@@ -75,6 +75,20 @@ which are mandatory to pass before the PR can be merged. A PR must also be tagge
 changes it introduces. See the `labels' descriptions <https://github.com/pymor/pymor/labels?q=pr%3A>`_ for more details.
 
 
+pre-commit hooks
+================
+
+pyMOR ships a config for the `pre-commit <https://pre-commit.com/>`_ hook management system.
+Using this setup can be a good way to find flake8 errors before pushing to GitHub, but using
+it is not required. Once you have `pre-commit` installed in you environment, run
+
+  pre-commit install
+
+Afterwards, the hooks configured in `.pre-commit-config.yaml` will run on all changed
+files prior to committing changes. Errors will block the commit, some
+checks will automatically fix the file.
+
+
 pyMOR's dependencies
 ######################################
 
@@ -98,7 +112,7 @@ The Makefile
 
 Via the ``Makefile`` it is possible to execute tests close to how they are run on CI with ``make docker_test``.
 All jobs described in :ref:`Gitlab CI Test Stage <ref_gitlab_ci_stage_test>` can be run this way by setting ``PYMOR_TEST_SCRIPT``
-accordingly.
+accordingly. You can pass additional arguments to pytest by setting ``PYMOR_PYTEST_EXTRA``.
 To run the test suite without docker,
 simply execute `make test` in the base directory of the pyMOR repository. This will
 run the pytest suite with the default hypothesis profile "dev". For available profiles
@@ -226,7 +240,6 @@ docs
   matching the currently checked out git branch of pyMOR.
 
 pypi
-  **This is not yet functional.** See `this issue <https://github.com/pymor/pymor/issues/551>`_
 
   Upload wheels to either the test or the real instance of the pypi repository, depending on whether
   the pipeline runs for a tagged commit.
@@ -261,6 +274,8 @@ Azure Pipelines
 .. note:: Configured by ``.ci/azure/pipeline-{osx,win}.yml`` respectively.
 
 Setup test environments with conda and run pytest. Also generate and upload coverage reports.
+
+.. note:: ``.ci/azure/pymor_defaults.py_*`` may override defaults 
 
 .. _ref_docker_images:
 

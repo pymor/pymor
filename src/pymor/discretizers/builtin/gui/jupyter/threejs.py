@@ -1,11 +1,11 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 import asyncio
 from io import BytesIO
 
 import numpy as np
-from ipywidgets import IntSlider, interact, widgets, Play, Layout
+from ipywidgets import IntSlider, interact, widgets, Play, Layout, Label
 import pythreejs as p3js
 from matplotlib.cm import get_cmap
 
@@ -55,7 +55,7 @@ class Renderer(widgets.VBox):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
-        self.layout = Layout(min_width=str(render_size[0]), min_height=str(render_size[1]), margin='0px 0px 0px 20px ')
+        self.layout = Layout(min_width=str(render_size[0]), min_height=str(render_size[1]), margin='10px')
         self.grid = grid
         self.codim = codim
         self.vmin, self.vmax = vmin, vmax
@@ -112,14 +112,14 @@ class Renderer(widgets.VBox):
         self._last_idx = None
         super().__init__(children=[self.renderer, ])
 
-    def _get_mesh(self, u):
+    def _get_mesh(self, i, u):
         if self.codim == 2:
             u = u[self.entity_map]
         elif self.grid.reference_element == triangle:
             u = np.repeat(u, 3)
         else:
             u = np.tile(np.repeat(u, 3), 2)
-        data = p3js.BufferAttribute(_normalize(u, self.vmin, self.vmax), normalized=True)
+        data = p3js.BufferAttribute(_normalize(u, self.vmin[i], self.vmax[i]), normalized=True)
         geo = p3js.BufferGeometry(
             index=self.buffer_faces,
             attributes=dict(
@@ -138,8 +138,8 @@ class Renderer(widgets.VBox):
         self._load_data(data)
 
     def _load_data(self, data):
-        for u in data:
-            m = self._get_mesh(u)
+        for i, u in enumerate(data):
+            m = self._get_mesh(i, u)
             self.scene.add(m)
             if len(self.meshes) == 0:
                 m.visible = True
@@ -187,57 +187,58 @@ class Renderer(widgets.VBox):
         self.renderer = p3js.Renderer(camera=self.cam, scene=self.scene,
                                       controls=[self.controller], webgl_version=1,
                                       width=render_size[0], height=render_size[1])
+        self.renderer.layout.max_height = f'{render_size[1]}px'
 
 
-class ColorBarRenderer(widgets.VBox):
+class ColorBarRenderer(widgets.HBox):
     def __init__(self, render_size, color_map, vmin=None, vmax=None):
         self.render_size = render_size
-        self.layout = Layout(min_width=str(render_size[0]), min_height=str(render_size[1]), margin='0px 0px 0px 20px ')
+        self.layout = Layout(min_width=str(render_size[0]), min_height=str(render_size[1]), margin='10px ')
         self.color_map = color_map
         self.vmin, self.vmax = vmin, vmax
-        self.image = self._gen_sprite()
-        super().__init__(children=[self.image, ])
+        self.image, labels = self._gen_sprite()
+        super().__init__(children=[self.image, labels])
 
     def freeze_camera(self, freeze=True):
         pass
 
-    def goto(self, _):
-        pass
+    def goto(self, idx):
+        labels = self.labels.children
+        text_fmt = '{:+1.3e}'
+        labels[0].value = text_fmt.format(self.vmax[idx])
+        labels[1].value = text_fmt.format((self.vmax[idx]+self.vmin[idx])/2)
+        labels[2].value = text_fmt.format(self.vmin[idx])
 
     def _gen_sprite(self):
-        from PIL import Image, ImageFont, ImageDraw
+        from PIL import Image, ImageDraw
         # upsacle to pow2
-        sprite_size = (self.render_size[0], self.render_size[1])
+        bar_width = 25
+        sprite_size = (bar_width, self.render_size[1])
         image = Image.new('RGBA', sprite_size, color=(255, 255, 255, 255))
         draw = ImageDraw.Draw(image)
-        ttf = '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf'
-        font_size = 12
-        font = ImageFont.truetype(ttf, font_size)
-        bar_width = 25
-        bar_padding = font_size // 2
-        bar_height = sprite_size[1] - (2*bar_padding)
+        bar_height = sprite_size[1]
         # we have to flip the Y coord cause PIL's coordinate system is different from OGL
         for i in range(bar_height):
             cl = tuple((np.array(self.color_map(bar_height-i))*255).astype(np.int_))
-            draw.line([(0, bar_padding+i), (bar_width, bar_padding+i)], cl, width=1)
+            draw.line([(0, i), (bar_width, i)], cl, width=1)
 
-        text_x = bar_width + 4
-        text_color = (0, 0, 0, 255)
-        text_fmt = '{:+1.3e}'
-        draw.text((text_x, 0), text_fmt.format(self.vmax), font=font, fill=text_color)
-        draw.text((text_x, (bar_height-bar_padding)//2), text_fmt.format((self.vmax+self.vmin)/2),
-                  font=font, fill=text_color)
-        draw.text((text_x, bar_height-bar_padding), text_fmt.format(self.vmin), font=font, fill=text_color)
+        label_layout = Layout(margin='0px 2px')
+        self.labels = widgets.VBox([Label('', layout=label_layout),
+                                    Label('', layout=label_layout),
+                                    Label('', layout=label_layout)],
+                                   layout=Layout(justify_content='space-between'))
+        self.goto(0)
 
         of = BytesIO()
         image.save(of, format='png')
         of.seek(0)
-        return widgets.Image(
+        return [widgets.Image(
             value=of.read(),
             format='png',
-            width=self.render_size[0],
+            width=bar_width,
             height=self.render_size[1],
-        )
+            layout=Layout(margin='0px'),
+        ), self.labels]
 
 
 class ThreeJSPlot(widgets.VBox):
@@ -249,7 +250,9 @@ class ThreeJSPlot(widgets.VBox):
         bar_size = (100, render_size[1])
         if not separate_colorbars:
             self.colorbars = [ColorBarRenderer(render_size=bar_size, vmin=vmins[0], vmax=vmaxs[0], color_map=color_map)]
-            self.r_hbox_items = self.renderer + self.colorbars
+            # prevent line break between last plot and colorbar
+            self.r_hbox_items = self.renderer[:-1]
+            self.r_hbox_items.append(widgets.HBox([self.renderer[-1], self.colorbars[0]]))
         else:
             self.r_hbox_items = []
             self.colorbars = []
@@ -257,17 +260,19 @@ class ThreeJSPlot(widgets.VBox):
                 cr = ColorBarRenderer(render_size=bar_size, vmin=vmin, vmax=vmax, color_map=color_map)
                 self.r_hbox_items.append(widgets.HBox([renderer, cr]))
                 self.colorbars.append(cr)
-        layout = Layout(display='flex', flex_flow='row wrap', align_items='stretch', justify_content='flex-start')
+        layout = Layout(display='flex', flex_flow='row wrap', align_items='stretch', justify_content='flex-start',)
         children = [widgets.Box(self.r_hbox_items, layout=layout)]
         if size > 1:
             def _goto_idx(idx):
                 for c in self.renderer:
                     c.goto(idx)
-            play = Play(min=0, max=size - 1, step=1, value=0, description='Timestep:')
+                for c in self.colorbars:
+                    c.goto(idx)
+            play = Play(min=0, max=size - 1, step=1, value=0, description='Timestep:', layout=Layout(margin='0px'))
             interact(idx=play).widget(_goto_idx)
             slider = IntSlider(min=0, max=size - 1, step=1, value=0, description='Timestep:')
             widgets.jslink((play, 'value'), (slider, 'value'))
-            controls = widgets.HBox([play, slider])
+            controls = widgets.HBox([play, slider], layout=Layout(margin='0px 10px'))
             children.append(controls)
 
         super().__init__(children=children)
@@ -323,19 +328,14 @@ def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         size = len(U[0])
         U = tuple(u.to_numpy().astype(np.float32, copy=False) for u in U)
 
-    if separate_colorbars:
-        if rescale_colorbars:
-            vmins = tuple(np.min(u[0]) for u in U)
-            vmaxs = tuple(np.max(u[0]) for u in U)
-        else:
-            vmins = tuple(np.min(u) for u in U)
-            vmaxs = tuple(np.max(u) for u in U)
+    if rescale_colorbars:
+        vmins = tuple(np.min(u, axis=1) for u in U)
+        vmaxs = tuple(np.max(u, axis=1) for u in U)
     else:
-        if rescale_colorbars:
-            vmins = (min(np.min(u[0]) for u in U),) * len(U)
-            vmaxs = (max(np.max(u[0]) for u in U),) * len(U)
-        else:
-            vmins = (min(np.min(u) for u in U),) * len(U)
-            vmaxs = (max(np.max(u) for u in U),) * len(U)
+        vmins = tuple(np.repeat(np.min(u), len(u)) for u in U)
+        vmaxs = tuple(np.repeat(np.max(u), len(u)) for u in U)
+    if not separate_colorbars:
+        vmins = (np.min(np.vstack(vmins), axis=0),) * len(U)
+        vmaxs = (np.max(np.vstack(vmaxs), axis=0),) * len(U)
 
     return ThreeJSPlot(grid, color_map, title, bounding_box, codim, U, vmins, vmaxs, separate_colorbars, size)

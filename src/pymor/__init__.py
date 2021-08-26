@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import os
 import platform
@@ -68,7 +68,8 @@ if 'PYMOR_DEFAULTS' in os.environ:
 else:
     filename = os.path.join(os.getcwd(), 'pymor_defaults.py')
     if os.path.exists(filename):
-        if os.stat(filename).st_uid != os.getuid():
+        from pymor.tools.io import file_owned_by_current_user
+        if not file_owned_by_current_user(filename):
             raise IOError('Cannot load pyMOR defaults from config file ' + filename
                           + ': not owned by user running Python interpreter')
         print('Loading pyMOR defaults from file ' + filename)
@@ -88,6 +89,7 @@ if mpi.parallel and mpi.event_loop_settings()['auto_launch']:
                 mpi.quit()
     else:
         print(f'Rank {mpi.rank}: MPI parallel run detected. Launching event loop ...')
-        mpi.event_loop()
+    mpi.launch_event_loop()
+    if not mpi.rank0:
         import sys
         sys.exit(0)

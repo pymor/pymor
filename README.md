@@ -25,7 +25,7 @@ provided for getting started quickly.
 License
 -------
 
-Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
+Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 following conditions are met:
@@ -43,7 +43,6 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSE
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 The following files contain source code originating from other open source software projects:
 
 * docs/source/pymordocstring.py  (sphinxcontrib-napoleon)
@@ -51,17 +50,15 @@ The following files contain source code originating from other open source softw
 
 See these files for more information.
 
-
 Citing
 ------
 
 If you use pyMOR for academic work, please consider citing our
 [publication](https://doi.org/10.1137/15M1026614):
 
-	R. Milk, S. Rave, F. Schindler
-	pyMOR - Generic Algorithms and Interfaces for Model Order Reduction
-	SIAM J. Sci. Comput., 38(5), pp. S194--S216, 2016
-
+    R. Milk, S. Rave, F. Schindler
+    pyMOR - Generic Algorithms and Interfaces for Model Order Reduction
+    SIAM J. Sci. Comput., 38(5), pp. S194--S216, 2016
 
 Installation via pip
 --------------------
@@ -87,22 +84,22 @@ for an installation with minimal dependencies.
 There are some optional packages not included with `pymor[full]`
 because they need additional setup on your system:
 
-- for support of MPI distributed models and parallelization of greedy algorithms
+* for support of MPI distributed models and parallelization of greedy algorithms
   (requires MPI development headers and a C compiler):
 
       pip install mpi4py
 
-- dense matrix equation solver for system-theoretic MOR methods, required for
+* dense matrix equation solver for system-theoretic MOR methods, required for
   H-infinity norm calculation (requires OpenBLAS headers and a Fortran
   compiler):
 
       pip install slycot
 
-- dense and sparse matrix equation solver for system-theoretic MOR methods
+* dense and sparse matrix equation solver for system-theoretic MOR methods
   (other backends available):
-    - from [source](https://gitlab.mpi-magdeburg.mpg.de/mess/cmess-releases)
-      (recommended)
-    - using a [wheel](https://www.mpi-magdeburg.mpg.de/projects/mess)
+  * from [source](https://gitlab.mpi-magdeburg.mpg.de/mess/cmess-releases)
+    (recommended)
+  * using a [wheel](https://www.mpi-magdeburg.mpg.de/projects/mess)
 
 If you are not operating in a virtual environment, you can pass the optional `--user`
 argument to pip. pyMOR will then only be installed for your
@@ -124,14 +121,12 @@ so you might prefer to install pyMOR from the current release branch:
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
 
-
 Installation via conda
 ----------------------
 
 pyMOR can be installed using `conda` by running
 
     conda install -c conda-forge pymor
-
 
 Documentation
 -------------
@@ -144,14 +139,12 @@ by executing:
 
 This will generate HTML documentation in `docs/_build/html`.
 
-
 Useful Links
 ------------
 
 * [Latest Changelog](https://docs.pymor.org/latest/release_notes/all.html)
 * [Getting Started](https://docs.pymor.org/latest/getting_started.html)
 * [Dependencies](https://github.com/pymor/pymor/blob/2020.2.x/requirements.txt)
-
 
 External PDE solvers
 --------------------
@@ -175,7 +168,7 @@ we provide bindings for the following solver libraries:
 
     MPI-compatible wrapper classes for dolfin linear algebra data structures are
     shipped with pyMOR (`pymor.bindings.fenics`).
-    For an example see `pymordemos.thermalbock`, `pymordemos.thermalblock_simple`.
+    For an example see `pymordemos.thermalblock`, `pymordemos.thermalblock_simple`.
     It is tested using version 2019.1.0.
 
 * [deal.II](https://dealii.org)
@@ -190,11 +183,9 @@ we provide bindings for the following solver libraries:
     For an example see `pymordemos.thermalblock_simple`.
     It is tested using version v6.2.2006.
 
-
 Do not hesitate to contact
 [us](https://github.com/pymor/pymor/discussions) if you
 need help with the integration of your PDE solver.
-
 
 External Matrix Equation Solvers
 --------------------------------
@@ -211,17 +202,15 @@ separately. Bindings for the following solver libraries are included:
 
     Python wrapper for the Subroutine Library in Systems and Control Theory (SLICOT) is also used for Hardy norm computations (`pymor.bindings.slycot`).
 
-
 Environments for pyMOR Development and Tests
 -----------------------------------------------
 
 Please see the [Developer Documentation](https://docs.pymor.org/latest/developer_docs.html).
 
-
 Contact
 -------
 
 Should you have any questions regarding pyMOR or wish to contribute,
-do not hestitate to contact us via our GitHub discussions forum:
+do not hesitate to contact us via our GitHub discussions forum:
 
 <https://github.com/pymor/pymor/discussions>

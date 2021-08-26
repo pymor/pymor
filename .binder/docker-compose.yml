@@ -22,13 +22,13 @@ services:
         context: ../
         dockerfile: .binder/Dockerfile
         args:
-            BASE: pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
+            BASE: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
             PYMOR_JUPYTER_TOKEN: "${PYMOR_JUPYTER_TOKEN}"
             NB_USER: "${NB_USER}"
             NB_UID: 1000
 
     ports:
-        - 9180:8888
+        - 9181:8888
     volumes:
         - ./..:/pymor
         - ./local_packages:/pymor/local_packages
@@ -37,6 +37,7 @@ services:
       - CI_COMMIT_REF_NAME
       - NB_DIR
       - PYMOR_HYPOTHESIS_PROFILE
+      - PYMOR_PYTEST_EXTRA
     entrypoint: /usr/local/bin/dev-entrypoint.bash
     # xsrf check disabled for docs viewing with chrome. Somewhat related issue: https://github.com/jupyterlab/jupyterlab/issues/6106
     # and see also https://bugs.chromium.org/p/chromium/issues/detail?id=455987
@@ -44,7 +45,7 @@ services:
         bash -c "jupyter notebook --ip 0.0.0.0 --no-browser --notebook-dir=$${NB_DIR} --NotebookApp.disable_check_xsrf=True"
 
   pytest:
-    image: pymor/testing_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
     depends_on:
       - pypi_mirror
     environment:
@@ -53,6 +54,7 @@ services:
       - CI_COMMIT_SHA
       - CI_COMMIT_REF_NAME
       - PYMOR_HYPOTHESIS_PROFILE
+      - PYMOR_PYTEST_EXTRA
     # this is a conservative estimate of available RAM on the gitlab ci runners
     mem_limit: 3500mb
     volumes:
@@ -61,9 +63,16 @@ services:
     command: "/pymor/.ci/gitlab/test_${PYMOR_TEST_SCRIPT}.bash"
 
   pypi_mirror:
-    image: pymor/pypi-mirror_${PYPI_MIRROR}_py${DOCKER_BASE_PYTHON}:${PYPI_MIRROR_TAG}
+    image: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_${PYPI_MIRROR}_py${DOCKER_BASE_PYTHON}:${PYPI_MIRROR_TAG}
     restart: "no"
 
+  install_check:
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_${PYMOR_TEST_OS}:${PYPI_MIRROR_TAG}
+    volumes:
+        - ./..:/pymor
+    depends_on:
+      - pypi_mirror
+    command: /bin/bash
   wheel_check:
     image: pymor/deploy_checks:devpi_${PYMOR_TEST_OS}
     volumes:
@@ -73,7 +82,7 @@ services:
     command: /bin/bash
 
   pymor__devpi:
-    image: pymor/devpi:1
+    image: zivgitlab.wwu.io/pymor/docker/pymor/devpi:1
     restart: "no"
 
   docs:
@@ -83,6 +92,7 @@ services:
     environment:
       - PYMOR_FORCE_JUPYTER=1
       - PYMOR_WITH_SPHINX=1
+      - PYMOR_PYTEST_EXTRA
       - CI_PROJECT_DIR=/pymor
       - CI_COMMIT_REF_NAME
     volumes:

@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 import numpy as np
 from ipywidgets import widgets
 import matplotlib.pyplot as plt
@@ -83,6 +83,8 @@ class MPLPlotBase:
             self._out = widgets.Output()
             with self._out:
                 plt.show()
+            # avoids figure double display
+            plt.close()
             # IPython display system checks for presence and calls this func
             self._ipython_display_ = self._out._ipython_display_
 

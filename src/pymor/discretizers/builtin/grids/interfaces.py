@@ -1,12 +1,13 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 
 from pymor.analyticalproblems.domaindescriptions import KNOWN_BOUNDARY_TYPES
 from pymor.core.base import abstractmethod
 from pymor.core.cache import CacheableObject, cached
+from pymor.core.logger import getLogger
 from pymor.discretizers.builtin.inverse import inv_transposed_two_by_two
 from pymor.discretizers.builtin.relations import inverse_relation
 
@@ -141,6 +142,10 @@ class Grid(CacheableObject):
     """
 
     cache_region = 'memory'
+
+    # if relative difference between domain points gets too large
+    # reference mapping etc numerics fail due to limited precision
+    MAX_DOMAIN_WIDTH = 1e12
 
     @abstractmethod
     def size(self, codim):
@@ -493,6 +498,16 @@ class Grid(CacheableObject):
             bbox[1, dim] = np.max(centers[:, dim])
         return bbox
 
+    @classmethod
+    def _check_domain(cls, domain):
+        ll, rr = np.array(domain[0]), np.array(domain[1])
+        too_large = np.linalg.norm(ll - rr) > cls.MAX_DOMAIN_WIDTH
+        if too_large:
+            logger = getLogger('pymor.discretizers.builtin.grid')
+            logger.warning(f'Domain {domain} for {cls} exceeds width limit. Results may be inaccurate')
+            return False
+        return True
+
 
 class GridWithOrthogonalCenters(Grid):
     """|Grid| with an additional `orthogonal_centers` method."""
@@ -533,13 +548,13 @@ class BoundaryInfo(CacheableObject):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is associated to one
         and only one boundary type.
         """
-        return np.less_equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 1)
+        return np.less_equal(sum(self.mask(bt, codim=codim).astype(int) for bt in self.boundary_types), 1)
 
     def no_boundary_type_mask(self, codim):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is associated to no
         boundary type.
         """
-        return np.equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 0)
+        return np.equal(sum(self.mask(bt, codim=codim).astype(int) for bt in self.boundary_types), 0)
 
     def check_boundary_types(self, assert_unique_type=(1,), assert_some_type=()):
         for bt in self.boundary_types:

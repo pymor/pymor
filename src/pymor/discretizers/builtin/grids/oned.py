@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 
@@ -71,7 +71,7 @@ class OnedGrid(GridWithOrthogonalCenters):
     def orthogonal_centers(self):
         return self.centers(0)
 
-    def visualize(self, U, codim=2, **kwargs):
+    def visualize(self, U, codim=1, **kwargs):
         """Visualize scalar data associated to the grid as a patch plot.
 
         Parameters
@@ -82,11 +82,11 @@ class OnedGrid(GridWithOrthogonalCenters):
             |Numpy arrays| can be provided, in which case a subplot is created for
             each entry of the tuple. The lengths of all arrays have to agree.
         codim
-            The codimension of the entities the data in `U` is attached to (either 0 or 2).
+            The codimension of the entities the data in `U` is attached to (either 0 or 1).
         kwargs
-            See :func:`~pymor.discretizers.builtin.gui.qt.visualize_patch`
+            See :func:`~pymor.discretizers.builtin.gui.visualizers.OnedVisualizer.visualize`
         """
-        from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d
+        from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer
         from pymor.vectorarrays.interface import VectorArray
         from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
         if isinstance(U, (np.ndarray, VectorArray)):
@@ -96,4 +96,4 @@ class OnedGrid(GridWithOrthogonalCenters):
                   u if isinstance(u, NumpyVectorArray) else
                   NumpyVectorSpace.make_array(u.to_numpy())
                   for u in U)
-        visualize_matplotlib_1d(self, U, codim=codim, **kwargs)
+        OnedVisualizer(self, codim=codim).visualize(U, **kwargs)

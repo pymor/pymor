@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 # DO NOT use any python features here that require 3.6 or newer
 
@@ -9,21 +9,9 @@ _PYTEST = 'pytest>=4.4'
 _PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*'
 
 
-def _pymess(rev, major, minor, marker=True):
-    cpm = 'm' if minor < 8 else ''
-    url = ('https://www.mpi-magdeburg.mpg.de/mpcsc/software/cmess/'
-           f'{rev}/pymess-{rev}-cp{major}{minor}-cp{major}{minor}{cpm}-'
-           'manylinux2014_x86_64.whl')
-    if marker:
-        return f'{url} ; python_version == "{major}.{minor}" and "linux" in sys_platform'
-    return url
-
-
-def setup_requires():
-    NUMPY = '1.16.0'
+def _numpy_scipy():
     # numpy versions with filters according to minimal version with a wheel
     numpys = [
-        'numpy>={};python_version <= "3.6"'.format(NUMPY),
         'numpy>=1.15.4;python_version == "3.7"',
         'numpy>=1.17.5;python_version == "3.8"',
         'numpy>=1.19.4;python_version >= "3.9"',
@@ -33,30 +21,29 @@ def setup_requires():
         'scipy>=1.3.3;python_version == "3.8"',
         'scipy>=1.5.4;python_version >= "3.9"',
     ]
+    return numpys + scipys
+
+
+def setup_requires():
     # setuptools pin in accordance with numpy: https://github.com/numpy/numpy/pull/17000,
     # see also https://github.com/pypa/setuptools/pull/2260
     # https://github.com/pypa/setuptools/pull/2259
-    other = [
-        'setuptools>=40.8.0,<49.2.0',
+    return [
+        'setuptools>=40.8.0,<49.2.0;python_version < "3.9"',
+        'setuptools>=49.1,<49.2.0;python_version >= "3.9"',
         'wheel',
         'pytest-runner>=2.9',
-        'cython>=0.28',
         'packaging',
     ]
-    return numpys + other + scipys
 
 
 # Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
-install_requires = ['Qt.py>=1.2.4', 'packaging', 'diskcache', 'typer'] + setup_requires()
+install_requires = ['qtpy', 'packaging', 'diskcache', 'typer', 'click<8'] + setup_requires() + _numpy_scipy()
 install_suggests = {
     'ipython>=5.0': 'an enhanced interactive python shell',
     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
     'matplotlib': 'needed for error plots in demo scipts',
-    'gmsh': 'this downloads the proper Gmsh binary',
-    'meshio==4.2.0': 'needed to import Gmsh grids',
     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
-    'pyamg;python_version<"3.8"': 'algebraic multigrid solvers',
-    'pyevtk>=1.1': 'writing vtk output',
     'sympy': 'symbolic mathematics',
     'pygments': 'highlighting code',
     'pythreejs': 'threejs bindings for python notebook  visualization',
@@ -64,18 +51,20 @@ install_suggests = {
     _PYSIDE: 'solution visualization for builtin discretizations',
     'ipywidgets': 'notebook GUI elements',
     'nbresuse': 'resource usage indicator for notebooks',
-    'torch;python_version<"3.9"': 'PyTorch open source machine learning framework',
+    'torch': 'PyTorch open source machine learning framework',
     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
     'pillow': 'image library used for bitmap data functions',
 }
-doc_requires = ['sphinx>=1.7', 'jupyter_sphinx', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
+io_requires = ['pyevtk', 'xmljson', 'meshio>=4.4', 'lxml', 'gmsh']
+install_suggests.update({p: 'optional File I/O support libraries' for p in io_requires})
+doc_requires = ['sphinx>=3.4', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
                 'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
-                'sphinxcontrib-bibtex'] + install_requires
+                'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8', 'myst-nb'] + install_requires
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout',
-               'flake8-rst-docstrings', 'flake8-docstrings',
+               'flake8-rst-docstrings', 'flake8-docstrings', 'pytest-datadir',
                'docutils', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]>=5.19',
-               'PyQt5!=5.15.2,>5.7,!=5.15.2.*']
+               'PyQt5!=5.15.2,>5.7,!=5.15.2.*,!=5.15.4,!=5.15.3']
 import_names = {
     'ipython': 'IPython',
     'pytest-cache': 'pytest_cache',
@@ -84,15 +73,12 @@ import_names = {
     'pytest-cov': 'pytest_cov',
     'pytest-flakes': 'pytest_flakes',
     'pytest-pep8': 'pytest_pep8',
-    _pymess('1.0.0', 3, 6, False): 'pymess',
-    _pymess('1.0.0', 3, 7, False): 'pymess',
-    _pymess('1.0.0', 3, 8, False): 'pymess',
-    _pymess('1.0.0', 3, 9, False): 'pymess',
     'pyopengl': 'OpenGL',
 }
 # Slycot is pinned due to buildsystem changes + missing wheels
-optional_requirements_file_only = ([_pymess('1.0.0', 3, i) for i in range(6, 10)]
-                                   + ['slycot>=0.4.0', 'mpi4py'])
+optional_requirements_file_only = (['slycot>=0.4.0', 'pymess',
+                                    'mpi4py>=3.0.3;python_version >= "3.9"',
+                                    'mpi4py>=3.0;python_version < "3.9"'])
 
 
 def strip_markers(name):
@@ -137,6 +123,7 @@ def extras():
         'full': list(_candidates(blocklist=['slycot', 'pymess', 'nbresuse', 'pytest-memprof'])),
         'ci':  ci_requires,
         'docs': doc_requires,
+        'io': io_requires,
     }
 
 
@@ -147,7 +134,6 @@ build-backend = "setuptools.build_meta"
 '''
 if __name__ == '__main__':
     note = '# This file is autogenerated. Edit dependencies.py instead'
-    print(' '.join([i for i in install_requires + list(install_suggests.keys())]))
     import os
     import itertools
     with open(os.path.join(os.path.dirname(__file__), 'requirements.txt'), 'wt') as req:

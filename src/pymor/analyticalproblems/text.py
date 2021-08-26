@@ -1,30 +1,22 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+import warnings
 
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, LincombFunction, BitmapFunction
 from pymor.core.defaults import defaults
 from pymor.parameters.functionals import ProjectionParameterFunctional
+from pymor.tools.io import safe_temporary_filename
 
 
 @defaults('font_name')
 def text_problem(text='pyMOR', font_name=None):
     import numpy as np
-    from PIL import Image, ImageDraw, ImageFont
-    from tempfile import NamedTemporaryFile
+    from PIL import Image, ImageDraw
 
-    font_list = [font_name] if font_name else ['DejaVuSansMono.ttf', 'VeraMono.ttf', 'UbuntuMono-R.ttf', 'Arial.ttf']
-    font = None
-    for filename in font_list:
-        try:
-            font = ImageFont.truetype(filename, 64)  # load some font from file of given size
-        except (OSError, IOError):
-            pass
-    if font is None:
-        raise ValueError('Could not load TrueType font')
-
+    font = _get_font(font_name)
     size = font.getsize(text)  # compute width and height of rendered text
     size = (size[0] + 20, size[1] + 20)  # add a border of 10 pixels around the text
 
@@ -43,9 +35,9 @@ def text_problem(text='pyMOR', font_name=None):
 
         # open a new temporary file
         # after leaving this 'with' block, the temporary file is automatically deleted
-        with NamedTemporaryFile(suffix='.png') as f:
+        with safe_temporary_filename(name='letter_bitmap.png') as f:
             img.save(f, format='png')
-            return BitmapFunction(f.name, bounding_box=[(0, 0), size], range=[0., 1.])
+            return BitmapFunction(f, bounding_box=[(0, 0), size], range=[0., 1.])
 
     # create BitmapFunctions for each character
     dfs = [make_bitmap_function(n) for n in range(len(text))]
@@ -64,3 +56,16 @@ def text_problem(text='pyMOR', font_name=None):
         diffusion=diffusion,
         parameter_ranges=(0.1, 1.)
     )
+
+
+def _get_font(font_name):
+    from PIL import ImageFont
+    font_list = [font_name] if font_name else ['DejaVuSansMono.ttf', 'VeraMono.ttf', 'UbuntuMono-R.ttf', 'Arial.ttf']
+    for filename in font_list:
+        try:
+            return ImageFont.truetype(filename, 64)  # load some font from file of given size
+        except (OSError, IOError):
+            pass
+    warnings.warn(f'Falling back to pillow default font. Could not load any of {font_list}',
+                  ResourceWarning, stacklevel=1)
+    return ImageFont.load_default()

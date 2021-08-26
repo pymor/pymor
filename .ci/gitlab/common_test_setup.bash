@@ -20,17 +20,21 @@ set -eux
 # check makes this script usable on OSX azure too
 [[ -e /usr/local/share/ci.pip.conf ]] && cp /usr/local/share/ci.pip.conf ~/.config/pip/pip.conf
 
-# most of these should be baked into the docker image already
-pip install -r requirements.txt
-pip install -r requirements-ci.txt
-pip install -r requirements-optional.txt
+# make sure image correct packages are baked into the image
+python src/pymor/scripts/check_reqs.py requirements.txt
+python src/pymor/scripts/check_reqs.py requirements-ci.txt
+python src/pymor/scripts/check_reqs.py requirements-optional.txt
 
 #allow xdist to work by fixing parametrization order
 export PYTHONHASHSEED=0
 
 python setup.py build_ext -i
+# workaround import mpl with no ~/.cache/matplotlib/fontconfig*.json
+# present segfaulting the interpreter
+python -c "from matplotlib import pyplot" || true
 
 PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')
-COMMON_PYTEST_OPTS="--junitxml=test_results_${PYMOR_VERSION}.xml --cov=src/pymor  \
-  --memprof-top-n 50 --memprof-csv-file=memory_usage.txt --cov-context=test \
-  --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE}"
+# `--cov-report=` suppresses terminal output
+COMMON_PYTEST_OPTS="--junitxml=test_results_${PYMOR_VERSION}.xml \
+  --cov-report= --cov --cov-config=setup.cfg --cov-context=test \
+  --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE} ${PYMOR_PYTEST_EXTRA}"

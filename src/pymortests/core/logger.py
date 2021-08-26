@@ -1,8 +1,10 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import logging
+
+import pytest
 
 import pymor.core as core
 from pymor.core.logger import log_levels
@@ -20,7 +22,7 @@ def test_logger():
 
 
 def test_empty_log_message():
-    core.logger.getLogger('test').warn('')
+    core.logger.getLogger('test').warning('')
 
 
 def test_log_levels():
@@ -33,6 +35,21 @@ def test_log_levels():
         assert logger.level != before
     assert logger.level == before
     assert before_name == logging.getLevelName(logger.level)
+
+
+@pytest.mark.parametrize('verb', ('info', 'error', 'fatal', 'debug', 'block', 'info2', 'info3', 'warning'))
+def test_once(verb, capsys):
+    logger = NumpyMatrixOperator._logger
+    logger.setLevel('DEBUG')
+    func = getattr(logger, f'{verb}_once')
+    msg = f'{verb} -- logger {str(logger)}'
+    func(msg)
+    # this just clears the capture buffer
+    capsys.readouterr()
+    func(msg)
+    second = capsys.readouterr()
+    # same log call must result in no output
+    assert second.out == second.err == ''
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """This module provides some operators for continuous finite element discretizations."""
 
@@ -1131,7 +1131,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     F = LincombOperator(operators=Fi, coefficients=coefficients_F, name='rhsOperator')
 
     if grid.reference_element in (triangle, square):
-        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=2)
+        visualizer = PatchVisualizer(grid=grid, codim=2)
     elif grid.reference_element is line:
         visualizer = OnedVisualizer(grid=grid, codim=1)
     else:

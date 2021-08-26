@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from collections.abc import Iterable, Mapping
 from collections import OrderedDict
@@ -9,6 +9,7 @@ from weakref import WeakValueDictionary
 from pymor.core.base import BasicObject, UberMeta, abstractmethod, classinstancemethod
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
 from pymor.operators.interface import Operator
+from pymor.tools.formatsrc import format_source, print_source
 from pymor.tools.table import format_table
 
 
@@ -56,9 +57,11 @@ class rule:
     condition_description = None
     condition_type = None
 
+    def _ipython_display_(self):
+        print_source(self.action)
+
     def __repr__(self):
-        from pymor.tools.formatsrc import source_repr
-        return source_repr(self.action)
+        return format_source(self.action)
 
     @property
     def action_description(self):
@@ -210,6 +213,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
 
     @insert_rule.instancemethod
     def insert_rule(self, index, rule_):
+        """:noindex:"""
         assert isinstance(rule_, rule)
         self.rules.insert(index, rule_)
 
@@ -220,6 +224,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
 
     @append_rule.instancemethod
     def append_rule(self, rule_):
+        """:noindex:"""
         assert isinstance(rule_, rule)
         self.rules.append(rule_)
 

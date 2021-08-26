@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import pytest
 import numpy as np
@@ -17,7 +17,6 @@ else:
         pass
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymortests.fixtures.operator import operator_with_arrays_and_products
 from pymortests.strategies import valid_inds, valid_inds_of_same_length
 from pymortests.vectorarray import indexed
 import pymortests.strategies as pyst

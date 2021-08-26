@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
 
@@ -9,6 +9,8 @@ if config.HAVE_FENICS:
     import dolfin as df
     import ufl
     import numpy as np
+    import sys
+    from pathlib import Path
 
     from pymor.core.base import ImmutableObject
     from pymor.core.defaults import defaults
@@ -262,7 +264,7 @@ if config.HAVE_FENICS:
                 raise NotImplementedError('SubMesh does not work in parallel')
             with self.logger.block(f'Restricting operator to {len(dofs)} dofs ...'):
                 if len(dofs) == 0:
-                    return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(0)), np.array([], dtype=np.int)
+                    return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(0)), np.array([], dtype=int)
 
                 if self.source.V.mesh().id() != self.range.V.mesh().id():
                     raise NotImplementedError
@@ -435,7 +437,7 @@ if config.HAVE_FENICS:
             self.space = space
             self.mesh_refinements = mesh_refinements
 
-        def visualize(self, U, m, title='', legend=None, filename=None, block=True,
+        def visualize(self, U, title='', legend=None, filename=None, block=True,
                       separate_colorbars=True):
             """Visualize the provided data.
 
@@ -447,8 +449,6 @@ if config.HAVE_FENICS:
                 If `filename` is specified, only one |VectorArray| may be provided which,
                 however, is allowed to contain multipled vectors that will be interpreted
                 as a time series.
-            m
-                Filled in by :meth:`pymor.models.interface.Model.visualize` (ignored).
             title
                 Title of the plot.
             legend
@@ -465,7 +465,16 @@ if config.HAVE_FENICS:
             if filename:
                 assert not isinstance(U, tuple)
                 assert U in self.space
-                f = df.File(filename)
+                if block:
+                    self.logger.warning('visualize with filename!=None, block=True will not block')
+                supported = (".x3d", ".xml", ".pvd", ".raw")
+                suffix = Path(filename).suffix
+                if suffix not in supported:
+                    msg = ('FenicsVisualizer needs a filename with a suffix indicating a supported backend\n'
+                           + f'defaulting to .pvd (possible choices: {supported})')
+                    self.logger.warning(msg)
+                    filename = f'{filename}.pvd'
+                f = df.File(str(filename))
                 coarse_function = df.Function(self.space.V)
                 if self.mesh_refinements:
                     mesh = self.space.V.mesh()
@@ -483,7 +492,7 @@ if config.HAVE_FENICS:
                     coarse_function.vector()[:] = u.real_part.impl
                     if self.mesh_refinements:
                         function.vector()[:] = df.interpolate(coarse_function, V_fine).vector()
-                    f << function
+                    f.write(function)
             else:
                 from matplotlib import pyplot as plt
 
@@ -520,7 +529,10 @@ if config.HAVE_FENICS:
                         plt.figure()
                         df.plot(function, title=tit,
                                 range_min=vmin, range_max=vmax)
-                plt.show(block=block)
+                if getattr(sys, '_called_from_test', False):
+                    plt.show(block=False)
+                else:
+                    plt.show(block=block)
 
     # adapted from dolfin.mesh.ale.init_parent_edge_indices
     def compute_parent_facet_indices(submesh, mesh):

@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
 
@@ -517,7 +517,7 @@ class ListVectorArray(VectorArray):
     def amax(self):
         assert self.dim > 0
 
-        MI = np.empty(len(self._list), dtype=np.int)
+        MI = np.empty(len(self._list), dtype=int)
         MV = np.empty(len(self._list))
 
         for k, v in enumerate(self._list):
@@ -605,6 +605,7 @@ class ListVectorSpace(VectorSpace):
 
     @make_array.instancemethod
     def make_array(self, obj):
+        """:noindex:"""
         return ListVectorArray([v if isinstance(v, Vector) else self.make_vector(v) for v in obj], self)
 
     @classinstancemethod
@@ -613,6 +614,7 @@ class ListVectorSpace(VectorSpace):
 
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
+        """:noindex:"""
         return ListVectorArray([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self)
 
 

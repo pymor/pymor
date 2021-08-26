@@ -19,4 +19,4 @@ codecov  --required \
   -X detect \
   --slug pymor/pymor \
   --commit ${CI_COMMIT_SHA} \
-  --branch ${CI_COMMIT_REF_NAME} 
+  --branch ${CI_COMMIT_REF_NAME}

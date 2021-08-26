@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import time
@@ -21,6 +21,7 @@ def main(
     dist: int = Argument(..., help='Number of slices for distributed HAPOD.'),
     inc: int = Argument(..., help='Number of steps for incremental HAPOD.'),
 
+    arity: int = Option(None, help='Arity of distributed HAPOD tree'),
     grid: int = Option(60, help='Use grid with (2*NI)*NI elements.'),
     nt: int = Option(100, help='Number of time steps.'),
     omega: float = Option(0.9, help='Parameter omega from HAPOD algorithm.'),
@@ -47,7 +48,7 @@ def main(
     pod_time = time.perf_counter() - tic
 
     tic = time.perf_counter()
-    dist_modes = dist_vectorarray_hapod(dist, U, tol, omega, product=m.l2_product, executor=executor)[0]
+    dist_modes = dist_vectorarray_hapod(dist, U, tol, omega, arity=arity, product=m.l2_product, executor=executor)[0]
     dist_time = time.perf_counter() - tic
 
     tic = time.perf_counter()

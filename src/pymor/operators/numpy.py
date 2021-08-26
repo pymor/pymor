@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """|Operators| based on |NumPy| arrays.
 
@@ -321,7 +321,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             if least_squares:
                 try:
-                    R, _, _, _ = np.linalg.lstsq(self.matrix, V.to_numpy().T)
+                    R, _, _, _ = np.linalg.lstsq(self.matrix, V.to_numpy().T, rcond=None)
                 except np.linalg.LinAlgError as e:
                     raise InversionError(f'{str(type(e))}: {str(e)}')
                 R = R.T

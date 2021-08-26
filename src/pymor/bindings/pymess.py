@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
 
@@ -33,7 +33,7 @@ if config.HAVE_PYMESS:
                              adi_shifts_b0=None,
                              adi_shifts_l0=16,
                              adi_shifts_p=None,
-                             adi_shifts_paratype=pymess.MESS_LRCFADI_PARA_ADAPTIVE_V):
+                             adi_shifts_paratype=pymess.MESS_LRCFADI_PARA_ADAPTIVE_Z):
         """Return available adi solver options with default values for the pymess backend.
 
         Parameters

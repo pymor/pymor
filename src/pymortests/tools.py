@@ -1,26 +1,29 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import operator
-from math import sin, pi, exp, factorial
+import itertools
+import os
+import tempfile
+from math import exp, factorial, pi, sin
+from pathlib import Path
+
 import numpy as np
 import pytest
-import itertools
-
 from hypothesis import given
 
+from pymor.core.config import config
 from pymor.core.logger import getLogger
-from pymor.tools.formatsrc import print_source, source_repr
-from pymor.tools.io import SafeTemporaryFileName
-from pymortests.base import runmodule
-from pymortests.fixtures.grid import hy_rect_or_tria_grid
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
+from pymor.tools import formatsrc, timing
 from pymor.tools.deprecated import Deprecated
-from pymor.tools.floatcmp import float_cmp, float_cmp_all, compare_with_tolerance, almost_less
+from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
+from pymor.tools.formatsrc import print_source
+from pymor.tools.io import safe_temporary_filename, change_to_directory, read_vtkfile
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymor.tools import timing, formatsrc
+from pymortests.base import runmodule
+from pymortests.fixtures.grid import hy_rect_or_tria_grid
 
 logger = getLogger('pymortests.tools')
 
@@ -104,43 +107,32 @@ def test_float_cmp():
             assert not float_cmp(-inf, inf, rtol, atol), msg
 
 
-def test_compare_with_tolerance():
+def test_almost_less():
     tol_range = [0.0, 1e-8, 1]
     inf = float('inf')
     for (rtol, atol) in itertools.product(tol_range, tol_range):
         msg = f'rtol: {rtol} | atol {atol}'
-        op = operator.le
         assert almost_less(0., 1, rtol, atol), msg
         assert almost_less(-1., -0., rtol, atol), msg
-        assert compare_with_tolerance(0., 1, op, rtol, atol), msg
-        assert compare_with_tolerance(-1., -0., op, rtol, atol), msg
-        assert compare_with_tolerance(-1., 1., op, rtol, atol), msg
-        assert compare_with_tolerance(0., atol, op, rtol, atol), msg
-        assert (rtol == 0.0 and not compare_with_tolerance(0., inf, op, rtol, atol), msg) or \
-               compare_with_tolerance(0., inf, op, rtol, atol), msg
-        op = operator.ge
-        assert compare_with_tolerance(1., 0., op, rtol, atol), msg
-        assert compare_with_tolerance(-0., -1., op, rtol, atol), msg
-        assert compare_with_tolerance(1., -1., op, rtol, atol), msg
-        assert compare_with_tolerance(atol, 0, op, rtol, atol), msg
-        assert not compare_with_tolerance(-inf, 0., op, rtol, atol), msg
-
-    with pytest.warns(Warning, match='Use float_cmp'):
-        compare_with_tolerance(0.0, 0.0, operator.eq)
+        assert almost_less(-1, -0.9, rtol, atol), msg
+        assert almost_less(0., 1, rtol, atol), msg
+        assert almost_less(-1., 1., rtol, atol), msg
+        assert almost_less(atol, 0., rtol, atol), msg
+        assert (rtol == 0.0 and not almost_less(0., inf, rtol, atol), msg) or \
+               almost_less(0., inf, rtol, atol), msg
 
 
+@pytest.mark.skipif(not config.HAVE_VTKIO, reason='VTKIO support libraries missing')
 @given(hy_rect_or_tria_grid)
 def test_vtkio(grid):
     steps = 4
-    for dim in range(1, 2):
-        for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.zeros((steps, grid.size(c))))
-                                      for c in range(grid.dim+1))):
-            with SafeTemporaryFileName('wb') as out_name:
-                if codim == 1:
-                    with pytest.raises(NotImplementedError):
-                        write_vtk(grid, data, out_name, codim=codim)
-                else:
-                    write_vtk(grid, data, out_name, codim=codim)
+    for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.ones((steps, grid.size(c))))
+                                  for c in range(grid.dim+1))):
+        with safe_temporary_filename('wb') as out_name:
+            fn = write_vtk(grid, data, out_name, codim=codim)
+            meshes = read_vtkfile(fn)
+            assert len(meshes) == len(data)
+            assert all((a is not None and b is not None for a, b in meshes))
 
 
 def testTimingContext():
@@ -187,7 +179,6 @@ def test_formatsrc():
     obj = formatsrc.format_source
     formatsrc.format_source(obj)
     print_source(obj)
-    source_repr(obj)
 
 
 def test_formatsrc_nopygments(monkeypatch):
@@ -197,6 +188,54 @@ def test_formatsrc_nopygments(monkeypatch):
     except ImportError:
         pass
     test_formatsrc()
+
+
+def test_load_matrix(loadable_matrices):
+    from pymor.tools.io import load_matrix
+    for m in loadable_matrices:
+        if m.suffix == '.npz':
+            load_matrix(m, key='arr_0')
+        else:
+            load_matrix(m)
+
+
+@pytest.mark.parametrize('ext', ['.mat', '.mtx', '.mtz.gz', '.npy', '.npz', '.txt'])
+def test_save_load_matrix(ext):
+    import filecmp
+    from pymor.tools.io import load_matrix, save_matrix
+    A = np.eye(2)
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        path = os.path.join(tmpdirname, 'matrix' + ext)
+        key = None
+        if ext == '.mat':
+            key = 'A'
+        save_matrix(path, A, key)
+        B = load_matrix(path, key)
+        assert np.all(A == B)
+        path2 = os.path.join(tmpdirname, 'matrix2' + ext)
+        save_matrix(path2, A, key)
+        # .mat save a timestamp, so full file cmp os too flaky
+        if ext not in ('.mtz.gz', '.mat'):
+            assert filecmp.cmp(path, path2)
+
+
+def test_cwd_ctx_manager():
+    def _cwd():
+        return Path(os.getcwd()).resolve()
+
+    original_cwd = _cwd()
+    target = Path(tempfile.gettempdir()).resolve()
+    with change_to_directory(target) as result:
+        assert result is None
+        assert _cwd() == target
+    assert _cwd() == original_cwd
+
+
+def test_deprecated_tmp():
+    """This test should be removed alongside SafeTemporaryFileName after the next release"""
+    from pymor.tools.io import SafeTemporaryFileName
+    with SafeTemporaryFileName() as fn:
+        open(fn, 'wt').write('foo')
 
 
 if __name__ == "__main__":

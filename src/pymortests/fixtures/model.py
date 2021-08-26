@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from itertools import product
 
@@ -11,9 +11,11 @@ from pymortests.fixtures.analyticalproblem import (picklable_thermalblock_proble
                                                    burgers_problems)
 
 
-picklable_model_generators = \
+stationary_cg_generators = \
     [lambda p=p, d=d: discretize_stationary_cg(p, diameter=d)[0]
-     for p, d in product(picklable_thermalblock_problems, [1./50., 1./100.])] \
+     for p, d in product(picklable_thermalblock_problems, [1./50., 1./100.])]
+
+picklable_model_generators = stationary_cg_generators \
     + [lambda p=p, d=d: discretize_instationary_fv(p, diameter=d, nt=100)[0]
        for p, d in product(burgers_problems, [1./10., 1./15.])]
 
@@ -28,6 +30,12 @@ model_generators = picklable_model_generators + non_picklable_model_generators
 
 @pytest.fixture(params=model_generators)
 def model(request):
+    return request.param()
+
+
+@pytest.fixture(params=[lambda p=p, d=d: discretize_stationary_cg(p, diameter=d)[0]
+                        for p, d in product(non_picklable_thermalblock_problems, [1./20., 1./30.])])
+def stationary_models(request):
     return request.param()
 
 

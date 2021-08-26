@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """This module imports some commonly used methods and classes.
 
@@ -11,7 +11,7 @@ to have the most important parts of pyMOR directly available.
 # flake8: noqa
 
 from pymor.algorithms.basic import almost_equal, relative_error, project_array
-from pymor.algorithms.ei import interpolate_operators, ei_greedy, deim
+from pymor.algorithms.ei import interpolate_operators, interpolate_function, ei_greedy, deim
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.greedy import rb_greedy

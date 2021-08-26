@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """Visualization of grid data using matplotlib.
 
@@ -190,7 +190,7 @@ class Matplotlib1DAxes(MatplotlibAxesBase):
 
 
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:
-    from Qt.QtWidgets import QSizePolicy
+    from qtpy.QtWidgets import QSizePolicy
 
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
@@ -212,7 +212,7 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
             lines = ()
             centers = grid.centers(1)
             if grid.identify_left_right:
-                centers = np.concatenate((centers, [[grid.domain[1]]]), axis=0)
+                centers = np.concatenate((centers, [grid.domain[1]]), axis=0)
                 self.periodic = True
             else:
                 self.periodic = False
@@ -231,7 +231,10 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
                 if legend and separate_plots:
                     axes.legend([legend[i]])
             if not separate_plots:
-                pad = (max(vmax) - min(vmin)) * 0.1
+                if max(vmax) == min(vmin):
+                    pad = 0.5
+                else:
+                    pad = (max(vmax) - min(vmin)) * 0.1
                 axes.set_ylim(min(vmin) - pad, max(vmax) + pad)
                 if legend:
                     axes.legend(legend)

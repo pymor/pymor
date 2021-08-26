@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """This module provides helper methods to use pyMOR in parallel with MPI.
 
@@ -57,24 +57,15 @@ from packaging.version import Version
 
 from pymor.core.config import config
 from pymor.core.defaults import defaults
-from pymor.core.pickle import dumps, loads
 
 if config.HAVE_MPI:
-    import mpi4py
+    import pymor.core.pickle
     from mpi4py import MPI
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
     finished = False
-    mpi4py_version = Version(mpi4py.__version__)
-    if mpi4py_version > Version('2.0'):
-        import pymor.core.pickle
-        MPI.pickle.__init__(pymor.core.pickle.dumps, pymor.core.pickle.loads, pymor.core.pickle.PROTOCOL)
-    elif mpi4py_version == Version('2.0'):
-        import pymor.core.pickle
-        MPI.pickle.PROTOCOL = pymor.core.pickle.PROTOCOL
-        MPI.pickle.loads = pymor.core.pickle.loads
-        MPI.pickle.dumps = pymor.core.pickle.dumps
+    MPI.pickle.__init__(pymor.core.pickle.dumps, pymor.core.pickle.loads, pymor.core.pickle.PROTOCOL)
 else:
     mpi4py_version = Version('0.0')
     rank = 0
@@ -86,6 +77,7 @@ parallel = (size > 1)
 
 _managed_objects = {}
 _object_counter = 0
+_event_loop_running = False
 
 
 ################################################################################
@@ -104,125 +96,76 @@ def event_loop_settings(auto_launch=True):
     return {'auto_launch': auto_launch}
 
 
-if mpi4py_version == Version('2.0'):
-    def event_loop():
-        """Launches an MPI-based event loop.
+def launch_event_loop():
+    global _event_loop_running
+    if rank0:
+        from pymor.core import defaults
+        if defaults.defaults_changes() > 0:
+            call(defaults.set_defaults, defaults.get_defaults(user=True, file=True, code=False))
+        _event_loop_running = True
+    else:
+        event_loop()
 
-        Events can be sent by either calling :func:`call` on
-        rank 0 to execute an arbitrary method on all ranks or
-        by calling :func:`quit` to exit the loop.
-        """
-        assert not rank0
-        while True:
-            try:
-                method, args, kwargs = comm.bcast(None)
-                if method == 'QUIT':
-                    break
-                else:
-                    method(*args, **kwargs)
-            except:
-                import traceback
-                print(f"Caught exception on MPI rank {rank}:")
-                traceback.print_exception(*sys.exc_info())
 
-    def call(method, *args, **kwargs):
-        """Execute method on all MPI ranks.
+def event_loop():
+    """Launches an MPI-based event loop.
 
-        Assuming :func:`event_loop` is running on all MPI ranks
-        (except rank 0), this will execute `method` on all
-        ranks (including rank 0) with positional arguments
-        `args` and keyword arguments `kwargs`.
+    Events can be sent by either calling :func:`call` on
+    rank 0 to execute an arbitrary method on all ranks or
+    by calling :func:`quit` to exit the loop.
+    """
+    assert not rank0
+    while True:
+        try:
+            method, args, kwargs = comm.bcast(None)
+            if method == 'QUIT':
+                break
+            else:
+                method(*args, **kwargs)
+        except BaseException:
+            import traceback
+            print(f"Caught exception on MPI rank {rank}:")
+            traceback.print_exception(*sys.exc_info())
 
-        Parameters
-        ----------
-        method
-            The function to execute on all ranks (must be picklable).
-        args
-            The positional arguments for `method`.
-        kwargs
-            The keyword arguments for `method`.
 
-        Returns
-        -------
-        The return value of `method` on rank 0.
-        """
-        assert rank0
-        if finished:
-            return
-        comm.bcast((method, args, kwargs), root=0)
-        return method(*args, **kwargs)
+def call(method, *args, **kwargs):
+    """Execute method on all MPI ranks.
 
-    def quit():
-        """Exit the event loop on all MPI ranks.
+    Assuming :func:`event_loop` is running on all MPI ranks
+    (except rank 0), this will execute `method` on all
+    ranks (including rank 0) with positional arguments
+    `args` and keyword arguments `kwargs`.
 
-        This will cause :func:`event_loop` to terminate on all
-        MPI ranks.
-        """
-        global finished
-        comm.bcast(('QUIT', None, None))
-        finished = True
+    Parameters
+    ----------
+    method
+        The function to execute on all ranks (must be picklable).
+    args
+        The positional arguments for `method`.
+    kwargs
+        The keyword arguments for `method`.
 
-else:
-    # for older mpi4py versions we have to pickle manually to ensure
-    # that pymor.core.pickle is used which will correctly serialize
-    # lambdas, etc.
+    Returns
+    -------
+    The return value of `method` on rank 0.
+    """
+    assert rank0
+    if finished:
+        return
+    comm.bcast((method, args, kwargs), root=0)
+    return method(*args, **kwargs)
 
-    def event_loop():
-        """Launches an MPI-based event loop.
 
-        Events can be sent by either calling :func:`call` on
-        rank 0 to execute an arbitrary method on all ranks or
-        by calling :func:`quit` to exit the loop.
-        """
-        assert not rank0
-        while True:
-            try:
-                method, args, kwargs = loads(comm.bcast(None))
-                if method == 'QUIT':
-                    break
-                else:
-                    method(*args, **kwargs)
-            except:
-                import traceback
-                print(f"Caught exception on MPI rank {rank}:")
-                traceback.print_exception(*sys.exc_info())
+def quit():
+    """Exit the event loop on all MPI ranks.
 
-    def call(method, *args, **kwargs):
-        """Execute method on all MPI ranks.
-
-        Assuming :func:`event_loop` is running on all MPI ranks
-        (except rank 0), this will execute `method` on all
-        ranks (including rank 0) with positional arguments
-        `args` and keyword arguments `kwargs`.
-
-        Parameters
-        ----------
-        method
-            The function to execute on all ranks (must be picklable).
-        args
-            The positional arguments for `method`.
-        kwargs
-            The keyword arguments for `method`.
-
-        Returns
-        -------
-        The return value of `method` on rank 0.
-        """
-        assert rank0
-        if finished:
-            return
-        comm.bcast(dumps((method, args, kwargs)), root=0)
-        return method(*args, **kwargs)
-
-    def quit():
-        """Exit the event loop on all MPI ranks.
-
-        This will cause :func:`event_loop` to terminate on all
-        MPI ranks.
-        """
-        global finished
-        comm.bcast(dumps(('QUIT', None, None)))
-        finished = True
+    This will cause :func:`event_loop` to terminate on all
+    MPI ranks.
+    """
+    global finished, _event_loop_running
+    comm.bcast(('QUIT', None, None))
+    finished = True
+    _event_loop_running = False
 
 
 ################################################################################
@@ -356,6 +299,7 @@ def remove_object(obj_id):
 
 if __name__ == '__main__':
     assert config.HAVE_MPI
+    launch_event_loop()
     if rank0:
         if len(sys.argv) >= 2:
             filename = sys.argv[1]
@@ -370,5 +314,3 @@ if __name__ == '__main__':
             except ImportError:
                 import code
                 code.interact()
-    else:
-        event_loop()

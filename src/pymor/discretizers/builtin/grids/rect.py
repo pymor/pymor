@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 
@@ -216,9 +216,9 @@ class RectGrid(GridWithOrthogonalCenters):
         codim
             The codimension of the entities the data in `U` is attached to (either 0 or 2).
         kwargs
-            See :func:`~pymor.discretizers.builtin.gui.qt.visualize_patch`
+            See :func:`~pymor.discretizers.builtin.gui.visualizers.PatchVisualizer.visualize`
         """
-        from pymor.discretizers.builtin.gui.qt import visualize_patch
+        from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer
         from pymor.vectorarrays.interface import VectorArray
         from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
         if isinstance(U, (np.ndarray, VectorArray)):
@@ -228,5 +228,4 @@ class RectGrid(GridWithOrthogonalCenters):
                   u if isinstance(u, NumpyVectorArray) else
                   NumpyVectorSpace.make_array(u.to_numpy())
                   for u in U)
-        bounding_box = kwargs.pop('bounding_box', self.domain)
-        visualize_patch(self, U, codim=codim, bounding_box=bounding_box, **kwargs)
+        PatchVisualizer(self, codim=codim).visualize(U, **kwargs)

@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 
@@ -104,7 +104,7 @@ class Model(CacheableObject, ParametricObject):
         must contain the key `'output'`.
         """
         if not getattr(self, 'output_functional', None):
-            return np.zeros(len(solution), 0)
+            return np.zeros((len(solution), 0))
         else:
             return self.output_functional.apply(solution, mu=mu).to_numpy()
 
@@ -580,6 +580,6 @@ class Model(CacheableObject, ParametricObject):
             See the docstring of `self.visualizer.visualize`.
         """
         if getattr(self, 'visualizer') is not None:
-            return self.visualizer.visualize(U, self, **kwargs)
+            return self.visualizer.visualize(U, **kwargs)
         else:
             raise NotImplementedError('Model has no visualizer.')

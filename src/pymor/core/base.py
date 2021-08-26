@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """This module provides base classes from which most classes in pyMOR inherit.
 
@@ -239,6 +239,7 @@ class classinstancemethod:
             @wraps(self.cls_meth)
             def the_class_method(*args, **kwargs):
                 return self.cls_meth(cls, *args, **kwargs)
+            the_class_method.autoapi_skip = True
             return the_class_method
         else:
             @wraps(self.inst_meth)

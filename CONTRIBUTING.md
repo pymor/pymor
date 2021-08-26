@@ -5,7 +5,6 @@ which improve or extend pyMOR. The purpose of this document
 is to make the contribution process easier for you and to answer
 some questions which might arise.
 
-
 ## Contribution process
 
 When you have written some code you want to contribute to
@@ -34,7 +33,6 @@ Feel free to
 [ask](https://github.com/pymor/pymor/discussions?discussions_q=category%3AQ%26A)
 for help at any time.
 
-
 ## License
 
 By submitting contributions to pyMOR, you give us the right to
@@ -59,7 +57,6 @@ is published under the BSD license, there is no way of revoking
 this license. Of course, you are free to not publish future versions
 of your code under the same license.
 
-
 ## Attribution
 
 When you have contributed code to pyMOR you and the content of your
@@ -76,7 +73,6 @@ attributions to trivial changes, such as fixing a typo in the
 documentation or correcting a very simple bug. However, your changes
 including your authorship will always be included in the git
 history of the project.
-
 
 ## Coding style
 
@@ -96,7 +92,6 @@ function is extended.
 
 All functions and classes called or instantiated by users should
 be sufficiently well documented.
-
 
 ## Becoming a main developer
 

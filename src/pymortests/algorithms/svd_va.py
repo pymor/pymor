@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 import pytest
@@ -13,7 +13,6 @@ from pymor.algorithms.basic import contains_zero_vector
 from pymor.core.logger import log_levels
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
-from pymortests.fixtures.operator import operator_with_arrays_and_products
 from pymortests.strategies import given_vector_arrays
 
 methods = [method_of_snapshots, qr_svd]

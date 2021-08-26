@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """This module contains the implementation of pyMOR's parameter handling facilities.
 
@@ -126,7 +126,7 @@ class Parameters(SortedFrozenDict):
             return Mu({})
 
         elif isinstance(mu, Mu):
-            mu == self or fail(self.why_incompatible(mu))
+            mu.parameters == self or fail(self.why_incompatible(mu))
             set(mu) == set(self) or fail(f'additional parameters {set(mu) - set(self)}')
             return mu
 
@@ -480,7 +480,9 @@ class ParameterSpace(ParametricObject):
         Parameters
         ----------
         count
-            `None` or number of random samples (see below).
+            If `None`, a single dict `mu` of |parameter values| is returned.
+            Otherwise, the number of random samples to generate and return as
+            a list of |parameter values| dicts.
         random_state
             :class:`~numpy.random.RandomState` to use for sampling.
             If `None`, a new random state is generated using `seed`
@@ -491,19 +493,14 @@ class ParameterSpace(ParametricObject):
 
         Returns
         -------
-        If `count` is `None`, an inexhaustible iterator returning random
-        |parameter value| dicts.
-        Otherwise a list of `count` random |parameter value| dicts.
+        The sampled |parameter values|.
         """
         assert not random_state or seed is None
         random_state = get_random_state(random_state, seed)
         get_param = lambda: Mu(((k, random_state.uniform(self.ranges[k][0], self.ranges[k][1], size))
                                for k, size in self.parameters.items()))
         if count is None:
-            def param_generator():
-                while True:
-                    yield get_param()
-            return param_generator()
+            return get_param()
         else:
             return [get_param() for _ in range(count)]
 

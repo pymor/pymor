@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from itertools import chain
 
@@ -26,11 +26,7 @@ def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
     where `O_i` are |Operators| and `c_i` scalar coefficients.
 
     This function is called in the :meth:`assemble` method of |LincombOperator| and
-    is not intended to be used directly. The assembled |Operator| is expected to
-    no longer be a |LincombOperator| nor should it contain any |LincombOperators|.
-    If an assembly of the given linear combination is not possible, `None` is returned.
-    The special case of a |LincombOperator| with a single operator (i.e. a scaled |Operator|)
-    is allowed as assemble_lincomb implements `apply_inverse` for this special case.
+    is not intended to be used directly.
 
     To form the linear combination of backend |Operators| (containing actual matrix data),
     :meth:`~pymor.operators.interface.Operator._assemble_lincomb` will be called
@@ -49,7 +45,7 @@ def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
 
     Returns
     -------
-    The assembled |Operator| if assembly is possible, otherwise `None`.
+    The assembled |Operator|.
     """
     return AssembleLincombRules(tuple(coefficients), solver_options, name).apply(tuple(operators))
 
@@ -289,10 +285,6 @@ class AssembleLincombRules(RuleTable):
             raise RuleNotMatchingError
         return op
 
-    @match_generic(lambda ops: len(ops) == 1)
-    def action_only_one_operator(self, ops):
-        return LincombOperator(ops, self.coefficients, name=self.name)
-
     @match_always
-    def action_failed(self, ops):
-        return None
+    def action_return_lincomb(self, ops):
+        return LincombOperator(ops, self.coefficients, name=self.name)

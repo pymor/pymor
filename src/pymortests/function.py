@@ -1,13 +1,13 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 import pytest
 
 from pymor.analyticalproblems.functions import ConstantFunction, GenericFunction
 from pymor.core.pickle import dumps, loads
-from pymortests.fixtures.function import function, picklable_function, function_argument
+from pymortests.fixtures.function import function_argument
 from pymortests.fixtures.parameter import parameters_of_type
 from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
 

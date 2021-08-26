@@ -1,12 +1,11 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 
 from pymor.discretizers.builtin.grids.interfaces import Grid
 from pymor.discretizers.builtin.grids.referenceelements import triangle
-from pymor.discretizers.builtin.grids._unstructured import compute_edges
 
 
 class UnstructuredTriangleGrid(Grid):
@@ -47,7 +46,7 @@ class UnstructuredTriangleGrid(Grid):
 
         vertices = vertices.astype(np.float64, copy=False)
         faces = faces.astype(np.int32, copy=False)
-        edges, num_edges = compute_edges(faces, len(vertices))
+        edges, num_edges = compute_edges(faces)
 
         COORDS = vertices[faces]
         SHIFTS = COORDS[:, 0, :]
@@ -93,9 +92,9 @@ class UnstructuredTriangleGrid(Grid):
         codim
             The codimension of the entities the data in `U` is attached to (either 0 or 2).
         kwargs
-            See :func:`~pymor.discretizers.builtin.gui.qt.visualize_patch`
+            See :func:`~pymor.discretizers.builtin.gui.visualizers.PatchVisualizer.visualize`
         """
-        from pymor.discretizers.builtin.gui.qt import visualize_patch
+        from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer
         from pymor.vectorarrays.interface import VectorArray
         from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
         if isinstance(U, (np.ndarray, VectorArray)):
@@ -105,8 +104,21 @@ class UnstructuredTriangleGrid(Grid):
                   u if isinstance(u, NumpyVectorArray) else
                   NumpyVectorSpace.make_array(u.to_numpy())
                   for u in U)
-        bounding_box = kwargs.pop('bounding_box', self.domain)
-        visualize_patch(self, U, codim=codim, bounding_box=bounding_box, **kwargs)
+        PatchVisualizer(self, codim=codim).visualize(U, **kwargs)
 
     def __str__(self):
         return 'UnstructuredTriangleGrid with {} triangles, {} edges, {} vertices'.format(*self.sizes)
+
+
+def compute_edges(subentities):
+    X = np.empty_like(subentities, dtype=[('l', np.int32), ('h', np.int32)])
+
+    X['l'][:, 0] = np.min(subentities[:, 1:3], axis=1)
+    X['l'][:, 1] = np.min(subentities[:, 0:3:2], axis=1)
+    X['l'][:, 2] = np.min(subentities[:, 0:2], axis=1)
+    X['h'][:, 0] = np.max(subentities[:, 1:3], axis=1)
+    X['h'][:, 1] = np.max(subentities[:, 0:3:2], axis=1)
+    X['h'][:, 2] = np.max(subentities[:, 0:2], axis=1)
+
+    U, I = np.unique(X, return_inverse=True)
+    return I.reshape(subentities.shape).astype(np.int32), len(U)

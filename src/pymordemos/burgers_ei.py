@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import sys
 import math
@@ -169,8 +169,8 @@ def main(
     if plot_error_landscape:
         N_count = min(real_rb_size - 1, plot_error_landscape_N)
         M_count = min(real_cb_size - 1, plot_error_landscape_M)
-        Ns = np.linspace(1, real_rb_size, N_count).astype(np.int)
-        Ms = np.linspace(1, real_cb_size, M_count).astype(np.int)
+        Ns = np.linspace(1, real_rb_size, N_count).astype(int)
+        Ms = np.linspace(1, real_cb_size, M_count).astype(int)
     else:
         Ns = np.array([real_rb_size])
         Ms = np.array([real_cb_size])

@@ -12,7 +12,8 @@
 # PYMOR_TEST_OS=debian_buster
 # hypothesis profiles: dev, debug, ci, ci-pr, ci-large
 # PYMOR_HYPOTHESIS_PROFILE=dev
-#
+# extra options to be passed to pytest
+# PYMOR_PYTEST_EXTRA="--lf"
 
 THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 DOCKER_RUN=docker run -v $(THIS_DIR):/pymor --env-file  $(THIS_DIR)/.env
@@ -20,7 +21,7 @@ CI_COMMIT_REF_NAME?=$(shell git rev-parse --abbrev-ref HEAD)
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
   	CI_COMMIT_REF_NAME=$(CI_COMMIT_REF_NAME) \
 	NB_USER=$(NB_USER) $(COMPOSE_SUDO) docker-compose -f .binder/docker-compose.yml -p pymor
-NB_DIR=notebooks
+NB_DIR=docs/source
 NB_USER:=${USER}
 ifeq ($(PYMOR_SUDO), 1)
 	COMPOSE_SUDO:=sudo -E
@@ -74,7 +75,7 @@ full-test:
 	@echo
 	@echo "--------------------------------------------------------------------------------"
 	@echo
-	py.test --flakes --pep8 --cov=src/pymor --cov-report=html --cov-report=xml src/pymortests
+	py.test --flakes --pep8 --cov --cov-config=setup.cfg --cov-report=html --cov-report=xml src/pymortests
 
 docs:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
@@ -85,10 +86,12 @@ template:
 
 # docker targets
 docker_template:
-	$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/dependencies.py \
+	@$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/dependencies.py \
 	  || $(DOCKER_RUN) pymor/ci_sanity:latest /pymor/dependencies.py
-	$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/.ci/gitlab/template.ci.py \
-	  || $(DOCKER_RUN) pymor/ci_sanity:latest /pymor/.ci/gitlab/template.ci.py
+	@$(DOCKER_RUN) pymor/ci_sanity:$(CI_IMAGE_TAG) /pymor/.ci/gitlab/template.ci.py ${GITLAB_TOKEN} \
+	  || $(DOCKER_RUN) pymor/ci_sanity:latest /pymor/.ci/gitlab/template.ci.py ${GITLAB_TOKEN}
+	@echo Files changed:
+	@git diff --name-only
 
 docker_image:
 	$(DOCKER_COMPOSE) build
@@ -112,3 +115,5 @@ docker_jupyter: docker_image
 	NB_DIR=$(NB_DIR) $(DOCKER_COMPOSE) up jupyter
 docker_wheel_check: docker_image
 	PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports wheel_check bash
+docker_install_check: docker_image
+	PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports install_check bash

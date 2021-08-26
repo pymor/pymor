@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """Visualization of grid data using Qt.
 
@@ -10,26 +10,85 @@ toolkit for the GUI.
 """
 
 import math as m
+from tempfile import NamedTemporaryFile
+import subprocess
+import sys
 
 import numpy as np
 
-import multiprocessing
-
 from pymor.core.config import config
-from pymor.core.config import is_windows_platform, is_macos_platform
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.core.exceptions import QtMissing
+from pymor.core.pickle import dump
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.gui.gl import GLPatchWidget, ColorBarWidget
 from pymor.discretizers.builtin.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
+
+@defaults('method')
+def background_visualization_method(method='ipython_if_possible'):
+    assert method in ('ipython', 'ipython_if_possible', 'pymor-vis')
+
+    if getattr(sys, '_called_from_test', False):
+        return 'ipython'
+    elif method == 'ipython_if_possible':
+        try:
+            from IPython import get_ipython
+            ip = get_ipython()
+        except ImportError:
+            ip = None
+        if ip is None:
+            return 'pymor-vis'
+        else:
+            return 'ipython'
+    else:
+        return method
+
+
+def _launch_qt_app(main_window_factory, block):
+    """Wrapper to display plot in a separate process."""
+    from qtpy.QtWidgets import QApplication
+
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+
+    if getattr(sys, '_called_from_test', False):
+        QTimer.singleShot(1000, app.quit)
+        block = True
+
+    if not block:
+        try:
+            from IPython import get_ipython
+            ip = get_ipython()
+        except ImportError:
+            ip = None
+        if ip is None:
+            logger = getLogger('pymor.discretizers.builtin.gui.qt')
+            logger.warn('Not running within IPython. Falling back to blocking visualization.')
+            block = True
+        else:
+            ip.run_line_magic('gui', 'qt')
+
+    main_window = main_window_factory()
+    main_window.show()
+
+    if block:
+        app.exec_()
+    else:
+        global _qt_app
+        _qt_app = app                 # deleting the app ref somehow closes the window
+        _qt_windows.add(main_window)  # need to keep ref to keep window alive
+
+
+
 if config.HAVE_QT:
-    from Qt.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QLCDNumber,
-                              QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
-    from Qt.QtCore import Qt, QTimer
+    from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QLCDNumber,
+                                QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
+    from qtpy.QtCore import Qt, QTimer
 
     class PlotMainWindow(QWidget):
         """Base class for plot main windows."""
@@ -170,54 +229,19 @@ if config.HAVE_QT:
             if ind >= 0:
                 self.slider.setValue(ind)
 
-
-_launch_qt_processes = set()
-
-
-def _launch_qt_app(main_window_factory, block):
-    """Wrapper to display plot in a separate process."""
-    mac_or_win = is_windows_platform() or is_macos_platform()
-
-    def _doit(factory):
-        # for windows these needs to be repeated due to multiprocessing (?)
-        from Qt.QtWidgets import QApplication
-        from Qt.QtCore import QCoreApplication
-        try:
-            app = QApplication([])
-        except RuntimeError:
-            app = QCoreApplication.instance()
-        main_window = factory()
-        if getattr(sys, '_called_from_test', False) and mac_or_win:
-            QTimer.singleShot(1000, app.quit)
-        main_window.show()
-        app.exec_()
-
-    import sys
-    # we treat win and osx differently here since no (reliable)
-    # forking is possible with multiprocessing startup
-    if (block and not getattr(sys, '_called_from_test', False)) or mac_or_win:
-        _doit(main_window_factory)
-    else:
-        p = multiprocessing.Process(target=_doit, args=(main_window_factory,))
-        p.start()
-        _launch_qt_processes.add(p.pid)
+        def closeEvent(self, event):
+            try:
+                self.deleteLater()
+                _qt_windows.remove(self)
+            except KeyError:
+                pass  # we should be in blocking mode ...
+            event.accept()
 
 
-def stop_gui_processes():
-    import os
-    import signal
-    kill_procs = {p for p in multiprocessing.active_children() if p.pid in _launch_qt_processes}
-    for p in kill_procs:
-        # active_children apparently contains false positives sometimes
-        p.terminate()
-        p.join(1)
-
-    for p in kill_procs:
-        if p.is_alive():
-            os.kill(p.pid, signal.SIGKILL)
+_qt_app = None
+_qt_windows = set()
 
 
-@defaults('backend')
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, backend='gl', block=False, columns=2):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
@@ -259,6 +283,18 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         raise QtMissing()
 
     assert backend in {'gl', 'matplotlib'}
+
+    if not block:
+        if background_visualization_method() == 'pymor-vis':
+            data = dict(dim=2,
+                        grid=grid, U=U, bounding_box=bounding_box, codim=codim, title=title, legend=legend,
+                        separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars,
+                        backend=backend, columns=columns)
+            with NamedTemporaryFile(mode='wb', delete=False) as f:
+                dump(data, f)
+                filename = f.name
+            subprocess.Popen(['python', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
+            return
 
     if backend == 'gl':
         if not config.HAVE_GL:
@@ -429,6 +465,17 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         raise QtMissing()
     if not config.HAVE_MATPLOTLIB:
         raise ImportError('cannot visualize: import of matplotlib failed')
+
+    if not block:
+        if background_visualization_method() == 'pymor-vis':
+            data = dict(dim=1,
+                        grid=grid, U=U, codim=codim, title=title, legend=legend,
+                        separate_plots=separate_plots)
+            with NamedTemporaryFile(mode='wb', delete=False) as f:
+                dump(data, f)
+                filename = f.name
+            subprocess.Popen(['python', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
+            return
 
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, codim, title, legend, separate_plots):

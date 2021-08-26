@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 from scipy.sparse import issparse
@@ -58,7 +58,7 @@ def assert_is_equal(first, second):
         assert type(first) == type(second)
 
         if isinstance(first, np.ndarray):
-            if first.dtype == np.object:
+            if first.dtype == object:
                 assert first.shape == second.shape
                 [_assert_is_equal(f, s) for f, s in zip(first.ravel(), second.ravel())]
             else:

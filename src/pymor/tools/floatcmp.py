@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import operator
 import warnings
@@ -68,28 +68,20 @@ def bounded(lower, upper, x, rtol=None, atol=None):
 
 
 @defaults('rtol', 'atol')
-def compare_with_tolerance(x, y, comparison_op, rtol=1e-14, atol=1e-14):
-    """'One-sided' Comparison x and y component-wise with given comparison op.
+def almost_less(x, y, rtol=1e-14, atol=1e-14):
+    """Component-wise check if x <= y up to a given tolerance.
 
-    For scalars we define almost equality as ::
+    For scalars the check is given by  ::
 
-       compare_with_tolerance(x,y) <=> op(x - y, atol + y*rtol)
+       almost_less(x, y) <=> (x - y  <= atol + |y| * rtol)
 
     Parameters
     ----------
     x, y
         |NumPy arrays| to be compared. Have to be broadcastable to the same shape.
-    comparison_op
-        binary operator object, see |operator| module.
     rtol
         The relative tolerance.
     atol
         The absolute tolerance.
     """
-    if comparison_op is operator.eq:
-        warnings.warn('Use float_cmp for float equality tests')
-    return comparison_op(x-y, atol + y * rtol)
-
-
-def almost_less(x, y, rtol=None, atol=None):
-    return compare_with_tolerance(x, y, operator.le, rtol, atol)
+    return x - y <= atol + np.abs(y) * rtol

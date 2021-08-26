@@ -1,13 +1,19 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import hashlib
 import os
 import sys
+from pprint import pformat
+from functools import wraps
+
+import hypothesis
 import numpy as np
 from pickle import dump, load
 from pkg_resources import resource_filename, resource_stream
+
+from pymor.algorithms.basic import almost_equal, relative_error
 
 
 def runmodule(filename):
@@ -63,3 +69,26 @@ def check_results(test_name, params, results, *args):
             assert False, (f'Results for test {test_name}({params}, key: {k}) have changed.\n'
                            f'(maximum error: {np.max(abs_errs)} abs / {np.max(rel_errs)} rel).\n'
                            f'Saved new results in {filename}_changed')
+
+
+def assert_all_almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol=1e-14):
+    cmp_array = almost_equal(U, V, product=product, sup_norm=sup_norm, rtol=rtol, atol=atol)
+    too_large_relative_errors = dict((i, relative_error(u, v, product=product))
+                                     for i, (u, v, f) in enumerate(zip(U, V, cmp_array)) if not f)
+    assert np.all(cmp_array), f'Relative errors for not-equal elements:{pformat(too_large_relative_errors)}'
+
+
+def might_exceed_deadline(deadline=-1):
+    """For hypothesis magic to work properly this must be the topmost decorator on test function"""
+    def _outer_wrapper(func):
+        @wraps(func)
+        def _inner_wrapper(*args, **kwargs):
+            dl = deadline
+            if os.environ.get('PYMOR_ALLOW_DEADLINE_EXCESS', False):
+                dl = None
+            elif dl == -1:
+                dl = hypothesis.settings.default.deadline.total_seconds() * 1e3
+            assert dl is None or dl > 1
+            return hypothesis.settings(deadline=dl)(func)(*args, **kwargs)
+        return _inner_wrapper
+    return _outer_wrapper

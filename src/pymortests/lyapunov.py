@@ -1,26 +1,23 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import os
+from itertools import chain, product
 
 import numpy as np
+import pytest
 import scipy.linalg as spla
 import scipy.sparse as sps
 
-from pymor.algorithms.lyapunov import solve_lyap_lrcf, solve_lyap_dense
+from pymor.algorithms.lyapunov import solve_lyap_dense, solve_lyap_lrcf
 from pymor.core.config import config
 from pymor.operators.numpy import NumpyMatrixOperator
 
-import pytest
-
-
-n_list = [100, 200]
+n_list_small = [10, 20]
+n_list_big = [300]
 m_list = [1, 2]
 lyap_lrcf_solver_list = [
-    'scipy',
-    'slycot_bartels-stewart',
-    'pymess_glyap',
     'pymess_lradi',
     'lradi',
 ]
@@ -95,19 +92,19 @@ def _check_availability(lyap_solver):
         pytest.skip('pymess not available')
 
 
-@pytest.mark.parametrize('n', n_list)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('lyap_solver', lyap_lrcf_solver_list)
+@pytest.mark.parametrize('n,lyap_solver', chain(product(n_list_small, lyap_dense_solver_list),
+                                                product(n_list_big, lyap_lrcf_solver_list)))
 def test_lrcf(n, m, with_E, trans, lyap_solver):
     _check_availability(lyap_solver)
 
     if not with_E:
-        A = conv_diff_1d_fd(n, 1, 1)
+        A = conv_diff_1d_fd(n, 1, 0.1)
         E = None
     else:
-        A, E = conv_diff_1d_fem(n, 1, 1)
+        A, E = conv_diff_1d_fem(n, 1, 0.1)
     np.random.seed(0)
     B = np.random.randn(n, m)
     if trans:
@@ -124,7 +121,7 @@ def test_lrcf(n, m, with_E, trans, lyap_solver):
     assert relative_residual(A, E, B, Z @ Z.T, trans=trans) < 1e-10
 
 
-@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])

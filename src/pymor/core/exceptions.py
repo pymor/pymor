@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import warnings
 
@@ -83,3 +83,9 @@ class NoMatchingRuleError(NotImplementedError):
     def __init__(self, obj):
         super().__init__(f'No rule could be applied to {obj}')
         self.obj = obj
+
+
+class IOLibsMissing(ImportError):
+    def __init__(self, msg=None):
+        msg = msg or 'meshio, pyevtk, xmljson and lxml are needed for full file I/O functionality'
+        super().__init__(msg)

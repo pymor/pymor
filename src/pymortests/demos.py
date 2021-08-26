@@ -1,11 +1,10 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import os
 import pymordemos  # noqa: F401
 from importlib import import_module
-import sys
 import pytest
 from tempfile import mkdtemp
 import shutil
@@ -15,7 +14,6 @@ from typer.testing import CliRunner
 
 from pymortests.base import runmodule, check_results
 from pymor.core.exceptions import QtMissing, GmshMissing, MeshioMissing, TorchMissing
-from pymor.discretizers.builtin.gui.qt import stop_gui_processes
 from pymor.core.config import is_windows_platform, is_macos_platform
 from pymor.tools.mpi import parallel
 
@@ -55,10 +53,9 @@ DISCRETIZATION_ARGS = (
 
 if not parallel:
     DISCRETIZATION_ARGS += (('elliptic_unstructured', [6., 16, 1e-1]),)
-if not is_windows_platform():
-    DISCRETIZATION_ARGS += (('neural_networks', [25, 50, 10]),
-                            ('neural_networks_fenics', [15, 3]),
-                            ('neural_networks_instationary', [25, 25, 30, 5]))
+DISCRETIZATION_ARGS += (('neural_networks', [25, 50, 10]),
+                        ('neural_networks_fenics', [15, 3]),
+                        ('neural_networks_instationary', [25, 25, 30, 5]))
 
 THERMALBLOCK_ARGS = (
     ('thermalblock', ['--plot-solutions', '--plot-err', '--plot-error-sequence', 2, 2, 3, 5]),
@@ -73,28 +70,24 @@ THERMALBLOCK_ARGS = (
 TB_IPYTHON_ARGS = THERMALBLOCK_ARGS[0:2]
 
 THERMALBLOCK_ADAPTIVE_ARGS = (
-    ('thermalblock_adaptive', [10]),
-    ('thermalblock_adaptive', ['--no-visualize-refinement', 10]),
+    ('thermalblock_adaptive', ['--pickle', '--cache-region=memory', '--plot-solutions', '--plot-error-sequence', 10]),
+    ('thermalblock_adaptive', ['--no-visualize-refinement', '--plot-err', 10]),
 )
 
 THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['pymor', 'naive', 2, 5, 5]),
     ('thermalblock_simple', ['fenics', 'greedy', 2, 5, 5]),
     ('thermalblock_simple', ['ngsolve', 'pod', 2, 5, 5]),
+    ('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),
 )
-# Font file loading currently does not work on windows
-if not is_windows_platform():
-    THERMALBLOCK_SIMPLE_ARGS += (('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),)
 
 THERMALBLOCK_GUI_ARGS = (
     ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
 )
-if is_windows_platform() or is_macos_platform():
-    THERMALBLOCK_GUI_ARGS = tuple()
 
 BURGERS_EI_ARGS = (
-    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--plot-ei-err']),
-    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--ei-alg=deim']),
+    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--plot-ei-err', '--plot-err', '--plot-solutions']),
+    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--ei-alg=deim', '--plot-error-landscape']),
 )
 
 PARABOLIC_MOR_ARGS = (
@@ -117,12 +110,16 @@ SYS_MOR_ARGS = (
 HAPOD_ARGS = (
     ('hapod', ['--snap=3', 1e-2, 10, 100]),
     ('hapod', ['--snap=3', '--threads=2', 1e-2, 10, 100]),
-    ('hapod', ['--snap=3', '--procs=2', 1e-2, 10, 100]),
+    ('hapod', ['--snap=3', '--procs=2', '--arity=2', 1e-2, 10, 100]),
 )
 
 FENICS_NONLINEAR_ARGS = (
     ('fenics_nonlinear', [2, 10, 2]),
     ('fenics_nonlinear', [3, 5, 1]),
+)
+
+FUNCTION_EI_ARGS = (
+    ('function_ei', ['--grid=10', 3, 2, 3, 2]),
 )
 
 DEMO_ARGS = (
@@ -136,6 +133,7 @@ DEMO_ARGS = (
     + SYS_MOR_ARGS
     + HAPOD_ARGS
     + FENICS_NONLINEAR_ARGS
+    + FUNCTION_EI_ARGS
 )
 DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 
@@ -178,12 +176,20 @@ def _test_demo(demo):
 
     try:
         from matplotlib import pyplot
-        pyplot.show = nop
+        if sys.version_info[:2] > (3, 7) or (
+                sys.version_info[0] == 3 and sys.version_info[1] == 6):
+            pyplot.ion()
+        else:
+            # the ion switch results in interpreter segfaults during multiple
+            # demo tests on 3.7 -> fall back on old monkeying solution
+            pyplot.show = nop
     except ImportError:
         pass
     try:
-        import dolfin
-        dolfin.plot = nop
+        import petsc4py
+        # the default X handlers can interfere with process termination
+        petsc4py.PETSc.Sys.popSignalHandler()
+        petsc4py.PETSc.Sys.popErrorHandler()
     except ImportError:
         pass
 
@@ -196,14 +202,12 @@ def _test_demo(demo):
         result = demo()
     except (QtMissing, GmshMissing, MeshioMissing, TorchMissing) as e:
         if os.environ.get('DOCKER_PYMOR', False):
-            # these are all installed in our CI env so them missing a grave error
+            # these are all installed in our CI env so them missing is a grave error
             raise e
         else:
             miss = str(type(e)).replace('Missing', '')
             pytest.xfail(f'{miss} not installed')
     finally:
-        stop_gui_processes()
-
         from pymor.parallel.default import _cleanup
         _cleanup()
         try:

@@ -1,12 +1,11 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.projection import project, project_to_subbasis
-from pymortests.fixtures.operator import operator_with_arrays, operator_with_arrays_and_products
 
 
 def test_project(operator_with_arrays):

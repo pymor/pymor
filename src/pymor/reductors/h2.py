@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """Reductors based on H2-norm."""
 
@@ -13,10 +13,8 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.krylov import tangential_rational_krylov
 from pymor.algorithms.riccati import solve_ricc_dense
 from pymor.algorithms.sylvester import solve_sylv_schur
-from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
-from pymor.models.iosys import InputOutputModel, LTIModel
-from pymor.operators.constructions import IdentityOperator
+from pymor.models.iosys import InputOutputModel, LTIModel, _lti_to_poles_b_c, _poles_b_c_to_lti
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
@@ -822,77 +820,3 @@ class GapIRKAReductor(GenericIRKAReductor):
 
         self.conv_crit.append(dist)
         self.logger.info(f'Convergence criterion in iteration {it + 1}: {dist:e}')
-
-
-def _lti_to_poles_b_c(rom):
-    """Compute poles and residues.
-
-    Parameters
-    ----------
-    rom
-        Reduced |LTIModel| (consisting of |NumpyMatrixOperators|).
-
-    Returns
-    -------
-    poles
-        1D |NumPy array| of poles.
-    b
-        |NumPy array| of shape `(rom.order, rom.dim_input)`.
-    c
-        |NumPy array| of shape `(rom.order, rom.dim_output)`.
-    """
-    A = to_matrix(rom.A, format='dense')
-    B = to_matrix(rom.B, format='dense')
-    C = to_matrix(rom.C, format='dense')
-    if isinstance(rom.E, IdentityOperator):
-        poles, X = spla.eig(A)
-        EX = X
-    else:
-        E = to_matrix(rom.E, format='dense')
-        poles, X = spla.eig(A, E)
-        EX = E @ X
-    b = spla.solve(EX, B)
-    c = (C @ X).T
-    return poles, b, c
-
-
-def _poles_b_c_to_lti(poles, b, c):
-    r"""Create an |LTIModel| from poles and residue rank-1 factors.
-
-    Returns an |LTIModel| with real matrices such that its transfer
-    function is
-
-    .. math::
-        \sum_{i = 1}^r \frac{c_i b_i^T}{s - \lambda_i}
-
-    where :math:`\lambda_i, b_i, c_i` are the poles and residue rank-1
-    factors.
-
-    Parameters
-    ----------
-    poles
-        Sequence of poles.
-    b
-        |NumPy array| of shape `(rom.order, rom.dim_input)`.
-    c
-        |NumPy array| of shape `(rom.order, rom.dim_output)`.
-
-    Returns
-    -------
-    |LTIModel|.
-    """
-    A, B, C = [], [], []
-    for i, pole in enumerate(poles):
-        if pole.imag == 0:
-            A.append(pole.real)
-            B.append(b[i].real)
-            C.append(c[i].real[:, np.newaxis])
-        elif pole.imag > 0:
-            A.append([[pole.real, pole.imag],
-                      [-pole.imag, pole.real]])
-            B.append(np.vstack([2 * b[i].real, -2 * b[i].imag]))
-            C.append(np.hstack([c[i].real[:, np.newaxis], c[i].imag[:, np.newaxis]]))
-    A = spla.block_diag(*A)
-    B = np.vstack(B)
-    C = np.hstack(C)
-    return LTIModel.from_matrices(A, B, C)

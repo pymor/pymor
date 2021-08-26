@@ -1,9 +1,11 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+from pathlib import Path
 
 from pymor.core.config import config
 from pymor.core.defaults import defaults
+from pymor.tools.io import change_to_directory
 
 if config.HAVE_NGSOLVE:
     import ngsolve as ngs
@@ -127,7 +129,10 @@ if config.HAVE_NGSOLVE:
 
         def _real_apply_adjoint_one_vector(self, v, mu=None, prepare_data=None):
             u = self.source.real_zero_vector()
-            mat = self.matrix.Transpose()
+            try:
+                mat = self.matrix.Transpose()
+            except AttributeError:
+                mat = self.matrix.T
             mat.Mult(v.impl.vec, u.impl.vec)
             return u
 
@@ -161,7 +166,7 @@ if config.HAVE_NGSOLVE:
             self.__auto_init(locals())
             self.space = NGSolveVectorSpace(fespace)
 
-        def visualize(self, U, m, legend=None, separate_colorbars=True, block=True):
+        def visualize(self, U, legend=None, separate_colorbars=True, filename=None, block=True):
             """Visualize the provided data."""
             if isinstance(U, VectorArray):
                 U = (U,)
@@ -170,7 +175,6 @@ if config.HAVE_NGSOLVE:
                 raise NotImplementedError
             if any(u._list[0].imag_part is not None for u in U):
                 raise NotImplementedError
-
             if legend is None:
                 legend = [f'VectorArray{i}' for i in range(len(U))]
             if isinstance(legend, str):
@@ -178,8 +182,21 @@ if config.HAVE_NGSOLVE:
             assert len(legend) == len(U)
             legend = [l.replace(' ', '_') for l in legend]  # NGSolve GUI will fail otherwise
 
-            if not separate_colorbars:
-                raise NotImplementedError
+            if filename:
+                # ngsolve unconditionnaly appends ".vtk"
+                filename = Path(filename).resolve()
+                if filename.suffix == '.vtk':
+                    filename = filename.parent / filename.stem
+                else:
+                    self.logger.warning(f'NGSolve set VTKOutput filename to {filename}.vtk')
+                coeffs = [u._list[0].real_part.impl for u in U]
+                # ngsolve cannot handle full paths for filenames
+                with change_to_directory(filename.parent):
+                    vtk = ngs.VTKOutput(ma=self.mesh, coefs=coeffs, names=legend, filename=str(filename), subdivision=0)
+                    vtk.Do()
+            else:
+                if not separate_colorbars:
+                    raise NotImplementedError
 
-            for u, name in zip(U, legend):
-                ngs.Draw(u._list[0].real_part.impl, self.mesh, name=name)
+                for u, name in zip(U, legend):
+                    ngs.Draw(u._list[0].real_part.impl, self.mesh, name=name)

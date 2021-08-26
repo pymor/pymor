@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
 
@@ -545,8 +545,8 @@ class Operator(ParametricObject):
     def _radd_sub(self, other, sign):
         if other == 0:
             return self
-        if not isinstance(other, Operator):
-            return NotImplemented
+        assert not isinstance(other, Operator)  # this is always handled by _add_sub
+        return NotImplemented
 
     def __add__(self, other):
         return self._add_sub(other, 1.)

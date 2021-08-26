@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from collections import namedtuple
 
@@ -42,7 +42,7 @@ class MPIModel:
         )
 
     def visualize(self, U, **kwargs):
-        self.visualizer.visualize(U, self, **kwargs)
+        self.visualizer.visualize(U, **kwargs)
 
     def __del__(self):
         mpi.call(mpi.remove_object, self.obj_id)
@@ -53,7 +53,7 @@ class MPIVisualizer(ImmutableObject):
     def __init__(self, m_obj_id):
         self.m_obj_id = m_obj_id
 
-    def visualize(self, U, m, **kwargs):
+    def visualize(self, U, **kwargs):
         if isinstance(U, tuple):
             U = tuple(u.obj_id for u in U)
         else:

@@ -35,7 +35,8 @@ tmpdir=$(mktemp -d)
 pushd ${tmpdir}
 # for some reason the installed conftest plugin is not picked up
 cp ${PYMOR_ROOT}/conftest.py .
-xvfb-run -a pytest ${COMMON_PYTEST_OPTS} --pyargs pymortests -c ${PYMOR_ROOT}/.ci/installed_pytest.ini
+INI="${PYMOR_ROOT}/.ci/installed_pytest.ini"
+xvfb-run -a pytest ${COMMON_PYTEST_OPTS} --cov-config=${INI} --pyargs pymortests -c ${INI}
 # make sure the demo script was instaled and is usable
 pymor-demo -h
 popd
