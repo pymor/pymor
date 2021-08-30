@@ -184,7 +184,7 @@ if config.HAVE_DUNEGDT:
         constrained_lhs_coeffs = []
         unconstrained_lhs_ops = []
         unconstrained_lhs_coeffs = []
-        if mu_energy_product:
+        if mu_energy_product is not None:
             mu_energy_product = p.parameters.parse(mu_energy_product)
             energy_product_ops = []
             energy_product_coeffs = []
@@ -357,21 +357,32 @@ if config.HAVE_DUNEGDT:
                 for op, coeff in zip(constrained_lhs_ops, constrained_lhs_coeffs):
                     rhs_ops += [op.apply(dirichlet_data.dofs.vector),]
                     rhs_coeffs += [-1*coeff]
+        else:
+            trivial_dirichlet_data = True
 
         # prepare additional products
+        # - in H^1
+        if mu_energy_product:
+            energy_product = MatrixOperator(
+                    grid, space, space,
+                    matrix=LincombOperator(
+                        operators=[DuneXTMatrixOperator(op.matrix.copy()) for op in energy_product_ops],
+                        coefficients=energy_product_coeffs).assemble(mu=mu_energy_product).matrix)
+        # - in H^1_0
         l2_0_product = MatrixOperator(grid, space, space, l2_product.matrix.copy()) # using operators here just for
         h1_0_semi_product = MatrixOperator(grid, space, space, h1_semi_product.matrix.copy()) # unified handling below
+        if mu_energy_product:
+            energy_product_0 = MatrixOperator(grid, space, space, energy_product.matrix.copy())
 
         # apply the Dirichlet constraints
         for op in constrained_lhs_ops:
             dirichlet_constraints.apply(op.matrix, only_clear=True, ensure_symmetry=True)
-        if mu_energy_product:
-            for op in energy_product_ops:
-                dirichlet_constraints.apply(op.matrix, ensure_symmetry=True)
         for vec in rhs_ops:
             dirichlet_constraints.apply(vec) # sets to zero
         dirichlet_constraints.apply(l2_0_product.matrix, ensure_symmetry=True)
         dirichlet_constraints.apply(h1_0_semi_product.matrix, ensure_symmetry=True)
+        if mu_energy_product:
+            dirichlet_constraints.apply(energy_product_0.matrix, ensure_symmetry=True)
 
         # create a matrix to hold the unit rows/cols corresponding to Dirichlet DoFs
         op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
@@ -395,27 +406,34 @@ if config.HAVE_DUNEGDT:
         del rhs_ops, rhs_coeffs
 
         # - products
-        products = {'h1': (DuneXTMatrixOperator(l2_product.matrix)
-                           + DuneXTMatrixOperator(h1_semi_product.matrix)).assemble(),
-                    'h1_semi': DuneXTMatrixOperator(h1_semi_product.matrix),
-                    'l2': DuneXTMatrixOperator(l2_product.matrix),
-                    'h1_0': (DuneXTMatrixOperator(l2_0_product.matrix)
-                             + DuneXTMatrixOperator(h1_0_semi_product.matrix)).assemble(),
-                    'h1_0_semi': DuneXTMatrixOperator(h1_0_semi_product.matrix),
-                    'l2_0': DuneXTMatrixOperator(l2_0_product.matrix)}
-
+        products = {}
+        #   * in H^1
+        products.update({
+            'l2': DuneXTMatrixOperator(l2_product.matrix),
+            'h1_semi': DuneXTMatrixOperator(h1_semi_product.matrix),
+            'h1': (DuneXTMatrixOperator(l2_product.matrix)
+                   + DuneXTMatrixOperator(h1_semi_product.matrix)).assemble(),
+        })
         if mu_energy_product:
-            energy_product_ops = [DuneXTMatrixOperator(op.matrix) for op in energy_product_ops]
-            energy_product = LincombOperator(operators=energy_product_ops, coefficients=energy_product_coeffs)
-            products['energy'] = energy_product.assemble(mu_energy_product)
-
-        # - outputs, shift if required
-        outputs = [VectorArrayOperator(lhs_ops[0].source.make_array([DuneXTVector(op.vector)]), adjoint=True)
-                   for op in outputs]
+            products['energy'] = DuneXTMatrixOperator(energy_product.matrix)
+        #   * in H^1_0
+        products.update({
+            'l2_0': DuneXTMatrixOperator(l2_0_product.matrix),
+            'h1_0_semi': DuneXTMatrixOperator(h1_0_semi_product.matrix),
+            'h1_0': (DuneXTMatrixOperator(l2_0_product.matrix)
+                     + DuneXTMatrixOperator(h1_0_semi_product.matrix)).assemble(),
+        })
+        if mu_energy_product:
+            products['energy_0'] = DuneXTMatrixOperator(energy_product_0.matrix)
         if trivial_dirichlet_data:
             dirichlet_data = lhs_ops[0].source.zeros(1)
         else:
             dirichlet_data = lhs_ops[0].source.make_array([DuneXTVector(dirichlet_data.dofs.vector),])
+
+        # - outputs, shift if required
+        outputs = [VectorArrayOperator(lhs_ops[0].source.make_array([DuneXTVector(op.vector)]), adjoint=True)
+                   for op in outputs]
+        if not trivial_dirichlet_data:
             shifted_outputs = []
             for func in outputs:
                 output_of_dirichlet_data = func.apply(dirichlet_data)
@@ -440,7 +458,9 @@ if config.HAVE_DUNEGDT:
         else:
             unshifted_visualizer = DuneGDTK3dVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
 
-        if not trivial_dirichlet_data:
+        if trivial_dirichlet_data:
+            visualizer = unshifted_visualizer
+        else:
             class ShiftedVisualizer(ImmutableObject):
                 def __init__(self, visualizer, shift):
                     self.__auto_init(locals())
@@ -456,9 +476,13 @@ if config.HAVE_DUNEGDT:
         data = {'grid': grid,
                 'boundary_info': boundary_info,
                 'space': space,
-                'interpolate': interpolate_single,
+                'interpolate': interpolate_single}
+
+        if not trivial_dirichlet_data:
+            data.update({
                 'dirichlet_shift': dirichlet_data,
-                'unshifted_visualizer': unshifted_visualizer}
+                'unshifted_visualizer': unshifted_visualizer,
+                })
 
         return m, data
 
