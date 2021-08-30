@@ -16,7 +16,7 @@ from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
 from pymor.models.iosys import InputOutputModel, LTIModel, _lti_to_poles_b_c, _poles_b_c_to_lti
-from pymor.operator.constructions import IdentityOperator
+from pymor.operators.constructions import IdentityOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
