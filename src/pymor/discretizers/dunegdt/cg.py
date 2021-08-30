@@ -161,12 +161,18 @@ if config.HAVE_DUNEGDT:
             elif func.shape_range == (d,):
                 if not pol_order in interpolation_space['vector']:
                     interpolation_space['vector'][pol_order] = DiscontinuousLagrangeSpace(
-                            grid, order=pol_order, dim_range=Dim(d))
+                            grid, order=pol_order, dim_range=Dim(d), dimwise_global_mapping=True)
                 if not pol_order in interpolation_points['vector']:
                     interpolation_points['vector'][pol_order] = interpolation_space['vector'][pol_order].interpolation_points()
                 df = DiscreteFunction(interpolation_space['vector'][pol_order], la_backend)
                 np_view = np.array(df.dofs.vector, copy=False)
-                np_view[:] = func.evaluate(interpolation_points['vector'][pol_order])[:].ravel()
+                values = func.evaluate(interpolation_points['vector'][pol_order])
+                reshaped_values = []
+                for dd in range(d):
+                    reshaped_values.append(np.array(values[:, dd], copy=False))
+                reshaped_values = np.hstack(reshaped_values)
+                np_view[:] = reshaped_values.ravel()[:]
+                del reshaped_values, values
                 return df
             else:
                 raise NotImplementedError(f'I do not know how to interpolate a {func.shape_range}d function!')
