@@ -402,7 +402,10 @@ if config.HAVE_DUNEGDT:
             if not float_cmp(vec.sup_norm(), 0.):
                 rhs_ops_ += [VectorArrayOperator(lhs_ops[0].range.make_array([DuneXTVector(vec)])),]
                 rhs_coeffs_ += [coeff,]
-        F = LincombOperator(operators=rhs_ops_, coefficients=rhs_coeffs_, name='rhsOperator')
+        if len(rhs_ops_) > 0:
+            F = LincombOperator(operators=rhs_ops_, coefficients=rhs_coeffs_, name='rhsOperator')
+        else:
+            F = VectorArrayOperator(L.range.zeros(1))
         del rhs_ops, rhs_coeffs
 
         # - products
