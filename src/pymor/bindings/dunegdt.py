@@ -126,7 +126,7 @@ if config.HAVE_DUNEGDT:
 
         def vector_from_numpy(self, data, ensure_copy=False):
             v = self.zero_vector()
-            np_view = np.array(v, copy=False)
+            np_view = np.array(v.impl, copy=False)
             np_view[:] = data
             return v
 
