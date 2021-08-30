@@ -1148,7 +1148,7 @@ class LTIModel(InputStateOutputModel):
         if not config.HAVE_SLYCOT:
             raise NotImplementedError
         if not return_fpeak:
-            return self.hinf_norm(mu=mu, return_fpeak=True, ab13dd_equilibrate=ab13dd_equilibrate)[0]
+            return self.linf_norm(mu=mu, return_fpeak=True, ab13dd_equilibrate=ab13dd_equilibrate)[0]
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)

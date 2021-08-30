@@ -13,8 +13,10 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.krylov import tangential_rational_krylov
 from pymor.algorithms.riccati import solve_ricc_dense
 from pymor.algorithms.sylvester import solve_sylv_schur
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
 from pymor.models.iosys import InputOutputModel, LTIModel, _lti_to_poles_b_c, _poles_b_c_to_lti
+from pymor.operator.constructions import IdentityOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
