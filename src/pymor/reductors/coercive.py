@@ -338,10 +338,10 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
         for d in range(m.output_functional.range.dim):
             dual_problem = m.with_(operator=m.operator.H, rhs=m.output_functional.H.as_range_array(mu)[d])
             dual_solution = dual_problem.solve(mu)
-            if not dual_problem.rhs.parametric:
+            if not m.output_functional.parametric or not isinstance(m.output_functional, LincombOperator):
                 CR = np.ones(1)
             else:
-                CR = np.array(dual_problem.rhs.evaluate_coefficients(mu))
+                CR = np.array(m.output_functional.evaluate_coefficients(mu))
 
             if not m.operator.parametric:
                 CO = np.ones(1)
