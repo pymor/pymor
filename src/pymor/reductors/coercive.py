@@ -45,22 +45,26 @@ class CoerciveRBReductor(StationaryRBReductor):
         self.coercivity_estimator = coercivity_estimator
         self.residual_reductor = ResidualReductor(self.bases['RB'], self.fom.operator, self.fom.rhs,
                                                   product=product, riesz_representatives=True)
-        if self.fom.output_functional.linear:
-            self.dual_residual_reductors = []
-            for d in range(fom.output_functional.range.dim):
-                output = ComponentProjectionOperator([d], self.fom.output_functional.range) @ self.fom.output_functional
-                self.dual_residual_reductors.append(ResidualReductor(self.bases['RB'], self.fom.operator.H,
-                                                                     output.H, product=product,
-                                                                     riesz_representatives=True))
+        if self.fom.output_functional is not None:
+            if self.fom.output_functional.linear:
+                self.dual_residual_reductors = []
+                for d in range(fom.output_functional.range.dim):
+                    output = ComponentProjectionOperator([d], self.fom.output_functional.range) @ \
+                            self.fom.output_functional
+                    self.dual_residual_reductors.append(ResidualReductor(self.bases['RB'],
+                                                                         self.fom.operator.H,
+                                                                         output.H, product=product,
+                                                                         riesz_representatives=True))
 
     def assemble_error_estimator(self):
         residual = self.residual_reductor.reduce()
-        if self.fom.output_functional.linear:
-            dual_residuals = []
-            dual_range_dims = []
-            for dual_residual_reductor in self.dual_residual_reductors:
-                dual_residuals.append(dual_residual_reductor.reduce())
-                dual_range_dims.append(tuple(dual_residual_reductor.residual_range_dims))
+        dual_residuals = []
+        dual_range_dims = []
+        if self.fom.output_functional is not None:
+            if self.fom.output_functional.linear:
+                for dual_residual_reductor in self.dual_residual_reductors:
+                    dual_residuals.append(dual_residual_reductor.reduce())
+                    dual_range_dims.append(tuple(dual_residual_reductor.residual_range_dims))
         error_estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
                                               self.coercivity_estimator,
                                               dual_residuals, dual_range_dims)
@@ -77,7 +81,7 @@ class CoerciveRBEstimator(ImmutableObject):
     """
 
     def __init__(self, residual, residual_range_dims, coercivity_estimator,
-                 dual_residuals, dual_residuals_range_dims):
+                 dual_residuals=None, dual_residuals_range_dims=None):
         self.__auto_init(locals())
 
     def estimate_error(self, U, mu, m):
@@ -87,6 +91,9 @@ class CoerciveRBEstimator(ImmutableObject):
         return est
 
     def estimate_output_error(self, U, mu, m):
+        assert m.output_functional is not None
+        assert m.output_functional.linear
+        assert len(self.dual_residuals) == m.output_functional.range.dim
         est_pr = self.estimate_error(U, mu, m)
         est_dus = []
         for d in range(m.output_functional.range.dim):
@@ -99,11 +106,26 @@ class CoerciveRBEstimator(ImmutableObject):
         if self.residual_range_dims:
             residual_range_dims = self.residual_range_dims[:dim + 1]
             residual = self.residual.projected_to_subbasis(residual_range_dims[-1], dim)
-            return CoerciveRBEstimator(residual, residual_range_dims, self.coercivity_estimator)
+            dual_residuals = []
+            dual_residuals_range_dims = []
+            if self.dual_residuals_range_dims is not None and len(self.dual_residuals_range_dims[0]) > 0:
+                assert len(self.dual_residuals_range_dims) == m.output_functional.range.dim
+                assert len(self.dual_residuals) == m.output_functional.range.dim
+                dual_residuals_range_dims = [res_range_dims[:dim + 1] for res_range_dims in
+                                             self.dual_residuals_range_dims]
+                dual_residuals = [res.projected_to_subbasis(res_range_dims[-1], dim) for
+                                  res, res_range_dims in zip(self.dual_residuals, dual_residuals_range_dims)]
+            else:
+                dual_residuals = [res.projected_to_subbasis(None, dim)
+                                  for res in self.dual_residuals]
+            return CoerciveRBEstimator(residual, residual_range_dims, self.coercivity_estimator,
+                                       dual_residuals, dual_residuals_range_dims)
         else:
             self.logger.warning('Cannot efficiently reduce to subbasis')
+            projected_dual_residuals = [res.projected_to_subbasis(None, dim)
+                                        for res in self.dual_residuals]
             return CoerciveRBEstimator(self.residual.projected_to_subbasis(None, dim), None,
-                                       self.coercivity_estimator)
+                                       self.coercivity_estimator, projected_dual_residuals)
 
 
 class SimpleCoerciveRBReductor(StationaryRBReductor):
