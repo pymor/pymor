@@ -5,6 +5,7 @@
 import numpy as np
 
 from pymor.core.base import ImmutableObject
+from pymor.operators.block import BlockRowOperator
 from pymor.operators.constructions import LincombOperator, induced_norm, ComponentProjectionOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.basic import StationaryRBReductor
@@ -238,13 +239,60 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
 
         estimator_matrix = NumpyMatrixOperator(estimator_matrix)
 
-        error_estimator = SimpleCoerciveRBEstimator(estimator_matrix, self.coercivity_estimator)
-        self.extends = (len(RB), dict(R_R=R_R, RR_R=RR_R, R_Os=R_Os, RR_Os=RR_Os))
+        # right hand side of the dual problem if needed
+        dual_estimator_matrices, R_DRs, RR_DRs = [], None, None
+        if self.fom.output_functional is not None:
+            if self.fom.output_functional.linear:
+                if extends:
+                    R_DRs, RR_DRs = old_data['R_DRs'], old_data['RR_DRs']
+                elif not self.fom.output_functional.parametric:
+                    R_DRs, RR_DRs = [], []
+                    for d in range(self.fom.output_functional.range.dim):
+                        dual_rhs = self.fom.output_functional.H
+                        R_DRs.append(space.empty(reserve=1))
+                        RR_DRs.append(space.empty(reserve=1))
+                        append_vector(dual_rhs.as_range_array()[d], R_DR[d], RR_DR[d])
+                else:
+                    R_DRs, RR_DRs = [], []
+                    for d in range(self.fom.output_functional.range.dim):
+                        dual_rhs = self.fom.output_functional.H
+                        if not isinstance(dual_rhs, LincombOperator):
+                            # this case happens if the builtin discretizer is used for the multi-dim
+                            # output, which then means that the output_functional is a BlockOperator
+                            assert isinstance(dual_rhs, BlockRowOperator)
+                            dual_rhs = dual_rhs.blocks[0,d]
+                            R_DRs.append(space.empty(reserve=len(dual_rhs.operators)))
+                            RR_DRs.append(space.empty(reserve=len(dual_rhs.operators)))
+                            for op in dual_rhs.operators:
+                                append_vector(op.as_range_array(), R_DRs[d], RR_DRs[d])
+                        else:
+                            R_DRs.append(space.empty(reserve=len(dual_rhs.operators)))
+                            RR_DRs.append(space.empty(reserve=len(dual_rhs.operators)))
+                            for op in dual_rhs.operators:
+                                append_vector(op.as_range_array()[d], R_DRs[d], RR_DRs[d])
+
+                # compute Gram matrix of the residuals related to dual rhs
+                R_DRRs = [RR_DR.inner(R_DR) for RR_DR, R_DR in zip(RR_DRs, R_DRs)]
+                R_DROs = [np.hstack([RR_DR.inner(R_O) for R_O in R_Os]) for RR_DR in RR_DRs]
+
+                for R_DRR, R_DRO in zip(R_DRRs, R_DROs):
+                    new_estimator_matrix = np.empty((len(R_DRR) + len(R_OO),) * 2)
+                    new_estimator_matrix[:len(R_DRR), :len(R_DRR)] = R_DRR
+                    new_estimator_matrix[len(R_DRR):, len(R_DRR):] = R_OO
+                    new_estimator_matrix[:len(R_DRR), len(R_DRR):] = R_DRO
+                    new_estimator_matrix[len(R_DRR):, :len(R_DRR)] = R_DRO.T
+
+                    dual_estimator_matrices.append(NumpyMatrixOperator(new_estimator_matrix))
+
+        error_estimator = SimpleCoerciveRBEstimator(estimator_matrix, self.coercivity_estimator,
+                                                    dual_estimator_matrices)
+        self.extends = (len(RB), dict(R_R=R_R, RR_R=RR_R, R_Os=R_Os, RR_Os=RR_Os,
+                                      R_DRs=R_DRs, RR_DRs=RR_DRs))
 
         return error_estimator
 
     def assemble_error_estimator_for_subbasis(self, dims):
-        return self._last_rom.estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
+        return self._last_rom.error_estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
 
 
 class SimpleCoerciveRBEstimator(ImmutableObject):
@@ -253,9 +301,11 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
     Not to be used directly.
     """
 
-    def __init__(self, estimator_matrix, coercivity_estimator):
+    def __init__(self, estimator_matrix, coercivity_estimator, dual_estimator_matrices=None):
         self.__auto_init(locals())
         self.norm = induced_norm(estimator_matrix)
+        if dual_estimator_matrices is not None:
+            self.dual_norms = [induced_norm(dual_mat) for dual_mat in dual_estimator_matrices]
 
     def estimate_error(self, U, mu, m):
         if len(U) > 1:
@@ -278,6 +328,33 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
 
         return est
 
+    def estimate_output_error(self, U, mu, m):
+        assert m.output_functional is not None
+        assert m.output_functional.linear
+        if len(U) > 1:
+            raise NotImplementedError
+        est_pr = self.estimate_error(U, mu, m)
+        est_dus = []
+        for d in range(m.output_functional.range.dim):
+            dual_problem = m.with_(operator=m.operator.H, rhs=m.output_functional.H.as_range_array(mu)[d])
+            dual_solution = dual_problem.solve(mu)
+            if not dual_problem.rhs.parametric:
+                CR = np.ones(1)
+            else:
+                CR = np.array(dual_problem.rhs.evaluate_coefficients(mu))
+
+            if not m.operator.parametric:
+                CO = np.ones(1)
+            else:
+                CO = np.array(m.operator.evaluate_coefficients(mu))
+
+            C = np.hstack((CR, np.dot(CO[..., np.newaxis], dual_solution.to_numpy()).ravel()))
+
+            est = self.dual_norms[d](NumpyVectorSpace.make_array(C))
+            est_dus.append(est)
+        return (est_pr * est_dus).T
+
+
     def restricted_to_subbasis(self, dim, m):
         cr = 1 if not m.rhs.parametric else len(m.rhs.operators)
         co = 1 if not m.operator.parametric else len(m.operator.operators)
@@ -287,4 +364,24 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
                                  ((np.arange(co)*old_dim)[..., np.newaxis] + np.arange(dim)).ravel() + cr))
         matrix = self.estimator_matrix.matrix[indices, :][:, indices]
 
-        return SimpleCoerciveRBEstimator(NumpyMatrixOperator(matrix), self.coercivity_estimator)
+        dual_estimator_matrices = []
+        if m.output_functional is not None:
+            if m.output_functional.linear:
+                if not m.output_functional.parametric:
+                    cdr = [1 for d in range(m.output_functional.range.dim)]
+                elif isinstance(m.output_functional, LincombOperator):
+                    cdr = [len(m.output_functional.operators) for d in range(m.output_functional.range.dim)]
+                else:
+                    assert isinstance(m.output_functional.H, BlockRowOperator)
+                    cdr = []
+                    for d in range(m.output_functional.range.dim):
+                        cdr.append(len(m.output_functional.H.blocks[0,d].operators))
+                for d in range(m.output_functional.range.dim):
+                    indices = np.concatenate((np.arange(cdr[d]),
+                                             ((np.arange(co)*old_dim)[..., np.newaxis] + np.arange(dim)).ravel() +
+                                              cdr[d]))
+                    new_matrix = NumpyMatrixOperator(self.dual_estimator_matrices[d].matrix[indices, :][:, indices])
+                    dual_estimator_matrices.append(new_matrix)
+
+        return SimpleCoerciveRBEstimator(NumpyMatrixOperator(matrix), self.coercivity_estimator,
+                                         dual_estimator_matrices)
