@@ -2,14 +2,12 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymortests.base import runmodule
-import pytest
-
 import numpy as np
 from pymor.algorithms.greedy import rb_greedy
 from pymor.parameters.functionals import MinThetaParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
 from pymordemos.linear_optimization import create_fom
+
 
 def test_output_estimate():
     grid_intervals = 10

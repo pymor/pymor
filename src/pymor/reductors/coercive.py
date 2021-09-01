@@ -51,7 +51,7 @@ class CoerciveRBReductor(StationaryRBReductor):
                 self.dual_residual_reductors = []
                 for d in range(fom.output_functional.range.dim):
                     output = ComponentProjectionOperator([d], self.fom.output_functional.range) @ \
-                            self.fom.output_functional
+                        self.fom.output_functional
                     self.dual_residual_reductors.append(ResidualReductor(self.bases['RB'],
                                                                          self.fom.operator.H,
                                                                          output.H, product=product,
@@ -251,7 +251,7 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
                         dual_rhs = self.fom.output_functional.H
                         R_DRs.append(space.empty(reserve=1))
                         RR_DRs.append(space.empty(reserve=1))
-                        append_vector(dual_rhs.as_range_array()[d], R_DR[d], RR_DR[d])
+                        append_vector(dual_rhs.as_range_array()[d], R_DRs[d], RR_DRs[d])
                 else:
                     R_DRs, RR_DRs = [], []
                     for d in range(self.fom.output_functional.range.dim):
@@ -260,7 +260,7 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
                             # this case happens if the builtin discretizer is used for the multi-dim
                             # output, which then means that the output_functional is a BlockOperator
                             assert isinstance(dual_rhs, BlockRowOperator)
-                            dual_rhs = dual_rhs.blocks[0,d]
+                            dual_rhs = dual_rhs.blocks[0, d]
                             R_DRs.append(space.empty(reserve=len(dual_rhs.operators)))
                             RR_DRs.append(space.empty(reserve=len(dual_rhs.operators)))
                             for op in dual_rhs.operators:
@@ -375,7 +375,7 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
                     assert isinstance(m.output_functional.H, BlockRowOperator)
                     cdr = []
                     for d in range(m.output_functional.range.dim):
-                        cdr.append(len(m.output_functional.H.blocks[0,d].operators))
+                        cdr.append(len(m.output_functional.H.blocks[0, d].operators))
                 for d in range(m.output_functional.range.dim):
                     indices = np.concatenate((np.arange(cdr[d]),
                                              ((np.arange(co)*old_dim)[..., np.newaxis] + np.arange(dim)).ravel() +
