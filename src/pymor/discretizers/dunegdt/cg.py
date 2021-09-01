@@ -4,6 +4,7 @@ from pymor.core.config import config, is_jupyter
 if config.HAVE_DUNEGDT:
     import numpy as np
     from functools import partial
+    from numbers import Number
 
     from dune.xt.grid import (
             ApplyOnBoundaryIntersections,
@@ -33,6 +34,7 @@ if config.HAVE_DUNEGDT:
             MatrixOperator,
             VectorFunctional,
             boundary_interpolation,
+            default_interpolation,
             make_element_sparsity_pattern,
             )
 
@@ -350,10 +352,16 @@ if config.HAVE_DUNEGDT:
             # we first require an interpolation of first order
             dirichlet_data = interpolate_single(p.dirichlet_data, pol_order=1)
             # second, we restrict this interpolation to the Dirichlet boundary
+            boundary_interpolation_space = space if space.max_polorder == 1 \
+                    else ContinuousLagrangeSpace(grid, order=1, dim_range=Dim(1))
             dirichlet_data = boundary_interpolation(GF(grid, dirichlet_data), space, boundary_info, DirichletBoundary())
             # third, we only do something if dirichlet_data != 0
             trivial_dirichlet_data = float_cmp(dirichlet_data.dofs.vector.sup_norm(), 0.)
             if not trivial_dirichlet_data:
+                # fourth, we embed them in the correct space, if required
+                if boundary_interpolation_space != space:
+                    dirichlet_data = default_interpolation(GF(grid, dirichlet_data), space)
+                # fifth, we apply the actual shift
                 for op, coeff in zip(constrained_lhs_ops, constrained_lhs_coeffs):
                     rhs_ops += [op.apply(dirichlet_data.dofs.vector),]
                     rhs_coeffs += [-1*coeff]
@@ -428,9 +436,7 @@ if config.HAVE_DUNEGDT:
         })
         if mu_energy_product:
             products['energy_0'] = DuneXTMatrixOperator(energy_product_0.matrix)
-        if trivial_dirichlet_data:
-            dirichlet_data = lhs_ops[0].source.zeros(1)
-        else:
+        if not trivial_dirichlet_data:
             dirichlet_data = lhs_ops[0].source.make_array([DuneXTVector(dirichlet_data.dofs.vector),])
 
         # - outputs, shift if required
@@ -474,17 +480,25 @@ if config.HAVE_DUNEGDT:
             visualizer = ShiftedVisualizer(unshifted_visualizer, dirichlet_data)
 
         m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
-                             name=f'{p.name}_CG')
+                             name=f'{p.name}_dunegdt_CG')
+
+        space_interpolation_points = space.interpolation_points() # cache
+        def interpolate(func):
+            df = DiscreteFunction(space, la_backend)
+            np_view = np.array(df.dofs.vector, copy=False)
+            np_view[:] = func.evaluate(space_interpolation_points)[:].ravel()
+            return m.solution_space.make_array([DuneXTVector(df.dofs.vector),])
 
         data = {'grid': grid,
                 'boundary_info': boundary_info,
                 'space': space,
-                'interpolate': interpolate_single}
+                'interpolate': interpolate}
 
         if not trivial_dirichlet_data:
             data.update({
                 'dirichlet_shift': dirichlet_data,
                 'unshifted_visualizer': unshifted_visualizer,
+                'dirichlet_interpolation_space': boundary_interpolation_space,
                 })
 
         return m, data
@@ -493,57 +507,14 @@ if config.HAVE_DUNEGDT:
     def discretize_instationary_cg(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
                                    grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None,
                                    order=1, data_approximation_order=2, la_backend=Istl(),
-                                   advection_in_divergence_form=False, mu_energy_product=None):
-        """Discretizes an |InstationaryProblem| with a |StationaryProblem| as stationary part
-        using finite elements.
-
-        Parameters
-        ----------
-        analytical_problem
-            The |InstationaryProblem| to discretize.
-        diameter
-            If not `None`, `diameter` is passed as an argument to the `domain_discretizer`.
-        domain_discretizer
-            Discretizer to be used for discretizing the analytical domain. This has
-            to be a function `domain_discretizer(domain_description, diameter, ...)`.
-            If `None`, |discretize_domain_default| is used.
-        grid_type
-            If not `None`, this parameter is forwarded to `domain_discretizer` to specify
-            the type of the generated |Grid|.
-        grid
-            Instead of using a domain discretizer, the |Grid| can also be passed directly
-            using this parameter.
-        boundary_info
-            A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
-            Must be provided if `grid` is specified.
-        num_values
-            The number of returned vectors of the solution trajectory. If `None`, each
-            intermediate vector that is calculated is returned.
-        time_stepper
-            The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
-            to be used by :class:`~pymor.models.basic.InstationaryModel.solve`.
-        nt
-            If `time_stepper` is not specified, the number of time steps for implicit
-            Euler time stepping.
-        preassemble
-            If `True`, preassemble all operators in the resulting |Model|.
-
-        Returns
-        -------
-        m
-            The |Model| that has been generated.
-        data
-            Dictionary with the following entries:
-
-                :grid:           The generated |Grid|.
-                :boundary_info:  The generated |BoundaryInfo|.
-                :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
-                                 before preassembling operators.
-        """
+                                   advection_in_divergence_form=False, mu_energy_product=None,
+                                   ensure_consistent_initial_values=1e-6):
 
         assert isinstance(analytical_problem, InstationaryProblem)
         assert isinstance(analytical_problem.stationary_part, StationaryProblem)
         assert (time_stepper is None) != (nt is None)
+        assert ensure_consistent_initial_values is None \
+               or isinstance(ensure_consistent_initial_values, Number)
 
         p = analytical_problem
 
@@ -556,25 +527,38 @@ if config.HAVE_DUNEGDT:
                                            advection_in_divergence_form=advection_in_divergence_form,
                                            mu_energy_product=mu_energy_product)
 
-        # interpolate initial data
-        df = DiscreteFunction(data['space'], la_backend)
-        np_view = np.array(df.dofs.vector, copy=False)
-        np_view[:] = p.initial_data.evaluate(data['space'].interpolation_points())[:].ravel()
-        I = m.solution_space.make_array([DuneXTVector(df.dofs.vector),])
-
         if time_stepper is None:
             if p.stationary_part.diffusion is None:
-                time_stepper = ExplicitEulerTimeStepper(nt=nt)
+                time_stepper = ExplicitEulerTimeStepper(nt=nt, initial_time=0, end_time=p.T, num_values=num_values)
             else:
-                time_stepper = ImplicitEulerTimeStepper(nt=nt)
+                time_stepper = ImplicitEulerTimeStepper(nt=nt, initial_time=0, end_time=p.T, num_values=num_values)
 
         mass = m.l2_0_product
 
-        m = InstationaryModel(operator=m.operator, rhs=m.rhs, mass=mass, initial_data=I, T=p.T,
-                              products=m.products,
-                              output_functional=m.output_functional,
-                              time_stepper=time_stepper,
-                              visualizer=m.visualizer,
-                              num_values=num_values, name=f'{p.name}_CG')
+        # treatment of initial values
+        # - interpolate them as is
+        interpolated_initial_data = data['interpolate'](p.initial_data)
+        # - shift if required
+        if 'dirichlet_shift' in data:
+            interpolated_initial_data -= data['dirichlet_shift']
+        # - constrain to H^1_0
+        if ensure_consistent_initial_values is not None:
+            interpolated_initial_data_on_boundary = boundary_interpolation(
+                    GF(data['grid'], DiscreteFunction(data['dirichlet_interpolation_space'],
+                                                      interpolated_initial_data._list[0].impl)),
+                    data['dirichlet_interpolation_space'],
+                    data['boundary_info'], DirichletBoundary())
+            if interpolated_initial_data_on_boundary.dofs.vector.sup_norm() > ensure_consistent_initial_values:
+                interpolated_initial_data._list[0].impl -= interpolated_initial_data_on_boundary.dofs.vector
+
+        m = InstationaryModel(
+                operator=m.operator, rhs=m.rhs, mass=mass,
+                initial_data=interpolated_initial_data,
+                T=p.T,
+                products=m.products,
+                output_functional=m.output_functional,
+                time_stepper=time_stepper,
+                visualizer=m.visualizer,
+                name=f'{p.name}_dunegdt_CG')
 
         return m, data
