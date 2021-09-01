@@ -118,7 +118,9 @@ def create_fom(grid_intervals, vector_valued_output=False):
                                             derivative_expressions={'diffusion': ['1/5', '1/5']})
 
     if vector_valued_output:
-        problem = StationaryProblem(domain, f, diffusion, outputs=[('l2', f * theta_J), ('l2', f * 0.5 * theta_J)])
+        problem = StationaryProblem(domain, f, diffusion,
+                                    outputs=[('l2', f * theta_J),
+                                             ('l2', f * 0.5 * theta_J)])
     else:
         problem = StationaryProblem(domain, f, diffusion, outputs=[('l2', f * theta_J)])
 
