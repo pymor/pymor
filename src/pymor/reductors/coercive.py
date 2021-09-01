@@ -5,9 +5,8 @@
 import numpy as np
 
 from pymor.core.base import ImmutableObject
-from pymor.operators.constructions import LincombOperator, induced_norm
+from pymor.operators.constructions import LincombOperator, induced_norm, ComponentProjectionOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.operators.block import BlockOperatorBase
 from pymor.reductors.basic import StationaryRBReductor
 from pymor.reductors.residual import ResidualReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -48,16 +47,11 @@ class CoerciveRBReductor(StationaryRBReductor):
                                                   product=product, riesz_representatives=True)
         if self.fom.output_functional.linear:
             self.dual_residual_reductors = []
-            if fom.output_functional.range.dim == 1:
+            for d in range(fom.output_functional.range.dim):
+                output = ComponentProjectionOperator([d], self.fom.output_functional.range) @ self.fom.output_functional
                 self.dual_residual_reductors.append(ResidualReductor(self.bases['RB'], self.fom.operator.H,
-                                                        self.fom.output_functional.H,
-                                                        product=product, riesz_representatives=True))
-            else:
-                for d in range(fom.output_functional.range.dim):
-                    assert isinstance(self.fom.output_functional, BlockOperatorBase)
-                    self.dual_residual_reductors.append(ResidualReductor(self.bases['RB'], self.fom.operator.H,
-                                                            self.fom.output_functional.blocks[d,0].H,
-                                                            product=product, riesz_representatives=True))
+                                                                     output.H, product=product,
+                                                                     riesz_representatives=True))
 
     def assemble_error_estimator(self):
         residual = self.residual_reductor.reduce()
