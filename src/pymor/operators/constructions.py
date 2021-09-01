@@ -607,6 +607,12 @@ class ComponentProjectionOperator(Operator):
         assert U in self.source
         return self.range.make_array(U.dofs(self.components))
 
+    def apply_adjoint(self, V, mu=None):
+        assert V in self.range
+        source_array = self.source.zeros().to_numpy()[0]
+        source_array[self.components] = V.to_numpy()[0]
+        return self.source.from_numpy(source_array)
+
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         source_dofs = self.components[dofs]
