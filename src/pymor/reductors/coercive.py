@@ -59,13 +59,14 @@ class CoerciveRBReductor(StationaryRBReductor):
 
     def assemble_error_estimator(self):
         residual = self.residual_reductor.reduce()
-        dual_residuals = []
-        dual_range_dims = []
+        dual_residuals, dual_range_dims = [], []
         if self.fom.output_functional is not None:
             if self.fom.output_functional.linear:
                 for dual_residual_reductor in self.dual_residual_reductors:
                     dual_residuals.append(dual_residual_reductor.reduce())
                     dual_range_dims.append(tuple(dual_residual_reductor.residual_range_dims))
+        # go back to None if nothing happened (this can also happen if the for loop started)
+        dual_range_dims = None if len(dual_range_dims) == 0 else dual_range_dims
         error_estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
                                               self.coercivity_estimator,
                                               dual_residuals, dual_range_dims)
@@ -109,14 +110,17 @@ class CoerciveRBEstimator(ImmutableObject):
             residual = self.residual.projected_to_subbasis(residual_range_dims[-1], dim)
             dual_residuals = []
             dual_residuals_range_dims = []
-            if self.dual_residuals_range_dims is not None and len(self.dual_residuals_range_dims[0]) > 0:
-                assert len(self.dual_residuals_range_dims) == m.output_functional.range.dim
-                assert len(self.dual_residuals) == m.output_functional.range.dim
-                dual_residuals_range_dims = [res_range_dims[:dim + 1] for res_range_dims in
-                                             self.dual_residuals_range_dims]
-                dual_residuals = [res.projected_to_subbasis(res_range_dims[-1], dim) for
-                                  res, res_range_dims in zip(self.dual_residuals, dual_residuals_range_dims)]
-            else:
+            if self.dual_residuals_range_dims is not None:
+                if len(self.dual_residuals_range_dims[0]) > 0:
+                    assert len(self.dual_residuals_range_dims) == m.output_functional.range.dim
+                    assert len(self.dual_residuals) == m.output_functional.range.dim
+                    dual_residuals_range_dims = [res_range_dims[:dim + 1] for res_range_dims in
+                                                 self.dual_residuals_range_dims]
+                    dual_residuals = [res.projected_to_subbasis(res_range_dims[-1], dim) for
+                                      res, res_range_dims in zip(self.dual_residuals,
+                                                                 dual_residuals_range_dims)]
+            if len(dual_residuals) == 0:
+                # the above if statements were not triggered
                 dual_residuals = [res.projected_to_subbasis(None, dim)
                                   for res in self.dual_residuals]
             return CoerciveRBEstimator(residual, residual_range_dims, self.coercivity_estimator,
