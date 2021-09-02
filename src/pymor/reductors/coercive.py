@@ -378,8 +378,8 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
                         cdr.append(len(m.output_functional.H.blocks[0, d].operators))
                 for d in range(m.output_functional.range.dim):
                     indices = np.concatenate((np.arange(cdr[d]),
-                                             ((np.arange(co)*old_dim)[..., np.newaxis] + np.arange(dim)).ravel() +
-                                              cdr[d]))
+                                             ((np.arange(co)*old_dim)[..., np.newaxis] + np.arange(dim)).ravel()
+                                              + cdr[d]))
                     new_matrix = NumpyMatrixOperator(self.dual_estimator_matrices[d].matrix[indices, :][:, indices])
                     dual_estimator_matrices.append(new_matrix)
 

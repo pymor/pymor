@@ -4,7 +4,6 @@
 
 import numpy as np
 from pymor.algorithms.greedy import rb_greedy
-from pymor.operators.block import BlockColumnOperator
 from pymor.operators.constructions import LincombOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import MinThetaParameterFunctional
