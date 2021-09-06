@@ -25,7 +25,7 @@ def test_output_estimate():
     # a vector valued output (with BlockColumnOperator)
     fom_3, _ = create_fom(grid_intervals, vector_valued_output=True)
 
-    # an output which is actually is a lincomb operator
+    # an output which is actually a lincomb operator
     dim_source = fom_1.output_functional.source.dim
     random_matrix_1 = np.random.rand(2, dim_source)
     random_matrix_2 = np.random.rand(2, dim_source)
@@ -47,8 +47,9 @@ def test_output_estimate():
     random_set = parameter_space.sample_randomly(random_samples, seed=0)
     coercivity_estimator = MinThetaParameterFunctional(fom_1.operator.coefficients, mu_bar)
 
-    for fom in foms:
-        for reductor in reductors:
+    estimator_values = []
+    for reductor in reductors:
+        for fom in foms:
             RB_reductor = reductor(fom, product=fom.energy_product,
                                    coercivity_estimator=coercivity_estimator)
             RB_greedy_data = rb_greedy(fom, RB_reductor, training_set, atol=1e-2)
@@ -59,7 +60,16 @@ def test_output_estimate():
 
             for mu in random_set:
                 s_fom = fom.output(mu=mu)
-                for rom in [rom_standard, rom_restricted]:
+                for rom in [rom_standard]: #, rom_restricted]:
                     s_rom, s_est = rom.output(return_error_estimate=True, mu=mu)
+                    estimator_values.append(s_est)
                     for s_r, s_f, s_e in np.dstack((s_rom, s_fom, s_est))[0]:
-                        assert np.abs(s_r-s_f) < s_e
+                        assert np.abs(s_r-s_f) <= s_e
+
+    coercive_reductor = estimator_values[:len(estimator_values)//2]
+    simple_coercive_reductor = estimator_values[len(estimator_values)//2:]
+
+    for coer, simple_coer in zip(coercive_reductor, simple_coercive_reductor):
+        # the result for CoerciveRBReductor and SimpleCoerciveRBReductor
+        # should be the same for these instances
+        assert np.allclose(coer, simple_coer)
