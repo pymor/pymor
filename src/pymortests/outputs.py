@@ -60,7 +60,7 @@ def test_output_estimate():
 
             for mu in random_set:
                 s_fom = fom.output(mu=mu)
-                for rom in [rom_standard]: #, rom_restricted]:
+                for rom in [rom_standard, rom_restricted]:
                     s_rom, s_est = rom.output(return_error_estimate=True, mu=mu)
                     estimator_values.append(s_est)
                     for s_r, s_f, s_e in np.dstack((s_rom, s_fom, s_est))[0]:

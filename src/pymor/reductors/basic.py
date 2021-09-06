@@ -39,10 +39,18 @@ class ProjectionBasedReductor(BasicObject):
     check_tol
         If `check_orthonormality` is `True`, the numerical tolerance with which the checks
         are performed.
+    assemble_error_estimate
+        If `True`, assembles error estimate
+    assemble_output_error_estimate
+        If `True`, assembles output error estimate. `assemble_error_estimate` must be `True`.
     """
 
     @defaults('check_orthonormality', 'check_tol')
-    def __init__(self, fom, bases, products={}, check_orthonormality=True, check_tol=1e-3):
+    def __init__(self, fom, bases, products={}, check_orthonormality=True, check_tol=1e-3,
+                 assemble_error_estimate=True, assemble_output_error_estimate=True):
+        if assemble_output_error_estimate:
+            # the output error estimate requires the state error estimate
+            assert assemble_error_estimate
         assert products.keys() <= bases.keys()
         bases = dict(bases)
         products = dict(products)
@@ -82,8 +90,12 @@ class ProjectionBasedReductor(BasicObject):
         # ensure that no logging output is generated for error_estimator assembly in case there is
         # no error estimator to assemble
         if self.assemble_error_estimator.__func__ is not ProjectionBasedReductor.assemble_error_estimator:
-            with self.logger.block('Assembling error estimator ...'):
-                error_estimator = self.assemble_error_estimator()
+            if self.assemble_error_estimate:
+                with self.logger.block('Assembling error estimator ...'):
+                    error_estimator = self.assemble_error_estimator()
+            else:
+                self.logger.info('Skip assembling error estimators ...')
+
         else:
             error_estimator = None
 
