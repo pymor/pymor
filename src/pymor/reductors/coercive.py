@@ -52,8 +52,9 @@ class CoerciveRBReductor(StationaryRBReductor):
                 for d in range(fom.output_functional.range.dim):
                     output = ComponentProjectionOperator([d], self.fom.output_functional.range) @ \
                         self.fom.output_functional
+                    # fom.operator.H can not be used yet
                     self.dual_residual_reductors.append(ResidualReductor(self.bases['RB'],
-                                                                         self.fom.operator.H,
+                                                                         self.fom.operator,
                                                                          output.H, product=product,
                                                                          riesz_representatives=True))
 
@@ -61,7 +62,7 @@ class CoerciveRBReductor(StationaryRBReductor):
         residual = self.residual_reductor.reduce()
         dual_residuals, dual_range_dims = [], []
         if self.fom.output_functional is not None:
-            if self.fom.output_functional.linear:
+            if self.fom.output_functional.linear and self.assemble_output_error_estimate:
                 for dual_residual_reductor in self.dual_residual_reductors:
                     dual_residuals.append(dual_residual_reductor.reduce())
                     dual_range_dims.append(tuple(dual_residual_reductor.residual_range_dims))
@@ -93,13 +94,13 @@ class CoerciveRBEstimator(ImmutableObject):
         return est
 
     def estimate_output_error(self, U, mu, m):
-        assert m.output_functional is not None
-        assert m.output_functional.linear
+        assert m.output_functional is not None and m.output_functional.linear
         assert len(self.dual_residuals) == m.output_functional.range.dim
         est_pr = self.estimate_error(U, mu, m)
         est_dus = []
         for d in range(m.output_functional.range.dim):
-            dual_problem = m.with_(operator=m.operator.H, rhs=m.output_functional.H.as_range_array(mu)[d])
+            # fom.operator.H can not be used yet
+            dual_problem = m.with_(operator=m.operator, rhs=m.output_functional.H.as_range_array(mu)[d])
             dual_solution = dual_problem.solve(mu)
             est_dus.append(self.dual_residuals[d].apply(dual_solution, mu=mu).norm())
         return (est_pr * est_dus).T
@@ -246,7 +247,7 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
         # right hand side of the dual problem if needed
         dual_estimator_matrices, R_DRs, RR_DRs = [], None, None
         if self.fom.output_functional is not None:
-            if self.fom.output_functional.linear:
+            if self.fom.output_functional.linear and self.assemble_output_error_estimate:
                 if extends:
                     R_DRs, RR_DRs = old_data['R_DRs'], old_data['RR_DRs']
                 elif not self.fom.output_functional.parametric:
@@ -275,7 +276,7 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
                             for op in dual_rhs.operators:
                                 append_vector(op.as_range_array()[d], R_DRs[d], RR_DRs[d])
 
-                # compute Gram matrix of the residuals related to dual rhs
+                # compute Gram matrix of the residuals related to dual_rhs
                 R_DRRs = [RR_DR.inner(R_DR) for RR_DR, R_DR in zip(RR_DRs, R_DRs)]
                 R_DROs = [np.hstack([RR_DR.inner(R_O) for R_O in R_Os]) for RR_DR in RR_DRs]
 
@@ -333,17 +334,21 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
         return est
 
     def estimate_output_error(self, U, mu, m):
-        assert m.output_functional is not None
-        assert m.output_functional.linear
+        assert m.output_functional is not None and m.output_functional.linear
         if len(U) > 1:
             raise NotImplementedError
         est_pr = self.estimate_error(U, mu, m)
         est_dus = []
         for d in range(m.output_functional.range.dim):
-            dual_problem = m.with_(operator=m.operator.H, rhs=m.output_functional.H.as_range_array(mu)[d])
+            # fom.operator.H can not be used yet
+            dual_problem = m.with_(operator=m.operator, rhs=m.output_functional.H.as_range_array(mu)[d])
             dual_solution = dual_problem.solve(mu)
             if not m.output_functional.parametric or not isinstance(m.output_functional, LincombOperator):
-                CR = np.ones(1)
+                if isinstance(m.output_functional.H, BlockRowOperator):
+                    # used builin output, i.e. the output_functional is a BlockOperator
+                    CR = m.output_functional.H.blocks[0, d].evaluate_coefficients(mu)
+                else:
+                    CR = np.ones(1)
             else:
                 CR = np.array(m.output_functional.evaluate_coefficients(mu))
 
@@ -353,7 +358,6 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
                 CO = np.array(m.operator.evaluate_coefficients(mu))
 
             C = np.hstack((CR, np.dot(CO[..., np.newaxis], dual_solution.to_numpy()).ravel()))
-
             est = self.dual_norms[d](NumpyVectorSpace.make_array(C))
             est_dus.append(est)
         return (est_pr * est_dus).T
