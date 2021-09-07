@@ -38,7 +38,7 @@ def setup_requires():
 
 
 # Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
-install_requires = ['qtpy', 'packaging', 'diskcache', 'typer', 'click<8'] + setup_requires() + _numpy_scipy()
+install_requires = ['qtpy', 'packaging', 'diskcache', 'typer', 'click'] + setup_requires() + _numpy_scipy()
 install_suggests = {
     'ipython>=5.0': 'an enhanced interactive python shell',
     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
