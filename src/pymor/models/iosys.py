@@ -1017,7 +1017,9 @@ class LTIModel(InputStateOutputModel):
         """Compute the H_infinity-norm of the |LTIModel|.
 
         .. note::
-            Assumes the system is asymptotically stable.
+            Assumes the system is asymptotically stable. Under this is assumption
+            the H_infinity-norm is equal to the L_infinity-norm. Accordingly, this
+            method calls :meth:`~pymor.models.iosys.LTIModel.linf_norm`.
 
         Parameters
         ----------
