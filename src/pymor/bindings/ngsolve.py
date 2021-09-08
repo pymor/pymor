@@ -183,7 +183,7 @@ if config.HAVE_NGSOLVE:
             legend = [l.replace(' ', '_') for l in legend]  # NGSolve GUI will fail otherwise
 
             if filename:
-                # ngsolve unconditionnaly appends ".vtk"
+                # ngsolve unconditionally appends ".vtk"
                 filename = Path(filename).resolve()
                 if filename.suffix == '.vtk':
                     filename = filename.parent / filename.stem

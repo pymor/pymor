@@ -415,7 +415,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
         def save(self):
             if not config.HAVE_PYEVTK:
-                msg = QMessageBox(QMessageBox.Critical, 'Error', 'VTK output disabled. Pleas install pyvtk.')
+                msg = QMessageBox(QMessageBox.Critical, 'Error', 'VTK output disabled. Please install pyvtk.')
                 msg.exec_()
                 return
             filename = QFileDialog.getSaveFileName(self, 'Save as vtk file')[0]

@@ -235,7 +235,7 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None):
     Parameters
     ----------
     steps
-        The number of incremental POD updates. Has to agree with the lenght
+        The number of incremental POD updates. Has to agree with the length
         of `snapshots`.
     snapshots
         An iterable returning for each incremental POD step the associated

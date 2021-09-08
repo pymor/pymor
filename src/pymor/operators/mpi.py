@@ -46,7 +46,7 @@ class MPIOperator(Operator):
         If `pickle_local_spaces` is `False`, a unique identifier
         is computed for each local source/range |VectorSpace|, which is then
         transferred to rank 0 instead of the true |VectorSpace|. This
-        allows the useage of :class:`~pymor.vectorarrays.mpi.MPIVectorArray`
+        allows the usage of :class:`~pymor.vectorarrays.mpi.MPIVectorArray`
         even when the local |VectorSpaces| are not picklable.
     space_type
         This class will be used to wrap the local |VectorArrays|
