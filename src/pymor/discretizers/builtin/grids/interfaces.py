@@ -223,7 +223,9 @@ class Grid(CacheableObject):
         return inverse_relation(SE, size_rhs=self.size(codim), with_indices=True)
 
     def neighbours(self, codim, neighbour_codim, intersection_codim=None):
-        """`retval[e,n]` is the global index of the `n`-th codim-`neighbour_codim` entitiy of the
+        """Maps entity index and local neighbour index to global neighbour index
+
+        `retval[e,n]` is the global index of the `n`-th codim-`neighbour_codim` entity of the
         codim-`codim` entity `e` that shares with `e` a subentity of codimension
         `intersection_codim`.
 
@@ -434,7 +436,7 @@ class Grid(CacheableObject):
 
     def unit_outer_normals(self):
         """`retval[e,i]` is the unit outer normal to the i-th codim-1 subentity of the codim-0
-        entitiy with global index `e`.
+        entity with global index `e`.
         """
         return self._unit_outer_normals()
 

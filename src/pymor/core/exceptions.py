@@ -36,7 +36,7 @@ class NewtonError(Exception):
 
 
 class CacheKeyGenerationError(Exception):
-    """Is raised when cache key generation fails due to unspported arguments."""
+    """Is raised when cache key generation fails due to unsupported arguments."""
 
 
 class GmshMissing(Exception):

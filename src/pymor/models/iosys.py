@@ -1457,7 +1457,7 @@ class SecondOrderModel(InputStateOutputModel):
 
         Returns
         -------
-        som
+        some
             The |SecondOrderModel| with operators M, E, K, B, Cp, Cv, and D.
         """
         from pymor.tools.io import load_matrix

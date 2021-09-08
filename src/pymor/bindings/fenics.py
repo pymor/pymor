@@ -447,7 +447,7 @@ if config.HAVE_FENICS:
                 |VectorArray| of the data to visualize (length must be 1). Alternatively,
                 a tuple of |VectorArrays| which will be visualized in separate windows.
                 If `filename` is specified, only one |VectorArray| may be provided which,
-                however, is allowed to contain multipled vectors that will be interpreted
+                however, is allowed to contain multiple vectors that will be interpreted
                 as a time series.
             title
                 Title of the plot.

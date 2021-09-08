@@ -86,11 +86,11 @@ def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=No
         logger.info(f'Maximum error after {extensions} extensions: {max_err} (mu = {max_err_mu})')
 
         if atol is not None and max_err <= atol:
-            logger.info(f'Absolute error tolerance ({atol}) reached! Stoping extension loop.')
+            logger.info(f'Absolute error tolerance ({atol}) reached! Stopping extension loop.')
             break
 
         if rtol is not None and max_err / max_errs[0] <= rtol:
-            logger.info(f'Relative error tolerance ({rtol}) reached! Stoping extension loop.')
+            logger.info(f'Relative error tolerance ({rtol}) reached! Stopping extension loop.')
             break
 
         with logger.block(f'Extending surrogate for mu = {max_err_mu} ...'):

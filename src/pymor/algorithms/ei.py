@@ -82,7 +82,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
                                     `collateral_basis` at `interpolation_dofs`.
     """
     assert not isinstance(error_norm, str) or error_norm == 'sup'
-    if pool:  # dispatch to parallel implemenation
+    if pool:  # dispatch to parallel implementation
         assert isinstance(U, (VectorArray, RemoteObject))
         with RemoteObjectManager() as rom:
             if isinstance(U, VectorArray):

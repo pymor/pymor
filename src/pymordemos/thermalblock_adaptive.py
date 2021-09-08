@@ -149,7 +149,7 @@ Problem:
    h:                                  sqrt(2)/{grid}
 
 Greedy basis generation:
-   error estimator enalbed:            {error_estimator}
+   error estimator enabled:            {error_estimator}
    product:                            {product}
    prescribed basis size:              {rbsize}
    actual basis size:                  {real_rb_size}

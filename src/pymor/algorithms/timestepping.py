@@ -70,7 +70,7 @@ class TimeStepper(ImmutableObject):
 
 
 class ImplicitEulerTimeStepper(TimeStepper):
-    """Implict Euler time-stepper.
+    """Implicit Euler time-stepper.
 
     Solves equations of the form ::
 

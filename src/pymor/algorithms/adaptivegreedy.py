@@ -195,7 +195,7 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
         refinements.append(current_refinements)
         training_set_sizes.append(len(sample_set.vertex_mus))
 
-        # break if traget error reached
+        # break if target error reached
         if target_error is not None and max_err <= target_error:
             logger.info(f'Reached maximal error on snapshots of {max_err} <= {target_error}')
             break
