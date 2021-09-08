@@ -53,9 +53,10 @@ DISCRETIZATION_ARGS = (
 
 if not parallel:
     DISCRETIZATION_ARGS += (('elliptic_unstructured', [6., 16, 1e-1]),)
-DISCRETIZATION_ARGS += (('neural_networks', [25, 50, 10]),
-                        ('neural_networks_fenics', [15, 3]),
-                        ('neural_networks_instationary', [25, 25, 30, 5]))
+if not is_windows_platform():
+    DISCRETIZATION_ARGS += (('neural_networks', [25, 50, 10]),
+                            ('neural_networks_fenics', [15, 3]),
+                            ('neural_networks_instationary', [25, 25, 30, 5]))
 
 THERMALBLOCK_ARGS = (
     ('thermalblock', ['--plot-solutions', '--plot-err', '--plot-error-sequence', 2, 2, 3, 5]),
