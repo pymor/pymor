@@ -74,7 +74,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     C
         The operator C as a |VectorArray| from `A.source`.
     R
-        The operator R as a 2D |NumPy array| or `None`.
+        The matrix R as a 2D |NumPy array| or `None`.
     trans
         Whether the first |Operator| in the Riccati equation is
         transposed.

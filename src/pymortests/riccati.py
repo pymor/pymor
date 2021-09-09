@@ -8,7 +8,8 @@ import numpy as np
 import pytest
 import scipy.linalg as spla
 
-from pymor.algorithms.riccati import solve_pos_ricc_lrcf, solve_ricc_lrcf
+from pymor.algorithms.lyapunov import _chol
+from pymor.algorithms.riccati import solve_pos_ricc_lrcf, solve_ricc_dense, solve_ricc_lrcf
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.lyapunov import _check_availability, conv_diff_1d_fd, conv_diff_1d_fem, fro_norm
 
@@ -24,6 +25,10 @@ ricc_lrcf_solver_list_small = [
 ricc_lrcf_solver_list_big = [
     'pymess_lrnm',
     'lrradi'
+]
+ricc_dense_solver_list = [
+    'scipy',
+    'slycot'
 ]
 
 
@@ -54,6 +59,40 @@ def relative_residual(A, E, B, C, R, Z, trans):
     res = fro_norm(linear - quadratic + RHS)
     rhs = fro_norm(RHS)
     return res / rhs
+
+
+@pytest.mark.parametrize('m', m_list)
+@pytest.mark.parametrize('p', p_list)
+@pytest.mark.parametrize('with_E', [False, True])
+@pytest.mark.parametrize('with_R', [False, True])
+@pytest.mark.parametrize('trans', [False, True])
+@pytest.mark.parametrize('n', n_list_small)
+@pytest.mark.parametrize('solver', ricc_dense_solver_list)
+def test_ricc_dense(n, m, p, with_E, with_R, trans, solver):
+    _check_availability(solver)
+
+    if not with_E:
+        A = conv_diff_1d_fd(n, 1, 1)
+        A = A.todense()
+        E = None
+    else:
+        A, E = conv_diff_1d_fem(n, 1, 1)
+        A = A.todense()
+        E = E.todense()
+    np.random.seed(0)
+    B = np.random.randn(n, m)
+    C = np.random.randn(p, n)
+    D = np.random.randn(p, m)
+    if not trans:
+        R0 = np.random.randn(p, p)
+        R = D.dot(D.T) + R0.dot(R0.T) if with_R else None
+    else:
+        R0 = np.random.randn(m, m)
+        R = D.T.dot(D) + R0.dot(R0.T) if with_R else None
+
+    X = solve_ricc_dense(A, E, B, C, R, trans=trans, options=solver)
+
+    assert relative_residual(A, E, B, C, R, _chol(X), trans) < 1e-8
 
 
 @pytest.mark.parametrize('m', m_list)
