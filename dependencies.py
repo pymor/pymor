@@ -61,9 +61,9 @@ doc_requires = ['sphinx>=3.4', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'pyt
                 'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
                 'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8', 'myst-nb'] + install_requires
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel',
-               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout',
+               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
                'flake8-rst-docstrings', 'flake8-docstrings', 'pytest-datadir',
-               'docutils', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]>=5.19',
+               'docutils', "pypi-oldest-requirements>=2021.2", 'hypothesis[numpy,pytest]>=5.19',
                'PyQt5!=5.15.2,>5.7,!=5.15.2.*,!=5.15.4,!=5.15.3']
 import_names = {
     'ipython': 'IPython',
