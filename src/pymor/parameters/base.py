@@ -245,14 +245,16 @@ class Parameters(SortedFrozenDict):
         return hash(tuple(self.items()))
 
 
-class Mu(SortedFrozenDict):
+class Mu(FrozenDict):
     """Immutable mapping of |Parameter| names to parameter values.
 
     Parameters
     ----------
     Anything that dict accepts for the construction of a dictionary.
-    Values are automatically converted to immutable one-dimensional |NumPy arrays|,
-    unless the Python interpreter runs with the `-O` flag.
+    Values are automatically converted to one-dimensional |NumPy arrays|,
+    except for |Functions| which are interpreted as time dependent parameter
+    values. Unless the Python interpreter runs with the `-O` flag,
+    the arrays are made immutable.
 
     Attributes
     ----------
@@ -260,17 +262,46 @@ class Mu(SortedFrozenDict):
         The |Parameters| to which the mapping assigns values.
     """
 
+    __slots__ = ('_raw_values')
+
     def __new__(cls, *args, **kwargs):
-        mu = super().__new__(cls,
-                             ((k, np.array(v, copy=False, ndmin=1))
-                              for k, v in dict(*args, **kwargs).items()))
-        assert all(type(k) is str and v.ndim == 1 for k, v in mu.items())
-        # only make elements immutable when running without optimization
-        assert not any(v.setflags(write=False) for v in mu.values())
+        raw_values = dict(*args, **kwargs)
+        values_for_t = {}
+        for k, v in sorted(raw_values.items()):
+            assert isinstance(k, str)
+            if callable(v):
+                # note: We can't import Function globally due to circular dependencies, so
+                # we import it locally in this branch to avoid executing the import statement
+                # each time a Mu is created (which would make instantiation of simple Mus without
+                # time dependency significantly more expensive).
+                from pymor.analyticalproblems.functions import Function
+                assert isinstance(v, Function) and v.dim_domain == 1 and len(v.shape_range) == 1 and \
+                    v.shape_range[0] > 0
+                vv = v(raw_values.get('t', 0))
+            else:
+                vv = np.array(v, copy=False, ndmin=1)
+                assert vv.ndim == 1
+            assert not vv.setflags(write=False)
+            values_for_t[k] = vv
+
+        mu = super().__new__(cls, values_for_t)
+        mu._raw_values = raw_values
         return mu
 
+    def is_time_dependent(self, param):
+        from pymor.analyticalproblems.functions import Function
+        return isinstance(self._raw_values[param], Function)
+
+    def get_time_dependent_value(self, param):
+        from pymor.analyticalproblems.functions import Function
+        value = self._raw_values[param]
+        if not isinstance(value, Function):
+            from pymor.analyticalproblems.functions import ConstantFunction
+            value = ConstantFunction(value)
+        return value
+
     def with_(self, **kwargs):
-        return Mu(self, **kwargs)
+        return Mu(self._raw_values, **kwargs)
 
     @property
     def parameters(self):
@@ -309,10 +340,11 @@ class Mu(SortedFrozenDict):
         return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
 
     def __str__(self):
-        return '{' + ', '.join(f'{k}: {format_array(v)}' for k, v in self.items()) + '}'
+        return '{' + ', '.join(f'{k}{"(t)" if self.is_time_dependent(k) else ""}: {format_array(v)}'
+                               for k, v in self.items()) + '}'
 
     def __repr__(self):
-        return f'Mu({self})'
+        return f'Mu({dict(sorted(self._raw_values.items()))})'
 
 
 class ParametricObject(ImmutableObject):
