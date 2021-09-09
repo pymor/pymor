@@ -32,6 +32,8 @@ class Parameters(SortedFrozenDict):
     specifying the dimension (number of scalar components) of the parameter.
     """
 
+    __slots__ = ()
+
     def _post_init(self):
         assert all(type(k) is str and type(v) is int and 0 <= v
                    for k, v in self.items())
