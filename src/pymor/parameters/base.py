@@ -96,7 +96,9 @@ class Parameters(SortedFrozenDict):
             Parameters(b=2, a=1).parse([1,2,3])
 
         will assign to parameter `a` the value `[1]` and to parameter `b` the
-        values `[2, 3]`.
+        values `[2, 3]`. Further, each parameter value can be given as a
+        vector-valued |Function| with `dim_domain == 1` to specify time-dependent
+        values. A `str` is converted to an appropriate |ExpressionFunction|.
 
         Parameters
         ----------
@@ -112,7 +114,9 @@ class Parameters(SortedFrozenDict):
         ValueError
             Is raised if `mu` cannot be interpreted as |parameter values| for the
             given |Parameters|.
-        """
+      """
+
+        from pymor.analyticalproblems.functions import Function, ExpressionFunction
 
         def fail(msg):
             if isinstance(mu, dict):
@@ -125,40 +129,55 @@ class Parameters(SortedFrozenDict):
             mu is None or mu == {} or fail('must be None or empty dict')
             return Mu({})
 
-        elif isinstance(mu, Mu):
+        if isinstance(mu, Mu):
             mu.parameters == self or fail(self.why_incompatible(mu))
             set(mu) == set(self) or fail(f'additional parameters {set(mu) - set(self)}')
             return mu
 
-        elif isinstance(mu, Number):
-            1 == sum(v for v in self.values()) or fail('need more than one number')
-            return Mu({next(iter(self)): np.array([mu])})
+        # convert mu to dict
+        if isinstance(mu, (Number, str, Function)):
+            assert len(self) == 1 or fail('not enough values')
+            mu = {next(iter(self.keys())): mu}
 
         elif isinstance(mu, (tuple, list, np.ndarray)):
             if isinstance(mu, np.ndarray):
                 mu = mu.ravel()
-            all(isinstance(v, Number) for v in mu) or fail('not every element a number')
-            len(mu) == sum(v for v in self.values()) or fail('wrong size')
+            all(isinstance(v, (Number, str, Function)) for v in mu) or \
+                fail('not every element a number or function')
             parsed_mu = {}
             for k, v in self.items():
-                p, mu = mu[:v], mu[v:]
+                len(mu) > 0 or fail('not enough values')
+                if isinstance(mu[0], (str, Function)):
+                    p, mu = mu[0], mu[1:]
+                else:
+                    len(mu) >= v or fail('not enough values')
+                    p, mu = mu[:v], mu[v:]
                 parsed_mu[k] = p
-            return Mu(parsed_mu)
+            len(mu) == 0 or fail('too many values')
+            mu = parsed_mu
 
-        elif isinstance(mu, dict):
-            set(mu.keys()) == set(self.keys()) or fail('parameters not matching')
+        set(mu.keys()) == set(self.keys()) or fail('parameters not matching')
 
-            def parse_value(k, v):
-                isinstance(v, (Number, tuple, list, np.ndarray)) \
-                    or fail(f"invalid value type '{type(v)}' for parameter {k}")
+        def parse_value(k, v):
+            if isinstance(v, (Number, tuple, list, np.ndarray)):
                 if isinstance(v, Number):
                     v = np.array([v])
-                elif isinstance(v, np.ndarray):
-                    v = v.ravel()
-                len(v) == self[k] or fail('wrong dimension of parameter value {k}')
+                elif isinstance(v, (tuple, list)):
+                    v = np.array(v)
+                v = v.ravel()
+                len(v) == self[k] or fail(f'wrong dimension of parameter value {k}')
                 return v
+            elif isinstance(v, (str, Function)):
+                if isinstance(v, str):
+                    v = ExpressionFunction(v, dim_domain=1, shape_range=(self[k],))
+                v.dim_domain == 1 or fail(f'wrong domain dimension of parameter function {k}')
+                len(v.shape_range) == 1 or fail(f'wrong shape_range of parameter function {k}')
+                v.shape_range[0] == self[k] or fail(f'wrong range dimension of prameter function {k}')
+                return v
+            else:
+                fail(f"invalid value type '{type(v)}' for parameter {k}")
 
-            return Mu({k: parse_value(k, v) for k, v in mu.items()})
+        return Mu({k: parse_value(k, v) for k, v in mu.items()})
 
     def space(self, *ranges):
         """Create a |ParameterSpace| with given ranges.
