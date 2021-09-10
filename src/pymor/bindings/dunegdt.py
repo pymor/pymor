@@ -25,7 +25,7 @@ if config.HAVE_DUNEGDT:
     from pymor.discretizers.builtin.grids.oned import OnedGrid
     from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer
     from pymor.operators.constructions import ZeroOperator
-    from pymor.operators.list import ListVectorArrayOperatorBase
+    from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
     from pymor.vectorarrays.interface import _create_random_values
     from pymor.vectorarrays.list import (
             ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector, ListVectorArray, NumpyVector)
@@ -146,7 +146,7 @@ if config.HAVE_DUNEGDT:
             return DuneXTVector(obj)
 
 
-    class DuneXTMatrixOperator(ListVectorArrayOperatorBase):
+    class DuneXTMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         """Wraps a dune-xt matrix as an |Operator|."""
 
         linear = True
@@ -156,21 +156,21 @@ if config.HAVE_DUNEGDT:
             self.range = DuneXTVectorSpace(matrix.rows, matrix.vector_type(), range_id)
             self.__auto_init(locals())
 
-        def _apply_one_vector(self, u, mu=None, prepare_data=None):
-            r = self.range.zero_vector()
+        def _real_apply_one_vector(self, u, mu=None, prepare_data=None):
+            r = self.range.real_zero_vector()
             self.matrix.mv(u.impl, r.impl)
             return r
 
         def _apply_adjoint_one_vector(self, v, mu=None, prepare_data=None):
-            r = self.source.zero_vector()
+            r = self.source.real_zero_vector()
             self.matrix.mtv(v.impl, r.impl)
             return r
 
-        def _apply_inverse_one_vector(self, v, mu=None, initial_guess=None,
-                                      least_squares=False, prepare_data=None):
+        def _real_apply_inverse_one_vector(self, v, mu=None, initial_guess=None,
+                                           least_squares=False, prepare_data=None):
             if least_squares:
                 raise NotImplementedError
-            r = (self.source.zero_vector() if initial_guess is None else
+            r = (self.source.real_zero_vector() if initial_guess is None else
                  initial_guess.copy(deep=True))
             options = self.solver_options.get('inverse') if self.solver_options else None
 
