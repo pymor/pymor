@@ -18,6 +18,7 @@ if config.HAVE_DUNEGDT:
     from matplotlib import pyplot as plt
 
     from dune.xt.common.vtk.plot import plot as k3d_plot
+    from dune.xt.la import IstlVector
     from dune.gdt import DiscreteFunction
 
     from pymor.core.base import ImmutableObject
@@ -35,10 +36,6 @@ if config.HAVE_DUNEGDT:
 
         def __init__(self, impl):
             self.impl = impl
-
-        # @property
-        # def data(self):
-            # return np.frombuffer(self.impl)
 
         def copy(self, deep=False):
             return DuneXTVector(self.impl.copy(deep))
@@ -101,7 +98,7 @@ if config.HAVE_DUNEGDT:
 
     class DuneXTVectorSpace(ListVectorSpace):
 
-        def __init__(self, vector_type, dim, id='STATE'):
+        def __init__(self, dim, vector_type=IstlVector, id='STATE'):
             self.__auto_init(locals())
 
         def __eq__(self, other):
@@ -137,8 +134,8 @@ if config.HAVE_DUNEGDT:
         linear = True
 
         def __init__(self, matrix, source_id='STATE', range_id='STATE', solver_options=None, name=None):
-            self.source = DuneXTVectorSpace(matrix.vector_type(), matrix.cols, source_id)
-            self.range = DuneXTVectorSpace(matrix.vector_type(), matrix.rows, range_id)
+            self.source = DuneXTVectorSpace(matrix.cols, matrix.vector_type(), source_id)
+            self.range = DuneXTVectorSpace(matrix.rows, matrix.vector_type(), range_id)
             self.__auto_init(locals())
 
         def _apply_one_vector(self, u, mu=None, prepare_data=None):
@@ -225,7 +222,7 @@ if config.HAVE_DUNEGDT:
 
 
     class DuneGDT1dMatplotlibVisualizer(ImmutableObject):
-        """Visualize a dune-gdt discrete function using paraview.
+        """Visualize a dune-gdt discrete function using matplotlib.
 
         Parameters
         ----------
@@ -311,8 +308,8 @@ if config.HAVE_DUNEGDT:
                         pvd_file.write('  <Collection>\n')
                         part = 0
                         for f_name in data:
-                            pvd_file.write('    <DataSet timestep="0" group="" part="{}" file="{}"/>\n'.format(part,
-                                                                                                               f_name))
+                            pvd_file.write('    <DataSet timestep="0" group="" part="{}" file="{}"/>\n'.format(
+                                part, f_name))
                             part += 1
                         pvd_file.write('  </Collection>\n')
                         pvd_file.write('</VTKFile>\n')
