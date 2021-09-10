@@ -9,7 +9,6 @@ from pymor.core.config import config
 if config.HAVE_DUNEGDT:
 
     import numpy as np
-    from functools import partial
     from collections import OrderedDict
     import os
     import subprocess
@@ -24,11 +23,10 @@ if config.HAVE_DUNEGDT:
     from pymor.core.base import ImmutableObject
     from pymor.discretizers.builtin.grids.oned import OnedGrid
     from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer
-    from pymor.operators.constructions import ZeroOperator
     from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
     from pymor.vectorarrays.interface import _create_random_values
     from pymor.vectorarrays.list import (
-            ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector, ListVectorArray, NumpyVector)
+        ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector, ListVectorArray, NumpyVector)
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -195,8 +193,9 @@ if config.HAVE_DUNEGDT:
             else:
                 matrix = operators[0].matrix * coefficients[0]
             for op, c in zip(operators[1:], coefficients[1:]):
-                matrix.axpy(c, op.matrix) # does not work for all backends for different sparsity patterns
-                # one would have to extract the patterns from the pruned matrices, merge them and create a new matrix
+                matrix.axpy(c, op.matrix)  # Not guaranteed to work for all backends! For different
+                # sparsity patterns one would have to extract the patterns from the pruned
+                # matrices, merge them and create a new matrix.
 
             return DuneXTMatrixOperator(matrix, self.source.id, self.range.id, solver_options=solver_options, name=name)
 
@@ -211,6 +210,7 @@ if config.HAVE_DUNEGDT:
         grid
             The dune grid associated with space (assumed to be equidistant!).
         """
+
         def __init__(self, space, grid):
             assert grid.dimension == 1
             assert space.dimDomain == 1
@@ -247,6 +247,7 @@ if config.HAVE_DUNEGDT:
         space
             The dune-gdt space for which we want to visualize DOF vectors.
         """
+
         def __init__(self, space):
             assert space.dimDomain == 1
             assert space.max_polorder == 1
@@ -423,11 +424,11 @@ if config.HAVE_DUNEGDT:
                         pvd_file.write('<VTKFile type=\'Collection\' version=\'0.1\'>\n')
                         pvd_file.write('<Collection>\n')
                         for i in range(len(U)):
-                            pvd_file.write(f'<DataSet timestep=\'{i}\' part=\'1\' name=\'{self.name}\' file=\'{prefix}_{i}.{suffix}\'/>\n')
+                            pvd_file.write(
+                    f'<DataSet timestep=\'{i}\' part=\'1\' name=\'{self.name}\' file=\'{prefix}_{i}.{suffix}\'/>\n')
                         pvd_file.write('</Collection>\n')
                         pvd_file.write('</VTKFile>\n')
                     filename = f'{prefix}.pvd'
             else:
                 raise NotImplementedError
             _ = k3d_plot(filename, color_attribute_name=self.name)
-
