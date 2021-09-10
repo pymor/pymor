@@ -27,7 +27,8 @@ if config.HAVE_DUNEGDT:
     from pymor.operators.constructions import ZeroOperator
     from pymor.operators.list import ListVectorArrayOperatorBase
     from pymor.vectorarrays.interface import _create_random_values
-    from pymor.vectorarrays.list import ListVectorArray, CopyOnWriteVector, ListVectorSpace
+    from pymor.vectorarrays.list import (
+            ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector, ListVectorArray, NumpyVector)
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -100,7 +101,20 @@ if config.HAVE_DUNEGDT:
             return np.array(self.impl, copy=ensure_copy)
 
 
-    class DuneXTVectorSpace(ListVectorSpace):
+    class ComplexifiedDuneXTVector(ComplexifiedVector):
+
+        def amax(self):
+            if self.imag_part is None:
+                return self.real_part.amax()
+            else:
+                real = np.array(self.real_part.impl, copy=False)
+                imag = np.array(self.imag_part.impl, copy=False)
+                return NumpyVector(real + imag * 1j).amax()
+
+
+    class DuneXTVectorSpace(ComplexifiedListVectorSpace):
+
+        complexified_vector_type = ComplexifiedDuneXTVector
 
         def __init__(self, dim, vector_type=IstlVector, id='STATE'):
             self.__auto_init(locals())
@@ -112,24 +126,24 @@ if config.HAVE_DUNEGDT:
         def __hash__(self):
             return id(self.vector_type) + hash(self.dim)
 
-        def zero_vector(self):
+        def real_zero_vector(self):
             return DuneXTVector(self.vector_type(self.dim, 0.))
 
-        def full_vector(self, value):
+        def real_full_vector(self, value):
             return DuneXTVector(self.vector_type(self.dim, value))
 
-        def random_vector(self, distribution, random_state, **kwargs):
+        def real_random_vector(self, distribution, random_state, **kwargs):
             values = _create_random_values(self.dim, distribution, random_state, **kwargs)
-            return self.vector_from_numpy(values)
+            return self.real_vector_from_numpy(values)
 
-        def make_vector(self, obj):
-            return DuneXTVector(obj)
-
-        def vector_from_numpy(self, data, ensure_copy=False):
-            v = self.zero_vector()
+        def real_vector_from_numpy(self, data, ensure_copy=False):
+            v = self.real_zero_vector()
             np_view = np.array(v.impl, copy=False)
             np_view[:] = data
             return v
+
+        def real_make_vector(self, obj):
+            return DuneXTVector(obj)
 
 
     class DuneXTMatrixOperator(ListVectorArrayOperatorBase):
