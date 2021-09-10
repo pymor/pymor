@@ -27,23 +27,27 @@ if config.HAVE_DUNEGDT:
     from pymor.operators.constructions import ZeroOperator
     from pymor.operators.list import ListVectorArrayOperatorBase
     from pymor.vectorarrays.interface import _create_random_values
-    from pymor.vectorarrays.list import ListVectorArray, Vector, ListVectorSpace
+    from pymor.vectorarrays.list import ListVectorArray, CopyOnWriteVector, ListVectorSpace
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-    class DuneXTVector(Vector):
+    class DuneXTVector(CopyOnWriteVector):
         """Wraps a vector from dune-xt to make it usable with ListVectorArray."""
 
         def __init__(self, impl):
             self.impl = impl
 
-        def copy(self, deep=False):
-            return DuneXTVector(self.impl.copy(deep))
+        @classmethod
+        def from_instance(cls, instance):
+            return cls(instance.impl)
 
-        def scal(self, alpha):
+        def _copy_data(self):
+            return DuneXTVector(self.impl.copy(True))
+
+        def _scal(self, alpha):
             self.impl.scal(alpha)
 
-        def axpy(self, alpha, x):
+        def _axpy(self, alpha, x):
             self.impl.axpy(alpha, x.impl)
 
         def inner(self, other):
