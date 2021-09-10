@@ -183,7 +183,10 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
                 - (F2 @ F2.T) / (4 * shifts[j_shift].real)  \
                 - (F3 @ F3.T) / 2
             Y = spla.block_diag(Y, Yt)
-            EVYt = E.apply(cat_arrays([V.real, V.imag])).lincomb(np.linalg.inv(Yt))
+            if not trans:
+                EVYt = E.apply(cat_arrays([V.real, V.imag])).lincomb(np.linalg.inv(Yt))
+            else:
+                EVYt = E.apply_adjoint(cat_arrays([V.real, V.imag])).lincomb(np.linalg.inv(Yt))
             RF.axpy(np.sqrt(-2 * shifts[j_shift].real), EVYt[:len(C)])
             K += EVYt.lincomb(F2.T)
             j += 2
@@ -302,7 +305,7 @@ def hamiltonian_shifts(A, E, B, R, K, Z, shift_options):
     """
     l = shift_options['subspace_columns']
     # always use multiple of len(R) columns
-    l = l // len(R) * len(R)
+    l = max(1, l // len(R)) * len(R)
     if len(Z) < l:
         l = len(Z)
 
