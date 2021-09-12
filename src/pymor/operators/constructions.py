@@ -15,7 +15,7 @@ from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
-from pymor.vectorarrays.interface import VectorArray, VectorSpace
+from pymor.vectorarrays.interface import DOFVectorArray, VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -617,7 +617,7 @@ class ComponentProjectionOperator(Operator):
         self.range = NumpyVectorSpace(len(components))
 
     def apply(self, U, mu=None):
-        assert U in self.source
+        assert U in self.source and isinstance(U, DOFVectorArray)
         return self.range.make_array(U.dofs(self.components))
 
     def restricted(self, dofs):

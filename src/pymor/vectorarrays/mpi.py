@@ -19,7 +19,7 @@ import numpy as np
 
 from pymor.core.pickle import unpicklable
 from pymor.tools import mpi
-from pymor.vectorarrays.interface import VectorArray, VectorSpace
+from pymor.vectorarrays.interface import DOFVectorArray, VectorArray, VectorSpace
 
 
 @unpicklable
@@ -101,12 +101,6 @@ class MPIVectorArray(VectorArray):
     def _norm2(self):
         return mpi.call(mpi.method_call, self.obj_id, '_norm2')
 
-    def dofs(self, dof_indices):
-        return mpi.call(mpi.method_call, self.obj_id, 'dofs', dof_indices)
-
-    def amax(self):
-        return mpi.call(mpi.method_call, self.obj_id, 'amax')
-
     def __del__(self):
         mpi.call(mpi.remove_object, self.obj_id)
 
@@ -124,6 +118,16 @@ class MPIVectorArray(VectorArray):
         return type(self)(mpi.call(mpi.method_call_manage, self.obj_id, 'conj'), self.space)
 
 
+class MPIDOFVectorArray(MPIVectorArray, DOFVectorArray):
+    """MPI distributed |DOFVectorArray|."""
+
+    def dofs(self, dof_indices):
+        return mpi.call(mpi.method_call, self.obj_id, 'dofs', dof_indices)
+
+    def amax(self):
+        return mpi.call(mpi.method_call, self.obj_id, 'amax')
+
+
 class MPIVectorSpace(VectorSpace):
     """|VectorSpace| of :class:`MPIVectorArrays <MPIVectorArray>`.
 
@@ -137,6 +141,7 @@ class MPIVectorSpace(VectorSpace):
     """
 
     array_type = MPIVectorArray
+    DOF_array_type = MPIDOFVectorArray
 
     def __init__(self, local_spaces):
         self.local_spaces = tuple(local_spaces)
@@ -160,13 +165,15 @@ class MPIVectorSpace(VectorSpace):
         """
         assert mpi.call(_MPIVectorSpace_check_local_spaces,
                         self.local_spaces, obj_id)
-        return self.array_type(obj_id, self)
+        if isinstance(mpi.get_object(obj_id), DOFVectorArray):
+            return self.DOF_array_type(obj_id, self)
+        else:
+            return self.array_type(obj_id, self)
 
     def zeros(self, count=1, reserve=0):
-        return self.array_type(
+        return self.make_array(
             mpi.call(_MPIVectorSpace_zeros,
-                     self.local_spaces, count=count, reserve=reserve),
-            self
+                     self.local_spaces, count=count, reserve=reserve)
         )
 
     @property
@@ -273,6 +280,10 @@ class MPIVectorArrayNoComm(MPIVectorArray):
     def _norm2(self):
         raise NotImplementedError
 
+
+class MPIDOFVectorArrayNoComm(MPIVectorArrayNoComm, DOFVectorArray):
+    """MPI distributed |DOFVectorArray|."""
+
     def dofs(self, dof_indices):
         raise NotImplementedError
 
@@ -284,6 +295,7 @@ class MPIVectorSpaceNoComm(MPIVectorSpace):
     """|VectorSpace| for :class:`MPIVectorArrayNoComm`."""
 
     array_type = MPIVectorArrayNoComm
+    DOF_array_type = MPIVectorArrayNoComm
 
     @property
     def dim(self):
@@ -321,6 +333,10 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
     def _norm2(self):
         return mpi.call(_MPIVectorArrayAutoComm_norm2, self.obj_id)
 
+
+class MPIDOFVectorArrayAutoComm(MPIVectorArrayAutoComm, DOFVectorArray):
+    """MPI distributed |VectorArray|."""
+
     def dofs(self, dof_indices):
         offsets = getattr(self, '_offsets', None)
         if offsets is None:
@@ -345,6 +361,7 @@ class MPIVectorSpaceAutoComm(MPIVectorSpace):
     """|VectorSpace| for :class:`MPIVectorArrayAutoComm`."""
 
     array_type = MPIVectorArrayAutoComm
+    DOF_array_type = MPIDOFVectorArrayAutoComm
 
     @property
     def dim(self):

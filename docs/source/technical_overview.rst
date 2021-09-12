@@ -18,13 +18,13 @@ operating on objects of the following types:
     array: vectors can be |scaled| in-place, the BLAS |axpy| operation is
     supported and |inner products| between vectors can be formed. Linear
     combinations of vectors can be formed using the |lincomb| method. Moreover,
-    various norms can be computed and selected |dofs| of the vectors can
-    be extracted for :mod:`empirical interpolation <pymor.algorithms.ei>`.
-    To act on subsets of vectors of an array, arrays can be |indexed| with an
-    integer, a list of integers or a slice, in each case returning a new
-    |VectorArray| which acts as a modifiable view onto the respective vectors in
-    the original array. As a convenience, many of Python's math operators are
-    implemented in terms of the interface methods.
+    various norms can be computed. If selected |dofs| of the vectors need to
+    be extracted for :mod:`empirical interpolation <pymor.algorithms.ei>`, a
+    |DOFVectorArray| can be used. To act on subsets of vectors of an array,
+    arrays can be |indexed| with an integer, a list of integers or a slice, in
+    each case returning a new |VectorArray| which acts as a modifiable view onto
+    the respective vectors in the original array. As a convenience, many of
+    Python's math operators are implemented in terms of the interface methods.
 
     Note that there is not the notion of a single vector in pyMOR. The main
     reason for this design choice is to take advantage of vectorized
@@ -60,7 +60,7 @@ operating on objects of the following types:
     .. |apply|            replace:: :meth:`~pymor.operators.interface.Operator.apply`
     .. |appended|         replace:: :meth:`appended <pymor.vectorarrays.interface.VectorArray.append>`
     .. |axpy|             replace:: :meth:`~pymor.vectorarrays.interface.VectorArray.axpy`
-    .. |dofs|             replace:: :meth:`~pymor.vectorarrays.interface.VectorArray.dofs`
+    .. |dofs|             replace:: :meth:`~pymor.vectorarrays.interface.DOFVectorArray.dofs`
     .. |copied|           replace:: :meth:`copied <pymor.vectorarrays.interface.VectorArray.copy>`
     .. |dimension|        replace:: :attr:`dimension <pymor.vectorarrays.interface.VectorArray.dim>`
     .. |empty|            replace:: :meth:`~pymor.vectorarrays.interface.VectorSpace.empty`

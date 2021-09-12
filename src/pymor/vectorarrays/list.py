@@ -8,7 +8,7 @@ import numpy as np
 
 from pymor.core.base import BasicObject, abstractmethod, abstractclassmethod, classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interface import VectorArray, VectorSpace, _create_random_values
+from pymor.vectorarrays.interface import DOFVectorArray, VectorSpace, _create_random_values
 
 
 class Vector(BasicObject):
@@ -342,7 +342,7 @@ class NumpyVector(CopyOnWriteVector):
         return self.__class__(self._array.conj())
 
 
-class ListVectorArray(VectorArray):
+class ListVectorArray(DOFVectorArray):
     """|VectorArray| implemented as a Python list of vectors.
 
     This |VectorArray| implementation is the first choice when

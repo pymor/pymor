@@ -9,10 +9,10 @@ from scipy.sparse import issparse
 
 from pymor.core.base import classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interface import VectorArray, VectorSpace, _create_random_values
+from pymor.vectorarrays.interface import DOFVectorArray, VectorSpace, _create_random_values
 
 
-class NumpyVectorArray(VectorArray):
+class NumpyVectorArray(DOFVectorArray):
     """|VectorArray| implementation via |NumPy arrays|.
 
     This is the default |VectorArray| type used by all |Operators|

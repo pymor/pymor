@@ -11,18 +11,58 @@ from pymor.core.defaults import defaults
 from pymor.tools.random import get_random_state
 
 
-class AbstractVectorArray(BasicObject):
-    """Interface for abstract vector arrays.
+class VectorArray(BasicObject):
+    """Interface for vector arrays.
 
-    Abstract vector arrays behave almost identically to vector arrays. The key difference
-    between the classes is that each entry of a |VectorArray| represents a DOF, whereas
-    the entries of |AbstractVectorArrays| should generally not be interpreted as DOFs.
+    A vector array should be thought of as a list of (possibly high-dimensional) vectors.
+    While the vectors themselves will be inaccessible in general (e.g. because they are
+    managed by an external PDE solver code), operations on the vectors like addition can
+    be performed via this interface.
+
+    It is assumed that the number of vectors is small enough such that scalar data
+    associated to each vector can be handled on the Python side. As such, methods like
+    :meth:`~VectorArray.norm` or :meth:`~VectorArray.gramian` will
+    always return |NumPy arrays|.
+
+    An implementation of the `VectorArray` via |NumPy arrays| is given by
+    |NumpyVectorArray|.  In general, it is the implementors decision how memory is
+    allocated internally (e.g.  continuous block of memory vs. list of pointers to the
+    individual vectors.) Thus, no general assumptions can be made on the costs of operations
+    like appending to or removing vectors from the array. As a hint for 'continuous block
+    of memory' implementations, :meth:`~VectorSpace.zeros` provides a `reserve`
+    keyword argument which allows to specify to what size the array is assumed to grow.
+
+    As with |Numpy array|, |VectorArrays| can be indexed with numbers, slices and
+    lists or one-dimensional |NumPy arrays|. Indexing will always return a new
+    |VectorArray| which acts as a view into the original data. Thus, if the indexed
+    array is modified via :meth:`~VectorArray.scal` or :meth:`~VectorArray.axpy`,
+    the vectors in the original array will be changed. Indices may be negative, in
+    which case the vector is selected by counting from the end of the array. Moreover
+    indices can be repeated, in which case the corresponding vector is selected several
+    times. The resulting view will be immutable, however.
+
+    .. note::
+        It is disallowed to append vectors to a |VectorArray| view or to remove
+        vectors from it. Removing vectors from an array with existing views
+        will lead to undefined behavior of these views. As such, it is generally
+        advisable to make a :meth:`~VectorArray.copy` of a view for long
+        term storage. Since :meth:`~VectorArray.copy` has copy-on-write
+        semantics, this will usually cause little overhead.
+
+    Attributes
+    ----------
+    dim
+        The dimension of the vectors in the array.
+    is_view
+        `True` if the array is a view obtained by indexing another array.
+    space
+        The |VectorSpace| the array belongs to.
     """
 
     is_view = False
 
     def zeros(self, count=1, reserve=0):
-        """Create an |AbstractVectorArray| of null vectors of the same |VectorSpace|.
+        """Create a |VectorArray| of null vectors of the same |VectorSpace|.
 
         This is a shorthand for `self.space.zeros(count, reserve)`.
 
@@ -35,12 +75,12 @@ class AbstractVectorArray(BasicObject):
 
         Returns
         -------
-        An |AbstractVectorArray| containing `count` vectors with each entry set to zero.
+        A |VectorArray| containing `count` vectors with each entry set to zero.
         """
         return self.space.zeros(count, reserve=reserve)
 
     def ones(self, count=1, reserve=0):
-        """Create an |AbstractVectorArray| of vectors of all-one vectors of the same |VectorSpace|.
+        """Create a |VectorArray| of vectors of all-one vectors of the same |VectorSpace|.
 
         This is a shorthand for `self.space.full(1., count, reserve)`.
 
@@ -53,12 +93,12 @@ class AbstractVectorArray(BasicObject):
 
         Returns
         -------
-        An |AbstractVectorArray| containing `count` vectors with each entry set to one.
+        A |VectorArray| containing `count` vectors with each entry set to one.
         """
         return self.space.full(1., count, reserve)
 
     def full(self, value, count=1, reserve=0):
-        """Create an |AbstractVectorArray| of vectors with all entries set to the same value.
+        """Create a |VectorArray| of vectors with all entries set to the same value.
 
         This is a shorthand for `self.space.full(value, count, reserve)`.
 
@@ -73,12 +113,12 @@ class AbstractVectorArray(BasicObject):
 
         Returns
         -------
-        An |AbstractVectorArray| containing `count` vectors with each entry set to `value`.
+        A |VectorArray| containing `count` vectors with each entry set to `value`.
         """
         return self.space.full(value, count, reserve=reserve)
 
     def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
-        """Create an |AbstractVectorArray| of vectors with random entries.
+        """Create a |VectorArray| of vectors with random entries.
 
         This is a shorthand for
         `self.space.random(count, distribution, radom_state, seed, **kwargs)`.
@@ -120,7 +160,7 @@ class AbstractVectorArray(BasicObject):
         return self.space.random(count, distribution, random_state, seed, **kwargs)
 
     def empty(self, reserve=0):
-        """Create an empty |AbstractVectorArray| of the same |VectorSpace|.
+        """Create an empty |VectorArray| of the same |VectorSpace|.
 
         This is a shorthand for `self.space.zeros(0, reserve)`.
 
@@ -131,7 +171,7 @@ class AbstractVectorArray(BasicObject):
 
         Returns
         -------
-        An empty |AbstractVectorArray|.
+        An empty |VectorArray|.
         """
         return self.space.zeros(0, reserve=reserve)
 
@@ -146,7 +186,7 @@ class AbstractVectorArray(BasicObject):
 
     @abstractmethod
     def __getitem__(self, ind):
-        """Return an |AbstractVectorArray| view onto a subset of the vectors in the array."""
+        """Return a |VectorArray| view onto a subset of the vectors in the array."""
         pass
 
     @abstractmethod
@@ -161,7 +201,7 @@ class AbstractVectorArray(BasicObject):
         ----------
         ensure_copy
             If `False`, modifying the returned |NumPy array| might alter the original
-            |AbstractVectorArray|. If `True` always a copy of the array data is made.
+            |VectorArray|. If `True` always a copy of the array data is made.
         """
         raise NotImplementedError
 
@@ -172,7 +212,7 @@ class AbstractVectorArray(BasicObject):
         Parameters
         ----------
         other
-            An |AbstractVectorArray| containing the vectors to be appended.
+            A |VectorArray| containing the vectors to be appended.
         remove_from_other
             If `True`, the appended vectors are removed from `other`.
             For list-like implementations this can be used to prevent
@@ -184,7 +224,7 @@ class AbstractVectorArray(BasicObject):
     def copy(self, deep=False):
         """Returns a copy of the array.
 
-        All |AbstractVectorArray| implementations in pyMOR have copy-on-write semantics:
+        All |VectorArray| implementations in pyMOR have copy-on-write semantics:
         if not specified otherwise by setting `deep` to `True`, the returned
         copy will hold a handle to the same array data as the original array,
         and a deep copy of the data will only be performed when one of the arrays
@@ -200,7 +240,7 @@ class AbstractVectorArray(BasicObject):
 
         Returns
         -------
-        A copy of the |AbstractVectorArray|.
+        A copy of the |VectorArray|.
         """
         pass
 
@@ -247,12 +287,12 @@ class AbstractVectorArray(BasicObject):
             The scalar coefficient or one-dimensional |NumPy array| of coefficients with which
             the vectors in `x` are multiplied.
         x
-            An |AbstractVectorArray| containing the x-summands.
+            A |VectorArray| containing the x-summands.
         """
         pass
 
     def inner(self, other, product=None):
-        """Returns the inner products between |AbstractVectorArray| elements.
+        """Returns the inner products between |VectorArray| elements.
 
         If `product` is `None`, the Euclidean inner product between
         the vectors of `self` and `other` are returned, i.e. it holds::
@@ -285,7 +325,7 @@ class AbstractVectorArray(BasicObject):
         Parameters
         ----------
         other
-            An |AbstractVectorArray| containing the second factors.
+            A |VectorArray| containing the second factors.
         product
             If not `None` an |Operator| representing the inner product
             bilinear form.
@@ -302,7 +342,7 @@ class AbstractVectorArray(BasicObject):
             raise NotImplementedError
 
     def pairwise_inner(self, other, product=None):
-        """Returns the pairwise inner products between |AbstractVectorArray| elements.
+        """Returns the pairwise inner products between |VectorArray| elements.
 
         If `product` is `None`, the Euclidean inner product between
         the vectors of `self` and `other` are returned, i.e. it holds::
@@ -336,7 +376,7 @@ class AbstractVectorArray(BasicObject):
         Parameters
         ----------
         other
-            An |AbstractVectorArray| containing the second factors.
+            A |VectorArray| containing the second factors.
         product
             If not `None` an |Operator| representing the inner product
             bilinear form.
@@ -366,7 +406,7 @@ class AbstractVectorArray(BasicObject):
 
         Returns
         -------
-        An |AbstractVectorArray| `result` such that:
+        A |VectorArray| `result` such that:
 
             result[i] = ∑ self[j] * coefficients[i,j]
 
@@ -470,34 +510,6 @@ class AbstractVectorArray(BasicObject):
     @abstractmethod
     def _norm2(self):
         """Implementation of :meth:`norm2` for the case that no `product` is given."""
-        pass
-
-    def sup_norm(self):
-        """The l-infinity-norms of the vectors contained in the array.
-
-        Returns
-        -------
-        A |NumPy array| `result` such that `result[i]` contains the norm
-        of `self[i]`.
-        """
-        if self.dim == 0:
-            return np.zeros(len(self))
-        else:
-            _, max_val = self.amax()
-            return max_val
-
-    @abstractmethod
-    def amax(self):
-        """The maximum absolute value of the vectors contained in the array.
-
-        Returns
-        -------
-        max_ind
-            |NumPy array| containing for each vector an index at which the maximum is
-            attained.
-        max_val
-            |NumPy array| containing for each vector the maximum absolute value of its entry.
-        """
         pass
 
     def gramian(self, product=None):
@@ -641,52 +653,12 @@ class AbstractVectorArray(BasicObject):
                 return [ind[ind_ind]]
 
 
-class VectorArray(AbstractVectorArray):
-    """Interface for vector arrays.
+class DOFVectorArray(VectorArray):
+    """Interface for vector arrays whose entries represent DOFs.
 
-    A vector array should be thought of as a list of (possibly high-dimensional) vectors.
-    While the vectors themselves will be inaccessible in general (e.g. because they are
-    managed by an external PDE solver code), operations on the vectors like addition can
-    be performed via this interface.
-
-    It is assumed that the number of vectors is small enough such that scalar data
-    associated to each vector can be handled on the Python side. As such, methods like
-    :meth:`~VectorArray.norm` or :meth:`~VectorArray.gramian` will
-    always return |NumPy arrays|.
-
-    An implementation of the `VectorArray` via |NumPy arrays| is given by
-    |NumpyVectorArray|.  In general, it is the implementors decision how memory is
-    allocated internally (e.g.  continuous block of memory vs. list of pointers to the
-    individual vectors.) Thus, no general assumptions can be made on the costs of operations
-    like appending to or removing vectors from the array. As a hint for 'continuous block
-    of memory' implementations, :meth:`~VectorSpace.zeros` provides a `reserve`
-    keyword argument which allows to specify to what size the array is assumed to grow.
-
-    As with |Numpy array|, |VectorArrays| can be indexed with numbers, slices and
-    lists or one-dimensional |NumPy arrays|. Indexing will always return a new
-    |VectorArray| which acts as a view into the original data. Thus, if the indexed
-    array is modified via :meth:`~VectorArray.scal` or :meth:`~VectorArray.axpy`,
-    the vectors in the original array will be changed. Indices may be negative, in
-    which case the vector is selected by counting from the end of the array. Moreover
-    indices can be repeated, in which case the corresponding vector is selected several
-    times. The resulting view will be immutable, however.
-
-    .. note::
-        It is disallowed to append vectors to a |VectorArray| view or to remove
-        vectors from it. Removing vectors from an array with existing views
-        will lead to undefined behavior of these views. As such, it is generally
-        advisable to make a :meth:`~VectorArray.copy` of a view for long
-        term storage. Since :meth:`~VectorArray.copy` has copy-on-write
-        semantics, this will usually cause little overhead.
-
-    Attributes
-    ----------
-    dim
-        The dimension of the vectors in the array.
-    is_view
-        `True` if the array is a view obtained by indexing another array.
-    space
-        The |VectorSpace| the array belongs to.
+    DOF vector arrays behave almost identically to vector arrays. The key difference
+    between the classes is that each entry of a |DOFVectorArray| represents a DOF, whereas
+    the entries of |VectorArrays| should generally not be interpreted as DOFs.
     """
 
     @abstractmethod
@@ -705,11 +677,39 @@ class VectorArray(AbstractVectorArray):
         """
         pass
 
+    def sup_norm(self):
+        """The l-infinity-norms of the vectors contained in the array.
+
+        Returns
+        -------
+        A |NumPy array| `result` such that `result[i]` contains the norm
+        of `self[i]`.
+        """
+        if self.dim == 0:
+            return np.zeros(len(self))
+        else:
+            _, max_val = self.amax()
+            return max_val
+
+    @abstractmethod
+    def amax(self):
+        """The maximum absolute value of the DOFs contained in the array.
+        Returns
+        -------
+        max_ind
+            |NumPy array| containing for each vector a DOF index at which the maximum is
+            attained.
+        max_val
+            |NumPy array| containing for each vector the maximum absolute value of its
+            DOFs.
+        """
+        pass
+
 
 class VectorSpace(ImmutableObject):
     """Class describing a vector space.
 
-    Vector spaces act as factories for |VectorArrays| (or |AbstractVectorArrays|)
+    Vector spaces act as factories for |VectorArrays| (or |DOFVectorArrays|)
     of vectors contained in them. As such, they hold all data necessary
     to create |VectorArrays| of a given type (e.g. the dimension of
     the vectors, or a socket for communication with an external

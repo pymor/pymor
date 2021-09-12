@@ -12,7 +12,7 @@ from pymor.operators.constructions import (ComponentProjectionOperator, Concaten
                                            ZeroOperator)
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.vectorarrays.interface import VectorArray
+from pymor.vectorarrays.interface import DOFVectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -49,7 +49,7 @@ class EmpiricalInterpolatedOperator(Operator):
     interpolation_dofs
         List or 1D |NumPy array| of the interpolation DOFs `c_1, ..., c_M`.
     collateral_basis
-        |VectorArray| containing the collateral basis `b_1, ..., b_M`.
+        |DOFVectorArray| containing the collateral basis `b_1, ..., b_M`.
     triangular
         If `True`, assume that ψ_(c_i)(b_j) = 0  for i < j, which means
         that the interpolation matrix is triangular.
@@ -62,7 +62,7 @@ class EmpiricalInterpolatedOperator(Operator):
     def __init__(self, operator, interpolation_dofs, collateral_basis, triangular,
                  solver_options=None, name=None):
         assert isinstance(operator, Operator)
-        assert isinstance(collateral_basis, VectorArray)
+        assert isinstance(collateral_basis, DOFVectorArray)
         assert collateral_basis in operator.range
         assert len(interpolation_dofs) == len(collateral_basis)
 
