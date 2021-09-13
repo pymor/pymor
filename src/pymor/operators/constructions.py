@@ -143,7 +143,7 @@ class LincombOperator(Operator):
                               name=self.name + '_assembled')
         # To avoid infinite recursions, only use the result if at least one of the following
         # is true:
-        #   - The operator is parametric, so the the result of assemble *must* be a different,
+        #   - The operator is parametric, so the result of assemble *must* be a different,
         #     non-parametric operator.
         #   - One of self.operators changed by calling 'assemble' on it.
         #   - The result of assemble_lincomb is of a different type than the original operator.
