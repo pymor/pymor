@@ -3,8 +3,9 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from importlib import import_module
-import sys
+from packaging.version import parse
 import platform
+import sys
 import warnings
 
 
@@ -26,6 +27,18 @@ def _get_fenics_version():
     if df.__version__ != '2019.1.0':
         warnings.warn(f'FEniCS bindings have been tested for version 2019.1.0 (installed: {df.__version__}).')
     return df.__version__
+
+
+def _get_dunegdt_version():
+    import dune.gdt
+    try:
+        version = parse(dune.gdt.__version__)
+        if version < parse('2021.1.2') or version >= parse('2021.2'):
+            warnings.warn(f'dune-gdt bindings have been tested for version 2021.1.2 (installed: {dune.gdt.__version__}).')
+        return dune.gdt.__version__
+    except AttributeError:
+        warnings.warn(f'dune-gdt bindings have been tested for version 2021.1.2 (installed: unknown older than 2021.1.2).')
+        return 'unknown'
 
 
 def is_windows_platform():
@@ -99,7 +112,7 @@ def is_nbconvert():
 
 _PACKAGES = {
     'DEALII': lambda: import_module('pydealii'),
-    'DUNEGDT': lambda: _can_import('dune.gdt'),
+    'DUNEGDT': _get_dunegdt_version,
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
     'IPYTHON': _get_ipython_version,
