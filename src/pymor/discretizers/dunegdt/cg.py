@@ -43,7 +43,7 @@ if config.HAVE_DUNEGDT:
     from pymor.analyticalproblems.instationary import InstationaryProblem
     from pymor.analyticalproblems.functions import Function, ConstantFunction, LincombFunction
     from pymor.bindings.dunegdt import (
-            DuneGDT1dasNumpyVisualizer,
+            DuneGDT1dAsNumpyVisualizer,
             DuneGDT1dMatplotlibVisualizer,
             DuneGDTK3dVisualizer,
             DuneGDTParaviewVisualizer,
@@ -469,7 +469,7 @@ if config.HAVE_DUNEGDT:
         # visualizer
         if d == 1:
             # unshifted_visualizer = DuneGDT1dMatplotlibVisualizer(space) # only for stationary problems!
-            unshifted_visualizer = DuneGDT1dasNumpyVisualizer(space, grid)
+            unshifted_visualizer = DuneGDT1dAsNumpyVisualizer(space, grid)
         else:
             unshifted_visualizer = DuneGDTK3dVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
 
