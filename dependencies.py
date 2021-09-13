@@ -57,6 +57,7 @@ install_suggests = {
     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
     'pillow': 'image library used for bitmap data functions',
     'dune-gdt~=2021.1,>=2021.1.2': 'generic discretization toolbox',
+    'dune-xt~=2021.1,>=2021.1.2': 'DUNE extensions for dune-gdt',
 }
 io_requires = ['pyevtk', 'xmljson', 'meshio>=4.4', 'lxml', 'gmsh']
 install_suggests.update({p: 'optional File I/O support libraries' for p in io_requires})
