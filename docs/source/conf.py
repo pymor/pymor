@@ -54,7 +54,7 @@ myst_enable_extensions = [
     "replacements",
     "substitution",
 ]
-myst_url_schemes = ("http", "https", "mailto")
+myst_url_schemes = ["http", "https", "mailto"]
 # auto genereated link anchors
 myst_heading_anchors = 2
 import substitutions # noqa
