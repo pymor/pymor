@@ -200,7 +200,7 @@ if config.HAVE_DUNEGDT:
             return DuneXTMatrixOperator(matrix, self.source.id, self.range.id, solver_options=solver_options, name=name)
 
 
-    class DuneGDT1dasNumpyVisualizer(ImmutableObject):
+    class DuneGDT1dAsNumpyVisualizer(ImmutableObject):
         """Visualize a dune-gdt discrete function using OnedVisualizer.
 
         Parameters
@@ -230,13 +230,17 @@ if config.HAVE_DUNEGDT:
                 raise NotImplementedError('Not available for higher polynomial orders!')
             self.__auto_init(locals())
 
-        def visualize(self, U, m, **kwargs):
+        def visualize(self, U, **kwargs):
             # convert to NumpyVectorArray
             U_np = NumpyVectorSpace(U.dim).zeros(len(U))
             for ii, u_dune in enumerate(U._list):
+                if isinstance(u_dune, ComplexifiedDuneXTVector):
+                    assert u_dune.imag_part is None
+                    u_dune = u_dune.real_part
+                assert isinstance(u_dune, DuneXTVector)
                 u_np = np.array(u_dune.impl, copy=False)
                 U_np._array[ii, :] = u_np[:]
-            return self.visualizer.visualize(U_np, None, **kwargs)
+            return self.visualizer.visualize(U_np, **kwargs)
 
 
     class DuneGDT1dMatplotlibVisualizer(ImmutableObject):
@@ -254,11 +258,14 @@ if config.HAVE_DUNEGDT:
             self.interpolation_points = space.interpolation_points()
             self.__auto_init(locals())
 
-        def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
+        def visualize(self, U, title=None, legend=None, separate_colorbars=False,
                       rescale_colorbars=False, block=None, filename=None, columns=2):
             assert isinstance(U, ListVectorArray)
             assert len(U) == 1
             U = U._list[0]
+            if isinstance(U, ComplexifiedDuneXTVector):
+                assert U.imag_part is None
+                U = U.real_part
             assert isinstance(U, DuneXTVector)
             X = np.array(self.interpolation_points, copy=False)
             Y = np.array(U.impl, copy=False)
@@ -282,7 +289,7 @@ if config.HAVE_DUNEGDT:
         def __init__(self, space):
             self.__auto_init(locals())
 
-        def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
+        def visualize(self, U, title=None, legend=None, separate_colorbars=False,
                       rescale_colorbars=False, block=None, filename=None, columns=2):
 
             def visualize_single(vec, vec_name, f_name):
@@ -342,6 +349,9 @@ if config.HAVE_DUNEGDT:
                 if len(U) == 1:
                     # we presume we have a single vector to be visualized
                     U = U._list[0]
+                    if isinstance(U, ComplexifiedDuneXTVector):
+                        assert U.imag_part is None
+                        U = U.real_part
                     assert isinstance(U, DuneXTVector)
                     if interactive:
                         _, filename = mkstemp(suffix=suffix)
@@ -402,9 +412,12 @@ if config.HAVE_DUNEGDT:
         def __init__(self, space, name='STATE'):
             self.__auto_init(locals())
 
-        def visualize(self, U, m):
+        def visualize(self, U):
 
             def visualize_single(u, filename):
+                if isinstance(u, ComplexifiedDuneXTVector):
+                    assert u.imag_part is None
+                    u = u.real_part
                 assert isinstance(u, DuneXTVector)
                 df = DiscreteFunction(self.space, u.impl, self.name)
                 df.visualize(filename)
