@@ -193,7 +193,7 @@ if config.HAVE_DUNEGDT:
             else:
                 matrix = operators[0].matrix * coefficients[0]
             for op, c in zip(operators[1:], coefficients[1:]):
-                matrix.axpy(c, op.matrix)  # Not guaranteed to work for all backends! For different
+                matrix.axpy(c, op.matrix)  # TODO: Not guaranteed to work for all backends! For different
                 # sparsity patterns one would have to extract the patterns from the pruned
                 # matrices, merge them and create a new matrix.
 
@@ -431,4 +431,5 @@ if config.HAVE_DUNEGDT:
                     filename = f'{prefix}.pvd'
             else:
                 raise NotImplementedError
-            _ = k3d_plot(filename, color_attribute_name=self.name)
+
+            return k3d_plot(filename, color_attribute_name=self.name)
