@@ -6,6 +6,7 @@ bash_kernel
 click
 diskcache
 dune-gdt~=2021.1,>=2021.1.2
+dune-xt~=2021.1,>=2021.1.2
 gmsh
 ipyparallel>=6.2.5
 ipython>=5.0
