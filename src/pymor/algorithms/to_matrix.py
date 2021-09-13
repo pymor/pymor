@@ -8,6 +8,7 @@ import scipy.sparse as sps
 import scipy.sparse.linalg as spsla
 
 from pymor.algorithms.rules import RuleTable, match_class
+from pymor.core.config import config
 from pymor.operators.block import BlockOperatorBase
 from pymor.operators.constructions import (AdjointOperator, ComponentProjectionOperator, ConcatenationOperator,
                                            IdentityOperator, LincombOperator, LowRankOperator, LowRankUpdatedOperator,
@@ -172,3 +173,25 @@ class ToMatrixRules(RuleTable):
             return np.zeros((op.range.dim, op.source.dim))
         else:
             return getattr(sps, format + '_matrix')((op.range.dim, op.source.dim))
+
+
+if config.HAVE_DUNEGDT:
+    from scipy.sparse import csr_matrix
+
+    from pymor.bindings.dunegdt import DuneXTMatrixOperator
+
+    @match_class(DuneXTMatrixOperator)
+    def action_DuneXTMatrixOperator(self, op):
+        data, row_ind, col_ind = op.matrix.to_csr()
+        mat = csr_matrix((data, (row_ind, col_ind)), shape=(op.matrix.rows, op.matrix.cols))
+        format = self.format
+        if format is None:
+            return mat
+        elif format == 'dense':
+            return mat.toarray()
+        else:
+            return mat.asformat(format)
+
+    ToMatrixRules.insert_rule(0, action_DuneXTMatrixOperator)
+
+
