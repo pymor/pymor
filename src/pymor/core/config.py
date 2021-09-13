@@ -30,15 +30,21 @@ def _get_fenics_version():
 
 
 def _get_dunegdt_version():
+    import dune.xt
     import dune.gdt
+    version = 'outdated'
     try:
-        version = parse(dune.gdt.__version__)
-        if version < parse('2021.1.2') or version >= parse('2021.2'):
+        if parse(dune.gdt.__version__) < parse('2021.1.2') or version >= parse('2021.2'):
             warnings.warn(f'dune-gdt bindings have been tested for version 2021.1.2 (installed: {dune.gdt.__version__}).')
-        return dune.gdt.__version__
+        version = dune.gdt.__version__
     except AttributeError:
         warnings.warn(f'dune-gdt bindings have been tested for version 2021.1.2 (installed: unknown older than 2021.1.2).')
-        return 'unknown'
+    try:
+        if parse(dune.xt.__version__) < parse('2021.1.2') or version >= parse('2021.2'):
+            warnings.warn(f'dune-gdt bindings have been tested for dune-xt 2021.1.2 (installed: {dune.xt.__version__}).')
+    except AttributeError:
+        warnings.warn(f'dune-gdt bindings have been tested for dune-xt version 2021.1.2 (installed: unknown older than 2021.1.2).')
+    return version
 
 
 def is_windows_platform():
