@@ -353,9 +353,11 @@ class ListVectorArray(VectorArray):
     The associated |VectorSpace| is a subclass of
     :class:`ListVectorSpace`.
 
-    For an example, see :class:`NumpyVector`, :class:`NumpyListVectorSpace`
-    or :class:`~pymor.bindings.fenics.FenicsVector`,
-    :class:`~pymor.bindings.fenics.FenicsVectorSpace`.
+    For an example, see :class:`NumpyVector` and :class:`NumpyListVectorSpace`,
+    :class:`~pymor.bindings.fenics.FenicsVector` and
+    :class:`~pymor.bindings.fenics.FenicsVectorSpace`,
+    :class:`~pymor.bindings.dunegdt.DuneXTVector` and
+    :class:`~pymor.bindings.dunegdt.DuneXTVectorSpace`.
     """
 
     _NONE = ()
