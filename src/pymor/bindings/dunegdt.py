@@ -31,7 +31,13 @@ if config.HAVE_DUNEGDT:
 
 
     class DuneXTVector(CopyOnWriteVector):
-        """Wraps a vector from dune-xt to make it usable with ListVectorArray."""
+        """Wraps a vector from dune-xt to make it usable with ListVectorArray.
+
+        Parameters
+        ----------
+        impl
+            The actual vector from dune.xt.la, usually IstlVector.
+        """
 
         def __init__(self, impl):
             self.impl = impl
@@ -100,6 +106,7 @@ if config.HAVE_DUNEGDT:
 
 
     class ComplexifiedDuneXTVector(ComplexifiedVector):
+        """Required for DuneXTVectorSpace, Usually not to be used directly."""
 
         def amax(self):
             if self.imag_part is None:
@@ -111,6 +118,17 @@ if config.HAVE_DUNEGDT:
 
 
     class DuneXTVectorSpace(ComplexifiedListVectorSpace):
+        """A |VectorSpace| yielding DuneXTVector
+
+        Parameters
+        ----------
+        dim
+            Dimension of the |VectorSpace|, i.e., length of the resulting vectors.
+        vector_type
+            Type of the actual vector from dune.xt.la, usually IstlVector.
+        id
+            Identifier of the |VectorSpace|.
+        """
 
         complexified_vector_type = ComplexifiedDuneXTVector
 
@@ -145,7 +163,30 @@ if config.HAVE_DUNEGDT:
 
 
     class DuneXTMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
-        """Wraps a dune-xt matrix as an |Operator|."""
+        """Wraps a dune-xt matrix as an |Operator|.
+
+        Parameters
+        ----------
+        matrix
+            The actual matrix from dune.xt.la, usually IstlMatrix.
+        source_id
+            Identifier of the source |VectorSpace|.
+        range_id
+            Identifier of the source |VectorSpace|.
+        solver_options
+            If specified, either a string or a dict specifying the solver used in apply_inverse. See
+            https://zivgitlab.uni-muenster.de/ag-ohlberger/dune-community/dune-xt/-/tree/master/dune/xt/la/solver
+            for available options, depending on the type of `matrix`. E.g., for dune.xt.la.IstlSparseMatrix, (as can be
+            queried from dune.xt.la.IstlSparseMatrixSolver via `types()` and `options(type)`):
+              - 'bicgstab.ssor'
+              - 'bicgstab.amg.ssor'
+              - 'bicgstab.amg.ilu0'
+              - 'bicgstab.ilut'
+              - 'bicgstab'
+              - 'cg'
+        name
+            Optional name of the resulting |Operator|.
+        """
 
         linear = True
 
