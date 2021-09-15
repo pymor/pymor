@@ -265,6 +265,9 @@ class ExpressionFunction(GenericFunction):
                 (self.expression, self.dim_domain, self.shape_range, self.parameters, self.values,
                  getattr(self, '_name', None)))
 
+    def __str__(self):
+        return f'{{x -> {self.expression}}}'
+
 
 class LincombFunction(Function):
     """A |Function| representing a linear combination of |Functions|.
