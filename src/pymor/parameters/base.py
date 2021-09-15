@@ -363,7 +363,7 @@ class Mu(FrozenDict):
     def __str__(self):
         def format_value(k, v):
             if self.is_time_dependent(k):
-                return f'{self._raw_values[k]}({self.get("t", 0)})={format_array(v)}'
+                return f'{self._raw_values[k]}({self.get("t", 0)}) = {format_array(v)}'
             else:
                 return format_array(v)
 
