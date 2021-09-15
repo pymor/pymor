@@ -361,8 +361,13 @@ class Mu(FrozenDict):
         return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
 
     def __str__(self):
-        return '{' + ', '.join(f'{k}{"(t)" if self.is_time_dependent(k) else ""}: {format_array(v)}'
-                               for k, v in self.items()) + '}'
+        def format_value(k, v):
+            if self.is_time_dependent(k):
+                return f'{self._raw_values[k]}({self.get("t", 0)})={format_array(v)}'
+            else:
+                return format_array(v)
+
+        return '{' + ', '.join(f'{k}: {format_value(k, v)}' for k, v in self.items()) + '}'
 
     def __repr__(self):
         return f'Mu({dict(sorted(self._raw_values.items()))})'
