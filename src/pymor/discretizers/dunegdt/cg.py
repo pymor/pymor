@@ -42,17 +42,10 @@ if config.HAVE_DUNEGDT:
     from pymor.analyticalproblems.elliptic import StationaryProblem
     from pymor.analyticalproblems.instationary import InstationaryProblem
     from pymor.analyticalproblems.functions import Function, ConstantFunction, LincombFunction
-    from pymor.bindings.dunegdt import (
-            DuneGDT1dAsNumpyVisualizer,
-            DuneGDT1dMatplotlibVisualizer,
-            DuneGDTK3dVisualizer,
-            DuneGDTParaviewVisualizer,
-            DuneXTMatrixOperator,
-            DuneXTVector,
-            DuneXTVectorSpace,
-            )
+    from pymor.bindings.dunegdt import DuneXTMatrixOperator, DuneXTVector, DuneXTVectorSpace
     from pymor.core.base import ImmutableObject
     from pymor.discretizers.dunegdt.domaindiscretizers.default import discretize_domain_default
+    from pymor.discretizers.dunegdt.gui import DuneGDT1dAsNumpyVisualizer, DuneGDTK3dVisualizer, DuneGDTParaviewVisualizer
     from pymor.models.basic import InstationaryModel, StationaryModel
     from pymor.operators.constructions import ConstantOperator, LincombOperator, VectorArrayOperator
     from pymor.tools.floatcmp import float_cmp
