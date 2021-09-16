@@ -4,7 +4,7 @@
 
 * Linus Balicki, linus.balicki@ovgu.de (2020-)
 * René Fritze, rene.fritze@uni-muenster.de (2012-)
-* Petar Mlinarić, mlinaric@mpi-magdeburg.mpg.de (2016-)
+* Petar Mlinarić, mlinaric@vt.edu (2016-)
 * Stephan Rave, stephan.rave@uni-muenster.de (2012-)
 * Felix Schindler, felix.schindler@uni-muenster.de (2012-)
 
