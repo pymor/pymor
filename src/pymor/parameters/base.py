@@ -243,16 +243,9 @@ class Parameters(SortedFrozenDict):
                    for k, v in other.items())
         return Parameters({k: v for k, v in self.items() if k not in other})
 
-    def __le__(self, mu):
-        """Check if |parameter values| are compatible with the given |Parameters|.
-
-        Each of the parameter must be contained in  `mu` and the dimensions have to match,
-        i.e. ::
-
-            mu[parameter].size == self[parameter]
-        """
-        if isinstance(mu, Parameters):
-            return all(mu.get(k) == v for k, v in self.items())
+    def __le__(self, params):
+        if isinstance(params, Parameters):
+            return all(params.get(k) == v for k, v in self.items())
         else:
             return NotImplemented
 
