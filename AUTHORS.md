@@ -15,6 +15,9 @@
 * Meret Behrens, mbehrens@mpi-magdeburg.mpg.de
   * modal truncation for model order reduction
 
+* Tim Keil, tim.keil@uni-muenster.de
+  * output error estimation with the DWR approach for stationary problems
+
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
   * artificial neural networks for approximation of output quantities
 
