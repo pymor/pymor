@@ -136,7 +136,7 @@ Continuous Testing / Integration Setup
 Our CI infrastructure is spread across three major platforms. These are Gitlab CI (Linux testsuite),
 Azure Pipelines (MacOS and Windows testsuite) and GitHub Actions (misc. checks).
 
-pyMOR uses `pytest` <https://pytest.org/>`_ for unit testing.
+pyMOR uses `pytest <https://pytest.org/>`_ for unit testing.
 All tests are contained within the `src/pymortests` directory and can be run
 individually by executing `python3 src/pymortests/the_module.py`.
 
