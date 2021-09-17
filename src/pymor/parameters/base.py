@@ -310,10 +310,28 @@ class Mu(FrozenDict):
         return mu
 
     def is_time_dependent(self, param):
+        """Check whether the values for a given parameter depend on time.
+
+        This is the case when the value for `self[param]` was given by a |Function|
+        instead of a constant array.
+        """
         from pymor.analyticalproblems.functions import Function
         return isinstance(self._raw_values[param], Function)
 
     def get_time_dependent_value(self, param):
+        """Return time-dependent |Function| for given parameter.
+
+        Parameters
+        ----------
+        param
+            The parameter for which to return the time-dependent values.
+
+        Returns
+        -------
+        If `param` depends on time, this corresponding |Function| (and not its
+        evaluation at the current time) is returned. If `param` is not given
+        by a |Function|, a |ConstantFunction| is returned.
+        """
         from pymor.analyticalproblems.functions import Function
         value = self._raw_values[param]
         if not isinstance(value, Function):
