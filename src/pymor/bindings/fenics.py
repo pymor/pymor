@@ -201,20 +201,16 @@ if config.HAVE_FENICS:
             r = (self.range.real_zero_vector() if initial_guess is None else
                  initial_guess.copy(deep=True))
             options = self.solver_options.get('inverse_adjoint') if self.solver_options else None
-            try:
-                # since dolfin does not have "apply_inverse_adjoint", we try transposing the matrix
-                if not hasattr(self, '_matrix_transpose'):
-                    self._matrix_transpose = self.matrix.copy()
-                    mat = df.as_backend_type(self.matrix).mat()
-                    mat_tr = df.as_backend_type(self._matrix_transpose).mat()
-                    mat.transpose(mat_tr)
-                _apply_inverse(self._matrix_transpose, r.impl, u.impl, options)
-                return r
-            except Exception as e:
-                self.logger.info(f'Was not able to transpose the FEniCS matrix ({e}).')
-                super()._real_apply_inverse_adjoint_one_vector(u, mu=mu, initial_guess=initial_guess,
-                                                               least_squares=least_squares,
-                                                               prepare_data=prepare_data)
+
+            # since dolfin does not have "apply_inverse_adjoint", we assume
+            # PETSc is used as backend and transpose the matrix
+            if not hasattr(self, '_matrix_transpose'):
+                self._matrix_transpose = self.matrix.copy()
+                mat = df.as_backend_type(self.matrix).mat()
+                mat_tr = df.as_backend_type(self._matrix_transpose).mat()
+                mat.transpose(mat_tr)
+            _apply_inverse(self._matrix_transpose, r.impl, u.impl, options)
+            return r
 
         def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
             if not all(isinstance(op, FenicsMatrixOperator) for op in operators):
