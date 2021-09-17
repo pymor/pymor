@@ -359,8 +359,6 @@ the {math}`\mathcal{H}_2` norm,
 the {math}`\mathcal{H}_\infty` norm, and
 the Hankel (semi)norm.
 
-### {math}`\mathcal{H}_2` norm
-
 The {math}`\mathcal{H}_2` norm is
 (if {math}`E` is invertible,
 {math}`E^{-1} A` has eigenvalues in the open left half plane, and
@@ -412,8 +410,6 @@ used to compute it.
 fom.h2_norm()
 ```
 
-### {math}`\mathcal{H}_\infty` norm
-
 The {math}`\mathcal{H}_\infty` norm is
 (if {math}`E` is invertible and
 {math}`E^{-1} A` has eigenvalues in the open left half plane)
@@ -449,8 +445,6 @@ from [Slycot](<https://github.com/python-control/Slycot>) to compute the
 ```{code-cell}
 fom.hinf_norm()
 ```
-
-### Hankel norm
 
 The Hankel norm is
 (if {math}`E` is invertible and
