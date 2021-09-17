@@ -7,7 +7,7 @@ import numpy as np
 from pymor.parameters.base import Mu
 
 
-def parameters_of_type(parameters, seed):
+def mu_of_type(parameters, seed):
     np.random.seed(seed)
     while True:
         if parameters is None:
