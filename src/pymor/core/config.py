@@ -63,10 +63,12 @@ def _get_slycot_version():
 def _get_qt_version():
     try:
         import qtpy
-        return f'{qtpy.API_NAME} (Qt {qtpy.QT_VERSION})'
-    except AttributeError as ae:
-        warnings.warn(f'importing qtpy abstraction failed:\n{ae}')
+    except RuntimeError:
+        # qtpy raises PythonQtError, which is a subclass of RuntimeError, in case no
+        # Python bindings could be found. Since pyMOR always pulls qtpy, we do not want
+        # to catch an ImportError
         return False
+    return f'{qtpy.API_NAME} (Qt {qtpy.QT_VERSION})'
 
 
 def is_jupyter():
@@ -96,7 +98,6 @@ def is_nbconvert():
 
 
 _PACKAGES = {
-    'CYTHON': lambda: import_module('cython').__version__,
     'DEALII': lambda: import_module('pydealii'),
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
@@ -113,7 +114,7 @@ _PACKAGES = {
     'PYTEST': lambda: import_module('pytest').__version__,
     'PYTHREEJS': lambda: import_module('pythreejs._version').__version__,
     'QT': _get_qt_version,
-    'QTOPENGL': lambda: bool(import_module('qtpy.QtOpenGL')),
+    'QTOPENGL': lambda: bool(_get_qt_version() and import_module('qtpy.QtOpenGL')),
     'SCIPY': lambda: import_module('scipy').__version__,
     'SCIPY_LSMR': lambda: hasattr(import_module('scipy.sparse.linalg'), 'lsmr'),
     'SLYCOT': lambda: _get_slycot_version(),
