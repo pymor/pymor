@@ -365,7 +365,10 @@ class Mu(FrozenDict):
 
     def to_numpy(self):
         """All parameter values as a NumPy array, ordered alphabetically."""
-        return np.hstack([v for k, v in self.items()])
+        if len(self) == 0:
+            return np.array([])
+        else:
+            return np.hstack([v for k, v in self.items()])
 
     def copy(self):
         return self
