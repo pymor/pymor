@@ -37,6 +37,7 @@ class Parameters(SortedFrozenDict):
     def _post_init(self):
         assert all(type(k) is str and type(v) is int and 0 <= v
                    for k, v in self.items())
+        assert self.get('t', 1) == 1, 'time parameter must have length 1'
 
     @classmethod
     def of(cls, *args):
@@ -128,7 +129,7 @@ class Parameters(SortedFrozenDict):
             raise ValueError(f'{mu_str} is incompatible with Parameters {self} ({msg})')
 
         if not self:
-            mu is None or mu == {} or fail('must be None or empty dict')
+            mu is None or len(mu) == 0 or fail('must be None or empty dict')
             return Mu({})
 
         if isinstance(mu, Mu):
@@ -289,12 +290,14 @@ class Mu(FrozenDict):
                 # each time a Mu is created (which would make instantiation of simple Mus without
                 # time dependency significantly more expensive).
                 from pymor.analyticalproblems.functions import Function
+                assert k != 't'
                 assert isinstance(v, Function) and v.dim_domain == 1 and len(v.shape_range) == 1 and \
                     v.shape_range[0] > 0
                 vv = v(raw_values.get('t', 0))
             else:
                 vv = np.array(v, copy=False, ndmin=1)
                 assert vv.ndim == 1
+                assert k != 't' or len(vv) == 1
             assert not vv.setflags(write=False)
             values_for_t[k] = vv
 
