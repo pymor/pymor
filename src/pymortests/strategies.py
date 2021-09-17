@@ -9,7 +9,9 @@ from hypothesis.extra import numpy as hynp
 import numpy as np
 from scipy.stats._multivariate import random_correlation_gen
 
+from pymor.analyticalproblems.functions import Function, ExpressionFunction, ConstantFunction
 from pymor.core.config import config
+from pymor.parameters.base import Mu
 from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -473,3 +475,17 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
 def equal_tuples(draw, strategy, count):
     val = draw(strategy)
     return draw(hyst.tuples(*[hyst.just(val) for _ in range(count)]))
+
+
+# stick to a few representative examples to avoid only seeing degenerate cases
+# in the selected examples
+mus = hyst.dictionaries(
+    keys=hyst.sampled_from(['t', 'foo', 'bar']),
+    values=hyst.sampled_from([
+        np.array([1.]),
+        np.array([1., 32., 3]),
+        ExpressionFunction('x+1', 1, (1,)),
+        ExpressionFunction('[1., 0] * x + [0, 1.] * x**2', 1, (2,)),
+        ConstantFunction(np.array([1., 2, 3]))
+    ])
+).filter(lambda mu: 't' not in mu or (not isinstance(mu['t'], Function) and len(mu['t']) == 1)).map(Mu)
