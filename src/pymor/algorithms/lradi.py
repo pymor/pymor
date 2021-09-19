@@ -24,8 +24,8 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                              projection_shifts_init_maxiter=20,
                              projection_shifts_init_seed=None,
                              projection_shifts_subspace_columns=6,
-                             large_ritz_num=50,
-                             small_ritz_num=25,
+                             wachspress_large_ritz_num=50,
+                             wachspress_small_ritz_num=25,
                              wachspress_tol=1e-10):
     """Return available Lyapunov solvers with default options.
 
@@ -62,8 +62,8 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                                              'init_seed': projection_shifts_init_seed,
                                              'subspace_columns': projection_shifts_subspace_columns},
                        'wachspress_shifts': {'type': 'wachspress_shifts',
-                                             'large_ritz_num': large_ritz_num,
-                                             'small_ritz_num': small_ritz_num,
+                                             'large_ritz_num': wachspress_large_ritz_num,
+                                             'small_ritz_num': wachspress_small_ritz_num,
                                              'tol': wachspress_tol}}}}
 
 
@@ -252,7 +252,8 @@ def wachspress_shifts_init(A, E, B, shift_options):
 
     This method computes optimal shift parameters for the LR-ADI iteration
     based on Wachspress' method which is discussed in :cite:`LiW02`. This
-    implementation assumes that :math:`A` and :math:`E` are both symmetric.
+    implementation assumes that :math:`A` and :math:`E` are both real and
+    symmetric.
     """
     b = B[0]  # this will work with an arbitrary vector
     _, Hl, _ = _arnoldi(InverseOperator(E) @ A, shift_options['large_ritz_num'], b, True)
@@ -272,10 +273,10 @@ def wachspress_shifts_init(A, E, B, shift_options):
         m = 2 * np.cos(alpha)**2 / cos2b - 1
         if m < 1:
             # shifts are complex, method not applicable
-            raise NotImplementedError
+            raise NotImplementedError('LR-ADI shift parameter strategy can not handle complex shifts.')
         kp = 1 / (m + np.sqrt(m**2 - 1))
 
-    # make sure k is not exactly 1 since the method won't work otherwise
+    # make sure k is not exactly 1
     k = min(1 - np.spacing(1), np.sqrt(1 - kp**2))
 
     # computes elliptic integral
