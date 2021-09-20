@@ -38,6 +38,13 @@ computation for |LTIModels|. The new methods and reductors are showcased in
 
 Modal truncation
 ~~~~~~~~~~~~~~~~
+Based on the previously added :meth:`~pymor.algorithms.samdp.samdp` method for
+computing dominant poles of an LTI system,
+a modal truncation reductor :class:`~pymor.reductors.mt.MTReductor` was added in
+`[#1151] <https://github.com/pymor/pymor/pull/1151>`_.
+It constructs a reduced-order model from dominant poles of the full-order model,
+with different possible dominance measures.
+The reductor also implements a dense method for small to medium problems.
 
 Time-dependent parameter values
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
