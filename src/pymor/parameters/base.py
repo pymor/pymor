@@ -267,7 +267,7 @@ class Mu(FrozenDict):
     ----------
     Anything that dict accepts for the construction of a dictionary.
     Values are automatically converted to one-dimensional |NumPy arrays|,
-    except for |Functions| which are interpreted as time dependent parameter
+    except for |Functions| which are interpreted as time-dependent parameter
     values. Unless the Python interpreter runs with the `-O` flag,
     the arrays are made immutable.
 
