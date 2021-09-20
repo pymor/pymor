@@ -407,8 +407,7 @@ if config.HAVE_DUNEGDT:
         rhs_coeffs_ = []
         for vec, coeff in zip(rhs_ops, rhs_coeffs):
             if not float_cmp(vec.sup_norm(), 0.):
-                # TODO: drop make_vector once https://github.com/pymor/pymor/issues/1386 is resolved
-                rhs_ops_ += [VectorArrayOperator(lhs_ops[0].range.make_array([lhs_ops[0].range.make_vector(vec)])),]
+                rhs_ops_ += [VectorArrayOperator(lhs_ops[0].range.make_array([vec,])),]
                 rhs_coeffs_ += [coeff,]
         if len(rhs_ops_) > 0:
             F = LincombOperator(operators=rhs_ops_, coefficients=rhs_coeffs_, name='rhsOperator')
@@ -437,13 +436,10 @@ if config.HAVE_DUNEGDT:
         if mu_energy_product:
             products['energy_0'] = DuneXTMatrixOperator(energy_product_0.matrix)
         if not trivial_dirichlet_data:
-            # TODO: drop make_vector once https://github.com/pymor/pymor/issues/1386 is resolved
-            dirichlet_data = lhs_ops[0].source.make_array([lhs_ops[0].source.make_vector(dirichlet_data.dofs.vector),])
+            dirichlet_data = lhs_ops[0].source.make_array([dirichlet_data.dofs.vector,])
 
         # - outputs, shift if required
-        # TODO: drop make_vector once https://github.com/pymor/pymor/issues/1386 is resolved
-        outputs = [VectorArrayOperator(lhs_ops[0].source.make_array([lhs_ops[0].source.make_vector(op.vector)]),
-                                       adjoint=True)
+        outputs = [VectorArrayOperator(lhs_ops[0].source.make_array([op.vector,]), adjoint=True)
                    for op in outputs]
         if not trivial_dirichlet_data:
             shifted_outputs = []
@@ -490,8 +486,7 @@ if config.HAVE_DUNEGDT:
             df = DiscreteFunction(space, la_backend)
             np_view = np.array(df.dofs.vector, copy=False)
             np_view[:] = func.evaluate(space_interpolation_points)[:].ravel()
-            # TODO: drop make_vector once https://github.com/pymor/pymor/issues/1386 is resolved
-            return m.solution_space.make_array([m.solution_space.make_vector(df.dofs.vector),])
+            return m.solution_space.make_array([df.dofs.vector,])
 
         data = {'grid': grid,
                 'boundary_info': boundary_info,
