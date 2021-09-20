@@ -1,6 +1,6 @@
 
 pyMOR 2021.1 (September 30, 2021)
---------------------------------
+---------------------------------
 We are proud to announce the release of pyMOR 2021.1! This release includes
 several new reductors for LTI systems. In particular, methods for reducing and
 analysing unstable systems have been added. ANNs can now be used in order to
@@ -14,6 +14,7 @@ pyMOR 2021.1 contains contributions by Tim Keil, Hendrik Kleikamp and Meret
 Behrens. See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for
 more details.
 
+
 Release highlights
 ^^^^^^^^^^^^^^^^^^
 
@@ -26,7 +27,7 @@ methods for working with and analyzing unstable |LTIModels| have been added.
 The :class:`~pymor.reductors.bt.FDBTReductor` allows for applying the balanced
 truncation technique to unstable systems by performing a Bernoulli stabiliztion
 before the using the classical BT method. The :class:`~pymor.reductors.h2.GapIRKAReductor`
-aims to compute a reduced order model such that the approximation error with
+aims to compute a reduced-order model such that the approximation error with
 respect to the :math:`\mathcal{H}_2`-Gap norm is small. Additionally,
 a variety of numerical linear algebra methods have been a part of
 `[#1149] <https://github.com/pymor/pymor/pull/1149>`_: Riccati equation solvers
@@ -38,21 +39,21 @@ computation for |LTIModels|. The new methods and reductors are showcased in
 Modal truncation
 ~~~~~~~~~~~~~~~~
 
-Output reductor using ANNs
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Time dependent parameter values
+Time-dependent parameter values
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+Output reductor using ANNs
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Improvements to the HAPOD algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Empirical Interpolation improvments
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Empirical Interpolation improvements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Add outputs to FV discretizers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,6 +67,7 @@ Backward incompatible changes
 
 Drop python 3.6 support
 ~~~~~~~~~~~~~~~~~~~~~~~
+
 
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
