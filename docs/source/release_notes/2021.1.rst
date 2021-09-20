@@ -65,8 +65,13 @@ Empirical Interpolation improvements
 Add outputs to FV discretizers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Methods for exporting matrices of LTI models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Methods for exporting matrices of system models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The system classes :class:`~pymor.models.iosys.LTIModel` and
+:class:`~pymor.models.iosys.SecondOrderModel` have had various `from_*` methods
+for constructing models from matrices.
+In `[#1309] <https://github.com/pymor/pymor/pull/1309>`_,
+the corresponding `to_*` methods were added for exporting matrices from a model.
 
 
 Backward incompatible changes
