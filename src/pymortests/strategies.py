@@ -484,8 +484,8 @@ mus = hyst.dictionaries(
     values=hyst.sampled_from([
         np.array([1.]),
         np.array([1., 32., 3]),
-        ExpressionFunction('x+1', 1, (1,)),
-        ExpressionFunction('[1., 0] * x + [0, 1.] * x**2', 1, (2,)),
+        ExpressionFunction('x+1', 1),
+        ExpressionFunction('[1., 0] * x + [0, 1.] * x**2', 1),
         ConstantFunction(np.array([1., 2, 3]))
     ])
 ).filter(lambda mu: 't' not in mu or (not isinstance(mu['t'], Function) and len(mu['t']) == 1)).map(Mu)
