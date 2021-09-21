@@ -269,6 +269,23 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
 
 def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivities=True, plot_condition=True,
         plot_custom_logarithmic=True, plot_custom_with_errors=False):
+    """Plots the results from :meth:`reduction_error_analysis`.
+
+    Parameters
+    ----------
+    result
+        Dictionary with entries as returned by :meth:`reduction_error_analysis`.
+    max_basis_size
+        Only plot results up to this basis size.
+    plot_effectivities
+        Whether to plot the effectivities of the a posteriori error estimate.
+    plot_condition
+        Whether to plot the condition of the reduced system matrix.
+    plot_custom_logarithmic
+        Whether to `semilogy` plot the custom values.
+    plot_custom_with_errors
+        Whether to plot errors and custom values in a single plot or in separate ones.
+    """
 
     error_norms = 'norms' in result
     error_estimator = 'error_estimates' in result
