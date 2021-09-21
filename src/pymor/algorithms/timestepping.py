@@ -131,7 +131,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
     elif isinstance(F, Operator):
         assert F.source.dim == 1
         assert F.range == A.range
-        F_time_dep = F.parametric and 't' in F.parameters
+        F_time_dep = _depends_on_time(F, mu)
         if not F_time_dep:
             dt_F = F.as_vector(mu) * dt
     else:
@@ -156,7 +156,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
                M.solver_options if solver_options == 'mass' else
                solver_options)
     M_dt_A = (M + A * dt).with_(solver_options=options)
-    if not M_dt_A.parametric or 't' not in M_dt_A.parameters:
+    if not _depends_on_time(M_dt_A, mu):
         M_dt_A = M_dt_A.assemble(mu)
 
     t = t0
@@ -186,7 +186,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     if isinstance(F, Operator):
         assert F.source.dim == 1
         assert F.range == A.range
-        F_time_dep = F.parametric and 't' in F.parameters
+        F_time_dep = _depends_on_time(F, mu)
         if not F_time_dep:
             F_ass = F.as_vector(mu)
     elif isinstance(F, VectorArray):
@@ -198,7 +198,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     assert len(U0) == 1
     assert U0 in A.source
 
-    A_time_dep = A.parametric and 't' in A.parameters
+    A_time_dep = _depends_on_time(A, mu)
     if not A_time_dep:
         A = A.assemble(mu)
 
@@ -228,3 +228,9 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
                 R.append(U)
 
     return R
+
+
+def _depends_on_time(obj, mu):
+    if not mu:
+        return False
+    return 't' in obj.parameters or any(mu.is_time_dependent(k) for k in obj.parameters)

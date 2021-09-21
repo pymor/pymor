@@ -32,9 +32,12 @@ class Parameters(SortedFrozenDict):
     specifying the dimension (number of scalar components) of the parameter.
     """
 
+    __slots__ = ()
+
     def _post_init(self):
         assert all(type(k) is str and type(v) is int and 0 <= v
                    for k, v in self.items())
+        assert self.get('t', 1) == 1, 'time parameter must have length 1'
 
     @classmethod
     def of(cls, *args):
@@ -96,7 +99,12 @@ class Parameters(SortedFrozenDict):
             Parameters(b=2, a=1).parse([1,2,3])
 
         will assign to parameter `a` the value `[1]` and to parameter `b` the
-        values `[2, 3]`.
+        values `[2, 3]`. Further, each parameter value can be given as a
+        vector-valued |Function| with `dim_domain == 1` to specify time-dependent
+        values. A `str` is converted to an appropriate |ExpressionFunction|.
+        Note that |ExpressionFunctions| are functions of the variable `x`, so you
+        have to write `x` instead of `t` for the time parameter in the string
+        expression.
 
         Parameters
         ----------
@@ -114,6 +122,8 @@ class Parameters(SortedFrozenDict):
             given |Parameters|.
         """
 
+        from pymor.analyticalproblems.functions import Function, ExpressionFunction
+
         def fail(msg):
             if isinstance(mu, dict):
                 mu_str = '{' + ', '.join([f'{k}: {v}' for k, v in mu.items()]) + '}'
@@ -122,43 +132,58 @@ class Parameters(SortedFrozenDict):
             raise ValueError(f'{mu_str} is incompatible with Parameters {self} ({msg})')
 
         if not self:
-            mu is None or mu == {} or fail('must be None or empty dict')
+            mu is None or len(mu) == 0 or fail('must be None or empty dict')
             return Mu({})
 
-        elif isinstance(mu, Mu):
+        if isinstance(mu, Mu):
             mu.parameters == self or fail(self.why_incompatible(mu))
             set(mu) == set(self) or fail(f'additional parameters {set(mu) - set(self)}')
             return mu
 
-        elif isinstance(mu, Number):
-            1 == sum(v for v in self.values()) or fail('need more than one number')
-            return Mu({next(iter(self)): np.array([mu])})
+        # convert mu to dict
+        if isinstance(mu, (Number, str, Function)):
+            assert len(self) == 1 or fail('not enough values')
+            mu = {next(iter(self.keys())): mu}
 
         elif isinstance(mu, (tuple, list, np.ndarray)):
             if isinstance(mu, np.ndarray):
                 mu = mu.ravel()
-            all(isinstance(v, Number) for v in mu) or fail('not every element a number')
-            len(mu) == sum(v for v in self.values()) or fail('wrong size')
+            all(isinstance(v, (Number, str, Function)) for v in mu) or \
+                fail('not every element a number or function')
             parsed_mu = {}
             for k, v in self.items():
-                p, mu = mu[:v], mu[v:]
+                len(mu) > 0 or fail('not enough values')
+                if isinstance(mu[0], (str, Function)):
+                    p, mu = mu[0], mu[1:]
+                else:
+                    len(mu) >= v or fail('not enough values')
+                    p, mu = mu[:v], mu[v:]
                 parsed_mu[k] = p
-            return Mu(parsed_mu)
+            len(mu) == 0 or fail('too many values')
+            mu = parsed_mu
 
-        elif isinstance(mu, dict):
-            set(mu.keys()) == set(self.keys()) or fail('parameters not matching')
+        set(mu.keys()) == set(self.keys()) or fail('parameters not matching')
 
-            def parse_value(k, v):
-                isinstance(v, (Number, tuple, list, np.ndarray)) \
-                    or fail(f"invalid value type '{type(v)}' for parameter {k}")
+        def parse_value(k, v):
+            if isinstance(v, (Number, tuple, list, np.ndarray)):
                 if isinstance(v, Number):
                     v = np.array([v])
-                elif isinstance(v, np.ndarray):
-                    v = v.ravel()
-                len(v) == self[k] or fail('wrong dimension of parameter value {k}')
+                elif isinstance(v, (tuple, list)):
+                    v = np.array(v)
+                v = v.ravel()
+                len(v) == self[k] or fail(f'wrong dimension of parameter value {k}')
                 return v
+            elif isinstance(v, (str, Function)):
+                if isinstance(v, str):
+                    v = ExpressionFunction(v, dim_domain=1, shape_range=(self[k],))
+                v.dim_domain == 1 or fail(f'wrong domain dimension of parameter function {k}')
+                len(v.shape_range) == 1 or fail(f'wrong shape_range of parameter function {k}')
+                v.shape_range[0] == self[k] or fail(f'wrong range dimension of prameter function {k}')
+                return v
+            else:
+                fail(f"invalid value type '{type(v)}' for parameter {k}")
 
-            return Mu({k: parse_value(k, v) for k, v in mu.items()})
+        return Mu({k: parse_value(k, v) for k, v in mu.items()})
 
     def space(self, *ranges):
         """Create a |ParameterSpace| with given ranges.
@@ -222,16 +247,9 @@ class Parameters(SortedFrozenDict):
                    for k, v in other.items())
         return Parameters({k: v for k, v in self.items() if k not in other})
 
-    def __le__(self, mu):
-        """Check if |parameter values| are compatible with the given |Parameters|.
-
-        Each of the parameter must be contained in  `mu` and the dimensions have to match,
-        i.e. ::
-
-            mu[parameter].size == self[parameter]
-        """
-        if isinstance(mu, Parameters):
-            return all(mu.get(k) == v for k, v in self.items())
+    def __le__(self, params):
+        if isinstance(params, Parameters):
+            return all(params.get(k) == v for k, v in self.items())
         else:
             return NotImplemented
 
@@ -245,14 +263,16 @@ class Parameters(SortedFrozenDict):
         return hash(tuple(self.items()))
 
 
-class Mu(SortedFrozenDict):
+class Mu(FrozenDict):
     """Immutable mapping of |Parameter| names to parameter values.
 
     Parameters
     ----------
     Anything that dict accepts for the construction of a dictionary.
-    Values are automatically converted to immutable one-dimensional |NumPy arrays|,
-    unless the Python interpreter runs with the `-O` flag.
+    Values are automatically converted to one-dimensional |NumPy arrays|,
+    except for |Functions| which are interpreted as time-dependent parameter
+    values. Unless the Python interpreter runs with the `-O` flag,
+    the arrays are made immutable.
 
     Attributes
     ----------
@@ -260,17 +280,66 @@ class Mu(SortedFrozenDict):
         The |Parameters| to which the mapping assigns values.
     """
 
+    __slots__ = ('_raw_values')
+
     def __new__(cls, *args, **kwargs):
-        mu = super().__new__(cls,
-                             ((k, np.array(v, copy=False, ndmin=1))
-                              for k, v in dict(*args, **kwargs).items()))
-        assert all(type(k) is str and v.ndim == 1 for k, v in mu.items())
-        # only make elements immutable when running without optimization
-        assert not any(v.setflags(write=False) for v in mu.values())
+        raw_values = dict(*args, **kwargs)
+        values_for_t = {}
+        for k, v in sorted(raw_values.items()):
+            assert isinstance(k, str)
+            if callable(v):
+                # note: We can't import Function globally due to circular dependencies, so
+                # we import it locally in this branch to avoid executing the import statement
+                # each time a Mu is created (which would make instantiation of simple Mus without
+                # time dependency significantly more expensive).
+                from pymor.analyticalproblems.functions import Function
+                assert k != 't'
+                assert isinstance(v, Function) and v.dim_domain == 1 and len(v.shape_range) == 1 and \
+                    v.shape_range[0] > 0
+                vv = v(raw_values.get('t', 0))
+            else:
+                vv = np.array(v, copy=False, ndmin=1)
+                assert vv.ndim == 1
+                assert k != 't' or len(vv) == 1
+            assert not vv.setflags(write=False)
+            values_for_t[k] = vv
+
+        mu = super().__new__(cls, values_for_t)
+        mu._raw_values = raw_values
         return mu
 
+    def is_time_dependent(self, param):
+        """Check whether the values for a given parameter depend on time.
+
+        This is the case when the value for `self[param]` was given by a |Function|
+        instead of a constant array.
+        """
+        from pymor.analyticalproblems.functions import Function
+        return isinstance(self._raw_values[param], Function)
+
+    def get_time_dependent_value(self, param):
+        """Return time-dependent |Function| for given parameter.
+
+        Parameters
+        ----------
+        param
+            The parameter for which to return the time-dependent values.
+
+        Returns
+        -------
+        If `param` depends on time, this corresponding |Function| (and not its
+        evaluation at the current time) is returned. If `param` is not given
+        by a |Function|, a |ConstantFunction| is returned.
+        """
+        from pymor.analyticalproblems.functions import Function
+        value = self._raw_values[param]
+        if not isinstance(value, Function):
+            from pymor.analyticalproblems.functions import ConstantFunction
+            value = ConstantFunction(value)
+        return value
+
     def with_(self, **kwargs):
-        return Mu(self, **kwargs)
+        return Mu(self._raw_values, **kwargs)
 
     @property
     def parameters(self):
@@ -295,7 +364,10 @@ class Mu(SortedFrozenDict):
 
     def to_numpy(self):
         """All parameter values as a NumPy array, ordered alphabetically."""
-        return np.hstack([v for k, v in self.items()])
+        if len(self) == 0:
+            return np.array([])
+        else:
+            return np.hstack([v for k, v in self.items()])
 
     def copy(self):
         return self
@@ -309,10 +381,16 @@ class Mu(SortedFrozenDict):
         return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
 
     def __str__(self):
-        return '{' + ', '.join(f'{k}: {format_array(v)}' for k, v in self.items()) + '}'
+        def format_value(k, v):
+            if self.is_time_dependent(k):
+                return f'{self._raw_values[k]}({self.get("t", 0)}) = {format_array(v)}'
+            else:
+                return format_array(v)
+
+        return '{' + ', '.join(f'{k}: {format_value(k, v)}' for k, v in self.items()) + '}'
 
     def __repr__(self):
-        return f'Mu({self})'
+        return f'Mu({dict(sorted(self._raw_values.items()))})'
 
 
 class ParametricObject(ImmutableObject):
