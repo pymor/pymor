@@ -33,7 +33,7 @@ def main(
     problem = StationaryProblem(
         domain=RectDomain(),
 
-        diffusion=ExpressionFunction('(x[...,1] > 0.5) * x[...,0]**exponent[0] + 0.1', 2,
+        diffusion=ExpressionFunction('(x[1] > 0.5) * x[0]**exponent[0] + 0.1', 2,
                                      parameters={'exponent': 1}),
 
         rhs=ConstantFunction(1., 2),
