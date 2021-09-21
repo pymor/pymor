@@ -218,6 +218,7 @@ mpl.rcParams['figure.figsize'] = (12.0, 8.0)
 mpl.rcParams['font.size'] = 12
 mpl.rcParams['savefig.dpi'] = 300
 mpl.rcParams['figure.subplot.bottom'] = .1
+mpl.rcParams['axes.facecolor'] = (0.0, 0.0, 0.0, 0.0)
 
 from mpl_toolkits.mplot3d import Axes3D # required for 3d plots
 from matplotlib import cm # required for colors
