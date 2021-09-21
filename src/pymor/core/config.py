@@ -41,13 +41,14 @@ def _get_dunegdt_version():
     import dune.gdt
     version = 'outdated'
     try:
-        if parse(dune.gdt.__version__) < parse('2021.1.2') or version >= parse('2021.2'):
-            warnings.warn(f'dune-gdt bindings have been tested for version 2021.1.2 (installed: {dune.gdt.__version__}).')
         version = dune.gdt.__version__
+        if parse(version) < parse('2021.1.2') or parse(version) >= parse('2021.2'):
+            warnings.warn(f'dune-gdt bindings have been tested for version 2021.1.2 (installed: {dune.gdt.__version__}).')
     except AttributeError:
         warnings.warn(f'dune-gdt bindings have been tested for version 2021.1.2 (installed: unknown older than 2021.1.2).')
     try:
-        if parse(dune.xt.__version__) < parse('2021.1.2') or version >= parse('2021.2'):
+        xt_version = dune.xt.__version__
+        if parse(xt_version) < parse('2021.1.2') or parse(xt_version) >= parse('2021.2'):
             warnings.warn(f'dune-gdt bindings have been tested for dune-xt 2021.1.2 (installed: {dune.xt.__version__}).')
     except AttributeError:
         warnings.warn(f'dune-gdt bindings have been tested for dune-xt version 2021.1.2 (installed: unknown older than 2021.1.2).')
