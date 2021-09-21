@@ -8,24 +8,25 @@ This module provides widgets for displaying plots of
 scalar data assigned to one- and two-dimensional grids using
 :mod:`matplotlib`. These widgets are not intended to be used directly.
 """
+from functools import partial
 
 import numpy as np
 from IPython.core.display import HTML
 from matplotlib import animation
 from pymor.core.base import abstractmethod
 
-from pymor.core.config import config
+from pymor.core.config import config, is_jupyter
 from pymor.discretizers.builtin.grids.constructions import flatten_grid
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
+from pymor.vectorarrays.interface import VectorArray
 
 
 class MatplotlibAxesBase:
 
-    def __init__(self, figure, sync_timer, grid, U=None, vmin=None, vmax=None, codim=2, separate_axes=False, columns=2,
+    def __init__(self, figure, sync_timer, grid, U, limits, codim=2, separate_axes=False, columns=2,
                  aspect_ratio=1):
+        assert isinstance(U, VectorArray)
         # aspect_ratio is height/width
-        self.vmin = vmin
-        self.vmax = vmax
         self.codim = codim
 
         self.grid = grid
@@ -42,7 +43,7 @@ class MatplotlibAxesBase:
         self.codim = codim
         self.grid = grid
         self.separate_axes = separate_axes
-        self.count = len(U) if separate_axes or isinstance(U, tuple) else 1
+        self.count = len(U) if separate_axes else 1
         self.aspect_ratio = aspect_ratio
 
         self._plot_init()
@@ -50,16 +51,17 @@ class MatplotlibAxesBase:
         # assignment delayed to ensure _plot_init works w/o data
         self.U = U
         # Rest is only needed with animation
-        if U is not None and not separate_axes and self.count == 1:
+        if is_jupyter() and not separate_axes and self.count == 1:
             assert len(self.ax) == 1
             delay_between_frames = 200  # ms
+            framecount = len(U)
             self.anim = animation.FuncAnimation(figure, self.animate,
-                                                frames=U, interval=delay_between_frames,
+                                                frames=list(range(framecount)), interval=delay_between_frames,
                                                 blit=True, event_source=sync_timer)
             # generating the HTML instance outside this class causes the plot display to fail
             self.html = HTML(self.anim.to_jshtml())
         else:
-            self.set(self.U)
+            self.set(self.U, limits=limits)
 
     @abstractmethod
     def _plot_init(self):
@@ -67,8 +69,13 @@ class MatplotlibAxesBase:
         pass
 
     @abstractmethod
-    def set(self, U):
+    def set(self, U, limits):
         """Load new data into existing plot objects."""
+        pass
+
+    @abstractmethod
+    def step(self, ind):
+        """Change currently displayed |VectorArray| index (of previously ~set array)"""
         pass
 
     @abstractmethod
@@ -77,73 +84,20 @@ class MatplotlibAxesBase:
         pass
 
 
-class MatplotlibPatchAxes(MatplotlibAxesBase):
-
-    def __init__(self, figure, grid, bounding_box=None, U=None, vmin=None, vmax=None, codim=2, columns=2,
-                 colorbar=True, sync_timer=None):
-        assert grid.reference_element in (triangle, square)
-        assert grid.dim == 2
-        assert codim in (0, 2)
-
-        subentities, coordinates, entity_map = flatten_grid(grid)
-        self.subentities = subentities if grid.reference_element is triangle \
-            else np.vstack((subentities[:, 0:3], subentities[:, [2, 3, 0]]))
-        self.coordinates = coordinates
-        self.entity_map = entity_map
-        self.reference_element = grid.reference_element
-        self.colorbar = colorbar
-        self.animate = self.set
-
-        if bounding_box is None:
-            bounding_box = grid.bounding_box()
-        assert len(bounding_box) == 2 and all(len(b) == 2 for b in bounding_box)
-        aspect_ratio = (bounding_box[1][1] - bounding_box[0][1]) / (bounding_box[1][0] - bounding_box[0][0])
-
-        super().__init__(U=U, figure=figure, grid=grid,  vmin=vmin, vmax=vmax, codim=codim, columns=columns,
-                         sync_timer=sync_timer, aspect_ratio=aspect_ratio)
-
-    def _plot_init(self):
-        if self.codim == 2:
-            self.p = self.ax[0].tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
-                                          np.zeros(len(self.coordinates)),
-                                          vmin=self.vmin, vmax=self.vmax, shading='gouraud')
-        else:
-            self.p = self.ax[0].tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
-                                          facecolors=np.zeros(len(self.subentities)),
-                                          vmin=self.vmin, vmax=self.vmax, shading='flat')
-        if self.colorbar:
-            # thin plots look ugly with a huge colorbar on the right
-            if self.aspect_ratio < 0.75:
-                orientation = 'horizontal'
-            else:
-                orientation = 'vertical'
-            self.figure.colorbar(self.p, ax=self.ax[0], orientation=orientation)
-
-    def set(self, U, vmin=None, vmax=None):
-        self.vmin = self.vmin if vmin is None else vmin
-        self.vmax = self.vmax if vmax is None else vmax
-        if self.codim == 2:
-            self.p.set_array(U)
-        elif self.reference_element is triangle:
-            self.p.set_array(U)
-        else:
-            self.p.set_array(np.tile(U, 2))
-        self.p.set_clim(self.vmin, self.vmax)
-        return (self.p,)
-
-
 class Matplotlib1DAxes(MatplotlibAxesBase):
 
-    def __init__(self, U, figure, grid, vmin=None, vmax=None, codim=1, separate_axes=False, sync_timer=None,
+    def __init__(self, U, figure, grid, limits, codim=1, separate_axes=False, sync_timer=None,
                  columns=2, bounding_box=None):
         assert isinstance(grid, OnedGrid)
+        assert isinstance(U, VectorArray)
         assert codim in (0, 1)
 
         if bounding_box is None:
             bounding_box = grid.bounding_box()
+        self.limits = limits
+        vmin, vmax = self.limits[0][0], self.limits[0][1]
         aspect_ratio = (bounding_box[1] - bounding_box[0]) / (vmax - vmin)
-
-        super().__init__(U=U, figure=figure, grid=grid, vmin=vmin, vmax=vmax, codim=codim, columns=columns,
+        super().__init__(U=U, figure=figure, grid=grid, limits=limits, codim=codim, columns=columns,
                          sync_timer=sync_timer, separate_axes=separate_axes, aspect_ratio=aspect_ratio)
 
     def _plot_init(self):
@@ -161,9 +115,11 @@ class Matplotlib1DAxes(MatplotlibAxesBase):
             self.lines = [ax.plot(xs, np.zeros_like(xs))[0] for ax in self.ax]
         else:
             self.lines = [self.ax[0].plot(xs, np.zeros_like(xs))[0] for _ in range(self.count)]
-        pad = (self.vmax - self.vmin) * 0.1
+        breakpoint()
+        vmin, vmax = self.limits[0][0], self.limits[0][1]
+        pad = (vmax - vmin) * 0.1
         for ax in self.ax:
-            ax.set_ylim(self.vmin - pad, self.vmax + pad)
+            ax.set_ylim(vmin - pad, vmax + pad)
 
     def _set(self, u, i):
         if self.codim == 1:
@@ -179,9 +135,8 @@ class Matplotlib1DAxes(MatplotlibAxesBase):
             self._set(u, i)
         return self.lines
 
-    def set(self, U, vmin=None, vmax=None):
-        self.vmin = self.vmin if vmin is None else vmin
-        self.vmax = self.vmax if vmax is None else vmax
+    def set(self, U, limits=None):
+        self.limits = limits or self.limits
 
         if isinstance(U, tuple):
             for i, u in enumerate(U):
@@ -189,9 +144,81 @@ class Matplotlib1DAxes(MatplotlibAxesBase):
         else:
             for i, (u, _) in enumerate(zip(U, self.ax)):
                 self._set(u, i)
-        pad = (self.vmax - self.vmin) * 0.1
+        vmin, vmax = self.limits[0][0], self.limits[0][1]
+        pad = (vmax - vmin) * 0.1
         for ax in self.ax:
-            ax.set_ylim(self.vmin - pad, self.vmax + pad)
+            ax.set_ylim(vmin - pad, vmax + pad)
+
+
+
+class MatplotlibPatchAxes(MatplotlibAxesBase):
+
+    def __init__(self, figure, grid, U, limits, bounding_box=None, codim=2, columns=2,
+                 colorbar=True, sync_timer=None):
+        """
+
+        Parameters
+        ==========
+
+        """
+        assert grid.reference_element in (triangle, square)
+        assert grid.dim == 2
+        assert codim in (0, 2)
+        assert isinstance(U, VectorArray)
+
+        subentities, coordinates, entity_map = flatten_grid(grid)
+        self.subentities = subentities if grid.reference_element is triangle \
+            else np.vstack((subentities[:, 0:3], subentities[:, [2, 3, 0]]))
+        self.coordinates = coordinates
+        self.entity_map = entity_map
+        self.reference_element = grid.reference_element
+        self.colorbar = colorbar
+        self.limits = limits
+        self.animate = self.step
+
+        if bounding_box is None:
+            bounding_box = grid.bounding_box()
+        assert len(bounding_box) == 2 and all(len(b) == 2 for b in bounding_box)
+        aspect_ratio = (bounding_box[1][1] - bounding_box[0][1]) / (bounding_box[1][0] - bounding_box[0][0])
+
+        super().__init__(U=U, figure=figure, grid=grid, codim=codim, columns=columns, limits=limits,
+                         sync_timer=sync_timer, aspect_ratio=aspect_ratio)
+
+    def _plot_init(self):
+        if self.codim == 2:
+            self.p = self.ax[0].tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
+                                          np.zeros(len(self.coordinates)),
+                                          vmin=0, vmax=1, shading='gouraud')
+        else:
+            self.p = self.ax[0].tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
+                                          facecolors=np.zeros(len(self.subentities)),
+                                          vmin=0, vmax=1, shading='flat')
+        if self.colorbar:
+            # thin plots look ugly with a huge colorbar on the right
+            if self.aspect_ratio < 0.75:
+                orientation = 'horizontal'
+            else:
+                orientation = 'vertical'
+            self.figure.colorbar(self.p, ax=self.ax[0], orientation=orientation)
+
+    def set(self, U, limits):
+        self.U = U
+        self.limits = limits
+        return self.step(0)
+
+    def step(self, ind):
+        assert ind < len(self.U)
+        U = self.U[ind].to_numpy()[0]
+        if self.codim == 2:
+            self.p.set_array(U)
+        elif self.reference_element is triangle:
+            self.p.set_array(U)
+        else:
+            self.p.set_array(np.tile(U, 2))
+        # limits are always a tuple
+        l,r = self.limits[ind]
+        self.p.set_clim(l[0], r[0])
+        return (self.p,)
 
 
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:
@@ -205,7 +232,7 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
     # noinspection PyShadowingNames
     class Matplotlib1DWidget(FigureCanvas):
 
-        def __init__(self, U, parent, grid, count, vmin=None, vmax=None, legend=None, codim=1,
+        def __init__(self, vecarray_tuple, parent, grid, count, limits, legend=None, codim=1,
                      separate_plots=False, dpi=100):
             assert isinstance(grid, OnedGrid)
             assert codim in (0, 1)
@@ -229,18 +256,20 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
                 if separate_plots:
                     figure.add_subplot(int(count / 2) + count % 2, 2, i + 1)
                     axes = figure.gca()
-                    pad = (vmax[i] - vmin[i]) * 0.1
-                    axes.set_ylim(vmin[i] - pad, vmax[i] + pad)
+                    pad = (limits[i][1] - limits[i][0]) * 0.1
+                    axes.set_ylim(limits[i][0] - pad, limits[i][1] + pad)
                 l, = axes.plot(xs, np.zeros_like(xs))
                 lines = lines + (l,)
                 if legend and separate_plots:
                     axes.legend([legend[i]])
             if not separate_plots:
-                if max(vmax) == min(vmin):
+                min_vmin = min((min(l[0]) for l in limits))
+                max_vmax = max((max(l[1]) for l in limits))
+                if max_vmax == min_vmin:
                     pad = 0.5
                 else:
-                    pad = (max(vmax) - min(vmin)) * 0.1
-                axes.set_ylim(min(vmin) - pad, max(vmax) + pad)
+                    pad = (max_vmax - min_vmin) * 0.1
+                axes.set_ylim(min_vmin - pad, max_vmax + pad)
                 if legend:
                     axes.legend(legend)
             self.lines = lines
@@ -249,9 +278,16 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
             self.setParent(parent)
             self.setMinimumSize(300, 300)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+            self.set(vecarray_tuple, limits)
 
-        def set(self, U, ind):
-            for l, u in zip(self.lines, U):
+        def set(self, vecarray_tuple, limits):
+            self.vecarray_tuple = vecarray_tuple
+            self.limits = limits
+            self.step(0)
+
+        def step(self, ind):
+            for l, u in zip(self.lines, self.vecarray_tuple):
+                u = u.to_numpy()
                 if self.codim == 1:
                     if self.periodic:
                         l.set_ydata(np.concatenate((u[ind], [u[ind][0]])))
@@ -263,10 +299,11 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
 
     class MatplotlibPatchWidget(FigureCanvas):
 
-        def __init__(self, parent, grid, bounding_box=None, vmin=None, vmax=None, codim=2, dpi=100):
+        def __init__(self, U, limits, parent, grid, bounding_box=None, codim=2, dpi=100):
             assert grid.reference_element in (triangle, square)
             assert grid.dim == 2
             assert codim in (0, 2)
+            assert isinstance(U, VectorArray)
 
             self.figure = Figure(dpi=dpi)
             super().__init__(self.figure)
@@ -276,10 +313,15 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
 
             self.patch_axes = MatplotlibPatchAxes(figure=self.figure, grid=grid, bounding_box=bounding_box,
-                                                  vmin=vmin, vmax=vmax, codim=codim)
+                                                  U=U, limits=limits, codim=codim)
 
-        def set(self, U, vmin=None, vmax=None):
-            self.patch_axes.set(U, vmin, vmax)
+        def set(self, U, limits):
+            self.U = U
+            self.limits = limits
+            self.step(0)
+
+        def step(self, ind):
+            self.patch_axes.step(ind)
             self.draw()
 
 else:

@@ -13,14 +13,15 @@ from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 from pymor.vectorarrays.interface import VectorArray
 
 
-def _normalize(u, vmin=None, vmax=None):
-    # rescale to be in [max(0,vmin), min(1,vmax)], scale nan to be the smallest value
+def _normalize(U, vmin=None, vmax=None):
+    # rescale to be in [max(0,vmin), min(1,vmax)]
+    u = U.copy()
     vmin = np.nanmin(u) if vmin is None else vmin
     vmax = np.nanmax(u) if vmax is None else vmax
-    u -= vmin
+    u.axpy(alpha=-vmin, x=u.space.ones(len(u)))
     if (vmax - vmin) > 0:
-        u /= float(vmax - vmin)
-    return np.nan_to_num(u)
+        u.scal(1/float(vmax - vmin))
+    return u
 
 
 def visualize_vista(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
@@ -87,8 +88,11 @@ class _JupyterMultiPlotter:
     def show(self, **kwargs):
         return self._plotter.show(**kwargs)
 
-    def close(self):
+    def nop(self):
         pass
+
+    link_views = nop
+    close = nop
 
     def __setitem__(self, idx, plotter):
         raise NotImplementedError
@@ -100,24 +104,34 @@ class _JupyterMultiPlotter:
         return self._plotter
 
 
-def visualize_vista_mesh(meshes, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
-                         separate_colorbars=False, rescale_colorbars=False, columns=2, color_map='viridis'):
-    from pyvista.utilities.fileio import from_meshio
-    from pyvistaqt import MultiPlotter
-
-    render_size = (300, 300)
+def _load_default_theme(color_map='viridis', title=None):
     # themes are loadable from json files, would make for a nice customization point for users
     my_theme = pv.themes.DocumentTheme()
     my_theme.cmap = color_map
     my_theme.cpos = 'xy'
     my_theme.show_edges = True
-    my_theme.interactive = True
+    my_theme.interactive = False
     my_theme.transparent_background = True
     my_theme.jupyter_backend = 'ipygany'
     my_theme.title = title
     my_theme.axes.show = False
     # apply it globally
     pv.global_theme.load_theme(my_theme)
+
+
+def _get_default_bar_args():
+    # interactive=True currently triggers an Attribute error in pyvista.plotting.scalar_bars.ScalarBars.add_scalar_bar
+    return {'interactive': False}
+
+
+def visualize_vista_mesh(meshes, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
+                         separate_colorbars=False, rescale_colorbars=False, columns=2, color_map='viridis'):
+    from pyvista.utilities.fileio import from_meshio
+    from pyvistaqt import MultiPlotter
+
+    render_size = (300, 300)
+    _load_default_theme()
+    scalar_bar_args = _get_default_bar_args()
     if is_jupyter():
         MultiPlotterType = _JupyterMultiPlotter
     else:
@@ -126,18 +140,18 @@ def visualize_vista_mesh(meshes, bounding_box=([0, 0], [1, 1]), codim=2, title=N
         rows = ceil(len(meshes)/2)
         plotter = MultiPlotterType(nrows=rows, ncols=columns, window_size=render_size)
         for meshlist, ind in zip(meshes, np.unravel_index(list(range(len(meshes))), shape=(rows, columns))):
-            plotter[ind].add_mesh(from_meshio(meshlist[0]), show_edges=True)
+            plotter[ind].add_mesh(from_meshio(meshlist[0]), scalar_bar_args=scalar_bar_args)
+        plotter.link_views()
     else:
         plotter = pv.Plotter()
-        plotter.add_mesh(from_meshio(mesh=meshes[0]))
-
+        plotter.add_mesh(from_meshio(mesh=meshes[0]), scalar_bar_args=scalar_bar_args)
     plotter.camera_position = 'xy'
     return plotter.show()
 
 
 class PyVistaPatchWidget(QtInteractor):
 
-    def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=([0, 0], [1, 1]), codim=2):
+    def __init__(self, U, limits, parent, grid, bounding_box=([0, 0], [1, 1]), codim=2):
         from qtpy.QtWidgets import QSizePolicy
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
@@ -145,27 +159,24 @@ class PyVistaPatchWidget(QtInteractor):
         super().__init__(parent)
         self.setMinimumSize(300, 300)
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+        _load_default_theme()
         self.scalar_name = 'Data'
-        self.mesh = to_meshio(grid, data=None, scalar_name=self.scalar_name, codim=codim)[0]
-        self.add_mesh(self.mesh)
-        self.view_xy()
+        self.mesh_kwargs = {'scalar_bar_args': _get_default_bar_args(),
+                            'scalars': self.scalar_name}
         self.grid = grid
         self.reference_element = grid.reference_element
-        self.vmin = vmin
-        self.vmax = vmax
         self.codim = codim
+        self.set(U, limits)
 
-    def set(self, U, vmin=None, vmax=None):
-        self.vmin = self.vmin if vmin is None else vmin
-        self.vmax = self.vmax if vmax is None else vmax
+    def set(self, U, limits):
+        self.clear()
+        self.limits = limits
+        self.mesh_data = to_meshio(self.grid, data=U, scalar_name=self.scalar_name, codim=self.codim)
+        self.meshes = [self.add_mesh(mesh, name=f'self.scalar_name_{i}', **self.mesh_kwargs)
+                       for i, mesh in enumerate(self.mesh_data)]
+        self.view_xy()
 
-        mesh = to_meshio(self.grid, U)[0]
-        if self.codim == 2:
-            arrays = self.mesh.point_arrays
-            arrays[self.scalar_name] = mesh.point_data[self.scalar_name]
-        else:
-            arrays = self.mesh.cell_arrays
-            arrays[self.scalar_name] = mesh.cell_data[self.scalar_name]
+    def step(self, ind):
+        for i, mesh in enumerate(self.meshes):
+            mesh.SetVisibility(i==ind)
 
-        _normalize(arrays[self.scalar_name], vmin, vmax)
-        self.render()
