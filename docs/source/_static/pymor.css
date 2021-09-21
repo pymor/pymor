@@ -61,3 +61,27 @@
     padding: calc(var(--jp-widgets-container-padding) * 1 / 5) var(--jp-widgets-container-padding) !important;
     font-size: .7rem !important;
 }
+
+div.cell div.cell_input {
+    border: None !important;
+    border-left: green solid medium !important;
+}
+
+div.cell div.cell_output, div.cell div.cell_output .highlight {
+    padding-left: 0 !important;
+    background-color: #fff2cc !important;
+}
+
+div.cell div.cell_output div.jupyter-widgets {
+    margin: 0 !important;
+}
+
+div.cell_output img {
+    padding-top: 0.5em !important;
+    padding-left: 0.5em !important;
+    padding-right: 0.5em !important;
+}
+
+div.cell_output .output.stream, div.cell_output .output.text_plain {
+    border: None !important;
+}
