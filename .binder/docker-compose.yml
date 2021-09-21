@@ -25,20 +25,19 @@ services:
             BASE: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py${DOCKER_BASE_PYTHON}:${CI_IMAGE_TAG}
             PYMOR_JUPYTER_TOKEN: "${PYMOR_JUPYTER_TOKEN}"
             NB_USER: "${NB_USER}"
-            NB_UID: "${NB_UID}"
+            NB_UID: 1000
 
     ports:
         - 9181:8888
     volumes:
-        - ./..:/pymor:z
-        - ./local_packages:/pymor/local_packages:z
+        - ./..:/pymor
+        - ./local_packages:/pymor/local_packages
     restart: "no"
     environment:
       - CI_COMMIT_REF_NAME
       - NB_DIR
       - PYMOR_HYPOTHESIS_PROFILE
       - PYMOR_PYTEST_EXTRA
-    user: ${USER}
     entrypoint: /usr/local/bin/dev-entrypoint.bash
     # xsrf check disabled for docs viewing with chrome. Somewhat related issue: https://github.com/jupyterlab/jupyterlab/issues/6106
     # and see also https://bugs.chromium.org/p/chromium/issues/detail?id=455987
