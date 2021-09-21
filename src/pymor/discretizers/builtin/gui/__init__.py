@@ -18,9 +18,9 @@ def vmin_vmax_vectorarray(array_tuple, separate_colorbars, rescale_colorbars):
         iff False, min/max are the same for all indices for all elements of the U tuple
     """
     assert isinstance(array_tuple, tuple)
-    limits = {}
     ind_count = len(array_tuple[0])
     tuple_size = len(array_tuple)
+    limits = [None] * ind_count
     mins, maxs = [None] * ind_count, [None] * ind_count
     for ind in range(ind_count):
         mins[ind] = tuple(np.min(U[ind].to_numpy()) for U in array_tuple)
@@ -36,6 +36,6 @@ def vmin_vmax_vectorarray(array_tuple, separate_colorbars, rescale_colorbars):
             if separate_colorbars:
                 limits[ind] = mins[0], maxs[0]
             else:
-                limits[ind] = ((min(np.min(U[0]) for U in array_tuple),) * tuple_size,
-                               (max(np.max(U[0]) for U in array_tuple),) * tuple_size)
+                limits[ind] = ((min(np.min(U[0].to_numpy()) for U in array_tuple),) * tuple_size,
+                               (max(np.max(U[0].to_numpy()) for U in array_tuple),) * tuple_size)
     return limits

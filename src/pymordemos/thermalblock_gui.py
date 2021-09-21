@@ -90,13 +90,14 @@ class SimPanel(QtWidgets.QWidget):
         super().__init__(parent)
         self.sim = sim
         box = QtWidgets.QHBoxLayout()
+        limits = [(0., 0.8)]
+        U = sim.m.solution_space.zeros()
         if is_windows_platform():
-            self.solution = MatplotlibPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
+            self.solution = MatplotlibPatchWidget(parent=self, U=U, grid=self.sim.grid, limits=limits)
             box.addWidget(self.solution, 2)
         else:
-            self.solution = PyVistaPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
+            self.solution = PyVistaPatchWidget(parent=self, U=U, grid=self.sim.grid, limits=limits)
             box.addWidget(self.solution, 2)
-            box.addWidget(self.bar, 2)
         self.param_panel = ParamRuler(self, sim)
         box.addWidget(self.param_panel)
         self.setLayout(box)
