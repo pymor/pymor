@@ -278,13 +278,14 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
     max_basis_size
         Only plot results up to this basis size.
     plot_effectivities
-        Whether to plot the effectivities of the a posteriori error estimate.
+        If `True`, plot the effectivities of the a posteriori error estimate.
     plot_condition
-        Whether to plot the condition of the reduced system matrix.
+        If `True`, plot the condition of the reduced system matrix.
     plot_custom_logarithmic
-        Whether to `semilogy` plot the custom values.
+        If `True`, use a logarithmic y-axis to plot the computed custom
+        values.
     plot_custom_with_errors
-        Whether to plot errors and custom values in a single plot or in separate ones.
+        It `True`, plot errors and custom values in a single plot (otherwise in separate ones).
     """
 
     error_norms = 'norms' in result
