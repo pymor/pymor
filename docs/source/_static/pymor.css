@@ -1,3 +1,9 @@
+.cell_input {
+  border: 0px #ccc solid !important;
+  border-left-color: green !important;
+  border-left-width: medium !important;
+}
+
 .md-typeset .md-typeset__table{
     display:block;
     /* background-color: red; */
