@@ -85,3 +85,7 @@ div.cell_output img {
 div.cell_output .output.stream, div.cell_output .output.text_plain {
     border: None !important;
 }
+
+div.lm-Widget.p-Widget.lm-Panel.p-Panel.jp-OutputArea-child {
+    float: left !important;
+}
