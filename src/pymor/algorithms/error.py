@@ -384,6 +384,8 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
         ax.set_title('maximum custom values')
         current_plot += 1
 
+    plt.show()
+
 
 def _compute_errors(mu, fom, reductor, error_estimator, error_norms, condition, custom, basis_sizes):
     import sys
