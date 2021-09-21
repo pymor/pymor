@@ -194,13 +194,6 @@ def _test_demo(demo):
     except ImportError:
         pass
 
-    # workaround for dolfin+dune incompat https://github.com/pymor/pymor/pull/1389
-    try:
-        # this needs to happen before importing dolfin
-        import dune.gdt  # noqa
-    except ImportError:
-        pass
-
     # reset default RandomState
     import pymor.tools.random
     pymor.tools.random._default_random_state = None
