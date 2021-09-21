@@ -1,7 +1,7 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
-
+import itertools
 from numbers import Number
 
 import pytest
@@ -1001,16 +1001,18 @@ def test_pickle(vector_array):
 
 
 @pyst.given_vector_arrays(count=2, compatible=True)
-@pytest.mark.parametrize('rescale_colorbars', [True, False])
-@pytest.mark.parametrize('separate_colorbars', [True, False])
-def test_vmin_vmax_vectorarray(vector_arrays, separate_colorbars, rescale_colorbars):
+def test_vmin_vmax_vectorarray(vector_arrays):
     vector_arrays = tuple(vector_arrays)
-    limits = vmin_vmax_vectorarray(vector_arrays, separate_colorbars=separate_colorbars,
-                                   rescale_colorbars=rescale_colorbars)
-    for l in limits.values():
-        assert isinstance(l, tuple)
-        assert len(l) == 2
-        assert isinstance(l[0], tuple)
-        assert isinstance(l[1], tuple)
-        assert all(isinstance(t, float) for t in l[0])
-        assert all(isinstance(t, float) for t in l[1])
+    assume(len(vector_arrays[0]) == len(vector_arrays[1]))
+
+    for rescale_colorbars, separate_colorbars in itertools.product([True, False], [True, False]):
+        limits = vmin_vmax_vectorarray(vector_arrays, separate_colorbars=separate_colorbars,
+                                       rescale_colorbars=rescale_colorbars)
+        assert isinstance(limits, list)
+        for l in limits:
+            assert isinstance(l, tuple)
+            assert len(l) == 2
+            assert isinstance(l[0], tuple)
+            assert isinstance(l[1], tuple)
+            assert all(isinstance(t, float) for t in l[0])
+            assert all(isinstance(t, float) for t in l[1])

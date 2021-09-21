@@ -17,7 +17,7 @@ from pymor.discretizers.builtin.domaindiscretizers.default import discretize_dom
 from pymortests.base import runmodule
 
 
-@pytest.fixture(params=(('matplotlib', RectGrid), ('gl', RectGrid), ('matplotlib', OnedGrid)))
+@pytest.fixture(params=(('matplotlib', RectGrid), ('pyvista', RectGrid), ('matplotlib', OnedGrid)))
 def backend_gridtype(request):
     return request.param
 

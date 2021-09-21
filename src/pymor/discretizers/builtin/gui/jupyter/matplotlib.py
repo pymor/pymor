@@ -13,47 +13,48 @@ from pymor.vectorarrays.interface import VectorArray
 
 class MPLPlotBase:
 
-    def __init__(self, U, grid, codim, legend, bounding_box=None, separate_colorbars=False, columns=2,
+    def __init__(self, Ut, grid, codim, legend, bounding_box=None, separate_colorbars=False, columns=2,
                  separate_plots=False, separate_axes=False):
-        assert isinstance(U, VectorArray) \
-               or (isinstance(U, tuple)
-                   and all(isinstance(u, VectorArray) for u in U)
-                   and all(len(u) == len(U[0]) for u in U))
+        if isinstance(Ut, VectorArray):
+            vecarray_tuple = (Ut,)
+        else:
+            vecarray_tuple = Ut
+        assert (all(isinstance(u, VectorArray) for u in vecarray_tuple)
+                   and all(len(u) == len(vecarray_tuple[0]) for u in vecarray_tuple))
         if separate_plots:
-            self.fig_ids = (U.uid,) if isinstance(U, VectorArray) else tuple(u.uid for u in U)
+            self.fig_ids = tuple(u.uid for u in vecarray_tuple)
         else:
             # using the same id multiple times lets us automagically re-use the same figure
-            self.fig_ids = (U.uid,) if isinstance(U, VectorArray) else [U[0].uid] * len(U)
-        self.U = U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-            tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
-        if grid.dim == 1 and len(U[0]) > 1 and not separate_plots:
+            self.fig_ids = [vecarray_tuple[0].uid] * len(vecarray_tuple)
+        self.vecarray_tuple = vecarray_tuple
+        if grid.dim == 1 and len(vecarray_tuple[0]) > 1 and not separate_plots:
             raise NotImplementedError('Plotting of VectorArrays with length > 1 is only available with '
                                       '`separate_plots=True`')
 
         if not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
-        if not config.HAVE_IPYWIDGETS and len(U[0]) > 1:
+        if not config.HAVE_IPYWIDGETS and len(vecarray_tuple[0]) > 1:
             raise ImportError('cannot visualize: import of ipywidgets failed')
         self.legend = (legend,) if isinstance(legend, str) else legend
-        assert self.legend is None or isinstance(self.legend, tuple) and len(self.legend) == len(U)
-        self._set_limits(U)
+        assert self.legend is None or isinstance(self.legend, tuple) and len(self.legend) == len(vecarray_tuple)
 
         self.plots = []
         # this _supposed_ to let animations run in sync
         sync_timer = None
 
-        do_animation = not separate_axes and len(U[0]) > 1
+        do_animation = not separate_axes and len(vecarray_tuple[0]) > 1
 
         if separate_plots:
-            for i, (vmin, vmax, u) in enumerate(zip(self.vmins, self.vmaxs, U)):
+            for i, u in enumerate(vecarray_tuple):
                 figure = plt.figure(self.fig_ids[i])
                 sync_timer = sync_timer or figure.canvas.new_timer()
+                limits = vmin_vmax_vectorarray((u,), separate_colorbars=separate_colorbars, rescale_colorbars=False)
                 if grid.dim == 2:
-                    plot = MatplotlibPatchAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, vmin=vmin,
-                                               vmax=vmax, bounding_box=bounding_box, codim=codim, columns=columns,
-                                               colorbar=separate_colorbars or i == len(U) - 1)
+                    plot = MatplotlibPatchAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, limits=limits,
+                                               bounding_box=bounding_box, codim=codim, columns=columns,
+                                               colorbar=separate_colorbars or i == len(vecarray_tuple) - 1)
                 else:
-                    plot = Matplotlib1DAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, vmin=vmin, vmax=vmax,
+                    plot = Matplotlib1DAxes(U=u, figure=figure, sync_timer=sync_timer, grid=grid, limits=limits,
                                             columns=columns, codim=codim, separate_axes=separate_axes)
                 if self.legend:
                     plot.ax[0].set_title(self.legend[i])
@@ -61,13 +62,13 @@ class MPLPlotBase:
         else:
             figure = plt.figure(self.fig_ids[0])
             sync_timer = sync_timer or figure.canvas.new_timer()
+            limits = vmin_vmax_vectorarray(vecarray_tuple, separate_colorbars=separate_colorbars, rescale_colorbars=False)
             if grid.dim == 2:
-                plot = MatplotlibPatchAxes(U=U, figure=figure, sync_timer=sync_timer, grid=grid, vmin=self.vmins,
-                                           vmax=self.vmaxs, bounding_box=bounding_box, codim=codim, columns=columns,
-                                           colorbar=True)
+                raise NotImplementedError("Plotting multiple VectorArray in the same Axes object is only "
+                                          "supported for grid.dim==1")
             else:
-                plot = Matplotlib1DAxes(U=U, figure=figure, sync_timer=sync_timer, grid=grid, vmin=self.vmins,
-                                        vmax=self.vmaxs, columns=columns, codim=codim, separate_axes=separate_axes)
+                plot = Matplotlib1DAxes(U=vecarray_tuple, figure=figure, sync_timer=sync_timer, grid=grid,
+                                        limits=limits, columns=columns, codim=codim, separate_axes=separate_axes)
             if self.legend:
                 plot.ax[0].set_title(self.legend[0])
             self.plots.append(plot)
@@ -126,10 +127,6 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
 
     class Plot(MPLPlotBase):
 
-        def _set_limits(self, np_U):
-            self.vmins, self.vmaxs = vmin_vmax_numpy(np_U, separate_colorbars=separate_colorbars,
-                                                     rescale_colorbars=rescale_colorbars)
-
         def __init__(self):
             super(Plot, self).__init__(U, grid, codim, legend, bounding_box=bounding_box, columns=columns,
                                        separate_colorbars=separate_colorbars, separate_plots=True,
@@ -171,18 +168,6 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     """
 
     class Plot(MPLPlotBase):
-
-        def _set_limits(self, np_U):
-            if separate_plots:
-                if separate_axes:
-                    self.vmins = tuple(np.min(u) for u in np_U)
-                    self.vmaxs = tuple(np.max(u) for u in np_U)
-                else:
-                    self.vmins = (min(np.min(u) for u in np_U),) * len(np_U)
-                    self.vmaxs = (max(np.max(u) for u in np_U),) * len(np_U)
-            else:
-                self.vmins = min(np.min(u) for u in np_U)
-                self.vmaxs = max(np.max(u) for u in np_U)
 
         def __init__(self):
             super(Plot, self).__init__(U, grid, codim, legend, separate_plots=separate_plots, columns=columns,

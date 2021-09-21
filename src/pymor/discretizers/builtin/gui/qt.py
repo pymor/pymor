@@ -94,7 +94,8 @@ if config.HAVE_QT:
     class PlotMainWindow(QWidget):
         """Base class for plot main windows."""
 
-        def __init__(self, U, plot, length=1, title=None):
+        def __init__(self, vecarray_tuple, plot_panel, limits, length=1, title=None):
+            assert all(isinstance(v, VectorArray) for v in vecarray_tuple)
             super().__init__()
 
             layout = QVBoxLayout()
@@ -103,9 +104,9 @@ if config.HAVE_QT:
                 title = QLabel('<b>' + title + '</b>')
                 title.setAlignment(Qt.AlignHCenter)
                 layout.addWidget(title)
-            layout.addWidget(plot)
+            layout.addWidget(plot_panel)
 
-            plot.set(U, 0)
+            plot_panel.set(vecarray_tuple, limits)
 
             if length > 1:
                 hlayout = QHBoxLayout()
@@ -179,12 +180,12 @@ if config.HAVE_QT:
                 self.a_save.triggered.connect(self.save)
 
             self.setLayout(layout)
-            self.plot = plot
-            self.U = U
+            self.plot_panel = plot_panel
+            self.vecarray_tuple = vecarray_tuple
             self.length = length
 
         def slider_changed(self, ind):
-            self.plot.set(self.U, ind)
+            self.plot_panel.step(ind)
 
         def speed_changed(self, val):
             self.timer.setInterval(val * 20)
@@ -313,15 +314,18 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
     # TODO extract class
     class MainWindow(PlotMainWindow):
-        def __init__(self, grid, U, bounding_box, codim, title, legend, separate_colorbars, rescale_colorbars, backend):
+        def __init__(self, grid, UT, bounding_box, codim, title, legend, separate_colorbars, rescale_colorbars, backend):
+            if isinstance(UT, VectorArray):
+                vecarray_tuple = (UT,)
+            else:
+                vecarray_tuple = UT
 
-            assert isinstance(U, VectorArray) \
-                or (isinstance(U, tuple) and all(isinstance(u, VectorArray) for u in U)
-                    and all(len(u) == len(U[0]) for u in U))
+            assert (all(isinstance(u, VectorArray) for u in vecarray_tuple)
+                    and all(len(u) == len(vecarray_tuple[0]) for u in vecarray_tuple))
             if isinstance(legend, str):
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
-            if not separate_colorbars and len(U) > 1:
+            if not separate_colorbars and len(vecarray_tuple) > 1:
                 l = getLogger('pymor.discretizers.builtin.gui.qt.visualize_patch')
                 l.warning('separate_colorbars=False not supported')
             if backend == 'pyvista':
@@ -329,16 +333,17 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             else:
                 widget = MatplotlibPatchWidget
                 separate_colorbars = True
+            limits = vmin_vmax_vectorarray(vecarray_tuple, separate_colorbars=separate_colorbars,
+                                                    rescale_colorbars=rescale_colorbars)
 
             class PlotPanel(QWidget):
                 def __init__(self):
                     super().__init__()
-                    self.vmins, self.vmaxs = vmin_vmax_vectorarray(U, separate_colorbars=separate_colorbars,
-                                                                   rescale_colorbars=rescale_colorbars)
                     layout = QHBoxLayout()
                     plot_layout = QGridLayout()
-                    plots = [widget(self, grid, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
-                             for vmin, vmax in zip(self.vmins, self.vmaxs)]
+                    plots = [widget(parent=self, U=u, limits=limits, grid=grid, bounding_box=bounding_box,
+                                    codim=codim)
+                             for u in vecarray_tuple]
                     if legend:
                         for i, plot, l in zip(range(len(plots)), plots, legend):
                             subplot_layout = QVBoxLayout()
@@ -364,19 +369,17 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                     self.setLayout(layout)
                     self.plots = plots
 
-                def set(self, U, ind):
-                    if rescale_colorbars:
-                        if separate_colorbars:
-                            self.vmins = tuple(np.min(u[ind]) for u in U)
-                            self.vmaxs = tuple(np.max(u[ind]) for u in U)
-                        else:
-                            self.vmins = (min(np.min(u[ind]) for u in U),) * len(U)
-                            self.vmaxs = (max(np.max(u[ind]) for u in U),) * len(U)
+                def set(self, U, limits):
+                    self.U = U
+                    self.limits = limits
+                    for u, plot in zip(self.U, self.plots):
+                        plot.set(u, limits=limits)
 
-                    for u, plot, vmin, vmax in zip(U, self.plots, self.vmins, self.vmaxs):
-                        plot.set(u[ind], vmin=vmin, vmax=vmax)
+                def step(self, ind):
+                    for plot in self.plots:
+                        plot.step(ind)
 
-            super().__init__(U, PlotPanel(), title=title, length=len(U[0]))
+            super().__init__(vecarray_tuple, PlotPanel(), limits=limits, title=title, length=len(vecarray_tuple[0]))
             self.grid = grid
             self.codim = codim
 
@@ -388,10 +391,10 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             filename = Path(QFileDialog.getSaveFileName(self, 'Save as vtk file')[0])
             base_name = filename.stem
             if base_name:
-                if len(self.U) == 1:
-                    write_vtk(self.grid, self.U[0], base_name, codim=self.codim)
+                if len(self.vecarray_tuple) == 1:
+                    write_vtk(self.grid, self.vecarray_tuple[0], base_name, codim=self.codim)
                 else:
-                    for i, u in enumerate(self.U):
+                    for i, u in enumerate(self.vecarray_tuple):
                         write_vtk(self.grid, u, f'{base_name}-{i}',
                                   codim=self.codim)
 
@@ -446,19 +449,21 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
 
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, codim, title, legend, separate_plots):
-            assert isinstance(U, VectorArray) \
-                or (isinstance(U, tuple)
-                    and all(isinstance(u, VectorArray) for u in U)
-                    and all(len(u) == len(U[0]) for u in U))
-            U = (U.to_numpy(),) if isinstance(U, VectorArray) else tuple(u.to_numpy() for u in U)
+            if isinstance(U, VectorArray):
+                vecarray_tuple = (U,)
+            else:
+                vecarray_tuple = U
+            assert (all(isinstance(u, VectorArray) for u in vecarray_tuple)
+                    and all(len(u) == len(vecarray_tuple[0]) for u in vecarray_tuple))
             if isinstance(legend, str):
                 legend = (legend,)
-            assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
+            assert legend is None or isinstance(legend, tuple) and len(legend) == len(vecarray_tuple)
 
-            plot_widget = Matplotlib1DWidget(U, None, grid, len(U), vmin=[np.min(u) for u in U],
-                                             vmax=[np.max(u) for u in U], legend=legend, codim=codim,
-                                             separate_plots=separate_plots)
-            super().__init__(U, plot_widget, title=title, length=len(U[0]))
+            limits = vmin_vmax_vectorarray(vecarray_tuple, separate_colorbars=False, rescale_colorbars=False)
+
+            plot_widget = Matplotlib1DWidget(vecarray_tuple, parent=None, grid=grid, count=len(vecarray_tuple),
+                                             limits=limits, legend=legend, codim=codim, separate_plots=separate_plots)
+            super().__init__(vecarray_tuple, plot_widget, limits=limits, title=title, length=len(vecarray_tuple[0]))
             self.grid = grid
 
     _launch_qt_app(lambda: MainWindow(grid, U, codim, title=title, legend=legend, separate_plots=separate_plots), block)
