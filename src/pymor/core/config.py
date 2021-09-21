@@ -2,14 +2,6 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-# workaround for dolfin+dune incompat https://github.com/pymor/pymor/issues/1397
-try:
-    # this needs to happen before importing dolfin
-    import dune.gdt  # noqa
-except ImportError:
-    pass
-
-
 from importlib import import_module
 from packaging.version import parse
 import platform
@@ -31,6 +23,13 @@ def _can_import(module):
 
 
 def _get_fenics_version():
+    # workaround for dolfin+dune incompat https://github.com/pymor/pymor/issues/1397
+    try:
+        # this needs to happen before importing dolfin
+        import dune.gdt  # noqa
+    except ImportError:
+        pass
+
     import dolfin as df
     if df.__version__ != '2019.1.0':
         warnings.warn(f'FEniCS bindings have been tested for version 2019.1.0 (installed: {df.__version__}).')
