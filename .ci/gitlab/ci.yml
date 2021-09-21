@@ -24,8 +24,8 @@ stages:
           when: never
         - when: on_success
     variables:
-        PYPI_MIRROR_TAG: 6921dfb5f30670a08f7eb0f21a92908f0c8f8458
-        CI_IMAGE_TAG: 6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        PYPI_MIRROR_TAG: af1d9e89d4511976bfa993c3c4716f1ca9d851f3
+        CI_IMAGE_TAG: af1d9e89d4511976bfa993c3c4716f1ca9d851f3
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
         BINDERIMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
@@ -59,7 +59,7 @@ stages:
 
 .submit:
     extends: .test_base
-    image: zivgitlab.wwu.io/pymor/docker/pymor/ci_sanity:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/ci_sanity:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     variables:
         XDG_CACHE_DIR: /tmp
     retry:
@@ -141,7 +141,7 @@ stages:
 
 .sanity_checks:
     extends: .test_base
-    image: zivgitlab.wwu.io/pymor/docker/pymor/ci_sanity:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/ci_sanity:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     stage: sanity
 #******** end definition of base jobs *********************************************************************************#
 
@@ -176,7 +176,7 @@ mpi 3 7:
         max: 2
         when: always
     services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -199,7 +199,7 @@ mpi 3 8:
         max: 2
         when: always
     services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -222,7 +222,7 @@ mpi 3 9:
         max: 2
         when: always
     services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -242,9 +242,9 @@ pip_installed 3 7:
     variables:
         COVERAGE_FILE: coverage_pip_installed__3.7
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -264,9 +264,9 @@ pip_installed 3 8:
     variables:
         COVERAGE_FILE: coverage_pip_installed__3.8
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -286,9 +286,9 @@ pip_installed 3 9:
     variables:
         COVERAGE_FILE: coverage_pip_installed__3.9
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -308,7 +308,7 @@ tutorials 3 7:
     variables:
         COVERAGE_FILE: coverage_tutorials__3.7
     services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -328,7 +328,7 @@ tutorials 3 8:
     variables:
         COVERAGE_FILE: coverage_tutorials__3.8
     services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -348,7 +348,7 @@ tutorials 3 9:
     variables:
         COVERAGE_FILE: coverage_tutorials__3.9
     services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -368,7 +368,7 @@ vanilla 3 7:
     variables:
         COVERAGE_FILE: coverage_vanilla__3.7
     services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -388,7 +388,7 @@ vanilla 3 8:
     variables:
         COVERAGE_FILE: coverage_vanilla__3.8
     services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -408,7 +408,7 @@ vanilla 3 9:
     variables:
         COVERAGE_FILE: coverage_vanilla__3.9
     services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -428,9 +428,9 @@ numpy_git 3 9:
     variables:
         COVERAGE_FILE: coverage_numpy_git__3.9
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -450,9 +450,9 @@ oldest 3 7:
     variables:
         COVERAGE_FILE: coverage_oldest__3.7
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_oldest_py3.7:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_oldest_py3.7:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -472,7 +472,7 @@ cpp_demo 3 7:
     variables:
         COVERAGE_FILE: coverage_cpp_demo__3.7
     services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -492,7 +492,7 @@ cpp_demo 3 8:
     variables:
         COVERAGE_FILE: coverage_cpp_demo__3.8
     services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -512,7 +512,7 @@ cpp_demo 3 9:
     variables:
         COVERAGE_FILE: coverage_cpp_demo__3.9
     services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -532,9 +532,9 @@ ci_weekly 3 7:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     
     script: ./.ci/gitlab/test_vanilla.bash
 ci_weekly 3 8:
@@ -546,9 +546,9 @@ ci_weekly 3 8:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     
     script: ./.ci/gitlab/test_vanilla.bash
 ci_weekly 3 9:
@@ -560,9 +560,9 @@ ci_weekly 3 9:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     
     script: ./.ci/gitlab/test_vanilla.bash
 
@@ -613,7 +613,7 @@ submit ci_weekly 3 9:
 from source 1/3:
     tags: [mike]
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
     needs: ["ci setup"]
     rules:
@@ -621,13 +621,13 @@ from source 1/3:
       when: never
     - when: on_success
     stage: install_checks
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_fedora:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_fedora:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script: ./.ci/gitlab/install_checks/fedora/check.bash
 
 from source 2/3:
     tags: [mike]
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
     needs: ["ci setup"]
     rules:
@@ -635,13 +635,13 @@ from source 2/3:
       when: never
     - when: on_success
     stage: install_checks
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_buster:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_buster:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script: ./.ci/gitlab/install_checks/debian_buster/check.bash
 
 from source 3/3:
     tags: [mike]
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
     needs: ["ci setup"]
     rules:
@@ -649,7 +649,7 @@ from source 3/3:
       when: never
     - when: on_success
     stage: install_checks
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_bullseye:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_bullseye:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script: ./.ci/gitlab/install_checks/debian_bullseye/check.bash
 
 
@@ -732,7 +732,7 @@ sdist_and_wheel:
 
 pypi:
     extends: .test_base
-    image: zivgitlab.wwu.io/pymor/docker/pymor/python_3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/python_3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     stage: deploy
     dependencies:
       - sdist_and_wheel
@@ -764,7 +764,7 @@ from wheel 1/3:
     extends: .check_wheel
     dependencies: ["sdist_and_wheel"]
     needs: ["sdist_and_wheel"]
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_fedora:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_fedora:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
       - echo "Testing wheel install on fedora with Python 3.9"
       - python3 -m pip --version
@@ -774,7 +774,7 @@ from wheel 2/3:
     extends: .check_wheel
     dependencies: ["sdist_and_wheel"]
     needs: ["sdist_and_wheel"]
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_buster:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_buster:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
       - echo "Testing wheel install on debian_buster with Python 3.7"
       - python3 -m pip --version
@@ -784,7 +784,7 @@ from wheel 3/3:
     extends: .check_wheel
     dependencies: ["sdist_and_wheel"]
     needs: ["sdist_and_wheel"]
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_bullseye:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian_bullseye:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
       - echo "Testing wheel install on debian_bullseye with Python 3.9"
       - python3 -m pip --version
@@ -798,9 +798,9 @@ docs build 3 7:
           when: never
         - when: on_success
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py3.7:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py3.7:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: build
@@ -818,9 +818,9 @@ docs build 3 8:
           when: never
         - when: on_success
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.8:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py3.8:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py3.8:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: build
@@ -838,9 +838,9 @@ docs build 3 9:
           when: never
         - when: on_success
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
           alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py3.9:6921dfb5f30670a08f7eb0f21a92908f0c8f8458
+    image: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py3.9:af1d9e89d4511976bfa993c3c4716f1ca9d851f3
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: build
