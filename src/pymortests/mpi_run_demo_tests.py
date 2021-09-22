@@ -50,6 +50,10 @@ if __name__ == '__main__':
     mpi.call(_fix_conftest_plugin_load_stalling)
 
     demo = str(pymor_root_dir / 'src' / 'pymortests' / 'demos.py')
-    success = pytest.main(['-svx', '-k', 'test_demo', demo]) == pytest.ExitCode.OK
+    args = ['-svx', '-k', 'test_demo', demo]
+    extra = os.environ.get('PYMOR_PYTEST_EXTRA', None)
+    if extra:
+        args.append(extra)
+    success = pytest.main(args) == pytest.ExitCode.OK
     with open(result_file_fn, 'wt') as result_file:
         result_file.write(f'{success}')
