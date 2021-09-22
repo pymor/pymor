@@ -4,8 +4,6 @@
 
 import numpy as np
 
-from pymor.vectorarrays.interface import VectorArray
-
 
 def vmin_vmax_vectorarray(array_tuple, separate_colorbars, rescale_colorbars):
     """

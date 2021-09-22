@@ -60,7 +60,7 @@ myst_heading_anchors = 2
 import substitutions # noqa
 myst_substitutions = substitutions.myst_substitutions
 jupyter_execute_notebooks = "cache"
-execution_timeout = 120
+execution_timeout = 180
 # print tracebacks to stdout
 execution_show_tb = True
 

@@ -121,7 +121,8 @@ def _load_default_theme(color_map='viridis', title=None):
 
 
 def _get_default_bar_args():
-    # interactive=True currently triggers an Attribute error in pyvista.plotting.scalar_bars.ScalarBars.add_scalar_bar
+    # interactive=True currently triggers an Attribute error in
+    # pyvista.plotting.scalar_bars.ScalarBars.add_scalar_bar
     return {'interactive': False}
 
 
@@ -179,5 +180,4 @@ class PyVistaPatchWidget(QtInteractor):
 
     def step(self, ind):
         for i, mesh in enumerate(self.meshes):
-            mesh.SetVisibility(i==ind)
-
+            mesh.SetVisibility(i == ind)
