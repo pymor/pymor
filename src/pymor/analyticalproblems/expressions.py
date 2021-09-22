@@ -45,7 +45,7 @@ class Expression(ParametricObject):
             all_args.update({k: v for k, v in zip(variables, args)})
             result = np.broadcast_to(eval(code,
                                           _numpy_functions,
-                                          dict(all_args, mu=mu)),
+                                          all_args),
                                      input_shape + self.shape)
             return result
 
