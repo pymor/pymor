@@ -237,8 +237,7 @@ class ExpressionFunction(GenericFunction):
     Parameters
     ----------
     expression
-        A Python expression of one variable `x` and a parameter `mu` given as
-        a string.
+        A Python expression of one variable and the `parameters`, given as a `str`.
     dim_domain
         The dimension of the domain.
     shape_range
@@ -248,13 +247,18 @@ class ExpressionFunction(GenericFunction):
     values
         Dictionary of additional constants that can be used in `expression`
         with their corresponding value.
+    variable
+        Name of the input variable in the given expression.
     name
         The name of the function.
     """
 
-    def __init__(self, expression, dim_domain=1, parameters={}, values={}, name=None):
-        self.expression_obj = parse_expression(expression, parameters=dict(parameters, x=dim_domain), values=values)
-        super().__init__(self.expression_obj.to_numpy(['x']), dim_domain, self.expression_obj.shape, parameters, name)
+    def __init__(self, expression, dim_domain=1, parameters={}, values={}, variable='x', name=None):
+        params = parameters.copy()
+        params[variable] = dim_domain
+        self.expression_obj = parse_expression(expression, parameters=params, values=values)
+        super().__init__(self.expression_obj.to_numpy([variable]),
+                         dim_domain, self.expression_obj.shape, parameters, name)
         self.__auto_init(locals())
 
     def __reduce__(self):
