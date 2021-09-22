@@ -8,8 +8,6 @@ This module provides widgets for displaying plots of
 scalar data assigned to one- and two-dimensional grids using
 :mod:`matplotlib`. These widgets are not intended to be used directly.
 """
-from functools import partial
-
 import numpy as np
 from IPython.core.display import HTML
 from matplotlib import animation
@@ -115,7 +113,6 @@ class Matplotlib1DAxes(MatplotlibAxesBase):
             self.lines = [ax.plot(xs, np.zeros_like(xs))[0] for ax in self.ax]
         else:
             self.lines = [self.ax[0].plot(xs, np.zeros_like(xs))[0] for _ in range(self.count)]
-        breakpoint()
         vmin, vmax = self.limits[0][0], self.limits[0][1]
         pad = (vmax - vmin) * 0.1
         for ax in self.ax:
@@ -150,17 +147,10 @@ class Matplotlib1DAxes(MatplotlibAxesBase):
             ax.set_ylim(vmin - pad, vmax + pad)
 
 
-
 class MatplotlibPatchAxes(MatplotlibAxesBase):
 
     def __init__(self, figure, grid, U, limits, bounding_box=None, codim=2, columns=2,
                  colorbar=True, sync_timer=None):
-        """
-
-        Parameters
-        ==========
-
-        """
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
@@ -216,7 +206,7 @@ class MatplotlibPatchAxes(MatplotlibAxesBase):
         else:
             self.p.set_array(np.tile(U, 2))
         # limits are always a tuple
-        l,r = self.limits[ind]
+        l, r = self.limits[ind]
         self.p.set_clim(l[0], r[0])
         return (self.p,)
 

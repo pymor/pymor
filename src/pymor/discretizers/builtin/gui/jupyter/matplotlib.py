@@ -20,7 +20,7 @@ class MPLPlotBase:
         else:
             vecarray_tuple = Ut
         assert (all(isinstance(u, VectorArray) for u in vecarray_tuple)
-                   and all(len(u) == len(vecarray_tuple[0]) for u in vecarray_tuple))
+                and all(len(u) == len(vecarray_tuple[0]) for u in vecarray_tuple))
         if separate_plots:
             self.fig_ids = tuple(u.uid for u in vecarray_tuple)
         else:
@@ -62,7 +62,8 @@ class MPLPlotBase:
         else:
             figure = plt.figure(self.fig_ids[0])
             sync_timer = sync_timer or figure.canvas.new_timer()
-            limits = vmin_vmax_vectorarray(vecarray_tuple, separate_colorbars=separate_colorbars, rescale_colorbars=False)
+            limits = vmin_vmax_vectorarray(vecarray_tuple, separate_colorbars=separate_colorbars,
+                                           rescale_colorbars=False)
             if grid.dim == 2:
                 raise NotImplementedError("Plotting multiple VectorArray in the same Axes object is only "
                                           "supported for grid.dim==1")
