@@ -147,6 +147,26 @@ class Parameter(Expression):
         return str(self.numpy_symbol)
 
 
+class Array(Expression):
+
+    def __init__(self, array):
+        self.array = array = np.array(array)
+        for i, v in np.ndenumerate(array):
+            if not isinstance(v, Expression):
+                raise ValueError(f'Array entry {v} at index {i} is not an Expression.')
+            if v.shape:
+                raise ValueError(f'Array entry {v} at index {i} is not scalar valued (shape: {v.shape}).')
+        self.shape = array.shape
+
+    def numpy_expr(self):
+        entries = [v.numpy_expr() for v in self.array.flat]
+        return f'(lambda a: array(a).T.reshape(a[0].shape + {self.shape}))(broadcast_arrays({", ".join(entries)}))'
+
+    def __str__(self):
+        expr_array = np.vectorize(str)(self.array)
+        return str(expr_array)
+
+
 class BinaryOp(Expression):
 
     numpy_symbol = None
@@ -251,12 +271,16 @@ class UnaryReductionCall(Expression):
 def _convert_to_expression(obj):
     if isinstance(obj, Expression):
         return obj
-    elif isinstance(obj, Number):
+    if isinstance(obj, Number):
         return Constant(obj)
-    else:
-        obj = np.array(obj)
-        if obj.dtype == object:
+    obj = np.array(obj)
+    if obj.dtype == object:
+        if obj.shape:
+            obj = np.vectorize(_convert_to_expression)(obj)
+            return Array(obj)
+        else:
             raise ValueError(f'Cannot convert {obj} to expression')
+    else:
         return Constant(obj)
 
 
@@ -329,7 +353,7 @@ _numpy_functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', '
                                                 'exp', 'exp2', 'log', 'log2', 'log10', 'sqrt', 'abs', 'sign',
                                                 'min', 'max', 'sum', 'prod',
                                                 'pi', 'e',
-                                                'array', 'newaxis'}}
+                                                'array', 'broadcast_arrays', 'newaxis'}}
 
 _numpy_functions['norm']  = np.linalg.norm
 _numpy_functions['angle'] = lambda x: np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi)
