@@ -8,7 +8,6 @@ This module provides widgets for displaying plots of
 scalar data assigned to one- and two-dimensional grids using
 :mod:`matplotlib`. These widgets are not intended to be used directly.
 """
-from functools import partial
 from pymor.core.config import config, is_jupyter
 config.require('MATPLOTLIB')
 config.require('QT')
@@ -31,7 +30,6 @@ from pymor.vectorarrays.interface import VectorArray
         self.limits = limits
         vmin, vmax = self.limits[0][0], self.limits[0][1]
         super().__init__(U=U, figure=figure, grid=grid, limits=limits, codim=codim, columns=columns,
-        breakpoint()
         vmin, vmax = self.limits[0][0], self.limits[0][1]
         pad = (vmax - vmin) * 0.1
             ax.set_ylim(vmin - pad, vmax + pad)
@@ -42,17 +40,10 @@ from pymor.vectorarrays.interface import VectorArray
             ax.set_ylim(vmin - pad, vmax + pad)
 
 
-
 class MatplotlibPatchAxes(MatplotlibAxesBase):
 
     def __init__(self, figure, grid, U, limits, bounding_box=None, codim=2, columns=2,
                  colorbar=True, sync_timer=None):
-        """
-
-        Parameters
-        ==========
-
-        """
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
@@ -108,7 +99,7 @@ class MatplotlibPatchAxes(MatplotlibAxesBase):
         else:
             self.p.set_array(np.tile(U, 2))
         # limits are always a tuple
-        l,r = self.limits[ind]
+        l, r = self.limits[ind]
         self.p.set_clim(l[0], r[0])
         return (self.p,)
 

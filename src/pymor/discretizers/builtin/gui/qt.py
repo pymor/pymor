@@ -326,7 +326,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             raise ImportError('cannot visualize: import of matplotlib failed')
 
     class MainWindow(PlotMainWindow):
-        def __init__(self, grid, UT, bounding_box, codim, title, legend, separate_colorbars, rescale_colorbars, backend):
+        def __init__(self, grid, UT, bounding_box, codim, title, legend, separate_colorbars, rescale_colorbars,
+                     backend):
             if isinstance(UT, VectorArray):
                 vecarray_tuple = (UT,)
             else:
@@ -347,7 +348,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 widget = MatplotlibPatchWidget
                 separate_colorbars = True
             limits = vmin_vmax_vectorarray(vecarray_tuple, separate_colorbars=separate_colorbars,
-                                                    rescale_colorbars=rescale_colorbars)
+                                           rescale_colorbars=rescale_colorbars)
 
             class PlotPanel(QWidget):
                 def __init__(self):
