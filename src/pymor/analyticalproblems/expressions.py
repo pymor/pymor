@@ -208,16 +208,19 @@ class Indexed(Expression):
         return f'{self.base.numpy_expr()}[{",".join(index)}]'
 
     def __str__(self):
-        return f'{self.base}[{",".join(self.index)}]'
+        index = [str(i) for i in self.index]
+        return f'{self.base}[{",".join(index)}]'
 
 
 class UnaryFunctionCall(Expression):
 
     numpy_symbol = None
 
-    def __init__(self, arg):
-        self.arg = _convert_to_expression(arg)
-        self.shape = arg.shape
+    def __init__(self, *arg):
+        if len(arg) != 1:
+            raise ValueError(f'{self.numpy_symbol} takes a single argument (given {arg})')
+        self.arg = _convert_to_expression(arg[0])
+        self.shape = self.arg.shape
 
     def numpy_expr(self):
         return f'{self.numpy_symbol}({self.arg.numpy_expr()})'
@@ -228,8 +231,10 @@ class UnaryFunctionCall(Expression):
 
 class UnaryReductionCall(Expression):
 
-    def __init__(self, arg):
-        self.arg = _convert_to_expression(arg)
+    def __init__(self, *arg):
+        if len(arg) != 1:
+            raise ValueError(f'{self.numpy_symbol} takes a single argument (given {arg})')
+        self.arg = _convert_to_expression(arg[0])
         self.shape = ()
 
     def numpy_expr(self):
