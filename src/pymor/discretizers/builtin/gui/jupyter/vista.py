@@ -105,12 +105,13 @@ class _JupyterMultiPlotter:
 
 
 def _load_default_theme(color_map='viridis', title=None):
+    import sys
     # themes are loadable from json files, would make for a nice customization point for users
     my_theme = pv.themes.DocumentTheme()
     my_theme.cmap = color_map
     my_theme.cpos = 'xy'
     my_theme.show_edges = True
-    my_theme.interactive = False
+    my_theme.interactive = not getattr(sys, '_called_from_test', False)
     my_theme.transparent_background = True
     my_theme.jupyter_backend = 'ipygany'
     my_theme.title = title
