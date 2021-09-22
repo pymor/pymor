@@ -144,7 +144,7 @@ rules:
         alias: pymor__devpi
     before_script:
       # bump to our minimal version
-      - python3 -m pip install devpi-client
+      - python3 -m pip install devpi-client wheel
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password ''
       - devpi upload --from-dir --formats=* ./dist/*.whl
