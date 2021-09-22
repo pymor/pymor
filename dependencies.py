@@ -122,7 +122,7 @@ def extras():
     # - slycot directly needs a compiler setup with BLAS, plus scikit-build + cmake
     # - pymess is better installed from source (see README.md)
     return {
-        'full': list(_candidates(blocklist=['slycot', 'pymess', 'nbresuse', 'pytest-memprof'])),
+        'full': list(_candidates(blocklist=['slycot', 'pymess', 'nbresuse', 'pytest-memprof', 'dune-gdt', 'dune-xt'])),
         'ci':  ci_requires,
         'docs': doc_requires,
         'io': io_requires,
