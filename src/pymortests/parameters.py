@@ -47,6 +47,12 @@ def test_parse_parameter():
 
 
 @given(pyst.mus)
+def test_parse_mu(mu):
+    parameters = mu.parameters
+    assert parameters.parse(mu) == mu
+
+
+@given(pyst.mus)
 def test_mu_parameters(mu):
     params = mu.parameters
     assert isinstance(params, Parameters)
