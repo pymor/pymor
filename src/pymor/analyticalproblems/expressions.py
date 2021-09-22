@@ -41,7 +41,7 @@ class Expression(ParametricObject):
                 input_shape = (tuple(builtin_max(*s)
                                      for s in zip_longest(*(a.shape[-2::-1] for a in args),
                                                           fillvalue=1)))[::-1]
-            all_args = dict(mu)
+            all_args = dict(mu) if mu else {}
             all_args.update({k: v for k, v in zip(variables, args)})
             result = np.broadcast_to(eval(code,
                                           _numpy_functions,
