@@ -10,9 +10,9 @@ work with time-dependent parameters in pyMOR.
 Over ??? single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/2020.2.x...2021.1.x>`__.
 
-pyMOR 2021.1 contains contributions by Tim Keil, Hendrik Kleikamp and Meret
-Behrens. See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for
-more details.
+pyMOR 2021.1 contains contributions by Tim Keil, Hendrik Kleikamp, Josefine Zeller
+and Meret Behrens. See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__
+for more details.
 
 
 Release highlights
@@ -26,7 +26,7 @@ to unstable LTI systems out of the box. In
 methods for working with and analyzing unstable |LTIModels| have been added.
 The :class:`~pymor.reductors.bt.FDBTReductor` allows for applying the balanced
 truncation technique to unstable systems by performing a Bernoulli stabilization
-before the using the classical BT method. The :class:`~pymor.reductors.h2.GapIRKAReductor`
+before using the classical BT method. The :class:`~pymor.reductors.h2.GapIRKAReductor`
 aims to compute a reduced-order model such that the approximation error with
 respect to the :math:`\mathcal{H}_2`-Gap norm is small. Additionally,
 a variety of numerical linear algebra methods have been a part of
