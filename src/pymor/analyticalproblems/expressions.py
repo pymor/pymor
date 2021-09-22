@@ -128,6 +128,9 @@ class Constant(BaseConstant):
         self.numpy_symbol = repr(value.tolist())
         self.shape = value.shape
 
+    def __str__(self):
+        return str(self.value)
+
 
 class Parameter(Expression):
 
