@@ -150,12 +150,13 @@ class Parameter(Expression):
 class Array(Expression):
 
     def __init__(self, array):
-        self.array = array = np.array(array)
+        array = np.array(array)
         for i, v in np.ndenumerate(array):
             if not isinstance(v, Expression):
                 raise ValueError(f'Array entry {v} at index {i} is not an Expression.')
-            if v.shape:
+            if v.shape not in ((), (1,)):
                 raise ValueError(f'Array entry {v} at index {i} is not scalar valued (shape: {v.shape}).')
+        self.array = np.vectorize(lambda x: x[0] if x.shape else x)(array)
         self.shape = array.shape
 
     def numpy_expr(self):
