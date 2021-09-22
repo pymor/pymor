@@ -33,7 +33,11 @@ if __name__ == '__main__':
             pyplot.show = nop
         except ImportError:
             pass
-
+        try:
+            # workaround for dolfin+dune incompat https://github.com/pymor/pymor/issues/1397
+            import dune.gdt  # noqa
+        except ImportError:
+            pass
         try:
             import dolfin
             dolfin.plot = nop
