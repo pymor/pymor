@@ -12,11 +12,10 @@ from pymor.parameters.base import ParametricObject
 builtin_max = max
 
 
-def parse_expression(expression, dim_domain, parameters={}, values={}):
+def parse_expression(expression, parameters={}, values={}):
     if isinstance(expression, Expression):
         return expression
     locals_dict = {name: Parameter(name, dim) for name, dim in parameters.items()}
-    locals_dict['x'] = X(dim_domain)
     return _convert_to_expression(eval(expression, dict(globals(), **values), locals_dict))
 
 
@@ -24,15 +23,29 @@ class Expression(ParametricObject):
 
     shape = None
 
-    def to_numpy(self):
+    def to_numpy(self, variables):
         expression = self.numpy_expr()
         code = compile(expression, '<expression>', 'eval')
-        return (
-            lambda x, mu={}: (np.broadcast_to(eval(code,
-                                                   dict(input_shape=x.shape[:-1], **_numpy_functions),
-                                                   dict(mu, x=x, mu=mu, input_shape=x.shape[:-1])),
-                                              x.shape[:-1] + self.shape))
-        )
+
+        def wrapper(*args, mu={}):
+            assert all(_broadcastable(args[0].shape[:-1], a.shape[:-1]) for a in args[1:])
+            if len(args) == 0:
+                input_shape = ()
+            elif len(args) == 1:
+                input_shape = args[0].shape[:-1]
+            else:
+                input_shape = (tuple(builtin_max(*s)
+                                     for s in zip_longest(*(a.shape[-2::-1] for a in args),
+                                                          fillvalue=1)))[::-1]
+            all_args = dict(mu)
+            all_args.update({k: v for k, v in zip(variables, args)})
+            result = np.broadcast_to(eval(code,
+                                          _numpy_functions,
+                                          dict(all_args, mu=mu)),
+                                     input_shape + self.shape)
+            return result
+
+        return wrapper
 
     def numpy_expr(self):
         raise NotImplementedError
@@ -98,19 +111,10 @@ class BaseConstant(Expression):
     shape = ()
 
     def numpy_expr(self):
-        return f'array({self.numpy_symbol}, ndmin=len(input_shape)+{len(self.shape)})'
+        return f'array({self.numpy_symbol}, ndmin={len(self.shape)}, copy=False)'
 
     def __str__(self):
         return str(self.numpy_symbol)
-
-
-class Parameter(BaseConstant):
-
-    def __init__(self, name, dim):
-        self.name, self.dim = name, dim
-        self.numpy_symbol = name
-        self.shape = (dim,)
-        self.parameters_own = {name: dim}
 
 
 class Constant(BaseConstant):
@@ -121,13 +125,29 @@ class Constant(BaseConstant):
         self.shape = value.shape
 
 
+class Parameter(Expression):
+
+    def __init__(self, name, dim):
+        self.name, self.dim = name, dim
+        self.numpy_symbol = name
+        self.shape = (dim,)
+        self.parameters_own = {name: dim}
+
+    def numpy_expr(self):
+        return str(self.numpy_symbol)
+
+    def __str__(self):
+        return str(self.numpy_symbol)
+
+
 class BinaryOp(Expression):
 
     numpy_symbol = None
 
     def __init__(self, first, second):
         if not _broadcastable(first.shape, second.shape):
-            raise ValueError('Incompatible shapes')
+            raise ValueError(f'Incompatible shapes of expressions "{first}" and "{second}" with shapes '
+                             f'{first.shape} and {second.shape} for binary operator {self.numpy_symbol}')
         self.first, self.second = first, second
         self.shape = tuple(builtin_max(f, s)
                            for f, s in zip_longest(first.shape[::-1], second.shape[::-1], fillvalue=1))[::-1]
@@ -167,29 +187,24 @@ class Neg(Expression):
 class Indexed(Expression):
 
     def __init__(self, base, index):
+        if not isinstance(index, int) and \
+                not (isinstance(index, tuple) and all(isinstance(i, int) for i in index)):
+            raise ValueError(f'Indices must be ints or tuples of ints (given: {index})')
+        if isinstance(index, int):
+            index = (index,)
+        if not len(index) == len(base.shape):
+            raise ValueError(f'Wrong number of indices (given: {index} for expression "{base}" of shape {base.shape})')
+        if not all(0 <= i < s for i, s in zip(index, base.shape)):
+            raise ValueError(f'Invalid index (given {index} for expression "{base}" of shape {base.shape})')
         self.base, self.index = base, index
-        self.shape = base.shape[(1 if isinstance(index, Number) else len(index)):]
+        self.shape = base.shape[len(index):]
 
     def numpy_expr(self):
-        index = [repr(self.index)] if isinstance(self.index, Number) else [repr(i) for i in self.index]
-        index = ['...'] + index
+        index = ['...'] + [repr(i) for i in self.index]
         return f'{self.base.numpy_expr()}[{",".join(index)}]'
 
     def __str__(self):
         return f'{self.base}[{",".join(self.index)}]'
-
-
-class X(Expression):
-
-    def __init__(self, dim_domain):
-        self.dim_domain = dim_domain
-        self.shape = (dim_domain,)
-
-    def numpy_expr(self):
-        return 'x'
-
-    def __str__(self):
-        return 'x'
 
 
 class UnaryFunctionCall(Expression):
@@ -197,7 +212,7 @@ class UnaryFunctionCall(Expression):
     numpy_symbol = None
 
     def __init__(self, arg):
-        self.arg = arg
+        self.arg = _convert_to_expression(arg)
         self.shape = arg.shape
 
     def numpy_expr(self):
@@ -210,11 +225,12 @@ class UnaryFunctionCall(Expression):
 class UnaryReductionCall(Expression):
 
     def __init__(self, arg):
-        self.arg = arg
+        self.arg = _convert_to_expression(arg)
         self.shape = ()
 
     def numpy_expr(self):
-        return f'{self.numpy_symbol}({self.arg.numpy_expr()}.reshape(input_shape + (-1,)), axis=-1)'
+        return (f'(lambda _a: {self.numpy_symbol}(_a.reshape(_a.shape[:-{len(self.arg.shape)}] + (-1,)), '
+                f'axis=-1))({self.arg.numpy_expr()})')
 
     def __str__(self):
         return f'{self.numpy_symbol}({self.arg})'
@@ -228,7 +244,7 @@ def _convert_to_expression(obj):
     else:
         obj = np.array(obj)
         if obj.dtype == object:
-            raise NotImplementedError
+            raise ValueError(f'Cannot convert {obj} to expression')
         return Constant(obj)
 
 

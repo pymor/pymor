@@ -10,7 +10,7 @@ from scipy.linalg import solve, solve_triangular
 from pymor.analyticalproblems.expressions import parse_expression
 from pymor.core.base import abstractmethod
 from pymor.parameters.base import ParametricObject, Mu
-from pymor.parameters.functionals import ParameterFunctional, ExpressionParameterFunctional
+from pymor.parameters.functionals import ParameterFunctional
 
 
 class Function(ParametricObject):
@@ -212,7 +212,7 @@ class GenericFunction(Function):
         assert x.shape[-1] == self.dim_domain
 
         if self.parametric:
-            v = self.mapping(x, mu)
+            v = self.mapping(x, mu=mu)
         else:
             v = self.mapping(x)
 
@@ -252,11 +252,9 @@ class ExpressionFunction(GenericFunction):
         The name of the function.
     """
 
-    functions = ExpressionParameterFunctional.functions
-
     def __init__(self, expression, dim_domain=1, parameters={}, values={}, name=None):
-        self.expression_obj = parse_expression(expression, dim_domain, parameters=parameters, values=values)
-        super().__init__(self.expression_obj.to_numpy(), dim_domain, self.expression_obj.shape, parameters, name)
+        self.expression_obj = parse_expression(expression, parameters=dict(parameters, x=dim_domain), values=values)
+        super().__init__(self.expression_obj.to_numpy(['x']), dim_domain, self.expression_obj.shape, parameters, name)
         self.__auto_init(locals())
 
     def __reduce__(self):
