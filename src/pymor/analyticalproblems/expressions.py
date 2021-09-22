@@ -28,6 +28,10 @@ class Expression(ParametricObject):
         code = compile(expression, '<expression>', 'eval')
 
         def wrapper(*args, mu={}):
+            if not variables and args:
+                assert len(args) == 1
+                mu = args[0]
+                args = []
             assert all(_broadcastable(args[0].shape[:-1], a.shape[:-1]) for a in args[1:])
             if len(args) == 0:
                 input_shape = ()
