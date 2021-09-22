@@ -25,7 +25,23 @@ from pymor.operators.constructions import ZeroOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class NeuralNetworkModel(Model):
+class BaseNeuralNetworkModel(Model):
+    def _scale_input(self, i):
+        if ('min_inputs' in self.scaling_parameters and self.scaling_parameters['min_inputs'] is not None
+           and 'max_inputs' in self.scaling_parameters and self.scaling_parameters['max_inputs'] is not None):
+            return ((torch.DoubleTensor(i) - self.scaling_parameters['min_inputs'])
+                    / (self.scaling_parameters['max_inputs'] - self.scaling_parameters['min_inputs']))
+        return i
+
+    def _scale_target(self, i):
+        if ('min_targets' in self.scaling_parameters and self.scaling_parameters['min_targets'] is not None
+           and 'max_targets' in self.scaling_parameters and self.scaling_parameters['max_targets'] is not None):
+            return (torch.DoubleTensor(i) * (self.scaling_parameters['max_targets']
+                                             - self.scaling_parameters['min_targets'])
+                    + self.scaling_parameters['min_targets'])
+        return i
+
+class NeuralNetworkModel(BaseNeuralNetworkModel):
     """Class for models of stationary problems that use artificial neural networks.
 
     This class implements a |Model| that uses a neural network for solving.
@@ -65,8 +81,9 @@ class NeuralNetworkModel(Model):
         Name of the model.
     """
 
-    def __init__(self, neural_network, parameters={}, output_functional=None,
-                 products=None, error_estimator=None, visualizer=None, name=None):
+    def __init__(self, neural_network, parameters={}, scaling_parameters={},
+                 output_functional=None, products=None, error_estimator=None,
+                 visualizer=None, name=None):
 
         super().__init__(products=products, error_estimator=error_estimator,
                          visualizer=visualizer, name=name)
@@ -81,16 +98,18 @@ class NeuralNetworkModel(Model):
 
         # convert the parameter `mu` into a form that is usable in PyTorch
         converted_input = torch.DoubleTensor(mu.to_numpy())
+        converted_input = self._scale_input(converted_input)
         # obtain (reduced) coordinates by forward pass of the parameter values
         # through the neural network
         U = self.neural_network(converted_input).data.numpy()
+        U = self._scale_target(U)
         # convert plain numpy array to element of the actual solution space
         U = self.solution_space.make_array(U)
 
         return U
 
 
-class NeuralNetworkStatefreeOutputModel(Model):
+class NeuralNetworkStatefreeOutputModel(BaseNeuralNetworkModel):
     """Class for models of the output of stationary problems that use ANNs.
 
     This class implements a |Model| that uses a neural network for solving for the output
@@ -116,7 +135,8 @@ class NeuralNetworkStatefreeOutputModel(Model):
         Name of the model.
     """
 
-    def __init__(self, neural_network, parameters={}, error_estimator=None, name=None):
+    def __init__(self, neural_network, parameters={}, scaling_parameters={},
+                 error_estimator=None, name=None):
 
         super().__init__(error_estimator=error_estimator, name=name)
 
@@ -127,12 +147,16 @@ class NeuralNetworkStatefreeOutputModel(Model):
                  output_d_mu_return_array=False, mu=None, **kwargs):
         if output:
             converted_input = torch.from_numpy(mu.to_numpy()).double()
+            converted_input = self._scale_input(converted_input)
             output = self.neural_network(converted_input).data.numpy()
+            output = self._scale_target(output)
+            if isinstance(output, torch.Tensor):
+                output = output.numpy()
             return {'output': output, 'solution': None}
         return {}
 
 
-class NeuralNetworkInstationaryModel(Model):
+class NeuralNetworkInstationaryModel(BaseNeuralNetworkModel):
     """Class for models of instationary problems that use artificial neural networks.
 
     This class implements a |Model| that uses a neural network for solving.
@@ -176,8 +200,9 @@ class NeuralNetworkInstationaryModel(Model):
         Name of the model.
     """
 
-    def __init__(self, T, nt, neural_network, parameters={}, output_functional=None,
-                 products=None, error_estimator=None, visualizer=None, name=None):
+    def __init__(self, T, nt, neural_network, parameters={}, scaling_parameters={},
+                 output_functional=None, products=None, error_estimator=None,
+                 visualizer=None, name=None):
 
         super().__init__(products=products, error_estimator=error_estimator,
                          visualizer=visualizer, name=name)
@@ -189,14 +214,16 @@ class NeuralNetworkInstationaryModel(Model):
 
     def _compute_solution(self, mu=None, **kwargs):
         # collect all inputs in a single tensor
-        inputs = torch.DoubleTensor([mu.with_(t=t).to_numpy() for t in np.linspace(0., self.T, self.nt)])
+        inputs = self._scale_input(torch.DoubleTensor([mu.with_(t=t).to_numpy()
+                                                       for t in np.linspace(0., self.T, self.nt)]))
         # pass batch of inputs to neural network
         result = self.neural_network(inputs).data.numpy()
+        result = self._scale_target(result)
         # convert result into element from solution space
         return self.solution_space.make_array(result)
 
 
-class NeuralNetworkInstationaryStatefreeOutputModel(Model):
+class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
     """Class for models of the output of instationary problems that use ANNs.
 
     This class implements a |Model| that uses a neural network for solving for the output
@@ -226,7 +253,8 @@ class NeuralNetworkInstationaryStatefreeOutputModel(Model):
         Name of the model.
     """
 
-    def __init__(self, T, nt, neural_network, parameters={}, error_estimator=None, name=None):
+    def __init__(self, T, nt, neural_network, parameters={}, scaling_parameters={},
+                 error_estimator=None, name=None):
 
         super().__init__(error_estimator=error_estimator, name=name)
 
@@ -238,9 +266,13 @@ class NeuralNetworkInstationaryStatefreeOutputModel(Model):
 
         if output:
             # collect all inputs in a single tensor
-            inputs = torch.DoubleTensor([mu.with_(t=t).to_numpy() for t in np.linspace(0., self.T, self.nt)])
+            inputs = self._scale_input(torch.DoubleTensor([mu.with_(t=t).to_numpy()
+                                                           for t in np.linspace(0., self.T, self.nt)]))
             # pass batch of inputs to neural network
             outputs = self.neural_network(inputs).data.numpy()
+            outputs = self._scale_target(outputs)
+            if isinstance(outputs, torch.Tensor):
+                outputs = outputs.numpy()
 
             return {'output': outputs, 'solution': None}
         return {}
