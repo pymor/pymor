@@ -503,9 +503,9 @@ if config.HAVE_DUNEGDT:
 
         if time_stepper is None:
             if p.stationary_part.diffusion is None:
-                time_stepper = ExplicitEulerTimeStepper(nt=nt, initial_time=0, end_time=p.T, num_values=num_values)
+                time_stepper = ExplicitEulerTimeStepper(nt=nt)
             else:
-                time_stepper = ImplicitEulerTimeStepper(nt=nt, initial_time=0, end_time=p.T, num_values=num_values)
+                time_stepper = ImplicitEulerTimeStepper(nt=nt)
 
         mass = m.l2_0_product
 
@@ -520,7 +520,7 @@ if config.HAVE_DUNEGDT:
             space = data['space']
             # ... restrict them to the boundary ...
             interpolated_initial_data_on_boundary = boundary_interpolation(
-                    GF(data['grid'], DiscreteFunction(space, interpolated_initial_data._list[0].impl)),
+                    GF(data['grid'], DiscreteFunction(space, interpolated_initial_data._list[0].real_part.impl)),
                     space,
                     data['boundary_info'], DirichletBoundary())
             if interpolated_initial_data_on_boundary.dofs.vector.sup_norm() > ensure_consistent_initial_values:
@@ -535,6 +535,7 @@ if config.HAVE_DUNEGDT:
                 output_functional=m.output_functional,
                 time_stepper=time_stepper,
                 visualizer=m.visualizer,
+                num_values=num_values,
                 name=f'{p.name}_dunegdt_CG')
 
         return m, data
