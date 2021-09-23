@@ -45,7 +45,9 @@ if config.HAVE_DUNEGDT:
     from pymor.bindings.dunegdt import DuneXTMatrixOperator, DuneXTVector, DuneXTVectorSpace
     from pymor.core.base import ImmutableObject
     from pymor.discretizers.dunegdt.domaindiscretizers.default import discretize_domain_default
-    from pymor.discretizers.dunegdt.gui import DuneGDT1dAsNumpyVisualizer, DuneGDTK3dVisualizer, DuneGDTParaviewVisualizer
+    from pymor.discretizers.dunegdt.gui import (
+            DuneGDT1dAsNumpyVisualizer, DuneGDTK3dVisualizer, DuneGDTParaviewVisualizer)
+    from pymor.discretizers.dunegdt.functions import DuneInterpolator, to_dune_grid_function
     from pymor.models.basic import InstationaryModel, StationaryModel
     from pymor.operators.constructions import ConstantOperator, LincombOperator, VectorArrayOperator
     from pymor.tools.floatcmp import float_cmp
@@ -135,50 +137,15 @@ if config.HAVE_DUNEGDT:
             else:
                 grid, boundary_info = domain_discretizer(p.domain, diameter=diameter)
 
-        # prepare to interpolate data functions
-        interpolation_space = {'scalar': {}, 'vector': {}}
-        interpolation_points = {'scalar': {}, 'vector': {}}
+        # use a common interpolator for data function conversion (to cache required spaces and interpolation points) ...
+        interpolator = DuneInterpolator(
+                grid,
+                'fv' if data_approximation_order == 0 else ('cg' if data_approximation_order == 1 else 'dg'),
+                data_approximation_order)
+        # ... and take special care with functions arising in boundary integrals and Dirichlet values
+        boundary_interpolator = interpolator if data_approximation_order == 1 else DuneInterpolator(grid, 'cg', 1)
 
-        def interpolate_single(func, pol_order=data_approximation_order):
-            assert isinstance(func, Function)
-            if func.shape_range in ((), (1,)):
-                if not pol_order in interpolation_space['scalar']:
-                    interpolation_space['scalar'][pol_order] = DiscontinuousLagrangeSpace(
-                            grid, order=pol_order, dim_range=Dim(1))
-                if not pol_order in interpolation_points['scalar']:
-                    interpolation_points['scalar'][pol_order] = interpolation_space['scalar'][pol_order].interpolation_points()
-                df = DiscreteFunction(interpolation_space['scalar'][pol_order], la_backend)
-                np_view = np.array(df.dofs.vector, copy=False)
-                np_view[:] = func.evaluate(interpolation_points['scalar'][pol_order])[:].ravel()
-                return df
-            elif func.shape_range == (d,):
-                if not pol_order in interpolation_space['vector']:
-                    interpolation_space['vector'][pol_order] = DiscontinuousLagrangeSpace(
-                            grid, order=pol_order, dim_range=Dim(d), dimwise_global_mapping=True)
-                if not pol_order in interpolation_points['vector']:
-                    interpolation_points['vector'][pol_order] = interpolation_space['vector'][pol_order].interpolation_points()
-                df = DiscreteFunction(interpolation_space['vector'][pol_order], la_backend)
-                np_view = np.array(df.dofs.vector, copy=False)
-                values = func.evaluate(interpolation_points['vector'][pol_order])
-                reshaped_values = []
-                for dd in range(d):
-                    reshaped_values.append(np.array(values[:, dd], copy=False))
-                reshaped_values = np.hstack(reshaped_values)
-                np_view[:] = reshaped_values.ravel()[:]
-                del reshaped_values, values
-                return df
-            else:
-                raise NotImplementedError(f'I do not know how to interpolate a {func.shape_range}d function!')
-
-
-        def interpolate(func, pol_order=data_approximation_order):
-            if isinstance(func, LincombFunction):
-                return [interpolate_single(ff, pol_order) for ff in func.functions], func.coefficients
-            elif not isinstance(func, Function):
-                func = ConstantFunction(value_array=func, dim_domain=d)
-            return [interpolate_single(func, pol_order)], [1]
-
-        # preparations for the actual discretization
+        # some preparations
         space = ContinuousLagrangeSpace(grid, order=order, dim_range=Dim(1))
         sparsity_pattern = make_element_sparsity_pattern(space)
         constrained_lhs_ops = []
@@ -199,7 +166,8 @@ if config.HAVE_DUNEGDT:
             return op
 
         if p.diffusion:
-            diffusion_funcs, diffusion_coeffs = interpolate(p.diffusion)
+            diffusion_funcs, diffusion_coeffs = to_dune_grid_function(
+                    p.diffusion, dune_interpolator=interpolator, ensure_lincomb=True)
             constrained_lhs_ops += [make_diffusion_operator(func) for func in diffusion_funcs]
             constrained_lhs_coeffs += list(diffusion_coeffs)
             if mu_energy_product:
@@ -213,7 +181,8 @@ if config.HAVE_DUNEGDT:
              return op
 
         if p.reaction:
-            reaction_funcs, reaction_coeffs = interpolate(p.reaction)
+            reaction_funcs, reaction_coeffs = to_dune_grid_function(
+                    p.reaction, dune_interpolator=interpolator, ensure_lincomb=True)
             constrained_lhs_ops += [make_weighted_l2_operator(func) for func in reaction_funcs]
             constrained_lhs_coeffs += list(reaction_coeffs)
             if mu_energy_product:
@@ -234,7 +203,8 @@ if config.HAVE_DUNEGDT:
 
                 return op
 
-            advection_funcs, advection_coeffs = interpolate(p.advection)
+            advection_funcs, advection_coeffs = to_dune_grid_function(
+                    p.advection, dune_interpolator=boundary_interpolator, ensure_lincomb=True)
             constrained_lhs_ops += [make_advection_operator(func) for func in advection_funcs]
             constrained_lhs_coeffs += list(advection_coeffs)
 
@@ -245,8 +215,10 @@ if config.HAVE_DUNEGDT:
         # robin boundaries
         if p.robin_data:
             assert isinstance(p.robin_data, tuple) and len(p.robin_data) == 2
-            robin_parameter_funcs, robin_parameter_coeffs = interpolate(p.robin_data[0])
-            robin_boundary_values_funcs, robin_boundary_values_coeffs = interpolate(p.robin_data[1])
+            robin_parameter_funcs, robin_parameter_coeffs = to_dune_grid_function(
+                    p.robin_data[0], dune_interpolator=boundary_interpolator, ensure_lincomb=True)
+            robin_boundary_values_funcs, robin_boundary_values_coeffs = to_dune_grid_function(
+                    p.robin_data[1], dune_interpolator=boundary_interpolator, ensure_lincomb=True)
 
             # contributions to the left hand side
             def make_weighted_l2_robin_boundary_operator(func):
@@ -279,7 +251,8 @@ if config.HAVE_DUNEGDT:
                         LocalElementProductIntegrand(GF(grid, 1)).with_ansatz(GF(grid, func)))
                 return op
 
-            source_funcs, source_coeffs = interpolate(p.rhs)
+            source_funcs, source_coeffs = to_dune_grid_function(
+                    p.rhs, dune_interpolator=interpolator, ensure_lincomb=True)
             rhs_ops += [make_l2_functional(func) for func in source_funcs]
             rhs_coeffs += list(source_coeffs)
 
@@ -292,7 +265,8 @@ if config.HAVE_DUNEGDT:
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
                 return op
 
-            neumann_data_funcs, neumann_data_coeffs = interpolate(p.neumann_data)
+            neumann_data_funcs, neumann_data_coeffs = to_dune_grid_function(
+                    p.neumann_data, dune_interpolator=boundary_interpolator, ensure_lincomb=True)
             rhs_ops += [make_l2_neumann_boundary_functional(func) for func in neumann_data_funcs]
             rhs_coeffs += list(neumann_data_coeffs)
 
@@ -349,16 +323,17 @@ if config.HAVE_DUNEGDT:
         # compute the Dirichlet shift before constraining
         if p.dirichlet_data:
             # we first require an interpolation of first order
-            dirichlet_data = interpolate_single(p.dirichlet_data, pol_order=1)
+            dirichlet_data = to_dune_grid_function(p.dirichlet_data, dune_interpolator=boundary_interpolator)
             # second, we restrict this interpolation to the Dirichlet boundary
-            boundary_interpolation_space = space if space.max_polorder == 1 \
-                    else ContinuousLagrangeSpace(grid, order=1, dim_range=Dim(1))
-            dirichlet_data = boundary_interpolation(GF(grid, dirichlet_data), space, boundary_info, DirichletBoundary())
+            # boundary_interpolation_space = space if space.max_polorder == 1 \
+                    # else ContinuousLagrangeSpace(grid, order=1, dim_range=Dim(1))
+            dirichlet_data = boundary_interpolation(
+                    GF(grid, dirichlet_data), boundary_interpolator._spaces[1], boundary_info, DirichletBoundary())
             # third, we only do something if dirichlet_data != 0
             trivial_dirichlet_data = float_cmp(dirichlet_data.dofs.vector.sup_norm(), 0.)
             if not trivial_dirichlet_data:
                 # fourth, we embed them in the correct space, if required
-                if boundary_interpolation_space != space:
+                if space.max_pol_order != 1:
                     dirichlet_data = default_interpolation(GF(grid, dirichlet_data), space)
                 # fifth, we apply the actual shift
                 for op, coeff in zip(constrained_lhs_ops, constrained_lhs_coeffs):
@@ -481,6 +456,7 @@ if config.HAVE_DUNEGDT:
         m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
                              name=f'{p.name}_dunegdt_CG')
 
+        # for convenience: an interpolation of data functions into the solution space
         space_interpolation_points = space.interpolation_points() # cache
         def interpolate(func):
             df = DiscreteFunction(space, la_backend)
@@ -497,7 +473,6 @@ if config.HAVE_DUNEGDT:
             data.update({
                 'dirichlet_shift': dirichlet_data,
                 'unshifted_visualizer': unshifted_visualizer,
-                'dirichlet_interpolation_space': boundary_interpolation_space,
                 })
 
         return m, data
@@ -540,14 +515,16 @@ if config.HAVE_DUNEGDT:
         # - shift if required
         if 'dirichlet_shift' in data:
             interpolated_initial_data -= data['dirichlet_shift']
-        # - constrain to H^1_0
+        # - constrain to H^1_0, therefore ...
         if ensure_consistent_initial_values is not None:
+            space = data['space']
+            # ... restrict them to the boundary ...
             interpolated_initial_data_on_boundary = boundary_interpolation(
-                    GF(data['grid'], DiscreteFunction(data['dirichlet_interpolation_space'],
-                                                      interpolated_initial_data._list[0].impl)),
-                    data['dirichlet_interpolation_space'],
+                    GF(data['grid'], DiscreteFunction(space, interpolated_initial_data._list[0].impl)),
+                    space,
                     data['boundary_info'], DirichletBoundary())
             if interpolated_initial_data_on_boundary.dofs.vector.sup_norm() > ensure_consistent_initial_values:
+                # ... and ensure zero values on the boundary
                 interpolated_initial_data._list[0].impl -= interpolated_initial_data_on_boundary.dofs.vector
 
         m = InstationaryModel(
