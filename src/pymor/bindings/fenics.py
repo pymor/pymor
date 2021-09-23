@@ -126,7 +126,8 @@ if config.HAVE_FENICS:
 
     class FenicsVectorSpace(ComplexifiedListVectorSpace):
 
-        complexified_vector_type = ComplexifiedFenicsVector
+        real_vector_type = FenicsVector
+        vector_type = ComplexifiedFenicsVector
 
         def __init__(self, V, id='STATE'):
             self.__auto_init(locals())

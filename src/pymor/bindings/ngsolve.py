@@ -68,7 +68,8 @@ if config.HAVE_NGSOLVE:
 
     class NGSolveVectorSpace(ComplexifiedListVectorSpace):
 
-        complexified_vector_type = ComplexifiedNGSolveVector
+        real_vector_type = NGSolveVector
+        vector_type = ComplexifiedNGSolveVector
 
         def __init__(self, V, id='STATE'):
             self.__auto_init(locals())
