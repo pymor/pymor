@@ -6,7 +6,8 @@ import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepper
 from pymor.models.interface import Model
-from pymor.operators.constructions import IdentityOperator, VectorOperator, ZeroOperator
+from pymor.parameters.base import Parameters
+from pymor.operators.constructions import IdentityOperator, VectorOperator, ZeroOperator, ConstantOperator
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -145,6 +146,33 @@ class StationaryModel(Model):
             return np.array(gradients)
         else:
             return gradients
+
+    def deaffinize(self, arg):
+        if not isinstance(arg, VectorArray):
+            mu = self.parameters.parse(arg)
+            arg = self.solve(mu)
+        assert arg in self.solution_space and len(arg) == 1
+
+        affine_shift = arg
+
+        if self.operator.linear:
+            new_operator = self.operator
+            new_rhs = self.rhs - self.operator @ VectorOperator(affine_shift)
+        else:
+            new_operator = \
+                self.operator @ (IdentityOperator(self.solution_space)
+                                 + ConstantOperator(affine_shift, self.solution_space))
+            new_rhs = self.rhs
+
+        if self.output_functional is not None:
+            new_output_functional = \
+                self.output_functional @ (IdentityOperator(self.solution_space)
+                                          + ConstantOperator(affine_shift, self.solution_space))
+        else:
+            new_output_functional = None
+
+        return self.with_(operator=new_operator, rhs=new_rhs, output_functional=new_output_functional,
+                          error_estimator=None)
 
 
 class InstationaryModel(Model):
