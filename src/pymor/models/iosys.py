@@ -1253,8 +1253,8 @@ class LTIModel(InputStateOutputModel):
             ast_ews = ew[ast_idx]
             idx = ast_ews.argsort()
 
-            ast_lev = self.A.source.from_numpy(lev[:, idx][:, ast_idx][:, 0, :].T)
-            ast_rev = self.A.range.from_numpy(rev[:, idx][:, ast_idx][:, 0, :].T)
+            ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, 0, :][:, idx].T)
+            ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, 0, :][:, idx].T)
 
             return ast_lev, ast_ews[idx], ast_rev
 
