@@ -29,7 +29,7 @@ jobs:
       #conda update -y --all
       conda install -y --only-deps pymor
       # these ones are not in the 2020.1 conda build yet
-      conda install -y pyevtk mpi4py slycot pytorch pyqt==5.12.3 pyside2==5.13.2 codecov qtpy pyvista
+      conda install -y pyevtk mpi4py slycot pytorch pyqt==5.12.3 pyside2==5.13.2 codecov qtpy pyvista pyvistaqt
       # these are buildtime, not a runtime,  deps for our conda package
       conda install -y cython pytest-cov pytest
       # install anything which might be a new dependency with pip
