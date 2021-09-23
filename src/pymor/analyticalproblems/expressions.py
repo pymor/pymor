@@ -300,7 +300,7 @@ class Indexed(Expression):
         if not len(index) == len(base.shape):
             raise ValueError(f'Wrong number of indices (given: {index} for expression "{base}" of shape {base.shape})')
         if not all(0 <= i < s for i, s in zip(index, base.shape)):
-            raise ValueError(f'Invalid index (given {index} for expression "{base}" of shape {base.shape})')
+            raise ValueError(f'Invalid index (given: {index} for expression "{base}" of shape {base.shape})')
         self.base, self.index = base, index
         self.shape = base.shape[len(index):]
 
@@ -323,7 +323,7 @@ class UnaryFunctionCall(Expression):
 
     def __init__(self, *arg):
         if len(arg) != 1:
-            raise ValueError(f'{self.numpy_symbol} takes a single argument (given {arg})')
+            raise ValueError(f'{self.numpy_symbol} takes a single argument (given: {arg})')
         self.arg = _convert_to_expression(arg[0])
         self.shape = self.arg.shape
 
@@ -337,7 +337,7 @@ class UnaryFunctionCall(Expression):
 class UnaryReductionCall(Expression):
     """Compound :class:`Expression` of an unary function applied to a sub-expression.
 
-    The function is to the entire vector/matrix/tensor the sub-expression evaluates to,
+    The function is applied to the entire vector/matrix/tensor the sub-expression evaluates to,
     returning a single number.
     """
 
