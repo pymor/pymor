@@ -11,6 +11,7 @@ import OpenGL
 from typer import Argument, Option, run
 
 from pymor.core.config import is_windows_platform
+from pymor.discretizers.builtin.gui import vmin_vmax_vectorarray
 from pymor.discretizers.builtin.gui.jupyter.vista import PyVistaPatchWidget
 from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchWidget
 
@@ -110,7 +111,7 @@ class SimPanel(QtWidgets.QWidget):
         U = self.sim.solve(mu)
         print(f'Simtime {time.perf_counter()-tic}')
         tic = time.perf_counter()
-        self.solution.set(U)
+        self.solution.set(U, limits=vmin_vmax_vectorarray((U,), separate_colorbars=False, rescale_colorbars=False))
         self.param_panel.enable(True)
         print(f'Drawtime {time.perf_counter()-tic}')
 
