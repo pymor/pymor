@@ -49,9 +49,9 @@ picklable_generic_functions = [
 ]
 
 expression_functions = [
-    ExpressionFunction('x', dim_domain=2, shape_range=(2,)),
-    ExpressionFunction("c[0]*x", dim_domain=1, shape_range=(1,), parameters={'c': 1}),
-    ExpressionFunction("c[2]*sin(x)", dim_domain=1, shape_range=(1,), parameters={'c': 3}),
+    ExpressionFunction('x', dim_domain=2),
+    ExpressionFunction("c[0]*x", dim_domain=1, parameters={'c': 1}),
+    ExpressionFunction("c[2]*sin(x)", dim_domain=1, parameters={'c': 3}),
 ]
 
 

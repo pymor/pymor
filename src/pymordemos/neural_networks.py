@@ -120,17 +120,17 @@ def main(
 
 def create_fom(fv, grid_intervals):
     f = LincombFunction(
-        [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()), ConstantFunction(1., 2)],
+        [ExpressionFunction('10', 2), ConstantFunction(1., 2)],
         [ProjectionParameterFunctional('mu'), 0.1])
     g = LincombFunction(
-        [ExpressionFunction('2 * x[..., 0]', 2, ()), ConstantFunction(1., 2)],
+        [ExpressionFunction('2 * x[0]', 2), ConstantFunction(1., 2)],
         [ProjectionParameterFunctional('mu'), 0.5])
 
     problem = StationaryProblem(
         domain=RectDomain(),
         rhs=f,
         diffusion=LincombFunction(
-            [ExpressionFunction('1 - x[..., 0]', 2, ()), ExpressionFunction('x[..., 0]', 2, ())],
+            [ExpressionFunction('1 - x[0]', 2), ExpressionFunction('x[0]', 2)],
             [ProjectionParameterFunctional('mu'), 1]),
         dirichlet_data=g,
         outputs=[('l2', f), ('l2_boundary', g)],

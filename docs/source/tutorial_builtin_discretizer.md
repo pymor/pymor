@@ -94,32 +94,15 @@ For the definition of the source term {math}`f` we use an
 {{ ExpressionFunction }} which is given an arbitrary Python expression
 used to evaluate the function. In this expression, the coordinates at
 which the function shall be evaluated are given as the variable `x`.
-Many NumPy functions can be used directly. The entire NumPy module is
-available under the name `np`.
-
-Thus, to define {math}`f` we could write
-
-```
-(sqrt((x[0]-0.5)**2 + (x[1]-0.5)**2) <= 0.3) * 1.
-```
-
-However, pyMOR {{ Functions }} are required to be vectorized with respect
-to the coordinate `x`. In the case of {{ ExpressionFunction }} this
-means that `x` can be an arbitrary dimensional NumPy array of
-coordinates where the last array index specifies the spacial dimension.
-Therefore, the correct definition of {math}`f` is:
+Many NumPy functions can be used directly.
+Thus, to define {math}`f` we can write
 
 ```{code-cell}
-rhs = ExpressionFunction('(sqrt( (x[...,0]-0.5)**2 + (x[...,1]-0.5)**2) <= 0.3) * 1.', 2, ())
+rhs = ExpressionFunction('(sqrt( (x[0]-0.5)**2 + (x[1]-0.5)**2) <= 0.3) * 1.', 2)
 ```
 
 Similarly to {{ ConstantFunction }}, the second argument is the dimension
-of the computational domain. As the shape of the return value cannot be
-easily inferred from the given string expression, it has to be provided
-as a third argument to {{ ConstantFunction }}. For scalar functions we
-provide the empty tuple `()`, for functions returning
-three-dimensional vectors we would specify `(3,)`, and for functions
-returning {math}`2\times 2` matrices we would specify `(2,2)`.
+of the computational domain.
 
 Finally, the computational domain and all data functions are collected
 in a {{ StationaryProblem }}:
@@ -228,7 +211,7 @@ The diffusivity can be defined similarly as above:
 ```{code-cell}
 neumann_data = ConstantFunction(-1., 2)
 
-diffusion = ExpressionFunction('1. - (sqrt( (x[...,0]-0.5)**2 + (x[...,1]-0.5)**2) <= 0.3) * 0.999' , 2, ())
+diffusion = ExpressionFunction('1. - (sqrt( (x[0]-0.5)**2 + (x[1]-0.5)**2) <= 0.3) * 0.999' , 2)
 
 problem = StationaryProblem(
    domain=domain,
@@ -253,9 +236,8 @@ following definition:
 
 ```{code-cell}
 diffusion = ExpressionFunction(
-   '1. - (sqrt( (np.mod(x[...,0],1./K)-0.5/K)**2 + (np.mod(x[...,1],1./K)-0.5/K)**2) <= 0.3/K) * 0.999',
-   2, (),
-   values={'K': 10}
+   '1. - (sqrt( (np.mod(x[0],1./K)-0.5/K)**2 + (np.mod(x[1],1./K)-0.5/K)**2) <= 0.3/K) * 0.999',
+   2, values={'K': 10}
 )
 ```
 
@@ -332,7 +314,7 @@ will be
 We can then make the following definition of the Neumann data:
 
 ```{code-cell}
-neumann_data = ExpressionFunction('-cos(pi*x[...,0])**2*neum[0]', 2, (), parameters= {'neum': 1})
+neumann_data = ExpressionFunction('-cos(pi*x[0])**2*neum[0]', 2, parameters= {'neum': 1})
 ```
 
 Similar to the range of the function, pyMOR cannot infer from the given
@@ -346,9 +328,8 @@ We can then proceed as usual and automatically obtain a parametric
 
 ```{code-cell}
 diffusion = ExpressionFunction(
-   '1. - (sqrt( (np.mod(x[...,0],1./K)-0.5/K)**2 + (np.mod(x[...,1],1./K)-0.5/K)**2) <= 0.3/K) * 0.999',
-   2, (),
-   values={'K': 10}
+   '1. - (sqrt( (np.mod(x[0],1./K)-0.5/K)**2 + (np.mod(x[1],1./K)-0.5/K)**2) <= 0.3/K) * 0.999',
+   2, values={'K': 10}
 )
 problem = StationaryProblem(
    domain=domain,
@@ -382,9 +363,8 @@ Next we also want to parameterize the diffusivity in the
 
 ```{code-cell}
 diffusion = ExpressionFunction(
-   '1. - (sqrt( (np.mod(x[...,0],1./K)-0.5/K)**2 + (np.mod(x[...,1],1./K)-0.5/K)**2) <= 0.3/K) * (1 - diffu[0])',
-   2, (),
-   values={'K': 10},
+   '1. - (sqrt( (np.mod(x[0],1./K)-0.5/K)**2 + (np.mod(x[1],1./K)-0.5/K)**2) <= 0.3/K) * (1 - diffu[0])',
+   2, values={'K': 10},
    parameters= {'diffu': 1}
 )
 ```

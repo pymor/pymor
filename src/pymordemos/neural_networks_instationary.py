@@ -102,7 +102,7 @@ def main(
 def create_fom(grid_intervals, time_steps):
     problem = burgers_problem()
     f = LincombFunction(
-        [ExpressionFunction('ones(x.shape[:-1])', 1, ()), ConstantFunction(1., 1)],
+        [ExpressionFunction('1.', 1), ConstantFunction(1., 1)],
         [ProjectionParameterFunctional('exponent'), 0.1])
     problem = problem.with_stationary_part(outputs=[('l2', f)])
 

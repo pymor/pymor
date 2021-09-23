@@ -7,9 +7,10 @@ from numbers import Number
 import numpy as np
 from scipy.linalg import solve, solve_triangular
 
+from pymor.analyticalproblems.expressions import parse_expression
 from pymor.core.base import abstractmethod
 from pymor.parameters.base import ParametricObject, Mu
-from pymor.parameters.functionals import ParameterFunctional, ExpressionParameterFunctional
+from pymor.parameters.functionals import ParameterFunctional
 
 
 class Function(ParametricObject):
@@ -211,7 +212,7 @@ class GenericFunction(Function):
         assert x.shape[-1] == self.dim_domain
 
         if self.parametric:
-            v = self.mapping(x, mu)
+            v = self.mapping(x, mu=mu)
         else:
             v = self.mapping(x)
 
@@ -236,33 +237,31 @@ class ExpressionFunction(GenericFunction):
     Parameters
     ----------
     expression
-        A Python expression of one variable `x` and a parameter `mu` given as
-        a string.
+        A Python expression of one variable and the `parameters`, given as a `str`.
     dim_domain
         The dimension of the domain.
-    shape_range
-        The shape of the values returned by the expression.
     parameters
         The |Parameters| the expression accepts.
     values
         Dictionary of additional constants that can be used in `expression`
         with their corresponding value.
+    variable
+        Name of the input variable in the given expression.
     name
         The name of the function.
     """
 
-    functions = ExpressionParameterFunctional.functions
-
-    def __init__(self, expression, dim_domain=1, shape_range=(), parameters={}, values=None, name=None):
-        values = values or {}
-        code = compile(expression, '<expression>', 'eval')
-        super().__init__(lambda x, mu={}: eval(code, dict(self.functions, **values), dict(mu, x=x, mu=mu)),
-                         dim_domain, shape_range, parameters, name)
+    def __init__(self, expression, dim_domain=1, parameters={}, values={}, variable='x', name=None):
+        params = parameters.copy()
+        params[variable] = dim_domain
+        self.expression_obj = parse_expression(expression, parameters=params, values=values)
+        super().__init__(self.expression_obj.to_numpy([variable]),
+                         dim_domain, self.expression_obj.shape, parameters, name)
         self.__auto_init(locals())
 
     def __reduce__(self):
         return (ExpressionFunction,
-                (self.expression, self.dim_domain, self.shape_range, self.parameters, self.values,
+                (self.expression, self.dim_domain, self.parameters, self.values, self.variable,
                  getattr(self, '_name', None)))
 
     def __str__(self):

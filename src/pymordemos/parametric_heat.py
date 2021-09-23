@@ -93,12 +93,12 @@ def main(
     p = InstationaryProblem(
         StationaryProblem(
             domain=LineDomain([0., 1.], left='robin', right='robin'),
-            diffusion=LincombFunction([ExpressionFunction('(x[...,0] <= 0.5) * 1.', 1),
-                                       ExpressionFunction('(0.5 < x[...,0]) * 1.', 1)],
+            diffusion=LincombFunction([ExpressionFunction('(x[0] <= 0.5) * 1.', 1),
+                                       ExpressionFunction('(0.5 < x[0]) * 1.', 1)],
                                       [1,
                                        ProjectionParameterFunctional('diffusion')]),
-            robin_data=(ConstantFunction(1., 1), ExpressionFunction('(x[...,0] < 1e-10) * 1.', 1)),
-            outputs=(('l2_boundary', ExpressionFunction('(x[...,0] > (1 - 1e-10)) * 1.', 1)),),
+            robin_data=(ConstantFunction(1., 1), ExpressionFunction('(x[0] < 1e-10) * 1.', 1)),
+            outputs=(('l2_boundary', ExpressionFunction('(x[0] > (1 - 1e-10)) * 1.', 1)),),
         ),
         ConstantFunction(0., 1),
         T=3.

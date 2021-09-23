@@ -35,10 +35,10 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
     assert initial_data_type in ('sin', 'bump')
 
     if initial_data_type == 'sin':
-        initial_data = ExpressionFunction('0.5 * (sin(2 * pi * x) + 1.)', 1, ())
+        initial_data = ExpressionFunction('0.5 * (sin(2 * pi * x[0]) + 1.)', 1)
         dirichlet_data = ConstantFunction(dim_domain=1, value=0.5)
     else:
-        initial_data = ExpressionFunction('(x >= 0.5) * (x <= 1) * 1.', 1, ())
+        initial_data = ExpressionFunction('(x[0] >= 0.5) * (x[0] <= 1) * 1.', 1)
         dirichlet_data = ConstantFunction(dim_domain=1, value=0.)
 
     return InstationaryProblem(
@@ -51,10 +51,10 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
             rhs=None,
 
             nonlinear_advection=ExpressionFunction('abs(x)**exponent[0] * v',
-                                                   1, (1,), {'exponent': 1}, {'v': v}),
+                                                   1, {'exponent': 1}, {'v': v}),
 
             nonlinear_advection_derivative=ExpressionFunction('exponent * abs(x)**(exponent[0]-1) * sign(x) * v',
-                                                              1, (1,), {'exponent': 1}, {'v': v}),
+                                                              1, {'exponent': 1}, {'v': v}),
         ),
 
         T=0.3,
@@ -94,10 +94,10 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
     assert initial_data_type in ('sin', 'bump')
 
     if initial_data_type == 'sin':
-        initial_data = ExpressionFunction("0.5 * (sin(2 * pi * x[..., 0]) * sin(2 * pi * x[..., 1]) + 1.)", 2, ())
+        initial_data = ExpressionFunction("0.5 * (sin(2 * pi * x[0]) * sin(2 * pi * x[1]) + 1.)", 2)
         dirichlet_data = ConstantFunction(dim_domain=2, value=0.5)
     else:
-        initial_data = ExpressionFunction("(x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1", 2, ())
+        initial_data = ExpressionFunction("(x[0] >= 0.5) * (x[0] <= 1) * 1", 2)
         dirichlet_data = ConstantFunction(dim_domain=2, value=0.)
 
     return InstationaryProblem(
@@ -109,11 +109,11 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
 
             rhs=None,
 
-            nonlinear_advection=ExpressionFunction("abs(x)**exponent * v",
-                                                   1, (2,), {'exponent': 1}, {'v': np.array([vx, vy])}),
+            nonlinear_advection=ExpressionFunction("abs(x[0])**exponent * v",
+                                                   1, {'exponent': 1}, {'v': [vx, vy]}),
 
-            nonlinear_advection_derivative=ExpressionFunction("exponent * abs(x)**(exponent-1) * sign(x) * v",
-                                                              1, (2,), {'exponent': 1}, {'v': np.array([vx, vy])}),
+            nonlinear_advection_derivative=ExpressionFunction("exponent * abs(x[0])**(exponent-1) * sign(x[0]) * v",
+                                                              1, {'exponent': 1}, {'v': [vx, vy]}),
         ),
 
         initial_data=initial_data,

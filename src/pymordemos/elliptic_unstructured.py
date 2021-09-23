@@ -26,8 +26,8 @@ def main(
         domain=CircularSectorDomain(angle, radius=1, num_points=num_points),
         diffusion=ConstantFunction(1, dim_domain=2),
         rhs=ConstantFunction(np.array(0.), dim_domain=2, name='rhs'),
-        dirichlet_data=ExpressionFunction('sin(polar(x)[1] * pi/angle)', 2, (),
-                                          {}, {'angle': angle}, name='dirichlet')
+        dirichlet_data=ExpressionFunction('sin(angle(x) * pi/rho)', 2,
+                                          {}, {'rho': angle}, name='dirichlet')
     )
 
     print('Discretize ...')
@@ -39,8 +39,8 @@ def main(
     print('Solve ...')
     U = m.solve()
 
-    solution = ExpressionFunction('(lambda r, phi: r**(pi/angle) * sin(phi * pi/angle))(*polar(x))', 2, (),
-                                  {}, {'angle': angle})
+    solution = ExpressionFunction('norm(x)**(pi/rho) * sin(angle(x) * pi/rho)', 2,
+                                  {}, {'rho': angle})
     U_ref = U.space.make_array(solution(grid.centers(2)))
 
     m.visualize((U, U_ref, U-U_ref),
