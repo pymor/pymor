@@ -29,14 +29,14 @@ def visualize_vista(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     """Generate a pyvista Plot and associated controls for grid-based data
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
-    be attached to the faces or vertices of the grid.
+    be attached to the elements or vertices of the grid.
 
     Parameters
     ----------
     grid
         The underlying |Grid|.
     U
-        |VectorArray| of the data to visualize. If `len(U) 1`, the data is visualized
+        |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
         as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
         provided, in which case a subplot is created for each entry of the tuple. The
         lengths of all arrays have to agree.
