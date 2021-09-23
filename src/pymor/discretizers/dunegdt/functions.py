@@ -169,7 +169,11 @@ if config.HAVE_DUNEGDT:
                 raise RuleNotMatchingError('Delegate to directly interpolate this as a Function with fixed mu.')
             elif pymor_function.parametric:
                 assert not any([func.parametric for func in pymor_function.functions])  # does not work without a mu
-            dune_functions = [self.apply(func) for func in pymor_function.functions]
+            # we know that LincombFunction is never nested, so we do not call self.apply() here in case
+            # self.ensure_lincomb == True to avoid nested lists
+            dune_functions = [to_dune_grid_function(
+                func, dune_grid=None, dune_interpolator=self.interpolator, mu=self.mu, ensure_lincomb=False)
+                              for func in pymor_function.functions]
             return dune_functions, pymor_function.coefficients
 
         @match_class(Function)
@@ -234,5 +238,7 @@ if config.HAVE_DUNEGDT:
             for func in pymor_function.functions:
                 if func.parametric:
                     raise RuleNotMatchingError('We cannot treat linear combinations of parametric functions!')
-            dune_functions = [self.apply(func) for func in pymor_function.functions]
+            # we know that LincombFunction is never nested, so we do not call self.apply() here in case
+            # self.ensure_lincomb == True to avoid nested lists
+            dune_functions = [to_dune_function(func, ensure_lincomb=False) for func in pymor_function.functions]
             return dune_functions, pymor_function.coefficients
