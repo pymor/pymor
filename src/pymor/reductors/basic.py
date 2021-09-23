@@ -39,10 +39,18 @@ class ProjectionBasedReductor(BasicObject):
     check_tol
         If `check_orthonormality` is `True`, the numerical tolerance with which the checks
         are performed.
+    assemble_error_estimate
+        If `True`, assembles error estimate
+    assemble_output_error_estimate
+        If `True`, assembles output error estimate. `assemble_error_estimate` must be `True`.
     """
 
     @defaults('check_orthonormality', 'check_tol')
-    def __init__(self, fom, bases, products={}, check_orthonormality=True, check_tol=1e-3):
+    def __init__(self, fom, bases, products={}, check_orthonormality=True, check_tol=1e-3,
+                 assemble_error_estimate=True, assemble_output_error_estimate=True):
+        if assemble_output_error_estimate:
+            # the output error estimate requires the state error estimate
+            assert assemble_error_estimate
         assert products.keys() <= bases.keys()
         bases = dict(bases)
         products = dict(products)
@@ -82,8 +90,12 @@ class ProjectionBasedReductor(BasicObject):
         # ensure that no logging output is generated for error_estimator assembly in case there is
         # no error estimator to assemble
         if self.assemble_error_estimator.__func__ is not ProjectionBasedReductor.assemble_error_estimator:
-            with self.logger.block('Assembling error estimator ...'):
-                error_estimator = self.assemble_error_estimator()
+            if self.assemble_error_estimate:
+                with self.logger.block('Assembling error estimator ...'):
+                    error_estimator = self.assemble_error_estimator()
+            else:
+                self.logger.info('Skip assembling error estimators ...')
+
         else:
             error_estimator = None
 
@@ -164,12 +176,15 @@ class StationaryRBReductor(ProjectionBasedReductor):
         See :class:`ProjectionBasedReductor`.
     """
 
-    def __init__(self, fom, RB=None, product=None, check_orthonormality=None, check_tol=None):
+    def __init__(self, fom, RB=None, product=None, check_orthonormality=None, check_tol=None,
+                 assemble_error_estimate=True, assemble_output_error_estimate=True):
         assert isinstance(fom, StationaryModel)
         RB = fom.solution_space.empty() if RB is None else RB
         assert RB in fom.solution_space
         super().__init__(fom, {'RB': RB}, {'RB': product},
-                         check_orthonormality=check_orthonormality, check_tol=check_tol)
+                         check_orthonormality=check_orthonormality, check_tol=check_tol,
+                         assemble_error_estimate=assemble_error_estimate,
+                         assemble_output_error_estimate=assemble_output_error_estimate)
 
     def project_operators(self):
         fom = self.fom
@@ -223,12 +238,15 @@ class InstationaryRBReductor(ProjectionBasedReductor):
     """
 
     def __init__(self, fom, RB=None, product=None, initial_data_product=None, product_is_mass=False,
-                 check_orthonormality=None, check_tol=None):
+                 check_orthonormality=None, check_tol=None,
+                 assemble_error_estimate=True, assemble_output_error_estimate=True):
         assert isinstance(fom, InstationaryModel)
         RB = fom.solution_space.empty() if RB is None else RB
         assert RB in fom.solution_space
         super().__init__(fom, {'RB': RB}, {'RB': product},
-                         check_orthonormality=check_orthonormality, check_tol=check_tol)
+                         check_orthonormality=check_orthonormality, check_tol=check_tol,
+                         assemble_error_estimate=assemble_error_estimate,
+                         assemble_output_error_estimate=assemble_output_error_estimate)
         self.initial_data_product = initial_data_product or product
         self.product_is_mass = product_is_mass
 

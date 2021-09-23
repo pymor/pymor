@@ -39,9 +39,11 @@ class CoerciveRBReductor(StationaryRBReductor):
     """
 
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
-                 check_orthonormality=None, check_tol=None):
+                 check_orthonormality=None, check_tol=None, assemble_error_estimate=True,
+                 assemble_output_error_estimate=True, operator_is_symmetric=False, dual_bases=None):
         super().__init__(fom, RB, product=product, check_orthonormality=check_orthonormality,
-                         check_tol=check_tol)
+                         check_tol=check_tol, assemble_error_estimate=assemble_error_estimate,
+                         assemble_output_error_estimate=assemble_output_error_estimate)
         self.coercivity_estimator = coercivity_estimator
         self.residual_reductor = ResidualReductor(self.bases['RB'], self.fom.operator, self.fom.rhs,
                                                   product=product, riesz_representatives=True)
@@ -111,7 +113,8 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
     """
 
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
-                 check_orthonormality=None, check_tol=None):
+                 check_orthonormality=None, check_tol=None,
+                 assemble_error_estimate=True, assemble_output_error_estimate=True):
         assert fom.operator.linear and fom.rhs.linear
         assert isinstance(fom.operator, LincombOperator)
         assert all(not op.parametric for op in fom.operator.operators)
@@ -120,7 +123,8 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
             assert all(not op.parametric for op in fom.rhs.operators)
 
         super().__init__(fom, RB, product=product, check_orthonormality=check_orthonormality,
-                         check_tol=check_tol)
+                         check_tol=check_tol, assemble_error_estimate=assemble_error_estimate,
+                         assemble_output_error_estimate=assemble_output_error_estimate)
         self.coercivity_estimator = coercivity_estimator
         self.extends = None
 
