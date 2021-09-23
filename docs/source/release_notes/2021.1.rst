@@ -1,5 +1,5 @@
 
-pyMOR 2021.1 (September 30, 2021)
+pyMOR 2021.1 (September 24, 2021)
 ---------------------------------
 We are proud to announce the release of pyMOR 2021.1! This release includes
 several new reductors for LTI systems. In particular, methods for reducing and
@@ -7,7 +7,7 @@ analyzing unstable systems have been added. ANNs can now be used in order to
 directly approximate output quantities. Furthermore, it is now possible to
 work with time-dependent parameters in pyMOR.
 
-Over ??? single commits have entered this release. For a full list of changes
+Over 700 single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/2020.2.x...2021.1.x>`__.
 
 pyMOR 2021.1 contains contributions by Tim Keil, Hendrik Kleikamp, Josefine Zeller
@@ -48,7 +48,7 @@ The reductor also implements a dense method for small to medium problems.
 
 Time-dependent parameter values
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+- `[#1379] Time dependent parameter values <https://github.com/pymor/pymor/pull/1379>`_
 
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -70,12 +70,12 @@ training routines have been separated from the reductors.
 
 Improvements to the HAPOD algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1322] Various Improvements to the HAPOD algorithm (v2) <https://github.com/pymor/pymor/pull/1322>`_
 
 Empirical Interpolation improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1240] Several EI improvements <https://github.com/pymor/pymor/pull/1240>`_
 
-Add outputs to FV discretizers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Methods for exporting matrices of system models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -85,6 +85,15 @@ for constructing models from matrices.
 In `[#1309] <https://github.com/pymor/pymor/pull/1309>`_,
 the corresponding `to_*` methods were added for exporting matrices from a model.
 
+pyMOR is now a pure-Python package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1314] Replace all Cython modules by equivalent NumPy code <https://github.com/pymor/pymor/pull/1314>`_
+
+
+Symbolic ExpressionFunctions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1277] Use symbolic expressions in ExpressionFunction <https://github.com/pymor/pymor/pull/1277>`_
+
 
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -92,8 +101,30 @@ Backward incompatible changes
 Drop python 3.6 support
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+Symbolic ExpressionFunctions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- `[#1331] Improve shift selection in lradi <https://github.com/pymor/pymor/pull/1331>`_
+- `[#1196] Add outputs to FV discretizers <https://github.com/pymor/pymor/pull/1196>`_
+- `[#1234] [operators/block] skip ZeroOperators in apply and apply_adjoint <https://github.com/pymor/pymor/pull/1234>`_
+- `[#1243] Fixed computation of intersection_codim in _neighbours <https://github.com/pymor/pymor/pull/1243>`_
+- `[#1246] Fix bug in apply_inverse for LincombOperators <https://github.com/pymor/pymor/pull/1246>`_
+- `[#1270] Simplify SecondOrderModel-related operators <https://github.com/pymor/pymor/pull/1270>`_
+- `[#1294] Let sample_randomly return a Mu instance in case count=None <https://github.com/pymor/pymor/pull/1294>`_
+- `[#1296] Simplify semantics of assemble_lincomb / fix #1276 <https://github.com/pymor/pymor/pull/1296>`_
+- `[#1302] Drop python 3.6 support <https://github.com/pymor/pymor/pull/1302>`_
 - `[#1304] Several improvements to Qt-based visualizations <https://github.com/pymor/pymor/pull/1304>`_
+- `[#1309] Add methods to models.iosys for exporting matrices <https://github.com/pymor/pymor/pull/1309>`_
+- `[#1317] Add FenicsMatrixOperator._real_apply_inverse_adjoint_one_vector <https://github.com/pymor/pymor/pull/1317>`_
+- `[#1323] Switch tutorials from rst to myst-markdown <https://github.com/pymor/pymor/pull/1323>`_
+- `[#1325] Let MPIOperator.assemble return self when operator is unchanged <https://github.com/pymor/pymor/pull/1325>`_
+- `[#1326] Fix almost_less for negative numbers <https://github.com/pymor/pymor/pull/1326>`_
+- `[#1327] Use complex vector handling of wrapped object in MPIVectorArray <https://github.com/pymor/pymor/pull/1327>`_
+- `[#1331] Improve shift selection in lradi <https://github.com/pymor/pymor/pull/1331>`_
+- `[#1363] [logging] implement a LOG_once facility <https://github.com/pymor/pymor/pull/1363>`_
+- `[#1378] Bugfixes in lrradi <https://github.com/pymor/pymor/pull/1378>`_
+- `[#1388] Fix qt config check <https://github.com/pymor/pymor/pull/1388>`_
+- `[#1408] Introduce ListVectorSpace.vector_type and make make_array smarter <https://github.com/pymor/pymor/pull/1408>`_
+- `[#1410] Add StationaryModel.deaffinize <https://github.com/pymor/pymor/pull/1410>`_
