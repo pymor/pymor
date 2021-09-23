@@ -5,7 +5,9 @@
 import numpy as np
 
 from pymor.core.base import ImmutableObject
-from pymor.operators.constructions import LincombOperator, induced_norm
+from pymor.algorithms.projection import project, project_to_subbasis
+from pymor.operators.block import BlockRowOperator
+from pymor.operators.constructions import LincombOperator, induced_norm, VectorOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.basic import StationaryRBReductor
 from pymor.reductors.residual import ResidualReductor
@@ -47,12 +49,86 @@ class CoerciveRBReductor(StationaryRBReductor):
         self.coercivity_estimator = coercivity_estimator
         self.residual_reductor = ResidualReductor(self.bases['RB'], self.fom.operator, self.fom.rhs,
                                                   product=product, riesz_representatives=True)
+        if self.fom.output_functional is not None:
+            if self.fom.output_functional.linear and self.assemble_output_error_estimate:
+                if dual_bases is not None:
+                    assert len(dual_bases) == fom.dim_output
+                self.dual_residual_reductors = []
+                output = self.fom.output_functional
+                for d in range(fom.dim_output):
+                    e_i = np.zeros(fom.dim_output)
+                    e_i[d] = 1
+                    e_i_vec = output.range.from_numpy(e_i)
+                    restricted_output = - output.H @ VectorOperator(e_i_vec)
+                    if dual_bases is not None:
+                        basis = dual_bases[d]
+                    else:
+                        basis = self.bases['RB']
+                    if operator_is_symmetric:
+                        dual_operator = self.fom.operator
+                    else:
+                        dual_operator = self.fom.operator.H
+                        if dual_bases is None:
+                            self.logger.warn('You are using a wrong basis for the adjoint operator. ' \
+                                             'If you are sure that your operator is symmetric (in theory), ' \
+                                             'you can set `operator_is_symmetric = True`. If your operator ' \
+                                             'is not symmetric, you should provide a dual basis via `dual_bases`.')
+
+                    self.dual_residual_reductors.append(ResidualReductor(basis, dual_operator,
+                                                                         restricted_output, product=product,
+                                                                         riesz_representatives=True))
 
     def assemble_error_estimator(self):
         residual = self.residual_reductor.reduce()
+        dual_ress, dual_range_dims, proj_dual_ops, proj_dual_rhss = self.assemble_output_error_estimator()
         error_estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
-                                              self.coercivity_estimator)
+                                              self.coercivity_estimator, dual_ress, dual_range_dims,
+                                              proj_dual_ops, proj_dual_rhss)
         return error_estimator
+
+    @classmethod
+    def dual_model(cls, fom, dim=0, operator_is_symmetric=False):
+        """Return dual model with the output as right hand side
+
+        Parameters
+        ----------
+        fom
+            The |Model| for which to construct the dual model
+        dim
+            The dimension of the `fom.output_functional` for which the dual model is to be built.
+        operator_is_symmetric
+            If `True`, `fom.operator` is used for the dual problem. This is only feasable if the operator is
+            symmetric (in theory), If `False` the adjoint `fom.operator.H` is used instead.
+
+        Returns
+        -------
+        A |Model| with the adjoint operator and the corresponding right hand side
+        """
+        assert 0 <= dim < fom.dim_output
+        e_i = np.zeros(fom.dim_output)
+        e_i[dim] = 1
+        e_i_vec = fom.output_functional.range.from_numpy(e_i)
+        dual_rhs = - fom.output_functional.H @ VectorOperator(e_i_vec)
+        dual_operator = fom.operator if operator_is_symmetric else fom.operator.H
+        dual_fom = fom.with_(operator=dual_operator, rhs=dual_rhs,
+                             output_functional=None, name=fom.name + '_dual')
+        return dual_fom
+
+    def assemble_output_error_estimator(self):
+        dual_residuals, dual_range_dims, projected_dual_operators, projected_dual_rhss = [], [], [], []
+        if self.fom.output_functional is not None:
+            if self.fom.output_functional.linear and self.assemble_output_error_estimate:
+                for dual_residual_reductor in self.dual_residual_reductors:
+                    dual_residuals.append(dual_residual_reductor.reduce())
+                    dual_range_dims.append(tuple(dual_residual_reductor.residual_range_dims))
+                    basis = dual_residual_reductor.RB
+                    projected_dual_operator = project(dual_residual_reductor.operator, basis, basis)
+                    projected_dual_operators.append(projected_dual_operator)
+                    projected_dual_rhs = project(dual_residual_reductor.rhs, basis, None)
+                    projected_dual_rhss.append(projected_dual_rhs)
+        # go back to None if nothing happened (this can also happen when the for loop started)
+        dual_range_dims = None if len(dual_range_dims) == 0 else dual_range_dims
+        return dual_residuals, dual_range_dims, projected_dual_operators, projected_dual_rhss
 
     def assemble_error_estimator_for_subbasis(self, dims):
         return self._last_rom.error_estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
@@ -64,7 +140,9 @@ class CoerciveRBEstimator(ImmutableObject):
     Not to be used directly.
     """
 
-    def __init__(self, residual, residual_range_dims, coercivity_estimator):
+    def __init__(self, residual, residual_range_dims, coercivity_estimator, dual_residuals=None,
+                 dual_residuals_range_dims=None, projected_dual_operators=None,
+                 projected_dual_rhss=None):
         self.__auto_init(locals())
 
     def estimate_error(self, U, mu, m):
@@ -73,15 +151,52 @@ class CoerciveRBEstimator(ImmutableObject):
             est /= self.coercivity_estimator(mu)
         return est
 
+    def estimate_output_error(self, U, mu, m):
+        assert m.output_functional is not None and m.output_functional.linear
+        assert len(self.dual_residuals) == m.dim_output
+        est_pr = self.estimate_error(U, mu, m)
+        est_dus = []
+        for d in range(m.dim_output):
+            dual_problem = m.with_(operator=self.projected_dual_operators[d],
+                                   rhs=self.projected_dual_rhss[d],
+                                   output_functional=None)
+            dual_solution = dual_problem.solve(mu)
+            est_dus.append(self.dual_residuals[d].apply(dual_solution, mu=mu).norm())
+        return (est_pr * est_dus).T
+
     def restricted_to_subbasis(self, dim, m):
+        projected_dual_operators = [project_to_subbasis(op, dim, dim) for op in
+                                    self.projected_dual_operators]
+        projected_dual_rhs = [project_to_subbasis(rhs, dim, None) for rhs in
+                                    self.projected_dual_rhss]
         if self.residual_range_dims:
             residual_range_dims = self.residual_range_dims[:dim + 1]
             residual = self.residual.projected_to_subbasis(residual_range_dims[-1], dim)
-            return CoerciveRBEstimator(residual, residual_range_dims, self.coercivity_estimator)
+            dual_residuals, dual_residuals_range_dims = [], []
+            if self.dual_residuals_range_dims is not None:
+                if len(self.dual_residuals_range_dims[0]) > 0:
+                    assert len(self.dual_residuals_range_dims) == m.dim_output
+                    assert len(self.dual_residuals) == m.dim_output
+                    dual_residuals_range_dims = [res_range_dims[:dim + 1] for res_range_dims in
+                                                 self.dual_residuals_range_dims]
+                    dual_residuals = [res.projected_to_subbasis(res_range_dims[-1], dim) for
+                                      res, res_range_dims in zip(self.dual_residuals,
+                                                                 dual_residuals_range_dims)]
+            if len(dual_residuals) == 0:
+                self.logger.warning('Cannot efficiently reduce dual to subbasis')
+                # the above if statements were not triggered
+                dual_residuals = [res.projected_to_subbasis(None, dim)
+                                  for res in self.dual_residuals]
+            return CoerciveRBEstimator(residual, residual_range_dims, self.coercivity_estimator,
+                                       dual_residuals, dual_residuals_range_dims,
+                                       projected_dual_operators, projected_dual_rhs)
         else:
             self.logger.warning('Cannot efficiently reduce to subbasis')
+            projected_dual_residuals = [res.projected_to_subbasis(None, dim)
+                                        for res in self.dual_residuals]
             return CoerciveRBEstimator(self.residual.projected_to_subbasis(None, dim), None,
-                                       self.coercivity_estimator)
+                                       self.coercivity_estimator, projected_dual_residuals,
+                                       projected_dual_operators, projected_dual_rhs)
 
 
 class SimpleCoerciveRBReductor(StationaryRBReductor):
