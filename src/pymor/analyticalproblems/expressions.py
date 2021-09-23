@@ -444,4 +444,4 @@ _numpy_functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', '
                                                 'array', 'broadcast_arrays', 'newaxis'}}
 
 _numpy_functions['norm']  = np.linalg.norm
-_numpy_functions['angle'] = lambda x: np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi)
+_numpy_functions['angle'] = lambda x: np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi)  # np.angle uses different convention
