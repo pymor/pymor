@@ -1200,6 +1200,10 @@ class LTIModel(InputStateOutputModel):
         rev
             |VectorArray| of right eigenvectors.
         """
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
+
         A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
 
         if ast_pole_data is not None:
