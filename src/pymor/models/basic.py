@@ -147,6 +147,47 @@ class StationaryModel(Model):
             return gradients
 
     def deaffinize(self, arg):
+        """Build |Model| with linear solution space.
+
+        For many |Models| the solution manifold is contained in an
+        affine subspace of the :attr:`~pymor.models.interface.Model.solution_space`,
+        e.g. the affine space of functions with certain fixed boundary values.
+        Most MOR techniques, however, construct linear approximation spaces, which
+        are not fully contained in this affine subspace, even if these spaces are
+        created using snapshot vectors from the subspace. Depending on the
+        FOM, neglecting the affine structure of the solution space may lead to bad
+        approximations or even an ill-posed ROM. A standard approach to circumvent
+        this issue is to replace the FOM with an equivalent |Model| with linear
+        solution space. This method can be used to obtain such a |Model|.
+
+        Given a vector `u_0` from the affine solution space, the returned
+        :class:`StationaryModel` is equivalent to solving::
+
+            L(u(μ) + u_0, μ) = F(μ)
+
+        When :attr:`~StationaryModel.operator` is linear, the affine shift is
+        moved to the right-hand side to obtain::
+
+            L(u(μ), μ) = F(μ) - L(u_0, μ)
+
+        Solutions of the original |Model| can be obtained by adding `u_0` to the
+        solutions of the deaffinized |Model|.
+
+        The :attr:`~StationaryModel.output_functional` is adapted accordingly to
+        yield the same output for given |parameter values|.
+
+        Parameters
+        ----------
+        arg
+            Either a |VectorArray| of length 1 containing the vector `u_0`.
+            Alternatively, |parameter values| can be provided, for which the
+            model is :meth:`solved <pymor.models.interface.Model.solve>` to
+            obtain `u_0`.
+
+        Returns
+        -------
+        The deaffinized |Model|.
+        """
         if not isinstance(arg, VectorArray):
             mu = self.parameters.parse(arg)
             arg = self.solve(mu)
