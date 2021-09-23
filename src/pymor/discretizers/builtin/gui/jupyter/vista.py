@@ -159,7 +159,8 @@ def visualize_vista_mesh(meshes, bounding_box=([0, 0], [1, 1]), codim=2, title=N
 
 class PyVistaPatchWidget(QtInteractor):
 
-    def __init__(self, U, limits, parent, grid, bounding_box=([0, 0], [1, 1]), codim=2):
+    def __init__(self, U, limits, parent, grid, bounding_box=([0, 0], [1, 1]), codim=2,
+                 show_scalar_bar=True):
         from qtpy.QtWidgets import QSizePolicy
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
@@ -171,7 +172,8 @@ class PyVistaPatchWidget(QtInteractor):
 
         self.scalar_name = 'Data'
         self.mesh_kwargs = {'scalar_bar_args': _get_default_bar_args(),
-                            'scalars': self.scalar_name}
+                            'scalars': self.scalar_name,
+                            'show_scalar_bar': show_scalar_bar}
         self.grid = grid
         self.reference_element = grid.reference_element
         self.codim = codim

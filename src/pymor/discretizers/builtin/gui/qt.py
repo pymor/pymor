@@ -326,13 +326,13 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             if isinstance(legend, str):
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
-            if not separate_colorbars and len(vecarray_tuple) > 1:
-                l = getLogger('pymor.discretizers.builtin.gui.qt.visualize_patch')
-                l.warning('separate_colorbars=False not supported')
             if backend == 'pyvista':
                 widget = PyVistaPatchWidget
             else:
                 widget = MatplotlibPatchWidget
+                if not separate_colorbars and len(vecarray_tuple) > 1:
+                    l = getLogger('pymor.discretizers.builtin.gui.qt.visualize_patch')
+                    l.warning('separate_colorbars=False not supported')
                 separate_colorbars = True
             limits = vmin_vmax_vectorarray(vecarray_tuple, separate_colorbars=separate_colorbars,
                                            rescale_colorbars=rescale_colorbars)
@@ -343,8 +343,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                     layout = QHBoxLayout()
                     plot_layout = QGridLayout()
                     plots = [widget(parent=self, U=u, limits=limits, grid=grid, bounding_box=bounding_box,
-                                    codim=codim)
-                             for u in vecarray_tuple]
+                                    codim=codim, show_scalar_bar=(separate_colorbars or i == 0))
+                             for i,u in enumerate(vecarray_tuple)]
                     if legend:
                         for i, plot, l in zip(range(len(plots)), plots, legend):
                             subplot_layout = QVBoxLayout()
