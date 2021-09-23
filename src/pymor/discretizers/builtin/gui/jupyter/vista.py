@@ -104,20 +104,26 @@ class _JupyterMultiPlotter:
         return self._plotter
 
 
-def _load_default_theme(color_map='viridis', title=None):
+def _load_default_theme(color_map='viridis', title=None, interactive=None):
     import sys
     # themes are loadable from json files, would make for a nice customization point for users
     my_theme = pv.themes.DocumentTheme()
     my_theme.cmap = color_map
     my_theme.cpos = 'xy'
-    my_theme.show_edges = True
-    my_theme.interactive = not getattr(sys, '_called_from_test', False)
+    my_theme.show_edges = False
+    if getattr(sys, '_called_from_test', False):
+        my_theme.interactive = False
+    else:
+        my_theme.interactive = interactive if interactive is not None else True
     my_theme.transparent_background = True
-    my_theme.jupyter_backend = 'ipygany'
+    if is_jupyter():
+        # setting this to anything in non jupyter-contexts produces weird results
+        my_theme.jupyter_backend = 'ipygany'
     my_theme.title = title
     my_theme.axes.show = False
     # apply it globally
     pv.global_theme.load_theme(my_theme)
+    return my_theme
 
 
 def _get_default_bar_args():
@@ -132,7 +138,7 @@ def visualize_vista_mesh(meshes, bounding_box=([0, 0], [1, 1]), codim=2, title=N
     from pyvistaqt import MultiPlotter
 
     render_size = (300, 300)
-    _load_default_theme()
+    theme = _load_default_theme()
     scalar_bar_args = _get_default_bar_args()
     if is_jupyter():
         MultiPlotterType = _JupyterMultiPlotter
@@ -140,12 +146,12 @@ def visualize_vista_mesh(meshes, bounding_box=([0, 0], [1, 1]), codim=2, title=N
         MultiPlotterType = MultiPlotter
     if isinstance(meshes, tuple):
         rows = ceil(len(meshes)/2)
-        plotter = MultiPlotterType(nrows=rows, ncols=columns, window_size=render_size)
+        plotter = MultiPlotterType(nrows=rows, ncols=columns, window_size=render_size, theme=theme)
         for meshlist, ind in zip(meshes, np.unravel_index(list(range(len(meshes))), shape=(rows, columns))):
             plotter[ind].add_mesh(from_meshio(meshlist[0]), scalar_bar_args=scalar_bar_args)
         plotter.link_views()
     else:
-        plotter = pv.Plotter()
+        plotter = pv.Plotter(theme=theme)
         plotter.add_mesh(from_meshio(mesh=meshes[0]), scalar_bar_args=scalar_bar_args)
     plotter.camera_position = 'xy'
     return plotter.show()
@@ -158,10 +164,11 @@ class PyVistaPatchWidget(QtInteractor):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
-        super().__init__(parent)
+        theme = _load_default_theme(interactive=(grid.dim == 3))
+        super().__init__(parent, theme=theme)
         self.setMinimumSize(300, 300)
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
-        _load_default_theme()
+
         self.scalar_name = 'Data'
         self.mesh_kwargs = {'scalar_bar_args': _get_default_bar_args(),
                             'scalars': self.scalar_name}
@@ -169,6 +176,9 @@ class PyVistaPatchWidget(QtInteractor):
         self.reference_element = grid.reference_element
         self.codim = codim
         self.set(U, limits)
+        if grid.dim != 3:
+            # disable interactive camera
+            self.disable()
 
     def set(self, U, limits):
         self.clear()
