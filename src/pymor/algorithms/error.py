@@ -266,9 +266,8 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
     return result
 
 
-
 def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivities=True, plot_condition=True,
-        plot_custom_logarithmic=True, plot_custom_with_errors=False):
+                                  plot_custom_logarithmic=True, plot_custom_with_errors=False):
     """Plots the results from :meth:`reduction_error_analysis`.
 
     Parameters
@@ -287,7 +286,6 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
     plot_custom_with_errors
         It `True`, plot errors and custom values in a single plot (otherwise in separate ones).
     """
-
     error_norms = 'norms' in result
     error_estimator = 'error_estimates' in result
     condition = 'conditions' in result
