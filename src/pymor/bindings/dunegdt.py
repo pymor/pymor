@@ -17,7 +17,6 @@ if config.HAVE_DUNEGDT:
     from pymor.vectorarrays.list import (
         ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector, NumpyVector)
 
-
     class DuneXTVector(CopyOnWriteVector):
         """Wraps a vector from dune-xt to make it usable with ListVectorArray.
 
@@ -92,7 +91,6 @@ if config.HAVE_DUNEGDT:
         def to_numpy(self, ensure_copy=False):
             return np.array(self.impl, copy=ensure_copy)
 
-
     class ComplexifiedDuneXTVector(ComplexifiedVector):
         """Required for DuneXTVectorSpace, Usually not to be used directly."""
 
@@ -103,7 +101,6 @@ if config.HAVE_DUNEGDT:
                 real = np.array(self.real_part.impl, copy=False)
                 imag = np.array(self.imag_part.impl, copy=False)
                 return NumpyVector(real + imag * 1j).amax()
-
 
     class DuneXTVectorSpace(ComplexifiedListVectorSpace):
         """A |VectorSpace| yielding DuneXTVector
@@ -124,7 +121,8 @@ if config.HAVE_DUNEGDT:
             self.__auto_init(locals())
 
         def __eq__(self, other):
-            return type(other) is DuneXTVectorSpace and self.vector_type == other.vector_type and self.dim == other.dim
+            return type(other) is DuneXTVectorSpace \
+                    and self.vector_type == other.vector_type and self.dim == other.dim
 
         # since we implement __eq__, we also need to implement __hash__
         def __hash__(self):
@@ -149,7 +147,6 @@ if config.HAVE_DUNEGDT:
         def real_make_vector(self, obj):
             return DuneXTVector(obj)
 
-
     class DuneXTMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         """Wraps a dune-xt matrix as an |Operator|.
 
@@ -164,8 +161,9 @@ if config.HAVE_DUNEGDT:
         solver_options
             If specified, either a string or a dict specifying the solver used in apply_inverse. See
             https://zivgitlab.uni-muenster.de/ag-ohlberger/dune-community/dune-xt/-/tree/master/dune/xt/la/solver
-            for available options, depending on the type of `matrix`. E.g., for dune.xt.la.IstlSparseMatrix, (as can be
-            queried from dune.xt.la.IstlSparseMatrixSolver via `types()` and `options(type)`):
+            for available options, depending on the type of `matrix`. E.g., for
+            dune.xt.la.IstlSparseMatrix, (as can be queried from dune.xt.la.IstlSparseMatrixSolver
+            via `types()` and `options(type)`):
               - 'bicgstab.ssor'
               - 'bicgstab.amg.ssor'
               - 'bicgstab.amg.ilu0'

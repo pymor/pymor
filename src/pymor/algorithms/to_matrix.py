@@ -193,5 +193,3 @@ if config.HAVE_DUNEGDT:
             return mat.asformat(format)
 
     ToMatrixRules.insert_rule(0, action_DuneXTMatrixOperator)
-
-
