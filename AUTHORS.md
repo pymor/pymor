@@ -10,6 +10,11 @@
 
 ## Contributors
 
+### pyMOR 2021.2
+
+* Tim Keil, tim.keil@uni-muenster.de
+  * output error estimation with the DWR approach for stationary problems
+
 ### pyMOR 2021.1
 
 * Meret Behrens, mbehrens@mpi-magdeburg.mpg.de
