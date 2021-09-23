@@ -6,7 +6,6 @@ import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepper
 from pymor.models.interface import Model
-from pymor.parameters.base import Parameters
 from pymor.operators.constructions import IdentityOperator, VectorOperator, ZeroOperator, ConstantOperator
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
