@@ -77,11 +77,16 @@ class NeuralNetworkReductor(BasicObject):
         network on the training set should not exceed this threshold.
         Training is interrupted if a neural network that undercuts the
         error tolerance is found.
+    scale_inputs
+        Determines whether or not to scale the inputs of the neural networks.
+    scale_outputs
+        Determines whether or not to scale the outputs/targets of the neural
+        networks.
     """
 
     def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
                  basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
-                 ann_mse='like_basis'):
+                 ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
@@ -217,23 +222,27 @@ class NeuralNetworkReductor(BasicObject):
             return datum
         sample = (torch.DoubleTensor(prepare_datum(sample[0])), torch.DoubleTensor(prepare_datum(sample[1])))
 
-        if self.scaling_parameters['min_inputs'] is not None:
-            self.scaling_parameters['min_inputs'] = torch.min(self.scaling_parameters['min_inputs'], sample[0])
-        else:
-            self.scaling_parameters['min_inputs'] = sample[0]
-        if self.scaling_parameters['max_inputs'] is not None:
-            self.scaling_parameters['max_inputs'] = torch.max(self.scaling_parameters['max_inputs'], sample[0])
-        else:
-            self.scaling_parameters['max_inputs'] = sample[0]
+        if self.scale_inputs:
+            if self.scaling_parameters['min_inputs'] is not None:
+                self.scaling_parameters['min_inputs'] = torch.min(self.scaling_parameters['min_inputs'], sample[0])
+            else:
+                self.scaling_parameters['min_inputs'] = sample[0]
+            if self.scaling_parameters['max_inputs'] is not None:
+                self.scaling_parameters['max_inputs'] = torch.max(self.scaling_parameters['max_inputs'], sample[0])
+            else:
+                self.scaling_parameters['max_inputs'] = sample[0]
 
-        if self.scaling_parameters['min_targets'] is not None:
-            self.scaling_parameters['min_targets'] = torch.min(self.scaling_parameters['min_targets'], sample[1])
-        else:
-            self.scaling_parameters['min_targets'] = sample[1]
-        if self.scaling_parameters['max_targets'] is not None:
-            self.scaling_parameters['max_targets'] = torch.max(self.scaling_parameters['max_targets'], sample[1])
-        else:
-            self.scaling_parameters['max_targets'] = sample[1]
+        if self.scale_outputs:
+            if self.scaling_parameters['min_targets'] is not None:
+                self.scaling_parameters['min_targets'] = torch.min(self.scaling_parameters['min_targets'],
+                                                                   sample[1])
+            else:
+                self.scaling_parameters['min_targets'] = sample[1]
+            if self.scaling_parameters['max_targets'] is not None:
+                self.scaling_parameters['max_targets'] = torch.max(self.scaling_parameters['max_targets'],
+                                                                   sample[1])
+            else:
+                self.scaling_parameters['max_targets'] = sample[1]
 
     def _compute_sample(self, mu, u=None):
         """Transform parameter and corresponding solution to |NumPy arrays|."""
@@ -321,10 +330,15 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     validation_loss
         The validation loss to reach during training. If `None`, the neural
         network with the smallest validation loss is returned.
+    scale_inputs
+        Determines whether or not to scale the inputs of the neural networks.
+    scale_outputs
+        Determines whether or not to scale the outputs/targets of the neural
+        networks.
     """
 
     def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
-                 validation_loss=None):
+                 validation_loss=None, scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
@@ -417,12 +431,21 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         network on the training set should not exceed this threshold.
         Training is interrupted if a neural network that undercuts the
         error tolerance is found.
+    scale_inputs
+        Determines whether or not to scale the inputs of the neural networks.
+    scale_outputs
+        Determines whether or not to scale the outputs/targets of the neural
+        networks.
     """
 
     def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
                  basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
-                 ann_mse='like_basis'):
+                 ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
+
+        self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
+                                       'min_targets': None, 'max_targets': None}
+
         self.__auto_init(locals())
 
     def compute_training_data(self):
@@ -522,12 +545,31 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
     validation_loss
         The validation loss to reach during training. If `None`, the neural
         network with the smallest validation loss is returned.
+    scale_inputs
+        Determines whether or not to scale the inputs of the neural networks.
+    scale_outputs
+        Determines whether or not to scale the outputs/targets of the neural
+        networks.
     """
 
     def __init__(self, fom, nt, training_set, validation_set=None, validation_ratio=0.1,
-                 validation_loss=None):
+                 validation_loss=None, scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
+
+        self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
+                                       'min_targets': None, 'max_targets': None}
+
         self.__auto_init(locals())
+
+    def compute_training_data(self):
+        """Compute the training samples (the outputs to the parameters of the training set)."""
+        with self.logger.block('Computing training samples ...'):
+            self.training_data = []
+            for mu in self.training_set:
+                samples = self._compute_sample(mu)
+                for sample in samples:
+                    self._update_scaling_parameters(sample)
+                self.training_data.extend(samples)
 
     def _compute_sample(self, mu):
         """Transform parameter and corresponding output to |NumPy arrays|.
