@@ -2,6 +2,48 @@
 # Copyright 2013-2020 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+"""This module contains a basic symbolic expression library.
+
+The library is used by |ExpressionFunction| and |ExpressionParameterFunctional|
+by calling :func:`parse_expression`, which parses `str` expressions by replacing
+the names in the string with objects from this module. The result is an
+:class:`Expression` object, which can be converted to a |NumPy|-vectorized function
+using :meth:`Expression.to_numpy`. In the future, more conversion routines will
+be added to make the same :class:`Expression` usable for :mod:`pymor.discretizers`
+that use external PDE solvers. Further advantages of using this expression library:
+
+- meaningful error messages are generated at parse time of the `str` expression,
+  instead of hard-to-debug errors in lambda functions at evaluation time,
+- expressions are automatically correctly vectorized. In particular, there is no
+  longer a need to add `...` to indexing expressions,
+- the shape of the resulting expressions is automatically determined.
+
+In the future, we will also provide support for symbolic differentiation of the
+given :class:`Expressions`.
+
+Every :class:`Expression` is built from the following atoms:
+
+- a :class:`Constant`, which is a fixed value of arbitrary shape,
+- a :class:`Parameter`, which is a variable of a fixed one-dimensional shape.
+
+Note that both |Parameters| and input variables are treated as a :class:`Parameter`
+in the expression. Only when calling, e.g., :meth:`~Expression.to_numpy`, it is
+determined which :class:`Parameter` belongs to the resulting function's |Parameters|
+and which :class:`Parameter` is treated as an input variable.
+
+More complex expressions can be built using:
+
+- :class:`binary operators <BinaryOp>`,
+- :class:`negation <Neg>`,
+- :class:`function calls <UnaryFunctionCall>`,
+- :class:`indexing <Indexed>`,
+- :class:`array construction <Array>`.
+
+For binary operations of :class:`Expressions <Expression>` of different shape,
+the usual broadcasting rules apply.
+"""
+
+
 from numbers import Number
 from itertools import zip_longest
 import numpy as np
@@ -20,10 +62,26 @@ def parse_expression(expression, parameters={}, values={}):
 
 
 class Expression(ParametricObject):
+    """A symbolic math expression
+
+    Attributes
+    ----------
+    shape
+        The shape of the object this expression evaluates to
+        in the sense of |NumPy|.
+    """
 
     shape = None
 
     def to_numpy(self, variables):
+        """Convert expression to a |NumPy|-vectorized callable.
+
+        Parameters
+        ----------
+        variables
+            List of names of :class:`~Parameters <Parameter>` in
+            the expression which shall be treated as input variables.
+        """
         expression = self.numpy_expr()
         code = compile(expression, '<expression>', 'eval')
 
@@ -52,6 +110,7 @@ class Expression(ParametricObject):
         return wrapper
 
     def numpy_expr(self):
+        """Called by :meth:`~Expression.to_numpy`."""
         raise NotImplementedError
 
     def __getitem__(self, index):
@@ -110,6 +169,7 @@ class Expression(ParametricObject):
 
 
 class BaseConstant(Expression):
+    """A constant value."""
 
     numpy_symbol = None
     shape = ()
@@ -122,6 +182,7 @@ class BaseConstant(Expression):
 
 
 class Constant(BaseConstant):
+    """A constant value given by a |NumPy| array."""
 
     def __init__(self, value):
         self.value = value = np.array(value)
@@ -133,6 +194,18 @@ class Constant(BaseConstant):
 
 
 class Parameter(Expression):
+    """A free parameter in an :class:`Expression`.
+
+    Parameters represent both pyMOR |Parameters| as well as
+    input variables. Each parameter is a vector of shape `(dim,)`.
+
+    Parameters
+    ----------
+    name
+        The name of the parameter.
+    dim
+        The dimension of the parameter.
+    """
 
     def __init__(self, name, dim):
         self.name, self.dim = name, dim
@@ -148,6 +221,7 @@ class Parameter(Expression):
 
 
 class Array(Expression):
+    """An array of scalar-valued :class:`Expressions <Expression>`."""
 
     def __init__(self, array):
         array = np.array(array)
@@ -169,6 +243,7 @@ class Array(Expression):
 
 
 class BinaryOp(Expression):
+    """Compound :class:`Expression` of a binary operator acting on two sub-expressions."""
 
     numpy_symbol = None
 
@@ -200,6 +275,7 @@ class BinaryOp(Expression):
 
 
 class Neg(Expression):
+    """Negated :class:`Expression`."""
 
     def __init__(self, operand):
         self.operand = operand
@@ -213,6 +289,7 @@ class Neg(Expression):
 
 
 class Indexed(Expression):
+    """Indexed :class:`Expression`."""
 
     def __init__(self, base, index):
         if not isinstance(index, int) and \
@@ -237,6 +314,10 @@ class Indexed(Expression):
 
 
 class UnaryFunctionCall(Expression):
+    """Compound :class:`Expression` of an unary function applied to a sub-expression.
+
+    The function is applied component-wise.
+    """
 
     numpy_symbol = None
 
@@ -254,6 +335,11 @@ class UnaryFunctionCall(Expression):
 
 
 class UnaryReductionCall(Expression):
+    """Compound :class:`Expression` of an unary function applied to a sub-expression.
+
+    The function is to the entire vector/matrix/tensor the sub-expression evaluates to,
+    returning a single number.
+    """
 
     def __init__(self, *arg):
         if len(arg) != 1:
@@ -270,6 +356,7 @@ class UnaryReductionCall(Expression):
 
 
 def _convert_to_expression(obj):
+    """Used internally to convert literals/list constructors to an :class:`Expression`."""
     if isinstance(obj, Expression):
         return obj
     if isinstance(obj, Number):
