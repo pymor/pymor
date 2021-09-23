@@ -55,6 +55,18 @@ Additional new features
 
 Output reductor using ANNs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+To further extend the neural network based reductors, in
+`[#1282] <https://github.com/pymor/pymor/pull/1282>`_ a reductor that only
+approximates the mapping from parameter space to output space using a neural
+network was added. Furthermore, a corresponding reductor for the instationary
+case was implemented. The new reductor for the stationary case is used in
+:doc:`../tutorial_mor_with_anns` and compared to the
+:class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+
+As part of `[#1282] <https://github.com/pymor/pymor/pull/1282>`_, the
+ANN-reductors were refactored, and in
+`[#1274] <https://github.com/pymor/pymor/pull/1274>`_, the neural network
+training routines have been separated from the reductors.
 
 Improvements to the HAPOD algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
