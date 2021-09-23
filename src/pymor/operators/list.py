@@ -93,7 +93,7 @@ class LinearComplexifiedListVectorArrayOperatorBase(ListVectorArrayOperatorBase)
             imag_part = self._real_apply_one_vector(u.imag_part, mu=mu, prepare_data=prepare_data)
         else:
             imag_part = None
-        return self.range.complexified_vector_type(real_part, imag_part)
+        return self.range.vector_type(real_part, imag_part)
 
     def _apply_inverse_one_vector(self, v, mu=None, initial_guess=None, least_squares=False, prepare_data=None):
         real_part = self._real_apply_inverse_one_vector(v.real_part, mu=mu,
@@ -109,7 +109,7 @@ class LinearComplexifiedListVectorArrayOperatorBase(ListVectorArrayOperatorBase)
                                                             prepare_data=prepare_data)
         else:
             imag_part = None
-        return self.source.complexified_vector_type(real_part, imag_part)
+        return self.source.vector_type(real_part, imag_part)
 
     def _apply_adjoint_one_vector(self, v, mu=None, prepare_data=None):
         real_part = self._real_apply_adjoint_one_vector(v.real_part, mu=mu, prepare_data=prepare_data)
@@ -117,7 +117,7 @@ class LinearComplexifiedListVectorArrayOperatorBase(ListVectorArrayOperatorBase)
             imag_part = self._real_apply_adjoint_one_vector(v.imag_part, mu=mu, prepare_data=prepare_data)
         else:
             imag_part = None
-        return self.source.complexified_vector_type(real_part, imag_part)
+        return self.source.vector_type(real_part, imag_part)
 
     def _apply_inverse_adjoint_one_vector(self, u, mu=None, initial_guess=None, least_squares=False, prepare_data=None):
         real_part = self._real_apply_inverse_adjoint_one_vector(u.real_part, mu=mu,
@@ -134,7 +134,7 @@ class LinearComplexifiedListVectorArrayOperatorBase(ListVectorArrayOperatorBase)
                                                                     prepare_data=prepare_data)
         else:
             imag_part = None
-        return self.range.complexified_vector_type(real_part, imag_part)
+        return self.range.vector_type(real_part, imag_part)
 
 
 class NumpyListVectorArrayMatrixOperator(ListVectorArrayOperatorBase, NumpyMatrixOperator):
