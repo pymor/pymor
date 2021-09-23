@@ -162,7 +162,14 @@ class ProjectRules(RuleTable):
         # at least we can try to partially project the outer operators
         projected_first = project(first, None, source_basis)
         projected_last = project(last, range_basis, None)
-        return ConcatenationOperator((projected_last,) + op.operators[1:-1] + (projected_first,), name=op.name)
+        projected_op = ConcatenationOperator((projected_last,) + op.operators[1:-1] + (projected_first,), name=op.name)
+
+        # special handling for concatenations with ConstantOperators
+        # probably should be moved elsewhere
+        if not projected_op.parametric and any(isinstance(o, ConstantOperator) for o in projected_op.operators):
+            projected_op = ConstantOperator(projected_op.apply(projected_op.source.zeros()), projected_op.source)
+
+        return projected_op
 
     @match_class(AdjointOperator)
     def action_AdjointOperator(self, op):
