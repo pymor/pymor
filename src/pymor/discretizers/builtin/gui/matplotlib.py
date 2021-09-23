@@ -184,7 +184,8 @@ class Matplotlib1DWidget(FigureCanvas):
 
 class MatplotlibPatchWidget(FigureCanvas):
 
-        def __init__(self, U, limits, parent, grid, bounding_box=None, codim=2, dpi=100):
+        def __init__(self, U, limits, parent, grid, bounding_box=None, codim=2, dpi=100,
+                     **kwargs):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
