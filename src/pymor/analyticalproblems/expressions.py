@@ -32,7 +32,7 @@ class Expression(ParametricObject):
                 assert len(args) == 1
                 mu = args[0]
                 args = []
-            assert all(_broadcastable(args[0].shape[:-1], a.shape[:-1]) for a in args[1:])
+            assert all(_broadcastable_shapes(args[0].shape[:-1], a.shape[:-1]) for a in args[1:])
             if len(args) == 0:
                 input_shape = ()
             elif len(args) == 1:
@@ -173,7 +173,7 @@ class BinaryOp(Expression):
     numpy_symbol = None
 
     def __init__(self, first, second):
-        if not _broadcastable(first.shape, second.shape):
+        if not _broadcastable_shapes(first.shape, second.shape):
             raise ValueError(f'Incompatible shapes of expressions "{first}" and "{second}" with shapes '
                              f'{first.shape} and {second.shape} for binary operator {self.numpy_symbol}')
         self.first, self.second = first, second
@@ -285,7 +285,7 @@ def _convert_to_expression(obj):
         return Constant(obj)
 
 
-def _broadcastable(first, second):
+def _broadcastable_shapes(first, second):
     return all(f == s or f == 1 or s == 1 for f, s in zip(first[::-1], second[::-1]))
 
 
