@@ -240,8 +240,6 @@ class ExpressionFunction(GenericFunction):
         A Python expression of one variable and the `parameters`, given as a `str`.
     dim_domain
         The dimension of the domain.
-    shape_range
-        The shape of the values returned by the expression.
     parameters
         The |Parameters| the expression accepts.
     values
