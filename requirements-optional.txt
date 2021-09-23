@@ -13,8 +13,6 @@ ipyparallel>=6.2.5
 ipython>=5.0
 ipywidgets<8,>7
 jupyter_client>=7.0.6
-jupyter_contrib_nbextensions
-k3d
 lxml
 matplotlib
 meshio>=4.4
