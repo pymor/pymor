@@ -50,7 +50,6 @@ install_suggests = {
     'pygments': 'highlighting code',
     'pythreejs': 'threejs bindings for python notebook  visualization',
     'ipyvolume': 'visualization library',
-    'k3d': 'visualization library',
     'ipygany': 'visualization library',
     'pyvista': 'visualization library',
     'pyvistaqt': 'Qt embedding for pyvista',
@@ -59,7 +58,6 @@ install_suggests = {
     'ipywidgets': 'notebook GUI elements',
     'nbresuse': 'resource usage indicator for notebooks',
     'torch': 'PyTorch open source machine learning framework',
-    'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
     'pillow': 'image library used for bitmap data functions',
 }
 io_requires = ['pyevtk', 'xmljson', 'meshio>=4.4', 'lxml', 'gmsh']

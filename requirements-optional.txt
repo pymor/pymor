@@ -11,8 +11,6 @@ ipyparallel>=6.2.5
 ipython>=5.0
 ipyvolume
 ipywidgets
-jupyter_contrib_nbextensions
-k3d
 lxml
 matplotlib
 meshio>=4.4
