@@ -139,7 +139,7 @@ Azure Pipelines (MacOS and Windows testsuite) and GitHub Actions (misc. checks).
 pyMOR uses `pytest <https://pytest.org/>`_ for unit testing.
 All tests are contained within the `src/pymortests` directory and can be run
 individually by executing `python3 src/pymortests/the_module.py` or invoking
-pytest directly. Please refer to the `pytest documentation https://docs.pytest.org/en/latest/how-to/usage.html`_
+pytest directly. Please refer to the `pytest documentation <https://docs.pytest.org/en/latest/how-to/usage.html>`_
 for detailed examples.
 
 
