@@ -7,8 +7,8 @@ from pymor.basic import *
 
 def test_output_estimate():
     grid_intervals = 10
-    training_samples = 20
-    random_samples = 1
+    training_samples = 10
+    random_samples = 10
 
     # a real valued output from the optimization demo
     fom_1 = create_fom(grid_intervals, vector_valued_output=False, parametric_objective=True)
@@ -42,7 +42,7 @@ def test_output_estimate():
     for fom in foms:
         print('_____NEW FOM ____')
         for operator_symmetric in [True, False]:
-            for construct_dual_bases in [False]:
+            for construct_dual_bases in [False, True]:
                 print(f'operator_symmetric: {operator_symmetric}, construct_dual_bases {construct_dual_bases}')
                 # generate solution snapshots
                 primal_snapshots = fom.solution_space.empty()
@@ -84,7 +84,7 @@ def test_output_estimate():
                         s_rom, s_est = rom.output(return_error_estimate=True, mu=mu)
                         estimator_values.append(s_est)
                         for s_r, s_f, s_e in np.dstack((s_rom, s_fom, s_est))[0]:
-                            print(rom.solution_space.dim, np.abs(s_r-s_f), s_e)
+                            # print(rom.solution_space.dim, np.abs(s_r-s_f), s_e)
                             assert np.abs(s_r-s_f) <= s_e + 1e-12
 
 def create_fom(grid_intervals, vector_valued_output=False, parametric_objective=False):
