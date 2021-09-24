@@ -66,11 +66,11 @@ Symbolic ExpressionFunctions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 A simple symbolic math expression library has been added to pyMOR, which is now
 used by |ExpressionFunction| and |ExpressionParameterFunctional| to parse and
-evaluate the given expressions
+evaluate the given expressions, see
 `[#1277] <https://github.com/pymor/pymor/pull/1277>`_. As immediate benefits,
 the :attr:`shape <pymor.analyticalproblems.functions.Function.shape_range>`
 of the expression is now automatically determined and the expression is
-automatically correctly vectorized. In particular, there is no longer a need to
+automatically vectorized correctly. In particular, there is no longer a need to
 add `...` to indexing expressions. Further, malformed expressions now lead
 to meaningful error messages at parse time. 
 
@@ -102,7 +102,7 @@ has seen several significant improvements in
 
 - :func:`~pymor.algorithms.hapod.hapod` now launches its own asyncio event
   loop in order to avoid conflicts with already running event loops
-  (e.g. when running form juypter).
+  (e.g. when running from jupyter).
 - It is now possible to explicitly specify that a node has to be processed
   after certain other nodes. In particular, this can be used to ensure the
   right execution order for incremental POD computations.
@@ -114,14 +114,14 @@ has seen several significant improvements in
   the snapshot data, which makes it easy to incrementally compute the data
   while computing the POD.
 
-Better support for Empirical Interpolation of functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Improved support for Empirical Interpolation of functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The :func:`~pymor.algorithms.ei.ei_greedy` algorithm has been improved, in
 particular to make it more useful for the interpolation of coefficient
 |Functions|. Based on these improvements, an
 :func:`~pymor.algorithms.ei.interpolate_function` method has been added which
 creates an :class:`~pymor.analyticalproblems.functions.EmpiricalInterpolatedFunction`
-from an arbitrary pyMOR |Function|. The new `function_ei` demo script
+from an arbitrary pyMOR |Function|. The `function_ei` demo script
 demonstrates the new functionality. For further details, see
 `[#1240] <https://github.com/pymor/pymor/pull/1240>`_.
 
@@ -137,9 +137,9 @@ the corresponding `to_*` methods were added for exporting matrices from a model.
 pyMOR is now a pure Python package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 All Cython modules in pyMOR's discretization toolkit have been replaced by
-equivalent |NumPy| code. As a result, pyMOR is now a pure Python package,
-which should significantly simplify pyMOR's installation when no pre-built
-binary wheels are available `[#1314] <https://github.com/pymor/pymor/pull/1314>`_.
+equivalent |NumPy| code, see `[#1314] <https://github.com/pymor/pymor/pull/1314>`_.
+As a result, pyMOR is now a pure Python package, which should significantly
+simplify pyMOR's installation when no pre-built binary wheels are available.
 
 
 
