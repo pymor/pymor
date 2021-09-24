@@ -12,7 +12,7 @@ to have the most important parts of pyMOR directly available.
 
 from pymor.algorithms.basic import almost_equal, relative_error, project_array
 from pymor.algorithms.ei import interpolate_operators, interpolate_function, ei_greedy, deim
-from pymor.algorithms.error import reduction_error_analysis
+from pymor.algorithms.error import plot_reduction_error_analysis, reduction_error_analysis
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.greedy import rb_greedy
 from pymor.algorithms.adaptivegreedy import rb_adaptive_greedy

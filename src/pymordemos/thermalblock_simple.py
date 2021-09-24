@@ -79,20 +79,17 @@ def main(
     ##############################
     results = reduction_error_analysis(rom, fom=fom, reductor=reductor, error_estimator=True,
                                        error_norms=[fom.h1_0_semi_norm], condition=True,
-                                       test_mus=parameter_space.sample_randomly(test),
-                                       plot=True)
+                                       test_mus=parameter_space.sample_randomly(test))
 
     # show results
     ##############
     print(results['summary'])
-    import matplotlib.pyplot
-    matplotlib.pyplot.show()
+    plot_reduction_error_analysis(results)
 
     # write results to disk
     #######################
     from pymor.core.pickle import dump
     dump((rom, parameter_space), open('reduced_model.out', 'wb'))
-    results.pop('figure')  # matplotlib figures cannot be serialized
     dump(results, open('results.out', 'wb'))
 
     # visualize reduction error for worst-approximated mu

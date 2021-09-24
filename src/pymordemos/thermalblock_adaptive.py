@@ -8,7 +8,7 @@ import sys
 from typer import Argument, Option, run
 
 from pymor.algorithms.adaptivegreedy import rb_adaptive_greedy
-from pymor.algorithms.error import reduction_error_analysis
+from pymor.algorithms.error import plot_reduction_error_analysis, reduction_error_analysis
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.core.pickle import dump
 from pymor.discretizers.builtin import discretize_stationary_cg
@@ -136,7 +136,6 @@ def main(
                                        condition=True,
                                        test_mus=problem.parameter_space.sample_randomly(test),
                                        basis_sizes=25 if plot_error_sequence else 1,
-                                       plot=True,
                                        pool=pool)
 
     real_rb_size = rom.solution_space.dim
@@ -160,8 +159,7 @@ Greedy basis generation:
     sys.stdout.flush()
 
     if plot_error_sequence:
-        from matplotlib import pyplot as plt
-        plt.show()
+        plot_reduction_error_analysis(results)
     if plot_err:
         mumax = results['max_error_mus'][0, -1]
         U = fom.solve(mumax)
