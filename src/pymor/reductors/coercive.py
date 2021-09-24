@@ -112,36 +112,14 @@ class CoerciveRBReductor(StationaryRBReductor):
 
     def project_operators_to_subbasis(self, dims):
         if self.corrected_output:
-            rom = self._last_rom
+            # this is a hack because there is not project rule defined
+            corrected_output = self._last_rom.output_functional
+            self._last_rom = self._last_rom.with_(output_functional=None)
+        projected_operators = super().project_operators_to_subbasis(dims)
+        if self.corrected_output:
             dim = dims['RB']
-            projected_operators = {
-                'operator':          project_to_subbasis(rom.operator, dim, dim),
-                'rhs':               project_to_subbasis(rom.rhs, dim, None),
-                'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
-                'output_functional': (project_to_subbasis(rom.output_functional.output_functional, None, dim)
-                                      if rom.output_functional else None)
-            }
-
-            dual_projected_primal_residuals, reduced_dual_models = [], []
-            for dual_model, dual_residuals in zip(rom.output_functional.dual_models,
-                                                   rom.output_functional.dual_projected_primal_residuals):
-                projected_dual_operator = project_to_subbasis(dual_model.operator, dim, dim)
-                projected_dual_rhs = project_to_subbasis(dual_model.rhs, dim, None)
-                restricted_dual_model = StationaryModel(projected_dual_operator, projected_dual_rhs,
-                                             name=self.fom.name + '_reduced_dual_restricted')
-                reduced_dual_models.append(restricted_dual_model)
-
-                op = project_to_subbasis(dual_residuals.operator, dim, dim)
-                rhs = project_to_subbasis(dual_residuals.rhs, dim, None)
-                residual = ResidualOperator(op, rhs, name='dual_projected_residual_restricted')
-                dual_projected_primal_residuals.append(residual)
-
-            standard_output = projected_operators['output_functional']
-            projected_operators['output_functional'] = CorrectedOutputFunctional(
-                standard_output, reduced_dual_models, dual_projected_primal_residuals)
-        else:
-            return super().project_operators_to_subbasis(dims)
-
+            projected_operators['output_functional'] = corrected_output.reduce_to_subbasis(dim, dim)
+            self._last_rom = self._last_rom.with_(output_functional=corrected_output)
         return projected_operators
 
     def assemble_error_estimator(self):
@@ -214,6 +192,24 @@ class CorrectedOutputFunctional(Operator):
             dual_correction = dual_res.apply2(dual_solution, solution, mu)
             dual_corrections.append(dual_correction)
         return self.range.from_numpy((output + dual_corrections)[0])
+
+    def reduce_to_subbasis(self, dim_range, dim_source):
+        dual_projected_primal_residuals, reduced_dual_models = [], []
+        for dual_model, dual_residuals in zip(self.dual_models, self.dual_projected_primal_residuals):
+            projected_dual_operator = project_to_subbasis(dual_model.operator, dim_range, dim_source)
+            projected_dual_rhs = project_to_subbasis(dual_model.rhs, dim_range, None)
+            restricted_dual_model = StationaryModel(projected_dual_operator, projected_dual_rhs,
+                                         name=dual_model.name + '_restricted')
+            reduced_dual_models.append(restricted_dual_model)
+
+            op = project_to_subbasis(dual_residuals.operator, dim_range, dim_source)
+            rhs = project_to_subbasis(dual_residuals.rhs, dim_range, None)
+            residual = ResidualOperator(op, rhs, name='dual_projected_residual_restricted')
+            dual_projected_primal_residuals.append(residual)
+
+        standard_output = project_to_subbasis(self.output_functional, None, dim_source)
+        return CorrectedOutputFunctional(standard_output, reduced_dual_models,
+                                         dual_projected_primal_residuals)
 
 
 class CoerciveRBEstimator(ImmutableObject):
