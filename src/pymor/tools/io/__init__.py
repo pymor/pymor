@@ -9,7 +9,6 @@ from contextlib import contextmanager
 
 from .matrices import load_matrix, save_matrix
 from pymor.core.config import config
-from ..deprecated import Deprecated
 from ...core.exceptions import IOLibsMissing
 
 if config.HAVE_VTKIO:
@@ -19,11 +18,6 @@ else:
         raise IOLibsMissing()
 
     write_vtk_collection = read_vtkfile
-
-
-@Deprecated('safe_temporary_filename')
-def SafeTemporaryFileName(name=None, parent_dir=None):
-    return safe_temporary_filename(name=name, parent_dir=parent_dir)
 
 
 @contextmanager

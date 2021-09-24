@@ -109,7 +109,6 @@ _PACKAGES = {
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NGSOLVE': lambda: bool(import_module('ngsolve')),
     'NUMPY': lambda: import_module('numpy').__version__,
-    'PYAMG': lambda: import_module('pyamg.version').full_version,
     'PYMESS': lambda: bool(import_module('pymess')),
     'PYTEST': lambda: import_module('pytest').__version__,
     'PYTHREEJS': lambda: import_module('pythreejs._version').__version__,
