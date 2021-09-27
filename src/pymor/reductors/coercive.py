@@ -89,6 +89,7 @@ class CoerciveRBReductor(StationaryRBReductor):
         projected_operators = super().project_operators()
 
         if self.corrected_output or self.assemble_output_error_estimate:
+            # we need additional code for the output error estimation with the DWR approach
             self.dual_projected_primal_residuals, self.reduced_dual_models = [], []
             for dual_residual in self.dual_residual_reductors:
                 basis = dual_residual.RB
@@ -104,6 +105,8 @@ class CoerciveRBReductor(StationaryRBReductor):
                     self.dual_projected_primal_residuals.append(residual)
 
             if self.dual_bases is not None:
+                # We replace the output functional by the corrected output functional
+                # this will only be used if `dual_bases` are given in the reductor.
                 standard_output = projected_operators['output_functional']
                 projected_operators['output_functional'] = CorrectedOutputFunctional(
                     standard_output, self.reduced_dual_models, self.dual_projected_primal_residuals)
@@ -112,7 +115,8 @@ class CoerciveRBReductor(StationaryRBReductor):
 
     def project_operators_to_subbasis(self, dims):
         if self.corrected_output:
-            # this is a hack because there is not project rule defined
+            # this is a hack because there is no project rule for CorrectedOutputFunctional defined
+            # TODO: define a project rule without circular imports.
             corrected_output = self._last_rom.output_functional
             self._last_rom = self._last_rom.with_(output_functional=None)
         projected_operators = super().project_operators_to_subbasis(dims)
@@ -124,7 +128,7 @@ class CoerciveRBReductor(StationaryRBReductor):
 
     def assemble_error_estimator(self):
         residual = self.residual_reductor.reduce()
-        dual_ress, dual_range_dims = self.assemble_output_error_estimator()
+        dual_ress, dual_range_dims = self.prepare_dwr_output_error_estimator()
         error_estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
                                               self.coercivity_estimator, dual_ress, dual_range_dims,
                                               self.reduced_dual_models)
@@ -132,7 +136,7 @@ class CoerciveRBReductor(StationaryRBReductor):
 
     @classmethod
     def dual_model(cls, fom, dim=0, operator_is_symmetric=False):
-        """Return dual model with the output as right hand side
+        """Return dual model with the output as right hand side. See :cite:`Haa17` (Definition 2.26)
 
         Parameters
         ----------
@@ -158,7 +162,10 @@ class CoerciveRBReductor(StationaryRBReductor):
                              output_functional=None, name=fom.name + '_dual')
         return dual_fom
 
-    def assemble_output_error_estimator(self):
+    def prepare_dwr_output_error_estimator(self):
+        """Prepare the output error estimator with the DWR approach.
+        See :cite:`Haa17` (Proposition 2.27)
+        """
         dual_residuals, dual_range_dims = [], []
         if self.fom.output_functional is not None:
             if self.fom.output_functional.linear and self.assemble_output_error_estimate:
@@ -174,7 +181,16 @@ class CoerciveRBReductor(StationaryRBReductor):
 
 
 class CorrectedOutputFunctional(Operator):
-    """tbc
+    """|Operator| representing the corrected output functional from :cite:`Haa17` (Definition 2.26)
+
+    Parameters
+    ----------
+    output_functional
+        Original output_functional
+    dual_models
+        All dual models that are required for the corrected output
+    dual_projected_primal_residuals
+        The evaluated primal residuals
     """
 
     def __init__(self, output_functional, dual_models, dual_projected_primal_residuals):
