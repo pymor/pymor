@@ -360,22 +360,22 @@ if config.HAVE_DUNEGDT:
         products = {}
         #   * in H^1
         products.update({
-            'l2': DuneXTMatrixOperator(l2_product.matrix),
-            'h1_semi': DuneXTMatrixOperator(h1_semi_product.matrix),
+            'l2': DuneXTMatrixOperator(l2_product.matrix, name='l2'),
+            'h1_semi': DuneXTMatrixOperator(h1_semi_product.matrix, name='h1_semi'),
             'h1': (DuneXTMatrixOperator(l2_product.matrix)
-                   + DuneXTMatrixOperator(h1_semi_product.matrix)).assemble(),
+                   + DuneXTMatrixOperator(h1_semi_product.matrix)).assemble().with_(name='h1'),
         })
         if mu_energy_product:
-            products['energy'] = DuneXTMatrixOperator(energy_product.matrix)
+            products['energy'] = DuneXTMatrixOperator(energy_product.matrix, name='energy')
         #   * in H^1_0
         products.update({
-            'l2_0': DuneXTMatrixOperator(l2_0_product.matrix),
-            'h1_0_semi': DuneXTMatrixOperator(h1_0_semi_product.matrix),
+            'l2_0': DuneXTMatrixOperator(l2_0_product.matrix, name='l2_0'),
+            'h1_0_semi': DuneXTMatrixOperator(h1_0_semi_product.matrix, name='h1_0_semi'),
             'h1_0': (DuneXTMatrixOperator(l2_0_product.matrix)
-                     + DuneXTMatrixOperator(h1_0_semi_product.matrix)).assemble(),
+                     + DuneXTMatrixOperator(h1_0_semi_product.matrix)).assemble().with_(name='h1_0'),
         })
         if mu_energy_product:
-            products['energy_0'] = DuneXTMatrixOperator(energy_product_0.matrix)
+            products['energy_0'] = DuneXTMatrixOperator(energy_product_0.matrix, name='energy_0')
         if not trivial_dirichlet_data:
             dirichlet_data = lhs_ops[0].source.make_array([dirichlet_data.dofs.vector,])
 
