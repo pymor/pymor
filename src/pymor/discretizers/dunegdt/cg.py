@@ -20,7 +20,6 @@ if config.HAVE_DUNEGDT:
     from dune.gdt import (
             ContinuousLagrangeSpace,
             DirichletConstraints,
-            DiscontinuousLagrangeSpace,
             DiscreteFunction,
             LocalElementIntegralBilinearForm,
             LocalElementIntegralFunctional,
@@ -41,13 +40,11 @@ if config.HAVE_DUNEGDT:
     from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
     from pymor.analyticalproblems.elliptic import StationaryProblem
     from pymor.analyticalproblems.instationary import InstationaryProblem
-    from pymor.analyticalproblems.functions import Function, ConstantFunction, LincombFunction
-    from pymor.bindings.dunegdt import DuneXTMatrixOperator, DuneXTVector, DuneXTVectorSpace
+    from pymor.bindings.dunegdt import DuneXTMatrixOperator
     from pymor.core.base import ImmutableObject
-    from pymor.discretizers.dunegdt.domaindiscretizers.default import discretize_domain_default
     from pymor.discretizers.dunegdt.gui import (
             DuneGDT1dAsNumpyVisualizer, DuneGDTK3dVisualizer, DuneGDTParaviewVisualizer)
-    from pymor.discretizers.dunegdt.functions import DuneInterpolator, to_dune_grid_function
+    from pymor.discretizers.dunegdt.problems import StationaryDuneProblem
     from pymor.models.basic import InstationaryModel, StationaryModel
     from pymor.operators.constructions import ConstantOperator, LincombOperator, VectorArrayOperator
     from pymor.tools.floatcmp import float_cmp
@@ -57,15 +54,13 @@ if config.HAVE_DUNEGDT:
                                  grid_type=None, grid=None, boundary_info=None,
                                  order=1, data_approximation_order=2, la_backend=Istl(),
                                  advection_in_divergence_form=True, mu_energy_product=None):
-        """Discretizes a |StationaryProblem| with dune-gdt using continuous Lagrange finite elements.
+        """Discretizes a |StationaryProblem| with dune-gdt using continuous Lagrange finite
+           elements.
 
-        Note: all data functions are replaced by their respective non-conforming interpolations. This allows to simply
-              use pyMORs data |Function|s at the expense of one DoF vector for each data function during discretization.
+        Note: all data functions are replaced by their respective interpolations.
 
-        Note: non-trivial Dirichlet data is treated via shifting. The resulting solution is thus in H^1_0 and the shift
-              is added upon visualization or output computation.
-
-        TODO: check if all products still make sense!
+        Note: non-trivial Dirichlet data is treated via shifting. The resulting solution is thus in
+              H^1_0 and the shift is added upon visualization or output computation.
 
         Parameters
         ----------
@@ -76,16 +71,17 @@ if config.HAVE_DUNEGDT:
         domain_discretizer
             Discretizer to be used for discretizing the analytical domain. This has
             to be a function `domain_discretizer(domain_description, diameter, ...)`.
-            If `None`, |discretize_domain_default| is used.
+            If `None`, :meth:`pymor.discretizers.dunegdt.domaindiscretizers.default.discretize_domain_default`
+            is used.
         grid_type
-            If not `None`, this parameter is forwarded to `domain_discretizer` to specify
-            the type of the generated |Grid|.
+            If not `None`, this parameter (has to be `simplex` or `cube`) is forwarded to
+            `domain_discretizer` to specify the type of the generated |Grid|.
         grid
-            Instead of using a domain discretizer, the |Grid| can also be passed directly
-            using this parameter.
+            Instead of using a domain discretizer, the |Grid| can also be passed directly using this
+            parameter.
         boundary_info
-            A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
-            Must be provided if `grid` is specified.
+            A |BoundaryInfo| specifying the boundary types of the grid boundary entities. Must be
+            provided if `grid` is specified.
         order
             Order of the Finite Element space.
         data_approximation_order
@@ -93,8 +89,11 @@ if config.HAVE_DUNEGDT:
         la_backend
             Tag to determine which linear algebra backend from dune-xt is used.
         advection_in_divergence_form
-            If true, treats linear advection as advertised in StationaryProblem (i.e. :math:`∇ ⋅ (v u)`), else as in
-            :math:`v ⋅∇ u` (where :math:`v` denotes the vector field).
+            If true, treats linear advection as advertised in StationaryProblem (i.e.
+            :math:`∇ ⋅ (v u)`), else as in :math:`v ⋅∇ u` (where :math:`v` denotes the vector
+            field).
+        mu_energy_product
+            If specified, converted to a |Mu| and used to assemble an appropriate energy product.
 
         Returns
         -------
@@ -106,44 +105,28 @@ if config.HAVE_DUNEGDT:
                 :grid:                  The generated grid from dune.xt.grid.
                 :boundary_info:         The generated boundary info from dune.xt.grid.
                 :space:                 The generated approximation space from dune.gdt.
+                :interpolate:           To interpolate data functions in the solution space.
                 :dirichlet_shift:       A |VectorArray| respresenting the Dirichlet shift.
                 :unshifted_visualizer:  A visualizer which does not add the dirichlet_shift.
         """
 
+        # currently limited to non-parametric Dirichlet data
+        assert analytical_problem.dirichlet_data is None or not analytical_problem.dirichlet_data.parametric
+
+        # convert problem, creates grid, boundary info and checks and converts all data functions
         assert isinstance(analytical_problem, StationaryProblem)
-        assert grid is None or boundary_info is not None
-        assert boundary_info is None or grid is not None
-        assert grid is None or domain_discretizer is None
-        assert grid_type is None or grid is None
-
-        p = analytical_problem
-        d = p.domain.dim
-
-        assert p.dirichlet_data is None or not p.dirichlet_data.parametric
-
-        if not (p.nonlinear_advection
-                == p.nonlinear_advection_derivative
-                == p.nonlinear_reaction
-                == p.nonlinear_reaction_derivative
-                is None):
-            raise NotImplementedError
-
-        if grid is None:
-            domain_discretizer = domain_discretizer or discretize_domain_default
-            if grid_type:
-                domain_discretizer = partial(domain_discretizer, grid_type=grid_type)
-            if diameter is None:
-                grid, boundary_info = domain_discretizer(p.domain)
-            else:
-                grid, boundary_info = domain_discretizer(p.domain, diameter=diameter)
-
-        # use a common interpolator for data function conversion (to cache required spaces and interpolation points) ...
-        interpolator = DuneInterpolator(
-                grid,
-                'fv' if data_approximation_order == 0 else ('cg' if data_approximation_order == 1 else 'dg'),
-                data_approximation_order)
-        # ... and take special care with functions arising in boundary integrals and Dirichlet values
-        boundary_interpolator = interpolator if data_approximation_order == 1 else DuneInterpolator(grid, 'cg', 1)
+        p = StationaryDuneProblem.from_pymor(
+                analytical_problem,
+                data_approximation_order=data_approximation_order,
+                diameter=diameter, domain_discretizer=domain_discretizer,
+                grid_type=grid_type, grid=grid, boundary_info=boundary_info)
+        if p.dirichlet_data is not None:
+            assert len(dirichlet_data.functions) == 1
+            assert len(dirichlet_data.coefficients) == 1
+            assert dirichlet_data.coefficients[0] == 1
+            dirichlet_data = DuneFunction(dirichlet_data.functions[0])
+        grid, boundary_info = p.grid, p.boundary_info
+        d = grid.dimension
 
         # some preparations
         space = ContinuousLagrangeSpace(grid, order=order, dim_range=Dim(1))
@@ -166,13 +149,11 @@ if config.HAVE_DUNEGDT:
             return op
 
         if p.diffusion:
-            diffusion_funcs, diffusion_coeffs = to_dune_grid_function(
-                    p.diffusion, dune_interpolator=interpolator, ensure_lincomb=True)
-            constrained_lhs_ops += [make_diffusion_operator(func) for func in diffusion_funcs]
-            constrained_lhs_coeffs += list(diffusion_coeffs)
+            constrained_lhs_ops += [make_diffusion_operator(func) for func in p.diffusion.functions]
+            constrained_lhs_coeffs += list(p.diffusion.coefficients)
             if mu_energy_product:
-                energy_product_ops += [make_diffusion_operator(func) for func in diffusion_funcs]
-                energy_product_coeffs += list(diffusion_coeffs)
+                energy_product_ops += [make_diffusion_operator(func) for func in p.diffusion.functions]
+                energy_product_coeffs += list(p.diffusion.coefficients)
 
         # reaction part
         def make_weighted_l2_operator(func):
@@ -181,12 +162,10 @@ if config.HAVE_DUNEGDT:
              return op
 
         if p.reaction:
-            reaction_funcs, reaction_coeffs = to_dune_grid_function(
-                    p.reaction, dune_interpolator=interpolator, ensure_lincomb=True)
-            constrained_lhs_ops += [make_weighted_l2_operator(func) for func in reaction_funcs]
+            constrained_lhs_ops += [make_weighted_l2_operator(func) for func in p.reaction.functions]
             constrained_lhs_coeffs += list(reaction_coeffs)
             if mu_energy_product:
-                energy_product_ops += [make_weighted_l2_operator(func) for func in reaction_funcs]
+                energy_product_ops += [make_weighted_l2_operator(func) for func in p.reaction.coefficients]
                 energy_product_coeffs += list(reaction_coeffs)
 
         # advection part
@@ -203,22 +182,17 @@ if config.HAVE_DUNEGDT:
 
                 return op
 
-            advection_funcs, advection_coeffs = to_dune_grid_function(
-                    p.advection, dune_interpolator=boundary_interpolator, ensure_lincomb=True)
-            constrained_lhs_ops += [make_advection_operator(func) for func in advection_funcs]
-            constrained_lhs_coeffs += list(advection_coeffs)
+            constrained_lhs_ops += [make_advection_operator(func) for func in p.advection.functions]
+            constrained_lhs_coeffs += list(p.advection.coefficients)
 
             if mu_energy_product:
-                energy_product_ops += [make_weighted_l2_operator(divergence(func)) for func in advection_funcs]
-                energy_product_coeffs += [-0.5*coeff for coeff in advection_coeffs]
+                energy_product_ops += [make_weighted_l2_operator(divergence(func)) for func in p.advection.functions]
+                energy_product_coeffs += [-0.5*coeff for coeff in p.advection.coefficients]
 
         # robin boundaries
         if p.robin_data:
             assert isinstance(p.robin_data, tuple) and len(p.robin_data) == 2
-            robin_parameter_funcs, robin_parameter_coeffs = to_dune_grid_function(
-                    p.robin_data[0], dune_interpolator=boundary_interpolator, ensure_lincomb=True)
-            robin_boundary_values_funcs, robin_boundary_values_coeffs = to_dune_grid_function(
-                    p.robin_data[1], dune_interpolator=boundary_interpolator, ensure_lincomb=True)
+            robin_parameter, robin_boundary_values = p.robin_data
 
             # contributions to the left hand side
             def make_weighted_l2_robin_boundary_operator(func):
@@ -227,8 +201,9 @@ if config.HAVE_DUNEGDT:
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, RobinBoundary()))
                 return op
 
-            unconstrained_lhs_ops += [make_weighted_l2_robin_boundary_operator(func) for func in robin_parameter_funcs]
-            unconstrained_lhs_coeffs += list(robin_parameter_coeffs)
+            unconstrained_lhs_ops += [make_weighted_l2_robin_boundary_operator(func)
+                                      for func in robin_parameter.functions]
+            unconstrained_lhs_coeffs += list(robin_parameter.coefficients)
 
             # contributions to the right hand side
             def make_weighted_l2_robin_boundary_functional(r_param_func, r_bv_func):
@@ -238,8 +213,8 @@ if config.HAVE_DUNEGDT:
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, RobinBoundary()))
                 return op
 
-            for r_param_func, r_param_coeff in zip(robin_parameter_funcs, robin_parameter_coeffs):
-                for r_bv_func, r_bv_coeff in zip(robin_boundary_values_funcs, robin_boundary_values_coeffs):
+            for r_param_func, r_param_coeff in zip(robin_parameter.functions, robin_parameter.coefficients):
+                for r_bv_func, r_bv_coeff in zip(robin_boundary_values.functions, robin_boundary_values.coefficients):
                     rhs_ops += [make_weighted_l2_robin_boundary_functional(r_param_func, r_bv_func)]
                     rhs_coeffs += [r_param_coeff*r_bv_coeff]
 
@@ -251,10 +226,8 @@ if config.HAVE_DUNEGDT:
                         LocalElementProductIntegrand(GF(grid, 1)).with_ansatz(GF(grid, func)))
                 return op
 
-            source_funcs, source_coeffs = to_dune_grid_function(
-                    p.rhs, dune_interpolator=interpolator, ensure_lincomb=True)
-            rhs_ops += [make_l2_functional(func) for func in source_funcs]
-            rhs_coeffs += list(source_coeffs)
+            rhs_ops += [make_l2_functional(func) for func in p.rhs.functions]
+            rhs_coeffs += list(p.rhs.coefficients)
 
         # Neumann boundaries
         if p.neumann_data:
@@ -265,10 +238,8 @@ if config.HAVE_DUNEGDT:
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
                 return op
 
-            neumann_data_funcs, neumann_data_coeffs = to_dune_grid_function(
-                    p.neumann_data, dune_interpolator=boundary_interpolator, ensure_lincomb=True)
-            rhs_ops += [make_l2_neumann_boundary_functional(func) for func in neumann_data_funcs]
-            rhs_coeffs += list(neumann_data_coeffs)
+            rhs_ops += [make_l2_neumann_boundary_functional(func) for func in p.neumann_data.functions]
+            rhs_coeffs += list(p.neumann_data.coefficients)
 
         # Dirichlet boundaries will be handled further below ...
 
@@ -282,14 +253,13 @@ if config.HAVE_DUNEGDT:
             if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
                 raise NotImplementedError(f'I do not know how to discretize a {v[0]} output!')
             for output_type, output_data in p.outputs:
+                assert isinstance(output_data, DuneGridFunction)  # as in: not LincombDuneGridFunction
+                output_data = output_data.impl
                 if output_type == 'l2':
-                    output_data = interpolate_single(output_data)
                     op = VectorFunctional(grid, space, la_backend)
                     op += LocalElementIntegralFunctional(LocalElementProductIntegrand(grid).with_ansatz(output_data))
                     outputs.append(op)
                 elif output_type == 'l2_boundary':
-                    output_data = interpolate_single(output_data,
-                            pol_order=data_approximation_order if data_approximation_order > 0 else 1)
                     op = VectorFunctional(grid, space, la_backend)
                     op += (LocalIntersectionIntegralFunctional(
                             LocalIntersectionProductIntegrand(GF(grid, 1)).with_ansatz(GF(grid, output_data))), {},
@@ -315,27 +285,23 @@ if config.HAVE_DUNEGDT:
                 walker.append(op)
         for op in outputs:
             walker.append(op)
-        walker.walk(thread_parallel=False) # support not stable/enabled yet
+        walker.walk(thread_parallel=False)  # support not stable/enabled yet
 
         # extract vectors from functionals
         rhs_ops = [op.vector for op in rhs_ops]
 
         # compute the Dirichlet shift before constraining
         if p.dirichlet_data:
-            # we first require an interpolation of first order
-            dirichlet_data = to_dune_grid_function(p.dirichlet_data, dune_interpolator=boundary_interpolator)
-            # second, we restrict this interpolation to the Dirichlet boundary
-            # boundary_interpolation_space = space if space.max_polorder == 1 \
-                    # else ContinuousLagrangeSpace(grid, order=1, dim_range=Dim(1))
+            # first, we restrict the data to the Dirichlet boundary
             dirichlet_data = boundary_interpolation(
-                    GF(grid, dirichlet_data), boundary_interpolator._spaces[1], boundary_info, DirichletBoundary())
-            # third, we only do something if dirichlet_data != 0
+                    GF(grid, p.dirichlet_data.impl),
+                    boundary_interpolator._spaces[1], boundary_info, DirichletBoundary())
+            # second, we only do something if dirichlet_data != 0
             trivial_dirichlet_data = float_cmp(dirichlet_data.dofs.vector.sup_norm(), 0.)
             if not trivial_dirichlet_data:
-                # fourth, we embed them in the correct space, if required
-                if space.max_pol_order != 1:
-                    dirichlet_data = default_interpolation(GF(grid, dirichlet_data), space)
-                # fifth, we apply the actual shift
+                # third, we embed them in the solution space
+                dirichlet_data = default_interpolation(GF(grid, dirichlet_data), space)
+                # fourth, we apply the actual shift
                 for op, coeff in zip(constrained_lhs_ops, constrained_lhs_coeffs):
                     rhs_ops += [op.apply(dirichlet_data.dofs.vector),]
                     rhs_coeffs += [-1*coeff]
@@ -351,8 +317,8 @@ if config.HAVE_DUNEGDT:
                         operators=[DuneXTMatrixOperator(op.matrix.copy()) for op in energy_product_ops],
                         coefficients=energy_product_coeffs).assemble(mu=mu_energy_product).matrix)
         # - in H^1_0
-        l2_0_product = MatrixOperator(grid, space, space, l2_product.matrix.copy()) # using operators here just for
-        h1_0_semi_product = MatrixOperator(grid, space, space, h1_semi_product.matrix.copy()) # unified handling below
+        l2_0_product = MatrixOperator(grid, space, space, l2_product.matrix.copy())     # using operators here just for
+        h1_0_semi_product = MatrixOperator(grid, space, space, h1_semi_product.matrix.copy())  # unified handling below
         if mu_energy_product:
             energy_product_0 = MatrixOperator(grid, space, space, energy_product.matrix.copy())
 
@@ -483,12 +449,75 @@ if config.HAVE_DUNEGDT:
                                    order=1, data_approximation_order=2, la_backend=Istl(),
                                    advection_in_divergence_form=False, mu_energy_product=None,
                                    ensure_consistent_initial_values=1e-6):
+        """Discretizes an |InstationaryProblem| with a |StationaryProblem| as stationary part
+        with dune-gdt using finite elements.
+
+        Parameters
+        ----------
+        analytical_problem
+            The |InstationaryProblem| to discretize.
+        diameter
+            If not `None`, `diameter` is passed as an argument to the `domain_discretizer`.
+        domain_discretizer
+            Discretizer to be used for discretizing the analytical domain. This has
+            to be a function `domain_discretizer(domain_description, diameter, ...)`.
+            If `None`, :meth:`pymor.discretizers.dunegdt.domaindiscretizers.default.discretize_domain_default`
+            is used.
+        grid_type
+            If not `None`, this parameter (has to be `simplex` or `cube`) is forwarded to
+            `domain_discretizer` to specify the type of the generated |Grid|.
+        grid
+            Instead of using a domain discretizer, the |Grid| can also be passed directly using this
+            parameter.
+        boundary_info
+            A |BoundaryInfo| specifying the boundary types of the grid boundary entities. Must be
+            provided if `grid` is specified.
+        num_values
+            The number of returned vectors of the solution trajectory. If `None`, each
+            intermediate vector that is calculated is returned.
+        time_stepper
+            The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+            to be used by :class:`~pymor.models.basic.InstationaryModel.solve`.
+        nt
+            If `time_stepper` is not specified, the number of time steps for implicit
+            Euler time stepping.
+        order
+            Order of the Finite Element space.
+        data_approximation_order
+            Polynomial order (on each grid element) for the interpolation of the data functions.
+        la_backend
+            Tag to determine which linear algebra backend from dune-xt is used.
+        advection_in_divergence_form
+            If true, treats linear advection as advertised in StationaryProblem (i.e.
+            :math:`∇ ⋅ (v u)`), else as in :math:`v ⋅∇ u` (where :math:`v` denotes the vector
+            field).
+        mu_energy_product
+            If specified, converted to a |Mu| and used to assemble an appropriate energy product.
+        ensure_consistent_initial_values
+            If provided (and if non-trivial Dirichlet data is present resulting in a shifted model),
+            the interpolated initial values are ensured to belong to H^1_0.
+
+        Returns
+        -------
+        m
+            The |Model| that has been generated.
+        data
+            Dictionary with the following entries:
+
+                :grid:                  The generated grid from dune.xt.grid.
+                :boundary_info:         The generated boundary info from dune.xt.grid.
+                :space:                 The generated approximation space from dune.gdt.
+                :interpolate:           To interpolate data functions in the solution space.
+                :dirichlet_shift:       A |VectorArray| respresenting the Dirichlet shift.
+                :unshifted_visualizer:  A visualizer which does not add the dirichlet_shift.
+        """
 
         assert isinstance(analytical_problem, InstationaryProblem)
         assert isinstance(analytical_problem.stationary_part, StationaryProblem)
         assert (time_stepper is None) != (nt is None)
         assert ensure_consistent_initial_values is None \
-               or isinstance(ensure_consistent_initial_values, Number)
+               or (isinstance(ensure_consistent_initial_values, Number) \
+                   and not ensure_consistent_initial_values < 0)
 
         p = analytical_problem
 
