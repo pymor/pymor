@@ -9,7 +9,9 @@ if config.HAVE_DUNEGDT:
     import numpy as np
     from numbers import Number
 
-    from dune.xt.functions import ConstantFunction as DuneConstantFunction, GridFunction as DuneGridFunction
+    import dune.xt.functions
+    from dune.xt.functions import (
+            ConstantFunction as DuneXTConstantFunction, GridFunction as DuneXTGridFunction)
     from dune.xt.grid import Dim
     from dune.gdt.basic import (
             ContinuousLagrangeSpace,
@@ -20,26 +22,161 @@ if config.HAVE_DUNEGDT:
             )
 
     from pymor.algorithms.rules import RuleTable, match_class, match_generic, RuleNotMatchingError, NoMatchingRuleError
-    from pymor.core.base import BasicObject
+    from pymor.core.base import BasicObject, ImmutableObject, classinstancemethod
     from pymor.analyticalproblems.functions import ConstantFunction, LincombFunction, ProductFunction, Function
 
 
+    def to_dune_grid_function(function, dune_grid=None, dune_interpolator=None, mu=None, ensure_lincomb=False):
+        """Converts pyMOR |Function|s to equivalent grid functions from `dune.xt.functions`.
+
+        Conversion is either done by creating exactly equivalent grid functions from
+        `dune.xt.functions` or by approximation by interpolation.
+
+        Parameters
+        ----------
+        function
+            The pyMOR |Function| to convert.
+        dune_grid
+            A grid from `dune.xt.grid`. If not `None`, used to create the :class:`DuneInterpolator`.
+        dune_interpolator
+            An instance of :class:`DuneInterpolator` to cache the required discrete function spaces
+            and interpolation points.
+        mu
+            If not `None` and `function` is parametric, returns an interpolation of the
+            resulting non-parametric function.
+        ensure_lincomb
+            If `True`, always returns a :class:`LincombDuneGridFunction`, otherwise a
+            :class:`DuneGridFunction` or :class:`LincombDuneGridFunction` (as deduced from
+            `function`).
+        """
+
+        assert dune_grid is not None or dune_interpolator is not None
+        if dune_interpolator is None:
+            dune_interpolator = DuneInterpolator(dune_grid)
+        if dune_grid is not None:
+            assert dune_grid == dune_interpolator.grid
+
+        return ToDuneGridFunctionRules(
+                mu=mu, interpolator=dune_interpolator, ensure_lincomb=ensure_lincomb).apply(function)
+
+
+    def to_dune_function(function, ensure_lincomb=False):
+        """Converts pyMOR |Function|s to equivalent functions from `dune.xt.functions`.
+
+        Conversion is done by creating exactly equivalent functions from `dune.xt.functions`.
+
+        NOTE: usually not to be used directly, see `to_dune_grid_function` instead.
+
+        Parameters
+        ----------
+        function
+            The pyMOR |Function| to convert.
+        ensure_lincomb
+            If `True`, always returns a :class:`LincombDuneFunction`, otherwise a
+            :class:`DuneFunction` or :class:`LincombDuneFunction` (as deduced from
+            `function`).
+        """
+        return ToDuneFunctionRules(ensure_lincomb).apply(function)
+
+
+    # collect once on first module import
+    _known_dune_function_interfaces = []       # required for DuneFunction
+    _known_dune_grid_function_interfaces = []  # required for DuneGridFunction
+    if len(_known_dune_function_interfaces) == 0:
+        for cls_nm in dune.xt.functions.__dict__.keys():
+            if cls_nm.startswith('GridFunctionInterface'):
+                _known_dune_grid_function_interfaces.append(dune.xt.functions.__dict__[cls_nm])
+            elif cls_nm.startswith('FunctionInterface'):
+                _known_dune_function_interfaces.append(dune.xt.functions.__dict__[cls_nm])
+
+
+    class DuneFunction(ImmutableObject):
+        """Convenience wrapper class for functions from `dune.xt.functions`.
+
+        Allows to check if a given `obj` is a function from `dune.xt.functions` by
+        `assert DuneFunction.is_base_of(obj)`.
+
+        Parameters
+        ----------
+        impl
+            A function from `dune.xt.functions`.
+        """
+        def __init__(self, impl):
+            assert DuneFunction.is_base_of(impl)
+            self.__auto_init(locals())
+
+        @classinstancemethod
+        def is_base_of(cls, obj):
+            for interface in _known_dune_function_interfaces:
+                if isinstance(obj, interface):
+                    return True
+            return False
+
+    class LincombDuneFunction(ImmutableObject):
+        """Convenience wrapper class for linear combinations of functions from `dune.xt.functions`
+        """
+        def __init__(self, functions, coefficients):
+            assert isinstance(functions, (list, tuple))
+            assert isinstance(coefficients, (list, tuple))
+            assert len(functions) == len(coefficients)
+            assert all(DuneFunction.is_base_of(func) for func in functions)
+            functions = tuple(functions)
+            coefficients = tuple(coefficients)
+            self.__auto_init(locals())
+
+
+    class DuneGridFunction(ImmutableObject):
+        """Convenience wrapper class for grid functions from `dune.xt.functions`.
+
+        Allows to check if a given `obj` is a grid function from `dune.xt.functions` by
+        `assert DuneGridFunction.is_base_of(obj)`.
+
+        Parameters
+        ----------
+        impl
+            A grid function from `dune.xt.functions`.
+        """
+        def __init__(self, impl):
+            assert DuneGridFunction.is_base_of(impl)
+            self.__auto_init(locals())
+
+        @classinstancemethod
+        def is_base_of(cls, obj):
+            for interface in _known_dune_grid_function_interfaces:
+                if isinstance(obj, interface):
+                    return True
+            return False
+
+    class LincombDuneGridFunction(ImmutableObject):
+        """Convenience wrapper class for linear combinations of grid functions from
+        `dune.xt.functions`
+        """
+        def __init__(self, functions, coefficients):
+            assert isinstance(functions, (list, tuple))
+            assert isinstance(coefficients, (list, tuple))
+            assert len(functions) == len(coefficients)
+            assert all(DuneGridFunction.is_base_of(func) for func in functions)
+            functions = tuple(functions)
+            coefficients = tuple(coefficients)
+            self.__auto_init(locals())
+
     class DuneInterpolator(BasicObject):
-        """Given a dune-xt-grid grid, interpolates pyMOR |Function|s by using the appropriate discrete function spaces.
+        """Interpolates pyMOR |Function|s within discrete function spaces from `dune.gdt`.
 
         Parameters
         ----------
         grid
-            A grid instance from dune.xt.grid.
+            A grid instance from `dune.xt.grid`.
         space_type
             A string identifying the target discrete function space:
-            - dg (default): a non-conforming space (as in subspace of L^2) of piecewise polynomial functions
+            - dg (default): a non-conforming space (as in subspace of L^2) of piecewise polynomial
+              functions
             - fv: a non-conforming space (as in subspace of L^2) of piecewise constant functions
             - cg: a conforming space (as in subspace of H^1) of piecewise polynomial functions
         order
-            The local polynomial order of the elements of the target discrete function space (if not fv).
+            The local polynomial order of the elements of the target discrete function space (if
+            not fv).
         """
-
         def __init__(self, grid, space_type='dg', order=1):
             assert space_type in ('dg', 'fv', 'cg')
             assert isinstance(order, Number)
@@ -95,73 +232,43 @@ if config.HAVE_DUNEGDT:
                 np_view[:] = reshaped_values.ravel()[:]
             return dune_function
 
-
-    def to_dune_grid_function(pymor_function, dune_grid=None, dune_interpolator=None, mu=None, ensure_lincomb=False):
-        """Converts |Function|s from `pymor.analyticalproblems.functions` to grid functions compatible with dune-gdt by
-           interpolation, if required.
-
-        Parameters
-        ----------
-        pymor_function
-            The pyMOR |Function| to convert.
-        dune_grid
-            If not None, use to create the DuneInterpolator.
-        dune_interpolator
-            An instance of DuneInterpolator to cache the required discrete function spaces and interpolation points.
-        mu
-            If not None and `pymor_function` is parametric, returns an interpolation of the resulting non-parametric
-            function.
-        ensure_lincomb
-            If True, always returns a tuple of functions and coefficients (even if only one function was converted)
-        """
-
-        assert dune_grid is not None or dune_interpolator is not None
-        if dune_interpolator is None:
-            dune_interpolator = DuneInterpolator(dune_grid)
-        if dune_grid is not None:
-            assert dune_grid == dune_interpolator.grid
-
-        return ToDuneGridFunctionRules(
-                mu=mu, interpolator=dune_interpolator, ensure_lincomb=ensure_lincomb).apply(pymor_function)
-
-
-    def to_dune_function(pymor_function, ensure_lincomb=False):
-        """Converts |Function|s from `pymor.analyticalproblems.functions` to functions compatible with dune-gdt.
-
-        NOTE: usually not to be used directly, see `to_dune_grid_function` instead.
-
-        Parameters
-        ----------
-        pymor_function
-            The pyMOR |Function| to convert.
-        ensure_lincomb
-            If True, always returns a tuple of functions and coefficients (even if only one function was converted)
-        """
-        return ToDuneFunctionRules(ensure_lincomb).apply(pymor_function)
-
-
     class ToDuneGridFunctionRules(RuleTable):
 
         def __init__(self, mu, interpolator, ensure_lincomb):
             super().__init__()
             self.__auto_init(locals())
 
+        @match_class(LincombDuneGridFunction)
+        def action_LincombDuneGridFunction(self, function):
+            return function
+
+        @match_class(DuneGridFunction)
+        def action_DuneGridFunction(self, function):
+            if self.ensure_lincomb:
+                return LincombDuneGridFunction([function.impl,], [1,])
+            else:
+                return function
+
+        @match_class(LincombDuneFunction)
+        def action_LincombDuneFunction(self, function):
+            return LincombDuneGridFunction(
+                    [DuneXTGridFunction(self.interpolator.grid, func) for func in function.functions],
+                    function.coefficients)
+
+        @match_class(DuneFunction)
+        def action_DuneFunction(self, function):
+            function = DuneXTGridFunction(self.interpolator.grid, function.impl)
+            if self.ensure_lincomb:
+                return LincombDuneGridFunction([function,], [1,])
+            else:
+                return DuneGridFunction(function)
+
         @match_generic(lambda pymor_function: _is_convertible_to_dune_function(pymor_function),
                        'convertible with to_dune_function')
         def action_to_dune_function_convertible_function(self, pymor_function):
             assert pymor_function.dim_domain == self.interpolator.grid.dimension
-            result = to_dune_function(pymor_function)
-            if isinstance(result, tuple):
-                dune_functions, coefficients = result
-                dune_functions = [DuneGridFunction(self.interpolator.grid, dune_function)
-                                  for dune_function in dune_functions]
-                return dune_functions, coefficients
-            else:
-                dune_function = DuneGridFunction(self.interpolator.grid, result)
-                if self.ensure_lincomb:
-                    return [dune_function,], [1,]
-                else:
-                    return dune_function
+            dune_function = to_dune_function(pymor_function, ensure_lincomb=self.ensure_lincomb)
+            return self.apply(dune_function)
 
         @match_class(LincombFunction)
         def action_LincombFunction(self, pymor_function):
@@ -172,9 +279,9 @@ if config.HAVE_DUNEGDT:
             # we know that LincombFunction is never nested, so we do not call self.apply() here in case
             # self.ensure_lincomb == True to avoid nested lists
             dune_functions = [to_dune_grid_function(
-                func, dune_grid=None, dune_interpolator=self.interpolator, mu=self.mu, ensure_lincomb=False)
+                func, dune_interpolator=self.interpolator, mu=self.mu, ensure_lincomb=False)
                               for func in pymor_function.functions]
-            return dune_functions, pymor_function.coefficients
+            return LincombDuneGridFunction([func.impl for func in dune_functions], pymor_function.coefficients)
 
         @match_class(Function)
         def action_Function(self, pymor_function):
@@ -183,9 +290,9 @@ if config.HAVE_DUNEGDT:
                 assert self.mu is not None
             dune_function = self.interpolator.interpolate(pymor_function, mu=self.mu)
             if self.ensure_lincomb:
-                return [dune_function,], [1,]
+                return LincombDuneGridFunction([dune_function,], [1,])
             else:
-                return dune_function
+                return DuneGridFunction(dune_function)
 
 
     def _is_convertible_to_dune_function(pymor_function):
@@ -202,6 +309,17 @@ if config.HAVE_DUNEGDT:
             super().__init__()
             self.__auto_init(locals())
 
+        @match_class(LincombDuneFunction)
+        def action_LincombDuneFunction(self, function):
+            return function
+
+        @match_class(DuneFunction)
+        def action_DuneFunction(self, function):
+            if self.ensure_lincomb:
+                return LincombDuneFunction([function.impl,], [1,])
+            else:
+                return function
+
         @match_class(ConstantFunction)
         def action_ConstantFunction(self, pymor_function):
             dim_domain = Dim(pymor_function.dim_domain)
@@ -213,25 +331,26 @@ if config.HAVE_DUNEGDT:
                 dim_range = Dim(pymor_function.shape_range[0])
             elif len(pymor_function.shape_range) == 2:
                 dim_range = (Dim(pymor_function.shape_range[0]), Dim(pymor_function.shape_range[1]))
-            dune_function = DuneConstantFunction(
+            dune_function = DuneXTConstantFunction(
                     dim_domain=dim_domain, dim_range=dim_range, value=value, name=pymor_function.name)
             if self.ensure_lincomb:
-                return [dune_function,], [1,]
+                return LincombDuneFunction([dune_function,], [1,])
             else:
-                return dune_function
+                return DuneFunction(dune_function)
 
         @match_class(ProductFunction)
         def action_ProductFunction(self, pymor_function):
             if pymor_function.parametric:
                 raise RuleNotMatchingError('We cannot treat products of parametric functions!')
-            dune_functions = [self.apply(func) for func in pymor_function.functions]
-            dune_function = dune_functions[0]
+            # not calling self.apply here in case ensure_lincomb == True
+            dune_functions = [to_dune_function(func) for func in pymor_function.functions]
+            dune_function = dune_functions[0].impl
             for ii in range(1, len(dune_functions)):
-                dune_function = dune_function*dune_functions[ii]
+                dune_function = dune_function*dune_functions[ii].impl
             if self.ensure_lincomb:
-                return [dune_function,], [1,]
+                return LincombDuneFunction([dune_function,], [1,])
             else:
-                return dune_function
+                return DuneFunction(dune_function)
 
         @match_class(LincombFunction)
         def action_LincombFunction(self, pymor_function):
@@ -241,4 +360,4 @@ if config.HAVE_DUNEGDT:
             # we know that LincombFunction is never nested, so we do not call self.apply() here in case
             # self.ensure_lincomb == True to avoid nested lists
             dune_functions = [to_dune_function(func, ensure_lincomb=False) for func in pymor_function.functions]
-            return dune_functions, pymor_function.coefficients
+            return LincombDuneFunction([func.impl for func in dune_functions], pymor_function.coefficients)
