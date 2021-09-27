@@ -131,7 +131,8 @@ if config.HAVE_DUNEGDT:
                 # we presume to have several vectors which should be visualized side by side
                 assert all([isinstance(u, ListVectorArray) for u in U])
                 assert all([len(u) == 1 for u in U])
-                assert all([all([isinstance(v, DuneXTVector) for v in u._list]) for u in U])
+                assert all([all([isinstance(v, ComplexifiedDuneXTVector) for v in u._list]) for u in U])
+                assert all([all([v.imag_part is None for v in u._list]) for u in U])
                 if legend is not None and len(legend) == len(U):
                     names = legend
                 elif title is not None and len(title) == len(U):
@@ -144,13 +145,13 @@ if config.HAVE_DUNEGDT:
                 if interactive:
                     for ii in range(len(U)):
                         _, filename = mkstemp(suffix='_{}{}'.format(ii, suffix))
-                        data[filename] = U[ii]._list[0]
+                        data[filename] = U[ii]._list[0].real_part
                 else:
                     if (filename.endswith('.vtp') or filename.endswith('.vtu')):
                         filename = filename[:-4]
                     assert len(filename) > 0
                     for ii in range(len(U)):
-                        data['{}_{}{}'.format(filename, ii, suffix)] = U[ii]._list[0]
+                        data['{}_{}{}'.format(filename, ii, suffix)] = U[ii]._list[0].real_part
                 for name, f_name in zip(names, data):
                     visualize_single(data[f_name].impl, name, f_name)
                 if interactive:
