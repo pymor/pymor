@@ -7,7 +7,6 @@ import numpy as np
 from pymor.core.base import ImmutableObject
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.models.basic import StationaryModel
-from pymor.operators.block import BlockRowOperator
 from pymor.operators.constructions import LincombOperator, induced_norm, VectorOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.operators.interface import Operator
@@ -63,7 +62,7 @@ class CoerciveRBReductor(StationaryRBReductor):
         self.corrected_output = False
         self.dual_bases = dual_bases
         if fom.output_functional is not None:
-            if fom.output_functional.linear and (assemble_output_error_estimate or dual_basis is not None):
+            if fom.output_functional.linear and (assemble_output_error_estimate or dual_bases is not None):
                 # either needed for estimation or just for the corrected output
                 if dual_bases is not None:
                     # corrected output only makes sense if the basis differs from the dual basis
@@ -83,9 +82,9 @@ class CoerciveRBReductor(StationaryRBReductor):
                         dual_operator = self.fom.operator
                     else:
                         if dual_bases is None:
-                            self.logger.warn('You are using a wrong basis for the adjoint operator. ' \
-                                             'If you are sure that your operator is symmetric (in theory), ' \
-                                             'you can set `operator_is_symmetric = True`. If your operator ' \
+                            self.logger.warn('You are using a wrong basis for the adjoint operator. '
+                                             'If you are sure that your operator is symmetric (in theory), '
+                                             'you can set `operator_is_symmetric = True`. If your operator '
                                              'is not symmetric, you should provide a dual basis via `dual_bases`.')
                         dual_operator = self.fom.operator.H
                     # construct dual rhs
@@ -149,7 +148,9 @@ class CoerciveRBReductor(StationaryRBReductor):
 
     @classmethod
     def dual_model(cls, fom, dim=0, operator_is_symmetric=False):
-        """Return dual model with the output as right hand side. See :cite:`Haa17` (Definition 2.26)
+        """Return dual model with the output as right hand side.
+
+        See :cite:`Haa17` (Definition 2.26)
 
         Parameters
         ----------
@@ -158,8 +159,9 @@ class CoerciveRBReductor(StationaryRBReductor):
         dim
             The dimension of the `fom.output_functional` for which the dual model is to be built.
         operator_is_symmetric
-            If `True`, `fom.operator` is used for the dual problem. This is only feasable if the operator is
-            symmetric (in theory), If `False` the adjoint `fom.operator.H` is used instead.
+            If `True`, `fom.operator` is used for the dual problem.
+            This is only feasable if the operator is symmetric (in theory).
+            If `False` the adjoint `fom.operator.H` is used instead.
 
         Returns
         -------
@@ -178,6 +180,7 @@ class CoerciveRBReductor(StationaryRBReductor):
 
     def prepare_dwr_output_error_estimator(self):
         """Prepare the output error estimator with the DWR approach.
+
         See :cite:`Haa17` (Proposition 2.27)
         """
 
@@ -230,7 +233,7 @@ class CorrectedOutputFunctional(Operator):
             projected_dual_operator = project_to_subbasis(dual_model.operator, dim_range, dim_source)
             projected_dual_rhs = project_to_subbasis(dual_model.rhs, dim_range, None)
             restricted_dual_model = StationaryModel(projected_dual_operator, projected_dual_rhs,
-                                         name=dual_model.name + '_restricted')
+                                                    name=dual_model.name + '_restricted')
             reduced_dual_models.append(restricted_dual_model)
 
             op = project_to_subbasis(dual_residuals.operator, dim_range, dim_source)
@@ -277,7 +280,7 @@ class CoerciveRBEstimator(ImmutableObject):
                 restricted_dual_rhs = project_to_subbasis(dual_m.rhs, dim, None)
                 restricted_dual_m = StationaryModel(restricted_dual_operator,
                                                     restricted_dual_rhs,
-                                                    name= dual_m.name + '_restricted')
+                                                    name=dual_m.name + '_restricted')
                 restricted_dual_models.append(restricted_dual_m)
         else:
             restricted_dual_models = None
