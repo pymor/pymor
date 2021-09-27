@@ -21,7 +21,7 @@ class CoerciveRBReductor(StationaryRBReductor):
 
     The only addition to :class:`~pymor.reductors.basic.StationaryRBReductor` is an error
     estimator which evaluates the dual norm of the residual with respect to a given inner
-    product. For the reduction of the residual we use
+    product and an output error estimator. For the reduction of the residual we use
     :class:`~pymor.reductors.residual.ResidualReductor` for improved numerical stability
     :cite:`BEOR14`.
 
@@ -40,11 +40,20 @@ class CoerciveRBReductor(StationaryRBReductor):
         constant of the given problem. Note that the computed error estimate is only
         guaranteed to be an upper bound for the error when an appropriate coercivity
         estimate is specified.
+    operator_is_symmetric
+        If `assemble_output_error_estimate` is `True`, the DWR estimator can either be
+        build with the operator itself (if the operator is symmetric, or with the adjoint
+        operator. For the symmetric case `operator_is_symmetric` is to be set as `True`.
+    dual_basis
+        If `operator_is_symmetric` is `False` or if the output functional of the |Model|
+        differs substantially from the right hand side of the |Model|, it makes sense to
+        provide a reduced basis for the dual problems
+        (see :classmethod:`~pymor.reductors.coercive.CoerciveRBReductor.dual_model` for details)
     """
 
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
-                 check_orthonormality=None, check_tol=None, assemble_error_estimate=True,
-                 assemble_output_error_estimate=True, operator_is_symmetric=False, dual_bases=None):
+                 operator_is_symmetric=False, dual_bases=None, check_orthonormality=None,
+                 check_tol=None, assemble_error_estimate=True, assemble_output_error_estimate=True):
         super().__init__(fom, RB, product=product, check_orthonormality=check_orthonormality,
                          check_tol=check_tol, assemble_error_estimate=assemble_error_estimate,
                          assemble_output_error_estimate=assemble_output_error_estimate)
@@ -54,23 +63,22 @@ class CoerciveRBReductor(StationaryRBReductor):
         self.corrected_output = False
         self.dual_bases = dual_bases
         if fom.output_functional is not None:
-            if fom.output_functional.linear and \
-               (assemble_output_error_estimate or dual_basis is not None):
+            if fom.output_functional.linear and (assemble_output_error_estimate or dual_basis is not None):
+                # either needed for estimation or just for the corrected output
                 if dual_bases is not None:
+                    # corrected output only makes sense if the basis differs from the dual basis
                     assert len(dual_bases) == fom.dim_output
                     self.corrected_output = True
                 self.dual_residual_reductors, self.dual_projected_primal_residuals = [], []
                 self.projected_dual_operators, self.projected_dual_rhss = [], []
                 output = self.fom.output_functional
                 for d in range(fom.dim_output):
-                    e_i = np.zeros(fom.dim_output)
-                    e_i[d] = 1
-                    e_i_vec = output.range.from_numpy(e_i)
-                    restricted_output = - output.H @ VectorOperator(e_i_vec)
+                    # choose dual basis
                     if dual_bases is not None:
-                        basis = dual_bases[d]
+                        dual_basis = dual_bases[d]
                     else:
-                        basis = self.bases['RB']
+                        dual_basis = self.bases['RB']
+                    # choose operator
                     if operator_is_symmetric:
                         dual_operator = self.fom.operator
                     else:
@@ -80,16 +88,21 @@ class CoerciveRBReductor(StationaryRBReductor):
                                              'you can set `operator_is_symmetric = True`. If your operator ' \
                                              'is not symmetric, you should provide a dual basis via `dual_bases`.')
                         dual_operator = self.fom.operator.H
-
-                    self.dual_residual_reductors.append(ResidualReductor(basis, dual_operator,
+                    # construct dual rhs
+                    e_i = np.zeros(fom.dim_output)
+                    e_i[d] = 1
+                    e_i_vec = output.range.from_numpy(e_i)
+                    restricted_output = - output.H @ VectorOperator(e_i_vec)
+                    # define dual residual
+                    self.dual_residual_reductors.append(ResidualReductor(dual_basis, dual_operator,
                                                                          restricted_output, product=product,
                                                                          riesz_representatives=True))
 
     def project_operators(self):
         projected_operators = super().project_operators()
 
-        if self.corrected_output or self.assemble_output_error_estimate:
-            # we need additional code for the output error estimation with the DWR approach
+        if hasattr(self, 'dual_residual_reductors'):
+            # either the corrected output needs to be built or the output error estimate or both
             self.dual_projected_primal_residuals, self.reduced_dual_models = [], []
             for dual_residual in self.dual_residual_reductors:
                 basis = dual_residual.RB
@@ -152,6 +165,7 @@ class CoerciveRBReductor(StationaryRBReductor):
         -------
         A |Model| with the adjoint operator and the corresponding right hand side
         """
+
         assert 0 <= dim < fom.dim_output
         e_i = np.zeros(fom.dim_output)
         e_i[dim] = 1
@@ -166,9 +180,10 @@ class CoerciveRBReductor(StationaryRBReductor):
         """Prepare the output error estimator with the DWR approach.
         See :cite:`Haa17` (Proposition 2.27)
         """
+
         dual_residuals, dual_range_dims = [], []
-        if self.fom.output_functional is not None:
-            if self.fom.output_functional.linear and self.assemble_output_error_estimate:
+        if hasattr(self, 'dual_residual_reductors'):
+            if self.assemble_output_error_estimate:
                 for dual_residual_reductor in self.dual_residual_reductors:
                     dual_residuals.append(dual_residual_reductor.reduce())
                     dual_range_dims.append(tuple(dual_residual_reductor.residual_range_dims))
