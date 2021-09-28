@@ -43,7 +43,7 @@ if config.HAVE_DUNEGDT:
     from pymor.bindings.dunegdt import DuneXTMatrixOperator
     from pymor.core.base import ImmutableObject
     from pymor.discretizers.dunegdt.gui import (
-            DuneGDT1dAsNumpyVisualizer, DuneGDTK3dVisualizer, DuneGDTParaviewVisualizer)
+            DuneGDT1dAsNumpyVisualizer, DuneGDTK3dVisualizer, DuneGDTParaviewVisualizer, DuneGDTPyvistaVisualizer)
     from pymor.discretizers.dunegdt.problems import StationaryDuneProblem
     from pymor.models.basic import InstationaryModel, StationaryModel
     from pymor.operators.constructions import ConstantOperator, LincombOperator, VectorArrayOperator
@@ -405,7 +405,7 @@ if config.HAVE_DUNEGDT:
             # unshifted_visualizer = DuneGDT1dMatplotlibVisualizer(space) # only for stationary problems!
             unshifted_visualizer = DuneGDT1dAsNumpyVisualizer(space, grid)
         else:
-            unshifted_visualizer = DuneGDTK3dVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
+            unshifted_visualizer = DuneGDTPyvistaVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
 
         if trivial_dirichlet_data:
             visualizer = unshifted_visualizer

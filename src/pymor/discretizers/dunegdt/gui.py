@@ -8,6 +8,7 @@ from pymor.core.config import config
 
 if config.HAVE_DUNEGDT:
 
+    import meshio
     import numpy as np
     from collections import OrderedDict
     import os
@@ -21,8 +22,11 @@ if config.HAVE_DUNEGDT:
 
     from pymor.bindings.dunegdt import ComplexifiedDuneXTVector, DuneXTVector
     from pymor.core.base import ImmutableObject
+    from pymor.core.config import is_jupyter
     from pymor.discretizers.builtin.grids.oned import OnedGrid
+    from pymor.discretizers.builtin.gui.jupyter.vista import visualize_vista_mesh
     from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer
+    from pymor.tools.io import safe_temporary_filename
     from pymor.vectorarrays.list import ListVectorArray
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -227,6 +231,62 @@ if config.HAVE_DUNEGDT:
             for f_name in to_clean_up:
                 os.remove(f_name)
 
+    class DuneGDTPyvistaVisualizer(ImmutableObject):
+        """Visualize scalar discrete functions associated with a space from dune-gdt.
+
+        Parameters
+        ----------
+        space
+            The underlying discrete function space.
+        """
+
+        def __init__(self, space):
+            assert space.dimDomain >= 2
+            self.__auto_init(locals())
+
+        def visualize(self, U, legend=None, filename=None):
+            """Visualize the provided data.
+
+            Parameters
+            ----------
+            U
+                |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
+                as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
+                provided, in which case a subplot is created for each entry of the tuple. The
+                lengths of all arrays have to agree.
+            legend
+                Description of the data that is plotted. Most useful if `U` is a tuple in which
+                case `legend` has to be a tuple of strings of the same length.
+            filename
+                If specified, write the data to a VTK-file.
+            """
+            assert isinstance(U, ListVectorArray) and len(U) == 1
+            legend = legend or 'STATE'
+            assert isinstance(legend, str)
+
+            def write_vector(vec, name, prefix):
+                if isinstance(vec, ComplexifiedDuneXTVector):
+                    assert vec.imag_part is None
+                    vec = vec.real_part
+                assert isinstance(vec, DuneXTVector)
+                DiscreteFunction(self.space, vec.impl, name=name).visualize(prefix)
+
+            if filename:
+                assert isinstance(filename, str)
+                # strip
+                if filename[-4:][:3] == '.vt':
+                    filename = filename[:-4]
+
+                write_vector(U._list[0], legend, filename)
+            else:
+                assert is_jupyter()
+
+                meshes = []
+                with safe_temporary_filename(name=f'data.vtu') as sfn:
+                    write_vector(U._list[0], legend, sfn[:-4])
+                    meshes.append(meshio.read(sfn))
+
+                return visualize_vista_mesh(meshes=meshes)
 
     class DuneGDTK3dVisualizer(ImmutableObject):
         """Visualize a dune-gdt discrete function within a jupyter notebook using K3d.
