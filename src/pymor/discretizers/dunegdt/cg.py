@@ -44,6 +44,7 @@ if config.HAVE_DUNEGDT:
     from pymor.core.base import ImmutableObject
     from pymor.discretizers.dunegdt.gui import (
             DuneGDT1dAsNumpyVisualizer, DuneGDTK3dVisualizer, DuneGDTParaviewVisualizer)
+    from pymor.discretizers.dunegdt.functions import DuneGridFunction
     from pymor.discretizers.dunegdt.problems import StationaryDuneProblem
     from pymor.models.basic import InstationaryModel, StationaryModel
     from pymor.operators.constructions import ConstantOperator, LincombOperator, VectorArrayOperator
@@ -121,10 +122,10 @@ if config.HAVE_DUNEGDT:
                 diameter=diameter, domain_discretizer=domain_discretizer,
                 grid_type=grid_type, grid=grid, boundary_info=boundary_info)
         if p.dirichlet_data is not None:
-            assert len(dirichlet_data.functions) == 1
-            assert len(dirichlet_data.coefficients) == 1
-            assert dirichlet_data.coefficients[0] == 1
-            dirichlet_data = DuneFunction(dirichlet_data.functions[0])
+            assert len(p.dirichlet_data.functions) == 1
+            assert len(p.dirichlet_data.coefficients) == 1
+            assert p.dirichlet_data.coefficients[0] == 1
+            dirichlet_data = DuneGridFunction(p.dirichlet_data.functions[0])
         grid, boundary_info = p.grid, p.boundary_info
         d = grid.dimension
 
@@ -163,10 +164,10 @@ if config.HAVE_DUNEGDT:
 
         if p.reaction:
             constrained_lhs_ops += [make_weighted_l2_operator(func) for func in p.reaction.functions]
-            constrained_lhs_coeffs += list(reaction_coeffs)
+            constrained_lhs_coeffs += list(p.reaction.coefficients)
             if mu_energy_product:
-                energy_product_ops += [make_weighted_l2_operator(func) for func in p.reaction.coefficients]
-                energy_product_coeffs += list(reaction_coeffs)
+                energy_product_ops += [make_weighted_l2_operator(func) for func in p.reaction.functions]
+                energy_product_coeffs += list(p.reaction.coefficients)
 
         # advection part
         if p.advection:
@@ -294,8 +295,8 @@ if config.HAVE_DUNEGDT:
         if p.dirichlet_data:
             # first, we restrict the data to the Dirichlet boundary
             dirichlet_data = boundary_interpolation(
-                    GF(grid, p.dirichlet_data.impl),
-                    boundary_interpolator._spaces[1], boundary_info, DirichletBoundary())
+                    GF(grid, dirichlet_data.impl),
+                    space if order == 1 else ContinuousLagrangeSpace(grid, order=1), boundary_info, DirichletBoundary())
             # second, we only do something if dirichlet_data != 0
             trivial_dirichlet_data = float_cmp(dirichlet_data.dofs.vector.sup_norm(), 0.)
             if not trivial_dirichlet_data:
@@ -548,13 +549,14 @@ if config.HAVE_DUNEGDT:
         if ensure_consistent_initial_values is not None:
             space = data['space']
             # ... restrict them to the boundary ...
+            assert interpolated_initial_data._list[0].imag_part is None
             interpolated_initial_data_on_boundary = boundary_interpolation(
                     GF(data['grid'], DiscreteFunction(space, interpolated_initial_data._list[0].real_part.impl)),
                     space,
                     data['boundary_info'], DirichletBoundary())
             if interpolated_initial_data_on_boundary.dofs.vector.sup_norm() > ensure_consistent_initial_values:
                 # ... and ensure zero values on the boundary
-                interpolated_initial_data._list[0].impl -= interpolated_initial_data_on_boundary.dofs.vector
+                interpolated_initial_data._list[0].real_part.impl -= interpolated_initial_data_on_boundary.dofs.vector
 
         m = InstationaryModel(
                 operator=m.operator, rhs=m.rhs, mass=mass,
