@@ -53,11 +53,12 @@ if config.HAVE_DUNEGDT:
             if outputs is not None:
                 assert isinstance(outputs, (tuple, list)) and all(len(o) == 2 for o in outputs) \
                        and all(o[0] in ('l2', 'l2_boundary') for o in outputs)
-                for output in outputs:
-                    output[1] = to_dune_grid_function(
-                            output[1],
-                            grid,
-                            interpolator if output[0] == 'l2' else boundary_interpolator)
+                outputs_ = outputs
+                outputs = []
+                for output in outputs_:
+                    outputs.append((output[0], to_dune_grid_function(
+                        output[1], grid, interpolator if output[0] == 'l2' else boundary_interpolator)))
+                outputs = tuple(outputs)
 
             name = name or 'StationaryDuneProblem'
             self.__auto_init(locals())
