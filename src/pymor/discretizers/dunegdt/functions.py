@@ -22,8 +22,9 @@ if config.HAVE_DUNEGDT:
             )
 
     from pymor.algorithms.rules import RuleTable, match_class, match_generic, RuleNotMatchingError, NoMatchingRuleError
-    from pymor.core.base import BasicObject, ImmutableObject, classinstancemethod
     from pymor.analyticalproblems.functions import ConstantFunction, LincombFunction, ProductFunction, Function
+    from pymor.core.base import BasicObject, ImmutableObject, classinstancemethod
+    from pymor.parameters.base import ParametricObject
 
 
     def to_dune_grid_function(function, dune_grid=None, dune_interpolator=None, mu=None, ensure_lincomb=False):
@@ -90,7 +91,7 @@ if config.HAVE_DUNEGDT:
                 _known_dune_function_interfaces.append(dune.xt.functions.__dict__[cls_nm])
 
 
-    class DuneFunction(ImmutableObject):
+    class DuneFunction(ParametricObject):
         """Convenience wrapper class for functions from `dune.xt.functions`.
 
         Allows to check if a given `obj` is a function from `dune.xt.functions` by
@@ -112,7 +113,7 @@ if config.HAVE_DUNEGDT:
                     return True
             return False
 
-    class LincombDuneFunction(ImmutableObject):
+    class LincombDuneFunction(ParametricObject):
         """Convenience wrapper class for linear combinations of functions from `dune.xt.functions`
         """
         def __init__(self, functions, coefficients):
@@ -125,7 +126,7 @@ if config.HAVE_DUNEGDT:
             self.__auto_init(locals())
 
 
-    class DuneGridFunction(ImmutableObject):
+    class DuneGridFunction(ParametricObject):
         """Convenience wrapper class for grid functions from `dune.xt.functions`.
 
         Allows to check if a given `obj` is a grid function from `dune.xt.functions` by
@@ -147,7 +148,7 @@ if config.HAVE_DUNEGDT:
                     return True
             return False
 
-    class LincombDuneGridFunction(ImmutableObject):
+    class LincombDuneGridFunction(ParametricObject):
         """Convenience wrapper class for linear combinations of grid functions from
         `dune.xt.functions`
         """
