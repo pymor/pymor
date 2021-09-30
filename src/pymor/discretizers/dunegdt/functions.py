@@ -206,7 +206,7 @@ if config.HAVE_DUNEGDT:
                                      'is not supported yet, defaulting to a dg space!')
                     self._spaces[r] = DiscontinuousLagrangeSpace(
                             self.grid, order=self.order, dim_range=Dim(r), dimwise_global_mapping=True)
-                if self.space_type == 'cg':
+                elif self.space_type == 'cg':
                     self._spaces[r] = ContinuousLagrangeSpace(self.grid, order=self.order, dim_range=Dim(r))
                 elif self.space_type == 'dg':
                     self._spaces[r] = DiscontinuousLagrangeSpace(self.grid, order=self.order, dim_range=Dim(r))
@@ -222,7 +222,7 @@ if config.HAVE_DUNEGDT:
             dune_function = DiscreteFunction(space)
             if r == 1:
                 np_view = np.array(dune_function.dofs.vector, copy=False)
-                np_view[:] = pymor_function.evaluate(interpolation_points, mu=mu)[:].ravel()
+                np_view[:] = pymor_function.evaluate(interpolation_points, mu=mu).ravel()[:]
             else:
                 np_view = np.array(dune_function.dofs.vector, copy=False)
                 values = pymor_function.evaluate(interpolation_points)
