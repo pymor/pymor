@@ -34,7 +34,7 @@ if config.HAVE_DUNEGDT:
             return cls(instance.impl)
 
         def _copy_data(self):
-            return DuneXTVector(self.impl.copy(True))
+            self.impl = self.impl.copy(True)
 
         def _scal(self, alpha):
             self.impl.scal(alpha)
