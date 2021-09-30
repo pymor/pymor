@@ -239,6 +239,14 @@ if config.HAVE_DUNEGDT:
             super().__init__()
             self.__auto_init(locals())
 
+        @match_generic(lambda function: DuneGridFunction.is_base_of(function),
+                       'grid function from dune.xt.functions')
+        def action_dune_xt_functions_grid_function(self, function):
+            if self.ensure_lincomb:
+                return LincombDuneGridFunction([function,], [1,])
+            else:
+                return DuneGridFunction(function)
+
         @match_class(LincombDuneGridFunction)
         def action_LincombDuneGridFunction(self, function):
             return function
@@ -309,6 +317,14 @@ if config.HAVE_DUNEGDT:
         def __init__(self, ensure_lincomb):
             super().__init__()
             self.__auto_init(locals())
+
+        @match_generic(lambda function: DuneFunction.is_base_of(function),
+                       'function from dune.xt.functions')
+        def action_dune_xt_functions_function(self, function):
+            if self.ensure_lincomb:
+                return LincombDuneFunction([function,], [1,])
+            else:
+                return DuneFunction(function)
 
         @match_class(LincombDuneFunction)
         def action_LincombDuneFunction(self, function):
