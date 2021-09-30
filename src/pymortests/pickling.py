@@ -20,6 +20,21 @@ is_equal_ignored_attributes = \
 
 is_equal_dispatch_table = {}
 
+if config.HAVE_DUNEGDT:
+    from dune.xt.la import IstlVector
+
+    def _assert_IstlVector_equal(first, second):
+        if not isinstance(first, IstlVector):
+            return False
+        if not isinstance(second, IstlVector):
+            return False
+        if not len(first) == len(second):
+            return False
+        assert_is_equal(np.array(first, copy=False), np.array(second, copy=False))
+        return True
+
+    is_equal_dispatch_table[IstlVector] = _assert_IstlVector_equal
+
 
 def func_with_closure_generator():
     x = 42
