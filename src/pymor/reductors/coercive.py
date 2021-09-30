@@ -47,7 +47,7 @@ class CoerciveRBReductor(StationaryRBReductor):
         If `operator_is_symmetric` is `False` or if the output functional of the |Model|
         differs substantially from the right hand side of the |Model|, it makes sense to
         provide a reduced basis for the dual problems
-        (see :classmethod:`~pymor.reductors.coercive.CoerciveRBReductor.dual_model` for details)
+        (see :func:`~pymor.reductors.coercive.CoerciveRBReductor.dual_model` for details)
     """
 
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
