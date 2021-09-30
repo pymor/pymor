@@ -266,6 +266,29 @@ def test_copy(vectors_and_indices):
             pass
 
 
+@pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
+def test_COW(vectors_and_indices):
+    v, ind = vectors_and_indices
+    for deep in (True, False):
+        if ind is None:
+            c = v.copy(deep)
+            assert len(c) == len(v)
+        else:
+            c = v[ind].copy(deep)
+            assert len(c) == v.len_ind(ind)
+        assert c.space == v.space
+        if len(c) > 0:
+            c *= 2
+            if ind is None:
+                assert not np.all(almost_equal(c, v))
+            else:
+                assert not np.all(almost_equal(c, v[ind]))
+            try:
+                assert np.allclose(c.to_numpy(), 2*indexed(v.to_numpy(), ind))
+            except NotImplementedError:
+                pass
+
+
 @pyst.given_vector_arrays()
 def test_copy_repeated_index(vector_array):
     v = vector_array
