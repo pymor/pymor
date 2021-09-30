@@ -121,6 +121,20 @@ if config.HAVE_DUNEGDT:
                 data_approximation_order=data_approximation_order,
                 diameter=diameter, domain_discretizer=domain_discretizer,
                 grid_type=grid_type, grid=grid, boundary_info=boundary_info)
+
+        return _discretize_stationary_cg_dune(p, order=order, la_backend=la_backend,
+                advection_in_divergence_form=advection_in_divergence_form, mu_energy_product=mu_energy_product)
+
+
+    def _discretize_stationary_cg_dune(dune_problem, order=1, la_backend=Istl(), advection_in_divergence_form=True,
+            mu_energy_product=None):
+        """Discretizes a |StationaryDuneProblem| with dune-gdt using continuous Lagrange finite
+           elements.
+
+           Note: usually not to be used directly, see :meth:`discretize_stationary_cg` instead.
+        """
+        assert isinstance(dune_problem, StationaryDuneProblem)
+        p = dune_problem
         if p.dirichlet_data is not None:
             assert len(p.dirichlet_data.functions) == 1
             assert len(p.dirichlet_data.coefficients) == 1
