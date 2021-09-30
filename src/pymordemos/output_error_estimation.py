@@ -13,9 +13,9 @@ from pymor.basic import *
 def main(
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.'),
-    verification_samples: int = Argument(..., help='Number of samples used for verification of the output error.')):
-    # Example script for using the DWR output error estimation #
-
+    verification_samples: int = Argument(..., help='Number of samples used for verification of the output error.')
+):
+    """Example script for using the DWR output error estimation"""
     # real valued output
     fom_1 = create_fom(grid_intervals, vector_valued_output=False)
 

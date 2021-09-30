@@ -167,7 +167,6 @@ class CoerciveRBReductor(StationaryRBReductor):
         -------
         A |Model| with the adjoint operator and the corresponding right hand side
         """
-
         assert 0 <= dim < fom.dim_output
         e_i = np.zeros(fom.dim_output)
         e_i[dim] = 1
@@ -185,7 +184,6 @@ class CoerciveRBReductor(StationaryRBReductor):
         If the no (corrected) output needs to be built or no estimation is required,
         this code returns empty defaults.
         """
-
         dual_residuals, dual_range_dims, reduced_dual_models = [], [], None
         if hasattr(self, 'dual_residual_reductors'):
             if self.assemble_output_error_estimate:
