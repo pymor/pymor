@@ -140,10 +140,10 @@ class CoerciveRBReductor(StationaryRBReductor):
 
     def assemble_error_estimator(self):
         residual = self.residual_reductor.reduce()
-        dual_ress, dual_range_dims = self.prepare_dwr_output_error_estimator()
+        dual_ress, dual_range_dims, reduced_dual_models = self.prepare_dwr_output_error_estimator()
         error_estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
                                               self.coercivity_estimator, dual_ress, dual_range_dims,
-                                              self.reduced_dual_models)
+                                              reduced_dual_models)
         return error_estimator
 
     @classmethod
@@ -181,18 +181,21 @@ class CoerciveRBReductor(StationaryRBReductor):
     def prepare_dwr_output_error_estimator(self):
         """Prepare the output error estimator with the DWR approach.
 
-        See :cite:`Haa17` (Proposition 2.27)
+        See :cite:`Haa17` (Proposition 2.27).
+        If the no (corrected) output needs to be built or no estimation is required,
+        this code returns empty defaults.
         """
 
-        dual_residuals, dual_range_dims = [], []
+        dual_residuals, dual_range_dims, reduced_dual_models = [], [], None
         if hasattr(self, 'dual_residual_reductors'):
             if self.assemble_output_error_estimate:
                 for dual_residual_reductor in self.dual_residual_reductors:
                     dual_residuals.append(dual_residual_reductor.reduce())
                     dual_range_dims.append(tuple(dual_residual_reductor.residual_range_dims))
+            reduced_dual_models = self.reduced_dual_models
         # go back to None if nothing happened (this can also happen when the for loop started)
         dual_range_dims = None if len(dual_range_dims) == 0 else dual_range_dims
-        return dual_residuals, dual_range_dims
+        return dual_residuals, dual_range_dims, reduced_dual_models
 
     def assemble_error_estimator_for_subbasis(self, dims):
         return self._last_rom.error_estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
