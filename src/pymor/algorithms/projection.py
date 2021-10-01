@@ -9,7 +9,8 @@ from pymor.core.exceptions import RuleNotMatchingError, NoMatchingRuleError
 from pymor.operators.block import BlockOperatorBase, BlockRowOperator, BlockColumnOperator
 from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ConstantOperator, ProjectedOperator,
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
-                                           IdentityOperator, VectorArrayOperator)
+                                           IdentityOperator, VectorArrayOperator,
+                                           CorrectedOutputFunctional)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -371,3 +372,24 @@ class ProjectToSubbasisRules(RuleTable):
             else op.range_basis[:dim_range]
         return ProjectedOperator(op.operator, range_basis, source_basis, product=None,
                                  solver_options=op.solver_options)
+
+    @match_class(CorrectedOutputFunctional)
+    def action_CorrectedOutputFunctional(self, op):
+        dim  = self.dim_source
+        assert self.dim_range is None
+        dual_projected_primal_residuals, reduced_dual_models = [], []
+        for dual_model, dual_residual in zip(op.dual_models, op.dual_projected_primal_residuals):
+            projected_dual_operator = ProjectToSubbasisRules(dim, dim).apply(dual_model.operator)
+            projected_dual_rhs = ProjectToSubbasisRules(dim, None).apply(dual_model.rhs)
+            restricted_dual_model = dual_model.with_(operator=projected_dual_operator,
+                                                     rhs=projected_dual_rhs,
+                                                     name=dual_model.name + '_restricted')
+            reduced_dual_models.append(restricted_dual_model)
+            operator = ProjectToSubbasisRules(dim, dim).apply(dual_residual.operator)
+            rhs = ProjectToSubbasisRules(dim, None).apply(dual_residual.rhs)
+            residual = dual_residual.with_(operator=operator, rhs=rhs, name='dual_projected_residual_restricted')
+            dual_projected_primal_residuals.append(residual)
+
+        standard_output = self.apply(op.output_functional)
+        return CorrectedOutputFunctional(standard_output, reduced_dual_models,
+                                         dual_projected_primal_residuals)

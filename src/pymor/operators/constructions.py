@@ -1310,6 +1310,36 @@ class SelectionOperator(Operator):
         return self.operators[operator_number].as_source_array(mu=mu)
 
 
+class CorrectedOutputFunctional(Operator):
+    """|Operator| representing the corrected output functional from :cite:`Haa17` (Definition 2.26)
+
+    Parameters
+    ----------
+    output_functional
+        Original output_functional
+    dual_models
+        All dual models that are required for the corrected output
+    dual_projected_primal_residuals
+        The evaluated primal residuals
+    """
+
+    def __init__(self, output_functional, dual_models, dual_projected_primal_residuals):
+        self.__auto_init(locals())
+        self.linear = False
+        self.source = output_functional.source
+        self.range = output_functional.range
+
+    def apply(self, solution, mu=None):
+        # compute corrected output functional
+        output = self.output_functional.apply(solution, mu=mu).to_numpy()
+        dual_corrections = []
+        for dual_m, dual_res in zip(self.dual_models, self.dual_projected_primal_residuals):
+            dual_solution = dual_m.solve(mu)
+            dual_correction = dual_res.apply2(dual_solution, solution, mu)
+            dual_corrections.append(dual_correction)
+        return self.range.from_numpy((output + dual_corrections)[0])
+
+
 @defaults('raise_negative', 'tol')
 def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
     """Obtain induced norm of an inner product.
