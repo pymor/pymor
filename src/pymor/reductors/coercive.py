@@ -43,10 +43,11 @@ class CoerciveRBReductor(StationaryRBReductor):
         If `assemble_output_error_estimate` is `True`, the DWR estimator can either be
         build with the operator itself (if the operator is symmetric, or with the adjoint
         operator. For the symmetric case `operator_is_symmetric` is to be set as `True`.
-    dual_basis
+    dual_bases
         If `operator_is_symmetric` is `False` or if the output functional of the |Model|
         differs substantially from the right hand side of the |Model|, it makes sense to
-        provide a reduced basis for the dual problems
+        provide a reduced basis for the dual problems. If °dual_bases° are given, then the
+        corrected reduced output functional is built automatically.
         (see :func:`~pymor.reductors.coercive.CoerciveRBReductor.dual_model` for details)
     """
 
@@ -70,28 +71,19 @@ class CoerciveRBReductor(StationaryRBReductor):
                     self.corrected_output = True
                 self.dual_residual_reductors, self.dual_projected_primal_residuals = [], []
                 self.projected_dual_operators, self.projected_dual_rhss = [], []
-                output = self.fom.output_functional
                 for d in range(fom.dim_output):
                     # choose dual basis
-                    if dual_bases is not None:
-                        dual_basis = dual_bases[d]
-                    else:
-                        dual_basis = self.bases['RB']
+                    dual_basis = dual_bases[d] if dual_bases is not None else self.bases['RB']
                     # choose operator
-                    if operator_is_symmetric:
-                        dual_operator = self.fom.operator
-                    else:
-                        if dual_bases is None:
-                            self.logger.warn('You are using a wrong basis for the adjoint operator. '
-                                             'If you are sure that your operator is symmetric (in theory), '
-                                             'you can set `operator_is_symmetric = True`. If your operator '
-                                             'is not symmetric, you should provide a dual basis via `dual_bases`.')
-                        dual_operator = self.fom.operator.H
-                    # construct dual rhs
-                    e_i = np.zeros(fom.dim_output)
-                    e_i[d] = 1
-                    e_i_vec = output.range.from_numpy(e_i)
-                    restricted_output = - output.H @ VectorOperator(e_i_vec)
+                    dual_operator = self.fom.operator if operator_is_symmetric else self.fom.operator.H
+                    if not operator_is_symmetric and dual_bases is None:
+                        self.logger.warn('You are using a wrong basis for the adjoint operator. '
+                                         'If you are sure that your operator is symmetric (in theory), '
+                                         'you can set `operator_is_symmetric = True`. If your operator '
+                                         'is not symmetric, you should provide a dual basis via `dual_bases`.')
+                    # construct dual rhs with unit vector
+                    e_i_vec = fom.output_functional.range.from_numpy(np.eye(1, fom.dim_output, d))
+                    restricted_output = - fom.output_functional.H @ VectorOperator(e_i_vec)
                     # define dual residual
                     self.dual_residual_reductors.append(ResidualReductor(dual_basis, dual_operator,
                                                                          restricted_output, product=product,
@@ -168,9 +160,7 @@ class CoerciveRBReductor(StationaryRBReductor):
         A |Model| with the adjoint operator and the corresponding right hand side
         """
         assert 0 <= dim < fom.dim_output
-        e_i = np.zeros(fom.dim_output)
-        e_i[dim] = 1
-        e_i_vec = fom.output_functional.range.from_numpy(e_i)
+        e_i_vec = fom.output_functional.range.from_numpy(np.eye(1, fom.dim_output, dim))
         dual_rhs = - fom.output_functional.H @ VectorOperator(e_i_vec)
         dual_operator = fom.operator if operator_is_symmetric else fom.operator.H
         dual_fom = fom.with_(operator=dual_operator, rhs=dual_rhs,
@@ -236,7 +226,6 @@ class CorrectedOutputFunctional(Operator):
             restricted_dual_model = StationaryModel(projected_dual_operator, projected_dual_rhs,
                                                     name=dual_model.name + '_restricted')
             reduced_dual_models.append(restricted_dual_model)
-
             op = project_to_subbasis(dual_residuals.operator, dim_range, dim_source)
             rhs = project_to_subbasis(dual_residuals.rhs, dim_range, None)
             residual = ResidualOperator(op, rhs, name='dual_projected_residual_restricted')
