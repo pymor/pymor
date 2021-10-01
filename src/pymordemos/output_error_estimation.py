@@ -15,6 +15,7 @@ def main(
     training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.'),
     verification_samples: int = Argument(..., help='Number of samples used for verification of the output error.')
 ):
+    set_log_levels({'pymor': 'WARN'})
     """Example script for using the DWR output error estimation"""
     # real valued output
     fom_1 = create_fom(grid_intervals, vector_valued_output=False)
@@ -48,6 +49,7 @@ def main(
     for fom in foms:
         for operator_symmetric in [True, False]:
             for construct_dual_bases in [False, True]:
+                print(f'operator_sym : {operator_symmetric}, use_dual_bases {construct_dual_bases}')
                 # generate solution snapshots
                 primal_snapshots = fom.solution_space.empty()
                 dual_snapshotss = [fom.solution_space.empty() for d in range(fom.dim_output)]
@@ -87,11 +89,12 @@ def main(
                         s_rom, s_est = rom.output(return_error_estimate=True, mu=mu)
                         estimator_values.append(s_est)
                         for s_r, s_f, s_e in np.dstack((s_rom, s_fom, s_est))[0]:
+                            print(f'error : {np.abs(s_r - s_f):.6f} < {s_e:.6f}')
                             assert np.abs(s_r-s_f) <= s_e + 1e-12
 
 
 def create_fom(grid_intervals, vector_valued_output=False):
-    p = thermal_block_problem([3, 3])
+    p = thermal_block_problem([2, 2])
     f = ConstantFunction(1, dim_domain=2)
 
     if vector_valued_output:

@@ -124,7 +124,7 @@ FUNCTION_EI_ARGS = (
 
 OUTPUT_FUNCTIONAL_ARGS = (
     ('linear_optimization', [40, 20]),
-    ('output_error_estimation', [10, 10, 10]),
+    ('output_error_estimation', [10, 10, 5]),
 )
 
 DEMO_ARGS = (
