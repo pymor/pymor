@@ -136,7 +136,7 @@ indicator_domain = ExpressionFunction(
     dim_domain=2)
 rest_of_domain = ConstantFunction(1, 2) - indicator_domain
 
-f = ExpressionFunction('0.5*pi*pi*cos(0.5*pi*x[0])*cos(0.5*pi*x[1])', dim_domain=2)
+l = ExpressionFunction('0.5*pi*pi*cos(0.5*pi*x[0])*cos(0.5*pi*x[1])', dim_domain=2)
 
 parameters = {'diffusion': 2}
 thetas = [ExpressionParameterFunctional('1.1 + sin(diffusion[0])*diffusion[1]', parameters,
@@ -152,7 +152,7 @@ diffusion = LincombFunction([rest_of_domain, indicator_domain], thetas)
 theta_J = ExpressionParameterFunctional('1 + 1/5 * diffusion[0] + 1/5 * diffusion[1]', parameters,
                                         derivative_expressions={'diffusion': ['1/5','1/5']})
 
-problem = StationaryProblem(domain, f, diffusion, outputs=[('l2', f * theta_J)])
+problem = StationaryProblem(domain, l, diffusion, outputs=[('l2', l * theta_J)])
 ```
 
 We now use pyMOR's builtin discretization toolkit (see {doc}`tutorial_builtin_discretizer`)
@@ -174,7 +174,7 @@ fom, data = discretize_stationary_cg(problem, diameter=1/50, mu_energy_product=m
 parameter_space = fom.parameters.space(0, np.pi)
 ```
 
-We now define a function for the output of the model that can be used by the minimizer below.
+We now define the first function for the output of the model that will be used by the minimizer.
 
 ```{code-cell}
 def fom_objective_functional(mu):
@@ -182,7 +182,7 @@ def fom_objective_functional(mu):
 ```
 
 We also pick a starting parameter for the optimization method,
-which in our case is {math}`\mu^0 = (0.25,0.5)`.
+which in our case is {math}`\mu^0 = (0.25, 0.5)`.
 
 ```{code-cell}
 initial_guess = [0.25, 0.5]
@@ -255,9 +255,8 @@ Now, we can visualize the objective functional on the parameter space
 ```{code-cell}
 ranges = parameter_space.ranges['diffusion']
 XX = np.linspace(ranges[0] + 0.05, ranges[1], 10)
-YY = XX
 
-plot_3d_surface(fom_objective_functional, XX, YY)
+plot_3d_surface(fom_objective_functional, XX, XX)
 ```
 
 Taking a closer look at the functional, we see that it is at least
@@ -266,19 +265,28 @@ PDE-constrained optimization problems are not convex. In our case
 changing the parameter functional {math}`\theta_{\mathcal{J}}` can
 already result in a very different non-convex output functional.
 
-In order to record some data during the optimization, we also define two
-helpful functions for recording and reporting the results.
+In order to record some data during the optimization, we also define
+helpful functions for recording and reporting the results in this tutorial.
 
 ```{code-cell}
-reference_minimization_data = {'num_evals': 0,
-                               'evaluations' : [],
-                               'evaluation_points': [],
-                               'time': np.inf}
+def prepare_data(offline_time=False, enrichments=False):
+    data = {'num_evals': 0, 'evaluations' : [], 'evaluation_points': [], 'time': np.inf}
+    if offline_time:
+        data['offline_time'] = offline_time
+    if enrichments:
+        data['enrichments'] = 0
+    return data
 
-def record_results(function, data, mu):
-    QoI = function(mu)
+def record_results(function, data, adaptive_enrichment=False, opt_dict=None, mu=None):
+    if adaptive_enrichment:
+        # this is for the adaptive case! rom is shiped via the opt_dict argument.
+        assert opt_dict is not None
+        QoI, data, rom = function(mu, data, opt_dict)
+        opt_dict['opt_rom'] = rom
+    else:
+        QoI = function(mu)
     data['num_evals'] += 1
-    data['evaluation_points'].append(fom.parameters.parse(mu).to_numpy())
+    data['evaluation_points'].append(mu)
     data['evaluations'].append(QoI[0])
     return QoI
 
@@ -287,17 +295,17 @@ def report(result, data, reference_mu=None):
         print('\n failed!')
     else:
         print('\n succeeded!')
-        print('  mu_min:    {}'.format(fom.parameters.parse(result.x)))
-        print('  J(mu_min): {}'.format(result.fun[0]))
+        print(f'  mu_min:    {fom.parameters.parse(result.x)}')
+        print(f'  J(mu_min): {result.fun[0]}')
         if reference_mu is not None:
-            print('  absolute error w.r.t. reference solution: {:.2e}'.format(np.linalg.norm(result.x-reference_mu)))
-        print('  num iterations:     {}'.format(result.nit))
-        print('  num function calls: {}'.format(data['num_evals']))
-        print('  time:               {:.5f} seconds'.format(data['time']))
+            print(f'  absolute error w.r.t. reference solution: {np.linalg.norm(result.x-reference_mu):.2e}')
+        print(f'  num iterations:     {result.nit}')
+        print(f'  num function calls: {data["num_evals"]}')
+        print(f'  time:               {data["time"]:.5f} seconds')
         if 'offline_time' in data:
-                print('  offline time:       {:.5f} seconds'.format(data['offline_time']))
+                print(f'  offline time:       {data["offline_time"]:.5f} seconds')
         if 'enrichments' in data:
-                print('  model enrichments:  {}'.format(data['enrichments']))
+                print(f'  model enrichments:  {data["enrichments"]}')
     print('')
 ```
 
@@ -308,7 +316,23 @@ to discuss the design and implementation of optimization methods. We
 simply use the {func}`~scipy.optimize.minimize` function
 from `scipy.optimize` and use the
 builtin `L-BFGS-B` routine which is a quasi-Newton method that can
-also handle a constrained parameter space.
+also handle a constrained parameter space. For the whole tutorial, we define the
+optimization function as follows.
+
+```{code-cell}
+from functools import partial
+from scipy.optimize import minimize
+
+def optimize(J, data, ranges, gradient=False, adaptive_enrichment=False, opt_dict=None):
+    tic = perf_counter()
+    result = minimize(partial(record_results, J, data, adaptive_enrichment, opt_dict),
+                      initial_guess,
+                      method='L-BFGS-B', jac=gradient,
+                      bounds=(ranges, ranges),
+                      options={'ftol': 1e-15, 'gtol': 5e-5})
+    data['time'] = perf_counter()-tic
+    return result
+```
 
 It is optional to give an expression for the gradient of the objective
 functional to the {func}`~scipy.optimize.minimize` function.
@@ -319,16 +343,10 @@ computation of finite differences requires even more evaluations of the
 primal equation. Here, we use this approach for a simple demonstration.
 
 ```{code-cell}
-from functools import partial
-from scipy.optimize import minimize
+reference_minimization_data = prepare_data()
 
-tic = perf_counter()
-fom_result = minimize(partial(record_results, fom_objective_functional, reference_minimization_data),
-                      initial_guess,
-                      method='L-BFGS-B', jac=False,
-                      bounds=(ranges, ranges),
-                      options={'ftol': 1e-15, 'gtol': 5e-5})
-reference_minimization_data['time'] = perf_counter()-tic
+fom_result = optimize(fom_objective_functional, reference_minimization_data, ranges)
+
 reference_mu = fom_result.x
 ```
 
@@ -343,11 +361,10 @@ finite differences. We can visualize the optimization path by plotting
 the chosen points during the minimization.
 
 ```{code-cell}
-reference_plot = plot_3d_surface(fom_objective_functional, XX, YY, alpha=0.5)
+reference_plot = plot_3d_surface(fom_objective_functional, XX, XX, alpha=0.5)
 
 for mu in reference_minimization_data['evaluation_points']:
     addplot_xy_point_as_bar(reference_plot, mu[0], mu[1])
-
 ```
 
 ## Optimizing with the ROM using finite differences
@@ -390,23 +407,21 @@ optimum.
 training_set = parameter_space.sample_uniformly(25)
 
 RB_reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
-
 RB_greedy_data = rb_greedy(fom, RB_reductor, training_set, atol=1e-2)
 
 num_RB_greedy_extensions = RB_greedy_data['extensions']
 RB_greedy_mus, RB_greedy_errors = RB_greedy_data['max_err_mus'], RB_greedy_data['max_errs']
-
 rom = RB_greedy_data['rom']
 
-print('RB system is of size {}x{}'.format(num_RB_greedy_extensions, num_RB_greedy_extensions))
-print('maximum estimated model reduction error over training set: {}'.format(RB_greedy_errors[-1]))
+print(f'RB system is of size {num_RB_greedy_extensions}x{num_RB_greedy_extensions}')
+print(f'maximum estimated model reduction error over training set: {RB_greedy_errors[-1]}')
 ```
 
 We can see that greedy algorithm already stops after {math}`3` basis functions.
 Next, we plot the chosen parameters.
 
 ```{code-cell}
-ax = plot_3d_surface(fom_objective_functional, XX, YY, alpha=0.5)
+ax = plot_3d_surface(fom_objective_functional, XX, XX, alpha=0.5)
 
 for mu in RB_greedy_mus[:-1]:
     mu = mu.to_numpy()
@@ -420,20 +435,9 @@ the resulting ROM objective functional.
 def rom_objective_functional(mu):
     return rom.output(mu)[0]
 
-RB_minimization_data = {'num_evals': 0,
-                        'evaluations' : [],
-                        'evaluation_points': [],
-                        'time': np.inf,
-                        'offline_time': RB_greedy_data['time']
-                        }
+RB_minimization_data = prepare_data(offline_time=RB_greedy_data['time'])
 
-tic = perf_counter()
-rom_result = minimize(partial(record_results, rom_objective_functional, RB_minimization_data),
-                      initial_guess,
-                      method='L-BFGS-B', jac=False,
-                      bounds=(ranges, ranges),
-                      options={'ftol': 1e-15, 'gtol': 5e-5})
-RB_minimization_data['time'] = perf_counter()-tic
+rom_result = optimize(rom_objective_functional, RB_minimization_data, ranges)
 ```
 
 ```{code-cell}
@@ -441,7 +445,7 @@ report(rom_result, RB_minimization_data, reference_mu)
 ```
 
 Comparing the result to the FOM model, we see that the number of
-iterations and evaluations of the model slightly decreased. As expected,
+iterations and evaluations of the model are equal. As expected,
 we see that the optmization routine is very fast because the surrogate
 enables almost instant evaluations of the primal equation.
 
@@ -456,7 +460,7 @@ To show that the ROM optimization roughly followed the same path as the
 FOM optimization, we visualize both of them in the following plot.
 
 ```{code-cell}
-reference_plot = plot_3d_surface(fom_objective_functional, XX, YY, alpha=0.5)
+reference_plot = plot_3d_surface(fom_objective_functional, XX, XX, alpha=0.5)
 reference_plot_mean_z_lim = 0.5*(reference_plot.get_zlim()[0] + reference_plot.get_zlim()[1])
 
 for mu in reference_minimization_data['evaluation_points']:
@@ -566,18 +570,10 @@ In order to use the output for {func}`~scipy.optimize.minimize` we thus use the 
 def fom_gradient_of_functional(mu):
     return fom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=True)
 
-opt_fom_minimization_data = {'num_evals': 0,
-                             'evaluations' : [],
-                             'evaluation_points': [],
-                             'time': np.inf}
-tic = perf_counter()
-opt_fom_result = minimize(partial(record_results, fom_objective_functional, opt_fom_minimization_data),
-                          initial_guess,
-                          method='L-BFGS-B',
-                          jac=fom_gradient_of_functional,
-                          bounds=(ranges, ranges),
-                          options={'ftol': 1e-15, 'gtol': 5e-5})
-opt_fom_minimization_data['time'] = perf_counter()-tic
+opt_fom_minimization_data = prepare_data()
+
+opt_fom_result = optimize(fom_objective_functional, opt_fom_minimization_data, ranges,
+                          gradient=fom_gradient_of_functional)
 
 # update the reference_mu because this is more accurate!
 reference_mu = opt_fom_result.x
@@ -588,7 +584,10 @@ report(opt_fom_result, opt_fom_minimization_data)
 ```
 
 With respect to the FOM result with finite differences, we see that we
-have a massive speed up by computing the gradient information properly.
+have a saved the evaluations for computing the gradient. Of course it is also not for free to
+compute the gradient, but since we are using the dual approach, this will only scale with the
+factor 2. Furthermore, we can expect that the result above is more accurate which is why we
+choose it as the reference parameter.
 
 ## Optimizing using a gradient in ROM
 
@@ -599,28 +598,18 @@ output functional.
 def rom_gradient_of_functional(mu):
     return rom.output_d_mu(rom.parameters.parse(mu), return_array=True, use_adjoint=True)
 
+opt_rom_minimization_data = prepare_data(offline_time=RB_greedy_data['time'])
 
-opt_rom_minimization_data = {'num_evals': 0,
-                             'evaluations' : [],
-                             'evaluation_points': [],
-                             'time': np.inf,
-                             'offline_time': RB_greedy_data['time']}
+opt_rom_result = optimize(rom_objective_functional, opt_rom_minimization_data, ranges,
+                          gradient=rom_gradient_of_functional)
+```
 
-
-tic = perf_counter()
-opt_rom_result = minimize(partial(record_results, rom_objective_functional, opt_rom_minimization_data),
-                  initial_guess,
-                  method='L-BFGS-B',
-                  jac=rom_gradient_of_functional,
-                  bounds=(ranges, ranges),
-                  options={'ftol': 1e-15, 'gtol': 5e-5})
-opt_rom_minimization_data['time'] = perf_counter()-tic
+```{code-cell}
 report(opt_rom_result, opt_rom_minimization_data, reference_mu)
 ```
 
-The online phase is even slightly faster than before but the offline
-phase is still the same as before. We also conclude that the
-ROM model eventually gives less speedup by using a better optimization
+The online phase is even faster but the offline time of course remains the same.
+We also conclude that the ROM model eventually gives less speedup by using a better optimization
 method for the FOM and ROM.
 
 ## Beyond the traditional offline/online splitting: enrich along the path of optimization
@@ -656,7 +645,7 @@ In the next function, we implement the above mentioned way of enriching
 the basis along the path of optimization.
 
 ```{code-cell}
-def record_results_and_enrich(function, data, opt_dict, mu):
+def enrich_and_compute_objective_function(mu, data, opt_dict):
     U = fom.solve(mu)
     try:
         pdeopt_reductor.extend_basis(U)
@@ -665,11 +654,7 @@ def record_results_and_enrich(function, data, opt_dict, mu):
         print('Extension failed')
     opt_rom = pdeopt_reductor.reduce()
     QoI = opt_rom.output(mu)
-    data['num_evals'] += 1
-    data['evaluation_points'].append(fom.parameters.parse(mu).to_numpy())
-    data['evaluations'].append(QoI[0])
-    opt_dict['opt_rom'] = rom
-    return QoI
+    return QoI, data, opt_rom
 
 def compute_gradient_with_opt_rom(opt_dict, mu):
     opt_rom = opt_dict['opt_rom']
@@ -679,21 +664,13 @@ def compute_gradient_with_opt_rom(opt_dict, mu):
 With this definitions, we can start the optimization method.
 
 ```{code-cell}
-opt_along_path_minimization_data = {'num_evals': 0,
-                                    'evaluations' : [],
-                                    'evaluation_points': [],
-                                    'time': np.inf,
-                                    'enrichments': 0}
+opt_along_path_minimization_data = prepare_data(enrichments=True)
+
 opt_dict = {}
-tic = perf_counter()
-opt_along_path_result = minimize(partial(record_results_and_enrich, rom_objective_functional,
-                                         opt_along_path_minimization_data, opt_dict),
-                                 initial_guess,
-                                 method='L-BFGS-B',
-                                 jac=partial(compute_gradient_with_opt_rom, opt_dict),
-                                 bounds=(ranges, ranges),
-                                 options={'ftol': 1e-15, 'gtol': 5e-5})
-opt_along_path_minimization_data['time'] = perf_counter()-tic
+opt_along_path_result = optimize(enrich_and_compute_objective_function,
+                                 opt_along_path_minimization_data, ranges,
+                                 gradient=partial(compute_gradient_with_opt_rom, opt_dict),
+                                 adaptive_enrichment=True, opt_dict=opt_dict)
 ```
 
 ```{code-cell}
@@ -725,7 +702,7 @@ opt_rom = pdeopt_reductor.reduce()
 ```
 
 ```{code-cell}
-def record_results_and_enrich_adaptively(function, data, opt_dict, mu):
+def enrich_adaptively_and_compute_objective_function(mu, data, opt_dict):
     opt_rom = opt_dict['opt_rom']
     primal_estimate = opt_rom.estimate_error(opt_rom.parameters.parse(mu))
     if primal_estimate > 1e-2:
@@ -741,33 +718,17 @@ def record_results_and_enrich_adaptively(function, data, opt_dict, mu):
         print('Do NOT enrich the space because primal estimate is {} ...'.format(primal_estimate))
     opt_rom = pdeopt_reductor.reduce()
     QoI = opt_rom.output(mu)
-    data['num_evals'] += 1
-    data['evaluation_points'].append(fom.parameters.parse(mu).to_numpy())
-    data['evaluations'].append(QoI[0])
-    opt_dict['opt_rom'] = opt_rom
-    return QoI
-
-def compute_gradient_with_opt_rom(opt_dict, mu):
-    opt_rom = opt_dict['opt_rom']
-    return opt_rom.output_d_mu(opt_rom.parameters.parse(mu), return_array=True, use_adjoint=True)
+    return QoI, data, opt_rom
 ```
 
 ```{code-cell}
-opt_along_path_adaptively_minimization_data = {'num_evals': 0,
-                                               'evaluations' : [],
-                                               'evaluation_points': [],
-                                               'time': np.inf,
-                                               'enrichments': 0}
+opt_along_path_adaptively_minimization_data = prepare_data(enrichments=True)
+
 opt_dict = {'opt_rom': opt_rom}
-tic = perf_counter()
-opt_along_path_adaptively_result = minimize(partial(record_results_and_enrich_adaptively, rom_objective_functional,
-                                                    opt_along_path_adaptively_minimization_data, opt_dict),
-                                            initial_guess,
-                                            method='L-BFGS-B',
-                                            jac=partial(compute_gradient_with_opt_rom, opt_dict),
-                                            bounds=(ranges, ranges),
-                                            options={'ftol': 1e-15, 'gtol': 5e-5})
-opt_along_path_adaptively_minimization_data['time'] = perf_counter()-tic
+opt_along_path_adaptively_result = optimize(enrich_adaptively_and_compute_objective_function,
+                                            opt_along_path_adaptively_minimization_data, ranges,
+                                            gradient=partial(compute_gradient_with_opt_rom, opt_dict),
+                                            adaptive_enrichment=True, opt_dict=opt_dict)
 ```
 
 ```{code-cell}
