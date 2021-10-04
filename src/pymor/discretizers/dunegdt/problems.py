@@ -27,7 +27,8 @@ if config.HAVE_DUNEGDT:
                         space_type='fv' if data_approximation_order == 0 else \
                                 ('cg' if data_approximation_order == 1 else 'dg'),
                         order=data_approximation_order)
-            boundary_interpolator = interpolator if data_approximation_order == 1 else DuneInterpolator(grid, 'cg', 1)
+            self.boundary_interpolator = interpolator if data_approximation_order == 1 \
+                    else DuneInterpolator(grid, 'cg', 1)
 
             # ensure all data functions are dune compatible
             # - those arising mainly in volume integrals
@@ -57,7 +58,7 @@ if config.HAVE_DUNEGDT:
                 outputs = []
                 for output in outputs_:
                     outputs.append((output[0], to_dune_grid_function(
-                        output[1], grid, interpolator if output[0] == 'l2' else boundary_interpolator)))
+                        output[1], grid, interpolator if output[0] == 'l2' else self.boundary_interpolator)))
                 outputs = tuple(outputs)
 
             name = name or 'StationaryDuneProblem'
