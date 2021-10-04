@@ -429,8 +429,8 @@ if config.HAVE_DUNEGDT:
                 def __init__(self, visualizer, shift):
                     self.__auto_init(locals())
 
-                def visualize(self, U, **kwargs):
-                    return self.visualizer.visualize(U + self.shift, **kwargs)
+                def visualize(self, U, *args, **kwargs):
+                    return self.visualizer.visualize(U + self.shift, *args, **kwargs)
 
             visualizer = ShiftedVisualizer(unshifted_visualizer, dirichlet_data)
 
