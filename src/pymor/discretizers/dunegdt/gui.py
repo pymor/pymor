@@ -240,7 +240,7 @@ if config.HAVE_DUNEGDT:
         def __init__(self, space, name='STATE'):
             self.__auto_init(locals())
 
-        def visualize(self, U):
+        def visualize(self, U, *args, **kwargs):
 
             def visualize_single(u, filename):
                 if isinstance(u, ComplexifiedDuneXTVector):
