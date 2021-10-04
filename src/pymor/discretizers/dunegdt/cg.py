@@ -45,7 +45,7 @@ if config.HAVE_DUNEGDT:
     from pymor.discretizers.dunegdt.gui import (
             DuneGDT1dAsNumpyVisualizer, DuneGDTK3dVisualizer, DuneGDTParaviewVisualizer)
     from pymor.discretizers.dunegdt.functions import DuneGridFunction
-    from pymor.discretizers.dunegdt.problems import StationaryDuneProblem
+    from pymor.discretizers.dunegdt.problems import InstationaryDuneProblem, StationaryDuneProblem
     from pymor.models.basic import InstationaryModel, StationaryModel
     from pymor.operators.constructions import ConstantOperator, LincombOperator, VectorArrayOperator
     from pymor.tools.floatcmp import float_cmp
@@ -91,7 +91,7 @@ if config.HAVE_DUNEGDT:
             Tag to determine which linear algebra backend from dune-xt is used.
         advection_in_divergence_form
             If true, treats linear advection as advertised in StationaryProblem (i.e.
-            :math:`∇ ⋅ (v u)`), else as in :math:`v ⋅∇ u` (where :math:`v` denotes the advective
+            :math:`∇ ⋅ (v u)`), else as in :math:`v ⋅∇ u` (where :math:`v` denotes the vector
             field).
         mu_energy_product
             If specified, converted to a |Mu| and used to assemble an appropriate energy product.
@@ -435,7 +435,7 @@ if config.HAVE_DUNEGDT:
             visualizer = ShiftedVisualizer(unshifted_visualizer, dirichlet_data)
 
         m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
-                             name=f'{p.name}_dunegdt_CG')
+                             name=f'{p.name}_DuneGDT_P{order}_CG')
 
         # for convenience: an interpolation of data functions into the solution space
         space_interpolation_points = space.interpolation_points() # cache
@@ -534,16 +534,34 @@ if config.HAVE_DUNEGDT:
                or (isinstance(ensure_consistent_initial_values, Number) \
                    and not ensure_consistent_initial_values < 0)
 
-        p = analytical_problem
+        # convert problem: creates grid, boundary info and checks and converts all data functions
+        p = InstationaryDuneProblem.from_pymor(
+                analytical_problem,
+                data_approximation_order=data_approximation_order,
+                diameter=diameter, domain_discretizer=domain_discretizer,
+                grid_type=grid_type, grid=grid, boundary_info=boundary_info)
+
+        return _discretize_instationary_cg_dune(
+                p, num_values=num_values, time_stepper=time_stepper, nt=nt, order=order, la_backend=la_backend,
+                advection_in_divergence_form=advection_in_divergence_form, mu_energy_product=mu_energy_product,
+                ensure_consistent_initial_values=ensure_consistent_initial_values)
+
+
+    def _discretize_instationary_cg_dune(dune_problem, num_values=None, time_stepper=None, nt=None, order=1,
+                                         la_backend=Istl(), advection_in_divergence_form=True, mu_energy_product=None,
+                                         ensure_consistent_initial_values=1e-6):
+        assert isinstance(dune_problem, InstationaryDuneProblem)
+        p = dune_problem
+
+        m, data = _discretize_stationary_cg_dune(p.stationary_part, order=order, la_backend=la_backend,
+                advection_in_divergence_form=advection_in_divergence_form, mu_energy_product=mu_energy_product)
 
         assert not p.initial_data.parametric
-
-        m, data = discretize_stationary_cg(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
-                                           grid_type=grid_type, grid=grid, boundary_info=boundary_info,
-                                           order=order, data_approximation_order=data_approximation_order,
-                                           la_backend=la_backend,
-                                           advection_in_divergence_form=advection_in_divergence_form,
-                                           mu_energy_product=mu_energy_product)
+        if p.initial_data is not None:
+            assert len(p.initial_data.functions) == 1
+            assert len(p.initial_data.coefficients) == 1
+            assert p.initial_data.coefficients[0] == 1
+            initial_data = DuneGridFunction(p.initial_data.functions[0])
 
         if time_stepper is None:
             if p.stationary_part.diffusion is None:
@@ -554,23 +572,34 @@ if config.HAVE_DUNEGDT:
         mass = m.l2_0_product
 
         # treatment of initial values
+        grid, space = data['grid'], data['space']
         # - interpolate them as is
-        interpolated_initial_data = data['interpolate'](p.initial_data)
+        interpolated_initial_data = default_interpolation(GF(grid, initial_data.impl), space)
         # - shift if required
         if 'dirichlet_shift' in data:
-            interpolated_initial_data -= data['dirichlet_shift']
+            assert data['dirichlet_shift']._list[0].imag_part is None
+            interpolated_initial_data.dofs.vector -= data['dirichlet_shift']._list[0].real_part.impl
         # - constrain to H^1_0, therefore ...
         if ensure_consistent_initial_values is not None:
-            space = data['space']
-            # ... restrict them to the boundary ...
-            assert interpolated_initial_data._list[0].imag_part is None
+            # ... restrict them to the boundary, which is only meaningful in P^1
+            if order == 1:
+                restricted_interpolation = interpolated_initial_data
+            else:
+                boundary_interpolation_space = ContinuousLagrangeSpace(grid, order=1)
+                restricted_interpolation = default_interpolation(
+                        GF(grid, interpolated_initial_data), boundary_interpolation_space)
             interpolated_initial_data_on_boundary = boundary_interpolation(
-                    GF(data['grid'], DiscreteFunction(space, interpolated_initial_data._list[0].real_part.impl)),
-                    space,
+                    GF(grid, restricted_interpolation),
+                    space if order == 1 else boundary_interpolation_space,
                     data['boundary_info'], DirichletBoundary())
             if interpolated_initial_data_on_boundary.dofs.vector.sup_norm() > ensure_consistent_initial_values:
+                if order > 1:
+                    logger.warn("Falling back to P^11-interpolation of initial values to ensure H^1_0-conformity, "
+                                "since 'ensure_consistent_initial_values' is positive and given 'initial_values' are "
+                                "not in H^1_0!")
                 # ... and ensure zero values on the boundary
-                interpolated_initial_data._list[0].real_part.impl -= interpolated_initial_data_on_boundary.dofs.vector
+                restricted_interpolation.dofs.vector -= interpolated_initial_data_on_boundary.dofs.vector
+        interpolated_initial_data = m.solution_space.make_array([restricted_interpolation.dofs.vector,])
 
         m = InstationaryModel(
                 operator=m.operator, rhs=m.rhs, mass=mass,
