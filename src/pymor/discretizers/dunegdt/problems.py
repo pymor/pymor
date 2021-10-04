@@ -8,6 +8,7 @@ if config.HAVE_DUNEGDT:
 
     from pymor.analyticalproblems.elliptic import StationaryProblem
     from pymor.analyticalproblems.functions import Function
+    from pymor.analyticalproblems.instationary import InstationaryProblem
     from pymor.core.base import classinstancemethod
     from pymor.discretizers.dunegdt.domaindiscretizers.default import discretize_domain_default
     from pymor.discretizers.dunegdt.functions import to_dune_grid_function, DuneInterpolator
@@ -97,3 +98,31 @@ if config.HAVE_DUNEGDT:
             return StationaryDuneProblem(grid, boundary_info, p.rhs, p.diffusion, p.advection, p.reaction,
                     p.dirichlet_data, p.neumann_data, p.robin_data, p.outputs, parameter_space=p.parameter_space,
                     name=p.name)
+
+
+    class InstationaryDuneProblem(ParametricObject):
+
+        def __init__(self, stationary_part, initial_data, T=1., parameter_space=None, name=None,
+                     interpolator=None, data_approximation_order=1):
+            assert isinstance(stationary_part, StationaryDuneProblem)
+            initial_data = to_dune_grid_function(initial_data, stationary_part.grid, interpolator, ensure_lincomb=True)
+            name = name or ('instationary_' + stationary_part.name)
+            self.__auto_init(locals())
+
+        @classinstancemethod
+        def from_pymor(cls, analytical_problem,
+                       data_approximation_order,
+                       diameter=None, domain_discretizer=None,
+                       grid_type=None, grid=None, boundary_info=None):
+            # some checks
+            p = analytical_problem
+            assert isinstance(p, InstationaryProblem)
+            stationary_part = StationaryDuneProblem.from_pymor(
+                    analytical_problem=p.stationary_part,
+                    data_approximation_order=data_approximation_order,
+                    diameter=diameter, domain_discretizer=domain_discretizer,
+                    grid_type=grid_type, grid=grid, boundary_info=boundary_info)
+            initial_data = to_dune_grid_function(
+                    p.initial_data, stationary_part.grid, stationary_part.interpolator, ensure_lincomb=True)
+
+            return InstationaryDuneProblem(stationary_part, initial_data, p.T, p.parameter_space, p.name)
