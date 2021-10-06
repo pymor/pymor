@@ -57,7 +57,7 @@ if config.HAVE_DUNEGDT:
                 raise NotImplementedError('Not available for higher polynomial orders!')
             self.__auto_init(locals())
 
-        def visualize(self, U, **kwargs):
+        def visualize(self, U, *args, **kwargs):
             # convert to NumpyVectorArray
             U_np = NumpyVectorSpace(U.dim).zeros(len(U))
             for ii, u_dune in enumerate(U._list):
@@ -85,7 +85,7 @@ if config.HAVE_DUNEGDT:
             self.interpolation_points = space.interpolation_points()
             self.__auto_init(locals())
 
-        def visualize(self, U, title=None, legend=None, separate_colorbars=False,
+        def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
                       rescale_colorbars=False, block=None, filename=None, columns=2):
             assert isinstance(U, ListVectorArray)
             assert len(U) == 1
@@ -116,7 +116,7 @@ if config.HAVE_DUNEGDT:
         def __init__(self, space):
             self.__auto_init(locals())
 
-        def visualize(self, U, title=None, legend=None, separate_colorbars=False,
+        def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
                       rescale_colorbars=False, block=None, filename=None, columns=2):
 
             def visualize_single(vec, vec_name, f_name):
@@ -192,18 +192,19 @@ if config.HAVE_DUNEGDT:
                         to_clean_up.append(filename)
                 else:
                     # we presume we have a single trajectory to be visualized
-                    assert all([isinstance(u, DuneXTVector) for u in U._list])
+                    assert all([isinstance(u, ComplexifiedDuneXTVector) for u in U._list])
+                    assert all([u.imag_part is None for u in U._list])
                     data = OrderedDict()
                     if interactive:
                         for ii in range(len(U)):
                             _, filename = mkstemp(suffix='_{}{}'.format(ii, suffix))
-                            data[filename] = U._list[ii]
+                            data[filename] = U._list[ii].real_part
                     else:
                         if (filename.endswith('.vtp') or filename.endswith('.vtu')):
                             filename = filename[:-4]
                         assert len(filename) > 0
                         for ii in range(len(U)):
-                            data['{}_{}{}'.format(filename, ii, suffix)] = U._list[ii]
+                            data['{}_{}{}'.format(filename, ii, suffix)] = U._list[ii].real_part
                     for f_name, vector in data.items():
                         visualize_single(vector.impl, name, f_name)
                     if interactive:
