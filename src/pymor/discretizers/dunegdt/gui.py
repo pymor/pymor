@@ -67,7 +67,7 @@ if config.HAVE_DUNEGDT:
                 assert isinstance(u_dune, DuneXTVector)
                 u_np = np.array(u_dune.impl, copy=False)
                 U_np._array[ii, :] = u_np[:]
-            return self.visualizer.visualize(U_np, **kwargs)
+            return self.visualizer.visualize(U_np, *args, **kwargs)
 
 
     class DuneGDT1dMatplotlibVisualizer(ImmutableObject):
