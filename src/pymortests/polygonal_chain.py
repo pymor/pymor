@@ -1,11 +1,8 @@
-import numpy as np
-
 from pymor.analyticalproblems.domaindescriptions import PolygonalDomain
 from pymortests.base import runmodule
 
 
 def _determine_boundary_type(point):
-    x = point[0]
     y = point[1]
 
     if y == 0:
@@ -26,9 +23,7 @@ def test_polygonal_chain_boundary_function():
             [2]
     }
 
-    domain = PolygonalDomain(
-         points=chain, boundary_types=_determine_boundary_type
-    )
+    domain = PolygonalDomain(points=chain, boundary_types=_determine_boundary_type)
 
     print(domain.boundary_types)
 
