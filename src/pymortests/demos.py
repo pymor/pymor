@@ -123,6 +123,10 @@ FUNCTION_EI_ARGS = (
     ('function_ei', ['--grid=10', 3, 2, 3, 2]),
 )
 
+DMD_ARGS = (
+    ('burgers_dmd', 2)
+)
+
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
     + THERMALBLOCK_ARGS
@@ -135,7 +139,9 @@ DEMO_ARGS = (
     + HAPOD_ARGS
     + FENICS_NONLINEAR_ARGS
     + FUNCTION_EI_ARGS
+    + DMD_ARGS
 )
+
 DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 
 
