@@ -17,7 +17,7 @@ def dmd(X, Y=None, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', r
     Parameters
     ----------
     X  :  |VectorArray|
-        The |VectorArray| for which the DMD Modes are to be computed.
+        The |VectorArray| for which the DMD modes are to be computed.
         If Y is given, X and Y are the left resp. right Snapshot series.
     Y  :  optional/|VectorArray|
         The |VectorArray| of the right Snapshot series.
