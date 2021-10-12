@@ -84,7 +84,7 @@ def dmd(X, Y=None, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', r
     logger.info('Reconstructing Eigenvectors...')
     if modes == 'standard':
         Wk = U.lincomb(evecs.T)
-    elif modes == 'exact' or 'exact_scaled':
+    elif modes == 'exact':
         Wk = Y.lincomb((V @ evecs / s).T)
         evals_inv = np.reciprocal(evals)
         Wk = Wk * evals_inv
