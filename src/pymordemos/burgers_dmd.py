@@ -1,4 +1,10 @@
+#!/usr/bin/env python
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+
 """Burgers demo with different applications of Dynamic Mode Decomposition."""
+
 import math
 import sys
 import time
@@ -61,7 +67,7 @@ def main(
 
     # ----- Testing DMD -----
     W1, E1 = dmd(X=U, modes='standard')
-    W2, E2 = dmd(X=U, target_rank=5, modes='exact')
+    W2, E2 = dmd(X=U, svd_rank=5, modes='exact')
 
     print('Visualize ...')
     m.visualize(W1, title='DMD Modes - standard')

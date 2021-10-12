@@ -4,46 +4,47 @@ from scipy import linalg
 from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import LowRankOperator
 from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('svd_method')
-def dmd(X, Y=None, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', return_A_approx=False):
+def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', return_A_tilde=False):
     """Dynamic Mode Decomposition.
 
     See Algorithm 1 and Algorithm 2 in :cite:`TRLBK14`.
 
     Parameters
     ----------
-    X  :  |VectorArray|
-        The |VectorArray| for which the DMD modes are to be computed.
-        If Y is given, X and Y are the left resp. right snapshot series.
-    Y  :  optional/|VectorArray|
-        The |VectorArray| of the right Snapshot series.
-    target_rank : int/optional
-        Number of DMD Modes to be computed. If None target_rank = len(A).
-    dt : scalar, optional (default: 1)
-        Factor specifying the time difference between the observations.
-        Used if the input data is a timeseries in continuous time.
-    modes : str `{'standard', 'exact', 'exact_scaled'}`
+    X
+        The |VectorArray| for which the DMD algorithm is performed.
+        If `Y` is given, `X` and `Y` are the left resp. right snapshot series.
+    Y
+        The |VectorArray| of the right snapshot series.
+    svd_rank
+        Number of DMD Modes to be computed, if None `svd_rank = len(X)`.
+    dt
+        Factor specifying the time difference between the observations, default `dt = 1`.
+    modes
         - 'standard': uses the standard definition to compute the dynamic modes
             `Wk = U * evecs`, where `U` are the left singular vectors of `X`.
         - 'exact' : computes the exact dynamic modes, `Wk = (1/evals) * Y * V * Sigma_inv * evecs`.
     svd_method
         Which SVD method from :mod:`~pymor.algorithms.svd_va` to use
         (`'method_of_snapshots'` or `'qr_svd'`).
+    return_A_tilde
+        If `True` the matrices `A_tilde` and `U`, which are necessary to reconstruct the operator
+        `A` with `AX=Y` are returned s.t. `A_approx = U.conj().T @ A_tilde @ U`.
 
     Returns
     -------
-    Wk : |VectorArray|
+    Wk
         |VectorArray| containing the dynamic modes.
-    omega : array_like
+    omega
         Time scaled eigenvalues: `ln(l)/dt`.
     """
     assert modes in ('exact', 'standard')
     assert isinstance(X, VectorArray)
-    assert target_rank is None or target_rank <= X.dim
+    assert svd_rank is None or svd_rank <= X.dim
     assert isinstance(Y, VectorArray) or Y is None
     assert svd_method in ('qr_svd', 'method_of_snapshots')
 
@@ -51,15 +52,17 @@ def dmd(X, Y=None, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', r
 
     # X = z_0, ..., z_{m-1}; Y = z_1, ..., z_m
     if Y is None:
-        assert target_rank is None or target_rank < len(X)
+        assert svd_rank is None or svd_rank < len(X)
 
         Y = X[1:]
         X = X[:-1]
     else:
-        assert target_rank is None or target_rank <= len(X)
+        assert svd_rank is None or svd_rank <= len(X)
         assert len(X) == len(Y)
 
-    rank = len(X) if target_rank is None else target_rank
+    assert len(X) >= X.dim
+
+    rank = len(X) if svd_rank is None else svd_rank
     svd = qr_svd if svd_method == 'qr_svd' else method_of_snapshots
 
     logger.info('SVD of X...')
@@ -91,8 +94,7 @@ def dmd(X, Y=None, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', r
     else:
         assert False
 
-    if return_A_approx:
-        A_approx = LowRankOperator(U, A_tilde, U)
-        return Wk, omega, A_approx
+    if return_A_tilde:
+        return Wk, omega, A_tilde, U
 
     return Wk, omega

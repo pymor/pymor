@@ -126,7 +126,8 @@ FUNCTION_EI_ARGS = (
 DMD_ARGS = (
     ('burgers_dmd', [2]),
     ('parabolic_dmd', []),
-    ('dmd_identification', [])
+    ('dmd_identification', ['--n=4', '--m=10']),
+    ('dmd_identification', ['--n=6', '--m=10'])
 )
 
 DEMO_ARGS = (
