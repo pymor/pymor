@@ -1,4 +1,4 @@
-"""Burgers demo with different Applications of Dynamic Mode Decomposition."""
+"""Burgers demo with different applications of Dynamic Mode Decomposition."""
 import math
 import sys
 import time
