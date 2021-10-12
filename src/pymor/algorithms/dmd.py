@@ -27,8 +27,8 @@ def dmd(X, Y=None, target_rank=None, dt=1, modes='exact', svd_method='qr_svd', r
         Factor specifying the time difference between the observations.
         Used if the input data is a timeseries in continuous time.
     modes : str `{'standard', 'exact', 'exact_scaled'}`
-        - 'standard' : uses the standard definition to compute the dynamic modes,
-                    where U are the left singular vectors `Wk = U * evecs`.
+        - 'standard': uses the standard definition to compute the dynamic modes
+            `Wk = U * evecs`, where `U` are the left singular vectors of `X`.
         - 'exact' : computes the exact dynamic modes, `Wk = (1/evals) * Y * V * Sigma_inv * evecs`.
     svd_method
         Which SVD method from :mod:`~pymor.algorithms.svd_va` to use
