@@ -137,14 +137,14 @@ rules:
     stage: install_checks
     {{ never_on_schedule_rule() }}
     services:
-      - name: {{registry}}/pymor/devpi:1
+      - name: {{registry}}/pymor/devpi:{{pypi_mirror_tag}}
         alias: pymor__devpi
     before_script:
       # bump to our minimal version
       - python3 -m pip install -U pip==20.3.4
       - python3 -m pip install devpi-client
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
-      - devpi login root --password none
+      - devpi login root --password ''
       - devpi upload --from-dir --formats=* ./dist/*.whl
     # the docker service adressing fails on other runners
     tags: [mike]
