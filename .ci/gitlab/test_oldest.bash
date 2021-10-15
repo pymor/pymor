@@ -7,6 +7,9 @@ source ${THIS_DIR}/common_test_setup.bash
 sudo pip uninstall -y -r requirements-optional.txt
 sudo pip uninstall -y -r requirements-ci.txt
 sudo pip uninstall -y -r requirements.txt
+# for some reason pip does not remove the whole mdist-info dir of mpi4py
+# essentially breaking any attempt at reinstallation
+sudo rm -rf /usr/local/lib/python3.*/site-packages/mpi4py-*.dist-info
 sudo pip install -U -r requirements.txt
 sudo pip install -U -r requirements-ci.txt
 sudo pip install -U -r requirements-optional.txt
