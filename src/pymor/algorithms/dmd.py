@@ -89,8 +89,7 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
         Wk = U.lincomb(evecs.T)
     elif modes == 'exact':
         Wk = Y.lincomb((V @ evecs / s).T)
-        evals_inv = np.reciprocal(evals)
-        Wk = Wk * evals_inv
+        Wk.scal(1 / evals)
     else:
         assert False
 
