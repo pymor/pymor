@@ -202,7 +202,7 @@ if config.HAVE_DUNEGDT:
                 raise RuleNotMatchingError('Interpolation of matrix- or tensor-valued functions not implemented yet!')
             if r not in self._spaces:
                 if r > 1 and self.space_type != 'dg':
-                    self.logger.warn(f'Interpolation of vector-valued functions into a {space_type} space '
+                    self.logger.warn(f'Interpolation of vector-valued functions into a {self.space_type} space '
                                      'is not supported yet, defaulting to a dg space!')
                     self._spaces[r] = DiscontinuousLagrangeSpace(
                             self.grid, order=self.order, dim_range=Dim(r), dimwise_global_mapping=True)
