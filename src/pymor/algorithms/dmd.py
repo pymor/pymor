@@ -21,7 +21,7 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
     Y
         The |VectorArray| of the right snapshot series.
     svd_rank
-        Number of DMD Modes to be computed, if None `svd_rank = len(X)`.
+        Number of DMD modes to be computed. If `None`, `svd_rank = len(X)`.
     dt
         Factor specifying the time difference between the observations, default `dt = 1`.
     modes
