@@ -108,7 +108,7 @@ rules:
             - unknown_failure
             - job_execution_timeout
     {# this is intentionally NOT moving with CI_IMAGE_TAG #}
-    image: {{registry}}/pymor/docker-in-docker:d1b5ebb4dc42a77cae82411da2e503a88bb8fb3a
+    image: {{registry}}/pymor/docker-in-docker:2021.1.0
     variables:
         DOCKER_HOST: tcp://docker:2375/
         DOCKER_DRIVER: overlay2
@@ -409,7 +409,7 @@ test_scripts = [
 ]
 # these should be all instances in the federation
 binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'ovh', 'gesis')]
-testos = [('fedora', '3.9'), ('debian_buster', '3.7'), ('debian_bullseye', '3.9')]
+testos = [('fedora', '3.9'), ('debian-buster', '3.7'), ('debian-bullseye', '3.9')]
 
 env_path = Path(os.path.dirname(__file__)) / '..' / '..' / '.env'
 env = dotenv_values(env_path)
