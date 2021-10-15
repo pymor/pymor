@@ -146,7 +146,7 @@ class BlockVectorArray(VectorArray):
 
 
 class BlockDOFVectorArray(BlockVectorArray, DOFVectorArray):
-    """|DOFVectorArray| version of |BlockVectorArray|"""
+    """|DOFVectorArray| version of :class:`BlockVectorArray <BlockVectorArray>`"""
 
     def __getitem__(self, ind):
         return BlockDOFVectorArrayView(self, ind)
