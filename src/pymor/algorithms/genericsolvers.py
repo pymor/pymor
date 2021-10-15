@@ -9,6 +9,7 @@ import numpy as np
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
+from pymor.vectorarrays.interface import DOFVectorArray
 
 
 @defaults('lgmres_tol', 'lgmres_maxiter',
@@ -511,6 +512,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
     v = A.source.zeros()
     u = b.copy()
     x = A.source.zeros()
+    has_dofs = isinstance(x, DOFVectorArray)
     alfa = 0
     beta = u.norm()[0]
     w = A.source.zeros()
@@ -546,7 +548,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         print(head1, head2)
         test1 = 1
         test2 = alfa / beta
-        str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}'
+        str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}' if has_dofs else 'NaN'
         str2 = f' {r1norm:10.3e} {r2norm:10.3e}'
         str3 = f'  {test1:8.1e} {test2:8.1e}'
         print(str1, str2, str3)
@@ -684,7 +686,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
         if prnt:
             if show:
-                str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}'
+                str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}' if has_dofs else 'NaN'
                 str2 = f' {r1norm:10.3e} {r2norm:10.3e}'
                 str3 = f'  {test1:8.1e} {test2:8.1e}'
                 str4 = f' {anorm:8.1e} {acond:8.1e}'
@@ -791,6 +793,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
     h = v.copy()
     hbar = A.source.zeros()
     x = A.source.zeros()
+    has_dofs = isinstance(x, DOFVectorArray)
 
     # Initialize variables for estimation of ||r||.
 
@@ -832,7 +835,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         print(hdg1, hdg2)
         test1 = 1
         test2 = alpha / beta
-        str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}'
+        str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}' if has_dofs else 'NaN'
         str2 = f' {normr:10.3e} {normar:10.3e}'
         str3 = f'  {test1:8.1e} {test2:8.1e}'
         print(''.join([str1, str2, str3]))
@@ -978,7 +981,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
                     print(' ')
                     print(hdg1, hdg2)
                 pcount = pcount + 1
-                str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}'
+                str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}' if has_dofs else 'NaN'
                 str2 = f' {normr:10.3e} {normar:10.3e}'
                 str3 = f'  {test1:8.1e} {test2:8.1e}'
                 str4 = f' {normA:8.1e} {condA:8.1e}'

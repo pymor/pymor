@@ -75,47 +75,9 @@ class VectorArray(BasicObject):
 
         Returns
         -------
-        A |VectorArray| containing `count` vectors with each entry set to zero.
+        A |VectorArray| containing `count` null vectors.
         """
         return self.space.zeros(count, reserve=reserve)
-
-    def ones(self, count=1, reserve=0):
-        """Create a |VectorArray| of vectors of all-one vectors of the same |VectorSpace|.
-
-        This is a shorthand for `self.space.full(1., count, reserve)`.
-
-        Parameters
-        ----------
-        count
-            The number of vectors.
-        reserve
-            Hint for the backend to which length the array will grow.
-
-        Returns
-        -------
-        A |VectorArray| containing `count` vectors with each entry set to one.
-        """
-        return self.space.full(1., count, reserve)
-
-    def full(self, value, count=1, reserve=0):
-        """Create a |VectorArray| of vectors with all entries set to the same value.
-
-        This is a shorthand for `self.space.full(value, count, reserve)`.
-
-        Parameters
-        ----------
-        value
-            The value each entry should be set to.
-        count
-            The number of vectors.
-        reserve
-            Hint for the backend to which length the array will grow.
-
-        Returns
-        -------
-        A |VectorArray| containing `count` vectors with each entry set to `value`.
-        """
-        return self.space.full(value, count, reserve=reserve)
 
     def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
         """Create a |VectorArray| of vectors with random entries.
@@ -294,8 +256,7 @@ class VectorArray(BasicObject):
     def inner(self, other, product=None):
         """Returns the inner products between |VectorArray| elements.
 
-        If `product` is `None`, the Euclidean inner product between
-        the vectors of `self` and `other` are returned, i.e. it holds::
+        It holds::
 
             U.inner(V) = result
 
@@ -344,8 +305,7 @@ class VectorArray(BasicObject):
     def pairwise_inner(self, other, product=None):
         """Returns the pairwise inner products between |VectorArray| elements.
 
-        If `product` is `None`, the Euclidean inner product between
-        the vectors of `self` and `other` are returned, i.e. it holds::
+        It holds::
 
             U.pairwise_inner(V) = result
 
@@ -420,8 +380,8 @@ class VectorArray(BasicObject):
     def norm(self, product=None, tol=None, raise_complex=None):
         """Norm with respect to a given inner product.
 
-        If `product` is `None`, the Euclidean norms of the vectors
-        of the array are returned, i.e. ::
+        Return the norms of the vectors, using the norm which is induced by
+        `self.pairwise_inner`, i.e. ::
 
             U.norm()
 
@@ -462,8 +422,8 @@ class VectorArray(BasicObject):
     def norm2(self, product=None, tol=1e-10, raise_complex=True):
         """Squared norm with respect to a given inner product.
 
-        If `product` is `None`, the Euclidean norms of the vectors
-        of the array are returned, i.e. ::
+        Return the squared norms of the vectors using the norm which is induced by
+        `self.pairwise_inner`, i.e. ::
 
             U.norm()
 
@@ -658,8 +618,49 @@ class DOFVectorArray(VectorArray):
 
     DOF vector arrays behave almost identically to vector arrays. The key difference
     between the classes is that each entry of a |DOFVectorArray| represents a DOF, whereas
-    the entries of |VectorArrays| should generally not be interpreted as DOFs.
+    the entries of |VectorArrays| should generally not be interpreted as DOFs. For
+    |DOFVectorArrays| it is assumed that for :meth:`~VectorArray.pairwise_inner` and
+    :meth:`~VectorArray.inner` the Euclidean inner product is implemented if the `product`
+    argument is `None`. In general, this does not have to be the case for |VectorArrays|.
     """
+
+    def ones(self, count=1, reserve=0):
+        """Create a |DOFVectorArray| of vectors of the same |VectorSpace| with all DOFs set to one.
+
+        This is a shorthand for `self.space.full(1., count, reserve)`.
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |DOFVectorArray| containing `count` vectors with each DOF set to one.
+        """
+        return self.space.full(1., count, reserve)
+
+    def full(self, value, count=1, reserve=0):
+        """Create a |DOFVectorArray| of vectors with all DOFs set to the same value.
+
+        This is a shorthand for `self.space.full(value, count, reserve)`.
+
+        Parameters
+        ----------
+        value
+            The value each entry should be set to.
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |DOFVectorArray| containing `count` vectors with each DOF set to `value`.
+        """
+        return self.space.full(value, count, reserve=reserve)
 
     @abstractmethod
     def dofs(self, dof_indices):
@@ -694,6 +695,7 @@ class DOFVectorArray(VectorArray):
     @abstractmethod
     def amax(self):
         """The maximum absolute value of the DOFs contained in the array.
+
         Returns
         -------
         max_ind
