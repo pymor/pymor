@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 
+set(PYTHON_EXECUTABLE /usr/local/bin/python3 CACHE PATH "")
 project(minimal-cpp-demo)
 
 find_package(pybind11 CONFIG REQUIRED)
