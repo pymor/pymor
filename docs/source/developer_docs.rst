@@ -29,7 +29,7 @@ Create and activate a new virtualenv::
 
 Then, make an editable installation of pyMOR with::
 
-    pip install -e .[full]
+    pip install -e '.[full]'
 
 
 Environment with docker-compose
