@@ -277,7 +277,7 @@ def test_COW(vectors_and_indices):
             c = v[ind].copy(deep)
             assert len(c) == v.len_ind(ind)
         assert c.space == v.space
-        if len(c) > 0:
+        if len(c) > 0 and not np.all(c.norm() == 0):
             c *= 2
             if ind is None:
                 assert not np.all(almost_equal(c, v))
