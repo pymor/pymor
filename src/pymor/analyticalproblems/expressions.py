@@ -167,6 +167,9 @@ class Expression(ParametricObject):
     def __gt__(self, other):
         return GT(self, _convert_to_expression(other))
 
+    def __bool__(self):
+        raise TypeError("Cannot convert Expression to bool. (Don't use boolean operators or two-sided comparisons.)")
+
 
 class BaseConstant(Expression):
     """A constant value."""
