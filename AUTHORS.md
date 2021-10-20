@@ -14,6 +14,9 @@
 
 * Jonas Nicodemus, jonas.nicodemus@simtech.uni-stuttgart.de
   * dynamic mode decomposition
+ 
+* Henrike von Hülsen, h.vonhuelsen@uni-muenster.de
+  * dynamic mode decomposition
 
 ### pyMOR 2021.1
 
