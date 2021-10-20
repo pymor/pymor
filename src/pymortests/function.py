@@ -5,7 +5,7 @@
 import numpy as np
 import pytest
 
-from pymor.analyticalproblems.functions import ConstantFunction, GenericFunction
+from pymor.analyticalproblems.functions import ConstantFunction, GenericFunction, ExpressionFunction
 from pymor.core.pickle import dumps, loads
 from pymortests.fixtures.function import function_argument
 from pymortests.fixtures.parameter import mu_of_type
@@ -77,3 +77,10 @@ def test_pickle_by_evaluation(function):
     for arg in function_argument(f, 10, 42):
         mu = next(mus)
         assert np.all(f.evaluate(arg, mu) == f2.evaluate(arg, mu))
+
+
+def test_invalid_expressions():
+    with pytest.raises(TypeError):
+        ExpressionFunction('-1 < x[0] < 1', 1)
+    with pytest.raises(TypeError):
+        ExpressionFunction('(-1 < x[0]) and (x[0] < 1)', 1)
