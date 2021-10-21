@@ -4,11 +4,12 @@ from scipy import linalg
 from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
+from pymor.operators.constructions import LowRankOperator
 from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('svd_method')
-def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', return_A_tilde=False):
+def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', return_A_approx=False):
     """Dynamic Mode Decomposition.
 
     See Algorithm 1 and Algorithm 2 in :cite:`TRLBK14`.
@@ -31,9 +32,8 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
     svd_method
         Which SVD method from :mod:`~pymor.algorithms.svd_va` to use
         (`'method_of_snapshots'` or `'qr_svd'`).
-    return_A_tilde
-        If `True` the matrices `A_tilde` and `U`, which are necessary to reconstruct the operator
-        `A` with `AX=Y` are returned s.t. `A_approx = U.conj().T @ A_tilde @ U`.
+    return_A_approx
+        If `True` the approximation of the operator `A` with `AX=Y` is returned as |LowRankOperator|.
 
     Returns
     -------
@@ -59,8 +59,6 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
     else:
         assert svd_rank is None or svd_rank <= len(X)
         assert len(X) == len(Y)
-
-    assert len(X) >= X.dim
 
     rank = len(X) if svd_rank is None else svd_rank
     svd = qr_svd if svd_method == 'qr_svd' else method_of_snapshots
@@ -93,7 +91,8 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
     else:
         assert False
 
-    if return_A_tilde:
-        return Wk, omega, A_tilde, U
+    if return_A_approx:
+        A_approx = LowRankOperator(U, A_tilde, U)
+        return Wk, omega, A_approx
 
     return Wk, omega
