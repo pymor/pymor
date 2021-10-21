@@ -28,6 +28,10 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
     of an LTI system. It is possible to take advantage of prior knowledge about the poles
     by specifying shift parameters, which are injected after a new pole has been found.
 
+    .. note::
+        Pairs of complex conjugate eigenvalues are always returned together. Accordingly, the
+        number of returned poles can be equal to `nwanted + 1`.
+
     Parameters
     ----------
     A
@@ -249,6 +253,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
                     if r.norm() / np.abs(cce) < conjtol:
                         logger.info(f'Conjugate Pole: {cce:.5e}')
                         poles = np.append(poles, cce)
+                        nr_converged += 1
 
                         Q.append(ccv)
                         ccvt = lschurvec.conj()
@@ -326,7 +331,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
             H = V.inner(AX)
             nrestart += 1
 
-        if nr_converged == nwanted or nrestart == maxrestart:
+        if nr_converged >= nwanted or nrestart == maxrestart:
             rightev = Q
             leftev = Qt
             absres = np.empty(len(poles))
