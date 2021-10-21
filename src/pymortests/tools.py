@@ -231,12 +231,5 @@ def test_cwd_ctx_manager():
     assert _cwd() == original_cwd
 
 
-def test_deprecated_tmp():
-    """This test should be removed alongside SafeTemporaryFileName after the next release"""
-    from pymor.tools.io import SafeTemporaryFileName
-    with SafeTemporaryFileName() as fn:
-        open(fn, 'wt').write('foo')
-
-
 if __name__ == "__main__":
     runmodule(filename=__file__)
