@@ -176,7 +176,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
 
     async def hapod_step(node):
         if node.after:
-            await asyncio.wait([node_finished_events[a].wait() for a in node.after])
+            await asyncio.wait([asyncio.create_task(node_finished_events[a].wait()) for a in node.after])
 
         if node.children:
             modes, svals, snap_counts = zip(
