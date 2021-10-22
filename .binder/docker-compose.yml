@@ -82,7 +82,7 @@ services:
     command: /bin/bash
 
   pymor__devpi:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/devpi:1
+    image: zivgitlab.wwu.io/pymor/docker/pymor/devpi:${CI_IMAGE_TAG}
     restart: "no"
 
   docs:

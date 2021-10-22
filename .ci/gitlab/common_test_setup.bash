@@ -16,9 +16,7 @@ cd "${PYMOR_ROOT}"
 set -eux
 
 # switches default index to pypi-mirror service
-[[ -d ~/.config/pip/ ]] || mkdir -p ~/.config/pip/
-# check makes this script usable on OSX azure too
-[[ -e /usr/local/share/ci.pip.conf ]] && cp /usr/local/share/ci.pip.conf ~/.config/pip/pip.conf
+export PIP_CONFIG_FILE=/usr/local/share/ci.pip.conf
 
 # make sure image correct packages are baked into the image
 python src/pymor/scripts/check_reqs.py requirements.txt
