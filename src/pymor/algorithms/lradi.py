@@ -48,6 +48,8 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
         See :func:`wachspress_shifts_init`.
     wachspress_small_ritz_num
         See :func:`wachspress_shifts_init`.
+    wachspress_tol
+        See :func:`wachspress_shifts_init`.
 
     Returns
     -------
