@@ -17,7 +17,8 @@ from pymor.vectorarrays.constructions import cat_arrays
 
 
 @defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'projection_shifts_init_maxiter',
-          'projection_shifts_init_seed', 'projection_shifts_subspace_columns')
+          'projection_shifts_init_seed', 'projection_shifts_subspace_columns',
+          'wachspress_large_ritz_num', 'wachspress_small_ritz_num', 'wachspress_tol')
 def lyap_lrcf_solver_options(lradi_tol=1e-10,
                              lradi_maxiter=500,
                              lradi_shifts='projection_shifts',
@@ -43,9 +44,9 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
         See :func:`projection_shifts_init`.
     projection_shifts_subspace_columns
         See :func:`projection_shifts`.
-    large_ritz_num
+    wachspress_large_ritz_num
         See :func:`wachspress_shifts_init`.
-    small_ritz_num
+    wachspress_small_ritz_num
         See :func:`wachspress_shifts_init`.
 
     Returns
