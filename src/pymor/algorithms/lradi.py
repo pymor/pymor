@@ -105,7 +105,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     if shift_options['type'] == 'projection_shifts':
         init_shifts = projection_shifts_init
         iteration_shifts = projection_shifts
-    if shift_options['type'] == 'wachspress_shifts':
+    elif shift_options['type'] == 'wachspress_shifts':
         init_shifts = wachspress_shifts_init
         iteration_shifts = cycle_shifts
     else:

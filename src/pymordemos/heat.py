@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from typer import Argument, run
 
 
+from pymor.algorithms.lradi import lyap_lrcf_solver_options
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
@@ -80,7 +81,8 @@ def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
     """
     # Reduction
     rom = reductor.reduce(r, **reduce_kwargs)
-    err = lti - rom
+    solver_options = {'lyap_lrcf': lyap_lrcf_solver_options(lradi_shifts='projection_shifts')['lradi']}
+    err = (lti - rom).with_(solver_options=solver_options)
 
     # Errors
     from pymor.models.iosys import TransferFunction
@@ -155,7 +157,8 @@ def main(
     fom.visualize(fom.solve())
 
     # LTI system
-    lti = fom.to_lti()
+    solver_options = {'lyap_lrcf': lyap_lrcf_solver_options(lradi_shifts='wachspress_shifts')['lradi']}
+    lti = fom.to_lti().with_(solver_options=solver_options)
 
     # System properties
     w = np.logspace(-1, 3, 100)
