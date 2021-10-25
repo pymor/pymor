@@ -6,7 +6,9 @@
 # DO NOT use any python features here that require 3.6 or newer
 
 _PYTEST = 'pytest>=4.4'
-_PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*'
+# 5.12.* blocked due to https://bugreports.qt.io/browse/PYSIDE-1004 
+# however the problem is not actually fixed in 5.12.3 as advertised
+_PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*,!=5.12.*'
 
 
 def _numpy_scipy():
