@@ -45,6 +45,7 @@ the usual broadcasting rules apply.
 
 
 from numbers import Number
+import operator
 from itertools import zip_longest
 import numpy as np
 
@@ -109,8 +110,20 @@ class Expression(ParametricObject):
 
         return wrapper
 
+    def to_fenics(self, mesh, variable='x'):
+        from ufl import SpatialCoordinate
+        from dolfin import Constant
+        assert variable in self.parameters
+        assert self.parameters[variable] == mesh.topology().dim()
+        params = {p: SpatialCoordinate(mesh) if p == variable else Constant([0.] * dim)
+                  for p, dim in self.parameters.items()}
+        return self.fenics_expr(params), params
+
     def numpy_expr(self):
         """Called by :meth:`~Expression.to_numpy`."""
+        raise NotImplementedError
+
+    def fenics_expr(self, params):
         raise NotImplementedError
 
     def __getitem__(self, index):
@@ -212,15 +225,17 @@ class Parameter(Expression):
 
     def __init__(self, name, dim):
         self.name, self.dim = name, dim
-        self.numpy_symbol = name
         self.shape = (dim,)
         self.parameters_own = {name: dim}
 
     def numpy_expr(self):
-        return str(self.numpy_symbol)
+        return str(self.name)
+
+    def fenics_expr(self, params):
+        return params[self.name]
 
     def __str__(self):
-        return str(self.numpy_symbol)
+        return str(self.name)
 
 
 class Array(Expression):
@@ -273,6 +288,9 @@ class BinaryOp(Expression):
 
         return f'({self.first.numpy_expr()}{first_ind} {self.numpy_symbol} {self.second.numpy_expr()}{second_ind})'
 
+    def fenics_expr(self, params):
+        return self.fenics_op(self.first.fenics_expr(params), self.second.fenics_expr(params))
+
     def __str__(self):
         return f'({self.first} {self.numpy_symbol} {self.second})'
 
@@ -310,6 +328,11 @@ class Indexed(Expression):
     def numpy_expr(self):
         index = ['...'] + [repr(i) for i in self.index]
         return f'{self.base.numpy_expr()}[{",".join(index)}]'
+
+    def fenics_expr(self, params):
+        if len(self.base.shape) != 1:
+            raise NotImplementedError
+        return self.base.fenics_expr(params)[self.index[0]]
 
     def __str__(self):
         index = [str(i) for i in self.index]
@@ -379,16 +402,18 @@ def _broadcastable_shapes(first, second):
     return all(f == s or f == 1 or s == 1 for f, s in zip(first[::-1], second[::-1]))
 
 
-class Sum(BinaryOp):  numpy_symbol = '+'   # NOQA
-class Diff(BinaryOp): numpy_symbol = '-'   # NOQA
-class Prod(BinaryOp): numpy_symbol = '*'   # NOQA
-class Div(BinaryOp):  numpy_symbol = '/'   # NOQA
-class Pow(BinaryOp):  numpy_symbol = '**'  # NOQA
-class Mod(BinaryOp):  numpy_symbol = '%'   # NOQA
-class LE(BinaryOp):   numpy_symbol = '<='  # NOQA
-class GE(BinaryOp):   numpy_symbol = '>='  # NOQA
-class LT(BinaryOp):   numpy_symbol = '<'   # NOQA
-class GT(BinaryOp):   numpy_symbol = '>'   # NOQA
+class Sum(BinaryOp):  numpy_symbol = '+'; fenics_op = operator.add  # NOQA
+class Diff(BinaryOp): numpy_symbol = '-'; fenics_op = operator.sub  # NOQA
+class Prod(BinaryOp): numpy_symbol = '*'; fenics_op = operator.mul  # NOQA
+class Div(BinaryOp):  numpy_symbol = '/'; fenics_op = operator.truediv  # NOQA
+
+
+class Pow(BinaryOp):  numpy_symbol = '**'; fenics_op = operator.pow  # NOQA
+class Mod(BinaryOp):  numpy_symbol = '%';  fenics_op = operator.mod  # NOQA
+class LE(BinaryOp):   numpy_symbol = '<='; fenics_op = operator.le   # NOQA
+class GE(BinaryOp):   numpy_symbol = '>='; fenics_op = operator.ge   # NOQA
+class LT(BinaryOp):   numpy_symbol = '<';  fenics_op = operator.lt   # NOQA
+class GT(BinaryOp):   numpy_symbol = '>';  fenics_op = operator.gt   # NOQA
 
 
 class sin(UnaryFunctionCall):      numpy_symbol = 'sin'      # NOQA
