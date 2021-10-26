@@ -109,8 +109,24 @@ class Expression(ParametricObject):
 
         return wrapper
 
+    def to_fenics(self, variables, degree=2):
+        if tuple(variables) != ('x',):
+            raise NotImplementedError
+        from dolfin import Expression, Constant
+        params = {p: Constant([1.] * builtin_max(dim, 2)) for p, dim in self.parameters.items()
+                  if p != 'x'}  # need at least two numbers, otherwise compilation fails
+        f = Expression(self.fenics_expr(), degree=degree, **params)
+        for p, dim in self.parameters.items():
+            if p == 'x':
+                continue
+            f.user_parameters[p] = Constant([1.] * dim)
+        return f
+
     def numpy_expr(self):
         """Called by :meth:`~Expression.to_numpy`."""
+        raise NotImplementedError
+
+    def fenics_expr(self):
         raise NotImplementedError
 
     def __getitem__(self, index):
@@ -212,15 +228,17 @@ class Parameter(Expression):
 
     def __init__(self, name, dim):
         self.name, self.dim = name, dim
-        self.numpy_symbol = name
         self.shape = (dim,)
         self.parameters_own = {name: dim}
 
     def numpy_expr(self):
-        return str(self.numpy_symbol)
+        return str(self.name)
+
+    def fenics_expr(self):
+        return str(self.name)
 
     def __str__(self):
-        return str(self.numpy_symbol)
+        return str(self.name)
 
 
 class Array(Expression):
@@ -273,6 +291,11 @@ class BinaryOp(Expression):
 
         return f'({self.first.numpy_expr()}{first_ind} {self.numpy_symbol} {self.second.numpy_expr()}{second_ind})'
 
+    def fenics_expr(self):
+        if self.shape != ():
+            raise NotImplementedError
+        return f'({self.first.fenics_expr()} {self.numpy_symbol} {self.second.fenics_expr()})'
+
     def __str__(self):
         return f'({self.first} {self.numpy_symbol} {self.second})'
 
@@ -310,6 +333,11 @@ class Indexed(Expression):
     def numpy_expr(self):
         index = ['...'] + [repr(i) for i in self.index]
         return f'{self.base.numpy_expr()}[{",".join(index)}]'
+
+    def fenics_expr(self):
+        if len(self.base.shape) != 1:
+            raise NotImplementedError
+        return f'{self.base.fenics_expr()}[{self.index[0]}]'
 
     def __str__(self):
         index = [str(i) for i in self.index]
@@ -383,7 +411,18 @@ class Sum(BinaryOp):  numpy_symbol = '+'   # NOQA
 class Diff(BinaryOp): numpy_symbol = '-'   # NOQA
 class Prod(BinaryOp): numpy_symbol = '*'   # NOQA
 class Div(BinaryOp):  numpy_symbol = '/'   # NOQA
-class Pow(BinaryOp):  numpy_symbol = '**'  # NOQA
+
+
+class Pow(BinaryOp):
+
+    numpy_symbol = '**'
+
+    def fenics_expr(self):
+        if self.shape != ():
+            raise NotImplementedError
+        return f'pow({self.first.fenics_expr()}, {self.second.fenics_expr()})'
+
+
 class Mod(BinaryOp):  numpy_symbol = '%'   # NOQA
 class LE(BinaryOp):   numpy_symbol = '<='  # NOQA
 class GE(BinaryOp):   numpy_symbol = '>='  # NOQA
