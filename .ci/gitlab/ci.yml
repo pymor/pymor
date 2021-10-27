@@ -441,28 +441,6 @@ numpy_git 3 9:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_numpy_git.bash
-oldest 3 7:
-    extends: .pytest
-    rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - when: on_success
-    variables:
-        COVERAGE_FILE: coverage_oldest__3.7
-    services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_oldest_py3.7:beb83e444d8d6f33afa4576cb23052b96cd2fdaa
-          alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:beb83e444d8d6f33afa4576cb23052b96cd2fdaa
-    script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
-        - ./.ci/gitlab/test_oldest.bash
 cpp_demo 3 7:
     extends: .pytest
     rules:
@@ -582,7 +560,6 @@ submit coverage:
         - vanilla 3 8
         - vanilla 3 9
         - numpy_git 3 9
-        - oldest 3 7
 submit ci_weekly 3 7:
     extends: .submit
     rules:
