@@ -257,10 +257,26 @@ def wachspress_shifts_init(A, E, B, shift_options):
     based on Wachspress' method which is discussed in :cite:`LiW02`. This
     implementation assumes that :math:`A` and :math:`E` are both real and
     symmetric.
+
+    Parameters
+    ----------
+    A
+        The |Operator| A from the corresponding Lyapunov equation.
+    E
+        The |Operator| E from the corresponding Lyapunov equation.
+    B
+        The |VectorArray| B from the corresponding Lyapunov equation.
+    shift_options
+        The shift options to use (see :func:`lyap_lrcf_solver_options`).
+
+    Returns
+    -------
+    shifts
+        A |NumPy array| containing a set of stable shift parameters.
     """
     b = B[0]  # this will work with an arbitrary vector
-    _, Hl, _ = _arnoldi(InverseOperator(E) @ A, shift_options['large_ritz_num'], b, True)
-    _, Hs, _ = _arnoldi(InverseOperator(A) @ E, shift_options['small_ritz_num'], b, True)
+    _, Hl, _ = _arnoldi(InverseOperator(E) @ A, shift_options['large_ritz_num'], b, False)
+    _, Hs, _ = _arnoldi(InverseOperator(A) @ E, shift_options['small_ritz_num'], b, False)
 
     rvs = np.concatenate((spla.eigvals(Hl), 1 / spla.eigvals(Hs)))
 
