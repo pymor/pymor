@@ -55,8 +55,10 @@ services:
       - CI_COMMIT_REF_NAME
       - PYMOR_HYPOTHESIS_PROFILE
       - PYMOR_PYTEST_EXTRA
+      - PYTHONPATH=/pymor/src
     # this is a conservative estimate of available RAM on the gitlab ci runners
     mem_limit: 3500mb
+    working_dir: /pymor
     volumes:
         - ./..:/pymor
     restart: "no"
@@ -82,7 +84,7 @@ services:
     command: /bin/bash
 
   pymor__devpi:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/devpi:1
+    image: zivgitlab.wwu.io/pymor/docker/pymor/devpi:${CI_IMAGE_TAG}
     restart: "no"
 
   docs:

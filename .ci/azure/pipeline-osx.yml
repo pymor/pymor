@@ -43,7 +43,6 @@ jobs:
   - script: |
       #set -ex
       export PYTHONPATH=${PWD}/src:${PYTHONPATH}
-      python setup.py build_ext -i
       export QT_API=pyside2
       export PYMOR_ALLOW_DEADLINE_EXCESS=1
 

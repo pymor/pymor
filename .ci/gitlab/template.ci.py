@@ -396,7 +396,7 @@ docs:
 
 tpl = jinja2.Template(tpl)
 pythons = ['3.7', '3.8', '3.9']
-oldest = [pythons[0]]
+oldest = []
 newest = [pythons[-1]]
 test_scripts = [
     ("mpi", pythons, 1),

@@ -16,9 +16,7 @@ cd "${PYMOR_ROOT}"
 set -eux
 
 # switches default index to pypi-mirror service
-[[ -d ~/.config/pip/ ]] || mkdir -p ~/.config/pip/
-# check makes this script usable on OSX azure too
-[[ -e /usr/local/share/ci.pip.conf ]] && cp /usr/local/share/ci.pip.conf ~/.config/pip/pip.conf
+export PIP_CONFIG_FILE=/usr/local/share/ci.pip.conf
 
 # make sure image correct packages are baked into the image
 python src/pymor/scripts/check_reqs.py requirements.txt
@@ -28,7 +26,6 @@ python src/pymor/scripts/check_reqs.py requirements-optional.txt
 #allow xdist to work by fixing parametrization order
 export PYTHONHASHSEED=0
 
-python setup.py build_ext -i
 # workaround import mpl with no ~/.cache/matplotlib/fontconfig*.json
 # present segfaulting the interpreter
 python -c "from matplotlib import pyplot" || true

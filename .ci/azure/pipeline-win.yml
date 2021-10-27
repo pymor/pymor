@@ -52,7 +52,6 @@ jobs:
       python -c "import numpy"
       python -c "import OpenGL.GL as gl; print(gl.glGetString(gl.GL_RENDERER))"
       python -c "import OpenGL.GL as gl; print(gl.glGetString(gl.GL_VERSION))"
-      python setup.py build_ext -i
       pip install pytest-azurepipelines pytest-datadir
     displayName: 'Sanity Checks'
 
