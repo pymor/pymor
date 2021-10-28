@@ -81,8 +81,10 @@ def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
     """
     # Reduction
     rom = reductor.reduce(r, **reduce_kwargs)
-    solver_options = {'lyap_lrcf': lyap_lrcf_solver_options(lradi_shifts='projection_shifts')['lradi']}
-    err = (lti - rom).with_(solver_options=solver_options)
+    err = lti - rom
+    if isinstance(err, LTIModel):
+        solver_options = {'lyap_lrcf': lyap_lrcf_solver_options(lradi_shifts='projection_shifts')['lradi']}
+        err = err.with_(solver_options=solver_options)
 
     # Errors
     from pymor.models.iosys import TransferFunction
