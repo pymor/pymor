@@ -599,9 +599,13 @@ if config.HAVE_TORCH:
             if u is None:
                 u = self.fom.solve(mu)
 
-            parameters = torch.DoubleTensor([mu.to_numpy(), ] * self.nt)
+            def time_dependent_parameter(t):
+                return [mu.get_time_dependent_value(param)(t) for param in mu]
 
-            sample = [(parameters, torch.transpose(torch.DoubleTensor(self.reduced_basis.inner(u)), 0, 1))]
+            parameters = torch.DoubleTensor([time_dependent_parameter(t)
+                                             for t in np.linspace(0., self.fom.T, self.nt)])
+
+            sample = [(parameters[..., 0], torch.transpose(torch.DoubleTensor(self.reduced_basis.inner(u)), 0, 1))]
 
             return sample
 
@@ -610,7 +614,7 @@ if config.HAVE_TORCH:
             with self.logger.block('Building ROM ...'):
                 projected_output_functional = (project(self.fom.output_functional, None, self.reduced_basis)
                                                if self.fom.output_functional else None)
-                rom = NeuralNetworkLSTMInstationaryModel(self.nt, self.neural_network,
+                rom = NeuralNetworkLSTMInstationaryModel(self.fom.T, self.nt, self.neural_network,
                                                          parameters=self.fom.parameters,
                                                          output_functional=projected_output_functional,
                                                          name=f'{self.fom.name}_reduced')

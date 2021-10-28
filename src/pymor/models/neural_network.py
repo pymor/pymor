@@ -248,7 +248,7 @@ if config.HAVE_TORCH:
             Name of the model.
         """
 
-        def __init__(self, nt, neural_network, parameters={}, output_functional=None,
+        def __init__(self, T, nt, neural_network, parameters={}, output_functional=None,
                      products=None, error_estimator=None, visualizer=None, name=None):
 
             super().__init__(products=products, error_estimator=error_estimator,
@@ -263,9 +263,13 @@ if config.HAVE_TORCH:
 
             U = self.solution_space.empty(reserve=self.nt)
 
-            converted_input = torch.DoubleTensor([mu.to_numpy()])
-            input_ = torch.unsqueeze(torch.cat((converted_input,)*self.nt, 0), axis=0)
-            result_neural_network = self.neural_network(input_).data.numpy()
+            def time_dependent_parameter(t):
+                return [mu.get_time_dependent_value(param)(t) for param in mu]
+
+            parameters = torch.DoubleTensor([[time_dependent_parameter(t)
+                                              for t in np.linspace(0., self.T, self.nt)]])
+
+            result_neural_network = self.neural_network(parameters[..., 0]).data.numpy()
             for t in range(self.nt):
                 U.append(self.solution_space.make_array(result_neural_network[:, t]))
 
