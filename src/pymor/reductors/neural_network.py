@@ -28,7 +28,8 @@ if config.HAVE_TORCH:
     from pymor.core.base import BasicObject
     from pymor.core.exceptions import NeuralNetworkTrainingFailed
     from pymor.core.logger import getLogger
-    from pymor.models.neural_network import (FullyConnectedNN, NeuralNetworkModel,
+    from pymor.models.neural_network import (FullyConnectedNN, LongShortTermMemoryNN,
+                                             NeuralNetworkModel, NeuralNetworkLSTMInstationaryModel,
                                              NeuralNetworkStatefreeOutputModel,
                                              NeuralNetworkInstationaryModel,
                                              NeuralNetworkInstationaryStatefreeOutputModel)
@@ -121,7 +122,7 @@ if config.HAVE_TORCH:
             rom
                 Reduced-order |NeuralNetworkModel|.
             """
-            assert restarts > 0
+            assert restarts >= 0
             assert epochs > 0
             assert batch_size > 0
             assert learning_rate > 0.
@@ -443,6 +444,176 @@ if config.HAVE_TORCH:
                                                      parameters=self.fom.parameters,
                                                      output_functional=projected_output_functional,
                                                      name=f'{self.fom.name}_reduced')
+
+            return rom
+
+    class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
+        """Reduced Basis reductor for instationary problems relying on artificial neural networks.
+
+        This is a reductor that constructs a reduced basis using proper
+        orthogonal decomposition and trains a LSTM neural network that approximates
+        the mapping from parameter to coefficients of the full-order solution
+        in the reduced basis for a fixed number of timesteps.
+
+        Parameters
+        ----------
+        fom
+            The full-order |Model| to reduce.
+        training_set
+            Set of |parameter values| to use for POD and training of the
+            neural network.
+        validation_set
+            Set of |parameter values| to use for validation in the training
+            of the neural network.
+        validation_ratio
+            Fraction of the training set to use for validation in the training
+            of the neural network (only used if no validation set is provided).
+        basis_size
+            Desired size of the reduced basis. If `None`, rtol, atol or l2_err must
+            be provided.
+        rtol
+            Relative tolerance the basis should guarantee on the training set.
+        atol
+            Absolute tolerance the basis should guarantee on the training set.
+        l2_err
+            L2-approximation error the basis should not exceed on the training
+            set.
+        pod_params
+            Dict of additional parameters for the POD-method.
+        ann_mse
+            If `'like_basis'`, the mean squared error of the neural network on
+            the training set should not exceed the error of projecting onto the basis.
+            If `None`, the neural network with smallest validation error is
+            used to build the ROM.
+            If a tolerance is prescribed, the mean squared error of the neural
+            network on the training set should not exceed this threshold.
+            Training is interrupted if a neural network that undercuts the
+            error tolerance is found.
+        """
+
+        def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
+                     basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
+                     ann_mse='like_basis'):
+            assert 0 < validation_ratio < 1 or validation_set
+            self.__auto_init(locals())
+
+        def reduce(self, hidden_dimension='2*N + P', number_layers=1, optimizer=optim.LBFGS,
+                   epochs=1000, batch_size=20, learning_rate=1., restarts=10, seed=0):
+            """Reduce by training artificial neural networks.
+
+            Parameters
+            ----------
+            hidden_dimension
+                Number of neurons in the hidden state of the LSTM. Can either
+                be fixed or a Python expression string depending on the reduced
+                basis size respectively output dimension `N` and the total
+                dimension of the |Parameters| `P`.
+            number_layers
+                Number of recurred layers, i.e. number of stacked LSTM cells in the
+                neural network.
+            optimizer
+                Algorithm to use as optimizer during training.
+            epochs
+                Maximum number of epochs for training.
+            batch_size
+                Batch size to use if optimizer allows mini-batching.
+            learning_rate
+                Step size to use in each optimization step.
+            restarts
+                Number of restarts of the training algorithm. Since the training
+                results highly depend on the initial starting point, i.e. the
+                initial weights and biases, it is advisable to train multiple
+                neural networks by starting with different initial values and
+                choose that one performing best on the validation set.
+            seed
+                Seed to use for various functions in PyTorch. Using a fixed seed,
+                it is possible to reproduce former results.
+
+            Returns
+            -------
+            rom
+                Reduced-order |NeuralNetworkModel|.
+            """
+            assert restarts >= 0
+            assert epochs > 0
+            assert batch_size > 0
+            assert learning_rate > 0.
+
+            # set a seed for the PyTorch initialization of weights and biases
+            # and further PyTorch methods
+            torch.manual_seed(seed)
+
+            # build a reduced basis using POD and compute training data
+            if not hasattr(self, 'training_data'):
+                self.compute_training_data()
+
+            # compute validation data
+            if not hasattr(self, 'validation_data'):
+                with self.logger.block('Computing validation snapshots ...'):
+
+                    if self.validation_set:
+                        self.validation_data = []
+                        for mu in self.validation_set:
+                            sample = self._compute_sample(mu)
+                            self.validation_data.extend(sample)
+                    else:
+                        number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
+                        # randomly shuffle training data before splitting into two sets
+                        np.random.shuffle(self.training_data)
+                        # split training data into validation and training set
+                        self.validation_data = self.training_data[0:number_validation_snapshots]
+                        self.training_data = self.training_data[number_validation_snapshots+1:]
+
+            # run the actual training of the neural network
+            with self.logger.block('Training of neural network ...'):
+                target_loss = self._compute_target_loss()
+                # set parameters for neural network and training
+                hidden_dimension = eval(hidden_dimension,
+                                        {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
+
+                neural_network_parameters = {'input_dimension': self.fom.parameters.dim,
+                                             'hidden_dimension': hidden_dimension,
+                                             'output_dimension': len(self.reduced_basis),
+                                             'number_layers': number_layers}
+
+                training_parameters = {'optimizer': optimizer, 'epochs': epochs,
+                                       'batch_size': batch_size, 'learning_rate': learning_rate}
+
+                self.logger.info('Initializing neural network ...')
+                # initialize the neural network
+                neural_network = LongShortTermMemoryNN(**neural_network_parameters).double()
+                # run training algorithm with multiple restarts
+                self.neural_network, self.losses = multiple_restarts_training(self.training_data, self.validation_data,
+                                                                              neural_network, target_loss, restarts,
+                                                                              training_parameters, seed)
+
+            self._check_tolerances()
+
+            return self._build_rom()
+
+        def _compute_sample(self, mu, u=None):
+            """Transform parameter and corresponding solution to |NumPy arrays|.
+
+            This function takes care of including the time instances in the inputs.
+            """
+            if u is None:
+                u = self.fom.solve(mu)
+
+            parameters = torch.DoubleTensor([mu.to_numpy(), ] * self.nt)
+
+            sample = [(parameters, torch.transpose(torch.DoubleTensor(self.reduced_basis.inner(u)), 0, 1))]
+
+            return sample
+
+        def _build_rom(self):
+            """Construct the reduced order model."""
+            with self.logger.block('Building ROM ...'):
+                projected_output_functional = (project(self.fom.output_functional, None, self.reduced_basis)
+                                               if self.fom.output_functional else None)
+                rom = NeuralNetworkLSTMInstationaryModel(self.nt, self.neural_network,
+                                                         parameters=self.fom.parameters,
+                                                         output_functional=projected_output_functional,
+                                                         name=f'{self.fom.name}_reduced')
 
             return rom
 
@@ -780,7 +951,7 @@ if config.HAVE_TORCH:
             of restarts.
         """
         assert isinstance(training_parameters, dict)
-        assert isinstance(max_restarts, int) and max_restarts > 0
+        assert isinstance(max_restarts, int) and max_restarts >= 0
 
         logger = getLogger('pymor.algorithms.neural_network.multiple_restarts_training')
 
@@ -810,10 +981,20 @@ if config.HAVE_TORCH:
 
             with logger.block(f'Training neural network #{run} ...'):
                 # reset parameters of layers to start training with a new and untrained network
-                for layers in neural_network.children():
-                    for layer in layers:
-                        if hasattr(layer, 'reset_parameters'):
-                            layer.reset_parameters()
+                def reset_parameters_nn(component):
+                    if hasattr(component, 'children'):
+                        for child in component.children():
+                            reset_parameters_nn(child)
+                    try:
+                        for child in component:
+                            reset_parameters_nn(child)
+                    except TypeError:
+                        pass
+                    if hasattr(component, 'reset_parameters'):
+                        component.reset_parameters()
+
+                reset_parameters_nn(neural_network)
+
                 # perform training
                 current_nn, current_losses = train_neural_network(training_data, validation_data,
                                                                   neural_network, training_parameters)

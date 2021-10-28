@@ -204,6 +204,73 @@ if config.HAVE_TORCH:
 
             return U
 
+    class NeuralNetworkLSTMInstationaryModel(Model):
+        """Class for models of instationary problems that use artificial neural networks.
+
+        This class implements a |Model| that uses a neural network for solving.
+
+        Parameters
+        ----------
+        T
+            The final time T.
+        nt
+            The number of time steps.
+        neural_network
+            The neural network that approximates the mapping from parameter space
+            to solution space. Should be an instance of
+            :class:`~pymor.models.neural_network.FullyConnectedNN` with input size that
+            matches the (total) number of parameters and output size equal to the
+            dimension of the reduced space.
+        parameters
+            |Parameters| of the reduced order model (the same as used in the full-order
+            model).
+        output_functional
+            |Operator| mapping a given solution to the model output. In many applications,
+            this will be a |Functional|, i.e. an |Operator| mapping to scalars.
+            This is not required, however.
+        products
+            A dict of inner product |Operators| defined on the discrete space the
+            problem is posed on. For each product with key `'x'` a corresponding
+            attribute `x_product`, as well as a norm method `x_norm` is added to
+            the model.
+        error_estimator
+            An error estimator for the problem. This can be any object with
+            an `estimate_error(U, mu, m)` method. If `error_estimator` is
+            not `None`, an `estimate_error(U, mu)` method is added to the
+            model which will call `error_estimator.estimate_error(U, mu, self)`.
+        visualizer
+            A visualizer for the problem. This can be any object with
+            a `visualize(U, m, ...)` method. If `visualizer`
+            is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the model which forwards its arguments to the
+            visualizer's `visualize` method.
+        name
+            Name of the model.
+        """
+
+        def __init__(self, nt, neural_network, parameters={}, output_functional=None,
+                     products=None, error_estimator=None, visualizer=None, name=None):
+
+            super().__init__(products=products, error_estimator=error_estimator,
+                             visualizer=visualizer, name=name)
+
+            self.__auto_init(locals())
+            self.solution_space = NumpyVectorSpace(neural_network.output_dimension)
+            if output_functional is not None:
+                self.dim_output = output_functional.range.dim
+
+        def _compute_solution(self, mu=None, **kwargs):
+
+            U = self.solution_space.empty(reserve=self.nt)
+
+            converted_input = torch.DoubleTensor([mu.to_numpy()])
+            input_ = torch.unsqueeze(torch.cat((converted_input,)*self.nt, 0), axis=0)
+            result_neural_network = self.neural_network(input_).data.numpy()
+            for t in range(self.nt):
+                U.append(self.solution_space.make_array(result_neural_network[:, t]))
+
+            return U
+
     class NeuralNetworkInstationaryStatefreeOutputModel(Model):
         """Class for models of the output of instationary problems that use ANNs.
 
@@ -315,3 +382,60 @@ if config.HAVE_TORCH:
             for i in range(len(self.layers) - 1):
                 x = self.activation_function(self.layers[i](x))
             return self.layers[len(self.layers)-1](x)
+
+    class LongShortTermMemoryNN(nn.Module, BasicObject):
+        """Class for Long Short-Term Memory neural networks (LSTMs).
+
+        This class implements neural networks for time series of input data of arbitrary length.
+        The same LSTMCell is applied in each timestep and the hidden state of the former LSTMCell
+        is used as input hidden state for the next cell.
+
+        Parameters
+        ----------
+        input_dimension
+            Dimension of the input (at a fixed time instance) of the LSTM.
+        hidden_dimension
+            Dimension of the hidden state of the LSTM.
+        output_dimension
+            Dimension of the output of the LSTM (must be smaller than `hidden_dimension`).
+        number_layers
+            Number of layers in the LSTM (if greater than 1, a stacked LSTM is used).
+        """
+
+        def __init__(self, input_dimension, hidden_dimension=10, output_dimension=1, number_layers=1):
+            assert input_dimension > 0 and hidden_dimension > 0 and output_dimension > 0
+            assert hidden_dimension > output_dimension
+            assert number_layers > 0
+
+            super().__init__()
+            self.__auto_init(locals())
+
+            self.lstm = nn.LSTM(input_dimension, hidden_dimension,
+                                proj_size=output_dimension, batch_first=True).double()
+
+        def forward(self, x):
+            """Performs the forward pass through the neural network.
+
+            Initializes the hidden and cell states and applies the weights of the LSTM layers
+            followed by the output layer that maps from the hidden state to the output state.
+
+            Parameters
+            ----------
+            x
+                Input for the neural network.
+
+            Returns
+            -------
+            The output of the neural network for the input x.
+            """
+            # initialize hidden state
+            h_t = torch.zeros(self.number_layers, x.size(0), self.output_dimension, dtype=torch.double)
+            # initialize cell state
+            c_t = torch.zeros(self.number_layers, x.size(0), self.hidden_dimension, dtype=torch.double)
+
+            outputs = []
+            for input_t in x.split(1, dim=1):
+                output, (h_t, c_t) = self.lstm(input_t, (h_t, c_t))
+                outputs += [output]
+
+            return torch.cat(outputs, dim=1)
