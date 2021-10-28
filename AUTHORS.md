@@ -10,6 +10,11 @@
 
 ## Contributors
 
+### pyMOR 2021.2
+
+* Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
+  * long short-term memory neural networks for instationary problems
+
 ### pyMOR 2021.1
 
 * Meret Behrens, mbehrens@mpi-magdeburg.mpg.de
