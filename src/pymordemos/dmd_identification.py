@@ -7,7 +7,6 @@ import numpy as np
 
 from typer import run, Option
 
-from pymor.algorithms.dmd import dmd
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.basic import *
 
