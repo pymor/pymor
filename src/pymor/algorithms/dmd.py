@@ -33,7 +33,8 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
         Which SVD method from :mod:`~pymor.algorithms.svd_va` to use
         (`'method_of_snapshots'` or `'qr_svd'`).
     return_A_approx
-        If `True` the approximation of the operator `A` with `AX=Y` is returned as |LowRankOperator|.
+        If `True` the approximation of the operator `A` with `AX=Y` is returned as
+        |LowRankOperator|.
 
     Returns
     -------
