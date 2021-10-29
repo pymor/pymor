@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import linalg
+import scipy.linalg as spla
 
 from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
 from pymor.core.defaults import defaults
@@ -42,17 +42,17 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
     omega
         Time scaled eigenvalues: `ln(l)/dt`.
     """
-    assert modes in ('exact', 'standard')
     assert isinstance(X, VectorArray)
-    assert svd_rank is None or svd_rank <= X.dim
     assert isinstance(Y, VectorArray) or Y is None
+    assert svd_rank is None or svd_rank <= X.dim
+    assert modes in ('exact', 'standard')
     assert svd_method in ('qr_svd', 'method_of_snapshots')
 
     logger = getLogger('pymor.algorithms.dmd.dmd')
 
-    # X = z_0, ..., z_{m-1}; Y = z_1, ..., z_m
     if Y is None:
         assert svd_rank is None or svd_rank < len(X)
+        # X = z_0, ..., z_{m-1}; Y = z_1, ..., z_m
         Y = X[1:]
         X = X[:-1]
     else:
@@ -67,13 +67,13 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
 
     V = Vh.conj().T
 
-    # Solve the least Squares Problem
+    # solve the least-squares problem
     A_tilde = U.inner(Y) @ V / s
 
-    logger.info('Calculating eigenvalue dec. ...')
-    evals, evecs = linalg.eig(A_tilde)
+    logger.info('Calculating eigenvalue decomposition...')
+    evals, evecs = spla.eig(A_tilde)
 
-    omega = evals / dt
+    omega = np.log(evals) / dt
 
     # ordering
     sort_idx = np.argsort(np.abs(omega))[::-1]
@@ -81,7 +81,7 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
     evals = evals[sort_idx]
     omega = omega[sort_idx]
 
-    logger.info('Reconstructing Eigenvectors...')
+    logger.info('Reconstructing eigenvectors...')
     if modes == 'standard':
         Wk = U.lincomb(evecs.T)
     elif modes == 'exact':
