@@ -53,7 +53,6 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
     # X = z_0, ..., z_{m-1}; Y = z_1, ..., z_m
     if Y is None:
         assert svd_rank is None or svd_rank < len(X)
-
         Y = X[1:]
         X = X[:-1]
     else:
@@ -92,7 +91,7 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
         assert False
 
     if return_A_approx:
-        A_approx = LowRankOperator(U, A_tilde, U)
+        A_approx = LowRankOperator(Y.lincomb(V.T), np.diag(s), U, inverted=True)
         return Wk, omega, A_approx
 
     return Wk, omega
