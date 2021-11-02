@@ -10,7 +10,8 @@ from typer import Argument, run
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import TorchMissing
-from pymor.reductors.neural_network import NeuralNetworkLSTMInstationaryReductor
+from pymor.reductors.neural_network import (NeuralNetworkLSTMInstationaryReductor,
+                                            NeuralNetworkLSTMInstationaryStatefreeOutputReductor)
 
 
 def main(
@@ -29,11 +30,10 @@ def main(
 
     training_set = parameter_space.sample_uniformly(training_samples)
     validation_set = parameter_space.sample_randomly(validation_samples)
+    test_set = parameter_space.sample_randomly(10)
 
     reductor = NeuralNetworkLSTMInstationaryReductor(fom, training_set, validation_set, basis_size=10)
     rom = reductor.reduce(restarts=100)
-
-    test_set = parameter_space.sample_randomly(10)
 
     speedups = []
 
@@ -56,10 +56,44 @@ def main(
     absolute_errors = (U - U_red).norm2()
     relative_errors = (U - U_red).norm2() / U.norm2()
 
+    output_reductor = NeuralNetworkLSTMInstationaryStatefreeOutputReductor(fom, time_steps+1, training_set,
+                                                                           validation_set, validation_loss=1e-4)
+    output_rom = output_reductor.reduce(restarts=100, hidden_dimension=10, learning_rate=0.1)
+
+    outputs = []
+    outputs_red = []
+    outputs_speedups = []
+
+    print(f'Performing test on set of size {len(test_set)} ...')
+
+    for mu in test_set:
+        tic = time.perf_counter()
+        outputs.append(fom.compute(output=True, mu=mu)['output'])
+        time_fom = time.perf_counter() - tic
+
+        tic = time.perf_counter()
+        outputs_red.append(output_rom.compute(output=True, mu=mu)['output'])
+        time_red = time.perf_counter() - tic
+
+        outputs_speedups.append(time_fom / time_red)
+
+    outputs = np.squeeze(np.array(outputs))
+    outputs_red = np.squeeze(np.array(outputs_red))
+
+    outputs_absolute_errors = np.abs(outputs - outputs_red)
+    outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
+
     print('Results for state approximation:')
     print(f'Average absolute error: {np.average(absolute_errors)}')
     print(f'Average relative error: {np.average(relative_errors)}')
     print(f'Median of speedup: {np.median(speedups)}')
+
+    print()
+    print('Results for output approximation:')
+    print(f'Average absolute error: {np.average(outputs_absolute_errors)}')
+    print(f'Average relative error: {np.average(outputs_relative_errors)}')
+    print(f'Median of speedup: {np.median(outputs_speedups)}')
+
 
 def create_fom(grid_intervals, time_steps):
     problem = burgers_problem()

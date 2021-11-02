@@ -29,10 +29,12 @@ if config.HAVE_TORCH:
     from pymor.core.exceptions import NeuralNetworkTrainingFailed
     from pymor.core.logger import getLogger
     from pymor.models.neural_network import (FullyConnectedNN, LongShortTermMemoryNN,
-                                             NeuralNetworkModel, NeuralNetworkLSTMInstationaryModel,
+                                             NeuralNetworkModel,
                                              NeuralNetworkStatefreeOutputModel,
                                              NeuralNetworkInstationaryModel,
-                                             NeuralNetworkInstationaryStatefreeOutputModel)
+                                             NeuralNetworkLSTMInstationaryModel,
+                                             NeuralNetworkInstationaryStatefreeOutputModel,
+                                             NeuralNetworkLSTMInstationaryStatefreeOutputModel)
 
     class NeuralNetworkReductor(BasicObject):
         """Reduced Basis reductor relying on artificial neural networks.
@@ -448,7 +450,7 @@ if config.HAVE_TORCH:
             return rom
 
     class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
-        """Reduced Basis reductor for instationary problems relying on artificial neural networks.
+        """Reduced Basis reductor for instationary problems relying on LSTM neural networks.
 
         This is a reductor that constructs a reduced basis using proper
         orthogonal decomposition and trains a LSTM neural network that approximates
@@ -547,6 +549,8 @@ if config.HAVE_TORCH:
             if not hasattr(self, 'training_data'):
                 self.compute_training_data()
 
+            layer_sizes = self._compute_layer_sizes(hidden_dimension)
+
             # compute validation data
             if not hasattr(self, 'validation_data'):
                 with self.logger.block('Computing validation snapshots ...'):
@@ -568,12 +572,9 @@ if config.HAVE_TORCH:
             with self.logger.block('Training of neural network ...'):
                 target_loss = self._compute_target_loss()
                 # set parameters for neural network and training
-                hidden_dimension = eval(hidden_dimension,
-                                        {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
-
-                neural_network_parameters = {'input_dimension': self.fom.parameters.dim,
-                                             'hidden_dimension': hidden_dimension,
-                                             'output_dimension': len(self.reduced_basis),
+                neural_network_parameters = {'input_dimension': layer_sizes[0],
+                                             'hidden_dimension': layer_sizes[1],
+                                             'output_dimension': layer_sizes[2],
                                              'number_layers': number_layers}
 
                 training_parameters = {'optimizer': optimizer, 'epochs': epochs,
@@ -608,6 +609,16 @@ if config.HAVE_TORCH:
             sample = [(parameters[..., 0], torch.transpose(torch.DoubleTensor(self.reduced_basis.inner(u)), 0, 1))]
 
             return sample
+
+        def _compute_layer_sizes(self, hidden_dimension):
+            """Compute the number of neurons in the layers of the neural network."""
+            if isinstance(hidden_dimension, str):
+                hidden_dimension = eval(hidden_dimension, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
+
+            assert isinstance(hidden_dimension, int)
+            # input and output size of the neural network are prescribed by the
+            # dimension of the parameter space and the reduced basis size
+            return [self.fom.parameters.dim, hidden_dimension, len(self.reduced_basis), ]
 
         def _build_rom(self):
             """Construct the reduced order model."""
@@ -681,6 +692,92 @@ if config.HAVE_TORCH:
                 rom = NeuralNetworkInstationaryStatefreeOutputModel(self.fom.T, self.nt, self.neural_network,
                                                                     self.fom.parameters,
                                                                     name=f'{self.fom.name}_output_reduced')
+
+            return rom
+
+    class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkLSTMInstationaryReductor):
+        """Output reductor relying on artificial neural networks.
+
+        This is a reductor that trains a neural network that approximates
+        the mapping from parameter space to output space.
+
+        Parameters
+        ----------
+        fom
+            The full-order |Model| to reduce.
+        nt
+            Number of time steps in the reduced order model (does not have to
+            coincide with the number of time steps in the full order model).
+        training_set
+            Set of |parameter values| to use for POD and training of the
+            neural network.
+        validation_set
+            Set of |parameter values| to use for validation in the training
+            of the neural network.
+        validation_ratio
+            Fraction of the training set to use for validation in the training
+            of the neural network (only used if no validation set is provided).
+        validation_loss
+            The validation loss to reach during training. If `None`, the neural
+            network with the smallest validation loss is returned.
+        """
+
+        def __init__(self, fom, nt, training_set, validation_set=None, validation_ratio=0.1,
+                     validation_loss=None):
+            assert 0 < validation_ratio < 1 or validation_set
+            self.__auto_init(locals())
+
+        def compute_training_data(self):
+            """Compute the training samples (the outputs to the parameters of the training set)."""
+            with self.logger.block('Computing training samples ...'):
+                self.training_data = []
+                for mu in self.training_set:
+                    sample = self._compute_sample(mu)
+                    self.training_data.extend(sample)
+
+        def _compute_target_loss(self):
+            """Compute target loss depending on value of `ann_mse`."""
+            return self.validation_loss
+
+        def _check_tolerances(self):
+            """Check if trained neural network is sufficient to guarantee certain error bounds."""
+            self.logger.info('Using neural network with smallest validation error ...')
+            self.logger.info(f'Finished training with a validation loss of {self.losses["val"]} ...')
+
+        def _compute_sample(self, mu, u=None):
+            """Transform parameter and corresponding solution to |NumPy arrays|.
+
+            This function takes care of including the time instances in the inputs.
+            """
+            output_trajectory = self.fom.output(mu)
+            output_size = output_trajectory.shape[0]
+
+            def time_dependent_parameter(t):
+                return [mu.get_time_dependent_value(param)(t) for param in mu]
+
+            parameters = torch.DoubleTensor([time_dependent_parameter(t)
+                                             for t in np.linspace(0., self.fom.T, output_size)])
+
+            sample = [(parameters[..., 0], output_trajectory)]
+
+            return sample
+
+        def _compute_layer_sizes(self, hidden_dimension):
+            """Compute the number of neurons in the layers of the neural network."""
+            if isinstance(hidden_dimension, str):
+                hidden_dimension = eval(hidden_dimension, {'N': self.fom.dim_output, 'P': self.fom.parameters.dim})
+
+            assert isinstance(hidden_dimension, int)
+            # input and output size of the neural network are prescribed by the
+            # dimension of the parameter space and the reduced basis size
+            return [self.fom.parameters.dim, hidden_dimension, self.fom.dim_output, ]
+
+        def _build_rom(self):
+            """Construct the reduced order model."""
+            with self.logger.block('Building ROM ...'):
+                rom = NeuralNetworkLSTMInstationaryStatefreeOutputModel(self.fom.T, self.nt, self.neural_network,
+                                                                        self.fom.parameters,
+                                                                        name=f'{self.fom.name}_output_reduced')
 
             return rom
 

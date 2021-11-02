@@ -205,9 +205,9 @@ if config.HAVE_TORCH:
             return U
 
     class NeuralNetworkLSTMInstationaryModel(Model):
-        """Class for models of instationary problems that use artificial neural networks.
+        """Class for models of instationary problems that use LSTM neural networks.
 
-        This class implements a |Model| that uses a neural network for solving.
+        This class implements a |Model| that uses a LSTM neural network for solving.
 
         Parameters
         ----------
@@ -335,6 +335,78 @@ if config.HAVE_TORCH:
                 return {'output': np.array(outputs), 'solution': None}
             return {}
 
+    class NeuralNetworkLSTMInstationaryStatefreeOutputModel(Model):
+        """Class for models of the output of instationary problems that use LSTM neural networks.
+
+        This class implements a |Model| that uses a LSTM neural network for solving for the output
+        quantity in the instationary case.
+
+        Parameters
+        ----------
+        T
+            The final time T.
+        nt
+            The number of time steps.
+        neural_network
+            The neural network that approximates the mapping from parameter space
+            to solution space. Should be an instance of
+            :class:`~pymor.models.neural_network.FullyConnectedNN` with input size that
+            matches the (total) number of parameters and output size equal to the
+            dimension of the reduced space.
+        parameters
+            |Parameters| of the reduced order model (the same as used in the full-order
+            model).
+        output_functional
+            |Operator| mapping a given solution to the model output. In many applications,
+            this will be a |Functional|, i.e. an |Operator| mapping to scalars.
+            This is not required, however.
+        products
+            A dict of inner product |Operators| defined on the discrete space the
+            problem is posed on. For each product with key `'x'` a corresponding
+            attribute `x_product`, as well as a norm method `x_norm` is added to
+            the model.
+        error_estimator
+            An error estimator for the problem. This can be any object with
+            an `estimate_error(U, mu, m)` method. If `error_estimator` is
+            not `None`, an `estimate_error(U, mu)` method is added to the
+            model which will call `error_estimator.estimate_error(U, mu, self)`.
+        visualizer
+            A visualizer for the problem. This can be any object with
+            a `visualize(U, m, ...)` method. If `visualizer`
+            is not `None`, a `visualize(U, *args, **kwargs)` method is added
+            to the model which forwards its arguments to the
+            visualizer's `visualize` method.
+        name
+            Name of the model.
+        """
+
+        def __init__(self, T, nt, neural_network, parameters={}, output_functional=None,
+                     products=None, error_estimator=None, visualizer=None, name=None):
+
+            super().__init__(products=products, error_estimator=error_estimator,
+                             visualizer=visualizer, name=name)
+
+            self.__auto_init(locals())
+            self.solution_space = NumpyVectorSpace(neural_network.output_dimension)
+            if output_functional is not None:
+                self.dim_output = output_functional.range.dim
+
+        def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
+                     solution_error_estimate=False, output_error_estimate=False,
+                     output_d_mu_return_array=False, mu=None, **kwargs):
+
+            if output:
+                def time_dependent_parameter(t):
+                    return [mu.get_time_dependent_value(param)(t) for param in mu]
+
+                parameters = torch.DoubleTensor([[time_dependent_parameter(t)
+                                                  for t in np.linspace(0., self.T, self.nt)]])
+
+                result_neural_network = self.neural_network(parameters[..., 0]).data.numpy()
+
+                return {'output': result_neural_network, 'solution': None}
+            return {}
+
     class FullyConnectedNN(nn.Module, BasicObject):
         """Class for neural networks with fully connected layers.
 
@@ -414,7 +486,7 @@ if config.HAVE_TORCH:
             super().__init__()
             self.__auto_init(locals())
 
-            self.lstm = nn.LSTM(input_dimension, hidden_dimension,
+            self.lstm = nn.LSTM(input_dimension, hidden_dimension, num_layers=number_layers,
                                 proj_size=output_dimension, batch_first=True).double()
 
         def forward(self, x):
