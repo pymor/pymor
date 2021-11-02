@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-from hypothesis import assume, settings
+from hypothesis import assume, settings, HealthCheck
 from hypothesis.strategies import sampled_from
 
 from pymor.algorithms.basic import almost_equal
@@ -19,7 +19,7 @@ methods = [method_of_snapshots, qr_svd]
 
 
 @given_vector_arrays(method=sampled_from(methods))
-@settings(deadline=None)
+@settings(deadline=None, suppress_health_check=[HealthCheck.filter_too_much,])
 def test_method_of_snapshots(vector_array, method):
     A = vector_array
 
