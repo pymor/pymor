@@ -108,11 +108,14 @@ class CoerciveRBEstimator(ImmutableObject):
         if self.residual_range_dims:
             residual_range_dims = self.residual_range_dims[:dim + 1]
             residual = self.residual.projected_to_subbasis(residual_range_dims[-1], dim)
-            return CoerciveRBEstimator(residual, residual_range_dims, self.coercivity_estimator)
+            return CoerciveRBEstimator(residual, residual_range_dims, self.coercivity_estimator,
+                                       self.output_estimator_matrices,
+                                       self.output_functional_coeffs)
         else:
             self.logger.warning('Cannot efficiently reduce to subbasis')
             return CoerciveRBEstimator(self.residual.projected_to_subbasis(None, dim), None,
-                                       self.coercivity_estimator)
+                                       self.coercivity_estimator, self.output_estimator_matrices,
+                                       self.output_functional_coeffs)
 
 
 class SimpleCoerciveRBReductor(StationaryRBReductor):
@@ -252,7 +255,7 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
         return error_estimator
 
     def assemble_error_estimator_for_subbasis(self, dims):
-        return self._last_rom.estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
+        return self._last_rom.error_estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
 
 
 class SimpleCoerciveRBEstimator(ImmutableObject):
@@ -306,4 +309,5 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
                                  ((np.arange(co)*old_dim)[..., np.newaxis] + np.arange(dim)).ravel() + cr))
         matrix = self.estimator_matrix.matrix[indices, :][:, indices]
 
-        return SimpleCoerciveRBEstimator(NumpyMatrixOperator(matrix), self.coercivity_estimator)
+        return SimpleCoerciveRBEstimator(NumpyMatrixOperator(matrix), self.coercivity_estimator,
+                self.output_estimator_matrices, self.output_functional_coeffs)
