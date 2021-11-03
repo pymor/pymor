@@ -2,7 +2,7 @@
 
 set -e
 
-mkdir ${CI_PROJECT_DIR}/${ARCHIVE_DIR}
+mkdir -p ${CI_PROJECT_DIR}/${ARCHIVE_DIR}
 mv ${CI_PROJECT_DIR}/dist/pymor*.whl ${CI_PROJECT_DIR}/dist/pymor*tar.gz ${CI_PROJECT_DIR}/${ARCHIVE_DIR}
 
 cd ${CI_PROJECT_DIR}
