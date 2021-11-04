@@ -70,9 +70,9 @@ def main(
     W2, E2 = dmd(X=U, svd_rank=5, modes='exact')
 
     print('Visualize ...')
-    m.visualize(W1, title='DMD Modes - standard')
-    plt.plot(E1.real, E1.imag, 'b.')
-    plt.title('DMD Eigenvalues - standard')
+    m.visualize(W1, title='DMD Modes (Standard)')
+    plt.plot(E1.real, E1.imag, '.')
+    plt.title('DMD Eigenvalues (Standard)')
     plt.xlabel('Real')
     plt.ylabel('Imaginary')
     plt.show()
