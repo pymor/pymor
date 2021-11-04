@@ -77,9 +77,9 @@ def main(
     plt.ylabel('Imaginary')
     plt.show()
 
-    m.visualize(W2, title='5 DMD Modes - exact')
-    plt.plot(E2.real, E2.imag, 'b.')
-    plt.title('DMD Eigenvalues - exact')
+    m.visualize(W2, title='Five DMD Modes (Exact)')
+    plt.plot(E2.real, E2.imag, '.')
+    plt.title('DMD Eigenvalues (Exact)')
     plt.xlabel('Real')
     plt.ylabel('Imaginary')
     plt.show()
