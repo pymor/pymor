@@ -141,7 +141,6 @@ rules:
         alias: pymor__devpi
     before_script:
       # bump to our minimal version
-      - python3 -m pip install -U pip==20.3.4
       - python3 -m pip install devpi-client
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password ''
