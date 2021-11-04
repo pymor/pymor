@@ -5,7 +5,10 @@
 from math import ceil
 import numpy as np
 import pyvista as pv
-from pyvistaqt import QtInteractor
+import pyvista.utilities
+from pyvista.utilities.fileio import from_meshio
+from pyvistaqt import QtInteractor, BackgroundPlotter
+from qtpy.QtCore import QTimer
 
 from pymor.core.config import is_jupyter
 from pymor.discretizers.builtin.grids.io import to_meshio
@@ -166,6 +169,7 @@ class PyVistaPatchWidget(QtInteractor):
         assert grid.dim == 2
         assert codim in (0, 2)
         theme = _load_default_theme(interactive=(grid.dim == 3))
+        self.parent = parent
         super().__init__(parent, theme=theme)
         self.setMinimumSize(300, 300)
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
@@ -181,15 +185,55 @@ class PyVistaPatchWidget(QtInteractor):
         if grid.dim != 3:
             # disable interactive camera
             self.disable()
+        self.add_slider_widget(self.step, [1, 30], title='Time')
 
     def set(self, U, limits):
         self.clear()
         self.limits = limits
-        self.mesh_data = to_meshio(self.grid, data=U, scalar_name=self.scalar_name, codim=self.codim)
-        self.meshes = [self.add_mesh(mesh, name=f'self.scalar_name_{i}', **self.mesh_kwargs)
-                       for i, mesh in enumerate(self.mesh_data)]
+        self.mesh_data = [from_meshio(m) for m in to_meshio(self.grid, data=U, scalar_name=self.scalar_name,
+                                                            codim=self.codim)]
+        self.actor = self.add_mesh(self.mesh_data[0], name=self.scalar_name, **self.mesh_kwargs)
         self.view_xy()
 
+
     def step(self, ind):
-        for i, mesh in enumerate(self.meshes):
-            mesh.SetVisibility(i == ind)
+        self.next_ind = ind
+        self.add_callback(self._step)
+
+    def add_callback(
+        self, func
+    ) -> None:
+        self._callback_timer = QTimer(parent=self.parent)
+        self._callback_timer.setSingleShot(True)
+        self._callback_timer.timeout.connect(func)
+        self._callback_timer.start(0)
+
+
+    @pyvista.utilities.threaded
+    def _step(self):
+
+        ind = self.next_ind
+        print(f"UPDATING {ind}")
+        # this basically replicates self.update_scalars w/o unnec. from/to numpy conversions
+        new_data = self.mesh_data[ind]
+        if self.codim == 0:
+            new_data = new_data.GetCellData()
+            data = self.mesh.GetCellData()
+        else:
+            new_data = new_data.GetPointData()
+            data = self.mesh.GetPointData()
+
+        vtk_scalars = data.GetScalars()
+        if vtk_scalars is None:
+            raise ValueError('No active scalars')
+        # vtk_scalars = new_data.GetScalars()
+        data.scalars = new_data.GetScalars()
+        data.Modified()
+        try:
+            # Why are the points updated here? Not all datasets have points
+            # and only the scalars array is modified by this function...
+            self.mesh.GetPoints().Modified()
+        except:
+            pass
+        self.render()
+
