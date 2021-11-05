@@ -263,14 +263,20 @@ if config.HAVE_TORCH:
 
             U = self.solution_space.empty(reserve=self.nt)
 
+            # create tensor of parameters at different time instances
             def time_dependent_parameter(t):
                 return [mu.get_time_dependent_value(param)(t) for param in mu]
 
             parameters = torch.DoubleTensor([[time_dependent_parameter(t)
                                               for t in np.linspace(0., self.T, self.nt)]])
 
+            # obtain (reduced) coordinates by forward pass of the parameter values
+            # through the neural network
             result_neural_network = self.neural_network(parameters[..., 0]).data.numpy()
+
+            # iterate over time steps
             for t in range(self.nt):
+                # convert plain numpy array to element of the actual solution space
                 U.append(self.solution_space.make_array(result_neural_network[:, t]))
 
             return U
@@ -479,7 +485,9 @@ if config.HAVE_TORCH:
         """
 
         def __init__(self, input_dimension, hidden_dimension=10, output_dimension=1, number_layers=1):
-            assert input_dimension > 0 and hidden_dimension > 0 and output_dimension > 0
+            assert input_dimension > 0
+            assert hidden_dimension > 0
+            assert output_dimension > 0
             assert hidden_dimension > output_dimension
             assert number_layers > 0
 
@@ -488,6 +496,9 @@ if config.HAVE_TORCH:
 
             self.lstm = nn.LSTM(input_dimension, hidden_dimension, num_layers=number_layers,
                                 proj_size=output_dimension, batch_first=True).double()
+
+            if not self.logging_disabled:
+                self.logger.info(f'Architecture of the neural network:\n{self}')
 
         def forward(self, x):
             """Performs the forward pass through the neural network.
