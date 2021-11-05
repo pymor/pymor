@@ -33,7 +33,7 @@ def main(
     test_set = parameter_space.sample_randomly(10)
 
     reductor = NeuralNetworkLSTMInstationaryReductor(fom, training_set, validation_set, basis_size=10)
-    rom = reductor.reduce(restarts=100)
+    rom = reductor.reduce(restarts=100, number_layers=2)
 
     speedups = []
 
