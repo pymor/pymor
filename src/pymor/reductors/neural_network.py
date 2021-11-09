@@ -248,8 +248,7 @@ if config.HAVE_TORCH:
         def _build_rom(self):
             """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
-                projected_output_functional = (project(self.fom.output_functional, None, self.reduced_basis)
-                                               if self.fom.output_functional else None)
+                projected_output_functional = project(self.fom.output_functional, None, self.reduced_basis)
                 rom = NeuralNetworkModel(self.neural_network, parameters=self.fom.parameters,
                                          output_functional=projected_output_functional,
                                          name=f'{self.fom.name}_reduced')
@@ -439,8 +438,7 @@ if config.HAVE_TORCH:
         def _build_rom(self):
             """Construct the reduced order model."""
             with self.logger.block('Building ROM ...'):
-                projected_output_functional = (project(self.fom.output_functional, None, self.reduced_basis)
-                                               if self.fom.output_functional else None)
+                projected_output_functional = project(self.fom.output_functional, None, self.reduced_basis)
                 rom = NeuralNetworkInstationaryModel(self.fom.T, self.nt, self.neural_network,
                                                      parameters=self.fom.parameters,
                                                      output_functional=projected_output_functional,

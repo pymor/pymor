@@ -62,17 +62,17 @@ class StationaryModel(Model):
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
             rhs = VectorOperator(rhs, name='rhs')
+        output_functional = output_functional or ZeroOperator(NumpyVectorSpace(0), operator.source)
 
         assert rhs.range == operator.range and rhs.source.is_scalar and rhs.linear
-        assert output_functional is None or output_functional.source == operator.source
+        assert output_functional.source == operator.source
 
         super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
         self.__auto_init(locals())
         self.solution_space = operator.source
-        self.linear = operator.linear and (output_functional is None or output_functional.linear)
-        if output_functional is not None:
-            self.dim_output = output_functional.range.dim
+        self.linear = operator.linear and output_functional.linear
+        self.dim_output = output_functional.range.dim
 
     def __str__(self):
         return (
@@ -121,7 +121,6 @@ class StationaryModel(Model):
         if not use_adjoint:
             return super()._compute_output_d_mu(solution, mu, return_array)
         else:
-            assert self.output_functional is not None
             assert self.operator.linear
             assert self.output_functional.linear
             dual_solutions = self.operator.range.empty()
@@ -204,12 +203,12 @@ class StationaryModel(Model):
                                  + ConstantOperator(affine_shift, self.solution_space))
             new_rhs = self.rhs
 
-        if self.output_functional is not None:
+        if not isinstance(self.output_functional, ZeroOperator):
             new_output_functional = \
                 self.output_functional @ (IdentityOperator(self.solution_space)
                                           + ConstantOperator(affine_shift, self.solution_space))
         else:
-            new_output_functional = None
+            new_output_functional = self.output_functional
 
         return self.with_(operator=new_operator, rhs=new_rhs, output_functional=new_output_functional,
                           error_estimator=None)
@@ -284,13 +283,14 @@ class InstationaryModel(Model):
             initial_data = VectorOperator(initial_data, name='initial_data')
         mass = mass or IdentityOperator(operator.source)
         rhs = rhs or ZeroOperator(operator.source, NumpyVectorSpace(1))
+        output_functional = output_functional or ZeroOperator(NumpyVectorSpace(0), operator.source)
 
         assert isinstance(time_stepper, TimeStepper)
         assert initial_data.source.is_scalar
         assert operator.source == initial_data.range
         assert rhs.linear and rhs.range == operator.range and rhs.source.is_scalar
         assert mass.linear and mass.source == mass.range == operator.source
-        assert output_functional is None or output_functional.source == operator.source
+        assert output_functional.source == operator.source
 
         super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
@@ -298,8 +298,7 @@ class InstationaryModel(Model):
         self.__auto_init(locals())
         self.solution_space = operator.source
         self.linear = operator.linear and (output_functional is None or output_functional.linear)
-        if output_functional is not None:
-            self.dim_output = output_functional.range.dim
+        self.dim_output = output_functional.range.dim
 
     def __str__(self):
         return (
@@ -336,8 +335,6 @@ class InstationaryModel(Model):
             None                   -> D
             self.mass              -> E
         """
-        if self.output_functional is None:
-            raise ValueError('No output defined.')
         A = - self.operator
         B = self.rhs
         C = self.output_functional
