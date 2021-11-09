@@ -15,10 +15,12 @@ by :mod:`pymor.tools.mpi`.
 
 import numpy as np
 
+from pymor.core.pickle import unpicklable
 from pymor.tools import mpi
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 
 
+@unpicklable
 class MPIVectorArray(VectorArray):
     """MPI distributed |VectorArray|.
 
