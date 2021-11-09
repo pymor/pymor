@@ -21,6 +21,8 @@ import pickle
 from io import BytesIO as IOtype
 import platform
 
+from pymor.core.exceptions import UnpicklableError
+
 
 PicklingError = pickle.PicklingError
 UnpicklingError = pickle.UnpicklingError
@@ -60,6 +62,15 @@ else:
     dumps = partial(pickle.dumps, protocol=PROTOCOL)
     load = pickle.load
     loads = pickle.loads
+
+
+def unpicklable(cls):
+    """Class decorator to mark a class as unpicklable."""
+    def __getstate__(self):
+        raise UnpicklableError(cls)
+
+    cls.__getstate__ = __getstate__
+    return cls
 
 
 def _generate_opcode(code_object):
