@@ -24,6 +24,7 @@ from pymor.operators.constructions import IdentityOperator, VectorArrayOperator,
 from pymor.operators.interface import Operator
 from pymor.parameters.base import Mu
 from pymor.tools import floatcmp
+from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.interface import VectorArray
 
 
@@ -140,7 +141,6 @@ class TimeStepperIterator(BasicObject):
         assert t1 > t0
 
         assert isinstance(A, Operator)
-        assert A.source == A.range
 
         F = F or ZeroOperator(A.source, NumpyVectorSpace(1))
         assert isinstance(F, (Operator, VectorArray))
@@ -148,13 +148,14 @@ class TimeStepperIterator(BasicObject):
             assert F.source.dim == 1
             assert F.range == A.range
         else:
-            assert A in A.range
+            assert F in A.range
             assert len(F) == 1
             F = VectorArrayOperator(F)
+        assert A.range == F.range
 
         M = M or IdentityOperator(A.source)
         assert isinstance(M, Operator)
-        assert A.source == M.source == M.range
+        assert A.range == M.range
 
         if isinstance(U0, Operator):
             assert U0.source.dim == 1
@@ -171,7 +172,7 @@ class TimeStepperIterator(BasicObject):
 
         # prepare interpolation
         if stepper.num_values:
-            self._save_dt = (t1 - t0) / (stepper.num_values - 1)
+            self._interpolation_points_increment = (t1 - t0) / (stepper.num_values - 1)
             self._last_stepped_point = t0 - 1
             self._next_interpolation_point = t0
 
@@ -240,7 +241,7 @@ class TimeStepperIterator(BasicObject):
                 # this is the start, take a step to have data and interpolation available next time, but return U0
                 _, self.t = self._step()
                 self._last_stepped_point = self.t
-                self._next_interpolation_point += self._save_dt
+                self._next_interpolation_point += self._interpolation_points_increment
                 if self.return_times:
                     return self.U0, self.t0
                 else:
@@ -251,7 +252,7 @@ class TimeStepperIterator(BasicObject):
                     self.logger.debug(f't={self._next_interpolation_point}: interpolating ...')
                 t_next = self._next_interpolation_point
                 U_next = self._interpolate(t_next)
-                self._next_interpolation_point += self._save_dt
+                self._next_interpolation_point += self._interpolation_points_increment
                 if self.return_times:
                     return U_next, t_next
                 else:
@@ -266,7 +267,7 @@ class TimeStepperIterator(BasicObject):
                     self.logger.debug(f't={self._next_interpolation_point}: interpolating ...')
                 t_next = self._next_interpolation_point
                 U_next = self._interpolate(t_next)
-                self._next_interpolation_point += self._save_dt
+                self._next_interpolation_point += self._interpolation_points_increment
                 if self.return_times:
                     return U_next, t_next
                 else:
@@ -515,7 +516,7 @@ class ExplicitRungeKuttaIterator(SingleStepTimeStepperIterator):
         self.f = f
 
     def _step_function(self, U_n, t_n):
-        c, A, b = self.stepper.butcher_array
+        c, A, b = self.stepper.butcher_tableau
         # compute stages
         s = len(c)
         stages = U_n.space.empty(reserve=s)
@@ -588,7 +589,7 @@ class ExplicitRungeKuttaTimeStepper(TimeStepper):
         assert isinstance(method, (tuple, str))
         if isinstance(method, str):
             assert method in self.available_RK_methods.keys()
-            self.butcher_array = (self.available_RK_methods[method])
+            self.butcher_tableau = (self.available_RK_methods[method])
         else:
             raise RuntimeError('Arbitrary butcher arrays not implemented yet!')
 
@@ -598,12 +599,14 @@ class ExplicitRungeKuttaTimeStepper(TimeStepper):
         self.__auto_init(locals())
 
 
+@Deprecated('Will be removed after the 2021.2 release, use ImplicitEulerTimeStepper directly.')
 def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_options='operator'):
     time_stepper = ImplicitEulerTimeStepper(nt=nt, initial_time=t0, end_time=t1, num_values=num_values,
                                             solver_options=solver_options, interpolation_order=0)
     return time_stepper.solve(mu=mu)
 
 
+@Deprecated('Will be removed after the 2021.2 release, use ExplicitEulerTimeStepper directly.')
 def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     time_stepper = ExplicitEulerTimeStepper(
             nt=nt, initial_time=t0, end_time=t1, num_values=num_values, interpolation_order=0)
