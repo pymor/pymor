@@ -79,18 +79,12 @@ THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['pymor', 'naive', 2, 5, 5]),
     ('thermalblock_simple', ['fenics', 'greedy', 2, 5, 5]),
     ('thermalblock_simple', ['ngsolve', 'pod', 2, 5, 5]),
+    ('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),
 )
-# Font file loading currently does not work on windows
-if not is_windows_platform():
-    THERMALBLOCK_SIMPLE_ARGS += (('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),)
 
-if is_macos_platform():
-    # thermalblock_gui requires OpenGL which somehow fails on macos
-    THERMALBLOCK_GUI_ARGS = tuple()
-else:
-    THERMALBLOCK_GUI_ARGS = (
-        ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
-    )
+THERMALBLOCK_GUI_ARGS = (
+    ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
+)
 
 BURGERS_EI_ARGS = (
     ('burgers_ei', [1, 2, 2, 5, 2, 5, '--plot-ei-err', '--plot-err', '--plot-solutions']),
@@ -111,6 +105,7 @@ SYS_MOR_ARGS = (
     ('parametric_delay', [2]),
     ('parametric_string', [25, 2]),
     ('parametric_synthetic', [100, 2]),
+    ('unstable_heat', [50, 10]),
 )
 
 HAPOD_ARGS = (
@@ -124,6 +119,10 @@ FENICS_NONLINEAR_ARGS = (
     ('fenics_nonlinear', [3, 5, 1]),
 )
 
+FUNCTION_EI_ARGS = (
+    ('function_ei', ['--grid=10', 3, 2, 3, 2]),
+)
+
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
     + THERMALBLOCK_ARGS
@@ -135,6 +134,7 @@ DEMO_ARGS = (
     + SYS_MOR_ARGS
     + HAPOD_ARGS
     + FENICS_NONLINEAR_ARGS
+    + FUNCTION_EI_ARGS
 )
 DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 

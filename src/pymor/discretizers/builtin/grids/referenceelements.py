@@ -159,7 +159,7 @@ class Square(ReferenceElement):
 
     def subentity_embedding(self, subentity_codim):
         assert 0 <= subentity_codim <= 2,\
-            f'Invalid codimension (must betwen 0 and 2 but was {subentity_codim})'
+            f'Invalid codimension (must between 0 and 2 but was {subentity_codim})'
         if subentity_codim == 0:
             return np.eye(2), np.zeros(2)
         elif subentity_codim == 1:
@@ -245,7 +245,7 @@ class Triangle(ReferenceElement):
 
     def subentity_embedding(self, subentity_codim):
         assert 0 <= subentity_codim <= 2,\
-            f'Invalid codimension (must betwen 0 and 2 but was {subentity_codim})'
+            f'Invalid codimension (must between 0 and 2 but was {subentity_codim})'
         if subentity_codim == 0:
             return np.eye(2), np.zeros(2)
         elif subentity_codim == 1:

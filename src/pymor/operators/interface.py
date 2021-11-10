@@ -103,7 +103,7 @@ class Operator(ParametricObject):
         V
             |VectorArray| of the left arguments V.
         U
-            |VectorArray| of the right right arguments U.
+            |VectorArray| of the right arguments U.
         mu
             The |parameter values| for which to evaluate the operator.
 
@@ -127,7 +127,7 @@ class Operator(ParametricObject):
 
             op.apply2(V, U)[i] = V[i]^T*M*U[i].
 
-        In the case of complex numbers, note that `pairwirse_apply2` is anti-linear in the
+        In the case of complex numbers, note that `pairwise_apply2` is anti-linear in the
         first variable by definition of `pairwise_inner`.
 
 
@@ -136,7 +136,7 @@ class Operator(ParametricObject):
         V
             |VectorArray| of the left arguments V.
         U
-            |VectorArray| of the right right arguments U.
+            |VectorArray| of the right arguments U.
         mu
             The |parameter values| for which to evaluate the operator.
 

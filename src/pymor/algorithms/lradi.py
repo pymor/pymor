@@ -2,26 +2,32 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import scipy.linalg as spla
 import numpy as np
+import scipy.linalg as spla
 
+from pymor.algorithms.eigs import _arnoldi
 from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args
-from pymor.vectorarrays.constructions import cat_arrays
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import IdentityOperator
+from pymor.operators.constructions import IdentityOperator, InverseOperator
 from pymor.tools.random import get_random_state
+from pymor.vectorarrays.constructions import cat_arrays
 
 
 @defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'projection_shifts_init_maxiter',
-          'projection_shifts_init_seed')
+          'projection_shifts_init_seed', 'projection_shifts_subspace_columns',
+          'wachspress_large_ritz_num', 'wachspress_small_ritz_num', 'wachspress_tol')
 def lyap_lrcf_solver_options(lradi_tol=1e-10,
                              lradi_maxiter=500,
                              lradi_shifts='projection_shifts',
                              projection_shifts_init_maxiter=20,
-                             projection_shifts_init_seed=None):
+                             projection_shifts_init_seed=None,
+                             projection_shifts_subspace_columns=6,
+                             wachspress_large_ritz_num=50,
+                             wachspress_small_ritz_num=25,
+                             wachspress_tol=1e-10):
     """Return available Lyapunov solvers with default options.
 
     Parameters
@@ -36,6 +42,14 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
         See :func:`projection_shifts_init`.
     projection_shifts_init_seed
         See :func:`projection_shifts_init`.
+    projection_shifts_subspace_columns
+        See :func:`projection_shifts`.
+    wachspress_large_ritz_num
+        See :func:`wachspress_shifts_init`.
+    wachspress_small_ritz_num
+        See :func:`wachspress_shifts_init`.
+    wachspress_tol
+        See :func:`wachspress_shifts_init`.
 
     Returns
     -------
@@ -48,7 +62,12 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                       'shift_options':
                       {'projection_shifts': {'type': 'projection_shifts',
                                              'init_maxiter': projection_shifts_init_maxiter,
-                                             'init_seed': projection_shifts_init_seed}}}}
+                                             'init_seed': projection_shifts_init_seed,
+                                             'subspace_columns': projection_shifts_subspace_columns},
+                       'wachspress_shifts': {'type': 'wachspress_shifts',
+                                             'large_ritz_num': wachspress_large_ritz_num,
+                                             'small_ritz_num': wachspress_small_ritz_num,
+                                             'tol': wachspress_tol}}}}
 
 
 def solve_lyap_lrcf(A, E, B, trans=False, options=None):
@@ -89,13 +108,16 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     if shift_options['type'] == 'projection_shifts':
         init_shifts = projection_shifts_init
         iteration_shifts = projection_shifts
+    elif shift_options['type'] == 'wachspress_shifts':
+        init_shifts = wachspress_shifts_init
+        iteration_shifts = cycle_shifts
     else:
-        raise ValueError('Unknown lradi shift strategy.')
+        raise ValueError('Unknown low-rank ADI shift strategy.')
 
     if E is None:
         E = IdentityOperator(A.source)
 
-    Z = A.source.empty(reserve=len(B) * options['maxiter'])
+    Z = A.source.empty()
     W = B.copy()
 
     j = 0
@@ -134,7 +156,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
         res = np.linalg.norm(W.gramian(), ord=2)
         logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
         if j_shift >= shifts.size:
-            shifts = iteration_shifts(A, E, V, shifts)
+            shifts = iteration_shifts(A, E, V, Z, shifts, shift_options)
             j_shift = 0
 
     if res > Btol:
@@ -145,9 +167,11 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
 
 
 def projection_shifts_init(A, E, B, shift_options):
-    """Find starting shift parameters for low-rank ADI iteration using
-    Galerkin projection on spaces spanned by LR-ADI iterates.
+    """Find starting projection shifts.
 
+    Uses Galerkin projection on the space spanned by the right-hand side if
+    it produces stable shifts.
+    Otherwise, uses a randomly generated subspace.
     See :cite:`PK16`, pp. 92-95.
 
     Parameters
@@ -179,10 +203,10 @@ def projection_shifts_init(A, E, B, shift_options):
     raise RuntimeError('Could not generate initial shifts for low-rank ADI iteration.')
 
 
-def projection_shifts(A, E, V, prev_shifts):
-    """Find further shift parameters for low-rank ADI iteration using
-    Galerkin projection on spaces spanned by LR-ADI iterates.
+def projection_shifts(A, E, V, Z, prev_shifts, shift_options):
+    """Find further projection shifts.
 
+    Uses Galerkin projection on spaces spanned by LR-ADI iterates.
     See :cite:`PK16`, pp. 92-95.
 
     Parameters
@@ -193,31 +217,155 @@ def projection_shifts(A, E, V, prev_shifts):
         The |Operator| E from the corresponding Lyapunov equation.
     V
         A |VectorArray| representing the currently computed iterate.
+    Z
+        A |VectorArray| representing the current approximate solution.
     prev_shifts
         A |NumPy array| containing the set of all previously used shift
         parameters.
+    shift_options
+        The shift options to use (see :func:`lyap_lrcf_solver_options`).
 
     Returns
     -------
     shifts
         A |NumPy array| containing a set of stable shift parameters.
     """
-    if prev_shifts[-1].imag != 0:
-        Q = gram_schmidt(cat_arrays([V.real, V.imag]), atol=0, rtol=0)
+    if shift_options['subspace_columns'] == 1:
+        if prev_shifts[-1].imag != 0:
+            Q = gram_schmidt(cat_arrays([V.real, V.imag]), atol=0, rtol=0)
+        else:
+            Q = gram_schmidt(V, atol=0, rtol=0)
     else:
-        Q = gram_schmidt(V, atol=0, rtol=0)
+        num_columns = shift_options['subspace_columns'] * len(V)
+        Q = gram_schmidt(Z[-num_columns:], atol=0, rtol=0)
 
-    Ap = A.apply2(Q, Q)
-    Ep = E.apply2(Q, Q)
-
-    shifts = spla.eigvals(Ap, Ep)
-    shifts.imag[abs(shifts.imag) < np.finfo(float).eps] = 0
-    shifts = shifts[np.real(shifts) < 0]
+    shifts = spla.eigvals(A.apply2(Q, Q), E.apply2(Q, Q))
+    shifts = shifts[shifts.real < 0]
+    shifts = shifts[shifts.imag >= 0]
     if shifts.size == 0:
         return prev_shifts
     else:
-        if np.any(shifts.imag != 0):
-            shifts = shifts[np.abs(shifts).argsort()]
-        else:
-            shifts.sort()
+        shifts.imag[-shifts.imag / shifts.real < 1e-12] = 0
+        shifts = shifts[np.abs(shifts).argsort()]
         return shifts
+
+
+def wachspress_shifts_init(A, E, B, shift_options):
+    """Compute optimal shifts for symmetric matrices.
+
+    This method computes optimal shift parameters for the LR-ADI iteration
+    based on Wachspress' method which is discussed in :cite:`LiW02`. This
+    implementation assumes that :math:`A` and :math:`E` are both real and
+    symmetric.
+
+    Parameters
+    ----------
+    A
+        The |Operator| A from the corresponding Lyapunov equation.
+    E
+        The |Operator| E from the corresponding Lyapunov equation.
+    B
+        The |VectorArray| B from the corresponding Lyapunov equation.
+    shift_options
+        The shift options to use (see :func:`lyap_lrcf_solver_options`).
+
+    Returns
+    -------
+    shifts
+        A |NumPy array| containing a set of stable shift parameters.
+    """
+    b = B[0]  # this will work with an arbitrary vector
+    _, Hl, _ = _arnoldi(InverseOperator(E) @ A, shift_options['large_ritz_num'], b, False)
+    _, Hs, _ = _arnoldi(InverseOperator(A) @ E, shift_options['small_ritz_num'], b, False)
+
+    rvs = np.concatenate((spla.eigvals(Hl), 1 / spla.eigvals(Hs)))
+
+    a = min(np.abs(np.real(rvs)))
+    b = max(np.abs(np.real(rvs)))
+
+    alpha = np.arctan(max(np.imag(rvs)/np.real(rvs)))
+
+    if alpha == 0:
+        kp = a / b
+    else:
+        cos2b = 2 / (1 + 0.5 * (a/b + b/a))
+        m = 2 * np.cos(alpha)**2 / cos2b - 1
+        if m < 1:
+            # shifts are complex, method not applicable
+            raise NotImplementedError('LR-ADI shift parameter strategy can not handle complex shifts.')
+        kp = 1 / (m + np.sqrt(m**2 - 1))
+
+    # make sure k is not exactly 1
+    k = min(1 - np.spacing(1), np.sqrt(1 - kp**2))
+
+    # computes elliptic integral
+    def ell_int(k, phi):
+        g = 0.
+        a0 = 1.
+        b0 = min(1 - np.spacing(1), np.sqrt(1 - k**2))
+        d0 = phi
+        r = k**2
+        fac = 1.
+        for _ in range(40):
+            a = (a0+b0) / 2
+            b = np.sqrt(a0 * b0)
+            c = (a0-b0) / 2
+            fac = 2 * fac
+            r = r + fac * c * c
+            if phi != np.pi / 2:
+                d = d0 + np.arctan((b0/a0) * np.tan(d0))
+                g = g + c * np.sin(d)
+                d0 = d + np.pi * np.fix(d / np.pi + 0.5)
+            a0 = a
+            b0 = b
+            if (c < 1.0e-15):
+                break
+        ck = np.pi / (2.0 * a)
+        if phi == np.pi / 2:
+            F = ck
+        else:
+            F = d0 / (fac * a)
+        return F
+
+    # evaluates elliptic function
+    def ell_val(u, k):
+        a = np.array([1])
+        b = np.array([min(1 - np.spacing(1), np.sqrt(1 - k**2))])
+        c = np.array([k])
+        i = 0
+        while np.abs(c[i] > np.spacing(1)):
+            a = np.append(a, (a[i] + b[i]) / 2)
+            b = np.append(b, np.sqrt(a[i] * b[i]))
+            c = np.append(c, (a[i] - b[i]) / 2)
+            i = i + 1
+
+        p1 = 2**i * a[i] * u
+        p0 = 0
+
+        for j in range(i, 0, -1):
+            if j < i:
+                p1 = p0
+            p0 = (p1 + np.arcsin(c[j] * np.sin(np.fmod(p1, 2*np.pi)) / a[j])) / 2
+        arg = 1 - k**2 * np.sin(np.fmod(p0, np.pi))**2
+        if arg < 1:
+            return np.sqrt(arg)
+        else:
+            return np.cos(np.fmod(p0, 2 * np.pi)) / np.cos(p1 - p0)
+
+    K = ell_int(k, np.pi / 2)
+    if alpha == 0:
+        v = ell_int(kp, np.pi / 2)
+    else:
+        v = ell_int(kp, np.arcsin(np.sqrt(a / (b * kp))))
+
+    J = int(np.ceil(K / (2*v*np.pi) * np.log(4/shift_options['tol'])))
+    p = np.empty(J)
+    for i in range(J):
+        p[i] = -np.sqrt(a*b/kp)*ell_val((i+0.5)*K/J, k)
+
+    return p
+
+
+def cycle_shifts(A, E, V, Z, prev_shifts, shift_options):
+    """Return previously computed shifts."""
+    return prev_shifts

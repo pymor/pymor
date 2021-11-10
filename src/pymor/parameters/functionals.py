@@ -6,6 +6,7 @@ from numbers import Number
 
 import numpy as np
 
+from pymor.analyticalproblems.expressions import parse_expression
 from pymor.core.base import abstractmethod
 from pymor.parameters.base import Mu, ParametricObject, Parameters
 from pymor.tools.floatcmp import float_cmp
@@ -256,25 +257,11 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         derivatives of each parameter component i and j.
     """
 
-    functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'arctan2',
-                                             'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-                                             'exp', 'exp2', 'log', 'log2', 'log10', 'sqrt', 'array',
-                                             'min', 'minimum', 'max', 'maximum', 'pi', 'e',
-                                             'sum', 'prod', 'abs', 'sign', 'zeros', 'ones'}}
-    functions['norm'] = np.linalg.norm
-    functions['polar'] = lambda x: (np.linalg.norm(x, axis=-1), np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi))
-    functions['np'] = np
-
     def __init__(self, expression, parameters, name=None, derivative_expressions=None,
                  second_derivative_expressions=None):
-        self.expression = expression
-        code = compile(expression, '<expression>', 'eval')
-        functions = self.functions
+        self.expression_obj = parse_expression(expression, parameters=parameters)
+        exp_mapping = self.expression_obj.to_numpy([])
 
-        def get_lambda(exp_code):
-            return lambda mu: eval(exp_code, functions, mu)
-
-        exp_mapping = get_lambda(code)
         if derivative_expressions is not None:
             derivative_mappings = derivative_expressions.copy()
             for key, exp in derivative_mappings.items():
@@ -282,12 +269,12 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
                     exp = [exp]
                 exp_array = np.array(exp, dtype=object)
                 for exp in np.nditer(exp_array, op_flags=['readwrite'], flags=['refs_ok']):
-                    exp_code = compile(str(exp), '<expression>', 'eval')
-                    mapping = get_lambda(exp_code)
-                    exp[...] = mapping
+                    exp_obj = parse_expression(str(exp), parameters=parameters)
+                    exp[...] = exp_obj.to_numpy([])
                 derivative_mappings[key] = exp_array
         else:
             derivative_mappings = None
+
         if second_derivative_expressions is not None:
             second_derivative_mappings = second_derivative_expressions.copy()
             for key_i, key_dicts in second_derivative_mappings.items():
@@ -300,9 +287,8 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
                             exp = [exp]
                         exp_array = np.array(exp, dtype=object)
                         for exp in np.nditer(exp_array, op_flags=['readwrite'], flags=['refs_ok']):
-                            exp_code = compile(str(exp), '<expression>', 'eval')
-                            mapping = get_lambda(exp_code)
-                            exp[...] = mapping
+                            exp_obj = parse_expression(str(exp), parameters=parameters)
+                            exp[...] = exp_obj.to_numpy([])
                         key_dict[()][key_j] = exp_array
                 second_derivative_mappings[key_i] = key_dicts_array
         else:

@@ -68,7 +68,8 @@ if config.HAVE_NGSOLVE:
 
     class NGSolveVectorSpace(ComplexifiedListVectorSpace):
 
-        complexified_vector_type = ComplexifiedNGSolveVector
+        real_vector_type = NGSolveVector
+        vector_type = ComplexifiedNGSolveVector
 
         def __init__(self, V, id='STATE'):
             self.__auto_init(locals())
@@ -183,7 +184,7 @@ if config.HAVE_NGSOLVE:
             legend = [l.replace(' ', '_') for l in legend]  # NGSolve GUI will fail otherwise
 
             if filename:
-                # ngsolve unconditionnaly appends ".vtk"
+                # ngsolve unconditionally appends ".vtk"
                 filename = Path(filename).resolve()
                 if filename.suffix == '.vtk':
                     filename = filename.parent / filename.stem

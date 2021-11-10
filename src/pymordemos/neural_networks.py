@@ -3,12 +3,14 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import time
 import numpy as np
 from typer import Argument, Option, run
 
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import TorchMissing
+from pymor.reductors.neural_network import NeuralNetworkReductor, NeuralNetworkStatefreeOutputReductor
 
 
 def main(
@@ -27,8 +29,6 @@ def main(
 
     parameter_space = fom.parameters.space((0.1, 1))
 
-    from pymor.reductors.neural_network import NeuralNetworkReductor
-
     training_set = parameter_space.sample_uniformly(training_samples)
     validation_set = parameter_space.sample_randomly(validation_samples)
 
@@ -39,8 +39,6 @@ def main(
     test_set = parameter_space.sample_randomly(10)
 
     speedups = []
-
-    import time
 
     print(f'Performing test on set of size {len(test_set)} ...')
 
@@ -65,23 +63,77 @@ def main(
         fom.visualize((U, U_red),
                       legend=('Full solution', 'Reduced solution'))
 
+    output_reductor = NeuralNetworkStatefreeOutputReductor(fom, training_set, validation_set, validation_loss=1e-5)
+    output_rom = output_reductor.reduce(restarts=100)
+
+    outputs = []
+    outputs_red = []
+    outputs_speedups = []
+    outputs_red_ann_reductor = []
+    outputs_speedups_ann_reductor = []
+
+    print(f'Performing test on set of size {len(test_set)} ...')
+
+    for mu in test_set:
+        tic = time.perf_counter()
+        outputs.append(fom.compute(output=True, mu=mu)['output'])
+        time_fom = time.perf_counter() - tic
+
+        tic = time.perf_counter()
+        outputs_red.append(output_rom.compute(output=True, mu=mu)['output'])
+        time_red = time.perf_counter() - tic
+
+        tic = time.perf_counter()
+        outputs_red_ann_reductor.append(rom.compute(output=True, mu=mu)['output'])
+        time_red_ann_reductor = time.perf_counter() - tic
+
+        outputs_speedups.append(time_fom / time_red)
+        outputs_speedups_ann_reductor.append(time_fom / time_red_ann_reductor)
+
+    outputs = np.squeeze(np.array(outputs))
+    outputs_red = np.squeeze(np.array(outputs_red))
+    outputs_red_ann_reductor = np.squeeze(np.array(outputs_red_ann_reductor))
+
+    outputs_absolute_errors = np.abs(outputs - outputs_red)
+    outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
+
+    outputs_absolute_errors_ann_reductor = np.abs(outputs - outputs_red_ann_reductor)
+    outputs_relative_errors_ann_reductor = np.abs(outputs - outputs_red_ann_reductor) / np.abs(outputs)
+
+    print('Results for state approximation:')
     print(f'Average absolute error: {np.average(absolute_errors)}')
     print(f'Average relative error: {np.average(relative_errors)}')
     print(f'Median of speedup: {np.median(speedups)}')
 
+    print()
+    print('Results for output approximation with `NeuralNetworkReductor`:')
+    print(f'Average absolute error: {np.average(outputs_absolute_errors_ann_reductor)}')
+    print(f'Average relative error: {np.average(outputs_relative_errors_ann_reductor)}')
+    print(f'Median of speedup: {np.median(outputs_speedups_ann_reductor)}')
+
+    print()
+    print('Results for output approximation with `NeuralNetworkStatefreeOutputReductor`:')
+    print(f'Average absolute error: {np.average(outputs_absolute_errors)}')
+    print(f'Average relative error: {np.average(outputs_relative_errors)}')
+    print(f'Median of speedup: {np.median(outputs_speedups)}')
+
 
 def create_fom(fv, grid_intervals):
+    f = LincombFunction(
+        [ExpressionFunction('10', 2), ConstantFunction(1., 2)],
+        [ProjectionParameterFunctional('mu'), 0.1])
+    g = LincombFunction(
+        [ExpressionFunction('2 * x[0]', 2), ConstantFunction(1., 2)],
+        [ProjectionParameterFunctional('mu'), 0.5])
+
     problem = StationaryProblem(
         domain=RectDomain(),
-        rhs=LincombFunction(
-            [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()), ConstantFunction(1., 2)],
-            [ProjectionParameterFunctional('mu'), 0.1]),
+        rhs=f,
         diffusion=LincombFunction(
-            [ExpressionFunction('1 - x[..., 0]', 2, ()), ExpressionFunction('x[..., 0]', 2, ())],
+            [ExpressionFunction('1 - x[0]', 2), ExpressionFunction('x[0]', 2)],
             [ProjectionParameterFunctional('mu'), 1]),
-        dirichlet_data=LincombFunction(
-            [ExpressionFunction('2 * x[..., 0]', 2, ()), ConstantFunction(1., 2)],
-            [ProjectionParameterFunctional('mu'), 0.5]),
+        dirichlet_data=g,
+        outputs=[('l2', f), ('l2_boundary', g)],
         name='2DProblem'
     )
 

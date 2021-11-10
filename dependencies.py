@@ -6,7 +6,9 @@
 # DO NOT use any python features here that require 3.6 or newer
 
 _PYTEST = 'pytest>=4.4'
-_PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*'
+# 5.12.* blocked due to https://bugreports.qt.io/browse/PYSIDE-1004 
+# however the problem is not actually fixed in 5.12.3 as advertised
+_PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*,!=5.12.*'
 
 
 def _numpy_scipy():
@@ -38,15 +40,12 @@ def setup_requires():
 
 
 # Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
-install_requires = ['qtpy', 'packaging', 'diskcache', 'typer', 'click<8'] + setup_requires() + _numpy_scipy()
+install_requires = ['qtpy', 'packaging', 'diskcache', 'typer', 'click'] + _numpy_scipy()
 install_suggests = {
     'ipython>=5.0': 'an enhanced interactive python shell',
     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
     'matplotlib': 'needed for error plots in demo scipts',
-    'gmsh': 'this downloads the proper Gmsh binary',
-    'meshio==4.2.0': 'needed to import Gmsh grids',
     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
-    'pyevtk>=1.1': 'writing vtk output',
     'sympy': 'symbolic mathematics',
     'pygments': 'highlighting code',
     'pythreejs': 'threejs bindings for python notebook  visualization',
@@ -57,14 +56,18 @@ install_suggests = {
     'torch': 'PyTorch open source machine learning framework',
     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
     'pillow': 'image library used for bitmap data functions',
+    'dune-gdt>=2021.1.3': 'generic discretization toolbox',
+    'dune-xt>=2021.1.3': 'DUNE extensions for dune-gdt',
 }
-doc_requires = ['sphinx>=3.4', 'jupyter_sphinx', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
+io_requires = ['pyevtk', 'xmljson', 'meshio>=4.4', 'lxml', 'gmsh']
+install_suggests.update({p: 'optional File I/O support libraries' for p in io_requires})
+doc_requires = ['sphinx>=3.4', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
                 'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
-                'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8'] + install_requires
+                'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8', 'myst-nb'] + install_requires
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel',
-               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof', 'pytest-timeout',
+               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
                'flake8-rst-docstrings', 'flake8-docstrings', 'pytest-datadir',
-               'docutils', "pypi-oldest-requirements>=2020.2", 'hypothesis[numpy,pytest]>=5.19',
+               'docutils', "pypi-oldest-requirements>=2021.2", 'hypothesis[numpy,pytest]>=5.19',
                'PyQt5!=5.15.2,>5.7,!=5.15.2.*,!=5.15.4,!=5.15.3']
 import_names = {
     'ipython': 'IPython',
@@ -124,6 +127,7 @@ def extras():
         'full': list(_candidates(blocklist=['slycot', 'pymess', 'nbresuse', 'pytest-memprof'])),
         'ci':  ci_requires,
         'docs': doc_requires,
+        'io': io_requires,
     }
 
 

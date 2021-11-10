@@ -6,11 +6,13 @@ import itertools
 import os
 import tempfile
 from math import exp, factorial, pi, sin
+from pathlib import Path
 
 import numpy as np
 import pytest
 from hypothesis import given
 
+from pymor.core.config import config
 from pymor.core.logger import getLogger
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
@@ -18,7 +20,7 @@ from pymor.tools import formatsrc, timing
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
 from pymor.tools.formatsrc import print_source
-from pymor.tools.io import SafeTemporaryFileName, change_to_directory
+from pymor.tools.io import safe_temporary_filename, change_to_directory, read_vtkfile
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_rect_or_tria_grid
@@ -120,18 +122,17 @@ def test_almost_less():
                almost_less(0., inf, rtol, atol), msg
 
 
+@pytest.mark.skipif(not config.HAVE_VTKIO, reason='VTKIO support libraries missing')
 @given(hy_rect_or_tria_grid)
 def test_vtkio(grid):
     steps = 4
-    for dim in range(1, 2):
-        for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.zeros((steps, grid.size(c))))
-                                      for c in range(grid.dim+1))):
-            with SafeTemporaryFileName('wb') as out_name:
-                if codim == 1:
-                    with pytest.raises(NotImplementedError):
-                        write_vtk(grid, data, out_name, codim=codim)
-                else:
-                    write_vtk(grid, data, out_name, codim=codim)
+    for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.ones((steps, grid.size(c))))
+                                  for c in range(grid.dim+1))):
+        with safe_temporary_filename('wb') as out_name:
+            fn = write_vtk(grid, data, out_name, codim=codim)
+            meshes = read_vtkfile(fn)
+            assert len(meshes) == len(data)
+            assert all((a is not None and b is not None for a, b in meshes))
 
 
 def testTimingContext():
@@ -213,17 +214,21 @@ def test_save_load_matrix(ext):
         assert np.all(A == B)
         path2 = os.path.join(tmpdirname, 'matrix2' + ext)
         save_matrix(path2, A, key)
-        if ext != '.mtz.gz':
+        # .mat save a timestamp, so full file cmp os too flaky
+        if ext not in ('.mtz.gz', '.mat'):
             assert filecmp.cmp(path, path2)
 
 
 def test_cwd_ctx_manager():
-    original_cwd = os.getcwd()
-    target = tempfile.gettempdir()
+    def _cwd():
+        return Path(os.getcwd()).resolve()
+
+    original_cwd = _cwd()
+    target = Path(tempfile.gettempdir()).resolve()
     with change_to_directory(target) as result:
         assert result is None
-        assert os.getcwd() == target
-    assert os.getcwd() == original_cwd
+        assert _cwd() == target
+    assert _cwd() == original_cwd
 
 
 if __name__ == "__main__":

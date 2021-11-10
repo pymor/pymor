@@ -308,7 +308,7 @@ class VectorArray(BasicObject):
 
         If a `product` |Operator| is specified, this |Operator| is
         used to compute the inner products using
-        :meth:`~pymor.operators.inerface.Operator.apply2`, i.e.
+        :meth:`~pymor.operators.interface.Operator.apply2`, i.e.
         `U.inner(V, product)` is equivalent to::
 
             product.apply2(U, V)
@@ -361,7 +361,7 @@ class VectorArray(BasicObject):
 
         If a `product` |Operator| is specified, this |Operator| is
         used to compute the inner products using
-        :meth:`~pymor.operators.inerface.Operator.pairwise_apply2`, i.e.
+        :meth:`~pymor.operators.interface.Operator.pairwise_apply2`, i.e.
         `U.inner(V, product)` is equivalent to::
 
             product.pairwise_apply2(U, V)

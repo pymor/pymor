@@ -2,7 +2,8 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import collections
+from collections import defaultdict
+from itertools import chain
 
 import numpy as np
 
@@ -307,18 +308,16 @@ class PolygonalDomain(DomainDescription):
         # if the boundary types are not given as a dict, try to evaluate at
         # the edge centers to get a dict.
         else:
-            points = [points]
-            points.extend(holes)
-            # shift points 1 entry to the left.
-            points_deque = [collections.deque(ps) for ps in points]
-            for ps_d in points_deque:
-                ps_d.rotate(-1)
-            # compute edge centers.
-            centers = [[(p0[0]+p1[0])/2, (p0[1]+p1[1])/2] for ps, ps_d in zip(points, points_deque)
-                       for p0, p1 in zip(ps, ps_d)]
-            # evaluate the boundary at the edge centers and save the boundary types together
-            # with the corresponding edge id.
-            boundary_types = dict(zip([boundary_types(centers)], [list(range(1, len(centers)+1))]))
+            segment_id = 0
+            boundary_types_dict = defaultdict(list)
+            for curve in chain([points], holes):
+                for index in range(len(curve)):
+                    p0, p1 = curve[index], curve[index % len(curve)]
+                    center = [(p0[0]+p1[0])/2, (p0[1]+p1[1])/2]
+                    boundary_types_dict[boundary_types(center)].append(segment_id)
+                    segment_id += 1
+
+            boundary_types = dict(boundary_types_dict)
 
         for bt in boundary_types.keys():
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:

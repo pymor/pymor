@@ -269,7 +269,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         check_finite
             Test if solution only contains finite values.
         default_sparse_solver_backend
-            Default sparse solver backend to use (scipy, pyamg, generic).
+            Default sparse solver backend to use (scipy, generic).
 
         Returns
         -------
@@ -304,10 +304,6 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
             if backend == 'scipy':
                 from pymor.bindings.scipy import apply_inverse as apply_inverse_impl
-            elif backend == 'pyamg':
-                if not config.HAVE_PYAMG:
-                    raise RuntimeError('PyAMG support not enabled.')
-                from pymor.bindings.pyamg import apply_inverse as apply_inverse_impl
             elif backend == 'generic':
                 logger = getLogger('pymor.bindings.scipy.scipy_apply_inverse')
                 logger.warning('You have selected a (potentially slow) generic solver for a NumPy matrix operator!')

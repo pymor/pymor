@@ -8,7 +8,7 @@ import time
 
 from typer import Argument, Option, run
 
-from pymor.algorithms.error import reduction_error_analysis
+from pymor.algorithms.error import plot_reduction_error_analysis, reduction_error_analysis
 from pymor.core.pickle import dump
 from pymor.parallel.default import new_parallel_pool
 from pymor.tools.typer import Choices
@@ -171,7 +171,6 @@ def main(
                                        condition=True,
                                        test_mus=parameter_space.sample_randomly(test, seed=999),
                                        basis_sizes=0 if plot_error_sequence else 1,
-                                       plot=plot_error_sequence,
                                        pool=None if fenics else pool  # cannot pickle FEniCS model
                                        )
 
@@ -182,8 +181,7 @@ def main(
     sys.stdout.flush()
 
     if plot_error_sequence:
-        import matplotlib.pyplot
-        matplotlib.pyplot.show()
+        plot_reduction_error_analysis(results)
     if plot_err:
         mumax = results['max_error_mus'][0, -1]
         U = fom.solve(mumax)

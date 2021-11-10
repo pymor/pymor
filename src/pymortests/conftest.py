@@ -7,9 +7,7 @@ from hypothesis import settings, Verbosity, HealthCheck
 
 _common_settings = {
     "print_blob": True,
-    "suppress_health_check": (HealthCheck.too_slow,
-                              HealthCheck.data_too_large,
-                              HealthCheck.filter_too_much),
+    "suppress_health_check": (HealthCheck.data_too_large, HealthCheck.too_slow),
     "deadline": 1000,
     "verbosity": Verbosity.normal,
 }

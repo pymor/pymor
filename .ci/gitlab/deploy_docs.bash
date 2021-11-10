@@ -59,7 +59,4 @@ git add ${REPO_DIR}/.binder/
 (git diff --quiet && git diff --staged --quiet) || \
   git commit -am "Binder setup for ${CI_COMMIT_REF_NAME}"
 
-# makes sure the binder infra is usable
-repo2docker --user-id 2000 --user-name juno --no-run --debug .
-
 git push origin ${SLUG} -f

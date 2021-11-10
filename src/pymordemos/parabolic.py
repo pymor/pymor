@@ -32,10 +32,10 @@ def heat(
 
             diffusion=LincombFunction(
                 [ConstantFunction(1., dim_domain=2),
-                 ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 1.',
+                 ExpressionFunction('(x[0] > 0.45) * (x[0] < 0.55) * (x[1] < 0.7) * 1.',
                                     dim_domain=2),
-                 ExpressionFunction('(x[..., 0] > 0.35) * (x[..., 0] < 0.40) * (x[..., 1] > 0.3) * 1. + '
-                                    '(x[..., 0] > 0.60) * (x[..., 0] < 0.65) * (x[..., 1] > 0.3) * 1.',
+                 ExpressionFunction('(x[0] > 0.35) * (x[0] < 0.40) * (x[1] > 0.3) * 1. + '
+                                    '(x[0] > 0.60) * (x[0] < 0.65) * (x[1] > 0.3) * 1.',
                                     dim_domain=2)],
                 [1.,
                  100. - 1.,
@@ -46,13 +46,13 @@ def heat(
 
             dirichlet_data=ConstantFunction(value=0., dim_domain=2),
 
-            neumann_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * -1000.',
+            neumann_data=ExpressionFunction('(x[0] > 0.45) * (x[0] < 0.55) * -1000.',
                                             dim_domain=2),
         ),
 
         T=1.,
 
-        initial_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 10.',
+        initial_data=ExpressionFunction('(x[0] > 0.45) * (x[0] < 0.55) * (x[1] < 0.7) * 10.',
                                         dim_domain=2)
     )
     mu = {'top': top}
@@ -80,7 +80,7 @@ def dar(
 
             reaction=ConstantFunction(0.5, dim_domain=2),
 
-            rhs=ExpressionFunction('(x[..., 0] > 0.3) * (x[..., 0] < 0.7) * (x[..., 1] > 0.3)*(x[...,1]<0.7) * 0.',
+            rhs=ExpressionFunction('(x[0] > 0.3) * (x[0] < 0.7) * (x[1] > 0.3)*(x[1]<0.7) * 0.',
                                    dim_domain=2),
 
             dirichlet_data=ConstantFunction(value=0., dim_domain=2),
@@ -89,7 +89,7 @@ def dar(
         T=1.,
 
         initial_data=ExpressionFunction(
-            '(x[..., 0] > 0.3) * (x[..., 0] < 0.7) * (x[...,1]>0.3) * (x[..., 1] < 0.7) * 10.',
+            '(x[0] > 0.3) * (x[0] < 0.7) * (x[1]>0.3) * (x[1] < 0.7) * 10.',
             dim_domain=2),
     )
     mu = {'speed': speed}

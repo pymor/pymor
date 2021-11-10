@@ -89,6 +89,7 @@ if mpi.parallel and mpi.event_loop_settings()['auto_launch']:
                 mpi.quit()
     else:
         print(f'Rank {mpi.rank}: MPI parallel run detected. Launching event loop ...')
-        mpi.event_loop()
+    mpi.launch_event_loop()
+    if not mpi.rank0:
         import sys
         sys.exit(0)

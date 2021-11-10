@@ -7,6 +7,7 @@ import numpy as np
 from pymor.analyticalproblems.domaindescriptions import KNOWN_BOUNDARY_TYPES
 from pymor.core.base import abstractmethod
 from pymor.core.cache import CacheableObject, cached
+from pymor.core.logger import getLogger
 from pymor.discretizers.builtin.inverse import inv_transposed_two_by_two
 from pymor.discretizers.builtin.relations import inverse_relation
 
@@ -142,6 +143,10 @@ class Grid(CacheableObject):
 
     cache_region = 'memory'
 
+    # if relative difference between domain points gets too large
+    # reference mapping etc numerics fail due to limited precision
+    MAX_DOMAIN_WIDTH = 1e12
+
     @abstractmethod
     def size(self, codim):
         """The number of entities of codimension `codim`."""
@@ -218,7 +223,9 @@ class Grid(CacheableObject):
         return inverse_relation(SE, size_rhs=self.size(codim), with_indices=True)
 
     def neighbours(self, codim, neighbour_codim, intersection_codim=None):
-        """`retval[e,n]` is the global index of the `n`-th codim-`neighbour_codim` entitiy of the
+        """Maps entity index and local neighbour index to global neighbour index
+
+        `retval[e,n]` is the global index of the `n`-th codim-`neighbour_codim` entity of the
         codim-`codim` entity `e` that shares with `e` a subentity of codimension
         `intersection_codim`.
 
@@ -429,7 +436,7 @@ class Grid(CacheableObject):
 
     def unit_outer_normals(self):
         """`retval[e,i]` is the unit outer normal to the i-th codim-1 subentity of the codim-0
-        entitiy with global index `e`.
+        entity with global index `e`.
         """
         return self._unit_outer_normals()
 
@@ -492,6 +499,16 @@ class Grid(CacheableObject):
             bbox[0, dim] = np.min(centers[:, dim])
             bbox[1, dim] = np.max(centers[:, dim])
         return bbox
+
+    @classmethod
+    def _check_domain(cls, domain):
+        ll, rr = np.array(domain[0]), np.array(domain[1])
+        too_large = np.linalg.norm(ll - rr) > cls.MAX_DOMAIN_WIDTH
+        if too_large:
+            logger = getLogger('pymor.discretizers.builtin.grid')
+            logger.warning(f'Domain {domain} for {cls} exceeds width limit. Results may be inaccurate')
+            return False
+        return True
 
 
 class GridWithOrthogonalCenters(Grid):

@@ -2,6 +2,7 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from itertools import cycle
 from numbers import Number
 import time
 
@@ -16,7 +17,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
                              basis_sizes=0,
                              error_estimator=True, condition=False, error_norms=(),
                              error_norm_names=None,
-                             error_estimator_norm_index=0, custom=(),
+                             error_estimator_norm_index=0, custom=(), custom_names=None,
                              plot=False, plot_custom_logarithmic=True,
                              pool=dummy_pool):
     """Analyze the model reduction error.
@@ -64,6 +65,8 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
 
             def custom_value(rom, fom, reductor, mu, dim):
                 pass
+    custom_names
+        List of names to be used for plotting custom values.
 
     plot
         If `True`, generate a plot of the computed quantities w.r.t.
@@ -83,8 +86,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
         :basis_sizes:               The reduced basis dimensions which have been considered.
 
         :norms:                     |Array| of the norms of the high-dimensional solutions
-                                    w.r.t. all given test |Parameters|, reduced basis
-                                    dimensions and norms in `error_norms`.
+                                    w.r.t. all given test |Parameters| and norms in `error_norms`.
                                     (Only present when `error_norms` has been specified.)
 
         :max_norms:                 Maxima of `norms` over the given test |Parameters|.
@@ -153,12 +155,10 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
 
         :summary:                   String containing a summary of all computed quantities for
                                     the largest (last) considered basis size.
-
-        :figure:                    The figure containing the generated plots.
-                                    (Only present when `plot` is `True`.)
     """
     assert not error_norms or (fom and reductor)
     assert error_norm_names is None or len(error_norm_names) == len(error_norms)
+    assert custom_names is None or (custom and len(custom_names) == len(custom))
     assert not condition \
         or isinstance(rom, StationaryModel) and rom.operator.linear
 
@@ -178,6 +178,9 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
                 basis_sizes = rom.solution_space.dim + 1
             basis_sizes = min(rom.solution_space.dim + 1, basis_sizes)
             basis_sizes = np.linspace(0, rom.solution_space.dim, basis_sizes).astype(int)
+    elif isinstance(basis_sizes, (list, tuple)):
+        assert all([isinstance(sz, Number) for sz in basis_sizes])
+        basis_sizes = np.array(basis_sizes)
     if error_norm_names is None:
         error_norm_names = tuple(norm.name for norm in error_norms)
 
@@ -193,6 +196,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
     summary = [('number of samples', str(len(test_mus)))]
 
     if error_norms:
+        result['error_norm_names'] = error_norm_names
         result['norms'] = norms = np.array(norms)
         result['max_norms'] = max_norms = np.max(norms, axis=0)
         result['max_norm_mus'] = max_norm_mus = test_mus[np.argmax(norms, axis=0)]
@@ -237,11 +241,12 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
                         f'{max_conditions[-1]:.7e} (mu = {max_condition_mus[-1]})'))
 
     if custom:
+        result['custom_names'] = custom_names
         result['custom_values'] = custom_values = np.array(custom_values)
         result['max_custom_values'] = max_custom_values = np.max(custom_values, axis=0)
         result['max_custom_values_mus'] = max_custom_values_mus = test_mus[np.argmax(custom_values, axis=0)]
         for i, (value, mu) in enumerate(zip(max_custom_values[:, -1], max_custom_values_mus[:, -1])):
-            summary.append((f'maximum custom value {i}',
+            summary.append((f'maximum {custom_names[i]}',
                             f'{value:.7e} (mu = {mu})'))
 
     toc = time.perf_counter()
@@ -256,56 +261,129 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
     result['summary'] = summary
 
     if plot:
-        import matplotlib.pyplot as plt
-        fig = plt.figure()
-        num_plots = (int(bool(error_norms) or error_estimator) + int(bool(error_norms) and error_estimator)
-                     + int(condition) + int(bool(custom)))
-        current_plot = 1
-
-        if bool(error_norms) or error_estimator:
-            ax = fig.add_subplot(1, num_plots, current_plot)
-            legend = []
-            if error_norms:
-                for name, errors in zip(error_norm_names, max_errors):
-                    ax.semilogy(basis_sizes, errors)
-                    legend.append(name)
-            if error_estimator:
-                ax.semilogy(basis_sizes, max_error_estimates)
-                legend.append('error estimator')
-            ax.legend(legend)
-            ax.set_title('maximum errors')
-            current_plot += 1
-
-        if bool(error_norms) and error_estimator:
-            ax = fig.add_subplot(1, num_plots, current_plot)
-            ax.semilogy(basis_sizes, min_effectivities)
-            ax.semilogy(basis_sizes, max_effectivities)
-            ax.legend(('min', 'max'))
-            ax.set_title('error estimator effectivities')
-            current_plot += 1
-
-        if condition:
-            ax = fig.add_subplot(1, num_plots, current_plot)
-            ax.semilogy(basis_sizes, max_conditions)
-            ax.set_title('maximum condition')
-            current_plot += 1
-
-        if custom:
-            ax = fig.add_subplot(1, num_plots, current_plot)
-            legend = []
-            for i, values in enumerate(custom_values):
-                if plot_custom_logarithmic:
-                    ax.semilogy(basis_sizes, values)
-                else:
-                    ax.plot(basis_sizes, values)
-                legend.append('value ' + str(i))
-            ax.legend(legend)
-            ax.set_title('maximum custom values')
-            current_plot += 1
-
-        result['figure'] = fig
+        plot_reduction_error_analysis(result, None, plot_custom_logarithmic=plot_custom_logarithmic)
 
     return result
+
+
+def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivities=True, plot_condition=True,
+                                  plot_custom_logarithmic=True, plot_custom_with_errors=False):
+    """Plots the results from :meth:`reduction_error_analysis`.
+
+    Parameters
+    ----------
+    result
+        Dictionary with entries as returned by :meth:`reduction_error_analysis`.
+    max_basis_size
+        Only plot results up to this basis size.
+    plot_effectivities
+        If `True`, plot the effectivities of the a posteriori error estimate.
+    plot_condition
+        If `True`, plot the condition of the reduced system matrix.
+    plot_custom_logarithmic
+        If `True`, use a logarithmic y-axis to plot the computed custom
+        values.
+    plot_custom_with_errors
+        It `True`, plot errors and custom values in a single plot (otherwise in separate ones).
+    """
+    error_norms = 'norms' in result
+    error_estimator = 'error_estimates' in result
+    condition = 'conditions' in result
+    custom = 'custom_values' in result
+
+    basis_sizes = result['basis_sizes']
+    if error_norms:
+        error_norm_names = result['error_norm_names']
+        max_errors = result['max_errors']
+        errors = result['errors']
+    if error_estimator:
+        max_estimates = result['max_error_estimates']
+    if error_norms and error_estimator:
+        min_effectivities = result['min_effectivities']
+        max_effectivities = result['max_effectivities']
+    if condition:
+        max_conditions = result['max_conditions']
+    if custom:
+        custom_values = result['custom_values']
+        custom_names = result['custom_names']
+
+    max_basis_size = max_basis_size if max_basis_size else len(basis_sizes)
+
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import TABLEAU_COLORS as COLORS
+    colors = cycle(COLORS.keys())
+
+    fig = plt.figure()
+    num_plots = (int(error_norms or error_estimator) + int(error_norms and error_estimator and plot_effectivities)
+                 + int(condition and plot_condition) + int(custom and not plot_custom_with_errors))
+    current_plot = 1
+
+    if error_norms or error_estimator:
+        ax = fig.add_subplot(1, num_plots, current_plot)
+        legend = []
+        if error_norms:
+            for name, errors in zip(error_norm_names, max_errors):
+                ax.semilogy(basis_sizes[:max_basis_size], errors[:max_basis_size], color=next(colors))
+                legend.append(name)
+        if error_estimator:
+            ax.semilogy(basis_sizes[:max_basis_size], max_estimates[:max_basis_size], color=next(colors))
+            legend.append('error estimator')
+        if custom and plot_custom_with_errors:
+            axwithyright = ax.twinx()
+            max_custom_values = np.max(custom_values, axis=0)
+            axwithyright_legend = []
+            for i, values in enumerate(max_custom_values):
+                values = values.reshape(basis_sizes.shape)
+                color = next(colors)
+                if plot_custom_logarithmic:
+                    axwithyright.semilogy(basis_sizes[:max_basis_size], values[:max_basis_size], color=color)
+                else:
+                    axwithyright.plot(basis_sizes[:max_basis_size], values[:max_basis_size], color=color)
+                axwithyright_legend.append(custom_names[i])
+            if len(axwithyright_legend) == 1:
+                axwithyright.tick_params(axis='y', labelcolor=color)
+                axwithyright.set_ylabel(axwithyright_legend[0], color=color)
+            else:
+                axwithyright.tick_params(axis='y', labelcolor='gray')
+                axwithyright.set_ylabel('custom values (bottom left)', color='gray')
+                axwithyright.legend(axwithyright_legend, loc=3)
+            ax.set_ylabel('error/estimator (top right)')
+            fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+        ax.legend(legend, loc=1)
+        ax.set_xlabel('ROM size')
+        ax.set_title('maximum errors')
+        current_plot += 1
+
+    if error_norms and error_estimator:
+        ax = fig.add_subplot(1, num_plots, current_plot)
+        ax.semilogy(basis_sizes[:max_basis_size], min_effectivities[:max_basis_size])
+        ax.semilogy(basis_sizes[:max_basis_size], max_effectivities[:max_basis_size])
+        ax.legend(('min', 'max'))
+        ax.set_title('error estimator effectivities')
+        current_plot += 1
+
+    if condition and plot_condition:
+        ax = fig.add_subplot(1, num_plots, current_plot)
+        ax.semilogy(basis_sizes[:max_basis_size], max_conditions[:max_basis_size])
+        ax.set_title('maximum condition')
+        current_plot += 1
+
+    if custom and not plot_custom_with_errors:
+        ax = fig.add_subplot(1, num_plots, current_plot)
+        legend = []
+        max_custom_values = np.max(custom_values, axis=0)
+        for i, values in enumerate(max_custom_values):
+            values = values.reshape(basis_sizes.shape)
+            if plot_custom_logarithmic:
+                ax.semilogy(basis_sizes[:max_basis_size], values[:max_basis_size])
+            else:
+                ax.plot(basis_sizes[:max_basis_size], values[:max_basis_size])
+            legend.append(custom_names[i])
+        ax.legend(legend)
+        ax.set_title('maximum custom values')
+        current_plot += 1
+
+    plt.show()
 
 
 def _compute_errors(mu, fom, reductor, error_estimator, error_norms, condition, custom, basis_sizes):

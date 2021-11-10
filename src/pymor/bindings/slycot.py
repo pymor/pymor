@@ -7,10 +7,12 @@ from pymor.core.config import config
 
 if config.HAVE_SLYCOT:
     import numpy as np
+    import scipy.linalg as spla
     import slycot
 
     from pymor.algorithms.genericsolvers import _parse_options
     from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args, _solve_lyap_dense_check_args, _chol
+    from pymor.algorithms.riccati import _solve_ricc_dense_check_args
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_ricc_check_args
     from pymor.core.logger import getLogger
@@ -94,13 +96,13 @@ if config.HAVE_SLYCOT:
         Parameters
         ----------
         A
-            The operator A as a 2D |NumPy array|.
+            The matrix A as a 2D |NumPy array|.
         E
-            The operator E as a 2D |NumPy array| or `None`.
+            The matrix E as a 2D |NumPy array| or `None`.
         B
-            The operator B as a 2D |NumPy array|.
+            The matrix B as a 2D |NumPy array|.
         trans
-            Whether the first operator in the Lyapunov equation is
+            Whether the first matrix in the Lyapunov equation is
             transposed.
         options
             The solver options to use (see
@@ -138,6 +140,98 @@ if config.HAVE_SLYCOT:
             raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 
         return X
+
+    def solve_ricc_dense(A, E, B, C, R=None, trans=False, options=None):
+        """Compute the solution of a Riccati equation.
+
+        See :func:`pymor.algorithms.riccati.solve_ricc_dense` for a
+        general description.
+
+        This function uses `slycot.sb02md` (if `E is None`) which is based on
+        the Schur vector approach and `slycot.sg02ad` (if `E is not None`) which
+        is based on the method of deflating subspaces.
+
+        Parameters
+        ----------
+        A
+            The matrix A as a 2D |NumPy array|.
+        E
+            The matrix E as a 2D |NumPy array| or `None`.
+        B
+            The matrix B as a 2D |NumPy array|.
+        C
+            The matrix C as a 2D |NumPy array|.
+        R
+            The matrix R as a 2D |NumPy array| or `None`.
+        trans
+            Whether the first matrix in the Riccati equation is
+            transposed.
+        options
+            The solver options to use (see
+            :func:`ricc_dense_solver_options`).
+
+        Returns
+        -------
+        X
+            Riccati equation solution as a |NumPy array|.
+        """
+        _solve_ricc_dense_check_args(A, E, B, C, R, trans)
+        options = _parse_options(options, ricc_dense_solver_options(), 'slycot', None, False)
+
+        if options['type'] != 'slycot':
+            raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
+
+        dico = 'C'
+        n = A.shape[0]
+        if E is not None:
+            jobb = 'B'
+            fact = 'C'
+            uplo = 'U'
+            jobl = 'Z'
+            scal = 'N'
+            sort = 'S'
+            acc = 'R'
+            m = C.shape[0] if not trans else B.shape[1]
+            p = B.shape[1] if not trans else C.shape[0]
+            if R is None:
+                R = np.eye(m)
+            S = np.empty((n, m))
+            if not trans:
+                A = A.T
+                E = E.T
+                B, C = C.T, B.T
+            out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
+                                n, m, p,
+                                A, E, B, C, R, S)
+            X = out[1]
+            rcond = out[0]
+        else:
+            if trans:
+                if R is None:
+                    G = B @ B.T
+                else:
+                    G = B @ spla.solve(R, B.T)
+                Q = C.T @ C
+                X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
+            else:
+                if R is None:
+                    G = C.T @ C
+                else:
+                    G = C.T @ spla.solve(R, C)
+                Q = B @ B.T
+                X, rcond = slycot.sb02md(n, A.T, G, Q, dico)[:2]
+        _ricc_rcond_check('slycot.sb02md', rcond)
+
+        return X
+
+    def ricc_dense_solver_options():
+        """Return available Riccati solvers with default options for the slycot backend.
+
+        Returns
+        -------
+        A dict of available solvers with default solver options.
+        """
+        return {'slycot': {'type': 'slycot'}}
 
     def _solve_check(dtype, solver, sep, ferr):
         if ferr > 1e-1:
@@ -178,7 +272,7 @@ if config.HAVE_SLYCOT:
         C
             The operator C as a |VectorArray| from `A.source`.
         R
-            The operator R as a 2D |NumPy array| or `None`.
+            The matrix R as a 2D |NumPy array| or `None`.
         trans
             Whether the first |Operator| in the Riccati equation is
             transposed.
@@ -203,41 +297,7 @@ if config.HAVE_SLYCOT:
         B = B.to_numpy().T
         C = C.to_numpy()
 
-        n = A.shape[0]
-        dico = 'C'
-
-        if E is None:
-            if not trans:
-                A = A.T
-                G = C.T.dot(C) if R is None else slycot.sb02mt(n, C.shape[0], C.T, R)[-1]
-            else:
-                G = B.dot(B.T) if R is None else slycot.sb02mt(n, B.shape[1], B, R)[-1]
-            Q = B.dot(B.T) if not trans else C.T.dot(C)
-            X, rcond = slycot.sb02md(n, A, G, Q, dico)[:2]
-            _ricc_rcond_check('slycot.sb02md', rcond)
-        else:
-            jobb = 'B'
-            fact = 'C'
-            uplo = 'U'
-            jobl = 'Z'
-            scal = 'N'
-            sort = 'S'
-            acc = 'R'
-            m = C.shape[0] if not trans else B.shape[1]
-            p = B.shape[1] if not trans else C.shape[0]
-            if R is None:
-                R = np.eye(m)
-            S = np.empty((n, m))
-            if not trans:
-                A = A.T
-                E = E.T
-                B, C = C.T, B.T
-            out = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc,
-                                n, m, p,
-                                A, E, B, C, R, S)
-            X = out[1]
-            rcond = out[0]
-            _ricc_rcond_check('slycot.sg02ad', rcond)
+        X = solve_ricc_dense(A, E, B, C, R, trans, options)
 
         return A_source.from_numpy(_chol(X).T)
 
@@ -280,7 +340,7 @@ if config.HAVE_SLYCOT:
         C
             The operator C as a |VectorArray| from `A.source`.
         R
-            The operator R as a 2D |NumPy array| or `None`.
+            The matrix R as a 2D |NumPy array| or `None`.
         trans
             Whether the first |Operator| in the positive Riccati
             equation is transposed.

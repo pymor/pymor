@@ -3,25 +3,56 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from importlib import import_module
-import sys
+from packaging.version import parse
 import platform
+import sys
 import warnings
 
 
 def _can_import(module):
-    try:
-        import_module(module)
-        return True
-    except ImportError:
-        pass
-    return False
+    def _can_import_single(m):
+        try:
+            import_module(m)
+            return True
+        except ImportError:
+            pass
+        return False
+    if not isinstance(module, (list, tuple)):
+        module = [module]
+    return all((_can_import_single(m) for m in module))
 
 
 def _get_fenics_version():
+    # workaround for dolfin+dune incompat https://github.com/pymor/pymor/issues/1397
+    try:
+        # this needs to happen before importing dolfin
+        import dune.gdt  # noqa
+    except ImportError:
+        pass
+
     import dolfin as df
     if df.__version__ != '2019.1.0':
         warnings.warn(f'FEniCS bindings have been tested for version 2019.1.0 (installed: {df.__version__}).')
     return df.__version__
+
+
+def _get_dunegdt_version():
+    import dune.xt
+    import dune.gdt
+    version = 'outdated'
+    try:
+        version = dune.gdt.__version__
+        if parse(version) < parse('2021.1.2') or parse(version) >= parse('2021.2'):
+            warnings.warn(f'dune-gdt bindings have been tested for version 2021.1.2 (installed: {dune.gdt.__version__}).')
+    except AttributeError:
+        warnings.warn(f'dune-gdt bindings have been tested for version 2021.1.2 (installed: unknown older than 2021.1.2).')
+    try:
+        xt_version = dune.xt.__version__
+        if parse(xt_version) < parse('2021.1.2') or parse(xt_version) >= parse('2021.2'):
+            warnings.warn(f'dune-gdt bindings have been tested for dune-xt 2021.1.2 (installed: {dune.xt.__version__}).')
+    except AttributeError:
+        warnings.warn(f'dune-gdt bindings have been tested for dune-xt version 2021.1.2 (installed: unknown older than 2021.1.2).')
+    return version
 
 
 def is_windows_platform():
@@ -59,10 +90,12 @@ def _get_slycot_version():
 def _get_qt_version():
     try:
         import qtpy
-        return f'{qtpy.API_NAME} (Qt {qtpy.QT_VERSION})'
-    except AttributeError as ae:
-        warnings.warn(f'importing qtpy abstraction failed:\n{ae}')
+    except RuntimeError:
+        # qtpy raises PythonQtError, which is a subclass of RuntimeError, in case no
+        # Python bindings could be found. Since pyMOR always pulls qtpy, we do not want
+        # to catch an ImportError
         return False
+    return f'{qtpy.API_NAME} (Qt {qtpy.QT_VERSION})'
 
 
 def is_jupyter():
@@ -92,24 +125,23 @@ def is_nbconvert():
 
 
 _PACKAGES = {
-    'CYTHON': lambda: import_module('cython').__version__,
     'DEALII': lambda: import_module('pydealii'),
+    'DUNEGDT': _get_dunegdt_version,
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
     'IPYTHON': _get_ipython_version,
     'MATPLOTLIB': _get_matplotib_version,
-    'MESHIO': lambda: import_module('meshio').__version__,
+    'VTKIO': lambda: _can_import(('meshio', 'pyevtk', 'lxml', 'xmljson')),
+    'MESHIO': lambda: _can_import('meshio'),
     'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NGSOLVE': lambda: bool(import_module('ngsolve')),
     'NUMPY': lambda: import_module('numpy').__version__,
-    'PYAMG': lambda: import_module('pyamg.version').full_version,
     'PYMESS': lambda: bool(import_module('pymess')),
     'PYTEST': lambda: import_module('pytest').__version__,
     'PYTHREEJS': lambda: import_module('pythreejs._version').__version__,
-    'PYEVTK': lambda: _can_import('pyevtk'),
     'QT': _get_qt_version,
-    'QTOPENGL': lambda: bool(import_module('qtpy.QtOpenGL')),
+    'QTOPENGL': lambda: bool(_get_qt_version() and import_module('qtpy.QtOpenGL')),
     'SCIPY': lambda: import_module('scipy').__version__,
     'SCIPY_LSMR': lambda: hasattr(import_module('scipy.sparse.linalg'), 'lsmr'),
     'SLYCOT': lambda: _get_slycot_version(),

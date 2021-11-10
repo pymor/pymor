@@ -34,20 +34,47 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.intersphinx',
               'pymordocstring',
               'try_on_binder',
-              'jupyter_sphinx',
+              'myst_nb',
               'sphinx.ext.mathjax',
               'sphinx_qt_documentation',
               'autoapi.extension',
               'autoapi_pymor',
               'sphinxcontrib.bibtex',
               ]
+# this enables:
+# substitutions-with-jinja2, direct-latex-math and definition-lists
+# ref: https://myst-parser.readthedocs.io/en/latest/using/syntax-optional.html
+myst_enable_extensions = [
+    "dollarmath",
+    "amsmath",
+    "deflist",
+    "html_image",
+    "colon_fence",
+    "smartquotes",
+    "replacements",
+    "substitution",
+]
+myst_url_schemes = ["http", "https", "mailto"]
+# auto genereated link anchors
+myst_heading_anchors = 2
+import substitutions # noqa
+myst_substitutions = substitutions.myst_substitutions
+jupyter_execute_notebooks = "cache"
+execution_timeout = 120
+# print tracebacks to stdout
+execution_show_tb = True
 
 bibtex_bibfiles = ['bibliography.bib']
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.ipynb': 'myst-nb',
+    '.md': 'myst-nb',
+}
+
 
 # The master toctree document.
 master_doc = 'index'
@@ -60,7 +87,6 @@ copyright = '2013-2021 pyMOR developers and contributors'
 # other places throughout the built documents.
 # imports have to be delayed until after sys.path modification
 import pymor  # noqa
-import substitutions # noqa
 import autoapi_pymor # noqa
 version = pymor.__version__
 rst_epilog = substitutions.substitutions
@@ -71,12 +97,12 @@ print(version, release)
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
-#today = ''
+# today = ''
 # Else, today_fmt is used as the format for a strftime call.
 today_fmt = '%B %d, %Y'
 
 # List of documents that shouldn't be included in the build.
-#unused_docs = []
+# unused_docs = []
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 default_role = "literal"
@@ -90,11 +116,11 @@ add_function_parentheses = False
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
-#add_module_names = True
+# add_module_names = True
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
-#show_authors = False
+# show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -145,7 +171,7 @@ html_last_updated_fmt = '%b %d, %Y'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
-#html_use_smartypants = True
+# html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
 # all: "**": ["logo-text.html", "globaltoc.html", "localtoc.html", "searchbox.html"]
@@ -154,23 +180,23 @@ html_sidebars = {
 }
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-#html_additional_pages = {
+# html_additional_pages = {
 #    'index': 'indexcontent.html',
-#}
+# }
 
 # If false, no module index is generated.
 html_use_modindex = True
 
 # If true, the reST sources are included in the HTML build as _sources/<name>.
-#html_copy_source = True
+# html_copy_source = True
 
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
-#html_use_opensearch = ''
+# html_use_opensearch = ''
 
 # If nonempty, this is the file name suffix for HTML files (e.g. ".html").
-#html_file_suffix = '.html'
+# html_file_suffix = '.html'
 
 # Hide link to page source.
 html_show_sourcelink = False
@@ -187,33 +213,33 @@ pngmath_use_preview = True
 # -----------------------------------------------------------------------------
 
 # The paper size ('letter' or 'a4').
-#latex_paper_size = 'letter'
+# latex_paper_size = 'letter'
 
 # The font size ('10pt', '11pt' or '12pt').
-#latex_font_size = '10pt'
+# latex_font_size = '10pt'
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
-#_stdauthor = 'Written by the NumPy community'
-#latex_documents = [
+# _stdauthor = 'Written by the NumPy community'
+# latex_documents = [
 #    ('reference/index', 'numpy-ref.tex', 'NumPy Reference',
 #     _stdauthor, 'manual'),
 #    ('user/index', 'numpy-user.tex', 'NumPy User Guide',
 #     _stdauthor, 'manual'),
-#]
+# ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-#latex_logo = None
+# latex_logo = None
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
-#latex_use_parts = False
+# latex_use_parts = False
 
 # Additional stuff for the LaTeX preamble.
 
 # Documents to append as an appendix to all manuals.
-#latex_appendices = []
+# latex_appendices = []
 
 # If false, no module index is generated.
 latex_use_modindex = False
@@ -262,6 +288,7 @@ branch = os.environ.get('CI_COMMIT_REF_NAME', 'main')
 try_on_binder_branch = branch.replace('github/PUSH_', 'from_fork__')
 try_on_binder_slug = os.environ.get('CI_COMMIT_REF_SLUG', slugify.slugify(try_on_binder_branch))
 
+
 def linkcode_resolve(domain, info):
     if domain == 'py':
         if not info['module']:
@@ -269,6 +296,7 @@ def linkcode_resolve(domain, info):
         filename = info['module'].replace('.', '/')
         return f'https://github.com/pymor/pymor/tree/{branch}/src/{filename}.py'
     return None
+
 
 autoapi_dirs = [src_dir / 'pymor']
 autoapi_type = 'python'

@@ -33,3 +33,7 @@ PYMOR_MPI_FINALIZE
     If set controls the value for `mpi4py.rc.finalize`. If `PYMOR_MPI_FINALIZE` is unset the value
     of `mpi4py.rc.finalize` remains unchanged, unless `mpi4py.rc.finalize is None` in which
     case it is defaulted to `False`.
+
+PYMOR_ALLOW_DEADLINE_EXCESS
+    If set, test functions decorated with :func:`~pymortests.base.might_exceed_deadline` are allowed
+    to exceed the default test deadline set in :mod:`~pymortests.conftest`.

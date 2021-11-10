@@ -9,6 +9,8 @@
 class FrozenDict(dict):
     """An immutable dictionary."""
 
+    __slots__ = ()
+
     @property
     def _blocked_attribute(self):
         raise AttributeError(f'A {type(self).__name__} cannot be modified.')
@@ -38,6 +40,8 @@ class FrozenDict(dict):
 
 class SortedFrozenDict(FrozenDict):
     """A sorted immutable dictionary."""
+
+    __slots__ = ()
 
     def __new__(cls, *args, **kwargs):
         new = dict.__new__(cls)

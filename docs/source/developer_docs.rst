@@ -29,7 +29,7 @@ Create and activate a new virtualenv::
 
 Then, make an editable installation of pyMOR with::
 
-    pip install -e .[full]
+    pip install -e '.[full]'
 
 
 Environment with docker-compose
@@ -136,9 +136,12 @@ Continuous Testing / Integration Setup
 Our CI infrastructure is spread across three major platforms. These are Gitlab CI (Linux testsuite),
 Azure Pipelines (MacOS and Windows testsuite) and GitHub Actions (misc. checks).
 
-pyMOR uses `pytest` <https://pytest.org/>`_ for unit testing.
+pyMOR uses `pytest <https://pytest.org/>`_ for unit testing.
 All tests are contained within the `src/pymortests` directory and can be run
-individually by executing `python3 src/pymortests/the_module.py`.
+individually by executing `python3 src/pymortests/the_module.py` or invoking
+pytest directly. Please refer to the `pytest documentation <https://docs.pytest.org/en/latest/how-to/usage.html>`_
+for detailed examples.
+
 
 
 .. _ref_gitlab_ci:
@@ -275,7 +278,7 @@ Azure Pipelines
 
 Setup test environments with conda and run pytest. Also generate and upload coverage reports.
 
-.. note:: ``.ci/azure/pymor_defaults.py_*`` may override defaults 
+.. note:: ``.ci/azure/pymor_defaults.py_*`` may override defaults
 
 .. _ref_docker_images:
 

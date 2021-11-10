@@ -126,7 +126,8 @@ if config.HAVE_FENICS:
 
     class FenicsVectorSpace(ComplexifiedListVectorSpace):
 
-        complexified_vector_type = ComplexifiedFenicsVector
+        real_vector_type = FenicsVector
+        vector_type = ComplexifiedFenicsVector
 
         def __init__(self, V, id='STATE'):
             self.__auto_init(locals())
@@ -192,6 +193,24 @@ if config.HAVE_FENICS:
                  initial_guess.copy(deep=True))
             options = self.solver_options.get('inverse') if self.solver_options else None
             _apply_inverse(self.matrix, r.impl, v.impl, options)
+            return r
+
+        def _real_apply_inverse_adjoint_one_vector(self, u, mu=None, initial_guess=None,
+                                                   least_squares=False, prepare_data=None):
+            if least_squares:
+                raise NotImplementedError
+            r = (self.range.real_zero_vector() if initial_guess is None else
+                 initial_guess.copy(deep=True))
+            options = self.solver_options.get('inverse_adjoint') if self.solver_options else None
+
+            # since dolfin does not have "apply_inverse_adjoint", we assume
+            # PETSc is used as backend and transpose the matrix
+            if not hasattr(self, '_matrix_transpose'):
+                self._matrix_transpose = self.matrix.copy()
+                mat = df.as_backend_type(self.matrix).mat()
+                mat_tr = df.as_backend_type(self._matrix_transpose).mat()
+                mat.transpose(mat_tr)
+            _apply_inverse(self._matrix_transpose, r.impl, u.impl, options)
             return r
 
         def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
@@ -447,7 +466,7 @@ if config.HAVE_FENICS:
                 |VectorArray| of the data to visualize (length must be 1). Alternatively,
                 a tuple of |VectorArrays| which will be visualized in separate windows.
                 If `filename` is specified, only one |VectorArray| may be provided which,
-                however, is allowed to contain multipled vectors that will be interpreted
+                however, is allowed to contain multiple vectors that will be interpreted
                 as a time series.
             title
                 Title of the plot.

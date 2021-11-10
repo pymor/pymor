@@ -1,0 +1,16 @@
+# YAML 1.2
+---
+authors: 
+  - family-names: Milk
+    given-names: "René"
+    orcid: "https://orcid.org/0000-0002-9548-2238"
+  - family-names: Rave
+    given-names: Stephan
+    orcid: "https://orcid.org/0000-0003-0439-7212"
+  - family-names: Schindler
+    given-names: Felix
+cff-version: "1.1.0"
+doi: "10.1137/15M1026614"
+message: "If you use this software, please cite it using these metadata."
+title: "pyMOR -- Generic Algorithms and Interfaces for Model Order Reduction"
+...

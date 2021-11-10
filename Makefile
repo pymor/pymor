@@ -21,7 +21,7 @@ CI_COMMIT_REF_NAME?=$(shell git rev-parse --abbrev-ref HEAD)
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
   	CI_COMMIT_REF_NAME=$(CI_COMMIT_REF_NAME) \
 	NB_USER=$(NB_USER) $(COMPOSE_SUDO) docker-compose -f .binder/docker-compose.yml -p pymor
-NB_DIR=notebooks
+NB_DIR=docs/source
 NB_USER:=${USER}
 ifeq ($(PYMOR_SUDO), 1)
 	COMPOSE_SUDO:=sudo -E
@@ -100,10 +100,10 @@ docker_docs: docker_image
 	NB_DIR=notebooks $(DOCKER_COMPOSE) run docs ./.ci/gitlab/test_docs.bash
 
 docker_run: docker_image
-	$(DOCKER_COMPOSE) run --service-ports jupyter bash
+	$(DOCKER_COMPOSE) run --service-ports pytest bash
 
 docker_exec: docker_image
-	$(DOCKER_COMPOSE) run --service-ports jupyter bash -l -c "${DOCKER_CMD}"
+	$(DOCKER_COMPOSE) run --service-ports pytest bash -l -c "${DOCKER_CMD}"
 
 docker_tutorials: NB_DIR=docs/_build/html
 docker_tutorials: docker_docs docker_jupyter

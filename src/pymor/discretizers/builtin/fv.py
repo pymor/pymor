@@ -15,7 +15,6 @@ from pymor.analyticalproblems.functions import Function, LincombFunction
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.base import abstractmethod
 from pymor.core.defaults import defaults
-from pymor.tools.deprecated import Deprecated
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
 from pymor.discretizers.builtin.grids.interfaces import GridWithOrthogonalCenters
 from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
@@ -434,9 +433,7 @@ def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_l
 
 def nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, flux, flux_derivative,
                                                            dirichlet_data=None, solver_options=None, name=None):
-    """Instantiate a :class:`NonlinearAdvectionOperator` using
-    :class:`SimplifiedEngquistOsherFlux`.
-    """
+    """Create a :class:`NonlinearAdvectionOperator` using :class:`SimplifiedEngquistOsherFlux`."""
     num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
 
@@ -699,13 +696,8 @@ class L2Functional(NumpyMatrixBasedOperator):
         return F_INTS.reshape((-1, 1))
 
 
-@Deprecated(L2Functional)
-def L2ProductFunctional(*args, **kwargs):
-    return L2Functional(*args, **kwargs)
-
-
 class BoundaryL2Functional(NumpyMatrixBasedOperator):
-    """Finite volume functional representing the inner product with an L2-|Function| on the boundary.
+    """FV functional representing the inner product with an L2-|Function| on the boundary.
 
     Parameters
     ----------
@@ -963,7 +955,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     F, F_coefficients = [], []
 
     if p.rhs is not None or p.neumann_data is not None:
-        F += [L2ProductFunctional(grid, p.rhs, boundary_info=boundary_info, neumann_data=p.neumann_data)]
+        F += [L2Functional(grid, p.rhs, boundary_info=boundary_info, neumann_data=p.neumann_data)]
         F_coefficients += [1.]
 
     # diffusion part
@@ -972,8 +964,8 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
               for i, df in enumerate(p.diffusion.functions)]
         L_coefficients += p.diffusion.coefficients
         if p.dirichlet_data is not None:
-            F += [L2ProductFunctional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
-                                      diffusion_function=df, name=f'dirichlet_{i}')
+            F += [L2Functional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
+                               diffusion_function=df, name=f'dirichlet_{i}')
                   for i, df in enumerate(p.diffusion.functions)]
             F_coefficients += p.diffusion.coefficients
 
@@ -981,8 +973,8 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
         L += [DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion, name='diffusion')]
         L_coefficients += [1.]
         if p.dirichlet_data is not None:
-            F += [L2ProductFunctional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
-                                      diffusion_function=p.diffusion, name='dirichlet')]
+            F += [L2Functional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
+                               diffusion_function=p.diffusion, name='dirichlet')]
             F_coefficients += [1.]
 
     # advection part
@@ -1094,8 +1086,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
                                num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
                                grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None,
                                preassemble=True):
-    """Discretizes an |InstationaryProblem| with a |StationaryProblem| as stationary part
-    using the finite volume method.
+    """FV Discretization of an |InstationaryProblem| with a |StationaryProblem| as stationary part
 
     Parameters
     ----------
@@ -1190,7 +1181,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
 
     rhs = None if isinstance(m.rhs, ZeroOperator) else m.rhs
 
-    m = InstationaryModel(operator=m.operator, rhs=m.rhs, mass=None, initial_data=I, T=p.T,
+    m = InstationaryModel(operator=m.operator, rhs=rhs, mass=None, initial_data=I, T=p.T,
                           products=m.products,
                           output_functional=m.output_functional,
                           time_stepper=time_stepper,

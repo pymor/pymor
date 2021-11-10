@@ -135,11 +135,16 @@ class MatplotlibPatchAxes(MatplotlibAxesBase):
 class Matplotlib1DAxes(MatplotlibAxesBase):
 
     def __init__(self, U, figure, grid, vmin=None, vmax=None, codim=1, separate_axes=False, sync_timer=None,
-                 columns=2):
+                 columns=2, bounding_box=None):
         assert isinstance(grid, OnedGrid)
         assert codim in (0, 1)
+
+        if bounding_box is None:
+            bounding_box = grid.bounding_box()
+        aspect_ratio = (bounding_box[1] - bounding_box[0]) / (vmax - vmin)
+
         super().__init__(U=U, figure=figure, grid=grid, vmin=vmin, vmax=vmax, codim=codim, columns=columns,
-                         sync_timer=sync_timer, separate_axes=separate_axes)
+                         sync_timer=sync_timer, separate_axes=separate_axes, aspect_ratio=aspect_ratio)
 
     def _plot_init(self):
         centers = self.grid.centers(1)
@@ -212,7 +217,7 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
             lines = ()
             centers = grid.centers(1)
             if grid.identify_left_right:
-                centers = np.concatenate((centers, [[grid.domain[1]]]), axis=0)
+                centers = np.concatenate((centers, [grid.domain[1]]), axis=0)
                 self.periodic = True
             else:
                 self.periodic = False
@@ -231,7 +236,10 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
                 if legend and separate_plots:
                     axes.legend([legend[i]])
             if not separate_plots:
-                pad = (max(vmax) - min(vmin)) * 0.1
+                if max(vmax) == min(vmin):
+                    pad = 0.5
+                else:
+                    pad = (max(vmax) - min(vmin)) * 0.1
                 axes.set_ylim(min(vmin) - pad, max(vmax) + pad)
                 if legend:
                     axes.legend(legend)

@@ -37,9 +37,6 @@ def generic_solver(request):
 
 all_sparse_solvers = set(pymor.algorithms.genericsolvers.solver_options().keys())
 all_sparse_solvers.update(scipy_solver_options().keys())
-if config.HAVE_PYAMG:
-    from pymor.bindings.pyamg import solver_options as pyamg_solver_options
-    all_sparse_solvers.update(pyamg_solver_options().keys())
 
 
 @pytest.fixture(params=all_sparse_solvers)

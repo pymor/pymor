@@ -31,10 +31,3 @@ API Documentation
     /autoapi/index
     /autoapi/pymor/index
 
-Demo Applications
-*****************
-
-.. toctree::
-    :maxdepth: 3
-    :glob:
-

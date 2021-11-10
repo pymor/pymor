@@ -9,7 +9,7 @@ import sys
 import os
 from setuptools import setup, find_packages
 # versioneer (+dependencies) does not work in a pep518/7 context w/o modification here
-sys.path.append(os.path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(__file__))
 import versioneer  # noqa
 import dependencies  # noqa
 

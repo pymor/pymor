@@ -336,7 +336,7 @@ class ImplicitEulerIterator(SingleStepTimeStepperIterator):
                 solver_options=A.solver_options if stepper.solver_options == 'operator' else \
                                M.solver_options if stepper.solver_options == 'mass' else \
                                stepper.solver_options)
-        if not M_dt_A.parametric or 't' not in M_dt_A.parameters:
+        if not _depends_on_time(M_dt_A.parametric, mu):
             M_dt_A = M_dt_A.assemble(mu)
 
         if isinstance(F, ZeroOperator):
@@ -346,7 +346,7 @@ class ImplicitEulerIterator(SingleStepTimeStepperIterator):
                 return M_dt_A.apply_inverse(M.apply(U_n, mu=mu_t), mu=mu_t, initial_guess=U_n), t_np1
         else:
             dt_F = F * dt
-            if not dt_F.parametric or 't' not in dt_F.parameters:
+            if not _depends_on_time(dt_F, mu):
                 dt_F = dt_F.assemble(mu)
             def step_function(U_n, t_n):
                 t_np1 = t_n + dt
@@ -487,9 +487,9 @@ class ExplicitRungeKuttaIterator(SingleStepTimeStepperIterator):
         A, F, M, mu = self.A, self.F, self.M, self.mu
 
         # prepare the function f in d_t y = f(t, y)
-        if not isinstance(M, IdentityOperator) and (not M.parametric or 't' not in M.parameters):
+        if not isinstance(M, IdentityOperator) and not _depends_on_time(M, mu):
             M = M.assemble(mu)
-        if not A.parametric or 't' not in A.parameters:
+        if not _depends_on_time(A, mu):
             A = A.assemble(mu)
 
         if isinstance(F, ZeroOperator):
@@ -502,7 +502,7 @@ class ExplicitRungeKuttaIterator(SingleStepTimeStepperIterator):
                     mu_t = mu.with_(t=t)
                     return M.apply_inverse(-1*A.apply(y, mu=mu_t), mu=mu_t, initial_guess=y)
         else:
-            if not F.parametric or 't' not in F.parameters:
+            if not _depends_on_time(F, mu):
                 F = F.assemble(mu)
             if isinstance(M, IdentityOperator):
                 def f(t, y):
@@ -597,6 +597,12 @@ class ExplicitRungeKuttaTimeStepper(TimeStepper):
         assert nt > 0
 
         self.__auto_init(locals())
+
+
+def _depends_on_time(obj, mu):
+    if not mu:
+        return False
+    return 't' in obj.parameters or any(mu.is_time_dependent(k) for k in obj.parameters)
 
 
 @Deprecated('Will be removed after the 2021.2 release, use ImplicitEulerTimeStepper directly.')
