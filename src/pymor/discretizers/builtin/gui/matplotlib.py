@@ -16,7 +16,9 @@ from pymor.core.base import abstractmethod
 
 from pymor.core.config import config
 from pymor.discretizers.builtin.grids.constructions import flatten_grid
+from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
+
 
 
 class MatplotlibAxesBase:
@@ -199,8 +201,6 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
 
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
-
-    from pymor.discretizers.builtin.grids.oned import OnedGrid
 
     # noinspection PyShadowingNames
     class Matplotlib1DWidget(FigureCanvas):
