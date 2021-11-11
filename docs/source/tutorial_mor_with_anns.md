@@ -68,7 +68,8 @@ layers, an input size of two and an output size of three. Each edge between
 neurons has a corresponding weight that is learnable in the training phase.
 
 ```{image} neural_network.png
-
+:alt: Feedforward neural network
+:width: 100%
 ```
 
 To train the neural network, one considers a so called "loss function", that
@@ -295,8 +296,7 @@ the {meth}`~pymor.models.interface.Model.solve` method of the {{ Model }}, it ca
 be applied to {{ Models }} originating from external solvers, without requiring any access to
 {{ Operators }} internal to the solver.
 
-Direct approximation of output quantities
------------------------------------------
+## Direct approximation of output quantities
 
 Thus far, we were mainly interested in approximating the solution state
 {math}`u(\mu)\equiv u(\cdot,\mu)` for some parameter {math}`\mu`. If we consider an output
@@ -391,8 +391,7 @@ and the median of the speedups amounts to
 np.median(outputs_speedups)
 ```
 
-Neural networks for instationary problems
------------------------------------------
+## Neural networks for instationary problems
 
 To solve instationary problems using neural networks, we have extended the
 {class}`~pymor.reductors.neural_network.NeuralNetworkReductor` to the
@@ -404,8 +403,69 @@ coefficients. In the same fashion, there exists a
 {class}`~pymor.reductors.neural_network.NeuralNetworkInstationaryStatefreeOutputReductor` and the
 corresponding {class}`~pymor.models.neural_network.NeuralNetworkInstationaryStatefreeOutputModel`.
 
+A slightly different approach that is also implemented in pyMOR and uses a different type of
+neural network is described in the following section.
+
+### Long short-term memory neural networks for instationary problems
+
+So called *recurrent neural networks* are especially well-suited for capturing time-dependent
+dynamics. These types of neural networks can treat input sequences of variable length (in our case
+sequences with a variable number of timesteps) and store internal states that are passed from one
+timestep to the next. Therefore, these networks implement an internal memory that keeps
+information over time. Furthermore, for each element of the input sequence, the same neural
+network is applied.
+
+In the {class}`~pymor.models.neural_network.NeuralNetworkLSTMInstationaryModel` and the
+corresponding {class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor`,
+we make use of a specific type of recurrent neural network, namely a so called
+*long short-term memory neural network (LSTM)* that tries to avoid problems like vanishing or
+exploding gradients that often occur during training of recurrent neural networks. The main
+building block of an LSTM network is the *LSTM cell*, which is denoted by {math}`\Phi` and
+sketched in the following figure:
+
+```{image} lstm_cell.svg
+:alt: LSTM cell
+:align: center
+```
+
+Here, {math}`\mu(t_k)` denotes the input to the network at the current time instance {math}`t_k`,
+{math}`o(t_k)` denotes the output, and the two hidden states for time instance `t_k` are given as
+the cell state {math}`c_k` and the hidden state {math}`h_k` that also serves as the output.
+Squares represent layers similar to those used in feedforward neural networks, where inside the
+square the applied activation function is mentioned, whereas circles denote element-wise
+operations like element-wise multiplication ({math}`\times`), element-wise addition ({math}`+`) or
+element-wise application of the hyperbolic tangent function ({math}`\tanh`).
+Furthermore, {math}`\sigma` is the sigmoid activation function
+({math}`\sigma(x)=\frac{1}{1+\exp(-x)}`), and {math}`\tanh` is the hyperbolic tangent activation
+function ({math}`\tanh(x)=\frac{\exp(x)-\exp(-x)}{\exp(x)+\exp(-x)}`) used for the respective
+layers in the LSTM network. Finally, the layer {math}`P` denotes a projection layer that projects
+vectors of the internal size to the hidden respectively output size. Hence, internally, the LSTM
+can deal with larger quantities and finally project them onto a space with a desired size.
+
+In an LSTM neural network, multiple LSTM cells are chained with each other such that the cell and
+the hidden state of the {math}`k`-th LSTM cell serves as the input hidden states for the
+{math}`k+1`-th LSTM cell. Therefore, information from former timesteps can be available later.
+The following figure shows the general structure of an LSTM neural network that is also
+implemented in the same way in pyMOR:
+
+```{image} lstm.svg
+:alt: Long short-term neural network
+:width: 100%
+```
+
+The idea of the approach implemented in pyMOR is the following: Instead of passing the current
+time instance as an additional input to the neural network, we use an LSTM that takes at each time
+instance {math}`t_k` the (potentially) time-dependent input {math}`\mu(t_k)` as an input and uses
+the hidden states from the former timestep. The output {math}`o(t_k)` of the LSTM at
+time {math}`t_k` are either approximations to the reduced basis coefficients (similar to the
+{class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel`) or approximations of the
+output quantities (similar to the
+{class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel`). For direct approximation
+of outputs using LSTMs, we provide the
+{class}`~pymor.models.neural_network.NeuralNetworkLSTMInstationaryStatefreeOutputModel` and the
+corresponding
+{class}`~pymor.reductor.neural_network.NeuralNetworkLSTMInstationaryStatefreeOutputReductor`.
+
 Download the code:
 {download}`tutorial_mor_with_anns.md`
 {nb-download}`tutorial_mor_with_anns.ipynb`
-
-
