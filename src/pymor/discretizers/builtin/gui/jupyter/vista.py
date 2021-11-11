@@ -6,6 +6,7 @@ from math import ceil
 import numpy as np
 import pyvista as pv
 from pyvistaqt import QtInteractor
+from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from pymor.core.config import is_jupyter
 from pymor.discretizers.builtin.grids.io import to_meshio
@@ -157,7 +158,7 @@ def visualize_vista_mesh(meshes, bounding_box=([0, 0], [1, 1]), codim=2, title=N
     return plotter.show()
 
 
-class PyVistaPatchWidget(QtInteractor):
+class PyVistaPatchWidget(QVTKRenderWindowInteractor):
 
     def __init__(self, U, limits, parent, grid, bounding_box=([0, 0], [1, 1]), codim=2,
                  show_scalar_bar=True):
@@ -178,18 +179,44 @@ class PyVistaPatchWidget(QtInteractor):
         self.reference_element = grid.reference_element
         self.codim = codim
         self.set(U, limits)
-        if grid.dim != 3:
-            # disable interactive camera
-            self.disable()
+        # if grid.dim != 3:
+        #     # disable interactive camera
+        #     self.disable()
+        widget = self
+        import vtk
+
+        widget.Initialize()
+        widget.Start()
+        # if you don't want the 'q' key to exit comment this.
+        # widget.AddObserver("ExitEvent", lambda o, e, a=app: a.quit())
+
+        self._renderer = vtk.vtkRenderer()
+        widget.GetRenderWindow().AddRenderer(self._renderer)
+        from pyvista import from_meshio
+        vtkgrid = from_meshio(self.mesh_data[1])
+
+        self.mapper = vtk.vtkDataSetMapper()
+        self.mapper.SetInputData(vtkgrid)
+        n_colors = 256*4
+        self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
+        if False: #interpolate_before_map:
+            self.mapper.InterpolateScalarsBeforeMappingOn()
+
+        actor = vtk.vtkActor()
+        prop = vtk.vtkProperty()
+        actor.SetMapper(self.mapper)
+        actor.SetProperty(prop)
+
+        self._renderer.AddActor(actor)
 
     def set(self, U, limits):
-        self.clear()
         self.limits = limits
         self.mesh_data = to_meshio(self.grid, data=U, scalar_name=self.scalar_name, codim=self.codim)
-        self.meshes = [self.add_mesh(mesh, name=f'self.scalar_name_{i}', **self.mesh_kwargs)
-                       for i, mesh in enumerate(self.mesh_data)]
-        self.view_xy()
+        from pyvista import from_meshio
+        self.meshes = [from_meshio(mesh) for mesh in self.mesh_data]
 
     def step(self, ind):
-        for i, mesh in enumerate(self.meshes):
-            mesh.SetVisibility(i == ind)
+        self.mapper.SetInputData(self.meshes[ind])
+        # self.mapper.SetLookupTable(self._luts[ind])
+        self.GetRenderWindow().Render()
+        

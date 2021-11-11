@@ -61,7 +61,7 @@ def main(
     tic = time.perf_counter()
     U = m.solve(mu)
     print(f'Solving took {time.perf_counter()-tic}s')
-    m.visualize(U)
+    m.visualize(U, block=True)
 
 
 if __name__ == '__main__':
