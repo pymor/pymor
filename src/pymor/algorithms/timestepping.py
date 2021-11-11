@@ -336,7 +336,7 @@ class ImplicitEulerIterator(SingleStepTimeStepperIterator):
                 solver_options=A.solver_options if stepper.solver_options == 'operator' else \
                                M.solver_options if stepper.solver_options == 'mass' else \
                                stepper.solver_options)
-        if not _depends_on_time(M_dt_A.parametric, mu):
+        if not _depends_on_time(M_dt_A, mu):
             M_dt_A = M_dt_A.assemble(mu)
 
         if isinstance(F, ZeroOperator):
