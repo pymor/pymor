@@ -381,10 +381,10 @@ def discretize(n, nt, blocks):
     grid = OnedGrid(domain=(0, 1), num_intervals=n)
     visualizer = OnedVisualizer(grid)
 
-    time_stepper = ExplicitEulerTimeStepper(nt)
+    time_stepper = ExplicitEulerTimeStepper(nt, num_values=20)
 
     fom = InstationaryModel(T=1, operator=operator, rhs=rhs, initial_data=initial_data,
-                            time_stepper=time_stepper, num_values=20,
+                            time_stepper=time_stepper,
                             visualizer=visualizer, name='C++-Model')
     return fom
 ```
