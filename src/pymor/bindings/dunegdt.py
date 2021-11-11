@@ -115,7 +115,8 @@ if config.HAVE_DUNEGDT:
             Identifier of the |VectorSpace|.
         """
 
-        complexified_vector_type = ComplexifiedDuneXTVector
+        real_vector_type = DuneXTVector
+        vector_type = ComplexifiedDuneXTVector
 
         def __init__(self, dim, vector_type=IstlVector, id='STATE'):
             self.__auto_init(locals())
