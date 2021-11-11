@@ -39,7 +39,7 @@ def discretize(n, nt, blocks):
     grid = OnedGrid(domain=(0, 1), num_intervals=n)
     visualizer = OnedVisualizer(grid)
 
-    time_stepper = ExplicitEulerTimeStepper(nt=nt, initial_time=0, end_time=1e-0, num_values=20)
+    time_stepper = ExplicitEulerTimeStepper(nt=nt, num_values=20)
 
     fom = InstationaryModel(T=1e-0, operator=operator, rhs=rhs, initial_data=initial_data,
                             time_stepper=time_stepper,
