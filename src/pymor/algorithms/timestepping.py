@@ -226,11 +226,10 @@ class TimeStepperIterator(BasicObject):
     def _interpolated_step(self):
         """
         Returns `(U_next, t_next)` (if `return_times == True`, otherwise `U_next`), behaviour depends on `num_values`:
-        - If `num_values` is provided, performs as many actual steps (by calling :meth:`_step`) as required to obtain
-          an interpolation of the solution, U(t_next) at the next required interpolation point t_next >= t_n, and
-          returns (U(t_next), t_next).
-        - If `num_values` is not provided, performs a single step (by calling :meth:`_step`) starting from t_n, to
-          compute (U(t_{n + 1}), t_{n + 1}).
+        If `num_values` is provided, performs as many actual steps (by calling :meth:`_step`) as required to obtain
+        an interpolation of the solution, U(t_next) at the next required interpolation point t_next >= t_n, and
+        returns (U(t_next), t_next). If `num_values` is not provided, performs a single step (by calling :meth:`_step`)
+        starting from t_n, to compute (U(t_{n + 1}), t_{n + 1}).
         """
         if self.t > self.t1 or floatcmp.float_cmp(self.t, self.t1):
             # this is the end
