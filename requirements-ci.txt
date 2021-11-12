@@ -8,6 +8,7 @@ flake8-docstrings
 flake8-rst-docstrings
 hypothesis[numpy,pytest]>=5.19
 nbconvert
+pybind11
 pypi-oldest-requirements>=2021.2
 pytest-cov
 pytest-datadir
