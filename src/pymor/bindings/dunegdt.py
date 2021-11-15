@@ -118,22 +118,22 @@ if config.HAVE_DUNEGDT:
         real_vector_type = DuneXTVector
         vector_type = ComplexifiedDuneXTVector
 
-        def __init__(self, dim, vector_type=IstlVector, id='STATE'):
+        def __init__(self, dim, dune_vector_type=IstlVector, id='STATE'):
             self.__auto_init(locals())
 
         def __eq__(self, other):
             return type(other) is DuneXTVectorSpace \
-                    and self.vector_type == other.vector_type and self.dim == other.dim and self.id == other.id
+                    and self.dune_vector_type == other.dune_vector_type and self.dim == other.dim and self.id == other.id
 
         # since we implement __eq__, we also need to implement __hash__
         def __hash__(self):
-            return id(self.vector_type) + hash(self.dim)
+            return id(self.dune_vector_type) + hash(self.dim)
 
         def real_zero_vector(self):
-            return DuneXTVector(self.vector_type(self.dim, 0.))
+            return DuneXTVector(self.dune_vector_type(self.dim, 0.))
 
         def real_full_vector(self, value):
-            return DuneXTVector(self.vector_type(self.dim, value))
+            return DuneXTVector(self.dune_vector_type(self.dim, value))
 
         def real_random_vector(self, distribution, random_state, **kwargs):
             values = _create_random_values(self.dim, distribution, random_state, **kwargs)
