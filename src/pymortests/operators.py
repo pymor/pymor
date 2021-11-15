@@ -504,5 +504,5 @@ if config.HAVE_DUNEGDT:
     def test_dunegdt_identiy_apply_inverse():
         op = make_dunegdt_identity(4)
         V = op.source.ones(1)
-        U = op.apply_inverse(U)
+        U = op.apply_inverse(V)
         assert (U - V).sup_norm() < 1e-14

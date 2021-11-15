@@ -123,7 +123,9 @@ if config.HAVE_DUNEGDT:
 
         def __eq__(self, other):
             return type(other) is DuneXTVectorSpace \
-                    and self.dune_vector_type == other.dune_vector_type and self.dim == other.dim and self.id == other.id
+                and self.dune_vector_type == other.dune_vector_type \
+                and self.dim == other.dim \
+                and self.id == other.id
 
         # since we implement __eq__, we also need to implement __hash__
         def __hash__(self):
