@@ -495,8 +495,14 @@ if config.HAVE_DUNEGDT:
             mat.set_entry(n, n, 1.)
         return DuneXTMatrixOperator(mat)
 
-    def test_dunegdt_identiy():
+    def test_dunegdt_identiy_apply():
         op = make_dunegdt_identity(4)
         U = op.source.ones(1)
         V = op.apply(U)
+        assert (U - V).sup_norm() < 1e-14
+
+    def test_dunegdt_identiy_apply_inverse():
+        op = make_dunegdt_identity(4)
+        V = op.source.ones(1)
+        U = op.apply_inverse(U)
         assert (U - V).sup_norm() < 1e-14
