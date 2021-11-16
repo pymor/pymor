@@ -71,7 +71,7 @@ THERMALBLOCK_ARGS = (
 TB_IPYTHON_ARGS = THERMALBLOCK_ARGS[0:2]
 
 THERMALBLOCK_ADAPTIVE_ARGS = (
-    ('thermalblock_adaptive', ['--pickle', '--cache-region=memory', '--plot-solutions', '--plot-error-sequence', 10]),
+    ('thermalblock_adaptive', ['--cache-region=memory', '--plot-solutions', '--plot-error-sequence', 10]),
     ('thermalblock_adaptive', ['--no-visualize-refinement', '--plot-err', 10]),
 )
 
@@ -246,7 +246,7 @@ def test_analyze_pickle1():
 def test_analyze_pickle2():
     d = mkdtemp()
     try:
-        test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
+        test_demos(('pymordemos.thermalblock_adaptive', ['--pickle=' + os.path.join(d, 'data'), 10]))
         test_demos(('pymordemos.analyze_pickle',
                    ['histogram', '--detailed-data=' + os.path.join(d, 'data_detailed'), os.path.join(d, 'data_reduced'),
                     10]))
