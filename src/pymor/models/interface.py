@@ -103,10 +103,7 @@ class Model(CacheableObject, ParametricObject):
         |NumPy array| with the computed output or a dict which at least
         must contain the key `'output'`.
         """
-        if not getattr(self, 'output_functional', None):
-            return np.zeros((len(solution), 0))
-        else:
-            return self.output_functional.apply(solution, mu=mu).to_numpy()
+        return self.output_functional.apply(solution, mu=mu).to_numpy()
 
     def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu=None, **kwargs):
         """Compute the partial derivative of the solution w.r.t. a parameter index

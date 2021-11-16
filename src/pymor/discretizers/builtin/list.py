@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.algorithms.preassemble import preassemble
-from pymor.algorithms.rules import RuleTable, match_class
+from pymor.algorithms.rules import RuleTable, RuleNotMatchingError, match_class, match_always
 from pymor.models.interface import Model
 from pymor.operators.constructions import (AdjointOperator, AffineOperator, ConcatenationOperator,
                                            FixedParameterOperator, LincombOperator,
@@ -14,7 +14,7 @@ from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.list import NumpyListVectorSpace
 
 
-def convert_to_numpy_list_vector_array(obj):
+def convert_to_numpy_list_vector_array(obj, space=None):
     """Use NumpyListVectorArrayMatrixOperator instead of NumpyMatrixOperator.
 
     This simple function recursively converts |NumpyMatrixOperators| to corresponding
@@ -25,19 +25,25 @@ def convert_to_numpy_list_vector_array(obj):
     obj
         Either an |Operator|, e.g. |NumpyMatrixOperator| or a |LincombOperator| of
         |NumpyMatrixOperators|, or an entire |Model| that is to be converted.
+    space
+        The |VectorSpace| that is to be converted.
 
     Returns
     -------
     The converted |Operator| or |Model|.
     """
+    if isinstance(obj, Model) and space is None:
+        space = obj.solution_space
+    assert space is not None
     obj = preassemble(obj)
-    return ConvertToNumpyListVectorArrayRules().apply(obj)
+    return ConvertToNumpyListVectorArrayRules(space).apply(obj)
 
 
 class ConvertToNumpyListVectorArrayRules(RuleTable):
 
-    def __init__(self):
+    def __init__(self, space):
         super().__init__(use_caching=True)
+        self.space = space
 
     @match_class(AdjointOperator, AffineOperator, ConcatenationOperator,
                  FixedParameterOperator, LincombOperator, SelectionOperator,
@@ -45,23 +51,20 @@ class ConvertToNumpyListVectorArrayRules(RuleTable):
     def action_recurse(self, op):
         return self.replace_children(op)
 
+    @match_always
+    def action_only_range(self, op):
+        if not (op.range == self.space and op.source != self.space):
+            raise RuleNotMatchingError
+        range = NumpyListVectorSpace(op.range.dim, op.range.id)
+        return VectorArrayOperator(range.from_numpy(op.as_range_array().to_numpy()), adjoint=False, name=op.name)
+
+    @match_always
+    def action_only_source(self, op):
+        if not (op.range != self.space and op.source == self.space):
+            raise RuleNotMatchingError
+        source = NumpyListVectorSpace(op.source.dim, op.source.id)
+        return VectorArrayOperator(source.from_numpy(op.as_source_array().to_numpy()), adjoint=True, name=op.name)
+
     @match_class(NumpyMatrixOperator)
     def action_NumpyMatrixOperator(self, op):
-        vector = op.source.dim == 1
-        functional = op.range.dim == 1
-        if vector and functional:
-            raise NotImplementedError
-        if vector:
-            space = NumpyListVectorSpace(op.range.dim, op.range.id)
-            return VectorOperator(space.from_numpy(op.matrix.reshape((1, -1))), op.name)
-        elif functional:
-            space = NumpyListVectorSpace(op.source.dim, op.source.id)
-            return VectorFunctional(space.from_numpy(op.matrix.ravel()), op.name)
-        else:
-            return op.with_(new_type=NumpyListVectorArrayMatrixOperator)
-
-    @match_class(VectorArrayOperator)
-    def action_VectorArrayOperator(self, op):
-        space = NumpyListVectorSpace(op.array.dim, op.array.space.id)
-        return op.with_(new_type=VectorArrayOperator,
-                        array=space.from_numpy(op.array.to_numpy()))
+        return op.with_(new_type=NumpyListVectorArrayMatrixOperator)
