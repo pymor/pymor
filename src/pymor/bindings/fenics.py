@@ -14,6 +14,7 @@ if config.HAVE_FENICS:
 
     from pymor.core.base import ImmutableObject
     from pymor.core.defaults import defaults
+    from pymor.core.pickle import unpicklable
     from pymor.operators.constructions import ZeroOperator
     from pymor.operators.interface import Operator
     from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
@@ -22,6 +23,7 @@ if config.HAVE_FENICS:
     from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
+    @unpicklable
     class FenicsVector(CopyOnWriteVector):
         """Wraps a FEniCS vector to make it usable with ListVectorArray."""
 
