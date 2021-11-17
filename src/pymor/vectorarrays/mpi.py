@@ -145,10 +145,12 @@ class MPIVectorSpace(VectorSpace):
 
     def __init__(self, local_spaces):
         self.local_spaces = tuple(local_spaces)
-        self.is_DOFVectorSpace = all([local_space.is_DOFVectorSpace for local_space in local_spaces])
         if type(local_spaces[0]) is RegisteredLocalSpace:
+            self.is_DOFVectorSpace = all([_local_space_registry[local_space].is_DOFVectorSpace
+                                         for local_space in local_spaces])
             self.id = _local_space_registry[local_spaces[0]].id
         else:
+            self.is_DOFVectorSpace = all([local_space.is_DOFVectorSpace for local_space in local_spaces])
             self.id = local_spaces[0].id
 
     def make_array(self, obj_id):
