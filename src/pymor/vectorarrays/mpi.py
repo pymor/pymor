@@ -145,6 +145,7 @@ class MPIVectorSpace(VectorSpace):
 
     def __init__(self, local_spaces):
         self.local_spaces = tuple(local_spaces)
+        self.is_DOFVectorSpace = all([local_space.is_DOFVectorSpace for local_space in local_spaces])
         if type(local_spaces[0]) is RegisteredLocalSpace:
             self.id = _local_space_registry[local_spaces[0]].id
         else:
@@ -165,7 +166,7 @@ class MPIVectorSpace(VectorSpace):
         """
         assert mpi.call(_MPIVectorSpace_check_local_spaces,
                         self.local_spaces, obj_id)
-        if isinstance(mpi.get_object(obj_id), DOFVectorArray):
+        if self.is_DOFVectorSpace:
             return self.DOF_array_type(obj_id, self)
         else:
             return self.array_type(obj_id, self)

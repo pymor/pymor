@@ -62,7 +62,7 @@ class VectorArray(BasicObject):
     is_view = False
 
     def zeros(self, count=1, reserve=0):
-        """Create a |VectorArray| of null vectors of the same |VectorSpace|.
+        """Create a |VectorArray| of zero vectors of the same |VectorSpace|.
 
         This is a shorthand for `self.space.zeros(count, reserve)`.
 
@@ -75,40 +75,23 @@ class VectorArray(BasicObject):
 
         Returns
         -------
-        A |VectorArray| containing `count` null vectors.
+        A |VectorArray| containing `count` zero vectors.
         """
         return self.space.zeros(count, reserve=reserve)
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(self, count=1, distribution=None, random_state=None, seed=None, reserve=0, **kwargs):
         """Create a |VectorArray| of vectors with random entries.
 
         This is a shorthand for
         `self.space.random(count, distribution, radom_state, seed, **kwargs)`.
-
-        Supported random distributions::
-
-            'uniform': Uniform distribution in half-open interval
-                       [`low`, `high`).
-            'normal':  Normal (Gaussian) distribution with mean
-                       `loc` and standard deviation `scale`.
-
-        Note that not all random distributions are necessarily implemented
-        by all |VectorSpace| implementations.
+        Implementations can vastly differ depending on the structure of the |VectorArray|.
 
         Parameters
         ----------
         count
             The number of vectors.
         distribution
-            Random distribution to use (`'uniform'`, `'normal'`).
-        low
-            Lower bound for `'uniform'` distribution (defaults to `0`).
-        high
-            Upper bound for `'uniform'` distribution (defaults to `1`).
-        loc
-            Mean for `'normal'` distribution (defaults to `0`).
-        scale
-            Standard deviation for `'normal'` distribution (defaults to `1`).
+            Random distribution to use.
         random_state
             :class:`~numpy.random.RandomState` to use for sampling.
             If `None`, a new random state is generated using `seed`
@@ -592,7 +575,7 @@ class VectorArray(BasicObject):
             return [i if 0 <= i else l+i for i in ind]
 
     def sub_index(self, ind, ind_ind):
-        """Return indices corresponding to the view `self[ind][ind_ind]`"""
+        """Return indices corresponding to the view `self[ind][ind_ind]`."""
         if type(ind) is slice:
             ind = range(*ind.indices(len(self)))
             if type(ind_ind) is slice:
@@ -623,6 +606,48 @@ class DOFVectorArray(VectorArray):
     :meth:`~VectorArray.inner` the Euclidean inner product is implemented if the `product`
     argument is `None`. In general, this does not have to be the case for |VectorArrays|.
     """
+
+    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+        """Create a |DOFVectorArray| of vectors with random entries.
+
+        This is a shorthand for
+        `self.space.random(count, distribution, radom_state, seed, **kwargs)`.
+
+        Supported random distributions::
+
+            'uniform': Uniform distribution in half-open interval
+                       [`low`, `high`).
+            'normal':  Normal (Gaussian) distribution with mean
+                       `loc` and standard deviation `scale`.
+
+        Note that not all random distributions are necessarily implemented
+        by all |VectorSpace| implementations.
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+        distribution
+            Random distribution to use (`'uniform'`, `'normal'`).
+        low
+            Lower bound for `'uniform'` distribution (defaults to `0`).
+        high
+            Upper bound for `'uniform'` distribution (defaults to `1`).
+        loc
+            Mean for `'normal'` distribution (defaults to `0`).
+        scale
+            Standard deviation for `'normal'` distribution (defaults to `1`).
+        random_state
+            :class:`~numpy.random.RandomState` to use for sampling.
+            If `None`, a new random state is generated using `seed`
+            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
+            random state is used.
+        seed
+            If not `None`, a new radom state with this seed is used.
+        reserve
+            Hint for the backend to which length the array will grow.
+        """
+        return self.space.random(count, distribution, random_state, seed, **kwargs)
 
     def ones(self, count=1, reserve=0):
         """Create a |DOFVectorArray| of vectors of the same |VectorSpace| with all DOFs set to one.
@@ -717,7 +742,7 @@ class VectorSpace(ImmutableObject):
     the vectors, or a socket for communication with an external
     PDE solver).
 
-    New |VectorArrays| of null vectors are created via
+    New |VectorArrays| of zero vectors are created via
     :meth:`~VectorSpace.zeros`.  The
     :meth:`~VectorSpace.make_array` method builds a new
     |VectorArray| from given raw data of the underlying linear algebra
@@ -747,6 +772,8 @@ class VectorSpace(ImmutableObject):
     is_scalar
         Equivalent to
         `isinstance(space, NumpyVectorSpace) and space.dim == 1 and space.id is None`.
+    is_DOFVectorSpace
+        If `True` only |DOFVectorArrays| can be created through :meth:`~VectorSpace.make_array`.
     """
 
     id = None
@@ -769,7 +796,7 @@ class VectorSpace(ImmutableObject):
 
     @abstractmethod
     def zeros(self, count=1, reserve=0):
-        """Create a |VectorArray| of null vectors
+        """Create a |VectorArray| of zero vectors.
 
         Parameters
         ----------
@@ -800,6 +827,8 @@ class VectorSpace(ImmutableObject):
         -------
         A |VectorArray| containing `count` vectors with each entry set to one.
         """
+        if not hasattr(self, 'is_DOFVectorSpace') or not self.is_DOFVectorSpace:
+            raise NotImplementedError
         return self.full(1., count, reserve)
 
     def full(self, value, count=1, reserve=0):
@@ -818,35 +847,22 @@ class VectorSpace(ImmutableObject):
         -------
         A |VectorArray| containing `count` vectors with each entry set to `value`.
         """
+        if not hasattr(self, 'is_DOFVectorSpace') or not self.is_DOFVectorSpace:
+            raise NotImplementedError
         return self.from_numpy(np.full((count, self.dim), value))
 
     def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
         """Create a |VectorArray| of vectors with random entries.
 
-        Supported random distributions::
-
-            'uniform': Uniform distribution in half-open interval
-                       [`low`, `high`).
-            'normal':  Normal (Gaussian) distribution with mean
-                       `loc` and standard deviation `scale`.
-
-        Note that not all random distributions are necessarily implemented
-        by all |VectorSpace| implementations.
+        For available distributions for |DOFVectorArrays| and the corresponding
+        parameters see :meth:`~DOFVectorArray.random`.
 
         Parameters
         ----------
         count
             The number of vectors.
         distribution
-            Random distribution to use (`'uniform'`, `'normal'`).
-        low
-            Lower bound for `'uniform'` distribution (defaults to `0`).
-        high
-            Upper bound for `'uniform'` distribution (defaults to `1`).
-        loc
-            Mean for `'normal'` distribution (defaults to `0`).
-        scale
-            Standard deviation for `'normal'` distribution (defaults to `1`).
+            Random distribution to use.
         random_state
             :class:`~numpy.random.RandomState` to use for sampling.
             If `None`, a new random state is generated using `seed`
@@ -857,13 +873,15 @@ class VectorSpace(ImmutableObject):
         reserve
             Hint for the backend to which length the array will grow.
         """
+        if not hasattr(self, 'is_DOFVectorSpace') or not self.is_DOFVectorSpace:
+            raise NotImplementedError
         assert random_state is None or seed is None
         random_state = get_random_state(random_state, seed)
         values = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
         return self.from_numpy(values)
 
     def empty(self, reserve=0):
-        """Create an empty |VectorArray|
+        """Create an empty |VectorArray|.
 
         This is a shorthand for `self.zeros(0, reserve)`.
 
@@ -879,7 +897,7 @@ class VectorSpace(ImmutableObject):
         return self.zeros(0, reserve=reserve)
 
     def from_numpy(self, data, ensure_copy=False):
-        """Create a |VectorArray| from a |NumPy array|
+        """Create a |VectorArray| from a |NumPy array|.
 
         Note that this method will not be supported by all vector
         space implementations.

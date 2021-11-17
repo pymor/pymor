@@ -554,6 +554,7 @@ class ListVectorSpace(VectorSpace):
 
     dim = None
     vector_type = Vector
+    is_DOFVectorSpace = True
 
     @abstractmethod
     def zero_vector(self):

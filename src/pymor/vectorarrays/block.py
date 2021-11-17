@@ -196,6 +196,7 @@ class BlockVectorSpace(VectorSpace):
     def __init__(self, subspaces):
         subspaces = tuple(subspaces)
         assert all([isinstance(subspace, VectorSpace) for subspace in subspaces])
+        self.is_DOFVectorSpace = all([subspace.is_DOFVectorSpace for subspace in subspaces])
         self.subspaces = subspaces
 
     def __eq__(self, other):
@@ -226,7 +227,7 @@ class BlockVectorSpace(VectorSpace):
         """:noindex:"""
         assert len(obj) == len(self.subspaces)
         assert all(block in subspace for block, subspace in zip(obj, self.subspaces))
-        if all(isinstance(block, DOFVectorArray) for block in obj):
+        if self.is_DOFVectorSpace:
             return BlockDOFVectorArray(obj, self)
         else:
             return BlockVectorArray(obj, self)

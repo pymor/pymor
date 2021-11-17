@@ -351,6 +351,8 @@ class NumpyVectorSpace(VectorSpace):
         See :attr:`~pymor.vectorarrays.interface.VectorSpace.id`.
     """
 
+    is_DOFVectorSpace = True
+
     def __init__(self, dim, id=None):
         self.dim = dim
         self.id = id
