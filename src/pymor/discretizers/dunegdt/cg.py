@@ -91,7 +91,7 @@ if config.HAVE_DUNEGDT:
             Tag to determine which linear algebra backend from dune-xt is used.
         advection_in_divergence_form
             If true, treats linear advection as advertised in StationaryProblem (i.e.
-            :math:`∇ ⋅ (v u)`), else as in :math:`v ⋅∇ u` (where :math:`v` denotes the vector
+            :math:`∇ ⋅ (v u)`), else as in :math:`v ⋅∇ u` (where :math:`v` denotes the advective
             field).
         mu_energy_product
             If specified, converted to a |Mu| and used to assemble an appropriate energy product.
