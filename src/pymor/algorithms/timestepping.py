@@ -224,9 +224,9 @@ class TimeStepperIterator(BasicObject):
             # compute P1-Lagrange interpolation
             U_n, U_np1 = self.U_n, self.U_np1
             # but return node values if t is close enough
-            if floatcmp.almost_equal(t, t_n):
+            if floatcmp.float_cmp(t, t_n):
                 return U_n
-            elif floatcmp.almost_equal(t, t_np1):
+            elif floatcmp.float_cmp(t, t_np1):
                 return U_np1
             else:
                 dt = t_np1 - t_n
