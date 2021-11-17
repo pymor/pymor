@@ -61,7 +61,7 @@ class TimeStepper(ImmutableObject):
         assert interpolation in self.available_interpolations
         self.__auto_init(locals())
 
-    def solve(self, t0, t1, U0, A, F=None, M=None, mu=None, iter=False, return_times=False):
+    def solve(self, t0, t1, U0, A, F=None, M=None, mu=None, return_iter=False, return_times=False):
         """Apply time-stepper to the equation ::
 
             M * d_t u + A(u, mu, t) = F(mu, t),
@@ -85,7 +85,7 @@ class TimeStepper(ImmutableObject):
         mu
             |Parameter values| for which `operator` and `rhs` are evaluated. The current
             time is added to `mu` with key `t`.
-        iter
+        return_iter
             Determines the return data, see below.
         return_times
             Determines the return data, see below.
@@ -93,18 +93,20 @@ class TimeStepper(ImmutableObject):
         Returns
         -------
         U
-            If `iter == False` and `return_times == False` (the default), where `U` is a |VectorArray| containing the
-            solution trajectory.
+            If `return_iter == False` and `return_times == False` (the default), where `U` is a |VectorArray|
+            containing the solution trajectory.
         (U, t)
-            If `iter == False` and `return_times == True`, where `t` is a list of time points corresponding to `U`.
+            If `return_iter == False` and `return_times == True`, where `t` is a list of time points corresponding to
+            `U`.
         iterator
-            If `iter == True`, an iterator yielding either `U_n` (if `return_times == False`) or `(U_n, t_n)` in each
-            step.
+            If `return_iter == True`, an iterator yielding either `U_n` (if `return_times == False`) or `(U_n, t_n)` in
+            each step.
         """
 
         # all checks are delegated to TimeStepperIterator
-        iterator = self.IteratorType(self, t0, t1, U0, A, F=F, M=M, mu=mu, iter=iter, return_times=return_times)
-        if iter:
+        iterator = self.IteratorType(
+                self, t0, t1, U0, A, F=F, M=M, mu=mu, return_iter=return_iter, return_times=return_times)
+        if return_iter:
             return iterator
         elif return_times:
             U = A.source.empty(reserve=self.num_values or 0)
@@ -135,7 +137,7 @@ class TimeStepperIterator(BasicObject):
         The associated :class:`TimeStepper`.
     """
 
-    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, iter, return_times):
+    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times):
         # check input
         assert isinstance(stepper, TimeStepper)
 
@@ -328,8 +330,8 @@ class SingleStepTimeStepperIterator(TimeStepperIterator):
 
 class ImplicitEulerIterator(SingleStepTimeStepperIterator):
 
-    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, iter, return_times):
-        super().__init__(stepper, t0, t1, U0, A, F, M, mu, iter, return_times)
+    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times):
+        super().__init__(stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times)
         self.dt = dt = (t1 - t0) / stepper.nt
         # use the ones from base, these are checked and converted in super().__init__()
         A, F, M, mu = self.A, self.F, self.M, self.mu
@@ -403,8 +405,8 @@ class ImplicitEulerTimeStepper(TimeStepper):
 
 class ExplicitEulerIterator(SingleStepTimeStepperIterator):
 
-    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, iter, return_times):
-        super().__init__(stepper, t0, t1, U0, A, F, M, mu, iter, return_times)
+    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times):
+        super().__init__(stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times)
         self.dt = dt = (t1 - t0) / stepper.nt
         # use the ones from base, these are checked and converted in super().__init__()
         A, F, M, mu = self.A, self.F, self.M, self.mu
@@ -487,8 +489,8 @@ class ExplicitEulerTimeStepper(TimeStepper):
 
 class ExplicitRungeKuttaIterator(SingleStepTimeStepperIterator):
 
-    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, iter, return_times):
-        super().__init__(stepper, t0, t1, U0, A, F, M, mu, iter, return_times)
+    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times):
+        super().__init__(stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times)
         self.dt = dt = (t1 - t0) / stepper.nt
         # use the ones from base, these are checked and converted in super().__init__()
         A, F, M, mu = self.A, self.F, self.M, self.mu
