@@ -594,7 +594,7 @@ if config.HAVE_DUNEGDT:
                     data['boundary_info'], DirichletBoundary())
             if interpolated_initial_data_on_boundary.dofs.vector.sup_norm() > ensure_consistent_initial_values:
                 if order > 1:
-                    logger.warn("Falling back to P^11-interpolation of initial values to ensure H^1_0-conformity, "
+                    logger.warn("Falling back to P^1-interpolation of initial values to ensure H^1_0-conformity, "
                                 "since 'ensure_consistent_initial_values' is positive and given 'initial_values' are "
                                 "not in H^1_0!")
                 # ... and ensure zero values on the boundary
