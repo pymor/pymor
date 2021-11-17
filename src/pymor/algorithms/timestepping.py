@@ -48,6 +48,9 @@ class TimeStepper(ImmutableObject):
         The number of returned vectors of the solution trajectory. If `None`, each intermediate vector that is
         calculated is returned. Else an interpolation of the calculated vectors on an equidistant temporal grid is
         returned, using an appropriate interpolation of the respective time stepper.
+    interpolation
+        Type of temporal interpolation to be used. Currently implemented are: piecewise constant (P0) and piecewise
+        linear (P1).
     """
 
     IteratorType = None
@@ -218,20 +221,26 @@ class TimeStepperIterator(BasicObject):
         elif self.stepper.interpolation == 'P1':
             # compute P1-Lagrange interpolation
             U_n, U_np1 = self.U_n, self.U_np1
-            dt = t_np1 - t_n
-            return (t_np1 - t)/dt * U_n + (t - t_n)/dt * U_np1
+            # but return node values if t is close enough
+            if float_cmp.almost_equal(t, t_n):
+                return U_n
+            elif float_cmp.almost_equal(t, t_np1):
+                return U_np1
+            else:
+                dt = t_np1 - t_n
+                return (t_np1 - t)/dt * U_n + (t - t_n)/dt * U_np1
         else:
             raise NotImplementedError(f'{self.interpolation}-interpolation not available!')
 
     def _interpolated_step(self):
         """
-        Returns `(U_next, t_next)` (if `return_times == True`, otherwise `U_next`), behaviour depends on `num_values`:
+        Returns `(U_next, t_next)` (if `return_times == True`, otherwise `U_next`), behavior depends on `num_values`:
         If `num_values` is provided, performs as many actual steps (by calling :meth:`_step`) as required to obtain
         an interpolation of the solution, U(t_next) at the next required interpolation point t_next >= t_n, and
         returns (U(t_next), t_next). If `num_values` is not provided, performs a single step (by calling :meth:`_step`)
         starting from t_n, to compute (U(t_{n + 1}), t_{n + 1}).
         """
-        if self.t > self.t1 or floatcmp.float_cmp(self.t, self.t1):
+        if floatcmp.almost_less(self.t1, self.t):
             # this is the end
             raise StopIteration
         elif self.stepper.num_values:
@@ -302,17 +311,13 @@ class SingleStepTimeStepperIterator(TimeStepperIterator):
         if not hasattr(self, 'U_n'):
             if not self.logging_disabled:
                 self.logger.debug(f't={self.t}: returning initial data (mu={self.mu}) ...')
-            self.t_n = self.t0
-            self.U_n = self.U0.copy()
-            return self.U_n, self.t_n
-        elif not hasattr(self, 'U_np1'):
-            # this is the first step
-            if not self.logging_disabled:
-                self.logger.debug(f't={self.t}: stepping (mu={self.mu}) ...')
-            self.U_np1, self.t_np1 = self._step_function(self.U_n, self.t_n)
+            self.t_n = self.t0   # setting these just in case ...
+            self.U_n = self.U0   # ... for _interpolate
+            self.t_np1 = self.t0
+            self.U_np1 = self.U0.copy()
             return self.U_np1, self.t_np1
         else:
-            # this is a usual step
+            # this is the first actual step or a usual step
             self.t_n = self.t_np1
             self.U_n = self.U_np1.copy()
             if not self.logging_disabled:
@@ -325,7 +330,6 @@ class ImplicitEulerIterator(SingleStepTimeStepperIterator):
 
     def __init__(self, stepper, t0, t1, U0, A, F, M, mu, iter, return_times):
         super().__init__(stepper, t0, t1, U0, A, F, M, mu, iter, return_times)
-        self.__auto_init(locals())
         self.dt = dt = (t1 - t0) / stepper.nt
         # use the ones from base, these are checked and converted in super().__init__()
         A, F, M, mu = self.A, self.F, self.M, self.mu
@@ -380,7 +384,10 @@ class ImplicitEulerTimeStepper(TimeStepper):
         returned, using an appropriate interpolation of the respective time stepper.
     solver_options
         The |solver_options| used to invert `M + dt*A`. The special values `'mass'` and `'operator'` are recognized,
-        in which case the solver_options of M (resp. A) are used.
+        in which case the solver_options of `M` (resp. `A`) are used.
+    interpolation
+        Type of temporal interpolation to be used. Currently implemented are: piecewise constant (P0) and piecewise
+        linear (P1).
     """
 
     IteratorType = ImplicitEulerIterator
@@ -398,15 +405,14 @@ class ExplicitEulerIterator(SingleStepTimeStepperIterator):
 
     def __init__(self, stepper, t0, t1, U0, A, F, M, mu, iter, return_times):
         super().__init__(stepper, t0, t1, U0, A, F, M, mu, iter, return_times)
-        self.__auto_init(locals())
         self.dt = dt = (t1 - t0) / stepper.nt
         # use the ones from base, these are checked and converted in super().__init__()
         A, F, M, mu = self.A, self.F, self.M, self.mu
 
         # prepare the step function U_np1 = M^{-1}(M U_n + dt F - dt A U_n)
-        if not isinstance(M, IdentityOperator) and (not M.parametric or 't' not in M.parameters):
+        if not 't' in M.parameters:
             M = M.assemble(mu)
-        if not A.parametric or 't' not in A.parameters:
+        if not 't' in A.parameters:
             A = A.assemble(mu)
 
         if isinstance(F, ZeroOperator):
@@ -463,6 +469,9 @@ class ExplicitEulerTimeStepper(TimeStepper):
         The number of returned vectors of the solution trajectory. If `None`, each intermediate vector that is
         calculated is returned. Else an interpolation of the calculated vectors on an equidistant temporal grid is
         returned, using an appropriate interpolation of the respective time stepper.
+    interpolation
+        Type of temporal interpolation to be used. Currently implemented are: piecewise constant (P0) and piecewise
+        linear (P1).
     """
 
     IteratorType = ExplicitEulerIterator
@@ -480,7 +489,6 @@ class ExplicitRungeKuttaIterator(SingleStepTimeStepperIterator):
 
     def __init__(self, stepper, t0, t1, U0, A, F, M, mu, iter, return_times):
         super().__init__(stepper, t0, t1, U0, A, F, M, mu, iter, return_times)
-        self.__auto_init(locals())
         self.dt = dt = (t1 - t0) / stepper.nt
         # use the ones from base, these are checked and converted in super().__init__()
         A, F, M, mu = self.A, self.F, self.M, self.mu
@@ -547,7 +555,7 @@ class ExplicitRungeKuttaTimeStepper(TimeStepper):
     Parameters
     ----------
     method
-        Either a string identifying the method or a tuple (c, A, b) of butcher arrays.
+        Either a string identifying the method or a tuple (c, A, b) of butcher tableaus.
     nt
         The number of time-steps the time-stepper will perform.
     num_values
