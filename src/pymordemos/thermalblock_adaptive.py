@@ -121,7 +121,7 @@ def main(
     if pickle:
         print(f"\nWriting reduced model to file {pickle}_reduced ...")
         with open(pickle + '_reduced', 'wb') as f:
-            dump(rom, f)
+            dump((rom, problem.parameter_space), f)
         print(f"Writing detailed model and reductor to file {pickle}_detailed ...")
         with open(pickle + '_detailed', 'wb') as f:
             dump((fom, reductor), f)
