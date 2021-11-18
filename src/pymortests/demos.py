@@ -43,6 +43,7 @@ DISCRETIZATION_ARGS = (
     ('burgers', ['--num-flux=engquist_osher', '0.1']),
     ('burgers', ['--num-flux=simplified_engquist_osher', '0.1']),
     ('linear_optimization', [40, 20]),
+    ('output_error_estimation', [10, 4, 5]),
     ('parabolic', ['heat', 1]),
     ('parabolic', ['heat', '--rect', 1]),
     ('parabolic', ['heat', '--fv', 1]),
