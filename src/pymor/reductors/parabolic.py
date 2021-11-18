@@ -92,12 +92,13 @@ class ParabolicRBReductor(InstationaryRBReductor):
             output_func = self.fom.output_functional
             product = self.products['RB']
             if not isinstance(output_func, LincombOperator):
-                output_func = LincombOperator([output_func,], [1,])
+                output_func = LincombOperator([output_func, ], [1, ])
             # compute gramian of the riesz representatives
             for d in range(self.fom.dim_output):
-                riesz_representatives = [product.apply_inverse(func.as_source_array()[d]) for func in output_func.operators]
-                output_estimator_matrix = np.array(
-                        [[product.apply2(rr, ss)[0][0] for rr in riesz_representatives] for ss in riesz_representatives])
+                riesz_representatives = [product.apply_inverse(func.as_source_array()[d])
+                                         for func in output_func.operators]
+                output_estimator_matrix = np.array([[product.apply2(rr, ss)[0][0] for rr in riesz_representatives]
+                                                    for ss in riesz_representatives])
                 del riesz_representatives
                 output_estimator_matrices.append(output_estimator_matrix)
             # wrap coefficient functionals if required
@@ -143,7 +144,7 @@ class ParabolicRBEstimator(ImmutableObject):
 
     def estimate_output_error(self, U, mu, m, return_error_sequence=False):
         if not self.output_estimator_matrices or not self.output_functional_coeffs:
-            raise NotImplemented
+            raise NotImplementedError
         estimate = self.estimate_error(U, mu, m, return_error_sequence=return_error_sequence)
         # scale with dual norm of the output functional
         coeff_vals = np.array([c.evaluate(mu) for c in self.output_functional_coeffs])

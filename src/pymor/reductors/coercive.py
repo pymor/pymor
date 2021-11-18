@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.core.base import ImmutableObject
-from pymor.operators.constructions import LincombOperator, induced_norm, VectorOperator
+from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ParameterFunctional, ConstantParameterFunctional
 from pymor.reductors.basic import StationaryRBReductor
@@ -58,12 +58,13 @@ class CoerciveRBReductor(StationaryRBReductor):
             output_func = self.fom.output_functional
             product = self.products['RB']
             if not isinstance(output_func, LincombOperator):
-                output_func = LincombOperator([output_func,], [1,])
+                output_func = LincombOperator([output_func, ], [1, ])
             # compute gramian of the riesz representatives
             for d in range(self.fom.dim_output):
-                riesz_representatives = [product.apply_inverse(func.as_source_array()[d]) for func in output_func.operators]
-                output_estimator_matrix = np.array(
-                        [[product.apply2(rr, ss)[0][0] for rr in riesz_representatives] for ss in riesz_representatives])
+                riesz_representatives = [product.apply_inverse(func.as_source_array()[d])
+                                         for func in output_func.operators]
+                output_estimator_matrix = np.array([[product.apply2(rr, ss)[0][0] for rr in riesz_representatives]
+                                                    for ss in riesz_representatives])
                 del riesz_representatives
                 output_estimator_matrices.append(output_estimator_matrix)
             # wrap coefficient functionals if required
@@ -236,12 +237,13 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
             output_func = self.fom.output_functional
             product = self.products['RB']
             if not isinstance(output_func, LincombOperator):
-                output_func = LincombOperator([output_func,], [1,])
+                output_func = LincombOperator([output_func, ], [1, ])
             # compute gramian of the riesz representatives
             for d in range(self.fom.dim_output):
-                riesz_representatives = [product.apply_inverse(func.as_source_array()[d]) for func in output_func.operators]
-                output_estimator_matrix = np.array(
-                        [[product.apply2(rr, ss)[0][0] for rr in riesz_representatives] for ss in riesz_representatives])
+                riesz_representatives = [product.apply_inverse(func.as_source_array()[d])
+                                         for func in output_func.operators]
+                output_estimator_matrix = np.array([[product.apply2(rr, ss)[0][0] for rr in riesz_representatives]
+                                                    for ss in riesz_representatives])
                 del riesz_representatives
                 output_estimator_matrices.append(output_estimator_matrix)
             # wrap coefficient functionals if required
@@ -310,4 +312,4 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
         matrix = self.estimator_matrix.matrix[indices, :][:, indices]
 
         return SimpleCoerciveRBEstimator(NumpyMatrixOperator(matrix), self.coercivity_estimator,
-                self.output_estimator_matrices, self.output_functional_coeffs)
+                                         self.output_estimator_matrices, self.output_functional_coeffs)
