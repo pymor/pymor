@@ -148,10 +148,10 @@ class ParabolicRBEstimator(ImmutableObject):
         estimate = self.estimate_error(U, mu, m, return_error_sequence=return_error_sequence)
         # scale with dual norm of the output functional
         coeff_vals = np.array([c.evaluate(mu) for c in self.output_functional_coeffs])
-        dual_norms = []
+        dual_norms = np.empty((m.dim_output, 1))
         for d in range(m.dim_output):
-            dual_norms.append(np.sqrt(coeff_vals.T@(self.output_estimator_matrices[d]@coeff_vals)))
-        return estimate * dual_norms
+            dual_norms[d] = np.sqrt(coeff_vals.T@(self.output_estimator_matrices[d]@coeff_vals))
+        return (estimate * dual_norms).T
 
     def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims and self.initial_residual_range_dims:
