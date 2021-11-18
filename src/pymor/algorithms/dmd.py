@@ -9,7 +9,8 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('svd_method')
-def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', return_A_approx=False):
+def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd',
+        return_A_approx=False, return_A_tilde=False):
     """Dynamic Mode Decomposition.
 
     See Algorithm 1 and Algorithm 2 in :cite:`TRLBK14`.
@@ -35,6 +36,8 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
     return_A_approx
         If `True` the approximation of the operator `A` with `AX=Y` is returned as
         |LowRankOperator|.
+    return_A_tilde
+        If `True` the low-rank dynamics are returned.
 
     Returns
     -------
@@ -42,6 +45,10 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
         |VectorArray| containing the dynamic modes.
     omega
         Time scaled eigenvalues: `ln(l)/dt`.
+    A_approx
+        |LowRankOperator| contains the approximation of the operator `A` with `AX=Y`.
+    A_tilde
+         Low-rank dynamics.
     """
     assert isinstance(X, VectorArray)
     assert isinstance(Y, VectorArray) or Y is None
@@ -77,7 +84,7 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
     omega = np.log(evals) / dt
 
     # ordering
-    sort_idx = np.argsort(np.abs(omega))[::-1]
+    sort_idx = np.argsort(omega.real)[::-1]
     evecs = evecs[:, sort_idx]
     evals = evals[sort_idx]
     omega = omega[sort_idx]
@@ -93,6 +100,11 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd', retu
 
     if return_A_approx:
         A_approx = LowRankOperator(Y.lincomb(V.T), np.diag(s), U, inverted=True)
+        if return_A_tilde:
+            return Wk, omega, A_approx, A_tilde
         return Wk, omega, A_approx
+
+    if return_A_tilde:
+        return Wk, omega, A_tilde
 
     return Wk, omega
