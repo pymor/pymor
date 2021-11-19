@@ -130,6 +130,8 @@ def test_full(vector_array):
 @pyst.given_vector_arrays(realizations=hyst.integers(min_value=0, max_value=30),
                           low=hyst.floats(allow_infinity=False, allow_nan=False),
                           high=hyst.floats(allow_infinity=False, allow_nan=False))
+@example(vector_array=NumpyVectorArray([], NumpyVectorSpace(1)), realizations=2,
+         low=-5e-324, high=0.0)
 def test_random_uniform(vector_array, realizations, low, high):
     # avoid Overflow in np.random.RandomState.uniform
     assume(np.isfinite(high-low))
@@ -150,11 +152,11 @@ def test_random_uniform(vector_array, realizations, low, high):
     assert v.space == vector_array.space
     assert len(v) == c
     if min(v.dim, c) > 0:
-        assert np.all(v.sup_norm() < max(abs(low), abs(high)))
+        assert np.all(v.sup_norm() <= max(abs(low), abs(high)))
     try:
         x = v.to_numpy()
         assert x.shape == (c, v.dim)
-        assert np.all(x < high)
+        assert np.all(x <= high)
         assert np.all(x >= low)
     except NotImplementedError:
         pass
