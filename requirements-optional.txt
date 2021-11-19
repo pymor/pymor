@@ -11,6 +11,7 @@ gmsh
 ipyparallel>=6.2.5
 ipython>=5.0
 ipywidgets
+jupyter_client>=7.0.6
 jupyter_contrib_nbextensions
 lxml
 matplotlib

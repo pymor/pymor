@@ -6,7 +6,7 @@
 # DO NOT use any python features here that require 3.6 or newer
 
 _PYTEST = 'pytest>=4.4'
-# 5.12.* blocked due to https://bugreports.qt.io/browse/PYSIDE-1004 
+# 5.12.* blocked due to https://bugreports.qt.io/browse/PYSIDE-1004
 # however the problem is not actually fixed in 5.12.3 as advertised
 _PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*,!=5.12.*'
 
@@ -39,6 +39,8 @@ def setup_requires():
     ]
 
 
+# recheck if jupyter_client pin still necessary
+#   https://github.com/jupyter-widgets/pythreejs/issues/366
 # Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
 install_requires = ['qtpy', 'packaging', 'diskcache', 'typer', 'click'] + _numpy_scipy()
 install_suggests = {
@@ -49,6 +51,7 @@ install_suggests = {
     'sympy': 'symbolic mathematics',
     'pygments': 'highlighting code',
     'pythreejs': 'threejs bindings for python notebook  visualization',
+    'jupyter_client>=7.0.6': 'necessary to explicitly state here to fix 3js',
     _PYTEST: 'testing framework required to execute unit tests',
     _PYSIDE: 'solution visualization for builtin discretizations',
     'ipywidgets': 'notebook GUI elements',
