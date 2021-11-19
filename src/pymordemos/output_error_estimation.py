@@ -16,7 +16,7 @@ def main(
     verification_samples: int = Argument(..., help='Number of samples used for verification of the output error.')
 ):
     set_log_levels({'pymor': 'WARN'})
-    """Example script for using the DWR output error estimation"""
+    """Example script for using output error estimation"""
     # real valued output
     fom_1 = create_fom(grid_intervals, vector_valued_output=False)
 

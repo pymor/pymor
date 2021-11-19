@@ -60,7 +60,7 @@ class CoerciveRBReductor(StationaryRBReductor):
                                    self.coercivity_estimator, output_estimator_matrices, output_functional_coeffs)
 
     def assemble_output_error_estimator(self):
-        output_estimator_matrices = output_functional_coeffs = []
+        output_estimator_matrices, output_functional_coeffs = [], []
         output_func = self.fom.output_functional
         product = self.products['RB']
         if not isinstance(output_func, LincombOperator):
@@ -246,7 +246,7 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
         return error_estimator
 
     def assemble_output_error_estimator(self):
-        output_estimator_matrices = output_functional_coeffs = []
+        output_estimator_matrices, output_functional_coeffs = [], []
         output_func = self.fom.output_functional
         product = self.products['RB']
         if not isinstance(output_func, LincombOperator):
