@@ -84,30 +84,34 @@ class ParabolicRBReductor(InstationaryRBReductor):
         residual = self.residual_reductor.reduce()
         initial_residual = self.initial_residual_reductor.reduce()
 
-        # optional output estimate
-        output_estimator_matrices = output_functional_coeffs = None
-        if hasattr(self.fom, 'output_functional') and self.fom.output_functional \
-                and self.fom.output_functional.linear:
-            output_estimator_matrices = output_functional_coeffs = []
-            output_func = self.fom.output_functional
-            product = self.products['RB']
-            if not isinstance(output_func, LincombOperator):
-                output_func = LincombOperator([output_func, ], [1, ])
-            # compute gramian of the riesz representatives
-            for d in range(self.fom.dim_output):
-                riesz_representatives = [product.apply_inverse(func.as_source_array()[d])
-                                         for func in output_func.operators]
-                output_estimator_matrix = np.array([[product.apply2(rr, ss)[0][0] for rr in riesz_representatives]
-                                                    for ss in riesz_representatives])
-                del riesz_representatives
-                output_estimator_matrices.append(output_estimator_matrix)
-            # wrap coefficient functionals if required
-            output_functional_coeffs = [c if isinstance(c, ParameterFunctional) else ConstantParameterFunctional(c)
-                                        for c in output_func.coefficients]
+        if self.assemble_output_error_estimate and self.fom.output_functional.linear:
+            output_estimator_matrices, output_functional_coeffs = self.assemble_output_error_estimator()
+        else:
+            output_estimator_matrices = output_functional_coeffs = None
 
         return ParabolicRBEstimator(residual, self.residual_reductor.residual_range_dims, initial_residual,
                                     self.initial_residual_reductor.residual_range_dims, self.coercivity_estimator,
                                     output_estimator_matrices, output_functional_coeffs)
+
+    def assemble_output_error_estimator(self):
+        # optional output estimate
+        output_estimator_matrices = output_functional_coeffs = []
+        output_func = self.fom.output_functional
+        product = self.products['RB']
+        if not isinstance(output_func, LincombOperator):
+            output_func = LincombOperator([output_func, ], [1, ])
+        # compute gramian of the riesz representatives
+        for d in range(self.fom.dim_output):
+            riesz_representatives = [product.apply_inverse(func.as_source_array()[d])
+                                     for func in output_func.operators]
+            output_estimator_matrix = np.array([[product.apply2(rr, ss)[0][0] for rr in riesz_representatives]
+                                                for ss in riesz_representatives])
+            del riesz_representatives
+            output_estimator_matrices.append(output_estimator_matrix)
+        # wrap coefficient functionals if required
+        output_functional_coeffs = [c if isinstance(c, ParameterFunctional) else ConstantParameterFunctional(c)
+                                    for c in output_func.coefficients]
+        return output_estimator_matrices, output_functional_coeffs
 
     def assemble_error_estimator_for_subbasis(self, dims):
         return self._last_rom.error_estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
