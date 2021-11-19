@@ -6,11 +6,12 @@ from numbers import Number
 
 import pytest
 import numpy as np
-from hypothesis import assume, settings
+from hypothesis import assume, settings, example
 from hypothesis import strategies as hyst
 
 from pymor.algorithms.basic import almost_equal
 from pymor.vectorarrays.interface import VectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 from pymor.tools import floatcmp
 from pymor.tools.floatcmp import float_cmp
 from pymortests.pickling import assert_picklable_without_dumps_function
@@ -129,6 +130,8 @@ def test_full(vector_array):
 @pyst.given_vector_arrays(realizations=hyst.integers(min_value=0, max_value=30),
                           low=hyst.floats(allow_infinity=False, allow_nan=False),
                           high=hyst.floats(allow_infinity=False, allow_nan=False))
+@example(vector_array=NumpyVectorArray([], NumpyVectorSpace(1)), realizations=2,
+         low=-5e-324, high=0.0)
 def test_random_uniform(vector_array, realizations, low, high):
     # avoid Overflow in np.random.RandomState.uniform
     assume(np.isfinite(high-low))
@@ -149,11 +152,11 @@ def test_random_uniform(vector_array, realizations, low, high):
     assert v.space == vector_array.space
     assert len(v) == c
     if min(v.dim, c) > 0:
-        assert np.all(v.sup_norm() < max(abs(low), abs(high)))
+        assert np.all(v.sup_norm() <= max(abs(low), abs(high)))
     try:
         x = v.to_numpy()
         assert x.shape == (c, v.dim)
-        assert np.all(x < high)
+        assert np.all(x <= high)
         assert np.all(x >= low)
     except NotImplementedError:
         pass
@@ -267,6 +270,7 @@ def test_copy(vectors_and_indices):
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
+@example(vectors_and_indices=(NumpyVectorArray(np.array([[2.22044605e-16]]), NumpyVectorSpace(1)), [0]))
 def test_COW(vectors_and_indices):
     v, ind = vectors_and_indices
     for deep in (True, False):
@@ -279,10 +283,8 @@ def test_COW(vectors_and_indices):
         assert c.space == v.space
         if len(c) > 0 and not np.all(c.norm() == 0):
             c *= 2
-            if ind is None:
-                assert not np.all(almost_equal(c, v))
-            else:
-                assert not np.all(almost_equal(c, v[ind]))
+            vi = v[ind] if ind else v
+            assert not np.all(almost_equal(c, vi, atol=0, rtol=0))
             try:
                 assert np.allclose(c.to_numpy(), 2*indexed(v.to_numpy(), ind))
             except NotImplementedError:
