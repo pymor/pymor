@@ -298,7 +298,8 @@ class InstationaryModel(Model):
         except IndexError:
             dim_input = 0
 
-        super().__init__(dim_input=dim_input, products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
+        super().__init__(dim_input=dim_input, products=products, error_estimator=error_estimator,
+                         visualizer=visualizer, name=name)
 
         self.parameters_internal = dict(self.parameters_internal, t=1)
         self.__auto_init(locals())
