@@ -1368,7 +1368,10 @@ class NumpyConversionOperator(Operator):
     """Converts |VectorArrays| to |NumpyVectorArrays|.
 
     Note that the input |VectorArrays| need to support
-    :meth:`~pymor.vectorarrays.interface.from_numpy`.
+    :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
+    For the adjoint,
+    :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
+    needs to be implemented.
 
     Parameters
     ----------
@@ -1392,8 +1395,8 @@ class NumpyConversionOperator(Operator):
             self.source = space
             self.range = NumpyVectorSpace(space.dim, id=space.id)
         else:
-            self.range = space
             self.source = NumpyVectorSpace(space.dim, id=space.id)
+            self.range = space
 
     @property
     def H(self):
