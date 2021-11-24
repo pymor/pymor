@@ -4,6 +4,8 @@
 
 import numpy as np
 
+from pymor.algorithms.image import estimate_image
+from pymor.algorithms.projection import project
 from pymor.core.base import ImmutableObject
 from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -52,31 +54,15 @@ class CoerciveRBReductor(StationaryRBReductor):
 
         # optional output estimate
         if self.assemble_output_error_estimate and self.fom.output_functional.linear:
-            output_estimator_matrices, output_functional_coeffs = self.assemble_output_error_estimator()
+            output_adjoint = self.fom.output_functional.H
+            output_adjoint_riesz_range = estimate_image(vectors=(output_adjoint,), orthonormalize=True,
+                                                        product=self.products['RB'], riesz_representatives=True)
+            projected_output_adjoint = project(output_adjoint, output_adjoint_riesz_range, None)
         else:
-            output_estimator_matrices = output_functional_coeffs = None
+            projected_output_adjoint = None
 
         return CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
-                                   self.coercivity_estimator, output_estimator_matrices, output_functional_coeffs)
-
-    def assemble_output_error_estimator(self):
-        output_estimator_matrices, output_functional_coeffs = [], []
-        output_func = self.fom.output_functional
-        product = self.products['RB']
-        if not isinstance(output_func, LincombOperator):
-            output_func = LincombOperator([output_func, ], [1, ])
-        # compute gramian of the riesz representatives
-        for d in range(self.fom.dim_output):
-            riesz_representatives = [product.apply_inverse(func.as_source_array()[d])
-                                     for func in output_func.operators]
-            output_estimator_matrix = np.array([[product.apply2(rr, ss)[0][0] for rr in riesz_representatives]
-                                                for ss in riesz_representatives])
-            del riesz_representatives
-            output_estimator_matrices.append(output_estimator_matrix)
-        # wrap coefficient functionals if required
-        output_functional_coeffs = [c if isinstance(c, ParameterFunctional) else ConstantParameterFunctional(c)
-                                    for c in output_func.coefficients]
-        return output_estimator_matrices, output_functional_coeffs
+                                   self.coercivity_estimator, projected_output_adjoint)
 
     def assemble_error_estimator_for_subbasis(self, dims):
         return self._last_rom.error_estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
@@ -88,8 +74,7 @@ class CoerciveRBEstimator(ImmutableObject):
     Not to be used directly.
     """
 
-    def __init__(self, residual, residual_range_dims, coercivity_estimator, output_estimator_matrices=None,
-                 output_functional_coeffs=None):
+    def __init__(self, residual, residual_range_dims, coercivity_estimator, projected_output_adjoint=None):
         self.__auto_init(locals())
 
     def estimate_error(self, U, mu, m):
@@ -99,28 +84,23 @@ class CoerciveRBEstimator(ImmutableObject):
         return est
 
     def estimate_output_error(self, U, mu, m):
-        if not self.output_estimator_matrices or not self.output_functional_coeffs:
+        if self.projected_output_adjoint is None:
             raise NotImplementedError
         estimate = self.estimate_error(U, mu, m)
         # scale with dual norm of the output functional
-        coeff_vals = np.array([c.evaluate(mu) for c in self.output_functional_coeffs])
-        dual_norms = []
-        for d in range(m.dim_output):
-            dual_norms.append(np.sqrt(coeff_vals.T@(self.output_estimator_matrices[d]@coeff_vals)))
-        return estimate * dual_norms
+        output_functional_norms = self.projected_output_adjoint.as_range_array(mu).norm()
+        return estimate * output_functional_norms
 
     def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims:
             residual_range_dims = self.residual_range_dims[:dim + 1]
             residual = self.residual.projected_to_subbasis(residual_range_dims[-1], dim)
             return CoerciveRBEstimator(residual, residual_range_dims, self.coercivity_estimator,
-                                       self.output_estimator_matrices,
-                                       self.output_functional_coeffs)
+                                       self.projected_output_adjoint)
         else:
             self.logger.warning('Cannot efficiently reduce to subbasis')
             return CoerciveRBEstimator(self.residual.projected_to_subbasis(None, dim), None,
-                                       self.coercivity_estimator, self.output_estimator_matrices,
-                                       self.output_functional_coeffs)
+                                       self.coercivity_estimator, self.projected_output_adjoint)
 
 
 class SimpleCoerciveRBReductor(StationaryRBReductor):
