@@ -97,7 +97,7 @@ docker_image:
 	$(DOCKER_COMPOSE) build
 
 docker_docs: docker_image
-	NB_DIR=notebooks $(DOCKER_COMPOSE) run docs ./.ci/gitlab/test_docs.bash
+	NB_DIR=notebooks $(DOCKER_COMPOSE) run jupyter ./.ci/gitlab/test_docs.bash
 
 docker_run: docker_image
 	$(DOCKER_COMPOSE) run --service-ports pytest bash
