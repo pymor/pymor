@@ -177,13 +177,7 @@ def _test_demo(demo):
 
     try:
         from matplotlib import pyplot
-        if sys.version_info[:2] > (3, 7) or (
-                sys.version_info[0] == 3 and sys.version_info[1] == 6):
-            pyplot.ion()
-        else:
-            # the ion switch results in interpreter segfaults during multiple
-            # demo tests on 3.7 -> fall back on old monkeying solution
-            pyplot.show = nop
+        pyplot.ion()
     except ImportError:
         pass
     try:
