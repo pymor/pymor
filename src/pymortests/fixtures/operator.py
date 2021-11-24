@@ -340,7 +340,7 @@ thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
     [lambda args=args: thermalblock_fixedparam_factory(*args) for args in thermalblock_factory_arguments]
 
 
-num_misc_operators = 12
+num_misc_operators = 13
 
 
 def misc_operator_with_arrays_and_products_factory(n):
@@ -442,6 +442,12 @@ def misc_operator_with_arrays_and_products_factory(n):
         U = op.source.make_array([U0, U1])
         V = V0
         return op, mu, U, V, sp, rp
+    elif n == 12:
+        from pymor.operators.constructions import NumpyConversionOperator
+        from pymor.vectorarrays.block import BlockVectorSpace
+        space = BlockVectorSpace([NumpyVectorSpace(1), NumpyVectorSpace(2)])
+        op = NumpyConversionOperator(space)
+        return op, None, op.source.random(), op.range.random(), None, None
     else:
         assert False
 

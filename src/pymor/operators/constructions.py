@@ -1362,3 +1362,55 @@ class InducedNorm(ParametricObject):
         if self.raise_negative and np.any(norm_squared < 0):
             raise ValueError(f'norm is negative (square = {norm_squared})')
         return np.sqrt(norm_squared)
+
+
+class NumpyConversionOperator(Operator):
+    """Converts |VectorArrays| to |NumpyVectorArrays|.
+
+    Note that the input |VectorArrays| need to support
+    :meth:`~pymor.vectorarrays.interface.from_numpy`.
+
+    Parameters
+    ----------
+    space
+        The |VectorSpace| of the |VectorArrays| that are converted to
+        |NumpyVectorArrays|.
+    direction
+        Either `'to_numpy'` or `'from_numpy'`. In case of `'to_numpy'`
+        :meth:`apply` takes a |VectorArray| from `space` and returns
+        a |NumpyVectorArray|. In case of `'from_numpy'`, :meth:`apply`
+        takes a |NumpyVectorArray| and returns a |VectorArray| from
+        `space`.
+    """
+
+    linear = True
+
+    def __init__(self, space, direction='to_numpy'):
+        assert direction in ('to_numpy', 'from_numpy')
+        self.__auto_init(locals())
+        if direction == 'to_numpy':
+            self.source = space
+            self.range = NumpyVectorSpace(space.dim, id=space.id)
+        else:
+            self.range = space
+            self.source = NumpyVectorSpace(space.dim, id=space.id)
+
+    @property
+    def H(self):
+        return self.with_(direction='from_numpy' if self.direction == 'to_numpy' else 'to_numpy')
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        return self.range.from_numpy(U.to_numpy())
+
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        assert V in self.range
+        return self.source.from_numpy(V.to_numpy())
+
+    def apply_adjoint(self, V, mu=None):
+        assert V in self.range
+        return self.source.from_numpy(V.to_numpy())
+
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+        assert U in self.source
+        return self.range.from_numpy(U.to_numpy())
