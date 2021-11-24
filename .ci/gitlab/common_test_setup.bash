@@ -9,11 +9,12 @@ fi
 export PYTHONPATH_PRE=${PYTHONPATH}
 export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
 export PATH=~/.local/bin:${PATH}
+export PYBIND11_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_path('purelib'))")
 
 export PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 # any failure here should fail the whole test
-set -eux
+#set -eux
 
 # switches default index to pypi-mirror service
 export PIP_CONFIG_FILE=/usr/local/share/ci.pip.conf

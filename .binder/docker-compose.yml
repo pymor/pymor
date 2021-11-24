@@ -87,17 +87,3 @@ services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/devpi:${CI_IMAGE_TAG}
     restart: "no"
 
-  docs:
-    image: pymor/local_dev:${CI_IMAGE_TAG}
-    depends_on:
-      - jupyter
-    environment:
-      - PYMOR_FORCE_JUPYTER=1
-      - PYMOR_WITH_SPHINX=1
-      - PYMOR_PYTEST_EXTRA
-      - CI_PROJECT_DIR=/pymor
-      - CI_COMMIT_REF_NAME
-    volumes:
-        - ./..:/pymor
-    restart: "no"
-    command: "/pymor/.ci/gitlab/test_docs.bash"

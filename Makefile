@@ -97,7 +97,7 @@ docker_image:
 	$(DOCKER_COMPOSE) build
 
 docker_docs: docker_image
-	NB_DIR=notebooks $(DOCKER_COMPOSE) run docs ./.ci/gitlab/test_docs.bash
+	NB_DIR=notebooks $(DOCKER_COMPOSE) run jupyter ./.ci/gitlab/test_docs.bash
 
 docker_run: docker_image
 	$(DOCKER_COMPOSE) run --service-ports pytest bash
@@ -110,6 +110,9 @@ docker_tutorials: docker_docs docker_jupyter
 
 docker_test: docker_image
 	PYMOR_TEST_SCRIPT=$(PYMOR_TEST_SCRIPT) $(DOCKER_COMPOSE) up pytest
+
+docker_test_oldest: docker_image
+	PYMOR_TEST_SCRIPT=oldest PYPI_MIRROR=oldest DOCKER_BASE_PYTHON=3.7 $(DOCKER_COMPOSE) up pytest
 
 docker_jupyter: docker_image
 	NB_DIR=$(NB_DIR) $(DOCKER_COMPOSE) up jupyter
