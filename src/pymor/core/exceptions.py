@@ -75,6 +75,14 @@ class TorchMissing(ImportError):
         super().__init__(msg)
 
 
+class DolfinMissing(ImportError):
+    """Raise me where having importable dolfin version is non-optional"""
+
+    def __init__(self, msg=None):
+        msg = msg or 'cannot convert to fenics: import of dolfin failed'
+        super().__init__(msg)
+        
+
 class RuleNotMatchingError(NotImplementedError):
     pass
 
