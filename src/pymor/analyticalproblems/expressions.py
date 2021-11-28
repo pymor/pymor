@@ -50,6 +50,7 @@ from itertools import zip_longest
 import numpy as np
 
 from pymor.parameters.base import ParametricObject
+from pymor.core.config import config
 
 
 builtin_max = max
@@ -111,19 +112,23 @@ class Expression(ParametricObject):
         return wrapper
 
     def to_fenics(self, mesh, variable='x'):
-        from ufl import SpatialCoordinate
-        from dolfin import Constant
-        assert variable in self.parameters
-        assert self.parameters[variable] == mesh.topology().dim()
-        params = {p: SpatialCoordinate(mesh) if p == variable else Constant([0.] * dim)
-                  for p, dim in self.parameters.items()}
-        return self.fenics_expr(params), params
+        # sanity check for dolfin before running code
+        if config.HAVE_FENICS:
+            from dolfin import Constant
+            from ufl import SpatialCoordinate
+            print(f'self.params: {self.parameters}')
+            assert variable in self.parameters
+            assert self.parameters[variable] == mesh.topology().dim()
+            params = {p: SpatialCoordinate(mesh) if p == variable else Constant([0.] * dim)
+                      for p, dim in self.parameters.items()}
+            return self.fenics_expr(params), params
 
     def numpy_expr(self):
         """Called by :meth:`~Expression.to_numpy`."""
         raise NotImplementedError
 
     def fenics_expr(self, params):
+        """Called by :meth:`~Expression.to_fenics`."""
         raise NotImplementedError
 
     def __getitem__(self, index):
@@ -305,6 +310,9 @@ class Neg(Expression):
     def numpy_expr(self):
         return f'(- {self.operand.numpy_expr()})'
 
+    def fenics_expr(self):
+        return f'(- {self.operand.fenics_expr()})'
+
     def __str__(self):
         return f'(- {self.operand})'
 
@@ -355,6 +363,9 @@ class UnaryFunctionCall(Expression):
 
     def numpy_expr(self):
         return f'{self.numpy_symbol}({self.arg.numpy_expr()})'
+
+    def fenics_expr(self):
+        return -1
 
     def __str__(self):
         return f'{self.numpy_symbol}({self.arg})'
@@ -416,31 +427,32 @@ class LT(BinaryOp):   numpy_symbol = '<';  fenics_op = operator.lt   # NOQA
 class GT(BinaryOp):   numpy_symbol = '>';  fenics_op = operator.gt   # NOQA
 
 
-class sin(UnaryFunctionCall):      numpy_symbol = 'sin'      # NOQA
-class cos(UnaryFunctionCall):      numpy_symbol = 'cos'      # NOQA
-class tan(UnaryFunctionCall):      numpy_symbol = 'tan'      # NOQA
-class arcsin(UnaryFunctionCall):   numpy_symbol = 'arcsin'   # NOQA
-class arccos(UnaryFunctionCall):   numpy_symbol = 'arccos'   # NOQA
-class arctan(UnaryFunctionCall):   numpy_symbol = 'arctan'   # NOQA
-class sinh(UnaryFunctionCall):     numpy_symbol = 'sinh'     # NOQA
-class cosh(UnaryFunctionCall):     numpy_symbol = 'cosh'     # NOQA
-class tanh(UnaryFunctionCall):     numpy_symbol = 'tanh'     # NOQA
-class arcsinh(UnaryFunctionCall):  numpy_symbol = 'arcsinh'  # NOQA
-class arccosh(UnaryFunctionCall):  numpy_symbol = 'arccosh'  # NOQA
-class arctanh(UnaryFunctionCall):  numpy_symbol = 'arctanh'  # NOQA
-class exp(UnaryFunctionCall):      numpy_symbol = 'exp'      # NOQA
-class exp2(UnaryFunctionCall):     numpy_symbol = 'exp2'     # NOQA
-class log(UnaryFunctionCall):      numpy_symbol = 'log'      # NOQA
-class log2(UnaryFunctionCall):     numpy_symbol = 'log2'     # NOQA
-class log10(UnaryFunctionCall):    numpy_symbol = 'log10'    # NOQA
-class sqrt(UnaryFunctionCall):     numpy_symbol = 'sqrt'     # NOQA
-class abs(UnaryFunctionCall):      numpy_symbol = 'abs'      # NOQA
-class sign(UnaryFunctionCall):     numpy_symbol = 'sign'     # NOQA
+class sin(UnaryFunctionCall):      numpy_symbol = 'sin'; fenics_op = 'sin'      # NOQA
+class cos(UnaryFunctionCall):      numpy_symbol = 'cos'; fenics_op = 'cos'      # NOQA
+class tan(UnaryFunctionCall):      numpy_symbol = 'tan'; fenics_op = ''         # NOQA
+class arcsin(UnaryFunctionCall):   numpy_symbol = 'arcsin'; fenics_op = ''      # NOQA
+class arccos(UnaryFunctionCall):   numpy_symbol = 'arccos'; fenics_op = ''      # NOQA
+class arctan(UnaryFunctionCall):   numpy_symbol = 'arctan'; fenics_op = ''      # NOQA
+class sinh(UnaryFunctionCall):     numpy_symbol = 'sinh'; fenics_op = ''        # NOQA
+class cosh(UnaryFunctionCall):     numpy_symbol = 'cosh'; fenics_op = ''        # NOQA
+class tanh(UnaryFunctionCall):     numpy_symbol = 'tanh'; fenics_op = ''        # NOQA
+class arcsinh(UnaryFunctionCall):  numpy_symbol = 'arcsinh'; fenics_op = ''     # NOQA
+class arccosh(UnaryFunctionCall):  numpy_symbol = 'arccosh'; fenics_op = ''     # NOQA
+class arctanh(UnaryFunctionCall):  numpy_symbol = 'arctanh'; fenics_op = ''     # NOQA
+class exp(UnaryFunctionCall):      numpy_symbol = 'exp'; fenics_op = ''         # NOQA
+class exp2(UnaryFunctionCall):     numpy_symbol = 'exp2'; fenics_op = ''        # NOQA
+class log(UnaryFunctionCall):      numpy_symbol = 'log'; fenics_op = ''         # NOQA
+class log2(UnaryFunctionCall):     numpy_symbol = 'log2'; fenics_op = ''        # NOQA
+class log10(UnaryFunctionCall):    numpy_symbol = 'log10'; fenics_op = ''       # NOQA
+class sqrt(UnaryFunctionCall):     numpy_symbol = 'sqrt'; fenics_op = ''        # NOQA
+class abs(UnaryFunctionCall):      numpy_symbol = 'abs'; fenics_op = ''         # NOQA
+class sign(UnaryFunctionCall):     numpy_symbol = 'sign'; fenics_op = ''        # NOQA
 
 
 class angle(UnaryFunctionCall):
 
     numpy_symbol = 'angle'
+    fenics_op = ''   
 
     def __init__(self, arg):
         if arg.shape[-1] != 2:
