@@ -8,8 +8,7 @@ from pymor.algorithms.image import estimate_image
 from pymor.algorithms.projection import project
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.core.base import ImmutableObject
-from pymor.operators.constructions import IdentityOperator, LincombOperator
-from pymor.parameters.functionals import ParameterFunctional, ConstantParameterFunctional
+from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import InstationaryRBReductor
 from pymor.reductors.residual import ResidualReductor, ImplicitEulerResidualReductor
 
@@ -86,7 +85,7 @@ class ParabolicRBReductor(InstationaryRBReductor):
         residual = self.residual_reductor.reduce()
         initial_residual = self.initial_residual_reductor.reduce()
 
-        if self.assemble_output_error_estimate and self.fom.output_functional.linear:
+        if self.fom.output_functional.linear:
             output_adjoint = self.fom.output_functional.H
             output_adjoint_riesz_range = estimate_image(vectors=(output_adjoint,), orthonormalize=True,
                                                         product=self.products['RB'], riesz_representatives=True)

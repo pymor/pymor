@@ -52,8 +52,8 @@ class CoerciveRBReductor(StationaryRBReductor):
     def assemble_error_estimator(self):
         residual = self.residual_reductor.reduce()
 
-        # optional output estimate
-        if self.assemble_output_error_estimate and self.fom.output_functional.linear:
+        # output estimate
+        if self.fom.output_functional.linear:
             output_adjoint = self.fom.output_functional.H
             output_adjoint_riesz_range = estimate_image(vectors=(output_adjoint,), orthonormalize=True,
                                                         product=self.products['RB'], riesz_representatives=True)
@@ -213,8 +213,8 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
 
         estimator_matrix = NumpyMatrixOperator(estimator_matrix)
 
-        # optional output estimate
-        if self.assemble_output_error_estimate and self.fom.output_functional.linear:
+        # output estimate
+        if self.fom.output_functional.linear:
             output_estimator_matrices, output_functional_coeffs = self.assemble_output_error_estimator()
         else:
             output_estimator_matrices = output_functional_coeffs = None
