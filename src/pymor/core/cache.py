@@ -377,6 +377,25 @@ def cached(function):
     return wrapper
 
 
+def cached_mu(function):
+    """Decorator to make a method of `CacheableObject` actually cached."""
+    params = inspect.signature(function).parameters
+    if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
+        raise NotImplementedError
+    argnames = list(params.keys())[1:]  # first argument is self
+    defaults = {k: v.default for k, v in params.items() if v.default is not v.empty}
+
+    @functools.wraps(function)
+    def wrapper(self, *args, mu=None, **kwargs):
+        if _caching_disabled or self.cache_region is None:
+            return function(self, *args, mu=mu, **kwargs)
+        mu = self.parameters.parse(mu)
+        kwargs['mu'] = mu
+        return self._cached_method_call(function, True, argnames, defaults, args, kwargs)
+
+    return wrapper
+
+
 NoneType = type(None)
 
 
