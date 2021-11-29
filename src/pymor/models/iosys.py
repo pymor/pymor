@@ -11,7 +11,7 @@ from pymor.algorithms.eigs import eigs
 from pymor.algorithms.lyapunov import solve_lyap_lrcf, solve_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import abstractmethod
-from pymor.core.cache import cached
+from pymor.core.cache import cached, cached_mu
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.models.interface import Model
@@ -872,7 +872,7 @@ class LTIModel(InputStateOutputModel):
                 mu=mu).to_numpy().conj()
         return dtfs
 
-    @cached
+    @cached_mu
     def gramian(self, typ, mu=None):
         """Compute a Gramian.
 
