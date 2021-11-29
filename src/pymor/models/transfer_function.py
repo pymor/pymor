@@ -22,7 +22,7 @@ class TransferFunction(InputOutputModel):
         The transfer function defined at least on the open right complex half-plane.
         `tf(s, mu)` is a |NumPy array| of shape `(p, m)`.
     dtf
-        The complex derivative of `H` with respect to `s`.
+        The complex derivative of `H` with respect to `s` (optional).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     name
@@ -40,7 +40,7 @@ class TransferFunction(InputOutputModel):
         The complex derivative of the transfer function.
     """
 
-    def __init__(self, dim_input, dim_output, tf, dtf, parameters={}, cont_time=True, name=None):
+    def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, cont_time=True, name=None):
         super().__init__(dim_input, dim_output, cont_time=cont_time, name=name)
         self.parameters_own = parameters
         self.__auto_init(locals())
