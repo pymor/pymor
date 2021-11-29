@@ -32,7 +32,7 @@ def fom_properties(fom, w):
     w
         Array of frequencies.
     """
-    from pymor.models.iosys import TransferFunction
+    from pymor.models.transfer_function import TransferFunction
     if not isinstance(fom, TransferFunction):
         print(f'order of the model = {fom.order}')
     print(f'number of inputs   = {fom.dim_input}')
@@ -87,7 +87,7 @@ def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
         err = err.with_(solver_options=solver_options)
 
     # Errors
-    from pymor.models.iosys import TransferFunction
+    from pymor.models.transfer_function import TransferFunction
     if not isinstance(lti, TransferFunction):
         print(f'{reductor_short_name} relative H_2-error:    {err.h2_norm() / lti.h2_norm():e}')
         if config.HAVE_SLYCOT:

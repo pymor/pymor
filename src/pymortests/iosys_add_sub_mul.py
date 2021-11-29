@@ -5,7 +5,8 @@
 import numpy as np
 import pytest
 
-from pymor.models.iosys import LTIModel, TransferFunction, SecondOrderModel, LinearDelayModel
+from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
+from pymor.models.transfer_function import TransferFunction
 from pymor.operators.numpy import NumpyMatrixOperator
 
 type_list = [
