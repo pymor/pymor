@@ -226,12 +226,14 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
         return error_estimator
 
     def assemble_output_error_estimator(self):
-        output_estimator_matrices, output_functional_coeffs = [], []
         output_func = self.fom.output_functional
         product = self.products['RB']
         if not isinstance(output_func, LincombOperator):
             output_func = LincombOperator([output_func, ], [1, ])
+        assert all(not op.parametric for op in output_func.operators)
+        assert all(op.linear for op in output_func.operators)
         # compute gramian of the riesz representatives
+        output_estimator_matrices, output_functional_coeffs = [], []
         for d in range(self.fom.dim_output):
             riesz_representatives = [product.apply_inverse(func.as_source_array()[d])
                                      for func in output_func.operators]
