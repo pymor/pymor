@@ -1,0 +1,4 @@
+contact_links:
+  - name: GitHub Discussions
+    url: https://github.com/pymor/pymor/discussions
+    about: For discussing other types of issues.
