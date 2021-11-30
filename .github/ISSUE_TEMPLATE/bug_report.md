@@ -19,10 +19,8 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**System information (please complete the following information):**
-- Operating system: (`python -c 'import platform; print(platform.platform())'`)
-- Python version: (`python -V`)
-- pyMOR version: (`python -c 'import pymor; print(pymor.__version__)'`)
+**System information:**
+Output of `python -c 'import pymor; print(pymor.config)'`.
 
 **Additional context**
 Add any other context about the problem here.
