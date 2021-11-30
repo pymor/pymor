@@ -42,8 +42,6 @@ DISCRETIZATION_ARGS = (
     ('burgers', ['--num-flux=lax_friedrichs', '0.1']),
     ('burgers', ['--num-flux=engquist_osher', '0.1']),
     ('burgers', ['--num-flux=simplified_engquist_osher', '0.1']),
-    ('linear_optimization', [40, 20]),
-    ('output_error_estimation', [10, 4, 5]),
     ('parabolic', ['heat', 1]),
     ('parabolic', ['heat', '--rect', 1]),
     ('parabolic', ['heat', '--fv', 1]),
@@ -124,6 +122,17 @@ FUNCTION_EI_ARGS = (
     ('function_ei', ['--grid=10', 3, 2, 3, 2]),
 )
 
+OUTPUT_FUNCTIONAL_ARGS = (
+    ('linear_optimization', [40, 20]),
+    ('output_error_estimation', [0, 10, 4, 10, 0]),
+    ('output_error_estimation', [0, 10, 4, 10, 1]),
+    ('output_error_estimation', [1, 10, 4, 10, 1]),
+    ('output_error_estimation', [2, 10, 4, 10, 0]),
+    ('output_error_estimation', [2, 10, 4, 10, 1]),
+    ('output_error_estimation', [3, 10, 10, 10, 1]),
+    ('output_error_estimation', [4, 10, 10, 10, 1]),
+)
+
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
     + THERMALBLOCK_ARGS
@@ -136,6 +145,7 @@ DEMO_ARGS = (
     + HAPOD_ARGS
     + FENICS_NONLINEAR_ARGS
     + FUNCTION_EI_ARGS
+    + OUTPUT_FUNCTIONAL_ARGS
 )
 DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 
