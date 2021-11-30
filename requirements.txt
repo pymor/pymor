@@ -10,7 +10,6 @@ qtpy
 scipy>=1.3.3;python_version == "3.8"
 scipy>=1.3;python_version < "3.8"
 scipy>=1.5.4;python_version >= "3.9"
-setuptools>=40.8.0,<49.2.0;python_version < "3.9"
-setuptools>=49.1,<49.2.0;python_version >= "3.9"
+setuptools
 typer
 wheel
