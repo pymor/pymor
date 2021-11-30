@@ -206,7 +206,7 @@ class Config:
         info = f'''
 pyMOR Version {self.version}
 
-Python: {self.PYTHON_VERSION}
+Python {self.PYTHON_VERSION} on {platform.platform()}
 
 External Packages
 {separator}
