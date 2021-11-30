@@ -4,4 +4,20 @@
 {# Call the parent block #}
 {{ super() }}
 <link rel="stylesheet" href="{{ pathto('_static/pymor.css', 1) }}"/>
+
+<script language="javascript">
+    function scrollToTarget() {
+        target_position = $(":target").offset().top;
+        header_height = $('header').height();
+        $(window).scrollTop(target_position - header_height);
+    }
+
+    $(document).ready(function(){
+        window.setTimeout(function() {
+            scrollToTarget();
+        }, 15);
+    });
+
+    window.onhashchange = scrollToTarget;
+</script>
 {%- endblock %}
