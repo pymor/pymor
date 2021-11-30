@@ -97,15 +97,28 @@ def main(
     results_full = {'fom': [], 'rom': [], 'err': [], 'est': []}
     for mu in training_set:
         s_fom = fom.output(mu=mu)
-
         s_rom, s_est = rom.output(return_error_estimate=True, mu=mu, return_estimate_vector=False)
         results_full['fom'].append(s_fom)
         results_full['rom'].append(s_rom)
-        results_full['err'].append(np.linalg.norm(np.abs(s_fom-s_rom)))
+        results_full['err'].append(np.linalg.norm(np.abs(s_fom[-1]-s_rom[-1])))
         results_full['est'].append(s_est)
 
         # just for testing purpose
         assert np.linalg.norm(np.abs(s_rom-s_fom)) <= s_est + 1e-8
+
+        # also test return_estimate_vector and return_error_sequence functionality but do not use it
+        s_rom_, s_est_ = rom.output(return_error_estimate=True, mu=mu, return_estimate_vector=True)
+        assert np.allclose(s_rom, s_rom_)
+        assert s_est == np.linalg.norm(s_est_)
+
+        if fom_number in [3, 4]:
+            s_rom__, s_est__ = rom.output(return_error_estimate=True, mu=mu, return_error_sequence=True)
+            s_rom___, s_est___ = rom.output(return_error_estimate=True, mu=mu, return_estimate_vector=True,
+                                            return_error_sequence=True)
+            # s_rom always stays the same
+            assert np.allclose(s_rom, s_rom__, s_rom___)
+            assert s_est__[-1] == s_est
+            assert np.allclose(s_est__, np.linalg.norm(s_est___, axis=1))
 
     # plot result
     plt.figure()
