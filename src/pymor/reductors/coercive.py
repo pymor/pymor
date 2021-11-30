@@ -83,13 +83,17 @@ class CoerciveRBEstimator(ImmutableObject):
             est /= self.coercivity_estimator(mu)
         return est
 
-    def estimate_output_error(self, U, mu, m):
+    def estimate_output_error(self, U, mu, m, return_estimate_vector=False):
         if self.projected_output_adjoint is None:
             raise NotImplementedError
         estimate = self.estimate_error(U, mu, m)
         # scale with dual norm of the output functional
         output_functional_norms = self.projected_output_adjoint.as_range_array(mu).norm()
-        return estimate * output_functional_norms
+        errs = estimate * output_functional_norms
+        if return_estimate_vector:
+            return errs
+        else:
+            return np.linalg.norm(errs)
 
     def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims:
@@ -281,7 +285,7 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
 
         return est
 
-    def estimate_output_error(self, U, mu, m):
+    def estimate_output_error(self, U, mu, m, return_estimate_vector=False):
         if not self.output_estimator_matrices or not self.output_functional_coeffs:
             raise NotImplementedError
         estimate = self.estimate_error(U, mu, m)
@@ -290,7 +294,11 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
         dual_norms = []
         for d in range(m.dim_output):
             dual_norms.append(np.sqrt(coeff_vals.T@(self.output_estimator_matrices[d]@coeff_vals)))
-        return estimate * dual_norms
+        errs = estimate * dual_norms
+        if return_estimate_vector:
+            return errs
+        else:
+            return np.linalg.norm(errs)
 
     def restricted_to_subbasis(self, dim, m):
         cr = 1 if not m.rhs.parametric else len(m.rhs.operators)

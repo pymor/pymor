@@ -56,6 +56,8 @@ class StationaryModel(Model):
         Name of the model.
     """
 
+    _compute_allowed_kwargs = frozenset({'use_adjoint', 'return_estimate_vector'})
+
     def __init__(self, operator, rhs, output_functional=None, products=None,
                  error_estimator=None, visualizer=None, name=None):
 
@@ -91,8 +93,6 @@ class StationaryModel(Model):
         rhs_d_mu = self.rhs.d_mu(parameter, index).as_range_array(mu)
         rhs = rhs_d_mu - lhs_d_mu
         return self.operator.jacobian(solution, mu=mu).apply_inverse(rhs)
-
-    _compute_allowed_kwargs = frozenset({'use_adjoint'})
 
     def _compute_output_d_mu(self, solution, mu, return_array=False, use_adjoint=None):
         """Compute the gradient of the output functional  w.r.t. the parameters.
@@ -273,7 +273,7 @@ class InstationaryModel(Model):
         Name of the model.
     """
 
-    _compute_allowed_kwargs = frozenset({'return_error_sequence'})
+    _compute_allowed_kwargs = frozenset({'return_error_sequence', 'return_estimate_vector'})
 
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
                  output_functional=None, products=None, error_estimator=None, visualizer=None, name=None):
