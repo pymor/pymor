@@ -37,7 +37,7 @@ class InputOutputModel(Model):
     def __init__(self, dim_input, dim_output, cont_time=True,
                  error_estimator=None, visualizer=None, name=None):
         assert cont_time in (True, False)
-        super().__init__(error_estimator=error_estimator, visualizer=visualizer, name=name)
+        super().__init__(dim_input=dim_input, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
     @abstractmethod

@@ -292,9 +292,16 @@ class InstationaryModel(Model):
         assert mass.linear and mass.source == mass.range == operator.source
         assert output_functional.source == operator.source
 
-        super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
+        try:
+            dim_input = [op.parameters['input']
+                         for op in [operator, rhs, output_functional] if 'input' in op.parameters].pop()
+        except IndexError:
+            dim_input = 0
 
-        self.parameters_internal = {'t': 1}
+        super().__init__(dim_input=dim_input, products=products, error_estimator=error_estimator,
+                         visualizer=visualizer, name=name)
+
+        self.parameters_internal = dict(self.parameters_internal, t=1)
         self.__auto_init(locals())
         self.solution_space = operator.source
         self.linear = operator.linear and (output_functional is None or output_functional.linear)
@@ -307,6 +314,7 @@ class InstationaryModel(Model):
             f'    {"linear" if self.linear else "non-linear"}\n'
             f'    T: {self.T}\n'
             f'    solution_space:  {self.solution_space}\n'
+            f'    dim_input:       {self.dim_input}\n'
             f'    dim_output:      {self.dim_output}\n'
         )
 
