@@ -345,6 +345,11 @@ class CacheableObject(ImmutableObject):
         if defaults:
             kwargs = dict(defaults, **kwargs)
 
+        # assume that all parameters named mu expect parameter values
+        # in case the value is not a Mu instance parse it to avoid cache misses
+        if 'mu' in kwargs and not isinstance(kwargs['mu'], Mu):
+            kwargs['mu'] = self.parameters.parse(kwargs['mu'])
+
         key = build_cache_key((method.__name__, self_id, kwargs))
         found, value = region.get(key)
 
