@@ -2,3 +2,20 @@
 [build-system]
 requires = ['setuptools', 'wheel', 'pytest-runner>=2.9', 'packaging']
 build-backend = "setuptools.build_meta"
+
+[tool.pylint.messages_control]
+variable-naming-style = "any"
+disable = [
+    "import-outside-toplevel",
+    "invalid-name",
+    "line-too-long",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "no-else-return",
+    "no-member",
+    "too-many-arguments",
+    "too-many-branches",
+    "too-many-instance-attributes",
+    "too-many-lines",
+    "too-many-locals",
+]
