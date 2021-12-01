@@ -8,7 +8,6 @@ from pymor.algorithms.krylov import rational_arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
-from pymor.operators.constructions import LincombOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import (ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor,
                                    DelayLTIPGReductor)
@@ -18,21 +17,25 @@ class GenericBHIReductor(BasicObject):
     r"""Generic bitangential Hermite interpolation reductor.
 
     This is a generic reductor for reducing any linear
-    :class:`~pymor.models.iosys.InputStateOutputModel` with the transfer
-    function which can be written in the generalized coprime
-    factorization :math:`H(s) = \mathcal{C}(s) \mathcal{K}(s)^{-1}
-    \mathcal{B}(s)` as in :cite:`BG09`. The interpolation here is limited to
-    only up to the first derivative. Interpolation points are assumed to
-    be pairwise distinct.
+    :class:`~pymor.models.iosys.InputStateOutputModel` that has a transfer
+    function that is a `FactorizedTransferFunction` (see :cite:`BG09`).
+    The interpolation here is limited to only up to the first derivative.
+    Interpolation points are assumed to be pairwise distinct.
 
-    In particular, given interpolation points :math:`\sigma_i`, right
-    tangential directions :math:`b_i`, and left tangential directions
-    :math:`c_i`, for :math:`i = 1, 2, \ldots, r`, which are closed under
-    conjugation (if :math:`\sigma_i` is real, then so are :math:`b_i`
-    and :math:`c_i`; if :math:`\sigma_i` is complex, there is
-    :math:`\sigma_j` such that :math:`\sigma_j = \overline{\sigma_i}`,
-    :math:`b_j = \overline{b_i}`, :math:`c_j = \overline{c_i}`), this
-    reductor finds a transfer function :math:`\hat{H}` such that
+    In particular, given:
+
+    - interpolation points :math:`\sigma_i`,
+    - right tangential directions :math:`b_i`, and
+    - left tangential directions :math:`c_i`,
+
+    for :math:`i = 1, 2, \ldots, r`,
+    which are closed under conjugation
+    (if :math:`\sigma_i` is real, then so are :math:`b_i` and :math:`c_i`;
+    if :math:`\sigma_i` is complex, there is :math:`\sigma_j` such that
+    :math:`\sigma_j = \overline{\sigma_i}`,
+    :math:`b_j = \overline{b_i}`,
+    :math:`c_j = \overline{c_i}`),
+    this reductor finds a transfer function :math:`\hat{H}` such that
 
     .. math::
         H(\sigma_i) b_i & = \hat{H}(\sigma_i) b_i, \\
@@ -63,16 +66,16 @@ class GenericBHIReductor(BasicObject):
         self._product = None
 
     def _B_apply(self, s, V):
-        raise NotImplementedError
+        return self.fom.transfer_function.B(s).apply(V, mu=self.mu)
 
     def _C_apply_adjoint(self, s, V):
-        raise NotImplementedError
+        return self.fom.transfer_function.C(s).apply_adjoint(V, mu=self.mu)
 
     def _K_apply_inverse(self, s, V):
-        raise NotImplementedError
+        return self.fom.transfer_function.K(s).apply_inverse(V, mu=self.mu)
 
     def _K_apply_inverse_adjoint(self, s, V):
-        raise NotImplementedError
+        return self.fom.transfer_function.K(s).apply_inverse_adjoint(V, mu=self.mu)
 
     def _fom_assemble(self):
         raise NotImplementedError
@@ -170,20 +173,6 @@ class LTIBHIReductor(GenericBHIReductor):
         super().__init__(fom, mu=mu)
         self._product = fom.E
 
-    def _B_apply(self, s, V):
-        return self.fom.B.apply(V, mu=self.mu)
-
-    def _C_apply_adjoint(self, s, V):
-        return self.fom.C.apply_adjoint(V, mu=self.mu)
-
-    def _K_apply_inverse(self, s, V):
-        sEmA = s * self.fom.E - self.fom.A
-        return sEmA.apply_inverse(V, mu=self.mu)
-
-    def _K_apply_inverse_adjoint(self, s, V):
-        sEmA = s * self.fom.E - self.fom.A
-        return sEmA.apply_inverse_adjoint(V, mu=self.mu)
-
     def _fom_assemble(self):
         if self.fom.parametric:
             return self.fom.with_(
@@ -258,22 +247,6 @@ class SOBHIReductor(GenericBHIReductor):
         super().__init__(fom, mu=mu)
         self._product = fom.M
 
-    def _B_apply(self, s, V):
-        return self.fom.B.apply(V, mu=self.mu)
-
-    def _C_apply_adjoint(self, s, V):
-        x = self.fom.Cp.apply_adjoint(V, mu=self.mu)
-        y = self.fom.Cv.apply_adjoint(V, mu=self.mu)
-        return x + y * s.conjugate()
-
-    def _K_apply_inverse(self, s, V):
-        s2MpsEpK = s**2 * self.fom.M + s * self.fom.E + self.fom.K
-        return s2MpsEpK.apply_inverse(V, mu=self.mu)
-
-    def _K_apply_inverse_adjoint(self, s, V):
-        s2MpsEpK = s**2 * self.fom.M + s * self.fom.E + self.fom.K
-        return s2MpsEpK.apply_inverse_adjoint(V, mu=self.mu)
-
     def _fom_assemble(self):
         if self.fom.parametric:
             return self.fom.with_(
@@ -300,26 +273,6 @@ class DelayBHIReductor(GenericBHIReductor):
         assert isinstance(fom, LinearDelayModel)
         super().__init__(fom, mu=mu)
         self._product = fom.E
-
-    def _B_apply(self, s, V):
-        return self.fom.B.apply(V, mu=self.mu)
-
-    def _C_apply_adjoint(self, s, V):
-        return self.fom.C.apply_adjoint(V, mu=self.mu)
-
-    def _K_apply_inverse(self, s, V):
-        Ks = LincombOperator(
-            (self.fom.E, self.fom.A) + self.fom.Ad,
-            (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau),
-        )
-        return Ks.apply_inverse(V, mu=self.mu)
-
-    def _K_apply_inverse_adjoint(self, s, V):
-        Ks = LincombOperator(
-            (self.fom.E, self.fom.A) + self.fom.Ad,
-            (s, -1) + tuple(-np.exp(-taui * s) for taui in self.fom.tau),
-        )
-        return Ks.apply_inverse_adjoint(V, mu=self.mu)
 
     def _fom_assemble(self):
         if self.fom.parametric:
