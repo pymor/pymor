@@ -34,7 +34,7 @@ class InputStateOutputModel(Model):
 
     def __init__(self, dim_input, solution_space, dim_output, cont_time=True,
                  error_estimator=None, visualizer=None, name=None):
-        super().__init__(error_estimator=error_estimator, visualizer=visualizer, name=name)
+        super().__init__(dim_input=dim_input, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
 
     @property
