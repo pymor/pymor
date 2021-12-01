@@ -14,11 +14,12 @@ from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.models.interface import Model
+from pymor.models.transfer_function import FactorizedTransferFunction
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
 from pymor.operators.constructions import IdentityOperator, LincombOperator, LowRankOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.parameters.base import Mu
+from pymor.parameters.base import Parameters, Mu
 from pymor.vectorarrays.block import BlockVectorSpace
 
 
@@ -106,6 +107,8 @@ class LTIModel(InputStateOutputModel):
         The |Operator| D.
     E
         The |Operator| E.
+    transfer_function
+        The transfer function.
     """
 
     def __init__(self, A, B, C, D=None, E=None, cont_time=True,
@@ -133,6 +136,28 @@ class LTIModel(InputStateOutputModel):
         super().__init__(B.source.dim, A.source, C.range.dim, cont_time=cont_time,
                          error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
+
+        K = lambda s: s * self.E - self.A
+        B = lambda s: self.B
+        C = lambda s: self.C
+        D = lambda s: self.D
+        dK = lambda s: self.E
+        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
+        dC = lambda s: ZeroOperator(self.C.range, self.C.source)
+        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
+        parameters = Parameters.of(self.A, self.B, self.C, self.D, self.E)
+
+        self.transfer_function = FactorizedTransferFunction(
+            self.dim_input, self.dim_output,
+            K, B, C, D, dK, dB, dC, dD,
+            parameters=parameters, cont_time=cont_time, name=self.name + '_transfer_function')
+
+        self.eval_tf = self.transfer_function.eval_tf
+        self.eval_dtf = self.transfer_function.eval_dtf
+        self.freq_resp = self.transfer_function.bode
+        self.bode = self.transfer_function.bode
+        self.bode_plot = self.transfer_function.bode_plot
+        self.mag_plot = self.transfer_function.mag_plot
 
     def __str__(self):
         return (
@@ -517,106 +542,6 @@ class LTIModel(InputStateOutputModel):
         A = to_matrix(A, format='dense')
         E = None if isinstance(E, IdentityOperator) else to_matrix(E, format='dense')
         return spla.eigvals(A, E)
-
-    def eval_tf(self, s, mu=None):
-        r"""Evaluate the transfer function.
-
-        The transfer function at :math:`s` is
-
-        .. math::
-            C(\mu) (s E(\mu) - A(\mu))^{-1} B(\mu) + D(\mu).
-
-        .. note::
-            Assumes that the number of inputs and outputs is much smaller than the order of the
-            system.
-
-        Parameters
-        ----------
-        s
-            Complex number.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        tfs
-            Transfer function evaluated at the complex number `s`, |NumPy array| of shape
-            `(self.dim_output, self.dim_input)`.
-        """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        A = self.A
-        B = self.B
-        C = self.C
-        D = self.D
-        E = self.E
-
-        sEmA = s * E - A
-        if self.dim_input <= self.dim_output:
-            tfs = C.apply(sEmA.apply_inverse(B.as_range_array(mu=mu),
-                                             mu=mu),
-                          mu=mu).to_numpy().T
-        else:
-            tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(C.as_source_array(mu=mu),
-                                                             mu=mu),
-                                  mu=mu).to_numpy().conj()
-        if not isinstance(D, ZeroOperator):
-            tfs += to_matrix(D, format='dense', mu=mu)
-        return tfs
-
-    def eval_dtf(self, s, mu=None):
-        r"""Evaluate the derivative of the transfer function.
-
-        The derivative of the transfer function at :math:`s` is
-
-        .. math::
-            -C(\mu) (s E(\mu) - A(\mu))^{-1} E(\mu)
-                (s E(\mu) - A(\mu))^{-1} B(\mu).
-
-        .. note::
-            Assumes that the number of inputs and outputs is much smaller than the order of the
-            system.
-
-        Parameters
-        ----------
-        s
-            Complex number.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        dtfs
-            Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
-            shape `(self.dim_output, self.dim_input)`.
-        """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        A = self.A
-        B = self.B
-        C = self.C
-        E = self.E
-
-        sEmA = (s * E - A).assemble(mu=mu)
-        if self.dim_input <= self.dim_output:
-            dtfs = -C.apply(
-                sEmA.apply_inverse(
-                    E.apply(
-                        sEmA.apply_inverse(
-                            B.as_range_array(mu=mu)),
-                        mu=mu)),
-                mu=mu).to_numpy().T
-        else:
-            dtfs = -B.apply_adjoint(
-                sEmA.apply_inverse_adjoint(
-                    E.apply_adjoint(
-                        sEmA.apply_inverse_adjoint(
-                            C.as_source_array(mu=mu)),
-                        mu=mu)),
-                mu=mu).to_numpy().conj()
-        return dtfs
 
     @cached
     def gramian(self, typ, mu=None):
@@ -1093,6 +1018,8 @@ class SecondOrderModel(InputStateOutputModel):
         The |Operator| Cv.
     D
         The |Operator| D.
+    transfer_function
+        The transfer function.
     """
 
     def __init__(self, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
@@ -1115,6 +1042,28 @@ class SecondOrderModel(InputStateOutputModel):
         super().__init__(B.source.dim, M.source, Cp.range.dim, cont_time=cont_time,
                          error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
+
+        K = lambda s: s**2 * self.M + s * self.E + self.K
+        B = lambda s: self.B
+        C = lambda s: self.Cp + s * self.Cv
+        D = lambda s: self.D
+        dK = lambda s: 2 * s * self.M + self.E
+        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
+        dC = lambda s: self.Cv
+        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
+        parameters = Parameters.of(self.M, self.E, self.K, self.B, self.Cp, self.Cv, self.D)
+
+        self.transfer_function = FactorizedTransferFunction(
+            self.dim_input, self.dim_output,
+            K, B, C, D, dK, dB, dC, dD,
+            parameters=parameters, cont_time=cont_time, name=self.name + '_transfer_function')
+
+        self.eval_tf = self.transfer_function.eval_tf
+        self.eval_dtf = self.transfer_function.eval_dtf
+        self.freq_resp = self.transfer_function.bode
+        self.bode = self.transfer_function.bode
+        self.bode_plot = self.transfer_function.bode_plot
+        self.mag_plot = self.transfer_function.mag_plot
 
     def __str__(self):
         return (
@@ -1467,123 +1416,6 @@ class SecondOrderModel(InputStateOutputModel):
         """
         return self.to_lti().poles(mu=mu)
 
-    def eval_tf(self, s, mu=None):
-        r"""Evaluate the transfer function.
-
-        The transfer function at :math:`s` is
-
-        .. math::
-            (C_p(\mu) + s C_v(\mu))
-                (s^2 M(\mu) + s E(\mu) + K(\mu))^{-1} B(\mu)
-            + D(\mu).
-
-        .. note::
-            Assumes that the number of inputs and outputs is much smaller than the order of the
-            system.
-
-        Parameters
-        ----------
-        s
-            Complex number.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        tfs
-            Transfer function evaluated at the complex number `s`, |NumPy array| of shape
-            `(self.dim_output, self.dim_input)`.
-        """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        M = self.M
-        E = self.E
-        K = self.K
-        B = self.B
-        Cp = self.Cp
-        Cv = self.Cv
-        D = self.D
-
-        s2MpsEpK = s**2 * M + s * E + K
-        if self.dim_input <= self.dim_output:
-            CppsCv = Cp + s * Cv
-            tfs = CppsCv.apply(s2MpsEpK.apply_inverse(B.as_range_array(mu=mu),
-                                                      mu=mu),
-                               mu=mu).to_numpy().T
-        else:
-            tfs = B.apply_adjoint(
-                s2MpsEpK.apply_inverse_adjoint(
-                    Cp.as_source_array(mu=mu) + Cv.as_source_array(mu=mu) * s.conjugate(),
-                    mu=mu),
-                mu=mu).to_numpy().conj()
-        if not isinstance(D, ZeroOperator):
-            tfs += to_matrix(D, format='dense')
-        return tfs
-
-    def eval_dtf(self, s, mu=None):
-        r"""Evaluate the derivative of the transfer function.
-
-        .. math::
-            s C_v(\mu) (s^2 M(\mu) + s E(\mu) + K(\mu))^{-1} B(\mu)
-            - (C_p(\mu) + s C_v(\mu))
-                (s^2 M(\mu) + s E(\mu) + K(\mu))^{-1}
-                (2 s M(\mu) + E(\mu))
-                (s^2 M(\mu) + s E(\mu) + K(\mu))^{-1}
-                B(\mu).
-
-        .. note::
-            Assumes that the number of inputs and outputs is much smaller than the order of the
-            system.
-
-        Parameters
-        ----------
-        s
-            Complex number.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        dtfs
-            Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
-            shape `(self.dim_output, self.dim_input)`.
-        """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        M = self.M
-        E = self.E
-        K = self.K
-        B = self.B
-        Cp = self.Cp
-        Cv = self.Cv
-
-        s2MpsEpK = (s**2 * M + s * E + K).assemble(mu=mu)
-        sM2pE = 2 * s * M + E
-        if self.dim_input <= self.dim_output:
-            dtfs = Cv.apply(s2MpsEpK.apply_inverse(B.as_range_array(mu=mu)),
-                            mu=mu).to_numpy().T * s
-            CppsCv = Cp + s * Cv
-            dtfs -= CppsCv.apply(
-                s2MpsEpK.apply_inverse(
-                    sM2pE.apply(
-                        s2MpsEpK.apply_inverse(
-                            B.as_range_array(mu=mu)),
-                        mu=mu)),
-                mu=mu).to_numpy().T
-        else:
-            dtfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(Cv.as_source_array(mu=mu)),
-                                   mu=mu).to_numpy().conj() * s
-            dtfs -= B.apply_adjoint(
-                s2MpsEpK.apply_inverse_adjoint(
-                    sM2pE.apply_adjoint(
-                        s2MpsEpK.apply_inverse_adjoint(
-                            Cp.as_source_array(mu=mu) + Cv.as_source_array(mu=mu) * s.conjugate()),
-                        mu=mu)),
-                mu=mu).to_numpy().conj()
-        return dtfs
-
     @cached
     def gramian(self, typ, mu=None):
         """Compute a second-order Gramian.
@@ -1860,6 +1692,8 @@ class LinearDelayModel(InputStateOutputModel):
         The |Operator| D.
     E
         The |Operator| E.
+    transfer_function
+        The transfer function.
     """
 
     def __init__(self, A, Ad, tau, B, C, D=None, E=None, cont_time=True,
@@ -1884,6 +1718,28 @@ class LinearDelayModel(InputStateOutputModel):
         self.__auto_init(locals())
         self.q = len(Ad)
         self.solution_space = A.source
+
+        K = lambda s: LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
+        B = lambda s: self.B
+        C = lambda s: self.C
+        D = lambda s: self.D
+        dK = lambda s: LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
+        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
+        dC = lambda s: ZeroOperator(self.C.range, self.C.source)
+        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
+        parameters = Parameters.of(self.A, self.Ad,  self.B, self.C, self.D, self.E)
+
+        self.transfer_function = FactorizedTransferFunction(
+            self.dim_input, self.dim_output,
+            K, B, C, D, dK, dB, dC, dD,
+            parameters=parameters, cont_time=cont_time, name=self.name + '_transfer_function')
+
+        self.eval_tf = self.transfer_function.eval_tf
+        self.eval_dtf = self.transfer_function.eval_dtf
+        self.freq_resp = self.transfer_function.bode
+        self.bode = self.transfer_function.bode
+        self.bode_plot = self.transfer_function.bode_plot
+        self.mag_plot = self.transfer_function.mag_plot
 
     def __str__(self):
         return (
@@ -2016,112 +1872,6 @@ class LinearDelayModel(InputStateOutputModel):
             return self.with_(E=E, A=A, Ad=Ad, B=B, C=C, D=D)
         else:
             return NotImplemented
-
-    def eval_tf(self, s, mu=None):
-        r"""Evaluate the transfer function.
-
-        The transfer function at :math:`s` is
-
-        .. math::
-            C \left(s E - A
-                - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B
-            + D.
-
-        .. note::
-            Assumes that the number of inputs and outputs is much smaller than the order of the
-            system.
-
-        Parameters
-        ----------
-        s
-            Complex number.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        tfs
-            Transfer function evaluated at the complex number `s`, |NumPy array| of shape
-            `(self.dim_output, self.dim_input)`.
-        """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        A = self.A
-        Ad = self.Ad
-        B = self.B
-        C = self.C
-        D = self.D
-        E = self.E
-
-        middle = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
-        if self.dim_input <= self.dim_output:
-            tfs = C.apply(middle.apply_inverse(B.as_range_array(mu=mu),
-                                               mu=mu),
-                          mu=mu).to_numpy().T
-        else:
-            tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array(mu=mu),
-                                                               mu=mu),
-                                  mu=mu).to_numpy().conj()
-        if not isinstance(D, ZeroOperator):
-            tfs += to_matrix(D, format='dense')
-        return tfs
-
-    def eval_dtf(self, s, mu=None):
-        r"""Evaluate the derivative of the transfer function.
-
-        The derivative of the transfer function at :math:`s` is
-
-        .. math::
-            -C \left(s E - A
-                    - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1}
-                \left(E
-                    + \sum_{i = 1}^q{\tau_i e^{-\tau_i s} A_i}\right)
-                \left(s E - A
-                    - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B.
-
-        .. note::
-            Assumes that the number of inputs and outputs is much smaller than the order of the
-            system.
-
-        Parameters
-        ----------
-        s
-            Complex number.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        dtfs
-            Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
-            shape `(self.dim_output, self.dim_input)`.
-        """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        A = self.A
-        Ad = self.Ad
-        B = self.B
-        C = self.C
-        E = self.E
-
-        left_and_right = LincombOperator((E, A) + Ad,
-                                         (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau)).assemble(mu=mu)
-        middle = LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
-        if self.dim_input <= self.dim_output:
-            dtfs = -C.apply(
-                left_and_right.apply_inverse(
-                    middle.apply(left_and_right.apply_inverse(B.as_range_array(mu=mu)),
-                                 mu=mu)),
-                mu=mu).to_numpy().T
-        else:
-            dtfs = -B.apply_adjoint(
-                left_and_right.apply_inverse_adjoint(
-                    middle.apply_adjoint(left_and_right.apply_inverse_adjoint(C.as_source_array(mu=mu)),
-                                         mu=mu)),
-                mu=mu).to_numpy().conj()
-        return dtfs
 
 
 class LinearStochasticModel(InputStateOutputModel):
