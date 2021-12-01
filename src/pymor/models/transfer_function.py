@@ -2,15 +2,19 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.models.iosys import InputOutputModel
-from pymor.parameters.base import Mu
+import numpy as np
+import scipy.linalg as spla
+
+from pymor.core.cache import CacheableObject
+from pymor.core.cache import cached
+from pymor.parameters.base import ParametricObject, Mu
 
 
-class TransferFunction(InputOutputModel):
-    """Class for systems represented by a transfer function.
+class TransferFunction(CacheableObject, ParametricObject):
+    r"""Class for systems represented by a transfer function.
 
     This class describes input-output systems given by a transfer
-    function :math:`H(s, mu)`.
+    function :math:`H(s, \mu)`.
 
     Parameters
     ----------
@@ -23,6 +27,8 @@ class TransferFunction(InputOutputModel):
         `tf(s, mu)` is a |NumPy array| of shape `(p, m)`.
     dtf
         The complex derivative of `H` with respect to `s` (optional).
+    parameters
+        The |Parameters| of the transfer function.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     name
@@ -40,8 +46,9 @@ class TransferFunction(InputOutputModel):
         The complex derivative of the transfer function.
     """
 
+    cache_region = 'memory'
+
     def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, cont_time=True, name=None):
-        super().__init__(dim_input, dim_output, cont_time=cont_time, name=name)
         self.parameters_own = parameters
         self.__auto_init(locals())
 
@@ -51,12 +58,24 @@ class TransferFunction(InputOutputModel):
             f'    class: {self.__class__.__name__}\n'
             f'    number of inputs:  {self.dim_input}\n'
             f'    number of outputs: {self.dim_output}\n'
-            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
-            f'    linear time-invariant\n'
-            f'    solution_space:  {self.solution_space}'
+            f'    {"continuous" if self.cont_time else "discrete"}-time'
         )
 
+    @cached
     def eval_tf(self, s, mu=None):
+        """Evaluate the transfer function.
+
+        Parameters
+        ----------
+        s
+            Laplace variable as a complex number.
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        Transfer function value as a 2D |NumPy array|.
+        """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
@@ -65,17 +84,265 @@ class TransferFunction(InputOutputModel):
         else:
             return self.tf(s, mu=mu)
 
+    @cached
     def eval_dtf(self, s, mu=None):
+        """Evaluate the derivative of the transfer function.
+
+        Parameters
+        ----------
+        s
+            Laplace variable as a complex number.
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        Transfer function value as a 2D |NumPy array|.
+        """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
+        if self.dtf is None:
+            raise ValueError('The derivative was not given.')
         if not self.parametric:
             return self.dtf(s)
         else:
             return self.dtf(s, mu=mu)
 
+    def freq_resp(self, w, mu=None):
+        """Evaluate the transfer function on the imaginary axis.
+
+        Parameters
+        ----------
+        w
+            A sequence of angular frequencies at which to compute the transfer function.
+        mu
+            |Parameter values| for which to evaluate the transfer function.
+
+        Returns
+        -------
+        tfw
+            Transfer function values at frequencies in `w`, |NumPy array| of shape
+            `(len(w), self.dim_output, self.dim_input)`.
+        """
+        if not self.cont_time:
+            raise NotImplementedError
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
+        return np.stack([self.eval_tf(1j * wi, mu=mu) for wi in w])
+
+    def bode(self, w, mu=None):
+        """Compute magnitudes and phases.
+
+        Parameters
+        ----------
+        w
+            A sequence of angular frequencies at which to compute the transfer function.
+        mu
+            |Parameter values| for which to evaluate the transfer function.
+
+        Returns
+        -------
+        mag
+            Transfer function magnitudes at frequencies in `w`, |NumPy array| of shape
+            `(len(w), self.dim_output, self.dim_input)`.
+        phase
+            Transfer function phases (in radians) at frequencies in `w`, |NumPy array| of shape
+            `(len(w), self.dim_output, self.dim_input)`.
+        """
+        w = np.asarray(w)
+        mag = np.abs(self.freq_resp(w, mu=mu))
+        phase = np.angle(self.freq_resp(w, mu=mu))
+        phase = np.unwrap(phase, axis=0)
+        return mag, phase
+
+    def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, **mpl_kwargs):
+        """Draw the Bode plot for all input-output pairs.
+
+        Parameters
+        ----------
+        w
+            A sequence of angular frequencies at which to compute the transfer function.
+        mu
+            |Parameter| for which to evaluate the transfer function.
+        ax
+            Axis of shape (2 * `self.dim_output`, `self.dim_input`) to which to plot.
+            If not given, `matplotlib.pyplot.gcf` is used to get the figure and create axis.
+        Hz
+            Should the frequency be in Hz on the plot.
+        dB
+            Should the magnitude be in dB on the plot.
+        deg
+            Should the phase be in degrees (otherwise in radians).
+        mpl_kwargs
+            Keyword arguments used in the matplotlib plot function.
+
+        Returns
+        -------
+        artists
+            List of matplotlib artists added.
+        """
+        if ax is None:
+            import matplotlib.pyplot as plt
+            fig = plt.gcf()
+            width, height = plt.rcParams['figure.figsize']
+            fig.set_size_inches(self.dim_input * width, 2 * self.dim_output * height)
+            fig.set_constrained_layout(True)
+            ax = fig.subplots(2 * self.dim_output, self.dim_input, sharex=True, squeeze=False)
+        else:
+            assert isinstance(ax, np.ndarray) and ax.shape == (2 * self.dim_output, self.dim_input)
+            fig = ax[0, 0].get_figure()
+
+        w = np.asarray(w)
+        freq = w / (2 * np.pi) if Hz else w
+        mag, phase = self.bode(w, mu=mu)
+        if deg:
+            phase *= 180 / np.pi
+
+        artists = np.empty_like(ax)
+        freq_label = f'Frequency ({"Hz" if Hz else "rad/s"})'
+        mag_label = f'Magnitude{" (dB)" if dB else ""}'
+        phase_label = f'Phase ({"deg" if deg else "rad"})'
+        for i in range(self.dim_output):
+            for j in range(self.dim_input):
+                if dB:
+                    artists[2 * i, j] = ax[2 * i, j].semilogx(freq, 20 * np.log10(mag[:, i, j]),
+                                                              **mpl_kwargs)
+                else:
+                    artists[2 * i, j] = ax[2 * i, j].loglog(freq, mag[:, i, j],
+                                                            **mpl_kwargs)
+                artists[2 * i + 1, j] = ax[2 * i + 1, j].semilogx(freq, phase[:, i, j],
+                                                                  **mpl_kwargs)
+        for i in range(self.dim_output):
+            ax[2 * i, 0].set_ylabel(mag_label)
+            ax[2 * i + 1, 0].set_ylabel(phase_label)
+        for j in range(self.dim_input):
+            ax[-1, j].set_xlabel(freq_label)
+        fig.suptitle('Bode plot')
+
+        return artists
+
+    def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
+        """Draw the magnitude plot.
+
+        Parameters
+        ----------
+        w
+            A sequence of angular frequencies at which to compute the transfer function.
+        mu
+            |Parameter values| for which to evaluate the transfer function.
+        ax
+            Axis to which to plot.
+            If not given, `matplotlib.pyplot.gca` is used.
+        ord
+            The order of the norm used to compute the magnitude (the default is the Frobenius norm).
+        Hz
+            Should the frequency be in Hz on the plot.
+        dB
+            Should the magnitude be in dB on the plot.
+        mpl_kwargs
+            Keyword arguments used in the matplotlib plot function.
+
+        Returns
+        -------
+        out
+            List of matplotlib artists added.
+        """
+        if ax is None:
+            import matplotlib.pyplot as plt
+            ax = plt.gca()
+
+        w = np.asarray(w)
+        freq = w / (2 * np.pi) if Hz else w
+        mag = spla.norm(self.freq_resp(w, mu=mu), ord=ord, axis=(1, 2))
+        if dB:
+            out = ax.semilogx(freq, 20 * np.log10(mag), **mpl_kwargs)
+        else:
+            out = ax.loglog(freq, mag, **mpl_kwargs)
+
+        ax.set_title('Magnitude plot')
+        freq_unit = ' (Hz)' if Hz else ' (rad/s)'
+        ax.set_xlabel('Frequency' + freq_unit)
+        mag_unit = ' (dB)' if dB else ''
+        ax.set_ylabel('Magnitude' + mag_unit)
+
+        return out
+
+    @cached
+    def h2_norm(self, return_norm_only=True, **quad_kwargs):
+        """Compute the H2-norm using quadrature.
+
+        This method uses `scipy.integrate.quad` and makes no assumptions on the form of the transfer
+        function.
+
+        By default, the absolute error tolerance in `scipy.integrate.quad` is set to zero (see its
+        optional argument `epsabs`).
+        It can be changed by using the `epsabs` keyword argument.
+
+        Parameters
+        ----------
+        return_norm_only
+            Whether to only return the approximate H2-norm.
+        quad_kwargs
+            Keyword arguments passed to `scipy.integrate.quad`.
+
+        Returns
+        -------
+        norm
+            Computed H2-norm.
+        norm_relerr
+            Relative error estimate (returned if `return_norm_only` is `False`).
+        info
+            Quadrature info (returned if `return_norm_only` is `False` and `full_output` is `True`).
+            See `scipy.integrate.quad` documentation for more details.
+        """
+        if not self.cont_time:
+            raise NotImplementedError
+
+        import scipy.integrate as spint
+        quad_kwargs.setdefault('epsabs', 0)
+        quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j))**2,
+                              0, np.inf,
+                              **quad_kwargs)
+        norm = np.sqrt(quad_out[0] / np.pi)
+        if return_norm_only:
+            return norm
+        norm_relerr = quad_out[1] / (2 * quad_out[0])
+        if len(quad_out) == 2:
+            return norm, norm_relerr
+        else:
+            return norm, norm_relerr, quad_out[2:]
+
+    def h2_inner(self, lti):
+        """Compute H2 inner product with an |LTIModel|.
+
+        Uses the inner product formula based on the pole-residue form
+        (see, e.g., Lemma 1 in :cite:`ABG10`).
+
+        Parameters
+        ----------
+        lti
+            |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|.
+            The D operator is ignored.
+
+        Returns
+        -------
+        inner
+            H2 inner product.
+        """
+        from pymor.models.iosys import LTIModel, _lti_to_poles_b_c
+        assert isinstance(lti, LTIModel)
+
+        poles, b, c = _lti_to_poles_b_c(lti)
+        inner = sum(c[i].dot(self.eval_tf(-poles[i]).dot(b[i]))
+                    for i in range(len(poles)))
+        inner = inner.conjugate()
+
+        return inner
+
     def __add__(self, other):
-        assert isinstance(other, InputOutputModel)
+        assert hasattr(other, 'eval_tf') and hasattr(other, 'eval_dtf')
         assert self.cont_time == other.cont_time
         assert self.dim_input == other.dim_input
         assert self.dim_output == other.dim_output
@@ -90,7 +357,7 @@ class TransferFunction(InputOutputModel):
         return self + (-other)
 
     def __rsub__(self, other):
-        assert isinstance(other, InputOutputModel)
+        assert hasattr(other, 'eval_tf') and hasattr(other, 'eval_dtf')
         assert self.cont_time == other.cont_time
         assert self.dim_input == other.dim_input
         assert self.dim_output == other.dim_output
@@ -105,7 +372,7 @@ class TransferFunction(InputOutputModel):
         return self.with_(tf=tf, dtf=dtf)
 
     def __mul__(self, other):
-        assert isinstance(other, InputOutputModel)
+        assert hasattr(other, 'eval_tf') and hasattr(other, 'eval_dtf')
         assert self.cont_time == other.cont_time
         assert self.dim_input == other.dim_input
 
@@ -115,7 +382,7 @@ class TransferFunction(InputOutputModel):
         return self.with_(tf=tf, dtf=dtf)
 
     def __rmul__(self, other):
-        assert isinstance(other, InputOutputModel)
+        assert hasattr(other, 'eval_tf') and hasattr(other, 'eval_dtf')
         assert self.cont_time == other.cont_time
         assert self.dim_output == other.dim_input
 
