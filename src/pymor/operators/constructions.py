@@ -278,6 +278,19 @@ class ConcatenationOperator(Operator):
         return ConcatenationOperator(tuple(op.jacobian(U, mu=mu) for op, U in zip(self.operators, Us[::-1])),
                                      solver_options=options, name=self.name + '_jacobian')
 
+    def d_mu(self, parameter, index=0):
+        summands = []
+        for i, op in enumerate(self.operators):
+            op_d_mu = op.d_mu(parameter, index)
+            if isinstance(op_d_mu, ZeroOperator):
+                continue
+            if not all(o.linear for o in self.operators[:i]):
+                raise NotImplementedError
+            ops = list(self.operators)
+            ops[i] = op_d_mu
+            summands.append(ConcatenationOperator(ops))
+        return LincombOperator(summands, [1.] * len(summands))
+
     def restricted(self, dofs):
         restricted_ops = []
         for op in self.operators:
