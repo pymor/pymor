@@ -601,7 +601,7 @@ if config.HAVE_TORCH:
                 u = self.fom.solve(mu)
 
             def time_dependent_parameter(t):
-                return [mu.get_time_dependent_value(param)(t) for param in mu]
+                return [mu.get_time_dependent_value(param)(t) for param in self.fom.parameters]
 
             parameters = torch.DoubleTensor([time_dependent_parameter(t)
                                              for t in np.linspace(0., self.fom.T, self.nt)])
@@ -753,7 +753,7 @@ if config.HAVE_TORCH:
             output_size = output_trajectory.shape[0]
 
             def time_dependent_parameter(t):
-                return [mu.get_time_dependent_value(param)(t) for param in mu]
+                return [mu.get_time_dependent_value(param)(t) for param in self.fom.parameters]
 
             parameters = torch.DoubleTensor([time_dependent_parameter(t)
                                              for t in np.linspace(0., self.fom.T, output_size)])

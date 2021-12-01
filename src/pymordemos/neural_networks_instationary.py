@@ -126,8 +126,8 @@ def main(
 
     print()
     print()
-    print('Approach using long short-term ANNs:')
-    print('====================================')
+    print('Approach using long short-term memory ANNs:')
+    print('===========================================')
 
     print('Results for state approximation:')
     print(f'Average absolute error: {np.average(abs_errors_lstm)}')

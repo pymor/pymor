@@ -267,10 +267,10 @@ if config.HAVE_TORCH:
 
             # create tensor of parameters at different time instances
             def time_dependent_parameter(t):
-                return [mu.get_time_dependent_value(param)(t) for param in mu]
+                return [mu.get_time_dependent_value(param)(t) for param in self.parameters]
 
-            parameters = torch.DoubleTensor([[time_dependent_parameter(t)
-                                              for t in np.linspace(0., self.T, self.nt)]])
+            parameters = torch.DoubleTensor([np.array([time_dependent_parameter(t)
+                                                       for t in np.linspace(0., self.T, self.nt)])])
 
             # obtain (reduced) coordinates by forward pass of the parameter values
             # through the neural network
@@ -386,10 +386,10 @@ if config.HAVE_TORCH:
 
             if output:
                 def time_dependent_parameter(t):
-                    return [mu.get_time_dependent_value(param)(t) for param in mu]
+                    return [mu.get_time_dependent_value(param)(t) for param in self.parameters]
 
-                parameters = torch.DoubleTensor([[time_dependent_parameter(t)
-                                                  for t in np.linspace(0., self.T, self.nt)]])
+                parameters = torch.DoubleTensor([np.array([time_dependent_parameter(t)
+                                                           for t in np.linspace(0., self.T, self.nt)])])
 
                 result_neural_network = self.neural_network(parameters[..., 0]).data.numpy()
 
