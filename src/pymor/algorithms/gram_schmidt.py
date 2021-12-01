@@ -130,7 +130,7 @@ def gram_schmidt_biorth(V, W, product=None,
     See Algorithm 1 in :cite:`BKS11`.
 
     Note that this algorithm can be significantly less accurate compared to orthogonalization,
-    in particular, when `V` and `W` are orthogonal.
+    in particular, when `V` and `W` are almost orthogonal.
 
     Parameters
     ----------
