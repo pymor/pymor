@@ -5,6 +5,7 @@
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject
 from pymor.core.cache import cached
 from pymor.parameters.base import ParametricObject, Mu
@@ -390,3 +391,83 @@ class TransferFunction(CacheableObject, ParametricObject):
         dtf = lambda s, mu=None: (other.eval_dtf(s, mu=mu) @ self.eval_tf(s, mu=mu)
                                   + other.eval_tf(s, mu=mu) @ self.eval_dtf(s, mu=mu))
         return self.with_(tf=tf, dtf=dtf)
+
+
+class FactorizedTransferFunction(TransferFunction):
+    r"""Transfer functions in generalized coprime factor form.
+
+    This class describes input-output systems given by a transfer
+    function of the form
+    :math:`H(s, \mu) = \mathcal{C}(s, \mu) \mathcal{K}(s, \mu)^{-1} \mathcal{B}(s, \mu)
+    + \mathcal{D}(s, \mu)`.
+
+    Parameters
+    ----------
+    dim_input
+        The number of inputs.
+    dim_output
+        The number of outputs.
+    K, B, C, D
+        Functions that take s and returns an |Operator|.
+    dK, dB, dC, dD
+        Functions that take s and returns an |Operator| that are derivatives of K, B, C (optional).
+    parameters
+        The |Parameters| of the transfer function.
+    cont_time
+        `True` if the system is continuous-time, otherwise `False`.
+    name
+        Name of the system.
+    """
+
+    def __init__(self, dim_input, dim_output, K, B, C, D, dK=None, dB=None, dC=None, dD=None,
+                 parameters={}, cont_time=True, name=None):
+        def tf(s, mu=None):
+            if dim_input <= dim_output:
+                B_vec = B(s).as_range_array(mu=mu)
+                Kinv_B = K(s).apply_inverse(B_vec, mu=mu)
+                res = C(s).apply(Kinv_B, mu=mu).to_numpy().T
+            else:
+                C_vec_adj = C(s).as_source_array(mu=mu).conj()
+                Kinvadj_Cadj = K(s).apply_inverse_adjoint(C_vec_adj, mu=mu)
+                res = B(s).apply_adjoint(Kinvadj_Cadj, mu=mu).to_numpy().conj()
+            res += to_matrix(D(s), format='dense', mu=mu)
+            return res
+
+        if dK is None or dB is None or dC is None:
+            dtf = None
+        else:
+            def dtf(s, mu=None):
+                if dim_input <= dim_output:
+                    B_vec = B(s).as_range_array(mu=mu)
+                    Ki_B = K(s).apply_ierse(B_vec, mu=mu)
+                    dC_Ki_B = dC(s).apply(Ki_B, mu=mu).to_numpy().T
+
+                    dB_vec = dB(s).as_range_array(mu=mu)
+                    Ki_dB = K(s).apply_ierse(dB_vec, mu=mu)
+                    C_Ki_dB = C(s).apply(Ki_dB, mu=mu).to_numpy().T
+
+                    dK_Ki_B = dK(s).apply(Ki_B, mu=mu)
+                    Ki_dK_Ki_B = K(s).apply_ierse(dK_Ki_B, mu=mu)
+                    C_Ki_dK_Ki_B = C(s).apply(Ki_dK_Ki_B, mu=mu).to_numpy().T
+
+                    res = dC_Ki_B + C_Ki_dB - C_Ki_dK_Ki_B
+                else:
+                    C_vec_a = C(s).as_source_array(mu=mu).conj()
+                    Kia_Ca = K(s).apply_ierse_aoint(C_vec_a, mu=mu)
+                    dC_Ki_B = dB(s).apply_ajoint(Kia_Ca, mu=mu).to_numpy().conj()
+
+                    dC_vec_a = dC(s).as_source_array(mu=mu).conj()
+                    Kia_dCa = K(s).apply_ierse_aoint(dC_vec_a, mu=mu)
+                    CKidB = B(s).apply_aoint(Kia_dCa, mu=mu).to_numpy().conj()
+
+                    dKa_Kiajd_Ca = dK(s).apply_aoint(Kia_Ca, mu=mu)
+                    Kia_dKa_Kia_Ca = K(s).apply_ierse_aoint(dKa_Kiajd_Ca, mu=mu)
+                    C_Ki_dK_Ki_B = B(s).apply_aoint(Kia_dKa_Kia_Ca, mu=mu).to_numpy().conj()
+
+                    res = dC_Ki_B + CKidB - C_Ki_dK_Ki_B
+                res += to_matrix(dD(s), format='dense', mu=mu)
+                return res
+
+        super().__init__(dim_input, dim_output, tf, dtf=dtf, parameters=parameters,
+                         cont_time=cont_time, name=name)
+        self.__auto_init(locals())
