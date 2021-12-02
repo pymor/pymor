@@ -154,7 +154,7 @@ class LTIModel(InputStateOutputModel):
 
         self.eval_tf = self.transfer_function.eval_tf
         self.eval_dtf = self.transfer_function.eval_dtf
-        self.freq_resp = self.transfer_function.bode
+        self.freq_resp = self.transfer_function.freq_resp
         self.bode = self.transfer_function.bode
         self.bode_plot = self.transfer_function.bode_plot
         self.mag_plot = self.transfer_function.mag_plot
@@ -1060,7 +1060,7 @@ class SecondOrderModel(InputStateOutputModel):
 
         self.eval_tf = self.transfer_function.eval_tf
         self.eval_dtf = self.transfer_function.eval_dtf
-        self.freq_resp = self.transfer_function.bode
+        self.freq_resp = self.transfer_function.freq_resp
         self.bode = self.transfer_function.bode
         self.bode_plot = self.transfer_function.bode_plot
         self.mag_plot = self.transfer_function.mag_plot
@@ -1736,7 +1736,7 @@ class LinearDelayModel(InputStateOutputModel):
 
         self.eval_tf = self.transfer_function.eval_tf
         self.eval_dtf = self.transfer_function.eval_dtf
-        self.freq_resp = self.transfer_function.bode
+        self.freq_resp = self.transfer_function.freq_resp
         self.bode = self.transfer_function.bode
         self.bode_plot = self.transfer_function.bode_plot
         self.mag_plot = self.transfer_function.mag_plot
