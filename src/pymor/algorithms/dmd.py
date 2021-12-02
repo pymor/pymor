@@ -9,7 +9,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('svd_method')
-def dmd(X, Y=None, modes=None, dt=1, type='exact', order='magnitude',
+def dmd(X, Y=None, modes=None, atol=None, rtol=None, dt=1, type='exact', order='magnitude',
         svd_method='method_of_snapshots', return_A_approx=False, return_A_tilde=False):
     """Dynamic Mode Decomposition.
 
@@ -24,6 +24,10 @@ def dmd(X, Y=None, modes=None, dt=1, type='exact', order='magnitude',
         The |VectorArray| of the right snapshot series.
     modes
         Number of DMD modes to be computed. If `None`, `modes = len(X)`.
+    atol
+        Absolute truncation tolerance for singular values of `X`.
+    rtol
+        Relative truncation tolerance for singular values of `X`.
     dt
         Factor specifying the time difference between the observations, default `dt = 1`.
     type
@@ -71,7 +75,7 @@ def dmd(X, Y=None, modes=None, dt=1, type='exact', order='magnitude',
     svd = qr_svd if svd_method == 'qr_svd' else method_of_snapshots
 
     logger.info('SVD of X...')
-    U, s, Vh = svd(X, product=None, modes=modes)
+    U, s, Vh = svd(X, modes=modes, atol=atol, rtol=rtol)
 
     V = Vh.conj().T
 
