@@ -24,10 +24,11 @@ class TransferFunction(CacheableObject, ParametricObject):
     dim_output
         The number of outputs.
     tf
-        The transfer function defined at least on the open right complex half-plane.
-        `tf(s, mu)` is a |NumPy array| of shape `(dim_output, dim_input)`.
+        The transfer function, given by a callable that takes a complex value `s` and,
+        if parametric, a |parameter value| `mu`.
+        The result of `tf(s, mu)` is a |NumPy array| of shape `(dim_output, dim_input)`.
     dtf
-        The complex derivative of `H` with respect to `s` (optional).
+        The complex derivative of `dtf` with respect to `s` (optional).
     parameters
         The |Parameters| of the transfer function.
     cont_time
@@ -276,6 +277,7 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         This method uses `scipy.integrate.quad` and makes no assumptions on the form of the transfer
         function.
+        It only assumes that `self.tf` is defined over the imaginary axis.
 
         By default, the absolute error tolerance in `scipy.integrate.quad` is set to zero (see its
         optional argument `epsabs`).
@@ -320,6 +322,7 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         Uses the inner product formula based on the pole-residue form
         (see, e.g., Lemma 1 in :cite:`ABG10`).
+        It assumes that `self.tf` is defined on `-lti.poles()`.
 
         Parameters
         ----------
