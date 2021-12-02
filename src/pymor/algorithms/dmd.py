@@ -43,8 +43,8 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='method_of_sna
     -------
     Wk
         |VectorArray| containing the dynamic modes.
-    omega
-        Time scaled eigenvalues: `ln(l)/dt`.
+    evals
+        Time-scaled DMD eigenvalues: `l**(1/dt)`.
     A_approx
         |LowRankOperator| contains the approximation of the operator `A` with `AX=Y`.
     A_tilde
@@ -81,13 +81,13 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='method_of_sna
     logger.info('Calculating eigenvalue decomposition...')
     evals, evecs = spla.eig(A_tilde)
 
-    omega = np.log(evals) / dt
+    # time scaling
+    evals = evals ** (1/dt)
 
     # ordering
-    sort_idx = np.argsort(omega.real)[::-1]
+    sort_idx = np.argsort(np.abs(evals))[::-1]
     evecs = evecs[:, sort_idx]
     evals = evals[sort_idx]
-    omega = omega[sort_idx]
 
     logger.info('Reconstructing eigenvectors...')
     if modes == 'standard':
@@ -98,7 +98,7 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='method_of_sna
     else:
         assert False
 
-    retval = [Wk, omega]
+    retval = [Wk, evals]
 
     if return_A_approx:
         A_approx = LowRankOperator(Y.lincomb(V.T), np.diag(s), U, inverted=True)
