@@ -98,13 +98,13 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd',
     else:
         assert False
 
+    retval = [Wk, omega]
+
     if return_A_approx:
         A_approx = LowRankOperator(Y.lincomb(V.T), np.diag(s), U, inverted=True)
-        if return_A_tilde:
-            return Wk, omega, A_approx, A_tilde
-        return Wk, omega, A_approx
+        retval.append(A_approx)
 
     if return_A_tilde:
-        return Wk, omega, A_tilde
+        retval.append(A_tilde)
 
-    return Wk, omega
+    return tuple(retval)
