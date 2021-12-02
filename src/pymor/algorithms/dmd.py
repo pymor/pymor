@@ -9,7 +9,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('svd_method')
-def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', order='magnitude',
+def dmd(X, Y=None, svd_rank=None, dt=1, type='exact', order='magnitude',
         svd_method='method_of_snapshots', return_A_approx=False, return_A_tilde=False):
     """Dynamic Mode Decomposition.
 
@@ -26,7 +26,7 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', order='magnitude',
         Number of DMD modes to be computed. If `None`, `svd_rank = len(X)`.
     dt
         Factor specifying the time difference between the observations, default `dt = 1`.
-    modes
+    type
         - 'standard': uses the standard definition to compute the dynamic modes
             `Wk = U * evecs`, where `U` are the left singular vectors of `X`.
         - 'exact' : computes the exact dynamic modes, `Wk = (1/evals) * Y * V * Sigma_inv * evecs`.
@@ -55,7 +55,7 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', order='magnitude',
     assert isinstance(X, VectorArray)
     assert isinstance(Y, VectorArray) or Y is None
     assert svd_rank is None or svd_rank <= X.dim
-    assert modes in ('exact', 'standard')
+    assert type in ('exact', 'standard')
     assert order in ('magnitude', 'frequency')
     assert svd_method in ('qr_svd', 'method_of_snapshots')
 
@@ -74,7 +74,7 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', order='magnitude',
     svd = qr_svd if svd_method == 'qr_svd' else method_of_snapshots
 
     logger.info('SVD of X...')
-    U, s, Vh = svd(X, product=None, modes=rank)
+    U, s, Vh = svd(X, rtol=1e-2, product=None, modes=rank)
 
     V = Vh.conj().T
 
@@ -98,9 +98,9 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', order='magnitude',
     evals = evals[sort_idx]
 
     logger.info('Reconstructing eigenvectors...')
-    if modes == 'standard':
+    if type == 'standard':
         Wk = U.lincomb(evecs.T)
-    elif modes == 'exact':
+    elif type == 'exact':
         Wk = Y.lincomb(((V / s) @ evecs).T)
         Wk.scal(1 / evals)
     else:
