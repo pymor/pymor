@@ -25,7 +25,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         The number of outputs.
     tf
         The transfer function defined at least on the open right complex half-plane.
-        `tf(s, mu)` is a |NumPy array| of shape `(p, m)`.
+        `tf(s, mu)` is a |NumPy array| of shape `(dim_output, dim_input)`.
     dtf
         The complex derivative of `H` with respect to `s` (optional).
     parameters
@@ -166,7 +166,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         w
             A sequence of angular frequencies at which to compute the transfer function.
         mu
-            |Parameter| for which to evaluate the transfer function.
+            |Parameter values| for which to evaluate the transfer function.
         ax
             Axis of shape (2 * `self.dim_output`, `self.dim_input`) to which to plot.
             If not given, `matplotlib.pyplot.gcf` is used to get the figure and create axis.
@@ -408,7 +408,7 @@ class FactorizedTransferFunction(TransferFunction):
     dim_output
         The number of outputs.
     K, B, C, D
-        Functions that take s and returns an |Operator|.
+        Functions that take `s` and return an |Operator|.
     dK, dB, dC, dD
         Functions that take s and returns an |Operator| that are derivatives of K, B, C (optional).
     parameters
@@ -439,30 +439,30 @@ class FactorizedTransferFunction(TransferFunction):
             def dtf(s, mu=None):
                 if dim_input <= dim_output:
                     B_vec = B(s).as_range_array(mu=mu)
-                    Ki_B = K(s).apply_ierse(B_vec, mu=mu)
+                    Ki_B = K(s).apply_inverse(B_vec, mu=mu)
                     dC_Ki_B = dC(s).apply(Ki_B, mu=mu).to_numpy().T
 
                     dB_vec = dB(s).as_range_array(mu=mu)
-                    Ki_dB = K(s).apply_ierse(dB_vec, mu=mu)
+                    Ki_dB = K(s).apply_inverse(dB_vec, mu=mu)
                     C_Ki_dB = C(s).apply(Ki_dB, mu=mu).to_numpy().T
 
                     dK_Ki_B = dK(s).apply(Ki_B, mu=mu)
-                    Ki_dK_Ki_B = K(s).apply_ierse(dK_Ki_B, mu=mu)
+                    Ki_dK_Ki_B = K(s).apply_inverse(dK_Ki_B, mu=mu)
                     C_Ki_dK_Ki_B = C(s).apply(Ki_dK_Ki_B, mu=mu).to_numpy().T
 
                     res = dC_Ki_B + C_Ki_dB - C_Ki_dK_Ki_B
                 else:
                     C_vec_a = C(s).as_source_array(mu=mu).conj()
-                    Kia_Ca = K(s).apply_ierse_aoint(C_vec_a, mu=mu)
-                    dC_Ki_B = dB(s).apply_ajoint(Kia_Ca, mu=mu).to_numpy().conj()
+                    Kia_Ca = K(s).apply_inverse_adjoint(C_vec_a, mu=mu)
+                    dC_Ki_B = dB(s).apply_adjoint(Kia_Ca, mu=mu).to_numpy().conj()
 
                     dC_vec_a = dC(s).as_source_array(mu=mu).conj()
-                    Kia_dCa = K(s).apply_ierse_aoint(dC_vec_a, mu=mu)
-                    CKidB = B(s).apply_aoint(Kia_dCa, mu=mu).to_numpy().conj()
+                    Kia_dCa = K(s).apply_inverse_adjoint(dC_vec_a, mu=mu)
+                    CKidB = B(s).apply_adjoint(Kia_dCa, mu=mu).to_numpy().conj()
 
-                    dKa_Kiajd_Ca = dK(s).apply_aoint(Kia_Ca, mu=mu)
-                    Kia_dKa_Kia_Ca = K(s).apply_ierse_aoint(dKa_Kiajd_Ca, mu=mu)
-                    C_Ki_dK_Ki_B = B(s).apply_aoint(Kia_dKa_Kia_Ca, mu=mu).to_numpy().conj()
+                    dKa_Kiajd_Ca = dK(s).apply_adjoint(Kia_Ca, mu=mu)
+                    Kia_dKa_Kia_Ca = K(s).apply_inverse_adjoint(dKa_Kiajd_Ca, mu=mu)
+                    C_Ki_dK_Ki_B = B(s).apply_adjoint(Kia_dKa_Kia_Ca, mu=mu).to_numpy().conj()
 
                     res = dC_Ki_B + CKidB - C_Ki_dK_Ki_B
                 res += to_matrix(dD(s), format='dense', mu=mu)
