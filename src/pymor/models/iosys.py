@@ -587,30 +587,32 @@ class LTIModel(Model):
         if E is not None:
             _mmwrite(Path(files_basename + '.E'), E)
 
-    _compute_allowed_kwargs = frozenset({'input'})
-
     def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                  solution_error_estimate=False, output_error_estimate=False,
-                 output_d_mu_return_array=False, mu=None, input=None, **kwargs):
+                 output_d_mu_return_array=False, mu=None, **kwargs):
         if not solution and not output:
             return {}
 
         # solution computation
         mu = mu.with_(t=0.)
         X0 = self.initial_data.as_range_array(mu)
-        if input is None:
-            rhs = None
-        else:
-            input_op = NumpyGenericOperator(lambda U, mu: U @ input(mu['t'][0]).T,
-                                            dim_range=self.dim_input,
-                                            parameters={'t': 1},
-                                            linear=True)
-            rhs = self.B @ input_op
-        X = self.time_stepper.solve(operator=-self.A,
-                                    rhs=rhs,
-                                    initial_data=X0,
-                                    mass=None if isinstance(self.E, IdentityOperator) else self.E,
-                                    initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
+        input_op = NumpyGenericOperator(
+            lambda U, mu: U * mu['input'],
+            dim_range=self.dim_input,
+            parameters={'input': self.dim_input},
+            linear=True,
+        )
+        rhs = self.B @ input_op
+        X = self.time_stepper.solve(
+            operator=-self.A,
+            rhs=rhs,
+            initial_data=X0,
+            mass=None if isinstance(self.E, IdentityOperator) else self.E,
+            initial_time=0,
+            end_time=self.T,
+            mu=mu,
+            num_values=self.num_values,
+        )
         data = {'solution': X}
 
         # output computation
