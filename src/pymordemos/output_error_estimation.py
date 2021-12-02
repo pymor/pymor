@@ -24,59 +24,30 @@ def main(
     set_log_levels({'pymor': 'WARN'})
     """Example script for using output error estimation"""
 
-    if fom_number in [0, 1, 2]:
-        # elliptic case
-        if fom_number == 0:
-            # real valued output
-            fom = create_fom(grid_intervals, vector_valued_output=False)
-        elif fom_number == 1:
-            # vector valued output (with BlockColumnOperator)
-            fom = create_fom(grid_intervals, vector_valued_output=True)
-        else:
-            # an output which is actually a lincomb operator
-            fom = create_fom(grid_intervals, vector_valued_output=True)
-            dim_source = fom.output_functional.source.dim
-            np.random.seed(1)
-            random_matrix_1 = np.random.rand(2, dim_source)
-            random_matrix_2 = np.random.rand(2, dim_source)
-            op1 = NumpyMatrixOperator(random_matrix_1, source_id='STATE')
-            op2 = NumpyMatrixOperator(random_matrix_2, source_id='STATE')
-            ops = [op1, op2]
-            lincomb_op = LincombOperator(ops, [1., 0.5])
-            fom = fom.with_(output_functional=lincomb_op)
+    assert fom_number in [0, 1, 2, 3, 4], f'No FOM available for fom_number {fom_number}'
 
-        if reductor_count == 0:
-            reductor = SimpleCoerciveRBReductor
-        if reductor_count == 1:
-            reductor = CoerciveRBReductor
-
-        # Parameter space and operator are equal for all foms
-        parameter_space = fom.parameters.space(0.1, 1)
-        training_set = parameter_space.sample_uniformly(training_samples)
-        coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
-
-        # generate solution snapshots
-        primal_snapshots = fom.solution_space.empty()
-
-        # construct training data
-        for mu in training_set:
-            primal_snapshots.append(fom.solve(mu))
-
-        # apply POD on bases
-        primal_reduced_basis = pod(primal_snapshots, modes=modes)[0]
-        from pymor.operators.constructions import IdentityOperator
-        product = IdentityOperator(fom.solution_space)
-
-        RB_reductor = reductor(fom, RB=primal_reduced_basis,
-                               product=product,
-                               coercivity_estimator=coercivity_estimator)
-
-        # rom
-        rom = RB_reductor.reduce()
-
+    # elliptic case
+    if fom_number == 0:
+        # real valued output
+        fom = create_fom(grid_intervals, vector_valued_output=False)
+    elif fom_number == 1:
+        # vector valued output (with BlockColumnOperator)
+        fom = create_fom(grid_intervals, vector_valued_output=True)
+    elif fom_number == 2:
+        # an output which is actually a lincomb operator
+        fom = create_fom(grid_intervals, vector_valued_output=True)
+        dim_source = fom.output_functional.source.dim
+        np.random.seed(1)
+        random_matrix_1 = np.random.rand(2, dim_source)
+        random_matrix_2 = np.random.rand(2, dim_source)
+        op1 = NumpyMatrixOperator(random_matrix_1, source_id='STATE')
+        op2 = NumpyMatrixOperator(random_matrix_2, source_id='STATE')
+        ops = [op1, op2]
+        lincomb_op = LincombOperator(ops, [1., 0.5])
+        fom = fom.with_(output_functional=lincomb_op)
+    # parabolic case
     elif fom_number in [3, 4]:
-        # parabolic case
-        from pymordemos.parabolic_mor import discretize_pymor, reduce_pod
+        from pymordemos.parabolic_mor import discretize_pymor
         fom = discretize_pymor()
         if fom_number == 3:
             fom = fom.with_(output_functional=fom.rhs.operators[0].H)
@@ -85,18 +56,46 @@ def main(
             op = NumpyMatrixOperator(random_matrix_1, source_id='STATE')
             fom = fom.with_(output_functional=op)
 
-        parameter_space = fom.parameters.space(1, 100)
+    if reductor_count == 0:
+        reductor = SimpleCoerciveRBReductor
+    elif reductor_count == 1:
+        reductor = CoerciveRBReductor
+    if fom_number in [3, 4]:
+        reductor = ParabolicRBReductor
 
-        RB_reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product)
-        rom = reduce_pod(fom, RB_reductor, parameter_space, training_samples, modes)
-        training_set = parameter_space.sample_uniformly(training_samples)
-
+    # Parameter space and operator are equal for all elliptic and parabolic foms
+    if fom_number in [0, 1, 2]:
+        parameter_space = fom.parameters.space(0.1, 1)
+        coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
     else:
-        assert 0, f'No FOM available for fom_number {fom_number}'
+        parameter_space = fom.parameters.space(1, 100)
+        coercivity_estimator = ExpressionParameterFunctional('1.', fom.parameters)
+
+    training_set = parameter_space.sample_uniformly(training_samples)
+
+    # generate solution snapshots
+    primal_snapshots = fom.solution_space.empty()
+    fom_outputs = []
+
+    # construct training data
+    for mu in training_set:
+        comp_data = fom.compute(output=True, solution=True, mu=mu)
+        primal_snapshots.append(comp_data['solution'])
+        fom_outputs.append(comp_data['output'])
+
+    # apply POD on bases
+    product = fom.h1_0_semi_product
+    primal_reduced_basis, _ = pod(primal_snapshots, modes=modes, product=product)
+
+    RB_reductor = reductor(fom, RB=primal_reduced_basis, product=product,
+                           coercivity_estimator=coercivity_estimator)
+
+    # rom
+    rom = RB_reductor.reduce()
 
     results_full = {'fom': [], 'rom': [], 'err': [], 'est': []}
-    for mu in training_set:
-        s_fom = fom.output(mu=mu)
+    for i, mu in enumerate(training_set):
+        s_fom = fom_outputs[i]
         s_rom, s_est = rom.output(return_error_estimate=True, mu=mu, return_estimate_vector=False)
         results_full['fom'].append(s_fom)
         results_full['rom'].append(s_rom)
@@ -134,8 +133,8 @@ def main(
         max_err, max_est, min_err, min_est = 0, 0, 1000, 1000
         rom = RB_reductor.reduce(mode)
 
-        for mu in training_set:
-            s_fom = fom.output(mu=mu)
+        for i, mu in enumerate(training_set):
+            s_fom = fom_outputs[i]
             s_rom, s_est = rom.output(return_error_estimate=True, mu=mu, return_estimate_vector=False)
             max_err = max(max_err, np.linalg.norm(np.abs(s_fom-s_rom)))
             max_est = max(max_est, s_est)
