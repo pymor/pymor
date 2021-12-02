@@ -23,7 +23,7 @@ def dmd(X, Y=None, modes=None, dt=1, type='exact', order='magnitude',
     Y
         The |VectorArray| of the right snapshot series.
     modes
-        Number of DMD modes to be computed. If `None`, `svd_rank = len(X)`.
+        Number of DMD modes to be computed. If `None`, `modes = len(X)`.
     dt
         Factor specifying the time difference between the observations, default `dt = 1`.
     type
@@ -55,6 +55,8 @@ def dmd(X, Y=None, modes=None, dt=1, type='exact', order='magnitude',
     assert isinstance(X, VectorArray)
     assert isinstance(Y, VectorArray) or Y is None
     assert modes is None or modes <= X.dim
+    assert modes is None or modes < len(X)
+    assert Y is None or len(X) == len(Y)
     assert type in ('exact', 'standard')
     assert order in ('magnitude', 'frequency')
     assert svd_method in ('qr_svd', 'method_of_snapshots')
@@ -62,19 +64,14 @@ def dmd(X, Y=None, modes=None, dt=1, type='exact', order='magnitude',
     logger = getLogger('pymor.algorithms.dmd.dmd')
 
     if Y is None:
-        assert modes is None or modes < len(X)
         # X = z_0, ..., z_{m-1}; Y = z_1, ..., z_m
         Y = X[1:]
         X = X[:-1]
-    else:
-        assert modes is None or modes <= len(X)
-        assert len(X) == len(Y)
 
-    rank = len(X) if modes is None else modes
     svd = qr_svd if svd_method == 'qr_svd' else method_of_snapshots
 
     logger.info('SVD of X...')
-    U, s, Vh = svd(X, rtol=1e-2, product=None, modes=rank)
+    U, s, Vh = svd(X, product=None, modes=modes)
 
     V = Vh.conj().T
 
