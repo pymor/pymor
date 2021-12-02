@@ -9,7 +9,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('svd_method')
-def dmd(X, Y=None, modes=None, atol=None, rtol=None, dt=1, type='exact', order='magnitude',
+def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='exact', order='magnitude',
         svd_method='method_of_snapshots', return_A_approx=False, return_A_tilde=False):
     """Dynamic Mode Decomposition.
 
@@ -28,8 +28,9 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, dt=1, type='exact', order='
         Absolute truncation tolerance for singular values of `X`.
     rtol
         Relative truncation tolerance for singular values of `X`.
-    dt
-        Factor specifying the time difference between the observations, default `dt = 1`.
+    cont_time_dt
+        If not `None`, return continuous-time DMD eigenvalues with scaling
+        log(lambda) / dt.
     type
         - 'standard': uses the standard definition to compute the dynamic modes
             `Wk = U * evecs`, where `U` are the left singular vectors of `X`.
@@ -50,7 +51,7 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, dt=1, type='exact', order='
     Wk
         |VectorArray| containing the dynamic modes.
     evals
-        Time-scaled DMD eigenvalues: `l**(1/dt)`.
+        Discrete or continuous time DMD eigenvalues.
     A_approx
         |LowRankOperator| contains the approximation of the operator `A` with `AX=Y`.
     A_tilde
@@ -85,9 +86,6 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, dt=1, type='exact', order='
     logger.info('Calculating eigenvalue decomposition...')
     evals, evecs = spla.eig(A_tilde)
 
-    # time scaling
-    evals = evals ** (1/dt)
-
     # ordering
     if order == 'magnitude':
         sort_idx = np.argsort(np.abs(evals))[::-1]
@@ -107,7 +105,12 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, dt=1, type='exact', order='
     else:
         assert False
 
-    retval = [Wk, evals]
+    retval = [Wk]
+
+    if cont_time_dt is not None:
+        retval.append(np.log(evals) / cont_time_dt)
+    else:
+        retval.append(evals)
 
     if return_A_approx:
         A_approx = LowRankOperator(Y.lincomb(V.T), np.diag(s), U, inverted=True)
