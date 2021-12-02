@@ -9,7 +9,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('svd_method')
-def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='qr_svd',
+def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='method_of_snapshots',
         return_A_approx=False, return_A_tilde=False):
     """Dynamic Mode Decomposition.
 
