@@ -410,7 +410,7 @@ class FactorizedTransferFunction(TransferFunction):
     K, B, C, D
         Functions that take `s` and return an |Operator|.
     dK, dB, dC, dD
-        Functions that take s and returns an |Operator| that are derivatives of K, B, C (optional).
+        Functions that take `s` and return an |Operator| that is the derivative of K, B, C, D (optional).
     parameters
         The |Parameters| of the transfer function.
     cont_time
