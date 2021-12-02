@@ -555,7 +555,9 @@ class TFIRKAReductor(GenericIRKAReductor):
     Parameters
     ----------
     fom
-        The full-order |Model| with `eval_tf` and `eval_dtf` methods.
+        The full-order |Model| with `eval_tf` and `eval_dtf` methods that
+        should be defined at least over the open right half of the complex
+        plane.
     mu
         |Parameter values|.
     """
