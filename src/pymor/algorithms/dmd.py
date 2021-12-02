@@ -23,7 +23,7 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, dt=1, type='exact', order='
     Y
         The |VectorArray| of the right snapshot series.
     modes
-        Number of DMD modes to be computed. If `None`, `modes = len(X)`.
+        Maximum number of singular vectors of `X` to take into account.
     atol
         Absolute truncation tolerance for singular values of `X`.
     rtol
