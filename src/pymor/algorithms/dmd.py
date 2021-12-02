@@ -49,7 +49,9 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
     Returns
     -------
     Wk
-        |VectorArray| containing the dynamic modes.
+        |VectorArray| containing the dynamic modes. The number of computed modes
+        is given by the SVD truncation rank determined by the `modes`, `atol` and
+        `rtol` arguments.
     evals
         Discrete or continuous time DMD eigenvalues.
     A_approx
