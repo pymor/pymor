@@ -9,8 +9,8 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('svd_method')
-def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='method_of_snapshots',
-        return_A_approx=False, return_A_tilde=False):
+def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', order='magnitude',
+        svd_method='method_of_snapshots', return_A_approx=False, return_A_tilde=False):
     """Dynamic Mode Decomposition.
 
     See Algorithm 1 and Algorithm 2 in :cite:`TRLBK14`.
@@ -30,6 +30,8 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='method_of_sna
         - 'standard': uses the standard definition to compute the dynamic modes
             `Wk = U * evecs`, where `U` are the left singular vectors of `X`.
         - 'exact' : computes the exact dynamic modes, `Wk = (1/evals) * Y * V * Sigma_inv * evecs`.
+    order
+        Sort DMD eigenvalues either by `'magnitude'` or `'frequency'`.
     svd_method
         Which SVD method from :mod:`~pymor.algorithms.svd_va` to use
         (`'method_of_snapshots'` or `'qr_svd'`).
@@ -54,6 +56,7 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='method_of_sna
     assert isinstance(Y, VectorArray) or Y is None
     assert svd_rank is None or svd_rank <= X.dim
     assert modes in ('exact', 'standard')
+    assert order in ('magnitude', 'frequency')
     assert svd_method in ('qr_svd', 'method_of_snapshots')
 
     logger = getLogger('pymor.algorithms.dmd.dmd')
@@ -85,7 +88,12 @@ def dmd(X, Y=None, svd_rank=None, dt=1, modes='exact', svd_method='method_of_sna
     evals = evals ** (1/dt)
 
     # ordering
-    sort_idx = np.argsort(np.abs(evals))[::-1]
+    if order == 'magnitude':
+        sort_idx = np.argsort(np.abs(evals))[::-1]
+    elif order == 'frequency':
+        sort_idx = np.argsort(np.abs(np.angle(evals)))
+    else:
+        assert False
     evecs = evecs[:, sort_idx]
     evals = evals[sort_idx]
 
