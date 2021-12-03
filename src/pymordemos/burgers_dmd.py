@@ -54,7 +54,7 @@ def main(
     tic = time.perf_counter()
     U = m.solve(mu)
     print(f'Solving took {time.perf_counter() - tic}s')
-    m.visualize(U)
+    m.visualize(U, title='Solution Trajectory')
 
     print('Computing DMD ...')
     dt = problem.T / nt if continuous_time else None
