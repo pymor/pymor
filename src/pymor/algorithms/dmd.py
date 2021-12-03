@@ -42,7 +42,7 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
         (`'method_of_snapshots'` or `'qr_svd'`).
     return_A_approx
         If `True`, the approximation of the operator `A` with `AX=Y` is returned as
-        a |LowRankOperator|.
+        a :class:`~pymor.operators.constructions.LowRankOperator`.
     return_A_tilde
         If `True` the low-rank dynamics are returned.
 
@@ -55,9 +55,10 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
     evals
         Discrete or continuous time DMD eigenvalues.
     A_approx
-        |LowRankOperator| containing the approximation of the operator `A` with `AX=Y`.
+        :class:`~pymor.operators.constructions.LowRankOperator` containing the approximation
+        of the operator `A` with `AX=Y`. Only provided if `return_A_approx` is `True`.
     A_tilde
-         Low-rank dynamics.
+         Low-rank dynamics. Only provided if `return_A_tilde` is `True`.
     """
     assert isinstance(X, VectorArray)
     assert isinstance(Y, VectorArray) or Y is None
