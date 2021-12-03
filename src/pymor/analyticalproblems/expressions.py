@@ -396,15 +396,21 @@ class UnaryReductionCall(Expression):
     returning a single number.
     """
 
-    def __init__(self, *arg):
-        if len(arg) != 1:
-            raise ValueError(f'{self.numpy_symbol} takes a single argument (given {arg})')
-        self.arg = _convert_to_expression(arg[0])
+    def __init__(self, arg):
+        self.arg = _convert_to_expression(arg)
         self.shape = ()
 
     def numpy_expr(self):
         return (f'(lambda _a: {self.numpy_symbol}(_a.reshape(_a.shape[:-{len(self.arg.shape)}] + (-1,)), '
                 f'axis=-1))({self.arg.numpy_expr()})')
+
+    def fenics_expr(self, params):
+        import ufl.classes as uc
+        if self.fenics_op is not None:
+            ufl_op = getattr(uc, self.fenics_op)
+            return ufl_op(self.arg.fenics_expr(params))
+        else:
+            raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
 
     def __str__(self):
         return f'{self.numpy_symbol}({self.arg})'
@@ -470,7 +476,7 @@ class sign(UnaryFunctionCall):     numpy_symbol = 'sign'; fenics_op = None      
 class angle(UnaryFunctionCall):
 
     numpy_symbol = 'angle'
-    fenics_op = ''   
+    fenics_op = None
 
     def __init__(self, arg):
         if arg.shape[-1] != 2:
@@ -479,11 +485,11 @@ class angle(UnaryFunctionCall):
         self.shape = arg.shape[:-1]
 
 
-class norm(UnaryReductionCall): numpy_symbol = 'norm'    # NOQA
-class min(UnaryReductionCall):  numpy_symbol = 'min'     # NOQA
-class max(UnaryReductionCall):  numpy_symbol = 'max'     # NOQA
-class sum(UnaryReductionCall):  numpy_symbol = 'sum'     # NOQA
-class prod(UnaryReductionCall): numpy_symbol = 'prod'    # NOQA
+class norm(UnaryReductionCall): numpy_symbol = 'norm'; fenics_op = None    # NOQA
+class min(UnaryReductionCall):  numpy_symbol = 'min';  fenics_op = None    # NOQA
+class max(UnaryReductionCall):  numpy_symbol = 'max';  fenics_op = None    # NOQA
+class sum(UnaryReductionCall):  numpy_symbol = 'sum';  fenics_op = None    # NOQA
+class prod(UnaryReductionCall): numpy_symbol = 'prod'; fenics_op = None    # NOQA
 
 
 class Pi(BaseConstant): numpy_symbol = 'pi'  # NOQA
