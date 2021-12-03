@@ -77,6 +77,7 @@ def main(
         xl = max(np.max(np.abs(E1.real)), 1.) * 1.1
         yl = max(np.max(np.abs(E1.imag)), 1.) * 1.1
         plt.gca().add_artist(c)
+        plt.axis('square')
         plt.xlim([-xl, xl])
         plt.ylim([-yl, yl])
     plt.plot(E1.real, E1.imag, '.')
