@@ -41,8 +41,8 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
         Which SVD method from :mod:`~pymor.algorithms.svd_va` to use
         (`'method_of_snapshots'` or `'qr_svd'`).
     return_A_approx
-        If `True` the approximation of the operator `A` with `AX=Y` is returned as
-        |LowRankOperator|.
+        If `True`, the approximation of the operator `A` with `AX=Y` is returned as
+        a |LowRankOperator|.
     return_A_tilde
         If `True` the low-rank dynamics are returned.
 
@@ -55,7 +55,7 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
     evals
         Discrete or continuous time DMD eigenvalues.
     A_approx
-        |LowRankOperator| contains the approximation of the operator `A` with `AX=Y`.
+        |LowRankOperator| containing the approximation of the operator `A` with `AX=Y`.
     A_tilde
          Low-rank dynamics.
     """
@@ -71,21 +71,20 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
     logger = getLogger('pymor.algorithms.dmd.dmd')
 
     if Y is None:
-        # X = z_0, ..., z_{m-1}; Y = z_1, ..., z_m
         Y = X[1:]
         X = X[:-1]
 
     svd = qr_svd if svd_method == 'qr_svd' else method_of_snapshots
 
-    logger.info('SVD of X...')
+    logger.info('SVD of X ...')
     U, s, Vh = svd(X, modes=modes, atol=atol, rtol=rtol)
 
     V = Vh.conj().T
 
-    # solve the least-squares problem
+    # compute low-rank dynamics
     A_tilde = U.inner(Y) @ V / s
 
-    logger.info('Calculating eigenvalue decomposition...')
+    logger.info('Calculating DMD eigenvalues ...')
     evals, evecs = spla.eig(A_tilde)
 
     # ordering
@@ -98,7 +97,7 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
     evecs = evecs[:, sort_idx]
     evals = evals[sort_idx]
 
-    logger.info('Reconstructing eigenvectors...')
+    logger.info('Computing DMD modes ...')
     if type == 'standard':
         Wk = U.lincomb(evecs.T)
     elif type == 'exact':
