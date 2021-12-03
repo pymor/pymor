@@ -58,8 +58,8 @@ def main(
 
     print('Computing DMD ...')
     dt = problem.T / nt if continuous_time else None
-    W1, E1 = dmd(X=U, modes=modes, atol=atol, rtol=rtol, type='standard', cont_time_dt=dt, order='frequency')
-    W2, E2 = dmd(X=U, modes=modes, atol=atol, rtol=rtol, type='exact', cont_time_dt=dt, order='frequency')
+    W1, E1 = dmd(X=U, modes=modes, atol=atol, rtol=rtol, type='standard', cont_time_dt=dt, order='phase')
+    W2, E2 = dmd(X=U, modes=modes, atol=atol, rtol=rtol, type='exact', cont_time_dt=dt, order='phase')
 
     print(E1)
 
