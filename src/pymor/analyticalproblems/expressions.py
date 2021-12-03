@@ -431,40 +431,40 @@ def _broadcastable_shapes(first, second):
     return all(f == s or f == 1 or s == 1 for f, s in zip(first[::-1], second[::-1]))
 
 
-class Sum(BinaryOp):  numpy_symbol = '+'; fenics_op = operator.add  # NOQA
-class Diff(BinaryOp): numpy_symbol = '-'; fenics_op = operator.sub  # NOQA
-class Prod(BinaryOp): numpy_symbol = '*'; fenics_op = operator.mul  # NOQA
+class Sum(BinaryOp):  numpy_symbol = '+'; fenics_op = operator.add      # NOQA
+class Diff(BinaryOp): numpy_symbol = '-'; fenics_op = operator.sub      # NOQA
+class Prod(BinaryOp): numpy_symbol = '*'; fenics_op = operator.mul      # NOQA
 class Div(BinaryOp):  numpy_symbol = '/'; fenics_op = operator.truediv  # NOQA
 
 
-class Pow(BinaryOp):  numpy_symbol = '**'; fenics_op = 'Power'  # NOQA
-class Mod(BinaryOp):  numpy_symbol = '%';  fenics_op = None  # NOQA
+class Pow(BinaryOp):  numpy_symbol = '**'; fenics_op = 'Power'       # NOQA
+class Mod(BinaryOp):  numpy_symbol = '%';  fenics_op = None          # NOQA
 class LE(BinaryOp):   numpy_symbol = '<='; fenics_op = 'LE'          # NOQA
 class GE(BinaryOp):   numpy_symbol = '>='; fenics_op = 'GE'          # NOQA
 class LT(BinaryOp):   numpy_symbol = '<';  fenics_op = 'LT'          # NOQA
 class GT(BinaryOp):   numpy_symbol = '>';  fenics_op = 'GT'          # NOQA
 
 
-class sin(UnaryFunctionCall):      numpy_symbol = 'sin'; fenics_op = 'Sin'      # NOQA
-class cos(UnaryFunctionCall):      numpy_symbol = 'cos'; fenics_op = 'Cos'      # NOQA
-class tan(UnaryFunctionCall):      numpy_symbol = 'tan'; fenics_op = 'Tan'         # NOQA
+class sin(UnaryFunctionCall):      numpy_symbol = 'sin'; fenics_op = 'Sin'          # NOQA
+class cos(UnaryFunctionCall):      numpy_symbol = 'cos'; fenics_op = 'Cos'          # NOQA
+class tan(UnaryFunctionCall):      numpy_symbol = 'tan'; fenics_op = 'Tan'          # NOQA
 class arcsin(UnaryFunctionCall):   numpy_symbol = 'arcsin'; fenics_op = 'Asin'      # NOQA
 class arccos(UnaryFunctionCall):   numpy_symbol = 'arccos'; fenics_op = 'Acos'      # NOQA
 class arctan(UnaryFunctionCall):   numpy_symbol = 'arctan'; fenics_op = 'Atan'      # NOQA
 class sinh(UnaryFunctionCall):     numpy_symbol = 'sinh'; fenics_op = 'Sinh'        # NOQA
 class cosh(UnaryFunctionCall):     numpy_symbol = 'cosh'; fenics_op = 'Cosh'        # NOQA
 class tanh(UnaryFunctionCall):     numpy_symbol = 'tanh'; fenics_op = 'Tanh'        # NOQA
-class arcsinh(UnaryFunctionCall):  numpy_symbol = 'arcsinh'; fenics_op = None     # NOQA
-class arccosh(UnaryFunctionCall):  numpy_symbol = 'arccosh'; fenics_op = None     # NOQA
-class arctanh(UnaryFunctionCall):  numpy_symbol = 'arctanh'; fenics_op = None     # NOQA
-class exp(UnaryFunctionCall):      numpy_symbol = 'exp'; fenics_op = 'Exp'         # NOQA
-class exp2(UnaryFunctionCall):     numpy_symbol = 'exp2'; fenics_op = None        # NOQA
-class log(UnaryFunctionCall):      numpy_symbol = 'log'; fenics_op = 'Ln'         # NOQA
-class log2(UnaryFunctionCall):     numpy_symbol = 'log2'; fenics_op = None        # NOQA
-class log10(UnaryFunctionCall):    numpy_symbol = 'log10'; fenics_op = None       # NOQA
+class arcsinh(UnaryFunctionCall):  numpy_symbol = 'arcsinh'; fenics_op = None       # NOQA
+class arccosh(UnaryFunctionCall):  numpy_symbol = 'arccosh'; fenics_op = None       # NOQA
+class arctanh(UnaryFunctionCall):  numpy_symbol = 'arctanh'; fenics_op = None       # NOQA
+class exp(UnaryFunctionCall):      numpy_symbol = 'exp'; fenics_op = 'Exp'          # NOQA
+class exp2(UnaryFunctionCall):     numpy_symbol = 'exp2'; fenics_op = None          # NOQA
+class log(UnaryFunctionCall):      numpy_symbol = 'log'; fenics_op = 'Ln'           # NOQA
+class log2(UnaryFunctionCall):     numpy_symbol = 'log2'; fenics_op = None          # NOQA
+class log10(UnaryFunctionCall):    numpy_symbol = 'log10'; fenics_op = None         # NOQA
 class sqrt(UnaryFunctionCall):     numpy_symbol = 'sqrt'; fenics_op = 'Sqrt'        # NOQA
-class abs(UnaryFunctionCall):      numpy_symbol = 'abs'; fenics_op = 'Abs'         # NOQA
-class sign(UnaryFunctionCall):     numpy_symbol = 'sign'; fenics_op = None        # NOQA
+class abs(UnaryFunctionCall):      numpy_symbol = 'abs'; fenics_op = 'Abs'          # NOQA
+class sign(UnaryFunctionCall):     numpy_symbol = 'sign'; fenics_op = None          # NOQA
 
 
 class angle(UnaryFunctionCall):
