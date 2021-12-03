@@ -386,7 +386,7 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         tf = lambda s, mu=None: self.eval_tf(s, mu=mu) @ other.eval_tf(s, mu=mu)
         dtf = (lambda s, mu=None: (self.eval_dtf(s, mu=mu) @ other.eval_tf(s, mu=mu)
-                                  + self.eval_tf(s, mu=mu) @ other.eval_dtf(s, mu=mu))
+                                   + self.eval_tf(s, mu=mu) @ other.eval_dtf(s, mu=mu))
                if hasattr(other, 'eval_dtf')
                else None)
         return self.with_(tf=tf, dtf=dtf)
@@ -398,7 +398,7 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         tf = lambda s, mu=None: other.eval_tf(s, mu=mu) @ self.eval_tf(s, mu=mu)
         dtf = (lambda s, mu=None: (other.eval_dtf(s, mu=mu) @ self.eval_tf(s, mu=mu)
-                                  + other.eval_tf(s, mu=mu) @ self.eval_dtf(s, mu=mu))
+                                   + other.eval_tf(s, mu=mu) @ self.eval_dtf(s, mu=mu))
                if hasattr(other, 'eval_dtf')
                else None)
         return self.with_(tf=tf, dtf=dtf)
