@@ -101,8 +101,7 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
     if type == 'standard':
         Wk = U.lincomb(evecs.T)
     elif type == 'exact':
-        Wk = Y.lincomb(((V / s) @ evecs).T)
-        Wk.scal(1 / evals)
+        Wk = Y.lincomb((((V / s) @ evecs) / evals).T)
     else:
         assert False
 
