@@ -62,8 +62,6 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
     """
     assert isinstance(X, VectorArray)
     assert isinstance(Y, VectorArray) or Y is None
-    assert modes is None or modes <= X.dim
-    assert modes is None or modes < len(X)
     assert Y is None or len(X) == len(Y)
     assert type in ('exact', 'standard')
     assert order in ('magnitude', 'phase')
