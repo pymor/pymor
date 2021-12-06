@@ -15,7 +15,7 @@ from pymor.parameters.base import ParametricObject, Mu
 class TransferFunction(CacheableObject, ParametricObject):
     r"""Class for systems represented by a transfer function.
 
-    This class describes input-output systems given by a transfer
+    This class describes input-output systems given by a (parametrized) transfer
     function :math:`H(s, \mu)`.
 
     Parameters
@@ -25,11 +25,11 @@ class TransferFunction(CacheableObject, ParametricObject):
     dim_output
         The number of outputs.
     tf
-        The transfer function, given by a callable that takes a complex value `s` and,
+        The transfer function H, given by a callable that takes a complex value `s` and,
         if parametric, a |parameter value| `mu`.
         The result of `tf(s, mu)` is a |NumPy array| of shape `(dim_output, dim_input)`.
     dtf
-        The complex derivative of `dtf` with respect to `s` (optional).
+        The complex derivative of `H` with respect to `s` (optional).
     parameters
         The |Parameters| of the transfer function.
     cont_time
