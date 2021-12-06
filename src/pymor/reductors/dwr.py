@@ -52,7 +52,7 @@ class DWRCoerciveRBReductor(BasicObject):
 
     def __init__(self, fom, primal_basis=None, product=None, coercivity_estimator=None,
                  operator_is_symmetric=False, dual_bases=None, check_orthonormality=None,
-                 check_tol=None, assemble_error_estimate=True, assemble_output_error_estimate=True):
+                 check_tol=None):
         self.__auto_init(locals())
         self._last_rom = None
 
@@ -60,9 +60,7 @@ class DWRCoerciveRBReductor(BasicObject):
             assert len(dual_bases) == fom.dim_output
 
         self.primal_reductor = CoerciveRBReductor(fom, primal_basis, product,
-                                                  coercivity_estimator, check_tol,
-                                                  assemble_error_estimate,
-                                                  assemble_output_error_estimate=False)
+                                                  coercivity_estimator, check_tol)
         self.dual_reductors = []
         assert (fom.output_functional is not None and fom.output_functional.linear), \
             'The features of the DWR reductor cannot be used, you should use CoerciveRBReductor instead.'
@@ -86,7 +84,7 @@ class DWRCoerciveRBReductor(BasicObject):
         assert isinstance(dim, Number)
         if dim < 0:
             raise ValueError('Reduced state dimension must be larger than zero')
-        if dim > len(self.primal_basis):
+        if dim > len(self.primal_basis) and all([dim > len(dual_basis) for dual_basis in self.dual_bases]):
             raise ValueError('Specified reduced state dimension larger than reduced basis')
 
         if self._last_rom is None or dim > self._last_rom_dim:
@@ -101,12 +99,11 @@ class DWRCoerciveRBReductor(BasicObject):
     def _reduce(self):
         primal_rom = self.primal_reductor.reduce()
 
-        # reduce dual models
+        # reduce dual models with most possible basis functions
         dual_roms = [red.reduce() for red in self.dual_reductors]
 
         # build corrected output
-        corrected_output = self.build_corrected_output(primal_rom, dual_roms,
-                                                       primal_rom.solution_space.dim)
+        corrected_output = self.build_corrected_output(primal_rom, dual_roms)
 
         # build error estimator
         dual_estimators = [dual_reductor.assemble_error_estimator()
@@ -126,7 +123,9 @@ class DWRCoerciveRBReductor(BasicObject):
         rom = primal_rom.with_(output_functional=corrected_output, error_estimator=error_estimator)
         return rom
 
-    def build_corrected_output(self, primal_rom, dual_roms, dim):
+    def build_corrected_output(self, primal_rom, dual_roms, dim=None):
+        # Note: if dim==None, then the dual and primal basis size can differ!
+        # This is the case if reduce() is called without dim specified
         dual_projected_primal_residuals = []
         for dual_reductor in self.dual_reductors:
             dual_basis = dual_reductor.bases['RB'][:dim]
@@ -191,13 +190,17 @@ class DWRCoerciveRBEstimator(ImmutableObject):
     def estimate_error(self, U, mu, m):
         return self.primal_estimator.estimate_error(U, mu, m)
 
-    def estimate_output_error(self, U, mu, m):
+    def estimate_output_error(self, U, mu, m, return_vector=False):
         est_pr = self.estimate_error(U, mu, m)
         est_dus = []
         for d in range(m.dim_output):
             dual_solution = self.dual_models[d].solve(mu)
             est_dus.append(self.dual_estimators[d].estimate_error(dual_solution, mu, m))
-        return (est_pr * est_dus).T
+        ret = (est_pr * est_dus).T
+        if return_vector:
+            return ret
+        else:
+            return np.linalg.norm(ret)
 
     def restricted_to_subbasis(self, dual_roms, dim, m):
         primal_estimator = self.primal_estimator.restricted_to_subbasis(dim, m)
@@ -233,6 +236,9 @@ class CorrectedOutputFunctional(Operator):
         for d, (dual_m, dual_res) in enumerate(zip(self.dual_models, self.dual_projected_primal_residuals)):
             dual_solution = dual_m.solve(mu)
             dual_correction = dual_res.apply2(dual_solution, solution, mu)
+            # only half machine precision for this residual
+            # TODO: check why this is required
+            dual_correction = 0 if dual_correction <= 1e-7 else dual_correction
             correction[d] = dual_correction
         corrected_output = output + correction.T
         return self.range.from_numpy(corrected_output)
