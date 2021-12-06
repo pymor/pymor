@@ -8,6 +8,7 @@ import scipy.linalg as spla
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject
 from pymor.core.cache import cached
+from pymor.operators.block import BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator
 from pymor.parameters.base import ParametricObject, Mu
 
 
@@ -382,7 +383,7 @@ class TransferFunction(CacheableObject, ParametricObject):
     def __mul__(self, other):
         assert hasattr(other, 'eval_tf')
         assert self.cont_time == other.cont_time
-        assert self.dim_input == other.dim_input
+        assert self.dim_input == other.dim_output
 
         tf = lambda s, mu=None: self.eval_tf(s, mu=mu) @ other.eval_tf(s, mu=mu)
         dtf = (lambda s, mu=None: (self.eval_dtf(s, mu=mu) @ other.eval_tf(s, mu=mu)
@@ -483,3 +484,80 @@ class FactorizedTransferFunction(TransferFunction):
         super().__init__(dim_input, dim_output, tf, dtf=dtf, parameters=parameters,
                          cont_time=cont_time, name=name)
         self.__auto_init(locals())
+
+    def __add__(self, other):
+        if (type(other) is not FactorizedTransferFunction
+                and not hasattr(other, 'transfer_function')):
+            return NotImplemented
+
+        assert self.cont_time == other.cont_time
+        assert self.dim_input == other.dim_input
+        assert self.dim_output == other.dim_output
+
+        if not type(other) is FactorizedTransferFunction:
+            other = other.transfer_function
+
+        K = lambda s: BlockDiagonalOperator([self.K(s), other.K(s)])
+        B = lambda s: BlockColumnOperator([self.B(s), other.B(s)])
+        C = lambda s: BlockRowOperator([self.C(s), other.C(s)])
+        D = lambda s: self.D(s) + other.D(s)
+        dK = (lambda s: BlockDiagonalOperator([self.dK(s), other.dK(s)])
+              if self.dK is not None and other.dK is not None
+              else None)
+        dB = (lambda s: BlockColumnOperator([self.dB(s), other.dB(s)])
+              if self.dB is not None and other.dB is not None
+              else None)
+        dC = (lambda s: BlockRowOperator([self.dC(s), other.dC(s)])
+              if self.dC is not None and other.dC is not None
+              else None)
+        dD = (lambda s: self.dD(s) + other.dD(s)
+              if self.dD is not None and other.dD is not None
+              else None)
+
+        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD)
+
+    __radd__ = __add__
+
+    def __neg__(self):
+        C = lambda s: -self.C(s)
+        D = lambda s: -self.D(s)
+        dC = lambda s: -self.dC(s) if self.dC is not None else None
+        dD = lambda s: -self.dD(s) if self.dD is not None else None
+        return self.with_(C=C, D=D, dC=dC, dD=dD)
+
+    def __mul__(self, other):
+        if (type(other) is not FactorizedTransferFunction
+                and not hasattr(other, 'transfer_function')):
+            return NotImplemented
+
+        assert self.cont_time == other.cont_time
+        assert self.dim_input == other.dim_output
+
+        if not type(other) is FactorizedTransferFunction:
+            other = other.transfer_function
+
+        K = lambda s: BlockOperator([[self.K(s), -self.B(s) @ other.C(s)],
+                                     [None, other.K(s)]])
+        B = lambda s: BlockColumnOperator([self.B(s) @ other.D(s), other.B(s)])
+        C = lambda s: BlockRowOperator([self.C(s), self.D(s) @ other.C(s)])
+        D = lambda s: self.D(s) @ other.D(s)
+        dK = (lambda s: BlockOperator([[self.dK(s), self.dB(s) @ other.C(s) + self.B(s) @ other.dC(s)],
+                                       [None, other.dK(s)]])
+              if self.dK is not None and other.dK is not None and self.dB is not None and other.dC is not None
+              else None)
+        dB = (lambda s: BlockColumnOperator([self.dB(s) @ other.D(s) + self.B(s) @ other.dD(s), other.dB(s)])
+              if self.dB is not None and other.dB is not None and other.dD is not None
+              else None)
+        dC = (lambda s: BlockRowOperator([self.dC(s), self.dD(s) @ other.C(s) + self.D(s) @ other.dC(s)])
+              if self.dC is not None and other.dC is not None and self.dD is not None
+              else None)
+        dD = (lambda s: self.dD(s) @ other.D(s) + self.D(s) @ other.dD(s)
+              if self.dD is not None and other.dD is not None
+              else None)
+
+        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD)
+
+    def __rmul__(self, other):
+        if not hasattr(other, 'transfer_function'):
+            return NotImplemented
+        return other.transfer_function * self
