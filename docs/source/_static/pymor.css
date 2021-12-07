@@ -7,7 +7,6 @@
 
 .md-typeset .admonition{
     overflow: hidden;
-    border-left: .2rem solid #ffd042;
 }
 
 .output.text_html {
@@ -123,7 +122,7 @@ html .md-typeset .admonition > :last-child, html .md-typeset details > :last-chi
 }
 
 .admonition-raises.admonition {
-    border-left: .2rem solid #ff7142;
+    border-left: .2rem solid #ff7142 !important;
 }
 
 .admonition-raises.admonition .admonition-title {
@@ -136,7 +135,7 @@ html .md-typeset .admonition > :last-child, html .md-typeset details > :last-chi
 }
 
 .py.class > dd > .admonition.admonition-parameters {
-    border-left: .2rem solid #ffd042;
+    border-left: .2rem solid #ffd042 !important;
 }
 
 .py.class > dd > .admonition.admonition-parameters .admonition-title {
@@ -146,4 +145,8 @@ html .md-typeset .admonition > :last-child, html .md-typeset details > :last-chi
 
 .py.method, .py.function {
     border-left: .1rem solid #448aff !important;
+}
+
+.align-left {
+    float: left;
 }
