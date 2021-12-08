@@ -185,24 +185,12 @@ if config.HAVE_TORCH:
                 self.dim_output = output_functional.range.dim
 
         def _compute_solution(self, mu=None, **kwargs):
-
-            U = self.solution_space.empty(reserve=self.nt)
-            dt = self.T / (self.nt - 1)
-            t = 0.
-
-            # iterate over time steps
-            for i in range(self.nt):
-                mu = mu.with_(t=t)
-                # convert the parameter `mu` into a form that is usable in PyTorch
-                converted_input = torch.DoubleTensor(mu.to_numpy())
-                # obtain (reduced) coordinates by forward pass of the parameter values
-                # through the neural network
-                result_neural_network = self.neural_network(converted_input).data.numpy()
-                # convert plain numpy array to element of the actual solution space
-                U.append(self.solution_space.make_array(result_neural_network))
-                t += dt
-
-            return U
+            # collect all inputs in a single tensor
+            inputs = torch.DoubleTensor([mu.with_(t=t).to_numpy() for t in np.linspace(0., self.T, self.nt)])
+            # pass batch of inputs to neural network
+            result = self.neural_network(inputs).data.numpy()
+            # convert result into element from solution space
+            return self.solution_space.make_array(result)
 
     class NeuralNetworkInstationaryStatefreeOutputModel(Model):
         """Class for models of the output of instationary problems that use ANNs.
@@ -245,23 +233,12 @@ if config.HAVE_TORCH:
                      output_d_mu_return_array=False, mu=None, **kwargs):
 
             if output:
-                outputs = []
-                dt = self.T / (self.nt - 1)
-                t = 0.
+                # collect all inputs in a single tensor
+                inputs = torch.DoubleTensor([mu.with_(t=t).to_numpy() for t in np.linspace(0., self.T, self.nt)])
+                # pass batch of inputs to neural network
+                outputs = self.neural_network(inputs).data.numpy()
 
-                # iterate over time steps
-                for i in range(self.nt):
-                    mu = mu.with_(t=t)
-                    # convert the parameter `mu` into a form that is usable in PyTorch
-                    converted_input = torch.from_numpy(mu.to_numpy()).double()
-                    # obtain approximate output quantity by forward pass of the parameter values
-                    # through the neural network
-                    result_neural_network = self.neural_network(converted_input).data.numpy()
-                    # append approximate output to list of outputs
-                    outputs.append(result_neural_network)
-                    t += dt
-
-                return {'output': np.array(outputs), 'solution': None}
+                return {'output': outputs, 'solution': None}
             return {}
 
     class FullyConnectedNN(nn.Module, BasicObject):
