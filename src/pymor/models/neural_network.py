@@ -262,9 +262,6 @@ if config.HAVE_TORCH:
             self.dim_output = output_functional.range.dim
 
         def _compute_solution(self, mu=None, **kwargs):
-
-            U = self.solution_space.empty(reserve=self.nt)
-
             # create tensor of parameters at different time instances
             def time_dependent_parameter(t):
                 return [mu.get_time_dependent_value(param)(t) for param in self.parameters]
@@ -274,14 +271,9 @@ if config.HAVE_TORCH:
 
             # obtain (reduced) coordinates by forward pass of the parameter values
             # through the neural network
-            result_neural_network = self.neural_network(parameters[..., 0]).data.numpy()
+            result_neural_network = self.neural_network(parameters[..., 0]).data.numpy()[0]
 
-            # iterate over time steps
-            for t in range(self.nt):
-                # convert plain numpy array to element of the actual solution space
-                U.append(self.solution_space.make_array(result_neural_network[:, t]))
-
-            return U
+            return self.solution_space.make_array(result_neural_network)
 
     class NeuralNetworkInstationaryStatefreeOutputModel(Model):
         """Class for models of the output of instationary problems that use ANNs.
