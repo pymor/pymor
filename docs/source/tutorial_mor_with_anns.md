@@ -425,7 +425,7 @@ exploding gradients that often occur during training of recurrent neural network
 In an LSTM neural network, multiple so called LSTM cells are chained with each other such that the
 cell and the hidden state of the {math}`k`-th LSTM cell, {math}`c_k` respectively {math}`h_k`,
 serve as the input hidden states for the {math}`k+1`-th LSTM cell. Therefore, information from
-former timesteps can be available later. Each LSTM cell takes an input {math}`\mu(t_k)` and
+former time steps can be available later. Each LSTM cell takes an input {math}`\mu(t_k)` and
 produces an output {math}`o(t_k)`. The following figure shows the general structure of an LSTM
 neural network that is also implemented in the same way in pyMOR:
 
@@ -447,7 +447,7 @@ Here, {math}`\mu(t_k)` denotes the input to the network at the current time inst
 while {math}`o(t_k)` denotes the output. The two hidden states for time instance `t_k` are given
 as the cell state {math}`c_k` and the hidden state {math}`h_k` that also serves as the output.
 Squares represent layers similar to those used in feedforward neural networks, where inside the
-square the applied activation function is mentioned, whereas circles denote element-wise
+square the applied activation function is mentioned, and circles denote element-wise
 operations like element-wise multiplication ({math}`\times`), element-wise addition ({math}`+`) or
 element-wise application of the hyperbolic tangent function ({math}`\tanh`). The filled black
 circle represents the concatenation of the inputs. Furthermore, {math}`\sigma` is the sigmoid
@@ -455,7 +455,7 @@ activation function ({math}`\sigma(x)=\frac{1}{1+\exp(-x)}`), and {math}`\tanh` 
 tangent activation function ({math}`\tanh(x)=\frac{\exp(x)-\exp(-x)}{\exp(x)+\exp(-x)}`) used for
 the respective layers in the LSTM network. Finally, the layer {math}`P` denotes a projection layer
 that projects vectors of the internal size to the hidden respectively output size. Hence,
-internally, the LSTM can deal with larger quantities and finally project them onto a space with a
+internally, the LSTM can deal with larger quantities and finally projects them onto a space with a
 desired size.
 
 We will take a closer look at the individual components of an LSTM cell in the subsequent
@@ -513,7 +513,7 @@ output {math}`o(t_k)` that is returned and a new hidden state {math}`h_k` that c
 The idea of the approach implemented in pyMOR is the following: Instead of passing the current
 time instance as an additional input to the neural network, we use an LSTM that takes at each time
 instance {math}`t_k` the (potentially) time-dependent input {math}`\mu(t_k)` as an input and uses
-the hidden states from the former timestep. The output {math}`o(t_k)` of the LSTM (and therefore
+the hidden states of the former time step. The output {math}`o(t_k)` of the LSTM (and therefore
 also the hidden state {math}`h_k`) at time {math}`t_k` are either approximations of the reduced
 basis coefficients (similar to the
 {class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel`) or approximations of the
