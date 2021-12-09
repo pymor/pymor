@@ -244,6 +244,9 @@ class Model(CacheableObject, ParametricObject):
             Internal model state for the given |parameter values|.
         mu
             |Parameter values| for which to compute the error estimate.
+        return_vector
+            If `True`, return the output estimate as a |NumPy array|.
+            Otherwise, return the euclidian norm of the estimate.
         kwargs
             Additional keyword arguments to customize how the error estimate is
             computed or to select additional data to be returned.
@@ -299,8 +302,11 @@ class Model(CacheableObject, ParametricObject):
         output_error_estimate
             If `True`, return an error estimate for the computed output.
         output_d_mu_return_array
-            if `True`, return the output gradient as a |NumPy array|.
+            If `True`, return the output gradient as a |NumPy array|.
             Otherwise, return a dict of gradients for each |Parameter|.
+        output_error_estimate_return_vector
+            If `True`, return the output error estimate as a |NumPy array|.
+            Otherwise, return the euclidian norm of the estimate.
         mu
             |Parameter values| for which to compute the values.
         input
@@ -469,6 +475,9 @@ class Model(CacheableObject, ParametricObject):
             Can be `None` if `self.dim_input == 0`.
         return_error_estimate
             If `True`, also return an error estimate for the computed output.
+        return_error_estimate_vector
+            if `True`, return the output estimate as a |NumPy array|.
+            Otherwise, return the euclidian norm of the estimate.
         kwargs
             Additional keyword arguments passed to :meth:`compute` that
             might affect how the solution is computed.
@@ -614,6 +623,9 @@ class Model(CacheableObject, ParametricObject):
             mapping time to input, or a `str` expression whith `t` as variable that
             can be used to instatiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
+        return_vector
+            if `True`, return the output estimate as a |NumPy array|.
+            Otherwise, return the euclidian norm of the estimate .
         kwargs
             Additional keyword arguments passed to :meth:`compute` that
             might affect how the error estimate (or the output) is computed.
