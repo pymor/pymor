@@ -97,7 +97,7 @@ class NeuralNetworkReductor(BasicObject):
 
     def reduce(self, hidden_layers='[(N+P)*3, (N+P)*3]', activation_function=torch.tanh,
                optimizer=optim.LBFGS, epochs=1000, batch_size=20, learning_rate=1.,
-               restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
+               loss='weighted MSE', restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
                lr_scheduler_params={'step_size': 10, 'gamma': 0.7}, weight_decay=0., seed=0):
         """Reduce by training artificial neural networks.
 
@@ -118,6 +118,11 @@ class NeuralNetworkReductor(BasicObject):
             Batch size to use if optimizer allows mini-batching.
         learning_rate
             Step size to use in each optimization step.
+        loss
+            Loss function to use for training. If `'weighted MSE'`, a weighted
+            mean squared error is used as loss function, where the weights are
+            given as the singular values of the corresponding reduced basis
+            functions. If `None`, the usual mean squared error is used.
         restarts
             Number of restarts of the training algorithm. Since the training
             results highly depend on the initial starting point, i.e. the
@@ -183,10 +188,22 @@ class NeuralNetworkReductor(BasicObject):
             # set parameters for neural network and training
             neural_network_parameters = {'layer_sizes': layer_sizes,
                                          'activation_function': activation_function}
+            loss_function = None
+            if loss == 'weighted MSE':
+                if hasattr(self, 'weights'):
+                    weights = self.weights
+
+                    def weighted_mse_loss_function(inputs, targets):
+                        return (weights * (inputs - targets) ** 2).mean()
+
+                    loss_function = weighted_mse_loss_function
+                    self.logger.info('Using weighted MSE loss function ...')
+                else:
+                    self.logger.warn('No weights for weighted MSE loss available. Switching to default loss ...')
             training_parameters = {'optimizer': optimizer, 'epochs': epochs,
                                    'batch_size': batch_size, 'learning_rate': learning_rate,
                                    'lr_scheduler': lr_scheduler, 'lr_scheduler_params': lr_scheduler_params,
-                                   'weight_decay': weight_decay}
+                                   'weight_decay': weight_decay, 'loss_function': loss_function}
 
             self.logger.info('Initializing neural network ...')
             # initialize the neural network
@@ -223,6 +240,9 @@ class NeuralNetworkReductor(BasicObject):
                 # compute minimum and maximum of outputs/targets for scaling
                 self._update_scaling_parameters(sample)
                 self.training_data.extend(sample)
+
+        # set singular values as weights for the weighted MSE loss
+        self.weights = torch.Tensor(svals)
 
         # compute mean square loss
         self.mse_basis = (sum(U.norm2()) - sum(svals**2)) / len(U)
@@ -491,6 +511,9 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
                 for sample in samples:
                     self._update_scaling_parameters(sample)
                 self.training_data.extend(samples)
+
+        # set singular values as weights for the weighted MSE loss
+        self.weights = torch.Tensor(svals)
 
         # compute mean square loss
         self.mse_basis = (sum(U.norm2()) - sum(svals**2)) / len(U)
@@ -781,7 +804,8 @@ def train_neural_network(training_data, validation_data, neural_network,
     assert isinstance(batch_size, int) and batch_size > 0
     learning_rate = 1. if 'learning_rate' not in training_parameters else training_parameters['learning_rate']
     assert learning_rate > 0.
-    loss_function = (nn.MSELoss() if 'loss_function' not in training_parameters
+    loss_function = (nn.MSELoss() if ('loss_function' not in training_parameters
+                                      or training_parameters['loss_function'] is None)
                      else training_parameters['loss_function'])
 
     logger = getLogger('pymor.algorithms.neural_network.train_neural_network')
