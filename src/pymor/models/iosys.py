@@ -140,13 +140,6 @@ class LTIModel(Model):
             K, B, C, D, dK, dB, dC, dD,
             parameters=parameters, cont_time=cont_time, name=self.name + '_transfer_function')
 
-        self.eval_tf = self.transfer_function.eval_tf
-        self.eval_dtf = self.transfer_function.eval_dtf
-        self.freq_resp = self.transfer_function.freq_resp
-        self.bode = self.transfer_function.bode
-        self.bode_plot = self.transfer_function.bode_plot
-        self.mag_plot = self.transfer_function.mag_plot
-
     def __str__(self):
         return (
             f'{self.name}\n'
@@ -530,6 +523,60 @@ class LTIModel(Model):
         A = to_matrix(A, format='dense')
         E = None if isinstance(E, IdentityOperator) else to_matrix(E, format='dense')
         return spla.eigvals(A, E)
+
+    def eval_tf(self, s, mu=None):
+        r"""Evaluate the transfer function.
+
+        This function is an alias for `transfer_function.eval_tf`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.eval_tf` for a detailed
+        documentation.
+        """
+        return self.transfer_function.eval_tf(s, mu=mu)
+
+    def eval_dtf(self, s, mu=None):
+        r"""Evaluate the derivative of the transfer function.
+
+        This function is an alias for `transfer_function.eval_dtf`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.eval_dtf` for a detailed
+        documentation.
+        """
+        return self.transfer_function.eval_dtf(s, mu=mu)
+
+    def freq_resp(self, w, mu=None):
+        """Evaluate the transfer function on the imaginary axis.
+
+        This function is an alias for `transfer_function.freq_resp`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.freq_resp` for a detailed
+        documentation.
+        """
+        return self.transfer_function.freq_resp(w, mu=mu)
+
+    def bode(self, w, mu=None):
+        """Compute magnitudes and phases.
+
+        This function is an alias for `transfer_function.bode`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.bode` for a detailed
+        documentation.
+        """
+        return self.transfer_function.bode(w, mu=mu)
+
+    def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, **mpl_kwargs):
+        """Draw the Bode plot for all input-output pairs.
+
+        This function is an alias for `transfer_function.bode_plot`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.bode_plot` for a detailed
+        documentation.
+        """
+        return self.transfer_function.bode_plot(w, mu=mu, ax=ax, Hz=Hz, dB=dB, deg=deg, **mpl_kwargs)
+
+    def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
+        """Draw the magnitude plot.
+
+        This function is an alias for `transfer_function.mag_plot`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.mag_plot` for a detailed
+        documentation.
+        """
+        return self.transfer_function.mag_plot(w, mu=mu, ax=ax, ord=ord, Hz=Hz, dB=dB, **mpl_kwargs)
 
     @cached
     def gramian(self, typ, mu=None):
@@ -1047,13 +1094,6 @@ class SecondOrderModel(Model):
             K, B, C, D, dK, dB, dC, dD,
             parameters=parameters, cont_time=cont_time, name=self.name + '_transfer_function')
 
-        self.eval_tf = self.transfer_function.eval_tf
-        self.eval_dtf = self.transfer_function.eval_dtf
-        self.freq_resp = self.transfer_function.freq_resp
-        self.bode = self.transfer_function.bode
-        self.bode_plot = self.transfer_function.bode_plot
-        self.mag_plot = self.transfer_function.mag_plot
-
     def __str__(self):
         return (
             f'{self.name}\n'
@@ -1405,6 +1445,60 @@ class SecondOrderModel(Model):
         """
         return self.to_lti().poles(mu=mu)
 
+    def eval_tf(self, s, mu=None):
+        r"""Evaluate the transfer function.
+
+        This function is an alias for `transfer_function.eval_tf`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.eval_tf` for a detailed
+        documentation.
+        """
+        return self.transfer_function.eval_tf(s, mu=mu)
+
+    def eval_dtf(self, s, mu=None):
+        r"""Evaluate the derivative of the transfer function.
+
+        This function is an alias for `transfer_function.eval_dtf`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.eval_dtf` for a detailed
+        documentation.
+        """
+        return self.transfer_function.eval_dtf(s, mu=mu)
+
+    def freq_resp(self, w, mu=None):
+        """Evaluate the transfer function on the imaginary axis.
+
+        This function is an alias for `transfer_function.freq_resp`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.freq_resp` for a detailed
+        documentation.
+        """
+        return self.transfer_function.freq_resp(w, mu=mu)
+
+    def bode(self, w, mu=None):
+        """Compute magnitudes and phases.
+
+        This function is an alias for `transfer_function.bode`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.bode` for a detailed
+        documentation.
+        """
+        return self.transfer_function.bode(w, mu=mu)
+
+    def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, **mpl_kwargs):
+        """Draw the Bode plot for all input-output pairs.
+
+        This function is an alias for `transfer_function.bode_plot`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.bode_plot` for a detailed
+        documentation.
+        """
+        return self.transfer_function.bode_plot(w, mu=mu, ax=ax, Hz=Hz, dB=dB, deg=deg, **mpl_kwargs)
+
+    def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
+        """Draw the magnitude plot.
+
+        This function is an alias for `transfer_function.mag_plot`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.mag_plot` for a detailed
+        documentation.
+        """
+        return self.transfer_function.mag_plot(w, mu=mu, ax=ax, ord=ord, Hz=Hz, dB=dB, **mpl_kwargs)
+
     @cached
     def gramian(self, typ, mu=None):
         """Compute a second-order Gramian.
@@ -1722,13 +1816,6 @@ class LinearDelayModel(Model):
             K, B, C, D, dK, dB, dC, dD,
             parameters=parameters, cont_time=cont_time, name=self.name + '_transfer_function')
 
-        self.eval_tf = self.transfer_function.eval_tf
-        self.eval_dtf = self.transfer_function.eval_dtf
-        self.freq_resp = self.transfer_function.freq_resp
-        self.bode = self.transfer_function.bode
-        self.bode_plot = self.transfer_function.bode_plot
-        self.mag_plot = self.transfer_function.mag_plot
-
     def __str__(self):
         return (
             f'{self.name}\n'
@@ -1860,6 +1947,60 @@ class LinearDelayModel(Model):
             return self.with_(E=E, A=A, Ad=Ad, B=B, C=C, D=D)
         else:
             return NotImplemented
+
+    def eval_tf(self, s, mu=None):
+        r"""Evaluate the transfer function.
+
+        This function is an alias for `transfer_function.eval_tf`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.eval_tf` for a detailed
+        documentation.
+        """
+        return self.transfer_function.eval_tf(s, mu=mu)
+
+    def eval_dtf(self, s, mu=None):
+        r"""Evaluate the derivative of the transfer function.
+
+        This function is an alias for `transfer_function.eval_dtf`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.eval_dtf` for a detailed
+        documentation.
+        """
+        return self.transfer_function.eval_dtf(s, mu=mu)
+
+    def freq_resp(self, w, mu=None):
+        """Evaluate the transfer function on the imaginary axis.
+
+        This function is an alias for `transfer_function.freq_resp`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.freq_resp` for a detailed
+        documentation.
+        """
+        return self.transfer_function.freq_resp(w, mu=mu)
+
+    def bode(self, w, mu=None):
+        """Compute magnitudes and phases.
+
+        This function is an alias for `transfer_function.bode`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.bode` for a detailed
+        documentation.
+        """
+        return self.transfer_function.bode(w, mu=mu)
+
+    def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, **mpl_kwargs):
+        """Draw the Bode plot for all input-output pairs.
+
+        This function is an alias for `transfer_function.bode_plot`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.bode_plot` for a detailed
+        documentation.
+        """
+        return self.transfer_function.bode_plot(w, mu=mu, ax=ax, Hz=Hz, dB=dB, deg=deg, **mpl_kwargs)
+
+    def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
+        """Draw the magnitude plot.
+
+        This function is an alias for `transfer_function.mag_plot`.
+        See :func:`~pymor.models.transfer_function.TransferFunction.mag_plot` for a detailed
+        documentation.
+        """
+        return self.transfer_function.mag_plot(w, mu=mu, ax=ax, ord=ord, Hz=Hz, dB=dB, **mpl_kwargs)
 
 
 class LinearStochasticModel(Model):
