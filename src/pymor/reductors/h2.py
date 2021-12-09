@@ -556,16 +556,16 @@ class TFIRKAReductor(GenericIRKAReductor):
     Parameters
     ----------
     fom
-        The full-order |Model| with a `transfer_function` attribute or a
-        |TransferFunction| with `eval_tf` and `eval_dtf` methods that should be
-        defined at least over the open right half of the complex plane.
+        |TransferFunction| or |Model| with a `transfer_function` attribute,
+        with `eval_tf` and `eval_dtf` methods that should be defined at least
+        over the open right half of the complex plane.
     mu
         |Parameter values|.
     """
 
     def __init__(self, fom, mu=None):
-        assert hasattr(fom, 'transfer_function') or isinstance(fom, TransferFunction)
-        if hasattr(fom, 'transfer_function'):
+        assert isinstance(fom, TransferFunction) or hasattr(fom, 'transfer_function')
+        if not isinstance(fom, TransferFunction):
             fom = fom.transfer_function
         super().__init__(fom, mu=mu)
 
