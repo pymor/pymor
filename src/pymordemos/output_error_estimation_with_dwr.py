@@ -91,10 +91,18 @@ def main(
                                        operator_is_symmetric=operator_symmetric)
         dwr_reductors.append(dwr_RB_reductor)
 
+    # dwr reductor without dual basis
+    dwr_reductor_primal = dwr_reductor(fom,
+                                       primal_basis=primal_reduced_basis,
+                                       product=product,
+                                       coercivity_estimator=coercivity_estimator,
+                                       operator_is_symmetric=operator_symmetric)
+    dwr_reductors.append(dwr_reductor_primal)
+
     # rom
     standard_rom = standard_RB_reductor.reduce()
     dwr_roms = [dwr_red.reduce() for dwr_red in dwr_reductors]
-    roms = [standard_rom, dwr_roms[0], dwr_roms[1]]
+    roms = [standard_rom, dwr_roms[0], dwr_roms[1], dwr_roms[2]]
 
     results = []
     for rom in roms:
@@ -119,13 +127,17 @@ def main(
     plt.semilogy(np.arange(len(training_set)), results[0]['est'], 'k--',
                  label=f'standard output estimate basis size {modes}')
     plt.semilogy(np.arange(len(training_set)), results[1]['err'], 'g',
-                 label=f'dwr output error basis size {modes}, 1')
+                 label=f'dwr output error basis size {modes}, operator_symmetric=True')
     plt.semilogy(np.arange(len(training_set)), results[1]['est'], 'g--',
-                 label=f'dwr output estimate basis size {modes}, 1')
+                 label=f'dwr output estimate basis size {modes}, operator_symmetric=True')
     plt.semilogy(np.arange(len(training_set)), results[2]['err'], 'r',
-                 label=f'dwr output error basis size {modes}, 2')
+                 label=f'dwr output error basis size {modes}, operator_symmetric=False')
     plt.semilogy(np.arange(len(training_set)), results[2]['est'], 'r--',
-                 label=f'dwr output estimate basis size {modes}, 2')
+                 label=f'dwr output estimate basis size {modes}, operator_symmetric=False')
+    plt.semilogy(np.arange(len(training_set)), results[3]['err'], 'y',
+                 label=f'dwr output error basis size {modes}, no dual_bases')
+    plt.semilogy(np.arange(len(training_set)), results[3]['est'], 'y--',
+                 label=f'dwr output estimate basis size {modes}, no dual_basis')
     plt.title(f'Error and estimate for {modes} basis functions for parameters in training set')
     plt.legend()
     # plt.show()
@@ -164,12 +176,16 @@ def main(
     plt.semilogy(modes_set, min_estss[0], 'g--', label='standard min estimate')
     # plt.semilogy(modes_set, max_errss[1], 'r', label='dwr max error, 1')
     # plt.semilogy(modes_set, max_estss[1], 'r--', label='dwr max estimate, 1')
-    plt.semilogy(modes_set, min_errss[1], 'b', label='dwr min error, 1')
-    plt.semilogy(modes_set, min_estss[1], 'b--', label='dwr min estimate, 1')
+    plt.semilogy(modes_set, min_errss[1], 'b',
+                 label='dwr min error, operator_symmetric=True')
+    plt.semilogy(modes_set, min_estss[1], 'b--',
+                 label='dwr min estimate, operator_symmetric=True')
     # plt.semilogy(modes_set, max_errss[2], 'y', label='dwr max error, 2')
     # plt.semilogy(modes_set, max_estss[2], 'y--', label='dwr max estimate, 2')
-    plt.semilogy(modes_set, min_errss[2], 'm', label='dwr min error, 2')
-    plt.semilogy(modes_set, min_estss[2], 'm--', label='dwr min estimate, 2')
+    plt.semilogy(modes_set, min_errss[2], 'm',
+                 label='dwr min error, operator_symmetric=False')
+    plt.semilogy(modes_set, min_estss[2], 'm--',
+                 label='dwr min estimate, operator_symmetric=False')
     plt.legend()
     plt.title('Evolution of maximum error and estimate for different RB sizes')
     plt.show()
