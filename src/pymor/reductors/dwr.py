@@ -14,14 +14,14 @@ from pymor.reductors.residual import ResidualOperator
 
 
 class DWRCoerciveRBReductor(BasicObject):
-    """Reduced Basis reductor for |StationaryModels| with coercive linear operator.
+    """Reduced Basis reductor for |StationaryModels| with coercive linear operator
 
     This class can be used as a replacement for
     :class:`~pymor.reductors.coercive.CoerciveRBReductor` for a corrected output
-    functional with the DWR approach. (see :cite:`Haa17` (Definition 2.26)).
+    functional with the DWR approach. (see :cite:`Haa17` (Definition 2.31)).
     This also enables a DWR based error estimator for the corrected output functional.
-    The DWR approach requires a dual problems for every output dimension of the output functional
-    Each dual problem is then constructed with the dual operator and the appropriate component of
+    The DWR approach requires a dual problem for every dimension of the output functional.
+    Each dual problem is defined by the dual operator and the corresponding component of
     the output functional as right hand side. See also :meth:`~pymor.reductors.dwr.dual_model`.
 
     Parameters
@@ -31,23 +31,24 @@ class DWRCoerciveRBReductor(BasicObject):
     RB
         |VectorArray| containing the reduced basis on which to project.
     product
-        Inner product for the orthonormalization of `RB`, the projection of the
-        |Operators| given by `vector_ranged_operators` and for the computation of
-        Riesz representatives of the residual. If `None`, the Euclidean product is used.
+        See :class:`~pymor.reductors.coercive.CoerciveRBReductor`.
     coercivity_estimator
-        `None` or a |Parameterfunctional| returning a lower bound for the coercivity
-        constant of the given problem. Note that the computed error estimate is only
-        guaranteed to be an upper bound for the error when an appropriate coercivity
-        estimate is specified.
+        See :class:`~pymor.reductors.coercive.CoerciveRBReductor`.
     operator_is_symmetric
-        If the operator of `fom` is symmetric (in theory), it can make sense to consider
-        the same operator also for the adjoint case for the dual models. In this case
-        `operator_is_symmetric` as `True`, means to use the same operator for both the
-        primal as well as for the dual model. If `False` the adjoint operator is used.
+        If the operator of `fom` is symmetric (in theory and before boundary treatment),
+        it can make sense to consider the same operator also for the adjoint case
+        for the dual models. In this case `operator_is_symmetric` as `True`,
+        means to use the same operator for both the primal as well as for the dual model.
+        If `False` the adjoint operator is used.
     dual_bases
-        List of |VectorArrays| contraining reduced basis for the dual models that are
+        List of |VectorArrays| containing the reduced basis for the dual models that are
         constructed with :meth:`~pymor.reductors.dwr.dual_model`, where each entry
         of the list corresponds to the dimensions of the output functional.
+        If `dual_bases` is `None`, the primal bases are used.
+    check_orthonormality
+        See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
+    check_tol
+        See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     """
 
     def __init__(self, fom, primal_basis=None, product=None, coercivity_estimator=None,
@@ -63,7 +64,8 @@ class DWRCoerciveRBReductor(BasicObject):
                                                   coercivity_estimator, check_tol)
         self.dual_reductors = []
         assert (fom.output_functional is not None and fom.output_functional.linear), \
-            'The features of the DWR reductor cannot be used, you should use CoerciveRBReductor instead.'
+            'The features of the DWR reductor cannot be used, ' + \
+            'please use CoerciveRBReductor instead.'
 
         # either needed for estimation or just for the corrected output
         for d in range(fom.dim_output):
@@ -73,9 +75,9 @@ class DWRCoerciveRBReductor(BasicObject):
             if dual_bases is not None:
                 dual_basis = dual_bases[d]
             else:
-                dual_basis = None
-            # define dual reductors
-            dual_reductor = CoerciveRBReductor(dual_model, dual_basis, product, coercivity_estimator,
+                dual_basis = primal_basis
+            # define dual reductors (with None as coercivity_estimator)
+            dual_reductor = CoerciveRBReductor(dual_model, dual_basis, product, None,
                                                check_orthonormality, check_tol)
             self.dual_reductors.append(dual_reductor)
 
@@ -140,6 +142,11 @@ class DWRCoerciveRBReductor(BasicObject):
     def dual_model(cls, model, dim=0, operator_is_symmetric=False):
         """Return dual model with the output as right hand side.
 
+        The dual equation is defined as to find the solution p such that
+
+            a(q, p) = - l_dim(q),       for all q,
+
+        where l_dim denotes the dim-th component of the output functional l.
         See :cite:`Haa17` (Definition 2.26)
 
         Parameters
@@ -147,9 +154,10 @@ class DWRCoerciveRBReductor(BasicObject):
         model
             The |Model| for which to construct the dual model
         dim
-            The dimension of the `fom.output_functional` for which the dual model is to be built.
+            The dimension of the `fom.output_functional` for which the dual model
+            is to be built.
         operator_is_symmetric
-            If `True`, `fom.operator` is used for the dual problem.
+            If `True`, `fom.operator` is used for the dual operator of a(., .).
             This is only feasable if the operator is symmetric (in theory).
             If `False` the adjoint `fom.operator.H` is used instead.
 
@@ -196,6 +204,8 @@ class DWRCoerciveRBEstimator(ImmutableObject):
         for d in range(m.dim_output):
             dual_solution = self.dual_models[d].solve(mu)
             est_dus.append(self.dual_estimators[d].estimate_error(dual_solution, mu, m))
+        # since dual models have a constant coercivity estimator,
+        # we do not have to multiply it here.
         ret = (est_pr * est_dus).T
         if return_vector:
             return ret
@@ -210,16 +220,17 @@ class DWRCoerciveRBEstimator(ImmutableObject):
 
 
 class CorrectedOutputFunctional(Operator):
-    """|Operator| representing the corrected output functional from :cite:`Haa17` (Definition 2.26)
+    """|Operator| representing the corrected output functional from :cite:`Haa17` (Definition 2.31)
 
     Parameters
     ----------
     output_functional
         Original output_functional
     dual_models
-        dual models for the corrected output
+        Dual models for the corrected output, see :meth:`~pymor.reductors.dwr.dual_model`
     dual_projected_primal_residuals
-        The evaluated primal residuals
+        The primal residuals projected on the dual space (in the first argument) and on the
+        primal space (in the second argument)
     """
 
     linear = False
@@ -236,9 +247,6 @@ class CorrectedOutputFunctional(Operator):
         for d, (dual_m, dual_res) in enumerate(zip(self.dual_models, self.dual_projected_primal_residuals)):
             dual_solution = dual_m.solve(mu)
             dual_correction = dual_res.apply2(dual_solution, solution, mu)
-            # only half machine precision for this residual
-            # TODO: check why this is required
-            dual_correction = 0 if dual_correction <= 1e-7 else dual_correction
             correction[d] = dual_correction
         corrected_output = output + correction.T
         return self.range.from_numpy(corrected_output)
