@@ -30,6 +30,9 @@ class Model(CacheableObject, ParametricObject):
         `True` if the model describes a linear problem.
     products
         Dict of inner product operators associated with the model.
+    order
+        The number of equations defining the |Model|, usually the dimension of
+        `solution_space`.
     """
 
     solution_space = None
