@@ -49,6 +49,10 @@ class Model(CacheableObject, ParametricObject):
 
         self.__auto_init(locals())
 
+    @property
+    def order(self):
+        return self.solution_space.dim
+
     def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                  solution_error_estimate=False, output_error_estimate=False,
                  output_d_mu_return_array=False, mu=None, **kwargs):
