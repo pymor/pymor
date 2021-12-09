@@ -1,6 +1,7 @@
 # Release checklist
 
  1. [ ] With each 20XX.1 release, update copyright notices accordingly.
+ 1. [ ] Update `.mailmap`.
  1. [ ] Check wheel install on debian stretch produces an OK error message due to too old Python.
  1. [ ] Write release notes. All new deprecations need to be mentioned.
  1. [ ] Update `README.md`.
