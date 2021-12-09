@@ -83,7 +83,7 @@ def project_array(U, basis, product=None, orthonormal=True):
     The projected |VectorArray|.
     """
     if orthonormal:
-        return basis.lincomb(U.inner(basis, product))
+        return basis.lincomb(basis.inner(U, product).T)
     else:
         gramian = basis.gramian(product)
         rhs = basis.inner(U, product)

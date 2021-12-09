@@ -62,7 +62,6 @@ def pod(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     """
     assert isinstance(A, VectorArray)
     assert product is None or isinstance(product, Operator)
-    assert modes is None or modes <= len(A)
     assert method in ('method_of_snapshots', 'qr_svd')
 
     logger = getLogger('pymor.algorithms.pod.pod')
