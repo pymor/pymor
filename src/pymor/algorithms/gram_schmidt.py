@@ -129,6 +129,9 @@ def gram_schmidt_biorth(V, W, product=None,
 
     See Algorithm 1 in :cite:`BKS11`.
 
+    Note that this algorithm can be significantly less accurate compared to orthogonalization,
+    in particular, when `V` and `W` are almost orthogonal.
+
     Parameters
     ----------
     V, W
@@ -148,7 +151,6 @@ def gram_schmidt_biorth(V, W, product=None,
         Tolerance for the check.
     copy
         If `True`, create a copy of `V` and `W` instead of modifying `V` and `W` in-place.
-
 
     Returns
     -------

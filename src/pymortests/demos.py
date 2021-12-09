@@ -131,6 +131,10 @@ OUTPUT_FUNCTIONAL_ARGS = (
     ('output_error_estimation', [2, 10, 4, 10, 1]),
     ('output_error_estimation', [3, 10, 10, 10, 1]),
     ('output_error_estimation', [4, 10, 10, 10, 1]),
+
+DMD_ARGS = (
+    ('burgers_dmd', [1.5, '--grid=10', '--nt=100']),
+    ('dmd_identification', ['--n=4', '--m=10']),
 )
 
 DEMO_ARGS = (
@@ -146,7 +150,9 @@ DEMO_ARGS = (
     + FENICS_NONLINEAR_ARGS
     + FUNCTION_EI_ARGS
     + OUTPUT_FUNCTIONAL_ARGS
+    + DMD_ARGS
 )
+
 DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 
 
