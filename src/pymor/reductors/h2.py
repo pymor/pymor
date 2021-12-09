@@ -16,6 +16,7 @@ from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel, _lti_to_poles_b_c, _poles_b_c_to_lti
+from pymor.models.transfer_function import TransferFunction
 from pymor.operators.constructions import IdentityOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
@@ -555,15 +556,17 @@ class TFIRKAReductor(GenericIRKAReductor):
     Parameters
     ----------
     fom
-        The full-order |Model| with `eval_tf` and `eval_dtf` methods that
-        should be defined at least over the open right half of the complex
-        plane.
+        The full-order |Model| with a `transfer_function` attribute or a
+        |TransferFunction| with `eval_tf` and `eval_dtf` methods that should be
+        defined at least over the open right half of the complex plane.
     mu
         |Parameter values|.
     """
 
     def __init__(self, fom, mu=None):
-        assert hasattr(fom, 'eval_tf') and hasattr(fom, 'eval_dtf')
+        assert hasattr(fom, 'transfer_function') or isinstance(fom, TransferFunction)
+        if hasattr(fom, 'transfer_function'):
+            fom = fom.transfer_function
         super().__init__(fom, mu=mu)
 
     def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1,
