@@ -29,20 +29,7 @@ def sparse_min_size(value=1000):
     return value
 
 
-class InputStateOutputModel(Model):
-    """Base class for input-output systems with state space."""
-
-    def __init__(self, dim_input, solution_space, dim_output, cont_time=True,
-                 error_estimator=None, visualizer=None, name=None):
-        super().__init__(dim_input=dim_input, error_estimator=error_estimator, visualizer=visualizer, name=name)
-        self.__auto_init(locals())
-
-    @property
-    def order(self):
-        return self.solution_space.dim
-
-
-class LTIModel(InputStateOutputModel):
+class LTIModel(Model):
     r"""Class for linear time-invariant systems.
 
     This class describes input-state-output systems given by
@@ -133,9 +120,10 @@ class LTIModel(InputStateOutputModel):
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
-        super().__init__(B.source.dim, A.source, C.range.dim, cont_time=cont_time,
-                         error_estimator=error_estimator, visualizer=visualizer, name=name)
+        super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
+        self.solution_space = A.source
+        self.dim_output = C.range.dim
 
         K = lambda s: s * self.E - self.A
         B = lambda s: self.B
@@ -930,7 +918,7 @@ class LTIModel(InputStateOutputModel):
             return ast_lev, ast_ews[idx], ast_rev
 
 
-class SecondOrderModel(InputStateOutputModel):
+class SecondOrderModel(Model):
     r"""Class for linear second order systems.
 
     This class describes input-output systems given by
@@ -1039,9 +1027,10 @@ class SecondOrderModel(InputStateOutputModel):
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
-        super().__init__(B.source.dim, M.source, Cp.range.dim, cont_time=cont_time,
-                         error_estimator=error_estimator, visualizer=visualizer, name=name)
+        super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
+        self.solution_space = M.source
+        self.dim_output = Cp.range.dim
 
         K = lambda s: s**2 * self.M + s * self.E + self.K
         B = lambda s: self.B
@@ -1606,7 +1595,7 @@ class SecondOrderModel(InputStateOutputModel):
         return self.to_lti().hankel_norm(mu=mu)
 
 
-class LinearDelayModel(InputStateOutputModel):
+class LinearDelayModel(Model):
     r"""Class for linear delay systems.
 
     This class describes input-state-output systems given by
@@ -1712,12 +1701,11 @@ class LinearDelayModel(InputStateOutputModel):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        super().__init__(B.source.dim, A.source, C.range.dim, cont_time=cont_time,
-                         error_estimator=error_estimator, visualizer=visualizer, name=name)
-
+        super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
-        self.q = len(Ad)
         self.solution_space = A.source
+        self.dim_output = C.range.dim
+        self.q = len(Ad)
 
         K = lambda s: LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
         B = lambda s: self.B
@@ -1874,7 +1862,7 @@ class LinearDelayModel(InputStateOutputModel):
             return NotImplemented
 
 
-class LinearStochasticModel(InputStateOutputModel):
+class LinearStochasticModel(Model):
     r"""Class for linear stochastic systems.
 
     This class describes input-state-output systems given by
@@ -1973,12 +1961,10 @@ class LinearStochasticModel(InputStateOutputModel):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        assert cont_time in (True, False)
-
-        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
-                         error_estimator=error_estimator, visualizer=visualizer, name=name)
-
+        super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
+        self.solution_space = A.source
+        self.dim_output = C.range.dim
         self.q = len(As)
 
     def __str__(self):
@@ -1995,7 +1981,7 @@ class LinearStochasticModel(InputStateOutputModel):
         )
 
 
-class BilinearModel(InputStateOutputModel):
+class BilinearModel(Model):
     r"""Class for bilinear systems.
 
     This class describes input-output systems given by
@@ -2092,12 +2078,10 @@ class BilinearModel(InputStateOutputModel):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        assert cont_time in (True, False)
-
-        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
-                         error_estimator=error_estimator, visualizer=visualizer, name=name)
-
+        super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
+        self.solution_space = A.source
+        self.dim_output = C.range.dim
         self.linear = False
 
     def __str__(self):

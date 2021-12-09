@@ -16,9 +16,9 @@ from pymor.reductors.basic import (ProjectionBasedReductor, LTIPGReductor, SOLTI
 class GenericBHIReductor(BasicObject):
     r"""Generic bitangential Hermite interpolation reductor.
 
-    This is a generic reductor for reducing any linear
-    :class:`~pymor.models.iosys.InputStateOutputModel` that has a transfer
-    function that is a `FactorizedTransferFunction` (see :cite:`BG09`).
+    This is a generic reductor for reducing any linear `Model` that has a
+    transfer function that is a `FactorizedTransferFunction`
+    (see :cite:`BG09`).
     The interpolation here is limited to only up to the first derivative.
     Interpolation points are assumed to be pairwise distinct.
 
@@ -39,7 +39,7 @@ class GenericBHIReductor(BasicObject):
 
     .. math::
         H(\sigma_i) b_i & = \hat{H}(\sigma_i) b_i, \\
-        c_i^T H(\sigma_i) & = c_i^T \hat{H}(\sigma_i) b_i, \ - \widehat{y}\
+        c_i^T H(\sigma_i) & = c_i^T \hat{H}(\sigma_i), \\
         c_i^T H'(\sigma_i) b_i & = c_i^T \hat{H}'(\sigma_i) b_i,
 
     for all :math:`i = 1, 2, \ldots, r`.

@@ -28,7 +28,7 @@ def fom_properties(fom, w):
     Parameters
     ----------
     fom
-        The full-order `InputStateOutputModel`.
+        The full-order `Model` from :mod:`~pymor.models.iosys`.
     w
         Array of frequencies.
     """
@@ -67,7 +67,7 @@ def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
     Parameters
     ----------
     lti
-        The full-order `InputStateOutputModel`.
+        The full-order `Model` from :mod:`~pymor.models.iosys`.
     w
         Array of frequencies.
     reductor
