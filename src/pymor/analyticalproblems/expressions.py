@@ -197,6 +197,12 @@ class BaseConstant(Expression):
     def numpy_expr(self):
         return f'array({self.numpy_symbol}, ndmin={len(self.shape)}, copy=False)'
 
+    def fenics_expr(self, params):
+        import ufl
+        if self.fenics_op is not None:
+            ufl_op = getattr(ufl, self.fenics_op)
+            return ufl_op
+
     def __str__(self):
         return str(self.numpy_symbol)
 
@@ -299,8 +305,6 @@ class BinaryOp(Expression):
         return f'({self.first.numpy_expr()}{first_ind} {self.numpy_symbol} {self.second.numpy_expr()}{second_ind})'
 
     def fenics_expr(self, params):
-        print(f'fenics op: {self.fenics_op}')
-        # for <=, >=, <, > we **need** to use ufl ops
         if isinstance(self.fenics_op, str):
             import ufl.classes as uc
             if self.fenics_op is not None:
@@ -485,15 +489,15 @@ class angle(UnaryFunctionCall):
         self.shape = arg.shape[:-1]
 
 
-class norm(UnaryReductionCall): numpy_symbol = 'norm'; fenics_op = None    # NOQA
-class min(UnaryReductionCall):  numpy_symbol = 'min';  fenics_op = None    # NOQA
-class max(UnaryReductionCall):  numpy_symbol = 'max';  fenics_op = None    # NOQA
-class sum(UnaryReductionCall):  numpy_symbol = 'sum';  fenics_op = None    # NOQA
-class prod(UnaryReductionCall): numpy_symbol = 'prod'; fenics_op = None    # NOQA
+class norm(UnaryReductionCall): numpy_symbol = 'norm'; fenics_op = None          # NOQA
+class min(UnaryReductionCall):  numpy_symbol = 'min';  fenics_op = None          # NOQA
+class max(UnaryReductionCall):  numpy_symbol = 'max';  fenics_op = None          # NOQA
+class sum(UnaryReductionCall):  numpy_symbol = 'sum';  fenics_op = None          # NOQA
+class prod(UnaryReductionCall): numpy_symbol = 'prod'; fenics_op = None          # NOQA
 
 
-class Pi(BaseConstant): numpy_symbol = 'pi'  # NOQA
-class E(BaseConstant):  numpy_symbol = 'e'   # NOQA
+class Pi(BaseConstant): numpy_symbol = 'pi'; fenics_op = 'pi'  # NOQA
+class E(BaseConstant):  numpy_symbol = 'e';  fenics_op = 'e'   # NOQA
 
 
 pi = Pi()
