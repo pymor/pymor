@@ -144,13 +144,20 @@ class UberMeta(abc.ABCMeta):
 
         init_sig = inspect.signature(c.__init__)
         init_args = []
+        has_args, has_kwargs = False, False
         for arg, description in init_sig.parameters.items():
             if arg == 'self':
                 continue
             if description.kind in (description.POSITIONAL_OR_KEYWORD, description.POSITIONAL_ONLY,
                                     description.KEYWORD_ONLY):
                 init_args.append(arg)
-        c._init_arguments = tuple(init_args)
+            elif description.kind == description.VAR_POSITIONAL:
+                has_args = True
+            elif description.kind == description.VAR_KEYWORD:
+                has_kwargs = True
+            else:
+                raise NotImplementedError(f'Unknown argument type {description.kind}')
+        c._init_arguments, c._init_has_args, c._init_has_kwargs = tuple(init_args), has_args, has_kwargs
 
         return c
 
