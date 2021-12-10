@@ -474,11 +474,23 @@ class arctanh(UnaryFunctionCall):  numpy_symbol = 'arctanh'; fenics_op = None   
 class exp(UnaryFunctionCall):      numpy_symbol = 'exp';     fenics_op = 'exp'       # NOQA
 class exp2(UnaryFunctionCall):     numpy_symbol = 'exp2';    fenics_op = None        # NOQA
 class log(UnaryFunctionCall):      numpy_symbol = 'log';     fenics_op = 'ln'        # NOQA
-class log2(UnaryFunctionCall):     numpy_symbol = 'log2';    fenics_op = None        # NOQA
-class log10(UnaryFunctionCall):    numpy_symbol = 'log10';   fenics_op = None        # NOQA
 class sqrt(UnaryFunctionCall):     numpy_symbol = 'sqrt';    fenics_op = 'sqrt'      # NOQA
 class sign(UnaryFunctionCall):     numpy_symbol = 'sign';    fenics_op = 'sign'      # NOQA
 
+
+class log2(UnaryFunctionCall):
+    numpy_symbol = 'log2';           # NOQA
+    
+    def fenics_expr(self, params):
+        from ufl import ln
+        return ln(self.arg.fenics_expr(params)) / ln(2)
+
+
+class log10(UnaryFunctionCall):
+    numpy_symbol = 'log10';          # NOQA
+    def fenics_expr(self, params):
+        from ufl import ln
+        return ln(self.arg.fenics_expr(params)) / ln(10)
 
 class abs(UnaryFunctionCall):
     numpy_symbol = 'abs'        # NOQA
