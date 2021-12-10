@@ -142,16 +142,13 @@ class UberMeta(abc.ABCMeta):
         # by updating the qualified name we make filtering in sphinx possible
         getattr(c, auto_init_name).__qualname__ = auto_init_name
 
-        # getargspec is deprecated and does not work with keyword only args
         init_sig = inspect.signature(c.__init__)
         init_args = []
         for arg, description in init_sig.parameters.items():
             if arg == 'self':
                 continue
-            if description.kind == description.POSITIONAL_ONLY:
-                raise TypeError('It should not be possible that {}.__init__ has POSITIONAL_ONLY arguments'.
-                                format(c))
-            if description.kind in (description.POSITIONAL_OR_KEYWORD, description.KEYWORD_ONLY):
+            if description.kind in (description.POSITIONAL_OR_KEYWORD, description.POSITIONAL_ONLY,
+                                    description.KEYWORD_ONLY):
                 init_args.append(arg)
         c._init_arguments = tuple(init_args)
 
