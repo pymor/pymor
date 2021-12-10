@@ -254,7 +254,7 @@ class BinaryOp(Expression):
         if not _broadcastable_shapes(first.shape, second.shape):
             raise ValueError(f'Incompatible shapes of expressions "{first}" and "{second}" with shapes '
                              f'{first.shape} and {second.shape} for binary operator {self.numpy_symbol}')
-        self.first, self.second = first, second
+        self.first, self.second = _convert_to_expression(first), _convert_to_expression(second)
         self.shape = tuple(builtin_max(f, s)
                            for f, s in zip_longest(first.shape[::-1], second.shape[::-1], fillvalue=1))[::-1]
 
@@ -281,7 +281,7 @@ class Neg(Expression):
     """Negated :class:`Expression`."""
 
     def __init__(self, operand):
-        self.operand = operand
+        self.operand = _convert_to_expression(operand)
         self.shape = operand.shape
 
     def numpy_expr(self):
@@ -304,7 +304,7 @@ class Indexed(Expression):
             raise ValueError(f'Wrong number of indices (given: {index} for expression "{base}" of shape {base.shape})')
         if not all(0 <= i < s for i, s in zip(index, base.shape)):
             raise ValueError(f'Invalid index (given: {index} for expression "{base}" of shape {base.shape})')
-        self.base, self.index = base, index
+        self.base, self.index = _convert_to_expression(base), index
         self.shape = base.shape[len(index):]
 
     def numpy_expr(self):
