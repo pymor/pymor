@@ -383,8 +383,17 @@ class UnaryFunctionCall(Expression):
 
     def fenics_expr(self, params):
         import ufl.classes as uc
+        import ufl
         if self.fenics_op is not None:
-            ufl_op = getattr(uc, self.fenics_op)
+            # we know that fenics_op is within one of these collections, we just have to find the right one
+            try:
+                ufl_op = getattr(uc, self.fenics_op)
+            except AttributeError:
+                pass
+            try:
+                ufl_op = getattr(ufl, self.fenics_op)
+            except AttributeError:
+                pass
             return ufl_op(self.arg.fenics_expr(params))
         else:
             raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
@@ -474,7 +483,7 @@ class log2(UnaryFunctionCall):     numpy_symbol = 'log2';    fenics_op = None   
 class log10(UnaryFunctionCall):    numpy_symbol = 'log10';   fenics_op = None        # NOQA
 class sqrt(UnaryFunctionCall):     numpy_symbol = 'sqrt';    fenics_op = 'Sqrt'      # NOQA
 class abs(UnaryFunctionCall):      numpy_symbol = 'abs';     fenics_op = 'Abs'       # NOQA
-class sign(UnaryFunctionCall):     numpy_symbol = 'sign';    fenics_op = None        # NOQA
+class sign(UnaryFunctionCall):     numpy_symbol = 'sign';    fenics_op = 'sign'        # NOQA
 
 
 class angle(UnaryFunctionCall):
