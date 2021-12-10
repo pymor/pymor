@@ -13,7 +13,7 @@ from pymor.reductors.dwr import DWRCoerciveRBReductor
 
 
 def main(
-    fom_number: int = Argument(..., help='Selects FOMs [0, 1, 2] for elliptic problems '
+    fom_number: int = Argument(..., help='Selects FOMs [0, 1] for elliptic problems '
                                          + 'with scalar and vector valued outputs '),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.'),
@@ -22,7 +22,7 @@ def main(
     set_log_levels({'pymor': 'WARN'})
     """Example script for using output error estimation compared with dwr approach"""
 
-    assert fom_number in [0, 1, 2], f'No FOM available for fom_number {fom_number}'
+    assert fom_number in [0, 1], f'No FOM available for fom_number {fom_number}'
 
     # elliptic case
     if fom_number == 0:
@@ -31,18 +31,6 @@ def main(
     elif fom_number == 1:
         # vector valued output (with BlockColumnOperator)
         fom = create_fom(grid_intervals, vector_valued_output=True)
-    elif fom_number == 2:
-        # an output which is actually a lincomb operator
-        fom = create_fom(grid_intervals, vector_valued_output=True)
-        dim_source = fom.output_functional.source.dim
-        np.random.seed(1)
-        random_matrix_1 = np.random.rand(2, dim_source)
-        random_matrix_2 = np.random.rand(2, dim_source)
-        op1 = NumpyMatrixOperator(random_matrix_1, source_id='STATE')
-        op2 = NumpyMatrixOperator(random_matrix_2, source_id='STATE')
-        ops = [op1, op2]
-        lincomb_op = LincombOperator(ops, [1., 0.5])
-        fom = fom.with_(output_functional=lincomb_op)
 
     standard_reductor = CoerciveRBReductor
     dwr_reductor = DWRCoerciveRBReductor
@@ -116,8 +104,9 @@ def main(
             results_full['err'].append(np.linalg.norm(np.abs(s_fom[-1]-s_rom[-1])))
             results_full['est'].append(s_est)
 
-            # just for testing purpose
-            assert np.linalg.norm(np.abs(s_rom-s_fom)) <= s_est + 1e-7
+            # just for testing purpose, only until accuracy 1e-6 due to symmetric=True case
+            assert np.linalg.norm(np.abs(s_rom-s_fom)) <= s_est + 1e-6
+
         results.append(results_full)
 
     # plot result
@@ -170,18 +159,12 @@ def main(
         min_estss.append(min_ests)
 
     plt.figure()
-    # plt.semilogy(modes_set, max_errss[0], 'k', label='standard max error')
-    # plt.semilogy(modes_set, max_estss[0], 'k--', label='standard max estimate')
     plt.semilogy(modes_set, min_errss[0], 'g', label='standard min error')
     plt.semilogy(modes_set, min_estss[0], 'g--', label='standard min estimate')
-    # plt.semilogy(modes_set, max_errss[1], 'r', label='dwr max error, 1')
-    # plt.semilogy(modes_set, max_estss[1], 'r--', label='dwr max estimate, 1')
     plt.semilogy(modes_set, min_errss[1], 'b',
                  label='dwr min error, operator_symmetric=True')
     plt.semilogy(modes_set, min_estss[1], 'b--',
                  label='dwr min estimate, operator_symmetric=True')
-    # plt.semilogy(modes_set, max_errss[2], 'y', label='dwr max error, 2')
-    # plt.semilogy(modes_set, max_estss[2], 'y--', label='dwr max estimate, 2')
     plt.semilogy(modes_set, min_errss[2], 'm',
                  label='dwr min error, operator_symmetric=False')
     plt.semilogy(modes_set, min_estss[2], 'm--',
@@ -193,12 +176,13 @@ def main(
 
 def create_fom(grid_intervals, vector_valued_output=False):
     p = thermal_block_problem([2, 2])
-    f = ConstantFunction(1, dim_domain=2)
+    f_1 = ConstantFunction(1, dim_domain=2)
+    f_2 = ExpressionFunction('sin(x[0])', dim_domain=2)
 
     if vector_valued_output:
-        p = p.with_(outputs=[('l2', f), ('l2', f * 0.5)])
+        p = p.with_(outputs=[('l2', f_1), ('l2', f_2 * 0.5)])
     else:
-        p = p.with_(outputs=[('l2', f)])
+        p = p.with_(outputs=[('l2', f_1)])
 
     fom, _ = discretize_stationary_cg(p, diameter=1./grid_intervals)
     return fom
