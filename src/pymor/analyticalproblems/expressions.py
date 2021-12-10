@@ -472,10 +472,17 @@ class arcsinh(UnaryFunctionCall):  numpy_symbol = 'arcsinh'; fenics_op = None   
 class arccosh(UnaryFunctionCall):  numpy_symbol = 'arccosh'; fenics_op = None        # NOQA
 class arctanh(UnaryFunctionCall):  numpy_symbol = 'arctanh'; fenics_op = None        # NOQA
 class exp(UnaryFunctionCall):      numpy_symbol = 'exp';     fenics_op = 'exp'       # NOQA
-class exp2(UnaryFunctionCall):     numpy_symbol = 'exp2';    fenics_op = None        # NOQA
 class log(UnaryFunctionCall):      numpy_symbol = 'log';     fenics_op = 'ln'        # NOQA
 class sqrt(UnaryFunctionCall):     numpy_symbol = 'sqrt';    fenics_op = 'sqrt'      # NOQA
 class sign(UnaryFunctionCall):     numpy_symbol = 'sign';    fenics_op = 'sign'      # NOQA
+
+
+class exp2(UnaryFunctionCall):
+    numpy_symbol = 'exp2';            # NOQA
+    
+    def fenics_expr(self, params):
+        from ufl import elem_pow
+        return elem_pow(2, self.arg.fenics_expr(params))
 
 
 class log2(UnaryFunctionCall):
