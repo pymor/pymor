@@ -451,7 +451,7 @@ class Prod(BinaryOp): numpy_symbol = '*'; fenics_op = operator.mul      # NOQA
 class Div(BinaryOp):  numpy_symbol = '/'; fenics_op = operator.truediv  # NOQA
 
 
-class Pow(BinaryOp):  numpy_symbol = '**'; fenics_op = 'elem_pow'       # NOQA
+class Pow(BinaryOp):  numpy_symbol = '**'; fenics_op = 'elem_pow'    # NOQA
 class Mod(BinaryOp):  numpy_symbol = '%';  fenics_op = None          # NOQA
 class LE(BinaryOp):   numpy_symbol = '<='; fenics_op = 'le'          # NOQA
 class GE(BinaryOp):   numpy_symbol = '>='; fenics_op = 'ge'          # NOQA
@@ -477,8 +477,15 @@ class log(UnaryFunctionCall):      numpy_symbol = 'log';     fenics_op = 'ln'   
 class log2(UnaryFunctionCall):     numpy_symbol = 'log2';    fenics_op = None        # NOQA
 class log10(UnaryFunctionCall):    numpy_symbol = 'log10';   fenics_op = None        # NOQA
 class sqrt(UnaryFunctionCall):     numpy_symbol = 'sqrt';    fenics_op = 'sqrt'      # NOQA
-class abs(UnaryFunctionCall):      numpy_symbol = 'abs';     fenics_op = None        # NOQA  # this exists, for some reason it is in ufl.algebra.Abs not ufl.abs....
 class sign(UnaryFunctionCall):     numpy_symbol = 'sign';    fenics_op = 'sign'      # NOQA
+
+
+class abs(UnaryFunctionCall):
+    numpy_symbol = 'abs'        # NOQA
+
+    def fenics_expr(self, params):
+        from ufl.algebra import Abs
+        return Abs(self.arg.fenics_expr(params))
 
 
 class angle(UnaryFunctionCall):
