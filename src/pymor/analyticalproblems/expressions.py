@@ -329,8 +329,8 @@ class Neg(Expression):
     def numpy_expr(self):
         return f'(- {self.operand.numpy_expr()})'
 
-    def fenics_expr(self):
-        return f'(- {self.operand.fenics_expr()})'
+    def fenics_expr(self, params):
+        return -self.operand.fenics_expr(params)
 
     def __str__(self):
         return f'(- {self.operand})'
@@ -452,11 +452,19 @@ class Div(BinaryOp):  numpy_symbol = '/'; fenics_op = operator.truediv  # NOQA
 
 
 class Pow(BinaryOp):  numpy_symbol = '**'; fenics_op = 'elem_pow'    # NOQA
-class Mod(BinaryOp):  numpy_symbol = '%';  fenics_op = None          # NOQA
 class LE(BinaryOp):   numpy_symbol = '<='; fenics_op = 'le'          # NOQA
 class GE(BinaryOp):   numpy_symbol = '>='; fenics_op = 'ge'          # NOQA
 class LT(BinaryOp):   numpy_symbol = '<';  fenics_op = 'lt'          # NOQA
 class GT(BinaryOp):   numpy_symbol = '>';  fenics_op = 'gt'          # NOQA
+
+
+class Mod(BinaryOp):
+    numpy_symbol = '%';            # NOQA
+    
+    def fenics_expr(self, params):
+        first = self.first.fenics_expr(params)
+        second = self.second.fenics_expr(params)
+        return first - (first / second) * second
 
 
 class sin(UnaryFunctionCall):      numpy_symbol = 'sin';     fenics_op = 'sin'       # NOQA
