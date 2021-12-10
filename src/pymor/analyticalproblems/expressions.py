@@ -374,8 +374,10 @@ class UnaryFunctionCall(Expression):
 
     numpy_symbol = None
 
-    def __init__(self, arg):
-        self.arg = _convert_to_expression(arg)
+    def __init__(self, arg, *args):
+        if args:
+            raise ValueError(f'{self.numpy_symbol} takes a single argument (given: {(arg,) + args})')
+        self.arg = _convert_to_expression(arg[0])
         self.shape = self.arg.shape
 
     def numpy_expr(self):
@@ -400,8 +402,10 @@ class UnaryReductionCall(Expression):
     returning a single number.
     """
 
-    def __init__(self, arg):
-        self.arg = _convert_to_expression(arg)
+    def __init__(self, arg, *args):
+        if len(arg) != 1:
+            raise ValueError(f'{self.numpy_symbol} takes a single argument (given {(arg,) + args})')
+        self.arg = _convert_to_expression(arg[0])
         self.shape = ()
 
     def numpy_expr(self):
