@@ -324,6 +324,8 @@ class UnaryFunctionCall(Expression):
 
     numpy_symbol = None
 
+    _parameters_varargs_warning = False  # silence warning due to use of *args in __init__
+
     def __init__(self, arg, *args):
         if args:
             raise ValueError(f'{self.numpy_symbol} takes a single argument (given: {(arg,) + args})')
@@ -343,6 +345,8 @@ class UnaryReductionCall(Expression):
     The function is applied to the entire vector/matrix/tensor the sub-expression evaluates to,
     returning a single number.
     """
+
+    _parameters_varargs_warning = False  # silence warning due to use of *args in __init__
 
     def __init__(self, arg, *args):
         if args:
