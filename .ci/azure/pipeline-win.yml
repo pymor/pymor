@@ -18,9 +18,9 @@ jobs:
         curl --output mesa.7z -L https://github.com/pal1000/mesa-dist-win/releases/download/20.1.1-2/mesa3d-20.1.1-release-mingw.7z
         7z x mesa.7z -omesa -y
 
-        # The script requires user input (choice of options) so need to
-        # fiddle to get it to run automatically. Not a clean way to do it,
-        # but works.
+        :: The script requires user input (choice of options) so need to
+        :: fiddle to get it to run automatically. Not a clean way to do it,
+        :: but works.
         sed -i 's/@echo Please make a deployment choice:/@GOTO desktopgl/g' mesa\systemwidedeploy.cmd
         sed -i 's/@echo Desktop OpenGL drivers deploy complete./@exit/g' mesa\systemwidedeploy.cmd
         mesa\systemwidedeploy.cmd
@@ -62,12 +62,12 @@ jobs:
       set QT_API=pyside2
       set PYMOR_ALLOW_DEADLINE_EXCESS=1
 
-      # this allows azure-specific defaults
+      :: this allows azure-specific defaults
       cp .ci/azure/pymor_defaults.py_win pymor_defaults.py
-      # async + converage data in sqlite -> errors
-      # ignore random interpreter error and rely on pytest exit instead
+      :: async + converage data in sqlite -> errors
+      :: ignore random interpreter error and rely on pytest exit instead
       python .ci/azure/run_tests.py -k hapod || echo "ignoring python exit code"
-      # cat equivalent will fail if tests did not succeed
+      :: cat equivalent will fail if tests did not succeed
       type pytest.azure.success || exit 127
 
       python .ci/azure/run_tests.py -k "not hapod" --cov --cov-config=setup.cfg --cov-context=test || echo "ignoring python exit code"
