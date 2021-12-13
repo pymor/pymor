@@ -31,12 +31,12 @@ jobs:
 
   - script: conda update -n base -c defaults conda
     displayName: Create Anaconda environment
-  - script: conda create --yes --name myEnvironment
+  - script: conda create -v --yes --name myEnvironment python=$(python.version)
     displayName: Create Anaconda environment
   - script: |
       call activate myEnvironment
       conda config --set channel_priority strict
-      conda install -v -c conda-forge --yes --name myEnvironment python=$(python.version) numpy pip
+      conda install -v -c conda-forge --yes --name myEnvironment numpy pip
     displayName: Conda 1/4
   - script: |
       call activate myEnvironment
