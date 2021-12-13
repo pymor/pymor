@@ -15,7 +15,7 @@ jobs:
 
   steps:
   - script: |
-        curl --output mesa.7z -L https://github.com/pal1000/mesa-dist-win/releases/download/20.1.1-2/mesa3d-20.1.1-release-mingw.7z
+        curl --output mesa.7z -L https://github.com/pal1000/mesa-dist-win/releases/download/20.3.4/mesa3d-20.3.4-release-msvc.7z
         7z x mesa.7z -omesa -y
 
         :: The script requires user input (choice of options) so need to
