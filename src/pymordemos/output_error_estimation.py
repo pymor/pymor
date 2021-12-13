@@ -130,7 +130,7 @@ def main(
     plt.legend()
 
     # estimator study for smaller number of basis functions
-    modes_set = np.arange(1, modes+1)
+    modes_set = np.arange(1, rom.solution_space.dim+1)
     max_errs, max_ests, min_errs, min_ests = [], [], [], []
     for mode in modes_set:
         max_err, max_est, min_err, min_est = 0, 0, 1000, 1000

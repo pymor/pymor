@@ -245,8 +245,10 @@ class Model(CacheableObject, ParametricObject):
         mu
             |Parameter values| for which to compute the error estimate.
         return_vector
-            If `True`, return the output estimate as a |NumPy array|.
-            Otherwise, return the euclidian norm of the estimate.
+            If `True`, return the output estimate as a |NumPy array|,
+            where each component corresponds to the respective component
+            of the :attr:`output_functional`.
+            Otherwise, return the euclidian norm of all components.
         kwargs
             Additional keyword arguments to customize how the error estimate is
             computed or to select additional data to be returned.
@@ -305,8 +307,10 @@ class Model(CacheableObject, ParametricObject):
             If `True`, return the output gradient as a |NumPy array|.
             Otherwise, return a dict of gradients for each |Parameter|.
         output_error_estimate_return_vector
-            If `True`, return the output error estimate as a |NumPy array|.
-            Otherwise, return the euclidian norm of the estimate.
+            If `True`, return the output estimate as a |NumPy array|,
+            where each component corresponds to the respective component
+            of the :attr:`output_functional`.
+            Otherwise, return the euclidian norm of all components.
         mu
             |Parameter values| for which to compute the values.
         input
@@ -476,8 +480,10 @@ class Model(CacheableObject, ParametricObject):
         return_error_estimate
             If `True`, also return an error estimate for the computed output.
         return_error_estimate_vector
-            if `True`, return the output estimate as a |NumPy array|.
-            Otherwise, return the euclidian norm of the estimate.
+            If `True`, return the output estimate as a |NumPy array|,
+            where each component corresponds to the respective component
+            of the :attr:`output_functional`.
+            Otherwise, return the euclidian norm of all components.
         kwargs
             Additional keyword arguments passed to :meth:`compute` that
             might affect how the solution is computed.
@@ -624,8 +630,10 @@ class Model(CacheableObject, ParametricObject):
             can be used to instatiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
         return_vector
-            if `True`, return the output estimate as a |NumPy array|.
-            Otherwise, return the euclidian norm of the estimate .
+            If `True`, return the output estimate as a |NumPy array|,
+            where each component corresponds to the respective component
+            of the :attr:`output_functional`.
+            Otherwise, return the euclidian norm of all components.
         kwargs
             Additional keyword arguments passed to :meth:`compute` that
             might affect how the error estimate (or the output) is computed.
