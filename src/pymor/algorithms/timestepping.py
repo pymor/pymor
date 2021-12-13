@@ -99,7 +99,7 @@ class TimeStepper(ImmutableObject):
             If `return_iter` is `False` and `return_times` is `True`, where `t` is the list of time points corresponding to
             the solution vectors in `U`.
         iterator
-            If `return_iter == True`, an iterator yielding either `U_n` (if `return_times == False`) or `(U_n, t_n)` in
+            If `return_iter` is `True`, an iterator yielding either `U_n` (if `return_times` is `False`) or `(U_n, t_n)` in
             each step.
         """
 
