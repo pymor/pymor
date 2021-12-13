@@ -73,7 +73,8 @@ jobs:
       python .ci/azure/run_tests.py -k "not hapod" --cov --cov-config=setup.cfg --cov-context=test || echo "ignoring python exit code"
       type pytest.azure.success || exit 127
   - script: |
-      choco install codecov
+      call activate myEnvironment
+      choco install -y codecov
       coverage xml
       codecov.exe -f coverage.xml
     displayName: 'Upload to codecov.io'
