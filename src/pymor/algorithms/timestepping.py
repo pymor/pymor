@@ -147,7 +147,7 @@ class TimeStepperIterator(BasicObject):
 
         assert isinstance(A, Operator)
 
-        F = F or ZeroOperator(A.source, NumpyVectorSpace(1))
+        F = F if F is not None else ZeroOperator(A.source, NumpyVectorSpace(1))
         assert isinstance(F, (Operator, VectorArray))
         if isinstance(F, Operator):
             assert F.source.dim == 1
