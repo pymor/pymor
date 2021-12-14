@@ -425,9 +425,9 @@ class ExplicitEulerIterator(SingleStepTimeStepperIterator):
         A, F, M, mu = self.A, self.F, self.M, self.mu
 
         # prepare the step function U_np1 = M^{-1}(M U_n + dt F - dt A U_n)
-        if 't' not in M.parameters:
+        if not _depends_on_time(M, mu):
             M = M.assemble(mu)
-        if 't' in A.parameters:
+        if not _depends_on_time(A, mu):
             A = A.assemble(mu)
 
         if isinstance(F, ZeroOperator):
@@ -444,7 +444,7 @@ class ExplicitEulerIterator(SingleStepTimeStepperIterator):
                         M.apply_inverse(M.apply(U_n, mu=mu_t) - dt*A.apply(U_n, mu=mu_t), mu=mu_t, initial_guess=U_n),
                         t_np1)
         else:
-            if not F.parametric or 't' not in F.parameters:
+            if not _depends_on_time(F, mu):
                 F = F.assemble(mu)
             if isinstance(M, IdentityOperator):
                 def step_function(U_n, t_n):
