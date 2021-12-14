@@ -54,6 +54,8 @@ class MPIVectorArray(VectorArray):
         return mpi.call(mpi.method_call, self.obj_id, '__len__')
 
     def __getitem__(self, ind):
+        if isinstance(ind, Number) and (ind >= len(self) or ind < -len(self)):
+            raise IndexError('VectorArray index out of range')
         U = type(self)(mpi.call(mpi.method_call_manage, self.obj_id, '__getitem__', ind),
                        self.space)
         U.is_view = True
