@@ -665,13 +665,16 @@ class VectorArray(BasicObject):
 
     def normalize_ind(self, ind):
         """Normalize given indices such that they are independent of the array length."""
+        l = len(self)
         if type(ind) is slice:
-            return slice(*ind.indices(len(self)))
-        elif not hasattr(ind, '__len__'):
-            ind = ind if 0 <= ind else len(self)+ind
+            start, stop, step = ind.indices(l)
+            if start == stop:
+                return slice(0, 0, 1)
+            assert start >= 0
+            assert stop >= 0 or (step < 0 and stop >= -1)
+            ind = ind if 0 <= ind else l+ind
             return slice(ind, ind+1)
         else:
-            l = len(self)
             return [i if 0 <= i else l+i for i in ind]
 
     def sub_index(self, ind, ind_ind):
