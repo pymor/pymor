@@ -510,7 +510,7 @@ class ExplicitRungeKuttaIterator(SingleStepTimeStepperIterator):
         A, F, M, mu = self.A, self.F, self.M, self.mu
 
         # prepare the function f in d_t y = f(t, y)
-        if not isinstance(M, IdentityOperator) and not _depends_on_time(M, mu):
+        if not _depends_on_time(M, mu):
             M = M.assemble(mu)
         if not _depends_on_time(A, mu):
             A = A.assemble(mu)
