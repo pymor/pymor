@@ -20,12 +20,13 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
-from pymor.operators.constructions import IdentityOperator, VectorArrayOperator, ZeroOperator
+from pymor.operators.constructions import IdentityOperator, VectorArrayOperator, VectorOperator, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.parameters.base import Mu
 from pymor.tools import floatcmp
 from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.interface import VectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class TimeStepper(ImmutableObject):
@@ -37,20 +38,21 @@ class TimeStepper(ImmutableObject):
         M * d_t u + A(u, mu, t) = F(mu, t),
                      u(mu, t_0) = u_0(mu).
 
-    Time-steppers used by |InstationaryModel| have to fulfill this interface. Time evolution can be performed
-    by calling :meth:`solve`.
+    Time-steppers used by |InstationaryModel| have to fulfill this interface. Time evolution can be
+    performed by calling :meth:`solve`.
 
     Note that the actual work is done in an iterator derived from :class:`TimeStepperIterator`.
 
     Parameters
     ----------
     num_values
-        The number of returned vectors of the solution trajectory. If `None`, each intermediate vector that is
-        calculated is returned. Else an interpolation of the calculated vectors on an equidistant temporal grid is
-        returned, using an appropriate interpolation of the respective time stepper.
+        The number of returned vectors of the solution trajectory. If `None`, each intermediate
+        vector that is calculated is returned. Else an interpolation of the calculated vectors on an
+        equidistant temporal grid is returned, using an appropriate interpolation of the respective
+        time stepper.
     interpolation
-        Type of temporal interpolation to be used. Currently implemented are: piecewise constant (P0) and piecewise
-        linear (P1).
+        Type of temporal interpolation to be used. Currently implemented are: piecewise constant
+        (P0) and piecewise linear (P1).
     """
 
     IteratorType = None
@@ -93,19 +95,19 @@ class TimeStepper(ImmutableObject):
         Returns
         -------
         U
-            If `return_iter` is `False` and `return_times` is `False` (the default), where `U` is a |VectorArray|
-            containing the solution trajectory.
+            If `return_iter` is `False` and `return_times` is `False` (the default), where `U` is a
+            |VectorArray| containing the solution trajectory.
         (U, t)
-            If `return_iter` is `False` and `return_times` is `True`, where `t` is the list of time points corresponding to
-            the solution vectors in `U`.
+            If `return_iter` is `False` and `return_times` is `True`, where `t` is the list of time
+            points corresponding to the solution vectors in `U`.
         iterator
-            If `return_iter` is `True`, an iterator yielding either `U_n` (if `return_times` is `False`) or `(U_n, t_n)` in
-            each step.
+            If `return_iter` is `True`, an iterator yielding either `U_n` (if `return_times` is
+            `False`) or `(U_n, t_n)` in each step.
         """
 
         # all checks are delegated to TimeStepperIterator
         iterator = self.IteratorType(
-                self, t0, t1, U0, A, F=F, M=M, mu=mu, return_iter=return_iter, return_times=return_times)
+            self, t0, t1, U0, A, F=F, M=M, mu=mu, return_iter=return_iter, return_times=return_times)
         if return_iter:
             return iterator
         elif return_times:
@@ -127,9 +129,11 @@ class TimeStepperIterator(BasicObject):
 
     See :meth:`TimeStepper.solve` for a documentation of the init parameters except `stepper`.
 
-    Note: derived classes usually only have to implement :meth:`_step`, and optionally :meth:`_interpolate` if none of
-          the provided interpolations are suitable. Using the interpolation from this base class requires the
-          implementor to store certain data in each step (see :meth:`_interpolate`).
+    .. note::
+        Derived classes usually only have to implement :meth:`_step`, and optionally
+        :meth:`_interpolate` if none of the provided interpolations are suitable. Using the
+        interpolation from this base class requires the implementor to store certain data in each
+        step (see :meth:`_interpolate`).
 
     Parameters
     ----------
@@ -185,22 +189,25 @@ class TimeStepperIterator(BasicObject):
     def _step(self):
         """Called in :meth:`_interpolated_step` to compute the next step of the time evolution.
 
-        The iterator is assumed to be in the n-th time-step, `self.t == t_n`, the current state of the solution is
-        often available as `self.U_n` (depending on the interpolation and the choice of the implementor).
+        The iterator is assumed to be in the n-th time-step, `self.t == t_n`, the current state of
+        the solution is often available as `self.U_n` (depending on the interpolation and the choice
+        of the implementor).
 
         Returns
         -------
         U_np1
             A |VectorArray| of length 1 containing U(t_{n + 1}).
         t_np1
-            The next time instance t_{n + 1} = t_n + dt, where dt has to be determined by the implementor.
+            The next time instance t_{n + 1} = t_n + dt, where dt has to be determined by the
+            implementor.
         """
         pass
 
     def _interpolate(self, t):
         """Called in :meth:`_interpolated_step` to compute an interpolated value of the solution.
 
-        If not overridden in derived classes, requires the following data to be present after a call to :meth:`_step`:
+        If not overridden in derived classes, requires the following data to be present after a call
+        to :meth:`_step`:
         - P0: self.t_n, self.t_np1, self.U_n
         - P1: self.t_n, self.t_np1, self.U_n, self.U_np1
 
@@ -236,11 +243,12 @@ class TimeStepperIterator(BasicObject):
 
     def _interpolated_step(self):
         """
-        Returns `(U_next, t_next)` (if `return_times == True`, otherwise `U_next`), behavior depends on `num_values`:
-        If `num_values` is provided, performs as many actual steps (by calling :meth:`_step`) as required to obtain
-        an interpolation of the solution, U(t_next) at the next required interpolation point t_next >= t_n, and
-        returns (U(t_next), t_next). If `num_values` is not provided, performs a single step (by calling :meth:`_step`)
-        starting from t_n, to compute (U(t_{n + 1}), t_{n + 1}).
+        Returns `(U_next, t_next)` (if `return_times == True`, otherwise `U_next`), behavior depends
+        on `num_values`: If `num_values` is provided, performs as many actual steps
+        (by calling :meth:`_step`) as required to obtain an interpolation of the solution, U(t_next)
+        at the next required interpolation point t_next >= t_n, and returns (U(t_next), t_next). If
+        `num_values` is not provided, performs a single step (by calling :meth:`_step`) starting
+        from t_n, to compute (U(t_{n + 1}), t_{n + 1}).
         """
         if floatcmp.almost_less(self.t1, self.t):
             # this is the end
@@ -248,7 +256,8 @@ class TimeStepperIterator(BasicObject):
         elif self.stepper.num_values:
             # an interpolation of the trajectory is requested
             if self._last_stepped_point < self.t0:
-                # this is the start, take a step to have data and interpolation available next time, but return U0
+                # this is the start, take a step to have data and interpolation available next time,
+                # but return U0
                 _, self.t = self._step()
                 self._last_stepped_point = self.t
                 self._next_interpolation_point += self._interpolation_points_increment
@@ -286,7 +295,7 @@ class TimeStepperIterator(BasicObject):
             # the trajectory is requested as is
             U, self.t = self._step()
             if self.return_times:
-                return U, t
+                return U, self.t
             else:
                 return U
 
@@ -302,7 +311,8 @@ class SingleStepTimeStepperIterator(TimeStepperIterator):
 
     See :meth:`TimeStepperIterator` for a documentation of the init parameters.
 
-    Note: derived classes only have to implement :meth:`_step_function`, and optionally :meth:`_interpolate`
+    Note: derived classes only have to implement :meth:`_step_function`, and optionally
+    :meth:`_interpolate`
     """
 
     @abstractmethod
@@ -338,9 +348,10 @@ class ImplicitEulerIterator(SingleStepTimeStepperIterator):
 
         # prepare the step function U_np1 = (M + dt A)^{-1}(M U_n + dt F)
         M_dt_A = (M + A * dt).with_(
-                solver_options=A.solver_options if stepper.solver_options == 'operator' else \
-                               M.solver_options if stepper.solver_options == 'mass' else \
-                               stepper.solver_options)
+            solver_options=(A.solver_options if stepper.solver_options == 'operator' else
+                            M.solver_options if stepper.solver_options == 'mass' else
+                            stepper.solver_options)
+        )
         if not _depends_on_time(M_dt_A, mu):
             M_dt_A = M_dt_A.assemble(mu)
 
@@ -353,6 +364,7 @@ class ImplicitEulerIterator(SingleStepTimeStepperIterator):
             dt_F = F * dt
             if not _depends_on_time(dt_F, mu):
                 dt_F = dt_F.assemble(mu)
+
             def step_function(U_n, t_n):
                 t_np1 = t_n + dt
                 mu_t = mu.with_(t=t_np1)
@@ -381,15 +393,16 @@ class ImplicitEulerTimeStepper(TimeStepper):
     nt
         The number of time-steps the time-stepper will perform.
     num_values
-        The number of returned vectors of the solution trajectory. If `None`, each intermediate vector that is
-        calculated is returned. Else an interpolation of the calculated vectors on an equidistant temporal grid is
-        returned, using an appropriate interpolation of the respective time stepper.
+        The number of returned vectors of the solution trajectory. If `None`, each intermediate
+        vector that is calculated is returned. Else an interpolation of the calculated vectors on an
+        equidistant temporal grid is returned, using an appropriate interpolation of the respective
+        time stepper.
     solver_options
-        The |solver_options| used to invert `M + dt*A`. The special values `'mass'` and `'operator'` are recognized,
-        in which case the solver_options of `M` (resp. `A`) are used.
+        The |solver_options| used to invert `M + dt*A`. The special values `'mass'` and `'operator'`
+        are recognized, in which case the solver_options of `M` (resp. `A`) are used.
     interpolation
-        Type of temporal interpolation to be used. Currently implemented are: piecewise constant (P0) and piecewise
-        linear (P1).
+        Type of temporal interpolation to be used. Currently implemented are: piecewise constant
+        (P0) and piecewise linear (P1).
     """
 
     IteratorType = ImplicitEulerIterator
@@ -412,9 +425,9 @@ class ExplicitEulerIterator(SingleStepTimeStepperIterator):
         A, F, M, mu = self.A, self.F, self.M, self.mu
 
         # prepare the step function U_np1 = M^{-1}(M U_n + dt F - dt A U_n)
-        if not 't' in M.parameters:
+        if 't' not in M.parameters:
             M = M.assemble(mu)
-        if not 't' in A.parameters:
+        if 't' in A.parameters:
             A = A.assemble(mu)
 
         if isinstance(F, ZeroOperator):
@@ -468,12 +481,13 @@ class ExplicitEulerTimeStepper(TimeStepper):
     nt
         The number of time-steps the time-stepper will perform.
     num_values
-        The number of returned vectors of the solution trajectory. If `None`, each intermediate vector that is
-        calculated is returned. Else an interpolation of the calculated vectors on an equidistant temporal grid is
-        returned, using an appropriate interpolation of the respective time stepper.
+        The number of returned vectors of the solution trajectory. If `None`, each intermediate
+        vector that is calculated is returned. Else an interpolation of the calculated vectors on an
+        equidistant temporal grid is returned, using an appropriate interpolation of the respective
+        time stepper.
     interpolation
-        Type of temporal interpolation to be used. Currently implemented are: piecewise constant (P0) and piecewise
-        linear (P1).
+        Type of temporal interpolation to be used. Currently implemented are: piecewise constant
+        (P0) and piecewise linear (P1).
     """
 
     IteratorType = ExplicitEulerIterator
@@ -491,7 +505,7 @@ class ExplicitRungeKuttaIterator(SingleStepTimeStepperIterator):
 
     def __init__(self, stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times):
         super().__init__(stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times)
-        self.dt = dt = (t1 - t0) / stepper.nt
+        self.dt = (t1 - t0) / stepper.nt
         # use the ones from base, these are checked and converted in super().__init__()
         A, F, M, mu = self.A, self.F, self.M, self.mu
 
@@ -561,36 +575,37 @@ class ExplicitRungeKuttaTimeStepper(TimeStepper):
     nt
         The number of time-steps the time-stepper will perform.
     num_values
-        The number of returned vectors of the solution trajectory. If `None`, each intermediate vector that is
-        calculated is returned. Else an interpolation of the calculated vectors on an equidistant temporal grid is
-        returned, using an appropriate interpolation of the respective time stepper.
+        The number of returned vectors of the solution trajectory. If `None`, each intermediate
+        vector that is calculated is returned. Else an interpolation of the calculated vectors on an
+        equidistant temporal grid is returned, using an appropriate interpolation of the respective
+        time stepper.
     """
 
     IteratorType = ExplicitRungeKuttaIterator
 
     available_RK_methods = {
-            'explicit_euler': (np.array([0,]), np.array([[0,],]), np.array([1,])),
-            'RK1':            (np.array([0,]), np.array([[0,],]), np.array([1,])),
-            'heun2':          (np.array([0, 1]), np.array([[0, 0], [1, 0]]), np.array([1/2, 1/2])),
-            'midpoint' :      (np.array([0, 1/2]), np.array([[0, 0], [1/2, 0]]), np.array([0, 1])),
-            'ralston' :       (np.array([0, 2/3]), np.array([[0, 0], [2/3, 0]]), np.array([1/4, 3/4])),
-            'RK2' :           (np.array([0, 1/2]), np.array([[0, 0], [1/2, 0]]), np.array([0, 1])),
-            'simpson' :       (np.array([0, 1/2, 1]),
-                               np.array([[0, 0, 0], [1/2, 0, 0], [-1, 2, 0]]),
-                               np.array([1/6, 4/6, 1/6])),
-            'heun3' :         (np.array([0, 1/3, 2/3]),
-                               np.array([[0, 0, 0], [1/3, 0, 0], [0, 2/3, 0]]),
-                               np.array([1/4, 0, 3/4])),
-            'RK3' :           (np.array([0, 1/2, 1]),
-                               np.array([[0, 0, 0], [1/2, 0, 0], [-1, 2, 0]]),
-                               np.array([1/6, 4/6, 1/6])),
-            '3/8' :           (np.array([0, 1/3, 2/3, 1]),
-                               np.array([[0, 0, 0, 0], [1/3, 0, 0, 0], [-1/3, 1, 0, 0], [1, -1, 1, 0]]),
-                               np.array([1/8, 3/8, 3/8, 1/8])),
-            'RK4' :           (np.array([0, 1/2, 1/2, 1]),
-                               np.array([[0, 0, 0, 0], [1/2, 0, 0, 0], [0, 1/2, 0, 0], [0, 0, 1, 0]]),
-                               np.array([1/6, 1/3, 1/3, 1/6])),
-            }
+        'explicit_euler': (np.array([0]), np.array([[0]]), np.array([1])),
+        'RK1':            (np.array([0]), np.array([[0]]), np.array([1])),
+        'heun2':          (np.array([0, 1]), np.array([[0, 0], [1, 0]]), np.array([1/2, 1/2])),
+        'midpoint':       (np.array([0, 1/2]), np.array([[0, 0], [1/2, 0]]), np.array([0, 1])),
+        'ralston':        (np.array([0, 2/3]), np.array([[0, 0], [2/3, 0]]), np.array([1/4, 3/4])),
+        'RK2':            (np.array([0, 1/2]), np.array([[0, 0], [1/2, 0]]), np.array([0, 1])),
+        'simpson':        (np.array([0, 1/2, 1]),
+                           np.array([[0, 0, 0], [1/2, 0, 0], [-1, 2, 0]]),
+                           np.array([1/6, 4/6, 1/6])),
+        'heun3':          (np.array([0, 1/3, 2/3]),
+                           np.array([[0, 0, 0], [1/3, 0, 0], [0, 2/3, 0]]),
+                           np.array([1/4, 0, 3/4])),
+        'RK3':            (np.array([0, 1/2, 1]),
+                           np.array([[0, 0, 0], [1/2, 0, 0], [-1, 2, 0]]),
+                           np.array([1/6, 4/6, 1/6])),
+        '3/8':            (np.array([0, 1/3, 2/3, 1]),
+                           np.array([[0, 0, 0, 0], [1/3, 0, 0, 0], [-1/3, 1, 0, 0], [1, -1, 1, 0]]),
+                           np.array([1/8, 3/8, 3/8, 1/8])),
+        'RK4':            (np.array([0, 1/2, 1/2, 1]),
+                           np.array([[0, 0, 0, 0], [1/2, 0, 0, 0], [0, 1/2, 0, 0], [0, 0, 1, 0]]),
+                           np.array([1/6, 1/3, 1/3, 1/6])),
+    }
 
     def __init__(self, method, nt, num_values=None, interpolation='P1'):
         super().__init__(num_values, interpolation)
@@ -624,5 +639,5 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
 @Deprecated('Will be removed after the 2021.2 release, use ExplicitEulerTimeStepper directly.')
 def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     time_stepper = ExplicitEulerTimeStepper(
-            nt=nt, initial_time=t0, end_time=t1, num_values=num_values, interpolation_order=0)
+        nt=nt, initial_time=t0, end_time=t1, num_values=num_values, interpolation_order=0)
     return time_stepper.solve(mu=mu)
