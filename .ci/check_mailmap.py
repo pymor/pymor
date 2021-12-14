@@ -30,4 +30,4 @@ for user, email in missing:
 for user, emails in duplicates:
     print(f"multiple emails for {user}: {emails}")
 
-sys.exit(len(missing) == len(duplicates) == 0)
+sys.exit(len(missing) + len(duplicates))
