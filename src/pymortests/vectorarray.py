@@ -324,17 +324,6 @@ def test_normalize_ind(vectors_and_indices):
     assert v.len_ind_unique(normalized) == v.len_ind_unique(ind)
 
 
-@pyst.given_vector_arrays(index_strategy=pyst.pairs_same_length)
-def test_normalize_ind_invalid(vectors_and_indices):
-    v, ind = vectors_and_indices
-    # invalid indices should raise an exception
-    assume(not v.check_ind(ind))
-    with pytest.raises(Exception):
-        v.len_ind(ind)
-    with pytest.raises(Exception):
-        v.normalize_ind(ind)
-
-
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_both_lengths)
 def test_append(vectors_and_indices):
     (v1, v2), (_, ind) = vectors_and_indices
