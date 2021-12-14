@@ -65,6 +65,9 @@ class BlockVectorArray(VectorArray):
             return 0
 
     def __getitem__(self, ind):
+        if isinstance(ind, Number) and (ind >= len(self) or ind < -len(self)):
+            raise IndexError('VectorArray index out of range')
+        assert self.check_ind(ind)
         return BlockVectorArrayView(self, ind)
 
     def __delitem__(self, ind):
