@@ -13,8 +13,7 @@ from pymor.algorithms.basic import almost_equal
 from pymor.core.config import config
 from pymor.vectorarrays.interface import VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
-from pymor.tools import floatcmp
-from pymor.tools.floatcmp import float_cmp
+from pymor.tools.floatcmp import float_cmp, bounded
 from pymortests.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
 
@@ -218,7 +217,7 @@ def test_random_normal(vector_array, realizations, loc, scale):
         alpha = 1 - gamma
         lower = np.sum(x)/n - norm.ppf(1 - alpha/2) * scale / np.sqrt(n)
         upper = np.sum(x)/n + norm.ppf(1 - alpha/2) * scale / np.sqrt(n)
-        floatcmp.bounded(lower, upper, loc)
+        bounded(lower, upper, loc)
     except NotImplementedError:
         pass
     vv = vector_array.random(c, 'normal', loc=loc, scale=scale, seed=seed)
