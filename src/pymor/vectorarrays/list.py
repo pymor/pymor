@@ -385,6 +385,7 @@ class ListVectorArray(VectorArray):
     def __getitem__(self, ind):
         if isinstance(ind, Number) and (ind >= len(self) or ind < -len(self)):
             raise IndexError('VectorArray index out of range')
+        assert self.check_ind(ind)
         return ListVectorArrayView(self, ind)
 
     def __delitem__(self, ind):
