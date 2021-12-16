@@ -82,6 +82,9 @@ if config.HAVE_PYMESS:
         lradi_opts.adi.shifts.paratype = adi_shifts_paratype
         return lradi_opts
 
+
+if config.HAVE_PYMESS:
+
     def lyap_lrcf_solver_options():
         """Return available Lyapunov solvers with default options for the pymess backend.
 
@@ -94,6 +97,9 @@ if config.HAVE_PYMESS:
         return {'pymess_glyap': {'type': 'pymess_glyap'},
                 'pymess_lradi': {'type': 'pymess_lradi',
                                  'opts': lradi_solver_options()}}
+
+
+if config.HAVE_PYMESS:
 
     @defaults('default_solver')
     def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
@@ -168,6 +174,9 @@ if config.HAVE_PYMESS:
 
         return A.source.from_numpy(Z.T)
 
+
+if config.HAVE_PYMESS:
+
     def lyap_dense_solver_options():
         """Return available Lyapunov solvers with default options for the pymess backend.
 
@@ -176,6 +185,9 @@ if config.HAVE_PYMESS:
         A dict of available solvers with default solver options.
         """
         return {'pymess_glyap': {'type': 'pymess_glyap'}}
+
+
+if config.HAVE_PYMESS:
 
     def solve_lyap_dense(A, E, B, trans=False, options=None):
         """Compute the solution of a Lyapunov equation.
@@ -218,6 +230,9 @@ if config.HAVE_PYMESS:
 
         return X
 
+
+if config.HAVE_PYMESS:
+
     @defaults('linesearch', 'maxit', 'absres_tol', 'relres_tol', 'nrm')
     def dense_nm_gmpcare_solver_options(linesearch=False,
                                         maxit=50,
@@ -250,6 +265,9 @@ if config.HAVE_PYMESS:
                 'absres_tol': absres_tol,
                 'relres_tol': relres_tol,
                 'nrm':        nrm}
+
+
+if config.HAVE_PYMESS:
 
     @defaults('newton_gstep', 'newton_k0', 'newton_linesearch', 'newton_maxit', 'newton_output', 'newton_res2_tol',
               'newton_singleshifts')
@@ -294,6 +312,9 @@ if config.HAVE_PYMESS:
 
         return lrnm_opts
 
+
+if config.HAVE_PYMESS:
+
     def ricc_lrcf_solver_options():
         """Return available Riccati solvers with default options for the pymess backend.
 
@@ -308,6 +329,9 @@ if config.HAVE_PYMESS:
                                             'opts': dense_nm_gmpcare_solver_options()},
                 'pymess_lrnm':             {'type': 'pymess_lrnm',
                                             'opts': lrnm_solver_options()}}
+
+
+if config.HAVE_PYMESS:
 
     @defaults('default_solver')
     def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None, default_solver=None):
@@ -393,6 +417,9 @@ if config.HAVE_PYMESS:
 
         return A.source.from_numpy(Z.T)
 
+
+if config.HAVE_PYMESS:
+
     def pos_ricc_lrcf_solver_options():
         """Return available positive Riccati solvers with default options for the pymess backend.
 
@@ -402,6 +429,9 @@ if config.HAVE_PYMESS:
         """
         return {'pymess_dense_nm_gmpcare': {'type': 'pymess_dense_nm_gmpcare',
                                             'opts': dense_nm_gmpcare_solver_options()}}
+
+
+if config.HAVE_PYMESS:
 
     def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         """Compute an approximate low-rank solution of a positive Riccati equation.
@@ -448,6 +478,9 @@ if config.HAVE_PYMESS:
 
         return A.source.from_numpy(Z.T)
 
+
+if config.HAVE_PYMESS:
+
     def _call_pymess_dense_nm_gmpare(A, E, B, C, R, trans=False, options=None, plus=False, method_name=''):
         """Return the solution from pymess.dense_nm_gmpare solver."""
         A = to_matrix(A, format='dense')
@@ -481,6 +514,9 @@ if config.HAVE_PYMESS:
                            f'({relres:e} > {options["relres_tol"]:e}).')
 
         return X
+
+
+if config.HAVE_PYMESS:
 
     class LyapunovEquation(pymess.Equation):
         """Lyapunov equation class for pymess
@@ -598,6 +634,9 @@ if config.HAVE_PYMESS:
 
         def parameter(self, arp_p, arp_m, B=None, K=None):
             return None
+
+
+if config.HAVE_PYMESS:
 
     class RiccatiEquation(pymess.Equation):
         """Riccati equation class for pymess

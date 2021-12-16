@@ -91,6 +91,9 @@ if config.HAVE_DUNEGDT:
         def to_numpy(self, ensure_copy=False):
             return np.array(self.impl, copy=ensure_copy)
 
+
+if config.HAVE_DUNEGDT:
+
     class ComplexifiedDuneXTVector(ComplexifiedVector):
         """Required for DuneXTVectorSpace, Usually not to be used directly."""
 
@@ -101,6 +104,9 @@ if config.HAVE_DUNEGDT:
                 real = np.array(self.real_part.impl, copy=False)
                 imag = np.array(self.imag_part.impl, copy=False)
                 return NumpyVector(real + imag * 1j).amax()
+
+
+if config.HAVE_DUNEGDT:
 
     class DuneXTVectorSpace(ComplexifiedListVectorSpace):
         """A |VectorSpace| yielding DuneXTVector
@@ -149,6 +155,9 @@ if config.HAVE_DUNEGDT:
 
         def real_make_vector(self, obj):
             return DuneXTVector(obj)
+
+
+if config.HAVE_DUNEGDT:
 
     class DuneXTMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         """Wraps a dune-xt matrix as an |Operator|.
