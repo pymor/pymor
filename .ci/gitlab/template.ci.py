@@ -461,7 +461,7 @@ if len(missing):
         from rich.console import Console
         from rich.table import Table
         table = Table("image", "tag", title="Not found in Container Registry")
-        for el in missing:
+        for el in sorted(missing):
             table.add_row(*el)
         console = Console()
         console.print(table)
