@@ -20,7 +20,7 @@ DOCKER_RUN=docker run -v $(THIS_DIR):/pymor --env-file  $(THIS_DIR)/.env
 CI_COMMIT_REF_NAME?=$(shell git rev-parse --abbrev-ref HEAD)
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
   	CI_COMMIT_REF_NAME=$(CI_COMMIT_REF_NAME) \
-	NB_USER=$(NB_USER) $(COMPOSE_SUDO) docker-compose -f .binder/docker-compose.yml -p pymor
+	NB_USER=$(NB_USER) $(COMPOSE_SUDO) docker-compose  -f .binder/docker-compose.yml -p pymor
 NB_DIR=docs/source
 NB_USER:=${USER}
 ifeq ($(PYMOR_SUDO), 1)
@@ -100,7 +100,9 @@ docker_docs: docker_image
 	NB_DIR=notebooks $(DOCKER_COMPOSE) run jupyter ./.ci/gitlab/test_docs.bash
 
 docker_run: docker_image
+	$(DOCKER_COMPOSE) up -d pypi_mirror
 	$(DOCKER_COMPOSE) run --service-ports pytest bash
+	$(DOCKER_COMPOSE) down pypi_mirror
 
 docker_exec: docker_image
 	$(DOCKER_COMPOSE) run --service-ports pytest bash -l -c "${DOCKER_CMD}"
@@ -114,8 +116,17 @@ docker_test: docker_image
 docker_test_oldest: docker_image
 	PYMOR_TEST_SCRIPT=oldest PYPI_MIRROR=oldest DOCKER_BASE_PYTHON=3.7 $(DOCKER_COMPOSE) up pytest
 
+docker_run_oldest: DOCKER_BASE_PYTHON=3.7
+docker_run_oldest: PYMOR_TEST_SCRIPT=oldest
+docker_run_oldest: PYPI_MIRROR=oldest
+docker_run_oldest: docker_image
+	$(DOCKER_COMPOSE) up -d pypi_mirror
+	$(DOCKER_COMPOSE) run pytest bash
+	$(DOCKER_COMPOSE) down pypi_mirror
+
 docker_jupyter: docker_image
 	NB_DIR=$(NB_DIR) $(DOCKER_COMPOSE) up jupyter
+
 docker_wheel_check: docker_image
 	PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports wheel_check bash
 docker_install_check: docker_image
