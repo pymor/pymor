@@ -3,6 +3,7 @@ import re
 MANUAL_SKIPS = ('pymor.analyticalproblems.domaindescriptions.DomainDescription.dim',
                 'pymor.analyticalproblems.domaindescriptions.DomainDescription.boundary_types',
                 'pymor.analyticalproblems.expressions.Expression.shape',
+                'pymor.bindings.fenics.RestrictedFenicsOperator.linear',
                 'pymor.core.base.BasicObject.name',
                 'pymor.core.base.BasicObject.logging_disabled',
                 'pymor.core.base.BasicObject.logger',

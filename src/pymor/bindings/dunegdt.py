@@ -176,12 +176,12 @@ if config.HAVE_DUNEGDT:
             for available options, depending on the type of `matrix`. E.g., for
             dune.xt.la.IstlSparseMatrix, (as can be queried from dune.xt.la.IstlSparseMatrixSolver
             via `types()` and `options(type)`):
-              - 'bicgstab.ssor'
-              - 'bicgstab.amg.ssor'
-              - 'bicgstab.amg.ilu0'
-              - 'bicgstab.ilut'
-              - 'bicgstab'
-              - 'cg'
+            - 'bicgstab.ssor'
+            - 'bicgstab.amg.ssor'
+            - 'bicgstab.amg.ilu0'
+            - 'bicgstab.ilut'
+            - 'bicgstab'
+            - 'cg'
         name
             Optional name of the resulting |Operator|.
         """
