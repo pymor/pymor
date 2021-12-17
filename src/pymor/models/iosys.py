@@ -545,6 +545,7 @@ class LTIModel(Model):
         """
         return self.transfer_function.eval_dtf(s, mu=mu)
 
+    @Deprecated('transfer_function.freq_resp')
     def freq_resp(self, w, mu=None):
         """Evaluate the transfer function on the imaginary axis.
 
@@ -554,6 +555,7 @@ class LTIModel(Model):
         """
         return self.transfer_function.freq_resp(w, mu=mu)
 
+    @Deprecated('transfer_function.bode')
     def bode(self, w, mu=None):
         """Compute magnitudes and phases.
 
@@ -563,6 +565,7 @@ class LTIModel(Model):
         """
         return self.transfer_function.bode(w, mu=mu)
 
+    @Deprecated('transfer_function.bode_plot')
     def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, **mpl_kwargs):
         """Draw the Bode plot for all input-output pairs.
 
@@ -572,6 +575,7 @@ class LTIModel(Model):
         """
         return self.transfer_function.bode_plot(w, mu=mu, ax=ax, Hz=Hz, dB=dB, deg=deg, **mpl_kwargs)
 
+    @Deprecated('transfer_function.mag_plot')
     def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
         """Draw the magnitude plot.
 
@@ -1468,6 +1472,7 @@ class SecondOrderModel(Model):
         """
         return self.transfer_function.eval_dtf(s, mu=mu)
 
+    @Deprecated('transfer_function.freq_resp')
     def freq_resp(self, w, mu=None):
         """Evaluate the transfer function on the imaginary axis.
 
@@ -1477,6 +1482,7 @@ class SecondOrderModel(Model):
         """
         return self.transfer_function.freq_resp(w, mu=mu)
 
+    @Deprecated('transfer_function.bode')
     def bode(self, w, mu=None):
         """Compute magnitudes and phases.
 
@@ -1486,6 +1492,7 @@ class SecondOrderModel(Model):
         """
         return self.transfer_function.bode(w, mu=mu)
 
+    @Deprecated('transfer_function.bode_plot')
     def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, **mpl_kwargs):
         """Draw the Bode plot for all input-output pairs.
 
@@ -1495,6 +1502,7 @@ class SecondOrderModel(Model):
         """
         return self.transfer_function.bode_plot(w, mu=mu, ax=ax, Hz=Hz, dB=dB, deg=deg, **mpl_kwargs)
 
+    @Deprecated('transfer_function.mag_plot')
     def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
         """Draw the magnitude plot.
 
@@ -1973,6 +1981,7 @@ class LinearDelayModel(Model):
         """
         return self.transfer_function.eval_dtf(s, mu=mu)
 
+    @Deprecated('transfer_function.freq_resp')
     def freq_resp(self, w, mu=None):
         """Evaluate the transfer function on the imaginary axis.
 
@@ -1982,6 +1991,7 @@ class LinearDelayModel(Model):
         """
         return self.transfer_function.freq_resp(w, mu=mu)
 
+    @Deprecated('transfer_function.bode')
     def bode(self, w, mu=None):
         """Compute magnitudes and phases.
 
@@ -1991,6 +2001,7 @@ class LinearDelayModel(Model):
         """
         return self.transfer_function.bode(w, mu=mu)
 
+    @Deprecated('transfer_function.bode_plot')
     def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, **mpl_kwargs):
         """Draw the Bode plot for all input-output pairs.
 
@@ -2000,6 +2011,7 @@ class LinearDelayModel(Model):
         """
         return self.transfer_function.bode_plot(w, mu=mu, ax=ax, Hz=Hz, dB=dB, deg=deg, **mpl_kwargs)
 
+    @Deprecated('transfer_function.mag_plot')
     def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
         """Draw the magnitude plot.
 
