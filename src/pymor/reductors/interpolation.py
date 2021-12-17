@@ -8,6 +8,7 @@ from pymor.algorithms.krylov import rational_arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
+from pymor.models.transfer_function import TransferFunction
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import (ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor,
                                    DelayLTIPGReductor)
@@ -292,12 +293,15 @@ class TFBHIReductor(BasicObject):
     Parameters
     ----------
     fom
-        The |Model| with `eval_tf` and `eval_dtf` methods.
+        |TransferFunction| or |Model| with a `transfer_function` attribute.
     mu
         |Parameter values|.
     """
 
     def __init__(self, fom, mu=None):
+        assert isinstance(fom, TransferFunction) or hasattr(fom, 'transfer_function')
+        if not isinstance(fom, TransferFunction):
+            fom = fom.transfer_function
         if not isinstance(mu, Mu):
             mu = fom.parameters.parse(mu)
         assert fom.parameters.assert_compatible(mu)
