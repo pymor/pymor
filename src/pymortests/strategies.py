@@ -21,7 +21,7 @@ if config.HAVE_FENICS:
     from pymor.bindings.fenics import FenicsVectorSpace
 
 if config.HAVE_DEALII:
-    from pydealii.pymor.vectorarray import DealIIVectorSpace
+    from pymor_dealii.pymor.vectorarray import DealIIVectorSpace
 
 if config.HAVE_DUNEGDT:
     from pymor.bindings.dunegdt import DuneXTVectorSpace
