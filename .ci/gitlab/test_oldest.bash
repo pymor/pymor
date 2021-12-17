@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# for some reason qtpy will not find any qt bindings w/o this
+export QT_API=pyside2
+
 THIS_DIR="$(cd "$(dirname ${BASH_SOURCE[0]})" ; pwd -P )"
 source ${THIS_DIR}/common_test_setup.bash
 
@@ -15,6 +18,8 @@ ${SUDO} rm -rf /usr/local/lib/python3.*/site-packages/mpi4py-*.dist-info
 ${SUDO} python -m pip install -U -r requirements.txt
 ${SUDO} python -m pip install -U -r requirements-ci.txt
 ${SUDO} python -m pip install -U -r requirements-optional.txt
+
+python -c "import qtpy"
 # make sure all deps are installed again
 python src/pymor/scripts/check_reqs.py requirements.txt
 python src/pymor/scripts/check_reqs.py requirements-ci.txt
