@@ -347,7 +347,9 @@ class TransferFunction(CacheableObject, ParametricObject):
         return inner
 
     def __add__(self, other):
-        assert hasattr(other, 'eval_tf')
+        assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
+        if not isinstance(other, TransferFunction):
+            other = other.transfer_function
         assert self.cont_time == other.cont_time
         assert self.dim_input == other.dim_input
         assert self.dim_output == other.dim_output
@@ -364,7 +366,9 @@ class TransferFunction(CacheableObject, ParametricObject):
         return self + (-other)
 
     def __rsub__(self, other):
-        assert hasattr(other, 'eval_tf')
+        assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
+        if not isinstance(other, TransferFunction):
+            other = other.transfer_function
         assert self.cont_time == other.cont_time
         assert self.dim_input == other.dim_input
         assert self.dim_output == other.dim_output
@@ -381,7 +385,9 @@ class TransferFunction(CacheableObject, ParametricObject):
         return self.with_(tf=tf, dtf=dtf)
 
     def __mul__(self, other):
-        assert hasattr(other, 'eval_tf')
+        assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
+        if not isinstance(other, TransferFunction):
+            other = other.transfer_function
         assert self.cont_time == other.cont_time
         assert self.dim_input == other.dim_output
 
@@ -393,7 +399,9 @@ class TransferFunction(CacheableObject, ParametricObject):
         return self.with_(tf=tf, dtf=dtf)
 
     def __rmul__(self, other):
-        assert hasattr(other, 'eval_tf')
+        assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
+        if not isinstance(other, TransferFunction):
+            other = other.transfer_function
         assert self.cont_time == other.cont_time
         assert self.dim_output == other.dim_input
 
