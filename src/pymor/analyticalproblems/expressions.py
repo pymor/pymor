@@ -459,7 +459,7 @@ class GT(BinaryOp):   numpy_symbol = '>';  fenics_op = 'gt'          # NOQA
 
 
 class Mod(BinaryOp):
-    numpy_symbol = '%';            # NOQA
+    numpy_symbol = '%'
     
     def fenics_expr(self, params):
         first = self.first.fenics_expr(params)
@@ -486,7 +486,7 @@ class sign(UnaryFunctionCall):     numpy_symbol = 'sign';    fenics_op = 'sign' 
 
 
 class exp2(UnaryFunctionCall):
-    numpy_symbol = 'exp2';            # NOQA
+    numpy_symbol = 'exp2'
     
     def fenics_expr(self, params):
         from ufl import elem_pow
@@ -494,7 +494,7 @@ class exp2(UnaryFunctionCall):
 
 
 class log2(UnaryFunctionCall):
-    numpy_symbol = 'log2';           # NOQA
+    numpy_symbol = 'log2'
     
     def fenics_expr(self, params):
         from ufl import ln
@@ -502,13 +502,13 @@ class log2(UnaryFunctionCall):
 
 
 class log10(UnaryFunctionCall):
-    numpy_symbol = 'log10';          # NOQA
+    numpy_symbol = 'log10'
     def fenics_expr(self, params):
         from ufl import ln
         return ln(self.arg.fenics_expr(params)) / ln(10)
 
 class abs(UnaryFunctionCall):
-    numpy_symbol = 'abs'        # NOQA
+    numpy_symbol = 'abs'
 
     def fenics_expr(self, params):
         from ufl.algebra import Abs
