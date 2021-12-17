@@ -27,6 +27,9 @@ if config.HAVE_NGSOLVE:
         def dofs(self, dof_indices):
             return self.to_numpy()[dof_indices]
 
+
+if config.HAVE_NGSOLVE:
+
     class NGSolveVector(NGSolveVectorCommon, CopyOnWriteVector):
         """Wraps a NGSolve BaseVector to make it usable with ListVectorArray."""
 
@@ -63,8 +66,14 @@ if config.HAVE_NGSOLVE:
         def norm2(self):
             return self.impl.vec.Norm() ** 2
 
+
+if config.HAVE_NGSOLVE:
+
     class ComplexifiedNGSolveVector(NGSolveVectorCommon, ComplexifiedVector):
         pass
+
+
+if config.HAVE_NGSOLVE:
 
     class NGSolveVectorSpace(ComplexifiedListVectorSpace):
 
@@ -107,6 +116,9 @@ if config.HAVE_NGSOLVE:
             v = self.real_zero_vector()
             v.to_numpy()[:] = data
             return v
+
+
+if config.HAVE_NGSOLVE:
 
     class NGSolveMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         """Wraps a NGSolve matrix as an |Operator|."""
@@ -159,6 +171,9 @@ if config.HAVE_NGSOLVE:
         def as_vector(self, copy=True):
             vec = self.matrix.AsVector().FV().NumPy()
             return NumpyVectorSpace.make_array(vec.copy() if copy else vec)
+
+
+if config.HAVE_NGSOLVE:
 
     class NGSolveVisualizer(ImmutableObject):
         """Visualize an NGSolve grid function."""

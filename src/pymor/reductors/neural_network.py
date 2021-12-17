@@ -260,6 +260,9 @@ if config.HAVE_TORCH:
             assert hasattr(self, 'reduced_basis')
             return self.reduced_basis.lincomb(u.to_numpy())
 
+
+if config.HAVE_TORCH:
+
     class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         """Output reductor relying on artificial neural networks.
 
@@ -327,6 +330,9 @@ if config.HAVE_TORCH:
                                                         name=f'{self.fom.name}_output_reduced')
 
             return rom
+
+
+if config.HAVE_TORCH:
 
     class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         """Reduced Basis reductor for instationary problems relying on artificial neural networks.
@@ -446,6 +452,9 @@ if config.HAVE_TORCH:
 
             return rom
 
+
+if config.HAVE_TORCH:
+
     class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOutputReductor):
         """Output reductor relying on artificial neural networks.
 
@@ -509,6 +518,9 @@ if config.HAVE_TORCH:
 
             return rom
 
+
+if config.HAVE_TORCH:
+
     class EarlyStoppingScheduler(BasicObject):
         """Class for performing early stopping in training of neural networks.
 
@@ -568,6 +580,9 @@ if config.HAVE_TORCH:
 
             return False
 
+
+if config.HAVE_TORCH:
+
     class CustomDataset(utils.data.Dataset):
         """Class that represents the dataset to use in PyTorch.
 
@@ -587,6 +602,9 @@ if config.HAVE_TORCH:
         def __getitem__(self, idx):
             t = self.training_data[idx]
             return t
+
+
+if config.HAVE_TORCH:
 
     def train_neural_network(training_data, validation_data, neural_network,
                              training_parameters={}):
@@ -739,6 +757,9 @@ if config.HAVE_TORCH:
                     return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
 
         return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
+
+
+if config.HAVE_TORCH:
 
     def multiple_restarts_training(training_data, validation_data, neural_network,
                                    target_loss=None, max_restarts=10,

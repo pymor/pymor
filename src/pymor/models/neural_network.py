@@ -88,6 +88,9 @@ if config.HAVE_TORCH:
 
             return U
 
+
+if config.HAVE_TORCH:
+
     class NeuralNetworkStatefreeOutputModel(Model):
         """Class for models of the output of stationary problems that use ANNs.
 
@@ -128,6 +131,9 @@ if config.HAVE_TORCH:
                 output = self.neural_network(converted_input).data.numpy()
                 return {'output': output, 'solution': None}
             return {}
+
+
+if config.HAVE_TORCH:
 
     class NeuralNetworkInstationaryModel(Model):
         """Class for models of instationary problems that use artificial neural networks.
@@ -192,6 +198,9 @@ if config.HAVE_TORCH:
             # convert result into element from solution space
             return self.solution_space.make_array(result)
 
+
+if config.HAVE_TORCH:
+
     class NeuralNetworkInstationaryStatefreeOutputModel(Model):
         """Class for models of the output of instationary problems that use ANNs.
 
@@ -240,6 +249,9 @@ if config.HAVE_TORCH:
 
                 return {'output': outputs, 'solution': None}
             return {}
+
+
+if config.HAVE_TORCH:
 
     class FullyConnectedNN(nn.Module, BasicObject):
         """Class for neural networks with fully connected layers.

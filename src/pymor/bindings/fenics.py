@@ -99,6 +99,9 @@ if config.HAVE_FENICS:
         def __neg__(self):
             return FenicsVector(-self.impl)
 
+
+if config.HAVE_FENICS:
+
     class ComplexifiedFenicsVector(ComplexifiedVector):
 
         def amax(self):
@@ -125,6 +128,9 @@ if config.HAVE_FENICS:
 
                 i = np.argmax(max_vals)
                 return max_inds[i], max_vals[i]
+
+
+if config.HAVE_FENICS:
 
     class FenicsVectorSpace(ComplexifiedListVectorSpace):
 
@@ -167,6 +173,9 @@ if config.HAVE_FENICS:
 
         def real_make_vector(self, obj):
             return FenicsVector(obj)
+
+
+if config.HAVE_FENICS:
 
     class FenicsMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         """Wraps a FEniCS matrix as an |Operator|."""
@@ -233,6 +242,9 @@ if config.HAVE_FENICS:
                 # all matrices. how to improve this?
 
             return FenicsMatrixOperator(matrix, self.source.V, self.range.V, solver_options=solver_options, name=name)
+
+
+if config.HAVE_FENICS:
 
     class FenicsOperator(Operator):
         """Wraps a FEniCS form as an |Operator|."""
@@ -401,6 +413,9 @@ if config.HAVE_FENICS:
             assert len(set(restricted_dofs)) == len(set(dofs))
             return restricted_dofs
 
+
+if config.HAVE_FENICS:
+
     class RestrictedFenicsOperator(Operator):
 
         linear = False
@@ -441,6 +456,9 @@ if config.HAVE_FENICS:
         # preconditioner argument may only be specified for iterative solvers:
         options = (solver, preconditioner) if preconditioner else (solver,)
         df.solve(matrix, r, v, *options)
+
+
+if config.HAVE_FENICS:
 
     class FenicsVisualizer(ImmutableObject):
         """Visualize a FEniCS grid function.
@@ -554,6 +572,9 @@ if config.HAVE_FENICS:
                     plt.show(block=False)
                 else:
                     plt.show(block=block)
+
+
+if config.HAVE_FENICS:
 
     # adapted from dolfin.mesh.ale.init_parent_edge_indices
     def compute_parent_facet_indices(submesh, mesh):
