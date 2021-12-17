@@ -41,7 +41,7 @@ def fom_properties(fom, w):
 
     # Bode plot of the full model
     fig, ax = plt.subplots(2 * fom.dim_output, fom.dim_input, squeeze=False)
-    fom.bode_plot(w, ax=ax)
+    fom.transfer_function.bode_plot(w, ax=ax)
     fig.suptitle('Bode plot of the full model')
     plt.show()
 
@@ -82,13 +82,13 @@ def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
 
     # Bode plot of the full and reduced model
     fig, ax = plt.subplots(2 * lti.dim_output, lti.dim_input, squeeze=False)
-    lti.bode_plot(w, ax=ax)
-    rom.bode_plot(w, ax=ax, linestyle='dashed')
+    lti.transfer_function.bode_plot(w, ax=ax)
+    rom.transfer_function.bode_plot(w, ax=ax, linestyle='dashed')
     fig.suptitle(f'Bode plot of the full and {reductor_short_name} reduced model')
 
     # Magnitude plot of the error system
     fig, ax = plt.subplots()
-    err.mag_plot(w, ax=ax)
+    err.transfer_function.mag_plot(w, ax=ax)
     ax.set_title(f'Magnitude plot of the {reductor_short_name} error system')
     plt.show()
 
