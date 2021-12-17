@@ -20,6 +20,7 @@ from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnO
 from pymor.operators.constructions import IdentityOperator, LincombOperator, LowRankOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Parameters, Mu
+from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.block import BlockVectorSpace
 
 
@@ -524,6 +525,7 @@ class LTIModel(Model):
         E = None if isinstance(E, IdentityOperator) else to_matrix(E, format='dense')
         return spla.eigvals(A, E)
 
+    @Deprecated('transfer_function.eval_tf')
     def eval_tf(self, s, mu=None):
         r"""Evaluate the transfer function.
 
@@ -533,6 +535,7 @@ class LTIModel(Model):
         """
         return self.transfer_function.eval_tf(s, mu=mu)
 
+    @Deprecated('transfer_function.eval_dtf')
     def eval_dtf(self, s, mu=None):
         r"""Evaluate the derivative of the transfer function.
 
@@ -1445,6 +1448,7 @@ class SecondOrderModel(Model):
         """
         return self.to_lti().poles(mu=mu)
 
+    @Deprecated('transfer_function.eval_tf')
     def eval_tf(self, s, mu=None):
         r"""Evaluate the transfer function.
 
@@ -1454,6 +1458,7 @@ class SecondOrderModel(Model):
         """
         return self.transfer_function.eval_tf(s, mu=mu)
 
+    @Deprecated('transfer_function.eval_dtf')
     def eval_dtf(self, s, mu=None):
         r"""Evaluate the derivative of the transfer function.
 
@@ -1948,6 +1953,7 @@ class LinearDelayModel(Model):
         else:
             return NotImplemented
 
+    @Deprecated('transfer_function.eval_tf')
     def eval_tf(self, s, mu=None):
         r"""Evaluate the transfer function.
 
@@ -1957,6 +1963,7 @@ class LinearDelayModel(Model):
         """
         return self.transfer_function.eval_tf(s, mu=mu)
 
+    @Deprecated('transfer_function.eval_dtf')
     def eval_dtf(self, s, mu=None):
         r"""Evaluate the derivative of the transfer function.
 
