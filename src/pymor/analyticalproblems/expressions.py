@@ -238,7 +238,8 @@ class Array(Expression):
 
     def numpy_expr(self):
         entries = [v.numpy_expr() for v in self.array.flat]
-        return f'(lambda a: array(a).T.reshape(a[0].shape + {self.shape}))(broadcast_arrays({", ".join(entries)}))'
+        return (f'(lambda a: moveaxis(array(a), 0, -1).reshape(a[0].shape + {self.shape}))'
+                f'(broadcast_arrays({", ".join(entries)}))')
 
     def __str__(self):
         expr_array = np.vectorize(str)(self.array)
@@ -448,7 +449,7 @@ _numpy_functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', '
                                                 'exp', 'exp2', 'log', 'log2', 'log10', 'sqrt', 'abs', 'sign',
                                                 'min', 'max', 'sum', 'prod',
                                                 'pi', 'e',
-                                                'array', 'broadcast_arrays', 'newaxis'}}
+                                                'array', 'broadcast_arrays', 'moveaxis', 'newaxis'}}
 
 _numpy_functions['norm']  = np.linalg.norm
 _numpy_functions['angle'] = lambda x: np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi)  # np.angle uses different convention
