@@ -456,15 +456,7 @@ class LE(BinaryOp):   numpy_symbol = '<='; fenics_op = 'le'          # NOQA
 class GE(BinaryOp):   numpy_symbol = '>='; fenics_op = 'ge'          # NOQA
 class LT(BinaryOp):   numpy_symbol = '<';  fenics_op = 'lt'          # NOQA
 class GT(BinaryOp):   numpy_symbol = '>';  fenics_op = 'gt'          # NOQA
-
-
-class Mod(BinaryOp):
-    numpy_symbol = '%'
-    
-    def fenics_expr(self, params):
-        first = self.first.fenics_expr(params)
-        second = self.second.fenics_expr(params)
-        return first - (first / second) * second
+class Mod(BinaryOp):  numpy_symbol = '%';  fenics_op = None          # NOQA
 
 
 class sin(UnaryFunctionCall):      numpy_symbol = 'sin';     fenics_op = 'sin'       # NOQA
