@@ -160,29 +160,32 @@ i.e., {math}`H(s) = C (s E - A)^{-1} B + D`.
 Note that {math}`H` is a matrix-valued rational function
 (each component is a rational function).
 
-The transfer function of a given {{ LTIModel }} can be evaluated using its
-{meth}`~pymor.models.iosys.LTIModel.eval_tf` method.
+The transfer function of a given {{ LTIModel }} is stored as the attribute
+`transfer_function`.
+It can be evaluated using its
+{meth}`~pymor.models.transfer_function.TransferFunction.eval_tf` method.
 The result is a NumPy array.
 
 ```{code-cell}
-print(fom.eval_tf(0))
-print(fom.eval_tf(1))
-print(fom.eval_tf(1j))
+print(fom.transfer_function.eval_tf(0))
+print(fom.transfer_function.eval_tf(1))
+print(fom.transfer_function.eval_tf(1j))
 ```
 
 Similarly, the derivative of the transfer function can be computed using the
-{meth}`~pymor.models.iosys.LTIModel.eval_dtf` method.
+{meth}`~pymor.models.transfer_function.TransferFunction.eval_dtf` method.
 The result is again a NumPy array.
 
 ```{code-cell}
-print(fom.eval_dtf(0))
-print(fom.eval_dtf(1))
-print(fom.eval_dtf(1j))
+print(fom.transfer_function.eval_dtf(0))
+print(fom.transfer_function.eval_dtf(1))
+print(fom.transfer_function.eval_dtf(1j))
 ```
 
 To evaluate the transfer function over a sequence of points on the imaginary
 axis,
-the {meth}`~pymor.models.iosys.InputOutputModel.freq_resp` method can be used.
+the {meth}`~pymor.models.transfer_function.TransferFunction.freq_resp` method
+can be used.
 A typical use case is plotting the transfer function,
 which is discussed in the next section.
 
@@ -217,15 +220,17 @@ there are multiple ways to plot it.
 
 One way is the "magnitude plot", a visualization of the mapping
 {math}`\omega \mapsto \lVert H(\boldsymbol{\imath} \omega) \rVert`,
-using the {meth}`~pymor.models.iosys.InputOutputModel.mag_plot` method.
+using the {meth}`~pymor.models.transfer_function.TransferFunction.mag_plot`
+method.
 
 ```{code-cell}
 w = np.logspace(-2, 8, 300)
-_ = fom.mag_plot(w)
+_ = fom.transfer_function.mag_plot(w)
 ```
 
-Note that {meth}`~pymor.models.iosys.InputOutputModel.mag_plot` computes the
-Frobenius norm of {math}`H(\boldsymbol{\imath} \omega)` by default, just as `scipy.linalg.norm`.
+Note that {meth}`~pymor.models.transfer_function.TransferFunction.mag_plot`
+computes the Frobenius norm of {math}`H(\boldsymbol{\imath} \omega)` by default,
+just as `scipy.linalg.norm`.
 Likewise, the choice of the norm {math}`\lVert \cdot \rVert` can be controlled
 using the `ord` parameter.
 
@@ -238,7 +243,7 @@ is in subplot {math}`(2 i - 1, j)` and
 is in subplot {math}`(2 i, j)`.
 
 ```{code-cell}
-_ = fom.bode_plot(w)
+_ = fom.transfer_function.bode_plot(w)
 ```
 
 ## System poles
