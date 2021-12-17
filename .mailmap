@@ -1,3 +1,11 @@
+# Prevent git from showing duplicate names with commands like "git shortlog"
+# See the manpage of git-shortlog for details (git help shortlog).
+#
+# This file is up-to-date if the command git log --format="%aN <%aE>" | sort -u
+# gives no duplicates.
+#
+# The list below should be sorted alphabetically.
+
 Christian Himpe <himpe@mpi-magdeburg.mpg.de>
 Dennis Eickhorn <d.eickhorn@uni-muenster.de>
 Dennis Eickhorn <d.eickhorn@uni-muenster.de> <d.eickhorn@mail.de>
@@ -12,6 +20,9 @@ Felix Schindler <felix.schindler@wwu.de> <mail@felixalbrecht.de>
 Geordie McBain <gdmcbain@protonmail.com>
 Hendrik Kleikamp <hendrik.kleikamp@uni-muenster.de>
 Hendrik Kleikamp <hendrik.kleikamp@uni-muenster.de> <h_klei18@uni-muenster.de>
+Jonas Nicodemus <jonas.nicodemus@icloud.com>
+Jonas Nicodemus <jonas.nicodemus@icloud.com> <44996273+Jonas-Nicodemus@users.noreply.github.com>
+Josefine Zeller <josefine_zeller@web.de> josefinez <josefine.zeller@web.de>
 Linus Balicki <balicki@vt.edu>
 Linus Balicki <balicki@vt.edu> <38659258+lbalicki@users.noreply.github.com>
 Linus Balicki <balicki@vt.edu> <linus.balicki@ovgu.de>

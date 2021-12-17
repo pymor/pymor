@@ -13,3 +13,6 @@ PYTHONS="${1}"
 
 # performs the image+tag in registry check
 ./.ci/gitlab/template.ci.py "${GITLAB_API_RO}"
+
+# makes sure mailmap is up-to-date
+./.ci/check_mailmap.py ./.mailmap
