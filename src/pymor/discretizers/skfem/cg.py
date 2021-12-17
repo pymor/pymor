@@ -147,7 +147,8 @@ if config.HAVE_SCIKIT_FEM:
         diameter
             If not `None`, `diameter` is passed as an argument to the `domain_discretizer`.
         mesh_type
-            If not `None`, a `skfem.Mesh` to be used for discretizing the domain of `analytical_problem`.
+            If not `None`, a `skfem.Mesh` to be used for discretizing the domain of
+            `analytical_problem`.
         element
             If not `None`, the `skfem.Element` to be used for building the finite element space.
             If `None`, `mesh.elem()` is used.
