@@ -70,6 +70,12 @@ def expected_return_type(m1, m2):
     return model_hierarchy[min(m1_idx, m2_idx)]
 
 
+def get_tf(m):
+    if isinstance(m, TransferFunction):
+        return m
+    return m.transfer_function
+
+
 @pytest.mark.parametrize('m1', type_list)
 @pytest.mark.parametrize('m2', type_list)
 def test_add(m1, m2):
@@ -77,6 +83,9 @@ def test_add(m1, m2):
     m2 = get_model(m2)
     m = m1 + m2
     assert type(m) is expected_return_type(m1, m2)
+    m1 = get_tf(m1)
+    m2 = get_tf(m2)
+    m = get_tf(m)
     assert np.allclose(m.eval_tf(0), m1.eval_tf(0) + m2.eval_tf(0))
     assert np.allclose(m.eval_dtf(0), m1.eval_dtf(0) + m2.eval_dtf(0))
     assert np.allclose(m.eval_tf(1j), m1.eval_tf(1j) + m2.eval_tf(1j))
@@ -90,6 +99,9 @@ def test_sub(m1, m2):
     m2 = get_model(m2)
     m = m1 - m2
     assert type(m) is expected_return_type(m1, m2)
+    m1 = get_tf(m1)
+    m2 = get_tf(m2)
+    m = get_tf(m)
     assert np.allclose(m.eval_tf(0), m1.eval_tf(0) - m2.eval_tf(0))
     assert np.allclose(m.eval_dtf(0), m1.eval_dtf(0) - m2.eval_dtf(0))
     assert np.allclose(m.eval_tf(1j), m1.eval_tf(1j) - m2.eval_tf(1j))
@@ -103,6 +115,9 @@ def test_mul(m1, m2):
     m2 = get_model(m2)
     m = m1 * m2
     assert type(m) is expected_return_type(m1, m2)
+    m1 = get_tf(m1)
+    m2 = get_tf(m2)
+    m = get_tf(m)
     assert np.allclose(m.eval_tf(0), m1.eval_tf(0) @ m2.eval_tf(0))
     assert np.allclose(m.eval_dtf(0), m1.eval_dtf(0) @ m2.eval_tf(0) + m1.eval_tf(0) @ m2.eval_dtf(0))
     assert np.allclose(m.eval_tf(1j), m1.eval_tf(1j) @ m2.eval_tf(1j))
