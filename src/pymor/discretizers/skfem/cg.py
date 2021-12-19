@@ -22,6 +22,9 @@ if config.HAVE_SCIKIT_FEM:
     from pymor.vectorarrays.interface import VectorArray
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
+
+if config.HAVE_SCIKIT_FEM:
+
     class SKFemBilinearFormOperator(NumpyMatrixBasedOperator):
 
         sparse = True
@@ -41,10 +44,15 @@ if config.HAVE_SCIKIT_FEM:
                 enforce(A, D=self.dirichlet_dofs, diag=0. if self.dirichlet_clear_diag else 1., overwrite=True)
             return A
 
+
+if config.HAVE_SCIKIT_FEM:
+
     class SKFemLinearFormOperator(NumpyMatrixBasedOperator):
 
+        sparse = False
+        source = NumpyVectorSpace(1)
+
         def __init__(self, basis, dirichlet_dofs=None, name=None):
-            self.source = NumpyVectorSpace(1)
             self.range = NumpyVectorSpace(basis.N)
             self.__auto_init(locals())
 
@@ -54,6 +62,9 @@ if config.HAVE_SCIKIT_FEM:
             if self.dirichlet_dofs is not None:
                 F[self.dirichlet_dofs] = 0
             return F.reshape((-1, 1))
+
+
+if config.HAVE_SCIKIT_FEM:
 
     class DiffusionOperator(SKFemBilinearFormOperator):
 
@@ -66,6 +77,9 @@ if config.HAVE_SCIKIT_FEM:
                 d = _eval_pymor_function(self.diffusion_function, w.x, mu)
                 return dot(grad(u), grad(v)) * d
             return bf
+
+
+if config.HAVE_SCIKIT_FEM:
 
     class L2ProductOperator(SKFemBilinearFormOperator):
 
@@ -83,6 +97,9 @@ if config.HAVE_SCIKIT_FEM:
                     return u * v * c
             return bf
 
+
+if config.HAVE_SCIKIT_FEM:
+
     class AdvectionOperator(SKFemBilinearFormOperator):
 
         def __init__(self, basis, advection_function, dirichlet_dofs=None, dirichlet_clear_diag=False, name=None):
@@ -94,6 +111,9 @@ if config.HAVE_SCIKIT_FEM:
                 c = -_eval_pymor_function(self.advection_function, w.x, mu)
                 return u * dot(c, grad(v))
             return bf
+
+
+if config.HAVE_SCIKIT_FEM:
 
     class L2Functional(SKFemLinearFormOperator):
 
@@ -107,6 +127,9 @@ if config.HAVE_SCIKIT_FEM:
                 return u * f
             return lf
 
+
+if config.HAVE_SCIKIT_FEM:
+
     class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
         sparse = False
         source = NumpyVectorSpace(1)
@@ -114,7 +137,6 @@ if config.HAVE_SCIKIT_FEM:
         def __init__(self, basis, dirichlet_data, dirichlet_dofs=None, name=None):
             assert dirichlet_data.shape_range == ()
             self.__auto_init(locals())
-            self.source = NumpyVectorSpace(1)
             self.range = NumpyVectorSpace(basis.N)
 
         def _assemble(self, mu=None):
@@ -123,6 +145,9 @@ if config.HAVE_SCIKIT_FEM:
             F = np.zeros(self.range.dim)
             F[self.dirichlet_dofs] = D
             return F.reshape((-1, 1))
+
+
+if config.HAVE_SCIKIT_FEM:
 
     class SKFemVisualizer(ImmutableObject):
         def __init__(self, space, basis):
@@ -136,6 +161,9 @@ if config.HAVE_SCIKIT_FEM:
 
             plot(self.basis, U.to_numpy().ravel(), colorbar=True, **kwargs)
             show()
+
+
+if config.HAVE_SCIKIT_FEM:
 
     def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, element=None, preassemble=True):
         """Discretizes a |StationaryProblem| with finite elements using scikit-fem.
