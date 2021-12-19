@@ -1,0 +1,65 @@
+
+pyMOR 2021.1 (December ??, 2021)
+---------------------------------
+We are proud to announce the release of pyMOR 2021.2! ...
+
+Over 300 single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2021.1.x...2021.2.x>`__.
+
+pyMOR 2021.2 contains contributions by Tim Keil Jonas Nicodemus and 
+Henrike von Hülsen See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__
+for more details.
+
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+Data-driven Model Order Reduction with Dynamic Mode Decomposition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`[#1424] <https://github.com/pymor/pymor/pull/1424>`_ 
+
+Formalization of Model inputs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`[#1469] <https://github.com/pymor/pymor/pull/1469>`_
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Experimental scikit-fem suuport
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1507] Experimental scikit-fem support <https://github.com/pymor/pymor/pull/1507>`_ 
+
+Wachspress' shifts
+~~~~~~~~~~~~~~~~~~
+`[#1445] <https://github.com/pymor/pymor/pull/1445>`_
+
+Basic RB output error estimates
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`[#1474] <https://github.com/pymor/pymor/pull/1474>`_
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Transfer function restructuring
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`[#1486] <https://github.com/pymor/pymor/pull/1486>`_ 
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- `[#1179] Update error analysis <https://github.com/pymor/pymor/pull/1179>`_ 
+- `[#1422] Fix passing a function as boundary_types argument to PolygonalDomain <https://github.com/pymor/pymor/pull/1422>`_ 
+- `[#1437] Prevent invalid conversion of an Expression to bool <https://github.com/pymor/pymor/pull/1437>`_ 
+- `[#1439] Fix deprecated usage of asyncio.wait in HAPOD algorithm <https://github.com/pymor/pymor/pull/1439>`_ 
+- `[#1442] SAMDP improvement <https://github.com/pymor/pymor/pull/1442>`_
+- `[#1453] Improve error handling in DiskRegion / Don't disable caching in mpi_wrap_model <https://github.com/pymor/pymor/pull/1453>`_
+- `[#1454] Ensure that output_functional is never None <https://github.com/pymor/pymor/pull/1454>`_ 
+- `[#1478] Add NumpyConversionOperator <https://github.com/pymor/pymor/pull/1478>`_
+- `[#1479] Fix VectorArray slicing and disable slice filtering in VectorArray tests <https://github.com/pymor/pymor/pull/1479>`_
+- `[#1484] Ensure that mu arguments are parsed before cache keys are built <https://github.com/pymor/pymor/pull/1484>`_ 
+- `[#1490] Speedup computations by passing inputs as batch in the instationary ANN models <https://github.com/pymor/pymor/pull/1490>`_ 
+- `[#1492] Minor fixes to symbolic expression library <https://github.com/pymor/pymor/pull/1492>`_ 
+- `[#1493] Warn when __init__ of a ParametricObject takes a variable number of arguments <https://github.com/pymor/pymor/pull/1493>`_ 
+- `[#1506] Fix to_numpy() for Array expression <https://github.com/pymor/pymor/pull/1506>`_ 
