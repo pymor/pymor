@@ -11,6 +11,4 @@ from pymor.core.config import config, _PACKAGES
 @pytest.mark.skipif(condition=not os.environ.get('DOCKER_PYMOR', False),
                     reason='Guarantee only valid in the docker container')
 def test_config(pkg):
-    if pkg == 'DEALII':
-        pytest.xfail('docker image setup for deal.II currently broken')
     assert getattr(config, f'HAVE_{pkg}')
