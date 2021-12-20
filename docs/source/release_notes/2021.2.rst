@@ -7,7 +7,7 @@ Over 300 single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/2021.1.x...2021.2.x>`__.
 
 pyMOR 2021.2 contains contributions by Tim Keil, Jonas Nicodemus and
-Henrike von Hülsen See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__
+Henrike von Hülsen. See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__
 for more details.
 
 
@@ -16,11 +16,35 @@ Release highlights
 
 Data-driven Model Order Reduction with Dynamic Mode Decomposition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`[#1424] <https://github.com/pymor/pymor/pull/1424>`_
+Dynamic Mode Decomposition (DMD) is a well-established method for computing
+low-rank dynamics from observational or simulation data. In contrast to
+Proper Orthogonal Decomposition (POD) where the computed modes are weighted
+by energy content, DMD modes are associated with oscillation frequency and
+decay rate. In `[#1424] <https://github.com/pymor/pymor/pull/1424>`_, both
+the 'standard' and 'exact' versions of DMD in the sense of :cite:`TRLBK14`
+have been implemented as algorithms operating on arbitrary |VectorArrays|.
+As such, :meth:`pymor.algorithms.dmd.dmd` can be applied also to
+:class:`blocked <pymor.vectorarrays.block.BlockVectorArray>` or
+:class:`MPI-distributed <pymor.vectorarrays.mpi.MPIVectorArray>` datasets.
 
 Formalization of Model inputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`[#1469] <https://github.com/pymor/pymor/pull/1469>`_
+In an ongoing effort to unify system-theoretic and reduced basis |Models| in
+pyMOR and to enable time-domain simulations for system-theoretic |Models|, we
+have formalized the notion of the input of a |Model|. Building on pyMOR's
+recently introduced support for time-dependent parameter values, |Models| can
+now have an `input` parameter, for which time-dependent parameter values are
+passed to :meth:`~pymor.models.interface.Model.solve`,
+:meth:`~pymor.models.interface.Model.output` and related methods via the new
+`input` keyword argument. For instance, for an arbitrary |InstationaryModel|
+`m` we can interpret the `rhs` operator as an input-to-state map as follows:
+
+.. code:: python
+
+  m = m.with_(rhs=m.rhs * ProjectionParameterFunctional('input', 1))
+  U = m.solve(input='[sin(t[0])]', mu=mu)
+
+For further details see `[#1469] <https://github.com/pymor/pymor/pull/1469>`_.
 
 
 Additional new features
@@ -28,7 +52,14 @@ Additional new features
 
 Experimental scikit-fem support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1507] Experimental scikit-fem support <https://github.com/pymor/pymor/pull/1507>`_
+In `[#1507] <https://github.com/pymor/pymor/pull/1507>`_ experimental support was
+added for building |Models| from pyMOR's :mod:`~pymor.analyticalproblems` using
+`scikit-fem <https://scikit-fem.readthedocs.io/>`_ as a discretization backend.
+scikit-fem is a lightweight NumPy/SciPy-based finite-element library that offers
+more advanced features than pyMOR's builtin discretization toolkit, such as 3d meshes
+or higher-order methods. Currently, only |StationaryProblems| can be discretized using
+:meth:`pymor.discretizers.skfem.cg.discretize_stationary_cg`, which supports most
+features of the corresponding builtin discretizer.
 
 Wachspress' shifts
 ~~~~~~~~~~~~~~~~~~
