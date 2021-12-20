@@ -29,6 +29,7 @@ MANUAL_SKIPS = (
     'pymor.discretizers.builtin.grids.subgrid.SubGrid.parent_grid',
     'pymor.models.interface.Model.dim_output',
     'pymor.models.interface.Model.linear',
+    'pymor.models.interface.Model.order',
     'pymor.models.interface.Model.products',
     'pymor.models.interface.Model.solution_space',
     'pymor.operators.block.BlockOperatorBase.H',
