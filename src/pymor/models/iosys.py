@@ -48,6 +48,10 @@ class LTIModel(Model):
     if discrete-time, where :math:`A`, :math:`B`, :math:`C`, :math:`D`, and :math:`E` are linear
     operators.
 
+    All methods related to the transfer function
+    (e.g., frequency response calculation and Bode plots)
+    are attached to the `transfer_function` attribute.
+
     Parameters
     ----------
     A
@@ -1006,6 +1010,10 @@ class SecondOrderModel(Model):
     if discrete-time, where :math:`M`, :math:`E`, :math:`K`, :math:`B`, :math:`C_p`, :math:`C_v`,
     and :math:`D` are linear operators.
 
+    All methods related to the transfer function
+    (e.g., frequency response calculation and Bode plots)
+    are attached to the `transfer_function` attribute.
+
     Parameters
     ----------
     M
@@ -1733,6 +1741,10 @@ class LinearDelayModel(Model):
 
     if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`, :math:`B`, :math:`C`, and :math:`D`
     are linear operators.
+
+    All methods related to the transfer function
+    (e.g., frequency response calculation and Bode plots)
+    are attached to the `transfer_function` attribute.
 
     Parameters
     ----------
