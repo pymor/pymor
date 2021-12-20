@@ -21,9 +21,9 @@ ${SUDO} python -m pip install -U -r requirements-optional.txt
 
 python -c "import qtpy"
 # make sure all deps are installed again
-python src/pymor/scripts/check_reqs.py requirements.txt
-python src/pymor/scripts/check_reqs.py requirements-ci.txt
-python src/pymor/scripts/check_reqs.py requirements-optional.txt
+check_reqs requirements.txt
+check_reqs requirements-ci.txt
+check_reqs requirements-optional.txt
 
 python -m pip freeze
 pytest src/pymortests/docker_ci_smoketest.py
