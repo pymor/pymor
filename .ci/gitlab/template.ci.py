@@ -441,6 +441,7 @@ images = [f"{r}_py{py}" for r, py in product(images, pythons)]
 images += [f"deploy_checks_{os}" for os, _ in testos] + ["python_3.9"]
 
 missing = set((r, mirror_tag) for r in mirrors) | set((r, image_tag) for r in images)
+img_count = len(missing)
 for repo in pymor.repositories.list(all=True):
     wanted = None
     match_name = repo.name.replace("pymor/", "")
@@ -465,7 +466,8 @@ if len(missing):
             table.add_row(*el)
         console = Console()
         console.print(table)
+        console.print(f"Missing {len(missing)} of {img_count} image:tag pairs")
     except (ImportError, ModuleNotFoundError):
-        print("Missing image,tag pairs")
+        print(f"Missing {len(missing)} of {img_count} image:tag pairs")
         print(missing)
     sys.exit(1)
