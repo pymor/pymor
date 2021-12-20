@@ -32,7 +32,13 @@ Experimental scikit-fem support
 
 Wachspress' shifts
 ~~~~~~~~~~~~~~~~~~
-`[#1445] <https://github.com/pymor/pymor/pull/1445>`_
+When performing model order reduction with the balanced truncation method, the primary
+computational cost consists of solving two Lyapunov equations. In pyMOR the low-rank
+ADI iteration is used to solve these matrix equations in a large-scale setting. In
+this method shift parameter selection plays a crucial role in convergence speed.
+For general systems a heuristic for computing sub-optimal shifts is implemented in pyMOR.
+Through `[#1445] <https://github.com/pymor/pymor/pull/1445>`_ optimal shift parameter
+computation for LTI models with symmetric system matrices was added.
 
 Basic RB output error estimates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
