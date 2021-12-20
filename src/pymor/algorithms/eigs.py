@@ -220,7 +220,9 @@ def _extend_arnoldi(A, V, H, f, p):
     k = len(V)
 
     res = f.norm()[0]
-    H = np.pad(H, ((0, p), (0, p)))
+    # the explicit "constant" mode is needed for numpy 1.16
+    # mode only gained a default value with numpy 1.17
+    H = np.pad(H, ((0, p), (0, p)), mode='constant')
     H[k, k - 1] = res
     v = f * (1 / res)
     V = V.copy()
