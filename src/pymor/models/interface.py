@@ -31,7 +31,7 @@ class Model(CacheableObject, ParametricObject):
     products
         Dict of inner product operators associated with the model.
     order
-        The number of equations defining the |Model|.
+        Dimension of the `solution_space`.
     """
 
     solution_space = None
