@@ -144,9 +144,10 @@ def test_random_uniform_all(vector_array, realizations, low, high):
 
 if config.HAVE_DUNEGDT:
     @pyst.given_vector_arrays(realizations=hyst.integers(min_value=0, max_value=MAX_RNG_REALIZATIONS),
-                              low=hyst.floats(allow_infinity=False, allow_nan=False),
+                              low=hyst.floats(allow_infinity=False, allow_nan=False,
+                                              max_value=10e100, min_value=-10e100),
                               high=hyst.floats(allow_infinity=False, allow_nan=False,
-                                               max_value=np.finfo(float).max / (MAX_RNG_REALIZATIONS ** 2)),
+                                               max_value=10e100, min_value=-10e100),
                               which=('dunegdt',))
     def test_random_uniform_dune(vector_array, realizations, low, high):
         _test_random_uniform(vector_array, realizations, low, high)
