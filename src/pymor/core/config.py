@@ -146,6 +146,7 @@ _PACKAGES = {
     'PYTHREEJS': lambda: import_module('pythreejs._version').__version__,
     'QT': _get_qt_version,
     'QTOPENGL': lambda: bool(_get_qt_version() and import_module('qtpy.QtOpenGL')),
+    'SCIKIT_FEM': lambda: import_module('skfem').__version__,
     'SCIPY': lambda: import_module('scipy').__version__,
     'SCIPY_LSMR': lambda: hasattr(import_module('scipy.sparse.linalg'), 'lsmr'),
     'SLYCOT': lambda: _get_slycot_version(),

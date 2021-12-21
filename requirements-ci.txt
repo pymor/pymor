@@ -19,4 +19,5 @@ pytest-xdist
 pytest>=6.0
 readme_renderer[md]
 rstcheck
+scikit-fem
 twine
