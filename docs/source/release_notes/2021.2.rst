@@ -1,7 +1,13 @@
 
 pyMOR 2021.1 (December ??, 2021)
 ---------------------------------
-We are proud to announce the release of pyMOR 2021.2! ...
+We are proud to announce the release of pyMOR 2021.2! New features in
+this release are the addition of Dynamic Mode Decomposition for data-driven
+model order reduction and the formalization of model inputs. Further,
+general output error bounds for Reduced Basis reductors and experimental
+scikit-fem support as an alternative to the builtin discretizers were
+added. Wachspress' shifts accelerate the solution of Lyapunov equations
+for symmetric system matrices.
 
 Over 300 single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/2021.1.x...2021.2.x>`__.
@@ -50,6 +56,10 @@ For further details see `[#1469] <https://github.com/pymor/pymor/pull/1469>`_.
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+Basic RB output error estimates
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`[#1474] <https://github.com/pymor/pymor/pull/1474>`_
+
 Experimental scikit-fem support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In `[#1507] <https://github.com/pymor/pymor/pull/1507>`_ experimental support was
@@ -70,10 +80,6 @@ this method shift parameter selection plays a crucial role in convergence speed.
 For general systems a heuristic for computing sub-optimal shifts is implemented in pyMOR.
 Through `[#1445] <https://github.com/pymor/pymor/pull/1445>`_ optimal shift parameter
 computation for LTI models with symmetric system matrices was added.
-
-Basic RB output error estimates
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`[#1474] <https://github.com/pymor/pymor/pull/1474>`_
 
 
 Backward incompatible changes
