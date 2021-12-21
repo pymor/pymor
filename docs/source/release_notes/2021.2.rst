@@ -20,7 +20,7 @@ for more details.
 Release highlights
 ^^^^^^^^^^^^^^^^^^
 
-Data-driven Model Order Reduction with Dynamic Mode Decomposition
+Data-driven model order reduction with Dynamic Mode Decomposition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Dynamic Mode Decomposition (DMD) is a well-established method for computing
 low-rank dynamics from observational or simulation data. In contrast to
@@ -50,7 +50,7 @@ passed to :meth:`~pymor.models.interface.Model.solve`,
   m = m.with_(rhs=m.rhs * ProjectionParameterFunctional('input', 1))
   U = m.solve(input='[sin(t[0])]', mu=mu)
 
-For further details see `[#1469] <https://github.com/pymor/pymor/pull/1469>`_.
+For further details, see `[#1469] <https://github.com/pymor/pymor/pull/1469>`_.
 
 
 Additional new features
@@ -63,14 +63,14 @@ estimate for the :meth:`~pymor.models.interface.Model.output` error.
 Given a linear output functional, this estimate is given by the product
 of the estimated state-space error and the dual norm of the output functional.
 The dual norm is computed efficiently online, also for parameter-dependent
-output functionals which are parameter separable. For further details see
+output functionals that are parameter-separable. For further details, see
 `[#1474] <https://github.com/pymor/pymor/pull/1474>`_. A DWR-based output
 error estimator is currently under development
 `[#1496] <https://github.com/pymor/pymor/pull/1496>`_.
 
 Experimental scikit-fem support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In `[#1507] <https://github.com/pymor/pymor/pull/1507>`_ experimental support was
+In `[#1507] <https://github.com/pymor/pymor/pull/1507>`_, experimental support was
 added for building |Models| from pyMOR's :mod:`~pymor.analyticalproblems` using
 `scikit-fem <https://scikit-fem.readthedocs.io/>`_ as a discretization backend.
 scikit-fem is a lightweight NumPy/SciPy-based finite-element library that offers
@@ -82,11 +82,11 @@ features of the corresponding builtin discretizer.
 Wachspress' shifts
 ~~~~~~~~~~~~~~~~~~
 When performing model order reduction with the balanced truncation method, the primary
-computational cost consists of solving two Lyapunov equations. In pyMOR the low-rank
+computational cost consists of solving two Lyapunov equations. In pyMOR, the low-rank
 ADI iteration is used to solve these matrix equations in a large-scale setting. In
-this method shift parameter selection plays a crucial role in convergence speed.
-For general systems a heuristic for computing sub-optimal shifts is implemented in pyMOR.
-Through `[#1445] <https://github.com/pymor/pymor/pull/1445>`_ optimal shift parameter
+this method, shift parameter selection plays a crucial role in convergence speed.
+For general systems, a heuristic for computing sub-optimal shifts is implemented in pyMOR.
+Through `[#1445] <https://github.com/pymor/pymor/pull/1445>`_, optimal shift parameter
 computation for LTI models with symmetric system matrices was added.
 
 
