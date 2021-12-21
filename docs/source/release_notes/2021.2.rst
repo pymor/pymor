@@ -1,6 +1,6 @@
 
-pyMOR 2021.1 (December ??, 2021)
----------------------------------
+pyMOR 2021.1 (December 22, 2021)
+--------------------------------
 We are proud to announce the release of pyMOR 2021.2! New features in
 this release are the addition of Dynamic Mode Decomposition for data-driven
 model order reduction and the formalization of model inputs. Further,
@@ -58,7 +58,15 @@ Additional new features
 
 Basic RB output error estimates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`[#1474] <https://github.com/pymor/pymor/pull/1474>`_
+pyMOR's Reduced Basis reductors have been extended to compute a basic 
+estimate for the :meth:`~pymor.models.interface.Model.output` error.
+Given a linear output functional, this estimate is given by the product
+of the estimated state-space error and the dual norm of the output functional.
+The dual norm is computed efficiently online, also for parameter-dependent
+output functionals which are parameter separable. For further details see
+`[#1474] <https://github.com/pymor/pymor/pull/1474>`_. A DWR-based output
+error estimator is currently under development
+`[#1496] <https://github.com/pymor/pymor/pull/1496>`_.
 
 Experimental scikit-fem support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
