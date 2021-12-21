@@ -21,6 +21,7 @@ TUT_DIR = Path(os.path.dirname(__file__)).resolve() / 'source'
 _exclude_files = ['tutorial_external_solver.rst']
 EXCLUDE = [TUT_DIR / t for t in _exclude_files]
 TUTORIALS = [t for t in TUT_DIR.glob('tutorial_*rst') if t not in EXCLUDE]
+TUTORIALS += [t for t in TUT_DIR.glob('tutorial_*md') if t not in EXCLUDE]
 
 
 class CodeCell(Directive):
