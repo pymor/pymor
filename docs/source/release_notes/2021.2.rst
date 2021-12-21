@@ -35,7 +35,7 @@ As such, :meth:`pymor.algorithms.dmd.dmd` can be applied also to
 
 Formalization of Model inputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In an ongoing effort to unify system-theoretic and reduced basis |Models| in
+In an ongoing effort to unify system-theoretic and Reduced Basis |Models| in
 pyMOR and to enable time-domain simulations for system-theoretic |Models|, we
 have formalized the notion of the input of a |Model|. Building on pyMOR's
 recently introduced support for time-dependent parameter values, |Models| can
@@ -95,17 +95,15 @@ Backward incompatible changes
 
 Transfer function restructuring
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In the pursuit of unifying system-theoretic and reduced basis |Models|,
+In the pursuit of unifying system-theoretic and Reduced Basis |Models|,
 the |TransferFunction| class is no longer a subclass of |Model| and
-it is moved from :mod:`pymor.models.iosys` to
-:mod:`pymor.models.transfer_function`.
-Additionally, the `InputOutputModel` and `InputStateOutputModel` classes are
-removed.
+is moved from :mod:`pymor.models.iosys` to :mod:`pymor.models.transfer_function`.
+Additionally, the `InputOutputModel` and `InputStateOutputModel` classes have
+been removed.
 Furthermore, the transfer function-related methods of |LTIModel|,
 |SecondOrderModel| and |LinearDelayModel| are deprecated and the attribute
-`transfer_function` should be used instead
-(e.g., `m.bode_plot(...)` should be replaced with
-`m.transfer_function.bode_plot(...)`).
+`transfer_function` should be used instead (e.g., `m.bode_plot(...)` should be replaced
+with `m.transfer_function.bode_plot(...)`).
 See `[#1486] <https://github.com/pymor/pymor/pull/1486>`_ for more details.
 
 
