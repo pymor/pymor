@@ -5,10 +5,11 @@
 
 # DO NOT use any python features here that require 3.6 or newer
 
-_PYTEST = 'pytest>=4.4'
+_PYTEST = 'pytest>=6.0'
 # 5.12.* blocked due to https://bugreports.qt.io/browse/PYSIDE-1004
-# however the problem is not actually fixed in 5.12.3 as advertised
-_PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*,!=5.12.*'
+# however the problem is not actually fixed in 5.12.3 as advertised,
+# but only starting from 5.13.1
+_PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*,!=5.12.*,!=5.13.0'
 
 
 def _numpy_scipy():
@@ -66,8 +67,8 @@ doc_requires = ['sphinx>=3.4', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'pyt
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
                'flake8-rst-docstrings', 'flake8-docstrings', 'pytest-datadir', 'pybind11',
-               'docutils', "pypi-oldest-requirements>=2021.2", 'hypothesis[numpy,pytest]>=5.19',
-               'PyQt5!=5.15.2,>5.7,!=5.15.2.*,!=5.15.4,!=5.15.3']
+               'docutils', "pypi-oldest-requirements>=2021.2", 'hypothesis[numpy,pytest]>=6.10',
+               'PyQt5!=5.15.2,>5.7,!=5.15.2.*,!=5.15.4,!=5.15.3', 'check_reqs']
 import_names = {
     'ipython': 'IPython',
     'pytest-cache': 'pytest_cache',
