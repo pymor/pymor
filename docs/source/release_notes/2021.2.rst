@@ -87,7 +87,18 @@ Backward incompatible changes
 
 Transfer function restructuring
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`[#1486] <https://github.com/pymor/pymor/pull/1486>`_
+In the pursuit of unifying system-theoretic and reduced basis |Models|,
+the |TransferFunction| class is no longer a subclass of |Model| and
+it is moved from :mod:`pymor.models.iosys` to
+:mod:`pymor.models.transfer_function`.
+Additionally, the `InputOutputModel` and `InputStateOutputModel` classes are
+removed.
+Furthermore, the transfer function-related methods of |LTIModel|,
+|SecondOrderModel| and |LinearDelayModel| are deprecated and the attribute
+`transfer_function` should be used instead
+(e.g., `m.bode_plot(...)` should be replaced with
+`m.transfer_function.bode_plot(...)`).
+See `[#1486] <https://github.com/pymor/pymor/pull/1486>`_ for more details.
 
 
 Further notable improvements
