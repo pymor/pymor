@@ -57,7 +57,8 @@ class Model(CacheableObject, ParametricObject):
 
     def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                  solution_error_estimate=False, output_error_estimate=False,
-                 output_d_mu_return_array=False, mu=None, **kwargs):
+                 output_d_mu_return_array=False, output_error_estimate_return_vector=False,
+                 mu=None, **kwargs):
         return {}
 
     def _compute_solution(self, mu=None, **kwargs):
@@ -228,7 +229,7 @@ class Model(CacheableObject, ParametricObject):
             raise ValueError('Model has no error estimator')
         return self.error_estimator.estimate_error(solution, mu, self, **kwargs)
 
-    def _compute_output_error_estimate(self, solution, mu=None, **kwargs):
+    def _compute_output_error_estimate(self, solution, mu=None, return_vector=False, **kwargs):
         """Compute an error estimate for the computed model output.
 
         This method is called by the default implementation of :meth:`compute`
@@ -249,6 +250,11 @@ class Model(CacheableObject, ParametricObject):
             Internal model state for the given |parameter values|.
         mu
             |Parameter values| for which to compute the error estimate.
+        return_vector
+            If `True`, return the output estimate as a |NumPy array|,
+            where each component corresponds to the respective component
+            of the :attr:`output_functional`.
+            Otherwise, return the euclidian norm of all components.
         kwargs
             Additional keyword arguments to customize how the error estimate is
             computed or to select additional data to be returned.
@@ -260,13 +266,16 @@ class Model(CacheableObject, ParametricObject):
         """
         if self.error_estimator is None:
             raise ValueError('Model has no error estimator')
-        return self.error_estimator.estimate_output_error(solution, mu, self, **kwargs)
+        return self.error_estimator.estimate_output_error(solution, mu, self,
+                                                          return_vector=return_vector,
+                                                          **kwargs)
 
     _compute_allowed_kwargs = frozenset()
 
     def compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                 solution_error_estimate=False, output_error_estimate=False,
-                output_d_mu_return_array=False, *, mu=None, input=None, **kwargs):
+                output_d_mu_return_array=False, output_error_estimate_return_vector=False,
+                *, mu=None, input=None, **kwargs):
         """Compute the solution of the model and associated quantities.
 
         This methods computes the output of the model it's internal state
@@ -301,8 +310,13 @@ class Model(CacheableObject, ParametricObject):
         output_error_estimate
             If `True`, return an error estimate for the computed output.
         output_d_mu_return_array
-            if `True`, return the output gradient as a |NumPy array|.
+            If `True`, return the output gradient as a |NumPy array|.
             Otherwise, return a dict of gradients for each |Parameter|.
+        output_error_estimate_return_vector
+            If `True`, return the output estimate as a |NumPy array|,
+            where each component corresponds to the respective component
+            of the :attr:`output_functional`.
+            Otherwise, return the euclidian norm of all components.
         mu
             |Parameter values| for which to compute the values.
         input
@@ -398,7 +412,9 @@ class Model(CacheableObject, ParametricObject):
 
         if output_error_estimate and 'output_error_estimate' not in data:
             # TODO use caching here (requires skipping args in key generation)
-            retval = self._compute_output_error_estimate(data['solution'], mu=mu, **kwargs)
+            retval = self._compute_output_error_estimate(
+                data['solution'], mu=mu,
+                return_vector=output_error_estimate_return_vector, **kwargs)
             if isinstance(retval, dict):
                 assert 'output_error_estimate' in retval
                 data.update(retval)
@@ -451,7 +467,8 @@ class Model(CacheableObject, ParametricObject):
         else:
             return data['solution']
 
-    def output(self, mu=None, input=None, return_error_estimate=False, **kwargs):
+    def output(self, mu=None, input=None, return_error_estimate=False,
+               return_error_estimate_vector=False, **kwargs):
         """Return the model output for given |parameter values| `mu`.
 
         This method is a convenience wrapper around :meth:`compute`.
@@ -468,6 +485,11 @@ class Model(CacheableObject, ParametricObject):
             Can be `None` if `self.dim_input == 0`.
         return_error_estimate
             If `True`, also return an error estimate for the computed output.
+        return_error_estimate_vector
+            If `True`, return the output estimate as a |NumPy array|,
+            where each component corresponds to the respective component
+            of the :attr:`output_functional`.
+            Otherwise, return the euclidian norm of all components.
         kwargs
             Additional keyword arguments passed to :meth:`compute` that
             might affect how the solution is computed.
@@ -484,6 +506,7 @@ class Model(CacheableObject, ParametricObject):
         data = self.compute(
             output=True,
             output_error_estimate=return_error_estimate,
+            output_error_estimate_return_vector=return_error_estimate_vector,
             mu=mu,
             input=input,
             **kwargs
@@ -590,7 +613,7 @@ class Model(CacheableObject, ParametricObject):
             **kwargs
         )['solution_error_estimate']
 
-    def estimate_output_error(self, mu=None, input=None, **kwargs):
+    def estimate_output_error(self, mu=None, input=None, return_vector=False, **kwargs):
         """Estimate the error for the computed output.
 
         For given |parameter values| `mu` this method returns an
@@ -612,6 +635,11 @@ class Model(CacheableObject, ParametricObject):
             mapping time to input, or a `str` expression whith `t` as variable that
             can be used to instatiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
+        return_vector
+            If `True`, return the output estimate as a |NumPy array|,
+            where each component corresponds to the respective component
+            of the :attr:`output_functional`.
+            Otherwise, return the euclidian norm of all components.
         kwargs
             Additional keyword arguments passed to :meth:`compute` that
             might affect how the error estimate (or the output) is computed.
@@ -622,6 +650,7 @@ class Model(CacheableObject, ParametricObject):
         """
         return self.compute(
             output_error_estimate=True,
+            output_error_estimate_return_vector=return_vector,
             mu=mu,
             input=input,
             **kwargs

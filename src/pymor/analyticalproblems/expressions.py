@@ -238,7 +238,8 @@ class Array(Expression):
 
     def numpy_expr(self):
         entries = [v.numpy_expr() for v in self.array.flat]
-        return f'(lambda a: array(a).T.reshape(a[0].shape + {self.shape}))(broadcast_arrays({", ".join(entries)}))'
+        return (f'(lambda a: moveaxis(array(a), 0, -1).reshape(a[0].shape + {self.shape}))'
+                f'(broadcast_arrays({", ".join(entries)}))')
 
     def __str__(self):
         expr_array = np.vectorize(str)(self.array)
@@ -254,7 +255,7 @@ class BinaryOp(Expression):
         if not _broadcastable_shapes(first.shape, second.shape):
             raise ValueError(f'Incompatible shapes of expressions "{first}" and "{second}" with shapes '
                              f'{first.shape} and {second.shape} for binary operator {self.numpy_symbol}')
-        self.first, self.second = first, second
+        self.first, self.second = _convert_to_expression(first), _convert_to_expression(second)
         self.shape = tuple(builtin_max(f, s)
                            for f, s in zip_longest(first.shape[::-1], second.shape[::-1], fillvalue=1))[::-1]
 
@@ -281,7 +282,7 @@ class Neg(Expression):
     """Negated :class:`Expression`."""
 
     def __init__(self, operand):
-        self.operand = operand
+        self.operand = _convert_to_expression(operand)
         self.shape = operand.shape
 
     def numpy_expr(self):
@@ -304,7 +305,7 @@ class Indexed(Expression):
             raise ValueError(f'Wrong number of indices (given: {index} for expression "{base}" of shape {base.shape})')
         if not all(0 <= i < s for i, s in zip(index, base.shape)):
             raise ValueError(f'Invalid index (given: {index} for expression "{base}" of shape {base.shape})')
-        self.base, self.index = base, index
+        self.base, self.index = _convert_to_expression(base), index
         self.shape = base.shape[len(index):]
 
     def numpy_expr(self):
@@ -324,10 +325,12 @@ class UnaryFunctionCall(Expression):
 
     numpy_symbol = None
 
-    def __init__(self, *arg):
-        if len(arg) != 1:
-            raise ValueError(f'{self.numpy_symbol} takes a single argument (given: {arg})')
-        self.arg = _convert_to_expression(arg[0])
+    _parameters_varargs_warning = False  # silence warning due to use of *args in __init__
+
+    def __init__(self, arg, *args):
+        if args:
+            raise ValueError(f'{self.numpy_symbol} takes a single argument (given: {(arg,) + args})')
+        self.arg = _convert_to_expression(arg)
         self.shape = self.arg.shape
 
     def numpy_expr(self):
@@ -344,10 +347,12 @@ class UnaryReductionCall(Expression):
     returning a single number.
     """
 
-    def __init__(self, *arg):
-        if len(arg) != 1:
-            raise ValueError(f'{self.numpy_symbol} takes a single argument (given {arg})')
-        self.arg = _convert_to_expression(arg[0])
+    _parameters_varargs_warning = False  # silence warning due to use of *args in __init__
+
+    def __init__(self, arg, *args):
+        if args:
+            raise ValueError(f'{self.numpy_symbol} takes a single argument (given {(arg,) + args})')
+        self.arg = _convert_to_expression(arg)
         self.shape = ()
 
     def numpy_expr(self):
@@ -444,7 +449,7 @@ _numpy_functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', '
                                                 'exp', 'exp2', 'log', 'log2', 'log10', 'sqrt', 'abs', 'sign',
                                                 'min', 'max', 'sum', 'prod',
                                                 'pi', 'e',
-                                                'array', 'broadcast_arrays', 'newaxis'}}
+                                                'array', 'broadcast_arrays', 'moveaxis', 'newaxis'}}
 
 _numpy_functions['norm']  = np.linalg.norm
 _numpy_functions['angle'] = lambda x: np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi)  # np.angle uses different convention

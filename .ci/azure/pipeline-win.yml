@@ -1,7 +1,7 @@
 jobs:
 - job: 'Windows_CI'
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'windows-2022'
   timeoutInMinutes: 75
   variables:
       PYMOR_HYPOTHESIS_PROFILE: ci
@@ -15,12 +15,12 @@ jobs:
 
   steps:
   - script: |
-        curl --output mesa.7z -L https://github.com/pal1000/mesa-dist-win/releases/download/20.1.1-2/mesa3d-20.1.1-release-mingw.7z
+        curl --output mesa.7z -L https://github.com/pal1000/mesa-dist-win/releases/download/20.3.4/mesa3d-20.3.4-release-msvc.7z
         7z x mesa.7z -omesa -y
 
-        # The script requires user input (choice of options) so need to
-        # fiddle to get it to run automatically. Not a clean way to do it,
-        # but works.
+        :: The script requires user input (choice of options) so need to
+        :: fiddle to get it to run automatically. Not a clean way to do it,
+        :: but works.
         sed -i 's/@echo Please make a deployment choice:/@GOTO desktopgl/g' mesa\systemwidedeploy.cmd
         sed -i 's/@echo Desktop OpenGL drivers deploy complete./@exit/g' mesa\systemwidedeploy.cmd
         mesa\systemwidedeploy.cmd
@@ -30,22 +30,22 @@ jobs:
     displayName: Add conda to PATH
 
   - script: conda update -n base -c defaults conda
-    displayName: Create Anaconda environment
-  - script: conda create --yes --name myEnvironment
+    displayName: Update base Anaconda environment
+  - script: conda create -v --yes --name myEnvironment python=$(python.version)
     displayName: Create Anaconda environment
   - script: |
       call activate myEnvironment
       conda config --set channel_priority strict
-      conda install -v -c conda-forge --yes --name myEnvironment python=$(python.version) numpy pip
-    displayName: Conda 1/4
+      conda install -v -c conda-forge --yes --name myEnvironment numpy pip
+    displayName: Conda 1/3
   - script: |
       call activate myEnvironment
       conda install -v -c conda-forge --yes --name myEnvironment --only-deps pymor
-    displayName: Conda 2/4
+    displayName: Conda 2/3
   - script: |
       call activate myEnvironment
       conda install -v -c conda-forge --yes --name myEnvironment pyopengl cython pyevtk slycot cython pytest pytest-cov curl hypothesis pyside2==5.13.2 qtpy typer click==7.1.2
-    displayName: Conda 3/4
+    displayName: Conda 3/3
 
   - script: |
       call activate myEnvironment
@@ -62,18 +62,19 @@ jobs:
       set QT_API=pyside2
       set PYMOR_ALLOW_DEADLINE_EXCESS=1
 
-      # this allows azure-specific defaults
+      :: this allows azure-specific defaults
       cp .ci/azure/pymor_defaults.py_win pymor_defaults.py
-      # async + converage data in sqlite -> errors
-      # ignore random interpreter error and rely on pytest exit instead
+      :: async + converage data in sqlite -> errors
+      :: ignore random interpreter error and rely on pytest exit instead
       python .ci/azure/run_tests.py -k hapod || echo "ignoring python exit code"
-      # cat equivalent will fail if tests did not succeed
+      :: cat equivalent will fail if tests did not succeed
       type pytest.azure.success || exit 127
 
       python .ci/azure/run_tests.py -k "not hapod" --cov --cov-config=setup.cfg --cov-context=test || echo "ignoring python exit code"
       type pytest.azure.success || exit 127
   - script: |
-      choco install codecov
+      call activate myEnvironment
+      choco install -y codecov
       coverage xml
       codecov.exe -f coverage.xml
     displayName: 'Upload to codecov.io'

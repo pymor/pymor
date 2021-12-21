@@ -56,7 +56,8 @@ def hy_oned_grid(draw):
     interval_i = hyst.integers(min_value=1, max_value=10000)
     num_intervals = draw(interval_i.filter(lambda x: (not identify_left_right) or x > 1))
     domain = hy_domain_bounds(draw, grid_type=OnedGrid)
-    return OnedGrid(num_intervals=num_intervals, domain=domain, identify_left_right=identify_left_right)
+    return OnedGrid(num_intervals=num_intervals, domain=[domain[0][0], domain[1][0]],
+                    identify_left_right=identify_left_right)
 
 
 @hyst.composite

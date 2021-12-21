@@ -26,6 +26,9 @@ if config.HAVE_SLYCOT:
         """
         return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
 
+
+if config.HAVE_SLYCOT:
+
     def solve_lyap_lrcf(A, E, B, trans=False, options=None):
         """Compute an approximate low-rank solution of a Lyapunov equation.
 
@@ -74,6 +77,9 @@ if config.HAVE_SLYCOT:
 
         return A.source.from_numpy(Z.T)
 
+
+if config.HAVE_SLYCOT:
+
     def lyap_dense_solver_options():
         """Return available Lyapunov solvers with default options for the slycot backend.
 
@@ -83,6 +89,8 @@ if config.HAVE_SLYCOT:
         """
         return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
 
+
+if config.HAVE_SLYCOT:
     def solve_lyap_dense(A, E, B, trans=False, options=None):
         """Compute the solution of a Lyapunov equation.
 
@@ -140,6 +148,9 @@ if config.HAVE_SLYCOT:
             raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 
         return X
+
+
+if config.HAVE_SLYCOT:
 
     def solve_ricc_dense(A, E, B, C, R=None, trans=False, options=None):
         """Compute the solution of a Riccati equation.
@@ -224,6 +235,9 @@ if config.HAVE_SLYCOT:
 
         return X
 
+
+if config.HAVE_SLYCOT:
+
     def ricc_dense_solver_options():
         """Return available Riccati solvers with default options for the slycot backend.
 
@@ -233,11 +247,17 @@ if config.HAVE_SLYCOT:
         """
         return {'slycot': {'type': 'slycot'}}
 
+
+if config.HAVE_SLYCOT:
+
     def _solve_check(dtype, solver, sep, ferr):
         if ferr > 1e-1:
             logger = getLogger(solver)
             logger.warning(f'Estimated forward relative error bound is large (ferr={ferr:e}, sep={sep:e}). '
                            f'Result may not be accurate.')
+
+
+if config.HAVE_SLYCOT:
 
     def ricc_lrcf_solver_options():
         """Return available Riccati solvers with default options for the slycot backend.
@@ -247,6 +267,9 @@ if config.HAVE_SLYCOT:
         A dict of available solvers with default solver options.
         """
         return {'slycot': {'type': 'slycot'}}
+
+
+if config.HAVE_SLYCOT:
 
     def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         """Compute an approximate low-rank solution of a Riccati equation.
@@ -301,11 +324,17 @@ if config.HAVE_SLYCOT:
 
         return A_source.from_numpy(_chol(X).T)
 
+
+if config.HAVE_SLYCOT:
+
     def _ricc_rcond_check(solver, rcond):
         if rcond < np.finfo(np.float64).eps:
             logger = getLogger(solver)
             logger.warning(f'Estimated reciprocal condition number is small (rcond={rcond:e}). '
                            f'Result may not be accurate.')
+
+
+if config.HAVE_SLYCOT:
 
     def pos_ricc_lrcf_solver_options():
         """Return available positive Riccati solvers with default options for the slycot backend.
@@ -315,6 +344,9 @@ if config.HAVE_SLYCOT:
         A dict of available solvers with default solver options.
         """
         return {'slycot': {'type': 'slycot'}}
+
+
+if config.HAVE_SLYCOT:
 
     def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         """Compute an approximate low-rank solution of a positive Riccati equation.

@@ -11,6 +11,7 @@ to have the most important parts of pyMOR directly available.
 # flake8: noqa
 
 from pymor.algorithms.basic import almost_equal, relative_error, project_array
+from pymor.algorithms.dmd import dmd
 from pymor.algorithms.ei import interpolate_operators, interpolate_function, ei_greedy, deim
 from pymor.algorithms.error import plot_reduction_error_analysis, reduction_error_analysis
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth

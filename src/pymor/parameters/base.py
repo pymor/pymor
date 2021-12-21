@@ -435,6 +435,11 @@ class ParametricObject(ImmutableObject):
             return self._parameters
         assert self._locked, 'parameters attribute can only be accessed after class initialization'
         params = Parameters.of(*(getattr(self, arg) for arg in self._init_arguments))
+        if (self._init_has_args or self._init_has_kwargs) and getattr(self, '_parameters_varargs_warning', True):
+            import warnings
+            warnings.warn(f'Class {type(self).__name__} takes *arg/**kwargs. '
+                          f'Parameters of objects passed via these arguments will not be inherited. '
+                          f'To silence this warning set {type(self).__name__}._parameters_varargs_warning = False')
         if self.parameters_own:
             params = params | self.parameters_own
         if self.parameters_internal:
