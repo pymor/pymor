@@ -119,7 +119,7 @@ FENICS_NONLINEAR_ARGS = (
 )
 
 FUNCTION_EI_ARGS = (
-    ('function_ei', ['--grid=10', 3, 2, 3, 2]),
+    ('function_ei', ['--grid=10', 3, 2, 3, 2, '--plot-ei-err', '--plot-solutions']),
 )
 
 OUTPUT_FUNCTIONAL_ARGS = (
