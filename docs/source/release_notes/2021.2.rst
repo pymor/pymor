@@ -1,5 +1,5 @@
 
-pyMOR 2021.1 (December 22, 2021)
+pyMOR 2021.2 (December 22, 2021)
 --------------------------------
 We are proud to announce the release of pyMOR 2021.2! New features in
 this release are the addition of Dynamic Mode Decomposition for data-driven
