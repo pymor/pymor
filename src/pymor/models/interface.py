@@ -30,6 +30,8 @@ class Model(CacheableObject, ParametricObject):
         `True` if the model describes a linear problem.
     products
         Dict of inner product operators associated with the model.
+    order
+        Dimension of the `solution_space`.
     """
 
     solution_space = None
@@ -48,6 +50,10 @@ class Model(CacheableObject, ParametricObject):
         self.parameters_internal = {'input': dim_input}
 
         self.__auto_init(locals())
+
+    @property
+    def order(self):
+        return self.solution_space.dim
 
     def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                  solution_error_estimate=False, output_error_estimate=False,

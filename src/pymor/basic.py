@@ -41,7 +41,8 @@ from pymor.core.logger import set_log_levels, getLogger
 from pymor.core.pickle import dump, dumps, load, loads
 
 from pymor.models.basic import StationaryModel, InstationaryModel
-from pymor.models.iosys import LTIModel, SecondOrderModel, TransferFunction
+from pymor.models.iosys import LTIModel, SecondOrderModel
+from pymor.models.transfer_function import TransferFunction
 
 from pymor.discretizers.builtin import (discretize_stationary_cg, discretize_instationary_cg,
                                         discretize_stationary_fv, discretize_instationary_fv,

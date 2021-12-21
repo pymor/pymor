@@ -6,7 +6,7 @@
 import numpy as np
 from typer import Argument, run
 
-from pymor.models.iosys import TransferFunction
+from pymor.models.transfer_function import TransferFunction
 from pymor.reductors.h2 import TFIRKAReductor
 from pymordemos.heat import fom_properties, run_mor_method
 
