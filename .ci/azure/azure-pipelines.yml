@@ -1,3 +1,0 @@
-jobs:
-  - template: ./pipeline-osx.yml
-  - template: ./pipeline-win.yml
