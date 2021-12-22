@@ -73,7 +73,7 @@ def main(
     # Magnitude plot
     fig, ax = plt.subplots()
     for mu in mu_list:
-        lti.mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
+        lti.transfer_function.mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
     ax.legend()
     plt.show()
 
