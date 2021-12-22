@@ -116,7 +116,7 @@ From time to time, the main branch of pyMOR undergoes major changes and things
 might break (this is usually announced in our [discussion forum](https://github.com/pymor/pymor/discussions)),
 so you might prefer to install pyMOR from the current release branch:
 
-    pip install git+https://github.com/pymor/pymor@2020.2.x#egg=pymor[full]
+    pip install git+https://github.com/pymor/pymor@2021.2.x#egg=pymor[full]
 
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
@@ -144,7 +144,7 @@ Useful Links
 
 * [Latest Changelog](https://docs.pymor.org/latest/release_notes/all.html)
 * [Getting Started](https://docs.pymor.org/latest/getting_started.html)
-* [Dependencies](https://github.com/pymor/pymor/blob/2020.2.x/requirements.txt)
+* [Dependencies](https://github.com/pymor/pymor/blob/2021.2.x/requirements.txt)
 
 External PDE solvers
 --------------------
@@ -169,7 +169,7 @@ we provide bindings for the following solver libraries:
     MPI-compatible wrapper classes for dolfin linear algebra data structures are
     shipped with pyMOR (`pymor.bindings.fenics`).
     For an example see `pymordemos.thermalblock`, `pymordemos.thermalblock_simple`.
-    It is tested using version 2019.1.0.
+    It is tested using FEniCS version 2019.1.0.
 
 * [deal.II](https://dealii.org)
 
@@ -181,7 +181,7 @@ we provide bindings for the following solver libraries:
     Wrapper classes for the NGSolve finite element library are shipped with pyMOR
     (`pymor.bindings.ngsolve`).
     For an example see `pymordemos.thermalblock_simple`.
-    It is tested using version v6.2.2006.
+    It is tested using NGSolve version v6.2.2104.
 
 Do not hesitate to contact
 [us](https://github.com/pymor/pymor/discussions) if you
