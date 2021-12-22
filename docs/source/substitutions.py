@@ -52,6 +52,7 @@ common = '''
 .. |CacheableObject| replace:: :class:`~pymor.core.cache.CacheableObject`
 
 .. |StationaryProblem| replace:: :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`
+.. |StationaryProblems| replace:: :class:`StationaryProblems <pymor.analyticalproblems.elliptic.StationaryProblem>`
 .. |InstationaryProblem| replace:: :class:`~pymor.analyticalproblems.instationary.InstationaryProblem`
 
 .. |RectDomain| replace:: :class:`~pymor.analyticalproblems.domaindescriptions.RectDomain`
