@@ -1,0 +1,59 @@
+name: Conda Tests
+on: [push]
+
+jobs:
+  miniconda:
+    name: Miniconda ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+        matrix:
+            os: ["ubuntu-20.04", "windows-2022", "macos-11"]
+        # avoid failure in one job immeadiately cancelling all others
+        fail-fast: false
+    steps:
+      - name: Install required X libs (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
+      - uses: actions/checkout@v2
+      - name: Cache conda
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache if .ci/conda-{env,rc}.yml have not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.ci/conda-env.yml') }}--${{ hashFiles('.ci/conda-rc.yml') }}
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: pyMOR-ci
+          miniforge-variant: Mambaforge
+          mamba-version: "*"
+          use-mamba: true
+          environment-file: .ci/conda-env.yml
+          # currently unused/empty
+          # condarc-file: .ci/conda-rc.yml
+          python-version: 3.9
+          auto-activate-base: false
+          channels: conda-forge
+          channel-priority: true
+           # This needs to be set for caching to work properly!
+          use-only-tar-bz2: true
+      - shell: bash -l {0}
+        run: |
+          conda info
+          conda list
+      - name: Install pyMOR
+        shell: bash -l {0}
+        # this seems to be the most portable way of making sure everything is importable
+        run: conda develop .
+        # alas it still does not work everywhere, so manual PYTHONPATH it is
+      - name: Imports
+        shell: bash -l {0}
+        run: |
+            QT_DEBUG_PLUGINS=1 python -c "from qtpy.QtGui import *"
+      - name: Run pytest
+        shell: bash -l {0}
+        run: |
+            PYTHONPATH=./src pytest -vs src/pymortests/demos.py -k "thermal"
