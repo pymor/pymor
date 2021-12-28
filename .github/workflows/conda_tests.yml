@@ -7,6 +7,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
         matrix:
+            os: [ubuntu-20.04, macos-11, windows-2022]
+            python: [3.7, 3.9]
             include:
               - os: ubuntu-20.04
                 prefix: /usr/share/miniconda3/envs/pyMOR-ci
@@ -27,7 +29,7 @@ jobs:
           activate-environment: pyMOR-ci
           miniforge-variant: Mambaforge
           use-mamba: true
-          python-version: 3.9
+          python-version: ${{ matrix.python }}
           channels: conda-forge
           channel-priority: true
            # This needs to be set for caching to work properly!
@@ -41,7 +43,7 @@ jobs:
         with:
           path: ${{ matrix.prefix }}
           key:
-            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.ci/conda-env.yml') }}
+            ${{ runner.os }}-${{ matrix.python }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.ci/conda-env.yml') }}
       - name: Update environment
         run: mamba env update -n pyMOR-ci -f .ci/conda-env.yml
         if: steps.cache.outputs.cache-hit != 'true'
@@ -74,6 +76,7 @@ jobs:
         run: |
             ${PYTEST_PREFIX} pytest ${COMMON_PYTEST_OPTS}
       - uses: codecov/codecov-action@v2
+        name: upload coverage
         with:
           flags: github_actions,${{ matrix.os }}
           fail_ci_if_error: true
