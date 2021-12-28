@@ -52,10 +52,10 @@ DISCRETIZATION_ARGS = (
 
 if not parallel:
     DISCRETIZATION_ARGS += (('elliptic_unstructured', [6., 16, 1e-1]),)
-if not is_windows_platform():
-    DISCRETIZATION_ARGS += (('neural_networks', [25, 50, 10]),
-                            ('neural_networks_fenics', [15, 3]),
-                            ('neural_networks_instationary', [25, 25, 30, 5]))
+
+DISCRETIZATION_ARGS += (('neural_networks', [25, 50, 10]),
+                        ('neural_networks_fenics', [15, 3]),
+                        ('neural_networks_instationary', [25, 25, 30, 5]))
 
 THERMALBLOCK_ARGS = (
     ('thermalblock', ['--plot-solutions', '--plot-err', '--plot-error-sequence', 2, 2, 3, 5]),
@@ -160,9 +160,10 @@ DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 def _skip_if_no_solver(param):
     demo, args = param
     from pymor.core.config import config
-    for solver in ['fenics', 'ngsolve']:
+    for solver, package in [('fenics', None), ('ngsolve', None), ('neural_', 'TORCH')]:
+        package = package or solver.upper()
         needs_solver = len([f for f in args if solver in str(f)]) > 0 or demo.find(solver) >= 0
-        has_solver = getattr(config, 'HAVE_' + solver.upper())
+        has_solver = getattr(config, f'HAVE_{package}')
         if needs_solver and not has_solver:
             if not os.environ.get('DOCKER_PYMOR', False):
                 pytest.skip('skipped test due to missing ' + solver)
