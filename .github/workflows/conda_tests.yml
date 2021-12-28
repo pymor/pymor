@@ -2,8 +2,18 @@ name: Conda Tests
 on: [push]
 
 jobs:
+  event_file:
+    # this is input for the pytest_results workflow
+    name: "Event File"
+    runs-on: ubuntu-latest
+    steps:
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        name: Event File
+        path: ${{ github.event_path }}
   miniconda:
-    name: Miniconda ${{ matrix.os }}
+    name: Conda ${{ matrix.os }} - Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     strategy:
         matrix:
@@ -72,7 +82,8 @@ jobs:
         env:
           PYTHONPATH: ./src
           PYMOR_HYPOTHESIS_PROFILE: "ci"
-          COMMON_PYTEST_OPTS: "--cov-report=xml --cov --cov-config=setup.cfg --cov-context=test --junitxml=test_results_${PYMOR_VERSION}.xml "
+          RESULTS_FILE: result_${{ runner.os }}-${{ matrix.python }}.xml
+          COMMON_PYTEST_OPTS: "--cov-report=xml --cov --cov-config=setup.cfg --cov-context=test --junitxml=${RESULTS_FILE}"
         run: |
             ${PYTEST_PREFIX} pytest ${COMMON_PYTEST_OPTS}
       - uses: codecov/codecov-action@v2
@@ -81,3 +92,9 @@ jobs:
           flags: github_actions,${{ matrix.os }}
           fail_ci_if_error: true
           verbose: true
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: Unit Test Results (Python ${{ matrix.python-version }}, OS ${{ runner.os }})
+          path: result_*.xml
