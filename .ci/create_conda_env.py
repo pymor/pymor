@@ -25,7 +25,6 @@ channels:
 dependencies:
   - anaconda-client
   - conda-build
-  - pytest-xvfb
   - pip
 {% for pkg in available %}
   - {{pkg}}

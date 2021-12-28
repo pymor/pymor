@@ -6,7 +6,6 @@ dependencies:
   - anaconda-client
   - conda-build
   - pip
-  - pytest-xvfb
 
   - twine
   - pytest>=4.4
