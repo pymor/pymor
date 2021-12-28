@@ -69,11 +69,12 @@ jobs:
         shell: bash -l {0}
         env:
           PYTHONPATH: ./src
+          PYMOR_HYPOTHESIS_PROFILE: "ci"
           COMMON_PYTEST_OPTS: "--cov-report=xml --cov --cov-config=setup.cfg --cov-context=test --junitxml=test_results_${PYMOR_VERSION}.xml "
         run: |
-            ${PYTEST_PREFIX} pytest ${COMMON_PYTEST_OPTS}-vs src/pymortests/demos.py -k "thermal"
+            ${PYTEST_PREFIX} pytest ${COMMON_PYTEST_OPTS}
       - uses: codecov/codecov-action@v2
         with:
           flags: github_actions,${{ matrix.os }}
-          fail_ci_if_error: false
+          fail_ci_if_error: true
           verbose: true
