@@ -2,6 +2,16 @@ name: Conda Tests
 on: [push]
 
 jobs:
+  bugout:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          all_but_latest: true
+          # also works on 'pull_request' targets
+          ignore_sha: true
+          access_token: ${{ github.token }}
   event_file:
     # this is input for the pytest_results workflow
     name: "Event File"
@@ -44,6 +54,10 @@ jobs:
           channel-priority: true
            # This needs to be set for caching to work properly!
           use-only-tar-bz2: true
+      - name: Stop if dependencies changed
+        shell: bash -l {0}
+        run: |
+          ./dependencies.py && git diff --exit-code requirements* pyproject.toml
       - name: Cache conda
         uses: actions/cache@v2
         id: cache
