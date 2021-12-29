@@ -36,7 +36,6 @@ dependencies:
 
 '''
 
-CONDA = '/home/rene/projekte/uni/pymor/conda/miniconda3/bin/conda'
 # AFAICT we _should_ install pytorch-cpu instead of torch, that
 # fails to install everywhere, so we're noping out of torch entirely
 BLOCKLIST = ('torch', )
@@ -96,7 +95,7 @@ def _strip_markers(name):
 
 def _search_single(pkg, plat):
     """Search needs to explicitly say its subdir, else only the host's native is searched"""
-    cmd = [CONDA, 'search', '--channel=conda-forge', '--json', f'{pkg}[subdir={plat}]']
+    cmd = ['/usr/bin/env', 'conda', 'search', '--channel=conda-forge', '--json', f'{pkg}[subdir={plat}]']
     try:
         output = check_output(cmd)
     except CalledProcessError as e:
