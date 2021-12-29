@@ -7,45 +7,45 @@ dependencies:
   - conda-build
   - pip
 
-  - setuptools
-  - lxml
-  - sympy
+  - PySide2!=5.15.2,!=5.15.2.*,!=5.11.*,!=5.12.*,!=5.13.0
+  - bash_kernel
+  - check-manifest
+  - click
   - docutils
-  - typer
-  - numpy>=1.19.4
-  - nbconvert
-  - numpy>=1.17.5
-  - sphinx-autoapi>=1.8
-  - myst-nb
-  - pyopengl
-  - mpi4py>=3.0
+  - flake8-rst-docstrings
   - ipyparallel>=6.2.5
-  - twine
-  - scipy>=1.5.4
-  - pillow
-  - numpy>=1.16.0
-  - scipy>=1.3.3
-  - sphinx>=3.4
-  - scipy>=1.3
-  - nbresuse
+  - ipython>=5.0
   - jupyter_client>=7.0.6
   - jupyter_contrib_nbextensions
-  - rstcheck
-  - mpi4py>=3.0.3
-  - pyevtk
-  - bash_kernel
-  - slycot>=0.4.0
-  - pytest-parallel
-  - pybind11
-  - meshio>=4.4
-  - click
-  - ipython>=5.0
-  - check-manifest
+  - lxml
   - matplotlib
-  - PySide2!=5.15.2,!=5.15.2.*,!=5.11.*,!=5.12.*,!=5.13.0
+  - meshio>=4.4
+  - mpi4py>=3.0
+  - mpi4py>=3.0.3
+  - myst-nb
+  - nbconvert
+  - nbresuse
+  - numpy>=1.16.0
+  - numpy>=1.17.5
+  - numpy>=1.19.4
+  - pillow
+  - pybind11
+  - pyevtk
+  - pyopengl
+  - pytest-parallel
   - pytest>=6.0
+  - rstcheck
   - scikit-fem
-  - flake8-rst-docstrings
+  - scipy>=1.3
+  - scipy>=1.3.3
+  - scipy>=1.5.4
+  - setuptools
+  - slycot>=0.4.0
+  - sphinx-autoapi>=1.8
+  - sphinx>=3.4
+  - sympy
+  - twine
+  - typer
 
   - pip:
     - -r ../requirements-ci.txt
