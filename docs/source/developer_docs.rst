@@ -99,6 +99,13 @@ During ``setup.py`` execution ``dependencies.py`` is imported and the package li
 (see :ref:`this list <ref_gitlab_ci_stage_test>`).
 The ``extra_requires`` dictionary here controls what 'extra' configurations are available for
 ``pip install pymor[extra1,extra2,extra3]``.
+The requirements files are input for `.ci/create_conda_env.py` which created a Conda Environment
+spec file that contains only those dependencies that are available on all OS-Python combinations
+for which GitHub Action based CI is run in Conda envs.
+
+A GitHub Action will update all "downstream" files of ``dependencies.py`` if it changes in a push.
+The result will be pushed into the same branch, but due to a GitHub limitation no new workflows
+will run as a result of that push.
 
 When adding new package dependencies, or version restrictions, these need to be reflected into
 a commit in our docker repository for the `constraints requirements <https://github.com/pymor/docker/tree/main/constraints>`_
@@ -270,15 +277,8 @@ GitHub Actions
 * Make sure at least one ``pr:*`` label is set on the PR.
 * Prohibit any commits with messages that indicate they can be auto-squashed
 * Auto-assign the labels if certain files are changed by the PR.
-
-Azure Pipelines
-===============
-
-.. note:: Configured by ``.ci/azure/pipeline-{osx,win}.yml`` respectively.
-
-Setup test environments with conda and run pytest. Also generate and upload coverage reports.
-
-.. note:: ``.ci/azure/pymor_defaults.py_*`` may override defaults
+* Update requirement files / conda env if ``depependencies.py`` changes.
+* Runs pytest in conda-based environments on Windows/MacOS/Linux for oldest and newest supported Pythons
 
 .. _ref_docker_images:
 
