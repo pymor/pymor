@@ -436,7 +436,7 @@ def _twosided_rqi(A, E, x, y, theta, init_res, imagtol, rqitol, maxiter):
         x = x_rqi
         y = v_rqi
         nrq = rqi_res.norm() / np.abs(x_rq)
-        if np.abs(theta - x_rq) / np.abs(x_rq) < rqitol:
+        if nrq < rqitol:
             break
         theta = x_rq
         if not np.isfinite(nrq):
