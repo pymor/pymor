@@ -180,6 +180,7 @@ def main(input_paths, output_path='conda-environment.yml'):
             available.append(pkg)
     for a in available:
         wanted.remove(a)
+    available, wanted = sorted(list(available)), sorted(list(wanted))
     tpl = jinja2.Template(ENV_TPL)
     with open(output_path, 'wt') as yml:
         yml.write(tpl.render(available=available))
@@ -193,7 +194,7 @@ if __name__ == '__main__':
     from rich.table import Table
 
     table = Table("available", "wanted", title="Conda search result")
-    for el in itertools.zip_longest(sorted(list(available)), sorted(list(wanted)), fillvalue=''):
+    for el in itertools.zip_longest(available, wanted, fillvalue=''):
         table.add_row(*el)
     console = Console()
     console.print(table)
