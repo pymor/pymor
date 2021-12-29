@@ -140,8 +140,8 @@ overridden like this: ``make DOCKER_BASE_PYTHON=3.8 docker_test`` (see also the 
 Continuous Testing / Integration Setup
 ######################################
 
-Our CI infrastructure is spread across three major platforms. These are Gitlab CI (Linux testsuite),
-Azure Pipelines (MacOS and Windows testsuite) and GitHub Actions (misc. checks).
+Our CI infrastructure is spread across two major platforms. These are Gitlab CI (Linux testsuite)
+and GitHub Actions (Conda-based MacOS and Windows testsuite, misc. checks).
 
 pyMOR uses `pytest <https://pytest.org/>`_ for unit testing.
 All tests are contained within the `src/pymortests` directory and can be run
