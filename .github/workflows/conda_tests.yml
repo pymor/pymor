@@ -71,10 +71,10 @@ jobs:
       - name: Update environment
         run: mamba env update -n pyMOR-ci -f .ci/conda-env.yml
         if: steps.cache.outputs.cache-hit != 'true'
-      - shell: bash -l {0}
+      - name: Export Conda Env
+        shell: bash -l {0}
         run: |
-          mamba info
-          mamba list
+          mamba env export > conda-env__${{ runner.os }}-${{ matrix.python }}.yml
       - name: Install pyMOR
         shell: bash -l {0}
         # this seems to be the most portable way of making sure everything is importable
@@ -110,5 +110,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: Unit Test Results (Python ${{ matrix.python-version }}, OS ${{ runner.os }})
+          name: Unit Test Results (Python ${{ matrix.python }}, OS ${{ runner.os }})
           path: result_*.xml
+      - name: Upload Conda Env Export
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: Conda Env Exports
+          path: conda-env__${{ runner.os }}-${{ matrix.python }}.yml
