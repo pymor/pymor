@@ -11,19 +11,6 @@ from pymor.tools.floatcmp import almost_less
 from pymortests.base import runmodule, might_exceed_deadline
 from pymortests.fixtures.grid import hy_grid, hy_grid_with_orthogonal_centers
 
-# monkey np.testing.assert_allclose to behave the same as np.allclose
-# for some reason, the default atol of np.testing.assert_allclose is 0
-# while it is 1e-8 for np.allclose
-
-real_assert_allclose = np.testing.assert_allclose
-
-
-def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
-    real_assert_allclose(a, b, rtol=rtol, atol=atol)
-
-
-np.testing.assert_allclose = monkey_allclose
-
 
 def _scale_tols_if_domain_bad(g, atol=1e-05, rtol=1e-08):
     # "badly" shaped domains produce excessive errors
