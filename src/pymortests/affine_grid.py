@@ -25,7 +25,7 @@ def _scale_tols_if_domain_bad(g, atol=1e-05, rtol=1e-08):
         w = np.linalg.norm(lower_right - lower_left)
         min_l = min(w, h)
         max_l = max(w, h)
-        ll, rr = np.linalg.norm(lower_left) , np.linalg.norm(upper_right)
+        ll, rr = np.linalg.norm(lower_left), np.linalg.norm(upper_right)
         scale = max(max_l / min_l, abs(rr-ll)*1e-2)
         if scale > 100:
             rtol *= scale / 10

@@ -37,9 +37,10 @@ pytest_plugins = [
     "pymortests.fixtures.parameter",
 ]
 
+
 @pytest.fixture(autouse=True)
 def monkey_np_testing(monkeypatch):
-    """all tests in this module automagically use this, we only change the default tolerances
+    """All tests automagically use this, we only change the default tolerances
 
     monkey np.testing.assert_allclose to behave the same as np.allclose
     for some reason, the default atol of np.testing.assert_allclose is 0

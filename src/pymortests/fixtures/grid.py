@@ -109,6 +109,7 @@ def hy_grid_and_dim_range_product_and_s_to_e(draw):
     s = hyst.integers(min_value=0, max_value=max(e-1, 0))
     return g, e, n, draw(s)
 
+
 @hyst.composite
 def hy_grid_and_codim_product_and_entity_index(draw):
     grid = draw(hy_grid)
