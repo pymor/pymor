@@ -9,7 +9,8 @@ from hypothesis import given, settings
 from pymor.discretizers.builtin.grids.interfaces import ReferenceElement
 from pymor.tools.floatcmp import almost_less
 from pymortests.base import runmodule, might_exceed_deadline
-from pymortests.fixtures.grid import hy_grid, hy_grid_with_orthogonal_centers
+from pymortests.fixtures.grid import hy_grid, hy_grid_with_orthogonal_centers, \
+    hy_grid_and_codim_product_and_entity_index
 
 
 def _scale_tols_if_domain_bad(g, atol=1e-05, rtol=1e-08):
@@ -112,15 +113,13 @@ def test_jacobian_inverse_transposed_shape(grid):
 
 
 @settings(deadline=None)
-@given(hy_grid)
-def test_jacobian_inverse_transposed_values(grid):
-    g = grid
+@given(hy_grid_and_codim_product_and_entity_index())
+def test_jacobian_inverse_transposed_values(grid_and_dims):
+    g, d, e = grid_and_dims
     atol, rtol = _scale_tols_if_domain_bad(g)
-    for d in range(g.dim):
-        JIT = g.jacobian_inverse_transposed(d)
-        A, _ = g.embeddings(d)
-        for e in range(g.size(d)):
-            np.testing.assert_allclose(JIT[e], np.linalg.pinv(A[e]).T, atol=atol, rtol=rtol)
+    JIT = g.jacobian_inverse_transposed(d)
+    A, _ = g.embeddings(d)
+    np.testing.assert_allclose(JIT[e], np.linalg.pinv(A[e]).T, atol=atol, rtol=rtol)
 
 
 @given(hy_grid)
