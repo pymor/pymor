@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.1)
 
-set(PYTHON_EXECUTABLE /usr/local/bin/python3 CACHE PATH "")
+set(Python3_EXECUTABLE /usr/local/bin/python3 CACHE PATH "")
 project(minimal-cpp-demo)
+
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18.0")
+  find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+else()
+  find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+endif()
 
 find_package(pybind11 CONFIG REQUIRED HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
