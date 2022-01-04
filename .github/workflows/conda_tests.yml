@@ -3,6 +3,7 @@ on: [push]
 
 jobs:
   bugout:
+    name: Cancel superseded jobs
     runs-on: ubuntu-20.04
     steps:
       - name: Cancel Previous Runs
@@ -127,6 +128,8 @@ jobs:
         env:
           PYTHONPATH: ./src
           PYMOR_HYPOTHESIS_PROFILE: "ci"
+          # we may be able to limit this to macos
+          PYMOR_ALLOW_DEADLINE_EXCESS: 1
           RESULTS_FILE: result_${{ runner.os }}-${{ matrix.python }}.xml
           COMMON_PYTEST_OPTS: "--cov-report=xml --cov --cov-config=setup.cfg --cov-context=test --junitxml=${RESULTS_FILE}"
         run: |
