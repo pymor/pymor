@@ -54,7 +54,7 @@ def main(r: int = Argument(10, help='Order of the TF-IRKA ROM.')):
 
     fig, ax = plt.subplots()
     for mu, rom in zip(mu_list, roms_tf_irka):
-        rom.mag_plot(w, ax=ax, label=fr'$\tau = {mu}$')
+        rom.transfer_function.mag_plot(w, ax=ax, label=fr'$\tau = {mu}$')
     ax.set_title("Magnitude plot of TF-IRKA's ROMs")
     ax.legend()
     plt.show()

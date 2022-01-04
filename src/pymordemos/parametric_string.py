@@ -76,7 +76,7 @@ def main(
     # Magnitude plots
     fig, ax = plt.subplots()
     for mu in mu_list:
-        so_sys.mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
+        so_sys.transfer_function.mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
     ax.set_title('Magnitude plot of the full model')
     ax.legend()
     plt.show()

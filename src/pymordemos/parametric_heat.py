@@ -57,14 +57,14 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
     # Magnitude plots
     fig, ax = plt.subplots()
     for mu, rom in zip(mus, roms):
-        rom.mag_plot(w, ax=ax, label=fr'$\mu = {mu}$')
+        rom.transfer_function.mag_plot(w, ax=ax, label=fr'$\mu = {mu}$')
     ax.set_title(f'Magnitude plot of {reductor_short_name} reduced models')
     ax.legend()
     plt.show()
 
     fig, ax = plt.subplots()
     for mu, rom in zip(mus, roms):
-        (fom - rom).mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
+        (fom - rom).transfer_function.mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
     ax.set_title(f'Magnitude plot of the {reductor_short_name} error system')
     ax.legend()
     plt.show()
@@ -131,7 +131,7 @@ def main(
     # Magnitude plots
     fig, ax = plt.subplots()
     for mu in mu_list:
-        lti.mag_plot(w_list, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
+        lti.transfer_function.mag_plot(w_list, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
     ax.set_title('Magnitude plot of the full model')
     ax.legend()
     plt.show()
