@@ -279,6 +279,12 @@ GitHub Actions
 * Auto-assign the labels if certain files are changed by the PR.
 * Update requirement files / conda env if ``depependencies.py`` changes.
 * Runs pytest in conda-based environments on Windows/MacOS/Linux for oldest and newest supported Pythons
+  * Entire conda envs are cached and only update if either manually invalidated by incrementing ``CACHE_NUMBER``
+    or if dependencies change.
+  * All pytest jobs export a full environment lockfile, which can be downloaded on the summary tab for
+    the "Conda Tests" action. Look for "Conda Env Exports".
+  * Pytest XML reports can also be found there.
+
 
 .. _ref_docker_images:
 
