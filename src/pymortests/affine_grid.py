@@ -9,24 +9,13 @@ from hypothesis import given, settings
 from pymor.discretizers.builtin.grids.interfaces import ReferenceElement
 from pymor.tools.floatcmp import almost_less
 from pymortests.base import runmodule, might_exceed_deadline
-from pymortests.fixtures.grid import hy_grid, hy_grid_with_orthogonal_centers
-
-# monkey np.testing.assert_allclose to behave the same as np.allclose
-# for some reason, the default atol of np.testing.assert_allclose is 0
-# while it is 1e-8 for np.allclose
-
-real_assert_allclose = np.testing.assert_allclose
-
-
-def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
-    real_assert_allclose(a, b, rtol=rtol, atol=atol)
-
-
-np.testing.assert_allclose = monkey_allclose
+from pymortests.fixtures.grid import hy_grid, hy_grid_with_orthogonal_centers, \
+    hy_grid_and_codim_product_and_entity_index
 
 
 def _scale_tols_if_domain_bad(g, atol=1e-05, rtol=1e-08):
     # "badly" shaped domains produce excessive errors
+    # same for large differences in absolute coord values
     bbox = g.bounding_box()
     if g.dim == 2:
         lower_left, upper_right = bbox[0], bbox[1]
@@ -36,10 +25,11 @@ def _scale_tols_if_domain_bad(g, atol=1e-05, rtol=1e-08):
         w = np.linalg.norm(lower_right - lower_left)
         min_l = min(w, h)
         max_l = max(w, h)
-        quot = max_l / min_l
-        if quot > 100:
-            rtol *= quot / 10
-            atol *= quot / 10
+        ll, rr = np.linalg.norm(lower_left), np.linalg.norm(upper_right)
+        scale = max(max_l / min_l, abs(rr-ll)*1e-2)
+        if scale > 100:
+            rtol *= scale / 10
+            atol *= scale / 10
     assert np.isfinite(atol)
     assert np.isfinite(rtol)
     return atol, rtol
@@ -123,15 +113,13 @@ def test_jacobian_inverse_transposed_shape(grid):
 
 
 @settings(deadline=None)
-@given(hy_grid)
-def test_jacobian_inverse_transposed_values(grid):
-    g = grid
+@given(hy_grid_and_codim_product_and_entity_index())
+def test_jacobian_inverse_transposed_values(grid_and_dims):
+    g, d, e = grid_and_dims
     atol, rtol = _scale_tols_if_domain_bad(g)
-    for d in range(g.dim):
-        JIT = g.jacobian_inverse_transposed(d)
-        A, _ = g.embeddings(d)
-        for e in range(g.size(d)):
-            np.testing.assert_allclose(JIT[e], np.linalg.pinv(A[e]).T, atol=atol, rtol=rtol)
+    JIT = g.jacobian_inverse_transposed(d)
+    A, _ = g.embeddings(d)
+    np.testing.assert_allclose(JIT[e], np.linalg.pinv(A[e]).T, atol=atol, rtol=rtol)
 
 
 @given(hy_grid)
