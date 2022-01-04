@@ -241,6 +241,9 @@ def _test_demo(demo):
 
 def test_demos(demo_args):
     module, args = demo_args
+    # assertions in pymordemos do not get changed by pytest by default
+    # https://docs.pytest.org/en/stable/writing_plugins.html#assertion-rewriting
+    pytest.register_assert_rewrite(module)
     module = import_module(module)
     if hasattr(module, 'app'):
         app = module.app
