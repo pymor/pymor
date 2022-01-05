@@ -35,7 +35,7 @@ pip install -e '.[full]'
 ### Environment with docker-compose
 
 To get a shell in a preconfigured container run
-(if required set `PYMOR_SUDO=1` in your environment to execute docker with elevated rights):
+(if required set {envvar}`PYMOR_SUDO=1` in your environment to execute docker with elevated rights):
 
 ```
 make docker_run
@@ -115,8 +115,8 @@ so that updated images become available to CI after entering the new commit hash
 ## The Makefile
 
 Via the `Makefile` it is possible to execute tests close to how they are run on CI with `make docker_test`.
-All jobs described in {ref}`Gitlab CI Test Stage <ref_gitlab_ci_stage_test>` can be run this way by setting `PYMOR_TEST_SCRIPT`
-accordingly. You can pass additional arguments to pytest by setting `PYMOR_PYTEST_EXTRA`.
+All jobs described in {ref}`Gitlab CI Test Stage <ref_gitlab_ci_stage_test>` can be run this way by setting {envvar}`PYMOR_TEST_SCRIPT`
+accordingly. You can pass additional arguments to pytest by setting {envvar}`PYMOR_PYTEST_EXTRA`.
 To run the test suite without docker,
 simply execute `make test` in the base directory of the pyMOR repository. This will
 run the pytest suite with the default hypothesis profile "dev". For available profiles
