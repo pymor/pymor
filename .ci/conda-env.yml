@@ -45,6 +45,7 @@ dependencies:
   - python-gmsh
   - python-slugify
   - pythreejs
+  - pytorch-cpu
   - qtpy>2.0
   - rstcheck==6.0.0.post1
   - scipy>=1.3
