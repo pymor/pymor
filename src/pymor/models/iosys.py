@@ -63,8 +63,8 @@ class LTIModel(Model):
         The |Operator| D or `None` (then D is assumed to be zero).
     E
         The |Operator| E or `None` (then E is assumed to be identity).
-    cont_time
-        `True` if the system is continuous-time, otherwise `False`.
+    dt
+        `0` if the system is continuous-time, otherwise a positive number.
     solver_options
         The solver options to use to solve the Lyapunov equations.
     error_estimator
@@ -178,8 +178,8 @@ class LTIModel(Model):
             The |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed to be zero).
         E
             The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be identity).
-        cont_time
-            `True` if the system is continuous-time, otherwise `False`.
+        dt
+            `0` if the system is continuous-time, otherwise a positive number.
         state_id
             Id of the state space.
         solver_options
@@ -260,8 +260,8 @@ class LTIModel(Model):
             `None` or the name of the file (with extension) containing D.
         E_file
             `None` or the name of the file (with extension) containing E.
-        cont_time
-            `True` if the system is continuous-time, otherwise `False`.
+        dt
+            `0` if the system is continuous-time, otherwise a positive number.
         state_id
             Id of the state space.
         solver_options
@@ -336,8 +336,8 @@ class LTIModel(Model):
         file_name
             The name of the .mat file (extension .mat does not need to be included) containing A, B,
             C, and optionally D and E.
-        cont_time
-            `True` if the system is continuous-time, otherwise `False`.
+        dt
+            `0` if the system is continuous-time, otherwise a positive number.
         state_id
             Id of the state space.
         solver_options
@@ -402,8 +402,8 @@ class LTIModel(Model):
         ----------
         files_basename
             The basename of files containing A, B, C, and optionally D and E.
-        cont_time
-            `True` if the system is continuous-time, otherwise `False`.
+        dt
+            `0` if the system is continuous-time, otherwise a positive number.
         state_id
             Id of the state space.
         solver_options
@@ -974,8 +974,8 @@ class SecondOrderModel(Model):
         The |Operator| Cv or `None` (then Cv is assumed to be zero).
     D
         The |Operator| D or `None` (then D is assumed to be zero).
-    cont_time
-        `True` if the system is continuous-time, otherwise `False`.
+    dt
+        `0` if the system is continuous-time, otherwise a positive number.
     solver_options
         The solver options to use to solve the Lyapunov equations.
     error_estimator
@@ -1092,8 +1092,8 @@ class SecondOrderModel(Model):
             The |NumPy array| or |SciPy spmatrix| Cv or `None` (then Cv is assumed to be zero).
         D
             The |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed to be zero).
-        cont_time
-            `True` if the system is continuous-time, otherwise `False`.
+        dt
+            `0` if the system is continuous-time, otherwise a positive number.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -1185,8 +1185,8 @@ class SecondOrderModel(Model):
             `None` or the name of the file (with extension) containing Cv.
         D_file
             `None` or the name of the file (with extension) containing D.
-        cont_time
-            `True` if the system is continuous-time, otherwise `False`.
+        dt
+            `0` if the system is continuous-time, otherwise a positive number.
         state_id
             Id of the state space.
         solver_options
@@ -1650,8 +1650,8 @@ class LinearDelayModel(Model):
         The |Operator| D or `None` (then D is assumed to be zero).
     E
         The |Operator| E or `None` (then E is assumed to be identity).
-    cont_time
-        `True` if the system is continuous-time, otherwise `False`.
+    dt
+        `0` if the system is continuous-time, otherwise a positive number.
     error_estimator
         An error estimator for the problem. This can be any object with an
         `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
@@ -1912,8 +1912,8 @@ class LinearStochasticModel(Model):
         The |Operator| D or `None` (then D is assumed to be zero).
     E
         The |Operator| E or `None` (then E is assumed to be identity).
-    cont_time
-        `True` if the system is continuous-time, otherwise `False`.
+    dt
+        `0` if the system is continuous-time, otherwise a positive number.
     error_estimator
         An error estimator for the problem. This can be any object with an
         `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
@@ -2035,8 +2035,8 @@ class BilinearModel(Model):
         The |Operator| D or `None` (then D is assumed to be zero).
     E
         The |Operator| E or `None` (then E is assumed to be identity).
-    cont_time
-        `True` if the system is continuous-time, otherwise `False`.
+    dt
+        `0` if the system is continuous-time, otherwise a positive number.
     error_estimator
         An error estimator for the problem. This can be any object with an
         `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an

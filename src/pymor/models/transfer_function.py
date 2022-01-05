@@ -32,8 +32,8 @@ class TransferFunction(CacheableObject, ParametricObject):
         The complex derivative of `H` with respect to `s` (optional).
     parameters
         The |Parameters| of the transfer function.
-    cont_time
-        `True` if the system is continuous-time, otherwise `False`.
+    dt
+        `0` if the system is continuous-time, otherwise a positive number.
     name
         Name of the system.
 
