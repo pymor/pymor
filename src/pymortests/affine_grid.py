@@ -8,7 +8,7 @@ from hypothesis import given, settings
 
 from pymor.discretizers.builtin.grids.interfaces import ReferenceElement
 from pymor.tools.floatcmp import almost_less
-from pymortests.base import runmodule, might_exceed_deadline
+from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_grid, hy_grid_with_orthogonal_centers, \
     hy_grid_and_codim_product_and_entity_index
 
@@ -138,17 +138,14 @@ def test_integration_elements_shape(grid):
         assert g.integration_elements(d).shape == (g.size(d),)
 
 
-@might_exceed_deadline()
-@given(hy_grid)
-def test_integration_elements_values(grid):
-    g = grid
+@given(hy_grid_and_codim_product_and_entity_index())
+def test_integration_elements_values(grid_and_dims):
+    g, d, e = grid_and_dims
     atol, rtol = _scale_tols_if_domain_bad(g)
-    for d in range(g.dim - 1):
-        IE = g.integration_elements(d)
-        A, _ = g.embeddings(d)
-        for e in range(g.size(d)):
-            np.testing.assert_allclose(IE[e], np.sqrt(np.linalg.det(np.dot(A[e].T, A[e]))),
-                                       atol=atol, rtol=rtol)
+    IE = g.integration_elements(d)
+    A, _ = g.embeddings(d)
+    np.testing.assert_allclose(IE[e], np.sqrt(np.linalg.det(np.dot(A[e].T, A[e]))),
+                               atol=atol, rtol=rtol)
     np.testing.assert_allclose(g.integration_elements(g.dim), 1,
                                atol=atol, rtol=rtol)
 

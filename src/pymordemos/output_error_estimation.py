@@ -110,7 +110,7 @@ def main(
         s_rom_, s_est_ = rom.output(return_error_estimate=True, mu=mu,
                                     return_error_estimate_vector=True)
         assert np.allclose(s_rom, s_rom_)
-        assert s_est == np.linalg.norm(s_est_)
+        assert np.allclose(s_est, np.linalg.norm(s_est_))
 
         if fom_number in [3, 4]:
             s_rom__, s_est__ = rom.output(return_error_estimate=True, mu=mu, return_error_sequence=True)

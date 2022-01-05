@@ -63,8 +63,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
         If the residual is smaller than dorqitol the two-sided Rayleigh quotient iteration
         is executed.
     rqitol
-        Tolerance for the relative change of a pole in the two-sided Rayleigh quotient
-        iteration.
+        Tolerance for the residual of a pole in the two-sided Rayleigh quotient iteration.
     maxrestart
         The maximum number of restarts.
     krestart
@@ -186,8 +185,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
 
             if np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
                 rres = A.apply(schurvec.real) - E.apply(schurvec.real) * np.real(theta)
-                nrr = rres.norm() / np.abs(np.real(theta))
-                if nrr - nres < np.finfo(float).eps:
+                nrr = rres.norm()
+                if np.abs(nrr - nres) < np.finfo(float).eps:
                     schurvec = schurvec.real
                     lschurvec = lschurvec.real
                     theta = np.real(theta)
@@ -199,8 +198,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
                 do_rqi = False
                 if np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
                     rres = A.apply(schurvec.real) - E.apply(schurvec.real) * np.real(theta)
-                    nrr = rres.norm() / np.abs(np.real(theta))
-                    if nrr - nres < np.finfo(float).eps:
+                    nrr = rres.norm()
+                    if np.abs(nrr - nres) < np.finfo(float).eps:
                         schurvec = schurvec.real
                         lschurvec = lschurvec.real
                         theta = np.real(theta)
@@ -382,7 +381,7 @@ def _twosided_rqi(A, E, x, y, theta, init_res, imagtol, rqitol, maxiter):
     imagtol
         Relative tolerance for imaginary parts of pairs of complex conjugate eigenvalues.
     rqitol
-        Convergence tolerance for the relative change of the pole.
+        Convergence tolerance for the residual of the pole.
     maxiter
         Maximum number of iteration.
 
@@ -435,7 +434,7 @@ def _twosided_rqi(A, E, x, y, theta, init_res, imagtol, rqitol, maxiter):
 
         x = x_rqi
         y = v_rqi
-        nrq = rqi_res.norm() / np.abs(x_rq)
+        nrq = rqi_res.norm()
         if nrq < rqitol:
             break
         theta = x_rq
