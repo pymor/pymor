@@ -132,12 +132,11 @@ class TransferFunction(CacheableObject, ParametricObject):
             Transfer function values at frequencies in `w`, |NumPy array| of shape
             `(len(w), self.dim_output, self.dim_input)`.
         """
-        if not self.cont_time:
-            raise NotImplementedError
+        w = 1j * w if self.dt == 0 else np.exp(1j * w)
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
-        return np.stack([self.eval_tf(1j * wi, mu=mu) for wi in w])
+        return np.stack([self.eval_tf(wi, mu=mu) for wi in w])
 
     def bode(self, w, mu=None):
         """Compute magnitudes and phases.
@@ -203,6 +202,7 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         w = np.asarray(w)
         freq = w / (2 * np.pi) if Hz else w
+        freq = freq / self.dt if self.dt > 0 else freq
         mag, phase = self.bode(w, mu=mu)
         if deg:
             phase *= 180 / np.pi
@@ -262,6 +262,7 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         w = np.asarray(w)
         freq = w / (2 * np.pi) if Hz else w
+        freq = freq / self.dt if self.dt > 0 else freq
         mag = spla.norm(self.freq_resp(w, mu=mu), ord=ord, axis=(1, 2))
         if dB:
             out = ax.semilogx(freq, 20 * np.log10(mag), **mpl_kwargs)
