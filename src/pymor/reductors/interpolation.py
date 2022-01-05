@@ -375,7 +375,7 @@ class TFBHIReductor(BasicObject):
         Br = (T @ Br).real
         Cr = (Cr @ T.conj().T).real
 
-        return LTIModel.from_matrices(Ar, Br, Cr, None, Er, cont_time=self.fom.cont_time)
+        return LTIModel.from_matrices(Ar, Br, Cr, None, Er, dt=self.fom.dt)
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""

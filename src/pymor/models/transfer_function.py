@@ -51,7 +51,10 @@ class TransferFunction(CacheableObject, ParametricObject):
 
     cache_region = 'memory'
 
-    def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, cont_time=True, name=None):
+    def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, dt=0, name=None):
+        assert isinstance(dt, (int, float)) and dt >= 0
+        dt = float(dt)
+
         self.parameters_own = parameters
         self.__auto_init(locals())
 
@@ -61,7 +64,8 @@ class TransferFunction(CacheableObject, ParametricObject):
             f'    class: {self.__class__.__name__}\n'
             f'    number of inputs:  {self.dim_input}\n'
             f'    number of outputs: {self.dim_output}\n'
-            f'    {"continuous" if self.cont_time else "discrete"}-time'
+            f'    {"continuous" if self.dt == 0 else "discrete"}-time\n'
+            f'{"" if self.dt == 0 else "    sampling-time:       " + "{0:.2e}".format(self.dt) + chr(10)}'
         )
 
     @cached
@@ -301,7 +305,7 @@ class TransferFunction(CacheableObject, ParametricObject):
             Quadrature info (returned if `return_norm_only` is `False` and `full_output` is `True`).
             See `scipy.integrate.quad` documentation for more details.
         """
-        if not self.cont_time:
+        if self.dt > 0:
             raise NotImplementedError
 
         import scipy.integrate as spint
@@ -350,7 +354,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
         if not isinstance(other, TransferFunction):
             other = other.transfer_function
-        assert self.cont_time == other.cont_time
+        assert self.dt == other.dt
         assert self.dim_input == other.dim_input
         assert self.dim_output == other.dim_output
 
@@ -369,7 +373,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
         if not isinstance(other, TransferFunction):
             other = other.transfer_function
-        assert self.cont_time == other.cont_time
+        assert self.dt == other.dt
         assert self.dim_input == other.dim_input
         assert self.dim_output == other.dim_output
 
@@ -388,7 +392,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
         if not isinstance(other, TransferFunction):
             other = other.transfer_function
-        assert self.cont_time == other.cont_time
+        assert self.dt == other.dt
         assert self.dim_input == other.dim_output
 
         tf = lambda s, mu=None: self.eval_tf(s, mu=mu) @ other.eval_tf(s, mu=mu)
@@ -402,7 +406,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
         if not isinstance(other, TransferFunction):
             other = other.transfer_function
-        assert self.cont_time == other.cont_time
+        assert self.dt == other.dt
         assert self.dim_output == other.dim_input
 
         tf = lambda s, mu=None: other.eval_tf(s, mu=mu) @ self.eval_tf(s, mu=mu)
@@ -434,14 +438,14 @@ class FactorizedTransferFunction(TransferFunction):
         (optional).
     parameters
         The |Parameters| of the transfer function.
-    cont_time
-        `True` if the system is continuous-time, otherwise `False`.
+    dt
+        `0` if the system is continuous-time, otherwise a positive number.
     name
         Name of the system.
     """
 
     def __init__(self, dim_input, dim_output, K, B, C, D, dK=None, dB=None, dC=None, dD=None,
-                 parameters={}, cont_time=True, name=None):
+                 parameters={}, dt=0, name=None):
         def tf(s, mu=None):
             if dim_input <= dim_output:
                 B_vec = B(s).as_range_array(mu=mu)
@@ -490,7 +494,7 @@ class FactorizedTransferFunction(TransferFunction):
                 return res
 
         super().__init__(dim_input, dim_output, tf, dtf=dtf, parameters=parameters,
-                         cont_time=cont_time, name=name)
+                         dt=dt, name=name)
         self.__auto_init(locals())
 
     def __add__(self, other):
@@ -498,7 +502,7 @@ class FactorizedTransferFunction(TransferFunction):
                 and not hasattr(other, 'transfer_function')):
             return NotImplemented
 
-        assert self.cont_time == other.cont_time
+        assert self.dt == other.dt
         assert self.dim_input == other.dim_input
         assert self.dim_output == other.dim_output
 
@@ -538,7 +542,7 @@ class FactorizedTransferFunction(TransferFunction):
                 and not hasattr(other, 'transfer_function')):
             return NotImplemented
 
-        assert self.cont_time == other.cont_time
+        assert self.dt == other.dt
         assert self.dim_input == other.dim_output
 
         if not type(other) is FactorizedTransferFunction:

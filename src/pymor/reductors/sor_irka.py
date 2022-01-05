@@ -88,7 +88,7 @@ class SORIRKAReductor(GenericIRKAReductor):
         rom
             Reduced-order |SecondOrderModel|.
         """
-        if not self.fom.cont_time:
+        if self.fom.dt > 0:
             raise NotImplementedError
 
         self._clear_lists()
