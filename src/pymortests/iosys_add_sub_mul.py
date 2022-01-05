@@ -18,13 +18,13 @@ type_list = [
 ]
 
 
-def get_model(name):
+def get_model(name, dt):
     if name == 'LTIModel':
         A = np.array([[-1]])
         B = np.array([[1]])
         C = np.array([[1]])
         D = np.array([[1]])
-        return LTIModel.from_matrices(A, B, C, D)
+        return LTIModel.from_matrices(A, B, C, D, dt=dt)
     elif name == 'SecondOrderModel':
         M = np.array([[1]])
         E = np.array([[1]])
@@ -32,7 +32,7 @@ def get_model(name):
         B = np.array([[1]])
         C = np.array([[1]])
         D = np.array([[1]])
-        return SecondOrderModel.from_matrices(M, E, K, B, C, D=D)
+        return SecondOrderModel.from_matrices(M, E, K, B, C, D=D, dt=dt)
     elif name == 'LinearDelayModel':
         A = NumpyMatrixOperator(np.array([[-1]]))
         Ad = NumpyMatrixOperator(np.array([[-0.1]]))
@@ -40,11 +40,11 @@ def get_model(name):
         C = NumpyMatrixOperator(np.array([[1]]))
         D = NumpyMatrixOperator(np.array([[1]]))
         tau = 1
-        return LinearDelayModel(A, (Ad,), (tau,), B, C, D)
+        return LinearDelayModel(A, (Ad,), (tau,), B, C, D, dt=dt)
     elif name == 'TransferFunction':
         H = lambda s: np.array([[1 / (s + 1)]])
         dH = lambda s: np.array([[-1 / (s + 1)**2]])
-        return TransferFunction(1, 1, H, dH)
+        return TransferFunction(1, 1, H, dH, dt=dt)
     elif name == 'FactorizedTransferFunction':
         K = lambda s: NumpyMatrixOperator(np.array([[s + 1]]))
         B = lambda s: NumpyMatrixOperator(np.array([[1]]))
@@ -54,7 +54,7 @@ def get_model(name):
         dB = lambda s: NumpyMatrixOperator(np.array([[0]]))
         dC = lambda s: NumpyMatrixOperator(np.array([[0]]))
         dD = lambda s: NumpyMatrixOperator(np.array([[0]]))
-        return FactorizedTransferFunction(1, 1, K, B, C, D, dK, dB, dC, dD)
+        return FactorizedTransferFunction(1, 1, K, B, C, D, dK, dB, dC, dD, dt=dt)
 
 
 def expected_return_type(m1, m2):
@@ -76,49 +76,52 @@ def get_tf(m):
     return m.transfer_function
 
 
-@pytest.mark.parametrize('m1', type_list)
-@pytest.mark.parametrize('m2', type_list)
-def test_add(m1, m2):
-    m1 = get_model(m1)
-    m2 = get_model(m2)
-    m = m1 + m2
-    assert type(m) is expected_return_type(m1, m2)
-    m1 = get_tf(m1)
-    m2 = get_tf(m2)
-    m = get_tf(m)
-    assert np.allclose(m.eval_tf(0), m1.eval_tf(0) + m2.eval_tf(0))
-    assert np.allclose(m.eval_dtf(0), m1.eval_dtf(0) + m2.eval_dtf(0))
-    assert np.allclose(m.eval_tf(1j), m1.eval_tf(1j) + m2.eval_tf(1j))
-    assert np.allclose(m.eval_dtf(1j), m1.eval_dtf(1j) + m2.eval_dtf(1j))
+@pytest.mark.parametrize('p1', type_list)
+@pytest.mark.parametrize('p2', type_list)
+def test_add(p1, p2):
+    for dt in [0, 1]:
+        m1 = get_model(p1, dt)
+        m2 = get_model(p2, dt)
+        m = m1 + m2
+        assert type(m) is expected_return_type(m1, m2)
+        m1 = get_tf(m1)
+        m2 = get_tf(m2)
+        m = get_tf(m)
+        assert np.allclose(m.eval_tf(0), m1.eval_tf(0) + m2.eval_tf(0))
+        assert np.allclose(m.eval_dtf(0), m1.eval_dtf(0) + m2.eval_dtf(0))
+        assert np.allclose(m.eval_tf(1j), m1.eval_tf(1j) + m2.eval_tf(1j))
+        assert np.allclose(m.eval_dtf(1j), m1.eval_dtf(1j) + m2.eval_dtf(1j))
 
 
-@pytest.mark.parametrize('m1', type_list)
-@pytest.mark.parametrize('m2', type_list)
-def test_sub(m1, m2):
-    m1 = get_model(m1)
-    m2 = get_model(m2)
-    m = m1 - m2
-    assert type(m) is expected_return_type(m1, m2)
-    m1 = get_tf(m1)
-    m2 = get_tf(m2)
-    m = get_tf(m)
-    assert np.allclose(m.eval_tf(0), m1.eval_tf(0) - m2.eval_tf(0))
-    assert np.allclose(m.eval_dtf(0), m1.eval_dtf(0) - m2.eval_dtf(0))
-    assert np.allclose(m.eval_tf(1j), m1.eval_tf(1j) - m2.eval_tf(1j))
-    assert np.allclose(m.eval_dtf(1j), m1.eval_dtf(1j) - m2.eval_dtf(1j))
+@pytest.mark.parametrize('p1', type_list)
+@pytest.mark.parametrize('p2', type_list)
+def test_sub(p1, p2):
+    for dt in [0, 1]:
+        m1 = get_model(p1, dt)
+        m2 = get_model(p2, dt)
+        m = m1 - m2
+        assert type(m) is expected_return_type(m1, m2)
+        m1 = get_tf(m1)
+        m2 = get_tf(m2)
+        m = get_tf(m)
+        assert np.allclose(m.eval_tf(0), m1.eval_tf(0) - m2.eval_tf(0))
+        assert np.allclose(m.eval_dtf(0), m1.eval_dtf(0) - m2.eval_dtf(0))
+        assert np.allclose(m.eval_tf(1j), m1.eval_tf(1j) - m2.eval_tf(1j))
+        assert np.allclose(m.eval_dtf(1j), m1.eval_dtf(1j) - m2.eval_dtf(1j))
 
 
-@pytest.mark.parametrize('m1', type_list)
-@pytest.mark.parametrize('m2', type_list)
-def test_mul(m1, m2):
-    m1 = get_model(m1)
-    m2 = get_model(m2)
-    m = m1 * m2
-    assert type(m) is expected_return_type(m1, m2)
-    m1 = get_tf(m1)
-    m2 = get_tf(m2)
-    m = get_tf(m)
-    assert np.allclose(m.eval_tf(0), m1.eval_tf(0) @ m2.eval_tf(0))
-    assert np.allclose(m.eval_dtf(0), m1.eval_dtf(0) @ m2.eval_tf(0) + m1.eval_tf(0) @ m2.eval_dtf(0))
-    assert np.allclose(m.eval_tf(1j), m1.eval_tf(1j) @ m2.eval_tf(1j))
-    assert np.allclose(m.eval_dtf(1j), m1.eval_dtf(1j) @ m2.eval_tf(1j) + m1.eval_tf(1j) @ m2.eval_dtf(1j))
+@pytest.mark.parametrize('p1', type_list)
+@pytest.mark.parametrize('p2', type_list)
+def test_mul(p1, p2):
+    for dt in [0, 1]:
+        m1 = get_model(p1, dt)
+        m2 = get_model(p2, dt)
+        m = m1 * m2
+        assert type(m) is expected_return_type(m1, m2)
+        m1 = get_tf(m1)
+        m2 = get_tf(m2)
+        m = get_tf(m)
+        assert np.allclose(m.eval_tf(0), m1.eval_tf(0) @ m2.eval_tf(0))
+        assert np.allclose(m.eval_dtf(0), m1.eval_dtf(0) @ m2.eval_tf(0) + m1.eval_tf(0) @ m2.eval_dtf(0))
+        assert np.allclose(m.eval_tf(1j), m1.eval_tf(1j) @ m2.eval_tf(1j))
+        assert np.allclose(m.eval_dtf(1j), m1.eval_dtf(1j) @ m2.eval_tf(1j) + m1.eval_tf(1j) @ m2.eval_dtf(1j))
