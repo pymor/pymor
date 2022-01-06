@@ -313,8 +313,8 @@ class InstationaryModel(Model):
 
     def _compute_solution(self, mu=None, **kwargs):
         return self.time_stepper.solve(
-                t0=0., t1=self.T, U0=self.initial_data, A=self.operator, F=self.rhs, M=self.mass, mu=mu,
-                return_iter=False, return_times=False)
+                initial_time=0., end_time=self.T, initial_data=self.initial_data, operator=self.operator, rhs=self.rhs,
+                mass=self.mass, mu=mu, return_iter=False, return_times=False)
 
     def to_lti(self):
         """Convert model to |LTIModel|.
