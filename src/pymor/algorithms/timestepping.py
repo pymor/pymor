@@ -542,18 +542,15 @@ class ExplicitRungeKuttaIterator(SingleStepTimeStepperIterator):
         c, A, b = self.stepper.butcher_tableau
         # compute stages
         s = len(c)
-        stages = U_n.space.empty(reserve=s)
+        stages = U_n.space.empty(reserve=s+1)
+        stages.append(U_n)
         for j in range(s):
             t_n_j = t_n + self.dt*c[j]
-            U_n_j = U_n.copy()
-            for l in range(j):
-                U_n_j.axpy(self.dt*A[j][l], stages[l])
+            U_n_j = stages.lincomb(np.hstack(([1], self.dt*A[j][:j])))
             U_n_j = self.f(t_n_j, U_n_j)
             stages.append(U_n_j, remove_from_other=True)
         # compute step
-        U_np1 = U_n.copy()
-        for j in range(s):
-            U_np1.axpy(self.dt*b[j], stages[j])
+        U_np1 = stages.lincomb(np.hstack(([1], self.dt*b)))
 
         return U_np1, t_n + self.dt
 
