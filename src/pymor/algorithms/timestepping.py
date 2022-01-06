@@ -9,11 +9,9 @@ on |Operators| and |VectorArrays|. In particular, the algorithms
 can also be used to turn an arbitrary stationary |Model| provided
 by an external library into an instationary |Model|.
 
-Currently, implementations of :func:`explicit_euler` and :func:`implicit_euler`
-time-stepping are provided, based on the :class:`ExplicitEulerTimeStepper` and
-:class:`ImplicitEulerTimeStepper` classes. These derive from :class:`TimeStepper`,
-which defines a common interface that has to be fulfilled by the time-steppers used
-by |InstationaryModel|.
+Currently, implementations of :class:`ExplicitEulerTimeStepper`, :class:`ImplicitEulerTimeStepper`
+and :class:`ExplicitRungeKuttaTimeStepper` are provided, deriving from the common
+:class:`TimeStepper` interface.
 """
 
 from numbers import Number
@@ -35,13 +33,13 @@ class TimeStepper(ImmutableObject):
     Algorithms implementing this interface solve time-dependent initial value problems
     of the form ::
 
-        M * d_t u + A(u, mu, t) = F(mu, t),
-                     u(mu, t_0) = u_0(mu).
+        M(mu) * d_t u + A(u, mu, t) = F(mu, t),
+                         u(mu, t_0) = u_0(mu).
 
-    Time-steppers used by |InstationaryModel| have to fulfill this interface. Time evolution can be
-    performed by calling :meth:`solve`.
+    Time evolution can be performed by calling :meth:`solve`.
 
-    Note that the actual work is done in an iterator derived from :class:`TimeStepperIterator`.
+    .. note::
+        The actual work is done in an iterator derived from :class:`TimeStepperIterator`.
 
     Parameters
     ----------
@@ -66,8 +64,8 @@ class TimeStepper(ImmutableObject):
     def solve(self, t0, t1, U0, A, F=None, M=None, mu=None, return_iter=False, return_times=False):
         """Apply time-stepper to the equation ::
 
-            M * d_t u + A(u, mu, t) = F(mu, t),
-                         u(mu, t_0) = u_0(mu).
+            M(mu) * d_t u + A(u, mu, t) = F(mu, t),
+                             u(mu, t_0) = u_0(mu).
 
         Parameters
         ----------
@@ -383,8 +381,8 @@ class ImplicitEulerTimeStepper(TimeStepper):
 
     Solves equations of the form ::
 
-        M * d_t u + A(u, mu, t) = F(mu, t),
-                     u(mu, t_0) = u_0(mu),
+        M(mu) * d_t u + A(u, mu, t) = F(mu, t),
+                         u(mu, t_0) = u_0(mu),
 
     by an implicit Euler time integration, implemented in :class:`ImplicitEulerIterator`.
 
@@ -471,8 +469,8 @@ class ExplicitEulerTimeStepper(TimeStepper):
 
     Solves equations of the form ::
 
-        M * d_t u + A(u, mu, t) = F(mu, t),
-                     u(mu, t_0) = u_0(mu),
+        M(mu) * d_t u + A(u, mu, t) = F(mu, t),
+                         u(mu, t_0) = u_0(mu),
 
     by an explicit Euler time integration, implemented in :class:`ExplicitEulerIterator`.
 
@@ -560,8 +558,8 @@ class ExplicitRungeKuttaTimeStepper(TimeStepper):
 
     Solves equations of the form ::
 
-        M * d_t u + A(u, mu, t) = F(mu, t).
-                     u(mu, t_0) = u_0(mu),
+        M(mu) * d_t u + A(u, mu, t) = F(mu, t).
+                         u(mu, t_0) = u_0(mu),
 
     by a Runge-Kutta method, implemented in :class:`ExplicitRungeKuttaIterator`.
 
