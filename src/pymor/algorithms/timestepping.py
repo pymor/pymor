@@ -142,7 +142,15 @@ class TimeStepperIterator(BasicObject):
         The associated :class:`TimeStepper`.
     """
 
-    def __init__(self, stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times):
+    def __init__(
+            self, stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times):
+        """
+        .. note::
+            The iterator keeps track of: self.t, always corresponding to the time instance of the last returned U;
+            self._last_stepped_point, always corresponding to the time instance of the last value actually computed by
+            _step (except after init, where it points to something not meaningful); self._next_interpolation_point,
+            always corresponding to the next point in time where a value needs to be returned.
+        """
         # check input
         assert isinstance(stepper, TimeStepper)
 
@@ -223,6 +231,8 @@ class TimeStepperIterator(BasicObject):
         assert floatcmp.almost_less(t_n, t)
         assert floatcmp.almost_less(t, t_np1)
         if self.stepper.interpolation == 'P0':
+            if not self.logging_disabled:
+                self.logger.debug(f't={self._next_interpolation_point}: -> (P0) returning U_n')
             # return previous value, old default in pyMOR
             return self.U_n.copy()
         elif self.stepper.interpolation == 'P1':
@@ -230,10 +240,16 @@ class TimeStepperIterator(BasicObject):
             U_n, U_np1 = self.U_n, self.U_np1
             # but return node values if t is close enough
             if floatcmp.float_cmp(t, t_n):
+                if not self.logging_disabled:
+                    self.logger.debug(f't={self._next_interpolation_point}: -> (P1) returning U_n')
                 return U_n
             elif floatcmp.float_cmp(t, t_np1):
+                if not self.logging_disabled:
+                    self.logger.debug(f't={self._next_interpolation_point}: -> (P1) returning U_np1')
                 return U_np1
             else:
+                if not self.logging_disabled:
+                    self.logger.debug(f't={self._next_interpolation_point}: -> (P1) computing intermediate value')
                 dt = t_np1 - t_n
                 return (t_np1 - t)/dt * U_n + (t - t_n)/dt * U_np1
         else:
@@ -256,8 +272,8 @@ class TimeStepperIterator(BasicObject):
             if self._last_stepped_point < self.initial_time:
                 # this is the start, take a step to have data and interpolation available next time,
                 # but return initial_data
-                _, self.t = self._step()
-                self._last_stepped_point = self.t
+                _, self._last_stepped_point = self._step()
+                self.t = self.initial_time
                 self._next_interpolation_point += self._interpolation_points_increment
                 if self.return_times:
                     return self.initial_data, self.initial_time
@@ -267,26 +283,26 @@ class TimeStepperIterator(BasicObject):
                 # we have enough data, simply interpolate
                 if not self.logging_disabled:
                     self.logger.debug(f't={self._next_interpolation_point}: interpolating ...')
-                t_next = self._next_interpolation_point
-                U_next = self._interpolate(t_next)
+                self.t = self._next_interpolation_point
+                U_next = self._interpolate(self.t)
                 self._next_interpolation_point += self._interpolation_points_increment
                 if self.return_times:
-                    return U_next, t_next
+                    return U_next, self.t
                 else:
                     return U_next
             else:
                 # we do not have enough data, take enough actual steps
-                while self.t < self._next_interpolation_point:
-                    _, self.t = self._step()
-                    self._last_stepped_point = self.t
+                while self._last_stepped_point < self._next_interpolation_point:
+                    _, self._last_stepped_point = self._step()
+                    # self._last_stepped_point = self.t
                 # compute the interpolation at the next requested point
                 if not self.logging_disabled:
                     self.logger.debug(f't={self._next_interpolation_point}: interpolating ...')
-                t_next = self._next_interpolation_point
-                U_next = self._interpolate(t_next)
+                self.t = self._next_interpolation_point
+                U_next = self._interpolate(self.t)
                 self._next_interpolation_point += self._interpolation_points_increment
                 if self.return_times:
-                    return U_next, t_next
+                    return U_next, self.t
                 else:
                     return U_next
         else:
