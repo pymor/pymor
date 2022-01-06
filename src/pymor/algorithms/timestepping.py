@@ -165,12 +165,12 @@ class TimeStepperIterator(BasicObject):
         assert isinstance(mass, Operator)
         assert operator.range == mass.range
 
-        if isinstance(initial_data, Operator):
-            assert initial_data.source.dim == 1
-            assert initial_data.range == operator.source
-        else:
-            assert initial_data in operator.source and len(initial_data) == 1
+        if isinstance(initial_data, VectorArray):
+            assert len(initial_data) == 1
             initial_data = VectorOperator(initial_data)
+        assert isinstance(initial_data, Operator)
+        assert initial_data.source.dim == 1
+        assert initial_data.range == A.source
 
         self.__auto_init(locals())
 
