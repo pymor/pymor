@@ -2,13 +2,15 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
 import pytest
 
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
-from pymor.analyticalproblems.domaindescriptions import RectDomain
+from pymor.analyticalproblems.domaindescriptions import CircleDomain, RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.functions import GenericFunction, ConstantFunction, LincombFunction
+from pymor.analyticalproblems.functions import GenericFunction, ConstantFunction, ExpressionFunction, LincombFunction
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
+from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.parameters.functionals import ExpressionParameterFunctional
 
@@ -39,6 +41,14 @@ burgers_problems = [
     burgers_problem(parameter_range=(1., 1.3)),
     burgers_problem_2d(),
     burgers_problem_2d(torus=False, initial_data_type='bump', parameter_range=(1.3, 1.5)),
+]
+
+
+linear_transport_problems = [
+    InstationaryProblem(
+        StationaryProblem(CircleDomain(), advection=ConstantFunction(dim_domain=1, value=np.array([1,]))),
+        ExpressionFunction(dim_domain=1, expression='1.*(0.1 <= x[0])*(x[0] <= 0.2)'),
+        T=1),
 ]
 
 
