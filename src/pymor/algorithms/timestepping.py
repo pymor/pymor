@@ -61,7 +61,8 @@ class TimeStepper(ImmutableObject):
         assert interpolation in self.available_interpolations
         self.__auto_init(locals())
 
-    def solve(self, t0, t1, U0, A, F=None, M=None, mu=None, return_iter=False, return_times=False):
+    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None,
+              return_iter=False, return_times=False):
         """Apply time-stepper to the equation ::
 
             M(mu) * d_t u + A(u, mu, t) = F(mu, t),
@@ -69,18 +70,18 @@ class TimeStepper(ImmutableObject):
 
         Parameters
         ----------
-        t0
+        initial_time
             The time at which to begin time-stepping.
-        t1
+        end_time
             The time until which to perform time-stepping.
-        U0
-            The solution vector at `t0`.
-        A
+        initial_data
+            The solution vector at `initial_time`.
+        operator
             The |Operator| A.
-        F
+        rhs
             The right-hand side F (either |VectorArray| of length 1 or |Operator| with
             `source.dim == 1`). If `None`, zero right-hand side is assumed.
-        M
+        mass
             The |Operator| M. If `None`, the identity operator is assumed.
         mu
             |Parameter values| for which `operator` and `rhs` are evaluated. The current
@@ -104,19 +105,19 @@ class TimeStepper(ImmutableObject):
         """
 
         # all checks are delegated to TimeStepperIterator
-        iterator = self.IteratorType(
-            self, t0, t1, U0, A, F=F, M=M, mu=mu, return_iter=return_iter, return_times=return_times)
+        iterator = self.IteratorType(self, initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass, mu=mu,
+                                     return_iter=return_iter, return_times=return_times)
         if return_iter:
             return iterator
         elif return_times:
-            U = A.source.empty(reserve=self.num_values or 0)
+            U = operator.source.empty(reserve=self.num_values or 0)
             t = []
             for U_n, t_n in iterator:
                 U.append(U_n, remove_from_other=True)
                 t.append(t_n)
             return U, t
         else:
-            U = A.source.empty(reserve=self.num_values or 0)
+            U = operator.source.empty(reserve=self.num_values or 0)
             for U_n in iterator:
                 U.append(U_n)
             return U
@@ -139,49 +140,49 @@ class TimeStepperIterator(BasicObject):
         The associated :class:`TimeStepper`.
     """
 
-    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times):
+    def __init__(self, stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times):
         # check input
         assert isinstance(stepper, TimeStepper)
 
-        assert isinstance(t0, Number)
-        assert isinstance(t1, Number)
-        assert t1 > t0
+        assert isinstance(initial_time, Number)
+        assert isinstance(end_time, Number)
+        assert end_time > initial_time
 
-        assert isinstance(A, Operator)
+        assert isinstance(operator, Operator)
 
-        F = F if F is not None else ZeroOperator(A.source, NumpyVectorSpace(1))
-        assert isinstance(F, (Operator, VectorArray))
-        if isinstance(F, Operator):
-            assert F.source.dim == 1
-            assert F.range == A.range
+        rhs = rhs if rhs is not None else ZeroOperator(operator.source, NumpyVectorSpace(1))
+        assert isinstance(rhs, (Operator, VectorArray))
+        if isinstance(rhs, Operator):
+            assert rhs.source.dim == 1
+            assert rhs.range == operator.range
         else:
-            assert F in A.range
-            assert len(F) == 1
-            F = VectorArrayOperator(F)
-        assert A.range == F.range
+            assert rhs in operator.range
+            assert len(rhs) == 1
+            rhs = VectorArrayOperator(rhs)
+        assert operator.range == rhs.range
 
-        M = M or IdentityOperator(A.source)
-        assert isinstance(M, Operator)
-        assert A.range == M.range
+        mass = mass if mass is not None else IdentityOperator(operator.source)
+        assert isinstance(mass, Operator)
+        assert operator.range == mass.range
 
-        if isinstance(U0, Operator):
-            assert U0.source.dim == 1
-            assert U0.range == A.source
+        if isinstance(initial_data, Operator):
+            assert initial_data.source.dim == 1
+            assert initial_data.range == operator.source
         else:
-            assert U0 in A.source and len(U0) == 1
-            U0 = VectorOperator(U0)
+            assert initial_data in operator.source and len(initial_data) == 1
+            initial_data = VectorOperator(initial_data)
 
         self.__auto_init(locals())
 
-        self.t = t0
+        self.t = initial_time
         self.mu = mu or Mu()
-        self.U0 = U0.as_vector(self.mu.with_(t=t0))
+        self.initial_data = initial_data.as_vector(self.mu.with_(t=initial_time))
 
         # prepare interpolation
         if stepper.num_values:
-            self._interpolation_points_increment = (t1 - t0) / (stepper.num_values - 1)
-            self._last_stepped_point = t0 - 1
-            self._next_interpolation_point = t0
+            self._interpolation_points_increment = (end_time - initial_time) / (stepper.num_values - 1)
+            self._last_stepped_point = initial_time - 1
+            self._next_interpolation_point = initial_time
 
     @abstractmethod
     def _step(self):
@@ -248,21 +249,21 @@ class TimeStepperIterator(BasicObject):
         `num_values` is not provided, performs a single step (by calling :meth:`_step`) starting
         from t_n, to compute (U(t_{n + 1}), t_{n + 1}).
         """
-        if floatcmp.almost_less(self.t1, self.t):
+        if floatcmp.almost_less(self.end_time, self.t):
             # this is the end
             raise StopIteration
         elif self.stepper.num_values:
             # an interpolation of the trajectory is requested
-            if self._last_stepped_point < self.t0:
+            if self._last_stepped_point < self.initial_time:
                 # this is the start, take a step to have data and interpolation available next time,
-                # but return U0
+                # but return initial_data
                 _, self.t = self._step()
                 self._last_stepped_point = self.t
                 self._next_interpolation_point += self._interpolation_points_increment
                 if self.return_times:
-                    return self.U0, self.t0
+                    return self.initial_data, self.initial_time
                 else:
-                    return self.U0
+                    return self.initial_data
             elif self._last_stepped_point > self._next_interpolation_point:
                 # we have enough data, simply interpolate
                 if not self.logging_disabled:
@@ -321,10 +322,10 @@ class SingleStepTimeStepperIterator(TimeStepperIterator):
         if not hasattr(self, 'U_n'):
             if not self.logging_disabled:
                 self.logger.debug(f't={self.t}: returning initial data (mu={self.mu}) ...')
-            self.t_n = self.t0   # setting these just in case ...
-            self.U_n = self.U0   # ... for _interpolate
-            self.t_np1 = self.t0
-            self.U_np1 = self.U0.copy()
+            self.t_n = self.initial_time   # setting these just in case ...
+            self.U_n = self.initial_data   # ... for _interpolate
+            self.t_np1 = self.initial_time
+            self.U_np1 = self.initial_data.copy()
             return self.U_np1, self.t_np1
         else:
             # this is the first actual step or a usual step
@@ -338,11 +339,11 @@ class SingleStepTimeStepperIterator(TimeStepperIterator):
 
 class ImplicitEulerIterator(SingleStepTimeStepperIterator):
 
-    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times):
-        super().__init__(stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times)
-        self.dt = dt = (t1 - t0) / stepper.nt
+    def __init__(self, stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times):
+        super().__init__(stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times)
+        self.dt = dt = (end_time - initial_time) / stepper.nt
         # use the ones from base, these are checked and converted in super().__init__()
-        A, F, M, mu = self.A, self.F, self.M, self.mu
+        A, F, M, mu = self.operator, self.rhs, self.mass, self.mu
 
         # prepare the step function U_np1 = (M + dt A)^{-1}(M U_n + dt F)
         M_dt_A = (M + A * dt).with_(
@@ -416,11 +417,11 @@ class ImplicitEulerTimeStepper(TimeStepper):
 
 class ExplicitEulerIterator(SingleStepTimeStepperIterator):
 
-    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times):
-        super().__init__(stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times)
-        self.dt = dt = (t1 - t0) / stepper.nt
+    def __init__(self, stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times):
+        super().__init__(stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times)
+        self.dt = dt = (end_time - initial_time) / stepper.nt
         # use the ones from base, these are checked and converted in super().__init__()
-        A, F, M, mu = self.A, self.F, self.M, self.mu
+        A, F, M, mu = self.operator, self.rhs, self.mass, self.mu
 
         # prepare the step function U_np1 = M^{-1}(M U_n + dt F - dt A U_n)
         if not _depends_on_time(M, mu):
@@ -501,11 +502,11 @@ class ExplicitEulerTimeStepper(TimeStepper):
 
 class ExplicitRungeKuttaIterator(SingleStepTimeStepperIterator):
 
-    def __init__(self, stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times):
-        super().__init__(stepper, t0, t1, U0, A, F, M, mu, return_iter, return_times)
-        self.dt = (t1 - t0) / stepper.nt
+    def __init__(self, stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times):
+        super().__init__(stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times)
+        self.dt = (end_time - initial_time) / stepper.nt
         # use the ones from base, these are checked and converted in super().__init__()
-        A, F, M, mu = self.A, self.F, self.M, self.mu
+        A, F, M, mu = self.operator, self.rhs, self.mass, self.mu
 
         # prepare the function f in d_t y = f(t, y)
         if not _depends_on_time(M, mu):
