@@ -113,13 +113,13 @@ class TimeStepper(ImmutableObject):
             U = operator.source.empty(reserve=self.num_values or 0)
             t = []
             for U_n, t_n in iterator:
-                U.append(U_n, remove_from_other=True)
+                U.append(U_n, remove_from_other=False)  # True yields len(U) == 1
                 t.append(t_n)
             return U, t
         else:
             U = operator.source.empty(reserve=self.num_values or 0)
             for U_n in iterator:
-                U.append(U_n)
+                U.append(U_n, remove_from_other=False)  # True yields len(U) == 1
             return U
 
 
