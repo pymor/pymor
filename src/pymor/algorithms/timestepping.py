@@ -14,7 +14,7 @@ and :class:`ExplicitRungeKuttaTimeStepper` are provided, deriving from the commo
 :class:`TimeStepper` interface.
 """
 
-from numbers import Number, Integral
+from numbers import Number
 import numpy as np
 
 from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
@@ -57,7 +57,9 @@ class TimeStepper(ImmutableObject):
     available_interpolations = ('P0', 'P1')
 
     def __init__(self, num_values=None, interpolation='P1'):
-        assert not num_values or (isinstance(num_values, Integral) and num_values > 1)
+        if num_values:
+            assert (isinstance(num_values, Number) and num_values > 1 and int(num_values) == num_values)
+            num_values = int(num_values)
         assert interpolation in self.available_interpolations
         self.__auto_init(locals())
 
