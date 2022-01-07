@@ -146,10 +146,11 @@ class TimeStepperIterator(BasicObject):
             self, stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times):
         """
         .. note::
-            The iterator keeps track of: self.t, always corresponding to the time instance of the last returned U;
-            self._last_stepped_point, always corresponding to the time instance of the last value actually computed by
-            _step (except after init, where it points to something not meaningful); self._next_interpolation_point,
-            always corresponding to the next point in time where a value needs to be returned.
+            The iterator keeps track of: self.t, always corresponding to the time instance of the
+            last returned U; self._last_stepped_point, always corresponding to the time instance of
+            the last value actually computed by _step (except after init, where it points to
+            something not meaningful); self._next_interpolation_point, always corresponding to the
+            next point in time where a value needs to be returned.
         """
         # check input
         assert isinstance(stepper, TimeStepper)
@@ -340,8 +341,10 @@ class SingleStepTimeStepperIterator(TimeStepperIterator):
 
 class ImplicitEulerIterator(SingleStepTimeStepperIterator):
 
-    def __init__(self, stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times):
-        super().__init__(stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times)
+    def __init__(
+            self, stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times):
+        super().__init__(
+                stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times)
         self.dt = dt = (end_time - initial_time) / stepper.nt
         # use the ones from base, these are checked and converted in super().__init__()
         A, F, M, mu = self.operator, self.rhs, self.mass, self.mu
@@ -418,8 +421,10 @@ class ImplicitEulerTimeStepper(TimeStepper):
 
 class ExplicitEulerIterator(SingleStepTimeStepperIterator):
 
-    def __init__(self, stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times):
-        super().__init__(stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times)
+    def __init__(
+            self, stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times):
+        super().__init__(
+                stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times)
         self.dt = dt = (end_time - initial_time) / stepper.nt
         # use the ones from base, these are checked and converted in super().__init__()
         A, F, M, mu = self.operator, self.rhs, self.mass, self.mu
@@ -503,8 +508,10 @@ class ExplicitEulerTimeStepper(TimeStepper):
 
 class ExplicitRungeKuttaIterator(SingleStepTimeStepperIterator):
 
-    def __init__(self, stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times):
-        super().__init__(stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times)
+    def __init__(
+            self, stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times):
+        super().__init__(
+                stepper, initial_time, end_time, initial_data, operator, rhs, mass, mu, return_iter, return_times)
         self.dt = (end_time - initial_time) / stepper.nt
         # use the ones from base, these are checked and converted in super().__init__()
         A, F, M, mu = self.operator, self.rhs, self.mass, self.mu
