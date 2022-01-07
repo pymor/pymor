@@ -196,10 +196,6 @@ class TimeStepperIterator(BasicObject):
     def _step(self):
         """Called in :meth:`_interpolated_step` to compute the next step of the time evolution.
 
-        The iterator is assumed to be in the n-th time-step, `self.t == t_n`, the current state of
-        the solution is often available as `self.U_n` (depending on the interpolation and the choice
-        of the implementor).
-
         Returns
         -------
         U_np1
@@ -280,19 +276,8 @@ class TimeStepperIterator(BasicObject):
                     return self.initial_data, self.initial_time
                 else:
                     return self.initial_data
-            elif self._last_stepped_point > self._next_interpolation_point:
-                # we have enough data, simply interpolate
-                if not self.logging_disabled:
-                    self.logger.debug(f't={self._next_interpolation_point}: interpolating ...')
-                self.t = self._next_interpolation_point
-                U_next = self._interpolate(self.t)
-                self._next_interpolation_point += self._interpolation_points_increment
-                if self.return_times:
-                    return U_next, self.t
-                else:
-                    return U_next
             else:
-                # we do not have enough data, take enough actual steps
+                # if we do not have enough data, take enough actual steps
                 while self._last_stepped_point < self._next_interpolation_point:
                     _, self._last_stepped_point = self._step()
                     # self._last_stepped_point = self.t
@@ -625,7 +610,7 @@ class ExplicitRungeKuttaTimeStepper(TimeStepper):
         assert isinstance(method, (tuple, str))
         if isinstance(method, str):
             assert method in self.available_RK_methods.keys()
-            self.butcher_tableau = (self.available_RK_methods[method])
+            self.butcher_tableau = self.available_RK_methods[method]
         else:
             raise RuntimeError('Arbitrary butcher arrays not implemented yet!')
 
