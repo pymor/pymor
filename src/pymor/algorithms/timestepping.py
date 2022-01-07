@@ -67,8 +67,8 @@ class TimeStepper(ImmutableObject):
               return_iter=False, return_times=False):
         """Apply time-stepper to the equation ::
 
-            M(mu) * d_t u + A(u, mu, t) = F(mu, t),
-                             u(mu, t_0) = u_0(mu).
+            M(mu, t) * d_t u + A(u, mu, t) = F(mu, t),
+                                u(mu, t_0) = u_0(mu).
 
         Parameters
         ----------
@@ -383,8 +383,8 @@ class ImplicitEulerTimeStepper(TimeStepper):
 
     Solves equations of the form ::
 
-        M(mu) * d_t u + A(u, mu, t) = F(mu, t),
-                         u(mu, t_0) = u_0(mu),
+        M(mu, t) * d_t u + A(u, mu, t) = F(mu, t),
+                            u(mu, t_0) = u_0(mu),
 
     by an implicit Euler time integration, implemented in :class:`ImplicitEulerIterator`.
 
@@ -471,8 +471,8 @@ class ExplicitEulerTimeStepper(TimeStepper):
 
     Solves equations of the form ::
 
-        M(mu) * d_t u + A(u, mu, t) = F(mu, t),
-                         u(mu, t_0) = u_0(mu),
+        M(mu, t) * d_t u + A(u, mu, t) = F(mu, t),
+                            u(mu, t_0) = u_0(mu),
 
     by an explicit Euler time integration, implemented in :class:`ExplicitEulerIterator`.
 
@@ -560,8 +560,8 @@ class ExplicitRungeKuttaTimeStepper(TimeStepper):
 
     Solves equations of the form ::
 
-        M(mu) * d_t u + A(u, mu, t) = F(mu, t).
-                         u(mu, t_0) = u_0(mu),
+        M(mu, t) * d_t u + A(u, mu, t) = F(mu, t).
+                            u(mu, t_0) = u_0(mu),
 
     by a Runge-Kutta method, implemented in :class:`ExplicitRungeKuttaIterator`.
 
