@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
-from pymor.analyticalproblems.domaindescriptions import CircleDomain, RectDomain
+from pymor.analyticalproblems.domaindescriptions import CircleDomain, LineDomain, RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import GenericFunction, ConstantFunction, ExpressionFunction, LincombFunction
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
@@ -47,7 +47,7 @@ burgers_problems = [
 linear_transport_problems = [
     InstationaryProblem(
         StationaryProblem(CircleDomain(), advection=ConstantFunction(dim_domain=1, value=np.array([1,]))),
-        ExpressionFunction(dim_domain=1, expression='1.*(0.1 <= x[0])*(x[0] <= 0.2)'),
+        initial_data=ExpressionFunction(dim_domain=1, expression='1.*(0.1 <= x[0])*(x[0] <= 0.2)'),
         T=1),
 ]
 
@@ -76,6 +76,18 @@ non_picklable_elliptic_problems = [
 
 
 elliptic_problems = picklable_thermalblock_problems + non_picklable_elliptic_problems
+
+
+pickable_parabolic_problems = [
+    InstationaryProblem(
+        StationaryProblem(
+            LineDomain(), diffusion=ConstantFunction(1, dim_domain=1), rhs=ConstantFunction(1, dim_domain=1)),
+        initial_data=ConstantFunction(0, dim_domain=1),
+        T=10),
+]
+
+
+parabolic_problems = pickable_parabolic_problems
 
 
 @pytest.fixture(params=elliptic_problems + thermalblock_problems + burgers_problems)
