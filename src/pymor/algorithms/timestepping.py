@@ -170,6 +170,7 @@ class TimeStepperIterator(BasicObject):
 
         mass = mass if mass is not None else IdentityOperator(operator.source)
         assert isinstance(mass, Operator)
+        assert mass.linear
         assert operator.range == mass.range
 
         if isinstance(initial_data, VectorArray):
