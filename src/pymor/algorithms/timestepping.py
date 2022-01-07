@@ -631,17 +631,3 @@ def _depends_on_time(obj, mu):
     if not mu:
         return False
     return 't' in obj.parameters or any(mu.is_time_dependent(k) for k in obj.parameters)
-
-
-@Deprecated('Will be removed after the 2021.2 release, use ImplicitEulerTimeStepper directly.')
-def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_options='operator'):
-    time_stepper = ImplicitEulerTimeStepper(nt=nt, initial_time=t0, end_time=t1, num_values=num_values,
-                                            solver_options=solver_options, interpolation_order=0)
-    return time_stepper.solve(mu=mu)
-
-
-@Deprecated('Will be removed after the 2021.2 release, use ExplicitEulerTimeStepper directly.')
-def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
-    time_stepper = ExplicitEulerTimeStepper(
-        nt=nt, initial_time=t0, end_time=t1, num_values=num_values, interpolation_order=0)
-    return time_stepper.solve(mu=mu)
