@@ -14,7 +14,6 @@ from hypothesis import given
 
 from pymor.core.config import config
 from pymor.core.logger import getLogger
-from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.tools import formatsrc, timing
 from pymor.tools.deprecated import Deprecated
@@ -125,6 +124,7 @@ def test_almost_less():
 @pytest.mark.skipif(not config.HAVE_VTKIO, reason='VTKIO support libraries missing')
 @given(hy_rect_or_tria_grid)
 def test_vtkio(grid):
+    from pymor.discretizers.builtin.grids.vtkio import write_vtk
     steps = 4
     for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.ones((steps, grid.size(c))))
                                   for c in range(grid.dim+1))):

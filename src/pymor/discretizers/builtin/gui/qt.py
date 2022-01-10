@@ -25,7 +25,6 @@ from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.core.pickle import dump
-from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -433,6 +432,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 msg = QMessageBox(QMessageBox.Critical, 'Error', 'VTK output disabled. Please install pyvtk.')
                 msg.exec_()
                 return
+            from pymor.discretizers.builtin.grids.vtkio import write_vtk
             filename = QFileDialog.getSaveFileName(self, 'Save as vtk file')[0]
             base_name = filename.split('.vtu')[0].split('.vtk')[0].split('.pvd')[0]
             if base_name:
