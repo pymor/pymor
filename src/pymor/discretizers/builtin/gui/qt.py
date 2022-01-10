@@ -8,6 +8,8 @@ This module provides a few methods and classes for visualizing data
 associated to grids. We use the `Qt <http://www.qt-project.org>`_ widget
 toolkit for the GUI.
 """
+from pymor.core.config import require_dependency
+require_dependency('QT')
 
 import math as m
 from tempfile import NamedTemporaryFile
@@ -15,11 +17,13 @@ import subprocess
 import sys
 
 import numpy as np
+from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QLCDNumber,
+                            QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
+from qtpy.QtCore import Qt, QTimer
 
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
-from pymor.core.exceptions import QtMissing
 from pymor.core.pickle import dump
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
@@ -86,174 +90,169 @@ def _launch_qt_app(main_window_factory, block):
         _qt_windows.add(main_window)  # need to keep ref to keep window alive
 
 
-if config.HAVE_QT:
-    from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QLCDNumber,
-                                QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
-    from qtpy.QtCore import Qt, QTimer
+class PlotMainWindow(QWidget):
+    """Base class for plot main windows."""
 
-    class PlotMainWindow(QWidget):
-        """Base class for plot main windows."""
+    def __init__(self, U, plot, length=1, title=None):
+        super().__init__()
 
-        def __init__(self, U, plot, length=1, title=None):
-            super().__init__()
+        layout = QVBoxLayout()
 
-            layout = QVBoxLayout()
+        if title:
+            title = QLabel('<b>' + title + '</b>')
+            title.setAlignment(Qt.AlignHCenter)
+            layout.addWidget(title)
+        layout.addWidget(plot)
 
-            if title:
-                title = QLabel('<b>' + title + '</b>')
-                title.setAlignment(Qt.AlignHCenter)
-                layout.addWidget(title)
-            layout.addWidget(plot)
+        plot.set(U, 0)
+        self.plot = plot
 
-            plot.set(U, 0)
-            self.plot = plot
+        if length > 1:
+            hlayout = QHBoxLayout()
 
-            if length > 1:
-                hlayout = QHBoxLayout()
+            self.slider = QSlider(Qt.Horizontal)
+            self.slider.setMinimum(0)
+            self.slider.setMaximum(length - 1)
+            self.slider.setTickPosition(QSlider.TicksBelow)
+            hlayout.addWidget(self.slider)
 
-                self.slider = QSlider(Qt.Horizontal)
-                self.slider.setMinimum(0)
-                self.slider.setMaximum(length - 1)
-                self.slider.setTickPosition(QSlider.TicksBelow)
-                hlayout.addWidget(self.slider)
+            lcd = QLCDNumber(m.ceil(m.log10(length)))
+            lcd.setDecMode()
+            lcd.setSegmentStyle(QLCDNumber.Flat)
+            hlayout.addWidget(lcd)
 
-                lcd = QLCDNumber(m.ceil(m.log10(length)))
-                lcd.setDecMode()
-                lcd.setSegmentStyle(QLCDNumber.Flat)
-                hlayout.addWidget(lcd)
+            layout.addLayout(hlayout)
 
-                layout.addLayout(hlayout)
+            hlayout = QHBoxLayout()
 
-                hlayout = QHBoxLayout()
-
-                toolbar = QToolBar()
-                self.a_play = QAction(self.style().standardIcon(QStyle.SP_MediaPlay), 'Play', self)
-                self.a_play.setCheckable(True)
-                self.a_rewind = QAction(self.style().standardIcon(QStyle.SP_MediaSeekBackward), 'Rewind', self)
-                self.a_toend = QAction(self.style().standardIcon(QStyle.SP_MediaSeekForward), 'End', self)
-                self.a_step_backward = QAction(self.style().standardIcon(QStyle.SP_MediaSkipBackward),
-                                               'Step Back', self)
-                self.a_step_forward = QAction(self.style().standardIcon(QStyle.SP_MediaSkipForward), 'Step', self)
-                self.a_loop = QAction(self.style().standardIcon(QStyle.SP_BrowserReload), 'Loop', self)
-                self.a_loop.setCheckable(True)
-                toolbar.addAction(self.a_play)
-                toolbar.addAction(self.a_rewind)
-                toolbar.addAction(self.a_toend)
-                toolbar.addAction(self.a_step_backward)
-                toolbar.addAction(self.a_step_forward)
-                toolbar.addAction(self.a_loop)
-                if hasattr(self, 'save'):
-                    self.a_save = QAction(self.style().standardIcon(QStyle.SP_DialogSaveButton), 'Save', self)
-                    toolbar.addAction(self.a_save)
-                    self.a_save.triggered.connect(self.save)
-                hlayout.addWidget(toolbar)
-
-                self.speed = QSlider(Qt.Horizontal)
-                self.speed.setMinimum(0)
-                self.speed.setMaximum(100)
-                hlayout.addWidget(QLabel('Speed:'))
-                hlayout.addWidget(self.speed)
-
-                layout.addLayout(hlayout)
-
-                self.timer = QTimer()
-                self.timer.timeout.connect(self.update_solution)
-
-                self.slider.valueChanged.connect(self.slider_changed)
-                self.slider.valueChanged.connect(lcd.display)
-                self.speed.valueChanged.connect(self.speed_changed)
-                self.a_play.toggled.connect(self.toggle_play)
-                self.a_rewind.triggered.connect(self.rewind)
-                self.a_toend.triggered.connect(self.to_end)
-                self.a_step_forward.triggered.connect(self.step_forward)
-                self.a_step_backward.triggered.connect(self.step_backward)
-
-                self.speed.setValue(50)
-
-            elif hasattr(self, 'save'):
-                hlayout = QHBoxLayout()
-                toolbar = QToolBar()
+            toolbar = QToolBar()
+            self.a_play = QAction(self.style().standardIcon(QStyle.SP_MediaPlay), 'Play', self)
+            self.a_play.setCheckable(True)
+            self.a_rewind = QAction(self.style().standardIcon(QStyle.SP_MediaSeekBackward), 'Rewind', self)
+            self.a_toend = QAction(self.style().standardIcon(QStyle.SP_MediaSeekForward), 'End', self)
+            self.a_step_backward = QAction(self.style().standardIcon(QStyle.SP_MediaSkipBackward),
+                                           'Step Back', self)
+            self.a_step_forward = QAction(self.style().standardIcon(QStyle.SP_MediaSkipForward), 'Step', self)
+            self.a_loop = QAction(self.style().standardIcon(QStyle.SP_BrowserReload), 'Loop', self)
+            self.a_loop.setCheckable(True)
+            toolbar.addAction(self.a_play)
+            toolbar.addAction(self.a_rewind)
+            toolbar.addAction(self.a_toend)
+            toolbar.addAction(self.a_step_backward)
+            toolbar.addAction(self.a_step_forward)
+            toolbar.addAction(self.a_loop)
+            if hasattr(self, 'save'):
                 self.a_save = QAction(self.style().standardIcon(QStyle.SP_DialogSaveButton), 'Save', self)
                 toolbar.addAction(self.a_save)
-                hlayout.addWidget(toolbar)
-                layout.addLayout(hlayout)
                 self.a_save.triggered.connect(self.save)
+            hlayout.addWidget(toolbar)
 
-            self.setLayout(layout)
-            self.plot = plot
-            self.U = U
-            self.length = length
+            self.speed = QSlider(Qt.Horizontal)
+            self.speed.setMinimum(0)
+            self.speed.setMaximum(100)
+            hlayout.addWidget(QLabel('Speed:'))
+            hlayout.addWidget(self.speed)
 
-        def slider_changed(self, ind):
-            self.plot.set(self.U, ind)
+            layout.addLayout(hlayout)
 
-        def speed_changed(self, val):
-            self.timer.setInterval(val * 20)
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.update_solution)
 
-        def update_solution(self):
-            ind = self.slider.value() + 1
-            if ind >= self.length:
-                if self.a_loop.isChecked():
-                    ind = 0
-                else:
-                    self.a_play.setChecked(False)
-                    return
+            self.slider.valueChanged.connect(self.slider_changed)
+            self.slider.valueChanged.connect(lcd.display)
+            self.speed.valueChanged.connect(self.speed_changed)
+            self.a_play.toggled.connect(self.toggle_play)
+            self.a_rewind.triggered.connect(self.rewind)
+            self.a_toend.triggered.connect(self.to_end)
+            self.a_step_forward.triggered.connect(self.step_forward)
+            self.a_step_backward.triggered.connect(self.step_backward)
+
+            self.speed.setValue(50)
+
+        elif hasattr(self, 'save'):
+            hlayout = QHBoxLayout()
+            toolbar = QToolBar()
+            self.a_save = QAction(self.style().standardIcon(QStyle.SP_DialogSaveButton), 'Save', self)
+            toolbar.addAction(self.a_save)
+            hlayout.addWidget(toolbar)
+            layout.addLayout(hlayout)
+            self.a_save.triggered.connect(self.save)
+
+        self.setLayout(layout)
+        self.plot = plot
+        self.U = U
+        self.length = length
+
+    def slider_changed(self, ind):
+        self.plot.set(self.U, ind)
+
+    def speed_changed(self, val):
+        self.timer.setInterval(val * 20)
+
+    def update_solution(self):
+        ind = self.slider.value() + 1
+        if ind >= self.length:
+            if self.a_loop.isChecked():
+                ind = 0
+            else:
+                self.a_play.setChecked(False)
+                return
+        self.slider.setValue(ind)
+
+    def toggle_play(self, checked):
+        if checked:
+            if self.slider.value() + 1 == self.length:
+                self.slider.setValue(0)
+            self.timer.start()
+        else:
+            self.timer.stop()
+
+    def rewind(self):
+        self.slider.setValue(0)
+
+    def to_end(self):
+        self.a_play.setChecked(False)
+        self.slider.setValue(self.length - 1)
+
+    def step_forward(self):
+        self.a_play.setChecked(False)
+        ind = self.slider.value() + 1
+        if ind == self.length and self.a_loop.isChecked():
+            ind = 0
+        if ind < self.length:
             self.slider.setValue(ind)
 
-        def toggle_play(self, checked):
-            if checked:
-                if self.slider.value() + 1 == self.length:
-                    self.slider.setValue(0)
-                self.timer.start()
-            else:
-                self.timer.stop()
+    def step_backward(self):
+        self.a_play.setChecked(False)
+        ind = self.slider.value() - 1
+        if ind == -1 and self.a_loop.isChecked():
+            ind = self.length - 1
+        if ind >= 0:
+            self.slider.setValue(ind)
 
-        def rewind(self):
-            self.slider.setValue(0)
+    def closeEvent(self, event=None):
+        """This is directly called from CI
 
-        def to_end(self):
-            self.a_play.setChecked(False)
-            self.slider.setValue(self.length - 1)
+        Xvfb (sometimes) raises errors on interpreter shutdown
+        when there are still 'live' MPL plot objects. This
+        happens even if the referencing MainWindow was already destroyed
+        """
+        try:
+            self.plot.p.close()
+        except Exception:
+            pass
+        try:
+            del self.plot.p
+        except Exception:
+            pass
 
-        def step_forward(self):
-            self.a_play.setChecked(False)
-            ind = self.slider.value() + 1
-            if ind == self.length and self.a_loop.isChecked():
-                ind = 0
-            if ind < self.length:
-                self.slider.setValue(ind)
-
-        def step_backward(self):
-            self.a_play.setChecked(False)
-            ind = self.slider.value() - 1
-            if ind == -1 and self.a_loop.isChecked():
-                ind = self.length - 1
-            if ind >= 0:
-                self.slider.setValue(ind)
-
-        def closeEvent(self, event=None):
-            """This is directly called from CI
-
-            Xvfb (sometimes) raises errors on interpreter shutdown
-            when there are still 'live' MPL plot objects. This
-            happens even if the referencing MainWindow was already destroyed
-            """
-            try:
-                self.plot.p.close()
-            except Exception:
-                pass
-            try:
-                del self.plot.p
-            except Exception:
-                pass
-
-            try:
-                self.deleteLater()
-                _qt_windows.remove(self)
-            except KeyError:
-                pass  # we should be in blocking mode ...
-            if event is not None:
-                event.accept()
+        try:
+            self.deleteLater()
+            _qt_windows.remove(self)
+        except KeyError:
+            pass  # we should be in blocking mode ...
+        if event is not None:
+            event.accept()
 
 
 _qt_app = None
@@ -297,9 +296,6 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         The number of columns in the visualizer GUI in case multiple plots are displayed
         at the same time.
     """
-    if not config.HAVE_QT:
-        raise QtMissing()
-
     assert backend in {'gl', 'matplotlib'}
 
     if not block:
@@ -480,8 +476,6 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     block
         If `True`, block execution until the plot window is closed.
     """
-    if not config.HAVE_QT:
-        raise QtMissing()
     if not config.HAVE_MATPLOTLIB:
         raise ImportError('cannot visualize: import of matplotlib failed')
 
