@@ -2,23 +2,24 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.core.config import require_dependency
+require_dependency('IPYTHON')
+
+
 from itertools import chain
 import os
 import time
 
-
 from pymor.core.base import BasicObject
-from pymor.core.config import config
 from pymor.core import defaults
 from pymor.parallel.basic import WorkerPoolBase
 from pymor.tools.counter import Counter
 
 
-if config.HAVE_IPYTHON:
-    try:
-        from ipyparallel import Client, TimeoutError
-    except ImportError:
-        from IPython.parallel import Client, TimeoutError
+try:
+    from ipyparallel import Client, TimeoutError
+except ImportError:
+    from IPython.parallel import Client, TimeoutError
 
 
 class new_ipcluster_pool(BasicObject):
@@ -135,6 +136,7 @@ class IPythonPool(WorkerPoolBase):
     kwargs
         Keyword arguments used to instantiate the IPython cluster client.
     """
+
     _updated_defaults = 0
 
     def __init__(self, num_engines=None, **kwargs):
