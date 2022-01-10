@@ -8,6 +8,19 @@ import platform
 import sys
 import warnings
 
+from pymor.core.exceptions import DependencyMissing, QtMissing, TorchMissing
+
+
+def require_dependency(dependency):
+    dependency = dependency.upper()
+    if not getattr(config, f'HAVE_{dependency}'):
+        if dependency == 'QT':
+            raise QtMissing
+        elif dependency == 'TORCH':
+            raise TorchMissing
+        else:
+            raise DependencyMissing(dependency)
+
 
 def _can_import(module):
     def _can_import_single(m):

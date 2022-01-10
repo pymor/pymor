@@ -59,20 +59,28 @@ class NeuralNetworkTrainingFailed(Exception):
     """Is raised when training of a neural network fails."""
 
 
-class QtMissing(ImportError):
+class DependencyMissing(ImportError):
+    """Raised when optional packages are required but are not installed."""
+
+    def __init__(self, dependency, msg=None):
+        self.dependency = dependency
+        super().__init__(msg or f'optional dependency {dependency} required')
+
+
+class QtMissing(DependencyMissing):
     """Raise me where having importable Qt bindings is non-optional"""
 
     def __init__(self, msg=None):
         msg = msg or 'cannot visualize: import of Qt bindings failed'
-        super().__init__(msg)
+        super().__init__('QT', msg)
 
 
-class TorchMissing(ImportError):
+class TorchMissing(DependencyMissing):
     """Raise me where having importable torch version is non-optional"""
 
     def __init__(self, msg=None):
         msg = msg or 'cannot use neural networks: import of torch failed'
-        super().__init__(msg)
+        super().__init__('TORCH', msg)
 
 
 class RuleNotMatchingError(NotImplementedError):
