@@ -26,7 +26,6 @@ from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.core.pickle import dump
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
-from pymor.discretizers.builtin.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -345,6 +344,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 widget = GLPatchWidget
                 cbar_widget = ColorBarWidget
             else:
+                from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchWidget
                 widget = MatplotlibPatchWidget
                 cbar_widget = None
                 if not separate_colorbars and len(U) > 1:
@@ -501,6 +501,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
 
+            from pymor.discretizers.builtin.gui.matplotlib import Matplotlib1DWidget
             plot_widget = Matplotlib1DWidget(U, None, grid, len(U), vmin=[np.min(u) for u in U],
                                              vmax=[np.max(u) for u in U], legend=legend, codim=codim,
                                              separate_plots=separate_plots)
