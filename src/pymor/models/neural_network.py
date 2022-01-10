@@ -21,6 +21,7 @@ if config.HAVE_TORCH:
 
     from pymor.core.base import BasicObject
     from pymor.models.interface import Model
+    from pymor.operators.constructions import ZeroOperator
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
     class NeuralNetworkModel(Model):
@@ -71,8 +72,9 @@ if config.HAVE_TORCH:
 
             self.__auto_init(locals())
             self.solution_space = NumpyVectorSpace(neural_network.output_dimension)
-            if output_functional is not None:
-                self.dim_output = output_functional.range.dim
+            output_functional = output_functional or ZeroOperator(NumpyVectorSpace(0), self.solution_space)
+            assert output_functional.source == self.solution_space
+            self.dim_output = output_functional.range.dim
 
         def _compute_solution(self, mu=None, **kwargs):
 
@@ -85,6 +87,9 @@ if config.HAVE_TORCH:
             U = self.solution_space.make_array(U)
 
             return U
+
+
+if config.HAVE_TORCH:
 
     class NeuralNetworkStatefreeOutputModel(Model):
         """Class for models of the output of stationary problems that use ANNs.
@@ -126,6 +131,9 @@ if config.HAVE_TORCH:
                 output = self.neural_network(converted_input).data.numpy()
                 return {'output': output, 'solution': None}
             return {}
+
+
+if config.HAVE_TORCH:
 
     class NeuralNetworkInstationaryModel(Model):
         """Class for models of instationary problems that use artificial neural networks.
@@ -183,24 +191,15 @@ if config.HAVE_TORCH:
                 self.dim_output = output_functional.range.dim
 
         def _compute_solution(self, mu=None, **kwargs):
+            # collect all inputs in a single tensor
+            inputs = torch.DoubleTensor([mu.with_(t=t).to_numpy() for t in np.linspace(0., self.T, self.nt)])
+            # pass batch of inputs to neural network
+            result = self.neural_network(inputs).data.numpy()
+            # convert result into element from solution space
+            return self.solution_space.make_array(result)
 
-            U = self.solution_space.empty(reserve=self.nt)
-            dt = self.T / (self.nt - 1)
-            t = 0.
 
-            # iterate over time steps
-            for i in range(self.nt):
-                mu = mu.with_(t=t)
-                # convert the parameter `mu` into a form that is usable in PyTorch
-                converted_input = torch.DoubleTensor(mu.to_numpy())
-                # obtain (reduced) coordinates by forward pass of the parameter values
-                # through the neural network
-                result_neural_network = self.neural_network(converted_input).data.numpy()
-                # convert plain numpy array to element of the actual solution space
-                U.append(self.solution_space.make_array(result_neural_network))
-                t += dt
-
-            return U
+if config.HAVE_TORCH:
 
     class NeuralNetworkInstationaryStatefreeOutputModel(Model):
         """Class for models of the output of instationary problems that use ANNs.
@@ -243,24 +242,16 @@ if config.HAVE_TORCH:
                      output_d_mu_return_array=False, mu=None, **kwargs):
 
             if output:
-                outputs = []
-                dt = self.T / (self.nt - 1)
-                t = 0.
+                # collect all inputs in a single tensor
+                inputs = torch.DoubleTensor([mu.with_(t=t).to_numpy() for t in np.linspace(0., self.T, self.nt)])
+                # pass batch of inputs to neural network
+                outputs = self.neural_network(inputs).data.numpy()
 
-                # iterate over time steps
-                for i in range(self.nt):
-                    mu = mu.with_(t=t)
-                    # convert the parameter `mu` into a form that is usable in PyTorch
-                    converted_input = torch.from_numpy(mu.to_numpy()).double()
-                    # obtain approximate output quantity by forward pass of the parameter values
-                    # through the neural network
-                    result_neural_network = self.neural_network(converted_input).data.numpy()
-                    # append approximate output to list of outputs
-                    outputs.append(result_neural_network)
-                    t += dt
-
-                return {'output': np.array(outputs), 'solution': None}
+                return {'output': outputs, 'solution': None}
             return {}
+
+
+if config.HAVE_TORCH:
 
     class FullyConnectedNN(nn.Module, BasicObject):
         """Class for neural networks with fully connected layers.

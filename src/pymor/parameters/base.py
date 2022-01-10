@@ -131,9 +131,9 @@ class Parameters(SortedFrozenDict):
                 mu_str = str(mu)
             raise ValueError(f'{mu_str} is incompatible with Parameters {self} ({msg})')
 
-        if not self:
-            mu is None or len(mu) == 0 or fail('must be None or empty dict')
-            return Mu({})
+        if mu is None:
+            sum(self.values()) == 0 or fail('no parameter values provided')
+            mu = []
 
         if isinstance(mu, Mu):
             mu.parameters == self or fail(self.why_incompatible(mu))
@@ -142,6 +142,7 @@ class Parameters(SortedFrozenDict):
 
         # convert mu to dict
         if isinstance(mu, (Number, str, Function)):
+            assert self or fail('too many values')
             assert len(self) == 1 or fail('not enough values')
             mu = {next(iter(self.keys())): mu}
 
@@ -152,8 +153,8 @@ class Parameters(SortedFrozenDict):
                 fail('not every element a number or function')
             parsed_mu = {}
             for k, v in self.items():
-                len(mu) > 0 or fail('not enough values')
-                if isinstance(mu[0], (str, Function)):
+                len(mu) >= v or fail('not enough values')
+                if len(mu) > 0 and isinstance(mu[0], (str, Function)):
                     p, mu = mu[0], mu[1:]
                 else:
                     len(mu) >= v or fail('not enough values')
@@ -294,8 +295,7 @@ class Mu(FrozenDict):
                 # time dependency significantly more expensive).
                 from pymor.analyticalproblems.functions import Function
                 assert k != 't'
-                assert isinstance(v, Function) and v.dim_domain == 1 and len(v.shape_range) == 1 and \
-                    v.shape_range[0] > 0
+                assert isinstance(v, Function) and v.dim_domain == 1 and len(v.shape_range) == 1
                 vv = v(raw_values.get('t', 0))
             else:
                 vv = np.array(v, copy=False, ndmin=1)
@@ -435,6 +435,11 @@ class ParametricObject(ImmutableObject):
             return self._parameters
         assert self._locked, 'parameters attribute can only be accessed after class initialization'
         params = Parameters.of(*(getattr(self, arg) for arg in self._init_arguments))
+        if (self._init_has_args or self._init_has_kwargs) and getattr(self, '_parameters_varargs_warning', True):
+            import warnings
+            warnings.warn(f'Class {type(self).__name__} takes *arg/**kwargs. '
+                          f'Parameters of objects passed via these arguments will not be inherited. '
+                          f'To silence this warning set {type(self).__name__}._parameters_varargs_warning = False')
         if self.parameters_own:
             params = params | self.parameters_own
         if self.parameters_internal:
@@ -547,7 +552,7 @@ class ParameterSpace(ParametricObject):
             counts = {k: counts for k in self.parameters}
 
         linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k]) for k in self.parameters)
-        iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
+        iters = tuple(product(ls, repeat=max(0, np.zeros(sps).size))
                       for ls, sps in zip(linspaces, self.parameters.values()))
         return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
                 for i in product(*iters)]

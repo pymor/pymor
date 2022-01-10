@@ -12,20 +12,6 @@ from pymortests.fixtures.parameter import mu_of_type
 from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
 
 
-# monkey np.testing.assert_allclose to behave the same as np.allclose
-# for some reason, the default atol of np.testing.assert_allclose is 0
-# while it is 1e-8 for np.allclose
-
-real_assert_allclose = np.testing.assert_allclose
-
-
-def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
-    real_assert_allclose(a, b, rtol=rtol, atol=atol)
-
-
-np.testing.assert_allclose = monkey_allclose
-
-
 def test_evaluate(function):
     f = function
     mus = mu_of_type(f.parameters, 4711)

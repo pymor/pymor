@@ -89,3 +89,11 @@ class IOLibsMissing(ImportError):
     def __init__(self, msg=None):
         msg = msg or 'meshio, pyevtk, xmljson and lxml are needed for full file I/O functionality'
         super().__init__(msg)
+
+
+class UnpicklableError(Exception):
+    def __init__(self, cls):
+        self.cls = cls
+
+    def __str__(self):
+        return f'{self.cls} cannot be pickled.'

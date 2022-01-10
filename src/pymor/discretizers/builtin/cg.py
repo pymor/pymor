@@ -1172,7 +1172,9 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                     outputs.append(BoundaryL2Functional(grid, v[1], dirichlet_clear_dofs=False).H)
         if len(outputs) > 1:
             from pymor.operators.block import BlockColumnOperator
+            from pymor.operators.constructions import NumpyConversionOperator
             output_functional = BlockColumnOperator(outputs)
+            output_functional = NumpyConversionOperator(output_functional.range) @ output_functional
         else:
             output_functional = outputs[0]
     else:

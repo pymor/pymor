@@ -50,6 +50,9 @@ def _mmread(path, key=None):
         if issparse(matrix):
             matrix = matrix.tocsc()
         return matrix
+    except AttributeError:
+        # fallback for older scipys that do not accept pathlib.Path
+        return _mmread(path=str(path), key=key)
     except Exception as e:
         raise IOError(e)
 
@@ -66,6 +69,9 @@ def _mmwrite(path, matrix, key=None):
         with open_file(path, 'wb') as f:
             # when mmwrite is given a string, it will append '.mtx'
             mmwrite(f, matrix)
+    except AttributeError:
+        # fallback for older scipys that do not accept pathlib.Path
+        return _mmwrite(path=str(path), matrix=matrix, key=key)
     except Exception as e:
         raise IOError(e)
 

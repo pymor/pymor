@@ -7,6 +7,7 @@ import os
 import slugify
 import glob
 import sphinx
+import sysconfig
 from pathlib import Path
 
 # Check Sphinx version
@@ -15,6 +16,7 @@ if sphinx.__version__ < "3.4":
 
 needs_sphinx = '3.4'
 os.environ['PYMOR_WITH_SPHINX'] = '1'
+os.environ['PYBIND11_DIR'] = sysconfig.get_path('purelib')
 
 # -----------------------------------------------------------------------------
 # General configuration

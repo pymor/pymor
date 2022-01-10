@@ -57,7 +57,7 @@ def _launch_qt_app(main_window_factory, block):
         app = QApplication(sys.argv)
 
     if getattr(sys, '_called_from_test', False):
-        QTimer.singleShot(1000, app.quit)
+        QTimer.singleShot(1200, app.quit)
         block = True
 
     if not block:
@@ -76,13 +76,15 @@ def _launch_qt_app(main_window_factory, block):
     main_window = main_window_factory()
     main_window.show()
 
+    if getattr(sys, '_called_from_test', False):
+        QTimer.singleShot(1000, main_window.closeEvent)
+
     if block:
         app.exec_()
     else:
         global _qt_app
         _qt_app = app                 # deleting the app ref somehow closes the window
         _qt_windows.add(main_window)  # need to keep ref to keep window alive
-
 
 
 if config.HAVE_QT:
@@ -105,6 +107,7 @@ if config.HAVE_QT:
             layout.addWidget(plot)
 
             plot.set(U, 0)
+            self.plot = plot
 
             if length > 1:
                 hlayout = QHBoxLayout()
@@ -229,13 +232,29 @@ if config.HAVE_QT:
             if ind >= 0:
                 self.slider.setValue(ind)
 
-        def closeEvent(self, event):
+        def closeEvent(self, event=None):
+            """This is directly called from CI
+
+            Xvfb (sometimes) raises errors on interpreter shutdown
+            when there are still 'live' MPL plot objects. This
+            happens even if the referencing MainWindow was already destroyed
+            """
+            try:
+                self.plot.p.close()
+            except Exception:
+                pass
+            try:
+                del self.plot.p
+            except Exception:
+                pass
+
             try:
                 self.deleteLater()
                 _qt_windows.remove(self)
             except KeyError:
                 pass  # we should be in blocking mode ...
-            event.accept()
+            if event is not None:
+                event.accept()
 
 
 _qt_app = None

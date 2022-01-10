@@ -6,15 +6,18 @@ from numbers import Number
 
 import pytest
 import numpy as np
-from hypothesis import assume, settings
+from hypothesis import assume, settings, example
 from hypothesis import strategies as hyst
 
 from pymor.algorithms.basic import almost_equal
+from pymor.core.config import config
 from pymor.vectorarrays.interface import VectorSpace
-from pymor.tools import floatcmp
-from pymor.tools.floatcmp import float_cmp
+from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.tools.floatcmp import float_cmp, bounded
 from pymortests.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
+
+MAX_RNG_REALIZATIONS = 30
 
 
 def ind_complement(v, ind):
@@ -126,10 +129,31 @@ def test_full(vector_array):
                 pass
 
 
-@pyst.given_vector_arrays(realizations=hyst.integers(min_value=0, max_value=30),
+@pyst.given_vector_arrays(realizations=hyst.integers(min_value=0, max_value=MAX_RNG_REALIZATIONS),
                           low=hyst.floats(allow_infinity=False, allow_nan=False),
                           high=hyst.floats(allow_infinity=False, allow_nan=False))
-def test_random_uniform(vector_array, realizations, low, high):
+@example(vector_array=NumpyVectorArray([], NumpyVectorSpace(1)), realizations=2,
+         low=-5e-324, high=0.0)
+def test_random_uniform_all(vector_array, realizations, low, high):
+    if config.HAVE_DUNEGDT:
+        # atm needs special casing due to norm implemenation handling of large vector elements
+        from pymor.bindings.dunegdt import DuneXTVectorSpace
+        assume(not isinstance(vector_array.space, DuneXTVectorSpace))
+    _test_random_uniform(vector_array, realizations, low, high)
+
+
+if config.HAVE_DUNEGDT:
+    @pyst.given_vector_arrays(realizations=hyst.integers(min_value=0, max_value=MAX_RNG_REALIZATIONS),
+                              low=hyst.floats(allow_infinity=False, allow_nan=False,
+                                              max_value=10e100, min_value=-10e100),
+                              high=hyst.floats(allow_infinity=False, allow_nan=False,
+                                               max_value=10e100, min_value=-10e100),
+                              which=('dunegdt',))
+    def test_random_uniform_dune(vector_array, realizations, low, high):
+        _test_random_uniform(vector_array, realizations, low, high)
+
+
+def _test_random_uniform(vector_array, realizations, low, high):
     # avoid Overflow in np.random.RandomState.uniform
     assume(np.isfinite(high-low))
     with pytest.raises(Exception):
@@ -149,11 +173,11 @@ def test_random_uniform(vector_array, realizations, low, high):
     assert v.space == vector_array.space
     assert len(v) == c
     if min(v.dim, c) > 0:
-        assert np.all(v.sup_norm() < max(abs(low), abs(high)))
+        assert np.all(v.sup_norm() <= max(abs(low), abs(high)))
     try:
         x = v.to_numpy()
         assert x.shape == (c, v.dim)
-        assert np.all(x < high)
+        assert np.all(x <= high)
         assert np.all(x >= low)
     except NotImplementedError:
         pass
@@ -194,7 +218,7 @@ def test_random_normal(vector_array, realizations, loc, scale):
         alpha = 1 - gamma
         lower = np.sum(x)/n - norm.ppf(1 - alpha/2) * scale / np.sqrt(n)
         upper = np.sum(x)/n + norm.ppf(1 - alpha/2) * scale / np.sqrt(n)
-        floatcmp.bounded(lower, upper, loc)
+        bounded(lower, upper, loc)
     except NotImplementedError:
         pass
     vv = vector_array.random(c, 'normal', loc=loc, scale=scale, seed=seed)
@@ -266,6 +290,28 @@ def test_copy(vectors_and_indices):
             pass
 
 
+@pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
+@example(vectors_and_indices=(NumpyVectorArray(np.array([[2.22044605e-16]]), NumpyVectorSpace(1)), [0]))
+def test_COW(vectors_and_indices):
+    v, ind = vectors_and_indices
+    for deep in (True, False):
+        if ind is None:
+            c = v.copy(deep)
+            assert len(c) == len(v)
+        else:
+            c = v[ind].copy(deep)
+            assert len(c) == v.len_ind(ind)
+        assert c.space == v.space
+        if len(c) > 0 and not np.all(c.norm() == 0):
+            c *= 2
+            vi = v[ind] if ind else v
+            assert not np.all(almost_equal(c, vi, atol=0, rtol=0))
+            try:
+                assert np.allclose(c.to_numpy(), 2*indexed(v.to_numpy(), ind))
+            except NotImplementedError:
+                pass
+
+
 @pyst.given_vector_arrays()
 def test_copy_repeated_index(vector_array):
     v = vector_array
@@ -288,6 +334,15 @@ def test_copy_repeated_index(vector_array):
             assert indexed(v.to_numpy(), ind).shape == c.to_numpy().shape
         except NotImplementedError:
             pass
+
+
+@pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
+def test_normalize_ind(vectors_and_indices):
+    v, ind = vectors_and_indices
+    assert v.check_ind(ind)
+    normalized = v.normalize_ind(ind)
+    assert v.len_ind(normalized) == v.len_ind(ind)
+    assert v.len_ind_unique(normalized) == v.len_ind_unique(ind)
 
 
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_both_lengths)

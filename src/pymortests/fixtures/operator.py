@@ -7,6 +7,7 @@ from numpy.polynomial.polynomial import Polynomial
 import pytest
 
 from pymor.core.config import config
+from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 from pymor.operators.list import NumpyListVectorArrayMatrixOperator
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -340,7 +341,7 @@ thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
     [lambda args=args: thermalblock_fixedparam_factory(*args) for args in thermalblock_factory_arguments]
 
 
-num_misc_operators = 12
+num_misc_operators = 13
 
 
 def misc_operator_with_arrays_and_products_factory(n):
@@ -442,6 +443,12 @@ def misc_operator_with_arrays_and_products_factory(n):
         U = op.source.make_array([U0, U1])
         V = V0
         return op, mu, U, V, sp, rp
+    elif n == 12:
+        from pymor.operators.constructions import NumpyConversionOperator
+        from pymor.vectorarrays.block import BlockVectorSpace
+        space = BlockVectorSpace([NumpyVectorSpace(1), NumpyVectorSpace(2)])
+        op = NumpyConversionOperator(space)
+        return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
     else:
         assert False
 

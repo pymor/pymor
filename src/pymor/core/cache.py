@@ -78,7 +78,7 @@ import numpy as np
 
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults, defaults_changes
-from pymor.core.exceptions import CacheKeyGenerationError
+from pymor.core.exceptions import CacheKeyGenerationError, UnpicklableError
 from pymor.core.logger import getLogger
 from pymor.core.pickle import dumps
 from pymor.parameters.base import Mu
@@ -186,7 +186,12 @@ class DiskRegion(CacheRegion):
         if has_key:
             getLogger('pymor.core.cache.DiskRegion').warning('Key already present in cache region, ignoring.')
             return
-        self._cache.set(key, value)
+        try:
+            self._cache.set(key, value)
+        except UnpicklableError as e:
+            getLogger('pymor.core.cache.DiskRegion').warning(f'{e.cls} cannot be pickled. Not caching result.')
+        except (TypeError, AttributeError) as e:
+            getLogger('pymor.core.cache.DiskRegion').warning(f'Pickling failed. Not caching result (error: {e}).')
 
     def clear(self):
         self._cache.clear()
@@ -339,6 +344,11 @@ class CacheableObject(ImmutableObject):
         # ensure the values of optional parameters enter the cache key
         if defaults:
             kwargs = dict(defaults, **kwargs)
+
+        # assume that all parameters named mu expect parameter values
+        # in case the value is not a Mu instance parse it to avoid cache misses
+        if 'mu' in kwargs and not isinstance(kwargs['mu'], Mu):
+            kwargs['mu'] = self.parameters.parse(kwargs['mu'])
 
         key = build_cache_key((method.__name__, self_id, kwargs))
         found, value = region.get(key)

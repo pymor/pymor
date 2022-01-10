@@ -10,16 +10,16 @@ from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.eigs import eigs
 from pymor.algorithms.lyapunov import solve_lyap_lrcf, solve_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.core.base import abstractmethod
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.models.interface import Model
+from pymor.models.transfer_function import FactorizedTransferFunction
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
 from pymor.operators.constructions import IdentityOperator, LincombOperator, LowRankOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.parameters.base import Mu
+from pymor.parameters.base import Parameters, Mu
 from pymor.vectorarrays.block import BlockVectorSpace
 
 
@@ -29,273 +29,7 @@ def sparse_min_size(value=1000):
     return value
 
 
-class InputOutputModel(Model):
-    """Base class for input-output systems."""
-
-    cache_region = 'memory'
-
-    def __init__(self, dim_input, dim_output, cont_time=True,
-                 error_estimator=None, visualizer=None, name=None):
-        assert cont_time in (True, False)
-        super().__init__(error_estimator=error_estimator, visualizer=visualizer, name=name)
-        self.__auto_init(locals())
-
-    @abstractmethod
-    def eval_tf(self, s, mu=None):
-        """Evaluate the transfer function."""
-
-    @abstractmethod
-    def eval_dtf(self, s, mu=None):
-        """Evaluate the derivative of the transfer function."""
-
-    @cached
-    def freq_resp(self, w, mu=None):
-        """Evaluate the transfer function on the imaginary axis.
-
-        Parameters
-        ----------
-        w
-            A sequence of angular frequencies at which to compute the transfer function.
-        mu
-            |Parameter values| for which to evaluate the transfer function.
-
-        Returns
-        -------
-        tfw
-            Transfer function values at frequencies in `w`, |NumPy array| of shape
-            `(len(w), self.dim_output, self.dim_input)`.
-        """
-        if not self.cont_time:
-            raise NotImplementedError
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        return np.stack([self.eval_tf(1j * wi, mu=mu) for wi in w])
-
-    def bode(self, w, mu=None):
-        """Compute magnitudes and phases.
-
-        Parameters
-        ----------
-        w
-            A sequence of angular frequencies at which to compute the transfer function.
-        mu
-            |Parameter values| for which to evaluate the transfer function.
-
-        Returns
-        -------
-        mag
-            Transfer function magnitudes at frequencies in `w`, |NumPy array| of shape
-            `(len(w), self.dim_output, self.dim_input)`.
-        phase
-            Transfer function phases (in radians) at frequencies in `w`, |NumPy array| of shape
-            `(len(w), self.dim_output, self.dim_input)`.
-        """
-        w = np.asarray(w)
-        mag = np.abs(self.freq_resp(w, mu=mu))
-        phase = np.angle(self.freq_resp(w, mu=mu))
-        phase = np.unwrap(phase, axis=0)
-        return mag, phase
-
-    def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, **mpl_kwargs):
-        """Draw the Bode plot for all input-output pairs.
-
-        Parameters
-        ----------
-        w
-            A sequence of angular frequencies at which to compute the transfer function.
-        mu
-            |Parameter| for which to evaluate the transfer function.
-        ax
-            Axis of shape (2 * `self.dim_output`, `self.dim_input`) to which to plot.
-            If not given, `matplotlib.pyplot.gcf` is used to get the figure and create axis.
-        Hz
-            Should the frequency be in Hz on the plot.
-        dB
-            Should the magnitude be in dB on the plot.
-        deg
-            Should the phase be in degrees (otherwise in radians).
-        mpl_kwargs
-            Keyword arguments used in the matplotlib plot function.
-
-        Returns
-        -------
-        artists
-            List of matplotlib artists added.
-        """
-        if ax is None:
-            import matplotlib.pyplot as plt
-            fig = plt.gcf()
-            width, height = plt.rcParams['figure.figsize']
-            fig.set_size_inches(self.dim_input * width, 2 * self.dim_output * height)
-            fig.set_constrained_layout(True)
-            ax = fig.subplots(2 * self.dim_output, self.dim_input, sharex=True, squeeze=False)
-        else:
-            assert isinstance(ax, np.ndarray) and ax.shape == (2 * self.dim_output, self.dim_input)
-            fig = ax[0, 0].get_figure()
-
-        w = np.asarray(w)
-        freq = w / (2 * np.pi) if Hz else w
-        mag, phase = self.bode(w, mu=mu)
-        if deg:
-            phase *= 180 / np.pi
-
-        artists = np.empty_like(ax)
-        freq_label = f'Frequency ({"Hz" if Hz else "rad/s"})'
-        mag_label = f'Magnitude{" (dB)" if dB else ""}'
-        phase_label = f'Phase ({"deg" if deg else "rad"})'
-        for i in range(self.dim_output):
-            for j in range(self.dim_input):
-                if dB:
-                    artists[2 * i, j] = ax[2 * i, j].semilogx(freq, 20 * np.log10(mag[:, i, j]),
-                                                              **mpl_kwargs)
-                else:
-                    artists[2 * i, j] = ax[2 * i, j].loglog(freq, mag[:, i, j],
-                                                            **mpl_kwargs)
-                artists[2 * i + 1, j] = ax[2 * i + 1, j].semilogx(freq, phase[:, i, j],
-                                                                  **mpl_kwargs)
-        for i in range(self.dim_output):
-            ax[2 * i, 0].set_ylabel(mag_label)
-            ax[2 * i + 1, 0].set_ylabel(phase_label)
-        for j in range(self.dim_input):
-            ax[-1, j].set_xlabel(freq_label)
-        fig.suptitle('Bode plot')
-
-        return artists
-
-    def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
-        """Draw the magnitude plot.
-
-        Parameters
-        ----------
-        w
-            A sequence of angular frequencies at which to compute the transfer function.
-        mu
-            |Parameter values| for which to evaluate the transfer function.
-        ax
-            Axis to which to plot.
-            If not given, `matplotlib.pyplot.gca` is used.
-        ord
-            The order of the norm used to compute the magnitude (the default is the Frobenius norm).
-        Hz
-            Should the frequency be in Hz on the plot.
-        dB
-            Should the magnitude be in dB on the plot.
-        mpl_kwargs
-            Keyword arguments used in the matplotlib plot function.
-
-        Returns
-        -------
-        out
-            List of matplotlib artists added.
-        """
-        if ax is None:
-            import matplotlib.pyplot as plt
-            ax = plt.gca()
-
-        w = np.asarray(w)
-        freq = w / (2 * np.pi) if Hz else w
-        mag = spla.norm(self.freq_resp(w, mu=mu), ord=ord, axis=(1, 2))
-        if dB:
-            out = ax.semilogx(freq, 20 * np.log10(mag), **mpl_kwargs)
-        else:
-            out = ax.loglog(freq, mag, **mpl_kwargs)
-
-        ax.set_title('Magnitude plot')
-        freq_unit = ' (Hz)' if Hz else ' (rad/s)'
-        ax.set_xlabel('Frequency' + freq_unit)
-        mag_unit = ' (dB)' if dB else ''
-        ax.set_ylabel('Magnitude' + mag_unit)
-
-        return out
-
-    @cached
-    def h2_norm(self, return_norm_only=True, **quad_kwargs):
-        """Compute the H2-norm using quadrature.
-
-        This method uses `scipy.integrate.quad` and makes no assumptions on the form of the transfer
-        function.
-
-        By default, the absolute error tolerance in `scipy.integrate.quad` is set to zero (see its
-        optional argument `epsabs`).
-        It can be changed by using the `epsabs` keyword argument.
-
-        Parameters
-        ----------
-        return_norm_only
-            Whether to only return the approximate H2-norm.
-        quad_kwargs
-            Keyword arguments passed to `scipy.integrate.quad`.
-
-        Returns
-        -------
-        norm
-            Computed H2-norm.
-        norm_relerr
-            Relative error estimate (returned if `return_norm_only` is `False`).
-        info
-            Quadrature info (returned if `return_norm_only` is `False` and `full_output` is `True`).
-            See `scipy.integrate.quad` documentation for more details.
-        """
-        if not self.cont_time:
-            raise NotImplementedError
-
-        import scipy.integrate as spint
-        quad_kwargs.setdefault('epsabs', 0)
-        quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j))**2,
-                              0, np.inf,
-                              **quad_kwargs)
-        norm = np.sqrt(quad_out[0] / np.pi)
-        if return_norm_only:
-            return norm
-        norm_relerr = quad_out[1] / (2 * quad_out[0])
-        if len(quad_out) == 2:
-            return norm, norm_relerr
-        else:
-            return norm, norm_relerr, quad_out[2:]
-
-    def h2_inner(self, lti):
-        """Compute H2 inner product with an |LTIModel|.
-
-        Uses the inner product formula based on the pole-residue form
-        (see, e.g., Lemma 1 in :cite:`ABG10`).
-
-        Parameters
-        ----------
-        lti
-            |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|.
-            The D operator is ignored.
-
-        Returns
-        -------
-        inner
-            H2 inner product.
-        """
-        assert isinstance(lti, LTIModel)
-
-        poles, b, c = _lti_to_poles_b_c(lti)
-        inner = sum(c[i].dot(self.eval_tf(-poles[i]).dot(b[i]))
-                    for i in range(len(poles)))
-        inner = inner.conjugate()
-
-        return inner
-
-
-class InputStateOutputModel(InputOutputModel):
-    """Base class for input-output systems with state space."""
-
-    def __init__(self, dim_input, solution_space, dim_output, cont_time=True,
-                 error_estimator=None, visualizer=None, name=None):
-        super().__init__(dim_input, dim_output, cont_time=cont_time,
-                         error_estimator=error_estimator, visualizer=visualizer, name=name)
-        self.__auto_init(locals())
-
-    @property
-    def order(self):
-        return self.solution_space.dim
-
-
-class LTIModel(InputStateOutputModel):
+class LTIModel(Model):
     r"""Class for linear time-invariant systems.
 
     This class describes input-state-output systems given by
@@ -312,6 +46,10 @@ class LTIModel(InputStateOutputModel):
 
     if discrete-time, where :math:`A`, :math:`B`, :math:`C`, :math:`D`, and :math:`E` are linear
     operators.
+
+    All methods related to the transfer function
+    (e.g., frequency response calculation and Bode plots)
+    are attached to the `transfer_function` attribute.
 
     Parameters
     ----------
@@ -360,6 +98,8 @@ class LTIModel(InputStateOutputModel):
         The |Operator| D.
     E
         The |Operator| E.
+    transfer_function
+        The transfer function.
     """
 
     def __init__(self, A, B, C, D=None, E=None, cont_time=True,
@@ -384,9 +124,25 @@ class LTIModel(InputStateOutputModel):
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
-        super().__init__(B.source.dim, A.source, C.range.dim, cont_time=cont_time,
-                         error_estimator=error_estimator, visualizer=visualizer, name=name)
+        super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
+        self.solution_space = A.source
+        self.dim_output = C.range.dim
+
+        K = lambda s: s * self.E - self.A
+        B = lambda s: self.B
+        C = lambda s: self.C
+        D = lambda s: self.D
+        dK = lambda s: self.E
+        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
+        dC = lambda s: ZeroOperator(self.C.range, self.C.source)
+        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
+        parameters = Parameters.of(self.A, self.B, self.C, self.D, self.E)
+
+        self.transfer_function = FactorizedTransferFunction(
+            self.dim_input, self.dim_output,
+            K, B, C, D, dK, dB, dC, dD,
+            parameters=parameters, cont_time=cont_time, name=self.name + '_transfer_function')
 
     def __str__(self):
         return (
@@ -771,106 +527,6 @@ class LTIModel(InputStateOutputModel):
         A = to_matrix(A, format='dense')
         E = None if isinstance(E, IdentityOperator) else to_matrix(E, format='dense')
         return spla.eigvals(A, E)
-
-    def eval_tf(self, s, mu=None):
-        r"""Evaluate the transfer function.
-
-        The transfer function at :math:`s` is
-
-        .. math::
-            C(\mu) (s E(\mu) - A(\mu))^{-1} B(\mu) + D(\mu).
-
-        .. note::
-            Assumes that the number of inputs and outputs is much smaller than the order of the
-            system.
-
-        Parameters
-        ----------
-        s
-            Complex number.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        tfs
-            Transfer function evaluated at the complex number `s`, |NumPy array| of shape
-            `(self.dim_output, self.dim_input)`.
-        """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        A = self.A
-        B = self.B
-        C = self.C
-        D = self.D
-        E = self.E
-
-        sEmA = s * E - A
-        if self.dim_input <= self.dim_output:
-            tfs = C.apply(sEmA.apply_inverse(B.as_range_array(mu=mu),
-                                             mu=mu),
-                          mu=mu).to_numpy().T
-        else:
-            tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(C.as_source_array(mu=mu),
-                                                             mu=mu),
-                                  mu=mu).to_numpy().conj()
-        if not isinstance(D, ZeroOperator):
-            tfs += to_matrix(D, format='dense', mu=mu)
-        return tfs
-
-    def eval_dtf(self, s, mu=None):
-        r"""Evaluate the derivative of the transfer function.
-
-        The derivative of the transfer function at :math:`s` is
-
-        .. math::
-            -C(\mu) (s E(\mu) - A(\mu))^{-1} E(\mu)
-                (s E(\mu) - A(\mu))^{-1} B(\mu).
-
-        .. note::
-            Assumes that the number of inputs and outputs is much smaller than the order of the
-            system.
-
-        Parameters
-        ----------
-        s
-            Complex number.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        dtfs
-            Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
-            shape `(self.dim_output, self.dim_input)`.
-        """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        A = self.A
-        B = self.B
-        C = self.C
-        E = self.E
-
-        sEmA = (s * E - A).assemble(mu=mu)
-        if self.dim_input <= self.dim_output:
-            dtfs = -C.apply(
-                sEmA.apply_inverse(
-                    E.apply(
-                        sEmA.apply_inverse(
-                            B.as_range_array(mu=mu)),
-                        mu=mu)),
-                mu=mu).to_numpy().T
-        else:
-            dtfs = -B.apply_adjoint(
-                sEmA.apply_inverse_adjoint(
-                    E.apply_adjoint(
-                        sEmA.apply_inverse_adjoint(
-                            C.as_source_array(mu=mu)),
-                        mu=mu)),
-                mu=mu).to_numpy().conj()
-        return dtfs
 
     @cached
     def gramian(self, typ, mu=None):
@@ -1259,126 +915,7 @@ class LTIModel(InputStateOutputModel):
             return ast_lev, ast_ews[idx], ast_rev
 
 
-class TransferFunction(InputOutputModel):
-    """Class for systems represented by a transfer function.
-
-    This class describes input-output systems given by a transfer
-    function :math:`H(s, mu)`.
-
-    Parameters
-    ----------
-    dim_input
-        The number of inputs.
-    dim_output
-        The number of outputs.
-    tf
-        The transfer function defined at least on the open right complex half-plane.
-        `tf(s, mu)` is a |NumPy array| of shape `(p, m)`.
-    dtf
-        The complex derivative of `H` with respect to `s`.
-    cont_time
-        `True` if the system is continuous-time, otherwise `False`.
-    name
-        Name of the system.
-
-    Attributes
-    ----------
-    dim_input
-        The number of inputs.
-    dim_output
-        The number of outputs.
-    tf
-        The transfer function.
-    dtf
-        The complex derivative of the transfer function.
-    """
-
-    def __init__(self, dim_input, dim_output, tf, dtf, parameters={}, cont_time=True, name=None):
-        super().__init__(dim_input, dim_output, cont_time=cont_time, name=name)
-        self.parameters_own = parameters
-        self.__auto_init(locals())
-
-    def __str__(self):
-        return (
-            f'{self.name}\n'
-            f'    class: {self.__class__.__name__}\n'
-            f'    number of inputs:  {self.dim_input}\n'
-            f'    number of outputs: {self.dim_output}\n'
-            f'    {"continuous" if self.cont_time else "discrete"}-time\n'
-            f'    linear time-invariant\n'
-            f'    solution_space:  {self.solution_space}'
-        )
-
-    def eval_tf(self, s, mu=None):
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        if not self.parametric:
-            return self.tf(s)
-        else:
-            return self.tf(s, mu=mu)
-
-    def eval_dtf(self, s, mu=None):
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        if not self.parametric:
-            return self.dtf(s)
-        else:
-            return self.dtf(s, mu=mu)
-
-    def __add__(self, other):
-        assert isinstance(other, InputOutputModel)
-        assert self.cont_time == other.cont_time
-        assert self.dim_input == other.dim_input
-        assert self.dim_output == other.dim_output
-
-        tf = lambda s, mu=None: self.eval_tf(s, mu=mu) + other.eval_tf(s, mu=mu)
-        dtf = lambda s, mu=None: self.eval_dtf(s, mu=mu) + other.eval_dtf(s, mu=mu)
-        return self.with_(tf=tf, dtf=dtf)
-
-    __radd__ = __add__
-
-    def __sub__(self, other):
-        return self + (-other)
-
-    def __rsub__(self, other):
-        assert isinstance(other, InputOutputModel)
-        assert self.cont_time == other.cont_time
-        assert self.dim_input == other.dim_input
-        assert self.dim_output == other.dim_output
-
-        tf = lambda s, mu=None: other.eval_tf(s, mu=mu) - self.eval_tf(s, mu=mu)
-        dtf = lambda s, mu=None: other.eval_dtf(s, mu=mu) - self.eval_dtf(s, mu=mu)
-        return self.with_(tf=tf, dtf=dtf)
-
-    def __neg__(self):
-        tf = lambda s, mu=None: -self.eval_tf(s, mu=mu)
-        dtf = lambda s, mu=None: -self.eval_dtf(s, mu=mu)
-        return self.with_(tf=tf, dtf=dtf)
-
-    def __mul__(self, other):
-        assert isinstance(other, InputOutputModel)
-        assert self.cont_time == other.cont_time
-        assert self.dim_input == other.dim_input
-
-        tf = lambda s, mu=None: self.eval_tf(s, mu=mu) @ other.eval_tf(s, mu=mu)
-        dtf = lambda s, mu=None: (self.eval_dtf(s, mu=mu) @ other.eval_tf(s, mu=mu)
-                                  + self.eval_tf(s, mu=mu) @ other.eval_dtf(s, mu=mu))
-        return self.with_(tf=tf, dtf=dtf)
-
-    def __rmul__(self, other):
-        assert isinstance(other, InputOutputModel)
-        assert self.cont_time == other.cont_time
-        assert self.dim_output == other.dim_input
-
-        tf = lambda s, mu=None: other.eval_tf(s, mu=mu) @ self.eval_tf(s, mu=mu)
-        dtf = lambda s, mu=None: (other.eval_dtf(s, mu=mu) @ self.eval_tf(s, mu=mu)
-                                  + other.eval_tf(s, mu=mu) @ self.eval_dtf(s, mu=mu))
-        return self.with_(tf=tf, dtf=dtf)
-
-
-class SecondOrderModel(InputStateOutputModel):
+class SecondOrderModel(Model):
     r"""Class for linear second order systems.
 
     This class describes input-output systems given by
@@ -1411,6 +948,10 @@ class SecondOrderModel(InputStateOutputModel):
 
     if discrete-time, where :math:`M`, :math:`E`, :math:`K`, :math:`B`, :math:`C_p`, :math:`C_v`,
     and :math:`D` are linear operators.
+
+    All methods related to the transfer function
+    (e.g., frequency response calculation and Bode plots)
+    are attached to the `transfer_function` attribute.
 
     Parameters
     ----------
@@ -1466,6 +1007,8 @@ class SecondOrderModel(InputStateOutputModel):
         The |Operator| Cv.
     D
         The |Operator| D.
+    transfer_function
+        The transfer function.
     """
 
     def __init__(self, M, E, K, B, Cp, Cv=None, D=None, cont_time=True,
@@ -1485,9 +1028,25 @@ class SecondOrderModel(InputStateOutputModel):
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
-        super().__init__(B.source.dim, M.source, Cp.range.dim, cont_time=cont_time,
-                         error_estimator=error_estimator, visualizer=visualizer, name=name)
+        super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
+        self.solution_space = M.source
+        self.dim_output = Cp.range.dim
+
+        K = lambda s: s**2 * self.M + s * self.E + self.K
+        B = lambda s: self.B
+        C = lambda s: self.Cp + s * self.Cv
+        D = lambda s: self.D
+        dK = lambda s: 2 * s * self.M + self.E
+        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
+        dC = lambda s: self.Cv
+        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
+        parameters = Parameters.of(self.M, self.E, self.K, self.B, self.Cp, self.Cv, self.D)
+
+        self.transfer_function = FactorizedTransferFunction(
+            self.dim_input, self.dim_output,
+            K, B, C, D, dK, dB, dC, dD,
+            parameters=parameters, cont_time=cont_time, name=self.name + '_transfer_function')
 
     def __str__(self):
         return (
@@ -1840,123 +1399,6 @@ class SecondOrderModel(InputStateOutputModel):
         """
         return self.to_lti().poles(mu=mu)
 
-    def eval_tf(self, s, mu=None):
-        r"""Evaluate the transfer function.
-
-        The transfer function at :math:`s` is
-
-        .. math::
-            (C_p(\mu) + s C_v(\mu))
-                (s^2 M(\mu) + s E(\mu) + K(\mu))^{-1} B(\mu)
-            + D(\mu).
-
-        .. note::
-            Assumes that the number of inputs and outputs is much smaller than the order of the
-            system.
-
-        Parameters
-        ----------
-        s
-            Complex number.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        tfs
-            Transfer function evaluated at the complex number `s`, |NumPy array| of shape
-            `(self.dim_output, self.dim_input)`.
-        """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        M = self.M
-        E = self.E
-        K = self.K
-        B = self.B
-        Cp = self.Cp
-        Cv = self.Cv
-        D = self.D
-
-        s2MpsEpK = s**2 * M + s * E + K
-        if self.dim_input <= self.dim_output:
-            CppsCv = Cp + s * Cv
-            tfs = CppsCv.apply(s2MpsEpK.apply_inverse(B.as_range_array(mu=mu),
-                                                      mu=mu),
-                               mu=mu).to_numpy().T
-        else:
-            tfs = B.apply_adjoint(
-                s2MpsEpK.apply_inverse_adjoint(
-                    Cp.as_source_array(mu=mu) + Cv.as_source_array(mu=mu) * s.conjugate(),
-                    mu=mu),
-                mu=mu).to_numpy().conj()
-        if not isinstance(D, ZeroOperator):
-            tfs += to_matrix(D, format='dense')
-        return tfs
-
-    def eval_dtf(self, s, mu=None):
-        r"""Evaluate the derivative of the transfer function.
-
-        .. math::
-            s C_v(\mu) (s^2 M(\mu) + s E(\mu) + K(\mu))^{-1} B(\mu)
-            - (C_p(\mu) + s C_v(\mu))
-                (s^2 M(\mu) + s E(\mu) + K(\mu))^{-1}
-                (2 s M(\mu) + E(\mu))
-                (s^2 M(\mu) + s E(\mu) + K(\mu))^{-1}
-                B(\mu).
-
-        .. note::
-            Assumes that the number of inputs and outputs is much smaller than the order of the
-            system.
-
-        Parameters
-        ----------
-        s
-            Complex number.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        dtfs
-            Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
-            shape `(self.dim_output, self.dim_input)`.
-        """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        M = self.M
-        E = self.E
-        K = self.K
-        B = self.B
-        Cp = self.Cp
-        Cv = self.Cv
-
-        s2MpsEpK = (s**2 * M + s * E + K).assemble(mu=mu)
-        sM2pE = 2 * s * M + E
-        if self.dim_input <= self.dim_output:
-            dtfs = Cv.apply(s2MpsEpK.apply_inverse(B.as_range_array(mu=mu)),
-                            mu=mu).to_numpy().T * s
-            CppsCv = Cp + s * Cv
-            dtfs -= CppsCv.apply(
-                s2MpsEpK.apply_inverse(
-                    sM2pE.apply(
-                        s2MpsEpK.apply_inverse(
-                            B.as_range_array(mu=mu)),
-                        mu=mu)),
-                mu=mu).to_numpy().T
-        else:
-            dtfs = B.apply_adjoint(s2MpsEpK.apply_inverse_adjoint(Cv.as_source_array(mu=mu)),
-                                   mu=mu).to_numpy().conj() * s
-            dtfs -= B.apply_adjoint(
-                s2MpsEpK.apply_inverse_adjoint(
-                    sM2pE.apply_adjoint(
-                        s2MpsEpK.apply_inverse_adjoint(
-                            Cp.as_source_array(mu=mu) + Cv.as_source_array(mu=mu) * s.conjugate()),
-                        mu=mu)),
-                mu=mu).to_numpy().conj()
-        return dtfs
-
     @cached
     def gramian(self, typ, mu=None):
         """Compute a second-order Gramian.
@@ -2147,7 +1589,7 @@ class SecondOrderModel(InputStateOutputModel):
         return self.to_lti().hankel_norm(mu=mu)
 
 
-class LinearDelayModel(InputStateOutputModel):
+class LinearDelayModel(Model):
     r"""Class for linear delay systems.
 
     This class describes input-state-output systems given by
@@ -2178,6 +1620,10 @@ class LinearDelayModel(InputStateOutputModel):
 
     if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`, :math:`B`, :math:`C`, and :math:`D`
     are linear operators.
+
+    All methods related to the transfer function
+    (e.g., frequency response calculation and Bode plots)
+    are attached to the `transfer_function` attribute.
 
     Parameters
     ----------
@@ -2233,6 +1679,8 @@ class LinearDelayModel(InputStateOutputModel):
         The |Operator| D.
     E
         The |Operator| E.
+    transfer_function
+        The transfer function.
     """
 
     def __init__(self, A, Ad, tau, B, C, D=None, E=None, cont_time=True,
@@ -2251,12 +1699,26 @@ class LinearDelayModel(InputStateOutputModel):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        super().__init__(B.source.dim, A.source, C.range.dim, cont_time=cont_time,
-                         error_estimator=error_estimator, visualizer=visualizer, name=name)
-
+        super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
-        self.q = len(Ad)
         self.solution_space = A.source
+        self.dim_output = C.range.dim
+        self.q = len(Ad)
+
+        K = lambda s: LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
+        B = lambda s: self.B
+        C = lambda s: self.C
+        D = lambda s: self.D
+        dK = lambda s: LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
+        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
+        dC = lambda s: ZeroOperator(self.C.range, self.C.source)
+        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
+        parameters = Parameters.of(self.A, self.Ad,  self.B, self.C, self.D, self.E)
+
+        self.transfer_function = FactorizedTransferFunction(
+            self.dim_input, self.dim_output,
+            K, B, C, D, dK, dB, dC, dD,
+            parameters=parameters, cont_time=cont_time, name=self.name + '_transfer_function')
 
     def __str__(self):
         return (
@@ -2390,114 +1852,8 @@ class LinearDelayModel(InputStateOutputModel):
         else:
             return NotImplemented
 
-    def eval_tf(self, s, mu=None):
-        r"""Evaluate the transfer function.
 
-        The transfer function at :math:`s` is
-
-        .. math::
-            C \left(s E - A
-                - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B
-            + D.
-
-        .. note::
-            Assumes that the number of inputs and outputs is much smaller than the order of the
-            system.
-
-        Parameters
-        ----------
-        s
-            Complex number.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        tfs
-            Transfer function evaluated at the complex number `s`, |NumPy array| of shape
-            `(self.dim_output, self.dim_input)`.
-        """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        A = self.A
-        Ad = self.Ad
-        B = self.B
-        C = self.C
-        D = self.D
-        E = self.E
-
-        middle = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
-        if self.dim_input <= self.dim_output:
-            tfs = C.apply(middle.apply_inverse(B.as_range_array(mu=mu),
-                                               mu=mu),
-                          mu=mu).to_numpy().T
-        else:
-            tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array(mu=mu),
-                                                               mu=mu),
-                                  mu=mu).to_numpy().conj()
-        if not isinstance(D, ZeroOperator):
-            tfs += to_matrix(D, format='dense')
-        return tfs
-
-    def eval_dtf(self, s, mu=None):
-        r"""Evaluate the derivative of the transfer function.
-
-        The derivative of the transfer function at :math:`s` is
-
-        .. math::
-            -C \left(s E - A
-                    - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1}
-                \left(E
-                    + \sum_{i = 1}^q{\tau_i e^{-\tau_i s} A_i}\right)
-                \left(s E - A
-                    - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B.
-
-        .. note::
-            Assumes that the number of inputs and outputs is much smaller than the order of the
-            system.
-
-        Parameters
-        ----------
-        s
-            Complex number.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        dtfs
-            Derivative of transfer function evaluated at the complex number `s`, |NumPy array| of
-            shape `(self.dim_output, self.dim_input)`.
-        """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        A = self.A
-        Ad = self.Ad
-        B = self.B
-        C = self.C
-        E = self.E
-
-        left_and_right = LincombOperator((E, A) + Ad,
-                                         (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau)).assemble(mu=mu)
-        middle = LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
-        if self.dim_input <= self.dim_output:
-            dtfs = -C.apply(
-                left_and_right.apply_inverse(
-                    middle.apply(left_and_right.apply_inverse(B.as_range_array(mu=mu)),
-                                 mu=mu)),
-                mu=mu).to_numpy().T
-        else:
-            dtfs = -B.apply_adjoint(
-                left_and_right.apply_inverse_adjoint(
-                    middle.apply_adjoint(left_and_right.apply_inverse_adjoint(C.as_source_array(mu=mu)),
-                                         mu=mu)),
-                mu=mu).to_numpy().conj()
-        return dtfs
-
-
-class LinearStochasticModel(InputStateOutputModel):
+class LinearStochasticModel(Model):
     r"""Class for linear stochastic systems.
 
     This class describes input-state-output systems given by
@@ -2596,12 +1952,10 @@ class LinearStochasticModel(InputStateOutputModel):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        assert cont_time in (True, False)
-
-        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
-                         error_estimator=error_estimator, visualizer=visualizer, name=name)
-
+        super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
+        self.solution_space = A.source
+        self.dim_output = C.range.dim
         self.q = len(As)
 
     def __str__(self):
@@ -2618,7 +1972,7 @@ class LinearStochasticModel(InputStateOutputModel):
         )
 
 
-class BilinearModel(InputStateOutputModel):
+class BilinearModel(Model):
     r"""Class for bilinear systems.
 
     This class describes input-output systems given by
@@ -2715,12 +2069,10 @@ class BilinearModel(InputStateOutputModel):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        assert cont_time in (True, False)
-
-        super().__init__(B.source, A.source, C.range, cont_time=cont_time,
-                         error_estimator=error_estimator, visualizer=visualizer, name=name)
-
+        super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
+        self.solution_space = A.source
+        self.dim_output = C.range.dim
         self.linear = False
 
     def __str__(self):

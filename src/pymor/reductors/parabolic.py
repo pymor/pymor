@@ -4,11 +4,13 @@
 
 import numpy as np
 
+from pymor.algorithms.image import estimate_image
+from pymor.algorithms.projection import project
+from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.core.base import ImmutableObject
+from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import InstationaryRBReductor
 from pymor.reductors.residual import ResidualReductor, ImplicitEulerResidualReductor
-from pymor.operators.constructions import IdentityOperator
-from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 
 
 class ParabolicRBReductor(InstationaryRBReductor):
@@ -83,10 +85,17 @@ class ParabolicRBReductor(InstationaryRBReductor):
         residual = self.residual_reductor.reduce()
         initial_residual = self.initial_residual_reductor.reduce()
 
-        error_estimator = ParabolicRBEstimator(residual, self.residual_reductor.residual_range_dims,
-                                               initial_residual, self.initial_residual_reductor.residual_range_dims,
-                                               self.coercivity_estimator)
-        return error_estimator
+        if self.fom.output_functional.linear:
+            output_adjoint = self.fom.output_functional.H
+            output_adjoint_riesz_range = estimate_image(vectors=(output_adjoint,), orthonormalize=True,
+                                                        product=self.products['RB'], riesz_representatives=True)
+            projected_output_adjoint = project(output_adjoint, output_adjoint_riesz_range, None)
+        else:
+            projected_output_adjoint = None
+
+        return ParabolicRBEstimator(residual, self.residual_reductor.residual_range_dims, initial_residual,
+                                    self.initial_residual_reductor.residual_range_dims, self.coercivity_estimator,
+                                    projected_output_adjoint)
 
     def assemble_error_estimator_for_subbasis(self, dims):
         return self._last_rom.error_estimator.restricted_to_subbasis(dims['RB'], m=self._last_rom)
@@ -99,7 +108,7 @@ class ParabolicRBEstimator(ImmutableObject):
     """
 
     def __init__(self, residual, residual_range_dims, initial_residual, initial_residual_range_dims,
-                 coercivity_estimator):
+                 coercivity_estimator, projected_output_adjoint=None):
         self.__auto_init(locals())
 
     def estimate_error(self, U, mu, m, return_error_sequence=False):
@@ -121,6 +130,18 @@ class ParabolicRBEstimator(ImmutableObject):
 
         return est if return_error_sequence else est[-1]
 
+    def estimate_output_error(self, U, mu, m, return_error_sequence=False, return_vector=False):
+        if self.projected_output_adjoint is None:
+            raise NotImplementedError
+        estimate = self.estimate_error(U, mu, m, return_error_sequence=return_error_sequence)
+        # scale with dual norm of the output functional
+        output_functional_norms = self.projected_output_adjoint.as_range_array(mu).norm()
+        errs = (estimate * output_functional_norms[:, np.newaxis]).T
+        if return_vector:
+            return errs
+        else:
+            return np.linalg.norm(errs, axis=1)
+
     def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims and self.initial_residual_range_dims:
             residual_range_dims = self.residual_range_dims[:dim + 1]
@@ -129,9 +150,9 @@ class ParabolicRBEstimator(ImmutableObject):
             initial_residual = self.initial_residual.projected_to_subbasis(initial_residual_range_dims[-1], dim)
             return ParabolicRBEstimator(residual, residual_range_dims,
                                         initial_residual, initial_residual_range_dims,
-                                        self.coercivity_estimator)
+                                        self.coercivity_estimator, self.projected_output_adjoint)
         else:
             self.logger.warning('Cannot efficiently reduce to subbasis')
             return ParabolicRBEstimator(self.residual.projected_to_subbasis(None, dim), None,
                                         self.initial_residual.projected_to_subbasis(None, dim), None,
-                                        self.coercivity_estimator)
+                                        self.coercivity_estimator, self.projected_output_adjoint)

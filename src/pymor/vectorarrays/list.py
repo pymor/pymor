@@ -353,9 +353,13 @@ class ListVectorArray(VectorArray):
     The associated |VectorSpace| is a subclass of
     :class:`ListVectorSpace`.
 
-    For an example, see :class:`NumpyVector`, :class:`NumpyListVectorSpace`
-    or :class:`~pymor.bindings.fenics.FenicsVector`,
-    :class:`~pymor.bindings.fenics.FenicsVectorSpace`.
+    For an example, see :class:`NumpyVector` and :class:`NumpyListVectorSpace`,
+    :class:`~pymor.bindings.fenics.FenicsVector` and
+    :class:`~pymor.bindings.fenics.FenicsVectorSpace`,
+    :class:`~pymor.bindings.dunegdt.DuneXTVector` and
+    :class:`~pymor.bindings.dunegdt.DuneXTVectorSpace`,
+    :class:`~pymor.bindings.ngsolve.NGSolveVector` and
+    :class:`~pymor.bindings.ngsolve.NGSolveVectorSpace`.
     """
 
     _NONE = ()
@@ -381,6 +385,7 @@ class ListVectorArray(VectorArray):
     def __getitem__(self, ind):
         if isinstance(ind, Number) and (ind >= len(self) or ind < -len(self)):
             raise IndexError('VectorArray index out of range')
+        assert self.check_ind(ind)
         return ListVectorArrayView(self, ind)
 
     def __delitem__(self, ind):

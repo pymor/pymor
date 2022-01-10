@@ -178,7 +178,7 @@ class StationaryRBReductor(ProjectionBasedReductor):
             'operator':          project(fom.operator, RB, RB),
             'rhs':               project(fom.rhs, RB, None),
             'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
-            'output_functional': project(fom.output_functional, None, RB) if fom.output_functional else None
+            'output_functional': project(fom.output_functional, None, RB)
         }
         return projected_operators
 
@@ -189,8 +189,7 @@ class StationaryRBReductor(ProjectionBasedReductor):
             'operator':          project_to_subbasis(rom.operator, dim, dim),
             'rhs':               project_to_subbasis(rom.rhs, dim, None),
             'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
-            'output_functional': (project_to_subbasis(rom.output_functional, None, dim)
-                                  if rom.output_functional else None)
+            'output_functional': project_to_subbasis(rom.output_functional, None, dim)
         }
         return projected_operators
 
@@ -256,7 +255,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
             'rhs':               project(fom.rhs, RB, None),
             'initial_data':      projected_initial_data,
             'products':          {k: project(v, RB, RB) for k, v in fom.products.items()},
-            'output_functional': project(fom.output_functional, None, RB) if fom.output_functional else None
+            'output_functional': project(fom.output_functional, None, RB)
         }
 
         return projected_operators
@@ -283,8 +282,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
             'rhs':               project_to_subbasis(rom.rhs, dim, None),
             'initial_data':      projected_initial_data,
             'products':          {k: project_to_subbasis(v, dim, dim) for k, v in rom.products.items()},
-            'output_functional': (project_to_subbasis(rom.output_functional, None, dim)
-                                  if rom.output_functional else None)
+            'output_functional': project_to_subbasis(rom.output_functional, None, dim)
         }
         return projected_operators
 

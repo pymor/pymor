@@ -9,6 +9,7 @@ fi
 export PYTHONPATH_PRE=${PYTHONPATH}
 export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
 export PATH=~/.local/bin:${PATH}
+export PYBIND11_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_path('purelib'))")
 
 export PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
@@ -19,9 +20,9 @@ set -eux
 export PIP_CONFIG_FILE=/usr/local/share/ci.pip.conf
 
 # make sure image correct packages are baked into the image
-python src/pymor/scripts/check_reqs.py requirements.txt
-python src/pymor/scripts/check_reqs.py requirements-ci.txt
-python src/pymor/scripts/check_reqs.py requirements-optional.txt
+check_reqs requirements.txt
+check_reqs requirements-ci.txt
+check_reqs requirements-optional.txt
 
 #allow xdist to work by fixing parametrization order
 export PYTHONHASHSEED=0
@@ -35,3 +36,5 @@ PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')
 COMMON_PYTEST_OPTS="--junitxml=test_results_${PYMOR_VERSION}.xml \
   --cov-report= --cov --cov-config=setup.cfg --cov-context=test \
   --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE} ${PYMOR_PYTEST_EXTRA}"
+
+pytest src/pymortests/docker_ci_smoketest.py

@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.1)
 
 project(minimal-cpp-demo)
 
-find_package(pybind11 CONFIG REQUIRED)
+find_package(pybind11 CONFIG REQUIRED HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
+  $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
 message(STATUS "Found pybind11 v${pybind11_VERSION}: ${pybind11_INCLUDE_DIRS}")
 
 # Create an extension module

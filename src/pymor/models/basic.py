@@ -56,23 +56,25 @@ class StationaryModel(Model):
         Name of the model.
     """
 
+    _compute_allowed_kwargs = frozenset({'use_adjoint'})
+
     def __init__(self, operator, rhs, output_functional=None, products=None,
                  error_estimator=None, visualizer=None, name=None):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
             rhs = VectorOperator(rhs, name='rhs')
+        output_functional = output_functional or ZeroOperator(NumpyVectorSpace(0), operator.source)
 
         assert rhs.range == operator.range and rhs.source.is_scalar and rhs.linear
-        assert output_functional is None or output_functional.source == operator.source
+        assert output_functional.source == operator.source
 
         super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
         self.__auto_init(locals())
         self.solution_space = operator.source
-        self.linear = operator.linear and (output_functional is None or output_functional.linear)
-        if output_functional is not None:
-            self.dim_output = output_functional.range.dim
+        self.linear = operator.linear and output_functional.linear
+        self.dim_output = output_functional.range.dim
 
     def __str__(self):
         return (
@@ -91,8 +93,6 @@ class StationaryModel(Model):
         rhs_d_mu = self.rhs.d_mu(parameter, index).as_range_array(mu)
         rhs = rhs_d_mu - lhs_d_mu
         return self.operator.jacobian(solution, mu=mu).apply_inverse(rhs)
-
-    _compute_allowed_kwargs = frozenset({'use_adjoint'})
 
     def _compute_output_d_mu(self, solution, mu, return_array=False, use_adjoint=None):
         """Compute the gradient of the output functional  w.r.t. the parameters.
@@ -121,7 +121,6 @@ class StationaryModel(Model):
         if not use_adjoint:
             return super()._compute_output_d_mu(solution, mu, return_array)
         else:
-            assert self.output_functional is not None
             assert self.operator.linear
             assert self.output_functional.linear
             dual_solutions = self.operator.range.empty()
@@ -130,17 +129,18 @@ class StationaryModel(Model):
                 dual_solutions.append(dual_problem.solve(mu))
             gradients = [] if return_array else {}
             for (parameter, size) in self.parameters.items():
-                array = np.empty(shape=(size, self.output_functional.range.dim))
+                result = []
                 for index in range(size):
                     output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution,
                                                                                              mu=mu).to_numpy()[0]
                     lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu)[:, 0]
                     rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:, 0]
-                    array[index] = output_partial_dmu + rhs_d_mu - lhs_d_mu
+                    result.append(output_partial_dmu + rhs_d_mu - lhs_d_mu)
+                result = np.array(result)
                 if return_array:
-                    gradients.extend(array)
+                    gradients.extend(result)
                 else:
-                    gradients[parameter] = array
+                    gradients[parameter] = result
         if return_array:
             return np.array(gradients)
         else:
@@ -204,12 +204,12 @@ class StationaryModel(Model):
                                  + ConstantOperator(affine_shift, self.solution_space))
             new_rhs = self.rhs
 
-        if self.output_functional is not None:
+        if not isinstance(self.output_functional, ZeroOperator):
             new_output_functional = \
                 self.output_functional @ (IdentityOperator(self.solution_space)
                                           + ConstantOperator(affine_shift, self.solution_space))
         else:
-            new_output_functional = None
+            new_output_functional = self.output_functional
 
         return self.with_(operator=new_operator, rhs=new_rhs, output_functional=new_output_functional,
                           error_estimator=None)
@@ -270,6 +270,8 @@ class InstationaryModel(Model):
         Name of the model.
     """
 
+    _compute_allowed_kwargs = frozenset({'return_error_sequence'})
+
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None,
                  output_functional=None, products=None, error_estimator=None, visualizer=None, name=None):
 
@@ -281,22 +283,29 @@ class InstationaryModel(Model):
             initial_data = VectorOperator(initial_data, name='initial_data')
         mass = mass or IdentityOperator(operator.source)
         rhs = rhs or ZeroOperator(operator.source, NumpyVectorSpace(1))
+        output_functional = output_functional or ZeroOperator(NumpyVectorSpace(0), operator.source)
 
         assert isinstance(time_stepper, TimeStepper)
         assert initial_data.source.is_scalar
         assert operator.source == initial_data.range
         assert rhs.linear and rhs.range == operator.range and rhs.source.is_scalar
         assert mass.linear and mass.source == mass.range == operator.source
-        assert output_functional is None or output_functional.source == operator.source
+        assert output_functional.source == operator.source
 
-        super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
+        try:
+            dim_input = [op.parameters['input']
+                         for op in [operator, rhs, output_functional] if 'input' in op.parameters].pop()
+        except IndexError:
+            dim_input = 0
 
-        self.parameters_internal = {'t': 1}
+        super().__init__(dim_input=dim_input, products=products, error_estimator=error_estimator,
+                         visualizer=visualizer, name=name)
+
+        self.parameters_internal = dict(self.parameters_internal, t=1)
         self.__auto_init(locals())
         self.solution_space = operator.source
         self.linear = operator.linear and (output_functional is None or output_functional.linear)
-        if output_functional is not None:
-            self.dim_output = output_functional.range.dim
+        self.dim_output = output_functional.range.dim
 
     def __str__(self):
         return (
@@ -305,6 +314,7 @@ class InstationaryModel(Model):
             f'    {"linear" if self.linear else "non-linear"}\n'
             f'    T: {self.T}\n'
             f'    solution_space:  {self.solution_space}\n'
+            f'    dim_input:       {self.dim_input}\n'
             f'    dim_output:      {self.dim_output}\n'
         )
 
@@ -328,8 +338,6 @@ class InstationaryModel(Model):
             None                   -> D
             self.mass              -> E
         """
-        if self.output_functional is None:
-            raise ValueError('No output defined.')
         A = - self.operator
         B = self.rhs
         C = self.output_functional

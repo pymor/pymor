@@ -43,15 +43,19 @@ def _get_dunegdt_version():
     try:
         version = dune.gdt.__version__
         if parse(version) < parse('2021.1.2') or parse(version) >= parse('2021.2'):
-            warnings.warn(f'dune-gdt bindings have been tested for version 2021.1.2 (installed: {dune.gdt.__version__}).')
+            warnings.warn('dune-gdt bindings have been tested for version 2021.1.x (x >= 2) '
+                          f'(installed: {dune.gdt.__version__}).')
     except AttributeError:
-        warnings.warn(f'dune-gdt bindings have been tested for version 2021.1.2 (installed: unknown older than 2021.1.2).')
+        warnings.warn('dune-gdt bindings have been tested for version 2021.1.x (x >= 2) '
+                      '(installed: unknown older than 2021.1.2).')
     try:
         xt_version = dune.xt.__version__
         if parse(xt_version) < parse('2021.1.2') or parse(xt_version) >= parse('2021.2'):
-            warnings.warn(f'dune-gdt bindings have been tested for dune-xt 2021.1.2 (installed: {dune.xt.__version__}).')
+            warnings.warn('dune-gdt bindings have been tested for dune-xt 2021.1.x (x >= 2) '
+                          f'(installed: {dune.xt.__version__}).')
     except AttributeError:
-        warnings.warn(f'dune-gdt bindings have been tested for dune-xt version 2021.1.2 (installed: unknown older than 2021.1.2).')
+        warnings.warn('dune-gdt bindings have been tested for dune-xt version 2021.1.x (x >= 2) '
+                      '(installed: unknown older than 2021.1.2).')
     return version
 
 
@@ -125,7 +129,7 @@ def is_nbconvert():
 
 
 _PACKAGES = {
-    'DEALII': lambda: import_module('pydealii'),
+    'DEALII': lambda: import_module('pymor_dealii'),
     'DUNEGDT': _get_dunegdt_version,
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
@@ -142,6 +146,7 @@ _PACKAGES = {
     'PYTHREEJS': lambda: import_module('pythreejs._version').__version__,
     'QT': _get_qt_version,
     'QTOPENGL': lambda: bool(_get_qt_version() and import_module('qtpy.QtOpenGL')),
+    'SCIKIT_FEM': lambda: import_module('skfem').__version__,
     'SCIPY': lambda: import_module('scipy').__version__,
     'SCIPY_LSMR': lambda: hasattr(import_module('scipy.sparse.linalg'), 'lsmr'),
     'SLYCOT': lambda: _get_slycot_version(),
@@ -202,7 +207,7 @@ class Config:
         info = f'''
 pyMOR Version {self.version}
 
-Python: {self.PYTHON_VERSION}
+Python {self.PYTHON_VERSION} on {platform.platform()}
 
 External Packages
 {separator}
