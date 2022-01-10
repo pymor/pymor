@@ -429,46 +429,39 @@ class ExplicitEulerIterator(SingleStepTimeStepperIterator):
         # use the ones from base, these are checked and converted in super().__init__()
         A, F, M, mu = self.operator, self.rhs, self.mass, self.mu
 
-        # prepare the step function U_np1 = M^{-1}(M U_n + dt F - dt A U_n)
-        if not _depends_on_time(M, mu):
-            M = M.assemble(mu)
+        # some pre-assembly
+        if isinstance(F, Operator):
+            assert F.source.dim == 1
+            assert F.range == A.range
+            self.F_time_dep = _depends_on_time(F, mu)
+            if not self.F_time_dep:
+                self.F_ass = F.as_vector(mu)
+        elif isinstance(F, VectorArray):
+            assert len(F) == 1
+            assert F in A.range
+            self.F_time_dep = False
+            self.F_ass = F
+
         if not _depends_on_time(A, mu):
-            A = A.assemble(mu)
+            self.operator = A.assemble(mu)
 
-        if isinstance(F, ZeroOperator):
-            if isinstance(M, IdentityOperator):
-                def step_function(U_n, t_n):
-                    t_np1 = t_n + dt
-                    mu_t = mu.with_(t=t_n)
-                    return U_n - dt*A.apply(U_n, mu=mu_t), t_np1
-            else:
-                def step_function(U_n, t_n):
-                    t_np1 = t_n + dt
-                    mu_t = mu.with_(t=t_n)
-                    return (
-                        M.apply_inverse(M.apply(U_n, mu=mu_t) - dt*A.apply(U_n, mu=mu_t), mu=mu_t, initial_guess=U_n),
-                        t_np1)
-        else:
-            if not _depends_on_time(F, mu):
-                F = F.assemble(mu)
-            if isinstance(M, IdentityOperator):
-                def step_function(U_n, t_n):
-                    t_np1 = t_n + dt
-                    mu_t = mu.with_(t=t_n)
-                    return U_n + dt*(F.as_vector(mu_t) - A.apply(U_n, mu=mu_t)), t_np1
-            else:
-                def step_function(U_n, t_n):
-                    t_np1 = t_n + dt
-                    mu_t = mu.with_(t=t_n)
-                    return (
-                        M.apply_inverse(M.apply(U_n, mu=mu_t) + dt(F.as_vector(mu_t) - A.apply(U_n, mu=mu_t)),
-                                        mu=mu_t, initial_guess=U_n),
-                        t_np1)
+        assert isinstance(M, IdentityOperator)
 
-        self.step_function = step_function
 
     def _step_function(self, U_n, t_n):
-        return self.step_function(U_n, t_n)
+        A, F, M, mu, dt = self.operator, self.rhs, self.mass, self.mu, self.dt
+        t_np1 = t_n + dt
+        mu_t = mu.with_(t=t_n)
+        U_np1 = U_n.copy()
+        if isinstance(F, ZeroOperator):
+            U_np1.axpy(-dt, A.apply(U_n, mu=mu_t))
+        else:
+            if self.F_time_dep:
+                F_ass = F.as_vector(mu=mu_t)
+            else:
+                F_ass = self.F_ass
+            U_np1.axpy(dt, F_ass - A.apply(U_n, mu=mu_t))
+        return U_np1, t_np1
 
 
 class ExplicitEulerTimeStepper(TimeStepper):
