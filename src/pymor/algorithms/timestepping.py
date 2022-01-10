@@ -439,12 +439,12 @@ class ExplicitEulerIterator(SingleStepTimeStepperIterator):
             if isinstance(M, IdentityOperator):
                 def step_function(U_n, t_n):
                     t_np1 = t_n + dt
-                    mu_t = mu.with_(t=t_np1)
+                    mu_t = mu.with_(t=t_n)
                     return U_n - dt*A.apply(U_n, mu=mu_t), t_np1
             else:
                 def step_function(U_n, t_n):
                     t_np1 = t_n + dt
-                    mu_t = mu.with_(t=t_np1)
+                    mu_t = mu.with_(t=t_n)
                     return (
                         M.apply_inverse(M.apply(U_n, mu=mu_t) - dt*A.apply(U_n, mu=mu_t), mu=mu_t, initial_guess=U_n),
                         t_np1)
@@ -454,12 +454,12 @@ class ExplicitEulerIterator(SingleStepTimeStepperIterator):
             if isinstance(M, IdentityOperator):
                 def step_function(U_n, t_n):
                     t_np1 = t_n + dt
-                    mu_t = mu.with_(t=t_np1)
+                    mu_t = mu.with_(t=t_n)
                     return U_n + dt*(F.as_vector(mu_t) - A.apply(U_n, mu=mu_t)), t_np1
             else:
                 def step_function(U_n, t_n):
                     t_np1 = t_n + dt
-                    mu_t = mu.with_(t=t_np1)
+                    mu_t = mu.with_(t=t_n)
                     return (
                         M.apply_inverse(M.apply(U_n, mu=mu_t) + dt(F.as_vector(mu_t) - A.apply(U_n, mu=mu_t)),
                                         mu=mu_t, initial_guess=U_n),
@@ -619,7 +619,7 @@ class ExplicitRungeKuttaTimeStepper(TimeStepper):
             assert method in self.available_RK_methods.keys()
             self.butcher_tableau = self.available_RK_methods[method]
         else:
-            raise RuntimeError('Arbitrary butcher arrays not implemented yet!')
+            raise RuntimeError('Arbitrary butcher tableaus not implemented yet!')
 
         assert isinstance(nt, Number)
         assert nt > 0
