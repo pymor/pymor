@@ -22,7 +22,6 @@ from pymor.core.logger import getLogger
 from pymor.core.exceptions import QtMissing
 from pymor.core.pickle import dump
 from pymor.discretizers.builtin.grids.vtkio import write_vtk
-from pymor.discretizers.builtin.gui.gl import GLPatchWidget, ColorBarWidget
 from pymor.discretizers.builtin.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -346,6 +345,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
             if backend == 'gl':
+                from pymor.discretizers.builtin.gui.gl import GLPatchWidget, ColorBarWidget
                 widget = GLPatchWidget
                 cbar_widget = ColorBarWidget
             else:
