@@ -186,6 +186,45 @@ if config.HAVE_FENICS:
             self.source = FenicsVectorSpace(source_space)
             self.range = FenicsVectorSpace(range_space)
 
+        def _solver_options(self, adjoint=False):
+            if adjoint:
+                options = self.solver_options.get('inverse_adjoint') if self.solver_options else None
+                if options is None:
+                    options = self.solver_options.get('inverse') if self.solver_options else None
+            else:
+                options = self.solver_options.get('inverse') if self.solver_options else None
+            return options or _solver_options()
+
+        def _create_solver(self, adjoint=False):
+            options = self._solver_options(adjoint)
+            if adjoint:
+                try:
+                    matrix = self._matrix_transpose
+                except AttributeError:
+                    raise RuntimeError('_create_solver called before _matrix_transpose has been initialized.')
+            else:
+                matrix = self.matrix
+            method = options.get('solver')
+            preconditioner = options.get('preconditioner')
+            if method == 'lu' or method in df.lu_solver_methods():
+                method = 'default' if method == 'lu' else method
+                solver = df.LUSolver(matrix, method)
+            else:
+                solver = df.KrylovSolver(matrix, method, preconditioner)
+            return solver
+
+        def _apply_inverse(self, r, v, adjoint=False):
+            try:
+                solver = self._adjoint_solver if adjoint else self._solver
+            except AttributeError:
+                solver = self._create_solver(adjoint)
+            solver.solve(r, v)
+            if _solver_options()['keep_solver']:
+                if adjoint:
+                    self._adjoint_solver = solver
+                else:
+                    self._solver = solver
+
         def _real_apply_one_vector(self, u, mu=None, prepare_data=None):
             r = self.range.real_zero_vector()
             self.matrix.mult(u.impl, r.impl)
@@ -202,8 +241,7 @@ if config.HAVE_FENICS:
                 raise NotImplementedError
             r = (self.source.real_zero_vector() if initial_guess is None else
                  initial_guess.copy(deep=True))
-            options = self.solver_options.get('inverse') if self.solver_options else None
-            _apply_inverse(self.matrix, r.impl, v.impl, options)
+            self._apply_inverse(r.impl, v.impl)
             return r
 
         def _real_apply_inverse_adjoint_one_vector(self, u, mu=None, initial_guess=None,
@@ -212,7 +250,6 @@ if config.HAVE_FENICS:
                 raise NotImplementedError
             r = (self.range.real_zero_vector() if initial_guess is None else
                  initial_guess.copy(deep=True))
-            options = self.solver_options.get('inverse_adjoint') if self.solver_options else None
 
             # since dolfin does not have "apply_inverse_adjoint", we assume
             # PETSc is used as backend and transpose the matrix
@@ -221,7 +258,7 @@ if config.HAVE_FENICS:
                 mat = df.as_backend_type(self.matrix).mat()
                 mat_tr = df.as_backend_type(self._matrix_transpose).mat()
                 mat.transpose(mat_tr)
-            _apply_inverse(self._matrix_transpose, r.impl, u.impl, options)
+            self._apply_inverse(r.impl, u.impl, adjoint=True)
             return r
 
         def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
@@ -444,18 +481,10 @@ if config.HAVE_FENICS:
             JJ = self.op.jacobian(UU, mu=mu)
             return NumpyMatrixOperator(JJ.matrix.array()[self.restricted_range_dofs, :])
 
-    @defaults('solver', 'preconditioner')
+    @defaults('solver', 'preconditioner', 'keep_solver')
     def _solver_options(solver='mumps' if 'mumps' in df.linear_solver_methods() else 'default',
-                        preconditioner=None):
-        return {'solver': solver, 'preconditioner': preconditioner}
-
-    def _apply_inverse(matrix, r, v, options=None):
-        options = options or _solver_options()
-        solver = options.get('solver')
-        preconditioner = options.get('preconditioner')
-        # preconditioner argument may only be specified for iterative solvers:
-        options = (solver, preconditioner) if preconditioner else (solver,)
-        df.solve(matrix, r, v, *options)
+                        preconditioner=None, keep_solver=True):
+        return {'solver': solver, 'preconditioner': preconditioner, 'keep_solver': keep_solver}
 
 
 if config.HAVE_FENICS:
