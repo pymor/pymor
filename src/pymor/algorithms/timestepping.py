@@ -115,13 +115,13 @@ class TimeStepper(ImmutableObject):
             U = operator.source.empty(reserve=self.num_values or 0)
             t = []
             for U_n, t_n in iterator:
-                U.append(U_n, remove_from_other=False)  # True yields len(U) == 1
+                U.append(U_n, remove_from_other=True)
                 t.append(t_n)
             return U, t
         else:
             U = operator.source.empty(reserve=self.num_values or 0)
             for U_n in iterator:
-                U.append(U_n, remove_from_other=False)  # True yields len(U) == 1
+                U.append(U_n, remove_from_other=True)
             return U
 
 
@@ -240,11 +240,11 @@ class TimeStepperIterator(BasicObject):
             if floatcmp.float_cmp(t, t_n):
                 if not self.logging_disabled:
                     self.logger.debug(f't={self._next_interpolation_point}: -> (P1) returning U_n')
-                return U_n
+                return U_n.copy()
             elif floatcmp.float_cmp(t, t_np1):
                 if not self.logging_disabled:
                     self.logger.debug(f't={self._next_interpolation_point}: -> (P1) returning U_np1')
-                return U_np1
+                return U_np1.copy()
             else:
                 if not self.logging_disabled:
                     self.logger.debug(f't={self._next_interpolation_point}: -> (P1) computing intermediate value')
@@ -274,9 +274,9 @@ class TimeStepperIterator(BasicObject):
                 self.t = self.initial_time
                 self._next_interpolation_point += self._interpolation_points_increment
                 if self.return_times:
-                    return self.initial_data, self.initial_time
+                    return self.initial_data.copy(), self.initial_time
                 else:
-                    return self.initial_data
+                    return self.initial_data.copy()
             else:
                 # if we do not have enough data, take enough actual steps
                 while self._last_stepped_point < self._next_interpolation_point:
@@ -328,7 +328,7 @@ class SingleStepTimeStepperIterator(TimeStepperIterator):
             self.U_n = self.initial_data   # ... for _interpolate
             self.t_np1 = self.initial_time
             self.U_np1 = self.initial_data.copy()
-            return self.U_np1, self.t_np1
+            return self.U_np1.copy(), self.t_np1
         else:
             # this is the first actual step or a usual step
             self.t_n = self.t_np1
@@ -336,7 +336,7 @@ class SingleStepTimeStepperIterator(TimeStepperIterator):
             if not self.logging_disabled:
                 self.logger.debug(f't={self.t}: stepping (mu={self.mu}) ...')
             self.U_np1, self.t_np1 = self._step_function(self.U_n, self.t_n)
-            return self.U_np1, self.t_np1
+            return self.U_np1.copy(), self.t_np1
 
 
 class ImplicitEulerIterator(SingleStepTimeStepperIterator):
