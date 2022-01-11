@@ -10,8 +10,8 @@ and `FullyConnectedNN` do not appear in the documentation,
 see https://github.com/pymor/pymor/issues/1343.
 """
 
-from pymor.core.config import require_dependency
-require_dependency('TORCH')
+from pymor.core.config import config
+config.require('TORCH')
 
 
 import numpy as np

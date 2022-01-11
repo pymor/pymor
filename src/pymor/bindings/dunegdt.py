@@ -3,8 +3,8 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.config import require_dependency
-require_dependency('DUNEGDT')
+from pymor.core.config import config
+config.require('DUNEGDT')
 
 
 import numpy as np

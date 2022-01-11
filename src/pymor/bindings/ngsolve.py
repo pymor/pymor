@@ -3,8 +3,8 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 from pathlib import Path
 
-from pymor.core.config import require_dependency
-require_dependency('NGSOLVE')
+from pymor.core.config import config
+config.require('NGSOLVE')
 
 
 from pymor.core.defaults import defaults

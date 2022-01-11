@@ -11,10 +11,10 @@ intended to be used directly. Instead, use
 :class:`~pymor.discretizers.builtin.gui.qt.PatchVisualizer`.
 """
 
-from pymor.core.config import require_dependency
-require_dependency('QT')
-require_dependency('QTOPENGL')
-require_dependency('GL')
+from pymor.core.config import config
+config.require('QT')
+config.require('QTOPENGL')
+config.require('GL')
 
 import math as m
 

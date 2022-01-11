@@ -10,8 +10,8 @@ Due to an issue in autoapi, the classes `NeuralNetworkStatefreeOutputReductor`,
 see https://github.com/pymor/pymor/issues/1343.
 """
 
-from pymor.core.config import require_dependency
-require_dependency('TORCH')
+from pymor.core.config import config
+config.require('TORCH')
 
 
 from numbers import Number

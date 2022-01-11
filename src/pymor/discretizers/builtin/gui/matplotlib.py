@@ -8,9 +8,9 @@ This module provides widgets for displaying plots of
 scalar data assigned to one- and two-dimensional grids using
 :mod:`matplotlib`. These widgets are not intended to be used directly.
 """
-from pymor.core.config import require_dependency
-require_dependency('MATPLOTLIB')
-require_dependency('QT')
+from pymor.core.config import config
+config.require('MATPLOTLIB')
+config.require('QT')
 
 import numpy as np
 from qtpy.QtWidgets import QSizePolicy

@@ -8,8 +8,8 @@ This module provides a few methods and classes for visualizing data
 associated to grids. We use the `Qt <http://www.qt-project.org>`_ widget
 toolkit for the GUI.
 """
-from pymor.core.config import require_dependency
-require_dependency('QT')
+from pymor.core.config import config
+config.require('QT')
 
 import math as m
 from tempfile import NamedTemporaryFile
