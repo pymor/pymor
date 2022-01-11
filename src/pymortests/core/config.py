@@ -2,6 +2,7 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import pytest
 
 from pymor.core.config import config, _PACKAGES
 
@@ -22,3 +23,13 @@ def test_dir():
     for p in _PACKAGES:
         assert 'HAVE_' + p in d
         assert p + '_VERSION' in d
+
+
+def test_require_numpy():
+    config.require('numpy')
+    config.require('NUMPY')
+
+
+def test_require_fail_foo():
+    with pytest.raises(AttributeError):
+        config.require('FOO')
