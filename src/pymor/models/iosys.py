@@ -361,14 +361,13 @@ class LTIModel(Model):
         import scipy.io as spio
         mat_dict = spio.loadmat(file_name)
 
-        assert 'A' in mat_dict and 'B' in mat_dict and 'C' in mat_dict and 'dt' in mat_dict
+        assert 'A' in mat_dict and 'B' in mat_dict and 'C' in mat_dict
 
         A = mat_dict['A']
         B = mat_dict['B']
         C = mat_dict['C']
         D = mat_dict['D'] if 'D' in mat_dict else None
         E = mat_dict['E'] if 'E' in mat_dict else None
-        dt = mat_dict['dt'][0][0] if 'dt' in mat_dict else 0
 
         return cls.from_matrices(A, B, C, D, E, dt=dt,
                                  state_id=state_id, solver_options=solver_options,
@@ -384,7 +383,7 @@ class LTIModel(Model):
         """
         import scipy.io as spio
         A, B, C, D, E = self.to_matrices()
-        mat_dict = {'A': A, 'B': B, 'C': C, 'dt': self.dt}
+        mat_dict = {'A': A, 'B': B, 'C': C}
         if D is not None:
             mat_dict['D'] = D
         if E is not None:
