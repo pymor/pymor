@@ -428,6 +428,7 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network
+
         (make sure to increase the input dimension to account for the time).
         """
         # determine the numbers of neurons in the hidden layers
