@@ -8,16 +8,19 @@ import tempfile
 from contextlib import contextmanager
 
 from .matrices import load_matrix, save_matrix
-from pymor.core.config import config
-from ...core.exceptions import IOLibsMissing
+from pymor.tools.deprecated import Deprecated
 
-if config.HAVE_VTKIO:
-    from .vtk import read_vtkfile, write_vtk_collection
-else:
-    def read_vtkfile(*args, **kwargs):
-        raise IOLibsMissing()
 
-    write_vtk_collection = read_vtkfile
+@Deprecated('pymor.tools.io.vtk.read_vtkfile')
+def read_vtkfile(*args, **kwargs):
+    from .vtk import read_vtkfile
+    return read_vtkfile(*args, **kwargs)
+
+
+@Deprecated('pymor.tools.io.vtk.write_vtk_collection')
+def write_vtk_collection(*args, **kwargs):
+    from .vtk import write_vtk_collection
+    return write_vtk_collection(*args, **kwargs)
 
 
 @contextmanager

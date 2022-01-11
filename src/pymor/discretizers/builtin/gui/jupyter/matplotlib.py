@@ -6,7 +6,7 @@ from ipywidgets import widgets
 import matplotlib.pyplot as plt
 
 from pymor.core.config import config
-from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchAxes, Matplotlib1DAxes
+from pymor.discretizers.builtin.gui.matplotlib_base import MatplotlibPatchAxes, Matplotlib1DAxes
 from pymor.vectorarrays.interface import VectorArray
 
 

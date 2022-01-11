@@ -2,6 +2,10 @@
 # Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.core.config import config
+config.require('VTKIO')
+
+
 from pathlib import Path
 
 import meshio
@@ -10,7 +14,6 @@ from collections import OrderedDict
 from xmljson import BadgerFish
 from lxml import etree
 
-from pymor.core.config import config
 from pymor.core.exceptions import IOLibsMissing
 
 
