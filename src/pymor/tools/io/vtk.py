@@ -14,7 +14,6 @@ from collections import OrderedDict
 from xmljson import BadgerFish
 from lxml import etree
 
-from pymor.core.config import config
 from pymor.core.exceptions import IOLibsMissing
 
 

@@ -21,7 +21,6 @@ from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSli
                             QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
 from qtpy.QtCore import Qt, QTimer
 
-from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.core.pickle import dump
