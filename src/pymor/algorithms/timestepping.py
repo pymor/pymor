@@ -51,15 +51,26 @@ class TimeStepper(ImmutableObject):
     interpolation
         Type of temporal interpolation to be used. Currently implemented are: piecewise constant
         (P0) and piecewise linear (P1).
+
+    Attributes
+    ----------
+    num_values
+        Length of the solution trajectory if known a priori, otherwise zero.
     """
 
     IteratorType = None
     available_interpolations = ('P0', 'P1')
+    num_values = 0
 
     def __init__(self, num_values=None, interpolation='P1'):
-        if num_values:
-            assert (isinstance(num_values, Number) and num_values > 1 and int(num_values) == num_values)
-            num_values = int(num_values)
+        if num_values is None:
+            num_values = 0
+        assert (isinstance(num_values, Number) and int(num_values) == num_values)
+        num_values = int(num_values)
+        if num_values == 0:
+            self._disable_interpolation = True
+        else:
+            self._disable_interpolation = False
         assert interpolation in self.available_interpolations
         self.__auto_init(locals())
 
@@ -112,14 +123,14 @@ class TimeStepper(ImmutableObject):
         if return_iter:
             return iterator
         elif return_times:
-            U = operator.source.empty(reserve=self.num_values or 0)
+            U = operator.source.empty(reserve=self.num_values)
             t = []
             for U_n, t_n in iterator:
                 U.append(U_n, remove_from_other=True)
                 t.append(t_n)
             return U, t
         else:
-            U = operator.source.empty(reserve=self.num_values or 0)
+            U = operator.source.empty(reserve=self.num_values)
             for U_n in iterator:
                 U.append(U_n, remove_from_other=True)
             return U
@@ -188,7 +199,7 @@ class TimeStepperIterator(BasicObject):
         self.initial_data = initial_data.as_vector(self.mu.with_(t=initial_time))
 
         # prepare interpolation
-        if stepper.num_values:
+        if not stepper._disable_interpolation:
             self._interpolation_points_increment = (end_time - initial_time) / (stepper.num_values - 1)
             self._last_stepped_point = initial_time - 1
             self._next_interpolation_point = initial_time
@@ -265,7 +276,14 @@ class TimeStepperIterator(BasicObject):
         if floatcmp.almost_less(self.end_time, self.t):
             # this is the end
             raise StopIteration
-        elif self.stepper.num_values:
+        elif self.stepper._disable_interpolation:
+            # the trajectory is requested as is
+            U, self.t = self._step()
+            if self.return_times:
+                return U, self.t
+            else:
+                return U
+        else:
             # an interpolation of the trajectory is requested
             if self._last_stepped_point < self.initial_time:
                 # this is the start, take a step to have data and interpolation available next time,
@@ -292,13 +310,6 @@ class TimeStepperIterator(BasicObject):
                     return U_next, self.t
                 else:
                     return U_next
-        else:
-            # the trajectory is requested as is
-            U, self.t = self._step()
-            if self.return_times:
-                return U, self.t
-            else:
-                return U
 
     def __iter__(self):
         return self
@@ -412,6 +423,8 @@ class ImplicitEulerTimeStepper(TimeStepper):
 
     def __init__(self, nt, num_values=None, solver_options='operator', interpolation='P1'):
         super().__init__(num_values, interpolation)
+        if not num_values:
+            self.num_values = nt + 1
 
         assert isinstance(nt, Number)
         assert nt > 0
@@ -499,6 +512,8 @@ class ExplicitEulerTimeStepper(TimeStepper):
 
     def __init__(self, nt, num_values=None, interpolation='P1'):
         super().__init__(num_values, interpolation)
+        if not num_values:
+            self.num_values = nt + 1
 
         assert isinstance(nt, Number)
         assert nt > 0
@@ -613,6 +628,8 @@ class ExplicitRungeKuttaTimeStepper(TimeStepper):
 
     def __init__(self, method, nt, num_values=None, interpolation='P1'):
         super().__init__(num_values, interpolation)
+        if not num_values:
+            self.num_values = nt + 1
 
         assert isinstance(method, (tuple, str))
         if isinstance(method, str):
