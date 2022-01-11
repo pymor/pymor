@@ -52,8 +52,8 @@ class TransferFunction(CacheableObject, ParametricObject):
     cache_region = 'memory'
 
     def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, dt=0, name=None):
-        assert isinstance(dt, (int, float)) and dt >= 0
         dt = float(dt)
+        assert dt >= 0
 
         self.parameters_own = parameters
         self.__auto_init(locals())

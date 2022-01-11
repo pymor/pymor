@@ -122,8 +122,8 @@ class LTIModel(Model):
         assert E.source == E.range
         assert E.source == A.source
 
-        assert isinstance(dt, (int, float)) and dt >= 0
         dt = float(dt)
+        assert dt >= 0
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
@@ -1031,8 +1031,8 @@ class SecondOrderModel(Model):
         D = D or ZeroOperator(Cp.range, B.source)
         assert D.linear and D.source == B.source and D.range == Cp.range
 
-        assert isinstance(dt, (int, float)) and dt >= 0
         dt = float(dt)
+        assert dt >= 0
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
@@ -1708,8 +1708,8 @@ class LinearDelayModel(Model):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        assert isinstance(dt, (int, float)) and dt >= 0
         dt = float(dt)
+        assert dt >= 0
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
@@ -1965,8 +1965,8 @@ class LinearStochasticModel(Model):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        assert isinstance(dt, (int, float)) and dt >= 0
         dt = float(dt)
+        assert dt >= 0
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
@@ -2086,8 +2086,8 @@ class BilinearModel(Model):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        assert isinstance(dt, (int, float)) and dt >= 0
         dt = float(dt)
+        assert dt >= 0
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
