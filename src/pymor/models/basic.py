@@ -246,9 +246,6 @@ class InstationaryModel(Model):
     time_stepper
         The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
         to be used by :meth:`~pymor.models.interface.Model.solve`.
-    num_values
-        The number of returned vectors of the solution trajectory. If `None`, each
-        intermediate vector that is calculated is returned.
     output_functional
         |Operator| mapping a given solution to the model output. In many applications,
         this will be a |Functional|, i.e. an |Operator| mapping to scalars.
@@ -275,7 +272,7 @@ class InstationaryModel(Model):
 
     _compute_allowed_kwargs = frozenset({'return_error_sequence'})
 
-    def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
+    def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None,
                  output_functional=None, products=None, error_estimator=None, visualizer=None, name=None):
 
         if isinstance(rhs, VectorArray):
@@ -325,14 +322,9 @@ class InstationaryModel(Model):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
 
     def _compute_solution(self, mu=None, **kwargs):
-        mu = mu.with_(t=0.)
-        U0 = self.initial_data.as_range_array(mu)
-        U = self.time_stepper.solve(operator=self.operator,
-                                    rhs=None if isinstance(self.rhs, ZeroOperator) else self.rhs,
-                                    initial_data=U0,
-                                    mass=None if isinstance(self.mass, IdentityOperator) else self.mass,
-                                    initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
-        return U
+        return self.time_stepper.solve(
+                initial_time=0., end_time=self.T, initial_data=self.initial_data, operator=self.operator, rhs=self.rhs,
+                mass=self.mass, mu=mu, return_iter=False, return_times=False)
 
     def to_lti(self):
         """Convert model to |LTIModel|.

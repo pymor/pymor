@@ -1279,9 +1279,9 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
 
     if time_stepper is None:
         if p.stationary_part.diffusion is None:
-            time_stepper = ExplicitEulerTimeStepper(nt=nt)
+            time_stepper = ExplicitEulerTimeStepper(nt=nt, num_values=num_values)
         else:
-            time_stepper = ImplicitEulerTimeStepper(nt=nt)
+            time_stepper = ImplicitEulerTimeStepper(nt=nt, num_values=num_values)
 
     mass = m.l2_0_product
 
@@ -1290,7 +1290,7 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
                           output_functional=m.output_functional,
                           time_stepper=time_stepper,
                           visualizer=m.visualizer,
-                          num_values=num_values, name=f'{p.name}_CG')
+                          name=f'{p.name}_CG')
 
     if preassemble:
         data['unassembled_m'] = m

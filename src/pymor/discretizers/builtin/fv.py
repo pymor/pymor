@@ -1177,9 +1177,9 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
 
     if time_stepper is None:
         if p.stationary_part.diffusion is None:
-            time_stepper = ExplicitEulerTimeStepper(nt=nt)
+            time_stepper = ExplicitEulerTimeStepper(nt=nt, num_values=num_values)
         else:
-            time_stepper = ImplicitEulerTimeStepper(nt=nt)
+            time_stepper = ImplicitEulerTimeStepper(nt=nt, num_values=num_values)
 
     rhs = None if isinstance(m.rhs, ZeroOperator) else m.rhs
 
@@ -1188,7 +1188,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
                           output_functional=m.output_functional,
                           time_stepper=time_stepper,
                           visualizer=m.visualizer,
-                          num_values=num_values, name=f'{p.name}_FV')
+                          name=f'{p.name}_FV')
 
     if preassemble:
         data['unassembled_m'] = m

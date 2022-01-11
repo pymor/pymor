@@ -288,7 +288,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
 
     def build_rom(self, projected_operators, error_estimator):
         fom = self.fom
-        return InstationaryModel(T=fom.T, time_stepper=fom.time_stepper, num_values=fom.num_values,
+        return InstationaryModel(T=fom.T, time_stepper=fom.time_stepper,
                                  error_estimator=error_estimator, **projected_operators)
 
 

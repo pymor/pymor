@@ -326,7 +326,7 @@ class Model(CacheableObject, ParametricObject):
             can be used to instatiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
         kwargs
-            Further keyword arguments to select further quantities that sould
+            Further keyword arguments to select further quantities that should
             be returned or to customize how the values are computed.
 
         Returns
