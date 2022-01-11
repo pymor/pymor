@@ -473,8 +473,11 @@ class RestrictedFenicsOperator(Operator):
         return NumpyMatrixOperator(JJ.matrix.array()[self.restricted_range_dofs, :])
 
 
+_DEFAULT_SOVLER = 'mumps' if 'mumps' in df.linear_solver_methods() else 'default'
+
+
 @defaults('solver', 'preconditioner', 'keep_solver')
-def _solver_options(solver='mumps' if 'mumps' in df.linear_solver_methods() else 'default',
+def _solver_options(solver=_DEFAULT_SOVLER,
                     preconditioner=None, keep_solver=True):
     return {'solver': solver, 'preconditioner': preconditioner, 'keep_solver': keep_solver}
 
