@@ -64,8 +64,7 @@ class TransferFunction(CacheableObject, ParametricObject):
             f'    class: {self.__class__.__name__}\n'
             f'    number of inputs:  {self.dim_input}\n'
             f'    number of outputs: {self.dim_output}\n'
-            f'    {"continuous" if self.dt == 0 else "discrete"}-time\n'
-            f'{"" if self.dt == 0 else "    sampling-time:       " + "{0:.2e}".format(self.dt) + chr(10)}'
+            f'    {"continuous-time" if self.dt == 0 else f"discrete-time (dt={self.dt:.2e}s)"}\n'
         )
 
     @cached
