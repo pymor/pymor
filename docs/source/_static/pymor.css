@@ -1,13 +1,11 @@
 .md-typeset .md-typeset__table{
     display:block;
-    /* background-color: red; */
     margin-bottom:.5em;
     padding:0 .8rem
 }
 
 .md-typeset .admonition{
     overflow: hidden;
-    border-left: .2rem solid #ffd042;
 }
 
 .output.text_html {
@@ -122,15 +120,6 @@ html .md-typeset .admonition > :last-child, html .md-typeset details > :last-chi
     margin-top: .6rem !important;
 }
 
-.admonition-raises.admonition {
-    border-left: .2rem solid #ff7142;
-}
-
-.admonition-raises.admonition .admonition-title {
-    border-bottom: .05rem solid #ff7142;
-    background-color: #ffc6b3;
-}
-
 .py.class .admonition, .py.function .admonition {
     border-left: None;
 }
@@ -142,6 +131,15 @@ html .md-typeset .admonition > :last-child, html .md-typeset details > :last-chi
 .py.class > dd > .admonition.admonition-parameters .admonition-title {
     border-bottom: .05rem solid #ffd042;
     background-color: #ffecb3;
+}
+
+.admonition-raises.admonition {
+    border-left: .2rem solid #ff7142 !important;
+}
+
+.admonition-raises.admonition .admonition-title {
+    border-bottom: .05rem solid #ff7142;
+    background-color: #ffc6b3;
 }
 
 .py.method, .py.function {
