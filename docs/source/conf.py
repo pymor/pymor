@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import sys
@@ -83,7 +83,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'pyMOR'
-copyright = '2013-2021 pyMOR developers and contributors'
+copyright = 'pyMOR developers and contributors'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
