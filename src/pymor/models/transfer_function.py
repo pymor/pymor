@@ -131,6 +131,8 @@ class TransferFunction(CacheableObject, ParametricObject):
             Transfer function values at frequencies in `w`, |NumPy array| of shape
             `(len(w), self.dim_output, self.dim_input)`.
         """
+        if self.dt > 0 and not all(-np.pi <= wi <= np.pi for wi in w):
+            self.logger.warning('Some frequencies are not in the [-pi, pi] interval.')
         w = 1j * w if self.dt == 0 else np.exp(1j * w)
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
