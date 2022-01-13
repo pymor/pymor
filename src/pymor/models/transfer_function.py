@@ -33,7 +33,8 @@ class TransferFunction(CacheableObject, ParametricObject):
     parameters
         The |Parameters| of the transfer function.
     dt
-        `0` if the system is continuous-time, otherwise a positive number.
+        `0` if the system is continuous-time, otherwise a positive number that denotes the
+        sampling time (in seconds).
     name
         Name of the system.
 
@@ -441,7 +442,8 @@ class FactorizedTransferFunction(TransferFunction):
     parameters
         The |Parameters| of the transfer function.
     dt
-        `0` if the system is continuous-time, otherwise a positive number.
+        `0` if the system is continuous-time, otherwise a positive number that denotes the
+        sampling time (in seconds).
     name
         Name of the system.
     """

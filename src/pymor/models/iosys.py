@@ -64,7 +64,8 @@ class LTIModel(Model):
     E
         The |Operator| E or `None` (then E is assumed to be identity).
     dt
-        `0` if the system is continuous-time, otherwise a positive number.
+        `0` if the system is continuous-time, otherwise a positive number that denotes the
+        sampling time (in seconds).
     solver_options
         The solver options to use to solve the Lyapunov equations.
     error_estimator
@@ -178,7 +179,8 @@ class LTIModel(Model):
         E
             The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be identity).
         dt
-            `0` if the system is continuous-time, otherwise a positive number.
+            `0` if the system is continuous-time, otherwise a positive number that denotes the
+            sampling time (in seconds).
         state_id
             Id of the state space.
         solver_options
@@ -260,7 +262,8 @@ class LTIModel(Model):
         E_file
             `None` or the name of the file (with extension) containing E.
         dt
-            `0` if the system is continuous-time, otherwise a positive number.
+            `0` if the system is continuous-time, otherwise a positive number that denotes the
+            sampling time (in seconds).
         state_id
             Id of the state space.
         solver_options
@@ -336,7 +339,8 @@ class LTIModel(Model):
             The name of the .mat file (extension .mat does not need to be included) containing A, B,
             C, and optionally D and E.
         dt
-            `0` if the system is continuous-time, otherwise a positive number.
+            `0` if the system is continuous-time, otherwise a positive number that denotes the
+            sampling time (in seconds).
         state_id
             Id of the state space.
         solver_options
@@ -401,7 +405,8 @@ class LTIModel(Model):
         files_basename
             The basename of files containing A, B, C, and optionally D and E.
         dt
-            `0` if the system is continuous-time, otherwise a positive number.
+            `0` if the system is continuous-time, otherwise a positive number that denotes the
+            sampling time (in seconds).
         state_id
             Id of the state space.
         solver_options
@@ -973,7 +978,8 @@ class SecondOrderModel(Model):
     D
         The |Operator| D or `None` (then D is assumed to be zero).
     dt
-        `0` if the system is continuous-time, otherwise a positive number.
+        `0` if the system is continuous-time, otherwise a positive number that denotes the
+        sampling time (in seconds).
     solver_options
         The solver options to use to solve the Lyapunov equations.
     error_estimator
@@ -1090,7 +1096,8 @@ class SecondOrderModel(Model):
         D
             The |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed to be zero).
         dt
-            `0` if the system is continuous-time, otherwise a positive number.
+            `0` if the system is continuous-time, otherwise a positive number that denotes the
+            sampling time (in seconds).
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -1183,7 +1190,8 @@ class SecondOrderModel(Model):
         D_file
             `None` or the name of the file (with extension) containing D.
         dt
-            `0` if the system is continuous-time, otherwise a positive number.
+            `0` if the system is continuous-time, otherwise a positive number that denotes the
+            sampling time (in seconds).
         state_id
             Id of the state space.
         solver_options
@@ -1648,7 +1656,8 @@ class LinearDelayModel(Model):
     E
         The |Operator| E or `None` (then E is assumed to be identity).
     dt
-        `0` if the system is continuous-time, otherwise a positive number.
+        `0` if the system is continuous-time, otherwise a positive number that denotes the
+        sampling time (in seconds).
     error_estimator
         An error estimator for the problem. This can be any object with an
         `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
@@ -1909,7 +1918,8 @@ class LinearStochasticModel(Model):
     E
         The |Operator| E or `None` (then E is assumed to be identity).
     dt
-        `0` if the system is continuous-time, otherwise a positive number.
+        `0` if the system is continuous-time, otherwise a positive number that denotes the
+        sampling time (in seconds).
     error_estimator
         An error estimator for the problem. This can be any object with an
         `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
@@ -2031,7 +2041,8 @@ class BilinearModel(Model):
     E
         The |Operator| E or `None` (then E is assumed to be identity).
     dt
-        `0` if the system is continuous-time, otherwise a positive number.
+        `0` if the system is continuous-time, otherwise a positive number that denotes the
+        sampling time (in seconds).
     error_estimator
         An error estimator for the problem. This can be any object with an
         `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
