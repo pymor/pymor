@@ -269,6 +269,12 @@ class Array(Expression):
         entries = [v.numpy_expr() for v in self.array.flat]
         return f'(lambda a: array(a).T.reshape(a[0].shape + {self.shape}))(broadcast_arrays({", ".join(entries)}))'
 
+    def fenics_expr(self, params):
+        exprs = []
+        for exp in self.array:
+            exprs.append(exp.fenics_expr(params))
+        return np.array(exprs)
+
     def __str__(self):
         expr_array = np.vectorize(str)(self.array)
         return str(expr_array)
