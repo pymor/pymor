@@ -99,10 +99,10 @@ def lyap_lrcf_solver_options():
 
 
 @defaults('default_solver')
-def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
+def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a
+    See :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf` for a
     general description.
 
     This function uses `pymess.glyap` and `pymess.lradi`.
@@ -151,10 +151,10 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
     options = _parse_options(options, lyap_lrcf_solver_options(), default_solver, None, False)
 
     if options['type'] == 'pymess_glyap':
-        X = solve_lyap_dense(to_matrix(A, format='dense'),
-                             to_matrix(E, format='dense') if E else None,
-                             B.to_numpy().T if not trans else B.to_numpy(),
-                             trans=trans, options=options)
+        X = solve_cont_lyap_dense(to_matrix(A, format='dense'),
+                                  to_matrix(E, format='dense') if E else None,
+                                  B.to_numpy().T if not trans else B.to_numpy(),
+                                  trans=trans, options=options)
         Z = _chol(X)
     elif options['type'] == 'pymess_lradi':
         opts = options['opts']
@@ -163,7 +163,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
         Z, status = pymess.lradi(eqn, opts)
         relres = status.res2_norm / status.res2_0
         if relres > opts.adi.res2_tol:
-            logger = getLogger('pymor.bindings.pymess.solve_lyap_lrcf')
+            logger = getLogger('pymor.bindings.pymess.solve_cont_lyap_lrcf')
             logger.warning(f'Desired relative residual tolerance was not achieved '
                            f'({relres:e} > {opts.adi.res2_tol:e}).')
     else:
@@ -182,10 +182,10 @@ def lyap_dense_solver_options():
     return {'pymess_glyap': {'type': 'pymess_glyap'}}
 
 
-def solve_lyap_dense(A, E, B, trans=False, options=None):
+def solve_cont_lyap_dense(A, E, B, trans=False, options=None):
     """Compute the solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_lyap_dense` for a
+    See :func:`pymor.algorithms.lyapunov.solve_cont_lyap_dense` for a
     general description.
 
     This function uses `pymess.glyap`.
