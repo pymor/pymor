@@ -173,8 +173,11 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None):
         dico = 'D'
         job = 'B'
         if E is None:
+            # slycot v. 0.4.0 does not set ldwork correctly for dico='D'
+            # should be fixed in the next release
+            ldwork = 2*n*n+2*n
             U = np.zeros((n, n))
-            X, scale, sep, ferr, _ = slycot.sb03md(n, C, A, U, dico, job=job, trana=trana)
+            X, scale, sep, ferr, _ = slycot.sb03md(n, C, A, U, dico, job=job, trana=trana, ldwork=ldwork)
             _solve_check(A.dtype, 'slycot.sb03md', sep, ferr)
         else:
             fact = 'N'
