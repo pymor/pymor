@@ -443,6 +443,15 @@ def _convert_to_expression(obj):
     else:
         return Constant(obj)
 
+def _run_ufl_op(operand, expression):
+    if expression.shape:
+        # run on a vectorized ezpression
+        print('TODO: vectorized')
+        return False
+    else:
+        # run on a singular expression
+        return operand(expression)
+
 
 def _broadcastable_shapes(first, second):
     return all(f == s or f == 1 or s == 1 for f, s in zip(first[::-1], second[::-1]))
