@@ -270,10 +270,7 @@ class Array(Expression):
         return f'(lambda a: array(a).T.reshape(a[0].shape + {self.shape}))(broadcast_arrays({", ".join(entries)}))'
 
     def fenics_expr(self, params):
-        exprs = []
-        for exp in self.array:
-            exprs.append(exp.fenics_expr(params))
-        return np.array(exprs)
+        return np.vectorize(lambda x: x.fenics_expr(params))(self.array)
 
     def __str__(self):
         expr_array = np.vectorize(str)(self.array)
