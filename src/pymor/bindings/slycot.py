@@ -28,10 +28,10 @@ def lyap_lrcf_solver_options():
     return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
 
 
-def solve_lyap_lrcf(A, E, B, trans=False, options=None):
+def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a
+    See :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf` for a
     general description.
 
     This function uses `slycot.sb03md` (if `E is None`) and
@@ -66,10 +66,26 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     options = _parse_options(options, lyap_lrcf_solver_options(), 'slycot_bartels-stewart', None, False)
 
     if options['type'] == 'slycot_bartels-stewart':
-        X = solve_lyap_dense(to_matrix(A, format='dense'),
-                             to_matrix(E, format='dense') if E else None,
-                             B.to_numpy().T if not trans else B.to_numpy(),
-                             trans=trans, options=options)
+        X = solve_cont_lyap_dense(to_matrix(A, format='dense'),
+                                  to_matrix(E, format='dense') if E else None,
+                                  B.to_numpy().T if not trans else B.to_numpy(),
+                                  trans=trans, options=options)
+        Z = _chol(X)
+    else:
+        raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
+
+    return A.source.from_numpy(Z.T)
+
+
+def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None):
+    _solve_lyap_lrcf_check_args(A, E, B, trans)
+    options = _parse_options(options, lyap_lrcf_solver_options(), 'slycot_bartels-stewart', None, False)
+
+    if options['type'] == 'slycot_bartels-stewart':
+        X = solve_disc_lyap_dense(to_matrix(A, format='dense'),
+                                  to_matrix(E, format='dense') if E else None,
+                                  B.to_numpy().T if not trans else B.to_numpy(),
+                                  trans=trans, options=options)
         Z = _chol(X)
     else:
         raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
@@ -87,10 +103,10 @@ def lyap_dense_solver_options():
     return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
 
 
-def solve_lyap_dense(A, E, B, trans=False, options=None):
+def solve_cont_lyap_dense(A, E, B, trans=False, options=None):
     """Compute the solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_lyap_dense` for a
+    See :func:`pymor.algorithms.lyapunov.solve_cont_lyap_dense` for a
     general description.
 
     This function uses `slycot.sb03md` (if `E is None`) and
@@ -125,6 +141,36 @@ def solve_lyap_dense(A, E, B, trans=False, options=None):
         C = -B.dot(B.T) if not trans else -B.T.dot(B)
         trana = 'T' if not trans else 'N'
         dico = 'C'
+        job = 'B'
+        if E is None:
+            U = np.zeros((n, n))
+            X, scale, sep, ferr, _ = slycot.sb03md(n, C, A, U, dico, job=job, trana=trana)
+            _solve_check(A.dtype, 'slycot.sb03md', sep, ferr)
+        else:
+            fact = 'N'
+            uplo = 'L'
+            Q = np.zeros((n, n))
+            Z = np.zeros((n, n))
+            _, _, _, _, X, scale, sep, ferr, _, _, _ = slycot.sg03ad(dico, job, fact, trana, uplo,
+                                                                     n, A, E,
+                                                                     Q, Z, C)
+            _solve_check(A.dtype, 'slycot.sg03ad', sep, ferr)
+        X /= scale
+    else:
+        raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
+
+    return X
+
+
+def solve_disc_lyap_dense(A, E, B, trans=False, options=None):
+    _solve_lyap_dense_check_args(A, E, B, trans)
+    options = _parse_options(options, lyap_dense_solver_options(), 'slycot_bartels-stewart', None, False)
+
+    if options['type'] == 'slycot_bartels-stewart':
+        n = A.shape[0]
+        C = -B.dot(B.T) if not trans else -B.T.dot(B)
+        trana = 'T' if not trans else 'N'
+        dico = 'D'
         job = 'B'
         if E is None:
             U = np.zeros((n, n))
