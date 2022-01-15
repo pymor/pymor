@@ -139,17 +139,6 @@ class VectorArray(BasicObject):
         """Remove vectors from the array."""
         pass
 
-    def to_numpy(self, ensure_copy=False):
-        """Return (len(self), self.dim) NumPy Array with the data stored in the array.
-
-        Parameters
-        ----------
-        ensure_copy
-            If `False`, modifying the returned |NumPy array| might alter the original
-            |VectorArray|. If `True` always a copy of the array data is made.
-        """
-        raise NotImplementedError
-
     @abstractmethod
     def append(self, other, remove_from_other=False):
         """Append vectors to the array.
@@ -716,6 +705,17 @@ class DOFVectorArray(VectorArray):
         else:
             _, max_val = self.amax()
             return max_val
+
+    def to_numpy(self, ensure_copy=False):
+        """Return (len(self), self.dim) NumPy Array with the data stored in the array.
+
+        Parameters
+        ----------
+        ensure_copy
+            If `False`, modifying the returned |NumPy array| might alter the original
+            |DOFVectorArray|. If `True` always a copy of the array data is made.
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def amax(self):
