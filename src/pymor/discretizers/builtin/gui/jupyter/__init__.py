@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """This module provides plotting support inside the Jupyter notebook.
@@ -13,12 +13,12 @@ inside the given notebook.
 import IPython
 
 from pymor.core.defaults import defaults
-from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_patch
 from pymor.core.config import config
 
 # AFAICT there is no robust way to query for loaded extensions
 # and we have to make sure we do not setup two redirects
 _extension_loaded = False
+
 
 @defaults('backend')
 def get_visualizer(backend='py3js'):
@@ -28,6 +28,7 @@ def get_visualizer(backend='py3js'):
         from pymor.discretizers.builtin.gui.jupyter.threejs import visualize_py3js
         return visualize_py3js
     else:
+        from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_patch
         return visualize_patch
 
 

@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 
@@ -8,7 +8,6 @@ from pymor.core.defaults import defaults
 from pymor.core.config import is_jupyter
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
-from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.vectorarrays.interface import VectorArray
 
 
@@ -79,6 +78,7 @@ class PatchVisualizer(ImmutableObject):
                 and all(isinstance(u, VectorArray) for u in U)
                 and all(len(u) == len(U[0]) for u in U))
         if filename:
+            from pymor.discretizers.builtin.grids.vtkio import write_vtk
             if not isinstance(U, tuple):
                 write_vtk(self.grid, U, filename, codim=self.codim)
             else:

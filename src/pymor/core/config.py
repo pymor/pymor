@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from importlib import import_module
@@ -7,6 +7,8 @@ from packaging.version import parse
 import platform
 import sys
 import warnings
+
+from pymor.core.exceptions import DependencyMissing, QtMissing, TorchMissing
 
 
 def _can_import(module):
@@ -165,6 +167,16 @@ class Config:
     def version(self):
         from pymor import __version__
         return __version__
+
+    def require(self, dependency):
+        dependency = dependency.upper()
+        if not getattr(self, f'HAVE_{dependency}'):
+            if dependency == 'QT':
+                raise QtMissing
+            elif dependency == 'TORCH':
+                raise TorchMissing
+            else:
+                raise DependencyMissing(dependency)
 
     def __getattr__(self, name):
         if name.startswith('HAVE_'):

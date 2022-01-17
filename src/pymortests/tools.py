@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import itertools
@@ -14,13 +14,12 @@ from hypothesis import given
 
 from pymor.core.config import config
 from pymor.core.logger import getLogger
-from pymor.discretizers.builtin.grids.vtkio import write_vtk
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.tools import formatsrc, timing
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
 from pymor.tools.formatsrc import print_source
-from pymor.tools.io import safe_temporary_filename, change_to_directory, read_vtkfile
+from pymor.tools.io import safe_temporary_filename, change_to_directory
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_rect_or_tria_grid
@@ -125,6 +124,8 @@ def test_almost_less():
 @pytest.mark.skipif(not config.HAVE_VTKIO, reason='VTKIO support libraries missing')
 @given(hy_rect_or_tria_grid)
 def test_vtkio(grid):
+    from pymor.discretizers.builtin.grids.vtkio import write_vtk
+    from pymor.tools.io.vtk import read_vtkfile
     steps = 4
     for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.ones((steps, grid.size(c))))
                                   for c in range(grid.dim+1))):
