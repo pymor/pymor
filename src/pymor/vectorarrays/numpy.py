@@ -13,7 +13,7 @@ from pymor.vectorarrays.interface import DOFVectorArray, VectorSpace, _create_ra
 
 
 class NumpyVectorArray(DOFVectorArray):
-    """|VectorArray| implementation via |NumPy arrays|.
+    """|DOFVectorArray| implementation via |NumPy arrays|.
 
     This is the default |VectorArray| type used by all |Operators|
     in pyMOR's discretization toolkit. Moreover, all reduced |Operators|

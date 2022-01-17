@@ -107,7 +107,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
 
     This function uses `pymess.glyap` and `pymess.lradi`.
     For both methods,
-    :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy`
+    :meth:`~pymor.vectorarrays.interface.DOFVectorArray.to_numpy`
     and
     :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
     need to be implemented for `A.source`.
@@ -128,7 +128,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
     E
         The non-parametric |Operator| E or `None`.
     B
-        The operator B as a |VectorArray| from `A.source`.
+        The operator B as a |DOFVectorArray| from `A.source`.
     trans
         Whether the first |Operator| in the Lyapunov equation is
         transposed.
@@ -143,7 +143,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
     -------
     Z
         Low-rank Cholesky factor of the Lyapunov equation solution,
-        |VectorArray| from `A.source`.
+        |DOFVectorArray| from `A.source`.
     """
     _solve_lyap_lrcf_check_args(A, E, B, trans)
     if default_solver is None:
@@ -327,7 +327,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None, default_solve
 
     This function uses `pymess.dense_nm_gmpcare` and `pymess.lrnm`.
     For both methods,
-    :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy`
+    :meth:`~pymor.vectorarrays.interface.DOFVectorArray.to_numpy`
     and
     :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
     need to be implemented for `A.source`.
@@ -348,9 +348,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None, default_solve
     E
         The non-parametric |Operator| E or `None`.
     B
-        The operator B as a |VectorArray| from `A.source`.
+        The operator B as a |DOFVectorArray| from `A.source`.
     C
-        The operator C as a |VectorArray| from `A.source`.
+        The operator C as a |DOFVectorArray| from `A.source`.
     R
         The matrix R as a 2D |NumPy array| or `None`.
     trans
@@ -368,7 +368,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None, default_solve
     -------
     Z
         Low-rank Cholesky factor of the Riccati equation solution,
-        |VectorArray| from `A.source`.
+        |DOFVectorArray| from `A.source`.
     """
     _solve_ricc_check_args(A, E, B, C, R, trans)
     if default_solver is None:
@@ -429,9 +429,9 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     E
         The non-parametric |Operator| E or `None`.
     B
-        The operator B as a |VectorArray| from `A.source`.
+        The operator B as a |DOFVectorArray| from `A.source`.
     C
-        The operator C as a |VectorArray| from `A.source`.
+        The operator C as a |DOFVectorArray| from `A.source`.
     R
         The matrix R as a 2D |NumPy array| or `None`.
     trans
@@ -445,7 +445,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     -------
     Z
         Low-rank Cholesky factor of the Riccati equation solution,
-        |VectorArray| from `A.source`.
+        |DOFVectorArray| from `A.source`.
     """
     _solve_ricc_check_args(A, E, B, C, R, trans)
     options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'pymess_dense_nm_gmpcare', None, False)
@@ -530,7 +530,7 @@ class LyapunovEquation(pymess.Equation):
     E
         The non-parametric |Operator| E or `None`.
     B
-        The operator B as a |VectorArray| from `A.source`.
+        The operator B as a |DOFVectorArray| from `A.source`.
     """
 
     def __init__(self, opt, A, E, B):
@@ -647,9 +647,9 @@ class RiccatiEquation(pymess.Equation):
     E
         The non-parametric |Operator| E or `None`.
     B
-        The operator B as a |VectorArray| from `A.source`.
+        The operator B as a |DOFVectorArray| from `A.source`.
     C
-        The operator C as a |VectorArray| from `A.source`.
+        The operator C as a |DOFVectorArray| from `A.source`.
     """
 
     def __init__(self, opt, A, E, B, C):

@@ -593,7 +593,7 @@ class LowRankUpdatedOperator(LincombOperator):
 
 
 class ComponentProjectionOperator(Operator):
-    """|Operator| representing the projection of a |VectorArray| onto some of its components.
+    """|Operator| representing the projection of a |DOFVectorArray| onto some of its components.
 
     Parameters
     ----------
@@ -1378,10 +1378,10 @@ class InducedNorm(ParametricObject):
 
 
 class NumpyConversionOperator(Operator):
-    """Converts |VectorArrays| to |NumpyVectorArrays|.
+    """Converts |DOFVectorArrays| to |NumpyVectorArrays|.
 
     Note that the input |VectorArrays| need to support
-    :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
+    :meth:`~pymor.vectorarrays.interface.DOFVectorArray.to_numpy`.
     For the adjoint,
     :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
     needs to be implemented.
@@ -1389,13 +1389,13 @@ class NumpyConversionOperator(Operator):
     Parameters
     ----------
     space
-        The |VectorSpace| of the |VectorArrays| that are converted to
+        The |VectorSpace| of the |DOFVectorArrays| that are converted to
         |NumpyVectorArrays|.
     direction
         Either `'to_numpy'` or `'from_numpy'`. In case of `'to_numpy'`
-        :meth:`apply` takes a |VectorArray| from `space` and returns
+        :meth:`apply` takes a |DOFVectorArray| from `space` and returns
         a |NumpyVectorArray|. In case of `'from_numpy'`, :meth:`apply`
-        takes a |NumpyVectorArray| and returns a |VectorArray| from
+        takes a |NumpyVectorArray| and returns a |DOFVectorArray| from
         `space`.
     """
 

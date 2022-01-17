@@ -14,6 +14,8 @@ interfaces = '''
 .. |Model| replace:: :class:`Model <pymor.models.interface.Model>`
 .. |DomainDescriptions| replace:: :class:`DomainDescriptions <pymor.analyticalproblems.domaindescriptions.DomainDescription>`
 .. |DomainDescription| replace:: :class:`DomainDescription <pymor.analyticalproblems.domaindescriptions.DomainDescription>`
+.. |DOFVectorArrays| replace:: :class:`DOFVectorArrays <pymor.vectorarrays.interface.DOFVectorArray>`
+.. |DOFVectorArray| replace:: :class:`DOFVectorArray <pymor.vectorarrays.interface.DOFVectorArray>`
 .. |Functionals| replace:: :class:`Functionals <pymor.operators.interface.Operator>`
 .. |Functional| replace:: :class:`Functional <pymor.operators.interface.Operator>`
 .. |Functions| replace:: :class:`Functions <pymor.analyticalproblems.functions.Function>`
@@ -80,8 +82,6 @@ common = '''
 .. |TriaGrid| replace:: :class:`~pymor.discretizers.builtin.grids.tria.TriaGrid`
 .. |GmshGrid| replace:: :class:`~pymor.discretizers.builtin.grids.gmsh.GmshGrid`
 
-.. |DOFVectorArrays| replace:: :class:`DOFVectorArrays <pymor.vectorarrays.interface.DOFVectorArray>`
-.. |DOFVectorArray| replace:: :class:`DOFVectorArray <pymor.vectorarrays.interface.DOFVectorArray>`
 .. |NumpyVectorArray| replace:: :class:`~pymor.vectorarrays.numpy.NumpyVectorArray`
 .. |NumpyVectorArrays| replace:: :class:`NumpyVectorArrays <pymor.vectorarrays.numpy.NumpyVectorArray>`
 .. |ListVectorArray| replace:: :class:`~pymor.vectorarrays.list.ListVectorArray`

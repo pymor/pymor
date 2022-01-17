@@ -68,6 +68,9 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     if source_product is None:
         lambda_min = 1
     elif lambda_min is None:
+        if not (A.source.is_DOFVectorSpace and A.range.is_DOFVectorSpace):
+            raise NotImplementedError
+
         def mv(v):
             return source_product.apply(source_product.source.from_numpy(v)).to_numpy()
 

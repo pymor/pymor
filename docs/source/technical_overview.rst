@@ -20,7 +20,7 @@ operating on objects of the following types:
     combinations of vectors can be formed using the |lincomb| method. Moreover,
     various norms can be computed. If selected |dofs| of the vectors need to
     be extracted for :mod:`empirical interpolation <pymor.algorithms.ei>`, a
-    |DOFVectorArray| can be used. To act on subsets of vectors of an array,
+    |DOFVectorArray| is required. To act on subsets of vectors of an array,
     arrays can be |indexed| with an integer, a list of integers or a slice, in
     each case returning a new |VectorArray| which acts as a modifiable view onto
     the respective vectors in the original array. As a convenience, many of

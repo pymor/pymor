@@ -159,7 +159,7 @@ class Operator(ParametricObject):
         |VectorArrays| `U`, `V` in the :attr:`~Operator.source`
         resp. :attr:`~Operator.range` we have::
 
-            op.apply_adjoint(V, mu).dot(U) == V.inner(op.apply(U, mu))
+            op.apply_adjoint(V, mu).inner(U) == V.inner(op.apply(U, mu))
 
         Thus, when `op` is represented by a matrix `M`, `apply_adjoint` is
         given by left-multplication of (the complex conjugate of) `M` with `V`.
