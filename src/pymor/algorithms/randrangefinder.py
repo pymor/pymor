@@ -57,10 +57,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     assert range_product is None or isinstance(range_product, Operator)
     assert isinstance(A, Operator)
 
-    if hasattr(A.source, 'is_DOFVectorSpace') and A.source.is_DOFVectorSpace:
-        distribution = 'normal'
-    else:
-        distribution = None
+    distribution = 'normal' if A.source.is_DOFVectorSpace else None
 
     B = A.range.empty()
 
@@ -131,10 +128,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False):
     assert range_product is None or isinstance(range_product, Operator)
     assert isinstance(A, Operator)
 
-    if hasattr(A.source, 'is_DOFVectorSpace') and A.source.is_DOFVectorSpace:
-        distribution = 'normal'
-    else:
-        distribution = None
+    distribution = 'normal' if A.source.is_DOFVectorSpace else None
 
     R = A.source.random(l, distribution=distribution)
     if iscomplex:

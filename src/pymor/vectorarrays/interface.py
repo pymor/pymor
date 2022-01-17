@@ -773,12 +773,13 @@ class VectorSpace(ImmutableObject):
         Equivalent to
         `isinstance(space, NumpyVectorSpace) and space.dim == 1 and space.id is None`.
     is_DOFVectorSpace
-        If `True` only |DOFVectorArrays| can be created through :meth:`~VectorSpace.make_array`.
+        `True` if the |VectorArrays| belonging to this space are |DOFVectorArrays|.
     """
 
     id = None
     dim = None
     is_scalar = False
+    is_DOFVectorSpace = False
 
     @abstractmethod
     def make_array(*args, **kwargs):
@@ -827,7 +828,7 @@ class VectorSpace(ImmutableObject):
         -------
         A |VectorArray| containing `count` vectors with each entry set to one.
         """
-        if not hasattr(self, 'is_DOFVectorSpace') or not self.is_DOFVectorSpace:
+        if not self.is_DOFVectorSpace:
             raise NotImplementedError
         return self.full(1., count, reserve)
 
@@ -847,7 +848,7 @@ class VectorSpace(ImmutableObject):
         -------
         A |VectorArray| containing `count` vectors with each entry set to `value`.
         """
-        if not hasattr(self, 'is_DOFVectorSpace') or not self.is_DOFVectorSpace:
+        if not self.is_DOFVectorSpace:
             raise NotImplementedError
         return self.from_numpy(np.full((count, self.dim), value))
 
@@ -873,7 +874,7 @@ class VectorSpace(ImmutableObject):
         reserve
             Hint for the backend to which length the array will grow.
         """
-        if not hasattr(self, 'is_DOFVectorSpace') or not self.is_DOFVectorSpace:
+        if not self.is_DOFVectorSpace:
             raise NotImplementedError
         assert random_state is None or seed is None
         random_state = get_random_state(random_state, seed)
