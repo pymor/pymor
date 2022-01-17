@@ -26,13 +26,6 @@ class BlockVectorArray(VectorArray):
         self.space = space
         assert self._blocks_are_valid()
 
-    def to_numpy(self, ensure_copy=False):
-        if len(self._blocks):
-            # hstack will error out with empty input list
-            return np.hstack([block.to_numpy() for block in self._blocks])
-        else:
-            return np.empty((0, 0))
-
     @property
     def real(self):
         return self.space.make_array([block.real for block in self._blocks])
@@ -176,6 +169,13 @@ class BlockDOFVectorArray(BlockVectorArray, DOFVectorArray):
         block_inds = np.argmax(vals, axis=0)
         ar = np.arange(inds.shape[1])
         return inds[block_inds, ar], vals[block_inds, ar]
+
+    def to_numpy(self, ensure_copy=False):
+        if len(self._blocks):
+            # hstack will error out with empty input list
+            return np.hstack([block.to_numpy() for block in self._blocks])
+        else:
+            return np.empty((0, 0))
 
 
 class BlockVectorSpace(VectorSpace):
