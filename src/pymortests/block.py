@@ -7,7 +7,7 @@ import scipy.linalg as spla
 
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.operators.block import BlockOperator, BlockDiagonalOperator
-from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.vectorarrays.block import block
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -30,7 +30,7 @@ def test_apply():
     v = np.hstack((v1, v2))
     v1va = NumpyVectorSpace.from_numpy(v1)
     v2va = NumpyVectorSpace.from_numpy(v2)
-    vva = BlockVectorSpace.make_array((v1va, v2va))
+    vva = block([v1va, v2va])
 
     wva = Aop.apply(vva)
     w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))
@@ -56,7 +56,7 @@ def test_apply_adjoint():
     v = np.hstack((v1, v2))
     v1va = NumpyVectorSpace.from_numpy(v1)
     v2va = NumpyVectorSpace.from_numpy(v2)
-    vva = BlockVectorSpace.make_array((v1va, v2va))
+    vva = block([v1va, v2va])
 
     wva = Aop.apply_adjoint(vva)
     w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))
@@ -89,7 +89,7 @@ def test_blk_diag_apply_inverse():
     v = np.hstack((v1, v2))
     v1va = NumpyVectorSpace.from_numpy(v1)
     v2va = NumpyVectorSpace.from_numpy(v2)
-    vva = BlockVectorSpace.make_array((v1va, v2va))
+    vva = block([v1va, v2va])
 
     wva = Cop.apply_inverse(vva)
     w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))
@@ -111,7 +111,7 @@ def test_blk_diag_apply_inverse_adjoint():
     v = np.hstack((v1, v2))
     v1va = NumpyVectorSpace.from_numpy(v1)
     v2va = NumpyVectorSpace.from_numpy(v2)
-    vva = BlockVectorSpace.make_array((v1va, v2va))
+    vva = block([v1va, v2va])
 
     wva = Cop.apply_inverse_adjoint(vva)
     w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))

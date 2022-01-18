@@ -13,7 +13,7 @@ from pymor.analyticalproblems.functions import Function, ExpressionFunction, Con
 from pymor.core.config import config
 from pymor.parameters.base import Mu
 from pymor.vectorarrays.list import NumpyListVectorSpace
-from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.vectorarrays.block import block
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 if config.HAVE_FENICS:
@@ -101,7 +101,7 @@ def _block_vector_spaces(draw, np_data_list, compatible, count, dims):
         constituent_spaces = [NumpyVectorSpace(dim) for dim in block_dims]
         # TODO this needs to be relaxed again
         assume(len(constituent_spaces))
-        ret.append((BlockVectorSpace(constituent_spaces), ar))
+        ret.append((block(constituent_spaces), ar))
     return ret
 
 

@@ -109,7 +109,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
     For both methods,
     :meth:`~pymor.vectorarrays.interface.DOFVectorArray.to_numpy`
     and
-    :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
+    :meth:`~pymor.vectorarrays.interface.DOFVectorSpace.from_numpy`
     need to be implemented for `A.source`.
     Additionally, since `glyap` is a dense solver, it expects
     :func:`~pymor.algorithms.to_matrix.to_matrix` to work for A and
@@ -329,7 +329,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None, default_solve
     For both methods,
     :meth:`~pymor.vectorarrays.interface.DOFVectorArray.to_numpy`
     and
-    :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
+    :meth:`~pymor.vectorarrays.interface.DOFVectorSpace.from_numpy`
     need to be implemented for `A.source`.
     Additionally, since `dense_nm_gmpcare` is a dense solver, it
     expects :func:`~pymor.algorithms.to_matrix.to_matrix` to work

@@ -7,7 +7,23 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.base import classinstancemethod
-from pymor.vectorarrays.interface import DOFVectorArray, VectorArray, VectorSpace
+from pymor.vectorarrays.interface import DOFVectorArray, VectorArray, VectorSpace, DOFVectorSpace
+
+
+def block(args):
+
+    def make_space(subspaces):
+        if all(isinstance(s, DOFVectorSpace) for s in subspaces):
+            return BlockDOFVectorSpace(subspaces)
+        else:
+            return BlockVectorSpace(subspaces)
+
+    if all(isinstance(a, VectorArray) for a in args):
+        space = make_space([a.space for a in args])
+        return space.make_array(args)
+    elif all(isinstance(a, VectorSpace) for a in args):
+        space = make_space(args)
+        return space
 
 
 class BlockVectorArray(VectorArray):
@@ -193,14 +209,15 @@ class BlockVectorSpace(VectorSpace):
         The tuple defined above.
     """
 
+    VectorArrayType = BlockVectorArray
+
     def __init__(self, subspaces):
         subspaces = tuple(subspaces)
         assert all([isinstance(subspace, VectorSpace) for subspace in subspaces])
-        self.is_DOFVectorSpace = all([subspace.is_DOFVectorSpace for subspace in subspaces])
         self.subspaces = subspaces
 
     def __eq__(self, other):
-        return (type(other) is BlockVectorSpace
+        return (isinstance(other, BlockVectorSpace)
                 and len(self.subspaces) == len(other.subspaces)
                 and all(space == other_space for space, other_space in zip(self.subspaces, other.subspaces)))
 
@@ -227,10 +244,7 @@ class BlockVectorSpace(VectorSpace):
         """:noindex:"""
         assert len(obj) == len(self.subspaces)
         assert all(block in subspace for block, subspace in zip(obj, self.subspaces))
-        if self.is_DOFVectorSpace:
-            return BlockDOFVectorArray(obj, self)
-        else:
-            return BlockVectorArray(obj, self)
+        return self.VectorArrayType(obj, self)
 
     def make_block_diagonal_array(self, obj):
         assert len(obj) == len(self.subspaces)
@@ -239,6 +253,15 @@ class BlockVectorSpace(VectorSpace):
         for i, UU in enumerate(obj):
             U.append(self.make_array([s.zeros(len(UU)) if j != i else UU for j, s in enumerate(self.subspaces)]))
         return U
+
+
+class BlockDOFVectorSpace(BlockVectorSpace, DOFVectorSpace):
+
+    VectorArrayType = BlockDOFVectorArray
+
+    def __init__(self, subspaces):
+        assert all([isinstance(subspace, DOFVectorSpace) for subspace in subspaces])
+        super().__init__(subspaces)
 
     def from_numpy(self, data, ensure_copy=False):
         if data.ndim == 1:

@@ -16,7 +16,7 @@ from pymor.operators.constructions import (SelectionOperator, InverseOperator, I
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.operators.interface import as_array_max_length
 from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
-from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.vectorarrays.block import block
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import assert_all_almost_equal
 from pymortests.fixtures.operator import MonomOperator
@@ -156,7 +156,7 @@ def test_identity_numpy_lincomb():
 
 def test_block_identity_lincomb():
     space = NumpyVectorSpace(10)
-    space2 = BlockVectorSpace([space, space])
+    space2 = block([space, space])
     identity = BlockDiagonalOperator([IdentityOperator(space), IdentityOperator(space)])
     identity2 = IdentityOperator(space2)
     ones = space.ones()

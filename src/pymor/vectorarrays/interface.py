@@ -772,14 +772,11 @@ class VectorSpace(ImmutableObject):
     is_scalar
         Equivalent to
         `isinstance(space, NumpyVectorSpace) and space.dim == 1 and space.id is None`.
-    is_DOFVectorSpace
-        `True` if the |VectorArrays| belonging to this space are |DOFVectorArrays|.
     """
 
     id = None
     dim = None
     is_scalar = False
-    is_DOFVectorSpace = False
 
     @abstractmethod
     def make_array(*args, **kwargs):
@@ -812,6 +809,61 @@ class VectorSpace(ImmutableObject):
         """
         pass
 
+    def random(self, count=1, distribution=None, random_state=None, seed=None, reserve=0, **kwargs):
+        """Create a |VectorArray| of vectors with random entries.
+
+        For available distributions for |DOFVectorArrays| and the corresponding
+        parameters see :meth:`~DOFVectorArray.random`.
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+        distribution
+            Random distribution to use.
+        random_state
+            :class:`~numpy.random.RandomState` to use for sampling.
+            If `None`, a new random state is generated using `seed`
+            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
+            random state is used.
+        seed
+            If not `None`, a new random state with this seed is used.
+        reserve
+            Hint for the backend to which length the array will grow.
+        """
+        raise NotImplementedError
+
+    def empty(self, reserve=0):
+        """Create an empty |VectorArray|.
+
+        This is a shorthand for `self.zeros(0, reserve)`.
+
+        Parameters
+        ----------
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        An empty |VectorArray|.
+        """
+        return self.zeros(0, reserve=reserve)
+
+    def __eq__(self, other):
+        return other is self
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __contains__(self, other):
+        return self == getattr(other, 'space', None)
+
+    def __hash__(self):
+        return hash(self.id)
+
+
+class DOFVectorSpace(VectorSpace):
+
     def ones(self, count=1, reserve=0):
         """Create a |VectorArray| of vectors with all entries set to one.
 
@@ -828,8 +880,6 @@ class VectorSpace(ImmutableObject):
         -------
         A |VectorArray| containing `count` vectors with each entry set to one.
         """
-        if not self.is_DOFVectorSpace:
-            raise NotImplementedError
         return self.full(1., count, reserve)
 
     def full(self, value, count=1, reserve=0):
@@ -848,8 +898,6 @@ class VectorSpace(ImmutableObject):
         -------
         A |VectorArray| containing `count` vectors with each entry set to `value`.
         """
-        if not self.is_DOFVectorSpace:
-            raise NotImplementedError
         return self.from_numpy(np.full((count, self.dim), value))
 
     def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
@@ -874,28 +922,10 @@ class VectorSpace(ImmutableObject):
         reserve
             Hint for the backend to which length the array will grow.
         """
-        if not self.is_DOFVectorSpace:
-            raise NotImplementedError
         assert random_state is None or seed is None
         random_state = get_random_state(random_state, seed)
         values = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
         return self.from_numpy(values)
-
-    def empty(self, reserve=0):
-        """Create an empty |VectorArray|.
-
-        This is a shorthand for `self.zeros(0, reserve)`.
-
-        Parameters
-        ----------
-        reserve
-            Hint for the backend to which length the array will grow.
-
-        Returns
-        -------
-        An empty |VectorArray|.
-        """
-        return self.zeros(0, reserve=reserve)
 
     def from_numpy(self, data, ensure_copy=False):
         """Create a |VectorArray| from a |NumPy array|.
@@ -917,18 +947,6 @@ class VectorSpace(ImmutableObject):
         A |VectorArray| with `data` as data.
         """
         raise NotImplementedError
-
-    def __eq__(self, other):
-        return other is self
-
-    def __ne__(self, other):
-        return not (self == other)
-
-    def __contains__(self, other):
-        return self == getattr(other, 'space', None)
-
-    def __hash__(self):
-        return hash(self.id)
 
 
 def _create_random_values(shape, distribution, random_state, **kwargs):

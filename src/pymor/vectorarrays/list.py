@@ -8,7 +8,7 @@ import numpy as np
 
 from pymor.core.base import BasicObject, abstractmethod, abstractclassmethod, classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interface import DOFVectorArray, VectorSpace, _create_random_values
+from pymor.vectorarrays.interface import DOFVectorArray, DOFVectorSpace, _create_random_values
 
 
 class Vector(BasicObject):
@@ -549,12 +549,11 @@ class ListVectorArray(DOFVectorArray):
         return f'{type(self).__name__} of {len(self._list)} vectors of space {self.space}'
 
 
-class ListVectorSpace(VectorSpace):
+class ListVectorSpace(DOFVectorSpace):
     """|VectorSpace| of |ListVectorArrays|."""
 
     dim = None
     vector_type = Vector
-    is_DOFVectorSpace = True
 
     @abstractmethod
     def zero_vector(self):

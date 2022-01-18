@@ -9,6 +9,7 @@ from scipy.special import erfinv
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
 from pymor.operators.interface import Operator
+from pymor.vectorarrays.interface import DOFVectorSpace
 
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
@@ -57,7 +58,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     assert range_product is None or isinstance(range_product, Operator)
     assert isinstance(A, Operator)
 
-    distribution = 'normal' if A.source.is_DOFVectorSpace else None
+    distribution = 'normal' if isinstance(A.source, DOFVectorSpace) else None
 
     B = A.range.empty()
 
@@ -68,7 +69,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     if source_product is None:
         lambda_min = 1
     elif lambda_min is None:
-        if not (A.source.is_DOFVectorSpace and A.range.is_DOFVectorSpace):
+        if not (isinstance(A.source, DOFVectorSpace) and isinstance(A.range, DOFVectorSpace)):
             raise NotImplementedError
 
         def mv(v):
@@ -131,7 +132,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False):
     assert range_product is None or isinstance(range_product, Operator)
     assert isinstance(A, Operator)
 
-    distribution = 'normal' if A.source.is_DOFVectorSpace else None
+    distribution = 'normal' if isinstance(A.source, DOFVectorSpace) else None
 
     R = A.source.random(l, distribution=distribution)
     if iscomplex:

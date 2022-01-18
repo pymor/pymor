@@ -1383,13 +1383,13 @@ class NumpyConversionOperator(Operator):
     Note that the input |VectorArrays| need to support
     :meth:`~pymor.vectorarrays.interface.DOFVectorArray.to_numpy`.
     For the adjoint,
-    :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
+    :meth:`~pymor.vectorarrays.interface.DOFVectorSpace.from_numpy`
     needs to be implemented.
 
     Parameters
     ----------
     space
-        The |VectorSpace| of the |DOFVectorArrays| that are converted to
+        The |DOFVectorSpace| of the |DOFVectorArrays| that are converted to
         |NumpyVectorArrays|.
     direction
         Either `'to_numpy'` or `'from_numpy'`. In case of `'to_numpy'`

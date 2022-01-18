@@ -19,7 +19,7 @@ import numpy as np
 
 from pymor.core.pickle import unpicklable
 from pymor.tools import mpi
-from pymor.vectorarrays.interface import DOFVectorArray, VectorArray, VectorSpace
+from pymor.vectorarrays.interface import DOFVectorArray, VectorArray, VectorSpace, DOFVectorSpace
 
 
 @unpicklable
@@ -141,16 +141,12 @@ class MPIVectorSpace(VectorSpace):
     """
 
     array_type = MPIVectorArray
-    DOF_array_type = MPIDOFVectorArray
 
     def __init__(self, local_spaces):
         self.local_spaces = tuple(local_spaces)
         if type(local_spaces[0]) is RegisteredLocalSpace:
-            self.is_DOFVectorSpace = all([_local_space_registry[local_space].is_DOFVectorSpace
-                                         for local_space in local_spaces])
             self.id = _local_space_registry[local_spaces[0]].id
         else:
-            self.is_DOFVectorSpace = all([local_space.is_DOFVectorSpace for local_space in local_spaces])
             self.id = local_spaces[0].id
 
     def make_array(self, obj_id):
@@ -168,10 +164,7 @@ class MPIVectorSpace(VectorSpace):
         """
         assert mpi.call(_MPIVectorSpace_check_local_spaces,
                         self.local_spaces, obj_id)
-        if self.is_DOFVectorSpace:
-            return self.DOF_array_type(obj_id, self)
-        else:
-            return self.array_type(obj_id, self)
+        return self.array_type(obj_id, self)
 
     def zeros(self, count=1, reserve=0):
         return self.make_array(
@@ -190,6 +183,11 @@ class MPIVectorSpace(VectorSpace):
 
     def __repr__(self):
         return f'{self.__class__}({self.local_spaces}, {self.id})'
+
+
+class MPIDOFVectorSpace(MPIVectorSpace, DOFVectorSpace):
+
+    array_type = MPIDOFVectorArray
 
 
 class RegisteredLocalSpace(int):
@@ -298,11 +296,16 @@ class MPIVectorSpaceNoComm(MPIVectorSpace):
     """|VectorSpace| for :class:`MPIVectorArrayNoComm`."""
 
     array_type = MPIVectorArrayNoComm
-    DOF_array_type = MPIVectorArrayNoComm
 
     @property
     def dim(self):
         raise NotImplementedError
+
+
+class MPIDOFVectorSpaceNoComm(MPIVectorSpaceNoComm, DOFVectorSpace):
+    """|VectorSpace| for :class:`MPIDOFVectorArrayNoComm`."""
+
+    array_type = MPIDOFVectorArrayNoComm
 
 
 class MPIVectorArrayAutoComm(MPIVectorArray):
@@ -363,8 +366,7 @@ class MPIDOFVectorArrayAutoComm(MPIVectorArrayAutoComm, DOFVectorArray):
 class MPIVectorSpaceAutoComm(MPIVectorSpace):
     """|VectorSpace| for :class:`MPIVectorArrayAutoComm`."""
 
-    array_type = MPIVectorArrayAutoComm
-    DOF_array_type = MPIDOFVectorArrayAutoComm
+    array_type = MPIDOFVectorArrayAutoComm
 
     @property
     def dim(self):
@@ -378,6 +380,12 @@ class MPIVectorSpaceAutoComm(MPIVectorSpace):
         self._offsets = offsets = np.cumsum(np.concatenate(([0], dims)))[:-1]
         self._dim = dim = sum(dims)
         return dim, offsets
+
+
+class MPIDOFVectorSpaceAutoComm(MPIVectorSpaceAutoComm, DOFVectorSpace):
+    """|VectorSpace| for :class:`MPIVectorArrayAutoComm`."""
+
+    array_type = MPIDOFVectorArrayAutoComm
 
 
 def _MPIVectorSpaceAutoComm_dim(local_spaces):
