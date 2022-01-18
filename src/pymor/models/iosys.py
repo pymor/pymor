@@ -149,16 +149,22 @@ class LTIModel(Model):
             parameters=parameters, sampling_time=sampling_time, name=self.name + '_transfer_function')
 
     def __str__(self):
-        return (
+        string = (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    number of equations: {self.order}\n'
             f'    number of inputs:    {self.dim_input}\n'
             f'    number of outputs:   {self.dim_output}\n'
-            f'    {"continuous-time" if self.dt == 0 else f"discrete-time (dt={self.dt:.2e}s)"}\n'
+        )
+        if self.sampling_time == 0:
+            string += '    continuous-time\n'
+        else:
+            string += f'    {f"discrete-time (sampling_time={self.sampling_time:.2e}s)"}\n'
+        string += (
             f'    linear time-invariant\n'
             f'    solution_space:  {self.solution_space}'
         )
+        return string
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, sampling_time=0,
@@ -1061,17 +1067,23 @@ class SecondOrderModel(Model):
             parameters=parameters, sampling_time=sampling_time, name=self.name + '_transfer_function')
 
     def __str__(self):
-        return (
+        string = (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    number of equations: {self.order}\n'
             f'    number of inputs:    {self.dim_input}\n'
             f'    number of outputs:   {self.dim_output}\n'
-            f'    {"continuous-time" if self.dt == 0 else f"discrete-time (dt={self.dt:.2e}s)"}\n'
+        )
+        if self.sampling_time == 0:
+            string += '    continuous-time\n'
+        else:
+            string += f'    {f"discrete-time (sampling_time={self.sampling_time:.2e}s)"}\n'
+        string += (
             f'    second-order\n'
             f'    linear time-invariant\n'
             f'    solution_space:  {self.solution_space}'
         )
+        return string
 
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
@@ -1739,17 +1751,23 @@ class LinearDelayModel(Model):
             parameters=parameters, sampling_time=sampling_time, name=self.name + '_transfer_function')
 
     def __str__(self):
-        return (
+        string = (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    number of equations: {self.order}\n'
             f'    number of inputs:    {self.dim_input}\n'
             f'    number of outputs:   {self.dim_output}\n'
-            f'    {"continuous-time" if self.dt == 0 else f"discrete-time (dt={self.dt:.2e}s)"}\n'
+        )
+        if self.sampling_time == 0:
+            string += '    continuous-time\n'
+        else:
+            string += f'    {f"discrete-time (sampling_time={self.sampling_time:.2e}s)"}\n'
+        string += (
             f'    time-delay\n'
             f'    linear time-invariant\n'
             f'    solution_space:  {self.solution_space}'
         )
+        return string
 
     def __add__(self, other):
         """Add an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
@@ -1981,17 +1999,23 @@ class LinearStochasticModel(Model):
         self.q = len(As)
 
     def __str__(self):
-        return (
+        string = (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    number of equations: {self.order}\n'
             f'    number of inputs:    {self.dim_input}\n'
             f'    number of outputs:   {self.dim_output}\n'
-            f'    {"continuous-time" if self.dt == 0 else f"discrete-time (dt={self.dt:.2e}s)"}\n'
+        )
+        if self.sampling_time == 0:
+            string += '    continuous-time\n'
+        else:
+            string += f'    {f"discrete-time (sampling_time={self.sampling_time:.2e}s)"}\n'
+        string += (
             f'    stochastic\n'
             f'    linear time-invariant\n'
             f'    solution_space:  {self.solution_space}'
         )
+        return string
 
 
 class BilinearModel(Model):
@@ -2102,16 +2126,22 @@ class BilinearModel(Model):
         self.linear = False
 
     def __str__(self):
-        return (
+        string = (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    number of equations: {self.order}\n'
             f'    number of inputs:    {self.dim_input}\n'
             f'    number of outputs:   {self.dim_output}\n'
-            f'    {"continuous-time" if self.dt == 0 else f"discrete-time (dt={self.dt:.2e}s)"}\n'
+        )
+        if self.sampling_time == 0:
+            string += '    continuous-time\n'
+        else:
+            string += f'    {f"discrete-time (sampling_time={self.sampling_time:.2e}s)"}\n'
+        string += (
             f'    bilinear time-invariant\n'
             f'    solution_space:  {self.solution_space}'
         )
+        return string
 
 
 def _lti_to_poles_b_c(lti):

@@ -60,13 +60,17 @@ class TransferFunction(CacheableObject, ParametricObject):
         self.__auto_init(locals())
 
     def __str__(self):
-        return (
+        string = (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    number of inputs:  {self.dim_input}\n'
             f'    number of outputs: {self.dim_output}\n'
-            f'    {"continuous-time" if self.dt == 0 else f"discrete-time (dt={self.dt:.2e}s)"}\n'
         )
+        if self.sampling_time == 0:
+            string += '    continuous-time\n'
+        else:
+            string += f'    {f"discrete-time (sampling_time={self.sampling_time:.2e}s)"}\n'
+        return string
 
     @cached
     def eval_tf(self, s, mu=None):
