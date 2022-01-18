@@ -63,7 +63,7 @@ class LTIModel(Model):
         The |Operator| D or `None` (then D is assumed to be zero).
     E
         The |Operator| E or `None` (then E is assumed to be identity).
-    dt
+    sampling_time
         `0` if the system is continuous-time, otherwise a positive number that denotes the
         sampling time (in seconds).
     solver_options
@@ -103,7 +103,7 @@ class LTIModel(Model):
         The transfer function.
     """
 
-    def __init__(self, A, B, C, D=None, E=None, dt=0,
+    def __init__(self, A, B, C, D=None, E=None, sampling_time=0,
                  solver_options=None, error_estimator=None, visualizer=None, name=None):
 
         assert A.linear
@@ -123,8 +123,8 @@ class LTIModel(Model):
         assert E.source == E.range
         assert E.source == A.source
 
-        dt = float(dt)
-        assert dt >= 0
+        sampling_time = float(sampling_time)
+        assert sampling_time >= 0
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
@@ -146,7 +146,7 @@ class LTIModel(Model):
         self.transfer_function = FactorizedTransferFunction(
             self.dim_input, self.dim_output,
             K, B, C, D, dK, dB, dC, dD,
-            parameters=parameters, dt=dt, name=self.name + '_transfer_function')
+            parameters=parameters, sampling_time=sampling_time, name=self.name + '_transfer_function')
 
     def __str__(self):
         return (
@@ -161,7 +161,7 @@ class LTIModel(Model):
         )
 
     @classmethod
-    def from_matrices(cls, A, B, C, D=None, E=None, dt=0,
+    def from_matrices(cls, A, B, C, D=None, E=None, sampling_time=0,
                       state_id='STATE', solver_options=None, error_estimator=None,
                       visualizer=None, name=None):
         """Create |LTIModel| from matrices.
@@ -178,7 +178,7 @@ class LTIModel(Model):
             The |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed to be zero).
         E
             The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be identity).
-        dt
+        sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
         state_id
@@ -216,7 +216,7 @@ class LTIModel(Model):
         if E is not None:
             E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
 
-        return cls(A, B, C, D, E, dt=dt,
+        return cls(A, B, C, D, E, sampling_time=sampling_time,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                    name=name)
 
@@ -244,7 +244,7 @@ class LTIModel(Model):
         return A, B, C, D, E
 
     @classmethod
-    def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, dt=0,
+    def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, sampling_time=0,
                    state_id='STATE', solver_options=None, error_estimator=None, visualizer=None,
                    name=None):
         """Create |LTIModel| from matrices stored in separate files.
@@ -261,7 +261,7 @@ class LTIModel(Model):
             `None` or the name of the file (with extension) containing D.
         E_file
             `None` or the name of the file (with extension) containing E.
-        dt
+        sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
         state_id
@@ -293,7 +293,7 @@ class LTIModel(Model):
         D = load_matrix(D_file) if D_file is not None else None
         E = load_matrix(E_file) if E_file is not None else None
 
-        return cls.from_matrices(A, B, C, D, E, dt=dt,
+        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time,
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
@@ -328,7 +328,7 @@ class LTIModel(Model):
             save_matrix(file, mat)
 
     @classmethod
-    def from_mat_file(cls, file_name, dt=0,
+    def from_mat_file(cls, file_name, sampling_time=0,
                       state_id='STATE', solver_options=None, error_estimator=None,
                       visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in a .mat file.
@@ -338,7 +338,7 @@ class LTIModel(Model):
         file_name
             The name of the .mat file (extension .mat does not need to be included) containing A, B,
             C, and optionally D and E.
-        dt
+        sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
         state_id
@@ -373,7 +373,7 @@ class LTIModel(Model):
         D = mat_dict['D'] if 'D' in mat_dict else None
         E = mat_dict['E'] if 'E' in mat_dict else None
 
-        return cls.from_matrices(A, B, C, D, E, dt=dt,
+        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time,
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
@@ -395,7 +395,7 @@ class LTIModel(Model):
         spio.savemat(file_name, mat_dict)
 
     @classmethod
-    def from_abcde_files(cls, files_basename, dt=0,
+    def from_abcde_files(cls, files_basename, sampling_time=0,
                          state_id='STATE', solver_options=None, error_estimator=None,
                          visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in .[ABCDE] files.
@@ -404,7 +404,7 @@ class LTIModel(Model):
         ----------
         files_basename
             The basename of files containing A, B, C, and optionally D and E.
-        dt
+        sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
         state_id
@@ -437,7 +437,7 @@ class LTIModel(Model):
         D = load_matrix(files_basename + '.D') if os.path.isfile(files_basename + '.D') else None
         E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
-        return cls.from_matrices(A, B, C, D, E, dt=dt,
+        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time,
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
@@ -465,7 +465,7 @@ class LTIModel(Model):
         if not isinstance(other, LTIModel):
             return NotImplemented
 
-        assert self.dt == other.dt
+        assert self.sampling_time == other.sampling_time
         assert self.D.source == other.D.source
         assert self.D.range == other.D.range
 
@@ -492,7 +492,7 @@ class LTIModel(Model):
         if not isinstance(other, LTIModel):
             return NotImplemented
 
-        assert self.dt == other.dt
+        assert self.sampling_time == other.sampling_time
         assert self.D.source == other.D.range
 
         A = BlockOperator([[self.A, self.B @ other.C],
@@ -564,7 +564,7 @@ class LTIModel(Model):
         `self.A.source`.
         If typ is `'c_dense'` or `'o_dense'`, then the Gramian as a |NumPy array|.
         """
-        if self.dt > 0:
+        if self.sampling_time > 0:
             raise NotImplementedError
 
         assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense')
@@ -660,7 +660,7 @@ class LTIModel(Model):
         norm
             H_2-norm.
         """
-        if self.dt > 0:
+        if self.sampling_time > 0:
             raise NotImplementedError
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
@@ -828,7 +828,7 @@ class LTIModel(Model):
                     self.logger.warning(f'Converting operator {op_name} to a NumPy array.')
 
         from slycot import ab13dd
-        dico = 'D' if self.dt > 0 else 'C'
+        dico = 'D' if self.sampling_time > 0 else 'C'
         jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
         equil = 'S' if ab13dd_equilibrate else 'N'
         jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
@@ -977,7 +977,7 @@ class SecondOrderModel(Model):
         The |Operator| Cv or `None` (then Cv is assumed to be zero).
     D
         The |Operator| D or `None` (then D is assumed to be zero).
-    dt
+    sampling_time
         `0` if the system is continuous-time, otherwise a positive number that denotes the
         sampling time (in seconds).
     solver_options
@@ -1020,7 +1020,7 @@ class SecondOrderModel(Model):
         The transfer function.
     """
 
-    def __init__(self, M, E, K, B, Cp, Cv=None, D=None, dt=0,
+    def __init__(self, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
                  solver_options=None, error_estimator=None, visualizer=None, name=None):
 
         assert M.linear and M.source == M.range
@@ -1035,8 +1035,8 @@ class SecondOrderModel(Model):
         D = D or ZeroOperator(Cp.range, B.source)
         assert D.linear and D.source == B.source and D.range == Cp.range
 
-        dt = float(dt)
-        assert dt >= 0
+        sampling_time = float(sampling_time)
+        assert sampling_time >= 0
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
@@ -1058,7 +1058,7 @@ class SecondOrderModel(Model):
         self.transfer_function = FactorizedTransferFunction(
             self.dim_input, self.dim_output,
             K, B, C, D, dK, dB, dC, dD,
-            parameters=parameters, dt=dt, name=self.name + '_transfer_function')
+            parameters=parameters, sampling_time=sampling_time, name=self.name + '_transfer_function')
 
     def __str__(self):
         return (
@@ -1074,7 +1074,7 @@ class SecondOrderModel(Model):
         )
 
     @classmethod
-    def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, dt=0,
+    def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
                       state_id='STATE', solver_options=None, error_estimator=None,
                       visualizer=None, name=None):
         """Create a second order system from matrices.
@@ -1095,7 +1095,7 @@ class SecondOrderModel(Model):
             The |NumPy array| or |SciPy spmatrix| Cv or `None` (then Cv is assumed to be zero).
         D
             The |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed to be zero).
-        dt
+        sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
         solver_options
@@ -1135,7 +1135,7 @@ class SecondOrderModel(Model):
         if D is not None:
             D = NumpyMatrixOperator(D)
 
-        return cls(M, E, K, B, Cp, Cv, D, dt=dt,
+        return cls(M, E, K, B, Cp, Cv, D, sampling_time=sampling_time,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
     def to_matrices(self):
@@ -1168,7 +1168,7 @@ class SecondOrderModel(Model):
         return M, E, K, B, Cp, Cv, D
 
     @classmethod
-    def from_files(cls, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, dt=0,
+    def from_files(cls, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, sampling_time=0,
                    state_id='STATE', solver_options=None, error_estimator=None, visualizer=None,
                    name=None):
         """Create |LTIModel| from matrices stored in separate files.
@@ -1189,7 +1189,7 @@ class SecondOrderModel(Model):
             `None` or the name of the file (with extension) containing Cv.
         D_file
             `None` or the name of the file (with extension) containing D.
-        dt
+        sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
         state_id
@@ -1223,7 +1223,7 @@ class SecondOrderModel(Model):
         Cv = load_matrix(Cv_file) if Cv_file is not None else None
         D = load_matrix(D_file) if D_file is not None else None
 
-        return cls.from_matrices(M, E, K, B, Cp, Cv, D, dt=dt,
+        return cls.from_matrices(M, E, K, B, Cp, Cv, D, sampling_time=sampling_time,
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
@@ -1317,7 +1317,7 @@ class SecondOrderModel(Model):
                         E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source]))
                            if isinstance(self.M, IdentityOperator) else
                            BlockDiagonalOperator([IdentityOperator(self.M.source), self.M])),
-                        dt=self.dt,
+                        sampling_time=self.sampling_time,
                         solver_options=self.solver_options,
                         error_estimator=self.error_estimator,
                         visualizer=self.visualizer,
@@ -1331,7 +1331,7 @@ class SecondOrderModel(Model):
         if not isinstance(other, SecondOrderModel):
             return NotImplemented
 
-        assert self.dt == other.dt
+        assert self.sampling_time == other.sampling_time
         assert self.D.source == other.D.source
         assert self.D.range == other.D.range
 
@@ -1374,7 +1374,7 @@ class SecondOrderModel(Model):
         if not isinstance(other, SecondOrderModel):
             return NotImplemented
 
-        assert self.dt == other.dt
+        assert self.sampling_time == other.sampling_time
         assert self.D.source == other.D.range
 
         M = BlockDiagonalOperator([self.M, other.M])
@@ -1655,7 +1655,7 @@ class LinearDelayModel(Model):
         The |Operator| D or `None` (then D is assumed to be zero).
     E
         The |Operator| E or `None` (then E is assumed to be identity).
-    dt
+    sampling_time
         `0` if the system is continuous-time, otherwise a positive number that denotes the
         sampling time (in seconds).
     error_estimator
@@ -1698,7 +1698,7 @@ class LinearDelayModel(Model):
         The transfer function.
     """
 
-    def __init__(self, A, Ad, tau, B, C, D=None, E=None, dt=0,
+    def __init__(self, A, Ad, tau, B, C, D=None, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
         assert A.linear and A.source == A.range
@@ -1714,8 +1714,8 @@ class LinearDelayModel(Model):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        dt = float(dt)
-        assert dt >= 0
+        sampling_time = float(sampling_time)
+        assert sampling_time >= 0
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
@@ -1736,7 +1736,7 @@ class LinearDelayModel(Model):
         self.transfer_function = FactorizedTransferFunction(
             self.dim_input, self.dim_output,
             K, B, C, D, dK, dB, dC, dD,
-            parameters=parameters, dt=dt, name=self.name + '_transfer_function')
+            parameters=parameters, sampling_time=sampling_time, name=self.name + '_transfer_function')
 
     def __str__(self):
         return (
@@ -1777,7 +1777,7 @@ class LinearDelayModel(Model):
         else:
             return NotImplemented
 
-        assert self.dt == other.dt
+        assert self.sampling_time == other.sampling_time
         assert self.D.source == other.D.source
         assert self.D.range == other.D.range
 
@@ -1838,7 +1838,7 @@ class LinearDelayModel(Model):
         else:
             return NotImplemented
 
-        assert self.dt == other.dt
+        assert self.sampling_time == other.sampling_time
         assert self.D.source == other.D.range
 
         E = BlockDiagonalOperator([self.E, other.E])
@@ -1851,7 +1851,7 @@ class LinearDelayModel(Model):
 
     def __rmul__(self, other):
         """Premultiply by an |LTIModel| or a |SecondOrderModel|."""
-        assert self.dt == other.dt
+        assert self.sampling_time == other.sampling_time
         assert self.D.source == other.D.range
 
         if isinstance(other, SecondOrderModel):
@@ -1917,7 +1917,7 @@ class LinearStochasticModel(Model):
         The |Operator| D or `None` (then D is assumed to be zero).
     E
         The |Operator| E or `None` (then E is assumed to be identity).
-    dt
+    sampling_time
         `0` if the system is continuous-time, otherwise a positive number that denotes the
         sampling time (in seconds).
     error_estimator
@@ -1956,7 +1956,7 @@ class LinearStochasticModel(Model):
         The |Operator| E.
     """
 
-    def __init__(self, A, As, B, C, D=None, E=None, dt=0,
+    def __init__(self, A, As, B, C, D=None, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
         assert A.linear and A.source == A.range
@@ -1971,8 +1971,8 @@ class LinearStochasticModel(Model):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        dt = float(dt)
-        assert dt >= 0
+        sampling_time = float(sampling_time)
+        assert sampling_time >= 0
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
@@ -2040,7 +2040,7 @@ class BilinearModel(Model):
         The |Operator| D or `None` (then D is assumed to be zero).
     E
         The |Operator| E or `None` (then E is assumed to be identity).
-    dt
+    sampling_time
         `0` if the system is continuous-time, otherwise a positive number that denotes the
         sampling time (in seconds).
     error_estimator
@@ -2077,7 +2077,7 @@ class BilinearModel(Model):
         The |Operator| E.
     """
 
-    def __init__(self, A, N, B, C, D, E=None, dt=0,
+    def __init__(self, A, N, B, C, D, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
         assert A.linear and A.source == A.range
@@ -2092,8 +2092,8 @@ class BilinearModel(Model):
         E = E or IdentityOperator(A.source)
         assert E.linear and E.source == E.range == A.source
 
-        dt = float(dt)
-        assert dt >= 0
+        sampling_time = float(sampling_time)
+        assert sampling_time >= 0
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())

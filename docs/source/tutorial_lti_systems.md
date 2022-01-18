@@ -58,7 +58,7 @@ passing {{ parameter_values }} via the `mu` argument to the methods of the
 ::: {note}
 
 Discrete-time LTI systems can be constructed by passing positive values for the
-sampling time `dt` to any constructor of an {{LTIModel}}.
+`sampling_time` to any constructor of an {{LTIModel}}.
 
 :::
 ## Building a model
