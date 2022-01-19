@@ -9,7 +9,6 @@ from pymor.models.interface import Model
 from pymor.operators.interface import Operator
 from pymor.operators.mpi import mpi_wrap_operator
 from pymor.tools import mpi
-from pymor.vectorarrays.mpi import MPIVectorSpace
 
 
 class MPIModel:
@@ -71,7 +70,7 @@ def _MPIVisualizer_visualize(m, U, **kwargs):
 
 
 def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_apply2=False,
-                   pickle_local_spaces=True, space_type=MPIVectorSpace,
+                   pickle_local_spaces=True, communication='solver',
                    base_type=None):
     """Wrap MPI distributed local |Models| to a global |Model| on rank 0.
 
@@ -116,7 +115,7 @@ def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_appl
         See :class:`~pymor.operators.mpi.MPIOperator`.
     pickle_local_spaces
         See :class:`~pymor.operators.mpi.MPIOperator`.
-    space_type
+    communication
         See :class:`~pymor.operators.mpi.MPIOperator`.
     """
     assert use_with or isinstance(base_type, Model)
@@ -129,7 +128,7 @@ def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_appl
     wrapped_attributes = {
         k: _map_children(lambda v: mpi_wrap_operator(*v, with_apply2=with_apply2,
                                                      pickle_local_spaces=pickle_local_spaces,
-                                                     space_type=space_type) if isinstance(v, _OperatorToWrap) else v,
+                                                     communication=communication) if isinstance(v, _OperatorToWrap) else v,
                          v)
         for k, v in attributes.items()
     }

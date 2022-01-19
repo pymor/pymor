@@ -128,6 +128,11 @@ class MPIDOFVectorArray(MPIVectorArray, DOFVectorArray):
         return mpi.call(mpi.method_call, self.obj_id, 'amax')
 
 
+def make_mpi_vector_space(space, local_spaces, communication):
+    space_type = (MPIDOFVectorSpace if isinstance(space, DOFVectorSpace) else MPIVectorSpace)
+    return space_type(local_spaces, communication)
+
+
 class MPIVectorSpace(VectorSpace):
     """|VectorSpace| of :class:`MPIVectorArrays <MPIVectorArray>`.
 
@@ -142,8 +147,18 @@ class MPIVectorSpace(VectorSpace):
 
     array_type = MPIVectorArray
 
-    def __init__(self, local_spaces):
+    def __init__(self, local_spaces, communication='solver'):
+        assert communication in ('solver', 'auto', 'none')
         self.local_spaces = tuple(local_spaces)
+        self.communication = communication
+        if communication == 'solver':
+            self.array_type = MPIVectorArray
+        elif communication == 'auto':
+            self.array_type = MPIVectorArrayAutoComm
+        elif communication == 'none':
+            self.array_type = MPIVectorArrayNoComm
+        else:
+            assert False
         if type(local_spaces[0]) is RegisteredLocalSpace:
             self.id = _local_space_registry[local_spaces[0]].id
         else:
@@ -174,20 +189,45 @@ class MPIVectorSpace(VectorSpace):
 
     @property
     def dim(self):
-        return mpi.call(_MPIVectorSpace_dim, self.local_spaces)
+        if self.communication == 'solver':
+            return mpi.call(_MPIVectorSpace_dim, self.local_spaces)
+        elif self.communication == 'auto':
+            dim = getattr(self, '_dim', None)
+            if dim is None:
+                dim = self._get_dims()[0]
+            return dim
+        elif self.communication == 'none':
+            raise NotImplementedError
+        else:
+            assert False
 
     def __eq__(self, other):
-        return type(other) is MPIVectorSpace and \
+        return type(other) == type(self) and \
             len(self.local_spaces) == len(other.local_spaces) and \
             all(ls == ols for ls, ols in zip(self.local_spaces, other.local_spaces))
 
     def __repr__(self):
         return f'{self.__class__}({self.local_spaces}, {self.id})'
 
+    def _get_dims(self):
+        dims = mpi.call(_MPIVectorSpaceAutoComm_dim, self.local_spaces)
+        self._offsets = offsets = np.cumsum(np.concatenate(([0], dims)))[:-1]
+        self._dim = dim = sum(dims)
+        return dim, offsets
+
 
 class MPIDOFVectorSpace(MPIVectorSpace, DOFVectorSpace):
 
-    array_type = MPIDOFVectorArray
+    def __init__(self, local_spaces, communication='solver'):
+        super().__init__(local_spaces, communication)
+        if communication == 'solver':
+            self.array_type = MPIDOFVectorArray
+        elif communication == 'auto':
+            self.array_type = MPIDOFVectorArrayAutoComm
+        elif communication == 'none':
+            self.array_type = MPIDOFVectorArrayNoComm
+        else:
+            assert False
 
 
 class RegisteredLocalSpace(int):
@@ -292,22 +332,6 @@ class MPIDOFVectorArrayNoComm(MPIVectorArrayNoComm, DOFVectorArray):
         raise NotImplementedError
 
 
-class MPIVectorSpaceNoComm(MPIVectorSpace):
-    """|VectorSpace| for :class:`MPIVectorArrayNoComm`."""
-
-    array_type = MPIVectorArrayNoComm
-
-    @property
-    def dim(self):
-        raise NotImplementedError
-
-
-class MPIDOFVectorSpaceNoComm(MPIVectorSpaceNoComm, DOFVectorSpace):
-    """|VectorSpace| for :class:`MPIDOFVectorArrayNoComm`."""
-
-    array_type = MPIDOFVectorArrayNoComm
-
-
 class MPIVectorArrayAutoComm(MPIVectorArray):
     """MPI distributed |VectorArray|.
 
@@ -361,31 +385,6 @@ class MPIDOFVectorArrayAutoComm(MPIVectorArrayAutoComm, DOFVectorArray):
         # https://github.com/numpy/numpy/issues/3259
         return (np.array([inds[max_inds[i], i] for i in range(len(max_inds))]),
                 np.array([vals[max_inds[i], i] for i in range(len(max_inds))]))
-
-
-class MPIVectorSpaceAutoComm(MPIVectorSpace):
-    """|VectorSpace| for :class:`MPIVectorArrayAutoComm`."""
-
-    array_type = MPIDOFVectorArrayAutoComm
-
-    @property
-    def dim(self):
-        dim = getattr(self, '_dim', None)
-        if dim is None:
-            dim = self._get_dims()[0]
-        return dim
-
-    def _get_dims(self):
-        dims = mpi.call(_MPIVectorSpaceAutoComm_dim, self.local_spaces)
-        self._offsets = offsets = np.cumsum(np.concatenate(([0], dims)))[:-1]
-        self._dim = dim = sum(dims)
-        return dim, offsets
-
-
-class MPIDOFVectorSpaceAutoComm(MPIVectorSpaceAutoComm, DOFVectorSpace):
-    """|VectorSpace| for :class:`MPIVectorArrayAutoComm`."""
-
-    array_type = MPIDOFVectorArrayAutoComm
 
 
 def _MPIVectorSpaceAutoComm_dim(local_spaces):
