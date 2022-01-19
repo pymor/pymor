@@ -119,6 +119,7 @@ def event_loop():
         try:
             method, args, kwargs = comm.bcast(None)
             if method == 'QUIT':
+                assert not _managed_objects
                 break
             else:
                 method(*args, **kwargs)
@@ -163,6 +164,12 @@ def quit():
     MPI ranks.
     """
     global finished, _event_loop_running
+    if _managed_objects:
+        from warnings import warn
+        warn('Leaving MPI event loop while not all managed objects have been removed. '
+             'This might be caused by a resource leak.')
+        for obj_id in list(_managed_objects):
+            call(remove_object, obj_id)
     comm.bcast(('QUIT', None, None))
     finished = True
     _event_loop_running = False
