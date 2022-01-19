@@ -715,9 +715,8 @@ class DOFVectorArray(VectorArray):
             If `False`, modifying the returned |NumPy array| might alter the original
             |DOFVectorArray|. If `True` always a copy of the array data is made.
         """
-        raise NotImplementedError
+        return self.dofs(np.arange(self.dim))
 
-    @abstractmethod
     def amax(self):
         """The maximum absolute value of the DOFs contained in the array.
 
@@ -730,7 +729,10 @@ class DOFVectorArray(VectorArray):
             |NumPy array| containing for each vector the maximum absolute value of its
             DOFs.
         """
-        pass
+        A = np.abs(self.to_numpy())
+        max_ind = np.argmax(A, axis=1)
+        max_val = A[np.arange(len(A)), max_ind]
+        return max_ind, max_val
 
 
 class VectorSpace(ImmutableObject):
