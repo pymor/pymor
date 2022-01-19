@@ -155,7 +155,7 @@ def solve_lyap_dense(A, E, B, trans=False, options=None,
       .. math::
           A X + X A^T + B B^T = 0,
 
-    - if trans is `False` and E is an |Operator|:
+    - if trans is `False` and E is a |NumPy array|:
 
       .. math::
           A X E^T + E X A^T + B B^T = 0,
@@ -165,7 +165,7 @@ def solve_lyap_dense(A, E, B, trans=False, options=None,
       .. math::
           A^T X + X A + B^T B = 0,
 
-    - if trans is `True` and E is an |Operator|:
+    - if trans is `True` and E is a |NumPy array|:
 
       .. math::
           A^T X E + E^T X A + B^T B = 0.
