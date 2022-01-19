@@ -26,7 +26,7 @@ class VectorArray(BasicObject):
 
     An implementation of the `VectorArray` via |NumPy arrays| is given by
     |NumpyVectorArray|.  In general, it is the implementors decision how memory is
-    allocated internally (e.g.  continuous block of memory vs. list of pointers to the
+    allocated internally (e.g. continuous block of memory vs. list of pointers to the
     individual vectors.) Thus, no general assumptions can be made on the costs of operations
     like appending to or removing vectors from the array. As a hint for 'continuous block
     of memory' implementations, :meth:`~VectorSpace.zeros` provides a `reserve`
@@ -588,12 +588,19 @@ class VectorArray(BasicObject):
 class DOFVectorArray(VectorArray):
     """Interface for vector arrays whose entries represent DOFs.
 
-    DOF vector arrays behave almost identically to vector arrays. The key difference
-    between the classes is that each entry of a |DOFVectorArray| represents a DOF, whereas
-    the entries of |VectorArrays| should generally not be interpreted as DOFs. For
-    |DOFVectorArrays| it is assumed that for :meth:`~VectorArray.pairwise_inner` and
-    :meth:`~VectorArray.inner` the Euclidean inner product is implemented if the `product`
-    argument is `None`. In general, this does not have to be the case for |VectorArrays|.
+    DOF vector arrays are |VectorArrays| which are represented as coefficient vectors w.r.t.
+    a fixed basis of their |VectorSpace|. Selected coefficients (DOF values) can be extracted
+    using the :meth:`~DOFVectorArray.dofs` method. A |NumPy array| of all coeffcients can be
+    obtained using :meth:`~DOFVectorArray.to_numpy`. However, depending on the implementation
+    of the array, obtaining all DOF values might be prohibitively expensive, e.g., in case of
+    an MPI distributed array, so :meth:`~DOFVectorArray.to_numpy` should in general only be
+    used for low-dimensional data. Further, :meth:`~DOFVectorArray.full` can be used to
+    initialize new arrays with constant coefficients, and :meth:`~DOFVectorArray.random` allows
+    to prescribe certain random distributions of the coffieients.
+
+    Note that in most cases, in particular for |NumpyVectorArray|, calling
+    :meth:`~VectorArray.inner` will `product=None` will yield the Euclidean inner product
+    of the coefficient vectors. This is not guaranteed by the interface, however.
     """
 
     def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
@@ -738,8 +745,8 @@ class DOFVectorArray(VectorArray):
 class VectorSpace(ImmutableObject):
     """Class describing a vector space.
 
-    Vector spaces act as factories for |VectorArrays| (or |DOFVectorArrays|)
-    of vectors contained in them. As such, they hold all data necessary
+    Vector spaces act as factories for |VectorArrays| of vectors
+    contained in them. As such, they hold all data necessary
     to create |VectorArrays| of a given type (e.g. the dimension of
     the vectors, or a socket for communication with an external
     PDE solver).
@@ -749,9 +756,6 @@ class VectorSpace(ImmutableObject):
     :meth:`~VectorSpace.make_array` method builds a new
     |VectorArray| from given raw data of the underlying linear algebra
     backend (e.g. a |Numpy array| in the case  of |NumpyVectorSpace|).
-    Some vector spaces can create new |VectorArrays| from a given
-    |Numpy array| via the :meth:`~VectorSpace.from_numpy`
-    method.
 
     Each vector space has a string :attr:`~VectorSpace.id`
     to distinguish mathematically different spaces appearing
@@ -769,8 +773,7 @@ class VectorSpace(ImmutableObject):
         of the vector space (for instance to distinguish different
         components in an equation system).
     dim
-        The dimension (number of degrees of freedom) of the
-        vectors contained in the space.
+        The dimension of the vectors contained in the space.
     is_scalar
         Equivalent to
         `isinstance(space, NumpyVectorSpace) and space.dim == 1 and space.id is None`.
@@ -814,15 +817,12 @@ class VectorSpace(ImmutableObject):
     def random(self, count=1, distribution=None, random_state=None, seed=None, reserve=0, **kwargs):
         """Create a |VectorArray| of vectors with random entries.
 
-        For available distributions for |DOFVectorArrays| and the corresponding
-        parameters see :meth:`~DOFVectorArray.random`.
-
         Parameters
         ----------
         count
             The number of vectors.
         distribution
-            Random distribution to use.
+            Random distribution to use. Valid values depend on the specific backend.
         random_state
             :class:`~numpy.random.RandomState` to use for sampling.
             If `None`, a new random state is generated using `seed`
@@ -865,6 +865,18 @@ class VectorSpace(ImmutableObject):
 
 
 class DOFVectorSpace(VectorSpace):
+    """A |VectorSpace| of |DOFVectorArrays|.
+
+    In addition to the array creation methods of |VectorSpace|,
+    |DOFVectorSpaces| can create |DOFVectorArrays| with constant
+    coefficients using the :meth:`~DOFVectorArray.full` method.
+    The :meth:`~DOFVectorArray.random` method allows to specify
+    the random distribution of the individual array coefficients.
+
+    Some vector spaces, but not all, can create new |DOFVectorArrays|
+    from a given |Numpy array| via the :meth:`~DOFVectorSpace.from_numpy`
+    method.
+    """
 
     def ones(self, count=1, reserve=0):
         """Create a |VectorArray| of vectors with all entries set to one.
@@ -908,6 +920,16 @@ class DOFVectorSpace(VectorSpace):
         For available distributions for |DOFVectorArrays| and the corresponding
         parameters see :meth:`~DOFVectorArray.random`.
 
+        Supported random distributions::
+
+            'uniform': Uniform distribution in half-open interval
+                       [`low`, `high`).
+            'normal':  Normal (Gaussian) distribution with mean
+                       `loc` and standard deviation `scale`.
+
+        Note that not all random distributions are necessarily implemented
+        by all |DOFVectorSpace| implementations.
+
         Parameters
         ----------
         count
@@ -930,10 +952,9 @@ class DOFVectorSpace(VectorSpace):
         return self.from_numpy(values)
 
     def from_numpy(self, data, ensure_copy=False):
-        """Create a |VectorArray| from a |NumPy array|.
+        """Create a |DOFVectorArray| from a |NumPy array|.
 
-        Note that this method will not be supported by all vector
-        space implementations.
+        Note that this method is not supported by all vector space implementations.
 
         Parameters
         ----------

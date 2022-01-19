@@ -98,6 +98,15 @@ class Operator(ParametricObject):
         In the case of complex numbers, note that `apply2` is anti-linear in the
         first variable by definition of `inner`.
 
+        Further note that for an operator that maps vectors to functionals, e.g.,
+        a finite-element matrix, :meth:`~Operator.apply2` will only correctly
+        evaluate the corresponding 2-form when `op.range.inner` implements the
+        dual paring between vectors and functionals. For `op.range` being a
+        |DOFVectorSpace|, this means that `op` needs to map to coefficient vectors
+        w.r.t. to the dual basis of the space and `op.range.inner` needs to be the
+        Euclidean inner product of the basis coefficients. This is the case for
+        all |VectorArray| implementations shipped with pyMOR.
+
         Parameters
         ----------
         V
