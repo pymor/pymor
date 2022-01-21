@@ -509,7 +509,7 @@ class sign(UnaryFunctionCall):     numpy_symbol = 'sign';    fenics_op = 'sign' 
 
 class exp2(UnaryFunctionCall):
     numpy_symbol = 'exp2'
-    
+
     def fenics_expr(self, params):
         from ufl import elem_pow
         f_expr = self.arg.fenics_expr(params)
@@ -521,27 +521,33 @@ class exp2(UnaryFunctionCall):
 
 class log2(UnaryFunctionCall):
     numpy_symbol = 'log2'
-    
-    def fenics_expr(self, params):
+
+    def log2(x):
         from ufl import ln
-        log2 = lambda x : ln(x) / ln(2)
+        return ln(x[0]) / ln(2)
+
+    def fenics_expr(self, params):
         f_expr = self.arg.fenics_expr(params)
         if isinstance(f_expr, np.ndarray):
-            return np.vectorize(lambda x: log2(x[0]))(f_expr)
+            return np.vectorize(log2)(f_expr)
         else:
-            return np.array([log2(f_expr[0])])
+            return np.array([log2(f_expr)])
 
 
 class log10(UnaryFunctionCall):
     numpy_symbol = 'log10'
-    def fenics_expr(self, params):
+
+    def log10(x):
         from ufl import ln
-        log10 = lambda x : ln(x) / ln(10)
+        return ln(x[0]) / ln(10)
+
+    def fenics_expr(self, params):
         f_expr = self.arg.fenics_expr(params)
         if isinstance(f_expr, np.ndarray):
-            return np.vectorize(lambda x: log10(x[0]))(f_expr)
+            return np.vectorize(log10)(f_expr)
         else:
-            return np.array([log10(f_expr[0])])
+            return np.array([log10(f_expr)])
+
 
 class abs(UnaryFunctionCall):
     numpy_symbol = 'abs'
@@ -556,7 +562,6 @@ class abs(UnaryFunctionCall):
 
 
 class angle(UnaryFunctionCall):
-
     numpy_symbol = 'angle'
     fenics_op = None
 
