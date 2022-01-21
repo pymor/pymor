@@ -312,11 +312,25 @@ class BinaryOp(Expression):
             import ufl
             if self.fenics_op is not None:
                 ufl_op = getattr(ufl, self.fenics_op)
-                return ufl_op(self.first.fenics_expr(params), self.second.fenics_expr(params))
+                first = self.first.fenics_expr(params)
+                second = self.second.fenics_expr(params)
+                if isinstance(first, np.ndarray):
+                    if not len(first) == len(second):
+                        raise ValueError(f'Cannot apply binary operator {self.fenics_op} to expressions of mismatched sizes {len(first)} and {len(second)}.')
+                    return np.vectorize(ufl_op)(first, second)
+                else:
+                    return ufl_op(first, second)
             else:
                 raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
         else:
-            return self.fenics_op(self.first.fenics_expr(params), self.second.fenics_expr(params))
+            first = self.first.fenics_expr(params)
+            second = self.second.fenics_expr(params)
+            if isinstance(first, np.ndarray):
+                if not len(first) == len(second):
+                    raise ValueError(f'Cannot apply binary operator {self.fenics_op} to expressions of mismatched sizes {len(first)} and {len(second)}.')
+                return np.vectorize(self.fenics_op)(first, second)
+            else:
+                return self.fenics_op(first, second)
 
     def __str__(self):
         return f'({self.first} {self.numpy_symbol} {self.second})'
@@ -390,7 +404,11 @@ class UnaryFunctionCall(Expression):
         import ufl
         if self.fenics_op is not None:
             ufl_op = getattr(ufl, self.fenics_op)
-            return ufl_op(self.arg.fenics_expr(params))
+            f_expr = self.arg.fenics_expr(params)
+            if isinstance(f_expr, np.ndarray):
+                return np.vectorize(ufl_op)(f_expr)
+            else:
+                return ufl_op(f_expr)
         else:
             raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
 
@@ -419,7 +437,11 @@ class UnaryReductionCall(Expression):
         import ufl
         if self.fenics_op is not None:
             ufl_op = getattr(ufl, self.fenics_op)
-            return ufl_op(self.arg.fenics_expr(params))
+            f_expr = self.arg.fenics_expr(params)
+            if isinstance(f_expr, np.ndarray):
+                return np.vectorize(ufl_op)(f_expr)
+            else:
+                return ufl_op(f_expr)
         else:
             raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
 
@@ -494,7 +516,11 @@ class exp2(UnaryFunctionCall):
     
     def fenics_expr(self, params):
         from ufl import elem_pow
-        return elem_pow(2, self.arg.fenics_expr(params))
+        f_expr = self.arg.fenics_expr(params)
+        if isinstance(f_expr, np.ndarray):
+            return np.vectorize(elem_pow)(f_expr)
+        else:
+            return elem_pow(f_expr)
 
 
 class log2(UnaryFunctionCall):
@@ -502,21 +528,35 @@ class log2(UnaryFunctionCall):
     
     def fenics_expr(self, params):
         from ufl import ln
-        return ln(self.arg.fenics_expr(params)) / ln(2)
+        log2 = lambda x : ln(x) / ln(2)
+        f_expr = self.arg.fenics_expr(params)
+        if isinstance(f_expr, np.ndarray):
+            return np.vectorize(log2)(f_expr)
+        else:
+            return log2(f_expr)
 
 
 class log10(UnaryFunctionCall):
     numpy_symbol = 'log10'
     def fenics_expr(self, params):
         from ufl import ln
-        return ln(self.arg.fenics_expr(params)) / ln(10)
+        log10 = lambda x : ln(x) / ln(10)
+        f_expr = self.arg.fenics_expr(params)
+        if isinstance(f_expr, np.ndarray):
+            return np.vectorize(log10)(f_expr)
+        else:
+            return log10(f_expr)
 
 class abs(UnaryFunctionCall):
     numpy_symbol = 'abs'
 
     def fenics_expr(self, params):
         from ufl.algebra import Abs
-        return Abs(self.arg.fenics_expr(params))
+        f_expr = self.arg.fenics_expr(params)
+        if isinstance(f_expr, np.ndarray):
+            return np.vectorize(Abs)(f_expr)
+        else:
+            return Abs(f_expr)
 
 
 class angle(UnaryFunctionCall):
