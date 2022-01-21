@@ -201,7 +201,7 @@ class BaseConstant(Expression):
         import ufl
         if self.fenics_op is not None:
             ufl_op = getattr(ufl, self.fenics_op)
-            return ufl_op
+            return np.array([ufl_op])
 
     def __str__(self):
         return str(self.numpy_symbol)
@@ -217,7 +217,7 @@ class Constant(BaseConstant):
 
     def fenics_expr(self, params):
         from dolfin import Constant
-        return Constant(self.value)
+        return np.array([Constant(self.value)])
 
     def __str__(self):
         return str(self.value)
@@ -246,7 +246,7 @@ class Parameter(Expression):
         return str(self.name)
 
     def fenics_expr(self, params):
-        return params[self.name]
+        return np.array([params[self.name]])
 
     def __str__(self):
         return str(self.name)
@@ -314,23 +314,23 @@ class BinaryOp(Expression):
                 ufl_op = getattr(ufl, self.fenics_op)
                 first = self.first.fenics_expr(params)
                 second = self.second.fenics_expr(params)
-                if isinstance(first, np.ndarray):
+                if isinstance(first[0], np.ndarray):
                     if not len(first) == len(second):
                         raise ValueError(f'Cannot apply binary operator {self.fenics_op} to expressions of mismatched sizes {len(first)} and {len(second)}.')
-                    return np.vectorize(ufl_op)(first, second)
+                    return np.vectorize(lambda x, y: ufl_op(x[0], y[0]))(first, second)
                 else:
-                    return ufl_op(first, second)
+                    return np.array([ufl_op(first, second)])
             else:
                 raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
         else:
             first = self.first.fenics_expr(params)
             second = self.second.fenics_expr(params)
-            if isinstance(first, np.ndarray):
+            if isinstance(first[0], np.ndarray):
                 if not len(first) == len(second):
                     raise ValueError(f'Cannot apply binary operator {self.fenics_op} to expressions of mismatched sizes {len(first)} and {len(second)}.')
-                return np.vectorize(self.fenics_op)(first, second)
+                return np.vectorize(lambda x, y: self.fenics_op(x[0], y[0]))(first, second)
             else:
-                return self.fenics_op(first, second)
+                return np.array([self.fenics_op(first, second)])
 
     def __str__(self):
         return f'({self.first} {self.numpy_symbol} {self.second})'
@@ -376,7 +376,7 @@ class Indexed(Expression):
     def fenics_expr(self, params):
         if len(self.base.shape) != 1:
             raise NotImplementedError
-        return self.base.fenics_expr(params)[self.index[0]]
+        return np.array([self.base.fenics_expr(params)[0][self.index[0]]])
 
     def __str__(self):
         index = [str(i) for i in self.index]
@@ -405,10 +405,10 @@ class UnaryFunctionCall(Expression):
         if self.fenics_op is not None:
             ufl_op = getattr(ufl, self.fenics_op)
             f_expr = self.arg.fenics_expr(params)
-            if isinstance(f_expr, np.ndarray):
-                return np.vectorize(ufl_op)(f_expr)
+            if isinstance(f_expr[0], np.ndarray):
+                return np.vectorize(lambda x: ufl_op(x[0]))(f_expr)
             else:
-                return ufl_op(f_expr)
+                return np.array([ufl_op(f_expr[0])])
         else:
             raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
 
@@ -439,9 +439,9 @@ class UnaryReductionCall(Expression):
             ufl_op = getattr(ufl, self.fenics_op)
             f_expr = self.arg.fenics_expr(params)
             if isinstance(f_expr, np.ndarray):
-                return np.vectorize(ufl_op)(f_expr)
+                return np.vectorize(lambda x: ufl_op(x[0]))(f_expr)
             else:
-                return ufl_op(f_expr)
+                return np.array([ufl_op(f_expr)])
         else:
             raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
 
@@ -518,9 +518,9 @@ class exp2(UnaryFunctionCall):
         from ufl import elem_pow
         f_expr = self.arg.fenics_expr(params)
         if isinstance(f_expr, np.ndarray):
-            return np.vectorize(elem_pow)(f_expr)
+            return np.vectorize(lambda x: elem_pow(x[0]))(f_expr)
         else:
-            return elem_pow(f_expr)
+            return np.array([elem_pow(f_expr[0])])
 
 
 class log2(UnaryFunctionCall):
@@ -531,9 +531,9 @@ class log2(UnaryFunctionCall):
         log2 = lambda x : ln(x) / ln(2)
         f_expr = self.arg.fenics_expr(params)
         if isinstance(f_expr, np.ndarray):
-            return np.vectorize(log2)(f_expr)
+            return np.vectorize(lambda x: log2(x[0]))(f_expr)
         else:
-            return log2(f_expr)
+            return np.array([log2(f_expr[0])])
 
 
 class log10(UnaryFunctionCall):
@@ -543,9 +543,9 @@ class log10(UnaryFunctionCall):
         log10 = lambda x : ln(x) / ln(10)
         f_expr = self.arg.fenics_expr(params)
         if isinstance(f_expr, np.ndarray):
-            return np.vectorize(log10)(f_expr)
+            return np.vectorize(lambda x: log10(x[0]))(f_expr)
         else:
-            return log10(f_expr)
+            return np.array([log10(f_expr[0])])
 
 class abs(UnaryFunctionCall):
     numpy_symbol = 'abs'
@@ -554,9 +554,9 @@ class abs(UnaryFunctionCall):
         from ufl.algebra import Abs
         f_expr = self.arg.fenics_expr(params)
         if isinstance(f_expr, np.ndarray):
-            return np.vectorize(Abs)(f_expr)
+            return np.vectorize(lambda x: Abs(x[0]))(f_expr)
         else:
-            return Abs(f_expr)
+            return np.array([Abs(f_expr[0])])
 
 
 class angle(UnaryFunctionCall):
