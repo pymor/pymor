@@ -120,7 +120,12 @@ class Expression(ParametricObject):
             assert self.parameters[variable] == mesh.topology().dim()
             params = {p: SpatialCoordinate(mesh) if p == variable else Constant([0.] * dim)
                       for p, dim in self.parameters.items()}
-            return self.fenics_expr(params), params
+            # avoid the final index around scalar valued expressions
+            # this is hacky and should probably be changed
+            f_expr = self.fenics_expr(params)
+            if f_expr.shape == (1, 1):
+                f_expr = f_expr[0]
+            return f_expr, params
 
     def numpy_expr(self):
         """Called by :meth:`~Expression.to_numpy`."""
