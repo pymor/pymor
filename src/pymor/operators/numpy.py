@@ -16,6 +16,7 @@ This module provides the following |NumPy|-based |Operators|:
 from functools import reduce
 
 import numpy as np
+from numpy.fft import fft, ifft
 from scipy.io import mmwrite, savemat
 from scipy.linalg import solve
 import scipy.sparse
@@ -395,3 +396,69 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             matrix_repr = f'<{self.range.dim}x{self.source.dim} dense>'
         return super()._format_repr(max_width, verbosity, override={'matrix': matrix_repr})
+
+
+class NumpyHankelOperator(NumpyGenericOperator):
+    def __init__(self, markov_parameters, source_id=None, range_id=None, name=None):
+        if markov_parameters.ndim == 1:
+            markov_parameters = markov_parameters.reshape(1, 1, -1)
+
+        assert markov_parameters.ndim == 3
+        try:
+            markov_parameters.setflags(write=False)  # make numpy arrays read-only
+        except AttributeError:
+            pass
+
+        self.__auto_init(locals())
+        p, m, s = markov_parameters.shape
+        n = s // 2 + 1
+        self.source = NumpyVectorSpace(m * n, source_id)
+        self.range = NumpyVectorSpace(p * n, range_id)
+        self.linear = True
+        self._circulant = self._calc_circulant()
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        U = U.to_numpy().T
+        k = U.shape[1]
+        p, m, s = self.markov_parameters.shape
+        n = s // 2 + 1
+        y = self.range.zeros(k).to_numpy().T
+        for (i, j) in np.ndindex((p, m)):
+            x = np.concatenate([np.flip(U[j::m], axis=0), np.zeros([n, k])])
+            y[i::p] += np.real(
+                ifft(fft(x, axis=0,) * self._circulant[i, j].reshape(-1, 1), axis=0)
+            )[:n]
+
+        return self.range.make_array(y.T)
+
+    def apply_adjoint(self, V, mu=None):
+        assert V in self.range
+        return self.H.apply(V, mu=mu)
+
+    def _calc_circulant(self):
+        p, m, s = self.markov_parameters.shape
+        return fft(
+            np.roll(
+                np.concatenate(
+                    [
+                        np.zeros([p, m, 1]),
+                        self.markov_parameters,
+                        np.zeros([p, m, 1 - s % 2]),
+                    ],
+                    axis=-1,
+                ),
+                s // 2 + 1,
+                axis=-1,
+            )
+        )
+
+    @property
+    def H(self):
+        adjoint_markov_parameters = self.markov_parameters.transpose(1, 0, 2).conj()
+        return self.with_(
+            markov_parameters=adjoint_markov_parameters,
+            source_id=self.range_id,
+            range_id=self.source_id,
+            name=self.name + "_adjoint",
+        )
