@@ -1,5 +1,15 @@
 name: Conda Tests
-on: [push]
+on:
+  # run tests on pull requests for main and release branches
+  # and (after a merge) on the target branch
+  push:
+    branches:
+      - main
+      - 20*.*.x
+  pull_request:
+    branches:
+      - main
+      - 20*.*.x
 
 jobs:
   bugout:
