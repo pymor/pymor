@@ -50,8 +50,8 @@ class MPIModel:
 
 class MPIVisualizer(ImmutableObject):
 
-    def __init__(self, m_obj_id):
-        self.m_obj_id = m_obj_id
+    def __init__(self, m_obj_id, remove_model=False):
+        self.__auto_init(locals())
 
     def visualize(self, U, **kwargs):
         if isinstance(U, tuple):
@@ -59,6 +59,10 @@ class MPIVisualizer(ImmutableObject):
         else:
             U = U.obj_id
         mpi.call(_MPIVisualizer_visualize, self.m_obj_id, U, **kwargs)
+
+    def __del__(self):
+        if self.remove_model:
+            mpi.call(mpi.remove_object, self.m_obj_id)
 
 
 def _MPIVisualizer_visualize(m, U, **kwargs):
@@ -137,7 +141,9 @@ def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_appl
     if use_with:
         m = mpi.get_object(local_models)
         if m.visualizer:
-            wrapped_attributes['visualizer'] = MPIVisualizer(local_models)
+            wrapped_attributes['visualizer'] = MPIVisualizer(local_models, True)
+        else:
+            mpi.call(mpi.remove_object, local_models)
         m = m.with_(**wrapped_attributes)
         return m
     else:
