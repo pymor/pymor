@@ -346,7 +346,8 @@ class Mu(FrozenDict):
         return Parameters({k: v.size for k, v in self.items()})
 
     def allclose(self, mu):
-        """Compare two dicts of |parameter values| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
+        """Compare two dicts of |parameter values| using
+        :meth:`~pymor.tools.floatcmp.float_cmp_all`.
 
         Parameters
         ----------
