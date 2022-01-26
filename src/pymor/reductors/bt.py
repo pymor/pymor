@@ -170,6 +170,9 @@ class FDBTReductor(GenericBTReductor):
         self.solver_options = solver_options
 
     def _gramians(self):
+        if self.fom.sampling_time > 0:
+            raise NotImplementedError
+
         A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
                       for op in ['A', 'B', 'C', 'E'])
         options = self.solver_options
@@ -213,6 +216,9 @@ class LQGBTReductor(GenericBTReductor):
         self.solver_options = solver_options
 
     def _gramians(self):
+        if self.fom.sampling_time > 0:
+            raise NotImplementedError
+
         A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
                       for op in ['A', 'B', 'C', 'E'])
         if isinstance(E, IdentityOperator):
@@ -253,6 +259,9 @@ class BRBTReductor(GenericBTReductor):
         self.solver_options = solver_options
 
     def _gramians(self):
+        if self.fom.sampling_time > 0:
+            raise NotImplementedError
+
         A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
                       for op in ['A', 'B', 'C', 'E'])
         if isinstance(E, IdentityOperator):
