@@ -32,8 +32,9 @@ class TransferFunction(CacheableObject, ParametricObject):
         The complex derivative of `H` with respect to `s` (optional).
     parameters
         The |Parameters| of the transfer function.
-    cont_time
-        `True` if the system is continuous-time, otherwise `False`.
+    sampling_time
+        `0` if the system is continuous-time, otherwise a positive number that denotes the
+        sampling time (in seconds).
     name
         Name of the system.
 
@@ -51,18 +52,25 @@ class TransferFunction(CacheableObject, ParametricObject):
 
     cache_region = 'memory'
 
-    def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, cont_time=True, name=None):
+    def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, sampling_time=0, name=None):
+        sampling_time = float(sampling_time)
+        assert sampling_time >= 0
+
         self.parameters_own = parameters
         self.__auto_init(locals())
 
     def __str__(self):
-        return (
+        string = (
             f'{self.name}\n'
             f'    class: {self.__class__.__name__}\n'
             f'    number of inputs:  {self.dim_input}\n'
             f'    number of outputs: {self.dim_output}\n'
-            f'    {"continuous" if self.cont_time else "discrete"}-time'
         )
+        if self.sampling_time == 0:
+            string += '    continuous-time\n'
+        else:
+            string += f'    {f"discrete-time (sampling_time={self.sampling_time:.2e}s)"}\n'
+        return string
 
     @cached
     def eval_tf(self, s, mu=None):
@@ -128,12 +136,13 @@ class TransferFunction(CacheableObject, ParametricObject):
             Transfer function values at frequencies in `w`, |NumPy array| of shape
             `(len(w), self.dim_output, self.dim_input)`.
         """
-        if not self.cont_time:
-            raise NotImplementedError
+        if self.sampling_time > 0 and not all(-np.pi <= wi <= np.pi for wi in w):
+            self.logger.warning('Some frequencies are not in the [-pi, pi] interval.')
+        w = 1j * w if self.sampling_time == 0 else np.exp(1j * w)
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
-        return np.stack([self.eval_tf(1j * wi, mu=mu) for wi in w])
+        return np.stack([self.eval_tf(wi, mu=mu) for wi in w])
 
     def bode(self, w, mu=None):
         """Compute magnitudes and phases.
@@ -199,6 +208,7 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         w = np.asarray(w)
         freq = w / (2 * np.pi) if Hz else w
+        freq = freq / self.sampling_time if self.sampling_time > 0 else freq
         mag, phase = self.bode(w, mu=mu)
         if deg:
             phase *= 180 / np.pi
@@ -258,6 +268,7 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         w = np.asarray(w)
         freq = w / (2 * np.pi) if Hz else w
+        freq = freq / self.sampling_time if self.sampling_time > 0 else freq
         mag = spla.norm(self.freq_resp(w, mu=mu), ord=ord, axis=(1, 2))
         if dB:
             out = ax.semilogx(freq, 20 * np.log10(mag), **mpl_kwargs)
@@ -301,7 +312,7 @@ class TransferFunction(CacheableObject, ParametricObject):
             Quadrature info (returned if `return_norm_only` is `False` and `full_output` is `True`).
             See `scipy.integrate.quad` documentation for more details.
         """
-        if not self.cont_time:
+        if self.sampling_time > 0:
             raise NotImplementedError
 
         import scipy.integrate as spint
@@ -350,7 +361,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
         if not isinstance(other, TransferFunction):
             other = other.transfer_function
-        assert self.cont_time == other.cont_time
+        assert self.sampling_time == other.sampling_time
         assert self.dim_input == other.dim_input
         assert self.dim_output == other.dim_output
 
@@ -369,7 +380,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
         if not isinstance(other, TransferFunction):
             other = other.transfer_function
-        assert self.cont_time == other.cont_time
+        assert self.sampling_time == other.sampling_time
         assert self.dim_input == other.dim_input
         assert self.dim_output == other.dim_output
 
@@ -388,7 +399,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
         if not isinstance(other, TransferFunction):
             other = other.transfer_function
-        assert self.cont_time == other.cont_time
+        assert self.sampling_time == other.sampling_time
         assert self.dim_input == other.dim_output
 
         tf = lambda s, mu=None: self.eval_tf(s, mu=mu) @ other.eval_tf(s, mu=mu)
@@ -402,7 +413,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
         if not isinstance(other, TransferFunction):
             other = other.transfer_function
-        assert self.cont_time == other.cont_time
+        assert self.sampling_time == other.sampling_time
         assert self.dim_output == other.dim_input
 
         tf = lambda s, mu=None: other.eval_tf(s, mu=mu) @ self.eval_tf(s, mu=mu)
@@ -434,14 +445,15 @@ class FactorizedTransferFunction(TransferFunction):
         (optional).
     parameters
         The |Parameters| of the transfer function.
-    cont_time
-        `True` if the system is continuous-time, otherwise `False`.
+    sampling_time
+        `0` if the system is continuous-time, otherwise a positive number that denotes the
+        sampling time (in seconds).
     name
         Name of the system.
     """
 
     def __init__(self, dim_input, dim_output, K, B, C, D, dK=None, dB=None, dC=None, dD=None,
-                 parameters={}, cont_time=True, name=None):
+                 parameters={}, sampling_time=0, name=None):
         def tf(s, mu=None):
             if dim_input <= dim_output:
                 B_vec = B(s).as_range_array(mu=mu)
@@ -490,7 +502,7 @@ class FactorizedTransferFunction(TransferFunction):
                 return res
 
         super().__init__(dim_input, dim_output, tf, dtf=dtf, parameters=parameters,
-                         cont_time=cont_time, name=name)
+                         sampling_time=sampling_time, name=name)
         self.__auto_init(locals())
 
     def __add__(self, other):
@@ -498,7 +510,7 @@ class FactorizedTransferFunction(TransferFunction):
                 and not hasattr(other, 'transfer_function')):
             return NotImplemented
 
-        assert self.cont_time == other.cont_time
+        assert self.sampling_time == other.sampling_time
         assert self.dim_input == other.dim_input
         assert self.dim_output == other.dim_output
 
@@ -538,7 +550,7 @@ class FactorizedTransferFunction(TransferFunction):
                 and not hasattr(other, 'transfer_function')):
             return NotImplemented
 
-        assert self.cont_time == other.cont_time
+        assert self.sampling_time == other.sampling_time
         assert self.dim_input == other.dim_output
 
         if not type(other) is FactorizedTransferFunction:

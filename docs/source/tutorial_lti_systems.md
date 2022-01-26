@@ -55,6 +55,12 @@ by constructing {math}`A, B, C, D, E` as parametric {{ Operators }} and
 passing {{ parameter_values }} via the `mu` argument to the methods of the
 {{ LTIModel }}.
 
+::: {note}
+
+Discrete-time LTI systems can be constructed by passing positive values for the
+`sampling_time` to any constructor of an {{LTIModel}}.
+
+:::
 ## Building a model
 
 We consider the following one-dimensional heat equation over {math}`(0, 1)` with

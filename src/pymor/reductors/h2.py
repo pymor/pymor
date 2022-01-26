@@ -260,7 +260,7 @@ class IRKAReductor(GenericIRKAReductor):
         rom
             Reduced |LTIModel| model.
         """
-        if not self.fom.cont_time:
+        if self.fom.sampling_time > 0:
             raise NotImplementedError
 
         self._clear_lists()
@@ -372,7 +372,7 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
         rom
             Reduced |LTIModel| model.
         """
-        if not self.fom.cont_time:
+        if self.fom.sampling_time > 0:
             raise NotImplementedError
 
         self._clear_lists()
@@ -502,7 +502,7 @@ class TSIAReductor(GenericIRKAReductor):
         rom
             Reduced |LTIModel|.
         """
-        if not self.fom.cont_time:
+        if self.fom.sampling_time > 0:
             raise NotImplementedError
 
         self._clear_lists()
@@ -620,7 +620,7 @@ class TFIRKAReductor(GenericIRKAReductor):
         rom
             Reduced |LTIModel| model.
         """
-        if not self.fom.cont_time:
+        if self.fom.sampling_time > 0:
             raise NotImplementedError
 
         self._clear_lists()
@@ -721,7 +721,7 @@ class GapIRKAReductor(GenericIRKAReductor):
         rom
             Reduced |LTIModel| model.
         """
-        if not self.fom.cont_time:
+        if self.fom.sampling_time > 0:
             raise NotImplementedError
 
         self._clear_lists()
