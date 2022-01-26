@@ -19,8 +19,7 @@ methods = [method_of_snapshots, qr_svd]
 
 
 @given_vector_arrays(method=sampled_from(methods))
-@settings(deadline=None, suppress_health_check=[HealthCheck.filter_too_much,
-    HealthCheck.data_too_large])
+@settings(deadline=None, suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.data_too_large])
 def test_method_of_snapshots(vector_array, method):
     A = vector_array
 
