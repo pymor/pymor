@@ -2,8 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
-
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.domaindescriptions import LineDomain, RectDomain, TorusDomain, CircleDomain
 from pymor.analyticalproblems.instationary import InstationaryProblem

@@ -7,8 +7,7 @@ from pymor.algorithms.rules import RuleTable, RuleNotMatchingError, match_class,
 from pymor.models.interface import Model
 from pymor.operators.constructions import (AdjointOperator, AffineOperator, ConcatenationOperator,
                                            FixedParameterOperator, LincombOperator,
-                                           SelectionOperator, VectorArrayOperator,
-                                           VectorFunctional, VectorOperator)
+                                           SelectionOperator, VectorArrayOperator)
 from pymor.operators.list import NumpyListVectorArrayMatrixOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.list import NumpyListVectorSpace
@@ -18,7 +17,8 @@ def convert_to_numpy_list_vector_array(obj, space=None):
     """Use NumpyListVectorArrayMatrixOperator instead of NumpyMatrixOperator.
 
     This simple function recursively converts |NumpyMatrixOperators| to corresponding
-    :class:`NumpyListVectorArrayMatrixOperators <pymor.operators.list.NumpyListVectorArrayMatrixOperator>`.
+    :class:`NumpyListVectorArrayMatrixOperators
+    <pymor.operators.list.NumpyListVectorArrayMatrixOperator>`.
 
     Parameters
     ----------
