@@ -47,6 +47,29 @@ def expand(obj):
 
 
 def contract(obj):
+    """Contract linear combinations and concatenations of |Operators|.
+
+    To any given |Operator| or |Model|, the following
+    transformations are applied recursively:
+
+    - :class:`Concatenations <pymor.operators.constructions.ConcatenationOperator>`
+      of non-parametric linear |Operators| are contracted into a single |Operator|
+      when possible. Products of sparse matrices are not computed, however.
+
+    - Non-parametric :class:`linear combinations <pymor.operators.constructions.LincombOperator>`
+      of non-parametric operators are merged.
+
+    Parameters
+    ----------
+    obj
+        Either a |Model| or an |Operator| to which the contraction rules are
+        applied recursively for all
+        :meth:`children <pymor.algorithms.rules.RuleTable.get_children>`.
+
+    Returns
+    -------
+    The transformed object.
+    """
     return ContractRules().apply(obj)
 
 
@@ -118,7 +141,7 @@ class ContractRules(RuleTable):
         param_ops, param_coeffs = [], []
         non_param_ops, non_param_coeffs = [], []
         for o, c in zip(op.operators, op.coefficients):
-            if isinstance(c, ParameterFunctional):
+            if o.parametric or isinstance(c, ParameterFunctional):
                 param_ops.append(o)
                 param_coeffs.append(c)
             else:
