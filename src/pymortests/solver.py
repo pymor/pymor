@@ -8,7 +8,6 @@ import pytest
 
 import pymor.algorithms.genericsolvers
 from pymor.bindings.scipy import solver_options as scipy_solver_options
-from pymor.core.config import config
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
