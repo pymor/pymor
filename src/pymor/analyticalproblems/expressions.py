@@ -433,7 +433,7 @@ class UnaryReductionCall(Expression):
     _parameters_varargs_warning = False  # silence warning due to use of *args in __init__
 
     def __init__(self, arg, *args):
-        if len(arg) != 1:
+        if args:
             raise ValueError(f'{self.numpy_symbol} takes a single argument (given {(arg,) + args})')
         self.arg = _convert_to_expression(arg)
         self.shape = ()
