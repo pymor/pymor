@@ -399,6 +399,67 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
 
 class NumpyHankelOperator(NumpyGenericOperator):
+    r"""Implicit representation of a Hankel operator by a |NumPy Array| of Markov parameters.
+
+    Let
+
+    .. math::
+        h =
+        \begin{pmatrix}
+            h_1 & h_2 & \dots & h_n
+        \end{pmatrix},\quad h_i\in\mathbb{R}^{p\times m},\,i=1,\,\dots,\,n,\quad n,m,p\in\mathbb{N}
+
+    be a finite sequence of (matrix-valued) Markov parameters. For an uneven number :math:`n=2s-1`
+    Markov parameters, the corresponding Hankel operator can be represented by the matrix
+
+    .. math::
+        H =
+        \begin{bmatrix}
+            h_1 & h_2 & \dots & h_s \\
+            h_2 & h_3 & \dots & h_{s+1}\\
+            \vdots & \vdots && \vdots\\
+            h_s & h_{s+1} & \dots & h_{2s-1}
+        \end{bmatrix}\in\mathbb{R}^{ms\times ps}.
+
+    For an even number of :math:`n=2s` Markov parameters, the corresponding matrix
+    representation is given by
+
+    .. math::
+        H =
+        \begin{bmatrix}
+            h_1 & h_2 & \dots & h_s & h_{s+1}\\
+            h_2 & h_3 & \dots & h_{s+1} & h_{s+2}\\
+            \vdots & \vdots && \vdots & \vdots\\
+            h_s & h_{s+1} & \dots & h_{2s-1} & h_{2s}\\
+            h_{s+1} & h_{s+2} & \dots & h_{2s} & 0
+        \end{bmatrix}\in\mathbb{R}^{m(s+1)\times p(s+1)}.
+
+    The matrix :math:`H` as seen above is not explicitly constructed, only the sequence of Markov
+    parameters is stored. Efficient matrix-vector multiplications are realized via circulant
+    matrices with DFT in the class' `apply` method
+    (see :cite:`MSKC21` Algorithm 3.1. for details).
+
+    Parameters
+    ----------
+    markov_parameters
+        The |NumPy array| that contains the first :math:`n` Markov parameters that define the Hankel
+        operator. Has to be one- or three-dimensional with either::
+
+            markov_parameters.shape = (n,)
+
+        for scalar-valued Markov parameters or::
+
+            markov_parameters.shape = (p, m, n)
+
+        for matrix-valued Markov parameters of dimension :math:`p\times m`.
+    source_id
+        The id of the operator's `source` |VectorSpace|.
+    range_id
+        The id of the operator's `range` |VectorSpace|.
+    name
+        Name of the operator.
+    """
+
     def __init__(self, markov_parameters, source_id=None, range_id=None, name=None):
         if markov_parameters.ndim == 1:
             markov_parameters = markov_parameters.reshape(1, 1, -1)
