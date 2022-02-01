@@ -173,7 +173,7 @@ class ColoredFormatter(logging.Formatter):
 
 
 @defaults('filename')
-def default_handler(filename=''):
+def default_handler(filename=None):
     streamhandler = logging.StreamHandler()
     streamformatter = ColoredFormatter()
     streamhandler.setFormatter(streamformatter)
@@ -187,7 +187,7 @@ def default_handler(filename=''):
 
 
 @defaults('filename')
-def getLogger(module, level=None, filename=''):
+def getLogger(module, level=None, filename=None):
     """Get the logger of the respective module for pyMOR's logging facility.
 
     In addition to the logging methods inherited from :class:`~logging.Logger`
