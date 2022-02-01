@@ -5,7 +5,7 @@
 import numpy as np
 from numpy.random import uniform
 
-from pymor.algorithms.randrangefinder import rrf, adaptive_rrf
+from pymor.algorithms.rand_la import rrf, adaptive_rrf
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.operators.constructions import VectorArrayOperator
 
