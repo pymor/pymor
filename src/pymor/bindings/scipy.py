@@ -314,18 +314,21 @@ def lyap_lrcf_solver_options():
 def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a general
-    description.
+    See
 
-    This function uses `scipy.linalg.solve_continuous_lyapunov`, which
-    is a dense solver for Lyapunov equations with E=I.
-    Therefore, we assume A and E can be converted to |NumPy arrays|
-    using :func:`~pymor.algorithms.to_matrix.to_matrix` and that
-    `B.to_numpy` is implemented.
+    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf`
+    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_lrcf`
+
+    for a general description.
+
+    This function uses `scipy.linalg.solve_continuous_lyapunov` or
+    `scipy.linalg.solve_discrete_lyapunov`, which is a dense solver for Lyapunov equations with E=I.
+    Therefore, we assume A and E can be converted to |NumPy arrays| using
+    :func:`~pymor.algorithms.to_matrix.to_matrix` and that `B.to_numpy` is implemented.
 
     .. note::
-        If E is not `None`, the problem will be reduced to a standard
-        continuous-time algebraic Lyapunov equation by inverting E.
+        If E is not `None`, the problem will be reduced to a standard continuous-time algebraic
+        Lyapunov equation by inverting E.
 
     Parameters
     ----------
@@ -336,17 +339,16 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     B
         The operator B as a |VectorArray| from `A.source`.
     trans
-        Whether the first |Operator| in the Lyapunov equation is
-        transposed.
+        Whether the first |Operator| in the Lyapunov equation is transposed.
+    cont_time
+        Whether the continuous- or discrete-time Lyapunov equation is solved.
     options
-        The solver options to use (see
-        :func:`lyap_lrcf_solver_options`).
+        The solver options to use (see :func:`lyap_lrcf_solver_options`).
 
     Returns
     -------
     Z
-        Low-rank Cholesky factor of the Lyapunov equation solution,
-        |VectorArray| from `A.source`.
+        Low-rank Cholesky factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
     """
     _solve_lyap_lrcf_check_args(A, E, B, trans)
     options = _parse_options(options, lyap_lrcf_solver_options(), 'scipy', None, False)
@@ -371,15 +373,19 @@ def lyap_dense_solver_options():
 def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     """Compute the solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_lyap_dense` for a
-    general description.
+    See
 
-    This function uses `scipy.linalg.solve_continuous_lyapunov`, which
-    is a dense solver for Lyapunov equations with E=I.
+    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_dense`
+    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_dense`
+
+    for a general description.
+
+    This function uses `scipy.linalg.solve_continuous_lyapunov` or
+    `scipy.linalg.solve_discrete_lyapunov`, which is a dense solver for Lyapunov equations with E=I.
 
     .. note::
-        If E is not `None`, the problem will be reduced to a standard
-        continuous-time algebraic Lyapunov equation by inverting E.
+        If E is not `None`, the problem will be reduced to a standard continuous-time algebraic
+        Lyapunov equation by inverting E.
 
     Parameters
     ----------
@@ -390,11 +396,11 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     B
         The matrix B as a 2D |NumPy array|.
     trans
-        Whether the first operator in the Lyapunov equation is
-        transposed.
+        Whether the first operator in the Lyapunov equation is transposed.
+    cont_time
+        Whether the continuous- or discrete-time Lyapunov equation is solved.
     options
-        The solver options to use (see
-        :func:`lyap_dense_solver_options`).
+        The solver options to use (see :func:`lyap_dense_solver_options`).
 
     Returns
     -------

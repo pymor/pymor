@@ -73,11 +73,14 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
 def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a
-    general description.
+    See
 
-    This function uses the low-rank ADI iteration as described in
-    Algorithm 4.3 in :cite:`PK16`.
+    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf`
+    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_lrcf`
+
+    for a general description.
+
+    This function uses the low-rank ADI iteration as described in Algorithm 4.3 in :cite:`PK16`.
 
     Parameters
     ----------
@@ -88,17 +91,16 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     B
         The operator B as a |VectorArray| from `A.source`.
     trans
-        Whether the first |Operator| in the Lyapunov equation is
-        transposed.
+        Whether the first |Operator| in the Lyapunov equation is transposed.\
+    cont_time
+        Whether the continuous- or discrete-time Lyapunov equation is solved.
     options
-        The solver options to use (see
-        :func:`lyap_lrcf_solver_options`).
+        The solver options to use (see :func:`lyap_lrcf_solver_options`).
 
     Returns
     -------
     Z
-        Low-rank Cholesky factor of the Lyapunov equation solution,
-        |VectorArray| from `A.source`.
+        Low-rank Cholesky factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
     """
     if not cont_time:
         raise NotImplementedError
