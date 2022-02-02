@@ -582,7 +582,7 @@ class LTIModel(Model):
         E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
         options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
         options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
-        solve_lyap_lrcf = solve_cont_lyap_lrcf if self.dt == 0 else solve_disc_lyap_lrcf
+        solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
         solve_lyap_dense = solve_cont_lyap_dense if self.dt == 0 else solve_disc_lyap_dense
         if typ == 'c_lrcf':
             return solve_lyap_lrcf(A, E, B.as_range_array(mu=mu),
