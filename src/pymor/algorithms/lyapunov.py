@@ -75,14 +75,14 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
     - for sparse problems (minimum size specified by
       :func:`mat_eqn_sparse_min_size`)
 
-      1. `pymess` (see :func:`pymor.bindings.pymess.solve_cont_lyap_lrcf`),
-      2. `lradi` (see :func:`pymor.algorithms.lradi.solve_cont_lyap_lrcf`),
+      1. `pymess` (see :func:`pymor.bindings.pymess.solve_lyap_lrcf`),
+      2. `lradi` (see :func:`pymor.algorithms.lradi.solve_lyap_lrcf`),
 
     - for dense problems (smaller than :func:`mat_eqn_sparse_min_size`)
 
-      1. `pymess` (see :func:`pymor.bindings.pymess.solve_cont_lyap_lrcf`),
-      2. `slycot` (see :func:`pymor.bindings.slycot.solve_cont_lyap_lrcf`),
-      3. `scipy` (see :func:`pymor.bindings.scipy.solve_cont_lyap_lrcf`).
+      1. `pymess` (see :func:`pymor.bindings.pymess.solve_lyap_lrcf`),
+      2. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_lrcf`),
+      3. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_lrcf`).
 
     Parameters
     ----------
@@ -125,19 +125,19 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
         else:
             backend = default_dense_solver_backend
     if backend == 'scipy':
-        from pymor.bindings.scipy import solve_cont_lyap_lrcf as solve_lyap_impl
+        from pymor.bindings.scipy import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'slycot':
-        from pymor.bindings.slycot import solve_cont_lyap_lrcf as solve_lyap_impl
+        from pymor.bindings.slycot import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'pymess':
-        from pymor.bindings.pymess import solve_cont_lyap_lrcf as solve_lyap_impl
+        from pymor.bindings.pymess import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'lradi':
-        from pymor.algorithms.lradi import solve_cont_lyap_lrcf as solve_lyap_impl
+        from pymor.algorithms.lradi import solve_lyap_lrcf as solve_lyap_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
-    return solve_lyap_impl(A, E, B, trans=trans, options=options)
+    return solve_lyap_impl(A, E, B, trans=trans, cont_time=True, options=options)
 
 
-@defaults('default_sparse_solver_backend', 'default_dense_solver_backend')
+@defaults('default_dense_solver_backend')
 def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
                          default_dense_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND["disc"]["dense"]):
     _solve_lyap_lrcf_check_args(A, E, B, trans)
@@ -147,12 +147,12 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
     else:
         backend = default_dense_solver_backend
     if backend == 'scipy':
-        from pymor.bindings.scipy import solve_disc_lyap_lrcf as solve_lyap_impl
+        from pymor.bindings.scipy import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'slycot':
-        from pymor.bindings.slycot import solve_disc_lyap_lrcf as solve_lyap_impl
+        from pymor.bindings.slycot import solve_lyap_lrcf as solve_lyap_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
-    return solve_lyap_impl(A, E, B, trans=trans, options=options)
+    return solve_lyap_impl(A, E, B, trans=trans, cont_time=False, options=options)
 
 
 def _solve_lyap_lrcf_check_args(A, E, B, trans):
@@ -202,9 +202,9 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
     If the solver is not specified using the options argument, a solver
     backend is chosen based on availability in the following order:
 
-    1. `pymess` (see :func:`pymor.bindings.pymess.solve_cont_lyap_dense`)
-    2. `slycot` (see :func:`pymor.bindings.slycot.solve_cont_lyap_dense`)
-    3. `scipy` (see :func:`pymor.bindings.scipy.solve_cont_lyap_dense`)
+    1. `pymess` (see :func:`pymor.bindings.pymess.solve_lyap_dense`)
+    2. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_dense`)
+    3. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_dense`)
 
     Parameters
     ----------
@@ -240,14 +240,14 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
     else:
         backend = default_solver_backend
     if backend == 'scipy':
-        from pymor.bindings.scipy import solve_cont_lyap_dense as solve_lyap_impl
+        from pymor.bindings.scipy import solve_lyap_dense as solve_lyap_impl
     elif backend == 'slycot':
-        from pymor.bindings.slycot import solve_cont_lyap_dense as solve_lyap_impl
+        from pymor.bindings.slycot import solve_lyap_dense as solve_lyap_impl
     elif backend == 'pymess':
-        from pymor.bindings.pymess import solve_cont_lyap_dense as solve_lyap_impl
+        from pymor.bindings.pymess import solve_lyap_dense as solve_lyap_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
-    return solve_lyap_impl(A, E, B, trans, options=options)
+    return solve_lyap_impl(A, E, B, trans=trans, cont_time=True, options=options)
 
 
 @defaults('default_solver_backend')
@@ -260,12 +260,12 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
     else:
         backend = default_solver_backend
     if backend == 'scipy':
-        from pymor.bindings.scipy import solve_disc_lyap_dense as solve_lyap_impl
+        from pymor.bindings.scipy import solve_lyap_dense as solve_lyap_impl
     elif backend == 'slycot':
-        from pymor.bindings.slycot import solve_disc_lyap_dense as solve_lyap_impl
+        from pymor.bindings.slycot import solve_lyap_dense as solve_lyap_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
-    return solve_lyap_impl(A, E, B, trans, options=options)
+    return solve_lyap_impl(A, E, B, trans=trans, cont_time=False, options=options)
 
 
 def _solve_lyap_dense_check_args(A, E, B, trans):

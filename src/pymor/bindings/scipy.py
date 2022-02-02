@@ -311,10 +311,10 @@ def lyap_lrcf_solver_options():
     return {'scipy': {'type': 'scipy'}}
 
 
-def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None):
+def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf` for a general
+    See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a general
     description.
 
     This function uses `scipy.linalg.solve_continuous_lyapunov`, which
@@ -351,21 +351,10 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None):
     _solve_lyap_lrcf_check_args(A, E, B, trans)
     options = _parse_options(options, lyap_lrcf_solver_options(), 'scipy', None, False)
 
-    X = solve_cont_lyap_dense(to_matrix(A, format='dense'),
-                              to_matrix(E, format='dense') if E else None,
-                              B.to_numpy().T if not trans else B.to_numpy(),
-                              trans=trans, options=options)
-    return A.source.from_numpy(_chol(X).T)
-
-
-def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None):
-    _solve_lyap_lrcf_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_lrcf_solver_options(), 'scipy', None, False)
-
-    X = solve_disc_lyap_dense(to_matrix(A, format='dense'),
-                              to_matrix(E, format='dense') if E else None,
-                              B.to_numpy().T if not trans else B.to_numpy(),
-                              trans=trans, options=options)
+    X = solve_lyap_dense(to_matrix(A, format='dense'),
+                         to_matrix(E, format='dense') if E else None,
+                         B.to_numpy().T if not trans else B.to_numpy(),
+                         trans=trans, cont_time=cont_time, options=options)
     return A.source.from_numpy(_chol(X).T)
 
 
@@ -379,10 +368,10 @@ def lyap_dense_solver_options():
     return {'scipy': {'type': 'scipy'}}
 
 
-def solve_cont_lyap_dense(A, E, B, trans=False, options=None):
+def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     """Compute the solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_cont_lyap_dense` for a
+    See :func:`pymor.algorithms.lyapunov.solve_lyap_dense` for a
     general description.
 
     This function uses `scipy.linalg.solve_continuous_lyapunov`, which
@@ -422,25 +411,13 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None):
         if trans:
             A = A.T
             B = B.T
-        X = solve_continuous_lyapunov(A, -B.dot(B.T))
-    else:
-        raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
-
-    return X
-
-
-def solve_disc_lyap_dense(A, E, B, trans=False, options=None):
-    _solve_lyap_dense_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_dense_solver_options(), 'scipy', None, False)
-
-    if options['type'] == 'scipy':
-        if E is not None:
-            A = solve(E, A) if not trans else solve(E.T, A.T).T
-            B = solve(E, B) if not trans else solve(E.T, B.T).T
-        if trans:
-            A = A.T
-            B = B.T
-        X = solve_discrete_lyapunov(A, B.dot(B.T))
+        if cont_time:
+            BBT = -B.dot(B.T)
+            solve_lyap = solve_continuous_lyapunov
+        else:
+            BBT = B.dot(B.T)
+            solve_lyap = solve_discrete_lyapunov
+        X = solve_lyap(A, BBT)
     else:
         raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 

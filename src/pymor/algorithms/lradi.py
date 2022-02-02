@@ -33,11 +33,11 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
     Parameters
     ----------
     lradi_tol
-        See :func:`solve_cont_lyap_lrcf`.
+        See :func:`solve_lyap_lrcf`.
     lradi_maxiter
-        See :func:`solve_cont_lyap_lrcf`.
+        See :func:`solve_lyap_lrcf`.
     lradi_shifts
-        See :func:`solve_cont_lyap_lrcf`.
+        See :func:`solve_lyap_lrcf`.
     projection_shifts_init_maxiter
         See :func:`projection_shifts_init`.
     projection_shifts_init_seed
@@ -70,10 +70,10 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                                              'tol': wachspress_tol}}}}
 
 
-def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None):
+def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf` for a
+    See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a
     general description.
 
     This function uses the low-rank ADI iteration as described in
@@ -100,9 +100,11 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None):
         Low-rank Cholesky factor of the Lyapunov equation solution,
         |VectorArray| from `A.source`.
     """
+    if not cont_time:
+        raise NotImplementedError
     _solve_lyap_lrcf_check_args(A, E, B, trans)
     options = _parse_options(options, lyap_lrcf_solver_options(), 'lradi', None, False)
-    logger = getLogger('pymor.algorithms.lradi.solve_cont_lyap_lrcf')
+    logger = getLogger('pymor.algorithms.lradi.solve_lyap_lrcf')
 
     shift_options = options['shift_options'][options['shifts']]
     if shift_options['type'] == 'projection_shifts':
