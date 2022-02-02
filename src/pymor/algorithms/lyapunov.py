@@ -7,23 +7,25 @@ import scipy.linalg as spla
 
 from pymor.core.config import config
 from pymor.core.defaults import defaults
+from pymor.tools.frozendict import FrozenDict
 from pymor.operators.interface import Operator
 
-_DEFAULT_CONT_LYAP_LRCF_SPARSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else 'lradi')
 
-_DEFAULT_CONT_LYAP_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
-                                                'slycot' if config.HAVE_SLYCOT else
-                                                'scipy')
-
-_DEFAULT_CONT_LYAP_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
-                                           'slycot' if config.HAVE_SLYCOT else
-                                           'scipy')
-
-_DEFAULT_DISC_LYAP_LRCF_SPARSE_SOLVER_BACKEND = NotImplemented
-
-_DEFAULT_DISC_LYAP_LRCF_DENSE_SOLVER_BACKEND = ('slycot' if config.HAVE_SLYCOT else 'scipy')
-
-_DEFAULT_DISC_LYAP_DENSE_SOLVER_BACKEND = ('slycot' if config.HAVE_SLYCOT else 'scipy')
+_DEFAULT_LYAP_SOLVER_BACKEND = FrozenDict(
+    {
+        "cont": FrozenDict(
+            {
+                "sparse": "pymess" if config.HAVE_PYMESS else "lradi",
+                "dense": "pymess"
+                if config.HAVE_PYMESS
+                else "slycot"
+                if config.HAVE_SLYCOT
+                else "scipy",
+            }
+        ),
+        "disc": FrozenDict({"dense": "slycot" if config.HAVE_SLYCOT else "scipy"}),
+    }
+)
 
 
 @defaults('value')
@@ -34,8 +36,8 @@ def mat_eqn_sparse_min_size(value=1000):
 
 @defaults('default_sparse_solver_backend', 'default_dense_solver_backend')
 def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
-                         default_sparse_solver_backend=_DEFAULT_CONT_LYAP_LRCF_SPARSE_SOLVER_BACKEND,
-                         default_dense_solver_backend=_DEFAULT_CONT_LYAP_LRCF_DENSE_SOLVER_BACKEND):
+                         default_sparse_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND["cont"]["sparse"],
+                         default_dense_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND["cont"]["dense"]):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
     Returns a low-rank Cholesky factor :math:`Z` such that :math:`Z Z^T`
@@ -137,17 +139,13 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
 
 @defaults('default_sparse_solver_backend', 'default_dense_solver_backend')
 def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
-                         default_sparse_solver_backend=_DEFAULT_DISC_LYAP_LRCF_SPARSE_SOLVER_BACKEND,
-                         default_dense_solver_backend=_DEFAULT_DISC_LYAP_LRCF_DENSE_SOLVER_BACKEND):
+                         default_dense_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND["disc"]["dense"]):
     _solve_lyap_lrcf_check_args(A, E, B, trans)
     if options:
         solver = options if isinstance(options, str) else options['type']
         backend = solver.split('_')[0]
     else:
-        if A.source.dim >= mat_eqn_sparse_min_size():
-            backend = default_sparse_solver_backend
-        else:
-            backend = default_dense_solver_backend
+        backend = default_dense_solver_backend
     if backend == 'scipy':
         from pymor.bindings.scipy import solve_disc_lyap_lrcf as solve_lyap_impl
     elif backend == 'slycot':
@@ -171,7 +169,7 @@ def _solve_lyap_lrcf_check_args(A, E, B, trans):
 
 @defaults('default_solver_backend')
 def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
-                          default_solver_backend=_DEFAULT_CONT_LYAP_DENSE_SOLVER_BACKEND):
+                          default_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND["cont"]["dense"]):
     """Compute the solution of a Lyapunov equation.
 
     Returns the solution :math:`X` of a (generalized) continuous-time
@@ -254,7 +252,7 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
 
 @defaults('default_solver_backend')
 def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
-                          default_solver_backend=_DEFAULT_DISC_LYAP_DENSE_SOLVER_BACKEND):
+                          default_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND["disc"]["dense"]):
     _solve_lyap_dense_check_args(A, E, B, trans)
     if options:
         solver = options if isinstance(options, str) else options['type']
