@@ -583,7 +583,7 @@ class LTIModel(Model):
         options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
         options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
         solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
-        solve_lyap_dense = solve_cont_lyap_dense if self.dt == 0 else solve_disc_lyap_dense
+        solve_lyap_dense = solve_cont_lyap_dense if self.sampling_time == 0 else solve_disc_lyap_dense
         if typ == 'c_lrcf':
             return solve_lyap_lrcf(A, E, B.as_range_array(mu=mu),
                                    trans=False, options=options_lrcf)
@@ -777,7 +777,7 @@ class LTIModel(Model):
         else:
             BmKD = B
 
-        solve_lyap_lrcf = solve_cont_lyap_lrcf if self.dt == 0 else solve_disc_lyap_lrcf
+        solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
         if self.dim_input <= self.dim_output:
             cf = solve_lyap_lrcf(A - KC, E, BmKD.as_range_array(mu=mu),
                                  trans=False, options=options_lrcf)
