@@ -165,6 +165,8 @@ def test_disc_lrcf(n, m, with_E, trans, lyap_solver):
         E = None
     else:
         A, E = conv_diff_1d_fem(n, 1, 0.1)
+
+    A /= np.max(np.abs(A)) * np.max(A.shape)  # ensure matrix is Schur-stable
     np.random.seed(0)
     B = np.random.randn(n, m)
     if trans:
