@@ -1,20 +1,22 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import scipy as sp
 from scipy.sparse.linalg import eigsh, LinearOperator
 from scipy.special import erfinv
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms import svd_va 
 from pymor.core.defaults import defaults
 from pymor.operators.interface import Operator
-from pymor.algorithms import svd_va
 from pymor.algorithms.eigs import eigs
 from pymor.core.logger import getLogger
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
 from pymor.operators.constructions import VectorArrayOperator, InverseOperator, IdentityOperator
+from pymor.operators.numpy import NumpyMatrixOperator
 
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
@@ -24,7 +26,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
 
     This is an implementation of Algorithm 1 in :cite:`BS18`.
 
-    Given the |Operator| `A`, the return value of this method is the |VectorArray
+    Given the |Operator| `A`, the return value of this method is the |VectorArray|
     `B` with the property
 
     .. math::
@@ -129,10 +131,10 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     -------
     Q
         |VectorArray| which contains the basis, whose span approximates the range of A.
-    R 
+    R
         The randomly sampled |VectorArray|
     """
-     assert isinstance(A, Operator)
+    assert isinstance(A, Operator)
     
     if range_product is None:
         range_product = IdentityOperator(A.range)
@@ -165,35 +167,36 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
         return Q
 
 
-    @defaults('p', 'q')
-    def random_generalized_svd(A, S=None, T=None, modes=None, p=20, q=2):
-    
-    """ Randomized SVD of a |VectorArray|. 
-    
-    Viewing the |VectorArray| 'A' as a 'A.dim' x 'len(A)' matrix, the return value
+@defaults('p', 'q', 'modes')
+def random_generalized_svd(A, range_product=None, source_product=None, modes=3, p=20, q=2):
+    """Randomized SVD of a |VectorArray| or an |Operator|. 
+
+    Saibaba AK, Hart J, van BloemenWaanders B. Randomized algorithms for
+    generalized singular value decomposition with application to sensitivity analysis. Numer Linear Algebra Appl.
+    2021;28:e2364. 
+    https://doi.org/10.1002/nla.2364
+
+    Viewing the 'A' as a 'A.dim' x 'len(A)' matrix, the return value
     of this method is the randomized singular value decomposition of 'A', where the
-    inner product on R^('dim(A)') is given by 'S' and the inner product on R^('len(A)')
-    is given by 'T'. 
+    inner product on R^('dim(A)') is given by 'range_product' and the inner product on R^('len(A)')
+    is given by 'source_product'. 
         
-        A = U*\Sigma*V*T
+        A = U*\Sigma*V*source_product
     
     Parameters
     ----------
     A : 
         The |VectorArray| or |Operator| for which the randomized SVD is to be computed. 
-    S : 
+    range_product : 
         Range product |Operator| w.r.t which the randomized SVD is computed
-
-    T :
+    source_product :
         Source product |Operator| w.r.t which the randomized SVD is computed
-
     modes : 
-        If not 'None', at most the first 'modes' approximated singular values 
-        and vectors are returned. 
+        The first 'modes' approximated singular values and vectors are returned. 
     p :
-        If not '0', adds 'Oversampling' colums to the randomly sampled matrix 'G'. 
+        If not '0', adds 'Oversampling' colums to the randomly sampled matrix. 
     q : 
-        If not '0', performs 'PowerIterations' iterations to increase the relative weight
+        If not '0', performs 'q' so called power iterations to increase the relative weight
         of the first singular values.
 
     Returns
@@ -212,44 +215,49 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     if isinstance(A, VectorArray):
         A = VectorArrayOperator(A)
    
-    assert 0 <= modes <= max(A.source.dim, A.range.dim) and isinstance(modes,int)
+    assert 0 <= modes <= max(A.source.dim, A.range.dim) and isinstance(modes, int)
     assert p >= 0 and isinstance(p, int)
     assert q >= 0 and isinstance(q, int)
     
-    if S is None:
-        S = IdentityOperator(A.range)
+    if range_product is None:
+        range_product = IdentityOperator(A.range)
     else:
-        assert isinstance(S, Operator)
+        assert isinstance(range_product, Operator)
         
-    if T is None:
-        T = IdentityOperator(A.source)
+    if source_product is None:
+        source_product = IdentityOperator(A.source)
     else:
-        assert isinstance(T, Operator)
+        assert isinstance(source_product, Operator)
         
     if A.source.dim == 0 or A.range.dim == 0:
         return A.source.empty(), np.array([]), A.range.empty()
     
-    Q = rrf(A, source_product=T, range_product=S, q=q, l=modes+p)
-    B = A.apply_adjoint(S.apply(Q))
-    Q_B, R_B = gram_schmidt(T.apply_inverse(B), product=T, return_R=True)
-    U_b, s, V_b = sp.linalg.svd(R_B.T)
+    Q = rrf(A, source_product=source_product, range_product=range_product, q=q, l=modes+p)
+    B = A.apply_adjoint(range_product.apply(Q))
+    Q_B, R_B = gram_schmidt(source_product.apply_inverse(B), product=source_product, return_R=True)
+    U_b, s, Vh_b = sp.linalg.svd(R_B.T)
 
     with logger.block(f'Computing generalized left-singular vectors ({U_b[:,:modes].shape[1]} vectors) ...'):
         U = Q.lincomb(U_b)
 
-    with logger.block(f'Computung gerneralized right-singular vector ({V_b[:modes,:].shape[0]} vectors) ...'):
-        V = Q_B.lincomb(V_b.T)
+    with logger.block(f'Computung gerneralized right-singular vector ({Vh_b[:modes,:].shape[0]} vectors) ...'):
+        V = Q_B.lincomb(Vh_b.T)
         
     return  U[:modes], s[:modes], V[:modes]
 
 
-    @defaults('p', 'q','which','maxIter','complex_evp','left_evp','seed')
-    def random_ghep(A, E=None, k=None, p=20, q=2, sigma=None, which='LM', b=None, l=None, maxIter=1000, complex_evp=False, left_evp=False, seed=0):
+@defaults('modes', 'p', 'q', 'which', 'maxiter', 'tol', 'imag_tol', 'complex_pair_tol', 'seed')
+def random_ghep(A, E=None, modes=3, p=20, q=2, single_pass=False, sigma=None, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,  imag_tol=1e-12, complex_pair_tol=1e-12, complex_evp=False, left_evp=False, seed=0):
+    """Approximates a few eigenvalues of a linear |Operator| with randomized methods.
 
-     """Approximates a few eigenvalues of a linear |Operator| with randomized methods.
+    Approximates `modes` eigenvalues `w` with corresponding eigenvectors `v` which solve
+    the eigenvalue problem.
 
-    Approximates `k` eigenvalues `w` with corresponding eigenvectors `v` which solve
-    the eigenvalue problem
+    This is an implementation of algorithm 6 and 7 in 
+    Saibaba AK, Lee J. and Kitanidis PK
+    Randomized algorithms for generalized Hermitian eigenvalue problems with application to computing 
+    Karhunen Loeve expansion
+    https://arxiv.org/abs/1307.6885
 
     .. math::
         A v_i = w_i v_i
@@ -267,7 +275,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
         The linear |Operator| for which the eigenvalues are to be computed.
     E
         The linear |Operator| which defines the generalized eigenvalue problem.
-    k
+    modes
         The number of eigenvalues and eigenvectors which are to be computed.
     p :
         If not '0', adds 'p' colums to the randomly sampled matrix in the randrangefinder.rff() method.
@@ -275,6 +283,9 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     q : 
         If not '0', performs 'q' PowerIterations to increase the relative weight
         of the bigger singular values.
+    single_pass
+        If 'True', computes the ghep where only one set of matvec Ax is required. 
+        If 'False' the methods requires two sets of matvecs Ax.
     sigma
         If not `None` transforms the eigenvalue problem such that the k eigenvalues
         closest to sigma are computed.
@@ -310,7 +321,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
         A |VectorArray| which contains the computed eigenvectors.
     """
     logger = getLogger('pymor.algorithms.rand_la')
-    
+
     assert isinstance(A, Operator) and A.linear
     assert not A.parametric
     assert A.source == A.range
@@ -335,14 +346,15 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     Q = gram_schmidt(Y, product=E)
     Q_op = VectorArrayOperator(Q)
     
-    if single_pass :
+    if single_pass:
         X = VectorArrayOperator(Omega_op.apply_adjoint(E.apply(Q)))
         Z = VectorArrayOperator(Q_op.apply_adjoint(E.apply(Omega)))
         T = InverseOperator(X) @ VectorArrayOperator(Omega_op.apply_adjoint(A.apply(Q))) @ InverseOperator(Z)
     else: 
         T = Q_op.H @ A @ Q_op
         
-    w, S = eigs(T,k=modes)
+    w, S = eigs(T, E=None, k=modes, sigma=sigma, which=which, b=b, l=l, maxiter=maxiter, tol=tol,
+         imag_tol=imag_tol, complex_pair_tol=complex_pair_tol, complex_evp=complex_evp, left_evp=left_evp, seed=seed)
     
     with logger.block(f'Computing eigenvectors ({S.dim} vectors) ...'):
         V = Q_op.apply(S)
