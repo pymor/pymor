@@ -65,7 +65,7 @@ class GenericIRKAReductor(BasicObject):
         elif isinstance(rom0_params, np.ndarray):
             assert rom0_params.ndim == 1
         elif isinstance(rom0_params, dict):
-            assert ('sigma', 'b', 'c') in rom0_params
+            assert {'sigma', 'b', 'c'} <= rom0_params.keys()
             assert isinstance(rom0_params['sigma'], np.ndarray)
             assert isinstance(rom0_params['b'], np.ndarray)
             assert isinstance(rom0_params['c'], np.ndarray)
@@ -77,7 +77,7 @@ class GenericIRKAReductor(BasicObject):
         elif isinstance(rom0_params, LTIModel):
             assert rom0_params.order > 0
             if hasattr(self.fom, 'order'):  # self.fom can be a TransferFunction
-                assert rom0_params < self.fom.order
+                assert rom0_params.order < self.fom.order
             assert rom0_params.dim_input == self.fom.dim_input
             assert rom0_params.dim_output == self.fom.dim_output
         else:
