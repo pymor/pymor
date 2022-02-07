@@ -113,21 +113,16 @@ class Expression(ParametricObject):
 
     def to_fenics(self, mesh, variable='x'):
         # sanity check for dolfin before running code
-        if config.HAVE_FENICS:
-            from dolfin import Constant
-            from ufl import SpatialCoordinate
-            assert variable in self.parameters
-            assert self.parameters[variable] == mesh.topology().dim()
-            params = {p: SpatialCoordinate(mesh) if p == variable else Constant([0.] * dim)
-                      for p, dim in self.parameters.items()}
-            # avoid the final index around scalar valued expressions
-            # this is hacky and should probably be changed
-            f_expr = self.fenics_expr(params)
-            # accidental user iinput of e.g. [x[0]] would lead to a vectorized expression
-            # this returns the scalar instead, i.e. shape = ()
-            if f_expr.shape == (1,):
-                f_expr = np.array(f_expr[0])
-            return f_expr, params
+        if not config.HAVE_FENICS:
+            raise ImportError('Conversion of expressions to FEniCS requires its modules to be installed!')
+        from dolfin import Constant
+        from ufl import SpatialCoordinate
+        assert variable in self.parameters
+        assert self.parameters[variable] == mesh.topology().dim()
+        params = {p: SpatialCoordinate(mesh) if p == variable else Constant([0.] * dim)
+                  for p, dim in self.parameters.items()}
+        f_expr = self.fenics_expr(params)
+        return f_expr, params
 
     def numpy_expr(self):
         """Called by :meth:`~Expression.to_numpy`."""
@@ -199,6 +194,7 @@ class BaseConstant(Expression):
     """A constant value."""
 
     numpy_symbol = None
+    fenics_symbol = None
     shape = ()
 
     def numpy_expr(self):
@@ -206,9 +202,11 @@ class BaseConstant(Expression):
 
     def fenics_expr(self, params):
         import ufl
-        if self.fenics_op is not None:
-            ufl_op = getattr(ufl, self.fenics_op)
-            return np.array(ufl_op)
+        if self.fenics_symbol is None:
+            raise NotImplementedError(f'No FEniCS symbol was given!')
+            
+        ufl_op = getattr(ufl, self.fenics_op)
+        return np.array(ufl_op)
 
     def __str__(self):
         return str(self.numpy_symbol)
@@ -288,6 +286,7 @@ class BinaryOp(Expression):
     """Compound :class:`Expression` of a binary operator acting on two sub-expressions."""
 
     numpy_symbol = None
+    fenics_symbol = None
 
     def __init__(self, first, second):
         first = _convert_to_expression(first)
@@ -295,7 +294,7 @@ class BinaryOp(Expression):
         if not _broadcastable_shapes(first.shape, second.shape):
             raise ValueError(f'Incompatible shapes of expressions "{first}" and "{second}" with shapes '
                              f'{first.shape} and {second.shape} for binary operator {self.numpy_symbol}')
-        self.first, self.second = _convert_to_expression(first), _convert_to_expression(second)
+        self.first, self.second = first, second
         self.shape = tuple(builtin_max(f, s)
                            for f, s in zip_longest(first.shape[::-1], second.shape[::-1], fillvalue=1))[::-1]
 
@@ -315,29 +314,21 @@ class BinaryOp(Expression):
         return f'({self.first.numpy_expr()}{first_ind} {self.numpy_symbol} {self.second.numpy_expr()}{second_ind})'
 
     def fenics_expr(self, params):
-        if isinstance(self.fenics_op, str):
-            import ufl
-            if self.fenics_op is not None:
-                ufl_op = getattr(ufl, self.fenics_op)
-                first = self.first.fenics_expr(params)
-                second = self.second.fenics_expr(params)
-                if first.shape:
-                    if not len(first) == len(second):
-                        raise ValueError(f'Cannot apply binary operator {self.fenics_op} to expressions of mismatched sizes {len(first)} and {len(second)}.')
-                    return np.vectorize(lambda x, y: ufl_op(x.item(), y.item()))(first, second)
-                else:
-                    return np.array(ufl_op(first.item(), second.item()))
-            else:
-                raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
+        import ufl
+        if self.fenics_symbol is None:
+            raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
+
+        ufl_op = getattr(ufl, self.fenics_symbol) if isinstance(self.fenics_symbol, str) else self.fenics_symbol
+        ufl_op = getattr(ufl, self.fenics_symbol)
+        first = self.first.fenics_expr(params)
+        second = self.second.fenics_expr(params)
+        if first.shape:
+            if not _broadcastable_shapes(first.shape, second.shape):
+                raise ValueError(f'Incompatible shapes of expressions "{first}" and "{second}" with shapes '
+                                 f'{first.shape} and {second.shape} for binary operator {self.numpy_symbol}')
+            return np.vectorize(lambda x, y: ufl_op(x.item(), y.item()))(first, second)
         else:
-            first = self.first.fenics_expr(params)
-            second = self.second.fenics_expr(params)
-            if first.shape:
-                if not len(first) == len(second):
-                    raise ValueError(f'Cannot apply binary operator {self.fenics_op} to expressions of mismatched sizes {len(first)} and {len(second)}.')
-                return np.vectorize(lambda x, y: self.fenics_op(x.item(), y.item()))(first, second)
-            else:
-                return np.array(self.fenics_op(first.item(), second.item()))
+            return np.array(ufl_op(first.item(), second.item()))
 
     def __str__(self):
         return f'({self.first} {self.numpy_symbol} {self.second})'
@@ -383,7 +374,7 @@ class Indexed(Expression):
     def fenics_expr(self, params):
         if len(self.base.shape) != 1:
             raise NotImplementedError
-        return np.array(self.base.fenics_expr(params)[self.index[0]])
+        return np.array(self.base.fenics_expr(params)[self.index])
 
     def __str__(self):
         index = [str(i) for i in self.index]
@@ -397,6 +388,7 @@ class UnaryFunctionCall(Expression):
     """
 
     numpy_symbol = None
+    fenics_symbol = None
 
     _parameters_varargs_warning = False  # silence warning due to use of *args in __init__
 
@@ -411,15 +403,15 @@ class UnaryFunctionCall(Expression):
 
     def fenics_expr(self, params):
         import ufl
-        if self.fenics_op is not None:
-            ufl_op = getattr(ufl, self.fenics_op)
-            f_expr = self.arg.fenics_expr(params)
-            if f_expr.shape:
-                return np.vectorize(lambda x: ufl_op(x.item()))(f_expr)
-            else:
-                return np.array(ufl_op(f_expr.item()))
-        else:
+        if self.fenics_symbol is None:
             raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
+
+        ufl_op = getattr(ufl, self.fenics_symbol)
+        f_expr = self.arg.fenics_expr(params)
+        if f_expr.shape:
+            return np.vectorize(lambda x: ufl_op(x.item()))(f_expr)
+        else:
+            return np.array(ufl_op(f_expr.item()))
 
     def __str__(self):
         return f'{self.numpy_symbol}({self.arg})'
@@ -431,6 +423,9 @@ class UnaryReductionCall(Expression):
     The function is applied to the entire vector/matrix/tensor the sub-expression evaluates to,
     returning a single number.
     """
+
+    numpy_symbol = None
+    fenics_symbol = None
 
     _parameters_varargs_warning = False  # silence warning due to use of *args in __init__
 
@@ -446,15 +441,15 @@ class UnaryReductionCall(Expression):
 
     def fenics_expr(self, params):
         import ufl
-        if self.fenics_op is not None:
-            ufl_op = getattr(ufl, self.fenics_op)
-            f_expr = self.arg.fenics_expr(params)
-            if f_expr.shape:
-                return np.vectorize(lambda x: ufl_op(x.item()))(f_expr)
-            else:
-                return np.array(ufl_op(f_expr.item()))
-        else:
+        if self.fenics_symbol is None:
             raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
+        
+        ufl_op = getattr(ufl, self.fenics_symbol)
+        f_expr = self.arg.fenics_expr(params)
+        if f_expr.shape:
+            return np.vectorize(lambda x: ufl_op(x.item()))(f_expr)
+        else:
+            return np.array(ufl_op(f_expr.item()))
 
     def __str__(self):
         return f'{self.numpy_symbol}({self.arg})'
@@ -481,36 +476,36 @@ def _broadcastable_shapes(first, second):
     return all(f == s or f == 1 or s == 1 for f, s in zip(first[::-1], second[::-1]))
 
 
-class Sum(BinaryOp):  numpy_symbol = '+'; fenics_op = operator.add      # NOQA
-class Diff(BinaryOp): numpy_symbol = '-'; fenics_op = operator.sub      # NOQA
-class Prod(BinaryOp): numpy_symbol = '*'; fenics_op = operator.mul      # NOQA
-class Div(BinaryOp):  numpy_symbol = '/'; fenics_op = operator.truediv  # NOQA
+class Sum(BinaryOp):  numpy_symbol = '+'; fenics_symbol = operator.add      # NOQA
+class Diff(BinaryOp): numpy_symbol = '-'; fenics_symbol = operator.sub      # NOQA
+class Prod(BinaryOp): numpy_symbol = '*'; fenics_symbol = operator.mul      # NOQA
+class Div(BinaryOp):  numpy_symbol = '/'; fenics_symbol = operator.truediv  # NOQA
 
 
-class Pow(BinaryOp):  numpy_symbol = '**'; fenics_op = 'elem_pow'    # NOQA
-class LE(BinaryOp):   numpy_symbol = '<='; fenics_op = 'le'          # NOQA
-class GE(BinaryOp):   numpy_symbol = '>='; fenics_op = 'ge'          # NOQA
-class LT(BinaryOp):   numpy_symbol = '<';  fenics_op = 'lt'          # NOQA
-class GT(BinaryOp):   numpy_symbol = '>';  fenics_op = 'gt'          # NOQA
-class Mod(BinaryOp):  numpy_symbol = '%';  fenics_op = None          # NOQA
+class Pow(BinaryOp):  numpy_symbol = '**'; fenics_symbol = 'elem_pow'    # NOQA
+class LE(BinaryOp):   numpy_symbol = '<='; fenics_symbol = 'le'          # NOQA
+class GE(BinaryOp):   numpy_symbol = '>='; fenics_symbol = 'ge'          # NOQA
+class LT(BinaryOp):   numpy_symbol = '<';  fenics_symbol = 'lt'          # NOQA
+class GT(BinaryOp):   numpy_symbol = '>';  fenics_symbol = 'gt'          # NOQA
+class Mod(BinaryOp):  numpy_symbol = '%';  fenics_symbol = None          # NOQA
 
 
-class sin(UnaryFunctionCall):      numpy_symbol = 'sin';     fenics_op = 'sin'       # NOQA
-class cos(UnaryFunctionCall):      numpy_symbol = 'cos';     fenics_op = 'cos'       # NOQA
-class tan(UnaryFunctionCall):      numpy_symbol = 'tan';     fenics_op = 'tan'       # NOQA
-class arcsin(UnaryFunctionCall):   numpy_symbol = 'arcsin';  fenics_op = 'asin'      # NOQA
-class arccos(UnaryFunctionCall):   numpy_symbol = 'arccos';  fenics_op = 'acos'      # NOQA
-class arctan(UnaryFunctionCall):   numpy_symbol = 'arctan';  fenics_op = 'atan'      # NOQA
-class sinh(UnaryFunctionCall):     numpy_symbol = 'sinh';    fenics_op = 'sinh'      # NOQA
-class cosh(UnaryFunctionCall):     numpy_symbol = 'cosh';    fenics_op = 'cosh'      # NOQA
-class tanh(UnaryFunctionCall):     numpy_symbol = 'tanh';    fenics_op = 'tanh'      # NOQA
-class arcsinh(UnaryFunctionCall):  numpy_symbol = 'arcsinh'; fenics_op = None        # NOQA
-class arccosh(UnaryFunctionCall):  numpy_symbol = 'arccosh'; fenics_op = None        # NOQA
-class arctanh(UnaryFunctionCall):  numpy_symbol = 'arctanh'; fenics_op = None        # NOQA
-class exp(UnaryFunctionCall):      numpy_symbol = 'exp';     fenics_op = 'exp'       # NOQA
-class log(UnaryFunctionCall):      numpy_symbol = 'log';     fenics_op = 'ln'        # NOQA
-class sqrt(UnaryFunctionCall):     numpy_symbol = 'sqrt';    fenics_op = 'sqrt'      # NOQA
-class sign(UnaryFunctionCall):     numpy_symbol = 'sign';    fenics_op = 'sign'      # NOQA
+class sin(UnaryFunctionCall):      numpy_symbol = 'sin';     fenics_symbol = 'sin'       # NOQA
+class cos(UnaryFunctionCall):      numpy_symbol = 'cos';     fenics_symbol = 'cos'       # NOQA
+class tan(UnaryFunctionCall):      numpy_symbol = 'tan';     fenics_symbol = 'tan'       # NOQA
+class arcsin(UnaryFunctionCall):   numpy_symbol = 'arcsin';  fenics_symbol = 'asin'      # NOQA
+class arccos(UnaryFunctionCall):   numpy_symbol = 'arccos';  fenics_symbol = 'acos'      # NOQA
+class arctan(UnaryFunctionCall):   numpy_symbol = 'arctan';  fenics_symbol = 'atan'      # NOQA
+class sinh(UnaryFunctionCall):     numpy_symbol = 'sinh';    fenics_symbol = 'sinh'      # NOQA
+class cosh(UnaryFunctionCall):     numpy_symbol = 'cosh';    fenics_symbol = 'cosh'      # NOQA
+class tanh(UnaryFunctionCall):     numpy_symbol = 'tanh';    fenics_symbol = 'tanh'      # NOQA
+class arcsinh(UnaryFunctionCall):  numpy_symbol = 'arcsinh'; fenics_symbol = None        # NOQA
+class arccosh(UnaryFunctionCall):  numpy_symbol = 'arccosh'; fenics_symbol = None        # NOQA
+class arctanh(UnaryFunctionCall):  numpy_symbol = 'arctanh'; fenics_symbol = None        # NOQA
+class exp(UnaryFunctionCall):      numpy_symbol = 'exp';     fenics_symbol = 'exp'       # NOQA
+class log(UnaryFunctionCall):      numpy_symbol = 'log';     fenics_symbol = 'ln'        # NOQA
+class sqrt(UnaryFunctionCall):     numpy_symbol = 'sqrt';    fenics_symbol = 'sqrt'      # NOQA
+class sign(UnaryFunctionCall):     numpy_symbol = 'sign';    fenics_symbol = 'sign'      # NOQA
 
 
 class exp2(UnaryFunctionCall):
@@ -528,11 +523,11 @@ class exp2(UnaryFunctionCall):
 class log2(UnaryFunctionCall):
     numpy_symbol = 'log2'
 
-    def log2(x):
-        from ufl import ln
-        return ln(x.item()) / ln(2)
-
     def fenics_expr(self, params):
+        def log2(x):
+            from ufl import ln
+            return ln(x.item()) / ln(2)
+
         f_expr = self.arg.fenics_expr(params)
         if f_expr.shape:
             return np.vectorize(log2)(f_expr)
@@ -543,11 +538,11 @@ class log2(UnaryFunctionCall):
 class log10(UnaryFunctionCall):
     numpy_symbol = 'log10'
 
-    def log10(x):
-        from ufl import ln
-        return ln(x.item()) / ln(10)
-
     def fenics_expr(self, params):
+        def log10(x):
+            from ufl import ln
+            return ln(x.item()) / ln(10)
+
         f_expr = self.arg.fenics_expr(params)
         if f_expr.shape:
             return np.vectorize(log10)(f_expr)
@@ -585,8 +580,8 @@ class sum(UnaryReductionCall):  numpy_symbol = 'sum';  fenics_op = None         
 class prod(UnaryReductionCall): numpy_symbol = 'prod'; fenics_op = None          # NOQA
 
 
-class Pi(BaseConstant): numpy_symbol = 'pi'; fenics_op = 'pi'  # NOQA
-class E(BaseConstant):  numpy_symbol = 'e';  fenics_op = 'e'   # NOQA
+class Pi(BaseConstant): numpy_symbol = 'pi'; fenics_symbol = 'pi'  # NOQA
+class E(BaseConstant):  numpy_symbol = 'e';  fenics_symbol = 'e'   # NOQA
 
 
 pi = Pi()
