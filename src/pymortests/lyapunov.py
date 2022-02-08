@@ -44,15 +44,18 @@ def fro_norm(A):
         return sps.linalg.norm(A)
 
 
-def conv_diff_1d_fd(n, a, b):
+def conv_diff_1d_fd(n, a, b, cont_time=True):
     diagonals = [-a * 2 * (n + 1) ** 2 * np.ones((n,)),
                  (a * (n + 1) ** 2 + b * (n + 1) / 2) * np.ones((n - 1,)),
                  (a * (n + 1) ** 2 - b * (n + 1) / 2) * np.ones((n - 1,))]
     A = sps.diags(diagonals, [0, -1, 1], format='csc')
+    if not cont_time:
+        dt = 0.1 / (4*a*(n+1)**2 + b*(n+1))
+        A = sps.eye(n) + dt * A
     return A
 
 
-def conv_diff_1d_fem(n, a, b):
+def conv_diff_1d_fem(n, a, b, cont_time=True):
     diagonals = [-a * 2 * (n + 1) ** 2 * np.ones((n,)),
                  (a * (n + 1) ** 2 + b * (n + 1) / 2) * np.ones((n - 1,)),
                  (a * (n + 1) ** 2 - b * (n + 1) / 2) * np.ones((n - 1,))]
@@ -61,6 +64,9 @@ def conv_diff_1d_fem(n, a, b):
                  1 / 6 * np.ones((n - 1,)),
                  1 / 6 * np.ones((n - 1,))]
     E = sps.diags(diagonals, [0, -1, 1], format='csc')
+    if not cont_time:
+        dt = 0.1 / (4*a*(n+1)**2 + b*(n+1))
+        A = E + dt * A
     return A, E
 
 
@@ -132,10 +138,10 @@ def test_cont_lrcf(n, m, with_E, trans, lyap_solver):
     _check_availability(lyap_solver)
 
     if not with_E:
-        A = conv_diff_1d_fd(n, 1, 0.1)
+        A = conv_diff_1d_fd(n, 1, 0.1, cont_time=True)
         E = None
     else:
-        A, E = conv_diff_1d_fem(n, 1, 0.1)
+        A, E = conv_diff_1d_fem(n, 1, 0.1, cont_time=True)
     np.random.seed(0)
     B = np.random.randn(n, m)
     if trans:
@@ -161,12 +167,11 @@ def test_disc_lrcf(n, m, with_E, trans, lyap_solver):
     _check_availability(lyap_solver)
 
     if not with_E:
-        A = conv_diff_1d_fd(n, 1, 0.1)
+        A = conv_diff_1d_fd(n, 1, 0.1, cont_time=False)
         E = None
     else:
-        A, E = conv_diff_1d_fem(n, 1, 0.1)
+        A, E = conv_diff_1d_fem(n, 1, 0.1, cont_time=False)
 
-    A /= np.max(np.abs(A)) * np.max(A.shape)  # ensure matrix is Schur-stable
     np.random.seed(0)
     B = np.random.randn(n, m)
     if trans:
