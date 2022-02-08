@@ -91,7 +91,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     B
         The operator B as a |VectorArray| from `A.source`.
     trans
-        Whether the first |Operator| in the Lyapunov equation is transposed.\
+        Whether the first |Operator| in the Lyapunov equation is transposed.
     cont_time
         Whether the continuous- or discrete-time Lyapunov equation is solved.
     options
