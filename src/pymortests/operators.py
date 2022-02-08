@@ -13,7 +13,7 @@ from pymor.core.config import config
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
                                            LincombOperator, VectorArrayOperator)
-from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 from pymor.operators.interface import as_array_max_length
 from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
@@ -479,6 +479,14 @@ def test_issue_1276():
     v = B.source.ones()
 
     B.apply_inverse(v)
+
+
+def test_hankel_operator():
+    s, p, m = 4, 2, 3
+    mp = np.arange(s * p * m).reshape(s, p, m) + 1
+    op = NumpyHankelOperator(mp)
+    U = op.source.random(1)
+    np.testing.assert_almost_equal(op.apply(U).to_numpy().T, to_matrix(op) @ U.to_numpy().T)
 
 
 if config.HAVE_DUNEGDT:
