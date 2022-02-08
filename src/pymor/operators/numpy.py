@@ -463,13 +463,8 @@ class NumpyHankelOperator(NumpyGenericOperator):
     def __init__(self, markov_parameters, source_id=None, range_id=None, name=None):
         if markov_parameters.ndim == 1:
             markov_parameters = markov_parameters.reshape(-1, 1, 1)
-
         assert markov_parameters.ndim == 3
-        try:
-            markov_parameters.setflags(write=False)  # make numpy arrays read-only
-        except AttributeError:
-            pass
-
+        markov_parameters.setflags(write=False)  # make numpy arrays read-only
         self.__auto_init(locals())
         s, p, m = markov_parameters.shape
         n = s // 2 + 1
