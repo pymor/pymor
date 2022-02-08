@@ -449,7 +449,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
 
         for scalar-valued Markov parameters or::
 
-            markov_parameters.shape = (p, m, n)
+            markov_parameters.shape = (n, p, m)
 
         for matrix-valued Markov parameters of dimension :math:`p\times m`.
     source_id
@@ -462,7 +462,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
 
     def __init__(self, markov_parameters, source_id=None, range_id=None, name=None):
         if markov_parameters.ndim == 1:
-            markov_parameters = markov_parameters.reshape(1, 1, -1)
+            markov_parameters = markov_parameters.reshape(-1, 1, 1)
 
         assert markov_parameters.ndim == 3
         try:
@@ -471,7 +471,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
             pass
 
         self.__auto_init(locals())
-        p, m, s = markov_parameters.shape
+        s, p, m = markov_parameters.shape
         n = s // 2 + 1
         self.source = NumpyVectorSpace(m * n, source_id)
         self.range = NumpyVectorSpace(p * n, range_id)
@@ -482,13 +482,13 @@ class NumpyHankelOperator(NumpyGenericOperator):
         assert U in self.source
         U = U.to_numpy().T
         k = U.shape[1]
-        p, m, s = self.markov_parameters.shape
+        s, p, m = self.markov_parameters.shape
         n = s // 2 + 1
         y = self.range.zeros(k).to_numpy().T
         for (i, j) in np.ndindex((p, m)):
             x = np.concatenate([np.flip(U[j::m], axis=0), np.zeros([n, k])])
             y[i::p] += np.real(
-                ifft(fft(x, axis=0,) * self._circulant[i, j].reshape(-1, 1), axis=0)
+                ifft(fft(x, axis=0,) * self._circulant[:, i, j].reshape(-1, 1), axis=0)
             )[:n]
 
         return self.range.make_array(y.T)
@@ -498,28 +498,28 @@ class NumpyHankelOperator(NumpyGenericOperator):
         return self.H.apply(V, mu=mu)
 
     def _calc_circulant(self):
-        p, m, s = self.markov_parameters.shape
+        s, p, m = self.markov_parameters.shape
         return fft(
             np.roll(
                 np.concatenate(
                     [
-                        np.zeros([p, m, 1]),
+                        np.zeros([1, p, m]),
                         self.markov_parameters,
-                        np.zeros([p, m, 1 - s % 2]),
-                    ],
-                    axis=-1,
+                        np.zeros([1 - s % 2, p, m]),
+                    ]
                 ),
                 s // 2 + 1,
-                axis=-1,
-            )
+                axis=0,
+            ),
+            axis=0,
         )
 
     @property
     def H(self):
-        adjoint_markov_parameters = self.markov_parameters.transpose(1, 0, 2).conj()
+        adjoint_markov_parameters = self.markov_parameters.transpose(0, 2, 1).conj()
         return self.with_(
             markov_parameters=adjoint_markov_parameters,
             source_id=self.range_id,
             range_id=self.source_id,
-            name=self.name + "_adjoint",
+            name=self.name + '_adjoint',
         )
