@@ -286,7 +286,12 @@ class NeuralNetworkReductor(BasicObject):
         # the training data
         if u is None:
             u = self.fom.solve(mu)
-        return [(mu, self.reduced_basis.inner(u)[:, 0])]
+
+        product = None
+        if 'product' in self.pod_params:
+            product = self.pod_params['product']
+
+        return [(mu, self.reduced_basis.inner(u, product=product)[:, 0])]
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network."""
@@ -528,7 +533,11 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
 
         parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
 
-        samples = [(mu, self.reduced_basis.inner(u_t)[:, 0])
+        product = None
+        if 'product' in self.pod_params:
+            product = self.pod_params['product']
+
+        samples = [(mu, self.reduced_basis.inner(u_t, product=product)[:, 0])
                    for mu, u_t in zip(parameters_with_time, u)]
 
         return samples
