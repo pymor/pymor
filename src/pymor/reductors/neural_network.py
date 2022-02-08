@@ -740,15 +740,14 @@ def train_neural_network(training_data, validation_data, neural_network,
         taken as default value; not used in the case of the LBFGS-optimizer
         since LBFGS does not support mini-batching), `'learning_rate'` (a
         positive real number used as the (initial) step size of the optimizer;
-        if not provided, 1 is taken as default value; thus far, no learning
-        rate schedulers are supported in this implementation),
-        `'loss_function'` (a loss function from PyTorch; if not provided, the
-        MSE loss is taken as default), `'lr_scheduler'` (a learning rate
-        scheduler from the PyTorch `optim.lr_scheduler` package; if not
-        provided or `None`, no learning rate scheduler is used),
-        `'lr_scheduler_params'` (a dictionary of additional parameters
-        for the learning rate scheduler), and `'weight_decay'` (non-negative
-        real number that determines the strenght of the l2-regularization;
+        if not provided, 1 is taken as default value), `'loss_function'`
+        (a loss function from PyTorch; if not provided, the MSE loss is taken
+        as default), `'lr_scheduler'` (a learning rate scheduler from the
+        PyTorch `optim.lr_scheduler` package; if not provided or `None`,
+        no learning rate scheduler is used), `'lr_scheduler_params'`
+        (a dictionary of additional parameters for the learning rate
+        scheduler), and `'weight_decay'` (non-negative real number that
+        determines the strenght of the l2-regularization;
         if not provided or 0., no regularization is applied).
 
     Returns
