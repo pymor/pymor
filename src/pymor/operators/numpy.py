@@ -6,13 +6,13 @@
 
 This module provides the following |NumPy|-based |Operators|:
 
-- |NumpyHankelOperator| implicitly constructs a Hankel operator from a |NumPy array| of Markov
-  parameters.
 - |NumpyMatrixOperator| wraps a 2D |NumPy array| as an |Operator|.
 - |NumpyMatrixBasedOperator| should be used as base class for all |Operators|
   which assemble into a |NumpyMatrixOperator|.
 - |NumpyGenericOperator| wraps an arbitrary Python function between
   |NumPy arrays| as an |Operator|.
+- |NumpyHankelOperator| implicitly constructs a Hankel operator from a |NumPy array| of Markov
+  parameters.
 """
 
 from functools import reduce
