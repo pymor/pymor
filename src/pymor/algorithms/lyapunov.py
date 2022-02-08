@@ -13,17 +13,17 @@ from pymor.operators.interface import Operator
 
 _DEFAULT_LYAP_SOLVER_BACKEND = FrozenDict(
     {
-        "cont": FrozenDict(
+        'cont': FrozenDict(
             {
-                "sparse": "pymess" if config.HAVE_PYMESS else "lradi",
-                "dense": "pymess"
+                'sparse': 'pymess' if config.HAVE_PYMESS else 'lradi',
+                'dense': 'pymess'
                 if config.HAVE_PYMESS
-                else "slycot"
+                else 'slycot'
                 if config.HAVE_SLYCOT
-                else "scipy",
+                else 'scipy',
             }
         ),
-        "disc": FrozenDict({"dense": "slycot" if config.HAVE_SLYCOT else "scipy"}),
+        'disc': FrozenDict({'dense': 'slycot' if config.HAVE_SLYCOT else 'scipy'}),
     }
 )
 
@@ -36,8 +36,8 @@ def mat_eqn_sparse_min_size(value=1000):
 
 @defaults('default_sparse_solver_backend', 'default_dense_solver_backend')
 def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
-                         default_sparse_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND["cont"]["sparse"],
-                         default_dense_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND["cont"]["dense"]):
+                         default_sparse_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND['cont']['sparse'],
+                         default_dense_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND['cont']['dense']):
     """Compute an approximate low-rank solution of a continuous-time Lyapunov equation.
 
     Returns a low-rank Cholesky factor :math:`Z` such that :math:`Z Z^T` approximates the solution
@@ -135,7 +135,7 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
 
 @defaults('default_dense_solver_backend')
 def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
-                         default_dense_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND["disc"]["dense"]):
+                         default_dense_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND['disc']['dense']):
     """Compute an approximate low-rank solution of a discrete-time Lyapunov equation.
 
     Returns a low-rank Cholesky factor :math:`Z` such that :math:`Z Z^T` approximates the solution
@@ -189,7 +189,7 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
         - :func:`pymor.bindings.slycot.lyap_lrcf_solver_options`,
 
     default_dense_solver_backend
-        Default dense solver backend to use (pymess, slycot, scipy).
+        Default dense solver backend to use (slycot, scipy).
 
     Returns
     -------
@@ -225,7 +225,7 @@ def _solve_lyap_lrcf_check_args(A, E, B, trans):
 
 @defaults('default_solver_backend')
 def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
-                          default_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND["cont"]["dense"]):
+                          default_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND['cont']['dense']):
     """Compute the solution of a continuous-time Lyapunov equation.
 
     Returns the solution :math:`X` of a (generalized) continuous-time algebraic Lyapunov equation:
@@ -305,7 +305,7 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
 
 @defaults('default_solver_backend')
 def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
-                          default_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND["disc"]["dense"]):
+                          default_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND['disc']['dense']):
     """Compute the solution of a discrete-time Lyapunov equation.
 
     Returns the solution :math:`X` of a (generalized) continuous-time algebraic Lyapunov equation:
@@ -315,7 +315,7 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
       .. math::
          A X A^T - X + B B^T = 0,
 
-    - if trans is `False` and E is an |Operator|:
+    - if trans is `False` and E is a |NumPy array|:
 
       .. math::
           A X A^T - E X E^T + B B^T = 0,
@@ -325,13 +325,13 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
       .. math::
           A^T X A - X + B^T B = 0,
 
-    - if trans is `True` and E is an |Operator|:
+    - if trans is `True` and E is an |NumPy array|:
 
       .. math::
           A^T X A - E^T X E + B^T B = 0.
 
-    We assume A and E are real |NumPy arrays|, E is invertible, and that no two eigenvalues of
-    (A, E) sum to zero (i.e., there exists a unique solution X).
+    We assume A and E are real |NumPy arrays|, E is invertible, and that all pairwise products of
+    two eigenvalues of (A, E) are not equal to one (i.e., there exists a unique solution X).
 
     If the solver is not specified using the options argument, a solver backend is chosen based on
     availability in the following order:
@@ -358,7 +358,7 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
         - :func:`pymor.bindings.slycot.lyap_dense_solver_options`,
 
     default_solver_backend
-        Default solver backend to use (pymess, slycot, scipy).
+        Default solver backend to use (slycot, scipy).
 
     Returns
     -------

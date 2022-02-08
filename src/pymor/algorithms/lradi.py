@@ -76,7 +76,6 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     See
 
     - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf`
-    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_lrcf`
 
     for a general description.
 
@@ -94,6 +93,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
         Whether the first |Operator| in the Lyapunov equation is transposed.
     cont_time
         Whether the continuous- or discrete-time Lyapunov equation is solved.
+        Only the continuous-time case is implemented.
     options
         The solver options to use (see :func:`lyap_lrcf_solver_options`).
 
