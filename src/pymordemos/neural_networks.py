@@ -34,7 +34,7 @@ def main(
 
     reductor = NeuralNetworkReductor(fom, training_set, validation_set, l2_err=1e-5,
                                      ann_mse=1e-5)
-    rom = reductor.reduce(loss=None, restarts=100)
+    rom = reductor.reduce(restarts=100)
 
     test_set = parameter_space.sample_randomly(10)
 

@@ -86,7 +86,7 @@ class NeuralNetworkReductor(BasicObject):
     """
 
     def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
-                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
+                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={},
                  ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
@@ -97,7 +97,7 @@ class NeuralNetworkReductor(BasicObject):
 
     def reduce(self, hidden_layers='[(N+P)*3, (N+P)*3]', activation_function=torch.tanh,
                optimizer=optim.LBFGS, epochs=1000, batch_size=20, learning_rate=1.,
-               loss='weighted MSE', restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
+               loss=None, restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
                lr_scheduler_params={'step_size': 10, 'gamma': 0.7}, weight_decay=0., seed=0):
         """Reduce by training artificial neural networks.
 
@@ -480,7 +480,7 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
     """
 
     def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
-                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
+                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={},
                  ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
