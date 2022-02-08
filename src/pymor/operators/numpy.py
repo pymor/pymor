@@ -164,7 +164,7 @@ class NumpyMatrixBasedOperator(Operator):
 
 
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):
-    """Wraps a 2D |NumPy Array| as an |Operator|.
+    """Wraps a 2D |NumPy Array| or |SciPy spmatrix| as an |Operator|.
 
     Parameters
     ----------
