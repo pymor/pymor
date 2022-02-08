@@ -169,7 +169,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     Parameters
     ----------
     matrix
-        The |NumPy array| which is to be wrapped.
+        The |NumPy array| or |SciPy spmatrix| which is to be wrapped.
     source_id
         The id of the operator's `source` |VectorSpace|.
     range_id
