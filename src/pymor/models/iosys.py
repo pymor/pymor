@@ -668,16 +668,17 @@ class LTIModel(Model):
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         D_norm2 = np.sum(self.D.as_range_array(mu=mu).norm2())
-        if D_norm2 != 0:
+        if D_norm2 != 0 and self.sampling_time == 0:
             self.logger.warning('The D operator is not exactly zero '
                                 f'(squared Frobenius norm is {D_norm2}).')
+            D_norm2 = 0
         assert self.parameters.assert_compatible(mu)
         if self.dim_input <= self.dim_output:
             cf = self.gramian('c_lrcf', mu=mu)
-            return np.sqrt(self.C.apply(cf, mu=mu).norm2().sum())
+            return np.sqrt(self.C.apply(cf, mu=mu).norm2().sum() + D_norm2)
         else:
             of = self.gramian('o_lrcf', mu=mu)
-            return np.sqrt(self.B.apply_adjoint(of, mu=mu).norm2().sum())
+            return np.sqrt(self.B.apply_adjoint(of, mu=mu).norm2().sum() + D_norm2)
 
     @cached
     def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
