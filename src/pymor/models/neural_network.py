@@ -31,6 +31,7 @@ class BaseNeuralNetworkModel(Model):
     This class implements the scaling methods for inputs and outputs/targets of
     neural networks.
     """
+
     def _scale_input(self, i):
         if ('min_inputs' in self.scaling_parameters and self.scaling_parameters['min_inputs'] is not None
            and 'max_inputs' in self.scaling_parameters and self.scaling_parameters['max_inputs'] is not None):
@@ -45,6 +46,7 @@ class BaseNeuralNetworkModel(Model):
                                              - self.scaling_parameters['min_targets'])
                     + self.scaling_parameters['min_targets'])
         return i
+
 
 class NeuralNetworkModel(BaseNeuralNetworkModel):
     """Class for models of stationary problems that use artificial neural networks.

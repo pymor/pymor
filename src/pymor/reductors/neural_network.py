@@ -460,7 +460,7 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
-                                       'min_targets': None, 'max_targets': None}
+                                   'min_targets': None, 'max_targets': None}
 
         self.__auto_init(locals())
 
@@ -573,7 +573,7 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
-                                       'min_targets': None, 'max_targets': None}
+                                   'min_targets': None, 'max_targets': None}
 
         self.__auto_init(locals())
 
