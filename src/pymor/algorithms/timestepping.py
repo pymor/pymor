@@ -37,7 +37,7 @@ class TimeStepper(ImmutableObject):
     @abstractmethod
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         """Apply time-stepper to the equation.
-        
+
         The equation is of the form ::
 
             M * d_t u + A(u, mu, t) = F(mu, t).
