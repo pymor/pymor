@@ -983,6 +983,15 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
     if seed:
         torch.manual_seed(seed)
 
+    # in case no training data is provided, return a neural network
+    # that always returns zeros independent of the input
+    if len(training_data) == 0 or len(training_data[0]) == 0:
+        for layers in neural_network.children():
+            for layer in layers:
+                torch.nn.init.zeros_(layer.weight)
+                layer.bias.data.fill_(0.)
+        return neural_network, {'full': None, 'train': None, 'val': None}
+
     if target_loss:
         logger.info(f'Performing up to {max_restarts} restart{"s" if max_restarts > 1 else ""} '
                     f'to train a neural network with a loss below {target_loss:.3e} ...')

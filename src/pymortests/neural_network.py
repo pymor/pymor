@@ -13,6 +13,7 @@ try:
     from pymor.reductors.neural_network import multiple_restarts_training
     from pymor.models.neural_network import FullyConnectedNN
 
+    import torch
     import torch.optim as optim
 
 
@@ -57,6 +58,16 @@ try:
                                                     training_parameters=training_parameters,
                                                     max_restarts=max_restarts)
         assert all(loss < tol for loss in best_losses.values())
+
+    def test_no_training_data():
+        n = 1000
+        d_in = 3
+        d_out = 2
+        training_data = []
+        validation_data = []
+        neural_network = FullyConnectedNN([d_in, 3 * (d_in + d_out), 3 * (d_in + d_out), d_out]).double()
+        best_neural_network, _ = multiple_restarts_training(training_data, validation_data, neural_network)
+        assert np.allclose(best_neural_network(torch.DoubleTensor(np.random.rand(n, d_in))).detach(), np.zeros(d_out))
 
 except TorchMissing as e:
     if os.environ.get('DOCKER_PYMOR', False):
