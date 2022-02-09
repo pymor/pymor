@@ -8,7 +8,7 @@ import numpy as np
 
 from pymor.core.base import BasicObject, abstractmethod, abstractclassmethod, classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interface import VectorArray, VectorSpace, _create_random_values
+from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
 
 
 class Vector(BasicObject):
@@ -342,6 +342,153 @@ class NumpyVector(CopyOnWriteVector):
         return self.__class__(self._array.conj())
 
 
+class ListVectorArrayImpl(VectorArrayImpl):
+
+    _NONE = ()
+
+    def __init__(self, vectors, space):
+        self._list = vectors
+        self.space = space
+
+    def _indexed(self, ind):
+        if ind is None:
+            return self._list
+        elif type(ind) is slice:
+            return self._list[ind]
+        elif hasattr(ind, '__len__'):
+            return (self._list[i] for i in ind)
+        else:
+            return (self._list[ind],)
+
+    def to_numpy(self, ensure_copy, ind):
+        vectors = [v.to_numpy() for v in self._indexed(ind)]
+        if vectors:
+            return np.array(vectors)
+        else:
+            return np.empty((0, self.space.dim))
+
+    def __len__(self):
+        return len(self._list)
+
+    def delete(self, ind):
+        if ind is None:
+            del self._list[:]
+        elif hasattr(ind, '__len__'):
+            thelist = self._list
+            l = len(thelist)
+            remaining = sorted(set(range(l)) - {i if 0 <= i else l+i for i in ind})
+            self._list = [thelist[i] for i in remaining]
+        else:
+            del self._list[ind]
+
+    def append(self, other, remove_from_other, oind):
+        if not remove_from_other:
+            self._list.extend([v.copy() for v in other._indexed(oind)])
+        else:
+            self._list.extend(other._indexed(oind))
+            other.delete(oind)
+
+    def copy(self, deep, ind):
+        return ListVectorArrayImpl([v.copy(deep=deep) for v in self._indexed(ind)], self.space)
+
+    def scal(self, alpha, ind):
+        if type(alpha) is np.ndarray:
+            for a, v in zip(alpha, self._indexed(ind)):
+                v.scal(a)
+        else:
+            for v in self._indexed(ind):
+                v.scal(alpha)
+
+    def axpy(self, alpha, x, ind, xind):
+        if np.all(alpha == 0):
+            return
+
+        if self is x:
+            x_list = x.copy(False, xind)._list
+        else:
+            x_list = x._indexed(xind)
+
+        if x.len_ind(xind) == 1:
+            xx = next(iter(x_list))
+            if type(alpha) is np.ndarray:
+                for a, y in zip(alpha, self._indexed(ind)):
+                    y.axpy(a, xx)
+            else:
+                for y in self._indexed(ind):
+                    y.axpy(alpha, xx)
+        else:
+            if type(alpha) is np.ndarray:
+                for a, xx, y in zip(alpha, x_list, self._indexed(ind)):
+                    y.axpy(a, xx)
+            else:
+                for xx, y in zip(x_list, self._indexed(ind)):
+                    y.axpy(alpha, xx)
+
+    def inner(self, other, ind, oind):
+        return (np.array([[a.inner(b) for b in other._indexed(oind)] for a in self._indexed(ind)])
+                  .reshape((self.len_ind(ind), other.len_ind(oind))))
+
+    def pairwise_inner(self, other, ind, oind):
+        return np.array([a.inner(b) for a, b in zip(self._indexed(ind), other._indexed(oind))])
+
+    def gramian(self, ind):
+        self_list = list(self._indexed(ind))
+        l = len(self_list)
+        R = [[0.] * l for _ in range(l)]
+        for i in range(l):
+            for j in range(i, l):
+                R[i][j] = self_list[i].inner(self_list[j])
+                if i == j:
+                    R[i][j] = R[i][j].real
+                else:
+                    R[j][i] = R[i][j].conjugate()
+        R = np.array(R)
+        return R
+
+    def lincomb(self, coefficients, ind):
+        RL = []
+        for coeffs in coefficients:
+            R = self.space.zero_vector()
+            for v, c in zip(self._indexed(ind), coeffs):
+                R.axpy(c, v)
+            RL.append(R)
+
+        return ListVectorArrayImpl(RL, self.space)
+
+    def norm(self, ind):
+        return np.array([v.norm() for v in self._indexed(ind)])
+
+    def norm2(self, ind):
+        return np.array([v.norm2() for v in self._indexed(ind)])
+
+    def dofs(self, dof_indices, ind):
+        return (np.array([v.dofs(dof_indices) for v in self._indexed(ind)])
+                  .reshape((self.len_ind(ind), len(dof_indices))))
+
+    def amax(self, ind):
+        l = self.len_ind(ind)
+        MI = np.empty(l, dtype=int)
+        MV = np.empty(l)
+
+        for k, v in enumerate(self._indexed(ind)):
+            MI[k], MV[k] = v.amax()
+
+        return MI, MV
+
+    def real(self, ind):
+        return ListVectorArrayImpl([v.real for v in self._indexed(ind)], self.space)
+
+    def imag(self, ind):
+        # note that Vector.imag is allowed to return None in case
+        # of a real vector, so we have to check for that.
+        # returning None is allowed as ComplexifiedVector does not know
+        # how to create a new zero vector.
+        return ListVectorArrayImpl([v.imag or self.space.zero_vector() for v in self._indexed(ind)], self.space)
+
+    def conj(self, ind):
+        return ListVectorArrayImpl([v.conj() for v in self._indexed(ind)], self.space)
+
+
 class ListVectorArray(VectorArray):
     """|VectorArray| implemented as a Python list of vectors.
 
@@ -362,191 +509,14 @@ class ListVectorArray(VectorArray):
     :class:`~pymor.bindings.ngsolve.NGSolveVectorSpace`.
     """
 
-    _NONE = ()
-
-    def __init__(self, vectors, space):
-        self._list = vectors
-        self.space = space
-
-    def to_numpy(self, ensure_copy=False):
-        if len(self._list) > 0:
-            return np.array([v.to_numpy() for v in self._list])
-        else:
-            return np.empty((0, self.dim))
-
-    @property
-    def _data(self):
-        """Return list of NumPy Array views on vector data for hacking / interactive use."""
-        return ListVectorArrayNumpyView(self)
-
-    def __len__(self):
-        return len(self._list)
-
-    def __getitem__(self, ind):
-        if isinstance(ind, Number) and (ind >= len(self) or ind < -len(self)):
-            raise IndexError('VectorArray index out of range')
-        assert self.check_ind(ind)
-        return ListVectorArrayView(self, ind)
-
-    def __delitem__(self, ind):
-        assert self.check_ind(ind)
-        if hasattr(ind, '__len__'):
-            thelist = self._list
-            l = len(thelist)
-            remaining = sorted(set(range(l)) - {i if 0 <= i else l+i for i in ind})
-            self._list = [thelist[i] for i in remaining]
-        else:
-            del self._list[ind]
-
-    def append(self, other, remove_from_other=False):
-        assert other.space == self.space
-        assert not remove_from_other or (other is not self and getattr(other, 'base', None) is not self)
-
-        if not remove_from_other:
-            self._list.extend([v.copy() for v in other._list])
-        else:
-            self._list.extend(other._list)
-            if other.is_view:
-                del other.base[other.ind]
-            else:
-                del other[:]
-
-    def copy(self, deep=False):
-        return ListVectorArray([v.copy(deep=deep) for v in self._list], self.space)
-
-    def scal(self, alpha):
-        assert isinstance(alpha, Number) \
-            or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
-
-        if type(alpha) is np.ndarray:
-            for a, v in zip(alpha, self._list):
-                v.scal(a)
-        else:
-            for v in self._list:
-                v.scal(alpha)
-
-    def axpy(self, alpha, x):
-        assert self.space == x.space
-        len_x = len(x)
-        assert len(self) == len_x or len_x == 1
-        assert isinstance(alpha, Number) \
-            or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
-
-        if np.all(alpha == 0):
-            return
-
-        if self is x or x.is_view and self is x.base:
-            x = x.copy()
-
-        if len(x) == 1:
-            xx = x._list[0]
-            if type(alpha) is np.ndarray:
-                for a, y in zip(alpha, self._list):
-                    y.axpy(a, xx)
-            else:
-                for y in self._list:
-                    y.axpy(alpha, xx)
-        else:
-            if type(alpha) is np.ndarray:
-                for a, xx, y in zip(alpha, x._list, self._list):
-                    y.axpy(a, xx)
-            else:
-                for xx, y in zip(x._list, self._list):
-                    y.axpy(alpha, xx)
-
-    def inner(self, other, product=None):
-        assert self.space == other.space
-        if product is not None:
-            return product.apply2(self, other)
-
-        return np.array([[a.inner(b) for b in other._list] for a in self._list]).reshape((len(self), len(other)))
-
-    def pairwise_inner(self, other, product=None):
-        assert self.space == other.space
-        assert len(self._list) == len(other)
-        if product is not None:
-            return product.pairwise_apply2(self, other)
-
-        return np.array([a.inner(b) for a, b in zip(self._list, other._list)])
-
-    def gramian(self, product=None):
-        if product is not None:
-            return super().gramian(product)
-        l = len(self._list)
-        R = [[0.] * l for _ in range(l)]
-        for i in range(l):
-            for j in range(i, l):
-                R[i][j] = self._list[i].inner(self._list[j])
-                if i == j:
-                    R[i][j] = R[i][j].real
-                else:
-                    R[j][i] = R[i][j].conjugate()
-        R = np.array(R)
-        return R
-
-    def lincomb(self, coefficients):
-        assert 1 <= coefficients.ndim <= 2
-        if coefficients.ndim == 1:
-            coefficients = coefficients[np.newaxis, :]
-
-        assert coefficients.shape[1] == len(self)
-
-        RL = []
-        for coeffs in coefficients:
-            R = self.space.zero_vector()
-            for v, c in zip(self._list, coeffs):
-                R.axpy(c, v)
-            RL.append(R)
-
-        return ListVectorArray(RL, self.space)
-
-    def _norm(self):
-        return np.array([v.norm() for v in self._list])
-
-    def _norm2(self):
-        return np.array([v.norm2() for v in self._list])
-
-    def sup_norm(self):
-        if self.dim == 0:
-            return np.zeros(len(self))
-        else:
-            return np.array([v.sup_norm() for v in self._list])
-
-    def dofs(self, dof_indices):
-        assert isinstance(dof_indices, list) and (len(dof_indices) == 0 or min(dof_indices) >= 0) \
-            or (isinstance(dof_indices, np.ndarray) and dof_indices.ndim == 1
-                and (len(dof_indices) == 0 or np.min(dof_indices) >= 0))
-        assert len(self) > 0 or len(dof_indices) == 0 or max(dof_indices) < self.dim
-        return np.array([v.dofs(dof_indices) for v in self._list]).reshape((len(self), len(dof_indices)))
-
-    def amax(self):
-        assert self.dim > 0
-
-        MI = np.empty(len(self._list), dtype=int)
-        MV = np.empty(len(self._list))
-
-        for k, v in enumerate(self._list):
-            MI[k], MV[k] = v.amax()
-
-        return MI, MV
-
-    @property
-    def real(self):
-        return ListVectorArray([v.real for v in self._list], self.space)
-
-    @property
-    def imag(self):
-        # note that Vector.imag is allowed to return None in case
-        # of a real vector, so we have to check for that.
-        # returning None is allowed as ComplexifiedVector does not know
-        # how to create a new zero vector.
-        return ListVectorArray([v.imag or self.space.zero_vector() for v in self._list], self.space)
-
-    def conj(self):
-        return self.__class__([v.conj() for v in self._list], self.space)
+    impl_type = ListVectorArrayImpl
 
     def __str__(self):
-        return f'{type(self).__name__} of {len(self._list)} vectors of space {self.space}'
+        return f'{type(self).__name__} of {len(self.impl._list)} vectors of space {self.space}'
+
+    @property
+    def _list(self):
+        return list(self.impl._indexed(self.ind))
 
 
 class ListVectorSpace(VectorSpace):
@@ -586,22 +556,25 @@ class ListVectorSpace(VectorSpace):
 
     def zeros(self, count=1, reserve=0):
         assert count >= 0 and reserve >= 0
-        return ListVectorArray([self.zero_vector() for _ in range(count)], self)
+        return ListVectorArray(self, ListVectorArrayImpl([self.zero_vector() for _ in range(count)], self))
 
     def ones(self, count=1, reserve=0):
         assert count >= 0 and reserve >= 0
-        return ListVectorArray([self.ones_vector() for _ in range(count)], self)
+        return ListVectorArray(self, ListVectorArrayImpl([self.ones_vector() for _ in range(count)], self))
 
     def full(self, value, count=1, reserve=0):
         assert count >= 0 and reserve >= 0
-        return ListVectorArray([self.full_vector(value) for _ in range(count)], self)
+        return ListVectorArray(self, ListVectorArrayImpl([self.full_vector(value) for _ in range(count)], self))
 
     def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
         assert count >= 0 and reserve >= 0
         assert random_state is None or seed is None
         random_state = get_random_state(random_state, seed)
-        return ListVectorArray([self.random_vector(distribution=distribution, random_state=random_state, **kwargs)
-                                for _ in range(count)], self)
+        return ListVectorArray(
+            self,
+            ListVectorArrayImpl([self.random_vector(distribution=distribution, random_state=random_state, **kwargs)
+                                 for _ in range(count)], self)
+        )
 
     @classinstancemethod
     def make_array(cls, obj, id=None):
@@ -612,7 +585,10 @@ class ListVectorSpace(VectorSpace):
     @make_array.instancemethod
     def make_array(self, obj):
         """:noindex:"""
-        return ListVectorArray([v if isinstance(v, self.vector_type) else self.make_vector(v) for v in obj], self)
+        return ListVectorArray(
+            self,
+            ListVectorArrayImpl([v if isinstance(v, self.vector_type) else self.make_vector(v) for v in obj], self)
+        )
 
     @classinstancemethod
     def from_numpy(cls, data, id=None, ensure_copy=False):
@@ -621,7 +597,9 @@ class ListVectorSpace(VectorSpace):
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
         """:noindex:"""
-        return ListVectorArray([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self)
+        return ListVectorArray(
+            self, ListVectorArrayImpl([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self)
+        )
 
 
 class ComplexifiedListVectorSpace(ListVectorSpace):
@@ -707,61 +685,3 @@ class NumpyListVectorSpace(ListVectorSpace):
 
     def vector_from_numpy(self, data, ensure_copy=False):
         return self.make_vector(data.copy() if ensure_copy else data)
-
-
-class ListVectorArrayView(ListVectorArray):
-
-    is_view = True
-
-    def __init__(self, base, ind):
-        self.base = base
-        assert base.check_ind(ind)
-        self.ind = base.normalize_ind(ind)
-        if type(ind) is slice:
-            self._list = base._list[ind]
-        elif hasattr(ind, '__len__'):
-            _list = base._list
-            self._list = [_list[i] for i in ind]
-        else:
-            self._list = [base._list[ind]]
-
-    @property
-    def space(self):
-        return self.base.space
-
-    def __getitem__(self, ind):
-        try:
-            return self.base[self.base.sub_index(self.ind, ind)]
-        except IndexError:
-            raise IndexError('VectorArray index out of range')
-
-    def __delitem__(self, ind):
-        raise TypeError('Cannot remove from ListVectorArrayView')
-
-    def append(self, other, remove_from_other=False):
-        raise TypeError('Cannot append to ListVectorArrayView')
-
-    def scal(self, alpha):
-        assert self.base.check_ind_unique(self.ind)
-        super().scal(alpha)
-
-    def axpy(self, alpha, x):
-        assert self.base.check_ind_unique(self.ind)
-        if x is self.base or x.is_view and x.base is self.base:
-            x = x.copy()
-        super().axpy(alpha, x)
-
-
-class ListVectorArrayNumpyView:
-
-    def __init__(self, array):
-        self.array = array
-
-    def __len__(self):
-        return len(self.array)
-
-    def __getitem__(self, i):
-        return self.array._list[i].to_numpy()
-
-    def __repr__(self):
-        return '[' + ',\n '.join(repr(v) for v in self) + ']'

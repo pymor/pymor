@@ -12,7 +12,7 @@ from hypothesis import strategies as hyst
 from pymor.algorithms.basic import almost_equal
 from pymor.core.config import config
 from pymor.vectorarrays.interface import VectorSpace
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.tools.floatcmp import float_cmp, bounded
 from pymortests.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
@@ -132,7 +132,7 @@ def test_full(vector_array):
 @pyst.given_vector_arrays(realizations=hyst.integers(min_value=0, max_value=MAX_RNG_REALIZATIONS),
                           low=hyst.floats(allow_infinity=False, allow_nan=False),
                           high=hyst.floats(allow_infinity=False, allow_nan=False))
-@example(vector_array=NumpyVectorArray([], NumpyVectorSpace(1)), realizations=2,
+@example(vector_array=NumpyVectorSpace(1).empty(), realizations=2,
          low=-5e-324, high=0.0)
 def test_random_uniform_all(vector_array, realizations, low, high):
     if config.HAVE_DUNEGDT:
@@ -291,7 +291,7 @@ def test_copy(vectors_and_indices):
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
-@example(vectors_and_indices=(NumpyVectorArray(np.array([[2.22044605e-16]]), NumpyVectorSpace(1)), [0]))
+@example(vectors_and_indices=(NumpyVectorSpace(1).full(2.22044605e-16, 1), [0]))
 def test_COW(vectors_and_indices):
     v, ind = vectors_and_indices
     for deep in (True, False):
