@@ -825,7 +825,7 @@ def train_neural_network(training_data, validation_data, neural_network,
 
     # initialize optimizer, early stopping scheduler and learning rate scheduler
     weight_decay = 0. if 'weight_decay' not in training_parameters else training_parameters['weight_decay']
-    assert training_parameters['weight_decay'] >= 0.
+    assert weight_decay >= 0.
     if weight_decay > 0. and 'weight_decay' not in inspect.getfullargspec(optimizer).args:
         optimizer = optimizer(neural_network.parameters(), lr=learning_rate)
         logger.warning(f"Optimizer {optimizer.__class__.__name__} does not support weight decay! "
