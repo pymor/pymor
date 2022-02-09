@@ -94,7 +94,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
 
 
 @defaults('q', 'l')
-def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False):
+def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False, seed=None):
     """Randomized range approximation of `A`.
 
     This is an implementation of Algorithm 4.4 in :cite:`HMT11`.
@@ -116,6 +116,8 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False):
         The block size of the normalized power iterations.
     iscomplex
         If `True`, the random vectors are chosen complex.
+    seed
+     The seed to use for the random samples, defaults to `None`.
 
     Returns
     -------
@@ -126,9 +128,11 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False):
     assert range_product is None or isinstance(range_product, Operator)
     assert isinstance(A, Operator)
 
-    R = A.source.random(l, distribution='normal')
     if iscomplex:
-        R += 1j*A.source.random(l, distribution='normal')
+        R = A.source.random(2*l, distribution='normal', seed=seed)
+        R = R[:l] + 1j * R[l:]
+    else:
+        R = A.source.random(l, distribution='normal', seed=seed)
     Q = A.apply(R)
     gram_schmidt(Q, range_product, atol=0, rtol=0, copy=False)
 
