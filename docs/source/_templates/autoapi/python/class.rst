@@ -48,6 +48,7 @@ This is currently not possible, see https://github.com/readthedocs/sphinx-autoap
    {% else %}
    {% set visible_methods = obj.methods|rejectattr("inherited")|selectattr("display")|list %}
    {% endif %}
+   {% block methods %}
    {% if visible_methods %}
    **Methods**
 
@@ -59,6 +60,8 @@ This is currently not possible, see https://github.com/readthedocs/sphinx-autoap
    {% endfor %}
 
    {% endif %}
+   {% endblock %}
+
    {% for method in visible_methods %}
    {{ method.render()|indent(3) }}
    {% endfor %}
