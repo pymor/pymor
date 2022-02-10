@@ -9,6 +9,7 @@ from scipy.special import erfinv
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
 from pymor.operators.interface import Operator
+from pymor.tools.random import get_random_state
 
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
@@ -94,7 +95,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
 
 
 @defaults('q', 'l')
-def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False, seed=None):
+def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False, random_state=None, seed=None):
     """Randomized range approximation of `A`.
 
     This is an implementation of Algorithm 4.4 in :cite:`HMT11`.
@@ -128,11 +129,14 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False, s
     assert range_product is None or isinstance(range_product, Operator)
     assert isinstance(A, Operator)
 
+    assert random_state is None or seed is None
+    random_state = get_random_state(random_state, seed)
+
     if iscomplex:
-        R = A.source.random(2*l, distribution='normal', seed=seed)
+        R = A.source.random(2*l, distribution='normal', random_state=random_state)
         R = R[:l] + 1j * R[l:]
     else:
-        R = A.source.random(l, distribution='normal', seed=seed)
+        R = A.source.random(l, distribution='normal', random_state=random_state)
     Q = A.apply(R)
     gram_schmidt(Q, range_product, atol=0, rtol=0, copy=False)
 
