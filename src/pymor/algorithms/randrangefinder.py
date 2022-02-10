@@ -13,8 +13,8 @@ from pymor.tools.random import get_random_state
 
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
-def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
-                 failure_tolerance=1e-15, num_testvecs=20, lambda_min=None, iscomplex=False):
+def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4, failure_tolerance=1e-15, num_testvecs=20,
+                 lambda_min=None, iscomplex=False, random_state=None, seed=None):
     r"""Adaptive randomized range approximation of `A`.
 
     This is an implementation of Algorithm 1 in :cite:`BS18`.
@@ -48,6 +48,13 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
         If `None`, the smallest eigenvalue is computed using scipy.
     iscomplex
         If `True`, the random vectors are chosen complex.
+    random_state
+        :class:`~numpy.random.RandomState` to use for sampling.
+        If `None`, a new random state is generated using `seed`
+        as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
+        random state is used.
+    seed
+        If not `None`, a new random state with this seed is used.
 
     Returns
     -------
@@ -58,11 +65,16 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     assert range_product is None or isinstance(range_product, Operator)
     assert isinstance(A, Operator)
 
+    assert random_state is None or seed is None
+    random_state = get_random_state(random_state, seed)
+
     B = A.range.empty()
 
-    R = A.source.random(num_testvecs, distribution='normal')
     if iscomplex:
-        R += 1j*A.source.random(num_testvecs, distribution='normal')
+        R = A.source.random(2*num_testvecs, distribution='normal', random_state=random_state)
+        R = R[:num_testvecs] + 1j * R[num_testvecs:]
+    else:
+        R = A.source.random(num_testvecs, distribution='normal', random_state=random_state)
 
     if source_product is None:
         lambda_min = 1
@@ -83,9 +95,11 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
 
     while(maxnorm > testlimit):
         basis_length = len(B)
-        v = A.source.random(distribution='normal')
         if iscomplex:
-            v += 1j*A.source.random(distribution='normal')
+            v = A.source.random(2, distribution='normal', random_state=random_state)
+            v = v[0] + 1j * v[1]
+        else:
+            v = A.source.random(distribution='normal', random_state=random_state)
         B.append(A.apply(v))
         gram_schmidt(B, range_product, atol=0, rtol=0, offset=basis_length, copy=False)
         M -= B.lincomb(B.inner(M, range_product).T)
@@ -117,8 +131,13 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False, r
         The block size of the normalized power iterations.
     iscomplex
         If `True`, the random vectors are chosen complex.
+    random_state
+        :class:`~numpy.random.RandomState` to use for sampling.
+        If `None`, a new random state is generated using `seed`
+        as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
+        random state is used.
     seed
-        The seed to use for the random samples, defaults to `None`.
+        If not `None`, a new random state with this seed is used.
 
     Returns
     -------
