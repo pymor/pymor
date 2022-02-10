@@ -1,5 +1,5 @@
 {% if False %}
-Ideally we'd only overrride the "methods" block below.
+Ideally we'd only override the "methods" block below.
 This is currently not possible, see https://github.com/readthedocs/sphinx-autoapi/issues/288
 {% endif %}
 {% if obj.display %}
