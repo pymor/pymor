@@ -5,18 +5,17 @@
 import os
 import pytest
 
-from pymor.core.exceptions import TorchMissing
-
 import numpy as np
 
 
 def _skip_if_no_torch():
     try:
-        import torch
+        import torch  # NOQA
     except ImportError as ie:
         if not os.environ.get('DOCKER_PYMOR', False):
             pytest.skip('skipped test due to missing Torch')
         raise ie
+
 
 def test_linear_function_fitting():
     _skip_if_no_torch()
@@ -66,6 +65,7 @@ def test_linear_function_fitting():
                                                 training_parameters=training_parameters,
                                                 max_restarts=max_restarts)
     assert all(loss < tol for loss in best_losses.values())
+
 
 def test_no_training_data():
     _skip_if_no_torch()
