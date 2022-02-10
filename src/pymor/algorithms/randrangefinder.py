@@ -117,7 +117,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, iscomplex=False, s
     iscomplex
         If `True`, the random vectors are chosen complex.
     seed
-     The seed to use for the random samples, defaults to `None`.
+        The seed to use for the random samples, defaults to `None`.
 
     Returns
     -------
