@@ -785,6 +785,12 @@ def train_neural_network(training_data, validation_data, neural_network,
         scheduler), and `'weight_decay'` (non-negative real number that
         determines the strenght of the l2-regularization;
         if not provided or 0., no regularization is applied).
+    scaling_parameters
+        Dict of tensors that determine how to scale inputs before passing them
+        through the neural network and outputs after obtaining them from the
+        neural network. If not provided or each entry is `None`, no scaling is
+        applied. Required keys are `'min_inputs'`, `'max_inputs'`, `'min_targets'`,
+        and `'max_targets'`.
     log_loss_frequency
         Frequency of epochs in which to log the current validation and
         training loss. If `0`, no intermediate logging of losses is done.
@@ -969,6 +975,9 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
         training loss. If `0`, no intermediate logging of losses is done.
     training_parameters
         Additional parameters for the training algorithm,
+        see :func:`train_neural_network` for more information.
+    scaling_parameters
+        Additional parameters for scaling inputs respectively outputs,
         see :func:`train_neural_network` for more information.
     seed
         Seed to use for various functions in PyTorch. Using a fixed seed,
