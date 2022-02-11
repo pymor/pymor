@@ -558,10 +558,11 @@ class LTIModel(Model):
             - `'o_dense'`: dense observability Gramian.
 
             .. note::
-                For `'c_lrcf'` and `'o_lrcf'` types, the method assumes the system is asymptotically
-                stable.
-                For `'c_dense'` and `'o_dense'` types, the method assumes there are no two system
-                poles which add to zero.
+                For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
+                For `'*_dense'` types, the method assumes that the underlying Lyapunov equation
+                has a unique solution, i.e. no pair of system poles adds to zero in the
+                continuous-time case and no pair of system poles multiplies to one in the
+                discrete-time case.
         mu
             |Parameter values|.
 
@@ -1444,8 +1445,10 @@ class SecondOrderModel(Model):
 
             .. note::
                 For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
-                For `'*_dense'` types, the method assumes there are no two system poles which add to
-                zero.
+                For `'*_dense'` types, the method assumes that the underlying Lyapunov equation
+                has a unique solution, i.e. no pair of system poles adds to zero in the
+                continuous-time case and no pair of system poles multiplies to one in the
+                discrete-time case.
         mu
             |Parameter values|.
 
