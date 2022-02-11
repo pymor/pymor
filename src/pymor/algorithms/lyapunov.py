@@ -186,7 +186,7 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
         See:
 
         - :func:`pymor.bindings.scipy.lyap_lrcf_solver_options`,
-        - :func:`pymor.bindings.slycot.lyap_lrcf_solver_options`,
+        - :func:`pymor.bindings.slycot.lyap_lrcf_solver_options`.
 
     default_dense_solver_backend
         Default dense solver backend to use (slycot, scipy).
