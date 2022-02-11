@@ -11,8 +11,12 @@ import numpy as np
 
 
 def _skip_if_no_torch():
-    if not os.environ.get('DOCKER_PYMOR', False):
-        pytest.skip('skipped test due to missing Torch')
+    try:
+        import torch
+    except ImportError as ie:
+        if not os.environ.get('DOCKER_PYMOR', False):
+            pytest.skip('skipped test due to missing Torch')
+        raise ie
 
 def test_linear_function_fitting():
     _skip_if_no_torch()
