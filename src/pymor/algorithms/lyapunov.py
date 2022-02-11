@@ -355,7 +355,7 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
         See:
 
         - :func:`pymor.bindings.scipy.lyap_dense_solver_options`,
-        - :func:`pymor.bindings.slycot.lyap_dense_solver_options`,
+        - :func:`pymor.bindings.slycot.lyap_dense_solver_options`.
 
     default_solver_backend
         Default solver backend to use (slycot, scipy).

@@ -322,12 +322,12 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     for a general description.
 
     This function uses `scipy.linalg.solve_continuous_lyapunov` or
-    `scipy.linalg.solve_discrete_lyapunov`, which is a dense solver for Lyapunov equations with E=I.
+    `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers for Lyapunov equations with E=I.
     Therefore, we assume A and E can be converted to |NumPy arrays| using
     :func:`~pymor.algorithms.to_matrix.to_matrix` and that `B.to_numpy` is implemented.
 
     .. note::
-        If E is not `None`, the problem will be reduced to a standard continuous-time algebraic
+        If E is not `None`, the problem will be reduced to a standard algebraic
         Lyapunov equation by inverting E.
 
     Parameters
@@ -381,10 +381,10 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     for a general description.
 
     This function uses `scipy.linalg.solve_continuous_lyapunov` or
-    `scipy.linalg.solve_discrete_lyapunov`, which is a dense solver for Lyapunov equations with E=I.
+    `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers for Lyapunov equations with E=I.
 
     .. note::
-        If E is not `None`, the problem will be reduced to a standard continuous-time algebraic
+        If E is not `None`, the problem will be reduced to a standard algebraic
         Lyapunov equation by inverting E.
 
     Parameters
@@ -418,12 +418,9 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
             A = A.T
             B = B.T
         if cont_time:
-            BBT = -B.dot(B.T)
-            solve_lyap = solve_continuous_lyapunov
+            X = solve_continuous_lyapunov(A, -B @ B.T)
         else:
-            BBT = B.dot(B.T)
-            solve_lyap = solve_discrete_lyapunov
-        X = solve_lyap(A, BBT)
+            X = solve_discrete_lyapunov(A, B @ B.T)
     else:
         raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 
