@@ -411,7 +411,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
             h_1 & h_2 & \dots & h_n
         \end{pmatrix},\quad h_i\in\mathbb{R}^{p\times m},\,i=1,\,\dots,\,n,\quad n,m,p\in\mathbb{N}
 
-    be a finite sequence of (matrix-valued) Markov parameters. For an uneven number :math:`n=2s-1`
+    be a finite sequence of (matrix-valued) Markov parameters. For an odd number :math:`n=2s-1`
     Markov parameters, the corresponding Hankel operator can be represented by the matrix
 
     .. math::
