@@ -113,8 +113,7 @@ class Expression(ParametricObject):
 
     def to_fenics(self, mesh, variable='x'):
         # sanity check for dolfin before running code
-        if not config.HAVE_FENICS:
-            raise ImportError('Conversion of expressions to FEniCS requires its modules to be installed!')
+        config.require('FENICS')
         from dolfin import Constant
         from ufl import SpatialCoordinate
         assert variable in self.parameters
