@@ -98,7 +98,8 @@ class NeuralNetworkReductor(BasicObject):
     def reduce(self, hidden_layers='[(N+P)*3, (N+P)*3]', activation_function=torch.tanh,
                optimizer=optim.LBFGS, epochs=1000, batch_size=20, learning_rate=1.,
                loss_function=None, restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
-               lr_scheduler_params={'step_size': 10, 'gamma': 0.7}, weight_decay=0., seed=0):
+               lr_scheduler_params={'step_size': 10, 'gamma': 0.7}, weight_decay=0.,
+               log_loss_frequency=0, seed=0):
         """Reduce by training artificial neural networks.
 
         Parameters
@@ -140,6 +141,10 @@ class NeuralNetworkReductor(BasicObject):
             Weighting parameter for the l2-regularization of the weights and
             biases in the neural network. This regularization is not available
             for all optimizers; see the PyTorch documentation for more details.
+        log_loss_frequency
+            Frequency of epochs in which to log the current validation and
+            training loss during training of the neural networks.
+            If `0`, no intermediate logging of losses is done.
         seed
             Seed to use for various functions in PyTorch. Using a fixed seed,
             it is possible to reproduce former results.
@@ -210,7 +215,7 @@ class NeuralNetworkReductor(BasicObject):
             # run training algorithm with multiple restarts
             self.neural_network, self.losses = multiple_restarts_training(self.training_data, self.validation_data,
                                                                           neural_network, target_loss, restarts,
-                                                                          training_parameters,
+                                                                          log_loss_frequency, training_parameters,
                                                                           self.scaling_parameters, seed)
 
         self._check_tolerances()
@@ -733,7 +738,7 @@ class CustomDataset(utils.data.Dataset):
 
 
 def train_neural_network(training_data, validation_data, neural_network,
-                         training_parameters={}, scaling_parameters={}):
+                         training_parameters={}, scaling_parameters={}, log_loss_frequency=0):
     """Training algorithm for artificial neural networks.
 
     Trains a single neural network using the given training and validation data.
@@ -780,6 +785,9 @@ def train_neural_network(training_data, validation_data, neural_network,
         scheduler), and `'weight_decay'` (non-negative real number that
         determines the strenght of the l2-regularization;
         if not provided or 0., no regularization is applied).
+    log_loss_frequency
+        Frequency of epochs in which to log the current validation and
+        training loss. If `0`, no intermediate logging of losses is done.
 
     Returns
     -------
@@ -792,6 +800,7 @@ def train_neural_network(training_data, validation_data, neural_network,
         (for the average loss on the validation set).
     """
     assert isinstance(neural_network, nn.Module)
+    assert isinstance(log_loss_frequency, int)
 
     for data in training_data, validation_data:
         assert isinstance(data, list)
@@ -915,6 +924,9 @@ def train_neural_network(training_data, validation_data, neural_network,
 
             losses['full'] += running_loss
 
+            if log_loss_frequency > 0 and epoch % log_loss_frequency == 0:
+                logger.info(f'Epoch {epoch}: Current {phase} loss of {losses[phase]:.3e}')
+
             if 'lr_scheduler' in training_parameters and training_parameters['lr_scheduler']:
                 lr_scheduler.step()
 
@@ -928,7 +940,7 @@ def train_neural_network(training_data, validation_data, neural_network,
 
 
 def multiple_restarts_training(training_data, validation_data, neural_network,
-                               target_loss=None, max_restarts=10,
+                               target_loss=None, max_restarts=10, log_loss_frequency=0,
                                training_parameters={}, scaling_parameters={}, seed=None):
     """Algorithm that performs multiple restarts of neural network training.
 
@@ -952,6 +964,9 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
         smallest loss is returned).
     max_restarts
         Maximum number of restarts to perform.
+    log_loss_frequency
+        Frequency of epochs in which to log the current validation and
+        training loss. If `0`, no intermediate logging of losses is done.
     training_parameters
         Additional parameters for the training algorithm,
         see :func:`train_neural_network` for more information.
@@ -1001,7 +1016,7 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
     with logger.block('Training neural network #0 ...'):
         best_neural_network, losses = train_neural_network(training_data, validation_data,
                                                            neural_network, training_parameters,
-                                                           scaling_parameters)
+                                                           scaling_parameters, log_loss_frequency)
 
     # perform multiple restarts
     for run in range(1, max_restarts + 1):
@@ -1020,7 +1035,7 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
             # perform training
             current_nn, current_losses = train_neural_network(training_data, validation_data,
                                                               neural_network, training_parameters,
-                                                              scaling_parameters)
+                                                              scaling_parameters, log_loss_frequency)
 
         if current_losses['full'] < losses['full']:
             logger.info(f'Found better neural network (loss of {current_losses["full"]:.3e} '
