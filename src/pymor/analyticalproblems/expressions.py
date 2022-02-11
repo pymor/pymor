@@ -221,7 +221,7 @@ class Constant(BaseConstant):
 
     def fenics_expr(self, params):
         from dolfin import Constant
-        return np.array(Constant(self.value))
+        return np.vectorize(Constant)(self.value)
 
     def __str__(self):
         return str(self.value)
@@ -318,16 +318,14 @@ class BinaryOp(Expression):
             raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
 
         ufl_op = getattr(ufl, self.fenics_symbol) if isinstance(self.fenics_symbol, str) else self.fenics_symbol
-        ufl_op = getattr(ufl, self.fenics_symbol)
         first = self.first.fenics_expr(params)
         second = self.second.fenics_expr(params)
-        if first.shape:
-            if not _broadcastable_shapes(first.shape, second.shape):
-                raise ValueError(f'Incompatible shapes of expressions "{first}" and "{second}" with shapes '
-                                 f'{first.shape} and {second.shape} for binary operator {self.numpy_symbol}')
-            return np.vectorize(lambda x, y: ufl_op(x.item(), y.item()))(first, second)
-        else:
-            return np.array(ufl_op(first.item(), second.item()))
+        if not _broadcastable_shapes(first.shape, second.shape):
+            raise ValueError(f'Incompatible shapes of expressions "{first}" and "{second}" with shapes '
+                             f'{first.shape} and {second.shape} for binary operator {self.numpy_symbol}')
+        print(f'{np.vectorize(lambda x: ufl_op(x.item()))(self.arg.fenics_expr(params))}')
+        print(f'{self.arg.fenics_expr(params)}, {ufl_op}')
+        return np.vectorize(ufl_op)(first, second)
 
     def __str__(self):
         return f'({self.first} {self.numpy_symbol} {self.second})'
@@ -344,7 +342,7 @@ class Neg(Expression):
         return f'(- {self.operand.numpy_expr()})'
 
     def fenics_expr(self, params):
-        return -self.operand.fenics_expr(params)
+        return np.vectorize(lambda x : -1 * x)(self.operand.fenics_expr(params))
 
     def __str__(self):
         return f'(- {self.operand})'
@@ -404,13 +402,10 @@ class UnaryFunctionCall(Expression):
         import ufl
         if self.fenics_symbol is None:
             raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
-
         ufl_op = getattr(ufl, self.fenics_symbol)
-        f_expr = self.arg.fenics_expr(params)
-        if f_expr.shape:
-            return np.vectorize(lambda x: ufl_op(x.item()))(f_expr)
-        else:
-            return np.array(ufl_op(f_expr.item()))
+        print(f'{np.vectorize(lambda x: ufl_op(x.item()))(self.arg.fenics_expr(params))}')
+        print(f'{self.arg.fenics_expr(params)}, {ufl_op}')
+        return np.vectorize(ufl_op)(self.arg.fenics_expr(params))
 
     def __str__(self):
         return f'{self.numpy_symbol}({self.arg})'
@@ -442,13 +437,8 @@ class UnaryReductionCall(Expression):
         import ufl
         if self.fenics_symbol is None:
             raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
-        
         ufl_op = getattr(ufl, self.fenics_symbol)
-        f_expr = self.arg.fenics_expr(params)
-        if f_expr.shape:
-            return np.vectorize(lambda x: ufl_op(x.item()))(f_expr)
-        else:
-            return np.array(ufl_op(f_expr.item()))
+        return np.vectorize(ufl_op)(self.arg.fenics_expr(params))
 
     def __str__(self):
         return f'{self.numpy_symbol}({self.arg})'
@@ -512,11 +502,7 @@ class exp2(UnaryFunctionCall):
 
     def fenics_expr(self, params):
         from ufl import elem_pow
-        f_expr = self.arg.fenics_expr(params)
-        if f_expr.shape:
-            return np.vectorize(lambda x: elem_pow(2, x.item()))(f_expr)
-        else:
-            return np.array(elem_pow(f_expr.item()))
+        return np.vectorize(lambda x: elem_pow(2, x))(self.arg.fenics_expr(params))
 
 
 class log2(UnaryFunctionCall):
@@ -527,11 +513,7 @@ class log2(UnaryFunctionCall):
             from ufl import ln
             return ln(x.item()) / ln(2)
 
-        f_expr = self.arg.fenics_expr(params)
-        if f_expr.shape:
-            return np.vectorize(log2)(f_expr)
-        else:
-            return np.array(log2(f_expr.item()))
+        return np.vectorize(log2)(self.arg.fenics_expr(params))
 
 
 class log10(UnaryFunctionCall):
@@ -542,11 +524,7 @@ class log10(UnaryFunctionCall):
             from ufl import ln
             return ln(x.item()) / ln(10)
 
-        f_expr = self.arg.fenics_expr(params)
-        if f_expr.shape:
-            return np.vectorize(log10)(f_expr)
-        else:
-            return np.array(log10(f_expr.item()))
+        return np.vectorize(log10)(self.arg.fenics_expr(params))
 
 
 class abs(UnaryFunctionCall):
@@ -554,11 +532,7 @@ class abs(UnaryFunctionCall):
 
     def fenics_expr(self, params):
         from ufl.algebra import Abs
-        f_expr = self.arg.fenics_expr(params)
-        if f_expr.shape:
-            return np.vectorize(lambda x: Abs(x.item()))(f_expr)
-        else:
-            return np.array(Abs(f_expr.item()))
+        return np.vectorize(lambda x: Abs(x))(self.arg.fenics_expr(params))
 
 
 class angle(UnaryFunctionCall):
