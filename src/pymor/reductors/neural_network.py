@@ -97,7 +97,7 @@ class NeuralNetworkReductor(BasicObject):
 
     def reduce(self, hidden_layers='[(N+P)*3, (N+P)*3]', activation_function=torch.tanh,
                optimizer=optim.LBFGS, epochs=1000, batch_size=20, learning_rate=1.,
-               loss=None, restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
+               loss_function=None, restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
                lr_scheduler_params={'step_size': 10, 'gamma': 0.7}, weight_decay=0., seed=0):
         """Reduce by training artificial neural networks.
 
@@ -118,7 +118,7 @@ class NeuralNetworkReductor(BasicObject):
             Batch size to use if optimizer allows mini-batching.
         learning_rate
             Step size to use in each optimization step.
-        loss
+        loss_function
             Loss function to use for training. If `'weighted MSE'`, a weighted
             mean squared error is used as loss function, where the weights are
             given as the singular values of the corresponding reduced basis
@@ -188,8 +188,7 @@ class NeuralNetworkReductor(BasicObject):
             # set parameters for neural network and training
             neural_network_parameters = {'layer_sizes': layer_sizes,
                                          'activation_function': activation_function}
-            loss_function = None
-            if loss == 'weighted MSE':
+            if loss_function == 'weighted MSE':
                 if hasattr(self, 'weights'):
                     weights = self.weights
 
