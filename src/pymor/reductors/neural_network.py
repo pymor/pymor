@@ -603,8 +603,8 @@ if config.HAVE_TORCH:
             def time_dependent_parameter(t):
                 return [mu.get_time_dependent_value(param)(t) for param in self.fom.parameters]
 
-            parameters = torch.DoubleTensor([time_dependent_parameter(t)
-                                             for t in np.linspace(0., self.fom.T, self.nt)])
+            parameters = torch.DoubleTensor(np.array([time_dependent_parameter(t)
+                                                      for t in np.linspace(0., self.fom.T, self.nt)]))
 
             sample = [(parameters[..., 0], torch.transpose(torch.DoubleTensor(self.reduced_basis.inner(u)), 0, 1))]
 
@@ -755,8 +755,8 @@ if config.HAVE_TORCH:
             def time_dependent_parameter(t):
                 return [mu.get_time_dependent_value(param)(t) for param in self.fom.parameters]
 
-            parameters = torch.DoubleTensor([time_dependent_parameter(t)
-                                             for t in np.linspace(0., self.fom.T, output_size)])
+            parameters = torch.DoubleTensor(np.array([time_dependent_parameter(t)
+                                                      for t in np.linspace(0., self.fom.T, output_size)]))
 
             sample = [(parameters[..., 0], output_trajectory)]
 
