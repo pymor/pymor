@@ -487,6 +487,8 @@ def test_hankel_operator():
     op = NumpyHankelOperator(mp)
     U = op.source.random(1)
     np.testing.assert_almost_equal(op.apply(U).to_numpy().T, to_matrix(op) @ U.to_numpy().T)
+    V = op.range.random(1)
+    np.testing.assert_almost_equal(op.apply_adjoint(V).to_numpy().T, to_matrix(op).T @ V.to_numpy().T)
 
 
 if config.HAVE_DUNEGDT:
