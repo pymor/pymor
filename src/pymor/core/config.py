@@ -139,7 +139,7 @@ _PACKAGES = {
     'IPYTHON': _get_ipython_version,
     'MATPLOTLIB': _get_matplotib_version,
     'VTKIO': lambda: _can_import(('meshio', 'pyevtk', 'lxml', 'xmljson')),
-    'MESHIO': lambda: _can_import('meshio'),
+    'MESHIO': lambda: import_module('meshio').__version__,
     'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NGSOLVE': lambda: import_module('ngsolve').__version__,
