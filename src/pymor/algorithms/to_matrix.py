@@ -50,16 +50,15 @@ class ToMatrixRules(RuleTable):
     @match_class(NumpyHankelOperator)
     def action_NumpyHankelOperator(self, op):
         format = self.format
-        s, p, m = op.markov_parameters.shape
-        n = s // 2 + 1
-        op_mp = np.concatenate([op.markov_parameters, np.zeros([1 - s % 2, p, m])])
-        r, c = op_mp[:n], op_mp[n - 1:]
-        op_matrix = np.zeros([p * n, m * n])
-        for (i, j) in np.ndindex((p, m)):
-            op_matrix[i::p, j::m] = spla.hankel(r[:, i, j], c[:, i, j])
-        if format is None:
-            return op_matrix
-        elif format == 'dense':
+        if format in (None, 'dense'):
+            s, p, m = op.markov_parameters.shape
+            n = s // 2 + 1
+            op_mp = np.concatenate([op.markov_parameters, np.zeros([1 - s % 2, p, m])])
+            r, c = op_mp[:n], op_mp[n - 1:]
+            op_matrix = np.zeros([p * n, m * n])
+            for (i, j) in np.ndindex((p, m)):
+                op_matrix[i::p, j::m] = spla.hankel(r[:, i, j], c[:, i, j])
+
             return op_matrix
         else:
             raise NotImplementedError
