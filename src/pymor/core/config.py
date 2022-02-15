@@ -132,7 +132,7 @@ def is_nbconvert():
 
 
 _PACKAGES = {
-    'DEALII': lambda: import_module('pymor_dealii'),
+    'DEALII': lambda: import_module('pymor_dealii').__version__,
     'DUNEGDT': _get_dunegdt_version,
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
