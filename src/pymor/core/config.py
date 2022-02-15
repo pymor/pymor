@@ -33,8 +33,9 @@ def _get_fenics_version():
         pass
 
     import dolfin as df
-    if df.__version__ != '2019.1.0':
-        warnings.warn(f'FEniCS bindings have been tested for version 2019.1.0 (installed: {df.__version__}).')
+    if parse(df.__version__) < parse('2019.1.0'):
+        warnings.warn(f'FEniCS bindings have been tested for version 2019.1.0 and greater '
+                      f'(installed: {df.__version__}).')
     return df.__version__
 
 
