@@ -142,7 +142,7 @@ _PACKAGES = {
     'MESHIO': lambda: _can_import('meshio'),
     'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
-    'NGSOLVE': lambda: bool(import_module('ngsolve')),
+    'NGSOLVE': lambda: import_module('ngsolve').__version__,
     'NUMPY': lambda: import_module('numpy').__version__,
     'PYMESS': lambda: bool(import_module('pymess')),
     'PYTEST': lambda: import_module('pytest').__version__,
