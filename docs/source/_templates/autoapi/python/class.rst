@@ -50,14 +50,16 @@ This is currently not possible, see https://github.com/readthedocs/sphinx-autoap
    {% endif %}
    {% block methods %}
    {% if visible_methods %}
-   **Methods**
 
-   .. autoapisummary::
-      :nosignatures:
+   .. admonition:: Methods
+      :class: admoition-methods
 
-   {% for method in visible_methods %}
-      {{ method.id }}
-   {% endfor %}
+      .. autoapisummary::
+         :nosignatures:
+
+      {% for method in visible_methods %}
+         {{ method.id }}
+      {% endfor %}
 
    {% endif %}
    {% endblock %}
