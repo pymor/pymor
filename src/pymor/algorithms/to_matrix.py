@@ -55,7 +55,7 @@ class ToMatrixRules(RuleTable):
             n = s // 2 + 1
             op_mp = np.concatenate([op.markov_parameters, np.zeros([1 - s % 2, p, m])])
             r, c = op_mp[:n], op_mp[n - 1:]
-            op_matrix = np.zeros([p * n, m * n])
+            op_matrix = np.zeros([p * n, m * n], dtype=op_mp.dtype)
             for (i, j) in np.ndindex((p, m)):
                 op_matrix[i::p, j::m] = spla.hankel(r[:, i, j], c[:, i, j])
 

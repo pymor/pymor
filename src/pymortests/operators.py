@@ -481,14 +481,22 @@ def test_issue_1276():
     B.apply_inverse(v)
 
 
-def test_hankel_operator():
+@pytest.mark.parametrize('iscomplex', [False, True])
+def test_hankel_operator(iscomplex):
     s, p, m = 4, 2, 3
-    mp = np.arange(s * p * m).reshape(s, p, m) + 1
+    if iscomplex:
+        mp = np.random.rand(s, p, m) + 1j * np.random.rand(s, p, m)
+    else:
+        mp = np.random.rand(s, p, m)
     op = NumpyHankelOperator(mp)
-    U = op.source.random(1)
-    np.testing.assert_almost_equal(op.apply(U).to_numpy().T, to_matrix(op) @ U.to_numpy().T)
-    V = op.range.random(1)
-    np.testing.assert_almost_equal(op.apply_adjoint(V).to_numpy().T, to_matrix(op).T @ V.to_numpy().T)
+    if iscomplex:
+        U = op.source.random(1) + 1j * op.source.random(1)
+        V = op.range.random(1) + 1j * op.range.random(1)
+    else:
+        U = op.source.random(1)
+        V = op.range.random(1)
+    np.testing.assert_array_almost_equal(op.apply(U).to_numpy().T, to_matrix(op) @ U.to_numpy().T)
+    np.testing.assert_array_almost_equal(op.apply_adjoint(V).to_numpy().T, to_matrix(op).conj().T @ V.to_numpy().T)
 
 
 if config.HAVE_DUNEGDT:

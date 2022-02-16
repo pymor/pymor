@@ -18,7 +18,7 @@ This module provides the following |NumPy|-based |Operators|:
 from functools import reduce
 
 import numpy as np
-from numpy.fft import fft, ifft
+from numpy.fft import fft, ifft, rfft, irfft
 from scipy.io import mmwrite, savemat
 from scipy.linalg import solve
 import scipy.sparse
@@ -476,17 +476,17 @@ class NumpyHankelOperator(NumpyGenericOperator):
         self._circulant = self._calc_circulant()
 
     def apply(self, U, mu=None):
+        FFT, iFFT = (rfft, irfft) if np.isrealobj(self.markov_parameters) else (fft, ifft)
         assert U in self.source
         U = U.to_numpy().T
         k = U.shape[1]
         s, p, m = self.markov_parameters.shape
         n = s // 2 + 1
-        y = self.range.zeros(k).to_numpy().T
+        y = np.zeros([self.range.dim, k], dtype=self.markov_parameters.dtype)
         for (i, j) in np.ndindex((p, m)):
             x = np.concatenate([np.flip(U[j::m], axis=0), np.zeros([n, k])])
-            y[i::p] += np.real(
-                ifft(fft(x, axis=0,) * self._circulant[:, i, j].reshape(-1, 1), axis=0)
-            )[:n]
+            cx = iFFT(FFT(x, axis=0) * self._circulant[:, i, j].reshape(-1, 1), axis=0)
+            y[i::p] += cx[:n]
 
         return self.range.make_array(y.T)
 
@@ -495,8 +495,9 @@ class NumpyHankelOperator(NumpyGenericOperator):
         return self.H.apply(V, mu=mu)
 
     def _calc_circulant(self):
+        FFT = rfft if np.isrealobj(self.markov_parameters) else fft
         s, p, m = self.markov_parameters.shape
-        return fft(
+        return FFT(
             np.roll(
                 np.concatenate(
                     [

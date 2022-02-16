@@ -452,7 +452,7 @@ def misc_operator_with_arrays_and_products_factory(n):
     elif n == 13:
         from pymor.operators.numpy import NumpyHankelOperator
         s, p, m = 4, 2, 3
-        mp = np.arange(s * p * m).reshape(s, p, m) + 1
+        mp = np.random.rand(s, p, m)
         op = NumpyHankelOperator(mp)
         return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
     else:
