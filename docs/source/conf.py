@@ -308,5 +308,3 @@ autoapi_ignore = ['*/pymordemos/minimal_cpp_demo/*']
 suppress_warnings = ["autoapi"]
 autoapi_template_dir = this_dir / '_templates' / 'autoapi'
 autoapi_member_order = "alphabetical"
-autoapi_options = ['members', 'undoc-members', 'private-members',
-                   'show-inheritance', 'show-module-summary', 'imported-members', ]

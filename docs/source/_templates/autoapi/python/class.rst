@@ -32,9 +32,34 @@ This is currently not possible, see https://github.com/readthedocs/sphinx-autoap
    {% else %}
    {% set visible_classes = obj.classes|rejectattr("inherited")|selectattr("display")|list %}
    {% endif %}
+
+   {% block methods %}
+
+   {% if "inherited-members" in autoapi_options %}
+   {% set visible_overview_methods = obj.methods|selectattr("display")|list %}
+   {% else %}
+   {% set visible_overview_methods = obj.methods|rejectattr("inherited")|selectattr("display")|list %}
+   {% endif %}
+
+   {% if visible_overview_methods %}
+
+   .. admonition:: Methods
+      :class: admoition-methods
+
+      .. autoapisummary::
+         :nosignatures:
+
+      {% for method in visible_overview_methods %}
+         {{ method.id }}
+      {% endfor %}
+
+   {% endif %}
+   {% endblock %}
+
    {% for klass in visible_classes %}
    {{ klass.render()|indent(3) }}
    {% endfor %}
+
    {% if "inherited-members" in autoapi_options %}
    {% set visible_attributes = obj.attributes|selectattr("display")|list %}
    {% else %}
@@ -48,22 +73,6 @@ This is currently not possible, see https://github.com/readthedocs/sphinx-autoap
    {% else %}
    {% set visible_methods = obj.methods|rejectattr("inherited")|selectattr("display")|list %}
    {% endif %}
-   {% block methods %}
-   {% if visible_methods %}
-
-   .. admonition:: Methods
-      :class: admoition-methods
-
-      .. autoapisummary::
-         :nosignatures:
-
-      {% for method in visible_methods %}
-         {{ method.id }}
-      {% endfor %}
-
-   {% endif %}
-   {% endblock %}
-
    {% for method in visible_methods %}
    {{ method.render()|indent(3) }}
    {% endfor %}
