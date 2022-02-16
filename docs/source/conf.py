@@ -307,3 +307,4 @@ autoapi_keep_files = True
 autoapi_ignore = ['*/pymordemos/minimal_cpp_demo/*']
 suppress_warnings = ["autoapi"]
 autoapi_template_dir = this_dir / '_templates' / 'autoapi'
+autoapi_member_order = "alphabetical"
