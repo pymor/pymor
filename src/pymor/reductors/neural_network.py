@@ -2,14 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-"""Remark on the documentation:
-
-Due to an issue in autoapi, the classes `NeuralNetworkStatefreeOutputReductor`,
-`NeuralNetworkInstationaryReductor`, `NeuralNetworkInstationaryStatefreeOutputReductor`,
-`EarlyStoppingScheduler` and `CustomDataset` do not appear in the documentation,
-see https://github.com/pymor/pymor/issues/1343.
-"""
-
 from pymor.core.config import config
 config.require('TORCH')
 
