@@ -409,7 +409,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
         h =
         \begin{pmatrix}
             h_1 & h_2 & \dots & h_n
-        \end{pmatrix},\quad h_i\in\mathbb{R}^{p\times m},\,i=1,\,\dots,\,n,\quad n,m,p\in\mathbb{N}
+        \end{pmatrix},\quad h_i\in\mathbb{C}^{p\times m},\,i=1,\,\dots,\,n,\quad n,m,p\in\mathbb{N}
 
     be a finite sequence of (matrix-valued) Markov parameters. For an odd number :math:`n=2s-1`
     of Markov parameters, the corresponding Hankel operator can be represented by the matrix
@@ -421,7 +421,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
             h_2 & h_3 & \dots & h_{s+1}\\
             \vdots & \vdots && \vdots\\
             h_s & h_{s+1} & \dots & h_{2s-1}
-        \end{bmatrix}\in\mathbb{R}^{ms\times ps}.
+        \end{bmatrix}\in\mathbb{C}^{ms\times ps}.
 
     For an even number :math:`n=2s` of Markov parameters, the corresponding matrix
     representation is given by
@@ -434,7 +434,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
             \vdots & \vdots && \vdots & \vdots\\
             h_s & h_{s+1} & \dots & h_{2s-1} & h_{2s}\\
             h_{s+1} & h_{s+2} & \dots & h_{2s} & 0
-        \end{bmatrix}\in\mathbb{R}^{m(s+1)\times p(s+1)}.
+        \end{bmatrix}\in\mathbb{C}^{m(s+1)\times p(s+1)}.
 
     The matrix :math:`H` as seen above is not explicitly constructed, only the sequence of Markov
     parameters is stored. Efficient matrix-vector multiplications are realized via circulant
