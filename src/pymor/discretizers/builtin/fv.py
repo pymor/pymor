@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """This module provides some operators for finite volume discretizations."""
@@ -1064,7 +1064,9 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
                     outputs.append(BoundaryL2Functional(grid, v[1]).H)
         if len(outputs) > 1:
             from pymor.operators.block import BlockColumnOperator
+            from pymor.operators.constructions import NumpyConversionOperator
             output_functional = BlockColumnOperator(outputs)
+            output_functional = NumpyConversionOperator(output_functional.range) @ output_functional
         else:
             output_functional = outputs[0]
     else:

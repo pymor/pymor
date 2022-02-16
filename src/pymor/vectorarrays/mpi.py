@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """Wrapper classes for building MPI distributed |VectorArrays|.
@@ -12,6 +12,8 @@ transform single rank |VectorArrays| into MPI distributed
 The implementations are based on the event loop provided
 by :mod:`pymor.tools.mpi`.
 """
+
+from numbers import Number
 
 import numpy as np
 
@@ -54,12 +56,16 @@ class MPIVectorArray(VectorArray):
         return mpi.call(mpi.method_call, self.obj_id, '__len__')
 
     def __getitem__(self, ind):
+        if isinstance(ind, Number) and (ind >= len(self) or ind < -len(self)):
+            raise IndexError('VectorArray index out of range')
+        assert self.check_ind(ind)
         U = type(self)(mpi.call(mpi.method_call_manage, self.obj_id, '__getitem__', ind),
                        self.space)
         U.is_view = True
         return U
 
     def __delitem__(self, ind):
+        assert self.check_ind(ind)
         mpi.call(mpi.method_call, self.obj_id, '__delitem__', ind)
 
     def copy(self, deep=False):

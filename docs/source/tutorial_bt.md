@@ -192,8 +192,8 @@ models
 ```{code-cell}
 w = np.logspace(-2, 8, 300)
 fig, ax = plt.subplots()
-fom.mag_plot(w, ax=ax, label='FOM')
-rom.mag_plot(w, ax=ax, linestyle='--', label='ROM')
+fom.transfer_function.mag_plot(w, ax=ax, label='FOM')
+rom.transfer_function.mag_plot(w, ax=ax, linestyle='--', label='ROM')
 _ = ax.legend()
 ```
 
@@ -201,8 +201,8 @@ as well as Bode plots
 
 ```{code-cell}
 fig, axs = plt.subplots(6, 2, figsize=(12, 24), sharex=True, constrained_layout=True)
-fom.bode_plot(w, ax=axs)
-_ = rom.bode_plot(w, ax=axs, linestyle='--')
+fom.transfer_function.bode_plot(w, ax=axs)
+_ = rom.transfer_function.bode_plot(w, ax=axs, linestyle='--')
 ```
 
 Also, we can plot the magnitude plot of the error system,
@@ -247,13 +247,13 @@ which is again an LTI system.
 
 ```{code-cell}
 err = fom - rom
-_ = err.mag_plot(w)
+_ = err.transfer_function.mag_plot(w)
 ```
 
 and its Bode plot
 
 ```{code-cell}
-_ = err.bode_plot(w)
+_ = err.transfer_function.bode_plot(w)
 ```
 
 Finally, we can compute the relative errors in different system norms.

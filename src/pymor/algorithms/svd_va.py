@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """Module for SVD method of operators represented by |VectorArrays|."""
@@ -63,7 +63,6 @@ def method_of_snapshots(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=
     """
     assert isinstance(A, VectorArray)
     assert product is None or isinstance(product, Operator)
-    assert modes is None or modes <= len(A)
 
     if A.dim == 0 or len(A) == 0:
         return A.space.empty(), np.array([]), np.zeros((0, len(A)))
@@ -155,7 +154,6 @@ def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
     """
     assert isinstance(A, VectorArray)
     assert product is None or isinstance(product, Operator)
-    assert modes is None or modes <= len(A)
 
     if A.dim == 0 or len(A) == 0:
         return A.space.empty(), np.array([]), np.zeros((0, len(A)))

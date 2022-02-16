@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """Reductors based on H2-norm."""
@@ -15,7 +15,8 @@ from pymor.algorithms.riccati import solve_ricc_dense
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
-from pymor.models.iosys import InputOutputModel, LTIModel, _lti_to_poles_b_c, _poles_b_c_to_lti
+from pymor.models.iosys import LTIModel, _lti_to_poles_b_c, _poles_b_c_to_lti
+from pymor.models.transfer_function import TransferFunction
 from pymor.operators.constructions import IdentityOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
@@ -64,7 +65,7 @@ class GenericIRKAReductor(BasicObject):
         elif isinstance(rom0_params, np.ndarray):
             assert rom0_params.ndim == 1
         elif isinstance(rom0_params, dict):
-            assert ('sigma', 'b', 'c') in rom0_params
+            assert {'sigma', 'b', 'c'} <= rom0_params.keys()
             assert isinstance(rom0_params['sigma'], np.ndarray)
             assert isinstance(rom0_params['b'], np.ndarray)
             assert isinstance(rom0_params['c'], np.ndarray)
@@ -76,7 +77,7 @@ class GenericIRKAReductor(BasicObject):
         elif isinstance(rom0_params, LTIModel):
             assert rom0_params.order > 0
             if hasattr(self.fom, 'order'):  # self.fom can be a TransferFunction
-                assert rom0_params < self.fom.order
+                assert rom0_params.order < self.fom.order
             assert rom0_params.dim_input == self.fom.dim_input
             assert rom0_params.dim_output == self.fom.dim_output
         else:
@@ -259,7 +260,7 @@ class IRKAReductor(GenericIRKAReductor):
         rom
             Reduced |LTIModel| model.
         """
-        if not self.fom.cont_time:
+        if self.fom.sampling_time > 0:
             raise NotImplementedError
 
         self._clear_lists()
@@ -371,7 +372,7 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
         rom
             Reduced |LTIModel| model.
         """
-        if not self.fom.cont_time:
+        if self.fom.sampling_time > 0:
             raise NotImplementedError
 
         self._clear_lists()
@@ -501,7 +502,7 @@ class TSIAReductor(GenericIRKAReductor):
         rom
             Reduced |LTIModel|.
         """
-        if not self.fom.cont_time:
+        if self.fom.sampling_time > 0:
             raise NotImplementedError
 
         self._clear_lists()
@@ -555,13 +556,17 @@ class TFIRKAReductor(GenericIRKAReductor):
     Parameters
     ----------
     fom
-        The full-order |Model| with `eval_tf` and `eval_dtf` methods.
+        |TransferFunction| or |Model| with a `transfer_function` attribute,
+        with `eval_tf` and `eval_dtf` methods that should be defined at least
+        over the open right half of the complex plane.
     mu
         |Parameter values|.
     """
 
     def __init__(self, fom, mu=None):
-        assert isinstance(fom, InputOutputModel)
+        assert isinstance(fom, TransferFunction) or hasattr(fom, 'transfer_function')
+        if not isinstance(fom, TransferFunction):
+            fom = fom.transfer_function
         super().__init__(fom, mu=mu)
 
     def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1,
@@ -615,7 +620,7 @@ class TFIRKAReductor(GenericIRKAReductor):
         rom
             Reduced |LTIModel| model.
         """
-        if not self.fom.cont_time:
+        if self.fom.sampling_time > 0:
             raise NotImplementedError
 
         self._clear_lists()
@@ -716,7 +721,7 @@ class GapIRKAReductor(GenericIRKAReductor):
         rom
             Reduced |LTIModel| model.
         """
-        if not self.fom.cont_time:
+        if self.fom.sampling_time > 0:
             raise NotImplementedError
 
         self._clear_lists()

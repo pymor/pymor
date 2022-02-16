@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
@@ -70,6 +70,7 @@ class NumpyVectorArray(VectorArray):
     def __getitem__(self, ind):
         if isinstance(ind, Number) and (ind >= self._len or ind < -self._len):
             raise IndexError('VectorArray index out of range')
+        assert self.check_ind(ind)
         return NumpyVectorArrayView(self, ind)
 
     def __delitem__(self, ind):
@@ -451,7 +452,6 @@ class NumpyVectorArrayView(NumpyVectorArray):
     is_view = True
 
     def __init__(self, array, ind):
-        assert array.check_ind(ind)
         self.base = array
         self.ind = array.normalize_ind(ind)
         self.space = array.space

@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """|Operators| based on |NumPy| arrays.
@@ -22,7 +22,6 @@ import scipy.sparse
 from scipy.sparse import issparse
 
 from pymor.core.base import abstractmethod
-from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
@@ -165,12 +164,12 @@ class NumpyMatrixBasedOperator(Operator):
 
 
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):
-    """Wraps a 2D |NumPy Array| as an |Operator|.
+    """Wraps a 2D |NumPy Array| or |SciPy spmatrix| as an |Operator|.
 
     Parameters
     ----------
     matrix
-        The |NumPy array| which is to be wrapped.
+        The |NumPy array| or |SciPy spmatrix| which is to be wrapped.
     source_id
         The id of the operator's `source` |VectorSpace|.
     range_id

@@ -50,7 +50,8 @@ sed -e "s;BINDERIMAGE;${BINDERIMAGE};g" -e "s;SLUG;${SLUG};g" \
 # for binder the notebooks need to exist alongside their .rst version
 cd ${TARGET_DIR}
 for nb in $(find ./_downloads/ -name "*.ipynb") ; do
-  ln -s ${nb}
+  # cannot use symlinks here due to github pages limitation
+  cp -a ${nb} .
 done
 
 git add ${TARGET_DIR}/*ipynb

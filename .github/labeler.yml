@@ -3,7 +3,6 @@ infrastructure:
   - .github/*
   - .binder/*
   - Makefile
-  - azure-pipelines.yml
   - requirements*
   - pyproject.toml
   - MANIFEST.in

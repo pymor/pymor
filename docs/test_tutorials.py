@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 import os
 import sys
@@ -18,9 +18,10 @@ from pymortests.base import runmodule
 from pymortests.demos import _test_demo
 
 TUT_DIR = Path(os.path.dirname(__file__)).resolve() / 'source'
-_exclude_files = ['tutorial_external_solver.rst']
+_exclude_files = []
 EXCLUDE = [TUT_DIR / t for t in _exclude_files]
 TUTORIALS = [t for t in TUT_DIR.glob('tutorial_*rst') if t not in EXCLUDE]
+TUTORIALS += [t for t in TUT_DIR.glob('tutorial_*md') if t not in EXCLUDE]
 
 
 class CodeCell(Directive):

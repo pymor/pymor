@@ -3,13 +3,13 @@
 exclude: .ci/gitlab/ci.yml
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v4.1.0
     hooks:
     -   id: trailing-whitespace
     -   id: check-yaml
     -   id: check-added-large-files
 -   repo: https://github.com/pycqa/flake8
-    rev: 3.9.2
+    rev: 4.0.1
     hooks:
     -   id: flake8
         additional_dependencies: [flake8-docstrings, flake8-rst-docstrings]

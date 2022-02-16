@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """Module containing some basic but generic linear algebra algorithms."""
@@ -83,7 +83,7 @@ def project_array(U, basis, product=None, orthonormal=True):
     The projected |VectorArray|.
     """
     if orthonormal:
-        return basis.lincomb(U.inner(basis, product))
+        return basis.lincomb(basis.inner(U, product).T)
     else:
         gramian = basis.gramian(product)
         rhs = basis.inner(U, product)

@@ -10,10 +10,24 @@
 
 ## Contributors
 
-### pyMOR 2021.2
+### pyMOR 2022.1
 
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
   * long short-term memory neural networks for instationary problems
+
+* Art Pelling, a.pelling@tu-berlin.de
+  * support for discrete-time LTI systems
+
+### pyMOR 2021.2
+
+* Tim Keil, tim.keil@uni-muenster.de
+  * Simple output estimation for elliptic and parabolic problems
+
+* Jonas Nicodemus, jonas.nicodemus@simtech.uni-stuttgart.de
+  * dynamic mode decomposition
+
+* Henrike von Hülsen, h.vonhuelsen@uni-muenster.de
+  * dynamic mode decomposition
 
 ### pyMOR 2021.1
 

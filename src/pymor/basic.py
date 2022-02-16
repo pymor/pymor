@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """This module imports some commonly used methods and classes.
@@ -11,6 +11,7 @@ to have the most important parts of pyMOR directly available.
 # flake8: noqa
 
 from pymor.algorithms.basic import almost_equal, relative_error, project_array
+from pymor.algorithms.dmd import dmd
 from pymor.algorithms.ei import interpolate_operators, interpolate_function, ei_greedy, deim
 from pymor.algorithms.error import plot_reduction_error_analysis, reduction_error_analysis
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
@@ -40,7 +41,8 @@ from pymor.core.logger import set_log_levels, getLogger
 from pymor.core.pickle import dump, dumps, load, loads
 
 from pymor.models.basic import StationaryModel, InstationaryModel
-from pymor.models.iosys import LTIModel, SecondOrderModel, TransferFunction
+from pymor.models.iosys import LTIModel, SecondOrderModel
+from pymor.models.transfer_function import TransferFunction
 
 from pymor.discretizers.builtin import (discretize_stationary_cg, discretize_instationary_cg,
                                         discretize_stationary_fv, discretize_instationary_fv,

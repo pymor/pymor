@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -24,8 +24,9 @@ class OnedGrid(GridWithOrthogonalCenters):
     reference_element = line
 
     def __init__(self, domain=(0, 1), num_intervals=4, identify_left_right=False):
-        assert domain[0] < domain[1]
         domain = np.array(domain)
+        assert domain.ndim == 1
+        assert domain[0] < domain[1]
         self.__auto_init(locals())
         self._sizes = [num_intervals, num_intervals] if identify_left_right else [num_intervals, num_intervals + 1]
         self._width = np.abs(self.domain[1] - self.domain[0]) / self.num_intervals

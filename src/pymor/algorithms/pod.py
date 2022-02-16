@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -62,7 +62,6 @@ def pod(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
     """
     assert isinstance(A, VectorArray)
     assert product is None or isinstance(product, Operator)
-    assert modes is None or modes <= len(A)
     assert method in ('method_of_snapshots', 'qr_svd')
 
     logger = getLogger('pymor.algorithms.pod.pod')

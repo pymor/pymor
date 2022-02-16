@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
@@ -385,6 +385,7 @@ class ListVectorArray(VectorArray):
     def __getitem__(self, ind):
         if isinstance(ind, Number) and (ind >= len(self) or ind < -len(self)):
             raise IndexError('VectorArray index out of range')
+        assert self.check_ind(ind)
         return ListVectorArrayView(self, ind)
 
     def __delitem__(self, ind):

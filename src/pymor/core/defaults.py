@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """This module contains pyMOR's facilities for handling default values.
@@ -54,6 +54,7 @@ import pkgutil
 import textwrap
 import threading
 
+from pymor.core.exceptions import DependencyMissing
 from pymor.tools.table import format_table
 
 
@@ -253,6 +254,8 @@ def _import_all(package_name='pymor'):
         for p in pkgutil.walk_packages(package.__path__, package_name + '.', onerror=onerror):
             try:
                 importlib.import_module(p[1])
+            except DependencyMissing:
+                pass
             except ImportError:
                 from pymor.core.logger import getLogger
                 logger = getLogger('pymor.core.defaults._import_all')

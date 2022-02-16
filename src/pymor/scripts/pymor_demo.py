@@ -1,24 +1,18 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 
 import importlib
 import pkgutil
-import pprint
 import pymordemos
 import sys
 import runpy
-import argparse
-import functools
 
 
 def run():
-    parser = argparse.ArgumentParser(description='Launcher script for all available pyMOR demos.',
-                                     epilog=f'Example: {sys.argv[0]} burgers 1')
-
     def _run(module):
         # only need to remove the modname from args, rest is automatic
         del sys.argv[1]
@@ -36,8 +30,6 @@ def run():
             importlib.import_module(module_name)
         except (ImportError, ModuleNotFoundError) as e:
             fails[short] = e
-
-
 
     def usage():
         msg = f'''Usage:

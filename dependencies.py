@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 # DO NOT use any python features here that require 3.6 or newer
 
-_PYTEST = 'pytest>=4.4'
+_PYTEST = 'pytest>=6.0'
 # 5.12.* blocked due to https://bugreports.qt.io/browse/PYSIDE-1004
-# however the problem is not actually fixed in 5.12.3 as advertised
-_PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*,!=5.12.*'
+# however the problem is not actually fixed in 5.12.3 as advertised,
+# but only starting from 5.13.1
+_PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*,!=5.12.*,!=5.13.0'
 
 
 def _numpy_scipy():
@@ -38,7 +39,7 @@ def setup_requires():
 # recheck if jupyter_client pin still necessary
 #   https://github.com/jupyter-widgets/pythreejs/issues/366
 # Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
-install_requires = ['qtpy', 'packaging', 'diskcache', 'typer', 'click'] + _numpy_scipy()
+install_requires = ['qtpy!=2.0.0', 'packaging', 'diskcache', 'typer', 'click'] + _numpy_scipy()
 install_suggests = {
     'ipython>=5.0': 'an enhanced interactive python shell',
     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
@@ -66,8 +67,8 @@ doc_requires = ['sphinx>=3.4', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'pyt
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
                'flake8-rst-docstrings', 'flake8-docstrings', 'pytest-datadir', 'pybind11',
-               'docutils', "pypi-oldest-requirements>=2021.2", 'hypothesis[numpy,pytest]>=5.19',
-               'PyQt5!=5.15.2,>5.7,!=5.15.2.*,!=5.15.4,!=5.15.3']
+               'docutils', "pypi-oldest-requirements>=2021.2", 'hypothesis[numpy,pytest]>=6.10',
+               'PyQt5!=5.15.2,>5.7,!=5.15.2.*,!=5.15.4,!=5.15.3', 'check_reqs', 'scikit-fem']
 import_names = {
     'ipython': 'IPython',
     'pytest-cache': 'pytest_cache',

@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -19,8 +19,7 @@ methods = [method_of_snapshots, qr_svd]
 
 
 @given_vector_arrays(method=sampled_from(methods))
-@settings(deadline=None, suppress_health_check=[HealthCheck.filter_too_much,
-    HealthCheck.data_too_large])
+@settings(deadline=None, suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.data_too_large])
 def test_method_of_snapshots(vector_array, method):
     A = vector_array
 
