@@ -490,7 +490,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
                 FFT, iFFT = rfft, irfft
                 dtype = float
             else:
-                c = np.concatenate([c, np.flip(c[1:-1]).conj()])
+                c = np.concatenate([c, np.flip(c[1:-1], axis=0).conj()])
 
         y = np.zeros([self.range.dim, k], dtype=dtype)
         for (i, j) in np.ndindex((p, m)):
