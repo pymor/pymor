@@ -476,16 +476,26 @@ class NumpyHankelOperator(NumpyGenericOperator):
         self._circulant = self._calc_circulant()
 
     def apply(self, U, mu=None):
-        FFT, iFFT = (rfft, irfft) if np.isrealobj(self.markov_parameters) else (fft, ifft)
         assert U in self.source
         U = U.to_numpy().T
         k = U.shape[1]
         s, p, m = self.markov_parameters.shape
         n = s // 2 + 1
-        y = np.zeros([self.range.dim, k], dtype=self.markov_parameters.dtype)
+
+        FFT, iFFT = fft, ifft
+        c = self._circulant
+        dtype = complex
+        if np.isrealobj(self.markov_parameters):
+            if np.isrealobj(U):
+                FFT, iFFT = rfft, irfft
+                dtype = float
+            else:
+                c = np.concatenate([c, np.flip(c[1:-1]).conj()])
+
+        y = np.zeros([self.range.dim, k], dtype=dtype)
         for (i, j) in np.ndindex((p, m)):
             x = np.concatenate([np.flip(U[j::m], axis=0), np.zeros([n, k])])
-            cx = iFFT(FFT(x, axis=0) * self._circulant[:, i, j].reshape(-1, 1), axis=0)
+            cx = iFFT(FFT(x, axis=0) * c[:, i, j].reshape(-1, 1), axis=0)
             y[i::p] += cx[:n]
 
         return self.range.make_array(y.T)
