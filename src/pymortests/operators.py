@@ -489,12 +489,14 @@ def test_hankel_operator(iscomplex):
     else:
         mp = np.random.rand(s, p, m)
     op = NumpyHankelOperator(mp)
-    if iscomplex:
-        U = op.source.random(1) + 1j * op.source.random(1)
-        V = op.range.random(1) + 1j * op.range.random(1)
-    else:
-        U = op.source.random(1)
-        V = op.range.random(1)
+
+    U = op.source.random(1)
+    V = op.range.random(1)
+    np.testing.assert_array_almost_equal(op.apply(U).to_numpy().T, to_matrix(op) @ U.to_numpy().T)
+    np.testing.assert_array_almost_equal(op.apply_adjoint(V).to_numpy().T, to_matrix(op).conj().T @ V.to_numpy().T)
+
+    U += 1j * op.source.random(1)
+    V += 1j * op.range.random(1)
     np.testing.assert_array_almost_equal(op.apply(U).to_numpy().T, to_matrix(op) @ U.to_numpy().T)
     np.testing.assert_array_almost_equal(op.apply_adjoint(V).to_numpy().T, to_matrix(op).conj().T @ V.to_numpy().T)
 
