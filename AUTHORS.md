@@ -10,6 +10,11 @@
 
 ## Contributors
 
+### pyMOR 2022.1
+
+* Peter Oehme, oehme.pb@gmail.com
+  * support for UFL expression conversion
+
 ### pyMOR 2021.2
 
 * Jonas Nicodemus, jonas.nicodemus@simtech.uni-stuttgart.de
