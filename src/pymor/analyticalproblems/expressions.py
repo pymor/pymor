@@ -274,7 +274,7 @@ class Array(Expression):
         return f'(lambda a: array(a).T.reshape(a[0].shape + {self.shape}))(broadcast_arrays({", ".join(entries)}))'
 
     def fenics_expr(self, params):
-        return np.vectorize(lambda x: x.fenics_expr(params))(self.array)
+        return np.vectorize(lambda x: x.fenics_expr(params).item())(self.array)
 
     def __str__(self):
         expr_array = np.vectorize(str)(self.array)
@@ -323,8 +323,6 @@ class BinaryOp(Expression):
         if not _broadcastable_shapes(first.shape, second.shape):
             raise ValueError(f'Incompatible shapes of expressions "{first}" and "{second}" with shapes '
                              f'{first.shape} and {second.shape} for binary operator {self.numpy_symbol}')
-        print(f'{np.vectorize(lambda x: ufl_op(x.item()))(self.arg.fenics_expr(params))}')
-        print(f'{self.arg.fenics_expr(params)}, {ufl_op}')
         return np.vectorize(ufl_op)(first, second)
 
     def __str__(self):
@@ -371,7 +369,7 @@ class Indexed(Expression):
     def fenics_expr(self, params):
         if len(self.base.shape) != 1:
             raise NotImplementedError
-        return np.array(self.base.fenics_expr(params)[self.index])
+        return np.vectorize(lambda x: x.fenics_expr(params)[self.index[0]])(self.base)
 
     def __str__(self):
         index = [str(i) for i in self.index]
@@ -403,8 +401,6 @@ class UnaryFunctionCall(Expression):
         if self.fenics_symbol is None:
             raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
         ufl_op = getattr(ufl, self.fenics_symbol)
-        print(f'{np.vectorize(lambda x: ufl_op(x.item()))(self.arg.fenics_expr(params))}')
-        print(f'{self.arg.fenics_expr(params)}, {ufl_op}')
         return np.vectorize(ufl_op)(self.arg.fenics_expr(params))
 
     def __str__(self):
