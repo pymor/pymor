@@ -7,7 +7,7 @@ source ${THIS_DIR}/common_test_setup.bash
 # cannot seem to directly affect, we save the intermediate
 # pytest exit code in a file and check that afterwards
 # while ignoring the mpirun result itself
-xvfb-run -a mpirun --timeout 1200 --mca btl self,vader -n 2 coverage run --rcfile=setup.cfg \
+xvfb-run -a mpirun --timeout 2400 --mca btl self,vader -n 2 coverage run --rcfile=setup.cfg \
   --parallel-mode src/pymortests/mpi_run_demo_tests.py || true
 [[ "$(cat pytest.mpirun.success)" == "True" ]] || exit 127
 
