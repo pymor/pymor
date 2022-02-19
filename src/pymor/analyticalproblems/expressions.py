@@ -433,7 +433,7 @@ class BinaryOp(Expression):
 class Neg(Expression):
     """Negated :class:`Expression`."""
 
-    def __init__(self, operand)
+    def __init__(self, operand):
         if not isinstance(operand, Expression):
             raise ValueError(f'Operand of {type(self).__name__}({operand}) must be Expression '
                              f'(given: {type(operand).__name__}).')
