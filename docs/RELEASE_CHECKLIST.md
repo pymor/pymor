@@ -1,6 +1,5 @@
 # Release checklist
 
- 1. [ ] With each 20XX.1 release, update copyright notices accordingly.
  1. [ ] Check wheel install on debian stretch produces an OK error message due to too old Python.
  1. [ ] Write release notes. All new deprecations need to be mentioned.
  1. [ ] Update `README.md`.
@@ -27,5 +26,6 @@
  1. [ ] Add a new section in
         [`docker/docs/releases/Dockerfile`](https://github.com/pymor/docker/blob/main/docs/releases/Dockerfile).
  1. [ ] All developers check if (stale) branches can be pruned.
+ 1. [ ] All developers check for mailmap correctness.
  1. [ ] Remove deprecated features in main.
  1. [ ] Close the [GitHub milestone](https://github.com/pymor/pymor/milestones) for the release.

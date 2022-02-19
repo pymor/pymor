@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 from typer import Argument, run
 
-from pymor.models.iosys import TransferFunction
+from pymor.models.transfer_function import TransferFunction
 from pymor.reductors.h2 import TFIRKAReductor
 from pymordemos.heat import fom_properties, run_mor_method
 

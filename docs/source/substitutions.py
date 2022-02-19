@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 # flake8: noqa
@@ -52,6 +52,7 @@ common = '''
 .. |CacheableObject| replace:: :class:`~pymor.core.cache.CacheableObject`
 
 .. |StationaryProblem| replace:: :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`
+.. |StationaryProblems| replace:: :class:`StationaryProblems <pymor.analyticalproblems.elliptic.StationaryProblem>`
 .. |InstationaryProblem| replace:: :class:`~pymor.analyticalproblems.instationary.InstationaryProblem`
 
 .. |RectDomain| replace:: :class:`~pymor.analyticalproblems.domaindescriptions.RectDomain`
@@ -102,8 +103,8 @@ common = '''
 
 .. |LTIModel| replace:: :class:`~pymor.models.iosys.LTIModel`
 .. |LTIModels| replace:: :class:`LTIModels <pymor.models.iosys.LTIModel>`
-.. |TransferFunction| replace:: :class:`~pymor.models.iosys.TransferFunction`
-.. |TransferFunctions| replace:: :class:`TransferFunctions <pymor.models.iosys.TransferFunction>`
+.. |TransferFunction| replace:: :class:`~pymor.models.transfer_function.TransferFunction`
+.. |TransferFunctions| replace:: :class:`TransferFunctions <pymor.models.transfer_function.TransferFunction>`
 .. |SecondOrderModel| replace:: :class:`~pymor.models.iosys.SecondOrderModel`
 .. |SecondOrderModels| replace:: :class:`SecondOrderModels <pymor.models.iosys.SecondOrderModel>`
 .. |LinearDelayModel| replace:: :class:`~pymor.models.iosys.LinearDelayModel`

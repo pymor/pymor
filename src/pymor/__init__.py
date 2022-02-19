@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import os
@@ -24,12 +24,13 @@ def _init_mpi():
 
 
     """
+
     try:
         import mpi4py
     except ImportError:
         return
 
-    finalize = os.environ.get('PYMOR_MPI_FINALIZE', mpi4py.rc.finalize if mpi4py.rc.finalize is not None else False)
+    finalize = os.environ.get('PYMOR_MPI_FINALIZE', mpi4py.rc.finalize if mpi4py.rc.finalize is not None else True)
     mpi4py.rc(initialize=False, finalize=finalize)
     from mpi4py import MPI
     if not MPI.Is_initialized():
@@ -37,13 +38,13 @@ def _init_mpi():
         supported_lvl = MPI.Init_thread(required_level)
         if supported_lvl < required_level:
             print(f'MPI does support threading level {required_level}, running with {supported_lvl} instead', flush=True)
+
     try:
         # this solves sporadic mpi calls happening after finalize
         import petsc4py
         petsc4py.init()
     except ImportError:
         return
-
 
 _init_mpi()
 

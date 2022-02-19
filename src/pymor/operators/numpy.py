@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 """|Operators| based on |NumPy| arrays.
@@ -11,18 +11,20 @@ This module provides the following |NumPy|-based |Operators|:
   which assemble into a |NumpyMatrixOperator|.
 - |NumpyGenericOperator| wraps an arbitrary Python function between
   |NumPy arrays| as an |Operator|.
+- :class:`NumpyHankelOperator` implicitly constructs a Hankel operator from a |NumPy array| of
+  Markov parameters.
 """
 
 from functools import reduce
 
 import numpy as np
+from numpy.fft import fft, ifft, rfft, irfft
 from scipy.io import mmwrite, savemat
 from scipy.linalg import solve
 import scipy.sparse
 from scipy.sparse import issparse
 
 from pymor.core.base import abstractmethod
-from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
@@ -165,12 +167,12 @@ class NumpyMatrixBasedOperator(Operator):
 
 
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):
-    """Wraps a 2D |NumPy Array| as an |Operator|.
+    """Wraps a 2D |NumPy Array| or |SciPy spmatrix| as an |Operator|.
 
     Parameters
     ----------
     matrix
-        The |NumPy array| which is to be wrapped.
+        The |NumPy array| or |SciPy spmatrix| which is to be wrapped.
     source_id
         The id of the operator's `source` |VectorSpace|.
     range_id
@@ -396,3 +398,136 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             matrix_repr = f'<{self.range.dim}x{self.source.dim} dense>'
         return super()._format_repr(max_width, verbosity, override={'matrix': matrix_repr})
+
+
+class NumpyHankelOperator(NumpyGenericOperator):
+    r"""Implicit representation of a Hankel operator by a |NumPy Array| of Markov parameters.
+
+    Let
+
+    .. math::
+        h =
+        \begin{pmatrix}
+            h_1 & h_2 & \dots & h_n
+        \end{pmatrix},\quad h_i\in\mathbb{C}^{p\times m},\,i=1,\,\dots,\,n,\quad n,m,p\in\mathbb{N}
+
+    be a finite sequence of (matrix-valued) Markov parameters. For an odd number :math:`n=2s-1`
+    of Markov parameters, the corresponding Hankel operator can be represented by the matrix
+
+    .. math::
+        H =
+        \begin{bmatrix}
+            h_1 & h_2 & \dots & h_s \\
+            h_2 & h_3 & \dots & h_{s+1}\\
+            \vdots & \vdots && \vdots\\
+            h_s & h_{s+1} & \dots & h_{2s-1}
+        \end{bmatrix}\in\mathbb{C}^{ms\times ps}.
+
+    For an even number :math:`n=2s` of Markov parameters, the corresponding matrix
+    representation is given by
+
+    .. math::
+        H =
+        \begin{bmatrix}
+            h_1 & h_2 & \dots & h_s & h_{s+1}\\
+            h_2 & h_3 & \dots & h_{s+1} & h_{s+2}\\
+            \vdots & \vdots && \vdots & \vdots\\
+            h_s & h_{s+1} & \dots & h_{2s-1} & h_{2s}\\
+            h_{s+1} & h_{s+2} & \dots & h_{2s} & 0
+        \end{bmatrix}\in\mathbb{C}^{m(s+1)\times p(s+1)}.
+
+    The matrix :math:`H` as seen above is not explicitly constructed, only the sequence of Markov
+    parameters is stored. Efficient matrix-vector multiplications are realized via circulant
+    matrices with DFT in the class' `apply` method
+    (see :cite:`MSKC21` Algorithm 3.1. for details).
+
+    Parameters
+    ----------
+    markov_parameters
+        The |NumPy array| that contains the first :math:`n` Markov parameters that define the Hankel
+        operator. Has to be one- or three-dimensional with either::
+
+            markov_parameters.shape = (n,)
+
+        for scalar-valued Markov parameters or::
+
+            markov_parameters.shape = (n, p, m)
+
+        for matrix-valued Markov parameters of dimension :math:`p\times m`.
+    source_id
+        The id of the operator's `source` |VectorSpace|.
+    range_id
+        The id of the operator's `range` |VectorSpace|.
+    name
+        Name of the operator.
+    """
+
+    def __init__(self, markov_parameters, source_id=None, range_id=None, name=None):
+        if markov_parameters.ndim == 1:
+            markov_parameters = markov_parameters.reshape(-1, 1, 1)
+        assert markov_parameters.ndim == 3
+        markov_parameters.setflags(write=False)  # make numpy arrays read-only
+        self.__auto_init(locals())
+        s, p, m = markov_parameters.shape
+        n = s // 2 + 1
+        self.source = NumpyVectorSpace(m * n, source_id)
+        self.range = NumpyVectorSpace(p * n, range_id)
+        self.linear = True
+        self._circulant = self._calc_circulant()
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        U = U.to_numpy().T
+        k = U.shape[1]
+        s, p, m = self.markov_parameters.shape
+        n = s // 2 + 1
+
+        FFT, iFFT = fft, ifft
+        c = self._circulant
+        dtype = complex
+        if np.isrealobj(self.markov_parameters):
+            if np.isrealobj(U):
+                FFT, iFFT = rfft, irfft
+                dtype = float
+            else:
+                c = np.concatenate([c, np.flip(c[1:-1], axis=0).conj()])
+
+        y = np.zeros([self.range.dim, k], dtype=dtype)
+        for (i, j) in np.ndindex((p, m)):
+            x = np.concatenate([np.flip(U[j::m], axis=0), np.zeros([n, k])])
+            cx = iFFT(FFT(x, axis=0) * c[:, i, j].reshape(-1, 1), axis=0)
+            y[i::p] += cx[:n]
+
+        return self.range.make_array(y.T)
+
+    def apply_adjoint(self, V, mu=None):
+        assert V in self.range
+        return self.H.apply(V, mu=mu)
+
+    def _calc_circulant(self):
+        FFT = rfft if np.isrealobj(self.markov_parameters) else fft
+        s, p, m = self.markov_parameters.shape
+        return FFT(
+            np.roll(
+                np.concatenate(
+                    [
+                        np.zeros([1, p, m]),
+                        self.markov_parameters,
+                        np.zeros([1 - s % 2, p, m]),
+                    ]
+                ),
+                s // 2 + 1,
+                axis=0,
+            ),
+            axis=0,
+        )
+
+    @property
+    def H(self):
+        adjoint_markov_parameters = self.markov_parameters.transpose(0, 2, 1).conj()
+        return self.with_(
+            markov_parameters=adjoint_markov_parameters,
+            source_id=self.range_id,
+            range_id=self.source_id,
+            name=self.name + '_adjoint',
+        )

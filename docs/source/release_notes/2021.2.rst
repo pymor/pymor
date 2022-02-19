@@ -1,0 +1,125 @@
+
+pyMOR 2021.2 (December 22, 2021)
+--------------------------------
+We are proud to announce the release of pyMOR 2021.2! New features in
+this release are the addition of Dynamic Mode Decomposition for data-driven
+model order reduction and the formalization of model inputs. Further,
+general output error bounds for Reduced Basis reductors and experimental
+scikit-fem support as an alternative to the builtin discretizers were
+added. Wachspress' shifts accelerate the solution of Lyapunov equations
+for symmetric system matrices.
+
+Over 300 single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2021.1.x...2021.2.x>`__.
+
+pyMOR 2021.2 contains contributions by Tim Keil, Jonas Nicodemus and
+Henrike von Hülsen. See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__
+for more details.
+
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+Data-driven model order reduction with Dynamic Mode Decomposition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Dynamic Mode Decomposition (DMD) is a well-established method for computing
+low-rank dynamics from observational or simulation data. In contrast to
+Proper Orthogonal Decomposition (POD) where the computed modes are weighted
+by energy content, DMD modes are associated with oscillation frequency and
+decay rate. In `[#1424] <https://github.com/pymor/pymor/pull/1424>`_, both
+the 'standard' and 'exact' versions of DMD in the sense of :cite:`TRLBK14`
+have been implemented as algorithms operating on arbitrary |VectorArrays|.
+As such, :meth:`pymor.algorithms.dmd.dmd` can be applied also to
+:class:`blocked <pymor.vectorarrays.block.BlockVectorArray>` or
+:class:`MPI-distributed <pymor.vectorarrays.mpi.MPIVectorArray>` datasets.
+
+Formalization of Model inputs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In an ongoing effort to unify system-theoretic and Reduced Basis |Models| in
+pyMOR and to enable time-domain simulations for system-theoretic |Models|, we
+have formalized the notion of the input of a |Model|. Building on pyMOR's
+recently introduced support for time-dependent parameter values, |Models| can
+now have an `input` parameter, for which time-dependent parameter values are
+passed to :meth:`~pymor.models.interface.Model.solve`,
+:meth:`~pymor.models.interface.Model.output` and related methods via the new
+`input` keyword argument. For instance, for an arbitrary |InstationaryModel|
+`m` we can interpret the `rhs` operator as an input-to-state map as follows:
+
+.. code:: python
+
+  m = m.with_(rhs=m.rhs * ProjectionParameterFunctional('input', 1))
+  U = m.solve(input='[sin(t[0])]', mu=mu)
+
+For further details, see `[#1469] <https://github.com/pymor/pymor/pull/1469>`_.
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Basic RB output error estimates
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pyMOR's Reduced Basis reductors have been extended to compute a basic 
+estimate for the :meth:`~pymor.models.interface.Model.output` error.
+Given a linear output functional, this estimate is given by the product
+of the estimated state-space error and the dual norm of the output functional.
+The dual norm is computed efficiently online, also for parameter-dependent
+output functionals that are parameter-separable. For further details, see
+`[#1474] <https://github.com/pymor/pymor/pull/1474>`_. A DWR-based output
+error estimator is currently under development
+`[#1496] <https://github.com/pymor/pymor/pull/1496>`_.
+
+Experimental scikit-fem support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In `[#1507] <https://github.com/pymor/pymor/pull/1507>`_, experimental support was
+added for building |Models| from pyMOR's :mod:`~pymor.analyticalproblems` using
+`scikit-fem <https://scikit-fem.readthedocs.io/>`_ as a discretization backend.
+scikit-fem is a lightweight NumPy/SciPy-based finite-element library that offers
+more advanced features than pyMOR's builtin discretization toolkit, such as 3d meshes
+or higher-order methods. Currently, only |StationaryProblems| can be discretized using
+:meth:`pymor.discretizers.skfem.cg.discretize_stationary_cg`, which supports most
+features of the corresponding builtin discretizer.
+
+Wachspress' shifts
+~~~~~~~~~~~~~~~~~~
+When performing model order reduction with the balanced truncation method, the primary
+computational cost consists of solving two Lyapunov equations. In pyMOR, the low-rank
+ADI iteration is used to solve these matrix equations in a large-scale setting. In
+this method, shift parameter selection plays a crucial role in convergence speed.
+For general systems, a heuristic for computing sub-optimal shifts is implemented in pyMOR.
+Through `[#1445] <https://github.com/pymor/pymor/pull/1445>`_, optimal shift parameter
+computation for LTI models with symmetric system matrices was added.
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Transfer function restructuring
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In the pursuit of unifying system-theoretic and Reduced Basis |Models|,
+the |TransferFunction| class is no longer a subclass of |Model| and
+is moved from :mod:`pymor.models.iosys` to :mod:`pymor.models.transfer_function`.
+Additionally, the `InputOutputModel` and `InputStateOutputModel` classes have
+been removed.
+Furthermore, the transfer function-related methods of |LTIModel|,
+|SecondOrderModel| and |LinearDelayModel| are deprecated and the attribute
+`transfer_function` should be used instead (e.g., `m.bode_plot(...)` should be replaced
+with `m.transfer_function.bode_plot(...)`).
+See `[#1486] <https://github.com/pymor/pymor/pull/1486>`_ for more details.
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- `[#1179] Update error analysis <https://github.com/pymor/pymor/pull/1179>`_
+- `[#1422] Fix passing a function as boundary_types argument to PolygonalDomain <https://github.com/pymor/pymor/pull/1422>`_
+- `[#1437] Prevent invalid conversion of an Expression to bool <https://github.com/pymor/pymor/pull/1437>`_
+- `[#1439] Fix deprecated usage of asyncio.wait in HAPOD algorithm <https://github.com/pymor/pymor/pull/1439>`_
+- `[#1442] SAMDP improvement <https://github.com/pymor/pymor/pull/1442>`_
+- `[#1453] Improve error handling in DiskRegion / Don't disable caching in mpi_wrap_model <https://github.com/pymor/pymor/pull/1453>`_
+- `[#1454] Ensure that output_functional is never None <https://github.com/pymor/pymor/pull/1454>`_
+- `[#1478] Add NumpyConversionOperator <https://github.com/pymor/pymor/pull/1478>`_
+- `[#1479] Fix VectorArray slicing and disable slice filtering in VectorArray tests <https://github.com/pymor/pymor/pull/1479>`_
+- `[#1484] Ensure that mu arguments are parsed before cache keys are built <https://github.com/pymor/pymor/pull/1484>`_
+- `[#1490] Speedup computations by passing inputs as batch in the instationary ANN models <https://github.com/pymor/pymor/pull/1490>`_
+- `[#1492] Minor fixes to symbolic expression library <https://github.com/pymor/pymor/pull/1492>`_
+- `[#1493] Warn when __init__ of a ParametricObject takes a variable number of arguments <https://github.com/pymor/pymor/pull/1493>`_
+- `[#1506] Fix to_numpy() for Array expression <https://github.com/pymor/pymor/pull/1506>`_

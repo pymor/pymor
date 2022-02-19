@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# for some reason qtpy will not find any qt bindings w/o this
+export QT_API=pyside2
+
 THIS_DIR="$(cd "$(dirname ${BASH_SOURCE[0]})" ; pwd -P )"
 source ${THIS_DIR}/common_test_setup.bash
 
@@ -16,7 +19,14 @@ ${SUDO} python -m pip install -U -r requirements.txt
 ${SUDO} python -m pip install -U -r requirements-ci.txt
 ${SUDO} python -m pip install -U -r requirements-optional.txt
 
+python -c "import qtpy"
+# make sure all deps are installed again
+check_reqs requirements.txt
+check_reqs requirements-ci.txt
+check_reqs requirements-optional.txt
+
 python -m pip freeze
+pytest src/pymortests/docker_ci_smoketest.py
 # this runs in pytest in a fake, auto numbered, X Server
 xvfb-run -a py.test ${COMMON_PYTEST_OPTS}
 coverage xml

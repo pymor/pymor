@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -55,8 +55,8 @@ def main(
         rhs=rhs,
         dirichlet_data=dirichlet,
         neumann_data=neumann,
-        outputs = (('l2', ConstantFunction(1, dim_domain=2)),             # average over the domain
-                   ('l2_boundary', ConstantFunction(0.25, dim_domain=2))) # average over the boundary
+        outputs=(('l2', ConstantFunction(1, dim_domain=2)),             # average over the domain
+                 ('l2_boundary', ConstantFunction(0.25, dim_domain=2)))  # average over the boundary
     )
 
     for n in [32, 128]:

@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import os
@@ -42,7 +42,6 @@ DISCRETIZATION_ARGS = (
     ('burgers', ['--num-flux=lax_friedrichs', '0.1']),
     ('burgers', ['--num-flux=engquist_osher', '0.1']),
     ('burgers', ['--num-flux=simplified_engquist_osher', '0.1']),
-    ('linear_optimization', [40, 20]),
     ('parabolic', ['heat', 1]),
     ('parabolic', ['heat', '--rect', 1]),
     ('parabolic', ['heat', '--fv', 1]),
@@ -53,10 +52,10 @@ DISCRETIZATION_ARGS = (
 
 if not parallel:
     DISCRETIZATION_ARGS += (('elliptic_unstructured', [6., 16, 1e-1]),)
-if not is_windows_platform():
-    DISCRETIZATION_ARGS += (('neural_networks', [25, 50, 10]),
-                            ('neural_networks_fenics', [15, 3]),
-                            ('neural_networks_instationary', [25, 25, 30, 5]))
+
+DISCRETIZATION_ARGS += (('neural_networks', [25, 50, 10]),
+                        ('neural_networks_fenics', [15, 3]),
+                        ('neural_networks_instationary', [25, 25, 30, 5]))
 
 THERMALBLOCK_ARGS = (
     ('thermalblock', ['--plot-solutions', '--plot-err', '--plot-error-sequence', 2, 2, 3, 5]),
@@ -123,6 +122,17 @@ FUNCTION_EI_ARGS = (
     ('function_ei', ['--grid=10', 3, 2, 3, 2]),
 )
 
+OUTPUT_FUNCTIONAL_ARGS = (
+    ('linear_optimization', [40, 20]),
+    ('output_error_estimation', [0, 10, 4, 10, 0]),
+    ('output_error_estimation', [0, 10, 4, 10, 1]),
+    ('output_error_estimation', [1, 10, 4, 10, 1]),
+    ('output_error_estimation', [2, 10, 4, 10, 0]),
+    ('output_error_estimation', [2, 10, 4, 10, 1]),
+    ('output_error_estimation', [3, 10, 10, 10, 1]),
+    ('output_error_estimation', [4, 10, 10, 10, 1]),
+)
+
 DMD_ARGS = (
     ('burgers_dmd', [1.5, '--grid=10', '--nt=100']),
     ('dmd_identification', ['--n=4', '--m=10']),
@@ -140,6 +150,7 @@ DEMO_ARGS = (
     + HAPOD_ARGS
     + FENICS_NONLINEAR_ARGS
     + FUNCTION_EI_ARGS
+    + OUTPUT_FUNCTIONAL_ARGS
     + DMD_ARGS
 )
 
@@ -149,9 +160,10 @@ DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 def _skip_if_no_solver(param):
     demo, args = param
     from pymor.core.config import config
-    for solver in ['fenics', 'ngsolve']:
+    for solver, package in [('fenics', None), ('ngsolve', None), ('neural_', 'TORCH')]:
+        package = package or solver.upper()
         needs_solver = len([f for f in args if solver in str(f)]) > 0 or demo.find(solver) >= 0
-        has_solver = getattr(config, 'HAVE_' + solver.upper())
+        has_solver = getattr(config, f'HAVE_{package}')
         if needs_solver and not has_solver:
             if not os.environ.get('DOCKER_PYMOR', False):
                 pytest.skip('skipped test due to missing ' + solver)
@@ -184,7 +196,13 @@ def _test_demo(demo):
 
     try:
         from matplotlib import pyplot
-        pyplot.ion()
+        if sys.version_info[:2] > (3, 7) or (
+                sys.version_info[0] == 3 and sys.version_info[1] == 6):
+            pyplot.ion()
+        else:
+            # the ion switch results in interpreter segfaults during multiple
+            # demo tests on 3.7 -> fall back on old monkeying solution
+            pyplot.show = nop
     except ImportError:
         pass
     try:
@@ -223,6 +241,9 @@ def _test_demo(demo):
 
 def test_demos(demo_args):
     module, args = demo_args
+    # assertions in pymordemos do not get changed by pytest by default
+    # https://docs.pytest.org/en/stable/writing_plugins.html#assertion-rewriting
+    pytest.register_assert_rewrite(module)
     module = import_module(module)
     if hasattr(module, 'app'):
         app = module.app

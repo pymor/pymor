@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -10,20 +10,6 @@ from pymor.core.pickle import dumps, loads
 from pymortests.fixtures.function import function_argument
 from pymortests.fixtures.parameter import mu_of_type
 from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
-
-
-# monkey np.testing.assert_allclose to behave the same as np.allclose
-# for some reason, the default atol of np.testing.assert_allclose is 0
-# while it is 1e-8 for np.allclose
-
-real_assert_allclose = np.testing.assert_allclose
-
-
-def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
-    real_assert_allclose(a, b, rtol=rtol, atol=atol)
-
-
-np.testing.assert_allclose = monkey_allclose
 
 
 def test_evaluate(function):

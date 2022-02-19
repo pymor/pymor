@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -76,7 +76,7 @@ def main(
     # Magnitude plots
     fig, ax = plt.subplots()
     for mu in mu_list:
-        so_sys.mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
+        so_sys.transfer_function.mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
     ax.set_title('Magnitude plot of the full model')
     ax.legend()
     plt.show()

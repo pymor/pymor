@@ -17,6 +17,7 @@
 
 * Art Pelling, a.pelling@tu-berlin.de
   * support for discrete-time LTI systems
+  * dedicated Hankel operator class
 
 ### pyMOR 2021.2
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -28,11 +28,11 @@ def fom_properties(fom, w):
     Parameters
     ----------
     fom
-        The full-order `InputStateOutputModel`.
+        The full-order `Model` from :mod:`~pymor.models.iosys`.
     w
         Array of frequencies.
     """
-    from pymor.models.iosys import TransferFunction
+    from pymor.models.transfer_function import TransferFunction
     if not isinstance(fom, TransferFunction):
         print(f'order of the model = {fom.order}')
     print(f'number of inputs   = {fom.dim_input}')
@@ -56,7 +56,10 @@ def fom_properties(fom, w):
 
     # Bode plot of the full model
     fig, ax = plt.subplots(2 * fom.dim_output, fom.dim_input, squeeze=False)
-    fom.bode_plot(w, ax=ax)
+    if isinstance(fom, TransferFunction):
+        fom.bode_plot(w, ax=ax)
+    else:
+        fom.transfer_function.bode_plot(w, ax=ax)
     fig.suptitle('Bode plot of the full model')
     plt.show()
 
@@ -67,7 +70,7 @@ def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
     Parameters
     ----------
     lti
-        The full-order `InputStateOutputModel`.
+        The full-order `Model` from :mod:`~pymor.models.iosys`.
     w
         Array of frequencies.
     reductor
@@ -87,7 +90,7 @@ def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
         err = err.with_(solver_options=solver_options)
 
     # Errors
-    from pymor.models.iosys import TransferFunction
+    from pymor.models.transfer_function import TransferFunction
     if not isinstance(lti, TransferFunction):
         print(f'{reductor_short_name} relative H_2-error:    {err.h2_norm() / lti.h2_norm():e}')
         if config.HAVE_SLYCOT:
@@ -109,13 +112,19 @@ def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
 
     # Bode plot of the full and reduced model
     fig, ax = plt.subplots(2 * lti.dim_output, lti.dim_input, squeeze=False)
-    lti.bode_plot(w, ax=ax)
-    rom.bode_plot(w, ax=ax, linestyle='dashed')
+    if isinstance(lti, TransferFunction):
+        lti.bode_plot(w, ax=ax)
+    else:
+        lti.transfer_function.bode_plot(w, ax=ax)
+    rom.transfer_function.bode_plot(w, ax=ax, linestyle='dashed')
     fig.suptitle(f'Bode plot of the full and {reductor_short_name} reduced model')
 
     # Magnitude plot of the error system
     fig, ax = plt.subplots()
-    err.mag_plot(w, ax=ax)
+    if isinstance(err, TransferFunction):
+        err.mag_plot(w, ax=ax)
+    else:
+        err.transfer_function.mag_plot(w, ax=ax)
     ax.set_title(f'Magnitude plot of the {reductor_short_name} error system')
     plt.show()
 

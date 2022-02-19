@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -341,7 +341,7 @@ thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
     [lambda args=args: thermalblock_fixedparam_factory(*args) for args in thermalblock_factory_arguments]
 
 
-num_misc_operators = 13
+num_misc_operators = 14
 
 
 def misc_operator_with_arrays_and_products_factory(n):
@@ -448,6 +448,12 @@ def misc_operator_with_arrays_and_products_factory(n):
         from pymor.vectorarrays.block import BlockVectorSpace
         space = BlockVectorSpace([NumpyVectorSpace(1), NumpyVectorSpace(2)])
         op = NumpyConversionOperator(space)
+        return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
+    elif n == 13:
+        from pymor.operators.numpy import NumpyHankelOperator
+        s, p, m = 4, 2, 3
+        mp = np.random.rand(s, p, m)
+        op = NumpyHankelOperator(mp)
         return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
     else:
         assert False

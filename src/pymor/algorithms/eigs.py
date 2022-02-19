@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -220,7 +220,9 @@ def _extend_arnoldi(A, V, H, f, p):
     k = len(V)
 
     res = f.norm()[0]
-    H = np.pad(H, ((0, p), (0, p)))
+    # the explicit "constant" mode is needed for numpy 1.16
+    # mode only gained a default value with numpy 1.17
+    H = np.pad(H, ((0, p), (0, p)), mode='constant')
     H[k, k - 1] = res
     v = f * (1 / res)
     V = V.copy()

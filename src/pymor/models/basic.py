@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -56,6 +56,8 @@ class StationaryModel(Model):
         Name of the model.
     """
 
+    _compute_allowed_kwargs = frozenset({'use_adjoint'})
+
     def __init__(self, operator, rhs, output_functional=None, products=None,
                  error_estimator=None, visualizer=None, name=None):
 
@@ -91,8 +93,6 @@ class StationaryModel(Model):
         rhs_d_mu = self.rhs.d_mu(parameter, index).as_range_array(mu)
         rhs = rhs_d_mu - lhs_d_mu
         return self.operator.jacobian(solution, mu=mu).apply_inverse(rhs)
-
-    _compute_allowed_kwargs = frozenset({'use_adjoint'})
 
     def _compute_output_d_mu(self, solution, mu, return_array=False, use_adjoint=None):
         """Compute the gradient of the output functional  w.r.t. the parameters.
@@ -272,6 +272,8 @@ class InstationaryModel(Model):
     name
         Name of the model.
     """
+
+    _compute_allowed_kwargs = frozenset({'return_error_sequence'})
 
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
                  output_functional=None, products=None, error_estimator=None, visualizer=None, name=None):

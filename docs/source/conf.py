@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import sys
@@ -7,6 +7,7 @@ import os
 import slugify
 import glob
 import sphinx
+import sysconfig
 from pathlib import Path
 
 # Check Sphinx version
@@ -15,6 +16,7 @@ if sphinx.__version__ < "3.4":
 
 needs_sphinx = '3.4'
 os.environ['PYMOR_WITH_SPHINX'] = '1'
+os.environ['PYBIND11_DIR'] = sysconfig.get_path('purelib')
 
 # -----------------------------------------------------------------------------
 # General configuration
@@ -81,7 +83,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'pyMOR'
-copyright = '2013-2021 pyMOR developers and contributors'
+copyright = 'pyMOR developers and contributors'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -270,12 +272,12 @@ coverage_ignore_c_items = {}
 # autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
 
 # PyQt5 inventory is only used internally, actual link targets PySide2
-intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
+intersphinx_mapping = {'python': ('https://docs.python.org/3/', None),
                        'numpy': ('https://numpy.org/doc/stable/', None),
                        'PyQt5': ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
-                       'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-                       'matplotlib': ('https://matplotlib.org', None),
-                       'Sphinx': (' https://www.sphinx-doc.org/en/master/', None)}
+                       'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+                       'matplotlib': ('https://matplotlib.org/stable/', None),
+                       'Sphinx': (' https://www.sphinx-doc.org/en/stable/', None)}
 
 modindex_common_prefix = ['pymor.']
 

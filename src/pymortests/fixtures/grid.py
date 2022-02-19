@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import math as m
@@ -108,3 +108,11 @@ def hy_grid_and_dim_range_product_and_s_to_e(draw):
     g, e, n = draw(hy_grid_and_dim_range_product())
     s = hyst.integers(min_value=0, max_value=max(e-1, 0))
     return g, e, n, draw(s)
+
+
+@hyst.composite
+def hy_grid_and_codim_product_and_entity_index(draw):
+    grid = draw(hy_grid)
+    codim = draw(hyst.integers(min_value=0, max_value=grid.dim-1))
+    index = hyst.integers(min_value=0, max_value=grid.size(codim)-1)
+    return grid, codim, draw(index)
