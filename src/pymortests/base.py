@@ -7,11 +7,13 @@ import os
 import sys
 from pprint import pformat
 from functools import wraps
+import importlib
 
 import hypothesis
 import numpy as np
 from pickle import dump, load
 from pkg_resources import resource_filename, resource_stream
+from pytest import skip
 
 from pymor.algorithms.basic import almost_equal, relative_error
 
@@ -90,5 +92,22 @@ def might_exceed_deadline(deadline=-1):
                 dl = hypothesis.settings.default.deadline.total_seconds() * 1e3
             assert dl is None or dl > 1
             return hypothesis.settings(deadline=dl)(func)(*args, **kwargs)
+        return _inner_wrapper
+    return _outer_wrapper
+
+def skip_if_missing(module_name):
+    """Wrapper for requiring certain modules on tests."""
+    def _outer_wrapper(func):
+        @wraps(func)
+        def _inner_wrapper(*args, **kwargs):
+            try:
+                module = importlib.import_module(module_name)
+            except ImportError as ie:
+                if not os.environ.get('DOCKER_PYMOR', False):
+                    skip_string = 'skipped test due to missing module ' + module_name
+                    skip(skip_string)
+                raise ie
+            
+            func(*args, **kwargs)
         return _inner_wrapper
     return _outer_wrapper
