@@ -7,15 +7,15 @@ import os
 import sys
 from pprint import pformat
 from functools import wraps
-import importlib
 
 import hypothesis
 import numpy as np
 from pickle import dump, load
 from pkg_resources import resource_filename, resource_stream
-from pytest import skip
+from pytest import skip, fail
 
 from pymor.algorithms.basic import almost_equal, relative_error
+from pymor.core.config import config
 
 
 def runmodule(filename):
@@ -97,17 +97,18 @@ def might_exceed_deadline(deadline=-1):
 
 
 def skip_if_missing(module_name):
-    """Wrapper for requiring certain modules on tests."""
+    """Wrapper for requiring certain module dependencies on tests."""
     def _outer_wrapper(func):
         @wraps(func)
         def _inner_wrapper(*args, **kwargs):
             try:
-                module = importlib.import_module(module_name)
+                config.require(module_name)
             except ImportError as ie:
                 if not os.environ.get('DOCKER_PYMOR', False):
-                    skip_string = 'skipped test due to missing module ' + module_name
+                    skip_string = 'skipped test due to missing dependency ' + module_name
                     skip(skip_string)
-                raise ie
+                fail_string = 'failed test due to missing dependency ' + module_name
+                fail(fail_string)
             
             func(*args, **kwargs)
         return _inner_wrapper
