@@ -61,6 +61,8 @@ class VectorArray(BasicObject):
 
     impl_type = None
     is_view = False
+    _impl = None
+    base = None
     ind = None
 
     @property
@@ -71,13 +73,15 @@ class VectorArray(BasicObject):
         assert impl is None or isinstance(impl, self.impl_type)
         assert base is None or impl is None
         assert ind is None or base is not None
-        self.space, self._impl, self.base, self.ind = space, impl, base, ind
+        self.space = space
         if base is None:
-            self.is_view = False
+            self._impl = impl
             self._refcount = [1]
             self._len = len(impl)
         else:
             self.is_view = True
+            self.base = base
+            self.ind = ind
             self._len = _len
 
     def zeros(self, count=1, reserve=0):
