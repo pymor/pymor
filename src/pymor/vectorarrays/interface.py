@@ -67,7 +67,7 @@ class VectorArray(BasicObject):
     def impl(self):
         return self.base._impl if self.is_view else self._impl
 
-    def __init__(self, space, impl, base=None, ind=None):
+    def __init__(self, space, impl, base=None, ind=None, _len=None):
         assert impl is None or isinstance(impl, self.impl_type)
         assert base is None or impl is None
         assert ind is None or base is not None
@@ -75,8 +75,10 @@ class VectorArray(BasicObject):
         if base is None:
             self.is_view = False
             self._refcount = [1]
+            self._len = len(impl)
         else:
             self.is_view = True
+            self._len = _len
 
     def zeros(self, count=1, reserve=0):
         """Create a |VectorArray| of null vectors of the same |VectorSpace|.
@@ -197,18 +199,44 @@ class VectorArray(BasicObject):
         return self.space.dim
 
     def __len__(self):
-        return self.impl.len_ind(self.ind)
+        return self._len
 
     def __getitem__(self, ind):
         """Return a |VectorArray| view onto a subset of the vectors in the array."""
-        if isinstance(ind, Number) and (ind >= len(self) or ind < -len(self)):
+        if isinstance(ind, Number) and (ind >= self._len or ind < -self._len):
             raise IndexError('VectorArray index out of range')
         assert self.check_ind(ind)
+
         if self.is_view:
-            ind = self._sub_index(len(self.base), self.ind, ind)
-            return type(self)(self.space, None, self.base, self.base.normalize_ind(ind))
+            l = self.base._len
+            ind = self._sub_index(l, self.ind, ind)
         else:
-            return type(self)(self.space, None, self, self.normalize_ind(ind))
+            l = self._len
+
+        # normalize ind s.t. the length of the view does not change when
+        # the array is appended to
+        if type(ind) is slice:
+            start, stop, step = ind.indices(l)
+            if start == stop:
+                ind = slice(0, 0, 1)
+                view_len = 0
+            else:
+                assert start >= 0
+                assert stop >= 0 or (step < 0 and stop >= -1)
+                ind = slice(start, None if stop == -1 else stop, step)
+                view_len = len(range(start, stop, step))
+        elif not hasattr(ind, '__len__'):
+            ind = ind if 0 <= ind else l+ind
+            ind = slice(ind, ind+1)
+            view_len = 1
+        else:
+            ind = [i if 0 <= i else l+i for i in ind]
+            view_len = len(ind)
+
+        if self.is_view:
+            return type(self)(self.space, None, self.base, ind, view_len)
+        else:
+            return type(self)(self.space, None, self, ind, view_len)
 
     def __delitem__(self, ind):
         """Remove vectors from the array."""
@@ -217,6 +245,7 @@ class VectorArray(BasicObject):
         assert self.check_ind(ind)
         self._copy_impl_if_multiple_refs()
         self.impl.delete(ind)
+        self._len = len(self.impl)
 
     def to_numpy(self, ensure_copy=False):
         """Return (len(self), self.dim) NumPy Array with the data stored in the array.
@@ -250,6 +279,12 @@ class VectorArray(BasicObject):
         if remove_from_other:
             other._copy_impl_if_multiple_refs()
         self.impl.append(other.impl, remove_from_other, other.ind)
+        self._len += other._len
+        if remove_from_other:
+            if other.is_view:
+                other.base._len = len(other.base._impl)
+            else:
+                other._len = 0
 
     def copy(self, deep=False):
         """Returns a copy of the array.
@@ -712,25 +747,6 @@ class VectorArray(BasicObject):
         if isinstance(ind, Number):
             return 1
         return len({i if i >= 0 else l+i for i in ind})
-
-    def normalize_ind(self, ind):
-        """Normalize given indices such that they are independent of the array length.
-
-        Does not check validity of the indices.
-        """
-        l = len(self)
-        if type(ind) is slice:
-            start, stop, step = ind.indices(l)
-            if start == stop:
-                return slice(0, 0, 1)
-            assert start >= 0
-            assert stop >= 0 or (step < 0 and stop >= -1)
-            return slice(start, None if stop == -1 else stop, step)
-        elif not hasattr(ind, '__len__'):
-            ind = ind if 0 <= ind else l+ind
-            return slice(ind, ind+1)
-        else:
-            return [i if 0 <= i else l+i for i in ind]
 
     def _copy_impl_if_multiple_refs(self):
         array = self.base if self.is_view else self
