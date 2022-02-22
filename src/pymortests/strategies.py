@@ -16,17 +16,17 @@ from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
-if config.HAVE_FENICS and False:
+if config.HAVE_FENICS:
     import dolfin as df
     from pymor.bindings.fenics import FenicsVectorSpace
 
-if config.HAVE_DEALII and False:
+if config.HAVE_DEALII:
     from pymor_dealii.pymor.vectorarray import DealIIVectorSpace
 
-if config.HAVE_DUNEGDT and False:
+if config.HAVE_DUNEGDT:
     from pymor.bindings.dunegdt import DuneXTVectorSpace
 
-if config.HAVE_NGSOLVE and False:
+if config.HAVE_NGSOLVE:
     import ngsolve as ngs
     import netgen.meshing as ngmsh
     from pymor.bindings.ngsolve import NGSolveVectorSpace
@@ -107,7 +107,7 @@ def _block_vector_spaces(draw, np_data_list, compatible, count, dims):
 
 _other_vector_space_types = []
 
-if config.HAVE_FENICS and False:
+if config.HAVE_FENICS:
     _FENICS_spaces = {}
 
     def _fenics_vector_spaces(draw, np_data_list, compatible, count, dims):
@@ -120,7 +120,7 @@ if config.HAVE_FENICS and False:
         return ret
     _other_vector_space_types.append('fenics')
 
-if config.HAVE_NGSOLVE and False:
+if config.HAVE_NGSOLVE:
     _NGSOLVE_spaces = {}
 
     def _create_ngsolve_space(dim):
@@ -139,18 +139,18 @@ if config.HAVE_NGSOLVE and False:
         return [(_create_ngsolve_space(d), ar) for d, ar in zip(dims, np_data_list)]
     _other_vector_space_types.append('ngsolve')
 
-if config.HAVE_DEALII and False:
+if config.HAVE_DEALII:
     def _dealii_vector_spaces(draw, np_data_list, compatible, count, dims):
         return [(DealIIVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
     _other_vector_space_types.append('dealii')
 
-if config.HAVE_DUNEGDT and False:
+if config.HAVE_DUNEGDT:
     def _dunegdt_vector_spaces(draw, np_data_list, compatible, count, dims):
         return [(DuneXTVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
     _other_vector_space_types.append('dunegdt')
 
 
-_picklable_vector_space_types = ['numpy', 'numpy_list']  #, 'block']
+_picklable_vector_space_types = ['numpy', 'numpy_list', 'block']
 
 
 @hyst.composite
