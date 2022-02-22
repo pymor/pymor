@@ -207,7 +207,6 @@ class VectorArray(BasicObject):
 
     def __getitem__(self, ind):
         """Return a |VectorArray| view onto a subset of the vectors in the array."""
-        assert self.check_ind(ind)
 
         l = self._len
 
@@ -216,7 +215,7 @@ class VectorArray(BasicObject):
         if type(ind) is int or isinstance(ind, Number):
             if 0 <= ind < l:
                 ind = slice(ind, ind+1)
-            elif ind >= l:
+            elif ind >= l or ind < -l:
                 raise IndexError('VectorArray index out of range')
             else:
                 ind = l+ind
@@ -233,6 +232,7 @@ class VectorArray(BasicObject):
                 ind = slice(start, None if stop == -1 else stop, step)
                 view_len = len(range(start, stop, step))
         else:
+            assert isinstance(ind, (list, np.ndarray)) and all(-l <= i < l for i in ind)
             ind = [i if 0 <= i else l+i for i in ind]
             view_len = len(ind)
 
