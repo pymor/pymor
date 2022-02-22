@@ -6,7 +6,7 @@ import numpy as np
 
 from pymor.operators.constructions import IdentityOperator, ZeroOperator
 from pymor.operators.interface import Operator
-from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.vectorarrays.block import block, BlockVectorSpace
 
 
 class BlockOperatorBase(Operator):
@@ -50,8 +50,8 @@ class BlockOperatorBase(Operator):
             if blocks[i, j] is None:
                 self.blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
 
-        self.source = BlockVectorSpace(source_spaces) if self.blocked_source else source_spaces[0]
-        self.range = BlockVectorSpace(range_spaces) if self.blocked_range else range_spaces[0]
+        self.source = block(source_spaces) if self.blocked_source else source_spaces[0]
+        self.range = block(range_spaces) if self.blocked_range else range_spaces[0]
         self.num_source_blocks = len(source_spaces)
         self.num_range_blocks = len(range_spaces)
         self.linear = all(op.linear for op in self._operators())

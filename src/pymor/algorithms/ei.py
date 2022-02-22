@@ -23,7 +23,7 @@ from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interface import RemoteObject
 from pymor.parallel.manager import RemoteObjectManager
-from pymor.vectorarrays.interface import VectorArray
+from pymor.vectorarrays.interface import DOFVectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -31,7 +31,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
               nodal_basis=False, copy=True, pool=dummy_pool):
     """Generate data for empirical interpolation using EI-Greedy algorithm.
 
-    Given a |VectorArray| `U`, this method generates a collateral basis and
+    Given a |DOFVectorArray| `U`, this method generates a collateral basis and
     interpolation DOFs for empirical interpolation of the vectors contained in `U`.
     The returned objects can be used to instantiate an |EmpiricalInterpolatedOperator|
     (with `triangular=True`).
@@ -42,7 +42,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     Parameters
     ----------
     U
-        A |VectorArray| of vectors to interpolate.
+        A |DOFVectorArray| of vectors to interpolate.
     error_norm
         Norm w.r.t. which to calculate the interpolation error. If `None`, the Euclidean norm
         is used. If `'sup'`, the sup-norm of the dofs is used.
@@ -67,7 +67,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     interpolation_dofs
         |NumPy array| of the DOFs at which the vectors are evaluated.
     collateral_basis
-        |VectorArray| containing the generated collateral basis.
+        |DOFVectorArray| containing the generated collateral basis.
     data
         Dict containing the following fields:
 
@@ -81,16 +81,15 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
             :interpolation_matrix:  The interpolation matrix, i.e., the evaluation of
                                     `collateral_basis` at `interpolation_dofs`.
     """
-    assert not isinstance(error_norm, str) or error_norm == 'sup'
-    if pool:  # dispatch to parallel implementation
-        assert isinstance(U, (VectorArray, RemoteObject))
+    if pool:  # dispatch to parallel implemenation
+        assert isinstance(U, (DOFVectorArray, RemoteObject))
         with RemoteObjectManager() as rom:
-            if isinstance(U, VectorArray):
+            if isinstance(U, DOFVectorArray):
                 U = rom.manage(pool.scatter_array(U))
             return _parallel_ei_greedy(U, error_norm=error_norm, atol=atol, rtol=rtol,
                                        max_interpolation_dofs=max_interpolation_dofs, copy=copy, pool=pool)
 
-    assert isinstance(U, VectorArray)
+    assert isinstance(U, DOFVectorArray)
 
     logger = getLogger('pymor.algorithms.ei.ei_greedy')
     logger.info('Generating Interpolation Data ...')
@@ -178,7 +177,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
 def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_options={}):
     """Generate data for empirical interpolation using DEIM algorithm.
 
-    Given a |VectorArray| `U`, this method generates a collateral basis and
+    Given a |DOFVectorArray| `U`, this method generates a collateral basis and
     interpolation DOFs for empirical interpolation of the vectors contained in `U`.
     The returned objects can be used to instantiate an |EmpiricalInterpolatedOperator|
     (with `triangular=False`).
@@ -188,7 +187,7 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
     Parameters
     ----------
     U
-        A |VectorArray| of vectors to interpolate.
+        A |DOFVectorArray| of vectors to interpolate.
     modes
         Dimension of the collateral basis i.e. number of POD modes of the vectors in `U`.
     pod
@@ -208,13 +207,13 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
     interpolation_dofs
         |NumPy array| of the DOFs at which the vectors are interpolated.
     collateral_basis
-        |VectorArray| containing the generated collateral basis.
+        |DOFVectorArray| containing the generated collateral basis.
     data
         Dict containing the following fields:
 
             :svals: POD singular values.
     """
-    assert isinstance(U, VectorArray)
+    assert isinstance(U, DOFVectorArray)
 
     logger = getLogger('pymor.algorithms.ei.deim')
     logger.info('Generating Interpolation Data ...')
@@ -313,7 +312,7 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
         Dict containing the following fields:
 
             :dofs:     |NumPy array| of the DOFs at which the |Operators| have to be evaluated.
-            :basis:    |VectorArray| containing the generated collateral basis.
+            :basis:    |DOFVectorArray| containing the generated collateral basis.
 
         In addition, `data` contains the fields of the `data` `dict` returned by
         :func:`ei_greedy`/:func:`deim`.

@@ -9,11 +9,11 @@ from scipy.sparse import issparse
 
 from pymor.core.base import classinstancemethod
 from pymor.tools.random import get_random_state
-from pymor.vectorarrays.interface import VectorArray, VectorSpace, _create_random_values
+from pymor.vectorarrays.interface import DOFVectorArray, DOFVectorSpace, _create_random_values
 
 
-class NumpyVectorArray(VectorArray):
-    """|VectorArray| implementation via |NumPy arrays|.
+class NumpyVectorArray(DOFVectorArray):
+    """|DOFVectorArray| implementation via |NumPy arrays|.
 
     This is the default |VectorArray| type used by all |Operators|
     in pyMOR's discretization toolkit. Moreover, all reduced |Operators|
@@ -340,7 +340,7 @@ class NumpyVectorArray(VectorArray):
         return NumpyVectorArray(-self._array[:self._len], self.space)
 
 
-class NumpyVectorSpace(VectorSpace):
+class NumpyVectorSpace(DOFVectorSpace):
     """|VectorSpace| of |NumpyVectorArrays|.
 
     Parameters
@@ -350,6 +350,8 @@ class NumpyVectorSpace(VectorSpace):
     id
         See :attr:`~pymor.vectorarrays.interface.VectorSpace.id`.
     """
+
+    is_DOFVectorSpace = True
 
     def __init__(self, dim, id=None):
         self.dim = dim

@@ -13,6 +13,7 @@ from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.tools.random import get_random_state
+from pymor.vectorarrays.interface import DOFVectorArray
 
 
 @defaults('lrradi_tol', 'lrradi_maxiter', 'lrradi_shifts', 'hamiltonian_shifts_init_maxiter',
@@ -249,7 +250,10 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
         eigpairs = list(filter(lambda e: e[0].real < 0, eigpairs))
         if len(eigpairs) == 0:
             # use random subspace instead of span{C} (with same dimensions)
-            C = C.random(len(C), distribution='normal', random_state=random_state)
+            if isinstance(C, DOFVectorArray):
+                C = C.random(len(C), distribution='normal', random_state=random_state)
+            else:
+                C = C.random(len(C), random_state=random_state)
             continue
         # find shift with most impact on convergence
         maxval = -1

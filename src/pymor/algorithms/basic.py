@@ -35,7 +35,8 @@ def almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol=1e-14):
         If specified, use this inner product |Operator| to compute the norm.
         Otherwise, the Euclidean norm is used.
     sup_norm
-        If `True`, use the sup norm to compute the error.
+        If `True`, use the sup norm to compute the error. Requires `U` and `V`
+        to be |DOFVectorArrays|.
     rtol
         The relative tolerance.
     atol

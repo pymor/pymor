@@ -5,7 +5,7 @@
 from pymor.operators.constructions import LincombOperator, VectorArrayOperator
 from pymor.operators.interface import Operator
 from pymor.tools import mpi
-from pymor.vectorarrays.mpi import MPIVectorSpace, _register_local_space
+from pymor.vectorarrays.mpi import make_mpi_vector_space, _register_local_space
 
 
 class MPIOperator(Operator):
@@ -48,17 +48,10 @@ class MPIOperator(Operator):
         transferred to rank 0 instead of the true |VectorSpace|. This
         allows the usage of :class:`~pymor.vectorarrays.mpi.MPIVectorArray`
         even when the local |VectorSpaces| are not picklable.
-    space_type
-        This class will be used to wrap the local |VectorArrays|
-        returned by the local operators into an MPI distributed
-        |VectorArray| managed from rank 0. By default,
-        :class:`~pymor.vectorarrays.mpi.MPIVectorSpace` will be used,
-        other options are :class:`~pymor.vectorarrays.mpi.MPIVectorSpaceAutoComm`
-        and :class:`~pymor.vectorarrays.mpi.MPIVectorSpaceNoComm`.
     """
 
     def __init__(self, obj_id, mpi_range, mpi_source, with_apply2=False, pickle_local_spaces=True,
-                 space_type=MPIVectorSpace):
+                 communication='solver'):
         assert mpi_source or mpi_range
 
         self.__auto_init(locals())
@@ -72,14 +65,14 @@ class MPIOperator(Operator):
             local_spaces = mpi.call(_MPIOperator_get_local_spaces, obj_id, True, pickle_local_spaces)
             if all(ls == local_spaces[0] for ls in local_spaces):
                 local_spaces = (local_spaces[0],)
-            self.source = space_type(local_spaces)
+            self.source = make_mpi_vector_space(op.source, local_spaces, communication)
         else:
             self.source = op.source
         if mpi_range:
             local_spaces = mpi.call(_MPIOperator_get_local_spaces, obj_id, False, pickle_local_spaces)
             if all(ls == local_spaces[0] for ls in local_spaces):
                 local_spaces = (local_spaces[0],)
-            self.range = space_type(local_spaces)
+            self.range = make_mpi_vector_space(op.range, local_spaces, communication)
         else:
             self.range = op.range
         self.solver_options = op.solver_options
@@ -224,7 +217,7 @@ def _MPIOperator_assemble(self, mu):
 
 
 def mpi_wrap_operator(obj_id, mpi_range, mpi_source, with_apply2=False, pickle_local_spaces=True,
-                      space_type=MPIVectorSpace):
+                      communication='solver'):
     """Wrap MPI distributed local |Operators| to a global |Operator| on rank 0.
 
     Given MPI distributed local |Operators| referred to by the
@@ -246,17 +239,19 @@ def mpi_wrap_operator(obj_id, mpi_range, mpi_source, with_apply2=False, pickle_l
     if isinstance(op, LincombOperator):
         obj_ids = mpi.call(_mpi_wrap_operator_LincombOperator_manage_operators, obj_id)
         return LincombOperator([mpi_wrap_operator(o, mpi_range, mpi_source, with_apply2, pickle_local_spaces,
-                                                  space_type)
+                                                  communication)
                                 for o in obj_ids], op.coefficients, name=op.name)
     elif isinstance(op, VectorArrayOperator):
         array_obj_id, local_spaces = mpi.call(_mpi_wrap_operator_VectorArrayOperator_manage_array,
                                               obj_id, pickle_local_spaces)
         if all(ls == local_spaces[0] for ls in local_spaces):
             local_spaces = (local_spaces[0],)
-        return VectorArrayOperator(space_type(local_spaces).make_array(array_obj_id),
-                                   adjoint=op.adjoint, name=op.name)
+        return VectorArrayOperator(
+            make_mpi_vector_space(op.array.space, local_spaces, communication).make_array(array_obj_id),
+            adjoint=op.adjoint, name=op.name
+        )
     else:
-        return MPIOperator(obj_id, mpi_range, mpi_source, with_apply2, pickle_local_spaces, space_type)
+        return MPIOperator(obj_id, mpi_range, mpi_source, with_apply2, pickle_local_spaces, communication)
 
 
 def _mpi_wrap_operator_LincombOperator_manage_operators(obj_id):

@@ -20,7 +20,7 @@ from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnO
 from pymor.operators.constructions import IdentityOperator, LincombOperator, LowRankOperator, ZeroOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Parameters, Mu
-from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.vectorarrays.block import block
 
 
 @defaults('value')
@@ -480,7 +480,7 @@ class LTIModel(Model):
         C = BlockRowOperator([self.C, other.C])
         D = self.D + other.D
         if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
-            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+            E = IdentityOperator(block([self.solution_space, other.solution_space]))
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         return self.with_(A=A, B=B, C=C, D=D, E=E)
@@ -1326,7 +1326,7 @@ class SecondOrderModel(Model):
                         B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B]),
                         C=BlockRowOperator([self.Cp, self.Cv]),
                         D=self.D,
-                        E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source]))
+                        E=(IdentityOperator(block([self.M.source, self.M.source]))
                            if isinstance(self.M, IdentityOperator) else
                            BlockDiagonalOperator([IdentityOperator(self.M.source), self.M])),
                         sampling_time=self.sampling_time,

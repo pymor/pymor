@@ -98,6 +98,15 @@ class Operator(ParametricObject):
         In the case of complex numbers, note that `apply2` is anti-linear in the
         first variable by definition of `inner`.
 
+        Further note that for an operator that maps vectors to functionals, e.g.,
+        a finite-element matrix, :meth:`~Operator.apply2` will only correctly
+        evaluate the corresponding 2-form when `op.range.inner` implements the
+        dual paring between vectors and functionals. For `op.range` being a
+        |DOFVectorSpace|, this means that `op` needs to map to coefficient vectors
+        w.r.t. to the dual basis of the space and `op.range.inner` needs to be the
+        Euclidean inner product of the basis coefficients. This is the case for
+        all |VectorArray| implementations shipped with pyMOR.
+
         Parameters
         ----------
         V
@@ -159,7 +168,7 @@ class Operator(ParametricObject):
         |VectorArrays| `U`, `V` in the :attr:`~Operator.source`
         resp. :attr:`~Operator.range` we have::
 
-            op.apply_adjoint(V, mu).dot(U) == V.inner(op.apply(U, mu))
+            op.apply_adjoint(V, mu).inner(U) == V.inner(op.apply(U, mu))
 
         Thus, when `op` is represented by a matrix `M`, `apply_adjoint` is
         given by left-multplication of (the complex conjugate of) `M` with `V`.
@@ -492,7 +501,7 @@ class Operator(ParametricObject):
 
         This method returns a restricted version `restricted_op` of the
         operator along with an array `source_dofs` such that for any
-        |VectorArray| `U` in `self.source` the following is true::
+        |DOFVectorArray| `U` in `self.source` the following is true::
 
             self.apply(U, mu).dofs(dofs)
                 == restricted_op.apply(NumpyVectorArray(U.dofs(source_dofs)), mu))

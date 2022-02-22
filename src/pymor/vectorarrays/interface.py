@@ -26,7 +26,7 @@ class VectorArray(BasicObject):
 
     An implementation of the `VectorArray` via |NumPy arrays| is given by
     |NumpyVectorArray|.  In general, it is the implementors decision how memory is
-    allocated internally (e.g.  continuous block of memory vs. list of pointers to the
+    allocated internally (e.g. continuous block of memory vs. list of pointers to the
     individual vectors.) Thus, no general assumptions can be made on the costs of operations
     like appending to or removing vectors from the array. As a hint for 'continuous block
     of memory' implementations, :meth:`~VectorSpace.zeros` provides a `reserve`
@@ -62,7 +62,7 @@ class VectorArray(BasicObject):
     is_view = False
 
     def zeros(self, count=1, reserve=0):
-        """Create a |VectorArray| of null vectors of the same |VectorSpace|.
+        """Create a |VectorArray| of zero vectors of the same |VectorSpace|.
 
         This is a shorthand for `self.space.zeros(count, reserve)`.
 
@@ -75,78 +75,23 @@ class VectorArray(BasicObject):
 
         Returns
         -------
-        A |VectorArray| containing `count` vectors with each DOF set to zero.
+        A |VectorArray| containing `count` zero vectors.
         """
         return self.space.zeros(count, reserve=reserve)
 
-    def ones(self, count=1, reserve=0):
-        """Create a |VectorArray| of vectors of the same |VectorSpace| with all DOFs set to one.
-
-        This is a shorthand for `self.space.full(1., count, reserve)`.
-
-        Parameters
-        ----------
-        count
-            The number of vectors.
-        reserve
-            Hint for the backend to which length the array will grow.
-
-        Returns
-        -------
-        A |VectorArray| containing `count` vectors with each DOF set to one.
-        """
-        return self.space.full(1., count, reserve)
-
-    def full(self, value, count=1, reserve=0):
-        """Create a |VectorArray| of vectors with all DOFs set to the same value.
-
-        This is a shorthand for `self.space.full(value, count, reserve)`.
-
-        Parameters
-        ----------
-        value
-            The value each DOF should be set to.
-        count
-            The number of vectors.
-        reserve
-            Hint for the backend to which length the array will grow.
-
-        Returns
-        -------
-        A |VectorArray| containing `count` vectors with each DOF set to `value`.
-        """
-        return self.space.full(value, count, reserve=reserve)
-
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(self, count=1, distribution=None, random_state=None, seed=None, reserve=0, **kwargs):
         """Create a |VectorArray| of vectors with random entries.
 
         This is a shorthand for
         `self.space.random(count, distribution, radom_state, seed, **kwargs)`.
-
-        Supported random distributions::
-
-            'uniform': Uniform distribution in half-open interval
-                       [`low`, `high`).
-            'normal':  Normal (Gaussian) distribution with mean
-                       `loc` and standard deviation `scale`.
-
-        Note that not all random distributions are necessarily implemented
-        by all |VectorSpace| implementations.
+        Implementations can vastly differ depending on the structure of the |VectorArray|.
 
         Parameters
         ----------
         count
             The number of vectors.
         distribution
-            Random distribution to use (`'uniform'`, `'normal'`).
-        low
-            Lower bound for `'uniform'` distribution (defaults to `0`).
-        high
-            Upper bound for `'uniform'` distribution (defaults to `1`).
-        loc
-            Mean for `'normal'` distribution (defaults to `0`).
-        scale
-            Standard deviation for `'normal'` distribution (defaults to `1`).
+            Random distribution to use.
         random_state
             :class:`~numpy.random.RandomState` to use for sampling.
             If `None`, a new random state is generated using `seed`
@@ -193,17 +138,6 @@ class VectorArray(BasicObject):
     def __delitem__(self, ind):
         """Remove vectors from the array."""
         pass
-
-    def to_numpy(self, ensure_copy=False):
-        """Return (len(self), self.dim) NumPy Array with the data stored in the array.
-
-        Parameters
-        ----------
-        ensure_copy
-            If `False`, modifying the returned |NumPy array| might alter the original
-            |VectorArray|. If `True` always a copy of the array data is made.
-        """
-        raise NotImplementedError
 
     @abstractmethod
     def append(self, other, remove_from_other=False):
@@ -294,17 +228,13 @@ class VectorArray(BasicObject):
     def inner(self, other, product=None):
         """Returns the inner products between |VectorArray| elements.
 
-        If `product` is `None`, the Euclidean inner product between
-        the :meth:`dofs` of `self` and `other` are returned, i.e. ::
+        It holds::
 
-            U.inner(V)
+            U.inner(V) = result
 
-        is equivalent to::
+        such that::
 
-            U.dofs(np.arange(U.dim)) @ V.dofs(np.arange(V.dim)).T
-
-        (Note, that :meth:`dofs` is only intended to be called for a
-        small number of DOF indices.)
+            result[i, j] = ( U[i], V[j] ).
 
         If a `product` |Operator| is specified, this |Operator| is
         used to compute the inner products using
@@ -347,17 +277,13 @@ class VectorArray(BasicObject):
     def pairwise_inner(self, other, product=None):
         """Returns the pairwise inner products between |VectorArray| elements.
 
-        If `product` is `None`, the Euclidean inner product between
-        the :meth:`dofs` of `self` and `other` are returned, i.e. ::
+        It holds::
 
-            U.pairwise_inner(V)
+            U.pairwise_inner(V) = result
 
-        is equivalent to::
+        such that::
 
-            np.sum(U.dofs(np.arange(U.dim)) * V.dofs(np.arange(V.dim)), axis=-1)
-
-        (Note, that :meth:`dofs` is only intended to be called for a
-        small number of DOF indices.)
+            result[i] = ( U[i], V[i] )
 
         If a `product` |Operator| is specified, this |Operator| is
         used to compute the inner products using
@@ -426,8 +352,8 @@ class VectorArray(BasicObject):
     def norm(self, product=None, tol=None, raise_complex=None):
         """Norm with respect to a given inner product.
 
-        If `product` is `None`, the Euclidean norms of the :meth:`dofs`
-        of the array are returned, i.e. ::
+        Return the norms of the vectors, using the norm which is induced by
+        `self.pairwise_inner`, i.e. ::
 
             U.norm()
 
@@ -468,8 +394,8 @@ class VectorArray(BasicObject):
     def norm2(self, product=None, tol=1e-10, raise_complex=True):
         """Squared norm with respect to a given inner product.
 
-        If `product` is `None`, the Euclidean norms of the :meth:`dofs`
-        of the array are returned, i.e. ::
+        Return the squared norms of the vectors using the norm which is induced by
+        `self.pairwise_inner`, i.e. ::
 
             U.norm()
 
@@ -516,51 +442,6 @@ class VectorArray(BasicObject):
     @abstractmethod
     def _norm2(self):
         """Implementation of :meth:`norm2` for the case that no `product` is given."""
-        pass
-
-    def sup_norm(self):
-        """The l-infinity-norms of the vectors contained in the array.
-
-        Returns
-        -------
-        A |NumPy array| `result` such that `result[i]` contains the norm
-        of `self[i]`.
-        """
-        if self.dim == 0:
-            return np.zeros(len(self))
-        else:
-            _, max_val = self.amax()
-            return max_val
-
-    @abstractmethod
-    def dofs(self, dof_indices):
-        """Extract DOFs of the vectors contained in the array.
-
-        Parameters
-        ----------
-        dof_indices
-            List or 1D |NumPy array| of indices of the DOFs that are to be returned.
-
-        Returns
-        -------
-        A |NumPy array| `result` such that `result[i, j]` is the `dof_indices[j]`-th
-        DOF of the `i`-th vector of the array.
-        """
-        pass
-
-    @abstractmethod
-    def amax(self):
-        """The maximum absolute value of the DOFs contained in the array.
-
-        Returns
-        -------
-        max_ind
-            |NumPy array| containing for each vector a DOF index at which the maximum is
-            attained.
-        max_val
-            |NumPy array| containing for each vector the maximum absolute value of its
-            DOFs.
-        """
         pass
 
     def gramian(self, product=None):
@@ -683,7 +564,7 @@ class VectorArray(BasicObject):
             return [i if 0 <= i else l+i for i in ind]
 
     def sub_index(self, ind, ind_ind):
-        """Return indices corresponding to the view `self[ind][ind_ind]`"""
+        """Return indices corresponding to the view `self[ind][ind_ind]`."""
         if type(ind) is slice:
             ind = range(*ind.indices(len(self)))
             if type(ind_ind) is slice:
@@ -704,120 +585,29 @@ class VectorArray(BasicObject):
                 return [ind[ind_ind]]
 
 
-class VectorSpace(ImmutableObject):
-    """Class describing a vector space.
+class DOFVectorArray(VectorArray):
+    """Interface for vector arrays whose entries represent DOFs.
 
-    Vector spaces act as factories for |VectorArrays| of vectors
-    contained in them. As such, they hold all data necessary to
-    create |VectorArrays| of a given type (e.g. the dimension of
-    the vectors, or a socket for communication with an external
-    PDE solver).
+    DOF vector arrays are |VectorArrays| which are represented as coefficient vectors w.r.t.
+    a fixed basis of their |VectorSpace|. Selected coefficients (DOF values) can be extracted
+    using the :meth:`~DOFVectorArray.dofs` method. A |NumPy array| of all coeffcients can be
+    obtained using :meth:`~DOFVectorArray.to_numpy`. However, depending on the implementation
+    of the array, obtaining all DOF values might be prohibitively expensive, e.g., in case of
+    an MPI distributed array, so :meth:`~DOFVectorArray.to_numpy` should in general only be
+    used for low-dimensional data. Further, :meth:`~DOFVectorArray.full` can be used to
+    initialize new arrays with constant coefficients, and :meth:`~DOFVectorArray.random` allows
+    to prescribe certain random distributions of the coffieients.
 
-    New |VectorArrays| of null vectors are created via
-    :meth:`~VectorSpace.zeros`.  The
-    :meth:`~VectorSpace.make_array` method builds a new
-    |VectorArray| from given raw data of the underlying linear algebra
-    backend (e.g. a |Numpy array| in the case  of |NumpyVectorSpace|).
-    Some vector spaces can create new |VectorArrays| from a given
-    |Numpy array| via the :meth:`~VectorSpace.from_numpy`
-    method.
-
-    Each vector space has a string :attr:`~VectorSpace.id`
-    to distinguish mathematically different spaces appearing
-    in the formulation of a given problem.
-
-    Vector spaces can be compared for equality via the `==` and `!=`
-    operators. To test if a given |VectorArray| is an element of
-    the space, the `in` operator can be used.
-
-
-    Attributes
-    ----------
-    id
-        None, or a string describing the mathematical identity
-        of the vector space (for instance to distinguish different
-        components in an equation system).
-    dim
-        The dimension (number of degrees of freedom) of the
-        vectors contained in the space.
-    is_scalar
-        Equivalent to
-        `isinstance(space, NumpyVectorSpace) and space.dim == 1 and space.id is None`.
+    Note that in most cases, in particular for |NumpyVectorArray|, calling
+    :meth:`~VectorArray.inner` will `product=None` will yield the Euclidean inner product
+    of the coefficient vectors. This is not guaranteed by the interface, however.
     """
 
-    id = None
-    dim = None
-    is_scalar = False
-
-    @abstractmethod
-    def make_array(*args, **kwargs):
-        """Create a |VectorArray| from raw data.
-
-        This method is used in the implementation of |Operators|
-        and |Models| to create new |VectorArrays| from
-        raw data of the underlying solver backends. The ownership
-        of the data is transferred to the newly created array.
-
-        The exact signature of this method depends on the wrapped
-        solver backend.
-        """
-        pass
-
-    @abstractmethod
-    def zeros(self, count=1, reserve=0):
-        """Create a |VectorArray| of null vectors
-
-        Parameters
-        ----------
-        count
-            The number of vectors.
-        reserve
-            Hint for the backend to which length the array will grow.
-
-        Returns
-        -------
-        A |VectorArray| containing `count` vectors with each component zero.
-        """
-        pass
-
-    def ones(self, count=1, reserve=0):
-        """Create a |VectorArray| of vectors with all DOFs set to one.
-
-        This is a shorthand for `self.full(1., count, reserve)`.
-
-        Parameters
-        ----------
-        count
-            The number of vectors.
-        reserve
-            Hint for the backend to which length the array will grow.
-
-        Returns
-        -------
-        A |VectorArray| containing `count` vectors with each DOF set to one.
-        """
-        return self.full(1., count, reserve)
-
-    def full(self, value, count=1, reserve=0):
-        """Create a |VectorArray| of vectors with all DOFs set to the same value.
-
-        Parameters
-        ----------
-        value
-            The value each DOF should be set to.
-        count
-            The number of vectors.
-        reserve
-            Hint for the backend to which length the array will grow.
-
-        Returns
-        -------
-        A |VectorArray| containing `count` vectors with each DOF set to `value`.
-        """
-        return self.from_numpy(np.full((count, self.dim), value))
-
     def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
-        """Create a |VectorArray| of vectors with random entries.
+        """Create a |DOFVectorArray| of vectors with random entries.
+
+        This is a shorthand for
+        `self.space.random(count, distribution, radom_state, seed, **kwargs)`.
 
         Supported random distributions::
 
@@ -849,17 +639,204 @@ class VectorSpace(ImmutableObject):
             as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
             random state is used.
         seed
+            If not `None`, a new radom state with this seed is used.
+        reserve
+            Hint for the backend to which length the array will grow.
+        """
+        return self.space.random(count, distribution, random_state, seed, **kwargs)
+
+    def ones(self, count=1, reserve=0):
+        """Create a |DOFVectorArray| of vectors of the same |VectorSpace| with all DOFs set to one.
+
+        This is a shorthand for `self.space.full(1., count, reserve)`.
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |DOFVectorArray| containing `count` vectors with each DOF set to one.
+        """
+        return self.space.full(1., count, reserve)
+
+    def full(self, value, count=1, reserve=0):
+        """Create a |DOFVectorArray| of vectors with all DOFs set to the same value.
+
+        This is a shorthand for `self.space.full(value, count, reserve)`.
+
+        Parameters
+        ----------
+        value
+            The value each entry should be set to.
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |DOFVectorArray| containing `count` vectors with each DOF set to `value`.
+        """
+        return self.space.full(value, count, reserve=reserve)
+
+    @abstractmethod
+    def dofs(self, dof_indices):
+        """Extract DOFs of the vectors contained in the array.
+
+        Parameters
+        ----------
+        dof_indices
+            List or 1D |NumPy array| of indices of the DOFs that are to be returned.
+
+        Returns
+        -------
+        A |NumPy array| `result` such that `result[i, j]` is the `dof_indices[j]`-th
+        DOF of the `i`-th vector of the array.
+        """
+        pass
+
+    def sup_norm(self):
+        """The l-infinity-norms of the vectors contained in the array.
+
+        Returns
+        -------
+        A |NumPy array| `result` such that `result[i]` contains the norm
+        of `self[i]`.
+        """
+        if self.dim == 0:
+            return np.zeros(len(self))
+        else:
+            _, max_val = self.amax()
+            return max_val
+
+    def to_numpy(self, ensure_copy=False):
+        """Return (len(self), self.dim) NumPy Array with the data stored in the array.
+
+        Parameters
+        ----------
+        ensure_copy
+            If `False`, modifying the returned |NumPy array| might alter the original
+            |DOFVectorArray|. If `True` always a copy of the array data is made.
+        """
+        return self.dofs(np.arange(self.dim))
+
+    def amax(self):
+        """The maximum absolute value of the DOFs contained in the array.
+
+        Returns
+        -------
+        max_ind
+            |NumPy array| containing for each vector a DOF index at which the maximum is
+            attained.
+        max_val
+            |NumPy array| containing for each vector the maximum absolute value of its
+            DOFs.
+        """
+        A = np.abs(self.to_numpy())
+        max_ind = np.argmax(A, axis=1)
+        max_val = A[np.arange(len(A)), max_ind]
+        return max_ind, max_val
+
+
+class VectorSpace(ImmutableObject):
+    """Class describing a vector space.
+
+    Vector spaces act as factories for |VectorArrays| of vectors
+    contained in them. As such, they hold all data necessary
+    to create |VectorArrays| of a given type (e.g. the dimension of
+    the vectors, or a socket for communication with an external
+    PDE solver).
+
+    New |VectorArrays| of zero vectors are created via
+    :meth:`~VectorSpace.zeros`.  The
+    :meth:`~VectorSpace.make_array` method builds a new
+    |VectorArray| from given raw data of the underlying linear algebra
+    backend (e.g. a |Numpy array| in the case  of |NumpyVectorSpace|).
+
+    Each vector space has a string :attr:`~VectorSpace.id`
+    to distinguish mathematically different spaces appearing
+    in the formulation of a given problem.
+
+    Vector spaces can be compared for equality via the `==` and `!=`
+    operators. To test if a given |VectorArray| is an element of
+    the space, the `in` operator can be used.
+
+
+    Attributes
+    ----------
+    id
+        None, or a string describing the mathematical identity
+        of the vector space (for instance to distinguish different
+        components in an equation system).
+    dim
+        The dimension of the vectors contained in the space.
+    is_scalar
+        Equivalent to
+        `isinstance(space, NumpyVectorSpace) and space.dim == 1 and space.id is None`.
+    """
+
+    id = None
+    dim = None
+    is_scalar = False
+
+    @abstractmethod
+    def make_array(*args, **kwargs):
+        """Create a |VectorArray| from raw data.
+
+        This method is used in the implementation of |Operators|
+        and |Models| to create new |VectorArrays| from
+        raw data of the underlying solver backends. The ownership
+        of the data is transferred to the newly created array.
+
+        The exact signature of this method depends on the wrapped
+        solver backend.
+        """
+        pass
+
+    @abstractmethod
+    def zeros(self, count=1, reserve=0):
+        """Create a |VectorArray| of zero vectors.
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |VectorArray| containing `count` vectors with each component zero.
+        """
+        pass
+
+    def random(self, count=1, distribution=None, random_state=None, seed=None, reserve=0, **kwargs):
+        """Create a |VectorArray| of vectors with random entries.
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+        distribution
+            Random distribution to use. Valid values depend on the specific backend.
+        random_state
+            :class:`~numpy.random.RandomState` to use for sampling.
+            If `None`, a new random state is generated using `seed`
+            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
+            random state is used.
+        seed
             If not `None`, a new random state with this seed is used.
         reserve
             Hint for the backend to which length the array will grow.
         """
-        assert random_state is None or seed is None
-        random_state = get_random_state(random_state, seed)
-        values = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
-        return self.from_numpy(values)
+        raise NotImplementedError
 
     def empty(self, reserve=0):
-        """Create an empty |VectorArray|
+        """Create an empty |VectorArray|.
 
         This is a shorthand for `self.zeros(0, reserve)`.
 
@@ -874,11 +851,110 @@ class VectorSpace(ImmutableObject):
         """
         return self.zeros(0, reserve=reserve)
 
-    def from_numpy(self, data, ensure_copy=False):
-        """Create a |VectorArray| from a |NumPy array|
+    def __eq__(self, other):
+        return other is self
 
-        Note that this method will not be supported by all vector
-        space implementations.
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __contains__(self, other):
+        return self == getattr(other, 'space', None)
+
+    def __hash__(self):
+        return hash(self.id)
+
+
+class DOFVectorSpace(VectorSpace):
+    """A |VectorSpace| of |DOFVectorArrays|.
+
+    In addition to the array creation methods of |VectorSpace|,
+    |DOFVectorSpaces| can create |DOFVectorArrays| with constant
+    coefficients using the :meth:`~DOFVectorArray.full` method.
+    The :meth:`~DOFVectorArray.random` method allows to specify
+    the random distribution of the individual array coefficients.
+
+    Some vector spaces, but not all, can create new |DOFVectorArrays|
+    from a given |Numpy array| via the :meth:`~DOFVectorSpace.from_numpy`
+    method.
+    """
+
+    def ones(self, count=1, reserve=0):
+        """Create a |VectorArray| of vectors with all entries set to one.
+
+        This is a shorthand for `self.full(1., count, reserve)`.
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |VectorArray| containing `count` vectors with each entry set to one.
+        """
+        return self.full(1., count, reserve)
+
+    def full(self, value, count=1, reserve=0):
+        """Create a |VectorArray| of vectors with all entries set to the same value.
+
+        Parameters
+        ----------
+        value
+            The value each entry should be set to.
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |VectorArray| containing `count` vectors with each entry set to `value`.
+        """
+        return self.from_numpy(np.full((count, self.dim), value))
+
+    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+        """Create a |VectorArray| of vectors with random entries.
+
+        For available distributions for |DOFVectorArrays| and the corresponding
+        parameters see :meth:`~DOFVectorArray.random`.
+
+        Supported random distributions::
+
+            'uniform': Uniform distribution in half-open interval
+                       [`low`, `high`).
+            'normal':  Normal (Gaussian) distribution with mean
+                       `loc` and standard deviation `scale`.
+
+        Note that not all random distributions are necessarily implemented
+        by all |DOFVectorSpace| implementations.
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+        distribution
+            Random distribution to use.
+        random_state
+            :class:`~numpy.random.RandomState` to use for sampling.
+            If `None`, a new random state is generated using `seed`
+            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
+            random state is used.
+        seed
+            If not `None`, a new random state with this seed is used.
+        reserve
+            Hint for the backend to which length the array will grow.
+        """
+        assert random_state is None or seed is None
+        random_state = get_random_state(random_state, seed)
+        values = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
+        return self.from_numpy(values)
+
+    def from_numpy(self, data, ensure_copy=False):
+        """Create a |DOFVectorArray| from a |NumPy array|.
+
+        Note that this method is not supported by all vector space implementations.
 
         Parameters
         ----------
@@ -894,18 +970,6 @@ class VectorSpace(ImmutableObject):
         A |VectorArray| with `data` as data.
         """
         raise NotImplementedError
-
-    def __eq__(self, other):
-        return other is self
-
-    def __ne__(self, other):
-        return not (self == other)
-
-    def __contains__(self, other):
-        return self == getattr(other, 'space', None)
-
-    def __hash__(self):
-        return hash(self.id)
 
 
 def _create_random_values(shape, distribution, random_state, **kwargs):

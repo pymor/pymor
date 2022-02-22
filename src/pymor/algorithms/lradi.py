@@ -14,6 +14,7 @@ from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
 from pymor.tools.random import get_random_state
 from pymor.vectorarrays.constructions import cat_arrays
+from pymor.vectorarrays.interface import DOFVectorArray
 
 
 @defaults('lradi_tol', 'lradi_maxiter', 'lradi_shifts', 'projection_shifts_init_maxiter',
@@ -197,7 +198,10 @@ def projection_shifts_init(A, E, B, shift_options):
         shifts = shifts[shifts.real < 0]
         if shifts.size == 0:
             # use random subspace instead of span{B} (with same dimensions)
-            B = B.random(len(B), distribution='normal', random_state=random_state)
+            if isinstance(B, DOFVectorArray):
+                B = B.random(len(B), distribution='normal', random_state=random_state)
+            else:
+                B = B.random(len(B), random_state=random_state)
         else:
             return shifts
     raise RuntimeError('Could not generate initial shifts for low-rank ADI iteration.')

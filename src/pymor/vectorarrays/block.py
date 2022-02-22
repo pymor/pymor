@@ -7,7 +7,23 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.base import classinstancemethod
-from pymor.vectorarrays.interface import VectorArray, VectorSpace
+from pymor.vectorarrays.interface import DOFVectorArray, VectorArray, VectorSpace, DOFVectorSpace
+
+
+def block(args):
+
+    def make_space(subspaces):
+        if all(isinstance(s, DOFVectorSpace) for s in subspaces):
+            return BlockDOFVectorSpace(subspaces)
+        else:
+            return BlockVectorSpace(subspaces)
+
+    if all(isinstance(a, VectorArray) for a in args):
+        space = make_space([a.space for a in args])
+        return space.make_array(args)
+    elif all(isinstance(a, VectorSpace) for a in args):
+        space = make_space(args)
+        return space
 
 
 class BlockVectorArray(VectorArray):
@@ -26,23 +42,16 @@ class BlockVectorArray(VectorArray):
         self.space = space
         assert self._blocks_are_valid()
 
-    def to_numpy(self, ensure_copy=False):
-        if len(self._blocks):
-            # hstack will error out with empty input list
-            return np.hstack([block.to_numpy() for block in self._blocks])
-        else:
-            return np.empty((0, 0))
-
     @property
     def real(self):
-        return BlockVectorArray([block.real for block in self._blocks], self.space)
+        return self.space.make_array([block.real for block in self._blocks])
 
     @property
     def imag(self):
-        return BlockVectorArray([block.imag for block in self._blocks], self.space)
+        return self.space.make_array([block.imag for block in self._blocks])
 
     def conj(self):
-        return BlockVectorArray([block.conj() for block in self._blocks], self.space)
+        return self.space.make_array([block.conj() for block in self._blocks])
 
     def block(self, ind):
         """Return a copy of a single block or a sequence of blocks."""
@@ -82,7 +91,7 @@ class BlockVectorArray(VectorArray):
             block.append(other_block, remove_from_other=remove_from_other)
 
     def copy(self, deep=False):
-        return BlockVectorArray([block.copy(deep) for block in self._blocks], self.space)
+        return self.space.make_array([block.copy(deep) for block in self._blocks])
 
     def scal(self, alpha):
         for block in self._blocks:
@@ -127,13 +136,29 @@ class BlockVectorArray(VectorArray):
 
     def lincomb(self, coefficients):
         lincombs = [block.lincomb(coefficients) for block in self._blocks]
-        return BlockVectorArray(lincombs, self.space)
+        return self.space.make_array(lincombs)
 
     def _norm(self):
         return np.sqrt(self.norm2())
 
     def _norm2(self):
         return np.sum(np.array([block.norm2() for block in self._blocks]), axis=0)
+
+    def _blocks_are_valid(self):
+        return all([len(block) == len(self._blocks[0]) for block in self._blocks])
+
+    def _compute_bins(self):
+        if not hasattr(self, '_bins'):
+            dims = np.array([subspace.dim for subspace in self.space.subspaces])
+            self._bin_map = bin_map = np.where(dims > 0)[0]
+            self._bins = np.cumsum(np.hstack(([0], dims[bin_map])))
+
+
+class BlockDOFVectorArray(BlockVectorArray, DOFVectorArray):
+    """|DOFVectorArray| version of :class:`BlockVectorArray <BlockVectorArray>`"""
+
+    def __getitem__(self, ind):
+        return BlockDOFVectorArrayView(self, ind)
 
     def sup_norm(self):
         return np.max(np.array([block.sup_norm() for block in self._blocks]), axis=0)
@@ -161,14 +186,12 @@ class BlockVectorArray(VectorArray):
         ar = np.arange(inds.shape[1])
         return inds[block_inds, ar], vals[block_inds, ar]
 
-    def _blocks_are_valid(self):
-        return all([len(block) == len(self._blocks[0]) for block in self._blocks])
-
-    def _compute_bins(self):
-        if not hasattr(self, '_bins'):
-            dims = np.array([subspace.dim for subspace in self.space.subspaces])
-            self._bin_map = bin_map = np.where(dims > 0)[0]
-            self._bins = np.cumsum(np.hstack(([0], dims[bin_map])))
+    def to_numpy(self, ensure_copy=False):
+        if len(self._blocks):
+            # hstack will error out with empty input list
+            return np.hstack([block.to_numpy() for block in self._blocks])
+        else:
+            return np.empty((0, 0))
 
 
 class BlockVectorSpace(VectorSpace):
@@ -186,13 +209,15 @@ class BlockVectorSpace(VectorSpace):
         The tuple defined above.
     """
 
+    VectorArrayType = BlockVectorArray
+
     def __init__(self, subspaces):
         subspaces = tuple(subspaces)
         assert all([isinstance(subspace, VectorSpace) for subspace in subspaces])
         self.subspaces = subspaces
 
     def __eq__(self, other):
-        return (type(other) is BlockVectorSpace
+        return (isinstance(other, BlockVectorSpace)
                 and len(self.subspaces) == len(other.subspaces)
                 and all(space == other_space for space, other_space in zip(self.subspaces, other.subspaces)))
 
@@ -207,7 +232,7 @@ class BlockVectorSpace(VectorSpace):
         # these asserts make sure we also trigger if the subspace list is empty
         assert count >= 0
         assert reserve >= 0
-        return BlockVectorArray([subspace.zeros(count=count, reserve=reserve) for subspace in self.subspaces], self)
+        return self.make_array([subspace.zeros(count=count, reserve=reserve) for subspace in self.subspaces])
 
     @classinstancemethod
     def make_array(cls, obj):
@@ -219,7 +244,7 @@ class BlockVectorSpace(VectorSpace):
         """:noindex:"""
         assert len(obj) == len(self.subspaces)
         assert all(block in subspace for block, subspace in zip(obj, self.subspaces))
-        return BlockVectorArray(obj, self)
+        return self.VectorArrayType(obj, self)
 
     def make_block_diagonal_array(self, obj):
         assert len(obj) == len(self.subspaces)
@@ -229,15 +254,33 @@ class BlockVectorSpace(VectorSpace):
             U.append(self.make_array([s.zeros(len(UU)) if j != i else UU for j, s in enumerate(self.subspaces)]))
         return U
 
+
+class BlockDOFVectorSpace(BlockVectorSpace, DOFVectorSpace):
+
+    VectorArrayType = BlockDOFVectorArray
+
+    def __init__(self, subspaces):
+        assert all([isinstance(subspace, DOFVectorSpace) for subspace in subspaces])
+        super().__init__(subspaces)
+
     def from_numpy(self, data, ensure_copy=False):
         if data.ndim == 1:
             data = data.reshape(1, -1)
         data_ind = np.cumsum([0] + [subspace.dim for subspace in self.subspaces])
-        return BlockVectorArray([subspace.from_numpy(data[:, data_ind[i]:data_ind[i + 1]], ensure_copy=ensure_copy)
-                                 for i, subspace in enumerate(self.subspaces)], self)
+        return self.make_array([subspace.from_numpy(data[:, data_ind[i]:data_ind[i + 1]], ensure_copy=ensure_copy)
+                               for i, subspace in enumerate(self.subspaces)])
 
 
 class BlockVectorArrayView(BlockVectorArray):
+
+    is_view = True
+
+    def __init__(self, base, ind):
+        self._blocks = tuple(block[ind] for block in base._blocks)
+        self.space = base.space
+
+
+class BlockDOFVectorArrayView(BlockDOFVectorArray):
 
     is_view = True
 

@@ -15,7 +15,7 @@ from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
 from pymor.parameters.base import ParametricObject
 from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
-from pymor.vectorarrays.interface import VectorArray, VectorSpace
+from pymor.vectorarrays.interface import DOFVectorArray, VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -593,7 +593,7 @@ class LowRankUpdatedOperator(LincombOperator):
 
 
 class ComponentProjectionOperator(Operator):
-    """|Operator| representing the projection of a |VectorArray| onto some of its components.
+    """|Operator| representing the projection of a |DOFVectorArray| onto some of its components.
 
     Parameters
     ----------
@@ -617,7 +617,7 @@ class ComponentProjectionOperator(Operator):
         self.range = NumpyVectorSpace(len(components))
 
     def apply(self, U, mu=None):
-        assert U in self.source
+        assert U in self.source and isinstance(U, DOFVectorArray)
         return self.range.make_array(U.dofs(self.components))
 
     def restricted(self, dofs):
@@ -1378,24 +1378,24 @@ class InducedNorm(ParametricObject):
 
 
 class NumpyConversionOperator(Operator):
-    """Converts |VectorArrays| to |NumpyVectorArrays|.
+    """Converts |DOFVectorArrays| to |NumpyVectorArrays|.
 
     Note that the input |VectorArrays| need to support
-    :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
+    :meth:`~pymor.vectorarrays.interface.DOFVectorArray.to_numpy`.
     For the adjoint,
-    :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
+    :meth:`~pymor.vectorarrays.interface.DOFVectorSpace.from_numpy`
     needs to be implemented.
 
     Parameters
     ----------
     space
-        The |VectorSpace| of the |VectorArrays| that are converted to
+        The |DOFVectorSpace| of the |DOFVectorArrays| that are converted to
         |NumpyVectorArrays|.
     direction
         Either `'to_numpy'` or `'from_numpy'`. In case of `'to_numpy'`
-        :meth:`apply` takes a |VectorArray| from `space` and returns
+        :meth:`apply` takes a |DOFVectorArray| from `space` and returns
         a |NumpyVectorArray|. In case of `'from_numpy'`, :meth:`apply`
-        takes a |NumpyVectorArray| and returns a |VectorArray| from
+        takes a |NumpyVectorArray| and returns a |DOFVectorArray| from
         `space`.
     """
 

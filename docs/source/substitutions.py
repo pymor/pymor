@@ -14,6 +14,10 @@ interfaces = '''
 .. |Model| replace:: :class:`Model <pymor.models.interface.Model>`
 .. |DomainDescriptions| replace:: :class:`DomainDescriptions <pymor.analyticalproblems.domaindescriptions.DomainDescription>`
 .. |DomainDescription| replace:: :class:`DomainDescription <pymor.analyticalproblems.domaindescriptions.DomainDescription>`
+.. |DOFVectorArrays| replace:: :class:`DOFVectorArrays <pymor.vectorarrays.interface.DOFVectorArray>`
+.. |DOFVectorArray| replace:: :class:`DOFVectorArray <pymor.vectorarrays.interface.DOFVectorArray>`
+.. |DOFVectorSpace| replace:: :class:`DOFVectorSpace <pymor.vectorarrays.interface.DOFVectorSpace>`
+.. |DOFVectorSpaces| replace:: :class:`DOFVectorSpaces <pymor.vectorarrays.interface.DOFVectorSpace>`
 .. |Functionals| replace:: :class:`Functionals <pymor.operators.interface.Operator>`
 .. |Functional| replace:: :class:`Functional <pymor.operators.interface.Operator>`
 .. |Functions| replace:: :class:`Functions <pymor.analyticalproblems.functions.Function>`

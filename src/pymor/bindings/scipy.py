@@ -156,9 +156,9 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
     op
         The linear, non-parametric |Operator| to invert.
     V
-        |VectorArray| of right-hand sides for the equation system.
+        |DOFVectorArray| of right-hand sides for the equation system.
     initial_guess
-        |VectorArray| with the same length as `V` containing initial guesses
+        |DOFVectorArray| with the same length as `V` containing initial guesses
         for the solution.  Some implementations of `apply_inverse` may
         ignore this parameter.  If `None` a solver-dependent default is used.
     options
@@ -176,7 +176,7 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
 
     Returns
     -------
-    |VectorArray| of the solution vectors.
+    |DOFVectorArray| of the solution vectors.
     """
     assert V in op.range
     assert initial_guess is None or initial_guess in op.source and len(initial_guess) == len(V)
@@ -334,7 +334,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     E
         The non-parametric |Operator| E or `None`.
     B
-        The operator B as a |VectorArray| from `A.source`.
+        The operator B as a |DOFVectorArray| from `A.source`.
     trans
         Whether the first |Operator| in the Lyapunov equation is
         transposed.
@@ -346,7 +346,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     -------
     Z
         Low-rank Cholesky factor of the Lyapunov equation solution,
-        |VectorArray| from `A.source`.
+        |DOFVectorArray| from `A.source`.
     """
     _solve_lyap_lrcf_check_args(A, E, B, trans)
     options = _parse_options(options, lyap_lrcf_solver_options(), 'scipy', None, False)
@@ -439,7 +439,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     Therefore, we assume all |Operators| and |VectorArrays| can be
     converted to |NumPy arrays| using
     :func:`~pymor.algorithms.to_matrix.to_matrix` and
-    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
+    :func:`~pymor.vectorarrays.interface.DOFVectorArray.to_numpy`.
 
     Parameters
     ----------
@@ -448,9 +448,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     E
         The non-parametric |Operator| E or `None`.
     B
-        The operator B as a |VectorArray| from `A.source`.
+        The operator B as a |DOFVectorArray| from `A.source`.
     C
-        The operator C as a |VectorArray| from `A.source`.
+        The operator C as a |DOFVectorArray| from `A.source`.
     R
         The matrix R as a 2D |NumPy array| or `None`.
     trans
@@ -463,7 +463,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     -------
     Z
         Low-rank Cholesky factor of the Riccati equation solution,
-        |VectorArray| from `A.source`.
+        |DOFVectorArray| from `A.source`.
     """
     _solve_ricc_check_args(A, E, B, C, R, trans)
     options = _parse_options(options, ricc_lrcf_solver_options(), 'scipy', None, False)
@@ -561,7 +561,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     Therefore, we assume all |Operators| and |VectorArrays| can be
     converted to |NumPy arrays| using
     :func:`~pymor.algorithms.to_matrix.to_matrix` and
-    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
+    :func:`~pymor.vectorarrays.interface.DOFVectorArray.to_numpy`.
 
     Parameters
     ----------
@@ -570,9 +570,9 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     E
         The non-parametric |Operator| E or `None`.
     B
-        The operator B as a |VectorArray| from `A.source`.
+        The operator B as a |DOFVectorArray| from `A.source`.
     C
-        The operator C as a |VectorArray| from `A.source`.
+        The operator C as a |DOFVectorArray| from `A.source`.
     R
         The matrix R as a 2D |NumPy array| or `None`.
     trans
@@ -586,7 +586,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
     -------
     Z
         Low-rank Cholesky factor of the positive Riccati equation
-        solution, |VectorArray| from `A.source`.
+        solution, |DOFVectorArray| from `A.source`.
     """
     _solve_ricc_check_args(A, E, B, C, R, trans)
     options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'scipy', None, False)

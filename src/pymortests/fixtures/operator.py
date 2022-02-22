@@ -445,8 +445,8 @@ def misc_operator_with_arrays_and_products_factory(n):
         return op, mu, U, V, sp, rp
     elif n == 12:
         from pymor.operators.constructions import NumpyConversionOperator
-        from pymor.vectorarrays.block import BlockVectorSpace
-        space = BlockVectorSpace([NumpyVectorSpace(1), NumpyVectorSpace(2)])
+        from pymor.vectorarrays.block import block
+        space = block([NumpyVectorSpace(1), NumpyVectorSpace(2)])
         op = NumpyConversionOperator(space)
         return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
     elif n == 13:
