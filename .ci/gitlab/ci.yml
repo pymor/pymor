@@ -171,6 +171,7 @@ mpi 0 3 7:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.7
     retry:
@@ -194,6 +195,7 @@ mpi 0 3 8:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.8
     retry:
@@ -217,6 +219,7 @@ mpi 0 3 9:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.9
     retry:
@@ -240,6 +243,10 @@ mpi 1 3 7:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
+    tags:
+    - eleven
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.7
     retry:
@@ -263,6 +270,10 @@ mpi 1 3 8:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
+    tags:
+    - eleven
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.8
     retry:
@@ -286,6 +297,10 @@ mpi 1 3 9:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
+    tags:
+    - eleven
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.9
     retry:
@@ -309,6 +324,10 @@ mpi 2 3 7:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
+    tags:
+    - will
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.7
     retry:
@@ -332,6 +351,10 @@ mpi 2 3 8:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
+    tags:
+    - will
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.8
     retry:
@@ -355,6 +378,10 @@ mpi 2 3 9:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
+    tags:
+    - will
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.9
     retry:
@@ -378,6 +405,7 @@ mpi 3 3 7:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.7
     retry:
@@ -401,6 +429,7 @@ mpi 3 3 8:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.8
     retry:
@@ -424,6 +453,7 @@ mpi 3 3 9:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.9
     retry:
@@ -447,6 +477,7 @@ mpi 4 3 7:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.7
     retry:
@@ -470,6 +501,7 @@ mpi 4 3 8:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.8
     retry:
@@ -493,6 +525,7 @@ mpi 4 3 9:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
+    
     variables:
         COVERAGE_FILE: coverage_mpi__3.9
     retry:

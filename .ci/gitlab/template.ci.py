@@ -179,6 +179,13 @@ ci setup:
 {{script}} {{run}} {{py[0]}} {{py[2]}}:
     extends: .pytest
     {{ never_on_schedule_rule() }}
+    {% if run == 1 %}
+    tags:
+    - eleven
+    {% elif run == 2 %}
+    tags:
+    - will
+    {% endif %}
     variables:
         COVERAGE_FILE: coverage_{{script}}__{{py}}
     {%- if script == "mpi" %}
