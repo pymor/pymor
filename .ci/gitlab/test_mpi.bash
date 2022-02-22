@@ -7,9 +7,13 @@ source ${THIS_DIR}/common_test_setup.bash
 # cannot seem to directly affect, we save the intermediate
 # pytest exit code in a file and check that afterwards
 # while ignoring the mpirun result itself
-xvfb-run -a mpirun --timeout 1200 --mca btl self,vader -n 2 python -u -m coverage run --rcfile=setup.cfg \
+RANKS=2
+xvfb-run -a mpirun --timeout 1200 --mca btl self,vader -n ${RANKS} python -u -m coverage run --rcfile=setup.cfg \
   --parallel-mode src/pymortests/mpi_run_demo_tests.py || true
-[[ "$(cat pytest.mpirun.success)" == "True" ]] || exit 127
+
+for fn in ./.mpirun_*/pytest.mpirun.success ; do
+  [[ "$(cat ${fn})" == "True" ]] || exit 127
+done
 
 coverage combine
 # the test_thermalblock_ipython results in '(builtin)' missing which we "--ignore-errors"
