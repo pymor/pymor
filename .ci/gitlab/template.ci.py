@@ -41,7 +41,7 @@ rules:
     tags:
       - autoscaling
     rules:
-        - if: $CI_COMMIT_REF_NAME =~ /^staging.*/
+        - if: $CI_COMMIT_REF_NAME =~ /^github.*/
           when: never
         - when: on_success
     variables:
@@ -178,7 +178,10 @@ ci setup:
 {%- for script, py, para in matrix %}
 {{script}} {{run}} {{py[0]}} {{py[2]}}:
     extends: .pytest
-    {{ never_on_schedule_rule() }}
+    rules:
+    - if: $CI_COMMIT_REF_NAME =~ /^github.*/
+      when: never
+    - when: on_success
     {% if run == 1 %}
     tags:
     - eleven
