@@ -207,19 +207,22 @@ class VectorArray(BasicObject):
 
     def __getitem__(self, ind):
         """Return a |VectorArray| view onto a subset of the vectors in the array."""
-        if isinstance(ind, Number) and (ind >= self._len or ind < -self._len):
-            raise IndexError('VectorArray index out of range')
         assert self.check_ind(ind)
 
-        if self.is_view:
-            l = self.base._len
-            ind = self._sub_index(l, self.ind, ind)
-        else:
-            l = self._len
+        l = self._len
 
         # normalize ind s.t. the length of the view does not change when
         # the array is appended to
-        if type(ind) is slice:
+        if type(ind) is int or isinstance(ind, Number):
+            if 0 <= ind < l:
+                ind = slice(ind, ind+1)
+            elif ind >= l:
+                raise IndexError('VectorArray index out of range')
+            else:
+                ind = l+ind
+                ind = slice(ind, ind+1)
+            view_len = 1
+        elif type(ind) is slice:
             start, stop, step = ind.indices(l)
             if start == stop:
                 ind = slice(0, 0, 1)
@@ -229,15 +232,12 @@ class VectorArray(BasicObject):
                 assert stop >= 0 or (step < 0 and stop >= -1)
                 ind = slice(start, None if stop == -1 else stop, step)
                 view_len = len(range(start, stop, step))
-        elif not hasattr(ind, '__len__'):
-            ind = ind if 0 <= ind else l+ind
-            ind = slice(ind, ind+1)
-            view_len = 1
         else:
             ind = [i if 0 <= i else l+i for i in ind]
             view_len = len(ind)
 
         if self.is_view:
+            ind = self._sub_index(self.base._len, self.ind, ind)
             return type(self)(self.space, None, self.base, ind, view_len)
         else:
             return type(self)(self.space, None, self, ind, view_len)
