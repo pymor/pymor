@@ -178,7 +178,7 @@ We now define the first function for the output of the model that will be used b
 
 ```{code-cell}
 def fom_objective_functional(mu):
-    return fom.output(mu)[0]
+    return fom.output(mu)[0, 0]
 ```
 
 We also pick a starting parameter for the optimization method,
@@ -287,7 +287,7 @@ def record_results(function, data, adaptive_enrichment=False, opt_dict=None, mu=
         QoI = function(mu)
     data['num_evals'] += 1
     data['evaluation_points'].append(mu)
-    data['evaluations'].append(QoI[0])
+    data['evaluations'].append(QoI)
     return QoI
 
 def report(result, data, reference_mu=None):
@@ -296,7 +296,7 @@ def report(result, data, reference_mu=None):
     else:
         print('\n succeeded!')
         print(f'  mu_min:    {fom.parameters.parse(result.x)}')
-        print(f'  J(mu_min): {result.fun[0]}')
+        print(f'  J(mu_min): {result.fun}')
         if reference_mu is not None:
             print(f'  absolute error w.r.t. reference solution: {np.linalg.norm(result.x-reference_mu):.2e}')
         print(f'  num iterations:     {result.nit}')
@@ -433,7 +433,7 @@ the resulting ROM objective functional.
 
 ```{code-cell}
 def rom_objective_functional(mu):
-    return rom.output(mu)[0]
+    return rom.output(mu)[0, 0]
 
 RB_minimization_data = prepare_data(offline_time=RB_greedy_data['time'])
 
@@ -717,7 +717,7 @@ def enrich_adaptively_and_compute_objective_function(mu, data, opt_dict):
     else:
         print('Do NOT enrich the space because primal estimate is {} ...'.format(primal_estimate))
     opt_rom = pdeopt_reductor.reduce()
-    QoI = opt_rom.output(mu)
+    QoI = opt_rom.output(mu)[0, 0]
     return QoI, data, opt_rom
 ```
 
