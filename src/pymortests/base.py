@@ -104,7 +104,7 @@ def skip_if_missing(module_name):
         def _inner_wrapper(*args, **kwargs):
             try:
                 config.require(module_name)
-            except DependencyMissing as dm:
+            except DependencyMissing:
                 if not os.environ.get('DOCKER_PYMOR', False):
                     skip_string = 'skipped test due to missing dependency ' + module_name
                     skip(skip_string)
