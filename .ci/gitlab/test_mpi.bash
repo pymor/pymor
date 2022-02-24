@@ -15,6 +15,7 @@ xvfb-run -a mpirun --output-filename mpi_logs --report-state-on-timeout \
   --parallel-mode src/pymortests/mpi_run_demo_tests.py || true
 
 mmv mpi_logs/\*/rank.\*/\* mpi_log.rank_#2.#3.txt
+rm -rf mpi_logs/
 
 for fn in ./.mpirun_*/pytest.mpirun.success ; do
   [[ "$(cat ${fn})" == "True" ]] || exit 127

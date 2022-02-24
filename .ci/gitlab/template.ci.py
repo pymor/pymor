@@ -76,7 +76,7 @@ rules:
             - memory_usage.txt
             - .hypothesis
             - test_results*.xml
-            - mpi_logs
+            - mpi_logs*
 
 {# note: only Vanilla and numpy runs generate coverage or test_results so we can skip others entirely here #}
 .submit:
