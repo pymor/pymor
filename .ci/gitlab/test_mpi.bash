@@ -8,7 +8,7 @@ source ${THIS_DIR}/common_test_setup.bash
 # pytest exit code in a file and check that afterwards
 # while ignoring the mpirun result itself
 RANKS=2
-xvfb-run -a mpirun --timeout 1200 --mca btl self,vader -n ${RANKS} python -u -m coverage run --rcfile=setup.cfg \
+xvfb-run -a mpirun --report-state-on-timeout --get-stack-traces --timestamp-output --tag-output --timeout 1200 --mca btl self,vader -n ${RANKS} python -u -m coverage run --rcfile=setup.cfg \
   --parallel-mode src/pymortests/mpi_run_demo_tests.py || true
 
 for fn in ./.mpirun_*/pytest.mpirun.success ; do
