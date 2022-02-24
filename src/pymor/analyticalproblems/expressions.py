@@ -274,8 +274,8 @@ class BaseConstant(Expression):
     def fenics_expr(self, params):
         import ufl
         if self.fenics_symbol is None:
-            raise NotImplementedError(f'No FEniCS symbol was given!')
-            
+            raise NotImplementedError('No FEniCS symbol was given!')
+
         ufl_op = getattr(ufl, self.fenics_op)
         return np.array(ufl_op)
 
@@ -444,7 +444,7 @@ class Neg(Expression):
         return f'(- {self.operand.numpy_expr()})'
 
     def fenics_expr(self, params):
-        return np.vectorize(lambda x : -1 * x)(self.operand.fenics_expr(params))
+        return np.vectorize(lambda x: -1 * x)(self.operand.fenics_expr(params))
 
     def __str__(self):
         return f'(- {self.operand})'
