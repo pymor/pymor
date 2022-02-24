@@ -81,24 +81,24 @@ def main(
                                        error_norms=[fom.h1_0_semi_norm], condition=True,
                                        test_mus=parameter_space.sample_randomly(test))
 
-    # show results
-    ##############
-    print(results['summary'])
-    plot_reduction_error_analysis(results)
+    ####  # show results
+    ####  ##############
+    ####  print(results['summary'])
+    ####  plot_reduction_error_analysis(results)
 
-    # write results to disk
-    #######################
-    from pymor.core.pickle import dump
-    dump((rom, parameter_space), open('reduced_model.out', 'wb'))
-    dump(results, open('results.out', 'wb'))
+    ####  # write results to disk
+    ####  #######################
+    ####  from pymor.core.pickle import dump
+    ####  dump((rom, parameter_space), open('reduced_model.out', 'wb'))
+    ####  dump(results, open('results.out', 'wb'))
 
-    # visualize reduction error for worst-approximated mu
-    #####################################################
-    mumax = results['max_error_mus'][0, -1]
-    U = fom.solve(mumax)
-    U_RB = reductor.reconstruct(rom.solve(mumax))
-    fom.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                  separate_colorbars=True, block=True)
+    ####  # visualize reduction error for worst-approximated mu
+    ####  #####################################################
+    ####  mumax = results['max_error_mus'][0, -1]
+    ####  U = fom.solve(mumax)
+    ####  U_RB = reductor.reconstruct(rom.solve(mumax))
+    ####  fom.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+    ####                separate_colorbars=True, block=True)
 
 
 ####################################################################################################
