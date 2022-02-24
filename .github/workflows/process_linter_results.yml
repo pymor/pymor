@@ -39,7 +39,7 @@ jobs:
         uses: actions/setup-python@v2
       # pinned to lintly 0.5.0 due to https://github.com/grantmcconnaughey/Lintly/issues/41
       - name: Install dependencies
-        run: pip install lintly==0.5.0
+        run: pip install lintly==0.5.0 markupsafe==2.0.1
       - name: 'Comment on PR'
         run: |
           cat ./flake8.out | lintly --use-checks \
