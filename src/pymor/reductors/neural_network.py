@@ -90,7 +90,8 @@ class NeuralNetworkReductor(BasicObject):
     def reduce(self, hidden_layers='[(N+P)*3, (N+P)*3]', activation_function=torch.tanh,
                optimizer=optim.LBFGS, epochs=1000, batch_size=20, learning_rate=1.,
                loss_function=None, restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
-               lr_scheduler_params={'step_size': 10, 'gamma': 0.7}, weight_decay=0.,
+               lr_scheduler_params={'step_size': 10, 'gamma': 0.7},
+               es_scheduler_params={'patience': 10, 'delta': 0.}, weight_decay=0.,
                log_loss_frequency=0, seed=0):
         """Reduce by training artificial neural networks.
 
@@ -129,6 +130,10 @@ class NeuralNetworkReductor(BasicObject):
             A dictionary of additional parameters passed to the init method of
             the learning rate scheduler. The possible parameters depend on the
             chosen learning rate scheduler.
+        es_scheduler_params
+            A dictionary of additional parameters passed to the init method of
+            the early stopping scheduler. For the possible parameters,
+            see :class:`EarlyStoppingScheduler`.
         weight_decay
             Weighting parameter for the l2-regularization of the weights and
             biases in the neural network. This regularization is not available
@@ -199,7 +204,8 @@ class NeuralNetworkReductor(BasicObject):
             training_parameters = {'optimizer': optimizer, 'epochs': epochs,
                                    'batch_size': batch_size, 'learning_rate': learning_rate,
                                    'lr_scheduler': lr_scheduler, 'lr_scheduler_params': lr_scheduler_params,
-                                   'weight_decay': weight_decay, 'loss_function': loss_function}
+                                   'es_scheduler_params': es_scheduler_params, 'weight_decay': weight_decay,
+                                   'loss_function': loss_function}
 
             self.logger.info('Initializing neural network ...')
             # initialize the neural network
@@ -774,9 +780,10 @@ def train_neural_network(training_data, validation_data, neural_network,
         PyTorch `optim.lr_scheduler` package; if not provided or `None`,
         no learning rate scheduler is used), `'lr_scheduler_params'`
         (a dictionary of additional parameters for the learning rate
-        scheduler), and `'weight_decay'` (non-negative real number that
-        determines the strenght of the l2-regularization;
-        if not provided or 0., no regularization is applied).
+        scheduler), `'es_scheduler_params'` (a dictionary of additional
+        parameters for the early stopping scheduler), and `'weight_decay'`
+        (non-negative real number that determines the strenght of the
+        l2-regularization; if not provided or 0., no regularization is applied).
     scaling_parameters
         Dict of tensors that determine how to scale inputs before passing them
         through the neural network and outputs after obtaining them from the
@@ -842,7 +849,11 @@ def train_neural_network(training_data, validation_data, neural_network,
     else:
         optimizer = optimizer(neural_network.parameters(), lr=learning_rate)
 
-    early_stopping_scheduler = EarlyStoppingScheduler(len(training_data) + len(validation_data))
+    if 'es_scheduler_params' in training_parameters:
+        es_scheduler = EarlyStoppingScheduler(len(training_data) + len(validation_data),
+                                              **training_parameters['es_scheduler_params'])
+    else:
+        es_scheduler = EarlyStoppingScheduler(len(training_data) + len(validation_data))
     if 'lr_scheduler' in training_parameters and training_parameters['lr_scheduler']:
         lr_scheduler = training_parameters['lr_scheduler'](optimizer, **training_parameters['lr_scheduler_params'])
 
@@ -929,12 +940,12 @@ def train_neural_network(training_data, validation_data, neural_network,
                 lr_scheduler.step()
 
             # check for early stopping
-            if phase == 'val' and early_stopping_scheduler(losses, neural_network):
+            if phase == 'val' and es_scheduler(losses, neural_network):
                 logger.info(f'Stopping training process early after {epoch + 1} epochs with validation loss '
-                            f'of {early_stopping_scheduler.best_losses["val"]:.3e} ...')
-                return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
+                            f'of {es_scheduler.best_losses["val"]:.3e} ...')
+                return es_scheduler.best_neural_network, es_scheduler.best_losses
 
-    return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
+    return es_scheduler.best_neural_network, es_scheduler.best_losses
 
 
 def multiple_restarts_training(training_data, validation_data, neural_network,
