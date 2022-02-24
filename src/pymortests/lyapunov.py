@@ -2,7 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import os
 from itertools import chain, product
 
 import numpy as np
@@ -16,7 +15,6 @@ from pymor.algorithms.lyapunov import (
     solve_cont_lyap_lrcf,
     solve_disc_lyap_lrcf,
 )
-from pymor.core.config import config
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.base import skip_if_missing
 
