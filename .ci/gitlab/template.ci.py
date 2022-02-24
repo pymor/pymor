@@ -196,7 +196,6 @@ ci setup:
     retry:
         max: 2
         when: always
-    arte
     {%- endif %}
     services:
     {%- if script == "oldest" %}

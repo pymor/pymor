@@ -178,7 +178,6 @@ mpi 0 3 7:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -203,7 +202,6 @@ mpi 0 3 8:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -228,7 +226,6 @@ mpi 0 3 9:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -256,7 +253,6 @@ mpi 1 3 7:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -284,7 +280,6 @@ mpi 1 3 8:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -312,7 +307,6 @@ mpi 1 3 9:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -340,7 +334,6 @@ mpi 2 3 7:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -368,7 +361,6 @@ mpi 2 3 8:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -396,7 +388,6 @@ mpi 2 3 9:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -421,7 +412,6 @@ mpi 3 3 7:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -446,7 +436,6 @@ mpi 3 3 8:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -471,7 +460,6 @@ mpi 3 3 9:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -496,7 +484,6 @@ mpi 4 3 7:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -521,7 +508,6 @@ mpi 4 3 8:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
@@ -546,7 +532,6 @@ mpi 4 3 9:
     retry:
         max: 2
         when: always
-    arte
     services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.9:f1c7c1fb8816ca3a9c383670bd039a01d05fa015
     script:
