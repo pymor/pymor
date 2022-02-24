@@ -11,7 +11,8 @@ import scipy.linalg as spla
 from pymor.algorithms.lyapunov import _chol
 from pymor.algorithms.riccati import solve_pos_ricc_lrcf, solve_ricc_dense, solve_ricc_lrcf
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymortests.lyapunov import _check_availability, conv_diff_1d_fd, conv_diff_1d_fem, fro_norm
+from pymortests.lyapunov import conv_diff_1d_fd, conv_diff_1d_fem, fro_norm
+from pymortests.base import skip_if_missing
 
 n_list_small = [10, 20]
 n_list_big = [250]
@@ -68,9 +69,9 @@ def relative_residual(A, E, B, C, R, Z, trans):
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('solver', ricc_dense_solver_list)
+@skip_if_missing('slycot')
+@skip_if_missing('pymess')
 def test_ricc_dense(n, m, p, with_E, with_R, trans, solver):
-    _check_availability(solver)
-
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
         A = A.todense()
@@ -102,9 +103,9 @@ def test_ricc_dense(n, m, p, with_E, with_R, trans, solver):
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n,solver', chain(product(n_list_small, ricc_lrcf_solver_list_small),
                                            product(n_list_big, ricc_lrcf_solver_list_big)))
+@skip_if_missing('slycot')
+@skip_if_missing('pymess')
 def test_ricc_lrcf(n, m, p, with_E, with_R, trans, solver):
-    _check_availability(solver)
-
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
         E = None
@@ -144,9 +145,9 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, trans, solver):
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
+@skip_if_missing('slycot')
+@skip_if_missing('pymess')
 def test_pos_ricc_lrcf(n, m, p, with_E, with_R, trans, solver):
-    _check_availability(solver)
-
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
         E = None
