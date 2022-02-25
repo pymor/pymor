@@ -523,77 +523,78 @@ class FenicsVisualizer(ImmutableObject):
         block
             If `True`, block execution until the plot window is closed.
         """
-        if filename:
-            assert not isinstance(U, tuple)
-            assert U in self.space
-            if block:
-                self.logger.warning('visualize with filename!=None, block=True will not block')
-            supported = (".x3d", ".xml", ".pvd", ".raw")
-            suffix = Path(filename).suffix
-            if suffix not in supported:
-                msg = ('FenicsVisualizer needs a filename with a suffix indicating a supported backend\n'
-                       + f'defaulting to .pvd (possible choices: {supported})')
-                self.logger.warning(msg)
-                filename = f'{filename}.pvd'
-            f = df.File(str(filename))
-            coarse_function = df.Function(self.space.V)
-            if self.mesh_refinements:
-                mesh = self.space.V.mesh()
-                for _ in range(self.mesh_refinements):
-                    mesh = df.refine(mesh)
-                V_fine = df.FunctionSpace(mesh, self.space.V.ufl_element())
-                function = df.Function(V_fine)
-            else:
-                function = coarse_function
-            if legend:
-                function.rename(legend, legend)
-            for u in U._list:
-                if u.imag_part is not None:
-                    raise NotImplementedError
-                coarse_function.vector()[:] = u.real_part.impl
-                if self.mesh_refinements:
-                    function.vector()[:] = df.interpolate(coarse_function, V_fine).vector()
-                f.write(function)
-        else:
-            from matplotlib import pyplot as plt
+        pass
+        # if filename:
+        #     assert not isinstance(U, tuple)
+        #     assert U in self.space
+        #     if block:
+        #         self.logger.warning('visualize with filename!=None, block=True will not block')
+        #     supported = (".x3d", ".xml", ".pvd", ".raw")
+        #     suffix = Path(filename).suffix
+        #     if suffix not in supported:
+        #         msg = ('FenicsVisualizer needs a filename with a suffix indicating a supported backend\n'
+        #                + f'defaulting to .pvd (possible choices: {supported})')
+        #         self.logger.warning(msg)
+        #         filename = f'{filename}.pvd'
+        #     f = df.File(str(filename))
+        #     coarse_function = df.Function(self.space.V)
+        #     if self.mesh_refinements:
+        #         mesh = self.space.V.mesh()
+        #         for _ in range(self.mesh_refinements):
+        #             mesh = df.refine(mesh)
+        #         V_fine = df.FunctionSpace(mesh, self.space.V.ufl_element())
+        #         function = df.Function(V_fine)
+        #     else:
+        #         function = coarse_function
+        #     if legend:
+        #         function.rename(legend, legend)
+        #     for u in U._list:
+        #         if u.imag_part is not None:
+        #             raise NotImplementedError
+        #         coarse_function.vector()[:] = u.real_part.impl
+        #         if self.mesh_refinements:
+        #             function.vector()[:] = df.interpolate(coarse_function, V_fine).vector()
+        #         f.write(function)
+        # else:
+        #     from matplotlib import pyplot as plt
 
-            assert U in self.space and len(U) == 1 \
-                or (isinstance(U, tuple) and all(u in self.space for u in U) and all(len(u) == 1 for u in U))
-            if not isinstance(U, tuple):
-                U = (U,)
-            if isinstance(legend, str):
-                legend = (legend,)
-            assert legend is None or len(legend) == len(U)
+        #     assert U in self.space and len(U) == 1 \
+        #         or (isinstance(U, tuple) and all(u in self.space for u in U) and all(len(u) == 1 for u in U))
+        #     if not isinstance(U, tuple):
+        #         U = (U,)
+        #     if isinstance(legend, str):
+        #         legend = (legend,)
+        #     assert legend is None or len(legend) == len(U)
 
-            if not separate_colorbars:
-                vmin = np.inf
-                vmax = -np.inf
-                for u in U:
-                    vec = u._list[0].real_part.impl
-                    vmin = min(vmin, vec.min())
-                    vmax = max(vmax, vec.max())
+        #     if not separate_colorbars:
+        #         vmin = np.inf
+        #         vmax = -np.inf
+        #         for u in U:
+        #             vec = u._list[0].real_part.impl
+        #             vmin = min(vmin, vec.min())
+        #             vmax = max(vmax, vec.max())
 
-            for i, u in enumerate(U):
-                if u._list[0].imag_part is not None:
-                    raise NotImplementedError
-                function = df.Function(self.space.V)
-                function.vector()[:] = u._list[0].real_part.impl
-                if legend:
-                    tit = title + ' -- ' if title else ''
-                    tit += legend[i]
-                else:
-                    tit = title
-                if separate_colorbars:
-                    plt.figure()
-                    df.plot(function, title=tit)
-                else:
-                    plt.figure()
-                    df.plot(function, title=tit,
-                            range_min=vmin, range_max=vmax)
-            if getattr(sys, '_called_from_test', False):
-                plt.show(block=False)
-            else:
-                plt.show(block=block)
+        #     for i, u in enumerate(U):
+        #         if u._list[0].imag_part is not None:
+        #             raise NotImplementedError
+        #         function = df.Function(self.space.V)
+        #         function.vector()[:] = u._list[0].real_part.impl
+        #         if legend:
+        #             tit = title + ' -- ' if title else ''
+        #             tit += legend[i]
+        #         else:
+        #             tit = title
+        #         if separate_colorbars:
+        #             plt.figure()
+        #             df.plot(function, title=tit)
+        #         else:
+        #             plt.figure()
+        #             df.plot(function, title=tit,
+        #                     range_min=vmin, range_max=vmax)
+        #     if getattr(sys, '_called_from_test', False):
+        #         plt.show(block=False)
+        #     else:
+        #         plt.show(block=block)
 
 
 # adapted from dolfin.mesh.ale.init_parent_edge_indices
