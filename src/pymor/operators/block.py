@@ -68,7 +68,7 @@ class BlockOperatorBase(Operator):
             if isinstance(op, ZeroOperator):
                 Vi = op.range.zeros(len(U))
             else:
-                Vi = op.apply(U.block(j) if self.blocked_source else U, mu=mu)
+                Vi = op.apply(U.blocks[j] if self.blocked_source else U, mu=mu)
             if V_blocks[i] is None:
                 V_blocks[i] = Vi
             else:
@@ -84,7 +84,7 @@ class BlockOperatorBase(Operator):
             if isinstance(op, ZeroOperator):
                 Uj = op.source.zeros(len(V))
             else:
-                Uj = op.apply_adjoint(V.block(i) if self.blocked_range else V, mu=mu)
+                Uj = op.apply_adjoint(V.blocks[i] if self.blocked_range else V, mu=mu)
             if U_blocks[j] is None:
                 U_blocks[j] = Uj
             else:
@@ -207,19 +207,19 @@ class BlockDiagonalOperator(BlockOperator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        V_blocks = [self.blocks[i, i].apply(U.block(i), mu=mu) for i in range(self.num_range_blocks)]
+        V_blocks = [self.blocks[i, i].apply(U.blocks[i], mu=mu) for i in range(self.num_range_blocks)]
         return self.range.make_array(V_blocks)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        U_blocks = [self.blocks[i, i].apply_adjoint(V.block(i), mu=mu) for i in range(self.num_source_blocks)]
+        U_blocks = [self.blocks[i, i].apply_adjoint(V.blocks[i], mu=mu) for i in range(self.num_source_blocks)]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
         assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
-        U_blocks = [self.blocks[i, i].apply_inverse(V.block(i), mu=mu,
-                                                    initial_guess=(initial_guess.block(i)
+        U_blocks = [self.blocks[i, i].apply_inverse(V.blocks[i], mu=mu,
+                                                    initial_guess=(initial_guess.blocks[i]
                                                                    if initial_guess is not None else None),
                                                     least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
@@ -228,8 +228,8 @@ class BlockDiagonalOperator(BlockOperator):
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
         assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
-        V_blocks = [self.blocks[i, i].apply_inverse_adjoint(U.block(i), mu=mu,
-                                                            initial_guess=(initial_guess.block(i)
+        V_blocks = [self.blocks[i, i].apply_inverse_adjoint(U.blocks[i], mu=mu,
+                                                            initial_guess=(initial_guess.blocks[i]
                                                                            if initial_guess is not None else None),
                                                             least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
@@ -304,23 +304,23 @@ class SecondOrderModelOperator(BlockOperator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        V_blocks = [self.alpha * U.block(0) + self.beta * U.block(1),
-                    self.B.apply(U.block(0), mu=mu) + self.A.apply(U.block(1), mu=mu)]
+        V_blocks = [self.alpha * U.blocks[0] + self.beta * U.blocks[1],
+                    self.B.apply(U.blocks[0], mu=mu) + self.A.apply(U.blocks[1], mu=mu)]
         return self.range.make_array(V_blocks)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        U_blocks = [self.alpha.conjugate() * V.block(0) + self.B.apply_adjoint(V.block(1), mu=mu),
-                    self.beta.conjugate() * V.block(0) + self.A.apply_adjoint(V.block(1), mu=mu)]
+        U_blocks = [self.alpha.conjugate() * V.blocks[0] + self.B.apply_adjoint(V.blocks[1], mu=mu),
+                    self.beta.conjugate() * V.blocks[0] + self.A.apply_adjoint(V.blocks[1], mu=mu)]
         return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
         assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
         aAmbB = (self.alpha * self.A - self.beta * self.B).assemble(mu=mu)
-        aAmbB_V1 = aAmbB.apply_inverse(V.block(1), least_squares=least_squares)
-        aAmbB_A_V0 = aAmbB.apply_inverse(self.A.apply(V.block(0), mu=mu), least_squares=least_squares)
-        aAmbB_B_V0 = aAmbB.apply_inverse(self.B.apply(V.block(0), mu=mu), least_squares=least_squares)
+        aAmbB_V1 = aAmbB.apply_inverse(V.blocks[1], least_squares=least_squares)
+        aAmbB_A_V0 = aAmbB.apply_inverse(self.A.apply(V.blocks[0], mu=mu), least_squares=least_squares)
+        aAmbB_B_V0 = aAmbB.apply_inverse(self.B.apply(V.blocks[0], mu=mu), least_squares=least_squares)
         U_blocks = [aAmbB_A_V0 - self.beta * aAmbB_V1,
                     self.alpha * aAmbB_V1 - aAmbB_B_V0]
         return self.source.make_array(U_blocks)
@@ -329,8 +329,8 @@ class SecondOrderModelOperator(BlockOperator):
         assert U in self.source
         assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
         aAmbB = (self.alpha * self.A - self.beta * self.B).assemble(mu=mu)
-        aAmbB_U0 = aAmbB.apply_inverse_adjoint(U.block(0), least_squares=least_squares)
-        aAmbB_U1 = aAmbB.apply_inverse_adjoint(U.block(1), least_squares=least_squares)
+        aAmbB_U0 = aAmbB.apply_inverse_adjoint(U.blocks[0], least_squares=least_squares)
+        aAmbB_U1 = aAmbB.apply_inverse_adjoint(U.blocks[1], least_squares=least_squares)
         V_blocks = [self.A.apply_adjoint(aAmbB_U0, mu=mu) - self.B.apply_adjoint(aAmbB_U1, mu=mu),
                     self.alpha.conjugate() * aAmbB_U1 - self.beta.conjugate() * aAmbB_U0]
         return self.range.make_array(V_blocks)

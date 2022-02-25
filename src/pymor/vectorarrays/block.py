@@ -7,6 +7,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.base import classinstancemethod
+from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpace
 
 
@@ -15,7 +16,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
     def __init__(self, blocks, space):
         self._blocks = tuple(blocks)
         self.space = space
-        assert self._blocks_are_valid()
+        assert self._blocks_are_valid(False)
 
     def __len__(self):
         try:
@@ -24,6 +25,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
             return 0
 
     def to_numpy(self, ensure_copy, ind):
+        assert self._blocks_are_valid()
         if len(self._blocks):
             # hstack will error out with empty input list
             return np.hstack([_indexed(block, ind).to_numpy(False) for block in self._blocks])
@@ -31,42 +33,54 @@ class BlockVectorArrayImpl(VectorArrayImpl):
             return np.empty((0, 0))
 
     def real(self, ind):
+        assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).real for block in self._blocks], self.space)
 
     def imag(self, ind):
+        assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).imag for block in self._blocks], self.space)
 
     def conj(self, ind):
+        assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).conj() for block in self._blocks], self.space)
 
     def delete(self, ind):
+        assert self._blocks_are_valid()
         ind = slice(None) if ind is None else ind
         for block in self._blocks:
             del block[ind]
 
     def append(self, other, remove_from_other, oind):
         assert self._blocks_are_valid()
+        assert other._blocks_are_valid()
         for block, other_block in zip(self._blocks, other._blocks):
             block.append(_indexed(other_block, oind), remove_from_other)
 
     def copy(self, deep, ind):
+        assert self._blocks_are_valid()
         return type(self)([_indexed(block, ind).copy(deep) for block in self._blocks], self.space)
 
     def scal(self, alpha, ind):
+        assert self._blocks_are_valid()
         for block in self._blocks:
             _indexed(block, ind).scal(alpha)
 
     def scal_copy(self, alpha, ind):
+        assert self._blocks_are_valid()
         if isinstance(alpha, Number):
             if alpha == -1:
                 return type(self)([-_indexed(block, ind) for block in self._blocks], self.space)
         return super().scal_copy(alpha, ind)
 
     def axpy(self, alpha, x, ind, xind):
+        assert self._blocks_are_valid()
+        assert x._blocks_are_valid()
         for block, x_block in zip(self._blocks, x._blocks):
             _indexed(block, ind).axpy(alpha, _indexed(x_block, xind))
 
     def axpy_copy(self, alpha, x, ind, xind):
+        assert self._blocks_are_valid()
+        assert x._blocks_are_valid()
         if isinstance(alpha, Number):
             if alpha == 1:
                 return type(self)([_indexed(block, ind) + _indexed(x_block, xind)
@@ -79,6 +93,8 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         return super().axpy_copy(alpha, x, ind, xind)
 
     def inner(self, other, ind, oind):
+        assert self._blocks_are_valid()
+        assert other._blocks_are_valid()
         prods = [_indexed(block, ind).inner(_indexed(other_block, oind))
                  for block, other_block in zip(self._blocks, other._blocks)]
         assert all([prod.shape == prods[0].shape for prod in prods])
@@ -89,6 +105,8 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         return ret
 
     def pairwise_inner(self, other, ind, oind):
+        assert self._blocks_are_valid()
+        assert other._blocks_are_valid()
         prods = [_indexed(block, ind).pairwise_inner(_indexed(other_block, oind))
                  for block, other_block in zip(self._blocks, other._blocks)]
         assert all([prod.shape == prods[0].shape for prod in prods])
@@ -99,13 +117,16 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         return ret
 
     def lincomb(self, coefficients, ind):
+        assert self._blocks_are_valid()
         lincombs = [_indexed(block, ind).lincomb(coefficients) for block in self._blocks]
         return type(self)(lincombs, self.space)
 
     def norm2(self, ind):
+        assert self._blocks_are_valid()
         return np.sum(np.array([_indexed(block, ind).norm2() for block in self._blocks]), axis=0)
 
     def dofs(self, dof_indices, ind):
+        assert self._blocks_are_valid()
         if not len(dof_indices):
             return np.zeros((self.len_ind(ind), 0))
 
@@ -118,6 +139,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
                          for bi, ci in zip(block_inds, dof_indices)]).T
 
     def amax(self, ind):
+        assert self._blocks_are_valid()
         self._compute_bins()
         blocks = [_indexed(b, ind) for b in self._blocks]
         inds, vals = zip(*(blocks[bi].amax() for bi in self._bin_map))
@@ -127,8 +149,13 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         ar = np.arange(inds.shape[1])
         return inds[block_inds, ar], vals[block_inds, ar]
 
-    def _blocks_are_valid(self):
-        return all([len(block) == len(self._blocks[0]) for block in self._blocks])
+    def _blocks_are_valid(self, after_creation=True):
+        assert all([len(block) == len(self._blocks[0]) for block in self._blocks]), \
+            (f'All blocks in a BlockVectorArray must be of the same length '
+             f'(lengths: {[len(block) for block in self._blocks]})'
+             + ('Likely, an array has been modified that has been accessed via BlockVectorArray.blocks'
+                if after_creation else ''))
+        return True
 
     def _compute_bins(self):
         if not hasattr(self, '_bins'):
@@ -150,21 +177,33 @@ class BlockVectorArray(VectorArray):
 
     impl_type = BlockVectorArrayImpl
 
-    def block(self, ind, copy=True):
-        """Return a copy of a single block or a sequence of blocks."""
-        if isinstance(ind, (tuple, list)):
-            import warnings
-            warnings.warn('Calling BlockVectorArray.block with a sequence is deprecated', DeprecationWarning)
-            assert all(isinstance(ii, Number) for ii in ind)
-            return tuple(self.block(ii) for ii in ind)
+    # @Deprecated('BlockVectorArray.blocks')
+    # def block(self, ind):
+    #     """Return a copy of a single block or a sequence of blocks."""
+    #     if isinstance(ind, (tuple, list)):
+    #         assert all(isinstance(ii, Number) for ii in ind)
+    #         return tuple(_indexed(self.impl._blocks[ii], self.ind).copy() for ii in ind)
+    #     else:
+    #         assert isinstance(ind, Number)
+    #         return _indexed(self.impl._blocks[ind], self.ind).copy()
 
-        assert isinstance(ind, Number)
-        b = _indexed(self.impl._blocks[ind], self.ind)
-        return b.copy() if copy else b
+    # @property
+    # @Deprecated('len(BlockVectorArray.blocks)')
+    # def num_blocks(self):
+    #     return len(self.space.subspaces)
 
     @property
-    def num_blocks(self):
-        return len(self.space.subspaces)
+    def blocks(self):
+        if self.ind is None:
+            return self.impl._blocks
+        else:
+            try:
+                return self._blocks
+            except AttributeError:
+                pass
+            ind = self.ind
+            self._blocks = tuple(b[ind] for b in self.impl._blocks)
+            return self._blocks
 
 
 class BlockVectorSpace(VectorSpace):
