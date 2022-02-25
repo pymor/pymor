@@ -54,23 +54,26 @@ class MPIVisualizer(ImmutableObject):
         self.__auto_init(locals())
 
     def visualize(self, U, **kwargs):
+        ind = U.ind
         if isinstance(U, tuple):
-            U = tuple(u.obj_id for u in U)
+            U = tuple(u.impl.obj_id for u in U)
         else:
-            U = U.obj_id
-        mpi.call(_MPIVisualizer_visualize, self.m_obj_id, U, **kwargs)
+            U = U.impl.obj_id
+        mpi.call(_MPIVisualizer_visualize, self.m_obj_id, U, ind, **kwargs)
 
     def __del__(self):
         if self.remove_model:
             mpi.call(mpi.remove_object, self.m_obj_id)
 
 
-def _MPIVisualizer_visualize(m, U, **kwargs):
+def _MPIVisualizer_visualize(m, U, ind, **kwargs):
     m = mpi.get_object(m)
     if isinstance(U, tuple):
         U = tuple(mpi.get_object(u) for u in U)
     else:
         U = mpi.get_object(U)
+    if ind is not None:
+        U = U[ind]
     m.visualize(U, **kwargs)
 
 
