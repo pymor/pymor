@@ -57,6 +57,12 @@ class VectorArray(BasicObject):
         `True` if the array is a view obtained by indexing another array.
     space
         The |VectorSpace| the array belongs to.
+    base
+        In case the array is a view, the |VectorArray| this array refers to. `None`
+        otherwise.
+    ind
+        In case the array is a view, the indices with which the :attr:`~VectorArray.base`
+        array is indexed with.
     """
 
     impl_type = None
@@ -207,7 +213,6 @@ class VectorArray(BasicObject):
 
     def __getitem__(self, ind):
         """Return a |VectorArray| view onto a subset of the vectors in the array."""
-
         l = self._len
 
         # normalize ind s.t. the length of the view does not change when
@@ -1013,6 +1018,15 @@ def _create_random_values(shape, distribution, random_state, **kwargs):
 
 
 class VectorArrayImpl(BasicObject):
+    """Implementation of a |VectorArray|.
+
+    The |VectorArray| base class defers all calls to interface methods to an
+    internal `impl` object of this type. Indexing, error checking or non-standard
+    inner products are handled by |VectorArray|. Possible indices are passed
+    to the methods of :class:`VectorArrayImpl` as `ind`, `oind` or `xind`
+    parameters. These can either be `None`, in case the array has not been indexed,
+    a `slice` object, or a Python list of non-negative numbers.
+    """
 
     @abstractmethod
     def __len__(self):
