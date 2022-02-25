@@ -2,11 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Number
-
 import numpy as np
 
 from pymor.core.base import BasicObject, abstractmethod, abstractclassmethod, classinstancemethod
+from pymor.tools.deprecated import Deprecated
 from pymor.tools.random import get_random_state
 from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
 
@@ -515,7 +514,12 @@ class ListVectorArray(VectorArray):
         return f'{type(self).__name__} of {len(self.impl._list)} vectors of space {self.space}'
 
     @property
+    @Deprecated('ListVectorArray.vectors')
     def _list(self):
+        return self.vectors
+
+    @property
+    def vectors(self):
         return self.impl._indexed(self.ind)
 
 
