@@ -13,8 +13,6 @@ The implementations are based on the event loop provided
 by :mod:`pymor.tools.mpi`.
 """
 
-from numbers import Number
-
 import numpy as np
 
 from pymor.core.pickle import unpicklable
