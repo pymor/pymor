@@ -356,9 +356,9 @@ class ListVectorArrayImpl(VectorArrayImpl):
         elif type(ind) is slice:
             return self._list[ind]
         elif hasattr(ind, '__len__'):
-            return (self._list[i] for i in ind)
+            return [self._list[i] for i in ind]
         else:
-            return (self._list[ind],)
+            return [self._list[ind]]
 
     def to_numpy(self, ensure_copy, ind):
         vectors = [v.to_numpy() for v in self._indexed(ind)]
@@ -432,7 +432,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
         return np.array([a.inner(b) for a, b in zip(self._indexed(ind), other._indexed(oind))])
 
     def gramian(self, ind):
-        self_list = list(self._indexed(ind))
+        self_list = self._indexed(ind)
         l = len(self_list)
         R = [[0.] * l for _ in range(l)]
         for i in range(l):
@@ -516,7 +516,7 @@ class ListVectorArray(VectorArray):
 
     @property
     def _list(self):
-        return list(self.impl._indexed(self.ind))
+        return self.impl._indexed(self.ind)
 
 
 class ListVectorSpace(VectorSpace):
