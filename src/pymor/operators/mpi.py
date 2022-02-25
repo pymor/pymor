@@ -158,7 +158,7 @@ class MPIOperator(Operator):
         assert U in self.source
         assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
         assert self.parameters.assert_compatible(mu)
-        return self.source.make_array(mpi.call(mpi.function_call_manage, _MPIOperator_apply_inver_adjoint,
+        return self.source.make_array(mpi.call(mpi.function_call_manage, _MPIOperator_apply_inverse_adjoint,
                                                self.obj_id,
                                                U.impl.obj_id, U.ind, mu,
                                                initial_guess=(initial_guess.obj_id if initial_guess is not None
