@@ -91,7 +91,7 @@ def estimate_image(operators=(), vectors=(),
             try:
                 rules.apply(v)
             except NoMatchingRuleError as e:
-                raise ImageCollectionError(e.obj)
+                raise ImageCollectionError(e.obj) from e
 
     if operators and domain is None:
         domain = domain_space.empty()
@@ -100,7 +100,7 @@ def estimate_image(operators=(), vectors=(),
         try:
             rules.apply(op)
         except NoMatchingRuleError as e:
-            raise ImageCollectionError(e.obj)
+            raise ImageCollectionError(e.obj) from e
 
     if riesz_representatives and product:
         image = product.apply_inverse(image)

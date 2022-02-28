@@ -269,7 +269,7 @@ class Operator(ParametricObject):
                                         mu=mu,
                                         **options)[0])
                     except NewtonError as e:
-                        raise InversionError(e)
+                        raise InversionError(e) from e
             return R
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):

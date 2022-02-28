@@ -163,8 +163,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, range_product=None, sourc
         jacobian = operator.jacobian(U, mu=mu)
         try:
             update = jacobian.apply_inverse(residual, least_squares=least_squares)
-        except InversionError:
-            raise NewtonError('Could not invert jacobian.')
+        except InversionError as e:
+            raise NewtonError('Could not invert jacobian.') from e
 
         # compute step size
         if isinstance(relax, Number):

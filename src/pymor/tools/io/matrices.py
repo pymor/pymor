@@ -15,13 +15,13 @@ def _loadmat(path, key=None):
     try:
         data = loadmat(path, mat_dtype=True)
     except Exception as e:
-        raise IOError(e)
+        raise IOError(e) from e
 
     if key:
         try:
             return data[key]
-        except KeyError:
-            raise IOError(f'"{key}" not found in MATLAB file {path}')
+        except KeyError as e:
+            raise IOError(f'"{key}" not found in MATLAB file {path}') from e
 
     data = [v for v in data.values() if isinstance(v, np.ndarray) or issparse(v)]
 
@@ -39,7 +39,7 @@ def _savemat(path, matrix, key=None):
     try:
         savemat(path, {key: matrix})
     except Exception as e:
-        raise IOError(e)
+        raise IOError(e) from e
 
 
 def _mmread(path, key=None):
@@ -54,7 +54,7 @@ def _mmread(path, key=None):
         # fallback for older scipys that do not accept pathlib.Path
         return _mmread(path=str(path), key=key)
     except Exception as e:
-        raise IOError(e)
+        raise IOError(e) from e
 
 
 def _mmwrite(path, matrix, key=None):
@@ -73,20 +73,20 @@ def _mmwrite(path, matrix, key=None):
         # fallback for older scipys that do not accept pathlib.Path
         return _mmwrite(path=str(path), matrix=matrix, key=key)
     except Exception as e:
-        raise IOError(e)
+        raise IOError(e) from e
 
 
 def _load(path, key=None):
     try:
         data = np.load(path)
     except Exception as e:
-        raise IOError(e)
+        raise IOError(e) from e
     if isinstance(data, (dict, np.lib.npyio.NpzFile)):
         if key:
             try:
                 matrix = data[key]
-            except KeyError:
-                raise IOError(f'"{key}" not found in NPY file {path}')
+            except KeyError as e:
+                raise IOError(f'"{key}" not found in NPY file {path}') from e
         elif len(data) == 0:
             raise IOError(f'No data contained in NPY file {path}')
         elif len(data) > 1:
@@ -106,7 +106,7 @@ def _save(path, matrix, key=None):
     try:
         np.save(path, matrix)
     except Exception as e:
-        raise IOError(e)
+        raise IOError(e) from e
 
 
 def _savez(path, matrix, key=None):
@@ -116,7 +116,7 @@ def _savez(path, matrix, key=None):
         else:
             np.savez(path, **{key: matrix})
     except Exception as e:
-        raise IOError(e)
+        raise IOError(e) from e
 
 
 def _loadtxt(path, key=None):
@@ -125,7 +125,7 @@ def _loadtxt(path, key=None):
     try:
         return np.loadtxt(path)
     except Exception as e:
-        raise IOError(e)
+        raise IOError(e) from e
 
 
 def _savetxt(path, matrix, key=None):
@@ -134,7 +134,7 @@ def _savetxt(path, matrix, key=None):
     try:
         return np.savetxt(path, matrix)
     except Exception as e:
-        raise IOError(e)
+        raise IOError(e) from e
 
 
 def _get_file_extension(path):

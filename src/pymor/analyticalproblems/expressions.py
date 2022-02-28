@@ -95,7 +95,7 @@ While parsing expression
 \t{expression}
 with parameters {parameters} and values {values} the following error occured:
 \t{e}
-''')
+''') from e
 
     if not isinstance(expression, Expression):
         raise ValueError(f'''

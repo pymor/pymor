@@ -115,8 +115,8 @@ class ProjectRules(RuleTable):
         if source_basis is None:
             try:
                 V = op.apply_adjoint(range_basis)
-            except NotImplementedError:
-                raise RuleNotMatchingError('apply_adjoint not implemented')
+            except NotImplementedError as e:
+                raise RuleNotMatchingError('apply_adjoint not implemented') from e
             if isinstance(op.source, NumpyVectorSpace):
                 from pymor.operators.numpy import NumpyMatrixOperator
                 return NumpyMatrixOperator(V.to_numpy(), source_id=op.source.id, name=op.name)

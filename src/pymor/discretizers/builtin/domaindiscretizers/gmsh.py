@@ -62,9 +62,9 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
            if 'MPI' not in k.upper()}
     try:
         version = subprocess.check_output(['gmsh', '--version'], stderr=subprocess.STDOUT, env=env).decode()
-    except (subprocess.CalledProcessError, OSError):
+    except (subprocess.CalledProcessError, OSError) as e:
         raise GmshMissing('Could not find Gmsh.'
-                          ' Please ensure that the gmsh binary (https://gmsh.info/) is in your PATH.')
+                          ' Please ensure that the gmsh binary (https://gmsh.info/) is in your PATH.') from e
 
     logger.info('Found version ' + version.strip())
 

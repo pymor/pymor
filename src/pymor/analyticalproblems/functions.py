@@ -365,8 +365,8 @@ class BitmapFunction(Function):
         range = range or [0., 1.]
         try:
             from PIL import Image
-        except ImportError:
-            raise ImportError("PIL is needed for loading images. Try 'pip install pillow'")
+        except ImportError as e:
+            raise ImportError("PIL is needed for loading images. Try 'pip install pillow'") from e
         img = Image.open(filename)
         if not img.mode == "L":
             self.logger.warning("Image " + filename + " not in grayscale mode. Converting to grayscale.")
