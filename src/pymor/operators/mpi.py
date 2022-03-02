@@ -148,7 +148,7 @@ class MPIOperator(Operator):
         return self.source.make_array(mpi.call(mpi.function_call_manage, _MPIOperator_apply_inverse,
                                                self.obj_id,
                                                V.impl.obj_id, V.ind, mu,
-                                               initial_guess=(initial_guess.obj_id if initial_guess is not None
+                                               initial_guess=(initial_guess.impl.obj_id if initial_guess is not None
                                                               else None),
                                                least_squares=least_squares))
 
@@ -161,7 +161,7 @@ class MPIOperator(Operator):
         return self.source.make_array(mpi.call(mpi.function_call_manage, _MPIOperator_apply_inverse_adjoint,
                                                self.obj_id,
                                                U.impl.obj_id, U.ind, mu,
-                                               initial_guess=(initial_guess.obj_id if initial_guess is not None
+                                               initial_guess=(initial_guess.impl.obj_id if initial_guess is not None
                                                               else None),
                                                least_squares=least_squares))
 
