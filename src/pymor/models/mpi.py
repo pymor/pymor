@@ -71,8 +71,7 @@ def _MPIVisualizer_visualize(m, U, ind, **kwargs):
     m = mpi.get_object(m)
     if isinstance(U, tuple):
         U = tuple(mpi.get_object(u) for u in U)
-        if ind is not None:
-            U = tuple(u[i] for u, i in zip(U, ind))
+        U = tuple(u[i] if i is not None else u for u, i in zip(U, ind))
     else:
         U = mpi.get_object(U)
         if ind is not None:
