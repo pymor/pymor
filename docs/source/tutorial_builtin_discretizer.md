@@ -236,7 +236,7 @@ following definition:
 
 ```{code-cell}
 diffusion = ExpressionFunction(
-   '1. - (sqrt( (np.mod(x[0],1./K)-0.5/K)**2 + (np.mod(x[1],1./K)-0.5/K)**2) <= 0.3/K) * 0.999',
+   '1. - (sqrt( ((x[0] % (1./K))-0.5/K)**2 + ((x[1] % (1./K))-0.5/K)**2) <= 0.3/K) * 0.999',
    2, values={'K': 10}
 )
 ```
@@ -328,7 +328,7 @@ We can then proceed as usual and automatically obtain a parametric
 
 ```{code-cell}
 diffusion = ExpressionFunction(
-   '1. - (sqrt( (np.mod(x[0],1./K)-0.5/K)**2 + (np.mod(x[1],1./K)-0.5/K)**2) <= 0.3/K) * 0.999',
+   '1. - (sqrt( ((x[0] % (1./K))-0.5/K)**2 + ((x[1] % (1./K))-0.5/K)**2) <= 0.3/K) * 0.999',
    2, values={'K': 10}
 )
 problem = StationaryProblem(
@@ -363,7 +363,7 @@ Next we also want to parameterize the diffusivity in the
 
 ```{code-cell}
 diffusion = ExpressionFunction(
-   '1. - (sqrt( (np.mod(x[0],1./K)-0.5/K)**2 + (np.mod(x[1],1./K)-0.5/K)**2) <= 0.3/K) * (1 - diffu[0])',
+   '1. - (sqrt( ((x[0] % (1./K))-0.5/K)**2 + ((x[1] % (1./K))-0.5/K)**2) <= 0.3/K) * (1 - diffu[0])',
    2, values={'K': 10},
    parameters= {'diffu': 1}
 )

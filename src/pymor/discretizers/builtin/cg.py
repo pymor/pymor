@@ -667,10 +667,11 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False,
                  solver_options=None, name=None):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
-        assert advection_function is None \
-            or (isinstance(advection_function, Function)
-                and advection_function.dim_domain == grid.dim
-                and advection_function.shape_range == (grid.dim,))
+
+        advection_function = advection_function or ConstantFunction(np.ones((grid.dim,)), grid.dim)
+        assert isinstance(advection_function, Function)
+        assert advection_function.dim_domain == grid.dim
+        assert advection_function.shape_range == (grid.dim,)
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
 

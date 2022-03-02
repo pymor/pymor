@@ -272,12 +272,12 @@ coverage_ignore_c_items = {}
 # autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
 
 # PyQt5 inventory is only used internally, actual link targets PySide2
-intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
+intersphinx_mapping = {'python': ('https://docs.python.org/3/', None),
                        'numpy': ('https://numpy.org/doc/stable/', None),
                        'PyQt5': ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
-                       'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-                       'matplotlib': ('https://matplotlib.org', None),
-                       'Sphinx': (' https://www.sphinx-doc.org/en/master/', None)}
+                       'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+                       'matplotlib': ('https://matplotlib.org/stable/', None),
+                       'Sphinx': (' https://www.sphinx-doc.org/en/stable/', None)}
 
 modindex_common_prefix = ['pymor.']
 

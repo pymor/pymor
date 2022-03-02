@@ -44,6 +44,13 @@ if __name__ == '__main__':
         except ImportError:
             pass
 
+        # completely disable FEniCS visualization on Gitlab CI
+        import os
+        if 'GITLAB_CI' in os.environ:
+            from pymor.bindings.fenics import FenicsVisualizer
+
+            FenicsVisualizer.visualize = nop
+
     def _fix_conftest_plugin_load_stalling():
         # for unknown reason pytest stalls in loading these if they're not preloaded on all ranks
         from pymortests.conftest import pytest_plugins
