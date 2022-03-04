@@ -11,7 +11,7 @@ if __name__ == '__main__':
     this_dir = Path(__file__).resolve().parent
     pymor_root_dir = (this_dir / '..' / '..').resolve()
 
-    result_file_fn = pymor_root_dir / 'pytest.mpirun.success'
+    result_file_fn = pymor_root_dir / f'.mpirun_{mpi.rank}' / 'pytest.mpirun.success'
     try:
         os.unlink(result_file_fn)
     except FileNotFoundError:
@@ -44,6 +44,13 @@ if __name__ == '__main__':
         except ImportError:
             pass
 
+        # completely disable FEniCS visualization on Gitlab CI
+        import os
+        if 'GITLAB_CI' in os.environ:
+            from pymor.bindings.fenics import FenicsVisualizer
+
+            FenicsVisualizer.visualize = nop
+
     def _fix_conftest_plugin_load_stalling():
         # for unknown reason pytest stalls in loading these if they're not preloaded on all ranks
         from pymortests.conftest import pytest_plugins
@@ -59,5 +66,6 @@ if __name__ == '__main__':
     if extra:
         args.append(extra)
     success = pytest.main(args) == pytest.ExitCode.OK
+    result_file_fn.parent.resolve().mkdir(parents=True, exist_ok=True)
     with open(result_file_fn, 'wt') as result_file:
         result_file.write(f'{success}')

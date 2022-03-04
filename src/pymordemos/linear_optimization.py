@@ -23,7 +23,7 @@ def main(
     initial_guess = fom.parameters.parse([0.25, 0.5])
 
     def fom_objective_functional(mu):
-        return fom.output(mu)
+        return fom.output(mu)[0, 0]
 
     def fom_gradient_of_functional(mu):
         return fom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=True)
@@ -61,7 +61,7 @@ def main(
     rom = RB_greedy_data['rom']
 
     def rom_objective_functional(mu):
-        return rom.output(mu)
+        return rom.output(mu)[0, 0]
 
     def rom_gradient_of_functional(mu):
         return rom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=True)
@@ -132,7 +132,7 @@ def record_results(function, parse, data, mu):
     QoI = function(mu)
     data['num_evals'] += 1
     data['evaluation_points'].append(parse(mu).to_numpy())
-    data['evaluations'].append(QoI[0])
+    data['evaluations'].append(QoI)
     print('.', end='')
     return QoI
 
@@ -143,7 +143,7 @@ def report(result, parse, data, reference_mu):
     else:
         print('\n succeeded!')
         print('  mu_min:    {}'.format(parse(result.x)))
-        print('  J(mu_min): {}'.format(result.fun[0]))
+        print('  J(mu_min): {}'.format(result.fun))
         print('  absolute error w.r.t. reference solution: {:.2e}'.format(np.linalg.norm(result.x-reference_mu)))
         print('  num iterations:        {}'.format(result.nit))
         print('  num function calls:    {}'.format(data['num_evals']))

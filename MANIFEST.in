@@ -27,4 +27,5 @@ include src/pymor/tools/LICENSE-MIT
 
 prune .binder
 prune .ci
+exclude .dockerignore
 prune logo
