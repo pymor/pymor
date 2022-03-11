@@ -89,4 +89,4 @@ class WrappedDiffusionOperator(Operator):
             self.op.apply(u._impl, v)
             return v
 
-        return self.range.make_array([apply_one_vector(u) for u in U._list])
+        return self.range.make_array([apply_one_vector(u) for u in U.vectors])

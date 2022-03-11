@@ -299,7 +299,7 @@ class FenicsOperator(Operator):
         self._set_mu(mu)
         R = []
         source_vec = self.source_function.vector()
-        for u in U._list:
+        for u in U.vectors:
             if u.imag_part is not None:
                 raise NotImplementedError
             source_vec[:] = u.real_part.impl
@@ -311,11 +311,11 @@ class FenicsOperator(Operator):
 
     def jacobian(self, U, mu=None):
         assert U in self.source and len(U) == 1
-        if U._list[0].imag_part is not None:
+        if U.vectors[0].imag_part is not None:
             raise NotImplementedError
         self._set_mu(mu)
         source_vec = self.source_function.vector()
-        source_vec[:] = U._list[0].real_part.impl
+        source_vec[:] = U.vectors[0].real_part.impl
         matrix = df.assemble(df.derivative(self.form, self.source_function))
         for bc in self.dirichlet_bcs:
             bc.apply(matrix)
@@ -457,18 +457,18 @@ class RestrictedFenicsOperator(Operator):
     def apply(self, U, mu=None):
         assert U in self.source
         UU = self.op.source.zeros(len(U))
-        for uu, u in zip(UU._list, U.to_numpy()):
+        for uu, u in zip(UU.vectors, U.to_numpy()):
             uu.real_part.impl[:] = np.ascontiguousarray(u)
         VV = self.op.apply(UU, mu=mu)
         V = self.range.zeros(len(VV))
-        for v, vv in zip(V.to_numpy(), VV._list):
+        for v, vv in zip(V.to_numpy(), VV.vectors):
             v[:] = vv.real_part.impl[self.restricted_range_dofs]
         return V
 
     def jacobian(self, U, mu=None):
         assert U in self.source and len(U) == 1
         UU = self.op.source.zeros()
-        UU._list[0].real_part.impl[:] = np.ascontiguousarray(U.to_numpy()[0])
+        UU.vectors[0].real_part.impl[:] = np.ascontiguousarray(U.to_numpy()[0])
         JJ = self.op.jacobian(UU, mu=mu)
         return NumpyMatrixOperator(JJ.matrix.array()[self.restricted_range_dofs, :])
 
@@ -547,7 +547,7 @@ class FenicsVisualizer(ImmutableObject):
                 function = coarse_function
             if legend:
                 function.rename(legend, legend)
-            for u in U._list:
+            for u in U.vectors:
                 if u.imag_part is not None:
                     raise NotImplementedError
                 coarse_function.vector()[:] = u.real_part.impl
@@ -569,15 +569,15 @@ class FenicsVisualizer(ImmutableObject):
                 vmin = np.inf
                 vmax = -np.inf
                 for u in U:
-                    vec = u._list[0].real_part.impl
+                    vec = u.vectors[0].real_part.impl
                     vmin = min(vmin, vec.min())
                     vmax = max(vmax, vec.max())
 
             for i, u in enumerate(U):
-                if u._list[0].imag_part is not None:
+                if u.vectors[0].imag_part is not None:
                     raise NotImplementedError
                 function = df.Function(self.space.V)
-                function.vector()[:] = u._list[0].real_part.impl
+                function.vector()[:] = u.vectors[0].real_part.impl
                 if legend:
                     tit = title + ' -- ' if title else ''
                     tit += legend[i]

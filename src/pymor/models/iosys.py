@@ -1463,7 +1463,7 @@ class SecondOrderModel(Model):
                        'pc_dense', 'vc_dense', 'po_dense', 'vo_dense')
 
         if typ.endswith('lrcf'):
-            return self.to_lti().gramian(typ[1:], mu=mu).block(0 if typ.startswith('p') else 1)
+            return self.to_lti().gramian(typ[1:], mu=mu).blocks[0 if typ.startswith('p') else 1].copy()
         else:
             g = self.to_lti().gramian(typ[1:], mu=mu)
             if typ.startswith('p'):
