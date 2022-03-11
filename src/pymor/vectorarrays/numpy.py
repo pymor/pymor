@@ -217,12 +217,11 @@ class NumpyVectorSpace(VectorSpace):
         See :attr:`~pymor.vectorarrays.interface.VectorSpace.id`.
     """
 
-    def __init__(self, dim, id=None):
-        self.dim = dim
-        self.id = id
+    def __init__(self, dim, *, product=None, id=None, is_dual=False):
+        self.__auto_init(locals())
 
-    def __eq__(self, other):
-        return type(other) is type(self) and self.dim == other.dim and self.id == other.id
+    def _same_raw_space(self, other):
+        return isinstance(other, NumpyVectorSpace) and self.dim == other.dim
 
     def __hash__(self):
         return hash(self.dim) + hash(self.id)

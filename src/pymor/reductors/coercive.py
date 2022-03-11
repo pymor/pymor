@@ -30,10 +30,6 @@ class CoerciveRBReductor(StationaryRBReductor):
         The |Model| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
-    product
-        Inner product for the orthonormalization of `RB`, the projection of the
-        |Operators| given by `vector_ranged_operators` and for the computation of
-        Riesz representatives of the residual. If `None`, the Euclidean product is used.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound for the coercivity
         constant of the given problem. Note that the computed error estimate is only
@@ -41,22 +37,22 @@ class CoerciveRBReductor(StationaryRBReductor):
         estimate is specified.
     """
 
-    def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
+    def __init__(self, fom, RB=None, coercivity_estimator=None,
                  check_orthonormality=None, check_tol=None):
-        super().__init__(fom, RB, product=product, check_orthonormality=check_orthonormality,
-                         check_tol=check_tol)
+        super().__init__(fom, RB, check_orthonormality=check_orthonormality, check_tol=check_tol)
         self.coercivity_estimator = coercivity_estimator
-        self.residual_reductor = ResidualReductor(self.bases['RB'], self.fom.operator, self.fom.rhs,
-                                                  product=product, riesz_representatives=True)
+        self.residual_reductor = ResidualReductor(self.bases['RB'], self.fom.operator, self.fom.rhs)
 
     def assemble_error_estimator(self):
         residual = self.residual_reductor.reduce()
 
         # output estimate
         if self.fom.output_functional.linear:
+            # FIXME The following code is broken as .H does not properly take inner products
+            # into account!
             output_adjoint = self.fom.output_functional.H
             output_adjoint_riesz_range = estimate_image(vectors=(output_adjoint,), orthonormalize=True,
-                                                        product=self.products['RB'], riesz_representatives=True)
+                                                        riesz_representatives=output_adjoint.range.is_dual)
             projected_output_adjoint = project(output_adjoint, output_adjoint_riesz_range, None)
         else:
             projected_output_adjoint = None

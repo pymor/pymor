@@ -70,8 +70,8 @@ class NumpyGenericOperator(Operator):
     def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameters={},
                  source_id=None, range_id=None, solver_options=None, name=None):
         self.__auto_init(locals())
-        self.source = NumpyVectorSpace(dim_source, source_id)
-        self.range = NumpyVectorSpace(dim_range, range_id)
+        self.source = NumpyVectorSpace(dim_source, id=source_id)
+        self.range = NumpyVectorSpace(dim_range, id=range_id)
         self.parameters_own = parameters
 
     def apply(self, U, mu=None):
@@ -121,8 +121,8 @@ class NumpyMatrixBasedOperator(Operator):
     def assemble(self, mu=None):
         assert self.parameters.assert_compatible(mu)
         return NumpyMatrixOperator(self._assemble(mu),
-                                   source_id=self.source.id,
-                                   range_id=self.range.id,
+                                   range=self.range,
+                                   source=self.source,
                                    solver_options=self.solver_options,
                                    name=self.name)
 
@@ -183,7 +183,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         Name of the operator.
     """
 
-    def __init__(self, matrix, source_id=None, range_id=None, solver_options=None, name=None):
+    def __init__(self, matrix, range=None, source=None, solver_options=None, name=None):
+        range = range or NumpyVectorSpace(matrix.shape[1])
+        source = source or NumpyVectorSpace(matrix.shape[0])
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
             matrix = np.reshape(matrix, (1, -1))
@@ -191,21 +193,22 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             matrix.setflags(write=False)  # make numpy arrays read-only
         except AttributeError:
             pass
+        assert isinstance(source, NumpyVectorSpace) and source.dim == matrix.shape[1]
+        assert isinstance(range, NumpyVectorSpace) and range.dim == matrix.shape[0]
 
         self.__auto_init(locals())
-        self.source = NumpyVectorSpace(matrix.shape[1], source_id)
-        self.range = NumpyVectorSpace(matrix.shape[0], range_id)
         self.sparse = issparse(matrix)
 
     @classmethod
-    def from_file(cls, path, key=None, source_id=None, range_id=None, solver_options=None, name=None):
+    def from_file(cls, path, key=None, range=None, source=None, solver_options=None, name=None):
         from pymor.tools.io import load_matrix
         matrix = load_matrix(path, key=key)
-        return cls(matrix, solver_options=solver_options, source_id=source_id, range_id=range_id,
+        return cls(matrix, solver_options=solver_options, range=range, source=source,
                    name=name or key or path)
 
     @property
     def H(self):
+        #FIXME
         options = {'inverse': self.solver_options.get('inverse_adjoint'),
                    'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
         if self.sparse:
@@ -383,8 +386,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 matrix += (np.eye(matrix.shape[0]) * identity_shift)
 
         return NumpyMatrixOperator(matrix,
-                                   source_id=self.source.id,
-                                   range_id=self.range.id,
+                                   range=self.range,
+                                   source=self.source,
                                    solver_options=solver_options)
 
     def __getstate__(self):
@@ -470,8 +473,8 @@ class NumpyHankelOperator(NumpyGenericOperator):
         self.__auto_init(locals())
         s, p, m = markov_parameters.shape
         n = s // 2 + 1
-        self.source = NumpyVectorSpace(m * n, source_id)
-        self.range = NumpyVectorSpace(p * n, range_id)
+        self.source = NumpyVectorSpace(m * n, id=source_id)
+        self.range = NumpyVectorSpace(p * n, id=range_id)
         self.linear = True
         self._circulant = self._calc_circulant()
 

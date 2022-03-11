@@ -110,15 +110,16 @@ def main(
     coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
 
     # inner product for computation of Riesz representatives
-    product = fom.h1_0_semi_product if product == 'h1' else None
+    #FIXME Allow specifying product
+    # product = fom.h1_0_semi_product if product == 'h1' else None
 
     if reductor == 'residual_basis':
         from pymor.reductors.coercive import CoerciveRBReductor
-        reductor = CoerciveRBReductor(fom, product=product, coercivity_estimator=coercivity_estimator,
+        reductor = CoerciveRBReductor(fom, coercivity_estimator=coercivity_estimator,
                                       check_orthonormality=False)
     elif reductor == 'traditional':
         from pymor.reductors.coercive import SimpleCoerciveRBReductor
-        reductor = SimpleCoerciveRBReductor(fom, product=product, coercivity_estimator=coercivity_estimator,
+        reductor = SimpleCoerciveRBReductor(fom, coercivity_estimator=coercivity_estimator,
                                             check_orthonormality=False)
     else:
         assert False  # this should never happen
@@ -407,7 +408,7 @@ def reduce_pod(fom, reductor, parameter_space, snapshots_per_block, basis_size):
         snapshots.append(fom.solve(mu))
 
     print('Performing POD ...')
-    basis, singular_values = pod(snapshots, modes=basis_size, product=reductor.products['RB'])
+    basis, singular_values = pod(snapshots, modes=basis_size)
 
     print('Reducing ...')
     reductor.extend_basis(basis, method='trivial')

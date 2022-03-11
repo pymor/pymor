@@ -52,18 +52,12 @@ class ResidualReductor(BasicObject):
         See definition of `residual`.
     rhs
         See definition of `residual`. If `None`, zero right-hand side is assumed.
-    product
-        Inner product |Operator| w.r.t. which to orthonormalize and w.r.t. which to
-        compute the Riesz representatives in case `operator` maps to functionals.
-    riesz_representatives
-        If `True` compute the Riesz representative of the residual.
     """
 
-    def __init__(self, RB, operator, rhs=None, product=None, riesz_representatives=False):
+    def __init__(self, RB, operator, rhs=None):
         assert RB in operator.source
         assert rhs is None \
             or (rhs.source.is_scalar and rhs.range == operator.range and rhs.linear)
-        assert product is None or product.source == product.range == operator.range
 
         self.__auto_init(locals())
         self.residual_range = operator.range.empty()
@@ -77,33 +71,26 @@ class ResidualReductor(BasicObject):
                         estimate_image_hierarchical([self.operator], [self.rhs],
                                                     self.RB,
                                                     (self.residual_range, self.residual_range_dims),
-                                                    orthonormalize=True, product=self.product,
-                                                    riesz_representatives=self.riesz_representatives)
+                                                    orthonormalize=True,
+                                                    riesz_representatives=self.operator.range.is_dual)
                 except ImageCollectionError as e:
                     self.logger.warning(f'Cannot compute range of {e.op}. Evaluation will be slow.')
                     self.residual_range = False
 
         if self.residual_range is False:
             operator = project(self.operator, None, self.RB)
-            return NonProjectedResidualOperator(operator, self.rhs, self.riesz_representatives, self.product)
+            return NonProjectedResidualOperator(operator, self.rhs)
 
         with self.logger.block('Projecting residual operator ...'):
-            if self.riesz_representatives:
-                operator = project(self.operator, self.residual_range, self.RB, product=None)  # the product cancels out
-                rhs = project(self.rhs, self.residual_range, None, product=None)
-            else:
-                operator = project(self.operator, self.residual_range, self.RB, product=self.product)
-                rhs = project(self.rhs, self.residual_range, None, product=self.product)
+            operator = project(self.operator, self.residual_range, self.RB)
+            rhs = project(self.rhs, self.residual_range, None)
 
         return ResidualOperator(operator, rhs)
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional residual vector from reduced vector `u`."""
         if self.residual_range is False:
-            if self.product:
-                return u * (u.norm() / u.norm(self.product))[0]
-            else:
-                return u
+            return u
         else:
             return self.residual_range[:u.dim].lincomb(u.to_numpy())
 
@@ -135,33 +122,6 @@ class ResidualOperator(Operator):
 
 
 class NonProjectedResidualOperator(ResidualOperator):
-    """Instantiated by :class:`ResidualReductor`.
-
-    Not to be used directly.
-    """
-
-    def __init__(self, operator, rhs, riesz_representatives, product):
-        super().__init__(operator, rhs)
-        self.__auto_init(locals())
-
-    def apply(self, U, mu=None):
-        R = super().apply(U, mu=mu)
-        if self.product:
-            if self.riesz_representatives:
-                R_riesz = self.product.apply_inverse(R)
-                # divide by norm, except when norm is zero:
-                inversel2 = 1./R_riesz.norm()
-                inversel2 = np.nan_to_num(inversel2)
-                R_riesz.scal(np.sqrt(R_riesz.pairwise_inner(R)) * inversel2)
-                return R_riesz
-            else:
-                # divide by norm, except when norm is zero:
-                inversel2 = 1./R.norm()
-                inversel2 = np.nan_to_num(inversel2)
-                R.scal(np.sqrt(self.product.pairwise_apply2(R, R)) * inversel2)
-                return R
-        else:
-            return R
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         return self.with_(operator=project_to_subbasis(self.operator, None, dim_source))

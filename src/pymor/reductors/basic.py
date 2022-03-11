@@ -28,13 +28,8 @@ class ProjectionBasedReductor(BasicObject):
         The full order |Model| to reduce.
     bases
         A dict of |VectorArrays| of basis vectors.
-    products
-        A dict of inner product |Operators| w.r.t. which the corresponding bases are
-        orthonormalized. A value of `None` corresponds to orthonormalization of the
-        basis w.r.t. the Euclidean inner product.
     check_orthonormality
-        If `True`, check if bases which have a corresponding entry in the `products`
-        dict are orthonormal w.r.t. the given inner product. After each
+        If `True`, check if bases are orthonormal. After each
         :meth:`basis extension <extend_basis>`, orthonormality is checked again.
     check_tol
         If `check_orthonormality` is `True`, the numerical tolerance with which the checks
@@ -42,10 +37,8 @@ class ProjectionBasedReductor(BasicObject):
     """
 
     @defaults('check_orthonormality', 'check_tol')
-    def __init__(self, fom, bases, products={}, check_orthonormality=True, check_tol=1e-3):
-        assert products.keys() <= bases.keys()
+    def __init__(self, fom, bases, check_orthonormality=True, check_tol=1e-3):
         bases = dict(bases)
-        products = dict(products)
         self.__auto_init(locals())
         self._last_rom = None
 
@@ -126,19 +119,17 @@ class ProjectionBasedReductor(BasicObject):
     def extend_basis(self, U, basis='RB', method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
         basis_length = len(self.bases[basis])
 
-        extend_basis(U, self.bases[basis], self.products.get(basis), method=method, pod_modes=pod_modes,
-                     pod_orthonormalize=pod_orthonormalize,
+        extend_basis(U, self.bases[basis], method=method, pod_modes=pod_modes, pod_orthonormalize=pod_orthonormalize,
                      copy_U=copy_U)
 
         self._check_orthonormality(basis, basis_length)
 
     def _check_orthonormality(self, basis, offset=0):
-        if not self.check_orthonormality or basis not in self.products:
+        if not self.check_orthonormality:
             return
 
         U = self.bases[basis]
-        product = self.products.get(basis, None)
-        error_matrix = U[offset:].inner(U, product)
+        error_matrix = U[offset:].inner(U)
         error_matrix[:len(U) - offset, offset:] -= np.eye(len(U) - offset)
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
@@ -155,21 +146,17 @@ class StationaryRBReductor(ProjectionBasedReductor):
         The full order |Model| to reduce.
     RB
         The basis of the reduced space onto which to project. If `None` an empty basis is used.
-    product
-        Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the Euclidean
-        inner product is used.
     check_orthonormality
         See :class:`ProjectionBasedReductor`.
     check_tol
         See :class:`ProjectionBasedReductor`.
     """
 
-    def __init__(self, fom, RB=None, product=None, check_orthonormality=None, check_tol=None):
+    def __init__(self, fom, RB=None, check_orthonormality=None, check_tol=None):
         assert isinstance(fom, StationaryModel)
         RB = fom.solution_space.empty() if RB is None else RB
         assert RB in fom.solution_space
-        super().__init__(fom, {'RB': RB}, {'RB': product},
-                         check_orthonormality=check_orthonormality, check_tol=check_tol)
+        super().__init__(fom, {'RB': RB}, check_orthonormality=check_orthonormality, check_tol=check_tol)
 
     def project_operators(self):
         fom = self.fom
@@ -206,12 +193,6 @@ class InstationaryRBReductor(ProjectionBasedReductor):
         The full order |Model| to reduce.
     RB
         The basis of the reduced space onto which to project. If `None` an empty basis is used.
-    product
-        Inner product |Operator| w.r.t. which `RB` is orthonormalized. If `None`, the
-        the Euclidean inner product is used.
-    initial_data_product
-        Inner product |Operator| w.r.t. which the `initial_data` of `fom` is orthogonally projected.
-        If `None`, the Euclidean inner product is used.
     product_is_mass
         If `True`, no mass matrix for the reduced |Model| is assembled.  Set to `True` if `RB` is
         orthonormal w.r.t. the `mass` matrix of `fom`.
@@ -221,36 +202,25 @@ class InstationaryRBReductor(ProjectionBasedReductor):
         See :class:`ProjectionBasedReductor`.
     """
 
-    def __init__(self, fom, RB=None, product=None, initial_data_product=None, product_is_mass=False,
-                 check_orthonormality=None, check_tol=None):
+    def __init__(self, fom, RB=None, product_is_mass=False, check_orthonormality=None, check_tol=None):
         assert isinstance(fom, InstationaryModel)
         RB = fom.solution_space.empty() if RB is None else RB
         assert RB in fom.solution_space
-        super().__init__(fom, {'RB': RB}, {'RB': product},
-                         check_orthonormality=check_orthonormality, check_tol=check_tol)
-        self.initial_data_product = initial_data_product or product
+        super().__init__(fom, {'RB': RB}, check_orthonormality=check_orthonormality, check_tol=check_tol)
         self.product_is_mass = product_is_mass
 
     def project_operators(self):
         fom = self.fom
         RB = self.bases['RB']
-        product = self.products['RB']
 
-        if self.initial_data_product != product:
-            # TODO there should be functionality for this somewhere else
-            projection_matrix = RB.gramian(self.initial_data_product)
-            projection_op = NumpyMatrixOperator(projection_matrix)
-            inverse_projection_op = InverseOperator(projection_op, 'inverse_projection_op')
-            pid = project(fom.initial_data, range_basis=RB, source_basis=None, product=self.initial_data_product)
-            projected_initial_data = ConcatenationOperator([inverse_projection_op, pid])
-        else:
-            projected_initial_data = project(fom.initial_data, range_basis=RB, source_basis=None,
-                                             product=product)
+        if not self.check_orthonormality:
+            self.logger.warn('Reduced basis must be orothonormal for correct projection of initial data. '
+                             'Orthonomality check is disabled.')
+        projected_initial_data = project(fom.initial_data, range_basis=RB, source_basis=None)
 
         projected_operators = {
-            'mass':              (None if (isinstance(fom.mass, IdentityOperator) and product is None
-                                           or self.product_is_mass) else
-                                  project(fom.mass, RB, RB)),
+            'mass':              (None if (isinstance(fom.mass, IdentityOperator) or self.product_is_mass)
+                                  else project(fom.mass, RB, RB)),
             'operator':          project(fom.operator, RB, RB),
             'rhs':               project(fom.rhs, RB, None),
             'initial_data':      projected_initial_data,
@@ -265,16 +235,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
         dim = dims['RB']
         product = self.products['RB']
 
-        if self.initial_data_product != product:
-            # TODO there should be functionality for this somewhere else
-            pop = project_to_subbasis(rom.initial_data.operators[1], dim_range=dim, dim_source=None)
-            inverse_projection_op = InverseOperator(
-                project_to_subbasis(rom.initial_data.operators[0].operator, dim_range=dim, dim_source=dim),
-                name='inverse_projection_op'
-            )
-            projected_initial_data = ConcatenationOperator([inverse_projection_op, pop])
-        else:
-            projected_initial_data = project_to_subbasis(rom.initial_data, dim_range=dim, dim_source=None)
+        projected_initial_data = project_to_subbasis(rom.initial_data, dim_range=dim, dim_source=None)
 
         projected_operators = {
             'mass':              project_to_subbasis(rom.mass, dim, dim),
@@ -460,7 +421,7 @@ class DelayLTIPGReductor(ProjectionBasedReductor):
         return super().reconstruct(u, basis)
 
 
-def extend_basis(U, basis, product=None, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
+def extend_basis(U, basis, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
     assert method in ('trivial', 'gram_schmidt', 'pod')
 
     basis_length = len(basis)
@@ -474,14 +435,14 @@ def extend_basis(U, basis, product=None, method='gram_schmidt', pod_modes=1, pod
                      remove_from_other=(not copy_U))
     elif method == 'gram_schmidt':
         basis.append(U, remove_from_other=(not copy_U))
-        gram_schmidt(basis, offset=basis_length, product=product, copy=False, check=False)
+        gram_schmidt(basis, offset=basis_length, copy=False, check=False)
     elif method == 'pod':
-        U_proj_err = U - basis.lincomb(U.inner(basis, product))
+        U_proj_err = U - basis.lincomb(U.inner(basis))
 
-        basis.append(pod(U_proj_err, modes=pod_modes, product=product, orth_tol=np.inf)[0])
+        basis.append(pod(U_proj_err, modes=pod_modes, orth_tol=np.inf)[0])
 
         if pod_orthonormalize:
-            gram_schmidt(basis, offset=basis_length, product=product, copy=False, check=False)
+            gram_schmidt(basis, offset=basis_length, copy=False, check=False)
 
     if len(basis) <= basis_length:
         raise ExtensionError

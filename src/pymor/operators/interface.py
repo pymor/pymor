@@ -65,6 +65,11 @@ class Operator(ParametricObject):
     solver_options = None
 
     @property
+    def T(self):
+        from pymor.operators.constructions import TransposeOperator
+        return TransposeOperator(self)
+
+    @property
     def H(self):
         from pymor.operators.constructions import AdjointOperator
         return AdjointOperator(self)
@@ -113,10 +118,10 @@ class Operator(ParametricObject):
         evaluations.
         """
         assert self.parameters.assert_compatible(mu)
-        assert isinstance(V, VectorArray)
-        assert isinstance(U, VectorArray)
+        assert V in self.range.dual
+        assert U in self.source
         AU = self.apply(U, mu=mu)
-        return V.inner(AU)
+        return V.dual_pairing(AU)
 
     def pairwise_apply2(self, V, U, mu=None):
         """Treat the operator as a 2-form and apply it to V and U in pairs.
@@ -146,11 +151,17 @@ class Operator(ParametricObject):
         the 2-form evaluations.
         """
         assert self.parameters.assert_compatible(mu)
-        assert isinstance(V, VectorArray)
-        assert isinstance(U, VectorArray)
+        assert V in self.range.dual
+        assert U in self.source
         assert len(U) == len(V)
         AU = self.apply(U, mu=mu)
-        return V.pairwise_inner(AU)
+        return V.pairwise_dual_pairing(AU)
+
+    def apply_transpose(self, V, mu=None):
+        if self.linear:
+            raise NotImplementedError
+        else:
+            raise LinAlgError('Operator not linear.')
 
     def apply_adjoint(self, V, mu=None):
         """Apply the adjoint operator.
@@ -253,6 +264,20 @@ class Operator(ParametricObject):
                     except NewtonError as e:
                         raise InversionError(e)
             return R
+
+    def apply_inverse_transpose(self, U, mu=None, initial_guess=None, least_squares=False):
+        from pymor.operators.constructions import FixedParameterOperator
+        if not self.linear:
+            raise LinAlgError('Operator not linear.')
+        assembled_op = self.assemble(mu)
+        if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
+            return assembled_op.apply_inverse_transpose(U, initial_guess=initial_guess, least_squares=least_squares)
+        else:
+            # use generic solver for the transpose operator
+            from pymor.operators.constructions import TransposeOperator
+            options = {'inverse': self.solver_options.get('inverse_transpose') if self.solver_options else None}
+            transpose_op = TransposeOperator(self, with_apply_inverse=False, solver_options=options)
+            return transpose_op.apply_inverse(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         """Apply the inverse adjoint operator.

@@ -90,6 +90,14 @@ class VectorArray(BasicObject):
             self.ind = ind
             self._len = _len
 
+    @property
+    def product(self):
+        return self.space.product
+
+    @product.setter
+    def product(self, product):
+        self.space = self.space.with_(product=product)
+
     def zeros(self, count=1, reserve=0):
         """Create a |VectorArray| of null vectors of the same |VectorSpace|.
 
@@ -379,7 +387,7 @@ class VectorArray(BasicObject):
         self._copy_impl_if_multiple_refs()
         self.impl.axpy(alpha, x.impl, self.ind, x.ind)
 
-    def inner(self, other, product=None):
+    def inner(self, other):
         """Returns the inner products between |VectorArray| elements.
 
         If `product` is `None`, the Euclidean inner product between
@@ -427,13 +435,25 @@ class VectorArray(BasicObject):
 
             result[i, j] = ( self[i], other[j] ).
         """
-        if product is not None:
-            return product.apply2(self, other)
-        else:
-            assert self.space == other.space
-            return self.impl.inner(other.impl, self.ind, other.ind)
+        assert self.space == other.space
 
-    def pairwise_inner(self, other, product=None):
+        if self.space.product is None:
+            # standard inner product
+            return self.impl.inner(other.impl, self.ind, other.ind)
+        elif self.space.is_dual:
+            # inner product on dual space w.r.t. given product
+            #FIXME Check complex case
+            return self.riez().impl.inner(other.impl, None, other.ind)
+        else:
+            # inner product between vectors
+            return self.space.product.apply2(self, other)
+
+    def dual_pairing(self, other):
+        assert self in other.space.dual
+
+        return self.impl.inner(other.impl, self.ind, other.ind)
+
+    def pairwise_inner(self, other):
         """Returns the pairwise inner products between |VectorArray| elements.
 
         If `product` is `None`, the Euclidean inner product between
@@ -483,12 +503,25 @@ class VectorArray(BasicObject):
             result[i] = ( self[i], other[i] ).
 
         """
-        if product is not None:
-            return product.pairwise_apply2(self, other)
-        else:
-            assert self.space == other.space
-            assert len(self) == len(other)
+        assert self.space == other.space
+        assert len(self) == len(other)
+
+        if self.space.product is None:
+            # standard inner product
             return self.impl.pairwise_inner(other.impl, self.ind, other.ind)
+        elif self.space.is_dual:
+            # inner product on dual space w.r.t. given product
+            #FIXME Check complex case
+            return self.riez().impl.pairwise_inner(other.impl, None, other.ind)
+        else:
+            # inner product between vectors
+            return self.space.product.pairwise_apply2(self, other)
+
+    def pairwise_dual_pairing(self, other):
+        assert self in other.space.dual
+        assert len(self) == len(other)
+
+        return self.impl.pairwise_inner(other.impl, self.ind, other.ind)
 
     def lincomb(self, coefficients):
         """Returns linear combinations of the vectors contained in the array.
@@ -517,7 +550,7 @@ class VectorArray(BasicObject):
         assert coefficients.shape[-1] == len(self)
         return type(self)(self.space, self.impl.lincomb(coefficients, self.ind))
 
-    def norm(self, product=None, tol=None, raise_complex=None):
+    def norm(self, tol=None, raise_complex=None):
         """Norm with respect to a given inner product.
 
         If `product` is `None`, the Euclidean norms of the :meth:`dofs`
@@ -550,16 +583,16 @@ class VectorArray(BasicObject):
         -------
         A one-dimensional |NumPy array| of the norms of the vectors in the array.
         """
-        if product is not None:
-            norm_squared = self.norm2(product=product, tol=tol, raise_complex=raise_complex)
-            return np.sqrt(norm_squared.real)
-        else:
+        if self.space.product is None:
             norm = self.impl.norm(self.ind)
             assert np.all(np.isrealobj(norm))
             return norm
+        else:
+            norm_squared = self.norm2(tol=tol, raise_complex=raise_complex)
+            return np.sqrt(norm_squared.real)
 
     @defaults('tol', 'raise_complex')
-    def norm2(self, product=None, tol=1e-10, raise_complex=True):
+    def norm2(self, tol=1e-10, raise_complex=True):
         """Squared norm with respect to a given inner product.
 
         If `product` is `None`, the Euclidean norms of the :meth:`dofs`
@@ -592,15 +625,30 @@ class VectorArray(BasicObject):
         -------
         A one-dimensional |NumPy array| of the squared norms of the vectors in the array.
         """
-        if product is not None:
-            norm_squared = product.pairwise_apply2(self, self)
-            if raise_complex and np.any(np.abs(norm_squared.imag) > tol):
-                raise ValueError(f'norm is complex (square = {norm_squared})')
-            return norm_squared.real
-        else:
+        if self.space.product is None:
             norm_squared = self.impl.norm2(self.ind)
             assert np.all(np.isrealobj(norm_squared))
             return norm_squared
+        else:
+            U = self.riesz() if self.space.is_dual else self
+            norm_squared = self.space.product.pairwise_apply2(U, U)
+            if raise_complex and np.any(np.abs(norm_squared.imag) > tol):
+                raise ValueError(f'norm is complex (square = {norm_squared})')
+            return norm_squared.real
+
+    def riesz(self):
+        if self.space.product is None:
+            R = self.impl.riesz(self.ind)
+            if R is self.impl:
+                R = self.copy()
+            else:
+                R = type(self)(self.space, R)
+        elif self.space.is_dual:
+            R = self.space.product.apply_inverse(self)
+        else:
+            R = self.space.product.apply(self)
+        R.space = self.space.dual
+        return R
 
     def sup_norm(self):
         """The l-infinity-norms of the vectors contained in the array.
@@ -656,10 +704,10 @@ class VectorArray(BasicObject):
         assert self.dim > 0
         return self.impl.amax(self.ind)
 
-    def gramian(self, product=None):
+    def gramian(self):
         """Shorthand for `self.inner(self, product)`."""
-        if product is not None:
-            return product.apply2(self, self)
+        if self.space.product is not None:
+            return self.space.product.apply2(self, self)
         else:
             return self.impl.gramian(self.ind)
 
@@ -688,7 +736,7 @@ class VectorArray(BasicObject):
         if isinstance(other, Number):
             assert other == 0
             return self.copy()
-        assert other in self.space
+        assert other.space == self.space
         assert len(self) == len(other) or len(other) == 1
         return type(self)(self.space, self.impl.axpy_copy(1, other.impl, self.ind, other.ind))
 
@@ -699,7 +747,7 @@ class VectorArray(BasicObject):
     __radd__ = __add__
 
     def __sub__(self, other):
-        assert other in self.space
+        assert other.space == self.space
         assert len(self) == len(other) or len(other) == 1
         return type(self)(self.space, self.impl.axpy_copy(-1, other.impl, self.ind, other.ind))
 
@@ -835,6 +883,15 @@ class VectorSpace(ImmutableObject):
     id = None
     dim = None
     is_scalar = False
+    is_dual = False
+    product = None
+
+    @property
+    def dual(self):
+        if self.product is None:
+            return self
+        else:
+            return self.with_(is_dual=not self.is_dual)
 
     @abstractmethod
     def make_array(*args, **kwargs):
@@ -983,16 +1040,19 @@ class VectorSpace(ImmutableObject):
         raise NotImplementedError
 
     def __eq__(self, other):
-        return other is self
+        return (self._same_raw_space(other)
+                and self.id == other.id
+                and self.product == other.product
+                and self.is_dual == other.is_dual)
 
     def __ne__(self, other):
         return not (self == other)
 
     def __contains__(self, other):
-        return self == getattr(other, 'space', None)
-
-    def __hash__(self):
-        return hash(self.id)
+        other = other.space
+        return (self._same_raw_space(other)
+                and self.id == other.id
+                and self.is_dual == other.is_dual)
 
 
 def _create_random_values(shape, distribution, random_state, **kwargs):

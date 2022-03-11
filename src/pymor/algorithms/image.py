@@ -14,7 +14,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def estimate_image(operators=(), vectors=(),
-                   domain=None, extends=False, orthonormalize=True, product=None,
+                   domain=None, extends=False, orthonormalize=True,
                    riesz_representatives=False):
     """Estimate the image of given |Operators| for all mu.
 
@@ -50,8 +50,6 @@ def estimate_image(operators=(), vectors=(),
     orthonormalize
         Compute an orthonormal basis for the linear span of `image` using the
         :func:`~pymor.algorithms.gram_schmidt.gram_schmidt` algorithm.
-    product
-        Inner product |Operator| w.r.t. which to orthonormalize.
     riesz_representatives
         If `True`, compute Riesz representatives of the vectors in `image` before
         orthonormalizing (useful for dual norm computation when the range of the
@@ -82,7 +80,6 @@ def estimate_image(operators=(), vectors=(),
         for v in vectors
     )
     assert domain is None or domain_space is None or domain in domain_space
-    assert product is None or product.source == product.range == image_space
 
     image = image_space.empty()
     if not extends:
@@ -102,17 +99,17 @@ def estimate_image(operators=(), vectors=(),
         except NoMatchingRuleError as e:
             raise ImageCollectionError(e.obj)
 
-    if riesz_representatives and product:
-        image = product.apply_inverse(image)
+    if riesz_representatives:
+        image = image.riesz()
 
     if orthonormalize:
-        gram_schmidt(image, product=product, copy=False)
+        gram_schmidt(image, copy=False)
 
     return image
 
 
 def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=None,
-                                orthonormalize=True, product=None, riesz_representatives=False):
+                                orthonormalize=True, riesz_representatives=False):
     """Estimate the image of given |Operators| for all mu.
 
     This is an extended version of :func:`estimate_image`, which calls
@@ -147,8 +144,6 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
         modified in-place.
     orthonormalize
         See :func:`estimate_image`.
-    product
-        See :func:`estimate_image`.
     riesz_representatives
         See :func:`estimate_image`.
 
@@ -180,7 +175,6 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
         for v in vectors
     )
     assert domain is None or domain_space is None or domain in domain_space
-    assert product is None or product.source == product.range == image_space
     assert extends is None or len(extends) == 2
 
     logger = getLogger('pymor.algorithms.image.estimate_image_hierarchical')
@@ -201,18 +195,16 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
         logger.info(f'Estimating image for basis vector {i} ...')
         if i == -1:
             new_image = estimate_image(operators, vectors, None, extends=False,
-                                       orthonormalize=False, product=product,
-                                       riesz_representatives=riesz_representatives)
+                                       orthonormalize=False, riesz_representatives=riesz_representatives)
         else:
             new_image = estimate_image(operators, [], domain[i], extends=True,
-                                       orthonormalize=False, product=product,
-                                       riesz_representatives=riesz_representatives)
+                                       orthonormalize=False, riesz_representatives=riesz_representatives)
 
         gram_schmidt_offset = len(image)
         image.append(new_image, remove_from_other=True)
         if orthonormalize:
             with logger.block('Orthonormalizing ...'):
-                gram_schmidt(image, offset=gram_schmidt_offset, product=product, copy=False)
+                gram_schmidt(image, offset=gram_schmidt_offset, copy=False)
             image_dims.append(len(image))
 
     return image, image_dims

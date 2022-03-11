@@ -15,7 +15,7 @@ from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-def project(op, range_basis, source_basis, product=None):
+def project(op, range_basis, source_basis):
     """Petrov-Galerkin projection of a given |Operator|.
 
     Given an inner product `( ⋅, ⋅)`, source vectors `b_1, ..., b_N`
@@ -50,25 +50,19 @@ def project(op, range_basis, source_basis, product=None):
     source_basis
         The vectors `b_1, ..., b_N` as a |VectorArray| or `None`. If `None`,
         no restriction of the source space is performed.
-    product
-        An |Operator| representing the inner product.  If `None`, the
-        Euclidean inner product is chosen.
 
     Returns
     -------
     The projected |Operator| `op_proj`.
     """
     assert source_basis is None or source_basis in op.source
-    assert range_basis is None or range_basis in op.range
-    assert product is None or product.source == product.range == op.range
-
-    rb = product.apply(range_basis) if product is not None and range_basis is not None else range_basis
+    assert range_basis is None or range_basis in op.range.dual or range_basis.space == op.range
 
     try:
-        return ProjectRules(rb, source_basis).apply(op)
+        return ProjectRules(range_basis, source_basis).apply(op)
     except NoMatchingRuleError:
         op.logger.warning('Using inefficient generic projection operator')
-        return ProjectedOperator(op, range_basis, source_basis, product)
+        return ProjectedOperator(op, range_basis, source_basis)
 
 
 class ProjectRules(RuleTable):
@@ -119,7 +113,7 @@ class ProjectRules(RuleTable):
                 raise RuleNotMatchingError('apply_adjoint not implemented')
             if isinstance(op.source, NumpyVectorSpace):
                 from pymor.operators.numpy import NumpyMatrixOperator
-                return NumpyMatrixOperator(V.to_numpy(), source_id=op.source.id, name=op.name)
+                return NumpyMatrixOperator(V.to_numpy(), source=op.source, name=op.name)
             else:
                 from pymor.operators.constructions import VectorArrayOperator
                 return VectorArrayOperator(V, adjoint=True, name=op.name)
@@ -128,7 +122,7 @@ class ProjectRules(RuleTable):
                 V = op.apply(source_basis)
                 if isinstance(op.range, NumpyVectorSpace):
                     from pymor.operators.numpy import NumpyMatrixOperator
-                    return NumpyMatrixOperator(V.to_numpy().T, range_id=op.range.id, name=op.name)
+                    return NumpyMatrixOperator(V.to_numpy().T, range=op.range, name=op.name)
                 else:
                     from pymor.operators.constructions import VectorArrayOperator
                     return VectorArrayOperator(V, adjoint=False, name=op.name)
@@ -369,5 +363,5 @@ class ProjectToSubbasisRules(RuleTable):
             else op.source_basis[:dim_source]
         range_basis = op.range_basis if dim_range is None \
             else op.range_basis[:dim_range]
-        return ProjectedOperator(op.operator, range_basis, source_basis, product=None,
+        return ProjectedOperator(op.operator, range_basis, source_basis,
                                  solver_options=op.solver_options)
