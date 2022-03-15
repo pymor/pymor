@@ -8,21 +8,18 @@ from scipy.sparse.linalg import eigsh, LinearOperator
 from scipy.special import erfinv
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.algorithms import svd_va 
 from pymor.core.defaults import defaults
 from pymor.operators.interface import Operator
 from pymor.algorithms.eigs import eigs
 from pymor.core.logger import getLogger
 from pymor.vectorarrays.interface import VectorArray
-from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
 from pymor.operators.constructions import VectorArrayOperator, InverseOperator, IdentityOperator
-from pymor.operators.numpy import NumpyMatrixOperator
 
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
 def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
                  failure_tolerance=1e-15, num_testvecs=20, lambda_min=None, iscomplex=False):
-    """Adaptive randomized range approximation of `A`.
+    r"""Adaptive randomized range approximation of `A`.
 
     This is an implementation of Algorithm 1 in :cite:`BS18`.
 
@@ -103,12 +100,14 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
 
 @defaults('q', 'l')
 def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False, iscomplex=False):
-    """Randomized range approximation of `A`.
+    r"""Randomized range approximation of `A`.
 
     This is an implementation of Algorithm 4.4 in :cite:`HMT11`.
 
     Given the |Operator| `A`, the return value of this method is the |VectorArray|
-    `Q` whose vectors form an approximate orthonomal basis for the range of `A`.
+    `Q` whose vectors form an approximate orthonomal basis for the range of `A`.#
+
+    This method is based on algorithm 2 in cite:`SBH21`. 
 
     Parameters
     ----------
@@ -169,20 +168,18 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
 
 @defaults('p', 'q', 'modes')
 def random_generalized_svd(A, range_product=None, source_product=None, modes=3, p=20, q=2):
-    """Randomized SVD of a |VectorArray| or an |Operator|. 
-
-    Saibaba AK, Hart J, van BloemenWaanders B. Randomized algorithms for
-    generalized singular value decomposition with application to sensitivity analysis. Numer Linear Algebra Appl.
-    2021;28:e2364. 
-    https://doi.org/10.1002/nla.2364
+    r"""Randomized SVD of a |VectorArray| or an |Operator|. 
 
     Viewing the 'A' as a 'A.dim' x 'len(A)' matrix, the return value
     of this method is the randomized singular value decomposition of 'A', where the
     inner product on R^('dim(A)') is given by 'range_product' and the inner product on R^('len(A)')
     is given by 'source_product'. 
         
-        A = U*\Sigma*V*source_product
+        A = U*\Sigma*V^H*source_product
     
+
+    This method is based on :cite:`SHB21`.
+
     Parameters
     ----------
     A : 
@@ -216,9 +213,9 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=3, 
         A = VectorArrayOperator(A)
    
     assert 0 <= modes <= max(A.source.dim, A.range.dim) and isinstance(modes, int)
-    assert p >= 0 and isinstance(p, int)
+    assert 0 <= p <= max(A.source.dim, A.range.dim) and isinstance(p, int)
     assert q >= 0 and isinstance(q, int)
-    
+
     if range_product is None:
         range_product = IdentityOperator(A.range)
     else:
@@ -235,12 +232,12 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=3, 
     Q = rrf(A, source_product=source_product, range_product=range_product, q=q, l=modes+p)
     B = A.apply_adjoint(range_product.apply(Q))
     Q_B, R_B = gram_schmidt(source_product.apply_inverse(B), product=source_product, return_R=True)
-    U_b, s, Vh_b = sp.linalg.svd(R_B.T)
+    U_b, s, Vh_b = sp.linalg.svd(R_B.T, full_matrices=False)
 
-    with logger.block(f'Computing generalized left-singular vectors ({U_b[:,:modes].shape[1]} vectors) ...'):
+    with logger.block(f'Computing generalized left-singular vectors ({modes} vectors) ...'):
         U = Q.lincomb(U_b)
 
-    with logger.block(f'Computung gerneralized right-singular vector ({Vh_b[:modes,:].shape[0]} vectors) ...'):
+    with logger.block(f'Computung gerneralized right-singular vector ({modes} vectors) ...'):
         V = Q_B.lincomb(Vh_b.T)
         
     return  U[:modes], s[:modes], V[:modes]
@@ -248,17 +245,11 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=3, 
 
 @defaults('modes', 'p', 'q', 'which', 'maxiter', 'tol', 'imag_tol', 'complex_pair_tol', 'seed')
 def random_ghep(A, E=None, modes=3, p=20, q=2, single_pass=False, sigma=None, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,  imag_tol=1e-12, complex_pair_tol=1e-12, complex_evp=False, left_evp=False, seed=0):
-    """Approximates a few eigenvalues of a linear |Operator| with randomized methods.
+    r"""Approximates a few eigenvalues of a linear |Operator| with randomized methods.
 
     Approximates `modes` eigenvalues `w` with corresponding eigenvectors `v` which solve
     the eigenvalue problem.
-
-    This is an implementation of algorithm 6 and 7 in 
-    Saibaba AK, Lee J. and Kitanidis PK
-    Randomized algorithms for generalized Hermitian eigenvalue problems with application to computing 
-    Karhunen Loeve expansion
-    https://arxiv.org/abs/1307.6885
-
+    
     .. math::
         A v_i = w_i v_i
 
@@ -269,6 +260,8 @@ def random_ghep(A, E=None, modes=3, p=20, q=2, single_pass=False, sigma=None, wh
 
     if `E` is not `None`.
 
+    This method is an implementation of algorithm 6 and 7 in :cite:`SJK21`. 
+
     Parameters
     ----------
     A
@@ -278,7 +271,7 @@ def random_ghep(A, E=None, modes=3, p=20, q=2, single_pass=False, sigma=None, wh
     modes
         The number of eigenvalues and eigenvectors which are to be computed.
     p :
-        If not '0', adds 'p' colums to the randomly sampled matrix in the randrangefinder.rff() method.
+        If not '0', adds 'p' colums to the randomly sampled matrix in the :func:'rrf' method.
         Often called Oversampling parameter.
     q : 
         If not '0', performs 'q' PowerIterations to increase the relative weight
