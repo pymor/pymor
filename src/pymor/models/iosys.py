@@ -8,7 +8,8 @@ import scipy.sparse as sps
 
 from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.eigs import eigs
-from pymor.algorithms.lyapunov import solve_lyap_lrcf, solve_lyap_dense
+from pymor.algorithms.lyapunov import (solve_cont_lyap_lrcf, solve_disc_lyap_lrcf, solve_cont_lyap_dense,
+                                       solve_disc_lyap_dense)
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
 from pymor.core.config import config
@@ -557,10 +558,11 @@ class LTIModel(Model):
             - `'o_dense'`: dense observability Gramian.
 
             .. note::
-                For `'c_lrcf'` and `'o_lrcf'` types, the method assumes the system is asymptotically
-                stable.
-                For `'c_dense'` and `'o_dense'` types, the method assumes there are no two system
-                poles which add to zero.
+                For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
+                For `'*_dense'` types, the method assumes that the underlying Lyapunov equation
+                has a unique solution, i.e. no pair of system poles adds to zero in the
+                continuous-time case and no pair of system poles multiplies to one in the
+                discrete-time case.
         mu
             |Parameter values|.
 
@@ -570,9 +572,6 @@ class LTIModel(Model):
         `self.A.source`.
         If typ is `'c_dense'` or `'o_dense'`, then the Gramian as a |NumPy array|.
         """
-        if self.sampling_time > 0:
-            raise NotImplementedError
-
         assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense')
 
         if not isinstance(mu, Mu):
@@ -584,7 +583,8 @@ class LTIModel(Model):
         E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
         options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
         options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
-
+        solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
+        solve_lyap_dense = solve_cont_lyap_dense if self.sampling_time == 0 else solve_disc_lyap_dense
         if typ == 'c_lrcf':
             return solve_lyap_lrcf(A, E, B.as_range_array(mu=mu),
                                    trans=False, options=options_lrcf)
@@ -666,21 +666,20 @@ class LTIModel(Model):
         norm
             H_2-norm.
         """
-        if self.sampling_time > 0:
-            raise NotImplementedError
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         D_norm2 = np.sum(self.D.as_range_array(mu=mu).norm2())
-        if D_norm2 != 0:
+        if D_norm2 != 0 and self.sampling_time == 0:
             self.logger.warning('The D operator is not exactly zero '
                                 f'(squared Frobenius norm is {D_norm2}).')
+            D_norm2 = 0
         assert self.parameters.assert_compatible(mu)
         if self.dim_input <= self.dim_output:
             cf = self.gramian('c_lrcf', mu=mu)
-            return np.sqrt(self.C.apply(cf, mu=mu).norm2().sum())
+            return np.sqrt(self.C.apply(cf, mu=mu).norm2().sum() + D_norm2)
         else:
             of = self.gramian('o_lrcf', mu=mu)
-            return np.sqrt(self.B.apply_adjoint(of, mu=mu).norm2().sum())
+            return np.sqrt(self.B.apply_adjoint(of, mu=mu).norm2().sum() + D_norm2)
 
     @cached
     def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
@@ -780,6 +779,7 @@ class LTIModel(Model):
         else:
             BmKD = B
 
+        solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
         if self.dim_input <= self.dim_output:
             cf = solve_lyap_lrcf(A - KC, E, BmKD.as_range_array(mu=mu),
                                  trans=False, options=options_lrcf)
@@ -1445,8 +1445,10 @@ class SecondOrderModel(Model):
 
             .. note::
                 For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
-                For `'*_dense'` types, the method assumes there are no two system poles which add to
-                zero.
+                For `'*_dense'` types, the method assumes that the underlying Lyapunov equation
+                has a unique solution, i.e. no pair of system poles adds to zero in the
+                continuous-time case and no pair of system poles multiplies to one in the
+                discrete-time case.
         mu
             |Parameter values|.
 
