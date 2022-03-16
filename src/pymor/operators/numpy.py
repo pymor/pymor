@@ -324,10 +324,17 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     raise InversionError(f'{str(type(e))}: {str(e)}') from e
                 R = R.T
             else:
-                try:
-                    R = solve(self.matrix, V.to_numpy().T).T
-                except np.linalg.LinAlgError as e:
-                    raise InversionError(f'{str(type(e))}: {str(e)}') from e
+                if not hasattr(self, '_inverse'):
+                    try:
+                        self._inverse = np.linalg.inv(self.matrix)
+                    except np.linalg.LinAlgError as e:
+                        inv_err_msg = f'{str(type(e))}: {str(e)}'
+                        try:
+                            R = solve(self.matrix, V.to_numpy().T).T
+                        except np.linalg.LinAlgError as e:
+                            raise InversionError(
+                            f'Neither numpy.linalg.inv nor numpy.linalg.solve succeeded!\nThe errors are: {inv_err_msg}\n{str(type(e))}: {str(e)}') from e
+                R = (self._inverse@V.to_numpy().T).T
 
             if check_finite:
                 if not np.isfinite(np.sum(R)):
