@@ -57,9 +57,12 @@ if platform.python_implementation() == 'CPython':
         return unpickler.load()
 
 else:
-    from functools import partial
-    dump = partial(pickle.dump, protocol=protocol or PROTOCOL)
-    dumps = partial(pickle.dumps, protocol=protocol or PROTOCOL)
+    def dump(obj, file, protocol=None):
+        pickle.dump(obj, file, protocol=protocol or PROTOCOL)
+
+    def dumps(obj, protocol=None):
+        dumps(obj, protocol=protocol or PROTOCOL)
+
     load = pickle.load
     loads = pickle.loads
 
