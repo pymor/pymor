@@ -61,7 +61,7 @@ else:
         pickle.dump(obj, file, protocol=protocol or PROTOCOL)
 
     def dumps(obj, protocol=None):
-        dumps(obj, protocol=protocol or PROTOCOL)
+        pickle.dumps(obj, protocol=protocol or PROTOCOL)
 
     load = pickle.load
     loads = pickle.loads
