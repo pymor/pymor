@@ -21,4 +21,3 @@ readme_renderer[md]
 rstcheck
 scikit-fem
 twine
-pep8
