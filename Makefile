@@ -49,9 +49,6 @@ README.html: README.md
 
 README: README.html
 
-pycodestyle:
-	pycodestyle ./src
-
 flake8:
 	flake8 ./src
 
