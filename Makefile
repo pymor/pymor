@@ -49,8 +49,8 @@ README.html: README.md
 
 README: README.html
 
-pep8:
-	pep8 ./src
+pycodestyle:
+	pycodestyle ./src
 
 flake8:
 	flake8 ./src

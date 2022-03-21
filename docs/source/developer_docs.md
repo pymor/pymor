@@ -65,7 +65,7 @@ be sufficiently well documented.
 #### How to check code style
 
 Firstly, make sure that you installed the `requirements-ci.txt` with `pip install -r requirements-ci.txt`.
-Afterwards use the Makefile to check for flake8 and pep8 warnings with `make flake8` and `make pep8`
+Afterwards use the Makefile to check for flake8 and pep8 warnings with `make flake8` and `make pycodestyle`
 or directly use the tools on the `src` folder.
 
 ### GitHub project
