@@ -93,7 +93,7 @@ jobs:
         run: |
           ./dependencies.py && git diff --exit-code requirements* pyproject.toml
       - name: Cache conda
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache
         env:
           # Increase this value to reset cache if .ci/conda-env.yml have not changed
