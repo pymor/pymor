@@ -34,13 +34,13 @@ PROTOCOL = pickle.HIGHEST_PROTOCOL
 if platform.python_implementation() == 'CPython':
 
     def dump(obj, file, protocol=None):
-        pickler = pickle.Pickler(file, protocol=PROTOCOL)
+        pickler = pickle.Pickler(file, protocol=protocol or PROTOCOL)
         pickler.persistent_id = _function_pickling_handler
         pickler.dump(obj)
 
     def dumps(obj, protocol=None):
         file = IOtype()
-        pickler = pickle.Pickler(file, protocol=PROTOCOL)
+        pickler = pickle.Pickler(file, protocol=protocol or PROTOCOL)
         pickler.persistent_id = _function_pickling_handler
         pickler.dump(obj)
         return file.getvalue()
@@ -57,9 +57,12 @@ if platform.python_implementation() == 'CPython':
         return unpickler.load()
 
 else:
-    from functools import partial
-    dump = partial(pickle.dump, protocol=PROTOCOL)
-    dumps = partial(pickle.dumps, protocol=PROTOCOL)
+    def dump(obj, file, protocol=None):
+        pickle.dump(obj, file, protocol=protocol or PROTOCOL)
+
+    def dumps(obj, protocol=None):
+        pickle.dumps(obj, protocol=protocol or PROTOCOL)
+
     load = pickle.load
     loads = pickle.loads
 
