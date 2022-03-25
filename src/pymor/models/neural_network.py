@@ -26,14 +26,14 @@ class BaseNeuralNetworkModel(Model):
 
     def _scale_input(self, i):
         if (self.scaling_parameters.get('min_inputs') is not None
-            and self.scaling_parameters.get('max_inputs') is not None):
+           and self.scaling_parameters.get('max_inputs') is not None):
             return ((torch.DoubleTensor(i) - self.scaling_parameters['min_inputs'])
                     / (self.scaling_parameters['max_inputs'] - self.scaling_parameters['min_inputs']))
         return i
 
     def _scale_target(self, i):
         if (self.scaling_parameters.get('min_targets') is not None
-            and self.scaling_parameters.get('max_targets') is not None):
+           and self.scaling_parameters.get('max_targets') is not None):
             return (torch.DoubleTensor(i) * (self.scaling_parameters['max_targets']
                                              - self.scaling_parameters['min_targets'])
                     + self.scaling_parameters['min_targets'])
