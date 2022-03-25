@@ -200,7 +200,7 @@ class NeuralNetworkReductor(BasicObject):
                     loss_function = weighted_mse_loss_function
                     self.logger.info('Using weighted MSE loss function ...')
                 else:
-                    self.logger.warn('No weights for weighted MSE loss available. Switching to default loss ...')
+                    raise RuntimeError('No weights for weighted MSE loss available!')
             training_parameters = {'optimizer': optimizer, 'epochs': epochs,
                                    'batch_size': batch_size, 'learning_rate': learning_rate,
                                    'lr_scheduler': lr_scheduler, 'lr_scheduler_params': lr_scheduler_params,
