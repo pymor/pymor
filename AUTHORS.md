@@ -12,6 +12,9 @@
 
 ### pyMOR 2022.1
 
+* Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
+  * several additional features for neural networks
+
 * Art Pelling, a.pelling@tu-berlin.de
   * support for discrete-time LTI systems
   * dedicated Hankel operator class
