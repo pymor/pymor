@@ -289,9 +289,7 @@ class NeuralNetworkReductor(BasicObject):
         if u is None:
             u = self.fom.solve(mu)
 
-        product = None
-        if 'product' in self.pod_params:
-            product = self.pod_params['product']
+        product = self.pod_params.get('product')
 
         return [(mu, self.reduced_basis.inner(u, product=product)[:, 0])]
 
@@ -535,9 +533,7 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
 
         parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
 
-        product = None
-        if 'product' in self.pod_params:
-            product = self.pod_params['product']
+        product = self.pod_params.get('product')
 
         samples = [(mu, self.reduced_basis.inner(u_t, product=product)[:, 0])
                    for mu, u_t in zip(parameters_with_time, u)]
@@ -826,8 +822,7 @@ def train_neural_network(training_data, validation_data, neural_network,
     assert isinstance(batch_size, int) and batch_size > 0
     learning_rate = 1. if 'learning_rate' not in training_parameters else training_parameters['learning_rate']
     assert learning_rate > 0.
-    loss_function = (nn.MSELoss() if ('loss_function' not in training_parameters
-                                      or training_parameters['loss_function'] is None)
+    loss_function = (nn.MSELoss() if (training_parameters.get('loss_function') is None)
                      else training_parameters['loss_function'])
 
     logger = getLogger('pymor.algorithms.neural_network.train_neural_network')
@@ -837,7 +832,7 @@ def train_neural_network(training_data, validation_data, neural_network,
         batch_size = max(len(training_data), len(validation_data))
 
     # initialize optimizer, early stopping scheduler and learning rate scheduler
-    weight_decay = 0. if 'weight_decay' not in training_parameters else training_parameters['weight_decay']
+    weight_decay = training_parameters.get('weight_decay', 0.)
     assert weight_decay >= 0.
     if weight_decay > 0. and 'weight_decay' not in inspect.getfullargspec(optimizer).args:
         optimizer = optimizer(neural_network.parameters(), lr=learning_rate)
@@ -854,7 +849,7 @@ def train_neural_network(training_data, validation_data, neural_network,
                                               **training_parameters['es_scheduler_params'])
     else:
         es_scheduler = EarlyStoppingScheduler(len(training_data) + len(validation_data))
-    if 'lr_scheduler' in training_parameters and training_parameters['lr_scheduler']:
+    if training_parameters.get('lr_scheduler'):
         lr_scheduler = training_parameters['lr_scheduler'](optimizer, **training_parameters['lr_scheduler_params'])
 
     # create the training and validation sets as well as the respective data loaders
