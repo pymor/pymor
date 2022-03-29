@@ -174,10 +174,11 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=3, 
     of this method is the randomized singular value decomposition of 'A', where the
     inner product on R^('dim(A)') is given by 'range_product' and the inner product on R^('len(A)')
     is given by 'source_product'. 
-        
-        A = U*\Sigma*V^H*source_product
-    
 
+    .. math::
+        
+        A = U \Sigma V^H source_product
+    
     This method is based on :cite:`SHB21`.
 
     Parameters
@@ -191,7 +192,7 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=3, 
     modes : 
         The first 'modes' approximated singular values and vectors are returned. 
     p :
-        If not '0', adds 'Oversampling' colums to the randomly sampled matrix. 
+        If not '0', adds 'p' colums to the randomly sampled matrix (Oversampling parameter). 
     q : 
         If not '0', performs 'q' so called power iterations to increase the relative weight
         of the first singular values.
@@ -202,7 +203,7 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=3, 
         |VectorArray| of approximated left singular vectors 
     s 
         One-dimensional |NumPy array| of the approximated singular values
-    V
+    Vh
         |VectorArray| of the approximated right singular vectors
     """
     logger = getLogger('pymor.algorithms.rand_la')
@@ -213,7 +214,7 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=3, 
         A = VectorArrayOperator(A)
    
     assert 0 <= modes <= max(A.source.dim, A.range.dim) and isinstance(modes, int)
-    assert 0 <= p <= max(A.source.dim, A.range.dim) and isinstance(p, int)
+    assert 0 <= p <= max(A.source.dim, A.range.dim) - modes and isinstance(p, int)
     assert q >= 0 and isinstance(q, int)
 
     if range_product is None:
@@ -238,14 +239,14 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=3, 
         U = Q.lincomb(U_b)
 
     with logger.block(f'Computung gerneralized right-singular vector ({modes} vectors) ...'):
-        V = Q_B.lincomb(Vh_b.T)
+        Vh = Q_B.lincomb(Vh_b.T)
         
-    return  U[:modes], s[:modes], V[:modes]
+    return  U[:modes], s[:modes], Vh[:modes]
 
 
-@defaults('modes', 'p', 'q', 'which', 'maxiter', 'tol', 'imag_tol', 'complex_pair_tol', 'seed')
-def random_ghep(A, E=None, modes=3, p=20, q=2, single_pass=False, sigma=None, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,  imag_tol=1e-12, complex_pair_tol=1e-12, complex_evp=False, left_evp=False, seed=0):
-    r"""Approximates a few eigenvalues of a linear |Operator| with randomized methods.
+@defaults('modes', 'p', 'q')
+def random_ghep(A, E=None, modes=3, p=20, q=2, single_pass=False):
+    r"""Approximates a few eigenvalues of a symmetric linear |Operator| with randomized methods.
 
     Approximates `modes` eigenvalues `w` with corresponding eigenvectors `v` which solve
     the eigenvalue problem.
@@ -265,9 +266,9 @@ def random_ghep(A, E=None, modes=3, p=20, q=2, single_pass=False, sigma=None, wh
     Parameters
     ----------
     A
-        The linear |Operator| for which the eigenvalues are to be computed.
+        The hermitian linear |Operator| for which the eigenvalues are to be computed.
     E
-        The linear |Operator| which defines the generalized eigenvalue problem.
+        The hermitian |Operator| which defines the generalized eigenvalue problem.
     modes
         The number of eigenvalues and eigenvectors which are to be computed.
     p :
@@ -279,32 +280,6 @@ def random_ghep(A, E=None, modes=3, p=20, q=2, single_pass=False, sigma=None, wh
     single_pass
         If 'True', computes the ghep where only one set of matvec Ax is required. 
         If 'False' the methods requires two sets of matvecs Ax.
-    sigma
-        If not `None` transforms the eigenvalue problem such that the k eigenvalues
-        closest to sigma are computed.
-    which
-        A string specifying which `k` eigenvalues and eigenvectors to compute:
-
-        - `'LM'`: select eigenvalues with largest magnitude
-        - `'SM'`: select eigenvalues with smallest magnitude
-        - `'LR'`: select eigenvalues with largest real part
-        - `'SR'`: select eigenvalues with smallest real part
-        - `'LI'`: select eigenvalues with largest imaginary part
-        - `'SI'`: select eigenvalues with smallest imaginary part
-    b
-        Initial vector for Arnoldi iteration. Default is a random vector.
-    l
-        The size of the Arnoldi factorization. Default is `min(n - 1, max(2*k + 1, 20))`.
-    maxiter
-        The maximum number of iterations.
-    complex_evp
-        Wether to consider an eigenvalue problem with complex operators. When operators
-        are real setting this argument to `False` will increase stability and performance.
-    left_evp
-        If set to `True` compute left eigenvectors else compute right eigenvectors.
-    seed
-        Random seed which is used for computing the initial vector for the Arnoldi
-        iteration.
 
     Returns
     -------
@@ -319,7 +294,7 @@ def random_ghep(A, E=None, modes=3, p=20, q=2, single_pass=False, sigma=None, wh
     assert not A.parametric
     assert A.source == A.range
     assert 0 <= modes <= max(A.source.dim, A.range.dim) and isinstance(modes, int)
-    assert p >= 0 and isinstance(p, int)
+    assert 0 <= p <= max(A.source.dim, A.range.dim) - modes and isinstance(p, int)
     assert q >= 0 and isinstance(q, int)
     
     if E is None:
@@ -335,21 +310,21 @@ def random_ghep(A, E=None, modes=3, p=20, q=2, single_pass=False, sigma=None, wh
     
     C = InverseOperator(E) @ A
     Y, Omega = rrf(C, q=q, l=modes+p, return_rand=True)
-    Omega_op = VectorArrayOperator(Omega)
     Q = gram_schmidt(Y, product=E)
-    Q_op = VectorArrayOperator(Q)
     
     if single_pass:
-        X = VectorArrayOperator(Omega_op.apply_adjoint(E.apply(Q)))
-        Z = VectorArrayOperator(Q_op.apply_adjoint(E.apply(Omega)))
-        T = InverseOperator(X) @ VectorArrayOperator(Omega_op.apply_adjoint(A.apply(Q))) @ InverseOperator(Z)
+        X = Omega.inner(E.apply(Q))
+        Z = Q.inner(E.apply(Omega))
+        Z_inv = np.linalg.solve(Z, np.eye(modes+p))
+        T = np.linalg.solve(X, (Omega.inner(A.apply(Omega))) @ Z_inv)
     else: 
-        T = Q_op.H @ A @ Q_op
+        T = A.apply2(Q, Q)
+
+    w, S = sp.linalg.eigh(T)
+    w = w[::-1]
+    S = S[:,::-1]
         
-    w, S = eigs(T, E=None, k=modes, sigma=sigma, which=which, b=b, l=l, maxiter=maxiter, tol=tol,
-         imag_tol=imag_tol, complex_pair_tol=complex_pair_tol, complex_evp=complex_evp, left_evp=left_evp, seed=seed)
-    
-    with logger.block(f'Computing eigenvectors ({S.dim} vectors) ...'):
-        V = Q_op.apply(S)
-        
-    return w, V
+    with logger.block(f'Computing eigenvectors ({modes} vectors) ...'):
+       V = Q.lincomb(S)
+
+    return w[:modes], V[:modes]
