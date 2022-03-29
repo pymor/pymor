@@ -63,6 +63,7 @@ def test_not_too_many_modes(method):
     U, s, V = method(vec_array, atol=0, rtol=0)
     assert len(U) == len(s) == len(V) == 1
 
-
 if __name__ == "__main__":
     runmodule(filename=__file__)
+
+
