@@ -34,7 +34,7 @@ def main(
 
     reductor = NeuralNetworkReductor(fom, training_set, validation_set, l2_err=1e-5,
                                      ann_mse=1e-5)
-    rom = reductor.reduce(restarts=100)
+    rom = reductor.reduce(restarts=100, log_loss_frequency=10)
 
     test_set = parameter_space.sample_randomly(10)
 
@@ -64,7 +64,7 @@ def main(
                       legend=('Full solution', 'Reduced solution'))
 
     output_reductor = NeuralNetworkStatefreeOutputReductor(fom, training_set, validation_set, validation_loss=1e-5)
-    output_rom = output_reductor.reduce(restarts=100)
+    output_rom = output_reductor.reduce(restarts=100, log_loss_frequency=10)
 
     outputs = []
     outputs_red = []

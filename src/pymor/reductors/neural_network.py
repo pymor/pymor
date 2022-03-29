@@ -2,19 +2,12 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-"""Remark on the documentation:
-
-Due to an issue in autoapi, the classes `NeuralNetworkStatefreeOutputReductor`,
-`NeuralNetworkInstationaryReductor`, `NeuralNetworkInstationaryStatefreeOutputReductor`,
-`EarlyStoppingScheduler` and `CustomDataset` do not appear in the documentation,
-see https://github.com/pymor/pymor/issues/1343.
-"""
-
 from pymor.core.config import config
 config.require('TORCH')
 
 
 from numbers import Number
+import inspect
 
 import numpy as np
 
@@ -77,17 +70,29 @@ class NeuralNetworkReductor(BasicObject):
         network on the training set should not exceed this threshold.
         Training is interrupted if a neural network that undercuts the
         error tolerance is found.
+    scale_inputs
+        Determines whether or not to scale the inputs of the neural networks.
+    scale_outputs
+        Determines whether or not to scale the outputs/targets of the neural
+        networks.
     """
 
     def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
-                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
-                 ann_mse='like_basis'):
+                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={},
+                 ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
+
+        self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
+                                   'min_targets': None, 'max_targets': None}
+
         self.__auto_init(locals())
 
     def reduce(self, hidden_layers='[(N+P)*3, (N+P)*3]', activation_function=torch.tanh,
                optimizer=optim.LBFGS, epochs=1000, batch_size=20, learning_rate=1.,
-               restarts=10, seed=0):
+               loss_function=None, restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
+               lr_scheduler_params={'step_size': 10, 'gamma': 0.7},
+               es_scheduler_params={'patience': 10, 'delta': 0.}, weight_decay=0.,
+               log_loss_frequency=0, seed=0):
         """Reduce by training artificial neural networks.
 
         Parameters
@@ -107,12 +112,36 @@ class NeuralNetworkReductor(BasicObject):
             Batch size to use if optimizer allows mini-batching.
         learning_rate
             Step size to use in each optimization step.
+        loss_function
+            Loss function to use for training. If `'weighted MSE'`, a weighted
+            mean squared error is used as loss function, where the weights are
+            given as the singular values of the corresponding reduced basis
+            functions. If `None`, the usual mean squared error is used.
         restarts
             Number of restarts of the training algorithm. Since the training
             results highly depend on the initial starting point, i.e. the
             initial weights and biases, it is advisable to train multiple
             neural networks by starting with different initial values and
             choose that one performing best on the validation set.
+        lr_scheduler
+            Algorithm to use as learning rate scheduler during training.
+            If `None`, no learning rate scheduler is used.
+        lr_scheduler_params
+            A dictionary of additional parameters passed to the init method of
+            the learning rate scheduler. The possible parameters depend on the
+            chosen learning rate scheduler.
+        es_scheduler_params
+            A dictionary of additional parameters passed to the init method of
+            the early stopping scheduler. For the possible parameters,
+            see :class:`EarlyStoppingScheduler`.
+        weight_decay
+            Weighting parameter for the l2-regularization of the weights and
+            biases in the neural network. This regularization is not available
+            for all optimizers; see the PyTorch documentation for more details.
+        log_loss_frequency
+            Frequency of epochs in which to log the current validation and
+            training loss during training of the neural networks.
+            If `0`, no intermediate logging of losses is done.
         seed
             Seed to use for various functions in PyTorch. Using a fixed seed,
             it is possible to reproduce former results.
@@ -126,6 +155,7 @@ class NeuralNetworkReductor(BasicObject):
         assert epochs > 0
         assert batch_size > 0
         assert learning_rate > 0.
+        assert weight_decay >= 0.
 
         # set a seed for the PyTorch initialization of weights and biases
         # and further PyTorch methods
@@ -160,8 +190,22 @@ class NeuralNetworkReductor(BasicObject):
             # set parameters for neural network and training
             neural_network_parameters = {'layer_sizes': layer_sizes,
                                          'activation_function': activation_function}
+            if loss_function == 'weighted MSE':
+                if hasattr(self, 'weights'):
+                    weights = self.weights
+
+                    def weighted_mse_loss_function(inputs, targets):
+                        return (weights * (inputs - targets) ** 2).mean()
+
+                    loss_function = weighted_mse_loss_function
+                    self.logger.info('Using weighted MSE loss function ...')
+                else:
+                    raise RuntimeError('No weights for weighted MSE loss available!')
             training_parameters = {'optimizer': optimizer, 'epochs': epochs,
-                                   'batch_size': batch_size, 'learning_rate': learning_rate}
+                                   'batch_size': batch_size, 'learning_rate': learning_rate,
+                                   'lr_scheduler': lr_scheduler, 'lr_scheduler_params': lr_scheduler_params,
+                                   'es_scheduler_params': es_scheduler_params, 'weight_decay': weight_decay,
+                                   'loss_function': loss_function}
 
             self.logger.info('Initializing neural network ...')
             # initialize the neural network
@@ -169,7 +213,8 @@ class NeuralNetworkReductor(BasicObject):
             # run training algorithm with multiple restarts
             self.neural_network, self.losses = multiple_restarts_training(self.training_data, self.validation_data,
                                                                           neural_network, target_loss, restarts,
-                                                                          training_parameters, seed)
+                                                                          log_loss_frequency, training_parameters,
+                                                                          self.scaling_parameters, seed)
 
         self._check_tolerances()
 
@@ -194,10 +239,48 @@ class NeuralNetworkReductor(BasicObject):
             self.training_data = []
             for mu, u in zip(self.training_set, U):
                 sample = self._compute_sample(mu, u)
+                # compute minimum and maximum of outputs/targets for scaling
+                self._update_scaling_parameters(sample)
                 self.training_data.extend(sample)
+
+        # set singular values as weights for the weighted MSE loss
+        self.weights = torch.Tensor(svals)
 
         # compute mean square loss
         self.mse_basis = (sum(U.norm2()) - sum(svals**2)) / len(U)
+
+    def _update_scaling_parameters(self, sample):
+        assert len(sample) == 2 or (len(sample) == 1 and len(sample[0]) == 2)
+        if len(sample) == 1:
+            sample = sample[0]
+
+        def prepare_datum(datum):
+            if not (isinstance(datum, torch.DoubleTensor) or isinstance(datum, np.ndarray)):
+                return datum.to_numpy()
+            return datum
+        sample = (torch.DoubleTensor(prepare_datum(sample[0])), torch.DoubleTensor(prepare_datum(sample[1])))
+
+        if self.scale_inputs:
+            if self.scaling_parameters['min_inputs'] is not None:
+                self.scaling_parameters['min_inputs'] = torch.min(self.scaling_parameters['min_inputs'], sample[0])
+            else:
+                self.scaling_parameters['min_inputs'] = sample[0]
+            if self.scaling_parameters['max_inputs'] is not None:
+                self.scaling_parameters['max_inputs'] = torch.max(self.scaling_parameters['max_inputs'], sample[0])
+            else:
+                self.scaling_parameters['max_inputs'] = sample[0]
+
+        if self.scale_outputs:
+            if self.scaling_parameters['min_targets'] is not None:
+                self.scaling_parameters['min_targets'] = torch.min(self.scaling_parameters['min_targets'],
+                                                                   sample[1])
+            else:
+                self.scaling_parameters['min_targets'] = sample[1]
+            if self.scaling_parameters['max_targets'] is not None:
+                self.scaling_parameters['max_targets'] = torch.max(self.scaling_parameters['max_targets'],
+                                                                   sample[1])
+            else:
+                self.scaling_parameters['max_targets'] = sample[1]
 
     def _compute_sample(self, mu, u=None):
         """Transform parameter and corresponding solution to |NumPy arrays|."""
@@ -205,7 +288,10 @@ class NeuralNetworkReductor(BasicObject):
         # the training data
         if u is None:
             u = self.fom.solve(mu)
-        return [(mu, self.reduced_basis.inner(u)[:, 0])]
+
+        product = self.pod_params.get('product')
+
+        return [(mu, self.reduced_basis.inner(u, product=product)[:, 0])]
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network."""
@@ -251,6 +337,7 @@ class NeuralNetworkReductor(BasicObject):
         with self.logger.block('Building ROM ...'):
             projected_output_functional = project(self.fom.output_functional, None, self.reduced_basis)
             rom = NeuralNetworkModel(self.neural_network, parameters=self.fom.parameters,
+                                     scaling_parameters=self.scaling_parameters,
                                      output_functional=projected_output_functional,
                                      name=f'{self.fom.name}_reduced')
 
@@ -284,11 +371,20 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     validation_loss
         The validation loss to reach during training. If `None`, the neural
         network with the smallest validation loss is returned.
+    scale_inputs
+        Determines whether or not to scale the inputs of the neural networks.
+    scale_outputs
+        Determines whether or not to scale the outputs/targets of the neural
+        networks.
     """
 
     def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
-                 validation_loss=None):
+                 validation_loss=None, scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
+
+        self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
+                                   'min_targets': None, 'max_targets': None}
+
         self.__auto_init(locals())
 
     def compute_training_data(self):
@@ -297,6 +393,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
             self.training_data = []
             for mu in self.training_set:
                 sample = self._compute_sample(mu)
+                self._update_scaling_parameters(sample)
                 self.training_data.extend(sample)
 
     def _compute_sample(self, mu):
@@ -325,7 +422,8 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     def _build_rom(self):
         """Construct the reduced order model."""
         with self.logger.block('Building ROM ...'):
-            rom = NeuralNetworkStatefreeOutputModel(self.neural_network, self.fom.parameters,
+            rom = NeuralNetworkStatefreeOutputModel(self.neural_network, parameters=self.fom.parameters,
+                                                    scaling_parameters=self.scaling_parameters,
                                                     name=f'{self.fom.name}_output_reduced')
 
         return rom
@@ -374,12 +472,21 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         network on the training set should not exceed this threshold.
         Training is interrupted if a neural network that undercuts the
         error tolerance is found.
+    scale_inputs
+        Determines whether or not to scale the inputs of the neural networks.
+    scale_outputs
+        Determines whether or not to scale the outputs/targets of the neural
+        networks.
     """
 
     def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
-                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
-                 ann_mse='like_basis'):
+                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={},
+                 ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
+
+        self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
+                                   'min_targets': None, 'max_targets': None}
+
         self.__auto_init(locals())
 
     def compute_training_data(self):
@@ -405,8 +512,13 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         with self.logger.block('Computing training samples ...'):
             self.training_data = []
             for i, mu in enumerate(self.training_set):
-                sample = self._compute_sample(mu, U[i*self.nt:(i+1)*self.nt])
-                self.training_data.extend(sample)
+                samples = self._compute_sample(mu, U[i*self.nt:(i+1)*self.nt])
+                for sample in samples:
+                    self._update_scaling_parameters(sample)
+                self.training_data.extend(samples)
+
+        # set singular values as weights for the weighted MSE loss
+        self.weights = torch.Tensor(svals)
 
         # compute mean square loss
         self.mse_basis = (sum(U.norm2()) - sum(svals**2)) / len(U)
@@ -421,7 +533,9 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
 
         parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
 
-        samples = [(mu, self.reduced_basis.inner(u_t)[:, 0])
+        product = self.pod_params.get('product')
+
+        samples = [(mu, self.reduced_basis.inner(u_t, product=product)[:, 0])
                    for mu, u_t in zip(parameters_with_time, u)]
 
         return samples
@@ -445,6 +559,7 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
             projected_output_functional = project(self.fom.output_functional, None, self.reduced_basis)
             rom = NeuralNetworkInstationaryModel(self.fom.T, self.nt, self.neural_network,
                                                  parameters=self.fom.parameters,
+                                                 scaling_parameters=self.scaling_parameters,
                                                  output_functional=projected_output_functional,
                                                  name=f'{self.fom.name}_reduced')
 
@@ -476,12 +591,31 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
     validation_loss
         The validation loss to reach during training. If `None`, the neural
         network with the smallest validation loss is returned.
+    scale_inputs
+        Determines whether or not to scale the inputs of the neural networks.
+    scale_outputs
+        Determines whether or not to scale the outputs/targets of the neural
+        networks.
     """
 
     def __init__(self, fom, nt, training_set, validation_set=None, validation_ratio=0.1,
-                 validation_loss=None):
+                 validation_loss=None, scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
+
+        self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
+                                   'min_targets': None, 'max_targets': None}
+
         self.__auto_init(locals())
+
+    def compute_training_data(self):
+        """Compute the training samples (the outputs to the parameters of the training set)."""
+        with self.logger.block('Computing training samples ...'):
+            self.training_data = []
+            for mu in self.training_set:
+                samples = self._compute_sample(mu)
+                for sample in samples:
+                    self._update_scaling_parameters(sample)
+                self.training_data.extend(samples)
 
     def _compute_sample(self, mu):
         """Transform parameter and corresponding output to |NumPy arrays|.
@@ -509,7 +643,8 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
         """Construct the reduced order model."""
         with self.logger.block('Building ROM ...'):
             rom = NeuralNetworkInstationaryStatefreeOutputModel(self.fom.T, self.nt, self.neural_network,
-                                                                self.fom.parameters,
+                                                                parameters=self.fom.parameters,
+                                                                scaling_parameters=self.scaling_parameters,
                                                                 name=f'{self.fom.name}_output_reduced')
 
         return rom
@@ -597,7 +732,7 @@ class CustomDataset(utils.data.Dataset):
 
 
 def train_neural_network(training_data, validation_data, neural_network,
-                         training_parameters={}):
+                         training_parameters={}, scaling_parameters={}, log_loss_frequency=0):
     """Training algorithm for artificial neural networks.
 
     Trains a single neural network using the given training and validation data.
@@ -635,10 +770,25 @@ def train_neural_network(training_data, validation_data, neural_network,
         taken as default value; not used in the case of the LBFGS-optimizer
         since LBFGS does not support mini-batching), `'learning_rate'` (a
         positive real number used as the (initial) step size of the optimizer;
-        if not provided, 1 is taken as default value; thus far, no learning
-        rate schedulers are supported in this implementation), and
-        `'loss_function'` (a loss function from PyTorch; if not provided, the
-        MSE loss is taken as default).
+        if not provided, 1 is taken as default value), `'loss_function'`
+        (a loss function from PyTorch; if not provided, the MSE loss is taken
+        as default), `'lr_scheduler'` (a learning rate scheduler from the
+        PyTorch `optim.lr_scheduler` package; if not provided or `None`,
+        no learning rate scheduler is used), `'lr_scheduler_params'`
+        (a dictionary of additional parameters for the learning rate
+        scheduler), `'es_scheduler_params'` (a dictionary of additional
+        parameters for the early stopping scheduler), and `'weight_decay'`
+        (non-negative real number that determines the strenght of the
+        l2-regularization; if not provided or 0., no regularization is applied).
+    scaling_parameters
+        Dict of tensors that determine how to scale inputs before passing them
+        through the neural network and outputs after obtaining them from the
+        neural network. If not provided or each entry is `None`, no scaling is
+        applied. Required keys are `'min_inputs'`, `'max_inputs'`, `'min_targets'`,
+        and `'max_targets'`.
+    log_loss_frequency
+        Frequency of epochs in which to log the current validation and
+        training loss. If `0`, no intermediate logging of losses is done.
 
     Returns
     -------
@@ -651,6 +801,7 @@ def train_neural_network(training_data, validation_data, neural_network,
         (for the average loss on the validation set).
     """
     assert isinstance(neural_network, nn.Module)
+    assert isinstance(log_loss_frequency, int)
 
     for data in training_data, validation_data:
         assert isinstance(data, list)
@@ -671,7 +822,7 @@ def train_neural_network(training_data, validation_data, neural_network,
     assert isinstance(batch_size, int) and batch_size > 0
     learning_rate = 1. if 'learning_rate' not in training_parameters else training_parameters['learning_rate']
     assert learning_rate > 0.
-    loss_function = (nn.MSELoss() if 'loss_function' not in training_parameters
+    loss_function = (nn.MSELoss() if (training_parameters.get('loss_function') is None)
                      else training_parameters['loss_function'])
 
     logger = getLogger('pymor.algorithms.neural_network.train_neural_network')
@@ -680,9 +831,26 @@ def train_neural_network(training_data, validation_data, neural_network,
     if optimizer == optim.LBFGS:
         batch_size = max(len(training_data), len(validation_data))
 
-    # initialize optimizer and early stopping scheduler
-    optimizer = optimizer(neural_network.parameters(), lr=learning_rate)
-    early_stopping_scheduler = EarlyStoppingScheduler(len(training_data) + len(validation_data))
+    # initialize optimizer, early stopping scheduler and learning rate scheduler
+    weight_decay = training_parameters.get('weight_decay', 0.)
+    assert weight_decay >= 0.
+    if weight_decay > 0. and 'weight_decay' not in inspect.getfullargspec(optimizer).args:
+        optimizer = optimizer(neural_network.parameters(), lr=learning_rate)
+        logger.warning(f"Optimizer {optimizer.__class__.__name__} does not support weight decay! "
+                       "Continuing without regularization!")
+    elif 'weight_decay' in inspect.getfullargspec(optimizer).args:
+        optimizer = optimizer(neural_network.parameters(), lr=learning_rate,
+                              weight_decay=weight_decay)
+    else:
+        optimizer = optimizer(neural_network.parameters(), lr=learning_rate)
+
+    if 'es_scheduler_params' in training_parameters:
+        es_scheduler = EarlyStoppingScheduler(len(training_data) + len(validation_data),
+                                              **training_parameters['es_scheduler_params'])
+    else:
+        es_scheduler = EarlyStoppingScheduler(len(training_data) + len(validation_data))
+    if training_parameters.get('lr_scheduler'):
+        lr_scheduler = training_parameters['lr_scheduler'](optimizer, **training_parameters['lr_scheduler_params'])
 
     # create the training and validation sets as well as the respective data loaders
     training_dataset = CustomDataset(training_data)
@@ -694,6 +862,19 @@ def train_neural_network(training_data, validation_data, neural_network,
     phases = ['train', 'val']
 
     logger.info('Starting optimization procedure ...')
+
+    if 'min_inputs' in scaling_parameters and 'max_inputs' in scaling_parameters:
+        min_inputs = scaling_parameters['min_inputs']
+        max_inputs = scaling_parameters['max_inputs']
+    else:
+        min_inputs = None
+        max_inputs = None
+    if 'min_targets' in scaling_parameters and 'max_targets' in scaling_parameters:
+        min_targets = scaling_parameters['min_targets']
+        max_targets = scaling_parameters['max_targets']
+    else:
+        min_targets = None
+        max_targets = None
 
     # perform optimization procedure
     for epoch in range(epochs):
@@ -710,8 +891,15 @@ def train_neural_network(training_data, validation_data, neural_network,
 
             # iterate over batches
             for batch in dataloaders[phase]:
-                inputs = batch[0]
-                targets = batch[1]
+                # scale inputs and outputs if desired
+                if min_inputs is not None and max_inputs is not None:
+                    inputs = (batch[0] - min_inputs) / (max_inputs - min_inputs)
+                else:
+                    inputs = batch[0]
+                if min_targets is not None and max_targets is not None:
+                    targets = (batch[1] - min_targets) / (max_targets - min_targets)
+                else:
+                    targets = batch[1]
 
                 with torch.set_grad_enabled(phase == 'train'):
                     def closure():
@@ -740,18 +928,24 @@ def train_neural_network(training_data, validation_data, neural_network,
 
             losses['full'] += running_loss
 
-            # check for early stopping
-            if phase == 'val' and early_stopping_scheduler(losses, neural_network):
-                logger.info(f'Stopping training process early after {epoch + 1} epochs with validation loss '
-                            f'of {early_stopping_scheduler.best_losses["val"]:.3e} ...')
-                return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
+            if log_loss_frequency > 0 and epoch % log_loss_frequency == 0:
+                logger.info(f'Epoch {epoch}: Current {phase} loss of {losses[phase]:.3e}')
 
-    return early_stopping_scheduler.best_neural_network, early_stopping_scheduler.best_losses
+            if 'lr_scheduler' in training_parameters and training_parameters['lr_scheduler']:
+                lr_scheduler.step()
+
+            # check for early stopping
+            if phase == 'val' and es_scheduler(losses, neural_network):
+                logger.info(f'Stopping training process early after {epoch + 1} epochs with validation loss '
+                            f'of {es_scheduler.best_losses["val"]:.3e} ...')
+                return es_scheduler.best_neural_network, es_scheduler.best_losses
+
+    return es_scheduler.best_neural_network, es_scheduler.best_losses
 
 
 def multiple_restarts_training(training_data, validation_data, neural_network,
-                               target_loss=None, max_restarts=10,
-                               training_parameters={}, seed=None):
+                               target_loss=None, max_restarts=10, log_loss_frequency=0,
+                               training_parameters={}, scaling_parameters={}, seed=None):
     """Algorithm that performs multiple restarts of neural network training.
 
     This method either performs a predefined number of restarts and returns
@@ -766,14 +960,26 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
         Data to use during the training phase.
     validation_data
         Data to use during the validation phase.
+    neural_network
+        The neural network to train (parameters will be reset after each
+        restart).
     target_loss
         Loss to reach during training (if `None`, the network with the
         smallest loss is returned).
     max_restarts
         Maximum number of restarts to perform.
-    neural_network
-        The neural network to train (parameters will be reset after each
-        restart).
+    log_loss_frequency
+        Frequency of epochs in which to log the current validation and
+        training loss. If `0`, no intermediate logging of losses is done.
+    training_parameters
+        Additional parameters for the training algorithm,
+        see :func:`train_neural_network` for more information.
+    scaling_parameters
+        Additional parameters for scaling inputs respectively outputs,
+        see :func:`train_neural_network` for more information.
+    seed
+        Seed to use for various functions in PyTorch. Using a fixed seed,
+        it is possible to reproduce former results.
 
     Returns
     -------
@@ -798,6 +1004,15 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
     if seed:
         torch.manual_seed(seed)
 
+    # in case no training data is provided, return a neural network
+    # that always returns zeros independent of the input
+    if len(training_data) == 0 or len(training_data[0]) == 0:
+        for layers in neural_network.children():
+            for layer in layers:
+                torch.nn.init.zeros_(layer.weight)
+                layer.bias.data.fill_(0.)
+        return neural_network, {'full': None, 'train': None, 'val': None}
+
     if target_loss:
         logger.info(f'Performing up to {max_restarts} restart{"s" if max_restarts > 1 else ""} '
                     f'to train a neural network with a loss below {target_loss:.3e} ...')
@@ -807,7 +1022,8 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
 
     with logger.block('Training neural network #0 ...'):
         best_neural_network, losses = train_neural_network(training_data, validation_data,
-                                                           neural_network, training_parameters)
+                                                           neural_network, training_parameters,
+                                                           scaling_parameters, log_loss_frequency)
 
     # perform multiple restarts
     for run in range(1, max_restarts + 1):
@@ -825,7 +1041,8 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
                         layer.reset_parameters()
             # perform training
             current_nn, current_losses = train_neural_network(training_data, validation_data,
-                                                              neural_network, training_parameters)
+                                                              neural_network, training_parameters,
+                                                              scaling_parameters, log_loss_frequency)
 
         if current_losses['full'] < losses['full']:
             logger.info(f'Found better neural network (loss of {current_losses["full"]:.3e} '
