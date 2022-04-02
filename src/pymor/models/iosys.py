@@ -1098,8 +1098,8 @@ class PHLTIModel(Model):
 
         Returns
         -------
-        lti
-            The |LTIModel| with operators A, B, C, D, and E.
+        phlti
+            The |PHLTIModel| with operators J, R, G, P, S, N, and E.
         """
         assert isinstance(J, (np.ndarray, sps.spmatrix))
         assert isinstance(R, (np.ndarray, sps.spmatrix))
@@ -1167,132 +1167,6 @@ class PHLTIModel(Model):
         One-dimensional |NumPy array| of system poles.
         """
         return self.to_lti().poles(mu=mu)
-
-    @cached
-    def gramian(self, typ, mu=None):
-        """Compute a second-order Gramian.
-
-        Parameters
-        ----------
-        typ
-            The type of the Gramian:
-
-            - `'pc_lrcf'`: low-rank Cholesky factor of the position controllability Gramian,
-            - `'vc_lrcf'`: low-rank Cholesky factor of the velocity controllability Gramian,
-            - `'po_lrcf'`: low-rank Cholesky factor of the position observability Gramian,
-            - `'vo_lrcf'`: low-rank Cholesky factor of the velocity observability Gramian,
-            - `'pc_dense'`: dense position controllability Gramian,
-            - `'vc_dense'`: dense velocity controllability Gramian,
-            - `'po_dense'`: dense position observability Gramian,
-            - `'vo_dense'`: dense velocity observability Gramian.
-
-            .. note::
-                For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
-                For `'*_dense'` types, the method assumes that the underlying Lyapunov equation
-                has a unique solution, i.e. no pair of system poles adds to zero in the
-                continuous-time case and no pair of system poles multiplies to one in the
-                discrete-time case.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        If typ is `'pc_lrcf'`, `'vc_lrcf'`, `'po_lrcf'` or `'vo_lrcf'`, then the Gramian factor as a
-        |VectorArray| from `self.M.source`.
-        If typ is `'pc_dense'`, `'vc_dense'`, `'po_dense'` or `'vo_dense'`, then the Gramian as a
-        |NumPy array|.
-        """
-        assert typ in ('pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',
-                       'pc_dense', 'vc_dense', 'po_dense', 'vo_dense')
-
-        if typ.endswith('lrcf'):
-            return self.to_lti().gramian(typ[1:], mu=mu).blocks[0 if typ.startswith('p') else 1].copy()
-        else:
-            g = self.to_lti().gramian(typ[1:], mu=mu)
-            if typ.startswith('p'):
-                return g[:self.order, :self.order]
-            else:
-                return g[self.order:, self.order:]
-
-    def psv(self, mu=None):
-        """Position singular values.
-
-        .. note::
-            Assumes the system is asymptotically stable.
-
-        Parameters
-        ----------
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        One-dimensional |NumPy array| of singular values.
-        """
-        return spla.svdvals(
-            self.gramian('po_lrcf', mu=mu)[:self.order]
-                .inner(self.gramian('pc_lrcf', mu=mu)[:self.order])
-        )
-
-    def vsv(self, mu=None):
-        """Velocity singular values.
-
-        .. note::
-            Assumes the system is asymptotically stable.
-
-        Parameters
-        ----------
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        One-dimensional |NumPy array| of singular values.
-        """
-        return spla.svdvals(
-            self.gramian('vo_lrcf', mu=mu)[:self.order]
-                .inner(self.gramian('vc_lrcf', mu=mu)[:self.order], product=self.M)
-        )
-
-    def pvsv(self, mu=None):
-        """Position-velocity singular values.
-
-        .. note::
-            Assumes the system is asymptotically stable.
-
-        Parameters
-        ----------
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        One-dimensional |NumPy array| of singular values.
-        """
-        return spla.svdvals(
-            self.gramian('vo_lrcf', mu=mu)[:self.order]
-                .inner(self.gramian('pc_lrcf', mu=mu)[:self.order], product=self.M)
-        )
-
-    def vpsv(self, mu=None):
-        """Velocity-position singular values.
-
-        .. note::
-            Assumes the system is asymptotically stable.
-
-        Parameters
-        ----------
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        One-dimensional |NumPy array| of singular values.
-        """
-        return spla.svdvals(
-            self.gramian('po_lrcf', mu=mu)[:self.order]
-                .inner(self.gramian('vc_lrcf', mu=mu)[:self.order])
-        )
 
     @cached
     def h2_norm(self, mu=None):
