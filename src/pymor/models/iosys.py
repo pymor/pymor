@@ -1007,7 +1007,19 @@ class PHLTIModel(Model):
 
     def __init__(self, J, R, G, P, S=None, N=None, E=None, solver_options=None,
                  error_estimator=None, visualizer=None, name=None):
-        # todo: assertions
+        assert J.linear
+        assert J.source == J.range
+
+        assert R.linear
+        assert R.source == J.source
+        assert R.source == R.range
+
+        assert G.linear
+        assert G.range == J.source
+
+        assert P.linear
+        assert P.range == J.source
+        assert P.source == G.source
 
         S = S or ZeroOperator(G.range, G.source)
         assert S.linear
@@ -1034,7 +1046,7 @@ class PHLTIModel(Model):
         K = lambda s: s * self.E - (self.J - self.R)
         B = lambda s: self.G - self.P
         C = lambda s: (self.G + self.P).H
-        D = lambda s: self.S + self.N
+        D = lambda s: self.S - self.N
         dK = lambda s: self.E
         dB = lambda s: ZeroOperator(self.G.range, self.G.source)
         dC = lambda s: ZeroOperator(self.G.source, self.G.range)
@@ -1111,6 +1123,241 @@ class PHLTIModel(Model):
         return cls(J, R, G, P, S, N, E,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                    name=name)
+
+    @cached
+    def to_lti(self):
+        r"""Return a standard linear time-invariant system representation.
+
+        The representation
+
+        .. math::
+            A = J - R,\qquad B = G - P,\qquad C = (G + P)^T,\qquad D = S - N,\qquad E = E
+
+        is returned.
+
+        Returns
+        -------
+        lti
+            |LTIModel| equivalent to the second-order model.
+        """
+        return LTIModel(A=self.J - self.R,
+                        B=self.G - self.P,
+                        C=(self.G + self.P).H,
+                        D=self.S - self.N,
+                        E=self.E,
+                        solver_options=self.solver_options,
+                        error_estimator=self.error_estimator,
+                        visualizer=self.visualizer,
+                        name=self.name + '_as_lti')
+
+    @cached
+    def poles(self, mu=None):
+        """Compute system poles.
+
+        .. note::
+            Assumes the systems is small enough to use a dense eigenvalue solver.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        One-dimensional |NumPy array| of system poles.
+        """
+        return self.to_lti().poles(mu=mu)
+
+    @cached
+    def gramian(self, typ, mu=None):
+        """Compute a second-order Gramian.
+
+        Parameters
+        ----------
+        typ
+            The type of the Gramian:
+
+            - `'pc_lrcf'`: low-rank Cholesky factor of the position controllability Gramian,
+            - `'vc_lrcf'`: low-rank Cholesky factor of the velocity controllability Gramian,
+            - `'po_lrcf'`: low-rank Cholesky factor of the position observability Gramian,
+            - `'vo_lrcf'`: low-rank Cholesky factor of the velocity observability Gramian,
+            - `'pc_dense'`: dense position controllability Gramian,
+            - `'vc_dense'`: dense velocity controllability Gramian,
+            - `'po_dense'`: dense position observability Gramian,
+            - `'vo_dense'`: dense velocity observability Gramian.
+
+            .. note::
+                For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
+                For `'*_dense'` types, the method assumes that the underlying Lyapunov equation
+                has a unique solution, i.e. no pair of system poles adds to zero in the
+                continuous-time case and no pair of system poles multiplies to one in the
+                discrete-time case.
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        If typ is `'pc_lrcf'`, `'vc_lrcf'`, `'po_lrcf'` or `'vo_lrcf'`, then the Gramian factor as a
+        |VectorArray| from `self.M.source`.
+        If typ is `'pc_dense'`, `'vc_dense'`, `'po_dense'` or `'vo_dense'`, then the Gramian as a
+        |NumPy array|.
+        """
+        assert typ in ('pc_lrcf', 'vc_lrcf', 'po_lrcf', 'vo_lrcf',
+                       'pc_dense', 'vc_dense', 'po_dense', 'vo_dense')
+
+        if typ.endswith('lrcf'):
+            return self.to_lti().gramian(typ[1:], mu=mu).blocks[0 if typ.startswith('p') else 1].copy()
+        else:
+            g = self.to_lti().gramian(typ[1:], mu=mu)
+            if typ.startswith('p'):
+                return g[:self.order, :self.order]
+            else:
+                return g[self.order:, self.order:]
+
+    def psv(self, mu=None):
+        """Position singular values.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        One-dimensional |NumPy array| of singular values.
+        """
+        return spla.svdvals(
+            self.gramian('po_lrcf', mu=mu)[:self.order]
+                .inner(self.gramian('pc_lrcf', mu=mu)[:self.order])
+        )
+
+    def vsv(self, mu=None):
+        """Velocity singular values.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        One-dimensional |NumPy array| of singular values.
+        """
+        return spla.svdvals(
+            self.gramian('vo_lrcf', mu=mu)[:self.order]
+                .inner(self.gramian('vc_lrcf', mu=mu)[:self.order], product=self.M)
+        )
+
+    def pvsv(self, mu=None):
+        """Position-velocity singular values.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        One-dimensional |NumPy array| of singular values.
+        """
+        return spla.svdvals(
+            self.gramian('vo_lrcf', mu=mu)[:self.order]
+                .inner(self.gramian('pc_lrcf', mu=mu)[:self.order], product=self.M)
+        )
+
+    def vpsv(self, mu=None):
+        """Velocity-position singular values.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        One-dimensional |NumPy array| of singular values.
+        """
+        return spla.svdvals(
+            self.gramian('po_lrcf', mu=mu)[:self.order]
+                .inner(self.gramian('vc_lrcf', mu=mu)[:self.order])
+        )
+
+    @cached
+    def h2_norm(self, mu=None):
+        """Compute the H2-norm.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        norm
+            H_2-norm.
+        """
+        return self.to_lti().h2_norm(mu=mu)
+
+    @cached
+    def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
+        """Compute the H_infinity-norm.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values|.
+        return_fpeak
+            Should the frequency at which the maximum is achieved should be returned.
+        ab13dd_equilibrate
+            Should `slycot.ab13dd` use equilibration.
+
+        Returns
+        -------
+        norm
+            H_infinity-norm.
+        fpeak
+            Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
+        """
+        return self.to_lti().hinf_norm(mu=mu,
+                                       return_fpeak=return_fpeak,
+                                       ab13dd_equilibrate=ab13dd_equilibrate)
+
+    @cached
+    def hankel_norm(self, mu=None):
+        """Compute the Hankel-norm.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        norm
+            Hankel-norm.
+        """
+        return self.to_lti().hankel_norm(mu=mu)
 
 
 class SecondOrderModel(Model):
