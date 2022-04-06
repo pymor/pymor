@@ -298,7 +298,7 @@ class Constant(BaseConstant):
 
     def fenics_expr(self, params):
         from dolfin import Constant
-        return np.vectorize(Constant)(self.value)
+        return np.array(Constant(self.value))
 
     def __str__(self):
         return str(self.value)
@@ -444,7 +444,7 @@ class Neg(Expression):
         return f'(- {self.operand.numpy_expr()})'
 
     def fenics_expr(self, params):
-        return np.vectorize(lambda x: -1 * x)(self.operand.fenics_expr(params))
+        return np.vectorize(lambda x: -x)(self.operand.fenics_expr(params))
 
     def __str__(self):
         return f'(- {self.operand})'
@@ -478,9 +478,7 @@ class Indexed(Expression):
         return f'{self.base.numpy_expr()}[{",".join(index)}]'
 
     def fenics_expr(self, params):
-        if len(self.base.shape) != 1:
-            raise NotImplementedError
-        return np.vectorize(lambda x: x.fenics_expr(params)[self.index[0]])(self.base)
+        return np.array(self.base.fenics_expr(params)[self.index])
 
     def __str__(self):
         index = [str(i) for i in self.index]
