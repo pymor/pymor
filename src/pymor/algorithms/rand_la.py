@@ -168,7 +168,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
 
 @defaults('p', 'q', 'modes')
 def random_generalized_svd(A, range_product=None, source_product=None, modes=3, p=20, q=2):
-    r"""Randomized SVD of a |VectorArray| or an |Operator|. 
+    r"""Randomized SVD of an |Operator|. 
 
     Viewing the 'A' as a 'A.dim' x 'len(A)' matrix, the return value
     of this method is the randomized singular value decomposition of 'A', where the
@@ -184,7 +184,7 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=3, 
     Parameters
     ----------
     A : 
-        The |VectorArray| or |Operator| for which the randomized SVD is to be computed. 
+        The Operator| for which the randomized SVD is to be computed. 
     range_product : 
         Range product |Operator| w.r.t which the randomized SVD is computed
     source_product :
@@ -208,11 +208,8 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=3, 
     """
     logger = getLogger('pymor.algorithms.rand_la')
     
-    assert isinstance(A, VectorArray) or isinstance(A, Operator)
+    assert isinstance(A, Operator)
     
-    if isinstance(A, VectorArray):
-        A = VectorArrayOperator(A)
-   
     assert 0 <= modes <= max(A.source.dim, A.range.dim) and isinstance(modes, int)
     assert 0 <= p <= max(A.source.dim, A.range.dim) - modes and isinstance(p, int)
     assert q >= 0 and isinstance(q, int)
@@ -221,11 +218,13 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=3, 
         range_product = IdentityOperator(A.range)
     else:
         assert isinstance(range_product, Operator)
+        assert range_product.source == range_product.range == A.range
         
     if source_product is None:
         source_product = IdentityOperator(A.source)
     else:
         assert isinstance(source_product, Operator)
+        assert source_product.source == source_product.range == A.source
         
     if A.source.dim == 0 or A.range.dim == 0:
         return A.source.empty(), np.array([]), A.range.empty()
@@ -272,14 +271,14 @@ def random_ghep(A, E=None, modes=3, p=20, q=2, single_pass=False):
     modes
         The number of eigenvalues and eigenvectors which are to be computed.
     p :
-        If not '0', adds 'p' colums to the randomly sampled matrix in the :func:'rrf' method.
-        Often called Oversampling parameter.
+        If not `0`, adds `p` colums to the randomly sampled matrix in the :func:`rrf` method 
+        (oversampling parameter).
     q : 
-        If not '0', performs 'q' PowerIterations to increase the relative weight
-        of the bigger singular values.
+        If not `0`, performs `q` power iterations to increase the relative weight
+        of the larger singular values.
     single_pass
-        If 'True', computes the ghep where only one set of matvec Ax is required. 
-        If 'False' the methods requires two sets of matvecs Ax.
+        If `True`, computes the ghep where only one set of matvec Ax is required, but an additional error is produced. 
+        If `False` the methods requires two sets of matvecs Ax
 
     Returns
     -------
