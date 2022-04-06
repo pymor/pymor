@@ -271,7 +271,7 @@ def random_ghep(A, E=None, modes=3, p=20, q=2, single_pass=False):
     modes
         The number of eigenvalues and eigenvectors which are to be computed.
     p :
-        If not `0`, adds `p` colums to the randomly sampled matrix in the :func:`rrf` method 
+        If not `0`, adds `p` colums to the randomly sampled matrix in the :func:`rrf` method
         (oversampling parameter).
     q : 
         If not `0`, performs `q` power iterations to increase the relative weight
