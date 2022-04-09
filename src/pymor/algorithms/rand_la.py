@@ -144,6 +144,9 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
         source_product = IdentityOperator(A.source)
     else:
         assert isinstance(source_product, Operator)
+
+    assert 0 <= l <= min(A.source.dim, A.range.dim) and isinstance(l, int)
+    assert q >= 0 and isinstance(q, int)
     
     R = A.source.random(l, distribution='normal')
 
@@ -232,13 +235,13 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=3, 
     Q = rrf(A, source_product=source_product, range_product=range_product, q=q, l=modes+p)
     B = A.apply_adjoint(range_product.apply(Q))
     Q_B, R_B = gram_schmidt(source_product.apply_inverse(B), product=source_product, return_R=True)
-    U_b, s, Vh_b = sp.linalg.svd(R_B.T, full_matrices=False)
+    U_b, s, Vh_b = sp.linalg.svd(R_B.T, full_matrices=False) 
 
     with logger.block(f'Computing generalized left-singular vectors ({modes} vectors) ...'):
-        U = Q.lincomb(U_b)
+        U = Q.lincomb(U_b.T)
 
-    with logger.block(f'Computung gerneralized right-singular vector ({modes} vectors) ...'):
-        Vh = Q_B.lincomb(Vh_b.T)
+    with logger.block(f'Computung generalized right-singular vector ({modes} vectors) ...'):
+        Vh = Q_B.lincomb(Vh_b)
         
     return  U[:modes], s[:modes], Vh[:modes]
 
