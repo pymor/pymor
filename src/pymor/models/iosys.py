@@ -1041,7 +1041,7 @@ class PHLTIModel(Model):
         super().__init__(dim_input=G.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
         self.solution_space = J.source
-        self.dim_output = G.range.dim
+        self.dim_output = G.source.dim
 
         K = lambda s: s * self.E - (self.J - self.R)
         B = lambda s: self.G - self.P
@@ -1232,6 +1232,22 @@ class PHLTIModel(Model):
             Hankel-norm.
         """
         return self.to_lti().hankel_norm(mu=mu)
+
+    def __str__(self):
+        string = (
+            f'{self.name}\n'
+            f'    class: {self.__class__.__name__}\n'
+            f'    number of equations: {self.order}\n'
+            f'    number of inputs:    {self.dim_input}\n'
+            f'    number of outputs:   {self.dim_output}\n'
+        )
+        string += '    continuous-time\n'
+        string += (
+            f'    port-Hamiltonian\n'
+            f'    linear time-invariant\n'
+            f'    solution_space:  {self.solution_space}'
+        )
+        return string
 
 
 class SecondOrderModel(Model):
