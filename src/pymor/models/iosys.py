@@ -1249,6 +1249,66 @@ class PHLTIModel(Model):
         )
         return string
 
+    def __add__(self, other):
+        """Add a |PHLTIModel| or an |LTIModel|."""
+        if isinstance(other, LTIModel):
+            return self.to_lti() + other
+
+        if not isinstance(other, PHLTIModel):
+            return NotImplemented
+
+        assert self.S.source == other.S.source
+        assert self.S.range == other.S.range
+
+        assert self.N.source == other.N.source
+        assert self.N.range == other.N.range
+
+        J = BlockDiagonalOperator([self.J, other.J])
+        R = BlockDiagonalOperator([self.R, other.R])
+        G = BlockColumnOperator([self.G, other.G])
+        P = BlockColumnOperator([self.P, other.P])
+        S = self.S + other.S
+        N = self.S + other.S
+        E = BlockDiagonalOperator([self.E, other.E])
+
+        return self.with_(J, R, G, P, S, N, E)
+
+    def __radd__(self, other):
+        """Add to an |LTIModel|."""
+        if isinstance(other, LTIModel):
+            return other + self.to_lti()
+        else:
+            return NotImplemented
+
+    def __sub__(self, other):
+        """Subtract a |PHLTIModel| or an |LTIModel|."""
+        return self + (-other)
+
+    def __rsub__(self, other):
+        """Subtract from an |LTIModel|."""
+        if isinstance(other, LTIModel):
+            return other - self.to_lti()
+        else:
+            return NotImplemented
+
+    def __neg__(self):
+        """Negate the |PHLTIModel|."""
+        return -self.to_lti()
+
+    def __mul__(self, other):
+        """Postmultiply by a |LTIModel|."""
+        if isinstance(other, LTIModel):
+            return self.to_lti() * other
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        """Premultiply by an |LTIModel|."""
+        if isinstance(other, LTIModel):
+            return other * self.to_lti()
+        else:
+            return NotImplemented
+
 
 class SecondOrderModel(Model):
     r"""Class for linear second order systems.
