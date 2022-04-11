@@ -214,6 +214,10 @@ def main():
     ax.set(xlabel='Re($\lambda$)', ylabel='Im($\lambda$)')
     plt.show()
 
+    e = phlti - lti
+    e.transfer_function.mag_plot(w)
+    plt.show()
+
 
 if __name__ == '__main__':
     run(main)
