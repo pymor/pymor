@@ -189,6 +189,9 @@ def main():
     assert is_spdf(E)
 
     phlti = PHLTIModel.from_matrices(J, R, G, P, S, N, E)
+    print(phlti)
+    assert phlti.dim_input == phlti.dim_output
+    assert phlti.dim_input == 1
 
     # Magnitude plot
     w = np.logspace(-2, 8, 300)
