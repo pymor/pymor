@@ -147,6 +147,8 @@ rules:
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password ''
       - devpi upload --from-dir --formats=* ./dist/*.whl
+      - python3 -m pip install pip~=21.0
+      - python3 -m pip remove -y pymor || true
     # the docker service adressing fails on other runners
     tags: [mike]
 
