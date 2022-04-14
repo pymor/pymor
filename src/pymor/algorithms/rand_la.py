@@ -170,7 +170,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
 
 
 @defaults('p', 'q', 'modes')
-def random_generalized_svd(A, range_product=None, source_product=None, modes=3, p=20, q=2):
+def random_generalized_svd(A, range_product=None, source_product=None, modes=6, p=20, q=2):
     r"""Randomized SVD of an |Operator|. 
 
     Viewing the 'A' as a 'A.dim' x 'len(A)' matrix, the return value
@@ -247,7 +247,7 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=3, 
 
 
 @defaults('modes', 'p', 'q')
-def random_ghep(A, E=None, modes=3, p=20, q=2, single_pass=False):
+def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
     r"""Approximates a few eigenvalues of a symmetric linear |Operator| with randomized methods.
 
     Approximates `modes` eigenvalues `w` with corresponding eigenvectors `v` which solve
