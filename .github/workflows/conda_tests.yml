@@ -144,7 +144,7 @@ jobs:
           COMMON_PYTEST_OPTS: "--cov-report=xml --cov --cov-config=setup.cfg --cov-context=test --junitxml=${RESULTS_FILE}"
         run: |
             ${PYTEST_PREFIX} pytest ${COMMON_PYTEST_OPTS}
-      - uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v3
         name: Upload coverage
         with:
           flags: github_actions,${{ matrix.os }}
