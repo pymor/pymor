@@ -15,7 +15,6 @@ stages:
         max: 2
         when:
             - runner_system_failure
-            - stuck_or_timeout_failure
             - api_failure
     tags:
       - autoscaling
@@ -24,8 +23,8 @@ stages:
           when: never
         - when: on_success
     variables:
-        PYPI_MIRROR_TAG: ef38304121ce0de0cf414036094b19c443ad16e2
-        CI_IMAGE_TAG: ef38304121ce0de0cf414036094b19c443ad16e2
+        PYPI_MIRROR_TAG: 94604308a724fed5167af7761eb1536c4d13bad6
+        CI_IMAGE_TAG: 94604308a724fed5167af7761eb1536c4d13bad6
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
         BINDERIMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
@@ -122,6 +121,9 @@ stages:
 .check_wheel:
     extends: .test_base
     stage: install_checks
+    timeout: 10 minutes
+    dependencies: ["sdist_and_wheel"]
+    needs: ["sdist_and_wheel"]
     rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
@@ -135,6 +137,8 @@ stages:
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password ''
       - devpi upload --from-dir --formats=* ./dist/*.whl
+      - python3 -m pip install pip~=21.0
+      - python3 -m pip remove -y pymor || true
     # the docker service adressing fails on other runners
     tags: [mike]
 
@@ -764,32 +768,26 @@ pypi:
 
 from wheel 1/3:
     extends: .check_wheel
-    dependencies: ["sdist_and_wheel"]
-    needs: ["sdist_and_wheel"]
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_fedora:${CI_IMAGE_TAG}
     script:
       - echo "Testing wheel install on fedora with Python 3.9"
-      - python3 -m pip --version
+      - python3 -m pip freeze --all
       - devpi install pymor[full]
 
 from wheel 2/3:
     extends: .check_wheel
-    dependencies: ["sdist_and_wheel"]
-    needs: ["sdist_and_wheel"]
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian-buster:${CI_IMAGE_TAG}
     script:
       - echo "Testing wheel install on debian-buster with Python 3.7"
-      - python3 -m pip --version
+      - python3 -m pip freeze --all
       - devpi install pymor[full]
 
 from wheel 3/3:
     extends: .check_wheel
-    dependencies: ["sdist_and_wheel"]
-    needs: ["sdist_and_wheel"]
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian-bullseye:${CI_IMAGE_TAG}
     script:
       - echo "Testing wheel install on debian-bullseye with Python 3.9"
-      - python3 -m pip --version
+      - python3 -m pip freeze --all
       - devpi install pymor[full]
 
 docs build 3 7:

@@ -36,7 +36,6 @@ rules:
         max: 2
         when:
             - runner_system_failure
-            - stuck_or_timeout_failure
             - api_failure
     tags:
       - autoscaling
@@ -135,6 +134,9 @@ rules:
 .check_wheel:
     extends: .test_base
     stage: install_checks
+    timeout: 10 minutes
+    dependencies: ["sdist_and_wheel"]
+    needs: ["sdist_and_wheel"]
     {{ never_on_schedule_rule() }}
     services:
       - name: {{registry}}/pymor/devpi:${PYPI_MIRROR_TAG}
@@ -145,6 +147,8 @@ rules:
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password ''
       - devpi upload --from-dir --formats=* ./dist/*.whl
+      - python3 -m pip install pip~=21.0
+      - python3 -m pip remove -y pymor || true
     # the docker service adressing fails on other runners
     tags: [mike]
 
@@ -333,12 +337,10 @@ pypi:
 {% for OS, PY in testos %}
 from wheel {{loop.index}}/{{loop.length}}:
     extends: .check_wheel
-    dependencies: ["sdist_and_wheel"]
-    needs: ["sdist_and_wheel"]
     image: {{registry}}/pymor/deploy_checks_{{OS}}:${CI_IMAGE_TAG}
     script:
       - echo "Testing wheel install on {{OS}} with Python {{PY}}"
-      - python3 -m pip --version
+      - python3 -m pip freeze --all
       - devpi install pymor[full]
 {% endfor %}
 
