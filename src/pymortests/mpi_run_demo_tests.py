@@ -51,14 +51,7 @@ if __name__ == '__main__':
 
             FenicsVisualizer.visualize = nop
 
-    def _fix_conftest_plugin_load_stalling():
-        # for unknown reason pytest stalls in loading these if they're not preloaded on all ranks
-        from pymortests.conftest import pytest_plugins
-        for plugin in pytest_plugins:
-            __import__(plugin)
-
     mpi.call(monkey_plot)
-    mpi.call(_fix_conftest_plugin_load_stalling)
 
     demo = str(pymor_root_dir / 'src' / 'pymortests' / 'demos.py')
     args = ['-svx', '-k', 'test_demo', demo]
