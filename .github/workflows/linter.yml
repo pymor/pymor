@@ -21,7 +21,7 @@ jobs:
         echo ${{ github.event.pull_request.head.sha }} > ./linter_output/head_sha
         flake8 src | tee ./linter_output/flake8.out
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: linter_output
         path: linter_output
