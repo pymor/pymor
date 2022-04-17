@@ -310,16 +310,18 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
     if A.source.dim == 0 or A.range.dim == 0:
         return A.source.empty(), np.array([]), A.range.empty()
     
-    C = InverseOperator(E) @ A
-    Y, Omega = rrf(C, q=q, l=modes+p, return_rand=True)
-    Q = gram_schmidt(Y, product=E)
-    
     if single_pass:
-        X = Omega.inner(E.apply(Q))
-        Z = Q.inner(E.apply(Omega))
-        Z_inv = np.linalg.solve(Z, np.eye(modes+p))
-        T = np.linalg.solve(X, (Omega.inner(A.apply(Omega))) @ Z_inv)
+        Omega = A.source.random(modes+p, distribution='normal')
+        Y_bar = A.apply(Omega)
+        Y = InverseOperator(E).apply(Y_bar)
+        Q, R = gram_schmidt(Y, product=E, return_R=True)
+        X = E.apply2(Omega,Q)
+        Z = E.apply2(Q, Omega)
+        T = np.linalg.inv(X) @ Omega.inner(Y_bar) @ np.linalg.inv(Z)
     else: 
+        C = InverseOperator(E) @ A
+        Y, Omega = rrf(C, q=q, l=modes+p, return_rand=True)
+        Q = gram_schmidt(Y, product=E)
         T = A.apply2(Q, Q)
 
     w, S = sp.linalg.eigh(T)
