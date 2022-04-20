@@ -344,7 +344,7 @@ class LTIModel(Model):
         ----------
         file_name
             The name of the .mat file (extension .mat does not need to be included) containing A, B,
-            C, and optionally D and E.
+            and optionally C, D, and E.
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
@@ -372,13 +372,13 @@ class LTIModel(Model):
         import scipy.io as spio
         mat_dict = spio.loadmat(file_name)
 
-        assert 'A' in mat_dict and 'B' in mat_dict and 'C' in mat_dict
+        assert 'A' in mat_dict and 'B' in mat_dict
 
         A = mat_dict['A']
         B = mat_dict['B']
-        C = mat_dict['C']
-        D = mat_dict['D'] if 'D' in mat_dict else None
-        E = mat_dict['E'] if 'E' in mat_dict else None
+        C = mat_dict.get('C', B.T)
+        D = mat_dict.get('D')
+        E = mat_dict.get('E')
 
         return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time,
                                  state_id=state_id, solver_options=solver_options,
