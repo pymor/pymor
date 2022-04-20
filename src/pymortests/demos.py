@@ -53,9 +53,11 @@ DISCRETIZATION_ARGS = (
 if not parallel:
     DISCRETIZATION_ARGS += (('elliptic_unstructured', [6., 16, 1e-1]),)
 
-DISCRETIZATION_ARGS += (('neural_networks', [25, 50, 10]),
-                        ('neural_networks_fenics', [15, 3]),
-                        ('neural_networks_instationary', [25, 25, 30, 5]))
+NEURAL_NETWORK_ARGS = (
+    ('neural_networks', [25, 50, 10]),
+    ('neural_networks_fenics', [15, 3]),
+    ('neural_networks_instationary', [25, 25, 30, 5]),
+)
 
 THERMALBLOCK_ARGS = (
     ('thermalblock', ['--plot-solutions', '--plot-err', '--plot-error-sequence', 2, 2, 3, 5]),
@@ -119,7 +121,7 @@ FENICS_NONLINEAR_ARGS = (
 )
 
 FUNCTION_EI_ARGS = (
-    ('function_ei', ['--grid=10', 3, 2, 3, 2]),
+    ('function_ei', ['--grid=10', 3, 2, 3, 2, '--plot-ei-err', '--plot-solutions']),
 )
 
 OUTPUT_FUNCTIONAL_ARGS = (
@@ -140,6 +142,7 @@ DMD_ARGS = (
 
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
+    + NEURAL_NETWORK_ARGS
     + THERMALBLOCK_ARGS
     + THERMALBLOCK_ADAPTIVE_ARGS
     + THERMALBLOCK_SIMPLE_ARGS

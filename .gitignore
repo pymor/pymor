@@ -71,3 +71,4 @@ libpeerconnection.log
 Pipfile
 Pipfile.lock
 .hypothesis
+.vscode

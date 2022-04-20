@@ -7,7 +7,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
-from pymor.algorithms.lyapunov import solve_lyap_lrcf
+from pymor.algorithms.lyapunov import solve_cont_lyap_lrcf
 from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
@@ -136,6 +136,8 @@ class BTReductor(GenericBTReductor):
     """
 
     def _gramians(self):
+        if self.fom.sampling_time > 0:
+            raise NotImplementedError
         return self.fom.gramian('c_lrcf', mu=self.mu), self.fom.gramian('o_lrcf', mu=self.mu)
 
     def error_bounds(self):
@@ -170,6 +172,9 @@ class FDBTReductor(GenericBTReductor):
         self.solver_options = solver_options
 
     def _gramians(self):
+        if self.fom.sampling_time > 0:
+            raise NotImplementedError
+
         A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
                       for op in ['A', 'B', 'C', 'E'])
         options = self.solver_options
@@ -177,13 +182,13 @@ class FDBTReductor(GenericBTReductor):
         self.ast_spectrum = self.fom.get_ast_spectrum(self.ast_pole_data, mu=self.mu)
         K = bernoulli_stabilize(A, E, B.as_range_array(mu=self.mu), self.ast_spectrum, trans=True)
         BK = LowRankOperator(B.as_range_array(mu=self.mu), np.eye(len(K)), K)
-        bsc_lrcf = solve_lyap_lrcf(A-BK, E, B.as_range_array(mu=self.mu),
-                                   trans=False, options=options)
+        bsc_lrcf = solve_cont_lyap_lrcf(A-BK, E, B.as_range_array(mu=self.mu),
+                                        trans=False, options=options)
 
         K = bernoulli_stabilize(A, E, C.as_source_array(mu=self.mu), self.ast_spectrum, trans=False)
         KC = LowRankOperator(K, np.eye(len(K)), C.as_source_array(mu=self.mu))
-        bso_lrcf = solve_lyap_lrcf(A-KC, E, C.as_source_array(mu=self.mu),
-                                   trans=True, options=options)
+        bso_lrcf = solve_cont_lyap_lrcf(A-KC, E, C.as_source_array(mu=self.mu),
+                                        trans=True, options=options)
 
         return bsc_lrcf, bso_lrcf
 
@@ -213,6 +218,9 @@ class LQGBTReductor(GenericBTReductor):
         self.solver_options = solver_options
 
     def _gramians(self):
+        if self.fom.sampling_time > 0:
+            raise NotImplementedError
+
         A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
                       for op in ['A', 'B', 'C', 'E'])
         if isinstance(E, IdentityOperator):
@@ -253,6 +261,9 @@ class BRBTReductor(GenericBTReductor):
         self.solver_options = solver_options
 
     def _gramians(self):
+        if self.fom.sampling_time > 0:
+            raise NotImplementedError
+
         A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
                       for op in ['A', 'B', 'C', 'E'])
         if isinstance(E, IdentityOperator):

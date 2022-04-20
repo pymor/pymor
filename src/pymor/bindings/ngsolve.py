@@ -183,7 +183,7 @@ class NGSolveVisualizer(ImmutableObject):
         assert all(u in self.space for u in U)
         if any(len(u) != 1 for u in U):
             raise NotImplementedError
-        if any(u._list[0].imag_part is not None for u in U):
+        if any(u.vectors[0].imag_part is not None for u in U):
             raise NotImplementedError
         if legend is None:
             legend = [f'VectorArray{i}' for i in range(len(U))]
@@ -199,7 +199,7 @@ class NGSolveVisualizer(ImmutableObject):
                 filename = filename.parent / filename.stem
             else:
                 self.logger.warning(f'NGSolve set VTKOutput filename to {filename}.vtk')
-            coeffs = [u._list[0].real_part.impl for u in U]
+            coeffs = [u.vectors[0].real_part.impl for u in U]
             # ngsolve cannot handle full paths for filenames
             with change_to_directory(filename.parent):
                 vtk = ngs.VTKOutput(ma=self.mesh, coefs=coeffs, names=legend, filename=str(filename), subdivision=0)
@@ -209,4 +209,4 @@ class NGSolveVisualizer(ImmutableObject):
                 raise NotImplementedError
 
             for u, name in zip(U, legend):
-                ngs.Draw(u._list[0].real_part.impl, self.mesh, name=name)
+                ngs.Draw(u.vectors[0].real_part.impl, self.mesh, name=name)

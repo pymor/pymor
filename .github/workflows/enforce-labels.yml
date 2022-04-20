@@ -1,23 +1,9 @@
-name: PR Labels
+name: Enforce Labels
 
 on:
   pull_request:
     types: [labeled, unlabeled, opened, edited, synchronize]
 jobs:
-  # This action will triage pull requests and apply a label based on the
-  # paths that are modified in the pull request.
-  #
-  # To use this workflow, you will need to set up a .github/labeler.yml
-  # file with configuration.  For more information, see:
-  # https://github.com/actions/labeler/blob/master/README.md
-  autolabel:
-    name: Auto-add
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/labeler@v3.0.2
-      with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
-  #
   enforce-label:
     name: "Enforce pr:*"
     runs-on: ubuntu-latest

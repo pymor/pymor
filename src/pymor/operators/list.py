@@ -29,7 +29,7 @@ class ListVectorArrayOperatorBase(Operator):
     def apply(self, U, mu=None):
         assert U in self.source
         data = self._prepare_apply(U, mu, 'apply')
-        V = [self._apply_one_vector(u, mu=mu, prepare_data=data) for u in U._list]
+        V = [self._apply_one_vector(u, mu=mu, prepare_data=data) for u in U.vectors]
         return self.range.make_array(V)
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
@@ -38,10 +38,10 @@ class ListVectorArrayOperatorBase(Operator):
         try:
             data = self._prepare_apply(V, mu, 'apply_inverse', least_squares=least_squares)
             U = [self._apply_inverse_one_vector(v, mu=mu,
-                                                initial_guess=(initial_guess._list[i]
+                                                initial_guess=(initial_guess.vectors[i]
                                                                if initial_guess is not None else None),
                                                 least_squares=least_squares, prepare_data=data)
-                 for i, v in enumerate(V._list)]
+                 for i, v in enumerate(V.vectors)]
         except NotImplementedError:
             return super().apply_inverse(V, mu=mu, least_squares=least_squares)
         return self.source.make_array(U)
@@ -50,7 +50,7 @@ class ListVectorArrayOperatorBase(Operator):
         assert V in self.range
         try:
             data = self._prepare_apply(V, mu, 'apply_adjoint')
-            U = [self._apply_adjoint_one_vector(v, mu=mu, prepare_data=data) for v in V._list]
+            U = [self._apply_adjoint_one_vector(v, mu=mu, prepare_data=data) for v in V.vectors]
         except NotImplementedError:
             return super().apply_adjoint(V, mu=mu)
         return self.source.make_array(U)
@@ -60,10 +60,10 @@ class ListVectorArrayOperatorBase(Operator):
         try:
             data = self._prepare_apply(U, mu, 'apply_inverse_adjoint', least_squares=least_squares)
             V = [self._apply_inverse_adjoint_one_vector(u, mu=mu,
-                                                        initial_guess=(initial_guess._list[i]
+                                                        initial_guess=(initial_guess.vectors[i]
                                                                        if initial_guess is not None else None),
                                                         least_squares=least_squares, prepare_data=data)
-                 for i, u in enumerate(U._list)]
+                 for i, u in enumerate(U.vectors)]
         except NotImplementedError:
             return super().apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
         return self.range.make_array(V)

@@ -36,7 +36,6 @@ rules:
         max: 2
         when:
             - runner_system_failure
-            - stuck_or_timeout_failure
             - api_failure
     tags:
       - autoscaling
@@ -80,7 +79,7 @@ rules:
 {# note: only Vanilla and numpy runs generate coverage or test_results so we can skip others entirely here #}
 .submit:
     extends: .test_base
-    image: {{registry}}/pymor/ci_sanity:{{ci_image_tag}}
+    image: {{registry}}/pymor/ci_sanity:${CI_IMAGE_TAG}
     variables:
         XDG_CACHE_DIR: /tmp
     retry:
@@ -135,9 +134,12 @@ rules:
 .check_wheel:
     extends: .test_base
     stage: install_checks
+    timeout: 10 minutes
+    dependencies: ["sdist_and_wheel"]
+    needs: ["sdist_and_wheel"]
     {{ never_on_schedule_rule() }}
     services:
-      - name: {{registry}}/pymor/devpi:{{pypi_mirror_tag}}
+      - name: {{registry}}/pymor/devpi:${PYPI_MIRROR_TAG}
         alias: pymor__devpi
     before_script:
       # bump to our minimal version
@@ -145,12 +147,14 @@ rules:
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password ''
       - devpi upload --from-dir --formats=* ./dist/*.whl
+      - python3 -m pip install pip~=21.0
+      - python3 -m pip remove -y pymor || true
     # the docker service adressing fails on other runners
     tags: [mike]
 
 .sanity_checks:
     extends: .test_base
-    image: {{registry}}/pymor/ci_sanity:{{ci_image_tag}}
+    image: {{registry}}/pymor/ci_sanity:${CI_IMAGE_TAG}
     stage: sanity
 #******** end definition of base jobs *********************************************************************************#
 
@@ -187,13 +191,13 @@ ci setup:
     {%- endif %}
     services:
     {%- if script == "oldest" %}
-        - name: {{registry}}/pymor/pypi-mirror_oldest_py{{py}}:{{pypi_mirror_tag}}
+        - name: {{registry}}/pymor/pypi-mirror_oldest_py{{py}}:${PYPI_MIRROR_TAG}
           alias: pypi_mirror
     {%- elif script in ["pip_installed", "numpy_git"] %}
-        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
+        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:${PYPI_MIRROR_TAG}
           alias: pypi_mirror
     {%- endif %}
-    image: {{registry}}/pymor/testing_py{{py}}:{{ci_image_tag}}
+    image: {{registry}}/pymor/testing_py{{py}}:${CI_IMAGE_TAG}
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -216,9 +220,9 @@ ci_weekly {{py[0]}} {{py[2]}}:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: always
     services:
-        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
+        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:${PYPI_MIRROR_TAG}
           alias: pypi_mirror
-    image: {{registry}}/pymor/testing_py{{py}}:{{ci_image_tag}}
+    image: {{registry}}/pymor/testing_py{{py}}:${CI_IMAGE_TAG}
     {# PYMOR_HYPOTHESIS_PROFILE is overwritten from web schedule settings #}
     script: ./.ci/gitlab/test_vanilla.bash
 {%- endfor %}
@@ -250,14 +254,15 @@ submit ci_weekly {{py[0]}} {{py[2]}}:
 
 {% for OS, PY in testos %}
 from source {{loop.index}}/{{loop.length}}:
+    extends: .test_base
     tags: [mike]
     services:
-        - name: {{registry}}/pymor/pypi-mirror_stable_py{{PY}}:{{pypi_mirror_tag}}
+        - name: {{registry}}/pymor/pypi-mirror_stable_py{{PY}}:${PYPI_MIRROR_TAG}
           alias: pypi_mirror
     needs: ["ci setup"]
     {{ never_on_schedule_rule() }}
     stage: install_checks
-    image: {{registry}}/pymor/deploy_checks_{{OS}}:{{ci_image_tag}}
+    image: {{registry}}/pymor/deploy_checks_{{OS}}:${CI_IMAGE_TAG}
     script: ./.ci/gitlab/install_checks/{{OS}}/check.bash
 {% endfor %}
 
@@ -307,7 +312,7 @@ sdist_and_wheel:
 
 pypi:
     extends: .test_base
-    image: {{registry}}/pymor/python_3.9:{{ci_image_tag}}
+    image: {{registry}}/pymor/python_3.9:${CI_IMAGE_TAG}
     stage: deploy
     dependencies:
       - sdist_and_wheel
@@ -332,12 +337,10 @@ pypi:
 {% for OS, PY in testos %}
 from wheel {{loop.index}}/{{loop.length}}:
     extends: .check_wheel
-    dependencies: ["sdist_and_wheel"]
-    needs: ["sdist_and_wheel"]
-    image: {{registry}}/pymor/deploy_checks_{{OS}}:{{ci_image_tag}}
+    image: {{registry}}/pymor/deploy_checks_{{OS}}:${CI_IMAGE_TAG}
     script:
       - echo "Testing wheel install on {{OS}} with Python {{PY}}"
-      - python3 -m pip --version
+      - python3 -m pip freeze --all
       - devpi install pymor[full]
 {% endfor %}
 
@@ -350,9 +353,9 @@ docs build {{py[0]}} {{py[2]}}:
           when: never
         - when: on_success
     services:
-        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:{{pypi_mirror_tag}}
+        - name: {{registry}}/pymor/pypi-mirror_stable_py{{py}}:${PYPI_MIRROR_TAG}
           alias: pypi_mirror
-    image: {{registry}}/pymor/jupyter_py{{py}}:{{ci_image_tag}}
+    image: {{registry}}/pymor/jupyter_py{{py}}:${CI_IMAGE_TAG}
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: build

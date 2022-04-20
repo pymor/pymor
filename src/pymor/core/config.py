@@ -33,8 +33,9 @@ def _get_fenics_version():
         pass
 
     import dolfin as df
-    if df.__version__ != '2019.1.0':
-        warnings.warn(f'FEniCS bindings have been tested for version 2019.1.0 (installed: {df.__version__}).')
+    if parse(df.__version__) < parse('2019.1.0'):
+        warnings.warn(f'FEniCS bindings have been tested for version 2019.1.0 and greater '
+                      f'(installed: {df.__version__}).')
     return df.__version__
 
 
@@ -131,17 +132,17 @@ def is_nbconvert():
 
 
 _PACKAGES = {
-    'DEALII': lambda: import_module('pymor_dealii'),
+    'DEALII': lambda: import_module('pymor_dealii').__version__,
     'DUNEGDT': _get_dunegdt_version,
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
     'IPYTHON': _get_ipython_version,
     'MATPLOTLIB': _get_matplotib_version,
     'VTKIO': lambda: _can_import(('meshio', 'pyevtk', 'lxml', 'xmljson')),
-    'MESHIO': lambda: _can_import('meshio'),
+    'MESHIO': lambda: import_module('meshio').__version__,
     'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
-    'NGSOLVE': lambda: bool(import_module('ngsolve')),
+    'NGSOLVE': lambda: import_module('ngsolve').__version__,
     'NUMPY': lambda: import_module('numpy').__version__,
     'PYMESS': lambda: bool(import_module('pymess')),
     'PYTEST': lambda: import_module('pytest').__version__,

@@ -14,9 +14,11 @@
 
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
   * long short-term memory neural networks for instationary problems
+  * several additional features for neural networks
 
 * Art Pelling, a.pelling@tu-berlin.de
-  * support for discrete-time LTI systems
+  * support for discrete-time LTI systems and Lyapunov equations
+  * dedicated Hankel operator class
 
 ### pyMOR 2021.2
 

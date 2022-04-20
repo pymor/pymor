@@ -62,6 +62,12 @@ function is extended.
 All functions and classes called or instantiated by users should
 be sufficiently well documented.
 
+#### How to check code style
+
+Firstly, make sure that you installed the `requirements-ci.txt` with `pip install -r requirements-ci.txt`.
+Afterwards use the Makefile to check for flake8 warnings with `make flake8`
+or directly use `flake8` on the `src` folder.
+
 ### GitHub project
 
 All new code enters pyMOR by means of a pull request. Pull requests (PR) trigger [automatic tests](#continuous-testing--integration-setup)

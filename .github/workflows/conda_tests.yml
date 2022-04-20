@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Upload
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Event File
         path: ${{ github.event_path }}
@@ -77,7 +77,7 @@ jobs:
           ./mesa/systemwidedeploy.cmd
 
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: pyMOR-ci
@@ -93,7 +93,7 @@ jobs:
         run: |
           ./dependencies.py && git diff --exit-code requirements* pyproject.toml
       - name: Cache conda
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache
         env:
           # Increase this value to reset cache if .ci/conda-env.yml have not changed
@@ -144,7 +144,7 @@ jobs:
           COMMON_PYTEST_OPTS: "--cov-report=xml --cov --cov-config=setup.cfg --cov-context=test --junitxml=${RESULTS_FILE}"
         run: |
             ${PYTEST_PREFIX} pytest ${COMMON_PYTEST_OPTS}
-      - uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v3
         name: Upload coverage
         with:
           flags: github_actions,${{ matrix.os }}
@@ -152,13 +152,13 @@ jobs:
           verbose: true
       - name: Upload Unit Test Results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Unit Test Results (Python ${{ matrix.python }}, OS ${{ runner.os }})
           path: result_*.xml
       - name: Upload Conda Env Export
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Conda Env Exports
           path: conda-env__${{ runner.os }}-${{ matrix.python }}.yml

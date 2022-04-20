@@ -99,11 +99,14 @@ def lyap_lrcf_solver_options():
 
 
 @defaults('default_solver')
-def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
+def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None, default_solver=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a
-    general description.
+    See
+
+    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf`
+
+    for a general description.
 
     This function uses `pymess.glyap` and `pymess.lradi`.
     For both methods,
@@ -112,14 +115,11 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
     :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
     need to be implemented for `A.source`.
     Additionally, since `glyap` is a dense solver, it expects
-    :func:`~pymor.algorithms.to_matrix.to_matrix` to work for A and
-    E.
+    :func:`~pymor.algorithms.to_matrix.to_matrix` to work for A and E.
 
-    If the solver is not specified using the options or
-    default_solver arguments, `glyap` is used for small problems
-    (smaller than defined with
-    :func:`~pymor.algorithms.lyapunov.mat_eqn_sparse_min_size`) and
-    `lradi` for large problems.
+    If the solver is not specified using the options or default_solver arguments, `glyap` is used
+    for small problems (smaller than defined with
+    :func:`~pymor.algorithms.lyapunov.mat_eqn_sparse_min_size`) and `lradi` for large problems.
 
     Parameters
     ----------
@@ -130,11 +130,12 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
     B
         The operator B as a |VectorArray| from `A.source`.
     trans
-        Whether the first |Operator| in the Lyapunov equation is
-        transposed.
+        Whether the first |Operator| in the Lyapunov equation is transposed.
+    cont_time
+        Whether the continuous- or discrete-time Lyapunov equation is solved.
+        Only the continuous-time case is implemented.
     options
-        The solver options to use (see
-        :func:`lyap_lrcf_solver_options`).
+        The solver options to use (see :func:`lyap_lrcf_solver_options`).
     default_solver
         Default solver to use (pymess_lradi, pymess_glyap).
         If `None`, choose solver depending on the dimension of A.
@@ -142,8 +143,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
     Returns
     -------
     Z
-        Low-rank Cholesky factor of the Lyapunov equation solution,
-        |VectorArray| from `A.source`.
+        Low-rank Cholesky factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
     """
     _solve_lyap_lrcf_check_args(A, E, B, trans)
     if default_solver is None:
@@ -154,7 +154,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None, default_solver=None):
         X = solve_lyap_dense(to_matrix(A, format='dense'),
                              to_matrix(E, format='dense') if E else None,
                              B.to_numpy().T if not trans else B.to_numpy(),
-                             trans=trans, options=options)
+                             trans=trans, cont_time=cont_time, options=options)
         Z = _chol(X)
     elif options['type'] == 'pymess_lradi':
         opts = options['opts']
@@ -182,11 +182,14 @@ def lyap_dense_solver_options():
     return {'pymess_glyap': {'type': 'pymess_glyap'}}
 
 
-def solve_lyap_dense(A, E, B, trans=False, options=None):
+def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     """Compute the solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_lyap_dense` for a
-    general description.
+    See
+
+    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_dense`
+
+    for a general description.
 
     This function uses `pymess.glyap`.
 
@@ -199,17 +202,20 @@ def solve_lyap_dense(A, E, B, trans=False, options=None):
     B
         The matrix B as a 2D |NumPy array|.
     trans
-        Whether the first operator in the Lyapunov equation is
-        transposed.
+        Whether the first operator in the Lyapunov equation is transposed.
+    cont_time
+        Whether the continuous- or discrete-time Lyapunov equation is solved.
+        Only the continuous-time case is implemented.
     options
-        The solver options to use (see
-        :func:`lyap_dense_solver_options`).
+        The solver options to use (see :func:`lyap_dense_solver_options`).
 
     Returns
     -------
     X
         Lyapunov equation solution as a |NumPy array|.
     """
+    if not cont_time:
+        raise NotImplementedError
     _solve_lyap_dense_check_args(A, E, B, trans)
     options = _parse_options(options, lyap_lrcf_solver_options(), 'pymess_glyap', None, False)
 
