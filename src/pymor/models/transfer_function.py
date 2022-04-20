@@ -10,6 +10,7 @@ from pymor.core.cache import CacheableObject
 from pymor.core.cache import cached
 from pymor.operators.block import BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator
 from pymor.parameters.base import ParametricObject, Mu
+from pymor.tools.plot import adaptive
 
 
 class TransferFunction(CacheableObject, ParametricObject):
@@ -236,13 +237,18 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         return artists
 
-    def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
+    def mag_plot(self, w=None, w_limits=None, mu=None, ax=None, ord=None, Hz=False, dB=False,
+                 adaptive_opts=None, **mpl_kwargs):
         """Draw the magnitude plot.
 
         Parameters
         ----------
         w
             A sequence of angular frequencies at which to compute the transfer function.
+            If given, `w_limits` has to be `None`.
+        w_limits
+            The left and right limits used for the adaptive plot.
+            If given, `w` has to be `None`.
         mu
             |Parameter values| for which to evaluate the transfer function.
         ax
@@ -254,6 +260,8 @@ class TransferFunction(CacheableObject, ParametricObject):
             Should the frequency be in Hz on the plot.
         dB
             Should the magnitude be in dB on the plot.
+        adaptive_opts
+            Optional arguments for `pymor.algorithms.plot.adaptive` (used if `w_limits` is given).
         mpl_kwargs
             Keyword arguments used in the matplotlib plot function.
 
@@ -261,15 +269,37 @@ class TransferFunction(CacheableObject, ParametricObject):
         -------
         out
             List of matplotlib artists added.
+        w
+            Angular frequencies (if `w_limits` is given).
         """
+        assert (w is not None and w_limits is None
+                or w is None and w_limits is not None)
+
         if ax is None:
             import matplotlib.pyplot as plt
             ax = plt.gca()
 
-        w = np.asarray(w)
+        if w is not None:
+            w = np.asarray(w)
+            mag = spla.norm(self.freq_resp(w, mu=mu), ord=ord, axis=(1, 2))
+        else:
+            if self.sampling_time == 0:
+                def f_mag(log10_w):
+                    return np.log10(spla.norm(self.eval_tf(10 ** log10_w * 1j), ord=ord))
+            else:
+                def f_mag(log10_w):
+                    return np.log10(spla.norm(self.eval_tf(np.exp(10 ** log10_w * 1j)), ord=ord))
+            a, b = w_limits
+            a = np.log10(a)
+            b = np.log10(b)
+            if adaptive_opts is None:
+                adaptive_opts = {}
+            w, mag = adaptive(f_mag, a, b, **adaptive_opts)
+            w = 10 ** w
+            mag = 10 ** mag
+
         freq = w / (2 * np.pi) if Hz else w
         freq = freq / self.sampling_time if self.sampling_time > 0 else freq
-        mag = spla.norm(self.freq_resp(w, mu=mu), ord=ord, axis=(1, 2))
         if dB:
             out = ax.semilogx(freq, 20 * np.log10(mag), **mpl_kwargs)
         else:
@@ -281,6 +311,8 @@ class TransferFunction(CacheableObject, ParametricObject):
         mag_unit = ' (dB)' if dB else ''
         ax.set_ylabel('Magnitude' + mag_unit)
 
+        if w_limits is not None:
+            return out, w
         return out
 
     @cached
