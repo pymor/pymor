@@ -340,6 +340,9 @@ class LTIModel(Model):
                       visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in a .mat file.
 
+        Supports the format used in the `SLICOT benchmark collection
+        <http://slicot.org/20-site/126-benchmark-examples-for-model-reduction>`_.
+
         Parameters
         ----------
         file_name
