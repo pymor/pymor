@@ -136,8 +136,6 @@ class BTReductor(GenericBTReductor):
     """
 
     def _gramians(self):
-        if self.fom.sampling_time > 0:
-            raise NotImplementedError
         return self.fom.gramian('c_lrcf', mu=self.mu), self.fom.gramian('o_lrcf', mu=self.mu)
 
     def error_bounds(self):
