@@ -16,7 +16,7 @@
   * several additional features for neural networks
 
 * Art Pelling, a.pelling@tu-berlin.de
-  * support for discrete-time LTI systems and Lyapunov equations
+  * support for discrete-time LTI systems, Lyapunov equations and balanced truncation
   * dedicated Hankel operator class
 
 ### pyMOR 2021.2
