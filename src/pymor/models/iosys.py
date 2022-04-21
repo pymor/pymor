@@ -377,13 +377,21 @@ class LTIModel(Model):
 
         assert 'A' in mat_dict and 'B' in mat_dict
 
-        A = mat_dict['A']
-        B = mat_dict['B']
-        C = mat_dict.get('C', B.T)
-        D = mat_dict.get('D')
-        E = mat_dict.get('E')
+        matrices = [
+            mat_dict['A'],
+            mat_dict['B'],
+            mat_dict.get('C', mat_dict['B'].T),
+            mat_dict.get('D'),
+            mat_dict.get('E'),
+        ]
 
-        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time,
+        # convert integer dtypes to floating dtypes
+        for i in range(len(matrices)):
+            mat = matrices[i]
+            if mat is not None and np.issubdtype(mat.dtype, np.integer):
+                matrices[i] = mat.astype(np.float_)
+
+        return cls.from_matrices(*matrices, sampling_time=sampling_time,
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
