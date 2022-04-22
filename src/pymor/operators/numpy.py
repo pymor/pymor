@@ -338,6 +338,37 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         return self.H.apply_inverse(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
 
+    def _assemble_concat(self, operators, solver_options=None, name=None):
+        if not all(isinstance(op, NumpyMatrixOperator) for op in operators):
+            return None
+
+        matrices, dense_matrices = [], []
+        for mat, mat_next in map(lambda x: map(lambda y: y.matrix, x), zip(operators, operators[1:])):
+            if not issparse(mat) and not issparse(mat_next):
+                if not dense_matrices:
+                    dense_matrices.append(mat)
+                dense_matrices.append(mat_next)
+            else:
+                if dense_matrices:
+                    mat = np.linalg.multi_dot(dense_matrices)
+                dense_matrices = []
+                matrices.append(mat)
+
+        if dense_matrices:
+            matrices.append(np.linalg.multi_dot(dense_matrices))
+        elif issparse(mat_next):
+            matrices.append(mat_next)
+
+        if len(matrices) > 1:
+            from operator import matmul
+            matrix = reduce(matmul, matrices)
+        else:
+            matrix = matrices[0]
+        return NumpyMatrixOperator(matrix,
+                                   source_id=self.source.id,
+                                   range_id=self.range.id,
+                                   solver_options=solver_options)
+
     def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
         if not all(isinstance(op, NumpyMatrixOperator) for op in operators):
             return None

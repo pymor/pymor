@@ -269,6 +269,12 @@ class ConcatenationOperator(Operator):
             V = op.apply_adjoint(V, mu=mu)
         return V
 
+    def assemble(self, mu=None):
+        from pymor.algorithms.concat import assemble_concat
+        operators = tuple(op.assemble(mu) for op in self.operators)
+        op = assemble_concat(operators, solver_options=self.solver_options, name=self.name + '_assembled')
+        return op
+
     def jacobian(self, U, mu=None):
         assert len(U) == 1
         Us = [U]

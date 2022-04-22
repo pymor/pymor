@@ -453,6 +453,9 @@ class Operator(ParametricObject):
         else:
             return self
 
+    def _assemble_concat(self, operators, solver_options=None, name=None):
+        return None
+
     def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
         """Try to assemble a linear combination of the given operators.
 
