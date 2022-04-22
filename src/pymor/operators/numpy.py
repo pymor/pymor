@@ -365,7 +365,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             matrix = matrices[0]
         return NumpyMatrixOperator(matrix,
-                                   source_id=self.source.id,
+                                   source_id=operators[-1].source.id,
                                    range_id=self.range.id,
                                    solver_options=solver_options)
 
