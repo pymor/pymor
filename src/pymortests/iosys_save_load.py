@@ -7,6 +7,7 @@ import tempfile
 
 import numpy as np
 import pytest
+import scipy.io as spio
 import scipy.sparse as sps
 
 from pymor.models.iosys import LTIModel, SecondOrderModel
@@ -102,6 +103,7 @@ def test_files_lti(with_D, with_E):
 @pytest.mark.parametrize('with_E', [False, True])
 def test_mat_file_lti(with_D, with_E):
     matrices = _build_matrices_lti(with_D, with_E)
+    assert all(np.issubdtype(mat.dtype, np.integer) for mat in matrices if mat is not None)
 
     lti = LTIModel.from_matrices(*matrices)
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -111,6 +113,19 @@ def test_mat_file_lti(with_D, with_E):
     matrices2 = lti2.to_matrices()
 
     _test_matrices_lti(*matrices, *matrices2, with_D, with_E)
+    assert all(np.issubdtype(mat.dtype, np.floating) for mat in matrices2 if mat is not None)
+
+
+def test_mat_file_lti_C():
+    A, B, _, _, _ = _build_matrices_lti(False, False)
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        file_name = os.path.join(tmpdirname, 'lti')
+        spio.savemat(file_name, {'A': A, 'B': B})
+        lti2 = LTIModel.from_mat_file(file_name)
+    matrices2 = lti2.to_matrices()
+
+    _test_matrices_lti(A, B, B.T, None, None, *matrices2, False, False)
 
 
 @pytest.mark.parametrize('with_D', [False, True])

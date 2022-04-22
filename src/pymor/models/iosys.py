@@ -340,11 +340,14 @@ class LTIModel(Model):
                       visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in a .mat file.
 
+        Supports the format used in the `SLICOT benchmark collection
+        <http://slicot.org/20-site/126-benchmark-examples-for-model-reduction>`_.
+
         Parameters
         ----------
         file_name
             The name of the .mat file (extension .mat does not need to be included) containing A, B,
-            C, and optionally D and E.
+            and optionally C, D, and E.
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
@@ -372,15 +375,23 @@ class LTIModel(Model):
         import scipy.io as spio
         mat_dict = spio.loadmat(file_name)
 
-        assert 'A' in mat_dict and 'B' in mat_dict and 'C' in mat_dict
+        assert 'A' in mat_dict and 'B' in mat_dict
 
-        A = mat_dict['A']
-        B = mat_dict['B']
-        C = mat_dict['C']
-        D = mat_dict['D'] if 'D' in mat_dict else None
-        E = mat_dict['E'] if 'E' in mat_dict else None
+        matrices = [
+            mat_dict['A'],
+            mat_dict['B'],
+            mat_dict.get('C', mat_dict['B'].T),
+            mat_dict.get('D'),
+            mat_dict.get('E'),
+        ]
 
-        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time,
+        # convert integer dtypes to floating dtypes
+        for i in range(len(matrices)):
+            mat = matrices[i]
+            if mat is not None and np.issubdtype(mat.dtype, np.integer):
+                matrices[i] = mat.astype(np.float_)
+
+        return cls.from_matrices(*matrices, sampling_time=sampling_time,
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
