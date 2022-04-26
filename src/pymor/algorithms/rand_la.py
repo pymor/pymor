@@ -263,7 +263,7 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
 
     if `E` is not `None`.
 
-    This method is an implementation of algorithm 6 and 7 in :cite:`SJK21`. 
+    This method is an implementation of algorithm 6 and 7 in :cite:`SJK16`. 
 
     Parameters
     ----------
@@ -278,9 +278,9 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
         (oversampling parameter).
     q : 
         If not `0`, performs `q` power iterations to increase the relative weight
-        of the larger singular values.
+        of the larger singular values. Ignored when `single_pass` is `True`.
     single_pass
-        If `True`, computes the ghep where only one set of matvec Ax is required, but an additional error is produced. 
+        If `True`, computes the ghep where only one set of matvec Ax is required, but at the expense of lower numerical accuracy.
         If `False` the methods requires two sets of matvecs Ax
 
     Returns
@@ -313,11 +313,10 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
     if single_pass:
         Omega = A.source.random(modes+p, distribution='normal')
         Y_bar = A.apply(Omega)
-        Y = InverseOperator(E).apply(Y_bar)
+        Y = E.apply_inverse(Y_bar)
         Q, R = gram_schmidt(Y, product=E, return_R=True)
         X = E.apply2(Omega,Q)
-        Z = E.apply2(Q, Omega)
-        T = np.linalg.inv(X) @ Omega.inner(Y_bar) @ np.linalg.inv(Z)
+        T = np.linalg.inv(X) @ Omega.inner(Y_bar) @ np.linalg.inv(X.T)
     else: 
         C = InverseOperator(E) @ A
         Y, Omega = rrf(C, q=q, l=modes+p, return_rand=True)
