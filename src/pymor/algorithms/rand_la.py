@@ -102,8 +102,6 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
 def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False, iscomplex=False):
     r"""Randomized range approximation of `A`.
 
-    This is an implementation of Algorithm 4.4 in :cite:`HMT11`.
-
     Given the |Operator| `A`, the return value of this method is the |VectorArray|
     `Q` whose vectors form an approximate orthonomal basis for the range of `A`.#
 
@@ -316,7 +314,8 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
         Y = E.apply_inverse(Y_bar)
         Q, R = gram_schmidt(Y, product=E, return_R=True)
         X = E.apply2(Omega,Q)
-        T = np.linalg.inv(X) @ Omega.inner(Y_bar) @ np.linalg.inv(X.T)
+        X_inv = np.linalg.inv(X)
+        T = X_inv @ Omega.inner(Y_bar) @ X_inv.T
     else: 
         C = InverseOperator(E) @ A
         Y, Omega = rrf(C, q=q, l=modes+p, return_rand=True)
