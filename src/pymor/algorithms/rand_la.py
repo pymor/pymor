@@ -5,6 +5,7 @@
 import numpy as np
 import scipy as sp
 from scipy.sparse.linalg import eigsh, LinearOperator
+from scipy.linalg import lu_factor, lu_solve
 from scipy.special import erfinv
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
@@ -314,8 +315,8 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
         Y = E.apply_inverse(Y_bar)
         Q, R = gram_schmidt(Y, product=E, return_R=True)
         X = E.apply2(Omega,Q)
-        X_inv = np.linalg.inv(X)
-        T = X_inv @ Omega.inner(Y_bar) @ X_inv.T
+        X_lu = lu_factor(X)
+        T = lu_solve(X_lu, lu_solve(X_lu, Omega.inner(Y_bar)).T).T
     else: 
         C = InverseOperator(E) @ A
         Y, Omega = rrf(C, q=q, l=modes+p, return_rand=True)
