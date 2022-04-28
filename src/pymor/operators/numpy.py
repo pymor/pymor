@@ -480,7 +480,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
         self.source = NumpyVectorSpace(m * n, source_id)
         self.range = NumpyVectorSpace(p * n, range_id)
         self.linear = True
-        self._circulant = self._calc_circulant()
+        self._circulant = None
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -490,7 +490,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
         n = s // 2 + 1
 
         FFT, iFFT = fft, ifft
-        c = self._circulant
+        c = self._calc_circulant()
         dtype = complex
         if np.isrealobj(self.markov_parameters):
             if np.isrealobj(U):
@@ -512,22 +512,24 @@ class NumpyHankelOperator(NumpyGenericOperator):
         return self.H.apply(V, mu=mu)
 
     def _calc_circulant(self):
-        FFT = rfft if np.isrealobj(self.markov_parameters) else fft
-        s, p, m = self.markov_parameters.shape
-        return FFT(
-            np.roll(
-                np.concatenate(
-                    [
-                        np.zeros([1, p, m]),
-                        self.markov_parameters,
-                        np.zeros([1 - s % 2, p, m]),
-                    ]
+        if not self._circulant:
+            FFT = rfft if np.isrealobj(self.markov_parameters) else fft
+            s, p, m = self.markov_parameters.shape
+            self._circulant = FFT(
+                np.roll(
+                    np.concatenate(
+                        [
+                            np.zeros([1, p, m]),
+                            self.markov_parameters,
+                            np.zeros([1 - s % 2, p, m]),
+                        ]
+                    ),
+                    s // 2 + 1,
+                    axis=0,
                 ),
-                s // 2 + 1,
                 axis=0,
-            ),
-            axis=0,
-        )
+            )
+        return self._circulant
 
     @property
     def H(self):
