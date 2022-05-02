@@ -5,13 +5,25 @@ from pymor.core.base import ImmutableObject
 
 
 class MoebiusTransformation(ImmutableObject):
-    """A Moebius transform operator.
+    r"""Maps the Riemann sphere onto itself.
 
-    Maps complex numbers to complex numbers.
-    The transform coefficients can be normalized.
-    Contains a method for constructing an inverse mapping, as well as a constructor that takes three
-    points and their images. The Moebius transforms form a group under composition, so __matmul__ is
-    defined to yield Moebius Transforms if both factors are Moebius Transforms.
+    A Moebius transformation
+
+    .. math::
+        M(s) = \frac{as+b}{cs+b}
+
+    is determined by the coefficients :math:`a,b,c,d\in\mathbb{C}`. The Moebius transformations form
+    a group under composition, therefore the `__matmul__` operator is defined to yield a
+    |MoebiusTransform| if both factors are |MoebiusTransformation|s.
+
+    Parameters
+    ----------
+    coefficients
+        A tuple, list or |NumPy array| containing the four coefficients `a,b,c,d`.
+    normalize
+        If `True`, the coefficients are normalized, i.e. :math:`ad-bc=1`. Defaults to `False`.
+    name
+        Name of the transformation.
     """
 
     def __init__(self, coefficients, normalize=False, name=None):
@@ -26,6 +38,21 @@ class MoebiusTransformation(ImmutableObject):
 
     @classmethod
     def from_points(cls, w, z=(0, 1, np.inf), name=None):
+        """Constructs a Moebius transformation from three points and their images.
+
+        A Moebius transformation is completely determined by the images of three distinct points on
+        the Riemann sphere under transformation.
+
+        Parameters
+        ----------
+        w
+            A tuple, list or |NumPy array| of three complex numbers that are transformed.
+        z
+            A tuple, list or |NumPy array| of three complex numbers represent the images of `w`.
+            Defaults to `(0, 1, np.inf)`.
+        name
+            Name of the transformation.
+        """
         assert len(z) == 3
         assert len(w) == 3
 
@@ -43,6 +70,13 @@ class MoebiusTransformation(ImmutableObject):
         return cls(null_space(A).ravel(), name=name)
 
     def inverse(self, normalize=False):
+        """Returns the inverse Moebius transformation by applying the inversion formula.
+
+        Parameters
+        ----------
+        normalize
+            If `True`, the coefficients are normalized, i.e. :math:`ad-bc=1`. Defaults to `False`.
+        """
         a, b, c, d = self.coefficients
         coefficients = np.array([d, -b, -c, a])
         return MoebiusTransformation(coefficients, normalize=normalize, name=self.name + '_inverse')
@@ -78,23 +112,23 @@ class MoebiusTransformation(ImmutableObject):
 
 
 class BilinearTransform(MoebiusTransformation):
-    r"""The bilinear transform.
+    r"""The bilinear transform also known as Tustin's method.
 
-    A bilinear transformation is defined as
+    The bilinear transform can be seen as the first order approximation of the natural logarithm
+    that maps the z-plane onto the s-plane. The approximation is given by
 
     .. math::
-        M(s) = \frac{as+b}{cs+b}
+        z = \frac{1+xs}{1-xs},
 
-    is determined by the coefficients :math:`a,b,c,d\in\mathbb{C}`. The Moebius transformations form
-    a group under composition, therefore the `__matmul__` operator is defined to yield a
-    |MoebiusTransform| if both factors are |MoebiusTransformation|s.
+    where `x` is an arbitrary number. Usually, this is chosen as the step size of the numerical
+    integration trapezoid rule, i.e. the sampling time of a discrete-time |LTIModel|.
 
     Parameters
     ----------
-    coefficients
-        A tuple, list or |NumPy array| containing the four coefficients `a,b,c,d`.
-    normalize
-        If `True`, the coefficients are normalized, i.e. :math:`ad-bc=1`. Defaults to `False`.
+    x
+        An arbitrary number that defines the |BilinearTransform|.
+    name
+        Name of the transform.
     """
 
     def __init__(self, x, normalize=False, name=None):
@@ -104,6 +138,19 @@ class BilinearTransform(MoebiusTransformation):
 
 
 class CayleyTransform(MoebiusTransformation):
+    r"""Maps the upper complex half-plane to the unit disk.
+
+    The Cayley transform is defined as
+
+    .. math::
+        f(s) = \frac{s-i}{s+i}.
+
+    Parameters
+    ----------
+    name
+        Name of the transform.
+    """
+
     def __init__(self, normalize=False, name=None):
         super().__init__([1, -1j, 1, 1j], normalize=normalize, name=name)
         self.__auto_init(locals())

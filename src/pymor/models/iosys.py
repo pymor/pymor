@@ -943,6 +943,34 @@ class LTIModel(Model):
             return ast_lev, ast_ews[idx], ast_rev
 
     def moebius_substitution(self, M, sampling_time=0):
+        r"""Create a transformed |LTIModel| by applying an arbitrary Moebius transformation.
+
+        This method returns a transformed |LTIModel| such that the transfer function of the original
+        and transformed |LTIModel| are related by a Moebius substitution of the frequency argument:
+
+        .. math::
+            H(s)=\tilde{H}(M(s)),
+
+        where
+
+        .. math::
+            M(s) = \frac{as+b}{cs+d}
+
+        is a Moebius transformation. See :cite:`CCA96` for details.
+
+        Parameters
+        ----------
+        M
+            The |MoebiusTransformation| that defines the frequency mapping.
+        sampling_time
+            The sampling time of the transformed system (in seconds). `0` if the system is
+            continuous-time, otherwise a positive number. Defaults to zero.
+
+        Returns
+        -------
+        sys
+            The transformed |LTIModel|.
+        """
         assert isinstance(M, MoebiusTransformation)
 
         a, b, c, d = M.coefficients
@@ -958,6 +986,24 @@ class LTIModel(Model):
         return LTIModel(At, Bt, Ct, D=Dt, E=Et, sampling_time=sampling_time)
 
     def to_discrete(self, sampling_time, method='Tustin', w0=0):
+        """Converts a continuous-time |LTIModel| to a discrete-time |LTIModel|.
+
+        Parameters
+        ----------
+        sampling_time
+            A positive number that denotes the sampling time of the resulting system (in seconds).
+        method
+            A string that defines the transformation method. At the moment only Tustin's method is
+            supported.
+        w0
+            If `method=='Tustin'`, this parameter can be used to specify the prewarping-frequency.
+            Defaults to zero.
+
+        Returns
+        -------
+        sys
+            Discrete-time |LTIModel|.
+        """
         if method != 'Tustin':
             return NotImplemented
         assert self.sampling_time == 0
@@ -968,6 +1014,22 @@ class LTIModel(Model):
         return self.moebius_substitution(c2d, sampling_time=sampling_time)
 
     def to_continuous(self, method='Tustin', w0=0):
+        """Converts a discrete-time |LTIModel| to a continuous-time |LTIModel|.
+
+        Parameters
+        ----------
+        method
+            A string that defines the transformation method. At the moment only Tustin's method is
+            supported.
+        w0
+            If `method=='Tustin'`, this parameter can be used to specify the prewarping-frequency.
+            Defaults to zero.
+
+        Returns
+        -------
+        sys
+            Continuous-time |LTIModel|.
+        """
         if method != 'Tustin':
             return NotImplemented
         assert self.sampling_time > 0
