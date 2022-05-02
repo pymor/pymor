@@ -14,7 +14,7 @@ class MoebiusTransformation(ImmutableObject):
 
     is determined by the coefficients :math:`a,b,c,d\in\mathbb{C}`. The Moebius transformations form
     a group under composition, therefore the `__matmul__` operator is defined to yield a
-    |MoebiusTransform| if both factors are |MoebiusTransformation|s.
+    |MoebiusTransformation| if both factors are |MoebiusTransformation|s.
 
     Parameters
     ----------

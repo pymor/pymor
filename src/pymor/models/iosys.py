@@ -1009,7 +1009,7 @@ class LTIModel(Model):
         assert self.sampling_time == 0
         assert sampling_time > 0
         assert isinstance(w0, Number)
-        x = 2/sampling_time if w0 == 0 else w0 / np.tan(w0*sampling_time/2)
+        x = 2 / sampling_time if w0 == 0 else w0 / np.tan(w0 * sampling_time / 2)
         c2d = BilinearTransform(x, dim=self.A.source.dim).inverse()
         return self.moebius_substitution(c2d, sampling_time=sampling_time)
 
@@ -1034,7 +1034,7 @@ class LTIModel(Model):
             return NotImplemented
         assert self.sampling_time > 0
         assert isinstance(w0, Number)
-        x = 2 / self.sampling_time if w0 == 0 else w0 / np.tan(w0*self.sampling_time/2)
+        x = 2 / self.sampling_time if w0 == 0 else w0 / np.tan(w0 * self.sampling_time / 2)
         d2c = BilinearTransform(x, dim=self.A.source.dim)
         return self.moebius_substitution(d2c, sampling_time=0)
 
