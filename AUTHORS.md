@@ -20,6 +20,7 @@
 
 * Art Pelling, a.pelling@tu-berlin.de
   * support for discrete-time LTI systems, Lyapunov equations and balanced truncation
+  * Moebius transformations and continuous/discrete-time conversion of LTI models
   * dedicated Hankel operator class
 
 * Sven Ullmann, ullmannsven@gmx.de
