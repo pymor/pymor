@@ -9,6 +9,7 @@ import scipy.sparse.linalg as spsla
 
 from pymor.algorithms.rules import RuleTable, match_class
 from pymor.core.config import config
+from pymor.core.exceptions import NoMatchingRuleError
 from pymor.models.transforms import MoebiusTransform
 from pymor.operators.block import BlockOperatorBase
 from pymor.operators.constructions import (AdjointOperator, ComponentProjectionOperator, ConcatenationOperator,
@@ -138,13 +139,13 @@ class ToMatrixRules(RuleTable):
 
     @match_class(ConcatenationOperator)
     def action_ConcatenationOperator(self, op):
-        mats = [self.apply(o) for o in op.operators]
-        while len(mats) > 1:
-            if self.format is None and not sps.issparse(mats[-2]) and sps.issparse(mats[-1]):
-                mats = mats[:-2] + [mats[-1].T.dot(mats[-2].T).T]
-            else:
-                mats = mats[:-2] + [mats[-2].dot(mats[-1])]
-        return mats[0]
+        try:
+            mats = [self.apply(o) for o in op.operators]
+            from functools import reduce
+            from operator import matmul
+            return reduce(matmul, mats)
+        except NoMatchingRuleError:
+            return op.as_range_array(mu=self.mu).to_numpy().T
 
     @match_class(IdentityOperator)
     def action_IdentityOperator(self, op):
