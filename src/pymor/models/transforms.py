@@ -131,9 +131,9 @@ class BilinearTransform(MoebiusTransformation):
         Name of the transform.
     """
 
-    def __init__(self, x, normalize=False, name=None):
+    def __init__(self, x, name=None):
         assert x > 0
-        super().__init__([x, -x, 1, 1], normalize=normalize, name=name)
+        super().__init__([x, -x, 1, 1], name=name)
         self.__auto_init(locals())
 
 
@@ -151,6 +151,6 @@ class CayleyTransform(MoebiusTransformation):
         Name of the transform.
     """
 
-    def __init__(self, normalize=False, name=None):
-        super().__init__([1, -1j, 1, 1j], normalize=normalize, name=name)
+    def __init__(self, name=None):
+        super().__init__([1, -1j, 1, 1j], name=name)
         self.__auto_init(locals())

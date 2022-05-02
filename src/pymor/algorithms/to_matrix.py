@@ -10,7 +10,6 @@ import scipy.sparse.linalg as spsla
 from pymor.algorithms.rules import RuleTable, match_class
 from pymor.core.config import config
 from pymor.core.exceptions import NoMatchingRuleError
-from pymor.models.transforms import MoebiusTransformation
 from pymor.operators.block import BlockOperatorBase
 from pymor.operators.constructions import (AdjointOperator, ComponentProjectionOperator, ConcatenationOperator,
                                            IdentityOperator, LincombOperator, LowRankOperator, LowRankUpdatedOperator,
@@ -48,10 +47,6 @@ class ToMatrixRules(RuleTable):
     def __init__(self, format, mu):
         super().__init__()
         self.__auto_init(locals())
-
-    @match_class(MoebiusTransformation)
-    def action_MoebiusTransformation(self, op):
-        return op.coefficients.reshape(2, 2)
 
     @match_class(NumpyHankelOperator)
     def action_NumpyHankelOperator(self, op):
