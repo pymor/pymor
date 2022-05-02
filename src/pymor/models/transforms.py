@@ -4,7 +4,7 @@ from scipy.linalg import null_space
 from pymor.core.base import ImmutableObject
 
 
-class MoebiusTransform(ImmutableObject):
+class MoebiusTransformation(ImmutableObject):
     """A Moebius transform operator.
 
     Maps complex numbers to complex numbers.
@@ -45,7 +45,7 @@ class MoebiusTransform(ImmutableObject):
     def inverse(self, normalize=False):
         a, b, c, d = self.coefficients
         coefficients = np.array([d, -b, -c, a])
-        return MoebiusTransform(coefficients, normalize=normalize, name=self.name + '_inverse')
+        return MoebiusTransformation(coefficients, normalize=normalize, name=self.name + '_inverse')
 
     def _mapping(self, x):
         a, b, c, d = self.coefficients
@@ -64,9 +64,9 @@ class MoebiusTransform(ImmutableObject):
         return np.vectorize(self._mapping)(x)
 
     def __matmul__(self, other):
-        assert isinstance(other, MoebiusTransform)
+        assert isinstance(other, MoebiusTransformation)
         M = self.coefficients.reshape(2, 2) @ other.coefficients.reshape(2, 2)
-        return MoebiusTransform(M.ravel())
+        return MoebiusTransformation(M.ravel())
 
     def __str__(self):
         return (
@@ -77,14 +77,33 @@ class MoebiusTransform(ImmutableObject):
         )
 
 
-class BilinearTransform(MoebiusTransform):
+class BilinearTransform(MoebiusTransformation):
+    r"""The bilinear transform.
+
+    A bilinear transformation is defined as
+
+    .. math::
+        M(s) = \frac{as+b}{cs+b}
+
+    is determined by the coefficients :math:`a,b,c,d\in\mathbb{C}`. The Moebius transformations form
+    a group under composition, therefore the `__matmul__` operator is defined to yield a
+    |MoebiusTransform| if both factors are |MoebiusTransformation|s.
+
+    Parameters
+    ----------
+    coefficients
+        A tuple, list or |NumPy array| containing the four coefficients `a,b,c,d`.
+    normalize
+        If `True`, the coefficients are normalized, i.e. :math:`ad-bc=1`. Defaults to `False`.
+    """
+
     def __init__(self, x, normalize=False, name=None):
         assert x > 0
         super().__init__([x, -x, 1, 1], normalize=normalize, name=name)
         self.__auto_init(locals())
 
 
-class CayleyTransform(MoebiusTransform):
+class CayleyTransform(MoebiusTransformation):
     def __init__(self, normalize=False, name=None):
         super().__init__([1, -1j, 1, 1j], normalize=normalize, name=name)
         self.__auto_init(locals())

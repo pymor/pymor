@@ -17,7 +17,7 @@ from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.models.interface import Model
 from pymor.models.transfer_function import FactorizedTransferFunction
-from pymor.models.transforms import BilinearTransform, MoebiusTransform
+from pymor.models.transforms import BilinearTransform, MoebiusTransformation
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
 from pymor.operators.constructions import (IdentityOperator, InverseOperator, LincombOperator, LowRankOperator,
@@ -943,7 +943,7 @@ class LTIModel(Model):
             return ast_lev, ast_ews[idx], ast_rev
 
     def moebius_substitution(self, M, sampling_time=0):
-        assert isinstance(M, MoebiusTransform)
+        assert isinstance(M, MoebiusTransformation)
 
         a, b, c, d = M.coefficients
         s = a * d - b * c
