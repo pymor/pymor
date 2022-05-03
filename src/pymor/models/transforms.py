@@ -121,7 +121,7 @@ class MoebiusTransformation(ImmutableObject):
         )
 
 
-class BilinearTransform(MoebiusTransformation):
+class BilinearTransformation(MoebiusTransformation):
     r"""The bilinear transform also known as Tustin's method.
 
     The bilinear transform can be seen as the first order approximation of the natural logarithm
@@ -136,7 +136,7 @@ class BilinearTransform(MoebiusTransformation):
     Parameters
     ----------
     x
-        An arbitrary number that defines the |BilinearTransform|.
+        An arbitrary number that defines the |BilinearTransformation|.
     name
         Name of the transform.
     """
@@ -147,7 +147,7 @@ class BilinearTransform(MoebiusTransformation):
         self.__auto_init(locals())
 
 
-class CayleyTransform(MoebiusTransformation):
+class CayleyTransformation(MoebiusTransformation):
     r"""Maps the upper complex half-plane to the unit disk.
 
     The Cayley transform is defined as

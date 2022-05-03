@@ -17,7 +17,7 @@ from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.models.interface import Model
 from pymor.models.transfer_function import FactorizedTransferFunction
-from pymor.models.transforms import BilinearTransform, MoebiusTransformation
+from pymor.models.transforms import BilinearTransformation, MoebiusTransformation
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
 from pymor.operators.constructions import (IdentityOperator, InverseOperator, LincombOperator, LowRankOperator,
@@ -1010,7 +1010,7 @@ class LTIModel(Model):
         assert sampling_time > 0
         assert isinstance(w0, Number)
         x = 2 / sampling_time if w0 == 0 else w0 / np.tan(w0 * sampling_time / 2)
-        c2d = BilinearTransform(x).inverse()
+        c2d = BilinearTransformation(x).inverse()
         return self.moebius_substitution(c2d, sampling_time=sampling_time)
 
     def to_continuous(self, method='Tustin', w0=0):
@@ -1035,7 +1035,7 @@ class LTIModel(Model):
         assert self.sampling_time > 0
         assert isinstance(w0, Number)
         x = 2 / self.sampling_time if w0 == 0 else w0 / np.tan(w0 * self.sampling_time / 2)
-        d2c = BilinearTransform(x)
+        d2c = BilinearTransformation(x)
         return self.moebius_substitution(d2c, sampling_time=0)
 
 
