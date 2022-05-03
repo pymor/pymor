@@ -1005,7 +1005,7 @@ class LTIModel(Model):
             Discrete-time |LTIModel|.
         """
         if method != 'Tustin':
-            return NotImplemented
+            return NotImplementedError
         assert self.sampling_time == 0
         assert sampling_time > 0
         assert isinstance(w0, Number)
@@ -1031,7 +1031,7 @@ class LTIModel(Model):
             Continuous-time |LTIModel|.
         """
         if method != 'Tustin':
-            return NotImplemented
+            return NotImplementedError
         assert self.sampling_time > 0
         assert isinstance(w0, Number)
         x = 2 / self.sampling_time if w0 == 0 else w0 / np.tan(w0 * self.sampling_time / 2)
