@@ -1215,6 +1215,81 @@ class PHLTIModel(Model):
         return self.to_lti().poles(mu=mu)
 
     @cached
+    def gramian(self, typ, mu=None):
+        """Compute a Gramian.
+
+        Parameters
+        ----------
+        typ
+            The type of the Gramian:
+
+            - `'c_lrcf'`: low-rank Cholesky factor of the controllability Gramian,
+            - `'o_lrcf'`: low-rank Cholesky factor of the observability Gramian,
+            - `'c_dense'`: dense controllability Gramian,
+            - `'o_dense'`: dense observability Gramian.
+
+            .. note::
+                For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
+                For `'*_dense'` types, the method assumes that the underlying Lyapunov equation
+                has a unique solution, i.e. no pair of system poles adds to zero in the
+                continuous-time case and no pair of system poles multiplies to one in the
+                discrete-time case.
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        If typ is `'c_lrcf'` or `'o_lrcf'`, then the Gramian factor as a |VectorArray| from
+        `self.A.source`.
+        If typ is `'c_dense'` or `'o_dense'`, then the Gramian as a |NumPy array|.
+        """
+        assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense')
+
+        return self.to_lti().gramian(typ, mu)
+
+    @cached
+    def _hsv_U_V(self, mu=None):
+        """Compute Hankel singular values and vectors.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        hsv
+            One-dimensional |NumPy array| of singular values.
+        Uh
+            |NumPy array| of left singular vectors.
+        Vh
+            |NumPy array| of right singular vectors.
+        """
+
+        return self.to_lti()._hsv_U_V(mu)
+
+    def hsv(self, mu=None):
+        """Hankel singular values.
+
+        .. note::
+            Assumes the system is asymptotically stable.
+
+        Parameters
+        ----------
+        mu
+            |Parameter values|.
+
+        Returns
+        -------
+        sv
+            One-dimensional |NumPy array| of singular values.
+        """
+        return self._hsv_U_V(mu=mu)[0]
+
+    @cached
     def h2_norm(self, mu=None):
         """Compute the H2-norm.
 
@@ -1277,7 +1352,7 @@ class PHLTIModel(Model):
         norm
             Hankel-norm.
         """
-        return self.to_lti().hankel_norm(mu=mu)
+        return self.hsv(mu=mu)[0]
 
     def __add__(self, other):
         """Add a |PHLTIModel| or an |LTIModel|."""
