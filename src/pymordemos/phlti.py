@@ -123,7 +123,7 @@ def is_sym(A):
 
     Returns
     -------
-    issym
+    is_sym
         Returns `True` if `A` is symmetric.
     """
     return np.allclose(A, A.T)
@@ -139,7 +139,7 @@ def is_skew(A):
 
     Returns
     -------
-    issym
+    is_skew
         Returns `True` if `A` is skew-symmetric.
     """
     return np.allclose(A, -A.T)
@@ -155,7 +155,7 @@ def is_spdf(A):
 
     Returns
     -------
-    issym
+    is_spdf
         Returns `True` if `A` is symmetric positive (semi-)definite.
     """
     if is_sym(A):
