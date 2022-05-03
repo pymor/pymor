@@ -952,7 +952,7 @@ class PHLTIModel(Model):
         with :math:`E\succeq 0`, :math:`J=-J^T`, :math:`N=-N^T` and
 
         .. math::
-            \mathcal{R} = \begin{bmatrix} R & P \\ P^T S\end{bmatrix}\succeq 0.
+            \mathcal{R} = \begin{bmatrix} R & P \\ P^T & S \end{bmatrix} \succeq 0.
 
         All methods related to the transfer function
         (e.g., frequency response calculation and Bode plots)
