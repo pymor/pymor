@@ -1124,6 +1124,36 @@ class PHLTIModel(Model):
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                    name=name)
 
+    def to_matrices(self):
+        """Return operators as matrices.
+
+        Returns
+        -------
+        J
+            The |NumPy array| or |SciPy spmatrix| J.
+        R
+            The |NumPy array| or |SciPy spmatrix| R.
+        G
+            The |NumPy array| or |SciPy spmatrix| G.
+        P
+            The |NumPy array| or |SciPy spmatrix| P.
+        S
+            The |NumPy array| or |SciPy spmatrix| S or `None` (if Cv is a `ZeroOperator`).
+        N
+            The |NumPy array| or |SciPy spmatrix| N or `None` (if Cv is a `ZeroOperator`).
+        E
+            The |NumPy array| or |SciPy spmatrix| E.
+        """
+        J = to_matrix(self.J)
+        R = to_matrix(self.R)
+        G = to_matrix(self.G)
+        P = to_matrix(self.P)
+        S = None if isinstance(self.S, ZeroOperator) else to_matrix(self.S)
+        N = None if isinstance(self.N, ZeroOperator) else to_matrix(self.N)
+        E = to_matrix(self.E)
+
+        return J, R, G, P, S, N, E
+
     @cached
     def to_lti(self):
         r"""Return a standard linear time-invariant system representation.
