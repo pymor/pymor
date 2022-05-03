@@ -52,6 +52,11 @@ class MoebiusTransformation(ImmutableObject):
             Defaults to `(0, 1, np.inf)`.
         name
             Name of the transformation.
+
+        Returns
+        -------
+        M
+            The corresponding |MoebiusTransformation|.
         """
         assert len(z) == 3
         assert len(w) == 3
@@ -76,6 +81,11 @@ class MoebiusTransformation(ImmutableObject):
         ----------
         normalize
             If `True`, the coefficients are normalized, i.e. :math:`ad-bc=1`. Defaults to `False`.
+
+        Returns
+        -------
+        M
+            The inverse |MoebiusTransformation|.
         """
         a, b, c, d = self.coefficients
         coefficients = np.array([d, -b, -c, a])
