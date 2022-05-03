@@ -628,10 +628,9 @@ class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
 
         self.__auto_init(locals())
 
-    def reduce(self, hidden_dimension='2*N + P', number_layers=1, optimizer=optim.LBFGS,
+    def reduce(self, hidden_dimension='3*N + P', number_layers=1, optimizer=optim.LBFGS,
                epochs=1000, batch_size=20, learning_rate=1., loss_function=None, restarts=10,
-               lr_scheduler=optim.lr_scheduler.StepLR,
-               lr_scheduler_params={'step_size': 10, 'gamma': 0.7},
+               lr_scheduler=None, lr_scheduler_params={},
                es_scheduler_params={'patience': 10, 'delta': 0.}, weight_decay=0.,
                log_loss_frequency=0, seed=0):
         """Reduce by training artificial neural networks.

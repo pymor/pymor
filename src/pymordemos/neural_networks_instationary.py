@@ -67,7 +67,7 @@ def main(
     abs_errors, rel_errors, speedups = compute_errors_state(rom, reductor)
 
     reductor_lstm = NeuralNetworkLSTMInstationaryReductor(fom, training_set, validation_set, basis_size=10)
-    rom_lstm = reductor_lstm.reduce(restarts=100, number_layers=2)
+    rom_lstm = reductor_lstm.reduce(restarts=100, number_layers=3)
 
     abs_errors_lstm, rel_errors_lstm, speedups_lstm = compute_errors_state(rom_lstm, reductor_lstm)
 
@@ -105,7 +105,8 @@ def main(
 
     output_reductor_lstm = NeuralNetworkLSTMInstationaryStatefreeOutputReductor(fom, time_steps+1, training_set,
                                                                                 validation_set, validation_loss=1e-4)
-    output_rom_lstm = output_reductor_lstm.reduce(restarts=100, hidden_dimension=10, learning_rate=0.1)
+    output_rom_lstm = output_reductor_lstm.reduce(restarts=10, number_layers=3, hidden_dimension=30,
+                                                  learning_rate=0.1, log_loss_frequency=3)
 
     outputs_abs_errors_lstm, outputs_rel_errors_lstm, outputs_speedups_lstm = compute_errors_output(output_rom_lstm)
 
