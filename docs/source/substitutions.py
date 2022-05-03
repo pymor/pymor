@@ -103,6 +103,8 @@ common = '''
 
 .. |LTIModel| replace:: :class:`~pymor.models.iosys.LTIModel`
 .. |LTIModels| replace:: :class:`LTIModels <pymor.models.iosys.LTIModel>`
+.. |PHLTIModel| replace:: :class:`~pymor.models.iosys.PHLTIModel`
+.. |PHLTIModels| replace:: :class:`PHLTIModels <pymor.models.iosys.PHLTIModel>`
 .. |TransferFunction| replace:: :class:`~pymor.models.transfer_function.TransferFunction`
 .. |TransferFunctions| replace:: :class:`TransferFunctions <pymor.models.transfer_function.TransferFunction>`
 .. |SecondOrderModel| replace:: :class:`~pymor.models.iosys.SecondOrderModel`
@@ -170,7 +172,6 @@ for line in substitutions.split('\n'):
 inline_directives = ['math', 'meth', 'class', 'ref', 'mod', 'attr', 'doc', ]
 
 if __name__ == '__main__':
-    import pprint as pp
     # pp.pprint(jinja_subst)
     with open('rst_to_myst.sed', 'wt') as out:
         for dr in inline_directives:
