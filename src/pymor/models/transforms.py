@@ -28,7 +28,7 @@ class MoebiusTransformation(ImmutableObject):
 
     def __init__(self, coefficients, normalize=False, name=None):
         assert len(coefficients) == 4
-        coefficients = np.array(coefficients, dtype=complex)
+        coefficients = np.array(coefficients)
         assert coefficients[0]*coefficients[3] != coefficients[1]*coefficients[2]
 
         if normalize:
@@ -103,7 +103,7 @@ class MoebiusTransformation(ImmutableObject):
             return (a * x + b) / (c * x + d)
 
     def __call__(self, x):
-        x = np.squeeze(np.array(x, dtype=complex))
+        x = np.squeeze(np.array(x))
         assert x.ndim <= 1
         return np.vectorize(self._mapping)(x)
 
