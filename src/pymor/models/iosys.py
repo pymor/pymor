@@ -947,7 +947,7 @@ class PHLTIModel(Model):
 
         .. math::
             E(\mu) \dot{x}(t, \mu) & = (J(\mu) - R(\mu)) x(t, \mu) + (G(\mu) - P(\mu)) u(t), \\
-                         y(t, \mu) & = (G(\mu) + P(\mu))^T x(t, \mu) + (S(\mu) + N(\mu)) u(t),
+                         y(t, \mu) & = (G(\mu) + P(\mu))^T x(t, \mu) + (S(\mu) - N(\mu)) u(t),
 
         with :math:`E\succeq 0`, :math:`J=-J^T`, :math:`N=-N^T` and
 
