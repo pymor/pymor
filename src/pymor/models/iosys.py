@@ -1058,6 +1058,22 @@ class PHLTIModel(Model):
             K, B, C, D, dK, dB, dC, dD,
             parameters=parameters, name=self.name + '_transfer_function')
 
+    def __str__(self):
+        string = (
+            f'{self.name}\n'
+            f'    class: {self.__class__.__name__}\n'
+            f'    number of equations: {self.order}\n'
+            f'    number of inputs:    {self.dim_input}\n'
+            f'    number of outputs:   {self.dim_output}\n'
+        )
+        string += '    continuous-time\n'
+        string += (
+            f'    port-Hamiltonian\n'
+            f'    linear time-invariant\n'
+            f'    solution_space:  {self.solution_space}'
+        )
+        return string
+
     @classmethod
     def from_matrices(cls, J, R, G, P, S=None, N=None, E=None,
                       state_id='STATE', solver_options=None, error_estimator=None,
@@ -1263,25 +1279,12 @@ class PHLTIModel(Model):
         """
         return self.to_lti().hankel_norm(mu=mu)
 
-    def __str__(self):
-        string = (
-            f'{self.name}\n'
-            f'    class: {self.__class__.__name__}\n'
-            f'    number of equations: {self.order}\n'
-            f'    number of inputs:    {self.dim_input}\n'
-            f'    number of outputs:   {self.dim_output}\n'
-        )
-        string += '    continuous-time\n'
-        string += (
-            f'    port-Hamiltonian\n'
-            f'    linear time-invariant\n'
-            f'    solution_space:  {self.solution_space}'
-        )
-        return string
-
     def __add__(self, other):
         """Add a |PHLTIModel| or an |LTIModel|."""
         if isinstance(other, LTIModel):
+            return self.to_lti() + other
+
+        if isinstance(other, SecondOrderModel):
             return self.to_lti() + other
 
         if not isinstance(other, PHLTIModel):
