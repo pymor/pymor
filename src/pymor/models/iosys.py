@@ -1022,16 +1022,17 @@ class PHLTIModel(Model):
         assert G.linear
         assert G.range == J.source
 
+        P = P or ZeroOperator(G.range, G.source)
         assert P.linear
         assert P.range == J.source
         assert P.source == G.source
 
-        S = S or ZeroOperator(G.range, G.source)
+        S = S or ZeroOperator(G.source, G.source)
         assert S.linear
         assert S.source == G.source
         assert S.range == S.source
 
-        N = N or ZeroOperator(G.range, G.source)
+        N = N or ZeroOperator(G.source, G.source)
         assert N.linear
         assert N.source == G.source
         assert N.range == N.source
@@ -1080,7 +1081,7 @@ class PHLTIModel(Model):
         return string
 
     @classmethod
-    def from_matrices(cls, J, R, G, P, S=None, N=None, E=None,
+    def from_matrices(cls, J, R, G, P=None, S=None, N=None, E=None,
                       state_id='STATE', solver_options=None, error_estimator=None,
                       visualizer=None, name=None):
         """Create |PHLTIModel| from matrices.
@@ -1094,7 +1095,7 @@ class PHLTIModel(Model):
         G
             The |NumPy array| or |SciPy spmatrix| G.
         P
-            The |NumPy array| or |SciPy spmatrix| P.
+            The |NumPy array| or |SciPy spmatrix| P or `None` (then P is assumed to be zero).
         S
             The |NumPy array| or |SciPy spmatrix| S or `None` (then S is assumed to be zero).
         N
@@ -1125,7 +1126,7 @@ class PHLTIModel(Model):
         assert isinstance(J, (np.ndarray, sps.spmatrix))
         assert isinstance(R, (np.ndarray, sps.spmatrix))
         assert isinstance(G, (np.ndarray, sps.spmatrix))
-        assert isinstance(P, (np.ndarray, sps.spmatrix))
+        assert P is None or isinstance(P, (np.ndarray, sps.spmatrix))
         assert S is None or isinstance(S, (np.ndarray, sps.spmatrix))
         assert N is None or isinstance(N, (np.ndarray, sps.spmatrix))
         assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
@@ -1133,7 +1134,8 @@ class PHLTIModel(Model):
         J = NumpyMatrixOperator(J, source_id=state_id, range_id=state_id)
         R = NumpyMatrixOperator(R, source_id=state_id, range_id=state_id)
         G = NumpyMatrixOperator(G, range_id=state_id)
-        P = NumpyMatrixOperator(P, range_id=state_id)
+        if P is not None:
+            P = NumpyMatrixOperator(P, range_id=state_id)
         if S is not None:
             S = NumpyMatrixOperator(S)
         if N is not None:
@@ -1168,7 +1170,7 @@ class PHLTIModel(Model):
         J = to_matrix(self.J)
         R = to_matrix(self.R)
         G = to_matrix(self.G)
-        P = to_matrix(self.P)
+        P = None if isinstance(self.P, ZeroOperator) else to_matrix(self.P)
         S = None if isinstance(self.S, ZeroOperator) else to_matrix(self.S)
         N = None if isinstance(self.N, ZeroOperator) else to_matrix(self.N)
         E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E)
