@@ -347,12 +347,14 @@ def psd_complex_svd(U, modes):
     )
 
 
-@defaults('atol', 'rtol', 'check', 'check_tol')
+@defaults('atol', 'rtol', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')
 def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, offset=0,
-                            lmax=2, check=True, check_tol=1e-3, copy=True):
+                            reiterate=True, reiteration_threshold=9e-1, check=True, check_tol=1e-3,
+                            copy=True):
     """Symplectify a |VectorArray| using the modified symplectic Gram-Schmidt algorithm.
 
-    This is an implementation of Algorithm 3.2. in :cite:`S11`.
+    This is an implementation of Algorithm 3.2. in :cite:`S11` with a modified criterion for
+    reiteration.
 
     Decomposition::
 
@@ -374,10 +376,12 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
     offset
         Assume that the first `offset` pairs vectors in E and F are already symplectic and start the
         algorithm at the `offset + 1`-th vector.
-    lmax
-        Number of symplectification iterations.
-            lmax = 1: modified symplectic Gram-Schmidt algorithm,
-            lmax = 2: modified symplectic Gram-Schmidt algorithm with reorthogonalization.
+    reiterate
+        If `True`, symplectify again if the symplectic product of the symplectified vectors
+        is much smaller than the symplectic product of the original vector.
+    reiteration_threshold
+        If `reiterate` is `True`, "re-orthonormalize" if the ratio between the symplectic
+        products of the symplectified vectors and the original vectors is smaller than this value.
     check
         If `True`, check if the resulting |VectorArray| is really symplectic.
     check_tol
@@ -393,7 +397,6 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
     assert E.space == F.space
     assert len(E) == len(F)
     assert E.dim % 2 == 0
-    assert lmax in (1, 2)
     assert offset % 2 == 0
 
     logger = getLogger('pymor.algorithms.symplectic_gram_schmidt.symplectic_gram_schmidt')
@@ -420,10 +423,9 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
             logger.info(f"Removing vector pair {j} with symplecticity value {initial_sympl}")
             remove.append(j)
             continue
-
-        # lmax = 1: MSGS
-        # lmax = 2: MSGSR
-        for _ in range(lmax):
+        
+        sympl = initial_sympl
+        while True:
             # symplectify to all vectors left
             for i in range(j):
                 if i in remove:
@@ -439,13 +441,21 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
 
                 Lambda[np.ix_([i, p+i], [j, p+j])] += P
 
-        # remove vector pair if it got a too small symplecticty value
-        if abs(J.apply2(E[j], F[j])) < rtol * initial_sympl:
-            logger.info(f"Removing vector pair {j} due to small symplecticty value")
-            remove.append(j)
-            continue
+            # calculate new symplectic product
+            old_sympl, sympl = sympl, abs(J.apply2(E[j], F[j]))
 
-        Lambda[np.ix_([j, p+j], [j, p+j])] = esr(E[j], F[j], J)
+            # remove vector pair if it got a too small symplecticty value
+            if sympl < rtol * initial_sympl:
+                logger.info(f"Removing vector pair {j} due to small symplecticty value")
+                remove.append(j)
+                break
+
+            # check if reorthogonalization should be done
+            if reiterate and sympl < reiteration_threshold * old_sympl:
+                logger.info(f"Symplectifying vector pair {j} again")
+            else:
+                Lambda[np.ix_([j, p+j], [j, p+j])] = esr(E[j], F[j], J)
+                break
 
     if remove:
         del E[remove]

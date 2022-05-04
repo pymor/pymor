@@ -48,8 +48,8 @@ def test_symplectic_gram_schmidt():
     half_red_dim = 10
 
     def run_test(E, F, test_orthonormality):
-        for lmax in [1, 2]:  # without and with reorthogonalization
-            S, Lambda = symplectic_gram_schmidt(E, F, return_Lambda=True, lmax=lmax)
+        for reiterate in (False, True):  # without and with reorthogonalization
+            S, Lambda = symplectic_gram_schmidt(E, F, return_Lambda=True, reiterate=reiterate)
             tsi_S = S.transposed_symplectic_inverse()
             arr_S = S.to_array()
             arr_tsi_S = tsi_S.to_array()
