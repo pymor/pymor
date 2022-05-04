@@ -17,7 +17,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 class SymplecticBasis(BasicObject):
-    """ A canonically |SymplecticBasis| based on pairs of basis vectors (e_i, f_i).
+    """A canonically |SymplecticBasis| based on pairs of basis vectors (e_i, f_i).
 
     The basis vectors are each contained in a |VectorArray|
 
@@ -37,6 +37,7 @@ class SymplecticBasis(BasicObject):
     F
         A |VectorArray| that represents the second half of basis vectors.
     """
+
     def __init__(self, J, E=None, F=None):
         if E is None:
             E = J.source.empty()
@@ -54,7 +55,7 @@ class SymplecticBasis(BasicObject):
 
     @classmethod
     def from_array(self, U, J):
-        """ Generate |SymplecticBasis| from |VectorArray|.
+        """Generate |SymplecticBasis| from |VectorArray|.
 
         Parameters
         ----------
@@ -74,7 +75,7 @@ class SymplecticBasis(BasicObject):
         )
 
     def transposed_symplectic_inverse(self):
-        """ Compute transposed symplectic inverse J_{2N}.T * V * J_{2n}.
+        """Compute transposed symplectic inverse J_{2N}.T * V * J_{2n}.
 
         Returns
         -------
@@ -86,7 +87,7 @@ class SymplecticBasis(BasicObject):
         return SymplecticBasis(self.J, E, F)
 
     def to_array(self):
-        """ Convert to |VectorArray|.
+        """Convert to |VectorArray|.
 
         Returns
         -------
@@ -102,7 +103,7 @@ class SymplecticBasis(BasicObject):
         return 2*len(self.E)
 
     def append(self, other, remove_from_other=False):
-        """ Append another |SymplecticBasis|.
+        """Append another |SymplecticBasis|.
 
         other
             The |SymplecticBasis| to append.
@@ -115,7 +116,7 @@ class SymplecticBasis(BasicObject):
         self.F.append(other.F, remove_from_other)
 
     def check_symplecticity(self, offset=0, check_tol=1e-3):
-        """ Check symplecticity w.r.t. a given transposed symplectic inverse.
+        """Check symplecticity w.r.t. a given transposed symplectic inverse.
 
         Parameters
         ----------
@@ -153,7 +154,7 @@ class SymplecticBasis(BasicObject):
         return result
 
     def extend(self, U, method='svd_like', modes=2, product=None):
-        """ Extend the |SymplecticBasis| with vectors from a |VectorArray|.
+        """Extend the |SymplecticBasis| with vectors from a |VectorArray|.
 
         Parameters
         ----------
@@ -197,7 +198,7 @@ class SymplecticBasis(BasicObject):
 
 
 def psd_svd_like_decomp(U, J, modes, balance=True):
-    """ Generates a |SymplecticBasis| with the PSD SVD-like decompostion.
+    """Generates a |SymplecticBasis| with the PSD SVD-like decompostion.
 
     Parameters
     ----------
@@ -252,7 +253,7 @@ def psd_svd_like_decomp(U, J, modes, balance=True):
 
 
 def psd_cotengent_lift(U, J, modes):
-    """ Generates a |SymplecticBasis| with the PSD cotangent lift.
+    """Generates a |SymplecticBasis| with the PSD cotangent lift.
 
     Parameters
     ----------
@@ -286,7 +287,7 @@ def psd_cotengent_lift(U, J, modes):
 
 
 def psd_complex_svd(U, J, modes):
-    """ Generates a |SymplecticBasis| with the PSD complex SVD.
+    """Generates a |SymplecticBasis| with the PSD complex SVD.
 
     Parameters
     ----------
@@ -322,7 +323,7 @@ def psd_complex_svd(U, J, modes):
 @defaults('atol', 'rtol', 'check', 'check_tol')
 def symplectic_gram_schmidt(E, F, J, return_Lambda=False, atol=1e-13, rtol=1e-13, offset=0,
                             lmax=2, check=True, check_tol=1e-3, copy=True):
-    """ Symplectify a |VectorArray| using the modified symplectic Gram-Schmidt algorithm.
+    """Symplectify a |VectorArray| using the modified symplectic Gram-Schmidt algorithm.
 
     Reference::
 
@@ -438,7 +439,7 @@ def symplectic_gram_schmidt(E, F, J, return_Lambda=False, atol=1e-13, rtol=1e-13
 
 
 def esr(E, F, J):
-    """ Elemenraty SR factorization. Transforms E and F such that
+    """Elemenraty SR factorization. Transforms E and F such that
 
         [E, F] = S * diag(r11, r22)
 

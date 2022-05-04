@@ -7,9 +7,15 @@ from pymor.operators.constructions import IdentityOperator
 
 
 class CanonicalSymplecticFormOperator(BlockOperator):
+    """An |Operator| for a canonically symplectic form.
+
+    Parameters
+    ----------
+    half_space
+        Half dimension of the underlying phase space.
+    """
+
     def __init__(self, half_space):
-        """ An |Operator| for a canonically symplectic form.
-        """
         self.__auto_init(locals())
         super().__init__([[None, IdentityOperator(half_space)],
                           [-IdentityOperator(half_space), None]])
