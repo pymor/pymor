@@ -16,7 +16,7 @@ METHODS_DICT = {
 KEYS_ORTHOSYMPL_METHOD = ['psd_cotengent_lift', 'psd_complex_svd']
 
 
-@pytest.mark.parametrize('key_basis_gen_method', METHODS_DICT.keys())
+@pytest.mark.parametrize('key_method', METHODS_DICT.keys())
 def test_symplecticity(key_method):
     """Check symplecticity of symplectic basis generation methods."""
     half_dim = 1000
@@ -30,7 +30,7 @@ def test_symplecticity(key_method):
     assert np.allclose(tis_basis.to_array().inner(basis.to_array()), np.eye(modes))
 
 
-@pytest.mark.parametrize('key_orthosympl_basis_gen_method', KEYS_ORTHOSYMPL_METHOD)
+@pytest.mark.parametrize('key_orthosympl_method', KEYS_ORTHOSYMPL_METHOD)
 def test_orthonormality(key_orthosympl_method):
     """Check orthonormality for orthosymplectic basis generation methods."""
     half_dim = 1000
