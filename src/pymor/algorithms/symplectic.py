@@ -365,7 +365,7 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
     Parameters
     ----------
     E, F
-        The two |VectorArray| which are to be symplectified.
+        The two |VectorArrays| which are to be symplectified.
     return_Lambda
         If `True`, the matrix `Lambda` from the decomposition is returned.
     atol
@@ -423,7 +423,7 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
             logger.info(f"Removing vector pair {j} with symplecticity value {initial_sympl}")
             remove.append(j)
             continue
-        
+
         sympl = initial_sympl
         while True:
             # symplectify to all vectors left
