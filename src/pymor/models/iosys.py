@@ -941,7 +941,7 @@ class LTIModel(Model):
 
 
 class PHLTIModel(Model):
-    r"""Class for (continuous) port-hamiltonian linear time-invariant systems.
+    r"""Class for (continuous) port-Hamiltonian linear time-invariant systems.
 
     This class describes input-state-output systems given by
 
