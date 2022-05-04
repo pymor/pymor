@@ -949,10 +949,15 @@ class PHLTIModel(Model):
         E(\mu) \dot{x}(t, \mu) & = (J(\mu) - R(\mu)) x(t, \mu) + (G(\mu) - P(\mu)) u(t), \\
                      y(t, \mu) & = (G(\mu) + P(\mu))^T x(t, \mu) + (S(\mu) - N(\mu)) u(t),
 
-    with :math:`E\succeq 0`, :math:`J=-J^T`, :math:`N=-N^T` and
+    with :math:`E(\mu) \succeq 0`, :math:`J(\mu) = -J(\mu)^T`, :math:`N(\mu) = -N(\mu)^T` and
 
     .. math::
-        \mathcal{R} = \begin{bmatrix} R & P \\ P^T & S \end{bmatrix} \succeq 0.
+        \mathcal{R}(\mu) =
+        \begin{bmatrix}
+            R(\mu) & P(\mu) \\
+            P(\mu)^T & S(\mu)
+        \end{bmatrix}
+        \succeq 0.
 
     All methods related to the transfer function
     (e.g., frequency response calculation and Bode plots)
