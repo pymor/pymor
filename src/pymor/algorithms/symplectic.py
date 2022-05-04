@@ -12,7 +12,6 @@ from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator
 from pymor.vectorarrays.block import BlockVectorSpace
-from pymor.vectorarrays.constructions import cat_arrays
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 
 
@@ -429,7 +428,10 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
             for i in range(j):
                 if i in remove:
                     continue
-                P = J2T @ J.apply2(cat_arrays([E[i], F[i]]), cat_arrays([E[j], F[j]]))
+                P = J2T @ np.block([
+                    [J.apply2(E[i], E[j]), J.apply2(E[i], F[j])],
+                    [J.apply2(F[i], E[j]), J.apply2(F[i], F[j])],
+                ])
                 E[j].axpy(-P[0, 0], E[i])
                 F[j].axpy(-P[1, 1], F[i])
                 E[j].axpy(-P[1, 0], F[i])
