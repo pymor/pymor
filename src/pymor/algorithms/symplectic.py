@@ -39,9 +39,12 @@ class SymplecticBasis(BasicObject):
         is specified.
     phase_space
         A |VectorSpace| that represents the phase space. May be none if E and F are specified.
+    check_symplecticity
+        Flag, wether to check symplecticity of E and F in the constructor (if these are not None).
+        Default is True.
     """
 
-    def __init__(self, E=None, F=None, phase_space=None):
+    def __init__(self, E=None, F=None, phase_space=None, check_symplecticity=True):
         if phase_space is None:
             assert E is not None and F is not None
             phase_space = E.space
@@ -55,14 +58,20 @@ class SymplecticBasis(BasicObject):
         assert E.space == F.space == phase_space and len(E) == len(F)
         self.__auto_init(locals())
 
+        if check_symplecticity and len(E) > 0:
+            self._check_symplecticity()
+
     @classmethod
-    def from_array(self, U):
+    def from_array(self, U, check_symplecticity=True):
         """Generate |SymplecticBasis| from |VectorArray|.
 
         Parameters
         ----------
         U
             The |VectorArray|.
+        check_symplecticity
+            Flag, wether to check symplecticity of E and F in the constructor (if these are not None).
+            Default is True.
 
         Returns
         -------
@@ -73,6 +82,7 @@ class SymplecticBasis(BasicObject):
         return SymplecticBasis(
             U[:len(U)//2],
             U[len(U)//2:],
+            check_symplecticity=check_symplecticity,
         )
 
     def transposed_symplectic_inverse(self):
@@ -86,7 +96,8 @@ class SymplecticBasis(BasicObject):
         J = CanonicalSymplecticFormOperator(self.phase_space)
         E = J.apply_adjoint(self.F*(-1))
         F = J.apply_adjoint(self.E)
-        return SymplecticBasis(E, F)
+        # check_symplecticity = False, otherwise recursion loop
+        return SymplecticBasis(E, F, check_symplecticity=False) 
 
     def to_array(self):
         """Convert to |VectorArray|.
@@ -117,7 +128,7 @@ class SymplecticBasis(BasicObject):
         self.E.append(other.E, remove_from_other)
         self.F.append(other.F, remove_from_other)
 
-    def check_symplecticity(self, offset=0, check_tol=1e-3):
+    def _check_symplecticity(self, offset=0, check_tol=1e-3):
         """Check symplecticity of the |SymplecticBasis|.
 
         Parameters
@@ -152,7 +163,8 @@ class SymplecticBasis(BasicObject):
 
     def __getitem__(self, ind):
         assert self.E.check_ind(ind)
-        return type(self)(self.E[ind], self.F[ind])
+        # check_symplecticity = False, otherwise recursion loop
+        return type(self)(self.E[ind], self.F[ind], check_symplecticity=False)
 
     def lincomb(self, coefficients):
         assert isinstance(coefficients, np.ndarray)
@@ -204,7 +216,7 @@ class SymplecticBasis(BasicObject):
             new_basis = U[idx].copy()
             new_basis.scal(1/new_basis.norm())
             new_basis.append(J.apply_adjoint(new_basis))
-            self.append(SymplecticBasis.from_array(new_basis))
+            self.append(SymplecticBasis.from_array(new_basis, check_symplecticity=False))
             symplectic_gram_schmidt(self.E, self.F, offset=basis_length, copy=False)
         else:
             assert False
@@ -428,7 +440,7 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
 
     S = SymplecticBasis(E, F)
     if check:
-        S.check_symplecticity(offset=offset, check_tol=check_tol)
+        S._check_symplecticity(offset=offset, check_tol=check_tol)
 
     if return_Lambda:
         return S, Lambda
