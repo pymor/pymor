@@ -236,6 +236,8 @@ class SymplecticBasis(BasicObject):
 def psd_svd_like_decomp(U, modes, balance=True):
     """Generates a |SymplecticBasis| with the PSD SVD-like decompostion.
 
+    This is an implementation of Algorithm 1 in :cite:`BBH19`.
+
     Parameters
     ----------
     U
@@ -287,6 +289,8 @@ def psd_svd_like_decomp(U, modes, balance=True):
 def psd_cotengent_lift(U, modes):
     """Generates a |SymplecticBasis| with the PSD cotangent lift.
 
+    This is an implementation of Algorithm 1 in :cite:`PM16`.
+
     Parameters
     ----------
     U
@@ -315,6 +319,8 @@ def psd_cotengent_lift(U, modes):
 
 def psd_complex_svd(U, modes):
     """Generates a |SymplecticBasis| with the PSD complex SVD.
+
+    This is an implementation of Algorithm 2 in :cite:`PM16`.
 
     Parameters
     ----------
@@ -347,10 +353,7 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
                             lmax=2, check=True, check_tol=1e-3, copy=True):
     """Symplectify a |VectorArray| using the modified symplectic Gram-Schmidt algorithm.
 
-    Reference::
-
-        Salam (2005), On theoretical and numerical aspects of symplectic Gram--Schmidt-like
-        algorithms
+    This is an implementation of Algorithm 3.2. in :cite:`S11`.
 
     Decomposition::
 
