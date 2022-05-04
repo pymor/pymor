@@ -10,11 +10,6 @@
 
 ## Contributors
 
-### pyMOR 2022.2
-
-* Sven Ullmann, ullmannsven@gmx.de
-  * randomized algorithms for generalized svd and generalized hermitian eigenvalue problem
-
 ### pyMOR 2022.1
 
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
@@ -23,6 +18,9 @@
 * Art Pelling, a.pelling@tu-berlin.de
   * support for discrete-time LTI systems, Lyapunov equations and balanced truncation
   * dedicated Hankel operator class
+
+* Sven Ullmann, ullmannsven@gmx.de
+  * randomized algorithms for generalized svd and generalized hermitian eigenvalue problem
 
 ### pyMOR 2021.2
 
