@@ -6,8 +6,9 @@ from pymor.models.iosys import PHLTIModel, LTIModel
 
 
 def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
-    """Returns the mass-spring-damper model, taken from :cite:`GPBV12`,
-    as (port-hamiltonian) linear time-invariant system.
+    """Mass-spring-damper model as (port-hamiltonian) linear time-invariant system.
+
+    Taken from :cite:`GPBV12`.
 
     Parameters
     ----------
@@ -211,7 +212,7 @@ def main():
     ax.scatter(poles.real, poles.imag, marker='o', facecolors='none', edgecolor='orange', label='PH')
     ax.set_title('Poles')
     ax.legend()
-    ax.set(xlabel='Re($\lambda$)', ylabel='Im($\lambda$)')
+    ax.set(xlabel=r'Re($\lambda$)', ylabel=r'Im($\lambda$)')
     plt.show()
 
     e = phlti - lti

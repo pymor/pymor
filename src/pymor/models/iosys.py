@@ -943,67 +943,67 @@ class LTIModel(Model):
 class PHLTIModel(Model):
     r"""Class for (continuous) port-hamiltonian linear time-invariant systems.
 
-        This class describes input-state-output systems given by
+    This class describes input-state-output systems given by
 
-        .. math::
-            E(\mu) \dot{x}(t, \mu) & = (J(\mu) - R(\mu)) x(t, \mu) + (G(\mu) - P(\mu)) u(t), \\
-                         y(t, \mu) & = (G(\mu) + P(\mu))^T x(t, \mu) + (S(\mu) - N(\mu)) u(t),
+    .. math::
+        E(\mu) \dot{x}(t, \mu) & = (J(\mu) - R(\mu)) x(t, \mu) + (G(\mu) - P(\mu)) u(t), \\
+                     y(t, \mu) & = (G(\mu) + P(\mu))^T x(t, \mu) + (S(\mu) - N(\mu)) u(t),
 
-        with :math:`E\succeq 0`, :math:`J=-J^T`, :math:`N=-N^T` and
+    with :math:`E\succeq 0`, :math:`J=-J^T`, :math:`N=-N^T` and
 
-        .. math::
-            \mathcal{R} = \begin{bmatrix} R & P \\ P^T & S \end{bmatrix} \succeq 0.
+    .. math::
+        \mathcal{R} = \begin{bmatrix} R & P \\ P^T & S \end{bmatrix} \succeq 0.
 
-        All methods related to the transfer function
-        (e.g., frequency response calculation and Bode plots)
-        are attached to the `transfer_function` attribute.
+    All methods related to the transfer function
+    (e.g., frequency response calculation and Bode plots)
+    are attached to the `transfer_function` attribute.
 
-        Parameters
-        ----------
-        J
-            The |Operator| J.
-        R
-            The |Operator| R.
-        G
-            The |Operator| G.
-        P
-            The |Operator| P.
-        S
-            The |Operator| S  or `None` (then S is assumed to be zero).
-        N
-            The |Operator| N or `None` (then N is assumed to be zero).
-        E
-            The |Operator| E or `None` (then E is assumed to be identity).
-        solver_options
-            The solver options to use to solve the Lyapunov equations.
-        name
-            Name of the system.
+    Parameters
+    ----------
+    J
+        The |Operator| J.
+    R
+        The |Operator| R.
+    G
+        The |Operator| G.
+    P
+        The |Operator| P.
+    S
+        The |Operator| S  or `None` (then S is assumed to be zero).
+    N
+        The |Operator| N or `None` (then N is assumed to be zero).
+    E
+        The |Operator| E or `None` (then E is assumed to be identity).
+    solver_options
+        The solver options to use to solve the Lyapunov equations.
+    name
+        Name of the system.
 
-        Attributes
-        ----------
-        order
-            The order of the system.
-        dim_input
-            The number of inputs.
-        dim_output
-            The number of outputs.
-        J
-            The |Operator| J.
-        R
-            The |Operator| R.
-        G
-            The |Operator| G.
-        P
-            The |Operator| P.
-        S
-            The |Operator| S.
-        N
-            The |Operator| N.
-        E
-            The |Operator| E.
-        transfer_function
-            The transfer function.
-        """
+    Attributes
+    ----------
+    order
+        The order of the system.
+    dim_input
+        The number of inputs.
+    dim_output
+        The number of outputs.
+    J
+        The |Operator| J.
+    R
+        The |Operator| R.
+    G
+        The |Operator| G.
+    P
+        The |Operator| P.
+    S
+        The |Operator| S.
+    N
+        The |Operator| N.
+    E
+        The |Operator| E.
+    transfer_function
+        The transfer function.
+    """
 
     def __init__(self, J, R, G, P, S=None, N=None, E=None, solver_options=None,
                  error_estimator=None, visualizer=None, name=None):
@@ -1268,7 +1268,6 @@ class PHLTIModel(Model):
         Vh
             |NumPy array| of right singular vectors.
         """
-
         return self.to_lti()._hsv_U_V(mu)
 
     def hsv(self, mu=None):
