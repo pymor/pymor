@@ -4,6 +4,7 @@
 
 from pymor.operators.block import BlockOperator
 from pymor.operators.constructions import IdentityOperator
+from pymor.vectorarrays.block import BlockVectorSpace
 
 
 class CanonicalSymplecticFormOperator(BlockOperator):
@@ -11,11 +12,15 @@ class CanonicalSymplecticFormOperator(BlockOperator):
 
     Parameters
     ----------
-    half_space
-        Half dimension of the underlying phase space.
+    phase_space
+        The phase space of a |SymplecticBasis|.
     """
 
-    def __init__(self, half_space):
+    def __init__(self, phase_space):
+        assert (isinstance(phase_space, BlockVectorSpace)
+                and len(phase_space.subspaces) == 2
+                and phase_space.subspaces[0] == phase_space.subspaces[1])
         self.__auto_init(locals())
+        half_space = phase_space.subspaces[0]
         super().__init__([[None, IdentityOperator(half_space)],
                           [-IdentityOperator(half_space), None]])

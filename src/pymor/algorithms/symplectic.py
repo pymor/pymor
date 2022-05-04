@@ -13,12 +13,13 @@ from pymor.core.logger import getLogger
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.constructions import cat_arrays
-from pymor.vectorarrays.interface import VectorArray
+from pymor.vectorarrays.interface import VectorArray, VectorSpace
 
 
 class SymplecticBasis(BasicObject):
     """A canonically-symplectic basis based on pairs of basis vectors (e_i, f_i).
 
+    Is either initialzed (a) with a pair of |VectorArrays| E and F or (b) with a |VectorSpace|.
     The basis vectors are each contained in a |VectorArray|
 
         E = (e_i)_{i=1}^n
@@ -30,31 +31,32 @@ class SymplecticBasis(BasicObject):
 
     Parameters
     ----------
-    J
-        A |CanonicalSymplecticFormOperator|.
     E
-        A |VectorArray| that represents the first half of basis vectors.
+        A |VectorArray| that represents the first half of basis vectors. May be none if phase_space
+        is specified.
     F
-        A |VectorArray| that represents the second half of basis vectors.
+        A |VectorArray| that represents the second half of basis vectors. May be none if phase_space
+        is specified.
+    phase_space
+        A |VectorSpace| that represents the phase space. May be none if E and F are specified.
     """
 
-    def __init__(self, J, E=None, F=None):
+    def __init__(self, E=None, F=None, phase_space=None):
+        if phase_space is None:
+            assert E is not None and F is not None
+            phase_space = E.space
         if E is None:
-            E = J.source.empty()
+            E = phase_space.empty()
         if F is None:
-            F = J.source.empty()
-        assert isinstance(J, CanonicalSymplecticFormOperator)
+            F = phase_space.empty()
+        assert isinstance(phase_space, VectorSpace)
         assert isinstance(E, VectorArray)
         assert isinstance(F, VectorArray)
-        assert E.space == F.space and len(E) == len(F)
-        assert J.source == J.range == E.space
-        self.phase_space = J.source
-        self.E = E
-        self.F = F
-        self.J = J
+        assert E.space == F.space == phase_space and len(E) == len(F)
+        self.__auto_init(locals())
 
     @classmethod
-    def from_array(self, U, J):
+    def from_array(self, U):
         """Generate |SymplecticBasis| from |VectorArray|.
 
         Parameters
@@ -69,7 +71,6 @@ class SymplecticBasis(BasicObject):
         """
         assert len(U) % 2 == 0, 'the symplectic array has to be even-dimensional'
         return SymplecticBasis(
-            J,
             U[:len(U)//2],
             U[len(U)//2:],
         )
@@ -82,9 +83,10 @@ class SymplecticBasis(BasicObject):
         TSI_BASIS
             The transposed symplectic inverse as |SymplecticBasis|.
         """
-        E = self.J.apply_adjoint(self.F*(-1))
-        F = self.J.apply_adjoint(self.E)
-        return SymplecticBasis(self.J, E, F)
+        J = CanonicalSymplecticFormOperator(self.phase_space)
+        E = J.apply_adjoint(self.F*(-1))
+        F = J.apply_adjoint(self.E)
+        return SymplecticBasis(E, F)
 
     def to_array(self):
         """Convert to |VectorArray|.
@@ -142,7 +144,7 @@ class SymplecticBasis(BasicObject):
 
     def __getitem__(self, ind):
         assert self.E.check_ind(ind)
-        return type(self)(self.J, self.E[ind], self.F[ind])
+        return type(self)(self.E[ind], self.F[ind])
 
     def lincomb(self, coefficients):
         assert isinstance(coefficients, np.ndarray)
@@ -180,34 +182,33 @@ class SymplecticBasis(BasicObject):
         if method in ('svd_like', 'complex_svd'):
 
             if method == 'svd_like':
-                new_basis = psd_svd_like_decomp(U_proj_err, self.J, modes)
+                new_basis = psd_svd_like_decomp(U_proj_err, modes)
             elif method == 'complex_svd':
-                new_basis = psd_complex_svd(U_proj_err, self.J, modes)
+                new_basis = psd_complex_svd(U_proj_err, modes)
 
             self.append(new_basis)
 
         elif method == 'symplectic_gram_schmidt':
+            J = CanonicalSymplecticFormOperator(self.phase_space)
             basis_length = len(self)
             # find max error
             idx = proj_error.argsort()[-modes//2:][::-1]
             new_basis = U[idx].copy()
             new_basis.scal(1/new_basis.norm())
-            new_basis.append(self.J.apply_adjoint(new_basis))
-            self.append(SymplecticBasis.from_array(new_basis, self.J))
-            symplectic_gram_schmidt(self.E, self.F, self.J, offset=basis_length, copy=False)
+            new_basis.append(J.apply_adjoint(new_basis))
+            self.append(SymplecticBasis.from_array(new_basis))
+            symplectic_gram_schmidt(self.E, self.F, offset=basis_length, copy=False)
         else:
             assert False
 
 
-def psd_svd_like_decomp(U, J, modes, balance=True):
+def psd_svd_like_decomp(U, modes, balance=True):
     """Generates a |SymplecticBasis| with the PSD SVD-like decompostion.
 
     Parameters
     ----------
     U
         The |VectorArray| for which the PSD SVD-like decompostion is to be computed.
-    J
-        A |CanonicalSymplecticFormOperator| operating on the same |VectorSpace| as U.
     modes
         Number of modes (needs to be even).
     balance
@@ -220,10 +221,8 @@ def psd_svd_like_decomp(U, J, modes, balance=True):
     """
     assert modes % 2 == 0
     assert U.dim % 2 == 0
-    if not isinstance(J, CanonicalSymplecticFormOperator):
-        raise NotImplementedError
-    assert U in J.source
 
+    J = CanonicalSymplecticFormOperator(U.space)
     symplectic_gramian = U.gramian(J)
 
     DJD, Q, _ = schur(symplectic_gramian, sort=lambda x: x.imag > 0)
@@ -251,18 +250,16 @@ def psd_svd_like_decomp(U, J, modes, balance=True):
         ])
         S = S.lincomb(balance_coeff.T)
 
-    return SymplecticBasis.from_array(S, J)
+    return SymplecticBasis.from_array(S)
 
 
-def psd_cotengent_lift(U, J, modes):
+def psd_cotengent_lift(U, modes):
     """Generates a |SymplecticBasis| with the PSD cotangent lift.
 
     Parameters
     ----------
     U
         The |VectorArray| for which the PSD SVD-like decompostion is to be computed.
-    J
-        A |CanonicalSymplecticFormOperator| operating on the same |VectorSpace| as U.
     modes
         Number of modes (needs to be even).
 
@@ -271,32 +268,27 @@ def psd_cotengent_lift(U, J, modes):
     BASIS
         The |SymplecticBasis|.
     """
-    assert isinstance(J, CanonicalSymplecticFormOperator)
     assert isinstance(U.space, BlockVectorSpace) and len(U.space.subspaces) == 2 and \
         U.space.subspaces[0] == U.space.subspaces[1]
     assert modes % 2 == 0
-    assert U in J.source
 
     X = U.block(0).copy()
     X.append(U.block(1).copy())
     V, svals = pod(X, modes=modes // 2)
 
     return SymplecticBasis(
-        J,
-        J.source.make_array([V, J.source.subspaces[1].zeros(len(V))]),
-        J.source.make_array([J.source.subspaces[0].zeros(len(V)), V]),
+        U.space.make_array([V, V.space.zeros(len(V))]),
+        U.space.make_array([V.space.zeros(len(V)), V]),
     )
 
 
-def psd_complex_svd(U, J, modes):
+def psd_complex_svd(U, modes):
     """Generates a |SymplecticBasis| with the PSD complex SVD.
 
     Parameters
     ----------
     U
         The |VectorArray| for which the PSD SVD-like decompostion is to be computed.
-    J
-        A |CanonicalSymplecticFormOperator| operating on the same |VectorSpace| as U.
     modes
         Number of modes (needs to be even).
 
@@ -305,25 +297,22 @@ def psd_complex_svd(U, J, modes):
     BASIS
         The |SymplecticBasis|.
     """
-    assert isinstance(J, CanonicalSymplecticFormOperator)
     assert isinstance(U.space, BlockVectorSpace) and len(U.space.subspaces) == 2 and \
         U.space.subspaces[0] == U.space.subspaces[1]
     assert modes % 2 == 0
-    assert U in J.source
 
     X = U.block(0) + U.block(1) * 1j
 
     V, _ = pod(X, modes=modes // 2)
 
     return SymplecticBasis(
-        J,
-        J.source.make_array([V.real, V.imag]),
-        J.source.make_array([-V.imag, V.real]),
+        U.space.make_array([V.real, V.imag]),
+        U.space.make_array([-V.imag, V.real]),
     )
 
 
 @defaults('atol', 'rtol', 'check', 'check_tol')
-def symplectic_gram_schmidt(E, F, J, return_Lambda=False, atol=1e-13, rtol=1e-13, offset=0,
+def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, offset=0,
                             lmax=2, check=True, check_tol=1e-3, copy=True):
     """Symplectify a |VectorArray| using the modified symplectic Gram-Schmidt algorithm.
 
@@ -342,8 +331,6 @@ def symplectic_gram_schmidt(E, F, J, return_Lambda=False, atol=1e-13, rtol=1e-13
     ----------
     E, F
         The two |VectorArray| which are to be symplectified.
-    J
-        An |Operator| describing the symplectic Form.
     return_Lambda
         If `True`, the matrix `Lambda` from the decomposition is returned.
     atol
@@ -370,7 +357,6 @@ def symplectic_gram_schmidt(E, F, J, return_Lambda=False, atol=1e-13, rtol=1e-13
     Lambda
         if `return_Lambda` is `True`.
     """
-    assert isinstance(J, CanonicalSymplecticFormOperator), NotImplementedError
     assert E.space == F.space
     assert len(E) == len(F)
     assert E.dim % 2 == 0
@@ -382,6 +368,8 @@ def symplectic_gram_schmidt(E, F, J, return_Lambda=False, atol=1e-13, rtol=1e-13
     if copy:
         E = E.copy()
         F = F.copy()
+
+    J = CanonicalSymplecticFormOperator(E.space)
 
     # main loop
     p = len(E)
@@ -430,7 +418,7 @@ def symplectic_gram_schmidt(E, F, J, return_Lambda=False, atol=1e-13, rtol=1e-13
         Lambda = np.delete(Lambda, p + remove, axis=0)
         Lambda = np.delete(Lambda, remove, axis=0)
 
-    S = SymplecticBasis(J, E, F)
+    S = SymplecticBasis(E, F)
     if check:
         S.check_symplecticity(offset=offset, check_tol=check_tol)
 
@@ -440,7 +428,7 @@ def symplectic_gram_schmidt(E, F, J, return_Lambda=False, atol=1e-13, rtol=1e-13
         return S
 
 
-def esr(E, F, J):
+def esr(E, F, J=None):
     """Elemenraty SR factorization. Transforms E and F such that
 
         [E, F] = S * diag(r11, r22)
@@ -454,13 +442,16 @@ def esr(E, F, J):
     F
         A |VectorArray| of dim=1 from the same |VectorSpace| as E.
     J
-        A |CanonicalSymplecticFormOperator| operating on the same |VectorSpace| as E and F.
+        A |CanonicalSymplecticFormOperator| operating on the same |VectorSpace| as E and F. Default
+        is CanonicalSymplecticFormOperator(E.space).
 
     Returns
     -------
     R
         A diagonal numpy.ndarray.
     """
+    if J is None:
+        J = CanonicalSymplecticFormOperator(E.space)
     assert E in J.source
     assert F in J.source
     assert len(E) == len(F) == 1
