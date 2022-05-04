@@ -118,14 +118,22 @@ class SymplecticBasis(BasicObject):
         self.F.append(other.F, remove_from_other)
 
     def check_symplecticity(self, offset=0, check_tol=1e-3):
-        """Check symplecticity w.r.t. a given transposed symplectic inverse.
+        """Check symplecticity of the |SymplecticBasis|.
 
         Parameters
         ----------
         offset
-            Used in iterative methods. Needs to be even.
+            Can be used to offset the check of symplecicity to the basis vectors with index bigger
+            than the offset. This is useful in iterative methods to avoid checking multiple times.
+            The offset needs to be even. The default value is 0, i.e. all basis vectors are checked
+            by default.
         check_tol
-            tolerance for which method returns true.
+            tolerance for which an error is raised.
+
+        Raises
+        ------
+        AccuracyError
+            Is raised when the symplecicity for some pair (e_i, f_i) exceeds check_tol.
         """
         assert offset % 2 == 0
 
