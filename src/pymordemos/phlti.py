@@ -6,7 +6,7 @@ from pymor.models.iosys import PHLTIModel, LTIModel
 
 
 def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
-    """Mass-spring-damper model as (port-hamiltonian) linear time-invariant system.
+    """Mass-spring-damper model as (port-Hamiltonian) linear time-invariant system.
 
     Taken from :cite:`GPBV12`.
 
