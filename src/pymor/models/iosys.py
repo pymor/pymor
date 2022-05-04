@@ -1189,7 +1189,7 @@ class PHLTIModel(Model):
         Returns
         -------
         lti
-            |LTIModel| equivalent to the port-hamiltonian model.
+            |LTIModel| equivalent to the port-Hamiltonian model.
         """
         return LTIModel(A=self.J - self.R,
                         B=self.G - self.P,
