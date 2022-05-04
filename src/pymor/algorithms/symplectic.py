@@ -11,7 +11,6 @@ from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator
-from pymor.parallel.dummy import dummy_pool
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.constructions import cat_arrays
 from pymor.vectorarrays.interface import VectorArray
@@ -68,7 +67,7 @@ class SymplecticBasis(BasicObject):
         ----------
         U
             The |VectorArray|.
-        
+
         Returns
         -------
         BASIS
@@ -111,7 +110,7 @@ class SymplecticBasis(BasicObject):
 
     def append(self, other, remove_from_other=False):
         """Append another |SymplecticBasis|.
-        
+
         other
             The |SymplecticBasis| to append.
         remove_from_other
@@ -205,7 +204,7 @@ class SymplecticBasis(BasicObject):
 
 def psd_svd_like_decomp(U, J, modes, balance=True):
     """Generates a |SymplecticBasis| with the PSD SVD-like decompostion.
-    
+
     Parameters
     ----------
     U
@@ -260,7 +259,7 @@ def psd_svd_like_decomp(U, J, modes, balance=True):
 
 def psd_cotengent_lift(U, J, modes):
     """Generates a |SymplecticBasis| with the PSD cotangent lift.
-    
+
     Parameters
     ----------
     U
@@ -294,7 +293,7 @@ def psd_cotengent_lift(U, J, modes):
 
 def psd_complex_svd(U, J, modes):
     """Generates a |SymplecticBasis| with the PSD complex SVD.
-    
+
     Parameters
     ----------
     U
@@ -453,7 +452,7 @@ def esr(E, F, J):
         A |VectorArray| of dim=1 from the same |VectorSpace| as E.
     J
         A |CanonicalSymplecticFormOperator| operating on the same |VectorSpace| as E and F.
-    
+
     Returns
     -------
     R
