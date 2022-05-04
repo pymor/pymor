@@ -195,6 +195,8 @@ class SymplecticBasis(BasicObject):
             new_basis.append(self.J.apply_adjoint(new_basis))
             self.append(SymplecticBasis.from_array(new_basis, self.J))
             symplectic_gram_schmidt(self.E, self.F, self.J, offset=basis_length, copy=False)
+        else:
+            assert False
 
 
 def psd_svd_like_decomp(U, J, modes, balance=True):
