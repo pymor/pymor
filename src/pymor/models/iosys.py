@@ -1171,7 +1171,7 @@ class PHLTIModel(Model):
         P = to_matrix(self.P)
         S = None if isinstance(self.S, ZeroOperator) else to_matrix(self.S)
         N = None if isinstance(self.N, ZeroOperator) else to_matrix(self.N)
-        E = to_matrix(self.E)
+        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E)
 
         return J, R, G, P, S, N, E
 
