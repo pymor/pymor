@@ -8,7 +8,8 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def test_symplecticity():
-    """Check symplecticity of symplectic basis generation methods."""
+    """ Check symplecticity of symplectic basis generation methods.
+    """
     basis_gen_methods = [psd_cotengent_lift, psd_complex_svd, psd_svd_like_decomp]
 
     half_dim = 1000
@@ -23,7 +24,8 @@ def test_symplecticity():
 
 
 def test_orthonormality():
-    """Check orthonormality for orthosymplectic basis generation methods."""
+    """ Check orthonormality for orthosymplectic basis generation methods.
+    """
     basis_gen_methods = [psd_cotengent_lift, psd_complex_svd]
 
     half_dim = 1000
@@ -37,7 +39,8 @@ def test_orthonormality():
 
 
 def test_symplectic_gram_schmidt():
-    """Check symplecticity and orthonormality for symplectic_gram_schmidt."""
+    """ Check symplecticity and orthonormality for symplectic_gram_schmidt.
+    """
     half_full_dim = 1000
     J = CanonicalSymplecticFormOperator(NumpyVectorSpace(half_full_dim))
     half_red_dim = 10
