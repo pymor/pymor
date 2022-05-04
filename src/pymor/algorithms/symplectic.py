@@ -115,18 +115,26 @@ class SymplecticBasis(BasicObject):
         assert len(self.E) == len(self.F)
         return 2*len(self.E)
 
-    def append(self, other, remove_from_other=False):
+    def append(self, other, remove_from_other=False, check_symplecticity=True):
         """Append another |SymplecticBasis|.
 
         other
             The |SymplecticBasis| to append.
         remove_from_other
             Flag, wether to remove vectors from other.
+        check_symplecticity
+            Flag, wether to check symplecticity of E and F in the constructor (if these are not None).
+            Default is True.
         """
         assert isinstance(other, SymplecticBasis)
         assert other.phase_space == self.phase_space
+        old_len = len(self.E)
         self.E.append(other.E, remove_from_other)
         self.F.append(other.F, remove_from_other)
+
+        if check_symplecticity and len(self.E) > 0:
+            # skip vectors which were already in the basis before append
+            self._check_symplecticity(offset=old_len)
 
     def _check_symplecticity(self, offset=0, check_tol=1e-3):
         """Check symplecticity of the |SymplecticBasis|.
@@ -216,7 +224,10 @@ class SymplecticBasis(BasicObject):
             new_basis = U[idx].copy()
             new_basis.scal(1/new_basis.norm())
             new_basis.append(J.apply_adjoint(new_basis))
-            self.append(SymplecticBasis.from_array(new_basis, check_symplecticity=False))
+            self.append(
+                SymplecticBasis.from_array(new_basis, check_symplecticity=False),
+                check_symplecticity=False,
+            )
             symplectic_gram_schmidt(self.E, self.F, offset=basis_length, copy=False)
         else:
             assert False
