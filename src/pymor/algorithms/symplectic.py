@@ -69,8 +69,8 @@ class SymplecticBasis(BasicObject):
         U
             The |VectorArray|.
         check_symplecticity
-            Flag, wether to check symplecticity of E and F in the constructor (if these are not None).
-            Default is True.
+            Flag, wether to check symplecticity of E and F in the constructor (if these are not
+            None). Default is True.
 
         Returns
         -------
@@ -96,7 +96,7 @@ class SymplecticBasis(BasicObject):
         E = J.apply_adjoint(self.F*(-1))
         F = J.apply_adjoint(self.E)
         # check_symplecticity = False, otherwise recursion loop
-        return SymplecticBasis(E, F, check_symplecticity=False) 
+        return SymplecticBasis(E, F, check_symplecticity=False)
 
     def to_array(self):
         """Convert to |VectorArray|.
@@ -122,8 +122,8 @@ class SymplecticBasis(BasicObject):
         remove_from_other
             Flag, wether to remove vectors from other.
         check_symplecticity
-            Flag, wether to check symplecticity of E and F in the constructor (if these are not None).
-            Default is True.
+            Flag, wether to check symplecticity of E and F in the constructor (if these are not
+            None). Default is True.
         """
         assert isinstance(other, SymplecticBasis)
         assert other.phase_space == self.phase_space

@@ -11,7 +11,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 METHODS_DICT = {
     'psd_cotengent_lift': psd_cotengent_lift,
     'psd_complex_svd': psd_complex_svd,
-    'psd_svd_like_decomp':psd_svd_like_decomp,
+    'psd_svd_like_decomp': psd_svd_like_decomp,
 }
 KEYS_ORTHOSYMPL_METHOD = ['psd_cotengent_lift', 'psd_complex_svd']
 
@@ -19,7 +19,6 @@ KEYS_ORTHOSYMPL_METHOD = ['psd_cotengent_lift', 'psd_complex_svd']
 @pytest.mark.parametrize('key_basis_gen_method', METHODS_DICT.keys())
 def test_symplecticity(key_method):
     """Check symplecticity of symplectic basis generation methods."""
-
     half_dim = 1000
     half_space = NumpyVectorSpace(half_dim)
     phase_space = BlockVectorSpace([half_space] * 2)
@@ -34,7 +33,6 @@ def test_symplecticity(key_method):
 @pytest.mark.parametrize('key_orthosympl_basis_gen_method', KEYS_ORTHOSYMPL_METHOD)
 def test_orthonormality(key_orthosympl_method):
     """Check orthonormality for orthosymplectic basis generation methods."""
-
     half_dim = 1000
     half_space = NumpyVectorSpace(half_dim)
     phase_space = BlockVectorSpace([half_space] * 2)
@@ -49,7 +47,6 @@ def test_orthonormality(key_orthosympl_method):
 @pytest.mark.parametrize('reiterate', [False, True])
 def test_symplectic_gram_schmidt(test_orthonormality, reiterate):
     """Check symplecticity and orthonormality for symplectic_gram_schmidt."""
-
     half_dim = 1000
     half_space = NumpyVectorSpace(half_dim)
     phase_space = BlockVectorSpace([half_space] * 2)
