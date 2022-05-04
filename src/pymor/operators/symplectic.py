@@ -8,7 +8,7 @@ from pymor.vectorarrays.block import BlockVectorSpace
 
 
 class CanonicalSymplecticFormOperator(BlockOperator):
-    """An |Operator| for a canonically symplectic form.
+    """|Operator| representing a canonically symplectic form.
 
     Parameters
     ----------
