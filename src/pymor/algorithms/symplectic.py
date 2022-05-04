@@ -17,7 +17,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 class SymplecticBasis(BasicObject):
-    """A canonically |SymplecticBasis| based on pairs of basis vectors (e_i, f_i).
+    """A canonically-symplectic basis based on pairs of basis vectors (e_i, f_i).
 
     The basis vectors are each contained in a |VectorArray|
 
