@@ -1064,6 +1064,16 @@ class PHLTIModel(Model):
             K, B, C, D, dK, dB, dC, dD,
             parameters=parameters, name=self.name + '_transfer_function')
 
+        self._lti_model = LTIModel(A=self.J - self.R,
+                                   B=self.G - self.P,
+                                   C=(self.G + self.P).H,
+                                   D=self.S - self.N,
+                                   E=self.E,
+                                   solver_options=self.solver_options,
+                                   error_estimator=self.error_estimator,
+                                   visualizer=self.visualizer,
+                                   name=self.name + '_as_lti')
+
     def __str__(self):
         string = (
             f'{self.name}\n'
@@ -1177,7 +1187,6 @@ class PHLTIModel(Model):
 
         return J, R, G, P, S, N, E
 
-    @cached
     def to_lti(self):
         r"""Return a standard linear time-invariant system representation.
 
@@ -1193,17 +1202,8 @@ class PHLTIModel(Model):
         lti
             |LTIModel| equivalent to the port-Hamiltonian model.
         """
-        return LTIModel(A=self.J - self.R,
-                        B=self.G - self.P,
-                        C=(self.G + self.P).H,
-                        D=self.S - self.N,
-                        E=self.E,
-                        solver_options=self.solver_options,
-                        error_estimator=self.error_estimator,
-                        visualizer=self.visualizer,
-                        name=self.name + '_as_lti')
+        return self._lti_model
 
-    @cached
     def poles(self, mu=None):
         """Compute system poles.
 
@@ -1221,7 +1221,6 @@ class PHLTIModel(Model):
         """
         return self.to_lti().poles(mu=mu)
 
-    @cached
     def gramian(self, typ, mu=None):
         """Compute a Gramian.
 
@@ -1254,7 +1253,6 @@ class PHLTIModel(Model):
 
         return self.to_lti().gramian(typ, mu)
 
-    @cached
     def _hsv_U_V(self, mu=None):
         """Compute Hankel singular values and vectors.
 
@@ -1295,7 +1293,6 @@ class PHLTIModel(Model):
         """
         return self._hsv_U_V(mu=mu)[0]
 
-    @cached
     def h2_norm(self, mu=None):
         """Compute the H2-norm.
 
@@ -1314,7 +1311,6 @@ class PHLTIModel(Model):
         """
         return self.to_lti().h2_norm(mu=mu)
 
-    @cached
     def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
         """Compute the H_infinity-norm.
 
@@ -1341,7 +1337,6 @@ class PHLTIModel(Model):
                                        return_fpeak=return_fpeak,
                                        ab13dd_equilibrate=ab13dd_equilibrate)
 
-    @cached
     def hankel_norm(self, mu=None):
         """Compute the Hankel-norm.
 
