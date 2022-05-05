@@ -29,26 +29,26 @@ def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
     A
         The lti |NumPy array| A, if `as_lti` is `True`.
     B
-        The lti |np.ndarray| B, if `as_lti` is `True`.
+        The lti |NumPy array| B, if `as_lti` is `True`.
     C
-        The lti |np.ndarray| C, if `as_lti` is `True`.
+        The lti |NumPy array| C, if `as_lti` is `True`.
     D
-        The lti |np.ndarray| D, if `as_lti` is `True`.
+        The lti |NumPy array| D, if `as_lti` is `True`.
     J
-        The ph |np.ndarray| J, if `as_lti` is `False`.
+        The ph |NumPy array| J, if `as_lti` is `False`.
     R
-        The ph |np.ndarray| R, if `as_lti` is `False`.
+        The ph |NumPy array| R, if `as_lti` is `False`.
     G
-        The ph |np.ndarray| G, if `as_lti` is `False`.
+        The ph |NumPy array| G, if `as_lti` is `False`.
     P
-        The ph |np.ndarray| P, if `as_lti` is `False`.
+        The ph |NumPy array| P, if `as_lti` is `False`.
     S
-        The ph |np.ndarray| S, if `as_lti` is `False`.
+        The ph |NumPy array| S, if `as_lti` is `False`.
     N
-        The ph |np.ndarray| N, if `as_lti` is `False`.
+        The ph |NumPy array| N, if `as_lti` is `False`.
     E
-        The lti |np.ndarray| E, if `as_lti` is `True`, or
-        the ph |np.ndarray| E, if `as_lti` is `False`.
+        The lti |NumPy array| E, if `as_lti` is `True`, or
+        the ph |NumPy array| E, if `as_lti` is `False`.
     """
     n = int(n / 2)
     m = 1
@@ -120,7 +120,7 @@ def is_sym(A):
     Parameters
     ----------
     A
-        The |np.ndarray| to be checked.
+        The |NumPy array| to be checked.
 
     Returns
     -------
@@ -136,7 +136,7 @@ def is_skew(A):
     Parameters
     ----------
     A
-        The |np.ndarray| to be checked.
+        The |NumPy array| to be checked.
 
     Returns
     -------
@@ -152,7 +152,7 @@ def is_spdf(A):
     Parameters
     ----------
     A
-        The |np.ndarray| to be checked.
+        The |NumPy array| to be checked.
 
     Returns
     -------
