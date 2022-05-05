@@ -1357,12 +1357,12 @@ class PHLTIModel(Model):
         return self.hsv(mu=mu)[0]
 
     def __add__(self, other):
-        """Add a |PHLTIModel| or an |LTIModel|."""
+        """Add a |PHLTIModel|, an |LTIModel|, or a |SecondOrderModel|."""
         if isinstance(other, LTIModel):
             return self.to_lti() + other
 
         if isinstance(other, SecondOrderModel):
-            return self.to_lti() + other
+            return self.to_lti() + other.to_lti()
 
         if not isinstance(other, PHLTIModel):
             return NotImplemented
@@ -1381,12 +1381,14 @@ class PHLTIModel(Model):
         N = self.S + other.S
         E = BlockDiagonalOperator([self.E, other.E])
 
-        return self.with_(J, R, G, P, S, N, E)
+        return self.with_(J=J, R=R, G=G, P=P, S=S, N=N, E=E)
 
     def __radd__(self, other):
-        """Add to an |LTIModel|."""
+        """Add to an |LTIModel| or |SecondOrderModel|."""
         if isinstance(other, LTIModel):
             return other + self.to_lti()
+        elif isinstance(other, SecondOrderModel):
+            return other.to_lti() + self.to_lti()
         else:
             return NotImplemented
 
@@ -1406,18 +1408,12 @@ class PHLTIModel(Model):
         return -self.to_lti()
 
     def __mul__(self, other):
-        """Postmultiply by a |LTIModel|."""
-        if isinstance(other, LTIModel):
-            return self.to_lti() * other
-        else:
-            return NotImplemented
+        """Postmultiply by an |LTIModel|."""
+        return self.to_lti() * other
 
     def __rmul__(self, other):
         """Premultiply by an |LTIModel|."""
-        if isinstance(other, LTIModel):
-            return other * self.to_lti()
-        else:
-            return NotImplemented
+        return other * self.to_lti()
 
 
 class SecondOrderModel(Model):
@@ -2260,8 +2256,8 @@ class LinearDelayModel(Model):
         return string
 
     def __add__(self, other):
-        """Add an |LTIModel|, |SecondOrderModel| or |LinearDelayModel|."""
-        if isinstance(other, SecondOrderModel):
+        """Add an |LTIModel|, |SecondOrderModel|, |PHLTIModel, or |LinearDelayModel|."""
+        if isinstance(other, (SecondOrderModel, PHLTIModel)):
             other = other.to_lti()
 
         if isinstance(other, LTIModel):
@@ -2297,10 +2293,10 @@ class LinearDelayModel(Model):
         return self.with_(E=E, A=A, Ad=Ad, tau=tau, B=B, C=C, D=D)
 
     def __radd__(self, other):
-        """Add to an |LTIModel| or a |SecondOrderModel|."""
+        """Add to an |LTIModel|, a |SecondOrderModel|, or a |PHLTIModel|."""
         if isinstance(other, LTIModel):
             return self + other
-        elif isinstance(other, SecondOrderModel):
+        elif isinstance(other, (SecondOrderModel, PHLTIModel)):
             return self + other.to_lti()
         else:
             return NotImplemented
