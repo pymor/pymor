@@ -27,7 +27,7 @@ def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
     Returns
     -------
     A
-        The lti |np.ndarray| A, if `as_lti` is `True`.
+        The lti |NumPy array| A, if `as_lti` is `True`.
     B
         The lti |np.ndarray| B, if `as_lti` is `True`.
     C
