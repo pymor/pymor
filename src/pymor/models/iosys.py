@@ -1556,6 +1556,19 @@ class SecondOrderModel(Model):
             K, B, C, D, dK, dB, dC, dD,
             parameters=parameters, sampling_time=sampling_time, name=self.name + '_transfer_function')
 
+        self._lti_model = LTIModel(A=SecondOrderModelOperator(0, 1, -self.E, -self.K),
+                                   B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B]),
+                                   C=BlockRowOperator([self.Cp, self.Cv]),
+                                   D=self.D,
+                                   E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source]))
+                                      if isinstance(self.M, IdentityOperator) else
+                                      BlockDiagonalOperator([IdentityOperator(self.M.source), self.M])),
+                                   sampling_time=self.sampling_time,
+                                   solver_options=self.solver_options,
+                                   error_estimator=self.error_estimator,
+                                   visualizer=self.visualizer,
+                                   name=self.name + '_first_order')
+
     def __str__(self):
         string = (
             f'{self.name}\n'
@@ -1763,7 +1776,6 @@ class SecondOrderModel(Model):
                 continue
             save_matrix(file, mat)
 
-    @cached
     def to_lti(self):
         r"""Return a first order representation.
 
@@ -1812,18 +1824,7 @@ class SecondOrderModel(Model):
         lti
             |LTIModel| equivalent to the second-order model.
         """
-        return LTIModel(A=SecondOrderModelOperator(0, 1, -self.E, -self.K),
-                        B=BlockColumnOperator([ZeroOperator(self.B.range, self.B.source), self.B]),
-                        C=BlockRowOperator([self.Cp, self.Cv]),
-                        D=self.D,
-                        E=(IdentityOperator(BlockVectorSpace([self.M.source, self.M.source]))
-                           if isinstance(self.M, IdentityOperator) else
-                           BlockDiagonalOperator([IdentityOperator(self.M.source), self.M])),
-                        sampling_time=self.sampling_time,
-                        solver_options=self.solver_options,
-                        error_estimator=self.error_estimator,
-                        visualizer=self.visualizer,
-                        name=self.name + '_first_order')
+        return self._lti_model
 
     def __add__(self, other):
         """Add a |SecondOrderModel| or an |LTIModel|."""
@@ -1897,7 +1898,6 @@ class SecondOrderModel(Model):
         else:
             return NotImplemented
 
-    @cached
     def poles(self, mu=None):
         """Compute system poles.
 
@@ -2041,7 +2041,6 @@ class SecondOrderModel(Model):
                 .inner(self.gramian('vc_lrcf', mu=mu)[:self.order])
         )
 
-    @cached
     def h2_norm(self, mu=None):
         """Compute the H2-norm.
 
@@ -2060,7 +2059,6 @@ class SecondOrderModel(Model):
         """
         return self.to_lti().h2_norm(mu=mu)
 
-    @cached
     def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
         """Compute the H_infinity-norm.
 
@@ -2087,7 +2085,6 @@ class SecondOrderModel(Model):
                                        return_fpeak=return_fpeak,
                                        ab13dd_equilibrate=ab13dd_equilibrate)
 
-    @cached
     def hankel_norm(self, mu=None):
         """Compute the Hankel-norm.
 
