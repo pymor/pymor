@@ -972,9 +972,9 @@ class PHLTIModel(Model):
     G
         The |Operator| G.
     P
-        The |Operator| P.
+        The |Operator| P or `None` (then P is assumed to be zero).
     S
-        The |Operator| S  or `None` (then S is assumed to be zero).
+        The |Operator| S or `None` (then S is assumed to be zero).
     N
         The |Operator| N or `None` (then N is assumed to be zero).
     E
@@ -1010,8 +1010,8 @@ class PHLTIModel(Model):
         The transfer function.
     """
 
-    def __init__(self, J, R, G, P, S=None, N=None, E=None, solver_options=None,
-                 error_estimator=None, visualizer=None, name=None):
+    def __init__(self, J, R, G, P=None, S=None, N=None, E=None,
+                 solver_options=None, error_estimator=None, visualizer=None, name=None):
         assert J.linear
         assert J.source == J.range
 
