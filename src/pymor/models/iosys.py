@@ -1048,6 +1048,7 @@ class PHLTIModel(Model):
         self.__auto_init(locals())
         self.solution_space = J.source
         self.dim_output = G.source.dim
+        self.sampling_time = 0
 
         K = lambda s: s * self.E - (self.J - self.R)
         B = lambda s: self.G - self.P
