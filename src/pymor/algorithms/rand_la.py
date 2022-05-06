@@ -267,9 +267,9 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
     Parameters
     ----------
     A
-        The hermitian linear |Operator| for which the eigenvalues are to be computed.
+        The Hermitian linear |Operator| for which the eigenvalues are to be computed.
     E
-        The hermitian |Operator| which defines the generalized eigenvalue problem.
+        The Hermitian |Operator| which defines the generalized eigenvalue problem.
     modes
         The number of eigenvalues and eigenvectors which are to be computed.
     p :
