@@ -2256,7 +2256,7 @@ class LinearDelayModel(Model):
         return string
 
     def __add__(self, other):
-        """Add an |LTIModel|, |SecondOrderModel|, |PHLTIModel, or |LinearDelayModel|."""
+        """Add an |LTIModel|, |SecondOrderModel|, |PHLTIModel|, or |LinearDelayModel|."""
         if isinstance(other, (SecondOrderModel, PHLTIModel)):
             other = other.to_lti()
 
