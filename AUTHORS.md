@@ -20,7 +20,7 @@
   * dedicated Hankel operator class
 
 * Sven Ullmann, ullmannsven@gmx.de
-  * randomized algorithms for generalized svd and generalized hermitian eigenvalue problem
+  * randomized algorithms for generalized SVD and generalized Hermitian eigenvalue problem
 
 ### pyMOR 2021.2
 
