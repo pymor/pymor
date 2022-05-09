@@ -147,14 +147,14 @@ def test_LincombFunction_to_dune_grid_function():
         assert np.allclose(f.coefficients, [1, 2, 3])
 
 def test_ExpressionFunction_to_dune_grid_function():
-    f = ExpressionFunction('x[..., 0]', dim_domain=2)
+    f = ExpressionFunction('x[0]', dim_domain=2)
     df = to_dune_grid_function(f, grid)
     assert isinstance(df, DuneGridFunction)
 
     assert np.allclose(f.evaluate(grid.centers(grid.dimension)), np.array(df.impl.dofs.vector, copy=False))
 
 def test_parametric_ExpressionFunction_to_dune_grid_function():
-    f = ExpressionFunction('foo[0]*x[..., 0]', dim_domain=2, parameters={'foo': 1})
+    f = ExpressionFunction('foo[0]*x[0]', dim_domain=2, parameters={'foo': 1})
     mu = f.parameters.parse(2)
     df = to_dune_grid_function(f, grid, mu=mu)
     assert isinstance(df, DuneGridFunction)
@@ -162,7 +162,7 @@ def test_parametric_ExpressionFunction_to_dune_grid_function():
     assert np.allclose(f.evaluate(grid.centers(grid.dimension), mu=mu), np.array(df.impl.dofs.vector, copy=False))
 
 def test_vector_valued_ExpressionFunction_to_dune_grid_function():
-    f = ExpressionFunction('np.array([x[..., 0], x[..., 1]]).T', dim_domain=2, shape_range=(2,))
+    f = ExpressionFunction('[x[0], x[1]]', dim_domain=2)
     df = to_dune_grid_function(f, grid)
     assert isinstance(df, DuneGridFunction)
 
