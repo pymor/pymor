@@ -114,66 +114,6 @@ def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
     return J, R, G, P, S, N, E
 
 
-def is_sym(A):
-    """Check if a matrix is symmetric.
-
-    Parameters
-    ----------
-    A
-        The |NumPy array| to be checked.
-
-    Returns
-    -------
-    is_sym
-        Returns `True` if `A` is symmetric.
-    """
-    return np.allclose(A, A.T)
-
-
-def is_skew(A):
-    """Check if a matrix is skew-symmetric.
-
-    Parameters
-    ----------
-    A
-        The |NumPy array| to be checked.
-
-    Returns
-    -------
-    is_skew
-        Returns `True` if `A` is skew-symmetric.
-    """
-    return np.allclose(A, -A.T)
-
-
-def is_spdf(A):
-    """Check if a matrix is symmetric positive (semi-)definite.
-
-    Parameters
-    ----------
-    A
-        The |NumPy array| to be checked.
-
-    Returns
-    -------
-    is_spdf
-        Returns `True` if `A` is symmetric positive (semi-)definite.
-    """
-    if is_sym(A):
-        try:
-            np.linalg.cholesky(A)
-            return True
-        except np.linalg.LinAlgError:
-            A += 1e-5 * np.eye(A.shape[0])
-            try:
-                np.linalg.cholesky(A)
-                return True
-            except np.linalg.LinAlgError:
-                return False
-    else:
-        return False
-
-
 def main():
     n = 10  # order
 
@@ -182,17 +122,8 @@ def main():
 
     J, R, G, P, S, N, E = msd(n)
 
-    # check ph conditions
-    JJ = np.block([[J, G], [-G.T, N]])
-    RR = np.block([[R, P], [P.T, S]])
-    assert is_skew(JJ)
-    assert is_spdf(RR)
-    assert is_spdf(E)
-
     phlti = PHLTIModel.from_matrices(J, R, G, P, S, N, E)
     print(phlti)
-    assert phlti.dim_input == phlti.dim_output
-    assert phlti.dim_input == 1
 
     # Magnitude plot
     w = np.logspace(-2, 8, 300)
@@ -205,7 +136,6 @@ def main():
     # Poles
     poles = phlti.poles()
     poles_lti = lti.poles()
-    assert np.allclose(poles, poles_lti)
 
     fig, ax = plt.subplots()
     ax.scatter(poles_lti.real, poles_lti.imag, marker='x', label='LTI')
