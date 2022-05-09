@@ -149,6 +149,9 @@ common = '''
 .. |rules| replace:: :class:`rules <pymor.algorithms.rules.rule>`
 .. |project| replace:: :func:`~pymor.algorithms.projection.project`
 
+.. |SymplecticBasis| replace:: :class:`~pymor.algorithms.symplectic.SymplecticBasis`
+.. |CanonicalSymplecticFormOperator| replace:: :class:`~pymor.operators.symplectic.CanonicalSymplecticFormOperator`
+
 '''
 
 substitutions = interfaces + common
