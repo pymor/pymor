@@ -1,6 +1,11 @@
+#!/usr/bin/env python
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+
 import numpy as np
 from matplotlib import pyplot as plt
-from typer import run
+from typer import run, Option
 
 from pymor.models.iosys import PHLTIModel, LTIModel
 
@@ -114,9 +119,9 @@ def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
     return J, R, G, P, S, N, E
 
 
-def main():
-    n = 10  # order
-
+def main(
+        n: int = Option(10, help='Order of the Mass-Spring-Damper system.')
+):
     A, B, C, D, E = msd(n, as_lti=True)
     lti = LTIModel.from_matrices(A, B, C, D, E)
 
