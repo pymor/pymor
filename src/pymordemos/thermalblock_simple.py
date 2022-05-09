@@ -15,6 +15,7 @@ from typer import Argument, run
 
 from pymor.basic import *
 from pymor.core.config import config
+from pymor.discretizers.dunegdt.cg import discretize_stationary_cg as discretize_stationary_cg_dunegdt
 from pymor.tools.typer import Choices
 
 # parameters for high-dimensional models
@@ -31,7 +32,7 @@ TEXT = 'pyMOR'
 ####################################################################################################
 
 def main(
-    model: Choices('pymor fenics ngsolve pymor_text') = Argument(..., help='High-dimensional model.'),
+    model: Choices('pymor fenics ngsolve dunegdt pymor_text') = Argument(..., help='High-dimensional model.'),
     alg: Choices('naive greedy adaptive_greedy pod') = Argument(..., help='The model reduction algorithm to use.'),
     snapshots: int = Argument(
         ...,
@@ -52,6 +53,8 @@ def main(
     elif model == 'ngsolve':
         config.require('NGSOLVE')
         fom, parameter_space = discretize_ngsolve()
+    elif model == 'dunegdt':
+        fom, parameter_space = discretize_dunegdt()
     elif model == 'pymor_text':
         fom, parameter_space = discretize_pymor_text()
     else:
@@ -280,6 +283,17 @@ def discretize_ngsolve():
                           products={'h1_0_semi': h1_0_op})
 
     return fom, fom.parameters.space((0.1, 1))
+
+
+def discretize_dunegdt():
+
+    # setup analytical problem
+    problem = thermal_block_problem(num_blocks=(XBLOCKS, YBLOCKS))
+
+    # discretize using continuous finite elements
+    fom, _ = discretize_stationary_cg_dunegdt(problem, diameter=1. / GRID_INTERVALS)
+
+    return fom, problem.parameter_space
 
 
 def discretize_pymor_text():
