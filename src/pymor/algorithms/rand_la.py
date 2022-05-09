@@ -11,10 +11,8 @@ from scipy.special import erfinv
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
 from pymor.operators.interface import Operator
-from pymor.algorithms.eigs import eigs
 from pymor.core.logger import getLogger
-from pymor.vectorarrays.interface import VectorArray
-from pymor.operators.constructions import VectorArrayOperator, InverseOperator, IdentityOperator
+from pymor.operators.constructions import InverseOperator, IdentityOperator
 
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
@@ -106,7 +104,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     Given the |Operator| `A`, the return value of this method is the |VectorArray|
     `Q` whose vectors form an approximate orthonormal basis for the range of `A`.
 
-    This method is based on algorithm 2 in :cite:`SBH21`. 
+    This method is based on algorithm 2 in :cite:`SBH21`.
 
     Parameters
     ----------
@@ -121,7 +119,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     l
         The block size of the normalized power iterations.
     return_rand
-        If `True`, the randomly sampled |VectorArray| R is returned. 
+        If `True`, the randomly sampled |VectorArray| R is returned.
     iscomplex
         If `True`, the random vectors are chosen complex.
 
@@ -133,12 +131,12 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
         The randomly sampled |VectorArray| (if `return_rand` is `True`).
     """
     assert isinstance(A, Operator)
-    
+
     if range_product is None:
         range_product = IdentityOperator(A.range)
     else:
         assert isinstance(range_product, Operator)
-        
+
     if source_product is None:
         source_product = IdentityOperator(A.source)
     else:
@@ -146,7 +144,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
 
     assert 0 <= l <= min(A.source.dim, A.range.dim) and isinstance(l, int)
     assert q >= 0 and isinstance(q, int)
-    
+
     R = A.source.random(l, distribution='normal')
 
     if iscomplex:
@@ -170,7 +168,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
 
 @defaults('p', 'q', 'modes')
 def random_generalized_svd(A, range_product=None, source_product=None, modes=6, p=20, q=2):
-    r"""Randomized SVD of an |Operator|. 
+    r"""Randomized SVD of an |Operator|.
 
     Viewing the `A` as a `A.dim x len(A)` matrix, the return value
     of this method is the randomized singular value decomposition of `A`, where the
@@ -178,23 +176,23 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
     the inner product on :math:`\mathbb{R}^{\mathtt{len(A)}}` is given by `source_product`.
 
     .. math::
-        
+
         A = U \Sigma V^H \mathtt{source_product}
-    
+
     This method is based on :cite:`SHB21`.
 
     Parameters
     ----------
     A
-        The |Operator| for which the randomized SVD is to be computed. 
+        The |Operator| for which the randomized SVD is to be computed.
     range_product
         Range product |Operator| w.r.t which the randomized SVD is computed.
     source_product
         Source product |Operator| w.r.t which the randomized SVD is computed.
     modes
-        The first `modes` approximated singular values and vectors are returned. 
+        The first `modes` approximated singular values and vectors are returned.
     p
-        If not `0`, adds `p` columns to the randomly sampled matrix (oversampling parameter). 
+        If not `0`, adds `p` columns to the randomly sampled matrix (oversampling parameter).
     q
         If not `0`, performs `q` so-called power iterations to increase the relative weight
         of the first singular values.
@@ -209,9 +207,9 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
         |VectorArray| of the approximated right singular vectors.
     """
     logger = getLogger('pymor.algorithms.rand_la')
-    
+
     assert isinstance(A, Operator)
-    
+
     assert 0 <= modes <= max(A.source.dim, A.range.dim) and isinstance(modes, int)
     assert 0 <= p <= max(A.source.dim, A.range.dim) - modes and isinstance(p, int)
     assert q >= 0 and isinstance(q, int)
@@ -221,28 +219,28 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
     else:
         assert isinstance(range_product, Operator)
         assert range_product.source == range_product.range == A.range
-        
+
     if source_product is None:
         source_product = IdentityOperator(A.source)
     else:
         assert isinstance(source_product, Operator)
         assert source_product.source == source_product.range == A.source
-        
+
     if A.source.dim == 0 or A.range.dim == 0:
         return A.source.empty(), np.array([]), A.range.empty()
-    
+
     Q = rrf(A, source_product=source_product, range_product=range_product, q=q, l=modes+p)
     B = A.apply_adjoint(range_product.apply(Q))
     Q_B, R_B = gram_schmidt(source_product.apply_inverse(B), product=source_product, return_R=True)
-    U_b, s, Vh_b = sp.linalg.svd(R_B.T, full_matrices=False) 
+    U_b, s, Vh_b = sp.linalg.svd(R_B.T, full_matrices=False)
 
     with logger.block(f'Computing generalized left-singular vectors ({modes} vectors) ...'):
         U = Q.lincomb(U_b.T)
 
     with logger.block(f'Computung generalized right-singular vector ({modes} vectors) ...'):
         Vh = Q_B.lincomb(Vh_b)
-        
-    return  U[:modes], s[:modes], Vh[:modes]
+
+    return U[:modes], s[:modes], Vh[:modes]
 
 
 @defaults('modes', 'p', 'q')
@@ -251,7 +249,7 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
 
     Approximates `modes` eigenvalues `w` with corresponding eigenvectors `v` which solve
     the eigenvalue problem
-    
+
     .. math::
         A v_i = w_i v_i
 
@@ -262,7 +260,7 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
 
     if `E` is not `None`.
 
-    This method is an implementation of algorithm 6 and 7 in :cite:`SJK16`. 
+    This method is an implementation of algorithm 6 and 7 in :cite:`SJK16`.
 
     Parameters
     ----------
@@ -279,7 +277,8 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
         If not `0`, performs `q` power iterations to increase the relative weight
         of the larger singular values. Ignored when `single_pass` is `True`.
     single_pass
-        If `True`, computes the GHEP where only one set of matvecs Ax is required, but at the expense of lower numerical accuracy.
+        If `True`, computes the GHEP where only one set of matvecs Ax is required, but at the
+        expense of lower numerical accuracy.
         If `False`, the methods require two sets of matvecs Ax.
 
     Returns
@@ -297,7 +296,7 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
     assert 0 <= modes <= max(A.source.dim, A.range.dim) and isinstance(modes, int)
     assert 0 <= p <= max(A.source.dim, A.range.dim) - modes and isinstance(p, int)
     assert q >= 0 and isinstance(q, int)
-    
+
     if E is None:
         E = IdentityOperator(A.source)
     else:
@@ -305,19 +304,19 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
         assert not E.parametric
         assert E.source == E.range
         assert E.source == A.source
-    
+
     if A.source.dim == 0 or A.range.dim == 0:
         return A.source.empty(), np.array([]), A.range.empty()
-    
+
     if single_pass:
         Omega = A.source.random(modes+p, distribution='normal')
         Y_bar = A.apply(Omega)
         Y = E.apply_inverse(Y_bar)
         Q, R = gram_schmidt(Y, product=E, return_R=True)
-        X = E.apply2(Omega,Q)
+        X = E.apply2(Omega, Q)
         X_lu = lu_factor(X)
         T = lu_solve(X_lu, lu_solve(X_lu, Omega.inner(Y_bar)).T).T
-    else: 
+    else:
         C = InverseOperator(E) @ A
         Y, Omega = rrf(C, q=q, l=modes+p, return_rand=True)
         Q = gram_schmidt(Y, product=E)
@@ -325,9 +324,9 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
 
     w, S = sp.linalg.eigh(T)
     w = w[::-1]
-    S = S[:,::-1]
-        
+    S = S[:, ::-1]
+
     with logger.block(f'Computing eigenvectors ({modes} vectors) ...'):
-       V = Q.lincomb(S)
+        V = Q.lincomb(S)
 
     return w[:modes], V[:modes]

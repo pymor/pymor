@@ -66,5 +66,3 @@ def test_not_too_many_modes(method):
 
 if __name__ == "__main__":
     runmodule(filename=__file__)
-
-
