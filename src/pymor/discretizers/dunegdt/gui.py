@@ -85,8 +85,7 @@ if config.HAVE_DUNEGDT:
             self.interpolation_points = space.interpolation_points()
             self.__auto_init(locals())
 
-        def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
-                      rescale_colorbars=False, block=None, filename=None, columns=2):
+        def visualize(self, U, *args, title=None, legend=None, **kwargs):
             assert isinstance(U, ListVectorArray)
             assert len(U) == 1
             U = U._list[0]
@@ -116,8 +115,7 @@ if config.HAVE_DUNEGDT:
         def __init__(self, space):
             self.__auto_init(locals())
 
-        def visualize(self, U, m, title=None, legend=None, separate_colorbars=False,
-                      rescale_colorbars=False, block=None, filename=None, columns=2):
+        def visualize(self, U, *args, title=None, legend=None, filename=None, **kwargs):
 
             def visualize_single(vec, vec_name, f_name):
                 discrete_function = DiscreteFunction(self.space, vec, vec_name)
