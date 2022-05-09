@@ -104,9 +104,9 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     r"""Randomized range approximation of `A`.
 
     Given the |Operator| `A`, the return value of this method is the |VectorArray|
-    `Q` whose vectors form an approximate orthonomal basis for the range of `A`.#
+    `Q` whose vectors form an approximate orthonormal basis for the range of `A`.
 
-    This method is based on algorithm 2 in cite:`SBH21`. 
+    This method is based on algorithm 2 in :cite:`SBH21`. 
 
     Parameters
     ----------
@@ -121,7 +121,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     l
         The block size of the normalized power iterations.
     return_rand
-        If 'True', the randomly sampled |VectorArray| R is returned. 
+        If `True`, the randomly sampled |VectorArray| R is returned. 
     iscomplex
         If `True`, the random vectors are chosen complex.
 
@@ -130,7 +130,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     Q
         |VectorArray| which contains the basis, whose span approximates the range of A.
     R
-        The randomly sampled |VectorArray|
+        The randomly sampled |VectorArray| (if `return_rand` is `True`).
     """
     assert isinstance(A, Operator)
     
@@ -172,41 +172,41 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
 def random_generalized_svd(A, range_product=None, source_product=None, modes=6, p=20, q=2):
     r"""Randomized SVD of an |Operator|. 
 
-    Viewing the 'A' as a 'A.dim' x 'len(A)' matrix, the return value
-    of this method is the randomized singular value decomposition of 'A', where the
-    inner product on R^('dim(A)') is given by 'range_product' and the inner product on R^('len(A)')
-    is given by 'source_product'. 
+    Viewing the `A` as a `A.dim x len(A)` matrix, the return value
+    of this method is the randomized singular value decomposition of `A`, where the
+    inner product on :math:`\mathbb{R}^{\mathtt{A.dim}}` is given by 'range_product' and
+    the inner product on :math:`\mathbb{R}^{\mathtt{len(A)}}` is given by `source_product`.
 
     .. math::
         
-        A = U \Sigma V^H source_product
+        A = U \Sigma V^H \mathtt{source_product}
     
     This method is based on :cite:`SHB21`.
 
     Parameters
     ----------
-    A : 
-        The Operator| for which the randomized SVD is to be computed. 
-    range_product : 
-        Range product |Operator| w.r.t which the randomized SVD is computed
-    source_product :
-        Source product |Operator| w.r.t which the randomized SVD is computed
-    modes : 
-        The first 'modes' approximated singular values and vectors are returned. 
-    p :
-        If not '0', adds 'p' colums to the randomly sampled matrix (Oversampling parameter). 
-    q : 
-        If not '0', performs 'q' so called power iterations to increase the relative weight
+    A
+        The |Operator| for which the randomized SVD is to be computed. 
+    range_product
+        Range product |Operator| w.r.t which the randomized SVD is computed.
+    source_product
+        Source product |Operator| w.r.t which the randomized SVD is computed.
+    modes
+        The first `modes` approximated singular values and vectors are returned. 
+    p
+        If not `0`, adds `p` columns to the randomly sampled matrix (oversampling parameter). 
+    q
+        If not `0`, performs `q` so-called power iterations to increase the relative weight
         of the first singular values.
 
     Returns
     -------
-    U 
-        |VectorArray| of approximated left singular vectors 
-    s 
-        One-dimensional |NumPy array| of the approximated singular values
+    U
+        |VectorArray| of approximated left singular vectors.
+    s
+        One-dimensional |NumPy array| of the approximated singular values.
     Vh
-        |VectorArray| of the approximated right singular vectors
+        |VectorArray| of the approximated right singular vectors.
     """
     logger = getLogger('pymor.algorithms.rand_la')
     
@@ -250,7 +250,7 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
     r"""Approximates a few eigenvalues of a symmetric linear |Operator| with randomized methods.
 
     Approximates `modes` eigenvalues `w` with corresponding eigenvectors `v` which solve
-    the eigenvalue problem.
+    the eigenvalue problem
     
     .. math::
         A v_i = w_i v_i
@@ -272,15 +272,15 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
         The Hermitian |Operator| which defines the generalized eigenvalue problem.
     modes
         The number of eigenvalues and eigenvectors which are to be computed.
-    p :
-        If not `0`, adds `p` colums to the randomly sampled matrix in the :func:`rrf` method
+    p
+        If not `0`, adds `p` columns to the randomly sampled matrix in the :func:`rrf` method
         (oversampling parameter).
-    q : 
+    q
         If not `0`, performs `q` power iterations to increase the relative weight
         of the larger singular values. Ignored when `single_pass` is `True`.
     single_pass
-        If `True`, computes the ghep where only one set of matvec Ax is required, but at the expense of lower numerical accuracy.
-        If `False` the methods requires two sets of matvecs Ax
+        If `True`, computes the GHEP where only one set of matvecs Ax is required, but at the expense of lower numerical accuracy.
+        If `False`, the methods require two sets of matvecs Ax.
 
     Returns
     -------
