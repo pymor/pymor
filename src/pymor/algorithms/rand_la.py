@@ -104,7 +104,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     Given the |Operator| `A`, the return value of this method is the |VectorArray|
     `Q` whose vectors form an approximate orthonormal basis for the range of `A`.
 
-    This method is based on algorithm 2 in :cite:`SBH21`.
+    This method is based on algorithm 2 in :cite:`SHB21`.
 
     Parameters
     ----------
