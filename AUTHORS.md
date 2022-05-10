@@ -12,6 +12,9 @@
 
 ### pyMOR 2022.1
 
+* Patrick Buchfink, patrick.buchfink@ians.uni-stuttgart.de
+  * symplectic model order reduction
+
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
   * several additional features for neural networks
 

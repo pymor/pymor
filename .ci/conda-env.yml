@@ -22,7 +22,6 @@ dependencies:
   - meshio>=4.4
   - mpi4py>=3.0
   - mpi4py>=3.0.3
-  - myst-nb
   - nbconvert
   - nbresuse
   - numpy>=1.16.0
@@ -42,7 +41,7 @@ dependencies:
   - setuptools
   - slycot>=0.4.0
   - sphinx-autoapi>=1.8
-  - sphinx>=3.4
+  - sphinx>=4.0
   - sympy
   - twine
   - typer
