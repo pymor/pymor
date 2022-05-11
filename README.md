@@ -21,6 +21,7 @@ provided for getting started quickly.
 [![GitLab Pipeline](https://zivgitlab.uni-muenster.de/pymor/pymor/badges/main/pipeline.svg)](https://zivgitlab.uni-muenster.de/pymor/pymor/commits/main)
 [![Conda Tests](https://github.com/pymor/pymor/actions/workflows/conda_tests.yml/badge.svg)](https://github.com/pymor/pymor/actions/workflows/conda_tests.yml)
 [![codecov](https://codecov.io/gh/pymor/pymor/branch/main/graph/badge.svg)](https://codecov.io/gh/pymor/pymor)
+[![GitHub Super-Linter](https://github.com/pymor/pymor/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/marketplace/actions/super-linter)
 
 License
 -------
