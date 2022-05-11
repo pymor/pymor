@@ -141,7 +141,7 @@ DMD_ARGS = (
 )
 
 PHLTI_ARGS = (
-    ('phlti', ['--n=10'])
+    ('phlti', ['--n=10']),
 )
 
 DEMO_ARGS = (
