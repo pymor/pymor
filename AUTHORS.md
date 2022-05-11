@@ -22,6 +22,9 @@
   * support for discrete-time LTI systems, Lyapunov equations and balanced truncation
   * dedicated Hankel operator class
 
+* Sven Ullmann, ullmannsven@gmx.de
+  * randomized algorithms for generalized SVD and generalized Hermitian eigenvalue problem
+
 ### pyMOR 2021.2
 
 * Tim Keil, tim.keil@uni-muenster.de
