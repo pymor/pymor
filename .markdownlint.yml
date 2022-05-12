@@ -1,0 +1,22 @@
+---
+###########################
+###########################
+## Markdown Linter rules ##
+###########################
+###########################
+
+# Linter rules doc:
+# - https://github.com/DavidAnson/markdownlint
+
+###############
+# Rules by id #
+###############
+MD013:
+  line_length: 120 # Line length 80 is far to short
+MD041: false # require heading as first line in file
+MD040: false # ``` fenced code must have language set
+
+#################
+# Rules by tags #
+#################
+blank_lines: false  # Error on blank lines
