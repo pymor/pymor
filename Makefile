@@ -38,7 +38,9 @@ ENV_FILE?=.env
 include $(ENV_FILE)
 export $(shell sed 's/=.*//' $(ENV_FILE))
 
-.PHONY: docker README.html pylint test docs conda_update
+.PHONY: docker README.html pylint test docs conda_update FORCE
+
+FORCE:
 
 all:
 	./dependencies.py
@@ -132,3 +134,7 @@ docker_wheel_check: docker_image
 	PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports wheel_check bash
 docker_install_check: docker_image
 	PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports install_check bash
+
+docker_super_linter: FORCE
+	docker pull -q github/super-linter:latest
+	docker run --env-file $(THIS_DIR)/.env -e RUN_LOCAL=true -v $(THIS_DIR):/tmp/lint github/super-linter:latest
