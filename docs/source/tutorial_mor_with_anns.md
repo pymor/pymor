@@ -297,8 +297,7 @@ the {meth}`~pymor.models.interface.Model.solve` method of the {{ Model }}, it ca
 be applied to {{ Models }} originating from external solvers, without requiring any access to
 {{ Operators }} internal to the solver.
 
-Direct approximation of output quantities
------------------------------------------
+## Direct approximation of output quantities
 
 Thus far, we were mainly interested in approximating the solution state
 {math}`u(\mu)\equiv u(\cdot,\mu)` for some parameter {math}`\mu`. If we consider an output
@@ -393,8 +392,8 @@ and the median of the speedups amounts to
 np.median(outputs_speedups)
 ```
 
-Neural networks for instationary problems
------------------------------------------
+## Neural networks for instationary problems
+
 
 To solve instationary problems using neural networks, we have extended the
 {class}`~pymor.reductors.neural_network.NeuralNetworkReductor` to the
