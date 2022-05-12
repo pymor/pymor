@@ -279,8 +279,8 @@ V = fom.solve(parameter_space.sample_randomly())
 
 The matrix {math}`G` of all inner products between vectors in `trivial_basis`
 is a so called [Gramian matrix](<https://en.wikipedia.org/wiki/Gramian_matrix>).
-Consequently, every {{ VectorArray }} has a {meth}`~pymor.vectorarrays.interface.VectorArray.gramian` method, which computes precisely
-this matrix:
+Consequently, every {{ VectorArray }} has a {meth}`~pymor.vectorarrays.interface.VectorArray.gramian`
+method, which computes precisely this matrix:
 
 ```{code-cell}
 G = trivial_basis.gramian()

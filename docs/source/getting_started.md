@@ -130,7 +130,8 @@ by executing:
 
 from pymor.basic import *
 from pymor.core.logger import set_log_levels
-set_log_levels({'pymor.algorithms.greedy': 'ERROR', 'pymor.algorithms.gram_schmidt.gram_schmidt': 'ERROR', 'pymor.algorithms.image.estimate_image_hierarchical': 'ERROR'})
+set_log_levels({'pymor.algorithms.greedy': 'ERROR', 'pymor.algorithms.gram_schmidt.gram_schmidt':
+  'ERROR', 'pymor.algorithms.image.estimate_image_hierarchical': 'ERROR'})
 ```
 
 Next we will instantiate a class describing the analytical problem
