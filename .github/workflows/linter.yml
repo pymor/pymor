@@ -22,7 +22,14 @@ jobs:
         with:
           # Full git history is needed to get a proper list of changed files within `super-linter`
           fetch-depth: 0
-
+      - name: Import environment variables from file
+        id: import-env
+        shell: bash
+        run: |
+          while read -r line; do
+            [[ "$line" =~ ^#.*$ ]] && continue
+            echo "$line" >> "$GITHUB_ENV"
+          done < .env
       - name: Lint Code Base
         uses: github/super-linter/slim@v4
         env:
