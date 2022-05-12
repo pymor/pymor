@@ -395,6 +395,7 @@ np.median(outputs_speedups)
 
 ## Neural networks for instationary problems
 
+
 To solve instationary problems using neural networks, we have extended the
 {class}`~pymor.reductors.neural_network.NeuralNetworkReductor` to the
 {class}`~pymor.reductors.neural_network.NeuralNetworkInstationaryReductor`, which treats time
