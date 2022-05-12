@@ -114,7 +114,8 @@ which will require that the [git](https://git-scm.com/) version control system i
 installed on your system.
 
 From time to time, the main branch of pyMOR undergoes major changes and things
-might break (this is usually announced in our [discussion forum](https://github.com/pymor/pymor/discussions)),
+might break (this is usually announced in our
+[discussion forum](https://github.com/pymor/pymor/discussions)),
 so you might prefer to install pyMOR from the current release branch:
 
     pip install git+https://github.com/pymor/pymor@2022.1.x#egg=pymor[full]
@@ -201,7 +202,8 @@ separately. Bindings for the following solver libraries are included:
 
 * [Slycot](https://github.com/python-control/Slycot)
 
-    Python wrapper for the Subroutine Library in Systems and Control Theory (SLICOT) is also used for Hardy norm computations (`pymor.bindings.slycot`).
+    Python wrapper for the Subroutine Library in Systems and Control Theory (SLICOT) is also
+    used for Hardy norm computations (`pymor.bindings.slycot`).
 
 Environments for pyMOR Development and Tests
 -----------------------------------------------

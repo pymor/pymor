@@ -145,8 +145,8 @@ with a few more advanced techniques added.
 
 Again we define a `py:class\_` with appropiate name and docstring, but now we also indicate to pybind11
 that this class will implement the [buffer protocol](<https://docs.python.org/3/c-api/buffer.html>), which basically
-exposes direct access to the chunk of memory associated with a `Vector` instance to Python. We also see how we can dispatch multiple init functions
-by using `py:init` objects with C++ lambda functions.
+exposes direct access to the chunk of memory associated with a `Vector` instance to Python.
+We also see how we can dispatch multiple init functions by using `py:init` objects with C++ lambda functions.
 Note that direct memory access to the vector data from Python is not required to integrate a solver with pyMOR.
 It is, however, useful for debugging and quickly modifying or extending the solver from within Python. For instance,
 in our toy example we will use the direct memory access to quickly define a visualization of the solutions and to
@@ -217,7 +217,8 @@ dir(model)
 
 ## Using the exported Python classes with pyMOR
 
-All of pyMOR's algorithms operate on {{ VectorArray }} and {{ Operator }} objects that all share the same programming interface. To be able to use
+All of pyMOR's algorithms operate on {{ VectorArray }} and {{ Operator }} objects that all
+share the same programming interface. To be able to use
 our Python `model.Vector` and `model.DiffusionOperator` in pyMOR, we have to provide implementations of
 {{ VectorArray }}, {{ VectorSpace }} and {{ Operator }} that wrap the classes defined in the extension module
 and translate calls to the interface methods into operations on `model.Vector` and `model.DiffusionOperator`.
