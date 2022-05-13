@@ -20,7 +20,6 @@ mpi4py>=3.0.3;python_version >= "3.9"
 mpi4py>=3.0;python_version < "3.9"
 myst-nb>=0.14
 nbresuse
-numpy>=1.16.0;python_version == "3.7"
 numpy>=1.17.5;python_version == "3.8"
 numpy>=1.19.4;python_version >= "3.9"
 packaging

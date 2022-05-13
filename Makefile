@@ -2,8 +2,8 @@
 
 # customization points via makefile key-value arguments
 #
-# interpreter in images: 3.{6,7,8} currently available
-# DOCKER_BASE_PYTHON=3.7
+# interpreter in images: 3.{8,9} currently available
+# DOCKER_BASE_PYTHON=3.9
 # test script executed with `docker_test`: mpi, notebooks_dir, oldest, vanilla, mpi, numpy_git, pip_installed
 # PYMOR_TEST_SCRIPT=vanilla
 # version pinned mirror to be used: stable or oldest
@@ -113,7 +113,7 @@ docker_test: docker_image
 docker_test_oldest: docker_image
 	PYMOR_TEST_SCRIPT=oldest PYPI_MIRROR=oldest DOCKER_BASE_PYTHON=3.7 $(DOCKER_COMPOSE) up pytest
 
-docker_run_oldest: DOCKER_BASE_PYTHON=3.7
+docker_run_oldest: DOCKER_BASE_PYTHON=3.8
 docker_run_oldest: PYMOR_TEST_SCRIPT=oldest
 docker_run_oldest: PYPI_MIRROR=oldest
 docker_run_oldest: docker_image

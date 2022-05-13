@@ -23,8 +23,8 @@ stages:
           when: never
         - when: on_success
     variables:
-        PYPI_MIRROR_TAG: 992e89d4d2d801ab6a8186b4f6bce11367f1095c
-        CI_IMAGE_TAG: 992e89d4d2d801ab6a8186b4f6bce11367f1095c
+        PYPI_MIRROR_TAG: f5966cc931749b9255b428c2d00e341ad7d3beab
+        CI_IMAGE_TAG: f5966cc931749b9255b428c2d00e341ad7d3beab
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
         BINDERIMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
@@ -164,32 +164,9 @@ verify setup.py:
 ci setup:
     extends: .sanity_checks
     script:
-        - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "3.7 3.8 3.9"
+        - ${CI_PROJECT_DIR}/.ci/gitlab/ci_sanity_check.bash "3.8 3.9"
 
 #****** test stage
-mpi 3 7:
-    extends: .pytest
-    rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - when: on_success
-    variables:
-        COVERAGE_FILE: coverage_mpi__3.7
-    retry:
-        max: 2
-        when: always
-    services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:${CI_IMAGE_TAG}
-    script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
-        - ./.ci/gitlab/test_mpi.bash
 mpi 3 8:
     extends: .pytest
     rules:
@@ -236,28 +213,6 @@ mpi 3 9:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_mpi.bash
-pip_installed 3 7:
-    extends: .pytest
-    rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - when: on_success
-    variables:
-        COVERAGE_FILE: coverage_pip_installed__3.7
-    services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:${PYPI_MIRROR_TAG}
-          alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:${CI_IMAGE_TAG}
-    script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
-        - ./.ci/gitlab/test_pip_installed.bash
 pip_installed 3 8:
     extends: .pytest
     rules:
@@ -302,26 +257,6 @@ pip_installed 3 9:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_pip_installed.bash
-tutorials 3 7:
-    extends: .pytest
-    rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - when: on_success
-    variables:
-        COVERAGE_FILE: coverage_tutorials__3.7
-    services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:${CI_IMAGE_TAG}
-    script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
-        - ./.ci/gitlab/test_tutorials.bash
 tutorials 3 8:
     extends: .pytest
     rules:
@@ -362,26 +297,6 @@ tutorials 3 9:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_tutorials.bash
-vanilla 3 7:
-    extends: .pytest
-    rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - when: on_success
-    variables:
-        COVERAGE_FILE: coverage_vanilla__3.7
-    services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:${CI_IMAGE_TAG}
-    script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
-        - ./.ci/gitlab/test_vanilla.bash
 vanilla 3 8:
     extends: .pytest
     rules:
@@ -444,18 +359,18 @@ numpy_git 3 9:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_numpy_git.bash
-oldest 3 7:
+oldest 3 8:
     extends: .pytest
     rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
     variables:
-        COVERAGE_FILE: coverage_oldest__3.7
+        COVERAGE_FILE: coverage_oldest__3.8
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_oldest_py3.7:${PYPI_MIRROR_TAG}
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_oldest_py3.8:${PYPI_MIRROR_TAG}
           alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:${CI_IMAGE_TAG}
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -466,26 +381,6 @@ oldest 3 7:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_oldest.bash
-cpp_demo 3 7:
-    extends: .pytest
-    rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - when: on_success
-    variables:
-        COVERAGE_FILE: coverage_cpp_demo__3.7
-    services:
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:${CI_IMAGE_TAG}
-    script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
-        - ./.ci/gitlab/test_cpp_demo.bash
 cpp_demo 3 8:
     extends: .pytest
     rules:
@@ -526,20 +421,6 @@ cpp_demo 3 9:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_cpp_demo.bash
-ci_weekly 3 7:
-    extends: .pytest
-    timeout: 5h
-    variables:
-        COVERAGE_FILE: coverage_ci_weekly
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: always
-    services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:${PYPI_MIRROR_TAG}
-          alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.7:${CI_IMAGE_TAG}
-    
-    script: ./.ci/gitlab/test_vanilla.bash
 ci_weekly 3 8:
     extends: .pytest
     timeout: 5h
@@ -578,22 +459,12 @@ submit coverage:
             - cover/*
             - .coverage
     dependencies:
-        - mpi 3 7
         - mpi 3 8
         - mpi 3 9
-        - vanilla 3 7
         - vanilla 3 8
         - vanilla 3 9
         - numpy_git 3 9
-        - oldest 3 7
-submit ci_weekly 3 7:
-    extends: .submit
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: always
-    dependencies:
-        - ci_weekly 3 7
-    needs: ["ci_weekly 3 7"]
+        - oldest 3 8
 submit ci_weekly 3 8:
     extends: .submit
     rules:
@@ -613,7 +484,7 @@ submit ci_weekly 3 9:
 
 
 
-from source 1/3:
+from source 1/2:
     extends: .test_base
     tags: [mike]
     services:
@@ -628,22 +499,7 @@ from source 1/3:
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_fedora:${CI_IMAGE_TAG}
     script: ./.ci/gitlab/install_checks/fedora/check.bash
 
-from source 2/3:
-    extends: .test_base
-    tags: [mike]
-    services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:${PYPI_MIRROR_TAG}
-          alias: pypi_mirror
-    needs: ["ci setup"]
-    rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - when: on_success
-    stage: install_checks
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian-buster:${CI_IMAGE_TAG}
-    script: ./.ci/gitlab/install_checks/debian-buster/check.bash
-
-from source 3/3:
+from source 2/2:
     extends: .test_base
     tags: [mike]
     services:
@@ -766,7 +622,7 @@ pypi:
         name: safe
 
 
-from wheel 1/3:
+from wheel 1/2:
     extends: .check_wheel
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_fedora:${CI_IMAGE_TAG}
     script:
@@ -774,41 +630,13 @@ from wheel 1/3:
       - python3 -m pip freeze --all
       - devpi install pymor[full]
 
-from wheel 2/3:
-    extends: .check_wheel
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian-buster:${CI_IMAGE_TAG}
-    script:
-      - echo "Testing wheel install on debian-buster with Python 3.7"
-      - python3 -m pip freeze --all
-      - devpi install pymor[full]
-
-from wheel 3/3:
+from wheel 2/2:
     extends: .check_wheel
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian-bullseye:${CI_IMAGE_TAG}
     script:
       - echo "Testing wheel install on debian-bullseye with Python 3.9"
       - python3 -m pip freeze --all
       - devpi install pymor[full]
-
-docs build 3 7:
-    extends: .test_base
-    tags: [mike]
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
-    services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.7:${PYPI_MIRROR_TAG}
-          alias: pypi_mirror
-    image: zivgitlab.wwu.io/pymor/docker/pymor/jupyter_py3.7:${CI_IMAGE_TAG}
-    script:
-        - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
-    stage: build
-    needs: ["ci setup"]
-    artifacts:
-        paths:
-            - docs/_build/html
-            - docs/error.log
 
 docs build 3 8:
     extends: .test_base
@@ -858,8 +686,8 @@ docs:
     image: zivgitlab.wwu.io/pymor/docker/alpine:3.11
     stage: deploy
     resource_group: docs_deploy
-    needs: ["docs build 3 7", "binder base image"]
-    dependencies: ["docs build 3 7", "binder base image"]
+    needs: ["docs build 3 9", "binder base image"]
+    dependencies: ["docs build 3 9", "binder base image"]
     before_script:
         - apk --update add make python3 bash
         # chardet is a workaround for https://github.com/jupyterhub/repo2docker/issues/1063

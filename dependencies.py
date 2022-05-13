@@ -15,7 +15,6 @@ _PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*,!=5.12.*,!=5.13.0'
 def _numpy_scipy():
     # numpy versions with filters according to minimal version with a wheel
     numpys = [
-        'numpy>=1.16.0;python_version == "3.7"',
         'numpy>=1.17.5;python_version == "3.8"',
         'numpy>=1.19.4;python_version >= "3.9"',
     ]
