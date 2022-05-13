@@ -1,0 +1,27 @@
+
+pyMOR 2022.1 (?? ??, 2022)
+--------------------------------
+
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Dropped Python 3.7 support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Following numpy/scipy we have dropped official support for
+Python 3.7. This means pyMOR now requires Python 3.8 to install
+and is no longer tested against for 3.7.
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
