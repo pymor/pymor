@@ -99,7 +99,7 @@ parameter values which maximises reduction error.
 
 ## The thermalblock demo explained
 
-In the following we will walk through the thermal block demo step by
+In the following we will go through the thermal block demo step by
 step in an interactive Python shell. We assume that you are familiar
 with the reduced basis method and that you know the basics of
 [Python](<https://www.python.org>) programming as well as working

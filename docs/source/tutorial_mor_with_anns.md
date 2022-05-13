@@ -106,7 +106,7 @@ Dirichlet boundary conditions
 u((x_1, x_2), \mu) = 2x_1\mu + 0.5,\quad x=(x_1, x_2) \in \partial\Omega.
 ```
 
-We discretize the problem using pyMOR's builtin discretization toolkit as
+We discretize the problem using pyMOR's built-in discretization toolkit as
 explained in {doc}`tutorial_builtin_discretizer`:
 
 ```{code-cell}
