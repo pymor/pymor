@@ -8,7 +8,10 @@ from matplotlib import pyplot as plt
 from typer import Argument, run
 
 from pymor.models.iosys import PHLTIModel
+<<<<<<< HEAD
 from pymor.reductors.h2 import IRKAReductor
+=======
+>>>>>>> 217d49701 ([pymordemos.phlti] update demo to reduce the msd model with pHIRKA)
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
 
 
