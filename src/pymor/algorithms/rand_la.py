@@ -237,7 +237,7 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
     with logger.block(f'Computing generalized left-singular vectors ({modes} vectors) ...'):
         U = Q.lincomb(U_b.T)
 
-    with logger.block(f'Computung generalized right-singular vector ({modes} vectors) ...'):
+    with logger.block(f'Computing generalized right-singular vector ({modes} vectors) ...'):
         Vh = Q_B.lincomb(Vh_b)
 
     return U[:modes], s[:modes], Vh[:modes]
