@@ -373,8 +373,8 @@ docs:
     image: {{registry}}/alpine:3.11
     stage: deploy
     resource_group: docs_deploy
-    needs: ["docs build 3 7", "binder base image"]
-    dependencies: ["docs build 3 7", "binder base image"]
+    needs: ["docs build 3 9", "binder base image"]
+    dependencies: ["docs build 3 9", "binder base image"]
     before_script:
         - apk --update add make python3 bash
         # chardet is a workaround for https://github.com/jupyterhub/repo2docker/issues/1063
@@ -397,7 +397,7 @@ docs:
 
 
 tpl = jinja2.Template(tpl)
-pythons = ['3.7', '3.8', '3.9']
+pythons = ['3.8', '3.9']
 oldest = [pythons[0]]
 newest = [pythons[-1]]
 test_scripts = [
@@ -411,7 +411,7 @@ test_scripts = [
 ]
 # these should be all instances in the federation
 binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'ovh', 'gesis')]
-testos = [('fedora', '3.9'), ('debian-buster', '3.7'), ('debian-bullseye', '3.9')]
+testos = [('fedora', '3.9'), ('debian-bullseye', '3.9')]
 
 env_path = Path(os.path.dirname(__file__)) / '..' / '..' / '.env'
 env = dotenv_values(env_path)

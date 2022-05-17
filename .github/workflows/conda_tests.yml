@@ -39,22 +39,17 @@ jobs:
     strategy:
         matrix:
             os: [ubuntu-20.04, macos-11, windows-2022]
-            python: [3.7, 3.9]
+            python: [3.8, 3.9]
             include:
               - os: ubuntu-20.04
                 prefix: /usr/share/miniconda3/envs/pyMOR-ci
               - os: macos-11
                 prefix: /Users/runner/miniconda3/envs/pyMOR-ci
               - os: macos-10.15
-                python: 3.7
+                python: 3.8
                 prefix: /Users/runner/miniconda3/envs/pyMOR-ci
               - os: windows-2022
                 prefix: C:\Miniconda3\envs\pyMOR-ci
-            exclude:
-              # these two don't mix WRT opengl loading: https://github.com/python/cpython/pull/21241
-              # explicitly include older macos for python 3.7 instead
-              - os: macos-11
-                python: 3.7
             # avoid failure in one job immeadiately cancelling all others
         fail-fast: false
     steps:

@@ -9,13 +9,12 @@ _PYTEST = 'pytest>=6.0'
 # 5.12.* blocked due to https://bugreports.qt.io/browse/PYSIDE-1004
 # however the problem is not actually fixed in 5.12.3 as advertised,
 # but only starting from 5.13.1
-_PYSIDE = 'PySide2!=5.15.2,!=5.15.2.*,!=5.11.*,!=5.12.*,!=5.13.0'
+_PYSIDE = 'PySide2>=5.15.2.1'
 
 
 def _numpy_scipy():
     # numpy versions with filters according to minimal version with a wheel
     numpys = [
-        'numpy>=1.16.0;python_version == "3.7"',
         'numpy>=1.17.5;python_version == "3.8"',
         'numpy>=1.19.4;python_version >= "3.9"',
     ]
@@ -68,7 +67,7 @@ ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconve
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
                'flake8-rst-docstrings', 'flake8-docstrings', 'pytest-datadir', 'pybind11',
                'docutils', "pypi-oldest-requirements>=2021.2", 'hypothesis[numpy,pytest]>=6.10',
-               'PyQt5!=5.15.2,>5.7,!=5.15.2.*,!=5.15.4,!=5.15.3', 'check_reqs', 'scikit-fem']
+               'PyQt5>=5.15.5', 'check_reqs', 'scikit-fem', 'PyQt5-Qt5>=5.15.2']
 import_names = {
     'ipython': 'IPython',
     'pytest-cache': 'pytest_cache',
