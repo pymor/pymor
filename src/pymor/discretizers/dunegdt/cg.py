@@ -37,6 +37,7 @@ if config.HAVE_DUNEGDT:
             make_element_sparsity_pattern,
             )
 
+    from pymor.algorithms.preassemble import preassemble as preassemble_
     from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
     from pymor.analyticalproblems.elliptic import StationaryProblem
     from pymor.analyticalproblems.instationary import InstationaryProblem
@@ -54,7 +55,7 @@ if config.HAVE_DUNEGDT:
     def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretizer=None,
                                  grid_type=None, grid=None, boundary_info=None,
                                  order=1, data_approximation_order=2, la_backend=Istl(),
-                                 advection_in_divergence_form=True, mu_energy_product=None):
+                                 advection_in_divergence_form=True, preassemble=True, mu_energy_product=None):
         """Discretizes a |StationaryProblem| with dune-gdt using continuous Lagrange finite
            elements.
 
@@ -93,6 +94,8 @@ if config.HAVE_DUNEGDT:
             If true, treats linear advection as advertised in StationaryProblem (i.e.
             :math:`∇ ⋅ (v u)`), else as in :math:`v ⋅∇ u` (where :math:`v` denotes the vector
             field).
+        preassemble
+            If `True`, preassemble all operators in the resulting |Model|.
         mu_energy_product
             If specified, converted to a |Mu| and used to assemble an appropriate energy product.
 
@@ -109,10 +112,9 @@ if config.HAVE_DUNEGDT:
                 :interpolate:           To interpolate data functions in the solution space.
                 :dirichlet_shift:       A |VectorArray| respresenting the Dirichlet shift.
                 :unshifted_visualizer:  A visualizer which does not add the dirichlet_shift.
+                :unassembled_m:         In case `preassemble` is `True`, the generated |Model|
+                                        before preassembling operators.
         """
-
-        # currently limited to non-parametric Dirichlet data
-        assert analytical_problem.dirichlet_data is None or not analytical_problem.dirichlet_data.parametric
 
         # convert problem, creates grid, boundary info and checks and converts all data functions
         assert isinstance(analytical_problem, StationaryProblem)
@@ -123,11 +125,12 @@ if config.HAVE_DUNEGDT:
                 grid_type=grid_type, grid=grid, boundary_info=boundary_info)
 
         return _discretize_stationary_cg_dune(p, order=order, la_backend=la_backend,
-                advection_in_divergence_form=advection_in_divergence_form, mu_energy_product=mu_energy_product)
+                advection_in_divergence_form=advection_in_divergence_form, preassemble=preassemble,
+                mu_energy_product=mu_energy_product)
 
 
     def _discretize_stationary_cg_dune(dune_problem, order=1, la_backend=Istl(), advection_in_divergence_form=True,
-            mu_energy_product=None):
+            preassemble=True, mu_energy_product=None):
         """Discretizes a |StationaryDuneProblem| with dune-gdt using continuous Lagrange finite
            elements.
 
@@ -135,11 +138,6 @@ if config.HAVE_DUNEGDT:
         """
         assert isinstance(dune_problem, StationaryDuneProblem)
         p = dune_problem
-        if p.dirichlet_data is not None:
-            assert len(p.dirichlet_data.functions) == 1
-            assert len(p.dirichlet_data.coefficients) == 1
-            assert p.dirichlet_data.coefficients[0] == 1
-            dirichlet_data = DuneGridFunction(p.dirichlet_data.functions[0])
         grid, boundary_info = p.grid, p.boundary_info
         d = grid.dimension
 
@@ -154,8 +152,10 @@ if config.HAVE_DUNEGDT:
             mu_energy_product = p.parameters.parse(mu_energy_product)
             energy_product_ops = []
             energy_product_coeffs = []
-        rhs_ops = []
-        rhs_coeffs = []
+        contrained_rhs_ops = []
+        constrained_rhs_coeffs = []
+        unconstrained_rhs_ops = []
+        unconstrained_rhs_coeffs = []
 
         # diffusion part
         def make_diffusion_operator(func):
@@ -230,8 +230,8 @@ if config.HAVE_DUNEGDT:
 
             for r_param_func, r_param_coeff in zip(robin_parameter.functions, robin_parameter.coefficients):
                 for r_bv_func, r_bv_coeff in zip(robin_boundary_values.functions, robin_boundary_values.coefficients):
-                    rhs_ops += [make_weighted_l2_robin_boundary_functional(r_param_func, r_bv_func)]
-                    rhs_coeffs += [r_param_coeff*r_bv_coeff]
+                    contrained_rhs_ops += [make_weighted_l2_robin_boundary_functional(r_param_func, r_bv_func)]
+                    constrained_rhs_coeffs += [r_param_coeff*r_bv_coeff]
 
         # source contribution
         if p.rhs:
@@ -241,8 +241,8 @@ if config.HAVE_DUNEGDT:
                         LocalElementProductIntegrand(GF(grid, 1)).with_ansatz(GF(grid, func)))
                 return op
 
-            rhs_ops += [make_l2_functional(func) for func in p.rhs.functions]
-            rhs_coeffs += list(p.rhs.coefficients)
+            contrained_rhs_ops += [make_l2_functional(func) for func in p.rhs.functions]
+            constrained_rhs_coeffs += list(p.rhs.coefficients)
 
         # Neumann boundaries
         if p.neumann_data:
@@ -253,10 +253,10 @@ if config.HAVE_DUNEGDT:
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
                 return op
 
-            rhs_ops += [make_l2_neumann_boundary_functional(func) for func in p.neumann_data.functions]
-            rhs_coeffs += list(p.neumann_data.coefficients)
+            contrained_rhs_ops += [make_l2_neumann_boundary_functional(func) for func in p.neumann_data.functions]
+            constrained_rhs_coeffs += list(p.neumann_data.coefficients)
 
-        # Dirichlet boundaries will be handled further below ...
+        # Dirichlet boundaries are handled further below ...
 
         # products
         l2_product = make_weighted_l2_operator(1)
@@ -291,7 +291,7 @@ if config.HAVE_DUNEGDT:
             walker.append(op)
         for op in unconstrained_lhs_ops:
             walker.append(op)
-        for op in rhs_ops:
+        for op in contrained_rhs_ops:
             walker.append(op)
         walker.append(l2_product)
         walker.append(h1_semi_product)
@@ -302,26 +302,23 @@ if config.HAVE_DUNEGDT:
             walker.append(op)
         walker.walk(thread_parallel=False)  # support not stable/enabled yet
 
-        # extract vectors from functionals
-        rhs_ops = [op.vector for op in rhs_ops]
-
-        # compute the Dirichlet shift before constraining
+        # Dirichlet boundaries
         if p.dirichlet_data:
-            # first, we restrict the data to the Dirichlet boundary
-            dirichlet_data = boundary_interpolation(
-                    GF(grid, dirichlet_data.impl),
-                    space if order == 1 else ContinuousLagrangeSpace(grid, order=1), boundary_info, DirichletBoundary())
-            # second, we only do something if dirichlet_data != 0
-            trivial_dirichlet_data = float_cmp(dirichlet_data.dofs.vector.sup_norm(), 0.)
-            if not trivial_dirichlet_data:
-                # third, we embed them in the solution space
-                dirichlet_data = default_interpolation(GF(grid, dirichlet_data), space)
-                # fourth, we apply the actual shift
-                for op, coeff in zip(constrained_lhs_ops, constrained_lhs_coeffs):
-                    rhs_ops += [op.apply(dirichlet_data.dofs.vector),]
-                    rhs_coeffs += [-1*coeff]
-        else:
-            trivial_dirichlet_data = True
+            def make_dirichlet_interpolation(func):
+                # first, we restrict the data to the Dirichlet boundary
+                dirichlet_data = boundary_interpolation(
+                        GF(grid, func),
+                        space if order == 1 else ContinuousLagrangeSpace(grid, order=1), boundary_info, DirichletBoundary())
+                # second, we only do something if dirichlet_data != 0
+                if not float_cmp(dirichlet_data.dofs.vector.sup_norm(), 0.):
+                    # third, we embed them in the solution space
+                    dirichlet_data = default_interpolation(GF(grid, dirichlet_data), space)
+                return dirichlet_data.dofs.vector
+            unconstrained_rhs_ops += [make_dirichlet_interpolation(func) for func in p.dirichlet_data.functions]
+            unconstrained_rhs_coeffs += list(p.dirichlet_data.coefficients)
+
+        # extract vectors from functionals
+        contrained_rhs_ops = [op.vector for op in contrained_rhs_ops]
 
         # prepare additional products
         # - in H^1
@@ -339,8 +336,8 @@ if config.HAVE_DUNEGDT:
 
         # apply the Dirichlet constraints
         for op in constrained_lhs_ops:
-            dirichlet_constraints.apply(op.matrix, only_clear=True, ensure_symmetry=True)
-        for vec in rhs_ops:
+            dirichlet_constraints.apply(op.matrix, only_clear=True, ensure_symmetry=False)
+        for vec in contrained_rhs_ops:
             dirichlet_constraints.apply(vec) # sets to zero
         dirichlet_constraints.apply(l2_0_product.matrix, ensure_symmetry=True)
         dirichlet_constraints.apply(h1_0_semi_product.matrix, ensure_symmetry=True)
@@ -359,17 +356,17 @@ if config.HAVE_DUNEGDT:
         L = LincombOperator(operators=lhs_ops, coefficients=lhs_coeffs, name='ellipticOperator')
 
         # - rhs, clean up beforehand
-        rhs_ops_ = []
-        rhs_coeffs_ = []
-        for vec, coeff in zip(rhs_ops, rhs_coeffs):
+        rhs_ops = [VectorArrayOperator(lhs_ops[0].range.make_array([vec,])) for vec in unconstrained_rhs_ops]
+        rhs_coeffs = list(unconstrained_rhs_coeffs)
+        for vec, coeff in zip(contrained_rhs_ops, constrained_rhs_coeffs):
             if not float_cmp(vec.sup_norm(), 0.):
-                rhs_ops_ += [VectorArrayOperator(lhs_ops[0].range.make_array([vec,])),]
-                rhs_coeffs_ += [coeff,]
-        if len(rhs_ops_) > 0:
-            F = LincombOperator(operators=rhs_ops_, coefficients=rhs_coeffs_, name='rhsOperator')
+                rhs_ops += [VectorArrayOperator(lhs_ops[0].range.make_array([vec,])),]
+                rhs_coeffs += [coeff,]
+        if len(rhs_ops) > 0:
+            F = LincombOperator(operators=rhs_ops, coefficients=rhs_coeffs, name='rhsOperator')
         else:
             F = VectorArrayOperator(L.range.zeros(1))
-        del rhs_ops, rhs_coeffs
+        del contrained_rhs_ops, constrained_rhs_coeffs, unconstrained_rhs_ops, unconstrained_rhs_coeffs
 
         # - products
         products = {}
@@ -391,21 +388,10 @@ if config.HAVE_DUNEGDT:
         })
         if mu_energy_product:
             products['energy_0'] = DuneXTMatrixOperator(energy_product_0.matrix, name='energy_0')
-        if not trivial_dirichlet_data:
-            dirichlet_data = lhs_ops[0].source.make_array([dirichlet_data.dofs.vector,])
 
-        # - outputs, shift if required
+        # - outputs
         outputs = [VectorArrayOperator(lhs_ops[0].source.make_array([op.vector,]), adjoint=True)
                    for op in outputs]
-        if not trivial_dirichlet_data:
-            shifted_outputs = []
-            for func in outputs:
-                output_of_dirichlet_data = func.apply(dirichlet_data)
-                if np.all(float_cmp(output_of_dirichlet_data.to_numpy(), 0.)):
-                    shifted_outputs += [func,]
-                else:
-                    shifted_outputs += [func + ConstantOperator(value=output_of_dirichlet_data, source=func.source),]
-            outputs = shifted_outputs
 
         if len(outputs) == 0:
             output_functional = None
@@ -417,25 +403,12 @@ if config.HAVE_DUNEGDT:
 
         # visualizer
         if d == 1:
-            # unshifted_visualizer = DuneGDT1dMatplotlibVisualizer(space) # only for stationary problems!
-            unshifted_visualizer = DuneGDT1dAsNumpyVisualizer(space, grid)
+            visualizer = DuneGDT1dMatplotlibVisualizer(space) # only for stationary problems!
         else:
-            unshifted_visualizer = DuneGDTK3dVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
-
-        if trivial_dirichlet_data:
-            visualizer = unshifted_visualizer
-        else:
-            class ShiftedVisualizer(ImmutableObject):
-                def __init__(self, visualizer, shift):
-                    self.__auto_init(locals())
-
-                def visualize(self, U, *args, **kwargs):
-                    return self.visualizer.visualize(U + self.shift, *args, **kwargs)
-
-            visualizer = ShiftedVisualizer(unshifted_visualizer, dirichlet_data)
+            visualizer = DuneGDTK3dVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
 
         m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
-                             name=f'{p.name}_DuneGDT_P{order}_CG')
+                             name=f'{p.name}_dunegdt_P{order}CG')
 
         # for convenience: an interpolation of data functions into the solution space
         space_interpolation_points = space.interpolation_points() # cache
@@ -450,11 +423,9 @@ if config.HAVE_DUNEGDT:
                 'space': space,
                 'interpolate': interpolate}
 
-        if not trivial_dirichlet_data:
-            data.update({
-                'dirichlet_shift': dirichlet_data,
-                'unshifted_visualizer': unshifted_visualizer,
-                })
+        if preassemble:
+            data['unassembled_m'] = m
+            m = preassemble_(m)
 
         return m, data
 
@@ -573,33 +544,11 @@ if config.HAVE_DUNEGDT:
 
         # treatment of initial values
         grid, space = data['grid'], data['space']
-        # - interpolate them as is
         interpolated_initial_data = default_interpolation(GF(grid, initial_data.impl), space)
-        # - shift if required
-        if 'dirichlet_shift' in data:
-            assert data['dirichlet_shift']._list[0].imag_part is None
-            interpolated_initial_data.dofs.vector -= data['dirichlet_shift']._list[0].real_part.impl
-        # - constrain to H^1_0, therefore ...
-        if ensure_consistent_initial_values is not None:
-            # ... restrict them to the boundary, which is only meaningful in P^1
-            if order == 1:
-                restricted_interpolation = interpolated_initial_data
-            else:
-                boundary_interpolation_space = ContinuousLagrangeSpace(grid, order=1)
-                restricted_interpolation = default_interpolation(
-                        GF(grid, interpolated_initial_data), boundary_interpolation_space)
-            interpolated_initial_data_on_boundary = boundary_interpolation(
-                    GF(grid, restricted_interpolation),
-                    space if order == 1 else boundary_interpolation_space,
-                    data['boundary_info'], DirichletBoundary())
-            if interpolated_initial_data_on_boundary.dofs.vector.sup_norm() > ensure_consistent_initial_values:
-                if order > 1:
-                    logger.warn("Falling back to P^1-interpolation of initial values to ensure H^1_0-conformity, "
-                                "since 'ensure_consistent_initial_values' is positive and given 'initial_values' are "
-                                "not in H^1_0!")
-                # ... and ensure zero values on the boundary
-                restricted_interpolation.dofs.vector -= interpolated_initial_data_on_boundary.dofs.vector
-        interpolated_initial_data = m.solution_space.make_array([restricted_interpolation.dofs.vector,])
+
+        # visualizer
+        if grid.dimension == 1:  # slow due to copy, but only working one with time-series in 1d
+            m = m.with_(visualizer=DuneGDT1dAsNumpyVisualizer(space, grid))
 
         m = InstationaryModel(
                 operator=m.operator, rhs=m.rhs, mass=mass,
@@ -610,6 +559,6 @@ if config.HAVE_DUNEGDT:
                 time_stepper=time_stepper,
                 visualizer=m.visualizer,
                 num_values=num_values,
-                name=f'{p.name}_dunegdt_CG')
+                name=f'{p.name}_dunegdt_P{order}CG')
 
         return m, data
