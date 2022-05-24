@@ -7,6 +7,7 @@ dependencies:
   - conda-build
   - pip
 
+  - PySide2>=5.15.2.1
   - bash_kernel
   - check-manifest
   - click
