@@ -181,13 +181,13 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
 
     .. math::
 
-        \langle x, y \rangle_S = x^TSy
+        (x, y)_S = x^TSy
 
     and the inner product on the source :math:`\mathbb{R}^n` is given by
 
     .. math::
 
-        \langle x, y \rangle_T = x^TTy.
+        (x, y) = x^TTy.
 
     This method is based on :cite:`SHB21`.
 
@@ -196,9 +196,9 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
     A
         The |Operator| for which the randomized SVD is to be computed.
     range_product
-        Range product |Operator| :math:`T` w.r.t which the randomized SVD is computed.
+        Range product |Operator| :math:`S` w.r.t which the randomized SVD is computed.
     source_product
-        Source product |Operator| :math:`S` w.r.t which the randomized SVD is computed.
+        Source product |Operator| :math:`T` w.r.t which the randomized SVD is computed.
     modes
         The first `modes` approximated singular values and vectors are returned.
     p
