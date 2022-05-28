@@ -151,14 +151,14 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
         R += 1j*A.source.random(l, distribution='normal')
 
     Q = A.apply(R)
-    gram_schmidt(Q, range_product, atol=0, rtol=0, copy=False)
+    gram_schmidt(Q, range_product, copy=False)
 
     for i in range(q):
         Q = A.apply_adjoint(range_product.apply(Q))
         Q = source_product.apply_inverse(Q)
-        gram_schmidt(Q, source_product, atol=0, rtol=0, copy=False)
+        gram_schmidt(Q, source_product, copy=False)
         Q = A.apply(Q)
-        gram_schmidt(Q, range_product, atol=0, rtol=0, copy=False)
+        gram_schmidt(Q, range_product, copy=False)
 
     if return_rand:
         return Q, R
