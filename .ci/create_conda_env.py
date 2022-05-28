@@ -14,7 +14,7 @@ import logging
 
 REQUIRED_PLATFORMS = ('osx-64', 'linux-64', 'win-64')
 # stars are not actually a glob pattern, but as-is in the conda search output
-REQUIRED_PYTHONS = ('3.7.*', '3.9.*')
+REQUIRED_PYTHONS = ('3.8.*', '3.9.*')
 ANY_PYTHON_VERSION = 'any_python'
 NO_PYTHON_VERSION = -1
 
