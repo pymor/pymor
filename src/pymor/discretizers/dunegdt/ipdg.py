@@ -64,7 +64,7 @@ if config.HAVE_DUNEGDT:
     def discretize_stationary_ipdg(analytical_problem, diameter=None, domain_discretizer=None,
                                    grid_type=None, grid=None, boundary_info=None,
                                    order=1, data_approximation_order=2, la_backend=Istl(), symmetry_factor=1,
-                                   weight_parameter=None, penalty_parameter=None):
+                                   weight_parameter=None, penalty_parameter=None, preassemble=True):
         """Discretizes a |StationaryProblem| with dune-gdt using an interior penalty (IP) discontinuous Galerkin (DG)
            method based on Lagrange finite elements.
 
@@ -81,10 +81,9 @@ if config.HAVE_DUNEGDT:
 
           - `symmetry_factor==1`: symmetric weighted interior penalty scheme (SWIPDG)
 
-        Note that we currently only support linear advection, which is discretized with an upwind numerical flux.
+        Note: currently only linear advection is supported, which is discretized with an upwind numerical flux.
 
-        Note: all data functions are replaced by their respective non-conforming interpolations. This allows to simply
-              use pyMORs data |Function|s at the expense of one DoF vector for each data function during discretization.
+        Note: data functions might be replaced by their respective interpolations.
 
         Parameters
         ----------
@@ -114,15 +113,13 @@ if config.HAVE_DUNEGDT:
         symmetry_factor
             Usually one of -1, 0, 1, determines the IPDG scheme (see above).
         weight_parameter
-            Determines the IPDG scheme (see above), either None or compatible with the diffusion in the sense that:
-            ```
-            p = analytical_problem
-            mu_weight = p.diffusion.parameters.parse(weight_parameter)
-            weight = LincombFunction(p.diffusion.functions, p.diffusion.evaluate_coefficients(mu_weight))
+            Determines the IPDG scheme (see above): either None or something being converted to a |Mu| and passed to the
+            diffusion to obtain a non-parametric weight function.
         penalty_parameter
             Positive number to ensure coercivity of the resulting diffusion bilinear form. Is determined automatically
             if `None`.
-            ```
+        preassemble
+            If `True`, preassemble all operators in the resulting |Model|.
 
         Returns
         -------
@@ -131,84 +128,39 @@ if config.HAVE_DUNEGDT:
         data
             Dictionary with the following entries:
 
-                :grid:           The generated |Grid|.
-                :boundary_info:  The generated |BoundaryInfo|.
+                :grid:                  The generated grid from dune.xt.grid.
+                :boundary_info:         The generated boundary info from dune.xt.grid.
+                :space:                 The generated approximation space from dune.gdt.
+                :interpolate:           To interpolate data functions in the solution space.
+                :unassembled_m:         In case `preassemble` is `True`, the generated |Model|
+                                        before preassembling operators.
         """
 
+        # convert problem, creates grid, boundary info and checks and converts all data functions
         assert isinstance(analytical_problem, StationaryProblem)
-        assert grid is None or boundary_info is not None
-        assert boundary_info is None or grid is not None
-        assert grid is None or domain_discretizer is None
-        assert grid_type is None or grid is None
+        p = StationaryDuneProblem.from_pymor(
+                analytical_problem,
+                data_approximation_order=data_approximation_order,
+                diameter=diameter, domain_discretizer=domain_discretizer,
+                grid_type=grid_type, grid=grid, boundary_info=boundary_info)
+
+        return _discretize_stationary_ipdg_dune(
+                p, order=order, la_backend=la_backend, symmetry_factor=symmetry_factor,
+                weight_parameter=weight_parameter, penalty_parameter=penalty_parameter, preassemble=preassemble):
+
+
+    def _discretize_stationary_ipdg_dune(dune_problem,
+                                   order=1, la_backend=Istl(), symmetry_factor=1,
+                                   weight_parameter=None, penalty_parameter=None, preassemble=True):
+
+        assert isinstance(dune_problem, StationaryDuneProblem)
+        p = dune_problem
+        grid, boundary_info = p.grid, p.boundary_info
+        d = grid.dimension
         assert symmetry_factor in (-1, 0, 1)
 
-        p = analytical_problem
-        d = p.domain.dim
-
-        if not (p.nonlinear_advection
-                == p.nonlinear_advection_derivative
-                == p.nonlinear_reaction
-                == p.nonlinear_reaction_derivative
-                is None):
-            raise NotImplementedError
-
-        if grid is None:
-            domain_discretizer = domain_discretizer or discretize_domain_default
-            if grid_type:
-                domain_discretizer = partial(domain_discretizer, grid_type=grid_type)
-            if diameter is None:
-                grid, boundary_info = domain_discretizer(p.domain)
-            else:
-                grid, boundary_info = domain_discretizer(p.domain, diameter=diameter)
-
-        # prepare to interpolate data functions
-        interpolation_space = {}
-        interpolation_points = {}
-
-        def interpolate_single(func):
-            assert isinstance(func, Function)
-            if func.shape_range in ((), (1,)):
-                if not 'scalar' in interpolation_space:
-                    interpolation_space['scalar'] = DiscontinuousLagrangeSpace(
-                            grid, order=data_approximation_order, dim_range=Dim(1))
-                if not 'scalar' in interpolation_points:
-                    interpolation_points['scalar'] = interpolation_space['scalar'].interpolation_points()
-                df = DiscreteFunction(interpolation_space['scalar'], la_backend)
-                np_view = np.array(df.dofs.vector, copy=False)
-                np_view[:] = func.evaluate(interpolation_points['scalar'])[:].ravel()
-                return df
-            elif func.shape_range == (d,):
-                if not 'vector' in interpolation_space:
-                    interpolation_space['vector'] = DiscontinuousLagrangeSpace(
-                            grid, order=data_approximation_order, dim_range=Dim(d))
-                if not 'vector' in interpolation_points:
-                    interpolation_points['vector'] = interpolation_space['vector'].interpolation_points()
-                df = DiscreteFunction(interpolation_space['vector'], la_backend)
-                np_view = np.array(df.dofs.vector, copy=False)
-                np_view[:] = func.evaluate(interpolation_points['vector'])[:].ravel()
-                return df
-            else:
-                raise NotImplementedError(f'I do not know how to interpolate a function with {func.shape_range}!')
-
-        def to_lincomb(func):
-            if isinstance(func, LincombFunction):
-                return func.functions, func.coefficients
-            elif not isinstance(func, Function):
-                func = ConstantFunction(value_array=func, dim_domain=d)
-            return [func], [1.]
-
-        def interpolate(func):
-            functions, coefficients = to_lincomb(func)
-            return [interpolate_single(ff) for ff in functions], coefficients
-
-        # preparations for the actual discretization
-        if order == data_approximation_order:
-            if not 'scalar' in interpolation_space:
-                interpolation_space['scalar'] = DiscontinuousLagrangeSpace(
-                        grid, order=data_approximation_order, dim_range=Dim(1))
-            space = interpolation_space['scalar']
-        else:
-            space = DiscontinuousLagrangeSpace(grid, order=order, dim_range=Dim(1))
+        # some preparations
+        space = DiscontinuousLagrangeSpace(grid, order=order, dim_range=Dim(1))
         sparsity_pattern = make_element_and_intersection_sparsity_pattern(space)
         lhs_ops = []
         lhs_coeffs = []
@@ -242,8 +194,8 @@ if config.HAVE_DUNEGDT:
                 assert symmetry_factor == 1
                 name = 'SWIPDG'
                 mu_weight = p.diffusion.parameters.parse(weight_parameter)
-                weight = LincombFunction(p.diffusion.functions, p.diffusion.evaluate_coefficients(mu_weight))
-            weight = GF(grid, interpolate_single(weight), (Dim(d), Dim(d)))
+                weight = to_dune_grid_function(p.diffusion, dune_interpolator=p.interpolator, mu=mu_weight)
+            weight = GF(grid, weight, (Dim(d), Dim(d)))
 
             # contributions to the left hand side
             def make_diffusion_operator_parametric_part(func):
@@ -257,9 +209,8 @@ if config.HAVE_DUNEGDT:
                        {}, ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
                 return op
 
-            diffusion_funcs, diffusion_coeffs = interpolate(p.diffusion)
-            lhs_ops += [make_diffusion_operator_parametric_part(func) for func in diffusion_funcs]
-            lhs_coeffs += list(diffusion_coeffs)
+            lhs_ops += [make_diffusion_operator_parametric_part(func) for func in p.diffusion.functions]
+            lhs_coeffs += list(p.diffusion.coefficients)
 
             def make_diffusion_operator_nonparametric_part():
                 op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
@@ -284,9 +235,8 @@ if config.HAVE_DUNEGDT:
                            ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
                     return op
 
-                dirichlet_funcs, dirichlet_coeffs = interpolate(p.dirichlet_data)
-                rhs_ops += [make_ipdg_dirichlet_penalty_functional(func) for func in dirichlet_funcs]
-                rhs_coeffs += list(dirichlet_coeffs)
+                rhs_ops += [make_ipdg_dirichlet_penalty_functional(func) for func in p.dirichlet_data.functions]
+                rhs_coeffs += list(p.dirichlet_data.coefficients)
 
                 def make_laplace_ipdg_dirichlet_coupling_functional(dirichlet_func, diffusion_func):
                     op = VectorFunctional(grid, space, la_backend)
@@ -296,34 +246,30 @@ if config.HAVE_DUNEGDT:
                     return op
 
                 rhs_ops += [make_laplace_ipdg_dirichlet_coupling_functional(dirichlet_func, diffusion_func)
-                            for diffusion_func in diffusion_funcs
-                            for dirichlet_func in dirichlet_funcs]
+                            for diffusion_func in p.diffusion.functions
+                            for dirichlet_func in p.dirichlet_data.functions]
                 rhs_coeffs += [dirichlet_coeff*diffusion_coeff
-                               for diffusion_coeff in diffusion_coeffs
-                               for dirichlet_coeff in dirichlet_coeffs]
+                               for diffusion_coeff in p.diffusion.coefficients
+                               for dirichlet_coeff in p.dirichlet_data.coefficients]
 
         # advection part
         if p.advection:
+            raise NotImplementedError('Linear advection is not supported, an appropriate inflow filter is missing!')
             # TODO: the filter is probably not runtime efficient, due to the temporary FieldVector/list conversion
             # x_local is in reference intersection coordinates
             def restrict_to_inflow(func):
                 return lambda intersection, x_local: \
                         func.evaluate(intersection.to_global(x_local)).dot(intersection.unit_outer_normal(x_local)) < 0
 
-            # we do not simply want to use interpolate() since we require the pyMOR function for the filter above
-            # alongside the dune function
-
             # contributions to the left hand side
             def make_advection_operator(pymor_func, dune_func):
                 op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
                 op += LocalElementIntegralBilinearForm(LocalLinearAdvectionIntegrand(GF(grid, dune_func)))
-                    # logging_prefix='volume'))
                 op += (LocalCouplingIntersectionRestrictedIntegralBilinearForm(restrict_to_inflow(pymor_func),
-                    LocalLinearAdvectionUpwindInnerCouplingIntegrand(GF(grid, dune_func))), #logging_prefix='inner')),
+                    LocalLinearAdvectionUpwindInnerCouplingIntegrand(GF(grid, dune_func))),
                        {}, ApplyOnInnerIntersections(grid))
                 op += (LocalIntersectionRestrictedIntegralBilinearForm(restrict_to_inflow(pymor_func),
                     LocalLinearAdvectionUpwindDirichletCouplingIntegrand(GF(grid, dune_func))),
-                        # logging_prefix='dirichlet_lhs')),
                        {}, ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
                 return op
 
@@ -340,7 +286,7 @@ if config.HAVE_DUNEGDT:
                     op = VectorFunctional(grid, space, la_backend)
                     op += (LocalIntersectionRestrictedIntegralFunctional(restrict_to_inflow(pymor_direction_func),
                             LocalLinearAdvectionUpwindDirichletCouplingIntegrand(
-                                GF(grid, dune_direction_func), GF(grid, dirichlet_func))), #logging_prefix='dirichlet_rhs')),
+                                GF(grid, dune_direction_func), GF(grid, dirichlet_func))),
                            {}, ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
                     return op
 
@@ -361,15 +307,13 @@ if config.HAVE_DUNEGDT:
              return op
 
         if p.reaction:
-            reaction_funcs, reaction_coeffs = interpolate(p.reaction)
-            lhs_ops += [make_weighted_l2_operator(func) for func in reaction_funcs]
-            lhs_coeffs += list(reaction_coeffs)
+            lhs_ops += [make_weighted_l2_operator(func) for func in p.reaction.functions]
+            lhs_coeffs += list(p.reaction.coefficients)
 
         # robin boundaries
         if p.robin_data:
             assert isinstance(p.robin_data, tuple) and len(p.robin_data) == 2
-            robin_parameter_funcs, robin_parameter_coeffs = interpolate(p.robin_data[0])
-            robin_boundary_values_funcs, robin_boundary_values_coeffs = interpolate(p.robin_data[1])
+            robin_parameter, robin_boundary_values = p.robin_data
 
             # contributions to the left hand side
             def make_weighted_l2_robin_boundary_operator(func):
@@ -378,8 +322,8 @@ if config.HAVE_DUNEGDT:
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, RobinBoundary()))
                 return op
 
-            lhs_ops += [make_weighted_l2_robin_boundary_operator(func) for func in robin_parameter_funcs]
-            lhs_coeffs += list(robin_parameter_coeffs)
+            lhs_ops += [make_weighted_l2_robin_boundary_operator(func) for func in robin_parameter.function]
+            lhs_coeffs += list(robin_parameter.coefficients)
 
             # contributions to the right hand side
             def make_weighted_l2_robin_boundary_functional(r_param_func, r_bv_func):
@@ -389,11 +333,11 @@ if config.HAVE_DUNEGDT:
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, RobinBoundary()))
                 return op
 
-            for r_param_func, r_param_coeff in zip(robin_parameter_funcs, robin_parameter_coeffs):
-                for r_bv_func, r_bv_coeff in zip(robin_boundary_values_funcs, robin_boundary_values_coeffs):
+            for r_param_func, r_param_coeff in zip(robin_parameter.functions, robin_parameter.coefficients):
+                for r_bv_func, r_bv_coeff in zip(robin_boundary_values.functions, robin_boundary_values.coefficients):
                     rhs_ops += [make_weighted_l2_robin_boundary_functional(r_param_func, r_bv_func)]
                     rhs_coeffs += [r_param_coeff*r_bv_coeff]
-        
+
         # source contribution
         if p.rhs:
             def make_l2_functional(func):
@@ -402,11 +346,10 @@ if config.HAVE_DUNEGDT:
                         LocalElementProductIntegrand(GF(grid, 1)).with_ansatz(GF(grid, func)))
                 return op
 
-            source_funcs, source_coeffs = interpolate(p.rhs)
-            rhs_ops += [make_l2_functional(func) for func in source_funcs]
-            rhs_coeffs += list(source_coeffs)
+            rhs_ops += [make_l2_functional(func) for func in p.rhs.functions]
+            rhs_coeffs += list(p.rhs.coefficients)
 
-        # neumann boundaries
+        # Neumann boundaries
         if p.neumann_data:
             def make_l2_neumann_boundary_functional(func):
                 op = VectorFunctional(grid, space, la_backend)
@@ -415,9 +358,8 @@ if config.HAVE_DUNEGDT:
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
                 return op
 
-            neumann_data_funcs, neumann_data_coeffs = interpolate(p.neumann_data)
-            rhs_ops += [make_l2_neumann_boundary_functional(func) for func in neumann_data_funcs]
-            rhs_coeffs += list(neumann_data_coeffs)
+            rhs_ops += [make_l2_neumann_boundary_functional(func) for func in p.neumann_data.functions]
+            rhs_coeffs += list(p.neumann_data.coefficients)
 
         # products
         l2_product = make_weighted_l2_operator(1)
@@ -491,16 +433,34 @@ if config.HAVE_DUNEGDT:
             output_functional = BlockColumnOperator(outputs)
 
         # visualizer
+        # visualizer
+        if d == 1:
+            visualizer = DuneGDT1dMatplotlibVisualizer(space) # only for stationary problems!
+        else:
+            visualizer = DuneGDTK3dVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
+
+        m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
+                             name=f'{p.name}_P{order}{name}')
         if d == 1:
             visualizer = DuneGDT1dMatplotlibVisualizer(space)
         else:
             visualizer = DuneGDTK3dVisualizer(space) if is_jupyter() else DuneGDTParaviewVisualizer(space)
 
-        m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
-                             name=f'{p.name}_{name}')
+        # for convenience: an interpolation of data functions into the solution space
+        space_interpolation_points = space.interpolation_points() # cache
+        def interpolate(func):
+            df = DiscreteFunction(space, la_backend)
+            np_view = np.array(df.dofs.vector, copy=False)
+            np_view[:] = func.evaluate(space_interpolation_points)[:].ravel()
+            return m.solution_space.make_array([df.dofs.vector,])
 
-        data = {'grid': grid, 'boundary_info': boundary_info}
+        data = {'grid': grid,
+                'boundary_info': boundary_info,
+                'space': space,
+                'interpolate': interpolate}
+
+        if preassemble:
+            data['unassembled_m'] = m
+            m = preassemble_(m)
 
         return m, data
-
-
