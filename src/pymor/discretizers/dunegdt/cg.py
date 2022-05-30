@@ -59,10 +59,7 @@ if config.HAVE_DUNEGDT:
         """Discretizes a |StationaryProblem| with dune-gdt using continuous Lagrange finite
            elements.
 
-        Note: all data functions are replaced by their respective interpolations.
-
-        Note: non-trivial Dirichlet data is treated via shifting. The resulting solution is thus in
-              H^1_0 and the shift is added upon visualization or output computation.
+        Note: data functions might be replaced by their respective interpolations.
 
         Parameters
         ----------
@@ -110,8 +107,6 @@ if config.HAVE_DUNEGDT:
                 :boundary_info:         The generated boundary info from dune.xt.grid.
                 :space:                 The generated approximation space from dune.gdt.
                 :interpolate:           To interpolate data functions in the solution space.
-                :dirichlet_shift:       A |VectorArray| respresenting the Dirichlet shift.
-                :unshifted_visualizer:  A visualizer which does not add the dirichlet_shift.
                 :unassembled_m:         In case `preassemble` is `True`, the generated |Model|
                                         before preassembling operators.
         """
