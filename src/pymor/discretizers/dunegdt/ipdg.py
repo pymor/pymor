@@ -19,6 +19,7 @@ if config.HAVE_DUNEGDT:
     from dune.xt.functions import GridFunction as GF
     from dune.xt.la import Istl
     from dune.gdt import (
+            BilinearForm,
             DiscontinuousLagrangeSpace,
             DiscreteFunction,
             LocalCouplingIntersectionIntegralBilinearForm,
@@ -46,17 +47,13 @@ if config.HAVE_DUNEGDT:
             make_element_and_intersection_sparsity_pattern,
             )
 
+    from pymor.algorithms.preassemble import preassemble as preassemble_
     from pymor.analyticalproblems.elliptic import StationaryProblem
-    from pymor.analyticalproblems.functions import Function, ConstantFunction, LincombFunction
-    from pymor.bindings.dunegdt import (
-            DuneGDT1dMatplotlibVisualizer,
-            DuneGDTK3dVisualizer,
-            DuneGDTParaviewVisualizer,
-            DuneXTMatrixOperator,
-            DuneXTVector,
-            DuneXTVectorSpace,
-            )
-    from pymor.discretizers.dunegdt.domaindiscretizers.default import discretize_domain_default
+    from pymor.bindings.dunegdt import DuneXTMatrixOperator, DuneXTVector
+    from pymor.discretizers.dunegdt.gui import (
+            DuneGDT1dAsNumpyVisualizer, DuneGDTK3dVisualizer, DuneGDTParaviewVisualizer)
+    from pymor.discretizers.dunegdt.functions import DuneGridFunction
+    from pymor.discretizers.dunegdt.problems import InstationaryDuneProblem, StationaryDuneProblem
     from pymor.models.basic import StationaryModel
     from pymor.operators.constructions import LincombOperator, VectorArrayOperator
 
@@ -146,7 +143,7 @@ if config.HAVE_DUNEGDT:
 
         return _discretize_stationary_ipdg_dune(
                 p, order=order, la_backend=la_backend, symmetry_factor=symmetry_factor,
-                weight_parameter=weight_parameter, penalty_parameter=penalty_parameter, preassemble=preassemble):
+                weight_parameter=weight_parameter, penalty_parameter=penalty_parameter, preassemble=preassemble)
 
 
     def _discretize_stationary_ipdg_dune(dune_problem,
@@ -189,7 +186,7 @@ if config.HAVE_DUNEGDT:
 
             # weight for the diffusion part of the IPDG scheme (see above)
             if weight_parameter is None:
-                weight = ConstantFunction(1, dim_domain=d)
+                weight = GF(grid, 1, (Dim(d), Dim(d)))
             else:
                 assert symmetry_factor == 1
                 name = 'SWIPDG'
@@ -199,27 +196,31 @@ if config.HAVE_DUNEGDT:
 
             # contributions to the left hand side
             def make_diffusion_operator_parametric_part(func):
-                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-                op += LocalElementIntegralBilinearForm(LocalLaplaceIntegrand(GF(grid, func, (Dim(d), Dim(d)))))
-                op += (LocalCouplingIntersectionIntegralBilinearForm(LocalLaplaceIPDGInnerCouplingIntegrand(
+                bf = BilinearForm(grid)
+                bf += LocalElementIntegralBilinearForm(LocalLaplaceIntegrand(GF(grid, func, (Dim(d), Dim(d)))))
+                bf += (LocalCouplingIntersectionIntegralBilinearForm(LocalLaplaceIPDGInnerCouplingIntegrand(
                             symmetry_factor, GF(grid, func, (Dim(d), Dim(d))), weight)),
-                       {}, ApplyOnInnerIntersectionsOnce(grid))
-                op += (LocalIntersectionIntegralBilinearForm(LocalLaplaceIPDGDirichletCouplingIntegrand(
+                       ApplyOnInnerIntersectionsOnce(grid))
+                bf += (LocalIntersectionIntegralBilinearForm(LocalLaplaceIPDGDirichletCouplingIntegrand(
                             symmetry_factor, GF(grid, func, (Dim(d), Dim(d))))),
-                       {}, ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
+                       ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
+                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
+                op.append(bf)
                 return op
 
             lhs_ops += [make_diffusion_operator_parametric_part(func) for func in p.diffusion.functions]
             lhs_coeffs += list(p.diffusion.coefficients)
 
             def make_diffusion_operator_nonparametric_part():
-                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-                op += (LocalCouplingIntersectionIntegralBilinearForm(LocalIPDGInnerPenaltyIntegrand(
+                bf = BilinearForm(grid)
+                bf += (LocalCouplingIntersectionIntegralBilinearForm(LocalIPDGInnerPenaltyIntegrand(
                             penalty_parameter, weight)),
-                       {}, ApplyOnInnerIntersectionsOnce(grid))
-                op += (LocalIntersectionIntegralBilinearForm(LocalIPDGBoundaryPenaltyIntegrand(
+                       ApplyOnInnerIntersectionsOnce(grid))
+                bf += (LocalIntersectionIntegralBilinearForm(LocalIPDGBoundaryPenaltyIntegrand(
                             symmetry_factor, weight)),
-                       {}, ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
+                       ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
+                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
+                op.append(bf)
                 return op
 
             lhs_ops += [make_diffusion_operator_nonparametric_part()]
@@ -231,7 +232,7 @@ if config.HAVE_DUNEGDT:
                     op = VectorFunctional(grid, space, la_backend)
                     op += (LocalIntersectionIntegralFunctional(
                                 LocalIntersectionProductIntegrand(GF(grid, penalty_parameter)).with_ansatz(GF(grid,
-                                    func))), {},
+                                    func))),
                            ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
                     return op
 
@@ -242,7 +243,7 @@ if config.HAVE_DUNEGDT:
                     op = VectorFunctional(grid, space, la_backend)
                     op += (LocalIntersectionIntegralFunctional(LocalLaplaceIPDGDirichletCouplingIntegrand(
                                 symmetry_factor, GF(grid, diffusion_func, (Dim(d), Dim(d))), GF(grid, dirichlet_func))),
-                           {}, ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
+                           ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
                     return op
 
                 rhs_ops += [make_laplace_ipdg_dirichlet_coupling_functional(dirichlet_func, diffusion_func)
@@ -263,14 +264,16 @@ if config.HAVE_DUNEGDT:
 
             # contributions to the left hand side
             def make_advection_operator(pymor_func, dune_func):
-                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-                op += LocalElementIntegralBilinearForm(LocalLinearAdvectionIntegrand(GF(grid, dune_func)))
-                op += (LocalCouplingIntersectionRestrictedIntegralBilinearForm(restrict_to_inflow(pymor_func),
+                bf = BilinearForm(grid)
+                bf += LocalElementIntegralBilinearForm(LocalLinearAdvectionIntegrand(GF(grid, dune_func)))
+                bf += (LocalCouplingIntersectionRestrictedIntegralBilinearForm(restrict_to_inflow(pymor_func),
                     LocalLinearAdvectionUpwindInnerCouplingIntegrand(GF(grid, dune_func))),
-                       {}, ApplyOnInnerIntersections(grid))
-                op += (LocalIntersectionRestrictedIntegralBilinearForm(restrict_to_inflow(pymor_func),
+                       ApplyOnInnerIntersections(grid))
+                bf += (LocalIntersectionRestrictedIntegralBilinearForm(restrict_to_inflow(pymor_func),
                     LocalLinearAdvectionUpwindDirichletCouplingIntegrand(GF(grid, dune_func))),
-                       {}, ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
+                       ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
+                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
+                op.append(bf)
                 return op
 
             advection_funcs_P, advection_coeffs = to_lincomb(p.advection)
@@ -287,7 +290,7 @@ if config.HAVE_DUNEGDT:
                     op += (LocalIntersectionRestrictedIntegralFunctional(restrict_to_inflow(pymor_direction_func),
                             LocalLinearAdvectionUpwindDirichletCouplingIntegrand(
                                 GF(grid, dune_direction_func), GF(grid, dirichlet_func))),
-                           {}, ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
+                           ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
                     return op
 
                 if not p.diffusion:
@@ -302,9 +305,11 @@ if config.HAVE_DUNEGDT:
 
         # reaction part
         def make_weighted_l2_operator(func):
-             op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-             op += LocalElementIntegralBilinearForm(LocalElementProductIntegrand(GF(grid, func)))
-             return op
+            bf = BilinearForm(grid)
+            bf += LocalElementIntegralBilinearForm(LocalElementProductIntegrand(GF(grid, func)))
+            op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
+            op.append(bf)
+            return op
 
         if p.reaction:
             lhs_ops += [make_weighted_l2_operator(func) for func in p.reaction.functions]
@@ -317,9 +322,11 @@ if config.HAVE_DUNEGDT:
 
             # contributions to the left hand side
             def make_weighted_l2_robin_boundary_operator(func):
-                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-                op += (LocalIntersectionIntegralBilinearForm(LocalIntersectionProductIntegrand(GF(grid, func))), {},
+                bf = BilinearForm(grid)
+                bf += (LocalIntersectionIntegralBilinearForm(LocalIntersectionProductIntegrand(GF(grid, func))),
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, RobinBoundary()))
+                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
+                op.append(bf)
                 return op
 
             lhs_ops += [make_weighted_l2_robin_boundary_operator(func) for func in robin_parameter.function]
@@ -329,7 +336,7 @@ if config.HAVE_DUNEGDT:
             def make_weighted_l2_robin_boundary_functional(r_param_func, r_bv_func):
                 op = VectorFunctional(grid, space, la_backend)
                 op += (LocalIntersectionIntegralFunctional(
-                            LocalIntersectionProductIntegrand(GF(grid, r_param_func)).with_ansatz(r_bv_func)), {},
+                            LocalIntersectionProductIntegrand(GF(grid, r_param_func)).with_ansatz(r_bv_func)),
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, RobinBoundary()))
                 return op
 
@@ -354,7 +361,7 @@ if config.HAVE_DUNEGDT:
             def make_l2_neumann_boundary_functional(func):
                 op = VectorFunctional(grid, space, la_backend)
                 op += (LocalIntersectionIntegralFunctional(
-                            LocalIntersectionProductIntegrand(GF(grid, 1)).with_ansatz(-GF(grid, func))), {},
+                            LocalIntersectionProductIntegrand(GF(grid, 1)).with_ansatz(-GF(grid, func))),
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
                 return op
 
@@ -364,18 +371,22 @@ if config.HAVE_DUNEGDT:
         # products
         l2_product = make_weighted_l2_operator(1)
         h1_product = make_weighted_l2_operator(1)
-        h1_product += LocalElementIntegralBilinearForm(LocalLaplaceIntegrand(GF(grid, 1, (Dim(d), Dim(d)))))
+        bf = BilinearForm(grid)
+        bf += LocalElementIntegralBilinearForm(LocalLaplaceIntegrand(GF(grid, 1, (Dim(d), Dim(d)))))
+        h1_product.append(bf)
         if p.diffusion:
-            weighted_h1_semi_penalty_product = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-            weighted_h1_semi_penalty_product += LocalElementIntegralBilinearForm(LocalLaplaceIntegrand(weight))
-            weighted_h1_semi_penalty_product += (
+            bf = BilinearForm(grid)
+            bf += LocalElementIntegralBilinearForm(LocalLaplaceIntegrand(weight))
+            bf += (
                     LocalCouplingIntersectionIntegralBilinearForm(LocalIPDGInnerPenaltyIntegrand(
                         penalty_parameter, weight)),
-                    {}, ApplyOnInnerIntersectionsOnce(grid))
-            weighted_h1_semi_penalty_product += (
+                    ApplyOnInnerIntersectionsOnce(grid))
+            bf += (
                     LocalIntersectionIntegralBilinearForm(LocalIPDGBoundaryPenaltyIntegrand(
                         symmetry_factor, weight)),
-                    {}, ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
+                    ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
+            weighted_h1_semi_penalty_product = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
+            weighted_h1_semi_penalty_product.append(bf)
 
         # output functionals
         outputs = []
@@ -391,7 +402,7 @@ if config.HAVE_DUNEGDT:
                 elif output_type == 'l2_boundary':
                     op = VectorFunctional(grid, space, la_backend)
                     op += (LocalIntersectionIntegralBilinearForm(
-                            LocalIntersectionProductIntegrand(grid).with_ansatz(output_data)), {},
+                            LocalIntersectionProductIntegrand(grid).with_ansatz(output_data)),
                             ApplyOnAllIntersectionsOnce(grid))
                     outputs.append(op)
                 else:
