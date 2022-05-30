@@ -8,7 +8,7 @@ import scipy.sparse as sps
 
 from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.eigs import eigs
-from pymor.algorithms.lyapunov import (solve_cont_lyap_lrcf, solve_disc_lyap_lrcf, solve_cont_lyap_dense,
+from pymor.algorithms.lyapunov import (_chol, solve_cont_lyap_lrcf, solve_disc_lyap_lrcf, solve_cont_lyap_dense,
                                        solve_disc_lyap_dense)
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
@@ -22,12 +22,30 @@ from pymor.operators.constructions import IdentityOperator, LincombOperator, Low
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Parameters, Mu
 from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.tools.frozendict import FrozenDict
 
 
 @defaults('value')
 def sparse_min_size(value=1000):
     """Return minimal sparse problem size for which to warn about converting to dense."""
     return value
+
+
+_preset_assertions = FrozenDict(
+    {
+        'poles': lambda A, val: isinstance(val, np.ndarray) and val.shape == (A.source.dim,),
+        'c_lrcf': lambda A, val: val in A.source,
+        'o_lrcf': lambda A, val: val in A.range,
+        'c_dense': lambda A, val: isinstance(val, np.ndarray) and val.shape == (A.source.dim, A.range.dim),
+        'o_dense': lambda A, val: isinstance(val, np.ndarray) and val.shape == (A.range.dim, A.source.dim),
+        'hsv': lambda A, val: isinstance(val, np.ndarray) and val.shape == (A.source.dim,),
+        'h2_norm': lambda A, val: val >= 0,
+        'hinf_norm': lambda A, val: val >= 0,
+        'l2_norm': lambda A, val: val >= 0,
+        'linf_norm': lambda A, val: val >= 0,
+        'fpeak': lambda A, val: isinstance(val, int) or isinstance(val, float) or isinstance(val, complex),
+    }
+)
 
 
 class LTIModel(Model):
@@ -67,6 +85,11 @@ class LTIModel(Model):
     sampling_time
         `0` if the system is continuous-time, otherwise a positive number that denotes the
         sampling time (in seconds).
+    presets
+        A `dict` of preset attributes or `None`. The dict must only contain keys that correspond to
+        attributes of |LTIModel| such as `poles`, `c_lrcf`, `o_lrcf`, `c_dense`, `o_dense`, `hsv`,
+        `h2_norm`, `hinf_norm`, `l2_norm` and `linf_norm`. Additionaly, the frequency at which the
+        :math:`\mathcal{H}_\infty/\mathcal{L}_\infty` norm is attained can be preset with `fpeak`.
     solver_options
         The solver options to use to solve the Lyapunov equations.
     error_estimator
@@ -104,7 +127,7 @@ class LTIModel(Model):
         The transfer function.
     """
 
-    def __init__(self, A, B, C, D=None, E=None, sampling_time=0,
+    def __init__(self, A, B, C, D=None, E=None, sampling_time=0, presets=None,
                  solver_options=None, error_estimator=None, visualizer=None, name=None):
 
         assert A.linear
@@ -126,6 +149,14 @@ class LTIModel(Model):
 
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
+
+        assert presets is None or presets.keys() <= _preset_assertions.keys()
+        if isinstance(presets, dict) and presets:
+            assert all(not obj.parametric for obj in [A, B, C, D, E])
+            for key, val in presets.items():
+                assert _preset_assertions[key](A, val)
+        else:
+            presets = {}
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
@@ -168,7 +199,7 @@ class LTIModel(Model):
         return string
 
     @classmethod
-    def from_matrices(cls, A, B, C, D=None, E=None, sampling_time=0,
+    def from_matrices(cls, A, B, C, D=None, E=None, sampling_time=0, presets=None,
                       state_id='STATE', solver_options=None, error_estimator=None,
                       visualizer=None, name=None):
         """Create |LTIModel| from matrices.
@@ -188,6 +219,9 @@ class LTIModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
+        presets
+            A `dict` of preset attributes or `None`.
+            See :meth:`~pymor.models.iosys.LTIModel.__init__`.
         state_id
             Id of the state space.
         solver_options
@@ -223,7 +257,7 @@ class LTIModel(Model):
         if E is not None:
             E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
 
-        return cls(A, B, C, D, E, sampling_time=sampling_time,
+        return cls(A, B, C, D, E, sampling_time=sampling_time, presets=presets,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                    name=name)
 
@@ -251,7 +285,7 @@ class LTIModel(Model):
         return A, B, C, D, E
 
     @classmethod
-    def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, sampling_time=0,
+    def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, sampling_time=0, presets=None,
                    state_id='STATE', solver_options=None, error_estimator=None, visualizer=None,
                    name=None):
         """Create |LTIModel| from matrices stored in separate files.
@@ -271,6 +305,9 @@ class LTIModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
+        presets
+            A `dict` of preset attributes or `None`.
+            See :meth:`~pymor.models.iosys.LTIModel.__init__`.
         state_id
             Id of the state space.
         solver_options
@@ -300,7 +337,7 @@ class LTIModel(Model):
         D = load_matrix(D_file) if D_file is not None else None
         E = load_matrix(E_file) if E_file is not None else None
 
-        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time,
+        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, presets=presets,
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
@@ -335,7 +372,7 @@ class LTIModel(Model):
             save_matrix(file, mat)
 
     @classmethod
-    def from_mat_file(cls, file_name, sampling_time=0,
+    def from_mat_file(cls, file_name, sampling_time=0, presets=None,
                       state_id='STATE', solver_options=None, error_estimator=None,
                       visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in a .mat file.
@@ -351,6 +388,9 @@ class LTIModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
+        presets
+            A `dict` of preset attributes or `None`.
+            See :meth:`~pymor.models.iosys.LTIModel.__init__`.
         state_id
             Id of the state space.
         solver_options
@@ -391,7 +431,7 @@ class LTIModel(Model):
             if mat is not None and np.issubdtype(mat.dtype, np.integer):
                 matrices[i] = mat.astype(np.float_)
 
-        return cls.from_matrices(*matrices, sampling_time=sampling_time,
+        return cls.from_matrices(*matrices, sampling_time=sampling_time, presets=presets,
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
@@ -413,7 +453,7 @@ class LTIModel(Model):
         spio.savemat(file_name, mat_dict)
 
     @classmethod
-    def from_abcde_files(cls, files_basename, sampling_time=0,
+    def from_abcde_files(cls, files_basename, sampling_time=0, presets=None,
                          state_id='STATE', solver_options=None, error_estimator=None,
                          visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in .[ABCDE] files.
@@ -425,6 +465,9 @@ class LTIModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
+        presets
+            A `dict` of preset attributes or `None`.
+            See :meth:`~pymor.models.iosys.LTIModel.__init__`.
         state_id
             Id of the state space.
         solver_options
@@ -455,7 +498,7 @@ class LTIModel(Model):
         D = load_matrix(files_basename + '.D') if os.path.isfile(files_basename + '.D') else None
         E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
-        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time,
+        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, presets=presets,
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
@@ -537,6 +580,8 @@ class LTIModel(Model):
         -------
         One-dimensional |NumPy array| of system poles.
         """
+        if 'poles' in self.presets:
+            return self.presets['poles']
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
@@ -596,22 +641,23 @@ class LTIModel(Model):
         options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
         solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
         solve_lyap_dense = solve_cont_lyap_dense if self.sampling_time == 0 else solve_disc_lyap_dense
-        if typ == 'c_lrcf':
-            return solve_lyap_lrcf(A, E, B.as_range_array(mu=mu),
-                                   trans=False, options=options_lrcf)
+
+        if typ in self.presets:
+            return self.presets[typ]
+        elif typ == 'c_lrcf' and 'c_dense' in self.presets:
+            return self.A.source.from_numpy(_chol(self.presets['c_dense']).T)
+        elif typ == 'o_lrcf' and 'o_dense' in self.presets:
+            return self.A.source.from_numpy(_chol(self.presets['o_dense']).T)
+        elif typ == 'c_lrcf':
+            return solve_lyap_lrcf(A, E, B.as_range_array(mu=mu), trans=False, options=options_lrcf)
         elif typ == 'o_lrcf':
-            return solve_lyap_lrcf(A, E, C.as_source_array(mu=mu),
-                                   trans=True, options=options_lrcf)
+            return solve_lyap_lrcf(A, E, C.as_source_array(mu=mu), trans=True, options=options_lrcf)
         elif typ == 'c_dense':
-            return solve_lyap_dense(to_matrix(A, format='dense'),
-                                    to_matrix(E, format='dense') if E else None,
-                                    to_matrix(B, format='dense'),
-                                    trans=False, options=options_dense)
+            return solve_lyap_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
+                                    to_matrix(B, format='dense'), trans=False, options=options_dense)
         elif typ == 'o_dense':
-            return solve_lyap_dense(to_matrix(A, format='dense'),
-                                    to_matrix(E, format='dense') if E else None,
-                                    to_matrix(C, format='dense'),
-                                    trans=True, options=options_dense)
+            return solve_lyap_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
+                                    to_matrix(C, format='dense'), trans=True, options=options_dense)
 
     @cached
     def _hsv_U_V(self, mu=None):
@@ -658,11 +704,13 @@ class LTIModel(Model):
         sv
             One-dimensional |NumPy array| of singular values.
         """
+        if 'hsv' in self.presets:
+            return self.presets['hsv']
         return self._hsv_U_V(mu=mu)[0]
 
     @cached
     def h2_norm(self, mu=None):
-        """Compute the H2-norm of the |LTIModel|.
+        r"""Compute the :math:`\mathcal{H}_2`-norm of the |LTIModel|.
 
         .. note::
             Assumes the system is asymptotically stable.
@@ -675,8 +723,10 @@ class LTIModel(Model):
         Returns
         -------
         norm
-            H_2-norm.
+            :math:`\mathcal{H}_2`-norm.
         """
+        if 'h2_norm' in self.presets:
+            return self.presets['h2_norm']
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         D_norm2 = np.sum(self.D.as_range_array(mu=mu).norm2())
@@ -694,12 +744,12 @@ class LTIModel(Model):
 
     @cached
     def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
-        """Compute the H_infinity-norm of the |LTIModel|.
+        r"""Compute the :math:`\mathcal{H}_\infty`-norm of the |LTIModel|.
 
         .. note::
-            Assumes the system is asymptotically stable. Under this is assumption
-            the H_infinity-norm is equal to the L_infinity-norm. Accordingly, this
-            method calls :meth:`~pymor.models.iosys.LTIModel.linf_norm`.
+            Assumes the system is asymptotically stable. Under this is assumption the
+            :math:`\mathcal{H}_\infty`-norm is equal to the :math:`\mathcal{H}_\infty`-norm.
+            Accordingly, this method calls :meth:`~pymor.models.iosys.LTIModel.linf_norm`.
 
         Parameters
         ----------
@@ -713,10 +763,12 @@ class LTIModel(Model):
         Returns
         -------
         norm
-            H_infinity-norm.
+            :math:`\mathcal{H}_\infty`-norm.
         fpeak
             Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
         """
+        if 'hinf_norm' in self.presets:
+            return self.presets['hinf_norm']
         return self.linf_norm(mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate)
 
     def hankel_norm(self, mu=None):
@@ -738,9 +790,9 @@ class LTIModel(Model):
         return self.hsv(mu=mu)[0]
 
     def l2_norm(self, ast_pole_data=None, mu=None):
-        r"""Compute the L2-norm of the |LTIModel|.
+        r"""Compute the :math:`\mathcal{L}_2`-norm of the |LTIModel|.
 
-        The L2-norm of an |LTIModel| is defined via the integral
+        The :math:`\mathcal{L}_2`-norm of an |LTIModel| is defined via the integral
 
         .. math::
             \lVert H \rVert_{\mathcal{L}_2}
@@ -768,8 +820,10 @@ class LTIModel(Model):
         Returns
         -------
         norm
-            L_2-norm.
+            :math:`\mathcal{L}_2`-norm.
         """
+        if 'l2_norm' in self.presets:
+            return self.presets['l2_norm']
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
@@ -802,9 +856,9 @@ class LTIModel(Model):
 
     @cached
     def linf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
-        r"""Compute the L_infinity-norm of the |LTIModel|.
+        r"""Compute the :math:`\mathcal{L}_\infty`-norm of the |LTIModel|.
 
-        The L-infinity norm of an |LTIModel| is defined via
+        The :math:`\mathcal{L}_\infty`-norm of an |LTIModel| is defined via
 
         .. math::
 
@@ -824,14 +878,21 @@ class LTIModel(Model):
         Returns
         -------
         norm
-            L_infinity-norm.
+            :math:`\mathcal{L}_\infty`-norm.
         fpeak
             Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
         """
-        if not config.HAVE_SLYCOT:
-            raise NotImplementedError
-        if not return_fpeak:
+        if not return_fpeak and 'linf_norm' in self.presets:
+            return self.presets['linf_norm']
+        elif not return_fpeak:
             return self.linf_norm(mu=mu, return_fpeak=True, ab13dd_equilibrate=ab13dd_equilibrate)[0]
+        elif {'fpeak', 'linf_norm'} <= self.presets.keys():
+            return self.presets['linf_norm'], self.presets['fpeak']
+        elif 'fpeak' in self.presets:
+            return self.transfer_function.eval_tf(self.presets['fpeak']), self.presets['fpeak']
+        elif not config.HAVE_SLYCOT:
+            raise NotImplementedError
+
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
@@ -850,10 +911,7 @@ class LTIModel(Model):
         equil = 'S' if ab13dd_equilibrate else 'N'
         jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
         A, B, C, D, E = (to_matrix(op, format='dense') for op in [A, B, C, D, E])
-        norm, fpeak = ab13dd(dico, jobe, equil, jobd,
-                             self.order, self.dim_input, self.dim_output,
-                             A, E, B, C, D)
-        return norm, fpeak
+        return ab13dd(dico, jobe, equil, jobd, self.order, self.dim_input, self.dim_output, A, E, B, C, D)
 
     def get_ast_spectrum(self, ast_pole_data=None, mu=None):
         """Compute anti-stable subset of the poles of the |LTIModel|.
@@ -2039,7 +2097,7 @@ class SecondOrderModel(Model):
         )
 
     def h2_norm(self, mu=None):
-        """Compute the H2-norm.
+        r"""Compute the :math:`\mathcal{H}_2`-norm.
 
         .. note::
             Assumes the system is asymptotically stable.
@@ -2052,12 +2110,12 @@ class SecondOrderModel(Model):
         Returns
         -------
         norm
-            H_2-norm.
+            :math:`\mathcal{H}_2`-norm.
         """
         return self.to_lti().h2_norm(mu=mu)
 
     def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
-        """Compute the H_infinity-norm.
+        r"""Compute the :math:`\mathcal{H}_\infty`-norm.
 
         .. note::
             Assumes the system is asymptotically stable.
@@ -2074,7 +2132,7 @@ class SecondOrderModel(Model):
         Returns
         -------
         norm
-            H_infinity-norm.
+            :math:`\mathcal{H}_\infty`.
         fpeak
             Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
         """
