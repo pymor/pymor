@@ -18,6 +18,7 @@ if config.HAVE_DUNEGDT:
     from dune.xt.functions import divergence, GridFunction as GF
     from dune.xt.la import Istl
     from dune.gdt import (
+            BilinearForm,
             ContinuousLagrangeSpace,
             DirichletConstraints,
             DiscreteFunction,
@@ -154,8 +155,10 @@ if config.HAVE_DUNEGDT:
 
         # diffusion part
         def make_diffusion_operator(func):
+            bf = BilinearForm(grid)
+            bf += LocalElementIntegralBilinearForm(LocalLaplaceIntegrand(GF(grid, func, (Dim(d), Dim(d)))))
             op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-            op += LocalElementIntegralBilinearForm(LocalLaplaceIntegrand(GF(grid, func, (Dim(d), Dim(d)))))
+            op.append(bf)
             return op
 
         if p.diffusion:
@@ -167,9 +170,11 @@ if config.HAVE_DUNEGDT:
 
         # reaction part
         def make_weighted_l2_operator(func):
-             op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-             op += LocalElementIntegralBilinearForm(LocalElementProductIntegrand(GF(grid, func)))
-             return op
+            bf = BilinearForm(grid)
+            bf += LocalElementIntegralBilinearForm(LocalElementProductIntegrand(GF(grid, func)))
+            op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
+            op.append(bf)
+            return op
 
         if p.reaction:
             constrained_lhs_ops += [make_weighted_l2_operator(func) for func in p.reaction.functions]
@@ -181,15 +186,16 @@ if config.HAVE_DUNEGDT:
         # advection part
         if p.advection:
             def make_advection_operator(func):
-                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-                op += LocalElementIntegralBilinearForm(LocalLinearAdvectionIntegrand(GF(grid, func),
-                                                                                     advection_in_divergence_form))
+                bf = BilinearForm(grid)
+                bf += LocalElementIntegralBilinearForm(LocalLinearAdvectionIntegrand(
+                    GF(grid, func), advection_in_divergence_form))
 
                 if p.diffusion and advection_in_divergence_form: # to ensure Neumann boundary values
-                    op += (LocalIntersectionIntegralBilinearForm(
+                    bf += (LocalIntersectionIntegralBilinearForm(
                              LocalIntersectionNormalComponentProductIntegrand(GF(grid, func))), {},
                            ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
-
+                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
+                op.append(bf)
                 return op
 
             constrained_lhs_ops += [make_advection_operator(func) for func in p.advection.functions]
@@ -206,9 +212,11 @@ if config.HAVE_DUNEGDT:
 
             # contributions to the left hand side
             def make_weighted_l2_robin_boundary_operator(func):
-                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
-                op += (LocalIntersectionIntegralBilinearForm(LocalIntersectionProductIntegrand(GF(grid, func))), {},
+                bf = BilinearForm(grid)
+                bf += (LocalIntersectionIntegralBilinearForm(LocalIntersectionProductIntegrand(GF(grid, func))), {},
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, RobinBoundary()))
+                op = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
+                op.append(bf)
                 return op
 
             unconstrained_lhs_ops += [make_weighted_l2_robin_boundary_operator(func)
@@ -303,7 +311,8 @@ if config.HAVE_DUNEGDT:
                 # first, we restrict the data to the Dirichlet boundary
                 dirichlet_data = boundary_interpolation(
                         GF(grid, func),
-                        space if order == 1 else ContinuousLagrangeSpace(grid, order=1), boundary_info, DirichletBoundary())
+                        space if order == 1 \
+                                else ContinuousLagrangeSpace(grid, order=1), boundary_info, DirichletBoundary())
                 # second, we only do something if dirichlet_data != 0
                 if not float_cmp(dirichlet_data.dofs.vector.sup_norm(), 0.):
                     # third, we embed them in the solution space
