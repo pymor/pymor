@@ -249,7 +249,10 @@ if config.HAVE_DUNEGDT:
 
         @match_class(LincombDuneGridFunction)
         def action_LincombDuneGridFunction(self, function):
-            return function
+            if self.mu is None:
+                return function
+            else:
+                return LincombDuneGridFunction(function.functions, [c.evaluate(mu) for c in function.coefficients])
 
         @match_class(DuneGridFunction)
         def action_DuneGridFunction(self, function):
