@@ -36,7 +36,8 @@ class MoebiusTransformation(ImmutableObject):
         assert coefficients[0]*coefficients[3] != coefficients[1]*coefficients[2]
 
         if normalize:
-            coefficients /= np.sqrt(coefficients[0]*coefficients[3]-coefficients[2]*coefficients[3])
+            coefficients = coefficients / np.sqrt(coefficients[0]*coefficients[3]-coefficients[1]*coefficients[2])
+            coefficients *= np.sign(coefficients[0])
 
         self.__auto_init(locals())
 
@@ -65,7 +66,7 @@ class MoebiusTransformation(ImmutableObject):
         assert len(z) == 3
         assert len(w) == 3
 
-        A = np.zeros([3, 4])
+        A = np.zeros([3, 4], dtype=complex)
         for i in range(3):
             if np.isinf(w[i]) and np.isinf(z[i]):
                 A[i] = [0, 0, -1, 0]
