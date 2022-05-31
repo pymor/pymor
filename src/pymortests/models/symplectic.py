@@ -17,10 +17,10 @@ def test_quadratic_hamiltonian_model(block_phase_space):
         H_op = IdentityOperator(phase_space)
 
     model = QuadraticHamiltonianModel(
-        100,
+        3,
         H_op.source.ones(),
         H_op,
-        time_stepper=ImplicitMidpointTimeStepper(100),
+        time_stepper=ImplicitMidpointTimeStepper(3),
         name='test_mass_spring_model'
     )
 
