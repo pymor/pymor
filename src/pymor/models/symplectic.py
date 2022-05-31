@@ -4,6 +4,7 @@
 
 import numpy as np
 from pymor.algorithms.simplify import contract, expand
+from pymor.algorithms.timestepping import ImplicitMidpointTimeStepper
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.models.basic import InstationaryModel
 from pymor.operators.block import BlockOperator
@@ -100,6 +101,22 @@ class QuadraticHamiltonianModel(InstationaryModel):
                          visualizer=visualizer,
                          name=name)
         self.__auto_init(locals())
+
+    @classmethod
+    def with_implicit_midpoint(cls, T, initial_data, H_op, nt, h=None, time_stepper=None,
+                               num_values=None, output_functional=None, visualizer=None, name=None):
+        """Init QuadraticHamiltonianModel with ImplicitMidpointTimeStepper.
+
+        Parameters
+        ----------
+        nt
+            Number of time steps in ImplicitMidpointTimeStepper.
+        others
+            See __init__.
+        """
+        time_stepper = ImplicitMidpointTimeStepper(nt)
+        cls(T, initial_data, H_op, nt, h=h, time_stepper=time_stepper, num_values=num_values,
+            output_functional=output_functional, visualizer=visualizer, name=name)
 
     def eval_hamiltonian(self, u, mu=None):
         """Evaluate a quadratic Hamiltonian function
