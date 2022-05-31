@@ -3,14 +3,11 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from pymor.algorithms.simplify import contract, expand
 from pymor.algorithms.timestepping import ImplicitMidpointTimeStepper
-from pymor.algorithms.to_matrix import to_matrix
 from pymor.models.basic import InstationaryModel
-from pymor.operators.block import BlockOperator
 from pymor.operators.constructions import ConcatenationOperator, NumpyConversionOperator, VectorOperator
 from pymor.operators.interface import Operator
-from pymor.operators.numpy import NumpyMatrixOperator, NumpyVectorSpace
+from pymor.operators.numpy import NumpyVectorSpace
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator
 from pymor.parameters.base import Mu
 from pymor.vectorarrays.block import BlockVectorSpace
