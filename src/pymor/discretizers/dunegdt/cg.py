@@ -425,7 +425,8 @@ if config.HAVE_DUNEGDT:
         data = {'grid': grid,
                 'boundary_info': boundary_info,
                 'space': space,
-                'interpolate': interpolate}
+                'interpolate': interpolate,
+                'sparsity_pattern': sparsity_pattern}
 
         if preassemble:
             data['unassembled_m'] = m

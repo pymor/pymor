@@ -3,7 +3,6 @@ from pymor.core.config import config, is_jupyter
 
 if config.HAVE_DUNEGDT:
     import numpy as np
-    from functools import partial
     from numbers import Number
 
     from dune.xt.grid import (
@@ -146,9 +145,9 @@ if config.HAVE_DUNEGDT:
                 weight_parameter=weight_parameter, penalty_parameter=penalty_parameter, preassemble=preassemble)
 
 
-    def _discretize_stationary_ipdg_dune(dune_problem,
-                                   order=1, la_backend=Istl(), symmetry_factor=1,
-                                   weight_parameter=None, penalty_parameter=None, preassemble=True):
+    def _discretize_stationary_ipdg_dune(
+            dune_problem, order=1, la_backend=Istl(), symmetry_factor=1, weight_parameter=None, penalty_parameter=None,
+            preassemble=True):
 
         assert isinstance(dune_problem, StationaryDuneProblem)
         p = dune_problem
@@ -163,24 +162,13 @@ if config.HAVE_DUNEGDT:
         lhs_coeffs = []
         rhs_ops = []
         rhs_coeffs = []
-        name = 'IIPDG'
+        name = _IP_scheme_id(symmetry_factor, weight_parameter)
 
         # diffusion part
         if p.diffusion:
             # penalty parameter for the diffusion part of the IPDG scheme
             if penalty_parameter is None:
-                if symmetry_factor == -1:
-                    name = 'NIPDG'
-                    penalty_parameter = 1 # any positive number will do (the smaller the better)
-                else:
-                    name = 'SIPDG'
-                    # TODO: check if we need to include diffusion for the coercivity here!
-                    # TODO: each is a grid walk, compute this in one grid walk with the sparsity pattern
-                    C_G = estimate_element_to_intersection_equivalence_constant(grid)
-                    C_M_times_1_plus_C_T = estimate_combined_inverse_trace_inequality_constant(space)
-                    penalty_parameter = C_G*C_M_times_1_plus_C_T
-                    if symmetry_factor == 1:
-                        penalty_parameter *= 4
+                penalty_parameter = _IP_estimate_penalty_parameter(grid, space, symmetry_factor, weight_parameter)
             assert isinstance(penalty_parameter, Number)
             assert penalty_parameter > 0
 
@@ -188,11 +176,9 @@ if config.HAVE_DUNEGDT:
             if weight_parameter is None:
                 weight = GF(grid, 1, (Dim(d), Dim(d)))
             else:
-                assert symmetry_factor == 1
-                name = 'SWIPDG'
                 mu_weight = p.diffusion.parameters.parse(weight_parameter)
                 weight = to_dune_grid_function(p.diffusion, dune_interpolator=p.interpolator, mu=mu_weight)
-            weight = GF(grid, weight, (Dim(d), Dim(d)))
+                weight = GF(grid, weight, (Dim(d), Dim(d)))
 
             # contributions to the left hand side
             def make_diffusion_operator_parametric_part(func):
@@ -369,12 +355,15 @@ if config.HAVE_DUNEGDT:
             rhs_coeffs += list(p.neumann_data.coefficients)
 
         # products
+        # - L^2
         l2_product = make_weighted_l2_operator(1)
+        # - H^1
         h1_product = make_weighted_l2_operator(1)
         bf = BilinearForm(grid)
         bf += LocalElementIntegralBilinearForm(LocalLaplaceIntegrand(GF(grid, 1, (Dim(d), Dim(d)))))
         h1_product.append(bf)
         if p.diffusion:
+            # - (weighted) broken H^1 product, w.r.t. which the system operator is coercive to
             bf = BilinearForm(grid)
             bf += LocalElementIntegralBilinearForm(LocalLaplaceIntegrand(weight))
             bf += (
@@ -444,7 +433,6 @@ if config.HAVE_DUNEGDT:
             output_functional = BlockColumnOperator(outputs)
 
         # visualizer
-        # visualizer
         if d == 1:
             visualizer = DuneGDT1dMatplotlibVisualizer(space) # only for stationary problems!
         else:
@@ -468,10 +456,39 @@ if config.HAVE_DUNEGDT:
         data = {'grid': grid,
                 'boundary_info': boundary_info,
                 'space': space,
-                'interpolate': interpolate}
+                'interpolate': interpolate,
+                'sparsity_pattern': sparsity_pattern,
+                'IP_scheme': name,
+                'IP_weight': weight,
+                'IP_penalty_parameter': penalty_parameter,
+                }
 
         if preassemble:
             data['unassembled_m'] = m
             m = preassemble_(m)
 
         return m, data
+
+
+    def _IP_scheme_id(symmetry_factor, weight_parameter):
+        if symmetry_factor == -1:
+            return 'NIPDG'
+        elif symmetry_factor == 0:
+            return 'IIPDG'
+        else:
+            assert symmetry_factor == 1
+            return 'SIPDG' if weight_parameter is None else 'SWIPDG'
+
+
+    def _IP_estimate_penalty_parameter(grid, space, symmetry_factor, weight_parameter):
+        if symmetry_factor == -1:  # NIPDG
+            return 1  # any positive number will do (the smaller the better)
+        else:
+            # TODO: check if we need to include diffusion for the coercivity here!
+            # TODO: each is a grid walk, compute this in one grid walk with the sparsity pattern
+            C_G = estimate_element_to_intersection_equivalence_constant(grid)
+            C_M_times_1_plus_C_T = estimate_combined_inverse_trace_inequality_constant(space)
+            penalty_parameter = C_G*C_M_times_1_plus_C_T
+            if symmetry_factor == 1:  # SIPDG or SWIPDG
+                penalty_parameter *= 4
+            return penalty_parameter
