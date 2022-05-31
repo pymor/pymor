@@ -12,6 +12,7 @@ from pymor.operators.constructions import ConcatenationOperator, VectorOperator
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator, NumpyVectorSpace
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator
+from pymor.parameters.base import Mu
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
 
@@ -123,6 +124,9 @@ class QuadraticHamiltonianModel(InstationaryModel):
 
         Ham(u, t, μ) = 1/2 * u * H_op(t, μ) * u + u * h(t, μ).
         """
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         # compute linear part
         ham_h = self.h.apply_adjoint(u, mu=mu)
         # compute quadratic part
