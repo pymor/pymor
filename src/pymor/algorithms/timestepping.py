@@ -301,10 +301,10 @@ def implicit_midpoint_rule(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, so
     else:
         options = solver_options
 
-    M_dt_A_impl = (M - A * (dt/2)).with_(solver_options=options)
+    M_dt_A_impl = (M + A * (dt/2)).with_(solver_options=options)
     if not _depends_on_time(M_dt_A_impl, mu):
         M_dt_A_impl = M_dt_A_impl.assemble(mu)
-    M_dt_A_expl = (M + A * (dt/2)).with_(solver_options=options)
+    M_dt_A_expl = (M - A * (dt/2)).with_(solver_options=options)
     if not _depends_on_time(M_dt_A_expl, mu):
         M_dt_A_expl = M_dt_A_expl.assemble(mu)
 

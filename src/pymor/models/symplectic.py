@@ -90,7 +90,8 @@ class QuadraticHamiltonianModel(InstationaryModel):
             raise NotImplementedError('Canonical Poisson matrix not implemented for this case.')
 
         # the contract expand structure is mainly relevant for reduced quadratic Hamiltonian systems
-        operator = contract(expand(ConcatenationOperator([self.J, H_op])))
+        # minus is required since operator in an InstationaryModel is on the LHS
+        operator = -contract(expand(ConcatenationOperator([self.J, H_op])))
         rhs = ConcatenationOperator([self.J, h])
         super().__init__(T, initial_data, operator, rhs,
                          time_stepper=time_stepper,
