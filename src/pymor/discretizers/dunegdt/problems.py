@@ -5,6 +5,7 @@
 from pymor.core.config import config
 
 if config.HAVE_DUNEGDT:
+    from functools import partial
 
     from pymor.analyticalproblems.elliptic import StationaryProblem
     from pymor.analyticalproblems.functions import Function
