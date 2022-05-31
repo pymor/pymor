@@ -8,7 +8,7 @@ from pymor.algorithms.timestepping import ImplicitMidpointTimeStepper
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.models.basic import InstationaryModel
 from pymor.operators.block import BlockOperator
-from pymor.operators.constructions import ConcatenationOperator, VectorOperator
+from pymor.operators.constructions import ConcatenationOperator, NumpyConversionOperator, VectorOperator
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator, NumpyVectorSpace
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator
@@ -72,28 +72,44 @@ class QuadraticHamiltonianModel(InstationaryModel):
         assert isinstance(H_op, Operator) and H_op.linear and H_op.range == H_op.source \
                and H_op.range.dim % 2 == 0
 
+        if isinstance(H_op.range, NumpyVectorSpace):
+            # make H_op compatible with blocked phase_space
+            assert H_op.range.dim % 2 == 0, 'H_op.range has to be even dimensional'
+            half_dim = H_op.range.dim // 2
+            phase_space = BlockVectorSpace([NumpyVectorSpace(half_dim)] * 2)
+            H_op = ConcatenationOperator([
+                NumpyConversionOperator(phase_space, direction='from_numpy'),
+                H_op,
+                NumpyConversionOperator(phase_space, direction='to_numpy'),
+            ])
+
         if h is None:
             h = H_op.range.zeros()
 
         if isinstance(h, VectorArray):
-            assert h in H_op.range
             h = VectorOperator(h, name='h')
 
-        # generate correct canonical J
-        if isinstance(H_op, BlockOperator):
-            self.J = CanonicalSymplecticFormOperator(H_op.source)
-        elif isinstance(H_op.range, NumpyVectorSpace):
-            assert H_op.range.dim % 2 == 0, 'H_op.range has to be even dimensional'
-            half_dim = H_op.range.dim // 2
-            phase_space = BlockVectorSpace([NumpyVectorSpace(half_dim)] * 2)
-            J = CanonicalSymplecticFormOperator(phase_space)
-            self.J = NumpyMatrixOperator(to_matrix(J).toarray())
-        else:
-            raise NotImplementedError('Canonical Poisson matrix not implemented for this case.')
+        if isinstance(h.range, NumpyVectorSpace):
+            # make h compatible with blocked phase_space
+            assert h.range.dim % 2 == 0, 'h.range has to be even dimensional'
+            half_dim = h.range.dim // 2
+            phase_space = H_op.range
+            h = ConcatenationOperator([
+                NumpyConversionOperator(phase_space, direction='from_numpy'),
+                h,
+            ])
+        assert h.range is H_op.range
+
+        if isinstance(initial_data.space, NumpyVectorSpace):
+            # make initial_data compatible with blocked phase_space
+            initial_data = H_op.source.from_numpy(initial_data.to_numpy())
+
+        # J based on blocked phase_space
+        self.J = CanonicalSymplecticFormOperator(H_op.source)
 
         # the contract expand structure is mainly relevant for reduced quadratic Hamiltonian systems
         # minus is required since operator in an InstationaryModel is on the LHS
-        operator = -contract(expand(ConcatenationOperator([self.J, H_op])))
+        operator = -ConcatenationOperator([self.J, H_op])
         rhs = ConcatenationOperator([self.J, h])
         super().__init__(T, initial_data, operator, rhs,
                          time_stepper=time_stepper,
