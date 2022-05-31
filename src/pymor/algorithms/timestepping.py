@@ -312,8 +312,8 @@ def implicit_midpoint_rule(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, so
     U = U0.copy()
 
     for n in range(nt):
-        t += dt
         mu = mu.with_(t=t + dt/2)
+        t += dt
         rhs = M_dt_A_expl.apply(U, mu=mu)
         if F_time_dep:
             dt_F = F.as_vector(mu) * dt
