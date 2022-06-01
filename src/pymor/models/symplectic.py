@@ -118,7 +118,6 @@ class QuadraticHamiltonianModel(InstationaryModel):
         # J based on blocked phase_space
         self.J = CanonicalSymplecticFormOperator(H_op.source)
 
-        # the contract expand structure is mainly relevant for reduced quadratic Hamiltonian systems
         # minus is required since operator in an InstationaryModel is on the LHS
         operator = -ConcatenationOperator([self.J, H_op])
         rhs = ConcatenationOperator([self.J, h])
