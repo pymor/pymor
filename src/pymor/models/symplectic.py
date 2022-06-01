@@ -50,7 +50,7 @@ class QuadraticHamiltonianModel(InstationaryModel):
         Alternatively, the parameter nt can be specified to use the
         :class:`implicit midpoint rule <pymor.algorithms.timestepping.ImplicitMidpointTimeStepper>`.
     nt
-        If time_stepper is `None` and nt is specified, the 
+        If time_stepper is `None` and nt is specified, the
         :class:`implicit midpoint rule <pymor.algorithms.timestepping.ImplicitMidpointTimeStepper>`
         as time_stepper.
         If time_stepper is not 'None', the parameter nt is ignored.
