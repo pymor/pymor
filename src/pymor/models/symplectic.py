@@ -47,6 +47,13 @@ class QuadraticHamiltonianModel(InstationaryModel):
     time_stepper
         The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
         to be used by :meth:`~pymor.models.interface.Model.solve`.
+        Alternatively, the parameter nt can be specified to use the
+        :class:`implicit midpoint rule <pymor.algorithms.timestepping.ImplicitMidpointTimeStepper>`.
+    nt
+        If time_stepper is `None` and nt is specified, the 
+        :class:`implicit midpoint rule <pymor.algorithms.timestepping.ImplicitMidpointTimeStepper>`
+        as time_stepper.
+        If time_stepper is not 'None', the parameter nt is ignored.
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
@@ -64,10 +71,17 @@ class QuadraticHamiltonianModel(InstationaryModel):
         Name of the model.
     """
 
-    def __init__(self, T, initial_data, H_op, h=None, time_stepper=None, num_values=None,
+    def __init__(self, T, initial_data, H_op, h=None, time_stepper=None, nt=None, num_values=None,
                  output_functional=None, visualizer=None, name=None):
         assert isinstance(H_op, Operator) and H_op.linear and H_op.range == H_op.source \
                and H_op.range.dim % 2 == 0
+
+        # interface to use ImplicitMidpointTimeStepper via parameter nt
+        if time_stepper is None:
+            if nt is not None:
+                time_stepper = ImplicitMidpointTimeStepper(nt)
+            else:
+                raise NotImplementedError('Either specify time_stepper or nt')
 
         if isinstance(H_op.range, NumpyVectorSpace):
             # make H_op compatible with blocked phase_space
@@ -115,22 +129,6 @@ class QuadraticHamiltonianModel(InstationaryModel):
                          visualizer=visualizer,
                          name=name)
         self.__auto_init(locals())
-
-    @classmethod
-    def with_implicit_midpoint(cls, T, initial_data, H_op, nt, h=None, time_stepper=None,
-                               num_values=None, output_functional=None, visualizer=None, name=None):
-        """Init QuadraticHamiltonianModel with ImplicitMidpointTimeStepper.
-
-        Parameters
-        ----------
-        nt
-            Number of time steps in ImplicitMidpointTimeStepper.
-        others
-            See __init__.
-        """
-        time_stepper = ImplicitMidpointTimeStepper(nt)
-        cls(T, initial_data, H_op, nt, h=h, time_stepper=time_stepper, num_values=num_values,
-            output_functional=output_functional, visualizer=visualizer, name=name)
 
     def eval_hamiltonian(self, u, mu=None):
         """Evaluate a quadratic Hamiltonian function
