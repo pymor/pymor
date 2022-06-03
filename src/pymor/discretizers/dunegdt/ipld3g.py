@@ -151,7 +151,7 @@ def discretize_stationary_ipld3g(
             bf = BilinearForm(local_grid)
             bf += (LocalIntersectionIntegralBilinearForm(
                 LocalIPDGBoundaryPenaltyIntegrand(
-                    symmetry_factor,
+                    penalty_parameter,
                     local_weights[I])),
                    ApplyOnCustomBoundaryIntersections(
                        local_grid,
