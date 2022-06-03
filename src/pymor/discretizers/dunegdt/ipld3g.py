@@ -9,7 +9,7 @@ from pymor.discretizers.dunegdt.ipdg import (
     _discretize_stationary_ipdg_dune, _IP_estimate_penalty_parameter, _IP_scheme_id)
 from pymor.models.basic import StationaryModel
 from pymor.operators.block import BlockOperator
-from pymor.operators.constructions import VectorOperator
+from pymor.operators.constructions import VectorOperator, LincombOperator
 
 from dune.xt.grid import (
     AllNeumannBoundaryInfo,
@@ -130,6 +130,7 @@ def discretize_stationary_ipld3g(
     for I in dd_grid.boundary_subdomains:
         local_grid = local_problems[I].grid
         walker = Walker(local_grid)
+        boundary_info = dd_grid.macro_based_boundary_info(I, macro_boundary_info)
 
         def make_boundary_contributions_parametric_part(func):
             bf = BilinearForm(local_grid)
@@ -139,7 +140,7 @@ def discretize_stationary_ipld3g(
                     GF(local_grid, func, (Dim(d), Dim(d))))),
                    ApplyOnCustomBoundaryIntersections(
                        local_grid,
-                       dd_grid.macro_based_boundary_info(I, macro_boundary_info),
+                       boundary_info,
                        DirichletBoundary()))
             op = MatrixOperator(local_grid, local_models_data[I]['space'], local_models_data[I]['space'], la_backend, local_models_data[I]['sparsity_pattern'])
             op.append(bf)
@@ -154,7 +155,7 @@ def discretize_stationary_ipld3g(
                     local_weights[I])),
                    ApplyOnCustomBoundaryIntersections(
                        local_grid,
-                       dd_grid.macro_based_boundary_info(I, macro_boundary_info),
+                       boundary_info,
                        DirichletBoundary()))
             op = MatrixOperator(local_grid, local_models_data[I]['space'], local_models_data[I]['space'], la_backend, local_models_data[I]['sparsity_pattern'])
             op.append(bf)
