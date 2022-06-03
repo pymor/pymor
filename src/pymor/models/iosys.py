@@ -743,7 +743,7 @@ class LTIModel(Model):
         norm
             :math:`\mathcal{H}_2`-norm.
         """
-        h2_norm = self.presets['h2_norm'] if 'h2_norm' in self.presets else self._h2_norm()
+        h2_norm = self.presets['h2_norm'] if 'h2_norm' in self.presets else self._h2_norm(mu=mu)
         assert h2_norm >= 0
 
         return h2_norm
