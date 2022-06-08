@@ -36,7 +36,7 @@ jobs:
             fs.writeFileSync('${{github.workspace}}/linter_output.zip', Buffer.from(download.data));
       - run: unzip linter_output.zip
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
       # pinned to lintly 0.5.0 due to https://github.com/grantmcconnaughey/Lintly/issues/41
       - name: Install dependencies
         run: pip install lintly==0.5.0 markupsafe==2.0.1
