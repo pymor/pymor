@@ -91,7 +91,8 @@ stages:
             - unknown_failure
             - job_execution_timeout
     
-    image: zivgitlab.wwu.io/pymor/docker/pymor/docker-in-docker:2021.1.0
+    image: zivgitlab.wwu.io/pymor/docker/pymor/docker-in-docker:2022.1.0@sha256:c912491b287e5e539efc7e160a4196bfef4e3c71934ff70e66afc4da88470254
+
     variables:
         DOCKER_HOST: tcp://docker:2375/
         DOCKER_DRIVER: overlay2
@@ -100,7 +101,7 @@ stages:
         - mkdir -p ${SHARED_PATH}
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/docker:dind
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/docker-in-docker:2022.1.0@sha256:c912491b287e5e539efc7e160a4196bfef4e3c71934ff70e66afc4da88470254
           alias: docker
     environment:
         name: unsafe

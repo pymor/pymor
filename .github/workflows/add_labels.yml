@@ -6,10 +6,20 @@ on:
 jobs:
   # This action will triage pull requests and apply a label based on the
   # paths that are modified in the pull request.
-  # https://github.com/actions/labeler/blob/master/README.md
+  # https://github.com/actions/labeler/blob/main/README.md
   Labeler:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/labeler@v4
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
+  # add the autoupdate label on PRs to main
+  autoupdate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Add autoupdate label
+        uses: actions-ecosystem/action-add-labels@v1.1.0
+        if: ${{ github.base_ref == 'main' }}
+        with:
+          labels: autoupdate
