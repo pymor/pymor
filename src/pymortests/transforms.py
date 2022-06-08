@@ -6,11 +6,13 @@ import numpy as np
 import pytest
 from itertools import combinations
 
+from pymor.models.iosys import LTIModel
 from pymor.models.transforms import BilinearTransformation, CayleyTransformation, MoebiusTransformation
 
 
 type_list = ['BilinearTransformation', 'CayleyTransformation', 'MoebiusTransformation']
 points_list = list(combinations([0, 1, -1, 1j, -1j, np.inf], 3))
+sampling_time_list = [0, 1/100, 2]
 
 
 def get_transformation(name):
@@ -57,3 +59,16 @@ def test_from_points(p1, p2):
             assert np.abs(p1[i]) >= 1e+15 or np.allclose(p1[i], m1[i])
         else:
             assert np.allclose(p1[i], m1[i])
+
+
+@pytest.mark.parametrize('sampling_time', sampling_time_list)
+def test_substitution(sampling_time):
+    sys1 = LTIModel.from_matrices(np.array([-1]), np.array([[1]]), np.array([[1]]), sampling_time=sampling_time)
+    if sampling_time:
+        sys2 = sys1.to_continuous()
+        assert isinstance(sys2, LTIModel)
+        assert sys2.sampling_time == 0
+    else:
+        sys2 = sys1.to_discrete(1)
+        assert isinstance(sys2, LTIModel)
+        assert sys2.sampling_time == 1
