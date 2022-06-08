@@ -78,6 +78,8 @@ class QuadraticHamiltonianModel(InstationaryModel):
         # interface to use ImplicitMidpointTimeStepper via parameter nt
         if (time_stepper is None) != (nt is None):
             raise ValueError('Either specify time_stepper or nt (not both)')
+        if time_stepper is None:
+            time_stepper = ImplicitMidpointTimeStepper(nt)
 
         if isinstance(H_op.range, NumpyVectorSpace):
             # make H_op compatible with blocked phase_space
