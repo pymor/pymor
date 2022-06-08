@@ -136,7 +136,7 @@ class LTIModel(Model):
 
         assert presets is None or presets.keys() <= {'poles', 'c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'hsv',
                                                      'h2_norm', 'hinf_norm', 'l2_norm', 'linf_norm', 'fpeak'}
-        if isinstance(presets, dict) and presets:
+        if presets:
             assert all(not obj.parametric for obj in [A, B, C, D, E])
         else:
             presets = {}
