@@ -19,6 +19,7 @@
   * several additional features for neural networks
 
 * Art Pelling, a.pelling@tu-berlin.de
+  * functionality to instantiate non-parametric LTIModels with preset attributes
   * support for discrete-time LTI systems, Lyapunov equations and balanced truncation
   * dedicated Hankel operator class
 
