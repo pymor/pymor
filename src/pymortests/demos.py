@@ -140,6 +140,10 @@ DMD_ARGS = (
     ('dmd_identification', ['--n=4', '--m=10']),
 )
 
+PHLTI_ARGS = (
+    ('phlti', ['--n=10']),
+)
+
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
     + NEURAL_NETWORK_ARGS
@@ -155,6 +159,7 @@ DEMO_ARGS = (
     + FUNCTION_EI_ARGS
     + OUTPUT_FUNCTIONAL_ARGS
     + DMD_ARGS
+    + PHLTI_ARGS
 )
 
 DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]

@@ -587,7 +587,7 @@ def test_pairwise_inner(vector_arrays):
         assert r.shape == (v1.len_ind(ind1),)
         r2 = v2[ind2].pairwise_inner(v1[ind1])
         assert np.allclose, (r, r2)
-        assert np.all(r <= v1[ind1].norm() * v2[ind2].norm() * (1. + 1e-10))
+        assert np.all(r <= (v1[ind1].norm() * v2[ind2].norm() * (1. + 1e-10) + 1e-15))
         try:
             assert np.allclose(r, np.sum(indexed(v1.to_numpy(), ind1).conj() * indexed(v2.to_numpy(), ind2), axis=1))
         except NotImplementedError:
@@ -602,7 +602,7 @@ def test_pairwise_inner_self(vectors_and_indices):
     assert r.shape == (v.len_ind(ind1),)
     r2 = v[ind2].pairwise_inner(v[ind1])
     assert np.allclose(r, r2.T.conj())
-    assert np.all(r <= v[ind1].norm() * v[ind2].norm() * (1. + 1e-10))
+    assert np.all(r <= (v[ind1].norm() * v[ind2].norm() * (1. + 1e-10) + 1e-15))
     try:
         assert np.allclose(r, np.sum(indexed(v.to_numpy(), ind1).conj() * indexed(v.to_numpy(), ind2), axis=1))
     except NotImplementedError:
@@ -621,7 +621,7 @@ def test_inner(vectors_and_indices):
     assert r.shape == (v1.len_ind(ind1), v2.len_ind(ind2))
     r2 = v2[ind2].inner(v1[ind1])
     assert np.allclose(r, r2.T.conj())
-    assert np.all(r <= v1[ind1].norm()[:, np.newaxis] * v2[ind2].norm()[np.newaxis, :] * (1. + 1e-10))
+    assert np.all(r <= (v1[ind1].norm()[:, np.newaxis] * v2[ind2].norm()[np.newaxis, :] * (1. + 1e-10) + 1e-15))
     try:
         assert np.allclose(r, indexed(v1.to_numpy(), ind1).conj().dot(indexed(v2.to_numpy(), ind2).T))
     except NotImplementedError:
@@ -637,7 +637,7 @@ def test_inner_self(vectors_and_indices):
     assert r.shape == (v.len_ind(ind1), v.len_ind(ind2))
     r2 = v[ind2].inner(v[ind1])
     assert np.allclose(r, r2.T.conj())
-    assert np.all(r <= v[ind1].norm()[:, np.newaxis] * v[ind2].norm()[np.newaxis, :] * (1. + 1e-10))
+    assert np.all(r <= (v[ind1].norm()[:, np.newaxis] * v[ind2].norm()[np.newaxis, :] * (1. + 1e-10) + 1e-15))
     try:
         assert np.allclose(r, indexed(v.to_numpy(), ind1).conj().dot(indexed(v.to_numpy(), ind2).T))
     except NotImplementedError:

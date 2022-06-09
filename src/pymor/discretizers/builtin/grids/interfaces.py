@@ -143,9 +143,10 @@ class Grid(CacheableObject):
 
     cache_region = 'memory'
 
-    # if relative difference between domain points gets too large
+    # if relative difference between domain points gets too large or too small
     # reference mapping etc numerics fail due to limited precision
     MAX_DOMAIN_WIDTH = 1e12
+    MIN_DOMAIN_WIDTH = 1e-12
 
     @abstractmethod
     def size(self, codim):
