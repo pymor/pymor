@@ -19,7 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Add autoupdate label
-        uses: actions-ecosystem/action-add-labels@v1.1.0
+        uses: actions-ecosystem/action-add-labels@v1.1.3
         if: ${{ github.base_ref == 'main' }}
         with:
           labels: autoupdate
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
