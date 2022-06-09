@@ -26,6 +26,7 @@ dependencies:
   - lxml
   - matplotlib
   - meshio>=4.4
+  - mpi4py>3.0.3
   - mpi4py>=3.0
   - mpi4py>=3.0.3
   - myst-nb>=0.16
@@ -51,6 +52,7 @@ dependencies:
   - rstcheck==6.0.0.post1
   - scipy>=1.5.1
   - scipy>=1.5.4
+  - scipy>=1.7.3
   - setuptools
   - slycot>=0.4.0
   - sphinx-autoapi>=1.8,<2
