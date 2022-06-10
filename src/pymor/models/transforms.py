@@ -1,6 +1,6 @@
-# This file is part of the pyMOR project (http://www.pymor.org).
+# This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 from scipy.linalg import null_space
@@ -25,14 +25,14 @@ class MoebiusTransformation(ImmutableObject):
     coefficients
         A tuple, list or |NumPy array| containing the four coefficients `a,b,c,d`.
     normalize
-        If `True`, the coefficients are normalized, i.e. :math:`ad-bc=1`. Defaults to `False`.
+        If `True`, the coefficients are normalized, i.e., :math:`ad-bc=1`. Defaults to `False`.
     name
         Name of the transformation.
     """
 
     def __init__(self, coefficients, normalize=False, name=None):
-        assert len(coefficients) == 4
         coefficients = np.array(coefficients)
+        assert coefficients.shape == (4,)
         assert coefficients[0]*coefficients[3] != coefficients[1]*coefficients[2]
 
         if normalize:
@@ -85,7 +85,7 @@ class MoebiusTransformation(ImmutableObject):
         Parameters
         ----------
         normalize
-            If `True`, the coefficients are normalized, i.e. :math:`ad-bc=1`. Defaults to `False`.
+            If `True`, the coefficients are normalized, i.e., :math:`ad-bc=1`. Defaults to `False`.
 
         Returns
         -------
@@ -119,7 +119,7 @@ class MoebiusTransformation(ImmutableObject):
 
     def __str__(self):
         return (
-            f'{self.name}: C^1 --> C^1\n'
+            f'{self.name}: ℂ --> ℂ\n'
             f'       ({self.coefficients[0]:.1f})*z + ({self.coefficients[1]:.1f})\n'
             'f(z) = --------------------------------\n'
             f'       ({self.coefficients[2]:.1f})*z + ({self.coefficients[3]:.1f})'
