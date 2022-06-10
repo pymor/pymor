@@ -121,29 +121,45 @@ class TransferFunction(CacheableObject, ParametricObject):
         else:
             return self.dtf(s, mu=mu)
 
-    def freq_resp(self, w, mu=None):
+    def freq_resp(self, w=None, w_limits=None, mu=None, adaptive_opts=None):
         """Evaluate the transfer function on the imaginary axis.
 
         Parameters
         ----------
         w
             A sequence of angular frequencies at which to compute the transfer function.
+            If given, `w_limits` has to be `None`.
+        w_limits
+            The left and right limits used for the adaptive plot.
+            If given, `w` has to be `None`.
         mu
             |Parameter values| for which to evaluate the transfer function.
+        adaptive_opts
+            Optional arguments for :func:`~pymor.tools.plot.adaptive` (used if `w_limits` is given).
 
         Returns
         -------
+        w
+            A sequence of angular frequencies at which the transfer function was computed
+            (returned if `w_limits` is given).
         tfw
             Transfer function values at frequencies in `w`, |NumPy array| of shape
             `(len(w), self.dim_output, self.dim_input)`.
         """
-        if self.sampling_time > 0 and not all(-np.pi <= wi <= np.pi for wi in w):
-            self.logger.warning('Some frequencies are not in the [-pi, pi] interval.')
-        w = 1j * w if self.sampling_time == 0 else np.exp(1j * w)
+        assert (w is not None and w_limits is None
+                or w is None and w_limits is not None)
+
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
-        return np.stack([self.eval_tf(wi, mu=mu) for wi in w])
+
+        if w is not None:
+            if self.sampling_time > 0 and not all(-np.pi <= wi <= np.pi for wi in w):
+                self.logger.warning('Some frequencies are not in the [-pi, pi] interval.')
+            w = 1j * w if self.sampling_time == 0 else np.exp(1j * w)
+            return np.stack([self.eval_tf(wi, mu=mu) for wi in w])
+        else:
+            raise NotImplementedError
 
     def bode(self, w, mu=None):
         """Compute magnitudes and phases.
