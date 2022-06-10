@@ -147,6 +147,7 @@ class Grid(CacheableObject):
     # reference mapping etc numerics fail due to limited precision
     MAX_DOMAIN_WIDTH = 1e12
     MIN_DOMAIN_WIDTH = 1e-12
+    MAX_DOMAIN_RATIO = 1e6
 
     @abstractmethod
     def size(self, codim):
@@ -504,7 +505,11 @@ class Grid(CacheableObject):
     @classmethod
     def _check_domain(cls, domain):
         ll, rr = np.array(domain[0]), np.array(domain[1])
-        too_large = np.linalg.norm(ll - rr) > cls.MAX_DOMAIN_WIDTH
+        sizes = rr - ll
+        too_large = (
+            np.linalg.norm(sizes) > cls.MAX_DOMAIN_WIDTH
+            or np.max(sizes) / np.min(sizes) > cls.MAX_DOMAIN_RATIO
+        )
         if too_large:
             logger = getLogger('pymor.discretizers.builtin.grid')
             logger.warning(f'Domain {domain} for {cls} exceeds width limit. Results may be inaccurate')
