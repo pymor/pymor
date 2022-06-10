@@ -588,20 +588,25 @@ class LTIModel(Model):
 
     @cached
     def _gramian(self, typ, mu=None):
-        A = self.A.assemble(mu)
-        B = self.B
-        C = self.C
-        E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
-        options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
-        options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
-        solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
-        solve_lyap_dense = solve_cont_lyap_dense if self.sampling_time == 0 else solve_disc_lyap_dense
-
         if typ == 'c_lrcf' and 'c_dense' in self.presets:
             return self.A.source.from_numpy(_chol(self.presets['c_dense']).T)
         elif typ == 'o_lrcf' and 'o_dense' in self.presets:
             return self.A.source.from_numpy(_chol(self.presets['o_dense']).T)
-        elif typ == 'c_lrcf':
+        elif typ == 'c_dense' and 'c_lrcf' in self.presets:
+            return self.presets['c_lrcf'].to_numpy().T @ self.presets['c_lrcf']
+        elif typ == 'o_dense' and 'o_lrcf' in self.presets:
+            return self.presets['o_lrcf'].to_numpy().T @ self.presets['o_lrcf']
+        else:
+            A = self.A.assemble(mu)
+            B = self.B
+            C = self.C
+            E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
+            options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
+            options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
+            solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
+            solve_lyap_dense = solve_cont_lyap_dense if self.sampling_time == 0 else solve_disc_lyap_dense
+
+        if typ == 'c_lrcf':
             return solve_lyap_lrcf(A, E, B.as_range_array(mu=mu), trans=False, options=options_lrcf)
         elif typ == 'o_lrcf':
             return solve_lyap_lrcf(A, E, C.as_source_array(mu=mu), trans=True, options=options_lrcf)
