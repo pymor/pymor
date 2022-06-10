@@ -549,9 +549,6 @@ class LTIModel(Model):
 
     @cached
     def _poles(self, mu=None):
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
         A = self.A.assemble(mu=mu)
         E = self.E.assemble(mu=mu)
 
@@ -581,6 +578,9 @@ class LTIModel(Model):
         -------
         One-dimensional |NumPy array| of system poles.
         """
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
         poles = self.presets['poles'] if 'poles' in self.presets else self._poles(mu=mu)
         assert isinstance(poles, np.ndarray) and poles.shape == (self.A.source.dim,)
 
@@ -712,8 +712,6 @@ class LTIModel(Model):
 
     @cached
     def _h2_norm(self, mu=None):
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
         D_norm2 = np.sum(self.D.as_range_array(mu=mu).norm2())
         if D_norm2 != 0 and self.sampling_time == 0:
             self.logger.warning('The D operator is not exactly zero '
@@ -743,6 +741,8 @@ class LTIModel(Model):
         norm
             :math:`\mathcal{H}_2`-norm.
         """
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
         h2_norm = self.presets['h2_norm'] if 'h2_norm' in self.presets else self._h2_norm(mu=mu)
         assert h2_norm >= 0
 
@@ -800,8 +800,6 @@ class LTIModel(Model):
 
     @cached
     def _l2_norm(self, ast_pole_data=None, mu=None):
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
 
         A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
@@ -863,6 +861,8 @@ class LTIModel(Model):
         norm
             :math:`\mathcal{L}_2`-norm.
         """
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
         l2_norm = self.presets['l2_norm'] if 'l2_norm' in self.presets else self._l2_norm(ast_pole_data=ast_pole_data,
                                                                                           mu=mu)
         assert l2_norm >= 0
