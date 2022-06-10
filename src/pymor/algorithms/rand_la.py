@@ -170,14 +170,24 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
 def random_generalized_svd(A, range_product=None, source_product=None, modes=6, p=20, q=2):
     r"""Randomized SVD of an |Operator|.
 
-    Viewing the `A` as a `A.dim x len(A)` matrix, the return value
-    of this method is the randomized singular value decomposition of `A`, where the
-    inner product on :math:`\mathbb{R}^{\mathtt{A.dim}}` is given by 'range_product' and
-    the inner product on :math:`\mathbb{R}^{\mathtt{len(A)}}` is given by `source_product`.
+    Viewing `A` as an :math:`m` by :math:`n` matrix, the return value
+    of this method is the randomized generalized singular value decomposition of `A`:
 
     .. math::
 
-        A = U \Sigma V^H \mathtt{source_product}
+        A = U \Sigma V^{-1},
+
+    where the inner product on the range :math:`\mathbb{R}^m` is given by
+
+    .. math::
+
+        (x, y)_S = x^TSy
+
+    and the inner product on the source :math:`\mathbb{R}^n` is given by
+
+    .. math::
+
+        (x, y) = x^TTy.
 
     This method is based on :cite:`SHB21`.
 
@@ -186,9 +196,9 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
     A
         The |Operator| for which the randomized SVD is to be computed.
     range_product
-        Range product |Operator| w.r.t which the randomized SVD is computed.
+        Range product |Operator| :math:`S` w.r.t which the randomized SVD is computed.
     source_product
-        Source product |Operator| w.r.t which the randomized SVD is computed.
+        Source product |Operator| :math:`T` w.r.t which the randomized SVD is computed.
     modes
         The first `modes` approximated singular values and vectors are returned.
     p
@@ -237,7 +247,7 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
     with logger.block(f'Computing generalized left-singular vectors ({modes} vectors) ...'):
         U = Q.lincomb(U_b.T)
 
-    with logger.block(f'Computung generalized right-singular vector ({modes} vectors) ...'):
+    with logger.block(f'Computing generalized right-singular vector ({modes} vectors) ...'):
         Vh = Q_B.lincomb(Vh_b)
 
     return U[:modes], s[:modes], Vh[:modes]
