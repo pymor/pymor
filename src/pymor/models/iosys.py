@@ -582,7 +582,7 @@ class LTIModel(Model):
         One-dimensional |NumPy array| of system poles.
         """
         poles = self.presets['poles'] if 'poles' in self.presets else self._poles(mu=mu)
-        assert isinstance(poles, np.ndarray) and len(poles) == (self.A.source.dim)
+        assert isinstance(poles, np.ndarray) and poles.shape == (self.A.source.dim,)
 
         return poles
 
@@ -872,7 +872,7 @@ class LTIModel(Model):
     @cached
     def _linf_norm(self, mu=None, ab13dd_equilibrate=False):
         if 'fpeak' in self.presets:
-            return self.transfer_function.eval_tf(self.presets['fpeak']), self.presets['fpeak']
+            return spla.norm(self.transfer_function.eval_tf(self.presets['fpeak']), ord=2), self.presets['fpeak']
         elif not config.HAVE_SLYCOT:
             raise NotImplementedError
 
