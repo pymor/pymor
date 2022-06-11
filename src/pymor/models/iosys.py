@@ -711,7 +711,7 @@ class LTIModel(Model):
             One-dimensional |NumPy array| of singular values.
         """
         hsv = self.presets['hsv'] if 'hsv' in self.presets else self._hsv_U_V(mu=mu)[0]
-        assert isinstance(hsv, np.ndarray) and hsv.shape == (self.A.source.dim,)
+        assert isinstance(hsv, np.ndarray) and hsv.ndim == 1
 
         return hsv
 
