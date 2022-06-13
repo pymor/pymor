@@ -102,13 +102,13 @@ parameter values which maximises reduction error.
 In the following we will walk through the thermal block demo step by
 step in an interactive Python shell. We assume that you are familiar
 with the reduced basis method and that you know the basics of
-[Python](<http://www.python.org>) programming as well as working
+[Python](<https://www.python.org>) programming as well as working
 with {{ NumPy }}. (Note that our code will differ a bit from
 `thermalblock.py` as we will hardcode the various options the script
 offers and leave out some features.)
 
 First, start a Python shell. We recommend using
-[IPython](<http://ipython.org>)
+[IPython](<https://ipython.org>)
 
 ```
 ipython

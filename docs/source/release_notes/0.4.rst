@@ -26,7 +26,7 @@ FEniCS and deal.II support
 pyMOR now includes wrapper classes for integrating PDE solvers
 written with the `dolfin` library of the `FEniCS <https://fenicsproject.org>`_
 project. For a usage example, see :meth:`pymordemos.thermalblock_simple.discretize_fenics`.
-Experimental support for `deal.II <http://dealii.org>`_ can be
+Experimental support for `deal.II <https://dealii.org>`_ can be
 found in the `pymor-deal.II <https://github.com/pymor/pymor-deal.II>`_
 repository of the pyMOR GitHub organization.
 
