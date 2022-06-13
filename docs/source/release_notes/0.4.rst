@@ -115,7 +115,7 @@ Improvements to pyMOR's discretizaion tookit
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - An unstructured triangular |Grid| is now provided by :class:`~pymor.grids.unstructured.UnstructuredTriangleGrid`.
   Such a |Grid| can be obtained using the :meth:`~pymor.domaindiscretizers.gmsh.discretize_gmsh`
-  method, which can parse `Gmsh <http://gmsh.info/>`_ output files. Moreover, this
+  method, which can parse `Gmsh <https://gmsh.info/>`_ output files. Moreover, this
   method can generate `Gmsh` input files to create unstructured meshes for
   an arbitrary :class:`~pymor.domaindescriptions.polygonal.PolygonalDomain`
   `[#9] <https://github.com/pymor/pymor/issues/9>`_.
