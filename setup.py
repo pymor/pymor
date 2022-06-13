@@ -62,7 +62,7 @@ def setup_package():
                 'pymor-vis = pymor.scripts.pymor_vis:run',
             ],
         },
-        url='http://pymor.org',
+        url='https://pymor.org',
         description=' ',
         python_requires='>=3.8',
         long_description=open('README.md').read(),
