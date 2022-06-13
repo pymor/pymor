@@ -18,7 +18,7 @@ class MoebiusTransformation(ImmutableObject):
 
     is determined by the coefficients :math:`a,b,c,d\in\mathbb{C}`. The Moebius transformations form
     a group under composition, therefore the `__matmul__` operator is defined to yield a
-    |MoebiusTransformation| if both factors are |MoebiusTransformation|s.
+    :class:`MoebiusTransformation` if both factors are :class:`MoebiusTransformation`\s.
 
     Parameters
     ----------
@@ -61,7 +61,7 @@ class MoebiusTransformation(ImmutableObject):
         Returns
         -------
         M
-            The corresponding |MoebiusTransformation|.
+            The corresponding :class:`MoebiusTransformation`.
         """
         assert len(z) == 3
         assert len(w) == 3
@@ -90,7 +90,7 @@ class MoebiusTransformation(ImmutableObject):
         Returns
         -------
         M
-            The inverse |MoebiusTransformation|.
+            The inverse :class:`MoebiusTransformation`.
         """
         a, b, c, d = self.coefficients
         coefficients = np.array([d, -b, -c, a])
@@ -139,7 +139,7 @@ class BilinearTransformation(MoebiusTransformation):
     Parameters
     ----------
     x
-        An arbitrary number that defines the |BilinearTransformation|.
+        An arbitrary number that defines the :class:`BilinearTransformation`.
     name
         Name of the transform.
     """

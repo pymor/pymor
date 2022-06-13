@@ -961,7 +961,7 @@ class LTIModel(Model):
         Parameters
         ----------
         M
-            The |MoebiusTransformation| that defines the frequency mapping.
+            The :class:`MoebiusTransformation` that defines the frequency mapping.
         sampling_time
             The sampling time of the transformed system (in seconds). `0` if the system is
             continuous-time, otherwise a positive number. Defaults to zero.
