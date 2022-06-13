@@ -36,7 +36,7 @@ class MoebiusTransformation(ImmutableObject):
         assert coefficients[0]*coefficients[3] != coefficients[1]*coefficients[2]
 
         if normalize:
-            coefficients = coefficients / np.sqrt(coefficients[0]*coefficients[3]-coefficients[1]*coefficients[2])
+            coefficients /= np.sqrt(np.abs(coefficients[0]*coefficients[3]-coefficients[1]*coefficients[2]))
             coefficients *= np.sign(coefficients[0])
 
         self.__auto_init(locals())
