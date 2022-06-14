@@ -90,17 +90,6 @@ def plot_w(w, split = False, save = False, outdir = './fig/', name = '', nt = ''
     else:
         plt.show()
 
-    if 0:
-        fig = df.plot(T)
-        plt.title("Temperature field")
-        plt.xlabel("$x$")
-        plt.ylabel("$y$")    
-        plt.colorbar(fig)    
-        plt.savefig(outdir+name+'temperature'+nt+'.png')
-        del fig
-        plt.clf()  
-        plt.close() 
-    #end
     return
 
 
