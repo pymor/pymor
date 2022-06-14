@@ -122,10 +122,11 @@ class MoebiusTransformation(ImmutableObject):
         return MoebiusTransformation(M.ravel())
 
     def __str__(self):
-        numerator = 8*' ' + f'({self.coefficients[0]:.1f})*z + ({self.coefficients[1]:.1f})\n'.center(29)
-        line = 'f(z) = ' + 29*'-' + '\n'
-        denominator = 8*' ' + f'({self.coefficients[2]:.1f})*z + ({self.coefficients[3]:.1f})'.center(29)
-        return f'{self.name}: ℂ --> ℂ\n' + numerator + line + denominator
+        numerator = f'({self.coefficients[0]:.1f})*z + ({self.coefficients[1]:.1f})'
+        denominator = f'({self.coefficients[2]:.1f})*z + ({self.coefficients[3]:.1f})'
+        n = max(len(numerator), len(denominator))
+        line = '\nf(z) = ' + n*'-' + '\n'
+        return f'{self.name}: ℂ --> ℂ\n' + 7*' ' + numerator.center(n) + line + 7*' ' + denominator.center(n)
 
 
 class BilinearTransformation(MoebiusTransformation):
