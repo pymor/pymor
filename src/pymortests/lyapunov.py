@@ -122,8 +122,8 @@ def relative_residual(A, E, B, X, cont_time, trans=False):
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n,lyap_solver', chain(product(n_list_small, cont_lyap_dense_solver_list),
                                                 product(n_list_big, cont_lyap_lrcf_solver_list)))
-@skip_if_missing('slycot')
-@skip_if_missing('pymess')
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_cont_lrcf(n, m, with_E, trans, lyap_solver):
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 0.1, cont_time=True)
@@ -151,11 +151,9 @@ def test_cont_lrcf(n, m, with_E, trans, lyap_solver):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('lyap_solver', disc_lyap_dense_solver_list)
-@skip_if_missing('slycot')
-@skip_if_missing('pymess')
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_disc_lrcf(n, m, with_E, trans, lyap_solver):
-    _check_availability(lyap_solver)
-
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 0.1, cont_time=False)
         E = None
@@ -183,8 +181,8 @@ def test_disc_lrcf(n, m, with_E, trans, lyap_solver):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('lyap_solver', cont_lyap_dense_solver_list)
-@skip_if_missing('slycot')
-@skip_if_missing('pymess')
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_cont_dense(n, m, with_E, trans, lyap_solver):
     np.random.seed(0)
     A = np.random.randn(n, n)
@@ -204,8 +202,8 @@ def test_cont_dense(n, m, with_E, trans, lyap_solver):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('lyap_solver', disc_lyap_dense_solver_list)
-@skip_if_missing('slycot')
-@skip_if_missing('pymess')
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_disc_dense(n, m, with_E, trans, lyap_solver):
     np.random.seed(0)
     A = np.random.randn(n, n)

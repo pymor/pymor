@@ -69,8 +69,8 @@ def relative_residual(A, E, B, C, R, Z, trans):
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('solver', ricc_dense_solver_list)
-@skip_if_missing('slycot')
-@skip_if_missing('pymess')
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_ricc_dense(n, m, p, with_E, with_R, trans, solver):
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
@@ -103,8 +103,8 @@ def test_ricc_dense(n, m, p, with_E, with_R, trans, solver):
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n,solver', chain(product(n_list_small, ricc_lrcf_solver_list_small),
                                            product(n_list_big, ricc_lrcf_solver_list_big)))
-@skip_if_missing('slycot')
-@skip_if_missing('pymess')
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_ricc_lrcf(n, m, p, with_E, with_R, trans, solver):
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
@@ -145,8 +145,8 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, trans, solver):
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
-@skip_if_missing('slycot')
-@skip_if_missing('pymess')
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_pos_ricc_lrcf(n, m, p, with_E, with_R, trans, solver):
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
