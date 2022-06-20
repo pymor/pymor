@@ -17,10 +17,9 @@ def main(
     num_points: int = Argument(..., help='The number of points that form the arc of the circular sector.'),
     clscale: float = Argument(..., help='Mesh element size scaling factor.'),
 ):
-    """Solves the Poisson equation in 2D on a circular sector domain of radius 1
-    using an unstructured mesh.
+    """Solves the 2D-Poisson equation on a circular sector of radius 1 with an unstructured mesh.
 
-    Note that Gmsh (http://geuz.org/gmsh/) is required for meshing.
+    Note that Gmsh (https://gmsh.info/) is required for meshing.
     """
     problem = StationaryProblem(
         domain=CircularSectorDomain(angle, radius=1, num_points=num_points),

@@ -163,7 +163,7 @@ construct the right-hand side vector for our problem.
 This completes the {download}`model.cc <minimal_cpp_demo/model.cc>`.
 
 This extension module needs to be compiled to a shared object that the Python interpreter can import.
-We use a minimal [CMake](<http://cmake.org/>) project that generates makefiles for us to achieve this.
+We use a minimal [CMake](<https://cmake.org/>) project that generates makefiles for us to achieve this.
 
 First we make sure pybind11 can be used:
 

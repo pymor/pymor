@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 # The following implementation is based on
-# http://code.activestate.com/recipes/414283-frozen-dictionaries/
+# https://code.activestate.com/recipes/414283-frozen-dictionaries/
 
 
 class FrozenDict(dict):

@@ -26,7 +26,7 @@ FEniCS and deal.II support
 pyMOR now includes wrapper classes for integrating PDE solvers
 written with the `dolfin` library of the `FEniCS <https://fenicsproject.org>`_
 project. For a usage example, see :meth:`pymordemos.thermalblock_simple.discretize_fenics`.
-Experimental support for `deal.II <http://dealii.org>`_ can be
+Experimental support for `deal.II <https://dealii.org>`_ can be
 found in the `pymor-deal.II <https://github.com/pymor/pymor-deal.II>`_
 repository of the pyMOR GitHub organization.
 
@@ -115,7 +115,7 @@ Improvements to pyMOR's discretizaion tookit
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - An unstructured triangular |Grid| is now provided by :class:`~pymor.grids.unstructured.UnstructuredTriangleGrid`.
   Such a |Grid| can be obtained using the :meth:`~pymor.domaindiscretizers.gmsh.discretize_gmsh`
-  method, which can parse `Gmsh <http://gmsh.info/>`_ output files. Moreover, this
+  method, which can parse `Gmsh <https://gmsh.info/>`_ output files. Moreover, this
   method can generate `Gmsh` input files to create unstructured meshes for
   an arbitrary :class:`~pymor.domaindescriptions.polygonal.PolygonalDomain`
   `[#9] <https://github.com/pymor/pymor/issues/9>`_.

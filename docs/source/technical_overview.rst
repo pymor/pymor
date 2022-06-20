@@ -203,7 +203,7 @@ Creating Models
 
 pyMOR ships a small (and still quite incomplete) framework for creating finite
 element or finite volume discretizations based on the `NumPy/Scipy
-<http://scipy.org>`_ software stack. To end up with an appropriate
+<https://scipy.org>`_ software stack. To end up with an appropriate
 |Model|, one starts by instantiating an |analytical problem| which
 describes the problem we want to discretize. |analytical problems| contain
 |Functions| which define the analytical data functions associated with the
