@@ -16,6 +16,10 @@ cd "${PYMOR_ROOT}"
 # any failure here should fail the whole test
 set -eux
 
+# pymor checks if this file's owner uid matches with the interpreter executor's
+ME=$(id -u)
+sudo chown ${ME} docs/source/pymor_defaults.py
+
 # switches default index to pypi-mirror service
 export PIP_CONFIG_FILE=/usr/local/share/ci.pip.conf
 
@@ -32,10 +36,11 @@ export PYTHONHASHSEED=0
 python -c "from matplotlib import pyplot" || true
 
 PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')
+# the tutorials script needs a different option
 COV_OPTION=${COV_OPTION:---cov=}
 # `--cov-report=` suppresses terminal output
 COMMON_PYTEST_OPTS="--junitxml=test_results_${PYMOR_VERSION}.xml \
-  --cov-report= --cov-config=${PYMOR_ROOT}/setup.cfg --cov-context=test \
+  --cov-report= ${COV_OPTION} --cov-config=${PYMOR_ROOT}/setup.cfg --cov-context=test \
   --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE} ${PYMOR_PYTEST_EXTRA}"
 
 pytest src/pymortests/docker_ci_smoketest.py
