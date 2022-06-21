@@ -1,6 +1,7 @@
 #!/bin/bash
 
 THIS_DIR="$(cd "$(dirname ${BASH_SOURCE[0]})" ; pwd -P )"
+COV_OPTION="--nb-coverage"
 source ${THIS_DIR}/common_test_setup.bash
 
 for fn in ${PYMOR_ROOT}/docs/source/tutorial*md ; do

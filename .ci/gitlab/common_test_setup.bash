@@ -32,9 +32,10 @@ export PYTHONHASHSEED=0
 python -c "from matplotlib import pyplot" || true
 
 PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')
+COV_OPTION=${COV_OPTION:---cov=}
 # `--cov-report=` suppresses terminal output
 COMMON_PYTEST_OPTS="--junitxml=test_results_${PYMOR_VERSION}.xml \
-  --cov-report= --cov --cov-config=setup.cfg --cov-context=test \
+  --cov-report= --cov-config=${PYMOR_ROOT}/setup.cfg --cov-context=test \
   --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE} ${PYMOR_PYTEST_EXTRA}"
 
 pytest src/pymortests/docker_ci_smoketest.py
