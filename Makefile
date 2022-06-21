@@ -99,7 +99,7 @@ docker_docs: docker_image
 docker_run: docker_image
 	$(DOCKER_COMPOSE) up -d pypi_mirror
 	$(DOCKER_COMPOSE) run --service-ports pytest bash
-	$(DOCKER_COMPOSE) down pypi_mirror
+	$(DOCKER_COMPOSE) down --remove-orphans -v
 
 docker_exec: docker_image
 	$(DOCKER_COMPOSE) run --service-ports pytest bash -l -c "${DOCKER_CMD}"
@@ -119,7 +119,7 @@ docker_run_oldest: PYPI_MIRROR=oldest
 docker_run_oldest: docker_image
 	$(DOCKER_COMPOSE) up -d pypi_mirror
 	$(DOCKER_COMPOSE) run pytest bash
-	$(DOCKER_COMPOSE) down pypi_mirror
+	$(DOCKER_COMPOSE) down --remove-orphans -v
 
 docker_jupyter: docker_image
 	NB_DIR=$(NB_DIR) $(DOCKER_COMPOSE) up jupyter
