@@ -2,7 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import os
 from itertools import chain, product
 
 import numpy as np
@@ -16,8 +15,8 @@ from pymor.algorithms.lyapunov import (
     solve_cont_lyap_lrcf,
     solve_disc_lyap_lrcf,
 )
-from pymor.core.config import config
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymortests.base import skip_if_missing
 
 n_list_small = [10, 20]
 n_list_big = [300]
@@ -118,25 +117,14 @@ def relative_residual(A, E, B, X, cont_time, trans=False):
     return res / rhs
 
 
-def _check_availability(lyap_solver):
-    if (lyap_solver.startswith('slycot')
-            and not os.environ.get('DOCKER_PYMOR', False)
-            and not config.HAVE_SLYCOT):
-        pytest.skip('slycot not available')
-    if (lyap_solver.startswith('pymess')
-            and not os.environ.get('DOCKER_PYMOR', False)
-            and not config.HAVE_PYMESS):
-        pytest.skip('pymess not available')
-
-
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n,lyap_solver', chain(product(n_list_small, cont_lyap_dense_solver_list),
                                                 product(n_list_big, cont_lyap_lrcf_solver_list)))
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_cont_lrcf(n, m, with_E, trans, lyap_solver):
-    _check_availability(lyap_solver)
-
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 0.1, cont_time=True)
         E = None
@@ -163,9 +151,9 @@ def test_cont_lrcf(n, m, with_E, trans, lyap_solver):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('lyap_solver', disc_lyap_dense_solver_list)
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_disc_lrcf(n, m, with_E, trans, lyap_solver):
-    _check_availability(lyap_solver)
-
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 0.1, cont_time=False)
         E = None
@@ -193,9 +181,9 @@ def test_disc_lrcf(n, m, with_E, trans, lyap_solver):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('lyap_solver', cont_lyap_dense_solver_list)
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_cont_dense(n, m, with_E, trans, lyap_solver):
-    _check_availability(lyap_solver)
-
     np.random.seed(0)
     A = np.random.randn(n, n)
     E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
@@ -214,9 +202,9 @@ def test_cont_dense(n, m, with_E, trans, lyap_solver):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('lyap_solver', disc_lyap_dense_solver_list)
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_disc_dense(n, m, with_E, trans, lyap_solver):
-    _check_availability(lyap_solver)
-
     np.random.seed(0)
     A = np.random.randn(n, n)
     E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
