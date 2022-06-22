@@ -21,10 +21,11 @@ kernelspec:
 ```
 
 ```{code-cell}
-:tags: [remove-cell]
 :load: myst_code_init.py
-```
+:tags: [remove-cell]
 
+
+```
 
 # Tutorial: Reducing an LTI system using balanced truncation
 
@@ -50,6 +51,8 @@ Then we build the matrices
 
 ```{code-cell}
 :load: heat_equation.py
+
+
 ```
 
 and form the full-order model.
@@ -267,5 +270,3 @@ print(f'Relative Hankel error: {err.hankel_norm() / fom.hankel_norm():.3e}')
 Download the code:
 {download}`tutorial_bt.md`,
 {nb-download}`tutorial_bt.ipynb`.
-
-
