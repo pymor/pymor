@@ -83,3 +83,12 @@ def test_no_training_data():
     neural_network = FullyConnectedNN([d_in, 3 * (d_in + d_out), 3 * (d_in + d_out), d_out]).double()
     best_neural_network, _ = multiple_restarts_training(training_data, validation_data, neural_network)
     assert np.allclose(best_neural_network(torch.DoubleTensor(np.random.rand(n, d_in))).detach(), np.zeros(d_out))
+
+
+def test_issue_1649():
+    from pymor.models.neural_network import FullyConnectedNN
+    from pymor.models.neural_network import NeuralNetworkModel
+    from pymor.parameters.base import Parameters
+    neural_network = FullyConnectedNN([3, 3, 3, 3]).double()
+    nn_model = NeuralNetworkModel(neural_network, Parameters(mu=1))
+    assert nn_model.output_functional
