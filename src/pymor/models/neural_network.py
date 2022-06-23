@@ -95,9 +95,9 @@ class NeuralNetworkModel(BaseNeuralNetworkModel):
 
         self.__auto_init(locals())
         self.solution_space = NumpyVectorSpace(neural_network.output_dimension)
-        output_functional = output_functional or ZeroOperator(NumpyVectorSpace(0), self.solution_space)
-        assert output_functional.source == self.solution_space
-        self.dim_output = output_functional.range.dim
+        self.output_functional = output_functional or ZeroOperator(NumpyVectorSpace(0), self.solution_space)
+        assert self.output_functional.source == self.solution_space
+        self.dim_output = self.output_functional.range.dim
 
     def _compute_solution(self, mu=None, **kwargs):
 
