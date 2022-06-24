@@ -2,24 +2,23 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-# # Solving incompressible heat flow in a cavity
-# 
-# Let us consider the Navier-Stokes equations for the velocity $\mathbf{u}$ and the pressure $p$ of an incompressible fluid
-# 
-# \begin{align*} 
-#     \nabla \cdot \mathbf{u} &= 0,  \\
-#     \mathbf{u}_t + \left( \mathbf{u}\cdot\nabla \right)\mathbf{u} + \nabla p - 2\mu \nabla \cdot \mathbf{D}(\mathbf{u}) &= 0,
-# \end{align*}
-# 
-# 
-# where  $\mathbf{D}(\mathbf{u}) = \mathrm{sym}(\mathbf{u}) = \frac{1}{2}\left(\nabla \mathbf{u} +  \left( \nabla \mathbf{u} \right)^{\mathrm{T}} \right)$ is the Newtonian fluid's rate of strain tensor and $\mu$ is the viscosity.
+"""Incompressible heat flow in a cavity.
+
+Let us consider the Navier-Stokes equations for the velocity $\mathbf{u}$ and the pressure $p$ of an incompressible fluid
+
+\begin{align*}
+    \nabla \cdot \mathbf{u} &= 0,  \\
+    \mathbf{u}_t + \left( \mathbf{u}\cdot\nabla \right)\mathbf{u} + \nabla p - 2\mu \nabla \cdot \mathbf{D}(\mathbf{u}) &= 0,
+\end{align*}
 
 
-# ### ROM generation (POD/DEIM)
-from pymor.algorithms.ei import ei_greedy
-from pymor.algorithms.newton import newton
+where $\mathbf{D}(\mathbf{u}) = \mathrm{sym}(\mathbf{u}) = \frac{1}{2}\left(\nabla \mathbf{u} +  \left( \nabla \mathbf{u} \right)^{\mathrm{T}} \right)$ is the Newtonian fluid's rate of strain tensor and $\mu$ is the viscosity.
+"""
+
+from typer import Option, run
+
+# ### ROM generation (POD)
 from pymor.algorithms.pod import pod
-from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.reductors.basic import InstationaryRBReductor
 # ### ROM validation
 import time
@@ -30,140 +29,94 @@ from pymor.models.basic import InstationaryModel
 from pymor.operators.constructions import VectorOperator
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 
-# FOM
 import dolfin as df
-# PLOTS
 import matplotlib.pyplot as plt
 
 
-def plot_w(w, split=False, save=False, outdir='./fig/', name='', nt=0):
-    if split:
-        p, u = df.split(w.leaf_node())
-    else:
-        p, u  = w.split()
+def plot(w, title_prefix=''):
+    p, u  = w.split()
 
     fig = df.plot(u)
-    plt.title("Velocity vector field")
+    plt.title("Velocity vector field " + title_prefix)
     plt.xlabel("$x$")
     plt.ylabel("$y$")
     plt.colorbar(fig)
 
-    if save:
-        plt.savefig(outdir + name + 'velocity' + str(nt) + '.png')
-        del fig
-        plt.clf()
-        plt.close()
-    else:
-        plt.show()
+    plt.show()
 
     fig = df.plot(p)
-    plt.title("Pressure field")
+    plt.title("Pressure field " + title_prefix)
     plt.xlabel("$x$")
     plt.ylabel("$y$")
     plt.colorbar(fig)
 
-    if save:
-        plt.savefig(outdir + name + 'pressure' + str(nt) + '.png')
-        del fig
-        plt.clf()
-        plt.close()
-    else:
-        plt.show()
+    plt.show()
 
 
-def discretize(dim, n):
-    # ### problem definition
-
-    if dim == 2:
-        mesh = df.UnitSquareMesh(n, n)
-    else:
-        raise NotImplementedError
+def discretize(n):
+    mesh = df.UnitSquareMesh(n, n)
 
     P1 = df.FiniteElement('P', mesh.ufl_cell(), 1)
     P2 = df.VectorElement('P', mesh.ufl_cell(), 2, dim=2)
-    # Taylor-Hoods elements
     TH = df.MixedElement([P1, P2])
     W = df.FunctionSpace(mesh, TH)
+
     W_p = W.sub(0)
     W_u = W.sub(1)
 
-    # define solution vectors and test functions
     p = df.TrialFunction(W_p)
     u = df.TrialFunction(W_u)
     psi_p = df.TestFunction(W_p)
     psi_u = df.TestFunction(W_u)
 
-    # assemble mass matrix
-    MASS1 = df.assemble(df.inner(u, psi_u) * df.dx)
+    mass_mat = df.assemble(df.inner(u, psi_u) * df.dx)
 
-    fig = plt.spy(MASS1.array())
-    plt.show()
-
-    # Test functions
     psi_p, psi_u = df.TestFunctions(W)
 
-    # Solution functions
     w = df.Function(W)
     p, u = df.split(w)
 
-    # Parameters
     Re = df.Constant(1.)
 
-    # velocity BCs
-    hot_wall = "near(x[0], 0.)"
-    cold_wall = "near(x[0], 1.)"
     top_wall = "near(x[1], 1.)"
-    bottom_wall = "near(x[1], 0.)"
-    walls = hot_wall + " | " + cold_wall + " | " + bottom_wall
+    walls = "near(x[0], 0.) | near(x[0], 1.) | near(x[1], 0.)"
 
-    bcu_noslip = df.DirichletBC(W_u, df.Constant((0, 0)), walls)
-    bcu_lid = df.DirichletBC(W_u, df.Constant((1, 0)), top_wall)
+    bcu_noslip_const = df.Constant((0., 0.))
+    bcu_noslip  = df.DirichletBC(W_u, bcu_noslip_const, walls)
+    bcu_lid_const = df.Constant((1., 0.))
+    bcu_lid = df.DirichletBC(W_u, bcu_lid_const, top_wall)
 
-    # pressure BCs
     pressure_point = "near(x[0],  0.) & (x[1]<= " + str(2./n) + ")"
-    bcp  = df.DirichletBC(W_p, df.Constant(0), pressure_point)
+    bcp_const = df.Constant(0.)
+    bcp  = df.DirichletBC(W_p, bcp_const, pressure_point)
 
     bc = [bcu_noslip, bcu_lid, bcp]
 
-    # define Fenics model
-    mass = -psi_p*df.div(u)
+    mass = -psi_p * df.div(u)
     momentum = (df.dot(psi_u, df.dot(df.grad(u), u))
-                - df.div(psi_u)*p
-                + 2.*(1./Re)*df.inner(df.sym(df.grad(psi_u)), df.sym(df.grad(u))))
-    F = (mass+momentum)*df.dx
+                - df.div(psi_u) * p
+                + 2.*(1./Re) * df.inner(df.sym(df.grad(psi_u)), df.sym(df.grad(u))))
+    F = (mass + momentum) * df.dx
 
-    # solve Full Order Model
-    df.solve(F == 0, w, bc,
-             solver_parameters={"newton_solver": {"relative_tolerance": 1e-6}})
+    df.solve(F == 0, w, bc, solver_parameters={"newton_solver": {"relative_tolerance": 1e-6}})
 
-    plot_w(w)
-
-    # PyMOR binding
-
-    # FEM space
     space = FenicsVectorSpace(W)
-    # Mass operator
-    mass_op = FenicsMatrixOperator(MASS1, W, W, name='mass')
-    # Stationary operator
+    mass_op = FenicsMatrixOperator(mass_mat, W, W, name='mass')
     op = FenicsOperator(F, space, space, w, bc,
                         parameter_setter=lambda mu: Re.assign(mu['Re'].item()),
                         parameters={'Re': 1},
                         solver_options={'inverse': {'type': 'newton',
-                                                    'rtol': 1e-6, 
+                                                    'rtol': 1e-6,
                                                     'return_residuals': 'True'}})
 
-    # time discretization
-    nt = 3
+    nt = 5
     timestep_size = 0.01
     ie_stepper = ImplicitEulerTimeStepper(nt=nt)
 
-    # initial conditions
     fom_init = VectorOperator(op.range.zeros())
-    # rhs
     rhs = VectorOperator(op.range.zeros())
 
-    # FOM binding
-    fom = InstationaryModel(timestep_size*nt,
+    fom = InstationaryModel(timestep_size * nt,
                             fom_init,
                             op,
                             rhs,
@@ -174,27 +127,18 @@ def discretize(dim, n):
     return fom, W
 
 
-def main(n):
-    """Reduces a FEniCS-based nonlinear diffusion problem using POD/DEIM.
-    Input
-    - n: Number of mesh intervals per spatial dimension. """
-    dim = 2
-
-    fom, W = discretize(dim, n)
+def main(n: int = Option(10, help='Number of mesh intervals per spatial dimension.')):
+    """Reduces a FEniCS-based incompressible Navier-Stokes problem using POD."""
+    fom, W = discretize(n)
 
     # define range for parameters
-    parameter_space = fom.parameters.space((1., 500.))
+    parameter_space = fom.parameters.space((1., 50.))
 
     # collect snapshots FOM
     U = fom.solution_space.empty()
-    for mu in parameter_space.sample_uniformly(10):
+    for mu in parameter_space.sample_uniformly(20):
         UU = fom.solve(mu)
         U.append(UU)
-
-    # extract and plot last time step solution
-    U_df = df.Function(W)
-    U_df.leaf_node().vector()[:] = (U.to_numpy()[-1,:]).squeeze()
-    plot_w(U_df, name='fom_')
 
     # build reduced basis
     rb, svals = pod(U, rtol=1e-7)
@@ -222,22 +166,21 @@ def main(n):
         diff = U - U_red
         error = np.linalg.norm(diff.to_numpy())/np.linalg.norm(U.to_numpy())
         speedup = t_fom / t_rom
-        print('error: ', error, 'speedup: ', speedup)
+
         errs.append(error)
         speedups.append(speedup)
 
-    U_red = df.Function(W)
-    U_red.leaf_node().vector()[:] = (U.to_numpy()[-1, :]).squeeze()
-    plot_w(U_red, name='rom_')
+    U_df = df.Function(W)
+    U_df.leaf_node().vector()[:] = (U.to_numpy()[-1, :]).squeeze()
+    plot(U_df, title_prefix='FOM')
+
+    U_red_df = df.Function(W)
+    U_red_df.leaf_node().vector()[:] = (U_red.to_numpy()[-1, :]).squeeze()
+    plot(U_red_df, title_prefix='ROM')
 
     print(f'Mean of relative ROM error: {np.mean(errs)}')
     print(f'Median of ROM speedup: {np.median(speedups)}')
 
 
-from dolfin.cpp.parameter import parameters, Parameters
-from dolfin.parameter import ffc_default_parameters
-
-if not parameters.has_parameter_set("form_compiler"):
-    parameters.add(ffc_default_parameters())
-
-main(10)
+if __name__ == '__main__':
+    run(main)
