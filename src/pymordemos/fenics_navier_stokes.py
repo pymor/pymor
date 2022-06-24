@@ -86,7 +86,7 @@ def discretize(n):
     bcu_lid_const = df.Constant((1., 0.))
     bcu_lid = df.DirichletBC(W_u, bcu_lid_const, top_wall)
 
-    pressure_point = "near(x[0],  0.) & (x[1]<= " + str(2./n) + ")"
+    pressure_point = "near(x[0],  0.) & (x[1] <= " + str(2./n) + ")"
     bcp_const = df.Constant(0.)
     bcp  = df.DirichletBC(W_p, bcp_const, pressure_point)
 
@@ -109,7 +109,7 @@ def discretize(n):
                                                     'rtol': 1e-6,
                                                     'return_residuals': 'True'}})
 
-    nt = 5
+    nt = 10
     timestep_size = 0.01
     ie_stepper = ImplicitEulerTimeStepper(nt=nt)
 
@@ -127,7 +127,7 @@ def discretize(n):
     return fom, W
 
 
-def main(n: int = Option(10, help='Number of mesh intervals per spatial dimension.')):
+def main(n: int = Option(30, help='Number of mesh intervals per spatial dimension.')):
     """Reduces a FEniCS-based incompressible Navier-Stokes problem using POD."""
     fom, W = discretize(n)
 
