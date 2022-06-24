@@ -157,3 +157,69 @@ jobs:
         with:
           name: Conda Env Exports
           path: conda-env__${{ runner.os }}-${{ matrix.python }}.yml
+  full_install:
+    name: Conda ${{ matrix.os }} - Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+        matrix:
+            os: [ubuntu-20.04, macos-11, windows-2022]
+            python: [3.8, 3.9]
+            include:
+              - os: ubuntu-20.04
+                prefix: /usr/share/miniconda3/envs/pyMOR-ci
+              - os: macos-11
+                prefix: /Users/runner/miniconda3/envs/pyMOR-ci
+              - os: macos-10.15
+                python: 3.8
+                prefix: /Users/runner/miniconda3/envs/pyMOR-ci
+              - os: windows-2022
+                prefix: C:\Miniconda3\envs\pyMOR-ci
+            # avoid failure in one job immeadiately cancelling all others
+        fail-fast: true
+    steps:
+      - name: Install required X libs (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
+      - name: Install
+        if: runner.os == 'Windows'
+        run: |
+          curl --output mesa.7z -L https://github.com/pal1000/mesa-dist-win/releases/download/20.3.4/mesa3d-20.3.4-release-msvc.7z
+          7z x mesa.7z -omesa -y
+
+
+          # The script requires user input (choice of options) so need to
+          # fiddle to get it to run automatically. Not a clean way to do it,
+          # but works.
+          sed -i 's/@echo Please make a deployment choice:/@GOTO desktopgl/g' ./mesa/systemwidedeploy.cmd
+          sed -i 's/@echo Desktop OpenGL drivers deploy complete./@exit/g' ./mesa/systemwidedeploy.cmd
+          ./mesa/systemwidedeploy.cmd
+
+
+      - uses: actions/checkout@v3
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: pyMOR-ci
+          miniforge-variant: Mambaforge
+          use-mamba: true
+          python-version: ${{ matrix.python }}
+          channels: conda-forge
+          channel-priority: true
+           # This needs to be set for caching to work properly!
+          use-only-tar-bz2: true
+      - name: Cache conda
+        uses: actions/cache@v3
+        id: cache
+        env:
+          # Increase this value to reset cache if .ci/conda-env.yml have not changed
+          CACHE_NUMBER: 1
+        with:
+          path: ${{ matrix.prefix }}
+          key:
+            ${{ runner.os }}-${{ matrix.python }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.ci/conda-env.yml') }}
+      - name: Update environment
+        run: mamba env update -n pyMOR-ci -f .ci/conda-env.yml
+        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Install pyMOR
+        shell: bash -l {0}
+        run: pip install .[full]
