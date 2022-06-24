@@ -53,43 +53,53 @@ def plot(w, title_prefix=''):
     plt.show()
 
 
-def discretize(n):
+def discretize(n, nt):
+    # create square mesh
     mesh = df.UnitSquareMesh(n, n)
 
-    P1 = df.FiniteElement('P', mesh.ufl_cell(), 1)
-    P2 = df.VectorElement('P', mesh.ufl_cell(), 2, dim=2)
-    TH = df.MixedElement([P1, P2])
+    # create Finite Elements for the pressure and the velocity
+    P = df.FiniteElement('P', mesh.ufl_cell(), 1)
+    V = df.VectorElement('P', mesh.ufl_cell(), 2, dim=2)
+    # create mixed element and function space
+    TH = df.MixedElement([P, V])
     W = df.FunctionSpace(mesh, TH)
 
+    # extract components of mixed space
     W_p = W.sub(0)
     W_u = W.sub(1)
 
-    p = df.TrialFunction(W_p)
+    # define trial and test functions for mass matrix
     u = df.TrialFunction(W_u)
-    psi_p = df.TestFunction(W_p)
     psi_u = df.TestFunction(W_u)
 
+    # assemble mass matrix for velocity
     mass_mat = df.assemble(df.inner(u, psi_u) * df.dx)
 
+    # define trial and test functions
     psi_p, psi_u = df.TestFunctions(W)
-
     w = df.Function(W)
     p, u = df.split(w)
 
+    # set Reynolds number, which will serve as parameter
     Re = df.Constant(1.)
 
+    # define walls
     top_wall = "near(x[1], 1.)"
     walls = "near(x[0], 0.) | near(x[0], 1.) | near(x[1], 0.)"
 
+    # define no slip boundary conditions on all but the top wall
     bcu_noslip_const = df.Constant((0., 0.))
     bcu_noslip  = df.DirichletBC(W_u, bcu_noslip_const, walls)
+    # define Dirichlet boundary condition for the velocity on the top wall
     bcu_lid_const = df.Constant((1., 0.))
     bcu_lid = df.DirichletBC(W_u, bcu_lid_const, top_wall)
 
+    # fix pressure at a single point of the domain to obtain unique solutions
     pressure_point = "near(x[0],  0.) & (x[1] <= " + str(2./n) + ")"
     bcp_const = df.Constant(0.)
-    bcp  = df.DirichletBC(W_p, bcp_const, pressure_point)
+    bcp = df.DirichletBC(W_p, bcp_const, pressure_point)
 
+    # collect boundary conditions
     bc = [bcu_noslip, bcu_lid, bcp]
 
     mass = -psi_p * df.div(u)
@@ -100,6 +110,7 @@ def discretize(n):
 
     df.solve(F == 0, w, bc, solver_parameters={"newton_solver": {"relative_tolerance": 1e-6}})
 
+    # define pyMOR operators
     space = FenicsVectorSpace(W)
     mass_op = FenicsMatrixOperator(mass_mat, W, W, name='mass')
     op = FenicsOperator(F, space, space, w, bc,
@@ -109,14 +120,16 @@ def discretize(n):
                                                     'rtol': 1e-6,
                                                     'return_residuals': 'True'}})
 
-    nt = 10
-    timestep_size = 0.01
+    # timestep size for the implicit Euler timestepper
+    dt = 0.01
     ie_stepper = ImplicitEulerTimeStepper(nt=nt)
 
+    # define initial condition and right hand side as zero
     fom_init = VectorOperator(op.range.zeros())
     rhs = VectorOperator(op.range.zeros())
 
-    fom = InstationaryModel(timestep_size * nt,
+    # construct instationary model
+    fom = InstationaryModel(dt * nt,
                             fom_init,
                             op,
                             rhs,
@@ -127,20 +140,23 @@ def discretize(n):
     return fom, W
 
 
-def main(n: int = Option(30, help='Number of mesh intervals per spatial dimension.')):
+def main(n: int = Option(30, help='Number of mesh intervals per spatial dimension.'),
+         nt: int = Option(10, help='Number of timesteps.'),
+         num_samples: int = Option(20, help='Number of samples used for computing the reduced basis.')):
     """Reduces a FEniCS-based incompressible Navier-Stokes problem using POD."""
-    fom, W = discretize(n)
+    # compute FOM and corresponding mixed function space
+    fom, W = discretize(n, nt)
 
-    # define range for parameters
+    # define range for parameter
     parameter_space = fom.parameters.space((1., 50.))
 
-    # collect snapshots FOM
+    # collect FOM snapshots
     U = fom.solution_space.empty()
-    for mu in parameter_space.sample_uniformly(20):
+    for mu in parameter_space.sample_uniformly(num_samples):
         UU = fom.solve(mu)
         U.append(UU)
 
-    # build reduced basis
+    # build reduced basis using POD
     rb, svals = pod(U, rtol=1e-7)
     reductor = InstationaryRBReductor(fom, rb)
     rom = reductor.reduce()
@@ -170,10 +186,12 @@ def main(n: int = Option(30, help='Number of mesh intervals per spatial dimensio
         errs.append(error)
         speedups.append(speedup)
 
+    # create a dolfin function out of DoF vector of FOM solution
     U_df = df.Function(W)
     U_df.leaf_node().vector()[:] = (U.to_numpy()[-1, :]).squeeze()
     plot(U_df, title_prefix='FOM')
 
+    # create a dolfin function out of DoF vector of ROM solution
     U_red_df = df.Function(W)
     U_red_df.leaf_node().vector()[:] = (U_red.to_numpy()[-1, :]).squeeze()
     plot(U_red_df, title_prefix='ROM')
