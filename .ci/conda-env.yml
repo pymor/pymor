@@ -22,6 +22,7 @@ dependencies:
   - meshio>=4.4
   - mpi4py>=3.0
   - mpi4py>=3.0.3
+  - myst-nb>=0.14
   - nbconvert
   - nbresuse
   - numpy>=1.17.5
