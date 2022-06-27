@@ -62,7 +62,7 @@ myst_heading_anchors = 2
 import substitutions # noqa
 myst_substitutions = substitutions.myst_substitutions
 nb_execute_notebooks = "cache"
-nb_execution_timeout = 120
+nb_execution_timeout = 180
 # print tracebacks to stdout
 nb_execution_show_tb = True
 
