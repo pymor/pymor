@@ -165,9 +165,9 @@ class ComplexifiedVector(Vector):
 
     def scal(self, alpha):
         if self.imag_part is None:
-            self.real_part.scal(alpha.real)
             if alpha.imag != 0:
                 self.imag_part = self.real_part * alpha.imag
+            self.real_part.scal(alpha.real)
         else:
             if alpha.imag == 0:
                 self.real_part.scal(alpha.real)
