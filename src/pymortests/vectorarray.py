@@ -396,7 +396,7 @@ def test_del(vectors_and_indices):
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
-def test_scla(vectors_and_indices):
+def test_scal(vectors_and_indices):
     v, ind = vectors_and_indices
     if v.len_ind(ind) != v.len_ind_unique(ind):
         with pytest.raises(Exception):
@@ -428,6 +428,14 @@ def test_scla(vectors_and_indices):
             assert np.allclose(c.to_numpy(), y)
         except NotImplementedError:
             pass
+
+
+@pyst.given_vector_arrays()
+def test_scal_imaginary(vector_array):
+    v = vector_array
+    w = v.copy()
+    w.scal(1j)
+    assert np.allclose(v.norm(), w.norm())
 
 
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length,
