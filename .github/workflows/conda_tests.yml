@@ -88,7 +88,7 @@ jobs:
         run: |
           ./dependencies.py && git diff --exit-code requirements* pyproject.toml
       - name: Cache conda
-        uses: actions/cache@v3
+        uses: martijnhols/actions-cache@v3.0.4
         id: cache
         env:
           # Increase this value to reset cache if .ci/conda-env.yml have not changed
@@ -208,7 +208,9 @@ jobs:
            # This needs to be set for caching to work properly!
           use-only-tar-bz2: true
       - name: Cache conda
-        uses: actions/cache@v3
+        # only restore here, since pip install might bring things into the cache
+        # that aren't controlled via the .ci/conda-env.yml file
+        uses: martijnhols/actions-cache/restore@v3.0.4
         id: cache
         env:
           # Increase this value to reset cache if .ci/conda-env.yml have not changed
@@ -217,9 +219,6 @@ jobs:
           path: ${{ matrix.prefix }}
           key:
             ${{ runner.os }}-${{ matrix.python }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.ci/conda-env.yml') }}
-      - name: Update environment
-        run: mamba env update -n pyMOR-ci -f .ci/conda-env.yml
-        if: steps.cache.outputs.cache-hit != 'true'
       - name: Install pyMOR
         shell: bash -l {0}
         run: pip install .[full]
