@@ -238,9 +238,12 @@ class ComplexifiedVector(Vector):
             return values
 
     def amax(self):
-        if self.imag_part is not None:
-            raise NotImplementedError
-        return self.real_part.amax()
+        if self.imag_part is None:
+            return self.real_part.amax()
+        else:
+            A = np.abs(self.real_part.to_numpy() + self.imag_part.to_numpy() * 1j)
+            max_ind = np.argmax(A)
+            return max_ind, A[max_ind]
 
     def to_numpy(self, ensure_copy=False):
         if self.imag_part is not None:
