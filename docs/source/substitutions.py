@@ -114,8 +114,8 @@ common = '''
 .. |NeuralNetworkModel| replace:: :class:`~pymor.models.neural_network.NeuralNetworkModel`
 
 .. |MoebiusTransformation| replace:: :class:`~pymor.models.transforms.MoebiusTransformation`
-.. |MoebiusTransformations| replace:: :class:`~pymor.models.transforms.MoebiusTransformation`
-.. |BilinearTransformation| replace:: :class:`~pymor.models.transforms.BilinearTransformation
+.. |MoebiusTransformations| replace:: :class:`MoebiusTransformations <pymor.models.transforms.MoebiusTransformation>`
+.. |BilinearTransformation| replace:: :class:`~pymor.models.transforms.BilinearTransformation`
 .. |CayleyTransformation| replace:: :class:`~pymor.models.transforms.CayleyTransformation`
 
 .. |Parameter| replace:: :class:`Parameter <pymor.parameters.base.Parameters>`
