@@ -7,6 +7,7 @@ from hypothesis import strategies as hyst
 from hypothesis import assume, given
 from hypothesis.extra import numpy as hynp
 import numpy as np
+from numpy import sign
 from scipy.stats._multivariate import random_correlation_gen
 
 from pymor.analyticalproblems.functions import Function, ExpressionFunction, ConstantFunction
@@ -37,12 +38,27 @@ MAX_VECTORARRAY_LENGTH = 102
 hy_lengths = hyst.integers(min_value=0, max_value=MAX_VECTORARRAY_LENGTH)
 # this is a legacy restriction, some tests will not work as expected when this is changed/unset
 MAX_ARRAY_ELEMENT_ABSVALUE = 1
+MIN_ARRAY_ELEMENT_ABSVALUE = 1e-34
+
+
+def _min_shift(x):
+    if abs(x) > MIN_ARRAY_ELEMENT_ABSVALUE or x == 0.0:
+        return x
+    return x + sign(x) * MIN_ARRAY_ELEMENT_ABSVALUE
+
+
+def _min_shift_complex(x):
+    return complex(_min_shift(x.real),  _min_shift(x.imag))
+
+
 hy_float_array_elements = hyst.floats(allow_nan=False, allow_infinity=False,
-                                      min_value=-MAX_ARRAY_ELEMENT_ABSVALUE, max_value=MAX_ARRAY_ELEMENT_ABSVALUE)
+                                      min_value=-MAX_ARRAY_ELEMENT_ABSVALUE, max_value=MAX_ARRAY_ELEMENT_ABSVALUE)\
+    .map(_min_shift)
 # the magnitute restriction is also a legacy one
 MAX_COMPLEX_MAGNITUDE = 2
 hy_complex_array_elements = hyst.complex_numbers(allow_nan=False, allow_infinity=False,
-                                                 max_magnitude=MAX_COMPLEX_MAGNITUDE)
+                                                 max_magnitude=MAX_COMPLEX_MAGNITUDE)\
+    .map(_min_shift_complex)
 hy_dtypes = hyst.sampled_from([np.float64, np.complex128])
 
 
