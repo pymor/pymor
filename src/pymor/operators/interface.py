@@ -221,25 +221,43 @@ class Operator(ParametricObject):
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
             return assembled_op.apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
-        elif self.linear:
-            options = self.solver_options.get('inverse') if self.solver_options else None
+
+        options = self.solver_options.get('inverse') if self.solver_options else None
+        options = (None if options is None else
+                   {'type': options} if isinstance(options, str) else
+                   options.copy())
+        solver_type = None if options is None else options['type']
+
+        if self.linear:
+            if solver_type is None or solver_type == 'to_matrix':
+                if solver_type is None:
+                    self.logger.warning(f'No specialized linear solver available for {self}.')
+                    self.logger.warning('Trying to solve by converting to NumPy matrix.')
+                from pymor.algorithms.rules import NoMatchingRuleError
+                try:
+                    from pymor.algorithms.to_matrix import to_matrix
+                    from pymor.operators.numpy import NumpyMatrixOperator
+                    mat = to_matrix(assembled_op)
+                    mat_op = NumpyMatrixOperator(mat)
+                    v = mat_op.range.from_numpy(V.to_numpy())
+                    i = None if initial_guess is None else v.source.from_numpy(initial_guess.to_numpy())
+                    u = mat_op.apply_inverse(v, initial_guess=i, least_squares=least_squares)
+                    return self.source.from_numpy(u.to_numpy())
+                except (NoMatchingRuleError, NotImplementedError):
+                    if solver_type == 'to_matrix':
+                        raise InversionError
+                    else:
+                        self.logger.warning('Failed.')
+            self.logger.warning('Solving with unpreconditioned iterative solver.')
             return genericsolvers.apply_inverse(assembled_op, V, initial_guess=initial_guess,
                                                 options=options, least_squares=least_squares)
         else:
             from pymor.algorithms.newton import newton
             from pymor.core.exceptions import NewtonError
 
-            options = self.solver_options.get('inverse') if self.solver_options else None
-            if options:
-                if isinstance(options, str):
-                    assert options == 'newton'
-                    options = {}
-                else:
-                    assert options['type'] == 'newton'
-                    options = options.copy()
-                    options.pop('type')
-            else:
-                options = {}
+            assert solver_type is None or solver_type == 'newton'
+            options = options or {}
+            options.pop('type', None)
             options['least_squares'] = least_squares
 
             with self.logger.block('Solving nonlinear problem using newton algorithm ...'):
