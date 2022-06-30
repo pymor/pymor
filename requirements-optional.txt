@@ -28,7 +28,7 @@ pyevtk
 pygments
 pymess
 pyopengl
-pytest>=6.0
+pytest==7.1.2
 python-slugify
 pythreejs
 qtpy!=2.0.0
