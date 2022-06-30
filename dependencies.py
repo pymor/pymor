@@ -65,7 +65,7 @@ doc_requires = ['sphinx>=4.0', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'pyt
                 'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8', 'myst-nb>=0.14'] + install_requires
 ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel',
                'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
-               'flake8-rst-docstrings', 'flake8-docstrings', 'pytest-datadir', 'pybind11',
+               'flake8-rst-docstrings', 'flake8-docstrings', 'pytest-regressions', 'pybind11',
                'docutils', "pypi-oldest-requirements>=2021.2", 'hypothesis[numpy,pytest]>=6.10',
                'PyQt5>=5.15.5', 'check_reqs', 'scikit-fem', 'PyQt5-Qt5>=5.15.2']
 
