@@ -5,7 +5,7 @@
 
 # DO NOT use any python features here that require 3.6 or newer
 
-_PYTEST = 'pytest>=6.0'
+_PYTEST = 'pytest==7.1.2'
 # 5.12.* blocked due to https://bugreports.qt.io/browse/PYSIDE-1004
 # however the problem is not actually fixed in 5.12.3 as advertised,
 # but only starting from 5.13.1
@@ -60,24 +60,31 @@ install_suggests = {
 }
 io_requires = ['pyevtk', 'xmljson', 'meshio>=4.4', 'lxml', 'gmsh']
 install_suggests.update({p: 'optional File I/O support libraries' for p in io_requires})
-doc_requires = ['sphinx>=4.0', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
+doc_requires = ['sphinx>=5.0', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
                 'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
-                'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8', 'myst-nb>=0.14'] + install_requires
-ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconvert', 'pytest-parallel',
-               'readme_renderer[md]', 'rstcheck', 'codecov', 'twine', 'pytest-memprof',
-               'flake8-rst-docstrings', 'flake8-docstrings', 'pytest-datadir', 'pybind11',
-               'docutils', "pypi-oldest-requirements>=2021.2", 'hypothesis[numpy,pytest]>=6.10',
-               'PyQt5>=5.15.5', 'check_reqs', 'scikit-fem', 'PyQt5-Qt5>=5.15.2']
-import_names = {
-    'ipython': 'IPython',
-    'pytest-cache': 'pytest_cache',
-    'pytest-instafail': 'pytest_instafail',
-    'pytest-xdist': 'xdist',
-    'pytest-cov': 'pytest_cov',
-    'pytest-flakes': 'pytest_flakes',
-    'pytest-pep8': 'pytest_pep8',
-    'pyopengl': 'OpenGL',
-}
+                'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8', 'myst-nb>=0.16'] + install_requires
+ci_requires = ['check-manifest==0.48',
+               'check_reqs==0.2.0',
+               'codecov==2.1.12',
+               'docutils==0.18.1',
+               'flake8-docstrings==1.6.0',
+               'flake8-rst-docstrings==0.2.6',
+               'hypothesis[numpy,pytest]==6.48.2',
+               'pybind11==2.9.2',
+               'pypi-oldest-requirements==2021.2.0',
+               'pyqt5-qt5==5.15.2',
+               'pyqt5==5.15.7',
+               _PYTEST,
+               'pytest-cov==3.0.0',
+               'pytest-memprof==0.2.0',
+               'pytest-parallel==0.1.1',
+               'pytest-regressions==2.3.1',
+               'pytest-xdist==2.5.0',
+               'readme_renderer[md]==35.0',
+               'rstcheck==6.0.0.post1',
+               'scikit-fem==6.0.0',
+               'twine==3.8.0']
+
 # Slycot is pinned due to buildsystem changes + missing wheels
 optional_requirements_file_only = (['slycot>=0.4.0', 'pymess',
                                     'mpi4py>=3.0.3;python_version >= "3.9"',
