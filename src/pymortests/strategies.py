@@ -13,6 +13,7 @@ from scipy.stats._multivariate import random_correlation_gen
 from pymor.analyticalproblems.functions import Function, ExpressionFunction, ConstantFunction
 from pymor.core.config import config
 from pymor.parameters.base import Mu
+from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -51,15 +52,20 @@ def _min_shift_complex(x):
     return complex(_min_shift(x.real),  _min_shift(x.imag))
 
 
-hy_float_array_elements = hyst.floats(allow_nan=False, allow_infinity=False,
+hy_dtypes = hyst.sampled_from([np.float64, np.complex128])
+hy_float_array_elements = hyst.floats(allow_nan=False, allow_infinity=False, allow_subnormal=False,
                                       min_value=-MAX_ARRAY_ELEMENT_ABSVALUE, max_value=MAX_ARRAY_ELEMENT_ABSVALUE)\
     .map(_min_shift)
-# the magnitute restriction is also a legacy one
-MAX_COMPLEX_MAGNITUDE = 2
-hy_complex_array_elements = hyst.complex_numbers(allow_nan=False, allow_infinity=False,
-                                                 max_magnitude=MAX_COMPLEX_MAGNITUDE)\
-    .map(_min_shift_complex)
-hy_dtypes = hyst.sampled_from([np.float64, np.complex128])
+
+
+@Deprecated("hypothesis.strategies.complex_numbers(allow_subnormal=False)")
+@hyst.composite
+def hy_complex_array_elements(draw):
+    # This is a crutch in place for https://github.com/HypothesisWorks/hypothesis/issues/3390
+    parts = hyst.floats(allow_nan=False, allow_infinity=False, allow_subnormal=False,
+                        min_value=-MAX_ARRAY_ELEMENT_ABSVALUE, max_value=MAX_ARRAY_ELEMENT_ABSVALUE)\
+        .map(_min_shift)
+    return complex(draw(parts), draw(parts))
 
 
 @hyst.composite
@@ -80,9 +86,9 @@ def nothing(*args, **kwargs):
 def _np_arrays(length, dim, dtype=None):
     if dtype is None:
         return hynp.arrays(dtype=np.float64, shape=(length, dim), elements=hy_float_array_elements) | \
-            hynp.arrays(dtype=np.complex128, shape=(length, dim), elements=hy_complex_array_elements)
+            hynp.arrays(dtype=np.complex128, shape=(length, dim), elements=hy_complex_array_elements())
     if dtype is np.complex128:
-        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=hy_complex_array_elements)
+        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=hy_complex_array_elements())
     if dtype is np.float64:
         return hynp.arrays(dtype=dtype, shape=(length, dim), elements=hy_float_array_elements)
     raise RuntimeError(f'unsupported dtype={dtype}')
