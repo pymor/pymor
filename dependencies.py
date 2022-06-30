@@ -68,16 +68,7 @@ ci_requires = [_PYTEST, 'pytest-cov', 'pytest-xdist', 'check-manifest', 'nbconve
                'flake8-rst-docstrings', 'flake8-docstrings', 'pytest-datadir', 'pybind11',
                'docutils', "pypi-oldest-requirements>=2021.2", 'hypothesis[numpy,pytest]>=6.10',
                'PyQt5>=5.15.5', 'check_reqs', 'scikit-fem', 'PyQt5-Qt5>=5.15.2']
-import_names = {
-    'ipython': 'IPython',
-    'pytest-cache': 'pytest_cache',
-    'pytest-instafail': 'pytest_instafail',
-    'pytest-xdist': 'xdist',
-    'pytest-cov': 'pytest_cov',
-    'pytest-flakes': 'pytest_flakes',
-    'pytest-pep8': 'pytest_pep8',
-    'pyopengl': 'OpenGL',
-}
+
 # Slycot is pinned due to buildsystem changes + missing wheels
 optional_requirements_file_only = (['slycot>=0.4.0', 'pymess',
                                     'mpi4py>=3.0.3;python_version >= "3.9"',
