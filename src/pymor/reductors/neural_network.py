@@ -825,10 +825,11 @@ class EarlyStoppingScheduler(BasicObject):
         -------
         `True` if early stopping is suggested, `False` otherwise.
         """
+        import copy
         if self.best_losses is None:
             self.best_losses = losses
             self.best_losses['full'] /= self.size_training_validation_set
-            self.best_neural_network = neural_network
+            self.best_neural_network = copy.deepcopy(neural_network)
         elif self.best_losses['val'] - self.delta <= losses['val']:
             self.counter += 1
             if self.counter >= self.patience:
@@ -836,7 +837,7 @@ class EarlyStoppingScheduler(BasicObject):
         else:
             self.best_losses = losses
             self.best_losses['full'] /= self.size_training_validation_set
-            self.best_neural_network = neural_network
+            self.best_neural_network = copy.deepcopy(neural_network)
             self.counter = 0
 
         return False
@@ -1025,11 +1026,15 @@ def train_neural_network(training_data, validation_data, neural_network,
             for batch in dataloaders[phase]:
                 # scale inputs and outputs if desired
                 if min_inputs is not None and max_inputs is not None:
-                    inputs = (batch[0] - min_inputs) / (max_inputs - min_inputs)
+                    diff = max_inputs - min_inputs
+                    diff[diff==0] = 1.
+                    inputs = (batch[0] - min_inputs) / diff
                 else:
                     inputs = batch[0]
                 if min_targets is not None and max_targets is not None:
-                    targets = (batch[1] - min_targets) / (max_targets - min_targets)
+                    diff = max_targets - min_targets
+                    diff[diff==0] = 1.
+                    targets = (batch[1] - min_targets) / diff
                 else:
                     targets = batch[1]
 
