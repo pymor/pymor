@@ -34,6 +34,12 @@ def test_expand():
             == {frozenset([i0, i1, i2]) for i0, i1, i2 in product([0, 1, 2], [3, 4, 5], [6, 7])})
 
 
+def test_expand_matrix_operator():
+    # MWE from #1656
+    op = expand(NumpyMatrixOperator(np.zeros((0, 0))))
+    assert isinstance(op, NumpyMatrixOperator)
+
+
 def test_contract():
     ops = [NumpyMatrixOperator(np.eye(1) * i) for i in range(1, 6)]
     pf = ProjectionParameterFunctional('p', 1, 0)
