@@ -2,6 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from numbers import Number
+
 import numpy as np
 from scipy.linalg import null_space
 
@@ -150,6 +152,7 @@ class BilinearTransformation(MoebiusTransformation):
     """
 
     def __init__(self, x, name=None):
+        assert isinstance(x, Number)
         assert x > 0
         super().__init__([x, -x, 1, 1], name=name)
         self.__auto_init(locals())
