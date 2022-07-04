@@ -1007,6 +1007,7 @@ class LTIModel(Model):
         if method != 'Tustin':
             return NotImplementedError
         assert self.sampling_time == 0
+        sampling_time = float(sampling_time)
         assert sampling_time > 0
         assert isinstance(w0, Number)
         x = 2 / sampling_time if w0 == 0 else w0 / np.tan(w0 * sampling_time / 2)
