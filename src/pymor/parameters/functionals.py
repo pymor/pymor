@@ -516,7 +516,7 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
     a_prime(., ., mu) or linear form l_prime(., mu) with the same
     affine decomposition but different theta_prime_q for arbitrary parameters mu, since ::
 
-      a_prime(u, v, mu=mu) <= |max_{q = 1}^Q theta_prime_q(mu)/theta_q(mu_bar)|  |a(u, v, mu=mu_bar)|
+      a_prime(u, v, mu=mu) <= |max_{q = 1}^Q theta_prime_q(mu)/theta_q(mu_bar)| |a(u, v, mu=mu_bar)|
 
     or ::
 

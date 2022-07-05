@@ -1,3 +1,5 @@
+import numpy as np
+import scipy.sparse as sps
 
 k = 50
 n = 2 * k + 1
