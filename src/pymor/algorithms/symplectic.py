@@ -306,8 +306,8 @@ def psd_cotengent_lift(U, modes):
         U.space.subspaces[0] == U.space.subspaces[1]
     assert modes % 2 == 0
 
-    X = U.block(0).copy()
-    X.append(U.block(1).copy())
+    X = U.blocks[0].copy()
+    X.append(U.blocks[1].copy())
     V, svals = pod(X, modes=modes // 2)
 
     return SymplecticBasis(
@@ -337,7 +337,7 @@ def psd_complex_svd(U, modes):
         U.space.subspaces[0] == U.space.subspaces[1]
     assert modes % 2 == 0
 
-    X = U.block(0) + U.block(1) * 1j
+    X = U.blocks[0] + U.blocks[1] * 1j
 
     V, _ = pod(X, modes=modes // 2)
 
