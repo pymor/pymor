@@ -17,8 +17,10 @@ def _scale_tols_if_domain_bad(g, atol=1e-05, rtol=1e-08):
     # "badly" shaped domains produce excessive errors
     # same for large differences in absolute coord values
     bbox = g.bounding_box()
+    scale = 1.0
+    lower_left, upper_right = bbox[0], bbox[1]
+    magic_downscale = 1e-3
     if g.dim == 2:
-        lower_left, upper_right = bbox[0], bbox[1]
         upper_left = np.array([lower_left[0], upper_right[1]])
         lower_right = np.array([lower_left[1], upper_right[0]])
         h = np.linalg.norm(upper_left - lower_left)
@@ -26,10 +28,15 @@ def _scale_tols_if_domain_bad(g, atol=1e-05, rtol=1e-08):
         min_l = min(w, h)
         max_l = max(w, h)
         ll, rr = np.linalg.norm(lower_left), np.linalg.norm(upper_right)
-        scale = max(max_l / min_l, abs(rr-ll)*1e-2)
-        if scale > 100:
-            rtol *= scale / 10
-            atol *= scale / 10
+        scale = max(max_l / min_l, abs(rr - ll) * magic_downscale)
+    if g.dim == 1:
+        ratio = abs(upper_right) / abs(lower_left)
+        if not np.isfinite(ratio):
+            ratio = abs(upper_right)*magic_downscale
+        scale = max(ratio, abs(upper_right-lower_left)*magic_downscale)[0]
+    if scale > 10:
+        rtol *= scale
+        atol *= scale
     assert np.isfinite(atol)
     assert np.isfinite(rtol)
     return atol, rtol
