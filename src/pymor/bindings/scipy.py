@@ -197,7 +197,7 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
     if options['type'] == 'scipy_bicgstab':
         for i, VV in enumerate(V):
             R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
-                                  tol=options['tol'], maxiter=options['maxiter'])
+                                  tol=options['tol'], maxiter=options['maxiter'], atol='legacy')
             if info != 0:
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
@@ -210,7 +210,7 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
         precond = LinearOperator(matrix.shape, ilu.solve)
         for i, VV in enumerate(V):
             R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
-                                  tol=options['tol'], maxiter=options['maxiter'], M=precond)
+                                  tol=options['tol'], maxiter=options['maxiter'], M=precond, atol='legacy')
             if info != 0:
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
