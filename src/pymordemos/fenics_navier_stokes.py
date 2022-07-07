@@ -11,7 +11,6 @@ Let us consider the Navier-Stokes equations for the velocity $\mathbf{u}$ and th
     \mathbf{u}_t + \left( \mathbf{u}\cdot\nabla \right)\mathbf{u} + \nabla p - 2\mu \nabla \cdot \mathbf{D}(\mathbf{u}) &= 0,
 \end{align*}
 
-
 where $\mathbf{D}(\mathbf{u}) = \mathrm{sym}(\mathbf{u}) = \frac{1}{2}\left(\nabla \mathbf{u} +  \left( \nabla \mathbf{u} \right)^{\mathrm{T}} \right)$ is the Newtonian fluid's rate of strain tensor and $\mu$ is the viscosity.
 """
 
@@ -26,7 +25,7 @@ import numpy as np
 # ### pyMOR wrapping
 from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsVisualizer, FenicsMatrixOperator
 from pymor.models.basic import InstationaryModel
-from pymor.operators.constructions import VectorOperator
+from pymor.operators.constructions import VectorOperator, VectorFunctional
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 
 import dolfin as df
@@ -127,6 +126,8 @@ def discretize(n, nt):
     # define initial condition and right hand side as zero
     fom_init = VectorOperator(op.range.zeros())
     rhs = VectorOperator(op.range.zeros())
+    # define output functional
+    output_func = VectorFunctional(op.range.ones())
 
     # construct instationary model
     fom = InstationaryModel(dt * nt,
@@ -135,6 +136,7 @@ def discretize(n, nt):
                             rhs,
                             mass=mass_op,
                             time_stepper=ie_stepper,
+                            output_functional=output_func,
                             visualizer=FenicsVisualizer(space))
 
     return fom, W

@@ -29,13 +29,13 @@ def main(
 
     fom = create_fom(grid_intervals, time_steps)
 
-    parameter_space = fom.parameters.space(1., 2.)
+    parameter_space = fom.parameters.space(1., 50.)
 
     training_set = parameter_space.sample_uniformly(training_samples)
     validation_set = parameter_space.sample_randomly(validation_samples)
 
-    reductor = NeuralNetworkInstationaryReductor(fom, training_set, validation_set, basis_size=10)
-    rom = reductor.reduce(hidden_layers='[30, 30, 30]', restarts=100)
+    reductor = NeuralNetworkInstationaryReductor(fom, training_set, validation_set, basis_size=10, scale_outputs=True)
+    rom = reductor.reduce(hidden_layers='[30, 30, 30]', restarts=10)
 
     test_set = parameter_space.sample_randomly(10)
 
@@ -48,11 +48,11 @@ def main(
 
     for mu in test_set:
         tic = time.time()
-        U.append(fom.solve(mu))
+        U.append(fom.solve(mu)[1:])
         time_fom = time.time() - tic
 
         tic = time.time()
-        U_red.append(reductor.reconstruct(rom.solve(mu)))
+        U_red.append(reductor.reconstruct(rom.solve(mu))[1:])
         time_red = time.time() - tic
 
         speedups.append(time_fom / time_red)
@@ -61,7 +61,8 @@ def main(
     relative_errors = (U - U_red).norm2() / U.norm2()
 
     output_reductor = NeuralNetworkInstationaryStatefreeOutputReductor(fom, time_steps+1, training_set,
-                                                                       validation_set, validation_loss=1e-5)
+                                                                       validation_set, validation_loss=1e-5,
+                                                                       scale_outputs=True)
     output_rom = output_reductor.reduce(restarts=100)
 
     outputs = []
@@ -72,11 +73,11 @@ def main(
 
     for mu in test_set:
         tic = time.perf_counter()
-        outputs.append(fom.compute(output=True, mu=mu)['output'])
+        outputs.append(fom.compute(output=True, mu=mu)['output'][1:])
         time_fom = time.perf_counter() - tic
 
         tic = time.perf_counter()
-        outputs_red.append(output_rom.compute(output=True, mu=mu)['output'])
+        outputs_red.append(output_rom.compute(output=True, mu=mu)['output'][1:])
         time_red = time.perf_counter() - tic
 
         outputs_speedups.append(time_fom / time_red)
@@ -100,14 +101,9 @@ def main(
 
 
 def create_fom(grid_intervals, time_steps):
-    problem = burgers_problem()
-    f = LincombFunction(
-        [ExpressionFunction('1.', 1), ConstantFunction(1., 1)],
-        [ProjectionParameterFunctional('exponent'), 0.1])
-    problem = problem.with_stationary_part(outputs=[('l2', f)])
-
     print('Discretize ...')
-    fom, _ = discretize_instationary_fv(problem, diameter=1. / grid_intervals, nt=time_steps)
+    from fenics_navier_stokes import discretize
+    fom, _ = discretize(grid_intervals, time_steps)
 
     return fom
 
