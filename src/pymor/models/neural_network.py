@@ -231,8 +231,8 @@ class NeuralNetworkInstationaryModel(BaseNeuralNetworkModel):
 
     def _compute_solution(self, mu=None, **kwargs):
         # collect all inputs in a single tensor
-        inputs = self._scale_input(torch.DoubleTensor([mu.with_(t=t).to_numpy()
-                                                       for t in np.linspace(0., self.T, self.nt)]))
+        inputs = self._scale_input(torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
+                                                                for t in np.linspace(0., self.T, self.nt)])))
         # pass batch of inputs to neural network
         result = self.neural_network(inputs).data.numpy()
         result = self._scale_target(result)
@@ -289,8 +289,8 @@ class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
 
         if output:
             # collect all inputs in a single tensor
-            inputs = self._scale_input(torch.DoubleTensor([mu.with_(t=t).to_numpy()
-                                                           for t in np.linspace(0., self.T, self.nt)]))
+            inputs = self._scale_input(torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
+                                                                    for t in np.linspace(0., self.T, self.nt)])))
             # pass batch of inputs to neural network
             outputs = self.neural_network(inputs).data.numpy()
             outputs = self._scale_target(outputs)
