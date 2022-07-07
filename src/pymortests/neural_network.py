@@ -14,7 +14,7 @@ def test_linear_function_fitting():
 
     import torch.optim as optim
 
-    n = 1000
+    n = 50
     d_in = 3
     d_out = 2
 
@@ -33,7 +33,7 @@ def test_linear_function_fitting():
     neural_network = FullyConnectedNN([d_in, 3 * (d_in + d_out), 3 * (d_in + d_out), d_out]).double()
 
     # without specifying training parameters
-    tol = 1e-5
+    tol = 5e-4
     _, best_losses = multiple_restarts_training(training_data, validation_data, neural_network)
     assert all(loss < tol for loss in best_losses.values())
 
@@ -49,7 +49,7 @@ def test_linear_function_fitting():
                            'epochs': epochs, 'lr_scheduler': lr_scheduler,
                            'lr_scheduler_params': lr_scheduler_params}
 
-    tol = 1e-4
+    tol = 1e-3
     _, best_losses = multiple_restarts_training(training_data, validation_data, neural_network,
                                                 training_parameters=training_parameters,
                                                 max_restarts=max_restarts)
