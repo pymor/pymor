@@ -89,8 +89,7 @@ class Parameters(SortedFrozenDict):
         return sum(self.values())
 
     def parse(self, mu):
-        """Takes a user input `mu` and interprets it as set of |parameter values|
-        according to the given |Parameters|.
+        """Interpret `mu` as a set of |parameter values| according to the given |Parameters|.
 
         Depending on the |Parameters|, `mu` can be given as a dict, list,
         tuple, |NumPy array| or scalar. In the latter cases, multiple parameters
@@ -121,7 +120,6 @@ class Parameters(SortedFrozenDict):
             Is raised if `mu` cannot be interpreted as |parameter values| for the
             given |Parameters|.
         """
-
         from pymor.analyticalproblems.functions import Function, ExpressionFunction
 
         def fail(msg):
@@ -346,8 +344,7 @@ class Mu(FrozenDict):
         return Parameters({k: v.size for k, v in self.items()})
 
     def allclose(self, mu):
-        """Compare two dicts of |parameter values| using
-        :meth:`~pymor.tools.floatcmp.float_cmp_all`.
+        """Compare dicts of |parameter values| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
 
         Parameters
         ----------

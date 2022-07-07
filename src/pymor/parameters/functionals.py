@@ -426,8 +426,7 @@ class LincombParameterFunctional(ParameterFunctional):
 
 
 class MinThetaParameterFunctional(ParameterFunctional):
-    """|ParameterFunctional| implementing the min-theta approach from :cite:`Haa17`
-    (Proposition 2.35).
+    """|ParameterFunctional| implementing the min-theta approach from :cite:`Haa17` (Prop. 2.35).
 
     Let V denote a Hilbert space and let a: V x V -> K denote a parametric coercive bilinear form
     with affine decomposition ::
@@ -488,8 +487,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
 
 
 class BaseMaxThetaParameterFunctional(ParameterFunctional):
-    """|ParameterFunctional| implementing a generalization of the max-theta approach from
-    :cite:`Haa17` (Exercise 5.12).
+    """Implements a generalization of the max-theta approach from :cite:`Haa17` (Exercise 5.12).
 
     Let V denote a Hilbert space and let a: V x V -> K denote a continuous bilinear form or
     l: V -> K a continuous linear functional, either with affine decomposition ::

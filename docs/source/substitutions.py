@@ -154,6 +154,7 @@ common = '''
 .. |SymplecticBasis| replace:: :class:`~pymor.algorithms.symplectic.SymplecticBasis`
 .. |CanonicalSymplecticFormOperator| replace:: :class:`~pymor.operators.symplectic.CanonicalSymplecticFormOperator`
 
+.. |lFEfunc| replace:: Linear finite element functional
 '''
 
 substitutions = interfaces + common

@@ -317,9 +317,7 @@ class ImmutableObject(BasicObject, metaclass=ImmutableMeta):
         pass
 
     def __setattr__(self, key, value):
-        """Depending on _locked state I delegate the setattr call to object or
-        raise an Exception.
-        """
+        """Depending on _locked state delegate the setattr call to object or raise an Exception."""
         if not self._locked or key[0] == '_':
             return object.__setattr__(self, key, value)
         else:
