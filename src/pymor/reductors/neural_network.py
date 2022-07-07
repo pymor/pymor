@@ -1027,13 +1027,13 @@ def train_neural_network(training_data, validation_data, neural_network,
                 # scale inputs and outputs if desired
                 if min_inputs is not None and max_inputs is not None:
                     diff = max_inputs - min_inputs
-                    diff[diff==0] = 1.
+                    diff[diff == 0] = 1.
                     inputs = (batch[0] - min_inputs) / diff
                 else:
                     inputs = batch[0]
                 if min_targets is not None and max_targets is not None:
                     diff = max_targets - min_targets
-                    diff[diff==0] = 1.
+                    diff[diff == 0] = 1.
                     targets = (batch[1] - min_targets) / diff
                 else:
                     targets = batch[1]
