@@ -14,7 +14,7 @@ def test_linear_function_fitting():
 
     import torch.optim as optim
 
-    n = 50
+    n = 100
     d_in = 3
     d_out = 2
 
@@ -32,24 +32,27 @@ def test_linear_function_fitting():
     validation_data = data[int(len(data)*validation_ratio):]
     neural_network = FullyConnectedNN([d_in, 3 * (d_in + d_out), 3 * (d_in + d_out), d_out]).double()
 
+    max_restarts = 10
+
     # without specifying training parameters
-    tol = 5e-4
-    _, best_losses = multiple_restarts_training(training_data, validation_data, neural_network)
+    tol = 1e-3
+    _, best_losses = multiple_restarts_training(training_data, validation_data, neural_network,
+                                                max_restarts=max_restarts)
     assert all(loss < tol for loss in best_losses.values())
 
     # with training parameters (that differ from the default values)
     optimizer = optim.Adam
     learning_rate = 1e-2
-    epochs = 2000
+    epochs = 1000
     max_restarts = 1
-    batch_size = 30
+    batch_size = 20
     lr_scheduler = optim.lr_scheduler.StepLR
     lr_scheduler_params = {'step_size': 50, 'gamma': 0.9}
     training_parameters = {'optimizer': optimizer, 'learning_rate': learning_rate, 'batch_size': batch_size,
                            'epochs': epochs, 'lr_scheduler': lr_scheduler,
                            'lr_scheduler_params': lr_scheduler_params}
 
-    tol = 1e-3
+    tol = 5e-3
     _, best_losses = multiple_restarts_training(training_data, validation_data, neural_network,
                                                 training_parameters=training_parameters,
                                                 max_restarts=max_restarts)
