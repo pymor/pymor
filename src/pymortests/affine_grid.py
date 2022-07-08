@@ -354,7 +354,7 @@ def test_bounding_box(grid):
     # compare with tolerance is necessary with very large domain boundaries values
     # where the relative error in the centers computation introduces enough error to fail the test
     # otherwise
-    rtol, atol = _scale_tols_if_domain_bad(g, rtol=1e-12, atol=1e-12)
+    rtol, atol = _scale_tols_if_domain_bad(g, rtol=2e-12, atol=2e-12)
     assert np.all(almost_less(bbox[0], g.centers(g.dim), rtol=rtol, atol=atol))
     assert np.all(almost_less(g.centers(g.dim), bbox[1], rtol=rtol, atol=atol))
 
