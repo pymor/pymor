@@ -102,7 +102,7 @@ def main(
 
 def create_fom(grid_intervals, time_steps):
     print('Discretize ...')
-    from fenics_navier_stokes import discretize
+    from pymordemos.fenics_navier_stokes import discretize
     fom, _ = discretize(grid_intervals, time_steps)
 
     return fom
