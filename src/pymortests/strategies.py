@@ -392,9 +392,12 @@ def st_valid_inds_of_different_length(draw, v1, v2):
         return False  # both scalars => not of different length
 
     len1, len2 = len(v1), len(v2)
-    # TODO we should include integer arrays here
-    val1 = hyst.slices(len1)  # | hynp.integer_array_indices(shape=(len1,))
-    val2 = hyst.slices(len2)  # | hynp.integer_array_indices(shape=(len1,))
+    val1 = hyst.slices(len1)
+    if len1 > 0:
+        val1 |= hynp.integer_array_indices(shape=(len1,))
+    val2 = hyst.slices(len2)
+    if len2 > 0:
+        val2 |= hynp.integer_array_indices(shape=(len2,))
     ret = hyst.tuples(val1, val2).filter(_filter)
     return draw(ret)
 
