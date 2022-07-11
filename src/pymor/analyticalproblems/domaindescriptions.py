@@ -251,8 +251,7 @@ class LineDomain(DomainDescription):
 
 
 class CircleDomain(DomainDescription):
-    """Describes a domain with the topology of a circle, i.e. a line with
-    identified end points.
+    """Domain with the topology of a circle, i.e. a line with end points identified.
 
     Parameters
     ----------

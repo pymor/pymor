@@ -54,10 +54,7 @@ def main(
     vx: float = Option(1., help='Speed in x-direction.'),
     vy: float = Option(1., help='Speed in y-direction.'),
 ):
-    """Model order reduction of a two-dimensional Burgers-type equation
-    (see pymor.analyticalproblems.burgers) using the reduced basis method
-    with empirical operator interpolation.
-    """
+    """Reduction of a two-dimensional Burgers-type equation using empirical interpolation."""
     print('Setup Problem ...')
     problem = burgers_problem_2d(vx=vx, vy=vy, initial_data_type=initial_data.value,
                                  parameter_range=(exp_min, exp_max), torus=periodic)
