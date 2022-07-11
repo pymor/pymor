@@ -54,7 +54,7 @@ def CGVectorSpace(grid, id='STATE'):
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
-    """|lFEfunc| representing the inner product with an L2-|Function|.
+    """Linear functional representing the inner product with an L2-|Function|.
 
     Parameters
     ----------
@@ -111,7 +111,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
 
 
 class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
-    """|lFEfunc| representing the inner product with an L2-|Function| on the boundary.
+    """Linear functional representing the inner product with an L2-|Function| on the boundary.
 
     Parameters
     ----------
@@ -167,7 +167,7 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
 
 
 class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
-    """|lFEfunc| for enforcing Dirichlet boundary values.
+    """Linear functional for enforcing Dirichlet boundary values.
 
     Parameters
     ----------
@@ -201,7 +201,7 @@ class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
 
 
 class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
-    """Bi|lFEfunc| representing the inner product with an L2-|Function|.
+    """Bilinear functional representing the inner product with an L2-|Function|.
 
     Parameters
     ----------
