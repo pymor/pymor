@@ -54,7 +54,7 @@ def CGVectorSpace(grid, id='STATE'):
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
-    """Linear finite element functional representing the inner product with an L2-|Function|.
+    """Linear functional representing the inner product with an L2-|Function|.
 
     Parameters
     ----------
@@ -111,8 +111,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
 
 
 class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
-    """Linear finite element functional representing the inner product with an
-    L2-|Function| on the boundary.
+    """Linear functional representing the inner product with an L2-|Function| on the boundary.
 
     Parameters
     ----------
@@ -168,7 +167,7 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
 
 
 class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
-    """Linear finite element functional for enforcing Dirichlet boundary values.
+    """Linear functional for enforcing Dirichlet boundary values.
 
     Parameters
     ----------
@@ -202,7 +201,7 @@ class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
 
 
 class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
-    """Bilinear finite element functional representing the inner product with an L2-|Function|.
+    """Bilinear functional representing the inner product with an L2-|Function|.
 
     Parameters
     ----------
@@ -1214,8 +1213,10 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 def discretize_instationary_cg(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
                                grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None,
                                preassemble=True):
-    """Discretizes an |InstationaryProblem| with a |StationaryProblem| as stationary part
-    using finite elements.
+    """Finite Element discretization of an |InstationaryProblem|.
+
+    Discretizes an |InstationaryProblem| with a |StationaryProblem| as the
+    stationary part using finite elements.
 
     Parameters
     ----------

@@ -55,7 +55,8 @@ MANUAL_SKIPS = ('RENDER_FRAGMENT_SHADER',
                 'pymor.vectorarrays.interface.VectorSpace.dim',
                 'pymor.vectorarrays.interface.VectorSpace.id',
                 'pymor.vectorarrays.interface.VectorSpace.is_scalar',
-)
+                )
+
 SKIPS_RE = re.compile(r'(?:{})'.format('|'.join(map(re.escape, sorted(MANUAL_SKIPS, key=len, reverse=True)))))
 
 

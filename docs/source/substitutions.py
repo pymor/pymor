@@ -158,7 +158,6 @@ common = '''
 
 .. |SymplecticBasis| replace:: :class:`~pymor.algorithms.symplectic.SymplecticBasis`
 .. |CanonicalSymplecticFormOperator| replace:: :class:`~pymor.operators.symplectic.CanonicalSymplecticFormOperator`
-
 '''
 
 substitutions = interfaces + common
