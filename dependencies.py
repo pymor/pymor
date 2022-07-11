@@ -185,6 +185,7 @@ disable = [
     "too-many-statements",
     "unidiomatic-typecheck",
     "unsubscriptable-object",
+    "R0801",
 ]
 '''
 if __name__ == '__main__':

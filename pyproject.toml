@@ -43,4 +43,5 @@ disable = [
     "too-many-statements",
     "unidiomatic-typecheck",
     "unsubscriptable-object",
+    "R0801",
 ]
