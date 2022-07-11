@@ -7,13 +7,16 @@ import scipy.linalg as spla
 import scipy.sparse as sps
 import scipy.sparse.linalg as spsla
 
-from pymor.algorithms.rules import RuleTable, match_class
+from pymor.algorithms.rules import RuleTable, match_class, match_always
 from pymor.core.config import config
+from pymor.core.exceptions import RuleNotMatchingError
 from pymor.operators.block import BlockOperatorBase
 from pymor.operators.constructions import (AdjointOperator, ComponentProjectionOperator, ConcatenationOperator,
                                            IdentityOperator, LincombOperator, LowRankOperator, LowRankUpdatedOperator,
-                                           VectorArrayOperator, ZeroOperator)
+                                           NumpyConversionOperator, VectorArrayOperator, ZeroOperator)
+from pymor.operators.interface import as_array_max_length
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def to_matrix(op, format=None, mu=None):
@@ -37,6 +40,7 @@ def to_matrix(op, format=None, mu=None):
         The matrix equivalent to `op`.
     """
     assert format is None or format in ('dense', 'bsr', 'coo', 'csc', 'csr', 'dia', 'dok', 'lil')
+    assert op.linear
     op = op.assemble(mu)
     return ToMatrixRules(format, mu).apply(op)
 
@@ -189,6 +193,24 @@ class ToMatrixRules(RuleTable):
             return np.zeros((op.range.dim, op.source.dim))
         else:
             return getattr(sps, format + '_matrix')((op.range.dim, op.source.dim))
+
+    @match_always
+    def action_as_array(self, op):
+        if op.source.dim < as_array_max_length():
+            if not isinstance(op.source, NumpyVectorSpace):
+                op = op @ NumpyConversionOperator(op.source, 'from_numpy')
+            try:
+                return op.as_range_array(mu=self.mu).to_numpy().T
+            except NotImplementedError:
+                pass
+        if op.range.dim < as_array_max_length():
+            if not isinstance(op.range, NumpyVectorSpace):
+                op = NumpyConversionOperator(op.source, 'to_numpy') @ op
+            try:
+                return op.as_source_array(mu=self.mu).to_numpy()
+            except NotImplementedError:
+                pass
+        raise RuleNotMatchingError
 
 
 if config.HAVE_DUNEGDT:

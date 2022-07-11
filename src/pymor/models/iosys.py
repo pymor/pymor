@@ -1,6 +1,7 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+from numbers import Number
 
 import numpy as np
 import scipy.linalg as spla
@@ -16,9 +17,11 @@ from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.models.interface import Model
 from pymor.models.transfer_function import FactorizedTransferFunction
+from pymor.models.transforms import BilinearTransformation, MoebiusTransformation
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
-from pymor.operators.constructions import IdentityOperator, LincombOperator, LowRankOperator, ZeroOperator
+from pymor.operators.constructions import (IdentityOperator, InverseOperator, LincombOperator, LowRankOperator,
+                                           ZeroOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Parameters, Mu
 from pymor.vectorarrays.block import BlockVectorSpace
@@ -938,6 +941,103 @@ class LTIModel(Model):
             ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, 0, :][:, idx].T)
 
             return ast_lev, ast_ews[idx], ast_rev
+
+    def moebius_substitution(self, M, sampling_time=0):
+        r"""Create a transformed |LTIModel| by applying an arbitrary Moebius transformation.
+
+        This method returns a transformed |LTIModel| such that the transfer function of the original
+        and transformed |LTIModel| are related by a Moebius substitution of the frequency argument:
+
+        .. math::
+            H(s)=\tilde{H}(M(s)),
+
+        where
+
+        .. math::
+            M(s) = \frac{as+b}{cs+d}
+
+        is a Moebius transformation. See :cite:`CCA96` for details.
+
+        Parameters
+        ----------
+        M
+            The |MoebiusTransformation| that defines the frequency mapping.
+        sampling_time
+            The sampling time of the transformed system (in seconds). `0` if the system is
+            continuous-time, otherwise a positive number. Defaults to zero.
+
+        Returns
+        -------
+        sys
+            The transformed |LTIModel|.
+        """
+        assert isinstance(M, MoebiusTransformation)
+
+        a, b, c, d = M.coefficients
+        s = a * d - b * c
+        v = np.sqrt(np.abs(s))
+
+        Et = d * self.E + c * self.A
+        At = a * self.A + b * self.E
+        Bt = np.sign(s) * v * self.B
+        Ct = v * self.C @ InverseOperator(Et)
+        Dt = self.D - c * self.C @ InverseOperator(Et) @ self.B
+
+        return LTIModel(At, Bt, Ct, D=Dt, E=Et, sampling_time=sampling_time)
+
+    def to_discrete(self, sampling_time, method='Tustin', w0=0):
+        """Converts a continuous-time |LTIModel| to a discrete-time |LTIModel|.
+
+        Parameters
+        ----------
+        sampling_time
+            A positive number that denotes the sampling time of the resulting system (in seconds).
+        method
+            A string that defines the transformation method. At the moment only Tustin's method is
+            supported.
+        w0
+            If `method=='Tustin'`, this parameter can be used to specify the prewarping-frequency.
+            Defaults to zero.
+
+        Returns
+        -------
+        sys
+            Discrete-time |LTIModel|.
+        """
+        if method != 'Tustin':
+            return NotImplementedError
+        assert self.sampling_time == 0
+        sampling_time = float(sampling_time)
+        assert sampling_time > 0
+        assert isinstance(w0, Number)
+        x = 2 / sampling_time if w0 == 0 else w0 / np.tan(w0 * sampling_time / 2)
+        c2d = BilinearTransformation(x).inverse()
+        return self.moebius_substitution(c2d, sampling_time=sampling_time)
+
+    def to_continuous(self, method='Tustin', w0=0):
+        """Converts a discrete-time |LTIModel| to a continuous-time |LTIModel|.
+
+        Parameters
+        ----------
+        method
+            A string that defines the transformation method. At the moment only Tustin's method is
+            supported.
+        w0
+            If `method=='Tustin'`, this parameter can be used to specify the prewarping-frequency.
+            Defaults to zero.
+
+        Returns
+        -------
+        sys
+            Continuous-time |LTIModel|.
+        """
+        if method != 'Tustin':
+            return NotImplementedError
+        assert self.sampling_time > 0
+        assert isinstance(w0, Number)
+        x = 2 / self.sampling_time if w0 == 0 else w0 / np.tan(w0 * self.sampling_time / 2)
+        d2c = BilinearTransformation(x)
+        return self.moebius_substitution(d2c, sampling_time=0)
 
 
 class PHLTIModel(Model):
