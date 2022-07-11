@@ -37,7 +37,9 @@ class ReferenceElement(CacheableObject):
 
     @abstractmethod
     def subentities(self, codim, subentity_codim):
-        """`subentities(c,sc)[i,j]` is, with respect to the indexing inside the
+        """Return subentities.
+
+        `subentities(c,sc)[i,j]` is, with respect to the indexing inside the
         reference element, the index of the `j`-th codim-`subentity_codim`
         subentity of the `i`-th codim-`codim` subentity of the reference element.
         """
@@ -45,7 +47,9 @@ class ReferenceElement(CacheableObject):
 
     @abstractmethod
     def subentity_embedding(self, subentity_codim):
-        """Returns a tuple `(A, B)` which defines the embedding of the codim-`subentity_codim`
+        """Return subentity embedding.
+
+        Returns a tuple `(A, B)` which defines the embedding of the codim-`subentity_codim`
         subentities into the reference element.
 
         For `subentity_codim > 1', the embedding is by default given recursively via
@@ -93,9 +97,7 @@ class ReferenceElement(CacheableObject):
 
     @abstractmethod
     def unit_outer_normals(self):
-        """`retval[e]` is the unit outer-normal vector to the codim-1 subentity
-        with index `e`.
-        """
+        """`retval[e]` is the unit outer-normal vector to the codim-1 subentity with index `e`."""
         pass
 
     @abstractmethod
@@ -105,15 +107,19 @@ class ReferenceElement(CacheableObject):
 
     @abstractmethod
     def mapped_diameter(self, A):
-        """The diameter of the reference element after transforming it with the
-        matrix `A` (vectorized).
+        """Return the diameter after transformation.
+
+        The diameter of the reference element after transforming it with the matrix `A`
+        (vectorized).
         """
         pass
 
     @abstractmethod
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
-        """Returns tuple `(P, W)` where `P` is an array of quadrature points with
-        corresponding weights `W`.
+        """Return quadrature points and weights.
+
+        Returns tuple `(P, W)` where `P` is an array of quadrature points with corresponding weights
+        `W`.
 
         The quadrature is of order `order` or has `npoints` integration points.
         """
@@ -121,7 +127,9 @@ class ReferenceElement(CacheableObject):
 
     @abstractmethod
     def quadrature_info(self):
-        """Returns a tuple of dicts `(O, N)` where `O[quadrature_type]` is a list
+        """Return quadrature information.
+
+        Returns a tuple of dicts `(O, N)` where `O[quadrature_type]` is a list
         of orders which are implemented for `quadrature_type` and `N[quadrature_type]`
         is a list of the corresponding numbers of integration points.
         """
@@ -133,7 +141,9 @@ class ReferenceElement(CacheableObject):
 
 
 class Grid(CacheableObject):
-    """Topological grid with geometry where each codim-0 entity is affinely mapped to the same
+    """Affine grid.
+
+    Topological grid with geometry where each codim-0 entity is affinely mapped to the same
     |ReferenceElement|.
 
     The grid is completely determined via the subentity relation given by :meth:`~Grid.subentities`
@@ -156,7 +166,9 @@ class Grid(CacheableObject):
 
     @abstractmethod
     def subentities(self, codim, subentity_codim):
-        """`retval[e,s]` is the global index of the `s`-th codim-`subentity_codim` subentity of the
+        """Return subentities.
+
+        `retval[e,s]` is the global index of the `s`-th codim-`subentity_codim` subentity of the
         codim-`codim` entity with global index `e`.
 
         The ordering of `subentities(0, subentity_codim)[e]` has to correspond, w.r.t. the embedding
@@ -193,8 +205,10 @@ class Grid(CacheableObject):
         return SSE
 
     def superentities(self, codim, superentity_codim):
-        """`retval[e,s]` is the global index of the `s`-th codim-`superentity_codim` superentity of
-        the codim-`codim` entity with global index `e`.
+        """Return superentities.
+
+        `retval[e,s]` is the global index of the `s`-th codim-`superentity_codim` superentity of the
+        codim-`codim` entity with global index `e`.
 
         `retval[e]` is sorted by global index.
 
@@ -208,7 +222,9 @@ class Grid(CacheableObject):
         return self._superentities_with_indices(codim, superentity_codim)[0]
 
     def superentity_indices(self, codim, superentity_codim):
-        """`retval[e,s]` is the local index of the codim-`codim` entity `e` in the
+        """Return indices of superentities.
+
+        `retval[e,s]` is the local index of the codim-`codim` entity `e` in the
         codim-`superentity_codim` superentity `superentities(codim, superentity_codim)[e,s].`
         """
         return self._superentity_indices(codim, superentity_codim)
@@ -285,8 +301,9 @@ class Grid(CacheableObject):
             return NB
 
     def boundary_mask(self, codim):
-        """`retval[e]` is true iff the codim-`codim` entity with global index `e` is a boundary
-        entity.
+        """Return boundary mask.
+
+        `retval[e]` is true iff the codim-`codim` entity with global index `e` is a boundary entity.
 
         By definition, a codim-1 entity is a boundary entity if it has only one codim-0 superentity.
         For `codim != 1`, a codim-`codim` entity is a boundary entity if it has a codim-1
@@ -344,7 +361,9 @@ class Grid(CacheableObject):
 
     @abstractmethod
     def embeddings(self, codim):
-        """Returns tuple `(A, B)` where `A[e]` and `B[e]` are the linear part and the translation
+        """Return embeddings.
+
+        Returns tuple `(A, B)` where `A[e]` and `B[e]` are the linear part and the translation
         part of the map from the reference element of `e` to `e`.
 
         For `codim > 0`, we provide a default implementation by taking the embedding of the codim-1
@@ -371,8 +390,9 @@ class Grid(CacheableObject):
         return A, B
 
     def jacobian_inverse_transposed(self, codim):
-        """`retval[e]` is the transposed (pseudo-)inverse of
-        the Jacobian of `embeddings(codim)[e]`.
+        """Return the inverse of transposed Jacobian.
+
+        `retval[e]` is the transposed (pseudo-)inverse of the Jacobian of `embeddings(codim)[e]`.
         """
         return self._jacobian_inverse_transposed(codim)
 
@@ -415,8 +435,10 @@ class Grid(CacheableObject):
         return np.sqrt(D)
 
     def volumes(self, codim):
-        """`retval[e]` is the (dim-`codim`)-dimensional volume of the codim-`codim` entity with
-        global index `e`.
+        """Return volumes.
+
+        `retval[e]` is the (dim-`codim`)-dimensional volume of the codim-`codim` entity with global
+        index `e`.
         """
         return self._volumes(codim)
 
@@ -437,8 +459,10 @@ class Grid(CacheableObject):
         return np.reciprocal(self.volumes(codim))
 
     def unit_outer_normals(self):
-        """`retval[e,i]` is the unit outer normal to the i-th codim-1 subentity of the codim-0
-        entity with global index `e`.
+        """Return unit outer normals.
+
+        `retval[e,i]` is the unit outer normal to the i-th codim-1 subentity of the codim-0 entity
+        with global index `e`.
         """
         return self._unit_outer_normals()
 
@@ -522,7 +546,9 @@ class GridWithOrthogonalCenters(Grid):
 
     @abstractmethod
     def orthogonal_centers(self):
-        """`retval[e]` is a point inside the codim-0 entity with global index `e` such that the line
+        """Return orthogonal centers.
+
+        `retval[e]` is a point inside the codim-0 entity with global index `e` such that the line
         segment from `retval[e]` to `retval[e2]` is always orthogonal to the codim-1 entity shared
         by the codim-0 entities with global index `e` and `e2`.
 
@@ -547,19 +573,25 @@ class BoundaryInfo(CacheableObject):
     cache_region = 'memory'
 
     def mask(self, boundary_type, codim):
-        """retval[i] is `True` if the codim-`codim` entity of global index `i` is associated to the
+        """Return mask.
+
+        retval[i] is `True` if the codim-`codim` entity of global index `i` is associated to the
         boundary type `boundary_type`.
         """
         raise ValueError(f'Has no boundary_type "{boundary_type}"')
 
     def unique_boundary_type_mask(self, codim):
-        """retval[i] is `True` if the codim-`codim` entity of global index `i` is associated to one
+        """Return unique boundary type mask.
+
+        retval[i] is `True` if the codim-`codim` entity of global index `i` is associated to one
         and only one boundary type.
         """
         return np.less_equal(sum(self.mask(bt, codim=codim).astype(int) for bt in self.boundary_types), 1)
 
     def no_boundary_type_mask(self, codim):
-        """retval[i] is `True` if the codim-`codim` entity of global index `i` is associated to no
+        """Return no boundary type mask.
+
+        retval[i] is `True` if the codim-`codim` entity of global index `i` is associated to no
         boundary type.
         """
         return np.equal(sum(self.mask(bt, codim=codim).astype(int) for bt in self.boundary_types), 0)
