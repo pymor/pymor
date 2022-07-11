@@ -104,7 +104,7 @@ SYS_MOR_ARGS = (
     ('string_equation', [25, 2]),
     ('parametric_heat', [0.02, 2]),
     ('parametric_delay', [2]),
-    ('parametric_string', [25, 2]),
+    ('parametric_string', [5, 2]),
     ('parametric_synthetic', [100, 2]),
     ('unstable_heat', [50, 10]),
 )
