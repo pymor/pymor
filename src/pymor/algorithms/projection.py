@@ -219,14 +219,14 @@ class ProjectRules(RuleTable):
     def action_BlockOperatorBase(self, op):
         if op.blocked_range:
             if self.range_basis is not None:
-                range_bases = self.range_basis._blocks
+                range_bases = self.range_basis.blocks
             else:
                 range_bases = [None] * len(op.range.subspaces)
         else:
             range_bases = [self.range_basis]
         if op.blocked_source:
             if self.source_basis is not None:
-                source_bases = self.source_basis._blocks
+                source_bases = self.source_basis.blocks
             else:
                 source_bases = [None] * len(op.source.subspaces)
         else:

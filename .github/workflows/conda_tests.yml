@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.9.1
+        uses: styfle/cancel-workflow-action@0.10.0
         with:
           all_but_latest: true
           # also works on 'pull_request' targets
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Upload
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Event File
         path: ${{ github.event_path }}
@@ -39,22 +39,17 @@ jobs:
     strategy:
         matrix:
             os: [ubuntu-20.04, macos-11, windows-2022]
-            python: [3.7, 3.9]
+            python: [3.8, 3.9]
             include:
               - os: ubuntu-20.04
                 prefix: /usr/share/miniconda3/envs/pyMOR-ci
               - os: macos-11
                 prefix: /Users/runner/miniconda3/envs/pyMOR-ci
               - os: macos-10.15
-                python: 3.7
+                python: 3.8
                 prefix: /Users/runner/miniconda3/envs/pyMOR-ci
               - os: windows-2022
                 prefix: C:\Miniconda3\envs\pyMOR-ci
-            exclude:
-              # these two don't mix WRT opengl loading: https://github.com/python/cpython/pull/21241
-              # explicitly include older macos for python 3.7 instead
-              - os: macos-11
-                python: 3.7
             # avoid failure in one job immeadiately cancelling all others
         fail-fast: false
     steps:
@@ -77,7 +72,7 @@ jobs:
           ./mesa/systemwidedeploy.cmd
 
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: pyMOR-ci
@@ -93,11 +88,11 @@ jobs:
         run: |
           ./dependencies.py && git diff --exit-code requirements* pyproject.toml
       - name: Cache conda
-        uses: actions/cache@v2
+        uses: martijnhols/actions-cache@v3.0.4
         id: cache
         env:
           # Increase this value to reset cache if .ci/conda-env.yml have not changed
-          CACHE_NUMBER: 1
+          CACHE_NUMBER: 2
         with:
           path: ${{ matrix.prefix }}
           key:
@@ -144,7 +139,7 @@ jobs:
           COMMON_PYTEST_OPTS: "--cov-report=xml --cov --cov-config=setup.cfg --cov-context=test --junitxml=${RESULTS_FILE}"
         run: |
             ${PYTEST_PREFIX} pytest ${COMMON_PYTEST_OPTS}
-      - uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v3
         name: Upload coverage
         with:
           flags: github_actions,${{ matrix.os }}
@@ -152,13 +147,78 @@ jobs:
           verbose: true
       - name: Upload Unit Test Results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Unit Test Results (Python ${{ matrix.python }}, OS ${{ runner.os }})
           path: result_*.xml
       - name: Upload Conda Env Export
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Conda Env Exports
           path: conda-env__${{ runner.os }}-${{ matrix.python }}.yml
+  full_install:
+    name: Conda ${{ matrix.os }} - Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+        matrix:
+            os: [ubuntu-20.04, macos-11, windows-2022]
+            python: [3.8, 3.9]
+            include:
+              - os: ubuntu-20.04
+                prefix: /usr/share/miniconda3/envs/pyMOR-ci
+              - os: macos-11
+                prefix: /Users/runner/miniconda3/envs/pyMOR-ci
+              - os: macos-10.15
+                python: 3.8
+                prefix: /Users/runner/miniconda3/envs/pyMOR-ci
+              - os: windows-2022
+                prefix: C:\Miniconda3\envs\pyMOR-ci
+            # avoid failure in one job immeadiately cancelling all others
+        fail-fast: true
+    steps:
+      - name: Install required X libs (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
+      - name: Install
+        if: runner.os == 'Windows'
+        run: |
+          curl --output mesa.7z -L https://github.com/pal1000/mesa-dist-win/releases/download/20.3.4/mesa3d-20.3.4-release-msvc.7z
+          7z x mesa.7z -omesa -y
+
+
+          # The script requires user input (choice of options) so need to
+          # fiddle to get it to run automatically. Not a clean way to do it,
+          # but works.
+          sed -i 's/@echo Please make a deployment choice:/@GOTO desktopgl/g' ./mesa/systemwidedeploy.cmd
+          sed -i 's/@echo Desktop OpenGL drivers deploy complete./@exit/g' ./mesa/systemwidedeploy.cmd
+          ./mesa/systemwidedeploy.cmd
+
+
+      - uses: actions/checkout@v3
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: pyMOR-ci
+          miniforge-variant: Mambaforge
+          use-mamba: true
+          python-version: ${{ matrix.python }}
+          channels: conda-forge
+          channel-priority: true
+           # This needs to be set for caching to work properly!
+          use-only-tar-bz2: true
+      - name: Cache conda
+        # only restore here, since pip install might bring things into the cache
+        # that aren't controlled via the .ci/conda-env.yml file
+        uses: martijnhols/actions-cache/restore@v3.0.4
+        id: cache
+        env:
+          # Increase this value to reset cache if .ci/conda-env.yml have not changed
+          CACHE_NUMBER: 2
+        with:
+          path: ${{ matrix.prefix }}
+          key:
+            ${{ runner.os }}-${{ matrix.python }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.ci/conda-env.yml') }}
+      - name: Install pyMOR
+        shell: bash -l {0}
+        run: pip install .[full]

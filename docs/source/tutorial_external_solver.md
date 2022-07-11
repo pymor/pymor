@@ -163,7 +163,7 @@ construct the right-hand side vector for our problem.
 This completes the {download}`model.cc <minimal_cpp_demo/model.cc>`.
 
 This extension module needs to be compiled to a shared object that the Python interpreter can import.
-We use a minimal [CMake](<http://cmake.org/>) project that generates makefiles for us to achieve this.
+We use a minimal [CMake](<https://cmake.org/>) project that generates makefiles for us to achieve this.
 
 First we make sure pybind11 can be used:
 
@@ -333,7 +333,7 @@ class WrappedDiffusionOperator(Operator):
             self.op.apply(u._impl, v)
             return v
 
-        return self.range.make_array([apply_one_vector(u) for u in U._list])
+        return self.range.make_array([apply_one_vector(u) for u in U.vectors])
 ```
 
 ## Putting it all together
@@ -371,7 +371,7 @@ def discretize(n, nt, blocks):
     initial_data = operator.source.zeros()
 
     rhs_vec = operator.range.zeros()
-    rhs_data = rhs_vec._data[0]
+    rhs_data = rhs_vec.vectors[0].to_numpy()
     rhs_data[:] = np.ones(len(rhs_data))
     rhs_data[0] = 0
     rhs_data[len(rhs_data) - 1] = 0

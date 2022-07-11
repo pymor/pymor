@@ -38,7 +38,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         Mesh element size scaling factor.
     options
         Other options to control the meshing procedure of Gmsh. See
-        http://geuz.org/gmsh/doc/texinfo/gmsh.html#Command_002dline-options for all available
+        https://gmsh.info/doc/texinfo/gmsh.html#Command_002dline-options for all available
         options.
     refinement_steps
         Number of refinement steps to do after the initial meshing.
@@ -64,7 +64,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         version = subprocess.check_output(['gmsh', '--version'], stderr=subprocess.STDOUT, env=env).decode()
     except (subprocess.CalledProcessError, OSError):
         raise GmshMissing('Could not find Gmsh.'
-                          ' Please ensure that the gmsh binary (http://geuz.org/gmsh/) is in your PATH.')
+                          ' Please ensure that the gmsh binary (https://gmsh.info/) is in your PATH.')
 
     logger.info('Found version ' + version.strip())
 

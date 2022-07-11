@@ -9,7 +9,10 @@ source ${THIS_DIR}/common_test_setup.bash
 # while ignoring the mpirun result itself
 xvfb-run -a mpirun --timeout 1200 --mca btl self,vader -n 2 coverage run --rcfile=setup.cfg \
   --parallel-mode src/pymortests/mpi_run_demo_tests.py || true
-[[ "$(cat pytest.mpirun.success)" == "True" ]] || exit 127
+
+for fn in ./.mpirun_*/pytest.mpirun.success ; do
+  [[ "$(cat ${fn})" == "True" ]] || exit 127
+done
 
 coverage combine
 # the test_thermalblock_ipython results in '(builtin)' missing which we "--ignore-errors"

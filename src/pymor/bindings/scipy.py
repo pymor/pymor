@@ -4,7 +4,7 @@
 
 
 import numpy as np
-from scipy.linalg import solve, solve_continuous_lyapunov, solve_continuous_are
+from scipy.linalg import solve, solve_continuous_lyapunov, solve_discrete_lyapunov, solve_continuous_are
 from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
 
 from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args, _solve_lyap_dense_check_args, _chol
@@ -197,7 +197,7 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
     if options['type'] == 'scipy_bicgstab':
         for i, VV in enumerate(V):
             R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
-                                  tol=options['tol'], maxiter=options['maxiter'])
+                                  tol=options['tol'], maxiter=options['maxiter'], atol='legacy')
             if info != 0:
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
@@ -210,7 +210,7 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
         precond = LinearOperator(matrix.shape, ilu.solve)
         for i, VV in enumerate(V):
             R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
-                                  tol=options['tol'], maxiter=options['maxiter'], M=precond)
+                                  tol=options['tol'], maxiter=options['maxiter'], M=precond, atol='legacy')
             if info != 0:
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
@@ -311,21 +311,24 @@ def lyap_lrcf_solver_options():
     return {'scipy': {'type': 'scipy'}}
 
 
-def solve_lyap_lrcf(A, E, B, trans=False, options=None):
+def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_lyap_lrcf` for a general
-    description.
+    See
 
-    This function uses `scipy.linalg.solve_continuous_lyapunov`, which
-    is a dense solver for Lyapunov equations with E=I.
-    Therefore, we assume A and E can be converted to |NumPy arrays|
-    using :func:`~pymor.algorithms.to_matrix.to_matrix` and that
-    `B.to_numpy` is implemented.
+    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf`
+    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_lrcf`
+
+    for a general description.
+
+    This function uses `scipy.linalg.solve_continuous_lyapunov` or
+    `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers for Lyapunov equations with E=I.
+    Therefore, we assume A and E can be converted to |NumPy arrays| using
+    :func:`~pymor.algorithms.to_matrix.to_matrix` and that `B.to_numpy` is implemented.
 
     .. note::
-        If E is not `None`, the problem will be reduced to a standard
-        continuous-time algebraic Lyapunov equation by inverting E.
+        If E is not `None`, the problem will be reduced to a standard algebraic
+        Lyapunov equation by inverting E.
 
     Parameters
     ----------
@@ -336,17 +339,16 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     B
         The operator B as a |VectorArray| from `A.source`.
     trans
-        Whether the first |Operator| in the Lyapunov equation is
-        transposed.
+        Whether the first |Operator| in the Lyapunov equation is transposed.
+    cont_time
+        Whether the continuous- or discrete-time Lyapunov equation is solved.
     options
-        The solver options to use (see
-        :func:`lyap_lrcf_solver_options`).
+        The solver options to use (see :func:`lyap_lrcf_solver_options`).
 
     Returns
     -------
     Z
-        Low-rank Cholesky factor of the Lyapunov equation solution,
-        |VectorArray| from `A.source`.
+        Low-rank Cholesky factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
     """
     _solve_lyap_lrcf_check_args(A, E, B, trans)
     options = _parse_options(options, lyap_lrcf_solver_options(), 'scipy', None, False)
@@ -354,7 +356,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, options=None):
     X = solve_lyap_dense(to_matrix(A, format='dense'),
                          to_matrix(E, format='dense') if E else None,
                          B.to_numpy().T if not trans else B.to_numpy(),
-                         trans=trans, options=options)
+                         trans=trans, cont_time=cont_time, options=options)
     return A.source.from_numpy(_chol(X).T)
 
 
@@ -368,18 +370,22 @@ def lyap_dense_solver_options():
     return {'scipy': {'type': 'scipy'}}
 
 
-def solve_lyap_dense(A, E, B, trans=False, options=None):
+def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     """Compute the solution of a Lyapunov equation.
 
-    See :func:`pymor.algorithms.lyapunov.solve_lyap_dense` for a
-    general description.
+    See
 
-    This function uses `scipy.linalg.solve_continuous_lyapunov`, which
-    is a dense solver for Lyapunov equations with E=I.
+    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_dense`
+    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_dense`
+
+    for a general description.
+
+    This function uses `scipy.linalg.solve_continuous_lyapunov` or
+    `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers for Lyapunov equations with E=I.
 
     .. note::
-        If E is not `None`, the problem will be reduced to a standard
-        continuous-time algebraic Lyapunov equation by inverting E.
+        If E is not `None`, the problem will be reduced to a standard algebraic
+        Lyapunov equation by inverting E.
 
     Parameters
     ----------
@@ -390,11 +396,11 @@ def solve_lyap_dense(A, E, B, trans=False, options=None):
     B
         The matrix B as a 2D |NumPy array|.
     trans
-        Whether the first operator in the Lyapunov equation is
-        transposed.
+        Whether the first operator in the Lyapunov equation is transposed.
+    cont_time
+        Whether the continuous- or discrete-time Lyapunov equation is solved.
     options
-        The solver options to use (see
-        :func:`lyap_dense_solver_options`).
+        The solver options to use (see :func:`lyap_dense_solver_options`).
 
     Returns
     -------
@@ -411,7 +417,10 @@ def solve_lyap_dense(A, E, B, trans=False, options=None):
         if trans:
             A = A.T
             B = B.T
-        X = solve_continuous_lyapunov(A, -B.dot(B.T))
+        if cont_time:
+            X = solve_continuous_lyapunov(A, -B @ B.T)
+        else:
+            X = solve_discrete_lyapunov(A, B @ B.T)
     else:
         raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 

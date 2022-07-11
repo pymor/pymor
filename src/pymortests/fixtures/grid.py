@@ -18,7 +18,8 @@ def hy_domain_bounds(draw, grid_type):
     # domain points are limited to allow their norm2 computations
     # TODO: allow negative coordinate points
     max_abs = grid_type.MAX_DOMAIN_WIDTH / 2
-    domain_point = hyst.floats(allow_infinity=False, allow_nan=False, min_value=0, max_value=max_abs)
+    min_abs = grid_type.MIN_DOMAIN_WIDTH / 2
+    domain_point = hyst.floats(allow_infinity=False, allow_nan=False, min_value=min_abs, max_value=max_abs)
 
     def _filter(d):
         return all(l < r for l, r in zip(ll, d)) and grid_type._check_domain((ll, d))

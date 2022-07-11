@@ -60,7 +60,7 @@ class NumpyGenericOperator(Operator):
     linear
         Set to `True` if the provided `mapping` and `adjoint_mapping` are linear.
     parameters
-        The |Parameters| the depends on.
+        The |Parameters| the operator depends on.
     solver_options
         The |solver_options| for the operator.
     name

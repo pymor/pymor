@@ -1,0 +1,24 @@
+name: autoupdate CI config
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.ci/**'
+      - '.github/**'
+      - '.env'
+jobs:
+  autoupdate:
+    name: autoupdate
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: chinthakagodawita/autoupdate-action@v1.6.0
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+          DRY_RUN: "true"
+          PR_FILTER: "labelled"
+          EXCLUDED_LABELS: "infrastructure,autoupdate"
+          MERGE_MSG: "Branch was auto-updated."
+          RETRY_COUNT: "5"
+          RETRY_SLEEP: "300"
+          MERGE_CONFLICT_ACTION: "fail"

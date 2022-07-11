@@ -12,7 +12,7 @@ from hypothesis import strategies as hyst
 from pymor.algorithms.basic import almost_equal
 from pymor.core.config import config
 from pymor.vectorarrays.interface import VectorSpace
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.tools.floatcmp import float_cmp, bounded
 from pymortests.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
@@ -132,7 +132,7 @@ def test_full(vector_array):
 @pyst.given_vector_arrays(realizations=hyst.integers(min_value=0, max_value=MAX_RNG_REALIZATIONS),
                           low=hyst.floats(allow_infinity=False, allow_nan=False),
                           high=hyst.floats(allow_infinity=False, allow_nan=False))
-@example(vector_array=NumpyVectorArray([], NumpyVectorSpace(1)), realizations=2,
+@example(vector_array=NumpyVectorSpace(1).empty(), realizations=2,
          low=-5e-324, high=0.0)
 def test_random_uniform_all(vector_array, realizations, low, high):
     if config.HAVE_DUNEGDT:
@@ -291,7 +291,7 @@ def test_copy(vectors_and_indices):
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
-@example(vectors_and_indices=(NumpyVectorArray(np.array([[2.22044605e-16]]), NumpyVectorSpace(1)), [0]))
+@example(vectors_and_indices=(NumpyVectorSpace(1).full(2.22044605e-16, 1), [0]))
 def test_COW(vectors_and_indices):
     v, ind = vectors_and_indices
     for deep in (True, False):
@@ -334,15 +334,6 @@ def test_copy_repeated_index(vector_array):
             assert indexed(v.to_numpy(), ind).shape == c.to_numpy().shape
         except NotImplementedError:
             pass
-
-
-@pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
-def test_normalize_ind(vectors_and_indices):
-    v, ind = vectors_and_indices
-    assert v.check_ind(ind)
-    normalized = v.normalize_ind(ind)
-    assert v.len_ind(normalized) == v.len_ind(ind)
-    assert v.len_ind_unique(normalized) == v.len_ind_unique(ind)
 
 
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_both_lengths)
@@ -596,7 +587,7 @@ def test_pairwise_inner(vector_arrays):
         assert r.shape == (v1.len_ind(ind1),)
         r2 = v2[ind2].pairwise_inner(v1[ind1])
         assert np.allclose, (r, r2)
-        assert np.all(r <= v1[ind1].norm() * v2[ind2].norm() * (1. + 1e-10))
+        assert np.all(r <= (v1[ind1].norm() * v2[ind2].norm() * (1. + 1e-10) + 1e-15))
         try:
             assert np.allclose(r, np.sum(indexed(v1.to_numpy(), ind1).conj() * indexed(v2.to_numpy(), ind2), axis=1))
         except NotImplementedError:
@@ -611,7 +602,7 @@ def test_pairwise_inner_self(vectors_and_indices):
     assert r.shape == (v.len_ind(ind1),)
     r2 = v[ind2].pairwise_inner(v[ind1])
     assert np.allclose(r, r2.T.conj())
-    assert np.all(r <= v[ind1].norm() * v[ind2].norm() * (1. + 1e-10))
+    assert np.all(r <= (v[ind1].norm() * v[ind2].norm() * (1. + 1e-10) + 1e-15))
     try:
         assert np.allclose(r, np.sum(indexed(v.to_numpy(), ind1).conj() * indexed(v.to_numpy(), ind2), axis=1))
     except NotImplementedError:
@@ -630,7 +621,7 @@ def test_inner(vectors_and_indices):
     assert r.shape == (v1.len_ind(ind1), v2.len_ind(ind2))
     r2 = v2[ind2].inner(v1[ind1])
     assert np.allclose(r, r2.T.conj())
-    assert np.all(r <= v1[ind1].norm()[:, np.newaxis] * v2[ind2].norm()[np.newaxis, :] * (1. + 1e-10))
+    assert np.all(r <= (v1[ind1].norm()[:, np.newaxis] * v2[ind2].norm()[np.newaxis, :] * (1. + 1e-10) + 1e-15))
     try:
         assert np.allclose(r, indexed(v1.to_numpy(), ind1).conj().dot(indexed(v2.to_numpy(), ind2).T))
     except NotImplementedError:
@@ -646,7 +637,7 @@ def test_inner_self(vectors_and_indices):
     assert r.shape == (v.len_ind(ind1), v.len_ind(ind2))
     r2 = v[ind2].inner(v[ind1])
     assert np.allclose(r, r2.T.conj())
-    assert np.all(r <= v[ind1].norm()[:, np.newaxis] * v[ind2].norm()[np.newaxis, :] * (1. + 1e-10))
+    assert np.all(r <= (v[ind1].norm()[:, np.newaxis] * v[ind2].norm()[np.newaxis, :] * (1. + 1e-10) + 1e-15))
     try:
         assert np.allclose(r, indexed(v.to_numpy(), ind1).conj().dot(indexed(v.to_numpy(), ind2).T))
     except NotImplementedError:

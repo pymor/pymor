@@ -12,8 +12,10 @@ import hypothesis
 import numpy as np
 from pickle import dump, load
 from pkg_resources import resource_filename, resource_stream
+from pytest import skip
 
 from pymor.algorithms.basic import almost_equal, relative_error
+from pymor.core.exceptions import DependencyMissing
 
 
 def runmodule(filename):
@@ -90,5 +92,29 @@ def might_exceed_deadline(deadline=-1):
                 dl = hypothesis.settings.default.deadline.total_seconds() * 1e3
             assert dl is None or dl > 1
             return hypothesis.settings(deadline=dl)(func)(*args, **kwargs)
+        return _inner_wrapper
+    return _outer_wrapper
+
+
+def skip_if_missing(config_name):
+    """Wrapper for requiring certain module dependencies on tests.
+
+    Parameters
+    ----------
+    config_name
+        if `pymor.core.config.HAVE_config_name` evaluates to `False` and we're not in the
+        Docker CI environment, the test is skipped.
+    """
+    def _outer_wrapper(func):
+        @wraps(func)
+        def _inner_wrapper(*args, **kwargs):
+            try:
+                func(*args, **kwargs)
+            except DependencyMissing as dm:
+                # skip does not return
+                if config_name in str(dm.dependency) and not os.environ.get('DOCKER_PYMOR', False):
+                    skip_string = 'skipped test due to missing dependency ' + config_name
+                    skip(skip_string)
+                raise dm
         return _inner_wrapper
     return _outer_wrapper

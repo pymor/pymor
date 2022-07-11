@@ -12,12 +12,21 @@
 
 ### pyMOR 2022.1
 
+* Patrick Buchfink, patrick.buchfink@ians.uni-stuttgart.de
+  * symplectic model order reduction
+
+* Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
+  * several additional features for neural networks
+
 * Peter Oehme, oehme.pb@gmail.com
   * support for UFL expression conversion
 
 * Art Pelling, a.pelling@tu-berlin.de
-  * support for discrete-time LTI systems
+  * support for discrete-time LTI systems, Lyapunov equations and balanced truncation
   * dedicated Hankel operator class
+
+* Sven Ullmann, ullmannsven@gmx.de
+  * randomized algorithms for generalized SVD and generalized Hermitian eigenvalue problem
 
 ### pyMOR 2021.2
 

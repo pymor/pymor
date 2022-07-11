@@ -33,7 +33,7 @@ def test_apply():
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Aop.apply(vva)
-    w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))
+    w = np.hstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
     assert np.allclose(A.dot(v), w)
 
 
@@ -59,7 +59,7 @@ def test_apply_adjoint():
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Aop.apply_adjoint(vva)
-    w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))
+    w = np.hstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
     assert np.allclose(A.T.dot(v), w)
 
 
@@ -92,7 +92,7 @@ def test_blk_diag_apply_inverse():
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Cop.apply_inverse(vva)
-    w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))
+    w = np.hstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
     assert np.allclose(spla.solve(C, v), w)
 
 
@@ -114,5 +114,5 @@ def test_blk_diag_apply_inverse_adjoint():
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Cop.apply_inverse_adjoint(vva)
-    w = np.hstack((wva.block(0).to_numpy(), wva.block(1).to_numpy()))
+    w = np.hstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
     assert np.allclose(spla.solve(C.T, v), w)
