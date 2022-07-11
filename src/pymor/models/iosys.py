@@ -593,9 +593,9 @@ class LTIModel(Model):
         elif typ == 'o_lrcf' and 'o_dense' in self.presets:
             return self.A.source.from_numpy(_chol(self.presets['o_dense']).T)
         elif typ == 'c_dense' and 'c_lrcf' in self.presets:
-            return self.presets['c_lrcf'].to_numpy().T @ self.presets['c_lrcf']
+            return self.presets['c_lrcf'].to_numpy().T @ self.presets['c_lrcf'].to_numpy()
         elif typ == 'o_dense' and 'o_lrcf' in self.presets:
-            return self.presets['o_lrcf'].to_numpy().T @ self.presets['o_lrcf']
+            return self.presets['o_lrcf'].to_numpy().T @ self.presets['o_lrcf'].to_numpy()
         else:
             A = self.A.assemble(mu)
             B = self.B
