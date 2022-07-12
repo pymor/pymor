@@ -15,13 +15,13 @@ def test_fenics_expression_vectorized():
     e = parse_expression('[1., 2.] + [x[0], x[1]]', {'x': 2})
     mesh = UnitSquareMesh(10, 10)
     f_fenics, f_fenics_params = e.to_fenics(mesh)
-    eval = f_fenics.item()([5., 2.])
+    eval = [f_fenics[0]([5., 2.]), f_fenics[1]([5., 2.])]
     val = [1. + 5., 2. + 2.]
 
     assert np.allclose(eval, val)
 
 
-def test_fenics_expression_vectorized():
+def test_fenics_expression_vectorized2():
     try:
         from dolfin import UnitSquareMesh
     except ImportError as ie:
@@ -31,7 +31,7 @@ def test_fenics_expression_vectorized():
     e = parse_expression('sin([x[0], x[1]])', {'x': 2})
     mesh = UnitSquareMesh(10, 10)
     f_fenics, f_fenics_params = e.to_fenics(mesh)
-    eval = f_fenics.item()([5., 2.])
+    eval = [f_fenics[0]([5., 2.]), f_fenics[1]([5., 2.])]
     val = [np.sin(5.), np.sin(2.)]
 
     assert np.allclose(eval, val)
