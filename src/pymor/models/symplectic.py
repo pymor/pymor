@@ -15,61 +15,11 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 class BaseQuadraticHamiltonianModel(InstationaryModel):
-    """Generic class for quadratic Hamiltonian systems.
+    """Base class of quadratic Hamiltonian systems.
 
-    This class describes Hamiltonian systems given by the equations::
-
-        ∂_t u(t, μ) = J * H_op(t, μ) * u(t, μ) + J * h(t, μ)
-            u(0, μ) = x_0(μ)
-
-    for t in [0,T], where H_op is a linear time-dependent |Operator|,
-    J is a canonical Poisson matrix, h is a (possibly) time-dependent
-    vector-like |Operator|, and x_0 the initial data.
-    The right-hand side of the Hamiltonian equation is J times the
-    gradient of the Hamiltonian
-
-        Ham(u, t, μ) = 1/2* u * H_op(t, μ) * u + u * h(t, μ)
-
-    Parameters
-    ----------
-    T
-        The final time T.
-    initial_data
-        The initial data `x_0`. Either a |VectorArray| of length 1 or
-        (for the |Parameter|-dependent case) a vector-like |Operator|
-        (i.e. a linear |Operator| with `source.dim == 1`) which
-        applied to `NumpyVectorArray(np.array([1]))` will yield the
-        initial data for a given |Parameter|.
-    J
-        The |Operator| J.
-    H_op
-        The |Operator| H_op.
-    h
-        The state-independet part of the Hamiltonian h.
-    time_stepper
-        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
-        to be used by :meth:`~pymor.models.interface.Model.solve`.
-        Alternatively, the parameter nt can be specified to use the
-        :class:`implicit midpoint rule <pymor.algorithms.timestepping.ImplicitMidpointTimeStepper>`.
-    nt
-        If time_stepper is `None` and nt is specified, the
-        :class:`implicit midpoint rule <pymor.algorithms.timestepping.ImplicitMidpointTimeStepper>`
-        as time_stepper.
-    num_values
-        The number of returned vectors of the solution trajectory. If `None`, each
-        intermediate vector that is calculated is returned.
-    output_functional
-        |Operator| mapping a given solution to the model output. In many applications,
-        this will be a |Functional|, i.e. an |Operator| mapping to scalars.
-        This is not required, however.
-    visualizer
-        A visualizer for the problem. This can be any object with
-        a `visualize(U, m, ...)` method. If `visualizer`
-        is not `None`, a `visualize(U, *args, **kwargs)` method is added
-        to the model which forwards its arguments to the
-        visualizer's `visualize` method.
-    name
-        Name of the model.
+    To formulate a quadratic Hamiltonian system it is advised to use a |QuadraticHamiltonianModel|
+    which works with a |BlockVectorSpace| as `phase_space` to be compatible with the current
+    implementation of the symplectic basis generation techniques.
     """
 
     def __init__(self, T, initial_data, J, H_op, h=None, time_stepper=None, nt=None, num_values=None,
@@ -127,6 +77,66 @@ class BaseQuadraticHamiltonianModel(InstationaryModel):
 
 
 class QuadraticHamiltonianModel(BaseQuadraticHamiltonianModel):
+    """Generic class for quadratic Hamiltonian systems.
+
+    This class describes Hamiltonian systems given by the equations::
+
+        ∂_t u(t, μ) = J * H_op(t, μ) * u(t, μ) + J * h(t, μ)
+            u(0, μ) = u_0(μ)
+
+    for t in [0,T], where H_op is a linear time-dependent |Operator|,
+    J is a canonical Poisson matrix, h is a (possibly) time-dependent
+    vector-like |Operator|, and u_0 the initial data.
+    The right-hand side of the Hamiltonian equation is J times the
+    gradient of the Hamiltonian
+
+        Ham(u, t, μ) = 1/2* u * H_op(t, μ) * u + u * h(t, μ).
+
+    The `phase_space` is assumed to be a |BlockVectorSpace|. If required, the arguments `H_op`, `h`
+    and the `initial_data` are casted to operate on a |BlockVectorSpace|. With this construction,
+    the solution u(t, μ) is based on a |BlockVectorSpace| which is required for the current
+    implementation of the symplectic basis generation techniques.
+
+    Parameters
+    ----------
+    T
+        The final time T.
+    initial_data
+        The initial data `u_0`. Either a |VectorArray| of length 1 or
+        (for the |Parameter|-dependent case) a vector-like |Operator|
+        (i.e. a linear |Operator| with `source.dim == 1`) which
+        applied to `NumpyVectorArray(np.array([1]))` will yield the
+        initial data for a given |Parameter|.
+    H_op
+        The |Operator| H_op.
+    h
+        The state-independet part of the Hamiltonian h.
+    time_stepper
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+        to be used by :meth:`~pymor.models.interface.Model.solve`.
+        Alternatively, the parameter nt can be specified to use the
+        :class:`implicit midpoint rule <pymor.algorithms.timestepping.ImplicitMidpointTimeStepper>`.
+    nt
+        If time_stepper is `None` and nt is specified, the
+        :class:`implicit midpoint rule <pymor.algorithms.timestepping.ImplicitMidpointTimeStepper>`
+        as time_stepper.
+    num_values
+        The number of returned vectors of the solution trajectory. If `None`, each
+        intermediate vector that is calculated is returned.
+    output_functional
+        |Operator| mapping a given solution to the model output. In many applications,
+        this will be a |Functional|, i.e. an |Operator| mapping to scalars.
+        This is not required, however.
+    visualizer
+        A visualizer for the problem. This can be any object with
+        a `visualize(U, m, ...)` method. If `visualizer`
+        is not `None`, a `visualize(U, *args, **kwargs)` method is added
+        to the model which forwards its arguments to the
+        visualizer's `visualize` method.
+    name
+        Name of the model.
+    """
+
     def __init__(self, T, initial_data, H_op, h=None, time_stepper=None, nt=None, num_values=None,
                  output_functional=None, visualizer=None, name=None):
         assert isinstance(H_op, Operator) and H_op.linear and H_op.range == H_op.source \

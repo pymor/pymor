@@ -84,6 +84,12 @@ class QuadraticHamiltonianRBReductor(BasicObject):
 
 
 class ReducedQuadraticHamiltonianModel(BaseQuadraticHamiltonianModel):
+    """A general reduced quadratic Hamiltonian system.
+
+    In contrast to the |QuadraticHamiltonianModel|, the reduced model does not rely on a
+    |BlockVectorSpace| as `phase_space`.
+    """
+
     def __init__(self, T, initial_data, H_op, h=None, time_stepper=None, nt=None, num_values=None,
                  output_functional=None, visualizer=None, name=None):
 
