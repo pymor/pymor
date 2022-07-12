@@ -510,7 +510,7 @@ class UnaryFunctionCall(Expression):
     def fenics_expr(self, params):
         import ufl
         if self.fenics_symbol is None:
-            raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
+            raise NotImplementedError(f'UFL does not support function {self.numpy_symbol}')
         ufl_op = getattr(ufl, self.fenics_symbol)
         return np.vectorize(ufl_op)(self.arg.fenics_expr(params))
 
@@ -627,22 +627,16 @@ class log2(UnaryFunctionCall):
     numpy_symbol = 'log2'
 
     def fenics_expr(self, params):
-        def log2(x):
-            from ufl import ln
-            return ln(x.item()) / ln(2)
-
-        return np.vectorize(log2)(self.arg.fenics_expr(params))
+        expr = log(self.arg) / log(Constant(2))
+        return expr.fenics_expr(params)
 
 
 class log10(UnaryFunctionCall):
     numpy_symbol = 'log10'
 
     def fenics_expr(self, params):
-        def log10(x):
-            from ufl import ln
-            return ln(x.item()) / ln(10)
-
-        return np.vectorize(log10)(self.arg.fenics_expr(params))
+        expr = log(self.arg) / log(Constant(10))
+        return expr.fenics_expr(params)
 
 
 class abs(UnaryFunctionCall):
