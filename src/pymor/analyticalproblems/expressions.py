@@ -275,8 +275,8 @@ class BaseConstant(Expression):
         if self.fenics_symbol is None:
             raise NotImplementedError('No FEniCS symbol was given!')
 
-        ufl_op = getattr(ufl, self.fenics_op)
-        return np.array(ufl_op)
+        fenics_const = getattr(ufl, self.fenics_symbol)
+        return np.array(fenics_const)
 
     def __str__(self):
         return str(self.numpy_symbol)
