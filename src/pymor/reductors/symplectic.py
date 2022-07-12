@@ -87,7 +87,7 @@ class ReducedQuadraticHamiltonianModel(BaseQuadraticHamiltonianModel):
     def __init__(self, T, initial_data, H_op, h=None, time_stepper=None, nt=None, num_values=None,
                  output_functional=None, visualizer=None, name=None):
 
-        # generate J in as NumpyMatrixOperator
+        # generate J as NumpyMatrixOperator
         assert H_op.source.dim % 2 == 0
         n = H_op.source.dim // 2
         J = NumpyMatrixOperator(

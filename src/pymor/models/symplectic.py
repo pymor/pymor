@@ -110,9 +110,9 @@ class BaseQuadraticHamiltonianModel(InstationaryModel):
         self.__auto_init(locals())
 
     def eval_hamiltonian(self, u, mu=None):
-        """Evaluate a quadratic Hamiltonian function
+        """Evaluate a quadratic Hamiltonian function.
 
-        Ham(u, t, μ) = 1/2 * u * H_op(t, μ) * u + u * h(t, μ).
+            Ham(u, t, μ) = 1/2 * u * H_op(t, μ) * u + u * h(t, μ)
         """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
