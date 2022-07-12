@@ -2,7 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
 from pymor.algorithms.timestepping import ImplicitMidpointTimeStepper
 from pymor.models.basic import InstationaryModel
 from pymor.operators.constructions import ConcatenationOperator, NumpyConversionOperator, VectorOperator
@@ -111,6 +110,8 @@ class BaseQuadraticHamiltonianModel(InstationaryModel):
 
     def eval_hamiltonian(self, u, mu=None):
         """Evaluate a quadratic Hamiltonian function.
+
+        Evaluation follows the formula::
 
             Ham(u, t, μ) = 1/2 * u * H_op(t, μ) * u + u * h(t, μ)
         """
