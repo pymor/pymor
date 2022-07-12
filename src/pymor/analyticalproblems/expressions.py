@@ -584,13 +584,35 @@ class arctan(UnaryFunctionCall):   numpy_symbol = 'arctan';  fenics_symbol = 'at
 class sinh(UnaryFunctionCall):     numpy_symbol = 'sinh';    fenics_symbol = 'sinh'      # NOQA
 class cosh(UnaryFunctionCall):     numpy_symbol = 'cosh';    fenics_symbol = 'cosh'      # NOQA
 class tanh(UnaryFunctionCall):     numpy_symbol = 'tanh';    fenics_symbol = 'tanh'      # NOQA
-class arcsinh(UnaryFunctionCall):  numpy_symbol = 'arcsinh'; fenics_symbol = None        # NOQA
-class arccosh(UnaryFunctionCall):  numpy_symbol = 'arccosh'; fenics_symbol = None        # NOQA
-class arctanh(UnaryFunctionCall):  numpy_symbol = 'arctanh'; fenics_symbol = None        # NOQA
 class exp(UnaryFunctionCall):      numpy_symbol = 'exp';     fenics_symbol = 'exp'       # NOQA
 class log(UnaryFunctionCall):      numpy_symbol = 'log';     fenics_symbol = 'ln'        # NOQA
 class sqrt(UnaryFunctionCall):     numpy_symbol = 'sqrt';    fenics_symbol = 'sqrt'      # NOQA
 class sign(UnaryFunctionCall):     numpy_symbol = 'sign';    fenics_symbol = 'sign'      # NOQA
+
+
+class arcsinh(UnaryFunctionCall):
+    numpy_symbol = 'arcsinh'
+
+    def fenics_expr(self, params):
+        arg = self.arg
+        expr = log(arg + sqrt(arg**Constant(2) + Constant(1)))
+        return expr.fenics_expr(params)
+
+
+class arccosh(UnaryFunctionCall):
+    numpy_symbol = 'arccosh'
+
+    def fenics_expr(self, params):
+        expr = log(self.arg + sqrt(self.arg**Constant(2) - Constant(1)))
+        return expr.fenics_expr(params)
+
+
+class arctanh(UnaryFunctionCall):
+    numpy_symbol = 'arctanh'
+
+    def fenics_expr(self, params):
+        expr = Constant(0.5) * log((Constant(1) + self.arg) / (Constant(1) - self.arg))
+        return expr.fenics_expr(params)
 
 
 class exp2(UnaryFunctionCall):
@@ -641,6 +663,16 @@ class angle(UnaryFunctionCall):
         self.arg = arg
         self.shape = arg.shape[:-1]
 
+    def fenics_expr(self, params):
+        if len(self.shape) > 1:
+            raise NotImplementedError
+        import ufl
+        import dolfin
+        arg = self.arg.fenics_expr(params)
+        assert arg.shape == (2,)
+        return np.array(
+            [ufl.atan_2(arg[1], arg[0]) + ufl.lt(ufl.atan_2(arg[1], arg[0]), 0) * dolfin.Constant(2*np.pi)]
+        ).reshape(())
 
 
 class min(UnaryReductionCall):  numpy_symbol = 'min';  fenics_op = 'min_value'   # NOQA
