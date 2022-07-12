@@ -188,8 +188,7 @@ class Expression(ParametricObject):
         config.require('FENICS')
         from dolfin import Constant
         from ufl import SpatialCoordinate
-        assert variable in self.parameters
-        assert self.parameters[variable] == mesh.topology().dim()
+        assert variable not in self.parameters or self.parameters[variable] == mesh.topology().dim()
         params = {p: SpatialCoordinate(mesh) if p == variable else Constant([0.] * dim)
                   for p, dim in self.parameters.items()}
         f_expr = self.fenics_expr(params)
