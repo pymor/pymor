@@ -195,8 +195,8 @@ class FenicsMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         if adjoint:
             try:
                 matrix = self._matrix_transpose
-            except AttributeError:
-                raise RuntimeError('_create_solver called before _matrix_transpose has been initialized.')
+            except AttributeError as e:
+                raise RuntimeError('_create_solver called before _matrix_transpose has been initialized.') from e
         else:
             matrix = self.matrix
         method = options.get('solver')

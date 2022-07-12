@@ -368,7 +368,7 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
     try:
         _default_container.update(env['d'], type='file')
     except KeyError as e:
-        raise KeyError(f'Error loading defaults from file. Key {e} does not correspond to a default')
+        raise KeyError(f'Error loading defaults from file. Key {e} does not correspond to a default') from e
 
 
 def _set_defaults(defaults):
@@ -397,7 +397,7 @@ def set_defaults(defaults):
     try:
         _default_container.update(defaults, type='user')
     except KeyError as e:
-        raise KeyError(f'Error setting defaults. Key {e} does not correspond to a default')
+        raise KeyError(f'Error setting defaults. Key {e} does not correspond to a default') from e
 
 
 def get_defaults(user=True, file=True, code=True):

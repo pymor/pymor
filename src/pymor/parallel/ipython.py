@@ -73,9 +73,9 @@ class new_ipcluster_pool(BasicObject):
         while client is None:
             try:
                 client = Client(profile=self.profile, cluster_id=self.cluster_id)
-            except (IOError, TimeoutError):
+            except (IOError, TimeoutError) as e:
                 if waited >= self.timeout:
-                    raise IOError('Could not connect to IPython cluster controller')
+                    raise IOError('Could not connect to IPython cluster controller') from e
                 if waited % 10 == 0:
                     self.logger.info('Waiting for controller to start ...')
                 time.sleep(1)
