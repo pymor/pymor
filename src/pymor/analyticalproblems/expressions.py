@@ -529,7 +529,7 @@ class UnaryReductionCall(UnaryFunctionCall):
     """
 
     numpy_symbol = None
-    fenics_symbol = None
+    fenics_op = None
 
     _parameters_varargs_warning = False  # silence warning due to use of *args in __init__
 
@@ -542,14 +542,20 @@ class UnaryReductionCall(UnaryFunctionCall):
                 f'axis=-1))({self.arg.numpy_expr()})')
 
     def fenics_expr(self, params):
-        import ufl
-        if self.fenics_symbol is None:
-            raise NotImplementedError(f'UFL does not support operand {self.numpy_symbol}')
-        ufl_op = getattr(ufl, self.fenics_symbol)
-        return np.vectorize(ufl_op)(self.arg.fenics_expr(params))
+        if self.fenics_op is None:
+            raise NotImplementedError(f'UFL does not support function {self.numpy_symbol}')
+        r = None
+        op = self.fenics_op
+        if isinstance(op, str):
+            import ufl
+            op = getattr(ufl, op)
+        for el in self.arg.fenics_expr(params).flat:
+            r = el if r is None else op(r, el)
+        return np.array(r).reshape(())
 
     def __str__(self):
         return f'{self.numpy_symbol}({self.arg})'
+
 
 def _broadcastable_shapes(first, second):
     return all(f == s or f == 1 or s == 1 for f, s in zip(first[::-1], second[::-1]))
@@ -636,11 +642,18 @@ class angle(UnaryFunctionCall):
         self.shape = arg.shape[:-1]
 
 
-class norm(UnaryReductionCall): numpy_symbol = 'norm'; fenics_op = None          # NOQA
-class min(UnaryReductionCall):  numpy_symbol = 'min';  fenics_op = None          # NOQA
-class max(UnaryReductionCall):  numpy_symbol = 'max';  fenics_op = None          # NOQA
-class sum(UnaryReductionCall):  numpy_symbol = 'sum';  fenics_op = None          # NOQA
-class prod(UnaryReductionCall): numpy_symbol = 'prod'; fenics_op = None          # NOQA
+
+class min(UnaryReductionCall):  numpy_symbol = 'min';  fenics_op = 'min_value'   # NOQA
+class max(UnaryReductionCall):  numpy_symbol = 'max';  fenics_op = 'max_value'   # NOQA
+class sum(UnaryReductionCall):  numpy_symbol = 'sum';  fenics_op = operator.add  # NOQA
+class prod(UnaryReductionCall): numpy_symbol = 'prod'; fenics_op = operator.mul  # NOQA
+
+
+class norm(UnaryReductionCall):
+    numpy_symbol = 'norm'
+
+    def fenics_expr(self, params):
+        return sqrt(sum(self.arg**Constant(2))).fenics_expr(params)
 
 
 class Pi(BaseConstant): numpy_symbol = 'pi'; fenics_symbol = 'pi'  # NOQA
