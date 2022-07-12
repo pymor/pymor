@@ -20,6 +20,8 @@ Note that compared to the experiments in :cite:`PM16`, the POD gives better resu
 """
 
 import numpy as np
+from typer import Argument, run
+
 from pymor.algorithms.pod import pod
 from pymor.algorithms.symplectic import (psd_complex_svd, psd_cotengent_lift,
                                          psd_svd_like_decomp)
@@ -70,28 +72,27 @@ def discretize_fom(T=50):
     return fom
 
 
-def run_mor(fom, U_fom, U_basis,  method, red_dims):
+def run_mor(fom, U_fom, method, red_dims):
     assert isinstance(fom, QuadraticHamiltonianModel)
     assert isinstance(U_fom, VectorArray) and U_fom in fom.H_op.range
-    assert isinstance(U_basis, VectorArray) and U_basis in fom.H_op.range
     assert isinstance(method, str) and method in METHODS
-    assert isinstance(red_dims, np.ndarray)
+    assert isinstance(red_dims, np.ndarray) and red_dims.dtype == int
     assert fom.time_stepper.nt + 1 == len(U_fom)
 
     # compute basis of maximal size
     max_red_dim = red_dims.max()
     if method in SYMPLECTIC_METHODS:
         if method == 'cotangent_lift':
-            MAX_RB = psd_cotengent_lift(U_basis, max_red_dim)
+            MAX_RB = psd_cotengent_lift(U_fom, max_red_dim)
         elif method == 'complex_svd':
-            MAX_RB = psd_complex_svd(U_basis, max_red_dim)
+            MAX_RB = psd_complex_svd(U_fom, max_red_dim)
         elif method == 'svd_like':
-            MAX_RB = psd_svd_like_decomp(U_basis, max_red_dim)
+            MAX_RB = psd_svd_like_decomp(U_fom, max_red_dim)
         else:
             raise NotImplementedError('Unknown method: {}'.format(method))
     else:
         assert method == 'pod'
-        MAX_RB, svals = pod(U_basis, modes=max_red_dim)
+        MAX_RB, svals = pod(U_fom, modes=max_red_dim)
 
     # compute ROM results for all reduced dimensions
     abs_err_proj = np.zeros(len(red_dims))
@@ -116,7 +117,9 @@ def run_mor(fom, U_fom, U_basis,  method, red_dims):
     }
 
 
-if __name__ == '__main__':
+def main(
+    final_time: float = Argument(10., help='Final time of the simulation'),
+):
     from matplotlib import pyplot as plt
 
     # deactivate warnings about missing solver_options {'type': 'to_matrix'}
@@ -124,16 +127,14 @@ if __name__ == '__main__':
     set_log_levels({'pymor.operators.block.BlockOperator': 'ERROR'})
 
     # compute errors for reproduction experiment
-    fom = discretize_fom(T=50)
+    fom = discretize_fom(T=final_time)
     U_fom = fom.solve()
     rel_fac = np.sqrt(U_fom.norm2().sum())
 
     # run mor for all METHODS and RED_DIMS
-    # only use first 1000 snapshots as the others are periodic copies
-    U_basis_generation = U_fom[:1000]
     results = {}
     for method in METHODS:
-        results[method] = run_mor(fom, U_fom, U_basis_generation, method, RED_DIMS)
+        results[method] = run_mor(fom, U_fom, method, RED_DIMS)
 
     # plot results
     markers = {
@@ -171,3 +172,7 @@ if __name__ == '__main__':
 
     plt.legend()
     plt.show()
+
+
+if __name__ == '__main__':
+    run(main)
