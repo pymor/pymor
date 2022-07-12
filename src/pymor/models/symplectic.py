@@ -118,9 +118,9 @@ class BaseQuadraticHamiltonianModel(InstationaryModel):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
         # compute linear part
-        ham_h = self.h.apply_adjoint(u, mu=mu)
+        ham_h = self.h.apply_adjoint(u, mu=mu).to_numpy().ravel()
         # compute quadratic part
-        ham_H = ham_h.space.make_array(self.H_op.pairwise_apply2(u, u, mu=mu)[:, np.newaxis])
+        ham_H = self.H_op.pairwise_apply2(u, u, mu=mu)
 
         return 1/2 * ham_H + ham_h
 
