@@ -145,7 +145,7 @@ PHLTI_ARGS = (
 )
 
 SYMPLECTIC_WAVE_ARGS = (
-    ('symplectic_wave_equation', [10.]),
+    ('symplectic_wave_equation', [1., 10]),
 )
 
 DEMO_ARGS = (
