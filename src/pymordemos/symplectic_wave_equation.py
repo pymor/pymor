@@ -3,9 +3,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-"""MOR experiment for linear wave equation discretized with FD.
+"""Symplectic MOR experiment for linear wave equation discretized with FD.
 
-The experiment closely follows the experiment described in :cite:`PM16`. The reduced model are
+The experiment closely follows the experiment described in :cite:`PM16`. The reduced models are
 trained on the trajectory of one parameter and try to reproduce this solution in the reduced
 simulation (reproduction experiment).
 
@@ -23,8 +23,7 @@ import numpy as np
 from typer import Argument, run
 
 from pymor.algorithms.pod import pod
-from pymor.algorithms.symplectic import (psd_complex_svd, psd_cotengent_lift,
-                                         psd_svd_like_decomp)
+from pymor.algorithms.symplectic import psd_complex_svd, psd_cotengent_lift, psd_svd_like_decomp
 from pymor.models.symplectic import QuadraticHamiltonianModel
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import IdentityOperator, LincombOperator
