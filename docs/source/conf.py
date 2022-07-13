@@ -308,4 +308,4 @@ autoapi_ignore = ['*/pymordemos/minimal_cpp_demo/*']
 suppress_warnings = ["autoapi"]
 autoapi_template_dir = this_dir / '_templates' / 'autoapi'
 autoapi_member_order = "groupwise"
-autoapi_options = ["show-inheritance", "members", "undoc-members"]
+autoapi_options = ["show-inheritance", "members", "undoc-members", "inherited-members"]
