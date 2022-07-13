@@ -17,6 +17,7 @@
 
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
   * several additional features for neural networks
+  * purely data-driven usage of neural networks without requiring full-order model
 
 * Art Pelling, a.pelling@tu-berlin.de
   * support for discrete-time LTI systems, Lyapunov equations and balanced truncation
