@@ -20,11 +20,11 @@ from scipy.sparse import diags
 
 SYMPLECTIC_METHODS = ['cotangent_lift', 'complex_svd', 'svd_like']
 METHODS = ['pod'] + SYMPLECTIC_METHODS
-RED_DIMS = np.arange(10, 90, 10)
 
 
 def main(
     final_time: float = Argument(10., help='Final time of the simulation'),
+    rbsize: int = Argument(80, help='Maximal reduced basis size'),
 ):
     """Symplectic MOR experiment for linear wave equation discretized with FD.
 
@@ -52,10 +52,12 @@ def main(
     U_fom = fom.solve()
     rel_fac = np.sqrt(U_fom.norm2().sum())
 
-    # run mor for all METHODS and RED_DIMS
+    # run mor for all METHODS
+    half_rbsize = min(rbsize // 2, len(U_fom) // 2)
+    red_dims = np.linspace(0, half_rbsize, 10, dtype=int) * 2
     results = {}
     for method in METHODS:
-        results[method] = run_mor(fom, U_fom, method, RED_DIMS)
+        results[method] = run_mor(fom, U_fom, method, red_dims)
 
     # plot results
     markers = {
@@ -73,12 +75,12 @@ def main(
     fig, axs = plt.subplots(1, 2, sharey=True, sharex=True)
     for method, result in results.items():
         axs[0].semilogy(
-            RED_DIMS,
+            red_dims,
             result['abs_err_proj'] / rel_fac,
             marker=markers[method],
             color=colors[method])
         axs[1].semilogy(
-            RED_DIMS,
+            red_dims,
             result['abs_err_rom'] / rel_fac,
             label=method,
             marker=markers[method],
@@ -153,6 +155,10 @@ def run_mor(fom, U_fom, method, red_dims):
     abs_err_proj = np.zeros(len(red_dims))
     abs_err_rom = np.zeros(len(red_dims))
     for i_red_dim, red_dim in enumerate(red_dims):
+        if red_dim > len(MAX_RB):
+            abs_err_proj[i_red_dim] = np.nan
+            abs_err_rom[i_red_dim] = np.nan
+            continue
         if method in SYMPLECTIC_METHODS:
             RB = MAX_RB[:red_dim//2]
             reductor = QuadraticHamiltonianRBReductor(fom, RB)
