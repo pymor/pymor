@@ -3,22 +3,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-"""Symplectic MOR experiment for linear wave equation discretized with FD.
-
-The experiment closely follows the experiment described in :cite:`PM16`. The reduced models are
-trained on the trajectory of one parameter and try to reproduce this solution in the reduced
-simulation (reproduction experiment).
-
-It compares structure-preserving MOR for Hamiltonian systems (known as symplectic MOR) with
-classical (non-structure-preserving) MOR. Different symplectic basis generation techniques are
-compared ('cotangent_lift', 'complex_svd', 'svd_like') to a non-symplectic basis ('pod').
-The experiment shows: Although 'pod' has the best projection error, its reduction error is
-comparably high. In contrast to this, the reduction error of all symplectic bases is close to their
-respective projection error.
-
-Note that compared to the experiments in :cite:`PM16`, the POD gives better results here.
-"""
-
 import numpy as np
 from typer import Argument, run
 
@@ -119,6 +103,22 @@ def run_mor(fom, U_fom, method, red_dims):
 def main(
     final_time: float = Argument(10., help='Final time of the simulation'),
 ):
+    """Symplectic MOR experiment for linear wave equation discretized with FD.
+
+    The experiment closely follows the experiment described in :cite:`PM16`. The reduced models are
+    trained on the trajectory of one parameter and try to reproduce this solution in the reduced
+    simulation (reproduction experiment).
+
+    It compares structure-preserving MOR for Hamiltonian systems (known as symplectic MOR) with
+    classical (non-structure-preserving) MOR. Different symplectic basis generation techniques are
+    compared ('cotangent_lift', 'complex_svd', 'svd_like') to a non-symplectic basis ('pod').
+    The experiment shows: Although 'pod' has the best projection error, its reduction error is
+    comparably high. In contrast to this, the reduction error of all symplectic bases is close to their
+    respective projection error.
+
+    Note that compared to the experiments in :cite:`PM16`, the POD gives better results here.
+    """
+
     from matplotlib import pyplot as plt
 
     # deactivate warnings about missing solver_options {'type': 'to_matrix'}
