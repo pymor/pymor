@@ -54,7 +54,7 @@ if not parallel:
     DISCRETIZATION_ARGS += (('elliptic_unstructured', [6., 16, 1e-1]),)
 
 NEURAL_NETWORK_ARGS = (
-    ('neural_networks', [25, 50, 10]),
+    ('neural_networks', [15, 20, 3]),
     ('neural_networks_fenics', [15, 3]),
     ('neural_networks_instationary', [25, 25, 30, 5]),
 )
