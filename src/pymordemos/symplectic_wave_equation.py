@@ -23,6 +23,78 @@ METHODS = ['pod'] + SYMPLECTIC_METHODS
 RED_DIMS = np.arange(10, 90, 10)
 
 
+def main(
+    final_time: float = Argument(10., help='Final time of the simulation'),
+):
+    """Symplectic MOR experiment for linear wave equation discretized with FD.
+
+    The experiment closely follows the experiment described in :cite:`PM16`. The reduced models are
+    trained on the trajectory of one parameter and try to reproduce this solution in the reduced
+    simulation (reproduction experiment).
+
+    It compares structure-preserving MOR for Hamiltonian systems (known as symplectic MOR) with
+    classical (non-structure-preserving) MOR. Different symplectic basis generation techniques are
+    compared ('cotangent_lift', 'complex_svd', 'svd_like') to a non-symplectic basis ('pod').
+    The experiment shows: Although 'pod' has the best projection error, its reduction error is
+    comparably high. In contrast to this, the reduction error of all symplectic bases is close to
+    their respective projection error.
+
+    Note that compared to the experiments in :cite:`PM16`, the POD gives better results here.
+    """
+    from matplotlib import pyplot as plt
+
+    # deactivate warnings about missing solver_options {'type': 'to_matrix'}
+    from pymor.core.logger import set_log_levels
+    set_log_levels({'pymor.operators.block.BlockOperator': 'ERROR'})
+
+    # compute errors for reproduction experiment
+    fom = discretize_fom(T=final_time)
+    U_fom = fom.solve()
+    rel_fac = np.sqrt(U_fom.norm2().sum())
+
+    # run mor for all METHODS and RED_DIMS
+    results = {}
+    for method in METHODS:
+        results[method] = run_mor(fom, U_fom, method, RED_DIMS)
+
+    # plot results
+    markers = {
+        'pod': '^',
+        'cotangent_lift': '.',
+        'complex_svd': 's',
+        'svd_like': 'X',
+    }
+    colors = {
+        'pod': 'blue',
+        'cotangent_lift': 'red',
+        'complex_svd': 'green',
+        'svd_like': 'gray',
+    }
+    fig, axs = plt.subplots(1, 2, sharey=True, sharex=True)
+    for method, result in results.items():
+        axs[0].semilogy(
+            RED_DIMS,
+            result['abs_err_proj'] / rel_fac,
+            marker=markers[method],
+            color=colors[method])
+        axs[1].semilogy(
+            RED_DIMS,
+            result['abs_err_rom'] / rel_fac,
+            label=method,
+            marker=markers[method],
+            color=colors[method])
+
+    fig.suptitle('Linear wave equation, FD discretization, reproduction experiment')
+    axs[0].title.set_text('Relative projection error')
+    axs[1].title.set_text('Relative reduction error')
+    axs[0].set_xlabel('red. dim. 2k')
+    axs[1].set_xlabel('red. dim. 2k')
+    axs[0].set_ylabel('rel. err.')
+
+    plt.legend()
+    plt.show()
+
+
 def discretize_fom(T=50):
     n_x = 500
     nt = int(T / 0.01) + 1
@@ -98,79 +170,6 @@ def run_mor(fom, U_fom, method, red_dims):
         'abs_err_proj': abs_err_proj,
         'abs_err_rom': abs_err_rom,
     }
-
-
-def main(
-    final_time: float = Argument(10., help='Final time of the simulation'),
-):
-    """Symplectic MOR experiment for linear wave equation discretized with FD.
-
-    The experiment closely follows the experiment described in :cite:`PM16`. The reduced models are
-    trained on the trajectory of one parameter and try to reproduce this solution in the reduced
-    simulation (reproduction experiment).
-
-    It compares structure-preserving MOR for Hamiltonian systems (known as symplectic MOR) with
-    classical (non-structure-preserving) MOR. Different symplectic basis generation techniques are
-    compared ('cotangent_lift', 'complex_svd', 'svd_like') to a non-symplectic basis ('pod').
-    The experiment shows: Although 'pod' has the best projection error, its reduction error is
-    comparably high. In contrast to this, the reduction error of all symplectic bases is close to their
-    respective projection error.
-
-    Note that compared to the experiments in :cite:`PM16`, the POD gives better results here.
-    """
-
-    from matplotlib import pyplot as plt
-
-    # deactivate warnings about missing solver_options {'type': 'to_matrix'}
-    from pymor.core.logger import set_log_levels
-    set_log_levels({'pymor.operators.block.BlockOperator': 'ERROR'})
-
-    # compute errors for reproduction experiment
-    fom = discretize_fom(T=final_time)
-    U_fom = fom.solve()
-    rel_fac = np.sqrt(U_fom.norm2().sum())
-
-    # run mor for all METHODS and RED_DIMS
-    results = {}
-    for method in METHODS:
-        results[method] = run_mor(fom, U_fom, method, RED_DIMS)
-
-    # plot results
-    markers = {
-        'pod': '^',
-        'cotangent_lift': '.',
-        'complex_svd': 's',
-        'svd_like': 'X',
-    }
-    colors = {
-        'pod': 'blue',
-        'cotangent_lift': 'red',
-        'complex_svd': 'green',
-        'svd_like': 'gray',
-    }
-    fig, axs = plt.subplots(1, 2, sharey=True, sharex=True)
-    for method, result in results.items():
-        axs[0].semilogy(
-            RED_DIMS,
-            result['abs_err_proj'] / rel_fac,
-            marker=markers[method],
-            color=colors[method])
-        axs[1].semilogy(
-            RED_DIMS,
-            result['abs_err_rom'] / rel_fac,
-            label=method,
-            marker=markers[method],
-            color=colors[method])
-
-    fig.suptitle('Linear wave equation, FD discretization, reproduction experiment')
-    axs[0].title.set_text('Relative projection error')
-    axs[1].title.set_text('Relative reduction error')
-    axs[0].set_xlabel('red. dim. 2k')
-    axs[1].set_xlabel('red. dim. 2k')
-    axs[0].set_ylabel('rel. err.')
-
-    plt.legend()
-    plt.show()
 
 
 if __name__ == '__main__':
