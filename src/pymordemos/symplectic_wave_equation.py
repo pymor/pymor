@@ -155,7 +155,7 @@ def run_mor(fom, U_fom, method, red_dims):
     abs_err_proj = np.zeros(len(red_dims))
     abs_err_rom = np.zeros(len(red_dims))
     for i_red_dim, red_dim in enumerate(red_dims):
-        if red_dim > len(MAX_RB):
+        if red_dim > len(MAX_RB) * (2 if method in SYMPLECTIC_METHODS else 1):
             abs_err_proj[i_red_dim] = np.nan
             abs_err_rom[i_red_dim] = np.nan
             continue

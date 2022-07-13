@@ -54,7 +54,7 @@ class QuadraticHamiltonianRBReductor(BasicObject):
                 raise NotImplementedError()
 
             if dim is None:
-                dim = len(self.RB)
+                dim = len(self.RB) * 2
             assert dim % 2 == 0, 'dim has to be even'
 
             fom = self.fom
