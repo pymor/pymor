@@ -40,10 +40,8 @@ def main(
     for mu in validation_set:
         validation_data.append((mu, fom.solve(mu)))
 
-#    reductor = NeuralNetworkReductor(fom, training_set, validation_set, l2_err=1e-5,
-#                                     ann_mse=1e-5)
     reductor = NeuralNetworkReductor(training_set=training_data, validation_set=validation_data,
-                                     parameters=fom.parameters, l2_err=1e-5, ann_mse=1e-5)
+                                     l2_err=1e-5, ann_mse=1e-5)
     rom = reductor.reduce(restarts=100, log_loss_frequency=10)
 
     test_set = parameter_space.sample_randomly(10)
