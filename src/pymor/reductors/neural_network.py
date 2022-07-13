@@ -163,7 +163,7 @@ class NeuralNetworkReductor(BasicObject):
         rom
             Reduced-order |NeuralNetworkModel|.
         """
-        assert restarts > 0
+        assert restarts >= 0
         assert epochs > 0
         assert batch_size > 0
         assert learning_rate > 0.
@@ -1132,7 +1132,7 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
         of restarts.
     """
     assert isinstance(training_parameters, dict)
-    assert isinstance(max_restarts, int) and max_restarts > 0
+    assert isinstance(max_restarts, int) and max_restarts >= 0
 
     logger = getLogger('pymor.algorithms.neural_network.multiple_restarts_training')
 
