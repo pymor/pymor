@@ -2,10 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
 from pymor.algorithms.timestepping import ImplicitMidpointTimeStepper
 from pymor.models.basic import InstationaryModel
 from pymor.operators.constructions import ConcatenationOperator, NumpyConversionOperator, VectorOperator
+from pymor.operators.block import BlockOperator
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyVectorSpace
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator
@@ -14,28 +14,95 @@ from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
 
 
-class QuadraticHamiltonianModel(InstationaryModel):
+class BaseQuadraticHamiltonianModel(InstationaryModel):
+    """Base class of quadratic Hamiltonian systems.
+
+    To formulate a quadratic Hamiltonian system it is advised to use a |QuadraticHamiltonianModel|
+    which works with a |BlockVectorSpace| as `phase_space` to be compatible with the current
+    implementation of the symplectic basis generation techniques.
+    """
+
+    def __init__(self, T, initial_data, J, H_op, h=None, time_stepper=None, nt=None, num_values=None,
+                 output_functional=None, visualizer=None, name=None):
+
+        # interface to use ImplicitMidpointTimeStepper via parameter nt
+        if time_stepper is not None and nt is not None:
+            # this case is required to use "with_" in combination with this model
+            assert hasattr(time_stepper, 'nt') and time_stepper.nt == nt
+        if time_stepper is None and nt is None:
+            raise ValueError('Specify time_stepper or nt (or both)')
+        if time_stepper is None:
+            time_stepper = ImplicitMidpointTimeStepper(nt)
+
+        assert (isinstance(J, Operator) and isinstance(H_op, Operator)
+                and J.range == J.source == H_op.range == H_op.source)
+
+        # minus (in J.H) is required since operator in an InstationaryModel is on the LHS
+        if isinstance(H_op.range, BlockVectorSpace) and isinstance(H_op, BlockOperator):
+            assert H_op.blocks.shape == (2, 2)
+            assert isinstance(J, CanonicalSymplecticFormOperator)
+            # compute by hand: operator = J.H * H_op
+            operator = BlockOperator([
+                [-H_op.blocks[1, 0], -H_op.blocks[1, 1]],
+                [H_op.blocks[0, 0], H_op.blocks[0, 1]]
+            ])
+        else:
+            operator = ConcatenationOperator([J.H, H_op])
+        rhs = ConcatenationOperator([J, h])
+
+        super().__init__(T, initial_data, operator, rhs,
+                         time_stepper=time_stepper,
+                         num_values=num_values,
+                         output_functional=output_functional,
+                         visualizer=visualizer,
+                         name=name)
+        self.__auto_init(locals())
+
+    def eval_hamiltonian(self, u, mu=None):
+        """Evaluate a quadratic Hamiltonian function.
+
+        Evaluation follows the formula::
+
+            Ham(u, t, μ) = 1/2 * u * H_op(t, μ) * u + u * h(t, μ)
+        """
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
+        # compute linear part
+        ham_h = self.h.apply_adjoint(u, mu=mu).to_numpy().ravel()
+        # compute quadratic part
+        ham_H = self.H_op.pairwise_apply2(u, u, mu=mu)
+
+        return 1/2 * ham_H + ham_h
+
+
+class QuadraticHamiltonianModel(BaseQuadraticHamiltonianModel):
     """Generic class for quadratic Hamiltonian systems.
 
     This class describes Hamiltonian systems given by the equations::
 
         ∂_t u(t, μ) = J * H_op(t, μ) * u(t, μ) + J * h(t, μ)
-            u(0, μ) = x_0(μ)
+            u(0, μ) = u_0(μ)
 
     for t in [0,T], where H_op is a linear time-dependent |Operator|,
     J is a canonical Poisson matrix, h is a (possibly) time-dependent
-    vector-like |Operator|, and x_0 the initial data.
+    vector-like |Operator|, and u_0 the initial data.
     The right-hand side of the Hamiltonian equation is J times the
     gradient of the Hamiltonian
 
-        Ham(u, t, μ) = 1/2* u * H_op(t, μ) * u + u * h(t, μ)
+        Ham(u, t, μ) = 1/2* u * H_op(t, μ) * u + u * h(t, μ).
+
+    The `phase_space` is assumed to be a |BlockVectorSpace|. If required, the arguments `H_op`, `h`
+    and the `initial_data` are casted to operate on a |BlockVectorSpace|. With this construction,
+    the solution u(t, μ) is based on a |BlockVectorSpace| which is required for the current
+    implementation of the symplectic basis generation techniques.
 
     Parameters
     ----------
     T
         The final time T.
     initial_data
-        The initial data `x_0`. Either a |VectorArray| of length 1 or
+        The initial data `u_0`. Either a |VectorArray| of length 1 or
         (for the |Parameter|-dependent case) a vector-like |Operator|
         (i.e. a linear |Operator| with `source.dim == 1`) which
         applied to `NumpyVectorArray(np.array([1]))` will yield the
@@ -75,12 +142,6 @@ class QuadraticHamiltonianModel(InstationaryModel):
         assert isinstance(H_op, Operator) and H_op.linear and H_op.range == H_op.source \
                and H_op.range.dim % 2 == 0
 
-        # interface to use ImplicitMidpointTimeStepper via parameter nt
-        if (time_stepper is None) == (nt is None):
-            raise ValueError('Either specify time_stepper or nt (not both)')
-        if time_stepper is None:
-            time_stepper = ImplicitMidpointTimeStepper(nt)
-
         if isinstance(H_op.range, NumpyVectorSpace):
             # make H_op compatible with blocked phase_space
             assert H_op.range.dim % 2 == 0, 'H_op.range has to be even dimensional'
@@ -107,37 +168,19 @@ class QuadraticHamiltonianModel(InstationaryModel):
                 NumpyConversionOperator(phase_space, direction='from_numpy'),
                 h,
             ])
-        assert h.range is H_op.range
+        assert h.range == H_op.range
 
-        if isinstance(initial_data.space, NumpyVectorSpace):
-            # make initial_data compatible with blocked phase_space
+        if (isinstance(initial_data, VectorArray)
+                and isinstance(initial_data.space, NumpyVectorSpace)):
+
             initial_data = H_op.source.from_numpy(initial_data.to_numpy())
+        elif (isinstance(initial_data, VectorOperator)
+              and isinstance(initial_data.range, NumpyVectorSpace)):
+
+            initial_data = VectorOperator(H_op.source.from_numpy(initial_data.as_range_array().to_numpy()))
 
         # J based on blocked phase_space
-        self.J = CanonicalSymplecticFormOperator(H_op.source)
+        J = CanonicalSymplecticFormOperator(H_op.source)
 
-        # minus is required since operator in an InstationaryModel is on the LHS
-        operator = -ConcatenationOperator([self.J, H_op])
-        rhs = ConcatenationOperator([self.J, h])
-        super().__init__(T, initial_data, operator, rhs,
-                         time_stepper=time_stepper,
-                         num_values=num_values,
-                         output_functional=output_functional,
-                         visualizer=visualizer,
-                         name=name)
-        self.__auto_init(locals())
-
-    def eval_hamiltonian(self, u, mu=None):
-        """Evaluate a quadratic Hamiltonian function
-
-        Ham(u, t, μ) = 1/2 * u * H_op(t, μ) * u + u * h(t, μ).
-        """
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-        # compute linear part
-        ham_h = self.h.apply_adjoint(u, mu=mu)
-        # compute quadratic part
-        ham_H = ham_h.space.make_array(self.H_op.pairwise_apply2(u, u, mu=mu)[:, np.newaxis])
-
-        return 1/2 * ham_H + ham_h
+        super().__init__(T, initial_data, J, H_op, h, time_stepper, nt, num_values,
+                         output_functional, visualizer, name)

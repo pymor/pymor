@@ -112,7 +112,7 @@ class SymplecticBasis(BasicObject):
 
     def __len__(self):
         assert len(self.E) == len(self.F)
-        return 2*len(self.E)
+        return len(self.E)
 
     def append(self, other, remove_from_other=False, check_symplecticity=True):
         """Append another |SymplecticBasis|.
@@ -127,7 +127,7 @@ class SymplecticBasis(BasicObject):
         """
         assert isinstance(other, SymplecticBasis)
         assert other.phase_space == self.phase_space
-        old_len = len(self.E)
+        old_len = len(self)
         self.E.append(other.E, remove_from_other)
         self.F.append(other.F, remove_from_other)
 
@@ -153,16 +153,12 @@ class SymplecticBasis(BasicObject):
         AccuracyError
             Is raised when the symplecicity for some pair (e_i, f_i) exceeds check_tol.
         """
-        assert offset % 2 == 0
-
-        h_off = offset//2
-        h_len = len(self)//2
-        idx = np.arange(h_off, h_len)
+        idx = np.arange(offset, len(self))
 
         tsi_self = self.transposed_symplectic_inverse()
 
         error_matrix = tsi_self[idx].to_array().inner(self.to_array())
-        error_matrix[:, np.hstack([idx, h_len+idx])] -= np.eye(len(self) - offset)
+        error_matrix[:, np.hstack([idx, len(self)+idx])] -= np.eye((len(self) - offset)*2)
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
             if err >= check_tol:
@@ -177,9 +173,9 @@ class SymplecticBasis(BasicObject):
         assert isinstance(coefficients, np.ndarray)
         if coefficients.ndim == 1:
             coefficients = coefficients[np.newaxis, ...]
-        assert len(coefficients.shape) == 2 and coefficients.shape[1] == len(self)
-        result = self.E.lincomb(coefficients[:, :len(self.E)])
-        result += self.F.lincomb(coefficients[:, len(self.E):])
+        assert len(coefficients.shape) == 2 and coefficients.shape[1] == 2*len(self)
+        result = self.E.lincomb(coefficients[:, :len(self)])
+        result += self.F.lincomb(coefficients[:, len(self):])
         return result
 
     def extend(self, U, method='svd_like', modes=2, product=None):
@@ -397,7 +393,6 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
     assert E.space == F.space
     assert len(E) == len(F)
     assert E.dim % 2 == 0
-    assert offset % 2 == 0
 
     logger = getLogger('pymor.algorithms.symplectic_gram_schmidt.symplectic_gram_schmidt')
 
@@ -415,7 +410,7 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
     ])
     Lambda = np.zeros((2*p, 2*p))
     remove = []  # indices of to be removed vectors
-    for j in range(offset//2, p):
+    for j in range(offset, p):
         # first calculate symplecticity value
         initial_sympl = abs(J.apply2(E[j], F[j]))
 

@@ -75,7 +75,7 @@ def test_quadratic_hamiltonian_model(block_phase_space):
 
     res = model.solve()
 
-    ham = model.eval_hamiltonian(res).to_numpy()
+    ham = model.eval_hamiltonian(res)
 
     # check preservation of the Hamiltonian
     assert np.allclose(ham, ham[0])

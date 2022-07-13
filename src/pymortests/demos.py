@@ -144,6 +144,10 @@ PHLTI_ARGS = (
     ('phlti', ['--n=10']),
 )
 
+SYMPLECTIC_WAVE_ARGS = (
+    ('symplectic_wave_equation', [1., 10]),
+)
+
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
     + NEURAL_NETWORK_ARGS
@@ -160,6 +164,7 @@ DEMO_ARGS = (
     + OUTPUT_FUNCTIONAL_ARGS
     + DMD_ARGS
     + PHLTI_ARGS
+    + SYMPLECTIC_WAVE_ARGS
 )
 
 DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
