@@ -35,6 +35,7 @@ interfaces = '''
 .. |VectorArray| replace:: :class:`VectorArray <pymor.vectorarrays.interface.VectorArray>`
 .. |VectorSpace| replace:: :class:`VectorSpace <pymor.vectorarrays.interface.VectorSpace>`
 .. |VectorSpaces| replace:: :class:`VectorSpaces <pymor.vectorarrays.interface.VectorSpace>`
+.. |BlockVectorSpace| replace:: :class:`BlockVectorSpace <pymor.vectorarrays.block.BlockVectorSpace>`
 .. |WorkerPool| replace:: :class:`WorkerPool <pymor.parallel.interface.WorkerPool>`
 .. |WorkerPools| replace:: :class:`WorkerPools <pymor.parallel.interface.WorkerPool>`
 
