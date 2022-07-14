@@ -238,79 +238,15 @@ def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
 
 def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
 
-    # assemble system matrices - FEniCS code
-    ########################################
+    from pymor.analyticalproblems.thermalblock import thermal_block_problem
+    from pymor.discretizers.fenics import discretize_stationary_cg
 
-    import dolfin as df
-    mesh = df.UnitSquareMesh(grid_num_intervals, grid_num_intervals, 'crossed')
-    V = df.FunctionSpace(mesh, 'Lagrange', element_order)
-    u = df.TrialFunction(V)
-    v = df.TestFunction(V)
+    print('Discretize ...')
+    # setup analytical problem
+    problem = thermal_block_problem(num_blocks=(xblocks, yblocks))
 
-    diffusion = df.Expression('(lower0 <= x[0]) * (open0 ? (x[0] < upper0) : (x[0] <= upper0)) *'
-                              '(lower1 <= x[1]) * (open1 ? (x[1] < upper1) : (x[1] <= upper1))',
-                              lower0=0., upper0=0., open0=0,
-                              lower1=0., upper1=0., open1=0,
-                              element=df.FunctionSpace(mesh, 'DG', 0).ufl_element())
-
-    def assemble_matrix(x, y, nx, ny):
-        diffusion.user_parameters['lower0'] = x/nx
-        diffusion.user_parameters['lower1'] = y/ny
-        diffusion.user_parameters['upper0'] = (x + 1)/nx
-        diffusion.user_parameters['upper1'] = (y + 1)/ny
-        diffusion.user_parameters['open0'] = (x + 1 == nx)
-        diffusion.user_parameters['open1'] = (y + 1 == ny)
-        return df.assemble(df.inner(diffusion * df.nabla_grad(u), df.nabla_grad(v)) * df.dx)
-
-    mats = [assemble_matrix(x, y, xblocks, yblocks)
-            for x in range(xblocks) for y in range(yblocks)]
-    mat0 = mats[0].copy()
-    mat0.zero()
-    h1_mat = df.assemble(df.inner(df.nabla_grad(u), df.nabla_grad(v)) * df.dx)
-    l2_mat = df.assemble(u * v * df.dx)
-
-    f = df.Constant(1.) * v * df.dx
-    F = df.assemble(f)
-
-    bc = df.DirichletBC(V, 0., df.DomainBoundary())
-    for m in mats:
-        bc.zero(m)
-    bc.apply(mat0)
-    bc.apply(h1_mat)
-    bc.apply(F)
-
-    # wrap everything as a pyMOR model
-    ##################################
-
-    # FEniCS wrappers
-    from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
-
-    # generic pyMOR classes
-    from pymor.models.basic import StationaryModel
-    from pymor.operators.constructions import LincombOperator, VectorOperator
-    from pymor.parameters.functionals import ProjectionParameterFunctional
-
-    # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
-    def parameter_functional_factory(x, y):
-        return ProjectionParameterFunctional('diffusion',
-                                             size=yblocks*xblocks,
-                                             index=yblocks - y - 1 + x * yblocks,
-                                             name=f'diffusion_{x}_{y}')
-    parameter_functionals = tuple(parameter_functional_factory(x, y)
-                                  for x in range(xblocks) for y in range(yblocks))
-
-    # wrap operators
-    ops = [FenicsMatrixOperator(mat0, V, V)] + [FenicsMatrixOperator(m, V, V) for m in mats]
-    op = LincombOperator(ops, (1.,) + parameter_functionals)
-    rhs = VectorOperator(FenicsVectorSpace(V).make_array([F]))
-    h1_product = FenicsMatrixOperator(h1_mat, V, V, name='h1_0_semi')
-    l2_product = FenicsMatrixOperator(l2_mat, V, V, name='l2')
-
-    # build model
-    visualizer = FenicsVisualizer(FenicsVectorSpace(V))
-    fom = StationaryModel(op, rhs, products={'h1_0_semi': h1_product,
-                                             'l2': l2_product},
-                          visualizer=visualizer)
+    # discretize using continuous finite elements
+    fom, _ = discretize_stationary_cg(problem, diameter=1. / grid_num_intervals, degree=element_order)
 
     return fom
 
