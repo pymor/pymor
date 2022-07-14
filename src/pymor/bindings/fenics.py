@@ -15,13 +15,50 @@ from pathlib import Path
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.pickle import unpicklable
-from pymor.operators.constructions import ZeroOperator
+from pymor.operators.constructions import ZeroOperator, VectorOperator, VectorFunctional
 from pymor.operators.interface import Operator
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.interface import _create_random_values
 from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+
+@defaults('doit')
+def patch_ufl(doit=True):
+    """Monkey patch ufl.algorithms.estimate_total_polynomial_degree.
+
+    Catches `TypeError`, which can be called by certain UFL expressions, and returns
+    `default_degree`.
+
+    This is needed, for instance, when using :mod:`pymor.discretizers.fenics` on a
+    :func:`~pymor.analyticalproblems.thermalblock.thermal_block_problem`.
+    """
+    if not doit:
+        return
+
+    import ufl
+
+    real_estimate_total_polynomial_degree = ufl.algorithms.estimate_total_polynomial_degree
+
+    def estimate_total_polynomial_degree_wrapper(e, default_degree=1, element_replace_map={}):
+        try:
+            return real_estimate_total_polynomial_degree(e, default_degree=default_degree,
+                                                         element_replace_map=element_replace_map)
+        except TypeError:
+            return default_degree
+
+    ufl.algorithms.estimate_degrees.estimate_total_polynomial_degree = estimate_total_polynomial_degree_wrapper
+    ufl.algorithms.estimate_total_polynomial_degree = estimate_total_polynomial_degree_wrapper
+
+    # use sys.modules for monkey patching since compute_form_data is at the same time function
+    # and sub-module
+    import sys
+    sys.modules['ufl.algorithms.compute_form_data'].estimate_total_polynomial_degree \
+        = estimate_total_polynomial_degree_wrapper
+
+
+patch_ufl()
 
 
 @unpicklable
@@ -170,6 +207,85 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace):
 
     def real_make_vector(self, obj):
         return FenicsVector(obj)
+
+
+class FenicsMatrixBasedOperator(Operator):
+    """Wraps a parameterized FEniCS linear or bilinear form as an |Operator|.
+
+    Parameters
+    ----------
+    form
+        The `Form` object which is assembled to a matrix or vector.
+    params
+        Dict mapping parameters to dolfin `Constants` as returned by
+        :meth:`~pymor.analyticalproblems.functions.ExpressionFunction.to_fenics`.
+    bc
+        dolfin `DirichletBC` object to be applied.
+    bc_zero
+        If `True` also clear the diagonal entries of Dirichlet dofs.
+    functional
+        If `True` return a |VectorFunctional| instead of a |VectorOperator| in case
+        `form` is a linear form.
+    solver_options
+        The |solver_options| for the assembled :class:`FenicsMatrixOperator`.
+    name
+        Name of the operator.
+    """
+
+    linear = True
+
+    def __init__(self, form, params, bc=None, bc_zero=False, functional=False, solver_options=None, name=None):
+        assert 1 <= len(form.arguments()) <= 2
+        assert not functional or len(form.arguments()) == 1
+        self.__auto_init(locals())
+        if len(form.arguments()) == 2 or not functional:
+            range_space = form.arguments()[0].function_space()
+            self.range = FenicsVectorSpace(range_space)
+        else:
+            self.range = NumpyVectorSpace(1)
+        if len(form.arguments()) == 2 or functional:
+            source_space = form.arguments()[0 if functional else 1].function_space()
+            self.source = FenicsVectorSpace(source_space)
+        else:
+            self.source = NumpyVectorSpace(1)
+        self.parameters_own = {k: len(v) for k, v in params.items()}
+
+    def assemble(self, mu=None):
+        assert self.parameters.assert_compatible(mu)
+        # update coefficients in form
+        for k, coeffs in self.params.items():
+            for c, v in zip(coeffs, mu[k]):
+                c.assign(v)
+        # assemble matrix
+        mat = df.assemble(self.form, keep_diagonal=True)
+        if self.bc is not None:
+            if self.bc_zero:
+                self.bc.zero(mat)
+            else:
+                self.bc.apply(mat)
+        if len(self.form.arguments()) == 2:
+            return FenicsMatrixOperator(mat, self.source.V, self.range.V, self.solver_options, self.name + '_assembled')
+        elif self.functional:
+            V = self.source.make_array([mat])
+            return VectorFunctional(V)
+        else:
+            V = self.range.make_array([mat])
+            return VectorOperator(V)
+
+    def apply(self, U, mu=None):
+        return self.assemble(mu).apply(U)
+
+    def apply_adjoint(self, V, mu=None):
+        return self.assemble(mu).apply_adjoint(V)
+
+    def as_range_array(self, mu=None):
+        return self.assemble(mu).as_range_array()
+
+    def as_source_array(self, mu=None):
+        return self.assemble(mu).as_source_array()
+
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        return self.assemble(mu).apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
 
 
 class FenicsMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
