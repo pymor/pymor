@@ -15,9 +15,13 @@
 * Patrick Buchfink, patrick.buchfink@ians.uni-stuttgart.de
   * symplectic model order reduction
 
+* Monica Dessole, monica.dessole.ext@leonardo.com
+  * Navier-Stokes demo using neural networks
+
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
   * several additional features for neural networks
   * purely data-driven usage of neural networks without requiring full-order model
+  * Navier-Stokes demo using neural networks
 
 * Art Pelling, a.pelling@tu-berlin.de
   * functionality to instantiate non-parametric LTIModels with preset attributes
