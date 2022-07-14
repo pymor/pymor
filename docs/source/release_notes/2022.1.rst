@@ -15,6 +15,21 @@ Release highlights
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+Lots of new features for the neural network based reductors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In `[#1559] <https://github.com/pymor/pymor/pull/1559>`_, a couple of new features
+including support for learning rate schedulers, input and output scaling,
+regularization of weights and biases, a weighted MSE loss and logging of current
+losses have been added to improve the training of neural networks. These additions
+make the training process more flexible and all components can be combined as required.
+
+Purely data-driven usage of neural network based reductors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If no full-order model is available but only snapshot data, it is now also possible to
+use the neural network based reductors in a data-driven way.
+In `[#1679] <https://github.com/pymor/pymor/pull/1679>`_, the reductors have been
+adjusted to allow for pairs of parameters and corresponding snapshot data as training
+set instead of only parameters. The resulting surrogate models can be used as before.
 
 
 Backward incompatible changes
