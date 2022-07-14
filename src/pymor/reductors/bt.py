@@ -8,7 +8,7 @@ import scipy.linalg as spla
 from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.lyapunov import solve_cont_lyap_lrcf
-from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
+from pymor.algorithms.riccati import solve_pos_ricc_lrcf
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import IdentityOperator, LowRankOperator
@@ -219,17 +219,7 @@ class LQGBTReductor(GenericBTReductor):
         if self.fom.sampling_time > 0:
             raise NotImplementedError
 
-        A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
-                      for op in ['A', 'B', 'C', 'E'])
-        if isinstance(E, IdentityOperator):
-            E = None
-        options = self.solver_options
-
-        cf = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                             trans=False, options=options)
-        of = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                             trans=True, options=options)
-        return cf, of
+        return self.fom.gramian('lqg_c_lrcf', mu=self.mu), self.fom.gramian('lqg_o_lrcf', mu=self.mu)
 
     def error_bounds(self):
         sv = self._sv_U_V()[0]
