@@ -1,7 +1,11 @@
 
-pyMOR 2022.1 (?? ??, 2022)
+pyMOR 2022.1 (July 19, 2022)
 --------------------------------
 
+We are proud to announce the release of pyMOR 2022.1!
+
+Over 700 single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2021.2.x...2022.1.x>`__.
 
 Release highlights
 ^^^^^^^^^^^^^^^^^^
