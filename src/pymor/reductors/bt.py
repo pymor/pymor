@@ -211,10 +211,6 @@ class LQGBTReductor(GenericBTReductor):
         The solver options to use to solve the Riccati equations.
     """
 
-    def __init__(self, fom, mu=None, solver_options=None):
-        super().__init__(fom, mu=mu)
-        self.solver_options = solver_options
-
     def _gramians(self):
         if self.fom.sampling_time > 0:
             raise NotImplementedError
