@@ -12,6 +12,7 @@ from pymor.core.config import config
 from pymor.core.exceptions import TorchMissing
 from pymor.reductors.neural_network import (NeuralNetworkInstationaryReductor,
                                             NeuralNetworkInstationaryStatefreeOutputReductor)
+from pymor.tools import mpi
 
 
 def main(
@@ -63,14 +64,14 @@ def main(
         u_fom = fom.solve(mu)[1:]
         U.append(u_fom)
         time_fom = time.time() - tic
-        if plot_test_solutions:
+        if plot_test_solutions and plot_function:
             plot_function(u_fom, title='FOM')
 
         tic = time.time()
         u_red = reductor.reconstruct(rom.solve(mu))[1:]
         U_red.append(u_red)
         time_red = time.time() - tic
-        if plot_test_solutions:
+        if plot_test_solutions and plot_function:
             plot_function(u_red, title='ROM')
 
         speedups.append(time_fom / time_red)
@@ -138,6 +139,17 @@ def create_fom(problem_number, grid_intervals, time_steps):
 
 
 def discretize_navier_stokes(n, nt):
+    if mpi.parallel:
+        from pymor.models.mpi import mpi_wrap_model
+        fom = mpi_wrap_model(lambda: _discretize_navier_stokes(n, nt),
+                             use_with=True, pickle_local_spaces=False)
+        plot_function = None
+    else:
+        fom, plot_function = _discretize_navier_stokes(n, nt)
+    return fom, plot_function
+
+
+def _discretize_navier_stokes(n, nt):
     from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsVisualizer, FenicsMatrixOperator
     from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 
@@ -198,17 +210,14 @@ def discretize_navier_stokes(n, nt):
                 + 2.*(1./Re) * df.inner(df.sym(df.grad(psi_u)), df.sym(df.grad(u))))
     F = (mass + momentum) * df.dx
 
-    df.solve(F == 0, w, bc, solver_parameters={"newton_solver": {"relative_tolerance": 1e-6}})
+    df.solve(F == 0, w, bc)
 
     # define pyMOR operators
     space = FenicsVectorSpace(W)
     mass_op = FenicsMatrixOperator(mass_mat, W, W, name='mass')
     op = FenicsOperator(F, space, space, w, bc,
                         parameter_setter=lambda mu: Re.assign(mu['Re'].item()),
-                        parameters={'Re': 1},
-                        solver_options={'inverse': {'type': 'newton',
-                                                    'rtol': 1e-6,
-                                                    'return_residuals': 'True'}})
+                        parameters={'Re': 1})
 
     # timestep size for the implicit Euler timestepper
     dt = 0.01
@@ -249,7 +258,10 @@ def discretize_navier_stokes(n, nt):
         plt.colorbar(fig_p)
         plt.show()
 
-    return fom, plot_fenics
+    if mpi.parallel:
+        return fom
+    else:
+        return fom, plot_fenics
 
 
 if __name__ == '__main__':
