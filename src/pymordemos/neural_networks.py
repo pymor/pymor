@@ -4,6 +4,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import time
+import sys
 import numpy as np
 from typer import Argument, Option, run
 
@@ -31,10 +32,16 @@ def main(
 
     training_set = parameter_space.sample_uniformly(training_samples)
     validation_set = parameter_space.sample_randomly(validation_samples)
+    test_set = parameter_space.sample_randomly(10)
 
-    reductor = NeuralNetworkReductor(fom=fom, training_set=training_set, validation_set=validation_set,
-                                     l2_err=1e-5, ann_mse=1e-5)
-    rom = reductor.reduce(restarts=100, log_loss_frequency=10)
+    if getattr(sys, '_called_from_test', False):
+        reductor = NeuralNetworkReductor(fom=fom, training_set=training_set, validation_set=validation_set,
+                                         l2_err=1e-5, ann_mse=1e-5)
+        rom = reductor.reduce(restarts=100, log_loss_frequency=10)
+
+        U_red = fom.solution_space.empty(reserve=len(test_set))
+        for mu in test_set:
+            U_red.append(reductor.reconstruct(rom.solve(mu)))
 
     training_data = []
     for mu in training_set:
@@ -48,15 +55,11 @@ def main(
                                                  l2_err=1e-5, ann_mse=1e-5)
     rom_data_driven = reductor_data_driven.reduce(restarts=100, log_loss_frequency=10)
 
-    test_set = parameter_space.sample_randomly(10)
-
-    speedups = []
     speedups_data_driven = []
 
     print(f'Performing test on set of size {len(test_set)} ...')
 
     U = fom.solution_space.empty(reserve=len(test_set))
-    U_red = fom.solution_space.empty(reserve=len(test_set))
     U_red_data_driven = fom.solution_space.empty(reserve=len(test_set))
 
     for mu in test_set:
@@ -65,25 +68,17 @@ def main(
         time_fom = time.perf_counter() - tic
 
         tic = time.perf_counter()
-        U_red.append(reductor.reconstruct(rom.solve(mu)))
-        time_red = time.perf_counter() - tic
-
-        tic = time.perf_counter()
         U_red_data_driven.append(reductor_data_driven.reconstruct(rom_data_driven.solve(mu)))
         time_red_data_driven = time.perf_counter() - tic
 
-        speedups.append(time_fom / time_red)
         speedups_data_driven.append(time_fom / time_red_data_driven)
-
-    absolute_errors = (U - U_red).norm()
-    relative_errors = (U - U_red).norm() / U.norm()
 
     absolute_errors_data_driven = (U - U_red_data_driven).norm()
     relative_errors_data_driven = (U - U_red_data_driven).norm() / U.norm()
 
     if vis:
-        fom.visualize((U, U_red, U_red_data_driven),
-                      legend=('Full solution', 'Reduced solution', 'Reduced solution data-driven'))
+        fom.visualize((U, U_red_data_driven),
+                      legend=('Full solution', 'Reduced solution (data-driven)'))
 
     output_reductor = NeuralNetworkStatefreeOutputReductor(fom, training_set, validation_set, validation_loss=1e-5)
     output_rom = output_reductor.reduce(restarts=100, log_loss_frequency=10)
@@ -110,11 +105,6 @@ def main(
 
     outputs_absolute_errors = np.abs(outputs - outputs_red)
     outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
-
-    print('Results for state approximation:')
-    print(f'Average absolute error: {np.average(absolute_errors)}')
-    print(f'Average relative error: {np.average(relative_errors)}')
-    print(f'Median of speedup: {np.median(speedups)}')
 
     print()
     print('Results for state approximation purely data-driven:')
