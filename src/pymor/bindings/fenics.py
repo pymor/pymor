@@ -583,13 +583,13 @@ class FenicsVisualizer(ImmutableObject):
                     tit += legend[i]
                 else:
                     tit = title
+                plt.figure()
                 if separate_colorbars:
-                    plt.figure()
-                    df.plot(function, title=tit)
+                    p = df.plot(function, title=tit)
                 else:
-                    plt.figure()
-                    df.plot(function, title=tit,
-                            range_min=vmin, range_max=vmax)
+                    p = df.plot(function, title=tit,
+                                range_min=vmin, range_max=vmax)
+                plt.colorbar(p)
             if getattr(sys, '_called_from_test', False):
                 plt.show(block=False)
             else:
