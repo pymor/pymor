@@ -11,6 +11,7 @@ from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.eigs import eigs
 from pymor.algorithms.lyapunov import (_chol, solve_cont_lyap_lrcf, solve_disc_lyap_lrcf, solve_cont_lyap_dense,
                                        solve_disc_lyap_dense)
+from pymor.algorithms.riccati import solve_ricc_lrcf
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
 from pymor.core.config import config
@@ -597,15 +598,16 @@ class LTIModel(Model):
             return self.presets['c_lrcf'].to_numpy().T @ self.presets['c_lrcf'].to_numpy()
         elif typ == 'o_dense' and 'o_lrcf' in self.presets:
             return self.presets['o_lrcf'].to_numpy().T @ self.presets['o_lrcf'].to_numpy()
-        else:
-            A = self.A.assemble(mu)
-            B = self.B
-            C = self.C
-            E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
-            options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
-            options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
-            solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
-            solve_lyap_dense = solve_cont_lyap_dense if self.sampling_time == 0 else solve_disc_lyap_dense
+
+        A = self.A.assemble(mu)
+        B = self.B
+        C = self.C
+        E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
+        options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
+        options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
+        options_ricc_lrcf = self.solver_options.get('ricc_lrcf') if self.solver_options else None
+        solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
+        solve_lyap_dense = solve_cont_lyap_dense if self.sampling_time == 0 else solve_disc_lyap_dense
 
         if typ == 'c_lrcf':
             return solve_lyap_lrcf(A, E, B.as_range_array(mu=mu), trans=False, options=options_lrcf)
@@ -617,6 +619,12 @@ class LTIModel(Model):
         elif typ == 'o_dense':
             return solve_lyap_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
                                     to_matrix(C, format='dense'), trans=True, options=options_dense)
+        elif typ == 'lqg_c_lrcf':
+            return solve_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
+                                   trans=False, options=options_ricc_lrcf)
+        elif typ == 'lqg_o_lrcf':
+            return solve_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
+                                   trans=True, options=options_ricc_lrcf)
 
     def gramian(self, typ, mu=None):
         """Compute a Gramian.
@@ -629,7 +637,9 @@ class LTIModel(Model):
             - `'c_lrcf'`: low-rank Cholesky factor of the controllability Gramian,
             - `'o_lrcf'`: low-rank Cholesky factor of the observability Gramian,
             - `'c_dense'`: dense controllability Gramian,
-            - `'o_dense'`: dense observability Gramian.
+            - `'o_dense'`: dense observability Gramian,
+            - `'lqg_c_lrcf'`: low-rank Cholesky factor of the "controllability" LQG Gramian,
+            - `'lqg_o_lrcf'`: low-rank Cholesky factor of the "observability" LQG Gramian.
 
             .. note::
                 For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
@@ -642,11 +652,13 @@ class LTIModel(Model):
 
         Returns
         -------
-        If typ is `'c_lrcf'` or `'o_lrcf'`, then the Gramian factor as a |VectorArray| from
-        `self.A.source`.
-        If typ is `'c_dense'` or `'o_dense'`, then the Gramian as a |NumPy array|.
+        If typ ends with `'_lrcf'`, then the Gramian factor as a |VectorArray| from `self.A.source`.
+        If typ ends with `'_dense'`, then the Gramian as a |NumPy array|.
         """
-        assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense')
+        assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'lqg_c_lrcf', 'lqg_o_lrcf')
+
+        if typ.startswith('lqg') and self.sampling_time > 0:
+            raise NotImplementedError
 
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
@@ -655,14 +667,10 @@ class LTIModel(Model):
         gramian = self.presets[typ] if typ in self.presets else self._gramian(typ, mu=mu)
 
         # assert correct return types
-        if typ == 'c_lrcf':
+        if typ.endswith('_lrcf'):
             assert gramian in self.A.source
-        elif typ == 'o_lrcf':
-            assert gramian in self.A.range
-        elif typ == 'c_dense':
-            assert isinstance(gramian, np.ndarray) and gramian.shape == (self.A.source.dim, self.A.range.dim)
-        elif typ == 'o_dense':
-            assert isinstance(gramian, np.ndarray) and gramian.shape == (self.A.range.dim, self.A.source.dim)
+        else:
+            assert isinstance(gramian, np.ndarray) and gramian.shape == (self.A.source.dim, self.A.source.dim)
 
         return gramian
 
