@@ -192,6 +192,7 @@ class Expression(ParametricObject):
         params = {p: SpatialCoordinate(mesh) if p == variable else [Constant(0.) for _ in range(dim)]
                   for p, dim in self.parameters.items()}
         f_expr = self.fenics_expr(params)
+        params.pop(variable, None)
         return f_expr, params
 
     def numpy_expr(self):
