@@ -9,6 +9,7 @@ from scipy.linalg import solve, solve_triangular
 
 from pymor.analyticalproblems.expressions import parse_expression
 from pymor.core.base import abstractmethod
+from pymor.core.config import config
 from pymor.parameters.base import ParametricObject, Mu
 from pymor.parameters.functionals import ParameterFunctional
 
@@ -166,6 +167,27 @@ class ConstantFunction(Function):
         else:
             return np.tile(self.value, x.shape[:-1] + (1,) * len(self.shape_range))
 
+    def to_fenics(self, mesh):
+        """Convert to ufl expression over dolfin mesh.
+
+        Parameters
+        ----------
+        mesh
+            The dolfin mesh object.
+
+        Returns
+        -------
+        coeffs
+            |NumPy array| of shape `self.shape_range` where each entry is an ufl
+            expression.
+        params
+            Dict mapping parameter names to lists of dolfin `Constants` which are
+            used in the ufl expressions for the corresponding parameter values.
+        """
+        config.require('FENICS')
+        from dolfin import Constant
+        return np.vectorize(Constant)(self.value), {}
+
 
 class GenericFunction(Function):
     """Wrapper making an arbitrary Python function between |NumPy arrays| a proper |Function|.
@@ -258,6 +280,25 @@ class ExpressionFunction(GenericFunction):
         super().__init__(self.expression_obj.to_numpy([variable]),
                          dim_domain, self.expression_obj.shape, parameters, name)
         self.__auto_init(locals())
+
+    def to_fenics(self, mesh):
+        """Convert to ufl expression over dolfin mesh.
+
+        Parameters
+        ----------
+        mesh
+            The dolfin mesh object.
+
+        Returns
+        -------
+        coeffs
+            |NumPy array| of shape `self.shape_range` where each entry is an ufl
+            expression.
+        params
+            Dict mapping parameter names to lists of dolfin `Constants` which are
+            used in the ufl expressions for the corresponding parameter values.
+        """
+        return self.expression_obj.to_fenics(mesh)
 
     def __reduce__(self):
         return (ExpressionFunction,
