@@ -22,9 +22,15 @@ def main(
     validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
     plot_test_solutions: bool = Option(False, help='Plot FOM and ROM solutions in the test set.'),
 ):
-    """Model oder reduction with neural networks for an instationary problem
+    """Model oder reduction with neural networks for instationary problems.
 
-    Using the approach by Hesthaven and Ubbiali.
+    Problem number 0 considers the incompressible Navier-Stokes equations in
+    a two-dimensional cavity with the Reynolds number as parameter.
+    The discretization is based on FEniCS.
+
+    Problem number 1 considers a parametrized Burgers equation on a
+    one-dimensional domain. The discretization is based on pyMOR's built-in
+    functionality.
     """
     if not config.HAVE_TORCH:
         raise TorchMissing()
