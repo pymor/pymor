@@ -131,11 +131,8 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
         dico = 'C' if cont_time else 'D'
         job = 'B'
         if E is None:
-            ldwork = max(2*n*n, 3*n) if cont_time else 2*n*n+2*n
-            # slycot v. 0.4.0 does not set ldwork correctly for dico='D'
-            # should be fixed in the next release
             U = np.zeros((n, n))
-            X, scale, sep, ferr, _ = slycot.sb03md(n, C, A, U, dico, job=job, trana=trana, ldwork=ldwork)
+            X, scale, sep, ferr, _ = slycot.sb03md(n, C, A, U, dico, job=job, trana=trana)
             _solve_check(A.dtype, 'slycot.sb03md', sep, ferr)
         else:
             fact = 'N'
