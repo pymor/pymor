@@ -8,10 +8,9 @@ import scipy.linalg as spla
 from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.lyapunov import solve_cont_lyap_lrcf
-from pymor.algorithms.riccati import solve_pos_ricc_lrcf
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
-from pymor.operators.constructions import IdentityOperator, LowRankOperator
+from pymor.operators.constructions import LowRankOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 
@@ -207,8 +206,6 @@ class LQGBTReductor(GenericBTReductor):
         The full-order |LTIModel| to reduce.
     mu
         |Parameter values|.
-    solver_options
-        The solver options to use to solve the Riccati equations.
     """
 
     def _gramians(self):
@@ -235,31 +232,18 @@ class BRBTReductor(GenericBTReductor):
         Upper bound for the :math:`\mathcal{H}_\infty`-norm.
     mu
         |Parameter values|.
-    solver_options
-        The solver options to use to solve the positive Riccati equations.
     """
 
-    def __init__(self, fom, gamma=1, mu=None, solver_options=None):
+    def __init__(self, fom, gamma=1, mu=None):
         super().__init__(fom, mu=mu)
         self.gamma = gamma
-        self.solver_options = solver_options
 
     def _gramians(self):
         if self.fom.sampling_time > 0:
             raise NotImplementedError
 
-        A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
-                      for op in ['A', 'B', 'C', 'E'])
-        if isinstance(E, IdentityOperator):
-            E = None
-        options = self.solver_options
-
-        cf = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                                 R=self.gamma**2 * np.eye(self.fom.dim_output) if self.gamma != 1 else None,
-                                 trans=False, options=options)
-        of = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                                 R=self.gamma**2 * np.eye(self.fom.dim_input) if self.gamma != 1 else None,
-                                 trans=True, options=options)
+        cf = self.fom.gramian(('br_c_lrcf', self.gamma), mu=self.mu)
+        of = self.fom.gramian(('br_o_lrcf', self.gamma), mu=self.mu)
         return cf, of
 
     def error_bounds(self):
