@@ -81,7 +81,7 @@ Simplified VectorArray implementation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The |VectorArray| code in pyMOR has been refactored into a single user-facing interface
 class and backend-specific
-:class:`implementation classes <pymor.vectorarray.vectorarray.VectorArrayImpl>`.
+:class:`implementation classes <pymor.vectorarrays.interface.VectorArrayImpl>`.
 All error checking, as well as managing of copy-on-write semantics and views is
 handled by the interface class, which should significantly simplify the correct
 implementation of new |VectorArrays| `[#1584] <https://github.com/pymor/pymor/pull/1584>`_.
