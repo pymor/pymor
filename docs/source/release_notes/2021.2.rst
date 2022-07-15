@@ -58,7 +58,7 @@ Additional new features
 
 Basic RB output error estimates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-pyMOR's Reduced Basis reductors have been extended to compute a basic 
+pyMOR's Reduced Basis reductors have been extended to compute a basic
 estimate for the :meth:`~pymor.models.interface.Model.output` error.
 Given a linear output functional, this estimate is given by the product
 of the estimated state-space error and the dual norm of the output functional.

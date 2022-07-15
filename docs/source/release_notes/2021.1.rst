@@ -72,11 +72,11 @@ the :attr:`shape <pymor.analyticalproblems.functions.Function.shape_range>`
 of the expression is now automatically determined and the expression is
 automatically vectorized correctly. In particular, there is no longer a need to
 add `...` to indexing expressions. Further, malformed expressions now lead
-to meaningful error messages at parse time. 
+to meaningful error messages at parse time.
 
 In the future, conversion routines will be added to make the expression library
 usable for :mod:`~pymor.discretizers` that use external PDE solvers, such that
-the same |ExpressionFunction| can be used for different PDE solver backends. 
+the same |ExpressionFunction| can be used for different PDE solver backends.
 
 Output reductor using ANNs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -95,7 +95,7 @@ training routines have been separated from the reductors.
 
 Improvements to the HAPOD algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-pyMOR's implementation of 
+pyMOR's implementation of
 `the HAPOD algorithm <https://epubs.siam.org/doi/abs/10.1137/16M1085413>`_
 has seen several significant improvements in
 `[#1322] <https://github.com/pymor/pymor/pull/1322>`_:
