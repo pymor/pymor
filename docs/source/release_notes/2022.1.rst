@@ -7,6 +7,7 @@ We are proud to announce the release of pyMOR 2022.1!
 Over 700 single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/2021.2.x...2022.1.x>`__.
 
+
 Release highlights
 ^^^^^^^^^^^^^^^^^^
 
@@ -79,7 +80,12 @@ converts pyMOR |analytical problems| to FEniCS-based |Models|
 
 Simplified VectorArray implementation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1584] Simplify VectorArray implementations <https://github.com/pymor/pymor/pull/1584>`_
+The |VectorArray| code in pyMOR has been refactored into a single user-facing interface
+class and backend-specific
+:class:`implementation classes <pymor.vectorarray.vectorarray.VectorArrayImpl>`.
+All error checking, as well as managing of copy-on-write semantics and views is
+handled by the interface class, which should significantly simplify the correct
+implementation of new |VectorArrays| `[#1584] <https://github.com/pymor/pymor/pull/1584>`_.
 
 
 Backward incompatible changes
