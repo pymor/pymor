@@ -31,7 +31,7 @@ With `[#1621] Added basic models for symplectic framework <https://github.com/py
 pyMOR now allows to formulate a quadratic Hamiltonian system as full-order model.
 Moreover, pyMOR implements multiple structure-preserving basis generation techniques
 `[#1600] Algorithms for symplectic MOR <https://github.com/pymor/pymor/pull/1600>`_.
-In combination with a special redcutor for quadratic Hamiltonian systems, a structure-preserving
+In combination with a special reductor for quadratic Hamiltonian systems, a structure-preserving
 reduction, known as symplectic MOR, is available. This was introduced in
 `[#1678] Added symplectic reductor <https://github.com/pymor/pymor/pull/1678>`_, together with a
 demo for the linear wave equation.
