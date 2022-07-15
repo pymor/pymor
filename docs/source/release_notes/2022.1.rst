@@ -56,9 +56,16 @@ In `[#1679] <https://github.com/pymor/pymor/pull/1679>`_, the reductors have bee
 adjusted to allow for pairs of parameters and corresponding snapshot data as training
 set instead of only parameters. The resulting surrogate models can be used as before.
 
-New randomized linear algebra algorithms
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1552] Add randomized linear algebra methods for svd and ghep <https://github.com/pymor/pymor/pull/1552>`_
+Randomized linear algebra algorithms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pyMOR's numerical linear algebra algorithms have been extended by randomized methods:
+the new :mod:`~pymor.algorithms.rand_la` module includes a method for
+:func:`singular value decomposition <pymor.algorithms.rand_la.randomized_generalized_svd>`_
+of arbitrary linear pyMOR |Operators|, as well as an algorithm for solving
+:func:`generalized hermitian eigenproblems <pymor.algorithms.rand_la.random_ghep>`_.
+The old randomized range approximation algorithms from the
+:mod:`~pymor.algorithms.randrangefinder` module have been moved to the new module as well
+`[#1552] <https://github.com/pymor/pymor/pull/1552>`_.
 
 FEniCS discretizer
 ~~~~~~~~~~~~~~~~~~
