@@ -28,14 +28,14 @@ FFT-accelerated matrix-vector multiplication routines that work on the Markov pa
 
 Structure-preserving model reduction for symplectic systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-With `[#1621] Added basic models for symplectic framework <https://github.com/pymor/pymor/pull/1621>`_,
+With `[#1621] <https://github.com/pymor/pymor/pull/1621>`_,
 pyMOR now allows to formulate a quadratic Hamiltonian system as full-order model.
 Moreover, pyMOR implements multiple structure-preserving basis generation techniques
-`[#1600] Algorithms for symplectic MOR <https://github.com/pymor/pymor/pull/1600>`_.
+`[#1600] <https://github.com/pymor/pymor/pull/1600>`_.
 In combination with a special reductor for quadratic Hamiltonian systems, a structure-preserving
-reduction, known as symplectic MOR, is available. This was introduced in
-`[#1678] Added symplectic reductor <https://github.com/pymor/pymor/pull/1678>`_, together with a
-demo for the linear wave equation.
+reduction, known as symplectic MOR, is available
+`[#1678] <https://github.com/pymor/pymor/pull/1678>`_. A demo script 
+for the linear wave equation is included.
 
 
 Additional new features
