@@ -10,6 +10,20 @@ see `here <https://github.com/pymor/pymor/compare/2021.2.x...2022.1.x>`__.
 Release highlights
 ^^^^^^^^^^^^^^^^^^
 
+Support for discrete-time systems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1500] sampling_time attribute for discrete-time systems <https://github.com/pymor/pymor/pull/1500>`_
+- `[#1525] Discrete Gramians <https://github.com/pymor/pymor/pull/1525>`_
+- `[#1546] NumpyHankelOperator class <https://github.com/pymor/pymor/pull/1546>`_
+- `[#1614] Moebius Transform Operator and Tustin's method for LTI-Systems <https://github.com/pymor/pymor/pull/1614>`_
+- `[#1617] enable discrete-time BT <https://github.com/pymor/pymor/pull/1617>`_
+
+
+Structure-preserving model reduction for symplectic systems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1600] Algorithms for symplectic MOR <https://github.com/pymor/pymor/pull/1600>`_
+- `[#1621] Added basic models for symplectic framework <https://github.com/pymor/pymor/pull/1621>`_
+- `[#1678] Added symplectic reductor <https://github.com/pymor/pymor/pull/1678>`_
 
 
 Additional new features
@@ -31,6 +45,19 @@ In `[#1679] <https://github.com/pymor/pymor/pull/1679>`_, the reductors have bee
 adjusted to allow for pairs of parameters and corresponding snapshot data as training
 set instead of only parameters. The resulting surrogate models can be used as before.
 
+New randomized linear algebra algorithms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1552] Add randomized linear algebra methods for svd and ghep <https://github.com/pymor/pymor/pull/1552>`_
+
+FEniCS discretizer
+~~~~~~~~~~~~~~~~~~
+- `[#1550] Support for converting Expressions to ufl expressions <https://github.com/pymor/pymor/pull/1550>`_
+- `[#1682] Experimental implementation of a FEniCS discretizer <https://github.com/pymor/pymor/pull/1682>`_
+
+Simplified VectorArray implementation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1584] Simplify VectorArray implementations <https://github.com/pymor/pymor/pull/1584>`_
+
 
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -42,29 +69,19 @@ Following numpy/scipy we have dropped official support for
 Python 3.7. This means pyMOR now requires Python 3.8 to install
 and is no longer tested against for 3.7.
 
+
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - `[#995] Add caching for LQGBTReductor and BRBTReductor Gramians <https://github.com/pymor/pymor/pull/995>`_
-- `[#1500] sampling_time attribute for discrete-time systems <https://github.com/pymor/pymor/pull/1500>`_
 - `[#1513] FEniCS: Save LinearSolver object in FenicsMatrixOperator to accelerate repeated solves <https://github.com/pymor/pymor/pull/1513>`_
 - `[#1520] Change RQI stopping criterion <https://github.com/pymor/pymor/pull/1520>`_
-- `[#1525] Discrete Gramians <https://github.com/pymor/pymor/pull/1525>`_
 - `[#1531] Remove 'if config.HAVE_...' checks in modules that require optional dependencies <https://github.com/pymor/pymor/pull/1531>`_
 - `[#1539] Add algorithm to contract non-parametric parts of LincombOperators and ConcatenationOperators <https://github.com/pymor/pymor/pull/1539>`_
-- `[#1546] NumpyHankelOperator class <https://github.com/pymor/pymor/pull/1546>`_
-- `[#1550] Support for converting Expressions to ufl expressions <https://github.com/pymor/pymor/pull/1550>`_
-- `[#1552] Add randomized linear algebra methods for svd and ghep <https://github.com/pymor/pymor/pull/1552>`_
 - `[#1576] Traverse ast to parse literals in Expressions <https://github.com/pymor/pymor/pull/1576>`_
 - `[#1583] preset values for LTIModel <https://github.com/pymor/pymor/pull/1583>`_
-- `[#1584] Simplify VectorArray implementations <https://github.com/pymor/pymor/pull/1584>`_
 - `[#1611] PHLTI system <https://github.com/pymor/pymor/pull/1611>`_
-- `[#1614] Moebius Transform Operator and Tustin's method for LTI-Systems <https://github.com/pymor/pymor/pull/1614>`_
 - `[#1616] Improve LTIModel.from_mat_file <https://github.com/pymor/pymor/pull/1616>`_
-- `[#1617] enable discrete-time BT <https://github.com/pymor/pymor/pull/1617>`_
-- `[#1621] Added basic models for symplectic framework <https://github.com/pymor/pymor/pull/1621>`_
 - `[#1637] Avoid division by zero in gram_schmidt <https://github.com/pymor/pymor/pull/1637>`_
 - `[#1659] Provide a default implementation of ComplexifiedVector.amax via to_numpy <https://github.com/pymor/pymor/pull/1659>`_
 - `[#1662] Provide a default implementation of apply_inverse by converting to a NumPy/SciPy matrix <https://github.com/pymor/pymor/pull/1662>`_
 - `[#1673] Use Navier-Stokes example in Neural Network demo <https://github.com/pymor/pymor/pull/1673>`_
-- `[#1678] Added symplectic reductor <https://github.com/pymor/pymor/pull/1678>`_
-- `[#1682] Experimental implementation of a FEniCS discretizer <https://github.com/pymor/pymor/pull/1682>`_
