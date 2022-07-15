@@ -60,7 +60,7 @@ Randomized linear algebra algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 pyMOR's numerical linear algebra algorithms have been extended by randomized methods:
 the new :mod:`~pymor.algorithms.rand_la` module includes a method for
-:func:`singular value decomposition <pymor.algorithms.rand_la.randomized_generalized_svd>`
+:func:`singular value decomposition <pymor.algorithms.rand_la.random_generalized_svd>`
 of arbitrary linear pyMOR |Operators|, as well as an algorithm for solving
 :func:`generalized hermitian eigenproblems <pymor.algorithms.rand_la.random_ghep>`.
 The old randomized range approximation algorithms from the
