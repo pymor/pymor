@@ -13,16 +13,17 @@ Release highlights
 
 Support for discrete-time systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-With `[#1500] <https://github.com/pymor/pymor/pull/1500>`_, discrete-time LTI systems can now
-be instantiated by passing the sampling time to the constructor. The computation of
+With `[#1500] <https://github.com/pymor/pymor/pull/1500>`_, discrete-time |LTIModels| can now
+be instantiated by passing the `sampling_time` to the constructor. The computation of
 discrete-time gramians has been enabled in `[#1525] <https://github.com/pymor/pymor/pull/1525>`_
 by solving the associated Stein equations with solvers from either SciPy or SLICOT and
 `[#1617] <https://github.com/pymor/pymor/pull/1617>`_ also allows for Balanced Truncation of discrete-time systems.
 In `[#1614] <https://github.com/pymor/pymor/pull/1614>`_, a class for the construction and evaluation of Moebius
-transformations was added. Realizations of LTI systems can be transformed according to arbitrary Moebius transformations.
+transformations was added. Realizations of LTI systems can be transformed according to arbitrary |MoebiusTransformations|.
 The conversion of continuous-time and discrete-time systems with Tustin's method (with optional frequency prewarping)
-is implemented on the basis of these Moebius transformations in dedicated model conversion methods.
-In preparation for data-driven reduced order modelling methods, a Hankel matrix class is added in
+is implemented on the basis of these |MoebiusTransformations| in dedicated
+:func:`to_continuous <pymor.models.iosys.LTIModel.to_continuous>` and
+:func:`to_discrete <pymor.models.iosys.LTIModel.to_discrete>` conversion methods.
 In preparation for data-driven reduced order modelling methods, a |NumpyHankelOperator| is added in
 `[#1546] <https://github.com/pymor/pymor/pull/1546>`_ that avoids explicit matrix constructions by supplying
 FFT-accelerated matrix-vector multiplication routines that work on the Markov parameters directly.
