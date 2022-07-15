@@ -28,7 +28,7 @@ FFT-accelerated matrix-vector multiplication routines that work on the Markov pa
 
 Structure-preserving model reduction for symplectic systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-With `[#1621] <https://github.com/pymor/pymor/pull/1621>`_,
+With `[#1621] <https://github.com/pymor/pymor/pull/1621>`_
 pyMOR now allows to formulate a quadratic Hamiltonian system as full-order model.
 Moreover, pyMOR implements multiple structure-preserving basis generation techniques
 `[#1600] <https://github.com/pymor/pymor/pull/1600>`_.
@@ -48,9 +48,6 @@ including support for learning rate schedulers, input and output scaling,
 regularization of weights and biases, a weighted MSE loss and logging of current
 losses have been added to improve the training of neural networks. These additions
 make the training process more flexible and all components can be combined as required.
-
-Purely data-driven usage of neural network based reductors
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If no full-order model is available but only snapshot data, it is now also possible to
 use the neural network based reductors in a data-driven way.
 In `[#1679] <https://github.com/pymor/pymor/pull/1679>`_, the reductors have been
