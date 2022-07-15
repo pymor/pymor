@@ -7,7 +7,13 @@ repos:
     hooks:
     -   id: trailing-whitespace
     -   id: check-yaml
+    -   id: check-json
+    -   id: check-symlinks
     -   id: check-added-large-files
+    -   id: debug-statements
+        exclude: "src/pymor/algorithms/rules.py"
+    -   id: pretty-format-json
+        args: [--autofix]
 -   repo: https://github.com/pycqa/flake8
     rev: 4.0.1
     hooks:
