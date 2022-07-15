@@ -95,6 +95,8 @@ common = '''
 .. |EmpiricalInterpolatedOperators| replace:: :class:`EmpiricalInterpolatedOperators <pymor.operators.ei.EmpiricalInterpolatedOperator>`
 .. |ConcatenationOperator| replace:: :class:`~pymor.operators.constructions.ConcatenationOperator`
 .. |ConcatenationOperators| replace:: :class:`ConcatenationOperators <pymor.operators.constructions.ConcatenationOperator>`
+.. |VectorOperator| replace:: :class:`~pymor.operators.constructions.VectorOperator`
+.. |VectorFunctional| replace:: :class:`~pymor.operators.constructions.VectorFunctional`
 .. |NumpyVectorSpace| replace:: :func:`~pymor.vectorarrays.numpy.NumpyVectorSpace`
 .. |NumpyVectorSpaces| replace:: :func:`NumpyVectorSpaces <pymor.vectorarrays.numpy.NumpyVectorSpace>`
 
