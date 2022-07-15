@@ -1270,6 +1270,11 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
 
     p = analytical_problem
 
+    if p.stationary_part.dirichlet_data is not None and 't' in p.stationary_part.dirichlet_data.parameters:
+        # we choose both mass and operator to be invertible.
+        # this leads to wrong results when the dirichlet values depend on time.
+        raise NotImplementedError('Time-dependent Dirichlet values not supported.')
+
     m, data = discretize_stationary_cg(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
                                        grid_type=grid_type, grid=grid, boundary_info=boundary_info)
 
