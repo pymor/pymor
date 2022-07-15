@@ -1,6 +1,6 @@
 
 pyMOR 2022.1 (July 19, 2022)
---------------------------------
+----------------------------
 
 We are proud to announce the release of pyMOR 2022.1!
 
@@ -90,10 +90,9 @@ Backward incompatible changes
 
 Dropped Python 3.7 support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Following NumPy/SciPy we have dropped official support for
 Python 3.7. This means pyMOR now requires Python 3.8 to install
-and is no longer tested against for 3.7.
+and is no longer tested against 3.7.
 
 
 Further notable improvements
