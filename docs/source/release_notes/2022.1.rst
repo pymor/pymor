@@ -36,7 +36,7 @@ Moreover, pyMOR implements multiple structure-preserving basis generation techni
 `[#1600] <https://github.com/pymor/pymor/pull/1600>`_.
 In combination with a special reductor for quadratic Hamiltonian systems, a structure-preserving
 reduction, known as symplectic MOR, is available
-`[#1678] <https://github.com/pymor/pymor/pull/1678>`_. A demo script 
+`[#1678] <https://github.com/pymor/pymor/pull/1678>`_. A demo script
 for the linear wave equation is included.
 
 
@@ -70,7 +70,7 @@ The old randomized range approximation algorithms from the
 FEniCS discretizer
 ~~~~~~~~~~~~~~~~~~
 pyMOR's symbolic :class:`Expressions <pymor.analyticalproblems.expressions.Expression>`
-can now be converted to equivalent `UFL <https://fenics.readthedocs.io/projects/ufl/en/latest/>`_ 
+can now be converted to equivalent `UFL <https://fenics.readthedocs.io/projects/ufl/en/latest/>`_
 expressions. In particular, |ExpressionFunction| now has a `to_fenics` methods which
 utilizes this functionality under the hood `[#1550] <https://github.com/pymor/pymor/pull/1550>`_.
 Based on this feature an experimental :mod:`discretizer <pymor.discretizers.fenics>`
