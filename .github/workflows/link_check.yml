@@ -14,3 +14,4 @@ jobs:
         use-verbose-mode: 'yes'
         base-branch: 'main'
         check-modified-files-only: 'yes'
+        config-file: .github/markdown_link_check_config.json

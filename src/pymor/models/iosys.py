@@ -3,8 +3,6 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 from numbers import Number
 
-from numbers import Number
-
 import numpy as np
 import scipy.linalg as spla
 import scipy.sparse as sps

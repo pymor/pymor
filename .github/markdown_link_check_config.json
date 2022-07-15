@@ -1,0 +1,19 @@
+{
+  "httpHeaders": [
+    {
+      "headers": {
+        "Accept-Encoding": "zstd, br, gzip, deflate"
+      },
+      "urls": [
+        "https://guides.github.com/",
+        "https://help.github.com/",
+        "https://docs.github.com/"
+      ]
+    }
+  ],
+  "ignorePatterns": [
+    {
+      "pattern": "^https://opensource.org"
+    }
+  ]
+}
