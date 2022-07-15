@@ -33,8 +33,10 @@ def hy_rect_tria_kwargs(draw, grid_type):
     identify_left_right = draw(hyst.booleans())
     identify_bottom_top = draw(hyst.booleans())
     interval_i = hyst.integers(min_value=1, max_value=42)
-    num_intervals = draw(hyst.tuples(interval_i.filter(lambda x: (not identify_left_right) or x > 1),
-                                     interval_i.filter(lambda y: (not identify_bottom_top) or y > 1)))
+
+    lambda x: (not identify_left_right) or x > 1
+    num_intervals = draw(hyst.tuples(interval_i.map(lambda x: x if not identify_left_right else max(2, x)),
+                                     interval_i.map(lambda y: y if not identify_bottom_top else max(2, y))))
 
     domain = hy_domain_bounds(draw, grid_type=grid_type)
     return {"num_intervals": num_intervals, "domain": domain, "identify_left_right": identify_left_right,
