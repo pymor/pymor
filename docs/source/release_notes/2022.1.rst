@@ -23,6 +23,7 @@ transformations was added. Realizations of LTI systems can be transformed accord
 The conversion of continuous-time and discrete-time systems with Tustin's method (with optional frequency prewarping)
 is implemented on the basis of these Moebius transformations in dedicated model conversion methods.
 In preparation for data-driven reduced order modelling methods, a Hankel matrix class is added in
+In preparation for data-driven reduced order modelling methods, a |NumpyHankelOperator| is added in
 `[#1546] <https://github.com/pymor/pymor/pull/1546>`_ that avoids explicit matrix constructions by supplying
 FFT-accelerated matrix-vector multiplication routines that work on the Markov parameters directly.
 
