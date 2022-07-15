@@ -89,10 +89,8 @@ Further guidelines:
 - Functions and classes called or instantiated by users should be
   sufficiently well documented.
 
-- When calling functions, positional arguments should generally be passed
-  as positional arguments, whereas keyword arguments should be passed as
-  keyword arguments. This will make your code less likely to break, when
-  the called function is extended.
+- Use keyword arguments for parameters with defaults. This will make your
+  code less likely to break, when the called function is extended.
 
 - Generally use verbose identifiers instead of single letter names, also
   for mathematical objects (use `residual` instead of `r`). Exceptions
