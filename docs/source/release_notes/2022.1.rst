@@ -51,8 +51,13 @@ New randomized linear algebra algorithms
 
 FEniCS discretizer
 ~~~~~~~~~~~~~~~~~~
-- `[#1550] Support for converting Expressions to ufl expressions <https://github.com/pymor/pymor/pull/1550>`_
-- `[#1682] Experimental implementation of a FEniCS discretizer <https://github.com/pymor/pymor/pull/1682>`_
+pyMOR's symbolic :class:`Expressions <pymor.analyticalproblems.expressions.Expression>`
+can now be converted to equivalent `UFL <https://fenics.readthedocs.io/projects/ufl/en/latest/>`_ 
+expressions. In particular, |ExpressionFunction| now has a `to_fenics` methods which
+utilizes this functionality under the hood `[#1550] <https://github.com/pymor/pymor/pull/1550>`_.
+Based on this feature an experimental :mod:`discretizer <pymor.discretizers.fenics>`
+converts pyMOR |analytical problems| to FEniCS-based |Models|
+`[#1682] <https://github.com/pymor/pymor/pull/1682>`_.
 
 Simplified VectorArray implementation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
