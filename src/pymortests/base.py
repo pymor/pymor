@@ -15,6 +15,7 @@ from pkg_resources import resource_filename, resource_stream
 from pytest import skip
 
 from pymor.algorithms.basic import almost_equal, relative_error
+from pymor.core import config
 from pymor.core.exceptions import DependencyMissing
 
 
@@ -99,6 +100,10 @@ def might_exceed_deadline(deadline=-1):
 def skip_if_missing(config_name):
     """Wrapper for requiring certain module dependencies on tests.
 
+    This will explicitly call :meth:`pymor.core.config.Config.require` with
+    given `config_name`, so it's usable even in places where a pyMOR module
+    that requires that package is not imported (yet).
+
     Parameters
     ----------
     config_name
@@ -109,12 +114,13 @@ def skip_if_missing(config_name):
         @wraps(func)
         def _inner_wrapper(*args, **kwargs):
             try:
-                func(*args, **kwargs)
+                config.config.require(config_name)
             except DependencyMissing as dm:
                 # skip does not return
                 if config_name in str(dm.dependency) and not os.environ.get('DOCKER_PYMOR', False):
                     skip_string = 'skipped test due to missing dependency ' + config_name
                     skip(skip_string)
                 raise dm
+            func(*args, **kwargs)
         return _inner_wrapper
     return _outer_wrapper

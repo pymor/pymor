@@ -23,6 +23,9 @@
   * purely data-driven usage of neural networks without requiring full-order model
   * Navier-Stokes demo using neural networks
 
+* Peter Oehme, oehme.pb@gmail.com
+  * support for UFL expression conversion
+
 * Art Pelling, a.pelling@tu-berlin.de
   * functionality to instantiate non-parametric LTIModels with preset attributes
   * support for discrete-time LTI systems, Lyapunov equations and balanced truncation
