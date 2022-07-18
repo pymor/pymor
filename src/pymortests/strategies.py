@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 import functools
+from numbers import Number
 
 from hypothesis import strategies as hyst
 from hypothesis import assume, given
@@ -232,7 +233,6 @@ def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatibl
     return inner_backend_decorator
 
 
-# TODO match st_valid_inds results to this
 def valid_inds(v, length=None, random_module=None):
     if length is None:
         yield []
@@ -291,7 +291,6 @@ def valid_indices(draw, array_strategy, length=None):
     return v, draw(indices)
 
 
-# TODO match st_valid_inds_of_same_length results to this
 def valid_inds_of_same_length(v1, v2, random_module=None):
     if len(v1) == len(v2):
         yield slice(None), slice(None)
@@ -323,8 +322,6 @@ def valid_inds_of_same_length(v1, v2, random_module=None):
 def st_valid_inds_of_same_length(draw, v1, v2):
     len1, len2 = len(v1), len(v2)
     ret = hyst.just(([], []))
-    # TODO we should include integer arrays here by chaining
-    # `| hynp.integer_array_indices(shape=(LEN_X,))`
     if len1 == len2:
         ints = hyst.integers(min_value=-len1, max_value=max(len1 - 1, 0))
         slicer = hyst.slices(len1) | hyst.lists(ints, max_size=len1)
@@ -333,10 +330,25 @@ def st_valid_inds_of_same_length(draw, v1, v2):
     if len1 > 0 and len2 > 0:
         mlen = min(len1, len2)
         ints = hyst.integers(min_value=-mlen, max_value=max(mlen - 1, 0))
-        slicer = hyst.slices(mlen) | ints | hyst.lists(ints, max_size=mlen)
+        slicer = hyst.slices(mlen) | ints | hyst.lists(ints, max_size=mlen) | hynp.basic_indices(shape=(mlen,))
         ret = ret | hyst.tuples(hyst.shared(slicer, key="st_valid_inds_of_same_length_uneven"),
                                 hyst.shared(slicer, key="st_valid_inds_of_same_length_uneven"))
-    return draw(ret)
+    val = draw(ret)
+    _assert_index_type(val)
+    return val
+
+
+def _assert_index_type(val):
+    scalar_types = (slice, int, Number)
+    iterable_types = (list, np.ndarray, tuple)
+    all_types = scalar_types + iterable_types
+    for el in val:
+        assert isinstance(el, all_types) or el == Ellipsis
+        # if isinstance(el, str):
+        #     assert el=="Ellipsis"
+        if isinstance(el, iterable_types):
+            for k in el:
+                assert isinstance(k, scalar_types) or k == Ellipsis
 
 
 @hyst.composite
@@ -380,6 +392,10 @@ def valid_inds_of_different_length(v1, v2, random_module):
                        list(np.random.randint(-len(v2), len(v2), size=count2)))
 
 
+def _basic_indices(shape):
+    return hynp.basic_indices(shape=shape, allow_ellipsis=False)
+
+
 @hyst.composite
 def st_valid_inds_of_different_length(draw, v1, v2):
     def _filter(x):
@@ -394,12 +410,14 @@ def st_valid_inds_of_different_length(draw, v1, v2):
     len1, len2 = len(v1), len(v2)
     val1 = hyst.slices(len1)
     if len1 > 0:
-        val1 |= hynp.integer_array_indices(shape=(len1,))
+        val1 |= _basic_indices(shape=(len1,))
     val2 = hyst.slices(len2)
     if len2 > 0:
-        val2 |= hynp.integer_array_indices(shape=(len2,))
+        val2 |= _basic_indices(shape=(len2,))
     ret = hyst.tuples(val1, val2).filter(_filter)
-    return draw(ret)
+    val = draw(ret)
+    _assert_index_type(val)
+    return val
 
 
 @hyst.composite
