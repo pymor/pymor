@@ -237,6 +237,8 @@ class VectorArray(BasicObject):
                 ind = slice(start, None if stop == -1 else stop, step)
                 view_len = len(range(start, stop, step))
         else:
+            for i in ind:
+                assert -l <= i < l
             assert isinstance(ind, (list, tuple, np.ndarray)) and all(-l <= i < l for i in ind)
             ind = [i if 0 <= i else l+i for i in ind]
             view_len = len(ind)

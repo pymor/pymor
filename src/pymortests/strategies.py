@@ -330,7 +330,7 @@ def st_valid_inds_of_same_length(draw, v1, v2):
     if len1 > 0 and len2 > 0:
         mlen = min(len1, len2)
         ints = hyst.integers(min_value=-mlen, max_value=max(mlen - 1, 0))
-        slicer = hyst.slices(mlen) | ints | hyst.lists(ints, max_size=mlen) | hynp.basic_indices(shape=(mlen,))
+        slicer = hyst.slices(mlen) | ints | hyst.lists(ints, max_size=mlen) | _basic_indices(shape=(mlen,))
         ret = ret | hyst.tuples(hyst.shared(slicer, key="st_valid_inds_of_same_length_uneven"),
                                 hyst.shared(slicer, key="st_valid_inds_of_same_length_uneven"))
     val = draw(ret)
@@ -339,9 +339,9 @@ def st_valid_inds_of_same_length(draw, v1, v2):
 
 
 def _assert_index_type(val):
-    scalar_types = (slice, int, Number)
+    scalar_types = (int, Number)
     iterable_types = (list, np.ndarray, tuple)
-    all_types = scalar_types + iterable_types
+    all_types = scalar_types + iterable_types + (slice, )
     for el in val:
         assert isinstance(el, all_types) or el == Ellipsis
         # if isinstance(el, str):
