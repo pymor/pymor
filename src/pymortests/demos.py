@@ -174,7 +174,8 @@ DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 def _skip_if_no_solver(param):
     demo, args = param
     from pymor.core.config import config
-    for solver, package in [('fenics', None), ('ngsolve', None), ('neural_', 'TORCH')]:
+    for solver, package in [('fenics', None), ('ngsolve', None), ('neural_', 'TORCH'),
+                            ('neural_networks_instationary', 'FENICS')]:
         package = package or solver.upper()
         needs_solver = len([f for f in args if solver in str(f)]) > 0 or demo.find(solver) >= 0
         has_solver = getattr(config, f'HAVE_{package}')
