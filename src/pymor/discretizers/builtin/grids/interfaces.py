@@ -530,13 +530,12 @@ class Grid(CacheableObject):
     def _check_domain(cls, domain):
         ll, rr = np.array(domain[0]), np.array(domain[1])
         sizes = rr - ll
-        too_large = (
-            np.linalg.norm(sizes) > cls.MAX_DOMAIN_WIDTH
-            or np.max(sizes) / np.min(sizes) > cls.MAX_DOMAIN_RATIO
-        )
-        if too_large:
-            logger = getLogger('pymor.discretizers.builtin.grid')
+        logger = getLogger('pymor.discretizers.builtin.grid')
+        if np.linalg.norm(sizes) > cls.MAX_DOMAIN_WIDTH:
             logger.warning(f'Domain {domain} for {cls} exceeds width limit. Results may be inaccurate')
+            return False
+        if np.max(sizes) / np.min(sizes) > cls.MAX_DOMAIN_RATIO:
+            logger.warning(f'Domain {domain} for {cls} exceeds ratio limit. Results may be inaccurate')
             return False
         return True
 

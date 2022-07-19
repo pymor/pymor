@@ -246,6 +246,12 @@ def valid_inds(v, length=None, random_module=None):
         yield list(range(int(len(v)/2)))
         yield list(range(len(v))) * 2
         # TODO what's with the magic number here?
+        # Maybe related to this?
+        # pymortests/vectorarray.py:910: VisibleDeprecationWarning:
+        #   Creating an ndarray from nested sequences exceeding
+        #   the maximum number of dimensions of 32 is deprecated.
+        #   If you mean to do this, you must specify
+        #  'dtype=object' when creating the ndarray.
         length = 32
     if len(v) > 0:
         for ind in [-len(v), 0, len(v) - 1]:
