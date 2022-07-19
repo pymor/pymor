@@ -9,7 +9,6 @@ from typer import Argument, Option, run
 
 from pymor.basic import *
 from pymor.core.config import config
-from pymor.core.exceptions import TorchMissing
 from pymor.reductors.neural_network import (NeuralNetworkInstationaryReductor,
                                             NeuralNetworkInstationaryStatefreeOutputReductor)
 from pymor.tools import mpi
@@ -33,8 +32,7 @@ def main(
     one-dimensional domain. The discretization is based on pyMOR's built-in
     functionality.
     """
-    if not config.HAVE_TORCH:
-        raise TorchMissing()
+    config.require("TORCH")
 
     fom, plot_function = create_fom(problem_number, grid_intervals, time_steps)
 
@@ -122,6 +120,7 @@ def main(
 def create_fom(problem_number, grid_intervals, time_steps):
     print('Discretize ...')
     if problem_number == 0:
+        config.require("FENICS")
         fom, plot_function = discretize_navier_stokes(grid_intervals, time_steps)
     elif problem_number == 1:
         problem = burgers_problem()

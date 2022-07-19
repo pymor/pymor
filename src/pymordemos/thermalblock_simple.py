@@ -15,6 +15,7 @@ from typer import Argument, run
 
 from pymor.basic import *
 from pymor.tools.typer import Choices
+from pymor.core.config import config
 
 
 # parameters for high-dimensional models
@@ -50,6 +51,7 @@ def main(
     elif model == 'fenics':
         fom, parameter_space = discretize_fenics()
     elif model == 'ngsolve':
+        config.require("NGSOLVE")
         fom, parameter_space = discretize_ngsolve()
     elif model == 'pymor_text':
         fom, parameter_space = discretize_pymor_text()

@@ -5,6 +5,8 @@
 
 from typer import Argument, run
 
+from pymor.core.config import config
+
 
 def main(
     dim: int = Argument(..., help='Spatial dimension of the problem.'),
@@ -13,6 +15,7 @@ def main(
 ):
     """Reduces a FEniCS-based nonlinear diffusion problem using POD/DEIM."""
     from pymor.tools import mpi
+    config.require("FENICS")
 
     if mpi.parallel:
         from pymor.models.mpi import mpi_wrap_model
