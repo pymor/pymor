@@ -118,7 +118,7 @@ jobs:
           fi
           # windows currently segfaults in first QT+MPL plot otherwise
           if [[ ${{ runner.os }} == Windows ]]; then
-            echo "QT_API=pyqt5" >> $GITHUB_ENV
+            echo "QT_API=pyside2" >> $GITHUB_ENV
           fi
           echo "QT_DEBUG_PLUGINS=1" >> $GITHUB_ENV
           echo "PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')" >> $GITHUB_ENV
