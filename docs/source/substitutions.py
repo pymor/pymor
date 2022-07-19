@@ -86,6 +86,8 @@ common = '''
 .. |ListVectorArray| replace:: :class:`~pymor.vectorarrays.list.ListVectorArray`
 .. |ListVectorArrays| replace:: :class:`ListVectorArrays <pymor.vectorarrays.list.ListVectorArray>`
 
+.. |NumpyHankelOperator| replace:: :class:`~pymor.operators.numpy.NumpyHankelOperator`
+.. |NumpyHankelOperators| replace:: :class:`NumpyHankelOperators <pymor.operators.numpy.NumpyHankelOperator>`
 .. |NumpyMatrixOperator| replace:: :class:`~pymor.operators.numpy.NumpyMatrixOperator`
 .. |NumpyMatrixOperators| replace:: :class:`NumpyMatrixOperators <pymor.operators.numpy.NumpyMatrixOperator>`
 .. |NumpyMatrixBasedOperator| replace:: :class:`~pymor.operators.numpy.NumpyMatrixBasedOperator`

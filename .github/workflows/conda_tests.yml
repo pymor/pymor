@@ -36,6 +36,7 @@ jobs:
   miniconda:
     name: Conda ${{ matrix.os }} - Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 55
     strategy:
         matrix:
             os: [ubuntu-20.04, macos-11, windows-2022]
@@ -114,12 +115,13 @@ jobs:
         run: |
           if [[ ${{ runner.os }} == Linux ]]; then
             echo "PYTEST_PREFIX=xvfb-run -a" >> $GITHUB_ENV
+            echo "QT_API=pyside2" >> $GITHUB_ENV
           fi
           # windows currently segfaults in first QT+MPL plot otherwise
           if [[ ${{ runner.os }} == Windows ]]; then
-            echo "QT_API=pyqt5" >> $GITHUB_ENV
-            echo "QT_DEBUG_PLUGINS=1" >> $GITHUB_ENV
+            echo "QT_API=pyside2" >> $GITHUB_ENV
           fi
+          echo "QT_DEBUG_PLUGINS=1" >> $GITHUB_ENV
           echo "PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')" >> $GITHUB_ENV
       - name: Sanity check
         shell: bash -l {0}

@@ -11,7 +11,7 @@ This module provides the following |NumPy|-based |Operators|:
   which assemble into a |NumpyMatrixOperator|.
 - |NumpyGenericOperator| wraps an arbitrary Python function between
   |NumPy arrays| as an |Operator|.
-- :class:`NumpyHankelOperator` implicitly constructs a Hankel operator from a |NumPy array| of
+- |NumpyHankelOperator| implicitly constructs a Hankel operator from a |NumPy array| of
   Markov parameters.
 """
 
