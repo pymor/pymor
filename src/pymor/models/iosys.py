@@ -940,7 +940,7 @@ class LTIModel(Model):
 
         if return_fpeak:
             assert isinstance(fpeak, Number) and linf_norm >= 0
-            return fpeak, linf_norm
+            return linf_norm, fpeak
         else:
             assert linf_norm >= 0
             return linf_norm
