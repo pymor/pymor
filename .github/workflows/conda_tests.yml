@@ -36,6 +36,7 @@ jobs:
   miniconda:
     name: Conda ${{ matrix.os }} - Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 55
     strategy:
         matrix:
             os: [ubuntu-20.04, macos-11, windows-2022]
