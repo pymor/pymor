@@ -406,7 +406,6 @@ test_scripts = [
     ("pip_installed", pythons, 1),
     ("tutorials", pythons, 1),
     ("vanilla", pythons, 1),
-    ("numpy_git", newest, 1),
     ("oldest", oldest, 1),
     ("cpp_demo", pythons, 1),
 ]
