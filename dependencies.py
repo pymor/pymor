@@ -64,6 +64,8 @@ install_suggests.update({p: 'optional File I/O support libraries' for p in io_re
 doc_requires = ['sphinx>=5.0', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
                 'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
                 'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8', 'myst-nb>=0.16'] + install_requires
+# Note the hypothesis duplication makes the conda env creation script work
+# and is harmless for pip installs
 ci_requires = ['check-manifest==0.48',
                'check_reqs==0.2.0',
                'codecov==2.1.12',
@@ -71,6 +73,7 @@ ci_requires = ['check-manifest==0.48',
                'flake8-docstrings==1.6.0',
                'flake8-rst-docstrings==0.2.6',
                'hypothesis[numpy,pytest]==6.52.3',
+               'hypothesis==6.52.3',
                'pybind11==2.9.2',
                'pypi-oldest-requirements==2021.2.0',
                'pyqt5-qt5==5.15.2',
