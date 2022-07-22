@@ -7,8 +7,9 @@ import os
 from contextlib import contextmanager
 from functools import reduce
 from pathlib import Path
+from pprint import pformat
 from subprocess import check_output, CalledProcessError
-from typing import List
+from typing import List, Dict
 
 import jinja2
 import logging
@@ -41,9 +42,10 @@ dependencies:
 
 # AFAICT we _should_ install pytorch-cpu instead of torch, that
 # fails to install everywhere, so we're noping out of torch entirely
-BLOCKLIST = ('torch', )
-PYPI_TO_CONDA_PACKAGENAME_MAPPING = {'torch': 'pytorch-cpu'}
-NO_ARCH = 'noarch'
+BLOCKLIST = ('torch',)
+PYPI_TO_CONDA_PACKAGENAME_MAPPING = {'torch': ['pytorch-cpu'],
+                                     'gmsh': ['python-gmsh', 'gmsh']}
+NO_ARCH = ['noarch', None]
 THIS_DIR = Path(__file__).resolve().parent
 LOGFILE = THIS_DIR / 'create_conda_env.log'
 
@@ -60,7 +62,7 @@ def change_to_directory(name):
         os.chdir(old_cwd)
 
 
-def _parse_req_file(path):
+def _parse_req_file(path) -> List[str]:
     path = Path(path).resolve()
     assert path.exists()
     assert path.is_file()
@@ -69,7 +71,7 @@ def _parse_req_file(path):
         for line in open(path, 'rt').readlines():
             line = line.strip()
             if line.startswith('-r'):
-                pkgs += _parse_req_file(line[line.find('-r ')+3:])
+                pkgs += _parse_req_file(line[line.find('-r ') + 3:])
                 continue
             if line.startswith('#'):
                 continue
@@ -81,12 +83,17 @@ def _parse_req_file(path):
             if name_only in BLOCKLIST:
                 continue
             if name_only in PYPI_TO_CONDA_PACKAGENAME_MAPPING.keys():
-                line = line.replace(name_only, PYPI_TO_CONDA_PACKAGENAME_MAPPING[name_only])
+                mapped_pkgs = PYPI_TO_CONDA_PACKAGENAME_MAPPING[name_only]
+                for mapped_pkg in mapped_pkgs[:-2]:
+                    line = line.replace(name_only, mapped_pkg)
+                for mapped_pkg in mapped_pkgs[-2:]:
+                    # more than 1 replacement means pkg is split into multiple in conda
+                    pkgs.append(mapped_pkg)
             pkgs.append(line)
     return pkgs
 
 
-def _strip_markers(name):
+def _strip_markers(name: str) -> str:
     for m in '!;<>=':
         try:
             i = name.index(m)
@@ -96,22 +103,27 @@ def _strip_markers(name):
     return name
 
 
-def _search_single(pkg, plat):
+def _search_single(pkg: str, plat: str):
     """Search needs to explicitly say its subdir, else only the host's native is searched"""
     cmd = ['/usr/bin/env', 'conda', 'search', '--channel=conda-forge', '--json', f'{pkg}[subdir={plat}]']
     try:
         output = check_output(cmd)
     except CalledProcessError as e:
-        if plat != NO_ARCH:
+        if plat not in NO_ARCH:
             logging.debug(f'Falling back to noarch for {pkg} - {plat}')
-            return _search_single(pkg, NO_ARCH)
+            for noarch in NO_ARCH:
+                try:
+                    return _search_single(pkg, noarch)
+                except Exception:
+                    continue
+            raise RuntimeError(f"noarch search failed for {pkg}") from e
         try:
             err = json.loads(e.output)['error']
             if 'PackagesNotFoundError' in err:
                 return None, []
-            raise RuntimeError(err)
-        except Exception:
-            raise e
+        except Exception as ex:
+            raise RuntimeError(f"Failed json load for {pkg} = {plat}") from ex
+        raise RuntimeError(f"{pkg} = {plat}: err") from e
 
     pkg_name = _strip_markers(pkg).lower()
     out = json.loads(output)
@@ -119,9 +131,14 @@ def _search_single(pkg, plat):
     return plat, list(reversed(ll))
 
 
-def _extract_conda_py(release):
+def _extract_conda_py(release: Dict):
     try:
         if release['package_type'] == 'noarch_python':
+            return ANY_PYTHON_VERSION
+    except KeyError:
+        pass
+    try:
+        if release['arch'] is None and release['platform'] is None:
             return ANY_PYTHON_VERSION
     except KeyError:
         pass
@@ -132,7 +149,7 @@ def _extract_conda_py(release):
         if pkg.startswith('python'):
             # format ''python >=3.9,<3.10.0a0''
             l, r = pkg.find('>='), pkg.find(',')
-            return pkg[l+2:r]+'.*'
+            return pkg[l + 2:r] + '.*'
     return NO_PYTHON_VERSION
 
 
@@ -140,13 +157,20 @@ def _available_on_required(json_result, required_plats, required_pys):
     required_tuples = list(itertools.product(required_plats, required_pys))
     name = 'PackageNameNotSet'
     for release in json_result:
+        name = release['name']
+
+        def _debug(msg):
+            logging.debug(f"{name}: {msg}")
+
         plat = release['subdir']
-        if plat not in required_plats and plat != NO_ARCH:
+        if plat not in required_plats and plat not in NO_ARCH:
+            _debug(f'{plat} unknown/not needed')
             continue
         py = _extract_conda_py(release)
+        _debug(f'{plat} needs {py}')
         if py in required_pys or py == ANY_PYTHON_VERSION:
             covered_pys = [py] if py != ANY_PYTHON_VERSION else required_pys
-            covered_plats = [plat] if plat != NO_ARCH else required_plats
+            covered_plats = [plat] if plat not in NO_ARCH else required_plats
             to_remove = itertools.product(covered_plats, covered_pys)
             for pair in to_remove:
                 try:
@@ -155,20 +179,21 @@ def _available_on_required(json_result, required_plats, required_pys):
                 except ValueError as e:
                     if 'list.remove' in str(e):
                         continue
-                    raise e
+                    raise RuntimeError(f"processing {plat} - {py} failed for release: {release}") from e
         if len(required_tuples) == 0:
+            _debug('all required tuples found')
             return True
-        name = release['name']
-    logging.error(f'{name} not available on {required_tuples}')
+
+    logging.error(f'{name} not available on {required_tuples}:\n{pformat(json_result)}')
     return False
 
 
 def _search(pkg):
-    """If a resul is noarch, we can return early"""
+    """If a result is noarch, we can return early"""
     for plat in REQUIRED_PLATFORMS:
         found_plat, json_list = _search_single(pkg, plat)
         yield json_list
-        if found_plat == NO_ARCH:
+        if found_plat in NO_ARCH:
             return
 
 
@@ -200,8 +225,8 @@ def main(input_paths: List[Path], output_path: Path = None):
         table.add_row(*el)
     console = Console(record=True)
     console.print(table)
+    logging.info(console.export_text())
     console.print(f'Details at {LOGFILE}')
-    logging.info(console.export_text)
 
 
 if __name__ == '__main__':
