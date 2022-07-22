@@ -11,11 +11,13 @@ dependencies:
   - bash_kernel
   - check-manifest==0.48
   - click
+  - codecov==2.1.12
   - diskcache
   - docutils==0.18.1
   - flake8-docstrings==1.6.0
   - flake8-rst-docstrings==0.2.6
   - gmsh
+  - hypothesis==6.56.3
   - ipyparallel>=6.2.5
   - ipython>=5.0
   - ipywidgets<8,>7
