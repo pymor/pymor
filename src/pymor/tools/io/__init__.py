@@ -11,18 +11,6 @@ from .matrices import load_matrix, save_matrix
 from pymor.tools.deprecated import Deprecated
 
 
-@Deprecated('pymor.tools.io.vtk.read_vtkfile')
-def read_vtkfile(*args, **kwargs):
-    from .vtk import read_vtkfile
-    return read_vtkfile(*args, **kwargs)
-
-
-@Deprecated('pymor.tools.io.vtk.write_vtk_collection')
-def write_vtk_collection(*args, **kwargs):
-    from .vtk import write_vtk_collection
-    return write_vtk_collection(*args, **kwargs)
-
-
 @contextmanager
 def safe_temporary_filename(name=None, parent_dir=None):
     """Cross~platform safe equivalent of re-opening a NamedTemporaryFile.
