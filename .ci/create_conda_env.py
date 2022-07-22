@@ -4,13 +4,16 @@ import itertools
 import json
 import operator
 import os
-import sys
 from contextlib import contextmanager
 from functools import reduce
 from pathlib import Path
 from subprocess import check_output, CalledProcessError
+from typing import List
+
 import jinja2
 import logging
+
+import typer
 
 REQUIRED_PLATFORMS = ('osx-64', 'linux-64', 'win-64')
 # stars are not actually a glob pattern, but as-is in the conda search output
@@ -44,7 +47,7 @@ NO_ARCH = 'noarch'
 THIS_DIR = Path(__file__).resolve().parent
 LOGFILE = THIS_DIR / 'create_conda_env.log'
 
-logging.basicConfig(filename=LOGFILE, level=logging.WARNING, filemode='wt')
+logging.basicConfig(filename=LOGFILE, level=logging.DEBUG, filemode='wt')
 
 
 @contextmanager
@@ -169,7 +172,7 @@ def _search(pkg):
             return
 
 
-def main(input_paths, output_path='conda-environment.yml'):
+def _process_inputs(input_paths):
     available = []
     wanted = set(reduce(operator.concat, (_parse_req_file(p) for p in input_paths)))
     for pkg in wanted:
@@ -180,22 +183,26 @@ def main(input_paths, output_path='conda-environment.yml'):
             available.append(pkg)
     for a in available:
         wanted.remove(a)
-    available, wanted = sorted(list(available)), sorted(list(wanted))
+    return sorted(list(available)), sorted(list(wanted))
+
+
+def main(input_paths: List[Path], output_path: Path = None):
+    output_path = output_path or THIS_DIR / 'conda-env.yml'
+    available, wanted = _process_inputs(input_paths)
     tpl = jinja2.Template(ENV_TPL)
     with open(output_path, 'wt') as yml:
         yml.write(tpl.render(available=available))
-    return available, wanted
-
-
-if __name__ == '__main__':
-    out_fn = THIS_DIR / 'conda-env.yml'
-    available, wanted = main(sys.argv[1:], output_path=out_fn)
     from rich.console import Console
     from rich.table import Table
 
     table = Table("available", "wanted", title="Conda search result")
     for el in itertools.zip_longest(available, wanted, fillvalue=''):
         table.add_row(*el)
-    console = Console()
+    console = Console(record=True)
     console.print(table)
     console.print(f'Details at {LOGFILE}')
+    logging.info(console.export_text)
+
+
+if __name__ == '__main__':
+    typer.run(main)
