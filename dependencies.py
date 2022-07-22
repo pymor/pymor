@@ -39,7 +39,7 @@ def setup_requires():
 # recheck if jupyter_client pin still necessary
 #   https://github.com/jupyter-widgets/pythreejs/issues/366
 # Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
-install_requires = ['qtpy!=2.0.0', 'packaging', 'diskcache', 'typer', 'click'] + _numpy_scipy()
+install_requires = ['qtpy>2.0', 'packaging', 'diskcache', 'typer', 'click'] + _numpy_scipy()
 install_suggests = {
     'ipython>=5.0': 'an enhanced interactive python shell',
     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
@@ -70,7 +70,7 @@ ci_requires = ['check-manifest==0.48',
                'docutils==0.18.1',
                'flake8-docstrings==1.6.0',
                'flake8-rst-docstrings==0.2.6',
-               'hypothesis[numpy,pytest]==6.48.2',
+               'hypothesis[numpy,pytest]==6.52.3',
                'pybind11==2.9.2',
                'pypi-oldest-requirements==2021.2.0',
                'pyqt5-qt5==5.15.2',
