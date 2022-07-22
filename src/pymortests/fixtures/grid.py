@@ -19,15 +19,17 @@ def _hy_domain_bounds(draw, grid_type):
     max_val = grid_type.MAX_DOMAIN_WIDTH / 2
     min_val = -grid_type.MAX_DOMAIN_WIDTH / 2
     domain_point = hyst.floats(allow_infinity=False, allow_nan=False, allow_subnormal=False,
-                               min_value=min_val, max_value=max_val)
+                               min_value=min_val, max_value=max_val+min_val)
 
     ll = draw(hyst.tuples(*[domain_point] * grid_type.dim))
 
     def _filter(d):
-        return (all(l < r and abs(r - l) > grid_type.MIN_DOMAIN_WIDTH for l, r in zip(ll, d))
-                and grid_type._check_domain((ll, d)))
+        return grid_type._check_domain((ll, d))
 
-    rr = draw(hyst.tuples(*[domain_point] * grid_type.dim).filter(_filter))
+    r_n = [hyst.floats(allow_infinity=False, allow_nan=False, allow_subnormal=False,
+                       min_value=-min_val+ll[i],
+                       max_value=max_val) for i in range(grid_type.dim)]
+    rr = draw(hyst.tuples(*r_n).filter(_filter))
     return ll, rr
 
 
