@@ -5,6 +5,7 @@ check_reqs==1.0.0
 docutils==0.18
 flake8-docstrings==1.6.0
 flake8-rst-docstrings==0.3.0
+hypothesis==6.56.3
 hypothesis[numpy,pytest]==6.56.3
 pybind11==2.9.2
 pypi-oldest-requirements==2022.1.0
