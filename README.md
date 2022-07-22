@@ -23,7 +23,7 @@ provided for getting started quickly.
 License
 -------
 
-Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+Copyright 2013-2022 pyMOR developers and contributors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 following conditions are met:
@@ -114,7 +114,7 @@ From time to time, the main branch of pyMOR undergoes major changes and things
 might break (this is usually announced in our [discussion forum](https://github.com/pymor/pymor/discussions)),
 so you might prefer to install pyMOR from the current release branch:
 
-    pip install git+https://github.com/pymor/pymor@2021.2.x#egg=pymor[full]
+    pip install git+https://github.com/pymor/pymor@2022.1.x#egg=pymor[full]
 
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
@@ -142,7 +142,7 @@ Useful Links
 
 * [Latest Changelog](https://docs.pymor.org/latest/release_notes/all.html)
 * [Getting Started](https://docs.pymor.org/latest/getting_started.html)
-* [Dependencies](https://github.com/pymor/pymor/blob/2021.2.x/requirements.txt)
+* [Dependencies](https://github.com/pymor/pymor/blob/2022.1.x/requirements.txt)
 
 External PDE solvers
 --------------------
