@@ -8,14 +8,14 @@ jobs:
   # paths that are modified in the pull request.
   # https://github.com/actions/labeler/blob/main/README.md
   Labeler:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/labeler@v4
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
   # add the autoupdate label on PRs to main
   autoupdate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - name: Add autoupdate label

@@ -8,7 +8,7 @@ on:
 jobs:
   validate_cff:
     name: "validate cff"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the repository
         uses: actions/checkout@v3
