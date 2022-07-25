@@ -14,7 +14,7 @@ on:
 jobs:
   bugout:
     name: Cancel superseded jobs
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.10.0
@@ -39,14 +39,14 @@ jobs:
     timeout-minutes: 55
     strategy:
         matrix:
-            os: [ubuntu-20.04, macos-11, windows-2022]
+            os: [ubuntu-22.04, macos-12, windows-2022]
             python: [3.8, 3.9]
             include:
-              - os: ubuntu-20.04
+              - os: ubuntu-22.04
                 prefix: /usr/share/miniconda3/envs/pyMOR-ci
-              - os: macos-11
+              - os: macos-12
                 prefix: /Users/runner/miniconda3/envs/pyMOR-ci
-              - os: macos-10.15
+              - os: macos-12
                 python: 3.8
                 prefix: /Users/runner/miniconda3/envs/pyMOR-ci
               - os: windows-2022
