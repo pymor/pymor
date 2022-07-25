@@ -26,7 +26,7 @@ jobs:
   event_file:
     # this is input for the pytest_results workflow
     name: "Event File"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Upload
       uses: actions/upload-artifact@v3
