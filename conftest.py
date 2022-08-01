@@ -11,7 +11,8 @@ import numpy as np
 
 _common_settings = {
     "print_blob": True,
-    "suppress_health_check": (HealthCheck.data_too_large, HealthCheck.too_slow),
+    "suppress_health_check": (HealthCheck.data_too_large, HealthCheck.too_slow,
+                              HealthCheck.filter_too_much),
     "deadline": 1000,
     "verbosity": Verbosity.normal,
 }
