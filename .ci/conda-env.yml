@@ -11,12 +11,15 @@ dependencies:
   - bash_kernel
   - check-manifest==0.48
   - click
+  - diskcache
   - docutils==0.18.1
   - flake8-docstrings==1.6.0
   - flake8-rst-docstrings==0.2.6
+  - gmsh
   - hypothesis==6.52.3
   - ipyparallel>=6.2.5
   - ipython>=5.0
+  - ipywidgets
   - jupyter_client>=7.0.6
   - jupyter_contrib_nbextensions
   - lxml
@@ -28,15 +31,21 @@ dependencies:
   - nbresuse
   - numpy>=1.17.5,<1.24
   - numpy>=1.19.4,<1.24
+  - packaging
   - pillow
   - pybind11==2.9.2
   - pyevtk
+  - pygments
   - pyopengl
   - pytest-cov==3.0.0
   - pytest-parallel==0.1.1
   - pytest-regressions==2.3.1
+  - pytest-runner>=2.9
   - pytest-xdist==2.5.0
   - pytest==7.1.2
+  - python-gmsh
+  - python-slugify
+  - pythreejs
   - qtpy>2.0
   - rstcheck==6.0.0.post1
   - scipy>=1.3
@@ -45,10 +54,13 @@ dependencies:
   - setuptools
   - slycot>=0.4.0
   - sphinx-autoapi>=1.8
+  - sphinx-material
   - sphinx>=5.0
+  - sphinxcontrib-bibtex
   - sympy
   - twine==3.8.0
   - typer
+  - wheel
 
   - pip:
     - -r ../requirements-ci.txt
