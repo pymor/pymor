@@ -34,7 +34,7 @@ jobs:
         name: Event File
         path: ${{ github.event_path }}
   miniconda:
-    name: Conda ${{ matrix.os }} - Python ${{ matrix.python }}
+    name: ${{ matrix.os }} - Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 55
     strategy:
@@ -160,19 +160,16 @@ jobs:
           name: Conda Env Exports
           path: conda-env__${{ runner.os }}-${{ matrix.python }}.yml
   full_install:
-    name: Conda ${{ matrix.os }} - Python ${{ matrix.python }}
+    name: Install with on ${{ matrix.os }} - Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     strategy:
         matrix:
-            os: [ubuntu-20.04, macos-11, windows-2022]
+            os: [ubuntu-22.04, macos-12, windows-2022]
             python: [3.8, 3.9]
             include:
-              - os: ubuntu-20.04
+              - os: ubuntu-22.04
                 prefix: /usr/share/miniconda3/envs/pyMOR-ci
-              - os: macos-11
-                prefix: /Users/runner/miniconda3/envs/pyMOR-ci
-              - os: macos-10.15
-                python: 3.8
+              - os: macos-12
                 prefix: /Users/runner/miniconda3/envs/pyMOR-ci
               - os: windows-2022
                 prefix: C:\Miniconda3\envs\pyMOR-ci
