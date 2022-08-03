@@ -21,8 +21,10 @@ kernelspec:
 ```
 
 ```{code-cell}
-:tags: [remove-cell]
 :load: myst_code_init.py
+:tags: [remove-cell]
+
+
 ```
 
 # Tutorial: Model order reduction with artificial neural networks
@@ -167,8 +169,8 @@ To train the neural network, we create a training and a validation set
 consisting of 100 and 20 randomly chosen {{ parameter_values }}, respectively:
 
 ```{code-cell}
-  training_set = parameter_space.sample_uniformly(100)
-  validation_set = parameter_space.sample_randomly(20)
+training_set = parameter_space.sample_uniformly(100)
+validation_set = parameter_space.sample_randomly(20)
 ```
 
 In this tutorial, we construct the reduced basis such that no more modes than
@@ -407,5 +409,3 @@ corresponding {class}`~pymor.models.neural_network.NeuralNetworkInstationaryStat
 Download the code:
 {download}`tutorial_mor_with_anns.md`
 {nb-download}`tutorial_mor_with_anns.ipynb`
-
-

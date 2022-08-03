@@ -21,8 +21,10 @@ kernelspec:
 ```
 
 ```{code-cell}
-:tags: [remove-cell]
 :load: myst_code_init.py
+:tags: [remove-cell]
+
+
 ```
 
 # Tutorial: Binding an external PDE solver to pyMOR
@@ -41,16 +43,18 @@ First, we need a class to store our data in and with some basic linear algebra o
 declared on it.
 
 ```{literalinclude} minimal_cpp_demo/model.hh
-:lines: 4-19
 :language: cpp
+:lines: 4-19
+
 
 ```
 
 Next, we need the operator that discretizes our PDE.
 
 ```{literalinclude} minimal_cpp_demo/model.hh
-:lines: 22-32
 :language: cpp
+:lines: 22-32
+
 
 ```
 
@@ -59,16 +63,16 @@ Together with some header guards, these two snippets make up our {download}`mode
 The definitions for the `Vector` class are pretty straightforward:
 
 ```{literalinclude} minimal_cpp_demo/model.cc
-:lines: 7-35
 :language: cpp
+:lines: 7-35
 
 ```
 
 Just like the diffusion operator that computes a central differences stencil:
 
 ```{literalinclude} minimal_cpp_demo/model.cc
-:lines: 39-49
 :language: cpp
+:lines: 39-49
 
 ```
 
@@ -97,8 +101,8 @@ to represent the full-order model.
 All of the C++ code related to the extension module is defined inside a scope started with
 
 ```{literalinclude} minimal_cpp_demo/model.cc
-:lines: 56-57
 :language: cpp
+:lines: 56-57
 
 ```
 
@@ -190,12 +194,12 @@ compilation.
 
 ```{code-cell}
 :tags: [raises-exception]
+
 %%bash
 mkdir -p minimal_cpp_demo/build
 cmake -B minimal_cpp_demo/build -S minimal_cpp_demo
 make -C minimal_cpp_demo/build
 ```
-
 
 To be able to use this extension module we need to insert the build directory into the path where the Python
 interpreter looks for things to import. Afterwards we can import the module and create and use the exported classes.
@@ -209,7 +213,6 @@ mymodel = model.DiffusionOperator(10, 0, 1)
 myvector = model.Vector(10, 0)
 mymodel.apply(myvector, myvector)
 dir(model)
-
 ```
 
 ## Using the exported Python classes with pyMOR
@@ -437,5 +440,3 @@ fom.visualize((U-U_RB), title=f'mu = {mu}', legend=('error'))
 You can download this demonstration plus the wrapper definitions as a
 notebook {nb-download}`tutorial_external_solver.ipynb` or
 as Markdown text {download}`tutorial_external_solver.md`.
-
-

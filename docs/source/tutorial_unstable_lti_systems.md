@@ -21,8 +21,10 @@ kernelspec:
 ```
 
 ```{code-cell}
-:tags: [remove-cell]
 :load: myst_code_init.py
+:tags: [remove-cell]
+
+
 ```
 
 # Tutorial: Model order reduction for unstable LTI systems
@@ -89,6 +91,8 @@ approximation using standard methods of NumPy and SciPy. Here we use
 
 ```{code-cell}
 :load: unstable_heat_equation.py
+
+
 ```
 
 Then, we can create an {{ LTIModel }} from NumPy and SciPy matrices `A`, `B`, `C`,
