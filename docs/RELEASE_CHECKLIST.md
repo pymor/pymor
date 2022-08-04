@@ -22,8 +22,6 @@
  1. [ ] Submit release to [NA-digest](http://icl.utk.edu/na-digest/websubmit.html).
  1. [ ] Announce release in
         [GitHub discussions](https://github.com/pymor/pymor/discussions).
- 1. [ ] Add a new section in
-        [`docker/docs/releases/Dockerfile`](https://github.com/pymor/docker/blob/main/docs/releases/Dockerfile).
  1. [ ] All developers check if (stale) branches can be pruned.
  1. [ ] Remove deprecated features in main.
  1. [ ] Close the [GitHub milestone](https://github.com/pymor/pymor/milestones) for the release.
