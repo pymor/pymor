@@ -95,6 +95,7 @@ def discretize_stationary_ipld3g(
     #   * discretize locally
     local_models = []
     local_models_data = []
+    local_spaces = []
     for I in range(M):
         if locally_continuous:
             local_model, local_model_data = _discretize_stationary_cg_dune(
@@ -106,8 +107,15 @@ def discretize_stationary_ipld3g(
                 preassemble=preassemble)
         local_models.append(local_model)
         local_models_data.append(local_model_data)
-        local_ops[I][I] = local_model.operator.with_(name=f'volume_part_{I}')
-        local_rhs[I] = local_model.rhs
+        local_spaces.append(local_model_data['space'])
+        if isinstance(local_model.operator, LincombOperator):
+            local_op = local_model.operator.with_(
+                operators=[op.with_(name=f'volume_part_{I}')
+                           for op in local_model.operator.operators], name='')
+        else:
+            local_op = local_model_operator.with_(name=f'volume_part_{I}')
+        local_ops[I][I] = local_op
+        local_rhs[I] = local_model.rhs.with_(name='')
 
     #   (from here on, we basically follow discretize_stationary_ipdg)
     IP_scheme_ID = _IP_scheme_id(symmetry_factor, weight_parameter)  # performs some checks
@@ -167,13 +175,18 @@ def discretize_stationary_ipld3g(
 
         ops = [make_boundary_contributions_parametric_part(func)
                for func in local_problems[I].diffusion.functions] + [make_boundary_contributions_nonparametric_part(),]
-        coeffs = list(local_problems[I].diffusion.coefficients) + [1,]
+        coeffs = list(local_problems[I].diffusion.coefficients) + [1.,]
 
         walker.walk(False)  # not supported yet
 
-        local_ops[I][I] += LincombOperator(
-            operators=[DuneXTMatrixOperator(op.matrix, name=f'boundary_part_{I}') for op in ops],
+        boundary_op = LincombOperator(
+            operators=[DuneXTMatrixOperator(op.matrix, name=f'boundary_part_{I}'
+                                           ) for op in ops],
             coefficients=coeffs)
+
+        local_ops[I][I] += boundary_op
+
+    lhs_without_coupling = BlockOperator(local_ops)
 
     # - coupling of the local models by IP techniques
     for I in range(M):
@@ -251,22 +264,29 @@ def discretize_stationary_ipld3g(
                 walker.walk(False)  # not yet supported
 
                 for (i, j, ops) in ((I, I, ops_I_I), (I, J, ops_I_J), (J, I, ops_J_I), (J, J, ops_J_J)):
+                    coupling_op = LincombOperator(
+                        operators=[DuneXTMatrixOperator(
+                            op.matrix, name=f'coupling_part_from_{I}_{J}_{i}_{j}') for op in ops],
+                        coefficients=list(coeffs))
                     if coupling_ops[i][j] is None:
-                        coupling_ops[i][j] = LincombOperator(
-                            operators=[DuneXTMatrixOperator(op.matrix, name=f'coupling_part_from_{I}_{J}_{i}_{j}') for op in ops],
-                            coefficients=list(coeffs))
+                        coupling_ops[i][j] = coupling_op
+                    if local_ops[i][j] is None:
+                        local_ops[i][j] = coupling_op
                     else:
-                        coupling_ops[i][j] = coupling_ops[i][j].with_(
-                            operators=list(coupling_ops[i][j].operators) +
-                            [DuneXTMatrixOperator(op.matrix, name=f'coupling_part_from_{I}_{J}_{i}_{j}') for op in ops],
-                            coefficients=list(coupling_ops[i][j].coefficients) + list(coeffs)
-                        )
+                        coupling_ops[i][j] += coupling_op
+                        local_ops[i][j] += coupling_op
 
-    lhs_op = BlockOperator(local_ops) + BlockOperator(coupling_ops)
+    coupling_op = BlockOperator(coupling_ops)
+    lhs_op = BlockOperator(local_ops)
     rhs_op = BlockOperator(local_rhs)
     m = StationaryModel(lhs_op, rhs_op, name=f'{analytical_problem.name}_P{order}{IP_scheme_ID[:-2]}LD3G')
 
-    data = {'dd_grid': dd_grid, 'macro_boundary_info': macro_boundary_info}
+    data = {'macro_grid': macro_grid ,'dd_grid': dd_grid,
+            'macro_boundary_info': macro_boundary_info,
+            'local_spaces': local_spaces,
+            'coupling_op': coupling_op,
+            'lhs_without_coupling': lhs_without_coupling
+           }
 
     if preassemble:
         data['unassembled_m'] = m
