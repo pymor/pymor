@@ -77,8 +77,6 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: pyMOR-ci
-          miniforge-variant: Mambaforge
-          use-mamba: true
           python-version: ${{ matrix.python }}
           channels: conda-forge
           channel-priority: true
@@ -99,12 +97,12 @@ jobs:
           key:
             ${{ runner.os }}-${{ matrix.python }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.ci/conda-env.yml') }}
       - name: Update environment
-        run: mamba env update -n pyMOR-ci -f .ci/conda-env.yml
+        run: conda env update -n pyMOR-ci -f .ci/conda-env.yml
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Export Conda Env
         shell: bash -l {0}
         run: |
-          mamba env export > conda-env__${{ runner.os }}-${{ matrix.python }}.yml
+          conda env export > conda-env__${{ runner.os }}-${{ matrix.python }}.yml
       - name: Install pyMOR
         shell: bash -l {0}
         # this seems to be the most portable way of making sure everything is importable
@@ -199,8 +197,6 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: pyMOR-ci
-          miniforge-variant: Mambaforge
-          use-mamba: true
           python-version: ${{ matrix.python }}
           channels: conda-forge
           channel-priority: true
