@@ -67,6 +67,7 @@ def discretize_stationary_ipld3g(
         macro_diameter = analytical_problem.domain.dim/(3*np.sqrt(2))
     macro_dune_problem = StationaryDuneProblem.from_pymor(
         analytical_problem, 0, diameter=macro_diameter, grid_type='cube')
+    # TODO: enable 'simplex' as macro and local grid_type
     macro_grid, macro_boundary_info = macro_dune_problem.grid, macro_dune_problem.boundary_info
     del macro_dune_problem
     d = macro_grid.dimension
@@ -105,7 +106,7 @@ def discretize_stationary_ipld3g(
                 preassemble=preassemble)
         local_models.append(local_model)
         local_models_data.append(local_model_data)
-        local_ops[I][I] = local_model.operator
+        local_ops[I][I] = local_model.operator.with_(name=f'volume_part_{I}')
         local_rhs[I] = local_model.rhs
 
     #   (from here on, we basically follow discretize_stationary_ipdg)
@@ -142,7 +143,8 @@ def discretize_stationary_ipld3g(
                        local_grid,
                        boundary_info,
                        DirichletBoundary()))
-            op = MatrixOperator(local_grid, local_models_data[I]['space'], local_models_data[I]['space'], la_backend, local_models_data[I]['sparsity_pattern'])
+            op = MatrixOperator(local_grid, local_models_data[I]['space'], local_models_data[I]['space'], la_backend,
+                                local_models_data[I]['sparsity_pattern'])
             op.append(bf)
             walker.append(op)
             return op
@@ -157,7 +159,8 @@ def discretize_stationary_ipld3g(
                        local_grid,
                        boundary_info,
                        DirichletBoundary()))
-            op = MatrixOperator(local_grid, local_models_data[I]['space'], local_models_data[I]['space'], la_backend, local_models_data[I]['sparsity_pattern'])
+            op = MatrixOperator(local_grid, local_models_data[I]['space'], local_models_data[I]['space'], la_backend,
+                                local_models_data[I]['sparsity_pattern'])
             op.append(bf)
             walker.append(op)
             return op
@@ -169,7 +172,7 @@ def discretize_stationary_ipld3g(
         walker.walk(False)  # not supported yet
 
         local_ops[I][I] += LincombOperator(
-            operators=[DuneXTMatrixOperator(op.matrix) for op in ops],
+            operators=[DuneXTMatrixOperator(op.matrix, name=f'boundary_part_{I}') for op in ops],
             coefficients=coeffs)
 
     # - coupling of the local models by IP techniques
@@ -250,11 +253,12 @@ def discretize_stationary_ipld3g(
                 for (i, j, ops) in ((I, I, ops_I_I), (I, J, ops_I_J), (J, I, ops_J_I), (J, J, ops_J_J)):
                     if coupling_ops[i][j] is None:
                         coupling_ops[i][j] = LincombOperator(
-                            operators=[DuneXTMatrixOperator(op.matrix) for op in ops],
+                            operators=[DuneXTMatrixOperator(op.matrix, name=f'coupling_part_from_{I}_{J}_{i}_{j}') for op in ops],
                             coefficients=list(coeffs))
                     else:
                         coupling_ops[i][j] = coupling_ops[i][j].with_(
-                            operators=list(coupling_ops[i][j].operators) + [DuneXTMatrixOperator(op.matrix) for op in ops],
+                            operators=list(coupling_ops[i][j].operators) +
+                            [DuneXTMatrixOperator(op.matrix, name=f'coupling_part_from_{I}_{J}_{i}_{j}') for op in ops],
                             coefficients=list(coupling_ops[i][j].coefficients) + list(coeffs)
                         )
 
