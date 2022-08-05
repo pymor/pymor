@@ -8,7 +8,7 @@ from pymor.discretizers.dunegdt.cg import _discretize_stationary_cg_dune
 from pymor.discretizers.dunegdt.ipdg import (
     _discretize_stationary_ipdg_dune, _IP_estimate_penalty_parameter, _IP_scheme_id)
 from pymor.models.basic import StationaryModel
-from pymor.operators.block import BlockOperator
+from pymor.operators.block import BlockOperator, BlockColumnOperator
 from pymor.operators.constructions import VectorOperator, LincombOperator
 
 from dune.xt.grid import (
@@ -278,7 +278,7 @@ def discretize_stationary_ipld3g(
 
     coupling_op = BlockOperator(coupling_ops)
     lhs_op = BlockOperator(local_ops)
-    rhs_op = BlockOperator(local_rhs)
+    rhs_op = BlockColumnOperator(local_rhs)
     m = StationaryModel(lhs_op, rhs_op, name=f'{analytical_problem.name}_P{order}{IP_scheme_ID[:-2]}LD3G')
 
     data = {'macro_grid': macro_grid ,'dd_grid': dd_grid,
