@@ -266,7 +266,7 @@ def discretize_stationary_ipld3g(
                 for (i, j, ops) in ((I, I, ops_I_I), (I, J, ops_I_J), (J, I, ops_J_I), (J, J, ops_J_J)):
                     coupling_op = LincombOperator(
                         operators=[DuneXTMatrixOperator(
-                            op.matrix, name=f'coupling_part_from_{I}_{J}_{i}_{j}') for op in ops],
+                            op.matrix, name=f'coupling_part_from_{I}_{J}') for op in ops],
                         coefficients=list(coeffs))
                     if coupling_ops[i][j] is None:
                         coupling_ops[i][j] = coupling_op
