@@ -7,6 +7,7 @@ from pymor.operators.block import BlockOperator
 
 from pymor.models.basic import StationaryModel
 from pymor.reductors.coercive import CoerciveRBReductor
+from pymor.reductors.basic import extend_basis
 from pymor.algorithms.gram_schmidt import gram_schmidt
 
 class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
@@ -36,21 +37,26 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         self.patch_mappings_to_global = patch_mappings_to_global
         self.patch_mappings_to_local = patch_mappings_to_local
 
-
     def add_global_solutions(self, us):
         assert us in self.fom.solution_space
         for I in range(self.S):
             us_block = us.block(I)
-            self.local_bases[I].append(us_block)
-            # TODO: add offset
-            self.local_bases[I] = gram_schmidt(self.local_bases[I])
+            try:
+                extend_basis(us_block, self.local_bases[I])
+            except:
+                print('Extension failed')
 
     def add_local_solutions(self, I, u):
-        self.local_bases[I].append(u)
-        # TODO: add offset
-        self.local_bases[I] = gram_schmidt(self.local_bases[I])
+        try:
+            extend_basis(u, self.local_bases[I])
+        except:
+            print('Extension failed')
 
-    def enrich_locally(self, I, mu, use_global_matrix=True):
+    def enrich_all_locally(self, mu, use_global_matrix=False):
+        for I in range(self.S):
+            _ = self.enrich_locally(I, mu, use_global_matrix=use_global_matrix)
+
+    def enrich_locally(self, I, mu, use_global_matrix=False):
         assert self._last_rom is not None
         mu_parsed = self.fom.parameters.parse(mu)
         current_solution = self._last_rom.solve(mu)
