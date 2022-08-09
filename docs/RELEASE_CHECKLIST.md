@@ -23,5 +23,6 @@
  1. [ ] Announce release in
         [GitHub discussions](https://github.com/pymor/pymor/discussions).
  1. [ ] All developers check if (stale) branches can be pruned.
+ 1. [ ] All developers check for `.mailmap` correctness.
  1. [ ] Remove deprecated features in main.
  1. [ ] Close the [GitHub milestone](https://github.com/pymor/pymor/milestones) for the release.

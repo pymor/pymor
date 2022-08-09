@@ -26,7 +26,7 @@ missing = [(u, e) for u, e in seen_set if u in contents and e not in contents]
 duplicates = [(u, mails) for u, mails in seen.items() if len(mails) > 1]
 
 lines = [l for l in open(mailmap).readlines() if not l.startswith("#")]
-unsorted = [u for u, s in zip(lines, sorted((l.lower() for l in lines))) if u.lower() != s]
+unsorted = [u for u, s in zip(lines, sorted(lines)) if u != s]
 for user, email in missing:
     print(f"missing mailmap entry for {user} {email}")
 for user, emails in duplicates:
