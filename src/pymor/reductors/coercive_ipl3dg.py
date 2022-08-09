@@ -2,6 +2,7 @@ import numpy as np
 from copy import deepcopy
 
 from pymor.operators.constructions import ZeroOperator, LincombOperator, VectorOperator
+from pymor.operators.constructions import VectorArrayOperator, IdentityOperator
 from pymor.algorithms.projection import project
 from pymor.operators.block import BlockOperator, BlockColumnOperator
 
@@ -11,14 +12,15 @@ from pymor.reductors.basic import extend_basis
 from pymor.algorithms.gram_schmidt import gram_schmidt
 
 class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
-    def __init__(self, fom, dd_grid):
+    def __init__(self, fom, dd_grid, local_bases=None):
         self.fom = fom
         self.solution_space = fom.solution_space
         self.S = self.solution_space.empty().num_blocks
         self._last_rom = None
 
-        self.local_bases = [self.solution_space.empty().block(ss).empty()
-                            for ss in range(self.S)]
+        # TODO: assertions for local_bases
+        self.local_bases = local_bases or [self.solution_space.empty().block(ss).empty()
+                                           for ss in range(self.S)]
 
         neighborhoods = construct_neighborhoods(dd_grid)
 
@@ -57,7 +59,8 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             _ = self.enrich_locally(I, mu, use_global_matrix=use_global_matrix)
 
     def enrich_locally(self, I, mu, use_global_matrix=False):
-        assert self._last_rom is not None
+        if self._last_rom is None:
+            _ = self.reduce()
         mu_parsed = self.fom.parameters.parse(mu)
         current_solution = self._last_rom.solve(mu)
         mapping_to_global = self.patch_mappings_to_global[I]
@@ -122,19 +125,11 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         # this is for BlockOperator(LincombOperators)
         assert isinstance(self.fom.operator, BlockOperator)
 
-        local_projected_op = np.empty((self.S, self.S), dtype=object)
-        local_projected_rhs = np.empty(self.S, dtype=object)
-        for I in range(self.S):
-            local_basis_I = self.local_bases[I]
-            for J in range(self.S):
-                local_basis_J = self.local_bases[J]
-                if self.fom.operator.blocks[I][J]:
-                    local_projected_op[I][J] = project(self.fom.operator.blocks[I][J],
-                                                       local_basis_I, local_basis_J)
-            local_projected_rhs[I] = project(self.fom.rhs.blocks[I, 0], local_basis_I, None)
+        projected_operator = project_block_operator(self.fom.operator, self.local_bases,
+                                                    self.local_bases)
+        projected_rhs = project_block_rhs(self.fom.rhs, self.local_bases)
 
-        projected_operator = BlockOperator(local_projected_op)
-        projected_rhs = BlockColumnOperator(local_projected_rhs)
+        # TODO: add products and output_functional
 
         projected_operators = {
             'operator':          projected_operator,
@@ -256,3 +251,60 @@ def remove_irrelevant_coupling_from_patch_operator(patch_model, mapping_to_globa
                     ops_without_outside_coupling[i][i] = LincombOperator(local_ops, local_coefs)
 
     return BlockOperator(ops_without_outside_coupling)
+
+def project_block_operator(operator, range_bases, source_bases):
+    # TODO: implement this with ruletables
+    if isinstance(operator, LincombOperator):
+        operators = []
+        for op in operator.operators:
+            operators.append(_project_block_operator(op, range_bases, source_bases))
+        return LincombOperator(operators, operator.coefficients)
+    else:
+        return _project_block_operator(operator, range_bases, source_bases)
+
+def _project_block_operator(operator, range_bases, source_bases):
+    if isinstance(operator, IdentityOperator):
+        local_projected_op = np.empty((len(range_bases), len(source_bases)), dtype=object)
+        # TODO: assert that both bases are the same
+        for I in range(len(range_bases)):
+            local_projected_op[I][I] = project(IdentityOperator(range_bases[I].space),
+                                               range_bases[I], range_bases[I])
+    elif isinstance(operator, BlockOperator):
+        local_projected_op = np.empty_like(operator.blocks)
+        for I in range(len(range_bases)):
+            local_basis_I = range_bases[I]
+            for J in range(len(source_bases)):
+                local_basis_J = source_bases[J]
+                if operator.blocks[I][J]:
+                    local_projected_op[I][J] = project(operator.blocks[I][J],
+                                                       local_basis_I, local_basis_J)
+    else:
+        raise NotImplementedError
+    projected_operator = BlockOperator(local_projected_op)
+    return projected_operator
+
+def project_block_rhs(rhs, range_bases):
+    # TODO: implement this with ruletables
+    if isinstance(rhs, LincombOperator):
+        operators = []
+        for op in rhs.operators:
+            operators.append(_project_block_rhs(op, range_bases))
+        return LincombOperator(operators, rhs.coefficients)
+    else:
+        return _project_block_rhs(rhs, range_bases)
+
+def _project_block_rhs(rhs, range_bases):
+    if isinstance(rhs, VectorOperator):
+        rhs_blocks = rhs.array._blocks
+        local_projected_rhs = np.empty(len(rhs_blocks), dtype=object)
+        for I in range(len(range_bases)):
+            rhs_operator = VectorArrayOperator(rhs_blocks[I])
+            local_projected_rhs[I] = project(rhs_operator, range_bases[I], None)
+    elif isinstance(rhs, BlockColumnOperator):
+        local_projected_rhs = np.empty_like(rhs.blocks[:, 0])
+        for I in range(len(range_bases)):
+            local_projected_rhs[I] = project(rhs.blocks[I, 0], range_bases[I], None)
+    else:
+        raise NotImplementedError
+    projected_rhs = BlockColumnOperator(local_projected_rhs)
+    return projected_rhs
