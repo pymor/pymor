@@ -50,7 +50,7 @@ def test_to_matrix_BlockOperator():
     A12 = np.random.randn(2, 3)
     A21 = np.random.randn(3, 2)
     A22 = np.random.randn(3, 3)
-    B = np.asarray(np.bmat([[A11, A12], [A21, A22]]))
+    B = np.block([[A11, A12], [A21, A22]])
 
     A11op = NumpyMatrixOperator(A11)
     A12op = NumpyMatrixOperator(A12)
@@ -71,8 +71,8 @@ def test_to_matrix_BlockDiagonalOperator():
     np.random.seed(0)
     A1 = np.random.randn(2, 2)
     A2 = np.random.randn(3, 3)
-    B = np.asarray(np.bmat([[A1, np.zeros((2, 3))],
-                            [np.zeros((3, 2)), A2]]))
+    B = np.block([[A1, np.zeros((2, 3))],
+                  [np.zeros((3, 2)), A2]])
 
     A1op = NumpyMatrixOperator(A1)
     A2op = NumpyMatrixOperator(A2)
