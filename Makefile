@@ -38,7 +38,7 @@ ENV_FILE?=.env
 include $(ENV_FILE)
 export $(shell sed 's/=.*//' $(ENV_FILE))
 
-.PHONY: docker README.html pylint test docs
+.PHONY: docker README.html pylint test docs conda_update
 
 all:
 	./dependencies.py
@@ -80,6 +80,10 @@ docs:
 template:
 	./dependencies.py
 	./.ci/gitlab/template.ci.py
+
+conda_update:
+	./dependencies.py
+	./.ci/create_conda_env.py $(THIS_DIR)/requirements*txt
 
 # docker targets
 docker_template:
