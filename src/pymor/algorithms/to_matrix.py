@@ -96,7 +96,7 @@ class ToMatrixRules(RuleTable):
                     is_dense = False
                 mat_blocks[i].append(mat_ij)
         if format is None and is_dense or format == 'dense':
-            return np.asarray(np.bmat(mat_blocks))
+            return np.block(mat_blocks)
         else:
             return sps.bmat(mat_blocks, format=format)
 

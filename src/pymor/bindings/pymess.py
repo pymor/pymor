@@ -5,6 +5,7 @@
 from pymor.core.config import config
 config.require('PYMESS')
 
+import warnings
 
 import numpy as np
 import scipy.linalg as spla
@@ -160,7 +161,9 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None, default_
         opts = options['opts']
         opts.type = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
         eqn = LyapunovEquation(opts, A, E, B)
-        Z, status = pymess.lradi(eqn, opts)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=PendingDeprecationWarning)
+            Z, status = pymess.lradi(eqn, opts)
         relres = status.res2_norm / status.res2_0
         if relres > opts.adi.res2_tol:
             logger = getLogger('pymor.bindings.pymess.solve_lyap_lrcf')
@@ -222,7 +225,9 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     if options['type'] == 'pymess_glyap':
         Y = B.dot(B.T) if not trans else B.T.dot(B)
         op = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
-        X = pymess.glyap(A, E, Y, op=op)[0]
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=PendingDeprecationWarning)
+            X = pymess.glyap(A, E, Y, op=op)[0]
         X = np.asarray(X)
     else:
         raise ValueError(f'Unexpected Lyapunov equation solver ({options["type"]}).')
@@ -397,7 +402,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None, default_solve
         opts = options['opts']
         opts.type = pymess.MESS_OP_NONE if not trans else pymess.MESS_OP_TRANSPOSE
         eqn = RiccatiEquation(opts, A, E, B, C)
-        Z, status = pymess.lrnm(eqn, opts)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=PendingDeprecationWarning)
+            Z, status = pymess.lrnm(eqn, opts)
         relres = status.res2_norm / status.res2_0
         if relres > opts.adi.res2_tol:
             logger = getLogger('pymor.bindings.pymess.solve_ricc_lrcf')
@@ -481,14 +488,14 @@ def _call_pymess_dense_nm_gmpare(A, E, B, C, R, trans=False, options=None, plus=
     else:
         RinvBT = spla.solve(R, B.T) if R is not None else B.T
         G = B.dot(RinvBT)
-    X, absres, relres = pymess.dense_nm_gmpare(None,
-                                               A, E, Q, G,
-                                               plus=plus, trans=pymess_trans,
-                                               linesearch=options['linesearch'],
-                                               maxit=options['maxit'],
-                                               absres_tol=options['absres_tol'],
-                                               relres_tol=options['relres_tol'],
-                                               nrm=options['nrm'])
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=PendingDeprecationWarning)
+        X, absres, relres = pymess.dense_nm_gmpare(
+            None, A, E, Q, G,
+            plus=plus, trans=pymess_trans,
+            linesearch=options['linesearch'], maxit=options['maxit'], absres_tol=options['absres_tol'],
+            relres_tol=options['relres_tol'], nrm=options['nrm'],
+        )
     if absres > options['absres_tol']:
         logger = getLogger('pymor.bindings.pymess.' + method_name)
         logger.warning(f'Desired absolute residual tolerance was not achieved '
