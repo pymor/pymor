@@ -30,7 +30,7 @@ TEXT = 'pyMOR'
 ####################################################################################################
 
 def main(
-    model: Choices('pymor fenics ngsolve pymor_text') = Argument(..., help='High-dimensional model.'),
+    model: Choices('pymor fenics fenicsx ngsolve pymor_text') = Argument(..., help='High-dimensional model.'),
     alg: Choices('naive greedy adaptive_greedy pod') = Argument(..., help='The model reduction algorithm to use.'),
     snapshots: int = Argument(
         ...,
@@ -48,6 +48,8 @@ def main(
         fom, parameter_space = discretize_pymor()
     elif model == 'fenics':
         fom, parameter_space = discretize_fenics()
+    elif model == 'fenicsx':
+        fom, parameter_space = discretize_fenicsx()
     elif model == 'ngsolve':
         config.require('NGSOLVE')
         fom, parameter_space = discretize_ngsolve()
@@ -138,7 +140,7 @@ def _discretize_fenics():
     import dolfin as df
 
     mesh = df.UnitSquareMesh(GRID_INTERVALS, GRID_INTERVALS, 'crossed')
-    V = df.FunctionSpace(mesh, 'Lagrange', FENICS_ORDER)
+    V = df.FunctionSpace(mesh, ('Lagrange', FENICS_ORDER))
     u = df.TrialFunction(V)
     v = df.TestFunction(V)
 
@@ -193,6 +195,97 @@ def _discretize_fenics():
 
     # build model
     visualizer = FenicsVisualizer(FenicsVectorSpace(V))
+    fom = StationaryModel(op, rhs, products={'h1_0_semi': h1_product},
+                          visualizer=visualizer)
+
+    return fom
+
+
+def discretize_fenicsx():
+    from pymor.tools import mpi
+
+    if mpi.parallel:
+        raise NotImplementedError
+    else:
+        fom = _discretize_fenicsx()
+    return fom, fom.parameters.space((0.1, 1))
+
+
+def _discretize_fenicsx():
+
+    # assemble system matrices - FEniCS code
+    ########################################
+
+    import numpy as np
+    from pymor.tools.mpi import comm
+    import pymor.bindings.fenicsx  # NOQA  needed here to load UFL patch
+    from dolfinx.mesh import create_unit_square, CellType, DiagonalType, locate_entities_boundary
+    from dolfinx.fem import FunctionSpace, form, dirichletbc, locate_dofs_topological, Constant
+    from dolfinx.fem.petsc import assemble_matrix, assemble_vector, set_bc
+    from ufl import TrialFunction, TestFunction, le, lt, SpatialCoordinate, inner, grad, dx
+    from petsc4py import PETSc
+
+    mesh = create_unit_square(comm, GRID_INTERVALS, GRID_INTERVALS, CellType.triangle, diagonal=DiagonalType.crossed)
+    X = SpatialCoordinate(mesh)
+    # Something weird is going on with ulf.lt, etc. and higher order elements. Probably related
+    # to the UFL patch required to get this working. Matrix becomes singular with order higher
+    # than 2.
+    assert FENICS_ORDER <= 2
+    V = FunctionSpace(mesh, ('Lagrange', FENICS_ORDER))
+
+    fdim = mesh.topology.dim - 1
+    boundary_facets = locate_entities_boundary(
+        mesh, fdim, lambda x: np.full(x.shape[1], True, dtype=bool))
+    bc = dirichletbc(PETSc.ScalarType(0), locate_dofs_topological(V, fdim, boundary_facets), V)
+
+    u = TrialFunction(V)
+    v = TestFunction(V)
+
+    def diffusion(lower0, upper0, lower1, upper1, open0, open1):
+        return (
+            le(lower0, X[0]) * (open0 * lt(X[0], upper0) + (not open0) * le(X[0], upper0))
+            * le(lower1, X[1]) * (open1 * lt(X[1], upper1) + (not open1) * le(X[1], upper1))
+        )
+
+    def ass_matrix(x, y, nx, ny):
+        d = diffusion(x/nx, (x + 1)/nx, y/ny, (y + 1)/ny, (x + 1 == nx), (y + 1 == ny))
+        blf = form(inner(d * grad(u), grad(v)) * dx)
+        mat = assemble_matrix(blf, diagonal=0., bcs=[bc])
+        mat.assemble()
+        return mat
+
+    mats = [ass_matrix(x, y, XBLOCKS, YBLOCKS)
+            for x in range(XBLOCKS) for y in range(YBLOCKS)]
+
+    mat0 = assemble_matrix(form(inner(Constant(mesh, 0.) * grad(u), grad(v)) * dx), diagonal=1., bcs=[bc])
+    mat0.assemble()
+    h1_mat = assemble_matrix(form(inner(grad(u), grad(v)) * dx), diagonal=1., bcs=[bc])
+    h1_mat.assemble()
+
+    lf = form(v * dx)
+    F = assemble_vector(lf)
+    set_bc(F, [bc])
+
+    # wrap everything as a pyMOR model
+    ##################################
+
+    # FEniCS wrappers
+    from pymor.bindings.fenicsx import FenicsxMatrixOperator, FenicsxVisualizer
+
+    # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
+    parameter_functionals = [ProjectionParameterFunctional('diffusion',
+                                                           size=YBLOCKS*XBLOCKS,
+                                                           index=YBLOCKS - y - 1 + x*YBLOCKS)
+                             for x in range(XBLOCKS) for y in range(YBLOCKS)]
+
+    # wrap operators
+    ops = [FenicsxMatrixOperator(mat0, V, V)] + [FenicsxMatrixOperator(m, V, V) for m in mats]
+    op = LincombOperator(ops, [1.] + parameter_functionals)
+    rhs = VectorOperator(op.range.make_array([F]))
+    h1_product = FenicsxMatrixOperator(h1_mat, V, V, name='h1_0_semi')
+
+    # build model
+    visualizer = FenicsxVisualizer(op.source)
     fom = StationaryModel(op, rhs, products={'h1_0_semi': h1_product},
                           visualizer=visualizer)
 
