@@ -40,26 +40,25 @@ def _get_fenics_version():
 
 
 def _get_dunegdt_version():
-    import dune.xt
-    import dune.gdt
-    version = 'outdated'
-    try:
-        version = dune.gdt.__version__
-        if parse(version) < parse('2021.1.2') or parse(version) >= parse('2022.2'):
-            warnings.warn('dune-gdt bindings have been tested for version 2022.1.x (x >= 1) '
-                          f'(installed: {dune.gdt.__version__}).')
-    except AttributeError:
-        warnings.warn('dune-gdt bindings have been tested for version 2022.1.x (x >= 1) '
-                      '(installed: unknown older than 2022.1.1).')
-    try:
-        xt_version = dune.xt.__version__
-        if parse(xt_version) < parse('2021.1.2') or parse(xt_version) >= parse('2022.2'):
-            warnings.warn('dune-gdt bindings have been tested for dune-xt 2022.1.x (x >= 4) '
-                          f'(installed: {dune.xt.__version__}).')
-    except AttributeError:
-        warnings.warn('dune-gdt bindings have been tested for dune-xt version 2022.1.x (x >= 4) '
-                      '(installed: unknown older than 2022.1.4).')
-    return version
+    import importlib
+    version_ranges = {"dune-gdt": ('2021.1.2', '2022.2'), "dune-xt": ('2021.1.2', '2022.2')}
+
+    def _get_version(dep_name):
+        min_version, max_version = version_ranges[dep_name]
+        module = importlib.import_module(dep_name.replace("-", "."))
+        try:
+            version = module.__version__
+            if parse(version) < parse(min_version) or parse(version) >= parse(max_version):
+                warnings.warn(f'{dep_name} bindings have been tested for versions between '
+                              '{min_version} and {max_version} (installed: {version}).')
+        except AttributeError:
+            warnings.warn(f'{dep_name} bindings have been tested for versions between '
+                          '{min_version} and {max_version} (installed unknown version).')
+            version = None
+        return version
+
+    _get_version("dune-xt")
+    return _get_version("dune-gdt")
 
 
 def is_windows_platform():
