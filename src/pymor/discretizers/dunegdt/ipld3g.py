@@ -120,11 +120,7 @@ def discretize_stationary_ipld3g(
                     symmetry_factor, weight_parameter)
         penalty_parameter = np.max([data['IP_penalty_parameter'] for data in local_models_data])
     # weight for the diffusion part of the IPDG scheme (see above)
-    if weight_parameter is None:
-        local_weights = [GF(p.grid, 1, (Dim(d), Dim(d))) for p in local_problems]
-    else:
-        mu_weight = local_problems[0].diffusion.parameters.parse(weight_parameter)
-        local_weights = [p.diffusion.assemble(mu_weight) for p in local_problems]
+    local_weights = [data['IP_weight' for data in local_models_data]
 
     # - weak enforcing of Dirichlet boundary values
     for I in dd_grid.boundary_subdomains:
@@ -161,8 +157,8 @@ def discretize_stationary_ipld3g(
             walker.append(op)
             return op
 
-        ops = [make_boundary_contributions_parametric_part(func)
-               for func in local_problems[I].diffusion.functions] + [make_boundary_contributions_nonparametric_part(),]
+        ops = [make_boundary_contributions_parametric_part(func) for func in local_problems[I].diffusion.functions]
+               + [make_boundary_contributions_nonparametric_part(),]
         coeffs = list(local_problems[I].diffusion.coefficients) + [1,]
 
         walker.walk(False)  # not supported yet
@@ -223,6 +219,7 @@ def discretize_stationary_ipld3g(
                 ops_I_J = []
                 ops_J_I = []
                 ops_J_J = []
+                ops_list = [ops_I_I, ops_I_J, ops_J_I, ops_J_J]  # just to save some lines below
                 coeffs = []
                 for diff_in, coeff_in, diff_out, coeff_out in zip(
                     local_problems[I].diffusion.functions,
@@ -230,21 +227,15 @@ def discretize_stationary_ipld3g(
                     local_problems[J].diffusion.functions,
                     local_problems[J].diffusion.coefficients):
                     assert coeff_in == coeff_out
-                    op_I_I, op_I_J, op_J_I, op_J_J = make_coupling_contributions_parametric_part(
-                        diff_in, diff_out)
-                    ops_I_I.append(op_I_I)
-                    ops_I_J.append(op_I_J)
-                    ops_J_I.append(op_J_I)
-                    ops_J_J.append(op_J_J)
-                    coeffs.append(coeff_in)
-                op_I_I, op_I_J, op_J_I, op_J_J = make_coupling_contributions_nonparametric_part()
-                ops_I_I.append(op_I_I)
-                ops_I_J.append(op_I_J)
-                ops_J_I.append(op_J_I)
-                ops_J_J.append(op_J_J)
+                    ops_list = [ops + additional_ops
+                         for ops, additional_ops in zip(
+                             ops_list, make_coupling_contributions_parametric_part(diff_in, diffout))]
+                ops_list = [ops + additional_ops
+                    for ops, additional_ops in zip(ops_list, make_coupling_contributions_nonparametric_part())]
+                del ops_list
                 coeffs.append(1.)
 
-                walker.walk(False)  # not yet supported
+                walker.walk(False)  # parallel assembly not yet supported
 
                 for (i, j, ops) in ((I, I, ops_I_I), (I, J, ops_I_J), (J, I, ops_J_I), (J, J, ops_J_J)):
                     if coupling_ops[i][j] is None:
