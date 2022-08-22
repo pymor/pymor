@@ -372,7 +372,7 @@ if config.HAVE_DUNEGDT:
                     ApplyOnInnerIntersectionsOnce(grid))
             bf += (
                     LocalIntersectionIntegralBilinearForm(LocalIPDGBoundaryPenaltyIntegrand(
-                        symmetry_factor, weight)),
+                        penalty_parameter, weight)),
                     ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
             weighted_h1_semi_penalty_product = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
             weighted_h1_semi_penalty_product.append(bf)
@@ -459,10 +459,11 @@ if config.HAVE_DUNEGDT:
                 'interpolate': interpolate,
                 'sparsity_pattern': sparsity_pattern,
                 'IP_scheme': name,
-                'IP_weight': weight,
                 'IP_penalty_parameter': penalty_parameter,
                 }
 
+        if p.diffusion:
+            data['IP_weight'] = weight
         if preassemble:
             data['unassembled_m'] = m
             m = preassemble_(m)
