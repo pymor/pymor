@@ -81,6 +81,7 @@ def discretize_stationary_ipld3g(
     local_ops = np.empty((M, M), dtype=object)
     local_rhs = np.empty((M, 1), dtype=object)
     coupling_ops = np.empty((M, M), dtype=object)
+    weighted_h1_semi_penalty_product_ops = np.empty((M, M), dtype=object)
 
     # - building local models from discretizations of localized problems
     #   without essential boundary conditions
@@ -235,6 +236,8 @@ def discretize_stationary_ipld3g(
                 del ops_list
                 coeffs.append(1.)
 
+                local_weighted_h1_semi_penalty_product_ops = make_coupling_contributions_nonparametric_part()
+
                 walker.walk(False)  # parallel assembly not yet supported
 
                 for (i, j, ops) in ((I, I, ops_I_I), (I, J, ops_I_J), (J, I, ops_J_I), (J, J, ops_J_J)):
@@ -247,10 +250,41 @@ def discretize_stationary_ipld3g(
                             operators=list(coupling_ops[i][j].operators) + [DuneXTMatrixOperator(op.matrix) for op in ops],
                             coefficients=list(coupling_ops[i][j].coefficients) + list(coeffs)
                         )
+                for (i, j, op) in zip(((I, I), (I, J), (J, I), (J, J)), local_weighted_h1_semi_penalty_product_ops):
+                    if weighted_h1_semi_penalty_product_ops[i][j] is None:
+                        weighted_h1_semi_penalty_product_ops[i][j] = LincombOperator(
+                                operators=[DuneXTMatrixOperator(op.matrix),],
+                                coefficients=[1,])
+                    else:
+                        weighted_h1_semi_penalty_product_ops[i][j] = weighted_h1_semi_penalty_product_ops[i][j].with_(
+                                operators=list(weighted_h1_semi_penalty_product_ops[i][j].operators) \
+                                          + [DuneXTMatrixOperator(op.matrix),],
+                                coefficients=list(weighted_h1_semi_penalty_product_ops[i][j].coefficients) + [1,])
+
+    # products
+    local_l2_ops = np.empty((M, M), dtype=object)
+    # - assemble subdomain contributions
+    for I in range(M):
+        local_l2_ops[I][I] = local_models[I].products['l2']
+        if 'weighted_h1_semi_penalty' in local_models[I].products:
+            local_weighted_h1_semi_penalty_prod = local_models[I].products['weighted_h1_semi_penalty']
+        else:
+            local_weighted_h1_semi_penalty_prod = local_models[I].products['h1_semi']
+        # entry I, I has to exist after the assembly above
+        weighted_h1_semi_penalty_product_ops[I][I] = weighted_h1_semi_penalty_product_ops[I][I].with_(
+                operators=list(weighted_h1_semi_penalty_product_ops[I][I].operators) \
+                          + list(local_weighted_h1_semi_penalty_prod.operators),
+                coefficients=list(weighted_h1_semi_penalty_product_ops[I][I].coefficients) \
+                             + list(local_weighted_h1_semi_penalty_prod.coefficients))
+    products = {
+            'l2': BlockOperator(local_l2_ops),
+            'weighted_h1_semi_penalty': BlockOperator(weighted_h1_semi_penalty_product_ops)
+            }
 
     lhs_op = BlockOperator(local_ops) + BlockOperator(coupling_ops)
     rhs_op = BlockOperator(local_rhs)
-    m = StationaryModel(lhs_op, rhs_op, name=f'{analytical_problem.name}_P{order}{IP_scheme_ID[:-2]}LD3G')
+    m = StationaryModel(lhs_op, rhs_op, products=products,
+                        name=f'{analytical_problem.name}_P{order}{IP_scheme_ID[:-2]}LD3G')
 
     data = {'dd_grid': dd_grid, 'macro_boundary_info': macro_boundary_info}
 
