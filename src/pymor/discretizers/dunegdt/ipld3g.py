@@ -151,7 +151,8 @@ def discretize_stationary_ipld3g(
                        local_grid,
                        boundary_info,
                        DirichletBoundary()))
-            op = MatrixOperator(local_grid, local_models_data[I]['space'], local_models_data[I]['space'], la_backend,
+            op = MatrixOperator(local_grid, local_models_data[I]['space'],
+                                local_models_data[I]['space'], la_backend,
                                 local_models_data[I]['sparsity_pattern'])
             op.append(bf)
             walker.append(op)
@@ -167,14 +168,16 @@ def discretize_stationary_ipld3g(
                        local_grid,
                        boundary_info,
                        DirichletBoundary()))
-            op = MatrixOperator(local_grid, local_models_data[I]['space'], local_models_data[I]['space'], la_backend,
+            op = MatrixOperator(local_grid, local_models_data[I]['space'],
+                                local_models_data[I]['space'], la_backend,
                                 local_models_data[I]['sparsity_pattern'])
             op.append(bf)
             walker.append(op)
             return op
 
         ops = [make_boundary_contributions_parametric_part(func)
-               for func in local_problems[I].diffusion.functions] + [make_boundary_contributions_nonparametric_part(),]
+               for func in local_problems[I].diffusion.functions] + \
+                [make_boundary_contributions_nonparametric_part(),]
         coeffs = list(local_problems[I].diffusion.coefficients) + [1.,]
 
         walker.walk(False)  # not supported yet
@@ -200,10 +203,14 @@ def discretize_stationary_ipld3g(
                     coupling_grid)
 
                 def make_coupling_ops_from_bilinear_form(bf):
-                    op_I_I = MatrixOperator(coupling_grid, local_models_data[I]['space'], local_models_data[I]['space'], local_models_data[I]['sparsity_pattern'])
-                    op_I_J = MatrixOperator(coupling_grid, local_models_data[I]['space'], local_models_data[J]['space'], coupling_sparsity_pattern)
-                    op_J_I = MatrixOperator(coupling_grid, local_models_data[J]['space'], local_models_data[I]['space'], coupling_sparsity_pattern)  # TODO: transpose pattern?!
-                    op_J_J = MatrixOperator(coupling_grid, local_models_data[J]['space'], local_models_data[J]['space'], local_models_data[J]['sparsity_pattern'])
+                    op_I_I = MatrixOperator(coupling_grid, local_models_data[I]['space'],
+                                            local_models_data[I]['space'], local_models_data[I]['sparsity_pattern'])
+                    op_I_J = MatrixOperator(coupling_grid, local_models_data[I]['space'],
+                                            local_models_data[J]['space'], coupling_sparsity_pattern)
+                    op_J_I = MatrixOperator(coupling_grid, local_models_data[J]['space'],
+                                            local_models_data[I]['space'], coupling_sparsity_pattern)  # TODO: transpose pattern?!
+                    op_J_J = MatrixOperator(coupling_grid, local_models_data[J]['space'],
+                                            local_models_data[J]['space'], local_models_data[J]['sparsity_pattern'])
                     op_I_I.append(bf, {}, (False, True , False, False, False, False))  # volume, in_in, in_out, out_in, out_out, boundary
                     op_I_J.append(bf, {}, (False, False, True , False, False, False))
                     op_J_I.append(bf, {}, (False, False, False, True , False, False))
@@ -240,6 +247,7 @@ def discretize_stationary_ipld3g(
                 ops_I_J = []
                 ops_J_I = []
                 ops_J_J = []
+                ops_list = [ops_I_I, ops_I_J, ops_J_I, ops_J_J]  # just to save some lines below
                 coeffs = []
                 for diff_in, coeff_in, diff_out, coeff_out in zip(
                     local_problems[I].diffusion.functions,
@@ -247,21 +255,15 @@ def discretize_stationary_ipld3g(
                     local_problems[J].diffusion.functions,
                     local_problems[J].diffusion.coefficients):
                     assert coeff_in == coeff_out
-                    op_I_I, op_I_J, op_J_I, op_J_J = make_coupling_contributions_parametric_part(
-                        diff_in, diff_out)
-                    ops_I_I.append(op_I_I)
-                    ops_I_J.append(op_I_J)
-                    ops_J_I.append(op_J_I)
-                    ops_J_J.append(op_J_J)
-                    coeffs.append(coeff_in)
-                op_I_I, op_I_J, op_J_I, op_J_J = make_coupling_contributions_nonparametric_part()
-                ops_I_I.append(op_I_I)
-                ops_I_J.append(op_I_J)
-                ops_J_I.append(op_J_I)
-                ops_J_J.append(op_J_J)
+                    ops_list = [ops + additional_ops
+                         for ops, additional_ops in zip(
+                             ops_list, make_coupling_contributions_parametric_part(diff_in, diffout))]
+                ops_list = [ops + additional_ops
+                    for ops, additional_ops in zip(ops_list, make_coupling_contributions_nonparametric_part())]
+                del ops_list
                 coeffs.append(1.)
 
-                walker.walk(False)  # not yet supported
+                walker.walk(False)  # parallel assembly not yet supported
 
                 for (i, j, ops) in ((I, I, ops_I_I), (I, J, ops_I_J), (J, I, ops_J_I), (J, J, ops_J_J)):
                     coupling_op = LincombOperator(
