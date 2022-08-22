@@ -671,7 +671,7 @@ class LTIModel(Model):
 
     def __neg__(self):
         """Negate the |LTIModel|."""
-        return self.with_(C=-self.C, D=-self.D)
+        return self.with_(C=-self.C, D=-self.D, new_type=LTIModel)  # ensure that __neg__ works in subclasses
 
     def __mul__(self, other):
         """Postmultiply by an |LTIModel|."""
@@ -1324,7 +1324,7 @@ class LTIModel(Model):
         return self.moebius_substitution(d2c, sampling_time=0)
 
 
-class PHLTIModel(Model):
+class PHLTIModel(LTIModel):
     r"""Class for (continuous) port-Hamiltonian linear time-invariant systems.
 
     This class describes input-state-output systems given by
@@ -1430,36 +1430,10 @@ class PHLTIModel(Model):
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
-        super().__init__(dim_input=G.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
+        super().__init__(A=J - R, B=G - P, C=(G + P).H, D=S - N, E=E,
+                         solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
+                         name=name)
         self.__auto_init(locals())
-        self.solution_space = J.source
-        self.dim_output = G.source.dim
-        self.sampling_time = 0
-
-        K = lambda s: s * self.E - (self.J - self.R)
-        B = lambda s: self.G - self.P
-        C = lambda s: (self.G + self.P).H
-        D = lambda s: self.S - self.N
-        dK = lambda s: self.E
-        dB = lambda s: ZeroOperator(self.G.range, self.G.source)
-        dC = lambda s: ZeroOperator(self.G.source, self.G.range)
-        dD = lambda s: ZeroOperator(self.S.range, self.S.source)
-        parameters = Parameters.of(self.J, self.R, self.G, self.P, self.S, self.N, self.E)
-
-        self.transfer_function = FactorizedTransferFunction(
-            self.dim_input, self.dim_output,
-            K, B, C, D, dK, dB, dC, dD,
-            parameters=parameters, name=self.name + '_transfer_function')
-
-        self._lti_model = LTIModel(A=self.J - self.R,
-                                   B=self.G - self.P,
-                                   C=(self.G + self.P).H,
-                                   D=self.S - self.N,
-                                   E=self.E,
-                                   solver_options=self.solver_options,
-                                   error_estimator=self.error_estimator,
-                                   visualizer=self.visualizer,
-                                   name=self.name + '_as_lti')
 
     def __str__(self):
         string = (
@@ -1574,186 +1548,9 @@ class PHLTIModel(Model):
 
         return J, R, G, P, S, N, E
 
-    def to_lti(self):
-        r"""Return a standard linear time-invariant system representation.
-
-        The representation
-
-        .. math::
-            A = J - R,\qquad B = G - P,\qquad C = (G + P)^T,\qquad D = S - N,\qquad E = E
-
-        is returned.
-
-        Returns
-        -------
-        lti
-            |LTIModel| equivalent to the port-Hamiltonian model.
-        """
-        return self._lti_model
-
-    def poles(self, mu=None):
-        """Compute system poles.
-
-        .. note::
-            Assumes the systems is small enough to use a dense eigenvalue solver.
-
-        Parameters
-        ----------
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        One-dimensional |NumPy array| of system poles.
-        """
-        return self.to_lti().poles(mu=mu)
-
-    def gramian(self, typ, mu=None):
-        """Compute a Gramian.
-
-        Parameters
-        ----------
-        typ
-            The type of the Gramian:
-
-            - `'c_lrcf'`: low-rank Cholesky factor of the controllability Gramian,
-            - `'o_lrcf'`: low-rank Cholesky factor of the observability Gramian,
-            - `'c_dense'`: dense controllability Gramian,
-            - `'o_dense'`: dense observability Gramian.
-
-            .. note::
-                For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
-                For `'*_dense'` types, the method assumes that the underlying Lyapunov equation
-                has a unique solution, i.e. no pair of system poles adds to zero in the
-                continuous-time case and no pair of system poles multiplies to one in the
-                discrete-time case.
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        If typ is `'c_lrcf'` or `'o_lrcf'`, then the Gramian factor as a |VectorArray| from
-        `self.A.source`.
-        If typ is `'c_dense'` or `'o_dense'`, then the Gramian as a |NumPy array|.
-        """
-        assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense')
-
-        return self.to_lti().gramian(typ, mu=mu)
-
-    def _sv_U_V(self, typ='lyap', mu=None):
-        """Compute (Hankel) singular values and vectors.
-
-        .. note::
-            Assumes the system is asymptotically stable.
-
-        Parameters
-        ----------
-        typ
-            The type of the Gramians used (see :meth:`LTIModel._sv_U_V`).
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        sv
-            One-dimensional |NumPy array| of singular values.
-        Uh
-            |NumPy array| of left singular vectors as rows.
-        Vh
-            |NumPy array| of right singular vectors as rows.
-        """
-        return self.to_lti()._sv_U_V(typ=typ, mu=mu)
-
-    def hsv(self, mu=None):
-        """Hankel singular values.
-
-        .. note::
-            Assumes the system is asymptotically stable.
-
-        Parameters
-        ----------
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        sv
-            One-dimensional |NumPy array| of singular values.
-        """
-        return self._sv_U_V(mu=mu)[0]
-
-    def h2_norm(self, mu=None):
-        """Compute the H2-norm.
-
-        .. note::
-            Assumes the system is asymptotically stable.
-
-        Parameters
-        ----------
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        norm
-            H_2-norm.
-        """
-        return self.to_lti().h2_norm(mu=mu)
-
-    def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
-        """Compute the H_infinity-norm.
-
-        .. note::
-            Assumes the system is asymptotically stable.
-
-        Parameters
-        ----------
-        mu
-            |Parameter values|.
-        return_fpeak
-            Should the frequency at which the maximum is achieved should be returned.
-        ab13dd_equilibrate
-            Should `slycot.ab13dd` use equilibration.
-
-        Returns
-        -------
-        norm
-            H_infinity-norm.
-        fpeak
-            Frequency at which the maximum is achieved (if `return_fpeak` is `True`).
-        """
-        return self.to_lti().hinf_norm(mu=mu,
-                                       return_fpeak=return_fpeak,
-                                       ab13dd_equilibrate=ab13dd_equilibrate)
-
-    def hankel_norm(self, mu=None):
-        """Compute the Hankel-norm.
-
-        .. note::
-            Assumes the system is asymptotically stable.
-
-        Parameters
-        ----------
-        mu
-            |Parameter values|.
-
-        Returns
-        -------
-        norm
-            Hankel-norm.
-        """
-        return self.hsv(mu=mu)[0]
-
     def __add__(self, other):
-        """Add a |PHLTIModel|, an |LTIModel|, or a |SecondOrderModel|."""
-        if isinstance(other, LTIModel):
-            return self.to_lti() + other
-
-        if isinstance(other, SecondOrderModel):
-            return self.to_lti() + other.to_lti()
-
         if not isinstance(other, PHLTIModel):
-            return NotImplemented
+            return super().__add__(other)
 
         assert self.S.source == other.S.source
         assert self.S.range == other.S.range
@@ -1773,38 +1570,6 @@ class PHLTIModel(Model):
             E = BlockDiagonalOperator([self.E, other.E])
 
         return self.with_(J=J, R=R, G=G, P=P, S=S, N=N, E=E)
-
-    def __radd__(self, other):
-        """Add to an |LTIModel| or |SecondOrderModel|."""
-        if isinstance(other, LTIModel):
-            return other + self.to_lti()
-        elif isinstance(other, SecondOrderModel):
-            return other.to_lti() + self.to_lti()
-        else:
-            return NotImplemented
-
-    def __sub__(self, other):
-        """Subtract a |PHLTIModel| or an |LTIModel|."""
-        return self + (-other)
-
-    def __rsub__(self, other):
-        """Subtract from an |LTIModel|."""
-        if isinstance(other, LTIModel):
-            return other - self.to_lti()
-        else:
-            return NotImplemented
-
-    def __neg__(self):
-        """Negate the |PHLTIModel|."""
-        return -self.to_lti()
-
-    def __mul__(self, other):
-        """Postmultiply by an |LTIModel|."""
-        return self.to_lti() * other
-
-    def __rmul__(self, other):
-        """Premultiply by an |LTIModel|."""
-        return other * self.to_lti()
 
 
 class SecondOrderModel(Model):
@@ -2659,7 +2424,7 @@ class LinearDelayModel(Model):
 
     def __add__(self, other):
         """Add an |LTIModel|, |SecondOrderModel|, |PHLTIModel|, or |LinearDelayModel|."""
-        if isinstance(other, (SecondOrderModel, PHLTIModel)):
+        if isinstance(other, SecondOrderModel):
             other = other.to_lti()
 
         if isinstance(other, LTIModel):

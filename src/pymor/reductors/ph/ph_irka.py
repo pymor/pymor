@@ -79,7 +79,7 @@ class PHIRKAReductor(GenericIRKAReductor):
         rom
             Reduced-order |PHLTIModel|.
         """
-        one_sided_irka_reductor = OneSidedIRKAReductor(self.fom.to_lti(), 'V')
+        one_sided_irka_reductor = OneSidedIRKAReductor(self.fom, 'V')
         _ = one_sided_irka_reductor.reduce(rom0_params, tol, maxit, num_prev,
                                            force_sigma_in_rhp, projection, conv_crit,
                                            compute_errors)
