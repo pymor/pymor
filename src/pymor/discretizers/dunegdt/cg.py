@@ -148,7 +148,7 @@ if config.HAVE_DUNEGDT:
             mu_energy_product = p.parameters.parse(mu_energy_product)
             energy_product_ops = []
             energy_product_coeffs = []
-        contrained_rhs_ops = []
+        constrained_rhs_ops = []
         constrained_rhs_coeffs = []
         unconstrained_rhs_ops = []
         unconstrained_rhs_coeffs = []
@@ -233,7 +233,7 @@ if config.HAVE_DUNEGDT:
 
             for r_param_func, r_param_coeff in zip(robin_parameter.functions, robin_parameter.coefficients):
                 for r_bv_func, r_bv_coeff in zip(robin_boundary_values.functions, robin_boundary_values.coefficients):
-                    contrained_rhs_ops += [make_weighted_l2_robin_boundary_functional(r_param_func, r_bv_func)]
+                    constrained_rhs_ops += [make_weighted_l2_robin_boundary_functional(r_param_func, r_bv_func)]
                     constrained_rhs_coeffs += [r_param_coeff*r_bv_coeff]
 
         # source contribution
@@ -244,7 +244,7 @@ if config.HAVE_DUNEGDT:
                         LocalElementProductIntegrand(GF(grid, 1)).with_ansatz(GF(grid, func)))
                 return op
 
-            contrained_rhs_ops += [make_l2_functional(func) for func in p.rhs.functions]
+            constrained_rhs_ops += [make_l2_functional(func) for func in p.rhs.functions]
             constrained_rhs_coeffs += list(p.rhs.coefficients)
 
         # Neumann boundaries
@@ -256,7 +256,7 @@ if config.HAVE_DUNEGDT:
                        ApplyOnCustomBoundaryIntersections(grid, boundary_info, NeumannBoundary()))
                 return op
 
-            contrained_rhs_ops += [make_l2_neumann_boundary_functional(func) for func in p.neumann_data.functions]
+            constrained_rhs_ops += [make_l2_neumann_boundary_functional(func) for func in p.neumann_data.functions]
             constrained_rhs_coeffs += list(p.neumann_data.coefficients)
 
         # Dirichlet boundaries are handled further below ...
@@ -294,7 +294,7 @@ if config.HAVE_DUNEGDT:
             walker.append(op)
         for op in unconstrained_lhs_ops:
             walker.append(op)
-        for op in contrained_rhs_ops:
+        for op in constrained_rhs_ops:
             walker.append(op)
         walker.append(l2_product)
         walker.append(h1_semi_product)
@@ -322,7 +322,7 @@ if config.HAVE_DUNEGDT:
             unconstrained_rhs_coeffs += list(p.dirichlet_data.coefficients)
 
         # extract vectors from functionals
-        contrained_rhs_ops = [op.vector for op in contrained_rhs_ops]
+        constrained_rhs_ops = [op.vector for op in constrained_rhs_ops]
 
         # prepare additional products
         # - in H^1
@@ -341,7 +341,7 @@ if config.HAVE_DUNEGDT:
         # apply the Dirichlet constraints
         for op in constrained_lhs_ops:
             dirichlet_constraints.apply(op.matrix, only_clear=True, ensure_symmetry=False)
-        for vec in contrained_rhs_ops:
+        for vec in constrained_rhs_ops:
             dirichlet_constraints.apply(vec) # sets to zero
         dirichlet_constraints.apply(l2_0_product.matrix, ensure_symmetry=True)
         dirichlet_constraints.apply(h1_0_semi_product.matrix, ensure_symmetry=True)
@@ -362,7 +362,7 @@ if config.HAVE_DUNEGDT:
         # - rhs, clean up beforehand
         rhs_ops = [VectorArrayOperator(lhs_ops[0].range.make_array([vec,])) for vec in unconstrained_rhs_ops]
         rhs_coeffs = list(unconstrained_rhs_coeffs)
-        for vec, coeff in zip(contrained_rhs_ops, constrained_rhs_coeffs):
+        for vec, coeff in zip(constrained_rhs_ops, constrained_rhs_coeffs):
             if not float_cmp(vec.sup_norm(), 0.):
                 rhs_ops += [VectorArrayOperator(lhs_ops[0].range.make_array([vec,])),]
                 rhs_coeffs += [coeff,]
@@ -370,7 +370,7 @@ if config.HAVE_DUNEGDT:
             F = LincombOperator(operators=rhs_ops, coefficients=rhs_coeffs, name='rhsOperator')
         else:
             F = VectorArrayOperator(L.range.zeros(1))
-        del contrained_rhs_ops, constrained_rhs_coeffs, unconstrained_rhs_ops, unconstrained_rhs_coeffs
+        del constrained_rhs_ops, constrained_rhs_coeffs, unconstrained_rhs_ops, unconstrained_rhs_coeffs
 
         # - products
         products = {}
