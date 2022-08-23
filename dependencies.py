@@ -39,7 +39,8 @@ def setup_requires():
 # recheck if jupyter_client pin still necessary
 #   https://github.com/jupyter-widgets/pythreejs/issues/366
 # Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
-install_requires = ['qtpy!=2.0.0', 'packaging', 'diskcache', 'typer', 'click'] + _numpy_scipy()
+# ipywidget pin is due to https://github.com/pymor/pymor/issues/1717
+install_requires = ['qtpy>2.0', 'packaging', 'diskcache', 'typer', 'click'] + _numpy_scipy()
 install_suggests = {
     'ipython>=5.0': 'an enhanced interactive python shell',
     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
@@ -51,7 +52,7 @@ install_suggests = {
     'jupyter_client>=7.0.6': 'necessary to explicitly state here to fix 3js',
     _PYTEST: 'testing framework required to execute unit tests',
     _PYSIDE: 'solution visualization for builtin discretizations',
-    'ipywidgets': 'notebook GUI elements',
+    'ipywidgets<8,>7': 'notebook GUI elements',
     'nbresuse': 'resource usage indicator for notebooks',
     'torch': 'PyTorch open source machine learning framework',
     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
@@ -62,7 +63,7 @@ install_suggests = {
 io_requires = ['pyevtk', 'xmljson', 'meshio>=4.4', 'lxml', 'gmsh']
 install_suggests.update({p: 'optional File I/O support libraries' for p in io_requires})
 doc_requires = ['sphinx>=5.0', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
-                'ipywidgets', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
+                'ipywidgets<8,>7', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
                 'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8', 'myst-nb>=0.16'] + install_requires
 ci_requires = ['check-manifest==0.48',
                'check_reqs==0.2.0',
