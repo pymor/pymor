@@ -18,10 +18,6 @@ jobs:
           python-version: 3.9
           channels: conda-forge
           channel-priority: true
-      - name: Install dependencies
-        run: pip install -r requirements-ci.txt
-      - name: Update requirements
-        run: python ./dependencies.py
       - name: Update env
         run: date >> .ci/conda-env.yml && date >> pyproject.toml
       - uses: peter-evans/create-pull-request@v4.1.1
