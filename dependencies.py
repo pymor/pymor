@@ -85,7 +85,7 @@ ci_requires = ['check-manifest==0.48',
                'readme_renderer[md]==35.0',
                'rstcheck==6.0.0.post1',
                'scikit-fem==6.0.0',
-               'twine==3.8.0']
+               'twine==4.0.1']
 
 # Slycot is pinned due to buildsystem changes + missing wheels
 optional_requirements_file_only = (['slycot>=0.4.0', 'pymess',
