@@ -1430,3 +1430,109 @@ class NumpyConversionOperator(Operator):
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
         return self.range.from_numpy(U.to_numpy())
+
+
+class OutputOperator(Operator):
+    linear = False
+
+    def __init__(self, operator_dict, coefficient_dict, nonlinear_rules=None, solver_options=None, name=None):
+        self.operators, self.source, self.range, self.linear = self._prepare_dicts(operator_dict, coefficient_dict, nonlinear_rules, solver_options, name)
+
+        self.__auto_init(locals())
+
+
+    def _prepare_dicts(self, operator_dict, coefficient_dict, nonlinear_rules, solver_options, name):
+        assert isinstance(operator_dict, dict)          # TODO: fix problem that this makes it a hassle to just use a single operator as output!
+        assert isinstance(coefficient_dict, dict)
+
+        both_dicts = lambda key : isinstance(operator_dict[key], list) and isinstance(coefficient_dict[key], list)
+        one_empty = lambda key : (len(operator_dict[key]) > 0) != (len(coefficient_dict[key]) > 0) # check if exactly one list is empty
+        both_empty = lambda key : len(operator_dict[key]) == 0 and len(coefficient_dict[key]) == 0
+
+        ret_dict = {}
+        sources = []
+        ranges = []
+        keys = list(set().union(operator_dict, coefficient_dict))
+        for key in keys:
+            assert key in ('constant', 'linear', 'bilinear', 'non-linear'), f"Key '{key}' is not a valid key!"
+            assert key in operator_dict and key in coefficient_dict, f"Key '{key}' not in both dictionaries!"
+
+            if both_dicts(key):
+                assert not (one_empty(key)), f"Key '{key}' contains one empty list!"
+                if both_empty(key):
+                    operator_dict.pop(key, None)
+                    coefficient_dict.pop(key, None)
+                    continue
+
+            ret_dict[key] = LincombOperator(operator_dict[key], coefficient_dict[key], solver_options=solver_options, name=name)
+            sources.append(ret_dict[key].source)
+            ranges.append(ret_dict[key].range)
+
+        assert all(src.source == sources[0] for src in sources[1:])
+        assert all(rge.range == ranges[0] for rge in ranges[1:])
+
+        linear = ret_dict.get('linear').linear and 'bilinear' not in ret_dict and 'non-linear' not in ret_dict
+
+        # TODO: check for non-linear evaluation rules!
+        
+        return ret_dict, sources[0], ranges[0], linear
+
+    @property
+    def H(self):
+        options = {'inverse': self.solver_options.get('inverse_adjoint'),
+                   'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
+        H_dict_ops = {key: self.operators[key].H.operators for key in self.operators}
+        H_dict_coeffs = {key: self.operators[key].H.coefficients for key in self.operators}
+        return type(self)(H_dict_ops, H_dict_coeffs, nonlinear_rules=self.nonlinear_rules, solver_options=options,
+                          name=self.name + '_adjoint')
+
+    def apply(self, U, mu=None):
+        return 0. # TODO: parse the individual components of this operator!
+
+    def jacobian(self, U, mu=None):
+        return 0. # TODO: parse the corresponding jacobians!
+
+    def assemble(self, mu=None):
+        return 0. # TODO: figure out how to do this!
+
+    def do_not_call(function):
+        def inner(self, *args, **kwargs):
+            raise NotImplementedError(f"The class {self.__class__.__name__} does not intend to invoke {function.__name__}! Please use {self.apply.__name__} instead.")
+
+        return inner
+
+    @do_not_call
+    def apply2(self, V, U, mu=None):
+        return 0.
+
+    @do_not_call
+    def pairwise_apply2(self, V, U, mu=None):
+        return 0.
+
+    @do_not_call
+    def apply_adjoint(self, V, mu=None):
+        return 0.
+
+    @do_not_call
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        return 0.
+
+    @do_not_call
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+        return 0.
+
+    @do_not_call
+    def d_mu(self, parameter, index=0):
+        return 0.
+
+    @do_not_call
+    def as_range_array(self, mu=None):
+        return 0.
+
+    @do_not_call
+    def as_source_array(self, mu=None):
+        return 0.
+
+    @do_not_call
+    def as_vector(self, mu=None):
+        return 0.

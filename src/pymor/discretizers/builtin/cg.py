@@ -19,7 +19,7 @@ from pymor.discretizers.builtin.grids.boundaryinfos import EmptyBoundaryInfo
 from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
 from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisualizer
 from pymor.models.basic import StationaryModel, InstationaryModel
-from pymor.operators.constructions import LincombOperator
+from pymor.operators.constructions import LincombOperator, OutputOperator
 from pymor.operators.numpy import NumpyMatrixBasedOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -1152,7 +1152,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     # assemble additional output functionals
     if p.outputs:
-        if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
+        if any(v[0] not in ('l2', 'l2_boundary', 'general') for v in p.outputs):
             raise NotImplementedError
         outputs = []
         for v in p.outputs:
@@ -1163,13 +1163,20 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                     outputs.append(LincombOperator(ops, v[1].coefficients))
                 else:
                     outputs.append(L2Functional(grid, v[1], dirichlet_clear_dofs=False).H)
-            else:
+            elif v[0] == 'l2_boundary':
                 if isinstance(v[1], LincombFunction):
                     ops = [BoundaryL2Functional(grid, vv, dirichlet_clear_dofs=False).H
                            for vv in v[1].functions]
                     outputs.append(LincombOperator(ops, v[1].coefficients))
                 else:
                     outputs.append(BoundaryL2Functional(grid, v[1], dirichlet_clear_dofs=False).H)
+            else:
+                if isinstance(v[1], OutputOperator):
+                    outputs.append(v[1])
+                else:
+                    # TODO: what needs to go here?
+                    # outputs.append()
+                    raise NotImplementedError
         if len(outputs) > 1:
             from pymor.operators.block import BlockColumnOperator
             from pymor.operators.constructions import NumpyConversionOperator
