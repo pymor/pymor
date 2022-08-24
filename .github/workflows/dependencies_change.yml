@@ -31,7 +31,6 @@ jobs:
           title: "[Bot] Update requirements and environments"
           author: pyMOR Bot <ci@pymor.org>
           labels: pr:change
-          add-paths: requirements*.txt;.ci/conda-env.yml;pyproject.toml
           delete-branch: true
       - name: Upload Logfile
         if: always()
