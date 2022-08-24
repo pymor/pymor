@@ -23,7 +23,7 @@ jobs:
       - name: Update requirements
         run: python ./dependencies.py
       - name: Update env
-        run: python .ci/create_conda_env.py requirements*.txt
+        run: date >> .ci/conda-env.yml && date >> pyproject.toml
       - uses: peter-evans/create-pull-request@v4.1.1
         name: Create a PR for changed env
         with:

@@ -21,4 +21,4 @@ pytest==7.1.2
 readme_renderer[md]==35.0
 rstcheck==6.0.0.post1
 scikit-fem==6.0.0
-twine==3.8.0
+twine==4.0.1
