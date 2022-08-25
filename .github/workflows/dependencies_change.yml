@@ -32,6 +32,7 @@ jobs:
           author: pyMOR Bot <ci@pymor.org>
           labels: pr:change
           delete-branch: true
+          branch-suffix: short-commit-hash
       - name: Upload Logfile
         if: always()
         uses: actions/upload-artifact@v3
