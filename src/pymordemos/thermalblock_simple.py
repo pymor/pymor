@@ -222,7 +222,7 @@ def _discretize_fenicsx():
     from dolfinx.mesh import create_unit_square, CellType, DiagonalType, locate_entities_boundary
     from dolfinx.fem import FunctionSpace, form, dirichletbc, locate_dofs_topological, Constant
     from dolfinx.fem.petsc import assemble_matrix, assemble_vector, set_bc
-    from ufl import TrialFunction, TestFunction, le, lt, SpatialCoordinate, inner, grad, dx
+    from ufl import TrialFunction, TestFunction, le, lt, SpatialCoordinate, inner, grad, dx, conditional
     from petsc4py import PETSc
 
     mesh = create_unit_square(comm, GRID_INTERVALS, GRID_INTERVALS, CellType.triangle, diagonal=DiagonalType.crossed)
@@ -230,7 +230,6 @@ def _discretize_fenicsx():
     # Something weird is going on with ulf.lt, etc. and higher order elements. Probably related
     # to the UFL patch required to get this working. Matrix becomes singular with order higher
     # than 2.
-    assert FENICS_ORDER <= 2
     V = FunctionSpace(mesh, ('Lagrange', FENICS_ORDER))
 
     fdim = mesh.topology.dim - 1
@@ -243,8 +242,10 @@ def _discretize_fenicsx():
 
     def diffusion(lower0, upper0, lower1, upper1, open0, open1):
         return (
-            le(lower0, X[0]) * (open0 * lt(X[0], upper0) + (not open0) * le(X[0], upper0))
-            * le(lower1, X[1]) * (open1 * lt(X[1], upper1) + (not open1) * le(X[1], upper1))
+            conditional(le(lower0, X[0]), 1, 0)
+            * (int(open0) * conditional(lt(X[0], upper0), 1, 0) + int(not open0) * conditional(le(X[0], upper0), 1, 0))
+            * conditional(le(lower1, X[1]), 1, 0)
+            * (int(open1) * conditional(lt(X[1], upper1), 1, 0) + int(not open1) * conditional(le(X[1], upper1), 1, 0))
         )
 
     def ass_matrix(x, y, nx, ny):
