@@ -159,7 +159,7 @@ fom = fom.with_(T=10, time_stepper=ImplicitEulerTimeStepper(100))
 With this done, we can compute the output for some given input and plot it.
 
 ```{code-cell}
-Y = fom.output(input='[sin(t), sin(2 * t)]')
+Y = fom.output(input='[sin(t[0]), sin(2 * t[0])]')
 fig, ax = plt.subplots()
 ax.plot(np.linspace(0, fom.T, fom.time_stepper.nt + 1), Y)
 ax.set_xlabel('$t$')
