@@ -19,10 +19,6 @@ from pymor.vectorarrays.interface import _create_random_values
 from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
 
 
-from pymor.bindings._patch_ufl import patch_ufl
-patch_ufl()
-
-
 @unpicklable
 class FenicsxVector(CopyOnWriteVector):
     """Wraps a FEniCSx vector to make it usable with ListVectorArray."""
