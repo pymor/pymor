@@ -1,5 +1,5 @@
 #########################################
-pyMOR - Model Order Reduction with python
+pyMOR - Model Order Reduction with Python
 #########################################
 
 `pyMOR <https://pymor.org>`_ is a software library for building model order
