@@ -5,12 +5,7 @@ MAINTAINER rene.fritze@wwu.de
 
 COPY . /tmp/pymor
 
-# manual numpy install is hack to workaround an otherwise happening
-#   File "src/pymor/discretizers/builtin/relations.pyx", line 1, in init pymor.discretizers.builtin.relations
-#   ValueError: numpy.ndarray size changed, may indicate binary incompatibility. Expected 88 from C header, got 80 from PyObject
-# for which no explanation could be found
-RUN pip install numpy==1.20 && \
-  pip install /tmp/pymor[docs,ci,full] && rm -rf /tmp/pymor
+RUN pip install /tmp/pymor[docs,ci,full] && rm -rf /tmp/pymor
 RUN python -c "from pymor.basic import *"
 
 
