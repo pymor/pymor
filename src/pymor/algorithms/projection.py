@@ -7,7 +7,7 @@ import numpy as np
 from pymor.algorithms.rules import RuleTable, match_class, match_generic, match_always
 from pymor.core.exceptions import RuleNotMatchingError, NoMatchingRuleError
 from pymor.operators.block import BlockOperatorBase, BlockRowOperator, BlockColumnOperator
-from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ConstantOperator, ProjectedOperator,
+from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ConstantOperator, OutputOperator, ProjectedOperator,
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
                                            IdentityOperator, VectorArrayOperator)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
@@ -241,6 +241,11 @@ class ProjectRules(RuleTable):
             return BlockRowOperator(np.sum(projected_ops, axis=0))
         else:
             return np.sum(projected_ops)
+
+    @match_class(OutputOperator)
+    def action_OutputOperator(self, op):
+        projected_ops = {key: project(op.operators[key], self.range_basis, self.source_basis) for key in op.operators} # TODO: check if this might need to be self.src_bas, self.src_bas!
+        return OutputOperator(projected_ops, non_linear_rules=op.non_linear_rules, solver_options=op.solver_options)
 
 
 def project_to_subbasis(op, dim_range=None, dim_source=None):
