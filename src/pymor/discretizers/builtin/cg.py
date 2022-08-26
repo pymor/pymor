@@ -1174,9 +1174,9 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                 if isinstance(v[1], OutputOperator):
                     outputs.append(v[1])
                 else:
-                    # TODO: what needs to go here?
+                    # TODO: do we want to handle lincom functions as well?
                     # outputs.append()
-                    raise NotImplementedError
+                    raise NotImplementedError("The general output option expects a general output operator to be given. Please convert your input to such an operator!")
         if len(outputs) > 1:
             from pymor.operators.block import BlockColumnOperator
             from pymor.operators.constructions import NumpyConversionOperator

@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+from pymor.operators.constructions import OutputOperator
 
 from pymor.parameters.base import ParametricObject, ParameterSpace
 from pymor.tools.frozendict import FrozenDict
@@ -111,7 +112,7 @@ class StationaryProblem(ParametricObject):
                     and np.all([f.dim_domain == domain.dim and f.shape_range == () for f in robin_data])))
         assert (outputs is None
                 or all(isinstance(v, tuple) and len(v) == 2 and v[0] in ('l2', 'l2_boundary', 'general')
-                       and v[1].dim_domain == domain.dim and v[1].shape_range == () for v in outputs))
+                       and ((v[1].dim_domain == domain.dim and v[1].shape_range == ()) if v[0] != 'general' else isinstance(v[1], OutputOperator)) for v in outputs))
         assert (parameter_ranges is None
                 or (isinstance(parameter_ranges, (list, tuple))
                     and len(parameter_ranges) == 2
