@@ -424,7 +424,10 @@ class BinaryOp(Expression):
         if not _broadcastable_shapes(first.shape, second.shape):
             raise ValueError(f'Incompatible shapes of expressions "{first}" and "{second}" with shapes '
                              f'{first.shape} and {second.shape} for binary operator {self.numpy_symbol}')
-        return np.vectorize(ufl_op)(first, second)
+        if self.fenics_conditional:
+            return np.vectorize(lambda x, y: ufl.conditional(ufl_op(x, y), 1., 0.))(first, second)
+        else:
+            return np.vectorize(ufl_op)(first, second)
 
     def __str__(self):
         return f'({self.first} {self.numpy_symbol} {self.second})'
@@ -562,18 +565,18 @@ def _broadcastable_shapes(first, second):
     return all(f == s or f == 1 or s == 1 for f, s in zip(first[::-1], second[::-1]))
 
 
-class Sum(BinaryOp):  numpy_symbol = '+'; fenics_symbol = operator.add      # NOQA
-class Diff(BinaryOp): numpy_symbol = '-'; fenics_symbol = operator.sub      # NOQA
-class Prod(BinaryOp): numpy_symbol = '*'; fenics_symbol = operator.mul      # NOQA
-class Div(BinaryOp):  numpy_symbol = '/'; fenics_symbol = operator.truediv  # NOQA
+class Sum(BinaryOp):  numpy_symbol = '+'; fenics_symbol = operator.add;     fenics_conditional=False  # NOQA
+class Diff(BinaryOp): numpy_symbol = '-'; fenics_symbol = operator.sub;     fenics_conditional=False  # NOQA
+class Prod(BinaryOp): numpy_symbol = '*'; fenics_symbol = operator.mul;     fenics_conditional=False  # NOQA
+class Div(BinaryOp):  numpy_symbol = '/'; fenics_symbol = operator.truediv; fenics_conditional=False  # NOQA
 
 
-class Pow(BinaryOp):  numpy_symbol = '**'; fenics_symbol = 'elem_pow'    # NOQA
-class LE(BinaryOp):   numpy_symbol = '<='; fenics_symbol = 'le'          # NOQA
-class GE(BinaryOp):   numpy_symbol = '>='; fenics_symbol = 'ge'          # NOQA
-class LT(BinaryOp):   numpy_symbol = '<';  fenics_symbol = 'lt'          # NOQA
-class GT(BinaryOp):   numpy_symbol = '>';  fenics_symbol = 'gt'          # NOQA
-class Mod(BinaryOp):  numpy_symbol = '%';  fenics_symbol = None          # NOQA
+class Pow(BinaryOp):  numpy_symbol = '**'; fenics_symbol = 'elem_pow'; fenics_conditional=False  # NOQA
+class LE(BinaryOp):   numpy_symbol = '<='; fenics_symbol = 'le';       fenics_conditional=True   # NOQA
+class GE(BinaryOp):   numpy_symbol = '>='; fenics_symbol = 'ge';       fenics_conditional=True   # NOQA
+class LT(BinaryOp):   numpy_symbol = '<';  fenics_symbol = 'lt';       fenics_conditional=True   # NOQA
+class GT(BinaryOp):   numpy_symbol = '>';  fenics_symbol = 'gt';       fenics_conditional=True   # NOQA
+class Mod(BinaryOp):  numpy_symbol = '%';  fenics_symbol = None;       fenics_conditional=None   # NOQA
 
 
 class sin(UnaryFunctionCall):      numpy_symbol = 'sin';     fenics_symbol = 'sin'       # NOQA
