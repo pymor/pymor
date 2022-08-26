@@ -24,13 +24,15 @@ jobs:
         run: python ./dependencies.py
       - name: Update env
         run: python .ci/create_conda_env.py requirements*.txt
-      - uses: stefanzweifel/git-auto-commit-action@v4
+      - uses: peter-evans/create-pull-request@v4.1.1
+        name: Create a PR for changed env
         with:
-          commit_message: "[Bot] Update requirements and environments"
-          commit_user_name: pyMOR Bot
-          commit_user_email: ci@pymor.org
-          commit_author: pyMOR Bot <ci@pymor.org>
-          file_pattern: requirements*.txt .ci/conda-env.yml pyproject.toml
+          commit-message: "[Bot] Update requirements and environments"
+          title: "[Bot] Update requirements and environments"
+          author: pyMOR Bot <ci@pymor.org>
+          labels: pr:change
+          delete-branch: true
+          branch-suffix: short-commit-hash
       - name: Upload Logfile
         if: always()
         uses: actions/upload-artifact@v3
