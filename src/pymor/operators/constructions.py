@@ -1464,16 +1464,20 @@ class OutputOperator(Operator):
         elif self.constant:
             self.source = self.operators['constant'].source
 
+        # TODO: actually use correct range estimates...
+        # We want to consider first of all, scalar ranges, i.e. R^d x R |--> R
+        # Then, we might go into vectorized ranges, that is R^d x R |--> R^d
+
+        # print(f"RANGES -- {ranges}")
+        # print(f"OPS: {self.operators}")
         # if ranges:
         #     assert len(ranges.values()) == 1 or all(list(ranges.values())[0] == rge for rge in list(ranges.values())[1:])
         #     self.range = list(ranges.values())[0]
         # elif self.constant:
         #     self.range = self.operators['constant'].range
-
-        # TODO: actually use correct range estimates...
-        # We want to consider first of all, scalar ranges, i.e. R^d x R |--> R
-        # Then, we might go into vectorized ranges, that is R^d x R |--> R^d
-        self.range = NumpyVectorSpace(1)
+        # self.range = NumpyVectorSpace(1)
+        # self.range = self.source
+        self.range = self.operators['linear'].range if self.operators.get('linear', []) else NumpyVectorSpace(1)
 
         # TODO: check for non-linear evaluation rules!
 
@@ -1502,6 +1506,7 @@ class OutputOperator(Operator):
 
     @property
     def H(self):
+        # TODO: add adjoint of constant, that is R^n (impl) |--> R ==> R |--> R^n!
         options = {'inverse': self.solver_options.get('inverse_adjoint'),
                    'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
         H_dict_ops = {key: self.operators[key].H.operators for key in self.operators}
@@ -1512,8 +1517,8 @@ class OutputOperator(Operator):
     def _evaluate_const_part(self, mu=None):
         ret_val = 0.
         if 'constant' in self.operators:
-            src = self.operators['constant'].source
-            ret_val += self.operators['constant'].apply(src.ones(), mu)
+            src = self.source
+            ret_val += self.operators['constant'].apply(src.ones(src.dim), mu)
         return ret_val
 
     def _evaluate_lin_part(self, U, mu=None):
@@ -1526,7 +1531,7 @@ class OutputOperator(Operator):
         assert U in self.source
         ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(U, mu)
         if 'bilinear' in self.operators:
-            ret_val += self.range.from_numpy(self.operators['bilinear'].apply2(U, U, mu))
+            ret_val += NumpyVectorSpace(1).from_numpy(self.operators['bilinear'].apply2(U, U, mu))
         # TODO: nonlinear evaluation:
         # if 'non-linear' in self.operators:
         #     ret_val += self.operators['non-linear'].evaluate(self.non_linear_rules)(U, mu)
@@ -1537,7 +1542,7 @@ class OutputOperator(Operator):
         assert V in self.source
         ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(U, mu)
         if 'bilinear' in self.operators:
-            ret_val += self.range.from_numpy(self.operators['bilinear'].apply2(V, U, mu))
+            ret_val += NumpyVectorSpace(1).from_numpy(self.operators['bilinear'].apply2(V, U, mu))
         # TODO: nonlinear evaluation:
         # if 'non-linear' in self.operators:
         #     ret_val += self.operators['non-linear'].evaluate(self.non_linear_rules)(U, mu)
