@@ -1500,7 +1500,7 @@ class OutputOperator(Operator):
                    'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
         H_dict_ops = {key: self.operators[key].H.operators for key in self.operators}
         H_dict_coeffs = {key: self.operators[key].H.coefficients for key in self.operators}
-        return type(self)(H_dict_ops, H_dict_coeffs, non_linear_rules=self.non_linear_rules, solver_options=options,
+        return OutputOperator(H_dict_ops, H_dict_coeffs, non_linear_rules=self.non_linear_rules, solver_options=options,
                           name=self.name + '_adjoint')
 
     def _evaluate_const_part(self, mu=None):
@@ -1544,13 +1544,14 @@ class OutputOperator(Operator):
 
     def assemble(self, mu=None):
         assembled_ops = {key: self.operators[key].assemble(mu) for key in self.operators}
-        return type(self)(assembled_ops, non_linear_rules=self.non_linear_rules, solver_options=self.solver_options, name=self.name + '_assembled')
+        return OutputOperator(assembled_ops, non_linear_rules=self.non_linear_rules, solver_options=self.solver_options, name=self.name + '_assembled')
 
     def jacobian(self, U, mu=None):
         if self.linear:
             return self.assemble(mu)
-        else:
-            raise NotImplementedError
+        jac_ops = {key: self.operators[key].jacobian(U, mu) for key in self.operators}
+        options = self.solver_options.get('jacobian') if self.solver_options else None
+        return OutputOperator(jac_ops, non_linear_rules=self.non_linear_rules, solver_options=options, name=self.name + '_jacobian').assemble(mu)
 
     def pairwise_apply2(self, V, U, mu=None):
         assert U in self.source
@@ -1586,7 +1587,7 @@ class OutputOperator(Operator):
 
     def d_mu(self, parameter, index=0):
         d_mu_ops = {key: self.operators[key].d_mu(parameter, index) for key in self.operators}
-        return type(self)(d_mu_ops, non_linear_rules=self.non_linear_rules, solver_options=self.solver_options, name=self.name + '_d_mu')
+        return OutputOperator(d_mu_ops, non_linear_rules=self.non_linear_rules, solver_options=self.solver_options, name=self.name + '_d_mu')
 
     def as_range_array(self, mu=None):
         ret_array = [op.as_range_array(mu) for op in self.operators.values()]
