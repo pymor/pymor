@@ -1434,8 +1434,6 @@ class NumpyConversionOperator(Operator):
 
 
 class OutputOperator(Operator):
-    linear = False
-
     def __init__(self, operator_dict, coefficient_dict=None, non_linear_rules=None, solver_options=None, name=None):
         assert isinstance(operator_dict, dict)
         assert operator_dict, "Expected dictionary with operators, got empty dictionary!"
@@ -1445,8 +1443,11 @@ class OutputOperator(Operator):
         else:
             self.operators = self._prepare_lincomb_dicts(operator_dict)
 
-        if 'linear' in operator_dict:
-            self.linear = self.operators.get('linear').linear and 'constant' not in self.operators and 'bilinear' not in self.operators and 'non-linear' not in self.operators
+        key_check = lambda key : True if len(self.operators) == 1 and key in self.operators else False
+        self.constant = key_check('constant')
+        self.linear = key_check('linear')
+        self.bilinear = key_check('bilinear')
+        self.non_linear = not self.constant and not self.linear and not self.bilinear
 
         sources = {}
         ranges = {}
@@ -1465,20 +1466,7 @@ class OutputOperator(Operator):
         elif self.constant:
             self.source = self.operators['constant'].source
 
-        # TODO: actually use correct range estimates...
-        # We want to consider first of all, scalar ranges, i.e. R^d x R |--> R
-        # Then, we might go into vectorized ranges, that is R^d x R |--> R^d
-
-        # print(f"RANGES -- {ranges}")
-        # print(f"OPS: {self.operators}")
-        # if ranges:
-        #     assert len(ranges.values()) == 1 or all(list(ranges.values())[0] == rge for rge in list(ranges.values())[1:])
-        #     self.range = list(ranges.values())[0]
-        # elif self.constant:
-        #     self.range = self.operators['constant'].range
-        # self.range = NumpyVectorSpace(1)
-        # self.range = self.source
-        self.range = self.operators['linear'].range if self.operators.get('linear', []) else NumpyVectorSpace(1)
+        self.range = self.operators['linear'].range if 'linear' in self.operators else NumpyVectorSpace(1)
 
         # TODO: check for non-linear evaluation rules!
 
@@ -1492,7 +1480,8 @@ class OutputOperator(Operator):
         return operator_dict
 
     def _prepare_coefficient_dicts(self, operator_dict, coefficient_dict, solver_options, name):
-        assert isinstance(coefficient_dict, dict)          # TODO: fix problem that this makes it a hassle to just use a single operator as output!
+        # TODO: fix problem that this makes it a hassle to just use a single operator as output!
+        assert isinstance(coefficient_dict, dict)
         assert coefficient_dict, "Expected dictionary with coefficients, got empty dictionaries"
 
         ret_dict = {}
@@ -1507,7 +1496,6 @@ class OutputOperator(Operator):
 
     @property
     def H(self):
-        # TODO: add adjoint of constant, that is R^n (impl) |--> R ==> R |--> R^n!
         options = {'inverse': self.solver_options.get('inverse_adjoint'),
                    'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
         H_dict_ops = {key: self.operators[key].H.operators for key in self.operators}
@@ -1522,10 +1510,10 @@ class OutputOperator(Operator):
             ret_val += self.operators['constant'].apply(src.ones(src.dim), mu)
         return ret_val
 
-    def _evaluate_lin_part(self, U, mu=None):
+    def _evaluate_lin_part(self, U, mu=None, adjoint=False):
         ret_val = 0.
         if 'linear' in self.operators:
-            ret_val += self.operators['linear'].apply(U, mu)
+            ret_val += self.operators['linear'].apply(U, mu) if not adjoint else self.operators['linear'].apply_adjoint(U, mu)
         return ret_val
 
     def apply(self, U, mu=None):
@@ -1540,7 +1528,7 @@ class OutputOperator(Operator):
 
     def apply2(self, V, U, mu=None):
         assert U in self.source
-        assert V in self.source
+        assert V in self.range
         ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(U, mu)
         if 'bilinear' in self.operators:
             ret_val += NumpyVectorSpace(1).from_numpy(self.operators['bilinear'].apply2(V, U, mu))
@@ -1549,32 +1537,52 @@ class OutputOperator(Operator):
         #     ret_val += self.operators['non-linear'].evaluate(self.non_linear_rules)(U, mu)
         return ret_val
 
-    def jacobian(self, U, mu=None):
-        return 0. # TODO: parse the corresponding jacobians!
-
-    def assemble(self, mu=None):
-        return 0. # TODO: figure out how to do this!
-
     def do_not_call(function):
         def inner(self, *args, **kwargs):
             raise NotImplementedError(f"The class {self.__class__.__name__} does not intend to invoke {function.__name__}!")
         return inner
 
-    @do_not_call
+    def assemble(self, mu=None):
+        assembled_ops = {key: self.operators[key].assemble(mu) for key in self.operators}
+        return type(self)(assembled_ops, non_linear_rules=self.non_linear_rules, solver_options=self.solver_options, name=self.name + '_assembled')
+
+    def jacobian(self, U, mu=None):
+        if self.linear:
+            return self.assemble(mu)
+        else:
+            raise NotImplementedError
+
     def pairwise_apply2(self, V, U, mu=None):
-        return 0.
+        assert U in self.source
+        assert V in self.range
+        assert self.source == self.range
+        ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(U, mu)
+        if 'bilinear' in self.operators:
+            ret_val += NumpyVectorSpace(1).from_numpy(self.operators['bilinear'].pairwise_apply2(V, U, mu))
+        # TODO: nonlinear evaluation:
+        # if 'non-linear' in self.operators:
+        #     ret_val += self.operators['non-linear'].evaluate(self.non_linear_rules)(U, mu)
+        return ret_val
 
-    @do_not_call
     def apply_adjoint(self, V, mu=None):
-        return 0.
+        assert V in self.range
+        ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(V, mu, adjoint=True)
+        if 'bilinear' in self.operators:
+            ret_val += NumpyVectorSpace(1).from_numpy(self.operators['bilinear'].apply_adjoint(V, mu))
+        # TODO: nonlinear evaluation:
+        # if 'non-linear' in self.operators:
+        #     ret_val += self.operators['non-linear'].evaluate(self.non_linear_rules)(V, mu)
+        return ret_val
 
-    @do_not_call
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        return 0.
+        if not self.linear:
+            raise InversionError
+        return self.operators['linear'].apply_inverse(V, mu, initial_guess, least_squares)
 
-    @do_not_call
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        return 0.
+        if not self.linear:
+            raise InversionError
+        return self.operators['linear'].apply_inverse_adjoint(U, mu, initial_guess, least_squares)
 
     def d_mu(self, parameter, index=0):
         d_mu_ops = {key: self.operators[key].d_mu(parameter, index) for key in self.operators}
@@ -1593,7 +1601,3 @@ class OutputOperator(Operator):
         for v in ret_array[1:]:
             R += v
         return R
-
-    @do_not_call
-    def as_vector(self, mu=None):
-        return 0.
