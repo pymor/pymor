@@ -15,7 +15,7 @@ from pymor.operators.constructions import (AdjointOperator, ComponentProjectionO
                                            IdentityOperator, LincombOperator, LowRankOperator, LowRankUpdatedOperator,
                                            NumpyConversionOperator, VectorArrayOperator, ZeroOperator)
 from pymor.operators.interface import as_array_max_length
-from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
+from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator, NumpyLoewnerOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -50,6 +50,20 @@ class ToMatrixRules(RuleTable):
     def __init__(self, format, mu):
         super().__init__()
         self.__auto_init(locals())
+
+    @match_class(NumpyLoewnerOperator)
+    def action_NumpyLoewnerOperator(self, op):
+        format = self.format
+        if format in (None, 'dense'):
+            if op.shifted:
+                op_matrix = (np.expand_dims(op.x, axis=(1, 2)) * op.Hx)[:, np.newaxis] \
+                    - (np.expand_dims(op.y, axis=(1, 2)) * op.Hy)[np.newaxis]
+            else:
+                op_matrix = op.Hx[:, np.newaxis] - op.Hy[np.newaxis]
+            op_matrix /= np.expand_dims(np.subtract.outer(op.x, op.y), axis=(2, 3))
+            return np.concatenate(np.concatenate(op_matrix, axis=1), axis=1)
+        else:
+            raise NotImplementedError
 
     @match_class(NumpyHankelOperator)
     def action_NumpyHankelOperator(self, op):
