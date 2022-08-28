@@ -5,6 +5,7 @@
 """Module containing some constructions to obtain new operators from old ones."""
 
 from functools import reduce
+import marshal
 from numbers import Number
 
 import numpy as np
@@ -1556,8 +1557,7 @@ class OutputOperator(Operator):
 
     def do_not_call(function):
         def inner(self, *args, **kwargs):
-            raise NotImplementedError(f"The class {self.__class__.__name__} does not intend to invoke {function.__name__}! Please use {self.apply.__name__} instead.")
-
+            raise NotImplementedError(f"The class {self.__class__.__name__} does not intend to invoke {function.__name__}!")
         return inner
 
     @do_not_call
@@ -1576,17 +1576,23 @@ class OutputOperator(Operator):
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         return 0.
 
-    @do_not_call
     def d_mu(self, parameter, index=0):
-        return 0.
+        d_mu_ops = {key: self.operators[key].d_mu(parameter, index) for key in self.operators}
+        return type(self)(d_mu_ops, non_linear_rules=self.non_linear_rules, solver_options=self.solver_options, name=self.name + '_d_mu')
 
-    @do_not_call
     def as_range_array(self, mu=None):
-        return 0.
+        ret_array = [op.as_range_array(mu) for op in self.operators.values()]
+        R = ret_array[0]
+        for v in ret_array[1:]:
+            R += v
+        return R
 
-    @do_not_call
     def as_source_array(self, mu=None):
-        return 0.
+        ret_array = [op.as_source_array(mu) for op in self.operators.values()]
+        R = ret_array[0]
+        for v in ret_array[1:]:
+            R += v
+        return R
 
     @do_not_call
     def as_vector(self, mu=None):
