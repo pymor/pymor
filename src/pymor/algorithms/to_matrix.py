@@ -55,13 +55,18 @@ class ToMatrixRules(RuleTable):
     def action_NumpyLoewnerOperator(self, op):
         format = self.format
         if format in (None, 'dense'):
-            if op.shifted:
-                op_matrix = (np.expand_dims(op.si, axis=(1, 2)) * op.Hsi)[:, np.newaxis] \
-                    - (np.expand_dims(op.sj, axis=(1, 2)) * op.Hsj)[np.newaxis]
+            si, sj = op.s[op.i], op.s[op.j]
+            Hsi, Hsj = op.Hs[op.i], op.Hs[op.j]
+            if np.any(np.isin(si, sj)):
+                raise NotImplementedError
             else:
-                op_matrix = op.Hsi[:, np.newaxis] - op.Hsj[np.newaxis]
-            op_matrix /= np.expand_dims(np.subtract.outer(op.si, op.sj), axis=(2, 3))
-            return np.concatenate(np.concatenate(op_matrix, axis=1), axis=1)
+                if op.shifted:
+                    op_matrix = (np.expand_dims(si, axis=(1, 2)) * Hsi)[:, np.newaxis] \
+                        - (np.expand_dims(sj, axis=(1, 2)) * Hsj)[np.newaxis]
+                else:
+                    op_matrix = Hsi[:, np.newaxis] - Hsj[np.newaxis]
+                op_matrix /= np.expand_dims(np.subtract.outer(si, sj), axis=(2, 3))
+                return np.concatenate(np.concatenate(op_matrix, axis=1), axis=1)
         else:
             raise NotImplementedError
 

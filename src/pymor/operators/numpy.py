@@ -28,6 +28,7 @@ from pymor.core.base import abstractmethod
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
+from pymor.models.transfer_function import TransferFunction
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -538,16 +539,22 @@ class NumpyLoewnerOperator(NumpyGenericOperator):
 
     Parameters
     ----------
-    si
-        |Numpy Array| of length k containing the left frequencies.
-    sj
-        |Numpy Array| of length l containing the right frequencies.
-    Hsi
-        |Numpy Array| of shape (k, p, m) containing the left data.
-    Hsj
-        |Numpy Array| of shape (l, p, m) containing the right data.
+    s
+        |Numpy Array| of shape (n,) containing the frequencies.
+    Hs
+        |Numpy Array| of shape (n, p, m) or |TransferFunction| resembling the transfer function
+        samples.
+    dHs
+        |NumpyArray| of shape (n, p, m) containing the transfer function derivatives.
     shifted
-        If `True` the shifted Loewner matrix is constructed.
+        If `True` the shifted Loewner matrix is constructed. Defaults to `False`.
+    partitioning
+        `str` or `tuple` of length 2. 'even-odd', 'half-half', 'same' define the splitting rule.
+        A user-defined partitioning can be defined by passing a tuple of the left and right indices.
+        Defaults to `even-odd`.
+    ordering
+        The ordering with respect to which the splitting rule is executed.
+        Can be either 'magnitude', 'random' or 'regular'. Defaults to 'regular'.
     source_id
         The id of the operator's `source` |VectorSpace|.
     range_id
@@ -556,51 +563,46 @@ class NumpyLoewnerOperator(NumpyGenericOperator):
         Name of the operator.
     """
 
-    def __init__(self, si, sj, Hsi, Hsj, shifted=False, source_id=None, range_id=None, name=None):
-        assert all(isinstance(arg, np.ndarray) for arg in (si, sj, Hsi, Hsj))
+    def __init__(self, s, Hs, dHs=None, shifted=False, partitioning='even-odd', ordering='regular',
+                 source_id=None, range_id=None, name=None):
+        assert isinstance(s, np.ndarray)
+        if hasattr(Hs, 'transfer_function'):
+            Hs = Hs.transfer_function
+        assert isinstance(Hs, TransferFunction) or isinstance(Hs, np.ndarray) and Hs.shape[0] == s.shape[0]
+        assert dHs is None or isinstance(dHs, np.ndarray)
         assert isinstance(shifted, bool)
+        assert partitioning in ('even-odd', 'half-half', 'same') or len(partitioning) == 2
+        assert ordering in ('magnitude', 'random', 'regular')
 
-        assert si.ndim == 1 and sj.ndim == 1
-        if Hsi.ndim == 1:
-            Hsi = Hsi.reshape(-1, 1, 1)
-        else:
-            assert Hsi.ndim == 3
-        if Hsj.ndim == 1:
-            Hsj = Hsj.reshape(-1, 1, 1)
-        else:
-            assert Hsj.ndim == 3
+        if not isinstance(partitioning, str) and np.any(np.isin(*partitioning)) or partitioning == 'same':
+            if isinstance(Hs, TransferFunction):
+                assert Hs.dtf is not None
+                dHs = np.stack([Hs.eval_dtf(si) for si in s])
+            else:
+                assert isinstance(dHs, np.ndarray) and Hs.shape == dHs.shape
 
-        assert si.shape[0] == Hsi.shape[0]
-        assert sj.shape[0] == Hsj.shape[0]
-        assert Hsi.shape[1:] == Hsj.shape[1:]
+        if isinstance(Hs, TransferFunction):
+            Hs = np.stack([Hs.eval_tf(si) for si in s])
+
+        self.i, self.j = self._partition(s, Hs, partitioning, ordering) \
+            if isinstance(partitioning, str) else partitioning
 
         self.__auto_init(locals())
-        self.range = NumpyVectorSpace(si.shape[0], range_id)
-        self.source = NumpyVectorSpace(sj.shape[0], source_id)
+        self.range = NumpyVectorSpace(self.i.shape[0], range_id)
+        self.source = NumpyVectorSpace(self.j.shape[0], source_id)
         self.linear = True
 
-    @classmethod
-    def from_partitioning(cls, s, Hs, split="even-odd", shifted=False, source_id=None, range_id=None, name=None):
-        assert isinstance(shifted, bool)
-        assert isinstance(s, np.ndarray) and isinstance(Hs, np.ndarray)
-        assert split in ("even-odd", "half-half", "random")
-
-        assert s.ndim == 1
-        if Hs.ndim == 1:
-            Hs = Hs.reshape(-1, 1, 1)
-        else:
-            assert Hs.ndim == 3
-        assert Hs.shape[0] == s.shape[0]
-
-        if split == "random":
+    def _partition(self, s, Hs, partitioning='even-odd', ordering='regular'):
+        if ordering == 'magnitude':
+            idx = np.argsort(np.linalg.norm(Hs), axis=(1, 2))
+        elif ordering == 'random':
             idx = np.random.permutation(s.shape[0])
-            split = "even-odd"
-        else:
+        elif ordering == 'regular':
             idx = np.arange(s.shape[0])
 
-        if split == "even-odd":
-            i, j = idx[::2], idx[1::2]
-        elif split == "half-half":
-            i, j = np.array_split(idx, 2)
-
-        return cls(s[i], s[j], Hs[i], Hs[j], shifted=shifted, source_id=source_id, range_id=range_id, name=name)
+        if partitioning == 'even-odd':
+            return idx[::2], idx[1::2]
+        elif partitioning == 'half-half':
+            return np.array_split(idx, 2)
+        elif partitioning == 'same':
+            return idx, idx

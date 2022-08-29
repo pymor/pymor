@@ -5,7 +5,6 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject
 from pymor.core.cache import cached
 from pymor.operators.block import BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator
@@ -455,6 +454,7 @@ class FactorizedTransferFunction(TransferFunction):
     def __init__(self, dim_input, dim_output, K, B, C, D, dK=None, dB=None, dC=None, dD=None,
                  parameters={}, sampling_time=0, name=None):
         def tf(s, mu=None):
+            from pymor.algorithms.to_matrix import to_matrix
             if dim_input <= dim_output:
                 B_vec = B(s).as_range_array(mu=mu)
                 Kinv_B = K(s).apply_inverse(B_vec, mu=mu)
@@ -470,6 +470,7 @@ class FactorizedTransferFunction(TransferFunction):
             dtf = None
         else:
             def dtf(s, mu=None):
+                from pymor.algorithms.to_matrix import to_matrix
                 if dim_input <= dim_output:
                     B_vec = B(s).as_range_array(mu=mu)
                     Ki_B = K(s).apply_inverse(B_vec, mu=mu)
