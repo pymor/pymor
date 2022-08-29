@@ -9,9 +9,6 @@
  1. [ ] Push tag.
  1. [ ] Wait for CI build to finish.
  1. [ ] Bump/create demo docker.
- 1. [ ] Update [`docs/index.html`](https://github.com/pymor/docs/edit/main/index.html) to point to new release.
- 1. [ ] Update [`docs/latest`](https://github.com/pymor/docs/edit/main/latest) to point to new release.
- 1. [ ] Update [`docs/badge.json`](https://github.com/pymor/docs/edit/main/badge.json) to point to new release.
  1. [ ] Update homepage.
  1. [ ] Make a GitHub release. Zenodo is hooked into that.
  1. [ ] Update MOR Wiki:
