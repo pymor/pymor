@@ -56,11 +56,11 @@ class ToMatrixRules(RuleTable):
         format = self.format
         if format in (None, 'dense'):
             if op.shifted:
-                op_matrix = (np.expand_dims(op.x, axis=(1, 2)) * op.Hx)[:, np.newaxis] \
-                    - (np.expand_dims(op.y, axis=(1, 2)) * op.Hy)[np.newaxis]
+                op_matrix = (np.expand_dims(op.si, axis=(1, 2)) * op.Hsi)[:, np.newaxis] \
+                    - (np.expand_dims(op.sj, axis=(1, 2)) * op.Hsj)[np.newaxis]
             else:
-                op_matrix = op.Hx[:, np.newaxis] - op.Hy[np.newaxis]
-            op_matrix /= np.expand_dims(np.subtract.outer(op.x, op.y), axis=(2, 3))
+                op_matrix = op.Hsi[:, np.newaxis] - op.Hsj[np.newaxis]
+            op_matrix /= np.expand_dims(np.subtract.outer(op.si, op.sj), axis=(2, 3))
             return np.concatenate(np.concatenate(op_matrix, axis=1), axis=1)
         else:
             raise NotImplementedError

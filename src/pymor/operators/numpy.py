@@ -538,14 +538,16 @@ class NumpyLoewnerOperator(NumpyGenericOperator):
 
     Parameters
     ----------
-    x
+    si
         |Numpy Array| of length k containing the left frequencies.
-    y
+    sj
         |Numpy Array| of length l containing the right frequencies.
-    Hx
+    Hsi
         |Numpy Array| of shape (k, p, m) containing the left data.
-    Hy
+    Hsj
         |Numpy Array| of shape (l, p, m) containing the right data.
+    shifted
+        If `True` the shifted Loewner matrix is constructed.
     source_id
         The id of the operator's `source` |VectorSpace|.
     range_id
@@ -554,51 +556,51 @@ class NumpyLoewnerOperator(NumpyGenericOperator):
         Name of the operator.
     """
 
-    def __init__(self, x, y, Hx, Hy, shifted=False, source_id=None, range_id=None, name=None):
-        assert all(isinstance(arg, np.ndarray) for arg in (x, y, Hx, Hy))
+    def __init__(self, si, sj, Hsi, Hsj, shifted=False, source_id=None, range_id=None, name=None):
+        assert all(isinstance(arg, np.ndarray) for arg in (si, sj, Hsi, Hsj))
         assert isinstance(shifted, bool)
 
-        assert x.ndim == 1 and y.ndim == 1
-        if Hx.ndim == 1:
-            Hx = Hx.reshape(-1, 1, 1)
+        assert si.ndim == 1 and sj.ndim == 1
+        if Hsi.ndim == 1:
+            Hsi = Hsi.reshape(-1, 1, 1)
         else:
-            assert Hx.ndim == 3
-        if Hy.ndim == 1:
-            Hy = Hy.reshape(-1, 1, 1)
+            assert Hsi.ndim == 3
+        if Hsj.ndim == 1:
+            Hsj = Hsj.reshape(-1, 1, 1)
         else:
-            assert Hy.ndim == 3
+            assert Hsj.ndim == 3
 
-        assert x.shape[0] == Hx.shape[0]
-        assert y.shape[0] == Hy.shape[0]
-        assert Hx.shape[1:] == Hy.shape[1:]
+        assert si.shape[0] == Hsi.shape[0]
+        assert sj.shape[0] == Hsj.shape[0]
+        assert Hsi.shape[1:] == Hsj.shape[1:]
 
         self.__auto_init(locals())
-        self.range = NumpyVectorSpace(x.shape[0], range_id)
-        self.source = NumpyVectorSpace(y.shape[0], source_id)
+        self.range = NumpyVectorSpace(si.shape[0], range_id)
+        self.source = NumpyVectorSpace(sj.shape[0], source_id)
         self.linear = True
 
     @classmethod
-    def from_partitioning(cls, w, H, split="even-odd", shifted=False, source_id=None, range_id=None, name=None):
+    def from_partitioning(cls, s, Hs, split="even-odd", shifted=False, source_id=None, range_id=None, name=None):
         assert isinstance(shifted, bool)
-        assert isinstance(w, np.ndarray) and isinstance(H, np.ndarray)
+        assert isinstance(s, np.ndarray) and isinstance(Hs, np.ndarray)
         assert split in ("even-odd", "half-half", "random")
 
-        assert w.ndim == 1
-        if H.ndim == 1:
-            H = H.reshape(-1, 1, 1)
+        assert s.ndim == 1
+        if Hs.ndim == 1:
+            Hs = Hs.reshape(-1, 1, 1)
         else:
-            assert H.ndim == 3
-        assert H.shape[0] == w.shape[0]
+            assert Hs.ndim == 3
+        assert Hs.shape[0] == s.shape[0]
 
         if split == "random":
-            idx = np.random.permutation(w.shape[0])
+            idx = np.random.permutation(s.shape[0])
             split = "even-odd"
         else:
-            idx = np.arange(w.shape[0])
+            idx = np.arange(s.shape[0])
 
         if split == "even-odd":
             i, j = idx[::2], idx[1::2]
         elif split == "half-half":
             i, j = np.array_split(idx, 2)
 
-        return cls(w[i], w[j], H[i], H[j], shifted=shifted, source_id=source_id, range_id=range_id, name=name)
+        return cls(s[i], s[j], Hs[i], Hs[j], shifted=shifted, source_id=source_id, range_id=range_id, name=name)
