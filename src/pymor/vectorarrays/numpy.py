@@ -8,7 +8,6 @@ import numpy as np
 from scipy.sparse import issparse
 
 from pymor.core.base import classinstancemethod
-from pymor.tools.random import get_random_state
 from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
 
 
@@ -237,13 +236,11 @@ class NumpyVectorSpace(VectorSpace):
         assert reserve >= 0
         return NumpyVectorArray(self, NumpyVectorArrayImpl(np.full((max(count, reserve), self.dim), value), count))
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(self, count=1, distribution='uniform', seed=None, reserve=0, **kwargs):
         assert count >= 0
         assert reserve >= 0
-        assert random_state is None or seed is None
-        random_state = get_random_state(random_state, seed)
         va = self.zeros(count, reserve)
-        va.impl._array[:count] = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
+        va.impl._array[:count] = _create_random_values((count, self.dim), distribution, **kwargs)
         return va
 
     @classinstancemethod

@@ -9,10 +9,11 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
 from pymor.operators.interface import Operator
+from pymor.tools.random import set_rng
 
 
 def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
-         imag_tol=1e-12, complex_pair_tol=1e-12, complex_evp=False, left_evp=False, seed=0):
+         imag_tol=1e-12, complex_pair_tol=1e-12, complex_evp=False, left_evp=False):
     """Approximate a few eigenvalues of a linear |Operator|.
 
     Computes `k` eigenvalues `w` with corresponding eigenvectors `v` which solve
@@ -67,9 +68,6 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
         are real setting this argument to `False` will increase stability and performance.
     left_evp
         If set to `True` compute left eigenvectors else compute right eigenvectors.
-    seed
-        Random seed which is used for computing the initial vector for the Arnoldi
-        iteration.
 
     Returns
     -------
@@ -93,7 +91,8 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
         assert E.source == A.source
 
     if b is None:
-        b = A.source.random(seed=seed)
+        with set_rng(0):
+            b = A.source.random()
     else:
         assert b in A.source
 

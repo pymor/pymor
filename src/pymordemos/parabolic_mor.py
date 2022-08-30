@@ -66,7 +66,7 @@ def main(
         rom, fom=fom, reductor=reductor, error_estimator=True,
         error_norms=[lambda U: DT * np.sqrt(np.sum(fom.h1_0_semi_norm(U)[1:]**2))],
         error_norm_names=['l^2-h^1'],
-        condition=False, test_mus=parameter_space.sample_randomly(test, seed=999)
+        condition=False, test_mus=parameter_space.sample_randomly(test)
     )
 
     # show results
