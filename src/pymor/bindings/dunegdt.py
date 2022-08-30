@@ -125,8 +125,8 @@ class DuneXTVectorSpace(ComplexifiedListVectorSpace):
     def real_full_vector(self, value):
         return DuneXTVector(self.dune_vector_type(self.dim, value))
 
-    def real_random_vector(self, distribution, random_state, **kwargs):
-        values = _create_random_values(self.dim, distribution, random_state, **kwargs)
+    def real_random_vector(self, distribution, **kwargs):
+        values = _create_random_values(self.dim, distribution, **kwargs)
         return self.real_vector_from_numpy(values)
 
     def real_vector_from_numpy(self, data, ensure_copy=False):

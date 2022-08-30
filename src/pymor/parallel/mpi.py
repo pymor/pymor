@@ -8,6 +8,7 @@ import os
 
 from pymor.parallel.basic import WorkerPoolBase
 from pymor.tools import mpi
+from pymor.tools.random import get_seed_seq
 
 
 class MPIPool(WorkerPoolBase):
@@ -18,6 +19,7 @@ class MPIPool(WorkerPoolBase):
         self.logger.info(f'Connected to {mpi.size} ranks')
         self._payload = mpi.call(mpi.function_call_manage, _setup_worker)
         self._apply(os.chdir, os.getcwd())
+        self._map(_setup_rng, [[s] for s in get_seed_seq().spawn(mpi.size)])
 
     def __del__(self):
         mpi.call(mpi.remove_object, self._payload)
@@ -90,14 +92,14 @@ def _worker_map_function(payload, function, **kwargs):
 
 
 def _setup_worker():
-    # ensure that each worker starts with a different RandomState
-    if not mpi.rank0:
-        from pymor.tools import random
-        import numpy as np
-        state = random.default_random_state()
-        new_state = np.random.RandomState(state.randint(0, 2**16) + mpi.rank)
-        random._default_random_state = new_state
     return [None]
+
+
+def _setup_rng(seed_seq):
+    # ensure that each worker starts with a different yet deterministically
+    # initialized rng
+    from pymor.tools.random import init_rng
+    init_rng(seed_seq)
 
 
 def _push_object(obj):

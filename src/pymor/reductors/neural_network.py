@@ -25,6 +25,7 @@ from pymor.models.neural_network import (FullyConnectedNN, NeuralNetworkModel,
                                          NeuralNetworkStatefreeOutputModel,
                                          NeuralNetworkInstationaryModel,
                                          NeuralNetworkInstationaryStatefreeOutputModel)
+from pymor.tools.random import get_rng
 
 
 class NeuralNetworkReductor(BasicObject):
@@ -196,7 +197,7 @@ class NeuralNetworkReductor(BasicObject):
                 else:
                     number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
                     # randomly shuffle training data before splitting into two sets
-                    np.random.shuffle(self.training_data)
+                    get_rng().shuffle(self.training_data)
                     # split training data into validation and training set
                     self.validation_data = self.training_data[0:number_validation_snapshots]
                     self.training_data = self.training_data[number_validation_snapshots+1:]
