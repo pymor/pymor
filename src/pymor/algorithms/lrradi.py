@@ -12,16 +12,15 @@ from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.tools.random import get_random_state
+from pymor.tools.random import set_rng
 
 
 @defaults('lrradi_tol', 'lrradi_maxiter', 'lrradi_shifts', 'hamiltonian_shifts_init_maxiter',
-          'hamiltonian_shifts_init_seed', 'hamiltonian_shifts_subspace_columns')
+          'hamiltonian_shifts_subspace_columns')
 def ricc_lrcf_solver_options(lrradi_tol=1e-10,
                              lrradi_maxiter=500,
                              lrradi_shifts='hamiltonian_shifts',
                              hamiltonian_shifts_init_maxiter=20,
-                             hamiltonian_shifts_init_seed=None,
                              hamiltonian_shifts_subspace_columns=6):
     """Returns available Riccati equation solvers with default solver options.
 
@@ -34,8 +33,6 @@ def ricc_lrcf_solver_options(lrradi_tol=1e-10,
     lrradi_shifts
         See :func:`solve_ricc_lrcf`.
     hamiltonian_shifts_init_maxiter
-        See :func:`hamiltonian_shifts_init`.
-    hamiltonian_shifts_init_seed
         See :func:`hamiltonian_shifts_init`.
     hamiltonian_shifts_subspace_columns
         See :func:`hamiltonian_shifts`.
@@ -51,7 +48,6 @@ def ricc_lrcf_solver_options(lrradi_tol=1e-10,
                        'shift_options':
                        {'hamiltonian_shifts': {'type': 'hamiltonian_shifts',
                                                'init_maxiter': hamiltonian_shifts_init_maxiter,
-                                               'init_seed': hamiltonian_shifts_init_seed,
                                                'subspace_columns': hamiltonian_shifts_subspace_columns}}}}
 
 
@@ -229,7 +225,6 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
     shifts
         A |NumPy array| containing a set of stable shift parameters.
     """
-    random_state = get_random_state(seed=shift_options['init_seed'])
     for _ in range(shift_options['init_maxiter']):
         Q = gram_schmidt(C, atol=0, rtol=0)
         Ap = A.apply2(Q, Q)
@@ -249,7 +244,8 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
         eigpairs = list(filter(lambda e: e[0].real < 0, eigpairs))
         if len(eigpairs) == 0:
             # use random subspace instead of span{C} (with same dimensions)
-            C = C.random(len(C), distribution='normal', random_state=random_state)
+            with set_rng(0):
+                C = C.random(len(C), distribution='normal')
             continue
         # find shift with most impact on convergence
         maxval = -1

@@ -5,7 +5,6 @@
 import numpy as np
 
 from pymor.core.base import BasicObject, abstractmethod, abstractclassmethod, classinstancemethod
-from pymor.tools.random import get_random_state
 from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
 
 
@@ -536,8 +535,8 @@ class ListVectorSpace(VectorSpace):
     def full_vector(self, value):
         return self.vector_from_numpy(np.full(self.dim, value))
 
-    def random_vector(self, distribution, random_state, **kwargs):
-        values = _create_random_values(self.dim, distribution, random_state, **kwargs)
+    def random_vector(self, distribution, **kwargs):
+        values = _create_random_values(self.dim, distribution, **kwargs)
         return self.vector_from_numpy(values)
 
     @abstractmethod
@@ -567,13 +566,11 @@ class ListVectorSpace(VectorSpace):
         assert count >= 0 and reserve >= 0
         return ListVectorArray(self, ListVectorArrayImpl([self.full_vector(value) for _ in range(count)], self))
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(self, count=1, distribution='uniform', reserve=0, **kwargs):
         assert count >= 0 and reserve >= 0
-        assert random_state is None or seed is None
-        random_state = get_random_state(random_state, seed)
         return ListVectorArray(
             self,
-            ListVectorArrayImpl([self.random_vector(distribution=distribution, random_state=random_state, **kwargs)
+            ListVectorArrayImpl([self.random_vector(distribution=distribution, **kwargs)
                                  for _ in range(count)], self)
         )
 
@@ -621,12 +618,12 @@ class ComplexifiedListVectorSpace(ListVectorSpace):
     def full_vector(self, value):
         return self.vector_type(self.real_full_vector(value), None)
 
-    def real_random_vector(self, distribution, random_state, **kwargs):
-        values = _create_random_values(self.dim, distribution, random_state, **kwargs)
+    def real_random_vector(self, distribution, **kwargs):
+        values = _create_random_values(self.dim, distribution, **kwargs)
         return self.real_vector_from_numpy(values)
 
-    def random_vector(self, distribution, random_state, **kwargs):
-        return self.vector_type(self.real_random_vector(distribution, random_state, **kwargs), None)
+    def random_vector(self, distribution, **kwargs):
+        return self.vector_type(self.real_random_vector(distribution, **kwargs), None)
 
     @abstractmethod
     def real_make_vector(self, obj):

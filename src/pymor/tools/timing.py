@@ -68,6 +68,7 @@ class Timer:
 
 
 def busywait(amount):
+    from pymor.tools.random import get_rng
     arr = np.arange(1000)
     for _ in range(amount):
-        np.random.shuffle(arr)
+        get_rng().shuffle(arr)
