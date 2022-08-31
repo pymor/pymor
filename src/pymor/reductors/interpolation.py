@@ -2,6 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from abc import abstractmethod
+
 import numpy as np
 
 from pymor.algorithms.krylov import rational_arnoldi
@@ -54,7 +56,8 @@ class GenericBHIReductor(BasicObject):
     """
 
     _PGReductor = ProjectionBasedReductor
-
+    
+    @abstractmethod
     def __init__(self, fom, mu=None):
         if not isinstance(mu, Mu):
             mu = fom.parameters.parse(mu)
@@ -380,3 +383,4 @@ class TFBHIReductor(BasicObject):
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
         raise TypeError(f'The reconstruct method is not available for {self.__class__.__name__}.')
+
