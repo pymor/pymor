@@ -10,6 +10,7 @@ from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
+from pymor.tools.random import new_rng
 
 
 @defaults('which', 'tol', 'imagtol', 'conjtol', 'dorqitol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
@@ -104,7 +105,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
     k = 0
     nrestart = 0
     nr_converged = 0
-    rng = np.random.default_rng(0)
+    rng = new_rng(0)
 
     X = A.source.empty()
     Q = A.source.empty()
