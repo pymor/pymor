@@ -5,7 +5,7 @@ from pymor.algorithms.symplectic import (psd_complex_svd, psd_cotengent_lift,
                                          psd_svd_like_decomp,
                                          symplectic_gram_schmidt)
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator
-from pymor.tools.random import set_rng
+from pymor.tools.random import new_rng
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -24,7 +24,7 @@ def test_symplecticity(key_method):
     half_space = NumpyVectorSpace(half_dim)
     phase_space = BlockVectorSpace([half_space] * 2)
     n_data = 100
-    with set_rng(42):
+    with new_rng(42):
         U = phase_space.random(n_data)
     modes = 10
     basis = METHODS_DICT[key_method](U, modes)
@@ -39,7 +39,7 @@ def test_orthonormality(key_orthosympl_method):
     half_space = NumpyVectorSpace(half_dim)
     phase_space = BlockVectorSpace([half_space] * 2)
     n_data = 100
-    with set_rng(42):
+    with new_rng(42):
         U = phase_space.random(n_data)
     modes = 10
     basis = METHODS_DICT[key_orthosympl_method](U, modes).to_array()
@@ -56,14 +56,14 @@ def test_symplectic_gram_schmidt(test_orthonormality, reiterate):
     J = CanonicalSymplecticFormOperator(phase_space)
     half_red_dim = 10
 
-    with set_rng(42):
+    with new_rng(42):
         E = phase_space.random(half_red_dim)
     if test_orthonormality:
         # special choice, such that result is orthosymplectic
         F = J.apply(E)
     else:
         # less structure in snapshots, no orthogonality
-        with set_rng(43):
+        with new_rng(43):
             F = phase_space.random(half_red_dim)
 
     S, Lambda = symplectic_gram_schmidt(E, F, return_Lambda=True, reiterate=reiterate)

@@ -12,7 +12,7 @@ from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
-from pymor.tools.random import set_rng
+from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
 
@@ -196,7 +196,7 @@ def projection_shifts_init(A, E, B, shift_options):
         shifts = shifts[shifts.real < 0]
         if shifts.size == 0:
             # use random subspace instead of span{B} (with same dimensions)
-            with set_rng(0):
+            with new_rng(0):
                 B = B.random(len(B), distribution='normal')
         else:
             return shifts
