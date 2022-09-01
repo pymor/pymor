@@ -19,7 +19,7 @@ class MPIPool(WorkerPoolBase):
         self.logger.info(f'Connected to {mpi.size} ranks')
         self._payload = mpi.call(mpi.function_call_manage, _setup_worker)
         self._apply(os.chdir, os.getcwd())
-        self._map(_setup_rng, [[s] for s in get_seed_seq().spawn(mpi.size)])
+        self._map(_setup_rng, [[[s] for s in get_seed_seq().spawn(mpi.size)]])
 
     def __del__(self):
         mpi.call(mpi.remove_object, self._payload)
