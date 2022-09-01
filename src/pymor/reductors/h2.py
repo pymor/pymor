@@ -21,6 +21,7 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
+from pymor.tools.random import new_rng
 
 
 class GenericIRKAReductor(BasicObject):
@@ -94,10 +95,10 @@ class GenericIRKAReductor(BasicObject):
         sigma = np.logspace(-1, 1, r)
         b = (np.ones((r, 1))
              if self.fom.dim_input == 1
-             else np.random.default_rng(0).normal(size=(r, self.fom.dim_input)))
+             else new_rng(0).normal(size=(r, self.fom.dim_input)))
         c = (np.ones((r, 1))
              if self.fom.dim_output == 1
-             else np.random.default_rng(0).normal(size=(r, self.fom.dim_output)))
+             else new_rng(0).normal(size=(r, self.fom.dim_output)))
         return sigma, b, c
 
     @staticmethod
