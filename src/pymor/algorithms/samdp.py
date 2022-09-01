@@ -119,7 +119,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
     poles = np.empty(0)
 
     if init_shifts is None:
-        st = rng().uniform() * 10.j
+        st = rng.uniform() * 10.j
         shift_nr = 0
         nr_shifts = 0
     else:
