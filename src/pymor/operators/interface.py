@@ -237,10 +237,10 @@ class Operator(ParametricObject):
                 try:
                     from pymor.algorithms.to_matrix import to_matrix
                     from pymor.operators.numpy import NumpyMatrixOperator
-                    mat = to_matrix(assembled_op)
+                    mat = to_matrix(assembled_op, mu=mu)
                     mat_op = NumpyMatrixOperator(mat)
                     v = mat_op.range.from_numpy(V.to_numpy())
-                    i = None if initial_guess is None else v.source.from_numpy(initial_guess.to_numpy())
+                    i = None if initial_guess is None else mat_op.source.from_numpy(initial_guess.to_numpy())
                     u = mat_op.apply_inverse(v, initial_guess=i, least_squares=least_squares)
                     return self.source.from_numpy(u.to_numpy())
                 except (NoMatchingRuleError, NotImplementedError):
