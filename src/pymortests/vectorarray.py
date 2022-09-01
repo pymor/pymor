@@ -14,7 +14,6 @@ from pymor.core.config import config
 from pymor.vectorarrays.interface import VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.tools.floatcmp import float_cmp, bounded
-from pymor.tools.random import set_rng
 from pymortests.base import might_exceed_deadline
 from pymortests.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
@@ -167,7 +166,7 @@ def _test_random_uniform(vector_array, realizations, low, high):
         return
     seed = 123
     try:
-        with set_rng(seed):
+        with new_rng(seed):
             v = vector_array.random(c, low=low, high=high)
     except ValueError as e:
         if high <= low:
@@ -184,7 +183,7 @@ def _test_random_uniform(vector_array, realizations, low, high):
         assert np.all(x >= low)
     except NotImplementedError:
         pass
-    with set_rng(seed):
+    with new_rng(seed):
         vv = vector_array.random(c, distribution='uniform', low=low, high=high)
     assert np.allclose((v - vv).sup_norm(), 0.)
 
@@ -202,7 +201,7 @@ def test_random_normal(vector_array, realizations, loc, scale):
         return
     seed = 123
     try:
-        with set_rng(seed):
+        with new_rng(seed):
             v = vector_array.random(c, 'normal', loc=loc, scale=scale)
     except ValueError as e:
         if scale <= 0:
@@ -226,7 +225,7 @@ def test_random_normal(vector_array, realizations, loc, scale):
         bounded(lower, upper, loc)
     except NotImplementedError:
         pass
-    with set_rng(seed):
+    with new_rng(seed):
         vv = vector_array.random(c, 'normal', loc=loc, scale=scale)
     data = vv.to_numpy()
     # due to scaling data might actually now include nan or inf

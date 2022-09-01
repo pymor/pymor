@@ -12,7 +12,7 @@ from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.tools.random import set_rng
+from pymor.tools.random import new_rng
 
 
 @defaults('lrradi_tol', 'lrradi_maxiter', 'lrradi_shifts', 'hamiltonian_shifts_init_maxiter',
@@ -244,7 +244,7 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
         eigpairs = list(filter(lambda e: e[0].real < 0, eigpairs))
         if len(eigpairs) == 0:
             # use random subspace instead of span{C} (with same dimensions)
-            with set_rng(0):
+            with new_rng(0):
                 C = C.random(len(C), distribution='normal')
             continue
         # find shift with most impact on convergence

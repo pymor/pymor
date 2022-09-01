@@ -10,18 +10,6 @@ from pymor.core.defaults import defaults
 import numpy as np
 
 
-@defaults('seed_seq')
-def init_rng(seed_seq=42):
-    if not isinstance(seed_seq, np.random.SeedSequence):
-        seed_seq = np.random.SeedSequence(seed_seq)
-    # Store a new rng together with seed_seq, as the latter cannot be recovered from the
-    # rng via a public interface (see https://github.com/numpy/numpy/issues/15322).
-    # The first field is a flag to indicate whether the current _rng_state has been consumed
-    # via get_rng. This is a safeguard to detect calls to get_rng in concurrent code
-    # paths.
-    _rng_state.set([False, np.random.default_rng(seed_seq), seed_seq])
-
-
 def get_rng():
     rng_state = _get_rng_state()
     rng_state[0] = True
@@ -29,27 +17,36 @@ def get_rng():
     return rng_state[1]
 
 
-class set_rng:
+@defaults('seed_seq')
+def new_rng(seed_seq=42):
+    if not isinstance(seed_seq, np.random.SeedSequence):
+        seed_seq = np.random.SeedSequence(seed_seq)
+    return RNG(seed_seq)
+
+
+class RNG(np.random.Generator):
 
     def __init__(self, seed_seq):
         self.old_state = _rng_state.get(None)
-        self.seed_seq = seed_seq
-        self.set()
+        super().__init__(np.random.default_rng(seed_seq).bit_generator)
+        self._seed_seq = seed_seq
 
-    def set(self):
-        self._is_set = True
-        init_rng(self.seed_seq)
+    def install(self):
+        # Store a new rng together with seed_seq, as the latter cannot be recovered from the
+        # rng via a public interface (see https://github.com/numpy/numpy/issues/15322).
+        # The first field is a flag to indicate whether the current _rng_state has been consumed
+        # via get_rng. This is a safeguard to detect calls to get_rng in concurrent code
+        # paths.
+        _rng_state.set([False, self, self._seed_seq])
 
-    def reset(self):
-        self._is_set = False
+    def uninstall(self):
         _rng_state.set(self.old_state)
 
     def __enter__(self):
-        if not self._is_set:
-            self.set()
+        self.install()
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        self.reset()
+        self.uninstall()
 
 
 def get_seed_seq():
@@ -62,7 +59,7 @@ def spawn_rng(f):
     if inspect.iscoroutine(f):
 
         async def spawn_rng_wrapper():
-            with set_rng(seed_seq):
+            with new_rng(seed_seq):
                 return await f
 
         return spawn_rng_wrapper()
@@ -80,7 +77,7 @@ class _SpawnRngWrapper:
         self.f, self.seed_seq = f, seed_seq
 
     def __call__(self, *args, **kwargs):
-        with set_rng(self.seed_seq):
+        with new_rng(self.seed_seq):
             return self.f(*args, **kwargs)
 
 
@@ -92,7 +89,7 @@ def _get_rng_state():
         warnings.warn(
             'get_rng called but _rng_state not initialized. (Call spawn_rng when creating new thread.) '
             'Initializing a new RNG from the default seed. This may lead to correlated data.')
-        init_rng()
+        new_rng().install()
         rng_state = _rng_state.get()
     if rng_state[0]:
         import warnings
@@ -102,4 +99,4 @@ def _get_rng_state():
 
 
 _rng_state = ContextVar('_rng_state')
-init_rng()
+new_rng().install()

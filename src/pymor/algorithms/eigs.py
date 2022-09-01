@@ -9,7 +9,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
 from pymor.operators.interface import Operator
-from pymor.tools.random import set_rng
+from pymor.tools.random import new_rng
 
 
 def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
@@ -91,7 +91,7 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
         assert E.source == A.source
 
     if b is None:
-        with set_rng(0):
+        with new_rng(0):
             b = A.source.random()
     else:
         assert b in A.source
