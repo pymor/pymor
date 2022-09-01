@@ -98,8 +98,8 @@ def _setup_worker():
 def _setup_rng(seed_seq):
     # ensure that each worker starts with a different yet deterministically
     # initialized rng
-    from pymor.tools.random import init_rng
-    init_rng(seed_seq)
+    from pymor.tools.random import new_rng
+    new_rng(seed_seq).install()
 
 
 def _push_object(obj):
