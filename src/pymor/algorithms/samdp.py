@@ -162,7 +162,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
         SH, UR, URt, res = _select_max_eig(H, G, X, V, B_defl, C_defl, which)
 
         if np.all(res < np.finfo(float).eps):
-            st = rng().uniform() * 10.j
+            st = rng.uniform() * 10.j
             found = False
         else:
             found = True
