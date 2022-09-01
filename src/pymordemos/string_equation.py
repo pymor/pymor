@@ -10,7 +10,8 @@ from typer import Argument, run
 
 from pymor.core.logger import set_log_levels
 from pymor.models.iosys import SecondOrderModel
-from pymor.reductors.bt import BTReductor
+from pymor.algorithms.timestepping import ImplicitEulerTimeStepper, AutoStoppingImplicitEulerTimeStepper
+from pymor.reductors.bt import BTReductor, EmpiricalBTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.mt import MTReductor
 from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, SOBTvpReductor,
@@ -79,6 +80,7 @@ def main(
     run_mor_method(so_sys, w, SORIRKAReductor(so_sys), 'SOR-IRKA', r,
                    irka_options={'maxit': 10})
     run_mor_method(so_sys, w, BTReductor(so_sys.to_lti()), 'BT', r)
+    run_mor_method(so_sys, w, EmpiricalBTReductor(so_sys.to_lti(), 10, AutoStoppingImplicitEulerTimeStepper(0.001, 1e-3)), 'EBT', r)
     run_mor_method(so_sys, w, IRKAReductor(so_sys.to_lti()), 'IRKA', r)
     run_mor_method(so_sys, w, MTReductor(so_sys.to_lti()), 'MT', r)
 

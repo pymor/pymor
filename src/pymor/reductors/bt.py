@@ -8,12 +8,15 @@ import scipy.linalg as spla
 from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.lyapunov import solve_cont_lyap_lrcf
+from pymor.algorithms.pod import pod
+from pymor.algorithms.hapod import inc_vectorarray_hapod
 from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import IdentityOperator, LowRankOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
+from pymor.vectorarrays.constructions import cat_arrays
 
 
 class GenericBTReductor(BasicObject):
@@ -141,6 +144,42 @@ class BTReductor(GenericBTReductor):
     def error_bounds(self):
         sv = self._sv_U_V()[0]
         return 2 * sv[:0:-1].cumsum()[::-1]
+
+
+class EmpiricalBTReductor(GenericBTReductor):
+
+    def __init__(self, fom, T, time_stepper, mu=None):
+        super().__init__(fom, mu=mu)
+        self.__auto_init(locals())
+        self._garmians = None
+
+    def _gramians(self):
+        if self._garmians is None:
+            fom = self.fom
+            # Xs = []
+            # for fac in [10, 1000]:
+            #     Xs.extend(fom.imp_resp(self.T * fac, self.time_stepper, mu=self.mu))
+            Xs = fom.imp_resp(self.T, self.time_stepper, mu=self.mu)
+            Xs = cat_arrays(Xs)
+            Xr, Xsv, _ = inc_vectorarray_hapod(100, Xs, 1e-5, 0.5)
+            Xr.scal(Xsv)
+            del Xs
+
+            dual_fom = fom.with_(A=fom.A.H, B=fom.C.H, C=fom.B.H, D=fom.D.H, E=fom.E.H)
+            # Zs = []
+            # for fac in [10, 1000]:
+            #     Zs.extend(dual_fom.imp_resp(self.T * fac, self.time_stepper, mu=self.mu))
+            Zs = dual_fom.imp_resp(self.T, self.time_stepper, mu=self.mu)
+            Zs = cat_arrays(Zs)
+            Zr, Zsv, _ = inc_vectorarray_hapod(100, Zs, 1e-5, 0.5)
+            Zr.scal(Zsv)
+            del Zs
+            self._garmians = (Xr, Zr)
+
+        return self._garmians
+
+    def error_bounds(self):
+        raise NotImplementedError
 
 
 class FDBTReductor(GenericBTReductor):

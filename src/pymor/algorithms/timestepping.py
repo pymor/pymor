@@ -332,3 +332,71 @@ def _depends_on_time(obj, mu):
     if not mu:
         return False
     return 't' in obj.parameters or any(mu.is_time_dependent(k) for k in obj.parameters)
+
+
+class AutoStoppingImplicitEulerTimeStepper(TimeStepper):
+    def __init__(self, dt, rtol, solver_options='operator'):
+        self.__auto_init(locals())
+
+    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, num_values=None, mu=None):
+        return auto_stopping_implicit_euler(operator, rhs, mass, initial_data, initial_time, end_time, self.dt,
+                                            self.rtol, mu, solver_options=self.solver_options)
+
+
+def auto_stopping_implicit_euler(A, F, M, U0, t0, t1, dt, rtol, mu=None, solver_options='operator'):
+    assert isinstance(A, Operator)
+    assert isinstance(F, (type(None), Operator, VectorArray))
+    assert isinstance(M, (type(None), Operator))
+    assert A.source == A.range
+
+    if F is None:
+        F_time_dep = False
+    elif isinstance(F, Operator):
+        assert F.source.dim == 1
+        assert F.range == A.range
+        F_time_dep = _depends_on_time(F, mu)
+        if not F_time_dep:
+            dt_F = F.as_vector(mu) * dt
+    else:
+        assert len(F) == 1
+        assert F in A.range
+        F_time_dep = False
+        dt_F = F * dt
+
+    if M is None:
+        from pymor.operators.constructions import IdentityOperator
+        M = IdentityOperator(A.source)
+
+    assert A.source == M.source == M.range
+    assert not M.parametric
+    assert U0 in A.source
+    assert len(U0) == 1
+
+    R = A.source.empty()
+    R.append(U0)
+
+    options = (A.solver_options if solver_options == 'operator' else
+               M.solver_options if solver_options == 'mass' else
+               solver_options)
+    M_dt_A = (M + A * dt).with_(solver_options=options)
+    if not _depends_on_time(M_dt_A, mu):
+        M_dt_A = M_dt_A.assemble(mu)
+
+    t = t0
+    initial_norm = U0.norm().item()
+    U = U0.copy()
+
+    while True:
+        t += dt
+        mu = mu.with_(t=t)
+        rhs = M.apply(U)
+        if F_time_dep:
+            dt_F = F.as_vector(mu) * dt
+        if F:
+            rhs += dt_F
+        U = M_dt_A.apply_inverse(rhs, mu=mu, initial_guess=U)
+        R.append(U)
+        if U.norm().item() / initial_norm < rtol:
+            break
+
+    return R

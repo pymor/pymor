@@ -587,6 +587,28 @@ class LTIModel(Model):
 
         return poles
 
+    def imp_resp(self, T, time_stepper, num_values=None, mu=None, return_output=False):
+        operator = -self.A
+        rhs = self.solution_space.zeros(1)
+        mass = self.E
+
+        Xs = []
+        for i in range(self.dim_input):
+            e_i = np.zeros(self.dim_input)
+            e_i[i] = 1
+            e_i = self.B.source.from_numpy(e_i)
+            initial_data = self.B.apply(e_i, mu=mu)
+            from pymor.models.basic import InstationaryModel
+            instationary_model = InstationaryModel(T, initial_data, operator, rhs, mass=mass,
+                                                   time_stepper=time_stepper, num_values=num_values)
+            X = instationary_model.solve(mu=mu)
+            Xs.append(X)
+
+        if return_output:
+            ys = [self.C.apply(X, mu=mu) for X in Xs]
+            return Xs, ys
+        return Xs
+
     @cached
     def _gramian(self, typ, mu=None):
         if typ == 'c_lrcf' and 'c_dense' in self.presets:
