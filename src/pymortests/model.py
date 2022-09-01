@@ -14,6 +14,7 @@ from pymor.core.pickle import dumps, loads
 from pymor.models.symplectic import QuadraticHamiltonianModel
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import IdentityOperator
+from pymor.tools.random import set_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
@@ -32,7 +33,9 @@ def test_pickle_by_solving(model):
     m2 = loads(dumps(m))
     m.disable_caching()
     m2.disable_caching()
-    for mu in m.parameters.space(1, 2).sample_randomly(3, seed=234):
+    with set_rng(234):
+        mus = m.parameters.space(1, 2).sample_randomly(3)
+    for mu in mus:
         assert np.all(almost_equal(m.solve(mu), m2.solve(mu)))
 
 

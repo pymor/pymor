@@ -11,6 +11,7 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 from pymor.operators.list import NumpyListVectorArrayMatrixOperator
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.tools.random import set_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -137,7 +138,9 @@ def thermalblock_factory(xblocks, yblocks, diameter, seed):
         U.append(iop.as_vector(f.parameters.parse(exp)))
     for exp in np.random.random(6):
         V.append(iop.as_vector(f.parameters.parse(exp)))
-    return m.operator, p.parameter_space.sample_randomly(1, seed=seed)[0], U, V, m.h1_product, m.l2_product
+    with set_rng(seed):
+        mu = p.parameter_space.sample_randomly(1)[0]
+    return m.operator, mu, U, V, m.h1_product, m.l2_product
 
 
 def thermalblock_assemble_factory(xblocks, yblocks, diameter, seed):
