@@ -230,7 +230,7 @@ def _test_demo(demo):
 
     # reset default RandomState
     import pymor.tools.random
-    pymor.tools.random._default_random_state = None
+    pymor.tools.random.new_rng().install()
 
     result = None
     try:
