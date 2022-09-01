@@ -7,6 +7,7 @@ import numpy as np
 from pymor.algorithms.pod import pod
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.reductors.basic import StationaryRBReductor
+from pymor.tools.random import set_rng
 from pymortests.base import runmodule, assert_all_almost_equal
 
 
@@ -18,7 +19,9 @@ def test_ei_restricted_to_full(stationary_models):
     ei_op = EmpiricalInterpolatedOperator(op, collateral_basis=cb, interpolation_dofs=dofs, triangular=True)
     ei_model = model.with_(operator=ei_op)
 
-    for mu in model.parameters.space(1, 2).sample_randomly(3, seed=234):
+    with set_rng(234):
+        mus = model.parameters.space(1, 2).sample_randomly(3, seed=234)
+    for mu in mus:
         a = model.solve(mu)
         b = ei_model.solve(mu)
         assert_all_almost_equal(a, b, rtol=1e-4)
@@ -41,7 +44,9 @@ def test_ei_rom(stationary_models):
 
     U = fom.solution_space.empty()
     base_mus = []
-    for mu in fom.parameters.space(1, 2).sample_randomly(3, seed=234):
+    with set_rng(234):
+        mus = fom.parameters.space(1, 2).sample_randomly(3, seed=234)
+    for mu in mus:
         a = fom.solve(mu)
         U.append(a)
         base_mus.append(mu)
