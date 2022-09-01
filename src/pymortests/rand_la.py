@@ -9,6 +9,7 @@ from numpy.random import uniform
 from pymor.algorithms.rand_la import rrf, adaptive_rrf, random_ghep, random_generalized_svd
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.operators.constructions import VectorArrayOperator
+from pymor.tools.random import set_rng
 
 
 def test_adaptive_rrf():
@@ -22,10 +23,14 @@ def test_adaptive_rrf():
     B = B.dot(B.T)
     source_product = NumpyMatrixOperator(B)
 
-    C = range_product.range.random(10, seed=10)
+    with set_rng(10):
+        C = range_product.range.random(10)
     op = VectorArrayOperator(C)
 
-    D = range_product.range.random(10, seed=11)+1j*range_product.range.random(10, seed=12)
+    with set_rng(11):
+        D = range_product.range.random(10)
+    with set_rng(12):
+        D += 1j*range_product.range.random(10)
     op_complex = VectorArrayOperator(D)
 
     Q1 = adaptive_rrf(op, source_product, range_product)
@@ -47,10 +52,14 @@ def test_rrf():
     B = B @ B.T
     source_product = NumpyMatrixOperator(B)
 
-    C = range_product.range.random(10, seed=10)
+    with set_rng(10):
+        C = range_product.range.random(10)
     op = VectorArrayOperator(C)
 
-    D = range_product.range.random(10, seed=11)+1j*range_product.range.random(10, seed=12)
+    with set_rng(11):
+        D = range_product.range.random(10)
+    with set_rng(12):
+        D += 1j*range_product.range.random(10)
     op_complex = VectorArrayOperator(D)
 
     Q1 = rrf(op, source_product, range_product)
