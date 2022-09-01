@@ -20,7 +20,7 @@ def test_ei_restricted_to_full(stationary_models):
     ei_model = model.with_(operator=ei_op)
 
     with new_rng(234):
-        mus = model.parameters.space(1, 2).sample_randomly(3, seed=234)
+        mus = model.parameters.space(1, 2).sample_randomly(3)
     for mu in mus:
         a = model.solve(mu)
         b = ei_model.solve(mu)
@@ -45,7 +45,7 @@ def test_ei_rom(stationary_models):
     U = fom.solution_space.empty()
     base_mus = []
     with new_rng(234):
-        mus = fom.parameters.space(1, 2).sample_randomly(3, seed=234)
+        mus = fom.parameters.space(1, 2).sample_randomly(3)
     for mu in mus:
         a = fom.solve(mu)
         U.append(a)
