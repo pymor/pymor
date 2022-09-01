@@ -44,6 +44,7 @@ class RNG(np.random.Generator):
 
     def __enter__(self):
         self.install()
+        return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         self.uninstall()
