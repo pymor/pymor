@@ -13,9 +13,9 @@ from pymor.operators.interface import Operator
 
 
 @defaults('which', 'tol', 'imagtol', 'conjtol', 'dorqitol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
-          'rqi_maxiter', 'seed')
+          'rqi_maxiter')
 def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=1e-6, conjtol=1e-8,
-          dorqitol=1e-4, rqitol=1e-10, maxrestart=100, krestart=20, rqi_maxiter=10, seed=0):
+          dorqitol=1e-4, rqitol=1e-10, maxrestart=100, krestart=20, rqi_maxiter=10):
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
     This function uses the subspace accelerated dominant pole (SAMDP) algorithm as described in

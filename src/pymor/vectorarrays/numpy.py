@@ -236,7 +236,7 @@ class NumpyVectorSpace(VectorSpace):
         assert reserve >= 0
         return NumpyVectorArray(self, NumpyVectorArrayImpl(np.full((max(count, reserve), self.dim), value), count))
 
-    def random(self, count=1, distribution='uniform', seed=None, reserve=0, **kwargs):
+    def random(self, count=1, distribution='uniform', reserve=0, **kwargs):
         assert count >= 0
         assert reserve >= 0
         va = self.zeros(count, reserve)
