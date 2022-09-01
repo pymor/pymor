@@ -285,7 +285,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
                     if found:
                         st = SH[0, 0]
                     else:
-                        st = rng().uniform() * 10.j
+                        st = rng.uniform() * 10.j
 
                     if shift_nr < nr_shifts:
                         st = shifts[shift_nr]
