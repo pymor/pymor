@@ -157,6 +157,7 @@ _PACKAGES = {
     'VTKIO': lambda: _can_import(('meshio', 'pyevtk', 'lxml', 'xmljson')),
     'MESHIO': lambda: import_module('meshio').__version__,
     'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
+    'K3D': lambda: import_module('k3d').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NGSOLVE': lambda: import_module('ngsolve').__version__,
     'NUMPY': lambda: import_module('numpy').__version__,
