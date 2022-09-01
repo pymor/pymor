@@ -225,6 +225,7 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
     shifts
         A |NumPy array| containing a set of stable shift parameters.
     """
+    rng = new_rng(0)
     for _ in range(shift_options['init_maxiter']):
         Q = gram_schmidt(C, atol=0, rtol=0)
         Ap = A.apply2(Q, Q)
@@ -244,7 +245,7 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
         eigpairs = list(filter(lambda e: e[0].real < 0, eigpairs))
         if len(eigpairs) == 0:
             # use random subspace instead of span{C} (with same dimensions)
-            with new_rng(0):
+            with rng:
                 C = C.random(len(C), distribution='normal')
             continue
         # find shift with most impact on convergence
