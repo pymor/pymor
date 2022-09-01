@@ -49,6 +49,7 @@ install_suggests = {
     'sympy': 'symbolic mathematics',
     'pygments': 'highlighting code',
     'pythreejs': 'threejs bindings for python notebook  visualization',
+    'k3d>=2.14': 'K3D Jupyter: meshed based visualizations',
     'jupyter_client>=7.0.6': 'necessary to explicitly state here to fix 3js',
     _PYTEST: 'testing framework required to execute unit tests',
     _PYSIDE: 'solution visualization for builtin discretizations',
