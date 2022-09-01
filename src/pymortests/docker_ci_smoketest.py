@@ -13,6 +13,8 @@ from pymor.core.config import config, _PACKAGES
 @pytest.mark.skipif(condition=not os.environ.get('DOCKER_PYMOR', False),
                     reason='Guarantee only valid in the docker container')
 def test_config(pkg):
+    if 'DUNE' in pkg:
+        pytest.xfail('DUNE currently not installed due to broken dependencies')
     assert getattr(config, f'HAVE_{pkg}')
 
 
