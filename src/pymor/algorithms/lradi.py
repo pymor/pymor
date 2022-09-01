@@ -190,13 +190,14 @@ def projection_shifts_init(A, E, B, shift_options):
     shifts
         A |NumPy array| containing a set of stable shift parameters.
     """
+    rng = new_rng(0)
     for i in range(shift_options['init_maxiter']):
         Q = gram_schmidt(B, atol=0, rtol=0)
         shifts = spla.eigvals(A.apply2(Q, Q), E.apply2(Q, Q))
         shifts = shifts[shifts.real < 0]
         if shifts.size == 0:
             # use random subspace instead of span{B} (with same dimensions)
-            with new_rng(0):
+            with rng:
                 B = B.random(len(B), distribution='normal')
         else:
             return shifts
