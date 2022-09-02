@@ -164,6 +164,8 @@ common = '''
 
 .. |SymplecticBasis| replace:: :class:`~pymor.algorithms.symplectic.SymplecticBasis`
 .. |CanonicalSymplecticFormOperator| replace:: :class:`~pymor.operators.symplectic.CanonicalSymplecticFormOperator`
+
+.. |RNG| replace:: :class:`~random number generator <pymor.tools.random.RNG>`
 '''
 
 substitutions = interfaces + common
