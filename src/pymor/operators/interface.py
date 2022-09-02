@@ -234,7 +234,7 @@ class Operator(ParametricObject):
                 if not hasattr(self, '_mat_op'):
                     if solver_type is None:
                         self.logger.warning(f'No specialized linear solver available for {self}.')
-                        self.logger.warning('Trying to solve by converting to NumPy matrix.')
+                        self.logger.warning('Trying to solve by converting to NumPy/SciPy matrix.')
                     from pymor.algorithms.rules import NoMatchingRuleError
                     try:
                         from pymor.algorithms.to_matrix import to_matrix
