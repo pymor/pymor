@@ -9,7 +9,9 @@ ARG PYMOR_JUPYTER_TOKEN=pyMOR_token
 
 USER root
 RUN useradd -d /home/pymor --shell /bin/bash -u ${NB_UID} -o -c "" -m ${NB_USER} && \
-    chown -R ${NB_USER} /home/pymor
+    chown -R ${NB_USER} /home/pymor && \
+    adduser ${NB_USER} sudo && \
+    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # do local package install before requirements to avoid conflict
 COPY .binder/local_packages /pymor/local_packages/
