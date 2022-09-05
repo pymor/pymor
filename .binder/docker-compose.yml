@@ -38,7 +38,7 @@ services:
       - NB_DIR
       - PYMOR_HYPOTHESIS_PROFILE
       - PYMOR_PYTEST_EXTRA
-    entrypoint: /usr/local/bin/dev-entrypoint.bash
+
     # xsrf check disabled for docs viewing with chrome. Somewhat related issue: https://github.com/jupyterlab/jupyterlab/issues/6106
     # and see also https://bugs.chromium.org/p/chromium/issues/detail?id=455987
     command: >
