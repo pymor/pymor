@@ -20,12 +20,14 @@ def test_config(pkg):
 
 @pytest.mark.skipif(condition=not os.environ.get('DOCKER_PYMOR', False),
                     reason='Guarantee only valid in the docker container')
+@pytest.mark.xfail(True, reason='DUNE currently not installed due to broken dependencies')
 def test_no_dune_warnings():
     _test_dune_import_warn()
 
 
 @pytest.mark.skipif(condition=not os.environ.get('DOCKER_PYMOR', False),
                     reason='Guarantee only valid in the docker container')
+@pytest.mark.xfail(True, reason='DUNE currently not installed due to broken dependencies')
 def test_dune_warnings(monkeypatch):
     from dune import xt, gdt
     monkeypatch.setattr(gdt, "__version__", "2020.0.0")
