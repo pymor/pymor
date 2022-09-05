@@ -21,6 +21,7 @@ dependencies:
   - ipywidgets<8,>7
   - jupyter_client>=7.0.6
   - jupyter_contrib_nbextensions
+  - k3d>=2.14
   - lxml
   - matplotlib
   - meshio>=4.4
