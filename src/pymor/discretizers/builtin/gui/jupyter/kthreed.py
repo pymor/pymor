@@ -102,6 +102,8 @@ def visualize_k3d(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, l
     color_map
         a Matplotlib Colormap object or a K3D array((step, r, g, b))
     """
+    if isinstance(U, (tuple, list)):
+        return visualize_k3d(grid, U[0], bounding_box, codim, color_map=color_map)
     assert len(bounding_box) == 2
     assert all(1 < len(bounding_box[i]) < 4 for i in range(2))
     assert len(bounding_box[0]) == len(bounding_box[1])
