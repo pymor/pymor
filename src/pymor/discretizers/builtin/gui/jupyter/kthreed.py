@@ -5,7 +5,6 @@
 import warnings
 
 import IPython
-import k3d
 import numpy as np
 
 from pymor.core.config import config
@@ -13,6 +12,7 @@ from pymor.core.config import config
 config.require('K3D')
 config.require('MATPLOTLIB')
 
+import k3d
 from ipywidgets import IntSlider, Play, interact, widgets
 from k3d.plot import Plot as k3dPlot
 from matplotlib.cm import get_cmap
@@ -47,7 +47,7 @@ class VectorArrayPlot(k3dPlot):
                              compression_level=0)
 
         self += self.mesh
-        self.lock = False
+        self.lock = True
         self.camera_no_pan = self.lock
         self.camera_no_rotate = self.lock
         self.camera_no_zoom = self.lock
@@ -118,21 +118,11 @@ def visualize_k3d(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, l
                            color_attribute_name='None',
                            grid_auto_fit=False,
                            camera_auto_fit=False, color_map=color_map)
-
-    plot.grid_visible = True
-    plot.menu_visibility = True
-    # guesstimate
-    fov_angle = 30
-    absx = np.abs(combined_bounds[0] - combined_bounds[3])
-    c_dist = np.sin((90 - fov_angle) * np.pi / 180) * absx / (2 * np.sin(fov_angle * np.pi / 180))
-    xhalf = (combined_bounds[0] + combined_bounds[3]) / 2
-    yhalf = (combined_bounds[1] + combined_bounds[4]) / 2
-    zhalf = (combined_bounds[2] + combined_bounds[5]) / 2
-    # camera[posx, posy, posz, targetx, targety, targetz, upx, upy, upz]
-    plot.camera = (xhalf, yhalf, zhalf + c_dist,
-                   xhalf, yhalf, zhalf,
-                   0, 1, 0)
     size = len(U)
+    plot.grid_visible = True
+    plot.menu_visibility = size > 1
+    plot.camera = plot.get_auto_camera(yaw=0, pitch=0, bounds=combined_bounds, factor=0.5)
+
     if size > 1:
         play = Play(min=0, max=size - 1, step=1, value=0, description='Timestep:')
         interact(idx=play).widget(plot._goto_idx)
