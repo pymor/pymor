@@ -6,6 +6,7 @@ import warnings
 
 import IPython
 import numpy as np
+from ipywidgets import GridBox, jslink
 
 from pymor.core.config import config
 
@@ -102,6 +103,14 @@ def visualize_k3d(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, l
     color_map
         a Matplotlib Colormap object or a K3D array((step, r, g, b))
     """
+    if isinstance(U, (tuple, list)):
+        plots = [visualize_k3d(grid, u, bounding_box, codim, color_map=color_map, title=None,
+                               legend=legend, separate_colorbars=separate_colorbars,
+                               rescale_colorbars=rescale_colorbars, columns=None) for u in U]
+        first_plot = plots[0]
+        for p in plots[1:]:
+            jslink((first_plot, 'time'), (p, 'time'))
+        return GridBox(plots, columns=columns)
     assert len(bounding_box) == 2
     assert all(1 < len(bounding_box[i]) < 4 for i in range(2))
     assert len(bounding_box[0]) == len(bounding_box[1])
