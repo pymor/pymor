@@ -6,7 +6,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.core.exceptions import ImageCollectionError, NoMatchingRuleError
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import ConcatenationOperator, LincombOperator, SelectionOperator
+from pymor.operators.constructions import ConcatenationOperator, LincombOperator, OutputOperator, SelectionOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.interface import VectorArray
@@ -275,3 +275,8 @@ class CollectVectorRangeRules(RuleTable):
             firstrange = op.operators[-1].range.empty()
             CollectVectorRangeRules(firstrange).apply(op.operators[-1])
             CollectOperatorRangeRules(firstrange, self.image, False).apply(op.with_(operators=op.operators[:-1]))
+
+    @match_class(OutputOperator)
+    def action_OutputOperator(self, op):
+        for key in op.operators:
+            self.apply_children(op.operators[key])

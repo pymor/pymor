@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.core.cache import CacheableObject
-from pymor.operators.constructions import induced_norm
+from pymor.operators.constructions import OutputOperator, induced_norm
 from pymor.parameters.base import Parameters, ParametricObject, Mu
 from pymor.tools.frozendict import FrozenDict
 
@@ -183,8 +183,10 @@ class Model(CacheableObject, ParametricObject):
                 output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
                     solution, mu=mu).to_numpy()[0]
                 U_d_mu = U_d_mus[parameter][index]
-                result.append(output_partial_dmu + self.output_functional.jacobian(
-                    solution, mu).apply(U_d_mu, mu).to_numpy()[0])
+                output_jac = self.output_functional.jacobian(solution, mu)
+                # distinction for bilinear output parts (all other parts will be evaluated using apply!)
+                output_d_u = output_jac.apply(U_d_mu, mu).to_numpy()[0] if not isinstance(self.output_functional, OutputOperator) else output_jac.apply2(U_d_mu, solution, mu=mu).to_numpy()[0]
+                result.append(output_partial_dmu + output_d_u)
             result = np.array(result)
             if return_array:
                 gradients.extend(result)

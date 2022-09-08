@@ -388,7 +388,7 @@ class Operator(ParametricObject):
         """
         assert isinstance(self.source, NumpyVectorSpace) and self.linear
         assert self.source.dim <= as_array_max_length()
-        return self.apply(self.source.from_numpy(np.eye(self.source.dim)), mu=mu)
+        return self.apply(self.source.ones(), mu=mu)
 
     def as_source_array(self, mu=None):
         """Return a |VectorArray| representation of the operator in its source space.
@@ -415,7 +415,7 @@ class Operator(ParametricObject):
         """
         assert isinstance(self.range, NumpyVectorSpace) and self.linear
         assert self.range.dim <= as_array_max_length()
-        return self.apply_adjoint(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
+        return self.apply_adjoint(self.range.ones(), mu=mu)
 
     def as_vector(self, mu=None):
         """Return a vector representation of a linear functional or vector operator.

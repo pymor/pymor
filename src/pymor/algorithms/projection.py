@@ -244,7 +244,7 @@ class ProjectRules(RuleTable):
 
     @match_class(OutputOperator)
     def action_OutputOperator(self, op):
-        projected_ops = {key: project(op.operators[key], self.range_basis, self.source_basis) for key in op.operators} # TODO: check if this might need to be self.src_bas, self.src_bas!
+        projected_ops = {key: project(op.operators[key], self.range_basis, self.source_basis) if key != 'bilinear' else project(op.operators[key], self.source_basis, self.source_basis) for key in op.operators} # TODO: check if this might need to be self.src_bas, self.src_bas!
         return OutputOperator(projected_ops, non_linear_rules=op.non_linear_rules, solver_options=op.solver_options)
 
 
