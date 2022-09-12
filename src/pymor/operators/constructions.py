@@ -1529,6 +1529,7 @@ class OutputOperator(Operator):
     def apply2(self, V, U, mu=None):
         assert U in self.source
         assert V in self.source
+        assert len(U) == len(V)
         ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(V, mu)
         if 'bilinear' in self.operators:
             ret_val += NumpyVectorSpace(1).from_numpy(self.operators['bilinear'].apply2(V, U, mu))
@@ -1553,7 +1554,7 @@ class OutputOperator(Operator):
         assert U in self.source
         assert V in self.range
         assert len(U) == len(V)
-        ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(U, mu)
+        ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(V, mu)
         if 'bilinear' in self.operators:
             ret_val += NumpyVectorSpace(1).from_numpy(self.operators['bilinear'].pairwise_apply2(V, U, mu))
         # TODO: non-linear evaluation:
