@@ -230,24 +230,29 @@ class Operator(ParametricObject):
 
         if self.linear:
             if solver_type is None or solver_type == 'to_matrix':
-                if solver_type is None:
-                    self.logger.warning(f'No specialized linear solver available for {self}.')
-                    self.logger.warning('Trying to solve by converting to NumPy matrix.')
-                from pymor.algorithms.rules import NoMatchingRuleError
-                try:
-                    from pymor.algorithms.to_matrix import to_matrix
-                    from pymor.operators.numpy import NumpyMatrixOperator
-                    mat = to_matrix(assembled_op)
-                    mat_op = NumpyMatrixOperator(mat)
+                mat_op = None
+                if not hasattr(self, '_mat_op'):
+                    if solver_type is None:
+                        self.logger.warning(f'No specialized linear solver available for {self}.')
+                        self.logger.warning('Trying to solve by converting to NumPy/SciPy matrix.')
+                    from pymor.algorithms.rules import NoMatchingRuleError
+                    try:
+                        from pymor.algorithms.to_matrix import to_matrix
+                        from pymor.operators.numpy import NumpyMatrixOperator
+                        mat = to_matrix(assembled_op, mu=mu)
+                        mat_op = NumpyMatrixOperator(mat)
+                        if not self.parametric:
+                            self._mat_op = mat_op
+                    except (NoMatchingRuleError, NotImplementedError):
+                        if solver_type == 'to_matrix':
+                            raise InversionError
+                        else:
+                            self.logger.warning('Failed.')
+                if mat_op is not None:
                     v = mat_op.range.from_numpy(V.to_numpy())
-                    i = None if initial_guess is None else v.source.from_numpy(initial_guess.to_numpy())
+                    i = None if initial_guess is None else mat_op.source.from_numpy(initial_guess.to_numpy())
                     u = mat_op.apply_inverse(v, initial_guess=i, least_squares=least_squares)
                     return self.source.from_numpy(u.to_numpy())
-                except (NoMatchingRuleError, NotImplementedError):
-                    if solver_type == 'to_matrix':
-                        raise InversionError
-                    else:
-                        self.logger.warning('Failed.')
             self.logger.warning('Solving with unpreconditioned iterative solver.')
             return genericsolvers.apply_inverse(assembled_op, V, initial_guess=initial_guess,
                                                 options=options, least_squares=least_squares)
