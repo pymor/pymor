@@ -8,7 +8,7 @@ Many algorithms potentially depend directly or indirectly on randomness.
 To ensure reproducible execution of pyMOR code without having to pass around
 a random number generator object everywhere, pyMOR manages a global |RNG|
 object. This object is initialized automatically from a configurable |default|
-random seed during startup, and can be obtained by calling :func:`get_rng`.
+random seed during startup and can be obtained by calling :func:`get_rng`.
 The returned object is a subclass of :class:`numpy.random.Generator` and
 inherits all its sampling methods.
 
@@ -56,7 +56,7 @@ def new_rng(seed_seq=42):
     seed_seq
         Entropy to seed the generator with. Either a :class:`~numpy.random.SeedSequence`
         or an `int` or list of `ints` from which the :class:`~numpy.random.SeedSequence`
-        will be created. If `None` entropy is sampled from the operating system.
+        will be created. If `None`, entropy is sampled from the operating system.
 
     Returns
     -------
