@@ -364,6 +364,9 @@ class ConjugateParameterFunctional(ParameterFunctional):
         assert self.parameters.assert_compatible(mu)
         return np.conj(self.functional.evaluate(mu))
 
+    def d_mu(self, parameter, index=0):
+        return self.with_(functional=self.functional.d_mu(parameter, index), name=f'{self.name}_d_{parameter}_{index}')
+
 
 class ConstantParameterFunctional(ParameterFunctional):
     """|ParameterFunctional| returning a constant value for each parameter.
