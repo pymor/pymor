@@ -244,7 +244,7 @@ class ProjectRules(RuleTable):
 
     @match_class(OutputOperator)
     def action_OutputOperator(self, op):
-        projected_ops = {key: project(op.operators[key], self.range_basis, self.source_basis) if key != 'bilinear' else project(op.operators[key], self.source_basis, self.source_basis) for key in op.operators} # TODO: check if this might need to be self.src_bas, self.src_bas!
+        projected_ops = {key: project(op.operators[key], self.range_basis, self.source_basis) if key != 'bilinear' else project(op.operators[key], self.source_basis, self.source_basis) for key in op.operators}
         return OutputOperator(projected_ops, non_linear_rules=op.non_linear_rules, solver_options=op.solver_options)
 
 
@@ -376,3 +376,9 @@ class ProjectToSubbasisRules(RuleTable):
             else op.range_basis[:dim_range]
         return ProjectedOperator(op.operator, range_basis, source_basis, product=None,
                                  solver_options=op.solver_options)
+
+    @match_class(OutputOperator)
+    def action_OutputOperator(self, op):
+        dim_range, dim_source = self.dim_range, self.dim_source
+        subbasis_projected_ops = {key: project_to_subbasis(op=op.operators[key], dim_range=dim_range, dim_source=dim_source if key != 'bilinear' else project_to_subbasis(op=op.operators[key], dim_range=dim_source, dim_source=dim_source)) for key in op.operators}
+        return OutputOperator(subbasis_projected_ops, non_linear_rules=op.non_linear_rules, solver_options=op.solver_options)

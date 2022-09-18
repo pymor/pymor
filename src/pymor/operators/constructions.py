@@ -1441,7 +1441,7 @@ class OutputOperator(Operator):
         if coefficient_dict is not None:
             self.operators = self._prepare_coefficient_dicts(operator_dict, coefficient_dict, solver_options, name)
         else:
-            self.operators = self._prepare_lincomb_dicts(operator_dict)
+            self.operators = self._prepare_operator_dicts(operator_dict)
 
         key_check = lambda key : True if len(self.operators) == 1 and key in self.operators else False
         self.constant = key_check('constant')
@@ -1472,15 +1472,14 @@ class OutputOperator(Operator):
 
         self.__auto_init(locals())
 
-    def _prepare_lincomb_dicts(self, operator_dict):
+    def _prepare_operator_dicts(self, operator_dict):
         for key in operator_dict:
             assert operator_dict[key] is not None, f"The key '{key}' does not contain any value!"
-            assert isinstance(operator_dict[key], Operator) # TODO: make this consistent with other checks (and see if we actually need LincombOperator)
+            assert isinstance(operator_dict[key], Operator)
 
         return operator_dict
 
     def _prepare_coefficient_dicts(self, operator_dict, coefficient_dict, solver_options, name):
-        # TODO: fix problem that this makes it a hassle to just use a single operator as output!
         assert isinstance(coefficient_dict, dict)
         assert coefficient_dict is not None, "Expected dictionary with coefficients, got empty dictionaries"
 
@@ -1498,10 +1497,8 @@ class OutputOperator(Operator):
     def H(self):
         options = {'inverse': self.solver_options.get('inverse_adjoint'),
                    'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
-        H_dict_ops = {key: self.operators[key].H.operators if key not in ['constant', 'linear'] else self.operators[key].operators for key in self.operators}
-        H_dict_coeffs = {key: self.operators[key].H.coefficients if key not in ['constant', 'linear'] else self.operators[key].coefficients for key in self.operators}
-        return OutputOperator(H_dict_ops, H_dict_coeffs, non_linear_rules=self.non_linear_rules, solver_options=options,
-                          name=self.name + '_adjoint')
+        H_ops = {key: self.operators[key].H if key == 'linear' else self.operators[key] for key in self.operators}
+        return OutputOperator(H_ops, non_linear_rules=self.non_linear_rules, solver_options=options, name=self.name + '_adjoint')
 
     def _evaluate_const_part(self, mu=None):
         ret_val = 0.
@@ -1530,7 +1527,7 @@ class OutputOperator(Operator):
         assert U in self.source
         assert V in self.source
         assert len(U) == len(V)
-        ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(V, mu)
+        ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(U, mu)
         if 'bilinear' in self.operators:
             ret_val += NumpyVectorSpace(1).from_numpy(self.operators['bilinear'].apply2(V, U, mu))
         # TODO: non-linear evaluation:
@@ -1583,7 +1580,10 @@ class OutputOperator(Operator):
         return self.operators['linear'].apply_inverse_adjoint(U, mu, initial_guess, least_squares)
 
     def d_mu(self, parameter, index=0):
-        d_mu_ops = {key: self.operators[key].d_mu(parameter, index) for key in self.operators}
+        # remove constant op
+        d_ops = self.operators.copy()
+        d_ops.pop('constant', None)
+        d_mu_ops = {key: self.operators[key].d_mu(parameter, index) for key in d_ops}
         return OutputOperator(d_mu_ops, non_linear_rules=self.non_linear_rules, solver_options=self.solver_options, name=self.name + '_d_mu')
 
     def as_range_array(self, mu=None):
@@ -1611,17 +1611,18 @@ class JacobianOutputOperator(OutputOperator):
         self.non_linear = not self.linear
         self.U = U
         self._transform_to_jacobian(U, output_op, name)
-        # self.operator = OutputOperator({key: output_op.operators[key].H for key in output_op.operators}, name=output_op.name, non_linear_rules=output_op.non_linear_rules, solver_options=output_op.solver_options)
-        # self.source = self.operator.source
-        # self.range = self.operator.range
 
     def _transform_to_jacobian(self, U, output_op, name):
-        if 'bilinear' in output_op.operators:
-            new_ops = [VectorOperator(op.apply(U)) for op in output_op.operators['bilinear'].operators]
-            new_coeffs = [2. * coeff for coeff in output_op.operators['bilinear'].coefficients]
-            helper_lincomb_op = LincombOperator(new_ops, new_coeffs, solver_options=output_op.solver_options, name=output_op.operators['bilinear'].name)
+        # remove constant operator from gradient
+        ops = output_op.operators.copy()
+        ops.pop('constant', None)
 
-        helper_out_op = OutputOperator({key: output_op.operators[key].H if key != 'bilinear' else helper_lincomb_op for key in output_op.operators}, name=output_op.name, non_linear_rules=output_op.non_linear_rules, solver_options=output_op.solver_options)
+        if 'bilinear' in ops:
+            new_ops = [VectorOperator(op.apply(U)) for op in ops['bilinear'].operators]
+            new_coeffs = [2. * coeff for coeff in ops['bilinear'].coefficients]
+            helper_lincomb_op = LincombOperator(new_ops, new_coeffs, solver_options=output_op.solver_options, name=ops['bilinear'].name)
+
+        helper_out_op = OutputOperator({key: ops[key].H if key != 'bilinear' else helper_lincomb_op for key in ops}, name=output_op.name, non_linear_rules=output_op.non_linear_rules, solver_options=output_op.solver_options)
         self.solver_options = output_op.solver_options
         self.non_linear_rules = output_op.non_linear_rules
         self.operators = helper_out_op.operators
