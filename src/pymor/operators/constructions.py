@@ -1551,7 +1551,7 @@ class OutputOperator(Operator):
         assert U in self.source
         assert V in self.range
         assert len(U) == len(V)
-        ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(V, mu)
+        ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(U, mu)
         if 'bilinear' in self.operators:
             ret_val += NumpyVectorSpace(1).from_numpy(self.operators['bilinear'].pairwise_apply2(V, U, mu))
         # TODO: non-linear evaluation:
@@ -1580,7 +1580,6 @@ class OutputOperator(Operator):
         return self.operators['linear'].apply_inverse_adjoint(U, mu, initial_guess, least_squares)
 
     def d_mu(self, parameter, index=0):
-        # remove constant op
         d_ops = self.operators.copy()
         d_ops.pop('constant', None)
         d_mu_ops = {key: self.operators[key].d_mu(parameter, index) for key in d_ops}
@@ -1613,7 +1612,6 @@ class JacobianOutputOperator(OutputOperator):
         self._transform_to_jacobian(U, output_op, name)
 
     def _transform_to_jacobian(self, U, output_op, name):
-        # remove constant operator from gradient
         ops = output_op.operators.copy()
         ops.pop('constant', None)
 

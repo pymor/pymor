@@ -123,43 +123,26 @@ class StationaryModel(Model):
         else:
             assert self.operator.linear
             dual_solutions = self.operator.range.empty()
-            if self.output_functional.linear:
-                for d in range(self.output_functional.range.dim):
+            primal_solution = self.solve(mu)
+            for d in range(self.output_functional.range.dim):
+                if self.output_functional.linear:
                     dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.H.as_range_array(mu)[d])
-                    dual_solutions.append(dual_problem.solve(mu))
-                gradients = [] if return_array else {}
-                for (parameter, size) in self.parameters.items():
-                    result = []
-                    for index in range(size):
-                        output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution,
-                                                                                                mu=mu).to_numpy()[0]
-                        lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu)[:, 0]
-                        rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:, 0]
-                        result.append(output_partial_dmu + rhs_d_mu - lhs_d_mu)
-                    result = np.array(result)
-                    if return_array:
-                        gradients.extend(result)
-                    else:
-                        gradients[parameter] = result
-            else:
-                primal_solution = self.solve(mu)
-                for d in range(self.output_functional.range.dim):
+                else: 
                     dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.jacobian_as_rhs(primal_solution))
-                    dual_solutions.append(dual_problem.solve(mu))
-                gradients = [] if return_array else {}
-                for (parameter, size) in self.parameters.items():
-                    result = []
-                    for index in range(size):
-                        output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution,
-                                                                                                mu=mu).to_numpy()[0]
-                        lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu)[:, 0]
-                        rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:, 0]
-                        result.append(output_partial_dmu + rhs_d_mu - lhs_d_mu)
-                    result = np.array(result)
-                    if return_array:
-                        gradients.extend(result)
-                    else:
-                        gradients[parameter] = result
+                dual_solutions.append(dual_problem.solve(mu))
+            gradients = [] if return_array else {}
+            for (parameter, size) in self.parameters.items():
+                result = []
+                for index in range(size):
+                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution, mu=mu).to_numpy()[0]
+                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu)[:, 0]
+                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:, 0]
+                    result.append(output_partial_dmu + rhs_d_mu - lhs_d_mu)
+                result = np.array(result)
+                if return_array:
+                    gradients.extend(result)
+                else:
+                    gradients[parameter] = result
         if return_array:
             return np.array(gradients)
         else:
