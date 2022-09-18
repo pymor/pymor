@@ -14,7 +14,7 @@ from pymor.analyticalproblems.functions import LincombFunction
 from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixBasedOperator, FenicsVisualizer
 from pymor.discretizers.fenics.domaindiscretizer import discretize_domain
 from pymor.models.basic import StationaryModel
-from pymor.operators.constructions import LincombOperator, NumpyConversionOperator
+from pymor.operators.constructions import LincombOperator, NumpyConversionOperator, OutputOperator
 from pymor.operators.block import BlockColumnOperator
 
 
@@ -127,7 +127,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preass
     }
 
     if p.outputs:
-        if any(o[0] not in ('l2', 'l2_boundary') for o in p.outputs):
+        if any(o[0] not in ('l2', 'l2_boundary', 'general') for o in p.outputs):       # TODO: check if this needs updating!
             raise NotImplementedError
         outputs = []
         for o in p.outputs:
@@ -136,11 +136,16 @@ def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preass
                     _assemble_operator(o[1], lambda c: c * v * dx, mesh,
                                        functional=True, name='l2_output')
                 )
-            else:
+            elif o[0] == 'l2_boundary':
                 outputs.append(
                     _assemble_operator(o[1], lambda c: c * v * ds, mesh,
                                        functional=True, name='l2_boundary_output')
                 )
+            else:
+                if isinstance(o[1], OutputOperator):
+                    outputs.append(o[1])
+                else:
+                    raise NotImplementedError("The general output option expects a general output operator to be given. Please convert your input to such an operator!")
         if len(outputs) > 1:
             output_functional = BlockColumnOperator(outputs)
             output_functional = NumpyConversionOperator(output_functional.range) @ output_functional

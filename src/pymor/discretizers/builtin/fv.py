@@ -22,7 +22,7 @@ from pymor.discretizers.builtin.grids.subgrid import SubGrid, make_sub_grid_boun
 from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisualizer
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.models.basic import StationaryModel, InstationaryModel
-from pymor.operators.constructions import ComponentProjectionOperator, LincombOperator, ZeroOperator
+from pymor.operators.constructions import ComponentProjectionOperator, LincombOperator, ZeroOperator, OutputOperator
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.parameters.base import ParametricObject
@@ -1044,7 +1044,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     # assemble additional output functionals
     if p.outputs:
-        if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
+        if any(v[0] not in ('l2', 'l2_boundary', 'general') for v in p.outputs):
             raise NotImplementedError
         outputs = []
         for v in p.outputs:
@@ -1055,13 +1055,18 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
                     outputs.append(LincombOperator(ops, v[1].coefficients))
                 else:
                     outputs.append(L2Functional(grid, v[1]).H)
-            else:
+            elif v[0] == 'l2_boundary':
                 if isinstance(v[1], LincombFunction):
                     ops = [BoundaryL2Functional(grid, vv).H
                            for vv in v[1].functions]
                     outputs.append(LincombOperator(ops, v[1].coefficients))
                 else:
                     outputs.append(BoundaryL2Functional(grid, v[1]).H)
+            else:
+                if isinstance(v[1], OutputOperator):
+                    outputs.append(v[1])
+                else:
+                    raise NotImplementedError("The general output option expects a general output operator to be given. Please convert your input to such an operator!")
         if len(outputs) > 1:
             from pymor.operators.block import BlockColumnOperator
             from pymor.operators.constructions import NumpyConversionOperator

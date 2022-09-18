@@ -17,7 +17,7 @@ from pymor.analyticalproblems.functions import ConstantFunction, LincombFunction
 from pymor.core.base import ImmutableObject
 from pymor.discretizers.skfem.domaindiscretizer import discretize_domain
 from pymor.models.basic import StationaryModel
-from pymor.operators.constructions import LincombOperator
+from pymor.operators.constructions import LincombOperator, OutputOperator
 from pymor.operators.numpy import NumpyMatrixBasedOperator
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -262,7 +262,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
     }
 
     if p.outputs:
-        if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
+        if any(v[0] not in ('l2', 'l2_boundary', 'general') for v in p.outputs):       # TODO: check if this needs updating!
             raise NotImplementedError
         outputs = []
         boundary_basis = None
@@ -271,12 +271,17 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
                 outputs.append(
                     _assemble_operator(v[1], 'l2_output', lambda f, n: L2Functional(basis, f, name=n).H)
                 )
-            else:
+            elif v[0] == 'l2_boundary':
                 boundary_basis = boundary_basis or BoundaryFacetBasis(mesh, element)
                 outputs.append(
                     _assemble_operator(v[1], 'l2_boundary_output',
                                        lambda f, n: L2Functional(boundary_basis, f, name=n).H)
                 )
+            else:
+                if isinstance(v[1], OutputOperator):
+                    outputs.append(v[1])
+                else:
+                    raise NotImplementedError("The general output option expects a general output operator to be given. Please convert your input to such an operator!")
         if len(outputs) > 1:
             from pymor.operators.block import BlockColumnOperator
             from pymor.operators.constructions import NumpyConversionOperator
