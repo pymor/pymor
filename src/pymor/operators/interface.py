@@ -420,7 +420,7 @@ class Operator(ParametricObject):
         """
         assert isinstance(self.range, NumpyVectorSpace) and self.linear
         assert self.range.dim <= as_array_max_length()
-        return self.apply_adjoint(self.range.from_numpy(np.eye(self.source.dim)), mu=mu)
+        return self.apply_adjoint(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
 
     def as_vector(self, mu=None):
         """Return a vector representation of a linear functional or vector operator.
