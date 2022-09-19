@@ -184,8 +184,7 @@ class Model(CacheableObject, ParametricObject):
                     solution, mu=mu).to_numpy()[0]
                 U_d_mu = U_d_mus[parameter][index]
                 output_jac = self.output_functional.jacobian(solution, mu)
-                # distinction for bilinear output parts (all other parts will be evaluated using apply!)
-                output_d_u = output_jac.apply(U_d_mu, mu).to_numpy()[0] if not isinstance(self.output_functional, OutputOperator) else output_jac.apply2(U_d_mu, solution, mu=mu).to_numpy()[0]
+                output_d_u = output_jac.apply(U_d_mu, mu).to_numpy()[0]
                 result.append(output_partial_dmu + output_d_u)
             result = np.array(result)
             if return_array:

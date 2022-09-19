@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from ast import operator
 import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepper
@@ -123,12 +124,8 @@ class StationaryModel(Model):
         else:
             assert self.operator.linear
             dual_solutions = self.operator.range.empty()
-            primal_solution = self.solve(mu)
             for d in range(self.output_functional.range.dim):
-                if self.output_functional.linear:
-                    dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.H.as_range_array(mu)[d])
-                else: 
-                    dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.jacobian_as_rhs(primal_solution))
+                dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.jacobian(solution, mu).H.as_range_array(mu)[d])
                 dual_solutions.append(dual_problem.solve(mu))
             gradients = [] if return_array else {}
             for (parameter, size) in self.parameters.items():
