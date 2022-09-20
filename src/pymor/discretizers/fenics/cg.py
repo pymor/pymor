@@ -127,7 +127,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preass
     }
 
     if p.outputs:
-        if any(o[0] not in ('l2', 'l2_boundary', 'general') for o in p.outputs):       # TODO: check if this needs updating!
+        if any(o[0] not in ('l2', 'l2_boundary', 'general') for o in p.outputs):
             raise NotImplementedError
         outputs = []
         for o in p.outputs:

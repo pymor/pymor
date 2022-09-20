@@ -262,7 +262,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
     }
 
     if p.outputs:
-        if any(v[0] not in ('l2', 'l2_boundary', 'general') for v in p.outputs):       # TODO: check if this needs updating!
+        if any(v[0] not in ('l2', 'l2_boundary', 'general') for v in p.outputs):
             raise NotImplementedError
         outputs = []
         boundary_basis = None
