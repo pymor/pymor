@@ -5,7 +5,6 @@
 """Module containing some constructions to obtain new operators from old ones."""
 
 from functools import reduce
-import marshal
 from numbers import Number
 
 import numpy as np
