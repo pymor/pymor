@@ -22,7 +22,7 @@ from pymor.discretizers.builtin.grids.subgrid import SubGrid, make_sub_grid_boun
 from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisualizer
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.models.basic import StationaryModel, InstationaryModel
-from pymor.operators.constructions import ComponentProjectionOperator, LincombOperator, ZeroOperator, OutputOperator
+from pymor.operators.constructions import ComponentProjectionOperator, LincombOperator, ZeroOperator, OutputFunctional
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.parameters.base import ParametricObject
@@ -1063,7 +1063,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
                 else:
                     outputs.append(BoundaryL2Functional(grid, v[1]).H)
             else:
-                if isinstance(v[1], OutputOperator):
+                if isinstance(v[1], OutputFunctional):
                     outputs.append(v[1])
                 else:
                     raise NotImplementedError

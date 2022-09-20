@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
-from pymor.operators.constructions import LincombOperator, ZeroOperator, OutputOperator
+from pymor.operators.constructions import LincombOperator, ZeroOperator, OutputFunctional
 from pymor.basic import NumpyVectorSpace, Mu
 
 
@@ -369,44 +369,44 @@ def test_output_operator_d_mu():
 
     # generate list of output operators
     ops = []
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
                               'bilinear': [bilin_op]}, {'constant': [1.],
                               'linear': [1.], 'bilinear': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op]},
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op]},
                               {'constant': [1.], 'linear': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op]}, {'constant': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'bilinear': [bilin_op]},
+    ops.append(OutputFunctional({'constant': [const_op]}, {'constant': [1.]}))
+    ops.append(OutputFunctional({'constant': [const_op], 'bilinear': [bilin_op]},
                               {'constant': [1.], 'bilinear': [1.]}))
-    ops.append(OutputOperator({'linear': [lin_op], 'bilinear': [bilin_op]},
+    ops.append(OutputFunctional({'linear': [lin_op], 'bilinear': [bilin_op]},
                               {'linear': [1.], 'bilinear': [1.]}))
-    ops.append(OutputOperator({'linear': [lin_op]}, {'linear': [1.]}))
-    ops.append(OutputOperator({'bilinear': [bilin_op]}, {'bilinear': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+    ops.append(OutputFunctional({'linear': [lin_op]}, {'linear': [1.]}))
+    ops.append(OutputFunctional({'bilinear': [bilin_op]}, {'bilinear': [1.]}))
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
                               'bilinear': [bilin_op]}, {'constant': [theta_J],
                               'linear': [1.], 'bilinear': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
                               'bilinear': [bilin_op]}, {'constant': [1.],
                               'linear': [theta_J], 'bilinear': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
                               'bilinear': [bilin_op]}, {'constant': [1.],
                               'linear': [1.], 'bilinear': [theta_J]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
                               'bilinear': [bilin_op]}, {'constant': [theta_J],
                               'linear': [.5*theta_J], 'bilinear': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
                               'bilinear': [bilin_op]}, {'constant': [theta_J],
                               'linear': [1.], 'bilinear': [.5*theta_J]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
                               'bilinear': [bilin_op]}, {'constant': [1.],
                               'linear': [theta_J], 'bilinear': [.5*theta_J]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
                               'bilinear': [bilin_op]},
                               {'constant': [.5*theta_J], 'linear': [theta_J],
                               'bilinear': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
                               'bilinear': [bilin_op]}, {'constant': [1.],
                               'linear': [.5*theta_J], 'bilinear': [theta_J]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
                               'bilinear': [bilin_op]}, {'constant': [theta_J],
                               'linear': [.5*theta_J], 'bilinear': [theta_J]}))
 

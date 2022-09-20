@@ -14,7 +14,7 @@ from pymor.analyticalproblems.functions import LincombFunction
 from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixBasedOperator, FenicsVisualizer
 from pymor.discretizers.fenics.domaindiscretizer import discretize_domain
 from pymor.models.basic import StationaryModel
-from pymor.operators.constructions import LincombOperator, NumpyConversionOperator, OutputOperator
+from pymor.operators.constructions import LincombOperator, NumpyConversionOperator, OutputFunctional
 from pymor.operators.block import BlockColumnOperator
 
 
@@ -142,7 +142,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preass
                                        functional=True, name='l2_boundary_output')
                 )
             else:
-                if isinstance(o[1], OutputOperator):
+                if isinstance(o[1], OutputFunctional):
                     raise NotImplementedError
         if len(outputs) > 1:
             output_functional = BlockColumnOperator(outputs)

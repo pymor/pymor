@@ -1432,7 +1432,7 @@ class NumpyConversionOperator(Operator):
         return self.range.from_numpy(U.to_numpy())
 
 
-class OutputOperator(Operator):
+class OutputFunctional(Operator):
     """Output operator intended as the output functional of a |StationaryProblem|.
 
     This |Operator| represents a general output functional with constant, linear,
@@ -1585,7 +1585,7 @@ class OutputOperator(Operator):
         # TODO: change this to H bilinear ops to (and adjust other srcs&rges!)
         H_ops = {key: self.operators[key].H if key in ('linear', 'constant')
                  else self.operators[key] for key in self.operators}
-        return OutputOperator(
+        return OutputFunctional(
             H_ops, non_linear_rules=self.non_linear_rules,
             solver_options=options, name=self.name + '_adjoint'
         )
@@ -1674,7 +1674,7 @@ class OutputOperator(Operator):
     def assemble(self, mu=None):
         assembled_ops = {key: self.operators[key].assemble(mu)
                          for key in self.operators}
-        return OutputOperator(
+        return OutputFunctional(
             assembled_ops, non_linear_rules=self.non_linear_rules,
             solver_options=self.solver_options, name=self.name + '_assembled'
         )
@@ -1696,7 +1696,7 @@ class OutputOperator(Operator):
                 jac_ops['linear'] = bilin_op
         options = self.solver_options.get('jacobian') if self.solver_options \
             else None
-        return OutputOperator(
+        return OutputFunctional(
             jac_ops, non_linear_rules=self.non_linear_rules,
             solver_options=options, name=self.name + '_jacobian'
         )
@@ -1735,7 +1735,7 @@ class OutputOperator(Operator):
     def d_mu(self, parameter, index=0):
         d_mu_ops = {key: self.operators[key].d_mu(parameter, index)
                     for key in self.operators}
-        return OutputOperator(
+        return OutputFunctional(
             d_mu_ops, non_linear_rules=self.non_linear_rules,
             solver_options=self.solver_options, name=self.name + '_d_mu'
         )

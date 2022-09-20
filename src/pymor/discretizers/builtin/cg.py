@@ -19,7 +19,7 @@ from pymor.discretizers.builtin.grids.boundaryinfos import EmptyBoundaryInfo
 from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
 from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisualizer
 from pymor.models.basic import StationaryModel, InstationaryModel
-from pymor.operators.constructions import LincombOperator, OutputOperator
+from pymor.operators.constructions import LincombOperator, OutputFunctional
 from pymor.operators.numpy import NumpyMatrixBasedOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -1171,7 +1171,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                 else:
                     outputs.append(BoundaryL2Functional(grid, v[1], dirichlet_clear_dofs=False).H)
             else:
-                if isinstance(v[1], OutputOperator):
+                if isinstance(v[1], OutputFunctional):
                     outputs.append(v[1])
                 else:
                     raise NotImplementedError

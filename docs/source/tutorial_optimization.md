@@ -780,7 +780,7 @@ assert opt_along_path_adaptively_minimization_data['enrichments'] == 4
 
 ## General output functionals
 
-So far, only a very limited {math}`L^2`-output functional has been used. Using {class}`~pymor.operators.constructions.OutputOperator` we can also optimize with respect to a more general output functional that may include constant, linear and bilinear terms. We construct our output in the following manner:
+So far, only a very limited {math}`L^2`-output functional has been used. Using {class}`~pymor.operators.constructions.OutputFunctional` we can also optimize with respect to a more general output functional that may include constant, linear and bilinear terms. We construct our output in the following manner:
 
 ```{code-cell}
 const_vec = NumpyVectorSpace.from_numpy([9.])
@@ -793,10 +793,10 @@ else:
     L2_OP = L2ProductP1
 RL2_OP = L2_OP(data['grid'], data['boundary_info'], dirichlet_clear_columns=False, coefficient_function=l)
 lin_op = VectorFunctional(RL2_OP.apply(ones))
-bilinear_output_functional = OutputOperator({'constant': [const_op], 'linear' : [lin_op], 'bilinear': [RL2_OP]},
+bilinear_output_functional = OutputFunctional({'constant': [const_op], 'linear' : [lin_op], 'bilinear': [RL2_OP]},
                                             {'constant': [1.], 'linear' : [-theta_J], 'bilinear': [-.5 * theta_J]}, name="BILIN_OUTPUT")
 
-general_output_problem = StationaryProblem(domain, l, diffusion, outputs=[('general', OutputOperator)])
+general_output_problem = StationaryProblem(domain, l, diffusion, outputs=[('general', OutputFunctional)])
 fom, data = discretize_stationary_cg(general_output_problem, diameter=1/50, mu_energy_product=mu_bar)
 ```
 

@@ -12,7 +12,7 @@ from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.core.config import config
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
-                                           LincombOperator, VectorArrayOperator, OutputOperator)
+                                           LincombOperator, VectorArrayOperator, OutputFunctional)
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 from pymor.operators.interface import as_array_max_length
 from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
@@ -180,10 +180,10 @@ def test_OutputOperator():
     bilin_matrix = np.eye(space.dim)
     bilin_op = NumpyMatrixOperator(bilin_matrix)
 
-    output_op_no_bilin = OutputOperator(
+    output_op_no_bilin = OutputFunctional(
             {'constant': [const_op], 'linear': [lin_op]},
             {'constant': [1.], 'linear': [1.]})
-    output_op_with_bilin = OutputOperator(
+    output_op_with_bilin = OutputFunctional(
             {'constant': [const_op], 'linear': [lin_op],
              'bilinear': [bilin_op]},
             {'constant': [1.], 'linear': [1.], 'bilinear': [1.]})

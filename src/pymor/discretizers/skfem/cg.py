@@ -17,7 +17,7 @@ from pymor.analyticalproblems.functions import ConstantFunction, LincombFunction
 from pymor.core.base import ImmutableObject
 from pymor.discretizers.skfem.domaindiscretizer import discretize_domain
 from pymor.models.basic import StationaryModel
-from pymor.operators.constructions import LincombOperator, OutputOperator
+from pymor.operators.constructions import LincombOperator, OutputFunctional
 from pymor.operators.numpy import NumpyMatrixBasedOperator
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -278,7 +278,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
                                        lambda f, n: L2Functional(boundary_basis, f, name=n).H)
                 )
             else:
-                if isinstance(v[1], OutputOperator):
+                if isinstance(v[1], OutputFunctional):
                     raise NotImplementedError
         if len(outputs) > 1:
             from pymor.operators.block import BlockColumnOperator

@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from pymor.operators.constructions import OutputOperator
+from pymor.operators.constructions import OutputFunctional
 
 from pymor.parameters.base import ParametricObject, ParameterSpace
 from pymor.tools.frozendict import FrozenDict
@@ -114,7 +114,7 @@ class StationaryProblem(ParametricObject):
                 or all(
                     isinstance(v, tuple) and len(v) == 2
                     and v[0] in ('l2', 'l2_boundary', 'general')
-                    and ((v[1].dim_domain == domain.dim and v[1].shape_range == ()) if v[0] != 'general' else isinstance(v[1], OutputOperator))
+                    and ((v[1].dim_domain == domain.dim and v[1].shape_range == ()) if v[0] != 'general' else isinstance(v[1], OutputFunctional))
                     for v in outputs))
         assert (parameter_ranges is None
                 or (isinstance(parameter_ranges, (list, tuple))

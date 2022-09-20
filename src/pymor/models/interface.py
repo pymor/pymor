@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.core.cache import CacheableObject
-from pymor.operators.constructions import OutputOperator, induced_norm
+from pymor.operators.constructions import OutputFunctional, induced_norm
 from pymor.parameters.base import Parameters, ParametricObject, Mu
 from pymor.tools.frozendict import FrozenDict
 

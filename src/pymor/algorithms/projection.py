@@ -7,7 +7,7 @@ import numpy as np
 from pymor.algorithms.rules import RuleTable, match_class, match_generic, match_always
 from pymor.core.exceptions import RuleNotMatchingError, NoMatchingRuleError
 from pymor.operators.block import BlockOperatorBase, BlockRowOperator, BlockColumnOperator
-from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ConstantOperator, OutputOperator, ProjectedOperator,
+from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ConstantOperator, OutputFunctional, ProjectedOperator,
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
                                            IdentityOperator, VectorArrayOperator)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
@@ -242,7 +242,7 @@ class ProjectRules(RuleTable):
         else:
             return np.sum(projected_ops)
 
-    @match_class(OutputOperator)
+    @match_class(OutputFunctional)
     def action_OutputOperator(self, op):
         projected_ops = {
             key: project(
@@ -250,7 +250,7 @@ class ProjectRules(RuleTable):
             if key != 'bilinear' else project(
                 op.operators[key], self.source_basis, self.source_basis)
             for key in op.operators}
-        return OutputOperator(projected_ops,
+        return OutputFunctional(projected_ops,
                               non_linear_rules=op.non_linear_rules,
                               solver_options=op.solver_options)
 
@@ -384,7 +384,7 @@ class ProjectToSubbasisRules(RuleTable):
         return ProjectedOperator(op.operator, range_basis, source_basis, product=None,
                                  solver_options=op.solver_options)
 
-    @match_class(OutputOperator)
+    @match_class(OutputFunctional)
     def action_OutputOperator(self, op):
         dim_range, dim_source = self.dim_range, self.dim_source
         subbasis_projected_ops = {
@@ -395,6 +395,6 @@ class ProjectToSubbasisRules(RuleTable):
                 op=op.operators[key], dim_range=dim_source,
                 dim_source=dim_source)
             for key in op.operators}
-        return OutputOperator(subbasis_projected_ops,
+        return OutputFunctional(subbasis_projected_ops,
                               non_linear_rules=op.non_linear_rules,
                               solver_options=op.solver_options)
