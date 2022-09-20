@@ -1436,7 +1436,8 @@ class NumpyConversionOperator(Operator):
 class OutputOperator(Operator):
     """Output operator intended as the output functional of a |StationaryProblem|.
 
-    This |Operator| represents a general output functional with constant, linear, and bilinear terms. (TODO: add non-linear terms!).
+    This |Operator| represents a general output functional with constant, linear,
+    and bilinear terms. (TODO: add non-linear terms!).
 
     Parameters
     ----------
@@ -1451,10 +1452,13 @@ class OutputOperator(Operator):
             `non-linear`:
                 the non-linear part of the operator
                 NOTE: this has no functionality yet!
-        The `operator_dict` must either contain single operators per keyword or lists of operators and a |coefficient_dict|!
-        The coefficients are multiplied to the operators in the order specified in each list.
+        The `operator_dict` must either contain single operators per keyword or lists
+        of operators and a |coefficient_dict|!
+        The coefficients are multiplied to the operators in the order specified in
+        each list.
     coefficient_dict
-        Optional dictionary of coefficients for the operators in the |operator_dict|. For keywords and usage please refer to |operator_dict|.
+        Optional dictionary of coefficients for the operators in the |operator_dict|.
+        For keywords and usage please refer to |operator_dict|.
     non_linear_rules:
         Optional evaluation rules for non-linear parts of the operator.
         NOTE: this has no functionality yet!
@@ -1463,7 +1467,8 @@ class OutputOperator(Operator):
     name
         Optional name of the operator.
     """
-    def __init__(self, operator_dict, coefficient_dict=None, non_linear_rules=None, solver_options=None, name=None):
+    def __init__(self, operator_dict, coefficient_dict=None,
+                 non_linear_rules=None, solver_options=None, name=None):
         assert operator_dict is not None
         assert isinstance(operator_dict, dict)
 
@@ -1471,21 +1476,27 @@ class OutputOperator(Operator):
             name = "OutputOperator"
 
         if coefficient_dict is not None:
-            self.operators = self._prepare_coefficient_dicts(operator_dict, coefficient_dict, solver_options, name)
+            self.operators = self._prepare_coefficient_dicts(
+                operator_dict, coefficient_dict, solver_options, name)
         else:
             self.operators = self._prepare_operator_dicts(operator_dict)
 
-        key_check = lambda key : True if len(self.operators) == 1 and key in self.operators else False
+        def key_check(key):
+            if len(self.operators) == 1 and key in self.operators:
+                return True
+            return False
         self.constant = key_check('constant')
         self.linear = key_check('linear')
         self.bilinear = key_check('bilinear')
-        self.non_linear = not self.constant and not self.linear and not self.bilinear
+        self.non_linear = not self.constant and not self.linear \
+            and not self.bilinear
 
         # check keyword sanity, and gather sources and ranges
         sources = {}
         ranges = {}
         for key in self.operators:
-            assert key in ('constant', 'linear', 'bilinear', 'non-linear'), f"Key '{key}' is not a valid key!"
+            assert key in ('constant', 'linear', 'bilinear', 'non-linear'), \
+                f"Key '{key}' is not a valid key!"
             sources[key] = self.operators[key].source
             ranges[key] = self.operators[key].range
 
@@ -1493,7 +1504,8 @@ class OutputOperator(Operator):
             if len(ranges.values()) == 1:
                 self.source = list(sources.values())[0]
             else:
-                assert all(list(sources.values())[0] == src for src in list(sources.values())[1:])
+                assert all(list(sources.values())[0] == src
+                           for src in list(sources.values())[1:])
                 self.source = list(sources.values())[0]
 
         # bilinear and non-linear terms do not necessarily need to specify the range of the output operator
@@ -1503,7 +1515,8 @@ class OutputOperator(Operator):
             elif 'non-linear' in ranges:
                 ranges['non-linear'] = NumpyVectorSpace(1)
 
-            assert all(list(sources.values())[0] == src for src in list(sources.values())[1:])
+            assert all(list(sources.values())[0] == src
+                       for src in list(sources.values())[1:])
             self.range = list(ranges.values())[0]
 
         # TODO: check for non-linear evaluation rules!
@@ -1511,7 +1524,8 @@ class OutputOperator(Operator):
         self.__auto_init(locals())
 
     def _prepare_operator_dicts(self, operator_dict):
-        """Prepares the `operator_dict` in the case that there are no coefficients being passed to the constructor.
+        """Prepares the `operator_dict` in the case that there are no coefficients
+        being passed to the constructor.
 
         Parameters
         ----------
@@ -1520,13 +1534,16 @@ class OutputOperator(Operator):
             See `operator_dict` of |OutputOperator|.
         """
         for key in operator_dict:
-            assert operator_dict[key] is not None, f"The key '{key}' does not contain any value!"
+            assert operator_dict[key] is not None, \
+                f"The key '{key}' does not contain any value!"
             assert isinstance(operator_dict[key], Operator)
 
         return operator_dict
 
-    def _prepare_coefficient_dicts(self, operator_dict, coefficient_dict, solver_options, name):
-        """Prepares the `operator_dict` and the `coefficient_dict` in the case that coefficients are being passed to the constructor.
+    def _prepare_coefficient_dicts(self, operator_dict, coefficient_dict,
+                                   solver_options, name):
+        """Prepares the `operator_dict` and the `coefficient_dict` in the case that
+        coefficients are being passed to the constructor.
 
         Parameters
         ----------
@@ -1542,26 +1559,39 @@ class OutputOperator(Operator):
             Name of |OutputOperator|.
         """
         assert isinstance(coefficient_dict, dict)
-        assert coefficient_dict is not None, "Expected dictionary with coefficients, got empty dictionaries"
+        assert coefficient_dict is not None, \
+            "Expected dictionary with coefficients, got empty dictionaries"
 
         ret_dict = {}
         keys = list(set().union(operator_dict, coefficient_dict))
         for key in keys:
-            assert key in operator_dict and key in coefficient_dict, f"Key '{key}' not in both dictionaries!"
-            assert operator_dict[key] is not None and coefficient_dict[key] is not None, f"The key '{key}' does not contain any value!"
+            assert key in operator_dict and key in coefficient_dict, \
+                f"Key '{key}' not in both dictionaries!"
+            assert operator_dict[key] is not None \
+                and coefficient_dict[key] is not None, \
+                f"The key '{key}' does not contain any value!"
 
-            ret_dict[key] = LincombOperator(operator_dict[key], coefficient_dict[key], solver_options=solver_options, name=name + '_' + key)
-        
+            ret_dict[key] = LincombOperator(
+                operator_dict[key], coefficient_dict[key],
+                solver_options=solver_options, name=name + '_' + key
+            )
+
         return ret_dict
 
     @property
     def H(self):
         options = {'inverse': self.solver_options.get('inverse_adjoint'),
-                   'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
-        H_ops = {key: self.operators[key].H if key in ('linear', 'constant') else self.operators[key] for key in self.operators} # TODO: change this to H bilinear ops to (and adjust other srcs&rges!)
-        return OutputOperator(H_ops, non_linear_rules=self.non_linear_rules, solver_options=options, name=self.name + '_adjoint')
+                   'inverse_adjoint': self.solver_options.get('inverse')} \
+                   if self.solver_options else None
+        # TODO: change this to H bilinear ops to (and adjust other srcs&rges!)
+        H_ops = {key: self.operators[key].H if key in ('linear', 'constant')
+                 else self.operators[key] for key in self.operators}
+        return OutputOperator(
+            H_ops, non_linear_rules=self.non_linear_rules,
+            solver_options=options, name=self.name + '_adjoint'
+        )
 
-    def _evaluate_const_part(self, mu=None):
+    def _eval_const_part(self, mu=None):
         """Evaluates the constant part of |OutputOperator|.
 
         Parameters
@@ -1575,7 +1605,7 @@ class OutputOperator(Operator):
             ret_val = self.operators['constant'].apply(src.ones(), mu)
         return ret_val
 
-    def _evaluate_lin_part(self, U, mu=None, adjoint=False):
+    def _eval_lin_part(self, U, mu=None, adjoint=False):
         """Evaluates the linear part of |OutputOperator|.
 
         Parameters
@@ -1595,8 +1625,9 @@ class OutputOperator(Operator):
                 ret_val = self.operators['linear'].apply(U, mu)
         return ret_val
 
-    def _evaluate_bilin_part(self, V, U, mu=None, adjoint=False, pairwise=False):
-        """Evaluates the bilinear part of |OutputOperator| via `apply2(V, U, mu)`, `pairwise_apply2(V, U, mu)`, or `apply_adjoint(V, mu)`.
+    def _eval_bilin_part(self, V, U, mu=None, adjoint=False, pairwise=False):
+        """Evaluates the bilinear part of |OutputOperator| via `apply2(V, U, mu)`,
+        `pairwise_apply2(V, U, mu)`, or `apply_adjoint(V, mu)`.
 
         Parameters
         ----------
@@ -1615,28 +1646,39 @@ class OutputOperator(Operator):
         assert not (adjoint and pairwise)
         if 'bilinear' in self.operators:
             if pairwise:
-                ret_val = NumpyVectorSpace(1).from_numpy(self.operators['bilinear'].pairwise_apply2(V, U, mu))
+                ret_val = NumpyVectorSpace(1).from_numpy(
+                    self.operators['bilinear'].pairwise_apply2(V, U, mu))
             elif adjoint:
-                ret_val = NumpyVectorSpace(1).from_numpy(self.operators['bilinear'].apply_adjoint(V, mu))
+                ret_val = NumpyVectorSpace(1).from_numpy(
+                    self.operators['bilinear'].apply_adjoint(V, mu))
             else:
-                ret_val = NumpyVectorSpace(1).from_numpy(self.operators['bilinear'].apply2(V, U, mu))
+                ret_val = NumpyVectorSpace(1).from_numpy(
+                    self.operators['bilinear'].apply2(V, U, mu))
         return ret_val
 
     def apply(self, U, mu=None):
         assert U in self.source
-        ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(U, mu) + self._evaluate_bilin_part(U, U, mu) # TODO: non-linear evaluation: + self._evaluate_non_lin_part(U, mu)
+        ret_val = self._eval_const_part(mu) + self._eval_lin_part(U, mu) \
+            + self._eval_bilin_part(U, U, mu)
+        # TODO: non-linear evaluation: + self._eval_non_lin_part(U, mu)
         return ret_val
 
     def apply2(self, V, U, mu=None):
         assert U in self.source
         assert V in self.source
         assert len(U) == len(V)
-        ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(U, mu) + self._evaluate_bilin_part(V, U, mu) # TODO: non-linear evaluation: + self._evaluate_non_lin_part(U, mu)
+        ret_val = self._eval_const_part(mu) + self._eval_lin_part(U, mu) \
+            + self._eval_bilin_part(V, U, mu)
+        # TODO: non-linear evaluation: + self._evaluate_non_lin_part(U, mu)
         return ret_val
 
     def assemble(self, mu=None):
-        assembled_ops = {key: self.operators[key].assemble(mu) for key in self.operators}
-        return OutputOperator(assembled_ops, non_linear_rules=self.non_linear_rules, solver_options=self.solver_options, name=self.name + '_assembled')
+        assembled_ops = {key: self.operators[key].assemble(mu)
+                         for key in self.operators}
+        return OutputOperator(
+            assembled_ops, non_linear_rules=self.non_linear_rules,
+            solver_options=self.solver_options, name=self.name + '_assembled'
+        )
 
     def jacobian(self, U, mu=None):
         jac_ops = {}
@@ -1645,44 +1687,66 @@ class OutputOperator(Operator):
         if 'linear' in self.operators:
             jac_ops['linear'] = self.operators['linear'].jacobian(U, mu)
         if 'bilinear' in self.operators:
-            bilin_op = 2. * VectorOperator(self.operators['bilinear'].apply_adjoint(U, mu), name=self.operators['bilinear'].name + '_jacobian').H 
+            bilin_op = VectorOperator(self.operators['bilinear'].apply_adjoint(
+                U, mu), name=self.operators['bilinear'].name + '_jacobian').H
+            bilin_op = 2. * bilin_op
             # bilinear jacobian part becomes linear (after first evaluation), so we need to safely add it into the linear operator
             if jac_ops.get('linear', None) is not None:
                 jac_ops['linear'] += bilin_op
             else:
                 jac_ops['linear'] = bilin_op
-        options = self.solver_options.get('jacobian') if self.solver_options else None
-        return OutputOperator(jac_ops, non_linear_rules=self.non_linear_rules, solver_options=options, name=self.name + '_jacobian')
+        options = self.solver_options.get('jacobian') if self.solver_options \
+            else None
+        return OutputOperator(
+            jac_ops, non_linear_rules=self.non_linear_rules,
+            solver_options=options, name=self.name + '_jacobian'
+        )
 
     def pairwise_apply2(self, V, U, mu=None):
         assert U in self.source
         assert V in self.range
         assert len(U) == len(V)
-        ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(U, mu) + self._evaluate_bilin_part(V, U, mu, pairwise=True) # TODO: non-linear evaluation: + self._evaluate_non_lin_part(U, mu)
+        ret_val = self._eval_const_part(mu) + self._eval_lin_part(U, mu) \
+            + self._eval_bilin_part(V, U, mu, pairwise=True)
+        # TODO: non-linear evaluation: + self._evaluate_non_lin_part(U, mu)
         return ret_val
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        ret_val = self._evaluate_const_part(mu) + self._evaluate_lin_part(V, mu, adjoint=True) + self._evaluate_bilin_part(V, U=None, adjoint=True) # TODO: non-linear evaluation: + self._evaluate_non_lin_part(V, mu)
+        ret_val = self._eval_const_part(mu) \
+            + self._eval_lin_part(V, mu, adjoint=True) + self._eval_bilin_part(
+                V, U=None, adjoint=True)
+        # TODO: non-linear evaluation: + self._evaluate_non_lin_part(V, mu)
         return ret_val
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, initial_guess=None,
+                      least_squares=False):
         if not self.linear:
             raise InversionError
-        return self.operators['linear'].apply_inverse(V, mu, initial_guess, least_squares)
+        return self.operators['linear'].apply_inverse(V, mu, initial_guess,
+                                                      least_squares)
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None,
+                              least_squares=False):
         if not self.linear:
             raise InversionError
-        return self.operators['linear'].apply_inverse_adjoint(U, mu, initial_guess, least_squares)
+        return self.operators['linear'].apply_inverse_adjoint(
+            U, mu, initial_guess, least_squares)
 
     def d_mu(self, parameter, index=0):
-        d_mu_ops = {key: self.operators[key].d_mu(parameter, index) for key in self.operators}
-        return OutputOperator(d_mu_ops, non_linear_rules=self.non_linear_rules, solver_options=self.solver_options, name=self.name + '_d_mu')
+        d_mu_ops = {key: self.operators[key].d_mu(parameter, index)
+                    for key in self.operators}
+        return OutputOperator(
+            d_mu_ops, non_linear_rules=self.non_linear_rules,
+            solver_options=self.solver_options, name=self.name + '_d_mu'
+        )
 
     def as_range_array(self, mu=None):
         one = self.source.ones()
-        ret_array = [self.operators[key].apply(one, mu) if key != 'bilinear' else self.range.from_numpy(self.operators[key].apply2(one, one, mu)) for key in self.operators]
+        ret_array = [
+            self.operators[key].apply(one, mu) if key != 'bilinear'
+            else self.range.from_numpy(self.operators[key].apply2(
+                one, one, mu)) for key in self.operators]
         R = ret_array[0]
         for v in ret_array[1:]:
             R.axpy(1, v)

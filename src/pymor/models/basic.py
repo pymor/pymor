@@ -118,22 +118,35 @@ class StationaryModel(Model):
         The gradient as a |NumPy array| or a dict of |NumPy arrays|.
         """
         if use_adjoint is None:
-            use_adjoint = (self.output_functional.linear or 'non-linear' not in getattr(self.output_functional, 'operators', ['non-linear'])) and self.operator.linear
+            use_adjoint = (
+                self.output_functional.linear
+                or 'non-linear' not in getattr(
+                    self.output_functional,
+                    'operators',
+                    ['non-linear']
+                )) and self.operator.linear
         if not use_adjoint:
             return super()._compute_output_d_mu(solution, mu, return_array)
         else:
             assert self.operator.linear
             dual_solutions = self.operator.range.empty()
             for d in range(self.output_functional.range.dim):
-                dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.jacobian(solution, mu).H.as_range_array(mu)[d])
+                dual_problem = self.with_(
+                    operator=self.operator.H,
+                    rhs=self.output_functional.jacobian(
+                        solution, mu).H.as_range_array(mu)[d]
+                )
                 dual_solutions.append(dual_problem.solve(mu))
             gradients = [] if return_array else {}
             for (parameter, size) in self.parameters.items():
                 result = []
                 for index in range(size):
-                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution, mu=mu).to_numpy()[0]
-                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu)[:, 0]
-                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:, 0]
+                    output_partial_dmu = self.output_functional.d_mu(
+                        parameter, index).apply(solution, mu=mu).to_numpy()[0]
+                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(
+                        dual_solutions, solution, mu=mu)[:, 0]
+                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(
+                        dual_solutions, mu=mu).to_numpy()[:, 0]
                     result.append(output_partial_dmu + rhs_d_mu - lhs_d_mu)
                 result = np.array(result)
                 if return_array:

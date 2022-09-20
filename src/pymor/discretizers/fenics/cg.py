@@ -145,7 +145,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preass
                 if isinstance(o[1], OutputOperator):
                     outputs.append(o[1])
                 else:
-                    raise NotImplementedError("The general output option expects a general output operator to be given. Please convert your input to such an operator!")
+                    raise NotImplementedError
         if len(outputs) > 1:
             output_functional = BlockColumnOperator(outputs)
             output_functional = NumpyConversionOperator(output_functional.range) @ output_functional

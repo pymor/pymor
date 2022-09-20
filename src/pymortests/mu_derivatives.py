@@ -324,19 +324,37 @@ def test_output_d_mu():
 
 
 def test_output_operator_d_mu():
-    from pymor.basic import RectDomain, ExpressionFunction, ConstantFunction, LincombFunction, StationaryProblem, discretize_stationary_cg
-    from pymor.operators.constructions import ConstantOperator, VectorFunctional
+    from pymor.basic import (RectDomain, ExpressionFunction, ConstantFunction,
+                             LincombFunction, StationaryProblem,
+                             discretize_stationary_cg)
+    from pymor.operators.constructions import (ConstantOperator,
+                                               VectorFunctional)
     from pymor.operators.numpy import NumpyMatrixOperator
 
     # generate data for the problems
-    domain = RectDomain(([-1,-1], [1,1]))
-    indicator_domain = ExpressionFunction('(-2/3. <= x[0]) * (x[0] <= -1/3.) * (-2/3. <= x[1]) * (x[1] <= -1/3.) * 1. + (-2/3. <= x[0]) * (x[0] <= -1/3.) *  (1/3. <= x[1]) * (x[1] <=  2/3.) * 1.', dim_domain=2)
+    domain = RectDomain(([-1, -1], [1, 1]))
+    indicator_domain = ExpressionFunction(
+                '(-2/3. <= x[0]) * (x[0] <= -1/3.) * (-2/3. <= x[1]) * \
+                 (x[1] <= -1/3.) * 1. + (-2/3. <= x[0]) * (x[0] <= -1/3.) \
+                 *  (1/3. <= x[1]) * (x[1] <=  2/3.) * 1.', dim_domain=2)
     rest_of_domain = ConstantFunction(1, 2) - indicator_domain
     parameters = {'diffusion': 2}
-    thetas = [ExpressionParameterFunctional('1.1 + sin(diffusion[0])*diffusion[1]', parameters, derivative_expressions={'diffusion': ['cos(diffusion[0])*diffusion[1]', 'sin(diffusion[0])']}), ExpressionParameterFunctional('1.1 + sin(diffusion[1])', parameters, derivative_expressions={'diffusion': ['0', 'cos(diffusion[1])']}),]
+    thetas = [
+        ExpressionParameterFunctional(
+            '1.1 + sin(diffusion[0])*diffusion[1]', parameters,
+            derivative_expressions={
+                'diffusion': ['cos(diffusion[0])*diffusion[1]',
+                              'sin(diffusion[0])']}),
+        ExpressionParameterFunctional(
+            '1.1 + sin(diffusion[1])', parameters,
+            derivative_expressions={'diffusion': ['0',
+                                                  'cos(diffusion[1])']}), ]
     diffusion = LincombFunction([rest_of_domain, indicator_domain], thetas)
-    theta_J = ExpressionParameterFunctional('1 + 1/5 * diffusion[0] + 1/5 * diffusion[1]', parameters, derivative_expressions={'diffusion': ['1/5','1/5']})
-    l = ExpressionFunction('0.5*pi*pi*cos(0.5*pi*x[0])*cos(0.5*pi*x[1])', dim_domain=2)
+    theta_J = ExpressionParameterFunctional(
+        '1 + 1/5 * diffusion[0] + 1/5 * diffusion[1]', parameters,
+        derivative_expressions={'diffusion': ['1/5', '1/5']})
+    l = ExpressionFunction('0.5*pi*pi*cos(0.5*pi*x[0])*cos(0.5*pi*x[1])',
+                           dim_domain=2)
 
     # generate fundamental operators for the output operators
     space = NumpyVectorSpace(221, id='STATE')
@@ -346,29 +364,58 @@ def test_output_operator_d_mu():
     lin_vec = space.ones()
     lin_op = VectorFunctional(lin_vec)
     bilin_matrix = np.eye(space.dim)
-    bilin_op = NumpyMatrixOperator(bilin_matrix, source_id='STATE', range_id='STATE')
+    bilin_op = NumpyMatrixOperator(bilin_matrix, source_id='STATE',
+                                   range_id='STATE')
 
     # generate list of output operators
     ops = []
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]}, {'constant': [1.], 'linear': [1.], 'bilinear': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op]}, {'constant': [1.], 'linear': [1.]}))
+    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+                              'bilinear': [bilin_op]}, {'constant': [1.],
+                              'linear': [1.], 'bilinear': [1.]}))
+    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op]},
+                              {'constant': [1.], 'linear': [1.]}))
     ops.append(OutputOperator({'constant': [const_op]}, {'constant': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'bilinear': [bilin_op]}, {'constant': [1.], 'bilinear': [1.]}))
-    ops.append(OutputOperator({'linear': [lin_op], 'bilinear': [bilin_op]}, {'linear': [1.], 'bilinear': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]}, {'constant': [theta_J], 'linear': [1.], 'bilinear': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]}, {'constant': [1.], 'linear': [theta_J], 'bilinear': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]}, {'constant': [1.], 'linear': [1.], 'bilinear': [theta_J]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]}, {'constant': [theta_J], 'linear': [.5*theta_J], 'bilinear': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]}, {'constant': [theta_J], 'linear': [1.], 'bilinear': [.5*theta_J]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]}, {'constant': [1.], 'linear': [theta_J], 'bilinear': [.5*theta_J]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]}, {'constant': [.5*theta_J], 'linear': [theta_J], 'bilinear': [1.]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]}, {'constant': [1.], 'linear': [.5*theta_J], 'bilinear': [theta_J]}))
-    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]}, {'constant': [theta_J], 'linear': [.5*theta_J], 'bilinear': [theta_J]}))
+    ops.append(OutputOperator({'constant': [const_op], 'bilinear': [bilin_op]},
+                              {'constant': [1.], 'bilinear': [1.]}))
+    ops.append(OutputOperator({'linear': [lin_op], 'bilinear': [bilin_op]},
+                              {'linear': [1.], 'bilinear': [1.]}))
+    ops.append(OutputOperator({'linear': [lin_op]}, {'linear': [1.]}))
+    ops.append(OutputOperator({'bilinear': [bilin_op]}, {'bilinear': [1.]}))
+    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+                              'bilinear': [bilin_op]}, {'constant': [theta_J],
+                              'linear': [1.], 'bilinear': [1.]}))
+    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+                              'bilinear': [bilin_op]}, {'constant': [1.],
+                              'linear': [theta_J], 'bilinear': [1.]}))
+    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+                              'bilinear': [bilin_op]}, {'constant': [1.],
+                              'linear': [1.], 'bilinear': [theta_J]}))
+    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+                              'bilinear': [bilin_op]}, {'constant': [theta_J],
+                              'linear': [.5*theta_J], 'bilinear': [1.]}))
+    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+                              'bilinear': [bilin_op]}, {'constant': [theta_J],
+                              'linear': [1.], 'bilinear': [.5*theta_J]}))
+    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+                              'bilinear': [bilin_op]}, {'constant': [1.],
+                              'linear': [theta_J], 'bilinear': [.5*theta_J]}))
+    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+                              'bilinear': [bilin_op]},
+                              {'constant': [.5*theta_J], 'linear': [theta_J],
+                              'bilinear': [1.]}))
+    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+                              'bilinear': [bilin_op]}, {'constant': [1.],
+                              'linear': [.5*theta_J], 'bilinear': [theta_J]}))
+    ops.append(OutputOperator({'constant': [const_op], 'linear': [lin_op],
+                              'bilinear': [bilin_op]}, {'constant': [theta_J],
+                              'linear': [.5*theta_J], 'bilinear': [theta_J]}))
 
     def _run_test_on_op(op):
         grid_intervals = 10
-        problem = StationaryProblem(domain, l, diffusion, outputs=[('general', op)])
-        fom, _ = discretize_stationary_cg(problem, diameter=2. / grid_intervals)
+        problem = StationaryProblem(domain, l, diffusion,
+                                    outputs=[('general', op)])
+        fom, _ = discretize_stationary_cg(problem,
+                                          diameter=2. / grid_intervals)
 
         parameter_space = fom.parameters.space(0, np.pi)
         training_samples = 3
@@ -376,13 +423,19 @@ def test_output_operator_d_mu():
 
         for mu in training_set:
             mu = fom.parameters.parse([0., 0.])
-            gradient_with_sensitivities = fom.output_d_mu(mu, return_array=True, use_adjoint=False)
-            gradient_with_adjoint_approach = fom.output_d_mu(mu, return_array=True, use_adjoint=True)
-            assert np.allclose(gradient_with_adjoint_approach, gradient_with_sensitivities)
+            gradient_with_sensitivities = fom.output_d_mu(
+                mu, return_array=True, use_adjoint=False)
+            gradient_with_adjoint_approach = fom.output_d_mu(
+                mu, return_array=True, use_adjoint=True)
+            assert np.allclose(gradient_with_adjoint_approach,
+                               gradient_with_sensitivities)
 
-            complex_fom = fom.with_(operator=fom.operator.with_(operators=[op * (1+2j) for op in fom.operator.operators]))
-            complex_gradient_adjoint = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=True)
-            complex_gradient = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=False)
+            complex_fom = fom.with_(operator=fom.operator.with_(
+                operators=[op * (1+2j) for op in fom.operator.operators]))
+            complex_gradient_adjoint = complex_fom.output_d_mu(
+                mu, return_array=True, use_adjoint=True)
+            complex_gradient = complex_fom.output_d_mu(
+                mu, return_array=True, use_adjoint=False)
             assert np.allclose(complex_gradient_adjoint, complex_gradient)
 
     for op in ops:
