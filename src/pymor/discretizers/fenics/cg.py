@@ -143,8 +143,6 @@ def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preass
                 )
             else:
                 if isinstance(o[1], OutputOperator):
-                    outputs.append(o[1])
-                else:
                     raise NotImplementedError
         if len(outputs) > 1:
             output_functional = BlockColumnOperator(outputs)
