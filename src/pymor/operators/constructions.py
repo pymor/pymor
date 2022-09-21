@@ -1686,9 +1686,12 @@ class OutputFunctional(Operator):
         if 'linear' in self.operators:
             jac_ops['linear'] = self.operators['linear'].jacobian(U, mu)
         if 'bilinear' in self.operators:
-            bilin_op = VectorOperator(self.operators['bilinear'].apply_adjoint(
+            # apply op normally and adjoint because of \partial_u k(u, u)[w] = k(w, u) + k(u, w) \neq 2 k(u, w) unless k symmetric
+            bilin_op_1 = VectorOperator(self.operators['bilinear'].apply_adjoint(
                 U, mu), name=self.operators['bilinear'].name + '_jacobian').H
-            bilin_op = 2. * bilin_op
+            bilin_op_2 = VectorOperator(self.operators['bilinear'].apply(
+                U, mu), name=self.operators['bilinear'].name + '_jacobian').H
+            bilin_op = bilin_op_1 + bilin_op_2
             # bilinear jacobian part becomes linear (after first evaluation), so we need to safely add it into the linear operator
             if jac_ops.get('linear', None) is not None:
                 jac_ops['linear'] += bilin_op
