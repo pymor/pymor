@@ -18,8 +18,7 @@ dependencies:
   - gmsh
   - ipyparallel>=6.2.5
   - ipython>=5.0
-  - ipywidgets<8,>7
-  - jupyter_client>=7.0.6
+  - ipywidgets
   - jupyter_contrib_nbextensions
   - lxml
   - matplotlib
@@ -44,7 +43,7 @@ dependencies:
   - pytest==7.1.2
   - python-gmsh
   - python-slugify
-  - pythreejs
+  - pythreejs>=2.4.1
   - qtpy>2.0
   - rstcheck==6.0.0.post1
   - scipy>=1.3
