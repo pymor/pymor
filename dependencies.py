@@ -36,8 +36,6 @@ def setup_requires():
     ]
 
 
-# recheck if jupyter_client pin still necessary
-#   https://github.com/jupyter-widgets/pythreejs/issues/366
 # Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
 # ipywidget pin is due to https://github.com/pymor/pymor/issues/1717
 install_requires = ['qtpy>2.0', 'packaging', 'diskcache', 'typer', 'click'] + _numpy_scipy()
@@ -48,8 +46,7 @@ install_suggests = {
     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
     'sympy': 'symbolic mathematics',
     'pygments': 'highlighting code',
-    'pythreejs': 'threejs bindings for python notebook  visualization',
-    'jupyter_client>=7.0.6': 'necessary to explicitly state here to fix 3js',
+    'pythreejs>=2.4.1': 'threejs bindings for python notebook  visualization',
     _PYTEST: 'testing framework required to execute unit tests',
     _PYSIDE: 'solution visualization for builtin discretizations',
     'ipywidgets<8,>7': 'notebook GUI elements',
