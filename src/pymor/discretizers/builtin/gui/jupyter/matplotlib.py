@@ -1,9 +1,11 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+import ipywidgets
 import numpy as np
 from ipywidgets import widgets
 import matplotlib.pyplot as plt
+from packaging.version import parse
 
 from pymor.core.config import config
 from pymor.discretizers.builtin.gui.matplotlib_base import MatplotlibPatchAxes, Matplotlib1DAxes
@@ -86,7 +88,10 @@ class MPLPlotBase:
             # avoids figure double display
             plt.close()
             # IPython display system checks for presence and calls this func
-            self._ipython_display_ = self._out._ipython_display_
+            if parse(ipywidgets.__version__) < parse("8.0.0"):
+                self._ipython_display_ = self._out._ipython_display_
+            else:
+                self._repr_mimebundle_ = self._out._repr_mimebundle_
 
 
 def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None,
