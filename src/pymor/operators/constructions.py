@@ -1701,37 +1701,6 @@ class OutputFunctional(Operator):
             solver_options=options, name=self.name + '_jacobian'
         )
 
-    def pairwise_apply2(self, V, U, mu=None):
-        assert U in self.source
-        assert V in self.range
-        assert len(U) == len(V)
-        ret_val = self._eval_const_part(mu) + self._eval_lin_part(U, mu) \
-            + self._eval_bilin_part(V, U, mu, pairwise=True)
-        # TODO: non-linear evaluation: + self._evaluate_non_lin_part(U, mu)
-        return ret_val
-
-    def apply_adjoint(self, V, mu=None):
-        assert V in self.range
-        ret_val = self._eval_const_part(mu) \
-            + self._eval_lin_part(V, mu, adjoint=True) + self._eval_bilin_part(
-                V, U=None, adjoint=True)
-        # TODO: non-linear evaluation: + self._evaluate_non_lin_part(V, mu)
-        return ret_val
-
-    def apply_inverse(self, V, mu=None, initial_guess=None,
-                      least_squares=False):
-        if not self.linear:
-            raise InversionError
-        return self.operators['linear'].apply_inverse(V, mu, initial_guess,
-                                                      least_squares)
-
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None,
-                              least_squares=False):
-        if not self.linear:
-            raise InversionError
-        return self.operators['linear'].apply_inverse_adjoint(
-            U, mu, initial_guess, least_squares)
-
     def d_mu(self, parameter, index=0):
         d_mu_ops = {key: self.operators[key].d_mu(parameter, index)
                     for key in self.operators}
@@ -1751,9 +1720,3 @@ class OutputFunctional(Operator):
             R.axpy(1, v)
         return R
 
-    def as_source_array(self, mu=None):
-        ret_array = [op.as_source_array(mu) for op in self.operators.values()]
-        R = ret_array[0]
-        for v in ret_array[1:]:
-            R.axpy(1, v)
-        return R
