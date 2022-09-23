@@ -1582,9 +1582,7 @@ class OutputFunctional(Operator):
         options = {'inverse': self.solver_options.get('inverse_adjoint'),
                    'inverse_adjoint': self.solver_options.get('inverse')} \
                    if self.solver_options else None
-        # TODO: change this to H bilinear ops to (and adjust other srcs&rges!)
-        H_ops = {key: self.operators[key].H if key in ('linear', 'constant')
-                 else self.operators[key] for key in self.operators}
+        H_ops = {key: self.operators[key].H for key in self.operators}
         return OutputFunctional(
             H_ops, non_linear_rules=self.non_linear_rules,
             solver_options=options, name=self.name + '_adjoint'
@@ -1714,12 +1712,6 @@ class OutputFunctional(Operator):
 
     def as_range_array(self, mu=None):
         one = self.source.ones()
-        ret_array = [
-            self.operators[key].apply(one, mu) if key != 'bilinear'
-            else self.range.from_numpy(self.operators[key].apply2(
-                one, one, mu)) for key in self.operators]
-        R = ret_array[0]
-        for v in ret_array[1:]:
-            R.axpy(1, v)
+        R = self.apply(one, mu)
         return R
 
