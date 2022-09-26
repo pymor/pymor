@@ -9,13 +9,178 @@ from scipy.sparse.linalg import LinearOperator, eigsh
 from scipy.special import erfinv
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.core.cache import CacheableObject, cached
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
 from pymor.operators.interface import Operator
+from pymor.tools.deprecated import Deprecated
+from pymor.tools.random import get_seed_seq, new_rng
+
+
+class RandomizedRangeFinder(CacheableObject):
+    def __init__(self, A, subspace_iterations=0, range_product=None, source_product=None, lambda_min=None,
+                 complex=False):
+        assert isinstance(A, Operator)
+        if range_product is None:
+            range_product = IdentityOperator(A.range)
+        else:
+            assert isinstance(range_product, Operator)
+
+        if source_product is None:
+            source_product = IdentityOperator(A.source)
+        else:
+            assert isinstance(source_product, Operator)
+
+        assert 0 <= subspace_iterations and isinstance(subspace_iterations, int)
+        assert isinstance(complex, bool)
+
+        self.__auto_init(locals())
+        self._l = 0
+        self._Q = [self.A.range.empty()]
+        for _ in range(subspace_iterations):
+            self._Q.append(self.A.source.empty())
+            self._Q.append(self.A.range.empty())
+        self._Q = tuple(self._Q)
+        self.testvecs = self.A.source.empty()
+        self._basis_rng_real = new_rng(get_seed_seq().spawn(1)[0])
+        self._test_rng_real = new_rng(get_seed_seq().spawn(1)[0])
+        if complex:
+            self._basis_rng_imag = new_rng(get_seed_seq().spawn(1)[0])
+            self._test_rng_imag = new_rng(get_seed_seq().spawn(1)[0])
+
+    @cached
+    def _lambda_min(self):
+        if isinstance(self.source_product, IdentityOperator):
+            return 1
+        elif self.lambda_min is None:
+            with self.logger.block('Estimating minimum singular value of source_product...'):
+                def mv(v):
+                    return self.source_product.apply(self.source_product.source.from_numpy(v)).to_numpy()
+
+                def mvinv(v):
+                    return self.source_product.apply_inverse(self.source_product.range.from_numpy(v)).to_numpy()
+                L = LinearOperator((self.source_product.source.dim, self.source_product.range.dim), matvec=mv)
+                Linv = LinearOperator((self.source_product.range.dim, self.source_product.source.dim), matvec=mvinv)
+                return eigsh(L, sigma=0, which="LM", return_eigenvectors=False, k=1, OPinv=Linv)[0]
+        else:
+            return self.lambda_min
+
+    def _draw_test_vector(self, n):
+        with self._test_rng_real:
+            W = self.A.source.random(n, distribution='normal')
+            if self.complex:
+                with self._test_rng_imag:
+                    W += 1j * self.A.source.random(n, distribution='normal')
+        self.testvecs.append(self.A.apply(W))
+
+    def _maxnorm(self, basis_size, num_testvecs):
+        if len(self.testvecs) < num_testvecs:
+            self._draw_test_vector(num_testvecs - len(self.testvecs))
+
+        W, Q = self.testvecs[:num_testvecs].copy(), self._find_range(basis_size=basis_size, tol=None)
+        W -= Q.lincomb(Q.inner(W, self.range_product).T)
+        return np.max(W.norm(self.range_product))
+
+    @cached
+    def _c_est(self, num_testvecs, p_fail):
+        c = np.sqrt(2 * self._lambda_min()) \
+            * erfinv((p_fail / min(self.A.source.dim, self.A.range.dim)) ** (1 / num_testvecs))
+        return 1 / c
+
+    def estimate_error(self, basis_size, num_testvecs=20, p_fail=1e-14):
+        assert isinstance(basis_size, int) and basis_size > 0
+        if basis_size > min(self.A.source.dim, self.A.range.dim):
+            self.logger.warning('Requested basis is larger than the rank of the operator!')
+            self.logger.info('Proceeding with maximum operator rank...')
+            basis_size = min(self.A.source.dim, self.A.range.dim)
+        assert 0 < num_testvecs and isinstance(num_testvecs, int)
+        assert 0 < p_fail
+
+        err = self._c_est(num_testvecs, p_fail) * self._maxnorm(basis_size, num_testvecs)
+        self.logger.info(f'estimated error: {err:.10f}')
+
+        return err
+
+    def _extend_basis(self, n=1):
+        self.logger.info(f'Appending {n} basis vector{"s" if n > 1 else ""}.')
+
+        with self._basis_rng_real:
+            W = self.A.source.random(n, distribution='normal')
+        if self.complex:
+            with self._basis_rng_imag:
+                W += 1j * self.A.source.random(n, distribution='normal')
+
+        self._Q[0].append(self.A.apply(W))
+        gram_schmidt(self._Q[0], self.range_product, offset=self._l, copy=False)
+
+        for i in range(self.subspace_iterations):
+            i = 2*i + 1
+            self._Q[i].append(self.source_product.apply_inverse(
+                (self.A.apply_adjoint(self.range_product.apply(self._Q[i-1][-n:])))))
+            gram_schmidt(self._Q[i], self.source_product, offset=self._l, copy=False)
+            self._Q[i+1].append(self.A.apply(self._Q[i][-n:]))
+            gram_schmidt(self._Q[i+1], self.range_product, offset=self._l, copy=False)
+
+        self._l += n
+
+    def _find_range(self, basis_size=8, tol=None, num_testvecs=20, p_fail=1e-14, block_size=8, increase_block=True,
+                    max_basis_size=500):
+        if basis_size > self._l:
+            self._extend_basis(basis_size - self._l)
+
+        if tol is not None and self.estimate_error(basis_size, num_testvecs, p_fail) > tol:
+            with self.logger.block('Extending range basis adaptively...'):
+                max_iter = min(max_basis_size, self.A.source.dim, self.A.range.dim)
+                while self._l < max_iter:
+                    if increase_block:
+                        low = basis_size
+                        basis_size += block_size
+                        block_size *= 2
+                    else:
+                        basis_size += block_size
+                    basis_size = min(basis_size, max_iter)
+                    if self.estimate_error(basis_size, num_testvecs, p_fail) <= tol:
+                        break
+            if increase_block:
+                with self.logger.block('Contracting range basis...'):
+                    high = basis_size
+                    while True:
+                        mid = high - (high - low) // 2
+                        if basis_size == mid:
+                            break
+                        basis_size = mid
+                        err = self.estimate_error(basis_size, num_testvecs, p_fail)
+                        if err <= tol:
+                            high = mid
+                        else:
+                            low = mid
+
+        return self._Q[-1][:basis_size]
+
+    def find_range(self, basis_size=8, tol=None, num_testvecs=20, p_fail=1e-14, block_size=8, increase_block=True,
+                   max_basis_size=500):
+        assert isinstance(basis_size, int) and basis_size > 0
+        if basis_size > min(self.A.source.dim, self.A.range.dim):
+            self.logger.warning('Requested basis is larger than the rank of the operator!')
+            self.logger.info('Proceeding with maximum operator rank...')
+            basis_size = min(self.A.source.dim, self.A.range.dim)
+        assert tol is None or tol > 0
+        assert isinstance(num_testvecs, int) and num_testvecs > 0
+        assert p_fail > 0
+        assert isinstance(block_size, int) and block_size > 0
+        assert isinstance(increase_block, bool)
+        assert isinstance(max_basis_size, int) and max_basis_size > 0
+
+        with self.logger.block('Finding range...'):
+            Q = self._find_range(basis_size=basis_size, tol=tol, num_testvecs=num_testvecs, p_fail=p_fail,
+                                 block_size=block_size, increase_block=increase_block, max_basis_size=max_basis_size)
+            self.logger.info(f'Found range of dimension {len(Q)}.')
+        return Q
 
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
+@Deprecated
 def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
                  failure_tolerance=1e-15, num_testvecs=20, lambda_min=None, iscomplex=False):
     r"""Adaptive randomized range approximation of `A`.
@@ -57,47 +222,13 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     B
         |VectorArray| which contains the basis, whose span approximates the range of A.
     """
-    assert source_product is None or isinstance(source_product, Operator)
-    assert range_product is None or isinstance(range_product, Operator)
-    assert isinstance(A, Operator)
-
-    B = A.range.empty()
-
-    R = A.source.random(num_testvecs, distribution='normal')
-    if iscomplex:
-        R += 1j*A.source.random(num_testvecs, distribution='normal')
-
-    if source_product is None:
-        lambda_min = 1
-    elif lambda_min is None:
-        def mv(v):
-            return source_product.apply(source_product.source.from_numpy(v)).to_numpy()
-
-        def mvinv(v):
-            return source_product.apply_inverse(source_product.range.from_numpy(v)).to_numpy()
-        L = LinearOperator((source_product.source.dim, source_product.range.dim), matvec=mv)
-        Linv = LinearOperator((source_product.range.dim, source_product.source.dim), matvec=mvinv)
-        lambda_min = eigsh(L, sigma=0, which='LM', return_eigenvectors=False, k=1, OPinv=Linv)[0]
-
-    testfail = failure_tolerance / min(A.source.dim, A.range.dim)
-    testlimit = np.sqrt(2. * lambda_min) * erfinv(testfail**(1. / num_testvecs)) * tol
-    maxnorm = np.inf
-    M = A.apply(R)
-
-    while maxnorm > testlimit:
-        basis_length = len(B)
-        v = A.source.random(distribution='normal')
-        if iscomplex:
-            v += 1j*A.source.random(distribution='normal')
-        B.append(A.apply(v))
-        gram_schmidt(B, range_product, atol=0, rtol=0, offset=basis_length, copy=False)
-        M -= B.lincomb(B.inner(M, range_product).T)
-        maxnorm = np.max(M.norm(range_product))
-
-    return B
+    RRF = RandomizedRangeFinder(A, subspace_iterations=0, source_product=source_product, range_product=range_product,
+                                lambda_min=lambda_min, complex=iscomplex)
+    return RRF.find_range(basis_size=1, tol=tol, num_testvecs=num_testvecs, p_fail=failure_tolerance)
 
 
 @defaults('q', 'l')
+@Deprecated
 def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False, iscomplex=False):
     r"""Randomized range approximation of `A`.
 
@@ -130,38 +261,11 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     R
         The randomly sampled |VectorArray| (if `return_rand` is `True`).
     """
-    assert isinstance(A, Operator)
-
-    if range_product is None:
-        range_product = IdentityOperator(A.range)
-    else:
-        assert isinstance(range_product, Operator)
-
-    if source_product is None:
-        source_product = IdentityOperator(A.source)
-    else:
-        assert isinstance(source_product, Operator)
-
-    assert 0 <= l <= min(A.source.dim, A.range.dim) and isinstance(l, int)
-    assert q >= 0 and isinstance(q, int)
-
-    R = A.source.random(l, distribution='normal')
-
-    if iscomplex:
-        R += 1j*A.source.random(l, distribution='normal')
-
-    Q = A.apply(R)
-    gram_schmidt(Q, range_product, atol=0, rtol=0, copy=False)
-
-    for i in range(q):
-        Q = A.apply_adjoint(range_product.apply(Q))
-        Q = source_product.apply_inverse(Q)
-        gram_schmidt(Q, source_product, atol=0, rtol=0, copy=False)
-        Q = A.apply(Q)
-        gram_schmidt(Q, range_product, atol=0, rtol=0, copy=False)
-
+    RRF = RandomizedRangeFinder(A, subspace_iterations=q, source_product=source_product, range_product=range_product,
+                                complex=iscomplex)
+    Q = RRF.find_range(basis_size=l, tol=None)
     if return_rand:
-        return Q, R
+        return Q, RRF.testvecs
     else:
         return Q
 
@@ -239,7 +343,9 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
     if A.source.dim == 0 or A.range.dim == 0:
         return A.source.empty(), np.array([]), A.range.empty()
 
-    Q = rrf(A, source_product=source_product, range_product=range_product, q=q, l=modes+p)
+    RRF = RandomizedRangeFinder(A, subspace_iterations=q, source_product=source_product, range_product=range_product)
+    Q = RRF.find_range(basis_size=modes+p)
+
     B = A.apply_adjoint(range_product.apply(Q))
     Q_B, R_B = gram_schmidt(source_product.apply_inverse(B), product=source_product, return_R=True)
     U_b, s, Vh_b = sp.linalg.svd(R_B.T, full_matrices=False)
