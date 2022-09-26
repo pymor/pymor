@@ -1,4 +1,4 @@
-# Contributor Covenant Code of Conduct
+# pyMOR Code of Conduct
 
 ## Our Pledge
 
