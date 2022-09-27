@@ -180,7 +180,7 @@ class RandomizedRangeFinder(CacheableObject):
 
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
-@Deprecated
+@Deprecated('RandomizedRangeFinder')
 def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
                  failure_tolerance=1e-15, num_testvecs=20, lambda_min=None, iscomplex=False):
     r"""Adaptive randomized range approximation of `A`.
@@ -228,7 +228,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
 
 
 @defaults('q', 'l')
-@Deprecated
+@Deprecated('RandomizedRangeFinder')
 def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False, iscomplex=False):
     r"""Randomized range approximation of `A`.
 
