@@ -68,7 +68,7 @@ def _launch_qt_app(main_window_factory, block):
             ip = None
         if ip is None:
             logger = getLogger('pymor.discretizers.builtin.gui.qt')
-            logger.warn('Not running within IPython. Falling back to blocking visualization.')
+            logger.warning('Not running within IPython. Falling back to blocking visualization.')
             block = True
         else:
             ip.run_line_magic('gui', 'qt')
