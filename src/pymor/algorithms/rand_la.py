@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from numbers import Number
 import numpy as np
 import scipy as sp
 from scipy.linalg import lu_factor, lu_solve
@@ -15,24 +16,28 @@ from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
 from pymor.operators.interface import Operator
 from pymor.tools.deprecated import Deprecated
+<<<<<<< HEAD
 from pymor.tools.random import get_seed_seq, new_rng
+=======
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+>>>>>>> ebe4ccd96 ([rand_la] even more refactoring)
 
 
 class RandomizedRangeFinder(CacheableObject):
     def __init__(self, A, subspace_iterations=0, range_product=None, source_product=None, lambda_min=None,
                  complex=False):
         assert isinstance(A, Operator)
+        assert 0 <= subspace_iterations and isinstance(subspace_iterations, int)
         if range_product is None:
             range_product = IdentityOperator(A.range)
-        else:
-            assert isinstance(range_product, Operator)
 
         if source_product is None:
             source_product = IdentityOperator(A.source)
-        else:
-            assert isinstance(source_product, Operator)
-
-        assert 0 <= subspace_iterations and isinstance(subspace_iterations, int)
+        assert isinstance(range_product, Operator)
+        assert source_product.source == source_product.range == A.source
+        assert isinstance(source_product, Operator)
+        assert source_product.source == source_product.range == A.source
+        assert lambda_min is None or isinstance(lambda_min, Number)
         assert isinstance(complex, bool)
 
         self.__auto_init(locals())
@@ -69,9 +74,9 @@ class RandomizedRangeFinder(CacheableObject):
     def _draw_test_vector(self, n):
         with self._test_rng_real:
             W = self.A.source.random(n, distribution='normal')
-            if self.complex:
-                with self._test_rng_imag:
-                    W += 1j * self.A.source.random(n, distribution='normal')
+        if self.complex:
+            with self._test_rng_imag:
+                W += 1j * self.A.source.random(n, distribution='normal')
         self.testvecs.append(self.A.apply(W))
 
     def _maxnorm(self, basis_size, num_testvecs):
@@ -102,14 +107,14 @@ class RandomizedRangeFinder(CacheableObject):
 
         return err
 
-    def _extend_basis(self, n=1):
-        self.logger.info(f'Appending {n} basis vector{"s" if n > 1 else ""}.')
+    def _extend_basis(self, k=1):
+        self.logger.info(f'Appending {k} basis vector{"s" if k > 1 else ""}.')
 
         with self._basis_rng_real:
-            W = self.A.source.random(n, distribution='normal')
+            W = self.A.source.random(k, distribution='normal')
         if self.complex:
             with self._basis_rng_imag:
-                W += 1j * self.A.source.random(n, distribution='normal')
+                W += 1j * self.A.source.random(k, distribution='normal')
 
         self._Q[0].append(self.A.apply(W))
         gram_schmidt(self._Q[0], self.range_product, offset=self._l, copy=False)
@@ -117,12 +122,12 @@ class RandomizedRangeFinder(CacheableObject):
         for i in range(self.subspace_iterations):
             i = 2*i + 1
             self._Q[i].append(self.source_product.apply_inverse(
-                (self.A.apply_adjoint(self.range_product.apply(self._Q[i-1][-n:])))))
+                (self.A.apply_adjoint(self.range_product.apply(self._Q[i-1][-k:])))))
             gram_schmidt(self._Q[i], self.source_product, offset=self._l, copy=False)
-            self._Q[i+1].append(self.A.apply(self._Q[i][-n:]))
+            self._Q[i+1].append(self.A.apply(self._Q[i][-k:]))
             gram_schmidt(self._Q[i+1], self.range_product, offset=self._l, copy=False)
 
-        self._l += n
+        self._l += k
 
     def _find_range(self, basis_size=8, tol=None, num_testvecs=20, p_fail=1e-14, block_size=8, increase_block=True,
                     max_basis_size=500):
@@ -158,8 +163,8 @@ class RandomizedRangeFinder(CacheableObject):
 
         return self._Q[-1][:basis_size]
 
-    def find_range(self, basis_size=8, tol=None, num_testvecs=20, p_fail=1e-14, block_size=8, increase_block=True,
-                   max_basis_size=500):
+    def find_range(self, basis_size=8, tol=None, num_testvecs=20, p_fail=1e-14, block_size=8,
+                   increase_block=True, max_basis_size=500):
         assert isinstance(basis_size, int) and basis_size > 0
         if basis_size > min(self.A.source.dim, self.A.range.dim):
             self.logger.warning('Requested basis is larger than the rank of the operator!')
@@ -181,7 +186,7 @@ class RandomizedRangeFinder(CacheableObject):
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
 @Deprecated('RandomizedRangeFinder')
-def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
+def adaptive_rrf(A, range_product=None, source_product=None, tol=1e-4,
                  failure_tolerance=1e-15, num_testvecs=20, lambda_min=None, iscomplex=False):
     r"""Adaptive randomized range approximation of `A`.
 
@@ -201,10 +206,10 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     ----------
     A
         The |Operator| A.
-    source_product
-        Inner product |Operator| of the source of A.
     range_product
         Inner product |Operator| of the range of A.
+    source_product
+        Inner product |Operator| of the source of A.
     tol
         Error tolerance for the algorithm.
     failure_tolerance
@@ -222,14 +227,14 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     B
         |VectorArray| which contains the basis, whose span approximates the range of A.
     """
-    RRF = RandomizedRangeFinder(A, subspace_iterations=0, source_product=source_product, range_product=range_product,
+    RRF = RandomizedRangeFinder(A, subspace_iterations=0, range_product=range_product, source_product=source_product,
                                 lambda_min=lambda_min, complex=iscomplex)
     return RRF.find_range(basis_size=1, tol=tol, num_testvecs=num_testvecs, p_fail=failure_tolerance)
 
 
 @defaults('q', 'l')
 @Deprecated('RandomizedRangeFinder')
-def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False, iscomplex=False):
+def rrf(A, range_product=None, source_product=None, q=2, l=8, return_rand=False, iscomplex=False):
     r"""Randomized range approximation of `A`.
 
     Given the |Operator| `A`, the return value of this method is the |VectorArray|
@@ -241,10 +246,10 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     ----------
     A
         The |Operator| A.
-    source_product
-        Inner product |Operator| of the source of A.
     range_product
         Inner product |Operator| of the range of A.
+    source_product
+        Inner product |Operator| of the source of A.
     q
         The number of power iterations.
     l
@@ -261,7 +266,7 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     R
         The randomly sampled |VectorArray| (if `return_rand` is `True`).
     """
-    RRF = RandomizedRangeFinder(A, subspace_iterations=q, source_product=source_product, range_product=range_product,
+    RRF = RandomizedRangeFinder(A, subspace_iterations=q, range_product=range_product, source_product=source_product,
                                 complex=iscomplex)
     Q = RRF.find_range(basis_size=l, tol=None)
     if return_rand:
@@ -270,8 +275,8 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
         return Q
 
 
-@defaults('p', 'q', 'modes')
-def random_generalized_svd(A, range_product=None, source_product=None, modes=6, p=20, q=2):
+@defaults('oversampling', 'subspace_iterations')
+def randomized_svd(A, n, range_product=None, source_product=None, oversampling=20, subspace_iterations=2):
     r"""Randomized SVD of an |Operator|.
 
     Viewing `A` as an :math:`m` by :math:`n` matrix, the return value
@@ -299,17 +304,18 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
     ----------
     A
         The |Operator| for which the randomized SVD is to be computed.
+    n
+        The number of eigenvalues and eigenvectors which are to be computed.
     range_product
         Range product |Operator| :math:`S` w.r.t which the randomized SVD is computed.
     source_product
         Source product |Operator| :math:`T` w.r.t which the randomized SVD is computed.
-    modes
-        The first `modes` approximated singular values and vectors are returned.
-    p
-        If not `0`, adds `p` columns to the randomly sampled matrix (oversampling parameter).
-    q
-        If not `0`, performs `q` so-called power iterations to increase the relative weight
-        of the first singular values.
+    oversampling
+        The number of samples that are drawn in addition to the desired basis size in the
+        randomized range approximation process.
+    subspace_iterations
+        The number of subspace iterations to increase the relative weight
+        of the larger singular values. Ignored when `single_pass` is `True`.
 
     Returns
     -------
@@ -317,50 +323,52 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
         |VectorArray| of approximated left singular vectors.
     s
         One-dimensional |NumPy array| of the approximated singular values.
-    Vh
+    V
         |VectorArray| of the approximated right singular vectors.
     """
-    logger = getLogger('pymor.algorithms.rand_la')
+    logger = getLogger('pymor.algorithms.rand_la.randomized_svd')
 
-    assert isinstance(A, Operator)
+    RRF = RandomizedRangeFinder(A, subspace_iterations=subspace_iterations, range_product=range_product,
+                                source_product=source_product)
 
-    assert 0 <= modes <= max(A.source.dim, A.range.dim) and isinstance(modes, int)
-    assert 0 <= p <= max(A.source.dim, A.range.dim) - modes and isinstance(p, int)
-    assert q >= 0 and isinstance(q, int)
-
+    assert 0 <= n <= max(A.source.dim, A.range.dim) and isinstance(n, int)
+    assert 0 <= oversampling <= max(A.source.dim, A.range.dim) - n and isinstance(oversampling, int)
     if range_product is None:
         range_product = IdentityOperator(A.range)
-    else:
-        assert isinstance(range_product, Operator)
-        assert range_product.source == range_product.range == A.range
-
     if source_product is None:
         source_product = IdentityOperator(A.source)
-    else:
-        assert isinstance(source_product, Operator)
-        assert source_product.source == source_product.range == A.source
-
     if A.source.dim == 0 or A.range.dim == 0:
         return A.source.empty(), np.array([]), A.range.empty()
 
-    RRF = RandomizedRangeFinder(A, subspace_iterations=q, source_product=source_product, range_product=range_product)
-    Q = RRF.find_range(basis_size=modes+p)
+    with logger.block('Approximating basis for the operator range...'):
+        Q = RRF.find_range(basis_size=n+oversampling)
 
-    B = A.apply_adjoint(range_product.apply(Q))
-    Q_B, R_B = gram_schmidt(source_product.apply_inverse(B), product=source_product, return_R=True)
-    U_b, s, Vh_b = sp.linalg.svd(R_B.T, full_matrices=False)
+    with logger.block('Projecting operator onto the reduced space...'):
+        if isinstance(source_product, IdentityOperator):
+            R_B = A.apply_adjoint(Q).to_numpy().T
+        else:
+            B = A.apply_adjoint(range_product.apply(Q))
+            Q_B, R_B = gram_schmidt(source_product.apply_inverse(B), product=source_product, return_R=True)
 
-    with logger.block(f'Computing generalized left-singular vectors ({modes} vectors) ...'):
-        U = Q.lincomb(U_b.T)
+    with logger.block('Computing SVD in the reduced space...'):
+        U_b, s, Vh_b = sp.linalg.svd(R_B.T, full_matrices=False)
 
-    with logger.block(f'Computing generalized right-singular vector ({modes} vectors) ...'):
-        Vh = Q_B.lincomb(Vh_b)
+    with logger.block(f'Backprojecting the left \
+                      {"" if isinstance(range_product, IdentityOperator) else "generalized "}\
+                      singular vectors...'):
+        U = Q.lincomb(U_b[:, :n].T)
 
-    return U[:modes], s[:modes], Vh[:modes]
+    if isinstance(source_product, IdentityOperator):
+        V = NumpyVectorSpace.from_numpy(Vh_b[:n])
+    else:
+        with logger.block('Backprojecting the right generalized singular vectors...'):
+            V = Q_B.lincomb(Vh_b[:n])
+
+    return U, s[:n], V
 
 
-@defaults('modes', 'p', 'q')
-def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
+@defaults('n', 'oversampling', 'subspace_iterations')
+def randomized_ghep(A, E=None, n=6, oversampling=20, subspace_iterations=2, single_pass=False, return_evecs=False):
     r"""Approximates a few eigenvalues of a symmetric linear |Operator| with randomized methods.
 
     Approximates `modes` eigenvalues `w` with corresponding eigenvectors `v` which solve
@@ -384,18 +392,20 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
         The Hermitian linear |Operator| for which the eigenvalues are to be computed.
     E
         The Hermitian |Operator| which defines the generalized eigenvalue problem.
-    modes
+    n
         The number of eigenvalues and eigenvectors which are to be computed.
-    p
-        If not `0`, adds `p` columns to the randomly sampled matrix in the :func:`rrf` method
-        (oversampling parameter).
-    q
-        If not `0`, performs `q` power iterations to increase the relative weight
+    oversampling
+        The number of samples that are drawn in addition to the desired basis size in the
+        randomized range approximation process.
+    subspace_iterations
+        The number of subspace iterations to increase the relative weight
         of the larger singular values. Ignored when `single_pass` is `True`.
     single_pass
         If `True`, computes the GHEP where only one set of matvecs Ax is required, but at the
         expense of lower numerical accuracy.
-        If `False`, the methods require two sets of matvecs Ax.
+        If `False`, the methods performs two sets of matvecs Ax.
+    return_evecs
+        If `True`, the eigenvectors are computed and returned.
 
     Returns
     -------
@@ -404,14 +414,16 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
     V
         A |VectorArray| which contains the computed eigenvectors.
     """
-    logger = getLogger('pymor.algorithms.rand_la')
+    logger = getLogger('pymor.algorithms.rand_la.randomized_ghep')
 
     assert isinstance(A, Operator) and A.linear
     assert not A.parametric
     assert A.source == A.range
-    assert 0 <= modes <= max(A.source.dim, A.range.dim) and isinstance(modes, int)
-    assert 0 <= p <= max(A.source.dim, A.range.dim) - modes and isinstance(p, int)
-    assert q >= 0 and isinstance(q, int)
+    assert 0 <= n <= max(A.source.dim, A.range.dim) and isinstance(n, int)
+    assert 0 <= oversampling <= max(A.source.dim, A.range.dim) - n and isinstance(oversampling, int)
+    assert subspace_iterations >= 0 and isinstance(subspace_iterations, int)
+    assert isinstance(single_pass, bool)
+    assert isinstance(return_evecs, bool)
 
     if E is None:
         E = IdentityOperator(A.source)
@@ -425,24 +437,25 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
         return A.source.empty(), np.array([]), A.range.empty()
 
     if single_pass:
-        Omega = A.source.random(modes+p, distribution='normal')
-        Y_bar = A.apply(Omega)
+        W = A.source.random(n+oversampling, distribution='normal')
+        Y_bar = A.apply(W)
         Y = E.apply_inverse(Y_bar)
-        Q, R = gram_schmidt(Y, product=E, return_R=True)
-        X = E.apply2(Omega, Q)
+        Q = gram_schmidt(Y, product=E)
+        X = E.apply2(W, Q)
         X_lu = lu_factor(X)
-        T = lu_solve(X_lu, lu_solve(X_lu, Omega.inner(Y_bar)).T).T
+        T = lu_solve(X_lu, lu_solve(X_lu, W.inner(Y_bar)).T).T
     else:
         C = InverseOperator(E) @ A
-        Y, Omega = rrf(C, q=q, l=modes+p, return_rand=True)
-        Q = gram_schmidt(Y, product=E)
+        RRF = RandomizedRangeFinder(C, subspace_iterations=subspace_iterations, range_product=E)
+        Q = RRF.find_range(n+oversampling)
         T = A.apply2(Q, Q)
 
-    w, S = sp.linalg.eigh(T)
+    w, *S = sp.linalg.eigh(T, evals_only=not return_evecs)
     w = w[::-1]
-    S = S[:, ::-1]
-
-    with logger.block(f'Computing eigenvectors ({modes} vectors) ...'):
-        V = Q.lincomb(S)
-
-    return w[:modes], V[:modes]
+    if return_evecs:
+        with logger.block(f'Computing eigenvectors ({n} vectors) ...'):
+            S = S[0][:, ::-1]
+            V = Q.lincomb(S)
+        return w[:n], V[:n]
+    else:
+        return w[:n]

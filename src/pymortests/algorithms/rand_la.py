@@ -69,7 +69,7 @@ def test_random_generalized_svd():
     E_op = NumpyMatrixOperator(E)
 
     modes = 3
-    U, s, Vh = random_generalized_svd(E_op, modes=modes, p=1)
+    U, s, Vh = random_generalized_svd(E_op, n=modes, oversampling=1)
     U_real, s_real, Vh_real = sp.linalg.svd(E)
 
     assert abs(np.linalg.norm(s-s_real[:modes])) <= 1e-2
@@ -86,8 +86,8 @@ def test_random_ghep():
     D_op = NumpyMatrixOperator(D)
 
     modes = 3
-    w1, V1 = random_ghep(D_op, modes=modes, p=1, single_pass=False)
-    w2, V2 = random_ghep(D_op, modes=modes, p=1, single_pass=True)
+    w1, V1 = random_ghep(D_op, n=modes, p=1, single_pass=False)
+    w2, V2 = random_ghep(D_op, n=modes, p=1, single_pass=True)
     w_real, V_real = sp.linalg.eigh(D)
     w_real = w_real[::-1]
     V_real = V_real[:, ::-1]
