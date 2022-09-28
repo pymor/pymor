@@ -6,17 +6,17 @@ set -eu
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
-python3 -m pip install -U pip codecov coverage
-coverage combine coverage*
-# the mpi test_thermalblock_ipython results in '(builtin)' missing which we "--ignore-errors"
-rm -f coverage.xml
-coverage xml --ignore-errors
+wget https://uploader.codecov.io/latest/alpine/codecov
+chmod +x codecov
 
-codecov  --required \
-  --token ${PYMOR_CODECOV_TOKEN} \
-  --file ${PYMOR_ROOT}/coverage.xml \
-  --root ${PYMOR_ROOT} \
+./codecov  --required \
+  -t ${PYMOR_CODECOV_TOKEN} \
+  --file ${PYMOR_ROOT}/coverage* \
+  --rootDir ${PYMOR_ROOT} \
+  --flags gitlab_ci \
+  --name gitlab_ci \
   -X detect \
+  -Z \
   --slug pymor/pymor \
-  --commit ${CI_COMMIT_SHA} \
+  --sha ${CI_COMMIT_SHA} \
   --branch ${CI_COMMIT_REF_NAME}
