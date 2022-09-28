@@ -52,9 +52,9 @@ dependencies:
   - scipy>=1.5.4
   - setuptools
   - slycot>=0.4.0
-  - sphinx-autoapi>=1.8
+  - sphinx-autoapi>=1.8,<2
   - sphinx-material
-  - sphinx>=5.0
+  - sphinx>=5.0,<5.2
   - sphinxcontrib-bibtex
   - sympy
   - twine==3.8.0
