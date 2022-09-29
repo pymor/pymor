@@ -616,10 +616,10 @@ class LTIModel(Model):
             return solve_lyap_lrcf(A, E, C.as_source_array(mu=mu), trans=True, options=options_lrcf)
         elif typ == 'c_dense':
             return solve_lyap_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
-                                    to_matrix(B, format='dense'), trans=False, options=options_dense)
+                                    to_matrix(B, format='dense', mu=mu), trans=False, options=options_dense)
         elif typ == 'o_dense':
             return solve_lyap_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
-                                    to_matrix(C, format='dense'), trans=True, options=options_dense)
+                                    to_matrix(C, format='dense', mu=mu), trans=True, options=options_dense)
         elif typ == 'lqg_c_lrcf':
             return solve_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
                                    trans=False, options=options_ricc_lrcf)
