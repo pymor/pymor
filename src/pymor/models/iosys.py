@@ -719,31 +719,51 @@ class LTIModel(Model):
         return gramian
 
     @cached
-    def _hsv_U_V(self, mu=None):
-        """Compute Hankel singular values and vectors.
+    def _sv_U_V(self, typ='lyap', mu=None):
+        """Compute (Hankel) singular values and vectors.
 
         .. note::
             Assumes the system is asymptotically stable.
 
         Parameters
         ----------
+        typ
+            The type of the Gramians used:
+
+            - `'lyap'`: Lyapunov Gramian,
+            - `'bs'`: Bernoulli stabilized Gramian,
+            - `'lqg'`: LQG Gramian,
+            - `('br', gamma)`: bounded real Gramian,
         mu
             |Parameter values|.
 
         Returns
         -------
-        hsv
+        sv
             One-dimensional |NumPy array| of singular values.
         Uh
-            |NumPy array| of left singular vectors.
+            |NumPy array| of left singular vectors as rows.
         Vh
-            |NumPy array| of right singular vectors.
+            |NumPy array| of right singular vectors as rows.
         """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
-        cf = self.gramian('c_lrcf', mu=mu)
-        of = self.gramian('o_lrcf', mu=mu)
+        if typ == 'lyap':
+            cf = self.gramian('c_lrcf', mu=mu)
+            of = self.gramian('o_lrcf', mu=mu)
+        elif typ == 'bs':
+            cf = self.gramian('bs_c_lrcf', mu=mu)
+            of = self.gramian('bs_o_lrcf', mu=mu)
+        elif typ == 'lqg':
+            cf = self.gramian('lqg_c_lrcf', mu=mu)
+            of = self.gramian('lqg_o_lrcf', mu=mu)
+        elif isinstance(typ, tuple) and typ[0] == 'br' and typ[1] > 0:
+            gamma = typ[1]
+            cf = self.gramian(('br_c_lrcf', gamma), mu=mu)
+            of = self.gramian(('br_o_lrcf', gamma), mu=mu)
+        else:
+            raise ValueError(f'Unknown typ ({typ}).')
         U, hsv, Vh = spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver='gesvd')
         return hsv, U.T, Vh
 
@@ -763,7 +783,7 @@ class LTIModel(Model):
         sv
             One-dimensional |NumPy array| of singular values.
         """
-        hsv = self.presets['hsv'] if 'hsv' in self.presets else self._hsv_U_V(mu=mu)[0]
+        hsv = self.presets['hsv'] if 'hsv' in self.presets else self._sv_U_V(mu=mu)[0]
         assert isinstance(hsv, np.ndarray) and hsv.ndim == 1
 
         return hsv
@@ -1493,27 +1513,29 @@ class PHLTIModel(Model):
 
         return self.to_lti().gramian(typ, mu)
 
-    def _hsv_U_V(self, mu=None):
-        """Compute Hankel singular values and vectors.
+    def _sv_U_V(self, typ='lyap', mu=None):
+        """Compute (Hankel) singular values and vectors.
 
         .. note::
             Assumes the system is asymptotically stable.
 
         Parameters
         ----------
+        typ
+            The type of the Gramians used (see :meth:`LTIModel._sv_U_V`).
         mu
             |Parameter values|.
 
         Returns
         -------
-        hsv
+        sv
             One-dimensional |NumPy array| of singular values.
         Uh
-            |NumPy array| of left singular vectors.
+            |NumPy array| of left singular vectors as rows.
         Vh
-            |NumPy array| of right singular vectors.
+            |NumPy array| of right singular vectors as rows.
         """
-        return self.to_lti()._hsv_U_V(mu)
+        return self.to_lti()._sv_U_V(typ=typ, mu=mu)
 
     def hsv(self, mu=None):
         """Hankel singular values.
@@ -1531,7 +1553,7 @@ class PHLTIModel(Model):
         sv
             One-dimensional |NumPy array| of singular values.
         """
-        return self._hsv_U_V(mu=mu)[0]
+        return self._sv_U_V(mu=mu)[0]
 
     def h2_norm(self, mu=None):
         """Compute the H2-norm.
