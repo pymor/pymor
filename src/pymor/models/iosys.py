@@ -1493,7 +1493,7 @@ class PHLTIModel(Model):
         """
         assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense')
 
-        return self.to_lti().gramian(typ, mu)
+        return self.to_lti().gramian(typ, mu=mu)
 
     def _sv_U_V(self, typ='lyap', mu=None):
         """Compute (Hankel) singular values and vectors.
