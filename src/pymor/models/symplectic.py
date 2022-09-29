@@ -110,7 +110,7 @@ class QuadraticHamiltonianModel(BaseQuadraticHamiltonianModel):
     H_op
         The |Operator| H_op.
     h
-        The state-independet part of the Hamiltonian h.
+        The state-independent part of the Hamiltonian h.
     time_stepper
         The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
         to be used by :meth:`~pymor.models.interface.Model.solve`.

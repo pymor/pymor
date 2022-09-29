@@ -7,7 +7,7 @@ from enum import Enum
 
 
 def Choices(choices):
-    """Multipe-choice options for typer.
+    """Multiple-choice options for typer.
 
     This is a convenicence function that creates string Enums to be
     used as the type of command-line arguments that can take a fixed set
