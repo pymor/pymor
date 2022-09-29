@@ -78,6 +78,14 @@ class LTIModel(Model):
         :math:`\mathcal{H}_\infty/\mathcal{L}_\infty` norm is attained can be preset with `fpeak`.
     solver_options
         The solver options to use to solve matrix equations.
+    ast_pole_data
+        Can be:
+
+        - dictionary of parameters for :func:`~pymor.algorithms.eigs.eigs`,
+        - list of anti-stable eigenvalues (scalars),
+        - tuple `(lev, ew, rev)` where `ew` contains the sorted anti-stable eigenvalues
+            and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
+        - `None` if anti-stable eigenvalues should be computed via dense methods.
     error_estimator
         An error estimator for the problem. This can be any object with an
         `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
@@ -114,7 +122,8 @@ class LTIModel(Model):
     """
 
     def __init__(self, A, B, C, D=None, E=None, sampling_time=0, presets=None,
-                 solver_options=None, error_estimator=None, visualizer=None, name=None):
+                 solver_options=None, ast_pole_data=None,
+                 error_estimator=None, visualizer=None, name=None):
 
         assert A.linear
         assert A.source == A.range
