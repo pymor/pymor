@@ -51,7 +51,7 @@ class GenericBTReductor(BasicObject):
         return self._sv_U_V_cache
 
     def error_bounds(self):
-        """Returns error bounds for all possible reduced orders."""
+        """Return error bounds for all possible reduced orders."""
         raise NotImplementedError
 
     def reduce(self, r=None, tol=None, projection='bfsr'):
