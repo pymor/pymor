@@ -95,7 +95,7 @@ def parse_expression(expression, parameters={}, values={}):
         raise ValueError(f'''
 While parsing expression
 \t{expression}
-with parameters {parameters} and values {values} the following error occured:
+with parameters {parameters} and values {values} the following error occurred:
 \t{e}
 ''') from e
 

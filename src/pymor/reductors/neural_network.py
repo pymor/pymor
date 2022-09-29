@@ -911,7 +911,7 @@ def train_neural_network(training_data, validation_data, neural_network,
         (a dictionary of additional parameters for the learning rate
         scheduler), `'es_scheduler_params'` (a dictionary of additional
         parameters for the early stopping scheduler), and `'weight_decay'`
-        (non-negative real number that determines the strenght of the
+        (non-negative real number that determines the strength of the
         l2-regularization; if not provided or 0., no regularization is applied).
     scaling_parameters
         Dict of tensors that determine how to scale inputs before passing them

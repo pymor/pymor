@@ -38,7 +38,7 @@ New system analysis and linear algebra algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The new :meth:`~pymor.algorithms.eigs.eigs` method
 `[#880] <https://github.com/pymor/pymor/pull/880>`_ computes
-smallest/largest eigenvalues of an arbitary linear real |Operator|
+smallest/largest eigenvalues of an arbitrary linear real |Operator|
 using the implicitly restarted Arnoldi method :cite:`RL95`. It can also
 be used to solve generalized eigenvalue problems.
 
@@ -214,7 +214,7 @@ Further notable improvements
 - `[#888] Implement FenicsVectorSpace.from_numpy <https://github.com/pymor/pymor/pull/888>`_
 - `[#895] Implement VectorArray.__deepcopy__ via VectorArray.copy(deep=True) <https://github.com/pymor/pymor/pull/895>`_
 - `[#905] Add from_files method to SecondOrderModel <https://github.com/pymor/pymor/pull/905>`_
-- `[#919] [reductors.coercive] remove unneccessary initialization in SimpleCoerciveReductor <https://github.com/pymor/pymor/pull/919>`_
+- `[#919] [reductors.coercive] remove unnecessary initialization in SimpleCoerciveReductor <https://github.com/pymor/pymor/pull/919>`_
 - `[#926] [Operators] Speed up apply methods for LincombOperator <https://github.com/pymor/pymor/pull/926>`_
 - `[#937] Move NumpyListVectorArrayMatrixOperator out of the playground <https://github.com/pymor/pymor/pull/937>`_
 - `[#943] [logger] adds a ctx manager that restores effective level on exit <https://github.com/pymor/pymor/pull/943>`_

@@ -143,7 +143,7 @@ with a few more advanced techniques added.
 
 ```
 
-Again we define a `py:class\_` with appropiate name and docstring, but now we also indicate to pybind11
+Again we define a `py:class\_` with appropriate name and docstring, but now we also indicate to pybind11
 that this class will implement the [buffer protocol](<https://docs.python.org/3/c-api/buffer.html>), which basically
 exposes direct access to the chunk of memory associated with a `Vector` instance to Python.
 We also see how we can dispatch multiple init functions by using `py:init` objects with C++ lambda functions.
@@ -223,7 +223,7 @@ our Python `model.Vector` and `model.DiffusionOperator` in pyMOR, we have to pro
 {{ VectorArray }}, {{ VectorSpace }} and {{ Operator }} that wrap the classes defined in the extension module
 and translate calls to the interface methods into operations on `model.Vector` and `model.DiffusionOperator`.
 
-Instead of writing a full implementaion of a {{ VectorArray }} that manages multiple `model.Vector`
+Instead of writing a full implementation of a {{ VectorArray }} that manages multiple `model.Vector`
 instances, we can instead implement a wrapper `WrappedVector` for a single `model.Vector` instance based on
 {class}`~pymor.vectorarrays.list.CopyOnWriteVector` which will be used to create
 {{ ListVectorArrays }} via a {class}`~pymor.vectorarrays.list.ListVectorSpace`-based `WrappedVectorSpace`.

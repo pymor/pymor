@@ -139,7 +139,7 @@
   * BlockOperator and BlockDiagonalOperator
 
 * Michael Schaefer, michael.schaefer@uni-muenster.de
-  * Robin bondary condition support for pymor.operators.cg
+  * Robin boundary condition support for pymor.operators.cg
 
 ### pyMOR 0.3
 

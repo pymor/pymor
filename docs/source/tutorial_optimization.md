@@ -281,7 +281,7 @@ def prepare_data(offline_time=False, enrichments=False):
 
 def record_results(function, data, adaptive_enrichment=False, opt_dict=None, mu=None):
     if adaptive_enrichment:
-        # this is for the adaptive case! rom is shiped via the opt_dict argument.
+        # this is for the adaptive case! rom is shipped via the opt_dict argument.
         assert opt_dict is not None
         QoI, data, rom = function(mu, data, opt_dict)
         opt_dict['opt_rom'] = rom

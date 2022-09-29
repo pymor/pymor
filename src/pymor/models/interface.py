@@ -254,7 +254,7 @@ class Model(CacheableObject, ParametricObject):
             If `True`, return the output estimate as a |NumPy array|,
             where each component corresponds to the respective component
             of the :attr:`output_functional`.
-            Otherwise, return the euclidian norm of all components.
+            Otherwise, return the euclidean norm of all components.
         kwargs
             Additional keyword arguments to customize how the error estimate is
             computed or to select additional data to be returned.
@@ -316,13 +316,13 @@ class Model(CacheableObject, ParametricObject):
             If `True`, return the output estimate as a |NumPy array|,
             where each component corresponds to the respective component
             of the :attr:`output_functional`.
-            Otherwise, return the euclidian norm of all components.
+            Otherwise, return the euclidean norm of all components.
         mu
             |Parameter values| for which to compute the values.
         input
             The model input. Either a |NumPy array| of shape `(self.dim_input,)`,
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
-            mapping time to input, or a `str` expression whith `t` as variable that
+            mapping time to input, or a `str` expression with `t` as variable that
             can be used to instatiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
         kwargs
@@ -441,7 +441,7 @@ class Model(CacheableObject, ParametricObject):
         input
             The model input. Either a |NumPy array| of shape `(self.dim_input,)`,
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
-            mapping time to input, or a `str` expression whith `t` as variable that
+            mapping time to input, or a `str` expression with `t` as variable that
             can be used to instatiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
         return_error_estimate
@@ -480,7 +480,7 @@ class Model(CacheableObject, ParametricObject):
         input
             The model input. Either a |NumPy array| of shape `(self.dim_input,)`,
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
-            mapping time to input, or a `str` expression whith `t` as variable that
+            mapping time to input, or a `str` expression with `t` as variable that
             can be used to instatiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
         return_error_estimate
@@ -489,7 +489,7 @@ class Model(CacheableObject, ParametricObject):
             If `True`, return the output estimate as a |NumPy array|,
             where each component corresponds to the respective component
             of the :attr:`output_functional`.
-            Otherwise, return the euclidian norm of all components.
+            Otherwise, return the euclidean norm of all components.
         kwargs
             Additional keyword arguments passed to :meth:`compute` that
             might affect how the solution is computed.
@@ -530,7 +530,7 @@ class Model(CacheableObject, ParametricObject):
         input
             The model input. Either a |NumPy array| of shape `(self.dim_input,)`,
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
-            mapping time to input, or a `str` expression whith `t` as variable that
+            mapping time to input, or a `str` expression with `t` as variable that
             can be used to instatiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
 
@@ -556,7 +556,7 @@ class Model(CacheableObject, ParametricObject):
         input
             The model input. Either a |NumPy array| of shape `(self.dim_input,)`,
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
-            mapping time to input, or a `str` expression whith `t` as variable that
+            mapping time to input, or a `str` expression with `t` as variable that
             can be used to instatiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
         return_array
@@ -595,7 +595,7 @@ class Model(CacheableObject, ParametricObject):
         input
             The model input. Either a |NumPy array| of shape `(self.dim_input,)`,
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
-            mapping time to input, or a `str` expression whith `t` as variable that
+            mapping time to input, or a `str` expression with `t` as variable that
             can be used to instatiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
         kwargs
@@ -632,14 +632,14 @@ class Model(CacheableObject, ParametricObject):
         input
             The model input. Either a |NumPy array| of shape `(self.dim_input,)`,
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
-            mapping time to input, or a `str` expression whith `t` as variable that
+            mapping time to input, or a `str` expression with `t` as variable that
             can be used to instatiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
         return_vector
             If `True`, return the output estimate as a |NumPy array|,
             where each component corresponds to the respective component
             of the :attr:`output_functional`.
-            Otherwise, return the euclidian norm of all components.
+            Otherwise, return the euclidean norm of all components.
         kwargs
             Additional keyword arguments passed to :meth:`compute` that
             might affect how the error estimate (or the output) is computed.

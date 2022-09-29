@@ -13,8 +13,8 @@ that you may use. Please use the logo as is and make no modifications. In partic
 If you want to create a derived version of the logo for your own project, please ask us first.
 
 <!-- markdownlint-disable MD033 -->
-type  |  PNG | SVG
-------|------|---------
+type  | PNG                                                 | SVG
+------|-----------------------------------------------------|----------------------------------------------------
 color | <img src="pymor_logo.png" width=320>                | <img src="pymor_logo.svg" width=320>
 black | <img src="pymor_logo_black.png" width=320>          | <img src="pymor_logo_black.svg" width=320>
 white | <img src="pymor_logo_white_black_bg.png" width=320> | <img src="pymor_logo_white_black_bg.png" width=320>

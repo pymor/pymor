@@ -150,7 +150,7 @@ rules:
       - devpi upload --from-dir --formats=* ./dist/*.whl
       - python3 -m pip install pip~=21.0
       - python3 -m pip remove -y pymor || true
-    # the docker service adressing fails on other runners
+    # the docker service addressing fails on other runners
     tags: [mike]
 
 .sanity_checks:
