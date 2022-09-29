@@ -149,43 +149,20 @@ class FDBTReductor(GenericBTReductor):
     ----------
     fom
         The full-order |LTIModel| to reduce.
-    ast_pole_data
-        Can be:
-
-        - dictionary of parameters for :func:`~pymor.algorithms.eigs.eigs`,
-        - list of anti-stable eigenvalues (scalars),
-        - tuple `(lev, ew, rev)` where `ew` contains the anti-stable eigenvalues
-          and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
-        - `None` if anti-stable eigenvalues should be computed via dense methods.
     mu
         |Parameter values|.
     """
 
-    def __init__(self, fom, ast_pole_data=None, mu=None, solver_options=None):
+    def __init__(self, fom, mu=None):
+        if fom.sampling_time > 0:
+            raise NotImplementedError
         super().__init__(fom, mu=mu)
-        self.ast_pole_data = ast_pole_data
-        self.solver_options = solver_options
 
     def _gramians(self):
-        if self.fom.sampling_time > 0:
-            raise NotImplementedError
+        return self.fom.gramian('bs_c_lrcf', mu=self.mu), self.fom.gramian('bs_o_lrcf', mu=self.mu)
 
-        A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
-                      for op in ['A', 'B', 'C', 'E'])
-        options = self.solver_options
-
-        self.ast_spectrum = self.fom.get_ast_spectrum(self.ast_pole_data, mu=self.mu)
-        K = bernoulli_stabilize(A, E, B.as_range_array(mu=self.mu), self.ast_spectrum, trans=True)
-        BK = LowRankOperator(B.as_range_array(mu=self.mu), np.eye(len(K)), K)
-        bsc_lrcf = solve_cont_lyap_lrcf(A-BK, E, B.as_range_array(mu=self.mu),
-                                        trans=False, options=options)
-
-        K = bernoulli_stabilize(A, E, C.as_source_array(mu=self.mu), self.ast_spectrum, trans=False)
-        KC = LowRankOperator(K, np.eye(len(K)), C.as_source_array(mu=self.mu))
-        bso_lrcf = solve_cont_lyap_lrcf(A-KC, E, C.as_source_array(mu=self.mu),
-                                        trans=True, options=options)
-
-        return bsc_lrcf, bso_lrcf
+    def _sv_U_V(self):
+        return self.fom._sv_U_V('bs', mu=self.mu)
 
     def error_bounds(self):
         """L-infinity error bounds for reduced order models."""
