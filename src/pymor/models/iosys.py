@@ -11,7 +11,7 @@ from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.eigs import eigs
 from pymor.algorithms.lyapunov import (_chol, solve_cont_lyap_lrcf, solve_disc_lyap_lrcf, solve_cont_lyap_dense,
                                        solve_disc_lyap_dense)
-from pymor.algorithms.riccati import solve_ricc_lrcf
+from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
 from pymor.core.config import config
@@ -606,6 +606,7 @@ class LTIModel(Model):
         options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
         options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
         options_ricc_lrcf = self.solver_options.get('ricc_lrcf') if self.solver_options else None
+        options_ricc_pos_lrcf = self.solver_options.get('ricc_pos_lrcf') if self.solver_options else None
         solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
         solve_lyap_dense = solve_cont_lyap_dense if self.sampling_time == 0 else solve_disc_lyap_dense
 
@@ -625,6 +626,18 @@ class LTIModel(Model):
         elif typ == 'lqg_o_lrcf':
             return solve_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
                                    trans=True, options=options_ricc_lrcf)
+        elif typ[0] == 'br_c_lrcf':
+            return solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
+                                       R=(typ[1]**2 * np.eye(self.dim_output)
+                                          if typ[1] != 1
+                                          else None),
+                                       trans=False, options=options_ricc_pos_lrcf)
+        elif typ[0] == 'br_o_lrcf':
+            return solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
+                                       R=(typ[1]**2 * np.eye(self.dim_input)
+                                          if typ[1] != 1
+                                          else None),
+                                       trans=True, options=options_ricc_pos_lrcf)
 
     def gramian(self, typ, mu=None):
         """Compute a Gramian.
@@ -639,7 +652,11 @@ class LTIModel(Model):
             - `'c_dense'`: dense controllability Gramian,
             - `'o_dense'`: dense observability Gramian,
             - `'lqg_c_lrcf'`: low-rank Cholesky factor of the "controllability" LQG Gramian,
-            - `'lqg_o_lrcf'`: low-rank Cholesky factor of the "observability" LQG Gramian.
+            - `'lqg_o_lrcf'`: low-rank Cholesky factor of the "observability" LQG Gramian,
+            - `('br_c_lrcf', gamma)`: low-rank Cholesky factor of the "controllability" bounded real
+              Gramian,
+            - `('br_o_lrcf', gamma)`: low-rank Cholesky factor of the "observability" bounded real
+              Gramian.
 
             .. note::
                 For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
@@ -655,9 +672,11 @@ class LTIModel(Model):
         If typ ends with `'_lrcf'`, then the Gramian factor as a |VectorArray| from `self.A.source`.
         If typ ends with `'_dense'`, then the Gramian as a |NumPy array|.
         """
-        assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'lqg_c_lrcf', 'lqg_o_lrcf')
+        assert (typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'lqg_c_lrcf', 'lqg_o_lrcf')
+                or isinstance(typ, tuple) and len(typ) == 2 and typ[0] in ('br_c_lrcf', 'br_o_lrcf'))
 
-        if typ.startswith('lqg') and self.sampling_time > 0:
+        if ((isinstance(typ, str) and typ.startswith('lqg') or isinstance(typ, tuple))
+                and self.sampling_time > 0):
             raise NotImplementedError
 
         if not isinstance(mu, Mu):
@@ -667,10 +686,10 @@ class LTIModel(Model):
         gramian = self.presets[typ] if typ in self.presets else self._gramian(typ, mu=mu)
 
         # assert correct return types
-        if typ.endswith('_lrcf'):
-            assert gramian in self.A.source
-        else:
-            assert isinstance(gramian, np.ndarray) and gramian.shape == (self.A.source.dim, self.A.source.dim)
+        assert ((isinstance(typ, str) and typ.endswith('_lrcf') or isinstance(typ, tuple))
+                and gramian in self.A.source
+                or isinstance(gramian, np.ndarray)
+                and gramian.shape == (self.A.source.dim, self.A.source.dim))
 
         return gramian
 
