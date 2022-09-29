@@ -183,10 +183,12 @@ class LQGBTReductor(GenericBTReductor):
         |Parameter values|.
     """
 
-    def _gramians(self):
-        if self.fom.sampling_time > 0:
+    def __init__(self, fom, mu=None):
+        if fom.sampling_time > 0:
             raise NotImplementedError
+        super().__init__(fom, mu=mu)
 
+    def _gramians(self):
         return self.fom.gramian('lqg_c_lrcf', mu=self.mu), self.fom.gramian('lqg_o_lrcf', mu=self.mu)
 
     def _sv_U_V(self):
@@ -213,13 +215,12 @@ class BRBTReductor(GenericBTReductor):
     """
 
     def __init__(self, fom, gamma=1, mu=None):
+        if fom.sampling_time > 0:
+            raise NotImplementedError
         super().__init__(fom, mu=mu)
         self.gamma = gamma
 
     def _gramians(self):
-        if self.fom.sampling_time > 0:
-            raise NotImplementedError
-
         cf = self.fom.gramian(('br_c_lrcf', self.gamma), mu=self.mu)
         of = self.fom.gramian(('br_o_lrcf', self.gamma), mu=self.mu)
         return cf, of
