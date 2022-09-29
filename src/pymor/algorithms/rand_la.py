@@ -87,7 +87,6 @@ class RandomizedRangeFinder(CacheableObject):
         W -= Q.lincomb(Q.inner(W, self.range_product).T)
         return np.max(W.norm(self.range_product))
 
-    @cached
     def _c_est(self, num_testvecs, p_fail):
         c = np.sqrt(2 * self._lambda_min()) \
             * erfinv((p_fail / min(self.A.source.dim, self.A.range.dim)) ** (1 / num_testvecs))
