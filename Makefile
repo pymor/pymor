@@ -138,3 +138,7 @@ docker_install_check: docker_image
 docker_super_linter: FORCE
 	docker pull -q github/super-linter:latest
 	docker run --env-file $(THIS_DIR)/.env -e RUN_LOCAL=true -v $(THIS_DIR):/tmp/lint github/super-linter:latest
+
+docker_mega_linter: FORCE
+	docker pull -q oxsecurity/megalinter:v6
+	docker run --env-file $(THIS_DIR)/.env -e RUN_LOCAL=true -v $(THIS_DIR):/tmp/lint oxsecurity/megalinter:v6
