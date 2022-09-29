@@ -130,7 +130,10 @@ def discretize_stationary_ipld3g(
         penalty_parameter = np.max([data['IP_penalty_parameter'] for data in local_models_data])
     # weight for the diffusion part of the IPDG scheme (see above)
     if weight_parameter is None:
-        local_weights = [GF(p.grid, 1, (Dim(d), Dim(d))) for p in local_problems]
+        if locally_continuous:
+            local_weights = [GF(p.grid, 1, (Dim(d), Dim(d))) for p in local_problems]
+        else:
+            local_weights = [data['IP_weight'] for data in local_models_data]
     else:
         mu_weight = local_problems[0].diffusion.parameters.parse(weight_parameter)
         local_weights = [p.diffusion.assemble(mu_weight) for p in local_problems]
@@ -243,11 +246,7 @@ def discretize_stationary_ipld3g(
                             intersection_type=CouplingIntersection(dd_grid))))
                     return make_coupling_ops_from_bilinear_form(bf)
 
-                ops_I_I = []
-                ops_I_J = []
-                ops_J_I = []
-                ops_J_J = []
-                ops_list = [ops_I_I, ops_I_J, ops_J_I, ops_J_J]  # just to save some lines below
+                ops_list = [[], [], [], []]
                 coeffs = []
                 for diff_in, coeff_in, diff_out, coeff_out in zip(
                     local_problems[I].diffusion.functions,
@@ -255,11 +254,12 @@ def discretize_stationary_ipld3g(
                     local_problems[J].diffusion.functions,
                     local_problems[J].diffusion.coefficients):
                     assert coeff_in == coeff_out
-                    ops_list = [ops + additional_ops
+                    ops_list += [ops + [additional_ops]
                          for ops, additional_ops in zip(
-                             ops_list, make_coupling_contributions_parametric_part(diff_in, diffout))]
-                ops_list = [ops + additional_ops
+                             ops_list, make_coupling_contributions_parametric_part(diff_in, diff_out))]
+                ops_list = [ops + [additional_ops]
                     for ops, additional_ops in zip(ops_list, make_coupling_contributions_nonparametric_part())]
+                ops_I_I, ops_I_J, ops_J_I, ops_J_J = ops_list[0], ops_list[1], ops_list[2], ops_list[3]
                 del ops_list
                 coeffs.append(1.)
 
