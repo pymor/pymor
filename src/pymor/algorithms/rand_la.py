@@ -16,11 +16,7 @@ from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
 from pymor.operators.interface import Operator
 from pymor.tools.deprecated import Deprecated
-<<<<<<< HEAD
-from pymor.tools.random import get_seed_seq, new_rng
-=======
 from pymor.vectorarrays.numpy import NumpyVectorSpace
->>>>>>> ebe4ccd96 ([rand_la] even more refactoring)
 
 
 class RandomizedRangeFinder(CacheableObject):
@@ -48,11 +44,6 @@ class RandomizedRangeFinder(CacheableObject):
             self._Q.append(self.A.range.empty())
         self._Q = tuple(self._Q)
         self.testvecs = self.A.source.empty()
-        self._basis_rng_real = new_rng(get_seed_seq().spawn(1)[0])
-        self._test_rng_real = new_rng(get_seed_seq().spawn(1)[0])
-        if complex:
-            self._basis_rng_imag = new_rng(get_seed_seq().spawn(1)[0])
-            self._test_rng_imag = new_rng(get_seed_seq().spawn(1)[0])
 
     @cached
     def _lambda_min(self):
@@ -72,11 +63,9 @@ class RandomizedRangeFinder(CacheableObject):
             return self.lambda_min
 
     def _draw_test_vector(self, n):
-        with self._test_rng_real:
-            W = self.A.source.random(n, distribution='normal')
+        W = self.A.source.random(n, distribution='normal')
         if self.complex:
-            with self._test_rng_imag:
-                W += 1j * self.A.source.random(n, distribution='normal')
+            W += 1j * self.A.source.random(n, distribution='normal')
         self.testvecs.append(self.A.apply(W))
 
     def _maxnorm(self, basis_size, num_testvecs):
@@ -109,11 +98,9 @@ class RandomizedRangeFinder(CacheableObject):
     def _extend_basis(self, k=1):
         self.logger.info(f'Appending {k} basis vector{"s" if k > 1 else ""}.')
 
-        with self._basis_rng_real:
-            W = self.A.source.random(k, distribution='normal')
+        W = self.A.source.random(k, distribution='normal')
         if self.complex:
-            with self._basis_rng_imag:
-                W += 1j * self.A.source.random(k, distribution='normal')
+            W += 1j * self.A.source.random(k, distribution='normal')
 
         self._Q[0].append(self.A.apply(W))
         gram_schmidt(self._Q[0], self.range_product, offset=self._l, copy=False)
