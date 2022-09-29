@@ -74,7 +74,7 @@ class LTIModel(Model):
     presets
         A `dict` of preset attributes or `None`. The dict must only contain keys that correspond to
         attributes of |LTIModel| such as `poles`, `c_lrcf`, `o_lrcf`, `c_dense`, `o_dense`, `hsv`,
-        `h2_norm`, `hinf_norm`, `l2_norm` and `linf_norm`. Additionaly, the frequency at which the
+        `h2_norm`, `hinf_norm`, `l2_norm` and `linf_norm`. Additionally, the frequency at which the
         :math:`\mathcal{H}_\infty/\mathcal{L}_\infty` norm is attained can be preset with `fpeak`.
     solver_options
         The solver options to use to solve the Lyapunov equations.
