@@ -77,7 +77,7 @@ class LTIModel(Model):
         `h2_norm`, `hinf_norm`, `l2_norm` and `linf_norm`. Additionally, the frequency at which the
         :math:`\mathcal{H}_\infty/\mathcal{L}_\infty` norm is attained can be preset with `fpeak`.
     solver_options
-        The solver options to use to solve the Lyapunov equations.
+        The solver options to use to solve matrix equations.
     error_estimator
         An error estimator for the problem. This can be any object with an
         `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
