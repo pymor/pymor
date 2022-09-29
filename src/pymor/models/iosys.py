@@ -629,6 +629,18 @@ class LTIModel(Model):
         elif typ == 'o_dense':
             return solve_lyap_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
                                     to_matrix(C, format='dense', mu=mu), trans=True, options=options_dense)
+        elif typ == 'bs_c_lrcf':
+            ast_spectrum = self.get_ast_spectrum(mu=mu)
+            K = bernoulli_stabilize(A, E, B.as_range_array(mu=mu), ast_spectrum, trans=True)
+            BK = LowRankOperator(B.as_range_array(mu=mu), np.eye(len(K)), K)
+            return solve_cont_lyap_lrcf(A - BK, E, B.as_range_array(mu=mu),
+                                        trans=False, options=options_lrcf)
+        elif typ == 'bs_o_lrcf':
+            ast_spectrum = self.get_ast_spectrum(mu=mu)
+            K = bernoulli_stabilize(A, E, C.as_source_array(mu=mu), ast_spectrum, trans=False)
+            KC = LowRankOperator(K, np.eye(len(K)), C.as_source_array(mu=mu))
+            return solve_cont_lyap_lrcf(A - KC, E, C.as_source_array(mu=mu),
+                                        trans=True, options=options_lrcf)
         elif typ == 'lqg_c_lrcf':
             return solve_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
                                    trans=False, options=options_ricc_lrcf)
@@ -660,6 +672,10 @@ class LTIModel(Model):
             - `'o_lrcf'`: low-rank Cholesky factor of the observability Gramian,
             - `'c_dense'`: dense controllability Gramian,
             - `'o_dense'`: dense observability Gramian,
+            - `'bs_c_lrcf'`: low-rank Cholesky factor of the Bernoulli stabilized controllability
+              Gramian,
+            - `'bs_o_lrcf'`: low-rank Cholesky factor of the Bernoulli stabilized observability
+              Gramian,
             - `'lqg_c_lrcf'`: low-rank Cholesky factor of the "controllability" LQG Gramian,
             - `'lqg_o_lrcf'`: low-rank Cholesky factor of the "observability" LQG Gramian,
             - `('br_c_lrcf', gamma)`: low-rank Cholesky factor of the "controllability" bounded real
@@ -681,10 +697,10 @@ class LTIModel(Model):
         If typ ends with `'_lrcf'`, then the Gramian factor as a |VectorArray| from `self.A.source`.
         If typ ends with `'_dense'`, then the Gramian as a |NumPy array|.
         """
-        assert (typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'lqg_c_lrcf', 'lqg_o_lrcf')
+        assert (typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'bs_c_lrcf', 'bs_o_lrcf', 'lqg_c_lrcf', 'lqg_o_lrcf')
                 or isinstance(typ, tuple) and len(typ) == 2 and typ[0] in ('br_c_lrcf', 'br_o_lrcf'))
 
-        if ((isinstance(typ, str) and typ.startswith('lqg') or isinstance(typ, tuple))
+        if ((isinstance(typ, str) and (typ.startswith('bs') or typ.startswith('lqg')) or isinstance(typ, tuple))
                 and self.sampling_time > 0):
             raise NotImplementedError
 
