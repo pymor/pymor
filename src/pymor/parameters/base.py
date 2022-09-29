@@ -171,7 +171,7 @@ class Parameters(SortedFrozenDict):
                 return v
             elif isinstance(v, (str, Function)):
                 if isinstance(v, str):
-                    v = ExpressionFunction(v, dim_domain=1, variable='t')
+                    v = ExpressionFunction(v.replace('t', 't[0]'), dim_domain=1, variable='t')
                 v.dim_domain == 1 or fail(f'wrong domain dimension of parameter function {k}')
                 len(v.shape_range) == 1 or fail(f'wrong shape_range of parameter function {k}')
                 v.shape_range[0] == self[k] or fail(f'wrong range dimension of prameter function {k}')
