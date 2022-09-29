@@ -877,13 +877,13 @@ class LTIModel(Model):
         return self.hsv(mu=mu)[0]
 
     @cached
-    def _l2_norm(self, ast_pole_data=None, mu=None):
+    def _l2_norm(self, mu=None):
         assert self.parameters.assert_compatible(mu)
 
         A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
         options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
 
-        ast_spectrum = self.get_ast_spectrum(ast_pole_data, mu)
+        ast_spectrum = self.get_ast_spectrum(mu=mu)
 
         if len(ast_spectrum[0]) == 0:
             return self.h2_norm()
@@ -906,7 +906,7 @@ class LTIModel(Model):
                                  trans=True, options=options_lrcf)
             return np.sqrt(BmKD.apply_adjoint(of, mu=mu).norm2().sum())
 
-    def l2_norm(self, ast_pole_data=None, mu=None):
+    def l2_norm(self, mu=None):
         r"""Compute the :math:`\mathcal{L}_2`-norm of the |LTIModel|.
 
         The :math:`\mathcal{L}_2`-norm of an |LTIModel| is defined via the integral
@@ -923,14 +923,6 @@ class LTIModel(Model):
 
         Parameters
         ----------
-        ast_pole_data
-            Can be:
-
-            - dictionary of parameters for :func:`~pymor.algorithms.eigs.eigs`,
-            - list of anti-stable eigenvalues (scalars),
-            - tuple `(lev, ew, rev)` where `ew` contains the anti-stable eigenvalues
-              and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
-            - `None` if anti-stable eigenvalues should be computed via dense methods.
         mu
             |Parameter|.
 
@@ -941,8 +933,7 @@ class LTIModel(Model):
         """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
-        l2_norm = self.presets['l2_norm'] if 'l2_norm' in self.presets else self._l2_norm(ast_pole_data=ast_pole_data,
-                                                                                          mu=mu)
+        l2_norm = self.presets['l2_norm'] if 'l2_norm' in self.presets else self._l2_norm(mu=mu)
         assert l2_norm >= 0
 
         return l2_norm
@@ -1017,19 +1008,11 @@ class LTIModel(Model):
             assert linf_norm >= 0
             return linf_norm
 
-    def get_ast_spectrum(self, ast_pole_data=None, mu=None):
+    def get_ast_spectrum(self, mu=None):
         """Compute anti-stable subset of the poles of the |LTIModel|.
 
         Parameters
         ----------
-        ast_pole_data
-            Can be:
-
-            - dictionary of parameters for :func:`~pymor.algorithms.eigs.eigs`,
-            - list of anti-stable eigenvalues (scalars),
-            - tuple `(lev, ew, rev)` where `ew` contains the sorted anti-stable eigenvalues
-              and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
-            - `None` if anti-stable eigenvalues should be computed via dense methods.
         mu
             |Parameter|.
 
@@ -1049,10 +1032,12 @@ class LTIModel(Model):
 
         A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
 
-        if ast_pole_data is not None:
-            if type(ast_pole_data) == dict:
-                ew, rev = eigs(A, E=E if self.E else None, left_evp=False, **ast_pole_data)
-                ast_idx = np.where(ew.real > 0.)
+        if self.ast_pole_data is not None:
+            if isinstance(E, IdentityOperator):
+                E = None
+            if type(self.ast_pole_data) == dict:
+                ew, rev = eigs(A, E, left_evp=False, **self.ast_pole_data)
+                ast_idx = (ew.real > 0)
                 ast_ews = ew[ast_idx]
                 if len(ast_ews) == 0:
                     return self.solution_space.empty(), np.empty((0,)), self.solution_space.empty()
@@ -1060,28 +1045,24 @@ class LTIModel(Model):
                 ast_levs = A.source.empty(reserve=len(ast_ews))
                 for ae in ast_ews:
                     # l=3 avoids issues with complex conjugate pairs
-                    _, lev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae, left_evp=True)
+                    _, lev = eigs(A, E, k=1, l=3, sigma=ae, left_evp=True)
                     ast_levs.append(lev)
-                return ast_levs, ast_ews, rev[ast_idx[0]]
-
-            elif type(ast_pole_data) == list:
-                assert all(np.real(ast_pole_data) > 0)
-                ast_pole_data = np.sort(ast_pole_data)
+                return ast_levs, ast_ews, rev[ast_idx]
+            elif type(self.ast_pole_data) == list:
+                assert all(np.real(self.ast_pole_data) > 0)
+                ast_pole_data = np.sort(self.ast_pole_data)
                 ast_levs = A.source.empty(reserve=len(ast_pole_data))
                 ast_revs = A.source.empty(reserve=len(ast_pole_data))
                 for ae in ast_pole_data:
-                    _, lev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae, left_evp=True)
+                    _, lev = eigs(A, E, k=1, l=3, sigma=ae, left_evp=True)
                     ast_levs.append(lev)
-                    _, rev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae)
+                    _, rev = eigs(A, E, k=1, l=3, sigma=ae)
                     ast_revs.append(rev)
                 return ast_levs, ast_pole_data, ast_revs
-
             elif type(ast_pole_data) == tuple:
                 return ast_pole_data
-
             else:
                 TypeError(f'ast_pole_data is of wrong type ({type(ast_pole_data)}).')
-
         else:
             if self.order >= sparse_min_size():
                 if not isinstance(A, NumpyMatrixOperator) or A.sparse:
@@ -1090,14 +1071,15 @@ class LTIModel(Model):
                     if not isinstance(E, NumpyMatrixOperator) or E.sparse:
                         self.logger.warning('Converting operator E to a NumPy array.')
 
-            A, E = (to_matrix(op, format='dense') for op in [A, E])
-            ew, lev, rev = spla.eig(A, E if self.E else None, left=True)
-            ast_idx = np.where(ew.real > 0.)
+            A = to_matrix(A, format='dense')
+            E = None if isinstance(E, IdentityOperator) else to_matrix(E, format='dense')
+            ew, lev, rev = spla.eig(A, E, left=True)
+            ast_idx = (ew.real > 0)
             ast_ews = ew[ast_idx]
             idx = ast_ews.argsort()
 
-            ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, 0, :][:, idx].T)
-            ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, 0, :][:, idx].T)
+            ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, idx].T)
+            ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, idx].T)
 
             return ast_lev, ast_ews[idx], ast_rev
 
