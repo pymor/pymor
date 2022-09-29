@@ -3,14 +3,10 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-import scipy.linalg as spla
 
-from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
-from pymor.algorithms.lyapunov import solve_cont_lyap_lrcf
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
-from pymor.operators.constructions import LowRankOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 
