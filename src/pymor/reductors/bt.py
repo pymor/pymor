@@ -36,7 +36,6 @@ class GenericBTReductor(BasicObject):
         self.V = None
         self.W = None
         self._pg_reductor = None
-        self._sv_U_V_cache = None
 
     def _gramians(self):
         """Return low-rank Cholesky factors of Gramians."""
@@ -44,11 +43,7 @@ class GenericBTReductor(BasicObject):
 
     def _sv_U_V(self):
         """Return singular values and vectors."""
-        if self._sv_U_V_cache is None:
-            cf, of = self._gramians()
-            U, sv, Vh = spla.svd(self.fom.E.apply2(of, cf, mu=self.mu), lapack_driver='gesvd')
-            self._sv_U_V_cache = (sv, U.T, Vh)
-        return self._sv_U_V_cache
+        raise NotImplementedError
 
     def error_bounds(self):
         """Return error bounds for all possible reduced orders."""
@@ -137,6 +132,9 @@ class BTReductor(GenericBTReductor):
     def _gramians(self):
         return self.fom.gramian('c_lrcf', mu=self.mu), self.fom.gramian('o_lrcf', mu=self.mu)
 
+    def _sv_U_V(self):
+        return self.fom._sv_U_V(mu=self.mu)
+
     def error_bounds(self):
         sv = self._sv_U_V()[0]
         return 2 * sv[:0:-1].cumsum()[::-1]
@@ -214,6 +212,9 @@ class LQGBTReductor(GenericBTReductor):
 
         return self.fom.gramian('lqg_c_lrcf', mu=self.mu), self.fom.gramian('lqg_o_lrcf', mu=self.mu)
 
+    def _sv_U_V(self):
+        return self.fom._sv_U_V('lqg', mu=self.mu)
+
     def error_bounds(self):
         sv = self._sv_U_V()[0]
         return 2 * (sv[:0:-1] / np.sqrt(1 + sv[:0:-1]**2)).cumsum()[::-1]
@@ -245,6 +246,9 @@ class BRBTReductor(GenericBTReductor):
         cf = self.fom.gramian(('br_c_lrcf', self.gamma), mu=self.mu)
         of = self.fom.gramian(('br_o_lrcf', self.gamma), mu=self.mu)
         return cf, of
+
+    def _sv_U_V(self):
+        return self.fom._sv_U_V(('br', self.gamma), mu=self.mu)
 
     def error_bounds(self):
         sv = self._sv_U_V()[0]
