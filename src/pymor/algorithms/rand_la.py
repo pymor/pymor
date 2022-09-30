@@ -68,21 +68,16 @@ class RandomizedRangeFinder(CacheableObject):
             W += 1j * self.A.source.random(n, distribution='normal')
         self.testvecs.append(self.A.apply(W))
 
-    def _maxnorm(self, basis_size, num_testvecs):
+    def _estimate_error(self, basis_size, num_testvecs, p_fail):
+        c = np.sqrt(2 * self._lambda_min())
+        c *= erfinv((p_fail / min(self.A.source.dim, self.A.range.dim)) ** (1 / num_testvecs))
+
         if len(self.testvecs) < num_testvecs:
             self._draw_test_vector(num_testvecs - len(self.testvecs))
 
-        W, Q = self.testvecs[:num_testvecs].copy(), self._find_range(basis_size=basis_size, tol=None)
+        W, Q = self.testvecs[:num_testvecs].copy(), self._find_range(basis_size)
         W -= Q.lincomb(Q.inner(W, self.range_product).T)
-        return np.max(W.norm(self.range_product))
-
-    def _c_est(self, num_testvecs, p_fail):
-        c = np.sqrt(2 * self._lambda_min()) \
-            * erfinv((p_fail / min(self.A.source.dim, self.A.range.dim)) ** (1 / num_testvecs))
-        return 1 / c
-
-    def _estimate_error(self, basis_size, num_testvecs, p_fail):
-        return self._c_est(num_testvecs, p_fail) * self._maxnorm(basis_size, num_testvecs)
+        return c * np.max(W.norm(self.range_product))
 
     def estimate_error(self, basis_size, num_testvecs=20, p_fail=1e-14):
         assert isinstance(basis_size, int) and basis_size > 0
@@ -97,7 +92,7 @@ class RandomizedRangeFinder(CacheableObject):
         self.logger.info(f'Estimated error (basis dimension {basis_size}): {err:.5e}.')
         return err
 
-    def _extend_basis(self, k=1):
+    def _extend_basis(self, k):
         W = self.A.source.random(k, distribution='normal')
         if self.complex:
             W += 1j * self.A.source.random(k, distribution='normal')
@@ -116,8 +111,7 @@ class RandomizedRangeFinder(CacheableObject):
             self._Q[i+1].append(self.A.apply(self._Q[i][-k:]))
             gram_schmidt(self._Q[i+1], self.range_product, offset=l, copy=False)
 
-    def _find_range(self, basis_size=8, tol=None, num_testvecs=20, p_fail=1e-14, block_size=8, increase_block=True,
-                    max_basis_size=500):
+    def _find_range(self, basis_size):
         if basis_size > self._l:
             k = basis_size - len(self._Q[-1])
             with self.logger.block(f'Appending {k} basis vector{"s" if k > 1 else ""} ...'):
@@ -142,47 +136,26 @@ class RandomizedRangeFinder(CacheableObject):
         assert tol is None or tol > 0
         assert isinstance(num_testvecs, int) and num_testvecs > 0
         assert p_fail > 0
-        assert isinstance(block_size, int) and block_size > 0
-        assert isinstance(increase_block, bool)
-        assert isinstance(max_basis_size, int) and max_basis_size > 0
 
         with self.logger.block('Finding range ...'):
             with self.logger.block(f'Approximating range basis of dimension {basis_size} ...'):
-                self._find_range(basis_size=basis_size, tol=tol, num_testvecs=num_testvecs, p_fail=p_fail,
-                                 block_size=block_size, increase_block=increase_block, max_basis_size=max_basis_size)
+                self._find_range(basis_size)
                 err = self._estimate_error(basis_size, num_testvecs, p_fail)
 
             if tol is not None and err > tol:
                 with self.logger.block('Extending range basis adaptively ...'):
                     max_iter = min(max_basis_size, self.A.source.dim, self.A.range.dim)
                     while self._l < max_iter:
-                        if increase_block:
-                            low = basis_size
-                            basis_size += block_size
-                            block_size *= 2
-                        else:
-                            basis_size += block_size
-                        basis_size = min(basis_size, max_iter)
-                        err = self.estimate_error(basis_size, num_testvecs, p_fail)
+                        basis_size = min(basis_size + 1, max_iter)
+                        err = self._estimate_error(basis_size, num_testvecs, p_fail)
+                        self.logger.info(f'Basis dimension: {basis_size}/{max_iter}\t'
+                                         + 'Estimated error: {err:.5e} (tol={tol:.2e})')
                         if err <= tol:
                             break
-                if increase_block:
-                    with self.logger.block('Contracting range basis ...'):
-                        high = basis_size
-                        while True:
-                            mid = high - (high - low) // 2
-                            if basis_size == mid:
-                                break
-                            basis_size = mid
-                            err = self.estimate_error(basis_size, num_testvecs, p_fail)
-                            if err <= tol:
-                                high = mid
-                            else:
-                                low = mid
 
         self.logger.info(f'Found range of dimension {basis_size}. (Estimated error: {err:.5e})')
 
-        return self._Q[-1][:basis_size]
+        return self._find_range(basis_size)
 
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
