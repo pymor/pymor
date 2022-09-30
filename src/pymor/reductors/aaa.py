@@ -6,7 +6,6 @@ import numpy as np
 import itertools
 
 from pymor.core.base import BasicObject
-from pymor.core.logger import getLogger
 from pymor.models.transfer_function import TransferFunction
 
 
@@ -25,21 +24,22 @@ class pAAAReductor(BasicObject):
         nested list `svs` such that `svs[i]` corresponds to sampling values of the `i-th`
         variable. Samples are represented as a tensor `S`. E.g., for 3 inputs `S[i,j,k]`
         corresponds to the sampled value at `(svs[0][i],svs[1][j],svs[2][k])`. In the
-        MIMO case `S[i,j,k]` represents a matrix of dimension `dim_input` times `dim_output`.
+        MIMO case `S[i,j,k]` represents a matrix of dimension `dim_output` times `dim_input`.
         If `fom` is not `None` data only contains a list of sampling values.
     fom
         |TransferFunction| or |Model| with a `transfer_function` attribute.
     conjugate
-        Wether to compute complex conjugates of first sampling variables and enforce
+        Whether to compute complex conjugates of first sampling variables and enforce
         interpolation in complex conjugate pairs (allows for constructing real system matrices).
     nsp_tol
         Tolerance for null space of higher-dimensional Loewner matrix to check for
         interpolation or convergence.
     post_process
-        Wether to do post-processing or not.
+        Whether to do post-processing or not.
     L_rk_tol
         Tolerance for ranks of 1-D Loewner matrices computed in post-processing.
     """
+
     def __init__(self, data, fom=None, conjugate=True, nsp_tol=1e-16, post_process=True, L_rk_tol=1e-8):
         if fom is not None:
             assert isinstance(fom, TransferFunction) or hasattr(fom, 'transfer_function')
@@ -50,16 +50,16 @@ class pAAAReductor(BasicObject):
             assert len(data) == self.num_vars
             self.sampling_values = data
             self.parameters = fom.parameters
-            sampling_grid = np.meshgrid(*(sv for sv in data), indexing='ij')
+            sampling_grid = np.meshgrid(*data, indexing='ij')
             if fom.dim_input == 1 and fom.dim_output == 1:
-                self.samples = np.empty([*(len(sv) for sv in data)], dtype=self.sampling_values[0].dtype)
+                self.samples = np.empty([len(sv) for sv in data], dtype=self.sampling_values[0].dtype)
                 for idc in itertools.product(*(range(ss) for ss in self.samples.shape)):
                     params = {}
                     for i, p in enumerate(fom.parameters.keys()):
                         params[p] = sampling_grid[i+1][idc]
                     self.samples[idc] = fom.eval_tf(sampling_grid[0][idc], mu=params)
             else:
-                sample_shape = [*(len(sv) for sv in data)]
+                sample_shape = [len(sv) for sv in data]
                 sample_shape.append(fom.dim_output)
                 sample_shape.append(fom.dim_input)
                 self.samples = np.empty(sample_shape, dtype=self.sampling_values[0].dtype)
@@ -73,15 +73,11 @@ class pAAAReductor(BasicObject):
             self.sampling_values = data[0]
             self.samples = data[1]
             self.num_vars = len(data[0])
-            self.parameters = {}
-            for i in range(self.num_vars-1):
-                self.parameters['p' + str(i)] = 1
+            self.parameters = {f'p{i}': 1 for i in range(self.num_vars-1)}
 
         self.__auto_init(locals())
 
-    def reduce(self, tol=1e-3, max_iters=None):
-        logger = getLogger('pymor.reductors.AAA.reduce')
-
+    def reduce(self, tol=1e-7, max_iters=None):
         svs = self.sampling_values
         samples = self.samples
 
@@ -103,8 +99,8 @@ class pAAAReductor(BasicObject):
             dim_input = samples.shape[-1]
             dim_output = samples.shape[-2]
             samples_T = np.empty(samples.shape[:-2], dtype=samples.dtype)
-            w = np.random.uniform(size=(1, dim_output))
-            v = np.random.uniform(size=(dim_input, 1))
+            w = np.random.RandomState(0).uniform(size=(1, dim_output))
+            v = np.random.RandomState(0).uniform(size=(dim_input, 1))
             w = w / np.linalg.norm(w)
             v = v / np.linalg.norm(v)
             for li in list(itertools.product(*(range(s) for s in samples.shape[:-2]))):
@@ -117,9 +113,9 @@ class pAAAReductor(BasicObject):
 
         # initilize data partitions, error, max iterations
         err = np.inf
-        itpl_part = [*([] for _ in range(num_vars))]
+        itpl_part = [[] for _ in range(num_vars)]
         if max_iters is None:
-            max_iters = [*(len(s)-1 for s in svs)]
+            max_iters = [len(s)-1 for s in svs]
 
         assert len(max_iters) == len(svs)
 
@@ -129,7 +125,7 @@ class pAAAReductor(BasicObject):
         # iteration counter
         j = 0
 
-        while np.any([*(len(i) < mi for (i, mi) in zip(itpl_part, max_iters))]):
+        while any(len(i) < mi for (i, mi) in zip(itpl_part, max_iters)):
 
             # compute approximation error over entire sampled data set
             grid = np.meshgrid(*(sv for sv in svs), indexing='ij')
@@ -146,8 +142,8 @@ class pAAAReductor(BasicObject):
             err = np.max(err_mat)
 
             j += 1
-            logger.info(f'Relative error at step {j}: {err/max_samples:.5e}, \
-                number of interpolation points {[*(len(ip) for ip in itpl_part)]}')
+            self.logger.info(f'Relative error at step {j}: {err/max_samples:.5e}, '
+                             f'number of interpolation points {[len(ip) for ip in itpl_part]}')
 
             # stopping criterion based on relative approximation error
             if err <= rel_tol:
@@ -175,23 +171,23 @@ class pAAAReductor(BasicObject):
             d_nsp = np.sum(S/S[0] < self.nsp_tol)
             if d_nsp > 1:
                 if self.post_process:
-                    logger.info('Non-minimal order interpolant computed. Starting post-processing.')
+                    self.logger.info('Non-minimal order interpolant computed. Starting post-processing.')
                     pp_coefs, pp_itpl_part = _post_processing(samples, svs, itpl_part, d_nsp, self.L_rk_tol)
                     if pp_coefs is not None:
                         coefs, itpl_part = pp_coefs, pp_itpl_part
                     else:
-                        logger.warning('Post-processing failed. Consider reducing "L_rk_tol".')
+                        self.logger.warning('Post-processing failed. Consider reducing "L_rk_tol".')
                 else:
-                    logger.warning('Non-minimal order interpolant computed.')
+                    self.logger.warning('Non-minimal order interpolant computed.')
 
             # update barycentric form
             itpl_samples = samples[np.ix_(*(ip for ip in itpl_part))]
             itpl_samples = np.reshape(itpl_samples, -1)
-            itpl_nodes = [*(sv[lp] for sv, lp in zip(svs, itpl_part))]
+            itpl_nodes = [sv[lp] for sv, lp in zip(svs, itpl_part)]
             bary_func = np.vectorize(make_bary_func(itpl_nodes, itpl_samples, coefs))
 
             if self.post_process and d_nsp >= 1:
-                logger.info('Converged due to non-trivial null space of Loewner matrix after post-processing.')
+                self.logger.info('Converged due to non-trivial null space of Loewner matrix after post-processing.')
                 break
 
         # in MIMO case construct barycentric form based on matrix/vector samples
@@ -279,9 +275,9 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs):
                 d_min_idx = np.argmin(np.abs(d))
                 d = np.eye(1, len(d), d_min_idx)
             else:
-                d = np.reciprocal(d)
+                d = 1 / d
             pd = np.kron(pd, d)
-        m = np.multiply(coefs.T, pd)
+        m = coefs.T * pd
         num = np.tensordot(m, itpl_vals, axes=1)
         denom = np.inner(coefs.T, pd)
         nd = num / denom
@@ -303,7 +299,7 @@ def _ls_part(itpl_part, svs):
 def _post_processing(samples, svs, itpl_part, d_nsp, L_rk_tol):
     """Compute coefficients/partition to construct minimal interpolant."""
     num_vars = len(svs)
-    max_idx = np.argmax([*(len(ip) for ip in itpl_part)])
+    max_idx = np.argmax([len(ip) for ip in itpl_part])
     max_rks = []
     for i in range(num_vars):
         max_rk = 0
@@ -325,7 +321,7 @@ def _post_processing(samples, svs, itpl_part, d_nsp, L_rk_tol):
                 max_rk = rk
         max_rks.append(max_rk)
     # exploit nullspace structure to obtain final max rank
-    denom = np.prod([*(len(itpl_part[k])-max_rks[k] for k in range(len(itpl_part)))])
+    denom = np.prod([len(itpl_part[k])-max_rks[k] for k in range(len(itpl_part))])
     if denom == 0 or d_nsp % denom != 0:
         return None, None
     max_rks[max_idx] = len(itpl_part[max_idx]) - d_nsp / denom

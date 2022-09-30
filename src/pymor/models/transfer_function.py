@@ -284,7 +284,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         return out
 
     @cached
-    def h2_norm(self, return_norm_only=True, **quad_kwargs):
+    def h2_norm(self, return_norm_only=True, mu=None, **quad_kwargs):
         """Compute the H2-norm using quadrature.
 
         This method uses `scipy.integrate.quad` and makes no assumptions on the form of the transfer
@@ -299,6 +299,8 @@ class TransferFunction(CacheableObject, ParametricObject):
         ----------
         return_norm_only
             Whether to only return the approximate H2-norm.
+        mu
+            |Parameter values|.
         quad_kwargs
             Keyword arguments passed to `scipy.integrate.quad`.
 
@@ -317,7 +319,7 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         import scipy.integrate as spint
         quad_kwargs.setdefault('epsabs', 0)
-        quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j))**2,
+        quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j, mu=mu))**2,
                               0, np.inf,
                               **quad_kwargs)
         norm = np.sqrt(quad_out[0] / np.pi)
