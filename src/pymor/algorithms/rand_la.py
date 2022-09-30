@@ -102,16 +102,19 @@ class RandomizedRangeFinder(CacheableObject):
         if self.complex:
             W += 1j * self.A.source.random(k, distribution='normal')
 
+        l = len(self._Q[0])
         self._Q[0].append(self.A.apply(W))
-        gram_schmidt(self._Q[0], self.range_product, offset=self._l, copy=False)
+        gram_schmidt(self._Q[0], self.range_product, offset=l, copy=False)
 
         for i in range(self.subspace_iterations):
             i = 2*i + 1
+            l = len(self._Q[i])
             self._Q[i].append(self.source_product.apply_inverse(
                 (self.A.apply_adjoint(self.range_product.apply(self._Q[i-1][-k:])))))
-            gram_schmidt(self._Q[i], self.source_product, offset=self._l, copy=False)
+            gram_schmidt(self._Q[i], self.source_product, offset=l, copy=False)
+            l = len(self._Q[i+1])
             self._Q[i+1].append(self.A.apply(self._Q[i][-k:]))
-            gram_schmidt(self._Q[i+1], self.range_product, offset=self._l, copy=False)
+            gram_schmidt(self._Q[i+1], self.range_product, offset=l, copy=False)
 
     def _find_range(self, basis_size=8, tol=None, num_testvecs=20, p_fail=1e-14, block_size=8, increase_block=True,
                     max_basis_size=500):
