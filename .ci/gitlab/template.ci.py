@@ -71,7 +71,7 @@ rules:
         paths:
             - src/pymortests/testdata/check_results/*/*_changed
             - docs/source/*_extracted.py
-            - coverage*
+            - coverage*xml
             - memory_usage.txt
             - .hypothesis
             - test_results*.xml
@@ -234,10 +234,9 @@ submit coverage:
         when: always
         name: "submit"
         paths:
-            - cover/*
-            - .coverage
+            - coverage*xml
     dependencies:
-    {%- for script, py, para in matrix if script in ['vanilla', 'oldest', 'numpy_git', 'mpi'] %}
+    {%- for script, py, para in matrix if script in ['tutorials', 'vanilla', 'oldest', 'numpy_git', 'mpi'] %}
         - {{script}} {{py[0]}} {{py[2]}}
     {%- endfor %}
 

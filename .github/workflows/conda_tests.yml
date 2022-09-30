@@ -39,6 +39,9 @@ jobs:
     name: ${{ matrix.os }} - Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 55
+    env:
+        RESULTS_FILE: result_${{ matrix.os }}-${{ matrix.python }}.xml
+        COVERAGE_FILE: coverage_${{ matrix.os }}-${{ matrix.python }}
     strategy:
         matrix:
             os: [ubuntu-22.04, macos-12, windows-2022]
@@ -139,28 +142,48 @@ jobs:
           PYMOR_HYPOTHESIS_PROFILE: "ci"
           # we may be able to limit this to macos
           PYMOR_ALLOW_DEADLINE_EXCESS: 1
-          RESULTS_FILE: result_${{ runner.os }}-${{ matrix.python }}.xml
-          COMMON_PYTEST_OPTS: "--cov-report=xml --cov --cov-config=setup.cfg --cov-context=test --junitxml=${RESULTS_FILE}"
+          COMMON_PYTEST_OPTS: "--cov-report= --cov --cov-config=setup.cfg --cov-context=test --junitxml=${RESULTS_FILE}"
         run: |
             ${PYTEST_PREFIX} pytest ${COMMON_PYTEST_OPTS}
-      - uses: codecov/codecov-action@v3
-        name: Upload coverage
+            coverage xml -o ${COVERAGE_FILE}.xml
+      - name: Upload Coverage Results
+        if: always()
+        uses: actions/upload-artifact@v3
         with:
-          flags: github_actions,${{ matrix.os }}
-          fail_ci_if_error: true
-          verbose: true
+          name: coverage_results
+          path: ${{env.COVERAGE_FILE}}.xml
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: Unit Test Results (Python ${{ matrix.python }}, OS ${{ runner.os }})
-          path: result_*.xml
+          path: ${RESULTS_FILE}
       - name: Upload Conda Env Export
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: Conda Env Exports
           path: conda-env__${{ runner.os }}-${{ matrix.python }}.yml
+
+  coverage_report:
+    name: Report Coverage to codecov.io
+    runs-on: ubuntu-22.04
+    needs: [miniconda]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: coverage_results
+          path: ./reports/
+      - uses: codecov/codecov-action@v3
+        name: Upload coverage
+        with:
+          flags: github_actions
+          name: github_actions
+          fail_ci_if_error: true
+          verbose: true
+          directory: ./reports/
+
   full_install:
     name: Install with on ${{ matrix.os }} - Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}

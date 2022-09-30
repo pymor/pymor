@@ -11,5 +11,4 @@ done
 # manually add plugins to load that are excluded for other runs
 xvfb-run -a py.test ${COMMON_PYTEST_OPTS} -s --cov= -p no:pycharm \
   -p nb_regression -p notebook docs/test_tutorials.py
-coverage xml
-
+_coverage_xml

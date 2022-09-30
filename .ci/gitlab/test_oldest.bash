@@ -29,4 +29,4 @@ python -m pip freeze
 pytest src/pymortests/docker_ci_smoketest.py
 # this runs in pytest in a fake, auto numbered, X Server
 xvfb-run -a py.test ${COMMON_PYTEST_OPTS}
-coverage xml
+_coverage_xml
