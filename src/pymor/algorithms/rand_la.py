@@ -50,7 +50,7 @@ class RandomizedRangeFinder(CacheableObject):
         if isinstance(self.source_product, IdentityOperator):
             return 1
         elif self.lambda_min is None:
-            with self.logger.block('Estimating minimum singular value of source_product...'):
+            with self.logger.block('Estimating minimum singular value of source_product ...'):
                 def mv(v):
                     return self.source_product.apply(self.source_product.source.from_numpy(v)).to_numpy()
 
@@ -81,23 +81,23 @@ class RandomizedRangeFinder(CacheableObject):
             * erfinv((p_fail / min(self.A.source.dim, self.A.range.dim)) ** (1 / num_testvecs))
         return 1 / c
 
+    def _estimate_error(self, basis_size, num_testvecs, p_fail):
+        return self._c_est(num_testvecs, p_fail) * self._maxnorm(basis_size, num_testvecs)
+
     def estimate_error(self, basis_size, num_testvecs=20, p_fail=1e-14):
         assert isinstance(basis_size, int) and basis_size > 0
         if basis_size > min(self.A.source.dim, self.A.range.dim):
             self.logger.warning('Requested basis is larger than the rank of the operator!')
-            self.logger.info('Proceeding with maximum operator rank...')
+            self.logger.info('Proceeding with maximum operator rank.')
             basis_size = min(self.A.source.dim, self.A.range.dim)
         assert 0 < num_testvecs and isinstance(num_testvecs, int)
         assert 0 < p_fail
 
-        err = self._c_est(num_testvecs, p_fail) * self._maxnorm(basis_size, num_testvecs)
-        self.logger.info(f'estimated error: {err:.10f}')
-
+        err = self._estimate_error(basis_size, num_testvecs, p_fail)
+        self.logger.info(f'Estimated error (basis dimension {basis_size}): {err:.5e}.')
         return err
 
     def _extend_basis(self, k=1):
-        self.logger.info(f'Appending {k} basis vector{"s" if k > 1 else ""}.')
-
         W = self.A.source.random(k, distribution='normal')
         if self.complex:
             W += 1j * self.A.source.random(k, distribution='normal')
@@ -113,39 +113,19 @@ class RandomizedRangeFinder(CacheableObject):
             self._Q[i+1].append(self.A.apply(self._Q[i][-k:]))
             gram_schmidt(self._Q[i+1], self.range_product, offset=self._l, copy=False)
 
-        self._l += k
-
     def _find_range(self, basis_size=8, tol=None, num_testvecs=20, p_fail=1e-14, block_size=8, increase_block=True,
                     max_basis_size=500):
         if basis_size > self._l:
-            self._extend_basis(basis_size - self._l)
-
-        if tol is not None and self.estimate_error(basis_size, num_testvecs, p_fail) > tol:
-            with self.logger.block('Extending range basis adaptively...'):
-                max_iter = min(max_basis_size, self.A.source.dim, self.A.range.dim)
-                while self._l < max_iter:
-                    if increase_block:
-                        low = basis_size
-                        basis_size += block_size
-                        block_size *= 2
-                    else:
-                        basis_size += block_size
-                    basis_size = min(basis_size, max_iter)
-                    if self.estimate_error(basis_size, num_testvecs, p_fail) <= tol:
-                        break
-            if increase_block:
-                with self.logger.block('Contracting range basis...'):
-                    high = basis_size
-                    while True:
-                        mid = high - (high - low) // 2
-                        if basis_size == mid:
-                            break
-                        basis_size = mid
-                        err = self.estimate_error(basis_size, num_testvecs, p_fail)
-                        if err <= tol:
-                            high = mid
-                        else:
-                            low = mid
+            k = basis_size - len(self._Q[-1])
+            with self.logger.block(f'Appending {k} basis vector{"s" if k > 1 else ""} ...'):
+                self._extend_basis(k)
+                self._l = len(self._Q[-1])
+            while basis_size > self._l:
+                k = basis_size - len(self._Q[-1])
+                with self.logger.block(f'Appending {k} basis vector{"s" if k > 1 else ""}'
+                                       + 'to compensate for removal in gram_schmidt ...'):
+                    self._extend_basis(k)
+                    self._l = len(self._Q[-1])
 
         return self._Q[-1][:basis_size]
 
@@ -154,7 +134,7 @@ class RandomizedRangeFinder(CacheableObject):
         assert isinstance(basis_size, int) and basis_size > 0
         if basis_size > min(self.A.source.dim, self.A.range.dim):
             self.logger.warning('Requested basis is larger than the rank of the operator!')
-            self.logger.info('Proceeding with maximum operator rank...')
+            self.logger.info('Proceeding with maximum operator rank.')
             basis_size = min(self.A.source.dim, self.A.range.dim)
         assert tol is None or tol > 0
         assert isinstance(num_testvecs, int) and num_testvecs > 0
@@ -163,11 +143,43 @@ class RandomizedRangeFinder(CacheableObject):
         assert isinstance(increase_block, bool)
         assert isinstance(max_basis_size, int) and max_basis_size > 0
 
-        with self.logger.block('Finding range...'):
-            Q = self._find_range(basis_size=basis_size, tol=tol, num_testvecs=num_testvecs, p_fail=p_fail,
+        with self.logger.block('Finding range ...'):
+            with self.logger.block(f'Approximating range basis of dimension {basis_size} ...'):
+                self._find_range(basis_size=basis_size, tol=tol, num_testvecs=num_testvecs, p_fail=p_fail,
                                  block_size=block_size, increase_block=increase_block, max_basis_size=max_basis_size)
-            self.logger.info(f'Found range of dimension {len(Q)}.')
-        return Q
+                err = self._estimate_error(basis_size, num_testvecs, p_fail)
+
+            if tol is not None and err > tol:
+                with self.logger.block('Extending range basis adaptively ...'):
+                    max_iter = min(max_basis_size, self.A.source.dim, self.A.range.dim)
+                    while self._l < max_iter:
+                        if increase_block:
+                            low = basis_size
+                            basis_size += block_size
+                            block_size *= 2
+                        else:
+                            basis_size += block_size
+                        basis_size = min(basis_size, max_iter)
+                        err = self.estimate_error(basis_size, num_testvecs, p_fail)
+                        if err <= tol:
+                            break
+                if increase_block:
+                    with self.logger.block('Contracting range basis ...'):
+                        high = basis_size
+                        while True:
+                            mid = high - (high - low) // 2
+                            if basis_size == mid:
+                                break
+                            basis_size = mid
+                            err = self.estimate_error(basis_size, num_testvecs, p_fail)
+                            if err <= tol:
+                                high = mid
+                            else:
+                                low = mid
+
+        self.logger.info(f'Found range of dimension {basis_size}. (Estimated error: {err:.5e})')
+
+        return self._Q[-1][:basis_size]
 
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
@@ -326,28 +338,28 @@ def randomized_svd(A, n, range_product=None, source_product=None, oversampling=2
     if A.source.dim == 0 or A.range.dim == 0:
         return A.source.empty(), np.array([]), A.range.empty()
 
-    with logger.block('Approximating basis for the operator range...'):
+    with logger.block('Approximating basis for the operator range ...'):
         Q = RRF.find_range(basis_size=n+oversampling)
 
-    with logger.block('Projecting operator onto the reduced space...'):
+    with logger.block('Projecting operator onto the reduced space ...'):
         if isinstance(source_product, IdentityOperator):
             R_B = A.apply_adjoint(Q).to_numpy().T
         else:
             B = A.apply_adjoint(range_product.apply(Q))
             Q_B, R_B = gram_schmidt(source_product.apply_inverse(B), product=source_product, return_R=True)
 
-    with logger.block('Computing SVD in the reduced space...'):
+    with logger.block(f'Computing SVD in the reduced space ({R_B.shape[1]}x{R_B.shape[0]})...'):
         U_b, s, Vh_b = sp.linalg.svd(R_B.T, full_matrices=False)
 
-    with logger.block(f'Backprojecting the left \
-                      {"" if isinstance(range_product, IdentityOperator) else "generalized "}\
-                      singular vectors...'):
+    with logger.block('Backprojecting the left'
+                      + f'{" " if isinstance(range_product, IdentityOperator) else " generalized "}'
+                      + 'singular vectors...'):
         U = Q.lincomb(U_b[:, :n].T)
 
     if isinstance(source_product, IdentityOperator):
         V = NumpyVectorSpace.from_numpy(Vh_b[:n])
     else:
-        with logger.block('Backprojecting the right generalized singular vectors...'):
+        with logger.block('Backprojecting the right generalized singular vectors ...'):
             V = Q_B.lincomb(Vh_b[:n])
 
     return U, s[:n], V
