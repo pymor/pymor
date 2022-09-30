@@ -10,4 +10,4 @@ pip install git+https://github.com/numpy/numpy@main
 # there seems to be no way of really overwriting -p no:warnings from setup.cfg
 sed -i -e 's/\-p\ no\:warnings//g' setup.cfg
 xvfb-run -a py.test ${COMMON_PYTEST_OPTS} -W once::DeprecationWarning -W once::PendingDeprecationWarning
-coverage xml
+_coverage_xml

@@ -9,13 +9,18 @@ cd "${PYMOR_ROOT}"
 wget https://uploader.codecov.io/latest/alpine/codecov
 chmod +x codecov
 
+rm -rf reports
+mkdir reports
+mv coverage*xml reports
+
 ./codecov  --required \
   -t ${PYMOR_CODECOV_TOKEN} \
-  --file ${PYMOR_ROOT}/coverage* \
+  -s ./reports \
   --rootDir ${PYMOR_ROOT} \
   --flags gitlab_ci \
   --name gitlab_ci \
   -X detect \
+  -v \
   -Z \
   --slug pymor/pymor \
   --sha ${CI_COMMIT_SHA} \

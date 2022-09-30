@@ -16,4 +16,4 @@ done
 
 coverage combine
 # the test_thermalblock_ipython results in '(builtin)' missing which we "--ignore-errors"
-coverage xml --ignore-errors
+_coverage_xml "--ignore-errors"

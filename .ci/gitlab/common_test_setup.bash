@@ -6,6 +6,12 @@ else
     export PULL_REQUEST=${CI_MERGE_REQUEST_ID}
 fi
 
+COVERAGE_FILE=${COVERAGE_FILE:-coverage}
+
+function _coverage_xml() {
+  local extra=${1:-}
+  coverage xml -o ${COVERAGE_FILE}.xml ${extra}
+}
 export PYTHONPATH_PRE=${PYTHONPATH}
 export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
 export PATH=~/.local/bin:${PATH}
