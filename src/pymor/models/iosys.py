@@ -121,6 +121,8 @@ class LTIModel(Model):
         The transfer function.
     """
 
+    cache_region = 'memory'
+
     def __init__(self, A, B, C, D=None, E=None, sampling_time=0, presets=None,
                  solver_options=None, ast_pole_data=None,
                  error_estimator=None, visualizer=None, name=None):
@@ -1251,6 +1253,8 @@ class PHLTIModel(Model):
         The transfer function.
     """
 
+    cache_region = 'memory'
+
     def __init__(self, J, R, G, P=None, S=None, N=None, E=None,
                  solver_options=None, error_estimator=None, visualizer=None, name=None):
         assert J.linear
@@ -1755,6 +1759,8 @@ class SecondOrderModel(Model):
     transfer_function
         The transfer function.
     """
+
+    cache_region = 'memory'
 
     def __init__(self, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
                  solver_options=None, error_estimator=None, visualizer=None, name=None):
@@ -2439,6 +2445,8 @@ class LinearDelayModel(Model):
         The transfer function.
     """
 
+    cache_region = 'memory'
+
     def __init__(self, A, Ad, tau, B, C, D=None, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
@@ -2703,6 +2711,8 @@ class LinearStochasticModel(Model):
         The |Operator| E.
     """
 
+    cache_region = 'memory'
+
     def __init__(self, A, As, B, C, D=None, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
@@ -2829,6 +2839,8 @@ class BilinearModel(Model):
     E
         The |Operator| E.
     """
+
+    cache_region = 'memory'
 
     def __init__(self, A, N, B, C, D, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
