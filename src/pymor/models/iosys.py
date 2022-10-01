@@ -79,7 +79,7 @@ class LTIModel(Model):
     solver_options
         The solver options to use to solve matrix equations.
     ast_pole_data
-        Can be:
+        Used in :meth:`get_ast_spectrum`. Can be:
 
         - dictionary of parameters for :func:`~pymor.algorithms.eigs.eigs`,
         - list of anti-stable eigenvalues (scalars),
@@ -1010,6 +1010,7 @@ class LTIModel(Model):
             assert linf_norm >= 0
             return linf_norm
 
+    @cached
     def get_ast_spectrum(self, mu=None):
         """Compute anti-stable subset of the poles of the |LTIModel|.
 
