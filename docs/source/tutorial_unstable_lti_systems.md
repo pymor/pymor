@@ -120,7 +120,8 @@ close to 0 using pyMOR's iterative eigensolver and filters the result for
 values with a positive real part.
 
 ```{code-cell}
-ast_spectrum = fom.get_ast_spectrum(ast_pole_data={'k': 10, 'sigma': 0})
+fom = fom.with_(ast_pole_data={'k': 10, 'sigma': 0})
+ast_spectrum = fom.get_ast_spectrum()
 print(ast_spectrum[1])
 ```
 
@@ -159,7 +160,7 @@ Let us start with initializing a reductor object
 
 ```{code-cell}
 from pymor.reductors.bt import FDBTReductor
-fdbt = FDBTReductor(fom, ast_pole_data={'k': 10, 'sigma': 0})
+fdbt = FDBTReductor(fom)
 ```
 
 In order to perform a Bernoulli stabilization, knowledge about the anti-stable
