@@ -22,22 +22,30 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         self.local_bases = local_bases or [self.solution_space.empty().block(ss).empty()
                                            for ss in range(self.S)]
 
-        neighborhoods = construct_neighborhoods(dd_grid)
+        # element patches for online enrichment
+        element_patches = construct_element_patches(dd_grid)
 
         patch_models = []
         patch_mappings_to_global = []
         patch_mappings_to_local = []
-        for neighborhood in neighborhoods:
+        for element_patch in element_patches:
             patch_model, local_to_global_mapping, global_to_local_mapping = construct_patch_model(
-                neighborhood, fom.operator, fom.rhs, dd_grid.neighbors)
+                element_patch, fom.operator, fom.rhs, dd_grid.neighbors)
             patch_models.append(patch_model)
             patch_mappings_to_global.append(local_to_global_mapping)
             patch_mappings_to_local.append(global_to_local_mapping)
 
-        self.neighborhoods = neighborhoods
+        self.element_patches = element_patches
         self.patch_models = patch_models
         self.patch_mappings_to_global = patch_mappings_to_global
         self.patch_mappings_to_local = patch_mappings_to_local
+
+        # node patches for estimation
+        # NOTE: currently the estimator domains are node patches
+        inner_node_patches = construct_inner_node_patches(dd_grid)
+        self.inner_node_patches = inner_node_patches
+        estimator_domains = add_element_neighbors(dd_grid, inner_node_patches)
+        self.estimator_domains = estimator_domains
 
     def add_global_solutions(self, us):
         assert us in self.fom.solution_space
@@ -177,16 +185,16 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
                 u_global.append(self.solution_space.subspaces[i].ones()*1e-4)
         return self.solution_space.make_array(u_global)
 
-def construct_patch_model(neighborhood, block_op, block_rhs, neighbors):
+def construct_patch_model(element_patch, block_op, block_rhs, neighbors):
     def local_to_global_mapping(i):
-        return neighborhood[i]
+        return element_patch[i]
     def global_to_local_mapping(i):
-        for i_, j in enumerate(neighborhood):
+        for i_, j in enumerate(element_patch):
             if j == i:
                 return i_
         return -1
 
-    S_patch = len(neighborhood)
+    S_patch = len(element_patch)
     patch_op = np.empty((S_patch, S_patch), dtype=object)
     patch_rhs = np.empty(S_patch, dtype=object)
     blocks_op = block_op.blocks
@@ -211,10 +219,10 @@ def construct_patch_model(neighborhood, block_op, block_rhs, neighbors):
     patch_model = StationaryModel(final_patch_op, final_patch_rhs)
     return patch_model, local_to_global_mapping, global_to_local_mapping
 
-def construct_neighborhoods(dd_grid):
+def construct_element_patches(dd_grid):
     # This is only working with quadrilateral meshes right now !
     # TODO: assert this
-    neighborhoods = []
+    element_patches = []
     for ss in range(dd_grid.num_subdomains):
         nh = {ss}
         nh.update(dd_grid.neighbors(ss))
@@ -222,8 +230,30 @@ def construct_neighborhoods(dd_grid):
             for nnn in dd_grid.neighbors(nn):
                 if nnn not in nh and len(set(dd_grid.neighbors(nnn)).intersection(nh)) == 2:
                     nh.add(nnn)
-        neighborhoods.append(tuple(nh))
-    return neighborhoods
+        element_patches.append(tuple(nh))
+    return element_patches
+
+def construct_inner_node_patches(dd_grid):
+    # This is only working with quadrilateral meshes right now !
+    # TODO: assert this
+    domain_ids = np.arange(dd_grid.num_subdomains).reshape(
+        (int(np.sqrt(dd_grid.num_subdomains)),) * 2)
+    node_patches = {}
+    for i in range(domain_ids.shape[0] - 1):
+        for j in range(domain_ids.shape[1] - 1):
+            node_patches[i * domain_ids.shape[1] + j] = \
+                    ([domain_ids[i, j], domain_ids[i, j+1],
+                      domain_ids[i+1, j], domain_ids[i+1, j+1]])
+    return node_patches
+
+def add_element_neighbors(dd_grid, domains):
+    new_domains = {}
+    for (i, elements) in domains.items():
+        elements_and_all_neighbors = []
+        for el in elements:
+            elements_and_all_neighbors.extend(dd_grid.neighbors(el))
+        new_domains[i] = list(np.sort(np.unique(elements_and_all_neighbors)))
+    return new_domains
 
 def remove_irrelevant_coupling_from_patch_operator(patch_model, mapping_to_global):
     local_op = patch_model.operator
@@ -242,9 +272,9 @@ def remove_irrelevant_coupling_from_patch_operator(patch_model, mapping_to_globa
                 if blocks[i][j]:
                     # only works for one thermal block right now
                     I = mapping_to_global(i)
-                    neighborhood = [mapping_to_global(l) for l in np.arange(subspaces)]
+                    element_patch = [mapping_to_global(l) for l in np.arange(subspaces)]
                     strings = []
-                    for J in neighborhood:
+                    for J in element_patch:
                         if I < J:
                             strings.append(f'{I}_{J}')
                         else:
