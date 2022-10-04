@@ -125,16 +125,24 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         # this is for BlockOperator(LincombOperators)
         assert isinstance(self.fom.operator, BlockOperator)
 
+        # TODO: think about not projection the BlockOperator, but instead get rid
+        # of the Block structure (like usual in localized MOR)
+        # or use methodology of Stage 2 in TSRBLOD
+
         projected_operator = project_block_operator(self.fom.operator, self.local_bases,
                                                     self.local_bases)
         projected_rhs = project_block_rhs(self.fom.rhs, self.local_bases)
 
-        # TODO: add products and output_functional
+        projected_products = {k: project_block_operator(v, self.local_bases,
+                                                        self.local_bases)
+                              for k, v in self.fom.products.items()}
+
+        # TODO: project output functional
 
         projected_operators = {
             'operator':          projected_operator,
             'rhs':               projected_rhs,
-            'products':          None,
+            'products':          projected_products,
             'output_functional': None
         }
         return projected_operators
