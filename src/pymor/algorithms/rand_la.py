@@ -37,7 +37,6 @@ class RandomizedRangeFinder(CacheableObject):
         assert isinstance(complex, bool)
 
         self.__auto_init(locals())
-        self._l = 0
         self._Q = [self.A.range.empty()]
         for _ in range(subspace_iterations):
             self._Q.append(self.A.source.empty())
@@ -97,32 +96,27 @@ class RandomizedRangeFinder(CacheableObject):
         if self.complex:
             W += 1j * self.A.source.random(k, distribution='normal')
 
-        l = len(self._Q[0])
         self._Q[0].append(self.A.apply(W))
-        gram_schmidt(self._Q[0], self.range_product, offset=l, copy=False)
+        gram_schmidt(self._Q[0], self.range_product, offset=len(self._Q[0]), copy=False)
 
         for i in range(self.subspace_iterations):
             i = 2*i + 1
-            l = len(self._Q[i])
             self._Q[i].append(self.source_product.apply_inverse(
                 (self.A.apply_adjoint(self.range_product.apply(self._Q[i-1][-k:])))))
-            gram_schmidt(self._Q[i], self.source_product, offset=l, copy=False)
-            l = len(self._Q[i+1])
+            gram_schmidt(self._Q[i], self.source_product, offset=len(self._Q[i]), copy=False)
             self._Q[i+1].append(self.A.apply(self._Q[i][-k:]))
-            gram_schmidt(self._Q[i+1], self.range_product, offset=l, copy=False)
+            gram_schmidt(self._Q[i+1], self.range_product, offset=len(self._Q[i+1]), copy=False)
 
     def _find_range(self, basis_size):
-        if basis_size > self._l:
+        if basis_size > len(self._Q[-1]):
             k = basis_size - len(self._Q[-1])
             with self.logger.block(f'Appending {k} basis vector{"s" if k > 1 else ""} ...'):
                 self._extend_basis(k)
-                self._l = len(self._Q[-1])
-            while basis_size > self._l:
+            while basis_size > len(self._Q[-1]):
                 k = basis_size - len(self._Q[-1])
                 with self.logger.block(f'Appending {k} basis vector{"s" if k > 1 else ""}'
                                        + 'to compensate for removal in gram_schmidt ...'):
                     self._extend_basis(k)
-                    self._l = len(self._Q[-1])
 
         return self._Q[-1][:basis_size]
 
@@ -145,7 +139,7 @@ class RandomizedRangeFinder(CacheableObject):
             if tol is not None and err > tol:
                 with self.logger.block('Extending range basis adaptively ...'):
                     max_iter = min(max_basis_size, self.A.source.dim, self.A.range.dim)
-                    while self._l < max_iter:
+                    while len(self._Q[-1]) < max_iter:
                         basis_size = min(basis_size + 1, max_iter)
                         err = self._estimate_error(basis_size, num_testvecs, p_fail)
                         self.logger.info(f'Basis dimension: {basis_size}/{max_iter}\t'
