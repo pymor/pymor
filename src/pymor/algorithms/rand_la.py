@@ -42,7 +42,7 @@ class RandomizedRangeFinder(CacheableObject):
             self._Q.append(self.A.source.empty())
             self._Q.append(self.A.range.empty())
         self._Q = tuple(self._Q)
-        self.testvecs = self.A.source.empty()
+        self._testvecs = self.A.source.empty()
 
     @cached
     def _lambda_min(self):
@@ -65,16 +65,16 @@ class RandomizedRangeFinder(CacheableObject):
         W = self.A.source.random(n, distribution='normal')
         if self.complex:
             W += 1j * self.A.source.random(n, distribution='normal')
-        self.testvecs.append(self.A.apply(W))
+        self._testvecs.append(self.A.apply(W))
 
     def _estimate_error(self, basis_size, num_testvecs, p_fail):
         c = np.sqrt(2 * self._lambda_min())
         c *= erfinv((p_fail / min(self.A.source.dim, self.A.range.dim)) ** (1 / num_testvecs))
 
-        if len(self.testvecs) < num_testvecs:
-            self._draw_test_vector(num_testvecs - len(self.testvecs))
+        if len(self._testvecs) < num_testvecs:
+            self._draw_test_vector(num_testvecs - len(self._testvecs))
 
-        W, Q = self.testvecs[:num_testvecs].copy(), self._find_range(basis_size)
+        W, Q = self._testvecs[:num_testvecs].copy(), self._find_range(basis_size)
         W -= Q.lincomb(Q.inner(W, self.range_product).T)
         return c * np.max(W.norm(self.range_product))
 
@@ -245,7 +245,7 @@ def rrf(A, range_product=None, source_product=None, q=2, l=8, return_rand=False,
                                 complex=iscomplex)
     Q = RRF.find_range(basis_size=l, tol=None)
     if return_rand:
-        return Q, RRF.testvecs
+        return Q, RRF._testvecs
     else:
         return Q
 
