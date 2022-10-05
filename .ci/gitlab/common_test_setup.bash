@@ -24,7 +24,10 @@ set -eux
 
 # pymor checks if this file's owner uid matches with the interpreter executor's
 ME=$(id -u)
-sudo chown ${ME} docs/source/pymor_defaults.py
+DEFAULTS_OWNER="$(stat --format '%u' docs/source/pymor_defaults.py)"
+if [ "x${ME}" != "x${DEFAULTS_OWNER}" ] ; then
+  sudo chown ${ME} docs/source/pymor_defaults.py
+fi
 
 # switches default index to pypi-mirror service
 export PIP_CONFIG_FILE=/usr/local/share/ci.pip.conf
