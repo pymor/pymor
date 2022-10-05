@@ -85,7 +85,7 @@ class RandomizedRangeFinder(CacheableObject):
             self.logger.info('Proceeding with maximum operator rank.')
             basis_size = min(self.A.source.dim, self.A.range.dim)
         assert 0 < num_testvecs and isinstance(num_testvecs, int)
-        assert 0 < p_fail
+        assert 0 < p_fail < 1
 
         err = self._estimate_error(basis_size, num_testvecs, p_fail)
         self.logger.info(f'Estimated error (basis dimension {basis_size}): {err:.5e}.')
@@ -136,7 +136,7 @@ class RandomizedRangeFinder(CacheableObject):
             basis_size = min(self.A.source.dim, self.A.range.dim)
         assert tol is None or tol > 0
         assert isinstance(num_testvecs, int) and num_testvecs > 0
-        assert p_fail > 0
+        assert 0 < p_fail < 1
 
         with self.logger.block('Finding range ...'):
             with self.logger.block(f'Approximating range basis of dimension {basis_size} ...'):
