@@ -650,13 +650,13 @@ class LTIModel(Model):
             return solve_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
                                    trans=True, options=options_ricc_lrcf)
         elif typ[0] == 'br_c_lrcf':
-            return solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
+            return solve_pos_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
                                        R=(typ[1]**2 * np.eye(self.dim_output)
                                           if typ[1] != 1
                                           else None),
                                        trans=False, options=options_ricc_pos_lrcf)
         elif typ[0] == 'br_o_lrcf':
-            return solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
+            return solve_pos_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
                                        R=(typ[1]**2 * np.eye(self.dim_input)
                                           if typ[1] != 1
                                           else None),
