@@ -147,11 +147,13 @@ build-backend = "setuptools.build_meta"
 
 [tool.pylint.messages_control]
 variable-naming-style = "any"
+ignore-paths = ["src/pymor/basic.py"]
 disable = [
     "broad-except",
     "c-extension-no-member",
     "cyclic-import",
     "global-statement",
+    "import-error",
     "import-outside-toplevel",
     "inconsistent-return-statements",
     "invalid-name",
@@ -168,6 +170,8 @@ disable = [
     "no-else-raise",
     "no-else-return",
     "no-member",
+    "no-name-in-module",
+    "no-value-for-parameter",
     "protected-access",
     "redefined-builtin",
     "too-few-public-methods",
@@ -184,6 +188,8 @@ disable = [
     "too-many-return-statements",
     "too-many-statements",
     "unidiomatic-typecheck",
+    "unnecessary-lambda-assignment",
+    "unsubscriptable-object",
     "unsubscriptable-object",
     "R0801",
 ]
