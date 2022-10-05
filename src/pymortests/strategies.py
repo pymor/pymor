@@ -7,6 +7,7 @@ from hypothesis import strategies as hyst
 from hypothesis import assume, given
 from hypothesis.extra import numpy as hynp
 import numpy as np
+import os
 from scipy.stats._multivariate import random_correlation_gen
 
 from pymor.analyticalproblems.functions import Function, ExpressionFunction, ConstantFunction
@@ -128,6 +129,8 @@ if config.HAVE_FENICS:
             ret.append((_FENICS_spaces[d], ar))
         return ret
     _other_vector_space_types.append('fenics')
+else:
+    assert not os.environ.get('DOCKER_PYMOR', False)
 
 if config.HAVE_NGSOLVE:
     _NGSOLVE_spaces = {}
@@ -147,16 +150,22 @@ if config.HAVE_NGSOLVE:
     def _ngsolve_vector_spaces(draw, np_data_list, compatible, count, dims):
         return [(_create_ngsolve_space(d), ar) for d, ar in zip(dims, np_data_list)]
     _other_vector_space_types.append('ngsolve')
+else:
+    assert not os.environ.get('DOCKER_PYMOR', False)
 
 if config.HAVE_DEALII:
     def _dealii_vector_spaces(draw, np_data_list, compatible, count, dims):
         return [(DealIIVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
     _other_vector_space_types.append('dealii')
+else:
+    assert not os.environ.get('DOCKER_PYMOR', False)
 
 if config.HAVE_DUNEGDT:
     def _dunegdt_vector_spaces(draw, np_data_list, compatible, count, dims):
         return [(DuneXTVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
     _other_vector_space_types.append('dunegdt')
+else:
+    assert not os.environ.get('DOCKER_PYMOR', False)
 
 
 _picklable_vector_space_types = ['numpy', 'numpy_list', 'block']
