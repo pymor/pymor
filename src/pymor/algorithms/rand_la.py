@@ -20,6 +20,30 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class RandomizedRangeFinder(CacheableObject):
+    """Approximates the range of an |Operator| with randomized methods.
+
+    Parameters
+    ----------
+    A
+        The |Operator| whose range is to be found.
+    subspace_iterations
+        The number of subspace iterations (defaults to zero).
+        This can be used to increase the precision in the cases where the spectrum of `A` does not
+        decay rapidly (at the expense of two additional passes over `A` per subspace iteration).
+    range_product
+        Inner product |Operator| of the range of `A`. Determines the basis orthogonalization and the
+        error norm.
+    source_product
+        Inner product |Operator| of the source of `A`. Determines the basis orthogonalization (only
+        if `subspace_iterations` is greater than zero) and the error norm.
+    lambda_min
+        A lower bound for the smallest eigenvalue of `source_product`. Defaults to `None`.
+        If `None` and a `source_product` is given, the smallest eigenvalue will be computed
+        using :func:`SciPy eigh <scipy.linalg.eigh>`.
+    complex
+        If `True`, complex valued random vectors will be chosen.
+    """
+
     def __init__(self, A, subspace_iterations=0, range_product=None, source_product=None, lambda_min=None,
                  complex=False):
         assert isinstance(A, Operator)
@@ -79,6 +103,41 @@ class RandomizedRangeFinder(CacheableObject):
         return c * np.max(W.norm(self.range_product))
 
     def estimate_error(self, basis_size, num_testvecs=20, p_fail=1e-14):
+        r"""Randomized a posteriori error estimator for a given basis size.
+
+        This implements the a posteriori error estimator from :cite:`BS18` (Definition 3.1).
+
+        The error is given by
+
+        .. math::
+            \epsilon_{\mathrm{est}}=c_{\mathrm{est}}\cdot\max_{\omega\in\Omega}
+            \lVert (I-QQ^T)A\omega\rVert_{T\rightarrow S}
+
+        with
+
+        .. math::
+            c_{\mathrm{est}}
+            =\frac{1}{\sqrt{2\lambda_{\mathrm{min}}}\operatorname{erf}^{-1}
+            \left(\left(\frac{\texttt{p_fail}}{n}\right)^{1/\texttt{num_testvecs}}\right)},
+
+        where :math:`\Omega` is a set of `num_testvecs` random vectors, :math:`S` denotes the inner
+        product of the range, :math:`T` denotes inner product of the source of :math:`A` and
+        :math:`n=\min\{\dim(S),\,\dim(T)\}`.
+
+        Parameters
+        ----------
+        basis_size
+            The size of the basis.
+        num_testvecs
+            Number of test vectors for error estimation.
+        p_fail
+            Maximum failure probabilty of the error estimate.
+
+        Returns
+        -------
+        err
+            The approximate error of the basis.
+        """
         assert isinstance(basis_size, int) and basis_size > 0
         if basis_size > min(self.A.source.dim, self.A.range.dim):
             self.logger.warning('Requested basis is larger than the rank of the operator!')
@@ -127,9 +186,53 @@ class RandomizedRangeFinder(CacheableObject):
 
         return self._Q[-1][:basis_size]
 
-    def find_range(self, basis_size=8, tol=None, num_testvecs=20, p_fail=1e-14, block_size=8,
-                   increase_block=True, max_basis_size=500):
-        assert isinstance(basis_size, int) and basis_size > 0
+    def find_range(self, basis_size=8, tol=None, num_testvecs=20, p_fail=1e-14, max_basis_size=500):
+        r"""Randomized range approximation of the |Operator| `self.A`.
+
+        This method returns a |VectorArray| :math:`Q` whose vectors form an approximate orthonormal
+        basis for the range of the |Operator| :math:`A` with the property
+
+        .. math::
+            P\left(\epsilon\leq \texttt{tol}\right)\leq1-\texttt{p_fail},
+
+        with
+
+        .. math::
+            \epsilon=\lVert A-QQ^TSA\rVert_{T\rightarrow S}=\lVert S^{1/2}(I-QQ^TS)AT^{-1/2}\rVert_2
+
+        where  :math:`S` denotes the inner product of the range and :math:`T` denotes inner product
+        of the source of :math:`A`.
+
+        This method employs Algorithm 2 in :cite:`SHB21` with
+        :func:`Gram-Schmidt <pymor.algorithms.gram_schmidt.gram_schmidt>` orthogonalization for the
+        computation of a basis of size `basis_size`.
+        If `tol` is given, the basis will then be adaptively enlarged until the error bound is
+        attained. The algorithm for adaptive basis enlargement combines Algorithm 1 in
+        :cite:`BS18` with Algorithm 2 in :cite:`SHB21` to incorporate subspace iterations.
+
+        Parameters
+        ----------
+        basis_size
+            The size of the basis that approximates the range. If `tol` is not `None`, this
+            can be used to set a lower bound for the dimension of the computed basis.
+        tol
+            Error tolerance for the computed basis.
+        num_testvecs
+            Number of test vectors used in `self.estimate_error`.
+        p_fail
+            Maximum failure probabilty.
+        max_basis_size
+            Maximum basis size for the adaptive process.
+
+        Returns
+        -------
+        Q
+            |VectorArray| with length greater or equal than `basis_size` which contains an
+            approximate basis for the range of `self.A` (with an error bounded by `tol` with
+            probability :math:`1-``p_fail`, if supplied).
+        """
+        assert isinstance(max_basis_size, int) and max_basis_size > 0
+        assert isinstance(basis_size, int) and 0 < basis_size < max_basis_size
         if basis_size > min(self.A.source.dim, self.A.range.dim):
             self.logger.warning('Requested basis is larger than the rank of the operator!')
             self.logger.info('Proceeding with maximum operator rank.')
@@ -252,10 +355,10 @@ def rrf(A, range_product=None, source_product=None, q=2, l=8, return_rand=False,
 
 @defaults('oversampling', 'subspace_iterations')
 def randomized_svd(A, n, range_product=None, source_product=None, oversampling=20, subspace_iterations=2):
-    r"""Randomized SVD of an |Operator|.
+    r"""Randomized SVD of an |Operator| based on :cite:`SHB21`.
 
-    Viewing `A` as an :math:`m` by :math:`n` matrix, the return value
-    of this method is the randomized generalized singular value decomposition of `A`:
+    Viewing the |Operator| :math:`A` as an :math:`m` by :math:`n` matrix, this methods computes and
+    returns the randomized generalized singular value decomposition of `A` according :cite:`SHB21`:
 
     .. math::
 
@@ -271,9 +374,11 @@ def randomized_svd(A, n, range_product=None, source_product=None, oversampling=2
 
     .. math::
 
-        (x, y) = x^TTy.
+        (x, y)_T = x^TTy.
 
-    This method is based on :cite:`SHB21`.
+    Note that :math:`U` is :math:`S`-orthogonal, i.e. :math:`U^TSU=I`
+    and :math:`V` is :math:`T`-orthogonal, i.e. :math:`V^TTV=I`.
+    In particular, `V^{-1}=V^TT`.
 
     Parameters
     ----------
@@ -282,24 +387,24 @@ def randomized_svd(A, n, range_product=None, source_product=None, oversampling=2
     n
         The number of eigenvalues and eigenvectors which are to be computed.
     range_product
-        Range product |Operator| :math:`S` w.r.t which the randomized SVD is computed.
+        Range product |Operator| :math:`S` w.r.t. which the randomized SVD is computed.
     source_product
-        Source product |Operator| :math:`T` w.r.t which the randomized SVD is computed.
+        Source product |Operator| :math:`T` w.r.t. which the randomized SVD is computed.
     oversampling
         The number of samples that are drawn in addition to the desired basis size in the
         randomized range approximation process.
     subspace_iterations
         The number of subspace iterations to increase the relative weight
-        of the larger singular values. Ignored when `single_pass` is `True`.
+        of the larger singular values (ignored when `single_pass` is `True`).
 
     Returns
     -------
     U
-        |VectorArray| of approximated left singular vectors.
+        |VectorArray| containing the approximated left singular vectors.
     s
         One-dimensional |NumPy array| of the approximated singular values.
     V
-        |VectorArray| of the approximated right singular vectors.
+        |VectorArray| containing the approximated right singular vectors.
     """
     logger = getLogger('pymor.algorithms.rand_la.randomized_svd')
 
@@ -344,7 +449,7 @@ def randomized_svd(A, n, range_product=None, source_product=None, oversampling=2
 
 @defaults('n', 'oversampling', 'subspace_iterations')
 def randomized_ghep(A, E=None, n=6, oversampling=20, subspace_iterations=2, single_pass=False, return_evecs=False):
-    r"""Approximates a few eigenvalues of a symmetric linear |Operator| with randomized methods.
+    r"""Approximates a few eigenvalues of a Hermitian linear |Operator| with randomized methods.
 
     Approximates `modes` eigenvalues `w` with corresponding eigenvectors `v` which solve
     the eigenvalue problem
