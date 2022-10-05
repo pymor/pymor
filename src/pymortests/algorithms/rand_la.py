@@ -64,12 +64,12 @@ def test_rrf():
     assert len(Q2) == 8
 
 
-def test_random_generalized_svd():
+def test_randomized_svd():
     E = uniform(low=-1.0, high=1.0, size=(5, 5))
     E_op = NumpyMatrixOperator(E)
 
     modes = 3
-    U, s, Vh = random_generalized_svd(E_op, n=modes, oversampling=1)
+    U, s, Vh = randomized_svd(E_op, n=modes, oversampling=1)
     U_real, s_real, Vh_real = sp.linalg.svd(E)
 
     assert abs(np.linalg.norm(s-s_real[:modes])) <= 1e-2
@@ -80,14 +80,14 @@ def test_random_generalized_svd():
     assert Vh in E_op.source
 
 
-def test_random_ghep():
+def test_randomized_ghep():
     D = uniform(low=-1.0, high=1.0, size=(5, 5))
     D = D @ D.T
     D_op = NumpyMatrixOperator(D)
 
     modes = 3
-    w1, V1 = random_ghep(D_op, n=modes, p=1, single_pass=False)
-    w2, V2 = random_ghep(D_op, n=modes, p=1, single_pass=True)
+    w1, V1 = randomized_ghep(D_op, n=modes, p=1, single_pass=False, return_evecs=True)
+    w2, V2 = randomized_ghep(D_op, n=modes, p=1, single_pass=True, return_evecs=True)
     w_real, V_real = sp.linalg.eigh(D)
     w_real = w_real[::-1]
     V_real = V_real[:, ::-1]
