@@ -18,16 +18,16 @@ class pAAAReductor(BasicObject):
 
     Parameters
     ----------
-    data
-        If `fom` is `None` a tuple where the first value corresponds to sampling values
-        and the second value contains samples. Sampling values are represented as a
-        nested list `svs` such that `svs[i]` corresponds to sampling values of the `i-th`
-        variable. Samples are represented as a tensor `S`. E.g., for 3 inputs `S[i,j,k]`
-        corresponds to the sampled value at `(svs[0][i],svs[1][j],svs[2][k])`. In the
+    sampling_values
+        Values where sample data has been evaluated or the full-order model should be evaluated.
+        Sampling values are represented as a nested list `svs` such that `svs[i]`corresponds
+        to sampling values of the `i-th` variable.
+    samples_or_fom
+        Can be either a full-order model (|TransferFunction| or |Model| with a `transfer_function`
+        attribute) or data sampled at the values specified in `sampling_values`. Samples are
+        represented as a tensor `S`. E.g., for 3 inputs `S[i,j,k]` corresponds to the sampled
+        value at `(sampling_values[0][i],sampling_values[1][j],sampling_values[2][k])`. In the
         MIMO case `S[i,j,k]` represents a matrix of dimension `dim_output` times `dim_input`.
-        If `fom` is not `None` data only contains a list of sampling values.
-    fom
-        |TransferFunction| or |Model| with a `transfer_function` attribute.
     conjugate
         Whether to compute complex conjugates of first sampling variables and enforce
         interpolation in complex conjugate pairs (allows for constructing real system matrices).
@@ -35,44 +35,36 @@ class pAAAReductor(BasicObject):
         Tolerance for null space of higher-dimensional Loewner matrix to check for
         interpolation or convergence.
     post_process
-        Whether to do post-processing or not.
+        Whether to do post-processing or not. If the Loewner matrix has a null space
+        of dimension greater than 1, it is assumed that the algorithm converged to
+        a non-minimal order interpolant which may cause numerical issues. In this case,
+        the post-processing procedure computes an interpolant of minimal order.
     L_rk_tol
         Tolerance for ranks of 1-D Loewner matrices computed in post-processing.
     """
 
-    def __init__(self, data, fom=None, conjugate=True, nsp_tol=1e-16, post_process=True, L_rk_tol=1e-8):
-        if fom is not None:
-            assert isinstance(fom, TransferFunction) or hasattr(fom, 'transfer_function')
-            if not isinstance(fom, TransferFunction):
+    def __init__(self, sampling_values, samples_or_fom, conjugate=True, nsp_tol=1e-16, post_process=True,
+                 L_rk_tol=1e-8):
+        if isinstance(samples_or_fom, TransferFunction) or hasattr(samples_or_fom, 'transfer_function'):
+            fom = samples_or_fom
+            if not isinstance(samples_or_fom, TransferFunction):
                 fom = fom.transfer_function
             self.num_vars = 1 + len(fom.parameters)
 
-            assert len(data) == self.num_vars
-            self.sampling_values = data
+            assert len(sampling_values) == self.num_vars
             self.parameters = fom.parameters
-            sampling_grid = np.meshgrid(*data, indexing='ij')
-            if fom.dim_input == 1 and fom.dim_output == 1:
-                self.samples = np.empty([len(sv) for sv in data], dtype=self.sampling_values[0].dtype)
-                for idc in itertools.product(*(range(ss) for ss in self.samples.shape)):
-                    params = {}
-                    for i, p in enumerate(fom.parameters.keys()):
-                        params[p] = sampling_grid[i+1][idc]
-                    self.samples[idc] = fom.eval_tf(sampling_grid[0][idc], mu=params)
-            else:
-                sample_shape = [len(sv) for sv in data]
-                sample_shape.append(fom.dim_output)
-                sample_shape.append(fom.dim_input)
-                self.samples = np.empty(sample_shape, dtype=self.sampling_values[0].dtype)
-                for idc in itertools.product(*(range(ss) for ss in self.samples.shape[:-2])):
-                    params = {}
-                    for i, p in enumerate(fom.parameters.keys()):
-                        params[p] = sampling_grid[i+1][idc]
-                    self.samples[idc] = fom.eval_tf(sampling_grid[0][idc], mu=params)
+            sampling_grid = np.meshgrid(*sampling_values, indexing='ij')
+            self.samples = np.empty([len(sv) for sv in sampling_values] + [fom.dim_output, fom.dim_input],
+                                    dtype=sampling_values[0].dtype)
+            for idx, vals in zip(np.ndindex(self.samples.shape[:-2]),
+                                 itertools.product(*sampling_values)):
+                params = {p: v for p, v in zip(fom.parameters, vals[1:])}
+                self.samples[idx] = fom.eval_tf(vals[0], mu=params)
+            if fom.dim_input == fom.dim_output == 1:
+                self.samples = self.samples.reshape(self.samples.shape[:-2])
         else:
-            assert len(data) == 2
-            self.sampling_values = data[0]
-            self.samples = data[1]
-            self.num_vars = len(data[0])
+            self.samples = samples_or_fom
+            self.num_vars = len(sampling_values)
             self.parameters = {f'p{i}': 1 for i in range(self.num_vars-1)}
 
         self.__auto_init(locals())
@@ -206,7 +198,26 @@ class pAAAReductor(BasicObject):
 
 
 def nd_loewner(samples, svs, itpl_part):
-    """Compute higher-dimensional Loewner matrix using only LS partition."""
+    """Compute higher-dimensional Loewner matrix using only LS partition.
+
+    .. note::
+       For non-parametric data this is simply the regular Loewner matrix.
+
+    Parameters
+    ----------
+    samples
+        Tensor of samples (see :class:`pAAAReductor`).
+    svs
+        List of sampling values (see :class:`pAAAReductor`).
+    itpl_part
+        Nested list such that `itpl_part[i]` is a list of indices for interpolated
+        sampling values in `svs[i]`.
+
+    Returns
+    -------
+    L
+        (Parametric) Loewner matrix based only on LS partition.
+    """
     d = len(samples.shape)
     ls_part = _ls_part(itpl_part, svs)
 
@@ -231,7 +242,27 @@ def nd_loewner(samples, svs, itpl_part):
 
 
 def full_nd_loewner(samples, svs, itpl_part):
-    """Compute higher-dimensional Loewner matrix taking all errors into account."""
+    """Compute higher-dimensional Loewner matrix while taking all combinations of partitions
+    into account.
+
+    .. note::
+       For non-parametric data this is simply the regular Loewner matrix.
+
+    Parameters
+    ----------
+    samples
+        Tensor of samples (see :class:`pAAAReductor`).
+    svs
+        List of sampling values (see :class:`pAAAReductor`).
+    itpl_part
+        Nested list such that `itpl_part[i]` is a list of indices for interpolated
+        sampling values in `svs[i]`.
+
+    Returns
+    -------
+    L
+        (Parametric) Loewner matrix based on all combinations of partitions.
+    """
     L = nd_loewner(samples, svs, itpl_part)
     range_S = range(len(svs))
 
@@ -263,14 +294,33 @@ def full_nd_loewner(samples, svs, itpl_part):
     return L
 
 
-def make_bary_func(itpl_nodes, itpl_vals, coefs):
-    """Return function handle for multivariate barycentric form."""
+def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14):
+    """Return function handle for (multivariate) barycentric form.
+
+    Parameters
+    ----------
+    itpl_nodes
+        Nested list sucht that `itpl_nodes[i]` contains interpolated sampling values
+        of the `i`-th variable.
+    itpl_vals
+        Vector of interpolation values.
+    coefs
+        Vector of barycentric coefficients.
+    removable_singularity_tol
+        Tolerance for evaluating the barycentric function at a removable singularity
+        and performing pole cancellation.
+
+    Returns
+    -------
+    bary_func
+        (Multi-variate) Loewner matrix based on all combinations of partitions.
+    """
     def bary_func(*args):
         pd = 1
         # this loop is for pole cancellation which occurs at interpolation nodes
         for i in range(len(itpl_nodes)):
             d = args[i] - itpl_nodes[i]
-            d_zero = d[np.abs(d) < 1e-14]
+            d_zero = d[np.abs(d) < removable_singularity_tol]
             if len(d_zero) > 0:
                 d_min_idx = np.argmin(np.abs(d))
                 d = np.eye(1, len(d), d_min_idx)
