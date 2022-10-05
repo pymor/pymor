@@ -36,13 +36,11 @@ def run_mor_method_dd_param(fom, ss, pp, reductor_cls, reductor_short_name, **re
         Optional keyword arguments for the reductor class.
     """
     # Reduction
-    rom = reductor_cls([ss, pp], fom, **reductor_kwargs).reduce()
+    rom = reductor_cls([ss * 1j, pp], fom, **reductor_kwargs).reduce()
 
     fig, ax = plt.subplots()
     sample_mu = np.median(pp)
     (fom - rom).mag_plot(ss, ax=ax, mu=sample_mu, label=fr'$\mu = {sample_mu}$')
-    fom.transfer_function.mag_plot(ss, ax=ax, mu=sample_mu, label=fr'$\mu = {sample_mu}$')
-    rom.mag_plot(ss, ax=ax, mu=sample_mu, label=fr'$\mu = {sample_mu}$')
     ax.set_title(f'Magnitude plot of the {reductor_short_name} error system')
     ax.legend()
     plt.show()
