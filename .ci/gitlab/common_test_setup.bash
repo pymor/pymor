@@ -7,6 +7,8 @@ else
 fi
 
 COVERAGE_FILE=${COVERAGE_FILE:-coverage}
+PYMOR_HYPOTHESIS_PROFILE=${PYMOR_HYPOTHESIS_PROFILE:-dev}
+PYMOR_PYTEST_EXTRA=${PYMOR_PYTEST_EXTRA:-}
 
 function _coverage_xml() {
   local extra=${1:-}
