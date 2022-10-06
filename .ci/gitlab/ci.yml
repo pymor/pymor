@@ -50,7 +50,7 @@ stages:
         paths:
             - src/pymortests/testdata/check_results/*/*_changed
             - docs/source/*_extracted.py
-            - coverage*xml
+            - coverage*
             - memory_usage.txt
             - .hypothesis
             - test_results*.xml
@@ -433,9 +433,9 @@ submit coverage:
     extends: .submit
     artifacts:
         when: always
-        name: "submit"
+        name: "coverage_reports"
         paths:
-            - coverage*xml
+            - reports/
     dependencies:
         - mpi 3 8
         - mpi 3 9
@@ -444,6 +444,20 @@ submit coverage:
         - vanilla 3 8
         - vanilla 3 9
         - oldest 3 8
+
+coverage html:
+    extends: .submit
+    needs: ["submit coverage"]
+    dependencies: ["submit coverage"]
+    artifacts:
+        name: "coverage_html"
+        paths:
+            - coverage_html
+    before_script:
+        - apk add py3-coverage
+    script:
+        - coverage combine reports/coverage*
+        - coverage html --directory coverage_html
 submit ci_weekly 3 8:
     extends: .submit
     rules:

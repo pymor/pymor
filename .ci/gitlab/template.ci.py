@@ -71,7 +71,7 @@ rules:
         paths:
             - src/pymortests/testdata/check_results/*/*_changed
             - docs/source/*_extracted.py
-            - coverage*xml
+            - coverage*
             - memory_usage.txt
             - .hypothesis
             - test_results*.xml
@@ -232,13 +232,27 @@ submit coverage:
     extends: .submit
     artifacts:
         when: always
-        name: "submit"
+        name: "coverage_reports"
         paths:
-            - coverage*xml
+            - reports/
     dependencies:
     {%- for script, py, para in matrix if script in ['tutorials', 'vanilla', 'oldest', 'numpy_git', 'mpi'] %}
         - {{script}} {{py[0]}} {{py[2]}}
     {%- endfor %}
+
+coverage html:
+    extends: .submit
+    needs: ["submit coverage"]
+    dependencies: ["submit coverage"]
+    artifacts:
+        name: "coverage_html"
+        paths:
+            - coverage_html
+    before_script:
+        - apk add py3-coverage
+    script:
+        - coverage combine reports/coverage*
+        - coverage html --directory coverage_html
 
 {%- for py in pythons %}
 submit ci_weekly {{py[0]}} {{py[2]}}:

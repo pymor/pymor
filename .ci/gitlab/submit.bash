@@ -25,3 +25,5 @@ mv coverage*xml reports
   --slug pymor/pymor \
   --sha ${CI_COMMIT_SHA} \
   --branch ${CI_COMMIT_REF_NAME}
+# after successful upload these now are only the original sqlite files
+mv coverage* reports
