@@ -10,7 +10,7 @@ export OMPI_MCA_btl_vader_single_copy_mechanism=none
 # cannot seem to directly affect, we save the intermediate
 # pytest exit code in a file and check that afterwards
 # while ignoring the mpirun result itself
-xvfb-run -a mpirun --timeout 1200 --mca btl self,vader -n 2 coverage run --rcfile=setup.cfg \
+xvfb-run -a mpirun --timeout 1200 --mca btl self,vader -n 2 coverage run --source=src --rcfile=setup.cfg \
   --parallel-mode src/pymortests/mpi_run_demo_tests.py || true
 
 for fn in ./.mpirun_*/pytest.mpirun.success ; do
@@ -18,5 +18,4 @@ for fn in ./.mpirun_*/pytest.mpirun.success ; do
 done
 
 coverage combine
-# the test_thermalblock_ipython results in '(builtin)' missing which we "--ignore-errors"
-_coverage_xml "--ignore-errors"
+_coverage_xml

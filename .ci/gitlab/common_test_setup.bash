@@ -7,6 +7,7 @@ else
 fi
 
 COVERAGE_FILE=${COVERAGE_FILE:-coverage}
+COV_OPTION=${COV_OPTION:---cov=src}
 PYMOR_HYPOTHESIS_PROFILE=${PYMOR_HYPOTHESIS_PROFILE:-dev}
 PYMOR_PYTEST_EXTRA=${PYMOR_PYTEST_EXTRA:-}
 
@@ -48,8 +49,7 @@ export PYTHONHASHSEED=0
 python -c "from matplotlib import pyplot" || true
 
 PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')
-# the tutorials script needs a different option
-COV_OPTION=${COV_OPTION:---cov=}
+
 # `--cov-report=` suppresses terminal output
 COMMON_PYTEST_OPTS="--junitxml=test_results_${PYMOR_VERSION}.xml \
   --cov-report= ${COV_OPTION} --cov-config=${PYMOR_ROOT}/setup.cfg --cov-context=test \
