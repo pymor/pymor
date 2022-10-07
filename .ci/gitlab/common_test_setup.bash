@@ -12,7 +12,8 @@ PYMOR_PYTEST_EXTRA=${PYMOR_PYTEST_EXTRA:-}
 
 function _coverage_xml() {
   local extra=${1:-}
-  coverage xml -o ${COVERAGE_FILE}.xml ${extra}
+  # make sure to fail if there was an error collecting data
+  coverage xml -o ${COVERAGE_FILE}.xml ${extra} --fail-under=10
 }
 export PYTHONPATH_PRE=${PYTHONPATH}
 export PYTHONPATH=${CI_PROJECT_DIR}/src:${PYTHONPATH}
