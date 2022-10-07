@@ -13,15 +13,19 @@ rm -rf reports
 mkdir reports
 mv coverage*xml reports
 
-./codecov  --required \
-  -t ${PYMOR_CODECOV_TOKEN} \
-  -s ./reports \
+./codecov \
+  --clean \
+  --token ${PYMOR_CODECOV_TOKEN} \
+  --dir ./reports \
   --rootDir ${PYMOR_ROOT} \
   --flags gitlab_ci \
   --name gitlab_ci \
-  -X detect \
-  -v \
-  -Z \
+  --feature detect \
+  --verbose \
+  --nonZero \
   --slug pymor/pymor \
   --sha ${CI_COMMIT_SHA} \
   --branch ${CI_COMMIT_REF_NAME}
+
+# after successful upload these now are only the original sqlite files
+mv coverage* reports

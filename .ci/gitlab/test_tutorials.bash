@@ -1,7 +1,8 @@
 #!/bin/bash
 
+COV_OPTION="--cov=pymor"
+
 THIS_DIR="$(cd "$(dirname ${BASH_SOURCE[0]})" ; pwd -P )"
-COV_OPTION="--nb-coverage"
 source ${THIS_DIR}/common_test_setup.bash
 
 for fn in ${PYMOR_ROOT}/docs/source/tutorial*md ; do
@@ -9,6 +10,7 @@ for fn in ${PYMOR_ROOT}/docs/source/tutorial*md ; do
 done
 
 # manually add plugins to load that are excluded for other runs
-xvfb-run -a py.test ${COMMON_PYTEST_OPTS} -s --cov= -p no:pycharm \
-  -p nb_regression -p notebook docs/test_tutorials.py
+xvfb-run -a pytest ${COMMON_PYTEST_OPTS} --nb-coverage -s -p no:pycharm \
+  -p nb_regression --cov=pymor -p notebook docs/test_tutorials.py
+
 _coverage_xml

@@ -44,9 +44,9 @@ if __name__ == '__main__':
         except ImportError:
             pass
 
-        # completely disable FEniCS visualization on Gitlab CI
+        # completely disable FEniCS visualization in containers
         import os
-        if 'GITLAB_CI' in os.environ:
+        if 'DOCKER_PYMOR' in os.environ:
             from pymor.bindings.fenics import FenicsVisualizer
 
             FenicsVisualizer.visualize = nop

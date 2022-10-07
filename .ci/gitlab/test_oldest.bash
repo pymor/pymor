@@ -28,5 +28,5 @@ check_reqs requirements-optional.txt
 python -m pip freeze
 pytest src/pymortests/docker_ci_smoketest.py
 # this runs in pytest in a fake, auto numbered, X Server
-xvfb-run -a py.test ${COMMON_PYTEST_OPTS}
+xvfb-run -a pytest ${COMMON_PYTEST_OPTS}
 _coverage_xml
