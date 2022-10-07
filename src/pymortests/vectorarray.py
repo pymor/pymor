@@ -14,6 +14,7 @@ from pymor.core.config import config
 from pymor.vectorarrays.interface import VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.tools.floatcmp import float_cmp, bounded
+from pymortests.base import might_exceed_deadline
 from pymortests.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
 
@@ -954,6 +955,7 @@ def test_append_incompatible(vector_arrays):
         c1.append(c2, remove_from_other=True)
 
 
+@might_exceed_deadline(2000)
 @pyst.given_vector_arrays(count=2, compatible=False)
 def test_axpy_incompatible(vector_arrays):
     v1, v2 = vector_arrays
