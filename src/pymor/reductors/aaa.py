@@ -53,7 +53,6 @@ class pAAAReductor(BasicObject):
 
             assert len(sampling_values) == self.num_vars
             self.parameters = fom.parameters
-            sampling_grid = np.meshgrid(*sampling_values, indexing='ij')
             self.samples = np.empty([len(sv) for sv in sampling_values] + [fom.dim_output, fom.dim_input],
                                     dtype=sampling_values[0].dtype)
             for idx, vals in zip(np.ndindex(self.samples.shape[:-2]),
@@ -198,7 +197,7 @@ class pAAAReductor(BasicObject):
 
 
 def nd_loewner(samples, svs, itpl_part):
-    """Compute higher-dimensional Loewner matrix using only LS partition.
+    """Compute higher-dimensional Loewner matrix using only LS partitions.
 
     .. note::
        For non-parametric data this is simply the regular Loewner matrix.
@@ -242,8 +241,7 @@ def nd_loewner(samples, svs, itpl_part):
 
 
 def full_nd_loewner(samples, svs, itpl_part):
-    """Compute higher-dimensional Loewner matrix while taking all combinations of partitions
-    into account.
+    """Compute higher-dimensional Loewner matrix using all combinations of partitions.
 
     .. note::
        For non-parametric data this is simply the regular Loewner matrix.
