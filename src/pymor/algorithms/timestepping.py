@@ -120,7 +120,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
 
 
 class ImplicitMidpointTimeStepper(TimeStepper):
-    """Implict midpoint rule time-stepper. Symplectic integrator + preserves quadratic invariants.
+    """Implicit midpoint rule time-stepper. Symplectic integrator + preserves quadratic invariants.
 
     Solves equations of the form ::
 
