@@ -582,3 +582,25 @@ class ParameterSpace(ParametricObject):
             return False
         return all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
                    for k in self.parameters)
+
+    def clip(self, mu):
+        """Clip (limit) |parameter values| to the space's parameter ranges.
+
+        Parameters
+        ----------
+        mu
+            |Parameter value| to clip.
+
+        Returns
+        -------
+        The clipped |parameter values|.
+        """
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        if not self.parameters.is_compatible(mu):
+            raise NotImplementedError
+        mu_dict = {key: np.array([v for v in mu[key]], dtype=float) for key in mu}
+        for key in self.parameters:
+            range_ = self.ranges[key]
+            mu_dict[key] = np.clip(mu_dict[key], range_[0], range_[1])
+        return Mu(((key, mu_dict[key]) for key in self.parameters))
