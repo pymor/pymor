@@ -1714,4 +1714,3 @@ class OutputFunctional(Operator):
         one = self.source.ones()
         R = self.apply(one, mu)
         return R
-
