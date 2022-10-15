@@ -232,14 +232,27 @@ submit coverage:
     extends: .submit
     artifacts:
         when: always
-        name: "submit"
+        name: "coverage_reports"
         paths:
-            - cover/*
-            - .coverage
+            - reports/
     dependencies:
-    {%- for script, py, para in matrix if script in ['vanilla', 'oldest', 'numpy_git', 'mpi'] %}
+    {%- for script, py, para in matrix if script in ['tutorials', 'vanilla', 'oldest', 'numpy_git', 'mpi'] %}
         - {{script}} {{py[0]}} {{py[2]}}
     {%- endfor %}
+
+coverage html:
+    extends: .submit
+    needs: ["submit coverage"]
+    dependencies: ["submit coverage"]
+    artifacts:
+        name: "coverage_html"
+        paths:
+            - coverage_html
+    before_script:
+        - apk add py3-coverage
+    script:
+        - coverage combine reports/coverage*
+        - coverage html --directory coverage_html
 
 {%- for py in pythons %}
 submit ci_weekly {{py[0]}} {{py[2]}}:
@@ -286,14 +299,14 @@ local docker:
 trigger_binder {{loop.index}}/{{loop.length}}:
     extends: .test_base
     stage: deploy
-    image: {{registry}}/alpine:3.11
+    image: harbor.uni-muenster.de/proxy-docker/library/alpine:3.16
     rules:
         - if: $CI_COMMIT_REF_NAME == "main"
           when: on_success
         - if: $CI_COMMIT_TAG != null
           when: on_success
     before_script:
-        - apk --update add bash python3
+        - apk --update add bash py3-pip
         - pip3 install requests
     script:
         - python3 .ci/gitlab/trigger_binder.py "{{url}}/${CI_COMMIT_REF}"
@@ -371,15 +384,14 @@ docs:
     extends: .docker-in-docker
     # makes sure this doesn't land on the test runner
     tags: [mike]
-    image: {{registry}}/alpine:3.11
+    image: harbor.uni-muenster.de/proxy-docker/library/alpine:3.16
     stage: deploy
     resource_group: docs_deploy
     needs: ["docs build 3 9", "binder base image"]
     dependencies: ["docs build 3 9", "binder base image"]
     before_script:
-        - apk --update add make python3 bash
-        # chardet is a workaround for https://github.com/jupyterhub/repo2docker/issues/1063
-        - pip3 install jinja2 pathlib jupyter-repo2docker six chardet
+        - apk --update add make py3-pip bash py3-ruamel.yaml.clib
+        - pip3 install jinja2 jupyter-repo2docker
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/deploy_docs.bash
     rules:

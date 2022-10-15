@@ -62,9 +62,9 @@ install_suggests = {
 }
 io_requires = ['pyevtk', 'xmljson', 'meshio>=4.4', 'lxml', 'gmsh']
 install_suggests.update({p: 'optional File I/O support libraries' for p in io_requires})
-doc_requires = ['sphinx>=5.0', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
+doc_requires = ['sphinx>=5.0,<5.2', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
                 'ipywidgets<8,>7', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
-                'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8', 'myst-nb>=0.16'] + install_requires
+                'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8,<2', 'myst-nb>=0.16'] + install_requires
 ci_requires = ['check-manifest==0.48',
                'check_reqs==0.2.0',
                'codecov==2.1.12',

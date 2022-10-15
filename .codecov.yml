@@ -1,32 +1,24 @@
 codecov:
   notify:
-    require_ci_to_pass: yes
-
+    after_n_builds: 2
+  require_ci_to_pass: true
+  ci:
+    - zivgitlab.uni-muenster.de
+comment:
+  behavior: once
+  layout: 'header, flags, files'
+  after_n_builds: 2
 coverage:
   precision: 2
+  range: 70..100
   round: down
-  range: "70...100"
-
-  # https://docs.codecov.io/docs/commit-status
   status:
-    project: no
-    patch: no
-    changes: no
-
-parsers:
-  gcov:
-    branch_detection:
-      conditional: yes
-      loop: yes
-      method: no
-      macro: no
-
-# https://docs.codecov.io/docs/pull-request-comments
-# https://docs.codecov.io/docs/graphs
-comment:
-  layout: "header, files "
-  behavior: once
-  require_changes: yes
-
-# fixes:
-#   - "/builds/pymor/pymor::"
+    changes: false
+    project:
+      pymor:
+        flags:
+          - gitlab_ci
+          - github_actions
+    patch:
+      pymor:
+        target: auto

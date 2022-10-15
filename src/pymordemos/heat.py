@@ -185,7 +185,7 @@ def main(
     # Model order reduction
     run_mor_method(lti, w, BTReductor(lti), 'BT', r, tol=1e-5)
     run_mor_method(lti, w, LQGBTReductor(lti), 'LQGBT', r, tol=1e-5)
-    run_mor_method(lti, w, BRBTReductor(lti), 'BRBT', r, tol=1e-5)
+    run_mor_method(lti, w, BRBTReductor(lti, gamma=0.2), 'BRBT', r, tol=1e-5)
     run_mor_method(lti, w, IRKAReductor(lti), 'IRKA', r)
     run_mor_method(lti, w, IRKAReductor(lti), 'IRKA (with Arnoldi)', r, projection='arnoldi')
     run_mor_method(lti, w, TSIAReductor(lti), 'TSIA', r)

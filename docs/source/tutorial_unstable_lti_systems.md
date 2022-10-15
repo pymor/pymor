@@ -42,8 +42,8 @@ If the system is asymptotically stable, i.e., all eigenvalues of the
 matrix pair {math}`(A, E)` lie in the open left half plane, methods like
 balanced truncation (see {doc}`tutorial_bt`) can be used for model
 order reduction. Asymptotic stability of the LTI system is a crucial
-assumption for balanced truncation because the observability and
-controllability Gramians are not defined if the matrix pair {math}`(A, E)` has
+assumption for balanced truncation because the controllability and
+observability Gramians are not defined if the matrix pair {math}`(A, E)` has
 eigenvalues with a positive real part (in this case we call the LTI system
 unstable). Additionally, commonly used system norms like the
 {math}`\mathcal{H}_2` norm, the {math}`\mathcal{H}_\infty` norm, and
@@ -70,7 +70,7 @@ one input {math}`u(t)` and one output {math}`y(t)`:
 \end{align}
 ```
 
-Depending on the choice of the parameter {math}`\lambda` the discretization of
+Depending on the choice of the parameter {math}`\lambda`, the discretization of
 the above partial differential equation is an unstable LTI system. In order to
 build the {{ LTIModel }} we follow the lines of {doc}`tutorial_lti_systems`.
 
@@ -115,18 +115,19 @@ print(ast_spectrum[1])
 In the code snippet above, all eigenvalues of the matrix pair {math}`(A, E)` are
 computed using dense methods. This works well for systems with a small state space
 dimension. For large-scale systems it is wiser to rely on iterative methods for
-computing eigenvalues. The code below computes 10 system poles which are
-close to 0 using pyMOR's iterative eigensolver and filters the result for
-values with a positive real part.
+computing eigenvalues. The code below redefines `fom` to compute 10 system poles
+that are close to 0 using pyMOR's iterative eigensolver and filters the result
+for values with a positive real part.
 
 ```{code-cell}
-ast_spectrum = fom.get_ast_spectrum(ast_pole_data={'k': 10, 'sigma': 0})
+fom = fom.with_(ast_pole_data={'k': 10, 'sigma': 0})
+ast_spectrum = fom.get_ast_spectrum()
 print(ast_spectrum[1])
 ```
 
 ## Frequency domain balanced truncation
 
-The observability and controllability Gramians (defined in the time-domain)
+The controllability and observability Gramians (defined in the time-domain)
 introduced in {doc}`tutorial_lti_systems` do not exist for unstable systems.
 However, the frequency domain representations of these Gramians are defined for
 systems with no poles on the imaginary axis. Hence, for most unstable systems we
@@ -159,15 +160,17 @@ Let us start with initializing a reductor object
 
 ```{code-cell}
 from pymor.reductors.bt import FDBTReductor
-fdbt = FDBTReductor(fom, ast_pole_data={'k': 10, 'sigma': 0})
+fdbt = FDBTReductor(fom)
 ```
 
 In order to perform a Bernoulli stabilization, knowledge about the anti-stable
-subset of system poles is required. With the `ast_pole_data` argument we can provide
-information about the system poles to the reductor (i.e. list of anti-stable
-eigenvalues with or without corresponding eigenvectors) or specify how eigenvalues
-should be computed (i.e. `None` for computing all eigenvalues using dense methods
-or arguments for pyMOR's iterative eigensolver like in the code above).
+subset of system poles is required. Therefore,
+{class}`~pymor.reductors.bt.FDBTReductor` internally calls
+`fom.get_ast_spectrum` using the `ast_pole_data` attribute, which can be a list
+of anti-stable eigenvalues (with or without corresponding eigenvectors) or
+specifying how eigenvalues should be computed (`None` for computing all
+eigenvalues using dense methods or arguments for pyMOR's iterative eigensolver
+like in the code above).
 
 Before we use the {meth}`~pymor.reductors.bt.FDBTReductor.reduce` method to
 obtain a reduced-order model, we take a look at some a priori error bounds for

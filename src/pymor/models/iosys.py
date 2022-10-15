@@ -11,6 +11,7 @@ from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.eigs import eigs
 from pymor.algorithms.lyapunov import (_chol, solve_cont_lyap_lrcf, solve_disc_lyap_lrcf, solve_cont_lyap_dense,
                                        solve_disc_lyap_dense)
+from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
 from pymor.core.config import config
@@ -73,10 +74,18 @@ class LTIModel(Model):
     presets
         A `dict` of preset attributes or `None`. The dict must only contain keys that correspond to
         attributes of |LTIModel| such as `poles`, `c_lrcf`, `o_lrcf`, `c_dense`, `o_dense`, `hsv`,
-        `h2_norm`, `hinf_norm`, `l2_norm` and `linf_norm`. Additionaly, the frequency at which the
+        `h2_norm`, `hinf_norm`, `l2_norm` and `linf_norm`. Additionally, the frequency at which the
         :math:`\mathcal{H}_\infty/\mathcal{L}_\infty` norm is attained can be preset with `fpeak`.
     solver_options
-        The solver options to use to solve the Lyapunov equations.
+        The solver options to use to solve matrix equations.
+    ast_pole_data
+        Used in :meth:`get_ast_spectrum`. Can be:
+
+        - dictionary of parameters for :func:`~pymor.algorithms.eigs.eigs`,
+        - list of anti-stable eigenvalues (scalars),
+        - tuple `(lev, ew, rev)` where `ew` contains the sorted anti-stable eigenvalues
+            and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
+        - `None` if anti-stable eigenvalues should be computed via dense methods.
     error_estimator
         An error estimator for the problem. This can be any object with an
         `estimate_error(U, mu, model)` method. If `error_estimator` is not `None`, an
@@ -112,8 +121,11 @@ class LTIModel(Model):
         The transfer function.
     """
 
+    cache_region = 'memory'
+
     def __init__(self, A, B, C, D=None, E=None, sampling_time=0, presets=None,
-                 solver_options=None, error_estimator=None, visualizer=None, name=None):
+                 solver_options=None, ast_pole_data=None,
+                 error_estimator=None, visualizer=None, name=None):
 
         assert A.linear
         assert A.source == A.range
@@ -597,15 +609,17 @@ class LTIModel(Model):
             return self.presets['c_lrcf'].to_numpy().T @ self.presets['c_lrcf'].to_numpy()
         elif typ == 'o_dense' and 'o_lrcf' in self.presets:
             return self.presets['o_lrcf'].to_numpy().T @ self.presets['o_lrcf'].to_numpy()
-        else:
-            A = self.A.assemble(mu)
-            B = self.B
-            C = self.C
-            E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
-            options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
-            options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
-            solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
-            solve_lyap_dense = solve_cont_lyap_dense if self.sampling_time == 0 else solve_disc_lyap_dense
+
+        A = self.A.assemble(mu)
+        B = self.B
+        C = self.C
+        E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
+        options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
+        options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
+        options_ricc_lrcf = self.solver_options.get('ricc_lrcf') if self.solver_options else None
+        options_ricc_pos_lrcf = self.solver_options.get('ricc_pos_lrcf') if self.solver_options else None
+        solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
+        solve_lyap_dense = solve_cont_lyap_dense if self.sampling_time == 0 else solve_disc_lyap_dense
 
         if typ == 'c_lrcf':
             return solve_lyap_lrcf(A, E, B.as_range_array(mu=mu), trans=False, options=options_lrcf)
@@ -613,10 +627,40 @@ class LTIModel(Model):
             return solve_lyap_lrcf(A, E, C.as_source_array(mu=mu), trans=True, options=options_lrcf)
         elif typ == 'c_dense':
             return solve_lyap_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
-                                    to_matrix(B, format='dense'), trans=False, options=options_dense)
+                                    to_matrix(B, format='dense', mu=mu), trans=False, options=options_dense)
         elif typ == 'o_dense':
             return solve_lyap_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
-                                    to_matrix(C, format='dense'), trans=True, options=options_dense)
+                                    to_matrix(C, format='dense', mu=mu), trans=True, options=options_dense)
+        elif typ == 'bs_c_lrcf':
+            ast_spectrum = self.get_ast_spectrum(mu=mu)
+            K = bernoulli_stabilize(A, E, B.as_range_array(mu=mu), ast_spectrum, trans=True)
+            BK = LowRankOperator(B.as_range_array(mu=mu), np.eye(len(K)), K)
+            return solve_cont_lyap_lrcf(A - BK, E, B.as_range_array(mu=mu),
+                                        trans=False, options=options_lrcf)
+        elif typ == 'bs_o_lrcf':
+            ast_spectrum = self.get_ast_spectrum(mu=mu)
+            K = bernoulli_stabilize(A, E, C.as_source_array(mu=mu), ast_spectrum, trans=False)
+            KC = LowRankOperator(K, np.eye(len(K)), C.as_source_array(mu=mu))
+            return solve_cont_lyap_lrcf(A - KC, E, C.as_source_array(mu=mu),
+                                        trans=True, options=options_lrcf)
+        elif typ == 'lqg_c_lrcf':
+            return solve_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
+                                   trans=False, options=options_ricc_lrcf)
+        elif typ == 'lqg_o_lrcf':
+            return solve_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
+                                   trans=True, options=options_ricc_lrcf)
+        elif typ[0] == 'br_c_lrcf':
+            return solve_pos_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
+                                       R=(typ[1]**2 * np.eye(self.dim_output)
+                                          if typ[1] != 1
+                                          else None),
+                                       trans=False, options=options_ricc_pos_lrcf)
+        elif typ[0] == 'br_o_lrcf':
+            return solve_pos_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
+                                       R=(typ[1]**2 * np.eye(self.dim_input)
+                                          if typ[1] != 1
+                                          else None),
+                                       trans=True, options=options_ricc_pos_lrcf)
 
     def gramian(self, typ, mu=None):
         """Compute a Gramian.
@@ -629,7 +673,17 @@ class LTIModel(Model):
             - `'c_lrcf'`: low-rank Cholesky factor of the controllability Gramian,
             - `'o_lrcf'`: low-rank Cholesky factor of the observability Gramian,
             - `'c_dense'`: dense controllability Gramian,
-            - `'o_dense'`: dense observability Gramian.
+            - `'o_dense'`: dense observability Gramian,
+            - `'bs_c_lrcf'`: low-rank Cholesky factor of the Bernoulli stabilized controllability
+              Gramian,
+            - `'bs_o_lrcf'`: low-rank Cholesky factor of the Bernoulli stabilized observability
+              Gramian,
+            - `'lqg_c_lrcf'`: low-rank Cholesky factor of the "controllability" LQG Gramian,
+            - `'lqg_o_lrcf'`: low-rank Cholesky factor of the "observability" LQG Gramian,
+            - `('br_c_lrcf', gamma)`: low-rank Cholesky factor of the "controllability" bounded real
+              Gramian,
+            - `('br_o_lrcf', gamma)`: low-rank Cholesky factor of the "observability" bounded real
+              Gramian.
 
             .. note::
                 For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
@@ -642,11 +696,15 @@ class LTIModel(Model):
 
         Returns
         -------
-        If typ is `'c_lrcf'` or `'o_lrcf'`, then the Gramian factor as a |VectorArray| from
-        `self.A.source`.
-        If typ is `'c_dense'` or `'o_dense'`, then the Gramian as a |NumPy array|.
+        If typ ends with `'_lrcf'`, then the Gramian factor as a |VectorArray| from `self.A.source`.
+        If typ ends with `'_dense'`, then the Gramian as a |NumPy array|.
         """
-        assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense')
+        assert (typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'bs_c_lrcf', 'bs_o_lrcf', 'lqg_c_lrcf', 'lqg_o_lrcf')
+                or isinstance(typ, tuple) and len(typ) == 2 and typ[0] in ('br_c_lrcf', 'br_o_lrcf'))
+
+        if ((isinstance(typ, str) and (typ.startswith('bs') or typ.startswith('lqg')) or isinstance(typ, tuple))
+                and self.sampling_time > 0):
+            raise NotImplementedError
 
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
@@ -655,43 +713,59 @@ class LTIModel(Model):
         gramian = self.presets[typ] if typ in self.presets else self._gramian(typ, mu=mu)
 
         # assert correct return types
-        if typ == 'c_lrcf':
-            assert gramian in self.A.source
-        elif typ == 'o_lrcf':
-            assert gramian in self.A.range
-        elif typ == 'c_dense':
-            assert isinstance(gramian, np.ndarray) and gramian.shape == (self.A.source.dim, self.A.range.dim)
-        elif typ == 'o_dense':
-            assert isinstance(gramian, np.ndarray) and gramian.shape == (self.A.range.dim, self.A.source.dim)
+        assert ((isinstance(typ, str) and typ.endswith('_lrcf') or isinstance(typ, tuple))
+                and gramian in self.A.source
+                or isinstance(gramian, np.ndarray)
+                and gramian.shape == (self.A.source.dim, self.A.source.dim))
 
         return gramian
 
     @cached
-    def _hsv_U_V(self, mu=None):
-        """Compute Hankel singular values and vectors.
+    def _sv_U_V(self, typ='lyap', mu=None):
+        """Compute (Hankel) singular values and vectors.
 
         .. note::
             Assumes the system is asymptotically stable.
 
         Parameters
         ----------
+        typ
+            The type of the Gramians used:
+
+            - `'lyap'`: Lyapunov Gramian,
+            - `'bs'`: Bernoulli stabilized Gramian,
+            - `'lqg'`: LQG Gramian,
+            - `('br', gamma)`: bounded real Gramian,
         mu
             |Parameter values|.
 
         Returns
         -------
-        hsv
+        sv
             One-dimensional |NumPy array| of singular values.
         Uh
-            |NumPy array| of left singular vectors.
+            |NumPy array| of left singular vectors as rows.
         Vh
-            |NumPy array| of right singular vectors.
+            |NumPy array| of right singular vectors as rows.
         """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
-        cf = self.gramian('c_lrcf', mu=mu)
-        of = self.gramian('o_lrcf', mu=mu)
+        if typ == 'lyap':
+            cf = self.gramian('c_lrcf', mu=mu)
+            of = self.gramian('o_lrcf', mu=mu)
+        elif typ == 'bs':
+            cf = self.gramian('bs_c_lrcf', mu=mu)
+            of = self.gramian('bs_o_lrcf', mu=mu)
+        elif typ == 'lqg':
+            cf = self.gramian('lqg_c_lrcf', mu=mu)
+            of = self.gramian('lqg_o_lrcf', mu=mu)
+        elif isinstance(typ, tuple) and typ[0] == 'br' and typ[1] > 0:
+            gamma = typ[1]
+            cf = self.gramian(('br_c_lrcf', gamma), mu=mu)
+            of = self.gramian(('br_o_lrcf', gamma), mu=mu)
+        else:
+            raise ValueError(f'Unknown typ ({typ}).')
         U, hsv, Vh = spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver='gesvd')
         return hsv, U.T, Vh
 
@@ -711,7 +785,7 @@ class LTIModel(Model):
         sv
             One-dimensional |NumPy array| of singular values.
         """
-        hsv = self.presets['hsv'] if 'hsv' in self.presets else self._hsv_U_V(mu=mu)[0]
+        hsv = self.presets['hsv'] if 'hsv' in self.presets else self._sv_U_V(mu=mu)[0]
         assert isinstance(hsv, np.ndarray) and hsv.ndim == 1
 
         return hsv
@@ -805,13 +879,13 @@ class LTIModel(Model):
         return self.hsv(mu=mu)[0]
 
     @cached
-    def _l2_norm(self, ast_pole_data=None, mu=None):
+    def _l2_norm(self, mu=None):
         assert self.parameters.assert_compatible(mu)
 
         A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
         options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
 
-        ast_spectrum = self.get_ast_spectrum(ast_pole_data, mu)
+        ast_spectrum = self.get_ast_spectrum(mu=mu)
 
         if len(ast_spectrum[0]) == 0:
             return self.h2_norm()
@@ -834,7 +908,7 @@ class LTIModel(Model):
                                  trans=True, options=options_lrcf)
             return np.sqrt(BmKD.apply_adjoint(of, mu=mu).norm2().sum())
 
-    def l2_norm(self, ast_pole_data=None, mu=None):
+    def l2_norm(self, mu=None):
         r"""Compute the :math:`\mathcal{L}_2`-norm of the |LTIModel|.
 
         The :math:`\mathcal{L}_2`-norm of an |LTIModel| is defined via the integral
@@ -851,14 +925,6 @@ class LTIModel(Model):
 
         Parameters
         ----------
-        ast_pole_data
-            Can be:
-
-            - dictionary of parameters for :func:`~pymor.algorithms.eigs.eigs`,
-            - list of anti-stable eigenvalues (scalars),
-            - tuple `(lev, ew, rev)` where `ew` contains the anti-stable eigenvalues
-              and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
-            - `None` if anti-stable eigenvalues should be computed via dense methods.
         mu
             |Parameter|.
 
@@ -869,8 +935,7 @@ class LTIModel(Model):
         """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
-        l2_norm = self.presets['l2_norm'] if 'l2_norm' in self.presets else self._l2_norm(ast_pole_data=ast_pole_data,
-                                                                                          mu=mu)
+        l2_norm = self.presets['l2_norm'] if 'l2_norm' in self.presets else self._l2_norm(mu=mu)
         assert l2_norm >= 0
 
         return l2_norm
@@ -945,19 +1010,12 @@ class LTIModel(Model):
             assert linf_norm >= 0
             return linf_norm
 
-    def get_ast_spectrum(self, ast_pole_data=None, mu=None):
+    @cached
+    def get_ast_spectrum(self, mu=None):
         """Compute anti-stable subset of the poles of the |LTIModel|.
 
         Parameters
         ----------
-        ast_pole_data
-            Can be:
-
-            - dictionary of parameters for :func:`~pymor.algorithms.eigs.eigs`,
-            - list of anti-stable eigenvalues (scalars),
-            - tuple `(lev, ew, rev)` where `ew` contains the sorted anti-stable eigenvalues
-              and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
-            - `None` if anti-stable eigenvalues should be computed via dense methods.
         mu
             |Parameter|.
 
@@ -977,10 +1035,12 @@ class LTIModel(Model):
 
         A, B, C, D, E = (op.assemble(mu=mu) for op in [self.A, self.B, self.C, self.D, self.E])
 
-        if ast_pole_data is not None:
-            if type(ast_pole_data) == dict:
-                ew, rev = eigs(A, E=E if self.E else None, left_evp=False, **ast_pole_data)
-                ast_idx = np.where(ew.real > 0.)
+        if self.ast_pole_data is not None:
+            if isinstance(E, IdentityOperator):
+                E = None
+            if type(self.ast_pole_data) == dict:
+                ew, rev = eigs(A, E, left_evp=False, **self.ast_pole_data)
+                ast_idx = (ew.real > 0)
                 ast_ews = ew[ast_idx]
                 if len(ast_ews) == 0:
                     return self.solution_space.empty(), np.empty((0,)), self.solution_space.empty()
@@ -988,28 +1048,24 @@ class LTIModel(Model):
                 ast_levs = A.source.empty(reserve=len(ast_ews))
                 for ae in ast_ews:
                     # l=3 avoids issues with complex conjugate pairs
-                    _, lev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae, left_evp=True)
+                    _, lev = eigs(A, E, k=1, l=3, sigma=ae, left_evp=True)
                     ast_levs.append(lev)
-                return ast_levs, ast_ews, rev[ast_idx[0]]
-
-            elif type(ast_pole_data) == list:
-                assert all(np.real(ast_pole_data) > 0)
-                ast_pole_data = np.sort(ast_pole_data)
+                return ast_levs, ast_ews, rev[ast_idx]
+            elif type(self.ast_pole_data) == list:
+                assert all(np.real(self.ast_pole_data) > 0)
+                ast_pole_data = np.sort(self.ast_pole_data)
                 ast_levs = A.source.empty(reserve=len(ast_pole_data))
                 ast_revs = A.source.empty(reserve=len(ast_pole_data))
                 for ae in ast_pole_data:
-                    _, lev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae, left_evp=True)
+                    _, lev = eigs(A, E, k=1, l=3, sigma=ae, left_evp=True)
                     ast_levs.append(lev)
-                    _, rev = eigs(A, E=E if self.E else None, k=1, l=3, sigma=ae)
+                    _, rev = eigs(A, E, k=1, l=3, sigma=ae)
                     ast_revs.append(rev)
                 return ast_levs, ast_pole_data, ast_revs
-
             elif type(ast_pole_data) == tuple:
                 return ast_pole_data
-
             else:
                 TypeError(f'ast_pole_data is of wrong type ({type(ast_pole_data)}).')
-
         else:
             if self.order >= sparse_min_size():
                 if not isinstance(A, NumpyMatrixOperator) or A.sparse:
@@ -1018,14 +1074,15 @@ class LTIModel(Model):
                     if not isinstance(E, NumpyMatrixOperator) or E.sparse:
                         self.logger.warning('Converting operator E to a NumPy array.')
 
-            A, E = (to_matrix(op, format='dense') for op in [A, E])
-            ew, lev, rev = spla.eig(A, E if self.E else None, left=True)
-            ast_idx = np.where(ew.real > 0.)
+            A = to_matrix(A, format='dense')
+            E = None if isinstance(E, IdentityOperator) else to_matrix(E, format='dense')
+            ew, lev, rev = spla.eig(A, E, left=True)
+            ast_idx = (ew.real > 0)
             ast_ews = ew[ast_idx]
             idx = ast_ews.argsort()
 
-            ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, 0, :][:, idx].T)
-            ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, 0, :][:, idx].T)
+            ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, idx].T)
+            ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, idx].T)
 
             return ast_lev, ast_ews[idx], ast_rev
 
@@ -1196,6 +1253,8 @@ class PHLTIModel(Model):
     transfer_function
         The transfer function.
     """
+
+    cache_region = 'memory'
 
     def __init__(self, J, R, G, P=None, S=None, N=None, E=None,
                  solver_options=None, error_estimator=None, visualizer=None, name=None):
@@ -1439,29 +1498,31 @@ class PHLTIModel(Model):
         """
         assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense')
 
-        return self.to_lti().gramian(typ, mu)
+        return self.to_lti().gramian(typ, mu=mu)
 
-    def _hsv_U_V(self, mu=None):
-        """Compute Hankel singular values and vectors.
+    def _sv_U_V(self, typ='lyap', mu=None):
+        """Compute (Hankel) singular values and vectors.
 
         .. note::
             Assumes the system is asymptotically stable.
 
         Parameters
         ----------
+        typ
+            The type of the Gramians used (see :meth:`LTIModel._sv_U_V`).
         mu
             |Parameter values|.
 
         Returns
         -------
-        hsv
+        sv
             One-dimensional |NumPy array| of singular values.
         Uh
-            |NumPy array| of left singular vectors.
+            |NumPy array| of left singular vectors as rows.
         Vh
-            |NumPy array| of right singular vectors.
+            |NumPy array| of right singular vectors as rows.
         """
-        return self.to_lti()._hsv_U_V(mu)
+        return self.to_lti()._sv_U_V(typ=typ, mu=mu)
 
     def hsv(self, mu=None):
         """Hankel singular values.
@@ -1479,7 +1540,7 @@ class PHLTIModel(Model):
         sv
             One-dimensional |NumPy array| of singular values.
         """
-        return self._hsv_U_V(mu=mu)[0]
+        return self._sv_U_V(mu=mu)[0]
 
     def h2_norm(self, mu=None):
         """Compute the H2-norm.
@@ -1699,6 +1760,8 @@ class SecondOrderModel(Model):
     transfer_function
         The transfer function.
     """
+
+    cache_region = 'memory'
 
     def __init__(self, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
                  solver_options=None, error_estimator=None, visualizer=None, name=None):
@@ -2383,6 +2446,8 @@ class LinearDelayModel(Model):
         The transfer function.
     """
 
+    cache_region = 'memory'
+
     def __init__(self, A, Ad, tau, B, C, D=None, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
@@ -2647,6 +2712,8 @@ class LinearStochasticModel(Model):
         The |Operator| E.
     """
 
+    cache_region = 'memory'
+
     def __init__(self, A, As, B, C, D=None, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
@@ -2773,6 +2840,8 @@ class BilinearModel(Model):
     E
         The |Operator| E.
     """
+
+    cache_region = 'memory'
 
     def __init__(self, A, N, B, C, D, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
