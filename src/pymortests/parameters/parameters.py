@@ -39,6 +39,17 @@ def test_randomly_without_count(space):
     assert isinstance(mu, Mu)
 
 
+def test_clip(space):
+    large_mu = [10e4]
+    large_mu = space.clip(large_mu)
+    small_mu = [-1]
+    small_mu = space.clip(small_mu)
+    max_mu = space.parameters.parse([1])
+    min_mu = space.parameters.parse([0.1])
+    assert large_mu == max_mu
+    assert small_mu == min_mu
+
+
 def test_parse_parameter():
     parameters = Parameters(b=2, a=1)
     mu_as_list = [1, 2, 3]
