@@ -530,12 +530,10 @@ def randomized_ghep(A, E=None, n=6, oversampling=20, subspace_iterations=2, sing
         Q = RRF.find_range(n+oversampling)
         T = A.apply2(Q, Q)
 
-    w, *S = sp.linalg.eigh(T, evals_only=not return_evecs)
-    w = w[::-1]
     if return_evecs:
+        w, S = sp.linalg.eigh(T, subset_by_index=(0, n-1))
         with logger.block(f'Computing eigenvectors ({n} vectors) ...'):
-            S = S[0][:, ::-1]
             V = Q.lincomb(S)
-        return w[:n], V[:n]
+        return w, V
     else:
-        return w[:n]
+        return sp.linalg.eigh(T, subset_by_index=(0, n-1), eigvals_only=True)
