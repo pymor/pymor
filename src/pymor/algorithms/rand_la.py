@@ -417,7 +417,12 @@ def randomized_svd(A, n, range_product=None, source_product=None, oversampling=2
                                 source_product=source_product)
 
     assert 0 <= n <= max(A.source.dim, A.range.dim) and isinstance(n, int)
-    assert 0 <= oversampling <= max(A.source.dim, A.range.dim) - n and isinstance(oversampling, int)
+    assert 0 <= oversampling and isinstance(oversampling, int)
+    if oversampling > max(A.source.dim, A.range.dim) - n:
+        logger.warn('Oversampling parameter is too large!')
+        oversampling = max(A.source.dim, A.range.dim) - n
+        logger.info(f'Setting oversampling to {oversampling} and proceeding ...')
+
     if range_product is None:
         range_product = IdentityOperator(A.range)
     if source_product is None:
@@ -505,7 +510,7 @@ def randomized_ghep(A, E=None, n=6, oversampling=20, subspace_iterations=2, sing
     assert not A.parametric
     assert A.source == A.range
     assert 0 <= n <= max(A.source.dim, A.range.dim) and isinstance(n, int)
-    assert 0 <= oversampling <= max(A.source.dim, A.range.dim) - n and isinstance(oversampling, int)
+    assert 0 <= oversampling and isinstance(oversampling, int)
     assert subspace_iterations >= 0 and isinstance(subspace_iterations, int)
     assert isinstance(single_pass, bool)
     assert isinstance(return_evecs, bool)
@@ -520,6 +525,11 @@ def randomized_ghep(A, E=None, n=6, oversampling=20, subspace_iterations=2, sing
 
     if A.source.dim == 0 or A.range.dim == 0:
         return A.source.empty(), np.array([]), A.range.empty()
+
+    if oversampling > max(A.source.dim, A.range.dim) - n:
+        logger.warn('Oversampling parameter is too large!')
+        oversampling = max(A.source.dim, A.range.dim) - n
+        logger.info(f'Setting oversampling to {oversampling} and proceeding ...')
 
     if single_pass:
         with logger.block('Approximating basis for the operator source/range ...'):
