@@ -13,7 +13,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.cache import CacheableObject, cached
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import IdentityOperator, InverseOperator
+from pymor.operators.constructions import AdjointOperator, IdentityOperator, InverseOperator
 from pymor.operators.interface import Operator
 from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -42,10 +42,13 @@ class RandomizedRangeFinder(CacheableObject):
         using :func:`SciPy eigh <scipy.linalg.eigh>`.
     complex
         If `True`, complex valued random vectors will be chosen.
+    self_adjoint
+        If `True`, the calculation of the adjoint will be skipped and `op` will be used as its
+        adjoint when calculating the subspace iterations. Defaults to `False`
     """
 
     def __init__(self, A, subspace_iterations=0, range_product=None, source_product=None, lambda_min=None,
-                 complex=False):
+                 complex=False, self_adjoint=False):
         assert isinstance(A, Operator)
         assert 0 <= subspace_iterations and isinstance(subspace_iterations, int)
         if range_product is None:
@@ -59,6 +62,7 @@ class RandomizedRangeFinder(CacheableObject):
         assert source_product.source == source_product.range == A.source
         assert lambda_min is None or isinstance(lambda_min, Number)
         assert isinstance(complex, bool)
+        assert isinstance(self_adjoint, bool)
 
         self.__auto_init(locals())
         self._Q = [self.A.range.empty()]
@@ -67,6 +71,7 @@ class RandomizedRangeFinder(CacheableObject):
             self._Q.append(self.A.range.empty())
         self._Q = tuple(self._Q)
         self._testvecs = self.A.source.empty()
+        self._adjoint_op = A if self_adjoint else AdjointOperator(A)
 
     @cached
     def _lambda_min(self):
@@ -165,7 +170,7 @@ class RandomizedRangeFinder(CacheableObject):
             k = len(self._Q[i-1]) - offset  # check if GS removed vectors
             offset = len(self._Q[i])
             self._Q[i].append(self.source_product.apply_inverse(
-                (self.A.apply_adjoint(self.range_product.apply(self._Q[i-1][-k:])))))
+                (self._adjoint_op.apply(self.range_product.apply(self._Q[i-1][-k:])))))
             gram_schmidt(self._Q[i], self.source_product, offset=offset, copy=False)
 
             k = len(self._Q[i]) - offset  # check if GS removed vectors
@@ -526,7 +531,7 @@ def randomized_ghep(A, E=None, n=6, oversampling=20, subspace_iterations=2, sing
         T = lu_solve(X_lu, lu_solve(X_lu, W.inner(Y_bar)).T).T
     else:
         C = InverseOperator(E) @ A
-        RRF = RandomizedRangeFinder(C, subspace_iterations=subspace_iterations, range_product=E)
+        RRF = RandomizedRangeFinder(C, subspace_iterations=subspace_iterations, self_adjoint=True)
         Q = RRF.find_range(n+oversampling)
         T = A.apply2(Q, Q)
 
