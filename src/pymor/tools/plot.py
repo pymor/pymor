@@ -54,8 +54,7 @@ def adaptive(f, a, b, initial_num=10, max_num=2000, angle_tol=2, min_rel_dist=1e
     plot = Adaptive(f, a, b, initial_num=initial_num, max_num=max_num,
                     angle_tol=angle_tol, min_rel_dist=min_rel_dist,
                     aspect_ratio=aspect_ratio, xscale=xscale, yscale=yscale)
-    plot.run()
-    return np.array(plot.points), np.array(plot.fvals)
+    return plot.compute()
 
 
 class Adaptive(BasicObject):
@@ -151,7 +150,7 @@ class Adaptive(BasicObject):
         self.y_min = np.min(self.y, axis=0, keepdims=True)
         self.y_max = np.max(self.y, axis=0, keepdims=True)
 
-    def run(self):
+    def _loop(self):
         while len(self.points) < self.max_num:
             angles, dists = self._angles_and_dists()
 
@@ -170,3 +169,7 @@ class Adaptive(BasicObject):
                 self._insert(idx[0] + 2)
             else:
                 self._insert(idx[0] + 1)
+
+    def compute(self):
+        self._loop()
+        return np.array(self.points), np.array(self.fvals)
