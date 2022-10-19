@@ -7,8 +7,10 @@ import math
 import numpy as np
 
 from pymor.core.base import BasicObject
+from pymor.core.defaults import defaults
 
 
+@defaults('initial_num', 'max_num', 'angle_tol', 'min_rel_dist', 'aspect_ratio', 'xscale', 'yscale')
 def adaptive(f, a, b, initial_num=10, max_num=2000, angle_tol=2, min_rel_dist=1e-2,
              aspect_ratio=4/3, xscale='linear', yscale='linear'):
     """Adaptive sampling of a |NumPy array|-valued function.
