@@ -121,45 +121,54 @@ class TransferFunction(CacheableObject, ParametricObject):
         else:
             return self.dtf(s, mu=mu)
 
-    def freq_resp(self, w=None, w_limits=None, mu=None, adaptive_opts=None):
+    @cached
+    def freq_resp(self, w=None, mu=None, adaptive_type='bode'):
         """Evaluate the transfer function on the imaginary axis.
 
         Parameters
         ----------
         w
-            A sequence of angular frequencies at which to compute the transfer function.
-            If given, `w_limits` has to be `None`.
-        w_limits
-            The left and right limits used for the adaptive plot.
-            If given, `w` has to be `None`.
+            If `len(w) == 2`, the left and right limits used for the adaptive sampling.
+            Otherwise, a sequence of angular frequencies at which to compute the transfer function.
         mu
             |Parameter values| for which to evaluate the transfer function.
-        adaptive_opts
-            Optional arguments for :func:`~pymor.tools.plot.adaptive` (used if `w_limits` is given).
+        adaptive_type
+            The plot type that adaptive sampling should be used for
+            (`'bode'`, `'mag'`).
+            Ignored if `len(w) != 2`.
 
         Returns
         -------
         w
             A sequence of angular frequencies at which the transfer function was computed
-            (returned if `w_limits` is given).
+            (returned if `len(w) == 2`).
         tfw
             Transfer function values at frequencies in `w`, |NumPy array| of shape
             `(len(w), self.dim_output, self.dim_input)`.
         """
-        assert (w is not None and w_limits is None
-                or w is None and w_limits is not None)
-
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
 
-        if w is not None:
-            if self.sampling_time > 0 and not all(-np.pi <= wi <= np.pi for wi in w):
-                self.logger.warning('Some frequencies are not in the [-pi, pi] interval.')
+        if self.sampling_time > 0 and not all(-np.pi <= wi <= np.pi for wi in w):
+            self.logger.warning('Some frequencies are not in the [-pi, pi] interval.')
+
+        if len(w) != 2:
             w = 1j * w if self.sampling_time == 0 else np.exp(1j * w)
             return np.stack([self.eval_tf(wi, mu=mu) for wi in w])
+
+        if adaptive_type == 'bode':
+            if self.sampling_time == 0:
+                f = lambda w: self.eval_tf(1j * w)
+            else:
+                f = lambda w: self.eval_tf(np.exp(1j * w))
         else:
-            raise NotImplementedError
+            if self.sampling_time == 0:
+                f = lambda w: np.abs(self.eval_tf(1j * w))
+            else:
+                f = lambda w: np.abs(self.eval_tf(np.exp(1j * w)))
+
+        return adaptive(f, w[0], w[1], xscale='log', yscale='log')
 
     def bode(self, w, mu=None):
         """Compute magnitudes and phases.
@@ -167,12 +176,16 @@ class TransferFunction(CacheableObject, ParametricObject):
         Parameters
         ----------
         w
-            A sequence of angular frequencies at which to compute the transfer function.
+            If `len(w) == 2`, the left and right limits used for the adaptive sampling.
+            Otherwise, a sequence of angular frequencies at which to compute the transfer function.
         mu
             |Parameter values| for which to evaluate the transfer function.
 
         Returns
         -------
+        w
+            A sequence of angular frequencies at which the transfer function was computed
+            (returned if `len(w) == 2`).
         mag
             Transfer function magnitudes at frequencies in `w`, |NumPy array| of shape
             `(len(w), self.dim_output, self.dim_input)`.
@@ -180,11 +193,15 @@ class TransferFunction(CacheableObject, ParametricObject):
             Transfer function phases (in radians) at frequencies in `w`, |NumPy array| of shape
             `(len(w), self.dim_output, self.dim_input)`.
         """
-        w = np.asarray(w)
-        mag = np.abs(self.freq_resp(w, mu=mu))
-        phase = np.angle(self.freq_resp(w, mu=mu))
+        tfw = self.freq_resp(w, mu=mu, adaptive_type='bode')
+        if len(w) == 2:
+            w_new, tfw = tfw
+        mag = np.abs(tfw)
+        phase = np.angle(tfw)
         phase = np.unwrap(phase, axis=0)
-        return mag, phase
+        if len(w) != 2:
+            return mag, phase
+        return w_new, mag, phase
 
     def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, **mpl_kwargs):
         """Draw the Bode plot for all input-output pairs.
@@ -192,7 +209,8 @@ class TransferFunction(CacheableObject, ParametricObject):
         Parameters
         ----------
         w
-            A sequence of angular frequencies at which to compute the transfer function.
+            If `len(w) == 2`, the left and right limits used for the adaptive sampling.
+            Otherwise, a sequence of angular frequencies at which to compute the transfer function.
         mu
             |Parameter values| for which to evaluate the transfer function.
         ax
@@ -220,13 +238,18 @@ class TransferFunction(CacheableObject, ParametricObject):
             fig.set_constrained_layout(True)
             ax = fig.subplots(2 * self.dim_output, self.dim_input, sharex=True, squeeze=False)
         else:
-            assert isinstance(ax, np.ndarray) and ax.shape == (2 * self.dim_output, self.dim_input)
+            assert isinstance(ax, np.ndarray)
+            assert ax.shape == (2 * self.dim_output, self.dim_input), \
+                f'ax.shape={ax.shape} should be ({2 * self.dim_output}, {self.dim_input})'
             fig = ax[0, 0].get_figure()
 
+        if len(w) != 2:
+            mag, phase = self.bode(w, mu=mu)
+        else:
+            w, mag, phase = self.bode(w, mu=mu)
         w = np.asarray(w)
         freq = w / (2 * np.pi) if Hz else w
         freq = freq / self.sampling_time if self.sampling_time > 0 else freq
-        mag, phase = self.bode(w, mu=mu)
         if deg:
             phase *= 180 / np.pi
 
@@ -253,18 +276,14 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         return artists
 
-    def mag_plot(self, w=None, w_limits=None, mu=None, ax=None, ord=None, Hz=False, dB=False,
-                 adaptive_opts=None, **mpl_kwargs):
+    def mag_plot(self, w=None, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
         """Draw the magnitude plot.
 
         Parameters
         ----------
         w
-            A sequence of angular frequencies at which to compute the transfer function.
-            If given, `w_limits` has to be `None`.
-        w_limits
-            The left and right limits used for the adaptive plot.
-            If given, `w` has to be `None`.
+            If `len(w) == 2`, the left and right limits used for the adaptive sampling.
+            Otherwise, a sequence of angular frequencies at which to compute the transfer function.
         mu
             |Parameter values| for which to evaluate the transfer function.
         ax
@@ -285,34 +304,17 @@ class TransferFunction(CacheableObject, ParametricObject):
         -------
         out
             List of matplotlib artists added.
-        w
-            Angular frequencies (if `w_limits` is given).
         """
-        assert (w is not None and w_limits is None
-                or w is None and w_limits is not None)
-
         if ax is None:
             import matplotlib.pyplot as plt
             ax = plt.gca()
 
-        if w is not None:
+        if len(w) != 2:
             w = np.asarray(w)
-            mag = spla.norm(self.freq_resp(w, mu=mu), ord=ord, axis=(1, 2))
+            tfw = self.freq_resp(w, mu=mu)
         else:
-            if self.sampling_time == 0:
-                def f_mag(log10_w):
-                    return np.log10(spla.norm(self.eval_tf(10 ** log10_w * 1j), ord=ord))
-            else:
-                def f_mag(log10_w):
-                    return np.log10(spla.norm(self.eval_tf(np.exp(10 ** log10_w * 1j)), ord=ord))
-            a, b = w_limits
-            a = np.log10(a)
-            b = np.log10(b)
-            if adaptive_opts is None:
-                adaptive_opts = {}
-            w, mag = adaptive(f_mag, a, b, **adaptive_opts)
-            w = 10 ** w
-            mag = 10 ** mag
+            w, tfw = self.freq_resp(w, mu=mu, adaptive_type='mag')
+        mag = spla.norm(tfw, ord=ord, axis=(1, 2))
 
         freq = w / (2 * np.pi) if Hz else w
         freq = freq / self.sampling_time if self.sampling_time > 0 else freq
@@ -327,8 +329,6 @@ class TransferFunction(CacheableObject, ParametricObject):
         mag_unit = ' (dB)' if dB else ''
         ax.set_ylabel('Magnitude' + mag_unit)
 
-        if w_limits is not None:
-            return out, w
         return out
 
     @cached
