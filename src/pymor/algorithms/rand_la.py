@@ -440,13 +440,13 @@ def randomized_svd(A, n, range_product=None, source_product=None, oversampling=2
 
     with logger.block('Backprojecting the left'
                       + f'{" " if isinstance(range_product, IdentityOperator) else " generalized "}'
-                      + 'singular vectors...'):
+                      + f'singular vector{"s" if n > 1 else ""} ...'):
         U = Q.lincomb(U_b[:, :n].T)
 
     if isinstance(source_product, IdentityOperator):
         V = NumpyVectorSpace.from_numpy(Vh_b[:n])
     else:
-        with logger.block('Backprojecting the right generalized singular vectors ...'):
+        with logger.block(f'Backprojecting the right generalized singular vector{"s" if n > 1 else ""} ...'):
             V = Q_B.lincomb(Vh_b[:n])
 
     return U, s[:n], V
@@ -522,23 +522,34 @@ def randomized_ghep(A, E=None, n=6, oversampling=20, subspace_iterations=2, sing
         return A.source.empty(), np.array([]), A.range.empty()
 
     if single_pass:
-        W = A.source.random(n+oversampling, distribution='normal')
-        Y_bar = A.apply(W)
-        Y = E.apply_inverse(Y_bar)
-        Q = gram_schmidt(Y, product=E)
-        X = E.apply2(W, Q)
-        X_lu = lu_factor(X)
-        T = lu_solve(X_lu, lu_solve(X_lu, W.inner(Y_bar)).T).T
+        with logger.block('Approximating basis for the operator source/range ...'):
+            W = A.source.random(n+oversampling, distribution='normal')
+            Y_bar = A.apply(W)
+            Y = E.apply_inverse(Y_bar)
+            Q = gram_schmidt(Y, product=E)
+        with logger.block('Projecting operator onto the reduced space ...'):
+            X = E.apply2(W, Q)
+            X_lu = lu_factor(X)
+            T = lu_solve(X_lu, lu_solve(X_lu, W.inner(Y_bar)).T).T
     else:
-        C = InverseOperator(E) @ A
-        RRF = RandomizedRangeFinder(C, subspace_iterations=subspace_iterations, self_adjoint=True)
-        Q = RRF.find_range(n+oversampling)
-        T = A.apply2(Q, Q)
+        with logger.block('Approximating basis for the operator source/range ...'):
+            C = InverseOperator(E) @ A
+            RRF = RandomizedRangeFinder(C, subspace_iterations=subspace_iterations, self_adjoint=True)
+            Q = RRF.find_range(n+oversampling)
+        with logger.block('Projecting operator onto the reduced space ...'):
+            T = A.apply2(Q, Q)
 
     if return_evecs:
-        w, S = sp.linalg.eigh(T, subset_by_index=(0, n-1))
-        with logger.block(f'Computing eigenvectors ({n} vectors) ...'):
+        with logger.block(f'Computing the{" " if isinstance(E, IdentityOperator) else " generalized "}'
+                          + f'eigenvalue{"s" if n > 1 else ""} and eigenvector{"s" if n > 1 else ""} '
+                          + 'in the reduced space ...'):
+            w, S = sp.linalg.eigh(T, subset_by_index=(0, n-1))
+        with logger.block('Backprojecting the'
+                          + f'{" " if isinstance(E, IdentityOperator) else " generalized "}'
+                          + f'eigenvector{"s" if n > 1 else ""} ...'):
             V = Q.lincomb(S)
         return w, V
     else:
-        return sp.linalg.eigh(T, subset_by_index=(0, n-1), eigvals_only=True)
+        with logger.block(f'Computing the{" " if isinstance(E, IdentityOperator) else " generalized "}'
+                          + f'eigenvalue{"s" if n > 1 else ""} in the reduced space ...'):
+            return sp.linalg.eigh(T, subset_by_index=(0, n-1), eigvals_only=True)
