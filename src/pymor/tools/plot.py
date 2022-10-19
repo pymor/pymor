@@ -62,6 +62,7 @@ class Adaptive(BasicObject):
 
     def __init__(self, f, a, b, initial_num, max_num, angle_tol, min_rel_dist,
                  aspect_ratio, xscale, yscale):
+        assert a < b
         assert initial_num >= 2
         assert max_num > initial_num
         assert 0 < angle_tol < 90
@@ -135,14 +136,18 @@ class Adaptive(BasicObject):
                 self.y.insert(index, np.log2(self.fvals[index]))
         else:
             if self.yscale == 'linear':
-                self.y.insert(index, np.stack((np.abs(self.fvals[index]),
-                                               np.angle(self.fvals[index]))))
+                self.y.insert(index, np.stack(
+                    (np.abs(self.fvals[index]), np.angle(self.fvals[index])),
+                    axis=-1,
+                ))
             else:
-                self.y.insert(index, np.stack((np.log2(np.abs(self.fvals[index])),
-                                               np.angle(self.fvals[index]))))
-            unwrapped_angle = np.unwrap([y[1] for y in self.y], axis=0)
+                self.y.insert(index, np.stack(
+                    (np.log2(np.abs(self.fvals[index])), np.angle(self.fvals[index])),
+                    axis=-1,
+                ))
+            unwrapped_angle = np.unwrap([y[..., 1] for y in self.y], axis=0)
             for y, new_angle in zip(self.y, unwrapped_angle):
-                y[1] = new_angle
+                y[..., 1] = new_angle
         self.y_min = np.min(self.y, axis=0, keepdims=True)
         self.y_max = np.max(self.y, axis=0, keepdims=True)
 
