@@ -16,6 +16,7 @@ dependencies:
   - flake8-docstrings==1.6.0
   - flake8-rst-docstrings==0.2.6
   - gmsh
+  - hypothesis==6.56.3
   - ipyparallel>=6.2.5
   - ipython>=5.0
   - ipywidgets<8,>7
