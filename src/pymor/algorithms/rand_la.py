@@ -493,9 +493,9 @@ def randomized_ghep(A, E=None, n=6, oversampling=20, subspace_iterations=2, sing
     single_pass
         If `True`, computes the GHEP where only one set of matvecs Ax is required, but at the
         expense of lower numerical accuracy.
-        If `False`, the methods performs two sets of matvecs Ax.
+        If `False`, the methods performs two sets of matvecs Ax (default).
     return_evecs
-        If `True`, the eigenvectors are computed and returned.
+        If `True`, the eigenvectors are computed and returned. Defaults to `False`.
 
     Returns
     -------
