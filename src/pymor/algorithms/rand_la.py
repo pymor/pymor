@@ -79,14 +79,7 @@ class RandomizedRangeFinder(CacheableObject):
             return 1
         elif self.lambda_min is None:
             with self.logger.block('Estimating minimum singular value of source_product ...'):
-                def mv(v):
-                    return self.source_product.apply(self.source_product.source.from_numpy(v)).to_numpy()
-
-                def mvinv(v):
-                    return self.source_product.apply_inverse(self.source_product.range.from_numpy(v)).to_numpy()
-                L = LinearOperator((self.source_product.source.dim, self.source_product.range.dim), matvec=mv)
-                Linv = LinearOperator((self.source_product.range.dim, self.source_product.source.dim), matvec=mvinv)
-                return eigsh(L, sigma=0, which="LM", return_eigenvectors=False, k=1, OPinv=Linv)[0]
+                return randomized_ghep(InverseOperator(self.source_product), n=1)[0]
         else:
             return self.lambda_min
 
