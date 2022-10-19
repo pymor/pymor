@@ -40,7 +40,7 @@ def main(
     opt_fom_result = minimize(partial(record_results, fom_objective_functional,
                                       fom.parameters.parse, opt_fom_minimization_data),
                               initial_guess.to_numpy(),
-                              method='L-BFGS-B',
+                              method='TNC',
                               jac=fom_gradient_of_functional,
                               bounds=(ranges, ranges),
                               options={'ftol': 1e-15})
@@ -76,7 +76,7 @@ def main(
     opt_rom_result = minimize(partial(record_results, rom_objective_functional, fom.parameters.parse,
                                       opt_rom_minimization_data),
                               initial_guess.to_numpy(),
-                              method='L-BFGS-B',
+                              method='TNC',
                               jac=rom_gradient_of_functional,
                               bounds=(ranges, ranges),
                               options={'ftol': 1e-15})
