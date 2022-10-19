@@ -122,7 +122,7 @@ class TransferFunction(CacheableObject, ParametricObject):
             return self.dtf(s, mu=mu)
 
     @cached
-    def freq_resp(self, w=None, mu=None, adaptive_type='bode'):
+    def freq_resp(self, w=None, mu=None, adaptive_type='bode', adaptive_opts=None):
         """Evaluate the transfer function on the imaginary axis.
 
         Parameters
@@ -136,6 +136,8 @@ class TransferFunction(CacheableObject, ParametricObject):
             The plot type that adaptive sampling should be used for
             (`'bode'`, `'mag'`).
             Ignored if `len(w) != 2`.
+        adaptive_opts
+            Optional arguments for `pymor.algorithms.plot.adaptive` (ignored if `len(w) != 2`).
 
         Returns
         -------
@@ -168,9 +170,12 @@ class TransferFunction(CacheableObject, ParametricObject):
             else:
                 f = lambda w: np.abs(self.eval_tf(np.exp(1j * w)))
 
-        return adaptive(f, w[0], w[1], xscale='log', yscale='log')
+        if adaptive_opts is None:
+            adaptive_opts = {}
 
-    def bode(self, w, mu=None):
+        return adaptive(f, w[0], w[1], xscale='log', yscale='log', **adaptive_opts)
+
+    def bode(self, w, mu=None, adaptive_opts=None):
         """Compute magnitudes and phases.
 
         Parameters
@@ -180,6 +185,8 @@ class TransferFunction(CacheableObject, ParametricObject):
             Otherwise, a sequence of angular frequencies at which to compute the transfer function.
         mu
             |Parameter values| for which to evaluate the transfer function.
+        adaptive_opts
+            Optional arguments for `pymor.algorithms.plot.adaptive` (ignored if `len(w) != 2`).
 
         Returns
         -------
@@ -193,7 +200,7 @@ class TransferFunction(CacheableObject, ParametricObject):
             Transfer function phases (in radians) at frequencies in `w`, |NumPy array| of shape
             `(len(w), self.dim_output, self.dim_input)`.
         """
-        tfw = self.freq_resp(w, mu=mu, adaptive_type='bode')
+        tfw = self.freq_resp(w, mu=mu, adaptive_type='bode', adaptive_opts=adaptive_opts)
         if len(w) == 2:
             w_new, tfw = tfw
         mag = np.abs(tfw)
@@ -203,7 +210,7 @@ class TransferFunction(CacheableObject, ParametricObject):
             return mag, phase
         return w_new, mag, phase
 
-    def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, **mpl_kwargs):
+    def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, adaptive_opts=None, **mpl_kwargs):
         """Draw the Bode plot for all input-output pairs.
 
         Parameters
@@ -222,6 +229,8 @@ class TransferFunction(CacheableObject, ParametricObject):
             Should the magnitude be in dB on the plot.
         deg
             Should the phase be in degrees (otherwise in radians).
+        adaptive_opts
+            Optional arguments for `pymor.algorithms.plot.adaptive` (ignored if `len(w) != 2`).
         mpl_kwargs
             Keyword arguments used in the matplotlib plot function.
 
@@ -246,7 +255,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         if len(w) != 2:
             mag, phase = self.bode(w, mu=mu)
         else:
-            w, mag, phase = self.bode(w, mu=mu)
+            w, mag, phase = self.bode(w, mu=mu, adaptive_opts=adaptive_opts)
         w = np.asarray(w)
         freq = w / (2 * np.pi) if Hz else w
         freq = freq / self.sampling_time if self.sampling_time > 0 else freq
@@ -276,7 +285,7 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         return artists
 
-    def mag_plot(self, w=None, mu=None, ax=None, ord=None, Hz=False, dB=False, **mpl_kwargs):
+    def mag_plot(self, w=None, mu=None, ax=None, ord=None, Hz=False, dB=False, adaptive_opts=None, **mpl_kwargs):
         """Draw the magnitude plot.
 
         Parameters
@@ -296,7 +305,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         dB
             Should the magnitude be in dB on the plot.
         adaptive_opts
-            Optional arguments for `pymor.algorithms.plot.adaptive` (used if `w_limits` is given).
+            Optional arguments for `pymor.algorithms.plot.adaptive` (ignored if `len(w) != 2`).
         mpl_kwargs
             Keyword arguments used in the matplotlib plot function.
 
@@ -313,7 +322,7 @@ class TransferFunction(CacheableObject, ParametricObject):
             w = np.asarray(w)
             tfw = self.freq_resp(w, mu=mu)
         else:
-            w, tfw = self.freq_resp(w, mu=mu, adaptive_type='mag')
+            w, tfw = self.freq_resp(w, mu=mu, adaptive_type='mag', adaptive_opts=adaptive_opts)
         mag = spla.norm(tfw, ord=ord, axis=(1, 2))
 
         freq = w / (2 * np.pi) if Hz else w
