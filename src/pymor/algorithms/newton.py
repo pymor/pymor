@@ -40,7 +40,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, range_product=None, sourc
         The |parameter values| for which to solve the equation.
     range_product
         The inner product `Operator` on `operator.range` with which the norm
-        of the resiudal is computed. If `None`, the Euclidean inner product
+        of the residual is computed. If `None`, the Euclidean inner product
         is used.
     source_product
         The inner product `Operator` on `operator.source` with which the norm
