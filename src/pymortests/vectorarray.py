@@ -138,7 +138,7 @@ def test_full(vector_array):
          low=-5e-324, high=0.0)
 def test_random_uniform_all(vector_array, realizations, low, high):
     if config.HAVE_DUNEGDT:
-        # atm needs special casing due to norm implemenation handling of large vector elements
+        # atm needs special casing due to norm implementation handling of large vector elements
         from pymor.bindings.dunegdt import DuneXTVectorSpace
         assume(not isinstance(vector_array.space, DuneXTVectorSpace))
     _test_random_uniform(vector_array, realizations, low, high)
