@@ -914,9 +914,6 @@ def test_rmul(vectors_and_indices):
     cc = vector_array.copy()
     cc.scal(a)
     alpha = a * vector_array
-    # the scaling_value strategy also draws ndarrays, for which alpha here will be an ndarray,
-    # which in turn will fail the axpy hidden in the almost_equal check
-    assume(not isinstance(alpha, np.ndarray))
     assert np.all(almost_equal(alpha, cc))
     assert np.all(almost_equal(vector_array, c))
 
