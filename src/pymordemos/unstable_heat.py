@@ -74,6 +74,7 @@ def main(
 
     # System properties
     w = np.logspace(-1, 3, 100)
+    w = (1e-1, 1e3)
     fom_properties(lti, w, stable=False, fig_bode=subfigs[0], fig_poles=subfigs[1])
     plt.show()
 

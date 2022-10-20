@@ -33,7 +33,7 @@ def main(
 
     # Bode plot
     fig = plt.figure(constrained_layout=True)
-    w = np.logspace(-1, 3, 500)
+    w = (1e-1, 1e3)
     fom_properties(tf, w, fig_bode=fig)
     plt.show()
 
