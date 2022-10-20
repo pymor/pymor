@@ -172,8 +172,8 @@ jobs:
           name: Conda Env Exports
           path: conda-env__${{ runner.os }}-${{ matrix.python }}.yml
 
-  coverage_to_codecov:
-    name: Report Coverage to codecov.io
+  coverage_to_html:
+    name: Upload HTML Coverage Report
     runs-on: ubuntu-22.04
     needs: [miniconda]
     steps:
@@ -199,7 +199,7 @@ jobs:
           name: coverage_html
           path: coverage_html
 
-  coverage_to_html:
+  coverage_to_codecov:
     name: Report Coverage to codecov.io
     runs-on: ubuntu-22.04
     needs: [miniconda]
