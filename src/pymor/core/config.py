@@ -25,32 +25,33 @@ def _can_import(module):
 
 
 def _get_fenics_version():
-    # In dolfin.__init__ the dlopen flags are set to include RTDL_GLOBAL,
-    # which can cause issues with other Python C extensions.
-    # In particular, with the manylinux wheels for scipy 1.9.{2,3} this leads
-    # to segfaults in the Fortran L-BFGS-B implementatiton.
-    #
-    # A MWE to trigger the segfault is:
-    #     import sys
-    #     import os
-    #     sys.setdlopenflags(os.RTLD_NOW | os.RTLD_GLOBAL)
-    #     import numpy as np
-    #     from scipy.optimize import minimize
-    #     opt_fom_result = minimize(lambda x: x[0]**2, np.array([0.25]), method='L-BFGS-B')
-    #
-    # According to the comment in dolfin.__init__, setting RTLD_GLOBAL is required
-    # for OpenMPI. According to the discussion in https://github.com/open-mpi/ompi/issues/3705
-    # this hack is no longer necessary for OpenMPI 3.0 and later. Therefore, we save here the
-    # original dlopen flags and restore them after importing dolfin.
     import sys
-    orig_dlopenflags = sys.getdlopenflags()
+    if "linux" in sys.platform:
+        # In dolfin.__init__ the dlopen flags are set to include RTDL_GLOBAL,
+        # which can cause issues with other Python C extensions.
+        # In particular, with the manylinux wheels for scipy 1.9.{2,3} this leads
+        # to segfaults in the Fortran L-BFGS-B implementatiton.
+        #
+        # A MWE to trigger the segfault is:
+        #     import sys
+        #     import os
+        #     sys.setdlopenflags(os.RTLD_NOW | os.RTLD_GLOBAL)
+        #     import numpy as np
+        #     from scipy.optimize import minimize
+        #     opt_fom_result = minimize(lambda x: x[0]**2, np.array([0.25]), method='L-BFGS-B')
+        #
+        # According to the comment in dolfin.__init__, setting RTLD_GLOBAL is required
+        # for OpenMPI. According to the discussion in https://github.com/open-mpi/ompi/issues/3705
+        # this hack is no longer necessary for OpenMPI 3.0 and later. Therefore, we save here the
+        orig_dlopenflags = sys.getdlopenflags()
 
     import dolfin as df
     if parse(df.__version__) < parse('2019.1.0'):
         warnings.warn(f'FEniCS bindings have been tested for version 2019.1.0 and greater '
                       f'(installed: {df.__version__}).')
 
-    sys.setdlopenflags(orig_dlopenflags)
+    if "linux" in sys.platform:
+        sys.setdlopenflags(orig_dlopenflags)
     return df.__version__
 
 
