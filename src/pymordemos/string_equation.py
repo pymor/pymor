@@ -62,7 +62,7 @@ def main(
     fig.suptitle('Full-order model')
 
     # System properties
-    w = np.logspace(-4, 2, 200)
+    w = (1e-4, 1e2)
     fom_properties(so_sys, w, fig_poles=subfigs1[0], fig_bode=subfigs[0])
 
     # Singular values

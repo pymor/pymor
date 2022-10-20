@@ -221,7 +221,7 @@ def main(
     fig.suptitle('Full-order model')
 
     # System properties
-    w = np.logspace(-1, 3, 100)
+    w = (1e-1, 1e3)
     fom_properties(lti, w, fig_poles=subfigs1[0], fig_bode=subfigs[0])
 
     # Hankel singular values
