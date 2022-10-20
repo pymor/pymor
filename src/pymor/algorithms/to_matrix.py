@@ -115,6 +115,9 @@ class ToMatrixRules(RuleTable):
             if not sps.issparse(source_product):
                 res = spla.solve(source_product, res)
             else:
+                source_product = source_product.tocsc()
+                if sps.issparse(res):
+                    res = res.tocsc()
                 res = spsla.spsolve(source_product, res)
         if format is not None and format != 'dense':
             res = getattr(sps, format + '_matrix')(res)
