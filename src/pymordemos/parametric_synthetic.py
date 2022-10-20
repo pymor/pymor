@@ -66,7 +66,7 @@ def main(
     lti = LTIModel(A, B, C)
 
     mus = [1/50, 1/20, 1/10, 1/5, 1/2, 1]
-    w = np.logspace(0.5, 3.5, 200)
+    w = (10**0.5, 10**3.5)
     fom_properties_param(lti, w, mus)
 
     # Model order reduction
