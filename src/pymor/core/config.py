@@ -25,13 +25,6 @@ def _can_import(module):
 
 
 def _get_fenics_version():
-    # workaround for dolfin+dune incompat https://github.com/pymor/pymor/issues/1397
-    try:
-        # this needs to happen before importing dolfin
-        import dune.gdt  # noqa
-    except ImportError:
-        pass
-
     # In dolfin.__init__ the dlopen flags are set to include RTDL_GLOBAL,
     # which can cause issues with other Python C extensions.
     # In particular, with the manylinux wheels for scipy 1.9.{2,3} this leads
