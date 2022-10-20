@@ -155,25 +155,31 @@ class TransferFunction(CacheableObject, ParametricObject):
         if self.sampling_time > 0 and not all(-np.pi <= wi <= np.pi for wi in w):
             self.logger.warning('Some frequencies are not in the [-pi, pi] interval.')
 
-        if len(w) != 2:
-            w = 1j * w if self.sampling_time == 0 else np.exp(1j * w)
-            return np.stack([self.eval_tf(wi, mu=mu) for wi in w])
-
-        if adaptive_type == 'bode':
-            if self.sampling_time == 0:
-                f = lambda w: self.eval_tf(1j * w)
+        if len(w) == 2:
+            if adaptive_type == 'bode':
+                if self.sampling_time == 0:
+                    f = lambda w: self.eval_tf(1j * w)
+                else:
+                    f = lambda w: self.eval_tf(np.exp(1j * w))
             else:
-                f = lambda w: self.eval_tf(np.exp(1j * w))
+                if self.sampling_time == 0:
+                    f = lambda w: spla.norm(self.eval_tf(1j * w))
+                else:
+                    f = lambda w: spla.norm(self.eval_tf(np.exp(1j * w)))
+
+            if adaptive_opts is None:
+                adaptive_opts = {}
+
+            w_new, _ = adaptive(f, w[0], w[1], xscale='log', yscale='log', **adaptive_opts)
         else:
-            if self.sampling_time == 0:
-                f = lambda w: spla.norm(self.eval_tf(1j * w))
-            else:
-                f = lambda w: spla.norm(self.eval_tf(np.exp(1j * w)))
+            w_new = w
 
-        if adaptive_opts is None:
-            adaptive_opts = {}
+        w_complex = 1j * w_new if self.sampling_time == 0 else np.exp(1j * w_new)
+        tfw = np.stack([self.eval_tf(wi, mu=mu) for wi in w_complex])
 
-        return adaptive(f, w[0], w[1], xscale='log', yscale='log', **adaptive_opts)
+        if len(w) == 2:
+            return w_new, tfw
+        return tfw
 
     def bode(self, w, mu=None, adaptive_opts=None):
         """Compute magnitudes and phases.
