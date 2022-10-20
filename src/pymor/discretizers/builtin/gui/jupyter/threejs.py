@@ -16,7 +16,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 # we should try to limit ourselves to webgl 1.0 here since 2.0 (draft) is not as widely supported
 # https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API#Browser_compatibility
-# version directives and such are preprended by threejs
+# version directives and such are prepended by threejs
 RENDER_VERTEX_SHADER = """
     attribute float data;
     varying float texcoord;
