@@ -8,13 +8,13 @@ import scipy.sparse as sps
 import matplotlib.pyplot as plt
 from typer import Argument, run
 
-from pymor.core.config import config
+from pymor.core.logger import set_log_levels
 from pymor.models.iosys import LTIModel
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.reductors.bt import BTReductor
 from pymor.reductors.h2 import IRKAReductor
-from pymordemos.parametric_heat import run_mor_method_param
+from pymordemos.parametric_heat import fom_properties_param, run_mor_method_param
 
 
 def main(
@@ -25,6 +25,13 @@ def main(
 
     See the `MOR Wiki page <http://modelreduction.org/index.php/Synthetic_parametric_model>`_.
     """
+    set_log_levels({
+        'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
+        'pymor.algorithms.lradi.solve_lyap_lrcf': 'WARNING',
+        'pymor.reductors.basic.LTIPGReductor': 'WARNING',
+    })
+    plt.rcParams['axes.grid'] = True
+
     # Model
     # set coefficients
     a = -np.linspace(1e1, 1e3, n // 2)
@@ -58,45 +65,13 @@ def main(
     # form a model
     lti = LTIModel(A, B, C)
 
-    mu_list = [1/50, 1/20, 1/10, 1/5, 1/2, 1]
+    mus = [1/50, 1/20, 1/10, 1/5, 1/2, 1]
     w = np.logspace(0.5, 3.5, 200)
-
-    # System poles
-    fig, ax = plt.subplots()
-    for mu in mu_list:
-        poles = lti.poles(mu=mu)
-        ax.plot(poles.real, poles.imag, '.', label=fr'$\mu = {mu}$')
-    ax.set_title('System poles')
-    ax.legend()
-    plt.show()
-
-    # Magnitude plot
-    fig, ax = plt.subplots()
-    for mu in mu_list:
-        lti.transfer_function.mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
-    ax.legend()
-    plt.show()
-
-    # Hankel singular values
-    fig, ax = plt.subplots()
-    for mu in mu_list:
-        hsv = lti.hsv(mu=mu)
-        ax.semilogy(range(1, len(hsv) + 1), hsv, '.-', label=fr'$\mu = {mu}$')
-    ax.set_title('Hankel singular values')
-    ax.legend()
-    plt.show()
-
-    # System norms
-    for mu in mu_list:
-        print(f'mu = {mu}:')
-        print(f'    H_2-norm of the full model:    {lti.h2_norm(mu=mu):e}')
-        if config.HAVE_SLYCOT:
-            print(f'    H_inf-norm of the full model:  {lti.hinf_norm(mu=mu):e}')
-        print(f'    Hankel-norm of the full model: {lti.hankel_norm(mu=mu):e}')
+    fom_properties_param(lti, w, mus)
 
     # Model order reduction
-    run_mor_method_param(lti, r, w, mu_list, BTReductor, 'BT')
-    run_mor_method_param(lti, r, w, mu_list, IRKAReductor, 'IRKA')
+    run_mor_method_param(lti, r, w, mus, BTReductor, 'BT')
+    run_mor_method_param(lti, r, w, mus, IRKAReductor, 'IRKA')
 
 
 if __name__ == "__main__":

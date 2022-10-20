@@ -9,88 +9,11 @@ import matplotlib.pyplot as plt
 from typer import Argument, run
 
 
-from pymor.core.config import config
 from pymor.core.logger import set_log_levels
 from pymor.models.iosys import LTIModel
 from pymor.reductors.bt import FDBTReductor
 from pymor.reductors.h2 import GapIRKAReductor
-
-
-def fom_properties(fom, w):
-    """Show properties of the full-order model.
-
-    Parameters
-    ----------
-    fom
-        The full-order `Model` from :mod:`~pymor.models.iosys`.
-    w
-        Array of frequencies.
-    """
-    print(f'order of the model = {fom.order}')
-    print(f'number of inputs   = {fom.dim_input}')
-    print(f'number of outputs  = {fom.dim_output}')
-
-    # System poles
-    poles = fom.poles()
-    fig, ax = plt.subplots()
-    ax.plot(poles.real, poles.imag, '.')
-    ax.set_title('System poles')
-
-    ast_spectrum = fom.get_ast_spectrum()
-    print(f'Anti-stable system poles:  {" ".join(str(x) for x in ast_spectrum[1])}')
-
-    # Bode plot of the full model
-    fig, ax = plt.subplots(2 * fom.dim_output, fom.dim_input, squeeze=False)
-    fom.transfer_function.bode_plot(w, ax=ax)
-    fig.suptitle('Bode plot of the full model')
-    plt.show()
-
-
-def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
-    """Run a model order reduction method.
-
-    Parameters
-    ----------
-    lti
-        The full-order |LTIModel|.
-    w
-        Array of frequencies.
-    reductor
-        The reductor object.
-    reductor_short_name
-        A short name for the reductor.
-    r
-        The order of the reduced-order model.
-    reduce_kwargs
-        Optional keyword arguments for the reduce method.
-    """
-    # Reduction
-    rom = reductor.reduce(r, **reduce_kwargs)
-    err = lti - rom
-
-    # Errors
-    if config.HAVE_SLYCOT:
-        print(f'{reductor_short_name} relative L_inf-error:  {err.linf_norm() / lti.linf_norm():e}')
-    else:
-        print('Skipped L_inf-norm calculation due to missing slycot.')
-
-    # Poles of the reduced-order model
-    poles_rom = rom.poles()
-    fig, ax = plt.subplots()
-    ax.plot(poles_rom.real, poles_rom.imag, '.')
-    ax.set_title(f"{reductor_short_name} reduced model's poles")
-
-    # Bode plot of the full and reduced model
-    fig, ax = plt.subplots(2 * lti.dim_output, lti.dim_input, squeeze=False)
-    lti.transfer_function.bode_plot(w, ax=ax)
-    rom.transfer_function.bode_plot(w, ax=ax, linestyle='dashed')
-    fig.suptitle(f'Bode plot of the full and {reductor_short_name} reduced model')
-
-    # Magnitude plot of the error system
-    fig, ax = plt.subplots()
-    err.transfer_function.mag_plot(w, ax=ax)
-    ax.set_title(f'Magnitude plot of the {reductor_short_name} error system')
-    plt.show()
+from pymordemos.heat import fom_properties, run_mor_method
 
 
 def main(
@@ -115,7 +38,12 @@ def main(
         \end{align}
 
     """
-    set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
+    set_log_levels({
+        'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
+        'pymor.algorithms.lradi.solve_lyap_lrcf': 'WARNING',
+        'pymor.reductors.basic.LTIPGReductor': 'WARNING',
+    })
+    plt.rcParams['axes.grid'] = True
 
     k = 50
     n = 2 * k + 1
@@ -139,20 +67,19 @@ def main(
     # LTI system
     lti = LTIModel.from_matrices(A, B, C, E=E)
 
+    # Figure
+    fig = plt.figure(figsize=(12, 5), constrained_layout=True)
+    subfigs = fig.subfigures(1, 2)
+    fig.suptitle('Full-order model')
+
     # System properties
     w = np.logspace(-1, 3, 100)
-    fom_properties(lti, w)
-
-    # Norms of the system
-    print(f'FOM L_2-norm:    {lti.l2_norm():e}')
-    if config.HAVE_SLYCOT:
-        print(f'FOM L_inf-norm:  {lti.hinf_norm():e}')
-    else:
-        print('Skipped L_inf-norm calculation due to missing slycot.')
+    fom_properties(lti, w, stable=False, fig_bode=subfigs[0], fig_poles=subfigs[1])
+    plt.show()
 
     # Model order reduction
-    run_mor_method(lti, w, FDBTReductor(lti), 'FDBT', r, tol=1e-5)
-    run_mor_method(lti, w, GapIRKAReductor(lti), 'GapIRKA', r, tol=1e-5)
+    run_mor_method(lti, w, FDBTReductor(lti), 'FDBT', r, stable=False, tol=1e-5)
+    run_mor_method(lti, w, GapIRKAReductor(lti), 'GapIRKA', r, stable=False, tol=1e-5)
 
 
 if __name__ == '__main__':
