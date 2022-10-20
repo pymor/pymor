@@ -537,7 +537,8 @@ def randomized_ghep(A, E=None, n=6, oversampling=20, subspace_iterations=2, sing
     else:
         with logger.block('Approximating basis for the operator source/range ...'):
             C = InverseOperator(E) @ A
-            RRF = RandomizedRangeFinder(C, subspace_iterations=subspace_iterations, self_adjoint=True)
+            RRF = RandomizedRangeFinder(C, subspace_iterations=subspace_iterations, range_product=E, source_product=E,
+                                        self_adjoint=True)
             Q = RRF.find_range(n+oversampling)
         with logger.block('Projecting operator onto the reduced space ...'):
             T = A.apply2(Q, Q)
