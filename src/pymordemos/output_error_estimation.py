@@ -139,6 +139,8 @@ def main(
         for i, mu in enumerate(training_set):
             s_fom = fom_outputs[i]
             s_rom, s_est = rom.output(return_error_estimate=True, mu=mu)
+            if fom_number in [3, 4]:
+                s_est = s_est[0]
             max_err = max(max_err, np.linalg.norm(np.abs(s_fom-s_rom)))
             max_est = max(max_est, s_est)
             min_err = min(min_err, np.linalg.norm(np.abs(s_fom-s_rom)))
