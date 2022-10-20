@@ -70,7 +70,7 @@ class Adaptive(BasicObject):
         assert xscale in ('linear', 'log')
         assert yscale in ('linear', 'log')
 
-        angle_tol *= np.pi/180
+        angle_tol *= np.pi / 180
         self.__auto_init(locals())
 
         if xscale == 'linear':
