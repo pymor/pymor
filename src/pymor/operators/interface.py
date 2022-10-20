@@ -62,6 +62,9 @@ class Operator(ParametricObject):
         for all V, mu.
     """
 
+    # override NumPy binary operations and ufuncs
+    __array_priority__ = 100.0
+
     solver_options = None
 
     @property
