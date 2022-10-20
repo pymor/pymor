@@ -65,6 +65,9 @@ class VectorArray(BasicObject):
         array is indexed with.
     """
 
+    # override NumPy binary operations and ufuncs
+    __array_priority__ = 100.0
+
     impl_type = None
     is_view = False
     _impl = None
