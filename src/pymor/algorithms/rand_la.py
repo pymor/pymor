@@ -71,7 +71,8 @@ class RandomizedRangeFinder(CacheableObject):
             self._Q.append(self.A.range.empty())
         self._Q = tuple(self._Q)
         self._testvecs = self.A.source.empty()
-        self._adjoint_op = A if self_adjoint else AdjointOperator(A)
+        self._adjoint_op = A if self_adjoint else AdjointOperator(A, range_product=range_product,
+                                                                  source_product=source_product)
 
     @cached
     def _lambda_min(self):
@@ -162,8 +163,7 @@ class RandomizedRangeFinder(CacheableObject):
 
             k = len(self._Q[i-1]) - offset  # check if GS removed vectors
             offset = len(self._Q[i])
-            self._Q[i].append(self.source_product.apply_inverse(
-                (self._adjoint_op.apply(self.range_product.apply(self._Q[i-1][-k:])))))
+            self._Q[i].append(self._adjoint_op.apply(self._Q[i-1][-k:]))
             gram_schmidt(self._Q[i], self.source_product, offset=offset, copy=False)
 
             k = len(self._Q[i]) - offset  # check if GS removed vectors
