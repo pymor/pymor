@@ -81,4 +81,4 @@ def almost_less(x, y, rtol=1e-14, atol=1e-14):
     atol
         The absolute tolerance.
     """
-    return x - y <= atol + np.abs(y) * rtol
+    return x - y <= atol + np.abs(y * rtol)
