@@ -412,7 +412,7 @@ def randomized_svd(A, n, range_product=None, source_product=None, oversampling=2
     assert 0 <= n <= max(A.source.dim, A.range.dim) and isinstance(n, int)
     assert 0 <= oversampling and isinstance(oversampling, int)
     if oversampling > max(A.source.dim, A.range.dim) - n:
-        logger.warn('Oversampling parameter is too large!')
+        logger.warning('Oversampling parameter is too large!')
         oversampling = max(A.source.dim, A.range.dim) - n
         logger.info(f'Setting oversampling to {oversampling} and proceeding ...')
 
@@ -520,7 +520,7 @@ def randomized_ghep(A, E=None, n=6, oversampling=20, subspace_iterations=2, sing
         return A.source.empty(), np.array([]), A.range.empty()
 
     if oversampling > max(A.source.dim, A.range.dim) - n:
-        logger.warn('Oversampling parameter is too large!')
+        logger.warning('Oversampling parameter is too large!')
         oversampling = max(A.source.dim, A.range.dim) - n
         logger.info(f'Setting oversampling to {oversampling} and proceeding ...')
 
