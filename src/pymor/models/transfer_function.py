@@ -122,7 +122,7 @@ class TransferFunction(CacheableObject, ParametricObject):
             return self.dtf(s, mu=mu)
 
     @cached
-    def freq_resp(self, w=None, mu=None, adaptive_type='bode', adaptive_opts=None):
+    def freq_resp(self, w, mu=None, adaptive_type='bode', adaptive_opts=None):
         """Evaluate the transfer function on the imaginary axis.
 
         Parameters
@@ -285,7 +285,7 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         return artists
 
-    def mag_plot(self, w=None, mu=None, ax=None, ord=None, Hz=False, dB=False, adaptive_opts=None, **mpl_kwargs):
+    def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, adaptive_opts=None, **mpl_kwargs):
         """Draw the magnitude plot.
 
         Parameters
