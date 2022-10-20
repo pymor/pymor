@@ -62,7 +62,7 @@ def main(
     so_sys = SecondOrderModel(Mop, Eop, Kop, Bop, Cpop)
 
     mus = [1, 5, 10]
-    w = np.logspace(-3, 2, 200)
+    w = (1e-3, 1e2)
     fom_properties_param(so_sys, w, mus)
 
     # Model order reduction

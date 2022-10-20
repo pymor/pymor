@@ -131,7 +131,7 @@ def main(
     print(phlti)
 
     # Magnitude plot
-    w = np.logspace(-2, 8, 300)
+    w = (1e-2, 1e8)
     fig, ax = plt.subplots()
     _ = lti.transfer_function.mag_plot(w, ax=ax, label='LTI')
     _ = phlti.transfer_function.mag_plot(w, ax=ax, ls='--', label='PH')
@@ -151,7 +151,7 @@ def main(
     plt.show()
 
     e = phlti - lti
-    e.transfer_function.mag_plot(w)
+    e.transfer_function.mag_plot(np.geomspace(*w, 300))
     plt.show()
 
 
