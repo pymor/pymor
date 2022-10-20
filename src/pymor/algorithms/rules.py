@@ -372,14 +372,18 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
             3. `a` is a `list` or `tuple` and each of its elements is either an |Operator|
                or `None`.
         """
-        children = set()
+        # Note: we return a list instead of a set (as was done previously) to ensure
+        # a deterministic order of children. In particular, this is needed to ensure that
+        # in the call to preassemble in pymor.discretizers.fenics.cg.discretize_stationary_cg
+        # all operators are assembled in the same order on all MPI ranks.
+        children = []
         for k in obj._init_arguments:
             try:
                 v = getattr(obj, k)
                 if (isinstance(v, Operator)
                         or isinstance(v, dict) and all(isinstance(vv, Operator) or vv is None for vv in v.values())
                         or isinstance(v, (list, tuple)) and all(isinstance(vv, Operator) or vv is None for vv in v)):
-                    children.add(k)
+                    children.append(k)
             except AttributeError:
                 pass
         return children
