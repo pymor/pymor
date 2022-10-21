@@ -21,4 +21,3 @@ coverage:
           - github_actions
     patch:
       pymor:
-        target: auto
