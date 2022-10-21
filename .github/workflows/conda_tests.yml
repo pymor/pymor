@@ -94,7 +94,7 @@ jobs:
         run: |
           ./dependencies.py && git diff --exit-code requirements* pyproject.toml
       - name: Cache conda
-        uses: martijnhols/actions-cache@v3.0.4
+        uses: martijnhols/actions-cache@v3.0.11
         id: cache
         env:
           # Increase this value to reset cache if .ci/conda-env.yml have not changed
@@ -269,7 +269,7 @@ jobs:
       - name: Cache conda
         # only restore here, since pip install might bring things into the cache
         # that aren't controlled via the .ci/conda-env.yml file
-        uses: martijnhols/actions-cache/restore@v3.0.4
+        uses: martijnhols/actions-cache/restore@v3.0.11
         id: cache
         env:
           # Increase this value to reset cache if .ci/conda-env.yml have not changed
