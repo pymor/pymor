@@ -324,7 +324,7 @@ def test_thermalblock_ipython(ipy_args):
     try:
         test_demos((f'pymordemos.{ipy_args[0]}', ['--ipython-engines=2'] + ipy_args[1]))
     finally:
-        import time     # there seems to be no way to shutdown the IPyhton cluster s.t. a new
+        import time     # there seems to be no way to shutdown the IPython cluster s.t. a new
         time.sleep(10)  # cluster can be started directly afterwards, so we have to wait ...
 
 
