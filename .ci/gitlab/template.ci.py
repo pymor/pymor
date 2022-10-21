@@ -326,8 +326,9 @@ sdist_and_wheel:
 
 pypi:
     extends: .test_base
-    image: {{registry}}/pymor/python_3.9:${CI_IMAGE_TAG}
+    image: harbor.uni-muenster.de/proxy-docker/library/alpine:3.16
     stage: deploy
+    needs:
     dependencies:
       - sdist_and_wheel
     {{ never_on_schedule_rule(exclude_github=True) }}
@@ -340,9 +341,7 @@ pypi:
         expire_in: 6 months
         name: pymor-wheels
     before_script:
-        - apt update && apt install -y git
-        - pip3 install -r requirements.txt
-        - pip3 install $(grep twine requirements-ci.txt)
+        - apk add py3-pip twine bash
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/pypi_deploy.bash
     environment:
