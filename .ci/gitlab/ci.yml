@@ -608,7 +608,7 @@ pypi:
     before_script:
         - apt update && apt install -y git
         - pip3 install -r requirements.txt
-        - pip3 install twine
+        - pip3 install $(grep twine requirements-ci.txt)
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/pypi_deploy.bash
     environment:
