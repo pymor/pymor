@@ -306,7 +306,7 @@ class ExpressionFunction(GenericFunction):
                  getattr(self, '_name', None)))
 
     def __str__(self):
-        return f'{{{self.variable} -> {self.expression}}}'
+        return f'{self.name}: {self.variable} -> {self.expression}'
 
 
 class LincombFunction(Function):
