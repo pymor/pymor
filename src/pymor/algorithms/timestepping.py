@@ -180,7 +180,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
     assert U0 in A.source
     assert len(U0) == 1
 
-    R = A.source.empty(reserve=nt+1)
+    R = A.source.empty(reserve=num_values)
     R.append(U0)
 
     options = (A.solver_options if solver_options == 'operator' else
@@ -293,7 +293,7 @@ def implicit_midpoint_rule(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, so
     assert U0 in A.source
     assert len(U0) == 1
 
-    R = A.source.empty(reserve=nt+1)
+    R = A.source.empty(reserve=num_values)
     R.append(U0)
 
     if solver_options == 'operator':
