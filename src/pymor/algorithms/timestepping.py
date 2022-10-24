@@ -140,8 +140,7 @@ class ImplicitMidpointTimeStepper(TimeStepper):
     def __init__(self, nt, solver_options='operator'):
         self.__auto_init(locals())
 
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None,
-              num_values=None):
+    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         if not operator.linear:
             raise NotImplementedError
         return implicit_midpoint_rule(operator, rhs, mass, initial_data, initial_time, end_time,
