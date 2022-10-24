@@ -8,7 +8,7 @@ import numpy as np
 
 from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
-from pymor.tools.random import get_random_state
+from pymor.tools.random import get_rng
 
 
 class VectorArray(BasicObject):
@@ -146,11 +146,11 @@ class VectorArray(BasicObject):
         """
         return self.space.full(value, count, reserve=reserve)
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(self, count=1, distribution='uniform', reserve=0, **kwargs):
         """Create a |VectorArray| of vectors with random entries.
 
         This is a shorthand for
-        `self.space.random(count, distribution, radom_state, seed, **kwargs)`.
+        `self.space.random(count, distribution, **kwargs)`.
 
         Supported random distributions::
 
@@ -176,17 +176,10 @@ class VectorArray(BasicObject):
             Mean for `'normal'` distribution (defaults to `0`).
         scale
             Standard deviation for `'normal'` distribution (defaults to `1`).
-        random_state
-            :class:`~numpy.random.RandomState` to use for sampling.
-            If `None`, a new random state is generated using `seed`
-            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
-            random state is used.
-        seed
-            If not `None`, a new radom state with this seed is used.
         reserve
             Hint for the backend to which length the array will grow.
         """
-        return self.space.random(count, distribution, random_state, seed, **kwargs)
+        return self.space.random(count, distribution, **kwargs)
 
     def empty(self, reserve=0):
         """Create an empty |VectorArray| of the same |VectorSpace|.
@@ -903,7 +896,7 @@ class VectorSpace(ImmutableObject):
         """
         return self.from_numpy(np.full((count, self.dim), value))
 
-    def random(self, count=1, distribution='uniform', random_state=None, seed=None, reserve=0, **kwargs):
+    def random(self, count=1, distribution='uniform', reserve=0, **kwargs):
         """Create a |VectorArray| of vectors with random entries.
 
         Supported random distributions::
@@ -930,19 +923,10 @@ class VectorSpace(ImmutableObject):
             Mean for `'normal'` distribution (defaults to `0`).
         scale
             Standard deviation for `'normal'` distribution (defaults to `1`).
-        random_state
-            :class:`~numpy.random.RandomState` to use for sampling.
-            If `None`, a new random state is generated using `seed`
-            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
-            random state is used.
-        seed
-            If not `None`, a new random state with this seed is used.
         reserve
             Hint for the backend to which length the array will grow.
         """
-        assert random_state is None or seed is None
-        random_state = get_random_state(random_state, seed)
-        values = _create_random_values((count, self.dim), distribution, random_state, **kwargs)
+        values = _create_random_values((count, self.dim), distribution, **kwargs)
         return self.from_numpy(values)
 
     def empty(self, reserve=0):
@@ -995,9 +979,11 @@ class VectorSpace(ImmutableObject):
         return hash(self.id)
 
 
-def _create_random_values(shape, distribution, random_state, **kwargs):
+def _create_random_values(shape, distribution, **kwargs):
     if distribution not in ('uniform', 'normal'):
         raise NotImplementedError
+
+    rng = get_rng()
 
     if distribution == 'uniform':
         if not kwargs.keys() <= {'low', 'high'}:
@@ -1006,13 +992,13 @@ def _create_random_values(shape, distribution, random_state, **kwargs):
         high = kwargs.get('high', 1.)
         if high <= low:
             raise ValueError
-        return random_state.uniform(low, high, shape)
+        return rng.uniform(low, high, shape)
     elif distribution == 'normal':
         if not kwargs.keys() <= {'loc', 'scale'}:
             raise ValueError
         loc = kwargs.get('loc', 0.)
         scale = kwargs.get('scale', 1.)
-        return random_state.normal(loc, scale, shape)
+        return rng.normal(loc, scale, shape)
     else:
         assert False
 

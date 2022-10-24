@@ -21,7 +21,7 @@ from pymor.core.base import ImmutableObject
 from pymor.tools.floatcmp import float_cmp_all
 from pymor.tools.frozendict import FrozenDict, SortedFrozenDict
 from pymor.tools.pprint import format_array
-from pymor.tools.random import get_random_state
+from pymor.tools.random import get_rng
 
 
 class Parameters(SortedFrozenDict):
@@ -554,7 +554,7 @@ class ParameterSpace(ParametricObject):
         return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
                 for i in product(*iters)]
 
-    def sample_randomly(self, count=None, random_state=None, seed=None):
+    def sample_randomly(self, count=None):
         """Randomly sample |parameter values| from the space.
 
         Parameters
@@ -563,21 +563,12 @@ class ParameterSpace(ParametricObject):
             If `None`, a single dict `mu` of |parameter values| is returned.
             Otherwise, the number of random samples to generate and return as
             a list of |parameter values| dicts.
-        random_state
-            :class:`~numpy.random.RandomState` to use for sampling.
-            If `None`, a new random state is generated using `seed`
-            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
-            random state is used.
-        seed
-            If not `None`, a new random state with this seed is used.
 
         Returns
         -------
         The sampled |parameter values|.
         """
-        assert not random_state or seed is None
-        random_state = get_random_state(random_state, seed)
-        get_param = lambda: Mu(((k, random_state.uniform(self.ranges[k][0], self.ranges[k][1], size))
+        get_param = lambda: Mu(((k, get_rng().uniform(self.ranges[k][0], self.ranges[k][1], size))
                                for k, size in self.parameters.items()))
         if count is None:
             return get_param()

@@ -169,7 +169,7 @@ def main(
                                        error_estimator=True,
                                        error_norms=(fom.h1_0_semi_norm, fom.l2_norm),
                                        condition=True,
-                                       test_mus=parameter_space.sample_randomly(test, seed=999),
+                                       test_mus=parameter_space.sample_randomly(test),
                                        basis_sizes=0 if plot_error_sequence else 1,
                                        pool=None if fenics else pool  # cannot pickle FEniCS model
                                        )
