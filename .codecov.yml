@@ -16,8 +16,11 @@ coverage:
     changes: false
     project:
       pymor:
+        # since we have no policy on this might as well turn this off entirely
+        target: 0%
         flags:
           - gitlab_ci
           - github_actions
     patch:
       pymor:
+        target: 0%
