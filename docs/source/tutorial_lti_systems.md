@@ -161,10 +161,10 @@ With this done, we can compute the output for some given input and plot it.
 ```{code-cell}
 Y = fom.output(input='[sin(t[0]), sin(2 * t[0])]')
 fig, ax = plt.subplots()
-ax.plot(np.linspace(0, fom.T, fom.time_stepper.nt + 1), Y)
-ax.set_xlabel('$t$')
-ax.set_ylabel('$y(t)$')
-_ = ax.set_title('Output')
+for i, y in enumerate(Y.T):
+  ax.plot(np.linspace(0, fom.T, fom.time_stepper.nt + 1), y, label=f'$y_{i+1}(t)$')
+_ = ax.set(xlabel='$t$', ylabel='$y(t)$', title='Output')
+_ = ax.legend()
 ```
 
 ## Transfer function evaluation
