@@ -340,13 +340,13 @@ class InstationaryModel(Model):
         This method interprets the given model as an |LTIModel|
         in the following way::
 
-            - self.operator        -> A
+            -self.operator         -> A
             self.rhs               -> B
             self.output_functional -> C
             None                   -> D
             self.mass              -> E
         """
-        A = - self.operator
+        A = -self.operator
         B = self.rhs
         C = self.output_functional
         E = self.mass
