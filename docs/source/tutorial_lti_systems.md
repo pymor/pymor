@@ -63,6 +63,7 @@ Discrete-time LTI systems can be constructed by passing positive values for the
 `sampling_time` to any constructor of an {{LTIModel}}.
 
 :::
+
 ## Building a model
 
 We consider the following one-dimensional heat equation over {math}`(0, 1)` with
