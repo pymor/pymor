@@ -68,9 +68,9 @@ class TransferFunction(CacheableObject, ParametricObject):
             f'    number of outputs: {self.dim_output}\n'
         )
         if self.sampling_time == 0:
-            string += '    continuous-time\n'
+            string += '    continuous-time'
         else:
-            string += f'    {f"discrete-time (sampling_time={self.sampling_time:.2e}s)"}\n'
+            string += f'    {f"discrete-time (sampling_time={self.sampling_time:.2e}s)"}'
         return string
 
     @cached
