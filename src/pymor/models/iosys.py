@@ -12,6 +12,7 @@ from pymor.algorithms.eigs import eigs
 from pymor.algorithms.lyapunov import (_chol, solve_cont_lyap_lrcf, solve_disc_lyap_lrcf, solve_cont_lyap_dense,
                                        solve_disc_lyap_dense)
 from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
+from pymor.algorithms.timestepping import TimeStepper, DiscreteTimeStepper
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
 from pymor.core.config import config
@@ -164,14 +165,25 @@ class LTIModel(Model):
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
 
-        if initial_data is None:
-            initial_data = A.source.zeros(1)
-        if isinstance(initial_data, VectorArray):
-            assert initial_data in A.source
-            assert len(initial_data) == 1
-            initial_data = VectorOperator(initial_data, name='initial_data')
-        assert initial_data.source.is_scalar
-        assert initial_data.range == A.source
+        assert T is None or T > 0
+
+        if T is not None:
+            if initial_data is None:
+                initial_data = A.source.zeros(1)
+            if isinstance(initial_data, VectorArray):
+                assert initial_data in A.source
+                assert len(initial_data) == 1
+                initial_data = VectorOperator(initial_data, name='initial_data')
+            assert initial_data.source.is_scalar
+            assert initial_data.range == A.source
+
+            if sampling_time == 0:
+                assert isinstance(time_stepper, TimeStepper)
+                assert not isinstance(time_stepper, DiscreteTimeStepper)
+            else:
+                if time_stepper is None:
+                    time_stepper = DiscreteTimeStepper()
+                assert isinstance(time_stepper, DiscreteTimeStepper)
 
         assert presets is None or presets.keys() <= {'poles', 'c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'hsv',
                                                      'h2_norm', 'hinf_norm', 'l2_norm', 'linf_norm', 'fpeak'}
@@ -593,8 +605,10 @@ class LTIModel(Model):
         if not solution and not output:
             return {}
 
+        assert self.T is not None
+
         # solution computation
-        mu = mu.with_(t=0.)
+        mu = mu.with_(t=0)
         X0 = self.initial_data.as_range_array(mu)
         input_op = NumpyGenericOperator(
             lambda U, mu: U * mu['input'],
