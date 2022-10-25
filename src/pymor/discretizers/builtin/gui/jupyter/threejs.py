@@ -7,7 +7,10 @@ from io import BytesIO
 import numpy as np
 from ipywidgets import IntSlider, interact, widgets, Play, Layout, Label
 import pythreejs as p3js
-import matplotlib as mpl
+try:
+    from matplotlib import colormaps
+except ImportError:  # matplotlib<3.5
+    from matplotlib.cm import get_cmap as colormaps
 
 from pymor.core import config
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
@@ -283,7 +286,7 @@ class ThreeJSPlot(widgets.VBox):
 
 
 def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
-                    separate_colorbars=False, rescale_colorbars=False, columns=2, color_map=mpl.colormaps['viridis']):
+                    separate_colorbars=False, rescale_colorbars=False, columns=2, color_map=colormaps['viridis']):
     """Generate a pythreejs plot and associated controls for scalar data associated to a 2D |Grid|.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
