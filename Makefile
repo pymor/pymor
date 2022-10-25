@@ -63,15 +63,14 @@ tutorials: docs jupyter
 
 full-test:
 	@echo
-	@echo "Ensuring that all required pytest plugins are installed ..."
+	@echo "Ensuring that all pytest-cov is installed ..."
 	@echo "--------------------------------------------------------------------------------"
 	@echo
-	pip install pytest-flake8
 	pip install pytest-cov
 	@echo
 	@echo "--------------------------------------------------------------------------------"
 	@echo
-	py.test --flake8 --cov --cov-config=setup.cfg --cov-report=html --cov-report=xml src/pymortests
+	py.test --cov --cov-config=setup.cfg --cov-report=html --cov-report=xml src/pymortests
 
 docs:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
