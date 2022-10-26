@@ -2595,18 +2595,25 @@ class LinearDelayModel(Model):
     def __init__(self, A, Ad, tau, B, C, D=None, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
-        assert A.linear and A.source == A.range
+        assert A.linear
+        assert A.source == A.range
         assert isinstance(Ad, tuple) and len(Ad) > 0
         assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in Ad)
         assert isinstance(tau, tuple) and len(tau) == len(Ad) and all(taui > 0 for taui in tau)
-        assert B.linear and B.range == A.source
-        assert C.linear and C.source == A.range
+        assert B.linear
+        assert B.range == A.source
+        assert C.linear
+        assert C.source == A.range
 
         D = D or ZeroOperator(C.range, B.source)
-        assert D.linear and D.source == B.source and D.range == C.range
+        assert D.linear
+        assert D.source == B.source
+        assert D.range == C.range
 
         E = E or IdentityOperator(A.source)
-        assert E.linear and E.source == E.range == A.source
+        assert E.linear
+        assert E.source == E.range
+        assert E.source == A.source
 
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
