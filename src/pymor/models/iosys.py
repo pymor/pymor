@@ -656,7 +656,10 @@ class LTIModel(Model):
             E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
         else:
             E = BlockDiagonalOperator([self.E, other.E])
-        initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
+        if self.T is not None and other.T is not None:
+            initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
+        else:
+            initial_data = None
         return self.with_(A=A, B=B, C=C, D=D, E=E, initial_data=initial_data)
 
     def __sub__(self, other):
@@ -681,7 +684,10 @@ class LTIModel(Model):
         C = BlockRowOperator([self.C, self.D @ other.C])
         D = self.D @ other.D
         E = BlockDiagonalOperator([self.E, other.E])
-        initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
+        if self.T is not None and other.T is not None:
+            initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
+        else:
+            initial_data = None
         return self.with_(A=A, B=B, C=C, D=D, E=E, initial_data=initial_data)
 
     @cached
