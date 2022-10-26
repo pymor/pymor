@@ -20,7 +20,7 @@ from functools import reduce
 import numpy as np
 from numpy.fft import fft, ifft, rfft, irfft
 from scipy.io import mmwrite, savemat
-from scipy.linalg import solve
+from scipy.linalg import lu_factor, lu_solve
 import scipy.sparse
 from scipy.sparse import issparse
 
@@ -324,22 +324,12 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     raise InversionError(f'{str(type(e))}: {str(e)}') from e
                 R = R.T
             else:
-                if not hasattr(self, '_inverse'):
-                    # we solve for the first time, try to compute an inverse
+                if not hasattr(self, '_lu_factor'):
                     try:
-                        self._inverse = np.linalg.inv(self.matrix)
+                        self._lu_factor = lu_factor(self.matrix)
                     except np.linalg.LinAlgError as e:
-                        self._inverse = None
-                        self._inv_err_msg = f'{str(type(e))}: {str(e)}'
-                if self._inverse is not None:
-                    R = (self._inverse@V.to_numpy().T).T
-                else:
-                    # computing the inverse was not possible, but solving the system might be
-                    try:
-                        R = solve(self.matrix, V.to_numpy().T).T
-                    except np.linalg.LinAlgError as e:
-                        raise InversionError(
-                        f'Neither numpy.linalg.inv nor numpy.linalg.solve succeeded!\nThe errors are: {self._inv_err_msg}\n{str(type(e))}: {str(e)}') from e
+                        raise InversionError(f'{str(type(e))}: {str(e)}') from e
+                R = lu_solve(self._lu_factor, V.to_numpy().T).T
 
             if check_finite:
                 if not np.isfinite(np.sum(R)):
