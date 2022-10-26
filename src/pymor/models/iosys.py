@@ -658,9 +658,13 @@ class LTIModel(Model):
             E = BlockDiagonalOperator([self.E, other.E])
         if self.T is not None and other.T is not None:
             initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
+            time_stepper = self.time_stepper
         else:
             initial_data = None
-        return self.with_(A=A, B=B, C=C, D=D, E=E, initial_data=initial_data)
+            time_stepper = None
+        return LTIModel(A, B, C, D, E, sampling_time=self.sampling_time,
+                        T=self.T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
+                        solver_options=self.solver_options)
 
     def __sub__(self, other):
         """Subtract an |LTIModel|."""
@@ -683,12 +687,19 @@ class LTIModel(Model):
         B = BlockColumnOperator([self.B @ other.D, other.B])
         C = BlockRowOperator([self.C, self.D @ other.C])
         D = self.D @ other.D
-        E = BlockDiagonalOperator([self.E, other.E])
+        if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
+            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+        else:
+            E = BlockDiagonalOperator([self.E, other.E])
         if self.T is not None and other.T is not None:
             initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
+            time_stepper = self.time_stepper
         else:
             initial_data = None
-        return self.with_(A=A, B=B, C=C, D=D, E=E, initial_data=initial_data)
+            time_stepper = None
+        return LTIModel(A, B, C, D, E, sampling_time=self.sampling_time,
+                        T=self.T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
+                        solver_options=self.solver_options)
 
     @cached
     def _poles(self, mu=None):
@@ -1757,7 +1768,10 @@ class PHLTIModel(Model):
         P = BlockColumnOperator([self.P, other.P])
         S = self.S + other.S
         N = self.S + other.S
-        E = BlockDiagonalOperator([self.E, other.E])
+        if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
+            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+        else:
+            E = BlockDiagonalOperator([self.E, other.E])
 
         return self.with_(J=J, R=R, G=G, P=P, S=S, N=N, E=E)
 
@@ -2667,7 +2681,10 @@ class LinearDelayModel(Model):
         assert self.D.source == other.D.source
         assert self.D.range == other.D.range
 
-        E = BlockDiagonalOperator([self.E, other.E])
+        if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
+            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+        else:
+            E = BlockDiagonalOperator([self.E, other.E])
         A = BlockDiagonalOperator([self.A, other.A])
         B = BlockColumnOperator([self.B, other.B])
         C = BlockRowOperator([self.C, other.C])
@@ -2727,7 +2744,10 @@ class LinearDelayModel(Model):
         assert self.sampling_time == other.sampling_time
         assert self.D.source == other.D.range
 
-        E = BlockDiagonalOperator([self.E, other.E])
+        if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
+            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+        else:
+            E = BlockDiagonalOperator([self.E, other.E])
         A = BlockOperator([[self.A, self.B @ other.C],
                            [None, other.A]])
         B = BlockColumnOperator([self.B @ other.D, other.B])
@@ -2744,7 +2764,10 @@ class LinearDelayModel(Model):
             other = other.to_lti()
 
         if isinstance(other, LTIModel):
-            E = BlockDiagonalOperator([other.E, self.E])
+            if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
+                E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+            else:
+                E = BlockDiagonalOperator([self.E, other.E])
             A = BlockOperator([[other.A, other.B @ self.C],
                                [None, self.A]])
             Ad = tuple(BlockDiagonalOperator([ZeroOperator(other.solution_space, other.solution_space), op])
