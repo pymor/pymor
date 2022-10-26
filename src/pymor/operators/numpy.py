@@ -16,11 +16,13 @@ This module provides the following |NumPy|-based |Operators|:
 """
 
 from functools import reduce
+from warnings import warn
 
 import numpy as np
 from numpy.fft import fft, ifft, rfft, irfft
 from scipy.io import mmwrite, savemat
-from scipy.linalg import lu_factor, lu_solve
+from scipy.linalg import lu_factor, lu_solve, LinAlgWarning
+from scipy.linalg.lapack import get_lapack_funcs
 import scipy.sparse
 from scipy.sparse import issparse
 
@@ -329,6 +331,12 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                         self._lu_factor = lu_factor(self.matrix)
                     except np.linalg.LinAlgError as e:
                         raise InversionError(f'{str(type(e))}: {str(e)}') from e
+                    gecon = get_lapack_funcs('gecon', self._lu_factor)
+                    rcond, _ = gecon(self._lu_factor[0], np.linalg.norm(self.matrix, ord=1), norm='1')
+                    if rcond < np.finfo(np.float64).eps:
+                        warn('Ill-conditioned matrix (rcond={:.6g}): '
+                             'result may not be accurate.'.format(rcond),
+                             LinAlgWarning, stacklevel=3)
                 R = lu_solve(self._lu_factor, V.to_numpy().T).T
 
             if check_finite:
