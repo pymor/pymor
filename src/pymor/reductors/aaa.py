@@ -75,11 +75,15 @@ class pAAAReductor(BasicObject):
 
         # add complex conjugate samples
         if self.conjugate:
-            for i in range(len(svs[0])):
-                s = svs[0][i]
-                if np.conj(s) not in svs[0]:
-                    svs[0] = np.append(svs[0], np.conj(s))
-                    samples = np.vstack((samples, np.conj(samples[i, None])))
+            s_conj_list = []
+            samples_conj_list = []
+            for i, s in enumerate(svs[0]):
+                if s.conj() not in svs[0]:
+                    s_conj_list.append(s.conj())
+                    samples_conj_list.append(samples[i, None].conj())
+            if s_conj_list:
+                svs[0] = np.append(svs[0], s_conj_list)
+                samples = np.vstack([samples] + samples_conj_list)
 
         num_vars = len(svs)
         max_samples = np.max(np.abs(samples))
