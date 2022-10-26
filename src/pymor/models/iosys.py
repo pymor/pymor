@@ -2765,9 +2765,9 @@ class LinearDelayModel(Model):
 
         if isinstance(other, LTIModel):
             if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
-                E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+                E = IdentityOperator(BlockVectorSpace([other.solution_space, self.solution_space]))
             else:
-                E = BlockDiagonalOperator([self.E, other.E])
+                E = BlockDiagonalOperator([other.E, self.E])
             A = BlockOperator([[other.A, other.B @ self.C],
                                [None, self.A]])
             Ad = tuple(BlockDiagonalOperator([ZeroOperator(other.solution_space, other.solution_space), op])
