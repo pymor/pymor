@@ -53,8 +53,6 @@ def main(
 ):
     """Parametric 1D heat equation example."""
     set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
-    # This demo opens more than 20 figures and matplotlib wants to warn us about that
-    plt.rcParams['figure.max_open_warning'] = 0
 
     # Model
     p = InstationaryProblem(
