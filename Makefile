@@ -63,7 +63,7 @@ tutorials: docs jupyter
 
 full-test:
 	@echo
-	@echo "Ensuring that all pytest-cov is installed ..."
+	@echo "Ensuring that pytest-cov is installed ..."
 	@echo "--------------------------------------------------------------------------------"
 	@echo
 	pip install pytest-cov
