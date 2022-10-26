@@ -2,8 +2,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
 import itertools
+
+import numpy as np
 
 from pymor.core.base import BasicObject
 from pymor.models.transfer_function import TransferFunction
