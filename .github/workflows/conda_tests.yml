@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.10.1
+        uses: styfle/cancel-workflow-action@0.11.0
         with:
           all_but_latest: true
           # also works on 'pull_request' targets
@@ -94,7 +94,7 @@ jobs:
         run: |
           ./dependencies.py && git diff --exit-code requirements* pyproject.toml
       - name: Cache conda
-        uses: martijnhols/actions-cache@v3.0.4
+        uses: martijnhols/actions-cache@v3.0.11
         id: cache
         env:
           # Increase this value to reset cache if .ci/conda-env.yml have not changed
@@ -172,8 +172,8 @@ jobs:
           name: Conda Env Exports
           path: conda-env__${{ runner.os }}-${{ matrix.python }}.yml
 
-  coverage_to_codecov:
-    name: Report Coverage to codecov.io
+  coverage_to_html:
+    name: Upload HTML Coverage Report
     runs-on: ubuntu-22.04
     needs: [miniconda]
     steps:
@@ -190,6 +190,7 @@ jobs:
         run: pip install coverage
       - name: Generate Report
         run: |
+          python .ci/fix_coverage_paths_windows.py reports/coverage_windows-2022-3.*
           coverage combine reports/*
           coverage html --directory coverage_html
       - name: Upload Coverage HTML
@@ -199,7 +200,7 @@ jobs:
           name: coverage_html
           path: coverage_html
 
-  coverage_to_html:
+  coverage_to_codecov:
     name: Report Coverage to codecov.io
     runs-on: ubuntu-22.04
     needs: [miniconda]
@@ -268,7 +269,7 @@ jobs:
       - name: Cache conda
         # only restore here, since pip install might bring things into the cache
         # that aren't controlled via the .ci/conda-env.yml file
-        uses: martijnhols/actions-cache/restore@v3.0.4
+        uses: martijnhols/actions-cache/restore@v3.0.11
         id: cache
         env:
           # Increase this value to reset cache if .ci/conda-env.yml have not changed
