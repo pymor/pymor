@@ -137,7 +137,7 @@ class TransferFunction(CacheableObject, ParametricObject):
             (`'bode'`, `'mag'`).
             Ignored if `len(w) != 2`.
         adaptive_opts
-            Optional arguments for `pymor.tools.plot.adaptive` (ignored if `len(w) != 2`).
+            Optional arguments for :func:`~pymor.tools.plot.adaptive` (ignored if `len(w) != 2`).
             If `xscale` and `yscale` are not set, `'log'` is used.
 
         Returns
@@ -196,7 +196,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         mu
             |Parameter values| for which to evaluate the transfer function.
         adaptive_opts
-            Optional arguments for `pymor.tools.plot.adaptive` (ignored if `len(w) != 2`).
+            Optional arguments for :func:`~pymor.tools.plot.adaptive` (ignored if `len(w) != 2`).
 
         Returns
         -------
@@ -240,7 +240,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         deg
             Should the phase be in degrees (otherwise in radians).
         adaptive_opts
-            Optional arguments for `pymor.tools.plot.adaptive` (ignored if `len(w) != 2`).
+            Optional arguments for :func:`~pymor.tools.plot.adaptive` (ignored if `len(w) != 2`).
         mpl_kwargs
             Keyword arguments used in the matplotlib plot function.
 
@@ -315,7 +315,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         dB
             Should the magnitude be in dB on the plot.
         adaptive_opts
-            Optional arguments for `pymor.tools.plot.adaptive` (ignored if `len(w) != 2`).
+            Optional arguments for :func:`~pymor.tools.plot.adaptive` (ignored if `len(w) != 2`).
         mpl_kwargs
             Keyword arguments used in the matplotlib plot function.
 
