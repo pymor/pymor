@@ -17,7 +17,7 @@ def adaptive(f, a, b, initial_num=10, max_num=2000, angle_tol=2, min_rel_dist=1e
 
     Samples the function such that the piecewise linear interpolation looks "smooth".
 
-    It the function is complex-valued, it is assumed that the magnitude and phase should be plotted.
+    If the function is complex-valued, it is assumed that the magnitude and phase should be plotted.
 
     Parameters
     ----------
@@ -62,7 +62,7 @@ class Adaptive(BasicObject):
     def __init__(self, f, a, b, initial_num, max_num, angle_tol, min_rel_dist,
                  aspect_ratio, xscale, yscale):
         assert a < b
-        assert initial_num >= 2
+        assert initial_num >= 3
         assert max_num > initial_num
         assert 0 < angle_tol < 90
         assert 0 < min_rel_dist < 1
