@@ -138,6 +138,7 @@ class TransferFunction(CacheableObject, ParametricObject):
             Ignored if `len(w) != 2`.
         adaptive_opts
             Optional arguments for `pymor.tools.plot.adaptive` (ignored if `len(w) != 2`).
+            If `xscale` and `yscale` are not set, `'log'` is used.
 
         Returns
         -------
@@ -169,8 +170,11 @@ class TransferFunction(CacheableObject, ParametricObject):
 
             if adaptive_opts is None:
                 adaptive_opts = {}
-
-            w_new, _ = adaptive(f, w[0], w[1], xscale='log', yscale='log', **adaptive_opts)
+            else:
+                adaptive_opts = adaptive_opts.copy()
+            adaptive_opts.setdefault('xscale', 'log')
+            adaptive_opts.setdefault('yscale', 'log')
+            w_new, _ = adaptive(f, w[0], w[1], **adaptive_opts)
         else:
             w_new = w
 
