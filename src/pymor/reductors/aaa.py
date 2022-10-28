@@ -14,15 +14,18 @@ class pAAAReductor(BasicObject):
     """Reductor implementing the parametric AAA algorithm.
 
     The reductor implements the parametric AAA algorithm and can be used either with
-    data or a given full-order model which has a `transfer_function` attribute. MIMO
-    data is accepted.
+    data or a given full-order model which can be a |TransferFunction| or any model which
+    has a `transfer_function` attribute. MIMO and non-parametric data is accepted. See
+    :cite:`NST18` for the non-parametric and :cite:`CRBG20` for the parametric version of
+    the algorithm.
 
     Parameters
     ----------
     sampling_values
         Values where sample data has been evaluated or the full-order model should be evaluated.
-        Sampling values are represented as a nested list `svs` such that `svs[i]`corresponds
-        to sampling values of the `i-th` variable.
+        Sampling values are represented as a nested list `svs` such that `svs[i]` corresponds
+        to sampling values of the `i-th` variable. For |TransferFunctions| or models with a
+        `transfer_function` attribute, the first variable corresponds to frequency data.
     samples_or_fom
         Can be either a full-order model (|TransferFunction| or |Model| with a `transfer_function`
         attribute) or data sampled at the values specified in `sampling_values`. Samples are
@@ -50,7 +53,7 @@ class pAAAReductor(BasicObject):
             fom = samples_or_fom
             if not isinstance(samples_or_fom, TransferFunction):
                 fom = fom.transfer_function
-            self.num_vars = 1 + len(fom.parameters)
+            self.num_vars = 1 + fom.parameters.dim
 
             assert len(sampling_values) == self.num_vars
             self.parameters = fom.parameters
@@ -65,11 +68,27 @@ class pAAAReductor(BasicObject):
         else:
             self.samples = samples_or_fom
             self.num_vars = len(sampling_values)
-            self.parameters = {f'p{i}': 1 for i in range(self.num_vars-1)}
+            self.parameters = {'p': self.num_vars-1}
 
         self.__auto_init(locals())
 
-    def reduce(self, tol=1e-7, max_iters=None):
+    def reduce(self, tol=1e-7, max_itpl=None):
+        """Reduce using p-AAA.
+
+        Parameters
+        ----------
+        tol
+            Convergence tolerance for relative error of `rom` over the set of samples.
+        max_itpl
+            Maximum number of interpolation points to use with respect to each
+            variable. Should be `None` or a list such that `self.num_vars == len(max_itpl)`.
+            If `None` `max_itpl[i]` will be set to `len(self.sampling_values[i]) - 1`.
+
+        Returns
+        -------
+        rom
+            Reduced |TransferFunction| model.
+        """
         svs = self.sampling_values
         samples = self.samples
 
@@ -97,8 +116,8 @@ class pAAAReductor(BasicObject):
             samples_T = np.empty(samples.shape[:-2], dtype=samples.dtype)
             w = np.random.RandomState(0).uniform(size=(1, dim_output))
             v = np.random.RandomState(0).uniform(size=(dim_input, 1))
-            w = w / np.linalg.norm(w)
-            v = v / np.linalg.norm(v)
+            w /= np.linalg.norm(w)
+            v /= np.linalg.norm(v)
             for li in list(itertools.product(*(range(s) for s in samples.shape[:-2]))):
                 samples_T[li] = w @ samples[li] @ v
             samples_orig = samples
@@ -107,13 +126,13 @@ class pAAAReductor(BasicObject):
             dim_input = 1
             dim_output = 1
 
-        # initilize data partitions, error, max iterations
+        # initialize data partitions, error, max iterations
         err = np.inf
         itpl_part = [[] for _ in range(num_vars)]
-        if max_iters is None:
-            max_iters = [len(s)-1 for s in svs]
+        if max_itpl is None:
+            max_itpl = [len(s)-1 for s in svs]
 
-        assert len(max_iters) == len(svs)
+        assert len(max_itpl) == len(svs)
 
         # start iteration with constant function
         bary_func = np.vectorize(lambda *args: np.mean(samples))
@@ -121,16 +140,16 @@ class pAAAReductor(BasicObject):
         # iteration counter
         j = 0
 
-        while any(len(i) < mi for (i, mi) in zip(itpl_part, max_iters)):
+        while any(len(i) < mi for (i, mi) in zip(itpl_part, max_itpl)):
 
             # compute approximation error over entire sampled data set
             grid = np.meshgrid(*(sv for sv in svs), indexing='ij')
             err_mat = np.abs(bary_func(*(g for g in grid))-samples)
 
-            # set errors to zero such that new interpolation points are consistent with max_iters
+            # set errors to zero such that new interpolation points are consistent with max_itpl
             zero_idx = []
             for i in range(num_vars):
-                if len(itpl_part[i]) >= max_iters[i]:
+                if len(itpl_part[i]) >= max_itpl[i]:
                     zero_idx.append(list(range(samples.shape[i])))
                 else:
                     zero_idx.append(itpl_part[i])
@@ -147,7 +166,7 @@ class pAAAReductor(BasicObject):
 
             greedy_idx = np.unravel_index(err_mat.argmax(), err_mat.shape)
             for i in range(num_vars):
-                if greedy_idx[i] not in itpl_part[i] and len(itpl_part[i]) < max_iters[i]:
+                if greedy_idx[i] not in itpl_part[i] and len(itpl_part[i]) < max_itpl[i]:
                     itpl_part[i].append(greedy_idx[i])
 
                     # perform double interpolation step to enforce real state-space representation
@@ -303,7 +322,7 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
     Parameters
     ----------
     itpl_nodes
-        Nested list sucht that `itpl_nodes[i]` contains interpolated sampling values
+        Nested list such that `itpl_nodes[i]` contains interpolated sampling values
         of the `i`-th variable.
     itpl_vals
         Vector of interpolation values.
