@@ -8,6 +8,7 @@ import numpy as np
 
 from pymor.core.base import BasicObject
 from pymor.models.transfer_function import TransferFunction
+from pymor.tools.random import new_rng
 
 
 class pAAAReductor(BasicObject):
@@ -114,8 +115,8 @@ class pAAAReductor(BasicObject):
             dim_input = samples.shape[-1]
             dim_output = samples.shape[-2]
             samples_T = np.empty(samples.shape[:-2], dtype=samples.dtype)
-            w = np.random.RandomState(0).uniform(size=(1, dim_output))
-            v = np.random.RandomState(0).uniform(size=(dim_input, 1))
+            w = new_rng(0).uniform(size=(1, dim_output))
+            v = new_rng(0).uniform(size=(dim_input, 1))
             w /= np.linalg.norm(w)
             v /= np.linalg.norm(v)
             for li in list(itertools.product(*(range(s) for s in samples.shape[:-2]))):
