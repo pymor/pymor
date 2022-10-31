@@ -11,10 +11,12 @@ from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunct
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.core.pickle import dumps, loads
 from pymor.discretizers.builtin import discretize_stationary_cg
+from pymor.models.basic import StationaryModel
 from pymor.models.iosys import LTIModel
 from pymor.models.symplectic import QuadraticHamiltonianModel
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import IdentityOperator
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
@@ -133,6 +135,13 @@ def test_lti_solve(sampling_time, m, p, T, nt):
     assert isinstance(X_step, tuple)
     assert all(Xi.dim == 2 for Xi in X_step)
     assert all(len(Xi) == len(X) for Xi in X_step)
+
+
+def test_StationaryModel_multiple_rhs():
+    m = StationaryModel(NumpyMatrixOperator(np.eye(2)), NumpyVectorSpace.from_numpy(np.eye(2)))
+    v = m.solve()
+    assert v in NumpyVectorSpace(2)
+    assert len(v) == 2
 
 
 if __name__ == '__main__':
