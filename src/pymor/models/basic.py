@@ -6,7 +6,13 @@ import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepper
 from pymor.models.interface import Model
-from pymor.operators.constructions import ConstantOperator, IdentityOperator, VectorOperator, ZeroOperator
+from pymor.operators.constructions import (
+    ConstantOperator,
+    IdentityOperator,
+    VectorArrayOperator,
+    VectorOperator,
+    ZeroOperator,
+)
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -18,7 +24,8 @@ class StationaryModel(Model):
 
         L(u(μ), μ) = F(μ)
 
-    with a vector-like right-hand side F and a (possibly non-linear) operator L.
+    with a vector-like right-hand side F (or multiple right-hand-sides) and
+    a (possibly non-linear) operator L.
 
     Note that even when solving a variational formulation where F is a
     functional and not a vector, F has to be specified as a vector-like
@@ -30,8 +37,8 @@ class StationaryModel(Model):
     operator
         The |Operator| L.
     rhs
-        The vector F. Either a |VectorArray| of length 1 or a vector-like
-        |Operator|.
+        The vectors F. Either a |VectorArray| or a linear |Operator| with
+        |NumpyVectorSpace| as `source`.
     output_functional
         |Operator| mapping a given solution to the model output. In many applications,
         this will be a |Functional|, i.e. an |Operator| mapping to scalars.
@@ -63,10 +70,15 @@ class StationaryModel(Model):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
-            rhs = VectorOperator(rhs, name='rhs')
+            if len(rhs) == 1:
+                rhs = VectorOperator(rhs, name='rhs')
+            else:
+                rhs = VectorArrayOperator(rhs, name='rhs')
         output_functional = output_functional or ZeroOperator(NumpyVectorSpace(0), operator.source)
 
-        assert rhs.range == operator.range and rhs.source.is_scalar and rhs.linear
+        assert rhs.range == operator.range
+        assert isinstance(rhs.source, NumpyVectorSpace)
+        assert rhs.linear
         assert output_functional.source == operator.source
 
         super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
@@ -181,7 +193,7 @@ class StationaryModel(Model):
         Parameters
         ----------
         arg
-            Either a |VectorArray| of length 1 containing the vector `u_0`.
+            Either a |VectorArray| containing the vector `u_0`.
             Alternatively, |parameter values| can be provided, for which the
             model is :meth:`solved <pymor.models.interface.Model.solve>` to
             obtain `u_0`.
@@ -193,7 +205,8 @@ class StationaryModel(Model):
         if not isinstance(arg, VectorArray):
             mu = self.parameters.parse(arg)
             arg = self.solve(mu)
-        assert arg in self.solution_space and len(arg) == 1
+        assert arg in self.solution_space
+        assert len(arg) == self.rhs.source.dim
 
         affine_shift = arg
 
