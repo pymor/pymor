@@ -5,6 +5,7 @@
 import itertools
 
 import numpy as np
+import scipy.linalg as spla
 
 from pymor.core.base import BasicObject
 from pymor.models.transfer_function import TransferFunction
@@ -25,8 +26,7 @@ class pAAAReductor(BasicObject):
     sampling_values
         Values where sample data has been evaluated or the full-order model should be evaluated.
         Sampling values are represented as a nested list `svs` such that `svs[i]` corresponds
-        to sampling values of the `i-th` variable. For |TransferFunctions| or models with a
-        `transfer_function` attribute, the first variable corresponds to frequency data.
+        to sampling values of the `i`-th variable. The first variable is the Laplace variable.
     samples_or_fom
         Can be either a full-order model (|TransferFunction| or |Model| with a `transfer_function`
         attribute) or data sampled at the values specified in `sampling_values`. Samples are
@@ -62,7 +62,7 @@ class pAAAReductor(BasicObject):
                                     dtype=sampling_values[0].dtype)
             for idx, vals in zip(np.ndindex(self.samples.shape[:-2]),
                                  itertools.product(*sampling_values)):
-                params = {p: v for p, v in zip(fom.parameters, vals[1:])}
+                params = fom.parameters.parse(vals[1:])
                 self.samples[idx] = fom.eval_tf(vals[0], mu=params)
             if fom.dim_input == fom.dim_output == 1:
                 self.samples = self.samples.reshape(self.samples.shape[:-2])
@@ -73,13 +73,19 @@ class pAAAReductor(BasicObject):
 
         self.__auto_init(locals())
 
-    def reduce(self, tol=1e-7, max_itpl=None):
+    def reduce(self, tol=1e-7, itpl_part=None, max_itpl=None):
         """Reduce using p-AAA.
 
         Parameters
         ----------
         tol
             Convergence tolerance for relative error of `rom` over the set of samples.
+        itpl_part
+            Initial partition for interpolation values. Should be `None` or a nested list
+            such that `itpl_part[i]` corresponds to indices of interpolated values with
+            respect to the `i`-th variable. I.e., `self.sampling_values[i][itpl_part[i]]`
+            represents a list of all initially interpolated samples of the `i`-th variable.
+            If `None` p-AAA will start with no interpolated values.
         max_itpl
             Maximum number of interpolation points to use with respect to each
             variable. Should be `None` or a list such that `self.num_vars == len(max_itpl)`.
@@ -90,8 +96,8 @@ class pAAAReductor(BasicObject):
         rom
             Reduced |TransferFunction| model.
         """
-        svs = self.sampling_values
-        samples = self.samples
+        svs = self.sampling_values.copy()
+        samples = self.samples.copy()
 
         # add complex conjugate samples
         if self.conjugate:
@@ -115,12 +121,18 @@ class pAAAReductor(BasicObject):
             dim_input = samples.shape[-1]
             dim_output = samples.shape[-2]
             samples_T = np.empty(samples.shape[:-2], dtype=samples.dtype)
-            w = new_rng(0).uniform(size=(1, dim_output))
-            v = new_rng(0).uniform(size=(dim_input, 1))
+            rng = new_rng(0)
+            if any(np.iscomplex(svs[0])):
+                w = 1j * rng.normal(scale=np.sqrt(2)/2, size=(dim_output,)) \
+                    + rng.normal(scale=np.sqrt(2)/2, size=(dim_output,))
+                v = 1j * rng.normal(scale=np.sqrt(2)/2, size=(dim_input,)) \
+                    + rng.normal(scale=np.sqrt(2)/2, size=(dim_input,))
+            else:
+                w = rng.normal(size=(dim_output,))
+                v = rng.normal(size=(dim_input,))
             w /= np.linalg.norm(w)
             v /= np.linalg.norm(v)
-            for li in list(itertools.product(*(range(s) for s in samples.shape[:-2]))):
-                samples_T[li] = w @ samples[li] @ v
+            samples_T = samples @ v @ w
             samples_orig = samples
             samples = samples_T
         else:
@@ -129,7 +141,11 @@ class pAAAReductor(BasicObject):
 
         # initialize data partitions, error, max iterations
         err = np.inf
-        itpl_part = [[] for _ in range(num_vars)]
+        if itpl_part is None:
+            self.itpl_part = [[] for _ in range(num_vars)]
+        else:
+            assert len(itpl_part) == num_vars
+            self.itpl_part = itpl_part
         if max_itpl is None:
             max_itpl = [len(s)-1 for s in svs]
 
@@ -141,25 +157,25 @@ class pAAAReductor(BasicObject):
         # iteration counter
         j = 0
 
-        while any(len(i) < mi for (i, mi) in zip(itpl_part, max_itpl)):
+        while any(len(i) < mi for i, mi in zip(self.itpl_part, max_itpl)):
 
             # compute approximation error over entire sampled data set
-            grid = np.meshgrid(*(sv for sv in svs), indexing='ij')
-            err_mat = np.abs(bary_func(*(g for g in grid))-samples)
+            grid = np.meshgrid(*svs, indexing='ij')
+            err_mat = np.abs(bary_func(*grid) - samples)
 
             # set errors to zero such that new interpolation points are consistent with max_itpl
             zero_idx = []
             for i in range(num_vars):
-                if len(itpl_part[i]) >= max_itpl[i]:
+                if len(self.itpl_part[i]) >= max_itpl[i]:
                     zero_idx.append(list(range(samples.shape[i])))
                 else:
-                    zero_idx.append(itpl_part[i])
-            err_mat[np.ix_(*(zi for zi in zero_idx))] = 0
+                    zero_idx.append(self.itpl_part[i])
+            err_mat[np.ix_(*zero_idx)] = 0
             err = np.max(err_mat)
 
             j += 1
             self.logger.info(f'Relative error at step {j}: {err/max_samples:.5e}, '
-                             f'number of interpolation points {[len(ip) for ip in itpl_part]}')
+                             f'number of interpolation points {[len(ip) for ip in self.itpl_part]}')
 
             # stopping criterion based on relative approximation error
             if err <= rel_tol:
@@ -167,20 +183,20 @@ class pAAAReductor(BasicObject):
 
             greedy_idx = np.unravel_index(err_mat.argmax(), err_mat.shape)
             for i in range(num_vars):
-                if greedy_idx[i] not in itpl_part[i] and len(itpl_part[i]) < max_itpl[i]:
-                    itpl_part[i].append(greedy_idx[i])
+                if greedy_idx[i] not in self.itpl_part[i] and len(self.itpl_part[i]) < max_itpl[i]:
+                    self.itpl_part[i].append(greedy_idx[i])
 
                     # perform double interpolation step to enforce real state-space representation
                     if i == 0 and self.conjugate and np.imag(svs[i][greedy_idx[i]]) != 0:
                         conj_sample = np.conj(svs[i][greedy_idx[i]])
                         conj_idx = np.where(svs[0] == conj_sample)[0]
-                        itpl_part[i].append(conj_idx[0])
+                        self.itpl_part[i].append(conj_idx[0])
 
             # solve LS problem
-            L = full_nd_loewner(samples, svs, itpl_part)
+            L = full_nd_loewner(samples, svs, self.itpl_part)
 
-            _, S, V = np.linalg.svd(L)
-            VH = np.conj(V.T)
+            _, S, V = spla.svd(L, lapack_driver='gesvd')
+            VH = V.T.conj()
             coefs = VH[:, -1:]
 
             # post-processing for non-minimal interpolants
@@ -188,18 +204,18 @@ class pAAAReductor(BasicObject):
             if d_nsp > 1:
                 if self.post_process:
                     self.logger.info('Non-minimal order interpolant computed. Starting post-processing.')
-                    pp_coefs, pp_itpl_part = _post_processing(samples, svs, itpl_part, d_nsp, self.L_rk_tol)
+                    pp_coefs, pp_itpl_part = _post_processing(samples, svs, self.itpl_part, d_nsp, self.L_rk_tol)
                     if pp_coefs is not None:
-                        coefs, itpl_part = pp_coefs, pp_itpl_part
+                        coefs, self.itpl_part = pp_coefs, pp_itpl_part
                     else:
                         self.logger.warning('Post-processing failed. Consider reducing "L_rk_tol".')
                 else:
                     self.logger.warning('Non-minimal order interpolant computed.')
 
             # update barycentric form
-            itpl_samples = samples[np.ix_(*(ip for ip in itpl_part))]
+            itpl_samples = samples[np.ix_(*self.itpl_part)]
             itpl_samples = np.reshape(itpl_samples, -1)
-            itpl_nodes = [sv[lp] for sv, lp in zip(svs, itpl_part)]
+            itpl_nodes = [sv[lp] for sv, lp in zip(svs, self.itpl_part)]
             bary_func = np.vectorize(make_bary_func(itpl_nodes, itpl_samples, coefs))
 
             if self.post_process and d_nsp >= 1:
@@ -208,7 +224,7 @@ class pAAAReductor(BasicObject):
 
         # in MIMO case construct barycentric form based on matrix/vector samples
         if dim_input != 1 or dim_output != 1:
-            itpl_samples = samples_orig[np.ix_(*(ip for ip in itpl_part))]
+            itpl_samples = samples_orig[np.ix_(*self.itpl_part)]
             itpl_samples = np.reshape(itpl_samples, (-1, dim_output, dim_input))
 
         bary_func = make_bary_func(itpl_nodes, itpl_samples, coefs)
@@ -256,9 +272,9 @@ def nd_loewner(samples, svs, itpl_part):
         ph = p0[ls_part[i]]
         pd = ph[:, np.newaxis] - p[np.newaxis]
         sdpd = np.kron(sdpd, pd)
-    samples0 = samples[np.ix_(*(p for p in itpl_part))]
+    samples0 = samples[np.ix_(*itpl_part)]
     samples0 = np.reshape(samples0, (-1, np.prod(samples0.shape)))
-    samples1 = samples[np.ix_(*(p for p in ls_part))]
+    samples1 = samples[np.ix_(*ls_part)]
     samples1 = np.reshape(samples1, (-1, np.prod(samples1.shape)))
     samplesd = samples1.T - samples0
 
@@ -404,7 +420,7 @@ def _post_processing(samples, svs, itpl_part, d_nsp, L_rk_tol):
 
     # solve LS problem
     L = full_nd_loewner(samples, svs, itpl_part)
-    _, S, V = np.linalg.svd(L)
+    _, S, V = spla.svd(L, lapack_driver='gesvd')
     VH = np.conj(V.T)
     coefs = VH[:, -1:]
 
