@@ -71,6 +71,18 @@ class pAAAReductor(BasicObject):
             self.num_vars = len(sampling_values)
             self.parameters = {'p': self.num_vars-1}
 
+        # add complex conjugate samples
+        if conjugate:
+            s_conj_list = []
+            samples_conj_list = []
+            for i, s in enumerate(sampling_values[0]):
+                if s.conj() not in sampling_values[0]:
+                    s_conj_list.append(s.conj())
+                    samples_conj_list.append(self.samples[i, None].conj())
+            if s_conj_list:
+                sampling_values[0] = np.append(sampling_values[0], s_conj_list)
+                self.samples = np.vstack([self.samples] + samples_conj_list)
+
         self.__auto_init(locals())
 
     def reduce(self, tol=1e-7, itpl_part=None, max_itpl=None):
@@ -96,20 +108,8 @@ class pAAAReductor(BasicObject):
         rom
             Reduced |TransferFunction| model.
         """
-        svs = self.sampling_values.copy()
-        samples = self.samples.copy()
-
-        # add complex conjugate samples
-        if self.conjugate:
-            s_conj_list = []
-            samples_conj_list = []
-            for i, s in enumerate(svs[0]):
-                if s.conj() not in svs[0]:
-                    s_conj_list.append(s.conj())
-                    samples_conj_list.append(samples[i, None].conj())
-            if s_conj_list:
-                svs[0] = np.append(svs[0], s_conj_list)
-                samples = np.vstack([samples] + samples_conj_list)
+        svs = self.sampling_values
+        samples = self.samples
 
         num_vars = len(svs)
         max_samples = np.max(np.abs(samples))
@@ -204,9 +204,9 @@ class pAAAReductor(BasicObject):
             if d_nsp > 1:
                 if self.post_process:
                     self.logger.info('Non-minimal order interpolant computed. Starting post-processing.')
-                    pp_coefs, pp_itpl_part = _post_processing(samples, svs, self.itpl_part, d_nsp, self.L_rk_tol)
+                    pp_coefs = self._post_processing(samples, svs, d_nsp)
                     if pp_coefs is not None:
-                        coefs, self.itpl_part = pp_coefs, pp_itpl_part
+                        coefs = pp_coefs
                     else:
                         self.logger.warning('Post-processing failed. Consider reducing "L_rk_tol".')
                 else:
@@ -236,6 +236,47 @@ class pAAAReductor(BasicObject):
         else:
             return TransferFunction(dim_input, dim_output, lambda s: bary_func(s))
 
+    def _post_processing(self, samples, svs, d_nsp):
+        """Compute coefficients/partition to construct minimal interpolant."""
+        num_vars = len(svs)
+        max_idx = np.argmax([len(ip) for ip in self.itpl_part])
+        max_rks = []
+        for i in range(num_vars):
+            max_rk = 0
+            # we don't need to compute this max rank since we exploit nullspace structure
+            if i == max_idx:
+                max_rks.append(len(self.itpl_part[max_idx])-1)
+                continue
+            shapes = []
+            for j in range(num_vars):
+                if i != j:
+                    shapes.append(samples.shape[j])
+            # compute max ranks of all possible 1-D Loewner matrices
+            for idc in itertools.product(*(range(s) for s in shapes)):
+                l_idc = list(idc)
+                l_idc.insert(i, slice(None))
+                L = nd_loewner(samples[tuple(l_idc)], [svs[i]], [self.itpl_part[i]])
+                rk = np.linalg.matrix_rank(L, tol=self.L_rk_tol)
+                if rk > max_rk:
+                    max_rk = rk
+            max_rks.append(max_rk)
+        # exploit nullspace structure to obtain final max rank
+        denom = np.prod([len(self.itpl_part[k])-max_rks[k] for k in range(len(self.itpl_part))])
+        if denom == 0 or d_nsp % denom != 0:
+            return None
+        max_rks[max_idx] = len(self.itpl_part[max_idx]) - d_nsp / denom
+        max_rks[max_idx] = round(max_rks[max_idx])
+        for i in range(len(max_rks)):
+            self.itpl_part[i] = self.itpl_part[i][0:max_rks[i]+1]
+
+        # solve LS problem
+        L = full_nd_loewner(samples, svs, self.itpl_part)
+        _, S, V = spla.svd(L, lapack_driver='gesvd')
+        VH = np.conj(V.T)
+        coefs = VH[:, -1:]
+
+        return coefs
+
 
 def nd_loewner(samples, svs, itpl_part):
     """Compute higher-dimensional Loewner matrix using only LS partitions.
@@ -264,18 +305,18 @@ def nd_loewner(samples, svs, itpl_part):
     s0 = svs[0]
     s = s0[itpl_part[0]]
     sh = s0[ls_part[0]]
-    sd = sh[:, np.newaxis] - s[np.newaxis]
+    sd = sh[:, np.newaxis] - s
     sdpd = sd
     for i in range(1, d):
         p0 = svs[i]
         p = p0[itpl_part[i]]
         ph = p0[ls_part[i]]
-        pd = ph[:, np.newaxis] - p[np.newaxis]
+        pd = ph[:, np.newaxis] - p
         sdpd = np.kron(sdpd, pd)
     samples0 = samples[np.ix_(*itpl_part)]
-    samples0 = np.reshape(samples0, (-1, np.prod(samples0.shape)))
+    samples0 = np.reshape(samples0, (1, -1))
     samples1 = samples[np.ix_(*ls_part)]
-    samples1 = np.reshape(samples1, (-1, np.prod(samples1.shape)))
+    samples1 = np.reshape(samples1, (1, -1))
     samplesd = samples1.T - samples0
 
     return samplesd / sdpd
@@ -377,51 +418,4 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
 
 def _ls_part(itpl_part, svs):
     """Compute least-squares partition based on interpolation partition."""
-    ls_part = []
-    for p, s in zip(itpl_part, svs):
-        idx = np.arange(len(s))
-        idx = np.delete(idx, p)
-        ls_part.append(list(idx))
-    return ls_part
-
-
-def _post_processing(samples, svs, itpl_part, d_nsp, L_rk_tol):
-    """Compute coefficients/partition to construct minimal interpolant."""
-    num_vars = len(svs)
-    max_idx = np.argmax([len(ip) for ip in itpl_part])
-    max_rks = []
-    for i in range(num_vars):
-        max_rk = 0
-        # we don't need to compute this max rank since we exploit nullspace structure
-        if i == max_idx:
-            max_rks.append(len(itpl_part[max_idx])-1)
-            continue
-        shapes = []
-        for j in range(num_vars):
-            if i != j:
-                shapes.append(samples.shape[j])
-        # compute max ranks of all possible 1-D Loewner matrices
-        for idc in itertools.product(*(range(s) for s in shapes)):
-            l_idc = list(idc)
-            l_idc.insert(i, slice(None))
-            L = nd_loewner(samples[tuple(l_idc)], [svs[i]], [itpl_part[i]])
-            rk = np.linalg.matrix_rank(L, tol=L_rk_tol)
-            if rk > max_rk:
-                max_rk = rk
-        max_rks.append(max_rk)
-    # exploit nullspace structure to obtain final max rank
-    denom = np.prod([len(itpl_part[k])-max_rks[k] for k in range(len(itpl_part))])
-    if denom == 0 or d_nsp % denom != 0:
-        return None, None
-    max_rks[max_idx] = len(itpl_part[max_idx]) - d_nsp / denom
-    max_rks[max_idx] = round(max_rks[max_idx])
-    for i in range(len(max_rks)):
-        itpl_part[i] = itpl_part[i][0:max_rks[i]+1]
-
-    # solve LS problem
-    L = full_nd_loewner(samples, svs, itpl_part)
-    _, S, V = spla.svd(L, lapack_driver='gesvd')
-    VH = np.conj(V.T)
-    coefs = VH[:, -1:]
-
-    return coefs, itpl_part
+    return [sorted(set(range(len(s))) - set(p)) for p, s in zip(itpl_part, svs)]
