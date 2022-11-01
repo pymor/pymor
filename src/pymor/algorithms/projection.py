@@ -7,9 +7,9 @@ import numpy as np
 from pymor.algorithms.rules import RuleTable, match_class, match_generic, match_always
 from pymor.core.exceptions import RuleNotMatchingError, NoMatchingRuleError
 from pymor.operators.block import BlockOperatorBase, BlockRowOperator, BlockColumnOperator
-from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ConstantOperator, OutputFunctional, ProjectedOperator,
+from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ConstantOperator, ProjectedOperator,
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
-                                           IdentityOperator, VectorArrayOperator)
+                                           IdentityOperator, VectorArrayOperator, OutputFunctional)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -243,7 +243,7 @@ class ProjectRules(RuleTable):
             return np.sum(projected_ops)
 
     @match_class(OutputFunctional)
-    def action_OutputOperator(self, op):
+    def action_OutputFunctional(self, op):
         projected_ops = {
             key: project(
                 op.operators[key], self.range_basis, self.source_basis)
@@ -251,8 +251,8 @@ class ProjectRules(RuleTable):
                 op.operators[key], self.source_basis, self.source_basis)
             for key in op.operators}
         return OutputFunctional(projected_ops,
-                              non_linear_rules=op.non_linear_rules,
-                              solver_options=op.solver_options)
+                                non_linear_rules=op.non_linear_rules,
+                                solver_options=op.solver_options)
 
 
 def project_to_subbasis(op, dim_range=None, dim_source=None):
@@ -385,7 +385,7 @@ class ProjectToSubbasisRules(RuleTable):
                                  solver_options=op.solver_options)
 
     @match_class(OutputFunctional)
-    def action_OutputOperator(self, op):
+    def action_OutputFunctional(self, op):
         dim_range, dim_source = self.dim_range, self.dim_source
         subbasis_projected_ops = {
             key: project_to_subbasis(
@@ -396,5 +396,5 @@ class ProjectToSubbasisRules(RuleTable):
                 dim_source=dim_source)
             for key in op.operators}
         return OutputFunctional(subbasis_projected_ops,
-                              non_linear_rules=op.non_linear_rules,
-                              solver_options=op.solver_options)
+                                non_linear_rules=op.non_linear_rules,
+                                solver_options=op.solver_options)
