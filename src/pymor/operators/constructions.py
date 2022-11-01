@@ -1624,7 +1624,7 @@ class OutputFunctional(Operator):
 
     def _eval_bilin_part(self, V, U, mu=None, adjoint=False, pairwise=False):
         """Evaluates the bilinear part of |OutputOperator|.
-        
+
         The evaluation is done via `apply2(V, U, mu)`,
         `pairwise_apply2(V, U, mu)`, or `apply_adjoint(V, mu)`.
 
