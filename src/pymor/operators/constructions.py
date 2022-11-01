@@ -1525,8 +1525,7 @@ class OutputFunctional(Operator):
         self.__auto_init(locals())
 
     def _prepare_operator_dicts(self, operator_dict):
-        """Prepares the `operator_dict` in the case that there are no coefficients
-        being passed to the constructor.
+        """Prepares the `operator_dict`.
 
         Parameters
         ----------
@@ -1543,8 +1542,7 @@ class OutputFunctional(Operator):
 
     def _prepare_coefficient_dicts(self, operator_dict, coefficient_dict,
                                    solver_options, name):
-        """Prepares the `operator_dict` and the `coefficient_dict` in the case that
-        coefficients are being passed to the constructor.
+        """Prepares the `operator_dict` and the `coefficient_dict`.
 
         Parameters
         ----------
@@ -1625,7 +1623,9 @@ class OutputFunctional(Operator):
         return ret_val
 
     def _eval_bilin_part(self, V, U, mu=None, adjoint=False, pairwise=False):
-        """Evaluates the bilinear part of |OutputOperator| via `apply2(V, U, mu)`,
+        """Evaluates the bilinear part of |OutputOperator|.
+        
+        The evaluation is done via `apply2(V, U, mu)`,
         `pairwise_apply2(V, U, mu)`, or `apply_adjoint(V, mu)`.
 
         Parameters
