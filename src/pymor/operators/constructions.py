@@ -1466,6 +1466,7 @@ class OutputFunctional(Operator):
     name
         Optional name of the operator.
     """
+
     def __init__(self, operator_dict, coefficient_dict=None,
                  non_linear_rules=None, solver_options=None, name=None):
         assert operator_dict is not None
@@ -1507,7 +1508,8 @@ class OutputFunctional(Operator):
                            for src in list(sources.values())[1:])
                 self.source = list(sources.values())[0]
 
-        # bilinear and non-linear terms do not necessarily need to specify the range of the output operator
+        # bilinear and non-linear terms do not necessarily need to
+        # specify the range of the output operator
         if ranges is not None:
             if 'bilinear' in ranges:
                 ranges['bilinear'] = NumpyVectorSpace(1)
@@ -1581,7 +1583,7 @@ class OutputFunctional(Operator):
     def H(self):
         options = {'inverse': self.solver_options.get('inverse_adjoint'),
                    'inverse_adjoint': self.solver_options.get('inverse')} \
-                   if self.solver_options else None
+            if self.solver_options else None
         H_ops = {key: self.operators[key].H for key in self.operators}
         return OutputFunctional(
             H_ops, non_linear_rules=self.non_linear_rules,
@@ -1684,13 +1686,16 @@ class OutputFunctional(Operator):
         if 'linear' in self.operators:
             jac_ops['linear'] = self.operators['linear'].jacobian(U, mu)
         if 'bilinear' in self.operators:
-            # apply op normally and adjoint because of \partial_u k(u, u)[w] = k(w, u) + k(u, w) \neq 2 k(u, w) unless k symmetric
+            # apply op normally and adjoint because of
+            # \partial_u k(u, u)[w] = k(w, u) + k(u, w) \neq 2 k(u, w)
+            # unless k symmetric
             bilin_op_1 = VectorOperator(self.operators['bilinear'].apply_adjoint(
                 U, mu), name=self.operators['bilinear'].name + '_jacobian').H
             bilin_op_2 = VectorOperator(self.operators['bilinear'].apply(
                 U, mu), name=self.operators['bilinear'].name + '_jacobian').H
             bilin_op = bilin_op_1 + bilin_op_2
-            # bilinear jacobian part becomes linear (after first evaluation), so we need to safely add it into the linear operator
+            # bilinear jacobian part becomes linear (after first evaluation),
+            # so we need to safely add it into the linear operator
             if jac_ops.get('linear', None) is not None:
                 jac_ops['linear'] += bilin_op
             else:

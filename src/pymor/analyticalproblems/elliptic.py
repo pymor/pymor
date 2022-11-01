@@ -114,7 +114,8 @@ class StationaryProblem(ParametricObject):
                 or all(
                     isinstance(v, tuple) and len(v) == 2
                     and v[0] in ('l2', 'l2_boundary', 'general')
-                    and ((v[1].dim_domain == domain.dim and v[1].shape_range == ()) if v[0] != 'general' else isinstance(v[1], OutputFunctional))
+                    and ((v[1].dim_domain == domain.dim and v[1].shape_range == ())
+                         if v[0] != 'general' else isinstance(v[1], OutputFunctional))
                     for v in outputs))
         assert (parameter_ranges is None
                 or (isinstance(parameter_ranges, (list, tuple))

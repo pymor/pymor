@@ -181,12 +181,11 @@ def test_OutputOperator():
     bilin_op = NumpyMatrixOperator(bilin_matrix)
 
     output_op_no_bilin = OutputFunctional(
-            {'constant': [const_op], 'linear': [lin_op]},
-            {'constant': [1.], 'linear': [1.]})
+        {'constant': [const_op], 'linear': [lin_op]},
+        {'constant': [1.], 'linear': [1.]})
     output_op_with_bilin = OutputFunctional(
-            {'constant': [const_op], 'linear': [lin_op],
-             'bilinear': [bilin_op]},
-            {'constant': [1.], 'linear': [1.], 'bilinear': [1.]})
+        {'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]},
+        {'constant': [1.], 'linear': [1.], 'bilinear': [1.]})
 
     zero_v = space.zeros()
     one_vec = [1.]

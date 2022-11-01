@@ -334,9 +334,9 @@ def test_output_operator_d_mu():
     # generate data for the problems
     domain = RectDomain(([-1, -1], [1, 1]))
     indicator_domain = ExpressionFunction(
-                '(-2/3. <= x[0]) * (x[0] <= -1/3.) * (-2/3. <= x[1]) * \
-                 (x[1] <= -1/3.) * 1. + (-2/3. <= x[0]) * (x[0] <= -1/3.) \
-                 *  (1/3. <= x[1]) * (x[1] <=  2/3.) * 1.', dim_domain=2)
+        '(-2/3. <= x[0]) * (x[0] <= -1/3.) * (-2/3. <= x[1]) * \
+        (x[1] <= -1/3.) * 1. + (-2/3. <= x[0]) * (x[0] <= -1/3.) \
+        *  (1/3. <= x[1]) * (x[1] <=  2/3.) * 1.', dim_domain=2)
     rest_of_domain = ConstantFunction(1, 2) - indicator_domain
     parameters = {'diffusion': 2}
     thetas = [
@@ -369,46 +369,35 @@ def test_output_operator_d_mu():
 
     # generate list of output operators
     ops = []
-    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
-                              'bilinear': [bilin_op]}, {'constant': [1.],
-                              'linear': [1.], 'bilinear': [1.]}))
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]},
+                                {'constant': [1.], 'linear': [1.], 'bilinear': [1.]}))
     ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op]},
-                              {'constant': [1.], 'linear': [1.]}))
+                                {'constant': [1.], 'linear': [1.]}))
     ops.append(OutputFunctional({'constant': [const_op]}, {'constant': [1.]}))
     ops.append(OutputFunctional({'constant': [const_op], 'bilinear': [bilin_op]},
-                              {'constant': [1.], 'bilinear': [1.]}))
+                                {'constant': [1.], 'bilinear': [1.]}))
     ops.append(OutputFunctional({'linear': [lin_op], 'bilinear': [bilin_op]},
-                              {'linear': [1.], 'bilinear': [1.]}))
+                                {'linear': [1.], 'bilinear': [1.]}))
     ops.append(OutputFunctional({'linear': [lin_op]}, {'linear': [1.]}))
     ops.append(OutputFunctional({'bilinear': [bilin_op]}, {'bilinear': [1.]}))
-    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
-                              'bilinear': [bilin_op]}, {'constant': [theta_J],
-                              'linear': [1.], 'bilinear': [1.]}))
-    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
-                              'bilinear': [bilin_op]}, {'constant': [1.],
-                              'linear': [theta_J], 'bilinear': [1.]}))
-    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
-                              'bilinear': [bilin_op]}, {'constant': [1.],
-                              'linear': [1.], 'bilinear': [theta_J]}))
-    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
-                              'bilinear': [bilin_op]}, {'constant': [theta_J],
-                              'linear': [.5*theta_J], 'bilinear': [1.]}))
-    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
-                              'bilinear': [bilin_op]}, {'constant': [theta_J],
-                              'linear': [1.], 'bilinear': [.5*theta_J]}))
-    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
-                              'bilinear': [bilin_op]}, {'constant': [1.],
-                              'linear': [theta_J], 'bilinear': [.5*theta_J]}))
-    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
-                              'bilinear': [bilin_op]},
-                              {'constant': [.5*theta_J], 'linear': [theta_J],
-                              'bilinear': [1.]}))
-    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
-                              'bilinear': [bilin_op]}, {'constant': [1.],
-                              'linear': [.5*theta_J], 'bilinear': [theta_J]}))
-    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op],
-                              'bilinear': [bilin_op]}, {'constant': [theta_J],
-                              'linear': [.5*theta_J], 'bilinear': [theta_J]}))
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]},
+                                {'constant': [theta_J], 'linear': [1.], 'bilinear': [1.]}))
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]},
+                                {'constant': [1.], 'linear': [theta_J], 'bilinear': [1.]}))
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]},
+                                {'constant': [1.], 'linear': [1.], 'bilinear': [theta_J]}))
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]},
+                                {'constant': [theta_J], 'linear': [.5*theta_J], 'bilinear': [1.]}))
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]},
+                                {'constant': [theta_J], 'linear': [1.], 'bilinear': [.5*theta_J]}))
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]},
+                                {'constant': [1.], 'linear': [theta_J], 'bilinear': [.5*theta_J]}))
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]},
+                                {'constant': [.5*theta_J], 'linear': [theta_J], 'bilinear': [1.]}))
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]},
+                                {'constant': [1.], 'linear': [.5*theta_J], 'bilinear': [theta_J]}))
+    ops.append(OutputFunctional({'constant': [const_op], 'linear': [lin_op], 'bilinear': [bilin_op]},
+                                {'constant': [theta_J], 'linear': [.5*theta_J], 'bilinear': [theta_J]}))
 
     def _run_test_on_op(op):
         grid_intervals = 10
