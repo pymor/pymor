@@ -201,6 +201,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, range_product=None, sourc
             err_scale_factor = solution_norm
 
         with warnings.catch_warnings():
+            # ignore division-by-zero warnings when solution_norm is zero
             warnings.filterwarnings('ignore', category=RuntimeWarning)
             logger.info(f'it:{iteration} '
                         f'norm:{solution_norm:.3e} '
