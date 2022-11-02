@@ -64,6 +64,7 @@ class Operator(ParametricObject):
 
     # override NumPy binary operations and ufuncs
     __array_priority__ = 100.0
+    __array_ufunc__ = None
 
     solver_options = None
 
