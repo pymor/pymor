@@ -166,7 +166,7 @@ class Operator(ParametricObject):
             op.apply_adjoint(V, mu).dot(U) == V.inner(op.apply(U, mu))
 
         Thus, when `op` is represented by a matrix `M`, `apply_adjoint` is
-        given by left-multplication of (the complex conjugate of) `M` with `V`.
+        given by left-multiplication of (the complex conjugate of) `M` with `V`.
 
         Parameters
         ----------
