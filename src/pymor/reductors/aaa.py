@@ -195,7 +195,7 @@ class pAAAReductor(BasicObject):
             # solve LS problem
             L = full_nd_loewner(samples, svs, self.itpl_part)
 
-            _, S, V = spla.svd(L, lapack_driver='gesvd')
+            _, S, V = spla.svd(L, full_matrices=False, lapack_driver='gesvd')
             VH = V.T.conj()
             coefs = VH[:, -1:]
 
@@ -271,7 +271,7 @@ class pAAAReductor(BasicObject):
 
         # solve LS problem
         L = full_nd_loewner(samples, svs, self.itpl_part)
-        _, S, V = spla.svd(L, lapack_driver='gesvd')
+        _, S, V = spla.svd(L, full_matrices=False, lapack_driver='gesvd')
         VH = np.conj(V.T)
         coefs = VH[:, -1:]
 
@@ -313,11 +313,9 @@ def nd_loewner(samples, svs, itpl_part):
         ph = p0[ls_part[i]]
         pd = ph[:, np.newaxis] - p
         sdpd = np.kron(sdpd, pd)
-    samples0 = samples[np.ix_(*itpl_part)]
-    samples0 = np.reshape(samples0, (1, -1))
-    samples1 = samples[np.ix_(*ls_part)]
-    samples1 = np.reshape(samples1, (1, -1))
-    samplesd = samples1.T - samples0
+    samples0 = samples[np.ix_(*itpl_part)].reshape(-1)
+    samples1 = samples[np.ix_(*ls_part)].reshape(-1, 1)
+    samplesd = samples1 - samples0
 
     return samplesd / sdpd
 
@@ -350,7 +348,7 @@ def full_nd_loewner(samples, svs, itpl_part):
     for i in itertools.product(*([0, 1] for _ in range_S)):
 
         # skip cases corresponding to all interpolated or all LS fit
-        if i == tuple(len(svs)*[0]) or i == tuple(len(svs)*[1]):
+        if i == len(svs) * (0,) or i == len(svs) * (1,):
             continue
 
         for j in itertools.product(*(itpl_part[k] for k in range_S if i[k] == 0)):
