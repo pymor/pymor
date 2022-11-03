@@ -110,7 +110,6 @@ rules:
     image: {{registry}}/pymor/docker-in-docker:2022.1.0@sha256:c912491b287e5e539efc7e160a4196bfef4e3c71934ff70e66afc4da88470254
 
     variables:
-        DOCKER_HOST: tcp://docker:2375/
         DOCKER_DRIVER: overlay2
     before_script:
         - 'export SHARED_PATH="${CI_PROJECT_DIR}/shared"'
