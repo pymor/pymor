@@ -23,8 +23,8 @@ stages:
           when: never
         - when: on_success
     variables:
-        PYPI_MIRROR_TAG: 7297bd425bf0d553a60831628b3349ae2d6dfe37
-        CI_IMAGE_TAG: 7297bd425bf0d553a60831628b3349ae2d6dfe37
+        PYPI_MIRROR_TAG: 209a55ff6ee013913a74729eddd4434920d39a02
+        CI_IMAGE_TAG: 209a55ff6ee013913a74729eddd4434920d39a02
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
         BINDERIMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
