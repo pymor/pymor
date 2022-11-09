@@ -26,20 +26,20 @@ class RandomizedRangeFinder(CacheableObject):
     ----------
     A
         The |Operator| whose range is to be found.
-    subspace_iterations
-        The number of subspace iterations (defaults to zero).
-        This can be used to increase the precision in the cases where the spectrum of `A` does not
-        decay rapidly (at the expense of two additional passes over `A` per subspace iteration).
     range_product
         Inner product |Operator| of the range of `A`. Determines the basis orthogonalization and the
         error norm.
     source_product
         Inner product |Operator| of the source of `A`. Determines the basis orthogonalization (only
         if `subspace_iterations` is greater than zero) and the error norm.
+    subspace_iterations
+        The number of subspace iterations (defaults to zero).
+        This can be used to increase the precision in the cases where the spectrum of `A` does not
+        decay rapidly (at the expense of two additional passes over `A` per subspace iteration).
     lambda_min
         A lower bound for the smallest eigenvalue of `source_product`. Defaults to `None`.
         If `None` and a `source_product` is given, the smallest eigenvalue will be computed
-        using :func:`SciPy eigh <scipy.linalg.eigh>`.
+        using :func:`randomized GHEP <pymor.algorithms.rand_la.randomized_ghep>`.
     complex
         If `True`, complex valued random vectors will be chosen.
     self_adjoint
@@ -47,7 +47,7 @@ class RandomizedRangeFinder(CacheableObject):
         adjoint when calculating the subspace iterations. Defaults to `False`
     """
 
-    def __init__(self, A, subspace_iterations=0, range_product=None, source_product=None, lambda_min=None,
+    def __init__(self, A, range_product=None, source_product=None, subspace_iterations=0, lambda_min=None,
                  complex=False, self_adjoint=False):
         assert isinstance(A, Operator)
         assert 0 <= subspace_iterations and isinstance(subspace_iterations, int)
@@ -388,12 +388,12 @@ def randomized_svd(A, n, range_product=None, source_product=None, oversampling=2
         Range product |Operator| :math:`S` w.r.t. which the randomized SVD is computed.
     source_product
         Source product |Operator| :math:`T` w.r.t. which the randomized SVD is computed.
-    oversampling
-        The number of samples that are drawn in addition to the desired basis size in the
-        randomized range approximation process.
     subspace_iterations
         The number of subspace iterations to increase the relative weight
         of the larger singular values (ignored when `single_pass` is `True`).
+    oversampling
+        The number of samples that are drawn in addition to the desired basis size in the
+        randomized range approximation process.
 
     Returns
     -------
@@ -451,7 +451,7 @@ def randomized_svd(A, n, range_product=None, source_product=None, oversampling=2
 
 
 @defaults('n', 'oversampling', 'subspace_iterations')
-def randomized_ghep(A, E=None, n=6, oversampling=20, subspace_iterations=2, single_pass=False, return_evecs=False):
+def randomized_ghep(A, E=None, n=6, subspace_iterations=0, oversampling=20, single_pass=False, return_evecs=False):
     r"""Approximates a few eigenvalues of a Hermitian linear |Operator| with randomized methods.
 
     Approximates `modes` eigenvalues `w` with corresponding eigenvectors `v` which solve
@@ -476,13 +476,13 @@ def randomized_ghep(A, E=None, n=6, oversampling=20, subspace_iterations=2, sing
     E
         The Hermitian |Operator| which defines the generalized eigenvalue problem.
     n
-        The number of eigenvalues and eigenvectors which are to be computed.
-    oversampling
-        The number of samples that are drawn in addition to the desired basis size in the
-        randomized range approximation process.
+        The number of eigenvalues and eigenvectors which are to be computed. Defaults to 6.
     subspace_iterations
         The number of subspace iterations to increase the relative weight
         of the larger singular values. Ignored when `single_pass` is `True`.
+    oversampling
+        The number of samples that are drawn in addition to the desired basis size in the
+        randomized range approximation process.
     single_pass
         If `True`, computes the GHEP where only one set of matvecs Ax is required, but at the
         expense of lower numerical accuracy.
@@ -525,7 +525,7 @@ def randomized_ghep(A, E=None, n=6, oversampling=20, subspace_iterations=2, sing
         logger.info(f'Setting oversampling to {oversampling} and proceeding ...')
 
     if single_pass:
-        with logger.block('Approximating basis for the operator source/range ...'):
+        with logger.block('Approximating basis for the operator source/range (single pass) ...'):
             W = A.source.random(n+oversampling, distribution='normal')
             Y_bar = A.apply(W)
             Y = E.apply_inverse(Y_bar)
