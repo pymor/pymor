@@ -18,6 +18,7 @@ class ERAReductor(BasicObject):
         self._SVD_cache = {}
 
     def _output_projector(self, l1):
+        self.logger.info(f'Constructing output projector ({l1} tangential directions) ...')
         p = self.H.markov_parameters.shape[1]
         assert isinstance(l1, int) and l1 <= p
         if self._output_projector_cache is None:
@@ -27,6 +28,7 @@ class ERAReductor(BasicObject):
         return W1[:, :l1]
 
     def _input_projector(self, l2):
+        self.logger.info(f'Constructing input projector ({l2} tangential directions) ...')
         m = self.H.markov_parameters.shape[2]
         assert isinstance(l2, int) and l2 <= m
         if self._input_projector_cache is None:
@@ -40,19 +42,18 @@ class ERAReductor(BasicObject):
         if key in self._SVD_cache.keys():
             U, sv, Vh = self._SVD_cache[key]
         else:
-            # project Markov parameters
             H = self.H
             if l1:
                 W1 = self._output_projector(l1)
+                self.logger.info('Projecting Markov parameters ...')
                 H = NumpyHankelOperator(W1.conj().T @ H.markov_parameters)
             if l2:
                 W2 = self._input_projector(l2)
+                self.logger.info('Projecting Markov parameters ...')
                 H = NumpyHankelOperator(H.markov_parameters @ W2)
 
-            # compute SVD
+            self.logger.info(f'Computing SVD of the {"projected " if l1 or l2 else ""}Hankel matrix ...')
             U, sv, Vh = spla.svd(to_matrix(H), full_matrices=False)
-
-            # cache results
             self._SVD_cache[key] = (U, sv, Vh)
 
         return U[:, :r], sv[:r], Vh[:r]
@@ -66,22 +67,21 @@ class ERAReductor(BasicObject):
 
         U, sv, Vh = self._SVD(r, l1=l1, l2=l2)
 
-        # construct realization
+        self.logger.info(f'Constructing reduced realization of order {r} ...')
         sqS = np.diag(np.sqrt(sv))
         Zo = U @ sqS
         A = NumpyMatrixOperator(spla.pinv(Zo[: -(l1 or p)]) @ Zo[(l1 or p):])
         B = NumpyMatrixOperator(sqS @ Vh[:, :(l2 or m)])
         C = NumpyMatrixOperator(Zo[:(l1 or p)])
 
-        # backprojection
         if l1:
+            self.logger.info('Backprojecting tangential output directions ...')
             W1 = self._output_projector(l1)
             C = project(C, source_basis=None, range_basis=C.range.from_numpy(W1))
         if l2:
+            self.logger.info('Backprojecting tangential input directions ...')
             W2 = self._input_projector(l2)
             B = project(B, source_basis=B.source.from_numpy(W2), range_basis=None)
 
-        return LTIModel(A, B, C, sampling_time=self.sampling_time)
-        # presets
-        # presets={'o_dense': np.diag(sv), 'c_dense': np.diag(sv)}
-        # return LTIModel(A, B, C, sampling_time=self.sampling_time, presets=presets)
+        return LTIModel(A, B, C, sampling_time=self.sampling_time,
+                        presets={'o_dense': np.diag(sv), 'c_dense': np.diag(sv)})
