@@ -547,13 +547,13 @@ def randomized_ghep(A, E=None, n=6, subspace_iterations=0, oversampling=20, sing
         with logger.block(f'Computing the{" " if isinstance(E, IdentityOperator) else " generalized "}'
                           + f'eigenvalue{"s" if n > 1 else ""} and eigenvector{"s" if n > 1 else ""} '
                           + 'in the reduced space ...'):
-            w, S = sp.linalg.eigh(T, subset_by_index=(0, n-1))
+            w, Vr = sp.linalg.eigh(T, subset_by_index=(A.source.dim-n, A.source.dim-1))
         with logger.block('Backprojecting the'
                           + f'{" " if isinstance(E, IdentityOperator) else " generalized "}'
                           + f'eigenvector{"s" if n > 1 else ""} ...'):
-            V = Q.lincomb(S)
-        return w, V
+            V = Q.lincomb(Vr[:, ::-1].T)
+        return w[::-1], V
     else:
         with logger.block(f'Computing the{" " if isinstance(E, IdentityOperator) else " generalized "}'
                           + f'eigenvalue{"s" if n > 1 else ""} in the reduced space ...'):
-            return sp.linalg.eigh(T, subset_by_index=(0, n-1), eigvals_only=True)
+            return sp.linalg.eigh(T, subset_by_index=(A.source.dim-n, A.source.dim-1), eigvals_only=True)[::-1]
