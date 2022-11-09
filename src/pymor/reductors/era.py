@@ -16,24 +16,26 @@ class ERAReductor(CacheableObject):
 
     def __init__(self, data, sampling_time):
         assert sampling_time > 0
-        self.H = NumpyHankelOperator(data)
+        if data.ndim == 1:
+            data = data.reshape(-1, 1, 1)
+        assert data.ndim == 3
         self.__auto_init(locals())
 
     @cached
     def _s1_W1(self):
         self.logger.info('Computing output SVD ...')
-        W1, s1, _ = spla.svd(np.hstack(self.H.markov_parameters), full_matrices=False)
+        W1, s1, _ = spla.svd(np.hstack(self.data), full_matrices=False)
         return s1, W1
 
     @cached
     def _s2_W2(self):
         self.logger.info('Computing input SVD ...')
-        _, s2, W2 = spla.svd(np.vstack(self.H.markov_parameters), full_matrices=False)
+        _, s2, W2 = spla.svd(np.vstack(self.data), full_matrices=False)
         return s2, W2.conj().T
 
     @cached
     def _sv_U_V(self, l1, l2):
-        H = self.H
+        H = NumpyHankelOperator(self.data)
         if l1:
             W1 = self.output_projector(l1)
             self.logger.info('Projecting Markov parameters ...')
@@ -50,20 +52,20 @@ class ERAReductor(CacheableObject):
 
     def output_projector(self, l1):
         self.logger.info(f'Constructing output projector ({l1} tangential directions) ...')
-        assert isinstance(l1, int) and l1 <= self.H.markov_parameters.shape[1]
+        assert isinstance(l1, int) and l1 <= self.data.shape[1]
         return self._s1_W1()[1][:, :l1]
 
     def input_projector(self, l2):
         self.logger.info(f'Constructing input projector ({l2} tangential directions) ...')
-        assert isinstance(l2, int) and l2 <= self.H.markov_parameters.shape[2]
+        assert isinstance(l2, int) and l2 <= self.data.shape[2]
         return self._s2_W2()[1][:, :l2]
 
     def reduce(self, r=None, l1=None, l2=None, tol=None):
         assert r is not None or tol is not None
-        _, p, m = self.H.markov_parameters.shape
+        s, p, m = self.data.shape
         assert l1 is None or isinstance(l1, int) and l1 <= p
         assert l2 is None or isinstance(l2, int) and l2 <= m
-        assert r is None or 0 < r <= min(self.H.range.dim * (l1 or p) / p, self.H.source.dim * (l2 or m) / m)
+        assert r is None or 0 < r <= min((l1 or p), (l2 or m)) * (s // 2 + 1)
 
         sv, U, V = self._sv_U_V(l1, l2)
         sv, U, V = sv[:r], U[:r], V[:r]
