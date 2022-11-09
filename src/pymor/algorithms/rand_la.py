@@ -70,7 +70,7 @@ class RandomizedRangeFinder(CacheableObject):
             self._Q.append(self.A.source.empty())
             self._Q.append(self.A.range.empty())
         self._Q = tuple(self._Q)
-        self._testvecs = self.A.source.empty()
+        self._samplevecs = self.A.range.empty()
         self._adjoint_op = A if self_adjoint else AdjointOperator(A, range_product=range_product,
                                                                   source_product=source_product)
 
@@ -88,16 +88,16 @@ class RandomizedRangeFinder(CacheableObject):
         W = self.A.source.random(n, distribution='normal')
         if self.complex:
             W += 1j * self.A.source.random(n, distribution='normal')
-        self._testvecs.append(self.A.apply(W))
+        self._samplevecs.append(self.A.apply(W))
 
     def _estimate_error(self, basis_size, num_testvecs, p_fail):
         c = np.sqrt(2 * self._lambda_min())
         c *= erfinv((p_fail / min(self.A.source.dim, self.A.range.dim)) ** (1 / num_testvecs))
 
-        if len(self._testvecs) < num_testvecs:
-            self._draw_test_vector(num_testvecs - len(self._testvecs))
+        if len(self._samplevecs) < num_testvecs:
+            self._draw_test_vector(num_testvecs - len(self._samplevecs))
 
-        W, Q = self._testvecs[:num_testvecs].copy(), self._find_range(basis_size)
+        W, Q = self._samplevecs[:num_testvecs].copy(), self._find_range(basis_size)
         W -= Q.lincomb(Q.inner(W, self.range_product).T)
         return c * np.max(W.norm(self.range_product))
 
@@ -346,13 +346,13 @@ def rrf(A, range_product=None, source_product=None, q=2, l=8, return_rand=False,
                                 complex=iscomplex)
     Q = RRF.find_range(basis_size=l, tol=None)
     if return_rand:
-        return Q, RRF._testvecs
+        return Q, RRF._samplevecs
     else:
         return Q
 
 
 @defaults('oversampling', 'subspace_iterations')
-def randomized_svd(A, n, range_product=None, source_product=None, oversampling=20, subspace_iterations=2):
+def randomized_svd(A, n, range_product=None, source_product=None, subspace_iterations=0, oversampling=20):
     r"""Randomized SVD of an |Operator| based on :cite:`SHB21`.
 
     Viewing the |Operator| :math:`A` as an :math:`m` by :math:`n` matrix, this methods computes and
