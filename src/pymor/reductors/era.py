@@ -34,7 +34,7 @@ class ERAReductor(CacheableObject):
         return s2, W2.conj().T
 
     @cached
-    def _sv_U_V(self, l1, l2):
+    def _sv_U_V(self, l1=None, l2=None):
         H = NumpyHankelOperator(self.data)
         if l1:
             W1 = self.output_projector(l1)
@@ -60,6 +60,19 @@ class ERAReductor(CacheableObject):
         assert isinstance(l2, int) and l2 <= self.data.shape[2]
         return self._s2_W2()[1][:, :l2]
 
+    def error_bounds(self, l1=None, l2=None):
+        sv = self._sv_U_V(l1, l2)[0]
+        _, p, m = self.data.shape
+        err = (np.sqrt(np.arange(len(sv)) + (l2 or m) + (l1 or p)) * sv)[1:]
+        err = 2 * err if l1 or l2 else err
+        if l1:
+            s1 = self._s1_W1()[0]
+            err += 4 * np.linalg.norm(s1[l1:])**2
+        if l2:
+            s2 = self._s2_W2()[0]
+            err += 4 * np.linalg.norm(s2[l2:])**2
+        return err
+
     def reduce(self, r=None, l1=None, l2=None, tol=None):
         assert r is not None or tol is not None
         s, p, m = self.data.shape
@@ -67,7 +80,13 @@ class ERAReductor(CacheableObject):
         assert l2 is None or isinstance(l2, int) and l2 <= m
         assert r is None or 0 < r <= min((l1 or p), (l2 or m)) * (s // 2 + 1)
 
-        sv, U, V = self._sv_U_V(l1, l2)
+        sv, U, V = self._sv_U_V(l1=l1, l2=l2)
+
+        if tol is not None:
+            error_bounds = self.error_bounds(l1=l1, l2=l2)
+            r_tol = np.argmax(error_bounds <= tol) + 1
+            r = r_tol if r is None else min(r, r_tol)
+
         sv, U, V = sv[:r], U[:r], V[:r]
 
         self.logger.info(f'Constructing reduced realization of order {r} ...')
