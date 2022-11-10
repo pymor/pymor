@@ -22,9 +22,9 @@ from pymor.models.transfer_function import FactorizedTransferFunction
 from pymor.models.transforms import BilinearTransformation, MoebiusTransformation
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
-from pymor.operators.constructions import (IdentityOperator, InverseOperator, LincombOperator, LowRankOperator,
-                                           VectorOperator, ZeroOperator)
-from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
+from pymor.operators.constructions import (IdentityOperator, InverseOperator, LincombOperator, LinearInputOperator,
+                                           LowRankOperator, VectorOperator, ZeroOperator)
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Parameters, Mu
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
@@ -610,13 +610,7 @@ class LTIModel(Model):
         # solution computation
         mu = mu.with_(t=0)
         X0 = self.initial_data.as_range_array(mu)
-        input_op = NumpyGenericOperator(
-            lambda U, mu: U * mu['input'],
-            dim_range=self.dim_input,
-            parameters={'input': self.dim_input},
-            linear=True,
-        )
-        rhs = self.B @ input_op
+        rhs = LinearInputOperator(self.B)
         X = self.time_stepper.solve(
             operator=-self.A,
             rhs=rhs,
