@@ -1430,3 +1430,27 @@ class NumpyConversionOperator(Operator):
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
         return self.range.from_numpy(U.to_numpy())
+
+
+class LinearInputOperator(Operator):
+    """Operator representing the product B(mu)*input(t).
+
+    Parameters
+    ----------
+    B
+        The input |Operator|.
+    """
+
+    linear = True
+
+    def __init__(self, B):
+        self.B = B
+        self.source = NumpyVectorSpace(1)
+        self.range = B.range
+        self.parameters_own = {'input': B.source.dim}
+
+    def apply(self, U, mu=None):
+        return self.B.as_range_array(mu).lincomb(U.to_numpy() * mu['input'])
+
+    def as_range_array(self, mu=None):
+        return self.B.as_range_array(mu).lincomb(mu['input'])
