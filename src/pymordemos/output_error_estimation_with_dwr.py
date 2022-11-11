@@ -19,8 +19,8 @@ def main(
     training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.'),
     modes: int = Argument(..., help='Number of basis functions for the RB spaces (generated with POD)')
 ):
-    set_log_levels({'pymor': 'WARN'})
-    """Example script for using output error estimation compared with dwr approach"""
+    set_log_levels({'pymor': 'INFO'})
+    """Example script for using output error estimation compared with DWR approach"""
 
     assert fom_number in [0, 1], f'No FOM available for fom_number {fom_number}'
 
@@ -31,9 +31,6 @@ def main(
     elif fom_number == 1:
         # vector valued output (with BlockColumnOperator)
         fom = create_fom(grid_intervals, vector_valued_output=True)
-
-    standard_reductor = CoerciveRBReductor
-    dwr_reductor = DWRCoerciveRBReductor
 
     # Parameter space and operator are equal for all fom
     parameter_space = fom.parameters.space(0.1, 1)
@@ -51,47 +48,42 @@ def main(
         fom_outputs.append(comp_data['output'])
 
     # apply POD on bases
-    product = fom.h1_0_semi_product
+    product = fom.h1_product
     primal_reduced_basis, _ = pod(primal_snapshots, modes=modes, product=product)
 
-    standard_RB_reductor = standard_reductor(fom, RB=primal_reduced_basis, product=product,
-                                             coercivity_estimator=coercivity_estimator)
+    standard_RB_reductor = CoerciveRBReductor(fom, RB=primal_reduced_basis, product=product,
+                                              coercivity_estimator=coercivity_estimator)
 
     # also construct dual bases for dwr
-    # take the operator as the dual operator if it is symmetric
-    symmetries = [True, False]
-    dwr_reductors = []
-    for operator_symmetric in symmetries:
-        dual_reduced_bases = []
-        for d in range(fom.dim_output):
-            dual_snapshots = fom.solution_space.empty()
-            # initialize dual model from reductor
-            dual_fom = dwr_reductor.dual_model(fom, d, operator_symmetric)
-            for mu in training_set:
-                dual_snapshots.append(dual_fom.solve(mu))
-            dual_reduced_bases.append(pod(dual_snapshots, modes=modes, product=product)[0])
+    dual_reduced_bases = []
+    for d in range(fom.dim_output):
+        dual_snapshots = fom.solution_space.empty()
+        # initialize dual model from reductor
+        dual_fom = DWRCoerciveRBReductor.dual_model(fom, d)
+        for mu in training_set:
+            dual_snapshots.append(dual_fom.solve(mu))
+        dual_reduced_bases.append(pod(dual_snapshots, modes=modes, product=product)[0])
 
-        dwr_RB_reductor = dwr_reductor(fom,
-                                       primal_basis=primal_reduced_basis,
-                                       product=product,
-                                       dual_bases=dual_reduced_bases,
-                                       coercivity_estimator=coercivity_estimator,
-                                       operator_is_symmetric=operator_symmetric)
-        dwr_reductors.append(dwr_RB_reductor)
+    dwr_RB_reductor = DWRCoerciveRBReductor(fom,
+                                            primal_basis=primal_reduced_basis,
+                                            product=product,
+                                            dual_bases=dual_reduced_bases,
+                                            coercivity_estimator=coercivity_estimator)
 
     # dwr reductor without dual basis
-    dwr_reductor_primal = dwr_reductor(fom,
-                                       primal_basis=primal_reduced_basis,
-                                       product=product,
-                                       coercivity_estimator=coercivity_estimator,
-                                       operator_is_symmetric=operator_symmetric)
-    dwr_reductors.append(dwr_reductor_primal)
+    dwr_reductor_primal = DWRCoerciveRBReductor(fom,
+                                                primal_basis=primal_reduced_basis,
+                                                product=product,
+                                                coercivity_estimator=coercivity_estimator)
+
+    dwr_reductors = [dwr_RB_reductor, dwr_reductor_primal]
 
     # rom
     standard_rom = standard_RB_reductor.reduce()
-    dwr_roms = [dwr_red.reduce() for dwr_red in dwr_reductors]
-    roms = [standard_rom, dwr_roms[0], dwr_roms[1], dwr_roms[2]]
+    roms = [standard_rom]
+    roms.extend([dwr_red.reduce() for dwr_red in dwr_reductors])
 
+    print('Collecting results ...')
     results = []
     for rom in roms:
         results_full = {'fom': [], 'rom': [], 'err': [], 'est': []}
@@ -111,25 +103,21 @@ def main(
 
     # plot result
     plt.figure()
-    plt.semilogy(np.arange(len(training_set)), results[0]['err'], 'k',
+    plt.semilogy(np.arange(len(training_set)), results[0]['err'], 'ko-', markersize=4,
                  label=f'standard output error basis size {modes}')
-    plt.semilogy(np.arange(len(training_set)), results[0]['est'], 'k--',
+    plt.semilogy(np.arange(len(training_set)), results[0]['est'], 'k--', alpha=.5,
                  label=f'standard output estimate basis size {modes}')
-    plt.semilogy(np.arange(len(training_set)), results[1]['err'], 'g-o',
-                 label=f'dwr output error basis size {modes}, operator_symmetric=True')
-    plt.semilogy(np.arange(len(training_set)), results[1]['est'], 'g--',
-                 label=f'dwr output estimate basis size {modes}, operator_symmetric=True')
-    plt.semilogy(np.arange(len(training_set)), results[2]['err'], 'r',
-                 label=f'dwr output error basis size {modes}, operator_symmetric=False')
-    plt.semilogy(np.arange(len(training_set)), results[2]['est'], 'r--',
-                 label=f'dwr output estimate basis size {modes}, operator_symmetric=False')
-    plt.semilogy(np.arange(len(training_set)), results[3]['err'], 'y',
+    plt.semilogy(np.arange(len(training_set)), results[1]['err'], 'ro-', alpha=.5,
+                 label=f'dwr output error basis size {modes}')
+    plt.semilogy(np.arange(len(training_set)), results[1]['est'], 'r--', alpha=.5,
+                 label=f'dwr output estimate basis size {modes}')
+    plt.semilogy(np.arange(len(training_set)), results[2]['err'], 'yo-', alpha=.5,
                  label=f'dwr output error basis size {modes}, no dual_bases')
-    plt.semilogy(np.arange(len(training_set)), results[3]['est'], 'y--',
+    plt.semilogy(np.arange(len(training_set)), results[2]['est'], 'y--', alpha=.5,
                  label=f'dwr output estimate basis size {modes}, no dual_basis')
     plt.title(f'Error and estimate for {modes} basis functions for parameters in training set')
+    plt.xlim(10, 50)
     plt.legend()
-    # plt.show()
 
     # estimator study for smaller number of basis functions
     modes_set = np.arange(1, len(primal_reduced_basis)+1)
@@ -137,7 +125,7 @@ def main(
     for reductor in [standard_RB_reductor, dwr_reductors[0], dwr_reductors[1]]:
         max_errs, max_ests, min_errs, min_ests = [], [], [], []
         for mode in modes_set:
-            max_err, max_est, min_err, min_est = 0, 0, 1000, 1000
+            max_err, max_est, min_err, min_est = 0, 0, np.inf, np.inf
             rom = reductor.reduce(mode)
 
             for i, mu in enumerate(training_set):
@@ -161,16 +149,19 @@ def main(
     plt.figure()
     plt.semilogy(modes_set, min_errss[0], 'g-o', label='standard min error')
     plt.semilogy(modes_set, min_estss[0], 'g--', label='standard min estimate')
-    plt.semilogy(modes_set, min_errss[1], 'b-o',
-                 label='dwr min error, operator_symmetric=True')
-    plt.semilogy(modes_set, min_estss[1], 'b--',
-                 label='dwr min estimate, operator_symmetric=True')
-    plt.semilogy(modes_set, min_errss[2], 'm-o',
-                 label='dwr min error, operator_symmetric=False')
-    plt.semilogy(modes_set, min_estss[2], 'm--',
-                 label='dwr min estimate, operator_symmetric=False')
+    plt.semilogy(modes_set, min_errss[1], 'm-o', label='DWR min error')
+    plt.semilogy(modes_set, min_estss[1], 'm--', label='DWR min estimate')
     plt.legend()
     plt.title('Evolution of minimum error and estimate for different RB sizes')
+
+    plt.figure()
+    plt.semilogy(modes_set, max_errss[0], 'g-o', label='standard max error')
+    plt.semilogy(modes_set, max_estss[0], 'g--', label='standard max estimate')
+    plt.semilogy(modes_set, max_errss[1], 'm-o', label='DWR max error')
+    plt.semilogy(modes_set, max_estss[1], 'm--', label='DWR max estimate')
+    plt.legend()
+    plt.title('Evolution of maximum error and estimate for different RB sizes')
+
     plt.show()
 
 
