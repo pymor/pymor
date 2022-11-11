@@ -583,13 +583,16 @@ class ParameterSpace(ParametricObject):
         return all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
                    for k in self.parameters)
 
-    def clip(self, mu):
+    def clip(self, mu, keep_additional=False):
         """Clip (limit) |parameter values| to the space's parameter ranges.
 
         Parameters
         ----------
         mu
             |Parameter value| to clip.
+        keep_additional
+            Boolean to keep additional values in the `Mu` instance which are
+            not contained in the parameters, e.g. time parameters.
 
         Returns
         -------
@@ -599,8 +602,9 @@ class ParameterSpace(ParametricObject):
             mu = self.parameters.parse(mu)
         if not self.parameters.is_compatible(mu):
             raise NotImplementedError
-        mu_dict = {key: np.array([v for v in mu[key]], dtype=float) for key in mu}
-        for key in self.parameters:
-            range_ = self.ranges[key]
-            mu_dict[key] = np.clip(mu_dict[key], range_[0], range_[1])
-        return Mu(((key, mu_dict[key]) for key in self.parameters))
+        clipped = {key: np.clip(mu[key], range_[0], range_[1])
+                   for key, range_ in self.ranges.items()}
+        if keep_additional:
+            additional = {key: mu[key] for key in mu if key not in clipped}
+            clipped = dict(clipped, **additional)
+        return Mu(clipped)
