@@ -34,12 +34,6 @@ class DWRCoerciveRBReductor(BasicObject):
         See :class:`~pymor.reductors.coercive.CoerciveRBReductor`.
     coercivity_estimator
         See :class:`~pymor.reductors.coercive.CoerciveRBReductor`.
-    operator_is_symmetric
-        If the operator of `fom` is symmetric (in theory and before boundary treatment),
-        it can make sense to consider the same operator also for the adjoint case
-        for the dual models. In this case `operator_is_symmetric` as `True`,
-        means to use the same operator for both the primal as well as for the dual model.
-        If `False` the adjoint operator is used.
     dual_bases
         List of |VectorArrays| containing the reduced basis for the dual models that are
         constructed with :meth:`~pymor.reductors.dwr.dual_model`, where each entry
@@ -52,8 +46,7 @@ class DWRCoerciveRBReductor(BasicObject):
     """
 
     def __init__(self, fom, primal_basis=None, product=None, coercivity_estimator=None,
-                 operator_is_symmetric=False, dual_bases=None, check_orthonormality=None,
-                 check_tol=None):
+                 dual_bases=None, check_orthonormality=None, check_tol=None):
         self.__auto_init(locals())
         self._last_rom = None
 
@@ -72,12 +65,9 @@ class DWRCoerciveRBReductor(BasicObject):
         # either needed for estimation or just for the corrected output
         for d in range(fom.dim_output):
             # construct dual model
-            dual_model = self.dual_model(fom, d, operator_is_symmetric)
+            dual_model = self.dual_model(fom, d)
             # choose dual basis
-            if dual_bases is not None:
-                dual_basis = dual_bases[d]
-            else:
-                dual_basis = primal_basis
+            dual_basis = primal_basis if dual_bases is None else dual_bases[d]
             # define dual reductors (with None as coercivity_estimator)
             dual_reductor = CoerciveRBReductor(dual_model, RB=dual_basis, product=product,
                                                coercivity_estimator=None,
@@ -143,7 +133,7 @@ class DWRCoerciveRBReductor(BasicObject):
                                          dual_projected_primal_residuals)
 
     @classmethod
-    def dual_model(cls, model, dim=0, operator_is_symmetric=False):
+    def dual_model(cls, model, dim=0):
         """Return dual model with the output as right hand side.
 
         The dual equation is defined as to find the solution p such that
@@ -160,10 +150,6 @@ class DWRCoerciveRBReductor(BasicObject):
         dim
             The dimension of the `fom.output_functional` for which the dual model
             is to be built.
-        operator_is_symmetric
-            If `True`, `fom.operator` is used for the dual operator of a(., .).
-            This is only feasable if the operator is symmetric (in theory).
-            If `False` the adjoint `fom.operator.H` is used instead.
 
         Returns
         -------
@@ -171,8 +157,9 @@ class DWRCoerciveRBReductor(BasicObject):
         """
         assert 0 <= dim < model.dim_output
         e_i_vec = model.output_functional.range.from_numpy(np.eye(1, model.dim_output, dim))
-        dual_rhs = - model.output_functional.H @ VectorOperator(e_i_vec)
-        dual_operator = model.operator if operator_is_symmetric else model.operator.H
+        output = model.output_functional
+        dual_rhs = - output.H @ VectorOperator(e_i_vec)
+        dual_operator = model.operator.H
         dual_model = model.with_(operator=dual_operator, rhs=dual_rhs,
                                  output_functional=None, name=model.name + '_dual')
         return dual_model
@@ -208,18 +195,12 @@ class DWRCoerciveRBEstimator(ImmutableObject):
         for d in range(m.dim_output):
             dual_solution = self.dual_models[d].solve(mu)
             est_dus.append(self.dual_estimators[d].estimate_error(dual_solution, mu, m))
-        # since dual models have a constant coercivity estimator,
-        # we do not have to multiply it here.
         ret = (est_pr * est_dus).T
-        if return_vector:
-            return ret
-        else:
-            return np.linalg.norm(ret)
+        return ret if return_vector else np.linalg.norm(ret)
 
     def restricted_to_subbasis(self, dual_roms, dim, m):
         primal_estimator = self.primal_estimator.restricted_to_subbasis(dim, m)
-        dual_estimators = [dual_estimator.restricted_to_subbasis(dim, m) for dual_estimator
-                           in self.dual_estimators]
+        dual_estimators = [dual_estimator.restricted_to_subbasis(dim, m) for dual_estimator in self.dual_estimators]
         return DWRCoerciveRBEstimator(primal_estimator, dual_estimators, dual_roms)
 
 
