@@ -60,8 +60,10 @@ class DWRCoerciveRBReductor(BasicObject):
         if dual_bases is not None:
             assert len(dual_bases) == fom.dim_output
 
-        self.primal_reductor = CoerciveRBReductor(fom, primal_basis, product,
-                                                  coercivity_estimator, check_tol)
+        self.primal_reductor = CoerciveRBReductor(fom, RB=primal_basis, product=product,
+                                                  coercivity_estimator=coercivity_estimator,
+                                                  check_orthonormality=check_orthonormality,
+                                                  check_tol=check_tol)
         self.dual_reductors = []
         assert (fom.output_functional is not None and fom.output_functional.linear), \
             'The features of the DWR reductor cannot be used, ' + \
@@ -77,8 +79,10 @@ class DWRCoerciveRBReductor(BasicObject):
             else:
                 dual_basis = primal_basis
             # define dual reductors (with None as coercivity_estimator)
-            dual_reductor = CoerciveRBReductor(dual_model, dual_basis, product, None,
-                                               check_orthonormality, check_tol)
+            dual_reductor = CoerciveRBReductor(dual_model, RB=dual_basis, product=product,
+                                               coercivity_estimator=None,
+                                               check_orthonormality=check_orthonormality,
+                                               check_tol=check_tol)
             self.dual_reductors.append(dual_reductor)
 
     def reduce(self, dim=None):
