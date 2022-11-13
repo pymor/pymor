@@ -12,6 +12,34 @@ from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 
 
 class ERAReductor(CacheableObject):
+    r"""Eigensystem Realization Algorithm reductor.
+
+    Constructs a (reduced) realization that matches the Markov parameters optimally for given order
+    by orthogonal factorization of the Hankel matrix of Markov parameters (see :cite:`K78`).
+
+    For a large number if inputs and/or outputs, the factorization of the Hankel matrix can be
+    accelerated by tangential projections of the Markov parameters first (see :cite:`KG16`).
+
+    Attributes
+    ----------
+    data
+        |NumPy array| that contains the first :math:`n` Markov parameters of a discrete-time system.
+        Has to be one- or three-dimensional with either::
+
+            data.shape = (n)
+
+        for scalar-valued Markov parameters or::
+
+            data.shape = (n, p, m)
+
+        for matrix-valued Markov parameters of dimension :math:`p\times m`, where
+        :math:`m` are the number of inputs and :math:`p` are the number of outputs of the system.
+    sampling_time
+        A positive number that denotes the sampling time of the system (in seconds).
+    force_stability
+        Whether the Markov parameters are zero-padded to double the length in order to enforce
+        Kung's stability assumption :cite:`K78`. Defaults to `True`.
+    """
     cache_region = 'memory'
 
     def __init__(self, data, sampling_time, force_stability=True):
@@ -76,7 +104,27 @@ class ERAReductor(CacheableObject):
             err += 4 * np.linalg.norm(s2[l2:])**2
         return err
 
-    def reduce(self, r=None, l1=None, l2=None, tol=None):
+    def reduce(self, r=None, tol=None, l1=None, l2=None):
+        """Construct a minimal realization.
+
+
+
+        Parameters
+        ----------
+        r
+            Order of the reduced model if `tol` is `None`, maximum order if `tol` is specified.
+        tol
+            Tolerance for the error bound if `r` is `None`.
+        l1
+            Number of left (output) directions for tangential projection.
+        l2
+            Number of right (input) directions for tangential projection.
+
+        Returns
+        -------
+        rom
+            Reduced-order discrete-time |LTIModel|.
+        """
         assert r is not None or tol is not None
         s, p, m = self.data.shape
         assert l1 is None or isinstance(l1, int) and l1 <= p
