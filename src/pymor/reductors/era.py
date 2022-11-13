@@ -37,18 +37,19 @@ class ERAReductor(CacheableObject):
 
     @cached
     def _sv_U_V(self, l1=None, l2=None):
-        H = NumpyHankelOperator(self.data)
-        if l1:
-            W1 = self.output_projector(l1)
+        if l1 or l2:
+            mats = [self.output_projector(l1).conj().T, self.data] if l1 else [self.data]
+            mats = [*mats, self.input_projector(l2)] if l2 else mats
+            s1 = ('lp,', 'l') if l1 else ('', 'p')
+            s2 = (',mk', 'k') if l2 else ('', 'm')
             self.logger.info('Projecting Markov parameters ...')
-            H = NumpyHankelOperator(W1.conj().T @ H.markov_parameters)
-        if l2:
-            W2 = self.input_projector(l2)
-            self.logger.info('Projecting Markov parameters ...')
-            H = NumpyHankelOperator(H.markov_parameters @ W2)
+            einstr = s1[0] + 'npm' + s2[0] + '->n' + s1[1] + s2[1]
+            h = np.einsum(einstr, *mats, optimize='optimal')
+        else:
+            h = self.data
 
         self.logger.info(f'Computing SVD of the {"projected " if l1 or l2 else ""}Hankel matrix ...')
-        U, sv, V = spla.svd(to_matrix(H), full_matrices=False)
+        U, sv, V = spla.svd(to_matrix(NumpyHankelOperator(h)), full_matrices=False)
 
         return sv, U.T, V
 
