@@ -14,11 +14,13 @@ from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 class ERAReductor(CacheableObject):
     cache_region = 'memory'
 
-    def __init__(self, data, sampling_time):
+    def __init__(self, data, sampling_time, force_stability=True):
         assert sampling_time > 0
         if data.ndim == 1:
             data = data.reshape(-1, 1, 1)
         assert data.ndim == 3
+        if force_stability:
+            data = np.concatenate([data, np.zeros_like(data)[1:]], axis=0)
         self.__auto_init(locals())
 
     @cached
