@@ -21,6 +21,11 @@ class pAAAReductor(BasicObject):
     :cite:`NST18` for the non-parametric and :cite:`CRBG20` for the parametric version of
     the algorithm.
 
+    .. note::
+        The dimension of the Loewner matrix which will be assembled in the algorithm has
+        `len(sampling_values[0])*...*len(sampling_values[-1])` rows. This reductor should
+        only be used with a low number of parameters.
+
     Parameters
     ----------
     sampling_values
@@ -300,7 +305,7 @@ def nd_loewner(samples, svs, itpl_part):
         (Parametric) Loewner matrix based only on LS partition.
     """
     d = len(samples.shape)
-    ls_part = _ls_part(itpl_part, svs)
+    ls_part = [sorted(set(range(len(s))) - set(p)) for p, s in zip(itpl_part, svs)]
 
     s0 = svs[0]
     s = s0[itpl_part[0]]
@@ -391,13 +396,13 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
     Returns
     -------
     bary_func
-        (Multi-variate) Loewner matrix based on all combinations of partitions.
+        (Multi-variate) rational function in barycentric form.
     """
     def bary_func(*args):
         pd = 1
         # this loop is for pole cancellation which occurs at interpolation nodes
-        for i in range(len(itpl_nodes)):
-            d = args[i] - itpl_nodes[i]
+        for arg, itpl_node in zip(args, itpl_nodes):
+            d = arg - itpl_node
             d_zero = d[np.abs(d) < removable_singularity_tol]
             if len(d_zero) > 0:
                 d_min_idx = np.argmin(np.abs(d))
@@ -412,8 +417,3 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
         return np.atleast_2d(nd[0])
 
     return bary_func
-
-
-def _ls_part(itpl_part, svs):
-    """Compute least-squares partition based on interpolation partition."""
-    return [sorted(set(range(len(s))) - set(p)) for p, s in zip(itpl_part, svs)]
