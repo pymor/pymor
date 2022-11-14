@@ -49,26 +49,38 @@ def main(
 
     # apply POD on bases
     product = fom.h1_product
-    primal_reduced_basis, _ = pod(primal_snapshots, modes=modes, product=product)
+    primal_reduced_basis, _ = pod(primal_snapshots, modes=modes-1, product=product)
 
     standard_RB_reductor = CoerciveRBReductor(fom, RB=primal_reduced_basis, product=product,
                                               coercivity_estimator=coercivity_estimator)
 
     # also construct dual bases for dwr
     dual_reduced_bases = []
+    dual_foms = []
     for d in range(fom.dim_output):
         dual_snapshots = fom.solution_space.empty()
         # initialize dual model from reductor
         dual_fom = DWRCoerciveRBReductor.dual_model(fom, d)
+        dual_foms.append(dual_fom)  # save this for later
         for mu in training_set:
             dual_snapshots.append(dual_fom.solve(mu))
-        dual_reduced_bases.append(pod(dual_snapshots, modes=modes, product=product)[0])
+        # use one mode more to test the case where the size it not the same
+        dual_reduced_bases.append(pod(dual_snapshots, modes=modes+1, product=product)[0])
 
     dwr_RB_reductor = DWRCoerciveRBReductor(fom,
                                             primal_basis=primal_reduced_basis,
                                             product=product,
                                             dual_bases=dual_reduced_bases,
                                             coercivity_estimator=coercivity_estimator)
+
+    # test the extension
+    another_mu = parameter_space.sample_randomly(1)[0]
+    u_ = fom.solve(another_mu)
+    ps_ = []
+    for dual_fom in dual_foms:
+        ps_.append(dual_fom.solve(another_mu))
+
+    dwr_RB_reductor.extend_basis(u_, ps_)
 
     # dwr reductor without dual basis
     dwr_reductor_primal = DWRCoerciveRBReductor(fom,
@@ -83,7 +95,6 @@ def main(
     roms = [standard_rom]
     roms.extend([dwr_red.reduce() for dwr_red in dwr_reductors])
 
-    print('Collecting results ...')
     results = []
     for rom in roms:
         results_full = {'fom': [], 'rom': [], 'err': [], 'est': []}
@@ -96,8 +107,8 @@ def main(
             results_full['err'].append(np.linalg.norm(np.abs(s_fom[-1]-s_rom[-1])))
             results_full['est'].append(s_est)
 
-            # just for testing purpose, only until accuracy 1e-6 due to symmetric=True case
-            assert np.linalg.norm(np.abs(s_rom-s_fom)) <= s_est + 1e-6
+            # just for testing purpose
+            assert np.linalg.norm(np.abs(s_rom-s_fom)) <= s_est
 
         results.append(results_full)
 
