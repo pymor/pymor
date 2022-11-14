@@ -93,22 +93,22 @@ class DWRCoerciveRBReductor(BasicObject):
             return self._reduce_to_subbasis(dim)
 
     def _reduce(self):
-        primal_rom = self.primal_reductor.reduce()
+        with self.logger.block('Reducing primal FOM ...'):
+            primal_rom = self.primal_reductor.reduce()
 
-        # reduce dual models with most possible basis functions
-        dual_roms = [red.reduce() for red in self.dual_reductors]
+        with self.logger.block('Reducing dual FOM ...'):
+            dual_roms = [red.reduce() for red in self.dual_reductors]
 
-        # build corrected output
-        corrected_output = self.build_corrected_output(primal_rom, dual_roms)
+        with self.logger.block('Constructing DWR error estimator ...'):
+            dual_estimators = [dual_rom.error_estimator for dual_rom in dual_roms]
+            error_estimator = DWRCoerciveRBEstimator(primal_rom.error_estimator, dual_estimators, dual_roms)
 
-        # build error estimator
-        dual_estimators = [dual_reductor.assemble_error_estimator()
-                           for dual_reductor in self.dual_reductors]
-        error_estimator = DWRCoerciveRBEstimator(primal_rom.error_estimator, dual_estimators,
-                                                 dual_roms)
+        with self.logger.block('Building corrected output ...'):
+            corrected_output = self.build_corrected_output(primal_rom, dual_roms)
 
-        # build rom
-        rom = primal_rom.with_(output_functional=corrected_output, error_estimator=error_estimator)
+        with self.logger.block('Building ROM ...'):
+            rom = primal_rom.with_(output_functional=corrected_output, error_estimator=error_estimator)
+
         return rom
 
     def _reduce_to_subbasis(self, dim):
@@ -171,10 +171,10 @@ class DWRCoerciveRBReductor(BasicObject):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
         return self.primal_reductor.reconstruct(u)
 
-    def extend_basis(self, U, Ps, method='gram_schmidt', copy_U=True):
-        self.primal_reductor.extend_basis(U, method=method, copy_U=copy_U)
+    def extend_basis(self, U, Ps, method='gram_schmidt', copy=True):
+        self.primal_reductor.extend_basis(U, method=method, copy_U=copy)
         for i, P in enumerate(Ps):
-            self.dual_reductors[i].extend_basis(P, method=method, copy_U=copy_U)
+            self.dual_reductors[i].extend_basis(P, method=method, copy_U=copy)
 
 
 class DWRCoerciveRBEstimator(ImmutableObject):
