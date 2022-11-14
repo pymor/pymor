@@ -88,6 +88,30 @@ class pAAAReductor(BasicObject):
                 sampling_values[0] = np.append(sampling_values[0], s_conj_list)
                 self.samples = np.vstack([self.samples] + samples_conj_list)
 
+        # Transform samples for MIMO case
+        if len(self.samples.shape) != len(sampling_values):
+            assert len(self.samples.shape) == len(sampling_values) + 2
+            self.dim_input = self.samples.shape[-1]
+            self.dim_output = self.samples.shape[-2]
+            samples_T = np.empty(self.samples.shape[:-2], dtype=self.samples.dtype)
+            rng = new_rng(0)
+            if any(np.iscomplex(sampling_values[0])):
+                w = 1j * rng.normal(scale=np.sqrt(2)/2, size=(self.dim_output,)) \
+                    + rng.normal(scale=np.sqrt(2)/2, size=(self.dim_output,))
+                v = 1j * rng.normal(scale=np.sqrt(2)/2, size=(self.dim_input,)) \
+                    + rng.normal(scale=np.sqrt(2)/2, size=(self.dim_input,))
+            else:
+                w = rng.normal(size=(self.dim_output,))
+                v = rng.normal(size=(self.dim_input,))
+            w /= np.linalg.norm(w)
+            v /= np.linalg.norm(v)
+            samples_T = self.samples @ v @ w
+            MIMO_samples = self.samples
+            samples = samples_T
+        else:
+            self.dim_input = 1
+            self.dim_output = 1
+
         self.__auto_init(locals())
 
     def reduce(self, tol=1e-7, itpl_part=None, max_itpl=None):
@@ -116,40 +140,15 @@ class pAAAReductor(BasicObject):
         svs = self.sampling_values
         samples = self.samples
 
-        num_vars = len(svs)
         max_samples = np.max(np.abs(samples))
         rel_tol = tol * max_samples
-
-        # Transform samples for MIMO case
-        if len(samples.shape) != len(svs):
-            assert len(samples.shape) == len(svs) + 2
-            dim_input = samples.shape[-1]
-            dim_output = samples.shape[-2]
-            samples_T = np.empty(samples.shape[:-2], dtype=samples.dtype)
-            rng = new_rng(0)
-            if any(np.iscomplex(svs[0])):
-                w = 1j * rng.normal(scale=np.sqrt(2)/2, size=(dim_output,)) \
-                    + rng.normal(scale=np.sqrt(2)/2, size=(dim_output,))
-                v = 1j * rng.normal(scale=np.sqrt(2)/2, size=(dim_input,)) \
-                    + rng.normal(scale=np.sqrt(2)/2, size=(dim_input,))
-            else:
-                w = rng.normal(size=(dim_output,))
-                v = rng.normal(size=(dim_input,))
-            w /= np.linalg.norm(w)
-            v /= np.linalg.norm(v)
-            samples_T = samples @ v @ w
-            samples_orig = samples
-            samples = samples_T
-        else:
-            dim_input = 1
-            dim_output = 1
 
         # initialize data partitions, error, max iterations
         err = np.inf
         if itpl_part is None:
-            self.itpl_part = [[] for _ in range(num_vars)]
+            self.itpl_part = [[] for _ in range(self.num_vars)]
         else:
-            assert len(itpl_part) == num_vars
+            assert len(itpl_part) == self.num_vars
             self.itpl_part = itpl_part
         if max_itpl is None:
             max_itpl = [len(s)-1 for s in svs]
@@ -170,7 +169,7 @@ class pAAAReductor(BasicObject):
 
             # set errors to zero such that new interpolation points are consistent with max_itpl
             zero_idx = []
-            for i in range(num_vars):
+            for i in range(self.num_vars):
                 if len(self.itpl_part[i]) >= max_itpl[i]:
                     zero_idx.append(list(range(samples.shape[i])))
                 else:
@@ -187,11 +186,11 @@ class pAAAReductor(BasicObject):
                 break
 
             greedy_idx = np.unravel_index(err_mat.argmax(), err_mat.shape)
-            for i in range(num_vars):
+            for i in range(self.num_vars):
                 if greedy_idx[i] not in self.itpl_part[i] and len(self.itpl_part[i]) < max_itpl[i]:
                     self.itpl_part[i].append(greedy_idx[i])
 
-                    # perform double interpolation step to enforce real state-space representation
+                    # perform double interpolation step to allow real state-space representation
                     if i == 0 and self.conjugate and np.imag(svs[i][greedy_idx[i]]) != 0:
                         conj_sample = np.conj(svs[i][greedy_idx[i]])
                         conj_idx = np.where(svs[0] == conj_sample)[0]
@@ -228,39 +227,38 @@ class pAAAReductor(BasicObject):
                 break
 
         # in MIMO case construct barycentric form based on matrix/vector samples
-        if dim_input != 1 or dim_output != 1:
-            itpl_samples = samples_orig[np.ix_(*self.itpl_part)]
-            itpl_samples = np.reshape(itpl_samples, (-1, dim_output, dim_input))
+        if self.dim_input != 1 or self.dim_output != 1:
+            itpl_samples = self.MIMO_samples[np.ix_(*self.itpl_part)]
+            itpl_samples = np.reshape(itpl_samples, (-1, self.dim_output, self.dim_input))
 
         bary_func = make_bary_func(itpl_nodes, itpl_samples, coefs)
 
         if self.num_vars > 1:
-            return TransferFunction(dim_input, dim_output,
+            return TransferFunction(self.dim_input, self.dim_output,
                                     lambda s, mu: bary_func(s, *(mu[p] for p in self.parameters)),
                                     parameters=self.parameters)
         else:
-            return TransferFunction(dim_input, dim_output, lambda s: bary_func(s))
+            return TransferFunction(self.dim_input, self.dim_output, lambda s: bary_func(s))
 
-    def _post_processing(self, samples, svs, d_nsp):
+    def _post_processing(self, d_nsp):
         """Compute coefficients/partition to construct minimal interpolant."""
-        num_vars = len(svs)
         max_idx = np.argmax([len(ip) for ip in self.itpl_part])
         max_rks = []
-        for i in range(num_vars):
+        for i in range(self.num_vars):
             max_rk = 0
             # we don't need to compute this max rank since we exploit nullspace structure
             if i == max_idx:
                 max_rks.append(len(self.itpl_part[max_idx])-1)
                 continue
             shapes = []
-            for j in range(num_vars):
+            for j in range(self.num_vars):
                 if i != j:
-                    shapes.append(samples.shape[j])
+                    shapes.append(self.samples.shape[j])
             # compute max ranks of all possible 1-D Loewner matrices
             for idc in itertools.product(*(range(s) for s in shapes)):
                 l_idc = list(idc)
                 l_idc.insert(i, slice(None))
-                L = nd_loewner(samples[tuple(l_idc)], [svs[i]], [self.itpl_part[i]])
+                L = nd_loewner(self.samples[tuple(l_idc)], [self.sampling_values[i]], [self.itpl_part[i]])
                 rk = np.linalg.matrix_rank(L, tol=self.L_rk_tol)
                 if rk > max_rk:
                     max_rk = rk
@@ -275,7 +273,7 @@ class pAAAReductor(BasicObject):
             self.itpl_part[i] = self.itpl_part[i][0:max_rks[i]+1]
 
         # solve LS problem
-        L = full_nd_loewner(samples, svs, self.itpl_part)
+        L = full_nd_loewner(self.samples, self.sampling_values, self.itpl_part)
         _, S, V = spla.svd(L, full_matrices=False, lapack_driver='gesvd')
         VH = np.conj(V.T)
         coefs = VH[:, -1:]
