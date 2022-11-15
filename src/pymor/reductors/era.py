@@ -81,13 +81,13 @@ class ERAReductor(CacheableObject):
         return sv, U.T, V
 
     def output_projector(self, l1):
-        self.logger.info(f'Constructing output projector ({l1} tangential directions) ...')
         assert isinstance(l1, int) and l1 <= self.data.shape[1]
+        self.logger.info(f'Constructing output projector ({l1} tangential directions) ...')
         return self._s1_W1()[1][:, :l1]
 
     def input_projector(self, l2):
-        self.logger.info(f'Constructing input projector ({l2} tangential directions) ...')
         assert isinstance(l2, int) and l2 <= self.data.shape[2]
+        self.logger.info(f'Constructing input projector ({l2} tangential directions) ...')
         return self._s2_W2()[1][:, :l2]
 
     def error_bounds(self, l1=None, l2=None):
