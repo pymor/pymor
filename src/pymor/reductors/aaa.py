@@ -106,8 +106,8 @@ class PAAAReductor(BasicObject):
             w /= np.linalg.norm(w)
             v /= np.linalg.norm(v)
             samples_T = self.samples @ v @ w
-            MIMO_samples = self.samples
-            samples = samples_T
+            self.MIMO_samples = self.samples
+            self.samples = samples_T
         else:
             self.dim_input = 1
             self.dim_output = 1
@@ -305,12 +305,8 @@ def nd_loewner(samples, svs, itpl_part):
     d = len(samples.shape)
     ls_part = [sorted(set(range(len(s))) - set(p)) for p, s in zip(itpl_part, svs)]
 
-    s0 = svs[0]
-    s = s0[itpl_part[0]]
-    sh = s0[ls_part[0]]
-    sd = sh[:, np.newaxis] - s
-    sdpd = sd
-    for i in range(1, d):
+    sdpd = 1
+    for i in range(d):
         p0 = svs[i]
         p = p0[itpl_part[i]]
         ph = p0[ls_part[i]]
@@ -348,23 +344,25 @@ def full_nd_loewner(samples, svs, itpl_part):
     range_S = range(len(svs))
 
     # consider all combinations of variables coming from interpolation vs LS partition
-    for i in itertools.product(*([0, 1] for _ in range_S)):
+    # `i_itpl[i]` is `True` if we are considering a partitioning where the `i`-th parameter
+    # is interpolated
+    for i_itpl in itertools.product(*([False, True] for _ in range_S)):
 
         # skip cases corresponding to all interpolated or all LS fit
-        if i == len(svs) * (0,) or i == len(svs) * (1,):
+        if np.all(not i_itpl) or np.all(i_itpl):
             continue
 
-        for j in itertools.product(*(itpl_part[k] for k in range_S if i[k] == 0)):
+        for j in itertools.product(*(itpl_part[k] for k in range_S if not i_itpl[k])):
             l_j = list(j)
-            for ii in range(len(i)):
-                if i[ii] == 1:
+            for ii in range(len(i_itpl)):
+                if i_itpl[ii]:
                     l_j.insert(ii, slice(None))
             samples0 = samples[tuple(l_j)]
-            svs0 = [svs[k] for k in range_S if i[k] == 1]
-            itpl_part0 = [itpl_part[k] for k in range_S if i[k] == 1]
+            svs0 = [svs[k] for k in range_S if i_itpl[k]]
+            itpl_part0 = [itpl_part[k] for k in range_S if i_itpl[k]]
             T_mat = 1
             for k in range_S:
-                if i[k] == 1:
+                if i_itpl[k]:
                     T_new = np.eye(len(itpl_part[k]))
                 else:
                     idx = np.where(np.array(itpl_part[k]) == l_j[k])[0][0]
@@ -376,7 +374,18 @@ def full_nd_loewner(samples, svs, itpl_part):
 
 
 def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14):
-    """Return function handle for (multivariate) barycentric form.
+    r"""Return function handle for (multivariate) barycentric form.
+
+    The multivariate barycentric form for two variables is given by
+
+    .. math::
+        H(s,p) = \frac{\sum_{i=1}^{k}\sum_{j=1}^{q}\frac{\alpha_{ij}H(s_i,p_j)}{(s-s_i)(p-p_j)}}
+            {\sum_{i=1}^{k}\sum_{j=1}^{q}\frac{\alpha_{ij}}{(s-s_i)(p-p_j)}}
+
+    where for :math:`i=1,\ldots,k` and :math:`j=1,\ldots,q` we have that :math:`s_i` and :math:`p_j`
+    are interpolation nodes, :math:`H(s_i,p_j)` are interpolation values and :math:`\alpha_{ij}`
+    represent the barycentric coefficients. This implementation can also handle single-variable
+    barycentric forms as well as barycentric forms with more than two variables.
 
     Parameters
     ----------
