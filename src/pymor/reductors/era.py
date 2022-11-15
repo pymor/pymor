@@ -40,6 +40,7 @@ class ERAReductor(CacheableObject):
         Whether the Markov parameters are zero-padded to double the length in order to enforce
         Kung's stability assumption :cite:`K78`. Defaults to `True`.
     """
+
     cache_region = 'memory'
 
     def __init__(self, data, sampling_time, force_stability=True):
@@ -63,22 +64,20 @@ class ERAReductor(CacheableObject):
         _, s2, W2 = spla.svd(np.vstack(self.data), full_matrices=False)
         return s2, W2.conj().T
 
-    @cached
-    def _sv_U_V(self, l1=None, l2=None):
-        if l1 or l2:
-            mats = [self.output_projector(l1).conj().T, self.data] if l1 else [self.data]
-            mats = [*mats, self.input_projector(l2)] if l2 else mats
-            s1 = ('lp,', 'l') if l1 else ('', 'p')
-            s2 = (',mk', 'k') if l2 else ('', 'm')
-            self.logger.info('Projecting Markov parameters ...')
-            einstr = s1[0] + 'npm' + s2[0] + '->n' + s1[1] + s2[1]
-            h = np.einsum(einstr, *mats, optimize='optimal')
-        else:
-            h = self.data
+    def _project_markov_parameters(self, l1, l2):
+        mats = [self.output_projector(l1).conj().T, self.data] if l1 else [self.data]
+        mats = [*mats, self.input_projector(l2)] if l2 else mats
+        s1 = ('lp,', 'l') if l1 else ('', 'p')
+        s2 = (',mk', 'k') if l2 else ('', 'm')
+        self.logger.info('Projecting Markov parameters ...')
+        einstr = s1[0] + 'npm' + s2[0] + '->n' + s1[1] + s2[1]
+        return np.einsum(einstr, *mats, optimize='optimal')
 
+    @cached
+    def _sv_U_V(self, l1, l2):
+        h = self._project_markov_parameters(l1, l2) if l1 or l2 else self.data
         self.logger.info(f'Computing SVD of the {"projected " if l1 or l2 else ""}Hankel matrix ...')
         U, sv, V = spla.svd(to_matrix(NumpyHankelOperator(h)), full_matrices=False)
-
         return sv, U.T, V
 
     def output_projector(self, l1):
@@ -106,8 +105,6 @@ class ERAReductor(CacheableObject):
 
     def reduce(self, r=None, tol=None, l1=None, l2=None):
         """Construct a minimal realization.
-
-
 
         Parameters
         ----------
