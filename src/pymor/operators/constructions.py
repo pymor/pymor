@@ -1454,3 +1454,47 @@ class LinearInputOperator(Operator):
 
     def as_range_array(self, mu=None):
         return self.B.as_range_array(mu).lincomb(mu['input'])
+
+
+class BilinearFunctional(Operator):
+    """An `Operator` intended as a bilinear functional.
+
+    Given an operator `A` acting on R^d, this class enables the functional::
+
+        op: R^d ----> R^1
+             u  |---> A(u, u)
+
+    In particular this is intended to provide the jacobian of such a bilinear
+    functional::
+
+        op.jacobian(U, mu).apply(V) = (A(u, v; mu) + A(v, u; mu))
+
+    Parameters
+    ----------
+    operator
+        The `Operator` to be wrapped as a bilinear functional.
+    """
+
+    linear = False
+    bilinear = True
+    range = NumpyVectorSpace(1)
+
+    def __init__(self, operator, name=None):
+        self.__auto_init(locals())
+        self.source = operator.source
+
+    @property
+    def H(self):
+        return BilinearFunctional(self.operator.H, name=self.name + '_adjoint')
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        return self.range.from_numpy(self.operator.apply2(U, U, mu))
+
+    def jacobian(self, U, mu=None):
+        inner_vec = self.operator.apply_adjoint(U, mu) + self.operator.apply(U, mu)
+        return VectorFunctional(inner_vec, name=self.name + '_jacobian')
+
+    def d_mu(self, parameter, index=1):
+        # the parameter derivative only takes effect on the inner operator
+        return BilinearFunctional(self.operator.d_mu(parameter, index), name=self.name + '_d_mu')

@@ -9,7 +9,7 @@ from pymor.core.exceptions import RuleNotMatchingError, NoMatchingRuleError
 from pymor.operators.block import BlockOperatorBase, BlockRowOperator, BlockColumnOperator
 from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ConstantOperator, ProjectedOperator,
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
-                                           IdentityOperator, VectorArrayOperator)
+                                           IdentityOperator, VectorArrayOperator, BilinearFunctional)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -242,6 +242,13 @@ class ProjectRules(RuleTable):
         else:
             return np.sum(projected_ops)
 
+    @match_class(BilinearFunctional)
+    def action_BilinearFunctional(self, op):
+        if op.operator.source == op.operator.range:
+            return BilinearFunctional(project(op.operator, self.source_basis, self.source_basis), name=op.name)
+        else:
+            return BilinearFunctional(project(op.operator, self.range_basis, self.source_basis), name=op.name)
+
 
 def project_to_subbasis(op, dim_range=None, dim_source=None):
     """Project already projected |Operator| to a subbasis.
@@ -371,3 +378,11 @@ class ProjectToSubbasisRules(RuleTable):
             else op.range_basis[:dim_range]
         return ProjectedOperator(op.operator, range_basis, source_basis, product=None,
                                  solver_options=op.solver_options)
+
+    @match_class(BilinearFunctional)
+    def action_BilinearFunctional(self, op):
+        dim_range, dim_source = self.dim_range, self.dim_source
+        if op.operator.source == op.operator.range:
+            return BilinearFunctional(project_to_subbasis(op.operator, dim_range=dim_source, dim_source=dim_source), name=op.name)
+        else:
+            return BilinearFunctional(project_to_subbasis(op.operator, dim_range=dim_range, dim_source=dim_source), name=op.name)

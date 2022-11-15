@@ -12,7 +12,7 @@ from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.core.config import config
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
-                                           LincombOperator, VectorArrayOperator)
+                                           LincombOperator, VectorArrayOperator, BilinearFunctional)
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 from pymor.operators.interface import as_array_max_length
 from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
@@ -166,6 +166,43 @@ def test_block_identity_lincomb():
     assert almost_equal(ones2 * 2, idid.apply_adjoint(ones2))
     assert almost_equal(ones2 * 0.5, idid.apply_inverse(ones2))
     assert almost_equal(ones2 * 0.5, idid.apply_inverse_adjoint(ones2))
+
+
+def test_bilin_functional():
+    from pymor.operators.constructions import (ConstantOperator,
+                                               VectorFunctional)
+    space = NumpyVectorSpace(10)
+    scalar = NumpyVectorSpace(1)
+    const_vec = scalar.from_numpy([10.])
+    const_op = ConstantOperator(const_vec, space)
+    lin_vec = space.ones()
+    lin_op = VectorFunctional(lin_vec)
+    bilin_matrix = np.eye(space.dim)
+    bilin_op = NumpyMatrixOperator(bilin_matrix)
+    bilin_op = BilinearFunctional(bilin_op)
+
+    output_op_no_bilin = const_op + lin_op
+    output_op_with_bilin = const_op + lin_op + bilin_op
+
+    zero_v = space.zeros()
+    one_vec = [1.]
+    two_vec = [2.]
+    for i in range(1, space.dim):
+        two_vec.append(0.)
+        one_vec.append(0.)
+    two_v = space.from_numpy(two_vec)
+    ten_s = const_vec
+    twelve_s = scalar.from_numpy([12.])
+    sixteen_s = scalar.from_numpy([16.])
+
+    assert output_op_no_bilin.source == space and \
+           output_op_with_bilin.source == space
+    assert output_op_no_bilin.range == scalar and \
+           output_op_with_bilin.range == scalar
+    assert almost_equal(ten_s, output_op_no_bilin.apply(zero_v)) \
+           and almost_equal(ten_s, output_op_with_bilin.apply(zero_v))
+    assert almost_equal(twelve_s, output_op_no_bilin.apply(two_v)) \
+           and almost_equal(sixteen_s, output_op_with_bilin.apply(two_v))
 
 
 def test_pickle(operator):
