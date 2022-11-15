@@ -512,7 +512,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
         return self.H.apply(V, mu=mu)
 
     def _calc_circulant(self):
-        if not self._circulant:
+        if self._circulant is None:
             FFT = rfft if np.isrealobj(self.markov_parameters) else fft
             s, p, m = self.markov_parameters.shape
             self._circulant = FFT(
