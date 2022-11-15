@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
-from pymor.operators.constructions import LincombOperator, ZeroOperator, BilinearFunctional
+from pymor.operators.constructions import LincombOperator, ZeroOperator, BilinearFunctional, BilinearProductFunctional
 from pymor.basic import NumpyVectorSpace, Mu
 
 
@@ -327,8 +327,6 @@ def test_BilinearFunctional():
     from pymor.basic import (RectDomain, ExpressionFunction, ConstantFunction,
                              LincombFunction, StationaryProblem,
                              discretize_stationary_cg)
-    from pymor.operators.constructions import (ConstantOperator,
-                                               VectorFunctional)
     from pymor.operators.numpy import NumpyMatrixOperator
 
     # generate data for the problems
@@ -358,11 +356,84 @@ def test_BilinearFunctional():
 
     # generate fundamental operators for the output operators
     space = NumpyVectorSpace(221, id='STATE')
-    scalar = NumpyVectorSpace(1)
     bilin_matrix = np.eye(space.dim)
     bilin_op = NumpyMatrixOperator(bilin_matrix, source_id='STATE',
                                    range_id='STATE')
     bilin_op = BilinearFunctional(bilin_op)
+
+    # generate list of output operators
+    ops = []
+    ops.append(bilin_op)
+    ops.append(theta_J * bilin_op)
+
+    def _run_test_on_op(op):
+        grid_intervals = 10
+        problem = StationaryProblem(domain, l, diffusion)
+        fom, _ = discretize_stationary_cg(problem,
+                                          diameter=2. / grid_intervals)
+        fom = fom.with_(output_functional=op)
+
+        parameter_space = fom.parameters.space(0, np.pi)
+        training_samples = 3
+        training_set = parameter_space.sample_uniformly(training_samples)
+
+        for mu in training_set:
+            mu = fom.parameters.parse([0., 0.])
+            gradient_with_sensitivities = fom.output_d_mu(
+                mu, return_array=True, use_adjoint=False)
+            gradient_with_adjoint_approach = fom.output_d_mu(
+                mu, return_array=True, use_adjoint=True)
+            assert np.allclose(gradient_with_adjoint_approach,
+                               gradient_with_sensitivities)
+
+            complex_fom = fom.with_(operator=fom.operator.with_(
+                operators=[op * (1+2j) for op in fom.operator.operators]))
+            complex_gradient_adjoint = complex_fom.output_d_mu(
+                mu, return_array=True, use_adjoint=True)
+            complex_gradient = complex_fom.output_d_mu(
+                mu, return_array=True, use_adjoint=False)
+            assert np.allclose(complex_gradient_adjoint, complex_gradient)
+
+    for op in ops:
+        _run_test_on_op(op)
+
+
+def test_BilinearProductFunctional():
+    from pymor.basic import (RectDomain, ExpressionFunction, ConstantFunction,
+                             LincombFunction, StationaryProblem,
+                             discretize_stationary_cg)
+    from pymor.operators.constructions import VectorFunctional
+
+    # generate data for the problems
+    domain = RectDomain(([-1, -1], [1, 1]))
+    indicator_domain = ExpressionFunction(
+        '(-2/3. <= x[0]) * (x[0] <= -1/3.) * (-2/3. <= x[1]) * \
+        (x[1] <= -1/3.) * 1. + (-2/3. <= x[0]) * (x[0] <= -1/3.) \
+        *  (1/3. <= x[1]) * (x[1] <=  2/3.) * 1.', dim_domain=2)
+    rest_of_domain = ConstantFunction(1, 2) - indicator_domain
+    parameters = {'diffusion': 2}
+    thetas = [
+        ExpressionParameterFunctional(
+            '1.1 + sin(diffusion[0])*diffusion[1]', parameters,
+            derivative_expressions={
+                'diffusion': ['cos(diffusion[0])*diffusion[1]',
+                              'sin(diffusion[0])']}),
+        ExpressionParameterFunctional(
+            '1.1 + sin(diffusion[1])', parameters,
+            derivative_expressions={'diffusion': ['0',
+                                                  'cos(diffusion[1])']}), ]
+    diffusion = LincombFunction([rest_of_domain, indicator_domain], thetas)
+    theta_J = ExpressionParameterFunctional(
+        '1 + 1/5 * diffusion[0] + 1/5 * diffusion[1]', parameters,
+        derivative_expressions={'diffusion': ['1/5', '1/5']})
+    l = ExpressionFunction('0.5*pi*pi*cos(0.5*pi*x[0])*cos(0.5*pi*x[1])',
+                           dim_domain=2)
+
+    # generate fundamental operators for the output operators
+    space = NumpyVectorSpace(221, id='STATE')
+    lin_vec = space.ones()
+    lin_op = VectorFunctional(lin_vec)
+    bilin_op = BilinearProductFunctional((lin_op, lin_op))
 
     # generate list of output operators
     ops = []

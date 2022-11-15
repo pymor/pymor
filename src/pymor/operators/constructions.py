@@ -1457,7 +1457,7 @@ class LinearInputOperator(Operator):
 
 
 class BilinearFunctional(Operator):
-    """An `Operator` intended as a bilinear functional.
+    """An `Operator` representing a bilinear functional.
 
     Given an operator `A` acting on R^d, this class enables the functional::
 
@@ -1476,16 +1476,13 @@ class BilinearFunctional(Operator):
     """
 
     linear = False
-    bilinear = True
     range = NumpyVectorSpace(1)
 
     def __init__(self, operator, name=None):
+        assert operator.linear
+        assert operator.source == operator.range
         self.__auto_init(locals())
         self.source = operator.source
-
-    @property
-    def H(self):
-        return BilinearFunctional(self.operator.H, name=self.name + '_adjoint')
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -1498,3 +1495,49 @@ class BilinearFunctional(Operator):
     def d_mu(self, parameter, index=1):
         # the parameter derivative only takes effect on the inner operator
         return BilinearFunctional(self.operator.d_mu(parameter, index), name=self.name + '_d_mu')
+
+
+class BilinearProductFunctional(Operator):
+    """An `Operator` representing a bilinear functional by multiplying two linear functionals.
+
+    Given linear operators `A`, `B`: R^d ----> R^n, this class enables the functional::
+
+        op: R^d ----> R^1
+             u  |---> (A(u), B(u))
+
+    In particular this is intended to provide the jacobian of such a bilinear
+    functional::
+
+        op.jacobian(U, mu).apply(V) = (A(v; mu), B(u; mu)) + (A(u; mu), B(v; mu))
+
+    Parameters
+    ----------
+    operators
+        The `Operator`s to be wrapped as a bilinear functional.
+    """
+
+    linear = False
+    range = NumpyVectorSpace(1)
+
+    def __init__(self, operators, name=None):
+        assert len(operators) == 2
+        assert operators[0].source == operators[1].source
+        assert operators[0].range == operators[1].range
+        self.__auto_init(locals())
+        self.source = operators[0].source
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        AU = self.operators[0].apply(U, mu)
+        BU = self.operators[1].apply(U, mu)
+        return self.range.from_numpy(AU.pairwise_inner(BU).reshape((-1, 1)))
+
+    def jacobian(self, U, mu=None):
+        inner_vec = self.operators[1].apply_adjoint(self.operators[0].apply(U, mu), mu) \
+            + self.operators[0].apply_adjoint(self.operators[1].apply(U, mu), mu)
+        return VectorFunctional(inner_vec)
+
+    def d_mu(self, parameter, index=1):
+        # the parameter derivative only takes effect on the inner operators
+        ops = (self.operators[0].d_mu(parameter, index), self.operators[1].d_mu(parameter, index))
+        return BilinearProductFunctional(ops, name=self.name + '_d_mu')

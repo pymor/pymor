@@ -124,7 +124,8 @@ class StationaryModel(Model):
             assert self.operator.linear
             dual_solutions = self.operator.range.empty()
             for d in range(self.output_functional.range.dim):
-                dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.jacobian(solution, mu).H.as_range_array(mu)[d])
+                dual_problem = self.with_(operator=self.operator.H,
+                                          rhs=self.output_functional.jacobian(solution, mu).H.as_range_array(mu)[d])
                 dual_solutions.append(dual_problem.solve(mu))
             gradients = [] if return_array else {}
             for (parameter, size) in self.parameters.items():
