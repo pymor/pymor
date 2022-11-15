@@ -26,14 +26,14 @@ class ERAReductor(CacheableObject):
         |NumPy array| that contains the first :math:`n` Markov parameters of a discrete-time system.
         Has to be one- or three-dimensional with either::
 
-            data.shape = (n)
+            data.shape == (n,)
 
         for scalar-valued Markov parameters or::
 
-            data.shape = (n, p, m)
+            data.shape == (n, p, m)
 
         for matrix-valued Markov parameters of dimension :math:`p\times m`, where
-        :math:`m` are the number of inputs and :math:`p` are the number of outputs of the system.
+        :math:`m` is the number of inputs and :math:`p` is the number of outputs of the system.
     sampling_time
         A positive number that denotes the sampling time of the system (in seconds).
     force_stability
