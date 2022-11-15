@@ -45,6 +45,7 @@ class ERAReductor(CacheableObject):
 
     def __init__(self, data, sampling_time, force_stability=True):
         assert sampling_time > 0
+        assert np.isrealobj(data)
         if data.ndim == 1:
             data = data.reshape(-1, 1, 1)
         assert data.ndim == 3
@@ -62,10 +63,10 @@ class ERAReductor(CacheableObject):
     def _s2_W2(self):
         self.logger.info('Computing input SVD ...')
         _, s2, W2 = spla.svd(np.vstack(self.data), full_matrices=False)
-        return s2, W2.conj().T
+        return s2, W2.T
 
     def _project_markov_parameters(self, l1, l2):
-        mats = [self.output_projector(l1).conj().T, self.data] if l1 else [self.data]
+        mats = [self.output_projector(l1).T, self.data] if l1 else [self.data]
         mats = [*mats, self.input_projector(l2)] if l2 else mats
         s1 = ('lp,', 'l') if l1 else ('', 'p')
         s2 = (',mk', 'k') if l2 else ('', 'm')
