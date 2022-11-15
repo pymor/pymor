@@ -16,7 +16,7 @@ from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.logger import set_log_levels
 from pymor.discretizers.builtin import discretize_instationary_cg
 from pymor.parameters.functionals import ProjectionParameterFunctional
-from pymor.reductors.aaa import pAAAReductor
+from pymor.reductors.aaa import PAAAReductor
 
 
 def run_mor_method_dd_param(fom, ss, pp, reductor_cls, reductor_short_name, **reductor_kwargs):
@@ -104,7 +104,7 @@ def main(
     ss = np.logspace(-1, 4, n)
     pp = np.linspace(10, 100, m)
 
-    run_mor_method_dd_param(lti, ss, pp, pAAAReductor, 'p-AAA')
+    run_mor_method_dd_param(lti, ss, pp, PAAAReductor, 'p-AAA')
 
 
 if __name__ == "__main__":

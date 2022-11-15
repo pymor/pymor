@@ -12,7 +12,7 @@ from pymor.models.transfer_function import TransferFunction
 from pymor.tools.random import new_rng
 
 
-class pAAAReductor(BasicObject):
+class PAAAReductor(BasicObject):
     """Reductor implementing the parametric AAA algorithm.
 
     The reductor implements the parametric AAA algorithm and can be used either with
@@ -208,7 +208,7 @@ class pAAAReductor(BasicObject):
             if d_nsp > 1:
                 if self.post_process:
                     self.logger.info('Non-minimal order interpolant computed. Starting post-processing.')
-                    pp_coefs = self._post_processing(samples, svs, d_nsp)
+                    pp_coefs = self._post_processing(d_nsp)
                     if pp_coefs is not None:
                         coefs = pp_coefs
                     else:
@@ -235,10 +235,10 @@ class pAAAReductor(BasicObject):
 
         if self.num_vars > 1:
             return TransferFunction(self.dim_input, self.dim_output,
-                                    lambda s, mu: bary_func(s, *(mu[p] for p in self.parameters)),
+                                    lambda s, mu: bary_func(s, mu.to_numpy()),
                                     parameters=self.parameters)
         else:
-            return TransferFunction(self.dim_input, self.dim_output, lambda s: bary_func(s))
+            return TransferFunction(self.dim_input, self.dim_output, bary_func)
 
     def _post_processing(self, d_nsp):
         """Compute coefficients/partition to construct minimal interpolant."""
