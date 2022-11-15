@@ -128,7 +128,7 @@ class ERAReductor(CacheableObject):
         assert l2 is None or isinstance(l2, int) and l2 <= m
         assert r is None or 0 < r <= min((l1 or p), (l2 or m)) * (s // 2 + 1)
 
-        sv, U, V = self._sv_U_V(l1=l1, l2=l2)
+        sv, U, V = self._sv_U_V(l1, l2)
 
         if tol is not None:
             error_bounds = self.error_bounds(l1=l1, l2=l2)
