@@ -193,7 +193,7 @@ class ERAReductor(CacheableObject):
         self.logger.info(f'Constructing reduced realization of order {r} ...')
         sqS = np.diag(np.sqrt(sv))
         Zo = U.T @ sqS
-        A = NumpyMatrixOperator(spla.pinv(Zo[: -(l1 or p)]) @ Zo[(l1 or p):])
+        A = NumpyMatrixOperator(spla.lstsq(Zo[: -(l1 or p)], Zo[(l1 or p):])[0])
         B = NumpyMatrixOperator(sqS @ V[:, :(l2 or m)])
         C = NumpyMatrixOperator(Zo[:(l1 or p)])
 
