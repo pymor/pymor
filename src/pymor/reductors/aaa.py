@@ -349,8 +349,11 @@ def full_nd_loewner(samples, svs, itpl_part):
     for i_itpl in itertools.product(*([False, True] for _ in range_S)):
 
         # skip cases corresponding to all interpolated or all LS fit
-        if np.all(not i_itpl) or np.all(i_itpl):
+        if not any(i_itpl) or all(i_itpl):
             continue
+
+        svs0 = [svs[k] for k in range_S if i_itpl[k]]
+        itpl_part0 = [itpl_part[k] for k in range_S if i_itpl[k]]
 
         for j in itertools.product(*(itpl_part[k] for k in range_S if not i_itpl[k])):
             l_j = list(j)
@@ -358,8 +361,6 @@ def full_nd_loewner(samples, svs, itpl_part):
                 if i_itpl[ii]:
                     l_j.insert(ii, slice(None))
             samples0 = samples[tuple(l_j)]
-            svs0 = [svs[k] for k in range_S if i_itpl[k]]
-            itpl_part0 = [itpl_part[k] for k in range_S if i_itpl[k]]
             T_mat = 1
             for k in range_S:
                 if i_itpl[k]:
@@ -390,12 +391,14 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
     Parameters
     ----------
     itpl_nodes
-        Nested list such that `itpl_nodes[i]` contains interpolated sampling values
-        of the `i`-th variable.
+        Nested list such that `itpl_nodes[i]` contains interpolation nodes of the
+        `i`-th variable.
     itpl_vals
-        Vector of interpolation values.
+        Vector of interpolation values with `len(itpl_nodes[0])*...*len(itpl_nodes[-1])`
+        entries.
     coefs
-        Vector of barycentric coefficients.
+        Vector of barycentric coefficients with `len(itpl_nodes[0])*...*len(itpl_nodes[-1])`
+        entries.
     removable_singularity_tol
         Tolerance for evaluating the barycentric function at a removable singularity
         and performing pole cancellation.
