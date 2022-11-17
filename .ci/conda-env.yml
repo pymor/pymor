@@ -60,6 +60,7 @@ dependencies:
   - twine==3.8.0
   - typer
   - wheel
+  - xmljson
 
   - pip:
     - -r ../requirements-ci.txt
