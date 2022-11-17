@@ -51,6 +51,13 @@ class PAAAReductor(BasicObject):
         the post-processing procedure computes an interpolant of minimal order.
     L_rk_tol
         Tolerance for ranks of 1-D Loewner matrices computed in post-processing.
+
+    Attributes
+    ----------
+    itpl_part
+        A nested list such that `itpl_part[i]` corresponds to indices of interpolated values
+        with respect to the `i`-th variable. I.e., `self.sampling_values[i][itpl_part[i]]`
+        represents a list of all interpolated samples of the `i`-th variable.
     """
 
     def __init__(self, sampling_values, samples_or_fom, conjugate=True, nsp_tol=1e-16, post_process=True,
@@ -62,7 +69,7 @@ class PAAAReductor(BasicObject):
             self.num_vars = 1 + fom.parameters.dim
 
             assert len(sampling_values) == self.num_vars
-            self.parameters = fom.parameters
+            self._parameters = fom.parameters
             self.samples = np.empty([len(sv) for sv in sampling_values] + [fom.dim_output, fom.dim_input],
                                     dtype=sampling_values[0].dtype)
             for idx, vals in zip(np.ndindex(self.samples.shape[:-2]),
@@ -74,7 +81,7 @@ class PAAAReductor(BasicObject):
         else:
             self.samples = samples_or_fom
             self.num_vars = len(sampling_values)
-            self.parameters = {'p': self.num_vars-1}
+            self._parameters = {'p': self.num_vars-1}
 
         # add complex conjugate samples
         if conjugate:
@@ -91,26 +98,26 @@ class PAAAReductor(BasicObject):
         # Transform samples for MIMO case
         if len(self.samples.shape) != len(sampling_values):
             assert len(self.samples.shape) == len(sampling_values) + 2
-            self.dim_input = self.samples.shape[-1]
-            self.dim_output = self.samples.shape[-2]
+            self._dim_input = self.samples.shape[-1]
+            self._dim_output = self.samples.shape[-2]
             samples_T = np.empty(self.samples.shape[:-2], dtype=self.samples.dtype)
             rng = new_rng(0)
             if any(np.iscomplex(sampling_values[0])):
-                w = 1j * rng.normal(scale=np.sqrt(2)/2, size=(self.dim_output,)) \
-                    + rng.normal(scale=np.sqrt(2)/2, size=(self.dim_output,))
-                v = 1j * rng.normal(scale=np.sqrt(2)/2, size=(self.dim_input,)) \
-                    + rng.normal(scale=np.sqrt(2)/2, size=(self.dim_input,))
+                w = 1j * rng.normal(scale=np.sqrt(2)/2, size=(self._dim_output,)) \
+                    + rng.normal(scale=np.sqrt(2)/2, size=(self._dim_output,))
+                v = 1j * rng.normal(scale=np.sqrt(2)/2, size=(self._dim_input,)) \
+                    + rng.normal(scale=np.sqrt(2)/2, size=(self._dim_input,))
             else:
-                w = rng.normal(size=(self.dim_output,))
-                v = rng.normal(size=(self.dim_input,))
+                w = rng.normal(size=(self._dim_output,))
+                v = rng.normal(size=(self._dim_input,))
             w /= np.linalg.norm(w)
             v /= np.linalg.norm(v)
             samples_T = self.samples @ v @ w
             self.MIMO_samples = self.samples
             self.samples = samples_T
         else:
-            self.dim_input = 1
-            self.dim_output = 1
+            self._dim_input = 1
+            self._dim_output = 1
 
         self.__auto_init(locals())
 
@@ -201,7 +208,7 @@ class PAAAReductor(BasicObject):
 
             _, S, V = spla.svd(L, full_matrices=False, lapack_driver='gesvd')
             VH = V.T.conj()
-            coefs = VH[:, -1:]
+            coefs = VH[:, -1]
 
             # post-processing for non-minimal interpolants
             d_nsp = np.sum(S/S[0] < self.nsp_tol)
@@ -227,18 +234,18 @@ class PAAAReductor(BasicObject):
                 break
 
         # in MIMO case construct barycentric form based on matrix/vector samples
-        if self.dim_input != 1 or self.dim_output != 1:
+        if self._dim_input != 1 or self._dim_output != 1:
             itpl_samples = self.MIMO_samples[np.ix_(*self.itpl_part)]
-            itpl_samples = np.reshape(itpl_samples, (-1, self.dim_output, self.dim_input))
+            itpl_samples = np.reshape(itpl_samples, (-1, self._dim_output, self._dim_input))
 
         bary_func = make_bary_func(itpl_nodes, itpl_samples, coefs)
 
         if self.num_vars > 1:
-            return TransferFunction(self.dim_input, self.dim_output,
-                                    lambda s, mu: bary_func(s, mu.to_numpy()),
-                                    parameters=self.parameters)
+            return TransferFunction(self._dim_input, self._dim_output,
+                                    lambda s, mu: bary_func(s, *mu.to_numpy()),
+                                    parameters=self._parameters)
         else:
-            return TransferFunction(self.dim_input, self.dim_output, bary_func)
+            return TransferFunction(self._dim_input, self._dim_output, bary_func)
 
     def _post_processing(self, d_nsp):
         """Compute coefficients/partition to construct minimal interpolant."""
@@ -420,10 +427,10 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
             else:
                 d = 1 / d
             pd = np.kron(pd, d)
-        m = coefs.T * pd
-        num = np.tensordot(m, itpl_vals, axes=1)
-        denom = np.inner(coefs.T, pd)
+        coefs_pd = coefs * pd
+        num = np.inner(coefs_pd, itpl_vals)
+        denom = np.sum(coefs_pd)
         nd = num / denom
-        return np.atleast_2d(nd[0])
+        return np.atleast_2d(nd)
 
     return bary_func
