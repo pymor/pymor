@@ -591,7 +591,7 @@ class ParameterSpace(ParametricObject):
         mu
             |Parameter value| to clip.
         keep_additional
-            Boolean to keep additional values in the `Mu` instance which are
+            If `True`, keep additional values in the `Mu` instance which are
             not contained in the parameters, e.g. time parameters.
 
         Returns

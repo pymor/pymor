@@ -40,7 +40,7 @@ def test_randomly_without_count(space):
 
 
 def test_clip(space):
-    large_mu = [10e4]
+    large_mu = [1e4]
     large_mu = space.clip(large_mu)
     small_mu = [-1]
     small_mu = space.clip(small_mu)
@@ -48,6 +48,14 @@ def test_clip(space):
     min_mu = space.parameters.parse([0.1])
     assert large_mu == max_mu
     assert small_mu == min_mu
+
+    additional_mu = Mu({'diffusionl': [1e4], 'test': [2.]})
+    additional_mu = space.clip(additional_mu, keep_additional=True)
+    no_additional_mu = space.clip(additional_mu, keep_additional=False)
+    add_clipped_mu = Mu({'diffusionl': [1.], 'test': [2.]})
+    clipped_mu = Mu({'diffusionl': [1.]})
+    assert additional_mu == add_clipped_mu
+    assert no_additional_mu == clipped_mu
 
 
 def test_parse_parameter():
