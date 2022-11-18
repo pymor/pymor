@@ -28,47 +28,50 @@ class DWRCoerciveRBReductor(BasicObject):
     ----------
     fom
         The |Model| which is to be reduced.
-    RB
-        |VectorArray| containing the reduced basis on which to project.
+    dual_foms
+        List of the dual |Models| that correspond to each dimension of the output_functional.
+        If `dual_foms` is `None`, the default dual models are constructed
+        by :meth:`~pymor.reductors.dwr.create_dual_model`, assuming a fully discrete perspective.
+    primal_RB
+        |VectorArray| containing the reduced basis on which to project the fom.
+    dual_RBs
+        List of |VectorArrays| containing the reduced basis on which to project the `dual_foms`,
+         where each entry of the list corresponds to the dimensions of the output functional.
+         If `dual_bases` is `None`, the primal bases are used.
     product
         See :class:`~pymor.reductors.coercive.CoerciveRBReductor`.
     coercivity_estimator
         See :class:`~pymor.reductors.coercive.CoerciveRBReductor`.
-    dual_bases
-        List of |VectorArrays| containing the reduced basis for the dual models that are
-        constructed with :meth:`~pymor.reductors.dwr.dual_model`, where each entry
-        of the list corresponds to the dimensions of the output functional.
-        If `dual_bases` is `None`, the primal bases are used.
     check_orthonormality
         See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     check_tol
         See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     """
 
-    def __init__(self, fom, primal_basis=None, product=None, coercivity_estimator=None,
-                 dual_bases=None, check_orthonormality=None, check_tol=None):
+    def __init__(self, fom, dual_foms=None, primal_RB=None, dual_RBs=None, product=None,
+                 coercivity_estimator=None, check_orthonormality=None, check_tol=None):
         self.__auto_init(locals())
         self._last_rom = None
 
-        if dual_bases is not None:
-            assert len(dual_bases) == fom.dim_output
-
-        self.primal_reductor = CoerciveRBReductor(fom, RB=primal_basis, product=product,
-                                                  coercivity_estimator=coercivity_estimator,
-                                                  check_orthonormality=check_orthonormality,
-                                                  check_tol=check_tol)
-        self.dual_reductors = []
+        if dual_RBs is not None:
+            assert len(dual_RBs) == fom.dim_output
         assert (fom.output_functional is not None and fom.output_functional.linear), \
             'The features of the DWR reductor cannot be used, ' + \
             'please use CoerciveRBReductor instead.'
 
+        self.primal_reductor = CoerciveRBReductor(fom, RB=primal_RB, product=product,
+                                                  coercivity_estimator=coercivity_estimator,
+                                                  check_orthonormality=check_orthonormality,
+                                                  check_tol=check_tol)
+        # construct default dual models if not provided
+        self.dual_foms = dual_foms or [self.create_dual_model(fom, d) for d in range(fom.dim_output)]
+        self.dual_reductors = []
         # either needed for estimation or just for the corrected output
         for d in range(fom.dim_output):
             # construct dual model
-            dual_model = self.dual_model(fom, d)
-            # choose dual basis
-            dual_basis = primal_basis if dual_bases is None else dual_bases[d]
+            dual_model = self.dual_foms[d]
             # define dual reductors (with None as coercivity_estimator)
+            dual_basis = primal_RB if dual_RBs is None else dual_RBs[d]
             dual_reductor = CoerciveRBReductor(dual_model, RB=dual_basis, product=product,
                                                coercivity_estimator=None,
                                                check_orthonormality=check_orthonormality,
@@ -76,11 +79,12 @@ class DWRCoerciveRBReductor(BasicObject):
             self.dual_reductors.append(dual_reductor)
 
     def reduce(self, dim=None):
-        dim = dim or len(self.primal_basis)
+        dim = dim or len(self.primal_reductor.bases['RB'])
         assert isinstance(dim, Number)
         if dim < 0:
             raise ValueError('Reduced state dimension must be larger than zero')
-        if dim > len(self.primal_basis) and all([dim > len(dual_basis) for dual_basis in self.dual_bases]):
+        if dim > len(self.primal_reductor.bases['RB']) and \
+                all([dim > len(dual_basis) for dual_basis in self.dual_RBs]):
             raise ValueError('Specified reduced state dimension larger than reduced basis')
 
         if self._last_rom is None or dim > self._last_rom_dim:
@@ -104,7 +108,7 @@ class DWRCoerciveRBReductor(BasicObject):
             error_estimator = DWRCoerciveRBEstimator(primal_rom.error_estimator, dual_estimators, dual_roms)
 
         with self.logger.block('Building corrected output ...'):
-            corrected_output = self.build_corrected_output(primal_rom, dual_roms)
+            corrected_output = self._build_corrected_output(primal_rom, dual_roms)
 
         with self.logger.block('Building ROM ...'):
             rom = primal_rom.with_(output_functional=corrected_output, error_estimator=error_estimator)
@@ -114,18 +118,18 @@ class DWRCoerciveRBReductor(BasicObject):
     def _reduce_to_subbasis(self, dim):
         primal_rom = self.primal_reductor.reduce(dim)
         dual_roms = [red.reduce(dim) for red in self.dual_reductors]
-        corrected_output = self.build_corrected_output(primal_rom, dual_roms, dim)
+        corrected_output = self._build_corrected_output(primal_rom, dual_roms, dim)
         error_estimator = self.assemble_error_estimator_for_subbasis(dual_roms, dim)
         rom = primal_rom.with_(output_functional=corrected_output, error_estimator=error_estimator)
         return rom
 
-    def build_corrected_output(self, primal_rom, dual_roms, dim=None):
+    def _build_corrected_output(self, primal_rom, dual_roms, dim=None):
         # Note: if dim==None, then the dual and primal basis size can differ!
         # This is the case if reduce() is called without dim specified
         dual_projected_primal_residuals = []
         for dual_reductor in self.dual_reductors:
             dual_basis = dual_reductor.bases['RB'][:dim]
-            op = project(self.fom.operator, dual_basis, self.primal_basis[:dim])
+            op = project(self.fom.operator, dual_basis, self.primal_reductor.bases['RB'][:dim])
             rhs = project(self.fom.rhs, dual_basis, None)
             primal_residual = ResidualOperator(op, rhs, name='dual_projected_residual')
             dual_projected_primal_residuals.append(primal_residual)
@@ -133,7 +137,7 @@ class DWRCoerciveRBReductor(BasicObject):
                                          dual_projected_primal_residuals)
 
     @classmethod
-    def dual_model(cls, model, dim=0):
+    def create_dual_model(cls, model, dim=0):
         """Return dual model with the output as right hand side.
 
         The dual equation is defined as to find the solution p such that
@@ -212,7 +216,7 @@ class CorrectedOutputFunctional(Operator):
     output_functional
         Original output_functional
     dual_models
-        Dual models for the corrected output, see :meth:`~pymor.reductors.dwr.dual_model`
+        Dual models for the corrected output, see :meth:`~pymor.reductors.dwr.create_dual_model`
     dual_projected_primal_residuals
         The primal residuals projected on the dual space (in the first argument) and on the
         primal space (in the second argument)
