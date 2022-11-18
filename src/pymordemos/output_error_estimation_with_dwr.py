@@ -39,6 +39,7 @@ def main(
 
     # generate solution snapshots
     primal_snapshots = fom.solution_space.empty()
+    # store true outputs
     fom_outputs = []
 
     # construct training data
@@ -48,44 +49,34 @@ def main(
         fom_outputs.append(comp_data['output'])
 
     # apply POD on bases
-    product = fom.h1_product
-    primal_reduced_basis, _ = pod(primal_snapshots, modes=modes-1, product=product)
+    product = fom.h1_0_product
+    primal_RB, _ = pod(primal_snapshots, modes=modes-1, product=product)
 
-    standard_RB_reductor = CoerciveRBReductor(fom, RB=primal_reduced_basis, product=product,
+    # standard RB reductor for comparison
+    standard_RB_reductor = CoerciveRBReductor(fom, RB=primal_RB, product=product,
                                               coercivity_estimator=coercivity_estimator)
 
+    # initialize DWR reductor
+    dwr_RB_reductor = DWRCoerciveRBReductor(fom, dual_foms=None, product=product,
+                                            coercivity_estimator=coercivity_estimator)
+
     # also construct dual bases for dwr
-    dual_reduced_bases = []
-    dual_foms = []
+    dual_RBs = []
+    dual_foms = dwr_RB_reductor.dual_foms
     for d in range(fom.dim_output):
         dual_snapshots = fom.solution_space.empty()
         # initialize dual model from reductor
-        dual_fom = DWRCoerciveRBReductor.dual_model(fom, d)
-        dual_foms.append(dual_fom)  # save this for later
+        dual_fom = dual_foms[d]
         for mu in training_set:
             dual_snapshots.append(dual_fom.solve(mu))
         # use one mode more to test the case where the size it not the same
-        dual_reduced_bases.append(pod(dual_snapshots, modes=modes+1, product=product)[0])
+        dual_RBs.append(pod(dual_snapshots, modes=modes+1, product=product)[0])
 
-    dwr_RB_reductor = DWRCoerciveRBReductor(fom,
-                                            primal_basis=primal_reduced_basis,
-                                            product=product,
-                                            dual_bases=dual_reduced_bases,
-                                            coercivity_estimator=coercivity_estimator)
-
-    # test the extension
-    another_mu = parameter_space.sample_randomly(1)[0]
-    u_ = fom.solve(another_mu)
-    ps_ = []
-    for dual_fom in dual_foms:
-        ps_.append(dual_fom.solve(another_mu))
-
-    dwr_RB_reductor.extend_basis(u_, ps_)
+    # extend basis
+    dwr_RB_reductor.extend_basis(primal_RB, dual_RBs)
 
     # dwr reductor without dual basis
-    dwr_reductor_primal = DWRCoerciveRBReductor(fom,
-                                                primal_basis=primal_reduced_basis,
-                                                product=product,
+    dwr_reductor_primal = DWRCoerciveRBReductor(fom, primal_RB=primal_RB, product=product,
                                                 coercivity_estimator=coercivity_estimator)
 
     dwr_reductors = [dwr_RB_reductor, dwr_reductor_primal]
@@ -131,7 +122,7 @@ def main(
     plt.legend()
 
     # estimator study for smaller number of basis functions
-    modes_set = np.arange(1, len(primal_reduced_basis)+1)
+    modes_set = np.arange(1, len(primal_RB)+1)
     max_errss, max_estss, min_errss, min_estss = [], [], [], []
     for reductor in [standard_RB_reductor, dwr_reductors[0], dwr_reductors[1]]:
         max_errs, max_ests, min_errs, min_ests = [], [], [], []
