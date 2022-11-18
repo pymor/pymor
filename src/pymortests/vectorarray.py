@@ -16,7 +16,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.tools.floatcmp import float_cmp, bounded
 from pymor.tools.random import new_rng
 from pymortests.base import might_exceed_deadline
-from pymortests.pickling import assert_picklable_without_dumps_function
+from pymortests.core.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
 
 MAX_RNG_REALIZATIONS = 30
@@ -138,7 +138,7 @@ def test_full(vector_array):
          low=-5e-324, high=0.0)
 def test_random_uniform_all(vector_array, realizations, low, high):
     if config.HAVE_DUNEGDT:
-        # atm needs special casing due to norm implemenation handling of large vector elements
+        # atm needs special casing due to norm implementation handling of large vector elements
         from pymor.bindings.dunegdt import DuneXTVectorSpace
         assume(not isinstance(vector_array.space, DuneXTVectorSpace))
     _test_random_uniform(vector_array, realizations, low, high)
@@ -914,9 +914,6 @@ def test_rmul(vectors_and_indices):
     cc = vector_array.copy()
     cc.scal(a)
     alpha = a * vector_array
-    # the scaling_value strategy also draws ndarrays, for which alpha here will be an ndarray,
-    # which in turn will fail the axpy hidden in the almost_equal check
-    assume(not isinstance(alpha, np.ndarray))
     assert np.all(almost_equal(alpha, cc))
     assert np.all(almost_equal(vector_array, c))
 

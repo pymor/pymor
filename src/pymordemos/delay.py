@@ -4,6 +4,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import matplotlib.pyplot as plt
 from typer import Argument, run
 
 from pymor.models.transfer_function import TransferFunction
@@ -19,6 +20,8 @@ def main(
 
     Cascade of delay and integrator
     """
+    plt.rcParams['axes.grid'] = True
+
     # Transfer function
     def H(s):
         return np.array([[np.exp(-s) / (tau * s + 1)]])
@@ -27,8 +30,12 @@ def main(
         return np.array([[-(tau * s + tau + 1) * np.exp(-s) / (tau * s + 1) ** 2]])
 
     tf = TransferFunction(1, 1, H, dH)
+
+    # Bode plot
+    fig = plt.figure(constrained_layout=True)
     w = np.logspace(-1, 3, 500)
-    fom_properties(tf, w)
+    fom_properties(tf, w, fig_bode=fig)
+    plt.show()
 
     # Transfer function IRKA (TF-IRKA)
     run_mor_method(tf, w, TFIRKAReductor(tf), 'TF-IRKA', r, maxit=1000)

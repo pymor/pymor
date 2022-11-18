@@ -62,6 +62,10 @@ class Operator(ParametricObject):
         for all V, mu.
     """
 
+    # override NumPy binary operations and ufuncs
+    __array_priority__ = 100.0
+    __array_ufunc__ = None
+
     solver_options = None
 
     @property
@@ -162,7 +166,7 @@ class Operator(ParametricObject):
             op.apply_adjoint(V, mu).dot(U) == V.inner(op.apply(U, mu))
 
         Thus, when `op` is represented by a matrix `M`, `apply_adjoint` is
-        given by left-multplication of (the complex conjugate of) `M` with `V`.
+        given by left-multiplication of (the complex conjugate of) `M` with `V`.
 
         Parameters
         ----------

@@ -5,6 +5,7 @@
 from pymor.core.config import config
 config.require('SCIKIT_FEM')
 
+import warnings
 
 import numpy as np
 from skfem import Basis, BoundaryFacetBasis, BilinearForm, LinearForm, asm, enforce, projection
@@ -38,8 +39,11 @@ class SKFemBilinearFormOperator(NumpyMatrixBasedOperator):
         form = BilinearForm(self.build_form(mu))
         A = asm(form, self.basis)
         if self.dirichlet_dofs is not None:
-            A.setdiag(A.diagonal())
-            enforce(A, D=self.dirichlet_dofs, diag=0. if self.dirichlet_clear_diag else 1., overwrite=True)
+            with warnings.catch_warnings():
+                from scipy.sparse import SparseEfficiencyWarning
+                warnings.filterwarnings('ignore', category=SparseEfficiencyWarning)
+                A.setdiag(A.diagonal())
+                enforce(A, D=self.dirichlet_dofs, diag=0. if self.dirichlet_clear_diag else 1., overwrite=True)
         return A
 
 

@@ -17,7 +17,7 @@ from pymor.operators.constructions import IdentityOperator
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
-from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
+from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
 
 
 def test_pickle(model):
