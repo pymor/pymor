@@ -45,7 +45,8 @@ class RandomizedRangeFinder(CacheableObject):
     self_adjoint
         If `True`, the calculation of the adjoint will be skipped and `op` will be used as its
         adjoint when calculating the subspace iterations. Defaults to `False`.
-        Note that when set to `True`, `A` has to be self-adjoint w.r.t. `source_product` and `range_product`.
+        Note that when set to `True`, `A` has to be self-adjoint w.r.t. `source_product` and
+        `range_product`.
     """
 
     def __init__(self, A, range_product=None, source_product=None, subspace_iterations=0, lambda_min=None,
@@ -350,6 +351,61 @@ def rrf(A, range_product=None, source_product=None, q=2, l=8, return_rand=False,
         return Q
 
 
+@defaults('p', 'q', 'modes')
+@Deprecated('randomized_svd')
+def random_generalized_svd(A, range_product=None, source_product=None, modes=6, p=20, q=2):
+    r"""Randomized SVD of an |Operator|.
+
+    Viewing `A` as an :math:`m` by :math:`n` matrix, the return value
+    of this method is the randomized generalized singular value decomposition of `A`:
+
+    .. math::
+
+        A = U \Sigma V^{-1},
+
+    where the inner product on the range :math:`\mathbb{R}^m` is given by
+
+    .. math::
+
+        (x, y)_S = x^TSy
+
+    and the inner product on the source :math:`\mathbb{R}^n` is given by
+
+    .. math::
+
+        (x, y) = x^TTy.
+
+    This method is based on :cite:`SHB21`.
+
+    Parameters
+    ----------
+    A
+        The |Operator| for which the randomized SVD is to be computed.
+    range_product
+        Range product |Operator| :math:`S` w.r.t which the randomized SVD is computed.
+    source_product
+        Source product |Operator| :math:`T` w.r.t which the randomized SVD is computed.
+    modes
+        The first `modes` approximated singular values and vectors are returned.
+    p
+        If not `0`, adds `p` columns to the randomly sampled matrix (oversampling parameter).
+    q
+        If not `0`, performs `q` so-called power iterations to increase the relative weight
+        of the first singular values.
+
+    Returns
+    -------
+    U
+        |VectorArray| of approximated left singular vectors.
+    s
+        One-dimensional |NumPy array| of the approximated singular values.
+    Vh
+        |VectorArray| of the approximated right singular vectors.
+    """
+    return randomized_svd(A, modes, range_product=range_product, source_product=source_product,
+                          subspace_iterations=q, oversampling=p)
+
+
 @defaults('oversampling', 'subspace_iterations')
 def randomized_svd(A, n, range_product=None, source_product=None, subspace_iterations=0, oversampling=20):
     r"""Randomized SVD of an |Operator| based on :cite:`SHB21`.
@@ -447,6 +503,56 @@ def randomized_svd(A, n, range_product=None, source_product=None, subspace_itera
             V = Q_B.lincomb(Vh_b[:n])
 
     return U, s[:n], V
+
+
+@defaults('modes', 'p', 'q')
+@Deprecated('randomized_ghep')
+def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
+    r"""Approximates a few eigenvalues of a symmetric linear |Operator| with randomized methods.
+
+    Approximates `modes` eigenvalues `w` with corresponding eigenvectors `v` which solve
+    the eigenvalue problem
+
+    .. math::
+        A v_i = w_i v_i
+
+    or the generalized eigenvalue problem
+
+    .. math::
+        A v_i = w_i E v_i
+
+    if `E` is not `None`.
+
+    This method is an implementation of algorithm 6 and 7 in :cite:`SJK16`.
+
+    Parameters
+    ----------
+    A
+        The Hermitian linear |Operator| for which the eigenvalues are to be computed.
+    E
+        The Hermitian |Operator| which defines the generalized eigenvalue problem.
+    modes
+        The number of eigenvalues and eigenvectors which are to be computed.
+    p
+        If not `0`, adds `p` columns to the randomly sampled matrix in the :func:`rrf` method
+        (oversampling parameter).
+    q
+        If not `0`, performs `q` power iterations to increase the relative weight
+        of the larger singular values. Ignored when `single_pass` is `True`.
+    single_pass
+        If `True`, computes the GHEP where only one set of matvecs Ax is required, but at the
+        expense of lower numerical accuracy.
+        If `False`, the methods require two sets of matvecs Ax.
+
+    Returns
+    -------
+    w
+        A 1D |NumPy array| which contains the computed eigenvalues.
+    V
+        A |VectorArray| which contains the computed eigenvectors.
+    """
+    return randomized_ghep(A, E=E, n=modes, subspace_iterations=q, oversampling=p, single_pass=single_pass,
+                           return_evecs=True)
 
 
 @defaults('n', 'oversampling', 'subspace_iterations')
