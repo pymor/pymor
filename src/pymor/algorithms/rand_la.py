@@ -34,7 +34,7 @@ class RandomizedRangeFinder(CacheableObject):
         if `subspace_iterations` is greater than zero) and the error norm.
     subspace_iterations
         The number of subspace iterations (defaults to zero).
-        This can be used to increase the precision in the cases where the spectrum of `A` does not
+        This can be used to increase the accuracy in the cases where the spectrum of `A` does not
         decay rapidly (at the expense of two additional passes over `A` per subspace iteration).
     lambda_min
         A lower bound for the smallest eigenvalue of `source_product`. Defaults to `None`.
@@ -44,7 +44,8 @@ class RandomizedRangeFinder(CacheableObject):
         If `True`, complex valued random vectors will be chosen.
     self_adjoint
         If `True`, the calculation of the adjoint will be skipped and `op` will be used as its
-        adjoint when calculating the subspace iterations. Defaults to `False`
+        adjoint when calculating the subspace iterations. Defaults to `False`.
+        Note that when set to `True`, `A` has to be self-adjoint w.r.t. `source_product` and `range_product`.
     """
 
     def __init__(self, A, range_product=None, source_product=None, subspace_iterations=0, lambda_min=None,
@@ -61,8 +62,6 @@ class RandomizedRangeFinder(CacheableObject):
         assert isinstance(source_product, Operator)
         assert source_product.source == source_product.range == A.source
         assert lambda_min is None or isinstance(lambda_min, Number)
-        assert isinstance(complex, bool)
-        assert isinstance(self_adjoint, bool)
 
         self.__auto_init(locals())
         self._Q = [self.A.range.empty()]
