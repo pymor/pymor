@@ -168,7 +168,7 @@ jobs:
         id: cache
         env:
           # Increase this value to reset cache if .ci/conda-env.yml have not changed
-          CACHE_NUMBER: 2
+          CACHE_NUMBER: 3
         with:
           path: ${{ matrix.prefix }}
           key:
