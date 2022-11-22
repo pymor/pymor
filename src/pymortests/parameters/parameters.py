@@ -40,22 +40,26 @@ def test_randomly_without_count(space):
 
 
 def test_clip(space):
-    large_mu = [1e4]
-    large_mu = space.clip(large_mu)
-    small_mu = [-1]
-    small_mu = space.clip(small_mu)
-    max_mu = space.parameters.parse([1])
-    min_mu = space.parameters.parse([0.1])
-    assert large_mu == max_mu
-    assert small_mu == min_mu
+    keys = space.parameters.keys()
+    upper_mu = {k: space.ranges[k][1] for k in keys}
+    lower_mu = {k: space.ranges[k][0] for k in keys}
+    large_mu = upper_mu.copy()
+    large_mu[next(iter(large_mu))] += 1
+    small_mu = lower_mu.copy()
+    small_mu[next(iter(small_mu))] -= 1
+    clipped_large_mu = space.clip(Mu(large_mu))
+    clipped_small_mu = space.clip(Mu(small_mu))
+    assert clipped_large_mu == Mu(upper_mu)
+    assert clipped_small_mu == Mu(lower_mu)
 
-    additional_mu = Mu({'diffusionl': [1e4], 'test': [2.]})
-    additional_mu = space.clip(additional_mu, keep_additional=True)
-    no_additional_mu = space.clip(additional_mu, keep_additional=False)
-    add_clipped_mu = Mu({'diffusionl': [1.], 'test': [2.]})
-    clipped_mu = Mu({'diffusionl': [1.]})
-    assert additional_mu == add_clipped_mu
-    assert no_additional_mu == clipped_mu
+    additional_upper_mu = upper_mu.copy()
+    additional_upper_mu[next(iter(upper_mu)) + '_test'] = 2
+    additional_large_mu = large_mu.copy()
+    additional_large_mu[next(iter(large_mu)) + '_test'] = 2
+    additional_mu = space.clip(Mu(additional_large_mu), keep_additional=True)
+    no_additional_mu = space.clip(Mu(additional_large_mu), keep_additional=False)
+    assert additional_mu == Mu(additional_upper_mu)
+    assert no_additional_mu == Mu(upper_mu)
 
 
 def test_parse_parameter():
