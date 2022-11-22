@@ -19,7 +19,7 @@ from pymor.discretizers.builtin.grids.boundaryinfos import EmptyBoundaryInfo
 from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
 from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisualizer
 from pymor.models.basic import StationaryModel, InstationaryModel
-from pymor.operators.constructions import LincombOperator
+from pymor.operators.constructions import LincombOperator, BilinearFunctional
 from pymor.operators.numpy import NumpyMatrixBasedOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -1016,12 +1016,14 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
         ReactionOperator  = L2ProductQ1
         L2Functional = L2ProductFunctionalQ1
         BoundaryL2Functional = BoundaryL2ProductFunctional
+        L2Product = L2ProductQ1
     else:
         DiffusionOperator = DiffusionOperatorP1
         AdvectionOperator = AdvectionOperatorP1
         ReactionOperator  = L2ProductP1
         L2Functional = L2ProductFunctionalP1
         BoundaryL2Functional = BoundaryL2ProductFunctional
+        L2Product = L2ProductP1
 
     Li = [DiffusionOperator(grid, boundary_info, diffusion_constant=0, name='boundary_part')]
     if mu_energy_product:
@@ -1160,7 +1162,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     # assemble additional output functionals
     if p.outputs:
-        if any(v[0] not in ('l2', 'l2_boundary') for v in p.outputs):
+        if any(v[0] not in ('l2', 'l2_boundary', 'quadratic') for v in p.outputs):
             raise NotImplementedError
         outputs = []
         for v in p.outputs:
@@ -1171,13 +1173,23 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                     outputs.append(LincombOperator(ops, v[1].coefficients))
                 else:
                     outputs.append(L2Functional(grid, v[1], dirichlet_clear_dofs=False).H)
-            else:
+            elif v[0] == 'l2_boundary':
                 if isinstance(v[1], LincombFunction):
                     ops = [BoundaryL2Functional(grid, vv, dirichlet_clear_dofs=False).H
                            for vv in v[1].functions]
                     outputs.append(LincombOperator(ops, v[1].coefficients))
                 else:
                     outputs.append(BoundaryL2Functional(grid, v[1], dirichlet_clear_dofs=False).H)
+            elif v[0] == 'quadratic':
+                if isinstance(v[1], LincombFunction):
+                    ops = [
+                        BilinearFunctional(
+                            L2Product(grid, boundary_info, dirichlet_clear_rows=False, coefficient_function=vv)
+                        ) for vv in v[1].functions]
+                    outputs.append(LincombOperator(ops, v[1].coefficients))
+                else:
+                    outputs.append(BilinearFunctional(
+                        L2Product(grid, boundary_info, dirichlet_clear_rows=False, coefficient_function=v[1])))
         if len(outputs) > 1:
             from pymor.operators.block import BlockColumnOperator
             from pymor.operators.constructions import NumpyConversionOperator
