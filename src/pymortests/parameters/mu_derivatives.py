@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
-from pymor.operators.constructions import LincombOperator, ZeroOperator, BilinearFunctional, BilinearProductFunctional
+from pymor.operators.constructions import LincombOperator, ZeroOperator
 from pymor.basic import NumpyVectorSpace, Mu
 
 
@@ -276,39 +276,41 @@ def test_d_mu_of_LincombOperator():
     assert hes_nu_nu == [0., 0., -0]
 
 
+def run_test_on_model(model, mu, parameter_name=None):
+    gradient_with_adjoint_approach = model.output_d_mu(mu, return_array=True, use_adjoint=True)
+    gradient_with_sensitivities = model.output_d_mu(mu, return_array=True, use_adjoint=False)
+    assert np.allclose(gradient_with_adjoint_approach, gradient_with_sensitivities)
+    if parameter_name is not None:
+        u_d_mu = model.solve_d_mu(parameter_name, 1, mu=mu).to_numpy()
+        u_d_mu_ = model.compute(solution_d_mu=True, mu=mu)['solution_d_mu'][parameter_name][1].to_numpy()
+        assert np.allclose(u_d_mu, u_d_mu_)
+
+
 def test_output_d_mu():
     from pymordemos.linear_optimization import create_fom
 
     grid_intervals = 10
     training_samples = 3
 
-    fom, mu_bar = create_fom(grid_intervals, vector_valued_output=True)
+    # creating multiple foms to test
+    fom, _ = create_fom(grid_intervals, vector_valued_output=True)
     easy_fom, _ = create_fom(grid_intervals, vector_valued_output=False)
+    complex_op_fom = easy_fom.with_(operator=easy_fom.operator.with_(
+        operators=[op * (1+2j) for op in easy_fom.operator.operators]))
+    complex_out_fom = easy_fom.with_(output_functional=easy_fom.output_functional.with_(
+        operators=[op * (1+2j) for op in easy_fom.output_functional.operators]))
+    quad_fom, _ = create_fom(grid_intervals, output_type='quadratic')
+
+    test_foms = [complex_op_fom, complex_out_fom, quad_fom]
 
     parameter_space = fom.parameters.space(0, np.pi)
     training_set = parameter_space.sample_uniformly(training_samples)
 
     # verifying that the adjoint and sensitivity gradients are the same and that solve_d_mu works
     for mu in training_set:
-        gradient_with_adjoint_approach = fom.output_d_mu(mu, return_array=True, use_adjoint=True)
-        gradient_with_sensitivities = fom.output_d_mu(mu, return_array=True, use_adjoint=False)
-        assert np.allclose(gradient_with_adjoint_approach, gradient_with_sensitivities)
-        u_d_mu = fom.solve_d_mu('diffusion', 1, mu=mu).to_numpy()
-        u_d_mu_ = fom.compute(solution_d_mu=True, mu=mu)['solution_d_mu']['diffusion'][1].to_numpy()
-        assert np.allclose(u_d_mu, u_d_mu_)
-
-        # test the complex case
-        complex_fom = easy_fom.with_(operator=easy_fom.operator.with_(
-            operators=[op * (1+2j) for op in easy_fom.operator.operators]))
-        complex_gradient_adjoint = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=True)
-        complex_gradient = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=False)
-        assert np.allclose(complex_gradient_adjoint, complex_gradient)
-
-        complex_fom = easy_fom.with_(output_functional=easy_fom.output_functional.with_(
-            operators=[op * (1+2j) for op in easy_fom.output_functional.operators]))
-        complex_gradient_adjoint = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=True)
-        complex_gradient = complex_fom.output_d_mu(mu, return_array=True, use_adjoint=False)
-        assert np.allclose(complex_gradient_adjoint, complex_gradient)
+        run_test_on_model(fom, mu, 'diffusion')
+        for model in test_foms:
+            run_test_on_model(model, mu)
 
     # another fom to test the 3d case
     ops, coefs = fom.operator.operators, fom.operator.coefficients
@@ -318,155 +320,4 @@ def test_output_d_mu():
     parameter_space = fom_.parameters.space(0, np.pi)
     training_set = parameter_space.sample_uniformly(training_samples)
     for mu in training_set:
-        gradient_with_adjoint_approach = fom_.output_d_mu(mu, return_array=True, use_adjoint=True)
-        gradient_with_sensitivities = fom_.output_d_mu(mu, return_array=True, use_adjoint=False)
-        assert np.allclose(gradient_with_adjoint_approach, gradient_with_sensitivities)
-
-
-def test_BilinearFunctional():
-    from pymor.basic import (RectDomain, ExpressionFunction, ConstantFunction,
-                             LincombFunction, StationaryProblem,
-                             discretize_stationary_cg)
-    from pymor.operators.numpy import NumpyMatrixOperator
-
-    # generate data for the problems
-    domain = RectDomain(([-1, -1], [1, 1]))
-    indicator_domain = ExpressionFunction(
-        '(-2/3. <= x[0]) * (x[0] <= -1/3.) * (-2/3. <= x[1]) * \
-        (x[1] <= -1/3.) * 1. + (-2/3. <= x[0]) * (x[0] <= -1/3.) \
-        *  (1/3. <= x[1]) * (x[1] <=  2/3.) * 1.', dim_domain=2)
-    rest_of_domain = ConstantFunction(1, 2) - indicator_domain
-    parameters = {'diffusion': 2}
-    thetas = [
-        ExpressionParameterFunctional(
-            '1.1 + sin(diffusion[0])*diffusion[1]', parameters,
-            derivative_expressions={
-                'diffusion': ['cos(diffusion[0])*diffusion[1]',
-                              'sin(diffusion[0])']}),
-        ExpressionParameterFunctional(
-            '1.1 + sin(diffusion[1])', parameters,
-            derivative_expressions={'diffusion': ['0',
-                                                  'cos(diffusion[1])']}), ]
-    diffusion = LincombFunction([rest_of_domain, indicator_domain], thetas)
-    theta_J = ExpressionParameterFunctional(
-        '1 + 1/5 * diffusion[0] + 1/5 * diffusion[1]', parameters,
-        derivative_expressions={'diffusion': ['1/5', '1/5']})
-    l = ExpressionFunction('0.5*pi*pi*cos(0.5*pi*x[0])*cos(0.5*pi*x[1])',
-                           dim_domain=2)
-
-    # generate fundamental operators for the output operators
-    space = NumpyVectorSpace(221, id='STATE')
-    bilin_matrix = np.eye(space.dim)
-    bilin_op = NumpyMatrixOperator(bilin_matrix, source_id='STATE',
-                                   range_id='STATE')
-    bilin_op = BilinearFunctional(bilin_op)
-
-    # generate list of output operators
-    ops = []
-    ops.append(bilin_op)
-    ops.append(theta_J * bilin_op)
-
-    def _run_test_on_op(op):
-        grid_intervals = 10
-        problem = StationaryProblem(domain, l, diffusion)
-        fom, _ = discretize_stationary_cg(problem,
-                                          diameter=2. / grid_intervals)
-        fom = fom.with_(output_functional=op)
-
-        parameter_space = fom.parameters.space(0, np.pi)
-        training_samples = 3
-        training_set = parameter_space.sample_uniformly(training_samples)
-
-        for mu in training_set:
-            mu = fom.parameters.parse([0., 0.])
-            gradient_with_sensitivities = fom.output_d_mu(
-                mu, return_array=True, use_adjoint=False)
-            gradient_with_adjoint_approach = fom.output_d_mu(
-                mu, return_array=True, use_adjoint=True)
-            assert np.allclose(gradient_with_adjoint_approach,
-                               gradient_with_sensitivities)
-
-            complex_fom = fom.with_(operator=fom.operator.with_(
-                operators=[op * (1+2j) for op in fom.operator.operators]))
-            complex_gradient_adjoint = complex_fom.output_d_mu(
-                mu, return_array=True, use_adjoint=True)
-            complex_gradient = complex_fom.output_d_mu(
-                mu, return_array=True, use_adjoint=False)
-            assert np.allclose(complex_gradient_adjoint, complex_gradient)
-
-    for op in ops:
-        _run_test_on_op(op)
-
-
-def test_BilinearProductFunctional():
-    from pymor.basic import (RectDomain, ExpressionFunction, ConstantFunction,
-                             LincombFunction, StationaryProblem,
-                             discretize_stationary_cg)
-    from pymor.operators.constructions import VectorFunctional
-
-    # generate data for the problems
-    domain = RectDomain(([-1, -1], [1, 1]))
-    indicator_domain = ExpressionFunction(
-        '(-2/3. <= x[0]) * (x[0] <= -1/3.) * (-2/3. <= x[1]) * \
-        (x[1] <= -1/3.) * 1. + (-2/3. <= x[0]) * (x[0] <= -1/3.) \
-        *  (1/3. <= x[1]) * (x[1] <=  2/3.) * 1.', dim_domain=2)
-    rest_of_domain = ConstantFunction(1, 2) - indicator_domain
-    parameters = {'diffusion': 2}
-    thetas = [
-        ExpressionParameterFunctional(
-            '1.1 + sin(diffusion[0])*diffusion[1]', parameters,
-            derivative_expressions={
-                'diffusion': ['cos(diffusion[0])*diffusion[1]',
-                              'sin(diffusion[0])']}),
-        ExpressionParameterFunctional(
-            '1.1 + sin(diffusion[1])', parameters,
-            derivative_expressions={'diffusion': ['0',
-                                                  'cos(diffusion[1])']}), ]
-    diffusion = LincombFunction([rest_of_domain, indicator_domain], thetas)
-    theta_J = ExpressionParameterFunctional(
-        '1 + 1/5 * diffusion[0] + 1/5 * diffusion[1]', parameters,
-        derivative_expressions={'diffusion': ['1/5', '1/5']})
-    l = ExpressionFunction('0.5*pi*pi*cos(0.5*pi*x[0])*cos(0.5*pi*x[1])',
-                           dim_domain=2)
-
-    # generate fundamental operators for the output operators
-    space = NumpyVectorSpace(221, id='STATE')
-    lin_vec = space.ones()
-    lin_op = VectorFunctional(lin_vec)
-    bilin_op = BilinearProductFunctional((lin_op, lin_op))
-
-    # generate list of output operators
-    ops = []
-    ops.append(bilin_op)
-    ops.append(theta_J * bilin_op)
-
-    def _run_test_on_op(op):
-        grid_intervals = 10
-        problem = StationaryProblem(domain, l, diffusion)
-        fom, _ = discretize_stationary_cg(problem,
-                                          diameter=2. / grid_intervals)
-        fom = fom.with_(output_functional=op)
-
-        parameter_space = fom.parameters.space(0, np.pi)
-        training_samples = 3
-        training_set = parameter_space.sample_uniformly(training_samples)
-
-        for mu in training_set:
-            mu = fom.parameters.parse([0., 0.])
-            gradient_with_sensitivities = fom.output_d_mu(
-                mu, return_array=True, use_adjoint=False)
-            gradient_with_adjoint_approach = fom.output_d_mu(
-                mu, return_array=True, use_adjoint=True)
-            assert np.allclose(gradient_with_adjoint_approach,
-                               gradient_with_sensitivities)
-
-            complex_fom = fom.with_(operator=fom.operator.with_(
-                operators=[op * (1+2j) for op in fom.operator.operators]))
-            complex_gradient_adjoint = complex_fom.output_d_mu(
-                mu, return_array=True, use_adjoint=True)
-            complex_gradient = complex_fom.output_d_mu(
-                mu, return_array=True, use_adjoint=False)
-            assert np.allclose(complex_gradient_adjoint, complex_gradient)
-
-    for op in ops:
-        _run_test_on_op(op)
+        run_test_on_model(fom_, mu)
