@@ -9,7 +9,7 @@ from pymor.discretizers.dunegdt.ipdg import (
     _discretize_stationary_ipdg_dune, _IP_estimate_penalty_parameter, _IP_scheme_id)
 from pymor.models.basic import StationaryModel
 from pymor.operators.block import BlockOperator, BlockColumnOperator
-from pymor.operators.constructions import VectorOperator, LincombOperator
+from pymor.operators.constructions import LincombOperator
 
 from dune.xt.grid import (
     AllNeumannBoundaryInfo,
@@ -18,9 +18,7 @@ from dune.xt.grid import (
     Dim,
     DirichletBoundary,
     Cube,
-    Simplex,
     Walker,
-    make_cube_grid,
     make_cube_dd_grid,
 )
 from dune.xt.functions import GridFunction as GF
@@ -49,7 +47,8 @@ def discretize_stationary_ipld3g(
     weight_parameter=None,
     penalty_parameter=None,
     preassemble=True,
-    locally_continuous=True):
+    locally_continuous=True
+):
     '''
     interior penalty localized domain decomposition discontinuous Galerkin = IPLDDDG = IPLD3G
     '''
@@ -92,7 +91,7 @@ def discretize_stationary_ipld3g(
     local_problems = [StationaryDuneProblem.from_pymor(
         local_analytical_problem, data_approximation_order,
         grid=dd_grid.local_grid(I), boundary_info=AllNeumannBoundaryInfo(dd_grid.local_grid(I)))
-                      for I in range(M)]
+        for I in range(M)]
     #   * discretize locally
     local_models = []
     local_models_data = []
@@ -114,7 +113,7 @@ def discretize_stationary_ipld3g(
                 operators=[op.with_(name=f'volume_part_{I}')
                            for op in local_model.operator.operators], name='')
         else:
-            local_op = local_model_operator.with_(name=f'volume_part_{I}')
+            local_op = local_model.operator.with_(name=f'volume_part_{I}')
         local_ops[I][I] = local_op
         local_rhs[I] = local_model.rhs.with_(name='')
 
@@ -181,14 +180,14 @@ def discretize_stationary_ipld3g(
 
         ops = [make_boundary_contributions_parametric_part(func)
                for func in local_problems[I].diffusion.functions] + \
-                [make_boundary_contributions_nonparametric_part(),]
-        coeffs = list(local_problems[I].diffusion.coefficients) + [1.,]
+            [make_boundary_contributions_nonparametric_part(), ]
+        coeffs = list(local_problems[I].diffusion.coefficients) + [1., ]
 
         walker.walk(False)  # not supported yet
 
         boundary_op = LincombOperator(
-            operators=[DuneXTMatrixOperator(op.matrix, name=f'boundary_part_{I}'
-                                           ) for op in ops],
+            operators=[DuneXTMatrixOperator(op.matrix, name=f'boundary_part_{I}')
+                       for op in ops],
             coefficients=coeffs)
 
         local_ops[I][I] += boundary_op
@@ -211,14 +210,16 @@ def discretize_stationary_ipld3g(
                                             local_models_data[I]['space'], local_models_data[I]['sparsity_pattern'])
                     op_I_J = MatrixOperator(coupling_grid, local_models_data[I]['space'],
                                             local_models_data[J]['space'], coupling_sparsity_pattern)
+                    # TODO: transpose pattern?!
                     op_J_I = MatrixOperator(coupling_grid, local_models_data[J]['space'],
-                                            local_models_data[I]['space'], coupling_sparsity_pattern)  # TODO: transpose pattern?!
+                                            local_models_data[I]['space'], coupling_sparsity_pattern)
                     op_J_J = MatrixOperator(coupling_grid, local_models_data[J]['space'],
                                             local_models_data[J]['space'], local_models_data[J]['sparsity_pattern'])
-                    op_I_I.append(bf, {}, (False, True , False, False, False, False))  # volume, in_in, in_out, out_in, out_out, boundary
-                    op_I_J.append(bf, {}, (False, False, True , False, False, False))
-                    op_J_I.append(bf, {}, (False, False, False, True , False, False))
-                    op_J_J.append(bf, {}, (False, False, False, False, True , False))
+                    # volume, in_in, in_out, out_in, out_out, boundary
+                    op_I_I.append(bf, {}, (False, True, False, False, False, False))
+                    op_I_J.append(bf, {}, (False, False, True, False, False, False))
+                    op_J_I.append(bf, {}, (False, False, False, True, False, False))
+                    op_J_J.append(bf, {}, (False, False, False, False, True, False))
                     walker.append(op_I_I)
                     walker.append(op_I_J)
                     walker.append(op_J_I)
@@ -253,13 +254,13 @@ def discretize_stationary_ipld3g(
                     local_problems[I].diffusion.functions,
                     local_problems[I].diffusion.coefficients,
                     local_problems[J].diffusion.functions,
-                    local_problems[J].diffusion.coefficients):
+                    local_problems[J].diffusion.coefficients
+                ):
                     assert coeff_in == coeff_out
-                    ops_list += [ops + [additional_ops]
-                         for ops, additional_ops in zip(
-                             ops_list, make_coupling_contributions_parametric_part(diff_in, diff_out))]
-                ops_list = [ops + [additional_ops]
-                    for ops, additional_ops in zip(ops_list, make_coupling_contributions_nonparametric_part())]
+                    ops_list += [ops + [additional_ops] for ops, additional_ops in zip(
+                                 ops_list, make_coupling_contributions_parametric_part(diff_in, diff_out))]
+                ops_list = [ops + [additional_ops] for ops, additional_ops in zip(
+                            ops_list, make_coupling_contributions_nonparametric_part())]
                 ops_I_I, ops_I_J, ops_J_I, ops_J_J = ops_list[0], ops_list[1], ops_list[2], ops_list[3]
                 del ops_list
                 coeffs.append(1.)
@@ -284,8 +285,8 @@ def discretize_stationary_ipld3g(
                 for ((i, j), op) in zip(((I, I), (I, J), (J, I), (J, J)), local_weighted_h1_semi_penalty_product_ops):
                     if weighted_h1_semi_penalty_product_ops[i][j] is None:
                         weighted_h1_semi_penalty_product_ops[i][j] = LincombOperator(
-                                operators=[DuneXTMatrixOperator(op.matrix),],
-                                coefficients=[1,])
+                            operators=[DuneXTMatrixOperator(op.matrix), ],
+                            coefficients=[1, ])
                     else:
                         weighted_h1_semi_penalty_product_ops[i][j] += DuneXTMatrixOperator(op.matrix)
 
@@ -301,9 +302,9 @@ def discretize_stationary_ipld3g(
         # entry I, I has to exist after the assembly above
         weighted_h1_semi_penalty_product_ops[I][I] += local_weighted_h1_semi_penalty_prod
     products = {
-            'l2': BlockOperator(local_l2_ops),
-            'weighted_h1_semi_penalty': BlockOperator(weighted_h1_semi_penalty_product_ops)
-            }
+        'l2': BlockOperator(local_l2_ops),
+        'weighted_h1_semi_penalty': BlockOperator(weighted_h1_semi_penalty_product_ops)
+    }
 
     coupling_op = BlockOperator(coupling_ops)
     lhs_op = BlockOperator(local_ops)
@@ -311,12 +312,12 @@ def discretize_stationary_ipld3g(
     m = StationaryModel(lhs_op, rhs_op, products=products,
                         name=f'{analytical_problem.name}_P{order}{IP_scheme_ID[:-2]}LD3G')
 
-    data = {'macro_grid': macro_grid ,'dd_grid': dd_grid,
+    data = {'macro_grid': macro_grid,
+            'dd_grid': dd_grid,
             'macro_boundary_info': macro_boundary_info,
             'local_spaces': local_spaces,
             'coupling_op': coupling_op,
-            'lhs_without_coupling': lhs_without_coupling
-           }
+            'lhs_without_coupling': lhs_without_coupling}
 
     if preassemble:
         data['unassembled_m'] = m
