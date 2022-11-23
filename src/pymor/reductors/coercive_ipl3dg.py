@@ -1,7 +1,9 @@
 import numpy as np
 from copy import deepcopy
 
-from pymor.operators.constructions import ZeroOperator, LincombOperator, VectorOperator
+from pymor.core.base import ImmutableObject
+
+from pymor.operators.constructions import LincombOperator, VectorOperator
 from pymor.operators.constructions import VectorArrayOperator, IdentityOperator
 from pymor.algorithms.projection import project
 from pymor.operators.block import BlockOperator, BlockColumnOperator
@@ -9,7 +11,7 @@ from pymor.operators.block import BlockOperator, BlockColumnOperator
 from pymor.models.basic import StationaryModel
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymor.reductors.basic import extend_basis
-from pymor.algorithms.gram_schmidt import gram_schmidt
+
 
 class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
     def __init__(self, fom, dd_grid, local_bases=None):
@@ -106,7 +108,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             a_u_v_as_operator = VectorOperator(a_u_v)
 
         patch_model_with_correction = patch_model.with_(
-            rhs = patch_model.rhs - a_u_v_as_operator)
+            rhs=patch_model.rhs - a_u_v_as_operator)
         # TODO: think about removing boundary dofs for the rhs
         phi = patch_model_with_correction.solve(mu)
         self.add_local_solutions(I, phi.block(mapping_to_local(I)))
@@ -129,7 +131,6 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         return self._last_rom
 
     def project_operators(self):
-        projected_ops_blocks = []
         # this is for BlockOperator(LincombOperators)
         assert isinstance(self.fom.operator, BlockOperator)
 
@@ -137,6 +138,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         # of the Block structure (like usual in localized MOR)
         # or use methodology of Stage 2 in TSRBLOD
 
+        # see PR #894 in pymor
         projected_operator = project_block_operator(self.fom.operator, self.local_bases,
                                                     self.local_bases)
         projected_rhs = project_block_rhs(self.fom.rhs, self.local_bases)
@@ -156,7 +158,10 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         return projected_operators
 
     def assemble_error_estimator(self):
-        return None
+        estimators = {}
+        estimators['global'] = GlobalEllipticEstimator(self.fom)
+        # estimators['local'] = EllipticIPLRBEstimator(self.estimator_domains)
+        return estimators
 
     def reduce_to_subbasis(self, dims):
         raise NotImplementedError
@@ -185,9 +190,11 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
                 u_global.append(self.solution_space.subspaces[i].ones()*1e-4)
         return self.solution_space.make_array(u_global)
 
+
 def construct_patch_model(element_patch, block_op, block_rhs, neighbors):
     def local_to_global_mapping(i):
         return element_patch[i]
+
     def global_to_local_mapping(i):
         for i_, j in enumerate(element_patch):
             if j == i:
@@ -219,6 +226,7 @@ def construct_patch_model(element_patch, block_op, block_rhs, neighbors):
     patch_model = StationaryModel(final_patch_op, final_patch_rhs)
     return patch_model, local_to_global_mapping, global_to_local_mapping
 
+
 def construct_element_patches(dd_grid):
     # This is only working with quadrilateral meshes right now !
     # TODO: assert this
@@ -233,6 +241,7 @@ def construct_element_patches(dd_grid):
         element_patches.append(tuple(nh))
     return element_patches
 
+
 def construct_inner_node_patches(dd_grid):
     # This is only working with quadrilateral meshes right now !
     # TODO: assert this
@@ -242,9 +251,10 @@ def construct_inner_node_patches(dd_grid):
     for i in range(domain_ids.shape[0] - 1):
         for j in range(domain_ids.shape[1] - 1):
             node_patches[i * domain_ids.shape[1] + j] = \
-                    ([domain_ids[i, j], domain_ids[i, j+1],
-                      domain_ids[i+1, j], domain_ids[i+1, j+1]])
+                ([domain_ids[i, j], domain_ids[i, j+1],
+                  domain_ids[i+1, j], domain_ids[i+1, j+1]])
     return node_patches
+
 
 def add_element_neighbors(dd_grid, domains):
     new_domains = {}
@@ -254,6 +264,7 @@ def add_element_neighbors(dd_grid, domains):
             elements_and_all_neighbors.extend(dd_grid.neighbors(el))
         new_domains[i] = list(np.sort(np.unique(elements_and_all_neighbors)))
     return new_domains
+
 
 def remove_irrelevant_coupling_from_patch_operator(patch_model, mapping_to_global):
     local_op = patch_model.operator
@@ -281,8 +292,8 @@ def remove_irrelevant_coupling_from_patch_operator(patch_model, mapping_to_globa
                             strings.append(f'{J}_{I}')
                     local_ops, local_coefs = [], []
                     for op, coef in zip(blocks[i][j].operators, blocks[i][j].coefficients):
-                        if ('volume' in op.name or 'boundary' in op.name or
-                                     np.sum(string in op.name for string in strings)):
+                        if ('volume' in op.name or 'boundary' in op.name
+                           or np.sum(string in op.name for string in strings)):
                             local_ops.append(op)
                             local_coefs.append(coef)
 
@@ -290,8 +301,10 @@ def remove_irrelevant_coupling_from_patch_operator(patch_model, mapping_to_globa
 
     return BlockOperator(ops_without_outside_coupling)
 
+
 def project_block_operator(operator, range_bases, source_bases):
     # TODO: implement this with ruletables
+    # see PR #894 in pymor
     if isinstance(operator, LincombOperator):
         operators = []
         for op in operator.operators:
@@ -299,6 +312,7 @@ def project_block_operator(operator, range_bases, source_bases):
         return LincombOperator(operators, operator.coefficients)
     else:
         return _project_block_operator(operator, range_bases, source_bases)
+
 
 def _project_block_operator(operator, range_bases, source_bases):
     if isinstance(operator, IdentityOperator):
@@ -321,8 +335,10 @@ def _project_block_operator(operator, range_bases, source_bases):
     projected_operator = BlockOperator(local_projected_op)
     return projected_operator
 
+
 def project_block_rhs(rhs, range_bases):
     # TODO: implement this with ruletables
+    # see PR #894 in pymor
     if isinstance(rhs, LincombOperator):
         operators = []
         for op in rhs.operators:
@@ -330,6 +346,7 @@ def project_block_rhs(rhs, range_bases):
         return LincombOperator(operators, rhs.coefficients)
     else:
         return _project_block_rhs(rhs, range_bases)
+
 
 def _project_block_rhs(rhs, range_bases):
     if isinstance(rhs, VectorOperator):
@@ -346,3 +363,18 @@ def _project_block_rhs(rhs, range_bases):
         raise NotImplementedError
     projected_rhs = BlockColumnOperator(local_projected_rhs)
     return projected_rhs
+
+
+class GlobalEllipticEstimator(ImmutableObject):
+
+    def __init__(self, fom):
+        self.fom = fom
+
+    def estimate_error(self, u, mu):
+        assert u in self.fom.solution_space
+        product = self.fom.products['weighted_h1_semi_penalty']
+        operator = self.fom.operator
+        rhs = self.fom.rhs
+        riesz_rep = product.apply_inverse(operator.apply(u, mu) - rhs.as_vector(mu))
+        return np.sqrt(product.apply2(riesz_rep, riesz_rep))
+
