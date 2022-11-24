@@ -17,12 +17,12 @@ class DWRCoerciveRBReductor(BasicObject):
     """Reduced Basis reductor for |StationaryModels| with coercive linear operator
 
     This class can be used as a replacement for
-    :class:`~pymor.reductors.coercive.CoerciveRBReductor` for a corrected output
-    functional with the DWR approach. (see :cite:`Haa17` (Definition 2.31)).
-    This also enables a DWR based error estimator for the corrected output functional.
-    The DWR approach requires a dual problem for every dimension of the output functional.
+    :class:`~pymor.reductors.coercive.CoerciveRBReductor` to obtain a corrected reduced 
+    output  functional with the DWR approach. (see :cite:`Haa17` (Definition 2.31)).
+    This also implements a DWR-based error estimator for the corrected output functional.
+    The DWR approach requires the reduction of a dual problem for every dimension of the output functional.
     Each dual problem is defined by the dual operator and the corresponding component of
-    the output functional as right hand side. See also :meth:`~pymor.reductors.dwr.dual_model`.
+    the output functional as right-hand side. See also :meth:`~pymor.reductors.dwr.dual_model`.
 
     Parameters
     ----------
@@ -35,9 +35,9 @@ class DWRCoerciveRBReductor(BasicObject):
     primal_RB
         |VectorArray| containing the reduced basis on which to project the fom.
     dual_RBs
-        List of |VectorArrays| containing the reduced basis on which to project the `dual_foms`,
-         where each entry of the list corresponds to the dimensions of the output functional.
-         If `dual_bases` is `None`, the primal bases are used.
+        List of |VectorArrays| containing the reduced bases on which to project the `dual_foms`,
+        where each entry of the list corresponds to the dimensions of the output functional.
+        If `dual_bases` is `None`, the primal basis are used.
     product
         See :class:`~pymor.reductors.coercive.CoerciveRBReductor`.
     coercivity_estimator
@@ -56,8 +56,8 @@ class DWRCoerciveRBReductor(BasicObject):
         if dual_RBs is not None:
             assert len(dual_RBs) == fom.dim_output
         assert (fom.output_functional is not None and fom.output_functional.linear), \
-            'The features of the DWR reductor cannot be used, ' + \
-            'please use CoerciveRBReductor instead.'
+            'DWRCoerciveRBReductor requires a linear ouput functional. ' + \
+            'Please use CoerciveRBReductor instead.'
 
         self.primal_reductor = CoerciveRBReductor(fom, RB=primal_RB, product=product,
                                                   coercivity_estimator=coercivity_estimator,
@@ -157,7 +157,7 @@ class DWRCoerciveRBReductor(BasicObject):
 
         Returns
         -------
-        A |Model| with the adjoint operator and the corresponding right hand side
+        A |Model| with the adjoint operator and the corresponding right-hand side
         """
         assert 0 <= dim < model.dim_output
         e_i_vec = model.output_functional.range.from_numpy(np.eye(1, model.dim_output, dim))
