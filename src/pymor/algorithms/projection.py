@@ -254,7 +254,11 @@ class ProjectRules(RuleTable):
     def action_BilinearProductFunctional(self, op):
         op1 = project(op.operators[0], self.range_basis, self.source_basis)
         op2 = project(op.operators[1], self.range_basis, self.source_basis)
-        return BilinearProductFunctional((op1, op2), name=op.name)
+        prod = op.product
+        if prod is not None:
+            if self.range_basis:
+                prod = project(prod, self.range_basis, self.range_basis)
+        return BilinearProductFunctional((op1, op2), product=prod, name=op.name)
 
 
 def project_to_subbasis(op, dim_range=None, dim_source=None):
@@ -401,4 +405,8 @@ class ProjectToSubbasisRules(RuleTable):
         dim_range, dim_source = self.dim_range, self.dim_source
         op1 = project_to_subbasis(op.operators[0], dim_range=dim_range, dim_source=dim_source)
         op2 = project_to_subbasis(op.operators[1], dim_range=dim_range, dim_source=dim_source)
-        return BilinearProductFunctional((op1, op2), name=op.name)
+        prod = op.product
+        if prod is not None:
+            if self.range_basis:
+                prod = project_to_subbasis(prod, dim_range=dim_range, dim_source=dim_range)
+        return BilinearProductFunctional((op1, op2), product=prod, name=op.name)

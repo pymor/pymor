@@ -196,9 +196,12 @@ def test_bilin_prod_functional():
     from pymor.operators.constructions import VectorFunctional
     space = NumpyVectorSpace(10)
     scalar = NumpyVectorSpace(1)
+    mat = 6. * np.identity(scalar.dim)
+    prod = NumpyMatrixOperator(mat)
     lin_vec = space.ones()
     lin_op = VectorFunctional(lin_vec)
     bilin_op = BilinearProductFunctional((lin_op, lin_op))
+    bilin_op_with_prod = BilinearProductFunctional((lin_op, lin_op), product=prod)
 
     one_vec = [1.]
     two_vec = [2.]
@@ -209,11 +212,15 @@ def test_bilin_prod_functional():
     two_v = space.from_numpy(two_vec)
     one_s = scalar.from_numpy([1.])
     four_s = scalar.from_numpy([4.])
+    six_s = scalar.from_numpy([6.])
+    twn_four_s = scalar.from_numpy([24.])
 
-    assert bilin_op.source == space
-    assert bilin_op.range == scalar
+    assert bilin_op.source == space and bilin_op_with_prod.source == space
+    assert bilin_op.range == scalar and bilin_op_with_prod.range == scalar
     assert almost_equal(one_s, bilin_op.apply(one_v))
     assert almost_equal(four_s, bilin_op.apply(two_v))
+    assert almost_equal(six_s, bilin_op_with_prod.apply(one_v))
+    assert almost_equal(twn_four_s, bilin_op_with_prod.apply(two_v))
 
 
 def test_pickle(operator):

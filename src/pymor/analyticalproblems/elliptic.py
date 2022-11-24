@@ -56,6 +56,8 @@ class StationaryProblem(ParametricObject):
             :l2:            Evaluate the l2-product with the given data function.
             :l2_boundary:   Evaluate the l2-product with the given data function
                             on the boundary.
+            :quadratic:     Evaluate the integral of the data function scaled by
+                            the squared solution (u, u).
     parameter_ranges
         Ranges of interest for the |Parameters| of the problem.
     name
