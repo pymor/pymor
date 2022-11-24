@@ -7,7 +7,8 @@ from numbers import Number
 
 from pymor.algorithms.projection import project
 from pymor.core.base import ImmutableObject, BasicObject
-from pymor.operators.constructions import VectorOperator
+from pymor.operators.block import BlockColumnOperator
+from pymor.operators.constructions import ConcatenationOperator, NumpyConversionOperator, VectorOperator
 from pymor.operators.interface import Operator
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymor.reductors.residual import ResidualOperator
@@ -169,9 +170,16 @@ class DWRCoerciveRBReductor(BasicObject):
         A |Model| with the adjoint operator and the corresponding right-hand side
         """
         assert 0 <= dim < model.dim_output
-        e_i_vec = model.output_functional.range.from_numpy(np.eye(1, model.dim_output, dim))
         output = model.output_functional
-        dual_rhs = - output.H @ VectorOperator(e_i_vec)
+        if isinstance(output, ConcatenationOperator) and isinstance(output.operators[1], BlockColumnOperator):
+            assert isinstance(output.operators[0], NumpyConversionOperator) and len(output.operators) == 2
+            # the output_functional has the same structure as built by the discretizers
+            dual_rhs = - output.operators[1].blocks[dim][0].H
+        else:
+            # case where model.dim_output == 1 and
+            # more general case without using the structure of BlockColumnOperator
+            e_i_vec = model.output_functional.range.from_numpy(np.eye(1, model.dim_output, dim))
+            dual_rhs = - output.H @ VectorOperator(e_i_vec) if model.dim_output > 1 else - output.H
         dual_operator = model.operator.H
         dual_model = model.with_(operator=dual_operator, rhs=dual_rhs,
                                  output_functional=None, name=model.name + '_dual')
