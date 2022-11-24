@@ -11,6 +11,11 @@
 
 ## Contributors
 
+### pyMOR 2022.2
+
+* Tim Keil, tim.keil@uni-muenster.de
+  * Dual-weighted residual (DWR) output estimation for elliptic problems
+
 ### pyMOR 2022.1
 
 * Patrick Buchfink, patrick.buchfink@ians.uni-stuttgart.de

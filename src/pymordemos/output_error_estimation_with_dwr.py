@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 
@@ -50,7 +49,7 @@ def main(
 
     # apply POD on bases
     product = fom.h1_0_product
-    primal_RB, _ = pod(primal_snapshots, modes=modes-1, product=product)
+    primal_RB, _ = pod(primal_snapshots, modes=modes, product=product)
 
     # standard RB reductor for comparison
     standard_RB_reductor = CoerciveRBReductor(fom, RB=primal_RB, product=product,

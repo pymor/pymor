@@ -1,14 +1,14 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
-# Copyright 2013-2021 pyMOR developers and contributors. All rights reserved.
+# Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 from numbers import Number
 
-from pymor.core.base import ImmutableObject, BasicObject
 from pymor.algorithms.projection import project
-from pymor.operators.interface import Operator
+from pymor.core.base import ImmutableObject, BasicObject
 from pymor.operators.constructions import VectorOperator
+from pymor.operators.interface import Operator
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymor.reductors.residual import ResidualOperator
 
@@ -17,12 +17,12 @@ class DWRCoerciveRBReductor(BasicObject):
     """Reduced Basis reductor for |StationaryModels| with coercive linear operator
 
     This class can be used as a replacement for
-    :class:`~pymor.reductors.coercive.CoerciveRBReductor` to obtain a corrected reduced 
+    :class:`~pymor.reductors.coercive.CoerciveRBReductor` to obtain a corrected reduced
     output  functional with the DWR approach. (see :cite:`Haa17` (Definition 2.31)).
     This also implements a DWR-based error estimator for the corrected output functional.
-    The DWR approach requires the reduction of a dual problem for every dimension of the output functional.
-    Each dual problem is defined by the dual operator and the corresponding component of
-    the output functional as right-hand side. See also :meth:`~pymor.reductors.dwr.dual_model`.
+    The DWR approach requires the reduction of a dual problem for every dimension of the output
+    functional. Each dual problem is defined by the dual operator and the corresponding component
+    of the output functional as right-hand side. See also :meth:`~pymor.reductors.dwr.dual_model`.
 
     Parameters
     ----------
