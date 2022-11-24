@@ -19,8 +19,8 @@ def main(
     training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.'),
     modes: int = Argument(..., help='Number of basis functions for the RB spaces (generated with POD)')
 ):
+    """Demo script for using DWR-based output error estimation."""
     set_log_levels({'pymor': 'INFO'})
-    """Example script for using output error estimation compared with DWR approach"""
 
     assert fom_number in [0, 1], f'No FOM available for fom_number {fom_number}'
 
