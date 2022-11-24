@@ -127,7 +127,10 @@ def main(
         max_errs, max_ests, min_errs, min_ests = [], [], [], []
         for mode in modes_set:
             max_err, max_est, min_err, min_est = 0, 0, np.inf, np.inf
-            rom = reductor.reduce(mode)
+            if isinstance(reductor, DWRCoerciveRBReductor):
+                rom = reductor.reduce(mode, mode)
+            else:
+                rom = reductor.reduce(mode)
 
             for i, mu in enumerate(training_set):
                 s_fom = fom_outputs[i]
