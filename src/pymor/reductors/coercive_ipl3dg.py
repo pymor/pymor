@@ -3,14 +3,14 @@ from copy import deepcopy
 
 from pymor.core.base import ImmutableObject
 
+from pymor.algorithms.projection import project
+from pymor.models.basic import StationaryModel
+from pymor.operators.block import BlockOperator, BlockColumnOperator
 from pymor.operators.constructions import LincombOperator, VectorOperator
 from pymor.operators.constructions import VectorArrayOperator, IdentityOperator
-from pymor.algorithms.projection import project
-from pymor.operators.block import BlockOperator, BlockColumnOperator
-
-from pymor.models.basic import StationaryModel
-from pymor.reductors.coercive import CoerciveRBReductor
 from pymor.reductors.basic import extend_basis
+from pymor.reductors.coercive import CoerciveRBReductor
+from pymor.reductors.residual import ResidualReductor, ResidualOperator
 
 
 class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
@@ -25,22 +25,17 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
                                            for ss in range(self.S)]
 
         # element patches for online enrichment
-        element_patches = construct_element_patches(dd_grid)
+        self.element_patches = construct_element_patches(dd_grid)
 
-        patch_models = []
-        patch_mappings_to_global = []
-        patch_mappings_to_local = []
-        for element_patch in element_patches:
-            patch_model, local_to_global_mapping, global_to_local_mapping = construct_patch_model(
+        self.patch_models = []
+        self.patch_mappings_to_global = []
+        self.patch_mappings_to_local = []
+        for element_patch in self.element_patches:
+            patch_model, local_to_global, global_to_local = construct_local_model(
                 element_patch, fom.operator, fom.rhs, dd_grid.neighbors)
-            patch_models.append(patch_model)
-            patch_mappings_to_global.append(local_to_global_mapping)
-            patch_mappings_to_local.append(global_to_local_mapping)
-
-        self.element_patches = element_patches
-        self.patch_models = patch_models
-        self.patch_mappings_to_global = patch_mappings_to_global
-        self.patch_mappings_to_local = patch_mappings_to_local
+            self.patch_models.append(patch_model)
+            self.patch_mappings_to_global.append(local_to_global)
+            self.patch_mappings_to_local.append(global_to_local)
 
         # node patches for estimation
         # NOTE: currently the estimator domains are node patches
@@ -48,6 +43,21 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         self.inner_node_patches = inner_node_patches
         estimator_domains = add_element_neighbors(dd_grid, inner_node_patches)
         self.estimator_domains = estimator_domains
+
+        self.local_residuals = []
+        self.estimator_domains_mappings = []
+        for assiociated_element, elements in estimator_domains.items():
+            local_model, local_to_global, global_to_local = construct_local_model(
+                elements, fom.operator, fom.rhs, dd_grid.neighbors)
+            bases_in_local_domain = [self.local_bases[el] for el in elements]
+            basis = local_model.solution_space.make_array(bases_in_local_domain)
+            residual_reductor = ResidualReductor(basis,
+                                                 local_model.operator,
+                                                 local_model.rhs,
+                                                 # TODO: product=product,
+                                                 riesz_representatives=True)
+            self.local_residuals.append(residual_reductor)
+            self.estimator_domains_mappings.append(global_to_local)
 
     def add_global_solutions(self, us):
         assert us in self.fom.solution_space
@@ -124,7 +134,6 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             self._last_rom = self._reduce()
             self._last_rom_dims = sum(self.basis_length())
             # self.reduced_local_basis is required to perform multiple local enrichments
-            # after the other
             # TODO: check how to fix this better
             self.reduced_local_bases = deepcopy(self.local_bases)
 
@@ -160,7 +169,14 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
     def assemble_error_estimator(self):
         estimators = {}
         estimators['global'] = GlobalEllipticEstimator(self.fom)
-        # estimators['local'] = EllipticIPLRBEstimator(self.estimator_domains)
+
+        # reduced_residuals = [local_residual.reduce() for local_residual in self.local_residuals]
+        # TODO: this can only be reduced by using project_block_operator and friends
+        #       from above
+        reduced_residuals = [local_residual for local_residual in self.local_residuals]
+        estimators['local'] = EllipticIPLRBEstimator(self.estimator_domains, reduced_residuals,
+                                                     self.S, self.estimator_domains_mappings,
+                                                     self.inner_node_patches)
         return estimators
 
     def reduce_to_subbasis(self, dims):
@@ -191,17 +207,17 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         return self.solution_space.make_array(u_global)
 
 
-def construct_patch_model(element_patch, block_op, block_rhs, neighbors):
+def construct_local_model(local_elements, block_op, block_rhs, neighbors):
     def local_to_global_mapping(i):
-        return element_patch[i]
+        return local_elements[i]
 
     def global_to_local_mapping(i):
-        for i_, j in enumerate(element_patch):
+        for i_, j in enumerate(local_elements):
             if j == i:
                 return i_
         return -1
 
-    S_patch = len(element_patch)
+    S_patch = len(local_elements)
     patch_op = np.empty((S_patch, S_patch), dtype=object)
     patch_rhs = np.empty(S_patch, dtype=object)
     blocks_op = block_op.blocks
@@ -217,6 +233,7 @@ def construct_patch_model(element_patch, block_op, block_rhs, neighbors):
                 patch_op[ii][jj] = blocks_op[I][J]
             else:
                 # fake dirichlet contribution because nn is outside the patch
+                # seems to be wrong ! 
                 # patch_op[ii][ii] += ops_dirichlet[ss][nn]
                 pass
 
@@ -368,13 +385,52 @@ def _project_block_rhs(rhs, range_bases):
 class GlobalEllipticEstimator(ImmutableObject):
 
     def __init__(self, fom):
-        self.fom = fom
+        self.__auto_init(locals())
 
     def estimate_error(self, u, mu):
         assert u in self.fom.solution_space
-        product = self.fom.products['weighted_h1_semi_penalty']
+        product = self.fom.products['h1']
         operator = self.fom.operator
         rhs = self.fom.rhs
         riesz_rep = product.apply_inverse(operator.apply(u, mu) - rhs.as_vector(mu))
         return np.sqrt(product.apply2(riesz_rep, riesz_rep))
+
+
+class EllipticIPLRBEstimator(ImmutableObject):
+
+    def __init__(self, estimator_domains, local_residuals, domains,
+                 mappings, inner_node_patches):
+        self.__auto_init(locals())
+
+    def estimate_error(self, u_rom, mu):
+        indicators = []
+
+        for (domain, elements), residual, mapping, (_, inner_elements) in zip(
+                self.estimator_domains.items(), self.local_residuals,
+                self.mappings, self.inner_node_patches.items()):
+            # TODO: this loop is not mathematically correct yet !
+            u_in_ed = u_rom.block(elements)
+
+            # TODO: this here is the non-reduced case
+            residual = ResidualOperator(residual.operator, residual.rhs)
+
+            u_in_ed = residual.source.make_array(u_in_ed)
+
+            # restrict to the elements of the node patch
+            # TODO: vectorize this
+            locally_inner_elements = [mapping(el) for el in inner_elements]
+            print(elements, inner_elements, locally_inner_elements)
+            res = residual.apply(u_in_ed, mu)
+            res_on_node_patch = [res.block(el).norm() for el in locally_inner_elements]
+            norm = np.linalg.norm(res_on_node_patch)
+            indicators.append(norm)
+
+        # distribute indicators to domains TODO: Is this the correct way of distributing this?
+        ests = np.zeros(self.domains)
+        for associated_domain, ind in zip(sorted(self.estimator_domains.keys()), indicators):
+            ed = self.estimator_domains[associated_domain]
+            for sd in ed:
+                ests[sd] += ind**2
+        ests = np.sqrt(sum(ests))
+        return np.linalg.norm(indicators), indicators, ests
 
