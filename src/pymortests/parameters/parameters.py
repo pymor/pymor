@@ -40,13 +40,14 @@ def test_randomly_without_count(space):
 
 
 def test_clip(space):
-    keys = space.parameters.keys()
-    upper_mu = {k: space.ranges[k][1] for k in keys}
-    lower_mu = {k: space.ranges[k][0] for k in keys}
-    large_mu = upper_mu.copy()
-    large_mu[next(iter(large_mu))] += 1
-    small_mu = lower_mu.copy()
-    small_mu[next(iter(small_mu))] -= 1
+    from copy import deepcopy
+    params = space.parameters
+    upper_mu = {k: [space.ranges[k][1]] * params[k] for k in params}
+    lower_mu = {k: [space.ranges[k][0]] * params[k] for k in params}
+    large_mu = deepcopy(upper_mu)
+    large_mu[next(iter(large_mu))][0] += 1.
+    small_mu = deepcopy(lower_mu)
+    small_mu[next(iter(small_mu))][0] -= 1.
     clipped_large_mu = space.clip(Mu(large_mu))
     clipped_small_mu = space.clip(Mu(small_mu))
     assert clipped_large_mu == Mu(upper_mu)
