@@ -22,7 +22,8 @@ def space():
 
 def test_uniform(space):
     values = space.sample_uniformly(num_samples)
-    assert len(values) == num_samples
+    total_num_parameters = sum([space.parameters[k] for k in space.parameters])
+    assert len(values) == num_samples**total_num_parameters
     for value in values:
         assert space.contains(value)
 
