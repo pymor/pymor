@@ -303,7 +303,9 @@ def discretize_stationary_ipld3g(
         weighted_h1_semi_penalty_product_ops[I][I] += local_weighted_h1_semi_penalty_prod
     products = {
         'l2': BlockOperator(local_l2_ops),
-        'weighted_h1_semi_penalty': BlockOperator(weighted_h1_semi_penalty_product_ops)
+        'weighted_h1_semi_penalty': BlockOperator(weighted_h1_semi_penalty_product_ops),
+        'h1': BlockOperator(local_l2_ops) + BlockOperator(weighted_h1_semi_penalty_product_ops)
+        # check whether this is the h1 product
     }
 
     coupling_op = BlockOperator(coupling_ops)
