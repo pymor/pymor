@@ -8,6 +8,7 @@ from pymor.models.basic import StationaryModel
 from pymor.operators.block import BlockOperator, BlockColumnOperator
 from pymor.operators.constructions import LincombOperator, VectorOperator
 from pymor.operators.constructions import VectorArrayOperator, IdentityOperator
+from pymor.parameters.functionals import ParameterFunctional
 from pymor.reductors.basic import extend_basis
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymor.reductors.residual import ResidualReductor, ResidualOperator
@@ -47,7 +48,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         for associated_element, elements in estimator_domains.items():
             local_model, local_to_global, global_to_local = construct_local_model(
                 elements, fom.operator, fom.rhs, dd_grid.neighbors,
-                block_prod=fom.products['h1'])
+                block_prod=fom.products['h1'], lincomb_outside=True)
             # TODO: vectorize the following
             bases_in_local_domain = [self.local_bases[el] for el in elements]
             basis = local_model.solution_space.make_array(bases_in_local_domain)
@@ -171,9 +172,8 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         return projected_operators
 
     def _reduce_residuals(self):
-        # reduced_residuals = [local_residual.reduce() for local_residual in self.local_residuals]
-        # TODO: this can only be reduced by using project_block_operator and friends
-        #       from above
+        reduced_residuals = [local_residual.reduce() for local_residual in self.local_residuals]
+        # TODO: use the above and adapt EllipticIPLRBEstimator
 
         reduced_residuals = [local_residual for local_residual in self.local_residuals]
         return reduced_residuals
@@ -214,7 +214,8 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         return self.solution_space.make_array(u_global)
 
 
-def construct_local_model(local_elements, block_op, block_rhs, neighbors, block_prod=None):
+def construct_local_model(local_elements, block_op, block_rhs, neighbors, block_prod=None,
+                          lincomb_outside=False):
     def local_to_global_mapping(i):
         return local_elements[i]
 
@@ -250,8 +251,73 @@ def construct_local_model(local_elements, block_op, block_rhs, neighbors, block_
                 # patch_op[ii][ii] += ops_dirichlet[ss][nn]
                 pass
 
-    final_patch_op = BlockOperator(patch_op)
-    final_patch_rhs = BlockColumnOperator(patch_rhs)
+    if lincomb_outside and block_rhs.parametric:
+        # porkelei for efficient residual reduction
+        # change from BlockOperator(LincombOperators) to LincombOperator(BlockOperators)
+        rhs_operators = []
+        # this only works for globally defined parameter functionals
+        # we only take the coefficients of the first one and assert below that this is
+        # always the same
+        rhs_coefficients = patch_rhs[0].coefficients
+        blocks = [np.empty(S_patch, dtype=object)
+                  for _ in range(len(rhs_coefficients))]
+        for I in range(S_patch):
+            rhs_lincomb = patch_rhs[I]
+            # asserts that parameter functionals are globally defined
+            assert rhs_lincomb.coefficients == rhs_coefficients
+            for i_, rhs in enumerate(rhs_lincomb.operators):
+                blocks[i_][I] = rhs
+        rhs_operators = [BlockColumnOperator(block) for block in blocks]
+        final_patch_rhs = LincombOperator(rhs_operators, rhs_coefficients)
+    else:
+        final_patch_rhs = BlockColumnOperator(patch_rhs)
+
+    if lincomb_outside and block_op.parametric:
+        # porkelei for efficient residual reduction
+        # change from BlockOperator(LincombOperators) to LincombOperator(BlockOperators)
+        op_operators = []
+        # this only works for globally defined parameter functionals
+        # we only take the coefficients of the first one and assert below that this is
+        # always the same
+        op_param_coefficients = list(set(
+            [coef for coef in patch_op[0, 0].coefficients
+             if isinstance(coef, ParameterFunctional) and coef.parametric]))
+        op_coefficients = op_param_coefficients + [1.]  # <-- for non parametric parts
+        blocks = [np.empty((S_patch, S_patch), dtype=object) for _ in range(len(op_coefficients))]
+        for I in range(S_patch):
+            for J in range(S_patch):
+                op_lincomb = patch_op[I, J]
+                if op_lincomb:     # can be None
+                    if not op_lincomb.parametric:
+                        # this is for the coupling parts that are independent of the parameter
+                        assert len(op_lincomb.operators) == 1 and op_lincomb.coefficients[0] == 1.
+                        blocks[-1][I, J] = op_lincomb.operators[0]
+                    else:
+                        constant_ops = []
+                        parametric_ops = []
+                        param_coefficients_in_op = []
+                        for coef, op in zip(op_lincomb.coefficients, op_lincomb.operators):
+                            if isinstance(coef, ParameterFunctional) and coef.parametric:
+                                parametric_ops.append(op)
+                                param_coefficients_in_op.append(coef)
+                            else:
+                                constant_ops.append(op)
+
+                        for coef, op in zip(param_coefficients_in_op, parametric_ops):
+                            for i_, coef_ in enumerate(op_param_coefficients):
+                                if coef_ == coef:
+                                    if blocks[i_][I, J] is None:
+                                        blocks[i_][I, J] = op
+                                    else:
+                                        blocks[i_][I, J] += op
+                                    break   # coefficients are unique
+
+                        blocks[-1][I, J] = sum(constant_ops)
+        op_operators = [BlockOperator(block) for block in blocks]
+        final_patch_op = LincombOperator(op_operators, op_coefficients)
+    else:
+        final_patch_op = BlockOperator(patch_op)
+
     final_patch_prod = BlockOperator(patch_prod) if block_prod else None
     products = dict(h1=final_patch_prod) if block_prod else None
 
@@ -422,10 +488,9 @@ class EllipticIPLRBEstimator(ImmutableObject):
 
         for (domain, (elements, inner_elements, local_inner_elements)), residual in zip(
                 self.estimator_data.items(), self.residuals):
-            # TODO: this loop is not mathematically correct yet !
             u_in_ed = u_rom.block(elements)
 
-            # TODO: this here is the non-reduced case
+            # TODO: this here is the non-reduced case where residual is the ResidualReductor
             residual_operator = ResidualOperator(residual.operator, residual.rhs)
 
             u_in_ed = residual_operator.source.make_array(u_in_ed)
@@ -442,6 +507,10 @@ class EllipticIPLRBEstimator(ImmutableObject):
             residual_inner_vec = residual.product.source.make_array(residual_inner_vec)
             res = residual.product.apply_inverse(residual_inner_vec)
             norm = np.sqrt(residual.product.apply2(res, res))
+            ################################################################
+
+            # this is the reduced case where residual is the reduced residual
+
 
             indicators.append(norm)
 
@@ -451,6 +520,6 @@ class EllipticIPLRBEstimator(ImmutableObject):
             elements = self.estimator_data[associated_domain][0]
             for sd in elements:
                 ests[sd] += ind**2
-        ests = np.sqrt(sum(ests))
-        return np.linalg.norm(indicators), indicators, ests
+        estimate = np.sqrt(sum(ests))
+        return estimate, np.linalg.norm(indicators), indicators
 
