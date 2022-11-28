@@ -46,14 +46,15 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         self.local_residuals = []
         for associated_element, elements in estimator_domains.items():
             local_model, local_to_global, global_to_local = construct_local_model(
-                elements, fom.operator, fom.rhs, dd_grid.neighbors)
-            # TODO: vectorize this
+                elements, fom.operator, fom.rhs, dd_grid.neighbors,
+                block_prod=fom.products['h1'])
+            # TODO: vectorize the following
             bases_in_local_domain = [self.local_bases[el] for el in elements]
             basis = local_model.solution_space.make_array(bases_in_local_domain)
             residual_reductor = ResidualReductor(basis,
                                                  local_model.operator,
                                                  local_model.rhs,
-                                                 # TODO: product=product,
+                                                 product=local_model.products['h1'],
                                                  riesz_representatives=True)
             node_elements = inner_node_patches[associated_element]
             local_node_elements = [global_to_local(el) for el in node_elements]
@@ -133,6 +134,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         assert dims is None, 'we cannot yet reduce to subbases'
 
         if self._last_rom is None or sum(self.basis_length()) > self._last_rom_dims:
+            self.reduced_residuals = self._reduce_residuals()
             self._last_rom = self._reduce()
             self._last_rom_dims = sum(self.basis_length())
             # self.reduced_local_basis is required to perform multiple local enrichments
@@ -168,15 +170,19 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         }
         return projected_operators
 
-    def assemble_error_estimator(self):
-        estimators = {}
-        estimators['global'] = GlobalEllipticEstimator(self.fom)
-
+    def _reduce_residuals(self):
         # reduced_residuals = [local_residual.reduce() for local_residual in self.local_residuals]
         # TODO: this can only be reduced by using project_block_operator and friends
         #       from above
+
         reduced_residuals = [local_residual for local_residual in self.local_residuals]
-        estimators['local'] = EllipticIPLRBEstimator(self.estimator_data, reduced_residuals,
+        return reduced_residuals
+
+    def assemble_error_estimator(self):
+        estimators = {}
+        estimators['global'] = GlobalEllipticEstimator(self.fom)
+        estimators['local'] = EllipticIPLRBEstimator(self.estimator_data,
+                                                     self.reduced_residuals,
                                                      self.S)
         return estimators
 
@@ -208,7 +214,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         return self.solution_space.make_array(u_global)
 
 
-def construct_local_model(local_elements, block_op, block_rhs, neighbors):
+def construct_local_model(local_elements, block_op, block_rhs, neighbors, block_prod=None):
     def local_to_global_mapping(i):
         return local_elements[i]
 
@@ -221,27 +227,36 @@ def construct_local_model(local_elements, block_op, block_rhs, neighbors):
     S_patch = len(local_elements)
     patch_op = np.empty((S_patch, S_patch), dtype=object)
     patch_rhs = np.empty(S_patch, dtype=object)
+    patch_prod = np.empty((S_patch, S_patch), dtype=object)
     blocks_op = block_op.blocks
     blocks_rhs = block_rhs.blocks
+    blocks_prod = block_prod.blocks if block_prod else None
     for ii in range(S_patch):
         I = local_to_global_mapping(ii)
         patch_op[ii][ii] = blocks_op[I][I]
+        if block_prod:
+            patch_prod[ii][ii] = blocks_prod[I][I]
         patch_rhs[ii] = blocks_rhs[I, 0]
         for J in neighbors(I):
             jj = global_to_local_mapping(J)
             if jj >= 0:
                 # coupling contribution because nn is inside the patch
                 patch_op[ii][jj] = blocks_op[I][J]
+                if block_prod:
+                    patch_prod[ii][jj] = blocks_prod[I][J]
             else:
                 # fake dirichlet contribution because nn is outside the patch
-                # seems to be wrong ! 
+                # seems to be wrong !
                 # patch_op[ii][ii] += ops_dirichlet[ss][nn]
                 pass
 
     final_patch_op = BlockOperator(patch_op)
     final_patch_rhs = BlockColumnOperator(patch_rhs)
+    final_patch_prod = BlockOperator(patch_prod) if block_prod else None
+    products = dict(h1=final_patch_prod) if block_prod else None
 
-    patch_model = StationaryModel(final_patch_op, final_patch_rhs)
+    patch_model = StationaryModel(operator=final_patch_op, rhs=final_patch_rhs,
+                                  products=products)
     return patch_model, local_to_global_mapping, global_to_local_mapping
 
 
@@ -411,13 +426,23 @@ class EllipticIPLRBEstimator(ImmutableObject):
             u_in_ed = u_rom.block(elements)
 
             # TODO: this here is the non-reduced case
-            residual = ResidualOperator(residual.operator, residual.rhs)
+            residual_operator = ResidualOperator(residual.operator, residual.rhs)
 
-            u_in_ed = residual.source.make_array(u_in_ed)
+            u_in_ed = residual_operator.source.make_array(u_in_ed)
+            residual_full = residual_operator.apply(u_in_ed, mu)
 
-            res = residual.apply(u_in_ed, mu)
-            res_on_node_patch = [res.block(el).norm() for el in local_inner_elements]
-            norm = np.linalg.norm(res_on_node_patch)
+            # old approach without product:
+            # res_on_node_patch = [residual_full.block(el).norm() for el in local_inner_elements]
+            # norm = np.linalg.norm(res_on_node_patch)
+
+            # new approach: cut out only the relevent part. TODO: use concatenation?
+            residual_inner_vec = [residual_full.block(i) if i in local_inner_elements
+                                  else residual_full.block(i).space.zeros()
+                                  for i in range(len(elements))]
+            residual_inner_vec = residual.product.source.make_array(residual_inner_vec)
+            res = residual.product.apply_inverse(residual_inner_vec)
+            norm = np.sqrt(residual.product.apply2(res, res))
+
             indicators.append(norm)
 
         # distribute indicators to domains TODO: Is this the correct way of distributing this?
