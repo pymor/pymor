@@ -171,9 +171,21 @@ class BlockOperatorBase(Operator):
     def jacobian(self, U, mu):
         assert len(U) == 1
         jacs = np.empty(self.blocks.shape, dtype=object)
-        for (i, j) in np.ndindex(self.blocks.shape):
-            jacs[i, j] = self.blocks[i, j].jacobian(U.blocks[i] if self.blocked_source else U, mu)
+        if isinstance(self.blocks, sparse.COO):
+            for (i, j) in zip(self.blocks.coords[0], self.blocks.coords[1]):
+                jacs[i, j] = self.blocks[i, j].jacobian(U.blocks[i] if self.blocked_source else U, mu)
+        else:
+            for (i, j) in np.ndindex(self.blocks.shape):
+                jacs[i, j] = self.blocks[i, j].jacobian(U.blocks[i] if self.blocked_source else U, mu)
         return self.with_(blocks=jacs)
+
+    def to_dense(self):
+        if self.make_sparse:
+            blocks = self.blocks.todense()
+            blocks[blocks == 0] = None
+            return self.with_(blocks=blocks, make_sparse=False)
+        else:
+            return self
 
 
 class BlockOperator(BlockOperatorBase):
