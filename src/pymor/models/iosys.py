@@ -184,6 +184,11 @@ class LTIModel(Model):
                 if time_stepper is None:
                     time_stepper = DiscreteTimeStepper()
                 assert isinstance(time_stepper, DiscreteTimeStepper)
+        else:
+            if initial_data is not None:
+                raise ValueError('Initial data is given but T is not.')
+            if time_stepper is not None:
+                raise ValueError('Time-stepper is given but T is not.')
 
         assert presets is None or presets.keys() <= {'poles', 'c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'hsv',
                                                      'h2_norm', 'hinf_norm', 'l2_norm', 'linf_norm', 'fpeak'}
