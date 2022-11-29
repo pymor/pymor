@@ -15,9 +15,11 @@ import pymortests.strategies as pyst
 num_samples = 100
 
 
-@pytest.fixture(scope='module')
-def space():
-    return Parameters({'diffusionl': 1}).space(0.1, 1)
+@pytest.fixture(scope='module', params=([1], [2], [1, 1]))
+def space(request):
+    parameter_sizes = request.param
+    param_dict = {'diffusion_' + str(ind): size for ind, size in enumerate(parameter_sizes)}
+    return Parameters(param_dict).space(0.1, 1)
 
 
 def test_uniform(space):
