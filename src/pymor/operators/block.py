@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import sparse
 
 from pymor.operators.constructions import IdentityOperator, ZeroOperator
 from pymor.operators.interface import Operator
@@ -16,7 +17,8 @@ class BlockOperatorBase(Operator):
         for (i, j) in np.ndindex(self.blocks.shape):
             yield self.blocks[i, j]
 
-    def __init__(self, blocks):
+    def __init__(self, blocks, make_sparse=True):
+        self.make_sparse = make_sparse
         self.blocks = blocks = np.array(blocks)
         assert 1 <= blocks.ndim <= 2
         if self.blocked_source and self.blocked_range:
@@ -45,16 +47,21 @@ class BlockOperatorBase(Operator):
                 assert range_spaces[i] is None or op.range == range_spaces[i]
                 range_spaces[i] = op.range
 
-        # turn Nones to ZeroOperators
-        for (i, j) in np.ndindex(blocks.shape):
-            if blocks[i, j] is None:
-                self.blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
+        if make_sparse:
+            # all None entries need to be zeros instead.
+            blocks[blocks == None] = 0  # noqa: E711
+            self.blocks = sparse.COO(blocks)
+        else:
+            # turn Nones to ZeroOperators
+            for (i, j) in np.ndindex(blocks.shape):
+                if blocks[i, j] is None:
+                    self.blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
 
         self.source = BlockVectorSpace(source_spaces) if self.blocked_source else source_spaces[0]
         self.range = BlockVectorSpace(range_spaces) if self.blocked_range else range_spaces[0]
         self.num_source_blocks = len(source_spaces)
         self.num_range_blocks = len(range_spaces)
-        self.linear = all(op.linear for op in self._operators())
+        self.linear = all(op.linear for op in self._operators() if op not in (None, 0))
 
     @property
     def H(self):
@@ -64,15 +71,23 @@ class BlockOperatorBase(Operator):
         assert U in self.source
 
         V_blocks = [None for i in range(self.num_range_blocks)]
-        for (i, j), op in np.ndenumerate(self.blocks):
-            if isinstance(op, ZeroOperator):
-                Vi = op.range.zeros(len(U))
-            else:
+        if isinstance(self.blocks, sparse.COO):
+            for i, j, op in zip(self.blocks.coords[0], self.blocks.coords[1], self.blocks.data):
                 Vi = op.apply(U.blocks[j] if self.blocked_source else U, mu=mu)
-            if V_blocks[i] is None:
-                V_blocks[i] = Vi
-            else:
-                V_blocks[i] += Vi
+                if V_blocks[i] is None:
+                    V_blocks[i] = Vi
+                else:
+                    V_blocks[i] += Vi
+        else:
+            for (i, j), op in np.ndenumerate(self.blocks):
+                if isinstance(op, ZeroOperator):
+                    Vi = op.range.zeros(len(U))
+                else:
+                    Vi = op.apply(U.blocks[j] if self.blocked_source else U, mu=mu)
+                if V_blocks[i] is None:
+                    V_blocks[i] = Vi
+                else:
+                    V_blocks[i] += Vi
 
         return self.range.make_array(V_blocks) if self.blocked_range else V_blocks[0]
 
@@ -80,22 +95,34 @@ class BlockOperatorBase(Operator):
         assert V in self.range
 
         U_blocks = [None for j in range(self.num_source_blocks)]
-        for (i, j), op in np.ndenumerate(self.blocks):
-            if isinstance(op, ZeroOperator):
-                Uj = op.source.zeros(len(V))
-            else:
+        if isinstance(self.blocks, sparse.COO):
+            for i, j, op in zip(self.blocks.coords[0], self.blocks.coords[1], self.blocks.data):
                 Uj = op.apply_adjoint(V.blocks[i] if self.blocked_range else V, mu=mu)
-            if U_blocks[j] is None:
-                U_blocks[j] = Uj
-            else:
-                U_blocks[j] += Uj
+                if U_blocks[j] is None:
+                    U_blocks[j] = Uj
+                else:
+                    U_blocks[j] += Uj
+        else:
+            for (i, j), op in np.ndenumerate(self.blocks):
+                if isinstance(op, ZeroOperator):
+                    Uj = op.source.zeros(len(V))
+                else:
+                    Uj = op.apply_adjoint(V.blocks[i] if self.blocked_range else V, mu=mu)
+                if U_blocks[j] is None:
+                    U_blocks[j] = Uj
+                else:
+                    U_blocks[j] += Uj
 
         return self.source.make_array(U_blocks) if self.blocked_source else U_blocks[0]
 
     def assemble(self, mu=None):
         blocks = np.empty(self.blocks.shape, dtype=object)
-        for (i, j) in np.ndindex(self.blocks.shape):
-            blocks[i, j] = self.blocks[i, j].assemble(mu)
+        if isinstance(self.blocks, sparse.COO):
+            for (i, j) in zip(self.blocks.coords[0], self.blocks.coords[1]):
+                blocks[i, j] = self.blocks[i, j].assemble(mu)
+        else:
+            for (i, j) in np.ndindex(self.blocks.shape):
+                blocks[i, j] = self.blocks[i, j].assemble(mu)
         if np.all(blocks == self.blocks):
             return self
         else:
@@ -106,7 +133,10 @@ class BlockOperatorBase(Operator):
         def process_row(row, space):
             R = space.empty()
             for op in row:
-                R.append(op.as_range_array(mu))
+                if op:
+                    R.append(op.as_range_array(mu))
+                else:
+                    R.append(space.zeros())
             return R
 
         subspaces = self.range.subspaces if self.blocked_range else [self.range]
@@ -118,7 +148,10 @@ class BlockOperatorBase(Operator):
         def process_col(col, space):
             R = space.empty()
             for op in col:
-                R.append(op.as_source_array(mu))
+                if op:
+                    R.append(op.as_source_array(mu))
+                else:
+                    R.append(space.zeros())
             return R
 
         subspaces = self.source.subspaces if self.blocked_source else [self.source]
@@ -127,8 +160,12 @@ class BlockOperatorBase(Operator):
 
     def d_mu(self, parameter, index=0):
         blocks = np.empty(self.blocks.shape, dtype=object)
-        for (i, j) in np.ndindex(self.blocks.shape):
-            blocks[i, j] = self.blocks[i, j].d_mu(parameter, index)
+        if isinstance(self.blocks, sparse.COO):
+            for (i, j) in zip(self.blocks.coords[0], self.blocks.coords[1]):
+                blocks[i, j] = self.blocks[i, j].d_mu(parameter, index)
+        else:
+            for (i, j) in np.ndindex(self.blocks.shape):
+                blocks[i, j] = self.blocks[i, j].d_mu(parameter, index)
         return self.with_(blocks=blocks)
 
 
@@ -205,16 +242,6 @@ class BlockDiagonalOperator(BlockOperator):
             blocks2[i, i] = op
         super().__init__(blocks2)
 
-    def apply(self, U, mu=None):
-        assert U in self.source
-        V_blocks = [self.blocks[i, i].apply(U.blocks[i], mu=mu) for i in range(self.num_range_blocks)]
-        return self.range.make_array(V_blocks)
-
-    def apply_adjoint(self, V, mu=None):
-        assert V in self.range
-        U_blocks = [self.blocks[i, i].apply_adjoint(V.blocks[i], mu=mu) for i in range(self.num_source_blocks)]
-        return self.source.make_array(U_blocks)
-
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
         assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
@@ -234,18 +261,6 @@ class BlockDiagonalOperator(BlockOperator):
                                                             least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
         return self.range.make_array(V_blocks)
-
-    def assemble(self, mu=None):
-        blocks = np.empty((self.num_source_blocks,), dtype=object)
-        assembled = True
-        for i in range(self.num_source_blocks):
-            block_i = self.blocks[i, i].assemble(mu)
-            assembled = assembled and block_i == self.blocks[i, i]
-            blocks[i] = block_i
-        if assembled:
-            return self
-        else:
-            return self.__class__(blocks)
 
 
 class SecondOrderModelOperator(BlockOperator):

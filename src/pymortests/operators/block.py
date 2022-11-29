@@ -107,3 +107,15 @@ def test_blk_diag_apply_inverse_adjoint():
     wva = Cop.apply_inverse_adjoint(vva)
     w = np.hstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
     assert np.allclose(spla.solve(C.T, v), w)
+
+
+def test_sparse():
+    eye = np.empty((4, 4), dtype=object)
+    for I in range(4):
+        eye[I, I] = NumpyMatrixOperator(np.eye(20))
+    block_op = BlockOperator(eye, make_sparse=True)
+    block_op.apply(block_op.range.ones())
+    block_op.apply_adjoint(block_op.range.ones())
+    block_op.as_source_array()
+    block_op.as_range_array()
+    block_op.d_mu('something')
