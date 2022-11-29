@@ -140,3 +140,15 @@ def test_block_jacobian():
     assert np.all(jac.blocks[0, 0].vector.to_numpy()[0] == np.dot(A.T, v1) + np.dot(A, v1))
     assert np.all(jac.blocks[1, 1].vector.to_numpy()[0] == np.dot(B.T, v2) + np.dot(B, v2))
     assert np.all(jac.blocks[2, 2].matrix == C)
+
+
+def test_sparse():
+    eye = np.empty((4, 4), dtype=object)
+    for I in range(4):
+        eye[I, I] = NumpyMatrixOperator(np.eye(20))
+    block_op = BlockOperator(eye, make_sparse=True)
+    block_op.apply(block_op.range.ones())
+    block_op.apply_adjoint(block_op.range.ones())
+    block_op.as_source_array()
+    block_op.as_range_array()
+    block_op.d_mu('something')
