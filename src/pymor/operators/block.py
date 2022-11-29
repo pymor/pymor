@@ -48,14 +48,18 @@ class BlockOperatorBase(Operator):
                 range_spaces[i] = op.range
 
         if make_sparse:
-            # all None entries need to be zeros instead.
+            # all None entries need to be zeros.
             blocks[blocks == None] = 0  # noqa: E711
             self.blocks = sparse.COO(blocks)
+            self.block_coords = self.blocks.coords
         else:
             # turn Nones to ZeroOperators
+            block_coords = []
             for (i, j) in np.ndindex(blocks.shape):
                 if blocks[i, j] is None:
                     self.blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
+                block_coords.append([i, j])
+            self.block_coords = np.array(block_coords).T
 
         self.source = BlockVectorSpace(source_spaces) if self.blocked_source else source_spaces[0]
         self.range = BlockVectorSpace(range_spaces) if self.blocked_range else range_spaces[0]
@@ -71,23 +75,16 @@ class BlockOperatorBase(Operator):
         assert U in self.source
 
         V_blocks = [None for i in range(self.num_range_blocks)]
-        if isinstance(self.blocks, sparse.COO):
-            for i, j, op in zip(self.blocks.coords[0], self.blocks.coords[1], self.blocks.data):
+        for (i, j) in zip(self.block_coords[0], self.block_coords[1]):
+            op = self.blocks[i, j]
+            if isinstance(op, ZeroOperator):
+                Vi = op.range.zeros(len(U))
+            else:
                 Vi = op.apply(U.blocks[j] if self.blocked_source else U, mu=mu)
-                if V_blocks[i] is None:
-                    V_blocks[i] = Vi
-                else:
-                    V_blocks[i] += Vi
-        else:
-            for (i, j), op in np.ndenumerate(self.blocks):
-                if isinstance(op, ZeroOperator):
-                    Vi = op.range.zeros(len(U))
-                else:
-                    Vi = op.apply(U.blocks[j] if self.blocked_source else U, mu=mu)
-                if V_blocks[i] is None:
-                    V_blocks[i] = Vi
-                else:
-                    V_blocks[i] += Vi
+            if V_blocks[i] is None:
+                V_blocks[i] = Vi
+            else:
+                V_blocks[i] += Vi
 
         return self.range.make_array(V_blocks) if self.blocked_range else V_blocks[0]
 
@@ -95,77 +92,69 @@ class BlockOperatorBase(Operator):
         assert V in self.range
 
         U_blocks = [None for j in range(self.num_source_blocks)]
-        if isinstance(self.blocks, sparse.COO):
-            for i, j, op in zip(self.blocks.coords[0], self.blocks.coords[1], self.blocks.data):
+        for (i, j) in zip(self.block_coords[0], self.block_coords[1]):
+            op = self.blocks[i, j]
+            if isinstance(op, ZeroOperator):
+                Uj = op.source.zeros(len(V))
+            else:
                 Uj = op.apply_adjoint(V.blocks[i] if self.blocked_range else V, mu=mu)
-                if U_blocks[j] is None:
-                    U_blocks[j] = Uj
-                else:
-                    U_blocks[j] += Uj
-        else:
-            for (i, j), op in np.ndenumerate(self.blocks):
-                if isinstance(op, ZeroOperator):
-                    Uj = op.source.zeros(len(V))
-                else:
-                    Uj = op.apply_adjoint(V.blocks[i] if self.blocked_range else V, mu=mu)
-                if U_blocks[j] is None:
-                    U_blocks[j] = Uj
-                else:
-                    U_blocks[j] += Uj
+            if U_blocks[j] is None:
+                U_blocks[j] = Uj
+            else:
+                U_blocks[j] += Uj
 
         return self.source.make_array(U_blocks) if self.blocked_source else U_blocks[0]
 
     def assemble(self, mu=None):
         blocks = np.empty(self.blocks.shape, dtype=object)
-        if isinstance(self.blocks, sparse.COO):
-            for (i, j) in zip(self.blocks.coords[0], self.blocks.coords[1]):
-                blocks[i, j] = self.blocks[i, j].assemble(mu)
-        else:
-            for (i, j) in np.ndindex(self.blocks.shape):
-                blocks[i, j] = self.blocks[i, j].assemble(mu)
-        if np.all(blocks == self.blocks):
+        for (i, j) in zip(self.block_coords[0], self.block_coords[1]):
+            blocks[i, j] = self.blocks[i, j].assemble(mu)
+        if self.make_sparse:
+            blocks[blocks == None] = 0  # noqa: E711
+            blocks = sparse.COO(blocks)
+        if np.all(blocks[i, j] == self.blocks[i, j] for (i, j) in zip(self.block_coords[0], self.block_coords[1])):
             return self
         else:
             return self.__class__(blocks)
 
     def as_range_array(self, mu=None):
 
-        def process_row(row, space):
+        def process_row(row, space, source_spaces):
             R = space.empty()
-            for op in row:
+            for op, source_space in zip(row, source_spaces):
                 if op:
                     R.append(op.as_range_array(mu))
                 else:
-                    R.append(space.zeros())
+                    # mimic what would have been done by a ZeroOperator
+                    R.append(space.zeros(source_space.dim))
             return R
 
-        subspaces = self.range.subspaces if self.blocked_range else [self.range]
-        blocks = [process_row(row, space) for row, space in zip(self.blocks, subspaces)]
+        range_subspaces = self.range.subspaces if self.blocked_range else [self.range]
+        source_subspaces = self.source.subspaces if self.blocked_source else [self.source]
+        blocks = [process_row(row, space, source_subspaces) for row, space in zip(self.blocks, range_subspaces)]
         return self.range.make_array(blocks) if self.blocked_range else blocks[0]
 
     def as_source_array(self, mu=None):
 
-        def process_col(col, space):
+        def process_col(col, space, range_spaces):
             R = space.empty()
-            for op in col:
+            for op, range_space in zip(col, range_spaces):
                 if op:
                     R.append(op.as_source_array(mu))
                 else:
-                    R.append(space.zeros())
+                    # mimic what would have been done by a ZeroOperator
+                    R.append(space.zeros(range_space.dim))
             return R
 
-        subspaces = self.source.subspaces if self.blocked_source else [self.source]
-        blocks = [process_col(col, space) for col, space in zip(self.blocks.T, subspaces)]
+        range_subspaces = self.range.subspaces if self.blocked_range else [self.range]
+        source_subspaces = self.source.subspaces if self.blocked_source else [self.source]
+        blocks = [process_col(col, space, range_subspaces) for col, space in zip(self.blocks.T, source_subspaces)]
         return self.source.make_array(blocks) if self.blocked_source else blocks[0]
 
     def d_mu(self, parameter, index=0):
         blocks = np.empty(self.blocks.shape, dtype=object)
-        if isinstance(self.blocks, sparse.COO):
-            for (i, j) in zip(self.blocks.coords[0], self.blocks.coords[1]):
-                blocks[i, j] = self.blocks[i, j].d_mu(parameter, index)
-        else:
-            for (i, j) in np.ndindex(self.blocks.shape):
-                blocks[i, j] = self.blocks[i, j].d_mu(parameter, index)
+        for (i, j) in zip(self.block_coords[0], self.block_coords[1]):
+            blocks[i, j] = self.blocks[i, j].d_mu(parameter, index)
         return self.with_(blocks=blocks)
 
     def to_dense(self):
