@@ -237,7 +237,7 @@ class BlockDiagonalOperator(BlockOperator):
         blocks2 = np.empty((n, n), dtype=object)
         for i, op in enumerate(blocks):
             blocks2[i, i] = op
-        super().__init__(blocks2)
+        super().__init__(blocks2, make_sparse=True)
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
