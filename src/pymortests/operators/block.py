@@ -110,15 +110,23 @@ def test_blk_diag_apply_inverse_adjoint():
 
 
 def test_sparse():
-    eye = np.empty((4, 4), dtype=object)
-    for I in range(4):
-        eye[I, I] = NumpyMatrixOperator(np.eye(20))
-    block_op = BlockOperator(eye, make_sparse=True)
+    op = np.empty((4, 4), dtype=object)
+    for I in range(3):
+        op[I, I] = NumpyMatrixOperator(np.eye(20))
+    op[3, 3] = NumpyMatrixOperator(np.eye(10))
+    op[0, 2] = NumpyMatrixOperator(4 * np.eye(20))
+    block_op = BlockOperator(op, make_sparse=True)
     ones = block_op.range.ones()
     block_op.apply(ones)
     block_op.apply_adjoint(ones)
-    block_op.as_source_array()
-    block_op.as_range_array()
+    block_op.assemble()
     block_op.d_mu('something')
     dense_block_op = block_op.to_dense()
+    dense_block_op.assemble()
+    a = dense_block_op.as_source_array().to_numpy()
+    b = block_op.as_source_array().to_numpy()
+    assert np.allclose(a, b)
+    a = dense_block_op.as_range_array().to_numpy()
+    b = block_op.as_range_array().to_numpy()
+    assert np.allclose(a, b)
     assert block_op.apply2(ones, ones) == dense_block_op.apply2(ones, ones)
