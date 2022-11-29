@@ -17,7 +17,7 @@ class BlockOperatorBase(Operator):
         for (i, j) in np.ndindex(self.blocks.shape):
             yield self.blocks[i, j]
 
-    def __init__(self, blocks, make_sparse=True):
+    def __init__(self, blocks, make_sparse=False):
         self.make_sparse = make_sparse
         self.blocks = blocks = np.array(blocks)
         assert 1 <= blocks.ndim <= 2
