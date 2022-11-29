@@ -168,6 +168,14 @@ class BlockOperatorBase(Operator):
                 blocks[i, j] = self.blocks[i, j].d_mu(parameter, index)
         return self.with_(blocks=blocks)
 
+    def to_dense(self):
+        if self.make_sparse:
+            blocks = self.blocks.todense()
+            blocks[blocks == 0] = None
+            return self.with_(blocks=blocks, make_sparse=False)
+        else:
+            return self
+
 
 class BlockOperator(BlockOperatorBase):
     """A matrix of arbitrary |Operators|.

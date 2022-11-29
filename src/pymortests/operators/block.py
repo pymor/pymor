@@ -114,8 +114,11 @@ def test_sparse():
     for I in range(4):
         eye[I, I] = NumpyMatrixOperator(np.eye(20))
     block_op = BlockOperator(eye, make_sparse=True)
-    block_op.apply(block_op.range.ones())
-    block_op.apply_adjoint(block_op.range.ones())
+    ones = block_op.range.ones()
+    block_op.apply(ones)
+    block_op.apply_adjoint(ones)
     block_op.as_source_array()
     block_op.as_range_array()
     block_op.d_mu('something')
+    dense_block_op = block_op.to_dense()
+    assert block_op.apply2(ones, ones) == dense_block_op.apply2(ones, ones)
