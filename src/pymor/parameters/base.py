@@ -537,7 +537,7 @@ class ParameterSpace(ParametricObject):
         counts
             Number of samples to take per parameter and component
             of the parameter. Either a dict of counts per |Parameter|
-            or a single count that is taken for all |Parameters|
+            or a single count that is taken for each parameter in |Parameters|.
 
         Returns
         -------
