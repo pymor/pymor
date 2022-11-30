@@ -333,8 +333,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     gecon = get_lapack_funcs('gecon', self._lu_factor)
                     rcond, _ = gecon(self._lu_factor[0], np.linalg.norm(self.matrix, ord=1), norm='1')
                     if rcond < np.finfo(np.float64).eps:
-                        logger = getLogger('pymor.operators.numpy.NumpyMatrixOperator.apply_inverse')
-                        logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}): result may not be accurate.')
+                        self.logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}) in apply_inverse: result may not be accurate.')
                 R = lu_solve(self._lu_factor, V.to_numpy().T).T
 
             if check_finite:
