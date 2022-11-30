@@ -3,7 +3,7 @@ from copy import deepcopy
 
 from pymor.operators.constructions import ZeroOperator, LincombOperator, VectorOperator
 from pymor.algorithms.projection import project
-from pymor.operators.block import BlockOperator
+from pymor.operators.block import BlockOperator, BlockColumnOperator
 
 from pymor.models.basic import StationaryModel
 from pymor.reductors.coercive import CoerciveRBReductor
@@ -121,26 +121,20 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         projected_ops_blocks = []
         # this is for BlockOperator(LincombOperators)
         assert isinstance(self.fom.operator, BlockOperator)
-        assert not self.fom.rhs.parametric
 
         local_projected_op = np.empty((self.S, self.S), dtype=object)
+        local_projected_rhs = np.empty(self.S, dtype=object)
         for I in range(self.S):
+            local_basis_I = self.local_bases[I]
             for J in range(self.S):
-                local_basis_I = self.local_bases[I]
                 local_basis_J = self.local_bases[J]
                 if self.fom.operator.blocks[I][J]:
                     local_projected_op[I][J] = project(self.fom.operator.blocks[I][J],
                                                        local_basis_I, local_basis_J)
-        projected_operator = BlockOperator(local_projected_op)
+            local_projected_rhs[I] = project(self.fom.rhs.blocks[I, 0], local_basis_I, None)
 
-        local_projected_rhs = np.empty(self.S, dtype=object)
-        for I in range(self.S):
-            # TODO: find an easier way for this this is currently not possible for parametric rhs
-            local_basis = self.local_bases[I]
-            rhs_int = project(self.fom.rhs.blocks[I, 0], local_basis, None).matrix[:, 0]
-            local_projected_rhs[I] = local_projected_op[I][I].range.make_array(rhs_int)
-        projected_rhs = VectorOperator(projected_operator.range.make_array(local_projected_rhs))
-        # projected_rhs = BlockOperator(local_projected_rhs)
+        projected_operator = BlockOperator(local_projected_op)
+        projected_rhs = BlockColumnOperator(local_projected_rhs)
 
         projected_operators = {
             'operator':          projected_operator,
@@ -197,7 +191,7 @@ def construct_patch_model(neighborhood, block_op, block_rhs, neighbors):
     for ii in range(S_patch):
         I = local_to_global_mapping(ii)
         patch_op[ii][ii] = blocks_op[I][I]
-        patch_rhs[ii] = blocks_rhs[I, 0].array
+        patch_rhs[ii] = blocks_rhs[I, 0]
         for J in neighbors(I):
             jj = global_to_local_mapping(J)
             if jj >= 0:
@@ -209,7 +203,7 @@ def construct_patch_model(neighborhood, block_op, block_rhs, neighbors):
                 pass
 
     final_patch_op = BlockOperator(patch_op)
-    final_patch_rhs = VectorOperator(final_patch_op.range.make_array(patch_rhs))
+    final_patch_rhs = BlockColumnOperator(patch_rhs)
 
     patch_model = StationaryModel(final_patch_op, final_patch_rhs)
     return patch_model, local_to_global_mapping, global_to_local_mapping
