@@ -3,11 +3,11 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
+import warnings
 
 import numpy as np
 
 from pymor.algorithms.line_search import armijo
-
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError, NewtonError
 from pymor.core.logger import getLogger
@@ -40,7 +40,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, range_product=None, sourc
         The |parameter values| for which to solve the equation.
     range_product
         The inner product `Operator` on `operator.range` with which the norm
-        of the resiudal is computed. If `None`, the Euclidean inner product
+        of the residual is computed. If `None`, the Euclidean inner product
         is used.
     source_product
         The inner product `Operator` on `operator.source` with which the norm
@@ -200,13 +200,16 @@ def newton(operator, rhs, initial_guess=None, mu=None, range_product=None, sourc
         if error_measure == 'update':
             err_scale_factor = solution_norm
 
-        logger.info(f'it:{iteration} '
-                    f'norm:{solution_norm:.3e} '
-                    f'upd:{update_norm:.3e} '
-                    f'rel_upd:{update_norm / solution_norm:.3e} '
-                    f'res:{residual_norm:.3e} '
-                    f'red:{residual_norm / residual_norms[-2]:.3e} '
-                    f'tot_red:{residual_norm / residual_norms[0]:.3e}')
+        with warnings.catch_warnings():
+            # ignore division-by-zero warnings when solution_norm is zero
+            warnings.filterwarnings('ignore', category=RuntimeWarning)
+            logger.info(f'it:{iteration} '
+                        f'norm:{solution_norm:.3e} '
+                        f'upd:{update_norm:.3e} '
+                        f'rel_upd:{update_norm / solution_norm:.3e} '
+                        f'res:{residual_norm:.3e} '
+                        f'red:{residual_norm / residual_norms[-2]:.3e} '
+                        f'tot_red:{residual_norm / residual_norms[0]:.3e}')
 
         if not np.isfinite(residual_norm) or not np.isfinite(solution_norm):
             raise NewtonError('Failed to converge.')

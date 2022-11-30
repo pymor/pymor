@@ -11,7 +11,7 @@ As an additional feature, if `None` is passed for such an argument,
 its default value is used instead of `None`. This is useful
 for writing code of the following form::
 
-    @default('option')
+    @defaults('option')
     def algorithm(U, option=42):
         ...
 

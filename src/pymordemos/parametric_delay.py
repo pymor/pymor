@@ -3,17 +3,25 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 from typer import Argument, run
 
+from pymor.core.logger import set_log_levels
 from pymor.models.transfer_function import TransferFunction
 from pymor.reductors.h2 import TFIRKAReductor
+from pymordemos.parametric_heat import fom_properties_param, run_mor_method_param
 
 
 def main(r: int = Argument(10, help='Order of the TF-IRKA ROM.')):
     """Parametric delay demo."""
+    set_log_levels({
+        'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
+        'pymor.algorithms.lradi.solve_lyap_lrcf': 'WARNING',
+        'pymor.reductors.basic.LTIPGReductor': 'WARNING',
+    })
+    plt.rcParams['axes.grid'] = True
+
     # Model
     def H(s, mu):
         tau = mu['tau'][0]
@@ -27,44 +35,12 @@ def main(r: int = Argument(10, help='Order of the TF-IRKA ROM.')):
                            H, dH,
                            parameters={'tau': 1})
 
-    # Magnitude plot
-    mu_list = [0.01, 0.1, 1]
-
-    w = np.logspace(-2, 4, 100)
-    fig, ax = plt.subplots()
-    for mu in mu_list:
-        fom.mag_plot(w, ax=ax, mu=mu, label=fr'$\tau = {mu}$')
-    ax.legend()
-    plt.show()
+    mus = [0.01, 0.1, 1]
+    w = np.logspace(-2, 4, 300)
+    fom_properties_param(fom, w, mus)
 
     # TF-IRKA
-    roms_tf_irka = []
-    for mu in mu_list:
-        tf_irka = TFIRKAReductor(fom, mu=mu)
-        rom = tf_irka.reduce(r, conv_crit='h2', maxit=1000, num_prev=5)
-        roms_tf_irka.append(rom)
-
-    fig, ax = plt.subplots()
-    for mu, rom in zip(mu_list, roms_tf_irka):
-        poles = rom.poles()
-        ax.plot(poles.real, poles.imag, '.', label=fr'$\tau = {mu}$')
-    ax.set_title("Poles of TF-IRKA's ROMs")
-    ax.legend()
-    plt.show()
-
-    fig, ax = plt.subplots()
-    for mu, rom in zip(mu_list, roms_tf_irka):
-        rom.transfer_function.mag_plot(w, ax=ax, label=fr'$\tau = {mu}$')
-    ax.set_title("Magnitude plot of TF-IRKA's ROMs")
-    ax.legend()
-    plt.show()
-
-    fig, ax = plt.subplots()
-    for mu, rom in zip(mu_list, roms_tf_irka):
-        (fom - rom).mag_plot(w, ax=ax, mu=mu, label=fr'$\tau = {mu}$')
-    ax.set_title("Magnitude plot of error systems")
-    ax.legend()
-    plt.show()
+    run_mor_method_param(fom, r, w, mus, TFIRKAReductor, 'TF-IRKA')
 
 
 if __name__ == "__main__":

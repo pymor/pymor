@@ -7,7 +7,10 @@ from io import BytesIO
 import numpy as np
 from ipywidgets import IntSlider, interact, widgets, Play, Layout, Label
 import pythreejs as p3js
-from matplotlib.cm import get_cmap
+try:
+    from matplotlib import colormaps
+except ImportError:  # matplotlib<3.5
+    from matplotlib.cm import get_cmap as colormaps
 
 from pymor.core import config
 from pymor.discretizers.builtin.grids.referenceelements import triangle, square
@@ -16,7 +19,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 # we should try to limit ourselves to webgl 1.0 here since 2.0 (draft) is not as widely supported
 # https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API#Browser_compatibility
-# version directives and such are preprended by threejs
+# version directives and such are prepended by threejs
 RENDER_VERTEX_SHADER = """
     attribute float data;
     varying float texcoord;
@@ -283,7 +286,7 @@ class ThreeJSPlot(widgets.VBox):
 
 
 def visualize_py3js(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
-                    separate_colorbars=False, rescale_colorbars=False, columns=2, color_map=get_cmap('viridis')):
+                    separate_colorbars=False, rescale_colorbars=False, columns=2, color_map=colormaps['viridis']):
     """Generate a pythreejs plot and associated controls for scalar data associated to a 2D |Grid|.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either

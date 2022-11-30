@@ -5,7 +5,7 @@ import warnings
 
 from pymor.analyticalproblems.text import text_problem
 from pymortests.base import runmodule
-from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
+from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
 
 
 def test_pickle(analytical_problem):

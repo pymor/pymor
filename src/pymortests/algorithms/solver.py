@@ -58,7 +58,7 @@ def test_numpy_dense_solvers():
 
 
 def test_numpy_sparse_solvers(numpy_sparse_solver):
-    op = NumpyMatrixOperator(diags([np.arange(1., 11.)], [0]), solver_options=numpy_sparse_solver)
+    op = NumpyMatrixOperator(diags([np.arange(1., 11.)], [0], format='csc'), solver_options=numpy_sparse_solver)
     rhs = op.range.make_array(np.ones(10))
     solution = op.apply_inverse(rhs)
     assert ((op.apply(solution) - rhs).norm() / rhs.norm())[0] < 1e-8
