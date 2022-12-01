@@ -1,29 +1,33 @@
 import numpy as np
 from copy import deepcopy
 
-from pymor.core.base import ImmutableObject
-
 from pymor.algorithms.projection import project
+from pymor.core.base import ImmutableObject
+from pymor.core.exceptions import ExtensionError
 from pymor.models.basic import StationaryModel
 from pymor.operators.block import BlockOperator, BlockColumnOperator
 from pymor.operators.constructions import LincombOperator, VectorOperator
 from pymor.operators.constructions import VectorArrayOperator, IdentityOperator
 from pymor.parameters.functionals import ParameterFunctional
 from pymor.reductors.basic import extend_basis
-from pymor.reductors.coercive import CoerciveRBReductor
+from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
 from pymor.reductors.residual import ResidualReductor, ResidualOperator
 
 
 class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
-    def __init__(self, fom, dd_grid, local_bases=None):
+    def __init__(self, fom, dd_grid, local_bases=None, product=None):
+        # super.__init__ ?
         self.fom = fom
+        self.product = product
         self.solution_space = fom.solution_space
         self.S = self.solution_space.empty().num_blocks
         self._last_rom = None
 
         # TODO: assertions for local_bases
-        self.local_bases = local_bases or [self.solution_space.empty().block(ss).empty()
-                                           for ss in range(self.S)]
+        self.local_bases = local_bases or [self.solution_space.empty().block(I).empty()
+                                           for I in range(self.S)]
+        self.local_products = [None if not product else product.blocks[I, I]
+                               for I in range(self.S)]
 
         # element patches for online enrichment
         self.element_patches = construct_element_patches(dd_grid)
@@ -45,17 +49,24 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
 
         self.estimator_data = {}
         self.local_residuals = []
+        self.bases_in_local_domains = {}
         for associated_element, elements in estimator_domains.items():
             local_model, local_to_global, global_to_local = construct_local_model(
                 elements, fom.operator, fom.rhs, dd_grid.neighbors,
-                block_prod=fom.products['h1'], lincomb_outside=True)
+                block_prod=self.product, lincomb_outside=True)
             bases_in_local_domain = [self.local_bases[el] for el in elements]
-            basis = local_model.solution_space.make_array(bases_in_local_domain)
+            self.bases_in_local_domains[associated_element] = bases_in_local_domain
+            # TODO: we need sparse BlockVectorArrays here !!
+            basis = local_model.solution_space.make_block_diagonal_array(bases_in_local_domain)
+            # NOTE: using the reduction here is way too slow and gives wrong results !
             residual_reductor = ResidualReductor(basis,
                                                  local_model.operator,
                                                  local_model.rhs,
-                                                 product=local_model.products['h1'],
+                                                 product=local_model.products['product'],
                                                  riesz_representatives=True)
+            # residual_reductor = SimpleCoerciveRBReductor(local_model, basis,
+            #                                              product=local_model.products['product'],
+            #                                              check_orthonormality=False)
             node_elements = inner_node_patches[associated_element]
             # TODO: vectorize the following
             local_node_elements = [global_to_local(el) for el in node_elements]
@@ -68,20 +79,18 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             # TODO: find the correct partition of unity here
             pass
 
-    def add_global_solutions(self, us):
+    def extend_bases_with_global_solution(self, us):
         assert us in self.fom.solution_space
         for I in range(self.S):
-            us_block = us.block(I)
-            try:
-                extend_basis(us_block, self.local_bases[I])
-            except:
-                print('Extension failed')
+            u_block = us.block(I)
+            self.extend_basis_locally(I, u_block)
 
-    def add_local_solutions(self, I, u):
+    def extend_basis_locally(self, I, u):
         try:
-            extend_basis(u, self.local_bases[I])
-        except:
-            print('Extension failed')
+            extend_basis(u, self.local_bases[I], product=self.local_products[I])
+            # TODO: can make use of super.extend_basis ?
+        except ExtensionError:
+            self.logger.warn('Extension failed')
 
     def enrich_all_locally(self, mu, use_global_matrix=False):
         for I in range(self.S):
@@ -130,21 +139,21 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             rhs=patch_model.rhs - a_u_v_as_operator)
         # TODO: think about removing boundary dofs for the rhs
         phi = patch_model_with_correction.solve(mu)
-        self.add_local_solutions(I, phi.block(mapping_to_local(I)))
+        self.extend_basis_locally(I, phi.block(mapping_to_local(I)))
         return phi
 
     def basis_length(self):
         return [len(self.local_bases[I]) for I in range(self.S)]
 
     def reduce(self, dims=None):
-        assert dims is None, 'we cannot yet reduce to subbases'
+        assert dims is None, 'Cannot reduce to subbases, yet'
 
         if self._last_rom is None or sum(self.basis_length()) > self._last_rom_dims:
             self.reduced_residuals = self._reduce_residuals()
             self._last_rom = self._reduce()
             self._last_rom_dims = sum(self.basis_length())
             # self.reduced_local_basis is required to perform multiple local enrichments
-            # TODO: check how to fix this better
+            # TODO: check how to make this better
             self.reduced_local_bases = deepcopy(self.local_bases)
 
         return self._last_rom
@@ -177,17 +186,32 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         return projected_operators
 
     def _reduce_residuals(self):
+        # reduced_residuals = []
+        # for (element, basis_local), residual in zip(self.bases_in_local_domains.items(),
+        #                                             self.local_residuals):
+        #     basis = residual.fom.operator.source.make_block_diagonal_array(basis_local)
+        #     # construct a new ResidualReductor object to be sure that nothing is used from before
+        #     # NOTE: this is way too slow !!
+        #     # residual_reductor = ResidualReductor(basis,
+        #     #                                      residual.operator,
+        #     #                                      residual.rhs,
+        #     #                                      product=residual.product,
+        #     #                                      riesz_representatives=True)
+        #     residual_reductor = SimpleCoerciveRBReductor(residual.fom, basis,
+        #                                                  product=residual.products['RB'],
+        #                                                  check_orthonormality=False)
+        #     reduced_residuals.append(residual_reductor.reduce())
+
         # reduced_residuals = [local_residual.reduce() for local_residual in self.local_residuals]
-        # NOTE: the above does not make sense because there is no system reduce involved.
-        # we need to use SimpleCoerciveReductor which also uses project_block_operator and friends
-        # instead: just use the FOM parts for now without reduction
+        # NOTE: the above requires a reductor that has a changeable basis, which only makes sense
+        # if the BlockVectorArray allows for a sparse format.
 
         reduced_residuals = [local_residual for local_residual in self.local_residuals]
         return reduced_residuals
 
     def assemble_error_estimator(self):
         estimators = {}
-        estimators['global'] = GlobalEllipticEstimator(self.fom)
+        estimators['global'] = GlobalEllipticEstimator(self.fom, self.product)
         estimators['local'] = EllipticIPLRBEstimator(self.estimator_data,
                                                      self.reduced_residuals,
                                                      self.S)
@@ -258,75 +282,75 @@ def construct_local_model(local_elements, block_op, block_rhs, neighbors, block_
                 # patch_op[ii][ii] += ops_dirichlet[ss][nn]
                 pass
 
-    # if lincomb_outside and block_rhs.parametric:
-    #     # porkelei for efficient residual reduction
-    #     # change from BlockOperator(LincombOperators) to LincombOperator(BlockOperators)
-    #     rhs_operators = []
-    #     # this only works for globally defined parameter functionals
-    #     # we only take the coefficients of the first one and assert below that this is
-    #     # always the same
-    #     rhs_coefficients = patch_rhs[0].coefficients
-    #     blocks = [np.empty(S_patch, dtype=object)
-    #               for _ in range(len(rhs_coefficients))]
-    #     for I in range(S_patch):
-    #         rhs_lincomb = patch_rhs[I]
-    #         # asserts that parameter functionals are globally defined
-    #         assert rhs_lincomb.coefficients == rhs_coefficients
-    #         for i_, rhs in enumerate(rhs_lincomb.operators):
-    #             blocks[i_][I] = rhs
-    #     rhs_operators = [BlockColumnOperator(block) for block in blocks]
-    #     final_patch_rhs = LincombOperator(rhs_operators, rhs_coefficients)
-    # else:
-    final_patch_rhs = BlockColumnOperator(patch_rhs)
+    if lincomb_outside and block_rhs.parametric:
+        # porkelei for efficient residual reduction
+        # change from BlockOperator(LincombOperators) to LincombOperator(BlockOperators)
+        rhs_operators = []
+        # this only works for globally defined parameter functionals
+        # we only take the coefficients of the first one and assert below that this is
+        # always the same
+        rhs_coefficients = patch_rhs[0].coefficients
+        blocks = [np.empty(S_patch, dtype=object)
+                  for _ in range(len(rhs_coefficients))]
+        for I in range(S_patch):
+            rhs_lincomb = patch_rhs[I]
+            # asserts that parameter functionals are globally defined
+            assert rhs_lincomb.coefficients == rhs_coefficients
+            for i_, rhs in enumerate(rhs_lincomb.operators):
+                blocks[i_][I] = rhs
+        rhs_operators = [BlockColumnOperator(block) for block in blocks]
+        final_patch_rhs = LincombOperator(rhs_operators, rhs_coefficients)
+    else:
+        final_patch_rhs = BlockColumnOperator(patch_rhs)
 
-    # if lincomb_outside and block_op.parametric:
-    #     # porkelei for efficient residual reduction
-    #     # change from BlockOperator(LincombOperators) to LincombOperator(BlockOperators)
-    #     op_operators = []
-    #     # this only works for globally defined parameter functionals
-    #     # we only take the coefficients of the first one and assert below that this is
-    #     # always the same
-    #     op_param_coefficients = list(set(
-    #         [coef for coef in patch_op[0, 0].coefficients
-    #          if isinstance(coef, ParameterFunctional) and coef.parametric]))
-    #     op_coefficients = op_param_coefficients + [1.]  # <-- for non parametric parts
-    #     blocks = [np.empty((S_patch, S_patch), dtype=object) for _ in range(len(op_coefficients))]
-    #     for I in range(S_patch):
-    #         for J in range(S_patch):
-    #             op_lincomb = patch_op[I, J]
-    #             if op_lincomb:     # can be None
-    #                 if not op_lincomb.parametric:
-    #                     # this is for the coupling parts that are independent of the parameter
-    #                     assert len(op_lincomb.operators) == 1 and op_lincomb.coefficients[0] == 1.
-    #                     blocks[-1][I, J] = op_lincomb.operators[0]
-    #                 else:
-    #                     constant_ops = []
-    #                     parametric_ops = []
-    #                     param_coefficients_in_op = []
-    #                     for coef, op in zip(op_lincomb.coefficients, op_lincomb.operators):
-    #                         if isinstance(coef, ParameterFunctional) and coef.parametric:
-    #                             parametric_ops.append(op)
-    #                             param_coefficients_in_op.append(coef)
-    #                         else:
-    #                             constant_ops.append(op)
+    if lincomb_outside and block_op.parametric:
+        # porkelei for efficient residual reduction
+        # change from BlockOperator(LincombOperators) to LincombOperator(BlockOperators)
+        op_operators = []
+        # this only works for globally defined parameter functionals
+        # we only take the coefficients of the first one and assert below that this is
+        # always the same
+        op_param_coefficients = list(set(
+            [coef for coef in patch_op[0, 0].coefficients
+             if isinstance(coef, ParameterFunctional) and coef.parametric]))
+        op_coefficients = op_param_coefficients + [1.]  # <-- for non parametric parts
+        blocks = [np.empty((S_patch, S_patch), dtype=object) for _ in range(len(op_coefficients))]
+        for I in range(S_patch):
+            for J in range(S_patch):
+                op_lincomb = patch_op[I, J]
+                if op_lincomb:     # can be None
+                    if not op_lincomb.parametric:
+                        # this is for the coupling parts that are independent of the parameter
+                        assert len(op_lincomb.operators) == 1 and op_lincomb.coefficients[0] == 1.
+                        blocks[-1][I, J] = op_lincomb.operators[0]
+                    else:
+                        constant_ops = []
+                        parametric_ops = []
+                        param_coefficients_in_op = []
+                        for coef, op in zip(op_lincomb.coefficients, op_lincomb.operators):
+                            if isinstance(coef, ParameterFunctional) and coef.parametric:
+                                parametric_ops.append(op)
+                                param_coefficients_in_op.append(coef)
+                            else:
+                                constant_ops.append(op)
 
-    #                     for coef, op in zip(param_coefficients_in_op, parametric_ops):
-    #                         for i_, coef_ in enumerate(op_param_coefficients):
-    #                             if coef_ == coef:
-    #                                 if blocks[i_][I, J] is None:
-    #                                     blocks[i_][I, J] = op
-    #                                 else:
-    #                                     blocks[i_][I, J] += op
-    #                                 break   # coefficients are unique
+                        for coef, op in zip(param_coefficients_in_op, parametric_ops):
+                            for i_, coef_ in enumerate(op_param_coefficients):
+                                if coef_ == coef:
+                                    if blocks[i_][I, J] is None:
+                                        blocks[i_][I, J] = op
+                                    else:
+                                        blocks[i_][I, J] += op
+                                    break   # coefficients are unique
 
-    #                     blocks[-1][I, J] = sum(constant_ops)
-    #     op_operators = [BlockOperator(block) for block in blocks]
-    #     final_patch_op = LincombOperator(op_operators, op_coefficients)
-    # else:
-    final_patch_op = BlockOperator(patch_op)
+                        blocks[-1][I, J] = sum(constant_ops)
+        op_operators = [BlockOperator(block) for block in blocks]
+        final_patch_op = LincombOperator(op_operators, op_coefficients)
+    else:
+        final_patch_op = BlockOperator(patch_op)
 
     final_patch_prod = BlockOperator(patch_prod) if block_prod else None
-    products = dict(h1=final_patch_prod) if block_prod else None
+    products = dict(product=final_patch_prod) if block_prod else None
 
     patch_model = StationaryModel(operator=final_patch_op, rhs=final_patch_rhs,
                                   products=products)
@@ -473,12 +497,12 @@ def _project_block_rhs(rhs, range_bases):
 
 class GlobalEllipticEstimator(ImmutableObject):
 
-    def __init__(self, fom):
+    def __init__(self, fom, product):
         self.__auto_init(locals())
 
     def estimate_error(self, u, mu):
         assert u in self.fom.solution_space
-        product = self.fom.products['h1']
+        product = self.product
         operator = self.fom.operator
         rhs = self.fom.rhs
         riesz_rep = product.apply_inverse(operator.apply(u, mu) - rhs.as_vector(mu))
@@ -498,7 +522,7 @@ class EllipticIPLRBEstimator(ImmutableObject):
             u_in_ed = u_rom.block(elements)
 
             if isinstance(residual, ResidualReductor):
-                # TODO: this here is the non-reduced case where residual is the ResidualReductor
+                # this is the non-reduced case where residual is the ResidualReductor
                 residual_operator = ResidualOperator(residual.operator, residual.rhs)
 
                 u_in_ed = residual_operator.source.make_array(u_in_ed)
@@ -515,11 +539,16 @@ class EllipticIPLRBEstimator(ImmutableObject):
                 residual_inner_vec = residual.product.source.make_array(residual_inner_vec)
                 res = residual.product.apply_inverse(residual_inner_vec)
                 norm = np.sqrt(residual.product.apply2(res, res))
-            else:
-                assert 0
+            elif isinstance(residual, ResidualOperator):
                 # this is the reduced case where residual is the reduced residual
                 # NOTE: this can not be used, see the comment in _reduce_residual !!
-                # norm = residual.apply(u_in_ed, mu=mu).norm()
+                u_in_ed_unblocked = np.array([u.to_numpy() for u in u_in_ed]).flatten()
+                norm = residual.apply(u_in_ed_unblocked, mu=mu).norm()
+            elif isinstance(residual, StationaryModel):  # result from SimpleCoerciveReductor
+                u_in_ed_unblocked = np.array([u.to_numpy() for u in u_in_ed]).flatten()
+                u_in_ed_unblocked = residual.solution_space.from_numpy(u_in_ed_unblocked)
+                norm = residual.error_estimator.estimate_error(u_in_ed_unblocked, mu=mu,
+                                                               m=residual)
 
             indicators.append(norm)
 
