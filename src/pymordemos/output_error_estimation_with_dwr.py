@@ -121,7 +121,7 @@ def main(
     plt.legend()
 
     # estimator study for smaller number of basis functions
-    modes_set = np.arange(1, len(primal_RB)+1)
+    modes_set = np.arange(0, len(primal_RB)+1)
     max_errss, max_estss, min_errss, min_estss = [], [], [], []
     for reductor in [standard_RB_reductor, dwr_reductors[0], dwr_reductors[1]]:
         max_errs, max_ests, min_errs, min_ests = [], [], [], []
