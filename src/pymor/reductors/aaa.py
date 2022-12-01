@@ -297,9 +297,9 @@ def nd_loewner(samples, svs, itpl_part):
     Parameters
     ----------
     samples
-        Tensor of samples (see :class:`pAAAReductor`).
+        Tensor of samples (see :class:`PAAAReductor`).
     svs
-        List of sampling values (see :class:`pAAAReductor`).
+        List of sampling values (see :class:`PAAAReductor`).
     itpl_part
         Nested list such that `itpl_part[i]` is a list of indices for interpolated
         sampling values in `svs[i]`.
@@ -335,9 +335,9 @@ def full_nd_loewner(samples, svs, itpl_part):
     Parameters
     ----------
     samples
-        Tensor of samples (see :class:`pAAAReductor`).
+        Tensor of samples (see :class:`PAAAReductor`).
     svs
-        List of sampling values (see :class:`pAAAReductor`).
+        List of sampling values (see :class:`PAAAReductor`).
     itpl_part
         Nested list such that `itpl_part[i]` is a list of indices for interpolated
         sampling values in `svs[i]`.
