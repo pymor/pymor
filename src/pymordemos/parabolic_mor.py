@@ -66,7 +66,7 @@ def main(
         rom, fom=fom, reductor=reductor, error_estimator=True,
         error_norms=[lambda U: DT * np.sqrt(np.sum(fom.h1_0_semi_norm(U)[1:]**2))],
         error_norm_names=['l^2-h^1'],
-        condition=False, test_mus=parameter_space.sample_randomly(test, seed=999)
+        condition=False, test_mus=parameter_space.sample_randomly(test)
     )
 
     # show results
@@ -175,10 +175,9 @@ def _discretize_fenics():
     # assemble matrices and vectors
     l2_mat = df.assemble(df.inner(u, v) * df.dx)
     l2_0_mat = l2_mat.copy()
+    mass_mat = l2_0_mat.copy()
     h1_mat = df.assemble(df.inner(df.nabla_grad(u), df.nabla_grad(v)) * df.dx)
     h1_0_mat = h1_mat.copy()
-    mat0 = h1_mat.copy()
-    mat0.zero()
     bottom_mat = df.assemble(bottom_diffusion * df.inner(df.nabla_grad(u), df.nabla_grad(v)) * df.dx)
     top_mat = df.assemble(top_diffusion * df.inner(df.nabla_grad(u), df.nabla_grad(v)) * df.dx)
     u0 = df.project(initial_data, V).vector()
@@ -191,8 +190,8 @@ def _discretize_fenics():
 
     bc = df.DirichletBC(V, df.Constant(0.), dirichlet_boundary)
     bc.apply(l2_0_mat)
+    bc.zero(mass_mat)
     bc.apply(h1_0_mat)
-    bc.apply(mat0)
     bc.zero(bottom_mat)
     bc.zero(top_mat)
     bc.apply(f)
@@ -208,18 +207,16 @@ def _discretize_fenics():
 
         initial_data=FenicsVectorSpace(V).make_array([u0]),
 
-        operator=LincombOperator([FenicsMatrixOperator(mat0, V, V),
-                                  FenicsMatrixOperator(h1_0_mat, V, V),
+        operator=LincombOperator([FenicsMatrixOperator(h1_0_mat, V, V),
                                   FenicsMatrixOperator(bottom_mat, V, V),
                                   FenicsMatrixOperator(top_mat, V, V)],
                                  [1.,
-                                  1.,
                                   100. - 1.,
                                   ExpressionParameterFunctional('top[0] - 1.', {'top': 1})]),
 
         rhs=VectorOperator(FenicsVectorSpace(V).make_array([f])),
 
-        mass=FenicsMatrixOperator(l2_0_mat, V, V, name='l2'),
+        mass=FenicsMatrixOperator(mass_mat, V, V, name='mass'),
 
         products={'l2': FenicsMatrixOperator(l2_mat, V, V, name='l2'),
                   'l2_0': FenicsMatrixOperator(l2_0_mat, V, V, name='l2_0'),

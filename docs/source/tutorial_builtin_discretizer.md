@@ -21,8 +21,10 @@ kernelspec:
 ```
 
 ```{code-cell}
-:tags: [remove-cell]
 :load: myst_code_init.py
+:tags: [remove-cell]
+
+
 ```
 
 # Tutorial: Using pyMOR’s discretization toolkit
@@ -501,5 +503,3 @@ for all possible parameter value combinations.
 Download the code:
 {download}`tutorial_builtin_discretizer.md`
 {nb-download}`tutorial_builtin_discretizer.ipynb`
-
-

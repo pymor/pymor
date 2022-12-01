@@ -28,25 +28,21 @@ if __name__ == '__main__':
             from qtpy import QtGui  # noqa F401
         except ImportError:
             pass
+
         try:
             from matplotlib import pyplot
             pyplot.show = nop
         except ImportError:
             pass
-        try:
-            # workaround for dolfin+dune incompat https://github.com/pymor/pymor/issues/1397
-            import dune.gdt  # noqa
-        except ImportError:
-            pass
-        try:
+
+        from pymor.core.config import config
+        if config.HAVE_FENICS:  # use config.HAVE_FENICS to ensure that dlopen fix is applied
             import dolfin
             dolfin.plot = nop
-        except ImportError:
-            pass
 
-        # completely disable FEniCS visualization on Gitlab CI
+        # completely disable FEniCS visualization in containers
         import os
-        if 'GITLAB_CI' in os.environ:
+        if 'DOCKER_PYMOR' in os.environ:
             from pymor.bindings.fenics import FenicsVisualizer
 
             FenicsVisualizer.visualize = nop

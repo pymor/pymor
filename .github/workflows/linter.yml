@@ -6,12 +6,14 @@ on:
 jobs:
   lint:
     name: run_linter
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
     - name: Install dependencies
       run: pip install -r requirements-ci.txt
     - name: Run flake8 linter

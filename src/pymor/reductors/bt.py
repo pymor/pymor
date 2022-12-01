@@ -3,15 +3,10 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-import scipy.linalg as spla
 
-from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
-from pymor.algorithms.lyapunov import solve_cont_lyap_lrcf
-from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
-from pymor.operators.constructions import IdentityOperator, LowRankOperator
 from pymor.parameters.base import Mu
 from pymor.reductors.basic import LTIPGReductor
 
@@ -37,7 +32,6 @@ class GenericBTReductor(BasicObject):
         self.V = None
         self.W = None
         self._pg_reductor = None
-        self._sv_U_V_cache = None
 
     def _gramians(self):
         """Return low-rank Cholesky factors of Gramians."""
@@ -45,14 +39,10 @@ class GenericBTReductor(BasicObject):
 
     def _sv_U_V(self):
         """Return singular values and vectors."""
-        if self._sv_U_V_cache is None:
-            cf, of = self._gramians()
-            U, sv, Vh = spla.svd(self.fom.E.apply2(of, cf, mu=self.mu), lapack_driver='gesvd')
-            self._sv_U_V_cache = (sv, U.T, Vh)
-        return self._sv_U_V_cache
+        raise NotImplementedError
 
     def error_bounds(self):
-        """Returns error bounds for all possible reduced orders."""
+        """Return error bounds for all possible reduced orders."""
         raise NotImplementedError
 
     def reduce(self, r=None, tol=None, projection='bfsr'):
@@ -136,9 +126,10 @@ class BTReductor(GenericBTReductor):
     """
 
     def _gramians(self):
-        if self.fom.sampling_time > 0:
-            raise NotImplementedError
         return self.fom.gramian('c_lrcf', mu=self.mu), self.fom.gramian('o_lrcf', mu=self.mu)
+
+    def _sv_U_V(self):
+        return self.fom._sv_U_V(mu=self.mu)
 
     def error_bounds(self):
         sv = self._sv_U_V()[0]
@@ -154,43 +145,20 @@ class FDBTReductor(GenericBTReductor):
     ----------
     fom
         The full-order |LTIModel| to reduce.
-    ast_pole_data
-        Can be:
-
-        - dictionary of parameters for :func:`~pymor.algorithms.eigs.eigs`,
-        - list of anti-stable eigenvalues (scalars),
-        - tuple `(lev, ew, rev)` where `ew` contains the anti-stable eigenvalues
-          and `lev` and `rev` are |VectorArrays| representing the eigenvectors.
-        - `None` if anti-stable eigenvalues should be computed via dense methods.
     mu
         |Parameter values|.
     """
 
-    def __init__(self, fom, ast_pole_data=None, mu=None, solver_options=None):
+    def __init__(self, fom, mu=None):
+        if fom.sampling_time > 0:
+            raise NotImplementedError
         super().__init__(fom, mu=mu)
-        self.ast_pole_data = ast_pole_data
-        self.solver_options = solver_options
 
     def _gramians(self):
-        if self.fom.sampling_time > 0:
-            raise NotImplementedError
+        return self.fom.gramian('bs_c_lrcf', mu=self.mu), self.fom.gramian('bs_o_lrcf', mu=self.mu)
 
-        A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
-                      for op in ['A', 'B', 'C', 'E'])
-        options = self.solver_options
-
-        self.ast_spectrum = self.fom.get_ast_spectrum(self.ast_pole_data, mu=self.mu)
-        K = bernoulli_stabilize(A, E, B.as_range_array(mu=self.mu), self.ast_spectrum, trans=True)
-        BK = LowRankOperator(B.as_range_array(mu=self.mu), np.eye(len(K)), K)
-        bsc_lrcf = solve_cont_lyap_lrcf(A-BK, E, B.as_range_array(mu=self.mu),
-                                        trans=False, options=options)
-
-        K = bernoulli_stabilize(A, E, C.as_source_array(mu=self.mu), self.ast_spectrum, trans=False)
-        KC = LowRankOperator(K, np.eye(len(K)), C.as_source_array(mu=self.mu))
-        bso_lrcf = solve_cont_lyap_lrcf(A-KC, E, C.as_source_array(mu=self.mu),
-                                        trans=True, options=options)
-
-        return bsc_lrcf, bso_lrcf
+    def _sv_U_V(self):
+        return self.fom._sv_U_V('bs', mu=self.mu)
 
     def error_bounds(self):
         """L-infinity error bounds for reduced order models."""
@@ -209,29 +177,18 @@ class LQGBTReductor(GenericBTReductor):
         The full-order |LTIModel| to reduce.
     mu
         |Parameter values|.
-    solver_options
-        The solver options to use to solve the Riccati equations.
     """
 
-    def __init__(self, fom, mu=None, solver_options=None):
+    def __init__(self, fom, mu=None):
+        if fom.sampling_time > 0:
+            raise NotImplementedError
         super().__init__(fom, mu=mu)
-        self.solver_options = solver_options
 
     def _gramians(self):
-        if self.fom.sampling_time > 0:
-            raise NotImplementedError
+        return self.fom.gramian('lqg_c_lrcf', mu=self.mu), self.fom.gramian('lqg_o_lrcf', mu=self.mu)
 
-        A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
-                      for op in ['A', 'B', 'C', 'E'])
-        if isinstance(E, IdentityOperator):
-            E = None
-        options = self.solver_options
-
-        cf = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                             trans=False, options=options)
-        of = solve_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                             trans=True, options=options)
-        return cf, of
+    def _sv_U_V(self):
+        return self.fom._sv_U_V('lqg', mu=self.mu)
 
     def error_bounds(self):
         sv = self._sv_U_V()[0]
@@ -251,32 +208,21 @@ class BRBTReductor(GenericBTReductor):
         Upper bound for the :math:`\mathcal{H}_\infty`-norm.
     mu
         |Parameter values|.
-    solver_options
-        The solver options to use to solve the positive Riccati equations.
     """
 
-    def __init__(self, fom, gamma=1, mu=None, solver_options=None):
+    def __init__(self, fom, gamma=1, mu=None):
+        if fom.sampling_time > 0:
+            raise NotImplementedError
         super().__init__(fom, mu=mu)
         self.gamma = gamma
-        self.solver_options = solver_options
 
     def _gramians(self):
-        if self.fom.sampling_time > 0:
-            raise NotImplementedError
-
-        A, B, C, E = (getattr(self.fom, op).assemble(mu=self.mu)
-                      for op in ['A', 'B', 'C', 'E'])
-        if isinstance(E, IdentityOperator):
-            E = None
-        options = self.solver_options
-
-        cf = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                                 R=self.gamma**2 * np.eye(self.fom.dim_output) if self.gamma != 1 else None,
-                                 trans=False, options=options)
-        of = solve_pos_ricc_lrcf(A, E, B.as_range_array(), C.as_source_array(),
-                                 R=self.gamma**2 * np.eye(self.fom.dim_input) if self.gamma != 1 else None,
-                                 trans=True, options=options)
+        cf = self.fom.gramian(('br_c_lrcf', self.gamma), mu=self.mu)
+        of = self.fom.gramian(('br_o_lrcf', self.gamma), mu=self.mu)
         return cf, of
+
+    def _sv_U_V(self):
+        return self.fom._sv_U_V(('br', self.gamma), mu=self.mu)
 
     def error_bounds(self):
         sv = self._sv_U_V()[0]

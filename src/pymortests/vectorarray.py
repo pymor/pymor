@@ -14,7 +14,9 @@ from pymor.core.config import config
 from pymor.vectorarrays.interface import VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.tools.floatcmp import float_cmp, bounded
-from pymortests.pickling import assert_picklable_without_dumps_function
+from pymor.tools.random import new_rng
+from pymortests.base import might_exceed_deadline
+from pymortests.core.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
 
 MAX_RNG_REALIZATIONS = 30
@@ -136,7 +138,7 @@ def test_full(vector_array):
          low=-5e-324, high=0.0)
 def test_random_uniform_all(vector_array, realizations, low, high):
     if config.HAVE_DUNEGDT:
-        # atm needs special casing due to norm implemenation handling of large vector elements
+        # atm needs special casing due to norm implementation handling of large vector elements
         from pymor.bindings.dunegdt import DuneXTVectorSpace
         assume(not isinstance(vector_array.space, DuneXTVectorSpace))
     _test_random_uniform(vector_array, realizations, low, high)
@@ -165,7 +167,8 @@ def _test_random_uniform(vector_array, realizations, low, high):
         return
     seed = 123
     try:
-        v = vector_array.random(c, low=low, high=high, seed=seed)
+        with new_rng(seed):
+            v = vector_array.random(c, low=low, high=high)
     except ValueError as e:
         if high <= low:
             return
@@ -181,7 +184,8 @@ def _test_random_uniform(vector_array, realizations, low, high):
         assert np.all(x >= low)
     except NotImplementedError:
         pass
-    vv = vector_array.random(c, distribution='uniform', low=low, high=high, seed=seed)
+    with new_rng(seed):
+        vv = vector_array.random(c, distribution='uniform', low=low, high=high)
     assert np.allclose((v - vv).sup_norm(), 0.)
 
 
@@ -198,7 +202,8 @@ def test_random_normal(vector_array, realizations, loc, scale):
         return
     seed = 123
     try:
-        v = vector_array.random(c, 'normal', loc=loc, scale=scale, seed=seed)
+        with new_rng(seed):
+            v = vector_array.random(c, 'normal', loc=loc, scale=scale)
     except ValueError as e:
         if scale <= 0:
             return
@@ -221,7 +226,8 @@ def test_random_normal(vector_array, realizations, loc, scale):
         bounded(lower, upper, loc)
     except NotImplementedError:
         pass
-    vv = vector_array.random(c, 'normal', loc=loc, scale=scale, seed=seed)
+    with new_rng(seed):
+        vv = vector_array.random(c, 'normal', loc=loc, scale=scale)
     data = vv.to_numpy()
     # due to scaling data might actually now include nan or inf
     assume(not np.isnan(data).any())
@@ -396,7 +402,7 @@ def test_del(vectors_and_indices):
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
-def test_scla(vectors_and_indices):
+def test_scal(vectors_and_indices):
     v, ind = vectors_and_indices
     if v.len_ind(ind) != v.len_ind_unique(ind):
         with pytest.raises(Exception):
@@ -428,6 +434,14 @@ def test_scla(vectors_and_indices):
             assert np.allclose(c.to_numpy(), y)
         except NotImplementedError:
             pass
+
+
+@pyst.given_vector_arrays()
+def test_scal_imaginary(vector_array):
+    v = vector_array
+    w = v.copy()
+    w.scal(1j)
+    assert np.allclose(v.norm(), w.norm())
 
 
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length,
@@ -587,7 +601,7 @@ def test_pairwise_inner(vector_arrays):
         assert r.shape == (v1.len_ind(ind1),)
         r2 = v2[ind2].pairwise_inner(v1[ind1])
         assert np.allclose, (r, r2)
-        assert np.all(r <= v1[ind1].norm() * v2[ind2].norm() * (1. + 1e-10))
+        assert np.all(r <= (v1[ind1].norm() * v2[ind2].norm() * (1. + 1e-10) + 1e-15))
         try:
             assert np.allclose(r, np.sum(indexed(v1.to_numpy(), ind1).conj() * indexed(v2.to_numpy(), ind2), axis=1))
         except NotImplementedError:
@@ -602,7 +616,7 @@ def test_pairwise_inner_self(vectors_and_indices):
     assert r.shape == (v.len_ind(ind1),)
     r2 = v[ind2].pairwise_inner(v[ind1])
     assert np.allclose(r, r2.T.conj())
-    assert np.all(r <= v[ind1].norm() * v[ind2].norm() * (1. + 1e-10))
+    assert np.all(r <= (v[ind1].norm() * v[ind2].norm() * (1. + 1e-10) + 1e-15))
     try:
         assert np.allclose(r, np.sum(indexed(v.to_numpy(), ind1).conj() * indexed(v.to_numpy(), ind2), axis=1))
     except NotImplementedError:
@@ -621,7 +635,7 @@ def test_inner(vectors_and_indices):
     assert r.shape == (v1.len_ind(ind1), v2.len_ind(ind2))
     r2 = v2[ind2].inner(v1[ind1])
     assert np.allclose(r, r2.T.conj())
-    assert np.all(r <= v1[ind1].norm()[:, np.newaxis] * v2[ind2].norm()[np.newaxis, :] * (1. + 1e-10))
+    assert np.all(r <= (v1[ind1].norm()[:, np.newaxis] * v2[ind2].norm()[np.newaxis, :] * (1. + 1e-10) + 1e-15))
     try:
         assert np.allclose(r, indexed(v1.to_numpy(), ind1).conj().dot(indexed(v2.to_numpy(), ind2).T))
     except NotImplementedError:
@@ -637,7 +651,7 @@ def test_inner_self(vectors_and_indices):
     assert r.shape == (v.len_ind(ind1), v.len_ind(ind2))
     r2 = v[ind2].inner(v[ind1])
     assert np.allclose(r, r2.T.conj())
-    assert np.all(r <= v[ind1].norm()[:, np.newaxis] * v[ind2].norm()[np.newaxis, :] * (1. + 1e-10))
+    assert np.all(r <= (v[ind1].norm()[:, np.newaxis] * v[ind2].norm()[np.newaxis, :] * (1. + 1e-10) + 1e-15))
     try:
         assert np.allclose(r, indexed(v.to_numpy(), ind1).conj().dot(indexed(v.to_numpy(), ind2).T))
     except NotImplementedError:
@@ -900,9 +914,6 @@ def test_rmul(vectors_and_indices):
     cc = vector_array.copy()
     cc.scal(a)
     alpha = a * vector_array
-    # the scaling_value strategy also draws ndarrays, for which alpha here will be an ndarray,
-    # which in turn will fail the axpy hidden in the almost_equal check
-    assume(not isinstance(alpha, np.ndarray))
     assert np.all(almost_equal(alpha, cc))
     assert np.all(almost_equal(vector_array, c))
 
@@ -946,6 +957,7 @@ def test_append_incompatible(vector_arrays):
         c1.append(c2, remove_from_other=True)
 
 
+@might_exceed_deadline(2000)
 @pyst.given_vector_arrays(count=2, compatible=False)
 def test_axpy_incompatible(vector_arrays):
     v1, v2 = vector_arrays

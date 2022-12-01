@@ -62,6 +62,10 @@ class Operator(ParametricObject):
         for all V, mu.
     """
 
+    # override NumPy binary operations and ufuncs
+    __array_priority__ = 100.0
+    __array_ufunc__ = None
+
     solver_options = None
 
     @property
@@ -162,7 +166,7 @@ class Operator(ParametricObject):
             op.apply_adjoint(V, mu).dot(U) == V.inner(op.apply(U, mu))
 
         Thus, when `op` is represented by a matrix `M`, `apply_adjoint` is
-        given by left-multplication of (the complex conjugate of) `M` with `V`.
+        given by left-multiplication of (the complex conjugate of) `M` with `V`.
 
         Parameters
         ----------
@@ -221,25 +225,48 @@ class Operator(ParametricObject):
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
             return assembled_op.apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
-        elif self.linear:
-            options = self.solver_options.get('inverse') if self.solver_options else None
+
+        options = self.solver_options.get('inverse') if self.solver_options else None
+        options = (None if options is None else
+                   {'type': options} if isinstance(options, str) else
+                   options.copy())
+        solver_type = None if options is None else options['type']
+
+        if self.linear:
+            if solver_type is None or solver_type == 'to_matrix':
+                mat_op = None
+                if not hasattr(self, '_mat_op'):
+                    if solver_type is None:
+                        self.logger.warning(f'No specialized linear solver available for {self}.')
+                        self.logger.warning('Trying to solve by converting to NumPy/SciPy matrix.')
+                    from pymor.algorithms.rules import NoMatchingRuleError
+                    try:
+                        from pymor.algorithms.to_matrix import to_matrix
+                        from pymor.operators.numpy import NumpyMatrixOperator
+                        mat = to_matrix(assembled_op, mu=mu)
+                        mat_op = NumpyMatrixOperator(mat)
+                        if not self.parametric:
+                            self._mat_op = mat_op
+                    except (NoMatchingRuleError, NotImplementedError):
+                        if solver_type == 'to_matrix':
+                            raise InversionError
+                        else:
+                            self.logger.warning('Failed.')
+                if mat_op is not None:
+                    v = mat_op.range.from_numpy(V.to_numpy())
+                    i = None if initial_guess is None else mat_op.source.from_numpy(initial_guess.to_numpy())
+                    u = mat_op.apply_inverse(v, initial_guess=i, least_squares=least_squares)
+                    return self.source.from_numpy(u.to_numpy())
+            self.logger.warning('Solving with unpreconditioned iterative solver.')
             return genericsolvers.apply_inverse(assembled_op, V, initial_guess=initial_guess,
                                                 options=options, least_squares=least_squares)
         else:
             from pymor.algorithms.newton import newton
             from pymor.core.exceptions import NewtonError
 
-            options = self.solver_options.get('inverse') if self.solver_options else None
-            if options:
-                if isinstance(options, str):
-                    assert options == 'newton'
-                    options = {}
-                else:
-                    assert options['type'] == 'newton'
-                    options = options.copy()
-                    options.pop('type')
-            else:
-                options = {}
+            assert solver_type is None or solver_type == 'newton'
+            options = options or {}
+            options.pop('type', None)
             options['least_squares'] = least_squares
 
             with self.logger.block('Solving nonlinear problem using newton algorithm ...'):
@@ -251,7 +278,7 @@ class Operator(ParametricObject):
                                         mu=mu,
                                         **options)[0])
                     except NewtonError as e:
-                        raise InversionError(e)
+                        raise InversionError(e) from e
             return R
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):

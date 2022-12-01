@@ -56,15 +56,15 @@ myst_enable_extensions = [
     "replacements",
     "substitution",
 ]
-myst_url_schemes = ["http", "https", "mailto"]
+myst_url_schemes = ("http", "https", "mailto")
 # auto genereated link anchors
 myst_heading_anchors = 2
 import substitutions # noqa
 myst_substitutions = substitutions.myst_substitutions
-jupyter_execute_notebooks = "cache"
-execution_timeout = 120
+nb_execute_notebooks = "cache"
+nb_execution_timeout = 180
 # print tracebacks to stdout
-execution_show_tb = True
+nb_execution_show_tb = True
 
 bibtex_bibfiles = ['bibliography.bib']
 # Add any paths that contain templates here, relative to this directory.
@@ -307,3 +307,5 @@ autoapi_keep_files = True
 autoapi_ignore = ['*/pymordemos/minimal_cpp_demo/*']
 suppress_warnings = ["autoapi"]
 autoapi_template_dir = this_dir / '_templates' / 'autoapi'
+autoapi_member_order = "groupwise"
+autoapi_options = ["show-inheritance", "members", "undoc-members"]

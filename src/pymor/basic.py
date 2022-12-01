@@ -41,7 +41,7 @@ from pymor.core.logger import set_log_levels, getLogger
 from pymor.core.pickle import dump, dumps, load, loads
 
 from pymor.models.basic import StationaryModel, InstationaryModel
-from pymor.models.iosys import LTIModel, SecondOrderModel
+from pymor.models.iosys import LTIModel, PHLTIModel, SecondOrderModel
 from pymor.models.transfer_function import TransferFunction
 
 from pymor.discretizers.builtin import (discretize_stationary_cg, discretize_instationary_cg,
@@ -76,7 +76,7 @@ from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, 
                                   SOBTReductor)
 from pymor.reductors.sor_irka import SORIRKAReductor
 
-from pymor.tools.random import default_random_state
+from pymor.tools.random import get_rng, new_rng
 
 from pymor.vectorarrays.constructions import cat_arrays
 from pymor.vectorarrays.list import ListVectorSpace

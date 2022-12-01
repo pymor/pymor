@@ -11,7 +11,7 @@ This module provides the following |NumPy|-based |Operators|:
   which assemble into a |NumpyMatrixOperator|.
 - |NumpyGenericOperator| wraps an arbitrary Python function between
   |NumPy arrays| as an |Operator|.
-- :class:`NumpyHankelOperator` implicitly constructs a Hankel operator from a |NumPy array| of
+- |NumpyHankelOperator| implicitly constructs a Hankel operator from a |NumPy array| of
   Markov parameters.
 """
 
@@ -60,7 +60,7 @@ class NumpyGenericOperator(Operator):
     linear
         Set to `True` if the provided `mapping` and `adjoint_mapping` are linear.
     parameters
-        The |Parameters| the depends on.
+        The |Parameters| the operator depends on.
     solver_options
         The |solver_options| for the operator.
     name
@@ -321,13 +321,13 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 try:
                     R, _, _, _ = np.linalg.lstsq(self.matrix, V.to_numpy().T, rcond=None)
                 except np.linalg.LinAlgError as e:
-                    raise InversionError(f'{str(type(e))}: {str(e)}')
+                    raise InversionError(f'{str(type(e))}: {str(e)}') from e
                 R = R.T
             else:
                 try:
                     R = solve(self.matrix, V.to_numpy().T).T
                 except np.linalg.LinAlgError as e:
-                    raise InversionError(f'{str(type(e))}: {str(e)}')
+                    raise InversionError(f'{str(type(e))}: {str(e)}') from e
 
             if check_finite:
                 if not np.isfinite(np.sum(R)):

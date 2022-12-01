@@ -21,8 +21,10 @@ kernelspec:
 ```
 
 ```{code-cell}
-:tags: [remove-cell]
 :load: myst_code_init.py
+:tags: [remove-cell]
+
+
 ```
 
 # Tutorial: Projecting a Model
@@ -564,7 +566,7 @@ In the case of `fom.operator`, which is a {{ LincombOperator }}, the rule with i
 be the first matching rule. We can take a look at it:
 
 ```{code-cell}
-:tags: [hide-code,hide-output]
+:tags: [hide-code, hide-output]
 
 assert ProjectRules.rules[8].action_description == 'LincombOperator'
 ```
@@ -588,7 +590,8 @@ In our case, `ProjectRules` will be applied to all {{ NumpyMatrixOperators }} he
 will apply:
 
 ```{code-cell}
-:tags: [hide-code,hide-output]
+:tags: [hide-code, hide-output]
+
 assert ProjectRules.rules[3].action_description == 'apply_basis'
 ```
 
@@ -674,5 +677,3 @@ print_source(reductor.reconstruct)
 Download the code:
 {download}`tutorial_projection.md`
 {nb-download}`tutorial_projection.ipynb`
-
-

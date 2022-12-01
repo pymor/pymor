@@ -37,9 +37,9 @@ def main(
         # an output which is actually a lincomb operator
         fom = create_fom(grid_intervals, vector_valued_output=True)
         dim_source = fom.output_functional.source.dim
-        np.random.seed(1)
-        random_matrix_1 = np.random.rand(2, dim_source)
-        random_matrix_2 = np.random.rand(2, dim_source)
+        rng = get_rng()
+        random_matrix_1 = rng.random((2, dim_source))
+        random_matrix_2 = rng.random((2, dim_source))
         op1 = NumpyMatrixOperator(random_matrix_1, source_id='STATE')
         op2 = NumpyMatrixOperator(random_matrix_2, source_id='STATE')
         ops = [op1, op2]
@@ -52,7 +52,7 @@ def main(
         if fom_number == 3:
             fom = fom.with_(output_functional=fom.rhs.operators[0].H)
         else:
-            random_matrix_1 = np.random.rand(2, fom.solution_space.dim)
+            random_matrix_1 = get_rng().random((2, fom.solution_space.dim))
             op = NumpyMatrixOperator(random_matrix_1, source_id='STATE')
             fom = fom.with_(output_functional=op)
 
@@ -139,6 +139,8 @@ def main(
         for i, mu in enumerate(training_set):
             s_fom = fom_outputs[i]
             s_rom, s_est = rom.output(return_error_estimate=True, mu=mu)
+            if fom_number in [3, 4]:
+                s_est = s_est[0]
             max_err = max(max_err, np.linalg.norm(np.abs(s_fom-s_rom)))
             max_est = max(max_est, s_est)
             min_err = min(min_err, np.linalg.norm(np.abs(s_fom-s_rom)))

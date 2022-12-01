@@ -14,40 +14,47 @@ from pymor.discretizers.builtin.grids.tria import TriaGrid
 from pymor.discretizers.builtin.grids.unstructured import UnstructuredTriangleGrid
 
 
-def hy_domain_bounds(draw, grid_type):
+def _hy_domain_bounds(draw, grid_type):
     # domain points are limited to allow their norm2 computations
-    # TODO: allow negative coordinate points
-    max_abs = grid_type.MAX_DOMAIN_WIDTH / 2
-    domain_point = hyst.floats(allow_infinity=False, allow_nan=False, min_value=0, max_value=max_abs)
-
-    def _filter(d):
-        return all(l < r for l, r in zip(ll, d)) and grid_type._check_domain((ll, d))
+    max_val = grid_type.MAX_DOMAIN_WIDTH / 2
+    min_val = -grid_type.MAX_DOMAIN_WIDTH / 2
+    domain_point = hyst.floats(allow_infinity=False, allow_nan=False, allow_subnormal=False,
+                               min_value=min_val, max_value=max_val+min_val)
 
     ll = draw(hyst.tuples(*[domain_point] * grid_type.dim))
-    rr = draw(hyst.tuples(*[domain_point] * grid_type.dim).filter(_filter))
+
+    def _filter(d):
+        return grid_type._check_domain((ll, d))
+
+    r_n = [hyst.floats(allow_infinity=False, allow_nan=False, allow_subnormal=False,
+                       min_value=-min_val+ll[i],
+                       max_value=max_val) for i in range(grid_type.dim)]
+    rr = draw(hyst.tuples(*r_n).filter(_filter))
     return ll, rr
 
 
-def hy_rect_tria_kwargs(draw, grid_type):
+def _hy_rect_tria_kwargs(draw, grid_type):
     identify_left_right = draw(hyst.booleans())
     identify_bottom_top = draw(hyst.booleans())
     interval_i = hyst.integers(min_value=1, max_value=42)
-    num_intervals = draw(hyst.tuples(interval_i.filter(lambda x: (not identify_left_right) or x > 1),
-                                     interval_i.filter(lambda y: (not identify_bottom_top) or y > 1)))
 
-    domain = hy_domain_bounds(draw, grid_type=grid_type)
+    lambda x: (not identify_left_right) or x > 1
+    num_intervals = draw(hyst.tuples(interval_i.map(lambda x: x if not identify_left_right else max(2, x)),
+                                     interval_i.map(lambda y: y if not identify_bottom_top else max(2, y))))
+
+    domain = _hy_domain_bounds(draw, grid_type=grid_type)
     return {"num_intervals": num_intervals, "domain": domain, "identify_left_right": identify_left_right,
             "identify_bottom_top": identify_bottom_top}
 
 
 @hyst.composite
 def hy_rect_grid(draw):
-    return RectGrid(**hy_rect_tria_kwargs(draw, RectGrid))
+    return RectGrid(**_hy_rect_tria_kwargs(draw, RectGrid))
 
 
 @hyst.composite
 def hy_tria_grid(draw):
-    return TriaGrid(**hy_rect_tria_kwargs(draw, TriaGrid))
+    return TriaGrid(**_hy_rect_tria_kwargs(draw, TriaGrid))
 
 
 @hyst.composite
@@ -55,7 +62,7 @@ def hy_oned_grid(draw):
     identify_left_right = draw(hyst.booleans())
     interval_i = hyst.integers(min_value=1, max_value=10000)
     num_intervals = draw(interval_i.filter(lambda x: (not identify_left_right) or x > 1))
-    domain = hy_domain_bounds(draw, grid_type=OnedGrid)
+    domain = _hy_domain_bounds(draw, grid_type=OnedGrid)
     return OnedGrid(num_intervals=num_intervals, domain=[domain[0][0], domain[1][0]],
                     identify_left_right=identify_left_right)
 

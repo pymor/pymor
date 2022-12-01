@@ -24,7 +24,13 @@ def main(
         r: int = Argument(5, help='Order of the ROMs.'),
 ):
     """String equation example."""
-    set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'ERROR'})
+    set_log_levels({
+        'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
+        'pymor.algorithms.lradi.solve_lyap_lrcf': 'WARNING',
+        'pymor.reductors.basic.LTIPGReductor': 'WARNING',
+        'pymor.reductors.basic.SOLTIPGReductor': 'WARNING',
+    })
+    plt.rcParams['axes.grid'] = True
 
     # Assemble matrices
     assert n % 2 == 1, 'The order has to be an odd integer.'
@@ -49,24 +55,32 @@ def main(
     # Second-order system
     so_sys = SecondOrderModel.from_matrices(M, E, K, B, Cp)
 
+    # Figure
+    fig = plt.figure(figsize=(10, 8), constrained_layout=True)
+    subfigs = fig.subfigures(1, 2)
+    subfigs1 = subfigs[1].subfigures(2, 1)
+    fig.suptitle('Full-order model')
+
     # System properties
     w = np.logspace(-4, 2, 200)
-    fom_properties(so_sys, w)
+    fom_properties(so_sys, w, fig_poles=subfigs1[0], fig_bode=subfigs[0])
 
     # Singular values
     psv = so_sys.psv()
     vsv = so_sys.vsv()
     pvsv = so_sys.pvsv()
     vpsv = so_sys.vpsv()
-    fig, ax = plt.subplots(2, 2, figsize=(12, 8), sharey=True)
-    ax[0, 0].semilogy(range(1, len(psv) + 1), psv, '.-')
-    ax[0, 0].set_title('Position singular values')
-    ax[0, 1].semilogy(range(1, len(vsv) + 1), vsv, '.-')
-    ax[0, 1].set_title('Velocity singular values')
-    ax[1, 0].semilogy(range(1, len(pvsv) + 1), pvsv, '.-')
-    ax[1, 0].set_title('Position-velocity singular values')
-    ax[1, 1].semilogy(range(1, len(vpsv) + 1), vpsv, '.-')
-    ax[1, 1].set_title('Velocity-position singular values')
+    axs = subfigs1[1].subplots(2, 2, sharex=True, sharey=True)
+    axs[0, 0].semilogy(range(1, len(psv) + 1), psv, '.-')
+    axs[0, 0].set_title('Position s.v.')
+    axs[0, 1].semilogy(range(1, len(vsv) + 1), vsv, '.-')
+    axs[0, 1].set_title('Velocity s.v.')
+    axs[1, 0].semilogy(range(1, len(pvsv) + 1), pvsv, '.-')
+    axs[1, 0].set_title('Position-velocity s.v.')
+    axs[1, 0].set_xlabel('Index')
+    axs[1, 1].semilogy(range(1, len(vpsv) + 1), vpsv, '.-')
+    axs[1, 1].set_title('Velocity-position s.v.')
+    axs[1, 1].set_xlabel('Index')
     plt.show()
 
     # Model order reduction

@@ -1,6 +1,5 @@
 # Release checklist
 
- 1. [ ] Check wheel install on debian stretch produces an OK error message due to too old Python.
  1. [ ] Write release notes. All new deprecations need to be mentioned.
  1. [ ] Update `README.md`.
  1. [ ] (Create release branch.)
@@ -10,9 +9,6 @@
  1. [ ] Push tag.
  1. [ ] Wait for CI build to finish.
  1. [ ] Bump/create demo docker.
- 1. [ ] Update [`docs/index.html`](https://github.com/pymor/docs/edit/main/index.html) to point to new release.
- 1. [ ] Update [`docs/latest`](https://github.com/pymor/docs/edit/main/latest) to point to new release.
- 1. [ ] Update [`docs/badge.json`](https://github.com/pymor/docs/edit/main/badge.json) to point to new release.
  1. [ ] Update homepage.
  1. [ ] Make a GitHub release. Zenodo is hooked into that.
  1. [ ] Update MOR Wiki:
@@ -23,9 +19,7 @@
  1. [ ] Submit release to [NA-digest](http://icl.utk.edu/na-digest/websubmit.html).
  1. [ ] Announce release in
         [GitHub discussions](https://github.com/pymor/pymor/discussions).
- 1. [ ] Add a new section in
-        [`docker/docs/releases/Dockerfile`](https://github.com/pymor/docker/blob/main/docs/releases/Dockerfile).
  1. [ ] All developers check if (stale) branches can be pruned.
- 1. [ ] All developers check for mailmap correctness.
+ 1. [ ] All developers check for `.mailmap` correctness.
  1. [ ] Remove deprecated features in main.
  1. [ ] Close the [GitHub milestone](https://github.com/pymor/pymor/milestones) for the release.

@@ -10,12 +10,13 @@ from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
+from pymor.tools.random import new_rng
 
 
 @defaults('which', 'tol', 'imagtol', 'conjtol', 'dorqitol', 'rqitol', 'maxrestart', 'krestart', 'init_shifts',
-          'rqi_maxiter', 'seed')
+          'rqi_maxiter')
 def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=1e-6, conjtol=1e-8,
-          dorqitol=1e-4, rqitol=1e-10, maxrestart=100, krestart=20, rqi_maxiter=10, seed=0):
+          dorqitol=1e-4, rqitol=1e-10, maxrestart=100, krestart=20, rqi_maxiter=10):
     """Compute the dominant pole triplets and residues of the transfer function of an LTI system.
 
     This function uses the subspace accelerated dominant pole (SAMDP) algorithm as described in
@@ -70,8 +71,6 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
         Maximum dimension of search space before performing a restart.
     rqi_maxiter
         Maximum number of iterations for the two-sided Rayleigh quotient iteration.
-    seed
-        Random seed which is used for computing the initial shift and random restarts.
 
     Returns
     -------
@@ -106,7 +105,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
     k = 0
     nrestart = 0
     nr_converged = 0
-    np.random.seed(seed)
+    rng = new_rng(0)
 
     X = A.source.empty()
     Q = A.source.empty()
@@ -121,7 +120,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
     poles = np.empty(0)
 
     if init_shifts is None:
-        st = np.random.uniform() * 10.j
+        st = rng.uniform() * 10.j
         shift_nr = 0
         nr_shifts = 0
     else:
@@ -164,7 +163,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
         SH, UR, URt, res = _select_max_eig(H, G, X, V, B_defl, C_defl, which)
 
         if np.all(res < np.finfo(float).eps):
-            st = np.random.uniform() * 10.j
+            st = rng.uniform() * 10.j
             found = False
         else:
             found = True
@@ -287,7 +286,7 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
                     if found:
                         st = SH[0, 0]
                     else:
-                        st = np.random.uniform() * 10.j
+                        st = rng.uniform() * 10.j
 
                     if shift_nr < nr_shifts:
                         st = shifts[shift_nr]

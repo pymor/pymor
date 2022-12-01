@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# This file is part of the pyMOR project (http://www.pymor.org).
+# This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
 config.require('DUNEGDT')
@@ -13,8 +13,7 @@ from dune.xt.la import IstlVector
 
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
 from pymor.vectorarrays.interface import _create_random_values
-from pymor.vectorarrays.list import (
-    ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector, NumpyVector)
+from pymor.vectorarrays.list import ComplexifiedListVectorSpace, CopyOnWriteVector
 
 
 class DuneXTVector(CopyOnWriteVector):
@@ -92,18 +91,6 @@ class DuneXTVector(CopyOnWriteVector):
         return np.array(self.impl, copy=ensure_copy)
 
 
-class ComplexifiedDuneXTVector(ComplexifiedVector):
-    """Required for DuneXTVectorSpace, Usually not to be used directly."""
-
-    def amax(self):
-        if self.imag_part is None:
-            return self.real_part.amax()
-        else:
-            real = np.array(self.real_part.impl, copy=False)
-            imag = np.array(self.imag_part.impl, copy=False)
-            return NumpyVector(real + imag * 1j).amax()
-
-
 class DuneXTVectorSpace(ComplexifiedListVectorSpace):
     """A |VectorSpace| yielding DuneXTVector
 
@@ -118,7 +105,6 @@ class DuneXTVectorSpace(ComplexifiedListVectorSpace):
     """
 
     real_vector_type = DuneXTVector
-    vector_type = ComplexifiedDuneXTVector
 
     def __init__(self, dim, dune_vector_type=IstlVector, id='STATE'):
         self.__auto_init(locals())
@@ -139,8 +125,8 @@ class DuneXTVectorSpace(ComplexifiedListVectorSpace):
     def real_full_vector(self, value):
         return DuneXTVector(self.dune_vector_type(self.dim, value))
 
-    def real_random_vector(self, distribution, random_state, **kwargs):
-        values = _create_random_values(self.dim, distribution, random_state, **kwargs)
+    def real_random_vector(self, distribution, **kwargs):
+        values = _create_random_values(self.dim, distribution, **kwargs)
         return self.real_vector_from_numpy(values)
 
     def real_vector_from_numpy(self, data, ensure_copy=False):

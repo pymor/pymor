@@ -2,8 +2,8 @@
 
 # customization points via makefile key-value arguments
 #
-# interpreter in images: 3.{6,7,8} currently available
-# DOCKER_BASE_PYTHON=3.7
+# interpreter in images: 3.{8,9} currently available
+# DOCKER_BASE_PYTHON=3.9
 # test script executed with `docker_test`: mpi, notebooks_dir, oldest, vanilla, mpi, numpy_git, pip_installed
 # PYMOR_TEST_SCRIPT=vanilla
 # version pinned mirror to be used: stable or oldest
@@ -19,7 +19,7 @@ THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 DOCKER_RUN=docker run -v $(THIS_DIR):/pymor --env-file  $(THIS_DIR)/.env
 CI_COMMIT_REF_NAME?=$(shell git rev-parse --abbrev-ref HEAD)
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
-  	CI_COMMIT_REF_NAME=$(CI_COMMIT_REF_NAME) \
+	CI_COMMIT_REF_NAME=$(CI_COMMIT_REF_NAME) \
 	NB_USER=$(NB_USER) $(COMPOSE_SUDO) docker-compose  -f .binder/docker-compose.yml -p pymor
 NB_DIR=docs/source
 NB_USER:=${USER}
@@ -38,7 +38,7 @@ ENV_FILE?=.env
 include $(ENV_FILE)
 export $(shell sed 's/=.*//' $(ENV_FILE))
 
-.PHONY: docker README.html pylint test docs
+.PHONY: docker README.html pylint test docs conda_update
 
 all:
 	./dependencies.py
@@ -63,16 +63,14 @@ tutorials: docs jupyter
 
 full-test:
 	@echo
-	@echo "Ensuring that all required pytest plugins are installed ..."
+	@echo "Ensuring that pytest-cov is installed ..."
 	@echo "--------------------------------------------------------------------------------"
 	@echo
-	pip install pytest-flakes
-	pip install pytest-pep8
 	pip install pytest-cov
 	@echo
 	@echo "--------------------------------------------------------------------------------"
 	@echo
-	py.test --flakes --pep8 --cov --cov-config=setup.cfg --cov-report=html --cov-report=xml src/pymortests
+	py.test --cov --cov-config=setup.cfg --cov-report=html --cov-report=xml src/pymortests
 
 docs:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
@@ -80,6 +78,10 @@ docs:
 template:
 	./dependencies.py
 	./.ci/gitlab/template.ci.py
+
+conda_update:
+	./dependencies.py
+	./.ci/create_conda_env.py $(THIS_DIR)/requirements*txt
 
 # docker targets
 docker_template:
@@ -99,7 +101,7 @@ docker_docs: docker_image
 docker_run: docker_image
 	$(DOCKER_COMPOSE) up -d pypi_mirror
 	$(DOCKER_COMPOSE) run --service-ports pytest bash
-	$(DOCKER_COMPOSE) down pypi_mirror
+	$(DOCKER_COMPOSE) down --remove-orphans -v
 
 docker_exec: docker_image
 	$(DOCKER_COMPOSE) run --service-ports pytest bash -l -c "${DOCKER_CMD}"
@@ -113,13 +115,13 @@ docker_test: docker_image
 docker_test_oldest: docker_image
 	PYMOR_TEST_SCRIPT=oldest PYPI_MIRROR=oldest DOCKER_BASE_PYTHON=3.7 $(DOCKER_COMPOSE) up pytest
 
-docker_run_oldest: DOCKER_BASE_PYTHON=3.7
+docker_run_oldest: DOCKER_BASE_PYTHON=3.8
 docker_run_oldest: PYMOR_TEST_SCRIPT=oldest
 docker_run_oldest: PYPI_MIRROR=oldest
 docker_run_oldest: docker_image
 	$(DOCKER_COMPOSE) up -d pypi_mirror
 	$(DOCKER_COMPOSE) run pytest bash
-	$(DOCKER_COMPOSE) down pypi_mirror
+	$(DOCKER_COMPOSE) down --remove-orphans -v
 
 docker_jupyter: docker_image
 	NB_DIR=$(NB_DIR) $(DOCKER_COMPOSE) up jupyter

@@ -5,7 +5,7 @@
 """Visualization of grid data using Qt.
 
 This module provides a few methods and classes for visualizing data
-associated to grids. We use the `Qt <http://www.qt-project.org>`_ widget
+associated to grids. We use the `Qt <https://www.qt-project.org>`_ widget
 toolkit for the GUI.
 """
 from pymor.core.config import config
@@ -68,7 +68,7 @@ def _launch_qt_app(main_window_factory, block):
             ip = None
         if ip is None:
             logger = getLogger('pymor.discretizers.builtin.gui.qt')
-            logger.warn('Not running within IPython. Falling back to blocking visualization.')
+            logger.warning('Not running within IPython. Falling back to blocking visualization.')
             block = True
         else:
             ip.run_line_magic('gui', 'qt')
@@ -325,7 +325,6 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         if not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
 
-    # TODO extract class
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, bounding_box, codim, title, legend, separate_colorbars, rescale_colorbars, backend):
 

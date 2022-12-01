@@ -331,8 +331,8 @@ class CacheableObject(ImmutableObject):
             default_regions()
         try:
             region = cache_regions[self.cache_region]
-        except KeyError:
-            raise KeyError(f'No cache region "{self.cache_region}" found')
+        except KeyError as e:
+            raise KeyError(f'No cache region "{self.cache_region}" found') from e
 
         # id for self
         assert self.cache_id or not region.persistent

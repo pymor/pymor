@@ -21,10 +21,11 @@ kernelspec:
 ```
 
 ```{code-cell}
-:tags: [remove-cell]
 :load: myst_code_init.py
-```
+:tags: [remove-cell]
 
+
+```
 
 Tutorial: Building a Reduced Basis
 ==================================
@@ -299,6 +300,7 @@ which will give us a {math}`25\times 1` {{ NumPy_array }} of all inner products.
 
 ```{code-cell}
 :tags: [remove-cell]
+
 assert R.shape == (25,1)
 ```
 
@@ -530,6 +532,7 @@ re-orthogonalization to improve numerical accuracy:
 
 ```{code-cell}
 :tags: [remove-output]
+
 gram_schmidt(greedy_basis, product=fom.h1_0_semi_product, copy=False)
 gram_schmidt(trivial_basis, product=fom.h1_0_semi_product, copy=False)
 ```

@@ -13,7 +13,7 @@ from pymortests.base import might_exceed_deadline
 from pymortests.fixtures.grid import hy_grids_with_visualize, hy_grid, hy_grid_and_dim_range_product, \
     hy_grid_and_dim_range_product_and_s_max_en, hy_grid_and_dim_range_product_and_s, \
     hy_grid_and_dim_range_product_and_s_to_e
-from pymortests.pickling import assert_picklable_without_dumps_function
+from pymortests.core.pickling import assert_picklable_without_dumps_function
 
 
 @given(hy_grid)

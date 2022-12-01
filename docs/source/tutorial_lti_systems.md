@@ -21,8 +21,10 @@ kernelspec:
 ```
 
 ```{code-cell}
-:tags: [remove-cell]
 :load: myst_code_init.py
+:tags: [remove-cell]
+
+
 ```
 
 # Tutorial: Linear time-invariant systems
@@ -108,6 +110,8 @@ approximation using standard methods of NumPy and SciPy.
 
 ```{code-cell}
 :load: heat_equation.py
+
+
 ```
 
 Then, we can create an {{ LTIModel }} from NumPy and SciPy matrices `A`, `B`, `C`,
@@ -503,4 +507,3 @@ fom.hankel_norm()
 Download the code:
 {download}`tutorial_lti_systems.md`,
 {nb-download}`tutorial_lti_systems.ipynb`.
-

@@ -72,3 +72,4 @@ Pipfile
 Pipfile.lock
 .hypothesis
 .vscode
+.ci/create_conda_env.log

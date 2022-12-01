@@ -12,13 +12,29 @@
 
 ### pyMOR 2022.1
 
+* Patrick Buchfink, patrick.buchfink@ians.uni-stuttgart.de
+  * symplectic model order reduction
+
+* Monica Dessole, monica.dessole.ext@leonardo.com
+  * Navier-Stokes demo using neural networks
+
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
   * long short-term memory neural networks for instationary problems
   * several additional features for neural networks
+  * purely data-driven usage of neural networks without requiring full-order model
+  * Navier-Stokes demo using neural networks
+
+* Peter Oehme, oehme.pb@gmail.com
+  * support for UFL expression conversion
 
 * Art Pelling, a.pelling@tu-berlin.de
-  * support for discrete-time LTI systems and Lyapunov equations
+  * functionality to instantiate non-parametric LTIModels with preset attributes
+  * support for discrete-time LTI systems, Lyapunov equations and balanced truncation
+  * Moebius transformations and continuous/discrete-time conversion of LTI models
   * dedicated Hankel operator class
+
+* Sven Ullmann, ullmannsven@gmx.de
+  * randomized algorithms for generalized SVD and generalized Hermitian eigenvalue problem
 
 ### pyMOR 2021.2
 

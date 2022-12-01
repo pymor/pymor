@@ -64,7 +64,7 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
         # first calculate norm
         initial_norm = A[i].norm(product)[0]
 
-        if initial_norm < atol:
+        if initial_norm <= atol:
             logger.info(f"Removing vector {i} of norm {initial_norm}")
             remove.append(i)
             continue
@@ -91,7 +91,7 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
                 old_norm, norm = norm, A[i].norm(product)[0]
 
                 # remove vector if it got too small
-                if norm < rtol * initial_norm:
+                if norm <= rtol * initial_norm:
                     logger.info(f"Removing linearly dependent vector {i}")
                     remove.append(i)
                     break

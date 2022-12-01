@@ -22,15 +22,21 @@ from pymor.reductors.h2 import IRKAReductor, TSIAReductor, OneSidedIRKAReductor
 from pymor.reductors.mt import MTReductor
 
 
-def fom_properties(fom, w):
+def fom_properties(fom, w, stable=True, fig_poles=None, fig_bode=None):
     """Show properties of the full-order model.
 
     Parameters
     ----------
     fom
-        The full-order `Model` from :mod:`~pymor.models.iosys`.
+        The full-order `Model` from :mod:`~pymor.models.iosys` or a |TransferFunction|.
     w
         Array of frequencies.
+    stable
+        Whether the FOM is stable.
+    fig_poles
+        Matplotlib figure for system poles.
+    fig_bode
+        Matplotlib figure for Bode plot.
     """
     from pymor.models.transfer_function import TransferFunction
     if not isinstance(fom, TransferFunction):
@@ -39,38 +45,53 @@ def fom_properties(fom, w):
     print(f'number of outputs  = {fom.dim_output}')
 
     # System norms
-    print(f'FOM H_2-norm:    {fom.h2_norm():e}')
-    if not isinstance(fom, TransferFunction):
+    if stable:
+        print(f'FOM H_2-norm:    {fom.h2_norm():e}')
+        if not isinstance(fom, TransferFunction):
+            if config.HAVE_SLYCOT:
+                print(f'FOM H_inf-norm:  {fom.hinf_norm():e}')
+            else:
+                print('Skipped H_inf-norm calculation due to missing slycot.')
+            print(f'FOM Hankel-norm: {fom.hankel_norm():e}')
+    else:
+        print(f'FOM L_2-norm:    {fom.l2_norm():e}')
         if config.HAVE_SLYCOT:
-            print(f'FOM H_inf-norm:  {fom.hinf_norm():e}')
+            print(f'FOM L_inf-norm:  {fom.linf_norm():e}')
         else:
-            print('Skipped H_inf-norm calculation due to missing slycot.')
-        print(f'FOM Hankel-norm: {fom.hankel_norm():e}')
+            print('Skipped L_inf-norm calculation due to missing slycot.')
 
     # System poles
     if not isinstance(fom, TransferFunction):
         poles = fom.poles()
-        fig, ax = plt.subplots()
+        if fig_poles is None:
+            fig_poles = plt.figure()
+        ax = fig_poles.subplots()
         ax.plot(poles.real, poles.imag, '.')
         ax.set_title('System poles')
+        ax.set_xlabel('Real')
+        ax.set_ylabel('Imag')
+
+        if not stable:
+            ast_spectrum = fom.get_ast_spectrum()
+            print(f'Anti-stable system poles:  {ast_spectrum[1]}')
 
     # Bode plot of the full model
-    fig, ax = plt.subplots(2 * fom.dim_output, fom.dim_input, squeeze=False)
+    if fig_bode is None:
+        fig_bode = plt.figure()
+    ax = fig_bode.subplots(2 * fom.dim_output, fom.dim_input, squeeze=False)
     if isinstance(fom, TransferFunction):
         fom.bode_plot(w, ax=ax)
     else:
         fom.transfer_function.bode_plot(w, ax=ax)
-    fig.suptitle('Bode plot of the full model')
-    plt.show()
 
 
-def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
+def run_mor_method(fom, w, reductor, reductor_short_name, r, stable=True, **reduce_kwargs):
     """Run a model order reduction method.
 
     Parameters
     ----------
-    lti
-        The full-order `Model` from :mod:`~pymor.models.iosys`.
+    fom
+        The full-order `Model` from :mod:`~pymor.models.iosys` or a |TransferFunction|.
     w
         Array of frequencies.
     reductor
@@ -79,53 +100,70 @@ def run_mor_method(lti, w, reductor, reductor_short_name, r, **reduce_kwargs):
         A short name for the reductor.
     r
         The order of the reduced-order model.
+    stable
+        Whether the FOM is stable.
     reduce_kwargs
         Optional keyword arguments for the reduce method.
     """
     # Reduction
     rom = reductor.reduce(r, **reduce_kwargs)
-    err = lti - rom
+    err = fom - rom
     if isinstance(err, LTIModel):
         solver_options = {'lyap_lrcf': lyap_lrcf_solver_options(lradi_shifts='projection_shifts')['lradi']}
         err = err.with_(solver_options=solver_options)
 
     # Errors
     from pymor.models.transfer_function import TransferFunction
-    if not isinstance(lti, TransferFunction):
-        print(f'{reductor_short_name} relative H_2-error:    {err.h2_norm() / lti.h2_norm():e}')
-        if config.HAVE_SLYCOT:
-            print(f'{reductor_short_name} relative H_inf-error:  {err.hinf_norm() / lti.hinf_norm():e}')
+    if not isinstance(fom, TransferFunction):
+        if stable:
+            print(f'{reductor_short_name} relative H_2-error:    {err.h2_norm() / fom.h2_norm():e}')
+            if config.HAVE_SLYCOT:
+                print(f'{reductor_short_name} relative H_inf-error:  {err.hinf_norm() / fom.hinf_norm():e}')
+            else:
+                print('Skipped H_inf-norm calculation due to missing slycot.')
+            print(f'{reductor_short_name} relative Hankel-error: {err.hankel_norm() / fom.hankel_norm():e}')
         else:
-            print('Skipped H_inf-norm calculation due to missing slycot.')
-        print(f'{reductor_short_name} relative Hankel-error: {err.hankel_norm() / lti.hankel_norm():e}')
+            if config.HAVE_SLYCOT:
+                print(f'{reductor_short_name} relative L_inf-error:  {err.linf_norm() / fom.linf_norm():e}')
+            else:
+                print('Skipped L_inf-norm calculation due to missing slycot.')
     elif isinstance(rom, LTIModel):
-        error = np.sqrt(lti.h2_norm()**2 - 2 * lti.h2_inner(rom).real + rom.h2_norm()**2)
-        print(f'{reductor_short_name} relative H_2-error:    {error / lti.h2_norm():e}')
+        error = np.sqrt(fom.h2_norm()**2 - 2 * fom.h2_inner(rom).real + rom.h2_norm()**2)
+        print(f'{reductor_short_name} relative H_2-error:    {error / fom.h2_norm():e}')
     else:
-        print(f'{reductor_short_name} relative H_2-error:    {err.h2_norm() / lti.h2_norm():e}')
+        print(f'{reductor_short_name} relative H_2-error:    {err.h2_norm() / fom.h2_norm():e}')
+
+    # Figure and subfigures
+    fig = plt.figure(figsize=(10, 8), constrained_layout=True)
+    subfigs = fig.subfigures(1, 2)
+    subfigs1 = subfigs[1].subfigures(2, 1)
+    fig.suptitle(f'{reductor_short_name} reduced-order model')
+
+    # Bode plot of the full and reduced model
+    axs = subfigs[0].subplots(2 * fom.dim_output, fom.dim_input, squeeze=False)
+    if isinstance(fom, TransferFunction):
+        fom.bode_plot(w, ax=axs, label='FOM')
+    else:
+        fom.transfer_function.bode_plot(w, ax=axs, label='FOM')
+    rom.transfer_function.bode_plot(w, ax=axs, linestyle='dashed', label='ROM')
+    for ax in axs.flat:
+        ax.legend()
 
     # Poles of the reduced-order model
     poles_rom = rom.poles()
-    fig, ax = plt.subplots()
+    ax = subfigs1[0].subplots()
     ax.plot(poles_rom.real, poles_rom.imag, '.')
-    ax.set_title(f"{reductor_short_name} reduced model's poles")
-
-    # Bode plot of the full and reduced model
-    fig, ax = plt.subplots(2 * lti.dim_output, lti.dim_input, squeeze=False)
-    if isinstance(lti, TransferFunction):
-        lti.bode_plot(w, ax=ax)
-    else:
-        lti.transfer_function.bode_plot(w, ax=ax)
-    rom.transfer_function.bode_plot(w, ax=ax, linestyle='dashed')
-    fig.suptitle(f'Bode plot of the full and {reductor_short_name} reduced model')
+    ax.set_title("ROM's poles")
+    ax.set_xlabel('Real')
+    ax.set_ylabel('Imag')
 
     # Magnitude plot of the error system
-    fig, ax = plt.subplots()
+    ax = subfigs1[1].subplots()
     if isinstance(err, TransferFunction):
         err.mag_plot(w, ax=ax)
     else:
         err.transfer_function.mag_plot(w, ax=ax)
-    ax.set_title(f'Magnitude plot of the {reductor_short_name} error system')
+    ax.set_title('Magnitude plot of the error system')
     plt.show()
 
 
@@ -150,7 +188,12 @@ def main(
 
     where :math:`u(t)` is the input and :math:`y(t)` is the output.
     """
-    set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
+    set_log_levels({
+        'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
+        'pymor.algorithms.lradi.solve_lyap_lrcf': 'WARNING',
+        'pymor.reductors.basic.LTIPGReductor': 'WARNING',
+    })
+    plt.rcParams['axes.grid'] = True
 
     p = InstationaryProblem(
         StationaryProblem(
@@ -171,21 +214,28 @@ def main(
     solver_options = {'lyap_lrcf': lyap_lrcf_solver_options(lradi_shifts='wachspress_shifts')['lradi']}
     lti = fom.to_lti().with_(solver_options=solver_options)
 
+    # Figure
+    fig = plt.figure(figsize=(10, 8), constrained_layout=True)
+    subfigs = fig.subfigures(1, 2)
+    subfigs1 = subfigs[1].subfigures(2, 1)
+    fig.suptitle('Full-order model')
+
     # System properties
     w = np.logspace(-1, 3, 100)
-    fom_properties(lti, w)
+    fom_properties(lti, w, fig_poles=subfigs1[0], fig_bode=subfigs[0])
 
     # Hankel singular values
     hsv = lti.hsv()
-    fig, ax = plt.subplots()
+    ax = subfigs1[1].subplots()
     ax.semilogy(range(1, len(hsv) + 1), hsv, '.-')
     ax.set_title('Hankel singular values')
+    ax.set_xlabel('Index')
     plt.show()
 
     # Model order reduction
     run_mor_method(lti, w, BTReductor(lti), 'BT', r, tol=1e-5)
     run_mor_method(lti, w, LQGBTReductor(lti), 'LQGBT', r, tol=1e-5)
-    run_mor_method(lti, w, BRBTReductor(lti), 'BRBT', r, tol=1e-5)
+    run_mor_method(lti, w, BRBTReductor(lti, gamma=0.2), 'BRBT', r, tol=1e-5)
     run_mor_method(lti, w, IRKAReductor(lti), 'IRKA', r)
     run_mor_method(lti, w, IRKAReductor(lti), 'IRKA (with Arnoldi)', r, projection='arnoldi')
     run_mor_method(lti, w, TSIAReductor(lti), 'TSIA', r)

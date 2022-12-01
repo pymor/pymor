@@ -63,9 +63,9 @@ start_time = time.perf_counter()
 
 
 class ColoredFormatter(logging.Formatter):
-    """A logging.Formatter that inserts tty control characters to color
-    loglevel keyword output. Coloring can be disabled by setting the
-    `PYMOR_COLORS_DISABLE` environment variable to `1`.
+    """A logging.Formatter that colors loglevel keyword output.
+
+    Coloring can be disabled by setting the `PYMOR_COLORS_DISABLE` environment variable to `1`.
     """
 
     def __init__(self):

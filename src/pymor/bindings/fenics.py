@@ -15,7 +15,7 @@ from pathlib import Path
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.pickle import unpicklable
-from pymor.operators.constructions import ZeroOperator
+from pymor.operators.constructions import ZeroOperator, VectorOperator, VectorFunctional
 from pymor.operators.interface import Operator
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -157,9 +157,9 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace):
         impl += value
         return FenicsVector(impl)
 
-    def real_random_vector(self, distribution, random_state, **kwargs):
+    def real_random_vector(self, distribution, **kwargs):
         impl = df.Function(self.V).vector()
-        values = _create_random_values(impl.local_size(), distribution, random_state, **kwargs)
+        values = _create_random_values(impl.local_size(), distribution, **kwargs)
         impl[:] = np.ascontiguousarray(values)
         return FenicsVector(impl)
 
@@ -170,6 +170,85 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace):
 
     def real_make_vector(self, obj):
         return FenicsVector(obj)
+
+
+class FenicsMatrixBasedOperator(Operator):
+    """Wraps a parameterized FEniCS linear or bilinear form as an |Operator|.
+
+    Parameters
+    ----------
+    form
+        The `Form` object which is assembled to a matrix or vector.
+    params
+        Dict mapping parameters to dolfin `Constants` as returned by
+        :meth:`~pymor.analyticalproblems.functions.ExpressionFunction.to_fenics`.
+    bc
+        dolfin `DirichletBC` object to be applied.
+    bc_zero
+        If `True` also clear the diagonal entries of Dirichlet dofs.
+    functional
+        If `True` return a |VectorFunctional| instead of a |VectorOperator| in case
+        `form` is a linear form.
+    solver_options
+        The |solver_options| for the assembled :class:`FenicsMatrixOperator`.
+    name
+        Name of the operator.
+    """
+
+    linear = True
+
+    def __init__(self, form, params, bc=None, bc_zero=False, functional=False, solver_options=None, name=None):
+        assert 1 <= len(form.arguments()) <= 2
+        assert not functional or len(form.arguments()) == 1
+        self.__auto_init(locals())
+        if len(form.arguments()) == 2 or not functional:
+            range_space = form.arguments()[0].function_space()
+            self.range = FenicsVectorSpace(range_space)
+        else:
+            self.range = NumpyVectorSpace(1)
+        if len(form.arguments()) == 2 or functional:
+            source_space = form.arguments()[0 if functional else 1].function_space()
+            self.source = FenicsVectorSpace(source_space)
+        else:
+            self.source = NumpyVectorSpace(1)
+        self.parameters_own = {k: len(v) for k, v in params.items()}
+
+    def assemble(self, mu=None):
+        assert self.parameters.assert_compatible(mu)
+        # update coefficients in form
+        for k, coeffs in self.params.items():
+            for c, v in zip(coeffs, mu[k]):
+                c.assign(v)
+        # assemble matrix
+        mat = df.assemble(self.form, keep_diagonal=True)
+        if self.bc is not None:
+            if self.bc_zero:
+                self.bc.zero(mat)
+            else:
+                self.bc.apply(mat)
+        if len(self.form.arguments()) == 2:
+            return FenicsMatrixOperator(mat, self.source.V, self.range.V, self.solver_options, self.name + '_assembled')
+        elif self.functional:
+            V = self.source.make_array([mat])
+            return VectorFunctional(V)
+        else:
+            V = self.range.make_array([mat])
+            return VectorOperator(V)
+
+    def apply(self, U, mu=None):
+        return self.assemble(mu).apply(U)
+
+    def apply_adjoint(self, V, mu=None):
+        return self.assemble(mu).apply_adjoint(V)
+
+    def as_range_array(self, mu=None):
+        return self.assemble(mu).as_range_array()
+
+    def as_source_array(self, mu=None):
+        return self.assemble(mu).as_source_array()
+
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        return self.assemble(mu).apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
 
 
 class FenicsMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
@@ -195,8 +274,8 @@ class FenicsMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         if adjoint:
             try:
                 matrix = self._matrix_transpose
-            except AttributeError:
-                raise RuntimeError('_create_solver called before _matrix_transpose has been initialized.')
+            except AttributeError as e:
+                raise RuntimeError('_create_solver called before _matrix_transpose has been initialized.') from e
         else:
             matrix = self.matrix
         method = options.get('solver')
@@ -583,13 +662,13 @@ class FenicsVisualizer(ImmutableObject):
                     tit += legend[i]
                 else:
                     tit = title
+                plt.figure()
                 if separate_colorbars:
-                    plt.figure()
-                    df.plot(function, title=tit)
+                    p = df.plot(function, title=tit)
                 else:
-                    plt.figure()
-                    df.plot(function, title=tit,
-                            range_min=vmin, range_max=vmax)
+                    p = df.plot(function, title=tit,
+                                range_min=vmin, range_max=vmax)
+                plt.colorbar(p)
             if getattr(sys, '_called_from_test', False):
                 plt.show(block=False)
             else:

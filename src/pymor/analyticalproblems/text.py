@@ -16,8 +16,16 @@ def text_problem(text='pyMOR', font_name=None):
     import numpy as np
     from PIL import Image, ImageDraw
 
+    def _getsize(font_object, string):
+        try:
+            # pillow >= 9.2.0
+            left, top, right, bottom = font_object.getbbox(string)
+            return (right-left, bottom-top)
+        except AttributeError:
+            return font_object.getsize(string)
+
     font = _get_font(font_name)
-    size = font.getsize(text)  # compute width and height of rendered text
+    size = _getsize(font, text)  # compute width and height of rendered text
     size = (size[0] + 20, size[1] + 20)  # add a border of 10 pixels around the text
 
     def make_bitmap_function(char_num):
@@ -31,7 +39,7 @@ def text_problem(text='pyMOR', font_name=None):
 
         # next we erase all previous character by drawing a black rectangle
         if char_num > 0:
-            d.rectangle(((0, 0), (font.getsize(text[:char_num])[0] + 10, size[1])), fill=0, outline=0)
+            d.rectangle(((0, 0), (_getsize(font, text[:char_num])[0] + 10, size[1])), fill=0, outline=0)
 
         # open a new temporary file
         # after leaving this 'with' block, the temporary file is automatically deleted

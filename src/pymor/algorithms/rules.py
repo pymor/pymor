@@ -343,9 +343,9 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         result = {}
         for child in children:
             c = getattr(obj, child)
-            if isinstance(c, Mapping):
+            if isinstance(c, dict):
                 result[child] = {k: self.apply(v) if v is not None else v for k, v in c.items()}
-            elif isinstance(c, Iterable):
+            elif isinstance(c, (list, tuple)):
                 result[child] = tuple(self.apply(v) if v is not None else v for v in c)
             else:
                 result[child] = self.apply(c) if c is not None else c
@@ -368,19 +368,22 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         attributes `a`, for which one of the folling is true:
 
             1. `a` is an |Operator|.
-            2. `a` is a `mapping` and each of its values is either an |Operator| or `None`.
-            3. `a` is an `iterable` and each of its elements is either an |Operator| or `None`.
+            2. `a` is a dict` and each of its values is either an |Operator| or `None`.
+            3. `a` is a `list` or `tuple` and each of its elements is either an |Operator|
+               or `None`.
         """
-        children = set()
+        # Note: we return a list instead of a set (as was done previously) to ensure
+        # a deterministic order of children. In particular, this is needed to ensure that
+        # in the call to preassemble in pymor.discretizers.fenics.cg.discretize_stationary_cg
+        # all operators are assembled in the same order on all MPI ranks.
+        children = []
         for k in obj._init_arguments:
             try:
                 v = getattr(obj, k)
                 if (isinstance(v, Operator)
-                    or isinstance(v, Mapping) and all(isinstance(vv, Operator)
-                                                      or vv is None for vv in v.values())
-                    or isinstance(v, Iterable) and type(v) is not str and all(isinstance(vv, Operator)
-                                                                              or vv is None for vv in v)):
-                    children.add(k)
+                        or isinstance(v, dict) and all(isinstance(vv, Operator) or vv is None for vv in v.values())
+                        or isinstance(v, (list, tuple)) and all(isinstance(vv, Operator) or vv is None for vv in v)):
+                    children.append(k)
             except AttributeError:
                 pass
         return children

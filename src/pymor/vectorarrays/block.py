@@ -7,7 +7,6 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.base import classinstancemethod
-from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpace
 
 
@@ -176,21 +175,6 @@ class BlockVectorArray(VectorArray):
     """
 
     impl_type = BlockVectorArrayImpl
-
-    @Deprecated('BlockVectorArray.blocks')
-    def block(self, ind):
-        """Return a copy of a single block or a sequence of blocks."""
-        if isinstance(ind, (tuple, list)):
-            assert all(isinstance(ii, Number) for ii in ind)
-            return tuple(_indexed(self.impl._blocks[ii], self.ind).copy() for ii in ind)
-        else:
-            assert isinstance(ind, Number)
-            return _indexed(self.impl._blocks[ind], self.ind).copy()
-
-    @property
-    @Deprecated('len(BlockVectorArray.blocks)')
-    def num_blocks(self):
-        return len(self.space.subspaces)
 
     @property
     def blocks(self):

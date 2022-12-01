@@ -28,6 +28,7 @@ from pymor.models.neural_network import (FullyConnectedNN, LongShortTermMemoryNN
                                          NeuralNetworkLSTMInstationaryModel,
                                          NeuralNetworkInstationaryStatefreeOutputModel,
                                          NeuralNetworkLSTMInstationaryStatefreeOutputModel)
+from pymor.tools.random import get_rng, get_seed_seq
 
 
 class NeuralNetworkReductor(BasicObject):
@@ -42,13 +43,19 @@ class NeuralNetworkReductor(BasicObject):
     Parameters
     ----------
     fom
-        The full-order |Model| to reduce.
+        The full-order |Model| to reduce. If `None`, the `training_set` has
+        to consist of pairs of |parameter values| and corresponding solution
+        |VectorArrays|.
     training_set
         Set of |parameter values| to use for POD and training of the
-        neural network.
+        neural network. If `fom` is `None`, the `training_set` has
+        to consist of pairs of |parameter values| and corresponding solution
+        |VectorArrays|.
     validation_set
         Set of |parameter values| to use for validation in the training
-        of the neural network.
+        of the neural network. If `fom` is `None`, the `validation_set` has
+        to consist of pairs of |parameter values| and corresponding solution
+        |VectorArrays|.
     validation_ratio
         Fraction of the training set to use for validation in the training
         of the neural network (only used if no validation set is provided).
@@ -80,13 +87,19 @@ class NeuralNetworkReductor(BasicObject):
         networks.
     """
 
-    def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
+    def __init__(self, fom=None, training_set=None, validation_set=None, validation_ratio=0.1,
                  basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={},
                  ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
                                    'min_targets': None, 'max_targets': None}
+
+        if not fom:
+            assert training_set is not None and len(training_set) > 0
+            self.parameters_dim = training_set[0][0].parameters.dim
+        else:
+            self.parameters_dim = fom.parameters.dim
 
         self.__auto_init(locals())
 
@@ -95,7 +108,7 @@ class NeuralNetworkReductor(BasicObject):
                loss_function=None, restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
                lr_scheduler_params={'step_size': 10, 'gamma': 0.7},
                es_scheduler_params={'patience': 10, 'delta': 0.}, weight_decay=0.,
-               log_loss_frequency=0, seed=0):
+               log_loss_frequency=0):
         """Reduce by training artificial neural networks.
 
         Parameters
@@ -145,9 +158,6 @@ class NeuralNetworkReductor(BasicObject):
             Frequency of epochs in which to log the current validation and
             training loss during training of the neural networks.
             If `0`, no intermediate logging of losses is done.
-        seed
-            Seed to use for various functions in PyTorch. Using a fixed seed,
-            it is possible to reproduce former results.
 
         Returns
         -------
@@ -160,9 +170,7 @@ class NeuralNetworkReductor(BasicObject):
         assert learning_rate > 0.
         assert weight_decay >= 0.
 
-        # set a seed for the PyTorch initialization of weights and biases
-        # and further PyTorch methods
-        torch.manual_seed(seed)
+        torch.manual_seed(get_seed_seq().spawn(1)[0].generate_state(1).item())
 
         # build a reduced basis using POD and compute training data
         if not hasattr(self, 'training_data'):
@@ -176,13 +184,18 @@ class NeuralNetworkReductor(BasicObject):
 
                 if self.validation_set:
                     self.validation_data = []
-                    for mu in self.validation_set:
-                        sample = self._compute_sample(mu)
-                        self.validation_data.extend(sample)
+                    if self.fom:
+                        for mu in self.validation_set:
+                            sample = self._compute_sample(mu)
+                            self.validation_data.extend(sample)
+                    else:
+                        for mu, u in self.validation_set:
+                            sample = self._compute_sample(mu, u)
+                            self.validation_data.extend(sample)
                 else:
                     number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
                     # randomly shuffle training data before splitting into two sets
-                    np.random.shuffle(self.training_data)
+                    get_rng().shuffle(self.training_data)
                     # split training data into validation and training set
                     self.validation_data = self.training_data[0:number_validation_snapshots]
                     self.training_data = self.training_data[number_validation_snapshots+1:]
@@ -217,7 +230,7 @@ class NeuralNetworkReductor(BasicObject):
             self.neural_network, self.losses = multiple_restarts_training(self.training_data, self.validation_data,
                                                                           neural_network, target_loss, restarts,
                                                                           log_loss_frequency, training_parameters,
-                                                                          self.scaling_parameters, seed)
+                                                                          self.scaling_parameters)
 
         self._check_tolerances()
 
@@ -226,10 +239,15 @@ class NeuralNetworkReductor(BasicObject):
     def compute_training_data(self):
         """Compute a reduced basis using proper orthogonal decomposition."""
         # compute snapshots for POD and training of neural networks
-        with self.logger.block('Computing training snapshots ...'):
-            U = self.fom.solution_space.empty()
-            for mu in self.training_set:
-                U.append(self.fom.solve(mu))
+        if not self.fom:
+            U = self.training_set[0][1].empty()
+            for mu, u in self.training_set:
+                U.append(u)
+        else:
+            with self.logger.block('Computing training snapshots ...'):
+                U = self.fom.solution_space.empty()
+                for mu in self.training_set:
+                    U.append(self.fom.solve(mu))
 
         # compute reduced basis via POD
         with self.logger.block('Building reduced basis ...'):
@@ -239,8 +257,13 @@ class NeuralNetworkReductor(BasicObject):
 
         # compute training samples
         with self.logger.block('Computing training samples ...'):
+            if not self.fom:
+                training_set_iterable = self.training_set
+            else:
+                training_set_iterable = zip(self.training_set, U)
+
             self.training_data = []
-            for mu, u in zip(self.training_set, U):
+            for mu, u in training_set_iterable:
                 sample = self._compute_sample(mu, u)
                 # compute minimum and maximum of outputs/targets for scaling
                 self._update_scaling_parameters(sample)
@@ -290,6 +313,7 @@ class NeuralNetworkReductor(BasicObject):
         # determine the coefficients of the full-order solutions in the reduced basis to obtain
         # the training data
         if u is None:
+            assert self.fom is not None
             u = self.fom.solve(mu)
 
         product = self.pod_params.get('product')
@@ -300,11 +324,11 @@ class NeuralNetworkReductor(BasicObject):
         """Compute the number of neurons in the layers of the neural network."""
         # determine the numbers of neurons in the hidden layers
         if isinstance(hidden_layers, str):
-            hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
+            hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.parameters_dim})
         # input and output size of the neural network are prescribed by the
         # dimension of the parameter space and the reduced basis size
         assert isinstance(hidden_layers, list)
-        return [self.fom.parameters.dim, ] + hidden_layers + [len(self.reduced_basis), ]
+        return [self.parameters_dim, ] + hidden_layers + [len(self.reduced_basis), ]
 
     def _compute_target_loss(self):
         """Compute target loss depending on value of `ann_mse`."""
@@ -337,12 +361,20 @@ class NeuralNetworkReductor(BasicObject):
 
     def _build_rom(self):
         """Construct the reduced order model."""
-        with self.logger.block('Building ROM ...'):
+        if self.fom:
             projected_output_functional = project(self.fom.output_functional, None, self.reduced_basis)
-            rom = NeuralNetworkModel(self.neural_network, parameters=self.fom.parameters,
+            parameters = self.fom.parameters
+            name = self.fom.name
+        else:
+            projected_output_functional = None
+            parameters = self.training_set[0][0].parameters
+            name = 'data_driven'
+
+        with self.logger.block('Building ROM ...'):
+            rom = NeuralNetworkModel(self.neural_network, parameters,
                                      scaling_parameters=self.scaling_parameters,
                                      output_functional=projected_output_functional,
-                                     name=f'{self.fom.name}_reduced')
+                                     name=f'{name}_reduced')
 
         return rom
 
@@ -361,13 +393,16 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     Parameters
     ----------
     fom
-        The full-order |Model| to reduce.
+        The full-order |Model| to reduce. If `None`, the `training_set` has
+        to consist of pairs of |parameter values| and corresponding outputs.
     training_set
         Set of |parameter values| to use for POD and training of the
-        neural network.
+        neural network. If `fom` is `None`, the `training_set` has
+        to consist of pairs of |parameter values| and corresponding outputs.
     validation_set
         Set of |parameter values| to use for validation in the training
-        of the neural network.
+        of the neural network. If `fom` is `None`, the `validation_set` has
+        to consist of pairs of |parameter values| and corresponding outputs.
     validation_ratio
         Fraction of the training set to use for validation in the training
         of the neural network (only used if no validation set is provided).
@@ -381,12 +416,20 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         networks.
     """
 
-    def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
+    def __init__(self, fom=None, training_set=None, validation_set=None, validation_ratio=0.1,
                  validation_loss=None, scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
                                    'min_targets': None, 'max_targets': None}
+
+        if not fom:
+            assert training_set is not None and len(training_set) > 0
+            self.parameters_dim = training_set[0][0].parameters.dim
+            self.dim_output = len(training_set[0][1].flatten())
+        else:
+            self.parameters_dim = fom.parameters.dim
+            self.dim_output = fom.dim_output
 
         self.__auto_init(locals())
 
@@ -394,24 +437,30 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         """Compute the training samples (the outputs to the parameters of the training set)."""
         with self.logger.block('Computing training samples ...'):
             self.training_data = []
-            for mu in self.training_set:
-                sample = self._compute_sample(mu)
+            for datum in self.training_set:
+                if not self.fom:
+                    mu, output = datum
+                    sample = self._compute_sample(mu, output=output)
+                else:
+                    sample = self._compute_sample(datum)
                 self._update_scaling_parameters(sample)
                 self.training_data.extend(sample)
 
-    def _compute_sample(self, mu):
+    def _compute_sample(self, mu, output=None):
         """Transform parameter and corresponding output to tensors."""
+        if output:
+            return [(mu, output.flatten())]
         return [(mu, self.fom.output(mu).flatten())]
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network."""
         # determine the numbers of neurons in the hidden layers
         if isinstance(hidden_layers, str):
-            hidden_layers = eval(hidden_layers, {'N': self.fom.dim_output, 'P': self.fom.parameters.dim})
+            hidden_layers = eval(hidden_layers, {'N': self.dim_output, 'P': self.parameters_dim})
         # input and output size of the neural network are prescribed by the
         # dimension of the parameter space and the output dimension
         assert isinstance(hidden_layers, list)
-        return [self.fom.parameters.dim, ] + hidden_layers + [self.fom.dim_output, ]
+        return [self.parameters_dim, ] + hidden_layers + [self.dim_output, ]
 
     def _compute_target_loss(self):
         """Compute target loss depending on value of `ann_mse`."""
@@ -424,10 +473,17 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
 
     def _build_rom(self):
         """Construct the reduced order model."""
+        if self.fom:
+            parameters = self.fom.parameters
+            name = self.fom.name
+        else:
+            parameters = self.training_set[0][0].parameters
+            name = 'data_driven'
+
         with self.logger.block('Building ROM ...'):
-            rom = NeuralNetworkStatefreeOutputModel(self.neural_network, parameters=self.fom.parameters,
+            rom = NeuralNetworkStatefreeOutputModel(self.neural_network, parameters=parameters,
                                                     scaling_parameters=self.scaling_parameters,
-                                                    name=f'{self.fom.name}_output_reduced')
+                                                    name=f'{name}_output_reduced')
 
         return rom
 
@@ -444,16 +500,24 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
     Parameters
     ----------
     fom
-        The full-order |Model| to reduce.
+        The full-order |Model| to reduce. If `None`, the `training_set` has
+        to consist of pairs of |parameter values| and corresponding solution
+        |VectorArrays|.
     training_set
         Set of |parameter values| to use for POD and training of the
-        neural network.
+        neural network. If `fom` is `None`, the `training_set` has
+        to consist of pairs of |parameter values| and corresponding solution
+        |VectorArrays|.
     validation_set
         Set of |parameter values| to use for validation in the training
-        of the neural network.
+        of the neural network. If `fom` is `None`, the `validation_set` has
+        to consist of pairs of |parameter values| and corresponding solution
+        |VectorArrays|.
     validation_ratio
         Fraction of the training set to use for validation in the training
         of the neural network (only used if no validation set is provided).
+    T
+        The final time T used in case `fom` is `None`.
     basis_size
         Desired size of the reduced basis. If `None`, rtol, atol or l2_err must
         be provided.
@@ -482,28 +546,46 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         networks.
     """
 
-    def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
-                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={},
-                 ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
+    def __init__(self, fom=None, training_set=None, validation_set=None, validation_ratio=0.1,
+                 T=None, basis_size=None, rtol=0., atol=0., l2_err=0.,
+                 pod_params={}, ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
                                    'min_targets': None, 'max_targets': None}
+
+        if not fom:
+            assert training_set is not None and len(training_set) > 0
+            assert T is not None
+            self.parameters_dim = training_set[0][0].parameters.dim
+            self.T = T
+        else:
+            self.parameters_dim = fom.parameters.dim
+            self.T = fom.T
 
         self.__auto_init(locals())
 
     def compute_training_data(self):
         """Compute a reduced basis using proper orthogonal decomposition."""
         # compute snapshots for POD and training of neural networks
-        with self.logger.block('Computing training snapshots ...'):
-            U = self.fom.solution_space.empty()
-            for mu in self.training_set:
-                u = self.fom.solve(mu)
+        if not self.fom:
+            U = self.training_set[0][1].empty()
+            for mu, u in self.training_set:
                 if hasattr(self, 'nt'):
                     assert self.nt == len(u)
                 else:
                     self.nt = len(u)
                 U.append(u)
+        else:
+            with self.logger.block('Computing training snapshots ...'):
+                U = self.fom.solution_space.empty()
+                for mu in self.training_set:
+                    u = self.fom.solve(mu)
+                    if hasattr(self, 'nt'):
+                        assert self.nt == len(u)
+                    else:
+                        self.nt = len(u)
+                    U.append(u)
 
         # compute reduced basis via POD
         with self.logger.block('Building reduced basis ...'):
@@ -514,8 +596,13 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         # compute training samples
         with self.logger.block('Computing training samples ...'):
             self.training_data = []
-            for i, mu in enumerate(self.training_set):
-                samples = self._compute_sample(mu, U[i*self.nt:(i+1)*self.nt])
+            for i, datum in enumerate(self.training_set):
+                if not self.fom:
+                    mu, u = datum
+                    samples = self._compute_sample(mu, u=u)
+                else:
+                    samples = self._compute_sample(datum, U[i*self.nt:(i+1)*self.nt])
+
                 for sample in samples:
                     self._update_scaling_parameters(sample)
                 self.training_data.extend(samples)
@@ -534,7 +621,7 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         if u is None:
             u = self.fom.solve(mu)
 
-        parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.fom.T, self.nt)]
+        parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.T, self.nt)]
 
         product = self.pod_params.get('product')
 
@@ -550,21 +637,29 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         """
         # determine the numbers of neurons in the hidden layers
         if isinstance(hidden_layers, str):
-            hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.fom.parameters.dim})
+            hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.parameters_dim})
         # input and output size of the neural network are prescribed by the
         # dimension of the parameter space and the reduced basis size
         assert isinstance(hidden_layers, list)
-        return [self.fom.parameters.dim + 1, ] + hidden_layers + [len(self.reduced_basis), ]
+        return [self.parameters_dim + 1, ] + hidden_layers + [len(self.reduced_basis), ]
 
     def _build_rom(self):
         """Construct the reduced order model."""
-        with self.logger.block('Building ROM ...'):
+        if self.fom:
             projected_output_functional = project(self.fom.output_functional, None, self.reduced_basis)
-            rom = NeuralNetworkInstationaryModel(self.fom.T, self.nt, self.neural_network,
-                                                 parameters=self.fom.parameters,
+            parameters = self.fom.parameters
+            name = self.fom.name
+        else:
+            projected_output_functional = None
+            parameters = self.training_set[0][0].parameters
+            name = 'data_driven'
+
+        with self.logger.block('Building ROM ...'):
+            rom = NeuralNetworkInstationaryModel(self.T, self.nt, self.neural_network,
+                                                 parameters=parameters,
                                                  scaling_parameters=self.scaling_parameters,
                                                  output_functional=projected_output_functional,
-                                                 name=f'{self.fom.name}_reduced')
+                                                 name=f'{name}_reduced')
 
         return rom
 
@@ -746,7 +841,7 @@ class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
             self.neural_network, self.losses = multiple_restarts_training(self.training_data, self.validation_data,
                                                                           neural_network, target_loss, restarts,
                                                                           log_loss_frequency, training_parameters,
-                                                                          self.scaling_parameters, seed)
+                                                                          self.scaling_parameters)
 
         self._check_tolerances()
 
@@ -802,16 +897,21 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
     Parameters
     ----------
     fom
-        The full-order |Model| to reduce.
+        The full-order |Model| to reduce. If `None`, the `training_set` has
+        to consist of pairs of |parameter values| and corresponding outputs.
     nt
         Number of time steps in the reduced order model (does not have to
         coincide with the number of time steps in the full order model).
     training_set
         Set of |parameter values| to use for POD and training of the
-        neural network.
+        neural network. If `fom` is `None`, the `training_set` has
+        to consist of pairs of |parameter values| and corresponding outputs.
     validation_set
         Set of |parameter values| to use for validation in the training
-        of the neural network.
+        of the neural network. If `fom` is `None`, the `validation_set` has
+        to consist of pairs of |parameter values| and corresponding outputs.
+    T
+        The final time T used in case `fom` is `None`.
     validation_ratio
         Fraction of the training set to use for validation in the training
         of the neural network (only used if no validation set is provided).
@@ -825,12 +925,23 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
         networks.
     """
 
-    def __init__(self, fom, nt, training_set, validation_set=None, validation_ratio=0.1,
-                 validation_loss=None, scale_inputs=True, scale_outputs=False):
+    def __init__(self, fom=None, nt=1, training_set=None, validation_set=None, validation_ratio=0.1,
+                 T=None, validation_loss=None, scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
                                    'min_targets': None, 'max_targets': None}
+
+        if not fom:
+            assert training_set is not None and len(training_set) > 0
+            assert T is not None
+            self.parameters_dim = training_set[0][0].parameters.dim
+            self.dim_output = len(training_set[0][1].flatten())
+            self.T = T
+        else:
+            self.parameters_dim = fom.parameters.dim
+            self.dim_output = fom.dim_output
+            self.T = fom.T
 
         self.__auto_init(locals())
 
@@ -838,21 +949,30 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
         """Compute the training samples (the outputs to the parameters of the training set)."""
         with self.logger.block('Computing training samples ...'):
             self.training_data = []
-            for mu in self.training_set:
-                samples = self._compute_sample(mu)
+            for datum in self.training_set:
+                if not self.fom:
+                    mu, u = datum
+                    samples = self._compute_sample(mu, u)
+                else:
+                    samples = self._compute_sample(datum)
+
                 for sample in samples:
                     self._update_scaling_parameters(sample)
                 self.training_data.extend(samples)
 
-    def _compute_sample(self, mu):
+    def _compute_sample(self, mu, output_trajectory=None):
         """Transform parameter and corresponding output to |NumPy arrays|.
 
         This function takes care of including the time instances in the inputs.
         """
-        output_trajectory = self.fom.output(mu)
+        if output_trajectory:
+            output_size = output_trajectory.shape[0]
+        else:
+            output_trajectory = self.fom.output(mu)
+
         output_size = output_trajectory.shape[0]
         samples = [(mu.with_(t=t), output.flatten())
-                   for t, output in zip(np.linspace(0, self.fom.T, output_size), output_trajectory)]
+                   for t, output in zip(np.linspace(0, self.T, output_size), output_trajectory)]
 
         return samples
 
@@ -860,19 +980,26 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
         """Compute the number of neurons in the layers of the neural network."""
         # determine the numbers of neurons in the hidden layers
         if isinstance(hidden_layers, str):
-            hidden_layers = eval(hidden_layers, {'N': self.fom.dim_output, 'P': self.fom.parameters.dim})
+            hidden_layers = eval(hidden_layers, {'N': self.dim_output, 'P': self.parameters_dim})
         # input and output size of the neural network are prescribed by the
         # dimension of the parameter space and the output dimension
         assert isinstance(hidden_layers, list)
-        return [self.fom.parameters.dim + 1, ] + hidden_layers + [self.fom.dim_output, ]
+        return [self.parameters_dim + 1, ] + hidden_layers + [self.dim_output, ]
 
     def _build_rom(self):
         """Construct the reduced order model."""
+        if self.fom:
+            parameters = self.fom.parameters
+            name = self.fom.name
+        else:
+            parameters = self.training_set[0][0].parameters
+            name = 'data_driven'
+
         with self.logger.block('Building ROM ...'):
-            rom = NeuralNetworkInstationaryStatefreeOutputModel(self.fom.T, self.nt, self.neural_network,
-                                                                parameters=self.fom.parameters,
+            rom = NeuralNetworkInstationaryStatefreeOutputModel(self.T, self.nt, self.neural_network,
+                                                                parameters=parameters,
                                                                 scaling_parameters=self.scaling_parameters,
-                                                                name=f'{self.fom.name}_output_reduced')
+                                                                name=f'{name}_output_reduced')
 
         return rom
 
@@ -905,7 +1032,7 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkLSTMInst
     """
 
     def __init__(self, fom, nt, training_set, validation_set=None, validation_ratio=0.1,
-                 validation_loss=None):
+                 validation_loss=None, scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
@@ -1011,10 +1138,11 @@ class EarlyStoppingScheduler(BasicObject):
         -------
         `True` if early stopping is suggested, `False` otherwise.
         """
+        import copy
         if self.best_losses is None:
             self.best_losses = losses
             self.best_losses['full'] /= self.size_training_validation_set
-            self.best_neural_network = neural_network
+            self.best_neural_network = copy.deepcopy(neural_network)
         elif self.best_losses['val'] - self.delta <= losses['val']:
             self.counter += 1
             if self.counter >= self.patience:
@@ -1022,7 +1150,7 @@ class EarlyStoppingScheduler(BasicObject):
         else:
             self.best_losses = losses
             self.best_losses['full'] /= self.size_training_validation_set
-            self.best_neural_network = neural_network
+            self.best_neural_network = copy.deepcopy(neural_network)
             self.counter = 0
 
         return False
@@ -1211,11 +1339,15 @@ def train_neural_network(training_data, validation_data, neural_network,
             for batch in dataloaders[phase]:
                 # scale inputs and outputs if desired
                 if min_inputs is not None and max_inputs is not None:
-                    inputs = (batch[0] - min_inputs) / (max_inputs - min_inputs)
+                    diff = max_inputs - min_inputs
+                    diff[diff == 0] = 1.
+                    inputs = (batch[0] - min_inputs) / diff
                 else:
                     inputs = batch[0]
                 if min_targets is not None and max_targets is not None:
-                    targets = (batch[1] - min_targets) / (max_targets - min_targets)
+                    diff = max_targets - min_targets
+                    diff[diff == 0] = 1.
+                    targets = (batch[1] - min_targets) / diff
                 else:
                     targets = batch[1]
 
@@ -1263,7 +1395,7 @@ def train_neural_network(training_data, validation_data, neural_network,
 
 def multiple_restarts_training(training_data, validation_data, neural_network,
                                target_loss=None, max_restarts=10, log_loss_frequency=0,
-                               training_parameters={}, scaling_parameters={}, seed=None):
+                               training_parameters={}, scaling_parameters={}):
     """Algorithm that performs multiple restarts of neural network training.
 
     This method either performs a predefined number of restarts and returns
@@ -1295,9 +1427,6 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
     scaling_parameters
         Additional parameters for scaling inputs respectively outputs,
         see :func:`train_neural_network` for more information.
-    seed
-        Seed to use for various functions in PyTorch. Using a fixed seed,
-        it is possible to reproduce former results.
 
     Returns
     -------
@@ -1317,10 +1446,7 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
 
     logger = getLogger('pymor.algorithms.neural_network.multiple_restarts_training')
 
-    # if applicable, set a common seed for the PyTorch initialization
-    # of weights and biases and further PyTorch methods for all training runs
-    if seed:
-        torch.manual_seed(seed)
+    torch.manual_seed(get_seed_seq().spawn(1)[0].generate_state(1).item())
 
     # in case no training data is provided, return a neural network
     # that always returns zeros independent of the input

@@ -35,6 +35,7 @@ interfaces = '''
 .. |VectorArray| replace:: :class:`VectorArray <pymor.vectorarrays.interface.VectorArray>`
 .. |VectorSpace| replace:: :class:`VectorSpace <pymor.vectorarrays.interface.VectorSpace>`
 .. |VectorSpaces| replace:: :class:`VectorSpaces <pymor.vectorarrays.interface.VectorSpace>`
+.. |BlockVectorSpace| replace:: :class:`BlockVectorSpace <pymor.vectorarrays.block.BlockVectorSpace>`
 .. |WorkerPool| replace:: :class:`WorkerPool <pymor.parallel.interface.WorkerPool>`
 .. |WorkerPools| replace:: :class:`WorkerPools <pymor.parallel.interface.WorkerPool>`
 
@@ -85,6 +86,8 @@ common = '''
 .. |ListVectorArray| replace:: :class:`~pymor.vectorarrays.list.ListVectorArray`
 .. |ListVectorArrays| replace:: :class:`ListVectorArrays <pymor.vectorarrays.list.ListVectorArray>`
 
+.. |NumpyHankelOperator| replace:: :class:`~pymor.operators.numpy.NumpyHankelOperator`
+.. |NumpyHankelOperators| replace:: :class:`NumpyHankelOperators <pymor.operators.numpy.NumpyHankelOperator>`
 .. |NumpyMatrixOperator| replace:: :class:`~pymor.operators.numpy.NumpyMatrixOperator`
 .. |NumpyMatrixOperators| replace:: :class:`NumpyMatrixOperators <pymor.operators.numpy.NumpyMatrixOperator>`
 .. |NumpyMatrixBasedOperator| replace:: :class:`~pymor.operators.numpy.NumpyMatrixBasedOperator`
@@ -94,6 +97,8 @@ common = '''
 .. |EmpiricalInterpolatedOperators| replace:: :class:`EmpiricalInterpolatedOperators <pymor.operators.ei.EmpiricalInterpolatedOperator>`
 .. |ConcatenationOperator| replace:: :class:`~pymor.operators.constructions.ConcatenationOperator`
 .. |ConcatenationOperators| replace:: :class:`ConcatenationOperators <pymor.operators.constructions.ConcatenationOperator>`
+.. |VectorOperator| replace:: :class:`~pymor.operators.constructions.VectorOperator`
+.. |VectorFunctional| replace:: :class:`~pymor.operators.constructions.VectorFunctional`
 .. |NumpyVectorSpace| replace:: :func:`~pymor.vectorarrays.numpy.NumpyVectorSpace`
 .. |NumpyVectorSpaces| replace:: :func:`NumpyVectorSpaces <pymor.vectorarrays.numpy.NumpyVectorSpace>`
 
@@ -103,6 +108,8 @@ common = '''
 
 .. |LTIModel| replace:: :class:`~pymor.models.iosys.LTIModel`
 .. |LTIModels| replace:: :class:`LTIModels <pymor.models.iosys.LTIModel>`
+.. |PHLTIModel| replace:: :class:`~pymor.models.iosys.PHLTIModel`
+.. |PHLTIModels| replace:: :class:`PHLTIModels <pymor.models.iosys.PHLTIModel>`
 .. |TransferFunction| replace:: :class:`~pymor.models.transfer_function.TransferFunction`
 .. |TransferFunctions| replace:: :class:`TransferFunctions <pymor.models.transfer_function.TransferFunction>`
 .. |SecondOrderModel| replace:: :class:`~pymor.models.iosys.SecondOrderModel`
@@ -110,6 +117,12 @@ common = '''
 .. |LinearDelayModel| replace:: :class:`~pymor.models.iosys.LinearDelayModel`
 .. |LinearDelayModels| replace:: :class:`LinearDelayModels <pymor.models.iosys.LinearDelayModel>`
 .. |NeuralNetworkModel| replace:: :class:`~pymor.models.neural_network.NeuralNetworkModel`
+.. |QuadraticHamiltonianModel| replace:: :class:`~pymor.model.symplectic.QuadraticHamiltonianModel`
+
+.. |MoebiusTransformation| replace:: :class:`~pymor.models.transforms.MoebiusTransformation`
+.. |MoebiusTransformations| replace:: :class:`MoebiusTransformations <pymor.models.transforms.MoebiusTransformation>`
+.. |BilinearTransformation| replace:: :class:`~pymor.models.transforms.BilinearTransformation`
+.. |CayleyTransformation| replace:: :class:`~pymor.models.transforms.CayleyTransformation`
 
 .. |Parameter| replace:: :class:`Parameter <pymor.parameters.base.Parameters>`
 .. |Parameters| replace:: :class:`~pymor.parameters.base.Parameters`
@@ -149,6 +162,10 @@ common = '''
 .. |rules| replace:: :class:`rules <pymor.algorithms.rules.rule>`
 .. |project| replace:: :func:`~pymor.algorithms.projection.project`
 
+.. |SymplecticBasis| replace:: :class:`~pymor.algorithms.symplectic.SymplecticBasis`
+.. |CanonicalSymplecticFormOperator| replace:: :class:`~pymor.operators.symplectic.CanonicalSymplecticFormOperator`
+
+.. |RNG| replace:: :class:`random number generator <pymor.tools.random.RNG>`
 '''
 
 substitutions = interfaces + common
@@ -167,8 +184,6 @@ for line in substitutions.split('\n'):
 inline_directives = ['math', 'meth', 'class', 'ref', 'mod', 'attr', 'doc', ]
 
 if __name__ == '__main__':
-    import pprint as pp
-    # pp.pprint(jinja_subst)
     with open('rst_to_myst.sed', 'wt') as out:
         for dr in inline_directives:
             out.write(f's;:{dr}:;{{{dr}}};g\n')

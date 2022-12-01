@@ -21,8 +21,10 @@ kernelspec:
 ```
 
 ```{code-cell}
-:tags: [remove-cell]
 :load: myst_code_init.py
+:tags: [remove-cell]
+
+
 ```
 
 # Tutorial: Model order reduction for PDE-constrained optimization problems
@@ -766,7 +768,8 @@ report(opt_along_path_adaptively_result, opt_along_path_adaptively_minimization_
 ```
 
 ```{code-cell}
-:tags: [hide-code,hide-output]
+:tags: [hide-code, hide-output]
+
 assert fom_result.nit == 7
 assert opt_along_path_result.nit == 7
 assert opt_along_path_minimization_data['num_evals'] == 9

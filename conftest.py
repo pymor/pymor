@@ -11,16 +11,17 @@ import numpy as np
 
 _common_settings = {
     "print_blob": True,
-    "suppress_health_check": (HealthCheck.data_too_large, HealthCheck.too_slow),
+    "suppress_health_check": (HealthCheck.data_too_large, HealthCheck.too_slow,
+                              HealthCheck.filter_too_much),
     "deadline": 1000,
     "verbosity": Verbosity.normal,
 }
 settings.register_profile("ci_large", max_examples=400, **_common_settings)
-settings.register_profile("ci_pr", max_examples=100, **_common_settings)
-settings.register_profile("ci", max_examples=25, **_common_settings)
-settings.register_profile("dev", max_examples=10, **_common_settings)
+settings.register_profile("ci_pr", derandomize=True, max_examples=80, **_common_settings)
+settings.register_profile("ci", derandomize=True, max_examples=25, **_common_settings)
+settings.register_profile("dev", derandomize=True, max_examples=10, **_common_settings)
 _common_settings["verbosity"] = Verbosity.verbose
-settings.register_profile("debug", max_examples=10, **_common_settings)
+settings.register_profile("debug", derandomize=True, max_examples=10, **_common_settings)
 settings.load_profile(os.getenv(u'PYMOR_HYPOTHESIS_PROFILE', 'dev'))
 
 """ This makes sure all our fixtures are available to all tests

@@ -6,7 +6,7 @@ on: [pull_request]
 jobs:
   markdown-link-check:
     name: Markdown
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
     - uses: renefritze/github-action-markdown-link-check@master
@@ -14,3 +14,4 @@ jobs:
         use-verbose-mode: 'yes'
         base-branch: 'main'
         check-modified-files-only: 'yes'
+        config-file: .github/markdown_link_check_config.json

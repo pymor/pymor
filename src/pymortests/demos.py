@@ -54,9 +54,10 @@ if not parallel:
     DISCRETIZATION_ARGS += (('elliptic_unstructured', [6., 16, 1e-1]),)
 
 NEURAL_NETWORK_ARGS = (
-    ('neural_networks', [25, 50, 10]),
+    ('neural_networks', [15, 20, 3]),
     ('neural_networks_fenics', [15, 3]),
-    ('neural_networks_instationary', [25, 25, 30, 5]),
+    ('neural_networks_instationary', [0, 10, 3, 15, 3]),
+    ('neural_networks_instationary', [1, 15, 3, 20, 3]),
 )
 
 THERMALBLOCK_ARGS = (
@@ -101,11 +102,11 @@ PARABOLIC_MOR_ARGS = (
 SYS_MOR_ARGS = (
     ('heat', [0.2, 2]),
     ('delay', [1, 2]),
-    ('string_equation', [25, 2]),
+    ('string_equation', [5, 2]),
     ('parametric_heat', [0.02, 2]),
     ('parametric_delay', [2]),
-    ('parametric_string', [25, 2]),
-    ('parametric_synthetic', [100, 2]),
+    ('parametric_string', [5, 2]),
+    ('parametric_synthetic', [10, 2]),
     ('unstable_heat', [50, 10]),
 )
 
@@ -140,6 +141,14 @@ DMD_ARGS = (
     ('dmd_identification', ['--n=4', '--m=10']),
 )
 
+PHLTI_ARGS = (
+    ('phlti', ['--n=10']),
+)
+
+SYMPLECTIC_WAVE_ARGS = (
+    ('symplectic_wave_equation', [1., 10]),
+)
+
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
     + NEURAL_NETWORK_ARGS
@@ -155,6 +164,8 @@ DEMO_ARGS = (
     + FUNCTION_EI_ARGS
     + OUTPUT_FUNCTIONAL_ARGS
     + DMD_ARGS
+    + PHLTI_ARGS
+    + SYMPLECTIC_WAVE_ARGS
 )
 
 DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
@@ -163,7 +174,8 @@ DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 def _skip_if_no_solver(param):
     demo, args = param
     from pymor.core.config import config
-    for solver, package in [('fenics', None), ('ngsolve', None), ('neural_', 'TORCH')]:
+    for solver, package in [('fenics', None), ('ngsolve', None), ('neural_', 'TORCH'),
+                            ('neural_networks_instationary', 'FENICS')]:
         package = package or solver.upper()
         needs_solver = len([f for f in args if solver in str(f)]) > 0 or demo.find(solver) >= 0
         has_solver = getattr(config, f'HAVE_{package}')
@@ -218,7 +230,7 @@ def _test_demo(demo):
 
     # reset default RandomState
     import pymor.tools.random
-    pymor.tools.random._default_random_state = None
+    pymor.tools.random.new_rng().install()
 
     result = None
     try:
@@ -312,7 +324,7 @@ def test_thermalblock_ipython(ipy_args):
     try:
         test_demos((f'pymordemos.{ipy_args[0]}', ['--ipython-engines=2'] + ipy_args[1]))
     finally:
-        import time     # there seems to be no way to shutdown the IPyhton cluster s.t. a new
+        import time     # there seems to be no way to shutdown the IPython cluster s.t. a new
         time.sleep(10)  # cluster can be started directly afterwards, so we have to wait ...
 
 

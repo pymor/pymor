@@ -364,6 +364,9 @@ class ConjugateParameterFunctional(ParameterFunctional):
         assert self.parameters.assert_compatible(mu)
         return np.conj(self.functional.evaluate(mu))
 
+    def d_mu(self, parameter, index=0):
+        return self.with_(functional=self.functional.d_mu(parameter, index), name=f'{self.name}_d_{parameter}_{index}')
+
 
 class ConstantParameterFunctional(ParameterFunctional):
     """|ParameterFunctional| returning a constant value for each parameter.
@@ -426,8 +429,7 @@ class LincombParameterFunctional(ParameterFunctional):
 
 
 class MinThetaParameterFunctional(ParameterFunctional):
-    """|ParameterFunctional| implementing the min-theta approach from :cite:`Haa17`
-    (Proposition 2.35).
+    """|ParameterFunctional| implementing the min-theta approach from :cite:`Haa17` (Prop. 2.35).
 
     Let V denote a Hilbert space and let a: V x V -> K denote a parametric coercive bilinear form
     with affine decomposition ::
@@ -488,8 +490,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
 
 
 class BaseMaxThetaParameterFunctional(ParameterFunctional):
-    """|ParameterFunctional| implementing a generalization of the max-theta approach from
-    :cite:`Haa17` (Exercise 5.12).
+    """Implements a generalization of the max-theta approach from :cite:`Haa17` (Exercise 5.12).
 
     Let V denote a Hilbert space and let a: V x V -> K denote a continuous bilinear form or
     l: V -> K a continuous linear functional, either with affine decomposition ::
@@ -516,7 +517,7 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
     a_prime(., ., mu) or linear form l_prime(., mu) with the same
     affine decomposition but different theta_prime_q for arbitrary parameters mu, since ::
 
-      a_prime(u, v, mu=mu) <= |max_{q = 1}^Q theta_prime_q(mu)/theta_q(mu_bar)|  |a(u, v, mu=mu_bar)|
+      a_prime(u, v, mu=mu) <= |max_{q = 1}^Q theta_prime_q(mu)/theta_q(mu_bar)| |a(u, v, mu=mu_bar)|
 
     or ::
 

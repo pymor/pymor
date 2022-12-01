@@ -7,11 +7,13 @@ from hypothesis import strategies as hyst
 from hypothesis import assume, given
 from hypothesis.extra import numpy as hynp
 import numpy as np
+import os
 from scipy.stats._multivariate import random_correlation_gen
 
 from pymor.analyticalproblems.functions import Function, ExpressionFunction, ConstantFunction
 from pymor.core.config import config
 from pymor.parameters.base import Mu
+from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -37,13 +39,21 @@ MAX_VECTORARRAY_LENGTH = 102
 hy_lengths = hyst.integers(min_value=0, max_value=MAX_VECTORARRAY_LENGTH)
 # this is a legacy restriction, some tests will not work as expected when this is changed/unset
 MAX_ARRAY_ELEMENT_ABSVALUE = 1
-hy_float_array_elements = hyst.floats(allow_nan=False, allow_infinity=False,
-                                      min_value=-MAX_ARRAY_ELEMENT_ABSVALUE, max_value=MAX_ARRAY_ELEMENT_ABSVALUE)
-# the magnitute restriction is also a legacy one
-MAX_COMPLEX_MAGNITUDE = 2
-hy_complex_array_elements = hyst.complex_numbers(allow_nan=False, allow_infinity=False,
-                                                 max_magnitude=MAX_COMPLEX_MAGNITUDE)
+MIN_ARRAY_ELEMENT_ABSVALUE = 1e-34
+
+
 hy_dtypes = hyst.sampled_from([np.float64, np.complex128])
+hy_float_array_elements = hyst.floats(allow_nan=False, allow_infinity=False, allow_subnormal=False,
+                                      min_value=-MAX_ARRAY_ELEMENT_ABSVALUE, max_value=MAX_ARRAY_ELEMENT_ABSVALUE)
+
+
+@Deprecated("hypothesis.strategies.complex_numbers(allow_subnormal=False)")
+@hyst.composite
+def hy_complex_array_elements(draw):
+    # This is a crutch in place for https://github.com/HypothesisWorks/hypothesis/issues/3390
+    parts = hyst.floats(allow_nan=False, allow_infinity=False, allow_subnormal=False,
+                        min_value=-MAX_ARRAY_ELEMENT_ABSVALUE, max_value=MAX_ARRAY_ELEMENT_ABSVALUE)
+    return complex(draw(parts), draw(parts))
 
 
 @hyst.composite
@@ -64,9 +74,9 @@ def nothing(*args, **kwargs):
 def _np_arrays(length, dim, dtype=None):
     if dtype is None:
         return hynp.arrays(dtype=np.float64, shape=(length, dim), elements=hy_float_array_elements) | \
-            hynp.arrays(dtype=np.complex128, shape=(length, dim), elements=hy_complex_array_elements)
+            hynp.arrays(dtype=np.complex128, shape=(length, dim), elements=hy_complex_array_elements())
     if dtype is np.complex128:
-        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=hy_complex_array_elements)
+        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=hy_complex_array_elements())
     if dtype is np.float64:
         return hynp.arrays(dtype=dtype, shape=(length, dim), elements=hy_float_array_elements)
     raise RuntimeError(f'unsupported dtype={dtype}')
@@ -119,6 +129,8 @@ if config.HAVE_FENICS:
             ret.append((_FENICS_spaces[d], ar))
         return ret
     _other_vector_space_types.append('fenics')
+else:
+    assert not os.environ.get('DOCKER_PYMOR', False)
 
 if config.HAVE_NGSOLVE:
     _NGSOLVE_spaces = {}
@@ -138,16 +150,22 @@ if config.HAVE_NGSOLVE:
     def _ngsolve_vector_spaces(draw, np_data_list, compatible, count, dims):
         return [(_create_ngsolve_space(d), ar) for d, ar in zip(dims, np_data_list)]
     _other_vector_space_types.append('ngsolve')
+else:
+    assert not os.environ.get('DOCKER_PYMOR', False)
 
 if config.HAVE_DEALII:
     def _dealii_vector_spaces(draw, np_data_list, compatible, count, dims):
         return [(DealIIVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
     _other_vector_space_types.append('dealii')
+else:
+    assert not os.environ.get('DOCKER_PYMOR', False)
 
 if config.HAVE_DUNEGDT:
     def _dunegdt_vector_spaces(draw, np_data_list, compatible, count, dims):
         return [(DuneXTVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
     _other_vector_space_types.append('dunegdt')
+else:
+    assert not os.environ.get('DOCKER_PYMOR', False)
 
 
 _picklable_vector_space_types = ['numpy', 'numpy_list', 'block']
@@ -237,6 +255,12 @@ def valid_inds(v, length=None, random_module=None):
         yield list(range(int(len(v)/2)))
         yield list(range(len(v))) * 2
         # TODO what's with the magic number here?
+        # Maybe related to this?
+        # pymortests/vectorarray.py:910: VisibleDeprecationWarning:
+        #   Creating an ndarray from nested sequences exceeding
+        #   the maximum number of dimensions of 32 is deprecated.
+        #   If you mean to do this, you must specify
+        #  'dtype=object' when creating the ndarray.
         length = 32
     if len(v) > 0:
         for ind in [-len(v), 0, len(v) - 1]:
