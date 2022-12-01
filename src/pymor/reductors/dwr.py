@@ -80,16 +80,17 @@ class DWRCoerciveRBReductor(BasicObject):
             self.dual_reductors.append(dual_reductor)
 
     def reduce(self, primal_dim=None, dual_dims=None):
-        primal_dim = primal_dim or len(self.primal_reductor.bases['RB'])
+        if primal_dim is None:
+            primal_dim = len(self.primal_reductor.bases['RB'])
         assert isinstance(primal_dim, Number)
         if isinstance(dual_dims, Number):
             dual_dims = [dual_dims for _ in range(self.fom.dim_output)]
-        dual_dims = dual_dims or [len(dual_reductor.bases['RB'])
-                                  for dual_reductor in self.dual_reductors]
+        if dual_dims is None:
+            dual_dims = [len(dual_reductor.bases['RB']) for dual_reductor in self.dual_reductors]
         assert isinstance(dual_dims, list)
         assert all(isinstance(dim, Number) for dim in dual_dims)
         if primal_dim < 0 or any(dim < 0 for dim in dual_dims):
-            raise ValueError('Reduced state dimension must be larger than zero')
+            raise ValueError('Reduced state dimension must be non-negative')
         if primal_dim > len(self.primal_reductor.bases['RB']) or \
                 any(dim > len(dual_reductor.bases['RB'])
                     for dim, dual_reductor in zip(dual_dims, self.dual_reductors)):
@@ -171,13 +172,17 @@ class DWRCoerciveRBReductor(BasicObject):
         """
         assert 0 <= dim < model.dim_output
         output = model.output_functional
-        if isinstance(output, ConcatenationOperator) and isinstance(output.operators[1], BlockColumnOperator):
-            assert isinstance(output.operators[0], NumpyConversionOperator) and len(output.operators) == 2
+        if (isinstance(output, ConcatenationOperator) and len(output.operators) == 2
+                and isinstance(output.operators[0], NumpyConversionOperator)
+                and isinstance(output.operators[1], BlockColumnOperator)):
             # the output_functional has the same structure as built by the discretizers
+            # which allows for unblocking the right-hand side efficiently.
             dual_rhs = - output.operators[1].blocks[dim][0].H
         else:
             # case where model.dim_output == 1 and
             # more general case without using the structure of BlockColumnOperator
+            if model.dim_output > 1:
+                model.logger.warn('Using inefficient concatenation for the right-hand side')
             e_i_vec = model.output_functional.range.from_numpy(np.eye(1, model.dim_output, dim))
             dual_rhs = - output.H @ VectorOperator(e_i_vec) if model.dim_output > 1 else - output.H
         dual_operator = model.operator.H
