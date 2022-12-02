@@ -1,6 +1,7 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+
 import numpy as np
 import scipy.linalg as spla
 
@@ -8,6 +9,7 @@ from pymor.algorithms.projection import project
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached, CacheableObject
 from pymor.models.iosys import LTIModel
+from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 
 
@@ -70,12 +72,16 @@ class ERAReductor(CacheableObject):
 
     cache_region = 'memory'
 
-    def __init__(self, data, sampling_time, force_stability=True):
+    def __init__(self, data, sampling_time, force_stability=True, feedthrough=None):
         assert sampling_time >= 0
+        assert feedthrough is None or isinstance(feedthrough, Operator)
         assert np.isrealobj(data)
         if data.ndim == 1:
             data = data.reshape(-1, 1, 1)
         assert data.ndim == 3
+        if isinstance(feedthrough, Operator):
+            assert feedthrough.range.dim == data.shape[1]
+            assert feedthrough.source.dim == data.shape[2]
         if force_stability:
             data = np.concatenate([data, np.zeros_like(data)[1:]], axis=0)
         self.__auto_init(locals())
@@ -206,5 +212,5 @@ class ERAReductor(CacheableObject):
             W2 = self.input_projector(l2)
             B = project(B, source_basis=B.source.from_numpy(W2), range_basis=None)
 
-        return LTIModel(A, B, C, sampling_time=self.sampling_time,
+        return LTIModel(A, B, C, D=self.feedthrough, sampling_time=self.sampling_time,
                         presets={'o_dense': np.diag(sv), 'c_dense': np.diag(sv)})
