@@ -68,7 +68,7 @@ def main(
         dual_fom = dual_foms[d]
         for mu in training_set:
             dual_snapshots.append(dual_fom.solve(mu))
-        # use one mode more to test the case where the size it not the same
+        # use one mode more to test the case where the size is not the same
         dual_RBs.append(pod(dual_snapshots, modes=modes+1, product=product)[0])
 
     # extend basis
@@ -115,7 +115,7 @@ def main(
     plt.semilogy(np.arange(len(training_set)), results[2]['err'], 'yo-', alpha=.5,
                  label=f'dwr output error basis size {modes}, no dual_bases')
     plt.semilogy(np.arange(len(training_set)), results[2]['est'], 'y--', alpha=.5,
-                 label=f'dwr output estimate basis size {modes}, no dual_basis')
+                 label=f'dwr output estimate basis size {modes}, no dual_bases')
     plt.title(f'Error and estimate for {modes} basis functions for parameters in training set')
     plt.xlim(10, 50)
     plt.legend()
