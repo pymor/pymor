@@ -19,7 +19,7 @@ class DWRCoerciveRBReductor(BasicObject):
 
     This class can be used as a replacement for
     :class:`~pymor.reductors.coercive.CoerciveRBReductor` to obtain a corrected reduced
-    output  functional with the DWR approach. (see :cite:`Haa17` (Definition 2.31)).
+    output functional with the DWR approach (see :cite:`Haa17` (Definition 2.31, Proposition 2.32)).
     This also implements a DWR-based error estimator for the corrected output functional.
     The DWR approach requires the reduction of a dual problem for every dimension of the output
     functional. Each dual problem is defined by the dual operator and the corresponding component
@@ -149,14 +149,15 @@ class DWRCoerciveRBReductor(BasicObject):
 
     @classmethod
     def create_dual_model(cls, model, dim=0):
-        """Return dual model with the output as right hand side.
+        r"""Return dual model with the output as right hand side.
 
-        The dual equation is defined as to find the solution p such that
+        The dual equation is defined as to find the solution :math:`p` such that
 
-            a(q, p) = - l_dim(q),       for all q,
+        .. math::
+            a(q, p) = - l_d(q),\qquad\text{for all }q,
 
-        where l_dim denotes the dim-th component of the output functional l.
-        See :cite:`Haa17` (Definition 2.26)
+        where :math:`l_d` denotes the :math:`d`-th component of the output functional :math:`l`.
+        See :cite:`Haa17` (Definition 2.31).
 
         Parameters
         ----------
