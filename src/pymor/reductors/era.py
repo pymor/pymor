@@ -68,6 +68,9 @@ class ERAReductor(CacheableObject):
     force_stability
         Whether the Markov parameters are zero-padded to double the length in order to enforce
         Kung's stability assumption. See :cite:`K78`. Defaults to `True`.
+    feedthrough
+        (Optional) |NumpyArray| of shape `(p, m)`. The zeroth Markov parameter that defines the
+        feedthrough of the realization. Defaults to `None`.
     """
 
     cache_region = 'memory'
