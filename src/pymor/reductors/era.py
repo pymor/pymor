@@ -101,45 +101,45 @@ class ERAReductor(CacheableObject):
         _, s2, W2 = spla.svd(np.vstack(self.data), full_matrices=False)
         return s2, W2.T
 
-    def _project_markov_parameters(self, l1, l2):
-        mats = [self.output_projector(l1).T, self.data] if l1 else [self.data]
-        mats = [*mats, self.input_projector(l2)] if l2 else mats
-        s1 = ('lp,', 'l') if l1 else ('', 'p')
-        s2 = (',mk', 'k') if l2 else ('', 'm')
+    def _project_markov_parameters(self, num_left, num_right):
+        mats = [self.output_projector(num_left).T, self.data] if num_left else [self.data]
+        mats = [*mats, self.input_projector(num_right)] if num_right else mats
+        s1 = ('lp,', 'l') if num_left else ('', 'p')
+        s2 = (',mk', 'k') if num_right else ('', 'm')
         self.logger.info('Projecting Markov parameters ...')
         einstr = s1[0] + 'npm' + s2[0] + '->n' + s1[1] + s2[1]
         return np.einsum(einstr, *mats, optimize='optimal')
 
     @cached
-    def _sv_U_V(self, l1, l2):
+    def _sv_U_V(self, num_left, num_right):
         n, p, m = self.data.shape
         s = n if self.force_stability else (n + 1) // 2
-        if l1 is None and m * s < p:
+        if num_left is None and m * s < p:
             self.logger.info('Data has low rank! Accelerating computation with output tangential projections ...')
-            l1 = m * s
-        if l2 is None and p * s < m:
+            num_left = m * s
+        if num_right is None and p * s < m:
             self.logger.info('Data has low rank! Accelerating computation with output tangential projections ...')
-            l2 = p * s
-        h = self._project_markov_parameters(l1, l2) if l1 or l2 else self.data
-        self.logger.info(f'Computing SVD of the {"projected " if l1 or l2 else ""}Hankel matrix ...')
+            num_right = p * s
+        h = self._project_markov_parameters(num_left, num_right) if num_left or num_right else self.data
+        self.logger.info(f'Computing SVD of the {"projected " if num_left or num_right else ""}Hankel matrix ...')
         if self.force_stability:
             h = np.concatenate([h, np.zeros_like(h)[1:]], axis=0)
         U, sv, V = spla.svd(to_matrix(NumpyHankelOperator(h)), full_matrices=False)
         return sv, U.T, V
 
-    def output_projector(self, l1):
+    def output_projector(self, num_left):
         """Construct the left/output projector :math:`W_1`."""
-        assert isinstance(l1, int) and l1 <= self.data.shape[1]
-        self.logger.info(f'Constructing output projector ({l1} tangential directions) ...')
-        return self._s1_W1()[1][:, :l1]
+        assert isinstance(num_left, int) and num_left <= self.data.shape[1]
+        self.logger.info(f'Constructing output projector ({num_left} tangential directions) ...')
+        return self._s1_W1()[1][:, :num_left]
 
-    def input_projector(self, l2):
+    def input_projector(self, num_right):
         """Construct the right/input projector :math:`W_2`."""
-        assert isinstance(l2, int) and l2 <= self.data.shape[2]
-        self.logger.info(f'Constructing input projector ({l2} tangential directions) ...')
-        return self._s2_W2()[1][:, :l2]
+        assert isinstance(num_right, int) and num_right <= self.data.shape[2]
+        self.logger.info(f'Constructing input projector ({num_right} tangential directions) ...')
+        return self._s2_W2()[1][:, :num_right]
 
-    def error_bounds(self, l1=None, l2=None):
+    def error_bounds(self, num_left=None, num_right=None):
         r"""Compute the error bounds for all possible reduction orders.
 
         Without tangential projection of the Markov parameters, the error bounds are given by
@@ -166,23 +166,23 @@ class ERAReductor(CacheableObject):
         n, p, m = self.data.shape
         s = n if self.force_stability else (n + 1) // 2
 
-        sv = self._sv_U_V(l1, l2)[0]
+        sv = self._sv_U_V(num_left, num_right)[0]
 
-        a = p * s if l2 is None and p * s < m else (l2 or m)
-        b = m * s if l1 is None and m * s < p else (l1 or p)
+        a = p * s if num_right is None and p * s < m else (num_right or m)
+        b = m * s if num_left is None and m * s < p else (num_left or p)
         err = (np.sqrt(np.arange(len(sv)) + a + b) * sv)[1:]
 
-        err = 2 * err if l1 or l2 else err
-        if l1:
+        err = 2 * err if num_left or num_right else err
+        if num_left:
             s1 = self._s1_W1()[0]
-            err += 4 * np.linalg.norm(s1[l1:])**2
-        if l2:
+            err += 4 * np.linalg.norm(s1[num_left:])**2
+        if num_right:
             s2 = self._s2_W2()[0]
-            err += 4 * np.linalg.norm(s2[l2:])**2
+            err += 4 * np.linalg.norm(s2[num_right:])**2
 
         return err
 
-    def reduce(self, r=None, tol=None, l1=None, l2=None):
+    def reduce(self, r=None, tol=None, num_left=None, num_right=None):
         """Construct a minimal realization.
 
         Parameters
@@ -191,9 +191,9 @@ class ERAReductor(CacheableObject):
             Order of the reduced model if `tol` is `None`, maximum order if `tol` is specified.
         tol
             Tolerance for the error bound.
-        l1
+        num_left
             Number of left (output) directions for tangential projection.
-        l2
+        num_right
             Number of right (input) directions for tangential projection.
 
         Returns
@@ -204,36 +204,36 @@ class ERAReductor(CacheableObject):
         assert r is not None or tol is not None
         n, p, m = self.data.shape
         s = n if self.force_stability else (n + 1) // 2
-        assert l1 is None or isinstance(l1, int) and l1 <= p
-        assert l2 is None or isinstance(l2, int) and l2 <= m
-        assert r is None or 0 < r <= min((l1 or p), (l2 or m)) * s
+        assert num_left is None or isinstance(num_left, int) and num_left <= p
+        assert num_right is None or isinstance(num_right, int) and num_right <= m
+        assert r is None or 0 < r <= min((num_left or p), (num_right or m)) * s
 
-        sv, U, V = self._sv_U_V(l1, l2)
+        sv, U, V = self._sv_U_V(num_left, num_right)
 
         if tol is not None:
-            error_bounds = self.error_bounds(l1=l1, l2=l2)
+            error_bounds = self.error_bounds(num_left=num_left, num_right=num_right)
             r_tol = np.argmax(error_bounds <= tol) + 1
             r = r_tol if r is None else min(r, r_tol)
 
         sv, U, V = sv[:r], U[:r], V[:r]
 
-        l1 = m * s if l1 is None and m * s < p else l1
-        l2 = p * s if l2 is None and p * s < m else l2
+        num_left = m * s if num_left is None and m * s < p else num_left
+        num_right = p * s if num_right is None and p * s < m else num_right
 
         self.logger.info(f'Constructing reduced realization of order {r} ...')
         sqS = np.diag(np.sqrt(sv))
         Zo = U.T @ sqS
-        A = NumpyMatrixOperator(spla.lstsq(Zo[: -(l1 or p)], Zo[(l1 or p):])[0])
-        B = NumpyMatrixOperator(sqS @ V[:, :(l2 or m)])
-        C = NumpyMatrixOperator(Zo[:(l1 or p)])
+        A = NumpyMatrixOperator(spla.lstsq(Zo[: -(num_left or p)], Zo[(num_left or p):])[0])
+        B = NumpyMatrixOperator(sqS @ V[:, :(num_right or m)])
+        C = NumpyMatrixOperator(Zo[:(num_left or p)])
 
-        if l1:
+        if num_left:
             self.logger.info('Backprojecting tangential output directions ...')
-            W1 = self.output_projector(l1)
+            W1 = self.output_projector(num_left)
             C = project(C, source_basis=None, range_basis=C.range.from_numpy(W1))
-        if l2:
+        if num_right:
             self.logger.info('Backprojecting tangential input directions ...')
-            W2 = self.input_projector(l2)
+            W2 = self.input_projector(num_right)
             B = project(B, source_basis=B.source.from_numpy(W2), range_basis=None)
 
         return LTIModel(A, B, C, D=self.feedthrough, sampling_time=self.sampling_time,
