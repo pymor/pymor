@@ -16,6 +16,7 @@ from itertools import product
 from numbers import Number
 
 import numpy as np
+import sparse
 
 from pymor.core.base import ImmutableObject
 from pymor.tools.floatcmp import float_cmp_all
@@ -76,6 +77,9 @@ class Parameters(SortedFrozenDict):
                     traverse(o)
             elif isinstance(obj, np.ndarray) and obj.dtype == object:
                 for o in obj.flat:
+                    traverse(o)
+            elif isinstance(obj, sparse.COO) and obj.dtype == object:
+                for o in obj.data:
                     traverse(o)
 
         for arg in args:
