@@ -82,8 +82,6 @@ class ERAReductor(CacheableObject):
         if isinstance(feedthrough, Operator):
             assert feedthrough.range.dim == data.shape[1]
             assert feedthrough.source.dim == data.shape[2]
-        if force_stability:
-            data = np.concatenate([data, np.zeros_like(data)[1:]], axis=0)
         self.__auto_init(locals())
 
     @cached
@@ -111,6 +109,8 @@ class ERAReductor(CacheableObject):
     def _sv_U_V(self, l1, l2):
         h = self._project_markov_parameters(l1, l2) if l1 or l2 else self.data
         self.logger.info(f'Computing SVD of the {"projected " if l1 or l2 else ""}Hankel matrix ...')
+        if self.force_stability:
+            h = np.concatenate([h, np.zeros_like(h)[1:]], axis=0)
         U, sv, V = spla.svd(to_matrix(NumpyHankelOperator(h)), full_matrices=False)
         return sv, U.T, V
 
