@@ -147,7 +147,7 @@ class ERAReductor(CacheableObject):
             4\left(\sum_{i=l_1+1}^p\sigma_i^2(\Theta_L)+\sum_{i=l_2+1}^m\sigma_i^2(\Theta_R)\right)
             +2\sigma_{r+1}(\mathcal{H})\sqrt{r+l_1+l_2},
 
-        where :math:`\Theta_L,\Theta_R` is the matrix of horizontally or vertically stacked Markov
+        where :math:`\Theta_L,\,\Theta_R` is the matrix of horizontally or vertically stacked Markov
         parameters, respectively. See :cite:`KG16` (Thm. 3.4) for details.
         """
         sv = self._sv_U_V(l1, l2)[0]
@@ -182,10 +182,11 @@ class ERAReductor(CacheableObject):
             Reduced-order discrete-time |LTIModel|.
         """
         assert r is not None or tol is not None
-        s, p, m = self.data.shape
+        n, p, m = self.data.shape
+        s = n if self.force_stability else (n + 1) // 2
         assert l1 is None or isinstance(l1, int) and l1 <= p
         assert l2 is None or isinstance(l2, int) and l2 <= m
-        assert r is None or 0 < r <= min((l1 or p), (l2 or m)) * (s // 2 + 1)
+        assert r is None or 0 < r <= min((l1 or p), (l2 or m)) * s
 
         sv, U, V = self._sv_U_V(l1, l2)
 
