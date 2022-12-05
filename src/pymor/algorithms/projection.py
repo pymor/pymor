@@ -242,7 +242,9 @@ class ProjectRules(RuleTable):
         else:
             source_bases = [self.source_basis]
 
-        projected_ops = np.array([[project(op.blocks[i, j], rb, sb)
+        # NOTE: this does not use a potential sparsity pattern of the BlockOperator
+        projected_ops = np.array([[project(op.blocks[i, j], rb, sb) if op.blocks[i, j]
+                                   else NumpyMatrixOperator(np.zeros((len(rb), len(sb))))
                                    for j, sb in enumerate(source_bases)]
                                   for i, rb in enumerate(range_bases)])
         if self.range_basis is None and op.blocked_range:
