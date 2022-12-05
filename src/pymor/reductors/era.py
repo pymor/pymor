@@ -69,8 +69,8 @@ class ERAReductor(CacheableObject):
         Whether the Markov parameters are zero-padded to double the length in order to enforce
         Kung's stability assumption. See :cite:`K78`. Defaults to `True`.
     feedthrough
-        (Optional) |Numpy array| of shape `(p, m)`. The zeroth Markov parameter that defines the
-        feedthrough of the realization. Defaults to `None`.
+        (Optional) |Operator| or |Numpy array| of shape `(p, m)`. The zeroth Markov parameter that
+        defines the feedthrough of the realization. Defaults to `None`.
     """
 
     cache_region = 'memory'
@@ -82,6 +82,8 @@ class ERAReductor(CacheableObject):
         if data.ndim == 1:
             data = data.reshape(-1, 1, 1)
         assert data.ndim == 3
+        if isinstance(feedthrough, np.ndarray):
+            feedthrough = NumpyMatrixOperator(feedthrough)
         if isinstance(feedthrough, Operator):
             assert feedthrough.range.dim == data.shape[1]
             assert feedthrough.source.dim == data.shape[2]
