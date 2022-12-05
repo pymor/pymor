@@ -72,7 +72,7 @@ def main():
     sampling_time = 0.1
     w = np.geomspace(1e-2, 1, 100) * np.pi
     with new_rng(0):
-        fom = example_system(sampling_time=sampling_time)
+        fom = example_system(10, sampling_time=sampling_time)
 
     mp = compute_markov_parameters(fom, n=100)
 
