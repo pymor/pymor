@@ -110,20 +110,27 @@ def test_blk_diag_apply_inverse_adjoint():
 
 
 def test_sparse():
+    # TODO: organize this test better
     op = np.empty((4, 4), dtype=object)
     for I in range(3):
         op[I, I] = NumpyMatrixOperator(np.eye(20))
     op[3, 3] = NumpyMatrixOperator(np.eye(10))
-    from pymor.parameters.functionals import ProjectionParameterFunctional
+    from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
     op[0, 2] = ProjectionParameterFunctional('mu', 1, 0) * NumpyMatrixOperator(4 * np.eye(20))
     block_op = BlockOperator(op, make_sparse=True)
     assert block_op.parametric
     mu = block_op.parameters.parse([1])
+    assembled_op = block_op.assemble(mu=mu)
+    assert assembled_op != block_op
+    op2 = op.copy()
+    op2[1, 2] = ExpressionParameterFunctional('0*mu[0]', {'mu': 1}) * NumpyMatrixOperator(4 * np.eye(20))
+    block_op_2 = BlockOperator(op2, make_sparse=True)
+    (0.5 * block_op + 0.5 * block_op_2).assemble(mu)
+    block_op_2_dense = BlockOperator(op2, make_sparse=False)
+    (0.5 * block_op + 0.5 * block_op_2_dense).assemble(mu)
     ones = block_op.range.ones()
     block_op.apply(ones, mu=mu)
     block_op.apply_adjoint(ones, mu=mu)
-    assembled_op = block_op.assemble(mu=mu)
-    assert assembled_op != block_op
     block_op.d_mu('something')
     dense_block_op = block_op.to_dense()
     dense_block_op.assemble(mu=mu)
@@ -134,3 +141,6 @@ def test_sparse():
     b = block_op.as_range_array(mu=mu).to_numpy()
     assert np.allclose(a, b)
     assert block_op.apply2(ones, ones, mu=mu) == dense_block_op.apply2(ones, ones, mu=mu)
+    block_diag_1 = BlockDiagonalOperator([op[0, 0], op[0, 2]])
+    block_diag_2 = BlockDiagonalOperator([op2[0, 0], op2[1, 2]])
+    (block_diag_1 + block_diag_2).assemble(mu)
