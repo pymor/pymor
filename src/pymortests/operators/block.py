@@ -122,7 +122,8 @@ def test_sparse():
     ones = block_op.range.ones()
     block_op.apply(ones, mu=mu)
     block_op.apply_adjoint(ones, mu=mu)
-    block_op.assemble(mu=mu)
+    assembled_op = block_op.assemble(mu=mu)
+    assert assembled_op != block_op
     block_op.d_mu('something')
     dense_block_op = block_op.to_dense()
     dense_block_op.assemble(mu=mu)
