@@ -107,6 +107,14 @@ class ERAReductor(CacheableObject):
 
     @cached
     def _sv_U_V(self, l1, l2):
+        n, p, m = self.data.shape
+        s = n if self.force_stability else (n + 1) // 2
+        if l1 is None and m * s < p:
+            self.logger.info('Data has low rank! Accelerating computation with output tangential projections ...')
+            l1 = m * s
+        if l2 is None and p * s < m:
+            self.logger.info('Data has low rank! Accelerating computation with output tangential projections ...')
+            l2 = p * s
         h = self._project_markov_parameters(l1, l2) if l1 or l2 else self.data
         self.logger.info(f'Computing SVD of the {"projected " if l1 or l2 else ""}Hankel matrix ...')
         if self.force_stability:
@@ -150,9 +158,15 @@ class ERAReductor(CacheableObject):
         where :math:`\Theta_L,\,\Theta_R` is the matrix of horizontally or vertically stacked Markov
         parameters, respectively. See :cite:`KG16` (Thm. 3.4) for details.
         """
+        n, p, m = self.data.shape
+        s = n if self.force_stability else (n + 1) // 2
+
         sv = self._sv_U_V(l1, l2)[0]
-        _, p, m = self.data.shape
-        err = (np.sqrt(np.arange(len(sv)) + (l2 or m) + (l1 or p)) * sv)[1:]
+
+        a = p * s if l2 is None and p * s < m else (l2 or m)
+        b = m * s if l1 is None and m * s < p else (l1 or p)
+        err = (np.sqrt(np.arange(len(sv)) + a + b) * sv)[1:]
+
         err = 2 * err if l1 or l2 else err
         if l1:
             s1 = self._s1_W1()[0]
@@ -160,6 +174,7 @@ class ERAReductor(CacheableObject):
         if l2:
             s2 = self._s2_W2()[0]
             err += 4 * np.linalg.norm(s2[l2:])**2
+
         return err
 
     def reduce(self, r=None, tol=None, l1=None, l2=None):
