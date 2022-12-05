@@ -109,10 +109,7 @@ class BlockOperatorBase(Operator):
         blocks = np.empty(self.blocks.shape, dtype=object)
         for (i, j) in zip(self.block_coords[0], self.block_coords[1]):
             blocks[i, j] = self.blocks[i, j].assemble(mu)
-        if self.make_sparse:
-            blocks[blocks == None] = 0  # noqa: E711
-            blocks = sparse.COO(blocks)
-        if np.all(blocks[i, j] == self.blocks[i, j] for (i, j) in zip(self.block_coords[0], self.block_coords[1])):
+        if all(blocks[i, j] == self.blocks[i, j] for (i, j) in zip(self.block_coords[0], self.block_coords[1])):
             return self
         else:
             return self.__class__(blocks)
