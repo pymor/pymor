@@ -408,7 +408,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
 
 class NumpyHankelOperator(NumpyGenericOperator):
-    r"""Implicit representation of a Hankel operator by a |NumPy Array| of Markov parameters.
+    r"""Implicit representation of a Hankel operator by a |NumPy Array|.
 
     Let
 
@@ -418,8 +418,8 @@ class NumpyHankelOperator(NumpyGenericOperator):
             h_1 & h_2 & \dots & h_n
         \end{pmatrix},\quad h_i\in\mathbb{C}^{p\times m},\,i=1,\,\dots,\,n,\quad n,m,p\in\mathbb{N}
 
-    be a finite sequence of (matrix-valued) Markov parameters. For an odd number :math:`n=2s-1`
-    of Markov parameters, the corresponding Hankel operator can be represented by the matrix
+    be a finite (matrix-valued) sequence. If :math:`h` has an odd number :math:`n=2s-1`
+    of elements, the corresponding Hankel operator can be represented by the matrix
 
     .. math::
         H =
@@ -430,7 +430,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
             h_s & h_{s+1} & \dots & h_{2s-1}
         \end{bmatrix}\in\mathbb{C}^{ms\times ps}.
 
-    For an even number :math:`n=2s` of Markov parameters, the corresponding matrix
+    For an even number :math:`n=2s` of elements, the corresponding matrix
     representation is given by
 
     .. math::
@@ -443,24 +443,23 @@ class NumpyHankelOperator(NumpyGenericOperator):
             h_{s+1} & h_{s+2} & \dots & h_{2s} & 0
         \end{bmatrix}\in\mathbb{C}^{m(s+1)\times p(s+1)}.
 
-    The matrix :math:`H` as seen above is not explicitly constructed, only the sequence of Markov
-    parameters is stored. Efficient matrix-vector multiplications are realized via circulant
-    matrices with DFT in the class' `apply` method
-    (see :cite:`MSKC21` Algorithm 3.1. for details).
+    The matrix :math:`H` as seen above is not explicitly constructed, only the sequence `h` is
+    stored. Efficient matrix-vector multiplications are realized via circulant matrices with DFT in
+    the class' `apply` method (see :cite:`MSKC21` Algorithm 3.1. for details).
 
     Parameters
     ----------
-    markov_parameters
-        The |NumPy array| that contains the first :math:`n` Markov parameters that define the Hankel
-        operator. Has to be one- or three-dimensional with either::
+    h
+        The |NumPy array| that defines the Hankel operator. Has to be one- or three-dimensional with
+        either:
 
-            markov_parameters.shape = (n,)
+            h.shape = (n,)
 
-        for scalar-valued Markov parameters or::
+        for scalar-valued sequences or::
 
-            markov_parameters.shape = (n, p, m)
+            h.shape = (n, p, m)
 
-        for matrix-valued Markov parameters of dimension :math:`p\times m`.
+        for matrix-valued of sequences with elements of dimension :math:`p\times m`.
     source_id
         The id of the operator's `source` |VectorSpace|.
     range_id
@@ -469,16 +468,16 @@ class NumpyHankelOperator(NumpyGenericOperator):
         Name of the operator.
     """
 
-    def __init__(self, markov_parameters, source_id=None, range_id=None, name=None):
-        if markov_parameters.ndim == 1:
-            markov_parameters = markov_parameters.reshape(-1, 1, 1)
-        assert markov_parameters.ndim == 3
-        markov_parameters.setflags(write=False)  # make numpy arrays read-only
+    def __init__(self, h, source_id=None, range_id=None, name=None):
+        if h.ndim == 1:
+            h = h.reshape(-1, 1, 1)
+        assert h.ndim == 3
+        h.setflags(write=False)  # make numpy arrays read-only
         self.__auto_init(locals())
-        s, p, m = markov_parameters.shape
-        n = s // 2 + 1
-        self.source = NumpyVectorSpace(m * n, source_id)
-        self.range = NumpyVectorSpace(p * n, range_id)
+        n, p, m = h.shape
+        s = n // 2 + 1
+        self.source = NumpyVectorSpace(m * s, source_id)
+        self.range = NumpyVectorSpace(p * s, range_id)
         self.linear = True
         self._circulant = None
 
@@ -486,13 +485,13 @@ class NumpyHankelOperator(NumpyGenericOperator):
         assert U in self.source
         U = U.to_numpy().T
         k = U.shape[1]
-        s, p, m = self.markov_parameters.shape
+        s, p, m = self.h.shape
         n = s // 2 + 1
 
         FFT, iFFT = fft, ifft
         c = self._calc_circulant()
         dtype = complex
-        if np.isrealobj(self.markov_parameters):
+        if np.isrealobj(self.h):
             if np.isrealobj(U):
                 FFT, iFFT = rfft, irfft
                 dtype = float
@@ -513,30 +512,13 @@ class NumpyHankelOperator(NumpyGenericOperator):
 
     def _calc_circulant(self):
         if self._circulant is None:
-            FFT = rfft if np.isrealobj(self.markov_parameters) else fft
-            s, p, m = self.markov_parameters.shape
-            self._circulant = FFT(
-                np.roll(
-                    np.concatenate(
-                        [
-                            np.zeros([1, p, m]),
-                            self.markov_parameters,
-                            np.zeros([1 - s % 2, p, m]),
-                        ]
-                    ),
-                    s // 2 + 1,
-                    axis=0,
-                ),
-                axis=0,
-            )
+            FFT = rfft if np.isrealobj(self.h) else fft
+            s, p, m = self.h.shape
+            self._circulant = FFT(np.roll(
+                np.concatenate([np.zeros([1, p, m]), self.h, np.zeros([1 - s % 2, p, m])]), s // 2 + 1, axis=0), axis=0)
         return self._circulant
 
     @property
     def H(self):
-        adjoint_markov_parameters = self.markov_parameters.transpose(0, 2, 1).conj()
-        return self.with_(
-            markov_parameters=adjoint_markov_parameters,
-            source_id=self.range_id,
-            range_id=self.source_id,
-            name=self.name + '_adjoint',
-        )
+        adjoint_h = self.h.transpose(0, 2, 1).conj()
+        return self.with_(h=adjoint_h, source_id=self.range_id, range_id=self.source_id, name=self.name + '_adjoint')
