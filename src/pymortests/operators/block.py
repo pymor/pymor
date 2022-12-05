@@ -144,3 +144,7 @@ def test_sparse():
     block_diag_1 = BlockDiagonalOperator([op[0, 0], op[0, 2]])
     block_diag_2 = BlockDiagonalOperator([op2[0, 0], op2[1, 2]])
     (block_diag_1 + block_diag_2).assemble(mu)
+    from pymor.algorithms.projection import project
+    projected_block = project(block_op, block_op.source.ones(), block_op.source.ones())
+    projected_block_dense = project(dense_block_op, block_op.source.ones(), block_op.source.ones())
+    projected_block.assemble(mu).matrix == projected_block_dense.assemble(mu).matrix
