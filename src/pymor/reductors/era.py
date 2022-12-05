@@ -212,6 +212,9 @@ class ERAReductor(CacheableObject):
 
         sv, U, V = sv[:r], U[:r], V[:r]
 
+        l1 = m * s if l1 is None and m * s < p else l1
+        l2 = p * s if l2 is None and p * s < m else l2
+
         self.logger.info(f'Constructing reduced realization of order {r} ...')
         sqS = np.diag(np.sqrt(sv))
         Zo = U.T @ sqS
