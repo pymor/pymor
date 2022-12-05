@@ -38,21 +38,21 @@ class ERAReductor(CacheableObject):
 
     Stability is enforced automatically and can be deactivated by setting `force_stability=False`.
 
-    For a large number if inputs and/or outputs, the factorization of the Hankel matrix can be
-    accelerated by tangentially projecting of the Markov parameters to reduce the dimension of
+    For a large number of inputs and/or outputs, the factorization of the Hankel matrix can be
+    accelerated by tangentially projecting the Markov parameters to reduce the dimension of
     the Hankel matrix, i.e.
 
     .. math::
         \hat{h}_i=W_1^Th_iW_2,
 
     where :math:`l_1\leq p` and :math:`l_2\leq m` are the number of left and right tangential
-    directions :math:`W_1\in\mathbb{R}^{p\times l_1}` and :math:`W_2\in\mathbb{R}^{m\times l_2}`
+    directions and :math:`W_1\in\mathbb{R}^{p\times l_1}` and :math:`W_2\in\mathbb{R}^{m\times l_2}`
     are the left and right projectors, respectively. See :cite:`KG16`.
 
     Attributes
     ----------
     data
-        |NumPy array| that contains the first :math:`n` Markov parameters of a discrete-time system.
+        |NumPy array| that contains the first :math:`n` Markov parameters of an LTI system.
         Has to be one- or three-dimensional with either::
 
             data.shape == (n,)
@@ -64,12 +64,12 @@ class ERAReductor(CacheableObject):
         for matrix-valued Markov parameters of dimension :math:`p\times m`, where
         :math:`m` is the number of inputs and :math:`p` is the number of outputs of the system.
     sampling_time
-        A positive number that denotes the sampling time of the system (in seconds).
+        A number that denotes the sampling time of the system (in seconds).
     force_stability
         Whether the Markov parameters are zero-padded to double the length in order to enforce
         Kung's stability assumption. See :cite:`K78`. Defaults to `True`.
     feedthrough
-        (Optional) |NumpyArray| of shape `(p, m)`. The zeroth Markov parameter that defines the
+        (Optional) |Numpy array| of shape `(p, m)`. The zeroth Markov parameter that defines the
         feedthrough of the realization. Defaults to `None`.
     """
 
@@ -140,7 +140,7 @@ class ERAReductor(CacheableObject):
     def error_bounds(self, l1=None, l2=None):
         r"""Compute the error bounds for all possible reduction orders.
 
-        Without tangential projection of the Markov parameters, the error bounds are defined as
+        Without tangential projection of the Markov parameters, the error bounds are given by
 
         .. math::
             \sum_{i=1}^{2s-1}\lVert C_rA_r^{i-1}B_r-h_i\rVert_F^2\leq\sigma_{r+1}(\mathcal{H})
@@ -188,7 +188,7 @@ class ERAReductor(CacheableObject):
         r
             Order of the reduced model if `tol` is `None`, maximum order if `tol` is specified.
         tol
-            Tolerance for the error bound if `r` is `None`.
+            Tolerance for the error bound.
         l1
             Number of left (output) directions for tangential projection.
         l2
