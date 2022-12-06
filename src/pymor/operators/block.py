@@ -162,6 +162,12 @@ class BlockOperatorBase(Operator):
         else:
             return self
 
+    def to_sparse(self):
+        if self.make_sparse:
+            return self
+        else:
+            return self.with_(make_sparse=True)
+
 
 class BlockOperator(BlockOperatorBase):
     """A matrix of arbitrary |Operators|.
