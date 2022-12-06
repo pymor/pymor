@@ -9,6 +9,8 @@ from hypothesis import settings, Verbosity, HealthCheck
 import pytest
 import numpy as np
 
+from pymor.tools.random import new_rng
+
 _common_settings = {
     "print_blob": True,
     "suppress_health_check": (HealthCheck.data_too_large, HealthCheck.too_slow,
@@ -55,3 +57,9 @@ def monkey_np_testing(monkeypatch):
         return real_all_close(a, b, rtol=rtol, atol=atol)
 
     monkeypatch.setattr(np.testing, 'assert_allclose', monkey_allclose)
+
+
+@pytest.fixture(autouse=True)
+def reset_rng():
+    new_rng(42).install()
+    np.random.seed(42)
