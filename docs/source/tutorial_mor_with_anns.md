@@ -528,11 +528,11 @@ output quantities (similar to the
 using a reduced basis, one can apply the 
 {class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor` and use the
 corresponding
-{class}`~pymor.model.neural_network.NeuralNetworkLSTMInstationaryModel`.
+{class}`~pymor.models.neural_network.NeuralNetworkLSTMInstationaryModel`.
 For a direct approximation of outputs using LSTMs, we provide the
 {class}`~pymor.models.neural_network.NeuralNetworkLSTMInstationaryStatefreeOutputModel` and the
 corresponding
-{class}`~pymor.reductor.neural_network.NeuralNetworkLSTMInstationaryStatefreeOutputReductor`.
+{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryStatefreeOutputReductor`.
 
 Download the code:
 {download}`tutorial_mor_with_anns.md`
