@@ -31,12 +31,9 @@ class ERAReductor(CacheableObject):
 
     where :math:`r\leq\min\{ms,ps\}` is the reduced order. See :cite:`K78`.
 
-    In order for the identified model to be stable, the Markov parameters must satisfy
-
-    .. math::
-        h_i\rightarrow0~\text{for}~i>s.
-
-    Stability is enforced automatically and can be deactivated by setting `force_stability=False`.
+    In order for the identified model to be stable, the Markov parameters decay substantially within
+    :math:`s` samples. Stability is enforced automatically through zero-padding and can be
+    deactivated by setting `force_stability=False`.
 
     For a large number of inputs and/or outputs, the factorization of the Hankel matrix can be
     accelerated by tangentially projecting the Markov parameters to reduce the dimension of
