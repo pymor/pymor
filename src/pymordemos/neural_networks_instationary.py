@@ -83,13 +83,10 @@ def main(
 
     abs_errors, rel_errors, speedups = compute_errors_state(rom, reductor)
 
-    import torch.optim as optim
-
     reductor_lstm = NeuralNetworkLSTMInstationaryReductor(fom, training_set, validation_set, basis_size=10,
                                                           scale_outputs=True, ann_mse=None)
 
-    rom_lstm = reductor_lstm.reduce(restarts=10, number_layers=3, log_loss_frequency=5, learning_rate=0.001,
-                                    optimizer=optim.Adam, hidden_dimension=50)
+    rom_lstm = reductor_lstm.reduce(restarts=0, number_layers=3, learning_rate=0.1)
 
     abs_errors_lstm, rel_errors_lstm, speedups_lstm = compute_errors_state(rom_lstm, reductor_lstm)
 
@@ -127,9 +124,9 @@ def main(
 
     output_reductor_lstm = NeuralNetworkLSTMInstationaryStatefreeOutputReductor(fom, time_steps+1, training_set,
                                                                                 validation_set, validation_loss=None,
-                                                                                scale_inputs=True, scale_outputs=True)
-    output_rom_lstm = output_reductor_lstm.reduce(restarts=10, number_layers=3, hidden_dimension=30,
-                                                  optimizer=optim.Adam, learning_rate=0.001, log_loss_frequency=3)
+                                                                                scale_outputs=True)
+    output_rom_lstm = output_reductor_lstm.reduce(restarts=10, number_layers=3, hidden_dimension=10,
+                                                  learning_rate=0.1, log_loss_frequency=3)
 
     outputs_abs_errors_lstm, outputs_rel_errors_lstm, outputs_speedups_lstm = compute_errors_output(output_rom_lstm)
 
