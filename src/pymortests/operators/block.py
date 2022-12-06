@@ -133,6 +133,8 @@ def test_sparse():
     block_op.apply_adjoint(ones, mu=mu)
     block_op.d_mu('something')
     dense_block_op = block_op.to_dense()
+    sparse_block_op = dense_block_op.to_sparse()
+    assert sparse_block_op == block_op
     dense_block_op.assemble(mu=mu)
     a = dense_block_op.as_source_array(mu=mu).to_numpy()
     b = block_op.as_source_array(mu=mu).to_numpy()
