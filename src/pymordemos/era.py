@@ -17,6 +17,8 @@ from pymor.tools.random import get_rng, new_rng
 def example_system(order, sampling_time=1):
     """Construct an example system.
 
+    The system is adapted from Section III-C of https://ieeexplore.ieee.org/document/508900.
+
     Parameters
     ----------
     order
