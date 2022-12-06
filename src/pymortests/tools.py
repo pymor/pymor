@@ -20,6 +20,7 @@ from pymor.tools.deprecated import Deprecated
 from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
 from pymor.tools.formatsrc import print_source
 from pymor.tools.io import safe_temporary_filename, change_to_directory
+from pymor.tools.random import get_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_rect_or_tria_grid
@@ -43,6 +44,15 @@ def polynomials(max_order):
 
         integral = (1 / (n + 1))
         yield (n, f, deri, integral)
+
+
+def test_rng_state_deterministic_a():
+    get_rng().integers(0, 10**10)
+    assert True
+
+
+def test_rng_state_deterministic_b():
+    assert get_rng().integers(0, 10**10) == 7739560485
 
 
 def test_quadrature_polynomials():

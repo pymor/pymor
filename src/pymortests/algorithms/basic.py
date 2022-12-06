@@ -182,7 +182,6 @@ def test_project_array(arrays):
 
 
 def test_project_array_with_product():
-    np.random.seed(123)
     U = NumpyVectorSpace.from_numpy(np.random.random((1, 10)))
     basis = NumpyVectorSpace.from_numpy(np.random.random((3, 10)))
     product = np.random.random((10, 10))

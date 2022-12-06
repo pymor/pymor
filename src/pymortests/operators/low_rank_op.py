@@ -8,20 +8,19 @@ import scipy.linalg as spla
 from pymor.algorithms.lincomb import assemble_lincomb
 from pymor.operators.constructions import LowRankOperator, LowRankUpdatedOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.tools.random import new_rng
+from pymor.tools.random import get_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-def construct_operators_and_vectorarrays(m, n, r, k, seed=0):
+def construct_operators_and_vectorarrays(m, n, r, k):
     space_m = NumpyVectorSpace(m)
     space_n = NumpyVectorSpace(n)
-    with new_rng(seed) as rng:
-        A = NumpyMatrixOperator(rng.normal(size=(m, n)))
-        L = space_m.random(r, distribution='normal')
-        C = rng.normal(size=(r, r))
-        R = space_n.random(r, distribution='normal')
-        U = space_n.random(k, distribution='normal')
-        V = space_m.random(k, distribution='normal')
+    A = NumpyMatrixOperator(get_rng().normal(size=(m, n)))
+    L = space_m.random(r, distribution='normal')
+    C = get_rng().normal(size=(r, r))
+    R = space_n.random(r, distribution='normal')
+    U = space_n.random(k, distribution='normal')
+    V = space_m.random(k, distribution='normal')
     return A, L, C, R, U, V
 
 
@@ -86,7 +85,7 @@ def test_low_rank_updated_apply_inverse_adjoint():
 def test_low_rank_assemble():
     r1, r2 = 2, 3
     _, L1, C1, R1, _, _ = construct_operators_and_vectorarrays(5, 5, r1, 0)
-    _, L2, C2, R2, _, _ = construct_operators_and_vectorarrays(5, 5, r2, 0, seed=1)
+    _, L2, C2, R2, _, _ = construct_operators_and_vectorarrays(5, 5, r2, 0)
 
     LR1 = LowRankOperator(L1, C1, R1)
     LR2 = LowRankOperator(L2, C2, R2)
