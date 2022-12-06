@@ -57,14 +57,6 @@ def main(
 
         for mu in test_set:
             tic = time.time()
-            U.append(fom.solve(mu))
-            time_fom = time.time() - tic
-
-            tic = time.time()
-            U_red.append(reductor.reconstruct(rom.solve(mu)))
-            time_red = time.time() - tic
-
-            tic = time.time()
             u_fom = fom.solve(mu)[1:]
             U.append(u_fom)
             time_fom = time.time() - tic
@@ -94,10 +86,10 @@ def main(
     import torch.optim as optim
 
     reductor_lstm = NeuralNetworkLSTMInstationaryReductor(fom, training_set, validation_set, basis_size=10,
-                                                          scale_inputs=True, scale_outputs=True, ann_mse=None)
+                                                          scale_outputs=True, ann_mse=None)
 
-    rom_lstm = reductor_lstm.reduce(restarts=10, number_layers=5, log_loss_frequency=5, learning_rate=0.001,
-                                    optimizer=optim.Adam, hidden_dimension=20)
+    rom_lstm = reductor_lstm.reduce(restarts=10, number_layers=3, log_loss_frequency=5, learning_rate=0.001,
+                                    optimizer=optim.Adam, hidden_dimension=50)
 
     abs_errors_lstm, rel_errors_lstm, speedups_lstm = compute_errors_state(rom_lstm, reductor_lstm)
 
@@ -110,10 +102,10 @@ def main(
 
         for mu in test_set:
             tic = time.perf_counter()
-            outputs.append(fom.compute(output=True, mu=mu)['output'])
+            outputs.append(fom.compute(output=True, mu=mu)['output'][1:])
             time_fom = time.perf_counter() - tic
             tic = time.perf_counter()
-            outputs_red.append(output_rom.compute(output=True, mu=mu)['output'])
+            outputs_red.append(output_rom.compute(output=True, mu=mu)['output'][1:])
             time_red = time.perf_counter() - tic
 
             outputs_speedups.append(time_fom / time_red)

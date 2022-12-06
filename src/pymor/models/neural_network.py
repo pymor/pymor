@@ -285,8 +285,9 @@ class NeuralNetworkLSTMInstationaryModel(BaseNeuralNetworkModel):
         Name of the model.
     """
 
-    def __init__(self, T, nt, neural_network, parameters={}, output_functional=None,
-                 products=None, error_estimator=None, visualizer=None, name=None):
+    def __init__(self, T, nt, neural_network, parameters={}, scaling_parameters={},
+                 output_functional=None, products=None, error_estimator=None,
+                 visualizer=None, name=None):
 
         super().__init__(products=products, error_estimator=error_estimator,
                          visualizer=visualizer, name=name)
@@ -307,9 +308,10 @@ class NeuralNetworkLSTMInstationaryModel(BaseNeuralNetworkModel):
 
         # obtain (reduced) coordinates by forward pass of the parameter values
         # through the neural network
-        result_neural_network = self.neural_network(parameters[..., 0]).data.numpy()[0]
+        result = self.neural_network(parameters[..., 0]).data.numpy()[0]
+        result = self._scale_target(result)
 
-        return self.solution_space.make_array(result_neural_network)
+        return self.solution_space.make_array(result)
 
 
 class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
@@ -373,7 +375,7 @@ class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
         return {}
 
 
-class NeuralNetworkLSTMInstationaryStatefreeOutputModel(Model):
+class NeuralNetworkLSTMInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
     """Class for models of the output of instationary problems that use LSTM neural networks.
 
     This class implements a |Model| that uses a LSTM neural network for solving for the output
@@ -403,7 +405,8 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputModel(Model):
         Name of the model.
     """
 
-    def __init__(self, T, nt, neural_network, parameters={}, error_estimator=None, name=None):
+    def __init__(self, T, nt, neural_network, parameters={}, scaling_parameters={},
+                 error_estimator=None, name=None):
 
         super().__init__(error_estimator=error_estimator, name=name)
 
@@ -421,9 +424,10 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputModel(Model):
             parameters = torch.DoubleTensor([np.array([time_dependent_parameter(t)
                                                        for t in np.linspace(0., self.T, self.nt)])])
 
-            result_neural_network = self.neural_network(parameters[..., 0]).data.numpy()
+            outputs = self.neural_network(parameters[..., 0]).data.numpy()[0]
+            outputs = self._scale_target(outputs)
 
-            return {'output': result_neural_network, 'solution': None}
+            return {'output': outputs, 'solution': None}
         return {}
 
 

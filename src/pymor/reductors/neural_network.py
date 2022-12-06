@@ -882,6 +882,7 @@ class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
                                            if self.fom.output_functional else None)
             rom = NeuralNetworkLSTMInstationaryModel(self.fom.T, self.nt, self.neural_network,
                                                      parameters=self.fom.parameters,
+                                                     scaling_parameters=self.scaling_parameters,
                                                      output_functional=projected_output_functional,
                                                      name=f'{self.fom.name}_reduced')
 
@@ -1089,7 +1090,8 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkLSTMInst
         """Construct the reduced order model."""
         with self.logger.block('Building ROM ...'):
             rom = NeuralNetworkLSTMInstationaryStatefreeOutputModel(self.fom.T, self.nt, self.neural_network,
-                                                                    self.fom.parameters,
+                                                                    parameters=self.fom.parameters,
+                                                                    scaling_parameters=self.scaling_parameters,
                                                                     name=f'{self.fom.name}_output_reduced')
 
         return rom
