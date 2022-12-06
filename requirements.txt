@@ -10,6 +10,5 @@ scipy>=1.3.3;python_version == "3.8"
 scipy>=1.3;python_version < "3.8"
 scipy>=1.5.4;python_version >= "3.9"
 setuptools
-sparse>=0.13.0
 typer
 wheel

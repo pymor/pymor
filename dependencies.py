@@ -59,6 +59,7 @@ install_suggests = {
     'pillow': 'image library used for bitmap data functions',
     'dune-gdt>=2021.1.3; platform_system=="Linux" and platform_machine=="x86_64"': 'generic discretization toolbox',
     'dune-xt>=2021.1.3; platform_system=="Linux" and platform_machine=="x86_64"': 'DUNE extensions for dune-gdt',
+    'sparse': 'sparse matrices that can have objects as dtype'
 }
 io_requires = ['pyevtk', 'xmljson', 'meshio>=4.4', 'lxml', 'gmsh']
 install_suggests.update({p: 'optional File I/O support libraries' for p in io_requires})
