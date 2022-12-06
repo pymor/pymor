@@ -34,7 +34,6 @@ def assert_type_and_allclose(A, Aop, default_format):
 
 
 def test_to_matrix_NumpyMatrixOperator():
-    np.random.seed(0)
     A = np.random.randn(2, 2)
 
     Aop = NumpyMatrixOperator(A)
@@ -45,7 +44,6 @@ def test_to_matrix_NumpyMatrixOperator():
 
 
 def test_to_matrix_BlockOperator():
-    np.random.seed(0)
     A11 = np.random.randn(2, 2)
     A12 = np.random.randn(2, 3)
     A21 = np.random.randn(3, 2)
@@ -68,7 +66,6 @@ def test_to_matrix_BlockOperator():
 
 
 def test_to_matrix_BlockDiagonalOperator():
-    np.random.seed(0)
     A1 = np.random.randn(2, 2)
     A2 = np.random.randn(3, 3)
     B = np.block([[A1, np.zeros((2, 3))],
@@ -86,7 +83,6 @@ def test_to_matrix_BlockDiagonalOperator():
 
 
 def test_to_matrix_AdjointOperator():
-    np.random.seed(0)
     A = np.random.randn(2, 2)
     S = np.random.randn(2, 2)
     S = S.dot(S.T)
@@ -138,7 +134,6 @@ def test_to_matrix_ComponentProjectionOperator():
 
 
 def test_to_matrix_ConcatenationOperator():
-    np.random.seed(0)
     A = np.random.randn(2, 3)
     B = np.random.randn(3, 4)
     C = A.dot(B)
@@ -173,7 +168,6 @@ def test_to_matrix_IdentityOperator():
 
 
 def test_to_matrix_LincombOperator():
-    np.random.seed(0)
     A = np.random.randn(3, 3)
     B = np.random.randn(3, 2)
     a = np.random.randn()
@@ -202,7 +196,6 @@ def test_to_matrix_LincombOperator():
 
 
 def test_to_matrix_LowRankOperator():
-    np.random.seed(0)
     m = 6
     n = 5
     r = 2
@@ -220,7 +213,6 @@ def test_to_matrix_LowRankOperator():
 
 
 def test_to_matrix_LowRankUpdatedOperator():
-    np.random.seed(0)
     m = 6
     n = 5
     r = 2
@@ -238,7 +230,6 @@ def test_to_matrix_LowRankUpdatedOperator():
 
 
 def test_to_matrix_VectorArrayOperator():
-    np.random.seed(0)
     V = np.random.randn(10, 2)
 
     Vva = NumpyVectorSpace.make_array(V.T)
@@ -263,7 +254,6 @@ if config.HAVE_DUNEGDT:
     from pymor.bindings.dunegdt import DuneXTMatrixOperator
 
     def test_to_matrix_DuneXTMatrixOperator():
-        np.random.seed(0)
         A = np.random.randn(2, 2)
 
         pattern = SparsityPatternDefault(2)

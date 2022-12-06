@@ -52,7 +52,6 @@ def test_samdp(n, m, k, wanted, with_E, which):
         A, E = conv_diff_1d_fem(n, 1, 1)
         Eop = NumpyMatrixOperator(E)
 
-    np.random.seed(0)
     B = np.random.randn(n, m)
     C = np.random.randn(k, n)
 

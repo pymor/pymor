@@ -18,7 +18,6 @@ sigma_list = [None, 0]
 @pytest.mark.parametrize('k', k_list)
 @pytest.mark.parametrize('sigma', sigma_list)
 def test_eigs(n, k, sigma):
-    np.random.seed(0)
     A = sps.random(n, n, density=0.1)
     Aop = NumpyMatrixOperator(A)
     ew, ev = eigs(Aop, k=k, sigma=sigma)

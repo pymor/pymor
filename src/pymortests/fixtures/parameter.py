@@ -7,8 +7,7 @@ import numpy as np
 from pymor.parameters.base import Mu
 
 
-def mu_of_type(parameters, seed):
-    np.random.seed(seed)
+def mu_of_type(parameters):
     while True:
         if parameters is None:
             yield None
