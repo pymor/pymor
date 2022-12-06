@@ -9,28 +9,22 @@ from numpy.random import uniform
 from pymor.algorithms.rand_la import rrf, adaptive_rrf, random_ghep, random_generalized_svd
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.operators.constructions import VectorArrayOperator
-from pymor.tools.random import new_rng
 
 
 def test_adaptive_rrf():
-    np.random.seed(0)
     A = uniform(low=-1.0, high=1.0, size=(100, 100))
     A = A @ A.T
     range_product = NumpyMatrixOperator(A)
 
-    np.random.seed(1)
     B = uniform(low=-1.0, high=1.0, size=(10, 10))
     B = B.dot(B.T)
     source_product = NumpyMatrixOperator(B)
 
-    with new_rng(10):
-        C = range_product.range.random(10)
+    C = range_product.range.random(10)
     op = VectorArrayOperator(C)
 
-    with new_rng(11):
-        D = range_product.range.random(10)
-    with new_rng(12):
-        D += 1j*range_product.range.random(10)
+    D = range_product.range.random(10)
+    D += 1j*range_product.range.random(10)
     op_complex = VectorArrayOperator(D)
 
     Q1 = adaptive_rrf(op, source_product, range_product)
@@ -42,24 +36,19 @@ def test_adaptive_rrf():
 
 
 def test_rrf():
-    np.random.seed(2)
     A = uniform(low=-1.0, high=1.0, size=(100, 100))
     A = A @ A.T
     range_product = NumpyMatrixOperator(A)
 
-    np.random.seed(3)
     B = uniform(low=-1.0, high=1.0, size=(10, 10))
     B = B @ B.T
     source_product = NumpyMatrixOperator(B)
 
-    with new_rng(10):
-        C = range_product.range.random(10)
+    C = range_product.range.random(10)
     op = VectorArrayOperator(C)
 
-    with new_rng(11):
-        D = range_product.range.random(10)
-    with new_rng(12):
-        D += 1j*range_product.range.random(10)
+    D = range_product.range.random(10)
+    D += 1j*range_product.range.random(10)
     op_complex = VectorArrayOperator(D)
 
     Q1 = rrf(op, source_product, range_product)
@@ -73,7 +62,6 @@ def test_rrf():
 
 
 def test_random_generalized_svd():
-    np.random.seed(4)
     E = uniform(low=-1.0, high=1.0, size=(5, 5))
     E_op = NumpyMatrixOperator(E)
 
@@ -90,7 +78,6 @@ def test_random_generalized_svd():
 
 
 def test_random_ghep():
-    np.random.seed(5)
     D = uniform(low=-1.0, high=1.0, size=(5, 5))
     D = D @ D.T
     D_op = NumpyMatrixOperator(D)

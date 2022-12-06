@@ -242,7 +242,7 @@ def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatibl
 
 
 # TODO match st_valid_inds results to this
-def valid_inds(v, length=None, random_module=None):
+def valid_inds(v, length=None):
     if length is None:
         yield []
         yield slice(None)
@@ -267,10 +267,6 @@ def valid_inds(v, length=None, random_module=None):
             yield ind
         if len(v) == length:
             yield slice(None)
-        # this avoids managing random state "against" hypothesis when this function is used in a
-        # strategy
-        if random_module is None:
-            np.random.seed(len(v) * length)
         yield list(np.random.randint(-len(v), len(v), size=length))
     else:
         if len(v) == 0:
@@ -301,7 +297,7 @@ def valid_indices(draw, array_strategy, length=None):
 
 
 # TODO match st_valid_inds_of_same_length results to this
-def valid_inds_of_same_length(v1, v2, random_module=None):
+def valid_inds_of_same_length(v1, v2):
     if len(v1) == len(v2):
         yield slice(None), slice(None)
         yield list(range(len(v1))), list(range(len(v1)))
@@ -317,10 +313,6 @@ def valid_inds_of_same_length(v1, v2, random_module=None):
         yield -len(v1), -len(v2)
         yield [0], 0
         yield (list(range(min(len(v1), len(v2))//2)),) * 2
-        # this avoids managing random state "against" hypothesis when this function is used in a
-        # strategy
-        if random_module is None:
-            np.random.seed(len(v1) * len(v2))
         for count in np.linspace(0, min(len(v1), len(v2)), 3).astype(int):
             yield (list(np.random.randint(-len(v1), len(v1), size=count)),
                    list(np.random.randint(-len(v2), len(v2), size=count)))
@@ -360,7 +352,7 @@ def st_scaling_value(draw, v1, v2=None):
 
 
 # TODO match st_valid_inds_of_different_length results to this
-def valid_inds_of_different_length(v1, v2, random_module):
+def valid_inds_of_different_length(v1, v2):
     # note this potentially yields no result at all for dual 0 length inputs
     if len(v1) != len(v2):
         yield slice(None), slice(None)
@@ -374,10 +366,6 @@ def valid_inds_of_different_length(v1, v2, random_module):
         if len(v2) > 1:
             yield 0, [0, 1]
             yield [0], [0, 1]
-        # this avoids managing random state "against" hypothesis when this function is used in a
-        # strategy
-        if random_module is None:
-            np.random.seed(len(v1) * len(v2))
         for count1 in np.linspace(0, len(v1), 3).astype(int):
             count2 = np.random.randint(0, len(v2))
             if count2 == count1:

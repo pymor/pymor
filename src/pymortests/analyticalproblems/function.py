@@ -14,9 +14,9 @@ from pymortests.core.pickling import assert_picklable, assert_picklable_without_
 
 def test_evaluate(function):
     f = function
-    mus = mu_of_type(f.parameters, 4711)
+    mus = mu_of_type(f.parameters)
     for count in [0, 1, 5, (0, 1), (2, 2, 2)]:
-        arg = function_argument(f, count, 454)
+        arg = function_argument(f, count)
         result = f.evaluate(arg, next(mus))
         assert result.shape == arg.shape[:-1] + f.shape_range
 
@@ -59,8 +59,8 @@ def test_pickle_without_dumps_function(picklable_function):
 def test_pickle_by_evaluation(function):
     f = function
     f2 = loads(dumps(f))
-    mus = mu_of_type(f.parameters, 47)
-    for arg in function_argument(f, 10, 42):
+    mus = mu_of_type(f.parameters)
+    for arg in function_argument(f, 10):
         mu = next(mus)
         assert np.all(f.evaluate(arg, mu) == f2.evaluate(arg, mu))
 

@@ -80,7 +80,6 @@ def test_ricc_dense(n, m, p, with_E, with_R, trans, solver):
         A, E = conv_diff_1d_fem(n, 1, 1)
         A = A.todense()
         E = E.todense()
-    np.random.seed(0)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
     D = np.random.randn(p, m)
@@ -111,7 +110,6 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, trans, solver):
         E = None
     else:
         A, E = conv_diff_1d_fem(n, 1, 1)
-    np.random.seed(0)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
     D = np.random.randn(p, m)
@@ -153,7 +151,6 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, trans, solver):
         E = None
     else:
         A, E = conv_diff_1d_fem(n, 1, 1)
-    np.random.seed(0)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
     D = np.random.randn(p, m)
