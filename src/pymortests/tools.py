@@ -47,11 +47,19 @@ def polynomials(max_order):
 
 
 def test_rng_state_deterministic_a():
+    # Just draw some random number to modify the RNG state.
+    # If the RNG state isn't properly reset before each test
+    # function execution, `py.test -k deterministic tools.py`
+    # will fail in test_rng_state_deterministic_b
     get_rng().integers(0, 10**10)
-    assert True
 
 
 def test_rng_state_deterministic_b():
+    # Ensure that pyMOR's RNG is in its initial state when
+    # a new test function is executed.
+    # By fixing a number here, we ensure that we are also
+    # made aware of changes in the initial state or the RNG
+    # algorithm.
     assert get_rng().integers(0, 10**10) == 7739560485
 
 
