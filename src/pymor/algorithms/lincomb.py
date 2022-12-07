@@ -181,25 +181,24 @@ class AssembleLincombRules(RuleTable):
     def action_BlockOperatorBase(self, ops):
         coefficients = self.coefficients
         shape = ops[0].blocks.shape
-        blocks = np.empty(shape, dtype=object)
+        blocks = np.zeros(shape, dtype=object)
         operator_type = ((BlockOperator if ops[0].blocked_source else BlockColumnOperator) if ops[0].blocked_range
                          else BlockRowOperator)
         # In the sparse case, the sparsity pattern can differ.
-        merged_coords = np.unique(np.hstack([op.block_coords for op in ops]), axis=1)
-        make_sparse = all([op.make_sparse for op in ops])
+        merged_coords = np.unique(np.hstack([op.blocks.coords for op in ops]), axis=1)
         if len(ops) > 1:
             for (i, j) in zip(merged_coords[0], merged_coords[1]):
                 operators_ij = [op.blocks[i, j] for op in ops if op.blocks[i, j]]
                 blocks[i, j] = assemble_lincomb(operators_ij, coefficients,
                                                 solver_options=self.solver_options, name=self.name)
-            return operator_type(blocks, make_sparse=make_sparse)
+            return operator_type(blocks)
         else:
             c = coefficients[0]
             if c == 1:
                 return ops[0]
             for (i, j) in zip(ops[0].block_coords[0], ops[0].block_coords[1]):
                 blocks[i, j] = ops[0].blocks[i, j] * c
-            return operator_type(blocks, make_sparse=make_sparse)
+            return operator_type(blocks)
 
     @match_generic(lambda ops: sum(1 for op in ops if isinstance(op, LowRankOperator)) >= 2)
     def action_merge_low_rank_operators(self, ops):
