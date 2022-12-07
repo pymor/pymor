@@ -3,7 +3,6 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-import scipy.linalg as spla
 import scipy.sparse as sps
 
 from pymor.algorithms.samdp import samdp
@@ -63,25 +62,10 @@ def test_samdp(n, m, k, wanted, with_E, which):
 
     dom_poles, dom_res, dom_rev, dom_lev = samdp(Aop, Eop, Bva, Cva, wanted, which=which)
 
-    dom_absres = spla.norm(dom_res, ord=2, axis=(1, 2))
-
-    poles, lev, rev = spla.eig(A.toarray(), E.toarray(), left=True)
-
-    absres = np.empty(len(poles))
-
-    for i in range(len(poles)):
-        lev[:, i] = lev[:, i] * (1 / lev[:, i].conj().dot(E @ rev[:, i]))
-        absres[i] = spla.norm(np.outer(C @ rev[:, i], lev[:, i] @ B), ord=2)
-
-    if which == 'NR':
-        val = absres / np.abs(np.real(poles))
-        dom_val = dom_absres / np.abs(np.real(dom_poles))
-    elif which == 'NS':
-        val = absres / np.abs(poles)
-        dom_val = dom_absres / np.abs(dom_poles)
-    elif which == 'NM':
-        val = absres
-        dom_val = dom_absres
-
-    # check if computed poles are approximately more dominant than others on average
-    assert np.average(val) * 0.9 < np.average(dom_val)
+    # check if we computed correct eigenvalues
+    if not with_E:
+        assert np.sum((Aop.apply(dom_rev) - dom_poles * dom_rev).norm()) < 1e-4
+        assert np.sum((Aop.apply_adjoint(dom_lev) - dom_poles * dom_lev).norm()) < 1e-4
+    else:
+        assert np.sum((Aop.apply(dom_rev) - dom_poles * Eop.apply(dom_rev)).norm()) < 1e-4
+        assert np.sum((Aop.apply_adjoint(dom_lev) - dom_poles * Eop.apply_adjoint(dom_lev)).norm()) < 1e-4
