@@ -87,7 +87,7 @@ def project_array(U, basis, product=None, orthonormal=True):
     else:
         gramian = basis.gramian(product)
         rhs = basis.inner(U, product)
-        coeffs = scipy.linalg.solve(gramian, rhs, sym_pos=True, overwrite_a=True, overwrite_b=True).T
+        coeffs = scipy.linalg.solve(gramian, rhs, assume_a='pos', overwrite_a=True, overwrite_b=True).T
         return basis.lincomb(coeffs)
 
 

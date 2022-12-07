@@ -102,11 +102,11 @@ PARABOLIC_MOR_ARGS = (
 SYS_MOR_ARGS = (
     ('heat', [0.2, 2]),
     ('delay', [1, 2]),
-    ('string_equation', [25, 2]),
+    ('string_equation', [5, 2]),
     ('parametric_heat', [0.02, 2]),
     ('parametric_delay', [2]),
     ('parametric_string', [5, 2]),
-    ('parametric_synthetic', [100, 2]),
+    ('parametric_synthetic', [10, 2]),
     ('unstable_heat', [50, 10]),
 )
 
@@ -134,6 +134,8 @@ OUTPUT_FUNCTIONAL_ARGS = (
     ('output_error_estimation', [2, 10, 4, 10, 1]),
     ('output_error_estimation', [3, 10, 10, 10, 1]),
     ('output_error_estimation', [4, 10, 10, 10, 1]),
+    ('output_error_estimation_with_dwr', [0, 10, 4, 12]),
+    ('output_error_estimation_with_dwr', [1, 10, 4, 8]),
 )
 
 DMD_ARGS = (
@@ -230,7 +232,7 @@ def _test_demo(demo):
 
     # reset default RandomState
     import pymor.tools.random
-    pymor.tools.random._default_random_state = None
+    pymor.tools.random.new_rng().install()
 
     result = None
     try:
@@ -324,7 +326,7 @@ def test_thermalblock_ipython(ipy_args):
     try:
         test_demos((f'pymordemos.{ipy_args[0]}', ['--ipython-engines=2'] + ipy_args[1]))
     finally:
-        import time     # there seems to be no way to shutdown the IPyhton cluster s.t. a new
+        import time     # there seems to be no way to shutdown the IPython cluster s.t. a new
         time.sleep(10)  # cluster can be started directly afterwards, so we have to wait ...
 
 

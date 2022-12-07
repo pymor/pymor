@@ -11,7 +11,7 @@ import scipy.linalg as spla
 from pymor.algorithms.lyapunov import _chol
 from pymor.algorithms.riccati import solve_pos_ricc_lrcf, solve_ricc_dense, solve_ricc_lrcf
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymortests.lyapunov import conv_diff_1d_fd, conv_diff_1d_fem, fro_norm
+from pymortests.algorithms.lyapunov import conv_diff_1d_fd, conv_diff_1d_fem, fro_norm
 from pymortests.base import skip_if_missing
 
 n_list_small = [10, 20]

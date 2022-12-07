@@ -25,6 +25,7 @@ from pymor.models.neural_network import (FullyConnectedNN, NeuralNetworkModel,
                                          NeuralNetworkStatefreeOutputModel,
                                          NeuralNetworkInstationaryModel,
                                          NeuralNetworkInstationaryStatefreeOutputModel)
+from pymor.tools.random import get_rng, get_seed_seq
 
 
 class NeuralNetworkReductor(BasicObject):
@@ -104,7 +105,7 @@ class NeuralNetworkReductor(BasicObject):
                loss_function=None, restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
                lr_scheduler_params={'step_size': 10, 'gamma': 0.7},
                es_scheduler_params={'patience': 10, 'delta': 0.}, weight_decay=0.,
-               log_loss_frequency=0, seed=0):
+               log_loss_frequency=0):
         """Reduce by training artificial neural networks.
 
         Parameters
@@ -154,9 +155,6 @@ class NeuralNetworkReductor(BasicObject):
             Frequency of epochs in which to log the current validation and
             training loss during training of the neural networks.
             If `0`, no intermediate logging of losses is done.
-        seed
-            Seed to use for various functions in PyTorch. Using a fixed seed,
-            it is possible to reproduce former results.
 
         Returns
         -------
@@ -169,9 +167,7 @@ class NeuralNetworkReductor(BasicObject):
         assert learning_rate > 0.
         assert weight_decay >= 0.
 
-        # set a seed for the PyTorch initialization of weights and biases
-        # and further PyTorch methods
-        torch.manual_seed(seed)
+        torch.manual_seed(get_seed_seq().spawn(1)[0].generate_state(1).item())
 
         # build a reduced basis using POD and compute training data
         if not hasattr(self, 'training_data'):
@@ -196,7 +192,7 @@ class NeuralNetworkReductor(BasicObject):
                 else:
                     number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
                     # randomly shuffle training data before splitting into two sets
-                    np.random.shuffle(self.training_data)
+                    get_rng().shuffle(self.training_data)
                     # split training data into validation and training set
                     self.validation_data = self.training_data[0:number_validation_snapshots]
                     self.training_data = self.training_data[number_validation_snapshots+1:]
@@ -231,7 +227,7 @@ class NeuralNetworkReductor(BasicObject):
             self.neural_network, self.losses = multiple_restarts_training(self.training_data, self.validation_data,
                                                                           neural_network, target_loss, restarts,
                                                                           log_loss_frequency, training_parameters,
-                                                                          self.scaling_parameters, seed)
+                                                                          self.scaling_parameters)
 
         self._check_tolerances()
 
@@ -1082,7 +1078,7 @@ def train_neural_network(training_data, validation_data, neural_network,
 
 def multiple_restarts_training(training_data, validation_data, neural_network,
                                target_loss=None, max_restarts=10, log_loss_frequency=0,
-                               training_parameters={}, scaling_parameters={}, seed=None):
+                               training_parameters={}, scaling_parameters={}):
     """Algorithm that performs multiple restarts of neural network training.
 
     This method either performs a predefined number of restarts and returns
@@ -1114,9 +1110,6 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
     scaling_parameters
         Additional parameters for scaling inputs respectively outputs,
         see :func:`train_neural_network` for more information.
-    seed
-        Seed to use for various functions in PyTorch. Using a fixed seed,
-        it is possible to reproduce former results.
 
     Returns
     -------
@@ -1136,10 +1129,7 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
 
     logger = getLogger('pymor.algorithms.neural_network.multiple_restarts_training')
 
-    # if applicable, set a common seed for the PyTorch initialization
-    # of weights and biases and further PyTorch methods for all training runs
-    if seed:
-        torch.manual_seed(seed)
+    torch.manual_seed(get_seed_seq().spawn(1)[0].generate_state(1).item())
 
     # in case no training data is provided, return a neural network
     # that always returns zeros independent of the input

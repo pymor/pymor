@@ -10,6 +10,7 @@ from threading import Thread
 
 from pymor.algorithms.pod import pod
 from pymor.core.logger import getLogger
+from pymor.tools.random import spawn_rng
 
 
 class Node:
@@ -180,7 +181,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
 
         if node.children:
             modes, svals, snap_counts = zip(
-                *await asyncio.gather(*(hapod_step(c) for c in node.children))
+                *await asyncio.gather(*(spawn_rng(hapod_step(c)) for c in node.children))
             )
             for m, sv in zip(modes, svals):
                 m.scal(sv)
@@ -221,7 +222,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
         nonlocal result
         result = asyncio.run(hapod_step(tree))
     result = None
-    hapod_thread = Thread(target=main)
+    hapod_thread = Thread(target=spawn_rng(main))
     hapod_thread.start()
     hapod_thread.join()
     return result
@@ -433,7 +434,7 @@ class LifoExecutor:
 
     def submit(self, f, *args):
         future = asyncio.get_event_loop().create_future()
-        self.queue.append((future, f, args))
+        self.queue.append((future, spawn_rng(f), args))
         asyncio.get_event_loop().create_task(self.run_task())
         return future
 

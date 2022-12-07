@@ -157,9 +157,9 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace):
         impl += value
         return FenicsVector(impl)
 
-    def real_random_vector(self, distribution, random_state, **kwargs):
+    def real_random_vector(self, distribution, **kwargs):
         impl = df.Function(self.V).vector()
-        values = _create_random_values(impl.local_size(), distribution, random_state, **kwargs)
+        values = _create_random_values(impl.local_size(), distribution, **kwargs)
         impl[:] = np.ascontiguousarray(values)
         return FenicsVector(impl)
 

@@ -8,19 +8,20 @@ import scipy.linalg as spla
 from pymor.algorithms.lincomb import assemble_lincomb
 from pymor.operators.constructions import LowRankOperator, LowRankUpdatedOperator
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.tools.random import new_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def construct_operators_and_vectorarrays(m, n, r, k, seed=0):
     space_m = NumpyVectorSpace(m)
     space_n = NumpyVectorSpace(n)
-    rng = np.random.RandomState(seed)
-    A = NumpyMatrixOperator(rng.randn(m, n))
-    L = space_m.random(r, distribution='normal', random_state=rng)
-    C = rng.randn(r, r)
-    R = space_n.random(r, distribution='normal', random_state=rng)
-    U = space_n.random(k, distribution='normal', random_state=rng)
-    V = space_m.random(k, distribution='normal', random_state=rng)
+    with new_rng(seed) as rng:
+        A = NumpyMatrixOperator(rng.normal(size=(m, n)))
+        L = space_m.random(r, distribution='normal')
+        C = rng.normal(size=(r, r))
+        R = space_n.random(r, distribution='normal')
+        U = space_n.random(k, distribution='normal')
+        V = space_m.random(k, distribution='normal')
     return A, L, C, R, U, V
 
 

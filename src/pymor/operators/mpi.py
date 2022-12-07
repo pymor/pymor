@@ -137,7 +137,7 @@ class MPIOperator(Operator):
                 mpi.call(mpi.function_call_manage, _MPIOperator_apply_adjoint, self.obj_id, V, V_ind, mu)
             )
         else:
-            return mpi.call(_MPIOperator_apply_adjoint, self.obj_id, V, V_ind, mu)
+            return mpi.call(mpi.function_call, _MPIOperator_apply_adjoint, self.obj_id, V, V_ind, mu)
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         if not self.mpi_source or not self.mpi_range:

@@ -4,11 +4,17 @@
 
 * Linus Balicki, balicki@vt.edu (2020-)
 * René Fritze, rene.fritze@uni-muenster.de (2012-)
+* Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de (2022-)
 * Petar Mlinarić, mlinaric@vt.edu (2016-)
 * Stephan Rave, stephan.rave@uni-muenster.de (2012-)
 * Felix Schindler, felix.schindler@uni-muenster.de (2012-)
 
 ## Contributors
+
+### pyMOR 2022.2
+
+* Tim Keil, tim.keil@uni-muenster.de
+  * Dual-weighted residual (DWR) output estimation for elliptic problems
 
 ### pyMOR 2022.1
 

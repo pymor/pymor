@@ -13,12 +13,9 @@ from pymor.basic import *
 
 def main(
         n: int = Option(4, help='Dimension of the state.'),
-        M: int = Option(10, help='Number of data pairs.'),
-        seed: int = Option(42, help='Random seed.')
+        M: int = Option(10, help='Number of data pairs.')
 ):
-    np.random.seed(seed)
-
-    A = np.random.rand(n, n)
+    A = get_rng().random((n, n))
     A = A / np.linalg.norm(A)
     print(f'A: {A}')
     X = np.zeros((M + 1, n))

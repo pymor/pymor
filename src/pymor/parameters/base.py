@@ -21,7 +21,7 @@ from pymor.core.base import ImmutableObject
 from pymor.tools.floatcmp import float_cmp_all
 from pymor.tools.frozendict import FrozenDict, SortedFrozenDict
 from pymor.tools.pprint import format_array
-from pymor.tools.random import get_random_state
+from pymor.tools.random import get_rng
 
 
 class Parameters(SortedFrozenDict):
@@ -537,7 +537,7 @@ class ParameterSpace(ParametricObject):
         counts
             Number of samples to take per parameter and component
             of the parameter. Either a dict of counts per |Parameter|
-            or a single count that is taken for all |Parameters|
+            or a single count that is taken for each parameter in |Parameters|.
 
         Returns
         -------
@@ -554,7 +554,7 @@ class ParameterSpace(ParametricObject):
         return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
                 for i in product(*iters)]
 
-    def sample_randomly(self, count=None, random_state=None, seed=None):
+    def sample_randomly(self, count=None):
         """Randomly sample |parameter values| from the space.
 
         Parameters
@@ -563,21 +563,12 @@ class ParameterSpace(ParametricObject):
             If `None`, a single dict `mu` of |parameter values| is returned.
             Otherwise, the number of random samples to generate and return as
             a list of |parameter values| dicts.
-        random_state
-            :class:`~numpy.random.RandomState` to use for sampling.
-            If `None`, a new random state is generated using `seed`
-            as random seed, or the :func:`default <pymor.tools.random.default_random_state>`
-            random state is used.
-        seed
-            If not `None`, a new random state with this seed is used.
 
         Returns
         -------
         The sampled |parameter values|.
         """
-        assert not random_state or seed is None
-        random_state = get_random_state(random_state, seed)
-        get_param = lambda: Mu(((k, random_state.uniform(self.ranges[k][0], self.ranges[k][1], size))
+        get_param = lambda: Mu(((k, get_rng().uniform(self.ranges[k][0], self.ranges[k][1], size))
                                for k, size in self.parameters.items()))
         if count is None:
             return get_param()
@@ -591,3 +582,29 @@ class ParameterSpace(ParametricObject):
             return False
         return all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
                    for k in self.parameters)
+
+    def clip(self, mu, keep_additional=False):
+        """Clip (limit) |parameter values| to the space's parameter ranges.
+
+        Parameters
+        ----------
+        mu
+            |Parameter value| to clip.
+        keep_additional
+            If `True`, keep additional values in the `Mu` instance which are
+            not contained in the parameters, e.g. time parameters.
+
+        Returns
+        -------
+        The clipped |parameter values|.
+        """
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        if not self.parameters.is_compatible(mu):
+            raise NotImplementedError
+        clipped = {key: np.clip(mu[key], range_[0], range_[1])
+                   for key, range_ in self.ranges.items()}
+        if keep_additional:
+            additional = {key: mu[key] for key in mu if key not in clipped}
+            clipped = dict(clipped, **additional)
+        return Mu(clipped)

@@ -20,7 +20,7 @@ from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import assert_all_almost_equal
 from pymortests.fixtures.operator import MonomOperator
-from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
+from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
 from pymortests.strategies import valid_inds, valid_inds_of_same_length
 
 

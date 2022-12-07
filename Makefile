@@ -19,7 +19,7 @@ THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 DOCKER_RUN=docker run -v $(THIS_DIR):/pymor --env-file  $(THIS_DIR)/.env
 CI_COMMIT_REF_NAME?=$(shell git rev-parse --abbrev-ref HEAD)
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
-  	CI_COMMIT_REF_NAME=$(CI_COMMIT_REF_NAME) \
+	CI_COMMIT_REF_NAME=$(CI_COMMIT_REF_NAME) \
 	NB_USER=$(NB_USER) $(COMPOSE_SUDO) docker-compose  -f .binder/docker-compose.yml -p pymor
 NB_DIR=docs/source
 NB_USER:=${USER}
@@ -63,16 +63,14 @@ tutorials: docs jupyter
 
 full-test:
 	@echo
-	@echo "Ensuring that all required pytest plugins are installed ..."
+	@echo "Ensuring that pytest-cov is installed ..."
 	@echo "--------------------------------------------------------------------------------"
 	@echo
-	pip install pytest-flakes
-	pip install pytest-pep8
 	pip install pytest-cov
 	@echo
 	@echo "--------------------------------------------------------------------------------"
 	@echo
-	py.test --flakes --pep8 --cov --cov-config=setup.cfg --cov-report=html --cov-report=xml src/pymortests
+	py.test --cov --cov-config=setup.cfg --cov-report=html --cov-report=xml src/pymortests
 
 docs:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
