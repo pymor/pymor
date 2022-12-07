@@ -3,7 +3,6 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-import scipy.linalg as spla
 import scipy.sparse as sps
 
 from pymor.algorithms.samdp import samdp
