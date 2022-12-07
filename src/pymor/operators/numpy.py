@@ -426,7 +426,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
         \begin{bmatrix}
             h_1 & h_2 & \dots & h_s \\
             h_2 & h_3 & \dots & h_{s+1}\\
-            \vdots & \vdots && \vdots\\
+            \vdots & \vdots & \ddots & \vdots\\
             h_s & h_{s+1} & \dots & h_{2s-1}
         \end{bmatrix}\in\mathbb{C}^{ms\times ps}.
 
@@ -438,7 +438,7 @@ class NumpyHankelOperator(NumpyGenericOperator):
         \begin{bmatrix}
             h_1 & h_2 & \dots & h_s & h_{s+1}\\
             h_2 & h_3 & \dots & h_{s+1} & h_{s+2}\\
-            \vdots & \vdots && \vdots & \vdots\\
+            \vdots & \vdots & \ddots & \vdots & \vdots\\
             h_s & h_{s+1} & \dots & h_{2s-1} & h_{2s}\\
             h_{s+1} & h_{s+2} & \dots & h_{2s} & 0
         \end{bmatrix}\in\mathbb{C}^{m(s+1)\times p(s+1)}.
