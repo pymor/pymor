@@ -25,9 +25,9 @@ class ERAReductor(CacheableObject):
         \begin{bmatrix}
             h_1 & h_2 & \dots & h_s \\
             h_2 & h_3 & \dots & h_{s+1}\\
-            \vdots & \vdots && \vdots\\
+            \vdots & \vdots & \ddots & \vdots\\
             h_s & h_{s+1} & \dots & h_{2s-1}
-        \end{bmatrix}=U\Sigma V^T\in\mathbb{R}^{ms\times ps},
+        \end{bmatrix}=U\Sigma V^T\in\mathbb{R}^{ps\times ms},
 
     where :math:`r\leq\min\{ms,ps\}` is the reduced order. See :cite:`K78`.
 

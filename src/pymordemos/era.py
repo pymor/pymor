@@ -86,15 +86,15 @@ def main():
 
     fig, axs = plt.subplots(1, 2, figsize=(12, 5), constrained_layout=True)
     ax = axs[0]
-    fom.transfer_function.mag_plot(w, ax=ax, label='fom', dB=True)
-    era_rom.transfer_function.mag_plot(w, ax=ax, label='ERAReductor', dB=True)
-    bt_rom.transfer_function.mag_plot(w, ax=ax, label='BTReductor', dB=True)
+    fom.transfer_function.mag_plot(w, ax=ax, label='FOM', dB=True)
+    era_rom.transfer_function.mag_plot(w, ax=ax, label='ERA ROM', dB=True, linestyle='dashed')
+    bt_rom.transfer_function.mag_plot(w, ax=ax, label='BT ROM', dB=True, linestyle='dotted')
     ax.set_title(r'Transfer function magnitude ($r=4$)')
     ax.legend()
 
     ax = axs[1]
-    (fom-era_rom).transfer_function.mag_plot(w, ax=ax, label='ERAReductor', dB=True)
-    (fom-bt_rom).transfer_function.mag_plot(w, ax=ax, label='BTReductor', dB=True)
+    (fom-era_rom).transfer_function.mag_plot(w, ax=ax, label='ERA', dB=True)
+    (fom-bt_rom).transfer_function.mag_plot(w, ax=ax, label='BT', dB=True, linestyle='dashed')
     ax.set_title(r'Error magnitude ($r=4$)')
     ax.legend()
 
