@@ -9,7 +9,6 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def test_complex():
-    np.random.seed(0)
     I = np.eye(5)
     A = np.random.randn(5, 5)
     B = np.random.randn(5, 5)

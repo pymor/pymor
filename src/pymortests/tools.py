@@ -20,6 +20,7 @@ from pymor.tools.deprecated import Deprecated
 from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
 from pymor.tools.formatsrc import print_source
 from pymor.tools.io import safe_temporary_filename, change_to_directory
+from pymor.tools.random import get_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_rect_or_tria_grid
@@ -43,6 +44,23 @@ def polynomials(max_order):
 
         integral = (1 / (n + 1))
         yield (n, f, deri, integral)
+
+
+def test_rng_state_deterministic_a():
+    # Just draw some random number to modify the RNG state.
+    # If the RNG state isn't properly reset before each test
+    # function execution, `py.test -k deterministic tools.py`
+    # will fail in test_rng_state_deterministic_b
+    get_rng().integers(0, 10**10)
+
+
+def test_rng_state_deterministic_b():
+    # Ensure that pyMOR's RNG is in its initial state when
+    # a new test function is executed.
+    # By fixing a number here, we ensure that we are also
+    # made aware of changes in the initial state or the RNG
+    # algorithm.
+    assert get_rng().integers(0, 10**10) == 7739560485
 
 
 def test_quadrature_polynomials():

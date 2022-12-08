@@ -130,7 +130,6 @@ def test_cont_lrcf(n, m, with_E, trans, lyap_solver):
         E = None
     else:
         A, E = conv_diff_1d_fem(n, 1, 0.1, cont_time=True)
-    np.random.seed(0)
     B = np.random.randn(n, m)
     if trans:
         B = B.T
@@ -160,7 +159,6 @@ def test_disc_lrcf(n, m, with_E, trans, lyap_solver):
     else:
         A, E = conv_diff_1d_fem(n, 1, 0.1, cont_time=False)
 
-    np.random.seed(0)
     B = np.random.randn(n, m)
     if trans:
         B = B.T
@@ -184,7 +182,6 @@ def test_disc_lrcf(n, m, with_E, trans, lyap_solver):
 @skip_if_missing('SLYCOT')
 @skip_if_missing('PYMESS')
 def test_cont_dense(n, m, with_E, trans, lyap_solver):
-    np.random.seed(0)
     A = np.random.randn(n, n)
     E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
     B = np.random.randn(n, m)
@@ -205,7 +202,6 @@ def test_cont_dense(n, m, with_E, trans, lyap_solver):
 @skip_if_missing('SLYCOT')
 @skip_if_missing('PYMESS')
 def test_disc_dense(n, m, with_E, trans, lyap_solver):
-    np.random.seed(0)
     A = np.random.randn(n, n)
     E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
     B = np.random.randn(n, m)
