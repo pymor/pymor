@@ -25,7 +25,6 @@
   * Navier-Stokes demo using neural networks
 
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
-  * long short-term memory neural networks for instationary problems
   * several additional features for neural networks
   * purely data-driven usage of neural networks without requiring full-order model
   * Navier-Stokes demo using neural networks
