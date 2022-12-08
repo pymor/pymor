@@ -106,7 +106,7 @@ class RandomizedRangeFinder(CacheableObject):
 
         This implements the a posteriori error estimator from :cite:`BS18` (Definition 3.1).
 
-        The error is given by
+        The error estimate is given by
 
         .. math::
             \epsilon_{\mathrm{est}}=c_{\mathrm{est}}\cdot\max_{\omega\in\Omega}
