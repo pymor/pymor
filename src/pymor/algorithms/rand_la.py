@@ -9,6 +9,7 @@ from scipy.linalg import lu_factor, lu_solve
 from scipy.sparse.linalg import LinearOperator, eigsh
 from scipy.special import erfinv
 
+from pymor.algorithms.basic import project_array
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.cache import CacheableObject, cached
 from pymor.core.defaults import defaults
@@ -100,7 +101,7 @@ class RandomizedRangeFinder(CacheableObject):
             self._draw_test_vector(num_testvecs - len(self._samplevecs))
 
         W, Q = self._samplevecs[:num_testvecs].copy(), self._find_range(basis_size)
-        W -= Q.lincomb(Q.inner(W, self.range_product).T)
+        W -= project_array(W, Q, self.range_product)
         return np.max(W.norm(self.range_product)) / c
 
     def estimate_error(self, basis_size, num_testvecs=20, p_fail=1e-14):
