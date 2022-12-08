@@ -14,7 +14,6 @@ from pymor.core.config import config
 from pymor.vectorarrays.interface import VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.tools.floatcmp import float_cmp, bounded
-from pymor.tools.random import new_rng
 from pymortests.base import might_exceed_deadline
 from pymortests.core.pickling import assert_picklable_without_dumps_function
 import pymortests.strategies as pyst
@@ -165,10 +164,8 @@ def _test_random_uniform(vector_array, realizations, low, high):
         with pytest.raises(ValueError):
             vector_array.random(c, low=low, high=high)
         return
-    seed = 123
     try:
-        with new_rng(seed):
-            v = vector_array.random(c, low=low, high=high)
+        v = vector_array.random(c, low=low, high=high)
     except ValueError as e:
         if high <= low:
             return
@@ -184,9 +181,6 @@ def _test_random_uniform(vector_array, realizations, low, high):
         assert np.all(x >= low)
     except NotImplementedError:
         pass
-    with new_rng(seed):
-        vv = vector_array.random(c, distribution='uniform', low=low, high=high)
-    assert np.allclose((v - vv).sup_norm(), 0.)
 
 
 @pyst.given_vector_arrays(realizations=hyst.integers(min_value=0, max_value=30),
@@ -200,10 +194,8 @@ def test_random_normal(vector_array, realizations, loc, scale):
         with pytest.raises(ValueError):
             vector_array.random(c, 'normal', loc=loc, scale=scale)
         return
-    seed = 123
     try:
-        with new_rng(seed):
-            v = vector_array.random(c, 'normal', loc=loc, scale=scale)
+        v = vector_array.random(c, 'normal', loc=loc, scale=scale)
     except ValueError as e:
         if scale <= 0:
             return
@@ -226,13 +218,6 @@ def test_random_normal(vector_array, realizations, loc, scale):
         bounded(lower, upper, loc)
     except NotImplementedError:
         pass
-    with new_rng(seed):
-        vv = vector_array.random(c, 'normal', loc=loc, scale=scale)
-    data = vv.to_numpy()
-    # due to scaling data might actually now include nan or inf
-    assume(not np.isnan(data).any())
-    assume(not np.isinf(data).any())
-    assert np.allclose((v - vv).sup_norm(), 0.)
 
 
 @pyst.given_vector_arrays()
@@ -270,7 +255,7 @@ def test_getitem_repeated(vectors_and_indices):
     v_ind = v[ind]
     v_ind_copy = v_ind.copy()
     assert not v_ind_copy.is_view
-    for ind_ind in pyst.valid_inds(v_ind, random_module=False):
+    for ind_ind in pyst.valid_inds(v_ind):
         v_ind_ind = v_ind[ind_ind]
         assert np.all(almost_equal(v_ind_ind, v_ind_copy[ind_ind]))
 
@@ -493,7 +478,7 @@ def test_axpy(vectors_and_indices, scalar):
                           scalar=hyst.floats(min_value=1, max_value=pyst.MAX_VECTORARRAY_LENGTH))
 def test_axpy_one_x(vectors_and_indices, scalar):
     (v1, v2), (ind1, _) = vectors_and_indices
-    for ind2 in pyst.valid_inds(v2, 1, random_module=False):
+    for ind2 in pyst.valid_inds(v2, 1):
         assert v1.check_ind(ind1)
         assert v2.check_ind(ind2)
         if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
@@ -961,7 +946,7 @@ def test_append_incompatible(vector_arrays):
 @pyst.given_vector_arrays(count=2, compatible=False)
 def test_axpy_incompatible(vector_arrays):
     v1, v2 = vector_arrays
-    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2, random_module=False):
+    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1[ind1].axpy(0., c2[ind2])
@@ -979,7 +964,7 @@ def test_axpy_incompatible(vector_arrays):
 @pyst.given_vector_arrays(count=2, compatible=False)
 def test_inner_incompatible(vector_arrays):
     v1, v2 = vector_arrays
-    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2, random_module=False):
+    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1[ind1].inner(c2[ind2])
@@ -988,7 +973,7 @@ def test_inner_incompatible(vector_arrays):
 @pyst.given_vector_arrays(count=2, compatible=False)
 def test_pairwise_inner_incompatible(vector_arrays):
     v1, v2 = vector_arrays
-    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2, random_module=False):
+    for ind1, ind2 in pyst.valid_inds_of_same_length(v1, v2):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1[ind1].pairwise_inner(c2[ind2])

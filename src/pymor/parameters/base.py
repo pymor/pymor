@@ -537,7 +537,7 @@ class ParameterSpace(ParametricObject):
         counts
             Number of samples to take per parameter and component
             of the parameter. Either a dict of counts per |Parameter|
-            or a single count that is taken for all |Parameters|
+            or a single count that is taken for each parameter in |Parameters|.
 
         Returns
         -------
@@ -582,3 +582,29 @@ class ParameterSpace(ParametricObject):
             return False
         return all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
                    for k in self.parameters)
+
+    def clip(self, mu, keep_additional=False):
+        """Clip (limit) |parameter values| to the space's parameter ranges.
+
+        Parameters
+        ----------
+        mu
+            |Parameter value| to clip.
+        keep_additional
+            If `True`, keep additional values in the `Mu` instance which are
+            not contained in the parameters, e.g. time parameters.
+
+        Returns
+        -------
+        The clipped |parameter values|.
+        """
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        if not self.parameters.is_compatible(mu):
+            raise NotImplementedError
+        clipped = {key: np.clip(mu[key], range_[0], range_[1])
+                   for key, range_ in self.ranges.items()}
+        if keep_additional:
+            additional = {key: mu[key] for key in mu if key not in clipped}
+            clipped = dict(clipped, **additional)
+        return Mu(clipped)

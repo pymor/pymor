@@ -20,6 +20,8 @@ from pymor.tools.deprecated import Deprecated
 from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
 from pymor.tools.formatsrc import print_source
 from pymor.tools.io import safe_temporary_filename, change_to_directory
+from pymor.tools.plot import adaptive
+from pymor.tools.random import get_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_rect_or_tria_grid
@@ -43,6 +45,23 @@ def polynomials(max_order):
 
         integral = (1 / (n + 1))
         yield (n, f, deri, integral)
+
+
+def test_rng_state_deterministic_a():
+    # Just draw some random number to modify the RNG state.
+    # If the RNG state isn't properly reset before each test
+    # function execution, `py.test -k deterministic tools.py`
+    # will fail in test_rng_state_deterministic_b
+    get_rng().integers(0, 10**10)
+
+
+def test_rng_state_deterministic_b():
+    # Ensure that pyMOR's RNG is in its initial state when
+    # a new test function is executed.
+    # By fixing a number here, we ensure that we are also
+    # made aware of changes in the initial state or the RNG
+    # algorithm.
+    assert get_rng().integers(0, 10**10) == 7739560485
 
 
 def test_quadrature_polynomials():
@@ -230,6 +249,75 @@ def test_cwd_ctx_manager():
         assert result is None
         assert _cwd() == target
     assert _cwd() == original_cwd
+
+
+@pytest.mark.parametrize('yscale', ['linear', 'log'])
+@pytest.mark.parametrize('xscale', ['linear', 'log'])
+def test_plot_spikes(xscale, yscale):
+    def spike(x):
+        return 1/(x**2 + 1e-3)
+
+    def f(x):
+        return spike(x - 1.5) + spike(x - 2) + spike(x - 5)
+
+    a, b = 1, 10
+    points, fvals = adaptive(f, a, b, xscale=xscale, yscale=yscale)
+    assert isinstance(points, np.ndarray)
+    assert points.ndim == 1
+    assert 10 <= len(points) <= 2000
+
+    assert isinstance(fvals, np.ndarray)
+    assert fvals.ndim == 1
+    assert len(fvals) == len(points)
+
+
+@pytest.mark.parametrize('yscale', ['linear', 'log'])
+@pytest.mark.parametrize('xscale', ['linear', 'log'])
+def test_plot_spikes_multiple(xscale, yscale):
+    def spike(x):
+        return 1/(x**2 + 1e-3)
+
+    def f(x):
+        return np.stack((
+            [spike(x - 1.5)
+             + spike(x - 2)
+             + spike(x - 5)],
+            [spike(x - 1)
+             + spike(x - 3)
+             + spike(x - 4)],
+        ))
+
+    a, b = 1, 10
+    points, fvals = adaptive(f, a, b, xscale=xscale, yscale=yscale)
+    assert isinstance(points, np.ndarray)
+    assert points.ndim == 1
+    assert 10 <= len(points) <= 2000
+
+    assert isinstance(fvals, np.ndarray)
+    assert fvals.ndim == 3
+    assert fvals.shape[0] == len(points)
+    assert fvals.shape[1] == 2
+    assert fvals.shape[2] == 1
+
+
+@pytest.mark.parametrize('yscale', ['linear', 'log'])
+@pytest.mark.parametrize('xscale', ['linear', 'log'])
+def test_plot_complex(xscale, yscale):
+    def H(s):
+        return 1 / ((s + 0.01)**2 + 1)
+
+    def f(x):
+        return H(1j * x)
+
+    a, b = 0.1, 10
+    points, fvals = adaptive(f, a, b, xscale=xscale, yscale=yscale)
+    assert isinstance(points, np.ndarray)
+    assert points.ndim == 1
+    assert 10 <= len(points) <= 2000
+
+    assert isinstance(fvals, np.ndarray)
+    assert fvals.ndim == 1
+    assert fvals.shape[0] == len(points)
 
 
 if __name__ == "__main__":

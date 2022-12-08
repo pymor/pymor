@@ -234,7 +234,7 @@ using the {meth}`~pymor.models.transfer_function.TransferFunction.mag_plot`
 method.
 
 ```{code-cell}
-w = np.logspace(-2, 8, 300)
+w = (1e-2, 1e3)
 _ = fom.transfer_function.mag_plot(w)
 ```
 

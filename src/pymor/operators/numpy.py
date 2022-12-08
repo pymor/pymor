@@ -20,7 +20,8 @@ from functools import reduce
 import numpy as np
 from numpy.fft import fft, ifft, rfft, irfft
 from scipy.io import mmwrite, savemat
-from scipy.linalg import solve
+from scipy.linalg import lu_factor, lu_solve
+from scipy.linalg.lapack import get_lapack_funcs
 import scipy.sparse
 from scipy.sparse import issparse
 
@@ -324,10 +325,16 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     raise InversionError(f'{str(type(e))}: {str(e)}') from e
                 R = R.T
             else:
-                try:
-                    R = solve(self.matrix, V.to_numpy().T).T
-                except np.linalg.LinAlgError as e:
-                    raise InversionError(f'{str(type(e))}: {str(e)}') from e
+                if not hasattr(self, '_lu_factor'):
+                    try:
+                        self._lu_factor = lu_factor(self.matrix)
+                    except np.linalg.LinAlgError as e:
+                        raise InversionError(f'{str(type(e))}: {str(e)}') from e
+                    gecon = get_lapack_funcs('gecon', self._lu_factor)
+                    rcond, _ = gecon(self._lu_factor[0], np.linalg.norm(self.matrix, ord=1), norm='1')
+                    if rcond < np.finfo(np.float64).eps:
+                        self.logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}) in apply_inverse: result may not be accurate.')
+                R = lu_solve(self._lu_factor, V.to_numpy().T).T
 
             if check_finite:
                 if not np.isfinite(np.sum(R)):

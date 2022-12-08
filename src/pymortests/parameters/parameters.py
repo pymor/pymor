@@ -15,14 +15,17 @@ import pymortests.strategies as pyst
 num_samples = 100
 
 
-@pytest.fixture(scope='module')
-def space():
-    return Parameters({'diffusionl': 1}).space(0.1, 1)
+@pytest.fixture(scope='module', params=([1], [2], [1, 1]))
+def space(request):
+    parameter_sizes = request.param
+    param_dict = {'diffusion_' + str(ind): size for ind, size in enumerate(parameter_sizes)}
+    return Parameters(param_dict).space(0.1, 1)
 
 
 def test_uniform(space):
     values = space.sample_uniformly(num_samples)
-    assert len(values) == num_samples
+    total_num_parameters = sum([space.parameters[k] for k in space.parameters])
+    assert len(values) == num_samples**total_num_parameters
     for value in values:
         assert space.contains(value)
 
@@ -37,6 +40,30 @@ def test_randomly(space):
 def test_randomly_without_count(space):
     mu = space.sample_randomly()
     assert isinstance(mu, Mu)
+
+
+def test_clip(space):
+    from copy import deepcopy
+    params = space.parameters
+    upper_mu = {k: [space.ranges[k][1]] * params[k] for k in params}
+    lower_mu = {k: [space.ranges[k][0]] * params[k] for k in params}
+    large_mu = deepcopy(upper_mu)
+    large_mu[next(iter(large_mu))][0] += 1.
+    small_mu = deepcopy(lower_mu)
+    small_mu[next(iter(small_mu))][0] -= 1.
+    clipped_large_mu = space.clip(Mu(large_mu))
+    clipped_small_mu = space.clip(Mu(small_mu))
+    assert clipped_large_mu == Mu(upper_mu)
+    assert clipped_small_mu == Mu(lower_mu)
+
+    additional_upper_mu = upper_mu.copy()
+    additional_upper_mu[next(iter(upper_mu)) + '_test'] = 2
+    additional_large_mu = large_mu.copy()
+    additional_large_mu[next(iter(large_mu)) + '_test'] = 2
+    additional_mu = space.clip(Mu(additional_large_mu), keep_additional=True)
+    no_additional_mu = space.clip(Mu(additional_large_mu), keep_additional=False)
+    assert additional_mu == Mu(additional_upper_mu)
+    assert no_additional_mu == Mu(upper_mu)
 
 
 def test_parse_parameter():

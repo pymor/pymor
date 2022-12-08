@@ -36,7 +36,7 @@ def main(r: int = Argument(10, help='Order of the TF-IRKA ROM.')):
                            parameters={'tau': 1})
 
     mus = [0.01, 0.1, 1]
-    w = np.logspace(-2, 4, 300)
+    w = (1e-2, 1e4)
     fom_properties_param(fom, w, mus)
 
     # TF-IRKA

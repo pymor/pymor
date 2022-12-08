@@ -12,8 +12,6 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def test_apply():
-    np.random.seed(0)
-
     A11 = np.random.randn(2, 3)
     A12 = np.random.randn(2, 4)
     A21 = np.zeros((5, 3))
@@ -38,8 +36,6 @@ def test_apply():
 
 
 def test_apply_adjoint():
-    np.random.seed(0)
-
     A11 = np.random.randn(2, 3)
     A12 = np.random.randn(2, 4)
     A21 = np.zeros((5, 3))
@@ -64,7 +60,6 @@ def test_apply_adjoint():
 
 
 def test_block_diagonal():
-    np.random.seed(0)
     A = np.random.randn(2, 3)
     B = np.random.randn(4, 5)
     Aop = NumpyMatrixOperator(A)
@@ -75,8 +70,6 @@ def test_block_diagonal():
 
 
 def test_blk_diag_apply_inverse():
-    np.random.seed(0)
-
     A = np.random.randn(2, 2)
     B = np.random.randn(3, 3)
     C = spla.block_diag(A, B)
@@ -97,8 +90,6 @@ def test_blk_diag_apply_inverse():
 
 
 def test_blk_diag_apply_inverse_adjoint():
-    np.random.seed(0)
-
     A = np.random.randn(2, 2)
     B = np.random.randn(3, 3)
     C = spla.block_diag(A, B)

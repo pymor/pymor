@@ -340,7 +340,6 @@ def test_restricted(operator_with_arrays):
     op, mu, U, _, = operator_with_arrays
     if op.range.dim == 0:
         return
-    np.random.seed(4711 + U.dim)
     for num in [0, 1, 3, 7]:
         dofs = np.random.randint(0, op.range.dim, num)
         try:
@@ -356,7 +355,6 @@ def test_restricted_jacobian(operator_with_arrays):
     op, mu, U, _, = operator_with_arrays
     if op.range.dim == 0:
         return
-    np.random.seed(4711 + U.dim)
     for num in [0, 1, 3, 7]:
         dofs = np.random.randint(0, op.range.dim, num)
         try:
@@ -427,18 +425,16 @@ def test_InverseAdjointOperator(operator_with_arrays):
 
 
 def test_vectorarray_op_apply_inverse():
-    np.random.seed(1234)
     O = np.random.random((5, 5))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
     V = op.range.random()
     U = op.apply_inverse(V)
     v = V.to_numpy()
     u = np.linalg.solve(O.T, v.ravel())
-    assert np.all(almost_equal(U, U.space.from_numpy(u)))
+    assert np.all(almost_equal(U, U.space.from_numpy(u), rtol=1e-10))
 
 
 def test_vectorarray_op_apply_inverse_lstsq():
-    np.random.seed(1234)
     O = np.random.random((3, 5))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
     V = op.range.random()
@@ -449,7 +445,6 @@ def test_vectorarray_op_apply_inverse_lstsq():
 
 
 def test_adjoint_vectorarray_op_apply_inverse_lstsq():
-    np.random.seed(1234)
     O = np.random.random((3, 5))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O), adjoint=True)
     V = op.range.random()
