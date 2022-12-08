@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Number
+from numbers import Integral, Number
 import numpy as np
 import scipy as sp
 from scipy.linalg import lu_factor, lu_solve
@@ -139,7 +139,7 @@ class RandomizedRangeFinder(CacheableObject):
         err
             The approximate error of the basis.
         """
-        assert isinstance(basis_size, int) and basis_size > 0
+        assert isinstance(basis_size, Integral) and basis_size > 0
         if basis_size > min(self.A.source.dim, self.A.range.dim):
             self.logger.warning('Requested basis is larger than the rank of the operator!')
             self.logger.info('Proceeding with maximum operator rank.')
