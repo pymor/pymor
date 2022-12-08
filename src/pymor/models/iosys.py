@@ -12,6 +12,7 @@ from pymor.algorithms.eigs import eigs
 from pymor.algorithms.lyapunov import (_chol, solve_cont_lyap_lrcf, solve_disc_lyap_lrcf, solve_cont_lyap_dense,
                                        solve_disc_lyap_dense)
 from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
+from pymor.algorithms.timestepping import TimeStepper, DiscreteTimeStepper
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
 from pymor.core.config import config
@@ -21,11 +22,12 @@ from pymor.models.transfer_function import FactorizedTransferFunction
 from pymor.models.transforms import BilinearTransformation, MoebiusTransformation
 from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
                                    SecondOrderModelOperator)
-from pymor.operators.constructions import (IdentityOperator, InverseOperator, LincombOperator, LowRankOperator,
-                                           ZeroOperator)
+from pymor.operators.constructions import (IdentityOperator, InverseOperator, LincombOperator, LinearInputOperator,
+                                           LowRankOperator, VectorOperator, ZeroOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Parameters, Mu
 from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.vectorarrays.interface import VectorArray
 
 
 @defaults('value')
@@ -71,6 +73,21 @@ class LTIModel(Model):
     sampling_time
         `0` if the system is continuous-time, otherwise a positive number that denotes the
         sampling time (in seconds).
+    T
+        The final time T.
+    initial_data
+        The initial data `x_0`. Either a |VectorArray| of length 1 or
+        (for the |Parameter|-dependent case) a vector-like |Operator|
+        (i.e. a linear |Operator| with `source.dim == 1`) which
+        applied to `NumpyVectorArray(np.array([1]))` will yield the
+        initial data for given |parameter values|. If `None`, it is
+        assumed to be zero.
+    time_stepper
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+        to be used by :meth:`~pymor.models.interface.Model.solve`.
+    num_values
+        The number of returned vectors of the solution trajectory. If `None`, each
+        intermediate vector that is calculated is returned.
     presets
         A `dict` of preset attributes or `None`. The dict must only contain keys that correspond to
         attributes of |LTIModel| such as `poles`, `c_lrcf`, `o_lrcf`, `c_dense`, `o_dense`, `hsv`,
@@ -123,7 +140,8 @@ class LTIModel(Model):
 
     cache_region = 'memory'
 
-    def __init__(self, A, B, C, D=None, E=None, sampling_time=0, presets=None,
+    def __init__(self, A, B, C, D=None, E=None, sampling_time=0,
+                 T=None, initial_data=None, time_stepper=None, num_values=None, presets=None,
                  solver_options=None, ast_pole_data=None,
                  error_estimator=None, visualizer=None, name=None):
 
@@ -146,6 +164,31 @@ class LTIModel(Model):
 
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
+
+        assert T is None or T > 0
+
+        if T is not None:
+            if initial_data is None:
+                initial_data = A.source.zeros(1)
+            if isinstance(initial_data, VectorArray):
+                assert initial_data in A.source
+                assert len(initial_data) == 1
+                initial_data = VectorOperator(initial_data, name='initial_data')
+            assert initial_data.source.is_scalar
+            assert initial_data.range == A.source
+
+            if sampling_time == 0:
+                assert isinstance(time_stepper, TimeStepper)
+                assert not isinstance(time_stepper, DiscreteTimeStepper)
+            else:
+                if time_stepper is None:
+                    time_stepper = DiscreteTimeStepper()
+                assert isinstance(time_stepper, DiscreteTimeStepper)
+        else:
+            if initial_data is not None:
+                raise ValueError('Initial data is given but T is not.')
+            if time_stepper is not None:
+                raise ValueError('Time-stepper is given but T is not.')
 
         assert presets is None or presets.keys() <= {'poles', 'c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'hsv',
                                                      'h2_norm', 'hinf_norm', 'l2_norm', 'linf_norm', 'fpeak'}
@@ -195,7 +238,8 @@ class LTIModel(Model):
         return string
 
     @classmethod
-    def from_matrices(cls, A, B, C, D=None, E=None, sampling_time=0, presets=None,
+    def from_matrices(cls, A, B, C, D=None, E=None, sampling_time=0,
+                      T=None, initial_data=None, time_stepper=None, num_values=None, presets=None,
                       state_id='STATE', solver_options=None, error_estimator=None,
                       visualizer=None, name=None):
         """Create |LTIModel| from matrices.
@@ -215,6 +259,17 @@ class LTIModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
+        T
+            The final time T.
+        initial_data
+            The initial data `x_0` as a |NumPy array|. If `None`, it is assumed
+            to be zero.
+        time_stepper
+            The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+            to be used by :meth:`~pymor.models.interface.Model.solve`.
+        num_values
+            The number of returned vectors of the solution trajectory. If `None`, each
+            intermediate vector that is calculated is returned.
         presets
             A `dict` of preset attributes or `None`.
             See :meth:`~pymor.models.iosys.LTIModel.__init__`.
@@ -242,8 +297,9 @@ class LTIModel(Model):
         assert isinstance(A, (np.ndarray, sps.spmatrix))
         assert isinstance(B, (np.ndarray, sps.spmatrix))
         assert isinstance(C, (np.ndarray, sps.spmatrix))
-        assert D is None or isinstance(D, (np.ndarray, sps.spmatrix))
-        assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
+        assert isinstance(D, (np.ndarray, sps.spmatrix, type(None)))
+        assert isinstance(E, (np.ndarray, sps.spmatrix, type(None)))
+        assert isinstance(initial_data, (np.ndarray, type(None)))
 
         A = NumpyMatrixOperator(A, source_id=state_id, range_id=state_id)
         B = NumpyMatrixOperator(B, range_id=state_id)
@@ -252,10 +308,12 @@ class LTIModel(Model):
             D = NumpyMatrixOperator(D)
         if E is not None:
             E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
+        if initial_data is not None:
+            initial_data = A.source.from_numpy(initial_data)
 
-        return cls(A, B, C, D, E, sampling_time=sampling_time, presets=presets,
-                   solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
-                   name=name)
+        return cls(A, B, C, D, E, sampling_time=sampling_time, T=T, initial_data=initial_data,
+                   time_stepper=time_stepper, num_values=num_values, presets=presets,
+                   solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
     def to_matrices(self):
         """Return operators as matrices.
@@ -281,9 +339,9 @@ class LTIModel(Model):
         return A, B, C, D, E
 
     @classmethod
-    def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, sampling_time=0, presets=None,
-                   state_id='STATE', solver_options=None, error_estimator=None, visualizer=None,
-                   name=None):
+    def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, sampling_time=0,
+                   T=None, initial_data_file=None, time_stepper=None, num_values=None, presets=None,
+                   state_id='STATE', solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in separate files.
 
         Parameters
@@ -301,6 +359,17 @@ class LTIModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
+        T
+            The final time T.
+        initial_data_file
+            `None` or the name of the file (with extension) containing the
+            initial data.
+        time_stepper
+            The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+            to be used by :meth:`~pymor.models.interface.Model.solve`.
+        num_values
+            The number of returned vectors of the solution trajectory. If `None`, each
+            intermediate vector that is calculated is returned.
         presets
             A `dict` of preset attributes or `None`.
             See :meth:`~pymor.models.iosys.LTIModel.__init__`.
@@ -332,10 +401,12 @@ class LTIModel(Model):
         C = load_matrix(C_file)
         D = load_matrix(D_file) if D_file is not None else None
         E = load_matrix(E_file) if E_file is not None else None
+        initial_data = load_matrix(initial_data_file) if initial_data_file is not None else None
 
-        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, presets=presets,
-                                 state_id=state_id, solver_options=solver_options,
-                                 error_estimator=error_estimator, visualizer=visualizer, name=name)
+        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, T=T, initial_data=initial_data,
+                                 time_stepper=time_stepper, num_values=num_values, presets=presets, state_id=state_id,
+                                 solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
+                                 name=name)
 
     def to_files(self, A_file, B_file, C_file, D_file=None, E_file=None):
         """Write operators to files as matrices.
@@ -368,9 +439,8 @@ class LTIModel(Model):
             save_matrix(file, mat)
 
     @classmethod
-    def from_mat_file(cls, file_name, sampling_time=0, presets=None,
-                      state_id='STATE', solver_options=None, error_estimator=None,
-                      visualizer=None, name=None):
+    def from_mat_file(cls, file_name, sampling_time=0, T=None, time_stepper=None, num_values=None, presets=None,
+                      state_id='STATE', solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in a .mat file.
 
         Supports the format used in the `SLICOT benchmark collection
@@ -384,6 +454,14 @@ class LTIModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
+        T
+            The final time T.
+        time_stepper
+            The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+            to be used by :meth:`~pymor.models.interface.Model.solve`.
+        num_values
+            The number of returned vectors of the solution trajectory. If `None`, each
+            intermediate vector that is calculated is returned.
         presets
             A `dict` of preset attributes or `None`.
             See :meth:`~pymor.models.iosys.LTIModel.__init__`.
@@ -427,9 +505,10 @@ class LTIModel(Model):
             if mat is not None and np.issubdtype(mat.dtype, np.integer):
                 matrices[i] = mat.astype(np.float_)
 
-        return cls.from_matrices(*matrices, sampling_time=sampling_time, presets=presets,
-                                 state_id=state_id, solver_options=solver_options,
-                                 error_estimator=error_estimator, visualizer=visualizer, name=name)
+        return cls.from_matrices(*matrices, sampling_time=sampling_time, T=T, time_stepper=time_stepper,
+                                 num_values=num_values, presets=presets, state_id=state_id,
+                                 solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
+                                 name=name)
 
     def to_mat_file(self, file_name):
         """Save operators as matrices to .mat file.
@@ -449,9 +528,8 @@ class LTIModel(Model):
         spio.savemat(file_name, mat_dict)
 
     @classmethod
-    def from_abcde_files(cls, files_basename, sampling_time=0, presets=None,
-                         state_id='STATE', solver_options=None, error_estimator=None,
-                         visualizer=None, name=None):
+    def from_abcde_files(cls, files_basename, sampling_time=0, T=None, time_stepper=None, num_values=None, presets=None,
+                         state_id='STATE', solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in .[ABCDE] files.
 
         Parameters
@@ -461,6 +539,14 @@ class LTIModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
+        T
+            The final time T.
+        time_stepper
+            The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
+            to be used by :meth:`~pymor.models.interface.Model.solve`.
+        num_values
+            The number of returned vectors of the solution trajectory. If `None`, each
+            intermediate vector that is calculated is returned.
         presets
             A `dict` of preset attributes or `None`.
             See :meth:`~pymor.models.iosys.LTIModel.__init__`.
@@ -494,9 +580,10 @@ class LTIModel(Model):
         D = load_matrix(files_basename + '.D') if os.path.isfile(files_basename + '.D') else None
         E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
-        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, presets=presets,
-                                 state_id=state_id, solver_options=solver_options,
-                                 error_estimator=error_estimator, visualizer=visualizer, name=name)
+        return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, T=T, time_stepper=time_stepper,
+                                 num_values=num_values, presets=presets, state_id=state_id,
+                                 solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
+                                 name=name)
 
     def to_abcde_files(self, files_basename):
         """Save operators as matrices to .[ABCDE] files in Matrix Market format.
@@ -517,6 +604,40 @@ class LTIModel(Model):
         if E is not None:
             _mmwrite(Path(files_basename + '.E'), E)
 
+    def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
+                 solution_error_estimate=False, output_error_estimate=False,
+                 output_d_mu_return_array=False, mu=None, **kwargs):
+        if not solution and not output:
+            return {}
+
+        assert self.T is not None
+
+        # solution computation
+        mu = mu.with_(t=0)
+        X0 = self.initial_data.as_range_array(mu)
+        rhs = LinearInputOperator(self.B)
+        X = self.time_stepper.solve(
+            operator=-self.A,
+            rhs=rhs,
+            initial_data=X0,
+            mass=None if isinstance(self.E, IdentityOperator) else self.E,
+            initial_time=0,
+            end_time=self.T,
+            mu=mu,
+            num_values=self.num_values,
+        )
+        data = {'solution': X}
+
+        # output computation
+        if output:
+            Cx = self.C.apply(X, mu=mu).to_numpy()
+            if input is None or isinstance(self.D, ZeroOperator):
+                data['output'] = Cx
+            else:
+                raise NotImplementedError
+
+        return data
+
     def __add__(self, other):
         """Add an |LTIModel|."""
         if not isinstance(other, LTIModel):
@@ -534,7 +655,15 @@ class LTIModel(Model):
             E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
         else:
             E = BlockDiagonalOperator([self.E, other.E])
-        return self.with_(A=A, B=B, C=C, D=D, E=E)
+        if self.T is not None and other.T is not None:
+            initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
+            time_stepper = self.time_stepper
+        else:
+            initial_data = None
+            time_stepper = None
+        return LTIModel(A, B, C, D, E, sampling_time=self.sampling_time,
+                        T=self.T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
+                        solver_options=self.solver_options)
 
     def __sub__(self, other):
         """Subtract an |LTIModel|."""
@@ -557,8 +686,19 @@ class LTIModel(Model):
         B = BlockColumnOperator([self.B @ other.D, other.B])
         C = BlockRowOperator([self.C, self.D @ other.C])
         D = self.D @ other.D
-        E = BlockDiagonalOperator([self.E, other.E])
-        return self.with_(A=A, B=B, C=C, D=D, E=E)
+        if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
+            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+        else:
+            E = BlockDiagonalOperator([self.E, other.E])
+        if self.T is not None and other.T is not None:
+            initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
+            time_stepper = self.time_stepper
+        else:
+            initial_data = None
+            time_stepper = None
+        return LTIModel(A, B, C, D, E, sampling_time=self.sampling_time,
+                        T=self.T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
+                        solver_options=self.solver_options)
 
     @cached
     def _poles(self, mu=None):
@@ -1627,7 +1767,10 @@ class PHLTIModel(Model):
         P = BlockColumnOperator([self.P, other.P])
         S = self.S + other.S
         N = self.S + other.S
-        E = BlockDiagonalOperator([self.E, other.E])
+        if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
+            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+        else:
+            E = BlockDiagonalOperator([self.E, other.E])
 
         return self.with_(J=J, R=R, G=G, P=P, S=S, N=N, E=E)
 
@@ -2451,18 +2594,25 @@ class LinearDelayModel(Model):
     def __init__(self, A, Ad, tau, B, C, D=None, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
-        assert A.linear and A.source == A.range
+        assert A.linear
+        assert A.source == A.range
         assert isinstance(Ad, tuple) and len(Ad) > 0
         assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in Ad)
         assert isinstance(tau, tuple) and len(tau) == len(Ad) and all(taui > 0 for taui in tau)
-        assert B.linear and B.range == A.source
-        assert C.linear and C.source == A.range
+        assert B.linear
+        assert B.range == A.source
+        assert C.linear
+        assert C.source == A.range
 
         D = D or ZeroOperator(C.range, B.source)
-        assert D.linear and D.source == B.source and D.range == C.range
+        assert D.linear
+        assert D.source == B.source
+        assert D.range == C.range
 
         E = E or IdentityOperator(A.source)
-        assert E.linear and E.source == E.range == A.source
+        assert E.linear
+        assert E.source == E.range
+        assert E.source == A.source
 
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
@@ -2537,7 +2687,10 @@ class LinearDelayModel(Model):
         assert self.D.source == other.D.source
         assert self.D.range == other.D.range
 
-        E = BlockDiagonalOperator([self.E, other.E])
+        if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
+            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+        else:
+            E = BlockDiagonalOperator([self.E, other.E])
         A = BlockDiagonalOperator([self.A, other.A])
         B = BlockColumnOperator([self.B, other.B])
         C = BlockRowOperator([self.C, other.C])
@@ -2597,7 +2750,10 @@ class LinearDelayModel(Model):
         assert self.sampling_time == other.sampling_time
         assert self.D.source == other.D.range
 
-        E = BlockDiagonalOperator([self.E, other.E])
+        if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
+            E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+        else:
+            E = BlockDiagonalOperator([self.E, other.E])
         A = BlockOperator([[self.A, self.B @ other.C],
                            [None, other.A]])
         B = BlockColumnOperator([self.B @ other.D, other.B])
@@ -2614,7 +2770,10 @@ class LinearDelayModel(Model):
             other = other.to_lti()
 
         if isinstance(other, LTIModel):
-            E = BlockDiagonalOperator([other.E, self.E])
+            if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
+                E = IdentityOperator(BlockVectorSpace([other.solution_space, self.solution_space]))
+            else:
+                E = BlockDiagonalOperator([other.E, self.E])
             A = BlockOperator([[other.A, other.B @ self.C],
                                [None, self.A]])
             Ad = tuple(BlockDiagonalOperator([ZeroOperator(other.solution_space, other.solution_space), op])

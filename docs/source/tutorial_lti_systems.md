@@ -63,6 +63,7 @@ Discrete-time LTI systems can be constructed by passing positive values for the
 `sampling_time` to any constructor of an {{LTIModel}}.
 
 :::
+
 ## Building a model
 
 We consider the following one-dimensional heat equation over {math}`(0, 1)` with
@@ -142,6 +143,31 @@ print(fom)
 which gives the dimensions of the underlying system more directly,
 together with some of its properties.
 
+## Time-domain simulation
+
+The `solve` and `output` methods can be used to respectively compute the
+solution and output trajectories.
+For this, it is necessary to set the final time and the time-stepper.
+This could have been done in the `from_matrices` call.
+Instead of creating a new model using `from_matrices`,
+we can redefine `fom` using its `with_` method.
+
+```{code-cell}
+from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
+fom = fom.with_(T=10, time_stepper=ImplicitEulerTimeStepper(100))
+```
+
+With this done, we can compute the output for some given input and plot it.
+
+```{code-cell}
+Y = fom.output(input='[sin(t[0]), sin(2 * t[0])]')
+fig, ax = plt.subplots()
+for i, y in enumerate(Y.T):
+  ax.plot(np.linspace(0, fom.T, fom.time_stepper.nt + 1), y, label=f'$y_{i+1}(t)$')
+_ = ax.set(xlabel='$t$', ylabel='$y(t)$', title='Output')
+_ = ax.legend()
+```
+
 ## Transfer function evaluation
 
 The transfer function {math}`H` is the function such that
@@ -220,8 +246,8 @@ In words, if the input is a pure exponential,
 the frequency is preserved in the output,
 the amplitude is multiplied by the amplitude of the transfer function, and
 the phase is shifted by the argument of the transfer function.
-In particular, if the input is sinusiodal, i.e., {math}`\xi = 0`,
-then the output is also sinusiodal.
+In particular, if the input is sinusoidal, i.e., {math}`\xi = 0`,
+then the output is also sinusoidal.
 
 It is of interest to plot the transfer function over the imaginary axis to
 visualize how the LTI system responds to each frequency in the input.

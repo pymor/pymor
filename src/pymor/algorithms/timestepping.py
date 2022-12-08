@@ -120,7 +120,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
 
 
 class ImplicitMidpointTimeStepper(TimeStepper):
-    """Implict midpoint rule time-stepper. Symplectic integrator + preserves quadratic invariants.
+    """Implicit midpoint rule time-stepper. Symplectic integrator + preserves quadratic invariants.
 
     Solves equations of the form ::
 
@@ -140,12 +140,26 @@ class ImplicitMidpointTimeStepper(TimeStepper):
     def __init__(self, nt, solver_options='operator'):
         self.__auto_init(locals())
 
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None,
-              num_values=None):
+    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         if not operator.linear:
             raise NotImplementedError
         return implicit_midpoint_rule(operator, rhs, mass, initial_data, initial_time, end_time,
                                       self.nt, mu, num_values, solver_options=self.solver_options)
+
+
+class DiscreteTimeStepper(TimeStepper):
+    """Discrete time-stepper.
+
+    Solves equations of the form ::
+
+        M(mu) * u_k+1 + A(u_k, mu, k) = F(mu, k).
+    """
+
+    def __init__(self):
+        pass
+
+    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+        return discrete(operator, rhs, mass, initial_data, initial_time, end_time, mu, num_values)
 
 
 def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_options='operator'):
@@ -180,7 +194,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
     assert U0 in A.source
     assert len(U0) == 1
 
-    R = A.source.empty(reserve=nt+1)
+    R = A.source.empty(reserve=num_values)
     R.append(U0)
 
     options = (A.solver_options if solver_options == 'operator' else
@@ -293,7 +307,7 @@ def implicit_midpoint_rule(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, so
     assert U0 in A.source
     assert len(U0) == 1
 
-    R = A.source.empty(reserve=nt+1)
+    R = A.source.empty(reserve=num_values)
     R.append(U0)
 
     if solver_options == 'operator':
@@ -323,6 +337,60 @@ def implicit_midpoint_rule(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, so
             rhs += dt_F
         U = M_dt_A_impl.apply_inverse(rhs, mu=mu)
         while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
+            R.append(U)
+
+    return R
+
+
+def discrete(A, F, M, U0, k0, k1, mu=None, num_values=None):
+    assert isinstance(A, Operator)
+    assert isinstance(F, (type(None), Operator, VectorArray))
+    assert isinstance(M, (type(None), Operator))
+    assert A.source == A.range
+    nt = k1 - k0
+    num_values = num_values or nt + 1
+    dt = 1
+    DT = nt / (num_values - 1)
+
+    if F is None:
+        F_time_dep = False
+    elif isinstance(F, Operator):
+        assert F.source.dim == 1
+        assert F.range == A.range
+        F_time_dep = _depends_on_time(F, mu)
+        if not F_time_dep:
+            Fk = F.as_vector(mu)
+    else:
+        assert len(F) == 1
+        assert F in A.range
+        F_time_dep = False
+        Fk = F
+
+    if M is None:
+        from pymor.operators.constructions import IdentityOperator
+        M = IdentityOperator(A.source)
+
+    assert A.source == M.source == M.range
+    assert U0 in A.source
+    assert len(U0) == 1
+
+    R = A.source.empty(reserve=num_values)
+    R.append(U0)
+
+    if not _depends_on_time(M, mu):
+        M = M.assemble(mu)
+
+    U = U0.copy()
+
+    for k in range(k0, k0 + nt):
+        mu = mu.with_(t=k)
+        rhs = -A.apply(U, mu=mu)
+        if F_time_dep:
+            Fk = F.as_vector(mu)
+        if F:
+            rhs += Fk
+        U = M.apply_inverse(rhs, mu=mu, initial_guess=U)
+        while k - k0 + 1 + (min(dt, DT) * 0.5) >= len(R) * DT:
             R.append(U)
 
     return R

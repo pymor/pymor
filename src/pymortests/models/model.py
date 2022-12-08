@@ -6,11 +6,12 @@ import numpy as np
 import pytest
 
 from pymor.algorithms.basic import almost_equal
-from pymor.algorithms.timestepping import ImplicitMidpointTimeStepper
+from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitMidpointTimeStepper
 from pymor.analyticalproblems.functions import ExpressionFunction, ConstantFunction
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
-from pymor.discretizers.builtin import discretize_stationary_cg
 from pymor.core.pickle import dumps, loads
+from pymor.discretizers.builtin import discretize_stationary_cg
+from pymor.models.iosys import LTIModel
 from pymor.models.symplectic import QuadraticHamiltonianModel
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import IdentityOperator
@@ -80,6 +81,24 @@ def test_quadratic_hamiltonian_model(block_phase_space):
 
     # check preservation of the Hamiltonian
     assert np.allclose(ham, ham[0])
+
+
+@pytest.mark.parametrize('sampling_time', (0, 1))
+def test_lti_solve(sampling_time):
+    if sampling_time == 0:
+        time_stepper = ExplicitEulerTimeStepper(4)
+    else:
+        time_stepper = None
+    lti = LTIModel.from_matrices(np.diag([-0.1, -0.2]), np.ones((2, 1)), np.ones((1, 2)),
+                                 sampling_time=sampling_time,
+                                 T=4, initial_data=np.array([1, 2]), time_stepper=time_stepper)
+    f = '[sin(t[0])]'
+    X = lti.solve(input=f)
+    assert X.dim == 2
+    assert len(X) == 5
+    y = lti.output(input=f)
+    assert y.shape[1] == 1
+    assert y.shape[0] == 5
 
 
 if __name__ == "__main__":
