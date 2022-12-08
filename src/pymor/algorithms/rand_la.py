@@ -101,7 +101,7 @@ class RandomizedRangeFinder(CacheableObject):
 
         W, Q = self._samplevecs[:num_testvecs].copy(), self._find_range(basis_size)
         W -= Q.lincomb(Q.inner(W, self.range_product).T)
-        return c * np.max(W.norm(self.range_product))
+        return np.max(W.norm(self.range_product)) / c
 
     def estimate_error(self, basis_size, num_testvecs=20, p_fail=1e-14):
         r"""Randomized a posteriori error estimator for a given basis size.
