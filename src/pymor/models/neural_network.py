@@ -303,12 +303,12 @@ class NeuralNetworkLSTMInstationaryModel(BaseNeuralNetworkModel):
         def time_dependent_parameter(t):
             return [mu.get_time_dependent_value(param)(t) for param in self.parameters]
 
-        parameters = torch.DoubleTensor([np.array([time_dependent_parameter(t)
-                                                   for t in np.linspace(0., self.T, self.nt)])])
-
+        inputs = torch.DoubleTensor(np.array([time_dependent_parameter(t)[0]
+                                              for t in np.linspace(0., self.T, self.nt)]))[None, ...]
+        inputs = self._scale_input(inputs)
         # obtain (reduced) coordinates by forward pass of the parameter values
         # through the neural network
-        result = self.neural_network(parameters[..., 0]).data.numpy()[0]
+        result = self.neural_network(inputs).data.numpy()[0]
         result = self._scale_target(result)
 
         return self.solution_space.make_array(result)
@@ -362,10 +362,8 @@ class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
                  output_d_mu_return_array=False, mu=None, **kwargs):
 
         if output:
-            # collect all inputs in a single tensor
             inputs = self._scale_input(torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
                                                                     for t in np.linspace(0., self.T, self.nt)])))
-            # pass batch of inputs to neural network
             outputs = self.neural_network(inputs).data.numpy()
             outputs = self._scale_target(outputs)
             if isinstance(outputs, torch.Tensor):
@@ -421,11 +419,13 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
             def time_dependent_parameter(t):
                 return [mu.get_time_dependent_value(param)(t) for param in self.parameters]
 
-            parameters = torch.DoubleTensor([np.array([time_dependent_parameter(t)
-                                                       for t in np.linspace(0., self.T, self.nt)])])
-
-            outputs = self.neural_network(parameters[..., 0]).data.numpy()[0]
+            inputs = torch.DoubleTensor(np.array([time_dependent_parameter(t)[0]
+                                                  for t in np.linspace(0., self.T, self.nt)]))[None, ...]
+            inputs = self._scale_input(inputs)
+            outputs = self.neural_network(inputs).data.numpy()[0]
             outputs = self._scale_target(outputs)
+            if isinstance(outputs, torch.Tensor):
+                outputs = outputs.numpy()
 
             return {'output': outputs, 'solution': None}
         return {}

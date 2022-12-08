@@ -715,7 +715,7 @@ class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
 
     def __init__(self, fom, training_set, validation_set=None, validation_ratio=0.1,
                  basis_size=None, rtol=0., atol=0., l2_err=0., pod_params=None,
-                 ann_mse='like_basis', scale_inputs=False, scale_outputs=False):
+                 ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
@@ -1047,6 +1047,7 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkLSTMInst
             self.training_data = []
             for mu in self.training_set:
                 sample = self._compute_sample(mu)
+                self._update_scaling_parameters(sample)
                 self.training_data.extend(sample)
 
     def _compute_target_loss(self):
