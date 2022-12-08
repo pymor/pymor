@@ -1030,6 +1030,11 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkLSTMInst
     validation_loss
         The validation loss to reach during training. If `None`, the neural
         network with the smallest validation loss is returned.
+    scale_inputs
+        Determines whether or not to scale the inputs of the neural networks.
+    scale_outputs
+        Determines whether or not to scale the outputs/targets of the neural
+        networks.
     """
 
     def __init__(self, fom, nt, training_set, validation_set=None, validation_ratio=0.1,
