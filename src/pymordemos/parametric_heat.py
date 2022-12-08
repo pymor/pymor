@@ -3,7 +3,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
 import matplotlib.pyplot as plt
 from typer import Argument, run
 
@@ -223,7 +222,7 @@ def main(
     lti = fom.to_lti()
 
     mus = [0.1, 1, 10]
-    w = np.logspace(-1, 3, 100)
+    w = (1e-1, 1e3)
     fom_properties_param(lti, w, mus)
 
     # Model order reduction

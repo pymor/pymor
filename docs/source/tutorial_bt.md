@@ -193,7 +193,7 @@ We can compare the magnitude plots between the full-order and reduced-order
 models
 
 ```{code-cell}
-w = np.logspace(-2, 8, 300)
+w = (1e-2, 1e3)
 fig, ax = plt.subplots()
 fom.transfer_function.mag_plot(w, ax=ax, label='FOM')
 rom.transfer_function.mag_plot(w, ax=ax, linestyle='--', label='ROM')

@@ -20,6 +20,7 @@ from pymor.tools.deprecated import Deprecated
 from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
 from pymor.tools.formatsrc import print_source
 from pymor.tools.io import safe_temporary_filename, change_to_directory
+from pymor.tools.plot import adaptive
 from pymor.tools.random import get_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
@@ -248,6 +249,75 @@ def test_cwd_ctx_manager():
         assert result is None
         assert _cwd() == target
     assert _cwd() == original_cwd
+
+
+@pytest.mark.parametrize('yscale', ['linear', 'log'])
+@pytest.mark.parametrize('xscale', ['linear', 'log'])
+def test_plot_spikes(xscale, yscale):
+    def spike(x):
+        return 1/(x**2 + 1e-3)
+
+    def f(x):
+        return spike(x - 1.5) + spike(x - 2) + spike(x - 5)
+
+    a, b = 1, 10
+    points, fvals = adaptive(f, a, b, xscale=xscale, yscale=yscale)
+    assert isinstance(points, np.ndarray)
+    assert points.ndim == 1
+    assert 10 <= len(points) <= 2000
+
+    assert isinstance(fvals, np.ndarray)
+    assert fvals.ndim == 1
+    assert len(fvals) == len(points)
+
+
+@pytest.mark.parametrize('yscale', ['linear', 'log'])
+@pytest.mark.parametrize('xscale', ['linear', 'log'])
+def test_plot_spikes_multiple(xscale, yscale):
+    def spike(x):
+        return 1/(x**2 + 1e-3)
+
+    def f(x):
+        return np.stack((
+            [spike(x - 1.5)
+             + spike(x - 2)
+             + spike(x - 5)],
+            [spike(x - 1)
+             + spike(x - 3)
+             + spike(x - 4)],
+        ))
+
+    a, b = 1, 10
+    points, fvals = adaptive(f, a, b, xscale=xscale, yscale=yscale)
+    assert isinstance(points, np.ndarray)
+    assert points.ndim == 1
+    assert 10 <= len(points) <= 2000
+
+    assert isinstance(fvals, np.ndarray)
+    assert fvals.ndim == 3
+    assert fvals.shape[0] == len(points)
+    assert fvals.shape[1] == 2
+    assert fvals.shape[2] == 1
+
+
+@pytest.mark.parametrize('yscale', ['linear', 'log'])
+@pytest.mark.parametrize('xscale', ['linear', 'log'])
+def test_plot_complex(xscale, yscale):
+    def H(s):
+        return 1 / ((s + 0.01)**2 + 1)
+
+    def f(x):
+        return H(1j * x)
+
+    a, b = 0.1, 10
+    points, fvals = adaptive(f, a, b, xscale=xscale, yscale=yscale)
+    assert isinstance(points, np.ndarray)
+    assert points.ndim == 1
+    assert 10 <= len(points) <= 2000
+
+    assert isinstance(fvals, np.ndarray)
+    assert fvals.ndim == 1
+    assert fvals.shape[0] == len(points)
 
 
 if __name__ == "__main__":
