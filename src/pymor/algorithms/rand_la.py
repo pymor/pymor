@@ -49,6 +49,8 @@ class RandomizedRangeFinder(CacheableObject):
         `range_product`.
     """
 
+    cache_region = 'memory'
+
     def __init__(self, A, range_product=None, source_product=None, subspace_iterations=0, lambda_min=None,
                  complex=False, self_adjoint=False):
         assert isinstance(A, Operator)
