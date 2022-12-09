@@ -168,6 +168,58 @@ _ = ax.set(xlabel='$t$', ylabel='$y(t)$', title='Output')
 _ = ax.legend()
 ```
 
+Additionally, there are the `impulse_resp` and `step_resp` methods for computing
+the impulse and step responses, respectively.
+
+Impulse response for continuous-time LTI systems is given by
+
+```{math}
+h(t) = C e^{t E^{-1} A} E^{-1} B + D \delta(t),
+```
+
+where $\delta$ is the Dirac function.
+
+For computations, we ignore the $D$ term and compute the first part by
+integrating the ODE system
+
+```{math}
+E \dot{x}_i(t) = A x_i(t),\ x_i(0) = E^{-1} B e_i
+```
+
+for canonical basis vectors $e_i$ to get the $i$-th column of
+$h_i(t) = C x_i(t)$.
+
+```{code-cell}
+_, ys_impulse = fom.impulse_resp(return_output=True)
+fig, ax = plt.subplots(fom.dim_output, fom.dim_input, sharex=True, constrained_layout=True)
+for i in range(fom.dim_output):
+    for j in range(fom.dim_input):
+        ax[i, j].plot(np.linspace(0, fom.T, fom.time_stepper.nt + 1), ys_impulse[j][:, i])
+for i in range(fom.dim_output):
+    ax[i, 0].set_title(f'Output {i + 1}', loc='left', rotation='vertical', x=-0.2, y=0.2)
+for j in range(fom.dim_input):
+    ax[0, j].set_title(f'Input {j + 1}')
+    ax[-1, j].set_xlabel('Time')
+_ = fig.suptitle('Impulse response')
+```
+
+Step response for continuous-time LTI systems is the output corresponding to the
+zero initial condition and inputs $u_i(t) = e_i$.
+
+```{code-cell}
+_, ys_step = fom.step_resp(return_output=True)
+fig, ax = plt.subplots(fom.dim_output, fom.dim_input, sharex=True, constrained_layout=True)
+for i in range(fom.dim_output):
+    for j in range(fom.dim_input):
+        ax[i, j].plot(np.linspace(0, fom.T, fom.time_stepper.nt + 1), ys_step[j][:, i])
+for i in range(fom.dim_output):
+    ax[i, 0].set_title(f'Output {i + 1}', loc='left', rotation='vertical', x=-0.2, y=0.2)
+for j in range(fom.dim_input):
+    ax[0, j].set_title(f'Input {j + 1}')
+    ax[-1, j].set_xlabel('Time')
+_ = fig.suptitle('Step response')
+```
+
 ## Transfer function evaluation
 
 The transfer function {math}`H` is the function such that
