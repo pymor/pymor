@@ -720,24 +720,24 @@ class LTIModel(Model):
         assert self.T is not None
 
         # solution computation
-        B_va = self.B.as_range_array(mu)
+        Xs0 = self.E.apply_inverse(self.B.as_range_array(mu=mu), mu=mu)
         Xs = [
             self.time_stepper.solve(
                 operator=-self.A,
                 rhs=None,
-                initial_data=b,
+                initial_data=X0,
                 mass=None if isinstance(self.E, IdentityOperator) else self.E,
                 initial_time=0,
                 end_time=self.T,
                 mu=mu,
                 num_values=self.num_values,
             )
-            for b in B_va
+            for X0 in Xs0
         ]
 
         # output computation
         if return_output:
-            ys = [self.C.apply(X, mu=mu) for X in Xs]
+            ys = [self.C.apply(X, mu=mu).to_numpy() for X in Xs]
             return Xs, ys
 
         return Xs
@@ -767,7 +767,7 @@ class LTIModel(Model):
             self.time_stepper.solve(
                 operator=-self.A,
                 rhs=b,
-                initial_data=None,
+                initial_data=self.solution_space.zeros(1),
                 mass=None if isinstance(self.E, IdentityOperator) else self.E,
                 initial_time=0,
                 end_time=self.T,
@@ -779,7 +779,7 @@ class LTIModel(Model):
 
         # output computation
         if return_output:
-            ys = [self.C.apply(X, mu=mu) for X in Xs]
+            ys = [self.C.apply(X, mu=mu).to_numpy() for X in Xs]
             return Xs, ys
 
         return Xs
