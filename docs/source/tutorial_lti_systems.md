@@ -327,7 +327,8 @@ is in subplot {math}`(2 i - 1, j)` and
 is in subplot {math}`(2 i, j)`.
 
 ```{code-cell}
-_ = fom.transfer_function.bode_plot(w)
+fig, axs = plt.subplots(6, 2, figsize=(8, 10), sharex=True, constrained_layout=True)
+_ = fom.transfer_function.bode_plot(w, ax=axs)
 ```
 
 ## System poles
