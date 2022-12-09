@@ -77,12 +77,8 @@ two inputs {math}`u_1, u_2` and three outputs {math}`y_1, y_2, y_2`:
     & t > 0, \\
     \partial_\xi T(1, t) & = -T(1, t),
     & t > 0, \\
-    y_1(t) & = T(0, t),
-    & t > 0, \\
-    y_2(t) & = T(0.5, t),
-    & t > 0, \\
-    y_3(t) & = T(1, t),
-    & t > 0.
+    y_k(t) & = 3 \int_{\frac{k - 1}{3}}^{\frac{k}{3}} T(\xi, t) \, \mathrm{d}\xi,
+    & t > 0,\ k = 1, 2, 3.
 \end{align}
 ```
 
