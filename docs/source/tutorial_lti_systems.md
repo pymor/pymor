@@ -150,16 +150,16 @@ we can redefine `fom` using its `with_` method.
 
 ```{code-cell}
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
-fom = fom.with_(T=10, time_stepper=ImplicitEulerTimeStepper(100))
+fom = fom.with_(T=4, time_stepper=ImplicitEulerTimeStepper(200))
 ```
 
 With this done, we can compute the output for some given input and plot it.
 
 ```{code-cell}
-Y = fom.output(input='[sin(t[0]), sin(2 * t[0])]')
+Y = fom.output(input='[sin(4 * t[0]), sin(6 * t[0])]')
 fig, ax = plt.subplots()
 for i, y in enumerate(Y.T):
-  ax.plot(np.linspace(0, fom.T, fom.time_stepper.nt + 1), y, label=f'$y_{i+1}(t)$')
+    ax.plot(np.linspace(0, fom.T, fom.time_stepper.nt + 1), y, label=f'$y_{i+1}(t)$')
 _ = ax.set(xlabel='$t$', ylabel='$y(t)$', title='Output')
 _ = ax.legend()
 ```
