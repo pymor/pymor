@@ -9,8 +9,7 @@ from pymor.core.exceptions import RuleNotMatchingError, NoMatchingRuleError
 from pymor.operators.block import BlockOperatorBase, BlockRowOperator, BlockColumnOperator
 from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ConstantOperator, ProjectedOperator,
                                            ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
-                                           IdentityOperator, VectorArrayOperator, BilinearFunctional,
-                                           BilinearProductFunctional)
+                                           IdentityOperator, VectorArrayOperator, QuadraticFunctional)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -243,22 +242,9 @@ class ProjectRules(RuleTable):
         else:
             return np.sum(projected_ops)
 
-    @match_class(BilinearFunctional)
-    def action_BilinearFunctional(self, op):
-        if op.operator.source == op.operator.range:
-            return BilinearFunctional(project(op.operator, self.source_basis, self.source_basis), name=op.name)
-        else:
-            return BilinearFunctional(project(op.operator, self.range_basis, self.source_basis), name=op.name)
-
-    @match_class(BilinearProductFunctional)
-    def action_BilinearProductFunctional(self, op):
-        op1 = project(op.operators[0], self.range_basis, self.source_basis)
-        op2 = project(op.operators[1], self.range_basis, self.source_basis)
-        prod = op.product
-        if prod is not None:
-            if self.range_basis:
-                prod = project(prod, self.range_basis, self.range_basis)
-        return BilinearProductFunctional((op1, op2), product=prod, name=op.name)
+    @match_class(QuadraticFunctional)
+    def action_QuadraticFunctional(self, op):
+        return QuadraticFunctional(project(op.operator, self.source_basis, self.source_basis), name=op.name)
 
 
 def project_to_subbasis(op, dim_range=None, dim_source=None):
@@ -390,23 +376,8 @@ class ProjectToSubbasisRules(RuleTable):
         return ProjectedOperator(op.operator, range_basis, source_basis, product=None,
                                  solver_options=op.solver_options)
 
-    @match_class(BilinearFunctional)
-    def action_BilinearFunctional(self, op):
-        dim_range, dim_source = self.dim_range, self.dim_source
-        if op.operator.source == op.operator.range:
-            return BilinearFunctional(
-                project_to_subbasis(op.operator, dim_range=dim_source, dim_source=dim_source), name=op.name)
-        else:
-            return BilinearFunctional(
-                project_to_subbasis(op.operator, dim_range=dim_range, dim_source=dim_source), name=op.name)
-
-    @match_class(BilinearProductFunctional)
-    def action_BilinearProductFunctional(self, op):
-        dim_range, dim_source = self.dim_range, self.dim_source
-        op1 = project_to_subbasis(op.operators[0], dim_range=dim_range, dim_source=dim_source)
-        op2 = project_to_subbasis(op.operators[1], dim_range=dim_range, dim_source=dim_source)
-        prod = op.product
-        if prod is not None:
-            if self.range_basis:
-                prod = project_to_subbasis(prod, dim_range=dim_range, dim_source=dim_range)
-        return BilinearProductFunctional((op1, op2), product=prod, name=op.name)
+    @match_class(QuadraticFunctional)
+    def action_QuadraticFunctional(self, op):
+        _, dim_source = self.dim_range, self.dim_source
+        return QuadraticFunctional(
+            project_to_subbasis(op.operator, dim_range=dim_source, dim_source=dim_source), name=op.name)

@@ -12,8 +12,8 @@ from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.core.config import config
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
-                                           LincombOperator, VectorArrayOperator, BilinearFunctional,
-                                           BilinearProductFunctional)
+                                           LincombOperator, VectorArrayOperator, QuadraticFunctional,
+                                           QuadraticProductFunctional)
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 from pymor.operators.interface import as_array_max_length
 from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
@@ -174,7 +174,7 @@ def test_bilin_functional():
     scalar = NumpyVectorSpace(1)
     bilin_matrix = np.eye(space.dim)
     bilin_op = NumpyMatrixOperator(bilin_matrix)
-    bilin_op = BilinearFunctional(bilin_op)
+    bilin_op = QuadraticFunctional(bilin_op)
 
     one_vec = [1.]
     two_vec = [2.]
@@ -200,8 +200,8 @@ def test_bilin_prod_functional():
     prod = NumpyMatrixOperator(mat)
     lin_vec = space.ones()
     lin_op = VectorFunctional(lin_vec)
-    bilin_op = BilinearProductFunctional((lin_op, lin_op))
-    bilin_op_with_prod = BilinearProductFunctional((lin_op, lin_op), product=prod)
+    bilin_op = QuadraticProductFunctional(lin_op, lin_op)
+    bilin_op_with_prod = QuadraticProductFunctional(lin_op, lin_op, product=prod)
 
     one_vec = [1.]
     two_vec = [2.]

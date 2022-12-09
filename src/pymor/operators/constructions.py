@@ -1456,23 +1456,18 @@ class LinearInputOperator(Operator):
         return self.B.as_range_array(mu).lincomb(mu['input'])
 
 
-class BilinearFunctional(Operator):
-    """An `Operator` representing a bilinear functional.
+class QuadraticFunctional(Operator):
+    """An `Operator` representing a quadratic functional.
 
-    Given an operator `A` acting on R^d, this class enables the functional::
+    Given an operator `A` acting on R^d, this class represents the functional::
 
         op: R^d ----> R^1
-             u  |---> A(u, u)
-
-    In particular this is intended to provide the jacobian of such a bilinear
-    functional::
-
-        op.jacobian(U, mu).apply(V) = (A(u, v; mu) + A(v, u; mu))
+             u  |---> (A(u), u).
 
     Parameters
     ----------
     operator
-        The `Operator` to be wrapped as a bilinear functional.
+        The |Operator| defining the quadratic functional.
     """
 
     linear = False
@@ -1494,41 +1489,39 @@ class BilinearFunctional(Operator):
 
     def d_mu(self, parameter, index=1):
         # the parameter derivative only takes effect on the inner operator
-        return BilinearFunctional(self.operator.d_mu(parameter, index), name=self.name + '_d_mu')
+        return QuadraticFunctional(self.operator.d_mu(parameter, index), name=self.name + '_d_mu')
 
 
-class BilinearProductFunctional(BilinearFunctional):
-    """An `Operator` representing a bilinear functional by multiplying two linear functionals.
+class QuadraticProductFunctional(QuadraticFunctional):
+    """An `Operator` representing a quadratic functional by multiplying two linear functionals.
 
-    Given linear operators `A`, `B`: R^d ----> R^n, this class enables the functional::
+    Given linear operators `A`, `B`: R^d ----> R^n, this class represents the functional::
 
         op: R^d ----> R^1
-             u  |---> (A(u), B(u))
-
-    In particular this is intended to provide the jacobian of such a bilinear
-    functional::
-
-        op.jacobian(U, mu).apply(V) = (A(v; mu), B(u; mu)) + (A(u; mu), B(v; mu))
+             u  |---> (A(u), B(u)).
 
     Parameters
     ----------
-    operators
-        The `Operator`s to be wrapped as a bilinear functional.
+    left
+        The |Operator| that defines the left operator of the quadratic functional.
+    right
+        The |Operator| that defines the right operator of the quadratic functional.
+    product
+        The |Operator| that defines the inner product.
     """
 
     linear = False
     range = NumpyVectorSpace(1)
 
-    def __init__(self, operators, product=None, name=None):
-        assert len(operators) == 2
-        assert operators[0].source == operators[1].source
-        assert operators[0].range == operators[1].range
+    def __init__(self, left, right, product=None, name=None):
+        assert left.source == right.source
+        assert left.range == right.range
         assert product is None or (
-            isinstance(product, Operator) and product.source == operators[1].range
-            and product.range == operators[0].range)
+            isinstance(product, Operator) and product.source == right.range
+            and product.range == left.range)
         self.__auto_init(locals())
-        self.source = operators[0].source
+        self.source = left.source
         if product is None:
-            super().__init__(operators[0].H @ operators[1])
+            super().__init__(left.H @ right)
         else:
-            super().__init__(operators[0].H @ product @ operators[1])
+            super().__init__(left.H @ product @ right)
