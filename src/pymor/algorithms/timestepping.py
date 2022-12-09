@@ -19,6 +19,7 @@ and :class:`ImplicitEulerTimeStepper` encapsulate :func:`explicit_euler` and
 
 from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.operators.interface import Operator
+from pymor.parameters.base import Mu
 from pymor.vectorarrays.interface import VectorArray
 
 
@@ -206,6 +207,8 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
 
     t = t0
     U = U0.copy()
+    if mu is None:
+        mu = Mu()
 
     for n in range(nt):
         t += dt
@@ -254,6 +257,8 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
 
     t = t0
     U = U0.copy()
+    if mu is None:
+        mu = Mu()
 
     if F is None:
         for n in range(nt):
@@ -326,6 +331,8 @@ def implicit_midpoint_rule(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, so
 
     t = t0
     U = U0.copy()
+    if mu is None:
+        mu = Mu()
 
     for n in range(nt):
         mu = mu.with_(t=t + dt/2)
@@ -381,6 +388,8 @@ def discrete(A, F, M, U0, k0, k1, mu=None, num_values=None):
         M = M.assemble(mu)
 
     U = U0.copy()
+    if mu is None:
+        mu = Mu()
 
     for k in range(k0, k0 + nt):
         mu = mu.with_(t=k)
