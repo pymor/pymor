@@ -382,7 +382,7 @@ class Mu(FrozenDict):
             try:
                 mu = Mu(mu)
             except Exception:
-                return False
+                raise NotImplementedError
         assert self.keys() == mu.keys()
         return Mu({key: self[key] + mu[key] for key in self.keys()})
 
