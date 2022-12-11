@@ -389,6 +389,10 @@ class Mu(FrozenDict):
     def __sub__(self, mu):
         return self + -mu
 
+    def __rmul__(self, other):
+        assert isinstance(other, Number)
+        return Mu({key: other * self[key] for key in self.keys()})
+
     def __str__(self):
         def format_value(k, v):
             if self.is_time_dependent(k):
