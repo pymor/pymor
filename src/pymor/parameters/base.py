@@ -374,6 +374,25 @@ class Mu(FrozenDict):
                 return False
         return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
 
+    def __neg__(self):
+        return Mu({key: -self[key] for key in self.keys()})
+
+    def __add__(self, mu):
+        if not isinstance(mu, Mu):
+            try:
+                mu = Mu(mu)
+            except Exception:
+                raise NotImplementedError
+        assert self.keys() == mu.keys()
+        return Mu({key: self[key] + mu[key] for key in self.keys()})
+
+    def __sub__(self, mu):
+        return self + -mu
+
+    def __rmul__(self, other):
+        assert isinstance(other, Number)
+        return Mu({key: other * self[key] for key in self.keys()})
+
     def __str__(self):
         def format_value(k, v):
             if self.is_time_dependent(k):
