@@ -26,8 +26,8 @@ Long short-term memory neural networks
 Eigensystem Realization Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The Eigensystem Realization Algorithm (aka. Ho-Kalman or Silverman Algorithm) can be used to
-identify |LTIModels| from Markov parameter data. With `[#1587] Eigensystem Realization Algorithm <https://github.com/pymor/pymor/pull/1587>`_,
-an :class:`ERAReductor <pymor.reductors.era.ERAReductor` is added that implements the
+identify |LTIModels| from Markov parameter data. With `[#1587] <https://github.com/pymor/pymor/pull/1587>`_,
+an :class:`~pymor.reductors.era.ERAReductor` is added that implements the
 classical algorithm as well as the TERA extension that uses tangential projections
 of the Markov parameters for cases where there are many inputs and/or outputs.
 The SVD of the Hankel matrix as well as the tangential projectors are cached
@@ -39,9 +39,9 @@ Parametric AAA algorithm
 The AAA algorithm allows for approximating rational functions in an iterative
 manner by combining the ideas of Vector-Fitting and Loewner interpolation. With
 this release, we are adding the parametric version of the algorithm
-(`[#1756] p-AAA <https://github.com/pymor/pymor/pull/1756>`_) for data-driven
-approximation of |TransferFunctions|. The :class:`PAAARedcutor <pymor.reductors.aaa.PAAAReductor` can handle any models
-that have a |TransferFunction| attribute or Numpy data as inputs. The
+(`[#1756] <https://github.com/pymor/pymor/pull/1756>`_) for data-driven
+approximation of |TransferFunctions|. The :class:`~pymor.reductors.aaa.PAAAReductor` can handle any models
+that have a `transfer_function` attribute or Numpy data as inputs. The
 implementation works in non-parametric, parametric, SISO as well as MIMO
 settings.
 
