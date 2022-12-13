@@ -382,7 +382,7 @@ def full_nd_loewner(samples, svs, itpl_part):
 
 
 def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14):
-    r"""Return function handle for (multivariate) barycentric form.
+    r"""Return function for (multivariate) barycentric form.
 
     The multivariate barycentric form for two variables is given by
 
