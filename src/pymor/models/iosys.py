@@ -700,28 +700,32 @@ class LTIModel(Model):
                         T=self.T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
                         solver_options=self.solver_options)
 
-    def impulse_resp(self, mu=None, return_output=False):
+    def impulse_resp(self, mu=None, return_solution=False):
         """Compute impulse response from all inputs.
 
         Parameters
         ----------
         mu
             |Parameter values| for which to solve.
-        return_output
-            If `True`, the model output for the given |parameter values| `mu` is
-            returned as a |VectorArray| from :attr:`output_space`.
+        return_solution
+            If `True`, the model solution for the given |parameter values| `mu` is returned.
 
         Returns
         -------
-        The list of solution |VectorArrays| for every input. When
-        `return_output` is `True`, the list of output |VectorArrays| is returned
-        as second value.
+        y
+            Impulse response as a 3D |NumPy array| where
+            `y.shape[0]` is the number of snapshots,
+            `y.shape[1]` is the number of outputs, and
+            `y.shape[2]` is the number of inputs.
+        Xs
+            The tuple of solution |VectorArrays| for every input.
+            Returned only when `return_solution` is `True`.
         """
         assert self.T is not None
 
         # solution computation
         Xs0 = self.E.apply_inverse(self.B.as_range_array(mu=mu), mu=mu)
-        Xs = [
+        Xs = tuple(
             self.time_stepper.solve(
                 operator=-self.A,
                 rhs=None,
@@ -733,31 +737,38 @@ class LTIModel(Model):
                 num_values=self.num_values,
             )
             for X0 in Xs0
-        ]
+        )
 
         # output computation
-        if return_output:
-            ys = [self.C.apply(X, mu=mu).to_numpy() for X in Xs]
-            return Xs, ys
+        y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
+        for i, X in enumerate(Xs):
+            y[:, :, i] = self.C.apply(X, mu=mu).to_numpy()
 
-        return Xs
+        if return_solution:
+            return y, Xs
 
-    def step_resp(self, mu=None, return_output=False):
+        return y
+
+    def step_resp(self, mu=None, return_solution=False):
         """Compute step response from all inputs.
 
         Parameters
         ----------
         mu
             |Parameter values| for which to solve.
-        return_output
-            If `True`, the model output for the given |parameter values| `mu` is
-            returned as a |VectorArray| from :attr:`output_space`.
+        return_solution
+            If `True`, the model solution for the given |parameter values| `mu` is returned.
 
         Returns
         -------
-        The list of solution |VectorArrays| for every input. When
-        `return_output` is `True`, the list of output |VectorArrays| is returned
-        as second value.
+        y
+            Step response as a 3D |NumPy array| where
+            `y.shape[0]` is the number of snapshots,
+            `y.shape[1]` is the number of outputs, and
+            `y.shape[2]` is the number of inputs.
+        Xs
+            The tuple of solution |VectorArrays| for every input.
+            Returned only when `return_solution` is `True`.
         """
         assert self.T is not None
 
@@ -778,11 +789,14 @@ class LTIModel(Model):
         ]
 
         # output computation
-        if return_output:
-            ys = [self.C.apply(X, mu=mu).to_numpy() for X in Xs]
-            return Xs, ys
+        y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
+        for i, X in enumerate(Xs):
+            y[:, :, i] = self.C.apply(X, mu=mu).to_numpy()
 
-        return Xs
+        if return_solution:
+            return y, Xs
+
+        return y
 
     @cached
     def _poles(self, mu=None):
