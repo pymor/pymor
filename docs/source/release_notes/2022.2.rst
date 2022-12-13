@@ -9,8 +9,11 @@ improved analysis for linear time-invariant systems.
 Over 330 single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/2022.1.x...2022.2.x>`__.
 
-pyMOR 2022.2 contains contributions by Tim Keil, Peter Oehme and Art Pelling.
-See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more details.
+pyMOR 2022.2 contains contributions by Tim Keil, Hendrik Kleikamp, Peter Oehme
+and Art Pelling.
+We are also happy to welcome Hendrik as a new main developer!
+See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more
+details.
 
 
 Release highlights
