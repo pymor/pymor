@@ -99,13 +99,14 @@ class ERAReductor(CacheableObject):
         return s2, W2.T
 
     def _project_markov_parameters(self, num_left, num_right):
-        mats = [self.output_projector(num_left).T, self.data] if num_left else [self.data]
-        mats = [*mats, self.input_projector(num_right)] if num_right else mats
-        s1 = ('lp,', 'l') if num_left else ('', 'p')
-        s2 = (',mk', 'k') if num_right else ('', 'm')
         self.logger.info('Projecting Markov parameters ...')
-        einstr = s1[0] + 'npm' + s2[0] + '->n' + s1[1] + s2[1]
-        return np.einsum(einstr, *mats, optimize='optimal')
+        mp = self.data
+        # computation strategy below is already improved but probably not optimal, see PR #1587.
+        if num_right:
+            mp = np.einsum('npm,mk->npk', mp, self.input_projector(num_right), optimize='optimal')
+        if num_left:
+            mp = self.output_projector(num_left).T @ mp
+        return mp
 
     @cached
     def _sv_U_V(self, num_left, num_right):
