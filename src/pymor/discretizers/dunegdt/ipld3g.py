@@ -185,10 +185,12 @@ def discretize_stationary_ipld3g(
 
         walker.walk(False)  # not supported yet
 
-        boundary_op = LincombOperator(
-            operators=[DuneXTMatrixOperator(op.matrix, name=f'boundary_part_{I}')
-                       for op in ops],
-            coefficients=coeffs)
+        boundary_operators = [DuneXTMatrixOperator(op.matrix, name=f'boundary_part_{I}')
+                              for op in ops]
+        # give the constant part a special name
+        boundary_operators[-1] = boundary_operators[-1].with_(name=f'constant_boundary_part_{I}')
+
+        boundary_op = LincombOperator(operators=boundary_operators, coefficients=coeffs)
 
         local_ops[I][I] += boundary_op
 
@@ -283,12 +285,13 @@ def discretize_stationary_ipld3g(
                         local_ops[i][j] += coupling_op
 
                 for ((i, j), op) in zip(((I, I), (I, J), (J, I), (J, J)), local_weighted_h1_semi_penalty_product_ops):
+                    coupling_op = DuneXTMatrixOperator(op.matrix, name=f'coupling_part_from_{I}_{J}')
                     if weighted_h1_semi_penalty_product_ops[i][j] is None:
                         weighted_h1_semi_penalty_product_ops[i][j] = LincombOperator(
-                            operators=[DuneXTMatrixOperator(op.matrix), ],
-                            coefficients=[1, ])
+                            operators=[coupling_op, ],
+                            coefficients=[1., ])
                     else:
-                        weighted_h1_semi_penalty_product_ops[i][j] += DuneXTMatrixOperator(op.matrix)
+                        weighted_h1_semi_penalty_product_ops[i][j] += coupling_op
 
     # products
     local_l2_ops = np.empty((M, M), dtype=object)
@@ -301,6 +304,10 @@ def discretize_stationary_ipld3g(
             local_weighted_h1_semi_penalty_prod = local_models[I].products['h1_semi']
         # entry I, I has to exist after the assembly above
         weighted_h1_semi_penalty_product_ops[I][I] += local_weighted_h1_semi_penalty_prod
+        local_op = local_ops[I][I]
+        for op in local_op.operators:
+            if 'constant_boundary_part' in op.name:
+                weighted_h1_semi_penalty_product_ops[I][I] += op
     products = {
         'l2': BlockOperator(local_l2_ops),
         'weighted_h1_semi_penalty': BlockOperator(weighted_h1_semi_penalty_product_ops),
