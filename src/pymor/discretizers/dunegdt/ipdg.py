@@ -366,14 +366,12 @@ if config.HAVE_DUNEGDT:
             # - (weighted) broken H^1 product, w.r.t. which the system operator is coercive to
             bf = BilinearForm(grid)
             bf += LocalElementIntegralBilinearForm(LocalLaplaceIntegrand(weight))
-            bf += (
-                    LocalCouplingIntersectionIntegralBilinearForm(LocalIPDGInnerPenaltyIntegrand(
-                        penalty_parameter, weight)),
-                    ApplyOnInnerIntersectionsOnce(grid))
-            bf += (
-                    LocalIntersectionIntegralBilinearForm(LocalIPDGBoundaryPenaltyIntegrand(
-                        penalty_parameter, weight)),
-                    ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
+            bf += (LocalCouplingIntersectionIntegralBilinearForm(LocalIPDGInnerPenaltyIntegrand(
+                penalty_parameter, weight)),
+                ApplyOnInnerIntersectionsOnce(grid))
+            bf += (LocalIntersectionIntegralBilinearForm(LocalIPDGBoundaryPenaltyIntegrand(
+                penalty_parameter, weight)),
+                ApplyOnCustomBoundaryIntersections(grid, boundary_info, DirichletBoundary()))
             weighted_h1_semi_penalty_product = MatrixOperator(grid, space, space, la_backend, sparsity_pattern)
             weighted_h1_semi_penalty_product.append(bf)
 
