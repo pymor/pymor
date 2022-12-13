@@ -35,9 +35,9 @@ Parametric AAA algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~
 The AAA algorithm allows for approximating rational functions in an iterative
 manner by combining the ideas of Vector-Fitting and Loewner interpolation. With
-this release we are adding the parametric version of the algorithm
+this release, we are adding the parametric version of the algorithm
 (`[#1756] p-AAA <https://github.com/pymor/pymor/pull/1756>`_) for data-driven
-approximation of |TransferFunctions|. The |PAAAReductor| can handle any models
+approximation of |TransferFunctions|. The :class:`PAAARedcutor <pymor.reductors.aaa.PAAAReductor` can handle any models
 that have a |TransferFunction| attribute or Numpy data as inputs. The
 implementation works in non-parametric, parametric, SISO as well as MIMO
 settings.
@@ -84,7 +84,7 @@ DWR reductor for output estimation with primal-dual approach
 |LTIModel| can compute LQG and BR Gramians
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The :meth:`~pymor.models.iosys.LTIModel.gramian` of the |LTIModel| so far could
-only compute the standard, Lyapunov Gramians.
+only compute the standard Lyapunov Gramians.
 With this release, the computation of linear quadratic Gaussian (LQG) and
 bounded-real (BR) Gramians was moved from the corresponding balanced truncation
 reductors to |LTIModel|.
