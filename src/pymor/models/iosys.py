@@ -9,15 +9,11 @@ import scipy.sparse as sps
 
 from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.eigs import eigs
-from pymor.algorithms.lyapunov import (
-    _chol,
-    solve_cont_lyap_dense,
-    solve_cont_lyap_lrcf,
-    solve_disc_lyap_dense,
-    solve_disc_lyap_lrcf,
-)
-from pymor.algorithms.riccati import solve_pos_ricc_lrcf, solve_ricc_lrcf
-from pymor.algorithms.timestepping import DiscreteTimeStepper, TimeStepper
+from pymor.algorithms.lyapunov import (_chol, solve_cont_lyap_lrcf, solve_disc_lyap_lrcf, solve_cont_lyap_dense,
+                                       solve_disc_lyap_dense)
+from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
+from pymor.algorithms.simplify import contract, expand
+from pymor.algorithms.timestepping import TimeStepper, DiscreteTimeStepper
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.analyticalproblems.functions import GenericFunction
 from pymor.core.cache import cached
@@ -1500,18 +1496,30 @@ class PHLTIModel(LTIModel):
     This class describes input-state-output systems given by
 
     .. math::
-        E(\mu) \dot{x}(t, \mu) & = (J(\mu) - R(\mu)) x(t, \mu) + (G(\mu) - P(\mu)) u(t), \\
-                     y(t, \mu) & = (G(\mu) + P(\mu))^T x(t, \mu) + (S(\mu) - N(\mu)) u(t),
+        E(\mu) \dot{x}(t, \mu) & = (J(\mu) - R(\mu))Q(\mu)   x(t, \mu) + (G(\mu) - P(\mu)) u(t), \\
+                     y(t, \mu) & = (G(\mu) + P(\mu))^TQ(\mu) x(t, \mu) + (S(\mu) - N(\mu)) u(t),
 
-    with :math:`E(\mu) \succeq 0`, :math:`J(\mu) = -J(\mu)^T`, :math:`N(\mu) = -N(\mu)^T` and
+    with :math:`H(\mu)=E(\mu)Q(\mu)^T \succeq 0` and
 
     .. math::
-        \mathcal{R}(\mu) =
+        \Gamma(\mu) =
+        \begin{bmatrix}
+            J(\mu) & G(\mu) \\
+            -G(\mu)^T & N(\mu)
+        \end{bmatrix}
+
+        \qquad \text{and} \qquad
+
+        W(\mu) =
         \begin{bmatrix}
             R(\mu) & P(\mu) \\
             P(\mu)^T & S(\mu)
         \end{bmatrix}
         \succeq 0.
+
+    A dynamical system of this form, together with a given quadratic (energy) function
+    :math:`\mathcal{H}=\tfrac{1}{2} x(t, \mu)^T H(\mu) x(t, \mu)`, called Hamiltonian
+    with :math:`H(\mu) \succeq 0`, is called port-Hamiltonian system.
 
     All methods related to the transfer function
     (e.g., frequency response calculation and Bode plots)
@@ -1533,6 +1541,8 @@ class PHLTIModel(LTIModel):
         The |Operator| N or `None` (then N is assumed to be zero).
     E
         The |Operator| E or `None` (then E is assumed to be identity).
+    Q
+        The |Operator| Q or `None` (then Q is assumed to be identity).
     solver_options
         The solver options to use to solve the Lyapunov equations.
     name
@@ -1560,13 +1570,15 @@ class PHLTIModel(LTIModel):
         The |Operator| N.
     E
         The |Operator| E.
+    Q
+        The |Operator| Q.
     transfer_function
         The transfer function.
     """
 
     cache_region = 'memory'
 
-    def __init__(self, J, R, G, P=None, S=None, N=None, E=None,
+    def __init__(self, J, R, G, P=None, S=None, N=None, E=None, Q=None,
                  solver_options=None, error_estimator=None, visualizer=None, name=None):
         assert J.linear
         assert J.source == J.range
@@ -1598,12 +1610,42 @@ class PHLTIModel(LTIModel):
         assert E.source == E.range
         assert E.source == J.source
 
+        Q = Q or IdentityOperator(J.source)
+        assert Q.linear
+        assert Q.source == Q.range
+        assert Q.source == J.source
+
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
-        super().__init__(A=J - R, B=G - P, C=(G + P).H, D=S - N, E=E,
+        super().__init__(A=(J - R) if isinstance(Q, IdentityOperator) else (J - R) @ Q,
+                         B=G - P,
+                         C=(G + P).H if isinstance(Q, IdentityOperator) else (G + P).H @ Q,
+                         D=S - N, E=E,
                          solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                          name=name)
         self.__auto_init(locals())
+
+    def to_generalized_model(self):
+        """
+        Convert the |PHLTIModel| to a |PHLTIModel| with :math:`Q=I`,
+        by left multiplication with :math:`Q^T`.
+
+        Returns
+        -------
+        model
+            Generalized |PHLTIModel|.
+
+        """
+        if isinstance(self.Q, IdentityOperator):
+            return self
+
+        E = contract(expand(self.Q.H @ self.E))
+        J = contract(expand(self.Q.H @ self.J @ self.Q))
+        R = contract(expand(self.Q.H @ self.R @ self.Q))
+        G = contract(expand(self.Q.H @ self.G))
+        P = contract(expand(self.Q.H @ self.P))
+
+        return self.with_(E=E, J=J, R=R, G=G, P=P, Q=None)
 
     def __str__(self):
         string = (
@@ -1622,7 +1664,7 @@ class PHLTIModel(LTIModel):
         return string
 
     @classmethod
-    def from_matrices(cls, J, R, G, P=None, S=None, N=None, E=None,
+    def from_matrices(cls, J, R, G, P=None, S=None, N=None, E=None, Q=None,
                       state_id='STATE', solver_options=None, error_estimator=None,
                       visualizer=None, name=None):
         """Create |PHLTIModel| from matrices.
@@ -1643,6 +1685,8 @@ class PHLTIModel(LTIModel):
             The |NumPy array| or |SciPy spmatrix| N or `None` (then N is assumed to be zero).
         E
             The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be identity).
+        Q
+            The |NumPy array| or |SciPy spmatrix| Q or `None` (then Q is assumed to be identity).
         state_id
             Id of the state space.
         solver_options
@@ -1671,6 +1715,7 @@ class PHLTIModel(LTIModel):
         assert S is None or isinstance(S, (np.ndarray, sps.spmatrix))
         assert N is None or isinstance(N, (np.ndarray, sps.spmatrix))
         assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
+        assert Q is None or isinstance(Q, (np.ndarray, sps.spmatrix))
 
         J = NumpyMatrixOperator(J, source_id=state_id, range_id=state_id)
         R = NumpyMatrixOperator(R, source_id=state_id, range_id=state_id)
@@ -1683,8 +1728,10 @@ class PHLTIModel(LTIModel):
             N = NumpyMatrixOperator(N)
         if E is not None:
             E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
+        if Q is not None:
+            Q = NumpyMatrixOperator(Q, source_id=state_id, range_id=state_id)
 
-        return cls(J, R, G, P, S, N, E,
+        return cls(J, R, G, P, S, N, E, Q,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                    name=name)
 
@@ -1707,6 +1754,8 @@ class PHLTIModel(LTIModel):
             The |NumPy array| or |SciPy spmatrix| N or `None` (if Cv is a `ZeroOperator`).
         E
             The |NumPy array| or |SciPy spmatrix| E.
+        Q
+            The |NumPy array| or |SciPy spmatrix| Q.
         """
         J = to_matrix(self.J)
         R = to_matrix(self.R)
@@ -1715,8 +1764,9 @@ class PHLTIModel(LTIModel):
         S = None if isinstance(self.S, ZeroOperator) else to_matrix(self.S)
         N = None if isinstance(self.N, ZeroOperator) else to_matrix(self.N)
         E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E)
+        Q = None if isinstance(self.Q, IdentityOperator) else to_matrix(self.Q)
 
-        return J, R, G, P, S, N, E
+        return J, R, G, P, S, N, E, Q
 
     def __add__(self, other):
         if not isinstance(other, PHLTIModel):
@@ -1738,8 +1788,12 @@ class PHLTIModel(LTIModel):
             E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
         else:
             E = BlockDiagonalOperator([self.E, other.E])
+        if isinstance(self.Q, IdentityOperator) and isinstance(other.Q, IdentityOperator):
+            Q = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
+        else:
+            Q = BlockDiagonalOperator([self.Q, other.Q])
 
-        return self.with_(J=J, R=R, G=G, P=P, S=S, N=N, E=E)
+        return self.with_(J=J, R=R, G=G, P=P, S=S, N=N, E=E, Q=Q)
 
 
 class SecondOrderModel(Model):
