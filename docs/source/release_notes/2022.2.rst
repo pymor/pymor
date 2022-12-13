@@ -22,7 +22,14 @@ Long short-term memory neural networks
 
 Eigensystem Realization Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1587] Eigensystem Realization Algorithm <https://github.com/pymor/pymor/pull/1587>`_
+The Eigensystem Realization Algorithm (aka. Ho-Kalman or Silverman Algorithm) can be used to
+identify |LTIModels| from Markov parameter data. With `[#1587] Eigensystem Realization Algorithm <https://github.com/pymor/pymor/pull/1587>`_,
+an :class:`ERAReductor <pymor.reductors.era.ERAReductor` is added that implements the
+classical algorithm as well as the TERA extension that uses tangential projections
+of the Markov parameters for cases where there are many inputs and/or outputs.
+The SVD of the Hankel matrix as well as the tangential projectors are cached
+by the reductor such that |LTIModels| of different orders can be constructed
+efficiently.
 
 Parametric AAA algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~
