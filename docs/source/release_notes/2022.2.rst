@@ -26,7 +26,14 @@ Eigensystem Realization Algorithm
 
 Parametric AAA algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1756] p-AAA <https://github.com/pymor/pymor/pull/1756>`_
+The AAA algorithm allows for approximating rational functions in an iterative
+manner by combining the ideas of Vector-Fitting and Loewner interpolation. With
+this release we are adding the parametric version of the algorithm
+(`[#1756] p-AAA <https://github.com/pymor/pymor/pull/1756>`_) for data-driven
+approximation of |TransferFunctions|. The |PAAAReductor| can handle any models
+that have a |TransferFunction| attribute or Numpy data as inputs. The
+implementation works in non-parametric, parametric, SISO as well as MIMO
+settings.
 
 New approach to handling randomness in pyMOR
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
