@@ -25,6 +25,8 @@ class PHIRKAReductor(GenericIRKAReductor):
 
         It uses IRKA as the intermediate reductor.
 
+        See :cite:`GPBV12`.
+
         Parameters
         ----------
         rom0_params
