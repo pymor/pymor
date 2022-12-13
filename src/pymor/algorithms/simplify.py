@@ -4,7 +4,7 @@
 
 from pymor.algorithms.rules import RuleTable, match_class
 from pymor.models.interface import Model
-from pymor.operators.constructions import ConcatenationOperator, LincombOperator, VectorArrayOperator
+from pymor.operators.constructions import LincombOperator, ConcatenationOperator, VectorArrayOperator, IdentityOperator
 from pymor.operators.interface import Operator, as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ParameterFunctional
@@ -175,7 +175,9 @@ class ContractRules(RuleTable):
         ops_rev = list(op.operators[::-1])
         i = 0
         while i + 1 < len(ops_rev):
-            if (ops_rev[i+1].linear and not ops_rev[i+1].parametric):
+            if isinstance(ops_rev[i], IdentityOperator) and len(ops_rev) > 1:
+                del ops_rev[i]
+            elif (ops_rev[i+1].linear and not ops_rev[i+1].parametric):
                 if isinstance(ops_rev[i], NumpyMatrixOperator):
                     if not ops_rev[i].sparse:  # do not touch sparse matrices
                         U = ops_rev[i+1].source.from_numpy(ops_rev[i].matrix.T)
