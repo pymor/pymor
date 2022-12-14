@@ -1674,7 +1674,6 @@ class PHLTIModel(LTIModel):
         generalized
             If `True`, the resulting |PHLTIModel| will have :math:`Q=I`.
         """
-
         # Determine solution of KYP inequality
         L = model.gramian('pr_c_lrcf')
         X = L.H @ L
