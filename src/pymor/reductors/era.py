@@ -186,7 +186,7 @@ class ERAReductor(CacheableObject):
             s2 = self._s2_W2()[0]
             err += 4 * np.linalg.norm(s2[num_right:])**2
 
-        return err
+        return np.sqrt(err)
 
     def reduce(self, r=None, tol=None, num_left=None, num_right=None):
         """Construct a minimal realization.
