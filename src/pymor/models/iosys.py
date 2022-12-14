@@ -1052,6 +1052,7 @@ class LTIModel(Model):
             - `'lyap'`: Lyapunov Gramian,
             - `'bs'`: Bernoulli stabilized Gramian,
             - `'lqg'`: LQG Gramian,
+            - `'pr'`: positive real Gramian,
             - `('br', gamma)`: bounded real Gramian,
         mu
             |Parameter values|.
@@ -1077,6 +1078,9 @@ class LTIModel(Model):
         elif typ == 'lqg':
             cf = self.gramian('lqg_c_lrcf', mu=mu)
             of = self.gramian('lqg_o_lrcf', mu=mu)
+        elif typ == 'pr':
+            cf = self.gramian('pr_c_lrcf', mu=mu)
+            of = self.gramian('pr_o_lrcf', mu=mu)
         elif isinstance(typ, tuple) and typ[0] == 'br' and typ[1] > 0:
             gamma = typ[1]
             cf = self.gramian(('br_c_lrcf', gamma), mu=mu)
