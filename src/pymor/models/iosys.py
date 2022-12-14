@@ -774,7 +774,7 @@ class LTIModel(Model):
 
         # solution computation
         B_va = self.B.as_range_array(mu)
-        Xs = [
+        Xs = tuple(
             self.time_stepper.solve(
                 operator=-self.A,
                 rhs=b,
@@ -786,7 +786,7 @@ class LTIModel(Model):
                 num_values=self.num_values,
             )
             for b in B_va
-        ]
+        )
 
         # output computation
         y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
