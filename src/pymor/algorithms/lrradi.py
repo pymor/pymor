@@ -51,7 +51,7 @@ def ricc_lrcf_solver_options(lrradi_tol=1e-10,
                                                'subspace_columns': hamiltonian_shifts_subspace_columns}}}}
 
 
-def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
+def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     """Compute an approximate low-rank solution of a Riccati equation.
 
     See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
@@ -71,6 +71,8 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         The operator C as a |VectorArray| from `A.source`.
     R
         The matrix R as a 2D |NumPy array| or `None`.
+    S
+        The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the Riccati equation is
         transposed.
@@ -84,7 +86,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         Low-rank Cholesky factor of the Riccati equation solution,
         |VectorArray| from `A.source`.
     """
-    _solve_ricc_check_args(A, E, B, C, R, trans)
+    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    if S is not None:
+        raise NotImplementedError
     options = _parse_options(options, ricc_lrcf_solver_options(), 'lrradi', None, False)
     logger = getLogger('pymor.algorithms.lrradi.solve_ricc_lrcf')
 
