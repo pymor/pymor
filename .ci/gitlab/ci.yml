@@ -23,8 +23,8 @@ stages:
           when: never
         - when: on_success
     variables:
-        PYPI_MIRROR_TAG: 209a55ff6ee013913a74729eddd4434920d39a02
-        CI_IMAGE_TAG: 209a55ff6ee013913a74729eddd4434920d39a02
+        PYPI_MIRROR_TAG: 5d76bb28c78d7cef84bbecfeccfe50aa8cc7843f
+        CI_IMAGE_TAG: 5d76bb28c78d7cef84bbecfeccfe50aa8cc7843f
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
         BINDERIMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
@@ -133,11 +133,12 @@ stages:
         alias: pymor__devpi
     before_script:
       # bump to our minimal version
-      - python3 -m pip install devpi-client
+      - python3 -m pip install "devpi-client"
+      - python3 -m pip install "https://m.devpi.net/fschulze/dev/+f/6ac/e7aaa2d1196f1/devpi_common-3.7.1.dev0-py2.py3-none-any.whl"  
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password ''
       - devpi upload --from-dir --formats=* ./dist/*.whl
-      - python3 -m pip install pip~=21.0
+      - python3 -m pip install pip~=22.0
       - python3 -m pip remove -y pymor || true
     # the docker service adressing fails on other runners
     tags: [mike]
