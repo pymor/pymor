@@ -14,6 +14,7 @@ from pymor.algorithms.lyapunov import (_chol, solve_cont_lyap_lrcf, solve_disc_l
 from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.algorithms.timestepping import TimeStepper, DiscreteTimeStepper
 from pymor.algorithms.to_matrix import to_matrix
+from pymor.analyticalproblems.functions import ExpressionFunction
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -723,26 +724,53 @@ class LTIModel(Model):
         """
         assert self.T is not None
 
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+
         # solution computation
-        Xs0 = self.E.apply_inverse(self.B.as_range_array(mu=mu), mu=mu)
-        Xs = tuple(
-            self.time_stepper.solve(
-                operator=-self.A,
-                rhs=None,
-                initial_data=X0,
-                mass=None if isinstance(self.E, IdentityOperator) else self.E,
-                initial_time=0,
-                end_time=self.T,
-                mu=mu,
-                num_values=self.num_values,
-            )
-            for X0 in Xs0
+        common_solver_opts = dict(
+            operator=-self.A,
+            mass=None if isinstance(self.E, IdentityOperator) else self.E,
+            initial_time=0,
+            end_time=self.T,
+            num_values=self.num_values,
         )
+        if self.sampling_time == 0:
+            Xs0 = self.E.apply_inverse(self.B.as_range_array(mu=mu), mu=mu)
+            Xs = tuple(
+                self.time_stepper.solve(
+                    rhs=None,
+                    initial_data=X0,
+                    mu=mu,
+                    **common_solver_opts,
+                )
+                for X0 in Xs0
+            )
+        else:
+            rhs = LinearInputOperator(self.B)
+            Xs = tuple(
+                self.time_stepper.solve(
+                    rhs=rhs,
+                    initial_data=self.solution_space.zeros(1),
+                    mu=mu.with_(input=ExpressionFunction(
+                        '['
+                        + i * '0, '
+                        + '(t[0] == 0)'
+                        + (self.dim_input - i - 1) * ', 0'
+                        + ']',
+                        variable='t',
+                    )),
+                    **common_solver_opts,
+                ) / self.sampling_time
+                for i in range(self.dim_input)
+            )
 
         # output computation
         y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
         for i, X in enumerate(Xs):
             y[:, :, i] = self.C.apply(X, mu=mu).to_numpy()
+        if self.sampling_time > 0 and isinstance(self.D, ZeroOperator):
+            y[0] += to_matrix(self.D, mu=mu, format='dense')
 
         if return_solution:
             return y, Xs
