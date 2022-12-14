@@ -11,6 +11,7 @@ dependencies:
   - bash_kernel
   - check-manifest==0.48
   - click
+  - codecov==2.1.12
   - diskcache
   - docutils==0.18.1
   - flake8-docstrings==1.6.0
@@ -28,8 +29,8 @@ dependencies:
   - mpi4py>=3.0.3
   - myst-nb>=0.16
   - nbresuse
-  - numpy>=1.17.5,<1.24
-  - numpy>=1.19.4,<1.24
+  - numpy>=1.17.5
+  - numpy>=1.19.4
   - packaging
   - pillow
   - pybind11==2.9.2
