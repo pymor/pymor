@@ -143,11 +143,12 @@ rules:
         alias: pymor__devpi
     before_script:
       # bump to our minimal version
-      - python3 -m pip install devpi-client
+      - python3 -m pip install "devpi-client"
+      - python3 -m pip install "https://m.devpi.net/fschulze/dev/+f/6ac/e7aaa2d1196f1/devpi_common-3.7.1.dev0-py2.py3-none-any.whl"  
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password ''
       - devpi upload --from-dir --formats=* ./dist/*.whl
-      - python3 -m pip install pip~=21.0
+      - python3 -m pip install pip~=22.0
       - python3 -m pip remove -y pymor || true
     # the docker service adressing fails on other runners
     tags: [mike]
