@@ -40,9 +40,7 @@ dependencies:
 
 '''
 
-# AFAICT we _should_ install pytorch-cpu instead of torch, that
-# fails to install everywhere, so we're noping out of torch entirely
-BLOCKLIST = ('torch',)
+BLOCKLIST = tuple()
 PYPI_TO_CONDA_PACKAGENAME_MAPPING = {'torch': ['pytorch-cpu'],
                                      'gmsh': ['python-gmsh', 'gmsh']}
 NO_ARCH = ['noarch', None]
