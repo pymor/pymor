@@ -956,9 +956,11 @@ class LTIModel(Model):
             return solve_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
                                    trans=True, options=options_ricc_lrcf)
         elif typ == 'pr_c_lrcf':
-            return solve_pos_ricc_lrcf(A=A, E=None, B=B, C=None, R=D - D.H, S=-C.H, trans=True)
+            return solve_pos_ricc_lrcf(A=A, E=None, B=B.as_range_array(mu=mu), C=A.source.zeros(),
+                                       R=to_matrix(D - D.H, 'dense'), S=(-C.H).as_range_array(mu=mu), trans=True)
         elif typ == 'pr_o_lrcf':
-            return solve_pos_ricc_lrcf(A=A, E=None, B=None, C=C, R=D - D.H, S=-B.H)
+            return solve_pos_ricc_lrcf(A=A, E=None, B=A.source.zeros(), C=C.as_source_array(mu=mu),
+                                       R=to_matrix(D - D.H, 'dense'), S=-B.H.as_source_array(mu=mu))
         elif typ[0] == 'br_c_lrcf':
             return solve_pos_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
                                        R=(typ[1] ** 2 * np.eye(self.dim_output)
