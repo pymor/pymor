@@ -40,10 +40,10 @@ class ERAReductor(CacheableObject):
     the Hankel matrix, i.e.
 
     .. math::
-        \hat{h}_i=W_1^Th_iW_2,
+        \hat{h}_i = W_L^T h_i W_R,
 
-    where :math:`l_1\leq p` and :math:`l_2\leq m` are the number of left and right tangential
-    directions and :math:`W_1\in\mathbb{R}^{p\times l_1}` and :math:`W_2\in\mathbb{R}^{m\times l_2}`
+    where :math:`n_L \leq p` and :math:`n_R \leq m` are the number of left and right tangential
+    directions and :math:`W_L \in \mathbb{R}^{p \times n_L}` and :math:`W_R \in \mathbb{R}^{m \times n_R}`
     are the left and right projectors, respectively. See :cite:`KG16`.
 
     Attributes
@@ -116,7 +116,7 @@ class ERAReductor(CacheableObject):
             self.logger.info('Data has low rank! Accelerating computation with output tangential projections ...')
             num_left = m * s
         if num_right is None and p * s < m:
-            self.logger.info('Data has low rank! Accelerating computation with output tangential projections ...')
+            self.logger.info('Data has low rank! Accelerating computation with input tangential projections ...')
             num_right = p * s
         h = self._project_markov_parameters(num_left, num_right) if num_left or num_right else self.data
         self.logger.info(f'Computing SVD of the {"projected " if num_left or num_right else ""}Hankel matrix ...')
@@ -143,8 +143,11 @@ class ERAReductor(CacheableObject):
         Without tangential projection of the Markov parameters, the error bounds are given by
 
         .. math::
-            \sum_{i=1}^{2s-1}\lVert C_rA_r^{i-1}B_r-h_i\rVert_F^2\leq\sigma_{r+1}(\mathcal{H})
-            \sqrt{r+p+m},
+            \sum_{i = 1}^{2 s - 1}
+            \lVert C_r A_r^{i - 1} B_r - h_i \rVert_F^2
+            \leq
+            \sigma_{r + 1}(\mathcal{H})
+            \sqrt{r + p + m},
 
         where :math:`(A_r,B_r,C_r)` is the reduced realization of order :math:`r`,
         :math:`h_i\in\mathbb{R}^{p\times m}` is the :math:`i`-th Markov parameter
@@ -154,9 +157,14 @@ class ERAReductor(CacheableObject):
         With tangential projection, the bound is given by
 
         .. math::
-            \sum_{i=1}^{2s-1}\lVert C_rA_r^{i-1}B_r-h_i\rVert_F^2\leq
-            4\left(\sum_{i=l_1+1}^p\sigma_i^2(\Theta_L)+\sum_{i=l_2+1}^m\sigma_i^2(\Theta_R)\right)
-            +2\sigma_{r+1}(\mathcal{H})\sqrt{r+l_1+l_2},
+            \sum_{i = 1}^{2 s - 1}
+            \lVert C_r A_r^{i - 1} B_r - h_i \rVert_F^2
+            \leq
+            4 \left(
+                \sum_{i = n_L + 1}^p \sigma_i^2(\Theta_L)
+                + \sum_{i = n_R + 1}^m \sigma_i^2(\Theta_R)
+            \right)
+            + 2 \sigma_{r + 1}(\mathcal{H}) \sqrt{r + n_L + n_R},
 
         where :math:`\Theta_L,\,\Theta_R` is the matrix of horizontally or vertically stacked Markov
         parameters, respectively. See :cite:`KG16` (Thm. 3.4) for details.
@@ -197,13 +205,13 @@ class ERAReductor(CacheableObject):
         Returns
         -------
         rom
-            Reduced-order discrete-time |LTIModel|.
+            Reduced-order |LTIModel|.
         """
         assert r is not None or tol is not None
         n, p, m = self.data.shape
         s = n if self.force_stability else (n + 1) // 2
-        assert num_left is None or isinstance(num_left, int) and num_left <= p
-        assert num_right is None or isinstance(num_right, int) and num_right <= m
+        assert num_left is None or isinstance(num_left, int) and 0 < num_left < p
+        assert num_right is None or isinstance(num_right, int) and 0 < num_right < m
         assert r is None or 0 < r <= min((num_left or p), (num_right or m)) * s
 
         sv, U, V = self._sv_U_V(num_left, num_right)
