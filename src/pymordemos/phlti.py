@@ -8,10 +8,8 @@ from matplotlib import pyplot as plt
 from typer import Argument, run
 
 from pymor.models.iosys import PHLTIModel
-<<<<<<< HEAD
+from pymor.reductors.bt import PRBTReductor
 from pymor.reductors.h2 import IRKAReductor
-=======
->>>>>>> 217d49701 ([pymordemos.phlti] update demo to reduce the msd model with pHIRKA)
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
 
 
@@ -132,11 +130,12 @@ def main(
 
     fom = PHLTIModel.from_matrices(J, R, G, Q=Q)
 
+    prbt = PRBTReductor(fom)
     irka = IRKAReductor(fom)
     phirka = PHIRKAReductor(fom)
 
-    reductors = {'IRKA': irka, 'pH-IRKA': phirka}
-    markers = {'IRKA': 'o', 'pH-IRKA': 's'}
+    reductors = {'PRBT': prbt, 'IRKA': irka, 'pH-IRKA': phirka}
+    markers = {'PRBT': 'x', 'IRKA': 'o', 'pH-IRKA': 's'}
 
     if reduced_order > 0:
         reduced_order = [reduced_order]
