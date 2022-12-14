@@ -918,6 +918,7 @@ class LTIModel(Model):
         A = self.A.assemble(mu)
         B = self.B
         C = self.C
+        D = self.D
         E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
         options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
         options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
@@ -954,15 +955,19 @@ class LTIModel(Model):
         elif typ == 'lqg_o_lrcf':
             return solve_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
                                    trans=True, options=options_ricc_lrcf)
+        elif typ == 'pr_c_lrcf':
+            return solve_pos_ricc_lrcf(A=A, E=None, B=B, C=None, R=D - D.H, S=-C.H, trans=True)
+        elif typ == 'pr_o_lrcf':
+            return solve_pos_ricc_lrcf(A=A, E=None, B=None, C=C, R=D - D.H, S=-B.H)
         elif typ[0] == 'br_c_lrcf':
             return solve_pos_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
-                                       R=(typ[1]**2 * np.eye(self.dim_output)
+                                       R=(typ[1] ** 2 * np.eye(self.dim_output)
                                           if typ[1] != 1
                                           else None),
                                        trans=False, options=options_ricc_pos_lrcf)
         elif typ[0] == 'br_o_lrcf':
             return solve_pos_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
-                                       R=(typ[1]**2 * np.eye(self.dim_input)
+                                       R=(typ[1] ** 2 * np.eye(self.dim_input)
                                           if typ[1] != 1
                                           else None),
                                        trans=True, options=options_ricc_pos_lrcf)
@@ -989,6 +994,10 @@ class LTIModel(Model):
               Gramian,
             - `('br_o_lrcf', gamma)`: low-rank Cholesky factor of the "observability" bounded real
               Gramian.
+            - `'pr_c_lrcf'`: low-rank Cholesky factor of the "controllability" positive real
+              Gramian,
+            - `'pr_o_lrcf'`: low-rank Cholesky factor of the "observability" positive real
+              Gramian.
 
             .. note::
                 For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
@@ -1004,7 +1013,8 @@ class LTIModel(Model):
         If typ ends with `'_lrcf'`, then the Gramian factor as a |VectorArray| from `self.A.source`.
         If typ ends with `'_dense'`, then the Gramian as a |NumPy array|.
         """
-        assert (typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'bs_c_lrcf', 'bs_o_lrcf', 'lqg_c_lrcf', 'lqg_o_lrcf')
+        assert (typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'bs_c_lrcf', 'bs_o_lrcf', 'lqg_c_lrcf', 'lqg_o_lrcf',
+                        'pr_c_lrcf', 'pr_o_lrcf')
                 or isinstance(typ, tuple) and len(typ) == 2 and typ[0] in ('br_c_lrcf', 'br_o_lrcf'))
 
         if ((isinstance(typ, str) and (typ.startswith('bs') or typ.startswith('lqg')) or isinstance(typ, tuple))
@@ -1652,6 +1662,42 @@ class PHLTIModel(LTIModel):
         P = contract(expand(self.Q.H @ self.P))
 
         return self.with_(E=E, J=J, R=R, G=G, P=P, Q=None)
+
+    def from_passive_LTIModel(self, model, generalized=True):
+        """
+        Convert a passive |LTIModel| to a |PHLTIModel|.
+
+        Parameters
+        ----------
+        model
+            The passive |LTIModel| to convert.
+        generalized
+            If `True`, the resulting |PHLTIModel| will have :math:`Q=I`.
+        """
+
+        # Determine solution of KYP inequality
+        L = model.gramian('pr_c_lrcf')
+        X = L.H @ L
+
+        if generalized:
+            E = X.H @ model.E
+            J = 0.5 * (X @ model.A - X @ model.A.H)
+            R = -0.5 * (X @ model.A - X @ model.A.H)
+            G = 0.5 * (X @ model.B + model.C)
+            P = 0.5 * (X @ model.B - model.C)
+            S = 0.5 * (model.D + model.D.H)
+            N = 0.5 * (model.D - model.D.H)
+
+        else:
+            J = 0.5 * (model.A.apply_inverse(X) - model.A.apply_inverse(model.X).H)
+            R = -0.5 * (model.A.apply_inverse(model.X) + model.A.apply_inverse(X).H)
+            G = 0.5 * (model.C.apply_inverse(X).H + model.B)
+            P = 0.5 * (model.C.apply_inverse(X).H - model.B)
+            S = 0.5 * (model.D + model.D.H)
+            N = 0.5 * (model.D - model.D.H)
+            Q = X
+
+        return self.with_(E=E, J=J, R=R, G=G, P=P, S=S, N=N, Q=Q, new_type=PHLTIModel)
 
     def __str__(self):
         string = (
