@@ -19,10 +19,6 @@ details.
 Release highlights
 ^^^^^^^^^^^^^^^^^^
 
-Long short-term memory neural networks
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1460] Long short-term memory neural networks <https://github.com/pymor/pymor/pull/1460>`_
-
 Eigensystem Realization Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The Eigensystem Realization Algorithm (aka. Ho-Kalman or Silverman Algorithm) can be used to
@@ -44,6 +40,17 @@ approximation of |TransferFunctions|. The :class:`~pymor.reductors.aaa.PAAAReduc
 that have a `transfer_function` attribute or Numpy data as inputs. The
 implementation works in non-parametric, parametric, SISO as well as MIMO
 settings.
+
+Long short-term memory neural networks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+As an alternative neural network architecture for data-driven model order reduction
+of parametrized instationary problems, long short-term memory neural networks (LSTMs)
+with corresponding reductors and reduced order models were introduced in
+`[#1460] <https://github.com/pymor/pymor/pull/1460>`_. Similar to the already existing
+reductors based on neural networks, the map from parameter to reduced coefficients is
+approximated by a neural network, while the reduced basis itself is constructed using
+proper orthogonal decomposition. This results in a purely data-driven approach that
+is applicable to any given instationary full-order model.
 
 New approach to handling randomness in pyMOR
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
