@@ -16,21 +16,24 @@ class PAAAReductor(BasicObject):
     """Reductor implementing the parametric AAA algorithm.
 
     The reductor implements the parametric AAA algorithm and can be used either with
-    data or a given full-order model which can be a |TransferFunction| or any model which
+    data or a given full-order model, which can be a |TransferFunction| or any model which
     has a `transfer_function` attribute. MIMO and non-parametric data is accepted. See
     :cite:`NST18` for the non-parametric and :cite:`CRBG20` for the parametric version of
-    the algorithm.
+    the algorithm. The reductor computes approximations based on the multivariate barycentric
+    form :math:`H(s,p,...)` (see :func:`~pymor.reductors.aaa.make_bary_func`), where
+    the inputs :math:`s,p,...` are referred to as the variables. Further, :math:`s` is
+    the Laplace variable and :math:`p` as well as other remaining inputs are parameters.
 
     .. note::
         The dimension of the Loewner matrix which will be assembled in the algorithm has
         `len(sampling_values[0])*...*len(sampling_values[-1])` rows. This reductor should
-        only be used with a low number of parameters.
+        only be used with a low number of variables.
 
     Parameters
     ----------
     sampling_values
         Values where sample data has been evaluated or the full-order model should be evaluated.
-        Sampling values are represented as a nested list `svs` such that `svs[i]` corresponds
+        Sampling values are represented as a nested list such that `sampling_values[i]` corresponds
         to sampling values of the `i`-th variable. The first variable is the Laplace variable.
     samples_or_fom
         Can be either a full-order model (|TransferFunction| or |Model| with a `transfer_function`
