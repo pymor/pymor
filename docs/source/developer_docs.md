@@ -102,9 +102,10 @@ The requirements files are input for `.ci/create_conda_env.py` which created a C
 spec file that contains only those dependencies that are available on all OS-Python combinations
 for which GitHub Action based CI is run in Conda envs.
 
-A GitHub Action will update all "downstream" files of `dependencies.py` if it changes in a push.
-The result will be pushed into the same branch, but due to a GitHub limitation no new workflows
-will run as a result of that push.
+A GitHub Action will update all "downstream" files of `dependencies.py` if it changes in a pull request.
+The resulting change will be added in a new pull request against the original pull request's source branch.
+The new pull request will be labeled with `pr:change` and `dependencies` and assigned to the original pull
+request's author.
 
 When adding new package dependencies, or version restrictions, these need to be reflected into
 a commit in our docker repository for the [constraints requirements](https://github.com/pymor/docker/tree/main/constraints)

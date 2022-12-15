@@ -8,10 +8,6 @@ on:
       - 20*.*.x
       - create-pull-request/patch*
   pull_request:
-    branches:
-      - main
-      - 20*.*.x
-      - create-pull-request/patch*
 
 jobs:
   bugout:
