@@ -48,3 +48,27 @@ jobs:
         with:
           name: requirements
           path: requirements*.txt
+  docker:
+    name: Update docker images
+    runs-on: ubuntu-22.04
+    needs: update
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: pymor/docker
+      - uses: actions/download-artifact@v3
+        with:
+          name: requirements
+          path: ./constraints/
+      - uses: peter-evans/create-pull-request@v4.2.3
+        name: Create a PR for dependencies
+        with:
+          commit-message: "[Bot] Update requirements/constraints"
+          title: "Update requirements for pymor PR ${{ format('{0}', github.event.pull_request.number) }}"
+          body: "Update requirements PR ${{ format('https://github.com/{1}/pulls/{0}', github.event.pull_request.number, github.repository) }}"
+          author: pyMOR Bot <ci@pymor.org>
+          labels: pr:change,infrastructure
+          delete-branch: true
+          branch-suffix: short-commit-hash
+          base: ${{ github.head_ref }}
+          assignees: ${{ github.event.pull_request.author.login }}
