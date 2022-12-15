@@ -43,8 +43,9 @@ class ERAReductor(CacheableObject):
         \hat{h}_i = W_L^T h_i W_R,
 
     where :math:`n_L \leq p` and :math:`n_R \leq m` are the number of left and right tangential
-    directions and :math:`W_L \in \mathbb{R}^{p \times n_L}` and :math:`W_R \in \mathbb{R}^{m \times n_R}`
-    are the left and right projectors, respectively. See :cite:`KG16`.
+    directions and :math:`W_L \in \mathbb{R}^{p \times n_L}` an
+    :math:`W_R \in \mathbb{R}^{m \times n_R}` are the left and right projectors, respectively.
+    See :cite:`KG16`.
 
     Attributes
     ----------
