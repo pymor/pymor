@@ -16,7 +16,7 @@ from pymor.reductors.residual import ResidualReductor, ResidualOperator
 
 class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
     def __init__(self, fom, dd_grid, local_bases=None, product=None, reduced_estimate=False,
-                 unassembled_product=None):
+                 unassembled_product=None, fake_dirichlet_ops=None):
         self.__auto_init(locals())
 
         self.solution_space = fom.solution_space
@@ -53,7 +53,8 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         for associated_element, elements in estimator_domains.items():
             local_model, local_to_global, global_to_local = construct_local_model(
                 elements, fom.operator, fom.rhs, dd_grid.neighbors,
-                block_prod=self.unassembled_product, lincomb_outside=True)
+                block_prod=self.unassembled_product, lincomb_outside=True,
+                ops_dirichlet=self.fake_dirichlet_ops)
             node_elements = inner_node_patches[associated_element]
             # TODO: vectorize the following
             local_node_elements = [global_to_local(el) for el in node_elements]
@@ -277,7 +278,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
 
 
 def construct_local_model(local_elements, block_op, block_rhs, neighbors, block_prod=None,
-                          lincomb_outside=False):
+                          lincomb_outside=False, ops_dirichlet=None):
     def local_to_global_mapping(i):
         return local_elements[i]
 
@@ -328,10 +329,11 @@ def construct_local_model(local_elements, block_op, block_rhs, neighbors, block_
                 if block_prod:
                     patch_prod[ii][jj] = blocks_prod[I][J]
             else:
-                # fake dirichlet contribution because nn is outside the patch
-                # seems to be wrong !
-                # patch_op[ii][ii] += ops_dirichlet[ss][nn]
-                pass
+                # fake dirichlet contribution because J is outside the patch
+                if block_prod:
+                    for op in ops_dirichlet.blocks[I][J].operators:
+                        if 'constant' in op.name:
+                            patch_prod[ii][ii] += op
 
     if lincomb_outside and block_rhs.parametric:
         # porkelei for efficient residual reduction
@@ -590,7 +592,7 @@ class EllipticIPLRBEstimator(ImmutableObject):
                 residual_inner_vec = residual.product.source.make_array(residual_inner_vec)
                 res = residual.product.apply_inverse(residual_inner_vec)
                 # NOTE: Uncomment the next line to use the whole residual without restriction to support
-                # res = residual.product.apply_inverse(residual_full)
+                res = residual.product.apply_inverse(residual_full)
                 norm = np.sqrt(residual.product.apply2(res, res))
             elif isinstance(residual, ResidualOperator):
                 # this is the reduced case where residual is the reduced residual
