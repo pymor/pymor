@@ -67,6 +67,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           repository: pymor/docker
+          ssh-key: ${{ secrets.PYMOR_DOCKER_DEPLOY }}
       - uses: actions/download-artifact@v3
         with:
           name: requirements
@@ -78,8 +79,8 @@ jobs:
           title: "Update requirements for pymor PR ${{ format('{0}', github.event.pull_request.number) }}"
           body: "Update requirements PR ${{ format('https://github.com/{1}/pulls/{0}', github.event.pull_request.number, github.repository) }}"
           author: pyMOR Bot <ci@pymor.org>
-          labels: pr:change,infrastructure
+          token: ${{ secrets.PYMOR_DOCKER_PR_TOKEN }}
           delete-branch: true
           branch-suffix: short-commit-hash
-          base: ${{ github.head_ref }}
+          base: main
           assignees: ${{ github.event.pull_request.author.login }}
