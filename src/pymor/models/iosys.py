@@ -14,7 +14,7 @@ from pymor.algorithms.lyapunov import (_chol, solve_cont_lyap_lrcf, solve_disc_l
 from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
 from pymor.algorithms.timestepping import TimeStepper, DiscreteTimeStepper
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.analyticalproblems.functions import ExpressionFunction
+from pymor.analyticalproblems.functions import GenericFunction
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -748,22 +748,23 @@ class LTIModel(Model):
             )
         else:
             rhs = LinearInputOperator(self.B)
-            Xs = tuple(
-                self.time_stepper.solve(
-                    rhs=rhs,
-                    initial_data=self.solution_space.zeros(1),
-                    mu=mu.with_(input=ExpressionFunction(
-                        '['
-                        + i * '0, '
-                        + '(t[0] == 0)'
-                        + (self.dim_input - i - 1) * ', 0'
-                        + ']',
-                        variable='t',
-                    )),
-                    **common_solver_opts,
-                ) / self.sampling_time
-                for i in range(self.dim_input)
-            )
+            Xs = []
+            for i in range(self.dim_input):
+                def input_i(t):
+                    if t == 0:
+                        e_i = np.zeros(self.dim_input)
+                        e_i[i] = 1/self.sampling_time
+                        return e_i
+                    return np.zeros(self.dim_input)
+                Xs.append(
+                    self.time_stepper.solve(
+                        rhs=rhs,
+                        initial_data=self.solution_space.zeros(1),
+                        mu=mu.with_(input=GenericFunction(input_i, shape_range=(self.dim_input,))),
+                        **common_solver_opts,
+                    )
+                )
+            Xs = tuple(Xs)
 
         # output computation
         y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
