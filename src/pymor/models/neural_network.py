@@ -402,17 +402,6 @@ class LongShortTermMemoryNN(nn.Module, BasicObject):
         -------
         The output of the neural network for the input x.
         """
-        if x.ndim == 2:
-            # initialize hidden state
-            h_t = torch.zeros(self.number_layers, self.output_dimension, dtype=torch.double)
-            # initialize cell state
-            c_t = torch.zeros(self.number_layers, self.hidden_dimension, dtype=torch.double)
-        else:
-            # initialize hidden state
-            h_t = torch.zeros(self.number_layers, x.size(0), self.output_dimension, dtype=torch.double)
-            # initialize cell state
-            c_t = torch.zeros(self.number_layers, x.size(0), self.hidden_dimension, dtype=torch.double)
-
         # perform forward pass through LSTM and return the result
-        output, _ = self.lstm(x, (h_t, c_t))
+        output, _ = self.lstm(x)
         return output
