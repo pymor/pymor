@@ -70,5 +70,5 @@ jobs:
           labels: pr:change,infrastructure
           delete-branch: true
           branch-suffix: short-commit-hash
-          base: ${{ github.head_ref }}
+          base: main
           assignees: ${{ github.event.pull_request.author.login }}
