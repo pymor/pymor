@@ -106,27 +106,14 @@ with different right-hand sides.
 
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- `[#1648] Refactor Tutorial testing <https://github.com/pymor/pymor/pull/1648>`_
 - `[#1689] branch off new slycot version <https://github.com/pymor/pymor/pull/1689>`_
-- `[#1701] NCC <https://github.com/pymor/pymor/pull/1701>`_
-- `[#1702] Update docker images <https://github.com/pymor/pymor/pull/1702>`_
-- `[#1709] update DUNE versions <https://github.com/pymor/pymor/pull/1709>`_
 - `[#1711] Remove np.matrix warnings <https://github.com/pymor/pymor/pull/1711>`_
 - `[#1731] Fix Expression.to_fenics for conditionals <https://github.com/pymor/pymor/pull/1731>`_
-- `[#1735] [docs] manually editing docs repo is no longer necessary <https://github.com/pymor/pymor/pull/1735>`_
 - `[#1738] Improve Operator.apply_inverse default impl via to_matrix <https://github.com/pymor/pymor/pull/1738>`_
-- `[#1740] Some small improvements of the documentation <https://github.com/pymor/pymor/pull/1740>`_
 - `[#1745] Fixes #1744 <https://github.com/pymor/pymor/pull/1745>`_
-- `[#1749] Fixes #1717 <https://github.com/pymor/pymor/pull/1749>`_
-- `[#1752] small deprecation fix <https://github.com/pymor/pymor/pull/1752>`_
-- `[#1758] Split coverage upload into separate job <https://github.com/pymor/pymor/pull/1758>`_
 - `[#1779] Reset dlopen flags after dolfin import <https://github.com/pymor/pymor/pull/1779>`_
 - `[#1780] Let RuleTable.get_children return a list <https://github.com/pymor/pymor/pull/1780>`_
 - `[#1781] Fix MPIOperator.apply_adjoint <https://github.com/pymor/pymor/pull/1781>`_
-- `[#1784] Testing improvements <https://github.com/pymor/pymor/pull/1784>`_
 - `[#1787] Allow ParameterSpace to project parameters into its ranges <https://github.com/pymor/pymor/pull/1787>`_
-- `[#1812] Add console highlighting extension to 'conf.py' <https://github.com/pymor/pymor/pull/1812>`_
 - `[#1815] Reset random state for each test <https://github.com/pymor/pymor/pull/1815>`_
-- `[#1817] Adjust 'samdp' tests <https://github.com/pymor/pymor/pull/1817>`_
 - `[#1818] [discretizers.builtin] Eliminate zeros of sparse matrices <https://github.com/pymor/pymor/pull/1818>`_
-- `[#1819] Reduce 'eigs' Tests <https://github.com/pymor/pymor/pull/1819>`_
