@@ -418,6 +418,7 @@ class NonlinearAdvectionOperator(Operator):
                        D_NUM_FLUX_0[BOUNDARIES]])
 
         A = coo_matrix((V, (I0, I1)), shape=(g.size(0), g.size(0)))
+        A.eliminate_zeros()
         A = csc_matrix(A).copy()   # See pymor.discretizers.builtin.cg.DiffusionOperatorP1 for why copy() is necessary
         A = dia_matrix(([1. / VOLS0], [0]), shape=(g.size(0),) * 2) * A
 
@@ -509,6 +510,7 @@ class LinearAdvectionLaxFriedrichsOperator(NumpyMatrixBasedOperator):
         V = np.hstack([V_inner, V_out, V_dir])
 
         A = coo_matrix((V, (I0, I1)), shape=(g.size(0), g.size(0)))
+        A.eliminate_zeros()
         A = csc_matrix(A).copy()   # See pymor.discretizers.builtin.cg.DiffusionOperatorP1 for why copy() is necessary
         A = dia_matrix(([1. / g.volumes(0)], [0]), shape=(g.size(0),) * 2) * A
 
@@ -846,6 +848,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
             FLUXES_I1 = np.concatenate((FLUXES_I1, SE_I0_D))
 
         A = coo_matrix((FLUXES, (FLUXES_I0, FLUXES_I1)), shape=(self.source.dim, self.source.dim))
+        A.eliminate_zeros()
         A = (dia_matrix(([1. / grid.volumes(0)], [0]), shape=(grid.size(0),) * 2) * A).tocsc()
 
         return A
