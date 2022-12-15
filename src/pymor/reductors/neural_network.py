@@ -855,13 +855,10 @@ class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
         if u is None:
             u = self.fom.solve(mu)
 
-        def time_dependent_parameter(t):
-            return [mu.get_time_dependent_value(param)(t) for param in self.fom.parameters]
-
-        parameters = torch.DoubleTensor(np.array([time_dependent_parameter(t)
+        parameters = torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
                                                   for t in np.linspace(0., self.fom.T, self.nt)]))
 
-        sample = [(parameters[..., 0], torch.transpose(torch.DoubleTensor(self.reduced_basis.inner(u)), 0, 1))]
+        sample = [(parameters, torch.transpose(torch.DoubleTensor(self.reduced_basis.inner(u)), 0, 1))]
 
         return sample
 
@@ -873,7 +870,7 @@ class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
         assert isinstance(hidden_dimension, int)
         # input and output size of the neural network are prescribed by the
         # dimension of the parameter space and the reduced basis size
-        return [self.fom.parameters.dim, hidden_dimension, len(self.reduced_basis), ]
+        return [self.fom.parameters.dim + 1, hidden_dimension, len(self.reduced_basis), ]
 
     def _build_rom(self):
         """Construct the reduced order model."""
@@ -1072,13 +1069,10 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkLSTMInst
         output_trajectory = self.fom.output(mu)
         output_size = output_trajectory.shape[0]
 
-        def time_dependent_parameter(t):
-            return [mu.get_time_dependent_value(param)(t) for param in self.fom.parameters]
-
-        parameters = torch.DoubleTensor(np.array([time_dependent_parameter(t)
+        parameters = torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
                                                   for t in np.linspace(0., self.fom.T, output_size)]))
 
-        sample = [(parameters[..., 0], output_trajectory)]
+        sample = [(parameters, output_trajectory)]
 
         return sample
 
@@ -1090,7 +1084,7 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkLSTMInst
         assert isinstance(hidden_dimension, int)
         # input and output size of the neural network are prescribed by the
         # dimension of the parameter space and the reduced basis size
-        return [self.fom.parameters.dim, hidden_dimension, self.fom.dim_output, ]
+        return [self.fom.parameters.dim + 1, hidden_dimension, self.fom.dim_output, ]
 
     def _build_rom(self):
         """Construct the reduced order model."""

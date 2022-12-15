@@ -300,15 +300,12 @@ class NeuralNetworkLSTMInstationaryModel(BaseNeuralNetworkModel):
 
     def _compute_solution(self, mu=None, **kwargs):
         # create tensor of parameters at different time instances
-        def time_dependent_parameter(t):
-            return [mu.get_time_dependent_value(param)(t) for param in self.parameters]
-
-        inputs = torch.DoubleTensor(np.array([time_dependent_parameter(t)[0]
-                                              for t in np.linspace(0., self.T, self.nt)]))[None, ...]
+        inputs = torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
+                                              for t in np.linspace(0., self.T, self.nt)]))
         inputs = self._scale_input(inputs)
         # obtain (reduced) coordinates by forward pass of the parameter values
         # through the neural network
-        result = self.neural_network(inputs).data.numpy()[0]
+        result = self.neural_network(inputs).data.numpy()
         result = self._scale_target(result)
 
         return self.solution_space.make_array(result)
@@ -416,13 +413,10 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
                  output_d_mu_return_array=False, mu=None, **kwargs):
 
         if output:
-            def time_dependent_parameter(t):
-                return [mu.get_time_dependent_value(param)(t) for param in self.parameters]
-
-            inputs = torch.DoubleTensor(np.array([time_dependent_parameter(t)[0]
-                                                  for t in np.linspace(0., self.T, self.nt)]))[None, ...]
+            inputs = torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
+                                                  for t in np.linspace(0., self.T, self.nt)]))
             inputs = self._scale_input(inputs)
-            outputs = self.neural_network(inputs).data.numpy()[0]
+            outputs = self.neural_network(inputs).data.numpy()
             outputs = self._scale_target(outputs)
             if isinstance(outputs, torch.Tensor):
                 outputs = outputs.numpy()
@@ -533,10 +527,16 @@ class LongShortTermMemoryNN(nn.Module, BasicObject):
         -------
         The output of the neural network for the input x.
         """
-        # initialize hidden state
-        h_t = torch.zeros(self.number_layers, x.size(0), self.output_dimension, dtype=torch.double)
-        # initialize cell state
-        c_t = torch.zeros(self.number_layers, x.size(0), self.hidden_dimension, dtype=torch.double)
+        if x.ndim == 2:
+            # initialize hidden state
+            h_t = torch.zeros(self.number_layers, self.output_dimension, dtype=torch.double)
+            # initialize cell state
+            c_t = torch.zeros(self.number_layers, self.hidden_dimension, dtype=torch.double)
+        else:
+            # initialize hidden state
+            h_t = torch.zeros(self.number_layers, x.size(0), self.output_dimension, dtype=torch.double)
+            # initialize cell state
+            c_t = torch.zeros(self.number_layers, x.size(0), self.hidden_dimension, dtype=torch.double)
 
         # perform forward pass through LSTM and return the result
         output, _ = self.lstm(x, (h_t, c_t))
