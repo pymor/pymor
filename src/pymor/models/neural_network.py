@@ -244,7 +244,7 @@ class NeuralNetworkInstationaryModel(BaseNeuralNetworkModel):
 class NeuralNetworkLSTMInstationaryModel(BaseNeuralNetworkModel):
     """Class for models of instationary problems that use LSTM neural networks.
 
-    This class implements a |Model| that uses a LSTM neural network for solving.
+    This class implements a |Model| that uses an LSTM neural network for solving.
 
     Parameters
     ----------
@@ -516,8 +516,7 @@ class LongShortTermMemoryNN(nn.Module, BasicObject):
         self.lstm = nn.LSTM(input_dimension, hidden_dimension, num_layers=number_layers,
                             proj_size=output_dimension, batch_first=True).double()
 
-        if not self.logging_disabled:
-            self.logger.info(f'Architecture of the neural network:\n{self}')
+        self.logger.info(f'Architecture of the neural network:\n{self}')
 
     def forward(self, x):
         """Performs the forward pass through the neural network.

@@ -668,7 +668,7 @@ class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
     """Reduced Basis reductor for instationary problems relying on LSTM neural networks.
 
     This is a reductor that constructs a reduced basis using proper
-    orthogonal decomposition and trains a LSTM neural network that approximates
+    orthogonal decomposition and trains an LSTM neural network that approximates
     the mapping from parameter to coefficients of the full-order solution
     in the reduced basis for a fixed number of timesteps.
 
