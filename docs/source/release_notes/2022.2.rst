@@ -52,7 +52,6 @@ approximated by a neural network, while the reduced basis itself is constructed 
 proper orthogonal decomposition. This results in a purely data-driven approach that
 is applicable to any given instationary full-order model.
 
-
 Time domain analysis of |LTIModels|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 With the introduction of time-dependent |Parameters|,
@@ -70,7 +69,13 @@ Additional new features
 
 New approach to handling randomness in pyMOR
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1736] New approach to handling randomness in pyMOR <https://github.com/pymor/pymor/pull/1736>`_
+pyMOR now consistently uses a global random generator state, which is initialized
+with a configurable fixed seed value. This approach allowed us to remove the `seed` and
+`random_state` parameters from all methods in pyMOR. The :func:`~pymor.tools.random.spawn_rng`
+wrapper ensures deterministic uncorrelated execution in concurrent code.
+In special cases where pyMOR shall execute code with a specific random state the
+:func:`~pymor.tools.random.new_rng` context manager can be used to temporarily
+install another random state `[#1736] <https://github.com/pymor/pymor/pull/1736>`_.
 
 DWR reductor for output estimation with primal-dual approach
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
