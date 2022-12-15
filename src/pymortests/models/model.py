@@ -83,22 +83,32 @@ def test_quadratic_hamiltonian_model(block_phase_space):
     assert np.allclose(ham, ham[0])
 
 
+@pytest.mark.parametrize('nt', (4, 5))
+@pytest.mark.parametrize('T', (4, 5))
+@pytest.mark.parametrize('p', (1, 2))
+@pytest.mark.parametrize('m', (1, 2))
 @pytest.mark.parametrize('sampling_time', (0, 1))
-def test_lti_solve(sampling_time):
+def test_lti_solve(sampling_time, m, p, T, nt):
     if sampling_time == 0:
-        time_stepper = ExplicitEulerTimeStepper(4)
+        time_stepper = ExplicitEulerTimeStepper(nt)
     else:
         time_stepper = None
-    lti = LTIModel.from_matrices(np.diag([-0.1, -0.2]), np.ones((2, 1)), np.ones((1, 2)),
+    lti = LTIModel.from_matrices(np.diag([-0.1, -0.2]), np.ones((2, m)), np.ones((p, 2)),
                                  sampling_time=sampling_time,
-                                 T=4, initial_data=np.array([1, 2]), time_stepper=time_stepper)
-    f = '[sin(t[0])]'
+                                 T=T, initial_data=np.array([1, 2]), time_stepper=time_stepper)
+    if m == 1:
+        f = '[sin(t[0])]'
+    else:
+        f = '[sin(t[0]),sin(2*t[0])]'
     X = lti.solve(input=f)
     assert X.dim == 2
-    assert len(X) == 5
+    if sampling_time == 0:
+        assert len(X) == nt + 1
+    else:
+        assert len(X) == T + 1
     y = lti.output(input=f)
-    assert y.shape[1] == 1
-    assert y.shape[0] == 5
+    assert y.shape[1] == p
+    assert y.shape[0] == len(X)
 
 
 if __name__ == "__main__":
