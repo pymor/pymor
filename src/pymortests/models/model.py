@@ -100,15 +100,37 @@ def test_lti_solve(sampling_time, m, p, T, nt):
         f = '[sin(t[0])]'
     else:
         f = '[sin(t[0]),sin(2*t[0])]'
+
     X = lti.solve(input=f)
     assert X.dim == 2
     if sampling_time == 0:
         assert len(X) == nt + 1
     else:
         assert len(X) == T + 1
+
     y = lti.output(input=f)
     assert y.shape[1] == p
     assert y.shape[0] == len(X)
+
+    y_impulse = lti.impulse_resp()
+    assert y_impulse.shape[:2] == y.shape
+    assert y_impulse.shape[2] == m
+
+    y_impulse2, X_impulse = lti.impulse_resp(return_solution=True)
+    assert np.all(y_impulse == y_impulse2)
+    assert isinstance(X_impulse, tuple)
+    assert all(Xi.dim == 2 for Xi in X_impulse)
+    assert all(len(Xi) == len(X) for Xi in X_impulse)
+
+    y_step = lti.step_resp()
+    assert y_step.shape[:2] == y.shape
+    assert y_step.shape[2] == m
+
+    y_step2, X_step = lti.step_resp(return_solution=True)
+    assert np.all(y_step == y_step2)
+    assert isinstance(X_step, tuple)
+    assert all(Xi.dim == 2 for Xi in X_step)
+    assert all(len(Xi) == len(X) for Xi in X_step)
 
 
 if __name__ == "__main__":
