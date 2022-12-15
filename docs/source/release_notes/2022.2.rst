@@ -52,9 +52,6 @@ approximated by a neural network, while the reduced basis itself is constructed 
 proper orthogonal decomposition. This results in a purely data-driven approach that
 is applicable to any given instationary full-order model.
 
-New approach to handling randomness in pyMOR
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1736] New approach to handling randomness in pyMOR <https://github.com/pymor/pymor/pull/1736>`_
 
 Time domain analysis of |LTIModels|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,29 +64,24 @@ Time domain analysis for other system-theoretic |Models|
 (e.g., |SecondOrderModel| and |PHLTIModel|),
 will be done in future releases.
 
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+New approach to handling randomness in pyMOR
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1736] New approach to handling randomness in pyMOR <https://github.com/pymor/pymor/pull/1736>`_
+
+DWR reductor for output estimation with primal-dual approach
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1496] DWR reductor for output estimation with primal-dual approach <https://github.com/pymor/pymor/pull/1496>`_
+
 Adaptive frequency domain analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The :func:`~pymor.tools.plot.adaptive` function was added for adaptive sampling
 of functions used in plotting.
 In particular, this was enabled for adaptive plotting of Bode-related plots
 `[#1615] <https://github.com/pymor/pymor/pull/1615>`_.
-
-
-Additional new features
-^^^^^^^^^^^^^^^^^^^^^^^
-
-Caching of the dense LU decomposition for |NumpyMatrixOperator|
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The |NumpyMatrixOperator| already caches the sparse LU decomposition when the
-underlying matrix is a SciPy sparse matrix.
-Now it also caches the dense LU decomposition when the matrix is a NumPy array
-`[#1603] <https://github.com/pymor/pymor/pull/1603>`_.
-This should significantly improve the runtime when solving the same dense system
-with different right-hand sides.
-
-DWR reductor for output estimation with primal-dual approach
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1496] DWR reductor for output estimation with primal-dual approach <https://github.com/pymor/pymor/pull/1496>`_
 
 |LTIModel| can compute LQG and BR Gramians
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,6 +93,15 @@ reductors to |LTIModel|.
 In particular, these Gramians are now cached, which can significantly speed up
 reductions for multiple orders `[#995]
 <https://github.com/pymor/pymor/pull/995>`_.
+
+Caching of the dense LU decomposition for |NumpyMatrixOperator|
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The |NumpyMatrixOperator| already caches the sparse LU decomposition when the
+underlying matrix is a SciPy sparse matrix.
+Now it also caches the dense LU decomposition when the matrix is a NumPy array
+`[#1603] <https://github.com/pymor/pymor/pull/1603>`_.
+This should significantly improve the runtime when solving the same dense system
+with different right-hand sides.
 
 
 Further notable improvements
