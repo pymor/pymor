@@ -141,9 +141,11 @@ class ERAReductor(CacheableObject):
     def error_bounds(self, num_left=None, num_right=None):
         r"""Compute the error bounds for all possible reduction orders.
 
-        Without tangential projection of the Markov parameters, the error bounds are given by
+        Without tangential projection of the Markov parameters, the :math:`\mathcal{L}_2`-error
+        of the Markov parameters :math:`\epsilon` is bounded by
 
         .. math::
+            \epsilonˆ2 =
             \sum_{i = 1}^{2 s - 1}
             \lVert C_r A_r^{i - 1} B_r - h_i \rVert_F^2
             \leq
@@ -158,6 +160,7 @@ class ERAReductor(CacheableObject):
         With tangential projection, the bound is given by
 
         .. math::
+            \epsilonˆ2 =
             \sum_{i = 1}^{2 s - 1}
             \lVert C_r A_r^{i - 1} B_r - h_i \rVert_F^2
             \leq
