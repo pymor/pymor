@@ -5,7 +5,7 @@
 
 # DO NOT use any python features here that require 3.6 or newer
 
-_PYTEST = 'pytest==7.1.2'
+_PYTEST = 'pytest==7.2.0'
 # 5.12.* blocked due to https://bugreports.qt.io/browse/PYSIDE-1004
 # however the problem is not actually fixed in 5.12.3 as advertised,
 # but only starting from 5.13.1
