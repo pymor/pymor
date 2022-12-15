@@ -145,7 +145,7 @@ class ERAReductor(CacheableObject):
         of the Markov parameters :math:`\epsilon` is bounded by
 
         .. math::
-            \epsilonˆ2 =
+            \epsilon^2 =
             \sum_{i = 1}^{2 s - 1}
             \lVert C_r A_r^{i - 1} B_r - h_i \rVert_F^2
             \leq
@@ -160,7 +160,7 @@ class ERAReductor(CacheableObject):
         With tangential projection, the bound is given by
 
         .. math::
-            \epsilonˆ2 =
+            \epsilon^2 =
             \sum_{i = 1}^{2 s - 1}
             \lVert C_r A_r^{i - 1} B_r - h_i \rVert_F^2
             \leq
