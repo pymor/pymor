@@ -103,14 +103,6 @@ reductions for multiple orders `[#995]
 <https://github.com/pymor/pymor/pull/995>`_.
 
 
-Backward incompatible changes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Refactoring of the randomized linear algebra module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1753] 'rand_la' refactoring <https://github.com/pymor/pymor/pull/1753>`_
-
-
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - `[#1648] Refactor Tutorial testing <https://github.com/pymor/pymor/pull/1648>`_
