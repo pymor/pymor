@@ -322,12 +322,72 @@ def discretize_stationary_ipld3g(
     m = StationaryModel(lhs_op, rhs_op, products=products,
                         name=f'{analytical_problem.name}_P{order}{IP_scheme_ID[:-2]}LD3G')
 
+    # Fake weak Dirichlet handling for localized residual
+    fake_dirichlet_ops = np.empty((M, M), dtype=object)
+
+    for I in range(M):
+        local_space = local_models_data[I]['space']
+        local_grid = local_problems[I].grid
+        for J in dd_grid.neighbors(I):
+            J_space = local_spaces[J]
+            coupling_grid = dd_grid.coupling_grid(I, J)
+            walker = Walker(coupling_grid)
+
+            def make_fake_dirichlet_coupling_parametric_part(func):
+                coupling_form = BilinearForm(coupling_grid)
+                dirichlet_coupling_integrand = LocalLaplaceIPDGDirichletCouplingIntegrand(
+                    symmetry_factor,
+                    GF(local_grid, func, (Dim(d), Dim(d))),
+                    intersection_type=CouplingIntersection(dd_grid))
+                coupling_form += LocalIntersectionIntegralBilinearForm(
+                    dirichlet_coupling_integrand)
+                op = MatrixOperator(coupling_grid, source_space=local_space,
+                                    range_space=J_space,
+                                    sparsity_pattern=local_models_data[I]['sparsity_pattern'])
+                op.append(coupling_form, {}, (False, False, False, False, False, True))
+                walker.append(op)
+                return op
+
+            def make_fake_dirichlet_coupling_nonparametric_part():
+                coupling_form = BilinearForm(coupling_grid)
+                dirichlet_penalty_integrand = LocalIPDGBoundaryPenaltyIntegrand(
+                    penalty_parameter, local_weights[I],
+                    intersection_type=CouplingIntersection(dd_grid))
+                coupling_form += LocalIntersectionIntegralBilinearForm(
+                    dirichlet_penalty_integrand)
+                op = MatrixOperator(coupling_grid, source_space=local_space,
+                                    range_space=J_space,
+                                    sparsity_pattern=local_models_data[I]['sparsity_pattern'])
+                op.append(coupling_form, {}, (False, False, False, False, False, True))
+                walker.append(op)
+                return op
+
+            ops = [make_fake_dirichlet_coupling_parametric_part(func)
+                   for func in local_problems[I].diffusion.functions] + \
+                [make_fake_dirichlet_coupling_nonparametric_part(), ]
+            coeffs = list(local_problems[I].diffusion.coefficients) + [1., ]
+            # NOTE: we probably only need the nonparametric part !
+            # TODO: check this!!
+
+            walker.walk(False)  # parallel assembly not yet supported
+
+            dirichlet_ops = [DuneXTMatrixOperator(op.matrix, name=f'dirichlet_part_{I}_{J}')
+                             for op in ops]
+            dirichlet_ops[-1] = dirichlet_ops[-1].with_(name=f'constant_dirichlet_part_{I}_{J}')
+
+            fake_dirichlet_op = LincombOperator(operators=dirichlet_ops, coefficients=coeffs)
+
+            fake_dirichlet_ops[I][J] = fake_dirichlet_op
+
+    fake_dirichlet_op = BlockOperator(fake_dirichlet_ops)
+
     data = {'macro_grid': macro_grid,
             'dd_grid': dd_grid,
             'macro_boundary_info': macro_boundary_info,
             'local_spaces': local_spaces,
             'coupling_op': coupling_op,
-            'lhs_without_coupling': lhs_without_coupling}
+            'lhs_without_coupling': lhs_without_coupling,
+            'fake_dirichlet_ops': fake_dirichlet_op}
 
     if preassemble:
         data['unassembled_m'] = m
