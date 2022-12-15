@@ -4,7 +4,6 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from slycot import sb02od
 from matplotlib import pyplot as plt
 from typer import Argument, run
 
@@ -121,23 +120,6 @@ def msd(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
 
     return J, R, G, P, S, N, E, Q
 
-def care(A, B=None, Q=None, R=None, S=None):
-    """Solve the continuous-time algebraic Riccati equation.
-            Q + A'X + XA - (S+XB)R^{-1}(S+XB)' = 0
-    """
-    dico = 'C'
-
-    if Q is None:
-        Q = np.zeros(A.shape)
-
-    n = A.shape[0]
-    m = B.shape[1]
-
-    # Q + A'X + XA + (-L-XB)R^{-1} (-L'-B'X) = 0
-    return sb02od(n, m, A, B, Q, R, dico, L=S)
-
-def kyp(A, B, C, D, X):
-    return np.block([[-A.T @ X - X @ A, C.T - X @ B], [C - B.T @ X, D + D.T]])
 
 def main(
         n: int = Argument(100, help='Order of the mass-spring-damper system.'),
