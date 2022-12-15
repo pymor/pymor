@@ -1,6 +1,6 @@
 name: Dependencies changed
 on:
-  push:
+  pull_request:
     paths:
       - 'dependencies.py'
       - '.ci/create_conda_env.py'
@@ -45,9 +45,17 @@ jobs:
           commit-message: "[Bot] Update requirements and environments"
           title: "[Bot] Update requirements and environments"
           add-paths: .ci/conda-env.yml
+          body: "Updates the conda environment for PR ${{ format('#{0}', github.event.pull_request.number) }}."
           author: pyMOR Bot <ci@pymor.org>
-          labels: pr:change
+          labels: pr:change,infrastructure
           delete-branch: true
           branch-suffix: short-commit-hash
-
           if-no-files-found: error
+          base: ${{ github.head_ref }}
+          assignees: ${{ github.event.pull_request.author.login }}
+      - name: Upload new requirements
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: requirements
+          path: requirements*.txt
