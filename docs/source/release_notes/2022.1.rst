@@ -13,7 +13,7 @@ and extended functionality for randomized linear algebra.
 Over 760 single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/2021.2.x...2022.1.x>`__.
 
-pyMOR 2022.1 contains contributions by Patric Buchfink, Monica Dessole,
+pyMOR 2022.1 contains contributions by Patrick Buchfink, Monica Dessole,
 Hendrik Kleikamp, Peter Oehme, Art Pelling and Sven Ullmann.
 See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more details.
 

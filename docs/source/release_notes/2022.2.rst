@@ -1,0 +1,130 @@
+pyMOR 2022.2 (December ??, 2022)
+--------------------------------
+
+We are proud to announce the release of pyMOR 2022.2!
+pyMOR now comes with three new data-driven MOR methods and
+time domain analysis for linear time-invariant systems.
+
+Over 330 single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2022.1.x...2022.2.x>`__.
+
+pyMOR 2022.2 contains contributions by Tim Keil, Hendrik Kleikamp, Peter Oehme
+and Art Pelling.
+We are also happy to welcome Hendrik as a new main developer!
+See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more
+details.
+
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+Eigensystem Realization Algorithm
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The Eigensystem Realization Algorithm (aka. Ho-Kalman or Silverman Algorithm) can be used to
+identify |LTIModels| from Markov parameter data. With `[#1587] <https://github.com/pymor/pymor/pull/1587>`_,
+an :class:`~pymor.reductors.era.ERAReductor` is added that implements the
+classical algorithm as well as the TERA extension that uses tangential projections
+of the Markov parameters for cases where there are many inputs and/or outputs.
+The SVD of the Hankel matrix as well as the tangential projectors are cached
+by the reductor such that |LTIModels| of different orders can be constructed
+efficiently.
+
+Parametric AAA algorithm
+~~~~~~~~~~~~~~~~~~~~~~~~
+The AAA algorithm allows for approximating rational functions in an iterative
+manner by combining the ideas of Vector-Fitting and Loewner interpolation. With
+this release, we are adding the parametric version of the algorithm
+(`[#1756] <https://github.com/pymor/pymor/pull/1756>`_) for data-driven
+approximation of |TransferFunctions|. The :class:`~pymor.reductors.aaa.PAAAReductor` can handle any models
+that have a `transfer_function` attribute or Numpy data as inputs. The
+implementation works in non-parametric, parametric, SISO as well as MIMO
+settings.
+
+Long short-term memory neural networks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+As an alternative neural network architecture for data-driven model order reduction
+of parametrized instationary problems, long short-term memory neural networks (LSTMs)
+with corresponding reductors and reduced order models were introduced in
+`[#1460] <https://github.com/pymor/pymor/pull/1460>`_. Similar to the already existing
+reductors based on neural networks, the map from parameter to reduced coefficients is
+approximated by a neural network, while the reduced basis itself is constructed using
+proper orthogonal decomposition. This results in a purely data-driven approach that
+is applicable to any given instationary full-order model.
+
+Time domain analysis of |LTIModels|
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+With the introduction of time-dependent |Parameters|,
+|LTIModels| also support `solve` and `output` methods as does
+|InstationaryModel| `[#1340] <https://github.com/pymor/pymor/pull/1340>`_.
+Additionally, |LTIModels| also have methods for computing the impulse and step
+responses `[#1054] <https://github.com/pymor/pymor/pull/1054>`_.
+Time domain analysis for other system-theoretic |Models|
+(e.g., |SecondOrderModel| and |PHLTIModel|),
+will be done in future releases.
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+New approach to handling randomness in pyMOR
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pyMOR now consistently uses a global random generator state, which is initialized
+with a configurable fixed seed value. This approach allowed us to remove the `seed` and
+`random_state` parameters from all methods in pyMOR. The :func:`~pymor.tools.random.spawn_rng`
+wrapper ensures deterministic uncorrelated execution in concurrent code.
+In special cases where pyMOR shall execute code with a specific random state the
+:func:`~pymor.tools.random.new_rng` context manager can be used to temporarily
+install another random state `[#1736] <https://github.com/pymor/pymor/pull/1736>`_.
+
+DWR reductor for output estimation with primal-dual approach
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In `[#1496] <https://github.com/pymor/pymor/pull/1496>`_, the
+:class:`~pymor.reductors.dwr.DWRCoerciveRBReductor` was added to support error estimation for
+linear output functionals with the dual-weighted residual (DWR) approach as proposed
+in :cite:`Haa17` (Definition 2.31, Proposition 2.32). After reduction, the reduced model
+includes the corrected output functional as well as the higher-order error estimator.
+The respective dual model can either be built on a fully discrete level or can be specified
+by the user.
+
+Adaptive frequency domain analysis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The :func:`~pymor.tools.plot.adaptive` function was added for adaptive sampling
+of functions used in plotting.
+In particular, this was enabled for adaptive plotting of Bode-related plots
+`[#1615] <https://github.com/pymor/pymor/pull/1615>`_.
+
+|LTIModel| can compute LQG and BR Gramians
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The :meth:`~pymor.models.iosys.LTIModel.gramian` of the |LTIModel| so far could
+only compute the standard Lyapunov Gramians.
+With this release, the computation of linear quadratic Gaussian (LQG) and
+bounded-real (BR) Gramians was moved from the corresponding balanced truncation
+reductors to |LTIModel|.
+In particular, these Gramians are now cached, which can significantly speed up
+reductions for multiple orders `[#995]
+<https://github.com/pymor/pymor/pull/995>`_.
+
+Caching of the dense LU decomposition for |NumpyMatrixOperator|
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The |NumpyMatrixOperator| already caches the sparse LU decomposition when the
+underlying matrix is a SciPy sparse matrix.
+Now it also caches the dense LU decomposition when the matrix is a NumPy array
+`[#1603] <https://github.com/pymor/pymor/pull/1603>`_.
+This should significantly improve the runtime when solving the same dense system
+with different right-hand sides.
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- `[#1689] branch off new slycot version <https://github.com/pymor/pymor/pull/1689>`_
+- `[#1711] Remove np.matrix warnings <https://github.com/pymor/pymor/pull/1711>`_
+- `[#1731] Fix Expression.to_fenics for conditionals <https://github.com/pymor/pymor/pull/1731>`_
+- `[#1738] Improve Operator.apply_inverse default impl via to_matrix <https://github.com/pymor/pymor/pull/1738>`_
+- `[#1745] Fixes #1744 <https://github.com/pymor/pymor/pull/1745>`_
+- `[#1779] Reset dlopen flags after dolfin import <https://github.com/pymor/pymor/pull/1779>`_
+- `[#1780] Let RuleTable.get_children return a list <https://github.com/pymor/pymor/pull/1780>`_
+- `[#1781] Fix MPIOperator.apply_adjoint <https://github.com/pymor/pymor/pull/1781>`_
+- `[#1787] Allow ParameterSpace to project parameters into its ranges <https://github.com/pymor/pymor/pull/1787>`_
+- `[#1815] Reset random state for each test <https://github.com/pymor/pymor/pull/1815>`_
+- `[#1818] [discretizers.builtin] Eliminate zeros of sparse matrices <https://github.com/pymor/pymor/pull/1818>`_
+- `[#1855] [config] treat colab like vanilla ipython <https://github.com/pymor/pymor/pull/1855>`_
