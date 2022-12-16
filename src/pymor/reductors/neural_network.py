@@ -57,6 +57,7 @@ class NeuralNetworkReductor(BasicObject):
     validation_ratio
         Fraction of the training set to use for validation in the training
         of the neural network (only used if no validation set is provided).
+        Either a validation set or a positive validation ratio is required.
     basis_size
         Desired size of the reduced basis. If `None`, rtol, atol or l2_err must
         be provided.
