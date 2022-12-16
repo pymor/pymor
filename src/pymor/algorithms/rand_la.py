@@ -84,7 +84,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     maxnorm = np.inf
     M = A.apply(R)
 
-    while(maxnorm > testlimit):
+    while maxnorm > testlimit:
         basis_length = len(B)
         v = A.source.random(distribution='normal')
         if iscomplex:
