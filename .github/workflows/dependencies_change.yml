@@ -63,6 +63,9 @@ jobs:
     name: Update docker images
     runs-on: ubuntu-22.04
     needs: update
+    outputs:
+      pr_url: ${{ steps.create_pr.outputs.pull-request-url }}
+      env_sha: ${{ steps.create_pr.outputs.pull-request-head-sha }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -74,6 +77,7 @@ jobs:
           path: ./constraints/
       - uses: peter-evans/create-pull-request@v4.2.3
         name: Create a PR for dependencies
+        id: create_pr
         with:
           commit-message: "[Bot] Update requirements/constraints"
           title: "Update requirements for pymor PR ${{ format('{0}', github.event.pull_request.number) }}"
@@ -84,3 +88,32 @@ jobs:
           branch-suffix: short-commit-hash
           base: main
           assignees: ${{ github.event.pull_request.author.login }}
+  update_env:
+    name: Suggest .env update
+    runs-on: ubuntu-22.04
+    needs: docker
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - run: pip install -r requirements-ci.txt
+      - name: Update .env
+        run: |
+          sed -i "/^PYPI_MIRROR_TAG/s/=.*$/=${{needs.docker.outputs.env_sha}}/" .env
+          sed -i "/^CI_IMAGE_TAG/s/=.*$/=${{needs.docker.outputs.env_sha}}/" .env
+      - name: Regenerate template
+        run: make template
+      - run: git diff
+      - uses: reviewdog/action-suggester@v1
+        name: Suggest .env update
+        with:
+          tool_name: make template
+          fail_on_error: true
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            I've created ${{needs.docker.outputs.pr_url}} to update the docker images for gitlab CI.
+            Once that PR is merged, please commit the code review suggestion to use the new images.
+          comment_tag: envupdate
