@@ -715,7 +715,7 @@ class LTIModel(Model):
         -------
         y
             Impulse response as a 3D |NumPy array| where
-            `y.shape[0]` is the number of snapshots,
+            `y.shape[0]` is the number of time steps,
             `y.shape[1]` is the number of outputs, and
             `y.shape[2]` is the number of inputs.
         Xs
@@ -792,7 +792,7 @@ class LTIModel(Model):
         -------
         y
             Step response as a 3D |NumPy array| where
-            `y.shape[0]` is the number of snapshots,
+            `y.shape[0]` is the number of time steps,
             `y.shape[1]` is the number of outputs, and
             `y.shape[2]` is the number of inputs.
         Xs
