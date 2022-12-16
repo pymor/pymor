@@ -709,7 +709,8 @@ class LTIModel(Model):
         mu
             |Parameter values| for which to solve.
         return_solution
-            If `True`, the model solution for the given |parameter values| `mu` is returned.
+            If `True`, the model :meth:`solution <pymor.models.interface.Model.solve>` for the given
+            |parameter values| `mu` is returned.
 
         Returns
         -------
