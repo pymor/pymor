@@ -17,6 +17,8 @@ pytest-parallel==0.1.1
 pytest-regressions==2.3.1
 pytest-xdist==2.5.0
 pytest==7.2.0
+python-dotenv==0.21.0
+python-gitlab==3.12.0
 readme_renderer[md]==35.0
 rstcheck==6.0.0.post1
 scikit-fem==6.0.0
