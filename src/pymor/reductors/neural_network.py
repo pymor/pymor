@@ -801,8 +801,8 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
             self.training_data = []
             for datum in self.training_set:
                 if not self.fom:
-                    mu, u = datum
-                    samples = self._compute_sample(mu, u)
+                    mu, outputs = datum
+                    samples = self._compute_sample(mu, output_trajectory=outputs)
                 else:
                     samples = self._compute_sample(datum)
 
@@ -936,12 +936,12 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkInstatio
         """Compute the number of neurons in the layers of the neural network."""
         hidden_dimension = hidden_layers[0]
         if isinstance(hidden_dimension, str):
-            hidden_dimension = eval(hidden_dimension, {'N': self.fom.dim_output, 'P': self.fom.parameters.dim})
+            hidden_dimension = eval(hidden_dimension, {'N': self.dim_output, 'P': self.parameters_dim})
 
         assert isinstance(hidden_dimension, int)
         # input and output size of the neural network are prescribed by the
         # dimension of the parameter space and the reduced basis size
-        return [self.fom.parameters.dim + 1, hidden_dimension, self.fom.dim_output, ]
+        return [self.fom.parameters.dim + 1, hidden_dimension, self.dim_output, ]
 
 
 class EarlyStoppingScheduler(BasicObject):
