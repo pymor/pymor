@@ -862,6 +862,8 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkInstatio
     the mapping from parameter space to output space.
     """
 
+    reduce = NeuralNetworkLSTMInstationaryReductor.reduce
+
     _initialize_neural_network = NeuralNetworkLSTMInstationaryReductor._initialize_neural_network
 
     def _compute_sample(self, mu, u=None):
