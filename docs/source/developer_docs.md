@@ -111,8 +111,7 @@ When adding new package dependencies, or version restrictions, these need to be 
 a commit in our docker repository for the [constraints requirements](https://github.com/pymor/docker/tree/main/constraints)
 so that updated images become available to CI after entering the new commit hash into `.env`.
 A GitHub Action will automatically create a pull request against the docker repository if changes in the requirements
-files are detected. The necessary change to `.env` is added as a review comment which needs to be accepted
-once the PR in the docker repo got merged.
+files are detected. The necessary change to `.env` is are included in the PR for the conda environment.
 
 (ref-makefile)=
 
