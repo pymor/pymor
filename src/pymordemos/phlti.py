@@ -7,7 +7,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from typer import Argument, run
 
-from pymor.models.iosys import LTIModel, PHLTIModel
+from pymor.models.iosys import PHLTIModel
 from pymor.reductors.bt import PRBTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
@@ -126,14 +126,14 @@ def main(
         m: int = Argument(2, help='Number of inputs and outputs of the mass-spring-damper system.'),
         reduced_order: int = Argument(0, help='The reduced order if positive. Otherwise, a range of values is used.'),
 ):
-    A, B, C, D, E = msd(n, m, as_lti=True)
-    lti = LTIModel.from_matrices(A, B, C, D, E)
-    phlti = PHLTIModel.from_passive_LTIModel(lti)
-
     J, R, G, P, S, N, E, Q = msd(n, m)
-    fom = PHLTIModel.from_matrices(J, R, G, Q=Q)
 
-    print(f'Error: {(fom - phlti).h2_norm():.2e}')
+    # tolerance for solving the Riccati equation instead of KYP-LMI
+    # by introducing a regularization feedthrough term D
+    eps = 1e-12
+    S = S + np.eye(S.shape[0]) * eps
+
+    fom = PHLTIModel.from_matrices(J, R, G, S=S, Q=Q)
 
     prbt = PRBTReductor(fom)
     irka = IRKAReductor(fom)
@@ -151,8 +151,8 @@ def main(
     for i, reductor in enumerate(reductors.values()):
         for j, r in enumerate(reduced_order):
             rom = reductor.reduce(r)
-            if not isinstance(rom, PHLTIModel):
-                rom = PHLTIModel.from_passive_LTIModel(rom)
+            # if not isinstance(rom, PHLTIModel):
+            #     rom = PHLTIModel.from_passive_LTIModel(rom)
             h2_errors[i, j] = (rom - fom).h2_norm() / fom.h2_norm()
 
     fig, ax = plt.subplots()
