@@ -50,12 +50,16 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         self.estimator_data = {}
         self.local_residuals = []
         self.bases_in_local_domains = {}
+        self.estimator_mappings_to_global = []
+        self.estimator_mappings_to_local = []
         for associated_element, elements in estimator_domains.items():
             local_model, local_to_global, global_to_local = construct_local_model(
                 elements, fom.operator, fom.rhs, dd_grid.neighbors,
                 block_prod=self.unassembled_product, lincomb_outside=True,
                 ops_dirichlet=self.fake_dirichlet_ops)
             node_elements = inner_node_patches[associated_element]
+            self.estimator_mappings_to_global.append(local_to_global)
+            self.estimator_mappings_to_local.append(global_to_local)
             # TODO: vectorize the following
             local_node_elements = [global_to_local(el) for el in node_elements]
             self.estimator_data[associated_element] = (elements, node_elements,
@@ -260,12 +264,19 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             u_.append(basis.lincomb(u_I.to_numpy()))
         return self.fom.solution_space.make_array(u_)
 
-    def from_patch_to_global(self, I, u_patch):
+    def from_patch_to_global(self, I, u_patch, patch_type='enrichment'):
         # a function that construct a globally defined u from a patch u
         # only here for visualization purposes. not relevant for reductor
+        if patch_type == 'enrichment':
+            mapping = self.patch_mappings_to_local
+        elif patch_type == 'estimation':
+            mapping = self.estimator_mappings_to_local
+        else:
+            assert 0, f'patch_type = {patch_type} not known'
+
         u_global = []
         for i in range(self.S):
-            i_loc = self.patch_mappings_to_local[I](i)
+            i_loc = mapping[I](i)
             if i_loc >= 0:
                 u_global.append(u_patch.block(i_loc))
             else:
@@ -334,6 +345,10 @@ def construct_local_model(local_elements, block_op, block_rhs, neighbors, block_
                     for op in ops_dirichlet.blocks[I][J].operators:
                         if 'constant' in op.name:
                             patch_prod[ii][ii] += op
+                if block_prod:
+                    # TODO: better if case for the estimation case
+                    # patch_op[ii][ii] += ops_dirichlet.blocks[I][J]
+                    pass
 
     if lincomb_outside and block_rhs.parametric:
         # porkelei for efficient residual reduction
@@ -566,6 +581,7 @@ class EllipticIPLRBEstimator(ImmutableObject):
 
     def estimate_error(self, u_rom, p_unused, mu):
         indicators = []
+        residuals = []
 
         if isinstance(self.residuals[0], ResidualReductor):
             u_rom = self.reconstruct(u_rom)
@@ -594,6 +610,7 @@ class EllipticIPLRBEstimator(ImmutableObject):
                 # NOTE: Uncomment the next line to use the whole residual without restriction to support
                 res = residual.product.apply_inverse(residual_full)
                 norm = np.sqrt(residual.product.apply2(res, res))
+                residuals.append(residual_full)
             elif isinstance(residual, ResidualOperator):
                 # this is the reduced case where residual is the reduced residual
                 u_in_ed_unblocked = np.array([u.to_numpy() for i, u in enumerate(u_in_ed)
@@ -618,5 +635,5 @@ class EllipticIPLRBEstimator(ImmutableObject):
                 ests[sd] += ind**2
         estimate = np.sqrt(sum(ests))
         # return estimate
-        return estimate, np.linalg.norm(indicators), indicators
+        return estimate, np.linalg.norm(indicators), indicators, residuals
 
