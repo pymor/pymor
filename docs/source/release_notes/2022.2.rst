@@ -86,8 +86,7 @@ linear output functionals with the dual-weighted residual (DWR) approach as prop
 in :cite:`Haa17` (Definition 2.31, Proposition 2.32). After reduction, the reduced model
 includes the corrected output functional as well as the higher-order error estimator.
 The respective dual model can either be built on a fully discrete level or can be specified
-by the user. It is also optional to provide a separated dual basis or to use a single basis
-for both the primal- and dual reduction.
+by the user.
 
 Adaptive frequency domain analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -130,3 +129,4 @@ Further notable improvements
 - `[#1787] Allow ParameterSpace to project parameters into its ranges <https://github.com/pymor/pymor/pull/1787>`_
 - `[#1815] Reset random state for each test <https://github.com/pymor/pymor/pull/1815>`_
 - `[#1818] [discretizers.builtin] Eliminate zeros of sparse matrices <https://github.com/pymor/pymor/pull/1818>`_
+- `[#1855] [config] treat colab like vanilla ipython <https://github.com/pymor/pymor/pull/1855>`_
