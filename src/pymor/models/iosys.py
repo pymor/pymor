@@ -958,10 +958,10 @@ class LTIModel(Model):
                                    trans=True, options=options_ricc_lrcf)
         elif typ == 'pr_c_lrcf':
             return solve_pos_ricc_lrcf(A=A, E=None, B=A.source.zeros(), C=-C.as_source_array(mu=mu),
-                                       R=to_matrix(D + D.H, 'dense')+np.eye(D.source.dim)*1e-6, S=B.H.as_source_array(mu=mu))
+                                       R=to_matrix(D + D.H, 'dense'), S=B.H.as_source_array(mu=mu))
         elif typ == 'pr_o_lrcf':
             return solve_pos_ricc_lrcf(A=A, E=None, B=-B.as_range_array(mu=mu), C=A.source.zeros(),
-                                       R=to_matrix(D + D.H, 'dense')+np.eye(D.source.dim)*1e-6, S=(C.H).as_range_array(mu=mu), trans=True)
+                                       R=to_matrix(D + D.H, 'dense'), S=(C.H).as_range_array(mu=mu), trans=True)
         elif typ[0] == 'br_c_lrcf':
             return solve_pos_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
                                        R=(typ[1] ** 2 * np.eye(self.dim_output)
@@ -1671,7 +1671,7 @@ class PHLTIModel(LTIModel):
         return self.with_(E=E, J=J, R=R, G=G, P=P, Q=None)
 
     @classmethod
-    def from_passive_LTIModel(cls, model, generalized=True):
+    def from_passive_LTIModel(cls, model):
         """
         Convert a passive |LTIModel| to a |PHLTIModel|.
 
@@ -1683,28 +1683,17 @@ class PHLTIModel(LTIModel):
             If `True`, the resulting |PHLTIModel| will have :math:`Q=I`.
         """
         # Determine solution of KYP inequality
-        L = VectorArrayOperator(model.gramian('pr_c_lrcf'), adjoint=True)
+        L = VectorArrayOperator(model.gramian('pr_o_lrcf'), adjoint=True)
         X = L.H @ L
 
-        Q = None
-
-        if generalized:
-            E = X.H @ model.E
-            J = 0.5 * (X @ model.A - X @ model.A.H)
-            R = -0.5 * (X @ model.A - X @ model.A.H)
-            G = 0.5 * (X @ model.B + model.C.H)
-            P = 0.5 * (X @ model.B - model.C.H)
-            S = 0.5 * (model.D + model.D.H)
-            N = 0.5 * (model.D - model.D.H)
-
-        else:
-            J = 0.5 * (model.A.apply_inverse(X) - model.A.apply_inverse(model.X).H)
-            R = -0.5 * (model.A.apply_inverse(model.X) + model.A.apply_inverse(X).H)
-            G = 0.5 * (model.C.apply_inverse(X).H + model.B)
-            P = 0.5 * (model.C.apply_inverse(X).H - model.B)
-            S = 0.5 * (model.D + model.D.H)
-            N = 0.5 * (model.D - model.D.H)
-            Q = X
+        Q = X
+        E = model.E
+        J = 0.5 * (model.A @ InverseOperator(X) - InverseOperator(X) @ model.A.H)
+        R = -0.5 * (model.A @ InverseOperator(X) + InverseOperator(X) @ model.A.H)
+        G = 0.5 * (InverseOperator(X) @ model.C.H + model.B)
+        P = 0.5 * (InverseOperator(X) @ model.C.H - model.B)
+        S = 0.5 * (model.D + model.D.H)
+        N = 0.5 * (model.D - model.D.H)
 
         return cls(E=E, J=J, R=R, G=G, P=P, S=S, N=N, Q=Q, solver_options=model.solver_options,
                    error_estimator=model.error_estimator, visualizer=model.visualizer, name=model.name)
@@ -1793,7 +1782,7 @@ class PHLTIModel(LTIModel):
         if Q is not None:
             Q = NumpyMatrixOperator(Q, source_id=state_id, range_id=state_id)
 
-        return cls(J, R, G, P, S, N, E, Q,
+        return cls(J=J, R=R, G=G, P=P, S=S, N=N, E=E, Q=Q,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                    name=name)
 
