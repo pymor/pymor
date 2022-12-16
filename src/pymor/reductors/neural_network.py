@@ -854,68 +854,15 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
         return rom
 
 
-class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkInstationaryStatefreeOutputReductor):
+class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkInstationaryStatefreeOutputReductor,
+                                                           NeuralNetworkLSTMInstationaryReductor):
     """Output reductor relying on LSTM neural networks.
 
     This is a reductor that trains an LSTM neural network that approximates
     the mapping from parameter space to output space.
     """
 
-    def reduce(self, hidden_dimension='3*N + P', number_layers=1, optimizer=optim.LBFGS,
-               epochs=1000, batch_size=20, learning_rate=1., loss_function=None, restarts=10,
-               lr_scheduler=None, lr_scheduler_params={},
-               es_scheduler_params={'patience': 10, 'delta': 0.}, weight_decay=0.,
-               log_loss_frequency=0):
-        """Reduce by LSTM neural networks.
-
-        Parameters
-        ----------
-        hidden_dimension
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor`.
-        number_layers
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor`.
-        optimizer
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-        epochs
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-        batch_size
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-        learning_rate
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-        loss_function
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-        restarts
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-        lr_scheduler
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-        lr_scheduler_params
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-        es_scheduler_params
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-        weight_decay
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-        log_loss_frequency
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-        """
-        hidden_layers = [hidden_dimension, number_layers]
-        return super().reduce(hidden_layers=hidden_layers, optimizer=optimizer, epochs=epochs,
-                              batch_size=batch_size, learning_rate=learning_rate, loss_function=loss_function,
-                              restarts=restarts, lr_scheduler=lr_scheduler, lr_scheduler_params=lr_scheduler_params,
-                              es_scheduler_params=es_scheduler_params, weight_decay=weight_decay,
-                              log_loss_frequency=log_loss_frequency)
-
-    def _initialize_neural_network(self, params):
-        """Initialize the neural network using the required parameters."""
-        layer_sizes = params['layer_sizes']
-        hidden_layers = params['hidden_layers']
-        number_layers = hidden_layers[1]
-
-        neural_network_parameters = {'input_dimension': layer_sizes[0],
-                                     'hidden_dimension': layer_sizes[1],
-                                     'output_dimension': layer_sizes[2],
-                                     'number_layers': number_layers}
-        neural_network = LongShortTermMemoryNN(**neural_network_parameters).double()
-        return neural_network
+    _initialize_neural_network = NeuralNetworkLSTMInstationaryReductor._initialize_neural_network
 
     def _compute_sample(self, mu, u=None):
         """Transform parameter and corresponding solution to |NumPy arrays|.
