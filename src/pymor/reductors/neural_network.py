@@ -280,6 +280,7 @@ class NeuralNetworkReductor(BasicObject):
         self.mse_basis = (sum(U.norm2()) - sum(svals**2)) / len(U)
 
     def _update_scaling_parameters(self, sample):
+        """Update the quantities for scaling of inputs and outputs."""
         assert len(sample) == 2 or (len(sample) == 1 and len(sample[0]) == 2)
         if len(sample) == 1:
             sample = sample[0]
@@ -408,16 +409,14 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         of the neural network. If `fom` is `None`, the `validation_set` has
         to consist of pairs of |parameter values| and corresponding outputs.
     validation_ratio
-        Fraction of the training set to use for validation in the training
-        of the neural network (only used if no validation set is provided).
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     validation_loss
         The validation loss to reach during training. If `None`, the neural
         network with the smallest validation loss is returned.
     scale_inputs
-        Determines whether or not to scale the inputs of the neural networks.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     scale_outputs
-        Determines whether or not to scale the outputs/targets of the neural
-        networks.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     """
 
     def __init__(self, fom=None, training_set=None, validation_set=None, validation_ratio=0.1,
@@ -504,50 +503,31 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
     Parameters
     ----------
     fom
-        The full-order |Model| to reduce. If `None`, the `training_set` has
-        to consist of pairs of |parameter values| and corresponding solution
-        |VectorArrays|.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     training_set
-        Set of |parameter values| to use for POD and training of the
-        neural network. If `fom` is `None`, the `training_set` has
-        to consist of pairs of |parameter values| and corresponding solution
-        |VectorArrays|.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     validation_set
-        Set of |parameter values| to use for validation in the training
-        of the neural network. If `fom` is `None`, the `validation_set` has
-        to consist of pairs of |parameter values| and corresponding solution
-        |VectorArrays|.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     validation_ratio
-        Fraction of the training set to use for validation in the training
-        of the neural network (only used if no validation set is provided).
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     T
         The final time T used in case `fom` is `None`.
     basis_size
-        Desired size of the reduced basis. If `None`, rtol, atol or l2_err must
-        be provided.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     rtol
-        Relative tolerance the basis should guarantee on the training set.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     atol
-        Absolute tolerance the basis should guarantee on the training set.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     l2_err
-        L2-approximation error the basis should not exceed on the training
-        set.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     pod_params
-        Dict of additional parameters for the POD-method.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     ann_mse
-        If `'like_basis'`, the mean squared error of the neural network on
-        the training set should not exceed the error of projecting onto the basis.
-        If `None`, the neural network with smallest validation error is
-        used to build the ROM.
-        If a tolerance is prescribed, the mean squared error of the neural
-        network on the training set should not exceed this threshold.
-        Training is interrupted if a neural network that undercuts the
-        error tolerance is found.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     scale_inputs
-        Determines whether or not to scale the inputs of the neural networks.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     scale_outputs
-        Determines whether or not to scale the outputs/targets of the neural
-        networks.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     """
 
     def __init__(self, fom=None, training_set=None, validation_set=None, validation_ratio=0.1,
@@ -695,43 +675,27 @@ class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
             Number of recurred layers, i.e. number of stacked LSTM cells in the
             neural network.
         optimizer
-            Algorithm to use as optimizer during training.
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
         epochs
-            Maximum number of epochs for training.
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
         batch_size
-            Batch size to use if optimizer allows mini-batching.
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
         learning_rate
-            Step size to use in each optimization step.
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
         loss_function
-            Loss function to use for training. If `'weighted MSE'`, a weighted
-            mean squared error is used as loss function, where the weights are
-            given as the singular values of the corresponding reduced basis
-            functions. If `None`, the usual mean squared error is used.
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
         restarts
-            Number of restarts of the training algorithm. Since the training
-            results highly depend on the initial starting point, i.e. the
-            initial weights and biases, it is advisable to train multiple
-            neural networks by starting with different initial values and
-            choose that one performing best on the validation set.
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
         lr_scheduler
-            Algorithm to use as learning rate scheduler during training.
-            If `None`, no learning rate scheduler is used.
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
         lr_scheduler_params
-            A dictionary of additional parameters passed to the init method of
-            the learning rate scheduler. The possible parameters depend on the
-            chosen learning rate scheduler.
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
         es_scheduler_params
-            A dictionary of additional parameters passed to the init method of
-            the early stopping scheduler. For the possible parameters,
-            see :class:`EarlyStoppingScheduler`.
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
         weight_decay
-            Weighting parameter for the l2-regularization of the weights and
-            biases in the neural network. This regularization is not available
-            for all optimizers; see the PyTorch documentation for more details.
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
         log_loss_frequency
-            Frequency of epochs in which to log the current validation and
-            training loss during training of the neural networks.
-            If `0`, no intermediate logging of losses is done.
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
         """
         hidden_layers = [hidden_dimension, number_layers]
         return super().reduce(hidden_layers=hidden_layers, optimizer=optimizer, epochs=epochs,
@@ -791,32 +755,23 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
     Parameters
     ----------
     fom
-        The full-order |Model| to reduce. If `None`, the `training_set` has
-        to consist of pairs of |parameter values| and corresponding outputs.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`.
     nt
-        Number of time steps in the reduced order model (does not have to
-        coincide with the number of time steps in the full order model).
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkInstationaryReductor`.
     training_set
-        Set of |parameter values| to use for POD and training of the
-        neural network. If `fom` is `None`, the `training_set` has
-        to consist of pairs of |parameter values| and corresponding outputs.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`.
     validation_set
-        Set of |parameter values| to use for validation in the training
-        of the neural network. If `fom` is `None`, the `validation_set` has
-        to consist of pairs of |parameter values| and corresponding outputs.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`.
     T
-        The final time T used in case `fom` is `None`.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkInstationaryReductor`.
     validation_ratio
-        Fraction of the training set to use for validation in the training
-        of the neural network (only used if no validation set is provided).
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     validation_loss
-        The validation loss to reach during training. If `None`, the neural
-        network with the smallest validation loss is returned.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`.
     scale_inputs
-        Determines whether or not to scale the inputs of the neural networks.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     scale_outputs
-        Determines whether or not to scale the outputs/targets of the neural
-        networks.
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     """
 
     def __init__(self, fom=None, nt=1, training_set=None, validation_set=None, validation_ratio=0.1,
@@ -910,6 +865,37 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkInstatio
                lr_scheduler=None, lr_scheduler_params={},
                es_scheduler_params={'patience': 10, 'delta': 0.}, weight_decay=0.,
                log_loss_frequency=0):
+        """Reduce by LSTM neural networks.
+
+        Parameters
+        ----------
+        hidden_dimension
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor`.
+        number_layers
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor`.
+        optimizer
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+        epochs
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+        batch_size
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+        learning_rate
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+        loss_function
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+        restarts
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+        lr_scheduler
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+        lr_scheduler_params
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+        es_scheduler_params
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+        weight_decay
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+        log_loss_frequency
+            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+        """
         hidden_layers = [hidden_dimension, number_layers]
         return super().reduce(hidden_layers=hidden_layers, optimizer=optimizer, epochs=epochs,
                               batch_size=batch_size, learning_rate=learning_rate, loss_function=loss_function,
