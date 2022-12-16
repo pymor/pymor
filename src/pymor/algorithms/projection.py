@@ -232,21 +232,28 @@ class ProjectRules(RuleTable):
                 range_bases = self.range_basis.blocks
             else:
                 range_bases = [None] * len(op.range.subspaces)
+            range_dims = [len(rb) if rb is not None else op.range.subspaces[i].dim
+                          for i, rb in enumerate(range_bases)]
         else:
             range_bases = [self.range_basis]
+            range_dims = [op.range.dim]
         if op.blocked_source:
             if self.source_basis is not None:
                 source_bases = self.source_basis.blocks
             else:
                 source_bases = [None] * len(op.source.subspaces)
+            source_dims = [len(sb) if sb is not None else op.source.subspaces[i].dim
+                           for i, sb in enumerate(source_bases)]
         else:
             source_bases = [self.source_basis]
+            source_dims = [op.source.dim]
 
         # NOTE: this does not use a potential sparsity pattern of the BlockOperator
+        # need source and range dims for the case where None is involved.
         projected_ops = np.array([[project(op.blocks[i, j], rb, sb) if op.blocks[i, j]
-                                   else NumpyMatrixOperator(np.zeros((len(rb), len(sb))))
-                                   for j, sb in enumerate(source_bases)]
-                                  for i, rb in enumerate(range_bases)])
+                                   else NumpyMatrixOperator(np.zeros((rdim, sdim)))
+                                   for j, (sb, sdim) in enumerate(zip(source_bases, source_dims))]
+                                  for i, (rb, rdim) in enumerate(zip(range_bases, range_dims))])
         if self.range_basis is None and op.blocked_range:
             return BlockColumnOperator(np.sum(projected_ops, axis=1))
         elif self.source_basis is None and op.blocked_source:
