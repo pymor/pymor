@@ -79,7 +79,15 @@ install another random state `[#1736] <https://github.com/pymor/pymor/pull/1736>
 
 DWR reductor for output estimation with primal-dual approach
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1496] DWR reductor for output estimation with primal-dual approach <https://github.com/pymor/pymor/pull/1496>`_
+
+In '[#1496] <https://github.com/pymor/pymor/pull/1496>`_, the
+:class:`~pymor.reductors.dwr.DWRCoerciveRBReductor` was added to support error estimation for
+linear output functionals with the dual-weighted residual (DWR) approach as proposed
+in :cite:`Haa17` (Definition 2.31, Proposition 2.32). After reduction, the reduced model
+includes the corrected output functional as well as the higher-order error estimator.
+The respective dual model can either be built on a fully discrete level or can be specified
+by the user. It is also optional to provide a separated dual basis or to use a single basis
+for both the primal- and dual reduction.
 
 Adaptive frequency domain analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
