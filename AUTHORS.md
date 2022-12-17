@@ -16,6 +16,9 @@
 * Tim Keil, tim.keil@uni-muenster.de
   * Dual-weighted residual (DWR) output estimation for elliptic problems
 
+* Art Pelling, a.pelling@tu-berlin.de
+  * Eigensystem Realization Algorithm
+
 ### pyMOR 2022.1
 
 * Patrick Buchfink, patrick.buchfink@ians.uni-stuttgart.de

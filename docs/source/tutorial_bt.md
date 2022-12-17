@@ -203,7 +203,7 @@ _ = ax.legend()
 as well as Bode plots
 
 ```{code-cell}
-fig, axs = plt.subplots(6, 2, figsize=(12, 24), sharex=True, constrained_layout=True)
+fig, axs = plt.subplots(6, 2, figsize=(8, 10), sharex=True, constrained_layout=True)
 fom.transfer_function.bode_plot(w, ax=axs)
 _ = rom.transfer_function.bode_plot(w, ax=axs, linestyle='--')
 ```
@@ -256,7 +256,8 @@ _ = err.transfer_function.mag_plot(w)
 and its Bode plot
 
 ```{code-cell}
-_ = err.transfer_function.bode_plot(w)
+fig, axs = plt.subplots(6, 2, figsize=(8, 10), sharex=True, constrained_layout=True)
+_ = err.transfer_function.bode_plot(w, ax=axs)
 ```
 
 Finally, we can compute the relative errors in different system norms.

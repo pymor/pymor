@@ -82,7 +82,7 @@ class StationaryModel(Model):
             f'    class: {self.__class__.__name__}\n'
             f'    {"linear" if self.linear else "non-linear"}\n'
             f'    solution_space:  {self.solution_space}\n'
-            f'    dim_output:      {self.dim_output}\n'
+            f'    dim_output:      {self.dim_output}'
         )
 
     def _compute_solution(self, mu=None, **kwargs):
@@ -318,7 +318,7 @@ class InstationaryModel(Model):
             f'    T: {self.T}\n'
             f'    solution_space:  {self.solution_space}\n'
             f'    dim_input:       {self.dim_input}\n'
-            f'    dim_output:      {self.dim_output}\n'
+            f'    dim_output:      {self.dim_output}'
         )
 
     def with_time_stepper(self, **kwargs):
@@ -340,13 +340,13 @@ class InstationaryModel(Model):
         This method interprets the given model as an |LTIModel|
         in the following way::
 
-            - self.operator        -> A
+            -self.operator         -> A
             self.rhs               -> B
             self.output_functional -> C
             None                   -> D
             self.mass              -> E
         """
-        A = - self.operator
+        A = -self.operator
         B = self.rhs
         C = self.output_functional
         E = self.mass

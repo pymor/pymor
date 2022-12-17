@@ -63,6 +63,7 @@ Discrete-time LTI systems can be constructed by passing positive values for the
 `sampling_time` to any constructor of an {{LTIModel}}.
 
 :::
+
 ## Building a model
 
 We consider the following one-dimensional heat equation over {math}`(0, 1)` with
@@ -76,12 +77,8 @@ two inputs {math}`u_1, u_2` and three outputs {math}`y_1, y_2, y_2`:
     & t > 0, \\
     \partial_\xi T(1, t) & = -T(1, t),
     & t > 0, \\
-    y_1(t) & = T(0, t),
-    & t > 0, \\
-    y_2(t) & = T(0.5, t),
-    & t > 0, \\
-    y_3(t) & = T(1, t),
-    & t > 0.
+    y_k(t) & = 3 \int_{\frac{k - 1}{3}}^{\frac{k}{3}} T(\xi, t) \, \mathrm{d}\xi,
+    & t > 0,\ k = 1, 2, 3.
 \end{align}
 ```
 
@@ -141,6 +138,83 @@ print(fom)
 
 which gives the dimensions of the underlying system more directly,
 together with some of its properties.
+
+## Time-domain simulation
+
+The `solve` and `output` methods can be used to respectively compute the
+solution and output trajectories.
+For this, it is necessary to set the final time and the time-stepper.
+This could have been done in the `from_matrices` call.
+Instead of creating a new model using `from_matrices`,
+we can redefine `fom` using its `with_` method.
+
+```{code-cell}
+from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
+fom = fom.with_(T=4, time_stepper=ImplicitEulerTimeStepper(200))
+```
+
+With this done, we can compute the output for some given input and plot it.
+
+```{code-cell}
+Y = fom.output(input='[sin(4 * t[0]), sin(6 * t[0])]')
+fig, ax = plt.subplots()
+for i, y in enumerate(Y.T):
+    ax.plot(np.linspace(0, fom.T, fom.time_stepper.nt + 1), y, label=f'$y_{i+1}(t)$')
+_ = ax.set(xlabel='$t$', ylabel='$y(t)$', title='Output')
+_ = ax.legend()
+```
+
+Additionally, there are the `impulse_resp` and `step_resp` methods for computing
+the impulse and step responses, respectively.
+
+Impulse response for continuous-time LTI systems is given by
+
+```{math}
+h(t) = C e^{t E^{-1} A} E^{-1} B + D \delta(t),
+```
+
+where {math}`\delta` is the Dirac function.
+
+For computations, we ignore the {math}`D` term and compute the first part by
+integrating the ODE system
+
+```{math}
+E \dot{x}_i(t) = A x_i(t),\ x_i(0) = E^{-1} B e_i
+```
+
+for canonical basis vectors {math}`e_i` to get the {math}`i`-th column of
+{math}`h_i(t) = C x_i(t)`.
+
+```{code-cell}
+y_impulse = fom.impulse_resp()
+fig, ax = plt.subplots(fom.dim_output, fom.dim_input, sharex=True, constrained_layout=True)
+for i in range(fom.dim_output):
+    for j in range(fom.dim_input):
+        ax[i, j].plot(np.linspace(0, fom.T, y_impulse.shape[0]), y_impulse[:, i, j])
+for i in range(fom.dim_output):
+    ax[i, 0].set_title(f'Output {i + 1}', loc='left', rotation='vertical', x=-0.2, y=0.2)
+for j in range(fom.dim_input):
+    ax[0, j].set_title(f'Input {j + 1}')
+    ax[-1, j].set_xlabel('Time')
+_ = fig.suptitle('Impulse response')
+```
+
+Step response for continuous-time LTI systems is the output corresponding to the
+zero initial condition and inputs {math}`u_i(t) = e_i`.
+
+```{code-cell}
+y_step = fom.step_resp()
+fig, ax = plt.subplots(fom.dim_output, fom.dim_input, sharex=True, constrained_layout=True)
+for i in range(fom.dim_output):
+    for j in range(fom.dim_input):
+        ax[i, j].plot(np.linspace(0, fom.T, y_step.shape[0]), y_step[:, i, j])
+for i in range(fom.dim_output):
+    ax[i, 0].set_title(f'Output {i + 1}', loc='left', rotation='vertical', x=-0.2, y=0.2)
+for j in range(fom.dim_input):
+    ax[0, j].set_title(f'Input {j + 1}')
+    ax[-1, j].set_xlabel('Time')
+_ = fig.suptitle('Step response')
+```
 
 ## Transfer function evaluation
 
@@ -220,8 +294,8 @@ In words, if the input is a pure exponential,
 the frequency is preserved in the output,
 the amplitude is multiplied by the amplitude of the transfer function, and
 the phase is shifted by the argument of the transfer function.
-In particular, if the input is sinusiodal, i.e., {math}`\xi = 0`,
-then the output is also sinusiodal.
+In particular, if the input is sinusoidal, i.e., {math}`\xi = 0`,
+then the output is also sinusoidal.
 
 It is of interest to plot the transfer function over the imaginary axis to
 visualize how the LTI system responds to each frequency in the input.
@@ -253,7 +327,8 @@ is in subplot {math}`(2 i - 1, j)` and
 is in subplot {math}`(2 i, j)`.
 
 ```{code-cell}
-_ = fom.transfer_function.bode_plot(w)
+fig, axs = plt.subplots(6, 2, figsize=(8, 10), sharex=True, constrained_layout=True)
+_ = fom.transfer_function.bode_plot(w, ax=axs)
 ```
 
 ## System poles

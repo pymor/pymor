@@ -444,13 +444,13 @@ class Neg(Expression):
         self.shape = operand.shape
 
     def numpy_expr(self):
-        return f'(- {self.operand.numpy_expr()})'
+        return f'(-{self.operand.numpy_expr()})'
 
     def fenics_expr(self, params):
         return np.vectorize(lambda x: -x)(self.operand.fenics_expr(params))
 
     def __str__(self):
-        return f'(- {self.operand})'
+        return f'(-{self.operand})'
 
 
 class Indexed(Expression):

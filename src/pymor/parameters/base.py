@@ -101,9 +101,6 @@ class Parameters(SortedFrozenDict):
         values `[2, 3]`. Further, each parameter value can be given as a
         vector-valued |Function| with `dim_domain == 1` to specify time-dependent
         values. A `str` is converted to an appropriate |ExpressionFunction|.
-        Note that |ExpressionFunctions| are functions of the variable `x`, so you
-        have to write `x` instead of `t` for the time parameter in the string
-        expression.
 
         Parameters
         ----------

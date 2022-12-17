@@ -6,11 +6,12 @@ import numpy as np
 import pytest
 
 from pymor.algorithms.basic import almost_equal
-from pymor.algorithms.timestepping import ImplicitMidpointTimeStepper
+from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitMidpointTimeStepper
 from pymor.analyticalproblems.functions import ExpressionFunction, ConstantFunction
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
-from pymor.discretizers.builtin import discretize_stationary_cg
 from pymor.core.pickle import dumps, loads
+from pymor.discretizers.builtin import discretize_stationary_cg
+from pymor.models.iosys import LTIModel
 from pymor.models.symplectic import QuadraticHamiltonianModel
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import IdentityOperator
@@ -80,6 +81,56 @@ def test_quadratic_hamiltonian_model(block_phase_space):
 
     # check preservation of the Hamiltonian
     assert np.allclose(ham, ham[0])
+
+
+@pytest.mark.parametrize('nt', (4, 5))
+@pytest.mark.parametrize('T', (4, 5))
+@pytest.mark.parametrize('p', (1, 2))
+@pytest.mark.parametrize('m', (1, 2))
+@pytest.mark.parametrize('sampling_time', (0, 1))
+def test_lti_solve(sampling_time, m, p, T, nt):
+    if sampling_time == 0:
+        time_stepper = ExplicitEulerTimeStepper(nt)
+    else:
+        time_stepper = None
+    lti = LTIModel.from_matrices(np.diag([-0.1, -0.2]), np.ones((2, m)), np.ones((p, 2)),
+                                 sampling_time=sampling_time,
+                                 T=T, initial_data=np.array([1, 2]), time_stepper=time_stepper)
+    if m == 1:
+        f = '[sin(t[0])]'
+    else:
+        f = '[sin(t[0]),sin(2*t[0])]'
+
+    X = lti.solve(input=f)
+    assert X.dim == 2
+    if sampling_time == 0:
+        assert len(X) == nt + 1
+    else:
+        assert len(X) == T + 1
+
+    y = lti.output(input=f)
+    assert y.shape[1] == p
+    assert y.shape[0] == len(X)
+
+    y_impulse = lti.impulse_resp()
+    assert y_impulse.shape[:2] == y.shape
+    assert y_impulse.shape[2] == m
+
+    y_impulse2, X_impulse = lti.impulse_resp(return_solution=True)
+    assert np.all(y_impulse == y_impulse2)
+    assert isinstance(X_impulse, tuple)
+    assert all(Xi.dim == 2 for Xi in X_impulse)
+    assert all(len(Xi) == len(X) for Xi in X_impulse)
+
+    y_step = lti.step_resp()
+    assert y_step.shape[:2] == y.shape
+    assert y_step.shape[2] == m
+
+    y_step2, X_step = lti.step_resp(return_solution=True)
+    assert np.all(y_step == y_step2)
+    assert isinstance(X_step, tuple)
+    assert all(Xi.dim == 2 for Xi in X_step)
+    assert all(len(Xi) == len(X) for Xi in X_step)
 
 
 if __name__ == "__main__":

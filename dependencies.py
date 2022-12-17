@@ -16,8 +16,8 @@ def _numpy_scipy():
     # numpy versions with filters according to minimal version with a wheel
     # 1.24 limit due to https://github.com/pymor/pymor/issues/1692
     numpys = [
-        'numpy>=1.17.5,<1.24;python_version == "3.8"',
-        'numpy>=1.19.4,<1.24;python_version >= "3.9"',
+        'numpy>=1.17.5;python_version == "3.8"',
+        'numpy>=1.19.4;python_version >= "3.9"',
     ]
     scipys = [
         'scipy>=1.3;python_version < "3.8"',
