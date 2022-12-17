@@ -226,8 +226,9 @@ class NeuralNetworkInstationaryModel(BaseNeuralNetworkModel):
 
         self.__auto_init(locals())
         self.solution_space = NumpyVectorSpace(neural_network.output_dimension)
-        if output_functional is not None:
-            self.dim_output = output_functional.range.dim
+        output_functional = output_functional or ZeroOperator(NumpyVectorSpace(0), self.solution_space)
+        assert output_functional.source == self.solution_space
+        self.dim_output = output_functional.range.dim
 
     def _compute_solution(self, mu=None, **kwargs):
         # collect all inputs in a single tensor
@@ -288,10 +289,8 @@ class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
                  output_d_mu_return_array=False, mu=None, **kwargs):
 
         if output:
-            # collect all inputs in a single tensor
             inputs = self._scale_input(torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
                                                                     for t in np.linspace(0., self.T, self.nt)])))
-            # pass batch of inputs to neural network
             outputs = self.neural_network(inputs).data.numpy()
             outputs = self._scale_target(outputs)
             if isinstance(outputs, torch.Tensor):
@@ -352,3 +351,57 @@ class FullyConnectedNN(nn.Module, BasicObject):
         for i in range(len(self.layers) - 1):
             x = self.activation_function(self.layers[i](x))
         return self.layers[len(self.layers)-1](x)
+
+
+class LongShortTermMemoryNN(nn.Module, BasicObject):
+    """Class for Long Short-Term Memory neural networks (LSTMs).
+
+    This class implements neural networks for time series of input data of arbitrary length.
+    The same LSTMCell is applied in each timestep and the hidden state of the former LSTMCell
+    is used as input hidden state for the next cell.
+
+    Parameters
+    ----------
+    input_dimension
+        Dimension of the input (at a fixed time instance) of the LSTM.
+    hidden_dimension
+        Dimension of the hidden state of the LSTM.
+    output_dimension
+        Dimension of the output of the LSTM (must be smaller than `hidden_dimension`).
+    number_layers
+        Number of layers in the LSTM (if greater than 1, a stacked LSTM is used).
+    """
+
+    def __init__(self, input_dimension, hidden_dimension=10, output_dimension=1, number_layers=1):
+        assert input_dimension > 0
+        assert hidden_dimension > 0
+        assert output_dimension > 0
+        assert hidden_dimension > output_dimension
+        assert number_layers > 0
+
+        super().__init__()
+        self.__auto_init(locals())
+
+        self.lstm = nn.LSTM(input_dimension, hidden_dimension, num_layers=number_layers,
+                            proj_size=output_dimension, batch_first=True).double()
+
+        self.logger.info(f'Architecture of the neural network:\n{self}')
+
+    def forward(self, x):
+        """Performs the forward pass through the neural network.
+
+        Initializes the hidden and cell states and applies the weights of the LSTM layers
+        followed by the output layer that maps from the hidden state to the output state.
+
+        Parameters
+        ----------
+        x
+            Input for the neural network.
+
+        Returns
+        -------
+        The output of the neural network for the input x.
+        """
+        # perform forward pass through LSTM and return the result
+        output, _ = self.lstm(x)
+        return output

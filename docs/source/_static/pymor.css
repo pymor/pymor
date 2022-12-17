@@ -145,3 +145,7 @@ html .md-typeset .admonition > :last-child, html .md-typeset details > :last-chi
 .py.method, .py.function {
     border-left: .1rem solid #448aff !important;
 }
+
+.align-left {
+    float: left;
+}

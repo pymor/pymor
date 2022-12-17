@@ -1,6 +1,5 @@
 *.py[cod]
 *.pstats
-*.svg
 *.vtu
 *.tar.gz
 

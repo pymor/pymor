@@ -48,12 +48,12 @@ networks serve as a special class of functions that are able to "learn" the
 underlying structure of the sample set {math}`S` by adjusting their weights.
 More precisely, feedforward neural networks consist of several layers, each
 comprising a set of neurons that are connected to neurons in adjacent layers.
-A so called "weight" is assigned to each of those connections. The weights in
+A so-called "weight" is assigned to each of those connections. The weights in
 the neural network can be adjusted while fitting the neural network to the
 given sample set. For a given input {math}`\mu\in\mathcal{P}`, the weights between the
 input layer and the first hidden layer (the one after the input layer) are
 multiplied with the respective values in {math}`\mu` and summed up. Subsequently,
-a so called "bias" (also adjustable during training) is added and the result is
+a so-called "bias" (also adjustable during training) is added and the result is
 assigned to the corresponding neuron in the first hidden layer. Before passing
 those values to the following layer, a (non-linear) activation function
 {math}`\rho\colon\mathbb{R}\rightarrow\mathbb{R}` is applied. If {math}`\rho`
@@ -70,10 +70,11 @@ layers, an input size of two and an output size of three. Each edge between
 neurons has a corresponding weight that is learnable in the training phase.
 
 ```{image} neural_network.png
-
+:alt: Feedforward neural network
+:width: 100%
 ```
 
-To train the neural network, one considers a so called "loss function", that
+To train the neural network, one considers a so-called "loss function", that
 measures how the neural network performs on the training set {math}`S`, i.e.
 how accurately the neural network reproduces the output {math}`h(\mu_i)` given
 the input {math}`\mu_i`. The weights of the neural network are adjusted
@@ -297,8 +298,7 @@ the {meth}`~pymor.models.interface.Model.solve` method of the {{ Model }}, it ca
 be applied to {{ Models }} originating from external solvers, without requiring any access to
 {{ Operators }} internal to the solver.
 
-Direct approximation of output quantities
------------------------------------------
+## Direct approximation of output quantities
 
 Thus far, we were mainly interested in approximating the solution state
 {math}`u(\mu)\equiv u(\cdot,\mu)` for some parameter {math}`\mu`. If we consider an output
@@ -393,8 +393,7 @@ and the median of the speedups amounts to
 np.median(outputs_speedups)
 ```
 
-Neural networks for instationary problems
------------------------------------------
+## Neural networks for instationary problems
 
 To solve instationary problems using neural networks, we have extended the
 {class}`~pymor.reductors.neural_network.NeuralNetworkReductor` to the
@@ -405,6 +404,135 @@ with the current time instance, through the neural network in each time step to 
 coefficients. In the same fashion, there exists a
 {class}`~pymor.reductors.neural_network.NeuralNetworkInstationaryStatefreeOutputReductor` and the
 corresponding {class}`~pymor.models.neural_network.NeuralNetworkInstationaryStatefreeOutputModel`.
+
+A slightly different approach that is also implemented in pyMOR and uses a different type of
+neural network is described in the following section.
+
+### Long short-term memory neural networks for instationary problems
+
+So-called *recurrent neural networks* are especially well-suited for capturing time-dependent
+dynamics. These types of neural networks can treat input sequences of variable length (in our case
+sequences with a variable number of time steps) and store internal states that are passed from one
+time step to the next. Therefore, these networks implement an internal memory that keeps
+information over time. Furthermore, for each element of the input sequence, the same neural
+network is applied.
+
+In the {class}`~pymor.models.neural_network.NeuralNetworkLSTMInstationaryModel` and the
+corresponding {class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor`,
+we make use of a specific type of recurrent neural network, namely a so-called
+*long short-term memory neural network (LSTM)*, first introduced in {cite}`HS97`, that tries to
+avoid problems like vanishing or exploding gradients that often occur during training of recurrent
+neural networks.
+
+#### The architecture of an LSTM neural network
+In an LSTM neural network, multiple so-called LSTM cells are chained with each other such that the
+cell state {math}`c_k` and the hidden state {math}`h_k` of the {math}`k`-th LSTM cell serve as the
+input hidden states for the {math}`k+1`-th LSTM cell. Therefore, information from former time
+steps can be available later. Each LSTM cell takes an input {math}`\mu(t_k)` and produces an
+output {math}`o(t_k)`. The following figure shows the general structure of an LSTM neural network
+that is also implemented in the same way in pyMOR:
+
+```{image} lstm.svg
+:alt: Long short-term neural network
+:width: 100%
+```
+
+#### The LSTM cell
+The main building block of an LSTM network is the *LSTM cell*, which is denoted by {math}`\Phi`,
+and sketched in the following figure:
+
+```{image} lstm_cell.svg
+:alt: LSTM cell
+:align: left
+```
+
+Here, {math}`\mu(t_k)` denotes the input of the network at the current time instance {math}`t_k`,
+while {math}`o(t_k)` denotes the output. The two hidden states for time instance `t_k` are given
+as the cell state {math}`c_k` and the hidden state {math}`h_k` that also serves as the output.
+Squares represent layers similar to those used in feedforward neural networks, where inside the
+square the applied activation function is mentioned, and circles denote element-wise
+operations like element-wise multiplication ({math}`\times`), element-wise addition ({math}`+`) or
+element-wise application of the hyperbolic tangent function ({math}`\tanh`). The filled black
+circle represents the concatenation of the inputs. Furthermore, {math}`\sigma` is the sigmoid
+activation function ({math}`\sigma(x)=\frac{1}{1+\exp(-x)}`), and {math}`\tanh` is the hyperbolic
+tangent activation function ({math}`\tanh(x)=\frac{\exp(x)-\exp(-x)}{\exp(x)+\exp(-x)}`) used for
+the respective layers in the LSTM network. Finally, the layer {math}`P` denotes a projection layer
+that projects vectors of the internal size to the hidden and output size. Hence, internally, the
+LSTM can deal with larger quantities and finally projects them onto a space with a desired size.
+Altogether, a single LSTM cell takes two hidden states and an input of the form
+{math}`(c_{k-1},h_{k-1},\mu(t_k))` and transforms them into new hidden states and an output state
+of the form {math}`(c_k,h_k,o(t_k))`.
+
+We will take a closer look at the individual components of an LSTM cell in the subsequent
+paragraphs.
+
+##### The forget gate
+```{image} lstm_cell_forget_gate.svg
+:alt: Forget gate of an LSTM cell
+:align: right
+```
+As the name already suggests, the *forget gate* determines which part of the cell state
+{math}`c_{k-1}` the network forgets when moving to the next cell state {math}`c_k`. The main
+component of the forget gate is a neural network layer consisting of an affine-linear function
+with adjustable weights and biases followed by a sigmoid nonlinearity. By applying the sigmoid
+activation function, the output of the layer is scaled to lie between 0 and 1. The cell state
+{math}`c_{k-1}` from the previous cell is (point-wise) multiplied by the output of the layer in
+the forget gate. Hence, small values in the output of the layer correspond to parts of the cell
+state that are diminished, while values near 1 mean that the corresponding parts of the cell
+state remain intact. As input of the forget gate serves the pair {math}`(h_{k-1},\mu(t_k))` and
+in the second step also the cell state {math}`c_{k-1}`.
+
+##### The input gate
+```{image} lstm_cell_input_gate.svg
+:alt: Input gate of an LSTM cell
+:align: right
+```
+To further change the cell state, an LSTM cell contains a so-called *input gate*. This gate mainly
+consists of two layers, a sigmoid layer and an hyperbolic tangent layer, acting on the pair
+{math}`(h_{k-1},\mu(t_k))`. As in the forget gate, the sigmoid layer determines which parts of the
+cell state to adjust. On the other hand, the hyperbolic tangent layer determines how to adjust the
+cell state. Using the hyperbolic tangent as activation function scales the output to be between -1
+and 1, and allows for small updates of the cell state. To finally compute the update, the outputs
+of the sigmoid and the hyperbolic tangent layer are multiplied entry-wise. Afterwards, the update
+is added to the cell state (after the cell state passed the forget gate). The new cell state is
+now prepared to be passed to the subsequent LSTM cell.
+
+##### The output gate
+```{image} lstm_cell_output_gate.svg
+:alt: Output gate of an LSTM cell
+:align: right
+```
+For computing the output {math}`o(t_k)` (and the new hidden state {math}`h_k`), the updated cell
+state {math}`c_k` is first of all entry-wise transformed using a hyperbolic tangent function such
+that the result again takes values between -1 and 1. Simultaneously, a neural network layer with a
+sigmoid activation function is applied to the concatenated pair {math}`(h_{k-1},\mu(t_k))` of
+hidden state and input. Both results are multiplied entry-wise. This results in a filtered version
+of the (normalized) cell state. Finally, a projection layer is applied such that the result of the
+output gate has the desired size and can take arbitrary real values (before, due to the sigmoid and
+hyperbolic tangent activation functions, the outcome was restricted to the interval from -1 to 1).
+The projection layer applies a linear function without an activation (similar to the last layer of
+a usual feedforward neural network but without bias). Altogether, the *output gate* produces an
+output {math}`o(t_k)` that is returned and a new hidden state {math}`h_k` that can be passed
+(together with the updated cell state {math}`c_k`) to the next LSTM cell.
+
+#### LSTMs for model order reduction
+The idea of the approach implemented in pyMOR is the following: Instead of passing the current
+time instance as an additional input of the neural network, we use an LSTM that takes at each time
+instance {math}`t_k` the (potentially) time-dependent input {math}`\mu(t_k)` as an input and uses
+the hidden states of the former time step. The output {math}`o(t_k)` of the LSTM (and therefore
+also the hidden state {math}`h_k`) at time {math}`t_k` are either approximations of the reduced
+basis coefficients (similar to the
+{class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel`) or approximations of the
+output quantities (similar to the
+{class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel`). For state approximations
+using a reduced basis, one can apply the 
+{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor` and use the
+corresponding
+{class}`~pymor.models.neural_network.NeuralNetworkLSTMInstationaryModel`.
+For a direct approximation of outputs using LSTMs, we provide the
+{class}`~pymor.models.neural_network.NeuralNetworkLSTMInstationaryStatefreeOutputModel` and the
+corresponding
+{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryStatefreeOutputReductor`.
 
 Download the code:
 {download}`tutorial_mor_with_anns.md`

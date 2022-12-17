@@ -54,7 +54,7 @@ install_suggests = {
     _PYSIDE: 'solution visualization for builtin discretizations',
     'ipywidgets<8,>7': 'notebook GUI elements',
     'nbresuse': 'resource usage indicator for notebooks',
-    'torch': 'PyTorch open source machine learning framework',
+    'torch>=1.11.0': 'PyTorch open source machine learning framework',
     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
     'pillow': 'image library used for bitmap data functions',
     'dune-gdt>=2021.1.3; platform_system=="Linux" and platform_machine=="x86_64"': 'generic discretization toolbox',
