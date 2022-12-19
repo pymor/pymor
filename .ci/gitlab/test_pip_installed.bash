@@ -17,6 +17,9 @@ pip uninstall -y pymor
 # pip install ${PIP_CLONE_URL}#egg=pymor[full]
 # pip uninstall -y pymor
 
+pip install -e .[full]
+pip uninstall -y pymor
+
 pip install .[full]
 pip uninstall -y pymor
 # other requirements are installed from pymor[full]
