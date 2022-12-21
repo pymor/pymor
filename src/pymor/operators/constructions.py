@@ -644,6 +644,7 @@ class IdentityOperator(Operator):
     linear = True
 
     def __init__(self, space, name=None):
+        assert isinstance(space, VectorSpace)
         self.__auto_init(locals())
         self.source = self.range = space
 
@@ -695,6 +696,7 @@ class ConstantOperator(Operator):
 
     def __init__(self, value, source, name=None):
         assert isinstance(value, VectorArray)
+        assert isinstance(source, VectorSpace)
         assert len(value) == 1
         value = value.copy()
 
