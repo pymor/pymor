@@ -11,6 +11,7 @@ dependencies:
   - bash_kernel
   - check-manifest==0.48
   - click
+  - codecov==2.1.12
   - diskcache
   - docutils==0.18.1
   - flake8-docstrings==1.6.0
@@ -47,7 +48,7 @@ dependencies:
   - pythreejs
   - qtpy>2.0
   - rstcheck==6.0.0.post1
-  - scipy>=1.5.0
+  - scipy>=1.5.1
   - scipy>=1.5.4
   - setuptools
   - slycot>=0.4.0
