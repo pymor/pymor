@@ -21,7 +21,7 @@ def _numpy_scipy():
     ]
     scipys = [
         'scipy>=1.5.0;python_version < "3.8"',
-        'scipy>=1.3.3;python_version == "3.8"',
+        'scipy>=1.5.0;python_version == "3.8"',
         'scipy>=1.5.4;python_version >= "3.9"',
     ]
     return numpys + scipys
