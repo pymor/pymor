@@ -13,6 +13,8 @@ ipython>=5.0
 ipywidgets<8,>7
 jupyter_client>=7.0.6
 jupyter_contrib_nbextensions
+jupyter_server>1.3,<2.0
+jupytext>=1.14.4
 lxml
 matplotlib
 meshio>=4.4
