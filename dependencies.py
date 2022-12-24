@@ -20,8 +20,8 @@ def _numpy_scipy():
         'numpy>=1.19.4;python_version >= "3.9"',
     ]
     scipys = [
-        'scipy>=1.3;python_version < "3.8"',
-        'scipy>=1.3.3;python_version == "3.8"',
+        'scipy>=1.5.1;python_version < "3.8"',
+        'scipy>=1.5.1;python_version == "3.8"',
         'scipy>=1.5.4;python_version >= "3.9"',
     ]
     return numpys + scipys
@@ -73,7 +73,7 @@ ci_requires = ['check-manifest==0.48',
                'flake8-rst-docstrings==0.2.6',
                'hypothesis[numpy,pytest]==6.56.3',
                'pybind11==2.9.2',
-               'pypi-oldest-requirements==2021.2.0',
+               'pypi-oldest-requirements==2022.1.0',
                'pyqt5-qt5==5.15.2',
                'pyqt5==5.15.7',
                _PYTEST,
