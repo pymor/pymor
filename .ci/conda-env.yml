@@ -11,6 +11,7 @@ dependencies:
   - bash_kernel
   - check-manifest==0.48
   - click
+  - codecov==2.1.12
   - diskcache
   - docutils==0.18.1
   - flake8-docstrings==1.6.0
@@ -18,10 +19,9 @@ dependencies:
   - gmsh
   - ipyparallel>=6.2.5
   - ipython>=5.0
-  - ipywidgets<8,>7
-  - jupyter_client>=7.0.6
+  - ipywidgets>7
   - jupyter_contrib_nbextensions
-  - k3d>=2.14
+  - k3d>=2.15.1
   - lxml
   - matplotlib
   - meshio>=4.4
@@ -29,8 +29,8 @@ dependencies:
   - mpi4py>=3.0.3
   - myst-nb>=0.16
   - nbresuse
-  - numpy>=1.17.5,<1.24
-  - numpy>=1.19.4,<1.24
+  - numpy>=1.17.5
+  - numpy>=1.19.4
   - packaging
   - pillow
   - pybind11==2.9.2
@@ -45,7 +45,6 @@ dependencies:
   - pytest==7.1.2
   - python-gmsh
   - python-slugify
-  - pythreejs
   - qtpy>2.0
   - rstcheck==6.0.0.post1
   - scipy>=1.3
