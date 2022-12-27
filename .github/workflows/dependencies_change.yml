@@ -37,6 +37,8 @@ jobs:
           python: "3.9"
           prefix: "/usr/share/miniconda3/envs/pyMOR-ci_changes"
           os: "ubuntu-22.04"
+          results_file: result_requirements.xml
+          coverage_file: coverage_result_requirements
       - uses: peter-evans/create-pull-request@v4.2.3
         name: Create a PR for changed env
         with:
