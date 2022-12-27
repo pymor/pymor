@@ -44,9 +44,6 @@ jobs:
     name: ${{ matrix.os }} - Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 55
-    env:
-        RESULTS_FILE: result_${{ matrix.os }}-${{ matrix.python }}.xml
-        COVERAGE_FILE: coverage_${{ matrix.os }}-${{ matrix.python }}
     strategy:
         matrix:
             os: [ubuntu-22.04, macos-12, windows-2022]
@@ -71,6 +68,8 @@ jobs:
           python: ${{ matrix.python }}
           prefix: ${{ matrix.prefix }}
           os: ${{ matrix.os }}
+          results_file: result_${{ matrix.os }}-${{ matrix.python }}.xml
+          coverage_file: coverage_${{ matrix.os }}-${{ matrix.python }}
 
   coverage_to_html:
     name: Upload HTML Coverage Report
