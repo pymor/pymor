@@ -67,7 +67,6 @@ doc_requires = ['sphinx>=5.0,<5.2', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5',
                 'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8,<2', 'myst-nb>=0.16'] + install_requires
 ci_requires = ['check-manifest==0.48',
                'check_reqs==0.2.0',
-               'codecov==2.1.12',
                'docutils==0.18.1',
                'flake8-docstrings==1.6.0',
                'flake8-rst-docstrings==0.2.6',
