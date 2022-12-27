@@ -11,6 +11,7 @@ dependencies:
   - bash_kernel
   - check-manifest==0.48
   - click
+  - codecov==2.1.12
   - diskcache
   - docutils==0.18.1
   - flake8-docstrings==1.6.0
@@ -21,8 +22,8 @@ dependencies:
   - ipywidgets<8,>7
   - jupyter_client>=7.0.6
   - jupyter_contrib_nbextensions
-  - jupyter_server<2.0
-  - jupytext
+  - jupyter_server>1.3,<2.0
+  - jupytext>=1.14.4
   - lxml
   - matplotlib
   - meshio>=4.4
