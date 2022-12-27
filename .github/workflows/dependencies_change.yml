@@ -112,7 +112,7 @@ jobs:
           author: pyMOR Bot <ci@pymor.org>
           token: ${{ secrets.PYMOR_DOCKER_PR_TOKEN }}
           delete-branch: true
-          branch-suffix: short-commit-hash
+          branch: update-requirements-${{ github.event.pull_request.number }}
           base: main
           assignees: ${{ github.event.pull_request.author.login }}
   create_pr:
@@ -147,6 +147,6 @@ jobs:
           author: pyMOR Bot <ci@pymor.org>
           labels: pr:change,infrastructure
           delete-branch: true
-          branch-suffix: short-commit-hash
+          branch: update-requirements-${{ github.event.pull_request.number }}
           base: ${{ github.head_ref }}
           assignees: ${{ github.event.pull_request.author.login }}
