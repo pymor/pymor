@@ -24,18 +24,27 @@ jobs:
         run: python ./dependencies.py
       - name: Update env
         run: python .ci/create_conda_env.py requirements*.txt
-      - uses: peter-evans/create-pull-request@v4.2.3
-        name: Create a PR for changed env
-        with:
-          commit-message: "[Bot] Update requirements and environments"
-          title: "[Bot] Update requirements and environments"
-          author: pyMOR Bot <ci@pymor.org>
-          labels: pr:change
-          delete-branch: true
-          branch-suffix: short-commit-hash
       - name: Upload Logfile
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: create_conda_env.log.txt
-          path: .ci/create_conda_env.log
+          path: ./.ci/create_conda_env.log
+          if-no-files-found: error
+      - name: Check new env usable
+        uses: ./.github/actions/miniconda_tests
+        with:
+          python: "3.9"
+          prefix: "/usr/share/miniconda3/envs/pyMOR-ci_changes"
+          os: "ubuntu-22.04"
+      - uses: peter-evans/create-pull-request@v4.2.3
+        name: Create a PR for changed env
+        with:
+          commit-message: "[Bot] Update requirements and environments"
+          title: "[Bot] Update requirements and environments"
+          add-paths: .ci/conda-env.yml
+          author: pyMOR Bot <ci@pymor.org>
+          labels: pr:change
+          delete-branch: true
+          branch-suffix: short-commit-hash
+
