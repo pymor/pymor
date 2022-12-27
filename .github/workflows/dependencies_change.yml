@@ -24,6 +24,12 @@ jobs:
         run: python ./dependencies.py
       - name: Update env
         run: python .ci/create_conda_env.py requirements*.txt
+      - name: Check new env usable
+        uses: ./.github/actions/miniconda_tests
+        with:
+          python: "3.9"
+          prefix: "/usr/share/miniconda3/envs/pyMOR-ci_changes"
+          os: "ubuntu-22.04"
       - uses: peter-evans/create-pull-request@v4.2.3
         name: Create a PR for changed env
         with:
