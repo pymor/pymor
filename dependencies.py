@@ -40,6 +40,7 @@ def setup_requires():
 #   https://github.com/jupyter-widgets/pythreejs/issues/366
 # Qt bindings selectors are a woraround for https://bugreports.qt.io/browse/QTBUG-88688
 # ipywidget pin is due to https://github.com/pymor/pymor/issues/1717
+# for jupytext and jupyter_server, see https://github.com/pymor/pymor/issues/1878
 install_requires = ['qtpy>2.0', 'packaging', 'diskcache', 'typer', 'click'] + _numpy_scipy()
 install_suggests = {
     'ipython>=5.0': 'an enhanced interactive python shell',
@@ -50,6 +51,8 @@ install_suggests = {
     'pygments': 'highlighting code',
     'pythreejs': 'threejs bindings for python notebook  visualization',
     'jupyter_client>=7.0.6': 'necessary to explicitly state here to fix 3js',
+    'jupytext>=1.14.4': 'open Markdown files in Jupyter',
+    'jupyter_server>1.3,<2.0': 'required for jupytext',
     _PYTEST: 'testing framework required to execute unit tests',
     _PYSIDE: 'solution visualization for builtin discretizations',
     'ipywidgets<8,>7': 'notebook GUI elements',
