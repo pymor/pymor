@@ -179,4 +179,4 @@ jobs:
             ${{ runner.os }}-${{ matrix.python }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.ci/conda-env.yml') }}
       - name: Install pyMOR
         shell: bash -l {0}
-        run: pip install .[full]
+        run: python -m pip install .[full]
