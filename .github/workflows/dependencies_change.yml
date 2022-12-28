@@ -111,6 +111,7 @@ jobs:
           body: "Update requirements PR ${{ format('https://github.com/{1}/pull/{0}', github.event.pull_request.number, github.repository) }}"
           author: pyMOR Bot <ci@pymor.org>
           token: ${{ secrets.PYMOR_DOCKER_PR_TOKEN }}
+          add-paths: constraints/requirements*.txt
           delete-branch: true
           branch: update-requirements-${{ github.event.pull_request.number }}
           base: main
@@ -127,7 +128,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: conda_env
-          path: ./
+          path: ./.ci/
       - run: pip install -r requirements-ci.txt
       - name: Update .env
         run: |
