@@ -85,6 +85,8 @@ def parse_expression(expression, parameters={}, values={}):
 
     # wrap all literals as Expressions
     transformed_tree = TransformLiterals().visit(tree)
+    # handle chained comparisons
+    transformed_tree = TransformChainedComparison().visit(transformed_tree)
     ast.fix_missing_locations(transformed_tree)
 
     # evaluate expression
@@ -133,6 +135,18 @@ class TransformLiterals(ast.NodeTransformer):
     def visit_List(self, node):
         return ast.Call(ast.Name('Array', ast.Load()),
                         [self.generic_visit(node)], [])
+
+class TransformChainedComparison(ast.NodeTransformer):
+
+    def visit_Compare(self, node):
+        comparators = [node.left] + node.comparators
+        operators = node.ops
+        comparisons = []
+        for i, op in enumerate(operators):
+            comparisons.append(ast.Compare(self.generic_visit(comparators[i]),
+                                           [self.generic_visit(operators[i])],
+                                           [self.generic_visit(comparators[i+1])]))
+        return ast.Call(ast.Name('ChainedComparison', ast.Load()), comparisons, [])
 
 
 class Expression(ParametricObject):
@@ -444,13 +458,13 @@ class Neg(Expression):
         self.shape = operand.shape
 
     def numpy_expr(self):
-        return f'(-{self.operand.numpy_expr()})'
+        return f'(- {self.operand.numpy_expr()})'
 
     def fenics_expr(self, params):
         return np.vectorize(lambda x: -x)(self.operand.fenics_expr(params))
 
     def __str__(self):
-        return f'(-{self.operand})'
+        return f'(- {self.operand})'
 
 
 class Indexed(Expression):
@@ -487,6 +501,23 @@ class Indexed(Expression):
         index = [str(i) for i in self.index]
         return f'{self.base}[{",".join(index)}]'
 
+
+class ChainedComparison(Expression):
+    """Chained comparison :class:`Expression`."""
+
+    numpy_symbol = None
+    fenics_symbol = None
+
+    def __init__(self, *compares):
+        for compare in compares:    
+            if not isinstance(compare, Expression):
+                raise ValueError(f'Comparison of {type(self).__name__}({compare}) must be Expression '
+                                f'(given: {type(compare).__name__}).')
+        self.compares = compares
+
+    def numpy_expr(self):
+        return "*".join([c.numpy_expr() for c in self.compares])   
+        
 
 class UnaryFunctionCall(Expression):
     """Compound :class:`Expression` of an unary function applied to a sub-expression.
