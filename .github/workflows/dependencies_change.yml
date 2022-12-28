@@ -47,3 +47,4 @@ jobs:
         with:
           name: create_conda_env.log.txt
           path: .ci/create_conda_env.log
+          if-no-files-found: error
