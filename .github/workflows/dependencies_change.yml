@@ -132,6 +132,8 @@ jobs:
           path: ./.ci/
       - run: pip install -r requirements-ci.txt
       - name: Update .env
+        # this will be empty if no PR was created in pymor/docker
+        if: ${{needs.docker.outputs.env_sha}} != ''
         run: |
           sed -i "/^PYPI_MIRROR_TAG/s/=.*$/=${{needs.docker.outputs.env_sha}}/" .env
           sed -i "/^CI_IMAGE_TAG/s/=.*$/=${{needs.docker.outputs.env_sha}}/" .env
