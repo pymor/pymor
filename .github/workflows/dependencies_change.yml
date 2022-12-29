@@ -112,6 +112,7 @@ jobs:
           author: pyMOR Bot <ci@pymor.org>
           token: ${{ secrets.PYMOR_DOCKER_PR_TOKEN }}
           add-paths: constraints/requirements*.txt
+          labels: automerge
           delete-branch: true
           branch: update-requirements-${{ github.event.pull_request.number }}
           base: main
@@ -146,7 +147,7 @@ jobs:
             Updates the conda environment / docker images for PR ${{ format('#{0}', github.event.pull_request.number) }}.
             The Gitlab pipelines might need to be restarted once ${{ needs.docker.outputs.repo_url }} is merged/finished.
           author: pyMOR Bot <ci@pymor.org>
-          labels: pr:change,infrastructure
+          labels: pr:change,infrastructure,dependencies
           delete-branch: true
           branch: update-requirements-${{ github.event.pull_request.number }}
           base: ${{ github.head_ref }}
