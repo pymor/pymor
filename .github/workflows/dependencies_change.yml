@@ -66,20 +66,6 @@ jobs:
           os: "ubuntu-22.04"
           results_file: result_requirements.xml
           coverage_file: coverage_result_requirements
-      - uses: peter-evans/create-pull-request@v4.2.3
-        name: Create a PR for changed env
-        with:
-          commit-message: "[Bot] Update requirements and environments"
-          title: "[Bot] Update requirements and environments"
-          add-paths: .ci/conda-env.yml
-          body: "Updates the conda environment for PR ${{ format('#{0}', github.event.pull_request.number) }}."
-          author: pyMOR Bot <ci@pymor.org>
-          labels: pr:change,infrastructure
-          delete-branch: true
-          branch-suffix: short-commit-hash
-          if-no-files-found: error
-          base: ${{ github.head_ref }}
-          assignees: ${{ github.event.pull_request.author.login }}
           hypothesis_profile: "dev" # minimal test parametrization
       - name: Upload new requirements
         if: always()
@@ -155,7 +141,8 @@ jobs:
           title: "[Bot] Update requirements and environments"
           body: |
             Updates the conda environment / docker images for PR ${{ format('#{0}', github.event.pull_request.number) }}.
-            The Gitlab pipelines might need to be restarted once ${{ needs.docker.outputs.pr_url }} is merged/finished.
+            The Gitlab pipelines of this PR might need to be restarted once ${{ needs.docker.outputs.pr_url }}
+            is merged/finished.
           author: pyMOR Bot <ci@pymor.org>
           labels: pr:change,infrastructure,dependencies,automerge
           delete-branch: true
