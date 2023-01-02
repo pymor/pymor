@@ -117,10 +117,14 @@ jobs:
           branch: update-requirements-${{ github.event.pull_request.number }}
           base: main
           assignees: ${{ github.event.pull_request.author.login }}
+
   create_pr:
     name: Create PR
     runs-on: ubuntu-22.04
     needs: [docker,conda]
+    outputs:
+      pr_url: ${{ steps.create_pr.outputs.pull-request-url }}
+      env_sha: ${{ steps.create_pr.outputs.pull-request-head-sha }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v2
@@ -144,15 +148,24 @@ jobs:
       - run: git diff
       - uses: peter-evans/create-pull-request@v4.2.3
         name: Create a PR for changed env
+        id: create_pr
         with:
           commit-message: "[Bot] Update requirements and environments"
           title: "[Bot] Update requirements and environments"
           body: |
             Updates the conda environment / docker images for PR ${{ format('#{0}', github.event.pull_request.number) }}.
-            The Gitlab pipelines might need to be restarted once ${{ needs.docker.outputs.repo_url }} is merged/finished.
+            The Gitlab pipelines might need to be restarted once ${{ needs.docker.outputs.pr_url }} is merged/finished.
           author: pyMOR Bot <ci@pymor.org>
-          labels: pr:change,infrastructure,dependencies
+          labels: pr:change,infrastructure,dependencies,automerge
           delete-branch: true
           branch: update-requirements-${{ github.event.pull_request.number }}
           base: ${{ github.head_ref }}
           assignees: ${{ github.event.pull_request.author.login }}
+      - name: PR Comment
+        uses: thollander/actions-comment-pull-request@v2
+        if: ${{ steps.create_pr.outputs.pull-request-number }}
+        with:
+          comment_tag: "pr_comment_pymor"
+          message: |
+            Please wait for ${{ steps.create_pr.outputs.pull-request-url }} to be merged before merging this PR.
+          reactions: rocket
