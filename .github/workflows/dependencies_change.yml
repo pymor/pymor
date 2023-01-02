@@ -1,13 +1,38 @@
 name: Dependencies changed
 on:
-  push:
+  pull_request:
     paths:
       - 'dependencies.py'
       - '.ci/create_conda_env.py'
+      - '.ci/gitlab/template.ci.py'
+
+concurrency:
+    group: ${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}
+    cancel-in-progress: true
+
 jobs:
-  update:
+  requirements:
     name: Update dependency files
     runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: pip install -r requirements-ci.txt
+      - name: Update requirements
+        run: python ./dependencies.py
+      - name: Upload new requirements
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: requirements
+          path: requirements*.txt
+  conda:
+    name: Update conda environment
+    runs-on: ubuntu-22.04
+    needs: requirements
     steps:
       - uses: actions/checkout@v3
       - uses: conda-incubator/setup-miniconda@v2
@@ -20,8 +45,10 @@ jobs:
           channel-priority: true
       - name: Install dependencies
         run: pip install -r requirements-ci.txt
-      - name: Update requirements
-        run: python ./dependencies.py
+      - uses: actions/download-artifact@v3
+        with:
+          name: requirements
+          path: .
       - name: Update env
         run: python .ci/create_conda_env.py requirements*.txt
       - name: Upload Logfile
@@ -45,9 +72,87 @@ jobs:
           commit-message: "[Bot] Update requirements and environments"
           title: "[Bot] Update requirements and environments"
           add-paths: .ci/conda-env.yml
+          body: "Updates the conda environment for PR ${{ format('#{0}', github.event.pull_request.number) }}."
           author: pyMOR Bot <ci@pymor.org>
-          labels: pr:change
+          labels: pr:change,infrastructure
           delete-branch: true
           branch-suffix: short-commit-hash
-
           if-no-files-found: error
+          base: ${{ github.head_ref }}
+          assignees: ${{ github.event.pull_request.author.login }}
+      - name: Upload new requirements
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: conda_env
+          path: .ci/conda-env.yml
+  docker:
+    name: Update docker images
+    runs-on: ubuntu-22.04
+    needs: requirements
+    outputs:
+      pr_url: ${{ steps.create_pr.outputs.pull-request-url }}
+      env_sha: ${{ steps.create_pr.outputs.pull-request-head-sha }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: pymor/docker
+          ssh-key: ${{ secrets.PYMOR_DOCKER_DEPLOY }}
+      - uses: actions/download-artifact@v3
+        with:
+          name: requirements
+          path: ./constraints/
+      - uses: peter-evans/create-pull-request@v4.2.3
+        name: Create a PR for dependencies
+        id: create_pr
+        with:
+          commit-message: "[Bot] Update requirements/constraints"
+          title: "Update requirements for pymor PR ${{ format('{0}', github.event.pull_request.number) }}"
+          body: "Update requirements PR ${{ format('https://github.com/{1}/pull/{0}', github.event.pull_request.number, github.repository) }}"
+          author: pyMOR Bot <ci@pymor.org>
+          token: ${{ secrets.PYMOR_DOCKER_PR_TOKEN }}
+          add-paths: constraints/requirements*.txt
+          labels: automerge
+          delete-branch: true
+          branch: update-requirements-${{ github.event.pull_request.number }}
+          base: main
+          assignees: ${{ github.event.pull_request.author.login }}
+  create_pr:
+    name: Create PR
+    runs-on: ubuntu-22.04
+    needs: [docker,conda]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - uses: actions/download-artifact@v3
+        with:
+          name: conda_env
+          path: ./.ci/
+      - run: pip install -r requirements-ci.txt
+      - name: Update .env
+        env:
+          ENV_SHA: ${{ needs.docker.outputs.env_sha }}
+        run: |
+          if [[ ${ENV_SHA} != "" ]]; then
+            sed -i "/^PYPI_MIRROR_TAG/s/=.*$/=${ENV_SHA}/" .env
+            sed -i "/^CI_IMAGE_TAG/s/=.*$/=${ENV_SHA}/" .env
+          fi
+      - name: Regenerate template
+        run: make template
+      - run: git diff
+      - uses: peter-evans/create-pull-request@v4.2.3
+        name: Create a PR for changed env
+        with:
+          commit-message: "[Bot] Update requirements and environments"
+          title: "[Bot] Update requirements and environments"
+          body: |
+            Updates the conda environment / docker images for PR ${{ format('#{0}', github.event.pull_request.number) }}.
+            The Gitlab pipelines might need to be restarted once ${{ needs.docker.outputs.repo_url }} is merged/finished.
+          author: pyMOR Bot <ci@pymor.org>
+          labels: pr:change,infrastructure,dependencies
+          delete-branch: true
+          branch: update-requirements-${{ github.event.pull_request.number }}
+          base: ${{ github.head_ref }}
+          assignees: ${{ github.event.pull_request.author.login }}

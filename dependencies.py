@@ -5,7 +5,7 @@
 
 # DO NOT use any python features here that require 3.6 or newer
 
-_PYTEST = 'pytest==7.1.2'
+_PYTEST = 'pytest==7.2.0'
 # 5.12.* blocked due to https://bugreports.qt.io/browse/PYSIDE-1004
 # however the problem is not actually fixed in 5.12.3 as advertised,
 # but only starting from 5.13.1
@@ -68,27 +68,30 @@ install_suggests.update({p: 'optional File I/O support libraries' for p in io_re
 doc_requires = ['sphinx>=5.0,<5.2', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
                 'ipywidgets<8,>7', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
                 'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8,<2', 'myst-nb>=0.16'] + install_requires
-ci_requires = ['check-manifest==0.48',
-               'check_reqs==0.2.0',
-               'docutils==0.18.1',
+ci_requires = ['check-manifest==0.49',
+               'check_reqs==1.0.0',
+               # only update in lockstep with sphinx
+               'docutils==0.18',
                'flake8-docstrings==1.6.0',
-               'flake8-rst-docstrings==0.2.6',
+               'flake8-rst-docstrings==0.3.0',
                'hypothesis[numpy,pytest]==6.56.3',
                'pybind11==2.9.2',
                'pypi-oldest-requirements==2022.1.0',
                'pyqt5-qt5==5.15.2',
                'pyqt5==5.15.7',
                _PYTEST,
-               'pytest-cov==3.0.0',
+               'pytest-cov==4.0.0',
+               'python-dotenv==0.21.0',
+               'python-gitlab==3.12.0',
                'pytest-memprof==0.2.0',
-               'pytest-notebook==0.8.0',
+               'pytest-notebook==0.8.1',
                'pytest-parallel==0.1.1',
-               'pytest-regressions==2.3.1',
-               'pytest-xdist==2.5.0',
-               'readme_renderer[md]==35.0',
-               'rstcheck==6.0.0.post1',
+               'pytest-regressions==2.4.1',
+               'pytest-xdist==3.1.0',
+               'readme_renderer[md]==37.0',
+               'rstcheck==6.1.1',
                'scikit-fem==6.0.0',
-               'twine==3.8.0']
+               'twine==4.0.2']
 
 # Slycot is pinned due to buildsystem changes + missing wheels
 optional_requirements_file_only = (['slycot>=0.4.0', 'pymess',
