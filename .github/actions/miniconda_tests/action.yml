@@ -16,6 +16,10 @@ inputs:
   results_file:
     required: true
     type: string
+  hypothesis_profile:
+    required: false
+    type: string
+    default: "ci"
 runs:
   using: "composite"
   steps:
@@ -97,7 +101,7 @@ runs:
       shell: bash -l {0}
       env:
         PYTHONPATH: ./src
-        PYMOR_HYPOTHESIS_PROFILE: "ci"
+        PYMOR_HYPOTHESIS_PROFILE: ${{ inputs.hypothesis_profile }}
         # we may be able to limit this to macos
         PYMOR_ALLOW_DEADLINE_EXCESS: 1
         COMMON_PYTEST_OPTS: "--cov-report= --cov --cov-config=setup.cfg --cov-context=test --junitxml=${{ inputs.results_file }}"

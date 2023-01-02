@@ -80,6 +80,7 @@ jobs:
           if-no-files-found: error
           base: ${{ github.head_ref }}
           assignees: ${{ github.event.pull_request.author.login }}
+          hypothesis_profile: "dev" # minimal test parametrization
       - name: Upload new requirements
         if: always()
         uses: actions/upload-artifact@v3
