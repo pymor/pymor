@@ -2,13 +2,15 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
+
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 
 
 @defaults('alpha_init', 'tau', 'beta', 'maxiter')
-def armijo(f, starting_point, direction, grad=None, initial_value=None,
-           alpha_init=1.0, tau=0.5, beta=0.0001, maxiter=10):
+def armijo(f, starting_point, direction, grad=None, initial_value=None, alpha_init=1.0, tau=0.5, beta=0.0001,
+           maxiter=10, additional_criterion=None):
     """Armijo line search algorithm.
 
     This method computes a step size such that the Armijo condition (see :cite:`NW06`, p. 33)
@@ -35,6 +37,8 @@ def armijo(f, starting_point, direction, grad=None, initial_value=None,
     maxiter
         Use `alpha_init` as default if the iteration count reaches this value without
         finding a point fulfilling the Armijo condition.
+    additional_criterion
+        A `callable` used as an additional termination criterion during the step length computation.
 
     Returns
     -------
@@ -56,15 +60,22 @@ def armijo(f, starting_point, direction, grad=None, initial_value=None,
     slope = 0.0
 
     # Compute slope if gradient is provided
-    if grad:
-        slope = min(grad.inner(direction), 0.0)
+    if grad is not None:
+        slope = min(np.inner(grad, direction), 0.0)
+
+    if additional_criterion is not None:
+        assert callable(additional_criterion)
+    else:
+        additional_criterion = lambda *args: False
 
     while True:
         # Compute new function value
         current_value = f(starting_point + alpha * direction)
         # Check the Armijo condition
-        if current_value < initial_value + alpha * beta * slope:
+        if (current_value < initial_value + alpha * beta * slope
+                or additional_criterion(f, starting_point, alpha, direction, grad, slope)):
             break
+
         # Check if maxiter is reached
         if iteration >= maxiter:
             # Use default value as step size
