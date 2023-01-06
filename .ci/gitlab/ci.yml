@@ -23,8 +23,8 @@ stages:
           when: never
         - when: on_success
     variables:
-        PYPI_MIRROR_TAG: 6c4cd69d011f495df6e7e2a5d422e0136ce2d12c
-        CI_IMAGE_TAG: 6c4cd69d011f495df6e7e2a5d422e0136ce2d12c
+        PYPI_MIRROR_TAG: 41b9ae5e0ac9f00028111644bcdaab97ca33cda6
+        CI_IMAGE_TAG: 41b9ae5e0ac9f00028111644bcdaab97ca33cda6
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
         BINDERIMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
@@ -134,7 +134,7 @@ stages:
     before_script:
       # bump to our minimal version
       - python3 -m pip install "devpi-client"
-      - python3 -m pip install "https://m.devpi.net/fschulze/dev/+f/6ac/e7aaa2d1196f1/devpi_common-3.7.1.dev0-py2.py3-none-any.whl"  
+      - python3 -m pip install "https://m.devpi.net/fschulze/dev/+f/6ac/e7aaa2d1196f1/devpi_common-3.7.1.dev0-py2.py3-none-any.whl"
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password ''
       - devpi upload --from-dir --formats=* ./dist/*.whl
@@ -611,7 +611,7 @@ from source 1/2:
     extends: .test_base
     tags: [mike]
     services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:${PYPI_MIRROR_TAG}
+        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.10:${PYPI_MIRROR_TAG}
           alias: pypi_mirror
     needs: ["ci setup"]
     rules:
@@ -748,7 +748,7 @@ from wheel 1/2:
     extends: .check_wheel
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_fedora:${CI_IMAGE_TAG}
     script:
-      - echo "Testing wheel install on fedora with Python 3.9"
+      - echo "Testing wheel install on fedora with Python 3.10"
       - python3 -m pip freeze --all
       - devpi install pymor[full]
 
