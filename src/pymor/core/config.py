@@ -57,7 +57,7 @@ def _get_fenics_version():
 
 def _get_dunegdt_version():
     import importlib
-    version_ranges = {"dune-gdt": ('2021.1.2', '2022.2'), "dune-xt": ('2021.1.2', '2022.2')}
+    version_ranges = {"dune-gdt": ('2021.1.2', '2023.2'), "dune-xt": ('2021.1.2', '2023.2')}
 
     def _get_version(dep_name):
         min_version, max_version = version_ranges[dep_name]
