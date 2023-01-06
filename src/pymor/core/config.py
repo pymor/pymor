@@ -66,10 +66,10 @@ def _get_dunegdt_version():
             version = module.__version__
             if parse(version) < parse(min_version) or parse(version) >= parse(max_version):
                 warnings.warn(f'{dep_name} bindings have been tested for versions between '
-                              '{min_version} and {max_version} (installed: {version}).')
+                              f'{min_version} and {max_version} (installed: {version}).')
         except AttributeError:
             warnings.warn(f'{dep_name} bindings have been tested for versions between '
-                          '{min_version} and {max_version} (installed unknown version).')
+                          f'{min_version} and {max_version} (installed unknown version).')
             version = None
         return version
 
