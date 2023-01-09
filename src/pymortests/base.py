@@ -16,7 +16,7 @@ from pytest import skip
 
 from pymor.algorithms.basic import almost_equal, relative_error
 from pymor.core import config
-from pymor.core.exceptions import DependencyMissing
+from pymor.core.exceptions import DependencyMissingError
 
 
 def runmodule(filename):
@@ -115,7 +115,7 @@ def skip_if_missing(config_name):
         def _inner_wrapper(*args, **kwargs):
             try:
                 config.config.require(config_name)
-            except DependencyMissing as dm:
+            except DependencyMissingError as dm:
                 # skip does not return
                 if config_name in str(dm.dependency) and not os.environ.get('DOCKER_PYMOR', False):
                     skip_string = 'skipped test due to missing dependency ' + config_name

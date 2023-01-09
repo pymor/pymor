@@ -15,7 +15,7 @@ import meshio
 from lxml import etree
 from xmljson import BadgerFish
 
-from pymor.core.exceptions import IOLibsMissing
+from pymor.core.exceptions import IOLibsMissingError
 
 
 def _read_collection(xml, metadata_key):
@@ -105,7 +105,7 @@ def write_vtk_collection(filename_base, meshes, metadata=None):
     full filename of saved file
     """
     if not config.HAVE_VTKIO:
-        raise IOLibsMissing()
+        raise IOLibsMissingError()
     from pyevtk.vtk import VtkGroup
 
     fn_tpl = '{}_{:08d}.vtu'

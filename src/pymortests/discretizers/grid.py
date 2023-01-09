@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from hypothesis import given, settings
 
-from pymor.core.exceptions import QtMissing
+from pymor.core.exceptions import QtMissingError
 from pymortests.base import might_exceed_deadline
 from pymortests.core.pickling import assert_picklable_without_dumps_function
 from pymortests.fixtures.grid import (
@@ -449,5 +449,5 @@ def test_visualize(grids_with_visualize):
         g = grids_with_visualize
         U = np.ones(g.size(g.dim))
         g.visualize(U, g.dim)
-    except QtMissing:
+    except QtMissingError:
         pytest.xfail('Qt missing')
