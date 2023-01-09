@@ -244,7 +244,7 @@ class NumpyVectorSpace(VectorSpace):
         return va
 
     @classinstancemethod
-    def make_array(cls, obj, id=None):
+    def make_array(cls, obj, id=None):  # noqa N805
         return cls._array_factory(obj, id=id)
 
     @make_array.instancemethod
@@ -253,7 +253,7 @@ class NumpyVectorSpace(VectorSpace):
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
-    def from_numpy(cls, data, id=None, ensure_copy=False):
+    def from_numpy(cls, data, id=None, ensure_copy=False):  # noqa N805
         return cls._array_factory(data.copy() if ensure_copy else data, id=id)
 
     @from_numpy.instancemethod
@@ -262,7 +262,7 @@ class NumpyVectorSpace(VectorSpace):
         return self._array_factory(data.copy() if ensure_copy else data, space=self)
 
     @classinstancemethod
-    def from_file(cls, path, key=None, single_vector=False, transpose=False, id=None):
+    def from_file(cls, path, key=None, single_vector=False, transpose=False, id=None):  # noqa N805
         assert not (single_vector and transpose)
         from pymor.tools.io import load_matrix
         array = load_matrix(path, key=key)

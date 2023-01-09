@@ -100,7 +100,7 @@ class Vector(BasicObject):
 class CopyOnWriteVector(Vector):
 
     @abstractclassmethod
-    def from_instance(cls, instance):
+    def from_instance(cls, instance):  # noqa: N805
         pass
 
     @abstractmethod
@@ -575,7 +575,7 @@ class ListVectorSpace(VectorSpace):
         )
 
     @classinstancemethod
-    def make_array(cls, obj, id=None):
+    def make_array(cls, obj, id=None):  # noqa: N805
         if len(obj) == 0:
             raise NotImplementedError
         return cls.space_from_vector_obj(obj[0], id=id).make_array(obj)
@@ -589,7 +589,7 @@ class ListVectorSpace(VectorSpace):
         )
 
     @classinstancemethod
-    def from_numpy(cls, data, id=None, ensure_copy=False):
+    def from_numpy(cls, data, id=None, ensure_copy=False):  # noqa: N805
         return cls.space_from_dim(data.shape[1], id=id).from_numpy(data, ensure_copy=ensure_copy)
 
     @from_numpy.instancemethod

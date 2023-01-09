@@ -22,7 +22,7 @@ except ImportError:
     from IPython.parallel import Client, TimeoutError
 
 
-class new_ipcluster_pool(BasicObject):
+class new_ipcluster_pool(BasicObject):  # noqa: N801
     """Create a new IPython parallel cluster and connect to it.
 
     This context manager can be used to create an :class:`IPythonPool`

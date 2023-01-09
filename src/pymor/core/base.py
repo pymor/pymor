@@ -231,7 +231,7 @@ abstractclassmethod = abc.abstractclassmethod
 abstractstaticmethod = abc.abstractstaticmethod
 
 
-class classinstancemethod:
+class classinstancemethod: # noqa: N801
 
     def __init__(self, cls_meth):
         self.cls_meth = cls_meth

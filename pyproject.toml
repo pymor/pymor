@@ -35,13 +35,6 @@ inline-quotes = "single"
 "__init__.py" = ["F401"]
 "src/pymor/algorithms/rules.py" = ["N801", "N805"] # class name CapWords convention, first argument should be `self` (not in metaclass)
 "src/pymor/analyticalproblems/expressions.py" = ["N801"] # class name CapWords convention
-"src/pymor/core/base.py" = ["N801"] # class name CapWords convention (for classinstancemethod)
-"src/pymor/core/pickle.py" = ["N807"] # Function should not start and end with `__` (`__get_state__` not understood)
-"src/pymor/discretizers/builtin/gui/gl.py" = ["N811"] # Constant imported as non-constant
-"src/pymor/parallel/ipython.py" = ["N801"] # class name CapWords convention
-"src/pymor/vectorarrays/block.py" = ["N805"] # first argument should be `self` (@classinstancemethod decorator not understood by linter)
-"src/pymor/vectorarrays/list.py" = ["N805"] # first argument should be `self` (@classinstancemethod decorator not understood by linter)
-"src/pymor/vectorarrays/numpy.py" = ["N805"] # first argument should be `self` (@classinstancemethod decorator not understood by linter)
 "src/pymordemos/*" = ["F403", "F405"] # undefined import due to pymor.basic functionality
 
 [tool.ruff.pydocstyle]

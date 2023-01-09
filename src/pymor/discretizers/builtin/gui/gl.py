@@ -21,7 +21,7 @@ import math as m
 from ctypes import c_void_p
 
 import numpy as np
-import OpenGL.GL as gl
+import OpenGL.GL as gl  # noqa: N811
 from qtpy.QtGui import QFontMetrics, QPainter
 from qtpy.QtWidgets import QOpenGLWidget, QSizePolicy
 

@@ -69,7 +69,7 @@ else:
 
 def unpicklable(cls):
     """Class decorator to mark a class as unpicklable."""
-    def __getstate__(self):
+    def __getstate__(self):  # noqa: N807
         raise UnpicklableError(cls)
 
     cls.__getstate__ = __getstate__

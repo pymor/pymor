@@ -233,7 +233,7 @@ class BlockVectorSpace(VectorSpace):
         )
 
     @classinstancemethod
-    def make_array(cls, obj):
+    def make_array(cls, obj):  # noqa: N805
         assert len(obj) > 0
         return cls(tuple(o.space for o in obj)).make_array(obj)
 
