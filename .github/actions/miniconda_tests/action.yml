@@ -40,39 +40,28 @@ runs:
         ./mesa/systemwidedeploy.cmd
 
     - uses: actions/checkout@v3
-    - uses: conda-incubator/setup-miniconda@v2
+    - name: provision-with-micromamba
+      uses: mamba-org/provision-with-micromamba@v14
+
       with:
-        activate-environment: pyMOR-ci
-        miniforge-variant: Mambaforge
-        use-mamba: true
-        python-version: ${{ inputs.python }}
+        extra-specs: |
+            python=${{ inputs.python }}
         channels: conda-forge
-        channel-priority: true
-        # This needs to be set for caching to work properly!
-        use-only-tar-bz2: true
-    - name: Cache conda
-      uses: martijnhols/actions-cache@v3.0.11
-      id: cache
-      env:
-        # Increase this value to reset cache if .ci/conda-env.yml have not changed
-        CACHE_NUMBER: 2
-      with:
-        path: ${{ inputs.python }}
-        key:
-          ${{ runner.os }}-${{ inputs.python }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.ci/conda-env.yml') }}
-    - name: Update environment
-      shell: bash
-      run: mamba env update -n pyMOR-ci -f .ci/conda-env.yml
-      if: steps.cache.outputs.cache-hit != 'true'
+        channel-priority: strict
+        cache-env: true
+        cache-downloads: true
+        cache-env-key: ${{ inputs.python }}-${{ inputs.os }}
+        environment-file: .ci/conda-env.yml
+        micromamba-version: "latest"
+    - name: Install non-conda packages
+      shell: bash -l {0}
+      run: |
+        # step step due to https://github.com/mamba-org/provision-with-micromamba/issues/108
+        pip install -r requirements-ci.txt
     - name: Export Conda Env
       shell: bash -l {0}
       run: |
-        mamba env export > conda-env__${{ runner.os }}-${{ inputs.python }}.yml
-    - name: Install pyMOR
-      shell: bash -l {0}
-      # this seems to be the most portable way of making sure everything is importable
-      run: conda develop .
-      # alas it still does not work everywhere, so manual PYTHONPATH it is
+        ${MAMBA_EXE} env export > conda-env__${{ runner.os }}-${{ inputs.python }}.yml
     - name: Platform env
       shell: bash -l {0}
       run: |
@@ -85,7 +74,6 @@ runs:
           echo "QT_API=pyside2" >> $GITHUB_ENV
         fi
         echo "QT_DEBUG_PLUGINS=1" >> $GITHUB_ENV
-        echo "PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')" >> $GITHUB_ENV
     - name: Sanity check
       shell: bash -l {0}
       run: |
