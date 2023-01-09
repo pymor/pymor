@@ -208,7 +208,15 @@ def _process_inputs(input_paths):
     return sorted(list(available)), sorted(list(wanted))
 
 
+def ensure_conda_binary():
+    try:
+        return check_output(['/usr/bin/env', 'conda', '--version'])
+    except CalledProcessError as cs:
+        raise RuntimeError('conda not found in PATH') from cs
+
+
 def main(input_paths: List[Path], output_path: Path = None):
+    ensure_conda_binary()
     output_path = output_path or THIS_DIR / 'conda-env.yml'
     available, wanted = _process_inputs(input_paths)
     tpl = jinja2.Template(ENV_TPL)
