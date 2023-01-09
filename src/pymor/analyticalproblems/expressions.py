@@ -136,6 +136,7 @@ class TransformLiterals(ast.NodeTransformer):
         return ast.Call(ast.Name('Array', ast.Load()),
                         [self.generic_visit(node)], [])
 
+
 class TransformChainedComparison(ast.NodeTransformer):
 
     def visit_Compare(self, node):
@@ -458,13 +459,13 @@ class Neg(Expression):
         self.shape = operand.shape
 
     def numpy_expr(self):
-        return f'(- {self.operand.numpy_expr()})'
+        return f'(-{self.operand.numpy_expr()})'
 
     def fenics_expr(self, params):
         return np.vectorize(lambda x: -x)(self.operand.fenics_expr(params))
 
     def __str__(self):
-        return f'(- {self.operand})'
+        return f'(-{self.operand})'
 
 
 class Indexed(Expression):
@@ -509,15 +510,15 @@ class ChainedComparison(Expression):
     fenics_symbol = None
 
     def __init__(self, *compares):
-        for compare in compares:    
+        for compare in compares:
             if not isinstance(compare, Expression):
                 raise ValueError(f'Comparison of {type(self).__name__}({compare}) must be Expression '
-                                f'(given: {type(compare).__name__}).')
+                                 f'(given: {type(compare).__name__}).')
         self.compares = compares
 
     def numpy_expr(self):
-        return "*".join([c.numpy_expr() for c in self.compares])   
-        
+        return "*".join([c.numpy_expr() for c in self.compares])
+
 
 class UnaryFunctionCall(Expression):
     """Compound :class:`Expression` of an unary function applied to a sub-expression.
