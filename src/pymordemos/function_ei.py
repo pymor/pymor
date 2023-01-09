@@ -98,8 +98,8 @@ def main(
                                        test_mus=problem.parameter_space.sample_randomly(test),
                                        plot=True)
     print(results['summary'])
-    import matplotlib.pyplot
-    matplotlib.pyplot.show()
+    import matplotlib.pyplot as plt
+    plt.show()
 
     mumax = results['max_error_mus'][0, -1]
     U = fom.solve(mumax)
