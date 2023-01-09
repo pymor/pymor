@@ -61,7 +61,7 @@ class SymplecticBasis(BasicObject):
             self._check_symplecticity()
 
     @classmethod
-    def from_array(self, U, check_symplecticity=True):
+    def from_array(cls, U, check_symplecticity=True):
         """Generate |SymplecticBasis| from |VectorArray|.
 
         Parameters
