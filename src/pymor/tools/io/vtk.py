@@ -65,7 +65,7 @@ def _get_vtk_type(path):
 
 
 def read_vtkfile(filename, metadata_key='timestep'):
-    """Try to read a given file into a Sequence of meshio.Mesh instances
+    """Try to read a given file into a Sequence of meshio.Mesh instances.
 
     Parameters
     ----------
@@ -88,7 +88,7 @@ def read_vtkfile(filename, metadata_key='timestep'):
 
 
 def write_vtk_collection(filename_base, meshes, metadata=None):
-    """Output grid-associated data in vtk format
+    """Output grid-associated data in vtk format.
 
     filename_base
         common component for output files in collection

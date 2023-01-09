@@ -514,7 +514,7 @@ def _call_pymess_dense_nm_gmpare(A, E, B, C, R, trans=False, options=None, plus=
 
 
 class LyapunovEquation(pymess.Equation):
-    """Lyapunov equation class for pymess
+    """Lyapunov equation class for pymess.
 
     Represents a (generalized) continuous-time algebraic Lyapunov
     equation:
@@ -632,7 +632,7 @@ class LyapunovEquation(pymess.Equation):
 
 
 class RiccatiEquation(pymess.Equation):
-    """Riccati equation class for pymess
+    """Riccati equation class for pymess.
 
     Represents a Riccati equation
 

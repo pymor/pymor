@@ -92,7 +92,7 @@ class DuneXTVector(CopyOnWriteVector):
 
 
 class DuneXTVectorSpace(ComplexifiedListVectorSpace):
-    """A |VectorSpace| yielding DuneXTVector
+    """A |VectorSpace| yielding DuneXTVector.
 
     Parameters
     ----------

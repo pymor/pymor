@@ -16,7 +16,7 @@ from pymor.reductors.residual import ResidualOperator
 
 
 class DWRCoerciveRBReductor(BasicObject):
-    """Reduced Basis reductor for |StationaryModels| with coercive linear operator
+    """Reduced Basis reductor for |StationaryModels| with coercive linear operator.
 
     This class can be used as a replacement for
     :class:`~pymor.reductors.coercive.CoerciveRBReductor` to obtain a corrected reduced
@@ -235,7 +235,7 @@ class DWRCoerciveRBEstimator(ImmutableObject):
 
 
 class CorrectedOutputFunctional(Operator):
-    """|Operator| representing the corrected output functional from :cite:`Haa17` (Definition 2.31)
+    """|Operator| representing the corrected output functional from :cite:`Haa17` (Definition 2.31).
 
     Parameters
     ----------

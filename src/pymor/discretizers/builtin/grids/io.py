@@ -8,7 +8,7 @@ from pymor.discretizers.builtin.grids.constructions import flatten_grid
 
 
 def to_meshio(grid, data, codim=2):
-    """Transform given |Grid| and |VectorArray| data into a sequence of meshio.Mesh objects
+    """Transform given |Grid| and |VectorArray| data into a sequence of meshio.Mesh objects.
 
     Parameters
     ----------

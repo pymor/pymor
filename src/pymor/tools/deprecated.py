@@ -34,6 +34,6 @@ class Deprecated:
         return new_func
 
     def __get__(self, obj, ownerClass=None):
-        """Return a wrapper that binds self as a method of obj (!)"""
+        """Return a wrapper that binds self as a method of obj (!)."""
         self.obj = obj
         return types.MethodType(self, obj)

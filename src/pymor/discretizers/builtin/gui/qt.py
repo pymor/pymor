@@ -241,7 +241,7 @@ class PlotMainWindow(QWidget):
             self.slider.setValue(ind)
 
     def closeEvent(self, event=None):
-        """This is directly called from CI
+        """This is directly called from CI.
 
         Xvfb (sometimes) raises errors on interpreter shutdown
         when there are still 'live' MPL plot objects. This

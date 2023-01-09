@@ -133,7 +133,7 @@ class Function(ParametricObject):
 
 
 class ConstantFunction(Function):
-    """A constant |Function|
+    """A constant |Function|.
 
     Defined as ::
 

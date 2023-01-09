@@ -68,7 +68,7 @@ class DependencyMissingError(ImportError):
 
 
 class QtMissingError(DependencyMissingError):
-    """Raise me where having importable Qt bindings is non-optional"""
+    """Raise me where having importable Qt bindings is non-optional."""
 
     def __init__(self, msg=None):
         msg = msg or 'cannot visualize: import of Qt bindings failed'
@@ -76,7 +76,7 @@ class QtMissingError(DependencyMissingError):
 
 
 class TorchMissingError(DependencyMissingError):
-    """Raise me where having importable torch version is non-optional"""
+    """Raise me where having importable torch version is non-optional."""
 
     def __init__(self, msg=None):
         msg = msg or 'cannot use neural networks: import of torch failed'

@@ -80,7 +80,7 @@ def test_runtime(class_type):
 
 @contextlib.contextmanager
 def _close_cache(backend):
-    """This avoids the tmp dir trying to rm still open files with the disk backend"""
+    """This avoids the tmp dir trying to rm still open files with the disk backend."""
     yield
     try:
         backend._cache.close()

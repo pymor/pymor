@@ -1091,7 +1091,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
                                num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
                                grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None,
                                preassemble=True):
-    """FV Discretization of an |InstationaryProblem| with a |StationaryProblem| as stationary part
+    """FV Discretization of an |InstationaryProblem| with a |StationaryProblem| as stationary part.
 
     Parameters
     ----------

@@ -849,7 +849,7 @@ class VectorSpace(ImmutableObject):
 
     @abstractmethod
     def zeros(self, count=1, reserve=0):
-        """Create a |VectorArray| of null vectors
+        """Create a |VectorArray| of null vectors.
 
         Parameters
         ----------
@@ -934,7 +934,7 @@ class VectorSpace(ImmutableObject):
         return self.from_numpy(values)
 
     def empty(self, reserve=0):
-        """Create an empty |VectorArray|
+        """Create an empty |VectorArray|.
 
         This is a shorthand for `self.zeros(0, reserve)`.
 
@@ -950,7 +950,7 @@ class VectorSpace(ImmutableObject):
         return self.zeros(0, reserve=reserve)
 
     def from_numpy(self, data, ensure_copy=False):
-        """Create a |VectorArray| from a |NumPy array|
+        """Create a |VectorArray| from a |NumPy array|.
 
         Note that this method will not be supported by all vector
         space implementations.

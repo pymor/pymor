@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-"""This module contains some iterative linear solvers which only use the |Operator| interface"""
+"""This module contains some iterative linear solvers which only use the |Operator| interface."""
 
 import numpy as np
 

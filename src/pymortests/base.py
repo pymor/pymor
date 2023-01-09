@@ -82,7 +82,7 @@ def assert_all_almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol
 
 
 def might_exceed_deadline(deadline=-1):
-    """For hypothesis magic to work properly this must be the topmost decorator on test function"""
+    """For hypothesis magic to work properly this must be the topmost decorator on test function."""
     def _outer_wrapper(func):
         @wraps(func)
         def _inner_wrapper(*args, **kwargs):

@@ -186,7 +186,7 @@ def vector_arrays(draw, space_types, count=1, dtype=None, length=None, compatibl
 
 
 def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatible=True, index_strategy=None, **kwargs):
-    """This decorator hides the combination details of given
+    """This decorator hides the combination details of given.
 
     the decorated function will be first wrapped in a |hypothesis.given| (with expanded `given_args`
     and then in |pytest.mark.parametrize| with selected implementation names. The decorated test
@@ -441,7 +441,7 @@ def invalid_indices(draw, array_strategy):
 
 @hyst.composite
 def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
-    """Strategy to generate linear independent |VectorArray| inputs for test functions
+    """Strategy to generate linear independent |VectorArray| inputs for test functions.
 
     Parameters
     ----------
@@ -468,7 +468,7 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     random_correlation = random_correlation_gen(random.seed)
 
     def _eigs():
-        """Sum must equal to `length` for the scipy construct method"""
+        """Sum must equal to `length` for the scipy construct method."""
         min_eig, max_eig = 0.001, 1.
         eigs = np.asarray((max_eig-min_eig)*np.random.random(length-1) + min_eig, dtype=float)
         return np.append(eigs, [length - np.sum(eigs)])

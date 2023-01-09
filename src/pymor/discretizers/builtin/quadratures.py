@@ -8,7 +8,7 @@ import numpy as np
 
 
 class GaussQuadratures:
-    """Gauss quadrature on the interval [0, 1]"""
+    """Gauss quadrature on the interval [0, 1]."""
 
     @classmethod
     def maxpoints(cls):

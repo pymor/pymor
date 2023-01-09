@@ -162,7 +162,7 @@ class ProjectionParameterFunctional(ParameterFunctional):
 
 
 class GenericParameterFunctional(ParameterFunctional):
-    """A wrapper making an arbitrary Python function a |ParameterFunctional|
+    """A wrapper making an arbitrary Python function a |ParameterFunctional|.
 
     Note that a GenericParameterFunctional can only be :mod:`pickled <pymor.core.pickle>`
     if the function it is wrapping can be pickled. For this reason, it is usually
@@ -342,7 +342,7 @@ class ProductParameterFunctional(ParameterFunctional):
 
 
 class ConjugateParameterFunctional(ParameterFunctional):
-    """Conjugate of a given |ParameterFunctional|
+    """Conjugate of a given |ParameterFunctional|.
 
     Evaluates a given |ParameterFunctional| and returns the complex
     conjugate of the value.

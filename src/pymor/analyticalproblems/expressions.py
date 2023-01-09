@@ -136,7 +136,7 @@ class TransformLiterals(ast.NodeTransformer):
 
 
 class Expression(ParametricObject):
-    """A symbolic math expression
+    """A symbolic math expression.
 
     Attributes
     ----------
