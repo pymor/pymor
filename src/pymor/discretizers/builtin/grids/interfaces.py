@@ -495,7 +495,9 @@ class Grid(CacheableObject):
         return np.reshape(self.reference_element(codim).mapped_diameter(self.embeddings(codim)[0]), (-1,))
 
     def quadrature_points(self, codim, order=None, npoints=None, quadrature_type='default'):
-        """`retval[e]` is an array of quadrature points in global coordinates for the codim-`codim`
+        """Returns the quadrature points.
+
+        `retval[e]` is an array of quadrature points in global coordinates for the codim-`codim`
         entity with global index `e`.
 
         The quadrature is of order `order` or has `npoints` integration points. To integrate a
