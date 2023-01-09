@@ -7,7 +7,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.projection import project
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.core.cache import cached, CacheableObject
+from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator

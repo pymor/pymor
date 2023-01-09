@@ -10,7 +10,6 @@ from pymor.basic import *
 from pymor.core.config import config
 from pymor.core.exceptions import TorchMissing
 
-
 DIM = 2
 GRID_INTERVALS = 50
 FENICS_ORDER = 1
@@ -106,7 +105,7 @@ def _discretize_fenics():
     df.solve(F == 0, u, bc,
              solver_parameters={"newton_solver": {"relative_tolerance": 1e-6}})
 
-    from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator
+    from pymor.bindings.fenics import FenicsOperator, FenicsVectorSpace
 
     space = FenicsVectorSpace(V)
     op = FenicsOperator(F, space, space, u, (bc,),

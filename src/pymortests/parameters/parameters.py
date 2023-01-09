@@ -6,11 +6,10 @@ import numpy as np
 import pytest
 from hypothesis import given
 
-from pymor.analyticalproblems.functions import ConstantFunction
-from pymor.parameters.base import Parameters, Mu
-from pymortests.base import runmodule
 import pymortests.strategies as pyst
-
+from pymor.analyticalproblems.functions import ConstantFunction
+from pymor.parameters.base import Mu, Parameters
+from pymortests.base import runmodule
 
 num_samples = 100
 

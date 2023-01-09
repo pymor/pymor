@@ -3,10 +3,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from typer import Argument, run
-
 
 from pymor.algorithms.lradi import lyap_lrcf_solver_options
 from pymor.analyticalproblems.domaindescriptions import RectDomain
@@ -17,8 +16,8 @@ from pymor.core.config import config
 from pymor.core.logger import set_log_levels
 from pymor.discretizers.builtin import discretize_instationary_cg
 from pymor.models.iosys import LTIModel
-from pymor.reductors.bt import BTReductor, LQGBTReductor, BRBTReductor
-from pymor.reductors.h2 import IRKAReductor, TSIAReductor, OneSidedIRKAReductor
+from pymor.reductors.bt import BRBTReductor, BTReductor, LQGBTReductor
+from pymor.reductors.h2 import IRKAReductor, OneSidedIRKAReductor, TSIAReductor
 from pymor.reductors.mt import MTReductor
 
 

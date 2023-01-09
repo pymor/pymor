@@ -2,9 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from itertools import chain
 import os
-
+from itertools import chain
 
 from pymor.parallel.basic import WorkerPoolBase
 from pymor.tools import mpi

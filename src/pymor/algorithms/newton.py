@@ -2,8 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Number
 import warnings
+from numbers import Number
 
 import numpy as np
 

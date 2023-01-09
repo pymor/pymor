@@ -14,9 +14,8 @@ Arguments:
 from typer import Argument, run
 
 from pymor.basic import *
-from pymor.tools.typer import Choices
 from pymor.core.config import config
-
+from pymor.tools.typer import Choices
 
 # parameters for high-dimensional models
 XBLOCKS = 2             # pyMOR/FEniCS
@@ -177,7 +176,7 @@ def _discretize_fenics():
     ##################################
 
     # FEniCS wrappers
-    from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
+    from pymor.bindings.fenics import FenicsMatrixOperator, FenicsVectorSpace, FenicsVisualizer
 
     # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
     parameter_functionals = [ProjectionParameterFunctional('diffusion',
@@ -200,10 +199,20 @@ def _discretize_fenics():
 
 
 def discretize_ngsolve():
-    from ngsolve import (ngsglobals, Mesh, H1, CoefficientFunction, LinearForm, SymbolicLFI,
-                         BilinearForm, SymbolicBFI, grad, TaskManager)
-    from netgen.csg import CSGeometry, OrthoBrick, Pnt
     import numpy as np
+    from netgen.csg import CSGeometry, OrthoBrick, Pnt
+    from ngsolve import (
+        H1,
+        BilinearForm,
+        CoefficientFunction,
+        LinearForm,
+        Mesh,
+        SymbolicBFI,
+        SymbolicLFI,
+        TaskManager,
+        grad,
+        ngsglobals,
+    )
 
     ngsglobals.msg_level = 1
 
@@ -255,7 +264,7 @@ def discretize_ngsolve():
             a.Assemble()
             mats.append(a.mat)
 
-    from pymor.bindings.ngsolve import NGSolveVectorSpace, NGSolveMatrixOperator, NGSolveVisualizer
+    from pymor.bindings.ngsolve import NGSolveMatrixOperator, NGSolveVectorSpace, NGSolveVisualizer
 
     space = NGSolveVectorSpace(V)
     op = LincombOperator([NGSolveMatrixOperator(m, space, space) for m in mats],

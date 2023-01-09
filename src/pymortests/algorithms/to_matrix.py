@@ -8,9 +8,16 @@ import scipy.sparse as sps
 
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.config import config
-from pymor.operators.block import BlockOperator, BlockDiagonalOperator
-from pymor.operators.constructions import (AdjointOperator, ComponentProjectionOperator, IdentityOperator,
-                                           LowRankOperator, LowRankUpdatedOperator, VectorArrayOperator, ZeroOperator)
+from pymor.operators.block import BlockDiagonalOperator, BlockOperator
+from pymor.operators.constructions import (
+    AdjointOperator,
+    ComponentProjectionOperator,
+    IdentityOperator,
+    LowRankOperator,
+    LowRankUpdatedOperator,
+    VectorArrayOperator,
+    ZeroOperator,
+)
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -251,6 +258,7 @@ def test_to_matrix_ZeroOperator():
 
 if config.HAVE_DUNEGDT:
     from dune.xt.la import IstlSparseMatrix, SparsityPatternDefault
+
     from pymor.bindings.dunegdt import DuneXTMatrixOperator
 
     def test_to_matrix_DuneXTMatrixOperator():

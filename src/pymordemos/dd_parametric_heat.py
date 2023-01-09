@@ -3,10 +3,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
-import scipy.linalg as spla
 import matplotlib.colors as cm
 import matplotlib.pyplot as plt
+import numpy as np
+import scipy.linalg as spla
 from typer import Argument, run
 
 from pymor.analyticalproblems.domaindescriptions import LineDomain

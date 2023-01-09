@@ -45,14 +45,14 @@ the usual broadcasting rules apply.
 
 
 import ast
-from numbers import Number
 import operator
 from itertools import zip_longest
+from numbers import Number
+
 import numpy as np
 
-from pymor.parameters.base import ParametricObject
 from pymor.core.config import config
-
+from pymor.parameters.base import ParametricObject
 
 builtin_max = max
 
@@ -664,8 +664,8 @@ class angle(UnaryFunctionCall):
     def fenics_expr(self, params):
         if len(self.shape) > 1:
             raise NotImplementedError
-        import ufl
         import dolfin
+        import ufl
         arg = self.arg.fenics_expr(params)
         assert arg.shape == (2,)
         return np.array(

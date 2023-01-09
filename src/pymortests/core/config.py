@@ -4,7 +4,7 @@
 
 import pytest
 
-from pymor.core.config import config, _PACKAGES
+from pymor.core.config import _PACKAGES, config
 from pymor.core.exceptions import DependencyMissing
 
 

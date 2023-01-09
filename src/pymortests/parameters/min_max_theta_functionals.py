@@ -4,9 +4,15 @@
 
 import numpy as np
 import pytest
-from pymor.parameters.functionals import (ConstantParameterFunctional, ExpressionParameterFunctional,
-                                          MinThetaParameterFunctional, BaseMaxThetaParameterFunctional,
-                                          MaxThetaParameterFunctional, ParameterFunctional)
+
+from pymor.parameters.functionals import (
+    BaseMaxThetaParameterFunctional,
+    ConstantParameterFunctional,
+    ExpressionParameterFunctional,
+    MaxThetaParameterFunctional,
+    MinThetaParameterFunctional,
+    ParameterFunctional,
+)
 from pymortests.base import runmodule
 
 

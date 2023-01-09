@@ -3,20 +3,19 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import os
-import pymordemos  # noqa: F401
-from importlib import import_module
-import pytest
-from tempfile import mkdtemp
 import shutil
+from importlib import import_module
+from tempfile import mkdtemp
 
+import pytest
 from typer import Typer
 from typer.testing import CliRunner
 
-from pymortests.base import runmodule, check_results
-from pymor.core.exceptions import QtMissing, GmshMissing, MeshioMissing, TorchMissing
-from pymor.core.config import is_windows_platform, is_macos_platform
+import pymordemos  # noqa: F401
+from pymor.core.config import is_macos_platform, is_windows_platform
+from pymor.core.exceptions import GmshMissing, MeshioMissing, QtMissing, TorchMissing
 from pymor.tools.mpi import parallel
-
+from pymortests.base import check_results, runmodule
 
 runner = CliRunner()
 
@@ -224,6 +223,7 @@ def _test_demo(demo):
         pass
     try:
         import petsc4py
+
         # the default X handlers can interfere with process termination
         petsc4py.PETSc.Sys.popSignalHandler()
         petsc4py.PETSc.Sys.popErrorHandler()
@@ -322,7 +322,7 @@ def test_thermalblock_ipython(ipy_args):
     try:
         test_demos((f'pymordemos.{ipy_args[0]}', ['--ipython-engines=2'] + ipy_args[1]))
     finally:
-        import time     # there seems to be no way to shutdown the IPython cluster s.t. a new
+        import time  # there seems to be no way to shutdown the IPython cluster s.t. a new
         time.sleep(10)  # cluster can be started directly afterwards, so we have to wait ...
 
 

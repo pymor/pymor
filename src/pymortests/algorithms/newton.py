@@ -5,10 +5,9 @@
 import numpy as np
 import pytest
 
-from pymor.algorithms.newton import newton, NewtonError
+from pymor.algorithms.newton import NewtonError, newton
 from pymor.tools.floatcmp import float_cmp
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-
 from pymortests.base import runmodule
 from pymortests.fixtures.operator import MonomOperator
 

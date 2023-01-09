@@ -52,6 +52,7 @@ def main(
 
     # ### ROM validation
     import time
+
     import numpy as np
 
     # ensure that FFC is not called during runtime measurements
@@ -106,7 +107,7 @@ def discretize(dim, n, order):
              solver_parameters={"newton_solver": {"relative_tolerance": 1e-6}})
 
     # ### pyMOR wrapping
-    from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsVisualizer
+    from pymor.bindings.fenics import FenicsOperator, FenicsVectorSpace, FenicsVisualizer
     from pymor.models.basic import StationaryModel
     from pymor.operators.constructions import VectorOperator
 

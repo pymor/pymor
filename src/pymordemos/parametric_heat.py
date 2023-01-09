@@ -16,8 +16,8 @@ from pymor.discretizers.builtin import discretize_instationary_cg
 from pymor.models.iosys import LTIModel, SecondOrderModel
 from pymor.models.transfer_function import TransferFunction
 from pymor.parameters.functionals import ProjectionParameterFunctional
-from pymor.reductors.bt import BTReductor, LQGBTReductor, BRBTReductor
-from pymor.reductors.h2 import IRKAReductor, TSIAReductor, OneSidedIRKAReductor
+from pymor.reductors.bt import BRBTReductor, BTReductor, LQGBTReductor
+from pymor.reductors.h2 import IRKAReductor, OneSidedIRKAReductor, TSIAReductor
 from pymor.reductors.mt import MTReductor
 
 

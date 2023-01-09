@@ -6,10 +6,9 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.core.cache import CacheableObject
-from pymor.core.cache import cached
-from pymor.operators.block import BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator
-from pymor.parameters.base import ParametricObject, Mu
+from pymor.core.cache import CacheableObject, cached
+from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, BlockOperator, BlockRowOperator
+from pymor.parameters.base import Mu, ParametricObject
 from pymor.tools.plot import adaptive
 
 

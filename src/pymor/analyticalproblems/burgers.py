@@ -2,10 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.analyticalproblems.domaindescriptions import CircleDomain, LineDomain, RectDomain, TorusDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.domaindescriptions import LineDomain, RectDomain, TorusDomain, CircleDomain
-from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
+from pymor.analyticalproblems.instationary import InstationaryProblem
 
 
 def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=(1., 2.)):

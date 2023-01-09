@@ -3,14 +3,13 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from hypothesis import settings, assume, given
+from hypothesis import assume, given, settings
 
-from pymor.algorithms.basic import almost_equal
+import pymortests.strategies as pyst
+from pymor.algorithms.basic import almost_equal, contains_zero_vector
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.core.logger import log_levels
-from pymor.algorithms.basic import contains_zero_vector
 from pymortests.base import runmodule
-import pymortests.strategies as pyst
 
 
 @pyst.given_vector_arrays()

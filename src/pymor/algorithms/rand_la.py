@@ -4,15 +4,15 @@
 
 import numpy as np
 import scipy as sp
-from scipy.sparse.linalg import eigsh, LinearOperator
 from scipy.linalg import lu_factor, lu_solve
+from scipy.sparse.linalg import LinearOperator, eigsh
 from scipy.special import erfinv
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
-from pymor.operators.interface import Operator
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import InverseOperator, IdentityOperator
+from pymor.operators.constructions import IdentityOperator, InverseOperator
+from pymor.operators.interface import Operator
 
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')

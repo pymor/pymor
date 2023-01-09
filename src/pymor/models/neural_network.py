@@ -3,11 +3,11 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+
 config.require('TORCH')
 
 
 import numpy as np
-
 import torch
 import torch.nn as nn
 

@@ -7,7 +7,7 @@ import numpy as np
 from pymor.algorithms.pod import pod
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.reductors.basic import StationaryRBReductor
-from pymortests.base import runmodule, assert_all_almost_equal
+from pymortests.base import assert_all_almost_equal, runmodule
 
 
 def test_ei_restricted_to_full(stationary_models):

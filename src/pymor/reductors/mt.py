@@ -4,6 +4,7 @@
 
 import numpy as np
 import scipy.linalg as spla
+
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.samdp import samdp
 from pymor.algorithms.to_matrix import to_matrix

@@ -18,11 +18,11 @@ This module provides the following |NumPy|-based |Operators|:
 from functools import reduce
 
 import numpy as np
-from numpy.fft import fft, ifft, rfft, irfft
+import scipy.sparse
+from numpy.fft import fft, ifft, irfft, rfft
 from scipy.io import mmwrite, savemat
 from scipy.linalg import lu_factor, lu_solve
 from scipy.linalg.lapack import get_lapack_funcs
-import scipy.sparse
 from scipy.sparse import issparse
 
 from pymor.core.base import abstractmethod

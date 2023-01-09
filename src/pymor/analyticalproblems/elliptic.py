@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.parameters.base import ParametricObject, ParameterSpace
+from pymor.parameters.base import ParameterSpace, ParametricObject
 from pymor.tools.frozendict import FrozenDict
 
 

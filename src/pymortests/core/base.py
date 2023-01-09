@@ -4,8 +4,8 @@
 
 import numpy as np
 
-from pymortests.base import runmodule
 from pymor.discretizers.builtin import RectGrid, TriaGrid
+from pymortests.base import runmodule
 
 
 def test_with_newtype():

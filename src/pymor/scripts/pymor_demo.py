@@ -7,9 +7,10 @@ from __future__ import absolute_import, division, print_function
 
 import importlib
 import pkgutil
-import pymordemos
-import sys
 import runpy
+import sys
+
+import pymordemos
 
 
 def run():

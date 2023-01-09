@@ -26,8 +26,8 @@ def format_source(obj):
         return source
     try:
         from pygments import highlight
-        from pygments.lexers import PythonLexer
         from pygments.formatters import Terminal256Formatter
+        from pygments.lexers import PythonLexer
         return highlight(source, PythonLexer(), Terminal256Formatter())
     except ImportError:
         return source

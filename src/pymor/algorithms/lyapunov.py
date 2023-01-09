@@ -7,9 +7,8 @@ import scipy.linalg as spla
 
 from pymor.core.config import config
 from pymor.core.defaults import defaults
-from pymor.tools.frozendict import FrozenDict
 from pymor.operators.interface import Operator
-
+from pymor.tools.frozendict import FrozenDict
 
 _DEFAULT_LYAP_SOLVER_BACKEND = FrozenDict(
     {

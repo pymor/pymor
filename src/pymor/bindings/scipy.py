@@ -4,12 +4,12 @@
 
 
 import numpy as np
-from scipy.linalg import solve, solve_continuous_lyapunov, solve_discrete_lyapunov, solve_continuous_are
-from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
+from scipy.linalg import solve, solve_continuous_are, solve_continuous_lyapunov, solve_discrete_lyapunov
+from scipy.sparse.linalg import LinearOperator, bicgstab, lgmres, lsqr, spilu, splu, spsolve
 
-from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args, _solve_lyap_dense_check_args, _chol
-from pymor.algorithms.riccati import _solve_ricc_check_args, _solve_ricc_dense_check_args
 from pymor.algorithms.genericsolvers import _parse_options
+from pymor.algorithms.lyapunov import _chol, _solve_lyap_dense_check_args, _solve_lyap_lrcf_check_args
+from pymor.algorithms.riccati import _solve_ricc_check_args, _solve_ricc_dense_check_args
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.config import config
 from pymor.core.defaults import defaults

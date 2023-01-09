@@ -9,16 +9,17 @@ scalar data assigned to one- and two-dimensional grids using
 :mod:`matplotlib`. These widgets are not intended to be used directly.
 """
 from pymor.core.config import config
+
 config.require('MATPLOTLIB')
 config.require('QT')
 
 import numpy as np
-from qtpy.QtWidgets import QSizePolicy
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+from qtpy.QtWidgets import QSizePolicy
 
 from pymor.discretizers.builtin.grids.oned import OnedGrid
-from pymor.discretizers.builtin.grids.referenceelements import triangle, square
+from pymor.discretizers.builtin.grids.referenceelements import square, triangle
 from pymor.discretizers.builtin.gui.matplotlib_base import MatplotlibPatchAxes
 
 

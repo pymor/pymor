@@ -46,17 +46,16 @@ used to specify the path of a configuration file. If empty or set to
     |defaults| (see :func:`defaults_changes`).
 """
 
-from collections import defaultdict, OrderedDict
 import functools
 import importlib
 import inspect
 import pkgutil
 import textwrap
 import threading
+from collections import OrderedDict, defaultdict
 
 from pymor.core.exceptions import DependencyMissing
 from pymor.tools.table import format_table
-
 
 _default_container = None
 

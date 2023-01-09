@@ -4,12 +4,11 @@
 
 import numpy as np
 import pytest
-from hypothesis import assume, settings, HealthCheck
+from hypothesis import HealthCheck, assume, settings
 from hypothesis.strategies import sampled_from
 
-from pymor.algorithms.basic import almost_equal
+from pymor.algorithms.basic import almost_equal, contains_zero_vector
 from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
-from pymor.algorithms.basic import contains_zero_vector
 from pymor.core.logger import log_levels
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule

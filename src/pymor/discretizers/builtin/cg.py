@@ -12,17 +12,16 @@ from scipy.sparse import coo_matrix, csc_matrix
 from pymor.algorithms.preassemble import preassemble as preassemble_
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.functions import Function, ConstantFunction, LincombFunction
+from pymor.analyticalproblems.functions import ConstantFunction, Function, LincombFunction
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
 from pymor.discretizers.builtin.grids.boundaryinfos import EmptyBoundaryInfo
-from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
-from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisualizer
-from pymor.models.basic import StationaryModel, InstationaryModel
+from pymor.discretizers.builtin.grids.referenceelements import line, square, triangle
+from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer, PatchVisualizer
+from pymor.models.basic import InstationaryModel, StationaryModel
 from pymor.operators.constructions import LincombOperator, QuadraticFunctional
 from pymor.operators.numpy import NumpyMatrixBasedOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-
 
 LagrangeShapeFunctions = {
     line: {1: [lambda X: 1 - X[..., 0],

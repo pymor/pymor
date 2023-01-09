@@ -29,8 +29,9 @@ def main(
         return fom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=True)
 
     from functools import partial
-    from scipy.optimize import minimize
     from time import perf_counter
+
+    from scipy.optimize import minimize
 
     opt_fom_minimization_data = {'num_evals': 0,
                                  'evaluations': [],
@@ -49,8 +50,8 @@ def main(
     reference_mu = opt_fom_result.x
 
     from pymor.algorithms.greedy import rb_greedy
-    from pymor.reductors.coercive import CoerciveRBReductor
     from pymor.parameters.functionals import MinThetaParameterFunctional
+    from pymor.reductors.coercive import CoerciveRBReductor
 
     coercivity_estimator = MinThetaParameterFunctional(fom.operator.coefficients, mu_bar)
 

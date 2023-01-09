@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.core.base import BasicObject, abstractmethod, abstractclassmethod, classinstancemethod
+from pymor.core.base import BasicObject, abstractclassmethod, abstractmethod, classinstancemethod
 from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
 
 

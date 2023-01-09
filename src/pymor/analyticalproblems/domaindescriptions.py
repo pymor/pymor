@@ -9,7 +9,6 @@ import numpy as np
 
 from pymor.core.base import ImmutableObject
 
-
 KNOWN_BOUNDARY_TYPES = {'dirichlet', 'neumann', 'robin'}
 
 

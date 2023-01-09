@@ -4,8 +4,8 @@
 
 import math as m
 
-from hypothesis import strategies as hyst
 import numpy as np
+from hypothesis import strategies as hyst
 
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.rect import RectGrid

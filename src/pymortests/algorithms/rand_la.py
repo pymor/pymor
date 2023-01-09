@@ -6,9 +6,9 @@ import numpy as np
 import scipy as sp
 from numpy.random import uniform
 
-from pymor.algorithms.rand_la import rrf, adaptive_rrf, random_ghep, random_generalized_svd
-from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.algorithms.rand_la import adaptive_rrf, random_generalized_svd, random_ghep, rrf
 from pymor.operators.constructions import VectorArrayOperator
+from pymor.operators.numpy import NumpyMatrixOperator
 
 
 def test_adaptive_rrf():

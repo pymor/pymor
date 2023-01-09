@@ -8,9 +8,9 @@ import sys
 import numpy as np
 from typer import Argument, Option, run
 
-from pymor.algorithms.greedy import rb_greedy
 from pymor.algorithms.ei import interpolate_function
 from pymor.algorithms.error import reduction_error_analysis
+from pymor.algorithms.greedy import rb_greedy
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction

@@ -2,23 +2,24 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 import functools
-
-from hypothesis import strategies as hyst
-from hypothesis import assume, given
-from hypothesis.extra import numpy as hynp
-import numpy as np
 import os
+
+import numpy as np
+from hypothesis import assume, given
+from hypothesis import strategies as hyst
+from hypothesis.extra import numpy as hynp
 from scipy.stats._multivariate import random_correlation_gen
 
-from pymor.analyticalproblems.functions import Function, ExpressionFunction, ConstantFunction
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, Function
 from pymor.core.config import config
 from pymor.parameters.base import Mu
-from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 if config.HAVE_FENICS:
     import dolfin as df
+
     from pymor.bindings.fenics import FenicsVectorSpace
 
 if config.HAVE_DEALII:
@@ -28,8 +29,9 @@ if config.HAVE_DUNEGDT:
     from pymor.bindings.dunegdt import DuneXTVectorSpace
 
 if config.HAVE_NGSOLVE:
-    import ngsolve as ngs
     import netgen.meshing as ngmsh
+    import ngsolve as ngs
+
     from pymor.bindings.ngsolve import NGSolveVectorSpace
 
 

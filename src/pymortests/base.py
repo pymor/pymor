@@ -5,12 +5,12 @@
 import hashlib
 import os
 import sys
-from pprint import pformat
 from functools import wraps
+from pickle import dump, load
+from pprint import pformat
 
 import hypothesis
 import numpy as np
-from pickle import dump, load
 from pkg_resources import resource_filename, resource_stream
 from pytest import skip
 

@@ -2,11 +2,12 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
 from numbers import Number
 
+import numpy as np
+
 from pymor.algorithms.projection import project
-from pymor.core.base import ImmutableObject, BasicObject
+from pymor.core.base import BasicObject, ImmutableObject
 from pymor.operators.block import BlockColumnOperator
 from pymor.operators.constructions import ConcatenationOperator, NumpyConversionOperator, VectorOperator
 from pymor.operators.interface import Operator

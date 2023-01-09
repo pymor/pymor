@@ -3,13 +3,14 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+
 config.require('SCIKIT_FEM')
 
 import warnings
 
 import numpy as np
-from skfem import Basis, BoundaryFacetBasis, BilinearForm, LinearForm, asm, enforce, projection
-from skfem.helpers import grad, dot
+from skfem import Basis, BilinearForm, BoundaryFacetBasis, LinearForm, asm, enforce, projection
+from skfem.helpers import dot, grad
 from skfem.visuals.matplotlib import plot, show
 
 from pymor.algorithms.preassemble import preassemble as preassemble_

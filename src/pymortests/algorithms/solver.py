@@ -3,8 +3,8 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from scipy.sparse import diags
 import pytest
+from scipy.sparse import diags
 
 import pymor.algorithms.genericsolvers
 from pymor.bindings.scipy import solver_options as scipy_solver_options

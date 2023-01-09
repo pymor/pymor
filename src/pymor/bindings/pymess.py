@@ -3,17 +3,22 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+
 config.require('PYMESS')
 
 import warnings
 
 import numpy as np
-import scipy.linalg as spla
 import pymess
+import scipy.linalg as spla
 
 from pymor.algorithms.genericsolvers import _parse_options
-from pymor.algorithms.lyapunov import (mat_eqn_sparse_min_size, _solve_lyap_lrcf_check_args,
-                                       _solve_lyap_dense_check_args, _chol)
+from pymor.algorithms.lyapunov import (
+    _chol,
+    _solve_lyap_dense_check_args,
+    _solve_lyap_lrcf_check_args,
+    mat_eqn_sparse_min_size,
+)
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.bindings.scipy import _solve_ricc_check_args
 from pymor.core.defaults import defaults

@@ -3,14 +3,14 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+
 config.require('TORCH')
 
 
-from numbers import Number
 import inspect
+from numbers import Number
 
 import numpy as np
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -21,11 +21,14 @@ from pymor.algorithms.projection import project
 from pymor.core.base import BasicObject
 from pymor.core.exceptions import NeuralNetworkTrainingFailed
 from pymor.core.logger import getLogger
-from pymor.models.neural_network import (FullyConnectedNN, LongShortTermMemoryNN,
-                                         NeuralNetworkModel,
-                                         NeuralNetworkStatefreeOutputModel,
-                                         NeuralNetworkInstationaryModel,
-                                         NeuralNetworkInstationaryStatefreeOutputModel)
+from pymor.models.neural_network import (
+    FullyConnectedNN,
+    LongShortTermMemoryNN,
+    NeuralNetworkInstationaryModel,
+    NeuralNetworkInstationaryStatefreeOutputModel,
+    NeuralNetworkModel,
+    NeuralNetworkStatefreeOutputModel,
+)
 from pymor.tools.random import get_rng, get_seed_seq
 
 

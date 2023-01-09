@@ -2,9 +2,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.defaults import defaults
-
 import numpy as np
+
+from pymor.core.defaults import defaults
 
 
 @defaults('compact_print')

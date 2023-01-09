@@ -17,11 +17,11 @@ from pymor.core.base import abstractmethod
 from pymor.core.defaults import defaults
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
 from pymor.discretizers.builtin.grids.interfaces import GridWithOrthogonalCenters
-from pymor.discretizers.builtin.grids.referenceelements import line, triangle, square
+from pymor.discretizers.builtin.grids.referenceelements import line, square, triangle
 from pymor.discretizers.builtin.grids.subgrid import SubGrid, make_sub_grid_boundary_info
-from pymor.discretizers.builtin.gui.visualizers import PatchVisualizer, OnedVisualizer
+from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer, PatchVisualizer
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
-from pymor.models.basic import StationaryModel, InstationaryModel
+from pymor.models.basic import InstationaryModel, StationaryModel
 from pymor.operators.constructions import ComponentProjectionOperator, LincombOperator, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator

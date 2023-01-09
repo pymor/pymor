@@ -3,8 +3,8 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import functools
-import types
 import inspect
+import types
 import warnings
 
 

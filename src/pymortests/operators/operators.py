@@ -8,20 +8,27 @@ import pytest
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.projection import project
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.core.config import config
+from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.operators.block import BlockDiagonalOperator
-from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
-                                           LincombOperator, VectorArrayOperator, QuadraticFunctional,
-                                           QuadraticProductFunctional)
-from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
+from pymor.operators.constructions import (
+    IdentityOperator,
+    InverseAdjointOperator,
+    InverseOperator,
+    LincombOperator,
+    QuadraticFunctional,
+    QuadraticProductFunctional,
+    SelectionOperator,
+    VectorArrayOperator,
+)
 from pymor.operators.interface import as_array_max_length
-from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
+from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
+from pymor.parameters.functionals import ExpressionParameterFunctional, GenericParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import assert_all_almost_equal
-from pymortests.fixtures.operator import MonomOperator
 from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
+from pymortests.fixtures.operator import MonomOperator
 from pymortests.strategies import valid_inds, valid_inds_of_same_length
 
 
@@ -551,6 +558,7 @@ def test_hankel_operator(iscomplex):
 
 if config.HAVE_DUNEGDT:
     from dune.xt.la import IstlSparseMatrix, SparsityPatternDefault
+
     from pymor.bindings.dunegdt import DuneXTMatrixOperator
 
     def make_dunegdt_identity(N):

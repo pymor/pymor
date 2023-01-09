@@ -5,8 +5,8 @@
 import scipy.linalg as spla
 
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.operators.interface import Operator
 from pymor.operators.constructions import IdentityOperator
+from pymor.operators.interface import Operator
 
 
 def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):

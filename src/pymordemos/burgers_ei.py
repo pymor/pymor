@@ -3,17 +3,17 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import sys
 import math
+import sys
 import time
 
 import numpy as np
 from typer import Argument, Option, run
 
-from pymor.algorithms.greedy import rb_greedy
 from pymor.algorithms.ei import interpolate_operators
+from pymor.algorithms.greedy import rb_greedy
 from pymor.analyticalproblems.burgers import burgers_problem_2d
-from pymor.discretizers.builtin import discretize_instationary_fv, RectGrid, TriaGrid
+from pymor.discretizers.builtin import RectGrid, TriaGrid, discretize_instationary_fv
 from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.basic import InstationaryRBReductor
 from pymor.tools.typer import Choices
@@ -214,7 +214,7 @@ def main(
     sys.stdout.flush()
     if plot_error_landscape:
         import matplotlib.pyplot as plt
-        import mpl_toolkits.mplot3d             # NOQA
+        import mpl_toolkits.mplot3d  # NOQA
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         # rescale the errors since matplotlib does not support logarithmic scales on 3d plots

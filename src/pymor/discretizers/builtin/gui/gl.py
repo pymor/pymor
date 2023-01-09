@@ -12,21 +12,22 @@ intended to be used directly. Instead, use
 """
 
 from pymor.core.config import config
+
 config.require('QT')
 config.require('QTOPENGL')
 config.require('GL')
 
 import math as m
+from ctypes import c_void_p
 
 import numpy as np
 import OpenGL.GL as gl
-from qtpy.QtWidgets import QSizePolicy, QOpenGLWidget
-from qtpy.QtGui import QPainter, QFontMetrics
-from ctypes import c_void_p
+from qtpy.QtGui import QFontMetrics, QPainter
+from qtpy.QtWidgets import QOpenGLWidget, QSizePolicy
 
 from pymor.core.defaults import defaults
 from pymor.discretizers.builtin.grids.constructions import flatten_grid
-from pymor.discretizers.builtin.grids.referenceelements import triangle, square
+from pymor.discretizers.builtin.grids.referenceelements import square, triangle
 
 
 def compile_shader(source, vertex=True):
@@ -98,6 +99,7 @@ def colormap_texture(name='viridis'):
         cmap = get_cmap(name)
     except ValueError:
         from pymor.core.logger import getLogger
+
         # this is our default which might not exist for older matplotlib
         # so a warning would be annoying
         if name != 'viridis':

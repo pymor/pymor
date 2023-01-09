@@ -3,9 +3,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sps
-import matplotlib.pyplot as plt
 from typer import Argument, run
 
 from pymor.core.logger import set_log_levels

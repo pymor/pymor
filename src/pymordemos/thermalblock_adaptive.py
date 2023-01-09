@@ -12,8 +12,8 @@ from pymor.algorithms.error import plot_reduction_error_analysis, reduction_erro
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.core.pickle import dump
 from pymor.discretizers.builtin import discretize_stationary_cg
-from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parallel.default import new_parallel_pool
+from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
 from pymor.tools.typer import Choices
 

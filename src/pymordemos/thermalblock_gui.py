@@ -5,9 +5,9 @@
 
 import sys
 import time
+
 import numpy as np
 import OpenGL
-
 from typer import Argument, Option, run
 
 from pymor.core.config import is_windows_platform
@@ -16,9 +16,9 @@ from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchWidget
 OpenGL.ERROR_ON_COPY = True
 
 from pymor.core.exceptions import QtMissing
+
 try:
-    from qtpy import QtWidgets
-    from qtpy import QtCore
+    from qtpy import QtCore, QtWidgets
 except ImportError as e:
     raise QtMissing() from e
 from pymor.algorithms.greedy import rb_greedy
@@ -27,7 +27,6 @@ from pymor.discretizers.builtin import discretize_stationary_cg
 from pymor.discretizers.builtin.gui.gl import ColorBarWidget, GLPatchWidget
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymor.tools.typer import Choices
-
 
 PARAM_STEPS = 10
 PARAM_MIN = 0.1

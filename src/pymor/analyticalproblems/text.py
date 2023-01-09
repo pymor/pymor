@@ -5,7 +5,7 @@ import warnings
 
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.functions import ConstantFunction, LincombFunction, BitmapFunction
+from pymor.analyticalproblems.functions import BitmapFunction, ConstantFunction, LincombFunction
 from pymor.core.defaults import defaults
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.tools.io import safe_temporary_filename

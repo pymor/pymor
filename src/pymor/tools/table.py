@@ -4,6 +4,7 @@
 
 from itertools import zip_longest
 from textwrap import wrap
+
 import numpy as np
 
 

@@ -5,12 +5,12 @@
 from numbers import Number
 
 import numpy as np
+
 from pymor.algorithms.projection import project
 from pymor.algorithms.simplify import contract, expand
 from pymor.algorithms.symplectic import SymplecticBasis
 from pymor.core.base import BasicObject
-from pymor.models.symplectic import (BaseQuadraticHamiltonianModel,
-                                     QuadraticHamiltonianModel)
+from pymor.models.symplectic import BaseQuadraticHamiltonianModel, QuadraticHamiltonianModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 

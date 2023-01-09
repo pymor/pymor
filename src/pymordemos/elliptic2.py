@@ -8,7 +8,7 @@ from typer import Argument, Option, run
 
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.functions import ExpressionFunction, LincombFunction, ConstantFunction
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, LincombFunction
 from pymor.discretizers.builtin import discretize_stationary_cg, discretize_stationary_fv
 from pymor.parameters.functionals import ProjectionParameterFunctional
 

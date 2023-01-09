@@ -8,7 +8,7 @@ import numpy as np
 
 from pymor.analyticalproblems.expressions import parse_expression
 from pymor.core.base import abstractmethod
-from pymor.parameters.base import Mu, ParametricObject, Parameters
+from pymor.parameters.base import Mu, Parameters, ParametricObject
 from pymor.tools.floatcmp import float_cmp
 
 

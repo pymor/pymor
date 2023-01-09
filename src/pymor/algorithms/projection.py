@@ -4,12 +4,22 @@
 
 import numpy as np
 
-from pymor.algorithms.rules import RuleTable, match_class, match_generic, match_always
-from pymor.core.exceptions import RuleNotMatchingError, NoMatchingRuleError
-from pymor.operators.block import BlockOperatorBase, BlockRowOperator, BlockColumnOperator
-from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ConstantOperator, ProjectedOperator,
-                                           ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
-                                           IdentityOperator, VectorArrayOperator, QuadraticFunctional)
+from pymor.algorithms.rules import RuleTable, match_always, match_class, match_generic
+from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
+from pymor.operators.block import BlockColumnOperator, BlockOperatorBase, BlockRowOperator
+from pymor.operators.constructions import (
+    AdjointOperator,
+    AffineOperator,
+    ConcatenationOperator,
+    ConstantOperator,
+    IdentityOperator,
+    LincombOperator,
+    ProjectedOperator,
+    QuadraticFunctional,
+    SelectionOperator,
+    VectorArrayOperator,
+    ZeroOperator,
+)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace

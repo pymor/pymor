@@ -4,15 +4,18 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import time
+
 import numpy as np
 from typer import Argument, Option, run
 
 from pymor.basic import *
 from pymor.core.config import config
-from pymor.reductors.neural_network import (NeuralNetworkInstationaryReductor,
-                                            NeuralNetworkInstationaryStatefreeOutputReductor,
-                                            NeuralNetworkLSTMInstationaryReductor,
-                                            NeuralNetworkLSTMInstationaryStatefreeOutputReductor)
+from pymor.reductors.neural_network import (
+    NeuralNetworkInstationaryReductor,
+    NeuralNetworkInstationaryStatefreeOutputReductor,
+    NeuralNetworkLSTMInstationaryReductor,
+    NeuralNetworkLSTMInstationaryStatefreeOutputReductor,
+)
 from pymor.tools import mpi
 
 
@@ -192,11 +195,11 @@ def discretize_navier_stokes(n, nt):
 
 
 def _discretize_navier_stokes(n, nt):
-    from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsVisualizer, FenicsMatrixOperator
-    from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
-
     import dolfin as df
     import matplotlib.pyplot as plt
+
+    from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
+    from pymor.bindings.fenics import FenicsMatrixOperator, FenicsOperator, FenicsVectorSpace, FenicsVisualizer
 
     # create square mesh
     mesh = df.UnitSquareMesh(n, n)

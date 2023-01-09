@@ -3,8 +3,8 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from numpy.polynomial.polynomial import Polynomial
 import pytest
+from numpy.polynomial.polynomial import Polynomial
 
 from pymor.core.config import config
 from pymor.operators.constructions import IdentityOperator
@@ -405,7 +405,7 @@ def misc_operator_with_arrays_and_products_factory(n):
         V = op.range.make_array([V0, V1])
         return op, mu, U, V, sp, rp
     elif n == 10:
-        from pymor.operators.block import BlockDiagonalOperator, BlockColumnOperator
+        from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator
         from pymor.parameters.functionals import ProjectionParameterFunctional
         op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3)
         op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3)
@@ -497,6 +497,7 @@ unpicklable_misc_operator_with_arrays_and_products_generators = \
 if config.HAVE_FENICS:
     def fenics_matrix_operator_factory():
         import dolfin as df
+
         from pymor.bindings.fenics import FenicsMatrixOperator
 
         mesh = df.UnitSquareMesh(10, 10)
@@ -515,7 +516,8 @@ if config.HAVE_FENICS:
 
     def fenics_nonlinear_operator_factory():
         import dolfin as df
-        from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsMatrixOperator
+
+        from pymor.bindings.fenics import FenicsMatrixOperator, FenicsOperator, FenicsVectorSpace
 
         class DirichletBoundary(df.SubDomain):
             def inside(self, x, on_boundary):

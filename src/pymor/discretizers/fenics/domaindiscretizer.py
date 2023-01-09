@@ -3,13 +3,20 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+
 config.require('FENICS')
 
-from dolfin import RectangleMesh, Point, SubDomain, MeshFunction, DOLFIN_EPS
 import numpy as np
+from dolfin import DOLFIN_EPS, MeshFunction, Point, RectangleMesh, SubDomain
 
-from pymor.analyticalproblems.domaindescriptions import (RectDomain, CylindricalDomain, TorusDomain, LineDomain,
-                                                         CircleDomain, PolygonalDomain)
+from pymor.analyticalproblems.domaindescriptions import (
+    CircleDomain,
+    CylindricalDomain,
+    LineDomain,
+    PolygonalDomain,
+    RectDomain,
+    TorusDomain,
+)
 
 
 def discretize_domain(domain_description, diameter=1 / 100):

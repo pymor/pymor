@@ -10,7 +10,7 @@ from scipy.linalg import solve, solve_triangular
 from pymor.analyticalproblems.expressions import parse_expression
 from pymor.core.base import abstractmethod
 from pymor.core.config import config
-from pymor.parameters.base import ParametricObject, Mu
+from pymor.parameters.base import Mu, ParametricObject
 from pymor.parameters.functionals import ParameterFunctional
 
 

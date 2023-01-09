@@ -1,7 +1,7 @@
-from pymortests.base import runmodule
 import numpy as np
+
 from pymor.analyticalproblems.expressions import parse_expression
-from pymortests.base import skip_if_missing
+from pymortests.base import runmodule, skip_if_missing
 
 
 @skip_if_missing('FENICS')

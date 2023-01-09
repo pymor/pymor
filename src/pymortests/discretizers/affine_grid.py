@@ -9,8 +9,11 @@ from hypothesis import given, settings
 from pymor.discretizers.builtin.grids.interfaces import ReferenceElement
 from pymor.tools.floatcmp import almost_less
 from pymortests.base import runmodule
-from pymortests.fixtures.grid import hy_grid, hy_grid_with_orthogonal_centers, \
-    hy_grid_and_codim_product_and_entity_index
+from pymortests.fixtures.grid import (
+    hy_grid,
+    hy_grid_and_codim_product_and_entity_index,
+    hy_grid_with_orthogonal_centers,
+)
 
 
 def _scale_tols_if_domain_bad(g, atol=1e-05, rtol=1e-08):

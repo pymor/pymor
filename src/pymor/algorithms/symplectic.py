@@ -193,9 +193,7 @@ class SymplecticBasis(BasicObject):
         product
             A product to use for the projection error. Default is None.
         """
-        from pymor.algorithms.symplectic import (psd_complex_svd,
-                                                 psd_svd_like_decomp,
-                                                 symplectic_gram_schmidt)
+        from pymor.algorithms.symplectic import psd_complex_svd, psd_svd_like_decomp, symplectic_gram_schmidt
         assert modes % 2 == 0, 'number of modes has to be even'
         assert method in ('svd_like', 'complex_svd', 'symplectic_gram_schmidt')
 

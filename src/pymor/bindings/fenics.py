@@ -3,24 +3,26 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+
 config.require('FENICS')
 
 
-import dolfin as df
-import ufl
-import numpy as np
 import sys
 from pathlib import Path
+
+import dolfin as df
+import numpy as np
+import ufl
 
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.pickle import unpicklable
-from pymor.operators.constructions import ZeroOperator, VectorOperator, VectorFunctional
+from pymor.operators.constructions import VectorFunctional, VectorOperator, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.interface import _create_random_values
-from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
+from pymor.vectorarrays.list import ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
