@@ -18,12 +18,10 @@ elif sys.version_info.major == 3:
 
 
 def _init_mpi():
-    """provides a way to manually set the thread init mode for MPI if necessary.
+    """Provides a way to manually set the thread init mode for MPI if necessary.
+
     Needs to happen as early as possible, otherwise mpi4py might auto-init somewhere else.
-
-
     """
-
     try:
         import mpi4py
     except ImportError:
