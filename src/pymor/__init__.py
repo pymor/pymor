@@ -36,7 +36,8 @@ def _init_mpi():
         required_level = int(os.environ.get('PYMOR_MPI_INIT_THREAD', MPI.THREAD_MULTIPLE))
         supported_lvl = MPI.Init_thread(required_level)
         if supported_lvl < required_level:
-            print(f'MPI does support threading level {required_level}, running with {supported_lvl} instead', flush=True)
+            print(f'MPI does support threading level {required_level},\
+                   running with {supported_lvl} instead', flush=True)
 
     try:
         # this solves sporadic mpi calls happening after finalize
