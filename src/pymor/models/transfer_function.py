@@ -582,7 +582,7 @@ class FactorizedTransferFunction(TransferFunction):
         assert self.dim_input == other.dim_input
         assert self.dim_output == other.dim_output
 
-        if not type(other) is FactorizedTransferFunction:
+        if type(other) is not FactorizedTransferFunction:
             other = other.transfer_function
 
         K = lambda s: BlockDiagonalOperator([self.K(s), other.K(s)])
@@ -621,7 +621,7 @@ class FactorizedTransferFunction(TransferFunction):
         assert self.sampling_time == other.sampling_time
         assert self.dim_input == other.dim_output
 
-        if not type(other) is FactorizedTransferFunction:
+        if type(other) is not FactorizedTransferFunction:
             other = other.transfer_function
 
         K = lambda s: BlockOperator([[self.K(s), -self.B(s) @ other.C(s)],
