@@ -15,12 +15,12 @@ from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchWidget
 
 OpenGL.ERROR_ON_COPY = True
 
-from pymor.core.exceptions import QtMissing
+from pymor.core.exceptions import QtMissingError
 
 try:
     from qtpy import QtCore, QtWidgets
 except ImportError as e:
-    raise QtMissing() from e
+    raise QtMissingError() from e
 from pymor.algorithms.greedy import rb_greedy
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.discretizers.builtin import discretize_stationary_cg

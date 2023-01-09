@@ -13,7 +13,7 @@ from typer.testing import CliRunner
 
 import pymordemos  # noqa: F401
 from pymor.core.config import is_macos_platform, is_windows_platform
-from pymor.core.exceptions import GmshMissing, MeshioMissing, QtMissing, TorchMissing
+from pymor.core.exceptions import GmshMissingError, MeshioMissingError, QtMissingError, TorchMissingError
 from pymor.tools.mpi import parallel
 from pymortests.base import check_results, runmodule
 
@@ -233,12 +233,12 @@ def _test_demo(demo):
     result = None
     try:
         result = demo()
-    except (QtMissing, GmshMissing, MeshioMissing, TorchMissing) as e:
+    except (QtMissingError, GmshMissingError, MeshioMissingError, TorchMissingError) as e:
         if os.environ.get('DOCKER_PYMOR', False):
             # these are all installed in our CI env so them missing is a grave error
             raise e
         else:
-            miss = str(type(e)).replace('Missing', '')
+            miss = str(type(e)).replace('MissingError', '')
             pytest.xfail(f'{miss} not installed')
     finally:
         from pymor.parallel.default import _cleanup

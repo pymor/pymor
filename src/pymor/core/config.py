@@ -9,7 +9,7 @@ from importlib import import_module
 
 from packaging.version import parse
 
-from pymor.core.exceptions import DependencyMissing, QtMissing, TorchMissing
+from pymor.core.exceptions import DependencyMissingError, QtMissingError, TorchMissingError
 
 
 def _can_import(module):
@@ -190,11 +190,11 @@ class Config:
         dependency = dependency.upper()
         if not getattr(self, f'HAVE_{dependency}'):
             if dependency == 'QT':
-                raise QtMissing
+                raise QtMissingError
             elif dependency == 'TORCH':
-                raise TorchMissing
+                raise TorchMissingError
             else:
-                raise DependencyMissing(dependency)
+                raise DependencyMissingError(dependency)
 
     def __getattr__(self, name):
         if name.startswith('HAVE_'):

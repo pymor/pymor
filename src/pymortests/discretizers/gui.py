@@ -8,7 +8,7 @@ import pytest
 from pymor.analyticalproblems.domaindescriptions import LineDomain, RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import GenericFunction
-from pymor.core.exceptions import QtMissing
+from pymor.core.exceptions import QtMissingError
 from pymor.discretizers.builtin import RectGrid, discretize_stationary_cg
 from pymor.discretizers.builtin.domaindiscretizers.default import discretize_domain_default
 from pymor.discretizers.builtin.grids.oned import OnedGrid
@@ -34,7 +34,7 @@ def test_visualize_patch(backend_gridtype):
     try:
         from pymor.discretizers.builtin.gui.qt import visualize_patch
         visualize_patch(data['grid'], U=U, backend=backend)
-    except QtMissing:
+    except QtMissingError:
         pytest.xfail("Qt missing")
 
 

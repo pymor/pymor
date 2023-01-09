@@ -19,7 +19,7 @@ import torch.utils as utils
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project
 from pymor.core.base import BasicObject
-from pymor.core.exceptions import NeuralNetworkTrainingFailed
+from pymor.core.exceptions import NeuralNetworkTrainingError
 from pymor.core.logger import getLogger
 from pymor.models.neural_network import (
     FullyConnectedNN,
@@ -354,11 +354,11 @@ class NeuralNetworkReductor(BasicObject):
 
             if isinstance(self.ann_mse, Number):
                 if self.losses['full'] > self.ann_mse:
-                    raise NeuralNetworkTrainingFailed('Could not train a neural network that '
+                    raise NeuralNetworkTrainingError('Could not train a neural network that '
                                                       'guarantees prescribed tolerance!')
             elif self.ann_mse == 'like_basis':
                 if self.losses['full'] > self.mse_basis:
-                    raise NeuralNetworkTrainingFailed('Could not train a neural network with an error as small as '
+                    raise NeuralNetworkTrainingError('Could not train a neural network with an error as small as '
                                                       'the reduced basis error! Maybe you can try a different '
                                                       'neural network architecture or change the value of '
                                                       '`ann_mse`.')
@@ -1238,7 +1238,7 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
 
     Raises
     ------
-    NeuralNetworkTrainingFailed
+    NeuralNetworkTrainingError
         Raised if prescribed loss can not be reached within the given number
         of restarts.
     """
@@ -1309,7 +1309,7 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
                         f'(instead of {losses["full"]:.3e}) ...')
 
     if target_loss:
-        raise NeuralNetworkTrainingFailed(f'Could not find neural network with prescribed loss of '
+        raise NeuralNetworkTrainingError(f'Could not find neural network with prescribed loss of '
                                           f'{target_loss:.3e} (best one found was {losses["full"]:.3e})!')
     logger.info(f'Found neural network with error of {losses["full"]:.3e} ...')
     return best_neural_network, losses

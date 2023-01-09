@@ -8,7 +8,7 @@ from typer import Argument, run
 
 from pymor.basic import *
 from pymor.core.config import config
-from pymor.core.exceptions import TorchMissing
+from pymor.core.exceptions import TorchMissingError
 
 DIM = 2
 GRID_INTERVALS = 50
@@ -21,7 +21,7 @@ def main(
 ):
     """Reduction of a FEniCS model using neural networks (approach by Hesthaven and Ubbiali)."""
     if not config.HAVE_TORCH:
-        raise TorchMissing()
+        raise TorchMissingError()
 
     fom, parameter_space = discretize_fenics()
 

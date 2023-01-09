@@ -355,7 +355,7 @@ def get_config_from_root(root):
     return cfg
 
 
-class NotThisMethod(Exception):
+class NotThisMethodError(Exception):
     """Exception raised if a method is not valid for the current scenario."""
 
 
@@ -462,7 +462,7 @@ def get_config():
     return cfg
 
 
-class NotThisMethod(Exception):
+class NotThisMethodError(Exception):
     """Exception raised if a method is not valid for the current scenario."""
 
 
@@ -538,7 +538,7 @@ def versions_from_parentdir(parentdir_prefix, root, verbose):
     if verbose:
         print("Tried directories %%s but none started with prefix %%s" %%
               (str(rootdirs), parentdir_prefix))
-    raise NotThisMethod("rootdir doesn't start with parentdir_prefix")
+    raise NotThisMethodError("rootdir doesn't start with parentdir_prefix")
 
 
 @register_vcs_handler("git", "get_keywords")
@@ -574,7 +574,7 @@ def git_get_keywords(versionfile_abs):
 def git_versions_from_keywords(keywords, tag_prefix, verbose):
     """Get version information from git keywords."""
     if not keywords:
-        raise NotThisMethod("no keywords at all, weird")
+        raise NotThisMethodError("no keywords at all, weird")
     date = keywords.get("date")
     if date is not None:
         # Use only the last line.  Previous lines may contain GPG signature
@@ -592,7 +592,7 @@ def git_versions_from_keywords(keywords, tag_prefix, verbose):
     if refnames.startswith("$Format"):
         if verbose:
             print("keywords are unexpanded, not using")
-        raise NotThisMethod("unexpanded keywords, not a git-archive tarball")
+        raise NotThisMethodError("unexpanded keywords, not a git-archive tarball")
     refs = set([r.strip() for r in refnames.strip("()").split(",")])
     # starting in git-1.8.3, tags are listed as "tag: foo-1.0" instead of
     # just "foo-1.0". If we see a "tag: " prefix, prefer those.
@@ -646,7 +646,7 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
     if rc != 0:
         if verbose:
             print("Directory %%s not under git control" %% root)
-        raise NotThisMethod("'git rev-parse --git-dir' returned error")
+        raise NotThisMethodError("'git rev-parse --git-dir' returned error")
 
     # if there is a tag matching tag_prefix, this yields TAG-NUM-gHEX[-dirty]
     # if there isn't one, this yields HEX[-dirty] (no NUM)
@@ -656,11 +656,11 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
                                    cwd=root)
     # --long was added in git-1.5.5
     if describe_out is None:
-        raise NotThisMethod("'git describe' failed")
+        raise NotThisMethodError("'git describe' failed")
     describe_out = describe_out.strip()
     full_out, rc = run_command(GITS, ["rev-parse", "HEAD"], cwd=root)
     if full_out is None:
-        raise NotThisMethod("'git rev-parse' failed")
+        raise NotThisMethodError("'git rev-parse' failed")
     full_out = full_out.strip()
 
     pieces = {}
@@ -909,7 +909,7 @@ def get_versions():
     try:
         return git_versions_from_keywords(get_keywords(), cfg.tag_prefix,
                                           verbose)
-    except NotThisMethod:
+    except NotThisMethodError:
         pass
 
     try:
@@ -928,13 +928,13 @@ def get_versions():
     try:
         pieces = git_pieces_from_vcs(cfg.tag_prefix, root, verbose)
         return render(pieces, cfg.style)
-    except NotThisMethod:
+    except NotThisMethodError:
         pass
 
     try:
         if cfg.parentdir_prefix:
             return versions_from_parentdir(cfg.parentdir_prefix, root, verbose)
-    except NotThisMethod:
+    except NotThisMethodError:
         pass
 
     return {"version": "0+unknown", "full-revisionid": None,
@@ -976,7 +976,7 @@ def git_get_keywords(versionfile_abs):
 def git_versions_from_keywords(keywords, tag_prefix, verbose):
     """Get version information from git keywords."""
     if not keywords:
-        raise NotThisMethod("no keywords at all, weird")
+        raise NotThisMethodError("no keywords at all, weird")
     date = keywords.get("date")
     if date is not None:
         # Use only the last line.  Previous lines may contain GPG signature
@@ -994,7 +994,7 @@ def git_versions_from_keywords(keywords, tag_prefix, verbose):
     if refnames.startswith("$Format"):
         if verbose:
             print("keywords are unexpanded, not using")
-        raise NotThisMethod("unexpanded keywords, not a git-archive tarball")
+        raise NotThisMethodError("unexpanded keywords, not a git-archive tarball")
     refs = set([r.strip() for r in refnames.strip("()").split(",")])
     # starting in git-1.8.3, tags are listed as "tag: foo-1.0" instead of
     # just "foo-1.0". If we see a "tag: " prefix, prefer those.
@@ -1054,7 +1054,7 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
     if rc != 0:
         if verbose:
             print("Directory %s not under git control" % root)
-        raise NotThisMethod("'git rev-parse --git-dir' returned error")
+        raise NotThisMethodError("'git rev-parse --git-dir' returned error")
 
     # if there is a tag matching tag_prefix, this yields TAG-NUM-gHEX[-dirty]
     # if there isn't one, this yields HEX[-dirty] (no NUM)
@@ -1063,11 +1063,11 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
     )
     # --long was added in git-1.5.5
     if describe_out is None:
-        raise NotThisMethod("'git describe' failed")
+        raise NotThisMethodError("'git describe' failed")
     describe_out = describe_out.strip()
     full_out, rc = run_command(GITS, ["rev-parse", "HEAD"], cwd=root)
     if full_out is None:
-        raise NotThisMethod("'git rev-parse' failed")
+        raise NotThisMethodError("'git rev-parse' failed")
     full_out = full_out.strip()
 
     pieces = {}
@@ -1193,7 +1193,7 @@ def versions_from_parentdir(parentdir_prefix, root, verbose):
 
     if verbose:
         print("Tried directories %s but none started with prefix %s" % (str(rootdirs), parentdir_prefix))
-    raise NotThisMethod("rootdir doesn't start with parentdir_prefix")
+    raise NotThisMethodError("rootdir doesn't start with parentdir_prefix")
 
 
 SHORT_VERSION_PY = """
@@ -1220,12 +1220,12 @@ def versions_from_file(filename):
         with open(filename) as f:
             contents = f.read()
     except EnvironmentError:
-        raise NotThisMethod("unable to read _version.py")
+        raise NotThisMethodError("unable to read _version.py")
     mo = re.search(r"version_json = '''\n(.*)'''  # END VERSION_JSON", contents, re.M | re.S)
     if not mo:
         mo = re.search(r"version_json = '''\r\n(.*)'''  # END VERSION_JSON", contents, re.M | re.S)
     if not mo:
-        raise NotThisMethod("no version_json in _version.py")
+        raise NotThisMethodError("no version_json in _version.py")
     return json.loads(mo.group(1))
 
 
@@ -1454,7 +1454,7 @@ def get_versions(verbose=False):
             if verbose:
                 print("got version from expanded keyword %s" % ver)
             return ver
-        except NotThisMethod:
+        except NotThisMethodError:
             pass
 
     try:
@@ -1462,7 +1462,7 @@ def get_versions(verbose=False):
         if verbose:
             print("got version from file %s %s" % (versionfile_abs, ver))
         return ver
-    except NotThisMethod:
+    except NotThisMethodError:
         pass
 
     from_vcs_f = handlers.get("pieces_from_vcs")
@@ -1473,7 +1473,7 @@ def get_versions(verbose=False):
             if verbose:
                 print("got version from VCS %s" % ver)
             return ver
-        except NotThisMethod:
+        except NotThisMethodError:
             pass
 
     try:
@@ -1482,7 +1482,7 @@ def get_versions(verbose=False):
             if verbose:
                 print("got version from parentdir %s" % ver)
             return ver
-    except NotThisMethod:
+    except NotThisMethodError:
         pass
 
     if verbose:

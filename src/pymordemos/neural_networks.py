@@ -11,7 +11,7 @@ from typer import Argument, Option, run
 
 from pymor.basic import *
 from pymor.core.config import config
-from pymor.core.exceptions import TorchMissing
+from pymor.core.exceptions import TorchMissingError
 from pymor.reductors.neural_network import NeuralNetworkReductor, NeuralNetworkStatefreeOutputReductor
 
 
@@ -25,7 +25,7 @@ def main(
 ):
     """Model oder reduction with neural networks (approach by Hesthaven and Ubbiali)."""
     if not config.HAVE_TORCH:
-        raise TorchMissing()
+        raise TorchMissingError()
 
     fom = create_fom(fv, grid_intervals)
 
