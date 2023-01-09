@@ -234,7 +234,7 @@ class Config:
         package_info = [f"{p+':':{key_width}} {v}" for p, v in sorted(status.items())]
         separator = '-' * max(map(len, package_info))
         package_info = '\n'.join(package_info)
-        info = f'''
+        info = f"""
 pyMOR Version {self.version}
 
 Python {self.PYTHON_VERSION} on {platform.platform()}
@@ -246,7 +246,7 @@ External Packages
 Defaults
 --------
 See pymor.core.defaults.print_defaults.
-'''[1:]
+"""[1:]
         return info
 
 

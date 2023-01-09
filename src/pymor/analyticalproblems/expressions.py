@@ -92,19 +92,19 @@ def parse_expression(expression, parameters={}, values={}):
     try:
         expression = eval(code, dict(globals(), **values), locals_dict)
     except ValueError as e:
-        raise ValueError(f'''
+        raise ValueError(f"""
 While parsing expression
 \t{expression}
 with parameters {parameters} and values {values} the following error occured:
 \t{e}
-''') from e
+""") from e
 
     if not isinstance(expression, Expression):
-        raise ValueError(f'''
+        raise ValueError(f"""
 Malformed expression
 \t{expression}
 evaluates to {type(expression).__name__} instead of Expression object.
-''')
+""")
 
     return expression
 

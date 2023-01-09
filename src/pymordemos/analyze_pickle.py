@@ -12,7 +12,7 @@ from typer import Argument, Option, Typer
 
 from pymor.core.pickle import load
 
-app = Typer(help='''
+app = Typer(help="""
 This demo loads a pickled reduced model, solves for random
 parameters, estimates the reduction errors and then visualizes these
 estimates. If the detailed model and the reductor are
@@ -21,7 +21,7 @@ the real reduction error.
 
 The needed data files are created by the thermal block demo, by
 setting the '--pickle' option.
-'''[1:])
+"""[1:])
 
 REDUCED_DATA = Argument(..., help='File containing the pickled reduced model.')
 SAMPLES = Argument(..., min=1, help='Number of parameter samples to test with. ')

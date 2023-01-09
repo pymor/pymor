@@ -140,7 +140,7 @@ def main(
 
     real_rb_size = rom.solution_space.dim
 
-    print('''
+    print("""
 *** RESULTS ***
 
 Problem:
@@ -153,7 +153,7 @@ Greedy basis generation:
    prescribed basis size:              {rbsize}
    actual basis size:                  {real_rb_size}
    elapsed time:                       {greedy_data[time]}
-'''.format(**locals()))
+""".format(**locals()))
     print(results['summary'])
 
     sys.stdout.flush()

@@ -44,8 +44,8 @@ def _format_generic(obj, max_width, verbosity, override={}):
                           or any('\n' in v for v in vals)):
         args = [f'    {k}{indent_value(v, len(k) + 4)}' for k, v in zip(keys, vals)]
         args = ',\n'.join(args)
-        return f'''{type(obj).__name__}(
-{args})'''
+        return f"""{type(obj).__name__}(
+{args})"""
     else:
         args = [f'{k}{v}' for k, v in zip(keys, vals)]
         return f'{type(obj).__name__}({", ".join(args)})'

@@ -182,7 +182,7 @@ def main(
     toc = time.perf_counter()
     t_est = toc - tic
 
-    print('''
+    print("""
     *** RESULTS ***
 
     Problem:
@@ -209,7 +209,7 @@ def main(
        number of samples:                  {test}
        maximal L2-error:                   {l2_err_max}  (mu = {mumax})
        elapsed time:                       {t_est}
-    '''.format(**locals()))
+    """.format(**locals()))
 
     sys.stdout.flush()
     if plot_error_landscape:
