@@ -239,7 +239,7 @@ class DummyLogger:
     log = nop
     exception = nop
 
-    def isEnabledFor(sefl, lvl):
+    def isEnabledFor(self, lvl):
         return False
 
     def getEffectiveLevel(self):

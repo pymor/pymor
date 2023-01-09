@@ -33,7 +33,7 @@ class SKFemBilinearFormOperator(NumpyMatrixBasedOperator):
         self.source = self.range = NumpyVectorSpace(basis.N)
         self.__auto_init(locals())
 
-    def build_form(mu):
+    def build_form(self, mu):
         pass
 
     def _assemble(self, mu):
