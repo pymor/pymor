@@ -379,5 +379,5 @@ def test_orthogonal_centers(grid_with_orthogonal_centers):
         np.testing.assert_allclose(SPROD, 0)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

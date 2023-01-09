@@ -33,9 +33,9 @@ BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
 # The background is set with 40 plus the number of the color, and the foreground with 30
 # These are the sequences needed to get colored output
-RESET_SEQ = "\033[0m"
-COLOR_SEQ = "\033[1;%dm"
-BOLD_SEQ = "\033[1m"
+RESET_SEQ = '\033[0m'
+COLOR_SEQ = '\033[1;%dm'
+BOLD_SEQ = '\033[1m'
 COLORS = {
     'WARNING':  YELLOW,
     'INFO2':    YELLOW,
@@ -76,7 +76,7 @@ class ColoredFormatter(logging.Formatter):
             try:
                 import curses
                 curses.setupterm()
-                self.use_color = curses.tigetnum("colors") > 1
+                self.use_color = curses.tigetnum('colors') > 1
             except Exception:
                 self.use_color = False
 

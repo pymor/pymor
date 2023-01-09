@@ -26,9 +26,9 @@ def test_no_dune_warnings():
                     reason='Guarantee only valid in the docker container')
 def test_dune_warnings(monkeypatch):
     from dune import gdt, xt
-    monkeypatch.setattr(gdt, "__version__", "2020.0.0")
-    monkeypatch.setattr(xt, "__version__", "2020.0.0")
-    with pytest.xfail(""):
+    monkeypatch.setattr(gdt, '__version__', '2020.0.0')
+    monkeypatch.setattr(xt, '__version__', '2020.0.0')
+    with pytest.xfail(''):
         _test_dune_import_warn()
 
 
@@ -37,5 +37,5 @@ def _test_dune_import_warn():
         from pymor.core.config import _get_dunegdt_version
 
         # this will result in an error if a warning is caught
-        warnings.simplefilter("error")
+        warnings.simplefilter('error')
         _get_dunegdt_version()

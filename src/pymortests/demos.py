@@ -188,7 +188,7 @@ def _skip_if_no_solver(param):
 def _demo_ids(demo_args):
     def _key(b):
         return ' '.join((str(s) for s in b))
-    return [f"{a}:'{_key(b)}'".replace('pymordemos.', '') for a, b in demo_args]
+    return [f'{a}:"{_key(b)}"'.replace('pymordemos.', '') for a, b in demo_args]
 
 
 @pytest.fixture(params=DEMO_ARGS, ids=_demo_ids(DEMO_ARGS))
@@ -367,5 +367,5 @@ def test_parabolic_mor_results():
                   'min_effectivities', 'max_effectivities', 'errors')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

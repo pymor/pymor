@@ -122,5 +122,5 @@ def test_memory_region_safety():
     assert len(U) == 1
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

@@ -107,5 +107,5 @@ def main(
     run_mor_method_dd_param(lti, ss, pp, PAAAReductor, 'p-AAA')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     run(main)

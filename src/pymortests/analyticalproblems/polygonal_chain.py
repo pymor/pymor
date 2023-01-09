@@ -6,9 +6,9 @@ def _determine_boundary_type(point):
     y = point[1]
 
     if y == 0:
-        return "neumann"
+        return 'neumann'
 
-    return "dirichlet"
+    return 'dirichlet'
 
 
 def test_polygonal_chain_boundary_function():
@@ -17,9 +17,9 @@ def test_polygonal_chain_boundary_function():
     ]
 
     reference_boundary_types = {
-        "neumann":
+        'neumann':
             [0, 1],
-        "dirichlet":
+        'dirichlet':
             [2]
     }
 
@@ -30,5 +30,5 @@ def test_polygonal_chain_boundary_function():
     assert domain.boundary_types == reference_boundary_types
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

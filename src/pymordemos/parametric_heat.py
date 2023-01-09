@@ -235,5 +235,5 @@ def main(
     run_mor_method_param(lti, r, w, mus, MTReductor, 'MT')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     run(main)

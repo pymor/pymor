@@ -39,7 +39,7 @@ def test_pod_with_product(operator_with_arrays_and_products, method):
     _, _, A, _, p, _ = operator_with_arrays_and_products
 
     B = A.copy()
-    with log_levels({"pymor.algorithms": "ERROR"}):
+    with log_levels({'pymor.algorithms': 'ERROR'}):
         U, s = pod(A, product=p, method=method)
     assert np.all(almost_equal(A, B))
     assert len(U) == len(s)

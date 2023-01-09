@@ -74,5 +74,5 @@ def main(
     run_mor_method_param(lti, r, w, mus, IRKAReductor, 'IRKA')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     run(main)

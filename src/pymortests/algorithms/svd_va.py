@@ -28,7 +28,7 @@ def test_method_of_snapshots(vector_array, method):
     assume(not contains_zero_vector(A, rtol=1e-13, atol=1e-13))
 
     B = A.copy()
-    with log_levels({"pymor.algorithms": "ERROR"}):
+    with log_levels({'pymor.algorithms': 'ERROR'}):
         U, s, Vh = method(A, rtol=4e-8)  # default tolerance
     assert np.all(almost_equal(A, B))
     assert len(U) == len(s) == Vh.shape[0]
@@ -45,7 +45,7 @@ def test_method_of_snapshots_with_product(operator_with_arrays_and_products, met
     _, _, A, _, p, _ = operator_with_arrays_and_products
 
     B = A.copy()
-    with log_levels({"pymor.algorithms": "ERROR"}):
+    with log_levels({'pymor.algorithms': 'ERROR'}):
         U, s, Vh = method(A, product=p)
     assert np.all(almost_equal(A, B))
     assert len(U) == len(s) == Vh.shape[0]
@@ -63,5 +63,5 @@ def test_not_too_many_modes(method):
     assert len(U) == len(s) == len(V) == 1
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

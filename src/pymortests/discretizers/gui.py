@@ -35,8 +35,8 @@ def test_visualize_patch(backend_gridtype):
         from pymor.discretizers.builtin.gui.qt import visualize_patch
         visualize_patch(data['grid'], U=U, backend=backend)
     except QtMissingError:
-        pytest.xfail("Qt missing")
+        pytest.xfail('Qt missing')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

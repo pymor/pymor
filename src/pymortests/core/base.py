@@ -17,5 +17,5 @@ def test_with_newtype():
     assert np.all(g2.domain == ([0, 0], [2, 2]))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

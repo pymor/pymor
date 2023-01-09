@@ -1083,8 +1083,8 @@ def train_neural_network(training_data, validation_data, neural_network,
     assert weight_decay >= 0.
     if weight_decay > 0. and 'weight_decay' not in inspect.getfullargspec(optimizer).args:
         optimizer = optimizer(neural_network.parameters(), lr=learning_rate)
-        logger.warning(f"Optimizer {optimizer.__class__.__name__} does not support weight decay! "
-                       "Continuing without regularization!")
+        logger.warning(f'Optimizer {optimizer.__class__.__name__} does not support weight decay! '
+                       'Continuing without regularization!')
     elif 'weight_decay' in inspect.getfullargspec(optimizer).args:
         optimizer = optimizer(neural_network.parameters(), lr=learning_rate,
                               weight_decay=weight_decay)

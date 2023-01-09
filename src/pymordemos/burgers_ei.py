@@ -73,8 +73,8 @@ def main(
 
     if cache_region != 'none':
         # building a cache_id is only needed for persistent CacheRegions
-        cache_id = (f"pymordemos.burgers_ei {vx} {vy} {initial_data}"
-                    f"{periodic} {grid} {grid_type} {num_flux} {lxf_lambda} {nt}")
+        cache_id = (f'pymordemos.burgers_ei {vx} {vy} {initial_data}'
+                    f'{periodic} {grid} {grid_type} {num_flux} {lxf_lambda} {nt}')
         fom.enable_caching(cache_region.value, cache_id)
 
     print(fom.operator.grid)

@@ -18,9 +18,9 @@ def main(
     n: int = Argument(..., help='Triangle count per direction'),
     norm: str = Argument(
         ...,
-        help="h1: compute the h1-norm of the last snapshot.\n\n"
-             "l2: compute the l2-norm of the last snapshot.\n\n"
-             "k: compute the energy norm of the last snapshot, where the energy-product"
+        help='h1: compute the h1-norm of the last snapshot.\n\n'
+             'l2: compute the l2-norm of the last snapshot.\n\n'
+             'k: compute the energy norm of the last snapshot, where the energy-product'
              "is constructed with a parameter {'mu': k}."
     ),
 

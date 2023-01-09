@@ -143,7 +143,7 @@ class ProjectionBasedReductor(BasicObject):
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
             if err >= self.check_tol:
-                raise AccuracyError(f"result not orthogonal (max err={err})")
+                raise AccuracyError(f'result not orthogonal (max err={err})')
 
 
 class StationaryRBReductor(ProjectionBasedReductor):

@@ -501,7 +501,7 @@ if config.HAVE_FENICS:
         from pymor.bindings.fenics import FenicsMatrixOperator
 
         mesh = df.UnitSquareMesh(10, 10)
-        V = df.FunctionSpace(mesh, "CG", 2)
+        V = df.FunctionSpace(mesh, 'CG', 2)
 
         u = df.TrialFunction(V)
         v = df.TestFunction(V)
@@ -524,7 +524,7 @@ if config.HAVE_FENICS:
                 return abs(x[0] - 1.0) < df.DOLFIN_EPS and on_boundary
 
         mesh = df.UnitSquareMesh(10, 10)
-        V = df.FunctionSpace(mesh, "CG", 2)
+        V = df.FunctionSpace(mesh, 'CG', 2)
 
         g = df.Constant(1.)
         c = df.Constant(1.)
@@ -534,7 +534,7 @@ if config.HAVE_FENICS:
         u = df.TrialFunction(V)
         v = df.TestFunction(V)
         w = df.Function(V)
-        f = df.Expression("x[0]*sin(x[1])", degree=2)
+        f = df.Expression('x[0]*sin(x[1])', degree=2)
         F = df.inner((1 + c*w**2)*df.grad(w), df.grad(v))*df.dx - f*v*df.dx
 
         space = FenicsVectorSpace(V)
@@ -640,4 +640,4 @@ def picklable_operator(reset_rng, request):
 
 @pytest.fixture
 def loadable_matrices(shared_datadir):
-    return (shared_datadir / "matrices").glob('*')
+    return (shared_datadir / 'matrices').glob('*')

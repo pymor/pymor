@@ -162,7 +162,7 @@ class SymplecticBasis(BasicObject):
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
             if err >= check_tol:
-                raise AccuracyError(f"result not symplectic (max err={err})")
+                raise AccuracyError(f'result not symplectic (max err={err})')
 
     def __getitem__(self, ind):
         assert self.E.check_ind(ind)
@@ -413,7 +413,7 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
         initial_sympl = abs(J.apply2(E[j], F[j]))
 
         if initial_sympl < atol:
-            logger.info(f"Removing vector pair {j} with symplecticity value {initial_sympl}")
+            logger.info(f'Removing vector pair {j} with symplecticity value {initial_sympl}')
             remove.append(j)
             continue
 
@@ -439,13 +439,13 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
 
             # remove vector pair if it got a too small symplecticty value
             if sympl < rtol * initial_sympl:
-                logger.info(f"Removing vector pair {j} due to small symplecticty value")
+                logger.info(f'Removing vector pair {j} due to small symplecticty value')
                 remove.append(j)
                 break
 
             # check if reorthogonalization should be done
             if reiterate and sympl < reiteration_threshold * old_sympl:
-                logger.info(f"Symplectifying vector pair {j} again")
+                logger.info(f'Symplectifying vector pair {j} again')
             else:
                 Lambda[np.ix_([j, p+j], [j, p+j])] = esr(E[j], F[j], J)
                 break

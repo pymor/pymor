@@ -35,14 +35,14 @@ from pymortests.strategies import valid_inds, valid_inds_of_same_length
 def test_selection_op():
     p1 = MonomOperator(1)
     select_rhs_functional = GenericParameterFunctional(
-        lambda x: round(x["nrrhs"].item()),
-        {"nrrhs": 1}
+        lambda x: round(x['nrrhs'].item()),
+        {'nrrhs': 1}
     )
     s1 = SelectionOperator(
         operators=[p1],
         boundaries=[],
         parameter_functional=select_rhs_functional,
-        name="foo"
+        name='foo'
     )
     x = np.linspace(-1., 1., num=3)
     vx = p1.source.make_array(x[:, np.newaxis])
@@ -53,16 +53,16 @@ def test_selection_op():
         operators=[p1, p1, p1, p1],
         boundaries=[-3, 3, 7],
         parameter_functional=select_rhs_functional,
-        name="Bar"
+        name='Bar'
     )
 
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": -4})) == 0
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": -3})) == 0
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": -2})) == 1
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": 3})) == 1
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": 4})) == 2
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": 7})) == 2
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": 9})) == 3
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': -4})) == 0
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': -3})) == 0
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': -2})) == 1
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': 3})) == 1
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': 4})) == 2
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': 7})) == 2
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': 9})) == 3
 
 
 def test_lincomb_op():

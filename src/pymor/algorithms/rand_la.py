@@ -77,7 +77,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
             return source_product.apply_inverse(source_product.range.from_numpy(v)).to_numpy()
         L = LinearOperator((source_product.source.dim, source_product.range.dim), matvec=mv)
         Linv = LinearOperator((source_product.range.dim, source_product.source.dim), matvec=mvinv)
-        lambda_min = eigsh(L, sigma=0, which="LM", return_eigenvectors=False, k=1, OPinv=Linv)[0]
+        lambda_min = eigsh(L, sigma=0, which='LM', return_eigenvectors=False, k=1, OPinv=Linv)[0]
 
     testfail = failure_tolerance / min(A.source.dim, A.range.dim)
     testlimit = np.sqrt(2. * lambda_min) * erfinv(testfail**(1. / num_testvecs)) * tol

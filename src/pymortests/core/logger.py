@@ -52,5 +52,5 @@ def test_once(verb, capsys):
     assert second.out == second.err == ''
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

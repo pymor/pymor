@@ -450,4 +450,4 @@ def test_visualize(grids_with_visualize):
         U = np.ones(g.size(g.dim))
         g.visualize(U, g.dim)
     except QtMissing:
-        pytest.xfail("Qt missing")
+        pytest.xfail('Qt missing')

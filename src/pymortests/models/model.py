@@ -133,5 +133,5 @@ def test_lti_solve(sampling_time, m, p, T, nt):
     assert all(len(Xi) == len(X) for Xi in X_step)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

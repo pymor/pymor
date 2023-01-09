@@ -140,5 +140,5 @@ def test_gram_schmidt_biorth_with_product(operator_with_arrays_and_products):
     assert np.all(almost_equal(A2, U2))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

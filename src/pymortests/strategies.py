@@ -196,7 +196,7 @@ def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatibl
     Parameters
     ----------
     which
-        A list of implementation shortnames, or either of the special values "all" and "picklable".
+        A list of implementation shortnames, or either of the special values 'all' and 'picklable'.
 
     kwargs
         passed to `given` decorator as is, use for additional strategies
@@ -324,14 +324,14 @@ def st_valid_inds_of_same_length(draw, v1, v2):
     if len1 == len2:
         ints = hyst.integers(min_value=-len1, max_value=max(len1 - 1, 0))
         slicer = hyst.slices(len1) | hyst.lists(ints, max_size=len1)
-        ret = ret | hyst.tuples(hyst.shared(slicer, key="st_valid_inds_of_same_length"),
-                                hyst.shared(slicer, key="st_valid_inds_of_same_length"))
+        ret = ret | hyst.tuples(hyst.shared(slicer, key='st_valid_inds_of_same_length'),
+                                hyst.shared(slicer, key='st_valid_inds_of_same_length'))
     if len1 > 0 and len2 > 0:
         mlen = min(len1, len2)
         ints = hyst.integers(min_value=-mlen, max_value=max(mlen - 1, 0))
         slicer = hyst.slices(mlen) | ints | hyst.lists(ints, max_size=mlen)
-        ret = ret | hyst.tuples(hyst.shared(slicer, key="st_valid_inds_of_same_length_uneven"),
-                                hyst.shared(slicer, key="st_valid_inds_of_same_length_uneven"))
+        ret = ret | hyst.tuples(hyst.shared(slicer, key='st_valid_inds_of_same_length_uneven'),
+                                hyst.shared(slicer, key='st_valid_inds_of_same_length_uneven'))
     return draw(ret)
 
 

@@ -57,5 +57,5 @@ def test_ei_rom(stationary_models):
         assert_all_almost_equal(u, ru_rec, rtol=1e-10)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

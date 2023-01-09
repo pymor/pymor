@@ -186,13 +186,13 @@ def testDeprecated():
     # Cause all warnings to always be triggered.
     import warnings
     with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
+        warnings.simplefilter('always')
         # Trigger a warning.
         deprecated_function()
         # Verify some things
         assert len(w) == 1
         assert issubclass(w[-1].category, DeprecationWarning)
-        assert "DeprecationWarning" in str(w[-1].message)
+        assert 'DeprecationWarning' in str(w[-1].message)
 
 
 def test_formatsrc():
@@ -321,5 +321,5 @@ def test_plot_complex(xscale, yscale):
     assert fvals.shape[0] == len(points)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

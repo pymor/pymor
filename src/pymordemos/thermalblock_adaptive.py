@@ -78,7 +78,7 @@ def main(
 
     if cache_region != 'none':
         # building a cache_id is only needed for persistent CacheRegions
-        cache_id = f"pymordemos.thermalblock_adaptive {grid}"
+        cache_id = f'pymordemos.thermalblock_adaptive {grid}'
         fom.enable_caching(cache_region.value, cache_id)
 
     if plot_solutions:
@@ -86,7 +86,7 @@ def main(
         Us = ()
         legend = ()
         for mu in problem.parameter_space.sample_randomly(2):
-            print(f"Solving for diffusion = \n{mu['diffusion']} ... ")
+            print(f'Solving for diffusion = \n{mu["diffusion"]} ... ')
             sys.stdout.flush()
             Us = Us + (fom.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
@@ -119,10 +119,10 @@ def main(
     rom = greedy_data['rom']
 
     if pickle:
-        print(f"\nWriting reduced model to file {pickle}_reduced ...")
+        print(f'\nWriting reduced model to file {pickle}_reduced ...')
         with open(pickle + '_reduced', 'wb') as f:
             dump((rom, problem.parameter_space), f)
-        print(f"Writing detailed model and reductor to file {pickle}_detailed ...")
+        print(f'Writing detailed model and reductor to file {pickle}_detailed ...')
         with open(pickle + '_detailed', 'wb') as f:
             dump((fom, reductor), f)
 

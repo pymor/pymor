@@ -132,5 +132,5 @@ def test_mu_t_wrong_value():
         Mu(t=np.array([1, 2]))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

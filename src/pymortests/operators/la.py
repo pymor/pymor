@@ -21,5 +21,5 @@ def test_induced():
     np.testing.assert_almost_equal(value, 0.0)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

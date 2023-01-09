@@ -50,7 +50,7 @@ def main(
     elif model == 'fenics':
         fom, parameter_space = discretize_fenics()
     elif model == 'ngsolve':
-        config.require("NGSOLVE")
+        config.require('NGSOLVE')
         fom, parameter_space = discretize_ngsolve()
     elif model == 'pymor_text':
         fom, parameter_space = discretize_pymor_text()
@@ -217,17 +217,17 @@ def discretize_ngsolve():
     ngsglobals.msg_level = 1
 
     geo = CSGeometry()
-    obox = OrthoBrick(Pnt(-1, -1, -1), Pnt(1, 1, 1)).bc("outer")
+    obox = OrthoBrick(Pnt(-1, -1, -1), Pnt(1, 1, 1)).bc('outer')
 
     b = []
-    b.append(OrthoBrick(Pnt(-1, -1, -1), Pnt(0.0, 0.0, 0.0)).mat("mat1").bc("inner"))
-    b.append(OrthoBrick(Pnt(-1,  0, -1), Pnt(0.0, 1.0, 0.0)).mat("mat2").bc("inner"))
-    b.append(OrthoBrick(Pnt(0,  -1, -1), Pnt(1.0, 0.0, 0.0)).mat("mat3").bc("inner"))
-    b.append(OrthoBrick(Pnt(0,   0, -1), Pnt(1.0, 1.0, 0.0)).mat("mat4").bc("inner"))
-    b.append(OrthoBrick(Pnt(-1, -1,  0), Pnt(0.0, 0.0, 1.0)).mat("mat5").bc("inner"))
-    b.append(OrthoBrick(Pnt(-1,  0,  0), Pnt(0.0, 1.0, 1.0)).mat("mat6").bc("inner"))
-    b.append(OrthoBrick(Pnt(0,  -1,  0), Pnt(1.0, 0.0, 1.0)).mat("mat7").bc("inner"))
-    b.append(OrthoBrick(Pnt(0,   0,  0), Pnt(1.0, 1.0, 1.0)).mat("mat8").bc("inner"))
+    b.append(OrthoBrick(Pnt(-1, -1, -1), Pnt(0.0, 0.0, 0.0)).mat('mat1').bc('inner'))
+    b.append(OrthoBrick(Pnt(-1,  0, -1), Pnt(0.0, 1.0, 0.0)).mat('mat2').bc('inner'))
+    b.append(OrthoBrick(Pnt(0,  -1, -1), Pnt(1.0, 0.0, 0.0)).mat('mat3').bc('inner'))
+    b.append(OrthoBrick(Pnt(0,   0, -1), Pnt(1.0, 1.0, 0.0)).mat('mat4').bc('inner'))
+    b.append(OrthoBrick(Pnt(-1, -1,  0), Pnt(0.0, 0.0, 1.0)).mat('mat5').bc('inner'))
+    b.append(OrthoBrick(Pnt(-1,  0,  0), Pnt(0.0, 1.0, 1.0)).mat('mat6').bc('inner'))
+    b.append(OrthoBrick(Pnt(0,  -1,  0), Pnt(1.0, 0.0, 1.0)).mat('mat7').bc('inner'))
+    b.append(OrthoBrick(Pnt(0,   0,  0), Pnt(1.0, 1.0, 1.0)).mat('mat8').bc('inner'))
     box = (obox - b[0] - b[1] - b[2] - b[3] - b[4] - b[5] - b[6] - b[7])
 
     geo.Add(box)
@@ -238,7 +238,7 @@ def discretize_ngsolve():
     mesh = Mesh(geo.GenerateMesh(maxh=0.3))
 
     # H1-conforming finite element space
-    V = H1(mesh, order=NGS_ORDER, dirichlet="outer")
+    V = H1(mesh, order=NGS_ORDER, dirichlet='outer')
     v = V.TestFunction()
     u = V.TrialFunction()
 

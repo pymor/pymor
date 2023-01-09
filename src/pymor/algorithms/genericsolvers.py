@@ -248,8 +248,8 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
 
         if inner_res_0 == 0:
             rnorm = r_outer.norm()[0]
-            raise RuntimeError("Preconditioner returned a zero vector; "
-                               "|v| ~ %.1g, |M v| = 0" % rnorm)
+            raise RuntimeError('Preconditioner returned a zero vector; '
+                               '|v| ~ %.1g, |M v| = 0' % rnorm)
 
         vs0.scal(1.0/inner_res_0)
         hs = []

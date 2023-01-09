@@ -27,7 +27,7 @@ def _can_import(module):
 
 def _get_fenics_version():
     import sys
-    if "linux" in sys.platform:
+    if 'linux' in sys.platform:
         # In dolfin.__init__ the dlopen flags are set to include RTDL_GLOBAL,
         # which can cause issues with other Python C extensions.
         # In particular, with the manylinux wheels for scipy 1.9.{2,3} this leads
@@ -51,18 +51,18 @@ def _get_fenics_version():
         warnings.warn(f'FEniCS bindings have been tested for version 2019.1.0 and greater '
                       f'(installed: {df.__version__}).')
 
-    if "linux" in sys.platform:
+    if 'linux' in sys.platform:
         sys.setdlopenflags(orig_dlopenflags)
     return df.__version__
 
 
 def _get_dunegdt_version():
     import importlib
-    version_ranges = {"dune-gdt": ('2021.1.2', '2023.2'), "dune-xt": ('2021.1.2', '2023.2')}
+    version_ranges = {'dune-gdt': ('2021.1.2', '2023.2'), 'dune-xt': ('2021.1.2', '2023.2')}
 
     def _get_version(dep_name):
         min_version, max_version = version_ranges[dep_name]
-        module = importlib.import_module(dep_name.replace("-", "."))
+        module = importlib.import_module(dep_name.replace('-', '.'))
         try:
             version = module.__version__
             if parse(version) < parse(min_version) or parse(version) >= parse(max_version):
@@ -74,8 +74,8 @@ def _get_dunegdt_version():
             version = None
         return version
 
-    _get_version("dune-xt")
-    return _get_version("dune-gdt")
+    _get_version('dune-xt')
+    return _get_version('dune-gdt')
 
 
 def is_windows_platform():

@@ -87,8 +87,8 @@ def main(
 
     if cache_region != 'none':
         # building a cache_id is only needed for persistent CacheRegions
-        cache_id = (f"pymordemos.thermalblock {fenics} {xblocks} {yblocks}"
-                    f"{grid} {order}")
+        cache_id = (f'pymordemos.thermalblock {fenics} {xblocks} {yblocks}'
+                    f'{grid} {order}')
         fom.enable_caching(cache_region.value, cache_id)
 
     if plot_solutions:
@@ -96,7 +96,7 @@ def main(
         Us = ()
         legend = ()
         for mu in parameter_space.sample_randomly(2):
-            print(f"Solving for diffusion = \n{mu['diffusion']} ... ")
+            print(f'Solving for diffusion = \n{mu["diffusion"]} ... ')
             sys.stdout.flush()
             Us = Us + (fom.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
@@ -153,11 +153,11 @@ def main(
         assert False  # this should never happen
 
     if pickle:
-        print(f"\nWriting reduced model to file {pickle}_reduced ...")
+        print(f'\nWriting reduced model to file {pickle}_reduced ...')
         with open(pickle + '_reduced', 'wb') as f:
             dump((rom, parameter_space), f)
         if not fenics:  # FEniCS data structures do not support serialization
-            print(f"Writing detailed model and reductor to file {pickle}_detailed ...")
+            print(f'Writing detailed model and reductor to file {pickle}_detailed ...')
             with open(pickle + '_detailed', 'wb') as f:
                 dump((fom, reductor), f)
 
@@ -294,7 +294,7 @@ def reduce_greedy(fom, reductor, parameter_space, snapshots_per_block,
    extension method:       {extension_alg_name}
    prescribed basis size:  {max_extensions}
    actual basis size:      {real_rb_size}
-   elapsed time:           {greedy_data["time"]}
+   elapsed time:           {greedy_data['time']}
 '''
 
     return rom, summary
@@ -324,7 +324,7 @@ def reduce_adaptive_greedy(fom, reductor, parameter_space, validation_mus,
    extension method:                {extension_alg_name}
    prescribed basis size:           {max_extensions}
    actual basis size:               {real_rb_size}
-   elapsed time:                    {greedy_data["time"]}
+   elapsed time:                    {greedy_data['time']}
 '''
 
     return rom, summary

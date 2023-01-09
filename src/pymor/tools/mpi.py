@@ -126,7 +126,7 @@ def event_loop():
                 method(*args, **kwargs)
         except BaseException:
             import traceback
-            print(f"Caught exception on MPI rank {rank}:")
+            print(f'Caught exception on MPI rank {rank}:')
             traceback.print_exception(*sys.exc_info())
 
 

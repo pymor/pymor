@@ -389,7 +389,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         return children
 
     def __repr__(self):
-        return super().__repr__() + "\n\n" + format_rules(self.rules)
+        return super().__repr__() + '\n\n' + format_rules(self.rules)
 
 
 def print_children(obj):
