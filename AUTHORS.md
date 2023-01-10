@@ -11,10 +11,12 @@
 
 ## Contributors
 
-### pyMOR 2022.2
+### pyMOR 2023.1
 
 * Peter Oehme, oehme.pb@gmail.com
   * quadratic functionals and quadratic output keyword for CG discretization
+
+### pyMOR 2022.2
 
 * Tim Keil, tim.keil@uni-muenster.de
   * Dual-weighted residual (DWR) output estimation for elliptic problems
