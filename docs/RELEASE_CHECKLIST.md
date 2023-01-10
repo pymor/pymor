@@ -4,24 +4,26 @@ Replace `RELEASE_TAG` below with the actual release tag.
 
  1. [ ] Write release notes. All new deprecations need to be mentioned.
  1. [ ] Update `README.md`.
- 1. [ ] (Create release branch in `pymor/pymor`. Should have a `.x` as last part of the branch name in contrast
-        to the `RELEASE_TAG`.)
+ 1. [ ] Create a release branch in `pymor/pymor`. Should have a `.x` as the last part of the branch name in contrast
+        to the `RELEASE_TAG`.
  1. [ ] Tag commit in `pymor/pymor` as `RELEASE_TAG`.
         Use an annotated tag (`git tag -a RELEASE_TAG -m RELEASE_TAG`) with the annotation being `RELEASE_TAG`.
- 1. [ ] Produce sdist with checked out tag `RELEASE_TAG`, make sure sdist version is correct.
+ 1. [ ] Run `python setup.py sdist` (on checked out tag `RELEASE_TAG`) and check that it
+        produces `dist/pymor-RELEASE_TAG.tar.gz`.
  1. [ ] Tag commit in `pymor/docker` as `RELEASE_TAG`, make sure to use the commit mentioned in the `.env` in the
         tagged commit in `pymor/pymor`. Use an annotated tag with the annotation being the version number.
         For instance:
-```
-source pymor/pymor/.env
-cd pymor/docker
-git checkout "${CI_IMAGE_TAG}"
-git tag -a RELEASE_TAG -m RELEASE_TAG
-```
+
+       ```bash
+       source pymor/pymor/.env
+       cd pymor/docker
+       git checkout "${CI_IMAGE_TAG}"
+       git tag -a RELEASE_TAG -m RELEASE_TAG
+       ```
  1. [ ] Push tag `RELEASE_TAG` to `pymor/docker`.
  1. [ ] Wait for CI build to finish in `pymor/docker`.
  1. [ ] Push tag `RELEASE_TAG` to `pymor/pymor`.
- 1. [ ] Wait for CI build to finish in `pymor/pymor`. The tagged commit will be deployed to pypi automatically,
+ 1. [ ] Wait for CI build to finish in `pymor/pymor`. The tagged commit will be deployed to PyPI automatically,
         see [the developer docs](https://docs.pymor.org/main/developer_docs.html#stage-deploy).
  1. [ ] Bump/create demo docker, i.e. in `pymor/docker` go to the `demo`-folder and copy the subfolder of the last
         version, change the version in the `Dockerfile` (lines 1 and 6) and extend the `DEMO_TAGS` in `common.mk`
