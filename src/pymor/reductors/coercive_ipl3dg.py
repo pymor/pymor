@@ -608,7 +608,9 @@ class EllipticIPLRBEstimator(ImmutableObject):
                 residual_inner_vec = residual.product.source.make_array(residual_inner_vec)
                 res = residual.product.apply_inverse(residual_inner_vec)
                 # NOTE: Uncomment the next line to use the whole residual without restriction to support
-                res = residual.product.apply_inverse(residual_full)
+                if 0:
+                    # FULL RESIDUAL
+                    res = residual.product.apply_inverse(residual_full)
                 norm = np.sqrt(residual.product.apply2(res, res))
                 residuals.append(residual_full)
             elif isinstance(residual, ResidualOperator):
