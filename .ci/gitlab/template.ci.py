@@ -149,7 +149,7 @@ rules:
       - devpi login root --password ''
       - devpi upload --from-dir --formats=* ./dist/*.whl
       - python3 -m pip install pip~=22.0
-      - python3 -m pip remove -y pymor || true
+      - python3 -m pip uninstall -y pymor || true
     # the docker service adressing fails on other runners
     tags: [mike]
 
