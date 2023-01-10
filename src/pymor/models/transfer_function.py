@@ -219,7 +219,8 @@ class TransferFunction(CacheableObject, ParametricObject):
             return mag, phase
         return w_new, mag, phase
 
-    def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, adaptive_opts=None, **mpl_kwargs):
+    def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, adaptive_opts=None, input_indices=None,
+                  output_indices=None, **mpl_kwargs):
         """Draw the Bode plot for all input-output pairs.
 
         Parameters
@@ -240,6 +241,12 @@ class TransferFunction(CacheableObject, ParametricObject):
             Should the phase be in degrees (otherwise in radians).
         adaptive_opts
             Optional arguments for :func:`~pymor.tools.plot.adaptive` (ignored if `len(w) != 2`).
+        input_indices
+            Optional argument to select a specific input(s) to be paired with all outputs
+            or selected ones then display their plots.
+        output_indices
+            Optional argument to select a specific output(s) to be paired  with all inputs
+            or selected ones then display their plots.
         mpl_kwargs
             Keyword arguments used in the matplotlib plot function.
 
@@ -248,17 +255,19 @@ class TransferFunction(CacheableObject, ParametricObject):
         artists
             List of matplotlib artists added.
         """
+        number_rows, number_columns, final_input_indices, final_output_indices \
+            = self._calc_plot_size_and_input_output_indics(input_indices, output_indices)
         if ax is None:
             import matplotlib.pyplot as plt
             fig = plt.gcf()
             width, height = plt.rcParams['figure.figsize']
-            fig.set_size_inches(self.dim_input * width, 2 * self.dim_output * height)
+            fig.set_size_inches(number_columns * width, number_rows * height)
             fig.set_constrained_layout(True)
-            ax = fig.subplots(2 * self.dim_output, self.dim_input, sharex=True, squeeze=False)
+            ax = fig.subplots(number_rows, number_columns, sharex=True, squeeze=False)
         else:
             assert isinstance(ax, np.ndarray)
-            assert ax.shape == (2 * self.dim_output, self.dim_input), \
-                f'ax.shape={ax.shape} should be ({2 * self.dim_output}, {self.dim_input})'
+            assert ax.shape == (number_rows, number_columns), \
+                f'ax.shape={ax.shape} should be ({number_rows}, {number_columns})'
             fig = ax[0, 0].get_figure()
 
         if len(w) != 2:
@@ -270,29 +279,99 @@ class TransferFunction(CacheableObject, ParametricObject):
         freq = freq / self.sampling_time if self.sampling_time > 0 else freq
         if deg:
             phase *= 180 / np.pi
-
         artists = np.empty_like(ax)
         freq_label = f'Frequency ({"Hz" if Hz else "rad/s"})'
         mag_label = f'Magnitude{" (dB)" if dB else ""}'
         phase_label = f'Phase ({"deg" if deg else "rad"})'
-        for i in range(self.dim_output):
-            for j in range(self.dim_input):
+        for i in range(int(number_rows/2)):
+            for j in range(number_columns):
                 if dB:
-                    artists[2 * i, j] = ax[2 * i, j].semilogx(freq, 20 * np.log10(mag[:, i, j]),
-                                                              **mpl_kwargs)
+                    artists[2 * i, j] = ax[2 * i, j].semilogx(freq, 20 * np.log10(mag[:, final_output_indices[i],
+                                                              final_input_indices[j]]), **mpl_kwargs)
                 else:
-                    artists[2 * i, j] = ax[2 * i, j].loglog(freq, mag[:, i, j],
-                                                            **mpl_kwargs)
-                artists[2 * i + 1, j] = ax[2 * i + 1, j].semilogx(freq, phase[:, i, j],
-                                                                  **mpl_kwargs)
-        for i in range(self.dim_output):
+                    artists[2 * i, j] = ax[2 * i, j].loglog(freq, mag[:, final_output_indices[i],
+                                                            final_input_indices[j]], **mpl_kwargs)
+                artists[2 * i + 1, j] = ax[2 * i + 1, j].semilogx(freq, phase[:, final_output_indices[i],
+                                                                  final_input_indices[j]], **mpl_kwargs)
+        for i in range(int(number_rows/2)):
             ax[2 * i, 0].set_ylabel(mag_label)
             ax[2 * i + 1, 0].set_ylabel(phase_label)
-        for j in range(self.dim_input):
+        for j in range(number_columns):
             ax[-1, j].set_xlabel(freq_label)
         fig.suptitle('Bode plot')
-
         return artists
+
+    def _calc_plot_size_and_input_output_indics(self, input_indices=None, output_indices=None):
+        """Calculate the figure size in case of selecting a specific inputs/outputs pairs along with
+
+        calculating the indices for the desired inputs and outputs
+
+        Parameters
+        ----------
+        input_indices
+            List of integers,If not None will show the plots for the inputs
+            associated with the given indices.
+        output_indices
+            List of integers,If not None will show the plots for the
+            outputs associated with the given indices.
+
+
+        Returns
+        -------
+        number_rows
+            Number of rows in the bode plot.
+        number_columns
+            Number of columns in the bode plot.
+        list_input_indices
+            List of specific input indices.
+        list_output_indices
+            LList of specific output indices.
+        """
+        match(input_indices, output_indices):
+            case(None, None):
+                number_rows = 2 * self.dim_output
+                number_columns = self.dim_input
+
+                list_input_indices = [*range(self.dim_input)]
+                list_output_indices = [*range(self.dim_output)]
+
+            case (None, list()):
+                assert all([isinstance(item, int) for item in output_indices])
+                assert all([output_indices[i] in range(-self.dim_output+1, self.dim_output)
+                            for i in range(len(output_indices))]), \
+                    f'Output indices should be any integer value between {-self.dim_output +1} and { self.dim_output-1}'
+                number_rows = 2 * len(output_indices)
+                number_columns = self.dim_input
+
+                list_input_indices = [*range(self.dim_input)]
+                list_output_indices = output_indices
+
+            case (list(), None):
+                assert all([isinstance(item, int) for item in input_indices])
+                assert all([input_indices[i] in range(- self.dim_input+1, self.dim_input)
+                           for i in range(len(input_indices))]), \
+                    f'Input indecies should be any integer value between {-self.dim_input +1} and {self.dim_input-1}'
+                number_rows = 2 * self.dim_output
+                number_columns = len(input_indices)
+
+                list_input_indices = input_indices
+                list_output_indices = [*range(self.dim_output)]
+
+            case(list(), list()):
+                assert all([isinstance(item, int) for item in output_indices])
+                assert all([isinstance(item, int) for item in input_indices])
+                assert all([output_indices[i] in range(- self.dim_output+1, self.dim_output)
+                            for i in range(len(output_indices))]), \
+                    f'Output indices should be any integer value between {-self.dim_output+1} and {self.dim_output-1}'
+                assert all([input_indices[i] in range(- self.dim_input+1, self.dim_input)
+                            for i in range(len(input_indices))]), \
+                    f'Input indecies should be any integer value between {-self.dim_input +1} and {self.dim_input-1}'
+                number_rows = 2 * len(output_indices)
+                number_columns = len(input_indices)
+
+                list_input_indices = input_indices
+                list_output_indices = output_indices
+        return number_rows, number_columns, list_input_indices, list_output_indices
 
     def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, adaptive_opts=None, **mpl_kwargs):
         """Draw the magnitude plot.
