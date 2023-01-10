@@ -2,14 +2,19 @@
 
  1. [ ] Write release notes. All new deprecations need to be mentioned.
  1. [ ] Update `README.md`.
- 1. [ ] (Create release branch.)
- 1. [ ] Tag commit.
+ 1. [ ] (Create release branch in `pymor/pymor`.)
+ 1. [ ] Tag commit in `pymor/pymor`.
+        Use an annotated tag (`git tag -a ...`) with the annotation being the version number.
  1. [ ] Produce sdist with checked out tag, make sure sdist version is correct.
- 1. [ ] Produce tagged docker with `make VER=CURRENT_TAG && make VER=CURRENT_TAG push`.
- 1. [ ] Push tag.
+ 1. [ ] Tag commit in `pymor/docker`, make sure to use the commit mentioned in the `.env` in the
+        tagged commit in `pymor/pymor`. Use an annotated tag with the annotation being the version number.
+ 1. [ ] Push tag to `pymor/docker`.
  1. [ ] Wait for CI build to finish.
- 1. [ ] Bump/create demo docker.
- 1. [ ] Update homepage.
+ 1. [ ] Push tag to `pymor/pymor`.
+ 1. [ ] Wait for CI build to finish.
+ 1. [ ] Bump/create demo docker, i.e. in `pymor/docker` go to the `demo`-folder and copy the last subfolder,
+        change the version in the `Dockerfile` (lines 1 and 6) and extend the `DEMO_TAGS` in `common.mk` (last line).
+ 1. [ ] Update homepage (`gh-pages` branch in `pymor/pymor`).
  1. [ ] Make a GitHub release. Zenodo is hooked into that.
  1. [ ] Update MOR Wiki:
         [pyMOR page](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/PyMOR),
