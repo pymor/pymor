@@ -9,7 +9,7 @@ dune-gdt>=2022.5.3; platform_system=="Linux" and platform_machine=="x86_64"
 dune-xt>=2022.5.3; platform_system=="Linux" and platform_machine=="x86_64"
 gmsh
 ipyparallel>=6.2.5
-ipython>=5.0
+ipython>=6.0
 ipywidgets<8,>7
 jupyter_client>=7.0.6
 jupyter_contrib_nbextensions
@@ -44,6 +44,7 @@ sphinx-autoapi>=1.8,<2
 sphinx-material
 sphinx-qt-documentation
 sphinx>=5.0,<5.2
+sphinxcontrib-applehelp<1.0.3
 sphinxcontrib-bibtex
 sympy
 torch>=1.11.0
