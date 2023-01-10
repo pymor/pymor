@@ -72,6 +72,8 @@ services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_${PYMOR_TEST_OS}:${PYPI_MIRROR_TAG}
     volumes:
         - ./..:/pymor
+    environment:
+      - CI_PROJECT_DIR=/pymor
     depends_on:
       - pypi_mirror
     command: /bin/bash
@@ -79,8 +81,11 @@ services:
     image: pymor/deploy_checks:devpi_${PYMOR_TEST_OS}
     volumes:
         - ./..:/pymor
+    environment:
+      - CI_PROJECT_DIR=/pymor
     depends_on:
       - pymor__devpi
+      - pypi_mirror
     command: /bin/bash
 
   pymor__devpi:

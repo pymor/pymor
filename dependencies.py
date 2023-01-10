@@ -17,12 +17,13 @@ def _numpy_scipy():
     # 1.24 limit due to https://github.com/pymor/pymor/issues/1692
     numpys = [
         'numpy>=1.17.5;python_version == "3.8"',
-        'numpy>=1.19.4;python_version >= "3.9"',
+        'numpy>=1.19.4;python_version == "3.9"',
+        'numpy>=1.21.5;python_version >= "3.10"',
     ]
     scipys = [
-        'scipy>=1.5.1;python_version < "3.8"',
         'scipy>=1.5.1;python_version == "3.8"',
-        'scipy>=1.5.4;python_version >= "3.9"',
+        'scipy>=1.5.4;python_version == "3.9"',
+        'scipy>=1.7.3;python_version >= "3.10"',
     ]
     return numpys + scipys
 
@@ -43,7 +44,7 @@ def setup_requires():
 # for jupytext and jupyter_server, see https://github.com/pymor/pymor/issues/1878
 install_requires = ['qtpy>2.0', 'packaging', 'diskcache', 'typer', 'click'] + _numpy_scipy()
 install_suggests = {
-    'ipython>=5.0': 'an enhanced interactive python shell',
+    'ipython>=6.0': 'an enhanced interactive python shell',
     'ipyparallel>=6.2.5': 'required for pymor.parallel.ipython',
     'matplotlib': 'needed for error plots in demo scipts',
     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
@@ -60,14 +61,14 @@ install_suggests = {
     'torch>=1.11.0': 'PyTorch open source machine learning framework',
     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
     'pillow': 'image library used for bitmap data functions',
-    'dune-gdt>=2021.1.3,<2022.5; platform_system=="Linux" and platform_machine=="x86_64"':
-        'generic discretization toolbox',
-    'dune-xt>=2021.1.3,<2022.5; platform_system=="Linux" and platform_machine=="x86_64"':
-        'DUNE extensions for dune-gdt',
+    'dune-gdt>=2022.5.3; platform_system=="Linux" and platform_machine=="x86_64"': 'generic discretization toolbox',
+    'dune-xt>=2022.5.3; platform_system=="Linux" and platform_machine=="x86_64"': 'DUNE extensions for dune-gdt',
 }
 io_requires = ['pyevtk', 'xmljson', 'meshio>=4.4', 'lxml', 'gmsh']
 install_suggests.update({p: 'optional File I/O support libraries' for p in io_requires})
+# see https://github.com/pymor/pymor/issues/1915 for contrib-apple
 doc_requires = ['sphinx>=5.0,<5.2', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
+                'sphinxcontrib-applehelp<1.0.3',
                 'ipywidgets<8,>7', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
                 'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8,<2', 'myst-nb>=0.16'] + install_requires
 ci_requires = ['check-manifest==0.49',
@@ -97,7 +98,8 @@ ci_requires = ['check-manifest==0.49',
 
 # Slycot is pinned due to buildsystem changes + missing wheels
 optional_requirements_file_only = (['slycot>=0.4.0', 'pymess',
-                                    'mpi4py>=3.0.3;python_version >= "3.9"',
+                                    'mpi4py>=3.0.3;python_version == "3.9"',
+                                    'mpi4py>3.0.3;python_version >= "3.10"',
                                     'mpi4py>=3.0;python_version < "3.9"'])
 
 

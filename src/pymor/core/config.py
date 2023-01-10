@@ -57,7 +57,7 @@ def _get_fenics_version():
 
 def _get_dunegdt_version():
     import importlib
-    version_ranges = {"dune-gdt": ('2021.1.2', '2022.2'), "dune-xt": ('2021.1.2', '2022.2')}
+    version_ranges = {"dune-gdt": ('2021.1.2', '2023.2'), "dune-xt": ('2021.1.2', '2023.2')}
 
     def _get_version(dep_name):
         min_version, max_version = version_ranges[dep_name]
@@ -66,10 +66,10 @@ def _get_dunegdt_version():
             version = module.__version__
             if parse(version) < parse(min_version) or parse(version) >= parse(max_version):
                 warnings.warn(f'{dep_name} bindings have been tested for versions between '
-                              '{min_version} and {max_version} (installed: {version}).')
+                              f'{min_version} and {max_version} (installed: {version}).')
         except AttributeError:
             warnings.warn(f'{dep_name} bindings have been tested for versions between '
-                          '{min_version} and {max_version} (installed unknown version).')
+                          f'{min_version} and {max_version} (installed unknown version).')
             version = None
         return version
 

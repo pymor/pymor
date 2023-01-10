@@ -18,7 +18,7 @@ import typer
 
 REQUIRED_PLATFORMS = ('osx-64', 'linux-64', 'win-64')
 # stars are not actually a glob pattern, but as-is in the conda search output
-REQUIRED_PYTHONS = ('3.8.*', '3.9.*')
+REQUIRED_PYTHONS = ('3.8.*', '3.10.*')
 ANY_PYTHON_VERSION = 'any_python'
 NO_PYTHON_VERSION = -1
 
@@ -208,7 +208,15 @@ def _process_inputs(input_paths):
     return sorted(list(available)), sorted(list(wanted))
 
 
+def ensure_conda_binary():
+    try:
+        return check_output(['/usr/bin/env', 'conda', '--version'])
+    except CalledProcessError as cs:
+        raise RuntimeError('conda not found in PATH') from cs
+
+
 def main(input_paths: List[Path], output_path: Path = None):
+    ensure_conda_binary()
     output_path = output_path or THIS_DIR / 'conda-env.yml'
     available, wanted = _process_inputs(input_paths)
     tpl = jinja2.Template(ENV_TPL)
