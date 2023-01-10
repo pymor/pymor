@@ -116,7 +116,7 @@ docker_test: docker_image
 	PYMOR_TEST_SCRIPT=$(PYMOR_TEST_SCRIPT) $(DOCKER_COMPOSE) up pytest
 
 docker_test_oldest: docker_image
-	PYMOR_TEST_SCRIPT=oldest PYPI_MIRROR=oldest DOCKER_BASE_PYTHON=3.7 $(DOCKER_COMPOSE) up pytest
+	PYMOR_TEST_SCRIPT=oldest PYPI_MIRROR=oldest DOCKER_BASE_PYTHON=3.8 $(DOCKER_COMPOSE) up pytest
 
 docker_run_oldest: DOCKER_BASE_PYTHON=3.8
 docker_run_oldest: PYMOR_TEST_SCRIPT=oldest
