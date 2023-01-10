@@ -130,6 +130,11 @@ docker_jupyter: docker_image
 	NB_DIR=$(NB_DIR) $(DOCKER_COMPOSE) up jupyter
 
 docker_wheel_check: docker_image
-	PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports wheel_check bash
+	DOCKER_BASE_PYTHON=$(DOCKER_BASE_PYTHON) PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports \
+		wheel_check bash
+	$(DOCKER_COMPOSE) down --remove-orphans -v
+
 docker_install_check: docker_image
-	PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports install_check bash
+	DOCKER_BASE_PYTHON=$(DOCKER_BASE_PYTHON) PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports install_check \
+      /pymor/.ci/gitlab/install_checks/$(PYMOR_TEST_OS)/check.bash
+	$(DOCKER_COMPOSE) down --remove-orphans -v
