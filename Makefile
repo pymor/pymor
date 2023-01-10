@@ -95,6 +95,8 @@ docker_template:
 
 docker_image:
 	$(DOCKER_COMPOSE) build
+	@if [ "$(COMPOSE_CMD)" = "docker-compose" ]; then echo \
+		"in case of inexplicable errors try using compose as plugin: https://docs.docker.com/compose/install/"; fi
 
 docker_docs: docker_image
 	NB_DIR=notebooks $(DOCKER_COMPOSE) run jupyter ./.ci/gitlab/test_docs.bash
