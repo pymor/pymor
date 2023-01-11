@@ -327,50 +327,48 @@ class TransferFunction(CacheableObject, ParametricObject):
         list_output_indices
             LList of specific output indices.
         """
-        match(input_indices, output_indices):
-            case(None, None):
-                number_rows = 2 * self.dim_output
-                number_columns = self.dim_input
+        if input_indices is None and output_indices is None:
+            number_rows = 2 * self.dim_output
+            number_columns = self.dim_input
 
-                list_input_indices = [*range(self.dim_input)]
-                list_output_indices = [*range(self.dim_output)]
+            list_input_indices = [*range(self.dim_input)]
+            list_output_indices = [*range(self.dim_output)]
 
-            case (None, list()):
-                assert all([isinstance(item, int) for item in output_indices])
-                assert all([output_indices[i] in range(-self.dim_output+1, self.dim_output)
-                            for i in range(len(output_indices))]), \
-                    f'Output indices should be any integer value between {-self.dim_output +1} and { self.dim_output-1}'
-                number_rows = 2 * len(output_indices)
-                number_columns = self.dim_input
+        elif input_indices is None and output_indices is not None:
+            assert all([isinstance(item, int) for item in output_indices])
+            assert all([output_indices[i] in range(-self.dim_output+1, self.dim_output)
+                        for i in range(len(output_indices))]), \
+                f'Output indices should be any integer value between {-self.dim_output +1} and { self.dim_output-1}'
+            number_rows = 2 * len(output_indices)
+            number_columns = self.dim_input
 
-                list_input_indices = [*range(self.dim_input)]
-                list_output_indices = output_indices
+            list_input_indices = [*range(self.dim_input)]
+            list_output_indices = output_indices
+        elif input_indices is not None and output_indices is None:
+            assert all([isinstance(item, int) for item in input_indices])
+            assert all([input_indices[i] in range(- self.dim_input+1, self.dim_input)
+                       for i in range(len(input_indices))]), \
+                f'Input indices should be any integer value between {-self.dim_input +1} and {self.dim_input-1}'
+            number_rows = 2 * self.dim_output
+            number_columns = len(input_indices)
 
-            case (list(), None):
-                assert all([isinstance(item, int) for item in input_indices])
-                assert all([input_indices[i] in range(- self.dim_input+1, self.dim_input)
-                           for i in range(len(input_indices))]), \
-                    f'Input indecies should be any integer value between {-self.dim_input +1} and {self.dim_input-1}'
-                number_rows = 2 * self.dim_output
-                number_columns = len(input_indices)
+            list_input_indices = input_indices
+            list_output_indices = [*range(self.dim_output)]
 
-                list_input_indices = input_indices
-                list_output_indices = [*range(self.dim_output)]
+        else:
+            assert all([isinstance(item, int) for item in output_indices])
+            assert all([isinstance(item, int) for item in input_indices])
+            assert all([output_indices[i] in range(- self.dim_output+1, self.dim_output)
+                        for i in range(len(output_indices))]), \
+                f'Output indices should be any integer value between {-self.dim_output+1} and {self.dim_output-1}'
+            assert all([input_indices[i] in range(- self.dim_input+1, self.dim_input)
+                        for i in range(len(input_indices))]), \
+                f'Input indecies should be any integer value between {-self.dim_input +1} and {self.dim_input-1}'
+            number_rows = 2 * len(output_indices)
+            number_columns = len(input_indices)
 
-            case(list(), list()):
-                assert all([isinstance(item, int) for item in output_indices])
-                assert all([isinstance(item, int) for item in input_indices])
-                assert all([output_indices[i] in range(- self.dim_output+1, self.dim_output)
-                            for i in range(len(output_indices))]), \
-                    f'Output indices should be any integer value between {-self.dim_output+1} and {self.dim_output-1}'
-                assert all([input_indices[i] in range(- self.dim_input+1, self.dim_input)
-                            for i in range(len(input_indices))]), \
-                    f'Input indecies should be any integer value between {-self.dim_input +1} and {self.dim_input-1}'
-                number_rows = 2 * len(output_indices)
-                number_columns = len(input_indices)
-
-                list_input_indices = input_indices
-                list_output_indices = output_indices
+            list_input_indices = input_indices
+            list_output_indices = output_indices
         return number_rows, number_columns, list_input_indices, list_output_indices
 
     def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, adaptive_opts=None, **mpl_kwargs):
