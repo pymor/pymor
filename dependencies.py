@@ -59,7 +59,8 @@ install_suggests = {
     'jupyter_contrib_nbextensions': 'modular collection of jupyter extensions',
     'pillow': 'image library used for bitmap data functions',
     'dune-gdt>=2022.5.3; platform_system=="Linux" and platform_machine=="x86_64"': 'generic discretization toolbox',
-    'dune-xt>=2022.5.3; platform_system=="Linux" and platform_machine=="x86_64"': 'DUNE extensions for dune-gdt',
+    'dune-xt[visualisation]>=2022.5.3; platform_system=="Linux" and platform_machine=="x86_64"':
+        'DUNE extensions for dune-gdt',
 }
 io_requires = ['pyevtk', 'xmljson', 'meshio>=4.4', 'lxml', 'gmsh']
 install_suggests.update({p: 'optional File I/O support libraries' for p in io_requires})
