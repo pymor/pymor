@@ -10,7 +10,7 @@ _PYTEST = 'pytest==7.2.0'
 # however the problem is not actually fixed in 5.12.3 as advertised,
 # but only starting from 5.13.1
 _PYSIDE = 'PySide2>=5.15.2.1'
-
+SLYCOT = 'slycot>=0.4.0'
 
 def _numpy_scipy():
     # numpy versions with filters according to minimal version with a wheel
@@ -65,7 +65,7 @@ io_requires = ['pyevtk', 'xmljson', 'meshio>=4.4', 'lxml', 'gmsh']
 install_suggests.update({p: 'optional File I/O support libraries' for p in io_requires})
 # see https://github.com/pymor/pymor/issues/1915 for contrib-apple
 doc_requires = ['sphinx>=5.0,<5.2', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
-                'sphinxcontrib-applehelp<1.0.3',
+                'sphinxcontrib-applehelp<1.0.3', SLYCOT,
                 'ipywidgets>7', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
                 'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8,<2', 'myst-nb>=0.16'] + install_requires
 # Note the hypothesis duplication makes the conda env creation script work
@@ -97,7 +97,7 @@ ci_requires = ['check-manifest==0.49',
                'twine==4.0.2']
 
 # Slycot is pinned due to buildsystem changes + missing wheels
-optional_requirements_file_only = (['slycot>=0.4.0', 'pymess',
+optional_requirements_file_only = ([SLYCOT, 'pymess',
                                     'mpi4py>=3.0.3;python_version == "3.9"',
                                     'mpi4py>3.0.3;python_version >= "3.10"',
                                     'mpi4py>=3.0;python_version < "3.9"'])
