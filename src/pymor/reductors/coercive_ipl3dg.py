@@ -16,7 +16,8 @@ from pymor.reductors.residual import ResidualReductor, ResidualOperator
 
 class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
     def __init__(self, fom, dd_grid, local_bases=None, product=None, reduced_estimate=False,
-                 unassembled_product=None, fake_dirichlet_ops=None):
+                 unassembled_product=None, fake_dirichlet_ops=None,
+                 only_primal_estimate=False):
         self.__auto_init(locals())
 
         self.solution_space = fom.solution_space
@@ -84,8 +85,6 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             # inner_product_blocks = product_blocks.todense()[local_node_elements][:, local_node_elements]
             # inner_product_blocks[inner_product_blocks == 0] = None
             # local_product = BlockOperator(inner_product_blocks)
-
-
 
             residual_reductor = ResidualReductor(basis,
                                                  local_model.operator,
@@ -251,7 +250,10 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
                                                      self.reduced_residuals,
                                                      self.S,
                                                      self.reconstruct)
-        return estimators
+        if self.only_primal_estimate:
+            return estimators['local']
+        else:
+            return estimators
 
     def reduce_to_subbasis(self, dims):
         raise NotImplementedError
@@ -579,7 +581,7 @@ class EllipticIPLRBEstimator(ImmutableObject):
     def __init__(self, estimator_data, residuals, domains, reconstruct):
         self.__auto_init(locals())
 
-    def estimate_error(self, u_rom, p_unused, mu):
+    def estimate_error(self, u_rom, mu, m):
         indicators = []
         residuals = []
 
@@ -601,7 +603,7 @@ class EllipticIPLRBEstimator(ImmutableObject):
                 # res_on_node_patch = [residual_full.block(el).norm() for el in local_inner_elements]
                 # norm = np.linalg.norm(res_on_node_patch)
 
-                # new approach: cut out only the relevent part. TODO: use concatenation?
+                # new approach: cut out only the relevant part. TODO: use concatenation?
                 residual_inner_vec = [residual_full.block(i) if i in local_inner_elements
                                       else residual_full.block(i).space.zeros()
                                       for i in range(len(elements))]
@@ -637,5 +639,5 @@ class EllipticIPLRBEstimator(ImmutableObject):
                 ests[sd] += ind**2
         estimate = np.sqrt(sum(ests))
         # return estimate
-        return estimate, np.linalg.norm(indicators), indicators, residuals
+        return estimate, ests, indicators, residuals
 
