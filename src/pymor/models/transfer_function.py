@@ -255,19 +255,26 @@ class TransferFunction(CacheableObject, ParametricObject):
         artists
             List of matplotlib artists added.
         """
-        number_rows, number_columns, final_input_indices, final_output_indices \
-            = self._calc_plot_size_and_input_output_indics(input_indices, output_indices)
+        number_columns = self._cal_plot_dimension(input_indices, self.dim_input)
+        number_rows = self._cal_plot_dimension(output_indices, self.dim_output)
+
+        if input_indices is None:
+            input_indices = [*range(self.dim_input)]
+
+        if output_indices is None:
+            output_indices = [*range(self.dim_output)]
+
         if ax is None:
             import matplotlib.pyplot as plt
             fig = plt.gcf()
             width, height = plt.rcParams['figure.figsize']
-            fig.set_size_inches(number_columns * width, number_rows * height)
+            fig.set_size_inches(number_columns * width, 2 * number_rows * height)
             fig.set_constrained_layout(True)
-            ax = fig.subplots(number_rows, number_columns, sharex=True, squeeze=False)
+            ax = fig.subplots(2 * number_rows, number_columns, sharex=True, squeeze=False)
         else:
             assert isinstance(ax, np.ndarray)
-            assert ax.shape == (number_rows, number_columns), \
-                f'ax.shape={ax.shape} should be ({number_rows}, {number_columns})'
+            assert ax.shape == (2 * number_rows, number_columns), \
+                f'ax.shape={ax.shape} should be ({2 * number_rows}, {number_columns})'
             fig = ax[0, 0].get_figure()
 
         if len(w) != 2:
@@ -283,17 +290,17 @@ class TransferFunction(CacheableObject, ParametricObject):
         freq_label = f'Frequency ({"Hz" if Hz else "rad/s"})'
         mag_label = f'Magnitude{" (dB)" if dB else ""}'
         phase_label = f'Phase ({"deg" if deg else "rad"})'
-        for i in range(int(number_rows/2)):
+        for i in range(number_rows):
             for j in range(number_columns):
                 if dB:
-                    artists[2 * i, j] = ax[2 * i, j].semilogx(freq, 20 * np.log10(mag[:, final_output_indices[i],
-                                                              final_input_indices[j]]), **mpl_kwargs)
+                    artists[2 * i, j] = ax[2 * i, j].semilogx(freq, 20 * np.log10(mag[:, output_indices[i],
+                                                              input_indices[j]]), **mpl_kwargs)
                 else:
-                    artists[2 * i, j] = ax[2 * i, j].loglog(freq, mag[:, final_output_indices[i],
-                                                            final_input_indices[j]], **mpl_kwargs)
-                artists[2 * i + 1, j] = ax[2 * i + 1, j].semilogx(freq, phase[:, final_output_indices[i],
-                                                                  final_input_indices[j]], **mpl_kwargs)
-        for i in range(int(number_rows/2)):
+                    artists[2 * i, j] = ax[2 * i, j].loglog(freq, mag[:, output_indices[i],
+                                                            input_indices[j]], **mpl_kwargs)
+                artists[2 * i + 1, j] = ax[2 * i + 1, j].semilogx(freq, phase[:, output_indices[i],
+                                                                  input_indices[j]], **mpl_kwargs)
+        for i in range(number_rows):
             ax[2 * i, 0].set_ylabel(mag_label)
             ax[2 * i + 1, 0].set_ylabel(phase_label)
         for j in range(number_columns):
@@ -301,75 +308,16 @@ class TransferFunction(CacheableObject, ParametricObject):
         fig.suptitle('Bode plot')
         return artists
 
-    def _calc_plot_size_and_input_output_indics(self, input_indices=None, output_indices=None):
-        """Calculate the figure size in case of selecting a specific inputs/outputs pairs along with
-
-        calculating the indices for the desired inputs and outputs
-
-        Parameters
-        ----------
-        input_indices
-            List of integers,If not None will show the plots for the inputs
-            associated with the given indices.
-        output_indices
-            List of integers,If not None will show the plots for the
-            outputs associated with the given indices.
-
-
-        Returns
-        -------
-        number_rows
-            Number of rows in the bode plot.
-        number_columns
-            Number of columns in the bode plot.
-        list_input_indices
-            List of specific input indices.
-        list_output_indices
-            LList of specific output indices.
-        """
-        if input_indices is None and output_indices is None:
-            number_rows = 2 * self.dim_output
-            number_columns = self.dim_input
-
-            list_input_indices = [*range(self.dim_input)]
-            list_output_indices = [*range(self.dim_output)]
-
-        elif input_indices is None and output_indices is not None:
-            assert all([isinstance(item, int) for item in output_indices])
-            assert all([output_indices[i] in range(-self.dim_output+1, self.dim_output)
-                        for i in range(len(output_indices))]), \
-                f'Output indices should be any integer value between {-self.dim_output +1} and { self.dim_output-1}'
-            number_rows = 2 * len(output_indices)
-            number_columns = self.dim_input
-
-            list_input_indices = [*range(self.dim_input)]
-            list_output_indices = output_indices
-        elif input_indices is not None and output_indices is None:
-            assert all([isinstance(item, int) for item in input_indices])
-            assert all([input_indices[i] in range(- self.dim_input+1, self.dim_input)
-                       for i in range(len(input_indices))]), \
-                f'Input indices should be any integer value between {-self.dim_input +1} and {self.dim_input-1}'
-            number_rows = 2 * self.dim_output
-            number_columns = len(input_indices)
-
-            list_input_indices = input_indices
-            list_output_indices = [*range(self.dim_output)]
-
+    @staticmethod
+    def _cal_plot_dimension(indices, dim):
+        if indices is None:
+            return dim
         else:
-            assert all([isinstance(item, int) for item in output_indices])
-            assert all([isinstance(item, int) for item in input_indices])
-            assert all([output_indices[i] in range(- self.dim_output+1, self.dim_output)
-                        for i in range(len(output_indices))]), \
-                f'Output indices should be any integer value between {-self.dim_output+1} and {self.dim_output-1}'
-            assert all([input_indices[i] in range(- self.dim_input+1, self.dim_input)
-                        for i in range(len(input_indices))]), \
-                f'Input indecies should be any integer value between {-self.dim_input +1} and {self.dim_input-1}'
-            number_rows = 2 * len(output_indices)
-            number_columns = len(input_indices)
-
-            list_input_indices = input_indices
-            list_output_indices = output_indices
-        return number_rows, number_columns, list_input_indices, list_output_indices
+            assert all([isinstance(item, int) for item in indices])
+            assert all([indices[i] in range(-dim+1, dim)
+                       for i in range(len(indices))]), \
+                f'Indices should be any integer value between {-dim+1} and {dim-1}'
+            return len(indices)
 
     def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, adaptive_opts=None, **mpl_kwargs):
         """Draw the magnitude plot.
