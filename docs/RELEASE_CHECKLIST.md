@@ -25,7 +25,7 @@ Replace `RELEASE_TAG` below with the actual release tag.
  1. [ ] Push tag `RELEASE_TAG` to `pymor/pymor`.
  1. [ ] Wait for CI build to finish in `pymor/pymor`. The tagged commit will be deployed to PyPI automatically,
         see [the developer docs](https://docs.pymor.org/main/developer_docs.html#stage-deploy).
- 1. [ ] Bump/create demo docker, i.e. in `pymor/docker` go to the `demo`-folder and copy the subfolder of the last
+ 1. [ ] Bump/create demo docker, i.e., in `pymor/docker` go to the `demo` folder and copy the subfolder of the last
         version, change the version in the `Dockerfile` (lines 1 and 6) and extend the `DEMO_TAGS` in `common.mk`
         (last line).
  1. [ ] Update homepage (`gh-pages` branch in `pymor/pymor`, similar to changes in `README.md`).
