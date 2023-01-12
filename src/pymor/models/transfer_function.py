@@ -255,26 +255,26 @@ class TransferFunction(CacheableObject, ParametricObject):
         artists
             List of matplotlib artists added.
         """
-        number_columns = self._cal_plot_dimension(input_indices, self.dim_input)
-        number_rows = self._cal_plot_dimension(output_indices, self.dim_output)
-
+        num_input = self._cal_plot_dimension(input_indices, self.dim_input)
+        num_output = self._cal_plot_dimension(output_indices, self.dim_output)
+        print(self.dim_input, self.dim_output)
         if input_indices is None:
-            input_indices = [*range(self.dim_input)]
+            input_indices = list(range(self.dim_input))
 
         if output_indices is None:
-            output_indices = [*range(self.dim_output)]
+            output_indices = list(range(self.dim_output))
 
         if ax is None:
             import matplotlib.pyplot as plt
             fig = plt.gcf()
             width, height = plt.rcParams['figure.figsize']
-            fig.set_size_inches(number_columns * width, 2 * number_rows * height)
+            fig.set_size_inches(num_input * width, 2 * num_output * height)
             fig.set_constrained_layout(True)
-            ax = fig.subplots(2 * number_rows, number_columns, sharex=True, squeeze=False)
+            ax = fig.subplots(2 * num_output, num_input, sharex=True, squeeze=False)
         else:
             assert isinstance(ax, np.ndarray)
-            assert ax.shape == (2 * number_rows, number_columns), \
-                f'ax.shape={ax.shape} should be ({2 * number_rows}, {number_columns})'
+            assert ax.shape == (2 * num_output, num_input), \
+                f'ax.shape={ax.shape} should be ({2 * num_output}, {num_input})'
             fig = ax[0, 0].get_figure()
 
         if len(w) != 2:
@@ -290,8 +290,8 @@ class TransferFunction(CacheableObject, ParametricObject):
         freq_label = f'Frequency ({"Hz" if Hz else "rad/s"})'
         mag_label = f'Magnitude{" (dB)" if dB else ""}'
         phase_label = f'Phase ({"deg" if deg else "rad"})'
-        for i in range(number_rows):
-            for j in range(number_columns):
+        for i in range(num_output):
+            for j in range(num_input):
                 if dB:
                     artists[2 * i, j] = ax[2 * i, j].semilogx(freq, 20 * np.log10(mag[:, output_indices[i],
                                                               input_indices[j]]), **mpl_kwargs)
@@ -300,10 +300,10 @@ class TransferFunction(CacheableObject, ParametricObject):
                                                             input_indices[j]], **mpl_kwargs)
                 artists[2 * i + 1, j] = ax[2 * i + 1, j].semilogx(freq, phase[:, output_indices[i],
                                                                   input_indices[j]], **mpl_kwargs)
-        for i in range(number_rows):
+        for i in range(num_output):
             ax[2 * i, 0].set_ylabel(mag_label)
             ax[2 * i + 1, 0].set_ylabel(phase_label)
-        for j in range(number_columns):
+        for j in range(num_input):
             ax[-1, j].set_xlabel(freq_label)
         fig.suptitle('Bode plot')
         return artists
@@ -313,10 +313,9 @@ class TransferFunction(CacheableObject, ParametricObject):
         if indices is None:
             return dim
         else:
-            assert all([isinstance(item, int) for item in indices])
-            assert all([indices[i] in range(-dim+1, dim)
-                       for i in range(len(indices))]), \
-                f'Indices should be any integer value between {-dim+1} and {dim-1}'
+            assert all(isinstance(item, int) for item in indices)
+            assert all(-dim <= item < dim for item in indices), \
+                f'Indices should be any integer value between {-dim} and {dim-1}'
             return len(indices)
 
     def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, adaptive_opts=None, **mpl_kwargs):
