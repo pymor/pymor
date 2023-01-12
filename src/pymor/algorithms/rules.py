@@ -213,7 +213,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
 
     @insert_rule.instancemethod
     def insert_rule(self, index, rule_):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         assert isinstance(rule_, rule)
         self.rules.insert(index, rule_)
 
@@ -224,7 +224,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
 
     @append_rule.instancemethod
     def append_rule(self, rule_):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         assert isinstance(rule_, rule)
         self.rules.append(rule_)
 

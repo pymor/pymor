@@ -239,7 +239,7 @@ class BlockVectorSpace(VectorSpace):
 
     @make_array.instancemethod
     def make_array(self, obj):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         assert len(obj) == len(self.subspaces)
         assert all(block in subspace for block, subspace in zip(obj, self.subspaces))
         return BlockVectorArray(self, BlockVectorArrayImpl(obj, self))

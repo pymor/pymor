@@ -128,7 +128,7 @@ def dumps_function(function):
 
     Note that also this is heavily implementation specific and will probably only
     work with CPython. If possible, avoid using this method.
-    """
+    """  # noqa: D400
     closure = None if function.__closure__ is None else [c.cell_contents for c in function.__closure__]
     code = marshal.dumps(function.__code__)
     func_globals = function.__globals__

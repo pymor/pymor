@@ -582,7 +582,7 @@ class ListVectorSpace(VectorSpace):
 
     @make_array.instancemethod
     def make_array(self, obj):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         return ListVectorArray(
             self,
             ListVectorArrayImpl([v if isinstance(v, self.vector_type) else self.make_vector(v) for v in obj], self)
@@ -594,7 +594,7 @@ class ListVectorSpace(VectorSpace):
 
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         return ListVectorArray(
             self, ListVectorArrayImpl([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self)
         )

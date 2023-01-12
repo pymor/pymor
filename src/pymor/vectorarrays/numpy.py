@@ -249,7 +249,7 @@ class NumpyVectorSpace(VectorSpace):
 
     @make_array.instancemethod
     def make_array(self, obj):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
@@ -258,7 +258,7 @@ class NumpyVectorSpace(VectorSpace):
 
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         return self._array_factory(data.copy() if ensure_copy else data, space=self)
 
     @classinstancemethod
@@ -279,7 +279,7 @@ class NumpyVectorSpace(VectorSpace):
 
     @from_file.instancemethod
     def from_file(self, path, key=None, single_vector=False, transpose=False):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         return type(self).from_file(path, key=key, single_vector=single_vector, transpose=transpose, id=self.id)
 
     @classmethod
