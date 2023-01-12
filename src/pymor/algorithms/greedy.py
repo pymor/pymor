@@ -13,7 +13,7 @@ from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interface import RemoteObject
 
 
-def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=None, pool=None):
+def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=None, pool=None, compute_true_errors=False):
     """Weak greedy basis generation algorithm :cite:`BCDDPW11`.
 
     This algorithm generates an approximation basis for a given set of vectors
@@ -76,12 +76,18 @@ def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=No
     extensions = 0
     max_errs = []
     max_err_mus = []
+    max_true_errs = []
+    max_true_err_mus = []
 
     while True:
         with logger.block('Estimating errors ...'):
             max_err, max_err_mu = surrogate.evaluate(training_set)
             max_errs.append(max_err)
             max_err_mus.append(max_err_mu)
+            if compute_true_errors:
+                max_true_err, max_true_err_mu = surrogate.evaluate(training_set, true_errors=True)
+                max_true_errs.append(max_true_err)
+                max_true_err_mus.append(max_true_err_mu)
 
         logger.info(f'Maximum error after {extensions} extensions: {max_err} (mu = {max_err_mu})')
 
@@ -109,8 +115,12 @@ def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=No
 
     tictoc = time.perf_counter() - tic
     logger.info(f'Greedy search took {tictoc} seconds')
-    return {'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
-            'time': tictoc}
+    result = {'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
+              'time': tictoc}
+    if compute_true_errors:
+        result['max_true_errs'] = max_true_errs
+        result['max_true_err_mus'] = max_true_err_mus
+    return result
 
 
 class WeakGreedySurrogate(BasicObject):
