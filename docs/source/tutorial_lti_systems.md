@@ -332,8 +332,8 @@ _ = fom.transfer_function.bode_plot(w, ax=axs)
 ```
 
 In the Bode plot visualization, you can choose a specific one or more input-output pair
-to display its plot by setting values for both the optional arguments ```input_indices``` and/or
-```output_indices```. In case you did not pass values for both of these arguments, a
+to display its plot by setting values for both the optional arguments `input_indices` and/or
+`output_indices`. In case you did not pass values for both of these arguments, a
 plot with all possible input-output paris will be displayed.
 
 ```{code-cell}

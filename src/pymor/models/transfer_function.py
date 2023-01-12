@@ -257,7 +257,6 @@ class TransferFunction(CacheableObject, ParametricObject):
         """
         num_input = self._cal_plot_dimension(input_indices, self.dim_input)
         num_output = self._cal_plot_dimension(output_indices, self.dim_output)
-        print(self.dim_input, self.dim_output)
         if input_indices is None:
             input_indices = list(range(self.dim_input))
 
