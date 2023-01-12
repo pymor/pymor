@@ -77,7 +77,7 @@ ci_requires = ['check-manifest==0.49',
                'check_reqs==1.0.0',
                # only update in lockstep with sphinx
                'docutils==0.18',
-               'ruff==0.0.215',
+               'ruff==0.0.219',
                'hypothesis[numpy,pytest]==6.56.3',
                'hypothesis==6.56.3',
                'pybind11==2.9.2',
@@ -190,6 +190,9 @@ inline-quotes = "single"
 "src/pymor/algorithms/rules.py" = ["N801", "N805"] # class name CapWords convention, first argument should be `self`
 "src/pymor/analyticalproblems/expressions.py" = ["N801"] # class name CapWords convention
 "src/pymordemos/*" = ["F403", "F405"] # undefined import due to pymor.basic functionality
+
+[tool.ruff.pycodestyle]
+max-doc-length = 100
 
 [tool.ruff.pydocstyle]
 convention = "numpy"

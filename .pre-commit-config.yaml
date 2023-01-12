@@ -15,7 +15,7 @@ repos:
     -   id: pretty-format-json
         args: [--autofix]
 - repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: 'v0.0.215'
+  rev: 'v0.0.219'
   hooks:
     - id: ruff
       # Respect `exclude` and `extend-exclude` settings.
