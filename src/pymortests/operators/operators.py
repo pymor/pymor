@@ -176,11 +176,10 @@ def test_bilin_functional():
     bilin_op = NumpyMatrixOperator(bilin_matrix)
     bilin_op = QuadraticFunctional(bilin_op)
 
-    one_vec = [1.]
-    two_vec = [2.]
-    for i in range(1, space.dim):
-        two_vec.append(0.)
-        one_vec.append(0.)
+    one_vec = np.zeros(space.dim)
+    two_vec = np.zeros(space.dim)
+    one_vec[0] = 1.
+    two_vec[0] = 2.
     one_v = space.from_numpy(one_vec)
     two_v = space.from_numpy(two_vec)
     one_s = scalar.from_numpy([1.])
@@ -203,11 +202,10 @@ def test_bilin_prod_functional():
     bilin_op = QuadraticProductFunctional(lin_op, lin_op)
     bilin_op_with_prod = QuadraticProductFunctional(lin_op, lin_op, product=prod)
 
-    one_vec = [1.]
-    two_vec = [2.]
-    for i in range(1, space.dim):
-        two_vec.append(0.)
-        one_vec.append(0.)
+    one_vec = np.zeros(space.dim)
+    two_vec = np.zeros(space.dim)
+    one_vec[0] = 1.
+    two_vec[0] = 2.
     one_v = space.from_numpy(one_vec)
     two_v = space.from_numpy(two_vec)
     one_s = scalar.from_numpy([1.])

@@ -1522,6 +1522,6 @@ class QuadraticProductFunctional(QuadraticFunctional):
         self.__auto_init(locals())
         self.source = left.source
         if product is None:
-            super().__init__(left.H @ right)
+            super().__init__(left.H @ right, name=name)
         else:
-            super().__init__(left.H @ product @ right)
+            super().__init__(left.H @ product @ right, name=name)
