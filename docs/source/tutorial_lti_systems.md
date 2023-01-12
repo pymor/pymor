@@ -337,7 +337,7 @@ to display its plot by setting values for both the optional arguments ```input_i
 plot with all possible input-output paris will be displayed.
 
 ```{code-cell}
-fig, axs = plt.subplots(1, 1, figsize=(8, 10), sharex=True, constrained_layout=True)
+fig, axs = plt.subplots(2, 1, figsize=(8, 10), sharex=True, constrained_layout=True)
 _ = fom.transfer_function.bode_plot(w, ax=axs, input_indices=[1], output_indices=[0])
 ```
 
