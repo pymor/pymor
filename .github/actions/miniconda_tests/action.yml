@@ -44,12 +44,21 @@ runs:
         ./mesa/systemwidedeploy.cmd
 
     - uses: actions/checkout@v3
+    - id: req_ci_file
+      shell: bash
+      run: |
+        echo 'contents<<EOF' >> $GITHUB_OUTPUT
+        grep -v "\.txt" ./requirements-ci.txt | grep -v "#" >> $GITHUB_OUTPUT
+        echo 'EOF' >> $GITHUB_OUTPUT
+
     - name: provision-with-micromamba
       uses: mamba-org/provision-with-micromamba@v14
 
       with:
         extra-specs: |
             python=${{ inputs.python }}
+            ${{ steps.req_ci_file.outputs.contents }}
+
         channels: conda-forge
         channel-priority: strict
         cache-env: true
