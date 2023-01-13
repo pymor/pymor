@@ -386,8 +386,8 @@ docs:
     image: harbor.uni-muenster.de/proxy-docker/library/alpine:3.16
     stage: deploy
     resource_group: docs_deploy
-    needs: ["docs build 3 9", "binder base image"]
-    dependencies: ["docs build 3 9", "binder base image"]
+    needs: ["docs build 3 10", "binder base image"]
+    dependencies: ["docs build 3 10", "binder base image"]
     before_script:
         - apk --update add make py3-pip bash py3-ruamel.yaml.clib
         - pip3 install jinja2 jupyter-repo2docker
@@ -409,7 +409,7 @@ docs:
 
 
 tpl = jinja2.Template(tpl)
-pythons = [f'3.{i}' for i in range(8, 11)]
+pythons = [f'3.{i}' for i in (8, 10)]
 oldest = [pythons[0]]
 newest = [pythons[-1]]
 test_scripts = [

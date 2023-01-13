@@ -2,8 +2,8 @@
 
 # customization points via makefile key-value arguments
 #
-# interpreter in images: 3.{8,9} currently available
-# DOCKER_BASE_PYTHON=3.9
+# interpreter in images: 3.{8,10} currently available
+# DOCKER_BASE_PYTHON=3.10
 # test script executed with `docker_test`: mpi, notebooks_dir, oldest, vanilla, mpi, numpy_git, pip_installed
 # PYMOR_TEST_SCRIPT=vanilla
 # version pinned mirror to be used: stable or oldest
