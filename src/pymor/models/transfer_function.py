@@ -272,7 +272,7 @@ class TransferFunction(CacheableObject, ParametricObject):
             ax = fig.subplots(2 * num_output, num_input, sharex=True, squeeze=False)
         else:
             if num_input == 1:
-                ax = ax.reshape((2*num_output, 1))
+                ax = ax.reshape((2 * num_output, 1))
             assert isinstance(ax, np.ndarray)
             assert ax.shape == (2 * num_output, num_input), \
                 f'ax.shape={ax.shape} should be ({2 * num_output}, {num_input})'
