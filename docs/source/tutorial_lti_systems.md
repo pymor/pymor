@@ -331,21 +331,16 @@ fig, axs = plt.subplots(6, 2, figsize=(8, 10), sharex=True, constrained_layout=T
 _ = fom.transfer_function.bode_plot(w, ax=axs)
 ```
 
-In the Bode plot visualization, you can choose a specific one or more input-output pair
-to display its plot by setting values for both the optional arguments `input_indices` and/or
-`output_indices`. In case you did not pass values for both of these arguments, a
-plot with all possible input-output paris will be displayed.
+To restrict which inputs and outputs are plotted by `bode_plot`,
+its parameters `input_indices` and `output_indices` can be used.
+The following restricts the plot to the second input {math}`u_2` and the first output {math}`y_1`.
 
 ```{code-cell}
 fig, axs = plt.subplots(2, 1, figsize=(8, 10), sharex=True, constrained_layout=True)
 _ = fom.transfer_function.bode_plot(w, ax=axs, input_indices=[1], output_indices=[0])
 ```
 
-As a result of the above function call, a plot that shows the relation between the second
-input {math}`u_2` and first output {math}`y_1`.
-
-P.S. In the case of input-output selection and passing a custom axis, make sure to pass
-it an appropriate axis shape that matches your selection.
+Note the change in the `axs` shape compared to the first call to `bode_plot`.
 
 ## System poles
 
