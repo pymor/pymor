@@ -15,6 +15,8 @@
 
 * Peter Oehme, oehme.pb@gmail.com
   * quadratic functionals and quadratic output keyword for CG discretization
+* Mohamed Adel Naguib Ahmed, mohamedadel1551998@gmail.com
+  * Input-output selection in bode_plot function
 
 * Mohamed Adel Naguib Ahmed, mohamedadel1551998@gmail.com
   * Input-output selection in `bode_plot` function
