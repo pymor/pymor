@@ -186,10 +186,9 @@ def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, ato
     if error_aware:
         assert beta is not None and radius is not None
 
-        def error_aware_line_search_criterion(f, starting_point, alpha, direction, grad, slope):
-            new_mu = starting_point + alpha * direction
+        def error_aware_line_search_criterion(new_mu, current_value):
             output_error = model.estimate_output_error(new_mu)
-            if output_error / abs(f(new_mu)) >= beta * radius:
+            if output_error / abs(current_value) >= beta * radius:
                 return True
             return False
 

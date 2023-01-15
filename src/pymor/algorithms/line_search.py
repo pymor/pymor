@@ -73,7 +73,7 @@ def armijo(f, starting_point, direction, grad=None, initial_value=None, alpha_in
         current_value = f(starting_point + alpha * direction)
         # Check the Armijo condition
         if (current_value < initial_value + alpha * beta * slope
-                or additional_criterion(f, starting_point, alpha, direction, grad, slope)):
+                or additional_criterion(starting_point + alpha * direction, current_value)):
             break
 
         # Check if maxiter is reached

@@ -8,9 +8,86 @@ from copy import deepcopy
 
 from pymor.parameters.base import Mu
 from pymor.algorithms.bfgs import bfgs
+from pymor.core.base import BasicObject
 from pymor.core.logger import getLogger
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import TRError
+
+
+class TRSurrogate(BasicObject):
+    """Surrogate for the :func:`trust_region.
+
+    Not intended to be used directly.
+    """
+
+    def __init__(self, reductor, initial_guess):
+        self.__auto_init(locals())
+
+        # generate a first rom if none was given
+        self.fom = reductor.fom
+        self.rom = None
+        if reductor._last_rom is None:
+            initial_basis = reductor.fom.solve(initial_guess)
+            reductor.extend_basis(initial_basis)
+            reductor.reduce()
+        self.rom = reductor._last_rom
+        assert self.rom.output_functional is not None, 'Please provide an output functional with your model!'
+
+        # initialize placeholders for extension
+        self.new_reductor = None
+        self.new_rom = None
+
+    def fom_output(self, mu):
+        return self.fom.output(mu)[0, 0]
+
+    def fom_gradient(self, mu):
+        return self.fom.parameters.parse(self.fom.output_d_mu(mu)).to_numpy()
+
+    def rom_output(self, mu):
+        return self.rom.output(mu)[0, 0]
+
+    def estimate_output_error(self, mu):
+        return self.rom.estimate_output_error(mu)
+
+    def extend(self, mu):
+        """Try and extend the current ROM for a new parameter.
+
+        Parameters
+        ----------
+        mu
+            The `Mu` instance for which an extension is computed.
+        """
+        U_h_mu = self.fom.solve(mu)
+        self.new_reductor = deepcopy(self.reductor)
+        try:
+            self.new_reductor.extend_basis(U_h_mu)
+            self.new_rom = self.new_reductor.reduce()
+        except Exception:
+            self.new_reductor = self.reductor
+            self.new_rom = self.rom
+
+    def new_rom_output(self, mu):
+        assert self.new_rom is not None, 'No new ROM found. Did you forget to call surrogate.extend()?'
+        return self.new_rom.output(mu)[0, 0]
+
+    def accept(self):
+        """Accept the new ROM.
+
+        This function is intended to be called after :func:`extend` was called.
+        """
+        assert self.new_rom is not None, 'No new ROM found. Did you forget to call surrogate.extend()?'
+        self.rom = self.new_rom
+        self.reductor = self.new_reductor
+        self.new_rom = None
+        self.new_reductor = None
+
+    def reject(self):
+        """Reject the new ROM.
+
+        This function is intended to be called after :func:`extend` was called.
+        """
+        self.new_rom = None
+        self.new_reductor = None
 
 
 @defaults('beta', 'radius', 'shrink_factor', 'miniter', 'maxiter', 'miniter_subproblem', 'maxiter_subproblem',
@@ -94,9 +171,9 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
     TRError
         Raised if the BFGS algorithm failed to converge.
     """
+    assert shrink_factor != 0.
+    
     logger = getLogger('pymor.algorithms.tr')
-
-    data = {}
 
     if initial_guess is None:
         initial_guess = parameter_space.sample_randomly(1)[0]
@@ -104,19 +181,9 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
     else:
         mu = initial_guess.to_numpy() if isinstance(initial_guess, Mu) else initial_guess
 
-    if reductor._last_rom is None:
-        initial_basis = reductor.fom.solve(initial_guess)
-        reductor.extend_basis(initial_basis)
-        reductor.reduce()
+    surrogate = TRSurrogate(reductor, initial_guess)
 
-    model = reductor._last_rom
-
-    assert shrink_factor != 0.
-    assert model.output_functional is not None, 'Please provide an output functional with your model!'
-
-    output = lambda m: model.output(m)[0, 0]
-    fom = reductor.fom
-
+    data = {}
     data['subproblem_data'] = []
     if return_stages:
         stages = []
@@ -126,8 +193,8 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
     mu_norms = [mu_norm]
     data['mus'] = [mu.copy()]
 
-    old_rom_output = output(mu)
-    old_fom_output = fom.output(mu)[0, 0]
+    old_rom_output = surrogate.rom_output(mu)
+    old_fom_output = surrogate.fom_output(mu)
 
     mu_clip_norm = 1e6
     iteration = 0
@@ -146,55 +213,41 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
 
             # solve the subproblem using bfgs
             old_mu = mu.copy()
-            compare_output = output(mu)
+            compare_output = surrogate.rom_output(mu)
             mu, sub_data = bfgs(
-                model, parameter_space, initial_guess=mu, miniter=miniter_subproblem,
+                surrogate.rom, parameter_space, initial_guess=mu, miniter=miniter_subproblem,
                 maxiter=maxiter_subproblem, atol=atol, tol_sub=tol_sub,
                 line_search_params=line_search_params, stagnation_window=stagnation_window,
                 stagnation_threshold=stagnation_threshold, error_aware=True, beta=beta,
                 radius=radius, return_stages=return_subproblem_stages)
 
-            estimate_output = model.estimate_output_error(mu)
-            current_output = output(mu)
+            estimate_output = surrogate.estimate_output_error(mu)
+            current_output = surrogate.rom_output(mu)
 
             # check output error conditions
             if current_output + estimate_output < compare_output:
-                U_h_mu = fom.solve(mu)
-                try:
-                    reductor.extend_basis(U_h_mu)
-                except Exception:
-                    pass
-                current_fom_output = fom.output(mu)[0, 0]
+                surrogate.extend(mu)
+                current_fom_output = surrogate.fom_output(mu)
                 fom_output_diff = old_fom_output - current_fom_output
                 rom_output_diff = old_rom_output - current_output
                 if fom_output_diff >= radius_tol * rom_output_diff:
                     # increase the radius if the model confidence is high enough
                     radius /= shrink_factor
-                model = reductor.reduce()
-                old_rom_output = current_output
             elif current_output - estimate_output > compare_output:
                 # reject new mu
                 rejected = True
                 # shrink the radius
                 radius *= shrink_factor
             else:
-                U_h_mu = fom.solve(mu)
-                new_reductor = deepcopy(reductor)
-                try:
-                    new_reductor.extend_basis(U_h_mu)
-                except Exception:
-                    pass
-                new_rom = new_reductor.reduce()
-                current_output = new_rom.output(mu)[0, 0]
+                surrogate.extend(mu)
+                current_output = surrogate.new_rom_output(mu)
                 if current_output <= compare_output:
-                    current_fom_output = fom.output(mu)[0, 0]
+                    current_fom_output = surrogate.fom_output(mu)
                     fom_output_diff = old_fom_output - current_fom_output
                     rom_output_diff = old_rom_output - current_output
                     if fom_output_diff >= radius_tol * rom_output_diff:
                         # increase the radius if the model confidence is high enough
                         radius /= shrink_factor
-                    model = new_rom
-                    old_rom_output = current_output
                 else:
                     # reject new mu
                     rejected = True
@@ -209,10 +262,14 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
 
                 data['subproblem_data'].append(sub_data)
 
-                gradient = model.parameters.parse(fom.output_d_mu(mu)).to_numpy()
+                gradient = surrogate.fom_gradient(mu)
                 mu_clip_norm = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
+
+                surrogate.accept()
+                old_rom_output = current_output
             else:
                 mu = old_mu
+                surrogate.reject()
 
             with warnings.catch_warnings():
                 # ignore division-by-zero warnings when solution_norm or output is zero
