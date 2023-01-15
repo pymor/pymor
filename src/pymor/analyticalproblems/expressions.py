@@ -48,6 +48,7 @@ import ast
 from numbers import Number
 import operator
 from itertools import zip_longest
+from functools import reduce
 import numpy as np
 
 from pymor.parameters.base import ParametricObject
@@ -143,11 +144,13 @@ class TransformChainedComparison(ast.NodeTransformer):
         comparators = [node.left] + node.comparators
         operators = node.ops
         comparisons = []
+        # transform comparison with chained comparisons to sequence of simple comparisons
         for i, op in enumerate(operators):
             comparisons.append(ast.Compare(self.generic_visit(comparators[i]),
                                            [self.generic_visit(operators[i])],
                                            [self.generic_visit(comparators[i+1])]))
-        return ast.Call(ast.Name('ChainedComparison', ast.Load()), comparisons, [])
+        # Join simple comparisons with multiplication  
+        return reduce(lambda left,right: ast.BinOp(left,ast.Mult(),right),comparisons)
 
 
 class Expression(ParametricObject):
@@ -501,23 +504,6 @@ class Indexed(Expression):
     def __str__(self):
         index = [str(i) for i in self.index]
         return f'{self.base}[{",".join(index)}]'
-
-
-class ChainedComparison(Expression):
-    """Chained comparison :class:`Expression`."""
-
-    numpy_symbol = None
-    fenics_symbol = None
-
-    def __init__(self, *compares):
-        for compare in compares:
-            if not isinstance(compare, Expression):
-                raise ValueError(f'Comparison of {type(self).__name__}({compare}) must be Expression '
-                                 f'(given: {type(compare).__name__}).')
-        self.compares = compares
-
-    def numpy_expr(self):
-        return "*".join([c.numpy_expr() for c in self.compares])
 
 
 class UnaryFunctionCall(Expression):
