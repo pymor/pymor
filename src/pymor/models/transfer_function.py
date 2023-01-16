@@ -11,6 +11,8 @@ from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, Bl
 from pymor.parameters.base import Mu, ParametricObject
 from pymor.tools.plot import adaptive
 
+from itertools import chain
+
 
 class TransferFunction(CacheableObject, ParametricObject):
     r"""Class for systems represented by a transfer function.
@@ -246,13 +248,13 @@ class TransferFunction(CacheableObject, ParametricObject):
             or selected ones. If `None`, all inputs are used for plotting, otherwise, an
             `iterable` containing the indices of the selected inputs has to be passed. The
             order of the plots depends on the order of the indices in the `iterable`. It is
-            possible to pass negative indices since python can access iterable by backward counting.
+            possible to pass negative indices to access the inputs counting backwards.
         output_indices
             Optional argument to select specific outputs to be paired  with all inputs
             or selected ones. If `None`, all outputs are used for plotting, otherwise, an
             `iterable` containing the indices of the selected outputs has to be passed. The
             order of the plots depends on the order of the indices in the `iterable`. It is
-            possible to pass negative indices since python can access iterable by backward counting.
+            possible to pass negative indices to access the outputs counting backwards.
         mpl_kwargs
             Keyword arguments used in the matplotlib plot function.
 
@@ -263,19 +265,15 @@ class TransferFunction(CacheableObject, ParametricObject):
         """
         if input_indices is None:
             input_indices = list(range(self.dim_input))
-        else:
-            assert all(isinstance(item, int) for item in input_indices)
-            assert all(-self.dim_input <= item < self.dim_input for item in input_indices), \
-                f'input_indices should be any integer value between {-self.dim_input} and {self.dim_input-1}'
-        num_input = len(input_indices)
-
         if output_indices is None:
             output_indices = list(range(self.dim_output))
-        else:
-            assert all(isinstance(item, int) for item in output_indices)
-            assert all(-self.dim_output <= item < self.dim_output for item in output_indices), \
-                f'output_indices should be any integer value between {-self.dim_output} and {self.dim_output-1}'
-        num_output = len(output_indices)
+
+        assert all(isinstance(item, int) for item in chain(input_indices, output_indices))
+        assert all(-self.dim_input <= item < self.dim_input for item in input_indices), \
+            f'input_indices should be any integer value between {-self.dim_input} and {self.dim_input-1}'
+        assert all(-self.dim_output <= item < self.dim_output for item in output_indices), \
+            f'output_indices should be any integer value between {-self.dim_output} and {self.dim_output-1}'
+        num_input, num_output = len(input_indices), len(output_indices)
 
         if ax is None:
             import matplotlib.pyplot as plt
