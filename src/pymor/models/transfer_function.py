@@ -242,11 +242,17 @@ class TransferFunction(CacheableObject, ParametricObject):
         adaptive_opts
             Optional arguments for :func:`~pymor.tools.plot.adaptive` (ignored if `len(w) != 2`).
         input_indices
-            Optional argument to select a specific input(s) to be paired with all outputs
-            or selected ones then display their plots.
+            Optional argument to select specific inputs to be paired with all outputs
+            or selected ones. If `None`, all inputs are used for plotting, otherwise, an
+            `iterable` containing the indices of the selected inputs has to be passed. The
+            order of the plots depends on the order of the indices in the `iterable`. It is
+            possible to pass negative indices since python can access iterable by backward counting.
         output_indices
-            Optional argument to select a specific output(s) to be paired  with all inputs
-            or selected ones then display their plots.
+            Optional argument to select specific outputs to be paired  with all inputs
+            or selected ones. If `None`, all outputs are used for plotting, otherwise, an
+            `iterable` containing the indices of the selected outputs has to be passed. The
+            order of the plots depends on the order of the indices in the `iterable`. It is
+            possible to pass negative indices since python can access iterable by backward counting.
         mpl_kwargs
             Keyword arguments used in the matplotlib plot function.
 
@@ -255,13 +261,21 @@ class TransferFunction(CacheableObject, ParametricObject):
         artists
             List of matplotlib artists added.
         """
-        num_input = self._cal_plot_dimension(input_indices, self.dim_input)
-        num_output = self._cal_plot_dimension(output_indices, self.dim_output)
         if input_indices is None:
             input_indices = list(range(self.dim_input))
+        else:
+            assert all(isinstance(item, int) for item in input_indices)
+            assert all(-self.dim_input <= item < self.dim_input for item in input_indices), \
+                f'input_indices should be any integer value between {-self.dim_input} and {self.dim_input-1}'
+        num_input = len(input_indices)
 
         if output_indices is None:
             output_indices = list(range(self.dim_output))
+        else:
+            assert all(isinstance(item, int) for item in output_indices)
+            assert all(-self.dim_output <= item < self.dim_output for item in output_indices), \
+                f'output_indices should be any integer value between {-self.dim_output} and {self.dim_output-1}'
+        num_output = len(output_indices)
 
         if ax is None:
             import matplotlib.pyplot as plt
@@ -308,16 +322,6 @@ class TransferFunction(CacheableObject, ParametricObject):
             ax[-1, j].set_xlabel(freq_label)
         fig.suptitle('Bode plot')
         return artists
-
-    @staticmethod
-    def _cal_plot_dimension(indices, dim):
-        if indices is None:
-            return dim
-        else:
-            assert all(isinstance(item, int) for item in indices)
-            assert all(-dim <= item < dim for item in indices), \
-                f'Indices should be any integer value between {-dim} and {dim-1}'
-            return len(indices)
 
     def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, adaptive_opts=None, **mpl_kwargs):
         """Draw the magnitude plot.
