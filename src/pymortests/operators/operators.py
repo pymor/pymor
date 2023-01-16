@@ -12,19 +12,12 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.config import config
 from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.operators.block import BlockDiagonalOperator
-from pymor.operators.constructions import (
-    IdentityOperator,
-    InverseAdjointOperator,
-    InverseOperator,
-    LincombOperator,
-    QuadraticFunctional,
-    QuadraticProductFunctional,
-    SelectionOperator,
-    VectorArrayOperator,
-)
+from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
+                                           LincombOperator, VectorArrayOperator)
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.operators.interface import as_array_max_length
-from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
-from pymor.parameters.functionals import ExpressionParameterFunctional, GenericParameterFunctional
+from pymor.operators.dft import CirculantOperator, HankelOperator, ToeplitzOperator
+from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import assert_all_almost_equal
@@ -550,15 +543,16 @@ def test_issue_1276():
     B.apply_inverse(v)
 
 
-@pytest.mark.builtin
+@pytest.mark.parametrize('structure', [CirculantOperator, HankelOperator, ToeplitzOperator])
 @pytest.mark.parametrize('iscomplex', [False, True])
-def test_hankel_operator(iscomplex):
-    s, p, m = 4, 2, 3
+@pytest.mark.parametrize('even', [False, True])
+def test_DFTBasedOperator(structure, iscomplex, even):
+    s = 6 if even else 7
     if iscomplex:
-        mp = np.random.rand(s, p, m) + 1j * np.random.rand(s, p, m)
+        mp = np.random.rand(s) + 1j * np.random.rand(s)
     else:
-        mp = np.random.rand(s, p, m)
-    op = NumpyHankelOperator(mp)
+        mp = np.random.rand(s)
+    op = structure(mp)
 
     U = op.source.random(1)
     V = op.range.random(1)

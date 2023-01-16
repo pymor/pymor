@@ -24,7 +24,8 @@ from pymor.operators.constructions import (
     ZeroOperator,
 )
 from pymor.operators.interface import as_array_max_length
-from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
+from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.operators.dft import CirculantOperator, HankelOperator, ToeplitzOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -61,19 +62,27 @@ class ToMatrixRules(RuleTable):
         super().__init__()
         self.__auto_init(locals())
 
-    @match_class(NumpyHankelOperator)
-    def action_NumpyHankelOperator(self, op):
+    @match_class(CirculantOperator)
+    def action_CirculantOperator(self, op):
         format = self.format
         if format in (None, 'dense'):
-            n, p, m = op.h.shape
-            s = n // 2 + 1
-            op_mp = np.concatenate([op.h, np.zeros([1 - n % 2, p, m])])
-            r, c = op_mp[:s], op_mp[s - 1:]
-            op_matrix = np.zeros([p * s, m * s], dtype=op_mp.dtype)
-            for (i, j) in np.ndindex((p, m)):
-                op_matrix[i::p, j::m] = spla.hankel(r[:, i, j], c[:, i, j])
+            return spla.circulant(op.c)
+        else:
+            raise NotImplementedError
 
-            return op_matrix
+    @match_class(HankelOperator)
+    def action_HankelOperator(self, op):
+        format = self.format
+        if format in (None, 'dense'):
+            return spla.hankel(op.c, op.r)
+        else:
+            raise NotImplementedError
+
+    @match_class(ToeplitzOperator)
+    def action_ToeplitzOperator(self, op):
+        format = self.format
+        if format in (None, 'dense'):
+            return spla.toeplitz(op.c, op.r)
         else:
             raise NotImplementedError
 
