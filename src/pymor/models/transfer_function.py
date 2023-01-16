@@ -2,6 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from itertools import chain
+
 import numpy as np
 import scipy.linalg as spla
 
@@ -10,8 +12,6 @@ from pymor.core.cache import CacheableObject, cached
 from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, BlockOperator, BlockRowOperator
 from pymor.parameters.base import Mu, ParametricObject
 from pymor.tools.plot import adaptive
-
-from itertools import chain
 
 
 class TransferFunction(CacheableObject, ParametricObject):
