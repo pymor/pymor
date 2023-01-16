@@ -1454,3 +1454,74 @@ class LinearInputOperator(Operator):
 
     def as_range_array(self, mu=None):
         return self.B.as_range_array(mu).lincomb(mu['input'])
+
+
+class QuadraticFunctional(Operator):
+    """An `Operator` representing a quadratic functional.
+
+    Given an operator `A` acting on R^d, this class represents the functional::
+
+        op: R^d ----> R^1
+             u  |---> (A(u), u).
+
+    Parameters
+    ----------
+    operator
+        The |Operator| defining the quadratic functional.
+    """
+
+    linear = False
+    range = NumpyVectorSpace(1)
+
+    def __init__(self, operator, name=None):
+        assert operator.linear
+        assert operator.source == operator.range
+        self.__auto_init(locals())
+        self.source = operator.source
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        return self.range.from_numpy(self.operator.apply2(U, U, mu))
+
+    def jacobian(self, U, mu=None):
+        inner_vec = self.operator.apply_adjoint(U, mu) + self.operator.apply(U, mu)
+        return VectorFunctional(inner_vec, name=self.name + '_jacobian')
+
+    def d_mu(self, parameter, index=1):
+        # the parameter derivative only takes effect on the inner operator
+        return QuadraticFunctional(self.operator.d_mu(parameter, index), name=self.name + '_d_mu')
+
+
+class QuadraticProductFunctional(QuadraticFunctional):
+    """An `Operator` representing a quadratic functional by multiplying two linear functionals.
+
+    Given linear operators `A`, `B`: R^d ----> R^n, this class represents the functional::
+
+        op: R^d ----> R^1
+             u  |---> (A(u), B(u)).
+
+    Parameters
+    ----------
+    left
+        The |Operator| that defines the left operator of the quadratic functional.
+    right
+        The |Operator| that defines the right operator of the quadratic functional.
+    product
+        The |Operator| that defines the inner product.
+    """
+
+    linear = False
+    range = NumpyVectorSpace(1)
+
+    def __init__(self, left, right, product=None, name=None):
+        assert left.source == right.source
+        assert left.range == right.range
+        assert product is None or (
+            isinstance(product, Operator) and product.source == right.range
+            and product.range == left.range)
+        self.__auto_init(locals())
+        self.source = left.source
+        if product is None:
+            super().__init__(left.H @ right, name=name)
+        else:
+            super().__init__(left.H @ product @ right, name=name)

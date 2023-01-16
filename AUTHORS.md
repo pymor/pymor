@@ -11,6 +11,11 @@
 
 ## Contributors
 
+### pyMOR 2023.1
+
+* Peter Oehme, oehme.pb@gmail.com
+  * quadratic functionals and quadratic output keyword for CG discretization
+
 ### pyMOR 2022.2
 
 * Tim Keil, tim.keil@uni-muenster.de
