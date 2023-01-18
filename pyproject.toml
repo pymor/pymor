@@ -33,7 +33,7 @@ inline-quotes = "single"
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["F401"]
-"src/pymor/algorithms/rules.py" = ["N801", "N805"] # class name CapWords convention, first argument should be `self` (not in metaclass)
+"src/pymor/algorithms/rules.py" = ["N801", "N805"] # class name CapWords convention, first argument should be `self`
 "src/pymor/analyticalproblems/expressions.py" = ["N801"] # class name CapWords convention
 "src/pymordemos/*" = ["F403", "F405"] # undefined import due to pymor.basic functionality
 
