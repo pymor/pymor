@@ -414,12 +414,12 @@ pythons = [f'3.{i}' for i in (8, 10)]
 oldest = [pythons[0]]
 newest = [pythons[-1]]
 test_scripts = [
-    ("mpi", pythons, 1),
-    ("pip_installed", pythons, 1),
-    ("tutorials", pythons, 1),
-    ("vanilla", pythons, 1),
-    ("oldest", oldest, 1),
-    ("cpp_demo", pythons, 1),
+    ('mpi', pythons, 1),
+    ('pip_installed', pythons, 1),
+    ('tutorials', pythons, 1),
+    ('vanilla', pythons, 1),
+    ('oldest', oldest, 1),
+    ('cpp_demo', pythons, 1),
 ]
 # these should be all instances in the federation
 binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'ovh', 'gesis')]
@@ -429,7 +429,7 @@ env_path = Path(os.path.dirname(__file__)) / '..' / '..' / '.env'
 env = dotenv_values(env_path)
 ci_image_tag = env['CI_IMAGE_TAG']
 pypi_mirror_tag = env['PYPI_MIRROR_TAG']
-registry = "zivgitlab.wwu.io/pymor/docker"
+registry = 'zivgitlab.wwu.io/pymor/docker'
 with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
     matrix = [(sc, py, pa) for sc, pythons, pa in test_scripts for py in pythons]
     yml.write(tpl.render(**locals()))
@@ -437,11 +437,11 @@ with open(os.path.join(os.path.dirname(__file__), 'ci.yml'), 'wt') as yml:
 try:
     token = sys.argv[1]
 except IndexError:
-    print("not checking image availability, no token given")
+    print('not checking image availability, no token given')
     sys.exit(0)
 
-print("Checking image availability\n")
-gl = gitlab.Gitlab("https://zivgitlab.uni-muenster.de", private_token=token)
+print('Checking image availability\n')
+gl = gitlab.Gitlab('https://zivgitlab.uni-muenster.de', private_token=token)
 gl.auth()
 
 pymor_id = 2758
@@ -449,17 +449,17 @@ pymor = gl.projects.get(pymor_id)
 
 image_tag = ci_image_tag
 mirror_tag = pypi_mirror_tag
-images = ["testing", "jupyter"]
-mirrors = [f"{r}_py{py}"
-           for r, py in product(["pypi-mirror_stable", "pypi-mirror_oldest"], pythons)]
-images = [f"{r}_py{py}" for r, py in product(images, pythons)]
-images += [f"deploy_checks_{os}" for os, _ in testos] + ["python_3.9"]
+images = ['testing', 'jupyter']
+mirrors = [f'{r}_py{py}'
+           for r, py in product(['pypi-mirror_stable', 'pypi-mirror_oldest'], pythons)]
+images = [f'{r}_py{py}' for r, py in product(images, pythons)]
+images += [f'deploy_checks_{os}' for os, _ in testos] + ['python_3.9']
 
 missing = set((r, mirror_tag) for r in mirrors) | set((r, image_tag) for r in images)
 img_count = len(missing)
 for repo in pymor.repositories.list(all=True):
     wanted = None
-    match_name = repo.name.replace("pymor/", "")
+    match_name = repo.name.replace('pymor/', '')
 
     if match_name in mirrors:
         wanted = mirror_tag
@@ -476,13 +476,13 @@ if len(missing):
     try:
         from rich.console import Console
         from rich.table import Table
-        table = Table("image", "tag", title="Not found in Container Registry")
+        table = Table('image', 'tag', title='Not found in Container Registry')
         for el in sorted(missing):
             table.add_row(*el)
         console = Console()
         console.print(table)
-        console.print(f"Missing {len(missing)} of {img_count} image:tag pairs")
+        console.print(f'Missing {len(missing)} of {img_count} image:tag pairs')
     except (ImportError, ModuleNotFoundError):
-        print(f"Missing {len(missing)} of {img_count} image:tag pairs")
+        print(f'Missing {len(missing)} of {img_count} image:tag pairs')
         print(missing)
     sys.exit(1)

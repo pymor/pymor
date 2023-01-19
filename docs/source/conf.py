@@ -12,8 +12,8 @@ import slugify
 import sphinx
 
 # Check Sphinx version
-if sphinx.__version__ < "3.4":
-    raise RuntimeError("Sphinx 3.4 or newer required")
+if sphinx.__version__ < '3.4':
+    raise RuntimeError('Sphinx 3.4 or newer required')
 
 needs_sphinx = '3.4'
 os.environ['PYMOR_WITH_SPHINX'] = '1'
@@ -50,21 +50,21 @@ extensions = ['sphinx.ext.autodoc',
 # substitutions-with-jinja2, direct-latex-math and definition-lists
 # ref: https://myst-parser.readthedocs.io/en/latest/using/syntax-optional.html
 myst_enable_extensions = [
-    "dollarmath",
-    "amsmath",
-    "deflist",
-    "html_image",
-    "colon_fence",
-    "smartquotes",
-    "replacements",
-    "substitution",
+    'dollarmath',
+    'amsmath',
+    'deflist',
+    'html_image',
+    'colon_fence',
+    'smartquotes',
+    'replacements',
+    'substitution',
 ]
-myst_url_schemes = ("http", "https", "mailto")
+myst_url_schemes = ('http', 'https', 'mailto')
 # auto genereated link anchors
 myst_heading_anchors = 2
 import substitutions # noqa
 myst_substitutions = substitutions.myst_substitutions
-nb_execute_notebooks = "cache"
+nb_execute_notebooks = 'cache'
 nb_execution_timeout = 180
 # print tracebacks to stdout
 nb_execution_show_tb = True
@@ -110,7 +110,7 @@ today_fmt = '%B %d, %Y'
 # unused_docs = []
 
 # The reST default role (used for this markup: `text`) to use for all documents.
-default_role = "literal"
+default_role = 'literal'
 
 # List of directories, relative to source directories, that shouldn't be searched
 # for source files.
@@ -156,7 +156,7 @@ html_theme_options = {
 }
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = "%s v%s Manual" % (project, version)
+html_title = '%s v%s Manual' % (project, version)
 
 # The name of an image file (within the static path) to place at the top of
 # the sidebar.
@@ -181,7 +181,7 @@ html_last_updated_fmt = '%b %d, %Y'
 # Custom sidebar templates, maps document names to template names.
 # all: "**": ["logo-text.html", "globaltoc.html", "localtoc.html", "searchbox.html"]
 html_sidebars = {
-    "**": ["logo-text.html", "globaltoc.html", "searchbox.html"]
+    '**': ['logo-text.html', 'globaltoc.html', 'searchbox.html']
 }
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -254,7 +254,7 @@ latex_use_modindex = False
 # Autosummary
 # -----------------------------------------------------------------------------
 
-autosummary_generate = glob.glob("generated/*.rst")
+autosummary_generate = glob.glob('generated/*.rst')
 
 # -----------------------------------------------------------------------------
 # Coverage checker
@@ -277,7 +277,7 @@ coverage_ignore_c_items = {}
 # PyQt5 inventory is only used internally, actual link targets PySide2
 intersphinx_mapping = {'python': ('https://docs.python.org/3/', None),
                        'numpy': ('https://numpy.org/doc/stable/', None),
-                       'PyQt5': ("https://www.riverbankcomputing.com/static/Docs/PyQt5", None),
+                       'PyQt5': ('https://www.riverbankcomputing.com/static/Docs/PyQt5', None),
                        'scipy': ('https://docs.scipy.org/doc/scipy/', None),
                        'matplotlib': ('https://matplotlib.org/stable/', None),
                        'Sphinx': (' https://www.sphinx-doc.org/en/stable/', None)}
@@ -308,7 +308,7 @@ autoapi_type = 'python'
 # allows incremental build
 autoapi_keep_files = True
 autoapi_ignore = ['*/pymordemos/minimal_cpp_demo/*']
-suppress_warnings = ["autoapi"]
+suppress_warnings = ['autoapi']
 autoapi_template_dir = this_dir / '_templates' / 'autoapi'
-autoapi_member_order = "groupwise"
-autoapi_options = ["show-inheritance", "members", "undoc-members"]
+autoapi_member_order = 'groupwise'
+autoapi_options = ['show-inheritance', 'members', 'undoc-members']

@@ -112,14 +112,14 @@ def _search_single(pkg: str, plat: str):
                     return _search_single(pkg, noarch)
                 except Exception:
                     continue
-            raise RuntimeError(f"noarch search failed for {pkg}") from e
+            raise RuntimeError(f'noarch search failed for {pkg}') from e
         try:
             err = json.loads(e.output)['error']
             if 'PackagesNotFoundError' in err:
                 return None, []
         except Exception as ex:
-            raise RuntimeError(f"Failed json load for {pkg} = {plat}") from ex
-        raise RuntimeError(f"{pkg} = {plat}: err") from e
+            raise RuntimeError(f'Failed json load for {pkg} = {plat}') from ex
+        raise RuntimeError(f'{pkg} = {plat}: err') from e
 
     pkg_name = _strip_markers(pkg).lower()
     out = json.loads(output)
@@ -156,7 +156,7 @@ def _available_on_required(json_result, required_plats, required_pys):
         name = release['name']
 
         def _debug(msg):
-            logging.debug(f"{name}: {msg}")
+            logging.debug(f'{name}: {msg}')
 
         plat = release['subdir']
         if plat not in required_plats and plat not in NO_ARCH:
@@ -175,7 +175,7 @@ def _available_on_required(json_result, required_plats, required_pys):
                 except ValueError as e:
                     if 'list.remove' in str(e):
                         continue
-                    raise RuntimeError(f"processing {plat} - {py} failed for release: {release}") from e
+                    raise RuntimeError(f'processing {plat} - {py} failed for release: {release}') from e
         if len(required_tuples) == 0:
             _debug('all required tuples found')
             return True
@@ -224,7 +224,7 @@ def main(input_paths: List[Path], output_path: Path = None):
     from rich.console import Console
     from rich.table import Table
 
-    table = Table("available", "wanted", title="Conda search result")
+    table = Table('available', 'wanted', title='Conda search result')
     for el in itertools.zip_longest(available, wanted, fillvalue=''):
         table.add_row(*el)
     console = Console(record=True)

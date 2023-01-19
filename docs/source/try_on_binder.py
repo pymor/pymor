@@ -44,7 +44,7 @@ def setup(app):
     app.add_config_value('try_on_binder_slug', 'main', 'html')
     app.add_node(binder_link_node,
                  html=(html_visit_binder_link_node, None))
-    app.add_directive("try_on_binder", TryOnBinder)
+    app.add_directive('try_on_binder', TryOnBinder)
 
     return {
         'version': '0.1',

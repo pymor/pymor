@@ -12,6 +12,6 @@ def _fix(path: Path):
     db.commit()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     for fn in sys.argv[1:]:
         _fix(Path(fn))
