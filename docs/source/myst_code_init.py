@@ -7,7 +7,7 @@ if ip is not None:
 
 import warnings
 
-warnings.filterwarnings("ignore", category=UserWarning, module='torch')
+warnings.filterwarnings('ignore', category=UserWarning, module='torch')
 import pymor.tools.random
 
 pymor.tools.random._default_random_state = None

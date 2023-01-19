@@ -156,6 +156,7 @@ requires = {0}
 build-backend = "setuptools.build_meta"
 
 [tool.ruff]
+# this makes isort behave nicely
 src = ["src"]
 line-length = 120
 select = ["D", "E", "F", "I", "ICN", "N", "Q", "W"]
@@ -187,6 +188,8 @@ inline-quotes = "single"
 "__init__.py" = ["F401"]
 "src/pymor/algorithms/rules.py" = ["N801", "N805"] # class name CapWords convention, first argument should be `self`
 "src/pymor/analyticalproblems/expressions.py" = ["N801"] # class name CapWords convention
+"versioneer.py" = ["N801"] # class name CapWords convention
+"docs/source/try_on_binder.py" = ["N801"] # class name CapWords convention
 "src/pymordemos/*" = ["F403", "F405"] # undefined import due to pymor.basic functionality
 
 [tool.ruff.pycodestyle]

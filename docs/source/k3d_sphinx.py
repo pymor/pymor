@@ -3,17 +3,17 @@ import shutil
 
 
 def setup(app):
-    to_copy_files = ["standalone.js", "require.js"]
+    to_copy_files = ['standalone.js', 'require.js']
     copied = []
     for fn in to_copy_files:
-        for package_fn in importlib.metadata.files("k3d"):
+        for package_fn in importlib.metadata.files('k3d'):
             if fn in str(package_fn):
                 shutil.copy(package_fn.locate(), './source/_static/')
                 copied.append(fn)
                 break
     assert copied == to_copy_files, copied
 
-    app.add_js_file(filename=None, body='''
+    app.add_js_file(filename=None, body="""
   <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
   <script>
     (function () {
@@ -43,10 +43,10 @@ def setup(app):
       document.addEventListener('DOMContentLoaded', addWidgetsRenderer);
     }());
   </script>
-''')
+""")
 
 
     return {
-        "parallel_read_safe": True,
-        "parallel_write_safe": True,
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
     }

@@ -290,6 +290,15 @@ Configured by individual files in `.github/workflows/*`
 
 (ref_docker_images)=
 
+
+### pre-commit.ci
+
+The main pyMOR repository has the `pre-commit.ci` GitHub App installed. This runs the pre-commit hooks
+defined in `.pre-commit-config.yaml` on every pull request.
+If the hooks change files, the changes are pushed back to the PR branch.
+[Configuration](https://pre-commit.ci/#configuration) is done
+via the `.pre-commit-config.yaml` file.
+
 ### Docker images
 
 The source for most of our docker images is this [repository](https://github.com/pymor/docker).
