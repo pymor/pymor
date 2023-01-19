@@ -295,7 +295,7 @@ Configured by individual files in `.github/workflows/*`
 
 The main pyMOR repository has the `pre-commit.ci` GitHub App installed. This runs the pre-commit hooks
 defined in `.pre-commit-config.yaml` on every pull request.
-If the hooks change files, the changes are pushed back to the PR branch. 
+If the hooks change files, the changes are pushed back to the PR branch.
 [Configuration](https://pre-commit.ci/#configuration) is done
 via the `.pre-commit-config.yaml` file.
 
