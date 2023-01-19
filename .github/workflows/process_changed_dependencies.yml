@@ -85,7 +85,7 @@ jobs:
           branch: update-requirements-${{ github.event.pull_request.number }}
           base: ${{ github.head_ref }}
           assignees: ${{ github.event.pull_request.author.login }}
-          token: ${{ secrets.GITHUB_TOKEN }} 
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: PR Comment
         uses: thollander/actions-comment-pull-request@v2
         if: ${{ steps.create_pr.outputs.pull-request-number }}

@@ -525,7 +525,7 @@ basis coefficients (similar to the
 {class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel`) or approximations of the
 output quantities (similar to the
 {class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel`). For state approximations
-using a reduced basis, one can apply the 
+using a reduced basis, one can apply the
 {class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor` and use the
 corresponding
 {class}`~pymor.models.neural_network.NeuralNetworkLSTMInstationaryModel`.

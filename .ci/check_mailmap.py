@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from subprocess import check_output
-from pathlib import Path
 import sys
 from collections import defaultdict
+from pathlib import Path
+from subprocess import check_output
 
 namesep = "??"
 fmtsep = "||"
