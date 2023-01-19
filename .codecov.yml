@@ -15,12 +15,24 @@ coverage:
   status:
     changes: false
     project:
-      pymor:
-        # since we have no policy on this might as well turn this off entirely
-        target: 0%
-        flags:
-          - gitlab_ci
-          - github_actions
+        default: false
+        pymor:
+            # since we have no policy on this might as well turn this off entirely
+            target: 0%
+            flags:
+                - gitlab_ci
+                - github_actions
+            paths:
+                - "src/pymor/*"
+                - "!src/pymor/version.py"
+        tests:
+            # if test coverage decreases, something very wrong is happening in CI
+            target: 95%
+            flags:
+                - gitlab_ci
+                - github_actions
+            paths:
+                - "src/pymortests/*"
     patch:
       pymor:
         target: 0%
