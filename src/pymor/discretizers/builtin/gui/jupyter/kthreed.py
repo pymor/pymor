@@ -13,7 +13,7 @@ from pymor.core.config import config
 config.require('K3D')
 config.require('MATPLOTLIB')
 
-from ipywidgets import IntSlider, interact, widgets, Play
+from ipywidgets import IntSlider, Play, interact, widgets
 from k3d.plot import Plot as k3dPlot
 from matplotlib.cm import get_cmap
 from matplotlib.colors import Colormap

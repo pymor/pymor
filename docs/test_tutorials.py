@@ -17,7 +17,7 @@ TUTORIALS = [t for t in TUT_DIR.glob('converted_tutorial_*ipynb') if t not in EX
 
 
 class NBLaxFixture(NBRegressionFixture):
-    """Same functionality as base class, but result comparison for regressions is skipped"""
+    """Same functionality as base class, but result comparison for regressions is skipped."""
 
     def check(self, path):
         return super().check(path=path, raise_errors=False)

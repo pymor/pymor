@@ -2,18 +2,17 @@
 
 import itertools
 import json
+import logging
 import operator
 import os
 from contextlib import contextmanager
 from functools import reduce
 from pathlib import Path
 from pprint import pformat
-from subprocess import check_output, CalledProcessError
-from typing import List, Dict
+from subprocess import CalledProcessError, check_output
+from typing import Dict, List
 
 import jinja2
-import logging
-
 import typer
 
 REQUIRED_PLATFORMS = ('osx-64', 'linux-64', 'win-64')
@@ -101,7 +100,7 @@ def _strip_markers(name: str) -> str:
 
 
 def _search_single(pkg: str, plat: str):
-    """Search needs to explicitly say its subdir, else only the host's native is searched"""
+    """Search needs to explicitly say its subdir, else only the host's native is searched."""
     cmd = ['/usr/bin/env', 'conda', 'search', '--channel=conda-forge', '--json', f'{pkg}[subdir={plat}]']
     try:
         output = check_output(cmd)
@@ -186,7 +185,7 @@ def _available_on_required(json_result, required_plats, required_pys):
 
 
 def _search(pkg):
-    """If a result is noarch, we can return early"""
+    """If a result is noarch, we can return early."""
     for plat in REQUIRED_PLATFORMS:
         found_plat, json_list = _search_single(pkg, plat)
         yield json_list

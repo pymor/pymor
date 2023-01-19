@@ -5,9 +5,9 @@
 import os
 from functools import wraps
 
-from hypothesis import settings, Verbosity, HealthCheck
-import pytest
 import numpy as np
+import pytest
+from hypothesis import HealthCheck, Verbosity, settings
 
 from pymor.tools.random import new_rng
 
@@ -43,7 +43,7 @@ pytest_plugins = [
 
 @pytest.fixture(autouse=True)
 def monkey_np_testing(monkeypatch):
-    """All tests automagically use this, we only change the default tolerances
+    """All tests automagically use this, we only change the default tolerances.
 
     monkey np.testing.assert_allclose to behave the same as np.allclose
     for some reason, the default atol of np.testing.assert_allclose is 0

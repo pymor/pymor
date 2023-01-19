@@ -2,13 +2,14 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import sys
-import os
-import slugify
 import glob
-import sphinx
+import os
+import sys
 import sysconfig
 from pathlib import Path
+
+import slugify
+import sphinx
 
 # Check Sphinx version
 if sphinx.__version__ < "3.4":
