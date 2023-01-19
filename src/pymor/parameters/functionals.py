@@ -5,6 +5,9 @@
 from numbers import Number
 
 import numpy as np
+from scipy.sparse.linalg import eigsh, LinearOperator
+from scipy.optimize import linprog
+from scipy.spatial import KDTree
 
 from pymor.analyticalproblems.expressions import parse_expression
 from pymor.core.base import abstractmethod
@@ -625,3 +628,106 @@ class MaxThetaParameterFunctional(BaseMaxThetaParameterFunctional):
 
     def __init__(self, thetas, mu_bar, gamma_mu_bar=1., name=None):
         super().__init__(thetas, thetas, mu_bar, gamma_mu_bar, name)
+
+
+class LBSuccessiveConstraintsFunctional(ParameterFunctional):
+    def __init__(self, operator, constraint_parameters,
+                 method='highs', options={}, M=None, bounds=None, coercivity_constants=None):
+        self.__auto_init(locals())
+        self.operators = operator.operators[1:]
+        self.thetas = operator.coefficients[1:]
+
+        if self.M is not None:
+            self.kdtree = KDTree(np.array([mu.to_numpy() for mu in self.constraint_parameters]))
+
+        if bounds is None:
+            def lower_bound(operator):
+                def mv(v):
+                    return operator.apply(operator.source.from_numpy(v)).to_numpy()
+
+                def mvinv(v):
+                    return operator.apply_inverse(operator.range.from_numpy(v)).to_numpy()
+
+                L = LinearOperator((operator.source.dim, operator.range.dim), matvec=mv)
+                Linv = LinearOperator((operator.range.dim, operator.source.dim), matvec=mvinv)
+                lambda_min = eigsh(L, sigma=0, which="LM", return_eigenvectors=False, k=1, OPinv=Linv)[0]
+                return lambda_min
+
+            def upper_bound(operator):
+                def mv(v):
+                    return operator.apply(operator.source.from_numpy(v)).to_numpy()
+
+                def mvinv(v):
+                    return operator.apply_inverse(operator.range.from_numpy(v)).to_numpy()
+
+                L = LinearOperator((operator.source.dim, operator.range.dim), matvec=mv)
+                Linv = LinearOperator((operator.range.dim, operator.source.dim), matvec=mvinv)
+                lambda_max = eigsh(L, which="LM", return_eigenvectors=False, k=1, OPinv=Linv)[0]
+                return lambda_max
+
+            self.bounds = [(lower_bound(aq), upper_bound(aq)) for aq in self.operators]
+
+        assert len(self.bounds) == len(self.operators)
+        assert all(isinstance(b, tuple) and len(b) == 2 for b in self.bounds)
+
+        if coercivity_constants is None:
+            self.coercivity_constants = []
+            for mu in constraint_parameters:
+                def mv(v):
+                    return self.operator.apply(self.operator.source.from_numpy(v), mu=mu).to_numpy()
+
+                def mvinv(v):
+                    return self.operator.apply_inverse(self.operator.range.from_numpy(v), mu=mu).to_numpy()
+
+                L = LinearOperator((self.operator.source.dim, self.operator.range.dim), matvec=mv)
+                Linv = LinearOperator((self.operator.range.dim, self.operator.source.dim), matvec=mvinv)
+                lambda_min = eigsh(L, sigma=0, which="LM", return_eigenvectors=False, k=1, OPinv=Linv)[0]
+                self.coercivity_constants.append(lambda_min)
+
+        assert len(self.coercivity_constants) == len(self.constraint_parameters)
+
+    def evaluate(self, mu=None):
+        c, A_ub, b_ub = self._construct_linear_program(mu)
+        res = linprog(c, A_ub=A_ub, b_ub=b_ub, bounds=self.bounds,
+                      method=self.method, options=self.options)
+        return res['fun']
+
+    def _construct_linear_program(self, mu):
+        if self.M is not None:
+            _, indices = self.tree.query(mu.to_numpy(), k=self.M)
+            selected_parameters = [self.constraint_parameters[i] for i in list(indices)]
+        else:
+            indices = list(range(len(self.constraint_parameters)))
+            selected_parameters = self.constraint_parameters
+        c = np.array([theta(mu) for theta in self.thetas])
+        A_ub = - np.array([[theta(mu_con) for theta in self.thetas] for mu_con in selected_parameters])
+        b_ub = - np.array([self.coercivity_constants[i] for i in list(indices)])
+        return c, A_ub, b_ub
+
+
+class UBSuccessiveConstraintsFunctional(ParameterFunctional):
+    def __init__(self, operator, thetas, constraint_parameters):
+        self.__auto_init(locals())
+        self.operators = operator.operators
+        self.thetas = operator.coefficients
+
+        self.minimizers = []
+        for mu in constraint_parameters:
+            def mv(v):
+                return self.operator.apply(self.operator.source.from_numpy(v), mu=mu).to_numpy()
+
+            def mvinv(v):
+                return self.operator.apply_inverse(self.operator.range.from_numpy(v), mu=mu).to_numpy()
+
+            L = LinearOperator((self.operator.source.dim, self.operator.range.dim), matvec=mv)
+            Linv = LinearOperator((self.operator.range.dim, self.operator.source.dim), matvec=mvinv)
+            minimizer, _ = eigsh(L, sigma=0, which="LM", return_eigenvectors=True, k=1, OPinv=Linv)
+            minimizer = operator.source.from_numpy(minimizer[0])
+            minimizer_squared_norm = minimizer.norm()
+            y_opt = np.array([op.apply2(minimizer, minimizer) / minimizer_squared_norm for op in self.operators])
+            self.minimizers.append(y_opt)
+
+    def evaluate(self, mu=None):
+        objective_values = [np.sum([theta(mu) * min_y for theta, min_y in zip(self.thetas, self.minimizers[i])])
+                            for i, mu_con in enumerate(self.constraint_parameters)]
+        return np.min(objective_values)
