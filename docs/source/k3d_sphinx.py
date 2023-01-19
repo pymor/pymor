@@ -13,7 +13,7 @@ def setup(app):
                 break
     assert copied == to_copy_files, copied
 
-    app.add_js_file(filename=None, body='''
+    app.add_js_file(filename=None, body="""
   <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
   <script>
     (function () {
@@ -43,7 +43,7 @@ def setup(app):
       document.addEventListener('DOMContentLoaded', addWidgetsRenderer);
     }());
   </script>
-''')
+""")
 
 
     return {

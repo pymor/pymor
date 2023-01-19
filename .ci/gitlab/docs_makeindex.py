@@ -5,7 +5,7 @@ from pathlib import Path
 
 from jinja2 import Template
 
-tpl = '''
+tpl = """
 <!doctype html>
 <head>
 <title>pyMOR Documentation</title>
@@ -23,7 +23,7 @@ tpl = '''
 
 </body>
 </html>
-'''
+"""
 
 
 def _make_list(root, name='main'):
