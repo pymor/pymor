@@ -156,6 +156,7 @@ requires = {0}
 build-backend = "setuptools.build_meta"
 
 [tool.ruff]
+# this makes isort behave nicely
 src = ["src"]
 line-length = 120
 select = ["D", "E", "F", "I", "ICN", "N", "Q", "W"]
