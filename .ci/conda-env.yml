@@ -13,15 +13,18 @@ dependencies:
   - click
   - diskcache
   - docutils==0.18
+  - flake8-docstrings==1.6.0
+  - flake8-rst-docstrings==0.3.0
   - gmsh
   - hypothesis==6.56.3
   - ipyparallel>=6.2.5
-  - ipython>=6.0
+  - ipython>=5.0
   - ipywidgets<8,>7
   - jupyter_client>=7.0.6
   - jupyter_contrib_nbextensions
   - jupyter_server>1.3,<2.0
   - jupytext>=1.14.4
+  - k3d>=2.14
   - lxml
   - matplotlib
   - meshio>=4.4
@@ -60,7 +63,6 @@ dependencies:
   - sphinx-autoapi>=1.8,<2
   - sphinx-material
   - sphinx>=5.0,<5.2
-  - sphinxcontrib-applehelp<1.0.3
   - sphinxcontrib-bibtex
   - sympy
   - twine==4.0.2
