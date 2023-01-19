@@ -267,7 +267,7 @@ The service also gets GitLab Pipeline events via hooks and translates those into
 updates.
 For GitHub the service authenticates with a PAT of the pyMOR-Bot account, for GitLab via Project Token.
 It is also registered as a GitHub app (so it can post Check statuses).
-The bridge also does this for forks of pyMOR, but the forks' user id must manually be 
+The bridge also does this for forks of pyMOR, but the forks' user id must manually be
 add to an allow list in the config to protect CI secrets. If a PR build does not start
 for a user a comment is added in that PR.
 This service currently runs on the `ammservices` machine under the git user.
