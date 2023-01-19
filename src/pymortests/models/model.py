@@ -7,7 +7,7 @@ import pytest
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitMidpointTimeStepper
-from pymor.analyticalproblems.functions import ExpressionFunction, ConstantFunction
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.core.pickle import dumps, loads
 from pymor.discretizers.builtin import discretize_stationary_cg
@@ -133,5 +133,5 @@ def test_lti_solve(sampling_time, m, p, T, nt):
     assert all(len(Xi) == len(X) for Xi in X_step)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

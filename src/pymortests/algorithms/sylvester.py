@@ -3,14 +3,12 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 import scipy.linalg as spla
 import scipy.sparse as sps
 
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.operators.numpy import NumpyMatrixOperator
-
-import pytest
-
 
 n_list = [100, 1000]
 r_list = [1, 10, 20]

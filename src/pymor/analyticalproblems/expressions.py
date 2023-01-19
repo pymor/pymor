@@ -45,14 +45,14 @@ the usual broadcasting rules apply.
 
 
 import ast
-from numbers import Number
 import operator
 from itertools import zip_longest
+from numbers import Number
+
 import numpy as np
 
-from pymor.parameters.base import ParametricObject
 from pymor.core.config import config
-
+from pymor.parameters.base import ParametricObject
 
 builtin_max = max
 
@@ -92,19 +92,19 @@ def parse_expression(expression, parameters={}, values={}):
     try:
         expression = eval(code, dict(globals(), **values), locals_dict)
     except ValueError as e:
-        raise ValueError(f'''
+        raise ValueError(f"""
 While parsing expression
 \t{expression}
 with parameters {parameters} and values {values} the following error occured:
 \t{e}
-''') from e
+""") from e
 
     if not isinstance(expression, Expression):
-        raise ValueError(f'''
+        raise ValueError(f"""
 Malformed expression
 \t{expression}
 evaluates to {type(expression).__name__} instead of Expression object.
-''')
+""")
 
     return expression
 
@@ -136,7 +136,7 @@ class TransformLiterals(ast.NodeTransformer):
 
 
 class Expression(ParametricObject):
-    """A symbolic math expression
+    """A symbolic math expression.
 
     Attributes
     ----------
@@ -664,8 +664,8 @@ class angle(UnaryFunctionCall):
     def fenics_expr(self, params):
         if len(self.shape) > 1:
             raise NotImplementedError
-        import ufl
         import dolfin
+        import ufl
         arg = self.arg.fenics_expr(params)
         assert arg.shape == (2,)
         return np.array(

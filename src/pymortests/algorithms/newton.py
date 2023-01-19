@@ -5,10 +5,9 @@
 import numpy as np
 import pytest
 
-from pymor.algorithms.newton import newton, NewtonError
+from pymor.algorithms.newton import NewtonError, newton
 from pymor.tools.floatcmp import float_cmp
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-
 from pymortests.base import runmodule
 from pymortests.fixtures.operator import MonomOperator
 
@@ -19,8 +18,8 @@ def _newton(mop, initial_value=1.0, **kwargs):
     return newton(mop, rhs, initial_guess=guess, **kwargs)
 
 
-@pytest.mark.parametrize("order", list(range(1, 8)))
-@pytest.mark.parametrize("error_measure", ['update', 'residual'])
+@pytest.mark.parametrize('order', list(range(1, 8)))
+@pytest.mark.parametrize('error_measure', ['update', 'residual'])
 def test_newton(order, error_measure):
     mop = MonomOperator(order)
     U, _ = _newton(mop,
@@ -60,5 +59,5 @@ def test_newton_residual_is_zero(order=5):
     assert float_cmp(mop.apply(U).to_numpy(), 0.0)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

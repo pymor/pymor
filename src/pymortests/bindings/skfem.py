@@ -2,10 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import pytest
 import numpy as np
+import pytest
 
-from pymor.basic import ExpressionFunction, StationaryProblem, ConstantFunction, RectDomain, LineDomain
+from pymor.basic import ConstantFunction, ExpressionFunction, LineDomain, RectDomain, StationaryProblem
 from pymor.core.config import config
 from pymor.discretizers.builtin.cg import discretize_stationary_cg as discretize_stationary_cg_builtin
 

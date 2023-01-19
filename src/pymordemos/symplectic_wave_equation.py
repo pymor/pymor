@@ -4,6 +4,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+from scipy.sparse import diags
 from typer import Argument, run
 
 from pymor.algorithms.pod import pod
@@ -16,7 +17,6 @@ from pymor.reductors.basic import InstationaryRBReductor
 from pymor.reductors.symplectic import QuadraticHamiltonianRBReductor
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from scipy.sparse import diags
 
 SYMPLECTIC_METHODS = ['cotangent_lift', 'complex_svd', 'svd_like']
 METHODS = ['pod'] + SYMPLECTIC_METHODS

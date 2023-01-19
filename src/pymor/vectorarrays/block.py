@@ -4,6 +4,7 @@
 
 from functools import reduce
 from numbers import Number
+
 import numpy as np
 
 from pymor.core.base import classinstancemethod
@@ -232,13 +233,13 @@ class BlockVectorSpace(VectorSpace):
         )
 
     @classinstancemethod
-    def make_array(cls, obj):
+    def make_array(cls, obj):  # noqa: N805
         assert len(obj) > 0
         return cls(tuple(o.space for o in obj)).make_array(obj)
 
     @make_array.instancemethod
     def make_array(self, obj):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         assert len(obj) == len(self.subspaces)
         assert all(block in subspace for block, subspace in zip(obj, self.subspaces))
         return BlockVectorArray(self, BlockVectorArrayImpl(obj, self))

@@ -8,8 +8,7 @@ from typer import Argument, run
 
 from pymor.basic import *
 from pymor.core.config import config
-from pymor.core.exceptions import TorchMissing
-
+from pymor.core.exceptions import TorchMissingError
 
 DIM = 2
 GRID_INTERVALS = 50
@@ -22,7 +21,7 @@ def main(
 ):
     """Reduction of a FEniCS model using neural networks (approach by Hesthaven and Ubbiali)."""
     if not config.HAVE_TORCH:
-        raise TorchMissing()
+        raise TorchMissingError()
 
     fom, parameter_space = discretize_fenics()
 
@@ -87,7 +86,7 @@ def _discretize_fenics():
     else:
         raise NotImplementedError
 
-    V = df.FunctionSpace(mesh, "CG", FENICS_ORDER)
+    V = df.FunctionSpace(mesh, 'CG', FENICS_ORDER)
 
     g = df.Constant(1.0)
     c = df.Constant(1.)
@@ -100,13 +99,13 @@ def _discretize_fenics():
 
     u = df.Function(V)
     v = df.TestFunction(V)
-    f = df.Expression("x[0]*sin(x[1])", degree=2)
+    f = df.Expression('x[0]*sin(x[1])', degree=2)
     F = df.inner((1 + c*u**2)*df.grad(u), df.grad(v))*df.dx - f*v*df.dx
 
     df.solve(F == 0, u, bc,
-             solver_parameters={"newton_solver": {"relative_tolerance": 1e-6}})
+             solver_parameters={'newton_solver': {'relative_tolerance': 1e-6}})
 
-    from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator
+    from pymor.bindings.fenics import FenicsOperator, FenicsVectorSpace
 
     space = FenicsVectorSpace(V)
     op = FenicsOperator(F, space, space, u, (bc,),

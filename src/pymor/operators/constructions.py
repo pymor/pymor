@@ -14,7 +14,7 @@ from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
 from pymor.parameters.base import ParametricObject
-from pymor.parameters.functionals import ParameterFunctional, ConjugateParameterFunctional
+from pymor.parameters.functionals import ConjugateParameterFunctional, ParameterFunctional
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -826,8 +826,9 @@ class VectorArrayOperator(Operator):
         if not least_squares and len(self.array) != self.array.dim:
             raise InversionError
 
-        from pymor.algorithms.gram_schmidt import gram_schmidt
         from numpy.linalg import lstsq
+
+        from pymor.algorithms.gram_schmidt import gram_schmidt
 
         Q, R = gram_schmidt(self.array, return_R=True, reiterate=False)
         if self.adjoint:

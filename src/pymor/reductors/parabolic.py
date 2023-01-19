@@ -10,7 +10,7 @@ from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.core.base import ImmutableObject
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import InstationaryRBReductor
-from pymor.reductors.residual import ResidualReductor, ImplicitEulerResidualReductor
+from pymor.reductors.residual import ImplicitEulerResidualReductor, ResidualReductor
 
 
 class ParabolicRBReductor(InstationaryRBReductor):

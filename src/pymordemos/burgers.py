@@ -5,14 +5,14 @@
 
 """Burgers demo."""
 
-import sys
 import math
+import sys
 import time
 
 from typer import Argument, Option, run
 
 from pymor.analyticalproblems.burgers import burgers_problem_2d
-from pymor.discretizers.builtin import discretize_instationary_fv, RectGrid, TriaGrid
+from pymor.discretizers.builtin import RectGrid, TriaGrid, discretize_instationary_fv
 from pymor.tools.typer import Choices
 
 

@@ -4,7 +4,7 @@
 
 from pymor.algorithms.rules import RuleTable, match_class
 from pymor.models.interface import Model
-from pymor.operators.constructions import LincombOperator, ConcatenationOperator, VectorArrayOperator
+from pymor.operators.constructions import ConcatenationOperator, LincombOperator, VectorArrayOperator
 from pymor.operators.interface import Operator, as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ParameterFunctional

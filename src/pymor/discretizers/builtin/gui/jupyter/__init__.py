@@ -12,8 +12,8 @@ inside the given notebook.
 """
 import IPython
 
-from pymor.core.defaults import defaults
 from pymor.core.config import config
+from pymor.core.defaults import defaults
 
 # AFAICT there is no robust way to query for loaded extensions
 # and we have to make sure we do not setup two redirects
@@ -33,7 +33,8 @@ def get_visualizer(backend='py3js'):
 
 
 def progress_bar(sequence, every=None, size=None, name='Parameters'):
-    from ipywidgets import IntProgress, HTML, VBox
+    from ipywidgets import HTML, IntProgress, VBox
+
     # c&p from https://github.com/kuk/log-progress
     is_iterator = False
     if size is None:

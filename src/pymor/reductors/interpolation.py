@@ -4,14 +4,13 @@
 
 import numpy as np
 
-from pymor.algorithms.krylov import rational_arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.algorithms.krylov import rational_arnoldi
 from pymor.core.base import BasicObject
-from pymor.models.iosys import LTIModel, SecondOrderModel, LinearDelayModel
+from pymor.models.iosys import LinearDelayModel, LTIModel, SecondOrderModel
 from pymor.models.transfer_function import TransferFunction
 from pymor.parameters.base import Mu
-from pymor.reductors.basic import (ProjectionBasedReductor, LTIPGReductor, SOLTIPGReductor,
-                                   DelayLTIPGReductor)
+from pymor.reductors.basic import DelayLTIPGReductor, LTIPGReductor, ProjectionBasedReductor, SOLTIPGReductor
 
 
 class GenericBHIReductor(BasicObject):

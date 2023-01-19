@@ -2,13 +2,14 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from importlib import import_module
-from packaging.version import parse
 import platform
 import sys
 import warnings
+from importlib import import_module
 
-from pymor.core.exceptions import DependencyMissing, QtMissing, TorchMissing
+from packaging.version import parse
+
+from pymor.core.exceptions import DependencyMissingError, QtMissingError, TorchMissingError
 
 
 def _can_import(module):
@@ -26,7 +27,7 @@ def _can_import(module):
 
 def _get_fenics_version():
     import sys
-    if "linux" in sys.platform:
+    if 'linux' in sys.platform:
         # In dolfin.__init__ the dlopen flags are set to include RTDL_GLOBAL,
         # which can cause issues with other Python C extensions.
         # In particular, with the manylinux wheels for scipy 1.9.{2,3} this leads
@@ -50,18 +51,18 @@ def _get_fenics_version():
         warnings.warn(f'FEniCS bindings have been tested for version 2019.1.0 and greater '
                       f'(installed: {df.__version__}).')
 
-    if "linux" in sys.platform:
+    if 'linux' in sys.platform:
         sys.setdlopenflags(orig_dlopenflags)
     return df.__version__
 
 
 def _get_dunegdt_version():
     import importlib
-    version_ranges = {"dune-gdt": ('2021.1.2', '2023.2'), "dune-xt": ('2021.1.2', '2023.2')}
+    version_ranges = {'dune-gdt': ('2021.1.2', '2023.2'), 'dune-xt': ('2021.1.2', '2023.2')}
 
     def _get_version(dep_name):
         min_version, max_version = version_ranges[dep_name]
-        module = importlib.import_module(dep_name.replace("-", "."))
+        module = importlib.import_module(dep_name.replace('-', '.'))
         try:
             version = module.__version__
             if parse(version) < parse(min_version) or parse(version) >= parse(max_version):
@@ -73,8 +74,8 @@ def _get_dunegdt_version():
             version = None
         return version
 
-    _get_version("dune-xt")
-    return _get_version("dune-gdt")
+    _get_version('dune-xt')
+    return _get_version('dune-gdt')
 
 
 def is_windows_platform():
@@ -189,11 +190,11 @@ class Config:
         dependency = dependency.upper()
         if not getattr(self, f'HAVE_{dependency}'):
             if dependency == 'QT':
-                raise QtMissing
+                raise QtMissingError
             elif dependency == 'TORCH':
-                raise TorchMissing
+                raise TorchMissingError
             else:
-                raise DependencyMissing(dependency)
+                raise DependencyMissingError(dependency)
 
     def __getattr__(self, name):
         if name.startswith('HAVE_'):
@@ -233,7 +234,7 @@ class Config:
         package_info = [f"{p+':':{key_width}} {v}" for p, v in sorted(status.items())]
         separator = '-' * max(map(len, package_info))
         package_info = '\n'.join(package_info)
-        info = f'''
+        info = f"""
 pyMOR Version {self.version}
 
 Python {self.PYTHON_VERSION} on {platform.platform()}
@@ -245,7 +246,7 @@ External Packages
 Defaults
 --------
 See pymor.core.defaults.print_defaults.
-'''[1:]
+"""[1:]
         return info
 
 

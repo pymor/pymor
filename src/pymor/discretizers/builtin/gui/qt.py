@@ -9,17 +9,30 @@ associated to grids. We use the `Qt <https://www.qt-project.org>`_ widget
 toolkit for the GUI.
 """
 from pymor.core.config import config
+
 config.require('QT')
 
 import math as m
-from tempfile import NamedTemporaryFile
 import subprocess
 import sys
+from tempfile import NamedTemporaryFile
 
 import numpy as np
-from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QLCDNumber,
-                            QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
 from qtpy.QtCore import Qt, QTimer
+from qtpy.QtWidgets import (
+    QAction,
+    QFileDialog,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QLCDNumber,
+    QMessageBox,
+    QSlider,
+    QStyle,
+    QToolBar,
+    QVBoxLayout,
+    QWidget,
+)
 
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
@@ -228,7 +241,7 @@ class PlotMainWindow(QWidget):
             self.slider.setValue(ind)
 
     def closeEvent(self, event=None):
-        """This is directly called from CI
+        """This is directly called from CI.
 
         Xvfb (sometimes) raises errors on interpreter shutdown
         when there are still 'live' MPL plot objects. This
@@ -337,7 +350,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
             if backend == 'gl':
-                from pymor.discretizers.builtin.gui.gl import GLPatchWidget, ColorBarWidget
+                from pymor.discretizers.builtin.gui.gl import ColorBarWidget, GLPatchWidget
                 widget = GLPatchWidget
                 cbar_widget = ColorBarWidget
             else:

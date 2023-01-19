@@ -9,7 +9,7 @@ from pymor.algorithms.projection import project
 from pymor.core.base import ImmutableObject
 from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.parameters.functionals import ParameterFunctional, ConstantParameterFunctional
+from pymor.parameters.functionals import ConstantParameterFunctional, ParameterFunctional
 from pymor.reductors.basic import StationaryRBReductor
 from pymor.reductors.residual import ResidualReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace

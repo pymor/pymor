@@ -39,11 +39,11 @@ class CacheKeyGenerationError(Exception):
     """Is raised when cache key generation fails due to unsupported arguments."""
 
 
-class GmshMissing(Exception):
+class GmshMissingError(Exception):
     """Is raised when a Gmsh is not found."""
 
 
-class MeshioMissing(Exception):
+class MeshioMissingError(Exception):
     """Is raised when meshio is not available."""
 
 
@@ -55,11 +55,11 @@ class ImageCollectionError(Exception):
         self.op = op
 
 
-class NeuralNetworkTrainingFailed(Exception):
+class NeuralNetworkTrainingError(Exception):
     """Is raised when training of a neural network fails."""
 
 
-class DependencyMissing(ImportError):
+class DependencyMissingError(ImportError):
     """Raised when optional packages are required but are not installed."""
 
     def __init__(self, dependency, msg=None):
@@ -67,16 +67,16 @@ class DependencyMissing(ImportError):
         super().__init__(msg or f'optional dependency {dependency} required')
 
 
-class QtMissing(DependencyMissing):
-    """Raise me where having importable Qt bindings is non-optional"""
+class QtMissingError(DependencyMissingError):
+    """Raise me where having importable Qt bindings is non-optional."""
 
     def __init__(self, msg=None):
         msg = msg or 'cannot visualize: import of Qt bindings failed'
         super().__init__('QT', msg)
 
 
-class TorchMissing(DependencyMissing):
-    """Raise me where having importable torch version is non-optional"""
+class TorchMissingError(DependencyMissingError):
+    """Raise me where having importable torch version is non-optional."""
 
     def __init__(self, msg=None):
         msg = msg or 'cannot use neural networks: import of torch failed'
@@ -93,7 +93,7 @@ class NoMatchingRuleError(NotImplementedError):
         self.obj = obj
 
 
-class IOLibsMissing(ImportError):
+class IOLibsMissingError(ImportError):
     def __init__(self, msg=None):
         msg = msg or 'meshio, pyevtk, xmljson and lxml are needed for full file I/O functionality'
         super().__init__(msg)

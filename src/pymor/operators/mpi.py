@@ -5,7 +5,7 @@
 from pymor.operators.constructions import LincombOperator, VectorArrayOperator
 from pymor.operators.interface import Operator
 from pymor.tools import mpi
-from pymor.vectorarrays.mpi import MPIVectorSpace, _register_local_space, _indexed
+from pymor.vectorarrays.mpi import MPIVectorSpace, _indexed, _register_local_space
 
 
 class MPIOperator(Operator):

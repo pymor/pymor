@@ -117,7 +117,7 @@ class Parameters(SortedFrozenDict):
             Is raised if `mu` cannot be interpreted as |parameter values| for the
             given |Parameters|.
         """
-        from pymor.analyticalproblems.functions import Function, ExpressionFunction
+        from pymor.analyticalproblems.functions import ExpressionFunction, Function
 
         def fail(msg):
             if isinstance(mu, dict):

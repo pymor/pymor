@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 import scipy.linalg as spla
 import scipy.sparse as sps
 from scipy.stats import ortho_group
@@ -11,9 +12,6 @@ from pymor.algorithms.bernoulli import bernoulli_stabilize, solve_bernoulli
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.constructions import LowRankOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-
-import pytest
-
 
 n_list = [10, 20, 30]
 

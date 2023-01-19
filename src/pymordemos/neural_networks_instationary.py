@@ -4,15 +4,18 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import time
+
 import numpy as np
 from typer import Argument, Option, run
 
 from pymor.basic import *
 from pymor.core.config import config
-from pymor.reductors.neural_network import (NeuralNetworkInstationaryReductor,
-                                            NeuralNetworkInstationaryStatefreeOutputReductor,
-                                            NeuralNetworkLSTMInstationaryReductor,
-                                            NeuralNetworkLSTMInstationaryStatefreeOutputReductor)
+from pymor.reductors.neural_network import (
+    NeuralNetworkInstationaryReductor,
+    NeuralNetworkInstationaryStatefreeOutputReductor,
+    NeuralNetworkLSTMInstationaryReductor,
+    NeuralNetworkLSTMInstationaryStatefreeOutputReductor,
+)
 from pymor.tools import mpi
 
 
@@ -34,7 +37,7 @@ def main(
     one-dimensional domain. The discretization is based on pyMOR's built-in
     functionality.
     """
-    config.require("TORCH")
+    config.require('TORCH')
 
     fom, plot_function = create_fom(problem_number, grid_intervals, time_steps)
 
@@ -163,7 +166,7 @@ def main(
 def create_fom(problem_number, grid_intervals, time_steps):
     print('Discretize ...')
     if problem_number == 0:
-        config.require("FENICS")
+        config.require('FENICS')
         fom, plot_function = discretize_navier_stokes(grid_intervals, time_steps)
     elif problem_number == 1:
         problem = burgers_problem()
@@ -192,11 +195,11 @@ def discretize_navier_stokes(n, nt):
 
 
 def _discretize_navier_stokes(n, nt):
-    from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsVisualizer, FenicsMatrixOperator
-    from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
-
     import dolfin as df
     import matplotlib.pyplot as plt
+
+    from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
+    from pymor.bindings.fenics import FenicsMatrixOperator, FenicsOperator, FenicsVectorSpace, FenicsVisualizer
 
     # create square mesh
     mesh = df.UnitSquareMesh(n, n)
@@ -228,8 +231,8 @@ def _discretize_navier_stokes(n, nt):
     Re = df.Constant(1.)
 
     # define walls
-    top_wall = "near(x[1], 1.)"
-    walls = "near(x[0], 0.) | near(x[0], 1.) | near(x[1], 0.)"
+    top_wall = 'near(x[1], 1.)'
+    walls = 'near(x[0], 0.) | near(x[0], 1.) | near(x[1], 0.)'
 
     # define no slip boundary conditions on all but the top wall
     bcu_noslip_const = df.Constant((0., 0.))
@@ -239,7 +242,7 @@ def _discretize_navier_stokes(n, nt):
     bcu_lid = df.DirichletBC(W_u, bcu_lid_const, top_wall)
 
     # fix pressure at a single point of the domain to obtain unique solutions
-    pressure_point = "near(x[0],  0.) & (x[1] <= " + str(2./n) + ")"
+    pressure_point = 'near(x[0],  0.) & (x[1] <= ' + str(2./n) + ')'
     bcp_const = df.Constant(0.)
     bcp = df.DirichletBC(W_p, bcp_const, pressure_point)
 
@@ -287,16 +290,16 @@ def _discretize_navier_stokes(n, nt):
         p, u  = v.split()
 
         fig_u = df.plot(u)
-        plt.title("Velocity vector field " + title)
-        plt.xlabel("$x$")
-        plt.ylabel("$y$")
+        plt.title('Velocity vector field ' + title)
+        plt.xlabel('$x$')
+        plt.ylabel('$y$')
         plt.colorbar(fig_u)
         plt.show()
 
         fig_p = df.plot(p)
-        plt.title("Pressure field " + title)
-        plt.xlabel("$x$")
-        plt.ylabel("$y$")
+        plt.title('Pressure field ' + title)
+        plt.xlabel('$x$')
+        plt.ylabel('$y$')
         plt.colorbar(fig_p)
         plt.show()
 

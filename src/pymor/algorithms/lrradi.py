@@ -2,17 +2,17 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import scipy.linalg as spla
 import numpy as np
+import scipy.linalg as spla
 
 from pymor.algorithms.genericsolvers import _parse_options
+from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.riccati import _solve_ricc_check_args
-from pymor.vectorarrays.constructions import cat_arrays
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
-from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.tools.random import new_rng
+from pymor.vectorarrays.constructions import cat_arrays
 
 
 @defaults('lrradi_tol', 'lrradi_maxiter', 'lrradi_shifts', 'hamiltonian_shifts_init_maxiter',

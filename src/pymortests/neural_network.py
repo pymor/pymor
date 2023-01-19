@@ -9,10 +9,10 @@ from pymortests.base import skip_if_missing
 
 @skip_if_missing('TORCH')
 def test_linear_function_fitting():
-    from pymor.reductors.neural_network import multiple_restarts_training
-    from pymor.models.neural_network import FullyConnectedNN
-
     import torch.optim as optim
+
+    from pymor.models.neural_network import FullyConnectedNN
+    from pymor.reductors.neural_network import multiple_restarts_training
 
     n = 100
     d_in = 3
@@ -62,10 +62,10 @@ def test_linear_function_fitting():
 @skip_if_missing('TORCH')
 def test_no_training_data():
 
-    from pymor.reductors.neural_network import multiple_restarts_training
-    from pymor.models.neural_network import FullyConnectedNN
-
     import torch
+
+    from pymor.models.neural_network import FullyConnectedNN
+    from pymor.reductors.neural_network import multiple_restarts_training
 
     n = 1000
     d_in = 3
@@ -79,8 +79,7 @@ def test_no_training_data():
 
 @skip_if_missing('TORCH')
 def test_issue_1649():
-    from pymor.models.neural_network import FullyConnectedNN
-    from pymor.models.neural_network import NeuralNetworkModel
+    from pymor.models.neural_network import FullyConnectedNN, NeuralNetworkModel
     from pymor.parameters.base import Parameters
     neural_network = FullyConnectedNN([3, 3, 3, 3]).double()
     nn_model = NeuralNetworkModel(neural_network, Parameters(mu=1))

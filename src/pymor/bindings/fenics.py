@@ -3,24 +3,26 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+
 config.require('FENICS')
 
 
-import dolfin as df
-import ufl
-import numpy as np
 import sys
 from pathlib import Path
+
+import dolfin as df
+import numpy as np
+import ufl
 
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.pickle import unpicklable
-from pymor.operators.constructions import ZeroOperator, VectorOperator, VectorFunctional
+from pymor.operators.constructions import VectorFunctional, VectorOperator, ZeroOperator
 from pymor.operators.interface import Operator
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.interface import _create_random_values
-from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
+from pymor.vectorarrays.list import ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -325,7 +327,7 @@ class FenicsMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         r = (self.range.real_zero_vector() if initial_guess is None else
              initial_guess.copy(deep=True))
 
-        # since dolfin does not have "apply_inverse_adjoint", we assume
+        # since dolfin does not have 'apply_inverse_adjoint', we assume
         # PETSc is used as backend and transpose the matrix
         if not hasattr(self, '_matrix_transpose'):
             self._matrix_transpose = self.matrix.copy()
@@ -607,7 +609,7 @@ class FenicsVisualizer(ImmutableObject):
             assert U in self.space
             if block:
                 self.logger.warning('visualize with filename!=None, block=True will not block')
-            supported = (".x3d", ".xml", ".pvd", ".raw")
+            supported = ('.x3d', '.xml', '.pvd', '.raw')
             suffix = Path(filename).suffix
             if suffix not in supported:
                 msg = ('FenicsVisualizer needs a filename with a suffix indicating a supported backend\n'
@@ -685,7 +687,7 @@ def compute_parent_facet_indices(submesh, mesh):
     # Make sure we have vertex-facet connectivity for parent mesh
     mesh.init(0, facet_dim)
 
-    parent_vertex_indices = submesh.data().array("parent_vertex_indices", 0)
+    parent_vertex_indices = submesh.data().array('parent_vertex_indices', 0)
     # Create the fact map
     parent_facet_indices = np.full(submesh.num_facets(), -1)
 

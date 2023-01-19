@@ -3,20 +3,19 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import os
-import pymordemos  # noqa: F401
-from importlib import import_module
-import pytest
-from tempfile import mkdtemp
 import shutil
+from importlib import import_module
+from tempfile import mkdtemp
 
+import pytest
 from typer import Typer
 from typer.testing import CliRunner
 
-from pymortests.base import runmodule, check_results
-from pymor.core.exceptions import QtMissing, GmshMissing, MeshioMissing, TorchMissing
-from pymor.core.config import is_windows_platform, is_macos_platform
+import pymordemos  # noqa: F401
+from pymor.core.config import is_macos_platform, is_windows_platform
+from pymor.core.exceptions import GmshMissingError, MeshioMissingError, QtMissingError, TorchMissingError
 from pymor.tools.mpi import parallel
-
+from pymortests.base import check_results, runmodule
 
 runner = CliRunner()
 
@@ -189,7 +188,7 @@ def _skip_if_no_solver(param):
 def _demo_ids(demo_args):
     def _key(b):
         return ' '.join((str(s) for s in b))
-    return [f"{a}:'{_key(b)}'".replace('pymordemos.', '') for a, b in demo_args]
+    return [f'{a}:"{_key(b)}"'.replace('pymordemos.', '') for a, b in demo_args]
 
 
 @pytest.fixture(params=DEMO_ARGS, ids=_demo_ids(DEMO_ARGS))
@@ -224,6 +223,7 @@ def _test_demo(demo):
         pass
     try:
         import petsc4py
+
         # the default X handlers can interfere with process termination
         petsc4py.PETSc.Sys.popSignalHandler()
         petsc4py.PETSc.Sys.popErrorHandler()
@@ -233,12 +233,12 @@ def _test_demo(demo):
     result = None
     try:
         result = demo()
-    except (QtMissing, GmshMissing, MeshioMissing, TorchMissing) as e:
+    except (QtMissingError, GmshMissingError, MeshioMissingError, TorchMissingError) as e:
         if os.environ.get('DOCKER_PYMOR', False):
             # these are all installed in our CI env so them missing is a grave error
             raise e
         else:
-            miss = str(type(e)).replace('Missing', '')
+            miss = str(type(e)).replace('MissingError', '')
             pytest.xfail(f'{miss} not installed')
     finally:
         from pymor.parallel.default import _cleanup
@@ -322,7 +322,7 @@ def test_thermalblock_ipython(ipy_args):
     try:
         test_demos((f'pymordemos.{ipy_args[0]}', ['--ipython-engines=2'] + ipy_args[1]))
     finally:
-        import time     # there seems to be no way to shutdown the IPython cluster s.t. a new
+        import time  # there seems to be no way to shutdown the IPython cluster s.t. a new
         time.sleep(10)  # cluster can be started directly afterwards, so we have to wait ...
 
 
@@ -367,5 +367,5 @@ def test_parabolic_mor_results():
                   'min_effectivities', 'max_effectivities', 'errors')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

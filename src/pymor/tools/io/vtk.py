@@ -3,18 +3,19 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+
 config.require('VTKIO')
 
 
+from collections import OrderedDict
 from pathlib import Path
+from xml.etree.ElementTree import fromstring
 
 import meshio
-from xml.etree.ElementTree import fromstring
-from collections import OrderedDict
-from xmljson import BadgerFish
 from lxml import etree
+from xmljson import BadgerFish
 
-from pymor.core.exceptions import IOLibsMissing
+from pymor.core.exceptions import IOLibsMissingError
 
 
 def _read_collection(xml, metadata_key):
@@ -64,7 +65,7 @@ def _get_vtk_type(path):
 
 
 def read_vtkfile(filename, metadata_key='timestep'):
-    """Try to read a given file into a Sequence of meshio.Mesh instances
+    """Try to read a given file into a Sequence of meshio.Mesh instances.
 
     Parameters
     ----------
@@ -87,7 +88,7 @@ def read_vtkfile(filename, metadata_key='timestep'):
 
 
 def write_vtk_collection(filename_base, meshes, metadata=None):
-    """Output grid-associated data in vtk format
+    """Output grid-associated data in vtk format.
 
     filename_base
         common component for output files in collection
@@ -104,7 +105,7 @@ def write_vtk_collection(filename_base, meshes, metadata=None):
     full filename of saved file
     """
     if not config.HAVE_VTKIO:
-        raise IOLibsMissing()
+        raise IOLibsMissingError()
     from pyevtk.vtk import VtkGroup
 
     fn_tpl = '{}_{:08d}.vtu'

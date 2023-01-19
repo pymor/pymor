@@ -7,13 +7,22 @@ import scipy.linalg as spla
 import scipy.sparse as sps
 import scipy.sparse.linalg as spsla
 
-from pymor.algorithms.rules import RuleTable, match_class, match_always
+from pymor.algorithms.rules import RuleTable, match_always, match_class
 from pymor.core.config import config
 from pymor.core.exceptions import RuleNotMatchingError
 from pymor.operators.block import BlockOperatorBase
-from pymor.operators.constructions import (AdjointOperator, ComponentProjectionOperator, ConcatenationOperator,
-                                           IdentityOperator, LincombOperator, LowRankOperator, LowRankUpdatedOperator,
-                                           NumpyConversionOperator, VectorArrayOperator, ZeroOperator)
+from pymor.operators.constructions import (
+    AdjointOperator,
+    ComponentProjectionOperator,
+    ConcatenationOperator,
+    IdentityOperator,
+    LincombOperator,
+    LowRankOperator,
+    LowRankUpdatedOperator,
+    NumpyConversionOperator,
+    VectorArrayOperator,
+    ZeroOperator,
+)
 from pymor.operators.interface import as_array_max_length
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace

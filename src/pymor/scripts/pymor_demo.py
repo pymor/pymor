@@ -7,9 +7,10 @@ from __future__ import absolute_import, division, print_function
 
 import importlib
 import pkgutil
-import pymordemos
-import sys
 import runpy
+import sys
+
+import pymordemos
 
 
 def run():
@@ -32,14 +33,14 @@ def run():
             fails[short] = e
 
     def usage():
-        msg = f'''Usage:
+        msg = f"""Usage:
     {sys.argv[0]} DEMO_NAME | -h [DEMO_OPTIONS]
 
 Arguments:
     -h           this message
     DEMO_NAME    select one from these: {",".join(shorts)}
     DEMO_OPTIONS any arguments for the demo, including -h for detailed help
-'''
+"""
         print(msg)
         if len(fails):
             print('\nThere are some pyMOR demos for which additional packages need to be installed:')

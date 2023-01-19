@@ -3,17 +3,17 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import sys
 import math
+import sys
 import time
 
 import numpy as np
 from typer import Argument, Option, run
 
-from pymor.algorithms.greedy import rb_greedy
 from pymor.algorithms.ei import interpolate_operators
+from pymor.algorithms.greedy import rb_greedy
 from pymor.analyticalproblems.burgers import burgers_problem_2d
-from pymor.discretizers.builtin import discretize_instationary_fv, RectGrid, TriaGrid
+from pymor.discretizers.builtin import RectGrid, TriaGrid, discretize_instationary_fv
 from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.basic import InstationaryRBReductor
 from pymor.tools.typer import Choices
@@ -73,8 +73,8 @@ def main(
 
     if cache_region != 'none':
         # building a cache_id is only needed for persistent CacheRegions
-        cache_id = (f"pymordemos.burgers_ei {vx} {vy} {initial_data}"
-                    f"{periodic} {grid} {grid_type} {num_flux} {lxf_lambda} {nt}")
+        cache_id = (f'pymordemos.burgers_ei {vx} {vy} {initial_data}'
+                    f'{periodic} {grid} {grid_type} {num_flux} {lxf_lambda} {nt}')
         fom.enable_caching(cache_region.value, cache_id)
 
     print(fom.operator.grid)
@@ -182,7 +182,7 @@ def main(
     toc = time.perf_counter()
     t_est = toc - tic
 
-    print('''
+    print("""
     *** RESULTS ***
 
     Problem:
@@ -209,12 +209,12 @@ def main(
        number of samples:                  {test}
        maximal L2-error:                   {l2_err_max}  (mu = {mumax})
        elapsed time:                       {t_est}
-    '''.format(**locals()))
+    """.format(**locals()))
 
     sys.stdout.flush()
     if plot_error_landscape:
         import matplotlib.pyplot as plt
-        import mpl_toolkits.mplot3d             # NOQA
+        import mpl_toolkits.mplot3d  # NOQA
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         # rescale the errors since matplotlib does not support logarithmic scales on 3d plots

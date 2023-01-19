@@ -4,8 +4,8 @@
 
 import pytest
 
-from pymor.core.config import config, _PACKAGES
-from pymor.core.exceptions import DependencyMissing
+from pymor.core.config import _PACKAGES, config
+from pymor.core.exceptions import DependencyMissingError
 
 
 def test_repr():
@@ -38,5 +38,5 @@ def test_require_fail_foo():
 
 def test_require_fail_missing_dependency(monkeypatch):
     monkeypatch.setitem(_PACKAGES, 'THISISNOTAPACKAGENAMETHATEXISTS', lambda: False)
-    with pytest.raises(DependencyMissing):
+    with pytest.raises(DependencyMissingError):
         config.require('THISISNOTAPACKAGENAMETHATEXISTS')

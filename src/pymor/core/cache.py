@@ -62,15 +62,15 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 """
 
 import atexit
-from collections import OrderedDict
-from copy import deepcopy
 import functools
 import getpass
 import hashlib
 import inspect
-from numbers import Number
 import os
 import tempfile
+from collections import OrderedDict
+from copy import deepcopy
+from numbers import Number
 from types import MethodType
 
 import diskcache

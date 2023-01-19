@@ -15,14 +15,14 @@ implementation details of CPython to achieve its goals.
 """
 
 import marshal
-import opcode
-from types import CodeType, FunctionType, ModuleType
 import pickle
-from io import BytesIO as IOtype
 import platform
+from io import BytesIO as IOtype
+from types import CodeType, FunctionType, ModuleType
+
+import opcode
 
 from pymor.core.exceptions import UnpicklableError
-
 
 PicklingError = pickle.PicklingError
 UnpicklingError = pickle.UnpicklingError
@@ -69,7 +69,7 @@ else:
 
 def unpicklable(cls):
     """Class decorator to mark a class as unpicklable."""
-    def __getstate__(self):
+    def __getstate__(self):  # noqa: N807
         raise UnpicklableError(cls)
 
     cls.__getstate__ = __getstate__
@@ -128,7 +128,7 @@ def dumps_function(function):
 
     Note that also this is heavily implementation specific and will probably only
     work with CPython. If possible, avoid using this method.
-    """
+    """  # noqa: D400
     closure = None if function.__closure__ is None else [c.cell_contents for c in function.__closure__]
     code = marshal.dumps(function.__code__)
     func_globals = function.__globals__

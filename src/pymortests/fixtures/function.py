@@ -3,11 +3,9 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-
 import pytest
 
-from pymor.analyticalproblems.functions import ConstantFunction, GenericFunction, ExpressionFunction
-
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, GenericFunction
 
 constant_functions = [
     ConstantFunction(),
@@ -50,8 +48,8 @@ picklable_generic_functions = [
 
 expression_functions = [
     ExpressionFunction('x', dim_domain=2),
-    ExpressionFunction("c[0]*x", dim_domain=1, parameters={'c': 1}),
-    ExpressionFunction("c[2]*sin(x)", dim_domain=1, parameters={'c': 3}),
+    ExpressionFunction('c[0]*x', dim_domain=1, parameters={'c': 1}),
+    ExpressionFunction('c[2]*sin(x)', dim_domain=1, parameters={'c': 3}),
 ]
 
 

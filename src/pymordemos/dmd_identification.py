@@ -4,8 +4,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-
-from typer import run, Option
+from typer import Option, run
 
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.basic import *

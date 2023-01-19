@@ -7,9 +7,12 @@ import weakref
 import numpy as np
 from scipy.linalg import solve, solve_triangular
 
-
-from pymor.operators.constructions import (ComponentProjectionOperator, ConcatenationOperator, VectorArrayOperator,
-                                           ZeroOperator)
+from pymor.operators.constructions import (
+    ComponentProjectionOperator,
+    ConcatenationOperator,
+    VectorArrayOperator,
+    ZeroOperator,
+)
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.interface import VectorArray

@@ -8,34 +8,41 @@ import pytest
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.projection import project
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.core.config import config
+from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.operators.block import BlockDiagonalOperator
-from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
-                                           LincombOperator, VectorArrayOperator, QuadraticFunctional,
-                                           QuadraticProductFunctional)
-from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
+from pymor.operators.constructions import (
+    IdentityOperator,
+    InverseAdjointOperator,
+    InverseOperator,
+    LincombOperator,
+    QuadraticFunctional,
+    QuadraticProductFunctional,
+    SelectionOperator,
+    VectorArrayOperator,
+)
 from pymor.operators.interface import as_array_max_length
-from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
+from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
+from pymor.parameters.functionals import ExpressionParameterFunctional, GenericParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import assert_all_almost_equal
-from pymortests.fixtures.operator import MonomOperator
 from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
+from pymortests.fixtures.operator import MonomOperator
 from pymortests.strategies import valid_inds, valid_inds_of_same_length
 
 
 def test_selection_op():
     p1 = MonomOperator(1)
     select_rhs_functional = GenericParameterFunctional(
-        lambda x: round(x["nrrhs"].item()),
-        {"nrrhs": 1}
+        lambda x: round(x['nrrhs'].item()),
+        {'nrrhs': 1}
     )
     s1 = SelectionOperator(
         operators=[p1],
         boundaries=[],
         parameter_functional=select_rhs_functional,
-        name="foo"
+        name='foo'
     )
     x = np.linspace(-1., 1., num=3)
     vx = p1.source.make_array(x[:, np.newaxis])
@@ -46,16 +53,16 @@ def test_selection_op():
         operators=[p1, p1, p1, p1],
         boundaries=[-3, 3, 7],
         parameter_functional=select_rhs_functional,
-        name="Bar"
+        name='Bar'
     )
 
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": -4})) == 0
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": -3})) == 0
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": -2})) == 1
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": 3})) == 1
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": 4})) == 2
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": 7})) == 2
-    assert s2._get_operator_number(s2.parameters.parse({"nrrhs": 9})) == 3
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': -4})) == 0
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': -3})) == 0
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': -2})) == 1
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': 3})) == 1
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': 4})) == 2
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': 7})) == 2
+    assert s2._get_operator_number(s2.parameters.parse({'nrrhs': 9})) == 3
 
 
 def test_lincomb_op():
@@ -551,6 +558,7 @@ def test_hankel_operator(iscomplex):
 
 if config.HAVE_DUNEGDT:
     from dune.xt.la import IstlSparseMatrix, SparsityPatternDefault
+
     from pymor.bindings.dunegdt import DuneXTMatrixOperator
 
     def make_dunegdt_identity(N):

@@ -6,7 +6,6 @@ import os
 import platform
 import sys
 
-
 if sys.version_info.major < 3:
     raise RuntimeError('pyMOR requires Python 3.6 or newer')
 elif sys.version_info.major == 3:
@@ -19,12 +18,10 @@ elif sys.version_info.major == 3:
 
 
 def _init_mpi():
-    """provides a way to manually set the thread init mode for MPI if necessary.
+    """Provides a way to manually set the thread init mode for MPI if necessary.
+
     Needs to happen as early as possible, otherwise mpi4py might auto-init somewhere else.
-
-
     """
-
     try:
         import mpi4py
     except ImportError:
@@ -37,7 +34,8 @@ def _init_mpi():
         required_level = int(os.environ.get('PYMOR_MPI_INIT_THREAD', MPI.THREAD_MULTIPLE))
         supported_lvl = MPI.Init_thread(required_level)
         if supported_lvl < required_level:
-            print(f'MPI does support threading level {required_level}, running with {supported_lvl} instead', flush=True)
+            print(f'MPI does support threading level {required_level},\
+                   running with {supported_lvl} instead', flush=True)
 
     try:
         # this solves sporadic mpi calls happening after finalize
@@ -48,11 +46,10 @@ def _init_mpi():
 
 _init_mpi()
 
+import pymor.version as _version
 from pymor.core.config import config
 from pymor.core.defaults import load_defaults_from_file
 
-
-import pymor.version as _version
 revstring = _version.get_versions()['version']
 __version__ = str(revstring)
 
@@ -76,11 +73,13 @@ else:
         print('Loading pyMOR defaults from file ' + filename)
         load_defaults_from_file(filename)
 
-from pymor.core.logger import set_log_levels, set_log_format
+from pymor.core.logger import set_log_format, set_log_levels
+
 set_log_levels()
 set_log_format()
 
 from pymor.tools import mpi
+
 if mpi.parallel and mpi.event_loop_settings()['auto_launch']:
     if mpi.rank0:
         import atexit

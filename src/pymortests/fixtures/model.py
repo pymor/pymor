@@ -6,10 +6,12 @@ from itertools import product
 
 import pytest
 
-from pymor.discretizers.builtin import discretize_stationary_cg, discretize_instationary_fv
-from pymortests.fixtures.analyticalproblem import (picklable_thermalblock_problems, non_picklable_thermalblock_problems,
-                                                   burgers_problems)
-
+from pymor.discretizers.builtin import discretize_instationary_fv, discretize_stationary_cg
+from pymortests.fixtures.analyticalproblem import (
+    burgers_problems,
+    non_picklable_thermalblock_problems,
+    picklable_thermalblock_problems,
+)
 
 stationary_cg_generators = \
     [lambda p=p, d=d: discretize_stationary_cg(p, diameter=d)[0]

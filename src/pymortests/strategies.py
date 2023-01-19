@@ -2,23 +2,24 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 import functools
-
-from hypothesis import strategies as hyst
-from hypothesis import assume, given
-from hypothesis.extra import numpy as hynp
-import numpy as np
 import os
+
+import numpy as np
+from hypothesis import assume, given
+from hypothesis import strategies as hyst
+from hypothesis.extra import numpy as hynp
 from scipy.stats._multivariate import random_correlation_gen
 
-from pymor.analyticalproblems.functions import Function, ExpressionFunction, ConstantFunction
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, Function
 from pymor.core.config import config
 from pymor.parameters.base import Mu
-from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 if config.HAVE_FENICS:
     import dolfin as df
+
     from pymor.bindings.fenics import FenicsVectorSpace
 
 if config.HAVE_DEALII:
@@ -28,8 +29,9 @@ if config.HAVE_DUNEGDT:
     from pymor.bindings.dunegdt import DuneXTVectorSpace
 
 if config.HAVE_NGSOLVE:
-    import ngsolve as ngs
     import netgen.meshing as ngmsh
+    import ngsolve as ngs
+
     from pymor.bindings.ngsolve import NGSolveVectorSpace
 
 
@@ -184,7 +186,7 @@ def vector_arrays(draw, space_types, count=1, dtype=None, length=None, compatibl
 
 
 def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatible=True, index_strategy=None, **kwargs):
-    """This decorator hides the combination details of given
+    """This decorator hides the combination details of given.
 
     the decorated function will be first wrapped in a |hypothesis.given| (with expanded `given_args`
     and then in |pytest.mark.parametrize| with selected implementation names. The decorated test
@@ -194,7 +196,7 @@ def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatibl
     Parameters
     ----------
     which
-        A list of implementation shortnames, or either of the special values "all" and "picklable".
+        A list of implementation shortnames, or either of the special values 'all' and 'picklable'.
 
     kwargs
         passed to `given` decorator as is, use for additional strategies
@@ -322,14 +324,14 @@ def st_valid_inds_of_same_length(draw, v1, v2):
     if len1 == len2:
         ints = hyst.integers(min_value=-len1, max_value=max(len1 - 1, 0))
         slicer = hyst.slices(len1) | hyst.lists(ints, max_size=len1)
-        ret = ret | hyst.tuples(hyst.shared(slicer, key="st_valid_inds_of_same_length"),
-                                hyst.shared(slicer, key="st_valid_inds_of_same_length"))
+        ret = ret | hyst.tuples(hyst.shared(slicer, key='st_valid_inds_of_same_length'),
+                                hyst.shared(slicer, key='st_valid_inds_of_same_length'))
     if len1 > 0 and len2 > 0:
         mlen = min(len1, len2)
         ints = hyst.integers(min_value=-mlen, max_value=max(mlen - 1, 0))
         slicer = hyst.slices(mlen) | ints | hyst.lists(ints, max_size=mlen)
-        ret = ret | hyst.tuples(hyst.shared(slicer, key="st_valid_inds_of_same_length_uneven"),
-                                hyst.shared(slicer, key="st_valid_inds_of_same_length_uneven"))
+        ret = ret | hyst.tuples(hyst.shared(slicer, key='st_valid_inds_of_same_length_uneven'),
+                                hyst.shared(slicer, key='st_valid_inds_of_same_length_uneven'))
     return draw(ret)
 
 
@@ -439,7 +441,7 @@ def invalid_indices(draw, array_strategy):
 
 @hyst.composite
 def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
-    """Strategy to generate linear independent |VectorArray| inputs for test functions
+    """Strategy to generate linear independent |VectorArray| inputs for test functions.
 
     Parameters
     ----------
@@ -466,7 +468,7 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     random_correlation = random_correlation_gen(random.seed)
 
     def _eigs():
-        """Sum must equal to `length` for the scipy construct method"""
+        """Sum must equal to `length` for the scipy construct method."""
         min_eig, max_eig = 0.001, 1.
         eigs = np.asarray((max_eig-min_eig)*np.random.random(length-1) + min_eig, dtype=float)
         return np.append(eigs, [length - np.sum(eigs)])

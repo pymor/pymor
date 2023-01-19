@@ -8,7 +8,7 @@ from pymor.discretizers.builtin.grids.constructions import flatten_grid
 
 
 def to_meshio(grid, data, codim=2):
-    """Transform given |Grid| and |VectorArray| data into a sequence of meshio.Mesh objects
+    """Transform given |Grid| and |VectorArray| data into a sequence of meshio.Mesh objects.
 
     Parameters
     ----------
@@ -34,16 +34,16 @@ def to_meshio(grid, data, codim=2):
 
     ref = grid.reference_element
     if ref is referenceelements.triangle:
-        cells = [("triangle", subentities), ]
+        cells = [('triangle', subentities), ]
     elif ref is referenceelements.square:
-        cells = [("quad", subentities), ]
+        cells = [('quad', subentities), ]
     else:
-        raise NotImplementedError("Meshio conversion restricted to grid with triangle or rectangle reference elements")
+        raise NotImplementedError('Meshio conversion restricted to grid with triangle or rectangle reference elements')
 
     meshes = []
     for i in range(len(data)):
         if is_cell_data:
-            meshes.append(meshio.Mesh(coordinates, cells, cell_data={"Data": [data[i, :]]}))
+            meshes.append(meshio.Mesh(coordinates, cells, cell_data={'Data': [data[i, :]]}))
         else:
-            meshes.append(meshio.Mesh(coordinates, cells, point_data={"Data": data[i, :]}))
+            meshes.append(meshio.Mesh(coordinates, cells, point_data={'Data': data[i, :]}))
     return meshes

@@ -244,25 +244,25 @@ class NumpyVectorSpace(VectorSpace):
         return va
 
     @classinstancemethod
-    def make_array(cls, obj, id=None):
+    def make_array(cls, obj, id=None):  # noqa N805
         return cls._array_factory(obj, id=id)
 
     @make_array.instancemethod
     def make_array(self, obj):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
-    def from_numpy(cls, data, id=None, ensure_copy=False):
+    def from_numpy(cls, data, id=None, ensure_copy=False):  # noqa N805
         return cls._array_factory(data.copy() if ensure_copy else data, id=id)
 
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         return self._array_factory(data.copy() if ensure_copy else data, space=self)
 
     @classinstancemethod
-    def from_file(cls, path, key=None, single_vector=False, transpose=False, id=None):
+    def from_file(cls, path, key=None, single_vector=False, transpose=False, id=None):  # noqa N805
         assert not (single_vector and transpose)
         from pymor.tools.io import load_matrix
         array = load_matrix(path, key=key)
@@ -279,7 +279,7 @@ class NumpyVectorSpace(VectorSpace):
 
     @from_file.instancemethod
     def from_file(self, path, key=None, single_vector=False, transpose=False):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         return type(self).from_file(path, key=key, single_vector=single_vector, transpose=transpose, id=self.id)
 
     @classmethod

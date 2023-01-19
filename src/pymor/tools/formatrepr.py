@@ -43,9 +43,9 @@ def _format_generic(obj, max_width, verbosity, override={}):
     if verbosity > 0 and (sum(len(k) + len(v) + 2 for k, v in zip(keys, vals)) + len(type(obj).__name__) > max_width
                           or any('\n' in v for v in vals)):
         args = [f'    {k}{indent_value(v, len(k) + 4)}' for k, v in zip(keys, vals)]
-        args = ",\n".join(args)
-        return f'''{type(obj).__name__}(
-{args})'''
+        args = ',\n'.join(args)
+        return f"""{type(obj).__name__}(
+{args})"""
     else:
         args = [f'{k}{v}' for k, v in zip(keys, vals)]
         return f'{type(obj).__name__}({", ".join(args)})'

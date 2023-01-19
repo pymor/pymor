@@ -2,13 +2,13 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from itertools import combinations
+
 import numpy as np
 import pytest
-from itertools import combinations
 
 from pymor.models.iosys import LTIModel
 from pymor.models.transforms import BilinearTransformation, CayleyTransformation, MoebiusTransformation
-
 
 type_list = ['BilinearTransformation', 'CayleyTransformation', 'MoebiusTransformation']
 points_list = list(combinations([0, 1, -1, 1j, -1j, np.inf], 3))

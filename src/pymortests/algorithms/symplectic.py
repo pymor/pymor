@@ -1,9 +1,13 @@
 
 import numpy as np
 import pytest
-from pymor.algorithms.symplectic import (psd_complex_svd, psd_cotengent_lift,
-                                         psd_svd_like_decomp,
-                                         symplectic_gram_schmidt)
+
+from pymor.algorithms.symplectic import (
+    psd_complex_svd,
+    psd_cotengent_lift,
+    psd_svd_like_decomp,
+    symplectic_gram_schmidt,
+)
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace

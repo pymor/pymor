@@ -2,13 +2,14 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
 import time
 
+import numpy as np
+
 from pymor.core.config import config
-from pymor.core.exceptions import MeshioMissing
+from pymor.core.exceptions import MeshioMissingError
 from pymor.core.logger import getLogger
-from pymor.discretizers.builtin.grids.boundaryinfos import GenericBoundaryInfo, EmptyBoundaryInfo
+from pymor.discretizers.builtin.grids.boundaryinfos import EmptyBoundaryInfo, GenericBoundaryInfo
 from pymor.discretizers.builtin.grids.unstructured import UnstructuredTriangleGrid
 
 
@@ -28,7 +29,7 @@ def load_gmsh(filename):
         The generated :class:`GmshBoundaryInfo`.
     """
     if not config.HAVE_MESHIO:
-        raise MeshioMissing('meshio (>=4) is required for reading Gmsh files.')
+        raise MeshioMissingError('meshio (>=4) is required for reading Gmsh files.')
     import meshio
 
     logger = getLogger('pymor.discretizers.builtin.grids.gmsh.load_gmsh')

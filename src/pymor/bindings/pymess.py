@@ -3,17 +3,22 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+
 config.require('PYMESS')
 
 import warnings
 
 import numpy as np
-import scipy.linalg as spla
 import pymess
+import scipy.linalg as spla
 
 from pymor.algorithms.genericsolvers import _parse_options
-from pymor.algorithms.lyapunov import (mat_eqn_sparse_min_size, _solve_lyap_lrcf_check_args,
-                                       _solve_lyap_dense_check_args, _chol)
+from pymor.algorithms.lyapunov import (
+    _chol,
+    _solve_lyap_dense_check_args,
+    _solve_lyap_lrcf_check_args,
+    mat_eqn_sparse_min_size,
+)
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.bindings.scipy import _solve_ricc_check_args
 from pymor.core.defaults import defaults
@@ -509,7 +514,7 @@ def _call_pymess_dense_nm_gmpare(A, E, B, C, R, trans=False, options=None, plus=
 
 
 class LyapunovEquation(pymess.Equation):
-    """Lyapunov equation class for pymess
+    """Lyapunov equation class for pymess.
 
     Represents a (generalized) continuous-time algebraic Lyapunov
     equation:
@@ -627,7 +632,7 @@ class LyapunovEquation(pymess.Equation):
 
 
 class RiccatiEquation(pymess.Equation):
-    """Riccati equation class for pymess
+    """Riccati equation class for pymess.
 
     Represents a Riccati equation
 

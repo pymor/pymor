@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+
 config.require('FENICS')
 
 
@@ -11,11 +12,11 @@ import dolfin as df
 from pymor.algorithms.preassemble import preassemble as preassemble_
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import LincombFunction
-from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixBasedOperator, FenicsVisualizer
+from pymor.bindings.fenics import FenicsMatrixBasedOperator, FenicsVectorSpace, FenicsVisualizer
 from pymor.discretizers.fenics.domaindiscretizer import discretize_domain
 from pymor.models.basic import StationaryModel
-from pymor.operators.constructions import LincombOperator, NumpyConversionOperator
 from pymor.operators.block import BlockColumnOperator
+from pymor.operators.constructions import LincombOperator, NumpyConversionOperator
 
 
 def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preassemble=True):

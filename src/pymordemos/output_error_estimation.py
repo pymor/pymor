@@ -4,8 +4,8 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from typer import Argument, run
 
 from pymor.basic import *

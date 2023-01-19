@@ -3,11 +3,17 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.algorithms.preassemble import preassemble
-from pymor.algorithms.rules import RuleTable, RuleNotMatchingError, match_class, match_always
+from pymor.algorithms.rules import RuleNotMatchingError, RuleTable, match_always, match_class
 from pymor.models.interface import Model
-from pymor.operators.constructions import (AdjointOperator, AffineOperator, ConcatenationOperator,
-                                           FixedParameterOperator, LincombOperator,
-                                           SelectionOperator, VectorArrayOperator)
+from pymor.operators.constructions import (
+    AdjointOperator,
+    AffineOperator,
+    ConcatenationOperator,
+    FixedParameterOperator,
+    LincombOperator,
+    SelectionOperator,
+    VectorArrayOperator,
+)
 from pymor.operators.list import NumpyListVectorArrayMatrixOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.list import NumpyListVectorSpace

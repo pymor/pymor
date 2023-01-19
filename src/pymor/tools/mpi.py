@@ -59,8 +59,9 @@ from pymor.core.config import config
 from pymor.core.defaults import defaults
 
 if config.HAVE_MPI:
-    import pymor.core.pickle
     from mpi4py import MPI
+
+    import pymor.core.pickle
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -125,7 +126,7 @@ def event_loop():
                 method(*args, **kwargs)
         except BaseException:
             import traceback
-            print(f"Caught exception on MPI rank {rank}:")
+            print(f'Caught exception on MPI rank {rank}:')
             traceback.print_exception(*sys.exc_info())
 
 

@@ -3,11 +3,18 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import math as m
+
 import numpy as np
 
-from pymor.analyticalproblems.domaindescriptions import (RectDomain, CylindricalDomain, TorusDomain, LineDomain,
-                                                         CircleDomain, PolygonalDomain)
-from pymor.discretizers.builtin.grids.boundaryinfos import GenericBoundaryInfo, EmptyBoundaryInfo
+from pymor.analyticalproblems.domaindescriptions import (
+    CircleDomain,
+    CylindricalDomain,
+    LineDomain,
+    PolygonalDomain,
+    RectDomain,
+    TorusDomain,
+)
+from pymor.discretizers.builtin.grids.boundaryinfos import EmptyBoundaryInfo, GenericBoundaryInfo
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.rect import RectGrid
 from pymor.discretizers.builtin.grids.tria import TriaGrid
@@ -170,8 +177,8 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         else:
             return discretize_TorusDomain()
     elif isinstance(domain_description, PolygonalDomain):
-        from pymor.discretizers.builtin.grids.unstructured import UnstructuredTriangleGrid
         from pymor.discretizers.builtin.domaindiscretizers.gmsh import discretize_gmsh
+        from pymor.discretizers.builtin.grids.unstructured import UnstructuredTriangleGrid
         assert grid_type is None or grid_type is UnstructuredTriangleGrid
         return discretize_gmsh(domain_description, clscale=diameter)
     else:

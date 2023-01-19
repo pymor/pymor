@@ -4,12 +4,11 @@
 
 import numpy as np
 import pytest
-from hypothesis import assume, settings, HealthCheck
+from hypothesis import HealthCheck, assume, settings
 from hypothesis.strategies import sampled_from
 
-from pymor.algorithms.basic import almost_equal
+from pymor.algorithms.basic import almost_equal, contains_zero_vector
 from pymor.algorithms.pod import pod
-from pymor.algorithms.basic import contains_zero_vector
 from pymor.core.logger import log_levels
 from pymortests.strategies import given_vector_arrays
 
@@ -40,7 +39,7 @@ def test_pod_with_product(operator_with_arrays_and_products, method):
     _, _, A, _, p, _ = operator_with_arrays_and_products
 
     B = A.copy()
-    with log_levels({"pymor.algorithms": "ERROR"}):
+    with log_levels({'pymor.algorithms': 'ERROR'}):
         U, s = pod(A, product=p, method=method)
     assert np.all(almost_equal(A, B))
     assert len(U) == len(s)

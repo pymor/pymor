@@ -4,8 +4,14 @@
 
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.models.interface import Model
-from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ProjectedOperator,
-                                           AffineOperator, AdjointOperator, SelectionOperator)
+from pymor.operators.constructions import (
+    AdjointOperator,
+    AffineOperator,
+    ConcatenationOperator,
+    LincombOperator,
+    ProjectedOperator,
+    SelectionOperator,
+)
 from pymor.operators.interface import Operator
 
 

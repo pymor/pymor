@@ -9,7 +9,7 @@ import pytest
 import pymor.core as core
 from pymor.core.logger import log_levels
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymortests.base import (runmodule,)
+from pymortests.base import runmodule
 
 
 def test_logger():
@@ -52,5 +52,5 @@ def test_once(verb, capsys):
     assert second.out == second.err == ''
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

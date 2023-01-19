@@ -4,8 +4,8 @@
 
 from pymor.algorithms.timestepping import ImplicitMidpointTimeStepper
 from pymor.models.basic import InstationaryModel
-from pymor.operators.constructions import ConcatenationOperator, NumpyConversionOperator, VectorOperator
 from pymor.operators.block import BlockOperator
+from pymor.operators.constructions import ConcatenationOperator, NumpyConversionOperator, VectorOperator
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyVectorSpace
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator

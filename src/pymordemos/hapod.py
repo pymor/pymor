@@ -3,16 +3,16 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import time
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 import numpy as np
 from typer import Argument, Option, run
 
-from pymor.analyticalproblems.burgers import burgers_problem_2d
-from pymor.discretizers.builtin import discretize_instationary_fv, RectGrid
 from pymor.algorithms.hapod import dist_vectorarray_hapod, inc_vectorarray_hapod
 from pymor.algorithms.pod import pod
+from pymor.analyticalproblems.burgers import burgers_problem_2d
+from pymor.discretizers.builtin import RectGrid, discretize_instationary_fv
 from pymor.tools.table import format_table
 
 

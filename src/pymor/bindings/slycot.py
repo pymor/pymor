@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+
 config.require('SLYCOT')
 
 
@@ -11,7 +12,7 @@ import scipy.linalg as spla
 import slycot
 
 from pymor.algorithms.genericsolvers import _parse_options
-from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args, _solve_lyap_dense_check_args, _chol
+from pymor.algorithms.lyapunov import _chol, _solve_lyap_dense_check_args, _solve_lyap_lrcf_check_args
 from pymor.algorithms.riccati import _solve_ricc_dense_check_args
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.bindings.scipy import _solve_ricc_check_args
@@ -132,6 +133,7 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
         job = 'B'
         if E is None:
             from packaging.version import parse
+
             # branch off different slycot versions due to changes of sb03md call signature
             if parse(slycot.version.version) < parse('0.5.0.0'):
                 U = np.zeros((n, n))

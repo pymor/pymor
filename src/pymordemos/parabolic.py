@@ -8,7 +8,6 @@ from typer import Argument, Option, Typer
 
 from pymor.basic import *
 
-
 app = Typer(help="Solve parabolic equations using pyMOR's builtin discretization toolkit.")
 FV = Option(False, help='Use finite volume discretization instead of finite elements.')
 GRID = Option(100, help='Use grid with NIxNI intervals.')

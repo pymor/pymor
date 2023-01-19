@@ -10,12 +10,12 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
+from typer import Argument, Option, run
 
 from pymor.algorithms.dmd import dmd
 from pymor.analyticalproblems.burgers import burgers_problem
 from pymor.discretizers.builtin import discretize_instationary_fv
 from pymor.tools.typer import Choices
-from typer import Argument, Option, run
 
 
 def main(

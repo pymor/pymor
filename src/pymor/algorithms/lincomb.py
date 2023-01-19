@@ -7,12 +7,24 @@ from itertools import chain
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.rules import RuleTable, match_generic, match_class_all, match_class_any, match_always
+from pymor.algorithms.rules import RuleTable, match_always, match_class_all, match_class_any, match_generic
 from pymor.core.exceptions import RuleNotMatchingError
-from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockOperatorBase,
-                                   BlockDiagonalOperator, SecondOrderModelOperator)
-from pymor.operators.constructions import (ZeroOperator, IdentityOperator, VectorArrayOperator, LincombOperator,
-                                           LowRankOperator, LowRankUpdatedOperator)
+from pymor.operators.block import (
+    BlockColumnOperator,
+    BlockDiagonalOperator,
+    BlockOperator,
+    BlockOperatorBase,
+    BlockRowOperator,
+    SecondOrderModelOperator,
+)
+from pymor.operators.constructions import (
+    IdentityOperator,
+    LincombOperator,
+    LowRankOperator,
+    LowRankUpdatedOperator,
+    VectorArrayOperator,
+    ZeroOperator,
+)
 from pymor.vectorarrays.constructions import cat_arrays
 
 

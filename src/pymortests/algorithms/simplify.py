@@ -7,9 +7,9 @@ from itertools import product
 import numpy as np
 
 from pymor.algorithms.basic import almost_equal
+from pymor.algorithms.simplify import contract, expand
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.algorithms.simplify import expand, contract
-from pymor.operators.constructions import LincombOperator, ConcatenationOperator
+from pymor.operators.constructions import ConcatenationOperator, LincombOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
 

@@ -5,11 +5,11 @@
 import numpy as np
 import pytest
 
-from pymor.analyticalproblems.functions import ConstantFunction, GenericFunction, ExpressionFunction
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, GenericFunction
 from pymor.core.pickle import dumps, loads
+from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
 from pymortests.fixtures.function import function_argument
 from pymortests.fixtures.parameter import mu_of_type
-from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
 
 
 def test_evaluate(function):

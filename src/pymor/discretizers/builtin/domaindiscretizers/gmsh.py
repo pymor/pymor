@@ -2,16 +2,16 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import tempfile
 import collections
 import os
 import subprocess
+import tempfile
 import time
 
-from pymor.analyticalproblems.domaindescriptions import RectDomain, PolygonalDomain
-from pymor.discretizers.builtin.grids.gmsh import load_gmsh
-from pymor.core.exceptions import GmshMissing
+from pymor.analyticalproblems.domaindescriptions import PolygonalDomain, RectDomain
+from pymor.core.exceptions import GmshMissingError
 from pymor.core.logger import getLogger
+from pymor.discretizers.builtin.grids.gmsh import load_gmsh
 
 
 def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, msh_file_path=None,
@@ -63,7 +63,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
     try:
         version = subprocess.check_output(['gmsh', '--version'], stderr=subprocess.STDOUT, env=env).decode()
     except (subprocess.CalledProcessError, OSError) as e:
-        raise GmshMissing('Could not find Gmsh.'
+        raise GmshMissingError('Could not find Gmsh.'
                           ' Please ensure that the gmsh binary (https://gmsh.info/) is in your PATH.') from e
 
     logger.info('Found version ' + version.strip())

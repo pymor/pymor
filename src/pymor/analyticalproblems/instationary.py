@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.parameters.base import ParametricObject, ParameterSpace
+from pymor.parameters.base import ParameterSpace, ParametricObject
 from pymor.tools.frozendict import FrozenDict
 
 

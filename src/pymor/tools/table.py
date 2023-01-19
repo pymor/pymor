@@ -4,6 +4,7 @@
 
 from itertools import zip_longest
 from textwrap import wrap
+
 import numpy as np
 
 
@@ -27,7 +28,7 @@ def format_table(rows, width='AUTO', title=None):
     wrapped_rows = []
     for row in rows:
         cols = [wrap(c, width=cw) for c, cw in zip(row, column_widths)]
-        for r in zip_longest(*cols, fillvalue=""):
+        for r in zip_longest(*cols, fillvalue=''):
             wrapped_rows.append(r)
     rows = wrapped_rows
 

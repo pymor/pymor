@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.core.base import BasicObject, abstractmethod, abstractclassmethod, classinstancemethod
+from pymor.core.base import BasicObject, abstractclassmethod, abstractmethod, classinstancemethod
 from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
 
 
@@ -100,7 +100,7 @@ class Vector(BasicObject):
 class CopyOnWriteVector(Vector):
 
     @abstractclassmethod
-    def from_instance(cls, instance):
+    def from_instance(cls, instance):  # noqa: N805
         pass
 
     @abstractmethod
@@ -575,26 +575,26 @@ class ListVectorSpace(VectorSpace):
         )
 
     @classinstancemethod
-    def make_array(cls, obj, id=None):
+    def make_array(cls, obj, id=None):  # noqa: N805
         if len(obj) == 0:
             raise NotImplementedError
         return cls.space_from_vector_obj(obj[0], id=id).make_array(obj)
 
     @make_array.instancemethod
     def make_array(self, obj):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         return ListVectorArray(
             self,
             ListVectorArrayImpl([v if isinstance(v, self.vector_type) else self.make_vector(v) for v in obj], self)
         )
 
     @classinstancemethod
-    def from_numpy(cls, data, id=None, ensure_copy=False):
+    def from_numpy(cls, data, id=None, ensure_copy=False):  # noqa: N805
         return cls.space_from_dim(data.shape[1], id=id).from_numpy(data, ensure_copy=ensure_copy)
 
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         return ListVectorArray(
             self, ListVectorArrayImpl([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self)
         )

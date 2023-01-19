@@ -5,18 +5,18 @@
 import hashlib
 import os
 import sys
-from pprint import pformat
 from functools import wraps
+from pickle import dump, load
+from pprint import pformat
 
 import hypothesis
 import numpy as np
-from pickle import dump, load
 from pkg_resources import resource_filename, resource_stream
 from pytest import skip
 
 from pymor.algorithms.basic import almost_equal, relative_error
 from pymor.core import config
-from pymor.core.exceptions import DependencyMissing
+from pymor.core.exceptions import DependencyMissingError
 
 
 def runmodule(filename):
@@ -82,7 +82,7 @@ def assert_all_almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol
 
 
 def might_exceed_deadline(deadline=-1):
-    """For hypothesis magic to work properly this must be the topmost decorator on test function"""
+    """For hypothesis magic to work properly this must be the topmost decorator on test function."""
     def _outer_wrapper(func):
         @wraps(func)
         def _inner_wrapper(*args, **kwargs):
@@ -115,7 +115,7 @@ def skip_if_missing(config_name):
         def _inner_wrapper(*args, **kwargs):
             try:
                 config.config.require(config_name)
-            except DependencyMissing as dm:
+            except DependencyMissingError as dm:
                 # skip does not return
                 if config_name in str(dm.dependency) and not os.environ.get('DOCKER_PYMOR', False):
                     skip_string = 'skipped test due to missing dependency ' + config_name

@@ -9,10 +9,15 @@ import scipy.sparse as sps
 
 from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.eigs import eigs
-from pymor.algorithms.lyapunov import (_chol, solve_cont_lyap_lrcf, solve_disc_lyap_lrcf, solve_cont_lyap_dense,
-                                       solve_disc_lyap_dense)
-from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
-from pymor.algorithms.timestepping import TimeStepper, DiscreteTimeStepper
+from pymor.algorithms.lyapunov import (
+    _chol,
+    solve_cont_lyap_dense,
+    solve_cont_lyap_lrcf,
+    solve_disc_lyap_dense,
+    solve_disc_lyap_lrcf,
+)
+from pymor.algorithms.riccati import solve_pos_ricc_lrcf, solve_ricc_lrcf
+from pymor.algorithms.timestepping import DiscreteTimeStepper, TimeStepper
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.analyticalproblems.functions import GenericFunction
 from pymor.core.cache import cached
@@ -21,12 +26,24 @@ from pymor.core.defaults import defaults
 from pymor.models.interface import Model
 from pymor.models.transfer_function import FactorizedTransferFunction
 from pymor.models.transforms import BilinearTransformation, MoebiusTransformation
-from pymor.operators.block import (BlockOperator, BlockRowOperator, BlockColumnOperator, BlockDiagonalOperator,
-                                   SecondOrderModelOperator)
-from pymor.operators.constructions import (IdentityOperator, InverseOperator, LincombOperator, LinearInputOperator,
-                                           LowRankOperator, VectorOperator, ZeroOperator)
+from pymor.operators.block import (
+    BlockColumnOperator,
+    BlockDiagonalOperator,
+    BlockOperator,
+    BlockRowOperator,
+    SecondOrderModelOperator,
+)
+from pymor.operators.constructions import (
+    IdentityOperator,
+    InverseOperator,
+    LincombOperator,
+    LinearInputOperator,
+    LowRankOperator,
+    VectorOperator,
+    ZeroOperator,
+)
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.parameters.base import Parameters, Mu
+from pymor.parameters.base import Mu, Parameters
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
 
@@ -572,8 +589,9 @@ class LTIModel(Model):
         lti
             The |LTIModel| with operators A, B, C, D, and E.
         """
-        from pymor.tools.io import load_matrix
         import os.path
+
+        from pymor.tools.io import load_matrix
 
         A = load_matrix(files_basename + '.A')
         B = load_matrix(files_basename + '.B')
@@ -595,6 +613,7 @@ class LTIModel(Model):
             The basename of files containing the operators.
         """
         from pathlib import Path
+
         from pymor.tools.io.matrices import _mmwrite
         A, B, C, D, E = self.to_matrices()
         _mmwrite(Path(files_basename + '.A'), A)

@@ -4,9 +4,9 @@
 
 import numpy as np
 
-from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
+from pymor.basic import Mu, NumpyVectorSpace
 from pymor.operators.constructions import LincombOperator, ZeroOperator
-from pymor.basic import NumpyVectorSpace, Mu
+from pymor.parameters.functionals import ExpressionParameterFunctional, ProjectionParameterFunctional
 
 
 def test_ProjectionParameterFunctional():
