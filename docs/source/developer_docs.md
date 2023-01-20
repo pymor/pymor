@@ -263,7 +263,15 @@ coverage
 This a sanic based Python [application](https://github.com/pymor/ci_hooks_app) that receives webhook
 events from GitHub for pull requests and pushes PR branches merged into main to Gitlab to run a
 parallel CI pipeline to check whether the main branch will still pass tests after the PR is merged.
-The bridge also does this for forks of pyMOR, but these have to be whitelisted in order to protect CI secrets.
+The service also gets GitLab Pipeline events via hooks and translates those into status check
+updates.
+For GitHub the service authenticates with a PAT of the pyMOR-Bot account, for GitLab via Project Token.
+It is also registered as a GitHub app (so it can post Check statuses).
+The bridge also does this for forks of pyMOR, but the forks' user id must manually be
+add to an allow list in the config to protect CI secrets. If a PR build does not start
+for a user a comment is added in that PR.
+This service currently runs on the `ammservices` machine under the git user.
+
 
 ### GitHub Actions
 
