@@ -16,6 +16,9 @@
 * Peter Oehme, oehme.pb@gmail.com
   * quadratic functionals and quadratic output keyword for CG discretization
 
+* Mohamed Adel Naguib Ahmed, mohamedadel1551998@gmail.com
+  * Input-output selection in `bode_plot` function
+
 ### pyMOR 2022.2
 
 * Tim Keil, tim.keil@uni-muenster.de

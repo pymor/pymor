@@ -331,6 +331,17 @@ fig, axs = plt.subplots(6, 2, figsize=(8, 10), sharex=True, constrained_layout=T
 _ = fom.transfer_function.bode_plot(w, ax=axs)
 ```
 
+To restrict which inputs and outputs are plotted by `bode_plot`,
+its parameters `input_indices` and `output_indices` can be used.
+The following restricts the plot to the second input {math}`u_2` and the first output {math}`y_1`.
+
+```{code-cell}
+fig, axs = plt.subplots(2, 1, figsize=(8, 10), sharex=True, constrained_layout=True)
+_ = fom.transfer_function.bode_plot(w, ax=axs, input_indices=[1], output_indices=[0])
+```
+
+Note the change in the `axs` shape compared to the first call to `bode_plot`.
+
 ## System poles
 
 The poles of an LTI system are the poles of its transfer function.

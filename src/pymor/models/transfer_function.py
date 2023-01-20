@@ -2,6 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from itertools import chain
+
 import numpy as np
 import scipy.linalg as spla
 
@@ -219,7 +221,8 @@ class TransferFunction(CacheableObject, ParametricObject):
             return mag, phase
         return w_new, mag, phase
 
-    def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, adaptive_opts=None, **mpl_kwargs):
+    def bode_plot(self, w, mu=None, ax=None, Hz=False, dB=False, deg=True, adaptive_opts=None, input_indices=None,
+                  output_indices=None, **mpl_kwargs):
         """Draw the Bode plot for all input-output pairs.
 
         Parameters
@@ -240,6 +243,18 @@ class TransferFunction(CacheableObject, ParametricObject):
             Should the phase be in degrees (otherwise in radians).
         adaptive_opts
             Optional arguments for :func:`~pymor.tools.plot.adaptive` (ignored if `len(w) != 2`).
+        input_indices
+            Optional argument to select specific inputs to be paired with all outputs
+            or selected ones. If `None`, all inputs are used for plotting, otherwise, an
+            `iterable` containing the indices of the selected inputs has to be passed. The
+            order of the plots depends on the order of the indices in the `iterable`. It is
+            possible to pass negative indices to access the inputs counting backwards.
+        output_indices
+            Optional argument to select specific outputs to be paired  with all inputs
+            or selected ones. If `None`, all outputs are used for plotting, otherwise, an
+            `iterable` containing the indices of the selected outputs has to be passed. The
+            order of the plots depends on the order of the indices in the `iterable`. It is
+            possible to pass negative indices to access the outputs counting backwards.
         mpl_kwargs
             Keyword arguments used in the matplotlib plot function.
 
@@ -248,17 +263,31 @@ class TransferFunction(CacheableObject, ParametricObject):
         artists
             List of matplotlib artists added.
         """
+        if input_indices is None:
+            input_indices = list(range(self.dim_input))
+        if output_indices is None:
+            output_indices = list(range(self.dim_output))
+
+        assert all(isinstance(item, int) for item in chain(input_indices, output_indices))
+        assert all(-self.dim_input <= item < self.dim_input for item in input_indices), \
+            f'input_indices should be any integer value between {-self.dim_input} and {self.dim_input-1}'
+        assert all(-self.dim_output <= item < self.dim_output for item in output_indices), \
+            f'output_indices should be any integer value between {-self.dim_output} and {self.dim_output-1}'
+        num_input, num_output = len(input_indices), len(output_indices)
+
         if ax is None:
             import matplotlib.pyplot as plt
             fig = plt.gcf()
             width, height = plt.rcParams['figure.figsize']
-            fig.set_size_inches(self.dim_input * width, 2 * self.dim_output * height)
+            fig.set_size_inches(num_input * width, 2 * num_output * height)
             fig.set_constrained_layout(True)
-            ax = fig.subplots(2 * self.dim_output, self.dim_input, sharex=True, squeeze=False)
+            ax = fig.subplots(2 * num_output, num_input, sharex=True, squeeze=False)
         else:
+            if num_input == 1:
+                ax = ax.reshape((2 * num_output, 1))
             assert isinstance(ax, np.ndarray)
-            assert ax.shape == (2 * self.dim_output, self.dim_input), \
-                f'ax.shape={ax.shape} should be ({2 * self.dim_output}, {self.dim_input})'
+            assert ax.shape == (2 * num_output, num_input), \
+                f'ax.shape={ax.shape} should be ({2 * num_output}, {num_input})'
             fig = ax[0, 0].get_figure()
 
         if len(w) != 2:
@@ -270,28 +299,26 @@ class TransferFunction(CacheableObject, ParametricObject):
         freq = freq / self.sampling_time if self.sampling_time > 0 else freq
         if deg:
             phase *= 180 / np.pi
-
         artists = np.empty_like(ax)
         freq_label = f'Frequency ({"Hz" if Hz else "rad/s"})'
         mag_label = f'Magnitude{" (dB)" if dB else ""}'
         phase_label = f'Phase ({"deg" if deg else "rad"})'
-        for i in range(self.dim_output):
-            for j in range(self.dim_input):
+        for i in range(num_output):
+            for j in range(num_input):
                 if dB:
-                    artists[2 * i, j] = ax[2 * i, j].semilogx(freq, 20 * np.log10(mag[:, i, j]),
-                                                              **mpl_kwargs)
+                    artists[2 * i, j] = ax[2 * i, j].semilogx(freq, 20 * np.log10(mag[:, output_indices[i],
+                                                              input_indices[j]]), **mpl_kwargs)
                 else:
-                    artists[2 * i, j] = ax[2 * i, j].loglog(freq, mag[:, i, j],
-                                                            **mpl_kwargs)
-                artists[2 * i + 1, j] = ax[2 * i + 1, j].semilogx(freq, phase[:, i, j],
-                                                                  **mpl_kwargs)
-        for i in range(self.dim_output):
+                    artists[2 * i, j] = ax[2 * i, j].loglog(freq, mag[:, output_indices[i],
+                                                            input_indices[j]], **mpl_kwargs)
+                artists[2 * i + 1, j] = ax[2 * i + 1, j].semilogx(freq, phase[:, output_indices[i],
+                                                                  input_indices[j]], **mpl_kwargs)
+        for i in range(num_output):
             ax[2 * i, 0].set_ylabel(mag_label)
             ax[2 * i + 1, 0].set_ylabel(phase_label)
-        for j in range(self.dim_input):
+        for j in range(num_input):
             ax[-1, j].set_xlabel(freq_label)
         fig.suptitle('Bode plot')
-
         return artists
 
     def mag_plot(self, w, mu=None, ax=None, ord=None, Hz=False, dB=False, adaptive_opts=None, **mpl_kwargs):
