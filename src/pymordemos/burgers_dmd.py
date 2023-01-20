@@ -22,7 +22,7 @@ def main(
         exp: float = Argument(..., help='Exponent'),
 
         atol: float = Option(None, help='Absolute tolerance'),
-        continuous_time: bool = Option(False, help='Show continous time system eigenvalues.'),
+        continuous_time: bool = Option(False, help='Show continuous time system eigenvalues.'),
         grid: int = Option(100, help='Use grid with this number of elements.'),
         initial_data: Choices('sin bump') = Option('sin', help='Select the initial data.'),
         modes: int = Option(None, help='Number of DMD modes'),

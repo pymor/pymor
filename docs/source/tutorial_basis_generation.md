@@ -106,7 +106,7 @@ from pymor.basic import *
 ```
 
 Then we build a 3-by-3 thermalblock problem that we discretize using pyMOR's
-{mod}`builtin discretizers <pymor.discretizers.builtin>` (see
+{mod}`built-in discretizers <pymor.discretizers.builtin>` (see
 {doc}`tutorial_builtin_discretizer` for an introduction to pyMOR's discretization toolkit).
 
 ```{code-cell}
@@ -187,7 +187,7 @@ fom.solution_space
 
 which means that the created {{ VectorArrays }} will internally hold
 {{ NumPy_arrays }} for data storage. The number is the dimension of the
-vector. We have here a {{ NumpyVectorSpace }} because pyMOR's builtin
+vector. We have here a {{ NumpyVectorSpace }} because pyMOR's built-in
 discretizations are built around the NumPy/SciPy stack. If `fom` would
 represent a {{ Model }} living in an external PDE solver, we would have
 a different type of {{ VectorSpace }} which, for instance, might hold a
@@ -279,8 +279,8 @@ V = fom.solve(parameter_space.sample_randomly())
 
 The matrix {math}`G` of all inner products between vectors in `trivial_basis`
 is a so called [Gramian matrix](<https://en.wikipedia.org/wiki/Gramian_matrix>).
-Consequently, every {{ VectorArray }} has a {meth}`~pymor.vectorarrays.interface.VectorArray.gramian` method, which computes precisely
-this matrix:
+Consequently, every {{ VectorArray }} has a {meth}`~pymor.vectorarrays.interface.VectorArray.gramian`
+method, which computes precisely this matrix:
 
 ```{code-cell}
 G = trivial_basis.gramian()
