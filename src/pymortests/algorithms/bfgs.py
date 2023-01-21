@@ -2,15 +2,14 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import pytest
 import numpy as np
+import pytest
 from hypothesis import given
 
 import pymortests.strategies as pyst
-from pymor.algorithms.bfgs import bfgs
+from pymor.algorithms.bfgs import bfgs, get_active_and_inactive_sets
 from pymor.core.exceptions import BFGSError
 from pymordemos.linear_optimization import create_fom
-from pymor.algorithms.bfgs import get_active_and_inactive_sets
 
 
 @given(pyst.active_mu_data())
@@ -36,7 +35,7 @@ def test_bfgs():
 
     # successful run
     _, data = bfgs(fom, parameter_space, initial_guess=initial_guess)
-    assert len(data['mus']) == 17
+    assert len(data['mus']) == 13
 
     # failing run
     with pytest.raises(BFGSError):

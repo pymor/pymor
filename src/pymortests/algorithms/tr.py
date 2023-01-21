@@ -2,14 +2,14 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import pytest
 import numpy as np
+import pytest
 
 from pymor.algorithms.tr import trust_region
 from pymor.core.exceptions import TRError
-from pymordemos.linear_optimization import create_fom
-from pymor.reductors.coercive import CoerciveRBReductor
 from pymor.parameters.functionals import MinThetaParameterFunctional
+from pymor.reductors.coercive import CoerciveRBReductor
+from pymordemos.linear_optimization import create_fom
 
 
 def test_tr():
@@ -21,10 +21,10 @@ def test_tr():
 
     # successful run
     _, data = trust_region(parameter_space, reductor, radius=.1, initial_guess=initial_guess)
-    assert len(data['mus']) == 22
+    assert len(data['mus']) == 4
 
     # failing run
     # reset reductor
     reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
     with pytest.raises(TRError):
-        mu, _ = trust_region(parameter_space, reductor, radius=.1, initial_guess=initial_guess, maxiter=10)
+        mu, _ = trust_region(parameter_space, reductor, radius=.1, initial_guess=initial_guess, maxiter=10, atol=1e-6)

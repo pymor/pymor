@@ -3,15 +3,16 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import warnings
-import numpy as np
 from copy import deepcopy
 
-from pymor.parameters.base import Mu
+import numpy as np
+
 from pymor.algorithms.bfgs import bfgs
 from pymor.core.base import BasicObject
-from pymor.core.logger import getLogger
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import TRError
+from pymor.core.logger import getLogger
+from pymor.parameters.base import Mu
 
 
 class TRSurrogate(BasicObject):
@@ -57,14 +58,15 @@ class TRSurrogate(BasicObject):
         mu
             The `Mu` instance for which an extension is computed.
         """
-        U_h_mu = self.fom.solve(mu)
-        self.new_reductor = deepcopy(self.reductor)
-        try:
-            self.new_reductor.extend_basis(U_h_mu)
-            self.new_rom = self.new_reductor.reduce()
-        except Exception:
-            self.new_reductor = self.reductor
-            self.new_rom = self.rom
+        with self.logger.block('Trying to extend the basis...'):
+            U_h_mu = self.fom.solve(mu)
+            self.new_reductor = deepcopy(self.reductor)
+            try:
+                self.new_reductor.extend_basis(U_h_mu)
+                self.new_rom = self.new_reductor.reduce()
+            except Exception:
+                self.new_reductor = self.reductor
+                self.new_rom = self.rom
 
     def new_rom_output(self, mu):
         assert self.new_rom is not None, 'No new ROM found. Did you forget to call surrogate.extend()?'
@@ -93,8 +95,8 @@ class TRSurrogate(BasicObject):
 @defaults('beta', 'radius', 'shrink_factor', 'miniter', 'maxiter', 'miniter_subproblem', 'maxiter_subproblem',
           'tol', 'radius_tol', 'atol', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
 def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius=1.,
-                 shrink_factor=.5, miniter=0, maxiter=100, miniter_subproblem=0, maxiter_subproblem=100, tol=1e-6,
-                 radius_tol=.75, atol=1e-6, tol_sub=1e-6, line_search_params=None, stagnation_window=3,
+                 shrink_factor=.5, miniter=0, maxiter=30, miniter_subproblem=0, maxiter_subproblem=400, tol=1e-6,
+                 radius_tol=.75, atol=1e-16, tol_sub=1e-8, line_search_params=None, stagnation_window=3,
                  stagnation_threshold=np.inf, return_stages=False, return_subproblem_stages=False):
     """BFGS algorithm.
 
@@ -190,80 +192,92 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
 
     # compute norms
     mu_norm = np.linalg.norm(mu)
-    mu_norms = [mu_norm]
+    update_norms = []
+    foc_norms = []
     data['mus'] = [mu.copy()]
 
     old_rom_output = surrogate.rom_output(mu)
     old_fom_output = surrogate.fom_output(mu)
 
-    mu_clip_norm = 1e6
+    first_order_criticity = 1e6
     iteration = 0
     while True:
-        with logger.block(f'Running adaptive TR algorithm iteration {iteration} with radius {radius}...'):
+        with logger.block(f'Starting adaptive TR algorithm iteration {iteration + 1} with radius {radius}...'):
             rejected = False
 
             if iteration >= miniter:
-                if mu_clip_norm < tol:
-                    logger.info(f'Absolute tolerance of {tol} for parameter clipping error reached. Converged.')
+                if first_order_criticity < tol:
+                    logger.info(
+                        f'TR converged in {iteration} iterations because first order criticity tolerance of {tol}' \
+                        f" was reached. The reduced basis is of size {len(surrogate.reductor.bases['RB'])}.")
                     break
                 if iteration >= maxiter:
-                    raise TRError(f'Failed to converge after {iteration} iterations.')
+                    logger.info(f'Maximum iterations reached. Failed to converge after {iteration} iterations.')
+                    raise TRError
 
             iteration += 1
+
+            # store convergence history
+            if iteration > 0 and return_stages:
+                stages.append(surrogate.fom.parameters.parse(mu))
 
             # solve the subproblem using bfgs
             old_mu = mu.copy()
             compare_output = surrogate.rom_output(mu)
-            mu, sub_data = bfgs(
-                surrogate.rom, parameter_space, initial_guess=mu, miniter=miniter_subproblem,
-                maxiter=maxiter_subproblem, atol=atol, tol_sub=tol_sub,
-                line_search_params=line_search_params, stagnation_window=stagnation_window,
-                stagnation_threshold=stagnation_threshold, error_aware=True, beta=beta,
-                radius=radius, return_stages=return_subproblem_stages)
+            
+            with logger.block('Solving subproblem for mu {mu} with BFGS...'):
+                mu, sub_data = bfgs(
+                    surrogate.rom, parameter_space, initial_guess=mu, miniter=miniter_subproblem,
+                    maxiter=maxiter_subproblem, atol=atol, tol_sub=tol_sub,
+                    line_search_params=line_search_params, stagnation_window=stagnation_window,
+                    stagnation_threshold=stagnation_threshold, error_aware=True, beta=beta,
+                    radius=radius, return_stages=return_subproblem_stages)
 
             estimate_output = surrogate.estimate_output_error(mu)
             current_output = surrogate.rom_output(mu)
 
-            # check output error conditions
-            if current_output + estimate_output < compare_output:
-                surrogate.extend(mu)
-                current_fom_output = surrogate.fom_output(mu)
-                fom_output_diff = old_fom_output - current_fom_output
-                rom_output_diff = old_rom_output - current_output
-                if fom_output_diff >= radius_tol * rom_output_diff:
-                    # increase the radius if the model confidence is high enough
-                    radius /= shrink_factor
-            elif current_output - estimate_output > compare_output:
-                # reject new mu
-                rejected = True
-                # shrink the radius
-                radius *= shrink_factor
-            else:
-                surrogate.extend(mu)
-                current_output = surrogate.new_rom_output(mu)
-                if current_output <= compare_output:
+            with logger.block('Running output checks for TR parameters.'):
+                if current_output + estimate_output < compare_output:
+                    surrogate.extend(mu)
                     current_fom_output = surrogate.fom_output(mu)
                     fom_output_diff = old_fom_output - current_fom_output
                     rom_output_diff = old_rom_output - current_output
                     if fom_output_diff >= radius_tol * rom_output_diff:
                         # increase the radius if the model confidence is high enough
                         radius /= shrink_factor
-                else:
+                elif current_output - estimate_output > compare_output:
                     # reject new mu
                     rejected = True
                     # shrink the radius
                     radius *= shrink_factor
+                else:
+                    surrogate.extend(mu)
+                    current_output = surrogate.new_rom_output(mu)
+                    if current_output <= compare_output:
+                        current_fom_output = surrogate.fom_output(mu)
+                        fom_output_diff = old_fom_output - current_fom_output
+                        rom_output_diff = old_rom_output - current_output
+                        if fom_output_diff >= radius_tol * rom_output_diff:
+                            # increase the radius if the model confidence is high enough
+                            radius /= shrink_factor
+                    else:
+                        # reject new mu
+                        rejected = True
+                        # shrink the radius
+                        radius *= shrink_factor
 
             # handle parameter rejection
             if not rejected:
                 data['mus'].append(mu.copy())
                 mu_norm = np.linalg.norm(mu)
-                mu_norms.append(mu_norm)
+                update_norms.append(np.linalg.norm(mu - old_mu))
 
                 data['subproblem_data'].append(sub_data)
 
-                gradient = surrogate.fom_gradient(mu)
-                mu_clip_norm = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
+                with logger.block('Computing first order criticity...'):
+                    gradient = surrogate.fom_gradient(mu)
+                    first_order_criticity = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
+                    foc_norms.append(first_order_criticity)
 
                 surrogate.accept()
                 old_rom_output = current_output
@@ -281,11 +295,11 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
             if not np.isfinite(mu_norm):
                 raise TRError('Failed to converge.')
 
-        logger.info('')
-
     logger.info('')
 
-    data['mu_norms'] = np.array(mu_norms)
+    data['update_norms'] = np.array(update_norms)
+    data['foc_norms'] = np.array(foc_norms)
+    data['iterations'] = iteration
     if return_stages:
         data['stages'] = np.array(stages)
 

@@ -3,13 +3,14 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import warnings
+
 import numpy as np
 
-from pymor.parameters.base import Mu
-from pymor.core.logger import getLogger
+from pymor.algorithms.line_search import armijo
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import BFGSError
-from pymor.algorithms.line_search import armijo
+from pymor.core.logger import getLogger
+from pymor.parameters.base import Mu
 
 
 def get_active_and_inactive_sets(parameter_space, mu, epsilon=1e-8):
@@ -104,8 +105,8 @@ def update_hessian(hessian, mu, old_mu, gradient, old_gradient):
 
 
 @defaults('miniter', 'maxiter', 'atol', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
-def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, atol=0,
-         tol_sub=1e-15, line_search_params=None, stagnation_window=3, stagnation_threshold=np.inf,
+def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, atol=1e-16,
+         tol_sub=1e-8, line_search_params=None, stagnation_window=3, stagnation_threshold=np.inf,
          error_aware=False, beta=None, radius=None, return_stages=False):
     """BFGS algorithm.
 
@@ -202,12 +203,13 @@ def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, ato
     # compute norms
     mu_norm = np.linalg.norm(mu)
     update_norms = []
-    mu_norms = [mu_norm]
+    foc_norms = []
+    line_search_iterations = []
     data['mus'] = [mu.copy()]
 
     hessian = np.eye(mu.size)
 
-    mu_clip_norm = output_diff = mu_diff = update_norm = 1e6
+    first_order_criticity = output_diff = mu_diff = update_norm = 1e6
     iteration = 0
     while True:
         if iteration >= miniter:
@@ -217,12 +219,11 @@ def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, ato
             if mu_diff < atol:
                 logger.info(f'Absolute tolerance of {atol} for parameter difference reached. Converged.')
                 break
-            if mu_clip_norm < tol_sub:
-                logger.info(f'Absolute tolerance of {tol_sub} for parameter clipping error reached. Converged.')
+            if first_order_criticity < tol_sub:
+                logger.info(f'Absolute tolerance of {tol_sub} for first order criticity reached. Converged.')
                 break
             if error_aware:
-                output_error = model.estimate_output_error(mu)
-                if output_error / abs(current_output) >= beta * radius:
+                if error_aware_line_search_criterion(mu, current_output):
                     logger.info(f'Output error confidence reached for beta {beta} and radius {radius}. Converged.')
                     break
             if (iteration >= stagnation_window + 1 and not stagnation_threshold == np.inf
@@ -233,7 +234,8 @@ def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, ato
                             f'window: {stagnation_window}). Converged.')
                 break
             if iteration >= maxiter:
-                raise BFGSError(f'Failed to converge after {iteration} iterations.')
+                logger.info(f'Maximum iterations reached. Failed to converge after {iteration} iterations.')
+                raise BFGSError
 
         iteration += 1
 
@@ -250,11 +252,13 @@ def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, ato
             direction = project_hessian(hessian, -gradient, active, inactive)
 
         if error_aware:
-            step_size = armijo(output, mu, direction, grad=gradient, initial_value=current_output,
-                               additional_criterion=error_aware_line_search_criterion, **(line_search_params or {}))
+            step_size, line_search_iteration = armijo(
+                output, mu, direction, grad=gradient, initial_value=current_output,
+                additional_criterion=error_aware_line_search_criterion, **(line_search_params or {}))
         else:
-            step_size = armijo(output, mu, direction, grad=gradient,
+            step_size, line_search_iteration = armijo(output, mu, direction, grad=gradient,
                                initial_value=current_output, **(line_search_params or {}))
+        line_search_iterations.append(line_search_iteration + 1)
 
         # update mu
         old_mu = mu.copy()
@@ -269,12 +273,12 @@ def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, ato
         update_norm = np.linalg.norm(mu - old_mu)
         update_norms.append(update_norm)
         mu_norm = np.linalg.norm(mu)
-        mu_norms.append(mu_norm)
 
         # update gradient
         old_gradient = gradient.copy()
         gradient = model.parameters.parse(model.output_d_mu(mu)).to_numpy()
-        mu_clip_norm = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
+        first_order_criticity = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
+        foc_norms.append(first_order_criticity)
 
         # set new active inactive threshhold
         eps_update_mu = mu - gradient
@@ -291,17 +295,17 @@ def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, ato
             # ignore division-by-zero warnings when solution_norm or output is zero
             warnings.filterwarnings('ignore', category=RuntimeWarning)
             logger.info(f'it:{iteration} '
-                        f'norm:{mu_norm:.3e} '
+                        f'foc:{first_order_criticity:.3e} '
                         f'upd:{update_norm:.3e} '
                         f'rel_upd:{update_norm / mu_norm:.3e} ')
 
         if not np.isfinite(update_norm) or not np.isfinite(mu_norm):
             raise BFGSError('Failed to converge.')
 
-    logger.info('')
-
     data['update_norms'] = np.array(update_norms)
-    data['mu_norms'] = np.array(mu_norms)
+    data['foc_norms'] = np.array(foc_norms)
+    data['iterations'] = iteration
+    data['line_search_iterations'] = np.array(line_search_iterations)
     if return_stages:
         data['stages'] = np.array(stages)
 
