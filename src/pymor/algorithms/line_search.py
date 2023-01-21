@@ -61,7 +61,10 @@ def armijo(f, starting_point, direction, grad=None, initial_value=None, alpha_in
 
     # Compute slope if gradient is provided
     if grad is not None:
-        slope = min(np.inner(grad, direction), 0.0)
+        if isinstance(grad, np.ndarray):
+            slope = min(np.inner(grad, direction), 0.0)
+        else:
+            slope = min(grad.inner(direction), 0.0)
 
     if additional_criterion is not None:
         assert callable(additional_criterion)
@@ -89,4 +92,4 @@ def armijo(f, starting_point, direction, grad=None, initial_value=None, alpha_in
         # Adjust step size
         alpha *= tau
 
-    return alpha
+    return alpha, iteration
