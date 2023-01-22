@@ -45,11 +45,11 @@ the usual broadcasting rules apply.
 
 
 import ast
-from numbers import Number
 import operator
 from itertools import zip_longest
 from numbers import Number
 from functools import reduce
+
 import numpy as np
 
 from pymor.parameters.base import ParametricObject
