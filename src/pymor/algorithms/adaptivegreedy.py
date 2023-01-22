@@ -2,10 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import time
 from fractions import Fraction
 
 import numpy as np
-import time
 
 from pymor.algorithms.greedy import RBSurrogate
 from pymor.core.base import BasicObject
@@ -142,8 +142,8 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
 
                 # visualization
                 if visualize:
-                    from mpl_toolkits.mplot3d import Axes3D  # NOQA
                     import matplotlib.pyplot as plt
+                    from mpl_toolkits.mplot3d import Axes3D  # NOQA
                     plt.figure()
                     plt.subplot(2, 2, 1, projection=None if sample_set.dim == 2 else '3d')
                     plt.title('estimated errors')
@@ -420,8 +420,8 @@ class AdaptiveSampleSet(BasicObject):
                              [0., 1., 1.],
                              [0., 0., 1.]])
 
-            from mpl_toolkits.mplot3d import Axes3D  # NOQA
             import matplotlib.pyplot as plt
+            from mpl_toolkits.mplot3d import Axes3D  # NOQA
             if new_figure:
                 plt.figure()
                 plt.gca().add_subplot(111, projection='3d')

@@ -87,8 +87,8 @@ def main(
 
     if cache_region != 'none':
         # building a cache_id is only needed for persistent CacheRegions
-        cache_id = (f"pymordemos.thermalblock {fenics} {xblocks} {yblocks}"
-                    f"{grid} {order}")
+        cache_id = (f'pymordemos.thermalblock {fenics} {xblocks} {yblocks}'
+                    f'{grid} {order}')
         fom.enable_caching(cache_region.value, cache_id)
 
     if plot_solutions:
@@ -96,7 +96,7 @@ def main(
         Us = ()
         legend = ()
         for mu in parameter_space.sample_randomly(2):
-            print(f"Solving for diffusion = \n{mu['diffusion']} ... ")
+            print(f'Solving for diffusion = \n{mu["diffusion"]} ... ')
             sys.stdout.flush()
             Us = Us + (fom.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
@@ -153,11 +153,11 @@ def main(
         assert False  # this should never happen
 
     if pickle:
-        print(f"\nWriting reduced model to file {pickle}_reduced ...")
+        print(f'\nWriting reduced model to file {pickle}_reduced ...')
         with open(pickle + '_reduced', 'wb') as f:
             dump((rom, parameter_space), f)
         if not fenics:  # FEniCS data structures do not support serialization
-            print(f"Writing detailed model and reductor to file {pickle}_detailed ...")
+            print(f'Writing detailed model and reductor to file {pickle}_detailed ...')
             with open(pickle + '_detailed', 'wb') as f:
                 dump((fom, reductor), f)
 
@@ -208,11 +208,11 @@ def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array
     if use_list_vector_array:
         fom = convert_to_numpy_list_vector_array(fom)
 
-    summary = f'''pyMOR model:
+    summary = f"""pyMOR model:
    number of blocks: {xblocks}x{yblocks}
    grid intervals:   {grid_num_intervals}
    ListVectorArray:  {use_list_vector_array}
-'''
+"""
 
     return fom, summary
 
@@ -227,11 +227,11 @@ def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     else:
         fom = _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order)
 
-    summary = f'''FEniCS model:
+    summary = f"""FEniCS model:
    number of blocks:      {xblocks}x{yblocks}
    grid intervals:        {grid_num_intervals}
    finite element order:  {element_order}
-'''
+"""
 
     return fom, summary
 
@@ -264,10 +264,10 @@ def reduce_naive(fom, reductor, parameter_space, basis_size):
 
     elapsed_time = time.perf_counter() - tic
 
-    summary = f'''Naive basis generation:
+    summary = f"""Naive basis generation:
    basis size set: {basis_size}
    elapsed time:   {elapsed_time}
-'''
+"""
 
     return rom, summary
 
@@ -288,14 +288,14 @@ def reduce_greedy(fom, reductor, parameter_space, snapshots_per_block,
     # generate summary
     real_rb_size = rom.solution_space.dim
     training_set_size = len(training_set)
-    summary = f'''Greedy basis generation:
+    summary = f"""Greedy basis generation:
    size of training set:   {training_set_size}
    error estimator used:   {use_error_estimator}
    extension method:       {extension_alg_name}
    prescribed basis size:  {max_extensions}
    actual basis size:      {real_rb_size}
-   elapsed time:           {greedy_data["time"]}
-'''
+   elapsed time:           {greedy_data['time']}
+"""
 
     return rom, summary
 
@@ -318,14 +318,14 @@ def reduce_adaptive_greedy(fom, reductor, parameter_space, validation_mus,
     # the validation set consists of `validation_mus` random parameters plus the centers of the
     # adaptive sample set cells
     validation_mus += 1
-    summary = f'''Adaptive greedy basis generation:
+    summary = f"""Adaptive greedy basis generation:
    initial size of validation set:  {validation_mus}
    error estimator used:            {use_error_estimator}
    extension method:                {extension_alg_name}
    prescribed basis size:           {max_extensions}
    actual basis size:               {real_rb_size}
-   elapsed time:                    {greedy_data["time"]}
-'''
+   elapsed time:                    {greedy_data['time']}
+"""
 
     return rom, summary
 
@@ -354,12 +354,12 @@ def reduce_pod(fom, reductor, parameter_space, snapshots_per_block, basis_size):
     # generate summary
     real_rb_size = rom.solution_space.dim
     training_set_size = len(training_set)
-    summary = f'''POD basis generation:
+    summary = f"""POD basis generation:
    size of training set:   {training_set_size}
    prescribed basis size:  {basis_size}
    actual basis size:      {real_rb_size}
    elapsed time:           {elapsed_time}
-'''
+"""
 
     return rom, summary
 

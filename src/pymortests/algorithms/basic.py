@@ -2,24 +2,25 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import pytest
 import numpy as np
-from hypothesis import given, assume, settings
+import pytest
+from hypothesis import assume, given, settings
 from hypothesis import strategies as hyst
 
 import pymor
 from pymor.algorithms.basic import almost_equal, project_array, relative_error
 from pymor.algorithms.gram_schmidt import gram_schmidt
+
 if pymor.config.HAVE_NGSOLVE:
     from pymor.bindings.ngsolve import NGSolveVectorSpace
 else:
     class NGSolveVectorSpace:
         pass
+import pymortests.strategies as pyst
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.strategies import valid_inds, valid_inds_of_same_length
 from pymortests.vectorarray import indexed
-import pymortests.strategies as pyst
 
 
 @pyst.given_vector_arrays(

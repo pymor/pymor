@@ -2,8 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from collections.abc import Iterable, Mapping
 from collections import OrderedDict
+from collections.abc import Iterable, Mapping
 from weakref import WeakValueDictionary
 
 from pymor.core.base import BasicObject, UberMeta, abstractmethod, classinstancemethod
@@ -213,7 +213,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
 
     @insert_rule.instancemethod
     def insert_rule(self, index, rule_):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         assert isinstance(rule_, rule)
         self.rules.insert(index, rule_)
 
@@ -224,7 +224,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
 
     @append_rule.instancemethod
     def append_rule(self, rule_):
-        """:noindex:"""
+        """:noindex:"""  # noqa: D400
         assert isinstance(rule_, rule)
         self.rules.append(rule_)
 
@@ -389,7 +389,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         return children
 
     def __repr__(self):
-        return super().__repr__() + "\n\n" + format_rules(self.rules)
+        return super().__repr__() + '\n\n' + format_rules(self.rules)
 
 
 def print_children(obj):

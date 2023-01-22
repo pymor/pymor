@@ -10,7 +10,7 @@ from scipy.linalg import solve, solve_triangular
 from pymor.analyticalproblems.expressions import parse_expression
 from pymor.core.base import abstractmethod
 from pymor.core.config import config
-from pymor.parameters.base import ParametricObject, Mu
+from pymor.parameters.base import Mu, ParametricObject
 from pymor.parameters.functionals import ParameterFunctional
 
 
@@ -133,7 +133,7 @@ class Function(ParametricObject):
 
 
 class ConstantFunction(Function):
-    """A constant |Function|
+    """A constant |Function|.
 
     Defined as ::
 
@@ -409,8 +409,8 @@ class BitmapFunction(Function):
         except ImportError as e:
             raise ImportError("PIL is needed for loading images. Try 'pip install pillow'") from e
         img = Image.open(filename)
-        if not img.mode == "L":
-            self.logger.warning("Image " + filename + " not in grayscale mode. Converting to grayscale.")
+        if not img.mode == 'L':
+            self.logger.warning('Image ' + filename + ' not in grayscale mode. Converting to grayscale.')
             img = img.convert('L')
         self.__auto_init(locals())
         self.bitmap = np.array(img).T[:, ::-1]

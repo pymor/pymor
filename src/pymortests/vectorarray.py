@@ -4,19 +4,19 @@
 
 from numbers import Number
 
-import pytest
 import numpy as np
-from hypothesis import assume, settings, example
+import pytest
+from hypothesis import assume, example, settings
 from hypothesis import strategies as hyst
 
+import pymortests.strategies as pyst
 from pymor.algorithms.basic import almost_equal
 from pymor.core.config import config
+from pymor.tools.floatcmp import bounded, float_cmp
 from pymor.vectorarrays.interface import VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymor.tools.floatcmp import float_cmp, bounded
 from pymortests.base import might_exceed_deadline
 from pymortests.core.pickling import assert_picklable_without_dumps_function
-import pymortests.strategies as pyst
 
 MAX_RNG_REALIZATIONS = 30
 

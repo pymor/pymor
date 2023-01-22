@@ -3,18 +3,18 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+
 config.require('IPYTHON')
 
 
-from itertools import chain
 import os
 import time
+from itertools import chain
 
-from pymor.core.base import BasicObject
 from pymor.core import defaults
+from pymor.core.base import BasicObject
 from pymor.parallel.basic import WorkerPoolBase
 from pymor.tools.counter import Counter
-
 
 try:
     from ipyparallel import Client, TimeoutError
@@ -22,7 +22,7 @@ except ImportError:
     from IPython.parallel import Client, TimeoutError
 
 
-class new_ipcluster_pool(BasicObject):
+class new_ipcluster_pool(BasicObject):  # noqa: N801
     """Create a new IPython parallel cluster and connect to it.
 
     This context manager can be used to create an :class:`IPythonPool`

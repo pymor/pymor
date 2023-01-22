@@ -11,8 +11,8 @@ import scipy.sparse as sps
 
 from pymor.algorithms.lyapunov import (
     solve_cont_lyap_dense,
-    solve_disc_lyap_dense,
     solve_cont_lyap_lrcf,
+    solve_disc_lyap_dense,
     solve_disc_lyap_lrcf,
 )
 from pymor.operators.numpy import NumpyMatrixOperator

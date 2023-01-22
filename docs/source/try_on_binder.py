@@ -25,7 +25,7 @@ class TryOnBinder(Directive):
 
 
 def html_visit_binder_link_node(self, node):
-    html = f'''
+    html = f"""
 <div class="admonition">
 <p class="admonition-title">Run this tutorial</p>
     <a href=\"{node['target']}\">Click here</a> to run this tutorial on mybinder.org: <a href=\"{node['target']}\">
@@ -33,7 +33,7 @@ def html_visit_binder_link_node(self, node):
     </a><br/>
     <emph>Please note that starting the notebook server may take a couple of minutes.</emph>
 </div>
-    '''
+    """
     self.body.append(html)
     raise nodes.SkipNode
 
@@ -44,7 +44,7 @@ def setup(app):
     app.add_config_value('try_on_binder_slug', 'main', 'html')
     app.add_node(binder_link_node,
                  html=(html_visit_binder_link_node, None))
-    app.add_directive("try_on_binder", TryOnBinder)
+    app.add_directive('try_on_binder', TryOnBinder)
 
     return {
         'version': '0.1',

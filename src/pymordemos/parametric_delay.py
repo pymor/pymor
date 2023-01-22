@@ -43,5 +43,5 @@ def main(r: int = Argument(10, help='Order of the TF-IRKA ROM.')):
     run_mor_method_param(fom, r, w, mus, TFIRKAReductor, 'TF-IRKA')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     run(main)

@@ -102,13 +102,16 @@ The requirements files are input for `.ci/create_conda_env.py` which created a C
 spec file that contains only those dependencies that are available on all OS-Python combinations
 for which GitHub Action based CI is run in Conda envs.
 
-A GitHub Action will update all "downstream" files of `dependencies.py` if it changes in a push.
-The result will be pushed into the same branch, but due to a GitHub limitation no new workflows
-will run as a result of that push.
+A GitHub Action will update all "downstream" files of `dependencies.py` if it changes in a pull request.
+The resulting change will be added in a new pull request against the original pull request's source branch.
+The new pull request will be labeled with `pr:change` and `dependencies` and assigned to the original pull
+request's author.
 
 When adding new package dependencies, or version restrictions, these need to be reflected into
 a commit in our docker repository for the [constraints requirements](https://github.com/pymor/docker/tree/main/constraints)
 so that updated images become available to CI after entering the new commit hash into `.env`.
+A GitHub Action will automatically create a pull request against the docker repository if changes in the requirements
+files are detected. The necessary change to `.env` is included in the PR for the conda environment.
 
 (ref-makefile)=
 
@@ -260,7 +263,15 @@ coverage
 This a sanic based Python [application](https://github.com/pymor/ci_hooks_app) that receives webhook
 events from GitHub for pull requests and pushes PR branches merged into main to Gitlab to run a
 parallel CI pipeline to check whether the main branch will still pass tests after the PR is merged.
-The bridge also does this for forks of pyMOR, but these have to be whitelisted in order to protect CI secrets.
+The service also gets GitLab Pipeline events via hooks and translates those into status check
+updates.
+For GitHub the service authenticates with a PAT of the pyMOR-Bot account, for GitLab via Project Token.
+It is also registered as a GitHub app (so it can post Check statuses).
+The bridge also does this for forks of pyMOR, but the forks' user id must manually be
+add to an allow list in the config to protect CI secrets. If a PR build does not start
+for a user a comment is added in that PR.
+This service currently runs on the `ammservices` machine under the git user.
+
 
 ### GitHub Actions
 
@@ -286,6 +297,15 @@ Configured by individual files in `.github/workflows/*`
   - Pytest XML reports can also be found there.
 
 (ref_docker_images)=
+
+
+### pre-commit.ci
+
+The main pyMOR repository has the `pre-commit.ci` GitHub App installed. This runs the pre-commit hooks
+defined in `.pre-commit-config.yaml` on every pull request.
+If the hooks change files, the changes are pushed back to the PR branch.
+[Configuration](https://pre-commit.ci/#configuration) is done
+via the `.pre-commit-config.yaml` file.
 
 ### Docker images
 

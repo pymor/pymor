@@ -107,7 +107,7 @@ Dirichlet boundary conditions
 u((x_1, x_2), \mu) = 2x_1\mu + 0.5,\quad x=(x_1, x_2) \in \partial\Omega.
 ```
 
-We discretize the problem using pyMOR's builtin discretization toolkit as
+We discretize the problem using pyMOR's built-in discretization toolkit as
 explained in {doc}`tutorial_builtin_discretizer`:
 
 ```{code-cell}
@@ -395,6 +395,7 @@ np.median(outputs_speedups)
 
 ## Neural networks for instationary problems
 
+
 To solve instationary problems using neural networks, we have extended the
 {class}`~pymor.reductors.neural_network.NeuralNetworkReductor` to the
 {class}`~pymor.reductors.neural_network.NeuralNetworkInstationaryReductor`, which treats time
@@ -525,7 +526,7 @@ basis coefficients (similar to the
 {class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel`) or approximations of the
 output quantities (similar to the
 {class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel`). For state approximations
-using a reduced basis, one can apply the 
+using a reduced basis, one can apply the
 {class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor` and use the
 corresponding
 {class}`~pymor.models.neural_network.NeuralNetworkLSTMInstationaryModel`.

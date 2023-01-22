@@ -1,7 +1,7 @@
-from pymortests.base import runmodule
 import numpy as np
+
 from pymor.analyticalproblems.expressions import parse_expression
-from pymortests.base import skip_if_missing
+from pymortests.base import runmodule, skip_if_missing
 
 
 @skip_if_missing('FENICS')
@@ -40,5 +40,5 @@ def test_fenics_expression_scalar():
     assert np.allclose(eval, val)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

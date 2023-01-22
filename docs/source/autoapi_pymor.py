@@ -62,7 +62,7 @@ SKIPS_RE = re.compile(r'(?:{})'.format('|'.join(map(re.escape, sorted(MANUAL_SKI
 
 def skip(app, what, name, obj, skip, options):
     try:
-        if ":noindex:" in obj.docstring:
+        if ':noindex:' in obj.docstring:
             print(f'HERE DO_SKIP {name}')
             return True
     except AttributeError:

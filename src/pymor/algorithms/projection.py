@@ -4,12 +4,22 @@
 
 import numpy as np
 
-from pymor.algorithms.rules import RuleTable, match_class, match_generic, match_always
-from pymor.core.exceptions import RuleNotMatchingError, NoMatchingRuleError
-from pymor.operators.block import BlockOperatorBase, BlockRowOperator, BlockColumnOperator
-from pymor.operators.constructions import (LincombOperator, ConcatenationOperator, ConstantOperator, ProjectedOperator,
-                                           ZeroOperator, AffineOperator, AdjointOperator, SelectionOperator,
-                                           IdentityOperator, VectorArrayOperator)
+from pymor.algorithms.rules import RuleTable, match_always, match_class, match_generic
+from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
+from pymor.operators.block import BlockColumnOperator, BlockOperatorBase, BlockRowOperator
+from pymor.operators.constructions import (
+    AdjointOperator,
+    AffineOperator,
+    ConcatenationOperator,
+    ConstantOperator,
+    IdentityOperator,
+    LincombOperator,
+    ProjectedOperator,
+    QuadraticFunctional,
+    SelectionOperator,
+    VectorArrayOperator,
+    ZeroOperator,
+)
 from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -242,6 +252,10 @@ class ProjectRules(RuleTable):
         else:
             return np.sum(projected_ops)
 
+    @match_class(QuadraticFunctional)
+    def action_QuadraticFunctional(self, op):
+        return QuadraticFunctional(project(op.operator, self.source_basis, self.source_basis), name=op.name)
+
 
 def project_to_subbasis(op, dim_range=None, dim_source=None):
     """Project already projected |Operator| to a subbasis.
@@ -371,3 +385,9 @@ class ProjectToSubbasisRules(RuleTable):
             else op.range_basis[:dim_range]
         return ProjectedOperator(op.operator, range_basis, source_basis, product=None,
                                  solver_options=op.solver_options)
+
+    @match_class(QuadraticFunctional)
+    def action_QuadraticFunctional(self, op):
+        _, dim_source = self.dim_range, self.dim_source
+        return QuadraticFunctional(
+            project_to_subbasis(op.operator, dim_range=dim_source, dim_source=dim_source), name=op.name)

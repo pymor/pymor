@@ -16,9 +16,9 @@ a single function call.
 import numpy as np
 from scipy.linalg import solve
 
-from pymor.core.logger import getLogger
 from pymor.algorithms.pod import pod as pod_alg
-from pymor.analyticalproblems.functions import Function, EmpiricalInterpolatedFunction
+from pymor.analyticalproblems.functions import EmpiricalInterpolatedFunction, Function
+from pymor.core.logger import getLogger
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interface import RemoteObject

@@ -2,12 +2,13 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.operators.interface import Operator
-from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
+import math
 
 import numpy as np
-import math
-from model import Vector, DiffusionOperator
+from model import DiffusionOperator, Vector
+
+from pymor.operators.interface import Operator
+from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
 
 class WrappedVector(CopyOnWriteVector):

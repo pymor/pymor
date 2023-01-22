@@ -124,7 +124,7 @@ pyMOR's main developers form a small
 of developers which, apart from making contributions to pyMOR,
 have the job of guiding and maintaining the future development of
 pyMOR. They are the only persons with direct push acces to pyMOR's
-main repository and have administrative priviliges over the
+main repository and have administrative privileges over the
 [pyMOR organization](https://github.com/pymor) on GitHub.
 
 As pyMOR is an open project, everyone is invited to step up to
@@ -136,7 +136,7 @@ in discussions on the mailing list and through GitHub. The applicant
 should be able to commit to the project for a time period of at
 least one year.
 
-Main developers will be automatically retired (losing all priviliges)
+Main developers will be automatically retired (losing all privileges)
 if they have not shown any relevant activity over a period of one
 year. Under special circumstances, the main developers
 (excluding the developer in question) may decide by simple majority

@@ -4,21 +4,20 @@
 from pathlib import Path
 
 from pymor.core.config import config
+
 config.require('NGSOLVE')
-
-
-from pymor.core.defaults import defaults
-from pymor.tools.io import change_to_directory
 
 
 import ngsolve as ngs
 import numpy as np
 
 from pymor.core.base import ImmutableObject
+from pymor.core.defaults import defaults
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
+from pymor.tools.io import change_to_directory
 from pymor.vectorarrays.interface import VectorArray
+from pymor.vectorarrays.list import ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
 
 
 class NGSolveVectorCommon:

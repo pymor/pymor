@@ -3,10 +3,12 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 if __name__ == '__main__':
-    from pymor.tools import mpi
-    import pytest
     import os
     from pathlib import Path
+
+    import pytest
+
+    from pymor.tools import mpi
 
     this_dir = Path(__file__).resolve().parent
     pymor_root_dir = (this_dir / '..' / '..').resolve()

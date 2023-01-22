@@ -38,7 +38,7 @@ services:
       - NB_DIR
       - PYMOR_HYPOTHESIS_PROFILE
       - PYMOR_PYTEST_EXTRA
-    entrypoint: /usr/local/bin/dev-entrypoint.bash
+
     # xsrf check disabled for docs viewing with chrome. Somewhat related issue: https://github.com/jupyterlab/jupyterlab/issues/6106
     # and see also https://bugs.chromium.org/p/chromium/issues/detail?id=455987
     command: >
@@ -72,6 +72,8 @@ services:
     image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_${PYMOR_TEST_OS}:${PYPI_MIRROR_TAG}
     volumes:
         - ./..:/pymor
+    environment:
+      - CI_PROJECT_DIR=/pymor
     depends_on:
       - pypi_mirror
     command: /bin/bash
@@ -79,8 +81,11 @@ services:
     image: pymor/deploy_checks:devpi_${PYMOR_TEST_OS}
     volumes:
         - ./..:/pymor
+    environment:
+      - CI_PROJECT_DIR=/pymor
     depends_on:
       - pymor__devpi
+      - pypi_mirror
     command: /bin/bash
 
   pymor__devpi:

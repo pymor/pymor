@@ -6,10 +6,10 @@ import numpy as np
 
 from pymor.algorithms.pod import pod
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
+from pymor.discretizers.builtin import OnedGrid
 from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer
 from pymor.models.basic import InstationaryModel
-from pymor.discretizers.builtin import OnedGrid
-from pymor.operators.constructions import VectorOperator, LincombOperator
+from pymor.operators.constructions import LincombOperator, VectorOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.reductors.basic import InstationaryRBReductor
 

@@ -5,16 +5,17 @@ import asyncio
 from io import BytesIO
 
 import numpy as np
-from ipywidgets import IntSlider, interact, widgets, Play, Layout, Label
 import pythreejs as p3js
+from ipywidgets import IntSlider, Label, Layout, Play, interact, widgets
+
 try:
     from matplotlib import colormaps
 except ImportError:  # matplotlib<3.5
     from matplotlib.cm import get_cmap as colormaps
 
 from pymor.core import config
-from pymor.discretizers.builtin.grids.referenceelements import triangle, square
 from pymor.discretizers.builtin.grids.constructions import flatten_grid
+from pymor.discretizers.builtin.grids.referenceelements import square, triangle
 from pymor.vectorarrays.interface import VectorArray
 
 # we should try to limit ourselves to webgl 1.0 here since 2.0 (draft) is not as widely supported
@@ -214,6 +215,7 @@ class ColorBarRenderer(widgets.HBox):
 
     def _gen_sprite(self):
         from PIL import Image, ImageDraw
+
         # upsacle to pow2
         bar_width = 25
         sprite_size = (bar_width, self.render_size[1])

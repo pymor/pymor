@@ -14,9 +14,13 @@ repos:
         exclude: "src/pymor/algorithms/rules.py"
     -   id: pretty-format-json
         args: [--autofix]
--   repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
-    hooks:
-    -   id: flake8
-        additional_dependencies: [flake8-docstrings, flake8-rst-docstrings]
-
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: 'v0.0.219'
+  hooks:
+    - id: ruff
+      # Respect `exclude` and `extend-exclude` settings.
+      args: ["--force-exclude", "--fix"]
+- repo: https://github.com/DavidAnson/markdownlint-cli2
+  rev: v0.4.0
+  hooks:
+  - id: markdownlint-cli2

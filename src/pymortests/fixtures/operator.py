@@ -3,8 +3,8 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from numpy.polynomial.polynomial import Polynomial
 import pytest
+from numpy.polynomial.polynomial import Polynomial
 
 from pymor.core.config import config
 from pymor.operators.constructions import IdentityOperator
@@ -405,7 +405,7 @@ def misc_operator_with_arrays_and_products_factory(n):
         V = op.range.make_array([V0, V1])
         return op, mu, U, V, sp, rp
     elif n == 10:
-        from pymor.operators.block import BlockDiagonalOperator, BlockColumnOperator
+        from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator
         from pymor.parameters.functionals import ProjectionParameterFunctional
         op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3)
         op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3)
@@ -497,10 +497,11 @@ unpicklable_misc_operator_with_arrays_and_products_generators = \
 if config.HAVE_FENICS:
     def fenics_matrix_operator_factory():
         import dolfin as df
+
         from pymor.bindings.fenics import FenicsMatrixOperator
 
         mesh = df.UnitSquareMesh(10, 10)
-        V = df.FunctionSpace(mesh, "CG", 2)
+        V = df.FunctionSpace(mesh, 'CG', 2)
 
         u = df.TrialFunction(V)
         v = df.TestFunction(V)
@@ -515,14 +516,15 @@ if config.HAVE_FENICS:
 
     def fenics_nonlinear_operator_factory():
         import dolfin as df
-        from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsMatrixOperator
+
+        from pymor.bindings.fenics import FenicsMatrixOperator, FenicsOperator, FenicsVectorSpace
 
         class DirichletBoundary(df.SubDomain):
             def inside(self, x, on_boundary):
                 return abs(x[0] - 1.0) < df.DOLFIN_EPS and on_boundary
 
         mesh = df.UnitSquareMesh(10, 10)
-        V = df.FunctionSpace(mesh, "CG", 2)
+        V = df.FunctionSpace(mesh, 'CG', 2)
 
         g = df.Constant(1.)
         c = df.Constant(1.)
@@ -532,7 +534,7 @@ if config.HAVE_FENICS:
         u = df.TrialFunction(V)
         v = df.TestFunction(V)
         w = df.Function(V)
-        f = df.Expression("x[0]*sin(x[1])", degree=2)
+        f = df.Expression('x[0]*sin(x[1])', degree=2)
         F = df.inner((1 + c*w**2)*df.grad(w), df.grad(v))*df.dx - f*v*df.dx
 
         space = FenicsVectorSpace(V)
@@ -638,4 +640,4 @@ def picklable_operator(reset_rng, request):
 
 @pytest.fixture
 def loadable_matrices(shared_datadir):
-    return (shared_datadir / "matrices").glob('*')
+    return (shared_datadir / 'matrices').glob('*')

@@ -3,9 +3,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sps
-import matplotlib.pyplot as plt
 from typer import Argument, run
 
 from pymor.core.logger import set_log_levels
@@ -15,8 +15,14 @@ from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.reductors.bt import BTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.mt import MTReductor
-from pymor.reductors.sobt import (SOBTpReductor, SOBTvReductor, SOBTpvReductor, SOBTvpReductor,
-                                  SOBTfvReductor, SOBTReductor)
+from pymor.reductors.sobt import (
+    SOBTfvReductor,
+    SOBTpReductor,
+    SOBTpvReductor,
+    SOBTReductor,
+    SOBTvpReductor,
+    SOBTvReductor,
+)
 from pymor.reductors.sor_irka import SORIRKAReductor
 from pymordemos.parametric_heat import fom_properties_param, run_mor_method_param
 
@@ -78,5 +84,5 @@ def main(
     run_mor_method_param(so_sys.to_lti(), r, w, mus, MTReductor, 'MT')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     run(main)

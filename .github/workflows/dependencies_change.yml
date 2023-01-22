@@ -1,13 +1,38 @@
 name: Dependencies changed
 on:
-  push:
+  pull_request_target:
     paths:
       - 'dependencies.py'
       - '.ci/create_conda_env.py'
+      - '.ci/gitlab/template.ci.py'
+
+concurrency:
+    group: ${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}
+    cancel-in-progress: true
+
 jobs:
-  update:
+  requirements:
     name: Update dependency files
     runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: pip install -r requirements-ci.txt
+      - name: Update requirements
+        run: python ./dependencies.py
+      - name: Upload new requirements
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: requirements
+          path: requirements*.txt
+  conda:
+    name: Update conda environment
+    runs-on: ubuntu-22.04
+    needs: requirements
     steps:
       - uses: actions/checkout@v3
       - uses: conda-incubator/setup-miniconda@v2
@@ -20,22 +45,31 @@ jobs:
           channel-priority: true
       - name: Install dependencies
         run: pip install -r requirements-ci.txt
-      - name: Update requirements
-        run: python ./dependencies.py
+      - uses: actions/download-artifact@v3
+        with:
+          name: requirements
+          path: .
       - name: Update env
         run: python .ci/create_conda_env.py requirements*.txt
-      - uses: peter-evans/create-pull-request@v4.2.3
-        name: Create a PR for changed env
-        with:
-          commit-message: "[Bot] Update requirements and environments"
-          title: "[Bot] Update requirements and environments"
-          author: pyMOR Bot <ci@pymor.org>
-          labels: pr:change
-          delete-branch: true
-          branch-suffix: short-commit-hash
       - name: Upload Logfile
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: create_conda_env.log.txt
-          path: .ci/create_conda_env.log
+          path: ./.ci/create_conda_env.log
+          if-no-files-found: error
+      - name: Check new env usable
+        uses: ./.github/actions/miniconda_tests
+        with:
+          python: "3.9"
+          prefix: "/usr/share/miniconda3/envs/pyMOR-ci_changes"
+          os: "ubuntu-22.04"
+          results_file: result_requirements.xml
+          coverage_file: coverage_result_requirements
+          hypothesis_profile: "dev" # minimal test parametrization
+      - name: Upload new requirements
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: conda_env
+          path: .ci/conda-env.yml

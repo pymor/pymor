@@ -19,7 +19,7 @@ from pymor.tools import formatsrc, timing
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
 from pymor.tools.formatsrc import print_source
-from pymor.tools.io import safe_temporary_filename, change_to_directory
+from pymor.tools.io import change_to_directory, safe_temporary_filename
 from pymor.tools.plot import adaptive
 from pymor.tools.random import get_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -186,13 +186,13 @@ def testDeprecated():
     # Cause all warnings to always be triggered.
     import warnings
     with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
+        warnings.simplefilter('always')
         # Trigger a warning.
         deprecated_function()
         # Verify some things
         assert len(w) == 1
         assert issubclass(w[-1].category, DeprecationWarning)
-        assert "DeprecationWarning" in str(w[-1].message)
+        assert 'DeprecationWarning' in str(w[-1].message)
 
 
 def test_formatsrc():
@@ -222,6 +222,7 @@ def test_load_matrix(loadable_matrices):
 @pytest.mark.parametrize('ext', ['.mat', '.mtx', '.mtz.gz', '.npy', '.npz', '.txt'])
 def test_save_load_matrix(ext):
     import filecmp
+
     from pymor.tools.io import load_matrix, save_matrix
     A = np.eye(2)
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -320,5 +321,5 @@ def test_plot_complex(xscale, yscale):
     assert fvals.shape[0] == len(points)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

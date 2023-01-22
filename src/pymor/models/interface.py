@@ -6,7 +6,7 @@ import numpy as np
 
 from pymor.core.cache import CacheableObject
 from pymor.operators.constructions import induced_norm
-from pymor.parameters.base import Parameters, ParametricObject, Mu
+from pymor.parameters.base import Mu, Parameters, ParametricObject
 from pymor.tools.frozendict import FrozenDict
 
 
@@ -115,7 +115,7 @@ class Model(CacheableObject, ParametricObject):
         return self.output_functional.apply(solution, mu=mu).to_numpy()
 
     def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu=None, **kwargs):
-        """Compute the partial derivative of the solution w.r.t. a parameter index
+        """Compute the partial derivative of the solution w.r.t. a parameter index.
 
         Parameters
         ----------
@@ -135,7 +135,7 @@ class Model(CacheableObject, ParametricObject):
         raise NotImplementedError
 
     def _compute_solution_d_mu(self, solution, mu=None, **kwargs):
-        """Compute all partial derivative of the solution w.r.t. a parameter index
+        """Compute all partial derivative of the solution w.r.t. a parameter index.
 
         Parameters
         ----------
@@ -158,7 +158,7 @@ class Model(CacheableObject, ParametricObject):
         return sensitivities
 
     def _compute_output_d_mu(self, solution, mu=None, return_array=False, **kwargs):
-        """Compute the gradient w.r.t. the parameter of the output functional
+        """Compute the gradient w.r.t. the parameter of the output functional.
 
         Parameters
         ----------
@@ -516,7 +516,7 @@ class Model(CacheableObject, ParametricObject):
             return data['output']
 
     def solve_d_mu(self, parameter, index, mu=None, input=None, **kwargs):
-        """Solve for the partial derivative of the solution w.r.t. a parameter index
+        """Solve for the partial derivative of the solution w.r.t. a parameter index.
 
         Parameters
         ----------

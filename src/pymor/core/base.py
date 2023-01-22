@@ -49,15 +49,15 @@ functionality:
 """
 
 import abc
-from functools import wraps
 import inspect
 import os
-from types import FunctionType
 import uuid
+from functools import wraps
+from types import FunctionType
 
 from pymor.core import logger
 from pymor.core.exceptions import ConstError
-from pymor.tools.formatrepr import format_repr, _format_generic
+from pymor.tools.formatrepr import _format_generic, format_repr
 
 DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1
 NoneType = type(None)
@@ -231,7 +231,7 @@ abstractclassmethod = abc.abstractclassmethod
 abstractstaticmethod = abc.abstractstaticmethod
 
 
-class classinstancemethod:
+class classinstancemethod: # noqa: N801
 
     def __init__(self, cls_meth):
         self.cls_meth = cls_meth

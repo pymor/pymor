@@ -15,7 +15,7 @@ def main(
 ):
     """Reduces a FEniCS-based nonlinear diffusion problem using POD/DEIM."""
     from pymor.tools import mpi
-    config.require("FENICS")
+    config.require('FENICS')
 
     if mpi.parallel:
         from pymor.models.mpi import mpi_wrap_model
@@ -52,6 +52,7 @@ def main(
 
     # ### ROM validation
     import time
+
     import numpy as np
 
     # ensure that FFC is not called during runtime measurements
@@ -86,7 +87,7 @@ def discretize(dim, n, order):
     else:
         raise NotImplementedError
 
-    V = df.FunctionSpace(mesh, "CG", order)
+    V = df.FunctionSpace(mesh, 'CG', order)
 
     g = df.Constant(1.0)
     c = df.Constant(1.)
@@ -99,14 +100,14 @@ def discretize(dim, n, order):
 
     u = df.Function(V)
     v = df.TestFunction(V)
-    f = df.Expression("x[0]*sin(x[1])", degree=2)
+    f = df.Expression('x[0]*sin(x[1])', degree=2)
     F = df.inner((1 + c*u**2)*df.grad(u), df.grad(v))*df.dx - f*v*df.dx
 
     df.solve(F == 0, u, bc,
-             solver_parameters={"newton_solver": {"relative_tolerance": 1e-6}})
+             solver_parameters={'newton_solver': {'relative_tolerance': 1e-6}})
 
     # ### pyMOR wrapping
-    from pymor.bindings.fenics import FenicsVectorSpace, FenicsOperator, FenicsVisualizer
+    from pymor.bindings.fenics import FenicsOperator, FenicsVectorSpace, FenicsVisualizer
     from pymor.models.basic import StationaryModel
     from pymor.operators.constructions import VectorOperator
 

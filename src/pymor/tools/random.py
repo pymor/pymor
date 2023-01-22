@@ -31,12 +31,12 @@ paths to ensure the desired behavior. For an advanced example, see
 :mod:`pymor.algorithms.hapod`.
 """
 
-from contextvars import ContextVar
 import inspect
-
-from pymor.core.defaults import defaults
+from contextvars import ContextVar
 
 import numpy as np
+
+from pymor.core.defaults import defaults
 
 
 def get_rng():

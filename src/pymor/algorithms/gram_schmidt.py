@@ -65,7 +65,7 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
         initial_norm = A[i].norm(product)[0]
 
         if initial_norm <= atol:
-            logger.info(f"Removing vector {i} of norm {initial_norm}")
+            logger.info(f'Removing vector {i} of norm {initial_norm}')
             remove.append(i)
             continue
 
@@ -92,13 +92,13 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
 
                 # remove vector if it got too small
                 if norm <= rtol * initial_norm:
-                    logger.info(f"Removing linearly dependent vector {i}")
+                    logger.info(f'Removing linearly dependent vector {i}')
                     remove.append(i)
                     break
 
                 # check if reorthogonalization should be done
                 if reiterate and norm < reiteration_threshold * old_norm:
-                    logger.info(f"Orthonormalizing vector {i} again")
+                    logger.info(f'Orthonormalizing vector {i} again')
                 else:
                     A[i].scal(1 / norm)
                     R[i, i] = norm
@@ -114,7 +114,7 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
             if err >= check_tol:
-                raise AccuracyError(f"result not orthogonal (max err={err})")
+                raise AccuracyError(f'result not orthogonal (max err={err})')
 
     if return_R:
         return A, R
@@ -188,7 +188,7 @@ def gram_schmidt_biorth(V, W, product=None,
 
                 # check if reorthogonalization should be done
                 if reiterate and norm < reiteration_threshold * old_norm:
-                    logger.info(f"Projecting vector V[{i}] again")
+                    logger.info(f'Projecting vector V[{i}] again')
                 else:
                     V[i].scal(1 / norm)
                     break
@@ -214,7 +214,7 @@ def gram_schmidt_biorth(V, W, product=None,
 
                 # check if reorthogonalization should be done
                 if reiterate and norm < reiteration_threshold * old_norm:
-                    logger.info(f"Projecting vector W[{i}] again")
+                    logger.info(f'Projecting vector W[{i}] again')
                 else:
                     W[i].scal(1 / norm)
                     break
@@ -229,6 +229,6 @@ def gram_schmidt_biorth(V, W, product=None,
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
             if err >= check_tol:
-                raise AccuracyError(f"result not biorthogonal (max err={err})")
+                raise AccuracyError(f'result not biorthogonal (max err={err})')
 
     return V, W

@@ -4,8 +4,8 @@
 
 from pymor.algorithms.timestepping import ImplicitMidpointTimeStepper
 from pymor.models.basic import InstationaryModel
-from pymor.operators.constructions import ConcatenationOperator, NumpyConversionOperator, VectorOperator
 from pymor.operators.block import BlockOperator
+from pymor.operators.constructions import ConcatenationOperator, NumpyConversionOperator, VectorOperator
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyVectorSpace
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator
@@ -110,7 +110,7 @@ class QuadraticHamiltonianModel(BaseQuadraticHamiltonianModel):
     H_op
         The |Operator| H_op.
     h
-        The state-independet part of the Hamiltonian h.
+        The state-independent part of the Hamiltonian h.
     time_stepper
         The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepper>`
         to be used by :meth:`~pymor.models.interface.Model.solve`.

@@ -5,9 +5,11 @@
 
 # DO NOT use any python features here that require 3.6 or newer
 
-import sys
 import os
-from setuptools import setup, find_packages
+import sys
+
+from setuptools import find_packages, setup
+
 # versioneer (+dependencies) does not work in a pep518/7 context w/o modification here
 sys.path.insert(0, os.path.dirname(__file__))
 import versioneer  # noqa
@@ -19,10 +21,10 @@ setup_requires = dependencies.setup_requires()
 install_suggests = dependencies.install_suggests
 # we'll need to tweak matplotlibs config dir or else
 # installing it from setup will result in a SandboxViolation
-os.environ['MPLCONFIGDIR'] = "."
+os.environ['MPLCONFIGDIR'] = '.'
 
 
-class DependencyMissing(Exception):
+class DependencyMissingError(Exception):
 
     def __init__(self, names):
         super().__init__('Try: "for i in {} ; do pip install $i ; done"'.format(' '.join(names)))

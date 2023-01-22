@@ -9,17 +9,18 @@ scalar data assigned to one- and two-dimensional grids using
 :mod:`matplotlib`. These widgets are not intended to be used directly.
 """
 from pymor.core.config import config
+
 config.require('MATPLOTLIB')
 
 
 import numpy as np
 from IPython.core.display import HTML
 from matplotlib import animation
-from pymor.core.base import abstractmethod
 
+from pymor.core.base import abstractmethod
 from pymor.discretizers.builtin.grids.constructions import flatten_grid
 from pymor.discretizers.builtin.grids.oned import OnedGrid
-from pymor.discretizers.builtin.grids.referenceelements import triangle, square
+from pymor.discretizers.builtin.grids.referenceelements import square, triangle
 
 
 class MatplotlibAxesBase:

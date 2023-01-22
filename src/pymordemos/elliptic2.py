@@ -8,7 +8,7 @@ from typer import Argument, Option, run
 
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.functions import ExpressionFunction, LincombFunction, ConstantFunction
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, LincombFunction
 from pymor.discretizers.builtin import discretize_stationary_cg, discretize_stationary_fv
 from pymor.parameters.functionals import ProjectionParameterFunctional
 
@@ -18,16 +18,16 @@ def main(
     n: int = Argument(..., help='Triangle count per direction'),
     norm: str = Argument(
         ...,
-        help="h1: compute the h1-norm of the last snapshot.\n\n"
-             "l2: compute the l2-norm of the last snapshot.\n\n"
-             "k: compute the energy norm of the last snapshot, where the energy-product"
+        help='h1: compute the h1-norm of the last snapshot.\n\n'
+             'l2: compute the l2-norm of the last snapshot.\n\n'
+             'k: compute the energy norm of the last snapshot, where the energy-product'
              "is constructed with a parameter {'mu': k}."
     ),
 
     fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
 ):
     """Solves the Poisson equation in 2D using pyMOR's builtin discreization toolkit."""
-    norm = float(norm) if not norm.lower() in ('h1', 'l2') else norm.lower()
+    norm = float(norm) if norm.lower() not in ('h1', 'l2') else norm.lower()
 
     rhss = [ExpressionFunction('10', 2),
             LincombFunction(

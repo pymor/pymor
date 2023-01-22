@@ -4,8 +4,8 @@
 
 import math as m
 
-from hypothesis import strategies as hyst
 import numpy as np
+from hypothesis import strategies as hyst
 
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.grids.rect import RectGrid
@@ -43,8 +43,8 @@ def _hy_rect_tria_kwargs(draw, grid_type):
                                      interval_i.map(lambda y: y if not identify_bottom_top else max(2, y))))
 
     domain = _hy_domain_bounds(draw, grid_type=grid_type)
-    return {"num_intervals": num_intervals, "domain": domain, "identify_left_right": identify_left_right,
-            "identify_bottom_top": identify_bottom_top}
+    return {'num_intervals': num_intervals, 'domain': domain, 'identify_left_right': identify_left_right,
+            'identify_bottom_top': identify_bottom_top}
 
 
 @hyst.composite

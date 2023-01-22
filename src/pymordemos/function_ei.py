@@ -8,9 +8,9 @@ import sys
 import numpy as np
 from typer import Argument, Option, run
 
-from pymor.algorithms.greedy import rb_greedy
 from pymor.algorithms.ei import interpolate_function
 from pymor.algorithms.error import reduction_error_analysis
+from pymor.algorithms.greedy import rb_greedy
 from pymor.analyticalproblems.domaindescriptions import RectDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
@@ -98,8 +98,8 @@ def main(
                                        test_mus=problem.parameter_space.sample_randomly(test),
                                        plot=True)
     print(results['summary'])
-    import matplotlib.pyplot
-    matplotlib.pyplot.show()
+    import matplotlib.pyplot as plt
+    plt.show()
 
     mumax = results['max_error_mus'][0, -1]
     U = fom.solve(mumax)

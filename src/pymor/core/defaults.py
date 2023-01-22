@@ -46,17 +46,16 @@ used to specify the path of a configuration file. If empty or set to
     |defaults| (see :func:`defaults_changes`).
 """
 
-from collections import defaultdict, OrderedDict
 import functools
 import importlib
 import inspect
 import pkgutil
 import textwrap
 import threading
+from collections import OrderedDict, defaultdict
 
-from pymor.core.exceptions import DependencyMissing
+from pymor.core.exceptions import DependencyMissingError
 from pymor.tools.table import format_table
-
 
 _default_container = None
 
@@ -84,11 +83,11 @@ class DefaultContainer:
 
         if func.__doc__ is not None:
             new_docstring = inspect.cleandoc(func.__doc__)
-            new_docstring += '''
+            new_docstring += """
 
 Defaults
 --------
-'''
+"""
             new_docstring += '\n'.join(textwrap.wrap(', '.join(args), 80)) + '\n(see :mod:`pymor.core.defaults`)'
             func.__doc__ = new_docstring
 
@@ -254,7 +253,7 @@ def _import_all(package_name='pymor'):
         for p in pkgutil.walk_packages(package.__path__, package_name + '.', onerror=onerror):
             try:
                 importlib.import_module(p[1])
-            except DependencyMissing:
+            except DependencyMissingError:
                 pass
             except ImportError:
                 from pymor.core.logger import getLogger
@@ -330,12 +329,12 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
     key_width = max(max([0] + list(map(len, ks))) for ks in keys)
 
     with open(filename, 'wt') as f:
-        print('''
+        print("""
 # pyMOR defaults config file
 # This file has been automatically created by pymor.core.defaults.write_defaults_to_file'.
 
 d = {}
-'''[1:], file=f)
+"""[1:], file=f)
 
         lks = keys[0].split('.')[:-1] if keys else ''
         for c, k, v in zip(as_comment, keys, values):

@@ -19,12 +19,12 @@ def test_pickle_without_dumps_function(picklable_analytical_problem):
 def test_missing_font():
     name = 'ThisFontIsMissing'
     with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
+        warnings.simplefilter('always')
         text_problem(text='pyMOR', font_name=name)
         assert len(w) == 1
         assert issubclass(w[-1].category, ResourceWarning)
         assert name in str(w[-1].message)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

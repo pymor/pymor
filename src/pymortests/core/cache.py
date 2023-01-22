@@ -2,11 +2,12 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 import contextlib
+import os
 import tempfile
 import time
-import os
-from uuid import uuid4
 from datetime import datetime, timedelta
+from uuid import uuid4
+
 import numpy as np
 import pytest
 
@@ -14,7 +15,6 @@ from pymor.core import cache
 from pymor.models.basic import StationaryModel
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.base import runmodule
-
 
 SLEEP_DELTA = timedelta(milliseconds=200)
 
@@ -80,7 +80,7 @@ def test_runtime(class_type):
 
 @contextlib.contextmanager
 def _close_cache(backend):
-    """This avoids the tmp dir trying to rm still open files with the disk backend"""
+    """This avoids the tmp dir trying to rm still open files with the disk backend."""
     yield
     try:
         backend._cache.close()
@@ -122,5 +122,5 @@ def test_memory_region_safety():
     assert len(U) == 1
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

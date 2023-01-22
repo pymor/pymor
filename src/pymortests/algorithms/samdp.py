@@ -3,12 +3,11 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 import scipy.sparse as sps
 
 from pymor.algorithms.samdp import samdp
 from pymor.operators.numpy import NumpyMatrixOperator
-
-import pytest
 
 n_list = [50, 100]
 m_list = [1, 2]

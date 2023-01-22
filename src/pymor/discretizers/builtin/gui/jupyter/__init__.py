@@ -12,8 +12,8 @@ inside the given notebook.
 """
 import IPython
 
-from pymor.core.defaults import defaults
 from pymor.core.config import config
+from pymor.core.defaults import defaults
 
 # AFAICT there is no robust way to query for loaded extensions
 # and we have to make sure we do not setup two redirects
@@ -22,18 +22,23 @@ _extension_loaded = False
 
 @defaults('backend')
 def get_visualizer(backend='py3js'):
-    if backend not in ('py3js', 'MPL'):
+    if backend not in ('py3js', 'MPL', 'k3d'):
         raise ValueError
     if backend == 'py3js' and config.HAVE_PYTHREEJS:
         from pymor.discretizers.builtin.gui.jupyter.threejs import visualize_py3js
         return visualize_py3js
+    elif backend == 'k3d':
+        assert config.HAVE_K3D
+        from pymor.discretizers.builtin.gui.jupyter.kthreed import visualize_k3d
+        return visualize_k3d
     else:
         from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_patch
         return visualize_patch
 
 
 def progress_bar(sequence, every=None, size=None, name='Parameters'):
-    from ipywidgets import IntProgress, HTML, VBox
+    from ipywidgets import HTML, IntProgress, VBox
+
     # c&p from https://github.com/kuk/log-progress
     is_iterator = False
     if size is None:

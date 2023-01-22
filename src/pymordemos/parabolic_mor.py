@@ -6,10 +6,9 @@
 import numpy as np
 from typer import Argument, run
 
-from pymor.basic import *
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
+from pymor.basic import *
 from pymor.tools.typer import Choices
-
 
 # parameters for high-dimensional models
 GRID_INTERVALS = 50
@@ -200,7 +199,7 @@ def _discretize_fenics():
     # wrap everything as a pyMOR model
     ##################################
 
-    from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
+    from pymor.bindings.fenics import FenicsMatrixOperator, FenicsVectorSpace, FenicsVisualizer
 
     fom = InstationaryModel(
         T=1.,

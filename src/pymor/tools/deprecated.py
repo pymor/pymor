@@ -3,8 +3,8 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import functools
-import types
 import inspect
+import types
 import warnings
 
 
@@ -34,6 +34,6 @@ class Deprecated:
         return new_func
 
     def __get__(self, obj, ownerClass=None):
-        """Return a wrapper that binds self as a method of obj (!)"""
+        """Return a wrapper that binds self as a method of obj (!)."""
         self.obj = obj
         return types.MethodType(self, obj)

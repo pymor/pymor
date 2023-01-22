@@ -2,10 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.analyticalproblems.domaindescriptions import CircleDomain, LineDomain, RectDomain, TorusDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.domaindescriptions import LineDomain, RectDomain, TorusDomain, CircleDomain
-from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
+from pymor.analyticalproblems.instationary import InstationaryProblem
 
 
 def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=(1., 2.)):
@@ -92,10 +92,10 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
     assert initial_data_type in ('sin', 'bump')
 
     if initial_data_type == 'sin':
-        initial_data = ExpressionFunction("0.5 * (sin(2 * pi * x[0]) * sin(2 * pi * x[1]) + 1.)", 2)
+        initial_data = ExpressionFunction('0.5 * (sin(2 * pi * x[0]) * sin(2 * pi * x[1]) + 1.)', 2)
         dirichlet_data = ConstantFunction(dim_domain=2, value=0.5)
     else:
-        initial_data = ExpressionFunction("(x[0] >= 0.5) * (x[0] <= 1) * 1", 2)
+        initial_data = ExpressionFunction('(x[0] >= 0.5) * (x[0] <= 1) * 1', 2)
         dirichlet_data = ConstantFunction(dim_domain=2, value=0.)
 
     return InstationaryProblem(
@@ -107,10 +107,10 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
 
             rhs=None,
 
-            nonlinear_advection=ExpressionFunction("abs(x[0])**exponent * v",
+            nonlinear_advection=ExpressionFunction('abs(x[0])**exponent * v',
                                                    1, {'exponent': 1}, {'v': [vx, vy]}),
 
-            nonlinear_advection_derivative=ExpressionFunction("exponent * abs(x[0])**(exponent-1) * sign(x[0]) * v",
+            nonlinear_advection_derivative=ExpressionFunction('exponent * abs(x[0])**(exponent-1) * sign(x[0]) * v',
                                                               1, {'exponent': 1}, {'v': [vx, vy]}),
         ),
 

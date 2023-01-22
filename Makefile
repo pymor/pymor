@@ -2,8 +2,8 @@
 
 # customization points via makefile key-value arguments
 #
-# interpreter in images: 3.{8,9} currently available
-# DOCKER_BASE_PYTHON=3.9
+# interpreter in images: 3.{8,10} currently available
+# DOCKER_BASE_PYTHON=3.10
 # test script executed with `docker_test`: mpi, notebooks_dir, oldest, vanilla, mpi, numpy_git, pip_installed
 # PYMOR_TEST_SCRIPT=vanilla
 # version pinned mirror to be used: stable or oldest
@@ -18,9 +18,10 @@
 THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 DOCKER_RUN=docker run -v $(THIS_DIR):/pymor --env-file  $(THIS_DIR)/.env
 CI_COMMIT_REF_NAME?=$(shell git rev-parse --abbrev-ref HEAD)
+COMPOSE_CMD=$(shell ((docker compose version 1> /dev/null) && echo "docker compose") || which docker-compose)
 DOCKER_COMPOSE=CI_COMMIT_SHA=$(shell git log -1 --pretty=format:"%H") \
 	CI_COMMIT_REF_NAME=$(CI_COMMIT_REF_NAME) \
-	NB_USER=$(NB_USER) $(COMPOSE_SUDO) docker-compose  -f .binder/docker-compose.yml -p pymor
+	NB_USER=$(NB_USER) $(COMPOSE_SUDO) $(COMPOSE_CMD) -f .binder/docker-compose.yml -p pymor
 NB_DIR=docs/source
 NB_USER:=${USER}
 ifeq ($(PYMOR_SUDO), 1)
@@ -94,6 +95,8 @@ docker_template:
 
 docker_image:
 	$(DOCKER_COMPOSE) build
+	@if [ "$(COMPOSE_CMD)" = "docker-compose" ]; then echo \
+		"in case of inexplicable errors try using compose as plugin: https://docs.docker.com/compose/install/"; fi
 
 docker_docs: docker_image
 	NB_DIR=notebooks $(DOCKER_COMPOSE) run jupyter ./.ci/gitlab/test_docs.bash
@@ -113,7 +116,7 @@ docker_test: docker_image
 	PYMOR_TEST_SCRIPT=$(PYMOR_TEST_SCRIPT) $(DOCKER_COMPOSE) up pytest
 
 docker_test_oldest: docker_image
-	PYMOR_TEST_SCRIPT=oldest PYPI_MIRROR=oldest DOCKER_BASE_PYTHON=3.7 $(DOCKER_COMPOSE) up pytest
+	PYMOR_TEST_SCRIPT=oldest PYPI_MIRROR=oldest DOCKER_BASE_PYTHON=3.8 $(DOCKER_COMPOSE) up pytest
 
 docker_run_oldest: DOCKER_BASE_PYTHON=3.8
 docker_run_oldest: PYMOR_TEST_SCRIPT=oldest
@@ -127,6 +130,11 @@ docker_jupyter: docker_image
 	NB_DIR=$(NB_DIR) $(DOCKER_COMPOSE) up jupyter
 
 docker_wheel_check: docker_image
-	PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports wheel_check bash
+	DOCKER_BASE_PYTHON=$(DOCKER_BASE_PYTHON) PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports \
+		wheel_check bash
+	$(DOCKER_COMPOSE) down --remove-orphans -v
+
 docker_install_check: docker_image
-	PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports install_check bash
+	DOCKER_BASE_PYTHON=$(DOCKER_BASE_PYTHON) PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports install_check \
+      /pymor/.ci/gitlab/install_checks/$(PYMOR_TEST_OS)/check.bash
+	$(DOCKER_COMPOSE) down --remove-orphans -v

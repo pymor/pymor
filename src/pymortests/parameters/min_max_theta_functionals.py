@@ -4,9 +4,15 @@
 
 import numpy as np
 import pytest
-from pymor.parameters.functionals import (ConstantParameterFunctional, ExpressionParameterFunctional,
-                                          MinThetaParameterFunctional, BaseMaxThetaParameterFunctional,
-                                          MaxThetaParameterFunctional, ParameterFunctional)
+
+from pymor.parameters.functionals import (
+    BaseMaxThetaParameterFunctional,
+    ConstantParameterFunctional,
+    ExpressionParameterFunctional,
+    MaxThetaParameterFunctional,
+    MinThetaParameterFunctional,
+    ParameterFunctional,
+)
 from pymortests.base import runmodule
 
 
@@ -75,5 +81,5 @@ def test_base_max_theta_parameter_functional():
     assert expected_value == actual_value
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)

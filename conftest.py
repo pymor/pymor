@@ -5,25 +5,25 @@
 import os
 from functools import wraps
 
-from hypothesis import settings, Verbosity, HealthCheck
-import pytest
 import numpy as np
+import pytest
+from hypothesis import HealthCheck, Verbosity, settings
 
 from pymor.tools.random import new_rng
 
 _common_settings = {
-    "print_blob": True,
-    "suppress_health_check": (HealthCheck.data_too_large, HealthCheck.too_slow,
+    'print_blob': True,
+    'suppress_health_check': (HealthCheck.data_too_large, HealthCheck.too_slow,
                               HealthCheck.filter_too_much),
-    "deadline": 1000,
-    "verbosity": Verbosity.normal,
+    'deadline': 1000,
+    'verbosity': Verbosity.normal,
 }
-settings.register_profile("ci_large", max_examples=400, **_common_settings)
-settings.register_profile("ci_pr", derandomize=True, max_examples=80, **_common_settings)
-settings.register_profile("ci", derandomize=True, max_examples=25, **_common_settings)
-settings.register_profile("dev", derandomize=True, max_examples=10, **_common_settings)
-_common_settings["verbosity"] = Verbosity.verbose
-settings.register_profile("debug", derandomize=True, max_examples=10, **_common_settings)
+settings.register_profile('ci_large', max_examples=400, **_common_settings)
+settings.register_profile('ci_pr', derandomize=True, max_examples=80, **_common_settings)
+settings.register_profile('ci', derandomize=True, max_examples=25, **_common_settings)
+settings.register_profile('dev', derandomize=True, max_examples=10, **_common_settings)
+_common_settings['verbosity'] = Verbosity.verbose
+settings.register_profile('debug', derandomize=True, max_examples=10, **_common_settings)
 settings.load_profile(os.getenv(u'PYMOR_HYPOTHESIS_PROFILE', 'dev'))
 
 """ This makes sure all our fixtures are available to all tests
@@ -32,18 +32,18 @@ Individual test modules MUST NOT import fixtures from `pymortests.fixtures`,
 as this can have strange side effects.
 """
 pytest_plugins = [
-    "pymortests.fixtures.analyticalproblem",
-    "pymortests.fixtures.function",
-    "pymortests.fixtures.grid",
-    "pymortests.fixtures.model",
-    "pymortests.fixtures.operator",
-    "pymortests.fixtures.parameter",
+    'pymortests.fixtures.analyticalproblem',
+    'pymortests.fixtures.function',
+    'pymortests.fixtures.grid',
+    'pymortests.fixtures.model',
+    'pymortests.fixtures.operator',
+    'pymortests.fixtures.parameter',
 ]
 
 
 @pytest.fixture(autouse=True)
 def monkey_np_testing(monkeypatch):
-    """All tests automagically use this, we only change the default tolerances
+    """All tests automagically use this, we only change the default tolerances.
 
     monkey np.testing.assert_allclose to behave the same as np.allclose
     for some reason, the default atol of np.testing.assert_allclose is 0

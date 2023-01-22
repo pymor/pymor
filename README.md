@@ -21,6 +21,8 @@ provided for getting started quickly.
 [![GitLab Pipeline](https://zivgitlab.uni-muenster.de/pymor/pymor/badges/main/pipeline.svg)](https://zivgitlab.uni-muenster.de/pymor/pymor/commits/main)
 [![Conda Tests](https://github.com/pymor/pymor/actions/workflows/conda_tests.yml/badge.svg)](https://github.com/pymor/pymor/actions/workflows/conda_tests.yml)
 [![codecov](https://codecov.io/gh/pymor/pymor/branch/main/graph/badge.svg)](https://codecov.io/gh/pymor/pymor)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/pymor/pymor/main.svg)](https://results.pre-commit.ci/latest/github/pymor/pymor/main)
+
 
 License
 -------
@@ -113,7 +115,8 @@ which will require that the [git](https://git-scm.com/) version control system i
 installed on your system.
 
 From time to time, the main branch of pyMOR undergoes major changes and things
-might break (this is usually announced in our [discussion forum](https://github.com/pymor/pymor/discussions)),
+might break (this is usually announced in our
+[discussion forum](https://github.com/pymor/pymor/discussions)),
 so you might prefer to install pyMOR from the current release branch:
 
     pip install git+https://github.com/pymor/pymor@2022.2.x#egg=pymor[full]
@@ -200,7 +203,8 @@ separately. Bindings for the following solver libraries are included:
 
 * [Slycot](https://github.com/python-control/Slycot)
 
-    Python wrapper for the Subroutine Library in Systems and Control Theory (SLICOT) is also used for Hardy norm computations (`pymor.bindings.slycot`).
+    Python wrapper for the Subroutine Library in Systems and Control Theory (SLICOT) is also
+    used for Hardy norm computations (`pymor.bindings.slycot`).
 
 Environments for pyMOR Development and Tests
 -----------------------------------------------

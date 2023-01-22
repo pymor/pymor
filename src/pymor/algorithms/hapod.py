@@ -5,8 +5,9 @@
 import asyncio
 from collections import defaultdict
 from math import ceil
-import numpy as np
 from threading import Thread
+
+import numpy as np
 
 from pymor.algorithms.pod import pod
 from pymor.core.logger import getLogger

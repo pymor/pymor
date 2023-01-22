@@ -5,10 +5,10 @@
 # This file was originally based upon sphinxcontrib-napoleon
 # Copyright 2013 Rob Ruana
 
-from collections import deque, defaultdict, OrderedDict
-from types import MethodType, FunctionType
-import re
 import functools
+import re
+from collections import OrderedDict, defaultdict, deque
+from types import FunctionType, MethodType
 
 from sphinx.util.inspect import safe_getattr
 

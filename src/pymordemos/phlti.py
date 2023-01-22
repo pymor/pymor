@@ -5,9 +5,9 @@
 
 import numpy as np
 from matplotlib import pyplot as plt
-from typer import run, Option
+from typer import Option, run
 
-from pymor.models.iosys import PHLTIModel, LTIModel
+from pymor.models.iosys import LTIModel, PHLTIModel
 
 
 def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):

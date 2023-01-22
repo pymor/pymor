@@ -99,7 +99,7 @@ parameter values which maximises reduction error.
 
 ## The thermalblock demo explained
 
-In the following we will walk through the thermal block demo step by
+In the following we will go through the thermal block demo step by
 step in an interactive Python shell. We assume that you are familiar
 with the reduced basis method and that you know the basics of
 [Python](<https://www.python.org>) programming as well as working
@@ -130,7 +130,8 @@ by executing:
 
 from pymor.basic import *
 from pymor.core.logger import set_log_levels
-set_log_levels({'pymor.algorithms.greedy': 'ERROR', 'pymor.algorithms.gram_schmidt.gram_schmidt': 'ERROR', 'pymor.algorithms.image.estimate_image_hierarchical': 'ERROR'})
+set_log_levels({'pymor.algorithms.greedy': 'ERROR', 'pymor.algorithms.gram_schmidt.gram_schmidt':
+  'ERROR', 'pymor.algorithms.image.estimate_image_hierarchical': 'ERROR'})
 ```
 
 Next we will instantiate a class describing the analytical problem

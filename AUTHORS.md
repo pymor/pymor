@@ -11,6 +11,14 @@
 
 ## Contributors
 
+### pyMOR 2023.1
+
+* Peter Oehme, oehme.pb@gmail.com
+  * quadratic functionals and quadratic output keyword for CG discretization
+
+* Mohamed Adel Naguib Ahmed, mohamedadel1551998@gmail.com
+  * Input-output selection in `bode_plot` function
+
 ### pyMOR 2022.2
 
 * Tim Keil, tim.keil@uni-muenster.de
@@ -148,7 +156,7 @@
   * BlockOperator and BlockDiagonalOperator
 
 * Michael Schaefer, michael.schaefer@uni-muenster.de
-  * Robin bondary condition support for pymor.operators.cg
+  * Robin boundary condition support for pymor.operators.cg
 
 ### pyMOR 0.3
 

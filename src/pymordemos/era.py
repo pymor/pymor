@@ -3,8 +3,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from typer import run
 
 from pymor.core.logger import set_log_levels

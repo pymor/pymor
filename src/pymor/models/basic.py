@@ -6,7 +6,7 @@ import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepper
 from pymor.models.interface import Model
-from pymor.operators.constructions import IdentityOperator, VectorOperator, ZeroOperator, ConstantOperator
+from pymor.operators.constructions import ConstantOperator, IdentityOperator, VectorOperator, ZeroOperator
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -122,10 +122,12 @@ class StationaryModel(Model):
             return super()._compute_output_d_mu(solution, mu, return_array)
         else:
             assert self.operator.linear
-            assert self.output_functional.linear
+            jacobian = self.output_functional.jacobian(solution, mu)
+            assert jacobian.linear
             dual_solutions = self.operator.range.empty()
             for d in range(self.output_functional.range.dim):
-                dual_problem = self.with_(operator=self.operator.H, rhs=self.output_functional.H.as_range_array(mu)[d])
+                dual_problem = self.with_(operator=self.operator.H,
+                                          rhs=jacobian.H.as_range_array(mu)[d])
                 dual_solutions.append(dual_problem.solve(mu))
             gradients = [] if return_array else {}
             for (parameter, size) in self.parameters.items():

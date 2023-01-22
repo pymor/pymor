@@ -14,7 +14,7 @@ def main(
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.')
 ):
-    """Example script for solving linear PDE-constrained parameter optimization problems"""
+    """Example script for solving linear PDE-constrained parameter optimization problems."""
     fom, mu_bar = create_fom(grid_intervals)
 
     parameter_space = fom.parameters.space(0, np.pi)
@@ -29,8 +29,9 @@ def main(
         return fom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=True)
 
     from functools import partial
-    from scipy.optimize import minimize
     from time import perf_counter
+
+    from scipy.optimize import minimize
 
     opt_fom_minimization_data = {'num_evals': 0,
                                  'evaluations': [],
@@ -49,8 +50,8 @@ def main(
     reference_mu = opt_fom_result.x
 
     from pymor.algorithms.greedy import rb_greedy
-    from pymor.reductors.coercive import CoerciveRBReductor
     from pymor.parameters.functionals import MinThetaParameterFunctional
+    from pymor.reductors.coercive import CoerciveRBReductor
 
     coercivity_estimator = MinThetaParameterFunctional(fom.operator.coefficients, mu_bar)
 
@@ -82,13 +83,13 @@ def main(
                               options={'ftol': 1e-15})
     opt_rom_minimization_data['time'] = perf_counter()-tic
 
-    print("\nResult of optimization with FOM model and adjoint gradient")
+    print('\nResult of optimization with FOM model and adjoint gradient')
     report(opt_fom_result, fom.parameters.parse, opt_fom_minimization_data, reference_mu)
-    print("Result of optimization with ROM model and adjoint gradient")
+    print('Result of optimization with ROM model and adjoint gradient')
     report(opt_rom_result, fom.parameters.parse, opt_rom_minimization_data, reference_mu)
 
 
-def create_fom(grid_intervals, vector_valued_output=False):
+def create_fom(grid_intervals, output_type='l2', vector_valued_output=False):
     domain = RectDomain(([-1, -1], [1, 1]))
     indicator_domain = ExpressionFunction(
         '(-2/3. <= x[0]) * (x[0] <= -1/3.) * (-2/3. <= x[1]) * (x[1] <= -1/3.) * 1. \
@@ -118,9 +119,11 @@ def create_fom(grid_intervals, vector_valued_output=False):
                                             derivative_expressions={'diffusion': ['1/5', '1/5']})
 
     if vector_valued_output:
-        problem = StationaryProblem(domain, f, diffusion, outputs=[('l2', f * theta_J), ('l2', f * 0.5 * theta_J)])
+        problem = StationaryProblem(
+            domain, f, diffusion, outputs=[(output_type, f * theta_J), (output_type, f * 0.5 * theta_J)]
+        )
     else:
-        problem = StationaryProblem(domain, f, diffusion, outputs=[('l2', f * theta_J)])
+        problem = StationaryProblem(domain, f, diffusion, outputs=[(output_type, f * theta_J)])
 
     print('Discretize ...')
     mu_bar = problem.parameters.parse([np.pi/2, np.pi/2])
