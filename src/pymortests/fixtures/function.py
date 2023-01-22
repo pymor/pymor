@@ -52,6 +52,7 @@ expression_functions = [
     ExpressionFunction('x', dim_domain=2),
     ExpressionFunction("c[0]*x", dim_domain=1, parameters={'c': 1}),
     ExpressionFunction("c[2]*sin(x)", dim_domain=1, parameters={'c': 3}),
+    ExpressionFunction("(0<x<=1)*c[0]*x", dim_domain=1, parameters={'c': 1}),
 ]
 
 
