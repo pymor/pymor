@@ -46,9 +46,9 @@ the usual broadcasting rules apply.
 
 import ast
 import operator
+from functools import reduce
 from itertools import zip_longest
 from numbers import Number
-from functools import reduce
 
 import numpy as np
 
@@ -149,7 +149,7 @@ class TransformChainedComparison(ast.NodeTransformer):
             comparisons.append(ast.Compare(self.generic_visit(comparators[i]),
                                            [self.generic_visit(operators[i])],
                                            [self.generic_visit(comparators[i+1])]))
-        # Join simple comparisons with multiplication  
+        # Join simple comparisons with multiplication
         return reduce(lambda left,right: ast.BinOp(left,ast.Mult(),right),comparisons)
 
 
