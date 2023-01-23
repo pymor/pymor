@@ -104,3 +104,32 @@ def unload_ipython_extension(ipython):
     ipython.events.unregister('pre_run_cell', redirect_logging.start)
     ipython.events.unregister('post_run_cell', redirect_logging.stop)
     _extension_loaded = False
+
+def _transform_vertex_index_data(codim, coordinates, grid, subentities):
+    import numpy as np
+
+    from pymor.discretizers.builtin.grids.referenceelements import triangle
+
+    if grid.reference_element == triangle:
+        if codim == 2:
+            vertices = np.zeros((len(coordinates), 3))
+            vertices[:, :-1] = coordinates
+            indices = subentities
+        else:
+            vertices = np.zeros((len(subentities) * 3, 3))
+            VERTEX_POS = coordinates[subentities]
+            vertices[:, 0:2] = VERTEX_POS.reshape((-1, 2))
+            indices = np.arange(len(subentities) * 3, dtype=np.uint32)
+    else:
+        if codim == 2:
+            vertices = np.zeros((len(coordinates), 3))
+            vertices[:, :-1] = coordinates
+            indices = np.vstack((subentities[:, 0:3], subentities[:, [0, 2, 3]]))
+        else:
+            num_entities = len(subentities)
+            vertices = np.zeros((num_entities * 6, 3))
+            VERTEX_POS = coordinates[subentities]
+            vertices[0:num_entities * 3, 0:2] = VERTEX_POS[:, 0:3, :].reshape((-1, 2))
+            vertices[num_entities * 3:, 0:2] = VERTEX_POS[:, [0, 2, 3], :].reshape((-1, 2))
+            indices = np.arange(len(subentities) * 6, dtype=np.uint32)
+    return indices, vertices

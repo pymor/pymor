@@ -29,22 +29,26 @@ class VectorArrayPlot(k3dPlot):
         if 'transform' in kwargs.keys():
             raise RuntimeError('supplying transforms is currently not supported for time series Data')
 
-        subentities, self.coordinates, entity_map = flatten_grid(grid)
-        self.subentities = subentities if grid.reference_element is triangle \
-            else np.vstack((subentities[:, 0:3], subentities[:, [2, 3, 0]]))
-        self.data = (U.to_numpy() if codim == 0 else U.to_numpy()[:, entity_map].copy()).astype(np.float32)
+        subentities, coordinates, entity_map = flatten_grid(grid)
 
-        if grid.dim == 2:
-            # pad 0 in z dimension
-            self.vertices = np.zeros((len(self.coordinates), 3))
-            self.vertices[:, :-1] = self.coordinates
+        from pymor.discretizers.builtin.gui.jupyter import _transform_vertex_index_data
+        self.indices, self.vertices = _transform_vertex_index_data(codim, coordinates, grid, subentities)
+
+        u = U.to_numpy()[0].astype(np.float32)
+        if codim == 2:
+            self.data = u[entity_map]
+        elif grid.reference_element == triangle:
+            self.data = np.repeat(u, 3).astype(np.float32)
+        else:
+            self.data = np.tile(np.repeat(u, 3), 2).astype(np.float32)
+
 
         self.idx = 0
         self.mesh = k3d.mesh(vertices=np.array(self.vertices, np.float32),
-                             indices=np.array(self.subentities, np.uint32),
+                             indices=np.array(self.indices, np.uint32),
                              color=0x0000FF,
                              opacity=1.0,
-                             attribute=self.data[self.idx],
+                             attribute=self.data,
                              color_range=(np.nanmin(self.data), np.nanmax(self.data)),
                              color_map=np.array(color_map, np.float32),
                              wireframe=False,

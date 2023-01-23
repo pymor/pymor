@@ -66,28 +66,8 @@ class Renderer(widgets.VBox):
 
         subentities, coordinates, self.entity_map = flatten_grid(grid)
 
-        if grid.reference_element == triangle:
-            if codim == 2:
-                vertices = np.zeros((len(coordinates), 3))
-                vertices[:, :-1] = coordinates
-                indices = subentities
-            else:
-                vertices = np.zeros((len(subentities) * 3, 3))
-                VERTEX_POS = coordinates[subentities]
-                vertices[:, 0:2] = VERTEX_POS.reshape((-1, 2))
-                indices = np.arange(len(subentities) * 3, dtype=np.uint32)
-        else:
-            if codim == 2:
-                vertices = np.zeros((len(coordinates), 3))
-                vertices[:, :-1] = coordinates
-                indices = np.vstack((subentities[:, 0:3], subentities[:, [0, 2, 3]]))
-            else:
-                num_entities = len(subentities)
-                vertices = np.zeros((num_entities * 6, 3))
-                VERTEX_POS = coordinates[subentities]
-                vertices[0:num_entities * 3, 0:2] = VERTEX_POS[:, 0:3, :].reshape((-1, 2))
-                vertices[num_entities * 3:, 0:2] = VERTEX_POS[:, [0, 2, 3], :].reshape((-1, 2))
-                indices = np.arange(len(subentities) * 6, dtype=np.uint32)
+        from pymor.discretizers.builtin.gui.jupyter import _transform_vertex_index_data
+        indices, vertices = _transform_vertex_index_data(codim, coordinates, grid, subentities)
 
         max_tex_size = 512
         cm = color_map(np.linspace(0, 1, max_tex_size)).astype(np.float32)
@@ -115,6 +95,7 @@ class Renderer(widgets.VBox):
 
         self._last_idx = None
         super().__init__(children=[self.renderer, ])
+
 
     def _get_mesh(self, i, u):
         if self.codim == 2:
