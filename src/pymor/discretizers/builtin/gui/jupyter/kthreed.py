@@ -2,9 +2,7 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-import warnings
 
-import IPython
 import numpy as np
 from ipywidgets import GridBox, jslink
 
@@ -15,7 +13,6 @@ config.require('K3D')
 config.require('MATPLOTLIB')
 
 import k3d
-from ipywidgets import IntSlider, Play, interact, widgets
 from k3d.plot import Plot as k3dPlot
 from matplotlib.cm import get_cmap
 from matplotlib.colors import Colormap
@@ -32,47 +29,56 @@ class VectorArrayPlot(k3dPlot):
         subentities, coordinates, entity_map = flatten_grid(grid)
 
         from pymor.discretizers.builtin.gui.jupyter import _transform_vertex_index_data
-        self.indices, self.vertices = _transform_vertex_index_data(codim, coordinates, grid, subentities)
+        self.indices, vertices = _transform_vertex_index_data(codim, coordinates, grid, subentities)
+        vertices = np.array(vertices, dtype=np.float32)
 
-        u = U.to_numpy()[0].astype(np.float32)
-        if codim == 2:
-            self.data = u[entity_map]
-        elif grid.reference_element == triangle:
-            self.data = np.repeat(u, 3).astype(np.float32)
+        size = len(U)
+        if size > 0:
+            self.data = {}
+            self.vertices = {}
+            self.time = 0
+            # TODO fix hardcoded color range
+            # color_range = {}
+            for idx, u in enumerate(U.to_numpy()):
+                u = u.astype(np.float32)
+                if codim == 2:
+                    data =u[entity_map]
+                elif grid.reference_element == triangle:
+                    data = np.repeat(u, 3)
+                else:
+                    data = np.tile(np.repeat(u, 3), 2)
+                self.data[str(idx)] = data
+                self.vertices[str(idx)] = vertices
+
+
         else:
-            self.data = np.tile(np.repeat(u, 3), 2).astype(np.float32)
+            u = U.to_numpy()[0].astype(np.float32)
+            self.vertices = vertices
 
+            if codim == 2:
+                self.data = u[entity_map]
+            elif grid.reference_element == triangle:
+                self.data = np.repeat(u, 3).astype(np.float32)
+            else:
+                self.data = np.tile(np.repeat(u, 3), 2).astype(np.float32)
 
         self.idx = 0
-        self.mesh = k3d.mesh(vertices=np.array(self.vertices, np.float32),
+        self.mesh = k3d.mesh(vertices=self.vertices,
                              indices=np.array(self.indices, np.uint32),
                              color=0x0000FF,
                              opacity=1.0,
                              attribute=self.data,
-                             color_range=(np.nanmin(self.data), np.nanmax(self.data)),
+                             color_range=(0, 1),
                              color_map=np.array(color_map, np.float32),
                              wireframe=False,
                              compression_level=0)
 
         self += self.mesh
-        self.lock = True
+        self.time = 0
+        self.lock = False
         self.camera_no_pan = self.lock
         self.camera_no_rotate = self.lock
         self.camera_no_zoom = self.lock
-
-    def _goto_idx(self, idx):
-        if idx > len(self.data) or idx < 0:
-            warnings.warn(f'Index {idx} outside data range for VectorArrayPlot', RuntimeWarning)
-            return
-        self.idx = idx
-        self.mesh.attribute = self.data[self.idx]
-
-    def dec(self):
-        self._goto_idx(self.idx - 1)
-
-    def inc(self):
-        self._goto_idx(self.idx + 1)
-
 
 def visualize_k3d(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                   separate_colorbars=False, rescale_colorbars=False, columns=2,
@@ -139,13 +145,5 @@ def visualize_k3d(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, l
     plot.menu_visibility = size > 1
     plot.camera = plot.get_auto_camera(yaw=0, pitch=0, bounds=combined_bounds, factor=0.5)
 
-    if size > 1:
-        play = Play(min=0, max=size - 1, step=1, value=0, description='Timestep:')
-        interact(idx=play).widget(plot._goto_idx)
-        slider = IntSlider(min=0, max=size - 1, step=1, value=0, description='Timestep:')
-        interact(idx=slider).widget(plot._goto_idx)
-        widgets.jslink((play, 'value'), (slider, 'value'))
-        hbox = widgets.HBox([play, slider])
-        IPython.display.display(hbox)
 
     return plot
