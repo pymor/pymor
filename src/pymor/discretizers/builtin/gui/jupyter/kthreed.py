@@ -9,6 +9,7 @@ import numpy as np
 from ipywidgets import GridBox, jslink
 
 from pymor.core.config import config
+from pymor.discretizers.builtin.grids.referenceelements import triangle
 
 config.require('K3D')
 config.require('MATPLOTLIB')
@@ -28,7 +29,9 @@ class VectorArrayPlot(k3dPlot):
         if 'transform' in kwargs.keys():
             raise RuntimeError('supplying transforms is currently not supported for time series Data')
 
-        self.subentities, self.coordinates, entity_map = flatten_grid(grid)
+        subentities, self.coordinates, entity_map = flatten_grid(grid)
+        self.subentities = subentities if grid.reference_element is triangle \
+            else np.vstack((subentities[:, 0:3], subentities[:, [2, 3, 0]]))
         self.data = (U.to_numpy() if codim == 0 else U.to_numpy()[:, entity_map].copy()).astype(np.float32)
 
         if grid.dim == 2:
