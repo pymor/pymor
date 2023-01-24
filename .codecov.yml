@@ -23,7 +23,8 @@ coverage:
                 - gitlab_ci
                 - github_actions
             paths:
-                - "src/pymor/*"
+                - "src/"
+                - "!src/pymortests/"
                 - "!src/pymor/version.py"
         tests:
             # if test coverage decreases, something very wrong is happening in CI
@@ -32,7 +33,7 @@ coverage:
                 - gitlab_ci
                 - github_actions
             paths:
-                - "src/pymortests/*"
+                - "src/pymortests/"
     patch:
       pymor:
         target: 0%
