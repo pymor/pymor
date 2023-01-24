@@ -18,8 +18,7 @@ repos:
   rev: 'v0.0.219'
   hooks:
     - id: ruff
-      # Respect `exclude` and `extend-exclude` settings.
-      args: ["--force-exclude", "--fix"]
+      args: ["--fix"]
 - repo: https://github.com/DavidAnson/markdownlint-cli2
   rev: v0.4.0
   hooks:
