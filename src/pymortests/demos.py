@@ -217,14 +217,14 @@ def _test_demo(demo):
         pass
 
     try:
-        from matplotlib import pyplot
+        from matplotlib import pyplot as plt
         if sys.version_info[:2] > (3, 7) or (
                 sys.version_info[0] == 3 and sys.version_info[1] == 6):
-            pyplot.ion()
+            plt.ion()
         else:
             # the ion switch results in interpreter segfaults during multiple
             # demo tests on 3.7 -> fall back on old monkeying solution
-            pyplot.show = nop
+            plt.show = nop
     except ImportError:
         pass
     try:
@@ -250,8 +250,8 @@ def _test_demo(demo):
         from pymor.parallel.default import _cleanup
         _cleanup()
         try:
-            from matplotlib import pyplot
-            pyplot.close('all')
+            from matplotlib import pyplot as plt
+            plt.close('all')
         except ImportError:
             pass
 
@@ -376,14 +376,14 @@ def test_parabolic_mor_results():
 def test_check_check_results_missing(tmp_path):
     test_name = tmp_path.name
     args = ['NONE', tmp_path]
-    results = {"error": math.pi}
+    results = {'error': math.pi}
     with pytest.raises(NoResultDataError):
-        check_results(test_name, args, results, "error")
+        check_results(test_name, args, results, 'error')
     # running same check again against now recored data must be fine
-    check_results(test_name, args, results, "error")
+    check_results(test_name, args, results, 'error')
     with pytest.raises(AssertionError):
-        results["error"] += 1
-        check_results(test_name, args, results, "error")
+        results['error'] += 1
+        check_results(test_name, args, results, 'error')
 
 
 if __name__ == '__main__':
