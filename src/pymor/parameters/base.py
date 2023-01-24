@@ -613,7 +613,8 @@ class ParameterSpace(ParametricObject):
         -------
         The sampled |parameter values|.
         """
-        get_param = lambda: Mu(((k, base**(get_rng().uniform(np.log10(self.ranges[k][0])/np.log10(base), \
+        def get_param(): 
+            return Mu(((k, base**(get_rng().uniform(np.log10(self.ranges[k][0])/np.log10(base), \
                                                              np.log10(self.ranges[k][1])/np.log10(base), size)))
                                for k, size in self.parameters.items()))
         if count is None:
