@@ -66,7 +66,10 @@ def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preass
     if p.dirichlet_data is not None and p.dirichlet_data.parametric:
         raise NotImplementedError
 
-    mesh, (boundary_mask, boundary_ids) = discretize_domain(p.domain, diameter=diameter)
+    if diameter is None:
+        mesh, (boundary_mask, boundary_ids) = discretize_domain(p.domain)
+    else:
+        mesh, (boundary_mask, boundary_ids) = discretize_domain(p.domain, diameter=diameter)
 
     V = df.FunctionSpace(mesh, 'Lagrange', degree)
     bc = df.DirichletBC(V, 0. if p.dirichlet_data is None else p.dirichlet_data.to_fenics(mesh)[0].item(),

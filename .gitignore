@@ -74,3 +74,4 @@ Pipfile.lock
 .hypothesis
 .vscode
 .ci/create_conda_env.log
+src/pymortests/testdata/check_results/test_check_check_results_miss*
