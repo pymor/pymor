@@ -571,6 +571,57 @@ class ParameterSpace(ParametricObject):
             return get_param()
         else:
             return [get_param() for _ in range(count)]
+            
+    def sample_logarithmic_uniformly(self, counts, base):
+        """Logarithmically uniform sample |parameter values| from the space.
+
+        Parameters
+        ----------
+        counts
+            Number of samples to take per parameter and component
+            of the parameter. Either a dict of counts per |Parameter|
+            or a single count that is taken for each parameter in |Parameters|.
+
+        Returns
+        -------
+        List of |parameter value| dicts.
+        """
+        if isinstance(counts, dict):
+            pass
+        else:
+            counts = {k: counts for k in self.parameters}
+            
+        
+        logspaces = tuple(np.logspace(np.log10(self.ranges[k][0])/np.log10(base), \
+                                      np.log10(self.ranges[k][1])/np.log10(base), \
+                                      num=counts[k], base=base)
+                          for k in self.parameters)
+        iters = tuple(product(ls, repeat=max(0, np.zeros(sps).size))
+                          for ls, sps in zip(logspaces, self.parameters.values()))
+        return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
+                for i in product(*iters)]
+        
+    def sample_logarithmic_randomly(self, base, count=None):
+        """Logarithmically scaled random sample |parameter values| from the space.
+
+        Parameters
+        ----------
+        count
+            If `None`, a single dict `mu` of |parameter values| is returned.
+            Otherwise, the number of logarithmically random samples to generate and return as
+            a list of |parameter values| dicts.
+
+        Returns
+        -------
+        The sampled |parameter values|.
+        """
+        get_param = lambda: Mu(((k, base**(get_rng().uniform(np.log10(self.ranges[k][0])/np.log10(base), \
+                                                             np.log10(self.ranges[k][1])/np.log10(base), size)))
+                               for k, size in self.parameters.items()))
+        if count is None:
+            return get_param()
+        else:
+            return [get_param() for _ in range(count)]
 
     def contains(self, mu):
         if not isinstance(mu, Mu):
