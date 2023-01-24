@@ -586,9 +586,7 @@ class ParameterSpace(ParametricObject):
         -------
         List of |parameter value| dicts.
         """
-        if isinstance(counts, dict):
-            pass
-        else:
+        if not isinstance(counts, dict):
             counts = {k: counts for k in self.parameters}
 
 
