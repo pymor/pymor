@@ -75,7 +75,7 @@ class VectorArrayPlot(k3dPlot):
 
         self += self.mesh
         self.time = 0
-        self.lock = False
+        self.lock = grid.dim == 2
         self.camera_no_pan = self.lock
         self.camera_no_rotate = self.lock
         self.camera_no_zoom = self.lock
@@ -125,6 +125,7 @@ def visualize_k3d(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, l
             # according to https://ipywidgets.readthedocs.io/en/8.0.2/examples/Widget%20Events.html#Linking-widgets-attributes-from-the-client-side
             # this should work in HTML output, but it doesn't
             jslink((first_plot, 'time'), (p, 'time'))
+            jslink((first_plot, 'camera'), (p, 'camera'))
         return GridBox(plots, columns=columns)
     assert len(bounding_box) == 2
     assert all(1 < len(bounding_box[i]) < 4 for i in range(2))
