@@ -32,6 +32,7 @@ class TRSurrogate(BasicObject):
             reductor.extend_basis(initial_basis)
             reductor.reduce()
         self.rom = reductor._last_rom
+
         assert self.rom.output_functional is not None, 'Please provide an output functional with your model!'
 
         # initialize placeholders for extension
@@ -91,10 +92,13 @@ class TRSurrogate(BasicObject):
         self.new_rom = None
         self.new_reductor = None
 
+    def rb_size(self):
+        return len(self.reductor.bases['RB'])
+
 
 @defaults('beta', 'radius', 'shrink_factor', 'miniter', 'maxiter', 'miniter_subproblem', 'maxiter_subproblem',
           'tol', 'radius_tol', 'atol', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
-def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius=1.,
+def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius=.1,
                  shrink_factor=.5, miniter=0, maxiter=30, miniter_subproblem=0, maxiter_subproblem=400, tol=1e-6,
                  radius_tol=.75, atol=1e-16, tol_sub=1e-8, line_search_params=None, stagnation_window=3,
                  stagnation_threshold=np.inf, return_stages=False, return_subproblem_stages=False):
@@ -174,7 +178,7 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
         Raised if the BFGS algorithm failed to converge.
     """
     assert shrink_factor != 0.
-    
+
     logger = getLogger('pymor.algorithms.tr')
 
     if initial_guess is None:
@@ -182,7 +186,7 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
         mu = initial_guess.to_numpy()
     else:
         mu = initial_guess.to_numpy() if isinstance(initial_guess, Mu) else initial_guess
-        
+
     def error_aware_line_search_criterion(new_mu, current_value):
         output_error = surrogate.estimate_output_error(new_mu)
         if output_error / abs(current_value) >= beta * radius:
@@ -215,7 +219,7 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
                 if first_order_criticity < tol:
                     logger.info(
                         f'TR converged in {iteration} iterations because first order criticity tolerance of {tol}' \
-                        f" was reached. The reduced basis is of size {len(surrogate.reductor.bases['RB'])}.")
+                        f' was reached. The reduced basis is of size {surrogate.rb_size()}.')
                     break
                 if iteration >= maxiter:
                     logger.info(f'Maximum iterations reached. Failed to converge after {iteration} iterations.')
@@ -230,8 +234,8 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
             # solve the subproblem using bfgs
             old_mu = mu.copy()
             compare_output = surrogate.rom_output(mu)
-            
-            with logger.block('Solving subproblem for mu {mu} with BFGS...'):
+
+            with logger.block(f'Solving subproblem for mu {mu} with BFGS...'):
                 mu, sub_data = bfgs(
                     surrogate.rom, parameter_space, initial_guess=mu, miniter=miniter_subproblem,
                     maxiter=maxiter_subproblem, atol=atol, tol_sub=tol_sub,
@@ -296,7 +300,7 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
                 # ignore division-by-zero warnings when solution_norm or output is zero
                 warnings.filterwarnings('ignore', category=RuntimeWarning)
                 logger.info(f'it:{iteration} '
-                            f'norm:{mu_norm:.3e} '
+                            f'foc:{first_order_criticity:.3e} '
                             f'radius:{radius:.3e}')
 
             if not np.isfinite(mu_norm):
