@@ -37,6 +37,21 @@ def test_randomly(space):
     assert len(values) == num_samples
     for value in values:
         assert space.contains(value)
+        
+        
+def test_logarithmic_uniformly(space):
+    values = space.sample_logarithmic_uniformly(num_samples)
+    total_num_parameters = sum([space.parameters[k] for k in space.parameters])
+    assert len(values) == num_samples**total_num_parameters
+    for value in values:
+        assert space.contains(value)
+        
+    
+def test_logarithmic_randomly(space):
+    values = space.sample_logarithmic_randomly(num_samples)
+    assert len(values) == num_samples
+    for value in values:
+        assert space.contains(value)
 
 
 def test_randomly_without_count(space):
