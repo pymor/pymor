@@ -107,7 +107,7 @@ def update_hessian(hessian, mu, old_mu, gradient, old_gradient):
 @defaults('miniter', 'maxiter', 'atol', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
 def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, atol=1e-16,
          tol_sub=1e-8, line_search_params=None, stagnation_window=3, stagnation_threshold=np.inf,
-         error_aware=False, beta=None, radius=None, return_stages=False):
+         error_aware=False, error_criterion=None, beta=None, radius=None, return_stages=False):
     """BFGS algorithm.
 
     This method solves the optimization problem ::
@@ -185,13 +185,8 @@ def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, ato
         mu = initial_guess.to_numpy() if isinstance(initial_guess, Mu) else initial_guess
 
     if error_aware:
-        assert beta is not None and radius is not None
-
-        def error_aware_line_search_criterion(new_mu, current_value):
-            output_error = model.estimate_output_error(new_mu)
-            if output_error / abs(current_value) >= beta * radius:
-                return True
-            return False
+        assert error_criterion is not None and beta is not None and radius is not None
+        assert callable(error_criterion)
 
     if return_stages:
         stages = []
@@ -223,7 +218,7 @@ def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, ato
                 logger.info(f'Absolute tolerance of {tol_sub} for first order criticity reached. Converged.')
                 break
             if error_aware:
-                if error_aware_line_search_criterion(mu, current_output):
+                if error_criterion(mu, current_output):
                     logger.info(f'Output error confidence reached for beta {beta} and radius {radius}. Converged.')
                     break
             if (iteration >= stagnation_window + 1 and not stagnation_threshold == np.inf
@@ -254,7 +249,7 @@ def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, ato
         if error_aware:
             step_size, line_search_iteration = armijo(
                 output, mu, direction, grad=gradient, initial_value=current_output,
-                additional_criterion=error_aware_line_search_criterion, **(line_search_params or {}))
+                additional_criterion=error_criterion, **(line_search_params or {}))
         else:
             step_size, line_search_iteration = armijo(output, mu, direction, grad=gradient,
                                initial_value=current_output, **(line_search_params or {}))

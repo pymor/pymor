@@ -182,6 +182,12 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
         mu = initial_guess.to_numpy()
     else:
         mu = initial_guess.to_numpy() if isinstance(initial_guess, Mu) else initial_guess
+        
+    def error_aware_line_search_criterion(new_mu, current_value):
+        output_error = surrogate.estimate_output_error(new_mu)
+        if output_error / abs(current_value) >= beta * radius:
+            return True
+        return False
 
     surrogate = TRSurrogate(reductor, initial_guess)
 
@@ -230,8 +236,9 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
                     surrogate.rom, parameter_space, initial_guess=mu, miniter=miniter_subproblem,
                     maxiter=maxiter_subproblem, atol=atol, tol_sub=tol_sub,
                     line_search_params=line_search_params, stagnation_window=stagnation_window,
-                    stagnation_threshold=stagnation_threshold, error_aware=True, beta=beta,
-                    radius=radius, return_stages=return_subproblem_stages)
+                    stagnation_threshold=stagnation_threshold, error_aware=True,
+                    error_criterion=error_aware_line_search_criterion, beta=beta, radius=radius,
+                    return_stages=return_subproblem_stages)
 
             estimate_output = surrogate.estimate_output_error(mu)
             current_output = surrogate.rom_output(mu)
