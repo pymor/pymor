@@ -122,6 +122,8 @@ def visualize_k3d(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, l
                                rescale_colorbars=rescale_colorbars, columns=None) for u in U]
         first_plot = plots[0]
         for p in plots[1:]:
+            # according to https://ipywidgets.readthedocs.io/en/8.0.2/examples/Widget%20Events.html#Linking-widgets-attributes-from-the-client-side
+            # this should work in HTML output, but it doesn't
             jslink((first_plot, 'time'), (p, 'time'))
         return GridBox(plots, columns=columns)
     assert len(bounding_box) == 2
