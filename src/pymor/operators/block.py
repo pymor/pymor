@@ -131,6 +131,12 @@ class BlockOperatorBase(Operator):
             blocks[i, j] = self.blocks[i, j].d_mu(parameter, index)
         return self.with_(blocks=blocks)
 
+    def jacobian(self, U, mu):
+        jacs = np.empty(self.blocks.shape, dtype=object)
+        for (i, j) in np.ndindex(self.blocks.shape):
+            jacs[i, j] = self.blocks[i, j].jacobian(U, mu)
+        return self.with_(blocks=jacs)
+
 
 class BlockOperator(BlockOperatorBase):
     """A matrix of arbitrary |Operators|.
