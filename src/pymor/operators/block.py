@@ -134,7 +134,7 @@ class BlockOperatorBase(Operator):
     def jacobian(self, U, mu):
         jacs = np.empty(self.blocks.shape, dtype=object)
         for (i, j) in np.ndindex(self.blocks.shape):
-            jacs[i, j] = self.blocks[i, j].jacobian(U, mu)
+            jacs[i, j] = self.blocks[i, j].jacobian(U if self.num_source_blocks == 1 else U.blocks[i], mu)
         return self.with_(blocks=jacs)
 
 

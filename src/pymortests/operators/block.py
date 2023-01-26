@@ -110,3 +110,27 @@ def test_blk_diag_apply_inverse_adjoint():
     wva = Cop.apply_inverse_adjoint(vva)
     w = np.hstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
     assert np.allclose(spla.solve(C.T, v), w)
+
+
+def test_block_jacobian():
+    from pymor.operators.constructions import QuadraticFunctional
+
+    A = np.random.randn(2, 2)
+    B = np.random.randn(3, 3)
+    C = np.random.randn(4, 4)
+    Aop = QuadraticFunctional(NumpyMatrixOperator(A))
+    Bop = QuadraticFunctional(NumpyMatrixOperator(B))
+    Cop = NumpyMatrixOperator(C)
+    Dop = BlockDiagonalOperator((Aop, Bop, Cop))
+    assert not Dop.linear
+
+    v1 = np.random.randn(2)
+    v2 = np.random.randn(3)
+    v3 = np.random.randn(4)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
+    v3va = NumpyVectorSpace.from_numpy(v3)
+    vva = BlockVectorSpace.make_array((v1va, v2va, v3va))
+
+    jac = Dop.jacobian(vva, mu=None)
+    assert jac.linear
