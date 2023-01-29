@@ -149,8 +149,8 @@ class TransformChainedComparison(ast.NodeTransformer):
             comparisons.append(ast.Compare(self.generic_visit(comparators[i]),
                                            [self.generic_visit(operators[i])],
                                            [self.generic_visit(comparators[i+1])]))
-        # Join simple comparisons with multiplication
-        return reduce(lambda left,right: ast.BinOp(left,ast.Mult(),right),comparisons)
+        # join simple comparisons with multiplication
+        return reduce(lambda left, right: ast.BinOp(left, ast.Mult(), right), comparisons)
 
 
 class Expression(ParametricObject):
