@@ -571,8 +571,8 @@ class ParameterSpace(ParametricObject):
             return get_param()
         else:
             return [get_param() for _ in range(count)]
-
-    def sample_logarithmic_uniformly(self, counts, base):
+            
+    def sample_logarithmic_uniformly(self, counts):
         """Logarithmically uniform sample |parameter values| from the space.
 
         Parameters
@@ -588,17 +588,17 @@ class ParameterSpace(ParametricObject):
         """
         if not isinstance(counts, dict):
             counts = {k: counts for k in self.parameters}
-
-        logspaces = tuple(np.logspace(np.log10(self.ranges[k][0]) / np.log10(base),
-                                      np.log10(self.ranges[k][1]) / np.log10(base),
-                                      num=counts[k], base=base)
+            
+        logspaces = tuple(np.geomspace(self.ranges[k][0],
+                                       self.ranges[k][1],
+                                       num=counts[k])
                           for k in self.parameters)
         iters = tuple(product(ls, repeat=max(0, np.zeros(sps).size))
                       for ls, sps in zip(logspaces, self.parameters.values()))
         return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
                 for i in product(*iters)]
-
-    def sample_logarithmic_randomly(self, base, count=None):
+        
+    def sample_logarithmic_randomly(self, count=None, pool_multiplier=100):
         """Logarithmically scaled random sample |parameter values| from the space.
 
         Parameters
@@ -607,14 +607,18 @@ class ParameterSpace(ParametricObject):
             If `None`, a single dict `mu` of |parameter values| is returned.
             Otherwise, the number of logarithmically random samples to generate and return as
             a list of |parameter values| dicts.
+        pool_multiplier
+            Determines how big of a pool the samples are selected.
 
         Returns
         -------
         The sampled |parameter values|.
         """
         def get_param():
-            return Mu(((k, base**(get_rng().uniform(np.log10(self.ranges[k][0])/np.log10(base),
-                                                    np.log10(self.ranges[k][1])/np.log10(base), size)))
+            return Mu(((k, np.random.choice(np.geomspace(self.ranges[k][0],
+                                                         self.ranges[k][1], 
+                                                         pool_multiplier*size),
+                                            size=size,replace=False))
                       for k, size in self.parameters.items()))
         if count is None:
             return get_param()
