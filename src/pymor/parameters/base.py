@@ -571,7 +571,7 @@ class ParameterSpace(ParametricObject):
             return get_param()
         else:
             return [get_param() for _ in range(count)]
-            
+
     def sample_logarithmic_uniformly(self, counts):
         """Logarithmically uniform sample |parameter values| from the space.
 
@@ -588,7 +588,7 @@ class ParameterSpace(ParametricObject):
         """
         if not isinstance(counts, dict):
             counts = {k: counts for k in self.parameters}
-            
+
         logspaces = tuple(np.geomspace(self.ranges[k][0],
                                        self.ranges[k][1],
                                        num=counts[k])
@@ -597,7 +597,7 @@ class ParameterSpace(ParametricObject):
                       for ls, sps in zip(logspaces, self.parameters.values()))
         return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
                 for i in product(*iters)]
-        
+
     def sample_logarithmic_randomly(self, count=None, pool_multiplier=100):
         """Logarithmically scaled random sample |parameter values| from the space.
 
@@ -616,7 +616,7 @@ class ParameterSpace(ParametricObject):
         """
         def get_param():
             return Mu(((k, np.random.choice(np.geomspace(self.ranges[k][0],
-                                                         self.ranges[k][1], 
+                                                         self.ranges[k][1],
                                                          pool_multiplier*size),
                                             size=size,replace=False))
                       for k, size in self.parameters.items()))
