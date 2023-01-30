@@ -259,8 +259,9 @@ def discretize_stationary_ipld3g(
                     local_problems[J].diffusion.coefficients
                 ):
                     assert coeff_in == coeff_out
-                    ops_list += [ops + [additional_ops] for ops, additional_ops in zip(
-                                 ops_list, make_coupling_contributions_parametric_part(diff_in, diff_out))]
+                    ops_list = [ops + [additional_ops] for ops, additional_ops in zip(
+                                ops_list, make_coupling_contributions_parametric_part(diff_in, diff_out))]
+                    coeffs.append(coeff_in)
                 ops_list = [ops + [additional_ops] for ops, additional_ops in zip(
                             ops_list, make_coupling_contributions_nonparametric_part())]
                 ops_I_I, ops_I_J, ops_J_I, ops_J_J = ops_list[0], ops_list[1], ops_list[2], ops_list[3]
@@ -272,10 +273,10 @@ def discretize_stationary_ipld3g(
                 walker.walk(False)  # parallel assembly not yet supported
 
                 for (i, j, ops) in ((I, I, ops_I_I), (I, J, ops_I_J), (J, I, ops_J_I), (J, J, ops_J_J)):
-                    coupling_op = LincombOperator(
-                        operators=[DuneXTMatrixOperator(
-                            op.matrix, name=f'coupling_part_from_{I}_{J}') for op in ops],
-                        coefficients=list(coeffs))
+                    operators = [DuneXTMatrixOperator(op.matrix, name=f'coupling_part_from_{I}_{J}')
+                                 for op in ops]
+                    operators[-1] = operators[-1].with_(name=f'constant_coupling_part_from_{I}_{J}')
+                    coupling_op = LincombOperator(operators=operators, coefficients=list(coeffs))
                     if coupling_ops[i][j] is None:
                         coupling_ops[i][j] = coupling_op
                     if local_ops[i][j] is None:
