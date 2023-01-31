@@ -122,7 +122,8 @@ def test_block_jacobian():
     Bop = QuadraticFunctional(NumpyMatrixOperator(B))
     Cop = NumpyMatrixOperator(C)
     Dop = BlockDiagonalOperator((Aop, Bop, Cop))
-    assert not Dop.linear
+    Dop_single_block = BlockDiagonalOperator(np.array([[Aop]]))
+    assert not Dop.linear and not Dop_single_block.linear
 
     v1 = np.random.randn(2)
     v2 = np.random.randn(3)
@@ -131,6 +132,8 @@ def test_block_jacobian():
     v2va = NumpyVectorSpace.from_numpy(v2)
     v3va = NumpyVectorSpace.from_numpy(v3)
     vva = BlockVectorSpace.make_array((v1va, v2va, v3va))
+    vva_single_block = BlockVectorSpace.make_array(v1va)
 
     jac = Dop.jacobian(vva, mu=None)
-    assert jac.linear
+    jac_single_block = Dop_single_block.jacobian(vva_single_block, mu=None)
+    assert jac.linear and jac_single_block.linear
