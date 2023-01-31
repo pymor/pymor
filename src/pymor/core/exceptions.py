@@ -105,3 +105,9 @@ class UnpicklableError(Exception):
 
     def __str__(self):
         return f'{self.cls} cannot be pickled.'
+
+
+class NoResultDataError(Exception):
+    def __init__(self, msg=None):
+        msg = msg or 'missing testdata, re-run test'
+        super().__init__(msg)

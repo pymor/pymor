@@ -16,7 +16,7 @@ from pytest import skip
 
 from pymor.algorithms.basic import almost_equal, relative_error
 from pymor.core import config
-from pymor.core.exceptions import DependencyMissingError
+from pymor.core.exceptions import DependencyMissingError, NoResultDataError
 
 
 def runmodule(filename):
@@ -61,8 +61,8 @@ def check_results(test_name, params, results, *args):
         if not os.path.exists(testname_dir):
             os.mkdir(testname_dir)
         _dump_results(filename, results)
-        assert False, \
-            f'No results found for test {test_name} ({params}), saved current results. Remember to check in {filename}.'
+        raise NoResultDataError(msg=f'No results found for test {test_name} ({params}), saved current results.'
+                                        f'Remember to check in {filename}.')
 
     for k, (atol, rtol) in keys.items():
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):

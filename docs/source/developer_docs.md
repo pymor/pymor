@@ -113,6 +113,15 @@ so that updated images become available to CI after entering the new commit hash
 A GitHub Action will automatically create a pull request against the docker repository if changes in the requirements
 files are detected. The necessary change to `.env` is included in the PR for the conda environment.
 
+### NumPy
+
+Like SciPy we have a meta package that pins the oldest supported
+numpy versions for all our support Pythons: [`pymor-oldest-supported-numpy`](https://github.com/pymor/pymor-oldest-supported-numpy).
+It was introduced to be able to specify minimal NumPy versions
+in the docker image build process to avoid binary incompatible wheel builds.
+When adding new supported Python versions, the `pymor-oldest-supported-numpy` package needs to be updated accordingly and
+change the install version in the docker images.
+
 (ref-makefile)=
 
 ## The Makefile
