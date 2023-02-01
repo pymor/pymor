@@ -96,7 +96,7 @@ To install the latest development version of pyMOR, execute
 
     pip install git+https://github.com/pymor/pymor#egg=pymor[full]
 
-which will require that the [git](https://git-scm.com/) version control system is
+which requires that the [git](https://git-scm.com/) version control system is
 installed on your system.
 
 #### Current Release Branch Version
@@ -123,9 +123,9 @@ pyMOR can be installed using conda/mamba by running
 
 ## Documentation
 
-Documentation is available [online](https://docs.pymor.org/)
-or you can build it yourself from inside the root directory of the pyMOR source tree
-by executing:
+Documentation is available [online](https://docs.pymor.org/).
+To build it locally, run the following from inside the root directory of the
+pyMOR source tree.
 
     make docs
 
@@ -137,10 +137,9 @@ This will generate HTML documentation in `docs/_build/html`.
 * [Getting Started](https://docs.pymor.org/latest/getting_started.html)
 * [Dependencies](https://github.com/pymor/pymor/blob/2022.2.x/requirements.txt)
 
-## External PDE solvers
+## External PDE Solvers
 
-pyMOR has been designed with easy integration of external PDE solvers
-in mind.
+pyMOR has been designed with easy integration of external PDE solvers in mind.
 
 A basic approach is to use the solver only to generate high-dimensional
 system matrices which are then read by pyMOR from disk (`pymor.discretizers.disk`).
@@ -185,12 +184,13 @@ separately. Bindings for the following solver libraries are included:
 
 * [Py-M.E.S.S.](https://www.mpi-magdeburg.mpg.de/projects/mess)
 
-    The Matrix Equation Sparse Solver library is intended for solving large sparse matrix equations (`pymor.bindings.pymess`).
+  The Matrix Equation Sparse Solver library is intended for solving large sparse
+  matrix equations (`pymor.bindings.pymess`).
 
 * [Slycot](https://github.com/python-control/Slycot)
 
-    Python wrapper for the Subroutine Library in Systems and Control Theory (SLICOT) is also
-    used for Hardy norm computations (`pymor.bindings.slycot`).
+  Python wrapper for the Subroutine Library in Systems and Control Theory
+  (SLICOT) is also used for Hardy norm computations (`pymor.bindings.slycot`).
 
 ## Environments for pyMOR Development and Tests
 
