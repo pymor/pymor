@@ -11,8 +11,9 @@
 
 # pyMOR - Model Order Reduction with Python
 
-pyMOR is a software library for building model order
-reduction applications with the Python programming language.
+pyMOR is a software library for building
+[model order reduction](https://morwiki.mpi-magdeburg.mpg.de)
+applications with the Python programming language.
 
 ## Features
 
