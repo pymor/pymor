@@ -12,15 +12,18 @@
 # pyMOR - Model Order Reduction with Python
 
 pyMOR is a software library for building model order
-reduction applications with the Python programming language. Implemented
-algorithms include reduced basis methods for parametric linear and non-linear
-problems, as well as system-theoretic methods such as balanced truncation or
-IRKA (Iterative Rational Krylov Algorithm).  All algorithms in pyMOR are
-formulated in terms of abstract interfaces for seamless integration with
-external PDE (Partial Differential Equation) solver packages.  Moreover, pure
-Python implementations of FEM (Finite Element Method) and FVM (Finite Volume
-Method) discretizations using the NumPy/SciPy scientific computing stack are
-provided for getting started quickly.
+reduction applications with the Python programming language.
+
+## Features
+
+* reduced basis methods for parametric linear and non-linear problems
+* system-theoretic methods such as balanced truncation or iterative rational
+  Krylov algorithm
+* all algorithms in pyMOR are formulated in terms of abstract interfaces for
+  seamless integration with external PDE (Partial Differential Equation) solver
+  packages.
+* pure Python implementations of finite element and finite volume
+  discretizations using the NumPy/SciPy scientific computing stack
 
 ## License
 
