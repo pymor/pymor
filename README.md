@@ -1,7 +1,6 @@
 ![pyMOR Logo](./logo/pymor_logo.svg)
 
-pyMOR - Model Order Reduction with Python
-=========================================
+# pyMOR - Model Order Reduction with Python
 
 pyMOR is a software library for building model order
 reduction applications with the Python programming language. Implemented
@@ -23,9 +22,7 @@ provided for getting started quickly.
 [![codecov](https://codecov.io/gh/pymor/pymor/branch/main/graph/badge.svg)](https://codecov.io/gh/pymor/pymor)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/pymor/pymor/main.svg)](https://results.pre-commit.ci/latest/github/pymor/pymor/main)
 
-
-License
--------
+## License
 
 Copyright pyMOR developers and contributors. All rights reserved.
 
@@ -52,8 +49,7 @@ The following files contain source code originating from other open source softw
 
 See these files for more information.
 
-Citing
-------
+## Citing
 
 If you use pyMOR for academic work, please consider citing our
 [publication](https://doi.org/10.1137/15M1026614):
@@ -62,8 +58,7 @@ If you use pyMOR for academic work, please consider citing our
     pyMOR - Generic Algorithms and Interfaces for Model Order Reduction
     SIAM J. Sci. Comput., 38(5), pp. S194--S216, 2016
 
-Installation via pip
---------------------
+## Installation via pip
 
 We recommend installation of pyMOR in a [virtual environment](https://virtualenv.pypa.io/en/latest/).
 
@@ -124,15 +119,13 @@ so you might prefer to install pyMOR from the current release branch:
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
 
-Installation via conda
-----------------------
+## Installation via conda
 
 pyMOR can be installed using `conda` by running
 
     conda install -c conda-forge pymor
 
-Documentation
--------------
+## Documentation
 
 Documentation is available [online](https://docs.pymor.org/)
 or you can build it yourself from inside the root directory of the pyMOR source tree
@@ -142,15 +135,13 @@ by executing:
 
 This will generate HTML documentation in `docs/_build/html`.
 
-Useful Links
-------------
+## Useful Links
 
 * [Latest Changelog](https://docs.pymor.org/latest/release_notes/all.html)
 * [Getting Started](https://docs.pymor.org/latest/getting_started.html)
 * [Dependencies](https://github.com/pymor/pymor/blob/2022.2.x/requirements.txt)
 
-External PDE solvers
---------------------
+## External PDE solvers
 
 pyMOR has been designed with easy integration of external PDE solvers
 in mind.
@@ -190,8 +181,7 @@ Do not hesitate to contact
 [us](https://github.com/pymor/pymor/discussions) if you
 need help with the integration of your PDE solver.
 
-External Matrix Equation Solvers
---------------------------------
+## External Matrix Equation Solvers
 
 pyMOR also provides bindings to matrix equation solvers (in `pymor.bindings`),
 which are needed for the system-theoretic methods and need to be installed
@@ -206,13 +196,11 @@ separately. Bindings for the following solver libraries are included:
     Python wrapper for the Subroutine Library in Systems and Control Theory (SLICOT) is also
     used for Hardy norm computations (`pymor.bindings.slycot`).
 
-Environments for pyMOR Development and Tests
------------------------------------------------
+## Environments for pyMOR Development and Tests
 
 Please see the [Developer Documentation](https://docs.pymor.org/latest/developer_docs.html).
 
-Contact
--------
+## Contact
 
 Should you have any questions regarding pyMOR or wish to contribute,
 do not hesitate to contact us via our GitHub discussions forum:
