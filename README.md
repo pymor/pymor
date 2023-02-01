@@ -39,49 +39,58 @@ If you use pyMOR for academic work, please consider citing our
     pyMOR - Generic Algorithms and Interfaces for Model Order Reduction
     SIAM J. Sci. Comput., 38(5), pp. S194--S216, 2016
 
-## Installation via pip
+## Installation
+
+### pip
 
 We recommend installation of pyMOR in a [virtual environment](https://virtualenv.pypa.io/en/latest/).
 
 pyMOR can easily be installed with the [pip](https://pip.pypa.io/en/stable/)
-command:
+command.
+Please note that pip versions prior to 21.1 might have problems resolving all
+dependencies, so running the following first is recommended.
 
-    pip install --upgrade pip  # make sure that pip is reasonably new
-    pip install pymor[full]
+    pip install --upgrade pip
 
-(Please note that pip versions prior to 21.1 might have problems resolving all dependencies)
+If you are not operating in a virtual environment, you can pass the optional
+`--user` argument to pip.
+pyMOR will then only be installed for your local user, not requiring
+administrator privileges.
 
-This will install the latest release of pyMOR on your system with most optional
-dependencies.
-For Linux we provide binary wheels, so no further system packages should
-be required. Use
+#### Latest Release (without Optional Dependencies)
+
+For an installation with minimal dependencies, run
 
     pip install pymor
 
-for an installation with minimal dependencies.
+#### Latest Release (with all Optional Dependencies)
+
+The following installs the latest release of pyMOR on your system with most
+optional dependencies.
+
+    pip install pymor[full]
+
 There are some optional packages not included with `pymor[full]`
 because they need additional setup on your system:
 
-* for support of MPI distributed models and parallelization of greedy algorithms
-  (requires MPI development headers and a C compiler):
+* mpi4py: support of MPI distributed models and parallelization of greedy
+  algorithms (requires MPI development headers and a C compiler):
 
       pip install mpi4py
 
-* dense matrix equation solver for system-theoretic MOR methods, required for
-  H-infinity norm calculation (requires OpenBLAS headers and a Fortran
-  compiler):
+* Slycot: dense matrix equation solvers for system-theoretic methods and
+  H-infinity norm calculation (requires OpenBLAS headers and a
+  Fortran compiler):
 
       pip install slycot
 
-* dense and sparse matrix equation solver for system-theoretic MOR methods
-  (other backends available):
+* Py-M.E.S.S.: dense and sparse matrix equation solvers for system-theoretic
+  methods (other backends available):
   * from [source](https://gitlab.mpi-magdeburg.mpg.de/mess/cmess-releases)
     (recommended)
   * using a [wheel](https://www.mpi-magdeburg.mpg.de/projects/mess)
 
-If you are not operating in a virtual environment, you can pass the optional `--user`
-argument to pip. pyMOR will then only be installed for your
-local user, not requiring administrator privileges.
+#### Latest Development Version
 
 To install the latest development version of pyMOR, execute
 
@@ -89,6 +98,8 @@ To install the latest development version of pyMOR, execute
 
 which will require that the [git](https://git-scm.com/) version control system is
 installed on your system.
+
+#### Current Release Branch Version
 
 From time to time, the main branch of pyMOR undergoes major changes and things
 might break (this is usually announced in our
@@ -100,11 +111,15 @@ so you might prefer to install pyMOR from the current release branch:
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
 
-## Installation via conda
+### conda
 
-pyMOR can be installed using `conda` by running
+We recommend installation of pyMOR in a
+[conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
 
-    conda install -c conda-forge pymor
+pyMOR can be installed using conda/mamba by running
+
+    conda install -c conda-forge mamba
+    mamba install -c conda-forge pymor
 
 ## Documentation
 
