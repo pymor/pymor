@@ -116,7 +116,7 @@ SYS_MOR_ARGS = (
 )
 
 DD_MOR_ARGS = (
-    ('dd_parabolic_heat', [0.01, 50, 10]),
+    ('dd_parametric_heat', [0.01, 50, 10]),
     ('era', [10]),
 )
 
