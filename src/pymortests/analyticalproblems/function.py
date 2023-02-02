@@ -67,6 +67,4 @@ def test_pickle_by_evaluation(function):
 
 def test_invalid_expressions():
     with pytest.raises(TypeError):
-        ExpressionFunction('-1 < x[0] < 1', 1)
-    with pytest.raises(TypeError):
         ExpressionFunction('(-1 < x[0]) and (x[0] < 1)', 1)

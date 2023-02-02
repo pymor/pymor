@@ -48,11 +48,11 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
 
     def diffusion_function_factory(ix, iy):
         if ix + 1 < num_blocks[0]:
-            X = '(x[0] >= ix * dx) * (x[0] < (ix + 1) * dx)'
+            X = '(ix * dx <= x[0] < (ix + 1) * dx)'
         else:
             X = '(x[0] >= ix * dx)'
         if iy + 1 < num_blocks[1]:
-            Y = '(x[1] >= iy * dy) * (x[1] < (iy + 1) * dy)'
+            Y = '(iy * dy <= x[1] < (iy + 1) * dy)'
         else:
             Y = '(x[1] >= iy * dy)'
         return ExpressionFunction(f'{X} * {Y} * 1.',

@@ -37,8 +37,8 @@ def main(
                   ExpressionFunction('x[0]', 2)]
     neumanns = [None,
                 ConstantFunction(3., dim_domain=2),
-                ExpressionFunction('50*(0.1 <= x[1]) * (x[1] <= 0.2)'
-                                   '+50*(0.8 <= x[1]) * (x[1] <= 0.9)', 2)]
+                ExpressionFunction('50*(0.1 <= x[1] <= 0.2)'
+                                   '+50*(0.8 <= x[1] <= 0.9)', 2)]
     domains = [RectDomain(),
                RectDomain(right='neumann'),
                RectDomain(right='neumann', top='neumann'),

@@ -46,6 +46,7 @@ the usual broadcasting rules apply.
 
 import ast
 import operator
+from functools import reduce
 from itertools import zip_longest
 from numbers import Number
 
@@ -85,6 +86,8 @@ def parse_expression(expression, parameters={}, values={}):
 
     # wrap all literals as Expressions
     transformed_tree = TransformLiterals().visit(tree)
+    # handle chained comparisons
+    transformed_tree = TransformChainedComparison().visit(transformed_tree)
     ast.fix_missing_locations(transformed_tree)
 
     # evaluate expression
@@ -133,6 +136,21 @@ class TransformLiterals(ast.NodeTransformer):
     def visit_List(self, node):
         return ast.Call(ast.Name('Array', ast.Load()),
                         [self.generic_visit(node)], [])
+
+
+class TransformChainedComparison(ast.NodeTransformer):
+
+    def visit_Compare(self, node):
+        comparators = [node.left] + node.comparators
+        operators = node.ops
+        comparisons = []
+        # transform chained comparisons to sequence of simple comparisons
+        for i, op in enumerate(operators):
+            comparisons.append(ast.Compare(self.generic_visit(comparators[i]),
+                                           [self.generic_visit(operators[i])],
+                                           [self.generic_visit(comparators[i+1])]))
+        # join simple comparisons with multiplication
+        return reduce(lambda left, right: ast.BinOp(left, ast.Mult(), right), comparisons)
 
 
 class Expression(ParametricObject):

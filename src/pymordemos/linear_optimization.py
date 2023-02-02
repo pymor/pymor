@@ -92,8 +92,8 @@ def main(
 def create_fom(grid_intervals, output_type='l2', vector_valued_output=False):
     domain = RectDomain(([-1, -1], [1, 1]))
     indicator_domain = ExpressionFunction(
-        '(-2/3. <= x[0]) * (x[0] <= -1/3.) * (-2/3. <= x[1]) * (x[1] <= -1/3.) * 1. \
-       + (-2/3. <= x[0]) * (x[0] <= -1/3.) *  (1/3. <= x[1]) * (x[1] <=  2/3.) * 1.',
+        '(-2/3. <= x[0] <= -1/3.) * (-2/3. <= x[1] <= -1/3.) * 1. \
+       + (-2/3. <= x[0] <= -1/3.) *  (1/3. <= x[1] <=  2/3.) * 1.',
         dim_domain=2)
     rest_of_domain = ConstantFunction(1, 2) - indicator_domain
 
