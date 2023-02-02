@@ -11,13 +11,13 @@ from scipy.special import erfinv
 
 from pymor.algorithms.basic import project_array
 from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.svd_va import qr_svd
 from pymor.core.cache import CacheableObject, cached
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import AdjointOperator, IdentityOperator, InverseOperator
 from pymor.operators.interface import Operator
 from pymor.tools.deprecated import Deprecated
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class RandomizedRangeFinder(CacheableObject):
@@ -484,28 +484,16 @@ def randomized_svd(A, n, range_product=None, source_product=None, subspace_itera
     with logger.block('Approximating basis for the operator range ...'):
         Q = RRF.find_range(basis_size=n+oversampling)
 
-    with logger.block('Projecting operator onto the reduced space ...'):
-        if isinstance(source_product, IdentityOperator):
-            R_B = A.apply_adjoint(Q).to_numpy().T
-        else:
-            B = A.apply_adjoint(range_product.apply(Q))
-            Q_B, R_B = gram_schmidt(source_product.apply_inverse(B), product=source_product, return_R=True)
-
-    with logger.block(f'Computing SVD in the reduced space ({R_B.shape[1]}x{R_B.shape[0]})...'):
-        U_b, s, Vh_b = sp.linalg.svd(R_B.T, full_matrices=False)
+    with logger.block(f'Computing transposed SVD in the reduced space ({len(Q)}x{Q.dim})...'):
+        B = source_product.apply_inverse(A.apply_adjoint(range_product.apply(Q)))
+        V, s, Uh_b = qr_svd(B, product=source_product, modes=n)
 
     with logger.block('Backprojecting the left'
                       + f'{" " if isinstance(range_product, IdentityOperator) else " generalized "}'
                       + f'singular vector{"s" if n > 1 else ""} ...'):
-        U = Q.lincomb(U_b[:, :n].T)
+        U = Q.lincomb(Uh_b[:n])
 
-    if isinstance(source_product, IdentityOperator):
-        V = NumpyVectorSpace.from_numpy(Vh_b[:n])
-    else:
-        with logger.block(f'Backprojecting the right generalized singular vector{"s" if n > 1 else ""} ...'):
-            V = Q_B.lincomb(Vh_b[:n])
-
-    return U, s[:n], V
+    return U, s, V
 
 
 @defaults('modes', 'p', 'q')
