@@ -486,7 +486,7 @@ def randomized_svd(A, n, range_product=None, source_product=None, subspace_itera
 
     with logger.block(f'Computing transposed SVD in the reduced space ({len(Q)}x{Q.dim})...'):
         B = source_product.apply_inverse(A.apply_adjoint(range_product.apply(Q)))
-        V, s, Uh_b = qr_svd(B, product=source_product, modes=n)
+        V, s, Uh_b = qr_svd(B, product=source_product, modes=n, rtol=0)
 
     with logger.block('Backprojecting the left'
                       + f'{" " if isinstance(range_product, IdentityOperator) else " generalized "}'
