@@ -3,10 +3,10 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Integral, Number
+
 import numpy as np
 import scipy as sp
 from scipy.linalg import lu_factor, lu_solve
-from scipy.sparse.linalg import LinearOperator, eigsh
 from scipy.special import erfinv
 
 from pymor.algorithms.basic import project_array
