@@ -7,9 +7,10 @@ import pytest
 import scipy as sp
 from numpy.random import uniform
 
-from pymor.algorithms.rand_la import adaptive_rrf, rrf
+from pymor.algorithms.rand_la import adaptive_rrf, randomized_ghep, randomized_svd, rrf
 from pymor.operators.constructions import VectorArrayOperator
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.tools.random import new_rng
 
 pytestmark = pytest.mark.builtin
 
