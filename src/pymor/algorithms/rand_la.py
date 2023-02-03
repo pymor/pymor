@@ -236,8 +236,8 @@ class RandomizedRangeFinder(CacheableObject):
         assert isinstance(basis_size, int) and 0 < basis_size
         if basis_size > min(self.A.source.dim, self.A.range.dim):
             self.logger.warning('Requested basis is larger than the rank of the operator!')
-            self.logger.info('Proceeding with maximum operator rank.')
             basis_size = min(self.A.source.dim, self.A.range.dim)
+            self.logger.info(f'Proceeding with maximum operator rank. (basis_size={basis_size})')
         assert tol is None or tol > 0
         assert isinstance(num_testvecs, int) and num_testvecs > 0
         assert 0 < p_fail < 1
