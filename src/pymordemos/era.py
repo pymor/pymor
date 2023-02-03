@@ -5,7 +5,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-from typer import Option, run
+from typer import Argument, run
 
 from pymor.core.logger import set_log_levels
 from pymor.models.iosys import LTIModel
@@ -69,7 +69,7 @@ def compute_markov_parameters(sys, n=100):
 
 
 def main(
-        n: int = Option(10, help='Order of the full model.')
+        n: int = Argument(10, help='Order of the full model.')
 ):
     set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
 
