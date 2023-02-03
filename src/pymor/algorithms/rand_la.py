@@ -31,8 +31,9 @@ class RandomizedRangeFinder(CacheableObject):
         Inner product |Operator| of the range of `A`. Determines the basis orthogonalization and the
         error norm.
     source_product
-        Inner product |Operator| of the source of `A`. Determines the basis orthogonalization (only
-        if `subspace_iterations` is greater than zero) and the error norm.
+        Inner product |Operator| of the source of `A`. Determines the basis orthogonalization when
+        multiplying with the adjoint during subspace iterations (only if `subspace_iterations` is
+        greater than zero) and the error norm.
     subspace_iterations
         The number of subspace iterations (defaults to zero).
         This can be used to increase the accuracy in the cases where the spectrum of `A` does not
@@ -113,7 +114,7 @@ class RandomizedRangeFinder(CacheableObject):
 
         .. math::
             \epsilon_{\mathrm{est}}=c_{\mathrm{est}}\cdot\max_{\omega\in\Omega}
-            \lVert (I-QQ^T)A\omega\rVert_{T\rightarrow S}
+            \lVert (I-QQ^T)A\omega\rVert_{S}
 
         with
 
