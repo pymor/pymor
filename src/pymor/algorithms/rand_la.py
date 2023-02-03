@@ -83,7 +83,7 @@ class RandomizedRangeFinder(CacheableObject):
             return 1
         elif self.lambda_min is None:
             with self.logger.block('Estimating minimum singular value of source_product ...'):
-                return randomized_ghep(InverseOperator(self.source_product), n=1)[0]
+                return 1/randomized_ghep(InverseOperator(self.source_product), n=1)[0]
         else:
             return self.lambda_min
 
