@@ -93,14 +93,14 @@ class RandomizedRangeFinder(CacheableObject):
             W += 1j * self.A.source.random(n, distribution='normal')
         self._samplevecs.append(self.A.apply(W))
 
-    def _estimate_error(self, basis_size, num_testvecs, p_fail):
+    def _estimate_error(self, Q, num_testvecs, p_fail):
         c = np.sqrt(2 * self._lambda_min())
         c *= erfinv((p_fail / min(self.A.source.dim, self.A.range.dim)) ** (1 / num_testvecs))
 
         if len(self._samplevecs) < num_testvecs:
             self._draw_test_vector(num_testvecs - len(self._samplevecs))
 
-        W, Q = self._samplevecs[:num_testvecs].copy(), self._find_range(basis_size)
+        W = self._samplevecs[:num_testvecs].copy()
         W -= project_array(W, Q, self.range_product)
         return np.max(W.norm(self.range_product)) / c
 
@@ -148,7 +148,8 @@ class RandomizedRangeFinder(CacheableObject):
         assert 0 < num_testvecs and isinstance(num_testvecs, int)
         assert 0 < p_fail < 1
 
-        err = self._estimate_error(basis_size, num_testvecs, p_fail)
+        Q = self._find_range(basis_size)
+        err = self._estimate_error(Q, num_testvecs, p_fail)
         self.logger.info(f'Estimated error (basis dimension {basis_size}): {err:.5e}.')
         return err
 
@@ -175,15 +176,14 @@ class RandomizedRangeFinder(CacheableObject):
             gram_schmidt(self._Q[i+1], self.range_product, offset=offset, copy=False)
 
     def _find_range(self, basis_size):
-        if basis_size > len(self._Q[-1]):
-            k = basis_size - len(self._Q[-1])
+        k = basis_size - len(self._Q[-1])
+        if k > 0:
             with self.logger.block(f'Appending {k} basis vector{"s" if k > 1 else ""} ...'):
                 self._extend_basis(k)
-            while basis_size > len(self._Q[-1]):
-                k = basis_size - len(self._Q[-1])
-                with self.logger.block(f'Appending {k} basis vector{"s" if k > 1 else ""}'
-                                       + 'to compensate for removal in gram_schmidt ...'):
-                    self._extend_basis(k)
+
+        k = basis_size - len(self._Q[-1])
+        if k > 0:
+            self.logger.warning(f'{k} vectors removed in gram_schmidt!')
 
         return self._Q[-1][:basis_size]
 
@@ -245,23 +245,23 @@ class RandomizedRangeFinder(CacheableObject):
         with self.logger.block('Finding range ...'):
             with self.logger.block(f'Approximating range basis of dimension {basis_size} ...'):
                 self._find_range(basis_size)
-                err = self._estimate_error(basis_size, num_testvecs, p_fail)
+                err = self._estimate_error(self._Q[-1], num_testvecs, p_fail)
 
             if tol is not None and err > tol:
                 with self.logger.block('Extending range basis adaptively ...'):
                     max_iter = min(max_basis_size, self.A.source.dim, self.A.range.dim)
                     while len(self._Q[-1]) < max_iter:
                         basis_size = min(basis_size + 1, max_iter)
-                        err = self._estimate_error(basis_size, num_testvecs, p_fail)
+                        err = self._estimate_error(self._Q[-1], num_testvecs, p_fail)
                         self.logger.info(f'Basis dimension: {basis_size}/{max_iter}\t'
                                          + 'Estimated error: {err:.5e} (tol={tol:.2e})')
                         if err <= tol:
                             break
 
-        self.logger.info(f'Found range of dimension {basis_size}. (Estimated error: {err:.5e})')
+        Q = self._Q[-1][:basis_size]
+        self.logger.info(f'Found range of dimension {len(Q)}. (Estimated error: {err:.5e})')
 
-        return self._find_range(basis_size)
-
+        return Q
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
 @Deprecated('RandomizedRangeFinder')
