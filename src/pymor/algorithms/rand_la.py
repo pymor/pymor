@@ -187,6 +187,7 @@ class RandomizedRangeFinder(CacheableObject):
 
         return self._Q[-1][:basis_size]
 
+    @defaults('basis_size', 'tol', 'num_testvecs', 'p_fail', 'max_basis_size')
     def find_range(self, basis_size=8, tol=None, num_testvecs=20, p_fail=1e-14, max_basis_size=500):
         r"""Randomized range approximation of the |Operator| `self.A`.
 
