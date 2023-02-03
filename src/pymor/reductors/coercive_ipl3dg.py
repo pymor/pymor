@@ -3,24 +3,35 @@ from copy import deepcopy
 
 from pymor.algorithms.projection import project
 from pymor.core.base import ImmutableObject
+from pymor.core.defaults import set_defaults
 from pymor.core.exceptions import ExtensionError
 from pymor.models.basic import StationaryModel
 from pymor.operators.block import BlockOperator, BlockColumnOperator
-from pymor.operators.constructions import LincombOperator, VectorOperator, ZeroOperator
+from pymor.operators.constructions import LincombOperator, VectorOperator
 from pymor.operators.constructions import VectorArrayOperator, IdentityOperator
-from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ParameterFunctional
 from pymor.reductors.basic import extend_basis
 from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
 from pymor.reductors.residual import ResidualReductor, ResidualOperator
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
-    def __init__(self, fom, dd_grid, local_bases=None, product=None, reduced_estimate=False,
-                 unassembled_product=None, fake_dirichlet_ops=None,
-                 only_primal_estimate=False, reductor_type='residual'):
+    def __init__(self, fom, dd_grid, local_bases=None, product=None,
+                 localized_estimator=False, reductor_type='residual',
+                 unassembled_product=None, fake_dirichlet_ops=None):
+        """
+            TBC
+
+            reductor_type:
+                'residual' : Reduction of the residual based on ResidualReductor.
+                'simple'   : Reduction of the residual based on SimpleCoerciveRBReductor.
+                'None'     : No reduction.
+        """
         self.__auto_init(locals())
+
+        if localized_estimator:
+            assert unassembled_product is not None
+            assert fake_dirichlet_ops is not None
 
         self.solution_space = fom.solution_space
         self.S = self.solution_space.empty().num_blocks
@@ -46,78 +57,76 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             self.patch_mappings_to_global.append(local_to_global)
             self.patch_mappings_to_local.append(global_to_local)
 
-        # node patches for estimation
-        # NOTE: currently the estimator domains are node patches
-        inner_node_patches = construct_inner_node_patches(dd_grid)
-        # estimator_domains = inner_node_patches
-        estimator_domains = add_element_neighbors(dd_grid, inner_node_patches)
+        if localized_estimator:
+            # node patches for estimation
+            # the estimator domains are node patches
+            inner_node_patches = construct_inner_node_patches(dd_grid)
+            # estimator_domains = inner_node_patches
+            estimator_domains = add_element_neighbors(dd_grid, inner_node_patches)
 
-        self.estimator_data = {}
-        self.local_residuals = []
-        self.inner_products = {}
-        self.bases_in_local_domains = {}
-        self.estimator_mappings_to_global = []
-        self.estimator_mappings_to_local = []
-        self.local_support_mappings_to_local = []
-        for associated_element, elements in estimator_domains.items():
-            local_model, local_to_global, global_to_local = construct_local_model(
-                elements, fom.operator, fom.rhs, dd_grid.neighbors,
-                block_prod=self.unassembled_product, lincomb_outside=True,
-                ops_dirichlet=self.fake_dirichlet_ops)
-            node_elements = inner_node_patches[associated_element]
-            self.estimator_mappings_to_global.append(local_to_global)
-            self.estimator_mappings_to_local.append(global_to_local)
-            # TODO: vectorize the following
-            local_node_elements = [global_to_local(el) for el in node_elements]
-            self.estimator_data[associated_element] = (elements, node_elements,
-                                                       local_node_elements)
-            bases_in_local_domain = [self.local_bases[el] for el in elements]
-            self.bases_in_local_domains[associated_element] = bases_in_local_domain
-            restricted_bases_in_local_domain = [bases if i in local_node_elements else bases.space.zeros()
-                                                for i, bases in enumerate(bases_in_local_domain)]
-            # todo: we need sparse blockvectorarrays here !!
-            basis = local_model.solution_space.make_block_diagonal_array(restricted_bases_in_local_domain)
-            # NOTE: using the reduction here is way too slow and gives wrong results !
-            # TODO: the product should act on only the inner elements ??????
-            local_product = local_model.products['product'] if product else None
-            # product_blocks = local_product.blocks
-            # product_blocks_on_support_with_coupling = product_blocks.copy().todense()
-            # for I in range(len(elements)):
-            #     if I not in local_node_elements:
-            #         product_blocks_on_support_with_coupling[I][I] = None
-            # product_blocks_on_support_with_coupling[product_blocks_on_support_with_coupling == 0] = None
-            # local_product = BlockOperator(product_blocks_on_support_with_coupling)
-            # product_blocks_on_support_with_coupling[local_node_elements][:, local_node_elements] = \
-            # inner_product_blocks = product_blocks.todense()[local_node_elements][:, local_node_elements]
-            # inner_product_blocks[inner_product_blocks == 0] = None
-            # local_product = BlockOperator(inner_product_blocks)
+            self.estimator_data = {}
+            self.inner_products = {}
+            self.bases_in_local_domains = {}
 
-            # extract the local inner product
-            inner_model, local_to_global, global_to_local = construct_local_model(
-                inner_node_patches[associated_element],
-                fom.operator, fom.rhs, dd_grid.neighbors,
-                block_prod=self.unassembled_product, lincomb_outside=True,
-                ops_dirichlet=self.fake_dirichlet_ops)
-            self.local_support_mappings_to_local.append(global_to_local)
-            inner_product = inner_model.products['product']
+            self.estimator_mappings_to_global = []
+            self.estimator_mappings_to_local = []
+            self.local_support_mappings_to_local = []
 
-            restricted_product = RestrictedProductOperator(local_product,
-                                                           inner_product,
-                                                           local_node_elements)
-            if not reduced_estimate or reductor_type == 'residual':
-                residual_reductor = ResidualReductor(basis,
-                                                     local_model.operator,
-                                                     local_model.rhs,
-                                                     product=restricted_product,
-                                                     riesz_representatives=True)
-            elif reductor_type == 'simple':
-                residual_reductor = SimpleCoerciveRBReductor(local_model, basis,
-                                                             product=restricted_product,
-                                                             check_orthonormality=False)
-            else:
-                assert 0, f'reductor type {reductor_type} not known'
-            self.inner_products[associated_element] = inner_product
-            self.local_residuals.append(residual_reductor)
+            self.local_residuals = []
+
+            for associated_element, elements in estimator_domains.items():
+                # construct estimator model on the stencil for residual computation
+                local_model, local_to_global, global_to_local = construct_local_model(
+                    elements, fom.operator, fom.rhs, dd_grid.neighbors,
+                    block_prod=self.unassembled_product, lincomb_outside=True,
+                    ops_dirichlet=self.fake_dirichlet_ops)
+                node_elements = inner_node_patches[associated_element]
+                self.estimator_mappings_to_global.append(local_to_global)
+                self.estimator_mappings_to_local.append(global_to_local)
+                # TODO: vectorize the following
+                local_node_elements = [global_to_local(el) for el in node_elements]
+                self.estimator_data[associated_element] = (elements, node_elements, local_node_elements)
+
+                # gather basis
+                bases_in_local_domain = [self.local_bases[el] for el in elements]
+                self.bases_in_local_domains[associated_element] = bases_in_local_domain
+
+                # todo: we need sparse blockvectorarrays here !!
+                basis = local_model.solution_space.make_block_diagonal_array(bases_in_local_domain)
+                local_product = local_model.products['product']
+
+                # construct local support model to extract the local inner product
+                inner_model, _, global_to_local = construct_local_model(
+                    inner_node_patches[associated_element],
+                    fom.operator, fom.rhs, dd_grid.neighbors,
+                    block_prod=self.unassembled_product, lincomb_outside=True,
+                    ops_dirichlet=self.fake_dirichlet_ops)
+                self.local_support_mappings_to_local.append(global_to_local)
+                inner_product = inner_model.products['product']
+
+                # this is the "product" which is used for the localized estimation.
+                # In fact, it is not a product on the larger stencil but only on the local support.
+                # Currently, this implies that the SimpleCoerciveRBReductor does not work as it should.
+                # However, in the ResidualReductor, the product cancels out.
+                restricted_product = RestrictedProductOperator(local_product,
+                                                               inner_product,
+                                                               local_node_elements)
+                if reductor_type == 'residual' or reductor_type == 'None':
+                    residual_reductor = ResidualReductor(basis,
+                                                         local_model.operator,
+                                                         local_model.rhs,
+                                                         product=restricted_product,
+                                                         riesz_representatives=True)
+                elif reductor_type == 'simple':
+                    # TODO: fix this case and make it work with the restricted product
+                    residual_reductor = SimpleCoerciveRBReductor(local_model, basis,
+                                                                 product=restricted_product,
+                                                                 check_orthonormality=False)
+                else:
+                    assert 0, f'reductor type {reductor_type} not known'
+
+                self.inner_products[associated_element] = inner_product
+                self.local_residuals.append(residual_reductor)
 
     def add_partition_of_unity(self):
         for I in range(self.S):
@@ -231,64 +240,48 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         return projected_operators
 
     def _reduce_residuals(self):
-        if self.reduced_estimate or 1:
-            from pymor.core.defaults import set_defaults
-            set_defaults({"pymor.algorithms.gram_schmidt.gram_schmidt.check": False})
-            reduced_residuals = []
-            for (element, bases_local), residual, (_, (_, _, local_node_elements)) in zip(
-                self.bases_in_local_domains.items(),
-                self.local_residuals,
-                self.estimator_data.items()
-            ):
-                # bases_local_in_domain = [bases if i in local_node_elements else bases.space.zeros()
-                #                          for i, bases in enumerate(bases_local)]
-                # basis = residual.operator.source.make_block_diagonal_array(bases_local_in_domain)
-                # actual_local_basis = basis.empty()
-                # for b in basis:
-                #     if b.norm():
-                #         actual_local_basis.append(b)
-                # construct a new ResidualReductor object to be sure that nothing is used from before
-                # NOTE: this is way too slow !!
-                if self.reductor_type == 'residual':
+        reduced_residuals = []
+        if self.localized_estimator:
+            for (_, bases_local), residual in zip(self.bases_in_local_domains.items(),
+                                                  self.local_residuals):
+                if self.reductor_type == 'residual' or self.reductor_type == 'None':
+                    set_defaults({"pymor.algorithms.gram_schmidt.gram_schmidt.check": False})
                     basis = residual.operator.source.make_block_diagonal_array(bases_local)
                     residual_reductor = ResidualReductor(basis,
                                                          residual.operator,
                                                          residual.rhs,
                                                          product=residual.product,
                                                          riesz_representatives=True)
-                else:
+                elif self.reductor_type == 'simple':
                     set_defaults({'pymor.operators.constructions.induced_norm.raise_negative': False})
                     basis = residual.fom.solution_space.make_block_diagonal_array(bases_local)
                     residual_reductor = SimpleCoerciveRBReductor(residual.fom, basis,
                                                                  product=residual.products['RB'],
                                                                  check_orthonormality=False)
-                if self.reduced_estimate:
+
+                if self.reductor_type == 'residual' or self.reductor_type == 'simple':
                     reduced_residuals.append(residual_reductor.reduce())
                 else:
                     reduced_residuals.append(residual_reductor)
 
-        else:
-            reduced_residuals = [local_residual for local_residual in self.local_residuals]
-
         # NOTE: the above requires a reductor that has a changeable basis, which only makes sense
         # if the BlockVectorArray allows for a sparse format.
+        # Currently, we do not use any data from before and reduce from scratch !
+        # TODO: implement hierarchy.
+
         return reduced_residuals
 
     def assemble_error_estimator(self):
-        # TODO: reduce this product
-        reduced_support_products = self.inner_products
-
-        estimators = {}
-        estimators['global'] = GlobalEllipticEstimator(self.fom, self.product)
-        estimators['local'] = EllipticIPLRBEstimator(self.estimator_data,
-                                                     self.reduced_residuals,
-                                                     reduced_support_products,
-                                                     self.S,
-                                                     self.reconstruct)
-        if self.only_primal_estimate:
-            return estimators['local']
+        if self.localized_estimator:
+            reduced_support_products = self.inner_products
+            estimator = EllipticIPLRBEstimator(self.estimator_data,
+                                               self.reduced_residuals,
+                                               reduced_support_products,
+                                               self.S,
+                                               self.reconstruct)
         else:
-            return estimators
+            estimator = GlobalEllipticEstimator(self.fom, self.product, self.reconstruct)
+        return estimator
 
     def reduce_to_subbasis(self, dims):
         raise NotImplementedError
@@ -539,7 +532,6 @@ def remove_irrelevant_coupling_from_patch_operator(patch_model, mapping_to_globa
             else:
                 # only the irrelevant couplings need to disappear
                 if blocks[i][j]:
-                    # TODO: only works for one thermal block right now. find out why !
                     I = mapping_to_global(i)
                     element_patch = [mapping_to_global(l) for l in np.arange(subspaces)]
                     strings = []
@@ -622,14 +614,16 @@ def _project_block_rhs(rhs, range_bases):
 
 class GlobalEllipticEstimator(ImmutableObject):
 
-    def __init__(self, fom, product):
+    def __init__(self, fom, product, reconstruct):
         self.__auto_init(locals())
 
-    def estimate_error(self, u, mu):
+    def estimate_error(self, u, mu, m):
+        u = self.reconstruct(u)
         assert u in self.fom.solution_space
         product = self.product
         operator = self.fom.operator
         rhs = self.fom.rhs
+        print('WARNING: globalized method')
         riesz_rep = product.apply_inverse(operator.apply(u, mu) - rhs.as_vector(mu))
         return np.sqrt(product.apply2(riesz_rep, riesz_rep))
 
@@ -672,7 +666,7 @@ class RestrictedProductOperator(BlockOperator):
 
     @property
     def H(self):
-        assert 0
+        raise NotImplementedError
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -688,24 +682,23 @@ class RestrictedProductOperator(BlockOperator):
         return self.range.make_array(V_inner_on_outer)
 
     def apply_adjoint(self, V, mu=None):
-        assert 0
-        assert V in self.range
-
-        return self.source.make_array(U_blocks) if self.blocked_source else U_blocks[0]
+        raise NotImplementedError
 
     def assemble(self, mu=None):
-        assert 0
+        raise NotImplementedError
 
     def as_range_array(self, mu=None):
-        assert 0
+        raise NotImplementedError
 
     def as_source_array(self, mu=None):
-        assert 0
+        raise NotImplementedError
 
     def d_mu(self, parameter, index=0):
-        assert 0
+        raise NotImplementedError
 
     def only_inner(self, U, mu=None):
+        # convenience method for restricting U to the inner part. Not connected to the product
+        # but useful in SimpleCoerciveRBReductor debugging.
         U_inner_on_outer = [U.block(self.global_to_local(i))
                             if i in self.inner_blocks else U.block(i).zeros(len(U))
                             for i in range(U.num_blocks)]
@@ -739,6 +732,8 @@ class EllipticIPLRBEstimator(ImmutableObject):
                 norm = np.sqrt(restricted_product.apply2(riesz_inner, riesz_inner))
 
                 residuals.append((residual_full, riesz_inner))
+
+                ##### DEBUGGING CODE FOR FIXING SimpleCoerciveRBReductor
 
                 # # the same code as above from RB tutorial
                 # rieszes = restricted_product.source.empty()
@@ -788,7 +783,7 @@ class EllipticIPLRBEstimator(ImmutableObject):
                 # print(norm, norm_, norm__)
 
             elif isinstance(residual, ResidualOperator):
-                # this is the reduced case with improved accuracy 
+                # this is the reduced case with improved accuracy
                 u_in_ed_unblocked = np.array([u.to_numpy() for u in u_in_ed]).flatten()
                 u_in_ed_unblocked = residual.source.from_numpy(u_in_ed_unblocked)
                 norm = residual.apply(u_in_ed_unblocked, mu=mu).norm()
@@ -799,16 +794,18 @@ class EllipticIPLRBEstimator(ImmutableObject):
                 norm = residual.error_estimator.estimate_error(u_in_ed_unblocked, mu=mu,
                                                                m=residual)
                 # TODO: It seems that something is wrong with the estimation here because there are nans coming in...
-                #       resolve this ! 
+                #       resolve this !
                 import math
                 if math.isnan(norm[0]):
+                    print('WARNING: catched a nan!')
                     norm[0] = 0
                 # NOTE: the following can not be used because we need to use u_in_ed for the coefficients
                 # norm = residual.estimate_error(mu=mu)
 
             indicators.append(norm)
 
-        # distribute indicators to domains TODO: Is this the correct way of distributing this?
+        # distribute indicators to domains
+        # TODO: Is this the correct way of distributing this?
         ests = np.zeros(self.domains)
         for associated_domain, ind in zip(sorted(self.estimator_data.keys()), indicators):
             elements = self.estimator_data[associated_domain][0]
