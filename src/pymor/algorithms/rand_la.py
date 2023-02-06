@@ -5,8 +5,7 @@
 from numbers import Integral, Number
 
 import numpy as np
-import scipy as sp
-from scipy.linalg import lu_factor, lu_solve
+import scipy.linalg as spla
 from scipy.special import erfinv
 
 from pymor.algorithms.basic import project_array
@@ -630,8 +629,8 @@ def randomized_ghep(A, E=None, n=6, subspace_iterations=0, oversampling=20, sing
             Q = gram_schmidt(Y, product=E)
         with logger.block('Projecting operator onto the reduced space ...'):
             X = E.apply2(W, Q)
-            X_lu = lu_factor(X)
-            T = lu_solve(X_lu, lu_solve(X_lu, W.inner(Y_bar)).T).T
+            X_lu = spla.lu_factor(X)
+            T = spla.lu_solve(X_lu, spla.lu_solve(X_lu, W.inner(Y_bar)).T).T
     else:
         with logger.block('Approximating basis for the operator source/range ...'):
             C = InverseOperator(E) @ A
@@ -645,7 +644,7 @@ def randomized_ghep(A, E=None, n=6, subspace_iterations=0, oversampling=20, sing
         with logger.block(f'Computing the{" " if isinstance(E, IdentityOperator) else " generalized "}'
                           + f'eigenvalue{"s" if n > 1 else ""} and eigenvector{"s" if n > 1 else ""} '
                           + 'in the reduced space ...'):
-            w, Vr = sp.linalg.eigh(T, subset_by_index=(T.shape[1]-n, T.shape[0]-1))
+            w, Vr = spla.eigh(T, subset_by_index=(T.shape[1]-n, T.shape[0]-1))
         with logger.block('Backprojecting the'
                           + f'{" " if isinstance(E, IdentityOperator) else " generalized "}'
                           + f'eigenvector{"s" if n > 1 else ""} ...'):
@@ -654,4 +653,4 @@ def randomized_ghep(A, E=None, n=6, subspace_iterations=0, oversampling=20, sing
     else:
         with logger.block(f'Computing the{" " if isinstance(E, IdentityOperator) else " generalized "}'
                           + f'eigenvalue{"s" if n > 1 else ""} in the reduced space ...'):
-            return sp.linalg.eigh(T, subset_by_index=(T.shape[1]-n, T.shape[0]-1), eigvals_only=True)[::-1]
+            return spla.eigh(T, subset_by_index=(T.shape[1]-n, T.shape[0]-1), eigvals_only=True)[::-1]
