@@ -11,15 +11,115 @@ from scipy.special import erfinv
 from pymor.algorithms.basic import project_array
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.svd_va import qr_svd
+from pymor.core.base import ImmutableObject
 from pymor.core.cache import CacheableObject, cached
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import AdjointOperator, IdentityOperator, InverseOperator
+from pymor.operators.constructions import AdjointOperator, IdentityOperator, InverseOperator, VectorArrayOperator
 from pymor.operators.interface import Operator
 from pymor.tools.deprecated import Deprecated
+from pymor.vectorarrays.interface import VectorArray
 
 
-class RandomizedRangeFinder(CacheableObject):
+class RandomizedNormEstimator(CacheableObject):
+    """Approximates the norm of an |Operator| with randomized methods.
+
+    Parameters
+    ----------
+    A
+        The |Operator| whose norm is approximated.
+    range_product
+        Inner product |Operator| of the range of `A`.
+    source_product
+        Inner product |Operator| of the source of `A`.
+    lambda_min
+        A lower bound for the smallest eigenvalue of `source_product`. Defaults to `None`.
+        If `None` and a `source_product` is given, the smallest eigenvalue will be computed
+        using :func:`randomized GHEP <pymor.algorithms.rand_la.randomized_ghep>`.
+    complex
+        If `True`, complex valued random vectors will be drawn.
+    """
+
+    cache_region = 'memory'
+
+    def __init__(self, A, range_product=None, source_product=None, subspace_iterations=0, lambda_min=None,
+                 complex=False):
+        if isinstance(A, VectorArray):
+            A = VectorArrayOperator(A)
+        assert isinstance(A, Operator)
+        assert 0 <= subspace_iterations and isinstance(subspace_iterations, Integral)
+        assert isinstance(range_product, Operator)
+        assert source_product.source == source_product.range == A.source
+        assert isinstance(source_product, Operator)
+        assert source_product.source == source_product.range == A.source
+        assert lambda_min is None or isinstance(lambda_min, Number)
+
+        self.__auto_init(locals())
+        self._samplevecs = self.A.range.empty()
+
+    @cached
+    def _lambda_min(self):
+        if isinstance(self.source_product, IdentityOperator):
+            return 1
+        elif self.lambda_min is None:
+            with self.logger.block('Estimating minimum singular value of source_product ...'):
+                return 1/randomized_ghep(InverseOperator(self.source_product), n=1)[0]
+        else:
+            return self.lambda_min
+
+    def _draw_samples(self, n):
+        if len(self._samplevecs) < n:
+            W = self.A.source.random(n, distribution='normal')
+            if self.complex:
+                W += 1j * self.A.source.random(n, distribution='normal')
+            self._samplevecs.append(self.A.apply(W))
+        return self._samplevecs[:n]
+
+    def _estimate_norm(self, vec, p_fail):
+        c = np.sqrt(2 * self._lambda_min())
+        c *= erfinv(p_fail ** (1 / len(vec)))
+        return np.max(vec.norm(self.range_product)) / c
+
+    def estimate_norm(self, num_testvecs, p_fail):
+        r"""Randomized operator norm estimator from :cite:`BS18` (Definition 3.1).
+
+        An upper bound on the operator norm with probability greater than or equal to
+        :math:`1-\texttt{p_fail}` is given by
+
+        .. math::
+            \epsilon_{\mathrm{est}}=c_{\mathrm{est}}\cdot\max_{\omega\in\Omega}
+            \lVert A\omega\rVert_{S}
+
+        with
+
+        .. math::
+            c_{\mathrm{est}}
+            =\frac{1}{\sqrt{2\lambda_{\mathrm{min}}}\operatorname{erf}^{-1}
+            \left(\texttt{p_fail}^{1/\texttt{num_testvecs}}\right)},
+
+        where :math:`\Omega` is a set of `num_testvecs` random vectors, :math:`S` denotes the inner
+        product of the range, :math:`\lambda_min` is a lower bound on the smallest eigenvalue of
+        the inner product of the source of :math:`A`.
+
+        Parameters
+        ----------
+        num_testvecs
+            Number of test vectors for estimation of the operator norm.
+        p_fail
+            Maximum failure probabilty of the estimate.
+
+        Returns
+        -------
+        norm
+            An approximate upper bound on the operator norm.
+        """
+        assert 0 < num_testvecs and isinstance(num_testvecs, Integral)
+        assert 0 < p_fail < 1
+
+        return self._estimate_norm(self._draw_samples(num_testvecs), p_fail)
+
+
+class RandomizedRangeFinder(ImmutableObject):
     """Approximates the range of an |Operator| with randomized methods.
 
     Parameters
@@ -50,81 +150,36 @@ class RandomizedRangeFinder(CacheableObject):
         `range_product`.
     """
 
-    cache_region = 'memory'
-
     def __init__(self, A, range_product=None, source_product=None, subspace_iterations=0, lambda_min=None,
                  complex=False, self_adjoint=False):
         assert isinstance(A, Operator)
-        assert 0 <= subspace_iterations and isinstance(subspace_iterations, int)
+        assert 0 <= subspace_iterations and isinstance(subspace_iterations, Integral)
         if range_product is None:
             range_product = IdentityOperator(A.range)
-
         if source_product is None:
             source_product = IdentityOperator(A.source)
-        assert isinstance(range_product, Operator)
-        assert source_product.source == source_product.range == A.source
-        assert isinstance(source_product, Operator)
-        assert source_product.source == source_product.range == A.source
-        assert lambda_min is None or isinstance(lambda_min, Number)
+
+        estimator = RandomizedNormEstimator(A, source_product=source_product, range_product=range_product,
+                                            lambda_min=lambda_min, complex=complex)
 
         self.__auto_init(locals())
+        self._estimator = estimator
         self._Q = [self.A.range.empty()]
         for _ in range(subspace_iterations):
             self._Q.append(self.A.source.empty())
             self._Q.append(self.A.range.empty())
         self._Q = tuple(self._Q)
-        self._samplevecs = self.A.range.empty()
         self._adjoint_op = A if self_adjoint else AdjointOperator(A, range_product=range_product,
                                                                   source_product=source_product)
 
-    @cached
-    def _lambda_min(self):
-        if isinstance(self.source_product, IdentityOperator):
-            return 1
-        elif self.lambda_min is None:
-            with self.logger.block('Estimating minimum singular value of source_product ...'):
-                return 1/randomized_ghep(InverseOperator(self.source_product), n=1)[0]
-        else:
-            return self.lambda_min
-
-    def _draw_test_vector(self, n):
-        W = self.A.source.random(n, distribution='normal')
-        if self.complex:
-            W += 1j * self.A.source.random(n, distribution='normal')
-        self._samplevecs.append(self.A.apply(W))
-
     def _estimate_error(self, Q, num_testvecs, p_fail):
-        c = np.sqrt(2 * self._lambda_min())
-        c *= erfinv((p_fail / min(self.A.source.dim, self.A.range.dim)) ** (1 / num_testvecs))
-
-        if len(self._samplevecs) < num_testvecs:
-            self._draw_test_vector(num_testvecs - len(self._samplevecs))
-
-        W = self._samplevecs[:num_testvecs].copy()
-        W -= project_array(W, Q, self.range_product)
-        return np.max(W.norm(self.range_product)) / c
+        W = self._estimator._draw_samples(num_testvecs)
+        return self._estimator._estimate_norm(W - project_array(W, Q), p_fail)
 
     def estimate_error(self, basis_size, num_testvecs=20, p_fail=1e-14):
         r"""Randomized a posteriori error estimator for a given basis size.
 
         This implements the a posteriori error estimator from :cite:`BS18` (Definition 3.1).
-
-        The error estimate is given by
-
-        .. math::
-            \epsilon_{\mathrm{est}}=c_{\mathrm{est}}\cdot\max_{\omega\in\Omega}
-            \lVert (I-QQ^T)A\omega\rVert_{S}
-
-        with
-
-        .. math::
-            c_{\mathrm{est}}
-            =\frac{1}{\sqrt{2\lambda_{\mathrm{min}}}\operatorname{erf}^{-1}
-            \left(\left(\frac{\texttt{p_fail}}{n}\right)^{1/\texttt{num_testvecs}}\right)},
-
-        where :math:`\Omega` is a set of `num_testvecs` random vectors, :math:`S` denotes the inner
-        product of the range, :math:`T` denotes inner product of the source of :math:`A` and
-        :math:`n=\min\{\dim(S),\,\dim(T)\}`.
 
         Parameters
         ----------
@@ -148,8 +203,7 @@ class RandomizedRangeFinder(CacheableObject):
         assert 0 < num_testvecs and isinstance(num_testvecs, Integral)
         assert 0 < p_fail < 1
 
-        Q = self._find_range(basis_size)
-        err = self._estimate_error(Q, num_testvecs, p_fail)
+        err = self._estimate_error(basis_size, num_testvecs, p_fail)
         self.logger.info(f'Estimated error (basis dimension {basis_size}): {err:.5e}.')
         return err
 
@@ -183,7 +237,7 @@ class RandomizedRangeFinder(CacheableObject):
 
         k = basis_size - len(self._Q[-1])
         if k > 0:
-            self.logger.warning(f'{k} vectors removed in gram_schmidt!')
+            self.logger.warning(f'{k} vector{"s" if k > 1 else ""} removed in gram_schmidt!')
 
         return self._Q[-1][:basis_size]
 
@@ -222,7 +276,7 @@ class RandomizedRangeFinder(CacheableObject):
         num_testvecs
             Number of test vectors used in `self.estimate_error`.
         p_fail
-            Maximum failure probabilty.
+            Maximum failure probabilty of the algorithm.
         max_basis_size
             Maximum basis size for the adaptive process.
 
@@ -235,32 +289,32 @@ class RandomizedRangeFinder(CacheableObject):
         """
         assert isinstance(max_basis_size, Integral) and max_basis_size > 0
         assert isinstance(basis_size, Integral) and 0 < basis_size
-        if basis_size > min(self.A.source.dim, self.A.range.dim):
+        N = min(self.A.source.dim, self.A.range.dim)
+        if basis_size > N:
             self.logger.warning('Requested basis is larger than the rank of the operator!')
-            basis_size = min(self.A.source.dim, self.A.range.dim)
-            self.logger.info(f'Proceeding with maximum operator rank. (basis_size={basis_size})')
+            basis_size = N
+            self.logger.info(f'Proceeding with maximum operator rank. (basis_size={N})')
         assert tol is None or tol > 0
         assert isinstance(num_testvecs, Integral) and num_testvecs > 0
         assert 0 < p_fail < 1
 
         with self.logger.block('Finding range ...'):
             with self.logger.block(f'Approximating range basis of dimension {basis_size} ...'):
-                self._find_range(basis_size)
-                err = self._estimate_error(self._Q[-1], num_testvecs, p_fail)
+                Q = self._find_range(basis_size)
+                err = self._estimate_error(Q, num_testvecs, p_fail/N)
 
             if tol is not None and err > tol:
                 with self.logger.block('Extending range basis adaptively ...'):
-                    max_iter = min(max_basis_size, self.A.source.dim, self.A.range.dim)
-                    while len(self._Q[-1]) < max_iter:
-                        basis_size = min(basis_size + 1, max_iter)
-                        self._extend_basis(1)
-                        err = self._estimate_error(self._Q[-1], num_testvecs, p_fail)
+                    max_iter = min(max_basis_size, N)
+                    while basis_size < max_iter:
+                        basis_size += 1
+                        Q = self._find_range(basis_size)
+                        err = self._estimate_error(Q, num_testvecs, p_fail/N)
                         self.logger.info(f'Basis dimension: {basis_size}/{max_iter}\t'
                                          + f'Estimated error: {err:.5e} (tol={tol:.2e})')
                         if err <= tol:
                             break
 
-        Q = self._Q[-1][:basis_size]
         self.logger.info(f'Found range of dimension {len(Q)}. (Estimated error: {err:.5e})')
 
         return Q
