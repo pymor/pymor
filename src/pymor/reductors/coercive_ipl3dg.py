@@ -23,9 +23,9 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             TBC
 
             reductor_type:
-                'residual' : Reduction of the residual based on ResidualReductor.
-                'simple'   : Reduction of the residual based on SimpleCoerciveRBReductor.
-                'None'     : No reduction.
+                'residual'      : Reduction of the residual based on ResidualReductor.
+                'simple'        : Reduction of the residual based on SimpleCoerciveRBReductor.
+                'non_assembled' : No reduction.
         """
         self.__auto_init(locals())
 
@@ -111,7 +111,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
                 restricted_product = RestrictedProductOperator(local_product,
                                                                inner_product,
                                                                local_node_elements)
-                if reductor_type == 'residual' or reductor_type == 'None':
+                if reductor_type == 'residual' or reductor_type == 'non_assembled':
                     residual_reductor = ResidualReductor(basis,
                                                          local_model.operator,
                                                          local_model.rhs,
@@ -244,7 +244,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         if self.localized_estimator:
             for (_, bases_local), residual in zip(self.bases_in_local_domains.items(),
                                                   self.local_residuals):
-                if self.reductor_type == 'residual' or self.reductor_type == 'None':
+                if self.reductor_type == 'residual' or self.reductor_type == 'non_assembled':
                     set_defaults({"pymor.algorithms.gram_schmidt.gram_schmidt.check": False})
                     basis = residual.operator.source.make_block_diagonal_array(bases_local)
                     residual_reductor = ResidualReductor(basis,
@@ -710,7 +710,7 @@ class EllipticIPLRBEstimator(ImmutableObject):
     def __init__(self, estimator_data, residuals, support_products, domains, reconstruct):
         self.__auto_init(locals())
 
-    def estimate_error(self, u_rom, mu, m):
+    def estimate_error(self, u_rom, mu, m=None):
         indicators = []
         residuals = []
 
