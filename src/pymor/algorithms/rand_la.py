@@ -145,7 +145,7 @@ class RandomizedRangeFinder(CacheableObject):
             self.logger.warning('Requested basis is larger than the rank of the operator!')
             self.logger.info('Proceeding with maximum operator rank.')
             basis_size = min(self.A.source.dim, self.A.range.dim)
-        assert 0 < num_testvecs and isinstance(num_testvecs, int)
+        assert 0 < num_testvecs and isinstance(num_testvecs, Integral)
         assert 0 < p_fail < 1
 
         Q = self._find_range(basis_size)
@@ -233,14 +233,14 @@ class RandomizedRangeFinder(CacheableObject):
             approximate basis for the range of `self.A` (with an error bounded by `tol` with
             probability :math:`1-``p_fail`, if supplied).
         """
-        assert isinstance(max_basis_size, int) and max_basis_size > 0
-        assert isinstance(basis_size, int) and 0 < basis_size
+        assert isinstance(max_basis_size, Integral) and max_basis_size > 0
+        assert isinstance(basis_size, Integral) and 0 < basis_size
         if basis_size > min(self.A.source.dim, self.A.range.dim):
             self.logger.warning('Requested basis is larger than the rank of the operator!')
             basis_size = min(self.A.source.dim, self.A.range.dim)
             self.logger.info(f'Proceeding with maximum operator rank. (basis_size={basis_size})')
         assert tol is None or tol > 0
-        assert isinstance(num_testvecs, int) and num_testvecs > 0
+        assert isinstance(num_testvecs, Integral) and num_testvecs > 0
         assert 0 < p_fail < 1
 
         with self.logger.block('Finding range ...'):
@@ -469,8 +469,8 @@ def randomized_svd(A, n, range_product=None, source_product=None, subspace_itera
     RRF = RandomizedRangeFinder(A, subspace_iterations=subspace_iterations, range_product=range_product,
                                 source_product=source_product)
 
-    assert 0 <= n <= max(A.source.dim, A.range.dim) and isinstance(n, int)
-    assert 0 <= oversampling and isinstance(oversampling, int)
+    assert 0 <= n <= max(A.source.dim, A.range.dim) and isinstance(n, Integral)
+    assert 0 <= oversampling and isinstance(oversampling, Integral)
     if oversampling > max(A.source.dim, A.range.dim) - n:
         logger.warning('Oversampling parameter is too large!')
         oversampling = max(A.source.dim, A.range.dim) - n
@@ -600,9 +600,9 @@ def randomized_ghep(A, E=None, n=6, subspace_iterations=0, oversampling=20, sing
     assert isinstance(A, Operator) and A.linear
     assert not A.parametric
     assert A.source == A.range
-    assert 0 <= n <= max(A.source.dim, A.range.dim) and isinstance(n, int)
-    assert 0 <= oversampling and isinstance(oversampling, int)
-    assert subspace_iterations >= 0 and isinstance(subspace_iterations, int)
+    assert 0 <= n <= max(A.source.dim, A.range.dim) and isinstance(n, Integral)
+    assert 0 <= oversampling and isinstance(oversampling, Integral)
+    assert subspace_iterations >= 0 and isinstance(subspace_iterations, Integral)
     assert isinstance(single_pass, bool)
     assert isinstance(return_evecs, bool)
 
