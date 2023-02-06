@@ -253,9 +253,10 @@ class RandomizedRangeFinder(CacheableObject):
                     max_iter = min(max_basis_size, self.A.source.dim, self.A.range.dim)
                     while len(self._Q[-1]) < max_iter:
                         basis_size = min(basis_size + 1, max_iter)
+                        self._extend_basis(1)
                         err = self._estimate_error(self._Q[-1], num_testvecs, p_fail)
                         self.logger.info(f'Basis dimension: {basis_size}/{max_iter}\t'
-                                         + 'Estimated error: {err:.5e} (tol={tol:.2e})')
+                                         + f'Estimated error: {err:.5e} (tol={tol:.2e})')
                         if err <= tol:
                             break
 
