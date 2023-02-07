@@ -173,8 +173,8 @@ class RandomizedRangeFinder(ImmutableObject):
         self._adjoint_op = A if self_adjoint else AdjointOperator(A, range_product=range_product,
                                                                   source_product=source_product)
 
-    def _estimate_error(self, Q, num_testvecs, p_fail):
-        W = self._estimator._draw_samples(num_testvecs)
+    def _estimate_error(self, basis_size, num_testvecs, p_fail):
+        Q, W = self._find_range(basis_size), self._estimator._draw_samples(num_testvecs)
         return self._estimator._estimate_norm(W - project_array(W, Q), p_fail)
 
     def estimate_error(self, basis_size, num_testvecs=20, p_fail=1e-14):
@@ -211,42 +211,38 @@ class RandomizedRangeFinder(ImmutableObject):
         assert 0 < num_testvecs and isinstance(num_testvecs, Integral)
         assert 0 < p_fail < 1
 
-        Q = self._find_range(basis_size)
-        err = self._estimate_error(Q, num_testvecs, p_fail)
+        err = self._estimate_error(basis_size, num_testvecs, p_fail)
         self.logger.info(f'Estimated error (basis dimension {basis_size}): {err:.5e}.')
         return err
-
-    def _extend_basis(self, k):
-        W = self.A.source.random(k, distribution='normal')
-        if self.complex:
-            W += 1j * self.A.source.random(k, distribution='normal')
-
-        offset = len(self._Q[0])
-        self._Q[0].append(self.A.apply(W))
-        gram_schmidt(self._Q[0], self.range_product, offset=offset, copy=False)
-
-        for i in range(self.subspace_iterations):
-            i = 2*i + 1
-
-            k = len(self._Q[i-1]) - offset  # check if GS removed vectors
-            offset = len(self._Q[i])
-            self._Q[i].append(self._adjoint_op.apply(self._Q[i-1][-k:]))
-            gram_schmidt(self._Q[i], self.source_product, offset=offset, copy=False)
-
-            k = len(self._Q[i]) - offset  # check if GS removed vectors
-            offset = len(self._Q[i+1])
-            self._Q[i+1].append(self.A.apply(self._Q[i][-k:]))
-            gram_schmidt(self._Q[i+1], self.range_product, offset=offset, copy=False)
 
     def _find_range(self, basis_size):
         k = basis_size - len(self._Q[-1])
         if k > 0:
             with self.logger.block(f'Appending {k} basis vector{"s" if k > 1 else ""} ...'):
-                self._extend_basis(k)
+                W = self.A.source.random(k, distribution='normal')
+                if self.complex:
+                    W += 1j * self.A.source.random(k, distribution='normal')
 
-        k = basis_size - len(self._Q[-1])
-        if k > 0:
-            self.logger.warning(f'{k} vector{"s" if k > 1 else ""} removed in gram_schmidt!')
+                offset = len(self._Q[0])
+                self._Q[0].append(self.A.apply(W))
+                gram_schmidt(self._Q[0], self.range_product, offset=offset, copy=False)
+
+                for i in range(self.subspace_iterations):
+                    i = 2*i + 1
+
+                    k = len(self._Q[i-1]) - offset  # check if GS removed vectors
+                    offset = len(self._Q[i])
+                    self._Q[i].append(self._adjoint_op.apply(self._Q[i-1][-k:]))
+                    gram_schmidt(self._Q[i], self.source_product, offset=offset, copy=False)
+
+                    k = len(self._Q[i]) - offset  # check if GS removed vectors
+                    offset = len(self._Q[i+1])
+                    self._Q[i+1].append(self.A.apply(self._Q[i][-k:]))
+                    gram_schmidt(self._Q[i+1], self.range_product, offset=offset, copy=False)
+
+            k = basis_size - len(self._Q[-1])
+            if k > 0:
+                self.logger.warning(f'{k} vector{"s" if k > 1 else ""} removed in gram_schmidt!')
 
         return self._Q[-1][:basis_size]
 
@@ -309,24 +305,23 @@ class RandomizedRangeFinder(ImmutableObject):
 
         with self.logger.block('Finding range ...'):
             with self.logger.block(f'Approximating range basis of dimension {basis_size} ...'):
-                Q = self._find_range(basis_size)
+                self._find_range(basis_size)
 
             if tol is not None:
-                err = self._estimate_error(Q, num_testvecs, p_fail/N)
-                if  err > tol:
+                err = self._estimate_error(basis_size, num_testvecs, p_fail/N)
+                if err > tol:
                     with self.logger.block('Extending range basis adaptively ...'):
                         max_iter = min(max_basis_size, N)
                         while basis_size < max_iter:
                             basis_size += 1
-                            Q = self._find_range(basis_size)
-                            err = self._estimate_error(Q, num_testvecs, p_fail/N)
+                            err = self._estimate_error(basis_size, num_testvecs, p_fail/N)
                             self.logger.info(f'Basis dimension: {basis_size}/{max_iter}\t'
                                              + f'Estimated error: {err:.5e} (tol={tol:.2e})')
                             if err <= tol:
                                 break
 
-        self.logger.info(f'Found range of dimension {len(Q)}.{" (Estimated error: {err:.5e})" if tol else ""}')
-        return Q
+        self.logger.info(f'Found range of dimension {basis_size}.{" (Estimated error: {err:.5e})" if tol else ""}')
+        return self._Q[-1][:basis_size]
 
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
