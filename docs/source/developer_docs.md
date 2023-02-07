@@ -67,14 +67,33 @@ pyMOR follows the coding style of
 few exceptions. Configurations for the [PEP8](https://pypi.python.org/pypi/pep8) and
 [flake8](https://pypi.python.org/pypi/flake8) code checkers are contained in `setup.cfg`.
 
-As an additional rule when calling functions, positional
-arguments should generally be passed as positional arguments
-whereas keyword arguments should be passed as keyword arguments.
-This will make your code less likely to break, when the called
-function is extended.
+Further guidelines:
 
-All functions and classes called or instantiated by users should
-be sufficiently well documented.
+- Functions and classes called or instantiated by users should be
+  sufficiently well documented.
+- Use keyword arguments for parameters with defaults. This will make your
+  code less likely to break, when the called function is extended.
+- Generally use verbose identifiers instead of single letter names, also
+  for mathematical objects (use `residual` instead of `r`). Exceptions
+  are well-established variable names (like A,B,C,D,E for LTI systems)
+  or temporary variables.
+- Prefer assertions over exceptions in potentially performance-relevant
+  code. Assertions can be ignored by invoking Python with the `-O`
+  argument. Try to check a single condition in an assertion and add helpful
+  error messages.
+- Use `warnings.warn` for code-related issues. Use `self.logger.warning`
+  for issues related to an algorithm or user input.
+- It is generally ok to use builtin names as function parameters
+  (e.g. `type`) when there is no other adequate name. There is no need
+  to add underscores before or after the name.
+- Use the `self.__auto_init(locals())` idiom to initialize instance
+  attributes from `__init__` args of the same name.
+
+:::{note}
+If you are a first-time contributor, do not worry too much about code
+style. The main developers will be happy to help you to bring your code
+into proper shape for inclusion in pyMOR.
+:::
 
 #### How to Check Code Style
 
@@ -96,6 +115,7 @@ or directly call
 ```
 flake8 src
 ```
+
 
 ### GitHub Project
 
