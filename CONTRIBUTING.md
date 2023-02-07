@@ -5,7 +5,7 @@ which improve or extend pyMOR. The purpose of this document
 is to make the contribution process easier for you and to answer
 some questions which might arise.
 
-## Contribution process
+## Contribution Process
 
 When you have written some code you want to contribute to
 pyMOR, the first thing you should do is to ensure that
@@ -74,7 +74,7 @@ documentation or correcting a very simple bug. However, your changes
 including your authorship will always be included in the git
 history of the project.
 
-## Becoming a main developer
+## Becoming a Main Developer
 
 pyMOR's main developers form a small
 [group](https://github.com/orgs/pymor/people?query=role:owner+)
