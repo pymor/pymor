@@ -123,7 +123,7 @@ pyMOR's main developers form a small
 [group](https://github.com/orgs/pymor/people?query=role:owner+)
 of developers which, apart from making contributions to pyMOR,
 have the job of guiding and maintaining the future development of
-pyMOR. They are the only persons with direct push acces to pyMOR's
+pyMOR. They are the only persons with direct push access to pyMOR's
 main repository and have administrative privileges over the
 [pyMOR organization](https://github.com/pymor) on GitHub.
 
