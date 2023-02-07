@@ -211,7 +211,8 @@ class RandomizedRangeFinder(ImmutableObject):
         assert 0 < num_testvecs and isinstance(num_testvecs, Integral)
         assert 0 < p_fail < 1
 
-        err = self._estimate_error(basis_size, num_testvecs, p_fail)
+        Q = self._find_range(basis_size)
+        err = self._estimate_error(Q, num_testvecs, p_fail)
         self.logger.info(f'Estimated error (basis dimension {basis_size}): {err:.5e}.')
         return err
 
