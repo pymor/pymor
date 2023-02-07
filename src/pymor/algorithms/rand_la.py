@@ -104,7 +104,8 @@ class RandomizedNormEstimator(CacheableObject):
         Parameters
         ----------
         num_testvecs
-            Number of test vectors for estimation of the operator norm.
+            Number of test vectors used for estimation. Increasing this number will likely improve
+            the effectivity of the estimator, i.e. the sharpness of the bound. See :cite:`BS18`.
         p_fail
             Maximum failure probabilty of the estimate.
 
@@ -179,14 +180,21 @@ class RandomizedRangeFinder(ImmutableObject):
     def estimate_error(self, basis_size, num_testvecs=20, p_fail=1e-14):
         r"""Randomized a posteriori error estimator for a given basis size.
 
-        This implements the a posteriori error estimator from :cite:`BS18` (Definition 3.1).
+        Approximates the a posteriori projection error
+
+        .. :math:
+
+            \lVert (I-QQ^T)A \rVert_R\
+
+        for a given `basis_size` with :class:`<pymor.algorithms.rand_la.RandomizedNormEstimator>`.
 
         Parameters
         ----------
         basis_size
             The size of the basis.
         num_testvecs
-            Number of test vectors for error estimation.
+            Number of test vectors used for estimation. Increasing this number will likely improve
+            the effectivity of the estimator, i.e. the sharpness of the bound. See :cite:`BS18`.
         p_fail
             Maximum failure probabilty of the error estimate.
 
