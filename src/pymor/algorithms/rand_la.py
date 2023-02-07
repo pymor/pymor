@@ -293,7 +293,7 @@ class RandomizedRangeFinder(ImmutableObject):
         Q
             |VectorArray| with length greater or equal than `basis_size` which contains an
             approximate basis for the range of `self.A` (with an error bounded by `tol` with
-            probability :math:`1-``p_fail`, if supplied).
+            probability :math:`1-\texttt{p_fail}`, if supplied).
         """
         assert isinstance(max_basis_size, Integral) and max_basis_size > 0
         assert isinstance(basis_size, Integral) and 0 < basis_size
