@@ -316,8 +316,8 @@ class RandomizedRangeFinder(ImmutableObject):
                             break
 
         self.logger.info(f'Found range of dimension {len(Q)}. (Estimated error: {err:.5e})')
-
         return Q
+
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
 @Deprecated('RandomizedRangeFinder')
