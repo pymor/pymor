@@ -309,21 +309,22 @@ class RandomizedRangeFinder(ImmutableObject):
         with self.logger.block('Finding range ...'):
             with self.logger.block(f'Approximating range basis of dimension {basis_size} ...'):
                 Q = self._find_range(basis_size)
+
+            if tol is not None:
                 err = self._estimate_error(Q, num_testvecs, p_fail/N)
+                if  err > tol:
+                    with self.logger.block('Extending range basis adaptively ...'):
+                        max_iter = min(max_basis_size, N)
+                        while basis_size < max_iter:
+                            basis_size += 1
+                            Q = self._find_range(basis_size)
+                            err = self._estimate_error(Q, num_testvecs, p_fail/N)
+                            self.logger.info(f'Basis dimension: {basis_size}/{max_iter}\t'
+                                             + f'Estimated error: {err:.5e} (tol={tol:.2e})')
+                            if err <= tol:
+                                break
 
-            if tol is not None and err > tol:
-                with self.logger.block('Extending range basis adaptively ...'):
-                    max_iter = min(max_basis_size, N)
-                    while basis_size < max_iter:
-                        basis_size += 1
-                        Q = self._find_range(basis_size)
-                        err = self._estimate_error(Q, num_testvecs, p_fail/N)
-                        self.logger.info(f'Basis dimension: {basis_size}/{max_iter}\t'
-                                         + f'Estimated error: {err:.5e} (tol={tol:.2e})')
-                        if err <= tol:
-                            break
-
-        self.logger.info(f'Found range of dimension {len(Q)}. (Estimated error: {err:.5e})')
+        self.logger.info(f'Found range of dimension {len(Q)}.{" (Estimated error: {err:.5e})" if tol else ""}')
         return Q
 
 
