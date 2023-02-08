@@ -74,7 +74,8 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
         axs = [ax]
     else:
         rows = int(np.ceil(len(U) / columns))
-        fig, axs = plt.subplots(rows, columns, figsize=(16, 8))
+        figsize = plt.rcParams['figure.figsize']
+        fig, axs = plt.subplots(rows, columns, figsize=(figsize[0]*columns, figsize[1]*rows))
         axs = axs.flatten()
         for ax in axs[len(U):]:
             ax.set_axis_off()
@@ -151,7 +152,11 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
 
     do_animation = len(U[0]) > 1
 
-    fig = plt.figure()
+    figsize = plt.rcParams['figure.figsize']
+    if separate_plots:
+        rows = int(np.ceil(len(U) / columns))
+        figsize = (figsize[0]*columns, figsize[1]*rows)
+    fig = plt.figure(figsize=figsize)
     plot = Matplotlib1DAxes(fig, grid, len(U), legend=legend, codim=codim, separate_plots=separate_plots,
                             columns=columns)
 
