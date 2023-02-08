@@ -201,7 +201,7 @@ class PlotMainWindow(QWidget):
         self.set(ind)
 
     def speed_changed(self, val):
-        self.timer.setInterval(val * 20)
+        self.timer.setInterval((100 - val) * 20)
 
     def update_solution(self):
         ind = self.slider.value() + 1
