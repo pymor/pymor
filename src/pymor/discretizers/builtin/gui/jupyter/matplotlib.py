@@ -106,7 +106,7 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
 
 
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False,
-                            columns=2):
+                            rescale_axes=False, columns=2):
     """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either
@@ -130,6 +130,8 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         case `legend` has to be a tuple of strings of the same length.
     separate_plots
         If `True`, use multiple figures to visualize multiple |VectorArrays|.
+    rescale_axes
+        If `True`, rescale axes to data in each frame.
     column
         Number of columns the subplots are organized in.
     """
@@ -148,7 +150,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
 
     from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs
-    vmins, vmaxs = _vmins_vmaxs(U, separate_plots, False)
+    vmins, vmaxs = _vmins_vmaxs(U, separate_plots, rescale_axes)
 
     do_animation = len(U[0]) > 1
 

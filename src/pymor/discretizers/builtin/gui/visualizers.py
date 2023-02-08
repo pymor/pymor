@@ -127,8 +127,8 @@ class OnedVisualizer(ImmutableObject):
             backend = 'jupyter' if is_jupyter() else 'matplotlib'
         self.__auto_init(locals())
 
-    def visualize(self, U, title=None, legend=None, separate_plots=False, block=None,
-                  filename=None, columns=2):
+    def visualize(self, U, title=None, legend=None, separate_plots=False,
+                  rescale_axes=False, block=None, columns=2):
         """Visualize the provided data.
 
         Parameters
@@ -143,6 +143,8 @@ class OnedVisualizer(ImmutableObject):
         legend
             Description of the data that is plotted. Most useful if `U` is a tuple in which
             case `legend` has to be a tuple of strings of the same length.
+        rescale_axes
+            If `True`, rescale axes to data in each frame.
         block
             If `True`, block execution until the plot window is closed. If `None`, use the
             default provided during instantiation.
@@ -153,12 +155,14 @@ class OnedVisualizer(ImmutableObject):
         if self.backend == 'jupyter':
             from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_matplotlib_1d
             return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
-                                           separate_plots=separate_plots, columns=columns)
+                                           separate_plots=separate_plots, rescale_axes=rescale_axes,
+                                           columns=columns)
         else:
             block = self.block if block is None else block
             from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d
             return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
-                                           separate_plots=separate_plots, block=block)
+                                           separate_plots=separate_plots, rescale_axes=rescale_axes,
+                                           block=block)
 
 
 def _vmins_vmaxs(U, separate_colorbars, rescale_colorbars):
