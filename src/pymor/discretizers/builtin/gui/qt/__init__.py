@@ -415,7 +415,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                    block)
 
 
-def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False, block=False):
+def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False,
+                            rescale_axes=False, columns=2, block=False):
     """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either
@@ -439,6 +440,8 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         case `legend` has to be a tuple of strings of the same length.
     separate_plots
         If `True`, use subplots to visualize multiple |VectorArrays|.
+    rescale_axes
+        If `True`, rescale axes to data in each frame.
     block
         If `True`, block execution until the plot window is closed.
     """
@@ -470,7 +473,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             return
 
     U = (U.to_numpy(),) if isinstance(U, VectorArray) else tuple(u.to_numpy() for u in U)
-    vmins, vmaxs = _vmins_vmaxs(U, separate_plots, False)
+    vmins, vmaxs = _vmins_vmaxs(U, separate_plots, rescale_axes)
 
     from pymor.discretizers.builtin.gui.qt.matplotlib import Matplotlib1DWidget
     plot_widget = Matplotlib1DWidget(U, None, grid, len(U), legend=legend, codim=codim,
