@@ -28,10 +28,10 @@ class RandomizedNormEstimator(CacheableObject):
     ----------
     A
         The |Operator| whose norm is approximated.
-    range_product
-        Inner product |Operator| of the range of `A`.
     source_product
         Inner product |Operator| of the source of `A`.
+    range_product
+        Inner product |Operator| of the range of `A`.
     lambda_min
         A lower bound for the smallest eigenvalue of `source_product`. Defaults to `None`.
         If `None` and a `source_product` is given, the smallest eigenvalue will be computed
@@ -42,7 +42,7 @@ class RandomizedNormEstimator(CacheableObject):
 
     cache_region = 'memory'
 
-    def __init__(self, A, range_product=None, source_product=None, subspace_iterations=0, lambda_min=None,
+    def __init__(self, A, source_product=None, range_product=None, subspace_iterations=0, lambda_min=None,
                  complex=False):
         if isinstance(A, VectorArray):
             A = VectorArrayOperator(A)
@@ -88,7 +88,7 @@ class RandomizedNormEstimator(CacheableObject):
 
         .. math::
             \epsilon_{\mathrm{est}}=c_{\mathrm{est}}\cdot\max_{\omega\in\Omega}
-            \lVert A\omega\rVert_{S}
+            \lVert A\omega\rVert_{R}
 
         with
 
@@ -97,7 +97,7 @@ class RandomizedNormEstimator(CacheableObject):
             =\frac{1}{\sqrt{2\lambda_{\mathrm{min}}}\operatorname{erf}^{-1}
             \left(\texttt{p_fail}^{1/\texttt{num_testvecs}}\right)},
 
-        where :math:`\Omega` is a set of `num_testvecs` random vectors, :math:`S` denotes the inner
+        where :math:`\Omega` is a set of `num_testvecs` random vectors, :math:`R` denotes the inner
         product of the range, :math:`\lambda_min` is a lower bound on the smallest eigenvalue of
         the inner product of the source of :math:`A`.
 
@@ -127,13 +127,13 @@ class RandomizedRangeFinder(ImmutableObject):
     ----------
     A
         The |Operator| whose range is to be found.
-    range_product
-        Inner product |Operator| of the range of `A`. Determines the basis orthogonalization and the
-        error norm.
     source_product
         Inner product |Operator| of the source of `A`. Determines the basis orthogonalization when
         multiplying with the adjoint during subspace iterations (only if `subspace_iterations` is
         greater than zero) and the error norm.
+    range_product
+        Inner product |Operator| of the range of `A`. Determines the basis orthogonalization and the
+        error norm.
     subspace_iterations
         The number of subspace iterations (defaults to zero).
         This can be used to increase the accuracy in the cases where the spectrum of `A` does not
@@ -151,7 +151,7 @@ class RandomizedRangeFinder(ImmutableObject):
         `range_product`.
     """
 
-    def __init__(self, A, range_product=None, source_product=None, subspace_iterations=0, lambda_min=None,
+    def __init__(self, A, source_product=None, range_product=None, subspace_iterations=0, lambda_min=None,
                  complex=False, self_adjoint=False):
         assert isinstance(A, Operator)
         assert 0 <= subspace_iterations and isinstance(subspace_iterations, Integral)
@@ -170,12 +170,12 @@ class RandomizedRangeFinder(ImmutableObject):
             self._Q.append(self.A.source.empty())
             self._Q.append(self.A.range.empty())
         self._Q = tuple(self._Q)
-        self._adjoint_op = A if self_adjoint else AdjointOperator(A, range_product=range_product,
-                                                                  source_product=source_product)
+        self._adjoint_op = A if self_adjoint else AdjointOperator(A, source_product=source_product,
+                                                                  range_product=range_product)
 
     def _estimate_error(self, basis_size, num_testvecs, p_fail):
         Q, W = self._find_range(basis_size), self._estimator._draw_samples(num_testvecs)
-        return self._estimator._estimate_norm(W - project_array(W, Q), p_fail)
+        return self._estimator._estimate_norm(W - project_array(W, Q, product=self.range_product), p_fail)
 
     def estimate_error(self, basis_size, num_testvecs=20, p_fail=1e-14):
         r"""Randomized a posteriori error estimator for a given basis size.
@@ -184,7 +184,7 @@ class RandomizedRangeFinder(ImmutableObject):
 
         .. :math:
 
-            \lVert (I-QQ^T)A \rVert_R\
+            \lVert (I-QQ^TR)A \rVert_R\
 
         for a given `basis_size` with :class:`<pymor.algorithms.rand_la.RandomizedNormEstimator>`.
 
@@ -259,10 +259,9 @@ class RandomizedRangeFinder(ImmutableObject):
         with
 
         .. math::
-            \epsilon=\lVert A-QQ^TSA\rVert_{T\rightarrow S}=\lVert S^{1/2}(I-QQ^TS)AT^{-1/2}\rVert_2
+            \epsilon=\lVert A-QQ^TRA\rVert_{R}=\lVert R^{1/2}(I-QQ^TR)A}\rVert_2
 
-        where  :math:`S` denotes the inner product of the range and :math:`T` denotes inner product
-        of the source of :math:`A`.
+        where :math:`R` denotes inner product of the range of :math:`A`.
 
         This method employs Algorithm 2 in :cite:`SHB21` with
         :func:`Gram-Schmidt <pymor.algorithms.gram_schmidt.gram_schmidt>` orthogonalization for the
@@ -326,7 +325,7 @@ class RandomizedRangeFinder(ImmutableObject):
 
 @defaults('tol', 'failure_tolerance', 'num_testvecs')
 @Deprecated('RandomizedRangeFinder')
-def adaptive_rrf(A, range_product=None, source_product=None, tol=1e-4,
+def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
                  failure_tolerance=1e-15, num_testvecs=20, lambda_min=None, iscomplex=False):
     r"""Adaptive randomized range approximation of `A`.
 
@@ -346,10 +345,10 @@ def adaptive_rrf(A, range_product=None, source_product=None, tol=1e-4,
     ----------
     A
         The |Operator| A.
-    range_product
-        Inner product |Operator| of the range of A.
     source_product
         Inner product |Operator| of the source of A.
+    range_product
+        Inner product |Operator| of the range of A.
     tol
         Error tolerance for the algorithm.
     failure_tolerance
@@ -367,14 +366,14 @@ def adaptive_rrf(A, range_product=None, source_product=None, tol=1e-4,
     B
         |VectorArray| which contains the basis, whose span approximates the range of A.
     """
-    RRF = RandomizedRangeFinder(A, subspace_iterations=0, range_product=range_product, source_product=source_product,
+    RRF = RandomizedRangeFinder(A, subspace_iterations=0, source_product=source_product, range_product=range_product,
                                 lambda_min=lambda_min, complex=iscomplex)
     return RRF.find_range(basis_size=1, tol=tol, num_testvecs=num_testvecs, p_fail=failure_tolerance)
 
 
 @defaults('q', 'l')
 @Deprecated('RandomizedRangeFinder')
-def rrf(A, range_product=None, source_product=None, q=2, l=8, return_rand=False, iscomplex=False):
+def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False, iscomplex=False):
     r"""Randomized range approximation of `A`.
 
     Given the |Operator| `A`, the return value of this method is the |VectorArray|
@@ -386,10 +385,10 @@ def rrf(A, range_product=None, source_product=None, q=2, l=8, return_rand=False,
     ----------
     A
         The |Operator| A.
-    range_product
-        Inner product |Operator| of the range of A.
     source_product
         Inner product |Operator| of the source of A.
+    range_product
+        Inner product |Operator| of the range of A.
     q
         The number of power iterations.
     l
@@ -417,7 +416,7 @@ def rrf(A, range_product=None, source_product=None, q=2, l=8, return_rand=False,
 
 @defaults('p', 'q', 'modes')
 @Deprecated('randomized_svd')
-def random_generalized_svd(A, range_product=None, source_product=None, modes=6, p=20, q=2):
+def random_generalized_svd(A, source_product=None, range_product=None, modes=6, p=20, q=2):
     r"""Randomized SVD of an |Operator|.
 
     Viewing `A` as an :math:`m` by :math:`n` matrix, the return value
@@ -471,7 +470,7 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
 
 
 @defaults('oversampling', 'subspace_iterations')
-def randomized_svd(A, n, range_product=None, source_product=None, subspace_iterations=0, oversampling=20):
+def randomized_svd(A, n, source_product=None, range_product=None, subspace_iterations=0, oversampling=20):
     r"""Randomized SVD of an |Operator| based on :cite:`SHB21`.
 
     Viewing the |Operator| :math:`A` as an :math:`m` by :math:`n` matrix, this methods computes and
@@ -485,17 +484,17 @@ def randomized_svd(A, n, range_product=None, source_product=None, subspace_itera
 
     .. math::
 
-        (x, y)_S = x^TSy
+        (x, y)_R = x^TRy
 
     and the inner product on the source :math:`\mathbb{R}^n` is given by
 
     .. math::
 
-        (x, y)_T = x^TTy.
+        (x, y)_S = x^TSy.
 
-    Note that :math:`U` is :math:`S`-orthogonal, i.e. :math:`U^TSU=I`
-    and :math:`V` is :math:`T`-orthogonal, i.e. :math:`V^TTV=I`.
-    In particular, `V^{-1}=V^TT`.
+    Note that :math:`U` is :math:`R`-orthogonal, i.e. :math:`U^TRU=I`
+    and :math:`V` is :math:`S`-orthogonal, i.e. :math:`V^TSV=I`.
+    In particular, `V^{-1}=V^TS`.
 
     Parameters
     ----------
@@ -503,10 +502,10 @@ def randomized_svd(A, n, range_product=None, source_product=None, subspace_itera
         The |Operator| for which the randomized SVD is to be computed.
     n
         The number of eigenvalues and eigenvectors which are to be computed.
-    range_product
-        Range product |Operator| :math:`S` w.r.t. which the randomized SVD is computed.
     source_product
-        Source product |Operator| :math:`T` w.r.t. which the randomized SVD is computed.
+        Source product |Operator| :math:`S` w.r.t. which the randomized SVD is computed.
+    range_product
+        Range product |Operator| :math:`R` w.r.t. which the randomized SVD is computed.
     subspace_iterations
         The number of subspace iterations to increase the relative weight
         of the larger singular values (ignored when `single_pass` is `True`).
