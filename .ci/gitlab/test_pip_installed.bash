@@ -24,6 +24,9 @@ pip install -r requirements-ci.txt
 
 python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
 twine check ${SDIST_DIR}/*
+# silence 'detected dubious ownership in repository at '/builds/pymor/pymor''
+# no idea where this comes from
+git config --global --add safe.directory /builds/pymor/pymor
 check-manifest -p python ${PWD}
 pushd ${SDIST_DIR}
 pip install $(ls ${SDIST_DIR})
