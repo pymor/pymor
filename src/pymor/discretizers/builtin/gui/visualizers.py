@@ -143,15 +143,16 @@ class OnedVisualizer(ImmutableObject):
         legend
             Description of the data that is plotted. Most useful if `U` is a tuple in which
             case `legend` has to be a tuple of strings of the same length.
+        separate_plots
+            If `True`, use multiple figures to visualize multiple |VectorArrays|.
         rescale_axes
             If `True`, rescale axes to data in each frame.
         block
             If `True`, block execution until the plot window is closed. If `None`, use the
             default provided during instantiation.
+        columns
+            Number of columns the subplots are organized in.
         """
-        if filename is not None:
-            raise NotImplementedError
-
         if self.backend == 'jupyter':
             from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_matplotlib_1d
             return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,

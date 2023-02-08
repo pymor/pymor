@@ -442,6 +442,8 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         If `True`, use subplots to visualize multiple |VectorArrays|.
     rescale_axes
         If `True`, rescale axes to data in each frame.
+    columns
+        Number of columns the subplots are organized in.
     block
         If `True`, block execution until the plot window is closed.
     """
@@ -477,7 +479,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
 
     from pymor.discretizers.builtin.gui.qt.matplotlib import Matplotlib1DWidget
     plot_widget = Matplotlib1DWidget(U, None, grid, len(U), legend=legend, codim=codim,
-                                     separate_plots=separate_plots)
+                                     separate_plots=separate_plots, columns=columns)
 
     _launch_qt_app(lambda: PlotMainWindow(U, vmins, vmaxs, plot_widget, title=title, length=len(U[0])),
                    block)

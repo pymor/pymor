@@ -132,7 +132,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         If `True`, use multiple figures to visualize multiple |VectorArrays|.
     rescale_axes
         If `True`, rescale axes to data in each frame.
-    column
+    columns
         Number of columns the subplots are organized in.
     """
     assert isinstance(grid, OnedGrid)
