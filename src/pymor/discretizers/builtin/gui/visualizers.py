@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
 
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
@@ -126,8 +127,8 @@ class OnedVisualizer(ImmutableObject):
             backend = 'jupyter' if is_jupyter() else 'matplotlib'
         self.__auto_init(locals())
 
-    def visualize(self, U, title=None, legend=None, separate_plots=True,
-                  separate_axes=False, block=None, filename=None, columns=2):
+    def visualize(self, U, title=None, legend=None, separate_plots=False, block=None,
+                  filename=None, columns=2):
         """Visualize the provided data.
 
         Parameters
@@ -152,8 +153,28 @@ class OnedVisualizer(ImmutableObject):
         if self.backend == 'jupyter':
             from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_matplotlib_1d
             return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
-                                           separate_plots=separate_plots, separate_axes=separate_axes, columns=columns)
+                                           separate_plots=separate_plots, columns=columns)
         else:
             block = self.block if block is None else block
             from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d
-            return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend, block=block)
+            return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
+                                           separate_plots=separate_plots, block=block)
+
+
+def _vmins_vmaxs(U, separate_colorbars, rescale_colorbars):
+    if separate_colorbars:
+        if rescale_colorbars:
+            vmins = [np.min(u, axis=1) for u in U]
+            vmaxs = [np.max(u, axis=1) for u in U]
+        else:
+            vmins = [[np.min(u)] * len(U[0]) for u in U]
+            vmaxs = [[np.max(u)] * len(U[0]) for u in U]
+    else:
+        if rescale_colorbars:
+            vmins = [[min(np.min(u[i]) for u in U) for i in range(len(U[0]))]] * len(U)
+            vmaxs = [[max(np.max(u[i]) for u in U) for i in range(len(U[0]))]] * len(U)
+        else:
+            vmins = [[np.min(U)] * len(U[0])] * len(U)
+            vmaxs = [[np.max(U)] * len(U[0])] * len(U)
+
+    return vmins, vmaxs

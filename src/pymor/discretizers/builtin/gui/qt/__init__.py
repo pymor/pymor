@@ -9,6 +9,8 @@ associated to grids. We use the `Qt <https://www.qt-project.org>`_ widget
 toolkit for the GUI.
 """
 from pymor.core.config import config
+from pymor.discretizers.builtin.grids.oned import OnedGrid
+
 config.require('QT')
 
 import math as m
@@ -90,8 +92,11 @@ def _launch_qt_app(main_window_factory, block):
 class PlotMainWindow(QWidget):
     """Base class for plot main windows."""
 
-    def __init__(self, U, plot, length=1, title=None):
+    def __init__(self, U, vmins, vmaxs, plot, length=1, title=None, save_action=None):
         super().__init__()
+
+        self.U, self.vmins, self.vmaxs, self.plot, self.length, self.save_action \
+            = U, vmins, vmaxs, plot, length, save_action
 
         layout = QVBoxLayout()
 
@@ -100,9 +105,6 @@ class PlotMainWindow(QWidget):
             title.setAlignment(Qt.AlignHCenter)
             layout.addWidget(title)
         layout.addWidget(plot)
-
-        plot.set(U, 0)
-        self.plot = plot
 
         if length > 1:
             hlayout = QHBoxLayout()
@@ -138,10 +140,10 @@ class PlotMainWindow(QWidget):
             toolbar.addAction(self.a_step_backward)
             toolbar.addAction(self.a_step_forward)
             toolbar.addAction(self.a_loop)
-            if hasattr(self, 'save'):
+            if save_action is not None:
                 self.a_save = QAction(self.style().standardIcon(QStyle.SP_DialogSaveButton), 'Save', self)
                 toolbar.addAction(self.a_save)
-                self.a_save.triggered.connect(self.save)
+                self.a_save.triggered.connect(lambda: self.save_action(self))
             hlayout.addWidget(toolbar)
 
             self.speed = QSlider(Qt.Horizontal)
@@ -166,22 +168,25 @@ class PlotMainWindow(QWidget):
 
             self.speed.setValue(50)
 
-        elif hasattr(self, 'save'):
+        elif save_action is not None:
             hlayout = QHBoxLayout()
             toolbar = QToolBar()
             self.a_save = QAction(self.style().standardIcon(QStyle.SP_DialogSaveButton), 'Save', self)
             toolbar.addAction(self.a_save)
             hlayout.addWidget(toolbar)
             layout.addLayout(hlayout)
-            self.a_save.triggered.connect(self.save)
+            self.a_save.triggered.connect(lambda: self.save_action(self))
 
         self.setLayout(layout)
-        self.plot = plot
-        self.U = U
-        self.length = length
+        self.set(0)
+
+    def set(self, ind):
+        self.plot.set([u[ind] for u in self.U],
+                      [vmin[ind] for vmin in self.vmins],
+                      [vmax[ind] for vmax in self.vmaxs])
 
     def slider_changed(self, ind):
-        self.plot.set(self.U, ind)
+        self.set(ind)
 
     def speed_changed(self, val):
         self.timer.setInterval(val * 20)
@@ -294,6 +299,14 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         at the same time.
     """
     assert backend in {'gl', 'matplotlib'}
+    assert isinstance(U, VectorArray) \
+        or (isinstance(U, tuple) and all(isinstance(u, VectorArray) for u in U)
+            and all(len(u) == len(U[0]) for u in U))
+    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+        tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+    if isinstance(legend, str):
+        legend = (legend,)
+    assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
 
     if not block:
         if background_visualization_method() == 'pymor-vis':
@@ -319,131 +332,86 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         if backend == 'matplotlib' and not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
     else:
-        if grid.dim == 1:
-            return visualize_matplotlib_1d(grid=grid, U=U, codim=1, title=title, legend=legend,
-                                           separate_plots=separate_colorbars, block=block)
         if not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
 
-    class MainWindow(PlotMainWindow):
-        def __init__(self, grid, U, bounding_box, codim, title, legend, separate_colorbars, rescale_colorbars, backend):
+    if backend == 'gl':
+        from pymor.discretizers.builtin.gui.qt.gl import ColorBarWidget, GLPatchWidget
+        widget = GLPatchWidget
+        cbar_widget = ColorBarWidget
+    else:
+        from pymor.discretizers.builtin.gui.qt.matplotlib import MatplotlibPatchWidget
+        widget = MatplotlibPatchWidget
+        cbar_widget = None
 
-            assert isinstance(U, VectorArray) \
-                or (isinstance(U, tuple) and all(isinstance(u, VectorArray) for u in U)
-                    and all(len(u) == len(U[0]) for u in U))
-            U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-                tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
-            if isinstance(legend, str):
-                legend = (legend,)
-            assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
-            if backend == 'gl':
-                from pymor.discretizers.builtin.gui.gl import GLPatchWidget, ColorBarWidget
-                widget = GLPatchWidget
-                cbar_widget = ColorBarWidget
-            else:
-                from pymor.discretizers.builtin.gui.matplotlib import MatplotlibPatchWidget
-                widget = MatplotlibPatchWidget
-                cbar_widget = None
-                if not separate_colorbars and len(U) > 1:
-                    l = getLogger('pymor.discretizers.builtin.gui.qt.visualize_patch')
-                    l.warning('separate_colorbars=False not supported for matplotlib backend')
-                separate_colorbars = True
-
-            class PlotWidget(QWidget):
-                def __init__(self):
-                    super().__init__()
-                    if separate_colorbars:
-                        if rescale_colorbars:
-                            self.vmins = tuple(np.min(u[0]) for u in U)
-                            self.vmaxs = tuple(np.max(u[0]) for u in U)
-                        else:
-                            self.vmins = tuple(np.min(u) for u in U)
-                            self.vmaxs = tuple(np.max(u) for u in U)
+    class PlotWidget(QWidget):
+        def __init__(self):
+            super().__init__()
+            layout = QHBoxLayout()
+            plot_layout = QGridLayout()
+            self.colorbarwidgets = [cbar_widget(self, vmin=0., vmax=1.) if cbar_widget else None
+                                    for _ in range(len(U))]
+            plots = [widget(self, grid, bounding_box=bounding_box, codim=codim) for _ in range(len(U))]
+            if legend:
+                for i, plot, colorbar, l in zip(range(len(plots)), plots, self.colorbarwidgets, legend):
+                    subplot_layout = QVBoxLayout()
+                    caption = QLabel(l)
+                    caption.setAlignment(Qt.AlignHCenter)
+                    subplot_layout.addWidget(caption)
+                    if not separate_colorbars or backend == 'matplotlib':
+                        subplot_layout.addWidget(plot)
                     else:
-                        if rescale_colorbars:
-                            self.vmins = (min(np.min(u[0]) for u in U),) * len(U)
-                            self.vmaxs = (max(np.max(u[0]) for u in U),) * len(U)
-                        else:
-                            self.vmins = (min(np.min(u) for u in U),) * len(U)
-                            self.vmaxs = (max(np.max(u) for u in U),) * len(U)
-
-                    layout = QHBoxLayout()
-                    plot_layout = QGridLayout()
-                    self.colorbarwidgets = [cbar_widget(self, vmin=vmin, vmax=vmax) if cbar_widget else None
-                                            for vmin, vmax in zip(self.vmins, self.vmaxs)]
-                    plots = [widget(self, grid, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
-                             for vmin, vmax in zip(self.vmins, self.vmaxs)]
-                    if legend:
-                        for i, plot, colorbar, l in zip(range(len(plots)), plots, self.colorbarwidgets, legend):
-                            subplot_layout = QVBoxLayout()
-                            caption = QLabel(l)
-                            caption.setAlignment(Qt.AlignHCenter)
-                            subplot_layout.addWidget(caption)
-                            if not separate_colorbars or backend == 'matplotlib':
-                                subplot_layout.addWidget(plot)
-                            else:
-                                hlayout = QHBoxLayout()
-                                hlayout.addWidget(plot)
-                                if colorbar:
-                                    hlayout.addWidget(colorbar)
-                                subplot_layout.addLayout(hlayout)
-                            plot_layout.addLayout(subplot_layout, int(i/columns), (i % columns), 1, 1)
-                    else:
-                        for i, plot, colorbar in zip(range(len(plots)), plots, self.colorbarwidgets):
-                            if not separate_colorbars or backend == 'matplotlib':
-                                plot_layout.addWidget(plot, int(i/columns), (i % columns), 1, 1)
-                            else:
-                                hlayout = QHBoxLayout()
-                                hlayout.addWidget(plot)
-                                if colorbar:
-                                    hlayout.addWidget(colorbar)
-                                plot_layout.addLayout(hlayout, int(i/columns), (i % columns), 1, 1)
-                    layout.addLayout(plot_layout)
-                    if not separate_colorbars:
-                        layout.addWidget(self.colorbarwidgets[0])
-                        for w in self.colorbarwidgets[1:]:
-                            w.setVisible(False)
-                    self.setLayout(layout)
-                    self.plots = plots
-
-                def set(self, U, ind):
-                    if rescale_colorbars:
-                        if separate_colorbars:
-                            self.vmins = tuple(np.min(u[ind]) for u in U)
-                            self.vmaxs = tuple(np.max(u[ind]) for u in U)
-                        else:
-                            self.vmins = (min(np.min(u[ind]) for u in U),) * len(U)
-                            self.vmaxs = (max(np.max(u[ind]) for u in U),) * len(U)
-
-                    for u, plot, colorbar, vmin, vmax in zip(U, self.plots, self.colorbarwidgets, self.vmins,
-                                                             self.vmaxs):
-                        plot.set(u[ind], vmin=vmin, vmax=vmax)
+                        hlayout = QHBoxLayout()
+                        hlayout.addWidget(plot)
                         if colorbar:
-                            colorbar.set(vmin=vmin, vmax=vmax)
+                            hlayout.addWidget(colorbar)
+                        subplot_layout.addLayout(hlayout)
+                    plot_layout.addLayout(subplot_layout, int(i/columns), (i % columns), 1, 1)
+            else:
+                for i, plot, colorbar in zip(range(len(plots)), plots, self.colorbarwidgets):
+                    if not separate_colorbars or backend == 'matplotlib':
+                        plot_layout.addWidget(plot, int(i/columns), (i % columns), 1, 1)
+                    else:
+                        hlayout = QHBoxLayout()
+                        hlayout.addWidget(plot)
+                        if colorbar:
+                            hlayout.addWidget(colorbar)
+                        plot_layout.addLayout(hlayout, int(i/columns), (i % columns), 1, 1)
+            layout.addLayout(plot_layout)
+            if not separate_colorbars and backend != 'matplotlib':
+                layout.addWidget(self.colorbarwidgets[0])
+                for w in self.colorbarwidgets[1:]:
+                    w.setVisible(False)
+            self.setLayout(layout)
+            self.plots = plots
 
-            super().__init__(U, PlotWidget(), title=title, length=len(U[0]))
-            self.grid = grid
-            self.codim = codim
+        def set(self, U, vmins, vmaxs):
+            for u, plot, colorbar, vmin, vmax in zip(U, self.plots, self.colorbarwidgets, vmins, vmaxs):
+                plot.set(u, vmin, vmax)
+                if colorbar:
+                    colorbar.set(vmin, vmax)
 
-        def save(self):
-            if not config.HAVE_VTKIO:
-                msg = QMessageBox(QMessageBox.Critical, 'Error', 'VTK output disabled. Please install pyvtk.')
-                msg.exec_()
-                return
-            from pymor.discretizers.builtin.grids.vtkio import write_vtk
-            filename = QFileDialog.getSaveFileName(self, 'Save as vtk file')[0]
-            base_name = filename.split('.vtu')[0].split('.vtk')[0].split('.pvd')[0]
-            if base_name:
-                if len(self.U) == 1:
-                    write_vtk(self.grid, NumpyVectorSpace.make_array(self.U[0]), base_name, codim=self.codim)
-                else:
-                    for i, u in enumerate(self.U):
-                        write_vtk(self.grid, NumpyVectorSpace.make_array(u), f'{base_name}-{i}',
-                                  codim=self.codim)
+    def save_action(parent):
+        if not config.HAVE_VTKIO:
+            msg = QMessageBox(QMessageBox.Critical, 'Error', 'VTK output disabled. Please install pyvtk.')
+            msg.exec_()
+            return
+        from pymor.discretizers.builtin.grids.vtkio import write_vtk
+        filename = QFileDialog.getSaveFileName(parent, 'Save as vtk file')[0]
+        base_name = filename.split('.vtu')[0].split('.vtk')[0].split('.pvd')[0]
+        if base_name:
+            if len(U) == 1:
+                write_vtk(grid, NumpyVectorSpace.make_array(U[0]), base_name, codim=codim)
+            else:
+                for i, u in enumerate(U):
+                    write_vtk(grid, NumpyVectorSpace.make_array(u), f'{base_name}-{i}',
+                              codim=codim)
 
-    _launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend,
-                                      separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars,
-                                      backend=backend),
+    from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs
+    vmins, vmaxs = _vmins_vmaxs(U, separate_colorbars, rescale_colorbars)
+
+    _launch_qt_app(lambda: PlotMainWindow(U, vmins, vmaxs, PlotWidget(), length=len(U[0]), title=title,
+                                          save_action=save_action),
                    block)
 
 
@@ -477,6 +445,19 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     if not config.HAVE_MATPLOTLIB:
         raise ImportError('cannot visualize: import of matplotlib failed')
 
+    from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs
+
+    assert isinstance(grid, OnedGrid)
+    assert codim in (0, 1)
+
+    assert isinstance(U, VectorArray) \
+        or (isinstance(U, tuple)
+            and all(isinstance(u, VectorArray) for u in U)
+            and all(len(u) == len(U[0]) for u in U))
+    if isinstance(legend, str):
+        legend = (legend,)
+    assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
+
     if not block:
         if background_visualization_method() == 'pymor-vis':
             data = dict(dim=1,
@@ -488,22 +469,12 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             subprocess.Popen(['python', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
-    class MainWindow(PlotMainWindow):
-        def __init__(self, grid, U, codim, title, legend, separate_plots):
-            assert isinstance(U, VectorArray) \
-                or (isinstance(U, tuple)
-                    and all(isinstance(u, VectorArray) for u in U)
-                    and all(len(u) == len(U[0]) for u in U))
-            U = (U.to_numpy(),) if isinstance(U, VectorArray) else tuple(u.to_numpy() for u in U)
-            if isinstance(legend, str):
-                legend = (legend,)
-            assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
+    U = (U.to_numpy(),) if isinstance(U, VectorArray) else tuple(u.to_numpy() for u in U)
+    vmins, vmaxs = _vmins_vmaxs(U, separate_plots, False)
 
-            from pymor.discretizers.builtin.gui.matplotlib import Matplotlib1DWidget
-            plot_widget = Matplotlib1DWidget(U, None, grid, len(U), vmin=[np.min(u) for u in U],
-                                             vmax=[np.max(u) for u in U], legend=legend, codim=codim,
-                                             separate_plots=separate_plots)
-            super().__init__(U, plot_widget, title=title, length=len(U[0]))
-            self.grid = grid
+    from pymor.discretizers.builtin.gui.qt.matplotlib import Matplotlib1DWidget
+    plot_widget = Matplotlib1DWidget(U, None, grid, len(U), legend=legend, codim=codim,
+                                     separate_plots=separate_plots)
 
-    _launch_qt_app(lambda: MainWindow(grid, U, codim, title=title, legend=legend, separate_plots=separate_plots), block)
+    _launch_qt_app(lambda: PlotMainWindow(U, vmins, vmaxs, plot_widget, title=title, length=len(U[0])),
+                   block)
