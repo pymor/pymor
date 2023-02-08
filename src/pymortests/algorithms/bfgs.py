@@ -30,12 +30,14 @@ def test_active_inactive_sets(data):
 
 def test_bfgs():
     fom, _ = create_fom(10)
+    mu_opt = [1.42454, np.pi]
     parameter_space = fom.parameters.space(0, np.pi)
     initial_guess = fom.parameters.parse([0.25, 0.5])
 
     # successful run
-    _, data = bfgs(fom, parameter_space, initial_guess=initial_guess)
+    mu_opt_bfgs, data = bfgs(fom, parameter_space, initial_guess=initial_guess)
     assert len(data['mus']) == 13
+    assert np.allclose(mu_opt_bfgs, mu_opt)
 
     # failing run
     with pytest.raises(BFGSError):

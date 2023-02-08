@@ -14,17 +14,19 @@ from pymordemos.linear_optimization import create_fom
 
 def test_tr():
     fom, mu_bar = create_fom(10)
+    mu_opt = [1.42454, np.pi]
     parameter_space = fom.parameters.space(0, np.pi)
     initial_guess = fom.parameters.parse([0.25, 0.5])
     coercivity_estimator = MinThetaParameterFunctional(fom.operator.coefficients, mu_bar)
     reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
 
     # successful run
-    _, data = trust_region(parameter_space, reductor, radius=.1, initial_guess=initial_guess)
+    mu_opt_tr, data = trust_region(parameter_space, reductor, radius=.1, initial_guess=initial_guess)
     assert len(data['mus']) == 4
+    assert np.allclose(mu_opt_tr, mu_opt)
 
     # failing run
     # reset reductor
     reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
     with pytest.raises(TRError):
-        mu, _ = trust_region(parameter_space, reductor, radius=.1, initial_guess=initial_guess, maxiter=10, atol=1e-6)
+        mu, _ = trust_region(parameter_space, reductor, radius=.1, initial_guess=initial_guess, maxiter=10, rtol=1e-6)
