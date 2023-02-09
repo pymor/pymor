@@ -4,8 +4,10 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import matplotlib.pyplot as plt
+import numpy as np
 from typer import Argument, run
 
+from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.analyticalproblems.domaindescriptions import LineDomain
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, LincombFunction
@@ -37,16 +39,25 @@ def fom_properties_param(fom, w, mus):
     print(fom)
 
     # System norms
-    if not isinstance(fom, TransferFunction):
-        for mu in mus:
-            print(f'mu = {mu}:')
-            print(f'    H_2-norm of the full model:    {fom.h2_norm(mu=mu):e}')
+    for mu in mus:
+        print(f'mu = {mu}:')
+        print(f'    H_2-norm of the full model:    {fom.h2_norm(mu=mu):e}')
+        if not isinstance(fom, TransferFunction):
             if config.HAVE_SLYCOT:
                 print(f'    H_inf-norm of the full model:  {fom.hinf_norm(mu=mu):e}')
             print(f'    Hankel-norm of the full model: {fom.hankel_norm(mu=mu):e}')
 
     # Figure
-    if isinstance(fom, (LTIModel, SecondOrderModel)):
+    if isinstance(fom, LTIModel) and fom.T is not None:
+        fig = plt.figure(figsize=(15, 8), constrained_layout=True)
+        fig.suptitle('Full-order model')
+        subfigs = fig.subfigures(1, 3)
+        subfigs1 = subfigs[1].subfigures(2, 1)
+        fig_bode = subfigs[0]
+        fig_poles = subfigs1[0]
+        fig_sv = subfigs1[1]
+        fig_time = subfigs[2]
+    elif isinstance(fom, (LTIModel, SecondOrderModel)):
         fig = plt.figure(figsize=(10, 8), constrained_layout=True)
         fig.suptitle('Full-order model')
         subfigs = fig.subfigures(1, 2)
@@ -54,8 +65,12 @@ def fom_properties_param(fom, w, mus):
         fig_bode = subfigs[0]
         fig_poles = subfigs1[0]
         fig_sv = subfigs1[1]
+        fig_time = None
     else:  # TransferFunction
         fig_bode = plt.figure(figsize=(5, 8), constrained_layout=True)
+        fig_poles = None
+        fig_sv = None
+        fig_time = None
     markers = 'ox+1234'
 
     # Bode plots
@@ -69,7 +84,7 @@ def fom_properties_param(fom, w, mus):
         ax.legend()
 
     # System poles
-    if not isinstance(fom, TransferFunction):
+    if fig_poles is not None:
         ax = fig_poles.subplots()
         for mu, marker in zip(mus, markers):
             poles = fom.poles(mu=mu)
@@ -106,6 +121,30 @@ def fom_properties_param(fom, w, mus):
         axs[1, 1].set_title('Velocity-position s.v.')
         axs[1, 1].set_xlabel('Index')
         axs[0, 1].legend()
+
+    # Time response
+    if fig_time is not None:
+        fig_i, fig_s = fig_time.subfigures(2, 1)
+        fig_i.suptitle('Impulse response')
+        fig_s.suptitle('Step response')
+        axs_i = fig_i.subplots(fom.dim_output, fom.dim_input, sharex=True, sharey=True, squeeze=False)
+        axs_s = fig_s.subplots(fom.dim_output, fom.dim_input, sharex=True, sharey=True, squeeze=False)
+        times = np.linspace(0, fom.T, fom.time_stepper.nt + 1)
+        for mu, marker in zip(mus, markers):
+            y_i = fom.impulse_resp(mu=mu)
+            y_s = fom.step_resp(mu=mu)
+            for i in range(fom.dim_output):
+                for j in range(fom.dim_input):
+                    axs_i[i, j].plot(times, y_i[:, i, j], f'{marker}-', fillstyle='none', label=fr'$\mu = {mu}$')
+                    axs_s[i, j].plot(times, y_s[:, i, j], f'{marker}-', fillstyle='none', label=fr'$\mu = {mu}$')
+        for j in range(fom.dim_input):
+            axs_i[-1, j].set_xlabel('Time (s)')
+            axs_s[-1, j].set_xlabel('Time (s)')
+        for ax in axs_i.flat:
+            ax.legend()
+        for ax in axs_s.flat:
+            ax.legend()
+
     plt.show()
 
 
@@ -136,12 +175,19 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
         roms.append(rom)
 
     # Errors
-    if not isinstance(fom, TransferFunction):
-        for mu, rom in zip(mus, roms):
-            err = fom - rom
-            print(f'mu = {mu}')
-            print(f'    {reductor_short_name} relative H_2-error:'
-                  f'    {err.h2_norm(mu=mu) / fom.h2_norm(mu=mu):e}')
+    for mu, rom in zip(mus, roms):
+        err = fom - rom
+        print(f'mu = {mu}')
+        if not isinstance(fom, TransferFunction):
+            error = err.h2_norm(mu=mu)
+        else:
+            fom_norm = fom.h2_norm(mu=mu)
+            rom_norm = rom.h2_norm()
+            inner = fom.h2_inner(rom, mu=mu).real
+            error = np.sqrt(fom_norm**2 - 2 * inner + rom_norm**2)
+        print(f'    {reductor_short_name} relative H_2-error:'
+              f'    {error / fom.h2_norm(mu=mu):e}')
+        if not isinstance(fom, TransferFunction):
             if config.HAVE_SLYCOT:
                 print(f'    {reductor_short_name} relative H_inf-error:'
                       f'  {err.hinf_norm(mu=mu) / fom.hinf_norm(mu=mu):e}')
@@ -149,13 +195,20 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
                   f' {err.hankel_norm(mu=mu) / fom.hankel_norm(mu=mu):e}')
 
     # Figure and subfigures
-    fig = plt.figure(figsize=(10, 8), constrained_layout=True)
+    if isinstance(fom, LTIModel) and fom.T is not None:
+        fig = plt.figure(figsize=(15, 8), constrained_layout=True)
+        subfigs = fig.subfigures(1, 3)
+        fig_time = subfigs[2]
+    else:
+        fig = plt.figure(figsize=(10, 8), constrained_layout=True)
+        subfigs = fig.subfigures(1, 2)
+        fig_time = None
     fig.suptitle(f'{reductor_short_name} reduced-order model')
-    subfigs = fig.subfigures(1, 2)
     subfigs1 = subfigs[1].subfigures(2, 1)
     fig_bode = subfigs[0]
     fig_poles = subfigs1[0]
     fig_mag = subfigs1[1]
+    markers = 'ox+1234'
 
     # Bode plots of reduced-order models
     axs = fig_bode.subplots(2 * fom.dim_output, fom.dim_input, squeeze=False)
@@ -166,7 +219,7 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
 
     # Poles
     ax = fig_poles.subplots()
-    for mu, rom, marker in zip(mus, roms, 'ox+1234'):
+    for mu, rom, marker in zip(mus, roms, markers):
         poles_rom = rom.poles()
         ax.plot(poles_rom.real, poles_rom.imag, marker, fillstyle='none', label=fr'$\mu = {mu}$')
     ax.set_title("ROM's poles")
@@ -183,6 +236,30 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
             (fom - rom).transfer_function.mag_plot(w, ax=ax, mu=mu, label=fr'$\mu = {mu}$')
     ax.set_title('Magnitude plot of the error system')
     ax.legend()
+
+    # Time response
+    if fig_time is not None:
+        fig_i, fig_s = fig_time.subfigures(2, 1)
+        fig_i.suptitle('Impulse response')
+        fig_s.suptitle('Step response')
+        axs_i = fig_i.subplots(fom.dim_output, fom.dim_input, sharex=True, sharey=True, squeeze=False)
+        axs_s = fig_s.subplots(fom.dim_output, fom.dim_input, sharex=True, sharey=True, squeeze=False)
+        times = np.linspace(0, fom.T, fom.time_stepper.nt + 1)
+        for mu, rom, marker in zip(mus, roms, markers):
+            y_i = rom.impulse_resp()
+            y_s = rom.step_resp()
+            for i in range(fom.dim_output):
+                for j in range(fom.dim_input):
+                    axs_i[i, j].plot(times, y_i[:, i, j], f'{marker}-', fillstyle='none', label=fr'$\mu = {mu}$')
+                    axs_s[i, j].plot(times, y_s[:, i, j], f'{marker}-', fillstyle='none', label=fr'$\mu = {mu}$')
+        for j in range(fom.dim_input):
+            axs_i[-1, j].set_xlabel('Time (s)')
+            axs_s[-1, j].set_xlabel('Time (s)')
+        for ax in axs_i.flat:
+            ax.legend()
+        for ax in axs_s.flat:
+            ax.legend()
+
     plt.show()
 
 
@@ -219,7 +296,7 @@ def main(
     fom.visualize(fom.solve(mu=1))
     fom.visualize(fom.solve(mu=10))
 
-    lti = fom.to_lti()
+    lti = fom.to_lti().with_(T=1, time_stepper=ImplicitEulerTimeStepper(100))
 
     mus = [0.1, 1, 10]
     w = (1e-1, 1e3)

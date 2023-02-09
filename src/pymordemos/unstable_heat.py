@@ -66,16 +66,9 @@ def main(
     # LTI system
     lti = LTIModel.from_matrices(A, B, C, E=E)
 
-    # Figure
-    fig = plt.figure(figsize=(12, 5), constrained_layout=True)
-    subfigs = fig.subfigures(1, 2)
-    fig.suptitle('Full-order model')
-
     # System properties
-    w = np.logspace(-1, 3, 100)
     w = (1e-1, 1e3)
-    fom_properties(lti, w, stable=False, fig_bode=subfigs[0], fig_poles=subfigs[1])
-    plt.show()
+    fom_properties(lti, w, stable=False)
 
     # Model order reduction
     run_mor_method(lti, w, FDBTReductor(lti), 'FDBT', r, stable=False, tol=1e-5)

@@ -61,33 +61,9 @@ def main(
     # Second-order system
     so_sys = SecondOrderModel.from_matrices(M, E, K, B, Cp)
 
-    # Figure
-    fig = plt.figure(figsize=(10, 8), constrained_layout=True)
-    subfigs = fig.subfigures(1, 2)
-    subfigs1 = subfigs[1].subfigures(2, 1)
-    fig.suptitle('Full-order model')
-
     # System properties
     w = (1e-4, 1e2)
-    fom_properties(so_sys, w, fig_poles=subfigs1[0], fig_bode=subfigs[0])
-
-    # Singular values
-    psv = so_sys.psv()
-    vsv = so_sys.vsv()
-    pvsv = so_sys.pvsv()
-    vpsv = so_sys.vpsv()
-    axs = subfigs1[1].subplots(2, 2, sharex=True, sharey=True)
-    axs[0, 0].semilogy(range(1, len(psv) + 1), psv, '.-')
-    axs[0, 0].set_title('Position s.v.')
-    axs[0, 1].semilogy(range(1, len(vsv) + 1), vsv, '.-')
-    axs[0, 1].set_title('Velocity s.v.')
-    axs[1, 0].semilogy(range(1, len(pvsv) + 1), pvsv, '.-')
-    axs[1, 0].set_title('Position-velocity s.v.')
-    axs[1, 0].set_xlabel('Index')
-    axs[1, 1].semilogy(range(1, len(vpsv) + 1), vpsv, '.-')
-    axs[1, 1].set_title('Velocity-position s.v.')
-    axs[1, 1].set_xlabel('Index')
-    plt.show()
+    fom_properties(so_sys, w)
 
     # Model order reduction
     run_mor_method(so_sys, w, SOBTpReductor(so_sys), 'SOBTp', r)
