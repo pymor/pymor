@@ -337,7 +337,9 @@ class LTIPGReductor(ProjectionBasedReductor):
         return projected_operators
 
     def build_rom(self, projected_operators, error_estimator):
-        return LTIModel(error_estimator=error_estimator, sampling_time=self.fom.sampling_time, **projected_operators)
+        fom = self.fom
+        return LTIModel(T=fom.T, time_stepper=fom.time_stepper, num_values=fom.num_values,
+                        error_estimator=error_estimator, sampling_time=fom.sampling_time, **projected_operators)
 
     def extend_basis(self, **kwargs):
         raise NotImplementedError
