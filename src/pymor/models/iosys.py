@@ -3197,7 +3197,7 @@ class BilinearModel(Model):
         return string
 
 
-def _lti_to_poles_b_c(lti):
+def _lti_to_poles_b_c(lti, mu=None):
     """Compute poles and residues.
 
     Parameters
@@ -3205,6 +3205,8 @@ def _lti_to_poles_b_c(lti):
     lti
         |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|.
         The D operator is ignored.
+    mu
+        |Parameter values|.
 
     Returns
     -------
@@ -3215,14 +3217,14 @@ def _lti_to_poles_b_c(lti):
     c
         |NumPy array| of shape `(lti.order, lti.dim_output)`.
     """
-    A = to_matrix(lti.A, format='dense')
-    B = to_matrix(lti.B, format='dense')
-    C = to_matrix(lti.C, format='dense')
+    A = to_matrix(lti.A, format='dense', mu=mu)
+    B = to_matrix(lti.B, format='dense', mu=mu)
+    C = to_matrix(lti.C, format='dense', mu=mu)
     if isinstance(lti.E, IdentityOperator):
         poles, X = spla.eig(A)
         EX = X
     else:
-        E = to_matrix(lti.E, format='dense')
+        E = to_matrix(lti.E, format='dense', mu=mu)
         poles, X = spla.eig(A, E)
         EX = E @ X
     b = spla.solve(EX, B)
