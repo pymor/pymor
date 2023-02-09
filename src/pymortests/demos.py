@@ -115,6 +115,11 @@ SYS_MOR_ARGS = (
     ('unstable_heat', [50, 10]),
 )
 
+DD_MOR_ARGS = (
+    ('dd_parametric_heat', [0.01, 50, 10]),
+    ('era', [10]),
+)
+
 HAPOD_ARGS = (
     ('hapod', ['--snap=3', 1e-2, 10, 100]),
     ('hapod', ['--snap=3', '--threads=2', 1e-2, 10, 100]),
@@ -165,6 +170,7 @@ DEMO_ARGS = (
     + THERMALBLOCK_GUI_ARGS
     + BURGERS_EI_ARGS
     + PARABOLIC_MOR_ARGS
+    + DD_MOR_ARGS
     + SYS_MOR_ARGS
     + HAPOD_ARGS
     + FENICS_NONLINEAR_ARGS
