@@ -71,7 +71,6 @@ class LoewnerReductor(BasicObject):
 
 def _partition_frequencies(s, Hs, partitioning='even-odd', ordering='regular'):
     """Create a frequency partitioning."""
-
     # partition frequencies corresponding to positive imaginary part
     pimidx = np.where(np.imag(s) > 0)[0]
 
