@@ -823,6 +823,9 @@ class LTIModel(Model):
         """
         assert self.T is not None
 
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+
         # solution computation
         B_va = self.B.as_range_array(mu)
         Xs = tuple(
