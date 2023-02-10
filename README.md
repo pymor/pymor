@@ -146,17 +146,7 @@ This will generate HTML documentation in `docs/_build/html`.
 
 pyMOR has been designed with easy integration of external PDE solvers in mind.
 
-A basic approach is to use the solver only to generate high-dimensional
-system matrices which are then read by pyMOR from disk (`pymor.discretizers.disk`).
-Another possibility is to steer the solver via an appropriate network
-protocol.
-
-Whenever possible, we recommend to recompile the solver as a
-Python extension module which gives pyMOR direct access to the solver without
-any communication overhead. A basic example using
-[pybind11](https://github.com/pybind/pybind11) can be found in
-`src/pymordemos/minimal_cpp_demo`. Moreover,
-we provide bindings for the following solver libraries:
+We provide bindings for the following solver libraries:
 
 * [FEniCS](https://fenicsproject.org)
 
@@ -177,9 +167,11 @@ we provide bindings for the following solver libraries:
     For an example see `pymordemos.thermalblock_simple`.
     It is tested using NGSolve version v6.2.2104.
 
-Do not hesitate to contact
-[us](https://github.com/pymor/pymor/discussions) if you
-need help with the integration of your PDE solver.
+A simple example for direct integration of pyMOR with a a custom solver
+can be found in `src/pymordemos/minimal_cpp_demo`.
+
+An alternative approach is to import system matrices from file and use
+`scipy.sparse`-based solvers.
 
 ## External Matrix Equation Solvers
 
