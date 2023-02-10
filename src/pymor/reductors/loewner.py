@@ -21,20 +21,21 @@ class LoewnerReductor(BasicObject):
     s
         |Numpy Array| of shape (n,) containing the frequencies.
     Hs
-        |Numpy Array| of shape (n, p, m) or |TransferFunction| resembling the transfer function samples.
+        |Numpy Array| of shape (n, p, m) or |TransferFunction| resembling the transfer function
+        samples.
     partitioning
         `str` or `tuple` of length 2. Strings can either be 'even-odd' or 'half-half' defining
-        the splitting rule. A user-defined partitioning can be defined by passing a tuple of the left and
-        right indices. Defaults to `even-odd`.
+        the splitting rule. A user-defined partitioning can be defined by passing a tuple of the
+        left and right indices. Defaults to `even-odd`.
     ordering
-        The ordering with respect to which the splitting rule is executed. Can be either 'magnitude',
-        'random' or 'regular'. Defaults to 'regular'.
+        The ordering with respect to which the splitting rule is executed. Can be either
+        'magnitude', 'random' or 'regular'. Defaults to 'regular'.
     ltd
-        |Numpy Array| representing left tangential directions. If `None` tangential directions will be
-        chosen randomly (normal distribution).
+        |Numpy Array| representing left tangential directions. If `None` tangential directions will
+        be chosen randomly (normal distribution).
     rtd
-        |Numpy Array| representing right tangential directions. If `None` tangential directions will be
-        chosen randomly (normal distribution).
+        |Numpy Array| representing right tangential directions. If `None` tangential directions will
+        be chosen randomly (normal distribution).
     """
 
     def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', ltd=None, rtd=None):
@@ -53,7 +54,8 @@ class LoewnerReductor(BasicObject):
         rom
             Reduced |LTIModel|.
         """
-        L, Ls, V, W = loewner_quadruple(self.s, self.Hs, partitioning='even-odd', ordering='regular', ltd=None, rtd=None)
+        L, Ls, V, W = loewner_quadruple(self.s, self.Hs, partitioning='even-odd', ordering='regular',
+                                        ltd=None, rtd=None)
         LLS = np.vstack([L, Ls])
         Y, S, _ = spla.svd(LLS, full_matrices=False)
         _, _, Xh = spla.svd(LLS.T, full_matrices=False)
@@ -123,28 +125,29 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', ltd=No
     .. math::
         (\mathbb{L},\mathbb{L}_s,V,W)
 
-    consists of the Loewner matrix :math:`\mathbb{L}`, the shifted Loewner matrix :math:`\mathbb{L}_s`,
-    left interpolation data :math:`V` and right interpolation data :math:`W`.
+    consists of the Loewner matrix :math:`\mathbb{L}`, the shifted Loewner matrix
+    :math:`\mathbb{L}_s`, left interpolation data :math:`V` and right interpolation data :math:`W`.
 
     Parameters
     ----------
     s
         |Numpy Array| of shape (n,) containing the frequencies.
     Hs
-        |Numpy Array| of shape (n, p, m) or |TransferFunction| resembling the transfer function samples.
+        |Numpy Array| of shape (n, p, m) or |TransferFunction| resembling the transfer function
+        samples.
     partitioning
         `str` or `tuple` of length 2. Strings can either be 'even-odd' or 'half-half' defining
-        the splitting rule. A user-defined partitioning can be defined by passing a tuple of the left and
-        right indices. Defaults to `even-odd`.
+        the splitting rule. A user-defined partitioning can be defined by passing a tuple of the
+        left and right indices. Defaults to `even-odd`.
     ordering
-        The ordering with respect to which the splitting rule is executed. Can be either 'magnitude',
-        'random' or 'regular'. Defaults to 'regular'.
+        The ordering with respect to which the splitting rule is executed. Can be either
+        'magnitude', 'random' or 'regular'. Defaults to 'regular'.
     ltd
-        |Numpy Array| representing left tangential directions. If `None` tangential directions will be
-        chosen randomly (normal distribution).
+        |Numpy Array| representing left tangential directions. If `None` tangential directions will
+        be chosen randomly (normal distribution).
     rtd
-        |Numpy Array| representing right tangential directions. If `None` tangential directions will be
-        chosen randomly (normal distribution).
+        |Numpy Array| representing right tangential directions. If `None` tangential directions will
+        be chosen randomly (normal distribution).
 
     Returns
     -------
