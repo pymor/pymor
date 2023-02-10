@@ -216,11 +216,11 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', ltd=No
         W = np.empty((dim_output, len(jp)), dtype=np.complex_)
         for i, si in enumerate(ip):
             for j, sj in enumerate(jp):
-                L[i, j] = ltd[i] @ (Hs[si] - Hs[sj]) @ rtd[:,j] / (s[si] - s[sj])
-                Ls[i, j] = ltd[i] @ (s[si] * Hs[si] - s[sj] * Hs[sj]) @ rtd[:,j] / (s[si] - s[sj])
+                L[i, j] = ltd[i] @ (Hs[si] - Hs[sj]) @ rtd[:, j] / (s[si] - s[sj])
+                Ls[i, j] = ltd[i] @ (s[si] * Hs[si] - s[sj] * Hs[sj]) @ rtd[:, j] / (s[si] - s[sj])
             V[i, :] = Hs[si].T @ ltd[i]
         for j, sj in enumerate(jp):
-            W[:, j] = Hs[sj] @ rtd[:,j]
+            W[:, j] = Hs[sj] @ rtd[:, j]
 
     # transform the system to have real matrices
     TL = np.zeros((len(ip), len(ip)), dtype=np.complex_)
