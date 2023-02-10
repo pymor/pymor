@@ -302,8 +302,6 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     assert isinstance(U, VectorArray) \
         or (isinstance(U, tuple) and all(isinstance(u, VectorArray) for u in U)
             and all(len(u) == len(U[0]) for u in U))
-    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-        tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
     if isinstance(legend, str):
         legend = (legend,)
     assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
@@ -319,6 +317,9 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 filename = f.name
             subprocess.Popen(['python', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
+
+    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+        tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
 
     if backend == 'gl':
         if not config.HAVE_GL:
