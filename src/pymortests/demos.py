@@ -114,6 +114,7 @@ DD_MOR_ARGS = (
     ('dd_parametric_heat', [0.01, 50, 10]),
     ('dd_heat', [0.1, 10]),
     ('era', [10]),
+    ('dd_heat', [0.1, 50]),
 )
 
 HAPOD_ARGS = (
