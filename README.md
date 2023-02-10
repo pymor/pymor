@@ -64,6 +64,9 @@ For an installation with minimal dependencies, run
 
     pip install pymor
 
+Note that most included demo scripts additionally require `matplotlib` and
+Qt bindings such as `pyside2` to function.
+
 #### Latest Release (with all Optional Dependencies)
 
 The following installs the latest release of pyMOR on your system with most
