@@ -22,7 +22,7 @@ from pymor.reductors.h2 import IRKAReductor, OneSidedIRKAReductor, TSIAReductor
 from pymor.reductors.mt import MTReductor
 
 
-def fom_properties(fom, w, stable=True):
+def fom_properties(fom, w, stable_lti=True):
     """Show properties of the full-order model.
 
     Parameters
@@ -31,8 +31,8 @@ def fom_properties(fom, w, stable=True):
         The full-order `Model` from :mod:`~pymor.models.iosys` or a |TransferFunction|.
     w
         Array of frequencies.
-    stable
-        Whether the FOM is stable.
+    stable_lti
+        Whether the FOM is stable (assuming it is an |LTIModel|).
     """
     from pymor.models.transfer_function import TransferFunction
     if not isinstance(fom, TransferFunction):
@@ -41,7 +41,7 @@ def fom_properties(fom, w, stable=True):
     print(f'number of outputs  = {fom.dim_output}')
 
     # System norms
-    if stable:
+    if stable_lti:
         print(f'FOM H_2-norm:    {fom.h2_norm():e}')
         if not isinstance(fom, TransferFunction):
             if config.HAVE_SLYCOT:
@@ -66,14 +66,6 @@ def fom_properties(fom, w, stable=True):
         fig_poles = subfigs1[0]
         fig_sv = subfigs1[1]
         fig_time = subfigs[2]
-    elif not stable:
-        fig = plt.figure(figsize=(10, 4), constrained_layout=True)
-        fig.suptitle('Full-order model')
-        subfigs = fig.subfigures(1, 2)
-        fig_bode = subfigs[0]
-        fig_poles = subfigs[1]
-        fig_sv = None
-        fig_time = None
     elif isinstance(fom, (LTIModel, SecondOrderModel)):
         fig = plt.figure(figsize=(10, 8), constrained_layout=True)
         fig.suptitle('Full-order model')
@@ -106,17 +98,23 @@ def fom_properties(fom, w, stable=True):
         ax.set_xlabel('Real')
         ax.set_ylabel('Imag')
 
-        if not stable:
+        if not stable_lti:
             ast_spectrum = fom.get_ast_spectrum()
             print(f'Anti-stable system poles:  {ast_spectrum[1]}')
 
     # Hankel singular values
     if fig_sv is not None:
         if isinstance(fom, LTIModel):
-            hsv = fom.hsv()
+            if stable_lti:
+                hsv = fom.hsv()
+            else:
+                hsv = fom._sv_U_V(typ='bs')[0]
             ax = fig_sv.subplots()
             ax.semilogy(range(1, len(hsv) + 1), hsv, '.-')
-            ax.set_title('Hankel singular values')
+            if stable_lti:
+                ax.set_title('Hankel singular values')
+            else:
+                ax.set_title('Bernoulli stabilized singular values')
             ax.set_xlabel('Index')
         else:  # SecondOrderModel
             psv = fom.psv()
