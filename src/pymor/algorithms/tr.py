@@ -94,7 +94,7 @@ class TRSurrogate(BasicObject):
 
 @defaults('beta', 'radius', 'shrink_factor', 'miniter', 'maxiter', 'miniter_subproblem', 'maxiter_subproblem',
           'tol', 'radius_tol', 'rtol', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
-def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius=.1,
+def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, radius=.1,
                  shrink_factor=.5, miniter=0, maxiter=30, miniter_subproblem=0, maxiter_subproblem=400, tol=1e-6,
                  radius_tol=.75, rtol=1e-16, tol_sub=1e-8, line_search_params=None, stagnation_window=3,
                  stagnation_threshold=np.inf):
@@ -112,10 +112,11 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
 
     Parameters
     ----------
-    parameter_space
-        The |ParameterSpace| for enforcing the box constraints on the parameter `mu`.
     reductor
         The `reductor` used to generate the reduced order models and estimate the output error.
+    parameter_space
+        If not `None`, the |ParameterSpace| for enforcing the box constraints on the
+        parameter `mu`. Otherwise a |ParameterSpace| with no constraints.
     initial_guess
         If not `None`, a |Mu| instance of length 1 containing an initial guess for
         the solution `mu`. Otherwise, a random parameter from the parameter space is chosen
@@ -170,6 +171,9 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
     assert shrink_factor != 0.
 
     logger = getLogger('pymor.algorithms.tr')
+
+    if parameter_space is None:
+        parameter_space = reductor.fom.parameters.space(-np.inf, np.inf)
 
     if initial_guess is None:
         initial_guess = parameter_space.sample_randomly(1)[0]
@@ -226,7 +230,8 @@ def trust_region(parameter_space, reductor, initial_guess=None, beta=.95, radius
                     error_criterion=error_aware_line_search_criterion, beta=beta, radius=radius)
 
             # first BFGS iterate is AGC point
-            compare_output = surrogate.rom_output(sub_data['mus'][1])
+            index = 1 if len(sub_data['mus']) > 1 else 0
+            compare_output = surrogate.rom_output(sub_data['mus'][index])
             estimate_output = surrogate.estimate_output_error(mu)
             current_output = surrogate.rom_output(mu)
 

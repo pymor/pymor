@@ -116,7 +116,7 @@ def update_hessian(hessian, mu, old_mu, gradient, old_gradient):
 
 
 @defaults('miniter', 'maxiter', 'rtol', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
-def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, rtol=1e-16,
+def bfgs(model, parameter_space=None, initial_guess=None, miniter=0, maxiter=100, rtol=1e-16,
          tol_sub=1e-8, line_search_params=None, stagnation_window=3, stagnation_threshold=np.inf,
          error_aware=False, error_criterion=None, beta=None, radius=None, return_stages=False):
     """BFGS algorithm.
@@ -132,7 +132,8 @@ def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, rto
     model
         The |Model| used for the optimization.
     parameter_space
-        The |ParameterSpace| for enforcing the box constraints on the parameter `mu`.
+        If not `None`, the |ParameterSpace| for enforcing the box constraints on the
+        parameter `mu`. Otherwise a |ParameterSpace| with no constraints.
     initial_guess
         If not `None`, a |Mu| instance of length 1 containing an initial guess for the
         solution `mu`. Otherwise, a random parameter from the parameter space is chosen
@@ -192,6 +193,9 @@ def bfgs(model, parameter_space, initial_guess=None, miniter=0, maxiter=100, rto
 
     assert model.output_functional is not None
     output = lambda m: model.output(m)[0, 0]
+
+    if parameter_space is None:
+        parameter_space = model.parameters.space(-np.inf, np.inf)
 
     if initial_guess is None:
         initial_guess = parameter_space.sample_randomly(1)[0]
