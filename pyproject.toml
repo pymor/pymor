@@ -10,7 +10,7 @@ line-length = 120
 select = ["D", "E", "F", "I", "ICN", "N", "Q", "W"]
 ignore = [
     "D10", "D404",
-    "D405", "D407", "D410", "D411", "D414", # related to 'parameters'
+    "D401", "D405", "D407", "D410", "D411", "D414", # related to 'parameters'
     "E402", "E731", "E741",
     "F722",
     "N802", "N803", "N806"]
