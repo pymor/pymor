@@ -98,7 +98,7 @@ because they need additional setup on your system:
 
 To install the latest development version of pyMOR, execute
 
-    pip install git+https://github.com/pymor/pymor#egg=pymor[full]
+    pip install 'pymor[full] @ git+https://github.com/pymor/pymor'
 
 which requires that the [git](https://git-scm.com/) version control system is
 installed on your system.
@@ -110,7 +110,7 @@ might break (this is usually announced in our
 [discussion forum](https://github.com/pymor/pymor/discussions)),
 so you might prefer to install pyMOR from the current release branch:
 
-    pip install git+https://github.com/pymor/pymor@2022.2.x#egg=pymor[full]
+    pip install 'pymor[full] @ git+https://github.com/pymor/pymor@2022.2.x'
 
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
