@@ -14,17 +14,21 @@
 pyMOR is a software library for building
 [model order reduction](https://morwiki.mpi-magdeburg.mpg.de)
 applications with the Python programming language.
+All algorithms in pyMOR are formulated in terms of abstract interfaces,
+allowing generic implementations to work with different backends,
+from NumPy/SciPy to external partial differential equation solver packages.
 
 ## Features
 
-* reduced basis methods for parametric linear and non-linear problems
-* system-theoretic methods such as balanced truncation or iterative rational
-  Krylov algorithm
-* all algorithms in pyMOR are formulated in terms of abstract interfaces for
-  seamless integration with external PDE (Partial Differential Equation) solver
-  packages.
-* pure Python implementations of finite element and finite volume
-  discretizations using the NumPy/SciPy scientific computing stack
+* Reduced basis methods for parametric linear and non-linear problems.
+* System-theoretic methods for linear time-invariant systems.
+* Neural network-based methods for parametric problems.
+* Proper orthogonal decomposition.
+* Dynamic mode decomposition.
+* Rational interpolation of data (Loewner, AAA).
+* Numerical linear algebra (Gram-Schmidt, time-stepping, ...).
+* Pure Python implementations of finite element and finite volume
+  discretizations using the NumPy/SciPy scientific computing stack.
 
 ## License
 
