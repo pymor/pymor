@@ -196,6 +196,6 @@ Please see the [Developer Documentation](https://docs.pymor.org/latest/developer
 ## Contact
 
 Should you have any questions regarding pyMOR or wish to contribute,
-do not hesitate to contact us via our GitHub discussions forum:
+do not hesitate to send us an email at
 
-<https://github.com/pymor/pymor/discussions>
+    main.developers@pymor.org
