@@ -53,9 +53,6 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
            or (isinstance(U, tuple)
                and all(isinstance(u, VectorArray) for u in U)
                and all(len(u) == len(U[0]) for u in U))
-    if not config.HAVE_MATPLOTLIB:
-        raise ImportError('cannot visualize: import of matplotlib failed')
-    from matplotlib import pyplot as plt
 
     U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
         tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
