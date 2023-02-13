@@ -32,8 +32,12 @@ def test_visualize_patch(backend_gridtype):
     m, data = discretize_stationary_cg(analytical_problem=problem, grid=grid, boundary_info=bi)
     U = m.solve()
     try:
-        from pymor.discretizers.builtin.gui.qt import visualize_patch
-        visualize_patch(data['grid'], U=U, backend=backend)
+        if dim == 1:
+            from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d
+            visualize_matplotlib_1d(data['grid'], U=U)
+        else:
+            from pymor.discretizers.builtin.gui.qt import visualize_patch
+            visualize_patch(data['grid'], U=U, backend=backend)
     except QtMissingError:
         pytest.xfail('Qt missing')
 
