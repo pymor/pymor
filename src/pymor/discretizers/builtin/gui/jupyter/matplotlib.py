@@ -10,9 +10,7 @@ config.require('MATPLOTLIB')
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.animation import FuncAnimation
 
-from pymor.core.config import config
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.gui.matplotlib_base import Matplotlib1DAxes, MatplotlibPatchAxes
 from pymor.vectorarrays.interface import VectorArray
@@ -98,6 +96,7 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
             for p, u, vmin, vmax in zip(plots, U, vmins, vmaxs):
                 p.set(u[i], vmin=vmin[i], vmax=vmax[i])
 
+        from matplotlib.animation import FuncAnimation
         anim = FuncAnimation(fig, animate, frames=len(U[0]), interval=delay_between_frames, blit=False)
         plt.close(fig)
         return anim
@@ -174,6 +173,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
                      [vmin[ind] for vmin in vmins],
                      [vmax[ind] for vmax in vmaxs])
 
+        from matplotlib.animation import FuncAnimation
         anim = FuncAnimation(fig, animate, frames=len(U[0]), interval=delay_between_frames, blit=False)
         plt.close(fig)
         return anim
