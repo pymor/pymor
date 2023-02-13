@@ -1,8 +1,7 @@
 import pytest
 
 from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymortests.base import runmodule
-from pymortests.base import skip_if_missing
+from pymortests.base import runmodule, skip_if_missing
 
 
 @skip_if_missing('FENICS')
@@ -13,5 +12,5 @@ def test_discretize(analytical_problem):
     discretize_stationary_cg(analytical_problem)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runmodule(filename=__file__)
