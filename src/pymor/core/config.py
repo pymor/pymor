@@ -87,8 +87,8 @@ def is_macos_platform():
 
 
 def _get_matplotib_version():
-    import matplotlib
-    return matplotlib.__version__
+    import matplotlib as mpl
+    return mpl.__version__
 
 
 def _get_ipython_version():
