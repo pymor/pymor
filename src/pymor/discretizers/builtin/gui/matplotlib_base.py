@@ -39,11 +39,11 @@ class MatplotlibPatchAxes:
         self.codim = codim
 
         if codim == 2:
-            self.p = ax.tripcolor(coordinates[:, 0], coordinates[:, 1], subentities,
-                                  np.zeros(len(coordinates)), shading='gouraud')
+            self.p = ax.tripcolor(coordinates[:, 0], coordinates[:, 1], np.zeros(len(coordinates)),
+                                  triangles=subentities, shading='gouraud')
         else:
-            self.p = ax.tripcolor(coordinates[:, 0], coordinates[:, 1], subentities,
-                                  facecolors=np.zeros(len(subentities)), shading='flat')
+            self.p = ax.tripcolor(coordinates[:, 0], coordinates[:, 1], facecolors=np.zeros(len(subentities)),
+                                  triangles=subentities, shading='flat')
 
         # thin plots look ugly with a huge colorbar on the right
         if aspect_ratio < 0.75:
