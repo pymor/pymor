@@ -21,8 +21,8 @@ class LoewnerReductor(BasicObject):
     s
         |Numpy Array| of shape (n,) containing the frequencies.
     Hs
-        |Numpy Array| of shape (n, p, m) or |TransferFunction| resembling the transfer function
-        samples.
+        |Numpy Array| of shape (n, p, m) resembling the transfer function samples,
+        |TransferFunction| or `Model` with `transfer_function` attribute.
     partitioning
         `str` or `tuple` of length 2. Strings can either be 'even-odd' or 'half-half' defining
         the splitting rule. A user-defined partitioning can be defined by passing a tuple of the
@@ -30,6 +30,9 @@ class LoewnerReductor(BasicObject):
     ordering
         The ordering with respect to which the splitting rule is executed. Can be either
         'magnitude', 'random' or 'regular'. Defaults to 'regular'.
+    conjugate
+        Whether to guarantee realness of reduced |LTIModel| by keeping complex conjugates in the
+        same partitioning or not. If `True` will automatically generate conjugate data if necessary.
     ltd
         |Numpy Array| representing left tangential directions. If `None` tangential directions will
         be chosen randomly (normal distribution).
@@ -38,7 +41,7 @@ class LoewnerReductor(BasicObject):
         be chosen randomly (normal distribution).
     """
 
-    def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', ltd=None, rtd=None):
+    def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, ltd=None, rtd=None):
         self.__auto_init(locals())
 
     def reduce(self, tol=1e-7):
@@ -54,8 +57,8 @@ class LoewnerReductor(BasicObject):
         rom
             Reduced |LTIModel|.
         """
-        L, Ls, V, W = loewner_quadruple(self.s, self.Hs, partitioning='even-odd', ordering='regular',
-                                        ltd=None, rtd=None)
+        L, Ls, V, W = loewner_quadruple(self.s, self.Hs, partitioning=self.partitioning, ordering=self.ordering,
+                                        conjugate=self.conjugate, ltd=None, rtd=None)
         LLS = np.vstack([L, Ls])
         Y, S, _ = spla.svd(LLS, full_matrices=False)
         _, _, Xh = spla.svd(LLS.T, full_matrices=False)
@@ -68,56 +71,74 @@ class LoewnerReductor(BasicObject):
         E = - Yr @ L @ Xhr.conj()
         A = - Yr @ Ls @ Xhr.conj()
 
+        if self.conjugate:
+            A, B, C, E = A.real, B.real, C.real, E.real
+
         return LTIModel.from_matrices(A, B, C, D=None, E=E)
 
 
-def _partition_frequencies(s, Hs, partitioning='even-odd', ordering='regular'):
+def _partition_frequencies(s, Hs, partitioning='even-odd', ordering='regular', conjugate=True):
     """Create a frequency partitioning."""
-    # partition frequencies corresponding to positive imaginary part
-    pimidx = np.where(np.imag(s) > 0)[0]
+    # must keep complex conjugate frequencies in the same partioning
+    if conjugate:
+        # partition frequencies corresponding to positive imaginary part
+        pimidx = np.where(np.imag(s) > 0)[0]
 
-    # treat real-valued samples separately in order to ensure balanced splitting
-    ridx = np.where(np.imag(s) == 0)[0]
+        # treat real-valued samples separately in order to ensure balanced splitting
+        ridx = np.where(np.imag(s) == 0)[0]
 
-    if ordering == 'magnitude':
-        pimidx_sort = np.argsort([np.linalg.norm(Hs[i]) for i in pimidx])
-        pimidx_ordered = pimidx[pimidx_sort]
-        ridx_sort = np.argsort([np.linalg.norm(Hs[i]) for i in ridx])
-        ridx_ordered = ridx[ridx_sort]
-    elif ordering == 'random':
-        np.random.shuffle(pimidx)
-        pimidx_ordered = pimidx
-        np.random.permutation(ridx)
-        ridx_ordered = ridx
-    elif ordering == 'regular':
-        pimidx_ordered = pimidx
-        ridx_ordered = ridx
+        if ordering == 'magnitude':
+            pimidx_sort = np.argsort([np.linalg.norm(Hs[i]) for i in pimidx])
+            pimidx_ordered = pimidx[pimidx_sort]
+            ridx_sort = np.argsort([np.linalg.norm(Hs[i]) for i in ridx])
+            ridx_ordered = ridx[ridx_sort]
+        elif ordering == 'random':
+            np.random.shuffle(pimidx)
+            pimidx_ordered = pimidx
+            np.random.permutation(ridx)
+            ridx_ordered = ridx
+        elif ordering == 'regular':
+            pimidx_ordered = pimidx
+            ridx_ordered = ridx
 
-    if partitioning == 'even-odd':
-        left = np.concatenate((ridx_ordered[::2], pimidx_ordered[::2]))
-        right = np.concatenate((ridx_ordered[1::2], pimidx_ordered[1::2]))
-    elif partitioning == 'half-half':
-        pim_split = np.array_split(pimidx_ordered, 2)
-        r_split = np.array_split(ridx_ordered, 2)
-        left = np.concatenate((r_split[0], pim_split[0]))
-        right = np.concatenate((r_split[1], pim_split[1]))
+        if partitioning == 'even-odd':
+            left = np.concatenate((ridx_ordered[::2], pimidx_ordered[::2]))
+            right = np.concatenate((ridx_ordered[1::2], pimidx_ordered[1::2]))
+        elif partitioning == 'half-half':
+            pim_split = np.array_split(pimidx_ordered, 2)
+            r_split = np.array_split(ridx_ordered, 2)
+            left = np.concatenate((r_split[0], pim_split[0]))
+            right = np.concatenate((r_split[1], pim_split[1]))
 
-    l_cc = np.array([], dtype=int)
-    for le in left:
-        if np.imag(s[le]) != 0:
-            l_cc = np.concatenate((l_cc, np.where(s == s[le].conj())[0]))
-    left = np.concatenate((left, l_cc))
+        l_cc = np.array([], dtype=int)
+        for le in left:
+            if np.imag(s[le]) != 0:
+                l_cc = np.concatenate((l_cc, np.where(s == s[le].conj())[0]))
+        left = np.concatenate((left, l_cc))
 
-    r_cc = np.array([], dtype=int)
-    for ri in right:
-        if np.imag(s[ri]) != 0:
-            r_cc = np.concatenate((r_cc, np.where(s == s[ri].conj())[0]))
-    right = np.concatenate((right, r_cc))
+        r_cc = np.array([], dtype=int)
+        for ri in right:
+            if np.imag(s[ri]) != 0:
+                r_cc = np.concatenate((r_cc, np.where(s == s[ri].conj())[0]))
+        right = np.concatenate((right, r_cc))
 
-    return (left, right)
+        return (left, right)
+    else:
+        if ordering == 'magnitude':
+            idx = np.argsort([np.linalg.norm(Hs[i]) for i in len(Hs[0])])
+        elif ordering == 'random':
+            idx = np.random.permutation(s.shape[0])
+        elif ordering == 'regular':
+            idx = np.arange(s.shape[0])
+
+        if partitioning == 'even-odd':
+            return (idx[::2], idx[1::2])
+        elif partitioning == 'half-half':
+            idx_split = np.array_split(idx, 2)
+            return (idx_split[0], idx_split[1])
 
 
-def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', ltd=None, rtd=None):
+def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, ltd=None, rtd=None):
     r"""Constructs a Loewner quadruple as |NumPy arrays|.
 
     The Loewner quadruple :cite:`ALI17`
@@ -142,6 +163,9 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', ltd=No
     ordering
         The ordering with respect to which the splitting rule is executed. Can be either
         'magnitude', 'random' or 'regular'. Defaults to 'regular'.
+    conjugate
+        Whether to guarantee realness of reduced |LTIModel| by keeping complex conjugates in the
+        same partitioning or not. If `True` will automatically generate conjugate data if necessary.
     ltd
         |Numpy Array| representing left tangential directions. If `None` tangential directions will
         be chosen randomly (normal distribution).
@@ -176,13 +200,15 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', ltd=No
     else:
         assert len(Hs[0]) == len(s)
 
-    # ensure that complex sampling values appear in complex conjugate pairs
-    for i, ss in enumerate(s):
-        if np.conj(ss) not in s:
-            s = np.append(s, np.conj(ss))
-            Hs = np.append(Hs, np.conj(Hs[i])[None, ...], axis=0)
+    # ensure that complex sampling values appear in complex conjugate pairs\
+    if conjugate:
+        for i, ss in enumerate(s):
+            if np.conj(ss) not in s:
+                s = np.append(s, np.conj(ss))
+                Hs = np.append(Hs, np.conj(Hs[i])[None, ...], axis=0)
 
-    ip, jp = _partition_frequencies(s, Hs, partitioning, ordering) if isinstance(partitioning, str) else partitioning
+    ip, jp = _partition_frequencies(s, Hs, partitioning, ordering, conjugate) \
+        if isinstance(partitioning, str) else partitioning
 
     if len(Hs.shape) > 1:
         dim_output = Hs.shape[1]
@@ -223,33 +249,34 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', ltd=No
             W[:, j] = Hs[sj] @ rtd[:, j]
 
     # transform the system to have real matrices
-    TL = np.zeros((len(ip), len(ip)), dtype=np.complex_)
-    for i, si in enumerate(ip):
-        if s[si].imag == 0:
-            TL[i, i] = 1
-        else:
-            j = np.argmin(np.abs(s[ip] - s[si].conjugate()))
-            if i < j:
+    if conjugate:
+        TL = np.zeros((len(ip), len(ip)), dtype=np.complex_)
+        for i, si in enumerate(ip):
+            if s[si].imag == 0:
                 TL[i, i] = 1
-                TL[i, j] = 1
-                TL[j, i] = -1j
-                TL[j, j] = 1j
+            else:
+                j = np.argmin(np.abs(s[ip] - s[si].conjugate()))
+                if i < j:
+                    TL[i, i] = 1
+                    TL[i, j] = 1
+                    TL[j, i] = -1j
+                    TL[j, j] = 1j
 
-    TR = np.zeros((len(jp), len(jp)), dtype=np.complex_)
-    for i, si in enumerate(jp):
-        if s[si].imag == 0:
-            TR[i, i] = 1
-        else:
-            j = np.argmin(np.abs(s[jp] - s[si].conjugate()))
-            if i < j:
+        TR = np.zeros((len(jp), len(jp)), dtype=np.complex_)
+        for i, si in enumerate(jp):
+            if s[si].imag == 0:
                 TR[i, i] = 1
-                TR[i, j] = 1
-                TR[j, i] = -1j
-                TR[j, j] = 1j
+            else:
+                j = np.argmin(np.abs(s[jp] - s[si].conjugate()))
+                if i < j:
+                    TR[i, i] = 1
+                    TR[i, j] = 1
+                    TR[j, i] = -1j
+                    TR[j, j] = 1j
 
-    L = (TL @ L @ TR.conj().T).real
-    Ls = (TL @ Ls @ TR.conj().T).real
-    V = (TL @ V).real
-    W = (W @ TR.conj().T).real
+        L = (TL @ L @ TR.conj().T).real
+        Ls = (TL @ Ls @ TR.conj().T).real
+        V = (TL @ V).real
+        W = (W @ TR.conj().T).real
 
     return L, Ls, V, W
