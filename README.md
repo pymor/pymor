@@ -38,7 +38,7 @@ See [LICENSE.txt](LICENSE.txt).
 ## Citing
 
 If you use pyMOR for academic work, please consider citing our
-[publication](https://doi.org/10.1137/15M1026614):
+[publication](https://epubs.siam.org/doi/10.1137/15M1026614):
 
     R. Milk, S. Rave, F. Schindler
     pyMOR - Generic Algorithms and Interfaces for Model Order Reduction
