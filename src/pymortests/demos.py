@@ -89,10 +89,6 @@ THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),
 )
 
-THERMALBLOCK_GUI_ARGS = (
-    ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
-)
-
 BURGERS_EI_ARGS = (
     ('burgers_ei', [1, 2, 2, 5, 2, 5, '--plot-ei-err', '--plot-err', '--plot-solutions']),
     ('burgers_ei', [1, 2, 2, 5, 2, 5, '--ei-alg=deim', '--plot-error-landscape']),
@@ -167,7 +163,6 @@ DEMO_ARGS = (
     + THERMALBLOCK_ARGS
     + THERMALBLOCK_ADAPTIVE_ARGS
     + THERMALBLOCK_SIMPLE_ARGS
-    + THERMALBLOCK_GUI_ARGS
     + BURGERS_EI_ARGS
     + PARABOLIC_MOR_ARGS
     + DD_MOR_ARGS
