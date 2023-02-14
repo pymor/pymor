@@ -81,22 +81,25 @@ optional dependencies.
 There are some optional packages not included with `pymor[full]`
 because they need additional setup on your system:
 
-* mpi4py: support of MPI distributed models and parallelization of greedy
+* [mpi4py](https://mpi4py.readthedocs.io/en/stable/mpi4py.html):
+  support of MPI distributed models and parallelization of greedy
   algorithms (requires MPI development headers and a C compiler):
 
       pip install mpi4py
 
-* Slycot: dense matrix equation solvers for system-theoretic methods and
+* [Slycot](https://github.com/python-control/Slycot):
+  dense matrix equation solvers for system-theoretic methods and
   H-infinity norm calculation (requires OpenBLAS headers and a
   Fortran compiler):
 
       pip install slycot
 
-* Py-M.E.S.S.: dense and sparse matrix equation solvers for system-theoretic
-  methods (other backends available):
-  * from [source](https://gitlab.mpi-magdeburg.mpg.de/mess/cmess-releases)
-    (recommended)
-  * using a [wheel](https://www.mpi-magdeburg.mpg.de/projects/mess)
+* [Py-M.E.S.S.](https://www.mpi-magdeburg.mpg.de/projects/mess):
+  dense and sparse matrix equation solvers for system-theoretic methods
+  (it is recommended to install from
+  [source](https://gitlab.mpi-magdeburg.mpg.de/mess/cmess-releases)):
+
+      pip install pymess
 
 #### Latest Development Version
 
@@ -176,22 +179,6 @@ can be found in `src/pymordemos/minimal_cpp_demo`.
 
 An alternative approach is to import system matrices from file and use
 `scipy.sparse`-based solvers.
-
-## External Matrix Equation Solvers
-
-pyMOR also provides bindings to matrix equation solvers (in `pymor.bindings`),
-which are needed for the system-theoretic methods and need to be installed
-separately. Bindings for the following solver libraries are included:
-
-* [Py-M.E.S.S.](https://www.mpi-magdeburg.mpg.de/projects/mess)
-
-  The Matrix Equation Sparse Solver library is intended for solving large sparse
-  matrix equations (`pymor.bindings.pymess`).
-
-* [Slycot](https://github.com/python-control/Slycot)
-
-  Python wrapper for the Subroutine Library in Systems and Control Theory
-  (SLICOT) is also used for Hardy norm computations (`pymor.bindings.slycot`).
 
 ## Environments for pyMOR Development and Tests
 
