@@ -133,18 +133,18 @@ pyMOR can be installed using conda/mamba by running
 ## Documentation
 
 Documentation is available [online](https://docs.pymor.org/).
-To build it locally, run the following from inside the root directory of the
-pyMOR source tree.
+We recommend starting with
+[getting started](https://docs.pymor.org/latest/getting_started.html),
+[tutorials](https://docs.pymor.org/latest/tutorials.html), and
+[technical overview](https://docs.pymor.org/latest/technical_overview.html).
+
+To build the documentation locally,
+run the following from inside the root directory of the pyMOR source tree.
 
     make docs
 
 This will generate HTML documentation in `docs/_build/html`.
 
-## Useful Links
-
-* [Latest Changelog](https://docs.pymor.org/latest/release_notes/all.html)
-* [Getting Started](https://docs.pymor.org/latest/getting_started.html)
-* [Dependencies](https://github.com/pymor/pymor/blob/2022.2.x/requirements.txt)
 
 ## External PDE Solvers
 
