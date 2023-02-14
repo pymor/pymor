@@ -45,6 +45,7 @@ class LoewnerReductor(BasicObject):
 
     def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, ltd=None, rtd=None):
         self.__auto_init(locals())
+        self.loewner_svds = None
 
     def reduce(self, tol=1e-7, r=None):
         """Reduce using Loewner framework.
@@ -66,16 +67,22 @@ class LoewnerReductor(BasicObject):
         """
         L, Ls, V, W = loewner_quadruple(self.s, self.Hs, partitioning=self.partitioning, ordering=self.ordering,
                                         conjugate=self.conjugate, ltd=None, rtd=None)
-        LhLs = np.hstack([L, Ls])
-        Y, S1, _ = spla.svd(LhLs, full_matrices=False)
-        LvLs = np.vstack([L, Ls])
-        _, S2, Xh = spla.svd(LvLs, full_matrices=False)
+
+        if self.loewner_svds is None:
+            LhLs = np.hstack([L, Ls])
+            Y, S1, _ = spla.svd(LhLs, full_matrices=False)
+            LvLs = np.vstack([L, Ls])
+            _, S2, Xh = spla.svd(LvLs, full_matrices=False)
+            self.loewner_svds = (Y, S1, S2, Xh)
+        else:
+            Y, S1, S2, Xh = self.loewner_svds
 
         r1 = len(S1[S1 > tol])
         r2 = len(S2[S2 > tol])
         if r is None or r > r1 or r > r2:
             if r1 != r2:
-                self.logger.warn('Mismatch in numerical rank of stacked Loewner matrices.')
+                self.logger.warn(f'Mismatch in numerical rank of stacked Loewner matrices ({r1} and {r2}).'
+                                 ' Consider increasing tol or specifying r.')
                 r = (r1 + r2) // 2
             else:
                 r = r1
