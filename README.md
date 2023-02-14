@@ -44,9 +44,7 @@ If you use pyMOR for academic work, please consider citing our
     pyMOR - Generic Algorithms and Interfaces for Model Order Reduction
     SIAM J. Sci. Comput., 38(5), pp. S194--S216, 2016
 
-## Installation
-
-### pip
+## Installation via pip
 
 We recommend installation of pyMOR in a [virtual environment](https://virtualenv.pypa.io/en/latest/).
 
@@ -62,7 +60,7 @@ If you are not operating in a virtual environment, you can pass the optional
 pyMOR will then only be installed for your local user, not requiring
 administrator privileges.
 
-#### Latest Release (without Optional Dependencies)
+### Latest Release (without Optional Dependencies)
 
 For an installation with minimal dependencies, run
 
@@ -71,7 +69,7 @@ For an installation with minimal dependencies, run
 Note that most included demo scripts additionally require `matplotlib` and
 Qt bindings such as `pyside2` to function.
 
-#### Latest Release (with all Optional Dependencies)
+### Latest Release (with all Optional Dependencies)
 
 The following installs the latest release of pyMOR on your system with most
 optional dependencies.
@@ -101,7 +99,7 @@ because they need additional setup on your system:
 
       pip install pymess
 
-#### Latest Development Version
+### Latest Development Version
 
 To install the latest development version of pyMOR, execute
 
@@ -110,7 +108,7 @@ To install the latest development version of pyMOR, execute
 which requires that the [git](https://git-scm.com/) version control system is
 installed on your system.
 
-#### Current Release Branch Version
+### Current Release Branch Version
 
 From time to time, the main branch of pyMOR undergoes major changes and things
 might break (this is usually announced in our
@@ -122,7 +120,7 @@ so you might prefer to install pyMOR from the current release branch:
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
 
-### conda/mamba
+## Installation via conda/mamba
 
 We recommend installation of pyMOR in a
 [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)
@@ -147,7 +145,6 @@ run the following from inside the root directory of the pyMOR source tree.
     make docs
 
 This will generate HTML documentation in `docs/_build/html`.
-
 
 ## External PDE Solvers
 
