@@ -21,8 +21,10 @@ class LoewnerReductor(BasicObject):
     s
         |Numpy Array| of shape (n,) containing the frequencies.
     Hs
-        |Numpy Array| of shape (n, p, m) resembling the transfer function samples,
-        |TransferFunction| or `Model` with `transfer_function` attribute.
+        |Numpy Array| of shape (n, p, m) for MIMO systems with p outputs and m inputs or
+        |Numpy Array| of shape (n,) for SISO systems where the |Numpy Arrays| resemble the transfer
+        function samples. Alternatively, |TransferFunction| or `Model` with `transfer_function`
+        attribute.
     partitioning
         `str` or `tuple` of length 2. Strings can either be 'even-odd' or 'half-half' defining
         the splitting rule. A user-defined partitioning can be defined by passing a tuple of the
@@ -44,13 +46,18 @@ class LoewnerReductor(BasicObject):
     def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, ltd=None, rtd=None):
         self.__auto_init(locals())
 
-    def reduce(self, tol=1e-7):
+    def reduce(self, tol=1e-7, r=None):
         """Reduce using Loewner framework.
 
         Parameters
         ----------
         tol
             Truncation tolerance for rank of Loewner matrices.
+        r
+            Integer for target order of reduced model. If an interpolant with order less than r
+            exists then the output will have the minimal order of an interpolant. Otherwise, the
+            output will be an |LTIModel| with order r. If `None` the order of the reduced model will
+            be the minimal order of an interpolant.
 
         Returns
         -------
@@ -59,17 +66,27 @@ class LoewnerReductor(BasicObject):
         """
         L, Ls, V, W = loewner_quadruple(self.s, self.Hs, partitioning=self.partitioning, ordering=self.ordering,
                                         conjugate=self.conjugate, ltd=None, rtd=None)
-        LLS = np.vstack([L, Ls])
-        Y, S, _ = spla.svd(LLS, full_matrices=False)
-        _, _, Xh = spla.svd(LLS.T, full_matrices=False)
+        LhLs = np.hstack([L, Ls])
+        Y, S1, _ = spla.svd(LhLs, full_matrices=False)
+        LvLs = np.vstack([L, Ls])
+        _, S2, Xh = spla.svd(LvLs, full_matrices=False)
 
-        r = len(S[S > tol])
+        r1 = len(S1[S1 > tol])
+        r2 = len(S2[S2 > tol])
+        if r is None or r > r1 or r > r2:
+            if r1 != r2:
+                self.logger.warn('Mismatch in numerical rank of stacked Loewner matrices.')
+                r = (r1 + r2) // 2
+            else:
+                r = r1
+
         Yr = Y[:r, :]
         Xhr = Xh[:, :r]
+
         B = Yr @ V
-        C = W @ Xhr.conj()
-        E = - Yr @ L @ Xhr.conj()
-        A = - Yr @ Ls @ Xhr.conj()
+        C = W @ Xhr
+        E = - Yr @ L @ Xhr
+        A = - Yr @ Ls @ Xhr
 
         if self.conjugate:
             A, B, C, E = A.real, B.real, C.real, E.real
@@ -154,8 +171,10 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
     s
         |Numpy Array| of shape (n,) containing the frequencies.
     Hs
-        |Numpy Array| of shape (n, p, m) or |TransferFunction| resembling the transfer function
-        samples.
+        |Numpy Array| of shape (n, p, m) for MIMO systems with p outputs and m inputs or
+        |Numpy Array| of shape (n,) for SISO systems where the |Numpy Arrays| resemble the transfer
+        function samples. Alternatively, |TransferFunction| or `Model` with `transfer_function`
+        attribute.
     partitioning
         `str` or `tuple` of length 2. Strings can either be 'even-odd' or 'half-half' defining
         the splitting rule. A user-defined partitioning can be defined by passing a tuple of the
@@ -187,7 +206,7 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
     assert isinstance(s, np.ndarray)
     if hasattr(Hs, 'transfer_function'):
         Hs = Hs.transfer_function
-    assert isinstance(Hs, TransferFunction) or isinstance(Hs, np.ndarray) and Hs.shape[0] == s.shape[0]
+    assert isinstance(Hs, TransferFunction) or isinstance(Hs, np.ndarray) or isinstance(Hs, list)
 
     assert partitioning in ('even-odd', 'half-half') or len(partitioning) == 2
     assert ordering in ('magnitude', 'random', 'regular')
@@ -198,7 +217,8 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
             Hss[i] = Hs.eval_tf(ss)
         Hs = Hss
     else:
-        assert len(Hs[0]) == len(s)
+        Hs = np.atleast_3d(Hs)
+        assert Hs.shape[0] == len(s)
 
     # ensure that complex sampling values appear in complex conjugate pairs\
     if conjugate:
