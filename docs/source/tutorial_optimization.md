@@ -804,7 +804,7 @@ For recent research on combining trust-region methods with model reduction for
 PDE-constrained optimization problems we refer to
 [YM13](<https://epubs.siam.org/doi/abs/10.1137/120869171>),
 [QGVW17](<https://epubs.siam.org/doi/abs/10.1137/16M1081981>) and
-[KMSOV20](<https://arxiv.org/abs/2006.09297>) where for the latter a pyMOR
+[KMSOV20](<https://doi.org/10.1051/m2an/2021019>) where for the latter a pyMOR
 implementation is available as supplementary material.
 
 Download the code:
