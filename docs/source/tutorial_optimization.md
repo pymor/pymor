@@ -768,7 +768,7 @@ report(opt_along_path_adaptively_result, opt_along_path_adaptively_minimization_
 ```
 
 ```{code-cell}
-:tags: [hide-code, hide-output]
+:tags: [remove-cell]
 
 assert fom_result.nit == 7
 assert opt_along_path_result.nit == 7

@@ -566,7 +566,7 @@ In the case of `fom.operator`, which is a {{ LincombOperator }}, the rule with i
 be the first matching rule. We can take a look at it:
 
 ```{code-cell}
-:tags: [hide-code, hide-output]
+:tags: [remove-cell]
 
 assert ProjectRules.rules[8].action_description == 'LincombOperator'
 ```
@@ -590,7 +590,7 @@ In our case, `ProjectRules` will be applied to all {{ NumpyMatrixOperators }} he
 will apply:
 
 ```{code-cell}
-:tags: [hide-code, hide-output]
+:tags: [remove-cell]
 
 assert ProjectRules.rules[3].action_description == 'apply_basis'
 ```
