@@ -69,7 +69,7 @@ The following figure shows a simple example of a neural network with two hidden
 layers, an input size of two and an output size of three. Each edge between
 neurons has a corresponding weight that is learnable in the training phase.
 
-```{image} neural_network.png
+```{image} neural_network.svg
 :alt: Feedforward neural network
 :width: 100%
 ```
