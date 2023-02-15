@@ -404,7 +404,7 @@ m.visualize(m.solve([1, -1]))
 
 For the generation of online-efficient reduced-order models, it is often
 crucial that data functions are parameter separable. We call a
-parametric function `f(x, \mu)` parameter separable if it admits a
+parametric function {math}`f(x, \mu)` parameter separable if it admits a
 decomposition
 
 ```{math}
