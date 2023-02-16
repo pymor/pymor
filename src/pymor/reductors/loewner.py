@@ -47,18 +47,18 @@ class LoewnerReductor(BasicObject):
         self.__auto_init(locals())
         self.loewner_svds = None
 
-    def reduce(self, tol=1e-7, r=None):
+    def reduce(self, r=None, tol=1e-7):
         """Reduce using Loewner framework.
 
         Parameters
         ----------
-        tol
-            Truncation tolerance for rank of Loewner matrices.
         r
             Integer for target order of reduced model. If an interpolant with order less than r
             exists then the output will have the minimal order of an interpolant. Otherwise, the
             output will be an |LTIModel| with order r. If `None` the order of the reduced model will
             be the minimal order of an interpolant.
+        tol
+            Truncation tolerance for rank of Loewner matrices.
 
         Returns
         -------
@@ -81,8 +81,8 @@ class LoewnerReductor(BasicObject):
         r2 = len(S2[S2 > tol])
         if r is None or r > r1 or r > r2:
             if r1 != r2:
-                self.logger.warn(f'Mismatch in numerical rank of stacked Loewner matrices ({r1} and {r2}).'
-                                 ' Consider increasing tol or specifying r.')
+                self.logger.warning(f'Mismatch in numerical rank of stacked Loewner matrices ({r1} and {r2}).'
+                                    ' Consider increasing tol, specifying r or changing the partitioning.')
                 r = (r1 + r2) // 2
             else:
                 r = r1
@@ -117,9 +117,10 @@ def _partition_frequencies(s, Hs, partitioning='even-odd', ordering='regular', c
             ridx_sort = np.argsort([np.linalg.norm(Hs[i]) for i in ridx])
             ridx_ordered = ridx[ridx_sort]
         elif ordering == 'random':
-            np.random.shuffle(pimidx)
+            rng = new_rng(0)
+            rng.shuffle(pimidx)
             pimidx_ordered = pimidx
-            np.random.permutation(ridx)
+            rng.shuffle(ridx)
             ridx_ordered = ridx
         elif ordering == 'regular':
             pimidx_ordered = pimidx
@@ -151,7 +152,8 @@ def _partition_frequencies(s, Hs, partitioning='even-odd', ordering='regular', c
         if ordering == 'magnitude':
             idx = np.argsort([np.linalg.norm(Hs[i]) for i in len(Hs[0])])
         elif ordering == 'random':
-            idx = np.random.permutation(s.shape[0])
+            rng = new_rng(0)
+            idx = rng.permutation(s.shape[0])
         elif ordering == 'regular':
             idx = np.arange(s.shape[0])
 
@@ -224,15 +226,18 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
             Hss[i] = Hs.eval_tf(ss)
         Hs = Hss
     else:
-        Hs = np.atleast_3d(Hs)
+        if Hs.ndim == 1:
+            Hs = Hs[:, np.newaxis, np.newaxis]
+        elif Hs.ndim == 2:
+            Hs = Hs[:, np.newaxis]
         assert Hs.shape[0] == len(s)
 
-    # ensure that complex sampling values appear in complex conjugate pairs\
+    # ensure that complex sampling values appear in complex conjugate pairs
     if conjugate:
         for i, ss in enumerate(s):
             if np.conj(ss) not in s:
                 s = np.append(s, np.conj(ss))
-                Hs = np.append(Hs, np.conj(Hs[i])[None, ...], axis=0)
+                Hs = np.append(Hs, np.conj(Hs[i])[np.newaxis, ...], axis=0)
 
     ip, jp = _partition_frequencies(s, Hs, partitioning, ordering, conjugate) \
         if isinstance(partitioning, str) else partitioning
