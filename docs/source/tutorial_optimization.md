@@ -57,7 +57,7 @@ of {math}`\eqref{eq:primal}` to reduce the computational costs of
 an evaluation of {math}`J(u_{\mu}, \mu)`.
 
 If there exists a unique solution {math}`u_{\mu}` for all
-{math}`\mu \in \mathcal{P}`, we can rewrite (P) by using the so-called
+{math}`\mu \in \mathcal{P}`, we can rewrite ({math}`\textrm{P}`) by using the so-called
 reduced objective functional {math}`\mathcal{J}(\mu):= J(u_{\mu}, \mu)`
 leading to the equivalent problem: Find a solution of
 
