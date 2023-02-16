@@ -12,6 +12,12 @@ PYMOR_CACHE_DISABLE
     useful for debugging. See :mod:`pymor.core.cache` for more
     details.
 
+PYMOR_CONFIG_DISABLE
+    Whitespace separated list of :mod:`~pymor.core.config` items
+    which should be reported as missing even though they may be present.
+    E.g., `PYMOR_CONFIG_DISABLE="SLYCOT"` can be used to prevent pyMOR
+    from importing the SLYCOT library.
+
 PYMOR_COLORS_DISABLE
     If ``1``, disable coloring of logging output.
 

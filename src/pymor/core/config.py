@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import os
 import platform
 import sys
 import warnings
@@ -181,6 +182,7 @@ class Config:
 
     def __init__(self):
         self.PYTHON_VERSION = f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}'
+        self.disabled = set(os.environ.get('PYMOR_CONFIG_DISABLE', '').upper().split())
 
     @property
     def version(self):
@@ -206,10 +208,13 @@ class Config:
             raise AttributeError
 
         if package in _PACKAGES:
-            try:
-                version = _PACKAGES[package]()
-            except ImportError:
+            if package in self.disabled:
                 version = False
+            else:
+                try:
+                    version = _PACKAGES[package]()
+                except ImportError:
+                    version = False
 
             if version is not None and version is not False:
                 setattr(self, 'HAVE_' + package, True)
@@ -229,7 +234,8 @@ class Config:
         return list(keys)
 
     def __repr__(self):
-        status = {p: (lambda v: 'missing' if not v else 'present' if v is True else v)(getattr(self, p + '_VERSION'))
+        status = {p: 'disabled' if p in self.disabled else
+                     (lambda v: 'missing' if not v else 'present' if v is True else v)(getattr(self, p + '_VERSION'))
                   for p in _PACKAGES}
         key_width = max(len(p) for p in _PACKAGES) + 2
         package_info = [f"{p+':':{key_width}} {v}" for p, v in sorted(status.items())]
