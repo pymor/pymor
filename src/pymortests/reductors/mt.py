@@ -21,7 +21,7 @@ test_data = [
     (2, {'decomposition': 'eig', 'which': 'SM'}),
     (2, {'decomposition': 'eig', 'which': 'LR'}),
     (2, {'decomposition': 'eig', 'symmetric': True}),
-    (3, {'decomposition': 'eig'}),
+    (3, {'decomposition': 'eig'}),  # dominant poles not closed under conjugation
     (3, {'decomposition': 'eig', 'allow_complex_rom': True}),
 ]
 
