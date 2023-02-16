@@ -1,6 +1,7 @@
 import numpy as np
 from copy import deepcopy
 
+from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import set_defaults
@@ -14,10 +15,13 @@ from pymor.reductors.basic import extend_basis
 from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
 from pymor.reductors.residual import ResidualReductor, ResidualOperator
 
+from dunegdtusercode import compute_partition_of_unity
+
 
 class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
     def __init__(self, fom, dd_grid, local_bases=None, product=None,
                  localized_estimator=False, reductor_type='residual',
+                 local_enrichment_tolerance=0,
                  unassembled_product=None, fake_dirichlet_ops=None):
         """
             TBC
@@ -128,10 +132,23 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
                 self.inner_products[associated_element] = inner_product
                 self.local_residuals.append(residual_reductor)
 
-    def add_partition_of_unity(self):
+    def add_partition_of_unity_to_bases(self):
+        print('Adding Lagrange PoU to basis')
         for I in range(self.S):
-            # TODO: find the correct partition of unity here
-            pass
+            # TODO: do not include PoU from the DD boundary!
+            # if I not in self.dd_grid.boundary_subdomains:
+            PoU = compute_partition_of_unity(self.dd_grid, I)
+            for P in PoU:
+                P_ = self.local_bases[I].space.make_array([P])
+                self.extend_basis_locally(I, P_)
+
+    def add_one_to_bases(self):
+        print('Adding One to basis')
+        for I in range(self.S):
+            # if I not in self.dd_grid.boundary_subdomains:
+            # only on inner domains
+            one = self.local_bases[I].space.ones()
+            self.extend_basis_locally(I, one)
 
     def extend_bases_with_global_solution(self, us):
         assert us in self.fom.solution_space
@@ -195,6 +212,11 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         phi = patch_model_with_correction.solve(mu)
         self.extend_basis_locally(I, phi.block(mapping_to_local(I)))
         return phi
+
+    def compress_basis_with_pod(self, rtol=1e-2):
+        for i, loc_basis in enumerate(self.local_bases):
+            compressed_loc_basis, _ = pod(loc_basis, rtol=rtol)
+            self.local_bases[i] = compressed_loc_basis
 
     def basis_length(self):
         return [len(self.local_bases[I]) for I in range(self.S)]
@@ -813,5 +835,5 @@ class EllipticIPLRBEstimator(ImmutableObject):
                 ests[sd] += ind**2
         estimate = np.sqrt(sum(ests))
         # return estimate
-        return estimate, ests, indicators, residuals
+        return estimate, np.sqrt(ests), indicators, residuals
 
