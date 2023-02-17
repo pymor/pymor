@@ -434,6 +434,8 @@ class ListVectorArrayImpl(VectorArrayImpl):
     def gramian(self, ind):
         self_list = self._indexed(ind)
         l = len(self_list)
+        if l == 0:
+            return np.zeros((0,0))
         R = [[0.] * l for _ in range(l)]
         for i in range(l):
             for j in range(i, l):
