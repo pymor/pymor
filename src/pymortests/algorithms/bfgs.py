@@ -7,7 +7,7 @@ import pytest
 from hypothesis import given
 
 import pymortests.strategies as pyst
-from pymor.algorithms.bfgs import bfgs, get_active_and_inactive_sets
+from pymor.algorithms.bfgs import error_aware_bfgs, get_active_and_inactive_sets
 from pymor.core.exceptions import BFGSError
 from pymordemos.linear_optimization import create_fom
 
@@ -35,10 +35,10 @@ def test_bfgs():
     initial_guess = fom.parameters.parse([0.25, 0.5])
 
     # successful run
-    mu_opt_bfgs, data = bfgs(fom, parameter_space, initial_guess=initial_guess)
+    mu_opt_bfgs, data = error_aware_bfgs(fom, parameter_space, initial_guess=initial_guess)
     assert len(data['mus']) == 13
     assert np.allclose(mu_opt_bfgs, mu_opt)
 
     # failing run
     with pytest.raises(BFGSError):
-        mu, _ = bfgs(fom, parameter_space, initial_guess=initial_guess, maxiter=10)
+        mu, _ = error_aware_bfgs(fom, parameter_space, initial_guess=initial_guess, maxiter=10)

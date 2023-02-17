@@ -7,7 +7,7 @@ from copy import deepcopy
 
 import numpy as np
 
-from pymor.algorithms.bfgs import bfgs
+from pymor.algorithms.bfgs import error_aware_bfgs
 from pymor.core.base import BasicObject
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import TRError
@@ -109,6 +109,11 @@ def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, r
 
     The main idea for the algorithm can be found in :cite:`YM13`, and an application to
     box-constrained parameters with possible enlarging of the trust radius in :cite:`K21`.
+
+    This method contrasts itself from `scipy.optimize` in the computation of the trust region:
+    `scipy` TR implementations use a metric distance, whereas this function uses an
+    `error_estimator` obtained from the reduced model. Additionally, the cheap model function
+    surrogate here is only updated for each outer iteration, not entirely reconstructed.
 
     Parameters
     ----------
@@ -222,7 +227,7 @@ def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, r
             old_mu = mu.copy()
 
             with logger.block(f'Solving subproblem for mu {mu} with BFGS...'):
-                mu, sub_data = bfgs(
+                mu, sub_data = error_aware_bfgs(
                     surrogate.rom, parameter_space, initial_guess=mu, miniter=miniter_subproblem,
                     maxiter=maxiter_subproblem, rtol=rtol, tol_sub=tol_sub,
                     line_search_params=line_search_params, stagnation_window=stagnation_window,

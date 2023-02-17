@@ -116,7 +116,7 @@ def update_hessian(hessian, mu, old_mu, gradient, old_gradient):
 
 
 @defaults('miniter', 'maxiter', 'rtol', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
-def bfgs(model, parameter_space=None, initial_guess=None, miniter=0, maxiter=100, rtol=1e-16,
+def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0, maxiter=100, rtol=1e-16,
          tol_sub=1e-8, line_search_params=None, stagnation_window=3, stagnation_threshold=np.inf,
          error_aware=False, error_criterion=None, beta=None, radius=None, return_stages=False):
     """BFGS algorithm.
@@ -126,6 +126,11 @@ def bfgs(model, parameter_space=None, initial_guess=None, miniter=0, maxiter=100
         min J(mu), mu in C
 
     for an output functional depending on a box-constrained `mu` using the BFGS method.
+
+    In contrast to `scipy.optimize` with the `L-BFGS-B` methods, this BFGS implementation is
+    explicitly designed to work with an error estimator. In particular, this implementation
+    terminates if the higher level TR boundary from `pymor.algorithms.tr` is reached instead of
+    continuing to optimize close to the boundary.
 
     Parameters
     ----------
