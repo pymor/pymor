@@ -49,6 +49,7 @@ rules:
         CI_IMAGE_TAG: {{ci_image_tag}}
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
         BINDERIMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
 
 .pytest:
@@ -211,6 +212,29 @@ ci setup:
           fi
         - ./.ci/gitlab/test_{{script}}.bash
 {%- endfor %}
+fenics:
+    extends: .pytest
+    rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_fenics
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
+    services:
+    image: zivgitlab.wwu.io/pymor/docker/pymor/testing_py3.8:${CI_IMAGE_TAG}
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_vanilla.bash
 
 {%- for py in pythons %}
 ci_weekly {{py[0]}} {{py[2:]}}:
