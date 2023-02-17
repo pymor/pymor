@@ -21,7 +21,7 @@ from pymor.core.exceptions import (
     TorchMissingError,
 )
 from pymor.tools.mpi import parallel
-from pymortests.base import check_results, runmodule
+from pymortests.base import check_results, runmodule, BUILTIN_DISABLED
 
 runner = CliRunner()
 
@@ -181,15 +181,19 @@ DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 
 def _skip_if_no_solver(param):
     demo, args = param
+    builtin = True
     from pymor.core.config import config
     for solver, package in [('fenics', None), ('ngsolve', None), ('neural_', 'TORCH'),
                             ('neural_networks_instationary', 'FENICS')]:
         package = package or solver.upper()
         needs_solver = len([f for f in args if solver in str(f)]) > 0 or demo.find(solver) >= 0
         has_solver = getattr(config, f'HAVE_{package}')
+        builtin = builtin and (not needs_solver or package == 'TORCH')
         if needs_solver and not has_solver:
             if not os.environ.get('DOCKER_PYMOR', False):
                 pytest.skip('skipped test due to missing ' + solver)
+    if builtin and BUILTIN_DISABLED:
+        pytest.skip('builtin discretizations disabled')
 
 
 def _demo_ids(demo_args):
@@ -275,6 +279,7 @@ def test_demos(demo_args):
     assert result.exit_code == 0
 
 
+@pytest.mark.builtin
 def test_analyze_pickle1():
     d = mkdtemp()
     try:
@@ -285,6 +290,7 @@ def test_analyze_pickle1():
         shutil.rmtree(d)
 
 
+@pytest.mark.builtin
 def test_analyze_pickle2():
     d = mkdtemp()
     try:
@@ -296,6 +302,7 @@ def test_analyze_pickle2():
         shutil.rmtree(d)
 
 
+@pytest.mark.builtin
 def test_analyze_pickle3():
     d = mkdtemp()
     try:
@@ -307,6 +314,7 @@ def test_analyze_pickle3():
         shutil.rmtree(d)
 
 
+@pytest.mark.builtin
 def test_analyze_pickle4():
     d = mkdtemp()
     try:
@@ -334,6 +342,7 @@ def test_thermalblock_ipython(ipy_args):
 
 
 def test_thermalblock_results(thermalblock_args):
+    _skip_if_no_solver(thermalblock_args)
     from pymordemos import thermalblock
     app = Typer()
     app.command()(thermalblock.main)
