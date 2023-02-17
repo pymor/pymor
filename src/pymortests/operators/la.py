@@ -3,12 +3,15 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 
 from pymor.discretizers.builtin.cg import L2ProductP1
 from pymor.discretizers.builtin.grids.boundaryinfos import AllDirichletBoundaryInfo
 from pymor.discretizers.builtin.grids.tria import TriaGrid
 from pymor.operators.constructions import induced_norm
 from pymortests.base import runmodule
+
+pytestmark = pytest.mark.builtin
 
 
 def test_induced():

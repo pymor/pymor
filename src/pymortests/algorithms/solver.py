@@ -12,6 +12,8 @@ from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
+pytestmark = pytest.mark.builtin
+
 
 class GenericOperator(Operator):
 

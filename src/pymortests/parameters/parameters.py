@@ -11,6 +11,9 @@ from pymor.analyticalproblems.functions import ConstantFunction
 from pymor.parameters.base import Mu, Parameters
 from pymortests.base import runmodule
 
+pytestmark = pytest.mark.builtin
+
+
 num_samples = 100
 
 

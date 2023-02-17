@@ -56,6 +56,7 @@ def test_method_of_snapshots_with_product(operator_with_arrays_and_products, met
     assert np.all(almost_equal(A, UsVh, rtol=4e-8))
 
 
+@pytest.mark.builtin
 @pytest.mark.parametrize('method', methods)
 def test_not_too_many_modes(method):
     vec_array = NumpyVectorSpace.from_numpy(np.logspace(-5, 0, 10).reshape((-1, 1)))

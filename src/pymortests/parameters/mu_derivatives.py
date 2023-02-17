@@ -3,10 +3,13 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 
 from pymor.basic import Mu, NumpyVectorSpace
 from pymor.operators.constructions import LincombOperator, ZeroOperator
 from pymor.parameters.functionals import ExpressionParameterFunctional, ProjectionParameterFunctional
+
+pytestmark = pytest.mark.builtin
 
 
 def test_ProjectionParameterFunctional():

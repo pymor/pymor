@@ -10,6 +10,9 @@ import scipy.sparse as sps
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.operators.numpy import NumpyMatrixOperator
 
+pytestmark = pytest.mark.builtin
+
+
 n_list = [100, 1000]
 r_list = [1, 10, 20]
 m_list = [1, 2]

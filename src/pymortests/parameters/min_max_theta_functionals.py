@@ -15,6 +15,8 @@ from pymor.parameters.functionals import (
 )
 from pymortests.base import runmodule
 
+pytestmark = pytest.mark.builtin
+
 
 def test_min_theta_parameter_functional():
     thetas = (ExpressionParameterFunctional('2*mu[0]', {'mu': 1}),

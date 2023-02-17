@@ -13,6 +13,8 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.constructions import LowRankOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 
+pytestmark = pytest.mark.builtin
+
 n_list = [10, 20, 30]
 
 

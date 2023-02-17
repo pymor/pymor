@@ -9,6 +9,9 @@ from pymor.models.iosys import LinearDelayModel, LTIModel, PHLTIModel, SecondOrd
 from pymor.models.transfer_function import FactorizedTransferFunction, TransferFunction
 from pymor.operators.numpy import NumpyMatrixOperator
 
+pytestmark = pytest.mark.builtin
+
+
 type_list = [
     'LTIModel',
     'SecondOrderModel',

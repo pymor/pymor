@@ -20,6 +20,8 @@ from pymortests.fixtures.grid import (
     hy_grids_with_visualize,
 )
 
+pytestmark = pytest.mark.builtin
+
 
 @given(hy_grid)
 def test_dim(grid):

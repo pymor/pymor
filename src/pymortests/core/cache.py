@@ -16,6 +16,9 @@ from pymor.models.basic import StationaryModel
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.base import runmodule
 
+pytestmark = pytest.mark.builtin
+
+
 SLEEP_DELTA = timedelta(milliseconds=200)
 
 

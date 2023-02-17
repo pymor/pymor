@@ -16,6 +16,7 @@ from pymor.parameters.base import Mu
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymortests.base import BUILTIN_DISABLED
 
 if config.HAVE_FENICS:
     import dolfin as df
@@ -163,7 +164,7 @@ else:
     assert not os.environ.get('DOCKER_PYMOR', False)
 
 
-_picklable_vector_space_types = ['numpy', 'numpy_list', 'block']
+_picklable_vector_space_types = [] if BUILTIN_DISABLED else ['numpy', 'numpy_list', 'block']
 
 
 @hyst.composite
@@ -219,6 +220,9 @@ def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatibl
                         'picklable': _picklable_vector_space_types}[which]
         except KeyError:
             use_imps = which
+        if not use_imps:
+            import pytest
+            return pytest.mark.skip('no backend')(func)
         first_args = {}
         if index_strategy:
             arr_ind_strategy = index_strategy(vector_arrays(

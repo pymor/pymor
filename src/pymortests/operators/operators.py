@@ -32,6 +32,7 @@ from pymortests.fixtures.operator import MonomOperator
 from pymortests.strategies import valid_inds, valid_inds_of_same_length
 
 
+@pytest.mark.builtin
 def test_selection_op():
     p1 = MonomOperator(1)
     select_rhs_functional = GenericParameterFunctional(
@@ -65,6 +66,7 @@ def test_selection_op():
     assert s2._get_operator_number(s2.parameters.parse({'nrrhs': 9})) == 3
 
 
+@pytest.mark.builtin
 def test_lincomb_op():
     p1 = MonomOperator(1)
     p2 = MonomOperator(2)
@@ -93,6 +95,7 @@ def test_lincomb_op():
         assert almost_equal(pa, p.apply(vx)).all()
 
 
+@pytest.mark.builtin
 def test_lincomb_op_with_zero_coefficients():
     p1 = MonomOperator(1)
     p2 = MonomOperator(2)
@@ -123,6 +126,7 @@ def test_lincomb_op_with_zero_coefficients():
     assert almost_equal(pc10.apply_adjoint(vx), pc1.apply_adjoint(vx)).all()
 
 
+@pytest.mark.builtin
 def test_lincomb_adjoint():
     op = LincombOperator([NumpyMatrixOperator(np.eye(10)), NumpyMatrixOperator(np.eye(10))],
                          [1+3j, ExpressionParameterFunctional('c[0] + 3', {'c': 1})])
@@ -135,6 +139,7 @@ def test_lincomb_adjoint():
     assert np.all(almost_equal(V, VVV))
 
 
+@pytest.mark.builtin
 def test_identity_lincomb():
     space = NumpyVectorSpace(10)
     identity = IdentityOperator(space)
@@ -149,6 +154,7 @@ def test_identity_lincomb():
     assert almost_equal(ones * 0.5, idid_.apply_inverse_adjoint(ones))
 
 
+@pytest.mark.builtin
 def test_identity_numpy_lincomb():
     n = 2
     space = NumpyVectorSpace(n)
@@ -162,6 +168,7 @@ def test_identity_numpy_lincomb():
             assert np.array_equal(mat1, mat2)
 
 
+@pytest.mark.builtin
 def test_block_identity_lincomb():
     space = NumpyVectorSpace(10)
     space2 = BlockVectorSpace([space, space])
@@ -176,6 +183,7 @@ def test_block_identity_lincomb():
     assert almost_equal(ones2 * 0.5, idid.apply_inverse_adjoint(ones2))
 
 
+@pytest.mark.builtin
 def test_bilin_functional():
     space = NumpyVectorSpace(10)
     scalar = NumpyVectorSpace(1)
@@ -198,6 +206,7 @@ def test_bilin_functional():
     assert almost_equal(four_s, bilin_op.apply(two_v))
 
 
+@pytest.mark.builtin
 def test_bilin_prod_functional():
     from pymor.operators.constructions import VectorFunctional
     space = NumpyVectorSpace(10)
@@ -484,6 +493,7 @@ def test_InverseAdjointOperator(operator_with_arrays):
         pass
 
 
+@pytest.mark.builtin
 def test_vectorarray_op_apply_inverse():
     O = np.random.random((5, 5))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
@@ -494,6 +504,7 @@ def test_vectorarray_op_apply_inverse():
     assert np.all(almost_equal(U, U.space.from_numpy(u), rtol=1e-10))
 
 
+@pytest.mark.builtin
 def test_vectorarray_op_apply_inverse_lstsq():
     O = np.random.random((3, 5))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
@@ -504,6 +515,7 @@ def test_vectorarray_op_apply_inverse_lstsq():
     assert np.all(almost_equal(U, U.space.from_numpy(u)))
 
 
+@pytest.mark.builtin
 def test_adjoint_vectorarray_op_apply_inverse_lstsq():
     O = np.random.random((3, 5))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O), adjoint=True)
@@ -524,6 +536,7 @@ def test_as_range_array(operator_with_arrays):
     assert np.all(almost_equal(array.lincomb(U.to_numpy()), op.apply(U, mu=mu)))
 
 
+@pytest.mark.builtin
 def test_issue_1276():
     from pymor.operators.block import BlockOperator
     from pymor.operators.constructions import IdentityOperator
@@ -536,6 +549,7 @@ def test_issue_1276():
     B.apply_inverse(v)
 
 
+@pytest.mark.builtin
 @pytest.mark.parametrize('iscomplex', [False, True])
 def test_hankel_operator(iscomplex):
     s, p, m = 4, 2, 3

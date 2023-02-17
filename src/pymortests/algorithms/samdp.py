@@ -9,6 +9,9 @@ import scipy.sparse as sps
 from pymor.algorithms.samdp import samdp
 from pymor.operators.numpy import NumpyMatrixOperator
 
+pytestmark = pytest.mark.builtin
+
+
 n_list = [50, 100]
 m_list = [1, 2]
 k_list = [2, 3]
