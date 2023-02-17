@@ -21,6 +21,10 @@ PYMOR_CONFIG_DISABLE
 PYMOR_COLORS_DISABLE
     If ``1``, disable coloring of logging output.
 
+PYMOR_FIXTURES_DISABLE_BUILTIN
+    If set, |VectorArray|, |Operator| and related fixtures only only use
+    external solver backends.
+
 PYMOR_WITH_SPHINX
     This variable is set to `1` during API documentation generation
     using sphinx.

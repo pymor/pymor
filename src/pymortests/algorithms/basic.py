@@ -170,8 +170,8 @@ def test_almost_equal_incompatible(vector_arrays):
                 almost_equal(c1[ind1], c2[ind2], sup_norm=sup_norm)
 
 
-@given(pyst.base_vector_arrays(count=2))
 @settings(deadline=None)
+@pyst.given_vector_arrays(count=2)
 def test_project_array(arrays):
     U, basis = arrays
     U_p = project_array(U, basis, orthonormal=False)

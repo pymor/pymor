@@ -85,8 +85,8 @@ def test_gram_schmidt_with_product_and_R(operator_with_arrays_and_products):
     assert np.all(almost_equal(onb, U))
 
 
-@given(pyst.base_vector_arrays(count=2))
 @settings(deadline=None)
+@pyst.given_vector_arrays(count=2)
 def test_gram_schmidt_biorth(vector_arrays):
     U1, U2 = vector_arrays
 

@@ -18,6 +18,8 @@ from pymor.algorithms.basic import almost_equal, relative_error
 from pymor.core import config
 from pymor.core.exceptions import DependencyMissingError, NoResultDataError
 
+BUILTIN_DISABLED = bool(os.environ.get('PYMOR_FIXTURES_DISABLE_BUILTIN', False))
+
 
 def runmodule(filename):
     import pytest

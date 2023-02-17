@@ -12,6 +12,7 @@ from pymor.operators.interface import Operator
 from pymor.operators.list import NumpyListVectorArrayMatrixOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymortests.base import BUILTIN_DISABLED
 
 
 class MonomOperator(Operator):
@@ -559,7 +560,8 @@ else:
     fenics_with_arrays_generators = []
 
 
-@pytest.fixture(params=(
+builtin_operator_with_arrays_and_products_generators = (
+    [] if BUILTIN_DISABLED else
     thermalblock_operator_with_arrays_and_products_generators
     + thermalblock_assemble_operator_with_arrays_and_products_generators
     + thermalblock_concatenation_operator_with_arrays_and_products_generators
@@ -572,13 +574,19 @@ else:
     + thermalblock_fixedparam_operator_with_arrays_and_products_generators
     + misc_operator_with_arrays_and_products_generators
     + unpicklable_misc_operator_with_arrays_and_products_generators
+)
+
+
+@pytest.fixture(params=(
+    builtin_operator_with_arrays_and_products_generators
     + fenics_with_arrays_and_products_generators
 ))
 def operator_with_arrays_and_products(reset_rng, request):
     return request.param()
 
 
-@pytest.fixture(params=(
+builtin_operator_with_arrays_generators = (
+    [] if BUILTIN_DISABLED else
     numpy_matrix_operator_with_arrays_generators
     + numpy_list_vector_array_matrix_operator_with_arrays_generators
     + thermalblock_operator_with_arrays_generators
@@ -593,13 +601,18 @@ def operator_with_arrays_and_products(reset_rng, request):
     + thermalblock_fixedparam_operator_with_arrays_generators
     + misc_operator_with_arrays_generators
     + unpicklable_misc_operator_with_arrays_generators
+)
+
+@pytest.fixture(params=(
+    builtin_operator_with_arrays_generators
     + fenics_with_arrays_generators
 ))
 def operator_with_arrays(reset_rng, request):
     return request.param()
 
 
-@pytest.fixture(params=(
+builtin_operator_generators = (
+    [] if BUILTIN_DISABLED else
     numpy_matrix_operator_generators
     + numpy_list_vector_array_matrix_operator_generators
     + thermalblock_operator_generators
@@ -614,12 +627,17 @@ def operator_with_arrays(reset_rng, request):
     + thermalblock_fixedparam_operator_generators
     + misc_operator_generators
     + unpicklable_misc_operator_generators
+)
+
+@pytest.fixture(params=(
+    builtin_operator_generators
 ))
 def operator(reset_rng, request):
     return request.param()
 
 
-@pytest.fixture(params=(
+builtin_picklable_operator_generators = (
+    [] if BUILTIN_DISABLED else
     numpy_matrix_operator_generators
     + numpy_list_vector_array_matrix_operator_generators
     + thermalblock_operator_generators
@@ -633,6 +651,10 @@ def operator(reset_rng, request):
     + thermalblock_vectorfunc_operator_generators
     + thermalblock_fixedparam_operator_generators
     + misc_operator_generators
+)
+
+@pytest.fixture(params=(
+    builtin_picklable_operator_generators
 ))
 def picklable_operator(reset_rng, request):
     return request.param()
