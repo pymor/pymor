@@ -137,3 +137,6 @@ def test_block_jacobian():
     jac = Dop.jacobian(vva, mu=None)
     jac_single_block = Dop_single_block.jacobian(vva_single_block, mu=None)
     assert jac.linear and jac_single_block.linear
+    assert np.all(jac.blocks[0, 0].vector.to_numpy()[0] == np.dot(A.T, v1) + np.dot(A, v1))
+    assert np.all(jac.blocks[1, 1].vector.to_numpy()[0] == np.dot(B.T, v2) + np.dot(B, v2))
+    assert np.all(jac.blocks[2, 2].matrix == C)
