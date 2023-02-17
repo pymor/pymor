@@ -3,7 +3,8 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from hypothesis import assume, given, settings
+import pytest
+from hypothesis import assume, settings
 
 import pymortests.strategies as pyst
 from pymor.algorithms.basic import almost_equal, contains_zero_vector
@@ -90,6 +91,11 @@ def test_gram_schmidt_with_product_and_R(operator_with_arrays_and_products):
 def test_gram_schmidt_biorth(vector_arrays):
     U1, U2 = vector_arrays
 
+    if len(U1) != len(U2):
+        with pytest.raises(Exception):
+            A1, A2 = gram_schmidt_biorth(U1, U2, copy=True)
+        return
+
     V1 = U1.copy()
     V2 = U2.copy()
 
@@ -100,7 +106,8 @@ def test_gram_schmidt_biorth(vector_arrays):
     assert np.all(almost_equal(U1, V1))
     assert np.all(almost_equal(U2, V2))
     assert np.allclose(A2.inner(A1), np.eye(len(A1)), atol=check_tol)
-    c = np.linalg.cond(A1.to_numpy()) * np.linalg.cond(A2.to_numpy())
+    c = (1 if len(A1) == 0 else np.linalg.cond(A1.to_numpy())) \
+        * (1 if len(A2) == 0 else np.linalg.cond(A2.to_numpy()))
     assert np.all(almost_equal(U1, A1.lincomb(A2.inner(U1).T), rtol=c * 1e-14))
     assert np.all(almost_equal(U2, A2.lincomb(A1.inner(U2).T), rtol=c * 1e-14))
 

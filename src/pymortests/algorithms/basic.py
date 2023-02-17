@@ -172,14 +172,14 @@ def test_almost_equal_incompatible(vector_arrays):
 
 @settings(deadline=None)
 @pyst.given_vector_arrays(count=2)
-def test_project_array(arrays):
-    U, basis = arrays
+def test_project_array(vector_arrays):
+    U, basis = vector_arrays
     U_p = project_array(U, basis, orthonormal=False)
     onb = gram_schmidt(basis)
     U_p2 = project_array(U, onb, orthonormal=True)
     err = relative_error(U_p, U_p2)
-    tol = np.finfo(np.float64).eps * np.linalg.cond(basis.gramian()) * 100.
-    assert np.all(err < tol)
+    tol = 0 if len(basis) == 0 else np.finfo(np.float64).eps * np.linalg.cond(basis.gramian()) * 100.
+    assert np.all(err <= tol)
 
 
 @pytest.mark.builtin
