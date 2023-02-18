@@ -119,7 +119,7 @@ def skip_if_missing(config_name):
                 config.config.require(config_name)
             except DependencyMissingError as dm:
                 # skip does not return
-                if config_name in str(dm.dependency) and not os.environ.get('DOCKER_PYMOR', False):
+                if config_name in str(dm.dependency):
                     skip_string = 'skipped test due to missing dependency ' + config_name
                     skip(skip_string)
                 raise dm
