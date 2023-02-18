@@ -277,6 +277,8 @@ class Mu(FrozenDict):
     """
 
     __slots__ = ('_raw_values')
+    __array_priority__ = 100.0
+    __array_ufunc__ = None
 
     def __new__(cls, *args, **kwargs):
         raw_values = dict(*args, **kwargs)
@@ -377,21 +379,30 @@ class Mu(FrozenDict):
     def __neg__(self):
         return Mu({key: -self[key] for key in self.keys()})
 
-    def __add__(self, mu):
-        if not isinstance(mu, Mu):
+    def __add__(self, other):
+        if not isinstance(other, Mu):
             try:
-                mu = Mu(mu)
+                other = self.parameters.parse(other)
             except Exception:
                 raise NotImplementedError
-        assert self.keys() == mu.keys()
-        return Mu({key: self[key] + mu[key] for key in self.keys()})
+        assert self.keys() == other.keys()
+        return Mu({key: self[key] + other[key] for key in self.keys()})
 
-    def __sub__(self, mu):
-        return self + -mu
+    def __radd__(self, other):
+        return self + other
+
+    def __sub__(self, other):
+        return self + -other
+
+    def __rsub__(self, other):
+        return self - other
+
+    def __mul__(self, other):
+        assert isinstance(other, Number)
+        return Mu({key: self[key] * other for key in self.keys()})
 
     def __rmul__(self, other):
-        assert isinstance(other, Number)
-        return Mu({key: other * self[key] for key in self.keys()})
+        return self * other
 
     def __str__(self):
         def format_value(k, v):

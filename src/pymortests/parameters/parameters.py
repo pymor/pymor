@@ -142,17 +142,19 @@ def test_mu_to_numpy(mu):
     mu2 = mu.parameters.parse(mu_array)
     assert mu == mu2
 
-
 @given(pyst.mus)
 def test_mu_algebra(mu):
     mu_np = mu.to_numpy()
     other_np = np.ones(len(mu_np))
     other = mu.parameters.parse(other_np)
 
+    assert mu + other == other + mu
+    assert other_np + mu == other + mu_np
     assert all((mu + other).to_numpy() == (mu_np + other_np))
     assert all((mu - other).to_numpy() == (mu_np - other_np))
     assert all((-mu).to_numpy() == -mu_np)
     assert all((2. * mu).to_numpy() == 2. * mu_np)
+    assert 2. * mu == mu * 2.
 
 
 def test_mu_t_wrong_value():
