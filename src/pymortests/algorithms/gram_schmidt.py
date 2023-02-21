@@ -14,7 +14,6 @@ from pymortests.base import runmodule
 
 
 @pyst.given_vector_arrays()
-@settings(deadline=20000)
 def test_gram_schmidt(vector_array):
     U = vector_array
     # TODO assumption here masks a potential issue with the algorithm

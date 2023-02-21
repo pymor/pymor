@@ -91,7 +91,6 @@ runs:
         PYTHONPATH: ./src
         PYMOR_HYPOTHESIS_PROFILE: ${{ inputs.hypothesis_profile }}
         # we may be able to limit this to macos
-        PYMOR_ALLOW_DEADLINE_EXCESS: 1
         COMMON_PYTEST_OPTS: "--cov-report= --cov --cov-config=setup.cfg --cov-context=test --junitxml=${{ inputs.results_file }}"
         COVERAGE_FILE: ${{ inputs.coverage_file }}
       run: |

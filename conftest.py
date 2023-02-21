@@ -15,7 +15,7 @@ _common_settings = {
     'print_blob': True,
     'suppress_health_check': (HealthCheck.data_too_large, HealthCheck.too_slow,
                               HealthCheck.filter_too_much),
-    'deadline': 1000,
+    'deadline': 5000,
     'verbosity': Verbosity.normal,
 }
 settings.register_profile('ci_large', max_examples=400, **_common_settings)
