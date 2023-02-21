@@ -177,6 +177,7 @@ mpi 3 8:
     - when: on_success
     variables:
         COVERAGE_FILE: coverage_mpi__3.8
+        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
     retry:
         max: 2
         when: always
@@ -200,6 +201,7 @@ mpi 3 10:
     - when: on_success
     variables:
         COVERAGE_FILE: coverage_mpi__3.10
+        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
     retry:
         max: 2
         when: always

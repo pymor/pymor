@@ -188,6 +188,7 @@ ci setup:
     variables:
         COVERAGE_FILE: coverage_{{script}}__{{py}}
     {%- if script == "mpi" %}
+        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
     retry:
         max: 2
         when: always
