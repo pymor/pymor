@@ -208,7 +208,7 @@ will significantly speed up the basis generation, as we will only need to
 solve the high-dimensional problem for those parameters in the training set
 which are actually selected for basis extension. To control the condition of
 the reduced system matrix, we must ensure that the generated basis is
-orthonormal w.r.t. the H1_0-product on the solution space. For this we pass
+orthonormal w.r.t. the {math}`H^1_0`-product on the solution space. For this we pass
 the {attr}`h1_0_semi_product` attribute of the model as inner product to
 the reductor, which will also use it for computing the Riesz representatives
 required for error estimation. Moreover, we have to provide
