@@ -96,6 +96,13 @@ def test_gram_schmidt_biorth(vector_arrays):
             A1, A2 = gram_schmidt_biorth(U1, U2, copy=True)
         return
 
+    onb1 = gram_schmidt(U1)
+    if len(onb1) < len(U1):
+        return
+    onb2 = gram_schmidt(U2)
+    if len(onb2) < len(U2):
+        return
+
     V1 = U1.copy()
     V2 = U2.copy()
 
