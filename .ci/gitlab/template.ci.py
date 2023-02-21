@@ -193,6 +193,18 @@ ci setup:
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
         PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
+    {%- elif script == "ngsolve" %}
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "fenics scikit_fem dealii dunegdt"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
+    {%- elif script == "dunegdt" %}
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
+    {%- elif script == "scikit_fem" %}
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve dealii dunegdt"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     {%- endif %}
     {%- if script == "mpi" %}
     retry:
@@ -429,6 +441,9 @@ test_scripts = [
     ('oldest', oldest, 1),
     ('cpp_demo', pythons, 1),
     ('fenics', pythons, 1),
+    ('ngsolve', pythons, 1),
+    ('dunegdt', pythons, 1),
+    ('scikit_fem', pythons, 1),
 ]
 # these should be all instances in the federation
 binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'ovh', 'gesis')]
