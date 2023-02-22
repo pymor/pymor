@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-from hypothesis import assume, given, settings
+from hypothesis import assume, settings
 from hypothesis import strategies as hyst
 
 import pymor

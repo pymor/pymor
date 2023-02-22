@@ -21,7 +21,7 @@ from pymor.core.exceptions import (
     TorchMissingError,
 )
 from pymor.tools.mpi import parallel
-from pymortests.base import check_results, runmodule, BUILTIN_DISABLED
+from pymortests.base import BUILTIN_DISABLED, check_results, runmodule
 
 runner = CliRunner()
 
