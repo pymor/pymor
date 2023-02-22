@@ -631,6 +631,14 @@ submit coverage:
         - vanilla 3 8
         - vanilla 3 10
         - oldest 3 8
+        - fenics 3 8
+        - fenics 3 10
+        - ngsolve 3 8
+        - ngsolve 3 10
+        - dunegdt 3 8
+        - dunegdt 3 10
+        - scikit_fem 3 8
+        - scikit_fem 3 10
 
 coverage html:
     extends: .submit

@@ -257,7 +257,7 @@ submit coverage:
         paths:
             - reports/
     dependencies:
-    {%- for script, py, para in matrix if script in ['tutorials', 'vanilla', 'oldest', 'numpy_git', 'mpi'] %}
+    {%- for script, py, para in matrix if script in ['tutorials', 'vanilla', 'oldest', 'numpy_git', 'mpi', 'fenics', 'ngsolve', 'dunegdt', 'scikit_fem'] %}
         - {{script}} {{py[0]}} {{py[2:]}}
     {%- endfor %}
 
