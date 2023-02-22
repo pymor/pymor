@@ -23,3 +23,5 @@ repos:
   rev: v0.4.0
   hooks:
   - id: markdownlint-cli2
+ci:
+  autofix_prs: false
