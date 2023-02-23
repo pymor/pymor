@@ -92,15 +92,6 @@ def _get_matplotib_version():
     return mpl.__version__
 
 
-def _get_ipython_version():
-    try:
-        import ipyparallel
-        return ipyparallel.__version__
-    except ImportError:
-        import IPython.parallel
-        return getattr(IPython.parallel, '__version__', True)
-
-
 def _get_slycot_version():
     from slycot.version import version
     if list(map(int, version.split('.'))) < [0, 3, 1]:
@@ -144,7 +135,8 @@ _PACKAGES = {
     'DUNEGDT': _get_dunegdt_version,
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
-    'IPYTHON': _get_ipython_version,
+    'IPYTHON': lambda: import_module('IPython').__version__,
+    'IPYPARALLEL': lambda: import_module('ipyparallel').__version__,
     'MATPLOTLIB': _get_matplotib_version,
     'VTKIO': lambda: _can_import(('meshio', 'pyevtk', 'lxml', 'xmljson')),
     'MESHIO': lambda: import_module('meshio').__version__,

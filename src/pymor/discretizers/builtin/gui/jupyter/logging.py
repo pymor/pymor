@@ -2,6 +2,12 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.core.config import config
+
+config.require('IPYTHON')
+config.require('IPYWIDGETS')
+
+
 import logging
 
 import ipywidgets
