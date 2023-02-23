@@ -127,7 +127,7 @@ def is_jupyter():
     if force is not None:
         return bool(force)
     ipy = type(get_ipython()).__module__
-    return ipy.startswith('ipykernel.') or ipy.startswith('google.colab')
+    return ipy.startswith('ipykernel.') or ipy.startswith('google.colab') or ipy.startswith('pyolite.')
 
 
 _PACKAGES = {
