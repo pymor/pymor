@@ -144,13 +144,12 @@ _PACKAGES = {
     'DUNEGDT': _get_dunegdt_version,
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
-    'IPYTHON': lambda: import_module('IPython').__version__,
     'IPYPARALLEL': lambda: import_module('ipyparallel').__version__,
-    'MATPLOTLIB': _get_matplotib_version,
-    'VTKIO': lambda: _can_import(('meshio', 'pyevtk', 'lxml', 'xmljson')),
-    'MESHIO': lambda: import_module('meshio').__version__,
+    'IPYTHON': lambda: import_module('IPython').__version__,
     'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
     'K3D': lambda: import_module('k3d').__version__,
+    'MATPLOTLIB': _get_matplotib_version,
+    'MESHIO': lambda: import_module('meshio').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NGSOLVE': lambda: import_module('ngsolve').__version__,
     'NUMPY': lambda: import_module('numpy').__version__,
@@ -166,6 +165,7 @@ _PACKAGES = {
     'SPHINX': lambda: import_module('sphinx').__version__,
     'TORCH': lambda: import_module('torch').__version__,
     'TYPER': lambda: import_module('typer').__version__,
+    'VTKIO': lambda: _can_import(('meshio', 'pyevtk', 'lxml', 'xmljson')),
 }
 
 
