@@ -2,17 +2,18 @@
 # Copyright 2013-2019 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.core.config import config
+
+config.require('K3D')
+config.require('MATPLOTLIB')
+config.require('IPYTHON')
+
+
 import warnings
 
 import IPython
 import k3d
 import numpy as np
-
-from pymor.core.config import config
-
-config.require('K3D')
-config.require('MATPLOTLIB')
-
 from ipywidgets import IntSlider, Play, interact, widgets
 from k3d.plot import Plot as k3dPlot
 from matplotlib.cm import get_cmap
