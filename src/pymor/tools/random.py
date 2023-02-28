@@ -99,11 +99,17 @@ class RNG(np.random.Generator):
         # The first field is a flag to indicate whether the current _rng_state has been consumed
         # via get_rng. This is a safeguard to detect calls to get_rng in concurrent code
         # paths.
-        _rng_state.set([False, self, self._seed_seq])
+        global _fallback_rng_state
+        new_state = [False, self, self._seed_seq]
+        _rng_state.set(new_state)
+        _fallback_rng_state = new_state
 
     def uninstall(self):
         """Restores the previously set global random generator."""
+        global _fallback_rng_state
         _rng_state.set(self.old_state)
+        if self.old_state is not None:
+            _fallback_rng_state = self.old_state
 
     def __enter__(self):
         self.install()
@@ -182,11 +188,20 @@ def _get_rng_state():
     try:
         rng_state = _rng_state.get()
     except LookupError:
+        import sys
         import warnings
-        warnings.warn(
-            'get_rng called but _rng_state not initialized. (Call spawn_rng when creating new thread.) '
-            'Initializing a new RNG from the default seed. This may lead to correlated data.')
-        new_rng().install()
+        if 'pyodide' in sys.modules:
+            warnings.warn(
+                'Cannot get current RNG state due to broken handling of contextvars in Jupyterlite.'
+                'Using global fallback RNG state. This might lead to non-deterministic code execution'
+                'in parallel or asynchronous code.'
+            )
+            _rng_state.set(_fallback_rng_state)
+        else:
+            warnings.warn(
+                'get_rng called but _rng_state not initialized. (Call spawn_rng when creating new thread.) '
+                'Initializing a new RNG from the default seed. This may lead to correlated data.')
+            new_rng().install()
         rng_state = _rng_state.get()
     if rng_state[0]:
         import warnings
