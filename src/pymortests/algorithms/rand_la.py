@@ -3,12 +3,15 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 import scipy as sp
 from numpy.random import uniform
 
 from pymor.algorithms.rand_la import adaptive_rrf, random_generalized_svd, random_ghep, rrf
 from pymor.operators.constructions import VectorArrayOperator
 from pymor.operators.numpy import NumpyMatrixOperator
+
+pytestmark = pytest.mark.builtin
 
 
 def test_adaptive_rrf():

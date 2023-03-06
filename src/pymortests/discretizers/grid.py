@@ -9,7 +9,6 @@ import pytest
 from hypothesis import given, settings
 
 from pymor.core.exceptions import QtMissingError
-from pymortests.base import might_exceed_deadline
 from pymortests.core.pickling import assert_picklable_without_dumps_function
 from pymortests.fixtures.grid import (
     hy_grid,
@@ -19,6 +18,8 @@ from pymortests.fixtures.grid import (
     hy_grid_and_dim_range_product_and_s_to_e,
     hy_grids_with_visualize,
 )
+
+pytestmark = pytest.mark.builtin
 
 
 @given(hy_grid)
@@ -246,7 +247,6 @@ def test_neighbours_wrong_arguments(grid_and_dims):
         g.neighbours(-1, 0, g.dim)
 
 
-@might_exceed_deadline(2000)
 @given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_shape(grid_and_dims):
     g, e, n, s = grid_and_dims
@@ -254,14 +254,12 @@ def test_neighbours_shape(grid_and_dims):
     assert g.neighbours(e, n, s).shape[0] == g.size(e)
 
 
-@might_exceed_deadline(2000)
 @given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_dtype(grid_and_dims):
     g, e, n, s = grid_and_dims
     assert g.neighbours(e, n, s).dtype == np.dtype('int32')
 
 
-@might_exceed_deadline(2000)
 @given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_entry_value_range(grid_and_dims):
     g, e, n, s = grid_and_dims
@@ -269,7 +267,6 @@ def test_neighbours_entry_value_range(grid_and_dims):
     np.testing.assert_array_less(-2, g.neighbours(e, n, s))
 
 
-@might_exceed_deadline(2000)
 @given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_entry_values_unique(grid_and_dims):
     g, e, n, s = grid_and_dims
@@ -278,7 +275,6 @@ def test_neighbours_entry_values_unique(grid_and_dims):
         assert S.size == np.unique(S).size
 
 
-@might_exceed_deadline(5000)
 @given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_each_entry_neighbour(grid_and_dims):
     g, e, n, s = grid_and_dims
@@ -294,7 +290,6 @@ def test_neighbours_each_entry_neighbour(grid_and_dims):
                 assert len(inter) > 0
 
 
-@might_exceed_deadline(4000)
 @given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_each_neighbour_has_entry(grid_and_dims):
     g, e, n, s = grid_and_dims
@@ -315,7 +310,6 @@ def test_neighbours_each_neighbour_has_entry(grid_and_dims):
                         f'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
 
 
-@might_exceed_deadline(2000)
 @given(hy_grid_and_dim_range_product_and_s_max_en())
 def test_neighbours_not_neighbour_of_itself(grid_and_dims):
     g, e, _, s = grid_and_dims
@@ -404,7 +398,6 @@ def test_boundaries_dtype(grid):
         assert g.boundaries(d).dtype == np.dtype('int32')
 
 
-@might_exceed_deadline(2000)
 @given(hy_grid)
 def test_boundaries_entry_value_range(grid):
     g = grid

@@ -18,6 +18,8 @@ from pymor.algorithms.lyapunov import (
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.base import skip_if_missing
 
+pytestmark = pytest.mark.builtin
+
 n_list_small = [10, 20]
 n_list_big = [300]
 m_list = [1, 2]

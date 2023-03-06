@@ -6,6 +6,8 @@ import pytest
 from pymor.core.defaults import defaults, load_defaults_from_file, print_defaults, set_defaults, write_defaults_to_file
 from pymor.tools.io import safe_temporary_filename
 
+pytestmark = pytest.mark.builtin
+
 
 @defaults('c', 'd')
 def func(a, b, c=2, d=3, e=4):

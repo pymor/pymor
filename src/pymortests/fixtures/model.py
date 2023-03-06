@@ -7,6 +7,7 @@ from itertools import product
 import pytest
 
 from pymor.discretizers.builtin import discretize_instationary_fv, discretize_stationary_cg
+from pymortests.base import BUILTIN_DISABLED
 from pymortests.fixtures.analyticalproblem import (
     burgers_problems,
     non_picklable_thermalblock_problems,
@@ -30,17 +31,18 @@ non_picklable_model_generators = \
 model_generators = picklable_model_generators + non_picklable_model_generators
 
 
-@pytest.fixture(params=model_generators)
+@pytest.fixture(params=[] if BUILTIN_DISABLED else model_generators)
 def model(request):
     return request.param()
 
 
-@pytest.fixture(params=[lambda p=p, d=d: discretize_stationary_cg(p, diameter=d)[0]
-                        for p, d in product(non_picklable_thermalblock_problems, [1./20., 1./30.])])
+@pytest.fixture(params=[] if BUILTIN_DISABLED else
+                       ([lambda p=p, d=d: discretize_stationary_cg(p, diameter=d)[0]
+                        for p, d in product(non_picklable_thermalblock_problems, [1./20., 1./30.])]))
 def stationary_models(request):
     return request.param()
 
 
-@pytest.fixture(params=picklable_model_generators)
+@pytest.fixture(params=[] if BUILTIN_DISABLED else picklable_model_generators)
 def picklable_model(request):
     return request.param()

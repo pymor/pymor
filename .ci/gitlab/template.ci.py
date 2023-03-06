@@ -49,6 +49,7 @@ rules:
         CI_IMAGE_TAG: {{ci_image_tag}}
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
         BINDERIMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
 
 .pytest:
@@ -187,6 +188,25 @@ ci setup:
     variables:
         COVERAGE_FILE: coverage_{{script}}__{{py}}
     {%- if script == "mpi" %}
+        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
+    {%- elif script == "fenics" %}
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
+    {%- elif script == "ngsolve" %}
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "fenics scikit_fem dealii dunegdt"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
+    {%- elif script == "dunegdt" %}
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
+    {%- elif script == "scikit_fem" %}
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve dealii dunegdt"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
+    {%- endif %}
+    {%- if script == "mpi" %}
     retry:
         max: 2
         when: always
@@ -237,7 +257,7 @@ submit coverage:
         paths:
             - reports/
     dependencies:
-    {%- for script, py, para in matrix if script in ['tutorials', 'vanilla', 'oldest', 'numpy_git', 'mpi'] %}
+    {%- for script, py, para in matrix if script in ['tutorials', 'vanilla', 'oldest', 'numpy_git', 'mpi', 'fenics', 'ngsolve', 'dunegdt', 'scikit_fem'] %}
         - {{script}} {{py[0]}} {{py[2:]}}
     {%- endfor %}
 
@@ -420,6 +440,10 @@ test_scripts = [
     ('vanilla', pythons, 1),
     ('oldest', oldest, 1),
     ('cpp_demo', pythons, 1),
+    ('fenics', pythons, 1),
+    ('ngsolve', pythons, 1),
+    ('dunegdt', pythons, 1),
+    ('scikit_fem', pythons, 1),
 ]
 # these should be all instances in the federation
 binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'ovh', 'gesis')]

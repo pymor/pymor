@@ -11,6 +11,8 @@ from pymortests.core.pickling import assert_picklable, assert_picklable_without_
 from pymortests.fixtures.function import function_argument
 from pymortests.fixtures.parameter import mu_of_type
 
+pytestmark = pytest.mark.builtin
+
 
 def test_evaluate(function):
     f = function

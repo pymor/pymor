@@ -3,9 +3,12 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 
 from pymor.discretizers.builtin import RectGrid, TriaGrid
 from pymortests.base import runmodule
+
+pytestmark = pytest.mark.builtin
 
 
 def test_with_newtype():

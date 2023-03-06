@@ -5,6 +5,7 @@
 from itertools import product
 
 import numpy as np
+import pytest
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.simplify import contract, expand
@@ -12,6 +13,8 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.constructions import ConcatenationOperator, LincombOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
+
+pytestmark = pytest.mark.builtin
 
 
 def test_expand():

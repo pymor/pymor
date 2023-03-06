@@ -59,7 +59,12 @@ def almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol=1e-14):
 
 def relative_error(U, V, product=None):
     """Compute error between U and V relative to norm of U."""
-    return (U - V).norm(product) / U.norm(product)
+    err = (U - V).norm(product)
+    if np.all(err == 0.):
+        # ensure to return 0 here even when the norm of U is zero
+        return err
+    else:
+        return err / U.norm(product)
 
 
 def project_array(U, basis, product=None, orthonormal=True):

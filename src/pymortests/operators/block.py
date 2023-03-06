@@ -3,12 +3,15 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 import scipy.linalg as spla
 
 from pymor.operators.block import BlockDiagonalOperator, BlockOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+pytestmark = pytest.mark.builtin
 
 
 def test_apply():

@@ -14,6 +14,9 @@ from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.algorithms.lyapunov import conv_diff_1d_fd, conv_diff_1d_fem, fro_norm
 from pymortests.base import skip_if_missing
 
+pytestmark = pytest.mark.builtin
+
+
 n_list_small = [10, 20]
 n_list_big = [250]
 m_list = [1, 2]

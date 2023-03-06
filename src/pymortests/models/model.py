@@ -19,6 +19,8 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
 
+pytestmark = pytest.mark.builtin
+
 
 def test_pickle(model):
     assert_picklable(model)

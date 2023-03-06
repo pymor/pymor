@@ -9,7 +9,6 @@ from functools import wraps
 from pickle import dump, load
 from pprint import pformat
 
-import hypothesis
 import numpy as np
 from pkg_resources import resource_filename, resource_stream
 from pytest import skip
@@ -17,6 +16,8 @@ from pytest import skip
 from pymor.algorithms.basic import almost_equal, relative_error
 from pymor.core import config
 from pymor.core.exceptions import DependencyMissingError, NoResultDataError
+
+BUILTIN_DISABLED = bool(os.environ.get('PYMOR_FIXTURES_DISABLE_BUILTIN', False))
 
 
 def runmodule(filename):
@@ -80,23 +81,6 @@ def assert_all_almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol
                                      for i, (u, v, f) in enumerate(zip(U, V, cmp_array)) if not f)
     assert np.all(cmp_array), f'Relative errors for not-equal elements:{pformat(too_large_relative_errors)}'
 
-
-def might_exceed_deadline(deadline=-1):
-    """For hypothesis magic to work properly this must be the topmost decorator on test function."""
-    def _outer_wrapper(func):
-        @wraps(func)
-        def _inner_wrapper(*args, **kwargs):
-            dl = deadline
-            if os.environ.get('PYMOR_ALLOW_DEADLINE_EXCESS', False):
-                dl = None
-            elif dl == -1:
-                dl = hypothesis.settings.default.deadline.total_seconds() * 1e3
-            assert dl is None or dl > 1
-            return hypothesis.settings(deadline=dl)(func)(*args, **kwargs)
-        return _inner_wrapper
-    return _outer_wrapper
-
-
 def skip_if_missing(config_name):
     """Wrapper for requiring certain module dependencies on tests.
 
@@ -117,7 +101,7 @@ def skip_if_missing(config_name):
                 config.config.require(config_name)
             except DependencyMissingError as dm:
                 # skip does not return
-                if config_name in str(dm.dependency) and not os.environ.get('DOCKER_PYMOR', False):
+                if config_name in str(dm.dependency):
                     skip_string = 'skipped test due to missing dependency ' + config_name
                     skip(skip_string)
                 raise dm

@@ -14,6 +14,8 @@ type_list = ['BilinearTransformation', 'CayleyTransformation', 'MoebiusTransform
 points_list = list(combinations([0, 1, -1, 1j, -1j, np.inf], 3))
 sampling_time_list = [0, 1/100, 2]
 
+pytestmark = pytest.mark.builtin
+
 
 def get_transformation(name):
     if name == 'BilinearTransformation':

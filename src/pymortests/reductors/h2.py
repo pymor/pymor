@@ -3,9 +3,12 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 
 from pymor.models.iosys import LTIModel
 from pymor.reductors.h2 import IRKAReductor
+
+pytestmark = pytest.mark.builtin
 
 
 def test_irka():
