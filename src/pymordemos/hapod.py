@@ -28,6 +28,7 @@ def main(
     procs: int = Option(0, help='Number of processes to use for parallelization.'),
     snap: int = Option(20, help='Number of snapshot trajectories to compute.'),
     threads: int = Option(0, help='Number of threads to use for parallelization.'),
+    svd: bool = Option(False, help='Compute SVD.'),
 ):
     """Compression of snapshot data with the HAPOD algorithm from [HLR18]."""
     assert procs == 0 or threads == 0
@@ -44,30 +45,54 @@ def main(
         U.append(m.solve(mu))
 
     tic = time.perf_counter()
-    pod_modes = pod(U, l2_err=tol * np.sqrt(len(U)), product=m.l2_product)[0]
+    if svd:
+        pod_modes, pod_svals, pod_rmodes = pod(U, l2_err=tol * np.sqrt(len(U)), product=m.l2_product,
+                                               return_right_singular_vectors=True)
+    else:
+        pod_modes = pod(U, l2_err=tol * np.sqrt(len(U)), product=m.l2_product)[0]
     pod_time = time.perf_counter() - tic
 
     tic = time.perf_counter()
-    dist_modes = dist_vectorarray_hapod(dist, U, tol, omega, arity=arity, product=m.l2_product, executor=executor)[0]
+    if svd:
+        dist_modes, dist_svals, dist_rmodes = \
+            dist_vectorarray_hapod(dist, U, tol, omega, arity=arity, product=m.l2_product, executor=executor,
+                                   return_right_singular_vectors=True)[0:3]
+    else:
+        dist_modes = \
+            dist_vectorarray_hapod(dist, U, tol, omega, arity=arity, product=m.l2_product, executor=executor)[0]
     dist_time = time.perf_counter() - tic
 
     tic = time.perf_counter()
-    inc_modes = inc_vectorarray_hapod(inc, U, tol, omega, product=m.l2_product)[0]
+    if svd:
+        inc_modes, inc_svals, inc_rmodes = \
+            inc_vectorarray_hapod(inc, U, tol, omega, product=m.l2_product,
+                                  return_right_singular_vectors=True)[0:3]
+    else:
+        inc_modes = inc_vectorarray_hapod(inc, U, tol, omega, product=m.l2_product)[0]
     inc_time = time.perf_counter() - tic
+
+    if svd:
+        pod_err = np.linalg.norm(m.l2_norm(U-pod_modes.lincomb(pod_svals * pod_rmodes.T))/np.sqrt(len(U)))
+        dist_err = np.linalg.norm(m.l2_norm(U-dist_modes.lincomb(dist_svals * dist_rmodes.T))/np.sqrt(len(U)))
+        inc_err = np.linalg.norm(m.l2_norm(U-inc_modes.lincomb(inc_svals * inc_rmodes.T))/np.sqrt(len(U)))
+    else:
+        pod_err = np.linalg.norm(m.l2_norm(U-pod_modes.lincomb(m.l2_product.apply2(U, pod_modes)))/np.sqrt(len(U)))
+        dist_err = np.linalg.norm(m.l2_norm(U-dist_modes.lincomb(m.l2_product.apply2(U, dist_modes)))/np.sqrt(len(U)))
+        inc_err = np.linalg.norm(m.l2_norm(U-inc_modes.lincomb(m.l2_product.apply2(U, inc_modes)))/np.sqrt(len(U)))
 
     print(f'Snapshot matrix: {U.dim} x {len(U)}')
     print(format_table([
         ['Method', 'Error', 'Modes', 'Time'],
         ['POD',
-         np.linalg.norm(m.l2_norm(U-pod_modes.lincomb(m.l2_product.apply2(U, pod_modes)))/np.sqrt(len(U))),
+         pod_err,
          len(pod_modes),
          pod_time],
         ['DIST HAPOD',
-         np.linalg.norm(m.l2_norm(U-dist_modes.lincomb(m.l2_product.apply2(U, dist_modes)))/np.sqrt(len(U))),
+         dist_err,
          len(dist_modes),
          dist_time],
         ['INC HAPOD',
-         np.linalg.norm(m.l2_norm(U-inc_modes.lincomb(m.l2_product.apply2(U, inc_modes)))/np.sqrt(len(U))),
+         inc_err,
          len(inc_modes),
          inc_time]]
     ))
