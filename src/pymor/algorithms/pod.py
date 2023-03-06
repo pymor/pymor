@@ -10,6 +10,7 @@ from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.interface import VectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 @defaults('rtol', 'atol', 'l2_err', 'method', 'orth_tol')
@@ -85,6 +86,13 @@ def pod(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         if err >= orth_tol:
             logger.info('Reorthogonalizing POD modes ...')
             gram_schmidt(POD, product=product, atol=0., rtol=0., copy=False)
+        if return_right_singular_vectors:
+            Vh = NumpyVectorSpace.from_numpy(Vh)
+            err = np.max(np.abs(Vh.inner(Vh) - np.eye(len(Vh))))
+            if err >= orth_tol:
+                logger.info('Reorthogonalizing POD modes ...')
+                gram_schmidt(Vh, atol=0., rtol=0., copy=False)
+            Vh = Vh.to_numpy()
 
     if return_reduced_coefficients:
         return POD, SVALS, COEFFS
