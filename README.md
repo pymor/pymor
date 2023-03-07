@@ -51,7 +51,7 @@ We recommend installation of pyMOR in a [virtual environment](https://virtualenv
 pyMOR can easily be installed with the [pip](https://pip.pypa.io/en/stable/)
 command.
 Please note that pip versions prior to 21.1 might have problems resolving all
-dependencies, so running the following first is recommended.
+dependencies, so running the following first is recommended:
 
     pip install --upgrade pip
 
@@ -72,7 +72,7 @@ Qt bindings such as `pyside2` to function.
 ### Latest Release (with all Optional Dependencies)
 
 The following installs the latest release of pyMOR on your system with most
-optional dependencies.
+optional dependencies:
 
     pip install pymor[full]
 
@@ -140,7 +140,7 @@ We recommend starting with
 [technical overview](https://docs.pymor.org/latest/technical_overview.html).
 
 To build the documentation locally,
-run the following from inside the root directory of the pyMOR source tree.
+run the following from inside the root directory of the pyMOR source tree:
 
     make docs
 
@@ -172,7 +172,7 @@ We provide bindings for the following solver libraries:
     It is tested using NGSolve version v6.2.2104.
 
 A simple example for direct integration of pyMOR with a a custom solver
-can be found in `src/pymordemos/minimal_cpp_demo`.
+can be found in `pymordemos.minimal_cpp_demo`.
 
 An alternative approach is to import system matrices from file and use
 `scipy.sparse`-based solvers.
