@@ -6,9 +6,24 @@ on:
       - completed
 
 jobs:
+  get_info:
+    name: "Get information about the source run"
+    runs-on: ubuntu-latest
+    outputs:
+      pullRequestNumber: ${{ steps.source-run-info.outputs.pullRequestNumber }}
+      sourceEvent: ${{ steps.source-run-info.outputs.sourceEvent }}
+    steps:
+      - name: "Get information about the origin 'CI' run"
+        uses: potiuk/get-workflow-origin@v1_5
+        id: source-run-info
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sourceRunId: ${{ github.event.workflow_run.id }}
+
   docker:
     name: Update docker images
     runs-on: ubuntu-22.04
+    needs: [get_info]
     outputs:
       pr_url: ${{ steps.create_pr.outputs.pull-request-url }}
       env_sha: ${{ steps.create_pr.outputs.pull-request-head-sha }}
@@ -28,21 +43,21 @@ jobs:
         id: create_pr
         with:
           commit-message: "[Bot] Update requirements/constraints"
-          title: "Update requirements for pymor PR ${{ format('{0}', github.event.pull_request.number) }}"
-          body: "Update requirements PR ${{ format('https://github.com/{1}/pull/{0}', github.event.pull_request.number, github.repository) }}"
+          title: "Update requirements for pymor PR ${{ format('{0}', needs.get_info.outputs.pullRequestNumber) }}"
+          body: "Update requirements PR ${{ format('https://github.com/{1}/pull/{0}', needs.get_info.outputs.pullRequestNumber, github.repository) }}"
           author: pyMOR Bot <ci@pymor.org>
           token: ${{ secrets.PYMOR_DOCKER_PR_TOKEN }}
           add-paths: constraints/requirements*.txt
           labels: automerge
           delete-branch: true
-          branch: update-requirements-${{ github.event.pull_request.number }}
+          branch: update-requirements-${{ needs.get_info.outputs.pullRequestNumber }}
           base: main
-          assignees: ${{ github.event.pull_request.author.login }}
+          assignees: ${{ needs.get_info.output.sourceEvent.pull_request.author.login }}
 
   create_pr:
     name: Create PR
     runs-on: ubuntu-22.04
-    needs: [docker]
+    needs: [docker, get_info]
     outputs:
       pr_url: ${{ steps.create_pr.outputs.pull-request-url }}
       env_sha: ${{ steps.create_pr.outputs.pull-request-head-sha }}
@@ -76,15 +91,15 @@ jobs:
           commit-message: "[Bot] Update requirements and environments"
           title: "[Bot] Update requirements and environments"
           body: |
-            Updates the conda environment / docker images for PR ${{ format('#{0}', github.event.pull_request.number) }}.
+            Updates the conda environment / docker images for PR ${{ format('#{0}', needs.get_info.outputs.pullRequestNumber) }}.
             The Gitlab pipelines of this PR might need to be restarted once ${{ needs.docker.outputs.pr_url }}
             is merged/finished.
           author: pyMOR Bot <ci@pymor.org>
           labels: pr:change,infrastructure,dependencies,automerge
           delete-branch: true
-          branch: update-requirements-${{ github.event.pull_request.number }}
+          branch: update-requirements-${{ needs.get_info.outputs.pullRequestNumber }}
           base: ${{ github.head_ref }}
-          assignees: ${{ github.event.pull_request.author.login }}
+          assignees: ${{ needs.get_info.output.sourceEvent.pull_request.author.login }}
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: PR Comment
         uses: thollander/actions-comment-pull-request@v2
