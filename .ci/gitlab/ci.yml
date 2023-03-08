@@ -23,8 +23,8 @@ stages:
           when: never
         - when: on_success
     variables:
-        PYPI_MIRROR_TAG: 623b44380673e2e60a51dea8bafe1de775614cf7
-        CI_IMAGE_TAG: 623b44380673e2e60a51dea8bafe1de775614cf7
+        PYPI_MIRROR_TAG: 351836efd22156730961801c228e8803b4f708f2
+        CI_IMAGE_TAG: 351836efd22156730961801c228e8803b4f708f2
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
         PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
