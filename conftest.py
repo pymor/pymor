@@ -45,9 +45,9 @@ pytest_plugins = [
 def monkey_np_testing(monkeypatch):
     """All tests automagically use this, we only change the default tolerances.
 
-    monkey np.testing.assert_allclose to behave the same as np.allclose
-    for some reason, the default atol of np.testing.assert_allclose is 0
-    while it is 1e-8 for np.allclose
+    monkey np.testing.assert_allclose to behave the same as np.allclose.
+    For some reason, the default atol of np.testing.assert_allclose is 0
+    while it is 1e-8 for np.allclose.
     """
     real_all_close = np.testing.assert_allclose
 
