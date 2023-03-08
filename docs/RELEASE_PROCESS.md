@@ -1,8 +1,8 @@
 # Release process and schedule
 
-
-1. [ ] Fix the following dates (at least xx weeks before the release, i.e. xx-(yy+zz) weeks before the soft freeze):
-       soft freeze &rarr; (yy weeks) &rarr; hard freeze &rarr; (zz weeks) &rarr; release day
+The release manager is responsible for ensuring that the following steps are performed:
+1. [ ] Fix the following dates (at least 10 weeks before the release, i.e. 5 weeks before the soft freeze):
+       soft freeze &rarr; (4 weeks) &rarr; hard freeze &rarr; (1 week) &rarr; release day
 1. [ ] As soon as they are fixed, communicate dates for soft freeze, hard freeze and release.
 1. [ ] Go through pull requests and issues without a milestone and assign them to the upcoming release if necessary.
 1. [ ] At the day of the soft freeze:
