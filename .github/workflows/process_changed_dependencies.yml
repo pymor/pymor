@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       pullRequestNumber: ${{ steps.source-run-info.outputs.pullRequestNumber }}
+      sourceHeadBranch: ${{ steps.source-run-info.outputs.sourceHeadBranch }}
     steps:
       - name: "Get information about the origin 'CI' run"
         uses: potiuk/get-workflow-origin@v1_5
@@ -96,7 +97,7 @@ jobs:
           labels: pr:change,infrastructure,dependencies,automerge
           delete-branch: true
           branch: update-requirements-${{ needs.get_info.outputs.pullRequestNumber }}
-          base: ${{ github.head_ref }}
+          base: ${{ needs.get_info.outputs.sourceHeadBranch }}
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: PR Comment
         uses: thollander/actions-comment-pull-request@v2
