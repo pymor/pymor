@@ -58,15 +58,17 @@ jobs:
           name: create_conda_env.log.txt
           path: ./.ci/create_conda_env.log
           if-no-files-found: error
-      - name: Check new env usable
-        uses: ./.github/actions/miniconda_tests
-        with:
-          python: "3.9"
-          prefix: "/usr/share/miniconda3/envs/pyMOR-ci_changes"
-          os: "ubuntu-22.04"
-          results_file: result_requirements.xml
-          coverage_file: coverage_result_requirements
-          hypothesis_profile: "dev" # minimal test parametrization
+      # The following step seems to overwrite the newly created
+      # conda-env.yml
+      # - name: Check new env usable
+      #   uses: ./.github/actions/miniconda_tests
+      #   with:
+      #     python: "3.9"
+      #     prefix: "/usr/share/miniconda3/envs/pyMOR-ci_changes"
+      #     os: "ubuntu-22.04"
+      #     results_file: result_requirements.xml
+      #     coverage_file: coverage_result_requirements
+      #     hypothesis_profile: "dev" # minimal test parametrization
       - name: Upload new requirements
         if: always()
         uses: actions/upload-artifact@v3
