@@ -9,6 +9,9 @@ import scipy.sparse as sps
 from pymor.models.iosys import LTIModel
 from pymor.reductors.mt import MTReductor
 
+pytestmark = pytest.mark.builtin
+
+
 test_data = [
     (8, {}),
     (8, {'which': 'NS'}),
