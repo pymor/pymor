@@ -8,6 +8,7 @@ diskcache
 dune-gdt>=2022.5.3; platform_system=="Linux" and platform_machine=="x86_64"
 dune-xt[visualisation]>=2022.5.3; platform_system=="Linux" and platform_machine=="x86_64"
 gmsh
+ipydatawidgets==4.3.2
 ipyparallel>=6.2.5
 ipython>=6.0
 ipywidgets>7
