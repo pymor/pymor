@@ -75,7 +75,7 @@ ci_requires = ['check-manifest==0.49',
                'check_reqs==1.0.0',
                # only update in lockstep with sphinx
                'docutils==0.18',
-               'ruff==0.0.219',
+               'ruff==0.0.242',
                'hypothesis[numpy,pytest]==6.56.3',
                'hypothesis==6.56.3',
                'pybind11==2.9.2',
