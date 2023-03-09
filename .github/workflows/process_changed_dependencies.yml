@@ -81,7 +81,13 @@ jobs:
             sed -i "/^CI_IMAGE_TAG/s/=.*$/=${ENV_SHA}/" .env
           fi
       - name: Regenerate template
-        run: make template
+        run: make template  # this does NOT update requirements correctly as main is checked out
+      - uses: dawidd6/action-download-artifact@v2.24.3
+        with:
+          workflow: dependencies_change.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: requirements
+          path: ./
       - run: git diff
       - uses: peter-evans/create-pull-request@v4.2.3
         name: Create a PR for changed env
