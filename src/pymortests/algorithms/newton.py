@@ -11,6 +11,8 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.fixtures.operator import MonomOperator
 
+pytestmark = pytest.mark.builtin
+
 
 def _newton(mop, initial_value=1.0, **kwargs):
     rhs = NumpyVectorSpace.from_numpy([0.0])

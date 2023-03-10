@@ -1,3 +1,6 @@
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 import pytest
@@ -11,6 +14,9 @@ from pymor.algorithms.symplectic import (
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+pytestmark = pytest.mark.builtin
+
 
 METHODS_DICT = {
     'psd_cotengent_lift': psd_cotengent_lift,

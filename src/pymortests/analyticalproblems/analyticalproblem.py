@@ -3,9 +3,13 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 import warnings
 
+import pytest
+
 from pymor.analyticalproblems.text import text_problem
 from pymortests.base import runmodule
 from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
+
+pytestmark = pytest.mark.builtin
 
 
 def test_pickle(analytical_problem):

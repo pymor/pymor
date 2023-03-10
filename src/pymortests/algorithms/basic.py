@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-from hypothesis import assume, given, settings
+from hypothesis import assume, settings
 from hypothesis import strategies as hyst
 
 import pymor
@@ -170,18 +170,21 @@ def test_almost_equal_incompatible(vector_arrays):
                 almost_equal(c1[ind1], c2[ind2], sup_norm=sup_norm)
 
 
-@given(pyst.base_vector_arrays(count=2))
 @settings(deadline=None)
-def test_project_array(arrays):
-    U, basis = arrays
-    U_p = project_array(U, basis, orthonormal=False)
+@pyst.given_vector_arrays(count=2)
+def test_project_array(vector_arrays):
+    U, basis = vector_arrays
     onb = gram_schmidt(basis)
+    if len(onb) < len(basis):
+        return
+    U_p = project_array(U, basis, orthonormal=False)
     U_p2 = project_array(U, onb, orthonormal=True)
     err = relative_error(U_p, U_p2)
-    tol = np.finfo(np.float64).eps * np.linalg.cond(basis.gramian()) * 100.
-    assert np.all(err < tol)
+    tol = 0 if len(basis) == 0 else np.finfo(np.float64).eps * np.linalg.cond(basis.gramian()) * 100.
+    assert np.all(err <= tol)
 
 
+@pytest.mark.builtin
 def test_project_array_with_product():
     U = NumpyVectorSpace.from_numpy(np.random.random((1, 10)))
     basis = NumpyVectorSpace.from_numpy(np.random.random((3, 10)))

@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 import scipy.linalg as spla
 
 from pymor.algorithms.lincomb import assemble_lincomb
@@ -10,6 +11,8 @@ from pymor.operators.constructions import LowRankOperator, LowRankUpdatedOperato
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.tools.random import get_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+pytestmark = pytest.mark.builtin
 
 
 def construct_operators_and_vectorarrays(m, n, r, k):

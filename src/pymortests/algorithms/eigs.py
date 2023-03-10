@@ -9,6 +9,8 @@ import scipy.sparse as sps
 from pymor.algorithms.eigs import eigs
 from pymor.operators.numpy import NumpyMatrixOperator
 
+pytestmark = pytest.mark.builtin
+
 n_list = [100, 200]
 k_list = [1, 7]
 sigma_list = [None, 0]

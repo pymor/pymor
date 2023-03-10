@@ -3,17 +3,14 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-import pytest
 
 from pymor.basic import ConstantFunction, ExpressionFunction, LineDomain, RectDomain, StationaryProblem
-from pymor.core.config import config
 from pymor.discretizers.builtin.cg import discretize_stationary_cg as discretize_stationary_cg_builtin
+from pymortests.base import skip_if_missing
 
 
+@skip_if_missing('SCIKIT_FEM')
 def test_skfem1d():
-    if not config.HAVE_SCIKIT_FEM:
-        pytest.xfail('scikit-fem missing')
-
     from pymor.discretizers.skfem.cg import discretize_stationary_cg
 
     p = StationaryProblem(
@@ -35,10 +32,8 @@ def test_skfem1d():
     assert np.linalg.norm((o_builtin - o_skfem) / o_builtin) < 0.01
 
 
+@skip_if_missing('SCIKIT_FEM')
 def test_skfem2d():
-    if not config.HAVE_SCIKIT_FEM:
-        pytest.xfail('scikit-fem missing')
-
     from pymor.discretizers.skfem.cg import discretize_stationary_cg
 
     p = StationaryProblem(

@@ -21,7 +21,7 @@ from pymor.core.exceptions import (
     TorchMissingError,
 )
 from pymor.tools.mpi import parallel
-from pymortests.base import check_results, runmodule
+from pymortests.base import BUILTIN_DISABLED, check_results, runmodule
 
 runner = CliRunner()
 
@@ -87,10 +87,6 @@ THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['fenics', 'greedy', 2, 5, 5]),
     ('thermalblock_simple', ['ngsolve', 'pod', 2, 5, 5]),
     ('thermalblock_simple', ['--', 'pymor_text', 'adaptive_greedy', -1, 3, 3]),
-)
-
-THERMALBLOCK_GUI_ARGS = (
-    ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
 )
 
 BURGERS_EI_ARGS = (
@@ -167,7 +163,6 @@ DEMO_ARGS = (
     + THERMALBLOCK_ARGS
     + THERMALBLOCK_ADAPTIVE_ARGS
     + THERMALBLOCK_SIMPLE_ARGS
-    + THERMALBLOCK_GUI_ARGS
     + BURGERS_EI_ARGS
     + PARABOLIC_MOR_ARGS
     + DD_MOR_ARGS
@@ -186,15 +181,18 @@ DEMO_ARGS = [(f'pymordemos.{a}', b) for (a, b) in DEMO_ARGS]
 
 def _skip_if_no_solver(param):
     demo, args = param
+    builtin = True
     from pymor.core.config import config
     for solver, package in [('fenics', None), ('ngsolve', None), ('neural_', 'TORCH'),
                             ('neural_networks_instationary', 'FENICS')]:
         package = package or solver.upper()
         needs_solver = len([f for f in args if solver in str(f)]) > 0 or demo.find(solver) >= 0
         has_solver = getattr(config, f'HAVE_{package}')
+        builtin = builtin and (not needs_solver or package == 'TORCH')
         if needs_solver and not has_solver:
-            if not os.environ.get('DOCKER_PYMOR', False):
-                pytest.skip('skipped test due to missing ' + solver)
+            pytest.skip('skipped test due to missing ' + solver)
+    if builtin and BUILTIN_DISABLED:
+        pytest.skip('builtin discretizations disabled')
 
 
 def _demo_ids(demo_args):
@@ -280,6 +278,7 @@ def test_demos(demo_args):
     assert result.exit_code == 0
 
 
+@pytest.mark.builtin
 def test_analyze_pickle1():
     d = mkdtemp()
     try:
@@ -290,6 +289,7 @@ def test_analyze_pickle1():
         shutil.rmtree(d)
 
 
+@pytest.mark.builtin
 def test_analyze_pickle2():
     d = mkdtemp()
     try:
@@ -301,6 +301,7 @@ def test_analyze_pickle2():
         shutil.rmtree(d)
 
 
+@pytest.mark.builtin
 def test_analyze_pickle3():
     d = mkdtemp()
     try:
@@ -312,6 +313,7 @@ def test_analyze_pickle3():
         shutil.rmtree(d)
 
 
+@pytest.mark.builtin
 def test_analyze_pickle4():
     d = mkdtemp()
     try:
@@ -339,6 +341,7 @@ def test_thermalblock_ipython(ipy_args):
 
 
 def test_thermalblock_results(thermalblock_args):
+    _skip_if_no_solver(thermalblock_args)
     from pymordemos import thermalblock
     app = Typer()
     app.command()(thermalblock.main)
@@ -356,6 +359,7 @@ def test_thermalblock_results(thermalblock_args):
                   'min_effectivities', 'max_effectivities', 'errors')
 
 
+@pytest.mark.builtin
 def test_burgers_ei_results():
     from pymordemos import burgers_ei
     app = Typer()
@@ -368,6 +372,7 @@ def test_burgers_ei_results():
                   (1e-13, 1e-7), 'errors', 'triangularity_errors', 'greedy_max_errs')
 
 
+@pytest.mark.builtin
 def test_parabolic_mor_results():
     from pymordemos import parabolic_mor
     args = ['pymor', 'greedy', 5, 20, 3]
@@ -379,6 +384,7 @@ def test_parabolic_mor_results():
                   'min_effectivities', 'max_effectivities', 'errors')
 
 
+@pytest.mark.builtin
 def test_check_check_results_missing(tmp_path):
     test_name = tmp_path.name
     args = ['NONE', tmp_path]

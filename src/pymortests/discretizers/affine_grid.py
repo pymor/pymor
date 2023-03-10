@@ -15,6 +15,8 @@ from pymortests.fixtures.grid import (
     hy_grid_with_orthogonal_centers,
 )
 
+pytestmark = pytest.mark.builtin
+
 
 def _scale_tols_if_domain_bad(g, atol=1e-05, rtol=1e-08):
     # "badly" shaped domains produce excessive errors

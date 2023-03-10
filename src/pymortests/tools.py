@@ -26,6 +26,9 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 from pymortests.fixtures.grid import hy_rect_or_tria_grid
 
+pytestmark = pytest.mark.builtin
+
+
 logger = getLogger('pymortests.tools')
 
 

@@ -54,6 +54,25 @@ class Function(ParametricObject):
         """Shorthand for :meth:`~Function.evaluate`."""
         return self.evaluate(x, mu)
 
+    def to_fenics(self, mesh):
+        """Convert to ufl expression over dolfin mesh.
+
+        Parameters
+        ----------
+        mesh
+            The dolfin mesh object.
+
+        Returns
+        -------
+        coeffs
+            |NumPy array| of shape `self.shape_range` where each entry is an ufl
+            expression.
+        params
+            Dict mapping parameter names to lists of dolfin `Constants` which are
+            used in the ufl expressions for the corresponding parameter values.
+        """
+        raise NotImplementedError(f'Conversion to UFL expression not implemented for {type(self).__name__}')
+
     def _add_sub(self, other, sign):
         if isinstance(other, Number) and other == 0:
             return self
@@ -168,22 +187,6 @@ class ConstantFunction(Function):
             return np.tile(self.value, x.shape[:-1] + (1,) * len(self.shape_range))
 
     def to_fenics(self, mesh):
-        """Convert to ufl expression over dolfin mesh.
-
-        Parameters
-        ----------
-        mesh
-            The dolfin mesh object.
-
-        Returns
-        -------
-        coeffs
-            |NumPy array| of shape `self.shape_range` where each entry is an ufl
-            expression.
-        params
-            Dict mapping parameter names to lists of dolfin `Constants` which are
-            used in the ufl expressions for the corresponding parameter values.
-        """
         config.require('FENICS')
         from dolfin import Constant
         return np.vectorize(Constant)(self.value), {}
@@ -282,22 +285,6 @@ class ExpressionFunction(GenericFunction):
         self.__auto_init(locals())
 
     def to_fenics(self, mesh):
-        """Convert to ufl expression over dolfin mesh.
-
-        Parameters
-        ----------
-        mesh
-            The dolfin mesh object.
-
-        Returns
-        -------
-        coeffs
-            |NumPy array| of shape `self.shape_range` where each entry is an ufl
-            expression.
-        params
-            Dict mapping parameter names to lists of dolfin `Constants` which are
-            used in the ufl expressions for the corresponding parameter values.
-        """
         return self.expression_obj.to_fenics(mesh)
 
     def __reduce__(self):

@@ -66,7 +66,7 @@ io_requires = ['pyevtk', 'xmljson', 'meshio>=4.4', 'lxml', 'gmsh']
 install_suggests.update({p: 'optional File I/O support libraries' for p in io_requires})
 # see https://github.com/pymor/pymor/issues/1915 for contrib-apple
 doc_requires = ['sphinx>=5.0,<5.2', 'matplotlib', _PYSIDE, 'ipyparallel>=6.2.5', 'python-slugify',
-                'sphinxcontrib-applehelp<1.0.3',
+                'sphinxcontrib-applehelp<1.0.3', 'ipydatawidgets==4.3.2',
                 'ipywidgets>7', 'sphinx-qt-documentation', 'bash_kernel', 'sphinx-material',
                 'sphinxcontrib-bibtex', 'sphinx-autoapi>=1.8,<2', 'myst-nb>=0.16'] + install_requires
 # Note the hypothesis duplication makes the conda env creation script work

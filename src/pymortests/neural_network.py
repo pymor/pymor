@@ -3,8 +3,11 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 
 from pymortests.base import skip_if_missing
+
+pytestmark = pytest.mark.builtin
 
 
 @skip_if_missing('TORCH')

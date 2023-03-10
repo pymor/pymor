@@ -6,9 +6,24 @@ on:
       - completed
 
 jobs:
+  get_info:
+    name: "Get information about the source run"
+    runs-on: ubuntu-latest
+    outputs:
+      pullRequestNumber: ${{ steps.source-run-info.outputs.pullRequestNumber }}
+      sourceHeadBranch: ${{ steps.source-run-info.outputs.sourceHeadBranch }}
+    steps:
+      - name: "Get information about the origin 'CI' run"
+        uses: potiuk/get-workflow-origin@v1_5
+        id: source-run-info
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sourceRunId: ${{ github.event.workflow_run.id }}
+
   docker:
     name: Update docker images
     runs-on: ubuntu-22.04
+    needs: [get_info]
     outputs:
       pr_url: ${{ steps.create_pr.outputs.pull-request-url }}
       env_sha: ${{ steps.create_pr.outputs.pull-request-head-sha }}
@@ -28,27 +43,26 @@ jobs:
         id: create_pr
         with:
           commit-message: "[Bot] Update requirements/constraints"
-          title: "Update requirements for pymor PR ${{ format('{0}', github.event.pull_request.number) }}"
-          body: "Update requirements PR ${{ format('https://github.com/{1}/pull/{0}', github.event.pull_request.number, github.repository) }}"
+          title: "Update requirements for pymor PR ${{ format('{0}', needs.get_info.outputs.pullRequestNumber) }}"
+          body: "Update requirements PR ${{ format('https://github.com/{1}/pull/{0}', needs.get_info.outputs.pullRequestNumber, github.repository) }}"
           author: pyMOR Bot <ci@pymor.org>
           token: ${{ secrets.PYMOR_DOCKER_PR_TOKEN }}
           add-paths: constraints/requirements*.txt
           labels: automerge
           delete-branch: true
-          branch: update-requirements-${{ github.event.pull_request.number }}
+          branch: update-requirements-${{ needs.get_info.outputs.pullRequestNumber }}
           base: main
-          assignees: ${{ github.event.pull_request.author.login }}
 
   create_pr:
     name: Create PR
     runs-on: ubuntu-22.04
-    needs: [docker]
+    needs: [docker, get_info]
     outputs:
       pr_url: ${{ steps.create_pr.outputs.pull-request-url }}
       env_sha: ${{ steps.create_pr.outputs.pull-request-head-sha }}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
       - uses: dawidd6/action-download-artifact@v2.24.3
@@ -67,7 +81,13 @@ jobs:
             sed -i "/^CI_IMAGE_TAG/s/=.*$/=${ENV_SHA}/" .env
           fi
       - name: Regenerate template
-        run: make template
+        run: make template  # this does NOT update requirements correctly as main is checked out
+      - uses: dawidd6/action-download-artifact@v2.24.3
+        with:
+          workflow: dependencies_change.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: requirements
+          path: ./
       - run: git diff
       - uses: peter-evans/create-pull-request@v4.2.3
         name: Create a PR for changed env
@@ -76,20 +96,20 @@ jobs:
           commit-message: "[Bot] Update requirements and environments"
           title: "[Bot] Update requirements and environments"
           body: |
-            Updates the conda environment / docker images for PR ${{ format('#{0}', github.event.pull_request.number) }}.
+            Updates the conda environment / docker images for PR ${{ format('#{0}', needs.get_info.outputs.pullRequestNumber) }}.
             The Gitlab pipelines of this PR might need to be restarted once ${{ needs.docker.outputs.pr_url }}
             is merged/finished.
           author: pyMOR Bot <ci@pymor.org>
           labels: pr:change,infrastructure,dependencies,automerge
           delete-branch: true
-          branch: update-requirements-${{ github.event.pull_request.number }}
-          base: ${{ github.head_ref }}
-          assignees: ${{ github.event.pull_request.author.login }}
+          branch: update-requirements-${{ needs.get_info.outputs.pullRequestNumber }}
+          base: ${{ needs.get_info.outputs.sourceHeadBranch }}
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: PR Comment
         uses: thollander/actions-comment-pull-request@v2
         if: ${{ steps.create_pr.outputs.pull-request-number }}
         with:
+          pr_number: ${{ needs.get_info.outputs.pullRequestNumber }}
           comment_tag: "pr_comment_pymor"
           message: |
             Please wait for ${{ steps.create_pr.outputs.pull-request-url }} to be merged before merging this PR.

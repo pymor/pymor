@@ -11,6 +11,8 @@ from pymor.core.logger import log_levels
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.base import runmodule
 
+pytestmark = pytest.mark.builtin
+
 
 def test_logger():
     logger = NumpyMatrixOperator._logger

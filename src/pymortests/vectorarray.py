@@ -15,7 +15,6 @@ from pymor.core.config import config
 from pymor.tools.floatcmp import bounded, float_cmp
 from pymor.vectorarrays.interface import VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymortests.base import might_exceed_deadline
 from pymortests.core.pickling import assert_picklable_without_dumps_function
 
 MAX_RNG_REALIZATIONS = 30
@@ -139,7 +138,8 @@ def test_random_uniform_all(vector_array, realizations, low, high):
     if config.HAVE_DUNEGDT:
         # atm needs special casing due to norm implementation handling of large vector elements
         from pymor.bindings.dunegdt import DuneXTVectorSpace
-        assume(not isinstance(vector_array.space, DuneXTVectorSpace))
+        if isinstance(vector_array.space, DuneXTVectorSpace):
+            return
     _test_random_uniform(vector_array, realizations, low, high)
 
 
@@ -942,7 +942,6 @@ def test_append_incompatible(vector_arrays):
         c1.append(c2, remove_from_other=True)
 
 
-@might_exceed_deadline(2000)
 @pyst.given_vector_arrays(count=2, compatible=False)
 def test_axpy_incompatible(vector_arrays):
     v1, v2 = vector_arrays

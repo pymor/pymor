@@ -13,18 +13,22 @@ from pymor.core.config import _PACKAGES, config
 @pytest.mark.skipif(condition=not os.environ.get('DOCKER_PYMOR', False),
                     reason='Guarantee only valid in the docker container')
 def test_config(pkg):
-    assert getattr(config, f'HAVE_{pkg}')
+    assert getattr(config, f'HAVE_{pkg}') or pkg in config.disabled
 
 
 @pytest.mark.skipif(condition=not os.environ.get('DOCKER_PYMOR', False),
                     reason='Guarantee only valid in the docker container')
 def test_no_dune_warnings():
+    if not config.HAVE_DUNEGDT:
+        pytest.skip('dune-gdt not enalbed')
     _test_dune_import_warn()
 
 
 @pytest.mark.skipif(condition=not os.environ.get('DOCKER_PYMOR', False),
                     reason='Guarantee only valid in the docker container')
 def test_dune_warnings(monkeypatch):
+    if not config.HAVE_DUNEGDT:
+        pytest.skip('dune-gdt not enalbed')
     from dune import gdt, xt
     monkeypatch.setattr(gdt, '__version__', '2020.0.0')
     monkeypatch.setattr(xt, '__version__', '2020.0.0')

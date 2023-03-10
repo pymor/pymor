@@ -12,6 +12,8 @@ import scipy.sparse as sps
 
 from pymor.models.iosys import LTIModel, SecondOrderModel
 
+pytestmark = pytest.mark.builtin
+
 
 def _build_matrices_lti(with_D, with_E):
     A = sps.csc_matrix([[1, 2], [3, 4]])
