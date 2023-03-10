@@ -20,6 +20,6 @@ python-dotenv==0.21.0
 python-gitlab==3.12.0
 readme_renderer[md]==37.0
 rstcheck==6.1.1
-ruff==0.0.219
+ruff==0.0.242
 scikit-fem==6.0.0
 twine==4.0.2
