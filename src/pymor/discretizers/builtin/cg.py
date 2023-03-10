@@ -147,7 +147,7 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
         NI = bi.boundaries(self.boundary_type, 1) if self.boundary_type else g.boundaries(1)
         if g.dim == 1:
             I = np.zeros(self.range.dim)
-            I[NI] = self.function(g.centers(1)[NI])
+            I[NI] = self.function(g.centers(1)[NI], mu=mu)
         else:
             F = self.function(g.centers(1)[NI], mu=mu)
             q, w = line.quadrature(order=1)
@@ -852,8 +852,8 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
     boundary_info
         |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
     robin_data
-        Tuple providing two |Functions| that represent the Robin parameter and boundary
-        value function. If `None`, the resulting operator is zero.
+        Tuple (c(x), g(x)) providing two |Functions| that represent the Robin parameter
+        and boundary value function. If `None`, the resulting operator is zero.
     solver_options
         The |solver_options| for the operator.
     name
@@ -1125,7 +1125,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
             coefficients_F += list(p.robin_data[0].coefficients)
         else:
             Fi += [BoundaryL2Functional(grid, p.robin_data[0] * p.robin_data[1], boundary_info=boundary_info,
-                                        boundary_type='robin', dirichlet_clear_dofs=True)]
+                                        boundary_type='robin', dirichlet_clear_dofs=True, name='robin')]
             coefficients_F.append(1.)
 
     if p.dirichlet_data is not None and boundary_info.has_dirichlet:
