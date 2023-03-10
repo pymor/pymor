@@ -1322,7 +1322,7 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
     if preassemble:
         # m has preassembled stationary parts, whose unassembled version we get from data
         ua_m = data['unassembled_m']
-        unassembled_m = m.with_(operator=ua_m.operator, rhs=ua_m.rhs)
+        unassembled_m = m.with_(operator=ua_m.operator, rhs=ua_m.rhs, products=ua_m.products)
         data['unassembled_m'] = unassembled_m
         m = preassemble_(m)
 
