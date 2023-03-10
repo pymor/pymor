@@ -657,13 +657,15 @@ class LTIModel(Model):
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         if self.T is not None and other.T is not None:
+            T = self.T
             initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
             time_stepper = self.time_stepper
         else:
+            T = None
             initial_data = None
             time_stepper = None
         return LTIModel(A, B, C, D, E, sampling_time=self.sampling_time,
-                        T=self.T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
+                        T=T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
                         solver_options=self.solver_options)
 
     def __sub__(self, other):
@@ -692,13 +694,15 @@ class LTIModel(Model):
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         if self.T is not None and other.T is not None:
+            T = self.T
             initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
             time_stepper = self.time_stepper
         else:
+            T = None
             initial_data = None
             time_stepper = None
         return LTIModel(A, B, C, D, E, sampling_time=self.sampling_time,
-                        T=self.T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
+                        T=T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
                         solver_options=self.solver_options)
 
     def impulse_resp(self, mu=None, return_solution=False):
@@ -801,6 +805,9 @@ class LTIModel(Model):
             Returned only when `return_solution` is `True`.
         """
         assert self.T is not None
+
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
 
         # solution computation
         B_va = self.B.as_range_array(mu)
