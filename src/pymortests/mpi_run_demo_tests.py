@@ -32,8 +32,8 @@ if __name__ == '__main__':
             pass
 
         try:
-            from matplotlib import pyplot
-            pyplot.show = nop
+            from matplotlib import pyplot as plt
+            plt.show = nop
         except ImportError:
             pass
 

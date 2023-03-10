@@ -75,7 +75,7 @@ ci_requires = ['check-manifest==0.49',
                'check_reqs==1.0.0',
                # only update in lockstep with sphinx
                'docutils==0.18',
-               'ruff==0.0.219',
+               'ruff==0.0.242',
                'hypothesis[numpy,pytest]==6.56.3',
                'hypothesis==6.56.3',
                'pybind11==2.9.2',
@@ -162,7 +162,7 @@ line-length = 120
 select = ["D", "E", "F", "I", "ICN", "N", "Q", "W"]
 ignore = [
     "D10", "D404",
-    "D405", "D407", "D410", "D411", "D414", # related to 'parameters'
+    "D401", "D405", "D407", "D410", "D411", "D414", # related to 'parameters'
     "E402", "E731", "E741",
     "F722",
     "N802", "N803", "N806"]

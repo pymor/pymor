@@ -3,7 +3,7 @@
 exclude: .ci/gitlab/ci.yml
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v4.4.0
     hooks:
     -   id: trailing-whitespace
     -   id: check-yaml
@@ -15,12 +15,12 @@ repos:
     -   id: pretty-format-json
         args: [--autofix]
 - repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: 'v0.0.219'
+  rev: 'v0.0.242'
   hooks:
     - id: ruff
       args: ["--fix"]
 - repo: https://github.com/DavidAnson/markdownlint-cli2
-  rev: v0.4.0
+  rev: v0.6.0
   hooks:
   - id: markdownlint-cli2
 ci:
