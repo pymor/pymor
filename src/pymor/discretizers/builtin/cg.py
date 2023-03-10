@@ -1295,7 +1295,8 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
         raise NotImplementedError('Time-dependent Dirichlet values not supported.')
 
     m, data = discretize_stationary_cg(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
-                                       grid_type=grid_type, grid=grid, boundary_info=boundary_info)
+                                       grid_type=grid_type, grid=grid, boundary_info=boundary_info,
+                                       preassemble=preassemble)
 
     if p.initial_data.parametric:
         I = InterpolationOperator(data['grid'], p.initial_data)
@@ -1319,7 +1320,10 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
                           num_values=num_values, name=f'{p.name}_CG')
 
     if preassemble:
-        data['unassembled_m'] = m
+        # m has preassembled stationary parts, whose unassembled version we get from data
+        ua_m = data['unassembled_m']
+        unassembled_m = m.with_(operator=ua_m.operator, rhs=ua_m.rhs)
+        data['unassembled_m'] = unassembled_m
         m = preassemble_(m)
 
     return m, data
