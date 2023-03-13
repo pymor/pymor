@@ -676,13 +676,20 @@ class LTIModel(Model):
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         if self.T is not None and other.T is not None:
+            if type(self.time_stepper) != type(other.time_stepper):  # noqa
+                raise TypeError('The time-steppers are not of the same type.')
+            T = min(self.T, other.T)
             initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
             time_stepper = self.time_stepper
+            if (hasattr(self.time_stepper, 'nt') and hasattr(other.time_stepper, 'nt')
+                    and self.T / self.time_stepper.nt > other.T / other.time_stepper.nt):
+                time_stepper = other.time_stepper
         else:
+            T = None
             initial_data = None
             time_stepper = None
         return LTIModel(A, B, C, D, E, sampling_time=self.sampling_time,
-                        T=self.T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
+                        T=T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
                         solver_options=self.solver_options)
 
     def __sub__(self, other):
@@ -711,13 +718,20 @@ class LTIModel(Model):
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         if self.T is not None and other.T is not None:
+            if type(self.time_stepper) != type(other.time_stepper):  # noqa
+                raise TypeError('The time-steppers are not of the same type.')
+            T = min(self.T, other.T)
             initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
             time_stepper = self.time_stepper
+            if (hasattr(self.time_stepper, 'nt') and hasattr(other.time_stepper, 'nt')
+                    and self.T / self.time_stepper.nt > other.T / other.time_stepper.nt):
+                time_stepper = other.time_stepper
         else:
+            T = None
             initial_data = None
             time_stepper = None
         return LTIModel(A, B, C, D, E, sampling_time=self.sampling_time,
-                        T=self.T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
+                        T=T, initial_data=initial_data, time_stepper=time_stepper, num_values=self.num_values,
                         solver_options=self.solver_options)
 
     def impulse_resp(self, mu=None, return_solution=False):
@@ -820,6 +834,9 @@ class LTIModel(Model):
             Returned only when `return_solution` is `True`.
         """
         assert self.T is not None
+
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
 
         # solution computation
         B_va = self.B.as_range_array(mu)
@@ -3192,7 +3209,7 @@ class BilinearModel(Model):
         return string
 
 
-def _lti_to_poles_b_c(lti):
+def _lti_to_poles_b_c(lti, mu=None):
     """Compute poles and residues.
 
     Parameters
@@ -3200,6 +3217,8 @@ def _lti_to_poles_b_c(lti):
     lti
         |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|.
         The D operator is ignored.
+    mu
+        |Parameter values|.
 
     Returns
     -------
@@ -3210,14 +3229,14 @@ def _lti_to_poles_b_c(lti):
     c
         |NumPy array| of shape `(lti.order, lti.dim_output)`.
     """
-    A = to_matrix(lti.A, format='dense')
-    B = to_matrix(lti.B, format='dense')
-    C = to_matrix(lti.C, format='dense')
+    A = to_matrix(lti.A, format='dense', mu=mu)
+    B = to_matrix(lti.B, format='dense', mu=mu)
+    C = to_matrix(lti.C, format='dense', mu=mu)
     if isinstance(lti.E, IdentityOperator):
         poles, X = spla.eig(A)
         EX = X
     else:
-        E = to_matrix(lti.E, format='dense')
+        E = to_matrix(lti.E, format='dense', mu=mu)
         poles, X = spla.eig(A, E)
         EX = E @ X
     b = spla.solve(EX, B)

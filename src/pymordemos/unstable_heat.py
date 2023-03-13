@@ -8,6 +8,7 @@ import numpy as np
 import scipy.sparse as sps
 from typer import Argument, run
 
+from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.core.logger import set_log_levels
 from pymor.models.iosys import LTIModel
 from pymor.reductors.bt import FDBTReductor
@@ -64,18 +65,12 @@ def main(
     C[0, -1] = 1
 
     # LTI system
-    lti = LTIModel.from_matrices(A, B, C, E=E)
-
-    # Figure
-    fig = plt.figure(figsize=(12, 5), constrained_layout=True)
-    subfigs = fig.subfigures(1, 2)
-    fig.suptitle('Full-order model')
+    lti = LTIModel.from_matrices(A, B, C, E=E,
+                                 T=0.1, time_stepper=ImplicitEulerTimeStepper(100))
 
     # System properties
-    w = np.logspace(-1, 3, 100)
     w = (1e-1, 1e3)
-    fom_properties(lti, w, stable=False, fig_bode=subfigs[0], fig_poles=subfigs[1])
-    plt.show()
+    fom_properties(lti, w, stable_lti=False)
 
     # Model order reduction
     run_mor_method(lti, w, FDBTReductor(lti), 'FDBT', r, stable=False, tol=1e-5)

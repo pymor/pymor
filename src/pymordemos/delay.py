@@ -32,10 +32,8 @@ def main(
     tf = TransferFunction(1, 1, H, dH)
 
     # Bode plot
-    fig = plt.figure(constrained_layout=True)
     w = (1e-1, 1e3)
-    fom_properties(tf, w, fig_bode=fig)
-    plt.show()
+    fom_properties(tf, w)
 
     # Transfer function IRKA (TF-IRKA)
     run_mor_method(tf, w, TFIRKAReductor(tf), 'TF-IRKA', r, maxit=1000)

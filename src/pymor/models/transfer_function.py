@@ -424,7 +424,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         else:
             return norm, norm_relerr, quad_out[2:]
 
-    def h2_inner(self, lti):
+    def h2_inner(self, lti, mu=None):
         """Compute H2 inner product with an |LTIModel|.
 
         Uses the inner product formula based on the pole-residue form
@@ -436,6 +436,8 @@ class TransferFunction(CacheableObject, ParametricObject):
         lti
             |LTIModel| consisting of |Operators| that can be converted to |NumPy arrays|.
             The D operator is ignored.
+        mu
+            |Parameter values|.
 
         Returns
         -------
@@ -445,8 +447,12 @@ class TransferFunction(CacheableObject, ParametricObject):
         from pymor.models.iosys import LTIModel, _lti_to_poles_b_c
         assert isinstance(lti, LTIModel)
 
-        poles, b, c = _lti_to_poles_b_c(lti)
-        inner = sum(c[i].dot(self.eval_tf(-poles[i]).dot(b[i]))
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
+
+        poles, b, c = _lti_to_poles_b_c(lti, mu=mu)
+        inner = sum(c[i].dot(self.eval_tf(-poles[i], mu=mu).dot(b[i]))
                     for i in range(len(poles)))
         inner = inner.conjugate()
 
