@@ -17,6 +17,9 @@ authors:
   - family-names: Balicki
     given-names: Linus
     orcid: https://orcid.org/0000-0002-8901-2889
+  - family-names: Kleikamp
+    given-names: Hendrik
+    orcid: https://orcid.org/0000-0003-1264-5941
 cff-version: "1.2.0"
 preferred-citation:
   title: pyMOR -- Generic Algorithms and Interfaces for Model Order Reduction
