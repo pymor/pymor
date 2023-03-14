@@ -17,6 +17,9 @@
     },
     {
       "pattern": "^https://www.researchgate.net"
+    },
+    {
+      "pattern": "^https://epubs.siam.org"
     }
   ]
 }
