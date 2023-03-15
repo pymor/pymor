@@ -1,3 +1,7 @@
+# This file is part of the pyMOR project (https://www.pymor.org).
+# Copyright pyMOR developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+
 from pymor.models.iosys import PHLTIModel
 from pymor.reductors.h2 import GenericIRKAReductor, OneSidedIRKAReductor
 from pymor.reductors.ph.basic import PHLTIPGReductor
