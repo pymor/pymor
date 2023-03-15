@@ -11,7 +11,7 @@ class PHLTIPGReductor(ProjectionBasedReductor):
     fom
         The full order |PHLTIModel| to reduce.
     V
-        The basis of the ansatz space.
+        The basis of the trail space.
     E_biorthonormal
         If `True`, no `E` matrix will be assembled for the reduced |Model|.
         Set to `True` if `W` and `V` are biorthonormal w.r.t. `fom.E`.
