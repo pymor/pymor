@@ -306,7 +306,7 @@ class ColorBarWidget(QOpenGLWidget):
             gl.glVertex(0.5, (bar_height*y + bar_start), y)
         gl.glEnd()
         p.endNativePainting()
-        p.drawText(int(round((self.width() - self.vmax_width)/2)), int(round(self.text_ascent)), self.vmax_str)
+        p.drawText(int(round((self.width() - self.vmax_width)/2)), int(round(self.text_ascent)), self.vmin_str)
         p.drawText(int(round((self.width() - self.vmin_width)/2)),
-                   int(round(self.height() - self.text_height + self.text_ascent)), self.vmin_str)
+                   int(round(self.height() - self.text_height + self.text_ascent)), self.vmax_str)
         p.end()

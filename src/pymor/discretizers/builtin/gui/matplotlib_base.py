@@ -50,7 +50,7 @@ class MatplotlibPatchAxes:
             orientation = 'horizontal'
         else:
             orientation = 'vertical'
-        ax.figure.colorbar(self.p, ax=ax, orientation=orientation)
+        self.cbar = ax.figure.colorbar(self.p, ax=ax, orientation=orientation)
 
     def set(self, U, vmin, vmax):
         if self.codim == 2:
@@ -60,6 +60,7 @@ class MatplotlibPatchAxes:
         else:
             self.p.set_array(np.tile(U, 2))
         self.p.set_clim(vmin, vmax)
+        self.cbar.mappable.set_clim(vmin, vmax)
         return (self.p,)
 
 
