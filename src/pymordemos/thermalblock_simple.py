@@ -60,6 +60,11 @@ def main(
     # select reduction algorithm with error estimator
     #################################################
     coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
+    from pymor.parameters.functionals import LBSuccessiveConstraintsFunctional
+    bounds = [(.1, 1.)] * (len(fom.operator.operators) - 1)
+    coercivity_constants = None
+    coercivity_estimator = LBSuccessiveConstraintsFunctional(fom.operator, parameter_space.sample_randomly(100), M=5,
+                                                             bounds=bounds, coercivity_constants=coercivity_constants)
     reductor = CoerciveRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator,
                                   check_orthonormality=False)
 
