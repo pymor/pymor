@@ -35,7 +35,7 @@ class LoewnerReductor(BasicObject):
     conjugate
         Whether to guarantee realness of reduced |LTIModel| by keeping complex conjugates in the
         same partitioning or not. If `True` will automatically generate conjugate data if necessary.
-    MIMO_handling
+    mimo_handling
         Option indicating how to treat MIMO systems. Can be:
 
         - `'random'` for using random tangential directions.
@@ -44,7 +44,7 @@ class LoewnerReductor(BasicObject):
           directions.
     """
 
-    def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, MIMO_handling='random'):
+    def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, mimo_handling='random'):
         self.__auto_init(locals())
         self.loewner_svds = None
 
@@ -67,7 +67,7 @@ class LoewnerReductor(BasicObject):
             Reduced |LTIModel|.
         """
         L, Ls, V, W = loewner_quadruple(self.s, self.Hs, partitioning=self.partitioning, ordering=self.ordering,
-                                        conjugate=self.conjugate, MIMO_handling=self.MIMO_handling)
+                                        conjugate=self.conjugate, mimo_handling=self.mimo_handling)
 
         if self.loewner_svds is None:
             LhLs = np.hstack([L, Ls])
@@ -78,8 +78,8 @@ class LoewnerReductor(BasicObject):
         else:
             Y, S1, S2, Xh = self.loewner_svds
 
-        r1 = len(S1[S1 > tol])
-        r2 = len(S2[S2 > tol])
+        r1 = len(S1[S1/S1[0] > tol])
+        r2 = len(S2[S2/S2[0] > tol])
         if r is None or r > r1 or r > r2:
             if r1 != r2:
                 self.logger.warning(f'Mismatch in numerical rank of stacked Loewner matrices ({r1} and {r2}).'
@@ -165,7 +165,7 @@ def _partition_frequencies(s, Hs, partitioning='even-odd', ordering='regular', c
             return (idx_split[0], idx_split[1])
 
 
-def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, MIMO_handling='random'):
+def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, mimo_handling='random'):
     r"""Constructs a Loewner quadruple as |NumPy arrays|.
 
     The Loewner quadruple :cite:`ALI17`
@@ -195,7 +195,7 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
     conjugate
         Whether to guarantee realness of reduced |LTIModel| by keeping complex conjugates in the
         same partitioning or not. If `True` will automatically generate conjugate data if necessary.
-    MIMO_handling
+    mimo_handling
         Option indicating how to treat MIMO systems. Can be:
 
         - `'random'` for using random tangential directions.
@@ -270,7 +270,7 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
         V = Hs[ip][:, np.newaxis]
         W = Hs[jp][np.newaxis]
     else:
-        if MIMO_handling == 'full':
+        if mimo_handling == 'full':
             L = Hs[ip][:, np.newaxis] - Hs[jp][np.newaxis]
             L /= (s[ip][:, np.newaxis] - s[jp][np.newaxis])[:, :, np.newaxis, np.newaxis]
             Ls = (s[ip, np.newaxis, np.newaxis] * Hs[ip])[:, np.newaxis] \
@@ -279,13 +279,13 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
             V = Hs[ip][:, np.newaxis]
             W = Hs[jp][np.newaxis]
         else:
-            if MIMO_handling == 'random':
+            if mimo_handling == 'random':
                 rng = new_rng(0)
                 ltd = rng.normal(size=(len(ip), dim_output))
                 rtd = rng.normal(size=(dim_input, len(jp)))
-            elif len(MIMO_handling) == 2:
-                ltd = MIMO_handling[0]
-                rtd = MIMO_handling[1]
+            elif len(mimo_handling) == 2:
+                ltd = mimo_handling[0]
+                rtd = mimo_handling[1]
                 assert ltd.shape == (len(ip), dim_output)
                 assert rtd.shape == (dim_input, len(jp))
             L = np.empty((len(ip), len(jp)), dtype=np.complex_)
@@ -328,7 +328,7 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
         TR = TR / np.sqrt(2)
         TL = TL / np.sqrt(2)
 
-        if MIMO_handling == 'full':
+        if mimo_handling == 'full':
             L = np.tensordot(TL, L, axes=(1, 0))
             L = np.tensordot(L, TR.conj().T, axes=(1, 0))
             L = L.real
@@ -345,7 +345,7 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
             V = (TL @ V).real
             W = (W @ TR.conj().T).real
 
-    if MIMO_handling == 'full':
+    if mimo_handling == 'full':
         L = np.reshape(L, (len(ip)*dim_output, len(jp)*dim_input))
         Ls = np.reshape(Ls, (len(ip)*dim_output, len(jp)*dim_input))
         V = np.reshape(V, (len(ip)*dim_output, dim_input))
