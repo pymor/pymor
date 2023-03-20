@@ -57,7 +57,7 @@ of {math}`\eqref{eq:primal}` to reduce the computational costs of
 an evaluation of {math}`J(u_{\mu}, \mu)`.
 
 If there exists a unique solution {math}`u_{\mu}` for all
-{math}`\mu \in \mathcal{P}`, we can rewrite (P) by using the so-called
+{math}`\mu \in \mathcal{P}`, we can rewrite ({math}`\textrm{P}`) by using the so-called
 reduced objective functional {math}`\mathcal{J}(\mu):= J(u_{\mu}, \mu)`
 leading to the equivalent problem: Find a solution of
 
@@ -546,7 +546,7 @@ functional by
 \begin{align}
 d_{\mu_i} \mathcal{J}(\mu) &= \partial_{\mu_i} J(u_{\mu}, \mu) + \partial_u J(u_{\mu}, \mu)[d_{\mu_i} u_{\mu}] \\
    &=   \partial_{\mu_i} J(u_{\mu}, \mu) + a_\mu(d_{\mu_i} u_{\mu}, p_\mu) \\
-   &=   \partial_{\mu_i} J(u_{\mu}, \mu) + \partial_{\mu_i} r_\mu^{\text{pr}}(d_{\mu_i} u_{\mu})[p_\mu]
+   &=   \partial_{\mu_i} J(u_{\mu}, \mu) + \partial_{\mu_i} r_\mu^{\text{pr}}(u_{\mu})[p_\mu]
 \end{align}
 ```
 
@@ -768,7 +768,7 @@ report(opt_along_path_adaptively_result, opt_along_path_adaptively_minimization_
 ```
 
 ```{code-cell}
-:tags: [hide-code, hide-output]
+:tags: [remove-cell]
 
 assert fom_result.nit == 7
 assert opt_along_path_result.nit == 7
@@ -804,7 +804,7 @@ For recent research on combining trust-region methods with model reduction for
 PDE-constrained optimization problems we refer to
 [YM13](<https://epubs.siam.org/doi/abs/10.1137/120869171>),
 [QGVW17](<https://epubs.siam.org/doi/abs/10.1137/16M1081981>) and
-[KMSOV20](<https://arxiv.org/abs/2006.09297>) where for the latter a pyMOR
+[KMSOV20](<https://doi.org/10.1051/m2an/2021019>) where for the latter a pyMOR
 implementation is available as supplementary material.
 
 Download the code:

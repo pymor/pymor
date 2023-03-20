@@ -298,10 +298,10 @@ ignored.
 Now, let us consider the Neumann data function:
 
 ```{math}
-g_N((x_0, x_1), \mu_{neum}) := -\cos(\pi \cdot x_0)^2 \cdot\mu_{neum}
+g_N((x_0, x_1), \mu_{\text{neum}}) := -\cos(\pi \cdot x_0)^2 \cdot\mu_{\text{neum}}
 ```
 
-with a single {{ Parameter }} {math}`\mu_{neum} \in \mathbb{R}`.
+with a single {{ Parameter }} {math}`\mu_{\text{neum}} \in \mathbb{R}`.
 
 In pyMOR, {{ parameter_values }} are specified as a dictionary of one-dimensional
 {{ NumPy_arrays }}. Each value in the dictionary must have a correct size specified by the
@@ -361,7 +361,7 @@ m.visualize(m.solve(-100))
 
 Next we also want to parameterize the diffusivity in the
 {math}`K \times K` circular disks by a scalar factor
-{math}`\mu_{diffu}`. To this end we define:
+{math}`\mu_{\text{diffu}}`. To this end we define:
 
 ```{code-cell}
 diffusion = ExpressionFunction(
@@ -404,7 +404,7 @@ m.visualize(m.solve([1, -1]))
 
 For the generation of online-efficient reduced-order models, it is often
 crucial that data functions are parameter separable. We call a
-parametric function `f(x, \mu)` parameter separable if it admits a
+parametric function {math}`f(x, \mu)` parameter separable if it admits a
 decomposition
 
 ```{math}

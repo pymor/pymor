@@ -357,7 +357,7 @@ The `0` in `h1_0_semi_product` refers to the fact that rows and columns of
 Dirichlet boundary DOFs have been cleared in the matrix of the Operator to
 make it invertible. This is important for being able to compute Riesz
 representatives w.r.t. this inner product (required for a posteriori
-estimation of the ROM error). If you want to compute the H1 semi-norm of a
+estimation of the ROM error). If you want to compute the {math}`H^1` semi-norm of a
 function that does not vanish at the Dirichlet boundary, use
 `fom.h1_semi_product`.
 ```

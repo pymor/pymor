@@ -89,6 +89,8 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
         plt.rcParams['animation.html'] = 'jshtml'
         delay_between_frames = 200  # ms
 
+        fig.patch.set_alpha(0.0)
+
         def animate(i):
             for p, u, vmin, vmax in zip(plots, U, vmins, vmaxs):
                 p.set(u[i], vmin=vmin[i], vmax=vmax[i])
@@ -164,6 +166,8 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     if do_animation:
         plt.rcParams['animation.html'] = 'jshtml'
         delay_between_frames = 200  # ms
+
+        fig.patch.set_alpha(0.0)
 
         def animate(ind):
             plot.set([u[ind] for u in U],
