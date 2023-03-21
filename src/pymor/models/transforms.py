@@ -37,13 +37,14 @@ class MoebiusTransformation(ImmutableObject):
         assert coefficients.shape == (4,)
         assert not np.array_equal(coefficients[0]*coefficients[3], coefficients[1]*coefficients[2])
         kappa = coefficients[0]*coefficients[3] -  coefficients[1]*coefficients[2]
+        factor = np.sqrt(np.abs(kappa)) * np.exp(-1j * np.angle(kappa))
 
         if normalize:
             if np.isrealobj(coefficients):
                 coefficients = np.asarray(coefficients, dtype=float)
-                coefficients /= np.sqrt(np.abs(kappa)) / np.sign(coefficients[0])
-            else:
-                coefficients /= np.sqrt(np.abs(kappa)) / np.exp(-1j * np.angle(coefficients[0]))
+                if np.any(coefficients.imag) != 0:
+                    self.logger.warning('Discarding non-zero imaginary part!')
+            coefficients /= factor.real
 
         self.__auto_init(locals())
 

@@ -36,7 +36,6 @@ from pymor.operators.block import (
 )
 from pymor.operators.constructions import (
     IdentityOperator,
-    InverseOperator,
     LincombOperator,
     LinearInputOperator,
     LowRankOperator,
