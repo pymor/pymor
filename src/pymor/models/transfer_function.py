@@ -10,7 +10,7 @@ import scipy.linalg as spla
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject, cached
 from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator, BlockOperator, BlockRowOperator
-from pymor.parameters.base import Mu, ParametricObject
+from pymor.parameters.base import Mu, Parameters, ParametricObject
 from pymor.tools.plot import adaptive
 
 
@@ -470,7 +470,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         dtf = (lambda s, mu=None: self.eval_dtf(s, mu=mu) + other.eval_dtf(s, mu=mu)
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf)
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
 
     __radd__ = __add__
 
@@ -489,7 +489,7 @@ class TransferFunction(CacheableObject, ParametricObject):
         dtf = (lambda s, mu=None: other.eval_dtf(s, mu=mu) - self.eval_dtf(s, mu=mu)
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf)
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
 
     def __neg__(self):
         tf = lambda s, mu=None: -self.eval_tf(s, mu=mu)
@@ -508,7 +508,7 @@ class TransferFunction(CacheableObject, ParametricObject):
                                    + self.eval_tf(s, mu=mu) @ other.eval_dtf(s, mu=mu))
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf)
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
 
     def __rmul__(self, other):
         assert isinstance(other, TransferFunction) or hasattr(other, 'transfer_function')
@@ -522,7 +522,7 @@ class TransferFunction(CacheableObject, ParametricObject):
                                    + other.eval_tf(s, mu=mu) @ self.eval_dtf(s, mu=mu))
                if hasattr(other, 'eval_dtf')
                else None)
-        return self.with_(tf=tf, dtf=dtf)
+        return self.with_(tf=tf, dtf=dtf, parameters=Parameters.of(self, other))
 
 
 class FactorizedTransferFunction(TransferFunction):
@@ -635,7 +635,7 @@ class FactorizedTransferFunction(TransferFunction):
               if self.dD is not None and other.dD is not None
               else None)
 
-        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD)
+        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD, parameters=Parameters.of(self, other))
 
     __radd__ = __add__
 
@@ -676,7 +676,7 @@ class FactorizedTransferFunction(TransferFunction):
               if self.dD is not None and other.dD is not None
               else None)
 
-        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD)
+        return self.with_(K=K, B=B, C=C, D=D, dK=dK, dB=dB, dC=dC, dD=dD, parameters=Parameters.of(self, other))
 
     def __rmul__(self, other):
         if not hasattr(other, 'transfer_function'):
