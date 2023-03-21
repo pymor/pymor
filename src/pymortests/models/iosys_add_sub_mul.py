@@ -2,17 +2,21 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from itertools import chain
+
 import numpy as np
 import pytest
 
 from pymor.models.iosys import LinearDelayModel, LTIModel, PHLTIModel, SecondOrderModel
 from pymor.models.transfer_function import FactorizedTransferFunction, TransferFunction
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.parameters.base import Mu
+from pymor.parameters.functionals import ProjectionParameterFunctional
 
 pytestmark = pytest.mark.builtin
 
 
-type_list = [
+name_list = [
     'LTIModel',
     'SecondOrderModel',
     'LinearDelayModel',
@@ -23,28 +27,44 @@ type_list = [
 sampling_time_list = [0, 1]
 
 
-def get_model(name, sampling_time):
+def get_model(name, sampling_time, parametric):
     if name == 'LTIModel':
-        A = np.array([[-1]])
-        B = np.array([[1]])
-        C = np.array([[1]])
-        D = np.array([[1]])
-        return LTIModel.from_matrices(A, B, C, D, sampling_time=sampling_time)
+        if not parametric:
+            A = NumpyMatrixOperator(np.array([[-1]]))
+        else:
+            A = (NumpyMatrixOperator(np.array([[-1]]))
+                 + ProjectionParameterFunctional('mu') * NumpyMatrixOperator(np.eye(1)))
+        B = NumpyMatrixOperator(np.array([[1]]))
+        C = NumpyMatrixOperator(np.array([[1]]))
+        D = NumpyMatrixOperator(np.array([[1]]))
+        return LTIModel(A, B, C, D, sampling_time=sampling_time)
     elif name == 'PHLTIModel':
-        J = np.array([[0]])
-        R = np.array([[1]])
-        G = np.array([[1]])
-        return PHLTIModel.from_matrices(J, R, G)
+        J = NumpyMatrixOperator(np.array([[0]]))
+        if not parametric:
+            R = NumpyMatrixOperator(np.array([[1]]))
+        else:
+            R = (NumpyMatrixOperator(np.array([[1]]))
+                 + ProjectionParameterFunctional('mu') * NumpyMatrixOperator(np.eye(1)))
+        G = NumpyMatrixOperator(np.array([[1]]))
+        return PHLTIModel(J, R, G)
     elif name == 'SecondOrderModel':
-        M = np.array([[1]])
-        E = np.array([[1]])
-        K = np.array([[1]])
-        B = np.array([[1]])
-        C = np.array([[1]])
-        D = np.array([[1]])
-        return SecondOrderModel.from_matrices(M, E, K, B, C, D=D, sampling_time=sampling_time)
+        M = NumpyMatrixOperator(np.array([[1]]))
+        E = NumpyMatrixOperator(np.array([[1]]))
+        if not parametric:
+            K = NumpyMatrixOperator(np.array([[1]]))
+        else:
+            K = (NumpyMatrixOperator(np.array([[1]]))
+                 + ProjectionParameterFunctional('mu') * NumpyMatrixOperator(np.eye(1)))
+        B = NumpyMatrixOperator(np.array([[1]]))
+        C = NumpyMatrixOperator(np.array([[1]]))
+        D = NumpyMatrixOperator(np.array([[1]]))
+        return SecondOrderModel(M, E, K, B, C, D=D, sampling_time=sampling_time)
     elif name == 'LinearDelayModel':
-        A = NumpyMatrixOperator(np.array([[-1]]))
+        if not parametric:
+            A = NumpyMatrixOperator(np.array([[-1]]))
+        else:
+            A = (NumpyMatrixOperator(np.array([[-1]]))
+                 + ProjectionParameterFunctional('mu') * NumpyMatrixOperator(np.eye(1)))
         Ad = NumpyMatrixOperator(np.array([[-0.1]]))
         B = NumpyMatrixOperator(np.array([[1]]))
         C = NumpyMatrixOperator(np.array([[1]]))
@@ -52,11 +72,19 @@ def get_model(name, sampling_time):
         tau = 1
         return LinearDelayModel(A, (Ad,), (tau,), B, C, D, sampling_time=sampling_time)
     elif name == 'TransferFunction':
-        H = lambda s: np.array([[1 / (s + 1)]])
-        dH = lambda s: np.array([[-1 / (s + 1)**2]])
-        return TransferFunction(1, 1, H, dH, sampling_time=sampling_time)
+        if not parametric:
+            H = lambda s: np.array([[1 / (s + 1)]])
+            dH = lambda s: np.array([[-1 / (s + 1)**2]])
+        else:
+            H = lambda s, mu: np.array([[1 / (s + 1 + mu['mu'][0])]])
+            dH = lambda s, mu: np.array([[-1 / (s + 1 + mu['mu'][0])**2]])
+        return TransferFunction(1, 1, H, dH, sampling_time=sampling_time, parameters={'mu': 1} if parametric else {})
     elif name == 'FactorizedTransferFunction':
-        K = lambda s: NumpyMatrixOperator(np.array([[s + 1]]))
+        if not parametric:
+            K = lambda s: NumpyMatrixOperator(np.array([[s + 1]]))
+        else:
+            K = lambda s: (NumpyMatrixOperator(np.array([[s + 1]]))
+                           + ProjectionParameterFunctional('mu') * NumpyMatrixOperator(np.eye(1)))
         B = lambda s: NumpyMatrixOperator(np.array([[1]]))
         C = lambda s: NumpyMatrixOperator(np.array([[1]]))
         D = lambda s: NumpyMatrixOperator(np.array([[1]]))
@@ -64,7 +92,8 @@ def get_model(name, sampling_time):
         dB = lambda s: NumpyMatrixOperator(np.array([[0]]))
         dC = lambda s: NumpyMatrixOperator(np.array([[0]]))
         dD = lambda s: NumpyMatrixOperator(np.array([[0]]))
-        return FactorizedTransferFunction(1, 1, K, B, C, D, dK, dB, dC, dD, sampling_time=sampling_time)
+        return FactorizedTransferFunction(1, 1, K, B, C, D, dK, dB, dC, dD, sampling_time=sampling_time,
+                                          parameters={'mu': 1} if parametric else {})
 
 
 def expected_return_type(m1, m2):
@@ -86,116 +115,134 @@ def get_tf(m):
     return m.transfer_function
 
 
-def assert_tf_add(m1, m2, m):
+def get_models_mu(m1, m2, m, parametric):
     m1 = get_tf(m1)
     m2 = get_tf(m2)
     m = get_tf(m)
+    mu = Mu(mu=0) if parametric else None
+    return m1, m2, m, mu
+
+
+def assert_tf_add(m1, m2, m, parametric):
+    m1, m2, m, mu = get_models_mu(m1, m2, m, parametric)
     for s in (0, 1j):
-        assert np.allclose(m.eval_tf(s), m1.eval_tf(s) + m2.eval_tf(s))
-        assert np.allclose(m.eval_dtf(s), m1.eval_dtf(s) + m2.eval_dtf(s))
+        assert np.allclose(m.eval_tf(s, mu=mu),
+                           m1.eval_tf(s, mu=mu) + m2.eval_tf(s, mu=mu))
+        assert np.allclose(m.eval_dtf(s, mu=mu),
+                           m1.eval_dtf(s, mu=mu) + m2.eval_dtf(s, mu=mu))
 
 
-def assert_tf_sub(m1, m2, m):
-    m1 = get_tf(m1)
-    m2 = get_tf(m2)
-    m = get_tf(m)
+def assert_tf_sub(m1, m2, m, parametric):
+    m1, m2, m, mu = get_models_mu(m1, m2, m, parametric)
     for s in (0, 1j):
-        assert np.allclose(m.eval_tf(s), m1.eval_tf(s) - m2.eval_tf(s))
-        assert np.allclose(m.eval_dtf(s), m1.eval_dtf(s) - m2.eval_dtf(s))
+        assert np.allclose(m.eval_tf(s, mu=mu),
+                           m1.eval_tf(s, mu=mu) - m2.eval_tf(s, mu=mu))
+        assert np.allclose(m.eval_dtf(s, mu=mu),
+                           m1.eval_dtf(s, mu=mu) - m2.eval_dtf(s, mu=mu))
 
 
-def assert_tf_mul(m1, m2, m):
-    m1 = get_tf(m1)
-    m2 = get_tf(m2)
-    m = get_tf(m)
+def assert_tf_mul(m1, m2, m, parametric):
+    m1, m2, m, mu = get_models_mu(m1, m2, m, parametric)
     for s in (0, 1j):
-        assert np.allclose(m.eval_tf(s),
-                           m1.eval_tf(s) @ m2.eval_tf(s))
-        assert np.allclose(m.eval_dtf(s),
-                           m1.eval_dtf(s) @ m2.eval_tf(s) + m1.eval_tf(s) @ m2.eval_dtf(s))
+        assert np.allclose(m.eval_tf(s, mu=mu),
+                           m1.eval_tf(s, mu=mu) @ m2.eval_tf(s, mu=mu))
+        assert np.allclose(m.eval_dtf(s, mu=mu),
+                           m1.eval_dtf(s, mu=mu) @ m2.eval_tf(s, mu=mu) + m1.eval_tf(s, mu=mu) @ m2.eval_dtf(s, mu=mu))
 
 
-@pytest.mark.parametrize('p1', type_list)
-@pytest.mark.parametrize('p2', type_list)
+@pytest.mark.parametrize('param2', [False, True])
+@pytest.mark.parametrize('param1', [False, True])
 @pytest.mark.parametrize('sampling_time', sampling_time_list)
-def test_add(p1, p2, sampling_time):
-    m1 = get_model(p1, sampling_time)
-    m2 = get_model(p2, sampling_time)
+@pytest.mark.parametrize('n2', name_list)
+@pytest.mark.parametrize('n1', name_list)
+def test_add(n1, n2, sampling_time, param1, param2):
+    m1 = get_model(n1, sampling_time, param1)
+    m2 = get_model(n2, sampling_time, param2)
     m = m1 + m2
     assert type(m) is expected_return_type(m1, m2)
-    assert_tf_add(m1, m2, m)
+    assert_tf_add(m1, m2, m, param1 or param2)
 
 
-@pytest.mark.parametrize('p1', type_list)
-@pytest.mark.parametrize('p2', type_list)
+@pytest.mark.parametrize('param2', [False, True])
+@pytest.mark.parametrize('param1', [False, True])
 @pytest.mark.parametrize('sampling_time', sampling_time_list)
-def test_sub(p1, p2, sampling_time):
-    m1 = get_model(p1, sampling_time)
-    m2 = get_model(p2, sampling_time)
+@pytest.mark.parametrize('n2', name_list)
+@pytest.mark.parametrize('n1', name_list)
+def test_sub(n1, n2, sampling_time, param1, param2):
+    m1 = get_model(n1, sampling_time, param1)
+    m2 = get_model(n2, sampling_time, param2)
     m = m1 - m2
     assert type(m) is expected_return_type(m1, m2)
-    assert_tf_sub(m1, m2, m)
+    assert_tf_sub(m1, m2, m, param1 or param2)
 
 
-@pytest.mark.parametrize('p1', type_list)
-@pytest.mark.parametrize('p2', type_list)
+@pytest.mark.parametrize('param2', [False, True])
+@pytest.mark.parametrize('param1', [False, True])
 @pytest.mark.parametrize('sampling_time', sampling_time_list)
-def test_mul(p1, p2, sampling_time):
-    m1 = get_model(p1, sampling_time)
-    m2 = get_model(p2, sampling_time)
+@pytest.mark.parametrize('n2', name_list)
+@pytest.mark.parametrize('n1', name_list)
+def test_mul(n1, n2, sampling_time, param1, param2):
+    m1 = get_model(n1, sampling_time, param1)
+    m2 = get_model(n2, sampling_time, param2)
     m = m1 * m2
     assert type(m) is expected_return_type(m1, m2)
-    assert_tf_mul(m1, m2, m)
+    assert_tf_mul(m1, m2, m, param1 or param2)
 
 
-@pytest.mark.parametrize('p', type_list + ['PHLTIModel'])
-@pytest.mark.parametrize('ph_first', [True, False])
-def test_add_ph(p, ph_first):
+@pytest.mark.parametrize('param2', [False, True])
+@pytest.mark.parametrize('param1', [False, True])
+@pytest.mark.parametrize('n,ph_first', chain(((n, True) for n in name_list + ['PHLTIModel']),
+                                             ((n, False) for n in name_list)))
+def test_add_ph(n, ph_first, param1, param2):
     if ph_first:
-        m1 = get_model('PHLTIModel', 0)
-        m2 = get_model(p, 0)
+        m1 = get_model('PHLTIModel', 0, param1)
+        m2 = get_model(n, 0, param2)
     else:
-        m1 = get_model(p, 0)
-        m2 = get_model('PHLTIModel', 0)
+        m1 = get_model(n, 0, param1)
+        m2 = get_model('PHLTIModel', 0, param2)
     m = m1 + m2
-    if p == 'PHLTIModel':
+    if n == 'PHLTIModel':
         assert type(m) is PHLTIModel
-    elif p == 'LTIModel' or p == 'SecondOrderModel':
+    elif n == 'LTIModel' or n == 'SecondOrderModel':
         assert type(m) is LTIModel
     else:
-        assert m.__class__.__name__ == p
-    assert_tf_add(m1, m2, m)
+        assert m.__class__.__name__ == n
+    assert_tf_add(m1, m2, m, param1 or param2)
 
 
-@pytest.mark.parametrize('p', type_list + ['PHLTIModel'])
-@pytest.mark.parametrize('ph_first', [True, False])
-def test_sub_ph(p, ph_first):
+@pytest.mark.parametrize('param2', [False, True])
+@pytest.mark.parametrize('param1', [False, True])
+@pytest.mark.parametrize('n,ph_first', chain(((n, True) for n in name_list + ['PHLTIModel']),
+                                             ((n, False) for n in name_list)))
+def test_sub_ph(n, ph_first, param1, param2):
     if ph_first:
-        m1 = get_model('PHLTIModel', 0)
-        m2 = get_model(p, 0)
+        m1 = get_model('PHLTIModel', 0, param1)
+        m2 = get_model(n, 0, param2)
     else:
-        m1 = get_model(p, 0)
-        m2 = get_model('PHLTIModel', 0)
+        m1 = get_model(n, 0, param1)
+        m2 = get_model('PHLTIModel', 0, param2)
     m = m1 - m2
-    if p in ('PHLTIModel', 'LTIModel', 'SecondOrderModel'):
+    if n in ('PHLTIModel', 'LTIModel', 'SecondOrderModel'):
         assert type(m) is LTIModel
     else:
-        assert m.__class__.__name__ == p
-    assert_tf_sub(m1, m2, m)
+        assert m.__class__.__name__ == n
+    assert_tf_sub(m1, m2, m, param1 or param2)
 
 
-@pytest.mark.parametrize('p', type_list + ['PHLTIModel'])
-@pytest.mark.parametrize('ph_first', [True, False])
-def test_mul_ph(p, ph_first):
+@pytest.mark.parametrize('param2', [False, True])
+@pytest.mark.parametrize('param1', [False, True])
+@pytest.mark.parametrize('n,ph_first', chain(((n, True) for n in name_list + ['PHLTIModel']),
+                                             ((n, False) for n in name_list)))
+def test_mul_ph(n, ph_first, param1, param2):
     if ph_first:
-        m1 = get_model('PHLTIModel', 0)
-        m2 = get_model(p, 0)
+        m1 = get_model('PHLTIModel', 0, param1)
+        m2 = get_model(n, 0, param2)
     else:
-        m1 = get_model(p, 0)
-        m2 = get_model('PHLTIModel', 0)
+        m1 = get_model(n, 0, param1)
+        m2 = get_model('PHLTIModel', 0, param2)
     m = m1 * m2
-    if p in ('PHLTIModel', 'LTIModel', 'SecondOrderModel'):
+    if n in ('PHLTIModel', 'LTIModel', 'SecondOrderModel'):
         assert type(m) is LTIModel
     else:
-        assert m.__class__.__name__ == p
-    assert_tf_mul(m1, m2, m)
+        assert m.__class__.__name__ == n
+    assert_tf_mul(m1, m2, m, param1 or param2)
