@@ -110,3 +110,33 @@ def test_blk_diag_apply_inverse_adjoint():
     wva = Cop.apply_inverse_adjoint(vva)
     w = np.hstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
     assert np.allclose(spla.solve(C.T, v), w)
+
+
+def test_block_jacobian():
+    from pymor.operators.constructions import QuadraticFunctional
+
+    A = np.random.randn(2, 2)
+    B = np.random.randn(3, 3)
+    C = np.random.randn(4, 4)
+    Aop = QuadraticFunctional(NumpyMatrixOperator(A))
+    Bop = QuadraticFunctional(NumpyMatrixOperator(B))
+    Cop = NumpyMatrixOperator(C)
+    Dop = BlockDiagonalOperator((Aop, Bop, Cop))
+    Dop_single_block = BlockDiagonalOperator(np.array([[Aop]]))
+    assert not Dop.linear and not Dop_single_block.linear
+
+    v1 = np.random.randn(2)
+    v2 = np.random.randn(3)
+    v3 = np.random.randn(4)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
+    v3va = NumpyVectorSpace.from_numpy(v3)
+    vva = BlockVectorSpace.make_array((v1va, v2va, v3va))
+    vva_single_block = BlockVectorSpace.make_array(v1va)
+
+    jac = Dop.jacobian(vva, mu=None)
+    jac_single_block = Dop_single_block.jacobian(vva_single_block, mu=None)
+    assert jac.linear and jac_single_block.linear
+    assert np.all(jac.blocks[0, 0].vector.to_numpy()[0] == np.dot(A.T, v1) + np.dot(A, v1))
+    assert np.all(jac.blocks[1, 1].vector.to_numpy()[0] == np.dot(B.T, v2) + np.dot(B, v2))
+    assert np.all(jac.blocks[2, 2].matrix == C)
