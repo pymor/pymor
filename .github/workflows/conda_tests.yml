@@ -95,25 +95,6 @@ jobs:
           name: coverage_html
           path: coverage_html
 
-  coverage_to_codecov:
-    name: Report Coverage to codecov.io
-    runs-on: ubuntu-22.04
-    needs: [miniconda]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          name: coverage_results
-          path: ./reports/
-      - uses: codecov/codecov-action@v3
-        name: Upload coverage
-        with:
-          flags: github_actions
-          name: github_actions
-          fail_ci_if_error: true
-          verbose: true
-          directory: ./reports/
-
   full_install:
     name: Install with on ${{ matrix.os }} - Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
