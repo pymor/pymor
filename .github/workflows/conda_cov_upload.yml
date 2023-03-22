@@ -1,0 +1,29 @@
+name: Upload coverage
+on:
+  workflow_run:
+    workflows: ["Conda Tests"]
+    types:
+      - completed
+
+jobs:
+  coverage_to_codecov:
+    name: Report Coverage to codecov.io
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dawidd6/action-download-artifact@v2.24.3
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+          name: coverage_results
+          path: ./reports/
+      # Upload to codecov with an API token to avoid upload failures
+      # See https://github.com/codecov/codecov-action/issues/837.
+      - uses: codecov/codecov-action@v3
+        name: Upload coverage
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: github_actions
+          name: github_actions
+          fail_ci_if_error: true
+          verbose: true
+          directory: ./reports/
