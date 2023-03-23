@@ -384,7 +384,7 @@ original data. If the view object is modified, the original array is modified
 as well.
 
 Next we will assess the approximation error a bit more thoroughly, by
-checking how the how well the training data is approximated 
+checking how the how well the training data is approximated
 for varying basis sizes.
 
 To optimize the computation of the projection matrix and the right-hand
