@@ -105,12 +105,12 @@ import numpy as np
 from pymor.basic import *
 ```
 
-Then we build a 3-by-3 thermalblock problem that we discretize using pyMOR's
+Then we build a 3-by-2 thermalblock problem that we discretize using pyMOR's
 {mod}`built-in discretizers <pymor.discretizers.builtin>` (see
 {doc}`tutorial_builtin_discretizer` for an introduction to pyMOR's discretization toolkit).
 
 ```{code-cell}
-problem = thermal_block_problem((3,3))
+problem = thermal_block_problem((3,2))
 fom, _ = discretize_stationary_cg(problem, diameter=1/100)
 ```
 
@@ -168,13 +168,13 @@ of a {{ Model }} belong to its {attr}`~pymor.models.interface.Model.solution_spa
 so we write:
 
 ```{code-cell}
-U = fom.solution_space.empty()
+training_data = fom.solution_space.empty()
 for mu in training_set:
-    U.append(fom.solve(mu))
+    training_data.append(fom.solve(mu))
 ```
 
 Note that `fom.solve` returns a {{ VectorArray }} containing a single vector.
-This entire array (of one vector) is then appended to the `U` array.
+This entire array (of one vector) is then appended to the `training_data` array.
 pyMOR has no notion of single vectors, we only speak of {{ VectorArrays }}.
 
 What exactly is a {{ VectorSpace }}? A {{ VectorSpace }} in pyMOR holds all
@@ -194,11 +194,11 @@ a different type of {{ VectorSpace }} which, for instance, might hold a
 reference to a discrete functions space object inside the PDE solver
 instead of the dimension.
 
-After appending all solutions vectors to `U`, we can verify that `U`
-now really contains 25 vectors:
+After appending all solutions vectors to `training_data`, we can verify that
+`training_data` now really contains 25 vectors:
 
 ```{code-cell}
-len(U)
+len(training_data)
 ```
 
 Note that appending one {{ VectorArray }} `V` to another array `U`
@@ -211,7 +211,7 @@ A {{ VectorArray }} containing multiple vectors is visualized as a
 time series:
 
 ```{code-cell}
-fom.visualize(U)
+fom.visualize(training_data)
 ```
 
 A trivial reduced basis
@@ -221,12 +221,12 @@ Given some snapshot data, the easiest option to get a reduced basis
 is to just use the snapshot vectors as the basis:
 
 ```{code-cell}
-trivial_basis = U.copy()
+trivial_basis = training_data.copy()
 ```
 
 Note that assignment in Python never copies data! Thus, if we had written
-`trivial_basis = U` and modified `trivial_basis`, `U` would change
-as well, since `trivial_basis` and `U` would refer to the same
+`trivial_basis = training_data` and modified `trivial_basis`, `training` would
+change as well, since `trivial_basis` and `training_data` would refer to the same
 {{ VectorArray }} object. So whenever you want to use one {{ VectorArray }}
 somewhere else and you are unsure whether some code might change the
 array, you should always create a copy. pyMOR uses copy-on-write semantics
@@ -274,7 +274,7 @@ the best-approximation error in `trivial_basis` for some test vector
 `V` which we take as another random solution of our {{ Model }}:
 
 ```{code-cell}
-V = fom.solve(parameter_space.sample_randomly())
+U = fom.solve(parameter_space.sample_randomly())
 ```
 
 The matrix {math}`G` of all inner products between vectors in `trivial_basis`
@@ -289,11 +289,11 @@ G = trivial_basis.gramian()
 The Gramian is computed w.r.t. the Euclidean inner product. For the
 right-hand side {math}`R`, we need to compute all (Euclidean) inner
 products between the vectors in `trivial_basis` and (the single vector in)
-`V`. For that, we can use the {meth}`~pymor.vectorarrays.interface.VectorArray.inner`
+`U`. For that, we can use the {meth}`~pymor.vectorarrays.interface.VectorArray.inner`
 method:
 
 ```{code-cell}
-R = trivial_basis.inner(V)
+R = trivial_basis.inner(U)
 ```
 
 which will give us a {math}`25\times 1` {{ NumPy_array }} of all inner products.
@@ -319,22 +319,22 @@ of `trivial_basis`. It expects row vectors of linear coefficients, but
 `solve` returns column vectors, so we need to take the transpose:
 
 ```{code-cell}
-V_proj = trivial_basis.lincomb(lambdas.T)
+U_proj = trivial_basis.lincomb(lambdas.T)
 ```
 
-Let's look at `V`, `V_proj` and the difference of both. {{ VectorArrays }} of
+Let's look at `U`, `U_proj` and the difference of both. {{ VectorArrays }} of
 the same length can simply be subtracted, yielding a new array of the
 differences:
 
 ```{code-cell}
 # for some reason V_proj does not carry over from the previous cell
-V_proj = trivial_basis.lincomb(lambdas.T)
-fom.visualize((V, V_proj, V - V_proj),
-              legend=('V', 'V_proj', 'best-approximation err'),
+U_proj = trivial_basis.lincomb(lambdas.T)
+fom.visualize((U, U_proj, U - U_proj),
+              legend=('U', 'U_proj', 'best-approximation err'),
               separate_colorbars=True)
 ```
 
-As you can see, we already have a quite good approximation of `V` with
+As you can see, we already have a quite good approximation of `U` with
 only 25 basis vectors.
 
 Now, the Euclidean norm will just work fine in many cases.
@@ -369,11 +369,11 @@ projection error, we can simply pass it as the optional `product` argument to
 
 ```{code-cell}
 G = trivial_basis[:10].gramian(product=fom.h1_0_semi_product)
-R = trivial_basis[:10].inner(V, product=fom.h1_0_semi_product)
+R = trivial_basis[:10].inner(U, product=fom.h1_0_semi_product)
 lambdas = np.linalg.solve(G, R)
-V_h1_proj = trivial_basis[:10].lincomb(lambdas.T)
+U_h1_proj = trivial_basis[:10].lincomb(lambdas.T)
 
-fom.visualize((V, V_h1_proj, V - V_h1_proj), separate_colorbars=True)
+fom.visualize((U, U_h1_proj, U - U_h1_proj), separate_colorbars=True)
 ```
 
 As you might have guessed, we have additionally opted here to only use the
@@ -384,17 +384,8 @@ original data. If the view object is modified, the original array is modified
 as well.
 
 Next we will assess the approximation error a bit more thoroughly, by
-evaluating it on a validation set of 100 {{ parameter_values }} for varying
-basis sizes.
-
-First, we compute the validation snapshots:
-
-```{code-cell}
-validation_set = parameter_space.sample_randomly(100)
-V = fom.solution_space.empty()
-for mu in validation_set:
-    V.append(fom.solve(mu))
-```
+checking how the how well the training data is approximated 
+for varying basis sizes.
 
 To optimize the computation of the projection matrix and the right-hand
 side for varying basis sizes, we first compute these for the full basis
@@ -414,7 +405,7 @@ def compute_proj_errors(basis, V, product):
         errors.append(np.max((V - V_proj).norm(product=product)))
     return errors
 
-trivial_errors = compute_proj_errors(trivial_basis, V, fom.h1_0_semi_product)
+trivial_errors = compute_proj_errors(trivial_basis, training_data, fom.h1_0_semi_product)
 ```
 
 Here we have used the fact that we can form multiple linear combinations at once by passing
@@ -431,12 +422,15 @@ Let's plot the projection errors:
 from matplotlib import pyplot as plt
 plt.figure()
 plt.semilogy(trivial_errors)
-plt.ylim(1e-1, 1e1)
+plt.ylim(1e-5, 1e1)
 plt.show()
 ```
 
 Good! We see an exponential decay of the error with growing basis size.
-However, we can do better. If we want to use a smaller basis than we
+The error drops to zero at the end as the basis contains all vectors it
+needs to approximate.
+
+We can do better, however. If we want to use a smaller basis than we
 have snapshots available, just picking the first of these obviously
 won't be optimal.
 
@@ -474,18 +468,18 @@ products we already know, but it will suffice for our purposes. Let's
 compute a reduced basis using the strong greedy algorithm:
 
 ```{code-cell}
-greedy_basis = strong_greedy(U, fom.h1_0_product, 25)
+greedy_basis = strong_greedy(training_data, fom.h1_0_product, 25)
 ```
 
-We compute the approximation errors for the validation set as before:
+We compute the approximation errors for the training data as before:
 
 ```{code-cell}
-greedy_errors = compute_proj_errors(greedy_basis, V, fom.h1_0_semi_product)
+greedy_errors = compute_proj_errors(greedy_basis, training_data, fom.h1_0_semi_product)
 
 plt.figure()
 plt.semilogy(trivial_errors, label='trivial')
 plt.semilogy(greedy_errors, label='greedy')
-plt.ylim(1e-1, 1e1)
+plt.ylim(1e-5, 1e1)
 plt.legend()
 plt.show()
 ```
@@ -509,17 +503,17 @@ onto {math}`V_N` explode:
 G_trivial = trivial_basis.gramian(fom.h1_0_semi_product)
 G_greedy = greedy_basis.gramian(fom.h1_0_semi_product)
 trivial_conds, greedy_conds = [], []
-for N in range(1, len(U)):
+for N in range(1, len(training_data)):
     trivial_conds.append(np.linalg.cond(G_trivial[:N, :N]))
     greedy_conds.append(np.linalg.cond(G_greedy[:N, :N]))
 plt.figure()
-plt.semilogy(range(1, len(U)), trivial_conds, label='trivial')
-plt.semilogy(range(1, len(U)), greedy_conds, label='greedy')
+plt.semilogy(range(1, len(training_data)), trivial_conds, label='trivial')
+plt.semilogy(range(1, len(training_data)), greedy_conds, label='greedy')
 plt.legend()
 plt.show()
 ```
 
-This is quite obvious as the snapshot matrix `U` becomes more and
+This is quite obvious as the snapshot data becomes more and
 more linear dependent the larger it grows.
 
 If we would use the bases we just constructed to build a reduced-order model
@@ -566,13 +560,13 @@ def compute_proj_errors_orth_basis(basis, V, product):
         errors.append(np.max((V - V_proj).norm(product)))
     return errors
 
-trivial_errors = compute_proj_errors_orth_basis(trivial_basis, V, fom.h1_0_semi_product)
-greedy_errors  = compute_proj_errors_orth_basis(greedy_basis, V, fom.h1_0_semi_product)
+trivial_errors = compute_proj_errors_orth_basis(trivial_basis, training_data, fom.h1_0_semi_product)
+greedy_errors  = compute_proj_errors_orth_basis(greedy_basis, training_data, fom.h1_0_semi_product)
 
 plt.figure()
 plt.semilogy(trivial_errors, label='trivial')
 plt.semilogy(greedy_errors, label='greedy')
-plt.ylim(1e-1, 1e1)
+plt.ylim(1e-5, 1e1)
 plt.legend()
 plt.show()
 ```
@@ -642,7 +636,7 @@ The POD in this more general form is implemented in pyMOR by the
 {meth}`~pymor.algorithms.pod.pod` method, which can be called as follows:
 
 ```{code-cell}
-pod_basis, pod_singular_values = pod(U, product=fom.h1_0_semi_product, modes=25)
+pod_basis, pod_singular_values = pod(training_data, product=fom.h1_0_semi_product, modes=25)
 ```
 
 We said that the POD modes (left-singular vectors) are orthonormal with respect to the
@@ -656,13 +650,13 @@ Now, let us compare how the POD performs against the greedy algorithm in the wor
 best-approximation error:
 
 ```{code-cell}
-pod_errors = compute_proj_errors_orth_basis(pod_basis, V, fom.h1_0_semi_product)
+pod_errors = compute_proj_errors_orth_basis(pod_basis, training_data, fom.h1_0_semi_product)
 
 plt.figure()
 plt.semilogy(trivial_errors, label='trivial')
 plt.semilogy(greedy_errors, label='greedy')
 plt.semilogy(pod_errors, label='POD')
-plt.ylim(1e-1, 1e1)
+plt.ylim(1e-5, 1e1)
 plt.legend()
 plt.show()
 ```
@@ -784,26 +778,57 @@ weak_greedy_basis = reductor.bases['RB']
 Let's see, how the weak-greedy basis performs:
 
 ```{code-cell}
-weak_greedy_errors = compute_proj_errors_orth_basis(weak_greedy_basis, V, fom.h1_0_semi_product)
+weak_greedy_errors = compute_proj_errors_orth_basis(weak_greedy_basis, training_data, fom.h1_0_semi_product)
 
 plt.figure()
 plt.semilogy(trivial_errors, label='trivial')
 plt.semilogy(greedy_errors, label='greedy')
 plt.semilogy(pod_errors, label='POD')
 plt.semilogy(weak_greedy_errors, label='weak greedy')
-plt.ylim(1e-1, 1e1)
+plt.ylim(1e-7, 1e2)
 plt.legend()
 plt.show()
 ```
 
-We see that for smaller basis sizes the weak-greedy basis is slightly worse than the POD and
-strong-greedy bases. This can be explained by the fact that the surrogate {math}`\mathcal{E}(\mu)`
-can over-estimate the actual best-approximation error by a certain (fixed) factor, possibly
-resulting in the selection of sub-optimal snapshots. For larger basis sizes, this is mitigated
-by the very large training set from which we were able to choose: the 25 snapshots in `training_set` used
-for the POD and strong-greedy bases can approximate the entire manifold of solutions only to
-a certain degree, whereas the weak-greedy algorithm could select the snapshots from 1000 possible
-{{ parameter_values }}.
+We see that the weak-greedy basis is worse than all the other bases!
+How can that be?
+Remember that the weak-greedy basis was trained for a new training data set of 1000 parameter values
+and not the original much smaller training data set.
+So what we actually see here is that the other bases are very good at approximating this small training
+data set, but likely do not generalize well to the entire solution manifold
+
+```{math}
+\{u(\mu) \,|\, \mu \in \mathcal{P}\}.
+```
+
+To check this, we compute an additional validation data set of 100 new parameter values:
+
+```{code-cell}
+validation_set = parameter_space.sample_randomly(100)
+validation_data = fom.solution_space.empty()
+for mu in validation_set:
+    validation_data.append(fom.solve(mu))
+```
+
+Let's see how the approximation error decays on the validation set:
+
+```{code-cell}
+trivial_errors = compute_proj_errors_orth_basis(trivial_basis, validation_data, fom.h1_0_semi_product)
+greedy_errors  = compute_proj_errors_orth_basis(greedy_basis, validation_data, fom.h1_0_semi_product)
+pod_errors = compute_proj_errors_orth_basis(pod_basis, validation_data, fom.h1_0_semi_product)
+weak_greedy_errors = compute_proj_errors_orth_basis(weak_greedy_basis, validation_data, fom.h1_0_semi_product)
+
+plt.figure()
+plt.semilogy(trivial_errors, label='trivial')
+plt.semilogy(greedy_errors, label='greedy')
+plt.semilogy(pod_errors, label='POD')
+plt.semilogy(weak_greedy_errors, label='weak greedy')
+plt.ylim(1e-2, 5e1)
+plt.legend()
+plt.show()
+```
+
+Indeed we see that the weak-greedy basis generalizes to the validation data much better than all the other bases.
 
 
 Download the code:
