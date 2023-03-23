@@ -1132,6 +1132,7 @@ class LTIModel(Model):
 
         return h2_norm
 
+    @defaults('tol')
     def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False, tol=1e-10):
         r"""Compute the :math:`\mathcal{H}_\infty`-norm of the |LTIModel|.
 
@@ -1273,6 +1274,7 @@ class LTIModel(Model):
         A, B, C, D, E = (to_matrix(op, format='dense') for op in [A, B, C, D, E])
         return ab13dd(dico, jobe, equil, jobd, self.order, self.dim_input, self.dim_output, A, E, B, C, D, tol=tol)
 
+    @defaults('tol')
     def linf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False, tol=1e-10):
         r"""Compute the :math:`\mathcal{L}_\infty`-norm of the |LTIModel|.
 
@@ -1868,6 +1870,7 @@ class PHLTIModel(Model):
         """
         return self.to_lti().h2_norm(mu=mu)
 
+    @defaults('tol')
     def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False, tol=1e-10):
         """Compute the H_infinity-norm.
 
@@ -2620,6 +2623,7 @@ class SecondOrderModel(Model):
         """
         return self.to_lti().h2_norm(mu=mu)
 
+    @defaults('tol')
     def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False, tol=1e-10):
         r"""Compute the :math:`\mathcal{H}_\infty`-norm.
 
