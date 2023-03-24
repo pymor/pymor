@@ -121,14 +121,15 @@ def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
 
 
 def main(
-        n: int = Option(100, help='Order of the Mass-Spring-Damper system.')
+        n: int = Option(100, help='Order of the Mass-Spring-Damper system.'),
+        r: int = Option(20, help='Order of the reduced model.')
 ):
     J, R, G, P, S, N, E = msd(n)
 
     fom = PHLTIModel.from_matrices(J, R, G, P, S, N, E)
 
     phirka = PHIRKAReductor(fom)
-    rom = phirka.reduce(20)
+    rom = phirka.reduce(r)
 
     # Magnitude plot
     w = (1e-2, 1e8)
