@@ -22,8 +22,7 @@ class PHIRKAReductor(GenericIRKAReductor):
         assert isinstance(fom, PHLTIModel)
         super().__init__(fom, mu=mu)
 
-    def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1,
-               force_sigma_in_rhp=False, projection='orth', conv_crit='sigma',
+    def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1, projection='orth', conv_crit='sigma',
                compute_errors=False):
         r"""Reduce using PH-IRKA.
 
@@ -55,10 +54,6 @@ class PHIRKAReductor(GenericIRKAReductor):
             Number of previous iterations to compare the current
             iteration to. Larger number can avoid occasional cyclic
             behavior of IRKA.
-        force_sigma_in_rhp
-            If `False`, new interpolation are reflections of the current
-            reduced order model's poles. Otherwise, only the poles in
-            the left half-plane are reflected.
         projection
             Projection method:
 
@@ -86,9 +81,9 @@ class PHIRKAReductor(GenericIRKAReductor):
             Reduced-order |PHLTIModel|.
         """
         one_sided_irka_reductor = OneSidedIRKAReductor(self.fom.to_lti(), 'V')
-        _ = one_sided_irka_reductor.reduce(rom0_params, tol, maxit, num_prev,
-                                           force_sigma_in_rhp, projection, conv_crit,
-                                           compute_errors)
+        _ = one_sided_irka_reductor.reduce(rom0_params, tol, maxit, num_prev, projection=projection,
+                                           conv_crit=conv_crit,
+                                           compute_errors=compute_errors)
 
         self._pg_reductor = PHLTIPGReductor(self.fom, one_sided_irka_reductor.V)
         rom = self._pg_reductor.reduce()
