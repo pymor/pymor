@@ -39,8 +39,7 @@ class PHLTIPGReductor(ProjectionBasedReductor):
                                'G': project(fom.G, W, None),
                                'P': project(fom.P, W, None),
                                'S': fom.S,
-                               'N': fom.N
-                               }
+                               'N': fom.N}
         return projected_operators
 
     def project_operators_to_subbasis(self, dims):
