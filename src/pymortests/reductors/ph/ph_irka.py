@@ -22,6 +22,6 @@ def test_irka():
     assert isinstance(rom, PHLTIModel) and rom.order == 1
 
     rom = phirka.reduce({'sigma': np.array([1]),
-                       'b': np.array([[1]]),
-                       'c': np.array([[1]])})
+                         'b': np.array([[1]]),
+                         'c': np.array([[1]])})
     assert isinstance(rom, PHLTIModel) and rom.order == 1
