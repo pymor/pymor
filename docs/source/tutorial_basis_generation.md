@@ -45,16 +45,23 @@ the reduced space (the span of the reduced basis) should approximate the
 solution for all {{ parameter_values }} and time instances.
 
 An upper bound for the possible quality of a reduced space is given by the so-called
-Kolmogorov {math}`N`-width {math}`d_N` given as
+Kolmogorov {math}`N`-width {math}`d_N(\mathcal{M})` of the solution manifold
 
 ```{math}
-d_N := \inf_{\substack{V_N \subseteq V\\ \operatorname{dim}(V_N) \leq N}}\,
-       \sup_{\mu \in \mathcal{P}}\,
-       \inf_{v \in V_N}\,
-       \|u(\mu) - v\|.
+\mathcal{M} := \{u(\mu) \,|\, \mu \in \mathcal{P}\},
 ```
 
-In this formula {math}`V` denotes the
+given as
+
+```{math}
+d_N(\mathcal{M}) :=
+       \inf_{\substack{V_N \subseteq V\\ \operatorname{dim}(V_N) \leq N}}\,
+       \sup_{x \in \mathcal{M}}\,
+       \inf_{v \in V_N}\,
+       \|x - v\|.
+```
+
+In these definitions, {math}`V` denotes the
 {attr}`~pymor.models.interface.Model.solution_space`, {math}`\mathcal{P} \subset \mathbb{R}^p`
 denotes the set of all {{ parameter_values }} we are interested in, and
 {math}`u(\mu)` denotes the {meth}`solution <pymor.models.interface.Model.solve>`
@@ -62,27 +69,30 @@ of the {{ Model }} for the given {{ parameter_values }} {math}`\mu`.
 In pyMOR the set {math}`\mathcal{P}` is called the {{ ParameterSpace }}.
 
 How to read this formula? For each candidate reduced space {math}`V_N` we
-look at all possible {{ parameter_values }} {math}`\mu` and compute the best-approximation
+look at all possible {math}`x \in \mathcal{M}` and compute the best-approximation
 error in {math}`V_N` (the second infimum). The supremum over the infimum
-is thus the worst-case best-approximation error over all {{ parameter_values }} of
-interest. Now we take the infimum of the worst-case best-approximation errors
+is thus the worst-case best-approximation error over all solutions
+{math}`x = u(\mu)` of interest.
+Now we take the infimum of the worst-case best-approximation errors
 over all possible reduced spaces of dimension at most {math}`N`, and this is
-{math}`d_N`.
+{math}`d_N(\mathcal{M})`.
 
 So whatever reduced space of dimension {math}`N` we pick, we
 will always find a {math}`\mu` for which the best-approximation error in our
-space is at least {math}`d_N`. Reduced basis methods aim at constructing
+space is at least {math}`d_N(\mathcal{M})`. Reduced basis methods aim at constructing
 spaces {math}`V_N` for which the worst-case best-approximation error is as
-close to {math}`d_N` as possible.
+close to {math}`d_N(\mathcal{M})` as possible.
 
 However, we will only find a good {math}`V_N` of small dimension
-{math}`N` if the values {math}`d_N` decrease quickly for growing
+{math}`N` if the values {math}`d_N(\mathcal{M})` decrease quickly for growing
 {math}`N`. It can be shown that this is the case as soon as {math}`u(\mu)`
 analytically depends on {math}`\mu`, which is true for many problems
 of interest. More precisely, it can be shown {cite}`BCDDPW11`, {cite}`DPW13` that there are constants
 {math}`C, c > 0` such that
 
-$$ d_N \leq C \cdot e^{-N^c}. $$
+```{math}
+d_N(\mathcal{M}) \leq C \cdot e^{-N^c}.
+```
 
 In this tutorial we will construct reduced spaces {math}`V_N` for a concrete problem
 with pyMOR and study their error decay.
@@ -796,10 +806,7 @@ Remember that the weak-greedy basis was trained for a new training data set of 1
 and not the original much smaller training data set.
 So what we actually see here is that the other bases are very good at approximating this small training
 data set, but likely do not generalize well to the entire solution manifold
-
-```{math}
-\{u(\mu) \,|\, \mu \in \mathcal{P}\}.
-```
+{math}`\mathcal{M}`.
 
 To check this, we compute an additional validation data set of 100 new parameter values:
 
