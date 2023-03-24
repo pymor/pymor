@@ -225,7 +225,7 @@ trivial_basis = training_data.copy()
 ```
 
 Note that assignment in Python never copies data! Thus, if we had written
-`trivial_basis = training_data` and modified `trivial_basis`, `training` would
+`trivial_basis = training_data` and modified `trivial_basis`, `training_data` would
 change as well, since `trivial_basis` and `training_data` would refer to the same
 {{ VectorArray }} object. So whenever you want to use one {{ VectorArray }}
 somewhere else and you are unsure whether some code might change the
@@ -384,7 +384,7 @@ original data. If the view object is modified, the original array is modified
 as well.
 
 Next we will assess the approximation error a bit more thoroughly, by
-checking how the how well the training data is approximated
+checking how well the training data is approximated
 for varying basis sizes.
 
 To optimize the computation of the projection matrix and the right-hand
