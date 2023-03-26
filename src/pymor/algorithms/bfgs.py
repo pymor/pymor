@@ -13,110 +13,6 @@ from pymor.core.logger import getLogger
 from pymor.parameters.base import Mu
 
 
-def _get_active_and_inactive_sets(parameter_space, mu, epsilon=1e-8):
-    """Compute the active and inactive parameter index sets for constrained optimization.
-
-    Parameters
-    ----------
-    parameter_space
-        The |ParameterSpace| used for checking parameter ranges.
-    mu
-        The |parameter values| to compute the active and inactive sets for.
-    epsilon
-        Tolerance threshold for checking boundary conditions.
-
-    Returns
-    -------
-    active
-        The binary mask corresponding to the set of active parameter indices.
-    inactive
-        The binary mask corresponding to the set of inactive parameter indices.
-    """
-    mu = mu if isinstance(mu, Mu) else parameter_space.parameters.parse(mu)
-    active = np.array([])
-
-    for key, dim in parameter_space.parameters.items():
-        indices = np.zeros(dim)
-        low_range = parameter_space.ranges[key][0] * np.ones(dim)
-        high_range = parameter_space.ranges[key][1] * np.ones(dim)
-        eps = epsilon * np.ones(dim)
-        indices[np.where(np.logical_or(mu[key] - low_range <= eps, high_range - mu[key] <= eps))] = 1
-        active = np.concatenate((active, indices))
-
-    inactive = np.ones(active.shape) - active
-
-    return active, inactive
-
-
-def _compute_hessian_action(hessian, direction, active, inactive):
-    """Compute the Hessian applied to the direction.
-
-    The active set specifies which indices of the direction are actively constrained.
-
-    Parameters
-    ----------
-    hessian
-        The Hessian matrix.
-    direction
-        The descent direction used to update the parameter.
-    active
-        The active set computed from the |ParameterSpace|.
-    inactive
-        The inactive set computed from the |ParameterSpace|.
-
-    Returns
-    -------
-    action
-        The Hessian applied to the projected direction.
-    """
-    direction_A = np.multiply(active, direction)
-    direction_I = np.multiply(inactive, direction)
-    action = direction_A + np.multiply(inactive, hessian.dot(direction_I))
-    return action
-
-
-def _update_hessian(hessian, mu, old_mu, gradient, old_gradient):
-    """Update Hessian matrix using BFGS iteration.
-
-    Parameters
-    ----------
-    hessian
-        The current Hessian matrix.
-    mu
-        The current `mu` |parameter values| as a |NumPy array|.
-    old_mu
-        The previous `mu` |parameter values| as a |NumPy array|.
-    gradient
-        The current gradient with respect to the parameter.
-    old_gradient
-        The previous gradient with respect to the parameter.
-
-    Returns
-    -------
-    hessian
-        The next BFGS Hessian matrix iterate.
-    """
-    gradient_difference = gradient - old_gradient
-    mu_difference = mu - old_mu
-    gradient_mu_coefficient = np.dot(gradient_difference, mu_difference)
-
-    if gradient_mu_coefficient > 0.:
-        hessian_grad_diff = np.dot(hessian, gradient_difference)
-        quadratic_coefficient = np.dot(gradient_difference, hessian_grad_diff)
-
-        hessian_part = np.outer(hessian_grad_diff, mu_difference) + np.outer(mu_difference, hessian_grad_diff)
-        mu_part = np.outer(mu_difference, mu_difference)
-
-        mu_coeff = (gradient_mu_coefficient + quadratic_coefficient) / gradient_mu_coefficient**2
-        hessian_coeff = 1. / gradient_mu_coefficient
-
-        hessian += mu_coeff * mu_part - hessian_coeff * hessian_part
-    else:
-        hessian = np.eye(hessian.shape[0])
-
-    return hessian
-
-
 @defaults('miniter', 'maxiter', 'rtol', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
 def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0, maxiter=100, rtol=1e-16,
          tol_sub=1e-8, line_search_params=None, stagnation_window=3, stagnation_threshold=np.inf,
@@ -193,16 +89,19 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     data = {}
 
     assert model.output_functional is not None
+    assert model.output_functional.range.dim == 1
     output = lambda m: model.output(m)[0, 0]
 
     if parameter_space is None:
-        parameter_space = model.parameters.space(-np.inf, np.inf)
+        logger.warn('No parameter space given. Assuming uniform parameter bounds of (-1, 1).')
+        parameter_space = model.parameters.space(-1., 1.)
 
     if initial_guess is None:
         initial_guess = parameter_space.sample_randomly(1)[0]
         mu = initial_guess.to_numpy()
     else:
         mu = initial_guess.to_numpy() if isinstance(initial_guess, Mu) else initial_guess
+        assert model.parameters.assert_compatible(model.parameters.parse(mu))
 
     if error_aware:
         assert error_criterion is not None
@@ -252,7 +151,7 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         active, inactive = _get_active_and_inactive_sets(parameter_space, mu, eps)
 
         # compute update to mu
-        if sum(inactive) == 0.:
+        if np.all(active):
             direction = -gradient
         else:
             direction = _compute_hessian_action(hessian, -gradient, active, inactive)
@@ -308,3 +207,107 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     data['line_search_iterations'] = np.array(line_search_iterations)
 
     return mu, data
+
+
+def _get_active_and_inactive_sets(parameter_space, mu, epsilon=1e-8):
+    """Compute the active and inactive parameter index sets for constrained optimization.
+
+    Parameters
+    ----------
+    parameter_space
+        The |ParameterSpace| used for checking parameter ranges.
+    mu
+        The |parameter values| to compute the active and inactive sets for.
+    epsilon
+        Tolerance threshold for checking boundary conditions.
+
+    Returns
+    -------
+    active
+        The binary mask corresponding to the set of active parameter indices.
+    inactive
+        The binary mask corresponding to the set of inactive parameter indices.
+    """
+    mu = mu if isinstance(mu, Mu) else parameter_space.parameters.parse(mu)
+    active = []
+
+    for key, dim in parameter_space.parameters.items():
+        indices = np.zeros(dim)
+        eps = epsilon * np.ones(dim)
+        low_range, high_range = parameter_space.ranges[key]
+        indices = np.logical_or(mu[key] - low_range <= eps, high_range - mu[key] <= eps)
+        active.append(indices)
+
+    active = np.concatenate(active)
+    inactive = ~active
+
+    return active, inactive
+
+
+def _compute_hessian_action(hessian, direction, active, inactive):
+    """Compute the Hessian applied to the direction.
+
+    The active set specifies which indices of the direction are actively constrained.
+
+    Parameters
+    ----------
+    hessian
+        The Hessian matrix.
+    direction
+        The descent direction used to update the parameter.
+    active
+        The active set computed from the |ParameterSpace|.
+    inactive
+        The inactive set computed from the |ParameterSpace|.
+
+    Returns
+    -------
+    action
+        The Hessian applied to the projected direction.
+    """
+    direction_A = active * direction
+    direction_I = inactive * direction
+    action = direction_A + inactive * (hessian @ direction_I)
+    return action
+
+
+def _update_hessian(hessian, mu, old_mu, gradient, old_gradient):
+    """Update Hessian matrix using BFGS iteration.
+
+    Parameters
+    ----------
+    hessian
+        The current Hessian matrix.
+    mu
+        The current `mu` |parameter values| as a |NumPy array|.
+    old_mu
+        The previous `mu` |parameter values| as a |NumPy array|.
+    gradient
+        The current gradient with respect to the parameter.
+    old_gradient
+        The previous gradient with respect to the parameter.
+
+    Returns
+    -------
+    hessian
+        The next BFGS Hessian matrix iterate.
+    """
+    gradient_difference = gradient - old_gradient
+    mu_difference = mu - old_mu
+    gradient_mu_coefficient = np.inner(gradient_difference, mu_difference)
+
+    if gradient_mu_coefficient > 0.:
+        hessian_grad_diff = hessian @ gradient_difference
+        quadratic_coefficient = np.inner(gradient_difference, hessian_grad_diff)
+
+        hessian_part = np.outer(hessian_grad_diff, mu_difference) + np.outer(mu_difference, hessian_grad_diff)
+        mu_part = np.outer(mu_difference, mu_difference)
+
+        mu_coeff = (gradient_mu_coefficient + quadratic_coefficient) / gradient_mu_coefficient**2
+        hessian_coeff = 1. / gradient_mu_coefficient
+
+        hessian += mu_coeff * mu_part - hessian_coeff * hessian_part
+    else:
+        hessian = np.eye(hessian.shape[0])
+
+    return hessian
