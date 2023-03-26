@@ -25,7 +25,7 @@ def armijo(f, starting_point, direction, grad=None, initial_value=None, alpha_in
     direction
         Descent direction along which the line search is performed.
     grad
-        Gradient of `f` in the point `starting_point`.
+        Gradient of `f` in the point `starting_point` as either a |VectorArray| or a |NumPy array|.
     initial_value
         Value of `f` in the point `starting_point`.
     alpha_init
@@ -44,6 +44,8 @@ def armijo(f, starting_point, direction, grad=None, initial_value=None, alpha_in
     -------
     alpha
         Step size computed according to the Armijo condition.
+    iteration
+        Number of total Armijo line search iterations.
     """
     assert alpha_init > 0
     assert 0 < tau < 1

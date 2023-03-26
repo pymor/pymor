@@ -13,7 +13,7 @@ from pymor.core.logger import getLogger
 from pymor.parameters.base import Mu
 
 
-def get_active_and_inactive_sets(parameter_space, mu, epsilon=1e-8):
+def _get_active_and_inactive_sets(parameter_space, mu, epsilon=1e-8):
     """Compute the active and inactive parameter index sets for constrained optimization.
 
     Parameters
@@ -21,16 +21,16 @@ def get_active_and_inactive_sets(parameter_space, mu, epsilon=1e-8):
     parameter_space
         The |ParameterSpace| used for checking parameter ranges.
     mu
-        The parameter to compute the active and inactive sets for.
+        The |parameter values| to compute the active and inactive sets for.
     epsilon
         Tolerance threshold for checking boundary conditions.
 
     Returns
     -------
     active
-        The set of active parameter indices.
+        The binary mask corresponding to the set of active parameter indices.
     inactive
-        The set of inactive parameter indices.
+        The binary mask corresponding to the set of inactive parameter indices.
     """
     mu = mu if isinstance(mu, Mu) else parameter_space.parameters.parse(mu)
     active = np.array([])
@@ -48,8 +48,10 @@ def get_active_and_inactive_sets(parameter_space, mu, epsilon=1e-8):
     return active, inactive
 
 
-def compute_hessian_action_matrix(hessian, direction, active, inactive):
-    """Project the Hessian matrix applied to the direction using an active and an inactive set.
+def _compute_hessian_action(hessian, direction, active, inactive):
+    """Compute the Hessian applied to the direction.
+
+    The active set specifies which indices of the direction are actively constrained.
 
     Parameters
     ----------
@@ -64,16 +66,16 @@ def compute_hessian_action_matrix(hessian, direction, active, inactive):
 
     Returns
     -------
-    hessian
-        The projection of the Hessian applied to the direction.
+    action
+        The Hessian applied to the projected direction.
     """
     direction_A = np.multiply(active, direction)
     direction_I = np.multiply(inactive, direction)
-    hessian = direction_A + np.multiply(inactive, hessian.dot(direction_I))
-    return hessian
+    action = direction_A + np.multiply(inactive, hessian.dot(direction_I))
+    return action
 
 
-def update_hessian(hessian, mu, old_mu, gradient, old_gradient):
+def _update_hessian(hessian, mu, old_mu, gradient, old_gradient):
     """Update Hessian matrix using BFGS iteration.
 
     Parameters
@@ -81,9 +83,9 @@ def update_hessian(hessian, mu, old_mu, gradient, old_gradient):
     hessian
         The current Hessian matrix.
     mu
-        The current `mu` parameter.
+        The current `mu` |parameter values| as a |NumPy array|.
     old_mu
-        The previous `mu` parameter.
+        The previous `mu` |parameter values| as a |NumPy array|.
     gradient
         The current gradient with respect to the parameter.
     old_gradient
@@ -118,7 +120,7 @@ def update_hessian(hessian, mu, old_mu, gradient, old_gradient):
 @defaults('miniter', 'maxiter', 'rtol', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
 def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0, maxiter=100, rtol=1e-16,
          tol_sub=1e-8, line_search_params=None, stagnation_window=3, stagnation_threshold=np.inf,
-         error_aware=False, error_criterion=None, beta=None, radius=None, return_stages=False):
+         error_aware=False, error_criterion=None):
     """BFGS algorithm.
 
     This method solves the optimization problem ::
@@ -127,9 +129,9 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
 
     for an output functional depending on a box-constrained `mu` using the BFGS method.
 
-    In contrast to `scipy.optimize` with the `L-BFGS-B` methods, this BFGS implementation is
+    In contrast to :func:`scipy.optimize.minimize` with the `L-BFGS-B` methods, this BFGS implementation is
     explicitly designed to work with an error estimator. In particular, this implementation
-    terminates if the higher level TR boundary from `pymor.algorithms.tr` is reached instead of
+    terminates if the higher level TR boundary from :mod:`pymor.algorithms.tr` is reached instead of
     continuing to optimize close to the boundary.
 
     Parameters
@@ -138,11 +140,10 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         The |Model| used for the optimization.
     parameter_space
         If not `None`, the |ParameterSpace| for enforcing the box constraints on the
-        parameter `mu`. Otherwise a |ParameterSpace| with no constraints.
+        |parameter values| `mu`. Otherwise a |ParameterSpace| with infinite bounds.
     initial_guess
-        If not `None`, a |Mu| instance of length 1 containing an initial guess for the
-        solution `mu`. Otherwise, a random parameter from the parameter space is chosen
-        as the initial value.
+        If not `None`, a |Mu| instance containing an initial guess for the solution `mu`.
+        Otherwise, random |parameter values| from the parameter space are chosen as the initial value.
     miniter
         Minimum amount of iterations to perform.
     maxiter
@@ -150,36 +151,31 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     rtol
         Finish when the relative error measure is below this threshold.
     tol_sub
-        Finish when the clipped parameter error measure is below this threshold.
+        Finish when the first order criticality is below this threshold.
     line_search_params
-        Dictionary of additional parameters passed to the line search method.
+        Dictionary of additional parameters passed to the Armijo line search method.
     stagnation_window
-        Finish when the parameter update has been stagnating within a tolerance of
+        Finish when the parameter update has not been enlarged by a factor of
         `stagnation_threshold` during the last `stagnation_window` iterations.
     stagnation_threshold
         See `stagnation_window`.
     error_aware
         If `True`, perform an additional error aware check during the line search phase.
-        Intended for use with the trust region algorithm. Requires the parameters `beta`
-        and `radius` to be set.
+        Intended for use with the trust region algorithm.
     error_criterion
         The additional error criterion used to check model confidence in the line search.
-    beta
-        Intended for use with the trust region algorithm. Indicates the factor for checking
-        if the current value is close to the trust region boundary. See `error_aware`.
-    radius
-        Intended for use with the trust region algorithm. Indicates the radius of the
-        current trust region. See `error_aware`.
+        This maps |parameter values| and an output value to a boolean indicating if the criterion is fulfilled.
+        Refer to :func:`error_aware_line_search_criterion` in :mod:`pymor.algorithms.tr` for an example.
 
     Returns
     -------
     mu
-        |Numpy array| containing the computed parameter.
+        |Numpy array| containing the computed |parameter values|.
     data
         Dict containing the following fields:
 
-            :mus:                       `list` of parameters after each iteration.
-            :foc_norms:                 |NumPy array| of the first order criticity norms
+            :mus:                       `list` of |parameter values| after each iteration.
+            :foc_norms:                 |NumPy array| of the first order criticality norms
                                         after each iteration.
             :update_norms:              |NumPy array| of the norms of the update vectors
                                         after each iteration.
@@ -192,7 +188,7 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     BFGSError
         Raised if the BFGS algorithm failed to converge.
     """
-    logger = getLogger('pymor.algorithms.bfgs')
+    logger = getLogger('pymor.algorithms.bfgs.error_aware_bfgs')
 
     data = {}
 
@@ -209,7 +205,7 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         mu = initial_guess.to_numpy() if isinstance(initial_guess, Mu) else initial_guess
 
     if error_aware:
-        assert error_criterion is not None and beta is not None and radius is not None
+        assert error_criterion is not None
         assert callable(error_criterion)
 
     gradient = model.parameters.parse(model.output_d_mu(mu)).to_numpy()
@@ -225,7 +221,7 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
 
     hessian = np.eye(mu.size)
 
-    first_order_criticity = output_diff = mu_diff = update_norm = 1e6
+    first_order_criticality = output_diff = mu_diff = update_norm = np.inf
     iteration = 0
     while True:
         if iteration >= miniter:
@@ -235,41 +231,35 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
             if mu_diff < rtol:
                 logger.info(f'Relative tolerance of {rtol} for parameter difference reached. Converged.')
                 break
-            if first_order_criticity < tol_sub:
-                logger.info(f'Absolute tolerance of {tol_sub} for first order criticity reached. Converged.')
+            if first_order_criticality < tol_sub:
+                logger.info(f'Absolute tolerance of {tol_sub} for first order criticality reached. Converged.')
                 break
             if error_aware:
                 if error_criterion(mu, current_output):
-                    logger.info(f'Output error confidence reached for beta {beta} and radius {radius}. Converged.')
+                    logger.info(f'Output error confidence reached. Converged.')
                     break
-            if (iteration >= stagnation_window + 1 and not stagnation_threshold == np.inf
-                    and all(np.isclose(
-                        [max(update_norms[-stagnation_window - 1:]), min(update_norms[-stagnation_window - 1:])],
-                        update_norm, atol=stagnation_threshold))):
+            if (iteration >= stagnation_window + 1
+                    and stagnation_threshold * update_norm < min(update_norms[-stagnation_window - 1:])):
                 logger.info(f'Norm of update is stagnating (threshold: {stagnation_threshold:5e}, '
                             f'window: {stagnation_window}). Converged.')
                 break
             if iteration >= maxiter:
                 logger.info(f'Maximum iterations reached. Failed to converge after {iteration} iterations.')
-                raise BFGSError
+                raise BFGSError('Failed to converge after the maximum amount of iterations.')
 
         iteration += 1
 
-        active, inactive = get_active_and_inactive_sets(parameter_space, mu, eps)
+        active, inactive = _get_active_and_inactive_sets(parameter_space, mu, eps)
 
         # compute update to mu
         if sum(inactive) == 0.:
             direction = -gradient
         else:
-            direction = compute_hessian_action_matrix(hessian, -gradient, active, inactive)
+            direction = _compute_hessian_action(hessian, -gradient, active, inactive)
 
-        if error_aware:
-            step_size, line_search_iteration = armijo(
-                output, mu, direction, grad=gradient, initial_value=current_output,
-                additional_criterion=error_criterion, **(line_search_params or {}))
-        else:
-            step_size, line_search_iteration = armijo(output, mu, direction, grad=gradient,
-                               initial_value=current_output, **(line_search_params or {}))
+        step_size, line_search_iteration = armijo(
+            output, mu, direction, grad=gradient, initial_value=current_output,
+            additional_criterion=error_criterion if error_aware else None, **(line_search_params or {}))
         line_search_iterations.append(line_search_iteration)
 
         # update mu
@@ -288,8 +278,8 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         # update gradient
         old_gradient = gradient.copy()
         gradient = model.parameters.parse(model.output_d_mu(mu)).to_numpy()
-        first_order_criticity = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
-        foc_norms.append(first_order_criticity)
+        first_order_criticality = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
+        foc_norms.append(first_order_criticality)
 
         # set new active inactive threshhold
         eps = np.linalg.norm(gradient)
@@ -299,13 +289,13 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         mu_diff = np.linalg.norm(mu - old_mu) / np.linalg.norm(old_mu)
 
         # update the hessian approximate
-        hessian = update_hessian(hessian, mu, old_mu, gradient, old_gradient)
+        hessian = _update_hessian(hessian, mu, old_mu, gradient, old_gradient)
 
         with warnings.catch_warnings():
             # ignore division-by-zero warnings when solution_norm or output is zero
             warnings.filterwarnings('ignore', category=RuntimeWarning)
             logger.info(f'it:{iteration} '
-                        f'foc:{first_order_criticity:.3e} '
+                        f'foc:{first_order_criticality:.3e} '
                         f'upd:{update_norm:.3e} '
                         f'rel_upd:{update_norm / mu_norm:.3e} ')
 

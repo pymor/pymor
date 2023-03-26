@@ -3,13 +3,14 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pymortests.strategies as pyst
 import pytest
 from hypothesis import given
-
-import pymortests.strategies as pyst
-from pymor.algorithms.bfgs import error_aware_bfgs, get_active_and_inactive_sets
-from pymor.core.exceptions import BFGSError
 from pymordemos.linear_optimization import create_fom
+
+from pymor.algorithms.bfgs import (_get_active_and_inactive_sets,
+                                   error_aware_bfgs)
+from pymor.core.exceptions import BFGSError
 
 
 @given(pyst.active_mu_data())
@@ -20,7 +21,7 @@ def test_active_inactive_sets(data):
         mu = mus[it]
         active_inds = active_indices[it]
 
-        active, inactive = get_active_and_inactive_sets(space, mu)
+        active, inactive = _get_active_and_inactive_sets(space, mu)
         compare = np.zeros(dim)
         compare[active_inds] = 1
 
