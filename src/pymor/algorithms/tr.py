@@ -232,7 +232,7 @@ def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, r
                     maxiter=maxiter_subproblem, rtol=rtol, tol_sub=tol_sub,
                     line_search_params=line_search_params, stagnation_window=stagnation_window,
                     stagnation_threshold=stagnation_threshold, error_aware=True,
-                    error_criterion=error_aware_line_search_criterion, beta=beta, radius=radius)
+                    error_criterion=error_aware_line_search_criterion)
 
             # first BFGS iterate is AGC point
             index = 1 if len(sub_data['mus']) > 1 else 0
@@ -249,11 +249,15 @@ def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, r
                     if fom_output_diff >= radius_tol * rom_output_diff:
                         # increase the radius if the model confidence is high enough
                         radius /= shrink_factor
+
+                    msg = 'Estimated output smaller than previous output.'
                 elif current_output - estimate_output > compare_output:
                     # reject new mu
                     rejected = True
                     # shrink the radius
                     radius *= shrink_factor
+
+                    msg = 'Estimated output larger than previous output.'
                 else:
                     surrogate.extend(mu)
                     current_output = surrogate.new_rom_output(mu)
@@ -264,11 +268,15 @@ def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, r
                         if fom_output_diff >= radius_tol * rom_output_diff:
                             # increase the radius if the model confidence is high enough
                             radius /= shrink_factor
+
+                        msg = 'Updated model output smaller than previous output.'
                     else:
                         # reject new mu
                         rejected = True
                         # shrink the radius
                         radius *= shrink_factor
+
+                        msg = 'Updated model output larger than previous output.'
 
             # handle parameter rejection
             if not rejected:
@@ -284,10 +292,13 @@ def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, r
                     foc_norms.append(first_order_criticity)
 
                 surrogate.accept()
+                logger.info(f'Current mu iterate accepted: {msg}')
+
                 old_rom_output = current_output
             else:
                 mu = old_mu
                 surrogate.reject()
+                logger.info(f'Current mu iterate rejected: {msg}')
 
             with warnings.catch_warnings():
                 # ignore division-by-zero warnings when solution_norm or output is zero
