@@ -476,38 +476,6 @@ submit ci_weekly 3 9:
     needs: ["ci_weekly 3 9"]
 
 
-
-from source 1/2:
-    extends: .test_base
-    tags: [mike]
-    services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:${PYPI_MIRROR_TAG}
-          alias: pypi_mirror
-    needs: ["ci setup"]
-    rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - when: on_success
-    stage: install_checks
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_fedora:${CI_IMAGE_TAG}
-    script: ./.ci/gitlab/install_checks/fedora/check.bash
-
-from source 2/2:
-    extends: .test_base
-    tags: [mike]
-    services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:${PYPI_MIRROR_TAG}
-          alias: pypi_mirror
-    needs: ["ci setup"]
-    rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - when: on_success
-    stage: install_checks
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian-bullseye:${CI_IMAGE_TAG}
-    script: ./.ci/gitlab/install_checks/debian-bullseye/check.bash
-
-
 binder base image:
     extends: .binder
     stage: build
