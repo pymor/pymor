@@ -1,8 +1,9 @@
 #!/bin/bash
 set -eu
 
-# this sets pip to install from the mirror container to reduce internet download time
-\cp -f ${CI_PROJECT_DIR}/.ci/gitlab/install_checks/ci.pip.conf /etc/pip.conf
+# # this sets pip to install from the mirror container to reduce internet download time
+# \cp -f ${CI_PROJECT_DIR}/.ci/gitlab/install_checks/ci.pip.conf /etc/pip.conf
+rm /etc/pip.conf  # use official pypi
 
 # first section should only need minimal setup
 python3 -m pip install ${CI_PROJECT_DIR}[full]
