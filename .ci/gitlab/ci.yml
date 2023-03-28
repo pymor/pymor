@@ -23,8 +23,8 @@ stages:
           when: never
         - when: on_success
     variables:
-        PYPI_MIRROR_TAG: c643e91115c783a4a7d2469e8e8ed4b033892274
-        CI_IMAGE_TAG: c643e91115c783a4a7d2469e8e8ed4b033892274
+        PYPI_MIRROR_TAG: 3ecc92a084f1f364f54302f1943936ddc11f0d0c
+        CI_IMAGE_TAG: 3ecc92a084f1f364f54302f1943936ddc11f0d0c
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
         BINDERIMAGE: ${CI_REGISTRY_IMAGE}/binder:${CI_COMMIT_REF_SLUG}
@@ -134,7 +134,7 @@ stages:
     before_script:
       # bump to our minimal version
       - python3 -m pip install "devpi-client"
-      - python3 -m pip install "https://m.devpi.net/fschulze/dev/+f/6ac/e7aaa2d1196f1/devpi_common-3.7.1.dev0-py2.py3-none-any.whl"  
+      - python3 -m pip install "https://m.devpi.net/fschulze/dev/+f/6ac/e7aaa2d1196f1/devpi_common-3.7.1.dev0-py2.py3-none-any.whl"
       - devpi use http://pymor__devpi:3141/root/public --set-cfg
       - devpi login root --password ''
       - devpi upload --from-dir --formats=* ./dist/*.whl
@@ -474,38 +474,6 @@ submit ci_weekly 3 9:
     dependencies:
         - ci_weekly 3 9
     needs: ["ci_weekly 3 9"]
-
-
-
-from source 1/2:
-    extends: .test_base
-    tags: [mike]
-    services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:${PYPI_MIRROR_TAG}
-          alias: pypi_mirror
-    needs: ["ci setup"]
-    rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - when: on_success
-    stage: install_checks
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_fedora:${CI_IMAGE_TAG}
-    script: ./.ci/gitlab/install_checks/fedora/check.bash
-
-from source 2/2:
-    extends: .test_base
-    tags: [mike]
-    services:
-        - name: zivgitlab.wwu.io/pymor/docker/pymor/pypi-mirror_stable_py3.9:${PYPI_MIRROR_TAG}
-          alias: pypi_mirror
-    needs: ["ci setup"]
-    rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - when: on_success
-    stage: install_checks
-    image: zivgitlab.wwu.io/pymor/docker/pymor/deploy_checks_debian-bullseye:${CI_IMAGE_TAG}
-    script: ./.ci/gitlab/install_checks/debian-bullseye/check.bash
 
 
 binder base image:

@@ -266,20 +266,6 @@ submit ci_weekly {{py[0]}} {{py[2]}}:
 {%- endfor %}
 
 
-{% for OS, PY in testos %}
-from source {{loop.index}}/{{loop.length}}:
-    extends: .test_base
-    tags: [mike]
-    services:
-        - name: {{registry}}/pymor/pypi-mirror_stable_py{{PY}}:${PYPI_MIRROR_TAG}
-          alias: pypi_mirror
-    needs: ["ci setup"]
-    {{ never_on_schedule_rule() }}
-    stage: install_checks
-    image: {{registry}}/pymor/deploy_checks_{{OS}}:${CI_IMAGE_TAG}
-    script: ./.ci/gitlab/install_checks/{{OS}}/check.bash
-{% endfor %}
-
 binder base image:
     extends: .binder
     stage: build

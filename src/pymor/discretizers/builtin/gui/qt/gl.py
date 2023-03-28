@@ -112,7 +112,7 @@ def colormap_texture(name='viridis'):
 
 class GLPatchWidget(QOpenGLWidget):
 
-    def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=([0, 0], [1, 1]), codim=2):
+    def __init__(self, parent, grid, bounding_box=([0, 0], [1, 1]), codim=2):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
@@ -125,8 +125,6 @@ class GLPatchWidget(QOpenGLWidget):
         self.subentities = subentities
         self.entity_map = entity_map
         self.reference_element = grid.reference_element
-        self.vmin = vmin
-        self.vmax = vmax
         self.bounding_box = bounding_box
         self.codim = codim
         self.update_vbo = False
@@ -156,7 +154,6 @@ class GLPatchWidget(QOpenGLWidget):
         self.vertex_data['color'] = 1
 
         self.set_coordinates(coordinates)
-        self.set(np.zeros(grid.size(codim)))
 
     def resizeGL(self, w, h):
         gl.glViewport(0, 0, w, h)
@@ -227,10 +224,7 @@ class GLPatchWidget(QOpenGLWidget):
         self.update_vbo = True
         self.update()
 
-    def set(self, U, vmin=None, vmax=None):
-        self.vmin = self.vmin if vmin is None else vmin
-        self.vmax = self.vmax if vmax is None else vmax
-
+    def set(self, U, vmin, vmax):
         U_buffer = self.vertex_data['color']
         if self.codim == 2:
             U_buffer[:] = U[self.entity_map]
@@ -240,8 +234,6 @@ class GLPatchWidget(QOpenGLWidget):
             U_buffer[:] = np.tile(np.repeat(U, 3), 2)
 
         # normalize
-        vmin = np.min(U) if self.vmin is None else self.vmin
-        vmax = np.max(U) if self.vmax is None else self.vmax
         U_buffer -= vmin
         if (vmax - vmin) > 0:
             U_buffer /= float(vmax - vmin)

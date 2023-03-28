@@ -64,6 +64,7 @@ htmlcov/
 coverage.xml
 libpeerconnection.log
 .cache
+.coverage.*
 
 # pycharm
 .idea/
