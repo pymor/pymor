@@ -20,6 +20,9 @@
     },
     {
       "pattern": "^https://epubs.siam.org"
+    },
+    {
+      "pattern": "^https://doi.org"
     }
   ]
 }
