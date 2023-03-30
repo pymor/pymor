@@ -24,7 +24,7 @@ class PHIRKAReductor(GenericIRKAReductor):
 
     def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1, projection='orth', conv_crit='sigma',
                compute_errors=False):
-        r"""Reduce using PH-IRKA.
+        r"""Reduce using pH-IRKA.
 
         It uses IRKA as the intermediate reductor.
 
@@ -38,11 +38,10 @@ class PHIRKAReductor(GenericIRKAReductor):
             - order of the reduced model (a positive integer),
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
-              tangential directions (|VectorArray| from
-              `fom.D.source`), and left tangential directions
-              (|VectorArray| from `fom.D.range`), all of the same
-              length (the order of the reduced model),
-            - initial reduced-order model (|LTIModel|).
+              tangential directions (|NumPy array| of shape
+              `(len(sigma), fom.dim_input)`), and left tangential directions
+              (|NumPy array| of shape `(len(sigma), fom.dim_input)`),
+            - initial reduced-order model (|PHLTIModel|).
 
             If the order of reduced model is given, initial
             interpolation data is generated randomly.
