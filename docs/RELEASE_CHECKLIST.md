@@ -39,6 +39,9 @@ Replace `RELEASE_TAG` below with the actual release tag.
       (Omit in case of a bugfix release.)
 - [ ] Update homepage
       (`gh-pages` branch in `pymor/pymor`, similar to changes in `README.md`).
+- [ ] Check if the [docs](https://docs.pymor.org) got updated.
+- [ ] Check if [`conda-forge/pymor-feedstock`](https://github.com/conda-forge/pymor-feedstock)
+      got updated.
 - [ ] Make a GitHub release
       ([Zenodo](https://zenodo.org/record/7494334) is hooked into that) and
       announce the release in
