@@ -39,15 +39,16 @@ Replace `RELEASE_TAG` below with the actual release tag.
       (Omit in case of a bugfix release.)
 - [ ] Update homepage
       (`gh-pages` branch in `pymor/pymor`, similar to changes in `README.md`).
-- [ ] Make a GitHub release.
-      [Zenodo](https://zenodo.org/record/7494334) is hooked into that.
+- [ ] Make a GitHub release
+      ([Zenodo](https://zenodo.org/record/7494334) is hooked into that) and
+      announce the release in
+      [GitHub Discussions](https://github.com/pymor/pymor/discussions)
+      (can be done as part of making the release).
 - [ ] Update MOR Wiki:
       [pyMOR page](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/PyMOR),
       [software comparison table](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/Comparison_of_Software).
 - [ ] Submit release to [NA-digest](http://icl.utk.edu/na-digest/websubmit.html).
       (Omit in case of a bugfix release.)
-- [ ] Announce release in
-      [GitHub discussions](https://github.com/pymor/pymor/discussions).
 - [ ] All developers check if (stale) branches can be pruned.
 - [ ] All developers check for `.mailmap` correctness.
 - [ ] Remove deprecated features in main in `pymor/pymor`.
