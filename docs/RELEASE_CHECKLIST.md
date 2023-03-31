@@ -44,8 +44,6 @@ Replace `RELEASE_TAG` below with the actual release tag.
 - [ ] Update MOR Wiki:
       [pyMOR page](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/PyMOR),
       [software comparison table](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/Comparison_of_Software).
-- [ ] Update [ResearchGate](https://www.researchgate.net/project/pyMOR-Model-Order-Reduction-with-Python)
-      (check formatting after submit!).
 - [ ] Submit release to [NA-digest](http://icl.utk.edu/na-digest/websubmit.html).
       (Omit in case of a bugfix release.)
 - [ ] Announce release in
