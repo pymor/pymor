@@ -3,10 +3,12 @@
 Replace `RELEASE_TAG` below with the actual release tag.
 
 - [ ] Check that release notes are finished and merged.
+      (Omit in case of a bugfix release.)
 - [ ] Update `README.md`.
 - [ ] Create a release branch in `pymor/pymor`.
       Should have a `.x` as the last part of the branch name in contrast
       to the `RELEASE_TAG`.
+      (Omit in case of a bugfix release.)
 - [ ] Tag commit in `pymor/pymor` as `RELEASE_TAG`.
       Use an annotated tag (`git tag -a RELEASE_TAG -m RELEASE_TAG`) with the
       annotation being `RELEASE_TAG`.
@@ -34,6 +36,7 @@ Replace `RELEASE_TAG` below with the actual release tag.
       and copy the subfolder of the last version, change the version in the
       `Dockerfile` (lines 1 and 6) and extend the `DEMO_TAGS` in `common.mk`
       (last line).
+      (Omit in case of a bugfix release.)
 - [ ] Update homepage
       (`gh-pages` branch in `pymor/pymor`, similar to changes in `README.md`).
 - [ ] Make a GitHub release.
@@ -44,11 +47,13 @@ Replace `RELEASE_TAG` below with the actual release tag.
 - [ ] Update [ResearchGate](https://www.researchgate.net/project/pyMOR-Model-Order-Reduction-with-Python)
       (check formatting after submit!).
 - [ ] Submit release to [NA-digest](http://icl.utk.edu/na-digest/websubmit.html).
+      (Omit in case of a bugfix release.)
 - [ ] Announce release in
       [GitHub discussions](https://github.com/pymor/pymor/discussions).
 - [ ] All developers check if (stale) branches can be pruned.
 - [ ] All developers check for `.mailmap` correctness.
-- [ ] Remove deprecated features in main in `pymor/pymor`
-      (omit this step in case of a bugfix release).
+- [ ] Remove deprecated features in main in `pymor/pymor`.
+      (Omit in case of a bugfix release.)
 - [ ] Close the [GitHub milestone](https://github.com/pymor/pymor/milestones)
       for the release.
+      (Omit in case of a bugfix release.)
