@@ -93,11 +93,11 @@ class TRSurrogate(BasicObject):
 
 
 @defaults('beta', 'radius', 'shrink_factor', 'miniter', 'maxiter', 'miniter_subproblem', 'maxiter_subproblem',
-          'tol', 'radius_tol', 'rtol', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
+          'tol', 'radius_tol', 'rtol_output', 'rtol_mu', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
 def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, radius=.1,
                  shrink_factor=.5, miniter=0, maxiter=30, miniter_subproblem=0, maxiter_subproblem=400, tol=1e-6,
-                 radius_tol=.75, rtol=1e-16, tol_sub=1e-8, line_search_params=None, stagnation_window=3,
-                 stagnation_threshold=np.inf):
+                 radius_tol=.75, rtol_output=1e-16, rtol_mu=1e-16, tol_sub=1e-8, line_search_params=None,
+                 stagnation_window=3, stagnation_threshold=np.inf):
     """TR algorithm.
 
     This method solves the optimization problem ::
@@ -145,8 +145,10 @@ def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, r
         Finish when the clipped parameter error measure is below this threshold.
     radius_tol
         Threshold for increasing the trust region radius upon extending the reduced order model.
-    rtol
-        Finish the subproblem when the relative error measure is below this threshold.
+    rtol_output
+        Finish when the relative error measure of the output is below this threshold.
+    rtol_mu
+        Finish when the relative error measure of the |parameter values| is below this threshold.
     tol_sub
         Finish when the subproblem clipped parameter error measure is below this threshold.
     line_search_params
@@ -229,7 +231,7 @@ def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, r
             with logger.block(f'Solving subproblem for mu {mu} with BFGS...'):
                 mu, sub_data = error_aware_bfgs(
                     surrogate.rom, parameter_space, initial_guess=mu, miniter=miniter_subproblem,
-                    maxiter=maxiter_subproblem, rtol=rtol, tol_sub=tol_sub,
+                    maxiter=maxiter_subproblem, rtol_output=rtol_output, rtol_mu=rtol_mu, tol_sub=tol_sub,
                     line_search_params=line_search_params, stagnation_window=stagnation_window,
                     stagnation_threshold=stagnation_threshold, error_aware=True,
                     error_criterion=error_aware_line_search_criterion)

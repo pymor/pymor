@@ -3,14 +3,13 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-import pymortests.strategies as pyst
 import pytest
 from hypothesis import given
-from pymordemos.linear_optimization import create_fom
 
-from pymor.algorithms.bfgs import (_get_active_and_inactive_sets,
-                                   error_aware_bfgs)
+import pymortests.strategies as pyst
+from pymor.algorithms.bfgs import _get_active_and_inactive_sets, error_aware_bfgs
 from pymor.core.exceptions import BFGSError
+from pymordemos.linear_optimization import create_fom
 
 
 @given(pyst.active_mu_data())

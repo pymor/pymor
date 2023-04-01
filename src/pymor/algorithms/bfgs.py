@@ -13,9 +13,9 @@ from pymor.core.logger import getLogger
 from pymor.parameters.base import Mu
 
 
-@defaults('miniter', 'maxiter', 'rtol', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
-def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0, maxiter=100, rtol=1e-16,
-         tol_sub=1e-8, line_search_params=None, stagnation_window=3, stagnation_threshold=np.inf,
+@defaults('miniter', 'maxiter', 'rtol_output', 'rtol_mu', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
+def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0, maxiter=100, rtol_output=1e-16,
+         rtol_mu=1e-16, tol_sub=1e-8, line_search_params=None, stagnation_window=3, stagnation_threshold=np.inf,
          error_aware=False, error_criterion=None):
     """BFGS algorithm.
 
@@ -25,10 +25,10 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
 
     for an output functional depending on a box-constrained `mu` using the BFGS method.
 
-    In contrast to :func:`scipy.optimize.minimize` with the `L-BFGS-B` methods, this BFGS implementation is
-    explicitly designed to work with an error estimator. In particular, this implementation
-    terminates if the higher level TR boundary from :mod:`pymor.algorithms.tr` is reached instead of
-    continuing to optimize close to the boundary.
+    In contrast to :func:`scipy.optimize.minimize` with the `L-BFGS-B` methods, this BFGS
+    implementation is explicitly designed to work with an error estimator. In particular, this
+    implementation terminates if the higher level TR boundary from :mod:`pymor.algorithms.tr` is
+    reached instead of continuing to optimize close to the boundary.
 
     Parameters
     ----------
@@ -39,13 +39,16 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         |parameter values| `mu`. Otherwise a |ParameterSpace| with infinite bounds.
     initial_guess
         If not `None`, a |Mu| instance containing an initial guess for the solution `mu`.
-        Otherwise, random |parameter values| from the parameter space are chosen as the initial value.
+        Otherwise, random |parameter values| from the parameter space are chosen as the
+        initial value.
     miniter
         Minimum amount of iterations to perform.
     maxiter
         Fail if the iteration count reaches this value without converging.
-    rtol
-        Finish when the relative error measure is below this threshold.
+    rtol_output
+        Finish when the relative error measure of the output is below this threshold.
+    rtol_mu
+        Finish when the relative error measure of the |parameter values| is below this threshold.
     tol_sub
         Finish when the first order criticality is below this threshold.
     line_search_params
@@ -60,8 +63,9 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         Intended for use with the trust region algorithm.
     error_criterion
         The additional error criterion used to check model confidence in the line search.
-        This maps |parameter values| and an output value to a boolean indicating if the criterion is fulfilled.
-        Refer to :func:`error_aware_line_search_criterion` in :mod:`pymor.algorithms.tr` for an example.
+        This maps |parameter values| and an output value to a boolean indicating if the
+        criterion is fulfilled. Refer to :func:`error_aware_line_search_criterion` in
+        :mod:`pymor.algorithms.tr` for an example.
 
     Returns
     -------
@@ -124,18 +128,18 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     iteration = 0
     while True:
         if iteration >= miniter:
-            if output_diff < rtol:
-                logger.info(f'Relative tolerance of {rtol} for output difference reached. Converged.')
+            if output_diff < rtol_output:
+                logger.info(f'Relative tolerance of {rtol_output} for output difference reached. Converged.')
                 break
-            if mu_diff < rtol:
-                logger.info(f'Relative tolerance of {rtol} for parameter difference reached. Converged.')
+            if mu_diff < rtol_mu:
+                logger.info(f'Relative tolerance of {rtol_mu} for parameter difference reached. Converged.')
                 break
             if first_order_criticality < tol_sub:
                 logger.info(f'Absolute tolerance of {tol_sub} for first order criticality reached. Converged.')
                 break
             if error_aware:
                 if error_criterion(mu, current_output):
-                    logger.info(f'Output error confidence reached. Converged.')
+                    logger.info('Output error confidence reached. Converged.')
                     break
             if (iteration >= stagnation_window + 1
                     and stagnation_threshold * update_norm < min(update_norms[-stagnation_window - 1:])):

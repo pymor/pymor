@@ -4,12 +4,12 @@
 
 import numpy as np
 import pytest
-from pymordemos.linear_optimization import create_fom
 
 from pymor.algorithms.tr import trust_region
 from pymor.core.exceptions import TRError
 from pymor.parameters.functionals import MinThetaParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor
+from pymordemos.linear_optimization import create_fom
 
 
 def test_tr():
