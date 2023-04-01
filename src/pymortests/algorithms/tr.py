@@ -29,4 +29,5 @@ def test_tr():
     # reset reductor
     reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
     with pytest.raises(TRError):
-        mu, _ = trust_region(reductor, parameter_space, radius=.1, initial_guess=initial_guess, maxiter=10, rtol_output=1e-6, rtol_mu=1e-6)
+        mu, _ = trust_region(reductor, parameter_space, radius=.1, initial_guess=initial_guess,
+                             maxiter=10, rtol_output=1e-6, rtol_mu=1e-6)
