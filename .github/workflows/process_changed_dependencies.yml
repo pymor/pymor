@@ -32,7 +32,7 @@ jobs:
         with:
           repository: pymor/docker
           ssh-key: ${{ secrets.PYMOR_DOCKER_DEPLOY }}
-      - uses: dawidd6/action-download-artifact@v2.24.3
+      - uses: dawidd6/action-download-artifact@v2.26.1
         with:
           workflow: dependencies_change.yml
           run_id: ${{ github.event.workflow_run.id }}
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-      - uses: dawidd6/action-download-artifact@v2.24.3
+      - uses: dawidd6/action-download-artifact@v2.26.1
         with:
           workflow: dependencies_change.yml
           run_id: ${{ github.event.workflow_run.id }}
@@ -81,7 +81,7 @@ jobs:
           fi
       - name: Regenerate template
         run: make template  # this does NOT update requirements correctly as main is checked out
-      - uses: dawidd6/action-download-artifact@v2.24.3
+      - uses: dawidd6/action-download-artifact@v2.26.1
         with:
           workflow: dependencies_change.yml
           run_id: ${{ github.event.workflow_run.id }}
