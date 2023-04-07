@@ -60,7 +60,7 @@ work on pyMOR with [PyCharm](https://www.jetbrains.com/help/pycharm/docker-compo
 
 ## Coding Guidelines and Project Management
 
-### Code Style
+### Python Code Style
 
 pyMOR follows the coding style of
 [PEP8](https://www.python.org/dev/peps/pep-0008/) apart from a
@@ -95,7 +95,7 @@ style. The main developers will be happy to help you to bring your code
 into proper shape for inclusion in pyMOR.
 :::
 
-#### How to Check Code Style
+#### How to Check Python Code Style
 
 Firstly, make sure that you installed the dependencies in `requirements-ci.txt`
 with
@@ -115,6 +115,15 @@ or directly call
 ```
 flake8 src
 ```
+
+### Markdown Style
+
+The Markdown style is determined by the
+[`markdownlint`](https://github.com/DavidAnson/markdownlint) rules,
+specified in `.markdownlint.yml`.
+The [`markdownlint-cli2`](https://github.com/DavidAnson/markdownlint-cli2) tool
+(or the `pre-commit` hook; see below)
+can be used to check for errors.
 
 ### GitHub Project
 
