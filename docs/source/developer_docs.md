@@ -116,7 +116,6 @@ or directly call
 flake8 src
 ```
 
-
 ### GitHub Project
 
 All new code enters pyMOR by means of a pull request. Pull requests (PR) trigger [automatic tests](#continuous-testing--integration-setup)
@@ -189,7 +188,6 @@ Run `make full-test` to also generate a
 
 This file records defaults used when executing CI scripts. These are loaded by make and can be
 overridden like this: `make DOCKER_BASE_PYTHON=3.8 docker_test` (see also the top of the `Makefile`).
-
 
 ## Continuous Testing / Integration Setup
 
@@ -317,7 +315,6 @@ add to an allow list in the config to protect CI secrets. If a PR build does not
 for a user a comment is added in that PR.
 This service currently runs on the `ammservices` machine under the git user.
 
-
 ### GitHub Actions
 
 :::{note}
@@ -342,7 +339,6 @@ Configured by individual files in `.github/workflows/*`
   - Pytest XML reports can also be found there.
 
 (ref_docker_images)=
-
 
 ### pre-commit.ci
 
