@@ -29,7 +29,6 @@ kernelspec:
 
 # Tutorial: Reducing an LTI system using balanced truncation
 
-
 Here we briefly describe the balanced truncation method,
 for asymptotically stable LTI systems with an invertible {math}`E` matrix,
 and demonstrate it on the heat equation example from

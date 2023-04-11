@@ -395,7 +395,6 @@ np.median(outputs_speedups)
 
 ## Neural networks for instationary problems
 
-
 To solve instationary problems using neural networks, we have extended the
 {class}`~pymor.reductors.neural_network.NeuralNetworkReductor` to the
 {class}`~pymor.reductors.neural_network.NeuralNetworkInstationaryReductor`, which treats time
@@ -426,6 +425,7 @@ avoid problems like vanishing or exploding gradients that often occur during tra
 neural networks.
 
 #### The architecture of an LSTM neural network
+
 In an LSTM neural network, multiple so-called LSTM cells are chained with each other such that the
 cell state {math}`c_k` and the hidden state {math}`h_k` of the {math}`k`-th LSTM cell serve as the
 input hidden states for the {math}`k+1`-th LSTM cell. Therefore, information from former time
@@ -439,6 +439,7 @@ that is also implemented in the same way in pyMOR:
 ```
 
 #### The LSTM cell
+
 The main building block of an LSTM network is the *LSTM cell*, which is denoted by {math}`\Phi`,
 and sketched in the following figure:
 
@@ -468,10 +469,12 @@ We will take a closer look at the individual components of an LSTM cell in the s
 paragraphs.
 
 ##### The forget gate
+
 ```{image} lstm_cell_forget_gate.svg
 :alt: Forget gate of an LSTM cell
 :align: right
 ```
+
 As the name already suggests, the *forget gate* determines which part of the cell state
 {math}`c_{k-1}` the network forgets when moving to the next cell state {math}`c_k`. The main
 component of the forget gate is a neural network layer consisting of an affine-linear function
@@ -484,10 +487,12 @@ state remain intact. As input of the forget gate serves the pair {math}`(h_{k-1}
 in the second step also the cell state {math}`c_{k-1}`.
 
 ##### The input gate
+
 ```{image} lstm_cell_input_gate.svg
 :alt: Input gate of an LSTM cell
 :align: right
 ```
+
 To further change the cell state, an LSTM cell contains a so-called *input gate*. This gate mainly
 consists of two layers, a sigmoid layer and an hyperbolic tangent layer, acting on the pair
 {math}`(h_{k-1},\mu(t_k))`. As in the forget gate, the sigmoid layer determines which parts of the
@@ -499,10 +504,12 @@ is added to the cell state (after the cell state passed the forget gate). The ne
 now prepared to be passed to the subsequent LSTM cell.
 
 ##### The output gate
+
 ```{image} lstm_cell_output_gate.svg
 :alt: Output gate of an LSTM cell
 :align: right
 ```
+
 For computing the output {math}`o(t_k)` (and the new hidden state {math}`h_k`), the updated cell
 state {math}`c_k` is first of all entry-wise transformed using a hyperbolic tangent function such
 that the result again takes values between -1 and 1. Simultaneously, a neural network layer with a
@@ -517,6 +524,7 @@ output {math}`o(t_k)` that is returned and a new hidden state {math}`h_k` that c
 (together with the updated cell state {math}`c_k`) to the next LSTM cell.
 
 #### LSTMs for model order reduction
+
 The idea of the approach implemented in pyMOR is the following: Instead of passing the current
 time instance as an additional input of the neural network, we use an LSTM that takes at each time
 instance {math}`t_k` the (potentially) time-dependent input {math}`\mu(t_k)` as an input and uses

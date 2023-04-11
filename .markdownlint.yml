@@ -1,22 +1,13 @@
 ---
-###########################
-###########################
-## Markdown Linter rules ##
-###########################
-###########################
+# Markdown linter rules
+# linter rules doc: https://github.com/DavidAnson/markdownlint
 
-# Linter rules doc:
-# - https://github.com/DavidAnson/markdownlint
-
-###############
-# Rules by id #
-###############
+MD003:
+  style: atx # use "#" for headers
 MD013:
-  line_length: 120 # Line length 80 is far to short
-MD041: false # require heading as first line in file
+  line_length: 120 # line length 80 is far too short
+MD033:
+  allowed_elements: # allowed HTML tags
+    - img
 MD040: false # ``` fenced code must have language set
-
-#################
-# Rules by tags #
-#################
-blank_lines: false  # Error on blank lines
+MD041: false # require heading as first line in file
