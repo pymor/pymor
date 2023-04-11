@@ -172,6 +172,7 @@ class RandomizedRangeFinder(ImmutableObject):
 
         self.__auto_init(locals())
         self._estimator = estimator
+        self._coeffs = np.array([[]])
         self._Q = [self.A.range.empty()]
         for _ in range(subspace_iterations):
             self._Q.append(self.A.source.empty())
@@ -180,13 +181,19 @@ class RandomizedRangeFinder(ImmutableObject):
         self._adjoint_op = A if self_adjoint else AdjointOperator(A, source_product=source_product,
                                                                   range_product=range_product)
 
+    def _compute_coefficients(self, basis_size, num_testvecs):
+        l, n = self._coeffs.shape
+        if basis_size > l or num_testvecs > n:
+            Q, W = self._find_range(basis_size), self._estimator._samplevecs[:num_testvecs]
+            gramian = Q.gramian(self.range_product)
+            rhs = Q.inner(W, self.range_product)
+            self._coeffs = spla.solve(gramian, rhs, assume_a='pos', overwrite_a=True, overwrite_b=True)
+        return self._coeffs[:basis_size, :num_testvecs]
+
     def _estimate_error(self, basis_size, num_testvecs, p_fail):
         self._estimator._draw_samples(num_testvecs)
-        Q, W = self._find_range(basis_size), self._estimator._samplevecs[:num_testvecs]
-        gramian = Q.gramian(self.range_product)
-        rhs = Q.inner(W, self.range_product)
-        coeffs = spla.solve(gramian, rhs, assume_a='pos', overwrite_a=True, overwrite_b=True)
         norms = np.asarray(self._estimator._norms[:num_testvecs])
+        coeffs = self._compute_coefficients(basis_size, num_testvecs)
         return self._estimator._estimate_norm(np.sqrt(np.abs(norms**2) - spla.norm(coeffs, axis=0)**2), p_fail)
 
     def estimate_error(self, basis_size, num_testvecs=20, p_fail=1e-14):
