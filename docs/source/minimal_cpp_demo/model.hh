@@ -1,5 +1,5 @@
-#ifndef DISCRETIZATION_HH
-#define DISCRETIZATION_HH
+#ifndef MODEL_HH
+#define MODEL_HH
 
 #include <vector>
 
@@ -32,4 +32,4 @@ private:
 };
 
 
-#endif // DISCRETIZATION_HH
+#endif // MODEL_HH
