@@ -12,4 +12,5 @@ if not platform.python_version_tuple()[:2] == ('3', '10'):
 # update requirements files using pip-compile
 os.system('pip-compile --resolver backtracking -o requirements.txt')
 os.system('pip-compile --resolver backtracking --extra ci -o requirements-ci.txt')
-os.system('pip-compile --resolver backtracking --extra all --extra ci -o requirements-optional.txt')
+os.system('pip-compile --resolver backtracking --extra ci --extra docs --extra io '
+          '--extra optional --extra compiled -o requirements-optional.txt')

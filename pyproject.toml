@@ -56,8 +56,7 @@ docs = [
     "sphinxcontrib-applehelp<1.0.3",
     "sphinxcontrib-bibtex",
 ]
-full = [
-    "pymor[docs,io]",
+optional = [
     "dune-gdt>=2022.5.3; platform_system==\"Linux\" and platform_machine==\"x86_64\"",
     "dune-xt[visualisation]>=2022.5.3; platform_system==\"Linux\" and platform_machine==\"x86_64\"",
     "ipython>=6.0",
@@ -74,11 +73,16 @@ full = [
     "sympy",
     "torch>=1.11.0",
 ]
-all = [
-    "pymor[full]",
+compiled = [
     "slycot>=0.4.0",
     "mpi4py>=3.0.3",
     "pymess"
+]
+full = [
+    "pymor[docs,io,optional]",
+]
+all = [
+    "pymor[docs,io,optional,compiled]",
 ]
 ci = [
     "check-manifest==0.49",
