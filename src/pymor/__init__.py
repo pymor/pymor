@@ -46,12 +46,9 @@ def _init_mpi():
 
 _init_mpi()
 
-import pymor.version as _version
+from pymor._version import __version__, __version_tuple__
 from pymor.core.config import config
 from pymor.core.defaults import load_defaults_from_file
-
-revstring = _version.get_versions()['version']
-__version__ = str(revstring)
 
 if 'PYMOR_DEFAULTS' in os.environ:
     filename = os.environ['PYMOR_DEFAULTS']
