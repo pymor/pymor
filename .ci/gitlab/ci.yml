@@ -156,13 +156,6 @@ include:
 
 #******* sanity stage
 
-# this step makes sure that on older python our install fails with
-# a nice message ala "python too old" instead of "SyntaxError"
-verify setup.py:
-    extends: .sanity_checks
-    script:
-        - python3 setup.py egg_info
-
 ci setup:
     extends: .sanity_checks
     script:
