@@ -5,6 +5,8 @@ check_reqs==1.0.0
 docutils==0.18
 hypothesis==6.56.3
 hypothesis[numpy,pytest]==6.56.3
+meson==1.1.0
+ninja==1.11.1
 pybind11==2.9.2
 pypi-oldest-requirements==2022.1.0
 pyqt5-qt5==5.15.2
