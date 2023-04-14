@@ -169,7 +169,7 @@ nbformat==5.8.0
     #   pytest-notebook
 nest-asyncio==1.5.6
     # via nbclient
-numpy==1.24.2 ; python_version >= "3.10"
+numpy==1.24.2
     # via
     #   hypothesis
     #   pymor (pyproject.toml)
@@ -313,7 +313,7 @@ rstcheck-core==1.0.3
     # via rstcheck
 ruff==0.0.242
     # via pymor (pyproject.toml)
-scipy==1.10.1 ; python_version >= "3.10"
+scipy==1.10.1
     # via pymor (pyproject.toml)
 secretstorage==3.3.3
     # via keyring
