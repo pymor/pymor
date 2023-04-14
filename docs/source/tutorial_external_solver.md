@@ -171,22 +171,23 @@ We use a minimal [CMake](<https://cmake.org/>) project that generates makefiles 
 
 First we make sure pybind11 can be used:
 
-```{literalinclude} minimal_cpp_demo/CMakeLists.txt
+<!-- ```{literalinclude} minimal_cpp_demo/CMakeLists.txt
 :lines: 1-6
 :language: cmake
 
-```
+``` -->
 
 Next, we define a new library with our `model.cc` as the single source file and let pybind11 set the proper compile
 flags.
 
-```{literalinclude} minimal_cpp_demo/CMakeLists.txt
+<!-- ```{literalinclude} minimal_cpp_demo/CMakeLists.txt
 :lines: 9-12
 :language: cmake
 
-```
+``` -->
 
-That is all that is needed for {download}`CMakeLists.txt <minimal_cpp_demo/CMakeLists.txt>`.
+That is all that is needed for
+<!-- {download}`CMakeLists.txt <minimal_cpp_demo/CMakeLists.txt>`. -->
 In the next step, we will switch to a bash terminal and actually compile this module.
 
 After creating a build directory for the module, we let cmake initialize the build and call make to execute the
@@ -196,9 +197,8 @@ compilation.
 :tags: [raises-exception]
 
 %%bash
-mkdir -p minimal_cpp_demo/build
-cmake -B minimal_cpp_demo/build -S minimal_cpp_demo
-make -C minimal_cpp_demo/build
+meson setup minimal_cpp_demo/build minimal_cpp_demo
+meson compile -C minimal_cpp_demo/build
 ```
 
 To be able to use this extension module we need to insert the build directory into the path where the Python
