@@ -8,6 +8,7 @@ hypothesis[numpy,pytest]==6.56.3
 meson==1.1.0
 ninja==1.11.1
 pybind11==2.9.2
+pybind11[global]==2.9.2
 pypi-oldest-requirements==2022.1.0
 pyqt5-qt5==5.15.2
 pyqt5==5.15.7
