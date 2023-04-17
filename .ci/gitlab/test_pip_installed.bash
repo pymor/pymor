@@ -46,7 +46,6 @@ pip install .[full]
 
 # other requirements are installed from pymor[full]
 pip install -r requirements-ci.txt
-pip install -r requirements-optional.txt
 # make sure pytest does not pick up anything from the source tree
 export PYTHONPATH=${PYTHONPATH_PRE}
 tmpdir=$(mktemp -d)

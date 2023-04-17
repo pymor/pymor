@@ -10,4 +10,4 @@ python3 -m pip install ${CI_PROJECT_DIR}[full]
 # second section gets additional setup for slycot, mpi4py etc
 apt-get --allow-releaseinfo-change update
 apt install -y python3-dev libopenblas-dev gfortran libopenmpi-dev gcc cmake make
-python3 -m pip install -r ${CI_PROJECT_DIR}/requirements-optional.txt
+python3 -m pip install -r ${CI_PROJECT_DIR}[all]

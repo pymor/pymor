@@ -10,4 +10,4 @@ python3 -m pip install ${CI_PROJECT_DIR}[full]
 # second section gets additional setup for slycot, mpi4py etc
 export CC=/usr/lib64/openmpi/bin/mpicc
 yum install -y python3-devel openmpi-devel openblas-devel cmake make gcc-gfortran gcc-c++
-python3 -m pip install -r ${CI_PROJECT_DIR}/requirements-optional.txt
+python3 -m pip install -r ${CI_PROJECT_DIR}[all]
