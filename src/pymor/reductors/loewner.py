@@ -47,6 +47,7 @@ class LoewnerReductor(BasicObject):
     def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, mimo_handling='random'):
         self.__auto_init(locals())
         self.loewner_svds = None
+        self.loewner_quadruple = None
 
     def reduce(self, r=None, tol=1e-7):
         """Reduce using Loewner framework.
@@ -66,17 +67,20 @@ class LoewnerReductor(BasicObject):
         rom
             Reduced |LTIModel|.
         """
-        L, Ls, V, W = loewner_quadruple(self.s, self.Hs, partitioning=self.partitioning, ordering=self.ordering,
-                                        conjugate=self.conjugate, mimo_handling=self.mimo_handling)
 
         if self.loewner_svds is None:
+            L, Ls, V, W = loewner_quadruple(self.s, self.Hs, partitioning=self.partitioning, ordering=self.ordering,
+                                            conjugate=self.conjugate, mimo_handling=self.mimo_handling)
+
             LhLs = np.hstack([L, Ls])
             Y, S1, _ = spla.svd(LhLs, full_matrices=False)
             LvLs = np.vstack([L, Ls])
             _, S2, Xh = spla.svd(LvLs, full_matrices=False)
             self.loewner_svds = (Y, S1, S2, Xh)
+            self.loewner_quadruple = (L, Ls, V, W)
         else:
             Y, S1, S2, Xh = self.loewner_svds
+            L, Ls, V, W = self.loewner_quadruple
 
         r1 = len(S1[S1/S1[0] > tol])
         r2 = len(S2[S2/S2[0] > tol])
@@ -93,8 +97,8 @@ class LoewnerReductor(BasicObject):
 
         B = Yhr @ V
         C = W @ Xr
-        E = - Yhr @ L @ Xr
-        A = - Yhr @ Ls @ Xr
+        E = -Yhr @ L @ Xr
+        A = -Yhr @ Ls @ Xr
 
         if self.conjugate:
             A, B, C, E = A.real, B.real, C.real, E.real
@@ -107,10 +111,10 @@ def _partition_frequencies(s, Hs, partitioning='even-odd', ordering='regular', c
     # must keep complex conjugate frequencies in the same partioning
     if conjugate:
         # partition frequencies corresponding to positive imaginary part
-        pimidx = np.where(np.imag(s) > 0)[0]
+        pimidx = np.where(s.imag > 0)[0]
 
         # treat real-valued samples separately in order to ensure balanced splitting
-        ridx = np.where(np.imag(s) == 0)[0]
+        ridx = np.where(s.imag == 0)[0]
 
         if ordering == 'magnitude':
             pimidx_sort = np.argsort([np.linalg.norm(Hs[i]) for i in pimidx])
@@ -138,13 +142,13 @@ def _partition_frequencies(s, Hs, partitioning='even-odd', ordering='regular', c
 
         l_cc = np.array([], dtype=int)
         for le in left:
-            if np.imag(s[le]) != 0:
+            if s[le].imag != 0:
                 l_cc = np.concatenate((l_cc, np.where(s == s[le].conj())[0]))
         left = np.concatenate((left, l_cc))
 
         r_cc = np.array([], dtype=int)
         for ri in right:
-            if np.imag(s[ri]) != 0:
+            if s[ri].imag != 0:
                 r_cc = np.concatenate((r_cc, np.where(s == s[ri].conj())[0]))
         right = np.concatenate((right, r_cc))
 
@@ -206,18 +210,18 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
     Returns
     -------
     L
-        Loewner matrix.
+        Loewner matrix as a |NumPy array|.
     Ls
-        Shifted Loewner matrix.
+        Shifted Loewner matrix as a |NumPy array|.
     V
-        Left interpolation data.
+        Left interpolation data as a |NumPy array|.
     W
-        Right interpolation data.
+        Right interpolation data as a |NumPy array|.
     """
     assert isinstance(s, np.ndarray)
     if hasattr(Hs, 'transfer_function'):
         Hs = Hs.transfer_function
-    assert isinstance(Hs, TransferFunction) or isinstance(Hs, np.ndarray) or isinstance(Hs, list)
+    assert isinstance(Hs, (TransferFunction, np.ndarray, list))
 
     assert partitioning in ('even-odd', 'half-half') or len(partitioning) == 2
     assert ordering in ('magnitude', 'random', 'regular')
@@ -232,7 +236,7 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
 
     # ensure that complex sampling values appear in complex conjugate pairs
     if conjugate:
-        # if user provides paritioning sizes, make sure they are adjusted
+        # if user provides partitioning sizes, make sure they are adjusted
         if isinstance(partitioning, tuple):
             p0 = partitioning[0]
             p1 = partitioning[1]
@@ -263,10 +267,10 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
 
     if dim_input == dim_output == 1:
         Hs = np.squeeze(Hs)
-        L = Hs[ip][:, np.newaxis] - Hs[jp][np.newaxis]
-        L /= s[ip][:, np.newaxis] - s[jp][np.newaxis]
-        Ls = (s[ip] * Hs[ip])[:, np.newaxis] - (s[jp] * Hs[jp])[np.newaxis]
-        Ls /= s[ip][:, np.newaxis] - s[jp][np.newaxis]
+        L = Hs[ip][:, np.newaxis] - Hs[jp]
+        L /= s[ip][:, np.newaxis] - s[jp]
+        Ls = (s[ip] * Hs[ip])[:, np.newaxis] - s[jp] * Hs[jp]
+        Ls /= s[ip][:, np.newaxis] - s[jp]
         V = Hs[ip][:, np.newaxis]
         W = Hs[jp][np.newaxis]
     else:
@@ -332,13 +336,16 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
             L = np.tensordot(TL, L, axes=(1, 0))
             L = np.tensordot(L, TR.conj().T, axes=(1, 0))
             L = L.real
+            L = np.transpose(L, (0, 3, 1, 2))
 
             Ls = np.tensordot(TL, Ls, axes=(1, 0))
             Ls = np.tensordot(Ls, TR.conj().T, axes=(1, 0))
             Ls = Ls.real
+            Ls = np.transpose(Ls, (0, 3, 1, 2))
 
             V = np.tensordot(TL, V, axes=(1, 0)).real
             W = np.tensordot(W, TR.conj().T, axes=(1, 0)).real
+            W = np.transpose(W, (0, 3, 1, 2))
         else:
             L = (TL @ L @ TR.conj().T).real
             Ls = (TL @ Ls @ TR.conj().T).real
@@ -346,9 +353,9 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
             W = (W @ TR.conj().T).real
 
     if mimo_handling == 'full':
-        L = np.reshape(L, (len(ip)*dim_output, len(jp)*dim_input))
-        Ls = np.reshape(Ls, (len(ip)*dim_output, len(jp)*dim_input))
-        V = np.reshape(V, (len(ip)*dim_output, dim_input))
-        W = np.reshape(W, (dim_output, len(jp)*dim_input))
+        L = np.concatenate(np.concatenate(L, axis=1), axis=1)
+        Ls = np.concatenate(np.concatenate(Ls, axis=1), axis=1)
+        V = np.concatenate(np.concatenate(V, axis=1), axis=1)
+        W = np.concatenate(np.concatenate(W, axis=0), axis=1)
 
     return L, Ls, V, W

@@ -74,7 +74,11 @@ def main(
 
     ss = np.logspace(-1, 4, n)
 
+<<<<<<< HEAD
     run_mor_method_dd(lti, ss, PAAAReductor, 'AAA')
+=======
+    run_mor_method_dd(lti, ss, LoewnerReductor, 'Loewner')
+>>>>>>> [reductors.loewner] fix MIMO loewner matrices, fix minor things
 
 
 if __name__ == '__main__':
