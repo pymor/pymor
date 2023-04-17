@@ -40,7 +40,7 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         |parameter values| `mu`. Otherwise a |ParameterSpace| with lower bound -1
         and upper bound 1.
     initial_guess
-        If not `None`, a |Mu| instance containing an initial guess for the solution `mu`.
+        If not `None`, |parameter values| containing an initial guess for the solution `mu`.
         Otherwise, random |parameter values| from the parameter space are chosen as the
         initial value.
     miniter
