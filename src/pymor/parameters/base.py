@@ -377,7 +377,7 @@ class Mu(FrozenDict):
         return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
 
     def __neg__(self):
-        return Mu({key: -self[key] for key in self.keys()})
+        return Mu({key: -value for key, value in self.items()})
 
     def __add__(self, other):
         if not isinstance(other, Mu):
@@ -386,7 +386,7 @@ class Mu(FrozenDict):
             except Exception:
                 raise NotImplementedError
         assert self.keys() == other.keys()
-        return Mu({key: self[key] + other[key] for key in self.keys()})
+        return Mu({key: self[key] + other[key] for key in self})
 
     def __radd__(self, other):
         return self + other
@@ -395,11 +395,11 @@ class Mu(FrozenDict):
         return self + -other
 
     def __rsub__(self, other):
-        return self - other
+        return -self + other
 
     def __mul__(self, other):
         assert isinstance(other, Number)
-        return Mu({key: self[key] * other for key in self.keys()})
+        return Mu({key: self[key] * other for key in self})
 
     def __rmul__(self, other):
         return self * other
