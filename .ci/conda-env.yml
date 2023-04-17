@@ -26,11 +26,13 @@ dependencies:
   - lxml
   - matplotlib
   - meshio>=4.4
+  - meson==1.1.0
   - mpi4py>3.0.3
   - mpi4py>=3.0
   - mpi4py>=3.0.3
   - myst-nb>=0.16
   - nbresuse
+  - ninja==1.11.1
   - numpy>=1.17.5
   - numpy>=1.19.4
   - numpy>=1.21.5
