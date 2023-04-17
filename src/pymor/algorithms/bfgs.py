@@ -23,7 +23,8 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
 
         min J(mu), mu in C
 
-    for an output functional depending on a box-constrained `mu` using the BFGS method.
+    for a model with an output functional :math:`J` depending on a box-constrained `mu` using
+    the BFGS method.
 
     In contrast to :func:`scipy.optimize.minimize` with the `L-BFGS-B` methods, this BFGS
     implementation is explicitly designed to work with an error estimator. In particular, this
@@ -36,7 +37,8 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         The |Model| used for the optimization.
     parameter_space
         If not `None`, the |ParameterSpace| for enforcing the box constraints on the
-        |parameter values| `mu`. Otherwise a |ParameterSpace| with infinite bounds.
+        |parameter values| `mu`. Otherwise a |ParameterSpace| with lower bound -1
+        and upper bound 1.
     initial_guess
         If not `None`, a |Mu| instance containing an initial guess for the solution `mu`.
         Otherwise, random |parameter values| from the parameter space are chosen as the
