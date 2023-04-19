@@ -53,6 +53,26 @@ stages:
             - .hypothesis
             - test_results*.xml
 
+.submit:
+    extends: .test_base
+    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    variables:
+        XDG_CACHE_DIR: /tmp
+    retry:
+        max: 2
+        when:
+            - always
+    environment:
+        name: safe
+    rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_COMMIT_REF_NAME =~ /^github.*/
+      when: never
+    - when: on_success
+    stage: deploy
+    script: .ci/gitlab/submit.bash
+
 
 get image tag:
     extends: .test_base
@@ -94,3 +114,190 @@ vanilla 3 10:
             export PYMOR_HYPOTHESIS_PROFILE="ci"
           fi
         - ./.ci/gitlab/test_vanilla.bash
+
+mpi 3 10:
+    extends: .pytest
+    rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_mpi__3.10
+        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
+    retry:
+        max: 2
+        when: always
+    services:
+    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_mpi.bash
+
+tutorials 3 10:
+    extends: .pytest
+    rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_tutorials__3.10
+    services:
+    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_tutorials.bash
+
+cpp_demo 3 10:
+    extends: .pytest
+    rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_cpp_demo__3.10
+    services:
+    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_cpp_demo.bash
+
+ngsolve 3 10:
+    extends: .pytest
+    rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_ngsolve__3.10
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "fenics scikit_fem dealii dunegdt"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
+    services:
+    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_ngsolve.bash
+
+dunegdt 3 10:
+    extends: .pytest
+    rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_dunegdt__3.10
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
+    services:
+    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_dunegdt.bash
+
+scikit_fem 3 10:
+    extends: .pytest
+    rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_scikit_fem__3.10
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve dealii dunegdt"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
+    services:
+    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_scikit_fem.bash
+
+submit coverage:
+    extends: .submit
+    artifacts:
+        when: always
+        name: "coverage_reports"
+        paths:
+            - reports/
+    dependencies:
+        - mpi 3 10
+        - tutorials 3 10
+        - vanilla 3 10
+        - ngsolve 3 10
+        - dunegdt 3 10
+        - scikit_fem 3 10
+
+coverage html:
+    extends: .submit
+    needs: ["submit coverage"]
+    dependencies: ["submit coverage"]
+    artifacts:
+        name: "coverage_html"
+        paths:
+            - coverage_html
+    before_script:
+        - apk add py3-coverage
+    script:
+        - coverage combine reports/coverage*
+        - coverage html --directory coverage_html
+
+docs build 3 10:
+    extends: .test_base
+    tags: [mike]
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    script:
+        - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
+    stage: build
+    artifacts:
+        paths:
+            - docs/_build/html
+            - docs/error.log
+
+# THIS FILE IS AUTOGENERATED -- DO NOT EDIT #
+#   Edit and Re-run .ci/gitlab/template.ci.py instead       #
