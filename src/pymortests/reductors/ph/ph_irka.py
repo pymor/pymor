@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.models.iosys import PHLTIModel, LTIModel
+from pymor.models.iosys import LTIModel, PHLTIModel
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
 
 
