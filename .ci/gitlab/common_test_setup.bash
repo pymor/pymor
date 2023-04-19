@@ -33,9 +33,6 @@ if [ "x${ME}" != "x${DEFAULTS_OWNER}" ] ; then
   sudo chown ${ME} docs/source/pymor_defaults.py
 fi
 
-# switches default index to pypi-mirror service
-export PIP_CONFIG_FILE=/usr/local/share/ci.pip.conf
-
 #allow xdist to work by fixing parametrization order
 export PYTHONHASHSEED=0
 
