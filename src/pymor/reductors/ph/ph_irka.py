@@ -36,12 +36,13 @@ class PHIRKAReductor(GenericIRKAReductor):
             Can be:
 
             - order of the reduced model (a positive integer),
+            - initial interpolation points (a 1D |NumPy array|),
             - dict with `'sigma'`, `'b'`, `'c'` as keys mapping to
               initial interpolation points (a 1D |NumPy array|), right
               tangential directions (|NumPy array| of shape
               `(len(sigma), fom.dim_input)`), and left tangential directions
               (|NumPy array| of shape `(len(sigma), fom.dim_input)`),
-            - initial reduced-order model (|PHLTIModel|).
+            - initial reduced-order model (|LTIModel|).
 
             If the order of reduced model is given, initial
             interpolation data is generated randomly.

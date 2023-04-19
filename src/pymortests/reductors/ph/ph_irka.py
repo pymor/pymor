@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.models.iosys import PHLTIModel
+from pymor.models.iosys import PHLTIModel, LTIModel
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
 
 
@@ -24,4 +24,12 @@ def test_irka():
     rom = phirka.reduce({'sigma': np.array([1]),
                          'b': np.array([[1]]),
                          'c': np.array([[1]])})
+    assert isinstance(rom, PHLTIModel) and rom.order == 1
+
+    Ar = np.array([-1])
+    Br = np.array([1])
+    Cr = np.array([1])
+    initial_rom = LTIModel.from_matrices(Ar, Br, Cr)
+
+    rom = phirka.reduce(initial_rom)
     assert isinstance(rom, PHLTIModel) and rom.order == 1
