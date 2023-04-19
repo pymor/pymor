@@ -1,0 +1,4 @@
+FROM pymor/ci-base:3.10
+
+COPY requirements-ci.txt .
+RUN pip install --no-cache-dir -r requirements-ci.txt
