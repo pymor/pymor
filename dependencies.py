@@ -11,4 +11,6 @@ if not platform.python_version_tuple()[:2] == ('3', '10'):
 
 # update requirements files using pip-compile
 os.system('pip-compile --resolver backtracking --extra ci --extra docs --extra io '
-          '--extra optional --extra compiled -o requirements-ci.txt')
+          '--extra optional --extra compiled '
+          '--extra-index-url https://download.pytorch.org/whl/cpu '
+          '-o requirements-ci.txt')
