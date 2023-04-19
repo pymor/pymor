@@ -33,6 +33,9 @@ if [ "x${ME}" != "x${DEFAULTS_OWNER}" ] ; then
   sudo chown ${ME} docs/source/pymor_defaults.py
 fi
 
+# install editable to ensure that _version.py is built
+pip install -e .
+
 #allow xdist to work by fixing parametrization order
 export PYTHONHASHSEED=0
 
