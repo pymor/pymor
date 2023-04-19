@@ -1,5 +1,10 @@
 FROM docker.io/python:3.10-bullseye
 
+ENV DOCKER_PYMOR=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    GOTO_NUM_THREADS=1 \
+    OMP_NUM_THREADS=1
+
 RUN apt-get -q update && \
     apt-get -qy install xvfb build-essential cmake libopenblas-dev gfortran libopenmpi-dev \
         libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
