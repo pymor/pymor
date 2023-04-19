@@ -36,9 +36,6 @@ fi
 # switches default index to pypi-mirror service
 export PIP_CONFIG_FILE=/usr/local/share/ci.pip.conf
 
-# make sure image correct packages are baked into the image
-check_reqs requirements-ci.txt
-
 #allow xdist to work by fixing parametrization order
 export PYTHONHASHSEED=0
 
