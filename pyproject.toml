@@ -65,6 +65,7 @@ optional = [
     "jupytext>=1.14.4",
     "k3d>=2.15.1",
     "meshio>=4.4",
+    "ngsolve",
     "pillow",
     "pygments",
     "pyopengl",
