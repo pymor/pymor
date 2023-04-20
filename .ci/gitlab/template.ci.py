@@ -446,7 +446,7 @@ test_scripts = [
     ('scikit_fem', pythons, 1),
 ]
 # these should be all instances in the federation
-binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'ovh', 'gesis')]
+binder_urls = [f'https://{sub}.mybinder.org/build/gh/pymor/pymor' for sub in ('gke', 'ovh')]
 testos = [('fedora', '3.10'), ('debian-bullseye', '3.9')]
 
 env_path = Path(os.path.dirname(__file__)) / '..' / '..' / '.env'

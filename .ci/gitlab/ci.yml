@@ -719,7 +719,7 @@ local docker:
         - make DOCKER_CMD="ipython -c 'from pymor.basic import *'" docker_exec
 
 
-trigger_binder 1/3:
+trigger_binder 1/2:
     extends: .test_base
     stage: deploy
     image: harbor.uni-muenster.de/proxy-docker/library/alpine:3.16
@@ -734,7 +734,7 @@ trigger_binder 1/3:
     script:
         - python3 .ci/gitlab/trigger_binder.py "https://gke.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
 
-trigger_binder 2/3:
+trigger_binder 2/2:
     extends: .test_base
     stage: deploy
     image: harbor.uni-muenster.de/proxy-docker/library/alpine:3.16
@@ -748,21 +748,6 @@ trigger_binder 2/3:
         - pip3 install requests
     script:
         - python3 .ci/gitlab/trigger_binder.py "https://ovh.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
-
-trigger_binder 3/3:
-    extends: .test_base
-    stage: deploy
-    image: harbor.uni-muenster.de/proxy-docker/library/alpine:3.16
-    rules:
-        - if: $CI_COMMIT_REF_NAME == "main"
-          when: on_success
-        - if: $CI_COMMIT_TAG != null
-          when: on_success
-    before_script:
-        - apk --update add bash py3-pip
-        - pip3 install requests
-    script:
-        - python3 .ci/gitlab/trigger_binder.py "https://gesis.mybinder.org/build/gh/pymor/pymor/${CI_COMMIT_REF}"
 
 
 sdist_and_wheel:
