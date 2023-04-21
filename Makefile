@@ -138,3 +138,14 @@ docker_install_check: docker_image
 	DOCKER_BASE_PYTHON=$(DOCKER_BASE_PYTHON) PYMOR_TEST_OS=$(PYMOR_TEST_OS) $(DOCKER_COMPOSE) run --service-ports install_check \
       /pymor/.ci/gitlab/install_checks/$(PYMOR_TEST_OS)/check.bash
 	$(DOCKER_COMPOSE) down --remove-orphans -v
+
+ci_base_image:
+	podman build -t pymor/ci-base:3.10 -f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci-base.3_10 $(THIS_DIR)
+
+ci_requirements:
+	podman run --rm -it -v=$(THIS_DIR):/src pymor/ci-base:3.10 ./.ci/update_requirements_ci.bash
+
+ci_image:
+	podman build -t pymor/ci:3.10_$(shell sha256sum $(THIS_DIR)/requirements-ci.txt | cut -d " " -f 1) \
+		-f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci.3_10 $(THIS_DIR)
+
