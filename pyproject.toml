@@ -40,10 +40,15 @@ io = [
     "pyevtk",
     "xmljson",
 ]
+ipyparallel = [
+    "ipyparallel>=6.2.5",
+]
+ann = [
+    "torch>=1.11.0",
+]
 docs = [
     "bash_kernel",
     "ipydatawidgets==4.3.2",
-    "ipyparallel>=6.2.5",
     "ipywidgets>7",
     "matplotlib",
     "myst-nb>=0.16",
@@ -72,7 +77,6 @@ optional = [
     "pythreejs",
     "scikit-fem==6.0.0",
     "sympy",
-    "torch>=1.11.0",
 ]
 compiled = [
     "slycot>=0.4.0",
@@ -80,14 +84,13 @@ compiled = [
     "pymess"
 ]
 full = [
-    "pymor[docs,io,optional]",
+    "pymor[docs,io,ipyparallel,ann,optional]",
 ]
 all = [
-    "pymor[docs,io,optional,compiled]",
+    "pymor[full,compiled]",
 ]
 ci = [
     "check-manifest==0.49",
-    "check_reqs==1.0.0",
     "docutils==0.18",
     "hatchling",
     "hatch-vcs",
