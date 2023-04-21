@@ -50,4 +50,3 @@ COMMON_PYTEST_OPTS="--junitxml=test_results_${PYMOR_VERSION}.xml \
   --cov-report= ${COV_OPTION} --cov-config=${PYMOR_ROOT}/setup.cfg --cov-context=test \
   --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE} ${PYMOR_PYTEST_EXTRA}"
 
-python -m pytest src/pymortests/docker_ci_smoketest.py
