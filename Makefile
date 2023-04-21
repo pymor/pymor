@@ -149,3 +149,13 @@ ci_image:
 	podman build -t pymor/ci:3.10_$(shell sha256sum $(THIS_DIR)/requirements-ci.txt | cut -d " " -f 1) \
 		-f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci.3_10 $(THIS_DIR)
 
+ci_fenics_base_image:
+	podman build -t pymor/ci-fenics-base:3.11 -f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci-fenics-base.3_11 $(THIS_DIR)
+
+ci_fenics_requirements:
+	podman run --rm -it -v=$(THIS_DIR):/src pymor/ci-fenics-base:3.11 \
+		./.ci/update_requirements_ci_fenics.bash
+
+ci_fenics_image:
+	podman build -t pymor/ci-fenics:3.11_$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
+		-f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci-fenics.3_11 $(THIS_DIR)

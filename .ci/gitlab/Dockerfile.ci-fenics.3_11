@@ -1,0 +1,5 @@
+FROM pymor/ci-fenics-base:3.11
+
+COPY requirements-ci-fenics.txt .
+RUN . /venv/bin/activate && \
+    pip install --no-cache-dir -r requirements-ci-fenics.txt
