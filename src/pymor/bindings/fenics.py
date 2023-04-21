@@ -331,9 +331,8 @@ class FenicsMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         # PETSc is used as backend and transpose the matrix
         if not hasattr(self, '_matrix_transpose'):
             self._matrix_transpose = self.matrix.copy()
-            mat = df.as_backend_type(self.matrix).mat()
             mat_tr = df.as_backend_type(self._matrix_transpose).mat()
-            mat.transpose(mat_tr)
+            mat_tr.transpose()
         self._apply_inverse(r.impl, u.impl, adjoint=True)
         return r
 
