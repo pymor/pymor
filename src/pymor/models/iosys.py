@@ -1496,8 +1496,8 @@ class PHLTIModel(LTIModel):
     This class describes input-state-output systems given by
 
     .. math::
-        E(\mu) \dot{x}(t, \mu) & = (J(\mu) - R(\mu))Q(\mu)   x(t, \mu) + (G(\mu) - P(\mu)) u(t), \\
-                     y(t, \mu) & = (G(\mu) + P(\mu))^TQ(\mu) x(t, \mu) + (S(\mu) - N(\mu)) u(t),
+        E(\mu) \dot{x}(t, \mu) & = (J(\mu) - R(\mu)) Q(\mu)   x(t, \mu) + (G(\mu) - P(\mu)) u(t), \\
+                     y(t, \mu) & = (G(\mu) + P(\mu))^T Q(\mu) x(t, \mu) + (S(\mu) - N(\mu)) u(t),
 
     with :math:`H(\mu)=Q(\mu)^T E(\mu) \succ 0`,
 
