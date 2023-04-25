@@ -98,8 +98,6 @@ ci = [
     "hypothesis[numpy,pytest]==6.56.3",
     "pybind11==2.9.2",
     "pypi-oldest-requirements==2022.1.0",
-    "pyqt5-qt5==5.15.2",
-    "pyqt5==5.15.7",
     "pytest-cov==4.0.0",
     "pytest-memprof==0.2.0",
     "pytest-notebook==0.8.1",

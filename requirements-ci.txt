@@ -458,14 +458,6 @@ pypi-oldest-requirements==2022.1.0
     # via pymor (pyproject.toml)
 pyproject-hooks==1.0.0
     # via build
-pyqt5==5.15.7
-    # via pymor (pyproject.toml)
-pyqt5-qt5==5.15.2
-    # via
-    #   pymor (pyproject.toml)
-    #   pyqt5
-pyqt5-sip==12.12.0
-    # via pyqt5
 pyrsistent==0.19.3
     # via jsonschema
 pyside2==5.15.2.1
