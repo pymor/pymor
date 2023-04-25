@@ -84,7 +84,7 @@ class PHIRKAReductor(GenericIRKAReductor):
         _ = one_sided_irka_reductor.reduce(rom0_params, tol=tol, maxit=maxit, num_prev=num_prev,
                                            projection=projection, conv_crit=conv_crit, compute_errors=compute_errors)
         
-        self._pg_reductor = PHLTIPGReductor(self.fom.to_generalized_model(), one_sided_irka_reductor.V)
+        self._pg_reductor = PHLTIPGReductor(self.fom, one_sided_irka_reductor.V)
         rom = self._pg_reductor.reduce()
 
         return rom
