@@ -81,6 +81,7 @@ get image tag:
     script:
         - |
           echo "CI_IMAGE_TAG=3.10_$(sha256sum requirements-ci.txt | cut -d ' ' -f 1)" > out.env
+          echo "CI_FENICS_IMAGE_TAG=3.11_$(sha256sum requirements-ci-fenics.txt | cut -d ' ' -f 1)" > out.env
           cat out.env
     artifacts:
       reports:
@@ -266,7 +267,7 @@ fenics 3 11:
         PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     services:
-    image: zivgitlab.wwu.io/pymor/pymor/ci-fenics:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-fenics:${CI_FENICS_IMAGE_TAG}
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
