@@ -254,6 +254,30 @@ scikit_fem 3 10:
           fi
         - ./.ci/gitlab/test_scikit_fem.bash
 
+fenics 3 11:
+    extends: .pytest
+    rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
+    variables:
+        COVERAGE_FILE: coverage_fenics__3.11
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
+    services:
+    image: zivgitlab.wwu.io/pymor/pymor/ci-fenics:${CI_IMAGE_TAG}
+    script:
+        - |
+          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
+            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
+          else
+            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
+            export PYMOR_HYPOTHESIS_PROFILE="ci"
+          fi
+        - ./.ci/gitlab/test_fenics.bash
+
 submit coverage:
     extends: .submit
     artifacts:
