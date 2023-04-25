@@ -1499,7 +1499,7 @@ class PHLTIModel(LTIModel):
         E(\mu) \dot{x}(t, \mu) & = (J(\mu) - R(\mu)) Q(\mu)   x(t, \mu) + (G(\mu) - P(\mu)) u(t), \\
                      y(t, \mu) & = (G(\mu) + P(\mu))^T Q(\mu) x(t, \mu) + (S(\mu) - N(\mu)) u(t),
 
-    with :math:`H(\mu)=Q(\mu)^T E(\mu) \succ 0`,
+    with :math:`H(\mu) = Q(\mu)^T E(\mu) \succ 0`,
 
     .. math::
         \Gamma(\mu) =
