@@ -39,20 +39,20 @@ if __name__ == '__main__':
 
         from pymor.core.config import config
         if config.HAVE_FENICS:  # use config.HAVE_FENICS to ensure that dlopen fix is applied
-            import dolfin
-            dolfin.plot = nop
+            # completely disable FEniCS visualization in containers
+            import os
+            if 'DOCKER_PYMOR' in os.environ:
+                from pymor.bindings.fenics import FenicsVisualizer
 
-        # completely disable FEniCS visualization in containers
-        import os
-        if 'DOCKER_PYMOR' in os.environ:
-            from pymor.bindings.fenics import FenicsVisualizer
-
-            FenicsVisualizer.visualize = nop
+                FenicsVisualizer.visualize = nop
+            else:
+                import dolfin
+                dolfin.plot = nop
 
     mpi.call(monkey_plot)
 
     demo = str(pymor_root_dir / 'src' / 'pymortests' / 'demos.py')
-    args = ['-svx', '-k', 'test_demo', demo]
+    args = ['-svx', '-r', 'fEsx', '-k', 'test_demo', demo]
     extra = os.environ.get('PYMOR_PYTEST_EXTRA', None)
     if extra:
         args.append(extra)
