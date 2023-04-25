@@ -1518,7 +1518,7 @@ class PHLTIModel(LTIModel):
         \succeq 0.
 
     A dynamical system of this form, together with a given quadratic (energy) function
-    :math:`\mathcal{H}=\tfrac{1}{2} x(t, \mu)^T H(\mu) x(t, \mu)`, typically called Hamiltonian,
+    :math:`\mathcal{H} = \tfrac{1}{2} x(t, \mu)^T H(\mu) x(t, \mu)`, typically called Hamiltonian,
     is called port-Hamiltonian system.
 
     All methods related to the transfer function
