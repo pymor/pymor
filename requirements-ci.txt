@@ -55,8 +55,6 @@ charset-normalizer==3.1.0
     # via requests
 check-manifest==0.49
     # via pymor (pyproject.toml)
-check-reqs==1.0.0
-    # via pymor (pyproject.toml)
 click==7.1.2
     # via
     #   jupyter-cache
@@ -86,9 +84,7 @@ cycler==0.11.0
 debugpy==1.6.7
     # via ipykernel
 decorator==5.1.1
-    # via
-    #   ipyparallel
-    #   ipython
+    # via ipython
 defusedxml==0.7.1
     # via nbconvert
 diskcache==5.6.1
@@ -111,8 +107,6 @@ dune-xt[visualisation]==2022.5.3 ; platform_system == "Linux" and platform_machi
     #   pymor (pyproject.toml)
 editables==0.3
     # via hatchling
-entrypoints==0.4
-    # via ipyparallel
 exceptiongroup==1.1.1
     # via
     #   hypothesis
@@ -123,8 +117,6 @@ executing==1.2.0
     # via stack-data
 fastjsonschema==2.16.3
     # via nbformat
-filelock==3.12.0
-    # via torch
 fonttools==4.39.3
     # via matplotlib
 gitdb==4.0.10
@@ -166,18 +158,14 @@ ipydatawidgets==4.3.2
 ipykernel==6.22.0
     # via
     #   bash-kernel
-    #   ipyparallel
     #   ipywidgets
     #   myst-nb
     #   nbclassic
     #   notebook
-ipyparallel==8.6.1
-    # via pymor (pyproject.toml)
 ipython==8.12.0
     # via
     #   dune-xt
     #   ipykernel
-    #   ipyparallel
     #   ipywidgets
     #   myst-nb
     #   pymor (pyproject.toml)
@@ -211,7 +199,6 @@ jinja2==3.1.2
     #   notebook
     #   sphinx
     #   sphinx-autoapi
-    #   torch
 jsonschema==4.17.3
     # via
     #   nbformat
@@ -221,7 +208,6 @@ jupyter-cache==0.5.0
 jupyter-client==8.2.0
     # via
     #   ipykernel
-    #   ipyparallel
     #   jupyter-server
     #   nbclassic
     #   nbclient
@@ -359,8 +345,6 @@ nest-asyncio==1.5.6
     #   notebook
 netgen-mesher==6.2.2302
     # via ngsolve
-networkx==3.1
-    # via torch
 ngsolve==6.2.2302
     # via pymor (pyproject.toml)
 notebook==6.5.4
@@ -434,7 +418,6 @@ prompt-toolkit==3.0.38
 psutil==5.9.5
     # via
     #   ipykernel
-    #   ipyparallel
     #   pytest-memprof
 ptyprocess==0.7.0
     # via
@@ -514,7 +497,6 @@ pytest-xdist==3.1.0
     # via pymor (pyproject.toml)
 python-dateutil==2.8.2
     # via
-    #   ipyparallel
     #   jupyter-client
     #   matplotlib
 python-dotenv==0.21.0
@@ -540,7 +522,6 @@ pyyaml==6.0
 pyzmq==25.0.2
     # via
     #   ipykernel
-    #   ipyparallel
     #   jupyter-client
     #   jupyter-server
     #   nbclassic
@@ -570,7 +551,6 @@ rfc3986==2.0.0
     # via twine
 rich==12.6.0
     # via
-    #   check-reqs
     #   meshio
     #   twine
     #   typer
@@ -656,9 +636,7 @@ sqlalchemy==1.4.47
 stack-data==0.6.2
     # via ipython
 sympy==1.11.1
-    # via
-    #   pymor (pyproject.toml)
-    #   torch
+    # via pymor (pyproject.toml)
 tabulate==0.9.0
     # via jupyter-cache
 tbb==2021.9.0
@@ -685,12 +663,9 @@ tomli==2.0.1
     #   pyproject-hooks
     #   pytest
     #   setuptools-scm
-torch==2.0.0+cpu
-    # via pymor (pyproject.toml)
 tornado==6.3
     # via
     #   ipykernel
-    #   ipyparallel
     #   jupyter-client
     #   jupyter-contrib-core
     #   jupyter-contrib-nbextensions
@@ -700,13 +675,10 @@ tornado==6.3
     #   nbdime
     #   notebook
     #   terminado
-tqdm==4.65.0
-    # via ipyparallel
 traitlets==5.9.0
     # via
     #   comm
     #   ipykernel
-    #   ipyparallel
     #   ipython
     #   ipywidgets
     #   jupyter-client
@@ -734,7 +706,6 @@ twine==4.0.2
     # via pymor (pyproject.toml)
 typer[all]==0.5.0
     # via
-    #   check-reqs
     #   pymor (pyproject.toml)
     #   pypi-oldest-requirements
     #   rstcheck
@@ -749,7 +720,6 @@ typing-extensions==4.5.0
     #   myst-parser
     #   pydantic
     #   setuptools-scm
-    #   torch
 unidecode==1.3.6
     # via
     #   python-slugify
