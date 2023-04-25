@@ -17,7 +17,7 @@ export OMPI_MCA_btl_vader_single_copy_mechanism=none
 # pytest exit code in a file and check that afterwards
 # while ignoring the mpirun result itself
 xvfb-run -a mpirun --allow-run-as-root --timeout 1200 --mca btl self,vader -n 2 coverage run --source=src --rcfile=setup.cfg \
-  --parallel-mode src/pymortests/mpi_run_demo_tests.py || true
+  --allow-run-as-root --parallel-mode src/pymortests/mpi_run_demo_tests.py || true
 
 for fn in ./.mpirun_*/pytest.mpirun.success ; do
   [[ "$(cat ${fn})" == "True" ]] || exit 127
