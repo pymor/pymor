@@ -312,5 +312,3 @@ Should you have any problems regarding pyMOR, questions or
 [feature requests](<https://github.com/pymor/pymor/issues>), do not hesitate
 to contact us via
 [GitHub discussions](<https://github.com/pymor/pymor/discussions>)!
-
-

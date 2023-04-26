@@ -60,7 +60,7 @@ work on pyMOR with [PyCharm](https://www.jetbrains.com/help/pycharm/docker-compo
 
 ## Coding Guidelines and Project Management
 
-### Code Style
+### Python Code Style
 
 pyMOR follows the coding style of
 [PEP8](https://www.python.org/dev/peps/pep-0008/) apart from a
@@ -95,7 +95,7 @@ style. The main developers will be happy to help you to bring your code
 into proper shape for inclusion in pyMOR.
 :::
 
-#### How to Check Code Style
+#### How to Check Python Code Style
 
 Firstly, make sure that you installed the dependencies in `requirements-ci.txt`
 with
@@ -116,6 +116,14 @@ or directly call
 flake8 src
 ```
 
+### Markdown Style
+
+The Markdown style is determined by the
+[`markdownlint`](https://github.com/DavidAnson/markdownlint) rules,
+specified in `.markdownlint.yml`.
+The [`markdownlint-cli2`](https://github.com/DavidAnson/markdownlint-cli2) tool
+(or the `pre-commit` hook; see below)
+can be used to check for errors.
 
 ### GitHub Project
 
@@ -189,7 +197,6 @@ Run `make full-test` to also generate a
 
 This file records defaults used when executing CI scripts. These are loaded by make and can be
 overridden like this: `make DOCKER_BASE_PYTHON=3.8 docker_test` (see also the top of the `Makefile`).
-
 
 ## Continuous Testing / Integration Setup
 
@@ -317,7 +324,6 @@ add to an allow list in the config to protect CI secrets. If a PR build does not
 for a user a comment is added in that PR.
 This service currently runs on the `ammservices` machine under the git user.
 
-
 ### GitHub Actions
 
 :::{note}
@@ -342,7 +348,6 @@ Configured by individual files in `.github/workflows/*`
   - Pytest XML reports can also be found there.
 
 (ref_docker_images)=
-
 
 ### pre-commit.ci
 

@@ -20,6 +20,7 @@ Replace `RELEASE_TAG` below with the actual release tag.
        git checkout "${CI_IMAGE_TAG}"
        git tag -a RELEASE_TAG -m RELEASE_TAG
        ```
+
  1. [ ] Push tag `RELEASE_TAG` to `pymor/docker`.
  1. [ ] Wait for CI build to finish in `pymor/docker`.
  1. [ ] Push tag `RELEASE_TAG` to `pymor/pymor`.

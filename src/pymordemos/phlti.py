@@ -7,7 +7,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from typer import Option, run
 
-from pymor.models.iosys import LTIModel, PHLTIModel
+from pymor.models.iosys import PHLTIModel
+from pymor.reductors.ph.ph_irka import PHIRKAReductor
 
 
 def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
@@ -120,27 +121,27 @@ def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
 
 
 def main(
-        n: int = Option(10, help='Order of the Mass-Spring-Damper system.')
+        n: int = Option(100, help='Order of the Mass-Spring-Damper system.'),
+        r: int = Option(20, help='Order of the reduced model.')
 ):
-    A, B, C, D, E = msd(n, as_lti=True)
-    lti = LTIModel.from_matrices(A, B, C, D, E)
-
     J, R, G, P, S, N, E = msd(n)
 
-    phlti = PHLTIModel.from_matrices(J, R, G, P, S, N, E)
-    print(phlti)
+    fom = PHLTIModel.from_matrices(J, R, G, P, S, N, E)
+
+    phirka = PHIRKAReductor(fom)
+    rom = phirka.reduce(r)
 
     # Magnitude plot
     w = (1e-2, 1e8)
     fig, ax = plt.subplots()
-    _ = lti.transfer_function.mag_plot(w, ax=ax, label='LTI')
-    _ = phlti.transfer_function.mag_plot(w, ax=ax, ls='--', label='PH')
-    ax.legend()
+    fom.transfer_function.mag_plot(w, ax=ax, label='FOM')
+    rom.transfer_function.mag_plot(w, ax=ax, linestyle='--', label='ROM')
+    _ = ax.legend()
     plt.show()
 
     # Poles
-    poles = phlti.poles()
-    poles_lti = lti.poles()
+    poles = fom.poles()
+    poles_lti = rom.poles()
 
     fig, ax = plt.subplots()
     ax.scatter(poles_lti.real, poles_lti.imag, marker='x', label='LTI')
@@ -150,9 +151,13 @@ def main(
     ax.set(xlabel=r'Re($\lambda$)', ylabel=r'Im($\lambda$)')
     plt.show()
 
-    e = phlti - lti
-    e.transfer_function.mag_plot(np.geomspace(*w, 300))
+    err = fom - rom
+    err.transfer_function.mag_plot(w)
     plt.show()
+
+    print(f'Relative Hinf error:   {err.hinf_norm() / fom.hinf_norm():.3e}')
+    print(f'Relative H2 error:     {err.h2_norm() / fom.h2_norm():.3e}')
+    print(f'Relative Hankel error: {err.hankel_norm() / fom.hankel_norm():.3e}')
 
 
 if __name__ == '__main__':

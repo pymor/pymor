@@ -27,11 +27,7 @@ kernelspec:
 
 ```
 
-Tutorial: Building a Reduced Basis
-==================================
-
-
-
+# Tutorial: Building a Reduced Basis
 
 In this tutorial we will learn more about {{ VectorArrays }} and how to
 construct a reduced basis using pyMOR.
@@ -97,9 +93,7 @@ d_N(\mathcal{M}) \leq C \cdot e^{-N^c}.
 In this tutorial we will construct reduced spaces {math}`V_N` for a concrete problem
 with pyMOR and study their error decay.
 
-
-Model setup
------------
+## Model setup
 
 First we need to define a {{ Model }} and a {{ ParameterSpace }} for which we want
 to build a reduced basis. We choose here the standard
@@ -150,9 +144,7 @@ The main use of {{ ParameterSpaces }} in pyMOR is that they allow to easily samp
 {meth}`~pymor.parameters.base.ParameterSpace.sample_uniformly` and
 {meth}`~pymor.parameters.base.ParameterSpace.sample_randomly`.
 
-
-Computing the snapshot data
----------------------------
+## Computing the snapshot data
 
 Reduced basis methods are snapshot-based, which means that they build
 the reduced space as a linear subspace of the linear span of solutions
@@ -224,8 +216,7 @@ time series:
 fom.visualize(training_data)
 ```
 
-A trivial reduced basis
------------------------
+## A trivial reduced basis
 
 Given some snapshot data, the easiest option to get a reduced basis
 is to just use the snapshot vectors as the basis:
@@ -444,9 +435,7 @@ We can do better, however. If we want to use a smaller basis than we
 have snapshots available, just picking the first of these obviously
 won't be optimal.
 
-
-Strong greedy algorithm
------------------------
+## Strong greedy algorithm
 
 The strong greedy algorithm iteratively builds reduced spaces
 {math}`V_N` with a small worst-case best approximation error on a
@@ -501,9 +490,7 @@ algorithm constructs quasi-optimal spaces in the sense that polynomial
 or exponential decay of the N-widths {math}`d_N` yields similar rates
 for the worst-case best-approximation errors of the constructed {math}`V_N`.
 
-
-Orthonormalization required
----------------------------
+## Orthonormalization required
 
 There is one technical problem with both algorithms however: the
 condition numbers of the Gramians used to compute the projection
@@ -581,8 +568,7 @@ plt.legend()
 plt.show()
 ```
 
-Proper Orthogonal Decomposition
--------------------------------
+## Proper Orthogonal Decomposition
 
 Another popular method to create a reduced basis out of snapshot data is the so-called
 Proper Orthogonal Decomposition (POD) which can be seen as a non-centered version of
@@ -697,9 +683,7 @@ As you can see, the first (more important) basis vectors account for the approxi
 the solutions in the bulk of the subdomains, whereas the higher modes are responsible for
 approximating the solutions at the subdomain interfaces.
 
-
-Weak greedy algorithm
----------------------
+## Weak greedy algorithm
 
 Both POD and the strong greedy algorithm require the computation of all
 {meth}`solutions <pymor.models.interface.Model.solve>` {math}`u(\mu)`
@@ -836,7 +820,6 @@ plt.show()
 ```
 
 Indeed we see that the weak-greedy basis generalizes to the validation data much better than all the other bases.
-
 
 Download the code:
 {download}`tutorial_basis_generation.md`
