@@ -1,6 +1,7 @@
 # Release process and schedule
 
 The release manager is responsible for ensuring that the following steps are performed:
+
 1. [ ] Fix the following dates (at least 10 weeks before the release, i.e. 5 weeks before the soft freeze):
        soft freeze &rarr; (4 weeks) &rarr; hard freeze &rarr; (1 week) &rarr; release day
 1. [ ] As soon as they are fixed, communicate dates for soft freeze, hard freeze and release (via Github discussions).
