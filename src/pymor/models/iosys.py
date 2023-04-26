@@ -1132,7 +1132,8 @@ class LTIModel(Model):
 
         return h2_norm
 
-    def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
+    @defaults('tol')
+    def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False, tol=1e-10):
         r"""Compute the :math:`\mathcal{H}_\infty`-norm of the |LTIModel|.
 
         .. note::
@@ -1148,6 +1149,8 @@ class LTIModel(Model):
             Whether to return the frequency at which the maximum is achieved.
         ab13dd_equilibrate
             Whether `slycot.ab13dd` should use equilibration.
+        tol
+            Tolerance in norm computation.
 
         Returns
         -------
@@ -1159,7 +1162,7 @@ class LTIModel(Model):
         if 'hinf_norm' in self.presets:
             hinf_norm = self.presets['hinf_norm']
         else:
-            hinf_norm = self.linf_norm(mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate)
+            hinf_norm = self.linf_norm(mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate, tol=tol)
         assert hinf_norm >= 0
 
         return hinf_norm
@@ -1245,7 +1248,7 @@ class LTIModel(Model):
         return l2_norm
 
     @cached
-    def _linf_norm(self, mu=None, ab13dd_equilibrate=False):
+    def _linf_norm(self, mu=None, ab13dd_equilibrate=False, tol=1e-10):
         if 'fpeak' in self.presets:
             return spla.norm(self.transfer_function.eval_tf(self.presets['fpeak']), ord=2), self.presets['fpeak']
         elif not config.HAVE_SLYCOT:
@@ -1269,9 +1272,10 @@ class LTIModel(Model):
         equil = 'S' if ab13dd_equilibrate else 'N'
         jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
         A, B, C, D, E = (to_matrix(op, format='dense') for op in [A, B, C, D, E])
-        return ab13dd(dico, jobe, equil, jobd, self.order, self.dim_input, self.dim_output, A, E, B, C, D)
+        return ab13dd(dico, jobe, equil, jobd, self.order, self.dim_input, self.dim_output, A, E, B, C, D, tol=tol)
 
-    def linf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
+    @defaults('tol')
+    def linf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False, tol=1e-10):
         r"""Compute the :math:`\mathcal{L}_\infty`-norm of the |LTIModel|.
 
         The :math:`\mathcal{L}_\infty`-norm of an |LTIModel| is defined via
@@ -1290,6 +1294,8 @@ class LTIModel(Model):
             Whether to return the frequency at which the maximum is achieved.
         ab13dd_equilibrate
             Whether `slycot.ab13dd` should use equilibration.
+        tol
+            Tolerance in norm computation.
 
         Returns
         -------
@@ -1301,11 +1307,11 @@ class LTIModel(Model):
         if not return_fpeak and 'linf_norm' in self.presets:
             linf_norm = self.presets['linf_norm']
         elif not return_fpeak:
-            linf_norm = self.linf_norm(mu=mu, return_fpeak=True, ab13dd_equilibrate=ab13dd_equilibrate)[0]
+            linf_norm = self.linf_norm(mu=mu, return_fpeak=True, ab13dd_equilibrate=ab13dd_equilibrate, tol=tol)[0]
         elif {'fpeak', 'linf_norm'} <= self.presets.keys():
             linf_norm, fpeak = self.presets['linf_norm'], self.presets['fpeak']
         else:
-            linf_norm, fpeak = self._linf_norm(mu=mu, ab13dd_equilibrate=ab13dd_equilibrate)
+            linf_norm, fpeak = self._linf_norm(mu=mu, ab13dd_equilibrate=ab13dd_equilibrate, tol=tol)
 
         if return_fpeak:
             assert isinstance(fpeak, Number) and linf_norm >= 0
@@ -1864,7 +1870,8 @@ class PHLTIModel(Model):
         """
         return self.to_lti().h2_norm(mu=mu)
 
-    def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
+    @defaults('tol')
+    def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False, tol=1e-10):
         """Compute the H_infinity-norm.
 
         .. note::
@@ -1878,6 +1885,8 @@ class PHLTIModel(Model):
             Should the frequency at which the maximum is achieved should be returned.
         ab13dd_equilibrate
             Should `slycot.ab13dd` use equilibration.
+        tol
+            Tolerance in norm computation.
 
         Returns
         -------
@@ -1888,7 +1897,8 @@ class PHLTIModel(Model):
         """
         return self.to_lti().hinf_norm(mu=mu,
                                        return_fpeak=return_fpeak,
-                                       ab13dd_equilibrate=ab13dd_equilibrate)
+                                       ab13dd_equilibrate=ab13dd_equilibrate,
+                                       tol=tol)
 
     def hankel_norm(self, mu=None):
         """Compute the Hankel-norm.
@@ -2613,7 +2623,8 @@ class SecondOrderModel(Model):
         """
         return self.to_lti().h2_norm(mu=mu)
 
-    def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False):
+    @defaults('tol')
+    def hinf_norm(self, mu=None, return_fpeak=False, ab13dd_equilibrate=False, tol=1e-10):
         r"""Compute the :math:`\mathcal{H}_\infty`-norm.
 
         .. note::
@@ -2627,6 +2638,8 @@ class SecondOrderModel(Model):
             Should the frequency at which the maximum is achieved should be returned.
         ab13dd_equilibrate
             Should `slycot.ab13dd` use equilibration.
+        tol
+            Tolerance in norm computation.
 
         Returns
         -------
@@ -2637,7 +2650,8 @@ class SecondOrderModel(Model):
         """
         return self.to_lti().hinf_norm(mu=mu,
                                        return_fpeak=return_fpeak,
-                                       ab13dd_equilibrate=ab13dd_equilibrate)
+                                       ab13dd_equilibrate=ab13dd_equilibrate,
+                                       tol=tol)
 
     def hankel_norm(self, mu=None):
         """Compute the Hankel-norm.
