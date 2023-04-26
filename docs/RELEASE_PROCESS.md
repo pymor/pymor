@@ -4,9 +4,11 @@ The release manager is responsible for ensuring that the following steps are per
 1. [ ] Fix the following dates (at least 10 weeks before the release, i.e. 5 weeks before the soft freeze):
        soft freeze &rarr; (4 weeks) &rarr; hard freeze &rarr; (1 week) &rarr; release day
 1. [ ] As soon as they are fixed, communicate dates for soft freeze, hard freeze and release (via Github discussions).
-1. [ ] Go through pull requests and issues without a milestone and assign them to the upcoming release if necessary.
+1. [ ] In the next community meeting after fixing the release date:
+    - [ ] Go through pull requests and issues without a milestone and assign them to the upcoming release if necessary.
 1. [ ] At the day of the soft freeze:
-    - [ ] Communicate soft freeze (via Github discussions).
+    - [ ] Communicate soft freeze (via Github discussions). At this point, no new feature pull requests can be added
+       to the release milestone. Exceptions need to be approved by the release manager.
     - [ ] Make all developers aware that they should finish their pull requests (ping in the PRs).
     - [ ] Assign main developers to pull requests that still require review. Make sure that reviews
        are finished early, such that enough time remains to incorporate requested changes.
@@ -20,6 +22,11 @@ The release manager is responsible for ensuring that the following steps are per
 1. [ ] At the day of the hard freeze:
     - [ ] Communicate hard freeze (via Github discussions). At this point, no new pull requests
        (except for potential bug fixes) can enter the release. Merging into `main` branch is not allowed until the
-       release has happened.
+       release has happened (new feature PRs have to wait until after the release to get merged).
     - [ ] Determine number of commits and so on for the release notes and add these information. Merge the
        release notes branch into `main` when they are finished.
+1. [ ] At the day of the release:
+    - [ ] Follow the steps outlined in `RELEASE_CHECKLIST`.
+1. [ ] In the first community meeting after the release:
+    - [ ] Select a new release manager for the next release. However, the current release manager is still responsible
+       for all point releases until the next release.
