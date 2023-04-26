@@ -55,15 +55,12 @@ stages:
 
 .submit:
     extends: .test_base
-    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
     variables:
         XDG_CACHE_DIR: /tmp
     retry:
         max: 2
         when:
             - always
-    environment:
-        name: safe
     rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
@@ -303,6 +300,8 @@ fenics mpi 3 11:
 
 submit coverage:
     extends: .submit
+    environment:
+        name: safe
     artifacts:
         when: always
         name: "coverage_reports"
@@ -315,20 +314,28 @@ submit coverage:
         - ngsolve 3 10
         - dunegdt 3 10
         - scikit_fem 3 10
+        - fenics 3 11
+        - fenics mpi 3 11
+        - get image tag
+    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
 
 coverage html:
     extends: .submit
-    needs: ["submit coverage"]
-    dependencies: ["submit coverage"]
+    needs: 
+        - submit coverage
+        - get image tag
+    dependencies: 
+        - submit coverage
+        - get image tag
     artifacts:
         name: "coverage_html"
         paths:
             - coverage_html
-    before_script:
-        - apk add py3-coverage
     script:
+        - pip install -e .
         - coverage combine reports/coverage*
         - coverage html --directory coverage_html
+    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
 
 docs build 3 10:
     extends: .test_base
