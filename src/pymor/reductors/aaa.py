@@ -34,7 +34,9 @@ class PAAAReductor(BasicObject):
     sampling_values
         Values where sample data has been evaluated or the full-order model should be evaluated.
         Sampling values are represented as a nested list such that `sampling_values[i]` corresponds
-        to sampling values of the `i`-th variable. The first variable is the Laplace variable.
+        to sampling values of the `i`-th variable given as a |NumpyArray|. The first variable is
+        the Laplace variable. In the non-parametric case (i.e., the only variable is the Laplace
+        variable) this can also be a |NumpyArray| representing the sampling values.
     samples_or_fom
         Can be either a full-order model (|TransferFunction| or |Model| with a `transfer_function`
         attribute) or data sampled at the values specified in `sampling_values` as a |NumpyArray|.
@@ -66,6 +68,10 @@ class PAAAReductor(BasicObject):
 
     def __init__(self, sampling_values, samples_or_fom, conjugate=True, nsp_tol=1e-16, post_process=True,
                  L_rk_tol=1e-8):
+        if isinstance(sampling_values, np.ndarray):
+            sampling_values = [sampling_values]
+        assert isinstance(sampling_values, list)
+        assert all(isinstance(sv, np.ndarray) for sv in sampling_values)
         if isinstance(samples_or_fom, TransferFunction) or hasattr(samples_or_fom, 'transfer_function'):
             fom = samples_or_fom
             if not isinstance(samples_or_fom, TransferFunction):

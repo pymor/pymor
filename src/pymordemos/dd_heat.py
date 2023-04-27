@@ -33,7 +33,7 @@ def run_mor_method_dd(fom, ss, reductor_cls, reductor_short_name, **reductor_kwa
         Optional keyword arguments for the reductor class.
     """
     # Reduction
-    rom = reductor_cls([ss * 1j], fom, **reductor_kwargs).reduce()
+    rom = reductor_cls(ss * 1j, fom, **reductor_kwargs).reduce()
     err = fom - rom
 
     n_w = 50
@@ -43,7 +43,7 @@ def run_mor_method_dd(fom, ss, reductor_cls, reductor_short_name, **reductor_kwa
     fom.transfer_function.mag_plot(w, ax=ax, label='FOM')
     rom.mag_plot(w, ax=ax, label='ROM', linestyle='dashed')
     err.mag_plot(w, ax=ax, label='Error', linestyle='dotted')
-    fig.suptitle(fr'Magnitude plot for {reductor_short_name}')
+    ax.set_title(fr'Magnitude plot for {reductor_short_name}')
     ax.legend()
 
     plt.show()
