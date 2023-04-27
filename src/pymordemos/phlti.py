@@ -11,6 +11,7 @@ from pymor.models.iosys import PHLTIModel
 from pymor.reductors.bt import BTReductor, PRBTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
+from pymor.reductors.spectral_factor import SpectralFactorReductor
 
 
 def msd(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
@@ -140,9 +141,10 @@ def main(
     prbt = PRBTReductor(fom)
     irka = IRKAReductor(fom)
     phirka = PHIRKAReductor(fom)
+    spectralFactor = SpectralFactorReductor(fom)
 
-    reductors = {'BT': bt, 'PRBT': prbt, 'IRKA': irka, 'pH-IRKA': phirka}
-    markers = {'BT': '.', 'PRBT': 'x', 'IRKA': 'o', 'pH-IRKA': 's'}
+    reductors = {'BT': bt, 'PRBT': prbt, 'IRKA': irka, 'pH-IRKA': phirka, 'spectralFactor': spectralFactor}
+    markers = {'BT': '.', 'PRBT': 'x', 'IRKA': 'o', 'pH-IRKA': 's', 'spectralFactor': 'v'}
 
     reduced_order = range(2, max_reduced_order + 1, 2)
     h2_errors = np.zeros((len(reductors), len(reduced_order)))
