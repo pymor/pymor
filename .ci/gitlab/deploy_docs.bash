@@ -43,9 +43,9 @@ git push || (git pull --rebase && git push )
 rm -rf ${REPO_DIR}/.binder
 mkdir ${REPO_DIR}/.binder
 
-# this needs to go into the repo root, not the subdir!
-sed -e "s;BINDERIMAGE;${BINDERIMAGE};g" -e "s;SLUG;${SLUG};g" \
-	${PYMOR_ROOT}/.ci/gitlab/Dockerfile.binder.tocopy > ${REPO_DIR}/.binder/Dockerfile
+# # this needs to go into the repo root, not the subdir!
+# sed -e "s;BINDERIMAGE;${BINDERIMAGE};g" -e "s;SLUG;${SLUG};g" \
+# 	${PYMOR_ROOT}/.ci/gitlab/Dockerfile.binder.tocopy > ${REPO_DIR}/.binder/Dockerfile
 
 # for binder the notebooks need to exist alongside their .rst version
 cd ${TARGET_DIR}
