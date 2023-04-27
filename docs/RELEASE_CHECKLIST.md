@@ -2,7 +2,7 @@
 
 Replace `RELEASE_TAG` below with the actual release tag.
 
- 1. [ ] Write release notes. All new deprecations need to be mentioned.
+ 1. [ ] Check that release notes are finished and merged.
  1. [ ] Update `README.md`.
  1. [ ] Create a release branch in `pymor/pymor`. Should have a `.x` as the last part of the branch name in contrast
         to the `RELEASE_TAG`.
