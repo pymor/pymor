@@ -43,6 +43,10 @@ class TRError(Exception):
     """Is raised if the TR algorithm fails to converge."""
 
 
+class PHDMDError(Exception):
+    """Is raised if the pH DMD algorithm fails to converge."""
+
+
 class CacheKeyGenerationError(Exception):
     """Is raised when cache key generation fails due to unsupported arguments."""
 
