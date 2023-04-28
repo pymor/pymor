@@ -12,12 +12,12 @@ The release manager is responsible for ensuring that the following steps are per
       release day
 - [ ] As soon as they are fixed,
       communicate dates for soft freeze, hard freeze, and release day
-      (via Github discussions).
+      (via GitHub discussions).
 - [ ] In the next community meeting after fixing the release day:
   - [ ] Go through pull requests and issues without a milestone and
         assign them to the upcoming release if necessary.
 - [ ] At the day of the soft freeze:
-  - [ ] Communicate soft freeze (via Github discussions).
+  - [ ] Communicate soft freeze (via GitHub discussions).
         At this point,
         no new feature pull requests can be added to the release milestone.
         Exceptions need to be approved by the release manager.
@@ -39,7 +39,7 @@ The release manager is responsible for ensuring that the following steps are per
         it is moved by exactly one week.
         This has to be communicated.
 - [ ] At the day of the hard freeze:
-  - [ ] Communicate hard freeze (via Github discussions).
+  - [ ] Communicate hard freeze (via GitHub discussions).
         At this point, no new pull requests (except for potential bug fixes) can enter the release.
         Merging into `main` branch is not allowed until the release has happened
         (new feature PRs have to wait until after the release to get merged).
