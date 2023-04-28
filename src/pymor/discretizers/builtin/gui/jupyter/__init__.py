@@ -21,7 +21,7 @@ _extension_loaded = False
 
 
 @defaults('backend')
-def get_visualizer(backend='py3js'):
+def get_visualizer(backend='MPL'):
     if backend not in ('py3js', 'MPL', 'k3d'):
         raise ValueError
     if backend == 'py3js' and config.HAVE_PYTHREEJS:
