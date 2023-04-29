@@ -12,8 +12,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, initial_alpha=0.1, miniter=0,
-          maxiter=30, atol=1e-12, rtol=1e-10, weighted_rtol=1e-12, skew_procrustes_rtol=1e-12, stagnation_window=3,
-          stagnation_threshold=1e-10):
+          maxiter=30, atol=1e-12, rtol=1e-10, weighted_rtol=1e-12, skew_procrustes_rtol=1e-12):
     """Solve the pH DMD problem.
 
     Not intended to be used directly.
@@ -53,11 +52,6 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
     skew_procrustes_rtol
         In the skew-symmetric Procrustes problem, truncate when the relative value is
         below this threshold.
-    stagnation_window
-        Finish when the relative norm of the update has been stagnating within a tolerance of
-        `stagnation_threshold` during the last `stagnation_window` iterations.
-    stagnation_threshold
-        See `stagnation_window`.
 
     Returns
     -------
