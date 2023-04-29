@@ -351,6 +351,11 @@ def _skew_symmetric_procrustes(X, Y, rtol=1e-12):
 
     A_1 = phi * (Z_1 @ trunc_S - trunc_S @ Z_1.T)
     A_2 = -spsolve(trunc_S.tocsc(), Z_3)
+    # if dimensions are unfortunately chosen, spsolve results in the following shapes:
+    # Z_3.shape = (x, 1) -> A_2.shape = (x,)
+    # this then breaks the hstack(...) afterwards
+    if A_2.ndim == 1:
+        A_2 = A_2[:, np.newaxis]
     A_4 = np.zeros((data_dim - rank, data_dim - rank))
     A_1 = np.hstack((A_1, A_2))
     A_4 = np.hstack((-A_2.T, A_4))
