@@ -11,8 +11,8 @@ from pymor.operators.interface import Operator
 from pymor.vectorarrays.interface import VectorArray
 
 
-def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, initial_alpha = 0.1, miniter=0,
-          maxiter=30, atol=1e-6, rtol=1e-12, weighted_rtol=1e-12, skew_procrustes_rtol=1e-12, stagnation_window=3,
+def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, initial_alpha=0.1, miniter=0,
+          maxiter=30, atol=1e-12, rtol=1e-10, weighted_rtol=1e-12, skew_procrustes_rtol=1e-12, stagnation_window=3,
           stagnation_threshold=1e-10):
     """Solve the pH DMD problem.
 
@@ -90,17 +90,18 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
     if Xdot is None:
         assert dt is not None
         Xdot = (X[1:] - X[:-1]) * (1. / dt)
-
-        X = .5 * (X[1:] + X[:-1])
-        Y = .5 * (Y[1:] + Y[:-1])
-        U = .5 * (U[1:] + U[:-1])
     else:
         assert isinstance(Xdot, VectorArray)
         assert len(X) == len(Xdot)
         assert len(X) == len(U)
-        # Xdot = .5 * (Xdot[1:] + Xdot[:-1])
+        Xdot = .5 * (Xdot[1:] + Xdot[:-1])
+
+    X = .5 * (X[1:] + X[:-1])
+    Y = .5 * (Y[1:] + Y[:-1])
+    U = .5 * (U[1:] + U[:-1])
 
     if H is None:
+        logger.warn('No H matrix provided. Did you intend this?')
         H = np.eye(X.dim)
     else:
         if isinstance(H, Operator):
@@ -167,10 +168,9 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
                 logger.info(f'pH DMD converged in {iteration} iterations because '
                             f'relative error tolerance of {rtol} was reached.')
                 break
-            if (iteration >= stagnation_window + 1
-                    and max(update_norms[-stagnation_window - 1:]) < stagnation_threshold):
-                logger.info(f'Norm of update is stagnating (threshold: {stagnation_threshold:5e}, '
-                            f'window: {stagnation_window}). Converged.')
+            if update_norm < rtol:
+                logger.info(f'pH DMD converged in {iteration} iterations because '
+                            f'relative update tolerance of {rtol} was reached.')
                 break
             if iteration >= maxiter:
                 logger.info(f'Maximum iterations reached. Failed to converge after {iteration} iterations.')
@@ -202,8 +202,6 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
         update_norm = np.linalg.norm(J_prev - J, 'fro') / np.linalg.norm(J, 'fro') \
                     + np.linalg.norm(R_prev - R, 'fro') / np.linalg.norm(J, 'fro')
         update_norms.append(update_norm)
-
-        logger.info(f"weighted relative error: {np.linalg.norm(T.T @ Z - T.T @ (J - R) @ T, 'fro') / np.linalg.norm(T.T @ Z, 'fro')}")
 
     data['update_norms'] = np.array(update_norms)
     data['abs_errs'] = np.array(abs_errs)
@@ -259,7 +257,7 @@ def _weighted_phdmd(X, Y, rtol=1e-12):
 
     data_dim = len(X)
 
-    U, s_vals, V = svd(X, full_matrices=False)
+    U, s_vals, V = svd(X)
 
     rank = np.argmax(s_vals / s_vals[0] < rtol)
     rank = rank if rank > 0 else len(s_vals)
@@ -275,8 +273,8 @@ def _weighted_phdmd(X, Y, rtol=1e-12):
     helper = trunc_S @ Z_1[:rank, :rank]
     J_11 = .5 * (helper - helper.T)
     R_11 = _project_spsd(-helper)
-    J = U @ trunc_S_inv @ J_11 @ trunc_S_inv @ U.T
-    R = U @ trunc_S_inv @ R_11 @ trunc_S_inv @ U.T
+    J = U[:, :rank] @ trunc_S_inv @ J_11 @ trunc_S_inv @ U[:, :rank].T
+    R = U[:, :rank] @ trunc_S_inv @ R_11 @ trunc_S_inv @ U[:, :rank].T
 
     if rank < data_dim:
         J_21, _, _, _ = lstsq(trunc_S.todense(), Z_1[rank:, :rank].T, cond=None)
