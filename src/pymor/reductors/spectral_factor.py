@@ -30,21 +30,20 @@ class SpectralFactorReductor(BasicObject):
         self.mu = mu
 
     def reduce(self, r=None):
+        # TODO Use operators directly instead of converting to dense matrix
+        # TODO where possible.
         A = to_matrix(self.fom.A, format='dense')
         B = to_matrix(self.fom.B, format='dense')
         C = to_matrix(self.fom.C, format='dense')
         D = to_matrix(self.fom.D, format='dense')
-        print('[spectralFactor] A')
-        print(A)
 
         # Compute minimal X
         Z = self.fom.gramian('pr_o_lrcf', mu=self.mu).to_numpy()
         # TODO Add option to supply X from outside?
         # TODO Do we really need to compute the full X out of the low-rank factor Z?
-        # TODO However, currently, `solve_pos_ricc_lrcf` uses a dense solver in the background anyway?
+        # TODO However, currently, `solve_pos_ricc_lrcf` uses a dense solver in
+        # TODO the background anyway?
         X = Z.T@Z
-        print('[spectralFactor] X')
-        print(X)
         
         # Compute Cholesky-like factorization of W(X)
         M = _chol(D+D.T).T
@@ -81,18 +80,25 @@ class SpectralFactorReductor(BasicObject):
         Lr = to_matrix(spectral_factor_reduced.C, format='dense')
         Mr = to_matrix(spectral_factor_reduced.D, format='dense')
 
-        ev = np.max(np.real(np.linalg.eig(Ar)[0]))
-        if ev > 0:
-            print(f'[spectralFactor] Warning: reduced spectral factor not stable. {ev}')
+        # TODO Add flag if stability should be checked.
+        largest_pole = np.max(np.real(spectral_factor_reduced.poles()))
+        if largest_pole > 0:
+            self.logger.warn('Reduced system for spectral factor is not stable. '
+                             f'Real value of largest pole is {largest_pole}.')
 
         print('[spectralFactor] Mr')
         print(Mr)
+
+        # Remove E
+        # TODO Generalize the next steps to use the matrix E
+        # TODO instead of removing E here.
+        Er = to_matrix(spectral_factor_reduced.E, format='dense')
+        Ar = np.linalg.solve(Er,Ar)
+        Br = np.linalg.solve(Er,Br)
 
         Dr = 0.5*(Mr.T @ Mr) + 0.5*(D-D.T)
 
         Xr = solve_cont_lyap_dense(A=Ar, E=None, B=Lr, trans=True)
         Cr = Br.T @ Xr + Mr.T @ Lr
 
-        return LTIModel(spectral_factor_reduced.A, spectral_factor_reduced.B,
-            NumpyMatrixOperator(Cr, source_id=spectral_factor_reduced.A.range.id),
-            NumpyMatrixOperator(Dr, source_id=spectral_factor_reduced.B.source.id))
+        return LTIModel.from_matrices(Ar,Br,Cr,Dr)
