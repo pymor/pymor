@@ -4,7 +4,6 @@
 
 from pymor.core.config import config
 
-config.require('IPYTHON')
 config.require('MATPLOTLIB')
 
 
