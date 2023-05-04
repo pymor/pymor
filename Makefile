@@ -54,7 +54,7 @@ flake8:
 	flake8 ./src
 
 test:
-	python setup.py pytest
+	xvfb-run pytest
 
 jupyter:
 	jupyter notebook --notebook-dir=$(NB_DIR) --NotebookApp.disable_check_xsrf=True
