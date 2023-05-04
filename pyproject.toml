@@ -184,6 +184,14 @@ version-file = "src/pymor/_version.py"
 [tool.hatch.build.targets.sdist]
 include = [
     "/src",
+    "/docs",
+    "CITATION.cff"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "/src/pymor",
+    "/src/pymordemos",
 ]
 
 [tool.ruff]
