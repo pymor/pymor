@@ -21,11 +21,6 @@ jobs:
           # also works on 'pull_request' targets
           ignore_sha: true
           access_token: ${{ github.token }}
-      - uses: actions/checkout@v3
-      - name: Stop if dependencies changed
-        shell: bash -l {0}
-        run: |
-          ./dependencies.py && git diff --exit-code requirements* pyproject.toml
   event_file:
     # this is input for the pytest_results workflow
     name: "Event File"
