@@ -189,7 +189,7 @@ ci_conda_requirements:
 		--extras gui \
 		--extras jupyter \
 		--extras vtk \
-		--extras gmsh 
+		--extras gmsh
 	# pymess, dune, ngsolve, scikit-fem (no recent version) not available as conda-forge packages
 	# pytorch not available for win64
 	# docs-additional not needed
@@ -202,7 +202,7 @@ ci_conda_requirements:
 		--extras gui \
 		--extras jupyter \
 		--extras vtk \
-		--extras gmsh 
+		--extras gmsh
 
 ci_image:
 	podman build -t pymor/ci:3.10_$(shell sha256sum $(THIS_DIR)/requirements-ci.txt | cut -d " " -f 1) \
