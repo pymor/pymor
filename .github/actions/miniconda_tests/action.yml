@@ -10,6 +10,9 @@ inputs:
   os:
     required: true
     type: string
+  environment_file:
+    required: true
+    type: string
   coverage_file:
     required: true
     type: string
@@ -55,13 +58,8 @@ runs:
         cache-env: true
         cache-downloads: true
         cache-env-key: ${{ inputs.python }}-${{ inputs.os }}
-        environment-file: .ci/conda-env.yml
+        environment-file: ${{ inputs.environment_file }}
         micromamba-version: "latest"
-    - name: Install non-conda packages
-      shell: bash -l {0}
-      run: |
-        # step step due to https://github.com/mamba-org/provision-with-micromamba/issues/108
-        pip install -r requirements-ci.txt
     - name: Export Conda Env
       shell: bash -l {0}
       run: |

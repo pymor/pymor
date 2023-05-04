@@ -47,13 +47,17 @@ jobs:
             include:
               - os: ubuntu-22.04
                 prefix: /usr/share/miniconda3/envs/pyMOR-ci
+                environment_file: conda-linux-64.lock
               - os: macos-12
                 prefix: /Users/runner/miniconda3/envs/pyMOR-ci
+                environment_file: conda-osx-64.lock
               - os: macos-12
                 python: 3.8
                 prefix: /Users/runner/miniconda3/envs/pyMOR-ci
+                environment_file: conda-osc-64.lock
               - os: windows-2022
                 prefix: C:\Miniconda3\envs\pyMOR-ci
+                environment_file: conda-win-64.lock
             # avoid failure in one job immeadiately cancelling all others
         fail-fast: false
     steps:
