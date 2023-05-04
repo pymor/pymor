@@ -180,7 +180,7 @@ ci_fenics_requirements:
 			-o requirements-ci-fenics.txt
 
 ci_conda_requirements:
-	conda-lock -c conda-forge --filter-extras -f pyproject.toml \
+	conda-lock --micromamba -c conda-forge --filter-extras -f pyproject.toml \
 		--extras tests \
 		--extras ci \
 		--extras slycot \
