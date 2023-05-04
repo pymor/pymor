@@ -54,7 +54,7 @@ jobs:
               - os: macos-12
                 python: 3.8
                 prefix: /Users/runner/miniconda3/envs/pyMOR-ci
-                environment_file: conda-osc-64.lock
+                environment_file: conda-osx-64.lock
               - os: windows-2022
                 prefix: C:\Miniconda3\envs\pyMOR-ci
                 environment_file: conda-win-64.lock
@@ -70,6 +70,7 @@ jobs:
           os: ${{ matrix.os }}
           results_file: result_${{ matrix.os }}-${{ matrix.python }}.xml
           coverage_file: coverage_${{ matrix.os }}-${{ matrix.python }}
+          environment_file: ${{ matrix.environment_file }}
 
   coverage_to_html:
     name: Upload HTML Coverage Report

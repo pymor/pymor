@@ -179,6 +179,31 @@ ci_fenics_requirements:
 			--extra-index-url https://download.pytorch.org/whl/cpu \
 			-o requirements-ci-fenics.txt
 
+ci_conda_requirements:
+	conda-lock -c conda-forge --filter-extras -f pyproject.toml \
+		--extras tests \
+		--extras ci \
+		--extras slycot \
+		--extras ipyparallel \
+		--extras mpi \
+		--extras gui \
+		--extras jupyter \
+		--extras vtk \
+		--extras gmsh 
+	# pymess, dune, ngsolve, scikit-fem (no recent version) not available as conda-forge packages
+	# pytorch not available for win64
+	# docs-additional not needed
+	conda-lock render \
+		--extras tests \
+		--extras ci \
+		--extras slycot \
+		--extras ipyparallel \
+		--extras mpi \
+		--extras gui \
+		--extras jupyter \
+		--extras vtk \
+		--extras gmsh 
+
 ci_image:
 	podman build -t pymor/ci:3.10_$(shell sha256sum $(THIS_DIR)/requirements-ci.txt | cut -d " " -f 1) \
 		-f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci.3_10 $(THIS_DIR)
