@@ -1,6 +1,0 @@
-_build/
-source/autoapi/
-coverage
-
-*.png
-pymor_defaults.py
