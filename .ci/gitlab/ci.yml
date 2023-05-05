@@ -313,17 +313,17 @@ submit coverage:
         - scikit_fem 3 10
         - fenics 3 11
         - fenics mpi 3 11
-        - get image tag
+        - preflight
     image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
 
 coverage html:
     extends: .submit
     needs: 
         - submit coverage
-        - get image tag
+        - preflight
     dependencies: 
         - submit coverage
-        - get image tag
+        - preflight
     artifacts:
         name: "coverage_html"
         paths:
@@ -360,10 +360,10 @@ docs:
     resource_group: docs_deploy
     needs:
         - docs build 3 10
-        - get image tag
+        - preflight
     dependencies:
         - docs build 3 10
-        - get image tag
+        - preflight
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/deploy_docs.bash
     rules:
