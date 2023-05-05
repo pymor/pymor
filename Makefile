@@ -15,6 +15,7 @@
 # extra options to be passed to pytest
 # PYMOR_PYTEST_EXTRA="--lf"
 
+DOCKER ?= docker
 THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 DOCKER_RUN=docker run -v $(THIS_DIR):/pymor --env-file  $(THIS_DIR)/.env
 CI_COMMIT_REF_NAME?=$(shell git rev-parse --abbrev-ref HEAD)
@@ -136,13 +137,13 @@ docker_install_check: docker_image
 	$(DOCKER_COMPOSE) down --remove-orphans -v
 
 ci_base_image:
-	podman build -t pymor/ci-base:3.10 -f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci-base.3_10 $(THIS_DIR)
+	$(DOCKER) build -t pymor/ci-base:3.10 -f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci-base.3_10 $(THIS_DIR)
 
 ci_fenics_base_image:
-	podman build -t pymor/ci-fenics-base:3.11 -f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci-fenics-base.3_11 $(THIS_DIR)
+	$(DOCKER) build -t pymor/ci-fenics-base:3.11 -f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci-fenics-base.3_11 $(THIS_DIR)
 
 ci_requirements:
-	podman run --rm -it -v=$(THIS_DIR):/src pymor/ci-base:3.10 \
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-base:3.10 \
 		pip-compile --resolver backtracking \
 			--extra docs-additional \
 			--extra tests \
@@ -163,7 +164,7 @@ ci_requirements:
 			-o requirements-ci.txt
 
 ci_fenics_requirements:
-	podman run --rm -it -v=$(THIS_DIR):/src pymor/ci-fenics-base:3.11 \
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-fenics-base:3.11 \
 		. /venv/bin/activate; \
 		pip-compile --resolver backtracking \
 			--extra docs_additional \
@@ -201,17 +202,17 @@ ci_conda_requirements:
 		--extras gmsh
 
 ci_image:
-	podman build -t pymor/ci:3.10_$(shell sha256sum $(THIS_DIR)/requirements-ci.txt | cut -d " " -f 1) \
+	$(DOCKER) build -t pymor/ci:3.10_$(shell sha256sum $(THIS_DIR)/requirements-ci.txt | cut -d " " -f 1) \
 		-f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci.3_10 $(THIS_DIR)
 
 ci_fenics_image:
-	podman build -t pymor/ci-fenics:3.11_$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
+	$(DOCKER) build -t pymor/ci-fenics:3.11_$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
 		-f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci-fenics.3_11 $(THIS_DIR)
 
 ci_image_push:
-	podman push pymor/ci:3.10_$(shell sha256sum $(THIS_DIR)/requirements-ci.txt | cut -d " " -f 1) \
+	$(DOCKER) push pymor/ci:3.10_$(shell sha256sum $(THIS_DIR)/requirements-ci.txt | cut -d " " -f 1) \
 		zivgitlab.wwu.io/pymor/pymor/ci:3.10_$(shell sha256sum $(THIS_DIR)/requirements-ci.txt | cut -d " " -f 1)
 
 ci_fenics_image_push:
-	podman push pymor/ci-fenics:3.11_$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
+	$(DOCKER) push pymor/ci-fenics:3.11_$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
 		zivgitlab.wwu.io/pymor/pymor/ci-fenics:3.11_$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1)
