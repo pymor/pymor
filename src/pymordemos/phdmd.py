@@ -21,7 +21,7 @@ def main(
 ):
     """Example script demonstrating the pH DMD algorithm.
 
-    A Mass-Spring-Damper system is used as both a full order model as well as a
+    A Mass-Spring-Damper system is used as full order model and
     reduced order model. Both of these are then inferred using pH DMD.
     """
     J, R, G, P, S, N, E = msd(n=fom_order)

@@ -48,7 +48,8 @@ def _get_fitting_data(order, initial_J=False, initial_R=False):
 def test_phdmd_no_init(order, rtol):
     X, Y, U, H, dt, _ = _get_fitting_data(order)
     try:
-        inf_fom, _ = phdmd(X, Y, U, dt=dt, H=H, rtol=rtol)
+        _, data = phdmd(X, Y, U, dt=dt, H=H, rtol=rtol)
+        assert data['rel_errs'][-1] < rtol or data['update_norms'][-1] < rtol
     except PHDMDError:
         # increasing model order reduces approximation for the same time stamps
         expected = False
@@ -61,7 +62,8 @@ def test_phdmd_no_init(order, rtol):
 def test_phdmd_J_init(order, rtol):
     X, Y, U, H, dt, initial_J = _get_fitting_data(order, initial_J=True)
     try:
-        inf_fom, _ = phdmd(X, Y, U, dt=dt, H=H, rtol=rtol, initial_J=initial_J)
+        _, data = phdmd(X, Y, U, dt=dt, H=H, rtol=rtol, initial_J=initial_J)
+        assert data['rel_errs'][-1] < rtol or data['update_norms'][-1] < rtol
     except PHDMDError:
         # increasing model order reduces approximation for the same time stamps
         expected = False
@@ -73,4 +75,5 @@ def test_phdmd_J_init(order, rtol):
 @pytest.mark.parametrize('rtol', [1e-8, 1e-10])
 def test_phdmd_R_init(order, rtol):
     X, Y, U, H, dt, initial_R = _get_fitting_data(order, initial_R=True)
-    inf_fom, _ = phdmd(X, Y, U, dt=dt, H=H, rtol=rtol, initial_R=initial_R)
+    _, data = phdmd(X, Y, U, dt=dt, H=H, rtol=rtol, initial_R=initial_R)
+    assert data['rel_errs'][-1] < rtol or data['update_norms'][-1] < rtol
