@@ -68,7 +68,7 @@ stages:
       when: never
     - when: on_success
     stage: deploy
-    script: .ci/gitlab/submit.bash
+    script: .ci/gitlab/submit_coverage.bash
 
 
 preflight:
