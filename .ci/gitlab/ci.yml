@@ -91,8 +91,6 @@ include:
 
 vanilla current:
     extends: .pytest
-    variables:
-        COVERAGE_FILE: coverage_vanilla__current
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
@@ -100,7 +98,6 @@ vanilla current:
 mpi current:
     extends: .pytest
     variables:
-        COVERAGE_FILE: coverage_mpi__current
         PYMOR_CONFIG_DISABLE: ""
     retry:
         max: 2
@@ -111,16 +108,12 @@ mpi current:
 
 tutorials current:
     extends: .pytest
-    variables:
-        COVERAGE_FILE: coverage_tutorials__current
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script: ./.ci/gitlab/test_tutorials.bash
 
 cpp_demo current:
     extends: .pytest
-    variables:
-        COVERAGE_FILE: coverage_cpp_demo__current
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script: ./.ci/gitlab/test_cpp_demo.bash
@@ -128,7 +121,6 @@ cpp_demo current:
 ngsolve current:
     extends: .pytest
     variables:
-        COVERAGE_FILE: coverage_ngsolve__current
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
         PYMOR_CONFIG_DISABLE: "fenics scikit_fem dealii dunegdt"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
@@ -139,7 +131,6 @@ ngsolve current:
 dunegdt current:
     extends: .pytest
     variables:
-        COVERAGE_FILE: coverage_dunegdt__current
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
         PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
@@ -150,7 +141,6 @@ dunegdt current:
 scikit_fem current:
     extends: .pytest
     variables:
-        COVERAGE_FILE: coverage_scikit_fem__current
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
         PYMOR_CONFIG_DISABLE: "fenics ngsolve dealii dunegdt"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
@@ -160,8 +150,6 @@ scikit_fem current:
 
 fenics:
     extends: .pytest
-    variables:
-        COVERAGE_FILE: coverage_fenics__
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-fenics:${CI_FENICS_IMAGE_TAG}
     script: ./.ci/gitlab/test_fenics.bash
@@ -169,7 +157,6 @@ fenics:
 fenics mpi:
     extends: .pytest
     variables:
-        COVERAGE_FILE: coverage_fenics_mpi__
         PYMOR_CONFIG_DISABLE: ""
     retry:
         max: 2
