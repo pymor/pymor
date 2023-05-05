@@ -89,7 +89,7 @@ ann = [
 # dense matrix equation solver for system-theoretic methods and H-infinity norm calculation
 # requires OpenBLAS headers and a Fortran compiler
 slycot = [
-    "slycot>=0.4.0",
+    "slycot>=0.5.4",
 ]
 
 # dense and sparse matrix equation solvers for system-theoretic methods (recommended to be installed from source)
