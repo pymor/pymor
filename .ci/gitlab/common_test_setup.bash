@@ -7,9 +7,9 @@ else
 fi
 
 if [ "x${CI_JOB_NAME_SLUG}" == "x" ] ; then 
-    COVERAGE_FILE=coverage
+    export COVERAGE_FILE=coverage
 else
-    COVERAGE_FILE=coverage_${CI_JOB_NAME_SLUG}
+    export COVERAGE_FILE=coverage_${CI_JOB_NAME_SLUG}
 fi
 COV_OPTION=${COV_OPTION:---cov=src}
 PYMOR_HYPOTHESIS_PROFILE=${PYMOR_HYPOTHESIS_PROFILE:-dev}
