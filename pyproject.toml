@@ -13,7 +13,7 @@ authors = [
     { name = "pyMOR developers", email = "main.developers@pymor.org" },
 ]
 maintainers = [
-    { name = "Rene Fritze", email = "rene.fritze@wwu.de" },
+    { name = "Stephan Rave", email = "stephan.rave@uni-muenster.de" },
 ]
 classifiers = [
     "Intended Audience :: Science/Research",
