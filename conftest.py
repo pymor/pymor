@@ -19,8 +19,7 @@ _common_settings = {
     'verbosity': Verbosity.normal,
 }
 settings.register_profile('ci_large', max_examples=400, **_common_settings)
-settings.register_profile('ci_pr', derandomize=True, max_examples=80, **_common_settings)
-settings.register_profile('ci', derandomize=True, max_examples=25, **_common_settings)
+settings.register_profile('ci', derandomize=True, max_examples=80, **_common_settings)
 settings.register_profile('dev', derandomize=True, max_examples=10, **_common_settings)
 _common_settings['verbosity'] = Verbosity.verbose
 settings.register_profile('debug', derandomize=True, max_examples=10, **_common_settings)

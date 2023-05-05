@@ -100,14 +100,7 @@ vanilla current:
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
+        - export PYMOR_HYPOTHESIS_PROFILE="ci"
         - ./.ci/gitlab/test_vanilla.bash
 
 mpi current:
@@ -125,14 +118,7 @@ mpi current:
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
+        - export PYMOR_HYPOTHESIS_PROFILE="ci"
         - ./.ci/gitlab/test_mpi.bash
 
 tutorials current:
@@ -146,14 +132,7 @@ tutorials current:
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
+        - export PYMOR_HYPOTHESIS_PROFILE="ci"
         - ./.ci/gitlab/test_tutorials.bash
 
 cpp_demo current:
@@ -167,14 +146,7 @@ cpp_demo current:
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
+        - export PYMOR_HYPOTHESIS_PROFILE="ci"
         - ./.ci/gitlab/test_cpp_demo.bash
 
 ngsolve current:
@@ -191,14 +163,7 @@ ngsolve current:
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
+        - export PYMOR_HYPOTHESIS_PROFILE="ci"
         - ./.ci/gitlab/test_ngsolve.bash
 
 dunegdt current:
@@ -215,14 +180,7 @@ dunegdt current:
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
+        - export PYMOR_HYPOTHESIS_PROFILE="ci"
         - ./.ci/gitlab/test_dunegdt.bash
 
 scikit_fem current:
@@ -239,14 +197,7 @@ scikit_fem current:
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
+        - export PYMOR_HYPOTHESIS_PROFILE="ci"
         - ./.ci/gitlab/test_scikit_fem.bash
 
 fenics:
@@ -260,14 +211,7 @@ fenics:
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-fenics:${CI_FENICS_IMAGE_TAG}
     script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
+        - export PYMOR_HYPOTHESIS_PROFILE="ci"
         - ./.ci/gitlab/test_fenics.bash
 
 fenics mpi:
@@ -285,14 +229,7 @@ fenics mpi:
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-fenics:${CI_FENICS_IMAGE_TAG}
     script:
-        - |
-          if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
-            echo selecting hypothesis profile "ci_pr" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci_pr"
-          else
-            echo selecting hypothesis profile "ci" for branch $CI_COMMIT_REF_NAME
-            export PYMOR_HYPOTHESIS_PROFILE="ci"
-          fi
+        - export PYMOR_HYPOTHESIS_PROFILE="ci"
         - ./.ci/gitlab/test_fenics_mpi.bash
 
 submit coverage:
