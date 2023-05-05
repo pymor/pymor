@@ -1,7 +1,6 @@
 infrastructure:
   - .ci/**/*
   - .github/**/*
-  - .binder/**/*
   - Makefile
   - requirements*
   - pyproject.toml
