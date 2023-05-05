@@ -160,7 +160,7 @@ fenics:
 fenics mpi:
     extends: .pytest
     variables:
-        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        # PYMOR_PYTEST_EXTRA: "-m 'not builtin'"   # fails, needs to be fixed in mpi_run_demo_tests
         PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     retry:
