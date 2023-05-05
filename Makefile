@@ -34,10 +34,6 @@ PANDOC_MAJOR=$(shell ( which pandoc && pandoc --version | head  -n1 | cut -d ' '
 ifeq ($(PANDOC_MAJOR),1)
 	PANDOC_FORMAT=-f markdown_github
 endif
-# this loads $(ENV_FILE) as both makefile variables and into shell env
-ENV_FILE?=.env
-include $(ENV_FILE)
-export $(shell sed 's/=.*//' $(ENV_FILE))
 
 .PHONY: docker README.html pylint test docs conda_update
 

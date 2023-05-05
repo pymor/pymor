@@ -6,7 +6,6 @@ on:
     paths:
       - '.ci/**'
       - '.github/**'
-      - '.env'
 jobs:
   autoupdate:
     name: autoupdate
