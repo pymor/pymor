@@ -139,30 +139,46 @@ docker_install_check: docker_image
 ci_preflight_image:
 	$(DOCKER) build -t pymor/ci-preflight -f $(THIS_DIR)/docker/Dockerfile.ci-preflight $(THIS_DIR)
 
+CI_EXTRAS= \
+	--extra docs-additional \
+	--extra tests \
+	--extra ci \
+	--extra ann \
+	--extra slycot \
+	--extra pymess \
+	--extra ipyparallel \
+	--extra mpi \
+	--extra gui \
+	--extra jupyter \
+	--extra vtk \
+	--extra gmsh \
+	--extra dune \
+	--extra ngsolve \
+	--extra scikit-fem
+
 ci_current_requirements:
 	# we run pip-compile in a container to ensure that the right Python version is used
 	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src python:3.10-bullseye /bin/bash -c "\
 		cd /src && \
 		pip install pip-tools==6.13.0 && \
 		pip-compile --resolver backtracking \
-			--extra docs-additional \
-			--extra tests \
-			--extra ci \
-			--extra ann \
-			--extra slycot \
-			--extra pymess \
-			--extra ipyparallel \
-			--extra mpi \
-			--extra gui \
-			--extra jupyter \
-			--extra vtk \
-			--extra gmsh \
-			--extra dune \
-			--extra ngsolve \
-			--extra scikit-fem \
+			$(CI_EXTRAS) \
 			--extra-index-url https://download.pytorch.org/whl/cpu \
 			-o requirements-ci-current.txt \
 		"
+
+ci_oldest_requirements:
+	# we run pip-compile in a container to ensure that the right Python version is used
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src python:3.8-bullseye /bin/bash -c "\
+		cd /src && \
+		pip install pip-tools==6.13.0 && \
+		pip-compile --resolver backtracking \
+			$(CI_EXTRAS) \
+			--extra ci-oldest \
+			--extra-index-url https://download.pytorch.org/whl/cpu \
+			-o requirements-ci-oldest.txt \
+		"
+
 
 ci_fenics_requirements:
 	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src python:3.11-bullseye /bin/bash -c "\
@@ -179,47 +195,49 @@ ci_fenics_requirements:
 			-o requirements-ci-fenics.txt \
 		"
 
-ci_conda_requirements:
-	conda-lock --micromamba -c conda-forge --filter-extras -f pyproject.toml \
-		--extras tests \
-		--extras ci \
-		--extras slycot \
-		--extras ipyparallel \
-		--extras mpi \
-		--extras gui \
-		--extras jupyter \
-		--extras vtk \
-		--extras gmsh
+CONDA_EXTRAS = \
+	--extras tests \
+	--extras ci \
+	--extras slycot \
+	--extras ipyparallel \
+	--extras mpi \
+	--extras gui \
+	--extras jupyter \
+	--extras vtk \
+	--extras gmsh
 	# pymess, dune, ngsolve, scikit-fem (no recent version) not available as conda-forge packages
 	# pytorch not available for win64
 	# docs-additional not needed
-	conda-lock render \
-		--extras tests \
-		--extras ci \
-		--extras slycot \
-		--extras ipyparallel \
-		--extras mpi \
-		--extras gui \
-		--extras jupyter \
-		--extras vtk \
-		--extras gmsh
 
-ci_requirements: ci_current_requirements ci_fenics_requirements ci_conda_requirements
+ci_conda_requirements:
+	conda-lock --micromamba -c conda-forge --filter-extras --no-dev-dependencies $(CONDA_EXTRAS) -f pyproject.toml
+	conda-lock render $(CONDA_EXTRAS)
+
+ci_requirements: ci_current_requirements ci_oldest_requirements ci_fenics_requirements ci_conda_requirements
 
 ci_current_image:
 	$(DOCKER) build -t pymor/ci-current:$(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1) \
 		-f $(THIS_DIR)/docker/Dockerfile.ci-current $(THIS_DIR)
 
+ci_oldest_image:
+	$(DOCKER) build -t pymor/ci-oldest:$(shell sha256sum $(THIS_DIR)/requirements-ci-oldest.txt | cut -d " " -f 1) \
+		-f $(THIS_DIR)/docker/Dockerfile.ci-oldest $(THIS_DIR)
+
 ci_fenics_image:
 	$(DOCKER) build -t pymor/ci-fenics:$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
 		-f $(THIS_DIR)/docker/Dockerfile.ci-fenics $(THIS_DIR)
 
-ci_images: ci_preflight_image ci_current_image ci_fenics_image
+ci_images: ci_preflight_image ci_current_image ci_oldest_image ci_fenics_image
 
 ci_current_image_push:
 	$(DOCKER) login zivgitlab.wwu.io
 	$(DOCKER) push pymor/ci-current:$(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1) \
 		zivgitlab.wwu.io/pymor/pymor/ci-current:$(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1)
+
+ci_oldset_image_push:
+	$(DOCKER) login zivgitlab.wwu.io
+	$(DOCKER) push pymor/ci-oldest:$(shell sha256sum $(THIS_DIR)/requirements-ci-oldest.txt | cut -d " " -f 1) \
+		zivgitlab.wwu.io/pymor/pymor/ci-oldest:$(shell sha256sum $(THIS_DIR)/requirements-ci-oldest.txt | cut -d " " -f 1)
 
 ci_fenics_image_push:
 	$(DOCKER) login zivgitlab.wwu.io
@@ -231,4 +249,4 @@ ci_preflight_image_push:
 	$(DOCKER) push pymor/ci-preflight \
 		zivgitlab.wwu.io/pymor/pymor/ci-preflight
 
-ci_image_push: ci_preflight_image_push ci_current_image_push ci_fenics_image_push
+ci_image_push: ci_preflight_image_push ci_current_image_push ci_oldset_image_push ci_fenics_image_push
