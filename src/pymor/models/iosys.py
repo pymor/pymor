@@ -1625,15 +1625,15 @@ class PHLTIModel(LTIModel):
                          name=name)
         self.__auto_init(locals())
 
-    def to_generalized_model(self):
+    def to_berlin_form(self):
         """
-        Convert the |PHLTIModel| to a |PHLTIModel| with :math:`Q=I`,
+        Convert the |PHLTIModel| into its Berlin form, i.e. a |PHLTIModel| with :math:`Q=I`,
         by left multiplication with :math:`Q^T`.
 
         Returns
         -------
         model
-            Generalized |PHLTIModel|.
+            |PHLTIModel| with :math:`Q=I`.
 
         """
         if isinstance(self.Q, IdentityOperator):
