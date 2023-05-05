@@ -1,13 +1,24 @@
 #!/bin/bash
 
-source ${CI_PROJECT_DIR}/.ci/gitlab/init_sshkey.bash
+# any failure here should fail the whole test
+set -eux
+
+function init_ssh {
+    which ssh-agent || ( apt-get update -y && apt-get install openssh-client git rsync -y ) || \
+      apk --update add openssh-client git rsync
+
+    eval $(ssh-agent -s)
+    echo "$DOCS_DEPLOY_KEY" | tr -d '\r' | ssh-add - > /dev/null
+
+    [[ -d ~/.ssh ]] || mkdir -p  ~/.ssh
+    chmod 700 ~/.ssh
+    ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+}
 init_ssh
 
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
-# any failure here should fail the whole test
-set -eux
 
 REPO=git@github.com:pymor/docs.git
 REPO_DIR=${CI_PROJECT_DIR}/repo
