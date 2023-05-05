@@ -18,10 +18,6 @@ stages:
         - if: $CI_COMMIT_REF_NAME =~ /^staging.*/
           when: never
         - when: on_success
-    variables:
-        PYMOR_HYPOTHESIS_PROFILE: ci
-        PYMOR_PYTEST_EXTRA: ""
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
 
 .pytest:
     extends: .test_base
@@ -35,6 +31,10 @@ stages:
     environment:
         name: unsafe
     stage: test
+    variables:
+        PYMOR_HYPOTHESIS_PROFILE: ci
+        PYMOR_PYTEST_EXTRA: ""
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
     after_script:
       - .ci/gitlab/after_script.bash
     cache:
@@ -62,14 +62,20 @@ stages:
         when:
             - always
     rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - if: $CI_COMMIT_REF_NAME =~ /^github.*/
-      when: never
-    - when: on_success
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
     stage: deploy
-    script: .ci/gitlab/submit_coverage.bash
+    script: .ci/gitlab/coverage_submit.bash
 
+
+#******** end definition of base jobs *********************************************************************************#
+
+# https://docs.gitlab.com/ee/ci/yaml/README.html#workflowrules-templates
+include:
+  - template: 'Workflows/Branch-Pipelines.gitlab-ci.yml'
+
+#******* preflight stage
 
 preflight:
     extends: .test_base
@@ -81,16 +87,13 @@ preflight:
       reports:
         dotenv: out.env
 
-#******** end definition of base jobs *********************************************************************************#
-
-# https://docs.gitlab.com/ee/ci/yaml/README.html#workflowrules-templates
-include:
-  - template: 'Workflows/Branch-Pipelines.gitlab-ci.yml'
-
-#******* sanity stage
+      
+#******* test stage
 
 vanilla current:
     extends: .pytest
+    variables:
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
@@ -108,12 +111,16 @@ mpi current:
 
 tutorials current:
     extends: .pytest
+    variables:
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script: ./.ci/gitlab/test_tutorials.bash
 
 cpp_demo current:
     extends: .pytest
+    variables:
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script: ./.ci/gitlab/test_cpp_demo.bash
@@ -126,7 +133,7 @@ ngsolve current:
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
-    script: ./.ci/gitlab/test_ngsolve.bash
+    script: ./.ci/gitlab/test_vanilla.bash
 
 dunegdt current:
     extends: .pytest
@@ -136,7 +143,7 @@ dunegdt current:
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
-    script: ./.ci/gitlab/test_dunegdt.bash
+    script: ./.ci/gitlab/test_vanilla.bash
 
 scikit_fem current:
     extends: .pytest
@@ -146,24 +153,57 @@ scikit_fem current:
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
-    script: ./.ci/gitlab/test_scikit_fem.bash
+    script: ./.ci/gitlab/test_vanilla.bash
 
 fenics:
     extends: .pytest
+    variables: 
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-fenics:${CI_FENICS_IMAGE_TAG}
-    script: ./.ci/gitlab/test_fenics.bash
+    script: 
+        - . /venv/bin/activate
+        - ./.ci/gitlab/test_fenics.bash
 
 fenics mpi:
     extends: .pytest
     variables:
-        PYMOR_CONFIG_DISABLE: ""
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     retry:
         max: 2
         when: always
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-fenics:${CI_FENICS_IMAGE_TAG}
-    script: ./.ci/gitlab/test_fenics_mpi.bash
+    script: 
+        - . /venv/bin/activate
+        - ./.ci/gitlab/test_mpi.bash
+
+
+#******* build stage
+
+docs build:
+    extends: .test_base
+    tags: [mike]
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - when: on_success
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
+    script:
+        - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
+    stage: build
+    artifacts:
+        paths:
+            - docs/_build/html
+            - docs/error.log
+
+
+#******* deploy stage
+
 
 submit coverage:
     extends: .submit
@@ -204,23 +244,6 @@ coverage html:
         - coverage html --directory coverage_html
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
 
-docs build:
-    extends: .test_base
-    tags: [mike]
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: never
-        - when: on_success
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
-    script:
-        - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
-    stage: build
-    artifacts:
-        paths:
-            - docs/_build/html
-            - docs/error.log
-
-
 docs:
     extends: .test_base
     # makes sure this doesn't land on the test runner
@@ -235,7 +258,7 @@ docs:
         - docs build
         - preflight
     script:
-        - ${CI_PROJECT_DIR}/.ci/gitlab/deploy_docs.bash
+        - ${CI_PROJECT_DIR}/.ci/gitlab/docs_deploy.bash
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never

@@ -1,1 +1,0 @@
-test_vanilla.bash
