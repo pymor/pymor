@@ -163,7 +163,7 @@ fenics:
     image: zivgitlab.wwu.io/pymor/pymor/ci-fenics:${CI_FENICS_IMAGE_TAG}
     script: 
         - . /venv/bin/activate
-        - ./.ci/gitlab/test_fenics.bash
+        - ./.ci/gitlab/test_vanilla.bash
 
 fenics mpi:
     extends: .pytest
