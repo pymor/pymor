@@ -92,7 +92,14 @@ vanilla current:
     extends: .pytest
     variables:
         PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
+    script: ./.ci/gitlab/test_vanilla.bash
+
+vanilla oldest:
+    extends: .pytest
+    variables:
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+    image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
 
 mpi current:
@@ -102,21 +109,45 @@ mpi current:
     retry:
         max: 2
         when: always
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
+    script: ./.ci/gitlab/test_mpi.bash
+
+mpi oldest:
+    extends: .pytest
+    variables:
+        PYMOR_CONFIG_DISABLE: ""
+    retry:
+        max: 2
+        when: always
+    image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
     script: ./.ci/gitlab/test_mpi.bash
 
 tutorials current:
     extends: .pytest
     variables:
         PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
+    script: ./.ci/gitlab/test_tutorials.bash
+
+tutorials oldest:
+    extends: .pytest
+    variables:
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+    image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
     script: ./.ci/gitlab/test_tutorials.bash
 
 cpp_demo current:
     extends: .pytest
     variables:
         PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
+    script: ./.ci/gitlab/test_cpp_demo.bash
+
+cpp_demo oldest:
+    extends: .pytest
+    variables:
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+    image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
     script: ./.ci/gitlab/test_cpp_demo.bash
 
 ngsolve current:
@@ -125,7 +156,7 @@ ngsolve current:
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
         PYMOR_CONFIG_DISABLE: "fenics scikit_fem dealii dunegdt"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
 
 dunegdt current:
@@ -134,7 +165,7 @@ dunegdt current:
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
         PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
 
 scikit_fem current:
@@ -143,7 +174,16 @@ scikit_fem current:
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
         PYMOR_CONFIG_DISABLE: "fenics ngsolve dealii dunegdt"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
+    script: ./.ci/gitlab/test_vanilla.bash
+
+scikit_fem oldest:
+    extends: .pytest
+    variables:
+        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve dealii dunegdt"
+        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
+    image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
 
 fenics:
@@ -181,7 +221,7 @@ docs build:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: build
@@ -213,7 +253,7 @@ submit coverage:
         - fenics
         - fenics mpi
         - preflight
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
 
 coverage html:
     extends: .submit
@@ -231,13 +271,13 @@ coverage html:
         - pip install -e .
         - coverage combine reports/coverage*
         - coverage html --directory coverage_html
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
 
 docs:
     extends: .test_base
     # makes sure this doesn't land on the test runner
     tags: [mike]
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
     stage: deploy
     resource_group: docs_deploy
     needs:
