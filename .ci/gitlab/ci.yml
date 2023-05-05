@@ -35,8 +35,6 @@ stages:
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
         PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
-    after_script:
-      - .ci/gitlab/after_script.bash
     cache:
         key: same_db_on_all_runners
         paths:
