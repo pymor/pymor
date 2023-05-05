@@ -72,8 +72,10 @@ ci = [
     "python-gitlab==3.12.0",
 ]
 
-lint = [
-    "ruff==0.0.242",
+# additional dependencies for pyMOR development
+dev = [
+    "ruff==0.0.242",      # our linter of choice
+    "conda_lock==1.4.0",  # needed for make ci_conda_requirements
 ]
 
 
