@@ -14,10 +14,12 @@ RUN apt-get -q update && \
     apt-get -qy install libpetsc-real-dev git && \
     apt-get -qy install fenics python3.11-venv && \
     python3 -m venv --system-site-packages /venv && \
-    . /venv/bin/activate && \
-    pip install --no-cache-dir pip-tools==6.13.0 && \
     echo ". /venv/bin/activate" >> /etc/profile
 
 CMD /bin/bash --login
 
 WORKDIR /src
+
+COPY requirements-ci-fenics.txt .
+RUN . /venv/bin/activate && \
+    pip install --no-cache-dir -r requirements-ci-fenics.txt

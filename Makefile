@@ -136,14 +136,14 @@ docker_install_check: docker_image
       /pymor/.ci/gitlab/install_checks/$(PYMOR_TEST_OS)/check.bash
 	$(DOCKER_COMPOSE) down --remove-orphans -v
 
-ci_base_image:
-	$(DOCKER) build -t pymor/ci-base:3.10 -f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci-base.3_10 $(THIS_DIR)
+ci_preflight_image:
+	$(DOCKER) build -t pymor/ci-preflight -f $(THIS_DIR)/docker/Dockerfile.ci-preflight $(THIS_DIR)
 
-ci_fenics_base_image:
-	$(DOCKER) build -t pymor/ci-fenics-base:3.11 -f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci-fenics-base.3_11 $(THIS_DIR)
-
-ci_requirements:
-	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-base:3.10 \
+ci_current_requirements:
+	# we run pip-compile in a container to ensure that the right Python version is used
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src python:3.10-bullseye /bin/bash -c "\
+		cd /src && \
+		pip install pip-tools==6.13.0 && \
 		pip-compile --resolver backtracking \
 			--extra docs-additional \
 			--extra tests \
@@ -161,11 +161,13 @@ ci_requirements:
 			--extra ngsolve \
 			--extra scikit-fem \
 			--extra-index-url https://download.pytorch.org/whl/cpu \
-			-o requirements-ci.txt
+			-o requirements-ci-current.txt \
+		"
 
 ci_fenics_requirements:
-	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-fenics-base:3.11 \
-		. /venv/bin/activate; \
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src python:3.11-bullseye /bin/bash -c "\
+		cd /src && \
+		pip install pip-tools==6.13.0 && \
 		pip-compile --resolver backtracking \
 			--extra docs_additional \
 			--extra tests \
@@ -174,7 +176,8 @@ ci_fenics_requirements:
 			--extra ipyparallel \
 			--extra mpi \
 			--extra-index-url https://download.pytorch.org/whl/cpu \
-			-o requirements-ci-fenics.txt
+			-o requirements-ci-fenics.txt \
+		"
 
 ci_conda_requirements:
 	conda-lock --micromamba -c conda-forge --filter-extras -f pyproject.toml \
@@ -201,18 +204,31 @@ ci_conda_requirements:
 		--extras vtk \
 		--extras gmsh
 
-ci_image:
-	$(DOCKER) build -t pymor/ci:3.10_$(shell sha256sum $(THIS_DIR)/requirements-ci.txt | cut -d " " -f 1) \
-		-f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci.3_10 $(THIS_DIR)
+ci_requirements: ci_current_requirements ci_fenics_requirements ci_conda_requirements
+
+ci_current_image:
+	$(DOCKER) build -t pymor/ci-current:$(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1) \
+		-f $(THIS_DIR)/docker/Dockerfile.ci-current $(THIS_DIR)
 
 ci_fenics_image:
-	$(DOCKER) build -t pymor/ci-fenics:3.11_$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
-		-f $(THIS_DIR)/.ci/gitlab/Dockerfile.ci-fenics.3_11 $(THIS_DIR)
+	$(DOCKER) build -t pymor/ci-fenics:$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
+		-f $(THIS_DIR)/docker/Dockerfile.ci-fenics $(THIS_DIR)
 
-ci_image_push:
-	$(DOCKER) push pymor/ci:3.10_$(shell sha256sum $(THIS_DIR)/requirements-ci.txt | cut -d " " -f 1) \
-		zivgitlab.wwu.io/pymor/pymor/ci:3.10_$(shell sha256sum $(THIS_DIR)/requirements-ci.txt | cut -d " " -f 1)
+ci_images: ci_preflight_image ci_current_image ci_fenics_image
+
+ci_current_image_push:
+	$(DOCKER) login zivgitlab.wwu.io
+	$(DOCKER) push pymor/ci-current:$(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1) \
+		zivgitlab.wwu.io/pymor/pymor/ci-current:$(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1)
 
 ci_fenics_image_push:
-	$(DOCKER) push pymor/ci-fenics:3.11_$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
-		zivgitlab.wwu.io/pymor/pymor/ci-fenics:3.11_$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1)
+	$(DOCKER) login zivgitlab.wwu.io
+	$(DOCKER) push pymor/ci-fenics:$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
+		zivgitlab.wwu.io/pymor/pymor/ci-fenics:$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1)
+
+ci_preflight_image_push:
+	$(DOCKER) login zivgitlab.wwu.io
+	$(DOCKER) push pymor/ci-preflight \
+		zivgitlab.wwu.io/pymor/pymor/ci-preflight
+
+ci_image_push: ci_preflight_image_push ci_current_image_push ci_fenics_image_push

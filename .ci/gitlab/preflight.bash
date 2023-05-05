@@ -5,8 +5,8 @@ cd "${PYMOR_ROOT}"
 
 set -eux
 
-echo "CI_IMAGE_TAG=3.10_$(sha256sum requirements-ci.txt | cut -d ' ' -f 1)" > out.env
-echo "CI_FENICS_IMAGE_TAG=3.11_$(sha256sum requirements-ci-fenics.txt | cut -d ' ' -f 1)" >> out.env
+echo "CI_IMAGE_TAG=$(sha256sum requirements-ci-current.txt | cut -d ' ' -f 1)" > out.env
+echo "CI_FENICS_IMAGE_TAG=$(sha256sum requirements-ci-fenics.txt | cut -d ' ' -f 1)" >> out.env
 cat out.env
 
 # PYTHONS="${1}"

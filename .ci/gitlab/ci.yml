@@ -73,7 +73,7 @@ stages:
 
 preflight:
     extends: .test_base
-    image: zivgitlab.wwu.io/pymor/pymor/ci-base:3.10
+    image: zivgitlab.wwu.io/pymor/pymor/ci-preflight
     stage: preflight
     script:
         - ./.ci/gitlab/preflight.bash
@@ -89,16 +89,16 @@ include:
 
 #******* sanity stage
 
-vanilla 3 10:
+vanilla current:
     extends: .pytest
     rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
     variables:
-        COVERAGE_FILE: coverage_vanilla__3.10
+        COVERAGE_FILE: coverage_vanilla__current
     services:
-    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -110,20 +110,20 @@ vanilla 3 10:
           fi
         - ./.ci/gitlab/test_vanilla.bash
 
-mpi 3 10:
+mpi current:
     extends: .pytest
     rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
     variables:
-        COVERAGE_FILE: coverage_mpi__3.10
+        COVERAGE_FILE: coverage_mpi__current
         PYMOR_CONFIG_DISABLE: ""
     retry:
         max: 2
         when: always
     services:
-    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -135,16 +135,16 @@ mpi 3 10:
           fi
         - ./.ci/gitlab/test_mpi.bash
 
-tutorials 3 10:
+tutorials current:
     extends: .pytest
     rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
     variables:
-        COVERAGE_FILE: coverage_tutorials__3.10
+        COVERAGE_FILE: coverage_tutorials__current
     services:
-    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -156,16 +156,16 @@ tutorials 3 10:
           fi
         - ./.ci/gitlab/test_tutorials.bash
 
-cpp_demo 3 10:
+cpp_demo current:
     extends: .pytest
     rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
     variables:
-        COVERAGE_FILE: coverage_cpp_demo__3.10
+        COVERAGE_FILE: coverage_cpp_demo__current
     services:
-    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -177,19 +177,19 @@ cpp_demo 3 10:
           fi
         - ./.ci/gitlab/test_cpp_demo.bash
 
-ngsolve 3 10:
+ngsolve current:
     extends: .pytest
     rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
     variables:
-        COVERAGE_FILE: coverage_ngsolve__3.10
+        COVERAGE_FILE: coverage_ngsolve__current
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
         PYMOR_CONFIG_DISABLE: "fenics scikit_fem dealii dunegdt"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     services:
-    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -201,19 +201,19 @@ ngsolve 3 10:
           fi
         - ./.ci/gitlab/test_ngsolve.bash
 
-dunegdt 3 10:
+dunegdt current:
     extends: .pytest
     rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
     variables:
-        COVERAGE_FILE: coverage_dunegdt__3.10
+        COVERAGE_FILE: coverage_dunegdt__current
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
         PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     services:
-    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -225,19 +225,19 @@ dunegdt 3 10:
           fi
         - ./.ci/gitlab/test_dunegdt.bash
 
-scikit_fem 3 10:
+scikit_fem current:
     extends: .pytest
     rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
     variables:
-        COVERAGE_FILE: coverage_scikit_fem__3.10
+        COVERAGE_FILE: coverage_scikit_fem__current
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
         PYMOR_CONFIG_DISABLE: "fenics ngsolve dealii dunegdt"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     services:
-    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
         - |
           if [[ "$CI_COMMIT_REF_NAME" == *"github/PR_"* ]]; then
@@ -249,14 +249,14 @@ scikit_fem 3 10:
           fi
         - ./.ci/gitlab/test_scikit_fem.bash
 
-fenics 3 11:
+fenics:
     extends: .pytest
     rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
     variables:
-        COVERAGE_FILE: coverage_fenics__3.11
+        COVERAGE_FILE: coverage_fenics__
     services:
     image: zivgitlab.wwu.io/pymor/pymor/ci-fenics:${CI_FENICS_IMAGE_TAG}
     script:
@@ -270,14 +270,14 @@ fenics 3 11:
           fi
         - ./.ci/gitlab/test_fenics.bash
 
-fenics mpi 3 11:
+fenics mpi:
     extends: .pytest
     rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
     - when: on_success
     variables:
-        COVERAGE_FILE: coverage_fenics_mpi__3.11
+        COVERAGE_FILE: coverage_fenics_mpi__
         PYMOR_CONFIG_DISABLE: ""
     retry:
         max: 2
@@ -305,16 +305,16 @@ submit coverage:
         paths:
             - reports/
     dependencies:
-        - mpi 3 10
-        - tutorials 3 10
-        - vanilla 3 10
-        - ngsolve 3 10
-        - dunegdt 3 10
-        - scikit_fem 3 10
-        - fenics 3 11
-        - fenics mpi 3 11
+        - mpi current
+        - tutorials current
+        - vanilla current
+        - ngsolve current
+        - dunegdt current
+        - scikit_fem current
+        - fenics
+        - fenics mpi
         - preflight
-    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
 
 coverage html:
     extends: .submit
@@ -332,16 +332,16 @@ coverage html:
         - pip install -e .
         - coverage combine reports/coverage*
         - coverage html --directory coverage_html
-    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
 
-docs build 3 10:
+docs build:
     extends: .test_base
     tags: [mike]
     rules:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
-    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: build
@@ -355,14 +355,14 @@ docs:
     extends: .test_base
     # makes sure this doesn't land on the test runner
     tags: [mike]
-    image: zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_IMAGE_TAG}
     stage: deploy
     resource_group: docs_deploy
     needs:
-        - docs build 3 10
+        - docs build
         - preflight
     dependencies:
-        - docs build 3 10
+        - docs build
         - preflight
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/deploy_docs.bash

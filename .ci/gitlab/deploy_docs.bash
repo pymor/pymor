@@ -48,7 +48,7 @@ mkdir ${REPO_DIR}/.binder
 # this needs to go into the repo root, not the subdir!
 sed -e "s;BINDERIMAGE;zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG};g" -e "s;SLUG;${SLUG};g" \
     -e "s;PYMOR_COMMIT;${CI_COMMIT_SHA};g" \
-	${PYMOR_ROOT}/.ci/gitlab/Dockerfile.binder.tocopy > ${REPO_DIR}/.binder/Dockerfile
+	${PYMOR_ROOT}/docker/Dockerfile.binder.tocopy > ${REPO_DIR}/.binder/Dockerfile
 
 # for binder the notebooks need to exist alongside their .rst version
 cd ${TARGET_DIR}

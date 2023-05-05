@@ -17,9 +17,9 @@ metadata:
   - url: conda-forge
     used_env_vars: []
   content_hash:
-    linux-64: 9c3d54ee9b749f6f5d77002e4b3f64e494efeabd2c36c3279c90c056ac798f93
-    osx-64: f2e4adfa836f1d8e26f94d58f5f53dc7005b2b8ee0403037d48697bb7afec430
-    win-64: 83f388fd57363e5266669574c0b480c9fa13784357f78e1fb29f9cb2d3fc79f1
+    linux-64: 9ff1b80611fc0ffc582824dcc999438acf7a15a4d5729314e99e2a8c94523e3f
+    osx-64: 65790edaa6db59240b89869967941d28160d1ca027542eba435449fa2c787b61
+    win-64: aae3adf1507bdfce0dcb4fd07e2f62602e4d6ac3a0d78fffd1b61b7d75958535
   platforms:
   - linux-64
   - osx-64
@@ -670,7 +670,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/libpciaccess-0.17-h166bdaf_0.tar.bz2
   version: '0.17'
-- category: ipyparallel
+- category: tests
   dependencies:
     libgcc-ng: '>=7.5.0'
   hash:
@@ -1363,13 +1363,13 @@ package:
     libstdcxx-ng: '>=12'
     openssl: '>=3.1.0,<4.0a0'
   hash:
-    md5: 2c18a7a26ec0d0c23a917f37a65fc9a2
-    sha256: aa2636ac80c677d78192a8af1976547c2e27e8df7c4a077ead9cf042033b011f
+    md5: cf4a8f520fdad3a63bb2bce74576cd2d
+    sha256: a7cae69838df2f7b2f094cfa8e21f73102cbcedd17e08d07197af5529c11ab02
   manager: conda
   name: mysql-common
   optional: true
   platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/mysql-common-8.0.32-ha901b37_1.conda
+  url: https://conda.anaconda.org/conda-forge/linux-64/mysql-common-8.0.32-hf1915f5_2.conda
   version: 8.0.32
 - category: gmsh
   dependencies:
@@ -1464,7 +1464,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/xorg-libsm-1.2.3-hd9c2040_1000.tar.bz2
   version: 1.2.3
-- category: ipyparallel
+- category: tests
   dependencies:
     libgcc-ng: '>=9.4.0'
     libsodium: '>=1.0.18,<1.0.19.0a0'
@@ -1478,7 +1478,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/zeromq-4.3.4-h9c3ff4c_1.tar.bz2
   version: 4.3.4
-- category: vtk
+- category: mpi
   dependencies:
     libgcc-ng: '>=12'
     libzlib: 1.2.13 h166bdaf_4
@@ -1784,17 +1784,17 @@ package:
     libgcc-ng: '>=12'
     libstdcxx-ng: '>=12'
     libzlib: '>=1.2.13,<1.3.0a0'
-    mysql-common: 8.0.32 ha901b37_1
+    mysql-common: 8.0.32 hf1915f5_2
     openssl: '>=3.1.0,<4.0a0'
     zstd: '>=1.5.2,<1.6.0a0'
   hash:
-    md5: a69fa6f218cfed8e2d61753eeacaf034
-    sha256: 33a83c23b8b8143b1f8d23e5aa70455beb094a678ef347e69f12b2a024559662
+    md5: 20b4708cd04bdc8138d03314ddd97885
+    sha256: 4b1178a7b21b634d417684a3dc96816ae5fe277ade5008c1c634a41d0dd614f6
   manager: conda
   name: mysql-libs
   optional: true
   platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/mysql-libs-8.0.32-hd7da12d_1.conda
+  url: https://conda.anaconda.org/conda-forge/linux-64/mysql-libs-8.0.32-hca2cd23_2.conda
   version: 8.0.32
 - category: gmsh
   dependencies:
@@ -1968,7 +1968,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/async-timeout-3.0.1-py_1000.tar.bz2
   version: 3.0.1
-- category: tests
+- category: gmsh
   dependencies:
     python: '>=3.5'
   hash:
@@ -1980,7 +1980,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/attrs-23.1.0-pyh71513ae_0.conda
   version: 23.1.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: ''
   hash:
@@ -1992,7 +1992,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/backcall-0.2.0-pyh9f0ad1d_0.tar.bz2
   version: 0.2.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=2.7'
   hash:
@@ -2132,7 +2132,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/dbus-1.13.6-h5008d03_3.tar.bz2
   version: 1.13.6
-- category: ipyparallel
+- category: jupyter
   dependencies:
     libgcc-ng: '>=12'
     libstdcxx-ng: '>=12'
@@ -2147,7 +2147,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/debugpy-1.6.7-py310heca2aa9_0.conda
   version: 1.6.7
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.5'
   hash:
@@ -2195,7 +2195,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/editables-0.3-pyhd8ed1ab_0.tar.bz2
   version: '0.3'
-- category: ipyparallel
+- category: tests
   dependencies:
     python: '>=3.6'
   hash:
@@ -2219,7 +2219,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.1.1-pyhd8ed1ab_0.conda
   version: 1.1.1
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=2.7'
   hash:
@@ -2582,7 +2582,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/mypy_extensions-1.0.0-pyha770c72_0.conda
   version: 1.0.0
-- category: ipyparallel
+- category: tests
   dependencies:
     python: '>=3.5'
   hash:
@@ -2652,7 +2652,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/pandocfilters-1.5.0-pyhd8ed1ab_0.tar.bz2
   version: 1.5.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.6'
   hash:
@@ -2676,7 +2676,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/pathspec-0.11.1-pyhd8ed1ab_0.conda
   version: 0.11.1
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3'
   hash:
@@ -2724,7 +2724,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/prometheus_client-0.16.0-pyhd8ed1ab_0.conda
   version: 0.16.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     libgcc-ng: '>=12'
     python: '>=3.10,<3.11.0a0'
@@ -2738,7 +2738,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/psutil-5.9.5-py310h1fa729e_0.conda
   version: 5.9.5
-- category: ipyparallel
+- category: tests
   dependencies:
     python: ''
   hash:
@@ -2750,7 +2750,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/ptyprocess-0.7.0-pyhd3deb0d_0.tar.bz2
   version: 0.7.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.5'
   hash:
@@ -2864,7 +2864,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/pyyaml-6.0-py310h5764c6d_5.tar.bz2
   version: '6.0'
-- category: ipyparallel
+- category: tests
   dependencies:
     libgcc-ng: '>=12'
     libsodium: '>=1.0.18,<1.0.19.0a0'
@@ -2992,7 +2992,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/tbb-2021.9.0-hf52228f_0.conda
   version: 2021.9.0
-- category: ci
+- category: tests
   dependencies:
     python: '>=2.7'
   hash:
@@ -3016,7 +3016,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/tomli-2.0.1-pyhd8ed1ab_0.tar.bz2
   version: 2.0.1
-- category: ipyparallel
+- category: tests
   dependencies:
     libgcc-ng: '>=12'
     python: '>=3.10,<3.11.0a0'
@@ -3030,7 +3030,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/tornado-6.3-py310h1fa729e_0.conda
   version: '6.3'
-- category: ipyparallel
+- category: tests
   dependencies:
     python: '>=3.7'
   hash:
@@ -3213,7 +3213,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/xorg-libxt-1.2.1-h7f98852_2.tar.bz2
   version: 1.2.1
-- category: ipyparallel
+- category: vtk
   dependencies:
     python: '>=3.7'
   hash:
@@ -3253,7 +3253,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/anyio-3.6.2-pyhd8ed1ab_0.tar.bz2
   version: 3.6.2
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.5'
     six: ''
@@ -3266,7 +3266,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/asttokens-2.2.1-pyhd8ed1ab_0.conda
   version: 2.2.1
-- category: ipyparallel
+- category: jupyter
   dependencies:
     backports: ''
     python: '>=3.6'
@@ -3379,7 +3379,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/cftime-1.6.2-py310hde88566_1.tar.bz2
   version: 1.6.2
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.6'
     traitlets: '>=5.3'
@@ -3570,7 +3570,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/hypothesis-6.56.3-pyha770c72_3.tar.bz2
   version: 6.56.3
-- category: ipyparallel
+- category: vtk
   dependencies:
     python: '>=3.8'
     zipp: '>=0.5'
@@ -3596,7 +3596,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/importlib_resources-5.12.0-pyhd8ed1ab_0.conda
   version: 5.12.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     parso: '>=0.8.0,<0.9.0'
     python: '>=3.6'
@@ -3698,7 +3698,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/markdown-it-py-2.2.0-pyhd8ed1ab_0.conda
   version: 2.2.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.6'
     traitlets: ''
@@ -3711,7 +3711,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/matplotlib-inline-0.1.6-pyhd8ed1ab_0.tar.bz2
   version: 0.1.6
-- category: ipyparallel
+- category: jupyter
   dependencies:
     ptyprocess: '>=0.5'
     python: ''
@@ -4194,7 +4194,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/hatchling-1.14.1-pyhd8ed1ab_0.conda
   version: 1.14.1
-- category: ipyparallel
+- category: vtk
   dependencies:
     importlib-metadata: '>=6.6.0,<6.6.1.0a0'
   hash:
@@ -4378,7 +4378,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/setuptools-scm-7.1.0-pyhd8ed1ab_0.conda
   version: 7.1.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     asttokens: ''
     executing: ''
@@ -4393,7 +4393,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/stack_data-0.6.2-pyhd8ed1ab_0.conda
   version: 0.6.2
-- category: ipyparallel
+- category: jupyter
   dependencies:
     backports.functools_lru_cache: ''
     python: '>=3.6'
@@ -4491,7 +4491,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/hatch-vcs-0.3.0-pyhd8ed1ab_0.conda
   version: 0.3.0
-- category: ipyparallel
+- category: tests
   dependencies:
     platformdirs: '>=2.5'
     python: '>=3.10,<3.11.0a0'
@@ -4526,7 +4526,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/netcdf4-1.6.3-nompi_py310h0feb132_100.conda
   version: 1.6.3
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.7'
     wcwidth: ''
@@ -4624,7 +4624,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/wslink-1.10.1-pyhd8ed1ab_0.conda
   version: 1.10.1
-- category: ipyparallel
+- category: tests
   dependencies:
     importlib_metadata: '>=4.8.3'
     jupyter_core: '>=4.12,!=5.0.*'
@@ -4676,7 +4676,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/nbformat-5.8.0-pyhd8ed1ab_0.conda
   version: 5.8.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     prompt-toolkit: '>=3.0.38,<3.0.39.0a0'
   hash:
@@ -4755,7 +4755,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/urllib3-1.26.15-pyhd8ed1ab_0.conda
   version: 1.26.15
-- category: ipyparallel
+- category: jupyter
   dependencies:
     __linux: ''
     backcall: ''
@@ -4771,14 +4771,14 @@ package:
     traitlets: '>=5'
     typing_extensions: ''
   hash:
-    md5: b3ccf14923518214f2020f8073d247ab
-    sha256: 0df2d1db9c4bb3f6af6f459776403c9ebd094d1b8c4bc9da52da66ee16dc573c
+    md5: e8563c13eee80a5f1c7bdfc2a1b20077
+    sha256: 4cdf7c6b93594023db5a7d02bd7e4e295bfede9d81571e7a16d01951a3ff5816
   manager: conda
   name: ipython
   optional: true
   platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/noarch/ipython-8.13.1-pyh41d4057_0.conda
-  version: 8.13.1
+  url: https://conda.anaconda.org/conda-forge/noarch/ipython-8.13.2-pyh41d4057_0.conda
+  version: 8.13.2
 - category: tests
   dependencies:
     jupyter_client: '>=6.1.5'
@@ -4879,7 +4879,7 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/vtk-9.2.5-qt_py310h8908f42_203.conda
   version: 9.2.5
-- category: ipyparallel
+- category: jupyter
   dependencies:
     __linux: ''
     comm: '>=0.1.1'
@@ -5581,7 +5581,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/libopus-1.3.1-hc929b4f_1.tar.bz2
   version: 1.3.1
-- category: ipyparallel
+- category: tests
   dependencies: {}
   hash:
     md5: 24632c09ed931af617fe6d5292919cab
@@ -6322,7 +6322,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/xorg-libsm-1.2.3-h0d85af4_1000.tar.bz2
   version: 1.2.3
-- category: ipyparallel
+- category: tests
   dependencies:
     libcxx: '>=11.1.0'
     libsodium: '>=1.0.18,<1.0.19.0a0'
@@ -6694,7 +6694,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/xorg-libx11-1.8.4-hb7f2c08_0.conda
   version: 1.8.4
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=2.7'
   hash:
@@ -6718,7 +6718,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/async-timeout-3.0.1-py_1000.tar.bz2
   version: 3.0.1
-- category: tests
+- category: gmsh
   dependencies:
     python: '>=3.5'
   hash:
@@ -6730,7 +6730,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/attrs-23.1.0-pyh71513ae_0.conda
   version: 23.1.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: ''
   hash:
@@ -6742,7 +6742,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/backcall-0.2.0-pyh9f0ad1d_0.tar.bz2
   version: 0.2.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=2.7'
   hash:
@@ -6867,7 +6867,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/cycler-0.11.0-pyhd8ed1ab_0.tar.bz2
   version: 0.11.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     libcxx: '>=14.0.6'
     python: '>=3.10,<3.11.0a0'
@@ -6881,7 +6881,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/debugpy-1.6.7-py310h7a76584_0.conda
   version: 1.6.7
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.5'
   hash:
@@ -6929,7 +6929,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/editables-0.3-pyhd8ed1ab_0.tar.bz2
   version: '0.3'
-- category: ipyparallel
+- category: tests
   dependencies:
     python: '>=3.6'
   hash:
@@ -6953,7 +6953,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.1.1-pyhd8ed1ab_0.conda
   version: 1.1.1
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=2.7'
   hash:
@@ -7299,7 +7299,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/mysql-libs-8.0.32-h8658499_1.conda
   version: 8.0.32
-- category: ipyparallel
+- category: tests
   dependencies:
     python: '>=3.5'
   hash:
@@ -7350,7 +7350,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/pandocfilters-1.5.0-pyhd8ed1ab_0.tar.bz2
   version: 1.5.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.6'
   hash:
@@ -7374,7 +7374,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/pathspec-0.11.1-pyhd8ed1ab_0.conda
   version: 0.11.1
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3'
   hash:
@@ -7422,7 +7422,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/prometheus_client-0.16.0-pyhd8ed1ab_0.conda
   version: 0.16.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
@@ -7435,7 +7435,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/psutil-5.9.5-py310h90acd4f_0.conda
   version: 5.9.5
-- category: ipyparallel
+- category: tests
   dependencies:
     python: ''
   hash:
@@ -7447,7 +7447,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/ptyprocess-0.7.0-pyhd3deb0d_0.tar.bz2
   version: 0.7.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.5'
   hash:
@@ -7559,7 +7559,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/pyyaml-6.0-py310h90acd4f_5.tar.bz2
   version: '6.0'
-- category: ipyparallel
+- category: tests
   dependencies:
     libcxx: '>=14.0.6'
     libsodium: '>=1.0.18,<1.0.19.0a0'
@@ -7659,7 +7659,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/soupsieve-2.3.2.post1-pyhd8ed1ab_0.tar.bz2
   version: 2.3.2.post1
-- category: ci
+- category: tests
   dependencies:
     python: '>=2.7'
   hash:
@@ -7683,7 +7683,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/tomli-2.0.1-pyhd8ed1ab_0.tar.bz2
   version: 2.0.1
-- category: ipyparallel
+- category: tests
   dependencies:
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
@@ -7696,7 +7696,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/tornado-6.3-py310h90acd4f_0.conda
   version: '6.3'
-- category: ipyparallel
+- category: tests
   dependencies:
     python: '>=3.7'
   hash:
@@ -7844,7 +7844,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/xorg-libxrender-0.9.10-h0d85af4_1003.tar.bz2
   version: 0.9.10
-- category: ipyparallel
+- category: vtk
   dependencies:
     python: '>=3.7'
   hash:
@@ -7884,7 +7884,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/anyio-3.6.2-pyhd8ed1ab_0.tar.bz2
   version: 3.6.2
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.5'
     six: ''
@@ -7897,7 +7897,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/asttokens-2.2.1-pyhd8ed1ab_0.conda
   version: 2.2.1
-- category: ipyparallel
+- category: jupyter
   dependencies:
     backports: ''
     python: '>=3.6'
@@ -7967,7 +7967,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/cffi-1.15.1-py310ha78151a_3.conda
   version: 1.15.1
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.6'
     traitlets: '>=5.3'
@@ -8147,7 +8147,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/hypothesis-6.56.3-pyha770c72_3.tar.bz2
   version: 6.56.3
-- category: ipyparallel
+- category: vtk
   dependencies:
     python: '>=3.8'
     zipp: '>=0.5'
@@ -8173,7 +8173,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/importlib_resources-5.12.0-pyhd8ed1ab_0.conda
   version: 5.12.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     parso: '>=0.8.0,<0.9.0'
     python: '>=3.6'
@@ -8269,7 +8269,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/markdown-it-py-2.2.0-pyhd8ed1ab_0.conda
   version: 2.2.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.6'
     traitlets: ''
@@ -8296,7 +8296,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/mpi4py-3.1.4-py310hb3ae6ab_0.tar.bz2
   version: 3.1.4
-- category: ipyparallel
+- category: jupyter
   dependencies:
     ptyprocess: '>=0.5'
     python: ''
@@ -8641,7 +8641,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/hatchling-1.14.1-pyhd8ed1ab_0.conda
   version: 1.14.1
-- category: ipyparallel
+- category: vtk
   dependencies:
     importlib-metadata: '>=6.6.0,<6.6.1.0a0'
   hash:
@@ -8811,7 +8811,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/setuptools-scm-7.1.0-pyhd8ed1ab_0.conda
   version: 7.1.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     asttokens: ''
     executing: ''
@@ -8826,7 +8826,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/stack_data-0.6.2-pyhd8ed1ab_0.conda
   version: 0.6.2
-- category: ipyparallel
+- category: jupyter
   dependencies:
     backports.functools_lru_cache: ''
     python: '>=3.6'
@@ -8920,7 +8920,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/hatch-vcs-0.3.0-pyhd8ed1ab_0.conda
   version: 0.3.0
-- category: ipyparallel
+- category: tests
   dependencies:
     platformdirs: '>=2.5'
     python: '>=3.10,<3.11.0a0'
@@ -8952,7 +8952,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/numpy-1.24.3-py310h7451ae0_0.conda
   version: 1.24.3
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.7'
     wcwidth: ''
@@ -9095,7 +9095,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/h5py-3.8.0-nompi_py310h5555e59_100.conda
   version: 3.8.0
-- category: ipyparallel
+- category: tests
   dependencies:
     importlib_metadata: '>=4.8.3'
     jupyter_core: '>=4.12,!=5.0.*'
@@ -9130,7 +9130,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/nbformat-5.8.0-pyhd8ed1ab_0.conda
   version: 5.8.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     prompt-toolkit: '>=3.0.38,<3.0.39.0a0'
   hash:
@@ -9219,7 +9219,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/urllib3-1.26.15-pyhd8ed1ab_0.conda
   version: 1.26.15
-- category: ipyparallel
+- category: jupyter
   dependencies:
     __osx: ''
     appnope: ''
@@ -9236,14 +9236,14 @@ package:
     traitlets: '>=5'
     typing_extensions: ''
   hash:
-    md5: 15d8d01aaac5cfebd5b7ca87ce4f7c5f
-    sha256: c224c32671cf984473d5f6ef4cd72152f455bbc6fa3a95844ea54d17ec91f6f2
+    md5: 30960117dd6bd242aec8428a1004b167
+    sha256: 8ac686f0e67f641a4b79826c2710a81ae0eb0087b776a369a857c92afc9b86dd
   manager: conda
   name: ipython
   optional: true
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/noarch/ipython-8.13.1-pyhd1c38e8_0.conda
-  version: 8.13.1
+  url: https://conda.anaconda.org/conda-forge/noarch/ipython-8.13.2-pyhd1c38e8_0.conda
+  version: 8.13.2
 - category: main
   dependencies:
     __osx: '>=10.12'
@@ -9385,7 +9385,7 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/osx-64/vtk-9.2.5-qt_py310h5683c47_203.conda
   version: 9.2.5
-- category: ipyparallel
+- category: jupyter
   dependencies:
     __osx: ''
     appnope: ''
@@ -10400,7 +10400,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/win-64/libopus-1.3.1-h8ffe710_1.tar.bz2
   version: 1.3.1
-- category: ipyparallel
+- category: tests
   dependencies:
     vc: '>=14.1,<15.0a0'
     vs2015_runtime: '>=14.16.27012'
@@ -10901,7 +10901,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/win-64/sqlite-3.40.0-hcfcfb64_1.conda
   version: 3.40.0
-- category: ipyparallel
+- category: tests
   dependencies:
     libsodium: '>=1.0.18,<1.0.19.0a0'
     vc: '>=14.1,<15.0a0'
@@ -10957,7 +10957,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/async-timeout-3.0.1-py_1000.tar.bz2
   version: 3.0.1
-- category: tests
+- category: gmsh
   dependencies:
     python: '>=3.5'
   hash:
@@ -10969,7 +10969,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/attrs-23.1.0-pyh71513ae_0.conda
   version: 23.1.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: ''
   hash:
@@ -10981,7 +10981,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/backcall-0.2.0-pyh9f0ad1d_0.tar.bz2
   version: 0.2.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=2.7'
   hash:
@@ -11095,7 +11095,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/cycler-0.11.0-pyhd8ed1ab_0.tar.bz2
   version: 0.11.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
@@ -11111,7 +11111,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/win-64/debugpy-1.6.7-py310h00ffb61_0.conda
   version: 1.6.7
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.5'
   hash:
@@ -11159,7 +11159,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/editables-0.3-pyhd8ed1ab_0.tar.bz2
   version: '0.3'
-- category: ipyparallel
+- category: tests
   dependencies:
     python: '>=3.6'
   hash:
@@ -11183,7 +11183,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.1.1-pyhd8ed1ab_0.conda
   version: 1.1.1
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=2.7'
   hash:
@@ -11548,7 +11548,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/mypy_extensions-1.0.0-pyha770c72_0.conda
   version: 1.0.0
-- category: ipyparallel
+- category: tests
   dependencies:
     python: '>=3.5'
   hash:
@@ -11600,7 +11600,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/pandocfilters-1.5.0-pyhd8ed1ab_0.tar.bz2
   version: 1.5.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.6'
   hash:
@@ -11624,7 +11624,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/pathspec-0.11.1-pyhd8ed1ab_0.conda
   version: 0.11.1
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3'
   hash:
@@ -11672,7 +11672,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/prometheus_client-0.16.0-pyhd8ed1ab_0.conda
   version: 0.16.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
@@ -11712,7 +11712,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/ptyprocess-0.7.0-pyhd3deb0d_0.tar.bz2
   version: 0.7.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.5'
   hash:
@@ -11800,7 +11800,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/python-fastjsonschema-2.16.3-pyhd8ed1ab_0.conda
   version: 2.16.3
-- category: ipyparallel
+- category: tests
   dependencies:
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
@@ -11850,7 +11850,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/win-64/pyyaml-6.0-py310h8d17308_5.tar.bz2
   version: '6.0'
-- category: ipyparallel
+- category: tests
   dependencies:
     libsodium: '>=1.0.18,<1.0.19.0a0'
     python: '>=3.10,<3.11.0a0'
@@ -11952,7 +11952,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/soupsieve-2.3.2.post1-pyhd8ed1ab_0.tar.bz2
   version: 2.3.2.post1
-- category: ci
+- category: tests
   dependencies:
     python: '>=2.7'
   hash:
@@ -11976,7 +11976,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/tomli-2.0.1-pyhd8ed1ab_0.tar.bz2
   version: 2.0.1
-- category: ipyparallel
+- category: tests
   dependencies:
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
@@ -11992,7 +11992,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/win-64/tornado-6.3-py310h8d17308_0.conda
   version: '6.3'
-- category: ipyparallel
+- category: tests
   dependencies:
     python: '>=3.7'
   hash:
@@ -12213,7 +12213,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/win-64/xorg-xproto-7.0.31-hcd874cb_1007.tar.bz2
   version: 7.0.31
-- category: ipyparallel
+- category: vtk
   dependencies:
     python: '>=3.7'
   hash:
@@ -12253,7 +12253,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/anyio-3.6.2-pyhd8ed1ab_0.tar.bz2
   version: 3.6.2
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.5'
     six: ''
@@ -12266,7 +12266,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/asttokens-2.2.1-pyhd8ed1ab_0.conda
   version: 2.2.1
-- category: ipyparallel
+- category: jupyter
   dependencies:
     backports: ''
     python: '>=3.6'
@@ -12369,7 +12369,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/click-8.1.3-win_pyhd8ed1ab_2.tar.bz2
   version: 8.1.3
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.6'
     traitlets: '>=5.3'
@@ -12481,7 +12481,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/win-64/hdf5-1.12.2-nompi_h57737ce_101.conda
   version: 1.12.2
-- category: ipyparallel
+- category: vtk
   dependencies:
     python: '>=3.8'
     zipp: '>=0.5'
@@ -12507,7 +12507,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/importlib_resources-5.12.0-pyhd8ed1ab_0.conda
   version: 5.12.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     parso: '>=0.8.0,<0.9.0'
     python: '>=3.6'
@@ -12625,7 +12625,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/markdown-it-py-2.2.0-pyhd8ed1ab_0.conda
   version: 2.2.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.6'
     traitlets: ''
@@ -13084,7 +13084,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/hypothesis-6.56.3-pyha770c72_3.tar.bz2
   version: 6.56.3
-- category: ipyparallel
+- category: vtk
   dependencies:
     importlib-metadata: '>=6.6.0,<6.6.1.0a0'
   hash:
@@ -13285,7 +13285,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/setuptools-scm-7.1.0-pyhd8ed1ab_0.conda
   version: 7.1.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     asttokens: ''
     executing: ''
@@ -13315,7 +13315,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/win-64/tbb-devel-2021.9.0-h91493d7_0.conda
   version: 2021.9.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     backports.functools_lru_cache: ''
     python: '>=3.6'
@@ -13448,7 +13448,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/hatch-vcs-0.3.0-pyhd8ed1ab_0.conda
   version: 0.3.0
-- category: ipyparallel
+- category: tests
   dependencies:
     platformdirs: '>=2.5'
     python: '>=3.10,<3.11.0a0'
@@ -13476,7 +13476,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/win-64/libblas-3.9.0-16_win64_mkl.tar.bz2
   version: 3.9.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     python: '>=3.7'
     wcwidth: ''
@@ -13647,7 +13647,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/win-64/gst-plugins-base-1.22.0-h001b923_2.conda
   version: 1.22.0
-- category: ipyparallel
+- category: tests
   dependencies:
     importlib_metadata: '>=4.8.3'
     jupyter_core: '>=4.12,!=5.0.*'
@@ -13706,7 +13706,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/nbformat-5.8.0-pyhd8ed1ab_0.conda
   version: 5.8.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     prompt-toolkit: '>=3.0.38,<3.0.39.0a0'
   hash:
@@ -13736,7 +13736,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/noarch/urllib3-1.26.15-pyhd8ed1ab_0.conda
   version: 1.26.15
-- category: ipyparallel
+- category: jupyter
   dependencies:
     __win: ''
     backcall: ''
@@ -13752,14 +13752,14 @@ package:
     traitlets: '>=5'
     typing_extensions: ''
   hash:
-    md5: 15cbfa7d74012746ab4fe07d9a33ff7c
-    sha256: 0934920e697b4f66e3d723c72477d5288aae3a8d00d76a8c8ece4aead60dcb5b
+    md5: aebd5e79c0f354cdbceb055cdec53659
+    sha256: 819e04cdbb99af0503ae55b88a16ba832e88fce9912b7e1bc4d44f39782b6be4
   manager: conda
   name: ipython
   optional: true
   platform: win-64
-  url: https://conda.anaconda.org/conda-forge/noarch/ipython-8.13.1-pyh08f2357_0.conda
-  version: 8.13.1
+  url: https://conda.anaconda.org/conda-forge/noarch/ipython-8.13.2-pyh08f2357_0.conda
+  version: 8.13.2
 - category: tests
   dependencies:
     jupyter_client: '>=6.1.5'
@@ -13891,7 +13891,7 @@ package:
   platform: win-64
   url: https://conda.anaconda.org/conda-forge/win-64/h5py-3.8.0-nompi_py310hae7a582_100.conda
   version: 3.8.0
-- category: ipyparallel
+- category: jupyter
   dependencies:
     __win: ''
     comm: '>=0.1.1'
