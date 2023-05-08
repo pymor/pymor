@@ -6,7 +6,7 @@ else
     export PULL_REQUEST=${CI_MERGE_REQUEST_ID}
 fi
 
-if [ "x${CI_JOB_NAME_SLUG}" == "x" ] ; then 
+if [ "x${CI_JOB_NAME_SLUG}" == "x" ] ; then
     export COVERAGE_FILE=coverage
 else
     export COVERAGE_FILE=coverage_${CI_JOB_NAME_SLUG}
