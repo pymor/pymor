@@ -9,7 +9,7 @@ ifeq ($(PANDOC_MAJOR),1)
 	PANDOC_FORMAT=-f markdown_github
 endif
 
-.PHONY: README.html README test docs 
+.PHONY: README.html README test docs
 
 # I want HTML (to preview the formatting :))
 README.html: README.md
