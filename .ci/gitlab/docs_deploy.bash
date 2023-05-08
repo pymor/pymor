@@ -57,7 +57,7 @@ mkdir ${REPO_DIR}/.binder
 # cp ${PYMOR_ROOT}/requirements-ci.txt ${REPO_DIR}/.binder/requirements.txt
 # echo "python-3.10" > ${REPO_DIR}/.binder/runtime.txt
 # this needs to go into the repo root, not the subdir!
-sed -e "s;BINDERIMAGE;zivgitlab.wwu.io/pymor/pymor/ci:${CI_IMAGE_TAG};g" -e "s;SLUG;${SLUG};g" \
+sed -e "s;BINDERIMAGE;zivgitlab.wwu.io/pymor/pymor/ci:${CI_CURRENT_IMAGE_TAG};g" -e "s;SLUG;${SLUG};g" \
     -e "s;PYMOR_COMMIT;${CI_COMMIT_SHA};g" \
 	${PYMOR_ROOT}/docker/Dockerfile.binder.tocopy > ${REPO_DIR}/.binder/Dockerfile
 
