@@ -82,7 +82,9 @@ jobs:
         with:
           python-version: "3.10"
       - name: Install dependencies
-        run: pip install coverage
+        run: |
+          pip install coverage
+          pip install -e .
       - name: Generate Report
         run: |
           python .ci/github/fix_coverage_paths_windows.py reports/coverage_windows-2022-3.*
