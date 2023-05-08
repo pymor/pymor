@@ -85,7 +85,7 @@ jobs:
         run: pip install coverage
       - name: Generate Report
         run: |
-          python .ci/fix_coverage_paths_windows.py reports/coverage_windows-2022-3.*
+          python .ci/github/fix_coverage_paths_windows.py reports/coverage_windows-2022-3.*
           coverage combine reports/*
           coverage html --directory coverage_html
       - name: Upload Coverage HTML
