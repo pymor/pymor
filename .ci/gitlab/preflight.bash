@@ -20,4 +20,4 @@ cat out.env
 # ./.ci/gitlab/template.ci.py "${GITLAB_API_RO}"
 
 # makes sure mailmap is up-to-date
-./.ci/check_mailmap.py ./.mailmap
+./.ci/gitlab/check_mailmap.py ./.mailmap
