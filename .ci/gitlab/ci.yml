@@ -1,7 +1,6 @@
 stages:
   - preflight
-  - test
-  - build
+  - test/build
   - deploy
 
 #************ definition of base jobs *********************************************************************************#
@@ -30,7 +29,7 @@ stages:
       - autoscaling
     environment:
         name: unsafe
-    stage: test
+    stage: test/build
     variables:
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
@@ -106,6 +105,20 @@ vanilla current:
 
 vanilla oldest:
     extends: .pytest
+    variables:
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+    image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
+    script: ./.ci/gitlab/test_vanilla.bash
+
+vanilla current weekly:
+    extends: .pytest_weekly
+    variables:
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
+    script: ./.ci/gitlab/test_vanilla.bash
+
+vanilla oldest weekly:
+    extends: .pytest_weekly
     variables:
         PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
     image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
@@ -220,9 +233,6 @@ fenics mpi:
         - . /venv/bin/activate
         - ./.ci/gitlab/test_mpi.bash
 
-
-#******* build stage
-
 docs build:
     extends: .test_base
     tags: [mike]
@@ -233,7 +243,7 @@ docs build:
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
-    stage: build
+    stage: test/build
     artifacts:
         paths:
             - docs/_build/html
@@ -262,6 +272,17 @@ submit coverage:
         - fenics
         - fenics mpi
         - preflight
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
+
+submit coverage weekly:
+    extends: .submit
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: always
+    environment:
+        name: safe
+    dependencies:
+        - vanilla current weekly
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
 
 coverage html:
@@ -303,40 +324,3 @@ docs:
         - when: on_success
     environment:
         name: safe
-
-
-#******* weekly jobs
-
-
-vanilla_weekly current:
-    extends: .pytest_weekly
-    variables:
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
-    script: ./.ci/gitlab/test_vanilla.bash
-
-vanilla_weekly current:
-    extends: .pytest_weekly
-    variables:
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
-    script: ./.ci/gitlab/test_vanilla.bash
-
-submit ci_weekly 3 8:
-    extends: .submit
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: always
-    dependencies:
-        - ci_weekly 3 8
-    needs: ["ci_weekly 3 8"]
-submit ci_weekly 3 10:
-    extends: .submit
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: always
-    dependencies:
-        - ci_weekly 3 10
-    needs: ["ci_weekly 3 10"]
-
-
