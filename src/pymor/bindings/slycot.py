@@ -233,7 +233,7 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
         m = C.shape[0] if not trans else B.shape[1]
         p = B.shape[1] if not trans else C.shape[0]
         if R is None:
-            R = np.eye(A.shape[0])
+            R = np.eye(m)
         if trans:
             X, rcond = slycot.sb02od(n, m, A, B, C, R, dico, p=p, L=S, fact='C')[:2]
         else:

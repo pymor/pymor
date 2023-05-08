@@ -477,8 +477,6 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         |VectorArray| from `A.source`.
     """
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
-    if S is not None:
-        raise NotImplementedError
     options = _parse_options(options, ricc_lrcf_solver_options(), 'scipy', None, False)
     if options['type'] != 'scipy':
         raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
@@ -488,6 +486,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     E = to_matrix(E, format='dense') if E else None
     B = B.to_numpy().T
     C = C.to_numpy()
+    S = S.to_numpy() if S is not None else None
+    if S is not None and trans:
+        S = S.T
     X = solve_ricc_dense(A, E, B, C, R, S, trans, options)
 
     return A_source.from_numpy(_chol(X).T)
@@ -539,8 +540,6 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
         Riccati equation solution as a |NumPy array|.
     """
     _solve_ricc_dense_check_args(A, E, B, C, R, S, trans)
-    if S is not None:
-        raise NotImplementedError
     options = _parse_options(options, ricc_dense_solver_options(), 'scipy', None, False)
     if options['type'] != 'scipy':
         raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
@@ -550,9 +549,11 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
     if not trans:
         if E is not None:
             E = E.T
-        X = solve_continuous_are(A.T, C.T, B.dot(B.T), R, E)
+        if S is not None:
+            S = S.T
+        X = solve_continuous_are(A.T, C.T, B.dot(B.T), R, E, S)
     else:
-        X = solve_continuous_are(A, B, C.T.dot(C), R, E)
+        X = solve_continuous_are(A, B, C.T.dot(C), R, E, S)
 
     return X
 
@@ -608,8 +609,6 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         solution, |VectorArray| from `A.source`.
     """
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
-    if S is not None:
-        raise NotImplementedError
     options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'scipy', None, False)
     if options['type'] != 'scipy':
         raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")

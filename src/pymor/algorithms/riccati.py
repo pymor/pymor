@@ -346,4 +346,7 @@ def _solve_ricc_check_args(A, E, B, C, R, S, trans):
             assert R.shape[0] == len(B)
     if S is not None:
         assert S in A.source
-        assert R.shape[0] == len(S)
+        if not trans:
+            assert len(C) == len(S)
+        else:
+            assert len(B) == len(S)
