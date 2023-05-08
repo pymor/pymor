@@ -22,7 +22,7 @@ inputs:
   hypothesis_profile:
     required: false
     type: string
-    default: "ci"
+    default: "dev"
 runs:
   using: "composite"
   steps:
