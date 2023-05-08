@@ -25,7 +25,7 @@ classifiers = [
 dependencies = [
     "diskcache",
     "matplotlib",
-    "numpy>=1.19.4",
+    "numpy>=1.20.3",
     "packaging",
     "pillow",
     "pygments",
@@ -74,7 +74,7 @@ ci = [
 
 # pin some packages to oldest supported version
 ci-oldest = [
-    "numpy==1.19.4",
+    "numpy==1.20.3",
     "scipy==1.5.4",
     "torch==1.11.0",
     "k3d==2.15.1",

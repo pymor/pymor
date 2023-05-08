@@ -234,7 +234,7 @@ ci_current_image_push:
 	$(DOCKER) push pymor/ci-current:$(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1) \
 		zivgitlab.wwu.io/pymor/pymor/ci-current:$(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1)
 
-ci_oldset_image_push:
+ci_oldest_image_push:
 	$(DOCKER) login zivgitlab.wwu.io
 	$(DOCKER) push pymor/ci-oldest:$(shell sha256sum $(THIS_DIR)/requirements-ci-oldest.txt | cut -d " " -f 1) \
 		zivgitlab.wwu.io/pymor/pymor/ci-oldest:$(shell sha256sum $(THIS_DIR)/requirements-ci-oldest.txt | cut -d " " -f 1)
