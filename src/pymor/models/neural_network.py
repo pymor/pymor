@@ -106,7 +106,7 @@ class NeuralNetworkModel(BaseNeuralNetworkModel):
         converted_input = self._scale_input(converted_input)
         # obtain (reduced) coordinates by forward pass of the parameter values
         # through the neural network
-        U = self.neural_network(converted_input).data.numpy()
+        U = self.neural_network(converted_input).detach().numpy()
         U = self._scale_target(U)
         # convert plain numpy array to element of the actual solution space
         U = self.solution_space.make_array(U)
@@ -159,7 +159,7 @@ class NeuralNetworkStatefreeOutputModel(BaseNeuralNetworkModel):
         if output:
             converted_input = torch.from_numpy(mu.to_numpy()).double()
             converted_input = self._scale_input(converted_input)
-            output = self.neural_network(converted_input).data.numpy()
+            output = self.neural_network(converted_input).detach().numpy()
             output = self._scale_target(output)
             if isinstance(output, torch.Tensor):
                 output = output.numpy()
@@ -235,7 +235,7 @@ class NeuralNetworkInstationaryModel(BaseNeuralNetworkModel):
         inputs = self._scale_input(torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
                                                                 for t in np.linspace(0., self.T, self.nt)])))
         # pass batch of inputs to neural network
-        result = self.neural_network(inputs).data.numpy()
+        result = self.neural_network(inputs).detach().numpy()
         result = self._scale_target(result)
         # convert result into element from solution space
         return self.solution_space.make_array(result)
@@ -291,7 +291,7 @@ class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
         if output:
             inputs = self._scale_input(torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
                                                                     for t in np.linspace(0., self.T, self.nt)])))
-            outputs = self.neural_network(inputs).data.numpy()
+            outputs = self.neural_network(inputs).detach().numpy()
             outputs = self._scale_target(outputs)
             if isinstance(outputs, torch.Tensor):
                 outputs = outputs.numpy()
