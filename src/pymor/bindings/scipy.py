@@ -488,7 +488,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     E = to_matrix(E, format='dense') if E else None
     B = B.to_numpy().T
     C = C.to_numpy()
-    X = solve_ricc_dense(A, E, B, C, R, trans, options)
+    X = solve_ricc_dense(A, E, B, C, R, S, trans, options)
 
     return A_source.from_numpy(_chol(X).T)
 
@@ -616,4 +616,4 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
 
     if R is None:
         R = np.eye(len(C) if not trans else len(B))
-    return solve_ricc_lrcf(A, E, B, C, -R, trans, options)
+    return solve_ricc_lrcf(A, E, B, C, -R, S, trans, options)
