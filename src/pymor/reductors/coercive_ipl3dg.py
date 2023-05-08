@@ -22,7 +22,8 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
     def __init__(self, fom, dd_grid, local_bases=None, product=None,
                  localized_estimator=False, reductor_type='residual',
                  local_enrichment_tolerance=0,
-                 unassembled_product=None, fake_dirichlet_ops=None):
+                 unassembled_product=None, fake_dirichlet_ops=None,
+                 evaluation_counter=None):
         """
             TBC
 
@@ -51,13 +52,22 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         self.element_patches = construct_element_patches(dd_grid)
 
         self.patch_models = []
+        self.removed_irrelevant_coupling_operators = []
         self.patch_mappings_to_global = []
         self.patch_mappings_to_local = []
         for element_patch in self.element_patches:
             patch_model, local_to_global, global_to_local = construct_local_model(
                 element_patch, fom.operator, fom.rhs, dd_grid.neighbors,
-                ops_dirichlet=self.fake_dirichlet_ops)
+                ops_dirichlet=self.fake_dirichlet_ops,
+                lincomb_outside=True)
+            # could do this in the same call, but this is easier!
+            patch_model_helper, _, _ = construct_local_model(
+                element_patch, fom.operator, fom.rhs, dd_grid.neighbors,
+                ops_dirichlet=self.fake_dirichlet_ops,
+                remove_irrelevant_coupling=True,
+                lincomb_outside=True)
             self.patch_models.append(patch_model)
+            self.removed_irrelevant_coupling_operators.append(patch_model_helper.operator)
             self.patch_mappings_to_global.append(local_to_global)
             self.patch_mappings_to_local.append(global_to_local)
 
@@ -132,6 +142,58 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
                 self.inner_products[associated_element] = inner_product
                 self.local_residuals.append(residual_reductor)
 
+        # simplifiy affine decomposition of global Operator
+        operator = fom.operator
+        # First step: make the coefficients unique !
+        # this only works for globally defined parameter functionals
+        # we only take the coefficients of the first one and assert below that this is
+        # always the same
+        op_param_coefficients = list(set(
+            [coef for coef in operator.blocks[0, 0].coefficients
+             if isinstance(coef, ParameterFunctional) and coef.parametric]))
+        op_coefficients = op_param_coefficients + [1.]  # <-- for non parametric parts
+        blocks = np.empty((self.S, self.S), dtype=object)
+        for I in range(self.S):
+            for J in range(self.S):
+                op_lincomb = operator.blocks[I, J]
+                if op_lincomb:     # can be None
+                    if op_lincomb.parametric:
+                        constant_ops = []
+                        parametric_ops = []
+                        param_coefficients_in_op = []
+                        for coef, op in zip(op_lincomb.coefficients, op_lincomb.operators):
+                            if isinstance(coef, ParameterFunctional) and coef.parametric:
+                                parametric_ops.append(op)
+                                param_coefficients_in_op.append(coef)
+                            else:
+                                constant_ops.append(op)
+                        operators = np.empty(len(op_coefficients), dtype=object)
+                        for coef, op in zip(param_coefficients_in_op, parametric_ops):
+                            for i_, coef_ in enumerate(op_param_coefficients):
+                                if coef_ == coef:
+                                    if operators[i_] is None:
+                                        operators[i_] = op
+                                    else:
+                                        operators[i_] += op
+                                    break   # make coefficients unique
+                        operators[-1] = sum(constant_ops)
+                        # Second step: assemble the operators and remove the zero parts
+                        active_coefficients = []
+                        active_operators = []
+                        for coef, op in zip(op_coefficients, operators):
+                            # current check for zero operator is to apply2 with random !
+                            random = op.range.random()
+                            if op.apply2(random, random):
+                                active_coefficients.append(coef)
+                                active_operators.append(op.assemble())
+
+                        blocks[I, J] = LincombOperator(active_operators, active_coefficients)
+                    else:
+                        blocks[I, J] = op_lincomb
+        new_operator = BlockOperator(blocks)
+        self.fom = fom.with_(operator=new_operator)
+
+
     def add_partition_of_unity_to_bases(self):
         print('Adding Lagrange PoU to basis')
         for I in range(self.S):
@@ -168,6 +230,8 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             _ = self.enrich_locally(I, mu, use_global_matrix=use_global_matrix)
 
     def enrich_locally(self, I, mu, use_global_matrix=False):
+        if self.evaluation_counter:
+            self.evaluation_counter.local_count()
         if self._last_rom is None:
             _ = self.reduce()
         mu_parsed = self.fom.parameters.parse(mu)
@@ -175,6 +239,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         mapping_to_global = self.patch_mappings_to_global[I]
         mapping_to_local = self.patch_mappings_to_local[I]
         patch_model = self.patch_models[I]
+        local_range = patch_model.operator.range
 
         if use_global_matrix:
             # use global matrix
@@ -185,25 +250,25 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             a_u_v_global = self.fom.operator.apply(current_solution_h, mu_parsed)
 
             a_u_v_restricted_to_patch = []
-            for i in range(len(patch_model.operator.range.subspaces)):
+            for i in range(len(local_range.subspaces)):
                 i_global = mapping_to_global(i)
                 a_u_v_restricted_to_patch.append(a_u_v_global.block(i_global))
-            a_u_v_restricted_to_patch = patch_model.operator.range.make_array(
+            a_u_v_restricted_to_patch = local_range.make_array(
                 a_u_v_restricted_to_patch)
             a_u_v_as_operator = VectorOperator(a_u_v_restricted_to_patch)
         else:
             u_restricted_to_patch = []
-            for i_loc in range(len(patch_model.operator.range.subspaces)):
+            for i_loc in range(len(local_range.subspaces)):
                 i_global = mapping_to_global(i_loc)
                 basis = self.reduced_local_bases[i_global]
                 u_restricted_to_patch.append(
                     basis.lincomb(current_solution.block(i_global).to_numpy()))
-            current_solution_on_patch = patch_model.operator.range.make_array(
+            current_solution_on_patch = local_range.make_array(
                 u_restricted_to_patch)
 
-            new_op = remove_irrelevant_coupling_from_patch_operator(patch_model,
-                                                                    mapping_to_global)
-            a_u_v = new_op.apply(current_solution_on_patch, mu_parsed)
+            # the patch_model.operator has removed irrelevant couplings !
+            op_without_outside_coupling = self.removed_irrelevant_coupling_operators[I]
+            a_u_v = op_without_outside_coupling.apply(current_solution_on_patch, mu_parsed)
             a_u_v_as_operator = VectorOperator(a_u_v)
 
         patch_model_with_correction = patch_model.with_(
@@ -343,7 +408,8 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
 
 
 def construct_local_model(local_elements, block_op, block_rhs, neighbors, block_prod=None,
-                          lincomb_outside=False, ops_dirichlet=None):
+                          lincomb_outside=False, ops_dirichlet=None,
+                          remove_irrelevant_coupling=False):
     def local_to_global_mapping(i):
         return local_elements[i]
 
@@ -425,6 +491,12 @@ def construct_local_model(local_elements, block_op, block_rhs, neighbors, block_
                             patch_prod[ii][ii] += op
                 # patch_op[ii][ii] += ops_dirichlet.blocks[I][J]
 
+    if remove_irrelevant_coupling:
+        tentative_patch_op = BlockOperator(patch_op)
+        new_op = remove_irrelevant_coupling_from_patch_operator(tentative_patch_op,
+                                                                local_to_global_mapping)
+        patch_op = new_op.blocks
+
     if lincomb_outside and block_rhs.parametric:
         # porkelei for efficient residual reduction
         # change from BlockOperator(LincombOperators) to LincombOperator(BlockOperators)
@@ -462,11 +534,7 @@ def construct_local_model(local_elements, block_op, block_rhs, neighbors, block_
             for J in range(S_patch):
                 op_lincomb = patch_op[I, J]
                 if op_lincomb:     # can be None
-                    if not op_lincomb.parametric:
-                        # this is for the coupling parts that are independent of the parameter
-                        assert len(op_lincomb.operators) == 1 and op_lincomb.coefficients[0] == 1.
-                        blocks[-1][I, J] = op_lincomb.operators[0]
-                    else:
+                    if op_lincomb.parametric:
                         constant_ops = []
                         parametric_ops = []
                         param_coefficients_in_op = []
@@ -484,11 +552,25 @@ def construct_local_model(local_elements, block_op, block_rhs, neighbors, block_
                                         blocks[i_][I, J] = op
                                     else:
                                         blocks[i_][I, J] += op
-                                    break   # coefficients are unique
+                                    break   # make coefficients unique
 
                         blocks[-1][I, J] = sum(constant_ops)
+                    else:
+                        # this is for the coupling parts that are independent of the parameter
+                        assert len(op_lincomb.operators) == 1 and op_lincomb.coefficients[0] == 1.
+                        blocks[-1][I, J] = op_lincomb.operators[0]
         op_operators = [BlockOperator(block) for block in blocks]
-        final_patch_op = LincombOperator(op_operators, op_coefficients)
+        # Second step: assemble the operators and remove the zero parts
+        active_coefficients = []
+        active_operators = []
+        for coef, op in zip(op_coefficients, op_operators):
+            # current check for zero operator is to apply2 with random !
+            random = op.range.random()
+            if op.apply2(random, random):
+                active_coefficients.append(coef)
+                active_operators.append(op.assemble())
+
+        final_patch_op = LincombOperator(active_operators, active_coefficients)
     else:
         final_patch_op = BlockOperator(patch_op)
 
@@ -539,8 +621,7 @@ def add_element_neighbors(dd_grid, domains):
     return new_domains
 
 
-def remove_irrelevant_coupling_from_patch_operator(patch_model, mapping_to_global):
-    local_op = patch_model.operator
+def remove_irrelevant_coupling_from_patch_operator(local_op, mapping_to_global):
     subspaces = len(local_op.range.subspaces)
     ops_without_outside_coupling = np.empty((subspaces, subspaces), dtype=object)
 
