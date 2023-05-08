@@ -51,6 +51,15 @@ stages:
             - .hypothesis
             - test_results*.xml
 
+.pytest_weekly:
+    extends: .pytest
+    timeout: 5h
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: always
+    variables:
+        PYMOR_HYPOTHESIS_PROFILE: ci_large
+
 .submit:
     extends: .test_base
     variables:
@@ -294,3 +303,40 @@ docs:
         - when: on_success
     environment:
         name: safe
+
+
+#******* weekly jobs
+
+
+vanilla_weekly current:
+    extends: .pytest_weekly
+    variables:
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
+    script: ./.ci/gitlab/test_vanilla.bash
+
+vanilla_weekly current:
+    extends: .pytest_weekly
+    variables:
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
+    script: ./.ci/gitlab/test_vanilla.bash
+
+submit ci_weekly 3 8:
+    extends: .submit
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: always
+    dependencies:
+        - ci_weekly 3 8
+    needs: ["ci_weekly 3 8"]
+submit ci_weekly 3 10:
+    extends: .submit
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: always
+    dependencies:
+        - ci_weekly 3 10
+    needs: ["ci_weekly 3 10"]
+
+
