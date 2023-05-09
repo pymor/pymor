@@ -298,7 +298,6 @@ coverage html:
         paths:
             - coverage_html
     script:
-        - pip install -e .
         - coverage combine reports/coverage*
         - coverage html --directory coverage_html
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}

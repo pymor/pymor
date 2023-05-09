@@ -84,7 +84,6 @@ jobs:
       - name: Install dependencies
         run: |
           pip install coverage[toml]
-          pip install -e .
       - name: Generate Report
         run: |
           python .ci/github/fix_coverage_paths_windows.py reports/coverage_windows-2022-3.*
