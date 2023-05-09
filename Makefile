@@ -114,7 +114,7 @@ ci_fenics_image:
 	$(DOCKER) build -t pymor/ci-fenics:$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
 		-f $(THIS_DIR)/docker/Dockerfile.ci-fenics $(THIS_DIR)
 
-ci_images: ci_preflight_image ci_current_image ci_oldest_image ci_fenics_image
+ci_images: ci_current_image ci_oldest_image ci_fenics_image
 
 ci_current_image_push:
 	$(DOCKER) login zivgitlab.wwu.io
@@ -136,4 +136,4 @@ ci_preflight_image_push:
 	$(DOCKER) push pymor/ci-preflight \
 		zivgitlab.wwu.io/pymor/pymor/ci-preflight
 
-ci_image_push: ci_preflight_image_push ci_current_image_push ci_oldset_image_push ci_fenics_image_push
+ci_image_push: ci_current_image_push ci_oldset_image_push ci_fenics_image_push
