@@ -34,7 +34,7 @@ jobs:
   miniconda:
     name: ${{ matrix.os }} - Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 55
+    timeout-minutes: 90
     strategy:
         matrix:
             os: [ubuntu-22.04, macos-12, windows-2022]
