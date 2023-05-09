@@ -33,3 +33,10 @@ def test_irka():
 
     rom = phirka.reduce(initial_rom)
     assert isinstance(rom, PHLTIModel) and rom.order == 1
+
+    Jr = np.array([0])
+    Rr = np.array([1])
+    Br = np.array([1])
+    initial_rom = PHLTIModel.from_matrices(Jr, Rr, Br)
+    rom = phirka.reduce(initial_rom)
+    assert isinstance(rom, PHLTIModel) and rom.order == 1
