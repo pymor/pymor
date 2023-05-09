@@ -51,7 +51,7 @@ PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')
 
 # `--cov-report=` suppresses terminal output
 COMMON_PYTEST_OPTS="-r fEsx --junitxml=test_results_${PYMOR_VERSION}.xml \
-  --cov-report= ${COV_OPTION} --cov-config=${PYMOR_ROOT}/setup.cfg --cov-context=test \
+  --cov-report= ${COV_OPTION} --cov-context=test \
   --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE} ${PYMOR_PYTEST_EXTRA}"
 
 # report pymor config
