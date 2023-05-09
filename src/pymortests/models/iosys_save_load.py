@@ -10,7 +10,7 @@ import pytest
 import scipy.io as spio
 import scipy.sparse as sps
 
-from pymor.models.iosys import LTIModel, SecondOrderModel, PHLTIModel
+from pymor.models.iosys import LTIModel, PHLTIModel, SecondOrderModel
 
 pytestmark = pytest.mark.builtin
 

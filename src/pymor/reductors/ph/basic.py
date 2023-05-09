@@ -23,7 +23,7 @@ class PHLTIPGReductor(ProjectionBasedReductor):
 
     def __init__(self, fom, V, E_biorthonormal=False):
         assert isinstance(fom, PHLTIModel)
-       
+
         W = fom.Q.apply(V)
 
         super().__init__(fom, {'W': W, 'V': V})

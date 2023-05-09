@@ -9,11 +9,16 @@ import scipy.sparse as sps
 
 from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.eigs import eigs
-from pymor.algorithms.lyapunov import (_chol, solve_cont_lyap_lrcf, solve_disc_lyap_lrcf, solve_cont_lyap_dense,
-                                       solve_disc_lyap_dense)
-from pymor.algorithms.riccati import solve_ricc_lrcf, solve_pos_ricc_lrcf
+from pymor.algorithms.lyapunov import (
+    _chol,
+    solve_cont_lyap_dense,
+    solve_cont_lyap_lrcf,
+    solve_disc_lyap_dense,
+    solve_disc_lyap_lrcf,
+)
+from pymor.algorithms.riccati import solve_pos_ricc_lrcf, solve_ricc_lrcf
 from pymor.algorithms.simplify import contract, expand
-from pymor.algorithms.timestepping import TimeStepper, DiscreteTimeStepper
+from pymor.algorithms.timestepping import DiscreteTimeStepper, TimeStepper
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.analyticalproblems.functions import GenericFunction
 from pymor.core.cache import cached
@@ -1626,9 +1631,9 @@ class PHLTIModel(LTIModel):
         self.__auto_init(locals())
 
     def to_berlin_form(self):
-        """
-        Convert the |PHLTIModel| into its Berlin form, i.e. a |PHLTIModel| with :math:`Q=I`,
-        by left multiplication with :math:`Q^T`.
+        """Convert the |PHLTIModel| into its Berlin form.
+
+        Returns a |PHLTIModel| with :math:`Q=I`, by left multiplication with :math:`Q^T`.
 
         Returns
         -------
