@@ -205,6 +205,19 @@ packages = [
     "/src/pymordemos",
 ]
 
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+testpaths = "src/pymortests"
+python_files = "*.py"
+# exclude misbehaving plugin from auto load
+addopts = "-p no:nb_regression --durations 10"
+junit_family = "xunit2"
+markers = [
+    "builtin: test does not require external PDE solver"
+]
+
+
 [tool.ruff]
 # this makes isort behave nicely
 src = ["src"]
