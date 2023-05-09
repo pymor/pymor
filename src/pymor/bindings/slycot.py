@@ -166,9 +166,10 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
     See :func:`pymor.algorithms.riccati.solve_ricc_dense` for a
     general description.
 
-    This function uses `slycot.sb02md` (if `E is None`) which is based on
-    the Schur vector approach and `slycot.sg02ad` (if `E is not None`) which
-    is based on the method of deflating subspaces.
+    This function uses `slycot.sb02md` (if `E is None and S is None`) which is based on
+    the Schur vector approach, and `slycot.sb02od` (if `E is None and S is not None`) or 
+    `slycot.sg02ad` (if `E is not None`) which are both based on
+    the method of deflating subspaces.
 
     Parameters
     ----------
@@ -197,8 +198,6 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
         Riccati equation solution as a |NumPy array|.
     """
     _solve_ricc_dense_check_args(A, E, B, C, R, S, trans)
-    if E is not None and S is not None:
-        raise NotImplementedError
     options = _parse_options(options, ricc_dense_solver_options(), 'slycot', None, False)
 
     if options['type'] != 'slycot':
@@ -210,7 +209,7 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
         jobb = 'B'
         fact = 'C'
         uplo = 'U'
-        jobl = 'Z'
+        jobl = 'Z' if S is None else 'N'
         scal = 'N'
         sort = 'S'
         acc = 'R'
@@ -218,7 +217,10 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
         p = B.shape[1] if not trans else C.shape[0]
         if R is None:
             R = np.eye(m)
-        S = np.empty((n, m))
+        if S is None:
+            S = np.empty((n, m))
+        elif not trans:
+            S = S.T
         if not trans:
             A = A.T
             E = E.T
