@@ -5,7 +5,6 @@ infrastructure:
   - requirements*
   - pyproject.toml
   - dependencies.py
-  - setup.*
   - versioneer.py
 
 management:
