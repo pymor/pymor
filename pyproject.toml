@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
@@ -67,7 +67,6 @@ tests = [
 # additional requirements that are baked into our gitlab ci images
 ci = [
     "hatchling",
-    "hatch-vcs",
     "python-dotenv==0.21.0",
     "python-gitlab==3.12.0",
 ]
@@ -187,10 +186,7 @@ pymor-vis = "pymor.scripts.pymor_vis:run"
 Homepage = "https://pymor.org"
 
 [tool.hatch.version]
-source = "vcs"
-
-[tool.hatch.build.hooks.vcs]
-version-file = "src/pymor/_version.py"
+path = "src/pymor/__init__.py"
 
 [tool.hatch.build.targets.sdist]
 include = [

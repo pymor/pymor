@@ -77,10 +77,6 @@ runs:
           echo "QT_API=pyside2" >> $GITHUB_ENV
         fi
         echo "QT_DEBUG_PLUGINS=1" >> $GITHUB_ENV
-    - name: Create _version.py
-      shell: bash -l {0}
-      run: |
-        hatchling build
     - name: Sanity check
       shell: bash -l {0}
       run: |

@@ -2,6 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+__version__ = '2023.1.0.dev0'
+
 import os
 import platform
 import sys
@@ -46,7 +48,6 @@ def _init_mpi():
 
 _init_mpi()
 
-from pymor._version import __version__, __version_tuple__
 from pymor.core.config import config
 from pymor.core.defaults import load_defaults_from_file
 
