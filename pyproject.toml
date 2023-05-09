@@ -228,9 +228,13 @@ omit = [
 ]
 
 [tool.coverage.run]
-relative_files = "True"
-source = "src"
-source_pkgs = "pymor"
+relative_files = true
+source = [
+  "src",
+]
+source_pkgs = [
+  "pymor",
+]
 omit = [
   "expression",
   "*/expression",
