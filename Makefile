@@ -136,4 +136,4 @@ ci_preflight_image_push:
 	$(DOCKER) push pymor/ci-preflight \
 		zivgitlab.wwu.io/pymor/pymor/ci-preflight
 
-ci_image_push: ci_current_image_push ci_oldset_image_push ci_fenics_image_push
+ci_image_push: ci_current_image_push ci_oldest_image_push ci_fenics_image_push
