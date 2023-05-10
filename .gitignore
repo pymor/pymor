@@ -75,3 +75,12 @@ Pipfile.lock
 .vscode
 .ci/create_conda_env.log
 src/pymortests/testdata/check_results/test_check_check_results_miss*
+docs/_build/
+docs/source/autoapi/
+docs/coverage
+docs/*.png
+docs/pymor_defaults.py
+docs/source/*rst_extracted.py
+# these are managed by sphinx plugin
+docs/source/_static/require.js*
+docs/source/_static/standalone.js*

@@ -6,7 +6,11 @@ else
     export PULL_REQUEST=${CI_MERGE_REQUEST_ID}
 fi
 
-COVERAGE_FILE=${COVERAGE_FILE:-coverage}
+if [ "x${CI_JOB_NAME_SLUG}" == "x" ] ; then
+    export COVERAGE_FILE=coverage
+else
+    export COVERAGE_FILE=coverage_${CI_JOB_NAME_SLUG}
+fi
 COV_OPTION=${COV_OPTION:---cov=src}
 PYMOR_HYPOTHESIS_PROFILE=${PYMOR_HYPOTHESIS_PROFILE:-dev}
 PYMOR_PYTEST_EXTRA=${PYMOR_PYTEST_EXTRA:-}
@@ -33,14 +37,6 @@ if [ "x${ME}" != "x${DEFAULTS_OWNER}" ] ; then
   sudo chown ${ME} docs/source/pymor_defaults.py
 fi
 
-# switches default index to pypi-mirror service
-export PIP_CONFIG_FILE=/usr/local/share/ci.pip.conf
-
-# make sure image correct packages are baked into the image
-check_reqs requirements.txt
-check_reqs requirements-ci.txt
-check_reqs requirements-optional.txt
-
 #allow xdist to work by fixing parametrization order
 export PYTHONHASHSEED=0
 
@@ -51,8 +47,9 @@ python -c "from matplotlib import pyplot" || true
 PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')
 
 # `--cov-report=` suppresses terminal output
-COMMON_PYTEST_OPTS="--junitxml=test_results_${PYMOR_VERSION}.xml \
-  --cov-report= ${COV_OPTION} --cov-config=${PYMOR_ROOT}/setup.cfg --cov-context=test \
+COMMON_PYTEST_OPTS="-r fEsx --junitxml=test_results_${PYMOR_VERSION}.xml \
+  --cov-report= ${COV_OPTION} --cov-context=test \
   --hypothesis-profile ${PYMOR_HYPOTHESIS_PROFILE} ${PYMOR_PYTEST_EXTRA}"
 
-python -m pytest src/pymortests/docker_ci_smoketest.py
+# report pymor config
+python -c "import pymor; print(pymor.config)"

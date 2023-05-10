@@ -1,13 +1,10 @@
 infrastructure:
   - .ci/**/*
   - .github/**/*
-  - .binder/**/*
   - Makefile
   - requirements*
   - pyproject.toml
-  - MANIFEST.in
   - dependencies.py
-  - setup.*
   - versioneer.py
 
 management:

@@ -14,11 +14,10 @@ from typer.testing import CliRunner
 import pymordemos  # noqa: F401
 from pymor.core.config import is_macos_platform, is_windows_platform
 from pymor.core.exceptions import (
+    DependencyMissingError,
     GmshMissingError,
     MeshioMissingError,
     NoResultDataError,
-    QtMissingError,
-    TorchMissingError,
 )
 from pymor.tools.mpi import parallel
 from pymortests.base import BUILTIN_DISABLED, check_results, runmodule
@@ -190,7 +189,7 @@ def _skip_if_no_solver(param):
         has_solver = getattr(config, f'HAVE_{package}')
         builtin = builtin and (not needs_solver or package == 'TORCH')
         if needs_solver and not has_solver:
-            pytest.skip('skipped test due to missing ' + solver)
+            pytest.skip('skipped test due to missing ' + package)
     if builtin and BUILTIN_DISABLED:
         pytest.skip('builtin discretizations disabled')
 
@@ -243,12 +242,15 @@ def _test_demo(demo):
     result = None
     try:
         result = demo()
-    except (QtMissingError, GmshMissingError, MeshioMissingError, TorchMissingError) as e:
+    except (DependencyMissingError, GmshMissingError, MeshioMissingError) as e:
         if os.environ.get('DOCKER_PYMOR', False):
             # these are all installed in our CI env so them missing is a grave error
             raise e
         else:
-            miss = str(type(e)).replace('MissingError', '')
+            if isinstance(e, DependencyMissingError):
+                miss = e.dependency
+            else:
+                miss = str(type(e)).replace('MissingError', '')
             pytest.xfail(f'{miss} not installed')
     finally:
         from pymor.parallel.default import _cleanup

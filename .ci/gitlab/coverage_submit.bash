@@ -6,7 +6,7 @@ set -eu
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
-wget https://uploader.codecov.io/latest/alpine/codecov
+wget https://uploader.codecov.io/latest/linux/codecov
 chmod +x codecov
 
 rm -rf reports

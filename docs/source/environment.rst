@@ -37,7 +37,7 @@ PYMOR_DEFAULTS
 PYMOR_HYPOTHESIS_PROFILE
     Controls which profile the hypothesis pytest plugin uses to execute our
     test suites. Defaults to the "dev" profile which runs fewer variations than
-    the "ci" or "ci_pr" which get used in our Gitlab-CI.
+    the "ci" or "ci_large" which get used in our Gitlab-CI.
 
 PYMOR_MPI_FINALIZE
     If set controls the value for `mpi4py.rc.finalize`. If `PYMOR_MPI_FINALIZE` is unset the value

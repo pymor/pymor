@@ -1,6 +1,5 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.15)
 
-set(Python3_EXECUTABLE /usr/local/bin/python3 CACHE PATH "")
 project(minimal-cpp-demo)
 
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18.0")

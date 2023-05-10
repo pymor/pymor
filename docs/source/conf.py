@@ -39,12 +39,10 @@ extensions = ['sphinx.ext.autodoc',
               'try_on_binder',
               'myst_nb',
               'sphinx.ext.mathjax',
-              'sphinx_qt_documentation',
               'autoapi.extension',
               'autoapi_pymor',
               'sphinxcontrib.bibtex',
               'IPython.sphinxext.ipython_console_highlighting',
-              'k3d_sphinx',
               ]
 # this enables:
 # substitutions-with-jinja2, direct-latex-math and definition-lists

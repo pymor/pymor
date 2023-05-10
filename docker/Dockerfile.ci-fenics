@@ -1,0 +1,25 @@
+FROM docker.io/debian:bookworm
+
+ENV DOCKER_PYMOR=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    GOTO_NUM_THREADS=1 \
+    OMP_NUM_THREADS=1
+
+RUN apt-get -q update && \
+    apt-get -qy install xvfb build-essential \
+        libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
+        libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 \
+# gmsh requirements
+    	libglu1-mesa libxcursor1 libxinerama1 && \
+    apt-get -qy install libpetsc-real-dev git && \
+    apt-get -qy install fenics python3.11-venv && \
+    python3 -m venv --system-site-packages /venv && \
+    echo ". /venv/bin/activate" >> /etc/profile
+
+CMD /bin/bash --login
+
+WORKDIR /src
+
+COPY requirements-ci-fenics.txt .
+RUN . /venv/bin/activate && \
+    pip install --no-cache-dir -r requirements-ci-fenics.txt

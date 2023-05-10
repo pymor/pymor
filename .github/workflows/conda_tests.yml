@@ -21,11 +21,6 @@ jobs:
           # also works on 'pull_request' targets
           ignore_sha: true
           access_token: ${{ github.token }}
-      - uses: actions/checkout@v3
-      - name: Stop if dependencies changed
-        shell: bash -l {0}
-        run: |
-          ./dependencies.py && git diff --exit-code requirements* pyproject.toml
   event_file:
     # this is input for the pytest_results workflow
     name: "Event File"
@@ -39,7 +34,7 @@ jobs:
   miniconda:
     name: ${{ matrix.os }} - Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 55
+    timeout-minutes: 90
     strategy:
         matrix:
             os: [ubuntu-22.04, macos-12, windows-2022]
@@ -47,13 +42,17 @@ jobs:
             include:
               - os: ubuntu-22.04
                 prefix: /usr/share/miniconda3/envs/pyMOR-ci
+                environment_file: conda-linux-64.lock
               - os: macos-12
                 prefix: /Users/runner/miniconda3/envs/pyMOR-ci
+                environment_file: conda-osx-64.lock
               - os: macos-12
                 python: 3.8
                 prefix: /Users/runner/miniconda3/envs/pyMOR-ci
+                environment_file: conda-osx-64.lock
               - os: windows-2022
                 prefix: C:\Miniconda3\envs\pyMOR-ci
+                environment_file: conda-win-64.lock
             # avoid failure in one job immeadiately cancelling all others
         fail-fast: false
     steps:
@@ -66,6 +65,7 @@ jobs:
           os: ${{ matrix.os }}
           results_file: result_${{ matrix.os }}-${{ matrix.python }}.xml
           coverage_file: coverage_${{ matrix.os }}-${{ matrix.python }}
+          environment_file: ${{ matrix.environment_file }}
 
   coverage_to_html:
     name: Upload HTML Coverage Report
@@ -82,10 +82,11 @@ jobs:
         with:
           python-version: "3.10"
       - name: Install dependencies
-        run: pip install coverage
+        run: |
+          pip install coverage[toml]
       - name: Generate Report
         run: |
-          python .ci/fix_coverage_paths_windows.py reports/coverage_windows-2022-3.*
+          python .ci/github/fix_coverage_paths_windows.py reports/coverage_windows-2022-3.*
           coverage combine reports/*
           coverage html --directory coverage_html
       - name: Upload Coverage HTML
@@ -94,66 +95,3 @@ jobs:
         with:
           name: coverage_html
           path: coverage_html
-
-  full_install:
-    name: Install with on ${{ matrix.os }} - Python ${{ matrix.python }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-        matrix:
-            os: [ubuntu-22.04, macos-12, windows-2022]
-            python: ["3.8", "3.10"]
-            include:
-              - os: ubuntu-22.04
-                prefix: /usr/share/miniconda3/envs/pyMOR-ci
-              - os: macos-12
-                prefix: /Users/runner/miniconda3/envs/pyMOR-ci
-              - os: windows-2022
-                prefix: C:\Miniconda3\envs\pyMOR-ci
-            # avoid failure in one job immeadiately cancelling all others
-        fail-fast: true
-    steps:
-      - name: Install required X libs (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
-      - name: Install
-        if: runner.os == 'Windows'
-        run: |
-          curl --output mesa.7z -L https://github.com/pal1000/mesa-dist-win/releases/download/20.3.4/mesa3d-20.3.4-release-msvc.7z
-          7z x mesa.7z -omesa -y
-
-
-          # The script requires user input (choice of options) so need to
-          # fiddle to get it to run automatically. Not a clean way to do it,
-          # but works.
-          sed -i 's/@echo Please make a deployment choice:/@GOTO desktopgl/g' ./mesa/systemwidedeploy.cmd
-          sed -i 's/@echo Desktop OpenGL drivers deploy complete./@exit/g' ./mesa/systemwidedeploy.cmd
-          ./mesa/systemwidedeploy.cmd
-
-
-      - uses: actions/checkout@v3
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: pyMOR-ci
-          miniforge-variant: Mambaforge
-          use-mamba: true
-          python-version: ${{ matrix.python }}
-          channels: conda-forge
-          channel-priority: true
-           # This needs to be set for caching to work properly!
-          use-only-tar-bz2: true
-      - name: Cache conda
-        # only restore here, since pip install might bring things into the cache
-        # that aren't controlled via the .ci/conda-env.yml file
-        uses: martijnhols/actions-cache/restore@v3.0.11
-        id: cache
-        env:
-          # Increase this value to reset cache if .ci/conda-env.yml have not changed
-          CACHE_NUMBER: 3
-        with:
-          path: ${{ matrix.prefix }}
-          key:
-            ${{ runner.os }}-${{ matrix.python }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.ci/conda-env.yml') }}
-      - name: Install pyMOR
-        shell: bash -l {0}
-        run: python -m pip install .[full]

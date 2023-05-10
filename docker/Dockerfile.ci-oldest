@@ -1,0 +1,29 @@
+FROM docker.io/python:3.8-bullseye
+
+ENV DOCKER_PYMOR=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    GOTO_NUM_THREADS=1 \
+    OMP_NUM_THREADS=1
+
+RUN apt-get -q update && \
+    apt-get -qy install xvfb build-essential cmake rsync libopenblas-dev gfortran libopenmpi-dev \
+        libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
+        libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 \
+# gmsh requirements
+    	libglu1-mesa libxcursor1 libxinerama1
+
+CMD /bin/bash
+
+WORKDIR /src
+
+COPY requirements-ci-oldest.txt .
+RUN pip install --no-cache-dir -r requirements-ci-oldest.txt && \
+# slycot build uses newest numpy, which is api incompatible with what we use
+    pip uninstall -y slycot && \
+    pip install build && \
+    wget https://files.pythonhosted.org/packages/85/21/4e7110462f3529b2fbcff8a519b61bf64e0604b8fcbe9a07649c9bed9d7a/slycot-0.4.0.0.tar.gz && \
+    tar -xvf slycot-0.4.0.0.tar.gz && \
+    cd slycot-0.4.0.0 && \
+    sed -i 's/numpy/oldest-supported-numpy/' pyproject.toml && \
+    python -m build && \
+    pip install dist/slycot-0.4.0-cp38-cp38-linux_x86_64.whl

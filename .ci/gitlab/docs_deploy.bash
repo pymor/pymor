@@ -1,13 +1,24 @@
 #!/bin/bash
 
-source ${CI_PROJECT_DIR}/.ci/gitlab/init_sshkey.bash
+# any failure here should fail the whole test
+set -eux
+
+function init_ssh {
+    which ssh-agent || ( apt-get update -y && apt-get install openssh-client git rsync -y ) || \
+      apk --update add openssh-client git rsync
+
+    eval $(ssh-agent -s)
+    echo "$DOCS_DEPLOY_KEY" | tr -d '\r' | ssh-add - > /dev/null
+
+    [[ -d ~/.ssh ]] || mkdir -p  ~/.ssh
+    chmod 700 ~/.ssh
+    ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+}
 init_ssh
 
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
-# any failure here should fail the whole test
-set -eux
 
 REPO=git@github.com:pymor/docs.git
 REPO_DIR=${CI_PROJECT_DIR}/repo
@@ -43,9 +54,12 @@ git push || (git pull --rebase && git push )
 rm -rf ${REPO_DIR}/.binder
 mkdir ${REPO_DIR}/.binder
 
+# cp ${PYMOR_ROOT}/requirements-ci.txt ${REPO_DIR}/.binder/requirements.txt
+# echo "python-3.10" > ${REPO_DIR}/.binder/runtime.txt
 # this needs to go into the repo root, not the subdir!
-sed -e "s;BINDERIMAGE;${BINDERIMAGE};g" -e "s;SLUG;${SLUG};g" \
-	${PYMOR_ROOT}/.ci/gitlab/Dockerfile.binder.tocopy > ${REPO_DIR}/.binder/Dockerfile
+sed -e "s;BINDERIMAGE;zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG};g" -e "s;SLUG;${SLUG};g" \
+    -e "s;PYMOR_COMMIT;${CI_COMMIT_SHA};g" \
+	${PYMOR_ROOT}/docker/Dockerfile.binder.tocopy > ${REPO_DIR}/.binder/Dockerfile
 
 # for binder the notebooks need to exist alongside their .rst version
 cd ${TARGET_DIR}
