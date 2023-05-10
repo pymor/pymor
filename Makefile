@@ -29,7 +29,6 @@ ci_preflight_image:
 CI_EXTRAS= \
 	--extra docs-additional \
 	--extra tests \
-	--extra ci \
 	--extra ann \
 	--extra slycot \
 	--extra pymess \
