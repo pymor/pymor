@@ -106,12 +106,8 @@ gmsh==4.11.1
     # via pymor (pyproject.toml)
 greenlet==2.0.2
     # via sqlalchemy
-hatch-vcs==0.3.0
-    # via pymor (pyproject.toml)
 hatchling==1.14.1
-    # via
-    #   hatch-vcs
-    #   pymor (pyproject.toml)
+    # via pymor (pyproject.toml)
 hypothesis[numpy,pytest]==6.56.3
     # via pymor (pyproject.toml)
 idna==3.4
@@ -344,7 +340,6 @@ packaging==23.1
     #   pymor (pyproject.toml)
     #   pytest
     #   qtpy
-    #   setuptools-scm
     #   sphinx
 pandocfilters==1.5.0
     # via nbconvert
@@ -488,8 +483,6 @@ send2trash==1.8.2
     #   jupyter-server
     #   nbclassic
     #   notebook
-setuptools-scm==7.1.0
-    # via hatch-vcs
 shiboken2==5.15.2.1
     # via pyside2
 six==1.16.0
@@ -559,7 +552,6 @@ tomli==2.0.1
     #   coverage
     #   hatchling
     #   pytest
-    #   setuptools-scm
 torch==1.11.0+cpu
     # via pymor (pyproject.toml)
 tornado==6.3.1
@@ -611,7 +603,6 @@ typing-extensions==4.5.0
     #   myst-nb
     #   myst-parser
     #   rich
-    #   setuptools-scm
     #   sqlalchemy
     #   torch
     #   typer

@@ -73,12 +73,8 @@ gitdb==4.0.10
     # via gitpython
 gitpython==3.1.31
     # via nbdime
-hatch-vcs==0.3.0
-    # via pymor (pyproject.toml)
 hatchling==1.14.1
-    # via
-    #   hatch-vcs
-    #   pymor (pyproject.toml)
+    # via pymor (pyproject.toml)
 hypothesis[numpy,pytest]==6.56.3
     # via pymor (pyproject.toml)
 idna==3.4
@@ -194,7 +190,6 @@ packaging==23.1
     #   pymor (pyproject.toml)
     #   pytest
     #   qtpy
-    #   setuptools-scm
 pandocfilters==1.5.0
     # via nbconvert
 parso==0.8.3
@@ -295,8 +290,6 @@ scipy==1.10.1
     # via pymor (pyproject.toml)
 send2trash==1.8.2
     # via jupyter-server
-setuptools-scm==7.1.0
-    # via hatch-vcs
 six==1.16.0
     # via
     #   asttokens
@@ -353,7 +346,6 @@ typer==0.9.0
     # via pymor (pyproject.toml)
 typing-extensions==4.5.0
     # via
-    #   setuptools-scm
     #   torch
     #   typer
 uri-template==1.2.0
@@ -370,6 +362,3 @@ webencodings==0.5.1
     #   tinycss2
 websocket-client==1.5.1
     # via jupyter-server
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
