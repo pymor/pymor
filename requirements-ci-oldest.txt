@@ -542,7 +542,7 @@ tomli==2.0.1
     # via
     #   coverage
     #   pytest
-torch==1.11.0+cpu
+torch==1.13.0+cpu
     # via
     #   -r requirements-ci-oldest-pins.in
     #   pymor (pyproject.toml)
