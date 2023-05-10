@@ -314,7 +314,7 @@ notebook==6.5.4
     #   jupyter-nbextensions-configurator
 notebook-shim==0.2.3
     # via nbclassic
-numpy==1.20.3
+numpy==1.22.0
     # via
     #   -r requirements-ci-oldest-pins.in
     #   contourpy
