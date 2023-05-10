@@ -61,9 +61,9 @@ ci_oldest_requirements:
 		pip install pip-tools==6.13.0 && \
 		pip-compile --resolver backtracking \
 			$(CI_EXTRAS) \
-			--extra ci-oldest \
 			--extra-index-url https://download.pytorch.org/whl/cpu \
 			-o requirements-ci-oldest.txt \
+			pyproject.toml requirements-ci-oldest-pins.in \
 		"
 
 
