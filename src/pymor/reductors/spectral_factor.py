@@ -32,6 +32,7 @@ class SpectralFactorReductor(BasicObject):
     def reduce(self, r=None):
         # TODO Use operators directly instead of converting to dense matrix
         # TODO where possible.
+        E = to_matrix(self.fom.E, format='dense')
         A = to_matrix(self.fom.A, format='dense')
         B = to_matrix(self.fom.B, format='dense')
         C = to_matrix(self.fom.C, format='dense')
@@ -48,22 +49,19 @@ class SpectralFactorReductor(BasicObject):
         # Compute Cholesky-like factorization of W(X)
         M = _chol(D+D.T).T
         # TODO Alternatives to taking matrix inverse?
-        L = np.linalg.solve(M.T, C-B.T@X)
-        print('[spectralFactor] L')
-        print(L)
-        # TODO Currently, relative LTL error way too high?
-        print('[spectralFactor] Relative LTL error')
-        LTL = -A.T@X - X@A
-        print(np.linalg.norm(L.T@L-LTL)/np.linalg.norm(LTL))
-        print('[spectralFactor] M')
-        print(M)
-        print('[spectralFactor] Relative LTM error')
-        LTM = C.T - X@B
-        print(np.linalg.norm(L.T@M-LTM)/np.linalg.norm(LTM))
+        L = np.linalg.solve(M.T, C-B.T@X@E)
+        # TODO Currently, relative LTL error too high?
+        LTL = -A.T@X@E - X@A@E
+        relLTLerr = np.linalg.norm(L.T@L-LTL)/np.linalg.norm(LTL)
+        self.logger.info(f'Relative L^T*L error: {relLTLerr:.3e}')
+        LTM = C.T - E.T@X@B
+        relLTMerr = np.linalg.norm(L.T@M-LTM)/np.linalg.norm(LTM)
+        self.logger.info(f'Relative L^T*M error: {relLTMerr:.3e}')
 
         spectral_factor = LTIModel(self.fom.A, self.fom.B,
             NumpyMatrixOperator(L, source_id=self.fom.A.range.id),
-            NumpyMatrixOperator(M, source_id=self.fom.B.source.id))
+            NumpyMatrixOperator(M, source_id=self.fom.B.source.id),
+            self.fom.E)
         
         # TODO Allow to set other reductor or reductor options from outside
         irka = IRKAReductor(spectral_factor, self.mu)
@@ -72,9 +70,10 @@ class SpectralFactorReductor(BasicObject):
         # spectral_factor_reduced = bt.reduce(r, projection='sr')
 
         spectralH2err = spectral_factor_reduced - spectral_factor
-        print('[spectralFactor] Relative H2 error of spectral factor: '
+        self.logger.info('Relative H2 error of spectral factor: '
             f'{spectralH2err.h2_norm() / spectral_factor.h2_norm():.3e}')
 
+        Er = to_matrix(spectral_factor_reduced.E, format='dense')
         Ar = to_matrix(spectral_factor_reduced.A, format='dense')
         Br = to_matrix(spectral_factor_reduced.B, format='dense')
         Lr = to_matrix(spectral_factor_reduced.C, format='dense')
@@ -86,19 +85,9 @@ class SpectralFactorReductor(BasicObject):
             self.logger.warn('Reduced system for spectral factor is not stable. '
                              f'Real value of largest pole is {largest_pole}.')
 
-        print('[spectralFactor] Mr')
-        print(Mr)
-
-        # Remove E
-        # TODO Generalize the next steps to use the matrix E
-        # TODO instead of removing E here.
-        Er = to_matrix(spectral_factor_reduced.E, format='dense')
-        Ar = np.linalg.solve(Er,Ar)
-        Br = np.linalg.solve(Er,Br)
-
         Dr = 0.5*(Mr.T @ Mr) + 0.5*(D-D.T)
 
-        Xr = solve_cont_lyap_dense(A=Ar, E=None, B=Lr, trans=True)
-        Cr = Br.T @ Xr + Mr.T @ Lr
+        Xr = solve_cont_lyap_dense(A=Ar, E=Er, B=Lr, trans=True)
+        Cr = Br.T @ Xr @ Er + Mr.T @ Lr
 
-        return LTIModel.from_matrices(Ar,Br,Cr,Dr)
+        return LTIModel.from_matrices(Ar, Br, Cr, Dr, Er)
