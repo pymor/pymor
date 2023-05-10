@@ -67,7 +67,6 @@ class LoewnerReductor(BasicObject):
         rom
             Reduced |LTIModel|.
         """
-
         if self.loewner_svds is None:
             L, Ls, V, W = loewner_quadruple(self.s, self.Hs, partitioning=self.partitioning, ordering=self.ordering,
                                             conjugate=self.conjugate, mimo_handling=self.mimo_handling)
@@ -223,7 +222,8 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
         Hs = Hs.transfer_function
     assert isinstance(Hs, (TransferFunction, np.ndarray, list))
 
-    assert partitioning in ('even-odd', 'half-half') or len(partitioning) == 2
+    assert partitioning in ('even-odd', 'half-half') \
+        or len(partitioning) == 2 and len(partitioning[0]) + len(partitioning[1]) == len(s)
     assert ordering in ('magnitude', 'random', 'regular')
 
     if isinstance(Hs, TransferFunction):
@@ -332,7 +332,7 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
         TR = TR / np.sqrt(2)
         TL = TL / np.sqrt(2)
 
-        if mimo_handling == 'full':
+        if mimo_handling == 'full' and not dim_input == dim_output == 1:
             L = np.tensordot(TL, L, axes=(1, 0))
             L = np.tensordot(L, TR.conj().T, axes=(1, 0))
             L = L.real
@@ -352,7 +352,7 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
             V = (TL @ V).real
             W = (W @ TR.conj().T).real
 
-    if mimo_handling == 'full':
+    if mimo_handling == 'full' and not dim_input == dim_output == 1:
         L = np.concatenate(np.concatenate(L, axis=1), axis=1)
         Ls = np.concatenate(np.concatenate(Ls, axis=1), axis=1)
         V = np.concatenate(np.concatenate(V, axis=1), axis=1)
