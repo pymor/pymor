@@ -1,0 +1,7 @@
+# pin some packages to oldest supported version
+numpy==1.20.3
+scipy==1.5.4
+torch==1.11.0
+k3d==2.15.1
+scikit-fem==6.0.0
+slycot==0.5.4
