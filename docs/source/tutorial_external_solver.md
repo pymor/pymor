@@ -172,7 +172,7 @@ We use a minimal [CMake](<https://cmake.org/>) project that generates makefiles 
 First we make sure pybind11 can be used:
 
 ```{literalinclude} minimal_cpp_demo/CMakeLists.txt
-:lines: 1-6
+:lines: 11-13
 :language: cmake
 
 ```
@@ -181,7 +181,7 @@ Next, we define a new library with our `model.cc` as the single source file and 
 flags.
 
 ```{literalinclude} minimal_cpp_demo/CMakeLists.txt
-:lines: 9-12
+:lines: 16-19
 :language: cmake
 
 ```
