@@ -11,7 +11,9 @@ from pymor.reductors.loewner import LoewnerReductor
 
 pytestmark = pytest.mark.builtin
 
+np.random.seed(0)
 custom_partitioning = np.random.permutation(10)
+
 test_data = [
     ({'r': 3}, {}),
     ({'tol': 1e-3}, {}),
@@ -30,16 +32,8 @@ test_data = [
 
 @pytest.mark.parametrize('reduce_kwargs,loewner_kwargs', test_data)
 def test_loewner_lti(reduce_kwargs, loewner_kwargs):
-    n = 10
-    A1 = np.array([[-1, 100], [-100, -1]])
-    A2 = np.array([[-1, 200], [-200, -1]])
-    A3 = np.array([[-1, 400], [-400, -1]])
-    A4 = sps.diags(np.arange(-1, -n + 5, -1))
-    A = sps.block_diag((A1, A2, A3, A4))
-    B = np.arange(2*n).reshape(n, 2)
-    C = np.arange(3*n).reshape(3, n)
+    fom = make_fom(10)
     s = np.logspace(-2, 2, 10)*1j
-    fom = LTIModel.from_matrices(A, B, C)
     loewner = LoewnerReductor(s, fom, **loewner_kwargs)
     rom = loewner.reduce(**reduce_kwargs)
     assert isinstance(rom, LTIModel)
@@ -47,16 +41,8 @@ def test_loewner_lti(reduce_kwargs, loewner_kwargs):
 
 @pytest.mark.parametrize('reduce_kwargs,loewner_kwargs', test_data)
 def test_loewner_tf(reduce_kwargs, loewner_kwargs):
-    n = 10
-    A1 = np.array([[-1, 100], [-100, -1]])
-    A2 = np.array([[-1, 200], [-200, -1]])
-    A3 = np.array([[-1, 400], [-400, -1]])
-    A4 = sps.diags(np.arange(-1, -n + 5, -1))
-    A = sps.block_diag((A1, A2, A3, A4))
-    B = np.arange(2*n).reshape(n, 2)
-    C = np.arange(3*n).reshape(3, n)
+    fom = make_fom(10)
     s = np.logspace(-2, 2, 10)*1j
-    fom = LTIModel.from_matrices(A, B, C)
     loewner = LoewnerReductor(s, fom.transfer_function, **loewner_kwargs)
     rom = loewner.reduce(**reduce_kwargs)
     assert isinstance(rom, LTIModel)
@@ -64,7 +50,15 @@ def test_loewner_tf(reduce_kwargs, loewner_kwargs):
 
 @pytest.mark.parametrize('reduce_kwargs,loewner_kwargs', test_data)
 def test_loewner_data(reduce_kwargs, loewner_kwargs):
-    n = 10
+    fom = make_fom(10)
+    s = np.logspace(-2, 2, 10)
+    Hs = fom.transfer_function.freq_resp(s)
+    loewner = LoewnerReductor(s*1j, Hs, **loewner_kwargs)
+    rom = loewner.reduce(**reduce_kwargs)
+    assert isinstance(rom, LTIModel)
+
+
+def make_fom(n):
     A1 = np.array([[-1, 100], [-100, -1]])
     A2 = np.array([[-1, 200], [-200, -1]])
     A3 = np.array([[-1, 400], [-400, -1]])
@@ -72,9 +66,4 @@ def test_loewner_data(reduce_kwargs, loewner_kwargs):
     A = sps.block_diag((A1, A2, A3, A4))
     B = np.arange(2*n).reshape(n, 2)
     C = np.arange(3*n).reshape(3, n)
-    s = np.logspace(-2, 2, 10)
-    fom = LTIModel.from_matrices(A, B, C)
-    Hs = fom.transfer_function.freq_resp(s)
-    loewner = LoewnerReductor(s*1j, Hs, **loewner_kwargs)
-    rom = loewner.reduce(**reduce_kwargs)
-    assert isinstance(rom, LTIModel)
+    return LTIModel.from_matrices(A, B, C)
