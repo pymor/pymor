@@ -34,15 +34,15 @@ class PAAAReductor(BasicObject):
     sampling_values
         Values where sample data has been evaluated or the full-order model should be evaluated.
         Sampling values are represented as a list of |NumPy arrays| such that `sampling_values[i]`
-        corresponds to sampling values of the `i`-th variable given as a |NumpyArray|. The first
+        corresponds to sampling values of the `i`-th variable given as a |NumPy array|. The first
         variable is the Laplace variable. In the non-parametric case (i.e., the only variable is
-        the Laplace variable) this can also be a |NumpyArray| representing the sampling values.
+        the Laplace variable) this can also be a |NumPy array| representing the sampling values.
     samples_or_fom
         Can be either a full-order model (|TransferFunction| or |Model| with a `transfer_function`
-        attribute) or data sampled at the values specified in `sampling_values` as a |NumpyArray|.
+        attribute) or data sampled at the values specified in `sampling_values` as a |NumPy array|.
         Samples are represented as a tensor `S`. E.g., for 3 inputs `S[i,j,k]` corresponds to the
         sampled value at `(sampling_values[0][i],sampling_values[1][j],sampling_values[2][k])`.
-        The samples (i.e., `S[i,j,k]`) need to be provided as 2-dimensional |NumpyArrays|. E.g.,
+        The samples (i.e., `S[i,j,k]`) need to be provided as 2-dimensional |NumPy arrays|. E.g.,
         in the MIMO case `S[i,j,k]` represents a matrix of dimension `dim_output` times `dim_input`.
     conjugate
         Whether to compute complex conjugates of first sampling variables and enforce
