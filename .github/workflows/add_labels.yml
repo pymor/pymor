@@ -13,14 +13,3 @@ jobs:
     - uses: actions/labeler@v4
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
-  # add the autoupdate label on PRs to main
-  autoupdate:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-      - name: Add autoupdate label
-        uses: actions-ecosystem/action-add-labels@v1.1.3
-        if: ${{ github.base_ref == 'main' }}
-        with:
-          labels: autoupdate
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
