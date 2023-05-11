@@ -33,14 +33,17 @@ class PAAAReductor(BasicObject):
     ----------
     sampling_values
         Values where sample data has been evaluated or the full-order model should be evaluated.
-        Sampling values are represented as a nested list such that `sampling_values[i]` corresponds
-        to sampling values of the `i`-th variable. The first variable is the Laplace variable.
+        Sampling values are represented as a list of |NumPy arrays| such that `sampling_values[i]`
+        corresponds to sampling values of the `i`-th variable given as a |NumPy array|. The first
+        variable is the Laplace variable. In the non-parametric case (i.e., the only variable is
+        the Laplace variable) this can also be a |NumPy array| representing the sampling values.
     samples_or_fom
         Can be either a full-order model (|TransferFunction| or |Model| with a `transfer_function`
-        attribute) or data sampled at the values specified in `sampling_values`. Samples are
-        represented as a tensor `S`. E.g., for 3 inputs `S[i,j,k]` corresponds to the sampled
-        value at `(sampling_values[0][i],sampling_values[1][j],sampling_values[2][k])`. In the
-        MIMO case `S[i,j,k]` represents a matrix of dimension `dim_output` times `dim_input`.
+        attribute) or data sampled at the values specified in `sampling_values` as a |NumPy array|.
+        Samples are represented as a tensor `S`. E.g., for 3 inputs `S[i,j,k]` corresponds to the
+        sampled value at `(sampling_values[0][i],sampling_values[1][j],sampling_values[2][k])`.
+        The samples (i.e., `S[i,j,k]`) need to be provided as 2-dimensional |NumPy arrays|. E.g.,
+        in the MIMO case `S[i,j,k]` represents a matrix of dimension `dim_output` times `dim_input`.
     conjugate
         Whether to compute complex conjugates of first sampling variables and enforce
         interpolation in complex conjugate pairs (allows for constructing real system matrices).
@@ -65,6 +68,10 @@ class PAAAReductor(BasicObject):
 
     def __init__(self, sampling_values, samples_or_fom, conjugate=True, nsp_tol=1e-16, post_process=True,
                  L_rk_tol=1e-8):
+        if isinstance(sampling_values, np.ndarray):
+            sampling_values = [sampling_values]
+        assert isinstance(sampling_values, list)
+        assert all(isinstance(sv, np.ndarray) for sv in sampling_values)
         if isinstance(samples_or_fom, TransferFunction) or hasattr(samples_or_fom, 'transfer_function'):
             fom = samples_or_fom
             if not isinstance(samples_or_fom, TransferFunction):
@@ -83,20 +90,26 @@ class PAAAReductor(BasicObject):
                 self.samples = self.samples.reshape(self.samples.shape[:-2])
         else:
             self.samples = samples_or_fom
+            # SISO case requires reshape
+            if self.samples.shape[-2:] == (1, 1):
+                self.samples = self.samples.reshape(self.samples.shape[:-2])
             self.num_vars = len(sampling_values)
             self._parameters = {'p': self.num_vars-1}
 
         # add complex conjugate samples
         if conjugate:
             s_conj_list = []
-            samples_conj_list = []
+            samples_conj_list = None
             for i, s in enumerate(sampling_values[0]):
                 if s.conj() not in sampling_values[0]:
                     s_conj_list.append(s.conj())
-                    samples_conj_list.append(self.samples[i, None].conj())
+                    if samples_conj_list is None:
+                        samples_conj_list = self.samples[i, None].conj()
+                    else:
+                        samples_conj_list = np.concatenate((samples_conj_list, self.samples[i, None].conj()))
             if s_conj_list:
                 sampling_values[0] = np.append(sampling_values[0], s_conj_list)
-                self.samples = np.vstack([self.samples] + samples_conj_list)
+                self.samples = np.concatenate((self.samples, samples_conj_list))
 
         # Transform samples for MIMO case
         if len(self.samples.shape) != len(sampling_values):
