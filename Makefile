@@ -116,22 +116,22 @@ ci_fenics_image:
 ci_images: ci_current_image ci_oldest_image ci_fenics_image
 
 ci_current_image_push:
-	$(DOCKER) login zivgitlab.wwu.io
+	$(DOCKER) login $(DOCKER_LOGIN_ARGS) zivgitlab.wwu.io
 	$(DOCKER) push pymor/ci-current:$(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1) \
 		zivgitlab.wwu.io/pymor/pymor/ci-current:$(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1)
 
 ci_oldest_image_push:
-	$(DOCKER) login zivgitlab.wwu.io
+	$(DOCKER) login $(DOCKER_LOGIN_ARGS) zivgitlab.wwu.io
 	$(DOCKER) push pymor/ci-oldest:$(shell sha256sum $(THIS_DIR)/requirements-ci-oldest.txt | cut -d " " -f 1) \
 		zivgitlab.wwu.io/pymor/pymor/ci-oldest:$(shell sha256sum $(THIS_DIR)/requirements-ci-oldest.txt | cut -d " " -f 1)
 
 ci_fenics_image_push:
-	$(DOCKER) login zivgitlab.wwu.io
+	$(DOCKER) login $(DOCKER_LOGIN_ARGS) zivgitlab.wwu.io
 	$(DOCKER) push pymor/ci-fenics:$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
 		zivgitlab.wwu.io/pymor/pymor/ci-fenics:$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1)
 
 ci_preflight_image_push:
-	$(DOCKER) login zivgitlab.wwu.io
+	$(DOCKER) login $(DOCKER_LOGIN_ARGS) zivgitlab.wwu.io
 	$(DOCKER) push pymor/ci-preflight \
 		zivgitlab.wwu.io/pymor/pymor/ci-preflight
 

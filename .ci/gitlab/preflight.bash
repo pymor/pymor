@@ -5,19 +5,33 @@ cd "${PYMOR_ROOT}"
 
 set -eux
 
-echo "CI_CURRENT_IMAGE_TAG=$(sha256sum requirements-ci-current.txt | cut -d ' ' -f 1)" > out.env
-echo "CI_OLDEST_IMAGE_TAG=$(sha256sum requirements-ci-oldest.txt | cut -d ' ' -f 1)" >> out.env
-echo "CI_FENICS_IMAGE_TAG=$(sha256sum requirements-ci-fenics.txt | cut -d ' ' -f 1)" >> out.env
+CI_CURRENT_IMAGE_TAG=$(sha256sum requirements-ci-current.txt | cut -d ' ' -f 1)
+CI_OLDEST_IMAGE_TAG=$(sha256sum requirements-ci-oldest.txt | cut -d ' ' -f 1)
+CI_FENICS_IMAGE_TAG=$(sha256sum requirements-ci-fenics.txt | cut -d ' ' -f 1)
+
+echo "CI_CURRENT_IMAGE_TAG=${CI_CURRENT_IMAGE_TAG}" > out.env
+echo "CI_OLDEST_IMAGE_TAG=${CI_OLDEST_IMAGE_TAG}" >> out.env
+echo "CI_FENICS_IMAGE_TAG=${CI_FENICS_IMAGE_TAG}" >> out.env
+
+if ./.ci/gitlab/check_image_in_registry.py ci-current $CI_CURRENT_IMAGE_TAG ; then
+	echo "CI_BUILD_CURRENT_IMAGE=no" >> out.env
+else
+	echo "CI_BUILD_CURRENT_IMAGE=yes" >> out.env
+fi
+
+if ./.ci/gitlab/check_image_in_registry.py ci-oldest $CI_OLDEST_IMAGE_TAG ; then
+	echo "CI_BUILD_OLDEST_IMAGE=no" >> out.env
+else
+	echo "CI_BUILD_OLDEST_IMAGE=yes" >> out.env
+fi
+
+if ./.ci/gitlab/check_image_in_registry.py ci-fenics $CI_FENICS_IMAGE_TAG ; then
+	echo "CI_BUILD_FENICS_IMAGE=no" >> out.env
+else
+	echo "CI_BUILD_FENICS_IMAGE=yes" >> out.env
+fi
+
 cat out.env
-
-# PYTHONS="${1}"
-# # make sure CI setup is current
-# ./.ci/gitlab/template.ci.py && git diff --exit-code .ci/gitlab/ci.yml
-# # check if requirements files are up-to-date
-# ./dependencies.py && git diff --exit-code requirements* pyproject.toml
-
-# # performs the image+tag in registry check
-# ./.ci/gitlab/template.ci.py "${GITLAB_API_RO}"
 
 # makes sure mailmap is up-to-date
 ./.ci/gitlab/check_mailmap.py ./.mailmap

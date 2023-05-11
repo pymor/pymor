@@ -1,5 +1,6 @@
 stages:
   - preflight
+  - docker images
   - test/build
   - deploy
 
@@ -92,6 +93,37 @@ preflight:
     artifacts:
       reports:
         dotenv: out.env
+
+ 
+#******* docker stage
+
+
+build current image:
+    extends: .test_base
+    image: zivgitlab.wwu.io/pymor/pymor/ci-preflight
+    stage: docker images
+    script:
+        - if [ ${CI_BUILD_CURRENT_IMAGE} != yes ] ; then exit 0; fi
+        - make DOCKER=podman ci_current_image
+        - make DOCKER=podman DOCKER_LOGIN_ARGS="-u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD" ci_current_image_push
+
+build oldest image:
+    extends: .test_base
+    image: zivgitlab.wwu.io/pymor/pymor/ci-preflight
+    stage: docker images
+    script:
+        - if [ ${CI_BUILD_OLDEST_IMAGE} != yes ] ; then exit 0; fi
+        - make DOCKER=podman ci_oldest_image
+        - make DOCKER=podman DOCKER_LOGIN_ARGS="-u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD" ci_oldest_image_push
+
+build fenics image:
+    extends: .test_base
+    image: zivgitlab.wwu.io/pymor/pymor/ci-preflight
+    stage: docker images
+    script:
+        - if [ ${CI_BUILD_FENICS_IMAGE} != yes ] ; then exit 0; fi
+        - make DOCKER=podman ci_fenics_image
+        - make DOCKER=podman DOCKER_LOGIN_ARGS="-u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD" ci_fenics_image_push
 
       
 #******* test stage
