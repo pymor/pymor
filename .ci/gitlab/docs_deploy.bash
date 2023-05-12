@@ -54,10 +54,14 @@ git push || (git pull --rebase && git push )
 rm -rf ${REPO_DIR}/.binder
 mkdir ${REPO_DIR}/.binder
 
-if [ -n "${CI_COMMIT_TAG}" ] ; then
+if [ -v CI_COMMIT_TAG ] ; then
 	IMAGE_TAG=$CI_COMMIT_TAG
-elif [ "${CI_COMMIT_BRANCH}" = main ] ; then
-	IMAGE_TAG=main
+elif [ -v CI_COMMIT_BRANCH ] ; then
+	if [ "${CI_COMMIT_BRANCH}" = main ] ; then
+		IMAGE_TAG=main
+	else
+		IMAGE_TAG="${CI_CURRENT_IMAGE_TAG}"
+	fi
 else
 	IMAGE_TAG="${CI_CURRENT_IMAGE_TAG}"
 fi
