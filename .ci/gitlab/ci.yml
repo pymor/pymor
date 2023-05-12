@@ -373,7 +373,5 @@ tag docker images:
     stage: deploy
     script:
         - make DOCKER=podman ci_images_pull
-        - >
-          make DOCKER=podman DOCKER_LOGIN_ARGS="-u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD"
-                             TARGET_TAG=${CI_COMMIT_TAG:-$CI_COMMIT_BRANCH}
-                             ci_images_push
+        - make DOCKER=podman DOCKER_LOGIN_ARGS="-u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD"
+            TARGET_TAG=${CI_COMMIT_TAG:-$CI_COMMIT_BRANCH} ci_images_push
