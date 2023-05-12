@@ -22,9 +22,9 @@ jobs:
               repo: context.repo.repo,
               body:
                 `This pull request modifies \`pyproject.toml\` or \`requirements-ci-oldest-pins.in\`.
-                In case dependencies were changed, make sure to call
-                \`\`\`shell
-                make ci_requirements
-                \`\`\`
-                and commit the changed files to ensure that CI runs with the updateded dependencies.`
+            In case dependencies were changed, make sure to call
+            \`\`\`shell
+            make ci_requirements
+            \`\`\`
+            and commit the changed files to ensure that CI runs with the updateded dependencies.`
             })
