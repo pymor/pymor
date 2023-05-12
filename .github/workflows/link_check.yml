@@ -1,7 +1,7 @@
 # homepage: https://github.com/gaurav-nelson/github-action-markdown-link-check
 name: Link Check
 
-on: 
+on:
   pull_request:
   merge_group:
     types: [checks_requested]
