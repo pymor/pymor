@@ -156,3 +156,22 @@ ci_preflight_image_push:
 		zivgitlab.wwu.io/pymor/pymor/ci-preflight
 
 ci_images_push: ci_current_image_push ci_oldest_image_push ci_fenics_image_push
+
+
+ci_current_image_run:
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-current:$(CI_CURRENT_IMAGE_TAG)
+
+ci_oldest_image_run:
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-oldest:$(CI_OLDEST_IMAGE_TAG)
+
+ci_fenics_image_run:
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG)
+
+
+ci_current_image_run_notebook:
+	$(DOCKER) run --rm -it -p 8888:8888 -v=$(THIS_DIR):/src pymor/ci-current:$(CI_CURRENT_IMAGE_TAG) \
+		bash -c "pip install -e . && jupyter notebook --allow-root --ip=0.0.0.0"
+
+ci_oldest_image_run_notebook:
+	$(DOCKER) run --rm -it -p 8888:8888 -v=$(THIS_DIR):/src pymor/ci-oldest:$(CI_OLDEST_IMAGE_TAG) \
+		bash -c "pip install -e . && jupyter notebook --allow-root --ip=0.0.0.0"
