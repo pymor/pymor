@@ -122,6 +122,19 @@ ci_fenics_image:
 
 ci_images: ci_current_image ci_oldest_image ci_fenics_image
 
+
+ci_current_image_pull:
+	$(DOCKER) pull zivgitlab.wwu.io/pymor/pymor/ci-current:$(CI_CURRENT_IMAGE_TAG)
+
+ci_oldest_image_pull:
+	$(DOCKER) pull zivgitlab.wwu.io/pymor/pymor/ci-oldest:$(CI_OLDEST_IMAGE_TAG)
+
+ci_fenics_image_pull:
+	$(DOCKER) pull zivgitlab.wwu.io/pymor/pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG)
+
+ci_images_pull: ci_current_image_pull ci_oldest_image_pull ci_fenics_image_pull
+
+
 ci_current_image_push:
 	$(DOCKER) login $(DOCKER_LOGIN_ARGS) zivgitlab.wwu.io
 	$(DOCKER) push pymor/ci-current:$(CI_CURRENT_IMAGE_TAG) \
@@ -142,4 +155,4 @@ ci_preflight_image_push:
 	$(DOCKER) push pymor/ci-preflight \
 		zivgitlab.wwu.io/pymor/pymor/ci-preflight
 
-ci_image_push: ci_current_image_push ci_oldest_image_push ci_fenics_image_push
+ci_images_push: ci_current_image_push ci_oldest_image_push ci_fenics_image_push
