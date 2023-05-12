@@ -1,9 +1,13 @@
-on: pull_request
+on:
+  pull_request:
+  merge_group:
+    types: [checks_requested]
 
 name: Git
 
 jobs:
   message-check:
+    if: github.event_name != 'merge_group'
     name: Block Autosquash Commits
     runs-on: ubuntu-22.04
     steps:
@@ -13,6 +17,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
   merge_conflict_job:
+    if: github.event_name != 'merge_group'
     runs-on: ubuntu-22.04
     name: Find merge conflicts
     steps:

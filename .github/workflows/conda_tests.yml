@@ -8,6 +8,8 @@ on:
       - 20*.*.x
       - create-pull-request/patch*
   pull_request:
+  merge_group:
+    types: [checks_requested]
 
 jobs:
   bugout:

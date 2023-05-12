@@ -1,7 +1,10 @@
 # homepage: https://github.com/gaurav-nelson/github-action-markdown-link-check
 name: Link Check
 
-on: [pull_request]
+on:
+  pull_request:
+  merge_group:
+    types: [checks_requested]
 
 jobs:
   markdown-link-check:
