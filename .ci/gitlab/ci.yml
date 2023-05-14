@@ -355,3 +355,23 @@ docs:
         - when: on_success
     environment:
         name: safe
+
+tag docker images:
+    extends: .test_base
+    rules:
+        - if: $CI_COMMIT_TAG || ($CI_COMMIT_BRANCH == "main")
+          when: on_success
+        - when: never
+    needs:
+        - build current image
+        - build oldest image
+        - build fenics image
+        - preflight
+    dependencies:
+        - preflight
+    image: zivgitlab.wwu.io/pymor/pymor/ci-preflight
+    stage: deploy
+    script:
+        - make DOCKER=podman ci_images_pull
+        - make DOCKER=podman DOCKER_LOGIN_ARGS="-u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD"
+            TARGET_TAG=${CI_COMMIT_TAG:-$CI_COMMIT_BRANCH} ci_images_push

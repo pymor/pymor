@@ -1,8 +1,18 @@
 #!/usr/bin/env make
 
 DOCKER ?= docker
-
 THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+CI_CURRENT_IMAGE_TAG := $(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1)
+CI_OLDEST_IMAGE_TAG  := $(shell sha256sum $(THIS_DIR)/requirements-ci-oldest.txt  | cut -d " " -f 1)
+CI_FENICS_IMAGE_TAG  := $(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt  | cut -d " " -f 1)
+
+CI_CURRENT_IMAGE_TARGET_TAG := $(or $(TARGET_TAG),$(CI_CURRENT_IMAGE_TAG))
+CI_OLDEST_IMAGE_TARGET_TAG  := $(or $(TARGET_TAG),$(CI_OLDEST_IMAGE_TAG))
+CI_FENICS_IMAGE_TARGET_TAG  := $(or $(TARGET_TAG),$(CI_FENICS_IMAGE_TAG))
+
+CI_PREFLIGHT_IMAGE_TARGET_TAG  := $(or $(TARGET_TAG),latest)
+
 
 PANDOC_MAJOR=$(shell ( which pandoc && pandoc --version | head  -n1 | cut -d ' ' -f 2 | cut -d '.' -f 1)) || echo "pandoc missing")
 ifeq ($(PANDOC_MAJOR),1)
@@ -102,37 +112,66 @@ ci_conda_requirements:
 ci_requirements: ci_current_requirements ci_oldest_requirements ci_fenics_requirements ci_conda_requirements
 
 ci_current_image:
-	$(DOCKER) build -t pymor/ci-current:$(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1) \
-		-f $(THIS_DIR)/docker/Dockerfile.ci-current $(THIS_DIR)
+	$(DOCKER) build -t pymor/ci-current:$(CI_CURRENT_IMAGE_TAG) -f $(THIS_DIR)/docker/Dockerfile.ci-current $(THIS_DIR)
 
 ci_oldest_image:
-	$(DOCKER) build -t pymor/ci-oldest:$(shell sha256sum $(THIS_DIR)/requirements-ci-oldest.txt | cut -d " " -f 1) \
-		-f $(THIS_DIR)/docker/Dockerfile.ci-oldest $(THIS_DIR)
+	$(DOCKER) build -t pymor/ci-oldest:$(CI_OLDEST_IMAGE_TAG) -f $(THIS_DIR)/docker/Dockerfile.ci-oldest $(THIS_DIR)
 
 ci_fenics_image:
-	$(DOCKER) build -t pymor/ci-fenics:$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
-		-f $(THIS_DIR)/docker/Dockerfile.ci-fenics $(THIS_DIR)
+	$(DOCKER) build -t pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG) -f $(THIS_DIR)/docker/Dockerfile.ci-fenics $(THIS_DIR)
 
 ci_images: ci_current_image ci_oldest_image ci_fenics_image
 
+
+ci_current_image_pull:
+	$(DOCKER) pull zivgitlab.wwu.io/pymor/pymor/ci-current:$(CI_CURRENT_IMAGE_TAG)
+
+ci_oldest_image_pull:
+	$(DOCKER) pull zivgitlab.wwu.io/pymor/pymor/ci-oldest:$(CI_OLDEST_IMAGE_TAG)
+
+ci_fenics_image_pull:
+	$(DOCKER) pull zivgitlab.wwu.io/pymor/pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG)
+
+ci_images_pull: ci_current_image_pull ci_oldest_image_pull ci_fenics_image_pull
+
+
 ci_current_image_push:
 	$(DOCKER) login $(DOCKER_LOGIN_ARGS) zivgitlab.wwu.io
-	$(DOCKER) push pymor/ci-current:$(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1) \
-		zivgitlab.wwu.io/pymor/pymor/ci-current:$(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1)
+	$(DOCKER) push pymor/ci-current:$(CI_CURRENT_IMAGE_TAG) \
+		zivgitlab.wwu.io/pymor/pymor/ci-current:$(CI_CURRENT_IMAGE_TARGET_TAG)
 
 ci_oldest_image_push:
 	$(DOCKER) login $(DOCKER_LOGIN_ARGS) zivgitlab.wwu.io
-	$(DOCKER) push pymor/ci-oldest:$(shell sha256sum $(THIS_DIR)/requirements-ci-oldest.txt | cut -d " " -f 1) \
-		zivgitlab.wwu.io/pymor/pymor/ci-oldest:$(shell sha256sum $(THIS_DIR)/requirements-ci-oldest.txt | cut -d " " -f 1)
+	$(DOCKER) push pymor/ci-oldest:$(CI_OLDEST_IMAGE_TAG) \
+		zivgitlab.wwu.io/pymor/pymor/ci-oldest:$(CI_OLDEST_IMAGE_TARGET_TAG)
 
 ci_fenics_image_push:
 	$(DOCKER) login $(DOCKER_LOGIN_ARGS) zivgitlab.wwu.io
-	$(DOCKER) push pymor/ci-fenics:$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1) \
-		zivgitlab.wwu.io/pymor/pymor/ci-fenics:$(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt | cut -d " " -f 1)
+	$(DOCKER) push pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG) \
+		zivgitlab.wwu.io/pymor/pymor/ci-fenics:$(CI_FENICS_IMAGE_TARGET_TAG)
 
 ci_preflight_image_push:
 	$(DOCKER) login $(DOCKER_LOGIN_ARGS) zivgitlab.wwu.io
 	$(DOCKER) push pymor/ci-preflight \
 		zivgitlab.wwu.io/pymor/pymor/ci-preflight
 
-ci_image_push: ci_current_image_push ci_oldest_image_push ci_fenics_image_push
+ci_images_push: ci_current_image_push ci_oldest_image_push ci_fenics_image_push
+
+
+ci_current_image_run:
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-current:$(CI_CURRENT_IMAGE_TAG)
+
+ci_oldest_image_run:
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-oldest:$(CI_OLDEST_IMAGE_TAG)
+
+ci_fenics_image_run:
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG)
+
+
+ci_current_image_run_notebook:
+	$(DOCKER) run --rm -it -p 8888:8888 -v=$(THIS_DIR):/src pymor/ci-current:$(CI_CURRENT_IMAGE_TAG) \
+		bash -c "pip install -e . && jupyter notebook --allow-root --ip=0.0.0.0"
+
+ci_oldest_image_run_notebook:
+	$(DOCKER) run --rm -it -p 8888:8888 -v=$(THIS_DIR):/src pymor/ci-oldest:$(CI_OLDEST_IMAGE_TAG) \
+		bash -c "pip install -e . && jupyter notebook --allow-root --ip=0.0.0.0"
