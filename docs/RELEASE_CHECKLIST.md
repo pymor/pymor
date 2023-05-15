@@ -46,7 +46,7 @@ Replace `RELEASE_TAG` below with the actual release tag.
       Check that binder links work and `.binder/Dockerfile` in `pymor/docs@RELEASE_TAG` uses the
       correctly tagged base image.
       (Should, for some reason, CI fail to produce correct setup, manually push release tags to
-      registry using 
+      registry using
 
       ```bash
       make ci_images_pull

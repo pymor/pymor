@@ -171,7 +171,7 @@ and commit the changes made to the lock files to ensure that the updated depende
 by CI.
 
 Note that `make ci_requirements` requires [docker](https://www.docker.com/) or a compatible
-container runtime such as [podman](https://podman.io/). 
+container runtime such as [podman](https://podman.io/).
 The pyMOR main developers will be happy to take care of this step for you.
 
 
@@ -205,7 +205,7 @@ The profiles are defined in `conftest.py`.
 To disable tests for some of pyMOR's optional dependencies, set `PYMOR_CONFIG_DISABLE` to a
 whitespace-separated list of {mod}`config <pymor.core.config>` items which should be prevented
 from being loaded during the test session.
-Conversely, to disable all tests that only use pyMOR's builtin discretization toolkit, set 
+Conversely, to disable all tests that only use pyMOR's builtin discretization toolkit, set
 `PYMOR_FIXTURES_DISABLE_BUILTIN` to `1` and pass `-m 'not builtin'` to the `pytest` command line.
 
 ### GitLab CI
