@@ -128,7 +128,7 @@ can be used to check for errors.
 
 ### GitHub Project
 
-All new code enters pyMOR by means of a pull request. Pull requests (PR) trigger [automatic tests](#continuous-testing--integration-setup)
+All new code enters pyMOR by means of a pull request. Pull requests (PR) trigger {ref}`automatic tests <ref_testing_ci>`
 which are mandatory to pass before the PR can be merged. A PR must also be tagged with either one of the
 `pr:new-feature`, `pr:fix`, `pr:removal`, `pr:deprecation` or `pr:change` labels to clearly identify the type of
 changes it introduces. See the [labels' descriptions](https://github.com/pymor/pymor/labels?q=pr%3A) for more details.
@@ -174,6 +174,8 @@ Note that `make ci_requirements` requires [docker](https://www.docker.com/) or a
 container runtime such as [podman](https://podman.io/). 
 The pyMOR main developers will be happy to take care of this step for you.
 
+
+(ref_testing_ci)=
 
 ## Testing / Continuous Integration Setup
 
