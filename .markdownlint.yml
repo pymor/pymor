@@ -9,5 +9,6 @@ MD013:
 MD033:
   allowed_elements: # allowed HTML tags
     - img
+MD034: false # allow bare URLs
 MD040: false # ``` fenced code must have language set
 MD041: false # require heading as first line in file
