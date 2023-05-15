@@ -14,7 +14,7 @@ cd pymor
 and, optionally, switch to the branch you are interested in, e.g.:
 
 ```
-git checkout 2020.2.x
+git checkout 2022.2.x
 ```
 
 ### Environment with venv
@@ -28,10 +28,10 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-Then, it may be necessary to upgrade `pip`, `setuptools`, and `wheel`:
+Then, it may be necessary to upgrade `pip`:
 
 ```
-pip install -U pip setuptools wheel
+pip install -U pip
 ```
 
 Finally, make an editable installation of pyMOR with minimal dependencies:
@@ -40,32 +40,54 @@ Finally, make an editable installation of pyMOR with minimal dependencies:
 pip install -e .
 ```
 
-or almost all dependencies
+or, to install all optional dependencies and development tools:
 
 ```
-pip install -e '.[full]'
+pip install -e '.[full-compiled,dev]'
+pip install pymess
 ```
 
-### Environment with `docker-compose`
+Note that the `full-compiled` extra will install `mpi4py` and `slycot`, which will require C and
+Fortran compilers as well as MPI and OpenBLAS headers.
+Alternatively, use the `full` extra to avoid building these additional packages.
+`pymess` is not included in `full-compiled` as the developers recommend to install it from source.
 
-To get a shell in a preconfigured container run
-(if required set `PYMOR_SUDO=1` in your environment to execute docker with elevated rights):
+
+### Environment with CI images
+
+The docker images used in pyMOR's CI pipeline can be pulled and executed using the
+`ci_<current|oldest|fenics>_image_<pull|run>` make targets.
+E.g., to run the 'current' CI image use
 
 ```
-make docker_run
+make ci_current_image_run
 ```
 
-You can also use the setup in `.binder/docker-compose.yml` to easily
-work on pyMOR with [PyCharm](https://www.jetbrains.com/help/pycharm/docker-compose.html).
+This will automatically mount the pyMOR source tree into `/src`. Note that pyMOR itself is not
+installed in the image, so you still have to install it using `pip install -e .`.
+To launch a notebook server and bind it to port 8888, execute
+
+```
+make ci_current_image_run_notebook
+```
+
+(not available for the `fenics` image).
+
 
 ## Coding Guidelines and Project Management
 
 ### Python Code Style
 
-pyMOR follows the coding style of
-[PEP8](https://www.python.org/dev/peps/pep-0008/) apart from a
-few exceptions. Configurations for the [PEP8](https://pypi.python.org/pypi/pep8) and
-[flake8](https://pypi.python.org/pypi/flake8) code checkers are contained in `setup.cfg`.
+pyMOR follows the coding style of [PEP8](https://www.python.org/dev/peps/pep-0008/) apart from a few
+exceptions.
+Configurations for the [ruff](https://github.com/charliermarsh/ruff) code checker are contained in
+`pyproject.toml`. To check your code using `ruff`, execute
+
+```
+ruff .
+```
+
+at the root of pyMOR's source tree.
 
 Further guidelines:
 
@@ -95,27 +117,6 @@ style. The main developers will be happy to help you to bring your code
 into proper shape for inclusion in pyMOR.
 :::
 
-#### How to Check Python Code Style
-
-Firstly, make sure that you installed the dependencies in `requirements-ci.txt`
-with
-
-```
-pip install -r requirements-ci.txt
-```
-
-Afterwards use the Makefile to check for flake8 warnings with
-
-```
-make flake8
-```
-
-or directly call
-
-```
-flake8 src
-```
-
 ### Markdown Style
 
 The Markdown style is determined by the
@@ -135,7 +136,7 @@ changes it introduces. See the [labels' descriptions](https://github.com/pymor/p
 ### `pre-commit` Hooks
 
 pyMOR ships a config for the [pre-commit](https://pre-commit.com/) hook management system.
-Using this setup can be a good way to find flake8 errors before pushing to GitHub, but using
+Using this setup can be a good way to find code style errors before pushing to GitHub, but using
 it is not required. Once you have `pre-commit` installed in you environment, run
 
 ```
@@ -146,208 +147,140 @@ Afterwards, the hooks configured in `.pre-commit-config.yaml` will run on all ch
 files prior to committing changes. Errors will block the commit, some
 checks will automatically fix the file.
 
-## pyMOR's Dependencies
+### Updating pyMOR's Dependencies
 
-The single source of truth for our dependency setup is `dependencies.py`.
-From it the `requirements*txt` files  and `pyproject.toml` are generated (by calling `make`).
-During `setup.py` execution `dependencies.py` is imported and the package lists passed to setuptools's
-`setup_requires`, `install_requires`, `tests_require` and `extra_requires` accordingly
-(see {ref}`this list <ref_gitlab_ci_stage_test>`).
-The `extra_requires` dictionary here controls what 'extra' configurations are available for
-`pip install pymor[extra1,extra2,extra3]`.
-The requirements files are input for `.ci/create_conda_env.py` which created a Conda Environment
-spec file that contains only those dependencies that are available on all OS-Python combinations
-for which GitHub Action based CI is run in Conda envs.
+All required or optional dependencies of pyMOR are specified in `pyproject.toml`.
 
-A GitHub Action will update all "downstream" files of `dependencies.py` if it changes in a pull request.
-The resulting change will be added in a new pull request against the original pull request's source branch.
-The new pull request will be labeled with `pr:change` and `dependencies` and assigned to the original pull
-request's author.
+We use [pip-compile](https://github.com/jazzband/pip-tools), to generate `requirements-ci-*.txt`
+files from these specifications, which contain pinned versions of all packaged installed into the
+respective Gitlab CI images.
+The extras included into the images are specified in `Makefile`.
+For the `oldest` CI image, `requirements-ci-oldest-pins.in` is used in addition, which pins some of
+pyMOR's core dependencies to the oldest version supported by pyMOR.
+Similarly to the `pip-compile` workflow, we use [conda-lock](https://github.com/conda/conda-lock)
+to create [conda-forge](https://conda-forge.org/) environment lock files that are used for the
+Github actions CI builds.
 
-When adding new package dependencies, or version restrictions, these need to be reflected into
-a commit in our docker repository for the [constraints requirements](https://github.com/pymor/docker/tree/main/constraints)
-so that updated images become available to CI after entering the new commit hash into `.env`.
-A GitHub Action will automatically create a pull request against the docker repository if changes in the requirements
-files are detected. The necessary change to `.env` is included in the PR for the conda environment.
+If you update pyMOR's dependencies, make sure to execute
 
-### NumPy
+```
+make ci_requirements
+```
 
-Like SciPy we have a meta package that pins the oldest supported
-numpy versions for all our support Pythons: [`pymor-oldest-supported-numpy`](https://github.com/pymor/pymor-oldest-supported-numpy).
-It was introduced to be able to specify minimal NumPy versions
-in the docker image build process to avoid binary incompatible wheel builds.
-When adding new supported Python versions, the `pymor-oldest-supported-numpy` package needs to be updated accordingly and
-change the install version in the docker images.
+and commit the changes made to the lock files to ensure that the updated dependencies are picked up
+by CI.
 
-(ref-makefile)=
+Note that `make ci_requirements` requires [docker](https://www.docker.com/) or a compatible
+container runtime such as [podman](https://podman.io/). 
+The pyMOR main developers will be happy to take care of this step for you.
 
-## The Makefile
 
-Via the `Makefile` it is possible to execute tests close to how they are run on CI with `make docker_test`.
-All jobs described in {ref}`GitLab CI Test Stage <ref_gitlab_ci_stage_test>` can be run this way by setting `PYMOR_TEST_SCRIPT`
-accordingly. You can pass additional arguments to pytest by setting `PYMOR_PYTEST_EXTRA`.
-To run the test suite without docker,
-simply execute `make test` in the base directory of the pyMOR repository. This will
-run the pytest suite with the default hypothesis profile "dev". For available profiles
-see `src/pymortests/conftest.py`. A profile is selected by running `make PYMOR_HYPOTHESIS_PROFILE=PROFILE_NAME test`.
-Run `make full-test` to also generate a
-[Coverage](https://coverage.readthedocs.io/en/stable/) report.
+## Testing / Continuous Integration Setup
 
-### The `.env` file
-
-This file records defaults used when executing CI scripts. These are loaded by make and can be
-overridden like this: `make DOCKER_BASE_PYTHON=3.8 docker_test` (see also the top of the `Makefile`).
-
-## Continuous Testing / Integration Setup
-
-Our CI infrastructure is spread across two major platforms. These are GitLab CI (Linux test suite)
-and GitHub Actions (Conda-based MacOS and Windows test suite, misc. checks).
+### pyMOR's Test Suite
 
 pyMOR uses [pytest](https://pytest.org/) for unit testing.
 All tests are contained within the `src/pymortests` directory and can be run
-individually by executing `python3 src/pymortests/the_module.py` or invoking
-pytest directly. Please refer to the [pytest documentation](https://docs.pytest.org/en/latest/how-to/usage.html)
+by invoking the `pytest` executable.
+Please refer to the [pytest documentation](https://docs.pytest.org/en/latest/how-to/usage.html)
 for detailed examples.
+To run the entire test suite, it is also possible to execute
 
-(ref_gitlab_ci)=
+```
+make test
+```
+
+which will use the [Xvfb](https://www.x.org/releases/X11R7.6/doc/man/man1/Xvfb.1.xhtml) virtual
+framebuffer X server, to prevent GUI windows from popping up during the test run.
+
+pyMOR uses the [hypothesis](https://hypothesis.works/) for property-based testing.
+To select the amount of test samples to create, you can specify the hypothesis profile to use by
+setting the PYMOR_HYPOTHESIS_PROFILE.
+Available profiles are `dev` (default, shortest execution time), `ci` and `ci_large` (longest
+execution time).
+The profiles are defined in `conftest.py`.
+
+To disable tests for some of pyMOR's optional dependencies, set `PYMOR_CONFIG_DISABLE` to a
+whitespace-separated list of {mod}`config <pymor.core.config>` items which should be prevented
+from being loaded during the test session.
+Conversely, to disable all tests that only use pyMOR's builtin discretization toolkit, set 
+`PYMOR_FIXTURES_DISABLE_BUILTIN` to `1` and pass `-m 'not builtin'` to the `pytest` command line.
 
 ### GitLab CI
 
-:::{note}
-Configured by `.ci/gitlab/ci.yml` which is generated from `.ci/gitlab/template.ci.py`
-by the calling `make template` (needs appropriate Python environment) or `make docker_template`.
-:::
+We use GitLab deployed at https://zivgitlab.uni-muenster.de/pymor/pymor as our main CI
+infrastructure.
+All CI stages are run in docker containers that are built and pushed to the Gitlab container
+registry using
 
-All stages are run in docker containers ({ref}`more info  <ref_docker_images>`).
-Jobs that potentially install packages get a frozen PyPI mirror
-as a "service" container. The mirror has a "oldest" variant in which all requirements are available
-in the oldest versions that still satisfy all version restrictions (recursively checked).
+```
+make ci_preflight_image      # used for preflight/docker images stages
+make ci_preflight_image_push
+make ci_images               # used for actual tests
+make ci_images_push
+```
 
-(ref_gitlab_ci_stage_sanity)=
+The corresponding `Dockerfiles` are all contained in the `docker` directory.
 
-#### Stage: Sanity
+The images are tagged with a `sha256sum` of the corresponding `requirements-ci-*.txt` file.
+Images corresponding to the current state of `main` are tagged with `main`.
+Images corresponding to tagged commits are tagged with the respective git tag
+(see {ref}`ref_gitlab_ci_stage_deploy`).
 
-A smoke test for the CI setup itself.
-Checks if the `setup.py` can be processed and if all docker images needed by subsequent
-stages are available in the `zivgitlab.wwu.io/pymor/docker/` registry.
-Also ensures CI config and requirements generated from their templates match the committed files.
+#### Stage: preflight
 
-(ref_gitlab_ci_stage_test)=
+The main responsible of the `preflight` job is to compute the `sha256sum` of all
+`requirements-ci-*.txt` files in order to infer the tags of the CI images used for testing.
+It also queries Gitlab's container registry to check if the needed images are available.
+The results are saved in a
+[dotenv](https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdotenv)
+file to make them available as environment variables in later CI stages.
 
-#### Stage: Test
+#### Stage: docker images
 
-This stage executes `./.ci/gitlab/test_{{script}}.bash` for a list of different scripts:
+When need, updated CI images are built using a podman-in-docker setup.
+The resulting images are then uploaded to the container registry.
 
-vanilla
-: This runs plain `pytest` with the common options defined in `./.ci/gitlab/common_test_setup.bash`.
+(ref_gitlab_ci_stage_testbuild)=
 
-cpp_demo
-: Builds and executes the minimal cpp demo in `src/pymordemos/minimal_cpp_demo/`,
-  see also {doc}`tutorial_external_solver`.
+#### Stage: test/build
 
-mpi
-: Runs all demos with `mpirun -np 2` via `src/pymortests/mpi_run_demo_tests.py`, checks against recorded results.
-
-numpy_git
-: Same as vanilla, but against the unreleased numpy development branch. This makes sure we catch
-  deprecation warnings or breaking changes early.
-
-oldest
-: Same as vanilla, but installs only packages from the "oldest" PyPI mirror.
-
-pip_installed
-: First install pyMOR from git over https, uninstall and then install with `pip install .[full]`.
-  Uninstall again and install from a generated (and checked) sdist tarball. Lastly run the pytest suite
-  on the installed (!) pyMOR, not the git working tree.
-
-tutorials
-: Using docutils magic this extracts the Python code from all the tutorials in
-  `docs/source/tutorials_*` (except tutorial_external_solver since that needs kernel switching)
-  and runs it in parameterized pytest fixtures as imported modules.
-
-All scripts are executed for all Python versions that pyMOR currently supports, with the exception
-of `numpy_git` and `oldest`. These are only tested against the newest and oldest versions accordingly.
-
-(ref_gitlab_ci_stage_build)=
-
-#### Stage: Build
-
-Builds documentation and manylinux wheels on all supported pythons. Also builds and pushes
-a docker image that includes pyMOR installed from checkout. This is used as the base image for the binder-ready
-deployment of the documentation in the last stage.
-
-(ref_gitlab_ci_stage_install)=
-
-#### Stage: Install_checks
-
-from wheel
-: Try to install wheels produced in previous stage on a few different Linuxes.
-
-from source
-: Try to install `pymor[full]` from git checkout. This checks that the extension module compile works,
-  which is not covered by the "from wheel" step. Also install full optional requirements, which include
-  packages omitted from `[full]`, after necessary additional system package install.
-
-local docker
-: Ensures minimal functionality for the local docker development setup .
+This stage executes the `test_*.bash` scripts located in `./.ci/gitlab/`.
+For each supported external PDE solver backend, an individual CI job is run.
+Documentation is also built in this stage.
 
 (ref_gitlab_ci_stage_deploy)=
 
-#### Stage: Deploy
+#### Stage: deploy
 
 docs
-: Commits documentation built in {ref}`ref_gitlab_ci_stage_build` (from a single Python version, not all) to the
+: Commits documentation built in {ref}`ref_gitlab_ci_stage_testbuild`to the
   [documentation repository](https://github.com/pymor/docs). This repository is the source for
   [https://docs.pymor.org/](https://docs.pymor.org/) served via GitHub Pages.
   A binder setup for the generated tutorials notebooks is added on a branch with a name
   matching the currently checked out git branch of pyMOR.
 
-pypi
-: Upload wheels to either the test or the real instance of the PyPI repository, depending on whether
-  the pipeline runs for a tagged commit.
-
-coverage
+submit coverage
 : This job accumulates all the coverage databases generated by previous stages and submits that
   to [codecov.io](https://codecov.io/github/pymor/pymor/).
 
-#### GitHub-GitLab Bridge
+coverage html
+: Generates an html coverage report, which can be downloaded as a job artifact.
 
-This a sanic based Python [application](https://github.com/pymor/ci_hooks_app) that receives webhook
-events from GitHub for pull requests and pushes PR branches merged into main to GitLab to run a
-parallel CI pipeline to check whether the main branch will still pass tests after the PR is merged.
-The service also gets GitLab Pipeline events via hooks and translates those into status check
-updates.
-For GitHub the service authenticates with a PAT of the pyMOR-Bot account, for GitLab via Project Token.
-It is also registered as a GitHub app (so it can post Check statuses).
-The bridge also does this for forks of pyMOR, but the forks' user id must manually be
-add to an allow list in the config to protect CI secrets. If a PR build does not start
-for a user a comment is added in that PR.
-This service currently runs on the `ammservices` machine under the git user.
+tag docker images
+: If the running pipeline corresponds to a push on `main` or a tagged commit (release), the used
+  CI images are tagged with either `main` or the corresponding git tag in Gitlab's container
+  registry.
+  This will prevent these images from being removed during registry cleanup.
+  In particular, this guarantees that the images are available for the binder setups linked in the
+  online documentation.
 
-### GitHub Actions
+### Github Actions
 
-:::{note}
-Configured by individual files in `.github/workflows/*`
-:::
-
-- Check all (external) links in changed Markdown documents are accessible.
-
-- Make sure at least one `pr:*` label is set on the PR.
-
-- Prohibit any commits with messages that indicate they can be auto-squashed
-
-- Auto-assign the labels if certain files are changed by the PR.
-
-- Update requirement files / conda env if `dependencies.py` changes.
-
-- Runs pytest in conda-based environments on Windows/MacOS/Linux for oldest and newest supported Pythons
-  - Entire conda envs are cached and only update if either manually invalidated by incrementing `CACHE_NUMBER`
-    or if dependencies change.
-  - All pytest jobs export a full environment lockfile, which can be downloaded on the summary tab for
-    the "Conda Tests" action. Look for "Conda Env Exports".
-  - Pytest XML reports can also be found there.
-
-(ref_docker_images)=
+We use GitHub Actions to run some additional checks.
+This includes Conda-based MacOS and Windows test suite runs and management of Github labels.
+Further, for PRs from external repositories, a local mirror branch is created and updated.
+This enables Gitlab CI runs those PRs.
 
 ### pre-commit.ci
 
@@ -356,16 +289,3 @@ defined in `.pre-commit-config.yaml` on every pull request.
 If the hooks change files, the changes are pushed back to the PR branch.
 [Configuration](https://pre-commit.ci/#configuration) is done
 via the `.pre-commit-config.yaml` file.
-
-### Docker Images
-
-The source for most of our docker images is this [repository](https://github.com/pymor/docker).
-The images are build by a Makefile system that expresses dependencies, handles parameterization,
-preloads caching and so forth. Builds are only permitted on a clean working tree, to increase reproducibility.
-On each push [GitLab CI](https://zivgitlab.uni-muenster.de/pymor/docker/-/pipelines) builds the entire tree.
-Great effort went into making incremental updates as fast as possible, but full rebuilds will take upwards of 3 hours.
-There are two basic categories for images: those that get generated for each supported Python version and those that
-are version independent.
-For CI the main image, in which the pytest suite runs, is defined in `testing/`. The main workflow for this repository
-is adding new packages to the appropriate requirements file in the `constraints/` subdirectory. From there
-those packages will become available in the `pypi_mirror-*` images, but also pre-installed in the `testing` image.
