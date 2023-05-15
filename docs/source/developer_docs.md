@@ -52,7 +52,6 @@ Fortran compilers as well as MPI and OpenBLAS headers.
 Alternatively, use the `full` extra to avoid building these additional packages.
 `pymess` is not included in `full-compiled` as the developers recommend to install it from source.
 
-
 ### Environment with CI images
 
 The docker images used in pyMOR's CI pipeline can be pulled and executed using the
@@ -72,7 +71,6 @@ make ci_current_image_run_notebook
 ```
 
 (not available for the `fenics` image).
-
 
 ## Coding Guidelines and Project Management
 
@@ -173,7 +171,6 @@ by CI.
 Note that `make ci_requirements` requires [docker](https://www.docker.com/) or a compatible
 container runtime such as [podman](https://podman.io/).
 The pyMOR main developers will be happy to take care of this step for you.
-
 
 (ref_testing_ci)=
 

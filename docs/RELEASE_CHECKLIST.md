@@ -16,7 +16,6 @@
 - [ ] Use `hatch build` to create wheel. `pip install` wheel (including extras) into new venv.
       Check if installation is working as expected.
 
-
 ## Release day
 
 Replace `RELEASE_TAG` below with the actual release tag.
@@ -79,8 +78,8 @@ Replace `RELEASE_TAG` below with the actual release tag.
 - [ ] Submit release to [NA-digest](http://icl.utk.edu/na-digest/websubmit.html).
       (Omit in case of a bugfix release.)
 
-
 ## After release
+
 - [ ] Bump version in main branch to NEXT_TARGET_TAG.dev0.
 - [ ] All developers check if (stale) branches can be pruned.
 - [ ] All developers check for `.mailmap` correctness.

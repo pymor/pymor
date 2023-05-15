@@ -72,7 +72,6 @@ Therefore we recommend install pyMOR with the `gui` extra:
 
     pip install pymor[gui]  # 2023.1 and later
 
-
 ### Latest Release (with all Optional Dependencies)
 
 The following installs the latest release of pyMOR on your system with most
