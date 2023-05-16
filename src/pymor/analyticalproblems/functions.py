@@ -12,6 +12,7 @@ from pymor.core.base import abstractmethod
 from pymor.core.config import config
 from pymor.parameters.base import Mu, ParametricObject
 from pymor.parameters.functionals import ParameterFunctional
+from pymor.tools.random import get_rng
 
 
 class Function(ParametricObject):
@@ -372,7 +373,68 @@ class ProductFunction(Function):
         return np.prod([f(x, mu) for f in self.functions], axis=0)
 
 
-class BitmapFunction(Function):
+class DataFieldFunction(Function):
+    """Define a 2D |Function| via a matrix that represents a data field.
+
+    Parameters
+    ----------
+    data_field
+        Data field as a 2D-|NumPy array|.
+    bounding_box
+        Lower left and upper right coordinates of the domain of the data field.
+    range
+        A pixel of value p is mapped to `(p / scaling_factor) * range[1] + range[0]`,
+        where scaling_factor is set below.
+    scaling_factor
+        See above.
+    """
+
+    dim_domain = 2
+    shape_range = ()
+
+    def __init__(self, data_field=None, bounding_box=None, range=None, scaling_factor=1.):
+        range = range or [0., 1.]
+        bounding_box = bounding_box or [[0., 0.], [1., 1.]]
+        self.__auto_init(locals())
+        self.lower_left = np.array(bounding_box[0])
+        self.data_field = data_field
+        self.size = np.array(bounding_box[1] - self.lower_left)
+
+    def evaluate(self, x, mu=None):
+        indices = np.maximum(np.floor((x - self.lower_left) * np.array(self.data_field.shape) /
+                                      self.size).astype(int), 0)
+        F = (self.data_field[np.minimum(indices[..., 0], self.data_field.shape[0] - 1),
+                             np.minimum(indices[..., 1], self.data_field.shape[1] - 1)]
+             * ((self.range[1] - self.range[0]) / self.scaling_factor)
+             + self.range[0])
+
+        return F
+
+
+class RandomFieldFunction(DataFieldFunction):
+    """Define a 2D |Function| via a random field with uniform distribution on [a, b].
+
+    Parameters
+    ----------
+    bounding_box
+        Lower left and upper right coordinates of the domain of the function.
+    random_range
+        Minimum and maximum value of the random field.
+    shape
+        Shape of the random field as a tuple.
+    """
+
+    dim_domain = 2
+    shape_range = ()
+
+    def __init__(self, bounding_box=None, random_range=[0, 1], shape=(1, 1)):
+        a, b = random_range[0], random_range[1]
+        random_field = get_rng().uniform(a, b, np.prod(shape)).reshape(shape)
+        self.__auto_init(locals())
+        super().__init__(data_field=random_field, bounding_box=bounding_box)
+
+
+class BitmapFunction(DataFieldFunction):
     """Define a 2D |Function| via a grayscale image.
 
     Parameters
@@ -389,8 +451,6 @@ class BitmapFunction(Function):
     shape_range = ()
 
     def __init__(self, filename, bounding_box=None, range=None):
-        bounding_box = bounding_box or [[0., 0.], [1., 1.]]
-        range = range or [0., 1.]
         try:
             from PIL import Image
         except ImportError as e:
@@ -399,18 +459,9 @@ class BitmapFunction(Function):
         if not img.mode == 'L':
             self.logger.warning('Image ' + filename + ' not in grayscale mode. Converting to grayscale.')
             img = img.convert('L')
+        bitmap = np.array(img).T[:, ::-1]
         self.__auto_init(locals())
-        self.bitmap = np.array(img).T[:, ::-1]
-        self.lower_left = np.array(bounding_box[0])
-        self.size = np.array(bounding_box[1] - self.lower_left)
-
-    def evaluate(self, x, mu=None):
-        indices = np.maximum(np.floor((x - self.lower_left) * np.array(self.bitmap.shape) / self.size).astype(int), 0)
-        F = (self.bitmap[np.minimum(indices[..., 0], self.bitmap.shape[0] - 1),
-                         np.minimum(indices[..., 1], self.bitmap.shape[1] - 1)]
-             * ((self.range[1] - self.range[0]) / 255.)
-             + self.range[0])
-        return F
+        super().__init__(data_field=bitmap, bounding_box=bounding_box, range=range, scaling_factor=255.)
 
 
 class EmpiricalInterpolatedFunction(LincombFunction):
