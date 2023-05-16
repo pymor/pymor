@@ -217,7 +217,7 @@ jupyterlab-pygments==0.2.2
     # via nbconvert
 jupyterlab-widgets==3.0.7
     # via ipywidgets
-k3d==2.15.1
+k3d==2.15.2
     # via
     #   -r requirements-ci-oldest-pins.in
     #   dune-xt
