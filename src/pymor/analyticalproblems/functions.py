@@ -392,9 +392,7 @@ class DataFieldFunction(Function):
     dim_domain = 2
     shape_range = ()
 
-    def __init__(self, data_field=None, bounding_box=None, range=None, scaling_factor=1.):
-        range = range or [0., 1.]
-        bounding_box = bounding_box or [[0., 0.], [1., 1.]]
+    def __init__(self, data_field, bounding_box=((0., 0.), (1., 1.)), range=(0., 1.), scaling_factor=1.):
         self.__auto_init(locals())
         self.lower_left = np.array(bounding_box[0])
         self.data_field = data_field
@@ -427,7 +425,7 @@ class RandomFieldFunction(DataFieldFunction):
     dim_domain = 2
     shape_range = ()
 
-    def __init__(self, bounding_box=None, random_range=[0, 1], shape=(1, 1)):
+    def __init__(self, bounding_box=((0., 0.), (1., 1.)), random_range=(0., 1.), shape=(1, 1)):
         a, b = random_range[0], random_range[1]
         random_field = get_rng().uniform(a, b, np.prod(shape)).reshape(shape)
         self.__auto_init(locals())
@@ -450,7 +448,7 @@ class BitmapFunction(DataFieldFunction):
     dim_domain = 2
     shape_range = ()
 
-    def __init__(self, filename, bounding_box=None, range=None):
+    def __init__(self, filename, bounding_box=((0., 0.), (1., 1.)), range=(0., 1.)):
         try:
             from PIL import Image
         except ImportError as e:
