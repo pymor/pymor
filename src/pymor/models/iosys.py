@@ -1639,7 +1639,6 @@ class PHLTIModel(LTIModel):
         -------
         model
             |PHLTIModel| with :math:`Q=I`.
-
         """
         if isinstance(self.Q, IdentityOperator):
             return self
