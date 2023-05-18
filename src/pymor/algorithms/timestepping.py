@@ -99,8 +99,66 @@ class ImplicitEulerTimeStepper(TimeStepper):
         self.__auto_init(locals())
 
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
-        return implicit_euler(operator, rhs, mass, initial_data, initial_time, end_time, self.nt, mu, num_values,
-                              solver_options=self.solver_options)
+        A, F, M, U0, t0, t1, nt = operator, rhs, mass, initial_data, initial_time, end_time, self.nt
+        assert isinstance(A, Operator)
+        assert isinstance(F, (type(None), Operator, VectorArray))
+        assert isinstance(M, (type(None), Operator))
+        assert A.source == A.range
+        num_values = num_values or nt + 1
+        dt = (t1 - t0) / nt
+        DT = (t1 - t0) / (num_values - 1)
+
+        if F is None:
+            F_time_dep = False
+        elif isinstance(F, Operator):
+            assert F.source.dim == 1
+            assert F.range == A.range
+            F_time_dep = _depends_on_time(F, mu)
+            if not F_time_dep:
+                dt_F = F.as_vector(mu) * dt
+        else:
+            assert len(F) == 1
+            assert F in A.range
+            F_time_dep = False
+            dt_F = F * dt
+
+        if M is None:
+            from pymor.operators.constructions import IdentityOperator
+            M = IdentityOperator(A.source)
+
+        assert A.source == M.source == M.range
+        assert not M.parametric
+        assert U0 in A.source
+        assert len(U0) == 1
+
+        R = A.source.empty(reserve=num_values)
+        R.append(U0)
+
+        options = (A.solver_options if self.solver_options == 'operator' else
+                   M.solver_options if self.solver_options == 'mass' else
+                   self.solver_options)
+        M_dt_A = (M + A * dt).with_(solver_options=options)
+        if not _depends_on_time(M_dt_A, mu):
+            M_dt_A = M_dt_A.assemble(mu)
+
+        t = t0
+        U = U0.copy()
+        if mu is None:
+            mu = Mu()
+
+        for n in range(nt):
+            t += dt
+            mu = mu.with_(t=t)
+            rhs = M.apply(U)
+            if F_time_dep:
+                dt_F = F.as_vector(mu) * dt
+            if F:
+                rhs += dt_F
+            U = M_dt_A.apply_inverse(rhs, mu=mu, initial_guess=U)
+            while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
+                R.append(U)
+
+        return R
 
 
 class ExplicitEulerTimeStepper(TimeStepper):
@@ -125,7 +183,59 @@ class ExplicitEulerTimeStepper(TimeStepper):
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         if mass is not None:
             raise NotImplementedError
-        return explicit_euler(operator, rhs, initial_data, initial_time, end_time, self.nt, mu, num_values)
+        A, F, U0, t0, t1, nt = operator, rhs, initial_data, initial_time, end_time, self.nt
+        assert isinstance(A, Operator)
+        assert F is None or isinstance(F, (Operator, VectorArray))
+        assert A.source == A.range
+        num_values = num_values or nt + 1
+
+        if isinstance(F, Operator):
+            assert F.source.dim == 1
+            assert F.range == A.range
+            F_time_dep = _depends_on_time(F, mu)
+            if not F_time_dep:
+                F_ass = F.as_vector(mu)
+        elif isinstance(F, VectorArray):
+            assert len(F) == 1
+            assert F in A.range
+            F_time_dep = False
+            F_ass = F
+
+        assert len(U0) == 1
+        assert U0 in A.source
+
+        A_time_dep = _depends_on_time(A, mu)
+        if not A_time_dep:
+            A = A.assemble(mu)
+
+        dt = (t1 - t0) / nt
+        DT = (t1 - t0) / (num_values - 1)
+        R = A.source.empty(reserve=num_values)
+        R.append(U0)
+
+        t = t0
+        U = U0.copy()
+        if mu is None:
+            mu = Mu()
+
+        if F is None:
+            for n in range(nt):
+                t += dt
+                mu = mu.with_(t=t)
+                U.axpy(-dt, A.apply(U, mu=mu))
+                while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
+                    R.append(U)
+        else:
+            for n in range(nt):
+                t += dt
+                mu = mu.with_(t=t)
+                if F_time_dep:
+                    F_ass = F.as_vector(mu)
+                U.axpy(dt, F_ass - A.apply(U, mu=mu))
+                while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
+                    R.append(U)
+
+        return R
 
 
 class ImplicitMidpointTimeStepper(TimeStepper):
@@ -155,8 +265,73 @@ class ImplicitMidpointTimeStepper(TimeStepper):
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         if not operator.linear:
             raise NotImplementedError
-        return implicit_midpoint_rule(operator, rhs, mass, initial_data, initial_time, end_time,
-                                      self.nt, mu, num_values, solver_options=self.solver_options)
+        A, F, M, U0, t0, t1, nt = operator, rhs, mass, initial_data, initial_time, end_time, self.nt
+        assert isinstance(A, Operator)
+        assert isinstance(F, (type(None), Operator, VectorArray))
+        assert isinstance(M, (type(None), Operator))
+        assert A.source == A.range
+        num_values = num_values or nt + 1
+        dt = (t1 - t0) / nt
+        DT = (t1 - t0) / (num_values - 1)
+
+        if F is None:
+            F_time_dep = False
+        elif isinstance(F, Operator):
+            assert F.source.dim == 1
+            assert F.range == A.range
+            F_time_dep = _depends_on_time(F, mu)
+            if not F_time_dep:
+                dt_F = F.as_vector(mu) * dt
+        else:
+            assert len(F) == 1
+            assert F in A.range
+            F_time_dep = False
+            dt_F = F * dt
+
+        if M is None:
+            from pymor.operators.constructions import IdentityOperator
+            M = IdentityOperator(A.source)
+
+        assert A.source == M.source == M.range
+        assert not M.parametric
+        assert U0 in A.source
+        assert len(U0) == 1
+
+        R = A.source.empty(reserve=num_values)
+        R.append(U0)
+
+        if self.solver_options == 'operator':
+            options = A.solver_options
+        elif self.solver_options == 'mass':
+            options = M.solver_options
+        else:
+            options = self.solver_options
+
+        M_dt_A_impl = (M + A * (dt/2)).with_(solver_options=options)
+        if not _depends_on_time(M_dt_A_impl, mu):
+            M_dt_A_impl = M_dt_A_impl.assemble(mu)
+        M_dt_A_expl = (M - A * (dt/2)).with_(solver_options=options)
+        if not _depends_on_time(M_dt_A_expl, mu):
+            M_dt_A_expl = M_dt_A_expl.assemble(mu)
+
+        t = t0
+        U = U0.copy()
+        if mu is None:
+            mu = Mu()
+
+        for n in range(nt):
+            mu = mu.with_(t=t + dt/2)
+            t += dt
+            rhs = M_dt_A_expl.apply(U, mu=mu)
+            if F_time_dep:
+                dt_F = F.as_vector(mu) * dt
+            if F:
+                rhs += dt_F
+            U = M_dt_A_impl.apply_inverse(rhs, mu=mu)
+            while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
+                R.append(U)
+
+        return R
 
 
 class DiscreteTimeStepper(TimeStepper):
@@ -174,249 +349,60 @@ class DiscreteTimeStepper(TimeStepper):
         pass
 
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
-        return discrete(operator, rhs, mass, initial_data, initial_time, end_time, mu, num_values)
+        A, F, M, U0, k0, k1 = operator, rhs, mass, initial_data, initial_time, end_time
+        assert isinstance(A, Operator)
+        assert isinstance(F, (type(None), Operator, VectorArray))
+        assert isinstance(M, (type(None), Operator))
+        assert A.source == A.range
+        nt = k1 - k0
+        num_values = num_values or nt + 1
+        dt = 1
+        DT = nt / (num_values - 1)
 
+        if F is None:
+            F_time_dep = False
+        elif isinstance(F, Operator):
+            assert F.source.dim == 1
+            assert F.range == A.range
+            F_time_dep = _depends_on_time(F, mu)
+            if not F_time_dep:
+                Fk = F.as_vector(mu)
+        else:
+            assert len(F) == 1
+            assert F in A.range
+            F_time_dep = False
+            Fk = F
 
-def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_options='operator'):
-    assert isinstance(A, Operator)
-    assert isinstance(F, (type(None), Operator, VectorArray))
-    assert isinstance(M, (type(None), Operator))
-    assert A.source == A.range
-    num_values = num_values or nt + 1
-    dt = (t1 - t0) / nt
-    DT = (t1 - t0) / (num_values - 1)
+        if M is None:
+            from pymor.operators.constructions import IdentityOperator
+            M = IdentityOperator(A.source)
 
-    if F is None:
-        F_time_dep = False
-    elif isinstance(F, Operator):
-        assert F.source.dim == 1
-        assert F.range == A.range
-        F_time_dep = _depends_on_time(F, mu)
-        if not F_time_dep:
-            dt_F = F.as_vector(mu) * dt
-    else:
-        assert len(F) == 1
-        assert F in A.range
-        F_time_dep = False
-        dt_F = F * dt
+        assert A.source == M.source == M.range
+        assert U0 in A.source
+        assert len(U0) == 1
 
-    if M is None:
-        from pymor.operators.constructions import IdentityOperator
-        M = IdentityOperator(A.source)
+        R = A.source.empty(reserve=num_values)
+        R.append(U0)
 
-    assert A.source == M.source == M.range
-    assert not M.parametric
-    assert U0 in A.source
-    assert len(U0) == 1
+        if not _depends_on_time(M, mu):
+            M = M.assemble(mu)
 
-    R = A.source.empty(reserve=num_values)
-    R.append(U0)
+        U = U0.copy()
+        if mu is None:
+            mu = Mu()
 
-    options = (A.solver_options if solver_options == 'operator' else
-               M.solver_options if solver_options == 'mass' else
-               solver_options)
-    M_dt_A = (M + A * dt).with_(solver_options=options)
-    if not _depends_on_time(M_dt_A, mu):
-        M_dt_A = M_dt_A.assemble(mu)
-
-    t = t0
-    U = U0.copy()
-    if mu is None:
-        mu = Mu()
-
-    for n in range(nt):
-        t += dt
-        mu = mu.with_(t=t)
-        rhs = M.apply(U)
-        if F_time_dep:
-            dt_F = F.as_vector(mu) * dt
-        if F:
-            rhs += dt_F
-        U = M_dt_A.apply_inverse(rhs, mu=mu, initial_guess=U)
-        while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
-            R.append(U)
-
-    return R
-
-
-def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
-    assert isinstance(A, Operator)
-    assert F is None or isinstance(F, (Operator, VectorArray))
-    assert A.source == A.range
-    num_values = num_values or nt + 1
-
-    if isinstance(F, Operator):
-        assert F.source.dim == 1
-        assert F.range == A.range
-        F_time_dep = _depends_on_time(F, mu)
-        if not F_time_dep:
-            F_ass = F.as_vector(mu)
-    elif isinstance(F, VectorArray):
-        assert len(F) == 1
-        assert F in A.range
-        F_time_dep = False
-        F_ass = F
-
-    assert len(U0) == 1
-    assert U0 in A.source
-
-    A_time_dep = _depends_on_time(A, mu)
-    if not A_time_dep:
-        A = A.assemble(mu)
-
-    dt = (t1 - t0) / nt
-    DT = (t1 - t0) / (num_values - 1)
-    R = A.source.empty(reserve=num_values)
-    R.append(U0)
-
-    t = t0
-    U = U0.copy()
-    if mu is None:
-        mu = Mu()
-
-    if F is None:
-        for n in range(nt):
-            t += dt
-            mu = mu.with_(t=t)
-            U.axpy(-dt, A.apply(U, mu=mu))
-            while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
-                R.append(U)
-    else:
-        for n in range(nt):
-            t += dt
-            mu = mu.with_(t=t)
+        for k in range(k0, k0 + nt):
+            mu = mu.with_(t=k)
+            rhs = -A.apply(U, mu=mu)
             if F_time_dep:
-                F_ass = F.as_vector(mu)
-            U.axpy(dt, F_ass - A.apply(U, mu=mu))
-            while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
+                Fk = F.as_vector(mu)
+            if F:
+                rhs += Fk
+            U = M.apply_inverse(rhs, mu=mu, initial_guess=U)
+            while k - k0 + 1 + (min(dt, DT) * 0.5) >= len(R) * DT:
                 R.append(U)
 
-    return R
-
-
-def implicit_midpoint_rule(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_options='operator'):
-    assert isinstance(A, Operator)
-    assert isinstance(F, (type(None), Operator, VectorArray))
-    assert isinstance(M, (type(None), Operator))
-    assert A.source == A.range
-    num_values = num_values or nt + 1
-    dt = (t1 - t0) / nt
-    DT = (t1 - t0) / (num_values - 1)
-
-    if F is None:
-        F_time_dep = False
-    elif isinstance(F, Operator):
-        assert F.source.dim == 1
-        assert F.range == A.range
-        F_time_dep = _depends_on_time(F, mu)
-        if not F_time_dep:
-            dt_F = F.as_vector(mu) * dt
-    else:
-        assert len(F) == 1
-        assert F in A.range
-        F_time_dep = False
-        dt_F = F * dt
-
-    if M is None:
-        from pymor.operators.constructions import IdentityOperator
-        M = IdentityOperator(A.source)
-
-    assert A.source == M.source == M.range
-    assert not M.parametric
-    assert U0 in A.source
-    assert len(U0) == 1
-
-    R = A.source.empty(reserve=num_values)
-    R.append(U0)
-
-    if solver_options == 'operator':
-        options = A.solver_options
-    elif solver_options == 'mass':
-        options = M.solver_options
-    else:
-        options = solver_options
-
-    M_dt_A_impl = (M + A * (dt/2)).with_(solver_options=options)
-    if not _depends_on_time(M_dt_A_impl, mu):
-        M_dt_A_impl = M_dt_A_impl.assemble(mu)
-    M_dt_A_expl = (M - A * (dt/2)).with_(solver_options=options)
-    if not _depends_on_time(M_dt_A_expl, mu):
-        M_dt_A_expl = M_dt_A_expl.assemble(mu)
-
-    t = t0
-    U = U0.copy()
-    if mu is None:
-        mu = Mu()
-
-    for n in range(nt):
-        mu = mu.with_(t=t + dt/2)
-        t += dt
-        rhs = M_dt_A_expl.apply(U, mu=mu)
-        if F_time_dep:
-            dt_F = F.as_vector(mu) * dt
-        if F:
-            rhs += dt_F
-        U = M_dt_A_impl.apply_inverse(rhs, mu=mu)
-        while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
-            R.append(U)
-
-    return R
-
-
-def discrete(A, F, M, U0, k0, k1, mu=None, num_values=None):
-    assert isinstance(A, Operator)
-    assert isinstance(F, (type(None), Operator, VectorArray))
-    assert isinstance(M, (type(None), Operator))
-    assert A.source == A.range
-    nt = k1 - k0
-    num_values = num_values or nt + 1
-    dt = 1
-    DT = nt / (num_values - 1)
-
-    if F is None:
-        F_time_dep = False
-    elif isinstance(F, Operator):
-        assert F.source.dim == 1
-        assert F.range == A.range
-        F_time_dep = _depends_on_time(F, mu)
-        if not F_time_dep:
-            Fk = F.as_vector(mu)
-    else:
-        assert len(F) == 1
-        assert F in A.range
-        F_time_dep = False
-        Fk = F
-
-    if M is None:
-        from pymor.operators.constructions import IdentityOperator
-        M = IdentityOperator(A.source)
-
-    assert A.source == M.source == M.range
-    assert U0 in A.source
-    assert len(U0) == 1
-
-    R = A.source.empty(reserve=num_values)
-    R.append(U0)
-
-    if not _depends_on_time(M, mu):
-        M = M.assemble(mu)
-
-    U = U0.copy()
-    if mu is None:
-        mu = Mu()
-
-    for k in range(k0, k0 + nt):
-        mu = mu.with_(t=k)
-        rhs = -A.apply(U, mu=mu)
-        if F_time_dep:
-            Fk = F.as_vector(mu)
-        if F:
-            rhs += Fk
-        U = M.apply_inverse(rhs, mu=mu, initial_guess=U)
-        while k - k0 + 1 + (min(dt, DT) * 0.5) >= len(R) * DT:
-            R.append(U)
-
-    return R
+        return R
 
 
 def _depends_on_time(obj, mu):
