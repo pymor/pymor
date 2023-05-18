@@ -44,11 +44,11 @@ def _build_matrices_phlti(with_P, with_S, with_N, with_E, with_Q):
     J = sps.csc_matrix([[0, -1], [1, 0]])
     R = sps.csc_matrix([[1, 0], [0, 1]])
     G = np.array([[1], [0]])
-    P = np.array([[1], [0]]) if with_P else None
+    P = np.array([[2], [0]]) if with_P else None
     S = np.array([[1]]) if with_S else None
     N = np.array([[0]]) if with_N else None
-    E = np.array([[1, 0], [0, 1]]) if with_E else None
-    Q = np.array([[1, 0], [0, 1]]) if with_Q else None
+    E = np.array([[1, 0], [0, 2]]) if with_E else None
+    Q = np.array([[2, 0], [0, 1]]) if with_Q else None
     return J, R, G, P, S, N, E, Q
 
 
