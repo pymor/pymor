@@ -26,10 +26,11 @@ from pymor.vectorarrays.interface import VectorArray
 class TimeStepper(ImmutableObject):
     """Interface for time-stepping algorithms.
 
-    Algorithms implementing this interface solve time-dependent problems
+    Algorithms implementing this interface solve time-dependent initial value problems
     of the form ::
 
-        M * d_t u + A(u, mu, t) = F(mu, t).
+        M(mu) * d_t u + A(u, mu, t) = F(mu, t),
+                         u(mu, t_0) = u_0(mu).
 
     Time-steppers used by |InstationaryModel| have to fulfill
     this interface.
@@ -41,7 +42,8 @@ class TimeStepper(ImmutableObject):
 
         The equation is of the form ::
 
-            M * d_t u + A(u, mu, t) = F(mu, t).
+            M(mu) * d_t u + A(u, mu, t) = F(mu, t),
+                             u(mu, t_0) = u_0(mu).
 
         Parameters
         ----------
@@ -77,7 +79,10 @@ class ImplicitEulerTimeStepper(TimeStepper):
 
     Solves equations of the form ::
 
-        M * d_t u + A(u, mu, t) = F(mu, t).
+        M(mu) * d_t u + A(u, mu, t) = F(mu, t),
+                         u(mu, t_0) = u_0(mu).
+
+    by implicit Euler time integration.
 
     Parameters
     ----------
@@ -103,7 +108,10 @@ class ExplicitEulerTimeStepper(TimeStepper):
 
     Solves equations of the form ::
 
-        M * d_t u + A(u, mu, t) = F(mu, t).
+        M(mu) * d_t u + A(u, mu, t) = F(mu, t),
+                         u(mu, t_0) = u_0(mu).
+
+    by explicit Euler time integration.
 
     Parameters
     ----------
@@ -125,7 +133,10 @@ class ImplicitMidpointTimeStepper(TimeStepper):
 
     Solves equations of the form ::
 
-        M * d_t u + A(u, mu, t) = F(mu, t).
+        M(mu) * d_t u + A(u, mu, t) = F(mu, t),
+                         u(mu, t_0) = u_0(mu).
+
+    by implicit midpoint time integration.
 
     Parameters
     ----------
@@ -154,6 +165,9 @@ class DiscreteTimeStepper(TimeStepper):
     Solves equations of the form ::
 
         M(mu) * u_k+1 + A(u_k, mu, k) = F(mu, k).
+                           u(mu, k_0) = u_0(mu).
+
+    by direct time stepping.
     """
 
     def __init__(self):
