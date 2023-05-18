@@ -310,6 +310,12 @@ class ProjectToSubbasisRules(RuleTable):
         super().__init__(use_caching=True)
         self.__auto_init(locals())
 
+    @staticmethod
+    def _add_suffix(op):
+        if op.name == op.__class__.__name__:
+            return None
+        return op.name + '_projected'
+
     @match_class(LincombOperator, SelectionOperator)
     def action_recurse(self, op):
         return self.replace_children(op)
