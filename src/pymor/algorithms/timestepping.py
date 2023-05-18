@@ -36,7 +36,6 @@ class TimeStepper(ImmutableObject):
     this interface.
     """
 
-    @abstractmethod
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         """Apply time-stepper to the equation.
 
@@ -71,6 +70,48 @@ class TimeStepper(ImmutableObject):
         -------
         |VectorArray| containing the solution trajectory.
         """
+        iterator = self.iterate(initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass, mu=mu,
+                                num_values=num_values)
+        U = operator.source.empty(reserve=num_values if num_values is not None else 1)
+        for U_n, _ in iterator:
+            U.append(U_n)
+        return U
+ #
+    @abstractmethod
+    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+        """Iterate time-stepper to the equation.
+
+        The equation is of the form ::
+
+            M(mu) * d_t u + A(u, mu, t) = F(mu, t),
+                             u(mu, t_0) = u_0(mu).
+
+        Parameters
+        ----------
+        initial_time
+            The time at which to begin time-stepping.
+        end_time
+            The time until which to perform time-stepping.
+        initial_data
+            The solution vector at `initial_time`.
+        operator
+            The |Operator| A.
+        rhs
+            The right-hand side F (either |VectorArray| of length 1 or |Operator| with
+            `source.dim == 1`). If `None`, zero right-hand side is assumed.
+        mass
+            The |Operator| M. If `None`, the identity operator is assumed.
+        mu
+            |Parameter values| for which `operator` and `rhs` are evaluated. The current
+            time is added to `mu` with key `t`.
+        num_values
+            The number of returned vectors of the solution trajectory. If `None`, each
+            intermediate vector that is calculated is returned.
+
+        Returns
+        -------
+        Generator yielding tuples (U, t) of snapshots and times.
+        """
         pass
 
 
@@ -98,7 +139,7 @@ class ImplicitEulerTimeStepper(TimeStepper):
     def __init__(self, nt, solver_options='operator'):
         self.__auto_init(locals())
 
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         A, F, M, U0, t0, t1, nt = operator, rhs, mass, initial_data, initial_time, end_time, self.nt
         assert isinstance(A, Operator)
         assert isinstance(F, (type(None), Operator, VectorArray))
@@ -131,8 +172,8 @@ class ImplicitEulerTimeStepper(TimeStepper):
         assert U0 in A.source
         assert len(U0) == 1
 
-        R = A.source.empty(reserve=num_values)
-        R.append(U0)
+        time_steps = 1
+        yield U0, t0
 
         options = (A.solver_options if self.solver_options == 'operator' else
                    M.solver_options if self.solver_options == 'mass' else
@@ -155,10 +196,9 @@ class ImplicitEulerTimeStepper(TimeStepper):
             if F:
                 rhs += dt_F
             U = M_dt_A.apply_inverse(rhs, mu=mu, initial_guess=U)
-            while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
-                R.append(U)
-
-        return R
+            while t - t0 + (min(dt, DT) * 0.5) >= time_steps * DT:
+                time_steps += 1
+                yield U, t
 
 
 class ExplicitEulerTimeStepper(TimeStepper):
@@ -180,7 +220,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
     def __init__(self, nt):
         self.__auto_init(locals())
 
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         if mass is not None:
             raise NotImplementedError
         A, F, U0, t0, t1, nt = operator, rhs, initial_data, initial_time, end_time, self.nt
@@ -210,8 +250,8 @@ class ExplicitEulerTimeStepper(TimeStepper):
 
         dt = (t1 - t0) / nt
         DT = (t1 - t0) / (num_values - 1)
-        R = A.source.empty(reserve=num_values)
-        R.append(U0)
+        time_steps = 1
+        yield U0, t0
 
         t = t0
         U = U0.copy()
@@ -223,8 +263,9 @@ class ExplicitEulerTimeStepper(TimeStepper):
                 t += dt
                 mu = mu.with_(t=t)
                 U.axpy(-dt, A.apply(U, mu=mu))
-                while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
-                    R.append(U)
+                while t - t0 + (min(dt, DT) * 0.5) >= time_steps * DT:
+                    time_steps += 1
+                    yield U, t
         else:
             for n in range(nt):
                 t += dt
@@ -232,10 +273,9 @@ class ExplicitEulerTimeStepper(TimeStepper):
                 if F_time_dep:
                     F_ass = F.as_vector(mu)
                 U.axpy(dt, F_ass - A.apply(U, mu=mu))
-                while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
-                    R.append(U)
-
-        return R
+                while t - t0 + (min(dt, DT) * 0.5) >= time_steps * DT:
+                    time_steps += 1
+                    yield U, t
 
 
 class ImplicitMidpointTimeStepper(TimeStepper):
@@ -262,7 +302,7 @@ class ImplicitMidpointTimeStepper(TimeStepper):
     def __init__(self, nt, solver_options='operator'):
         self.__auto_init(locals())
 
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         if not operator.linear:
             raise NotImplementedError
         A, F, M, U0, t0, t1, nt = operator, rhs, mass, initial_data, initial_time, end_time, self.nt
@@ -297,8 +337,8 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         assert U0 in A.source
         assert len(U0) == 1
 
-        R = A.source.empty(reserve=num_values)
-        R.append(U0)
+        time_steps = 1
+        yield U0, t0
 
         if self.solver_options == 'operator':
             options = A.solver_options
@@ -328,10 +368,9 @@ class ImplicitMidpointTimeStepper(TimeStepper):
             if F:
                 rhs += dt_F
             U = M_dt_A_impl.apply_inverse(rhs, mu=mu)
-            while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
-                R.append(U)
-
-        return R
+            while t - t0 + (min(dt, DT) * 0.5) >= time_steps * DT:
+                time_steps += 1
+                yield U, t
 
 
 class DiscreteTimeStepper(TimeStepper):
@@ -348,7 +387,7 @@ class DiscreteTimeStepper(TimeStepper):
     def __init__(self):
         pass
 
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         A, F, M, U0, k0, k1 = operator, rhs, mass, initial_data, initial_time, end_time
         assert isinstance(A, Operator)
         assert isinstance(F, (type(None), Operator, VectorArray))
@@ -381,8 +420,8 @@ class DiscreteTimeStepper(TimeStepper):
         assert U0 in A.source
         assert len(U0) == 1
 
-        R = A.source.empty(reserve=num_values)
-        R.append(U0)
+        time_steps = 1
+        yield U0, k0
 
         if not _depends_on_time(M, mu):
             M = M.assemble(mu)
@@ -399,10 +438,9 @@ class DiscreteTimeStepper(TimeStepper):
             if F:
                 rhs += Fk
             U = M.apply_inverse(rhs, mu=mu, initial_guess=U)
-            while k - k0 + 1 + (min(dt, DT) * 0.5) >= len(R) * DT:
-                R.append(U)
-
-        return R
+            while k - k0 + 1 + (min(dt, DT) * 0.5) >= time_steps * DT:
+                time_steps += 1
+                yield U, k
 
 
 def _depends_on_time(obj, mu):
