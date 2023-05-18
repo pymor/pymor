@@ -27,10 +27,10 @@ class LoewnerReductor(BasicObject):
         attribute.
     partitioning
         `str` or `tuple` of length 2. Strings can either be 'even-odd' or 'half-half' defining
-        the splitting rule. A user-defined partitioning can be defined by passing a tuple of the
+        the partitioning rule. A user-defined partitioning can be defined by passing a tuple of the
         left and right indices. Defaults to `even-odd`.
     ordering
-        The ordering with respect to which the splitting rule is executed. Can be either
+        The ordering with respect to which the partitioning rule is executed. Can be either
         'magnitude', 'random' or 'regular'. Defaults to 'regular'.
     conjugate
         Whether to guarantee realness of reduced |LTIModel| by keeping complex conjugates in the
@@ -112,7 +112,7 @@ def _partition_frequencies(s, Hs, partitioning='even-odd', ordering='regular', c
         # partition frequencies corresponding to positive imaginary part
         pimidx = np.where(s.imag > 0)[0]
 
-        # treat real-valued samples separately in order to ensure balanced splitting
+        # treat real-valued samples separately in order to ensure balanced partitioning
         ridx = np.where(s.imag == 0)[0]
 
         if ordering == 'magnitude':
@@ -190,10 +190,10 @@ def loewner_quadruple(s, Hs, partitioning='even-odd', ordering='regular', conjug
         attribute.
     partitioning
         `str` or `tuple` of length 2. Strings can either be 'even-odd' or 'half-half' defining
-        the splitting rule. A user-defined partitioning can be defined by passing a tuple of the
+        the partitioning rule. A user-defined partitioning can be defined by passing a tuple of the
         left and right indices. Defaults to `even-odd`.
     ordering
-        The ordering with respect to which the splitting rule is executed. Can be either
+        The ordering with respect to which the partitioning rule is executed. Can be either
         'magnitude', 'random' or 'regular'. Defaults to 'regular'.
     conjugate
         Whether to guarantee realness of reduced |LTIModel| by keeping complex conjugates in the
