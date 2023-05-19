@@ -59,10 +59,11 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             # TODO: we need sparse BlockVectorArrays here !!
             basis = local_model.solution_space.make_block_diagonal_array(bases_in_local_domain)
             # NOTE: using the reduction here is way too slow and gives wrong results !
+            local_product = local_model.products['product'] if product else None
             residual_reductor = ResidualReductor(basis,
                                                  local_model.operator,
                                                  local_model.rhs,
-                                                 product=local_model.products['product'],
+                                                 product=local_product,
                                                  riesz_representatives=True)
             # residual_reductor = SimpleCoerciveRBReductor(local_model, basis,
             #                                              product=local_model.products['product'],
@@ -445,14 +446,13 @@ def project_block_operator(operator, range_bases, source_bases):
 
 
 def _project_block_operator(operator, range_bases, source_bases):
+    local_projected_op = np.empty((len(range_bases), len(source_bases)), dtype=object)
     if isinstance(operator, IdentityOperator):
-        local_projected_op = np.empty((len(range_bases), len(source_bases)), dtype=object)
         # TODO: assert that both bases are the same
         for I in range(len(range_bases)):
             local_projected_op[I][I] = project(IdentityOperator(range_bases[I].space),
                                                range_bases[I], range_bases[I])
     elif isinstance(operator, BlockOperator):
-        local_projected_op = np.empty_like(operator.blocks)
         for I in range(len(range_bases)):
             local_basis_I = range_bases[I]
             for J in range(len(source_bases)):
@@ -479,14 +479,13 @@ def project_block_rhs(rhs, range_bases):
 
 
 def _project_block_rhs(rhs, range_bases):
+    local_projected_rhs = np.empty(len(range_bases), dtype=object)
     if isinstance(rhs, VectorOperator):
         rhs_blocks = rhs.array._blocks
-        local_projected_rhs = np.empty(len(rhs_blocks), dtype=object)
         for I in range(len(range_bases)):
             rhs_operator = VectorArrayOperator(rhs_blocks[I])
             local_projected_rhs[I] = project(rhs_operator, range_bases[I], None)
     elif isinstance(rhs, BlockColumnOperator):
-        local_projected_rhs = np.empty_like(rhs.blocks[:, 0])
         for I in range(len(range_bases)):
             local_projected_rhs[I] = project(rhs.blocks[I, 0], range_bases[I], None)
     else:
