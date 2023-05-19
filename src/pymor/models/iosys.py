@@ -1751,15 +1751,15 @@ class PHLTIModel(LTIModel):
         G
             The |NumPy array| or |SciPy spmatrix| G.
         P
-            The |NumPy array| or |SciPy spmatrix| P.
+            The |NumPy array| or |SciPy spmatrix| P or `None` (if P is a `ZeroOperator`).
         S
-            The |NumPy array| or |SciPy spmatrix| S or `None` (if Cv is a `ZeroOperator`).
+            The |NumPy array| or |SciPy spmatrix| S or `None` (if S is a `ZeroOperator`).
         N
-            The |NumPy array| or |SciPy spmatrix| N or `None` (if Cv is a `ZeroOperator`).
+            The |NumPy array| or |SciPy spmatrix| N or `None` (if N is a `ZeroOperator`).
         E
-            The |NumPy array| or |SciPy spmatrix| E.
+            The |NumPy array| or |SciPy spmatrix| E or `None` (if E is an `IdentityOperator`).
         Q
-            The |NumPy array| or |SciPy spmatrix| Q.
+            The |NumPy array| or |SciPy spmatrix| Q  or `None` (if Q is an `IdentityOperator`).
         """
         J = to_matrix(self.J)
         R = to_matrix(self.R)
