@@ -383,10 +383,11 @@ class DataFieldFunction(Function):
     bounding_box
         Lower left and upper right coordinates of the domain of the data field.
     range
-        A pixel of value p is mapped to `(p / scaling_factor) * range[1] + range[0]`,
+        A `data_field` value of p is mapped to `(p / scaling_factor) * range[1] + range[0]`,
         where scaling_factor is set below.
     scaling_factor
-        See above.
+        See above. The scaling factor should be chosen, such that `data_field` has values
+        in `[0, scaling_factor]`.
     """
 
     dim_domain = 2
