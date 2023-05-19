@@ -19,11 +19,11 @@ if config.HAVE_DUNEGDT:
     from dune.xt.common.vtk.plot import plot as k3d_plot
     from dune.gdt import DiscreteFunction
 
-    from pymor.bindings.dunegdt import ComplexifiedDuneXTVector, DuneXTVector
+    from pymor.bindings.dunegdt import DuneXTVector
     from pymor.core.base import ImmutableObject
     from pymor.discretizers.builtin.grids.oned import OnedGrid
     from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer
-    from pymor.vectorarrays.list import ListVectorArray
+    from pymor.vectorarrays.list import ListVectorArray, ComplexifiedVector
     from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -60,8 +60,8 @@ if config.HAVE_DUNEGDT:
         def visualize(self, U, *args, **kwargs):
             # convert to NumpyVectorArray
             U_np = NumpyVectorSpace(U.dim).zeros(len(U))
-            for ii, u_dune in enumerate(U._list):
-                if isinstance(u_dune, ComplexifiedDuneXTVector):
+            for ii, u_dune in enumerate(U.vectors):
+                if isinstance(u_dune, ComplexifiedVector):
                     assert u_dune.imag_part is None
                     u_dune = u_dune.real_part
                 assert isinstance(u_dune, DuneXTVector)
@@ -88,8 +88,8 @@ if config.HAVE_DUNEGDT:
         def visualize(self, U, *args, title=None, legend=None, **kwargs):
             assert isinstance(U, ListVectorArray)
             assert len(U) == 1
-            U = U._list[0]
-            if isinstance(U, ComplexifiedDuneXTVector):
+            U = U.vectors[0]
+            if isinstance(U, ComplexifiedVector):
                 assert U.imag_part is None
                 U = U.real_part
             assert isinstance(U, DuneXTVector)
@@ -129,8 +129,8 @@ if config.HAVE_DUNEGDT:
                 # we presume to have several vectors which should be visualized side by side
                 assert all([isinstance(u, ListVectorArray) for u in U])
                 assert all([len(u) == 1 for u in U])
-                assert all([all([isinstance(v, ComplexifiedDuneXTVector) for v in u._list]) for u in U])
-                assert all([all([v.imag_part is None for v in u._list]) for u in U])
+                assert all([all([isinstance(v, ComplexifiedVector) for v in u.vectors]) for u in U])
+                assert all([all([v.imag_part is None for v in u.vectors]) for u in U])
                 if legend is not None and len(legend) == len(U):
                     names = legend
                 elif title is not None and len(title) == len(U):
@@ -143,13 +143,13 @@ if config.HAVE_DUNEGDT:
                 if interactive:
                     for ii in range(len(U)):
                         _, filename = mkstemp(suffix='_{}{}'.format(ii, suffix))
-                        data[filename] = U[ii]._list[0].real_part
+                        data[filename] = U[ii].vectors[0].real_part
                 else:
                     if (filename.endswith('.vtp') or filename.endswith('.vtu')):
                         filename = filename[:-4]
                     assert len(filename) > 0
                     for ii in range(len(U)):
-                        data['{}_{}{}'.format(filename, ii, suffix)] = U[ii]._list[0].real_part
+                        data['{}_{}{}'.format(filename, ii, suffix)] = U[ii].vectors[0].real_part
                 for name, f_name in zip(names, data):
                     visualize_single(data[f_name].impl, name, f_name)
                 if interactive:
@@ -174,8 +174,8 @@ if config.HAVE_DUNEGDT:
                 name = legend if legend else (title if title else 'STATE')
                 if len(U) == 1:
                     # we presume we have a single vector to be visualized
-                    U = U._list[0]
-                    if isinstance(U, ComplexifiedDuneXTVector):
+                    U = U.vectors[0]
+                    if isinstance(U, ComplexifiedVector):
                         assert U.imag_part is None
                         U = U.real_part
                     assert isinstance(U, DuneXTVector)
@@ -190,19 +190,19 @@ if config.HAVE_DUNEGDT:
                         to_clean_up.append(filename)
                 else:
                     # we presume we have a single trajectory to be visualized
-                    assert all([isinstance(u, ComplexifiedDuneXTVector) for u in U._list])
-                    assert all([u.imag_part is None for u in U._list])
+                    assert all([isinstance(u, ComplexifiedVector) for u in U.vectors])
+                    assert all([u.imag_part is None for u in U.vectors])
                     data = OrderedDict()
                     if interactive:
                         for ii in range(len(U)):
                             _, filename = mkstemp(suffix='_{}{}'.format(ii, suffix))
-                            data[filename] = U._list[ii].real_part
+                            data[filename] = U.vectors[ii].real_part
                     else:
                         if (filename.endswith('.vtp') or filename.endswith('.vtu')):
                             filename = filename[:-4]
                         assert len(filename) > 0
                         for ii in range(len(U)):
-                            data['{}_{}{}'.format(filename, ii, suffix)] = U._list[ii].real_part
+                            data['{}_{}{}'.format(filename, ii, suffix)] = U.vectors[ii].real_part
                     for f_name, vector in data.items():
                         visualize_single(vector.impl, name, f_name)
                     if interactive:
@@ -242,7 +242,7 @@ if config.HAVE_DUNEGDT:
         def visualize(self, U, *args, **kwargs):
 
             def visualize_single(u, filename):
-                if isinstance(u, ComplexifiedDuneXTVector):
+                if isinstance(u, ComplexifiedVector):
                     assert u.imag_part is None
                     u = u.real_part
                 assert isinstance(u, DuneXTVector)
@@ -255,7 +255,7 @@ if config.HAVE_DUNEGDT:
                 if len(U) == 0:
                     return
                 for i in range(len(U)):
-                    visualize_single(U._list[i], f'{prefix}_{i}')
+                    visualize_single(U.vectors[i], f'{prefix}_{i}')
                 if len(U) == 1:
                     filename = f'{prefix}_{i}.{suffix}'
                 else:
