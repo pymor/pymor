@@ -95,15 +95,16 @@ class ToMatrixRules(RuleTable):
     @match_class(BlockOperatorBase)
     def action_BlockOperator(self, op):
         format = self.format
+        # Note: to_dense() only puts zero operators for all None entries
+        op = op.to_dense()
         op_blocks = op.blocks
         mat_blocks = [[] for i in range(op.num_range_blocks)]
         is_dense = True
-        for i in range(op.num_range_blocks):
-            for j in range(op.num_source_blocks):
-                mat_ij = self.apply(op_blocks[i, j])
-                if sps.issparse(mat_ij):
-                    is_dense = False
-                mat_blocks[i].append(mat_ij)
+        for (i, j) in zip(op.blocks.coords[0], op.blocks.coords[1]):
+            mat_ij = self.apply(op_blocks[i, j])
+            if sps.issparse(mat_ij):
+                is_dense = False
+            mat_blocks[i].append(mat_ij)
         if format is None and is_dense or format == 'dense':
             return np.block(mat_blocks)
         else:
