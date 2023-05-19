@@ -181,7 +181,7 @@ class ContractRules(RuleTable):
                 if isinstance(ops_rev[i], NumpyMatrixOperator):
                     if not ops_rev[i].sparse:  # do not touch sparse matrices
                         U = ops_rev[i+1].source.from_numpy(ops_rev[i].matrix.T)
-                        ops_rev[i+1] = VectorArrayOperator(ops_rev[i+1].apply(U))
+                        ops_rev[i+1] = VectorArrayOperator(ops_rev[i+1].apply(U), space_id=ops_rev[i].source_id)
                         del ops_rev[i]
                     else:
                         i += 1
@@ -191,7 +191,7 @@ class ContractRules(RuleTable):
                     # the following might in fact convert small sparse matrices in external solvers
                     # to dense ...
                     U = ops_rev[i].as_range_array()
-                    ops_rev[i+1] = VectorArrayOperator(ops_rev[i+1].apply(U))
+                    ops_rev[i+1] = VectorArrayOperator(ops_rev[i+1].apply(U), space_id=ops_rev[i].source_id)
                     del ops_rev[i]
                 else:
                     i += 1
