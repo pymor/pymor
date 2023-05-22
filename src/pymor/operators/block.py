@@ -17,16 +17,16 @@ class BlockOperatorBase(Operator):
         if isinstance(blocks, np.ndarray) or isinstance(blocks, list):
             blocks = np.array(blocks)
             blocks[blocks == None] = 0  # noqa: E711
+            if self.blocked_source and self.blocked_range:
+                assert blocks.ndim == 2
+            elif self.blocked_source:
+                if blocks.ndim == 1:
+                    blocks.shape = (1, len(blocks))
+            else:
+                if blocks.ndim == 1:
+                    blocks.shape = (len(blocks), 1)
         self.blocks = blocks = sparse.COO(blocks)
         assert 1 <= blocks.ndim <= 2
-        if self.blocked_source and self.blocked_range:
-            assert blocks.ndim == 2
-        elif self.blocked_source:
-            if blocks.ndim == 1:
-                blocks.shape = (1, len(blocks))
-        else:
-            if blocks.ndim == 1:
-                blocks.shape = (len(blocks), 1)
         assert all(isinstance(op, Operator) for op in self.blocks.data)
 
         # check if every row/column contains at least one operator
