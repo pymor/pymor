@@ -39,11 +39,11 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             assert fake_dirichlet_ops is not None
 
         self.solution_space = fom.solution_space
-        self.S = self.solution_space.empty().num_blocks
+        self.S = len(self.solution_space.empty().blocks)
         self._last_rom = None
 
         # TODO: assertions for local_bases
-        self.local_bases = local_bases or [self.solution_space.empty().block(I).empty()
+        self.local_bases = local_bases or [self.solution_space.empty().blocks[I].empty()
                                            for I in range(self.S)]
         self.local_products = [None if not product else product.blocks[I, I]
                                for I in range(self.S)]
@@ -215,7 +215,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
     def extend_bases_with_global_solution(self, us):
         assert us in self.fom.solution_space
         for I in range(self.S):
-            u_block = us.block(I)
+            u_block = us.blocks[I]
             self.extend_basis_locally(I, u_block)
 
     def extend_basis_locally(self, I, u):
@@ -252,7 +252,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             a_u_v_restricted_to_patch = []
             for i in range(len(local_range.subspaces)):
                 i_global = mapping_to_global(i)
-                a_u_v_restricted_to_patch.append(a_u_v_global.block(i_global))
+                a_u_v_restricted_to_patch.append(a_u_v_global.blocks[i_global])
             a_u_v_restricted_to_patch = local_range.make_array(
                 a_u_v_restricted_to_patch)
             a_u_v_as_operator = VectorOperator(a_u_v_restricted_to_patch)
@@ -262,7 +262,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
                 i_global = mapping_to_global(i_loc)
                 basis = self.reduced_local_bases[i_global]
                 u_restricted_to_patch.append(
-                    basis.lincomb(current_solution.block(i_global).to_numpy()))
+                    basis.lincomb(current_solution.blocks[i_global].to_numpy()))
             current_solution_on_patch = local_range.make_array(
                 u_restricted_to_patch)
 
@@ -275,7 +275,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
             rhs=patch_model.rhs - a_u_v_as_operator)
         # TODO: think about removing boundary dofs for the rhs
         phi = patch_model_with_correction.solve(mu)
-        self.extend_basis_locally(I, phi.block(mapping_to_local(I)))
+        self.extend_basis_locally(I, phi.blocks[mapping_to_local(I)])
         return phi
 
     def compress_basis_with_pod(self, rtol=1e-2):
@@ -377,7 +377,7 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         u_ = []
         for I in range(self.S):
             basis = self.reduced_local_bases[I]
-            u_I = u_rom.block(I)
+            u_I = u_rom.blocks[I]
             u_.append(basis.lincomb(u_I.to_numpy()))
         return self.fom.solution_space.make_array(u_)
 
@@ -396,8 +396,8 @@ class CoerciveIPLD3GRBReductor(CoerciveRBReductor):
         u_global = []
         for i in range(self.S):
             i_loc = mapping[I](i)
-            if i_loc >= 0 and u_patch.block(i_loc).to_numpy().sum() != 0:
-                u_global.append(u_patch.block(i_loc))
+            if i_loc >= 0 and u_patch.blocks[i_loc].to_numpy().sum() != 0:
+                u_global.append(u_patch.blocks[i_loc])
             else:
                 # the multiplication with 1e-4 is only there for visualization
                 # purposes. Otherwise, the colorbar gets scaled up until 1.
@@ -747,22 +747,22 @@ class RestrictedProductOperator(BlockOperator):
 
     def apply_inverse(self, V, mu=None):
         assert V in self.range
-        V_on_inner = [V.block(i) for i in self.inner_blocks]
+        V_on_inner = [V.blocks[i] for i in self.inner_blocks]
         V_on_inner = self.inner_product.range.make_array(V_on_inner)
         V_inverse = self.inner_product.apply_inverse(V_on_inner)
-        V_inverse_on_outer = [V_inverse.block(self.global_to_local(i))
-                              if i in self.inner_blocks else V.block(i).zeros(len(V))
-                              for i in range(V.num_blocks)]
+        V_inverse_on_outer = [V_inverse.blocks[self.global_to_local(i)]
+                              if i in self.inner_blocks else V.blocks[i].zeros(len(V))
+                              for i in range(len(V.blocks))]
         return self.source.make_array(V_inverse_on_outer)
 
     def apply2(self, V, U, mu=None):
         assert U in self.source
         assert V in self.range
 
-        U_on_inner = [U.block(i) for i in self.inner_blocks]
+        U_on_inner = [U.blocks[i] for i in self.inner_blocks]
         U_on_inner = self.inner_product.source.make_array(U_on_inner)
 
-        V_on_inner = [V.block(i) for i in self.inner_blocks]
+        V_on_inner = [V.blocks[i] for i in self.inner_blocks]
         V_on_inner = self.inner_product.range.make_array(V_on_inner)
 
         return self.inner_product.apply2(V_on_inner, U_on_inner)
@@ -774,13 +774,13 @@ class RestrictedProductOperator(BlockOperator):
     def apply(self, U, mu=None):
         assert U in self.source
 
-        U_on_inner = [U.block(i) for i in self.inner_blocks]
+        U_on_inner = [U.blocks[i] for i in self.inner_blocks]
         U_on_inner = self.inner_product.source.make_array(U_on_inner)
         V = self.inner_product.apply(U_on_inner, mu=mu)
 
-        V_inner_on_outer = [V.block(self.global_to_local(i))
-                            if i in self.inner_blocks else U.block(i).zeros(len(U))
-                            for i in range(U.num_blocks)]
+        V_inner_on_outer = [V.blocks[self.global_to_local(i)]
+                            if i in self.inner_blocks else U.blocks[i].zeros(len(U))
+                            for i in range(len(U.blocks))]
 
         return self.range.make_array(V_inner_on_outer)
 
@@ -802,9 +802,9 @@ class RestrictedProductOperator(BlockOperator):
     def only_inner(self, U, mu=None):
         # convenience method for restricting U to the inner part. Not connected to the product
         # but useful in SimpleCoerciveRBReductor debugging.
-        U_inner_on_outer = [U.block(self.global_to_local(i))
-                            if i in self.inner_blocks else U.block(i).zeros(len(U))
-                            for i in range(U.num_blocks)]
+        U_inner_on_outer = [U.blocks[self.global_to_local(i)]
+                            if i in self.inner_blocks else U.blocks[i].zeros(len(U))
+                            for i in range(len(U.blocks))]
         return self.range.make_array(U_inner_on_outer)
 
 
@@ -822,7 +822,7 @@ class EllipticIPLRBEstimator(ImmutableObject):
             u_rom = self.reconstruct(u_rom)
         for (domain, (elements, inner_elements, local_inner_elements)), residual in zip(
                 self.estimator_data.items(), self.residuals):
-            u_in_ed = u_rom.block(elements)
+            u_in_ed = tuple(u_rom.blocks[ii].copy() for ii in elements)
 
             if isinstance(residual, ResidualReductor):
                 # this is the non-reduced case where residual is the ResidualReductor
@@ -848,7 +848,7 @@ class EllipticIPLRBEstimator(ImmutableObject):
                 # gram_matrix_rf_op = NumpyMatrixOperator(restricted_product.apply2(rieszes, riesz_f))
                 # G_f = restricted_product.apply2(riesz_f, riesz_f)
 
-                # u_in_ed = u_rom_copy.block(elements)
+                # u_in_ed = u_rom_copy.blocks[elements]
                 # u_in_ed_unblocked = np.array([u.to_numpy() for u in u_in_ed]).flatten()
                 # u_in_ed_unblocked = gram_matrix_rr_op.source.from_numpy(u_in_ed_unblocked)
                 # norm_ = np.sqrt(gram_matrix_rr_op.apply2(u_in_ed_unblocked, u_in_ed_unblocked)[0][0] \
@@ -877,7 +877,7 @@ class EllipticIPLRBEstimator(ImmutableObject):
 
                 # estimator_matrix = NumpyMatrixOperator(estimator_matrix)
 
-                # u_in_ed = u_rom_copy.block(elements)
+                # u_in_ed = u_rom_copy.blocks[elements]
                 # u_in_ed_unblocked = np.array([u.to_numpy() for u in u_in_ed]).flatten()
                 # C = np.append([1.], u_in_ed_unblocked)
                 # C = estimator_matrix.source.from_numpy(C)
