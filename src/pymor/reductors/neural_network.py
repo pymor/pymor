@@ -1173,7 +1173,10 @@ def train_neural_network(training_data, validation_data, neural_network,
                 running_loss += loss.item() * len(batch[0])
 
             # compute average loss
-            epoch_loss = running_loss / len(dataloaders[phase].dataset)
+            if len(dataloaders[phase].dataset) > 0:
+                epoch_loss = running_loss / len(dataloaders[phase].dataset)
+            else:
+                epoch_loss = np.inf
 
             losses[phase] = epoch_loss
 
