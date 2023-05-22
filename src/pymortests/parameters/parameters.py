@@ -152,6 +152,8 @@ def test_mu_algebra(mu):
     assert other_np + mu == other + mu_np
     assert all((mu + other).to_numpy() == (mu_np + other_np))
     assert all((mu - other).to_numpy() == (mu_np - other_np))
+    assert all((other + mu).to_numpy() == (other_np + mu_np))
+    assert all((other - mu).to_numpy() == (other_np - mu_np))
     assert all((-mu).to_numpy() == -mu_np)
     assert all((2. * mu).to_numpy() == 2. * mu_np)
     assert 2. * mu == mu * 2.
