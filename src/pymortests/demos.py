@@ -89,8 +89,8 @@ THERMALBLOCK_SIMPLE_ARGS = (
 )
 
 BURGERS_EI_ARGS = (
-    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--plot-ei-err', '--plot-err', '--plot-solutions']),
-    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--ei-alg=deim', '--plot-error-landscape']),
+    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--grid=20', '--plot-ei-err', '--plot-err', '--plot-solutions']),
+    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--grid=20', '--ei-alg=deim', '--plot-error-landscape']),
 )
 
 PARABOLIC_MOR_ARGS = (
@@ -367,7 +367,7 @@ def test_burgers_ei_results():
     from pymordemos import burgers_ei
     app = Typer()
     app.command()(burgers_ei.main)
-    args = list(map(str, [1, 2, 10, 100, 10, 30]))
+    args = list(map(str, [1, 2, 2, 5, 2, 5])) + ['--grid=20']
     _test_demo(lambda: runner.invoke(app, args, catch_exceptions=False))
     ei_results, greedy_results = burgers_ei.test_results
     ei_results['greedy_max_errs'] = greedy_results['max_errs']
