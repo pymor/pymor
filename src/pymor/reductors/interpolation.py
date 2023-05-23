@@ -2,6 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from abc import abstractmethod
+
 import numpy as np
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
@@ -77,8 +79,9 @@ class GenericBHIReductor(BasicObject):
     def _K_apply_inverse_adjoint(self, s, V):
         return self.fom.transfer_function.K(s).apply_inverse_adjoint(V, mu=self.mu)
 
+    @abstractmethod
     def _fom_assemble(self):
-        raise NotImplementedError
+        pass
 
     def reduce(self, sigma, b, c, projection='orth'):
         """Bitangential Hermite interpolation.
