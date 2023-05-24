@@ -50,3 +50,4 @@ The release manager is responsible for ensuring that the following steps are per
 - [ ] In the first community meeting after the release:
   - [ ] Select a new release manager for the next release.
         However, the current release manager is still responsible for all point releases until the next release.
+  - [ ] Assign a couple of issues (about 2 or 3) to each main developer and give them the milestone of the next release.
