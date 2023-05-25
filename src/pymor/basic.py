@@ -47,6 +47,7 @@ from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.core.cache import clear_caches, disable_caching, enable_caching
 from pymor.core.defaults import (load_defaults_from_file, print_defaults,
                                  set_defaults, write_defaults_to_file)
+from pymor.core.exceptions import DependencyMissingError
 from pymor.core.logger import getLogger, set_log_levels
 from pymor.core.pickle import dump, dumps, load, loads
 from pymor.discretizers.builtin import (OnedGrid, RectGrid, TriaGrid,
@@ -99,3 +100,8 @@ from pymor.tools.random import get_rng, new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 from pymor.vectorarrays.list import ListVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+try:
+    from pymor.models.interact import interact
+except DependencyMissingError:
+    pass
