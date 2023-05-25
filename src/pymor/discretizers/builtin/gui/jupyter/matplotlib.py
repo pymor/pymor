@@ -10,13 +10,75 @@ config.require('MATPLOTLIB')
 import matplotlib.pyplot as plt
 import numpy as np
 
+from pymor.core.base import BasicObject
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.gui.matplotlib_base import Matplotlib1DAxes, MatplotlibPatchAxes
 from pymor.vectorarrays.interface import VectorArray
 
 
+class PatchVisualizer(BasicObject):
+
+    def __init__(self, grid, U, bounding_box=None, codim=2, title=None, legend=None,
+                 separate_colorbars=False, rescale_colorbars=False, columns=2):
+        assert isinstance(U, VectorArray) \
+               or (isinstance(U, tuple)
+                   and all(isinstance(u, VectorArray) for u in U)
+                   and all(len(u) == len(U[0]) for u in U))
+
+        if isinstance(U, VectorArray):
+            U = (U,)
+        legend = (legend,) if isinstance(legend, str) else legend
+        assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
+
+        self.separate_colorbars, self.rescale_colorbars = separate_colorbars, rescale_colorbars
+
+        if len(U) == 1:
+            rows = columns = 1
+        else:
+            rows = int(np.ceil(len(U) / columns))
+
+        figsize = plt.rcParams['figure.figsize']
+        self.fig = fig = plt.figure(figsize=(figsize[0] * columns, figsize[1] * rows))
+
+        axs = []
+        plots = []
+        for i in range(1, len(U)+1):
+            ax = fig.add_subplot(rows, columns, i)
+            if legend:
+                ax.set_title(legend[i])
+            plot = MatplotlibPatchAxes(ax, grid, bounding_box=bounding_box, codim=codim)
+            axs.append(ax)
+            plots.append(plot)
+
+        self.plots = plots
+        self.fig = fig
+
+        if title is not None:
+            fig.suptitle(title)
+
+        self.set(U)
+
+    def set(self, U=None, idx=0):
+        if U is None:
+            U = self.U
+        else:
+            assert isinstance(U, VectorArray) \
+                   or (isinstance(U, tuple)
+                       and all(isinstance(u, VectorArray) for u in U)
+                       and all(len(u) == len(U[0]) for u in U))
+            self.U = U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+                tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+            from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs
+            self.vmins, self.vmaxs = _vmins_vmaxs(U, self.separate_colorbars, self.rescale_colorbars)
+
+        for vmin, vmax, u, plot in zip(self.vmins, self.vmaxs, U, self.plots):
+            plot.set(u[idx], vmin=vmin[idx], vmax=vmax[idx])
+        self.fig.canvas.draw_idle()
+
+
 def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None,
-                    separate_colorbars=False, rescale_colorbars=False, columns=2):
+                    separate_colorbars=False, rescale_colorbars=False, columns=2,
+                    return_widget=True):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -53,53 +115,58 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
                and all(isinstance(u, VectorArray) for u in U)
                and all(len(u) == len(U[0]) for u in U))
 
-    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-        tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
-    legend = (legend,) if isinstance(legend, str) else legend
-    assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
+    if isinstance(U, VectorArray):
+        U = (U,)
 
-    from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs
-    vmins, vmaxs = _vmins_vmaxs(U, separate_colorbars, rescale_colorbars)
+    if return_widget:
+        from IPython import get_ipython
+        get_ipython().run_line_magic('matplotlib', 'widget')
+        plt.ioff()
 
-    plots = []
+    vis = PatchVisualizer(grid, U, bounding_box=bounding_box, codim=codim, title=title, legend=legend,
+        separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars, columns=columns)
+
     do_animation = len(U[0]) > 1
-    if len(U) == 1:
-        fig, ax = plt.subplots()
-        axs = [ax]
+
+    if return_widget:
+        vis.fig.canvas.header_visible = False
+        if do_animation:
+            from ipywidgets import HBox, IntSlider, Play, VBox, jslink
+            speed = IntSlider(value=100, min=10, max=1000, description='speed', readout=False)
+            play = Play(min=None, max=len(U[0])-1)
+            animation_slider = IntSlider(0, 0, len(U[0])-1)
+            jslink((play, 'value'), (animation_slider, 'value'))
+            jslink((speed, 'value'), (play, 'interval'))
+
+            def animate(change):
+                vis.set(idx=change['new'])
+
+            animation_slider.observe(animate, 'value')
+            controls = HBox([speed, play, animation_slider])
+            widget = VBox([vis.fig.canvas, controls])
+
+            def set(U):
+                vis.set(U, animation_slider.value)
+            widget.set = set
+        else:
+            widget = vis.fig.canvas
+            widget.set = vis.set
+        return widget
     else:
-        rows = int(np.ceil(len(U) / columns))
-        figsize = plt.rcParams['figure.figsize']
-        fig, axs = plt.subplots(rows, columns, figsize=(figsize[0]*columns, figsize[1]*rows))
-        axs = axs.flatten()
-        for ax in axs[len(U):]:
-            ax.set_axis_off()
+        if do_animation:
+            plt.rcParams['animation.html'] = 'jshtml'
+            delay_between_frames = 200  # ms
+            vis.fig.patch.set_alpha(0.0)
+            from matplotlib.animation import FuncAnimation
 
-    for i, (vmin, vmax, u, ax) in enumerate(zip(vmins, vmaxs, U, axs)):
-        plot = MatplotlibPatchAxes(ax, grid, bounding_box=bounding_box, codim=codim)
-        plot.set(u[0], vmin=vmin[0], vmax=vmax[0])
-        if legend:
-            ax.set_title(legend[i])
-        plots.append(plot)
+            def animate(i):
+                vis.set(idx=i)
 
-    if title is not None:
-        fig.suptitle(title)
-
-    if do_animation:
-        plt.rcParams['animation.html'] = 'jshtml'
-        delay_between_frames = 200  # ms
-
-        fig.patch.set_alpha(0.0)
-
-        def animate(i):
-            for p, u, vmin, vmax in zip(plots, U, vmins, vmaxs):
-                p.set(u[i], vmin=vmin[i], vmax=vmax[i])
-
-        from matplotlib.animation import FuncAnimation
-        anim = FuncAnimation(fig, animate, frames=len(U[0]), interval=delay_between_frames, blit=False)
-        plt.close(fig)
-        return anim
-    else:
-        plt.show()
+            anim = FuncAnimation(vis.fig, animate, frames=len(U[0]), interval=delay_between_frames, blit=False)
+            plt.close(vis.fig)
+            return anim
+        else:
+            plt.show()
 
 
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False,

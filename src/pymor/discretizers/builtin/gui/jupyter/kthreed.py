@@ -132,7 +132,7 @@ class VectorArrayPlot(K3DPlot):
 def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                   separate_colorbars=False, rescale_colorbars=False, columns=2,
                   warp_by_scalar=True, scale_factor='auto', show_mesh=True, height=300,
-                  color_map=get_cmap('viridis'), background_color=0xffffff):
+                  color_map=get_cmap('viridis'), background_color=0xffffff, return_widget=True):
     """Generate a k3d Plot for scalar data associated to a two-dimensional |Grid|.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
