@@ -6,7 +6,9 @@ import warnings
 
 import numpy as np
 
-from pymor.algorithms.line_search import armijo
+from functools import partial
+
+from pymor.algorithms.line_search import armijo, constrained_armijo
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import BFGSError
 from pymor.core.logger import getLogger
@@ -16,7 +18,7 @@ from pymor.parameters.base import Mu
 @defaults('miniter', 'maxiter', 'rtol_output', 'rtol_mu', 'tol_sub', 'stagnation_window', 'stagnation_threshold')
 def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0, maxiter=100, rtol_output=1e-16,
          rtol_mu=1e-16, tol_sub=1e-8, line_search_params=None, stagnation_window=3, stagnation_threshold=np.inf,
-         error_aware=False, error_criterion=None):
+         error_aware=False, error_criterion=None, line_search_error_criterion=None):
     """BFGS algorithm.
 
     This method solves the optimization problem ::
@@ -64,6 +66,11 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         If `True`, perform an additional error aware check during the line search phase.
         Intended for use with the trust region algorithm.
     error_criterion
+        The additional error criterion used to check model confidence. This maps |parameter values|
+        and an output value to a boolean indicating if the criterion is fulfilled.
+        Refer to :func:`error_aware_bfgs_criterion` in
+        :mod:`pymor.algorithms.tr` for an example.
+    line_search_error_criterion
         The additional error criterion used to check model confidence in the line search.
         This maps |parameter values| and an output value to a boolean indicating if the
         criterion is fulfilled. Refer to :func:`error_aware_line_search_criterion` in
@@ -109,9 +116,12 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         mu = initial_guess.to_numpy() if isinstance(initial_guess, Mu) else initial_guess
         assert model.parameters.assert_compatible(model.parameters.parse(mu))
 
+    bfgs_armijo = armijo
     if error_aware:
         assert error_criterion is not None
-        assert callable(error_criterion)
+        assert line_search_error_criterion is not None
+        assert callable(error_criterion) and callable(line_search_error_criterion)
+        bfgs_armijo = partial(constrained_armijo, armijo_condition=line_search_error_criterion)
 
     gradient = model.parameters.parse(model.output_d_mu(mu)).to_numpy()
     current_output = output(mu)
@@ -162,9 +172,8 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         else:
             direction = _compute_hessian_action(hessian, -gradient, active, inactive)
 
-        step_size, line_search_iteration = armijo(
-            output, mu, direction, grad=gradient, initial_value=current_output,
-            additional_criterion=error_criterion if error_aware else None, **(line_search_params or {}))
+        step_size, line_search_iteration = bfgs_armijo(
+            output, mu, direction, grad=gradient, initial_value=current_output, **(line_search_params or {}))
         line_search_iterations.append(line_search_iteration)
 
         # update mu

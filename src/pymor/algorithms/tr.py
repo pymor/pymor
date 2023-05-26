@@ -115,9 +115,22 @@ def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, r
     else:
         mu = initial_guess.to_numpy() if isinstance(initial_guess, Mu) else initial_guess
 
-    def error_aware_line_search_criterion(new_mu, current_value):
+    def error_aware_bfgs_criterion(new_mu, current_value):
         output_error = surrogate.estimate_output_error(new_mu)
         if output_error / abs(current_value) >= beta * radius:
+            return True
+        return False
+
+    def error_aware_line_search_criterion(starting_point, initial_value, current_value, initial_step, step,
+                                          line_search_beta, direction, slope):
+        initial_mu = starting_point
+        new_mu = initial_mu + step * direction
+        if not np.allclose(np.linalg.norm(new_mu - parameter_space.clip(new_mu).to_numpy()), 0.):
+            return False
+
+        output_error = surrogate.estimate_output_error(new_mu)
+        if (current_value <= initial_value - (initial_step / step) * np.linalg.norm(new_mu - initial_mu)**2
+            and output_error / abs(current_value) <= radius):
             return True
         return False
 
@@ -161,7 +174,8 @@ def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, r
                     maxiter=maxiter_subproblem, rtol_output=rtol_output, rtol_mu=rtol_mu, tol_sub=tol_sub,
                     line_search_params=line_search_params, stagnation_window=stagnation_window,
                     stagnation_threshold=stagnation_threshold, error_aware=True,
-                    error_criterion=error_aware_line_search_criterion)
+                    error_criterion=error_aware_bfgs_criterion,
+                    line_search_error_criterion=error_aware_line_search_criterion)
 
             # first BFGS iterate is AGC point
             index = 1 if len(sub_data['mus']) > 1 else 0
