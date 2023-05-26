@@ -11,3 +11,4 @@ pyMOR Tutorials
     tutorial_mor_with_anns
     tutorial_optimization
     tutorial_external_solver
+    tutorial_interact
