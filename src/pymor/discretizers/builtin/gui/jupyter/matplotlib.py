@@ -42,8 +42,8 @@ class PatchVisualizer(BasicObject):
 
         axs = []
         plots = []
-        for i in range(1, len(U)+1):
-            ax = fig.add_subplot(rows, columns, i)
+        for i in range(len(U)):
+            ax = fig.add_subplot(rows, columns, i+1)
             if legend:
                 ax.set_title(legend[i])
             plot = MatplotlibPatchAxes(ax, grid, bounding_box=bounding_box, codim=codim)
