@@ -3,10 +3,9 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import warnings
+from functools import partial
 
 import numpy as np
-
-from functools import partial
 
 from pymor.algorithms.line_search import armijo, constrained_armijo
 from pymor.core.defaults import defaults

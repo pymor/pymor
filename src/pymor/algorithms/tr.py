@@ -48,9 +48,9 @@ def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, r
         |parameter values| `mu`. Otherwise a |ParameterSpace| with lower bound -1
         and upper bound 1.
     initial_guess
-        If not `None`, |parameter values| instance containing an initial guess for the solution `mu`.
-        Otherwise, random |parameter values| from the parameter space are chosen as the
-        initial value.
+        If not `None`, |parameter values| instance containing an initial guess for the
+        solution `mu`. Otherwise, random |parameter values| from the parameter space are
+        chosen as the initial value.
     beta
         The factor to check if the current |parameter values| are close to the
         trust region boundary.
@@ -258,6 +258,9 @@ def trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, r
     data['update_norms'] = np.array(update_norms)
     data['foc_norms'] = np.array(foc_norms)
     data['iterations'] = iteration
+    data['fom_evaluations'] = surrogate.fom_evaluations
+    data['rom_evaluations'] = surrogate.rom_evaluations
+    data['enrichments'] = surrogate.enrichments
 
     return mu, data
 
@@ -270,6 +273,10 @@ class TRSurrogate(BasicObject):
 
     def __init__(self, reductor, initial_guess):
         self.__auto_init(locals())
+
+        self.fom_evaluations = 0
+        self.rom_evaluations = 0
+        self.enrichments = 0
 
         # generate a first rom if none was given
         self.fom = reductor.fom
@@ -288,12 +295,15 @@ class TRSurrogate(BasicObject):
         self.new_rom = None
 
     def fom_output(self, mu):
+        self.fom_evaluations += 1
         return self.fom.output(mu)[0, 0]
 
     def fom_gradient(self, mu):
+        self.fom_evaluations += 1
         return self.fom.parameters.parse(self.fom.output_d_mu(mu)).to_numpy()
 
     def rom_output(self, mu):
+        self.rom_evaluations += 1
         return self.rom.output(mu)[0, 0]
 
     def estimate_output_error(self, mu):
@@ -309,6 +319,7 @@ class TRSurrogate(BasicObject):
         """
         with self.logger.block('Trying to extend the basis...'):
             U_h_mu = self.fom.solve(mu)
+            self.fom_evaluations += 1
             self.new_reductor = deepcopy(self.reductor)
             try:
                 self.new_reductor.extend_basis(U_h_mu)
@@ -321,6 +332,7 @@ class TRSurrogate(BasicObject):
         assert self.new_rom is not None, 'No new ROM found. Did you forget to call surrogate.extend()?'
         assert self.new_rom.output_functional is not None
         assert self.new_rom.output_functional.range.dim == 1
+        self.rom_evaluations += 1
         return self.new_rom.output(mu)[0, 0]
 
     def accept(self):
@@ -333,6 +345,7 @@ class TRSurrogate(BasicObject):
         self.reductor = self.new_reductor
         self.new_rom = None
         self.new_reductor = None
+        self.enrichments += 1
 
     def reject(self):
         """Reject the new ROM.
