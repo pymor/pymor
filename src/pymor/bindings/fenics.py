@@ -141,7 +141,7 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace):
 
     @property
     def dim(self):
-        return df.Function(self.V).vector().size()
+        return int(df.Function(self.V).vector().size())
 
     def __eq__(self, other):
         return type(other) is FenicsVectorSpace and self.V == other.V and self.id == other.id

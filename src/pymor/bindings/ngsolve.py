@@ -96,7 +96,7 @@ class NGSolveVectorSpace(ComplexifiedListVectorSpace):
 
     @property
     def dim(self):
-        return self.V.ndofglobal * self.value_dim
+        return int(self.V.ndofglobal * self.value_dim)
 
     @classmethod
     def space_from_vector_obj(cls, vec, id):

@@ -655,7 +655,7 @@ class NumpyListVectorSpace(ListVectorSpace):
     vector_type = NumpyVector
 
     def __init__(self, dim, id=None):
-        self.dim = dim
+        self._dim = dim
         self.id = id
 
     def __eq__(self, other):

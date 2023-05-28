@@ -830,7 +830,7 @@ class VectorSpace(ImmutableObject):
     """
 
     id = None
-    dim = None
+    _dim = None
     is_scalar = False
 
     @abstractmethod
@@ -969,6 +969,10 @@ class VectorSpace(ImmutableObject):
         A |VectorArray| with `data` as data.
         """
         raise NotImplementedError
+
+    @property
+    def dim(self):
+        return int(self._dim)
 
     def __eq__(self, other):
         return other is self
