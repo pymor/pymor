@@ -28,8 +28,6 @@ def armijo(f, starting_point, direction, grad=None, initial_value=None, alpha_in
         Gradient of `f` in the point `starting_point` as either a |VectorArray| or a |NumPy array|.
     initial_value
         Value of `f` in the point `starting_point`.
-    alpha_init
-        Initial step size that is gradually reduced.
     tau
         The fraction by which the step size is reduced in each iteration.
     beta
@@ -45,7 +43,7 @@ def armijo(f, starting_point, direction, grad=None, initial_value=None, alpha_in
     iteration
         Number of total Armijo line search iterations.
     """
-    def _unconstrained_armijo_condition(starting_point, initial_value, current_value, alpha_init, alpha, beta,
+    def _unconstrained_armijo_condition(starting_point, initial_value, current_value, alpha, beta,
                                         direction, slope):
         return current_value < initial_value + alpha * beta * slope
 
@@ -75,8 +73,6 @@ def constrained_armijo(f, starting_point, direction, armijo_condition=None, grad
         Gradient of `f` in the point `starting_point` as either a |VectorArray| or a |NumPy array|.
     initial_value
         Value of `f` in the point `starting_point`.
-    alpha_init
-        Initial step size that is gradually reduced.
     tau
         The fraction by which the step size is reduced in each iteration.
     beta
@@ -166,7 +162,7 @@ def _armijo(f, starting_point, direction, armijo_condition, grad=None, initial_v
         # Compute new function value
         current_value = f(starting_point + alpha * direction)
         # Check the Armijo condition
-        if armijo_condition(starting_point, initial_value, current_value, alpha_init, alpha, beta, direction, slope):
+        if armijo_condition(starting_point, initial_value, current_value, alpha, beta, direction, slope):
             break
 
         # Check if maxiter is reached

@@ -5,14 +5,15 @@
 import numpy as np
 import pytest
 
-from pymor.algorithms.tr import trust_region
+from pymor.algorithms.tr import DualTRSurrogate, SimpleTRSurrogate, trust_region
 from pymor.core.exceptions import TRError
 from pymor.parameters.functionals import MinThetaParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymordemos.linear_optimization import create_fom
 
 
-def test_tr():
+@pytest.mark.parametrize('surrogate_cls', [SimpleTRSurrogate, DualTRSurrogate])
+def test_tr(surrogate_cls):
     fom, mu_bar = create_fom(10)
     mu_opt = [1.42454, np.pi]
     parameter_space = fom.parameters.space(0, np.pi)
@@ -21,13 +22,15 @@ def test_tr():
     reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
 
     # successful run
-    mu_opt_tr, data = trust_region(reductor, parameter_space, radius=.1, initial_guess=initial_guess)
+    surrogate = surrogate_cls(reductor, initial_guess)
+    mu_opt_tr, data = trust_region(surrogate, parameter_space, radius=.1, initial_guess=initial_guess)
     assert len(data['mus']) == 4
     assert np.allclose(mu_opt_tr, mu_opt)
 
     # failing run
     # reset reductor
+    surrogate = surrogate_cls(reductor, initial_guess)
     reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
     with pytest.raises(TRError):
-        mu, _ = trust_region(reductor, parameter_space, radius=.1, initial_guess=initial_guess,
+        mu, _ = trust_region(surrogate, parameter_space, radius=.1, initial_guess=initial_guess,
                              maxiter=10, rtol_output=1e-6, rtol_mu=1e-6)
