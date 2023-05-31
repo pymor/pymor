@@ -314,7 +314,7 @@ class ProjectToSubbasisRules(RuleTable):
     def _add_suffix(op):
         if op.name == op.__class__.__name__:
             return None
-        return op.name + '_projected'
+        return op.name
 
     @match_class(LincombOperator, SelectionOperator)
     def action_recurse(self, op):
