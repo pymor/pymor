@@ -79,7 +79,7 @@ common = '''
 .. |OnedGrid| replace:: :class:`~pymor.discretizers.builtin.grids.oned.OnedGrid`
 .. |RectGrid| replace:: :class:`~pymor.discretizers.builtin.grids.rect.RectGrid`
 .. |TriaGrid| replace:: :class:`~pymor.discretizers.builtin.grids.tria.TriaGrid`
-.. |GmshGrid| replace:: :class:`~pymor.discretizers.builtin.grids.gmsh.GmshGrid`
+.. |UnstructuredTriangleGrid| replace:: :class:`~pymor.discretizers.builtin.grids.unstructured.UnstructuredTriangleGrid`
 
 .. |NumpyVectorArray| replace:: :class:`~pymor.vectorarrays.numpy.NumpyVectorArray`
 .. |NumpyVectorArrays| replace:: :class:`NumpyVectorArrays <pymor.vectorarrays.numpy.NumpyVectorArray>`
