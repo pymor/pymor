@@ -20,7 +20,7 @@ from pymor.operators.constructions import (
     VectorArrayOperator,
     ZeroOperator,
 )
-from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiciralInterpolatedOperator
+from pymor.operators.ei import EmpiricalInterpolatedOperator, ProjectedEmpiricalInterpolatedOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -209,7 +209,7 @@ class ProjectRules(RuleTable):
         else:
             projected_collateral_basis = op.collateral_basis
 
-        return ProjectedEmpiciralInterpolatedOperator(op.restricted_operator, op.interpolation_matrix,
+        return ProjectedEmpiricalInterpolatedOperator(op.restricted_operator, op.interpolation_matrix,
                                                       NumpyVectorSpace.make_array(source_basis.dofs(op.source_dofs)),
                                                       projected_collateral_basis, op.triangular, None, op.name)
 
@@ -334,8 +334,8 @@ class ProjectToSubbasisRules(RuleTable):
         source_space = op.source if dim_source is None else NumpyVectorSpace(dim_source)
         return ZeroOperator(range_space, source_space, name=op.name)
 
-    @match_class(ProjectedEmpiciralInterpolatedOperator)
-    def action_ProjectedEmpiciralInterpolatedOperator(self, op):
+    @match_class(ProjectedEmpiricalInterpolatedOperator)
+    def action_ProjectedEmpiricalInterpolatedOperator(self, op):
         if not isinstance(op.projected_collateral_basis.space, NumpyVectorSpace):
             raise NotImplementedError
 
@@ -347,7 +347,7 @@ class ProjectToSubbasisRules(RuleTable):
         old_sbd = op.source_basis_dofs
         source_basis_dofs = NumpyVectorSpace.make_array(old_sbd.to_numpy()[:self.dim_source])
 
-        return ProjectedEmpiciralInterpolatedOperator(restricted_operator, op.interpolation_matrix,
+        return ProjectedEmpiricalInterpolatedOperator(restricted_operator, op.interpolation_matrix,
                                                       source_basis_dofs, projected_collateral_basis, op.triangular,
                                                       solver_options=op.solver_options, name=op.name)
 
