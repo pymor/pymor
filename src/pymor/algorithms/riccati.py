@@ -51,8 +51,11 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     - A and E are real |Operators|,
     - B, C and S are real |VectorArrays| from `A.source`,
     - R is a real |NumPy array|,
-    - (E, A, B, C) is stabilizable and detectable, and    #TODO condition when S!=0 ?
-    - R is symmetric positive definite.
+    - E is nonsingular,
+    - (E, A, B, C) is stabilizable and detectable,
+    - R is symmetric positive definite, and
+    - :math:`B B^T - S^T R^{-1} S` (:math:`C^T C - S R^{-1} S^T`) is
+      positive semi-definite if trans is `False` (`True`).
 
     For large-scale problems, we additionally assume that `len(B)` and
     `len(C)` are small.
@@ -157,8 +160,11 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None,
     We assume:
 
     - A, E, B, C, R, S are real |NumPy arrays|,
-    - (E, A, B, C) is stabilizable and detectable, and    #TODO condition when S!=0 ?
-    - R is symmetric positive definite.
+    - E is nonsingular,
+    - (E, A, B, C) is stabilizable and detectable,
+    - R is symmetric positive definite, and
+    - :math:`B B^T - S^T R^{-1} S` (:math:`C^T C - S R^{-1} S^T`) is
+      positive semi-definite if trans is `False` (`True`).
 
     If the solver is not specified using the options argument, a solver
     backend is chosen based on availability in the following order:
