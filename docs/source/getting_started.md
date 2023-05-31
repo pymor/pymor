@@ -116,7 +116,7 @@ fom_tb.visualize(U - Urec)
 
 ## Balanced Truncation for LTI System
 
-Here we consider a syntetic linear time-invariant (LTI) system of the form
+Here we consider a synthetic linear time-invariant (LTI) system of the form
 
 $$
 \begin{align*}
@@ -171,11 +171,16 @@ _ = err_lti.transfer_function.mag_plot(w)
 
 ## Learning More
 
-As a next step, you should read our {ref}`technical_overview` which discusses the
-most important concepts and design decisions behind pyMOR. You can also follow our
-growing set of {doc}`tutorials`, which focus on specific aspects of pyMOR.
+You can find more details on the above approaches,
+and even more,
+in the {doc}`tutorials`.
+Specific questions are answered in the {doc}`howtos` and
+[GitHub discussions](https://github.com/pymor/pymor/discussions).
+The {ref}`technical_overview` provides discussion on fundamental pyMOR concepts
+and design decisions.
 
 Should you have any problems regarding pyMOR, questions or
-[feature requests](<https://github.com/pymor/pymor/issues>), do not hesitate
-to contact us via
-[GitHub discussions](<https://github.com/pymor/pymor/discussions>)!
+[feature requests](https://github.com/pymor/pymor/issues),
+do not hesitate to contact us via
+[GitHub discussions](https://github.com/pymor/pymor/discussions)
+or [email](mailto:main.developers@pymor.org)!
