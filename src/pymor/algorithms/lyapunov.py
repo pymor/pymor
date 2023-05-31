@@ -15,7 +15,7 @@ _DEFAULT_LYAP_SOLVER_BACKEND = FrozenDict(
         'cont': FrozenDict(
             {
                 'sparse': 'lradi',
-                'dense': 'slycot' if config.HAVE_SLYCOT else 'scipy',
+                'dense': 'slycot' if config.HAVE_SLYCOT else 'pymepack' if config.HAVE_PYMEPACK else 'scipy',
             }
         ),
         'disc': FrozenDict({'dense': 'slycot' if config.HAVE_SLYCOT else 'scipy'}),
@@ -286,6 +286,13 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
         from pymor.bindings.scipy import solve_lyap_dense as solve_lyap_impl
     elif backend == 'slycot':
         from pymor.bindings.slycot import solve_lyap_dense as solve_lyap_impl
+<<<<<<< HEAD
+=======
+    elif backend == 'pymess':
+        from pymor.bindings.pymess import solve_lyap_dense as solve_lyap_impl
+    elif backend == 'pymepack':
+        from pymor.binding.pymepack import solve_lyap_dense as solve_lyap_impl
+>>>>>>> d6c0198a8 (pymepack binding: cont lyap dense)
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
     return solve_lyap_impl(A, E, B, trans=trans, cont_time=True, options=options)

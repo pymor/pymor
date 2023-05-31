@@ -29,6 +29,7 @@ cont_lyap_lrcf_solver_list = [
 cont_lyap_dense_solver_list = [
     'scipy',
     'slycot_bartels-stewart',
+    'pymepack_gelyap',
 ]
 disc_lyap_dense_solver_list = [
     'scipy',
