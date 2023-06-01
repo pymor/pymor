@@ -209,6 +209,12 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
             found = nr_converged < nwanted and nres < tol
 
             if found:
+                if np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
+                    schurvec = schurvec.real
+                    lschurvec = lschurvec.real
+                    theta = np.real(theta)
+                    nres = nrr
+
                 poles = np.append(poles, theta)
                 logger.info(f'Pole: {theta:.5e}')
 
