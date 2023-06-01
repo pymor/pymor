@@ -89,5 +89,11 @@ Replace `RELEASE_TAG` below with the actual release tag.
 - [ ] Bump version in main branch to NEXT_TARGET_TAG.dev0.
 - [ ] All developers check if (stale) branches can be pruned.
 - [ ] All developers check for `.mailmap` correctness.
+
+    This file is up-to-date if the command
+    `git log --format="%aN <%aE>" | sort -u`
+    gives no duplicates.
+
+    See the manpage of `git-shortlog` for details (`git help shortlog`).
 - [ ] Remove deprecated features in main in `pymor/pymor`.
       (Omit in case of a bugfix release.)

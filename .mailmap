@@ -1,11 +1,3 @@
-# Prevent git from showing duplicate names with commands like "git shortlog"
-# See the manpage of git-shortlog for details (git help shortlog).
-#
-# This file is up-to-date if the command git log --format="%aN <%aE>" | sort -u
-# gives no duplicates.
-#
-# The list below should be sorted alphabetically.
-
 Alexandre Pasco <103425970+alexandre-pasco@users.noreply.github.com>
 Art Pelling <a.pelling@tu-berlin.de> <account@artpelling.de>
 Art Pelling <a.pelling@tu-berlin.de> Art J. R. Pelling <a.pelling@tu-berlin.de>
