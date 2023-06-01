@@ -5,14 +5,13 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.core.base import BasicObject
-from pymor.core.cache import cached
+from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
 from pymor.models.transfer_function import TransferFunction
 from pymor.tools.random import new_rng
 
 
-class LoewnerReductor(BasicObject):
+class LoewnerReductor(CacheableObject):
     """Reductor based on Loewner interpolation framework.
 
     The reductor implements interpolation based on the Loewner framework as in :cite:`ALI17`.
@@ -44,6 +43,8 @@ class LoewnerReductor(BasicObject):
         - Tuple `(ltd, rtd)` where `ltd` corresponds to left and `rtd` to right tangential
           directions.
     """
+
+    cache_region = 'memory'
 
     def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, mimo_handling='random'):
         assert isinstance(s, np.ndarray)
@@ -96,8 +97,6 @@ class LoewnerReductor(BasicObject):
             self.dim_input = 1
 
         self.__auto_init(locals())
-        self.loewner_svds = None
-        self.loewner_quadruple = None
 
     def reduce(self, r=None, tol=1e-7):
         """Reduce using Loewner framework.
@@ -117,18 +116,12 @@ class LoewnerReductor(BasicObject):
         rom
             Reduced |LTIModel|.
         """
-        if self.loewner_svds is None:
-            L, Ls, V, W = self.construct_loewner_quadruple()
+        L, Ls, V, W = self.loewner_quadruple()
 
-            LhLs = np.hstack([L, Ls])
-            Y, S1, _ = spla.svd(LhLs, full_matrices=False)
-            LvLs = np.vstack([L, Ls])
-            _, S2, Xh = spla.svd(LvLs, full_matrices=False)
-            self.loewner_svds = (Y, S1, S2, Xh)
-            self.loewner_quadruple = (L, Ls, V, W)
-        else:
-            Y, S1, S2, Xh = self.loewner_svds
-            L, Ls, V, W = self.loewner_quadruple
+        LhLs = np.hstack([L, Ls])
+        Y, S1, _ = spla.svd(LhLs, full_matrices=False)
+        LvLs = np.vstack([L, Ls])
+        _, S2, Xh = spla.svd(LvLs, full_matrices=False)
 
         r1 = len(S1[S1/S1[0] > tol])
         r2 = len(S2[S2/S2[0] > tol])
@@ -217,7 +210,7 @@ class LoewnerReductor(BasicObject):
                 return (idx_split[0], idx_split[1])
 
     @cached
-    def construct_loewner_quadruple(self):
+    def loewner_quadruple(self):
         r"""Constructs a Loewner quadruple as |NumPy arrays|.
 
         The Loewner quadruple :cite:`ALI17`
@@ -243,8 +236,6 @@ class LoewnerReductor(BasicObject):
         ip, jp = self._partition_frequencies() if isinstance(self.partitioning, str) else self.partitioning
 
         if self.dim_input == self.dim_output == 1:
-            print(self.Hs.shape)
-            print(self.s.shape)
             L = self.Hs[ip][:, np.newaxis] - self.Hs[jp]
             L /= self.s[ip][:, np.newaxis] - self.s[jp]
             Ls = (self.s[ip] * self.Hs[ip])[:, np.newaxis] - self.s[jp] * self.Hs[jp]
