@@ -12,6 +12,8 @@ repos:
     -   id: check-added-large-files
     -   id: debug-statements
         exclude: "src/pymor/algorithms/rules.py"
+    -   id: file-contents-sorter
+        files: ^\.mailmap$
     -   id: pretty-format-json
         args: [--autofix]
 - repo: https://github.com/astral-sh/ruff-pre-commit
