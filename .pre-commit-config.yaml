@@ -25,6 +25,10 @@ repos:
   rev: v0.8.1
   hooks:
   - id: markdownlint-cli2
+- repo: https://github.com/jumanjihouse/pre-commit-hooks
+  rev: 3.0.0
+  hooks:
+  - id: check-mailmap
 ci:
   autofix_prs: false
   autoupdate_schedule: quarterly
