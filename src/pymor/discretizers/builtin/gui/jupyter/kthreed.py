@@ -10,7 +10,7 @@ config.require('MATPLOTLIB')
 
 import k3d
 import numpy as np
-from ipywidgets import GridspecLayout, IntSlider, Label, Layout, VBox, jslink
+from ipywidgets import GridBox, GridspecLayout, IntSlider, Label, Layout, VBox, jslink
 from k3d.plot import Plot as K3DPlot
 from matplotlib.cm import get_cmap
 from matplotlib.colors import Colormap
@@ -90,6 +90,7 @@ class VectorArrayPlot(K3DPlot):
                              color_map=np.array(color_map, np.float32),
                              wireframe=False,
                              compression_level=0,
+                             side='double',
                              **{('attribute' if codim == 2 else 'triangles_attribute'): self.data})
 
         self += self.mesh
@@ -162,8 +163,6 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
 
     legend = (legend,) if isinstance(legend, str) else legend
     assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
-    if legend is None:
-        legend = (None,) * len(U)
 
     if separate_colorbars:
         color_ranges = [[np.min(u), np.max(u)] for u in U]
@@ -176,7 +175,7 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
             if not separate_colorbars:
                 scale_factors = np.full(len(U), np.max(scale_factors))
             bb = grid.bounding_box()
-            scale_factors = np.max(bb[1] - bb[0]) / scale_factors
+            scale_factors = np.max(bb[1] - bb[0]) / (3 * scale_factors)
         else:
             scale_factors = [scale_factor] * len(U)
     else:
@@ -191,25 +190,25 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                              warp=sf,
                              bounding_box=bounding_box,
                              height=height,
-                             background_color=background_color)
+                             background_color=background_color,
+                             name='foo')
              for u, cr, sf in zip(U, color_ranges, scale_factors)]
 
     for p in plots[1:]:
         jslink((plots[0], 'camera'), (p, 'camera'))
 
-    if len(plots) > 1:
-        rows = int(np.ceil(len(plots) / columns))
-        plot_widget = GridspecLayout(rows, columns, width='100%')
-        for (i, j), p, l in zip(np.ndindex(rows, columns), plots, legend):
-            if l is None:
-                w = p
-            else:
-                p.layout.width = '100%'
-                w = VBox([Label(l), p], layout=Layout(align_items='center'))
-            plot_widget[i, j] = w
+    rows = int(np.ceil(len(plots) / columns))
+    if legend is None:
+        plot_widget = GridspecLayout(rows, columns if len(U) > 1 else 1, width='100%')
+        for (i, j), p in zip(np.ndindex(rows, columns), plots):
+            plot_widget[i, j] = p
     else:
-        plot_widget = plots[0]
-        plot_widget.layout.width = '100%'
+        plot_widget = GridspecLayout(rows*2, columns if len(U) > 1 else 1, width='100%')
+        for (i, j), p, l in zip(np.ndindex(rows, columns), plots, legend):
+            p.layout.width = '100%'
+            plot_widget[2*i,   j] = Label(l, layout=Layout(display='flex', justify_content='center', justify_self='center'))
+            plot_widget[2*i+1, j] = p
+        plot_widget.layout.grid_template_rows=' '.join(['auto'] * rows * 2)
 
     main_widget = []
     if title is not None:
