@@ -32,6 +32,3 @@ else
 fi
 
 cat out.env
-
-# makes sure mailmap is up-to-date
-./.ci/gitlab/check_mailmap.py ./.mailmap
