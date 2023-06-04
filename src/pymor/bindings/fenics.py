@@ -525,6 +525,7 @@ class FenicsOperator(Operator):
 
 
 class RestrictedFenicsOperator(Operator):
+    """Restricted :class:`FenicsOperator`."""
 
     linear = False
 
