@@ -42,9 +42,10 @@ def project(op, range_basis, source_basis, product=None):
     orthogonal projection onto `span(c_i)`.
 
     From another point of view, if `op` is viewed as a bilinear form
-    (see :meth:`apply2`) and `( ⋅, ⋅ )` is the Euclidean inner
-    product, then `op_proj` represents the matrix of the bilinear form restricted
-    to `span(b_i) / span(c_i)` (w.r.t. the `b_i/c_i` bases).
+    (see :meth:`~pymor.operators.interface.Operator.apply2`) and `( ⋅, ⋅ )` is
+    the Euclidean inner product, then `op_proj` represents the matrix of the
+    bilinear form restricted to `span(b_i) / span(c_i)` (w.r.t. the `b_i/c_i`
+    bases).
 
     How the projection is realized will depend on the given |Operator|.
     While a projected |NumpyMatrixOperator| will

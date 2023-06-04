@@ -55,6 +55,7 @@ def to_matrix(op, format=None, mu=None):
 
 
 class ToMatrixRules(RuleTable):
+    """|RuleTable| for the :func:`to_matrix` algorithm."""
 
     def __init__(self, format, mu):
         super().__init__()
