@@ -10,7 +10,7 @@ config.require('MATPLOTLIB')
 
 import k3d
 import numpy as np
-from ipywidgets import GridspecLayout, IntSlider, Label, Layout, VBox, jslink
+from ipywidgets import GridspecLayout, HBox, IntSlider, Label, Layout, Play, VBox, jslink
 from k3d.plot import Plot as K3DPlot
 from matplotlib.cm import get_cmap
 from matplotlib.colors import Colormap
@@ -218,10 +218,17 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
     main_widget.append(plot_widget)
 
     if len(U[0]) > 1:
-        slider = IntSlider(0, 0, len(U[0])-1)
+        play = Play(min=None, max=len(U[0])-1)
+        animation_slider = IntSlider(0, 0, len(U[0])-1, layout=Layout(flex='1'))
+        speed = IntSlider(value=100, min=10, max=1000, description='speed:', readout=False,
+                          layout=Layout(flex='0.5'))
+        jslink((play, 'value'), (animation_slider, 'value'))
+        jslink((speed, 'value'), (play, 'interval'))
+        controls = HBox([play, animation_slider, speed])
+
         for p in plots:
-            jslink((p, 'time'), (slider, 'value'))
-        main_widget.append(slider)
+            jslink((p, 'time'), (animation_slider, 'value'))
+        main_widget.append(controls)
 
     main_widget = VBox(main_widget, layout=Layout(align_items='center'))
 
