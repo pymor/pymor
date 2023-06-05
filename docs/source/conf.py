@@ -187,6 +187,8 @@ html_sidebars = {
 #    'index': 'indexcontent.html',
 # }
 
+html_css_files = ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0/css/all.min.css']
+
 # If false, no module index is generated.
 html_use_modindex = True
 
