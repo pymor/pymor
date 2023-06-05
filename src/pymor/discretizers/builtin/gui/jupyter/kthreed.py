@@ -105,7 +105,7 @@ class VectorArrayPlot(K3DPlot):
         self.menu_visibility = False
         self.axes_helper = 0
         center = np.hstack([(bounding_box[1] + bounding_box[0]) / 2, 0.])
-        radius = np.max(bounding_box[1] - bounding_box[0]) / 2
+        radius = (np.max(bounding_box[1] - bounding_box[0]) / 2) * 1.1
 
         FOV = 46
         camera_pos = center + np.array([0., 0., radius/np.tan(np.deg2rad(FOV/2))])
