@@ -26,5 +26,5 @@ jobs:
             \`\`\`shell
             make ci_requirements
             \`\`\`
-            and commit the changed files to ensure that CI runs with the updateded dependencies.`
+            and commit the changed files to ensure that CI runs with the updated dependencies.`
             })
