@@ -10,7 +10,7 @@ config.require('MATPLOTLIB')
 
 import k3d
 import numpy as np
-from ipywidgets import GridBox, GridspecLayout, IntSlider, Label, Layout, VBox, jslink
+from ipywidgets import GridspecLayout, IntSlider, Label, Layout, VBox, jslink
 from k3d.plot import Plot as K3DPlot
 from matplotlib.cm import get_cmap
 from matplotlib.colors import Colormap
@@ -191,8 +191,7 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                              warp=sf,
                              bounding_box=bounding_box,
                              height=height,
-                             background_color=background_color,
-                             name='foo')
+                             background_color=background_color)
              for u, cr, sf in zip(U, color_ranges, scale_factors)]
 
     for p in plots[1:]:
@@ -207,7 +206,8 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
         plot_widget = GridspecLayout(rows*2, columns if len(U) > 1 else 1, width='100%')
         for (i, j), p, l in zip(np.ndindex(rows, columns), plots, legend):
             p.layout.width = '100%'
-            plot_widget[2*i,   j] = Label(l, layout=Layout(display='flex', justify_content='center', justify_self='center'))
+            plot_widget[2*i,   j] = Label(l, layout=Layout(display='flex', justify_content='center',
+                                                           justify_self='center'))
             plot_widget[2*i+1, j] = p
         plot_widget.layout.grid_template_rows=' '.join(['auto'] * rows * 2)
 
