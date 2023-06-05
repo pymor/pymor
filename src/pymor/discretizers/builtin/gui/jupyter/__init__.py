@@ -22,13 +22,9 @@ _extension_loaded = False
 
 @defaults('backend')
 def get_visualizer(backend='MPL'):
-    if backend not in ('py3js', 'MPL', 'k3d'):
+    if backend not in ('MPL', 'k3d'):
         raise ValueError
-    if backend == 'py3js' and config.HAVE_PYTHREEJS:
-        from pymor.discretizers.builtin.gui.jupyter.threejs import visualize_py3js
-        return visualize_py3js
-    elif backend == 'k3d':
-        assert config.HAVE_K3D
+    if backend == 'k3d':
         from pymor.discretizers.builtin.gui.jupyter.kthreed import visualize_k3d
         return visualize_k3d
     else:
@@ -104,32 +100,3 @@ def unload_ipython_extension(ipython):
     ipython.events.unregister('pre_run_cell', redirect_logging.start)
     ipython.events.unregister('post_run_cell', redirect_logging.stop)
     _extension_loaded = False
-
-def _transform_vertex_index_data(codim, coordinates, grid, subentities):
-    import numpy as np
-
-    from pymor.discretizers.builtin.grids.referenceelements import triangle
-
-    if grid.reference_element == triangle:
-        if codim == 2:
-            vertices = np.zeros((len(coordinates), 3))
-            vertices[:, :-1] = coordinates
-            indices = subentities
-        else:
-            vertices = np.zeros((len(subentities) * 3, 3))
-            VERTEX_POS = coordinates[subentities]
-            vertices[:, 0:2] = VERTEX_POS.reshape((-1, 2))
-            indices = np.arange(len(subentities) * 3, dtype=np.uint32)
-    else:
-        if codim == 2:
-            vertices = np.zeros((len(coordinates), 3))
-            vertices[:, :-1] = coordinates
-            indices = np.vstack((subentities[:, 0:3], subentities[:, [0, 2, 3]]))
-        else:
-            num_entities = len(subentities)
-            vertices = np.zeros((num_entities * 6, 3))
-            VERTEX_POS = coordinates[subentities]
-            vertices[0:num_entities * 3, 0:2] = VERTEX_POS[:, 0:3, :].reshape((-1, 2))
-            vertices[num_entities * 3:, 0:2] = VERTEX_POS[:, [0, 2, 3], :].reshape((-1, 2))
-            indices = np.arange(len(subentities) * 6, dtype=np.uint32)
-    return indices, vertices
