@@ -30,12 +30,12 @@ Replace `RELEASE_TAG` below with the actual release tag.
 - [ ] Use `hatch version` to update `__version__` in `sr/pymor/__init__.py`. Merge into release branch.
 - [ ] Run
 
-      ```bash
-      rm -r ./dist  # ensure that we do not accidentally publish old wheels
-      hatch build
-      ```
+    ```bash
+    rm -r ./dist  # ensure that we do not accidentally publish old wheels
+    hatch build
+    ```
 
-      to generate release sdist and wheel. Check that versions are correct.
+    to generate release sdist and wheel. Check that versions are correct.
 - [ ] Tag commit in release branch as `RELEASE_TAG`.
       Use an annotated tag (`git tag -a RELEASE_TAG -m RELEASE_TAG`) with the
       annotation being `RELEASE_TAG`.
@@ -47,17 +47,17 @@ Replace `RELEASE_TAG` below with the actual release tag.
       (Should, for some reason, CI fail to produce correct setup, manually push release tags to
       registry using
 
-      ```bash
-      make ci_images_pull
-      make TARGET_TAG=RELEASE_TAG ci_images_push
-      ```
+    ```bash
+    make ci_images_pull
+    make TARGET_TAG=RELEASE_TAG ci_images_push
+    ```
 
-      and update `Dockerfile` in TARGET_TAG branch of `pymor/docs` manually.)
+    and update `Dockerfile` in TARGET_TAG branch of `pymor/docs` manually.)
 - [ ] Publish wheel to PyPI using
 
-      ```bash
-      hatch publish
-      ```
+    ```bash
+    hatch publish
+    ```
 - [ ] Update homepage
       (`gh-pages` branch in `pymor/pymor`, similar to changes in `README.md`).
 - [ ] Check if the [docs](https://docs.pymor.org) got updated to point to new release.
