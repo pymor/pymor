@@ -58,8 +58,8 @@ class VectorArrayPlot(K3DPlot):
                 vertices[num_entities * 3:, 0:2] = VERTEX_POS[:, [0, 2, 3], :].reshape((-1, 2))
                 indices = np.arange(len(subentities) * 6, dtype=np.uint32)
 
-
         vertices = np.array(vertices, dtype=np.float32)
+        indices = np.array(indices, dtype=np.uint32)
 
         self.data = {}
         self.vertices = {} if warp else vertices
@@ -83,7 +83,7 @@ class VectorArrayPlot(K3DPlot):
 
         self.idx = 0
         self.mesh = k3d.mesh(vertices=self.vertices,
-                             indices=np.array(indices, np.uint32),
+                             indices=indices,
                              color=0x0000FF,
                              opacity=1.0,
                              color_range=color_range,
@@ -92,8 +92,22 @@ class VectorArrayPlot(K3DPlot):
                              compression_level=0,
                              side='double',
                              **{('attribute' if codim == 2 else 'triangles_attribute'): self.data})
-
         self += self.mesh
+
+        if warp:
+            line_vertices = np.hstack([coordinates.astype(np.float32),
+                                       np.zeros((len(coordinates), 1), dtype=np.float32)])
+            line_indices = np.array(subentities, dtype=np.float32)  # indices trait is float32
+            line_indices = np.repeat(line_indices, 2, axis=1)[:,1:]
+            line_indices = np.hstack([line_indices, line_indices[:,0:1]]).ravel()
+            self.lines = k3d.lines(vertices=line_vertices,
+                                   indices=line_indices,
+                                   indices_type='segment',
+                                   shader='simple',
+                                   color=0x444444,
+                                   opacity=0.1,)
+            self += self.lines
+
         self.time = 0
 
         if not warp:
