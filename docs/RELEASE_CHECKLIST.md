@@ -4,13 +4,13 @@
 
 - [ ] Bump all CI requirements to current versions:
 
-      ```bash
-      rm requirements-ci-current.txt requirements-ci-fenics.txt conda-lock.yml
-      make ci_requirements
-      ```
+    ```bash
+    rm requirements-ci-current.txt requirements-ci-fenics.txt conda-lock.yml
+    make ci_requirements
+    ```
 
-      Commit all changes.
-      Before proceeding, wait until changes are merged.
+    Commit all changes.
+    Before proceeding, wait until changes are merged.
 - [ ] Check if all tutorials are rendered correctly.
 - [ ] Check if binder links are functional.
 - [ ] Use `hatch build` to create wheel. `pip install` wheel (including extras) into new venv.
