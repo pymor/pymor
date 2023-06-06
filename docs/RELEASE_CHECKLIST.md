@@ -59,6 +59,7 @@ Replace `RELEASE_TAG` below with the actual release tag.
     ```bash
     hatch publish
     ```
+    
 - [ ] Update homepage
       (`gh-pages` branch in `pymor/pymor`, similar to changes in `README.md`).
 - [ ] Check if the [docs](https://docs.pymor.org) got updated to point to new release.
