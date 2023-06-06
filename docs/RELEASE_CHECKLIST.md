@@ -13,7 +13,8 @@
     Before proceeding, wait until changes are merged.
 - [ ] Check if all tutorials are rendered correctly.
 - [ ] Check if binder links are functional.
-- [ ] Use `hatch build` to create wheel. `pip install` wheel (including extras) into new venv.
+- [ ] Use `hatch build` to create wheel (`pip install hatch` or install pyMOR with `dev` extras).
+      `pip install` wheel (including extras) into new venv.
       Check if installation is working as expected.
 
 ## Release day
