@@ -5,13 +5,13 @@
 
 import numpy as np
 from matplotlib import pyplot as plt
-from typer import Option, run
+from typer import run, Option
 
 from pymor.models.iosys import PHLTIModel
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
 
 
-def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
+def msd(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
     """Mass-spring-damper model as (port-Hamiltonian) linear time-invariant system.
 
     Taken from :cite:`GPBV12`.
@@ -57,15 +57,20 @@ def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
         the ph |NumPy array| E, if `as_lti` is `False`.
     """
     n = int(n / 2)
-    m = 1
 
     A = np.array(
         [[0, 1 / m_i, 0, 0, 0, 0], [-k_i, -c_i / m_i, k_i, 0, 0, 0],
          [0, 0, 0, 1 / m_i, 0, 0], [k_i, 0, -2 * k_i, -c_i / m_i, k_i, 0],
          [0, 0, 0, 0, 0, 1 / m_i], [0, 0, k_i, 0, -2 * k_i, -c_i / m_i]])
 
-    B = np.array([[0, 1, 0, 0, 0, 0]]).T
-    C = np.array([[0, 1 / m_i, 0, 0, 0, 0]])
+    if m == 2:
+        B = np.array([[0, 1, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0]]).T
+        C = np.array([[0, 1 / m_i, 0, 0, 0, 0], [0, 0, 0, 1 / m_i, 0, 0]])
+    elif m == 1:
+        B = np.array([[0, 1, 0, 0, 0, 0]]).T
+        C = np.array([[0, 1 / m_i, 0, 0, 0, 0]])
+    else:
+        assert False
 
     J_i = np.array([[0, 1], [-1, 0]])
     J = np.kron(np.eye(3), J_i)
@@ -110,55 +115,47 @@ def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
     if as_lti:
         return A, B, C, D, E
 
-    # Shift Q on LHS
-    E = Q.T @ E
-    J = Q.T @ J @ Q
-    R = Q.T @ R @ Q
-    G = Q.T @ G
-    P = Q.T @ P
-
-    return J, R, G, P, S, N, E
+    return J, R, G, P, S, N, E, Q
 
 
 def main(
         n: int = Option(100, help='Order of the Mass-Spring-Damper system.'),
-        r: int = Option(20, help='Order of the reduced model.')
+        m: int = Option(2, help='Number of inputs and outputs of the Mass-Spring-Damper system.')
 ):
-    J, R, G, P, S, N, E = msd(n)
+    J, R, G, P, S, N, E, Q = msd(n, m)
 
-    fom = PHLTIModel.from_matrices(J, R, G, P, S, N, E)
+    fom = PHLTIModel.from_matrices(J, R, G, Q=Q)
 
-    phirka = PHIRKAReductor(fom)
-    rom = phirka.reduce(r)
+    # J = Q.T @ J @ Q
+    # R = Q.T @ R @ Q
+    # G = Q.T @ G
+    #
+    # fom = PHLTIModel.from_matrices(J, R, G)
 
-    # Magnitude plot
-    w = (1e-2, 1e8)
-    fig, ax = plt.subplots()
-    fom.transfer_function.mag_plot(w, ax=ax, label='FOM')
-    rom.transfer_function.mag_plot(w, ax=ax, linestyle='--', label='ROM')
-    _ = ax.legend()
+    h2 = fom.h2_norm()
+
+    phirka = PHIRKAReductor(fom.to_berlin_form())
+
+    reductors = {'pH-IRKA': phirka}
+    markers = {'pH-IRKA': 's'}
+
+    reduced_order = range(2, 22, 2)
+    h2_errors = np.zeros((len(reductors), len(reduced_order)))
+
+    for i, reductor in enumerate(reductors):
+        for j, r in enumerate(reduced_order):
+            rom = reductors[reductor].reduce(r)
+
+            h2_errors[i, j] = (rom - fom).h2_norm() / h2
+
+    plt.figure()
+    for i, reductor in enumerate(reductors):
+        plt.semilogy(reduced_order, h2_errors[i], label=reductor, marker=markers[reductor])
+
+    plt.ylabel('Relative $\mathcal{H}_2$-error')
+    plt.xlabel('Reduced order r')
+    plt.legend()
     plt.show()
-
-    # Poles
-    poles = fom.poles()
-    poles_lti = rom.poles()
-
-    fig, ax = plt.subplots()
-    ax.scatter(poles_lti.real, poles_lti.imag, marker='x', label='LTI')
-    ax.scatter(poles.real, poles.imag, marker='o', facecolors='none', edgecolor='orange', label='PH')
-    ax.set_title('Poles')
-    ax.legend()
-    ax.set(xlabel=r'Re($\lambda$)', ylabel=r'Im($\lambda$)')
-    plt.show()
-
-    err = fom - rom
-    err.transfer_function.mag_plot(w)
-    plt.show()
-
-    print(f'Relative Hinf error:   {err.hinf_norm() / fom.hinf_norm():.3e}')
-    print(f'Relative H2 error:     {err.h2_norm() / fom.h2_norm():.3e}')
-    print(f'Relative Hankel error: {err.hankel_norm() / fom.hankel_norm():.3e}')
-
 
 if __name__ == '__main__':
     run(main)
