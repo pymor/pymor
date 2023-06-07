@@ -1777,10 +1777,6 @@ class PHLTIModel(LTIModel):
             return super().__add__(other)
 
         assert self.S.source == other.S.source
-        assert self.S.range == other.S.range
-
-        assert self.N.source == other.N.source
-        assert self.N.range == other.N.range
 
         J = BlockDiagonalOperator([self.J, other.J])
         R = BlockDiagonalOperator([self.R, other.R])
