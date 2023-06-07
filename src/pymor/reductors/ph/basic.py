@@ -1,6 +1,7 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+import numpy as np
 
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.models.iosys import PHLTIModel
@@ -25,6 +26,7 @@ class PHLTIPGReductor(ProjectionBasedReductor):
         assert isinstance(fom, PHLTIModel)
 
         W = fom.Q.apply(V)
+        # .lincomb(np.linalg.inv(fom.Q.apply2(V, V)))
 
         super().__init__(fom, {'W': W, 'V': V})
         self.E_biorthonormal = E_biorthonormal
@@ -34,8 +36,9 @@ class PHLTIPGReductor(ProjectionBasedReductor):
         W = self.bases['W']
         V = self.bases['V']
         projected_operators = {'E': None if self.E_biorthonormal else project(fom.E, W, V),
-                               'J': project(fom.J, W, V),
-                               'R': project(fom.R, W, V),
+                               'J': project(fom.J, W, W),
+                               'R': project(fom.R, W, W),
+                               # 'Q': project(fom.Q, V, V),
                                'G': project(fom.G, W, None),
                                'P': project(fom.P, W, None),
                                'S': fom.S,
@@ -50,6 +53,7 @@ class PHLTIPGReductor(ProjectionBasedReductor):
         projected_operators = {'E': None if self.E_biorthonormal else project_to_subbasis(rom.E, dim, dim),
                                'J': project_to_subbasis(rom.J, dim, dim),
                                'R': project_to_subbasis(rom.R, dim, dim),
+                               'Q': project_to_subbasis(rom.Q, dim, dim),
                                'G': project_to_subbasis(rom.B, dim, None),
                                'P': project_to_subbasis(rom.P, dim, None),
                                'S': rom.S,
