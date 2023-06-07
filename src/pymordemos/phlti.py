@@ -126,15 +126,9 @@ def main(
 
     fom = PHLTIModel.from_matrices(J, R, G, Q=Q)
 
-    # J = Q.T @ J @ Q
-    # R = Q.T @ R @ Q
-    # G = Q.T @ G
-    #
-    # fom = PHLTIModel.from_matrices(J, R, G)
-
     h2 = fom.h2_norm()
 
-    phirka = PHIRKAReductor(fom.to_berlin_form())
+    phirka = PHIRKAReductor(fom)
 
     reductors = {'pH-IRKA': phirka}
     markers = {'pH-IRKA': 's'}
