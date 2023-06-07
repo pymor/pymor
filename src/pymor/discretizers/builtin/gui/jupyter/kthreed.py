@@ -22,7 +22,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 class VectorArrayPlot(K3DPlot):
-    def __init__(self, grid, U, codim, color_range, color_map, warp, bounding_box, *args, **kwargs):
+    def __init__(self, grid, U, codim, color_range, color_map, warp, bounding_box, show_mesh, *args, **kwargs):
         bounding_box = grid.bounding_box() if bounding_box is None else np.asarray(bounding_box)
         assert bounding_box.shape == (2, 2)
 
@@ -94,7 +94,7 @@ class VectorArrayPlot(K3DPlot):
                              **{('attribute' if codim == 2 else 'triangles_attribute'): self.data})
         self += self.mesh
 
-        if warp:
+        if warp and show_mesh:
             line_vertices = np.hstack([coordinates.astype(np.float32),
                                        np.zeros((len(coordinates), 1), dtype=np.float32)])
             line_indices = np.array(subentities, dtype=np.float32)  # indices trait is float32
@@ -131,7 +131,7 @@ class VectorArrayPlot(K3DPlot):
 @defaults('warp_by_scalar', 'scale_factor', 'background_color')
 def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                   separate_colorbars=False, rescale_colorbars=False, columns=2,
-                  warp_by_scalar=True, scale_factor='auto', height=300,
+                  warp_by_scalar=True, scale_factor='auto', show_mesh=True, height=300,
                   color_map=get_cmap('viridis'), background_color=0xffffff):
     """Generate a k3d Plot for scalar data associated to a two-dimensional |Grid|.
 
@@ -203,6 +203,7 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                              color_range=cr,
                              color_map=color_map,
                              warp=sf,
+                             show_mesh=show_mesh,
                              bounding_box=bounding_box,
                              height=height,
                              background_color=background_color)
