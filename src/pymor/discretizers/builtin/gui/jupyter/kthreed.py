@@ -163,8 +163,21 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
     columns
         The number of columns in the visualizer GUI in case multiple plots are displayed
         at the same time.
+    warp_by_scalar
+        If `True`, visualize as a surface where the z-coordinate is determined by `U`.
+    scale_factor
+        If `warp_by_scalar` is enabled, the factor by which the values in `U` are scaled
+        to obtain the z-coordinate. If set to `'auto'`, the scale factor is determined
+        from the minimum/maximum values in `U` and the `bounding_box`.
+    show_mesh
+        If `True` and `warp_by_scalar` is enabled, additionally visualize the mesh in the
+        (z=0)-plane.
+    height
+        Height of the subplots in pixels.
     color_map
-        a Matplotlib Colormap object or a K3D array((step, r, g, b))
+        Matplotlib `Colormap` object or a K3D array((step, r, g, b)).
+    background_color
+        Background color of the plot.
     """
     if rescale_colorbars:
         raise NotImplementedError
