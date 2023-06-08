@@ -104,6 +104,8 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     assert model.output_functional.range.dim == 1
     output = lambda m: model.output(m)[0, 0]
 
+    logger.info(f'Started projected BFGS algorithm for {model.output_functional}.')
+
     if parameter_space is None:
         logger.warn('No parameter space given. Assuming uniform parameter bounds of (-1, 1).')
         parameter_space = model.parameters.space(-1., 1.)
@@ -127,7 +129,6 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     eps = np.linalg.norm(gradient)
 
     # compute norms
-    mu_norm = np.linalg.norm(mu)
     update_norms = []
     foc_norms = []
     line_search_iterations = []
@@ -207,10 +208,11 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         with warnings.catch_warnings():
             # ignore division-by-zero warnings when solution_norm or output is zero
             warnings.filterwarnings('ignore', category=RuntimeWarning)
-            logger.info(f'it:{iteration} '
-                        f'foc:{first_order_criticality:.3e} '
-                        f'upd:{update_norm:.3e} '
-                        f'rel_upd:{update_norm / mu_norm:.3e} ')
+
+        logger.info(f'it:{iteration} '
+                    f'foc:{first_order_criticality:.3e} '
+                    f'upd:{update_norm:.3e} '
+                    f'rel_upd:{update_norm / mu_norm:.3e} ')
 
         if not np.isfinite(update_norm) or not np.isfinite(mu_norm):
             raise BFGSError('Failed to converge.')
