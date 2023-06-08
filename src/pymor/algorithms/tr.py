@@ -107,6 +107,7 @@ def trust_region(surrogate, parameter_space=None, initial_guess=None, beta=.95, 
     assert shrink_factor != 0.
 
     logger = getLogger('pymor.algorithms.tr.trust_region')
+    logger.info(f'Started error-aware adaptive TR algorithm for {surrogate.fom.output_functional}.')
 
     reductor = surrogate.reductor
 
@@ -316,23 +317,22 @@ class TRSurrogate(BasicObject):
         pass
 
     def extend(self, mu):
-        """Try to extend the current ROM for new |parameter values|.
+        """Extend the current ROM for new |parameter values|.
 
         Parameters
         ----------
         mu
             The `Mu` instance for which an extension is computed.
         """
-        with self.logger.block('Trying to extend the basis...'):
+        with self.logger.block('Extending the basis...'):
             U_h_mu = self.fom.solve(mu)
             self.fom_evaluations += 1
             self.new_reductor = deepcopy(self.reductor)
             try:
                 self.new_reductor.extend_basis(U_h_mu)
-                self.new_rom = self.new_reductor.reduce()
             except Exception:
                 self.new_reductor = self.reductor
-                self.new_rom = self.rom
+            self.new_rom = self.new_reductor.reduce()
 
     def new_rom_output(self, mu):
         assert self.new_rom is not None, 'No new ROM found. Did you forget to call surrogate.extend()?'
@@ -377,9 +377,7 @@ class SimpleTRSurrogate(TRSurrogate):
     """
 
     def estimate_output_error(self, mu):
-        pr_err = self.rom.estimate_error(mu)
-        U_mu = self.rom.solve(mu)
-
+        U_mu, pr_err = self.rom.solve(mu, return_error_estimate=True)
         return pr_err * (2 * self.rom.l2_norm(U_mu) + pr_err)
 
 
@@ -409,7 +407,7 @@ class DualTRSurrogate(TRSurrogate):
             for d in range(self.fom.dim_output):
                 dual_problem = self.fom.with_(operator=self.fom.operator.H, rhs=jacobian.H.as_range_array(mu)[d])
                 P_h_mu = dual_problem.solve(mu)
-                dual_solutions.append(U_h_mu)
+                dual_solutions.append(P_h_mu)
 
             self.fom_evaluations += 1 + self.fom.dim_output
             self.new_reductor = deepcopy(self.reductor)
@@ -425,8 +423,7 @@ class DualTRSurrogate(TRSurrogate):
             self.new_rom = self.new_reductor.reduce()
 
     def estimate_output_error(self, mu):
-        pr_err = self.rom.estimate_error(mu)
-        U_mu = self.rom.solve(mu)
+        U_mu, pr_err = self.rom.solve(mu, return_error_estimate=True)
 
         jacobian = self.rom.output_functional.jacobian(U_mu, self.rom.parameters.parse(mu))
         dual_sols = self.rom.solution_space.empty()
@@ -441,6 +438,7 @@ class DualTRSurrogate(TRSurrogate):
         j_h = jac_h.as_vector(mu)
         res_terms = dual_terms - j_h
         riesz = self.reductor.products['RB'].apply_inverse(res_terms)
+        # Note: these are also fom_evaluations
         dual_estimate = np.sqrt(self.reductor.products['RB'].apply2(riesz, riesz))
         errs = (dual_estimate + pr_err) * pr_err
         return errs
