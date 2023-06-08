@@ -29,8 +29,8 @@ def test_tr(surrogate_cls):
 
     # failing run
     # reset reductor
-    surrogate = surrogate_cls(reductor, initial_guess)
     reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
+    surrogate = surrogate_cls(reductor, initial_guess)
     with pytest.raises(TRError):
         mu, _ = trust_region(surrogate, parameter_space, radius=.1, initial_guess=initial_guess,
                              maxiter=10, rtol_output=1e-6, rtol_mu=1e-6)
