@@ -394,6 +394,36 @@ class DualTRSurrogate(TRSurrogate):
         The `parameter values` instance containing an initial guess for the optimal parameter value.
     """
 
+    def extend(self, mu):
+        """Extend the current ROM for new |parameter values| with primal and dual solutions.
+
+        Parameters
+        ----------
+        mu
+            The `Mu` instance for which an extension is computed.
+        """
+        with self.logger.block('Extending the basis with primal and dual...'):
+            U_h_mu = self.fom.solve(mu)
+            jacobian = self.fom.output_functional.jacobian(U_h_mu, self.fom.parameters.parse(mu))
+            dual_solutions = self.fom.solution_space.empty()
+            for d in range(self.fom.dim_output):
+                dual_problem = self.fom.with_(operator=self.fom.operator.H, rhs=jacobian.H.as_range_array(mu)[d])
+                P_h_mu = dual_problem.solve(mu)
+                dual_solutions.append(U_h_mu)
+
+            self.fom_evaluations += 1 + self.fom.dim_output
+            self.new_reductor = deepcopy(self.reductor)
+            try:
+                self.new_reductor.extend_basis(U_h_mu)
+            except Exception:
+                self.new_reductor = self.reductor
+            # it can happen that primal is successful but duals are not.
+            try:
+                self.new_reductor.extend_basis(dual_solutions)
+            except Exception:
+                pass
+            self.new_rom = self.new_reductor.reduce()
+
     def estimate_output_error(self, mu):
         pr_err = self.rom.estimate_error(mu)
         U_mu = self.rom.solve(mu)
