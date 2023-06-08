@@ -19,6 +19,29 @@ from pymor.core.defaults import defaults
 
 @defaults('Q', 'Z', 'hess', 'block_size', 'solver', 'inplace')
 def pymepack_gelyap_solver_options(Q = None, Z = None, hess = None, block_size = None, solver = None, inplace = None):
+    """Return customized options for the pymepack.gelyap and pymepack.gglyap solvers.
+    If no values are specified, pymepack uses its default settings.
+    Refer to the `pymepack` documentation for default values.
+
+    Parameters
+    ----------
+    Q
+        See `pymepack.gelyap`, `pymepack.gglyap`.
+    Z
+        See `pymepack.gglyap`.
+    hess
+        See `pymepack.gelyap`, `pymepack.gglyap`.
+    block_size
+        See `pymepack.gelyap`, `pymepack.gglyap`.
+    solver
+        See `pymepack.gelyap`, `pymepack.gglyap`.
+    inplace
+        See `pymepack.gelyap`, `pymepack.gglyap`.
+
+    Returns
+    -------
+    Dictionary of customized solver options to be used instead of the default values for the pymepack backend.
+    """
     gelyap_opts = {}
     if Q: gelyap_opts['Q']= Q
     if Z: gelyap_opts['Z'] = Z
@@ -35,6 +58,31 @@ def pymepack_gelyap_refine_solver_options(AS = None, BS = None, Q = None,
                                           Z = None, X = None,
                                           max_it = None, tau = None, 
                                           block_size = None, solver = None):
+    """Return preconfigured options for the pymepack.gelyap_refine and pymepack.gglyap_refine solvers.
+    If no values are specified, pymepack uses its default settings.
+    Refer to the `pymepack` documentation for default values.
+
+    Parameters
+    ----------
+    AS
+        See `pymepack.gelyap_refine`, pymepack.gglyap_refine`.
+    BS
+        See `pymepack.gglyap_refine`.
+    Q
+        See `pymepack.gelyap_refine`, `pymepack.gglyap_refine`.
+    Z
+        See `pymepack.gglyap_refine`.
+    X
+        See `pymepack.gelyap_refine`, `pymepack.gglyap_refine`.
+    block_size
+        See `pymepack.gelyap_refine`, `pymepack.gglyap_refine`.
+    solver
+        See `pymepack.gelyap_refine`, `pymepack.gglyap_refine`.
+
+    Returns
+    -------
+    Dictionary of preconfigured solver options to be used instead of the default values for the pymepack backend.
+    """
     gelyap_refine_opts = {}
     if AS: gelyap_refine_opts['AS'] = AS
     if BS: gelyap_refine_opts['BS'] = BS
@@ -51,11 +99,11 @@ def pymepack_gelyap_refine_solver_options(AS = None, BS = None, Q = None,
 
 
 def lyap_lrcf_solver_options():
-    """Return available Lyapunov solvers with default options for the pymepack backend.
+    """Return available Lyapunov solvers with preconfigured options for the pymepack backend.
 
     Returns
     -------
-    A dict of available solvers with default solver options.
+    A dict of available solvers with preconfigured solver options.
     """
     return {
             'pymepack_gelyap': {'type': 'pymepack_gelyap',
@@ -67,10 +115,33 @@ def lyap_lrcf_solver_options():
 def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
+    See
+
     - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf`
     - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_lrcf`
 
     for a general description.
+
+    This function uses `pymepack.gelyap` (if `E is None`) and `pymepack.gglyap` (if `E is not None`),
+    which are dense solvers. If options specify a solver with iterative refinement, `pymepack.gelyap_refine` 
+    and `pymepack.gglyap_refine` are used in the aforementioned cases respectively. We assume A and E can
+    be converted to |NumPy arrays| using :func:`~pymor.algorithms.to_matrix.to_matrix` and that
+    `B.to_numpy` is implemented.
+
+    Parameters
+    ----------
+    A
+        The non-parametric |Operator| A.
+    E
+        The non-parametric |Operator| E or `None`.
+    B
+        The operator B as a |VectorArray| from `A.source`.
+    trans
+        Whether the first |Operator| in the Lyapunov equation is transposed.
+    cont_time
+        Whether the continuous- or discrete-time Lyapunov equation is solved.
+    options
+        The solver options to use (see :func:`lyap_lrcf_solver_options`).
 
     Returns
     -------
@@ -92,7 +163,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     return A.source.from_numpy(Z.T)
 
 def lyap_dense_solver_options():
-    """Return available Lyapunov solvers with default options for the slycot backend.
+    """Return available Lyapunov solvers with preconfigured options for the slycot backend.
 
     Returns
     -------
@@ -115,8 +186,24 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
 
     for a general description.
 
-    This function uses `slycot.sb03md` (if `E is None`) and `slycot.sg03ad` (if `E is not None`),
-    which are based on the Bartels-Stewart algorithm.
+    This function uses `pymepack.gelyap` (if `E is None`) and `pymepack.gglyap` (if `E is not None`),
+    which are dense solvers. If options specify a solver with iterative refinement, `pymepack.gelyap_refine`
+    and `pymepack.gglyap_refine` are used in the aforementioned cases respectively.
+
+    Parameters
+    ----------
+    A
+        The matrix A as a 2D |NumPy array|.
+    E
+        The matrix E as a 2D |NumPy array| or `None`.
+    B
+        The matrix B as a 2D |NumPy array|.
+    trans
+        Whether the first matrix in the Lyapunov equation is transposed.
+    cont_time
+        Whether the continuous- or discrete-time Lyapunov equation is solved.
+    options
+        The solver options to use (see :func:`lyap_dense_solver_options`).
 
     Returns
     -------
