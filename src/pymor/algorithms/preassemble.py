@@ -10,8 +10,8 @@ from pymor.operators.constructions import (
     ConcatenationOperator,
     LincombOperator,
     ProjectedOperator,
+    QuadraticFunctional,
     SelectionOperator,
-    QuadraticFunctional
 )
 from pymor.operators.interface import Operator
 
