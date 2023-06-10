@@ -381,10 +381,7 @@ class Mu(FrozenDict):
 
     def __add__(self, other):
         if not isinstance(other, Mu):
-            try:
-                other = self.parameters.parse(other)
-            except Exception:
-                raise NotImplementedError
+            other = self.parameters.parse(other)
         assert self.keys() == other.keys()
         return Mu({key: self[key] + other[key] for key in self})
 
