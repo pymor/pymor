@@ -1042,5 +1042,5 @@ def test_pickle(vector_array):
 
 
 def test_space_dim():
-    space = NumpyVectorSpace(5.)
-    assert isinstance(space.dim, int)
+    with pytest.raises(TypeError):
+        _ = NumpyVectorSpace(5.)

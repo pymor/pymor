@@ -217,7 +217,7 @@ class NumpyVectorSpace(VectorSpace):
     """
 
     def __init__(self, dim, id=None):
-        self._dim = dim
+        self.dim = dim
         self.id = id
 
     def __eq__(self, other):

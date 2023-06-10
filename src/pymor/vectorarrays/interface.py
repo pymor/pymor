@@ -972,7 +972,13 @@ class VectorSpace(ImmutableObject):
 
     @property
     def dim(self):
-        return int(self._dim)
+        return self._dim
+
+    @dim.setter
+    def dim(self, dim):
+        if not isinstance(dim, int):
+            raise TypeError(f'unsupported dtype={type(dim)}')
+        self._dim = dim
 
     def __eq__(self, other):
         return other is self

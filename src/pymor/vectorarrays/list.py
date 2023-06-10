@@ -524,7 +524,6 @@ class ListVectorArray(VectorArray):
 class ListVectorSpace(VectorSpace):
     """|VectorSpace| of |ListVectorArrays|."""
 
-    dim = None
     vector_type = Vector
 
     @abstractmethod
@@ -655,7 +654,7 @@ class NumpyListVectorSpace(ListVectorSpace):
     vector_type = NumpyVector
 
     def __init__(self, dim, id=None):
-        self._dim = dim
+        self.dim = dim
         self.id = id
 
     def __eq__(self, other):

@@ -138,10 +138,7 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace):
 
     def __init__(self, V, id='STATE'):
         self.__auto_init(locals())
-
-    @property
-    def dim(self):
-        return int(df.Function(self.V).vector().size())
+        self.dim = df.Function(self.V).vector().size()
 
     def __eq__(self, other):
         return type(other) is FenicsVectorSpace and self.V == other.V and self.id == other.id

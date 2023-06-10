@@ -79,6 +79,7 @@ class NGSolveVectorSpace(ComplexifiedListVectorSpace):
 
     def __init__(self, V, id='STATE'):
         self.__auto_init(locals())
+        self.dim = self.V.ndofglobal * self.value_dim
 
     def __eq__(self, other):
         return type(other) is NGSolveVectorSpace and self.V == other.V and self.id == other.id
@@ -93,10 +94,6 @@ class NGSolveVectorSpace(ComplexifiedListVectorSpace):
             return u[0].dim
         else:
             return u.dim
-
-    @property
-    def dim(self):
-        return int(self.V.ndofglobal * self.value_dim)
 
     @classmethod
     def space_from_vector_obj(cls, vec, id):
