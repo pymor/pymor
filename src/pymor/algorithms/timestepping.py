@@ -76,7 +76,7 @@ class TimeStepper(ImmutableObject):
         for U_n, _ in iterator:
             U.append(U_n)
         return U
- #
+
     @abstractmethod
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         """Iterate time-stepper to the equation.
