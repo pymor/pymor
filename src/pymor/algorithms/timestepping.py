@@ -36,6 +36,19 @@ class TimeStepper(ImmutableObject):
     this interface.
     """
 
+    @abstractmethod
+    def estimate_time_step_number(self, initial_time, end_time):
+        """Estimate the number of time steps.
+
+        Parameters
+        ----------
+        initial_time
+            The time at which to begin time-stepping.
+        end_time
+            The time until which to perform time-stepping.
+        """
+        pass
+
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         """Apply time-stepper to the equation.
 
@@ -70,9 +83,10 @@ class TimeStepper(ImmutableObject):
         -------
         |VectorArray| containing the solution trajectory.
         """
+        num_time_steps = self.estimate_time_step_number(initial_time, end_time)
         iterator = self.iterate(initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass, mu=mu,
                                 num_values=num_values)
-        U = operator.source.empty(reserve=num_values if num_values is not None else 1)
+        U = operator.source.empty(reserve=min(num_time_steps, num_values) if num_values else num_time_steps)
         for U_n, _ in iterator:
             U.append(U_n)
         return U
@@ -138,6 +152,9 @@ class ImplicitEulerTimeStepper(TimeStepper):
 
     def __init__(self, nt, solver_options='operator'):
         self.__auto_init(locals())
+
+    def estimate_time_step_number(self, initial_time, end_time):
+        return self.nt + 1
 
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         A, F, M, U0, t0, t1, nt = operator, rhs, mass, initial_data, initial_time, end_time, self.nt
@@ -220,6 +237,9 @@ class ExplicitEulerTimeStepper(TimeStepper):
     def __init__(self, nt):
         self.__auto_init(locals())
 
+    def estimate_time_step_number(self, initial_time, end_time):
+        return self.nt + 1
+
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         if mass is not None:
             raise NotImplementedError
@@ -301,6 +321,9 @@ class ImplicitMidpointTimeStepper(TimeStepper):
 
     def __init__(self, nt, solver_options='operator'):
         self.__auto_init(locals())
+
+    def estimate_time_step_number(self, initial_time, end_time):
+        return self.nt + 1
 
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         if not operator.linear:
@@ -386,6 +409,9 @@ class DiscreteTimeStepper(TimeStepper):
 
     def __init__(self):
         pass
+
+    def estimate_time_step_number(self, initial_time, end_time):
+        return end_time - initial_time + 1
 
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         A, F, M, U0, k0, k1 = operator, rhs, mass, initial_data, initial_time, end_time
