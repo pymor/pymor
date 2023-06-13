@@ -15,12 +15,12 @@ repos:
     -   id: pretty-format-json
         args: [--autofix]
 - repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: 'v0.0.270'
+  rev: 'v0.0.272'
   hooks:
     - id: ruff
       args: ["--fix"]
 - repo: https://github.com/DavidAnson/markdownlint-cli2
-  rev: v0.7.1
+  rev: v0.8.1
   hooks:
   - id: markdownlint-cli2
 ci:
