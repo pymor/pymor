@@ -11,14 +11,23 @@ from pymor.algorithms.lyapunov import solve_cont_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.algorithms.lyapunov import _chol
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.reductors.h2 import IRKAReductor
-from pymor.reductors.bt import BTReductor
 
 class SpectralFactorReductor(BasicObject):
     r"""
     Passivity preserving model reduction via spectral factorization.
 
-    See :cite:`BU22`.
+    See :cite:`BU22` (Algorithm 4).
+
+    Parameters
+    ----------
+    fom
+        The passive full-order |LTIModel| to reduce. 
+        
+        - The system must be minimal and asymptotically stable.
+        - For the feed-through matrix :math:`D`, it must hold that
+          :math:`D+D^T` is nonsingular.
+    mu
+        |Parameter values|.
     """
 
     def __init__(self, fom, mu=None):
@@ -29,49 +38,82 @@ class SpectralFactorReductor(BasicObject):
         self.fom = fom
         self.mu = mu
 
-    def reduce(self, r=None):
-        # TODO Use operators directly instead of converting to dense matrix
-        # TODO where possible.
+    def reduce(self, r_fn, X=None, compute_errors=False, check_stability=True):
+        r"""Reduce system by reducing its spectral factor.
+
+        Parameters
+        ----------
+        r_fn
+            A |Callable| which takes two arguments
+            - spectral_factor |LTIModel|
+            - mu |Parameter values|
+            and returns an |LTIModel| reduced-order model for the supplied spectral
+            factor.
+            
+            For example, a possible choice to obtain a reduced-order model of order 10 is
+            `lambda spectral_factor,mu : IRKAReductor(spectral_factor,mu).reduce(10)`
+            or
+            `lambda spectral_factor,mu : BTReductor(spectral_factor,mu).reduce(10)`.
+
+            The method should preserve asymptotic stability.
+        X
+            A solution to the Riccati equation
+
+              .. math::
+                A^T X E + E^T X A
+                + (C^T - E^T X B) (D+D^T)^{-1} (C - B^T X E) = 0,
+
+            as a |NumPy array|, which in turn is used for computation of the spectral
+            factor.
+
+            If `None`, the minimal solution to the Riccati equation is computed
+            internally.
+        compute_errors
+            If `True`, the relative :math:`\mathcal{H}_2` error of the
+            reduced spectral factor is computed.
+        check_stability
+            If `True`, the stability of the reduced spectral factor is
+            checked. The stability is required to guarantee a positive definite
+            solution to the Lyapunov equation :cite:`BU22` (21).
+
+        Returns
+        -------
+        rom
+            Reduced passive |LTIModel| model.
+        """
+        if X is None:
+            # Compute minimal solution X to Riccati equation
+            Z = self.fom.gramian('pr_o_lrcf', mu=self.mu).to_numpy()
+            X = Z.T@Z
+        
+        # Compute Cholesky-like factorization of W(X)
         E = to_matrix(self.fom.E, format='dense')
-        A = to_matrix(self.fom.A, format='dense')
         B = to_matrix(self.fom.B, format='dense')
         C = to_matrix(self.fom.C, format='dense')
         D = to_matrix(self.fom.D, format='dense')
-
-        # Compute minimal X
-        Z = self.fom.gramian('pr_o_lrcf', mu=self.mu).to_numpy()
-        # TODO Add option to supply X from outside?
-        # TODO Do we really need to compute the full X out of the low-rank factor Z?
-        # TODO However, currently, `solve_pos_ricc_lrcf` uses a dense solver in
-        # TODO the background anyway?
-        X = Z.T@Z
-        
-        # Compute Cholesky-like factorization of W(X)
         M = _chol(D+D.T).T
-        # TODO Alternatives to taking matrix inverse?
         L = np.linalg.solve(M.T, C-B.T@X@E)
-        # TODO Currently, relative LTL error too high?
-        LTL = -A.T@X@E - X@A@E
-        relLTLerr = np.linalg.norm(L.T@L-LTL)/np.linalg.norm(LTL)
-        self.logger.info(f'Relative L^T*L error: {relLTLerr:.3e}')
-        LTM = C.T - E.T@X@B
-        relLTMerr = np.linalg.norm(L.T@M-LTM)/np.linalg.norm(LTM)
-        self.logger.info(f'Relative L^T*M error: {relLTMerr:.3e}')
+
+        if compute_errors:
+            A = to_matrix(self.fom.A, format='dense')
+            LTL = -A.T@X@E - X@A@E
+            relLTLerr = np.linalg.norm(L.T@L-LTL)/np.linalg.norm(LTL)
+            self.logger.info(f'Relative L^T*L error: {relLTLerr:.3e}')
+            LTM = C.T - E.T@X@B
+            relLTMerr = np.linalg.norm(L.T@M-LTM)/np.linalg.norm(LTM)
+            self.logger.info(f'Relative L^T*M error: {relLTMerr:.3e}')
 
         spectral_factor = LTIModel(self.fom.A, self.fom.B,
             NumpyMatrixOperator(L, source_id=self.fom.A.range.id),
             NumpyMatrixOperator(M, source_id=self.fom.B.source.id),
             self.fom.E)
         
-        # TODO Allow to set other reductor or reductor options from outside
-        irka = IRKAReductor(spectral_factor, self.mu)
-        spectral_factor_reduced = irka.reduce(r)
-        # bt = BTReductor(spectral_factor, self.mu)
-        # spectral_factor_reduced = bt.reduce(r, projection='sr')
+        spectral_factor_reduced = r_fn(spectral_factor, self.mu)
 
-        spectralH2err = spectral_factor_reduced - spectral_factor
-        self.logger.info('Relative H2 error of spectral factor: '
-            f'{spectralH2err.h2_norm() / spectral_factor.h2_norm():.3e}')
+        if compute_errors:
+            spectralH2err = spectral_factor_reduced - spectral_factor
+            self.logger.info('Relative H2 error of reduced spectral factor: '
+                f'{spectralH2err.h2_norm() / spectral_factor.h2_norm():.3e}')
 
         Er = to_matrix(spectral_factor_reduced.E, format='dense')
         Ar = to_matrix(spectral_factor_reduced.A, format='dense')
@@ -79,11 +121,11 @@ class SpectralFactorReductor(BasicObject):
         Lr = to_matrix(spectral_factor_reduced.C, format='dense')
         Mr = to_matrix(spectral_factor_reduced.D, format='dense')
 
-        # TODO Add flag if stability should be checked.
-        largest_pole = np.max(np.real(spectral_factor_reduced.poles()))
-        if largest_pole > 0:
-            self.logger.warn('Reduced system for spectral factor is not stable. '
-                             f'Real value of largest pole is {largest_pole}.')
+        if check_stability:
+            largest_pole = np.max(np.real(spectral_factor_reduced.poles()))
+            if largest_pole > 0:
+                self.logger.warn('Reduced system for spectral factor is not stable. '
+                                f'Real value of largest pole is {largest_pole}.')
 
         Dr = 0.5*(Mr.T @ Mr) + 0.5*(D-D.T)
 

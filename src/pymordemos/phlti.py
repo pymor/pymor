@@ -12,6 +12,7 @@ from pymor.reductors.bt import BTReductor, PRBTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
 from pymor.reductors.spectral_factor import SpectralFactorReductor
+from pymor.reductors.h2 import IRKAReductor
 
 
 def msd(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
@@ -142,6 +143,9 @@ def main(
     irka = IRKAReductor(fom)
     phirka = PHIRKAReductor(fom)
     spectralFactor = SpectralFactorReductor(fom)
+    def spectralFactor_reduce(r):
+        return spectralFactor.reduce(
+            lambda spectral_factor, mu : IRKAReductor(spectral_factor,mu).reduce(r))
 
     reductors = {'BT': bt, 'PRBT': prbt, 'IRKA': irka, 'pH-IRKA': phirka, 'spectralFactor': spectralFactor}
     markers = {'BT': '.', 'PRBT': 'x', 'IRKA': 'o', 'pH-IRKA': 's', 'spectralFactor': 'v'}
