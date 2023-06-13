@@ -12,50 +12,53 @@ from pymor.reductors.loewner import LoewnerReductor
 pytestmark = pytest.mark.builtin
 
 np.random.seed(0)
-custom_partitioning = np.random.permutation(10)
+custom_partitioning = np.random.permutation(40)
 
 test_data = [
-    ({'r': 3}, {}),
-    ({'tol': 1e-3}, {}),
-    ({'tol': 1e-3}, {'partitioning': 'even-odd'}),
-    ({'tol': 1e-3}, {'partitioning': 'half-half'}),
-    ({'tol': 1e-3}, {'partitioning': (custom_partitioning[:5], custom_partitioning[5:])}),
-    ({'tol': 1e-3}, {'ordering': 'magnitude'}),
-    ({'tol': 1e-3}, {'ordering': 'random'}),
-    ({'tol': 1e-3}, {'ordering': 'regular'}),
-    ({'tol': 1e-3}, {'conjugate': False}),
-    ({'tol': 1e-3}, {'mimo_handling': 'full'}),
-    ({'tol': 1e-3}, {'mimo_handling': 'random'}),
-    ({'tol': 1e-3}, {'mimo_handling': (np.random.rand(10, 3), np.random.rand(2, 10))})
+    ({'r': 20}, {}),
+    ({'tol': 1e-12}, {}),
+    ({'tol': 1e-12}, {'partitioning': 'even-odd'}),
+    ({'tol': 1e-12}, {'partitioning': 'half-half'}),
+    ({'tol': 1e-12}, {'partitioning': (custom_partitioning[:20], custom_partitioning[20:])}),
+    ({'tol': 1e-12}, {'ordering': 'magnitude'}),
+    ({'tol': 1e-12}, {'ordering': 'random'}),
+    ({'tol': 1e-12}, {'ordering': 'regular'}),
+    ({'tol': 1e-12}, {'conjugate': False}),
+    ({'tol': 1e-12}, {'mimo_handling': 'full'}),
+    ({'tol': 1e-12}, {'mimo_handling': 'random'}),
+    ({'tol': 1e-12}, {'mimo_handling': (np.random.rand(40, 3), np.random.rand(2, 40))})
 ]
 
 
 @pytest.mark.parametrize('reduce_kwargs,loewner_kwargs', test_data)
 def test_loewner_lti(reduce_kwargs, loewner_kwargs):
     fom = make_fom(10)
-    s = np.logspace(-2, 2, 10)*1j
+    s = np.logspace(1, 3, 40)*1j
     loewner = LoewnerReductor(s, fom, **loewner_kwargs)
     rom = loewner.reduce(**reduce_kwargs)
-    assert isinstance(rom, LTIModel)
+    assert np.all([np.abs(fom.transfer_function.eval_tf(ss) - rom.transfer_function.eval_tf(ss))
+        / np.abs(fom.transfer_function.eval_tf(ss)) < 1e-10 for ss in s])
 
 
 @pytest.mark.parametrize('reduce_kwargs,loewner_kwargs', test_data)
 def test_loewner_tf(reduce_kwargs, loewner_kwargs):
     fom = make_fom(10)
-    s = np.logspace(-2, 2, 10)*1j
+    s = np.logspace(1, 3, 40)*1j
     loewner = LoewnerReductor(s, fom.transfer_function, **loewner_kwargs)
     rom = loewner.reduce(**reduce_kwargs)
-    assert isinstance(rom, LTIModel)
+    assert np.all([np.abs(fom.transfer_function.eval_tf(ss) - rom.transfer_function.eval_tf(ss))
+        / np.abs(fom.transfer_function.eval_tf(ss)) < 1e-10 for ss in s])
 
 
 @pytest.mark.parametrize('reduce_kwargs,loewner_kwargs', test_data)
 def test_loewner_data(reduce_kwargs, loewner_kwargs):
     fom = make_fom(10)
-    s = np.logspace(-2, 2, 10)
+    s = np.logspace(1, 3, 40)
     Hs = fom.transfer_function.freq_resp(s)
     loewner = LoewnerReductor(s*1j, Hs, **loewner_kwargs)
     rom = loewner.reduce(**reduce_kwargs)
-    assert isinstance(rom, LTIModel)
+    assert np.all([np.abs(fom.transfer_function.eval_tf(ss) - rom.transfer_function.eval_tf(ss))
+        / np.abs(fom.transfer_function.eval_tf(ss)) < 1e-10 for ss in s])
 
 
 def make_fom(n):

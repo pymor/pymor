@@ -98,7 +98,7 @@ class LoewnerReductor(CacheableObject):
 
         self.__auto_init(locals())
 
-    def reduce(self, r=None, tol=1e-7):
+    def reduce(self, r=None, tol=1e-12):
         """Reduce using Loewner framework.
 
         Parameters
@@ -129,7 +129,7 @@ class LoewnerReductor(CacheableObject):
             if r1 != r2:
                 self.logger.warning(f'Mismatch in numerical rank of stacked Loewner matrices ({r1} and {r2}).'
                                     ' Consider increasing tol, specifying r or changing the partitioning.')
-                r = (r1 + r2) // 2
+                r = min(r1, r2)
             else:
                 r = r1
 
