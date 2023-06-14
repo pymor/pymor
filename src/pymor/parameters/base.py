@@ -277,6 +277,8 @@ class Mu(FrozenDict):
     """
 
     __slots__ = ('_raw_values')
+    __array_priority__ = 100.0
+    __array_ufunc__ = None
 
     def __new__(cls, *args, **kwargs):
         raw_values = dict(*args, **kwargs)
@@ -373,6 +375,31 @@ class Mu(FrozenDict):
             except Exception:
                 return False
         return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
+
+    def __neg__(self):
+        return Mu({key: -value for key, value in self.items()})
+
+    def __add__(self, other):
+        if not isinstance(other, Mu):
+            other = self.parameters.parse(other)
+        assert self.keys() == other.keys()
+        return Mu({key: self[key] + other[key] for key in self})
+
+    def __radd__(self, other):
+        return self + other
+
+    def __sub__(self, other):
+        return self + -other
+
+    def __rsub__(self, other):
+        return -self + other
+
+    def __mul__(self, other):
+        assert isinstance(other, Number)
+        return Mu({key: self[key] * other for key in self})
+
+    def __rmul__(self, other):
+        return self * other
 
     def __str__(self):
         def format_value(k, v):
