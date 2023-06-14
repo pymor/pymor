@@ -40,7 +40,7 @@ Replace `RELEASE_TAG` below with the actual release tag.
 - [ ] Tag commit in release branch as `RELEASE_TAG`.
       Use an annotated tag (`git tag -a RELEASE_TAG -m RELEASE_TAG`) with the
       annotation being `RELEASE_TAG`.
-      Push `RELEASE_TAG` to Github.
+      Push `RELEASE_TAG` to GitHub.
 - [ ] Wait for CI build for tagged commit to finish.
 - [ ] Check again that documentation for tagged commit (not release branch) is built correctly.
       Check that binder links work and `.binder/Dockerfile` in `pymor/docs@RELEASE_TAG` uses the

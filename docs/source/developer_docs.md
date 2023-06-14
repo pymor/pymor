@@ -151,13 +151,13 @@ All required or optional dependencies of pyMOR are specified in `pyproject.toml`
 
 We use [pip-compile](https://github.com/jazzband/pip-tools), to generate `requirements-ci-*.txt`
 files from these specifications, which contain pinned versions of all packaged installed into the
-respective Gitlab CI images.
+respective GitLab CI images.
 The extras included into the images are specified in `Makefile`.
 For the `oldest` CI image, `requirements-ci-oldest-pins.in` is used in addition, which pins some of
 pyMOR's core dependencies to the oldest version supported by pyMOR.
 Similarly to the `pip-compile` workflow, we use [conda-lock](https://github.com/conda/conda-lock)
 to create [conda-forge](https://conda-forge.org/) environment lock files that are used for the
-Github actions CI builds.
+GitHub actions CI builds.
 
 If you update pyMOR's dependencies, make sure to execute
 
@@ -209,7 +209,7 @@ Conversely, to disable all tests that only use pyMOR's builtin discretization to
 
 We use GitLab deployed at https://zivgitlab.uni-muenster.de/pymor/pymor as our main CI
 infrastructure.
-All CI stages are run in docker containers that are built and pushed to the Gitlab container
+All CI stages are run in docker containers that are built and pushed to the GitLab container
 registry using
 
 ```
@@ -230,7 +230,7 @@ Images corresponding to tagged commits are tagged with the respective git tag
 
 The main responsible of the `preflight` job is to compute the `sha256sum` of all
 `requirements-ci-*.txt` files in order to infer the tags of the CI images used for testing.
-It also queries Gitlab's container registry to check if the needed images are available.
+It also queries GitLab's container registry to check if the needed images are available.
 The results are saved in a
 [dotenv](https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdotenv)
 file to make them available as environment variables in later CI stages.
@@ -268,18 +268,18 @@ coverage html
 
 tag docker images
 : If the running pipeline corresponds to a push on `main` or a tagged commit (release), the used
-  CI images are tagged with either `main` or the corresponding git tag in Gitlab's container
+  CI images are tagged with either `main` or the corresponding git tag in GitLab's container
   registry.
   This will prevent these images from being removed during registry cleanup.
   In particular, this guarantees that the images are available for the binder setups linked in the
   online documentation.
 
-### Github Actions
+### GitHub Actions
 
 We use GitHub Actions to run some additional checks.
-This includes Conda-based MacOS and Windows test suite runs and management of Github labels.
+This includes Conda-based MacOS and Windows test suite runs and management of GitHub labels.
 Further, for PRs from external repositories, a local mirror branch is created and updated.
-This enables Gitlab CI runs those PRs.
+This enables GitLab CI runs those PRs.
 
 ### pre-commit.ci
 
