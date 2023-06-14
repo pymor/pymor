@@ -112,6 +112,8 @@ def interact(model, parameter_space, show_solution=True, visualizer=None):
     if show_solution:
         U = data['solution']
         visualizer = visualizer(U) if visualizer is not None else model.visualize(U, return_widget=True)
+        visualizer.layout.flex = '0.6'
+        right_pane.layout.flex = '0.4'
         widget = HBox([visualizer, right_pane])
     else:
         widget = right_pane

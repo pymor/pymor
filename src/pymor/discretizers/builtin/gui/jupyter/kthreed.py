@@ -33,7 +33,10 @@ class VectorArrayPlot(K3DPlot):
         if 'transform' in kwargs.keys():
             raise RuntimeError('supplying transforms is currently not supported for time series Data')
 
+        self.codim, self.warp, self.reference_element = codim, warp, grid.reference_element
+
         subentities, coordinates, entity_map = flatten_grid(grid)
+        self.entity_map = entity_map
 
         if grid.reference_element == triangle:
             if codim == 2:
@@ -127,6 +130,44 @@ class VectorArrayPlot(K3DPlot):
         self.camera = np.hstack([camera_pos, center, up])
         self.camera_fov = FOV
 
+    def set(self, U, vmin, vmax, warp=None):
+        if warp is not None:
+            self.warp = warp
+        for idx, u in enumerate(U):
+            u = u.astype(np.float32)
+            if self.codim == 2:
+                data = u[self.entity_map]
+            elif self.reference_element == triangle:
+                data = u
+            else:
+                data = np.tile(u, 2)
+            if self.warp:
+                if self.codim == 2:
+                    self.vertices[str(idx)][:,-1] = u[self.entity_map] * self.warp
+                elif self.reference_element == triangle:
+                    self.vertices[str(idx)][:,-1] = np.repeat(u, 3) * self.warp
+                else:
+                    self.vertices[str(idx)][:,-1] = np.tile(np.repeat(u, 3), 2) * self.warp
+            self.data[str(idx)] = data
+
+        # setting color_range as a dict does not work.
+        # setting color_range as a single pair of values also does not work as long
+        # as vertices and attributes are dicts.
+        # as a workaround, we set these first to single arrays ...
+        self.mesh.vertices = self.vertices[str(int(self.time))]
+        if self.codim == 2:
+            self.mesh.attribute = self.data[str(int(self.time))]
+        else:
+            self.mesh.triangles_attribute = self.data[str(int(self.time))]
+        self.mesh.color_range = [vmin, vmax]
+
+        if self.warp:
+            self.mesh.vertices = {k: v.copy() for k, v in self.vertices.items()}
+        if self.codim == 2:
+            self.mesh.attribute = self.data
+        else:
+            self.mesh.triangles_attribute = self.data
+
 
 @defaults('warp_by_scalar', 'scale_factor', 'background_color')
 def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
@@ -192,18 +233,15 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
     legend = (legend,) if isinstance(legend, str) else legend
     assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
 
-    if separate_colorbars:
-        color_ranges = [[np.min(u), np.max(u)] for u in U]
-    else:
-        color_ranges = [[min(np.min(u) for u in U), max(np.max(u) for u in U)]] * len(U)
+    from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs
+    vmins, vmaxs = _vmins_vmaxs(U, separate_colorbars, rescale_colorbars)
 
     if warp_by_scalar:
         if scale_factor == 'auto':
-            scale_factors = np.max(np.abs(np.array(color_ranges)), axis=1) + 1e-15  # prevent division by zero
-            if not separate_colorbars:
-                scale_factors = np.full(len(U), np.max(scale_factors))
             bb = grid.bounding_box()
-            scale_factors = np.max(bb[1] - bb[0]) / (3 * scale_factors)
+            bb_fac = np.max(bb[1] - bb[0]) / 3 
+            scale_factors = [bb_fac/(max(abs(vmin), abs(vmax)) + 1e-15)  # prevent division by zero
+                             for vmin, vmax in zip(vmins[0], vmaxs[0])]
         else:
             scale_factors = [scale_factor] * len(U)
     else:
@@ -213,14 +251,14 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                              codim=codim,
                              grid_auto_fit=False,
                              camera_auto_fit=False,
-                             color_range=cr,
+                             color_range=[vmin, vmax],
                              color_map=color_map,
                              warp=sf,
                              show_mesh=show_mesh,
                              bounding_box=bounding_box,
                              height=height,
                              background_color=background_color)
-             for u, cr, sf in zip(U, color_ranges, scale_factors)]
+             for u, vmin, vmax, sf in zip(U, vmins[0], vmaxs[0], scale_factors)]
 
     for p in plots[1:]:
         jslink((plots[0], 'camera'), (p, 'camera'))
@@ -259,5 +297,19 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
         main_widget.append(controls)
 
     main_widget = VBox(main_widget, layout=Layout(align_items='center'))
+
+    def set(U):
+        assert isinstance(U, VectorArray) \
+               or (isinstance(U, tuple)
+                   and all(isinstance(u, VectorArray) for u in U)
+                   and all(len(u) == len(U[0]) for u in U))
+        U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+            tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+        vmins, vmaxs = _vmins_vmaxs(U, separate_colorbars, rescale_colorbars)
+
+        for u, p, vmin, vmax in zip(U, plots, vmins[0], vmaxs[0]):
+            p.set(u, vmin, vmax)
+
+    main_widget.set = set
 
     return main_widget
