@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from itertools import chain
 from time import perf_counter
 
 import numpy as np
@@ -11,15 +12,16 @@ from pymor.core.config import config
 config.require('IPYWIDGETS')
 
 from IPython.display import display
-from ipywidgets import Button, Checkbox, FloatSlider, HBox, Label, VBox, jsdlink
+from ipywidgets import Accordion, Button, Checkbox, FloatSlider, HBox, Label, Layout, Stack, Text, VBox, jsdlink
 
 from pymor.core.base import BasicObject
-from pymor.parameters.base import Mu, ParameterSpace
+from pymor.models.basic import StationaryModel
+from pymor.parameters.base import Parameters, ParameterSpace
 
 
 class ParameterSelector(BasicObject):
 
-    def __init__(self, space):
+    def __init__(self, space, time_dependent):
         assert isinstance(space, ParameterSpace)
         self.space = space
         self._handlers = []
@@ -28,19 +30,75 @@ class ParameterSelector(BasicObject):
             def __init__(self, p):
                 dim = space.parameters[p]
                 low, high = space.ranges[p]
-                widgets = []
+                self._sliders = sliders = []
+                self._texts = texts = []
+                self._checkboxes = checkboxes = []
+                stacks = []
+                hboxes = []
                 for i in range(dim):
-                    widgets.append(FloatSlider((high-low)/2, min=low, max=high))
-                self._widgets = widgets
-                self.widget = HBox([Label(f'{p}:'), VBox(widgets)])
+                    sliders.append(FloatSlider((high+low)/2, min=low, max=high,
+                                               description=f'{i}:'))
+
+                for i in range(dim):
+                    texts.append(Text(f'{(high+low)/2:.2f}', description=f'{i}:'))
+
+                    def text_changed(change):
+                        try:
+                            Parameters(p=1).parse(change['new'])
+                            change['owner'].style.background = '#FFFFFF'
+                            return
+                        except ValueError:
+                            pass
+                        change['owner'].style.background = '#FFCCCC'
+
+                    texts[i].observe(text_changed, 'value')
+
+                    stacks.append(Stack(children=[sliders[i], texts[i]], selected_index=0, layout=Layout(flex='1')))
+                    checkboxes.append(Checkbox(value=False, description='time dep.', indent=False, layout=Layout(flex='0')))
+
+                    def check_box_clicked(change, idx):
+                        stacks[idx].selected_index = int(change['new'])
+
+                    checkboxes[i].observe(lambda change, idx=i: check_box_clicked(change, idx), 'value')
+
+                    hboxes.append(HBox([stacks[i], checkboxes[i]]))
+                widgets = VBox(hboxes if time_dependent else sliders)
+                self.widget = Accordion(titles=[p], children=[widgets], selected_index=0)
+                self._old_values = [s.value for s in sliders]
+                self.valid = True
+                self._handlers = []
+
+                for obj in chain(sliders, texts, checkboxes):
+                    obj.observe(self._values_changed, 'value')
+
+            def _call_handlers(self):
+                for handler in self._handlers:
+                    handler()
+
+            def _values_changed(self, change):
+                was_valid = self.valid
+                new_values = [t.value if c.value else s.value
+                              for s, t, c in zip(self._sliders, self._texts, self._checkboxes)]
+                # do nothing if new values are invalid
+                try:
+                    Parameters(p=len(self._sliders)).parse(new_values)
+                except ValueError:
+                    self.valid = False
+                    if was_valid:
+                        self._call_handlers()
+                    return
+
+                self.valid = True
+                if new_values != self._old_values:
+                    self._old_values = new_values
+                    self._call_handlers()
 
             @property
             def values(self):
-                return [w.value for w in self._widgets]
+                return self._old_values
 
             def on_change(self, handler):
-                for w in self._widgets:
-                    w.observe(lambda change: handler(), 'value')
+                self._handlers.append(handler)
 
         self._widgets = _widgets = {p: ParameterWidget(p) for p in space.parameters}
         for w in _widgets.values():
@@ -54,7 +112,6 @@ class ParameterSelector(BasicObject):
         self._update_mu()
         self.last_mu = self.mu
 
-
     def display(self):
         return display(self.widget)
 
@@ -62,30 +119,43 @@ class ParameterSelector(BasicObject):
         self._handlers.append(handler)
 
     def _call_handlers(self):
+        self._update_button.disabled = True
         for handler in self._handlers:
             handler(self.mu)
         self.last_mu = self.mu
 
     def _update_mu(self):
-        self.mu = Mu({p: w.values for p, w in self._widgets.items()})
+        if any(not w.valid for w in self._widgets.values()):
+            self._update_button.disabled = True
+            return
+        self.mu = self.space.parameters.parse({p: w.values for p, w in self._widgets.items()})
         if self._auto_update.value:
             self._call_handlers()
         else:
             self._update_button.disabled = False
 
     def _on_update(self, b):
-        b.disabled = True
         self._call_handlers()
 
 
 def interact(model, parameter_space, show_solution=True, visualizer=None):
+    assert model.parameters == parameter_space.parameters
+    if model.dim_input > 0:
+        params = Parameters(model.parameters, input=model.dim_input)
+        parameter_space = ParameterSpace(params, dict(parameter_space.ranges, input=[-1,1]))
+        print(params)
+        print(parameter_space)
     right_pane = []
-    parameter_selector = ParameterSelector(parameter_space)
+    parameter_selector = ParameterSelector(parameter_space, time_dependent=not isinstance(model, StationaryModel))
     right_pane.append(parameter_selector.widget)
 
     has_output = model.dim_output > 0
     tic = perf_counter()
-    data = model.compute(solution=show_solution, output=has_output, mu=parameter_selector.mu)
+    mu = parameter_selector.mu
+    input = parameter_selector.mu.get('input', None)
+    mu = {k: mu.get_time_dependent_value(k) if mu.is_time_dependent(k) else mu[k]
+          for k in mu if k != 'input'}
+    data = model.compute(solution=show_solution, output=has_output, input=input, mu=mu)
     sim_time = perf_counter() - tic
 
     if has_output:
@@ -119,8 +189,14 @@ def interact(model, parameter_space, show_solution=True, visualizer=None):
         widget = right_pane
 
     def do_update(mu):
+        if 'input' in mu:
+            input = mu.get_time_dependent_value('input') if mu.is_time_dependent('input') else mu['input']
+        else:
+            input = None
+        mu = {k: mu.get_time_dependent_value(k) if mu.is_time_dependent(k) else mu[k]
+              for k in mu if k != 'input'}
         tic = perf_counter()
-        data = model.compute(solution=show_solution, output=has_output, mu=mu)
+        data = model.compute(solution=show_solution, output=has_output, input=input, mu=mu)
         sim_time = perf_counter() - tic
         if show_solution:
             visualizer.set(data['solution'])
