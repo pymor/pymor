@@ -73,7 +73,15 @@ def parse_expression(expression, parameters={}, values={}):
     values = {name: parse_value(val) for name, val in values.items()}
 
     # parse Expression
-    tree = ast.parse(expression, mode='eval')
+    try:
+        tree = ast.parse(expression, mode='eval')
+    except SyntaxError as e:
+        raise ValueError(f"""
+Expression
+\t{expression}
+is malformed. The following error occurred:
+\t{e}
+""") from e
 
     # check if all names in given Expression are valid
     names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
