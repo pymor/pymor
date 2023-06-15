@@ -11,6 +11,7 @@ from pymor.algorithms.lyapunov import solve_cont_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.algorithms.lyapunov import _chol
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.operators.constructions import ZeroOperator
 
 class SpectralFactorReductor(BasicObject):
     r"""
@@ -21,11 +22,8 @@ class SpectralFactorReductor(BasicObject):
     Parameters
     ----------
     fom
-        The passive full-order |LTIModel| to reduce. 
-        
-        - The system must be minimal and asymptotically stable.
-        - For the feed-through matrix :math:`D`, it must hold that
-          :math:`D+D^T` is nonsingular.
+        The passive full-order |LTIModel| to reduce. The full-order model must be
+        minimal and asymptotically stable.
     mu
         |Parameter values|.
     """
@@ -57,17 +55,26 @@ class SpectralFactorReductor(BasicObject):
 
             The method should preserve asymptotic stability.
         X
-            A solution to the Riccati equation
+            A solution to the KYP inequality
 
               .. math::
-                A^T X E + E^T X A
-                + (C^T - E^T X B) (D+D^T)^{-1} (C - B^T X E) = 0,
+                \begin{bmatrix}
+                    -A^T X - X A & C^T - X B\\
+                    C - B^T X & D+D^T
+                \end{bmatrix} \geq 0.
 
             as a |NumPy array|, which in turn is used for computation of the spectral
             factor.
 
-            If `None`, the minimal solution to the Riccati equation is computed
-            internally.
+            If `None`, it is assumed that :math:`D+D^T` is nonsingular, where
+            :math:`D` is the feed-through matrix of the full-order model. 
+            A minimal solution to the KYP inequality is then obtained internally
+            by computing the minimal solution of the Riccati equation
+              .. math::
+                A^T X E + E^T X A
+                + (C^T - E^T X B) (D+D^T)^{-1} (C - B^T X E) = 0.
+            In the case that :math:`D+D^T` is singular, one can add a small
+            perturbation, see :cite:`BU22` (Section 2.2.2).
         compute_errors
             If `True`, the relative :math:`\mathcal{H}_2` error of the
             reduced spectral factor is computed.
@@ -83,6 +90,7 @@ class SpectralFactorReductor(BasicObject):
         """
         if X is None:
             # Compute minimal solution X to Riccati equation
+            assert not isinstance(self.fom.D,ZeroOperator), "D+D^T must be invertible."
             Z = self.fom.gramian('pr_o_lrcf', mu=self.mu).to_numpy()
             X = Z.T@Z
         

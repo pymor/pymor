@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 
 from pymor.models.iosys import LTIModel
 from pymor.reductors.spectral_factor import SpectralFactorReductor
@@ -30,3 +31,16 @@ def test_spectral_factor():
     Z2 = rom.gramian('pr_o_lrcf').to_numpy()
     X2 = Z2.T@Z2
     assert np.all(np.linalg.eigvals(X2) > 0), "Passive ROM expected."
+
+def test_spectral_factor_invertible_D_assertion():
+    R = np.array([[1, 0], [0, 2]])
+    G = np.array([[1], [2]])
+    fom = LTIModel.from_matrices(-R, G, G.T)
+
+    spectralFactor = SpectralFactorReductor(fom)
+
+    with pytest.raises(AssertionError) as e:
+        spectralFactor.reduce(
+            lambda spectral_factor, mu : IRKAReductor(spectral_factor,mu).reduce(1))
+        
+    assert "D+D^T must be invertible." in str(e.value)
