@@ -170,7 +170,7 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
 
 
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False,
-                            rescale_axes=False, columns=2):
+                            rescale_axes=False, columns=2, return_widget=True):
     """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either
@@ -218,6 +218,12 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
 
     do_animation = len(U[0]) > 1
 
+    if return_widget:
+        from IPython import get_ipython
+        get_ipython().run_line_magic('matplotlib', 'widget')
+        plt.ioff()
+
+
     figsize = plt.rcParams['figure.figsize']
     if separate_plots:
         rows = int(np.ceil(len(U) / columns))
@@ -229,23 +235,59 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     if title is not None:
         fig.suptitle(title)
 
-    if do_animation:
-        plt.rcParams['animation.html'] = 'jshtml'
-        delay_between_frames = 200  # ms
+    data = [U, vmins, vmaxs]
+    def set_data(U=None, ind=0):
+        if U is not None:
+            U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+                tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+            vmins, vmaxs = _vmins_vmaxs(U, separate_plots, rescale_axes)
+            data[0:3] = U, vmins, vmaxs
 
-        fig.patch.set_alpha(0.0)
+        U, vmins, vmaxs = data
+        plot.set([u[ind] for u in U],
+                 [vmin[ind] for vmin in vmins],
+                 [vmax[ind] for vmax in vmaxs])
+        fig.canvas.draw_idle()
 
-        def animate(ind):
-            plot.set([u[ind] for u in U],
-                     [vmin[ind] for vmin in vmins],
-                     [vmax[ind] for vmax in vmaxs])
+    if return_widget:
+        fig.canvas.header_visible = False
+        if do_animation:
+            from ipywidgets import HBox, IntSlider, Play, VBox, jslink
+            speed = IntSlider(value=100, min=10, max=1000, description='speed', readout=False)
+            play = Play(min=None, max=len(U[0])-1)
+            animation_slider = IntSlider(0, 0, len(U[0])-1)
+            jslink((play, 'value'), (animation_slider, 'value'))
+            jslink((speed, 'value'), (play, 'interval'))
 
-        from matplotlib.animation import FuncAnimation
-        anim = FuncAnimation(fig, animate, frames=len(U[0]), interval=delay_between_frames, blit=False)
-        plt.close(fig)
-        return anim
+            def time_changed(change):
+                set_data(U=None, ind=change['new'])
+
+            animation_slider.observe(time_changed, 'value')
+            controls = HBox([speed, play, animation_slider])
+            widget = VBox([fig.canvas, controls])
+
+            def set(U):
+                set_data(U, ind=animation_slider.value)
+            widget.set = set
+        else:
+            widget = fig.canvas
+            widget.set = set_data
+        return widget
     else:
-        plot.set(U,
-                 [vmin[0] for vmin in vmins],
-                 [vmax[0] for vmax in vmaxs])
-        plt.show()
+        if do_animation:
+            plt.rcParams['animation.html'] = 'jshtml'
+            delay_between_frames = 200  # ms
+
+            fig.patch.set_alpha(0.0)
+
+            from matplotlib.animation import FuncAnimation
+            anim = FuncAnimation(fig, lambda ind: set_data(ind=ind), frames=len(U[0]),
+                                 interval=delay_between_frames, blit=False)
+            plt.close(fig)
+            return anim
+        else:
+            plot.set(U,
+                     [vmin[0] for vmin in vmins],
+                     [vmax[0] for vmax in vmaxs])
+            plt.show()
+

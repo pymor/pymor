@@ -136,7 +136,7 @@ class OnedVisualizer(ImmutableObject):
         self.__auto_init(locals())
 
     def visualize(self, U, title=None, legend=None, separate_plots=False,
-                  rescale_axes=False, block=None, columns=2):
+                  rescale_axes=False, block=None, columns=2, return_widget=False):
         """Visualize the provided data.
 
         Parameters
@@ -160,13 +160,17 @@ class OnedVisualizer(ImmutableObject):
             default provided during instantiation.
         columns
             Number of columns the subplots are organized in.
+        return_widget
+            If `True`, create an interactive visualization that can be used as a jupyter widget.
         """
         if self.backend == 'jupyter':
             from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_matplotlib_1d
             return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
                                            separate_plots=separate_plots, rescale_axes=rescale_axes,
-                                           columns=columns)
+                                           columns=columns, return_widget=return_widget)
         else:
+            if return_widget:
+                raise NotImplementedError
             block = self.block if block is None else block
             from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d
             return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
