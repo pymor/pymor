@@ -250,7 +250,7 @@ class ProjectRules(RuleTable):
 
         # NOTE: this does not use a potential sparsity pattern of the BlockOperator
         # need source and range dims for the case where None is involved.
-        projected_ops = np.array([[project(op.blocks[i, j], rb, sb) if op.blocks[i, j]
+        projected_ops = np.array([[project(op.slice((i, j)), rb, sb) if (i, j) in op.block_coords
                                    else NumpyMatrixOperator(np.zeros((rdim, sdim)))
                                    for j, (sb, sdim) in enumerate(zip(source_bases, source_dims))]
                                   for i, (rb, rdim) in enumerate(zip(range_bases, range_dims))])

@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-import sparse
+from scipy.sparse import coo_matrix
 
 from pymor.operators.constructions import IdentityOperator, ZeroOperator
 from pymor.operators.interface import Operator
@@ -25,25 +25,24 @@ class BlockOperatorBase(Operator):
             else:
                 if blocks.ndim == 1:
                     blocks.shape = (len(blocks), 1)
-        self.blocks = blocks = sparse.COO(blocks)
+        self.blocks = blocks = coo_matrix(blocks)
+        sparsity_pattern = np.vstack([self.blocks.row, self.blocks.col]).T
+        self.block_coords = [(i, j) for [i, j] in sparsity_pattern]
         assert 1 <= blocks.ndim <= 2
         assert all(isinstance(op, Operator) for op in self.blocks.data)
-
-        # check if every row/column contains at least one operator
-        assert all(any(blocks[i, j] for j in range(blocks.shape[1]))
-                   for i in range(blocks.shape[0]))
-        assert all(any(blocks[i, j] for i in range(blocks.shape[0]))
-                   for j in range(blocks.shape[1]))
 
         # find source/range spaces for every column/row
         source_spaces = [None for j in range(blocks.shape[1])]
         range_spaces = [None for i in range(blocks.shape[0])]
-        for (i, j) in zip(self.blocks.coords[0], self.blocks.coords[1]):
-            op = self.blocks[i, j]
+        for i, j, op in zip(self.blocks.row, self.blocks.col, self.blocks.data):
             assert source_spaces[j] is None or op.source == source_spaces[j]
             source_spaces[j] = op.source
             assert range_spaces[i] is None or op.range == range_spaces[i]
             range_spaces[i] = op.range
+
+        # check if every row/column contains at least one operator
+        assert None not in source_spaces
+        assert None not in range_spaces
 
         self.source = BlockVectorSpace(source_spaces) if self.blocked_source else source_spaces[0]
         self.range = BlockVectorSpace(range_spaces) if self.blocked_range else range_spaces[0]
@@ -53,16 +52,22 @@ class BlockOperatorBase(Operator):
 
     @property
     def H(self):
-        blocks_trans = self.blocks.T
-        adjoint_data = np.vectorize(lambda op: op.H)(blocks_trans.data)
-        return self.adjoint_type((adjoint_data, blocks_trans.coords))
+        # coo_matrix does not support (data, (row, col)) call for objects. Thus, this code does not work
+        # adjoint_data = np.vectorize(lambda op: op.H)(self.blocks.data)
+        # return self.adjoint_type((adjoint_data, (self.blocks.col, self.blocks.row)))
+        # TODO: fix me.
+
+        # current workaround: construct from scratch
+        adjoint_blocks = np.zeros(self.blocks.shape, dtype=object)
+        for i, j, op in zip(self.blocks.row, self.blocks.col, self.blocks.data):
+            adjoint_blocks[j, i] = op.H
+        return self.adjoint_type(adjoint_blocks)
 
     def apply(self, U, mu=None):
         assert U in self.source
 
         V_blocks = [None for i in range(self.num_range_blocks)]
-        for (i, j) in zip(self.blocks.coords[0], self.blocks.coords[1]):
-            op = self.blocks[i, j]
+        for i, j, op in zip(self.blocks.row, self.blocks.col, self.blocks.data):
             if isinstance(op, ZeroOperator):
                 Vi = op.range.zeros(len(U))
             else:
@@ -78,8 +83,7 @@ class BlockOperatorBase(Operator):
         assert V in self.range
 
         U_blocks = [None for j in range(self.num_source_blocks)]
-        for (i, j) in zip(self.blocks.coords[0], self.blocks.coords[1]):
-            op = self.blocks[i, j]
+        for i, j, op in zip(self.blocks.row, self.blocks.col, self.blocks.data):
             if isinstance(op, ZeroOperator):
                 Uj = op.source.zeros(len(V))
             else:
@@ -92,13 +96,10 @@ class BlockOperatorBase(Operator):
         return self.source.make_array(U_blocks) if self.blocked_source else U_blocks[0]
 
     def assemble(self, mu=None):
-        blocks = np.zeros(self.blocks.data.shape, dtype=object)
-        for i, block in enumerate(self.blocks.data):
-            blocks[i] = block.assemble(mu)
-        if all(blocks[i] == self.blocks.data[i] for i in range(len(blocks))):
-            return self
-        else:
-            return self.__class__((blocks, self.blocks.coords))
+        blocks = np.zeros(self.blocks.shape, dtype=object)
+        for i, j, op in zip(self.blocks.row, self.blocks.col, self.blocks.data):
+            blocks[i, j] = op.assemble(mu)
+        return self.__class__(blocks)
 
     def as_range_array(self, mu=None):
 
@@ -136,41 +137,44 @@ class BlockOperatorBase(Operator):
 
     def d_mu(self, parameter, index=0):
         blocks = np.zeros(self.blocks.shape, dtype=object)
-        for (i, j) in zip(self.blocks.coords[0], self.blocks.coords[1]):
-            blocks[i, j] = self.blocks[i, j].d_mu(parameter, index)
+        for i, j, op in zip(self.blocks.row, self.blocks.col, self.blocks.data):
+            blocks[i, j] = op.d_mu(parameter, index)
         return self.with_(blocks=blocks)
 
     def jacobian(self, U, mu):
         assert len(U) == 1
-        jacs = np.empty(self.blocks.shape, dtype=object)
-        if isinstance(self.blocks, sparse.COO):
-            for (i, j) in zip(self.blocks.coords[0], self.blocks.coords[1]):
-                jacs[i, j] = self.blocks[i, j].jacobian(U.blocks[i] if self.blocked_source else U, mu)
-        else:
-            for (i, j) in np.ndindex(self.blocks.shape):
-                jacs[i, j] = self.blocks[i, j].jacobian(U.blocks[i] if self.blocked_source else U, mu)
+        jacs = np.zeros(self.blocks.shape, dtype=object)
+        for i, j, op in zip(self.blocks.row, self.blocks.col, self.blocks.data):
+            jacs[i, j] = op.jacobian(U.blocks[i] if self.blocked_source else U, mu)
         return self.with_(blocks=jacs)
 
     def to_dense(self):
         # turn Nones to ZeroOperators
         blocks = np.zeros(self.blocks.shape, dtype=object)
+        data_index = 0
         for (i, j) in np.ndindex(blocks.shape):
-            if not self.blocks[i, j]:
+            if not (i, j) in self.block_coords:
                 blocks[i, j] = ZeroOperator(self.range.subspaces[i], self.source.subspaces[j])
             else:
-                blocks[i, j] = self.blocks[i, j]
+                blocks[i, j] = self.blocks.data[data_index]
+                data_index += 1
         return self.with_(blocks=blocks)
 
     def to_sparse(self):
         # remove all ZeroOperators
         blocks = np.zeros(self.blocks.shape, dtype=object)
-        for (i, j) in np.ndindex(blocks.shape):
-            if isinstance(self.blocks[i, j], ZeroOperator):
+        for k, (i, j) in enumerate(np.ndindex(blocks.shape)):
+            if isinstance(self.blocks.data[k], ZeroOperator):
                 blocks[i, j] = 0
             else:
-                blocks[i, j] = self.blocks[i, j]
+                blocks[i, j] = self.blocks.data[k]
         return self.with_(blocks=blocks)
 
+    def slice(self, tuple):
+        for i, j, op in zip(self.blocks.row, self.blocks.col, self.blocks.data):
+            if (i, j) == tuple:
+                return op
+        return 0
 
 class BlockOperator(BlockOperatorBase):
     """A matrix of arbitrary |Operators|.
@@ -237,8 +241,14 @@ class BlockDiagonalOperator(BlockOperator):
     def __init__(self, blocks):
         blocks = np.array(blocks)
         assert 1 <= blocks.ndim <= 2
-        coords = np.arange(len(blocks))
-        super().__init__((blocks, (coords, coords)))
+        # coo_matrix does not support (data, (row, col)) call for objects. Thus, this code does not work
+        # coords = np.arange(len(blocks))
+        # super().__init__((blocks, (coords, coords)))
+        # workaround: construct from scratch
+        diag_blocks = np.zeros((len(blocks), len(blocks)), dtype=object)
+        for i, op in enumerate(blocks):
+            diag_blocks[i, i] = op
+        super().__init__(diag_blocks)
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range

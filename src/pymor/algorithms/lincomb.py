@@ -184,21 +184,22 @@ class AssembleLincombRules(RuleTable):
         blocks = np.zeros(shape, dtype=object)
         operator_type = ((BlockOperator if ops[0].blocked_source else BlockColumnOperator) if ops[0].blocked_range
                          else BlockRowOperator)
-        # In the sparse case, the sparsity pattern can differ.
-        merged_coords = np.unique(np.hstack([op.blocks.coords for op in ops]), axis=1)
         if len(ops) > 1:
-            for (i, j) in zip(merged_coords[0], merged_coords[1]):
-                operators_ij = [op.blocks[i, j] for op in ops if op.blocks[i, j]]
+            # the sparsity pattern can differ.
+            merged_coords = np.unique(np.vstack([op.block_coords for op in ops]), axis=0)
+            for (i, j) in merged_coords:
+                # currently we use a self-written slicing for coo_matrix in scipy.sparse
+                # TODO: find a better way to do it
+                operators_ij = [op.slice((i, j)) for op in ops if (i, j) in op.block_coords]
                 blocks[i, j] = assemble_lincomb(operators_ij, coefficients,
                                                 solver_options=self.solver_options, name=self.name)
-            return operator_type(blocks)
         else:
             c = coefficients[0]
             if c == 1:
                 return ops[0]
-            for (i, j) in zip(ops[0].block_coords[0], ops[0].block_coords[1]):
-                blocks[i, j] = ops[0].blocks[i, j] * c
-            return operator_type(blocks)
+            for i, j, op in zip(ops[0].blocks.row, ops[0].blocks.col, ops[0].blocks.data):
+                blocks[i, j] = op * c
+        return operator_type(blocks)
 
     @match_generic(lambda ops: sum(1 for op in ops if isinstance(op, LowRankOperator)) >= 2)
     def action_merge_low_rank_operators(self, ops):
