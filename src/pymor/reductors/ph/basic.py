@@ -56,7 +56,7 @@ class PHLTIPGReductor(ProjectionBasedReductor):
                                'J': J,
                                'R': project_to_subbasis(rom.R, dim, dim),
                                'Q': IdentityOperator(J.source),
-                               'G': project_to_subbasis(rom.B, dim, None),
+                               'G': project_to_subbasis(rom.G, dim, None),
                                'P': project_to_subbasis(rom.P, dim, None),
                                'S': rom.S,
                                'N': rom.N}
