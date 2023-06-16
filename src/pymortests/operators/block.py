@@ -7,9 +7,10 @@ import pytest
 import scipy.linalg as spla
 
 from pymor.algorithms.projection import project
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.block import BlockDiagonalOperator, BlockOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
+from pymor.parameters.functionals import ExpressionParameterFunctional, ProjectionParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -145,10 +146,8 @@ def test_block_jacobian():
 
 
 def test_sparse():
-    np.random.seed(0)
-
     # construct an operator with parametric parts outside the diagonal
-    ops = np.zeros((4, 4), dtype=object)
+    ops = np.empty((4, 4), dtype=object)
     for I in range(3):
         ops[I, I] = NumpyMatrixOperator(np.random.randn(3, 3))
     ops[3, 3] = NumpyMatrixOperator(np.random.randn(2, 2))
@@ -192,14 +191,19 @@ def test_sparse():
     block_op.apply(ones, mu=mu)
     block_op.apply_adjoint(ones, mu=mu)
     block_op.d_mu('something')
-    block_op.H
+
+    block_op_adjoint = block_op.H
+    block_op_adjoint_ = BlockOperator(ops.T)
+    assert np.isclose(block_op_adjoint.apply2(ones, ones, mu=mu),
+                      block_op_adjoint_.apply2(ones, ones, mu=mu))
 
     # call as a list
     block_op_half = BlockOperator([[ops[0, 0], None], [None, ops[1, 1]]])
     assert not block_op_half.parametric
-    # call with (data, coords) functionality
-    block_op_ = BlockOperator((block_op.blocks.data, block_op.blocks.coords))
-    assert block_op.apply2(ones, ones, mu=mu) == block_op_.apply2(ones, ones, mu=mu)
+    # call with 0 instead of None functionality
+    block_op_half_ = BlockOperator([[ops[0, 0], 0], [0, ops[1, 1]]])
+    ones_half = block_op_half.range.ones()
+    assert block_op_half.apply2(ones_half, ones_half, mu=mu) == block_op_half_.apply2(ones_half, ones_half, mu=mu)
 
     # BlockDiagOperator
     block_diag_1 = BlockDiagonalOperator([ops[0, 0], ops[0, 2]])
@@ -209,4 +213,10 @@ def test_sparse():
     # projection
     projected_block = project(block_op, block_op.source.ones(), block_op.source.ones())
     projected_block_dense = project(dense_block_op, block_op.source.ones(), block_op.source.ones())
-    projected_block.assemble(mu).matrix == projected_block_dense.assemble(mu).matrix
+    assert projected_block.assemble(mu).matrix == projected_block_dense.assemble(mu).matrix
+
+    # to matrix
+    as_matrix = to_matrix(block_op, mu=mu)
+    ones_numpy = ones.to_numpy()[0]
+    assert np.isclose(block_op.apply2(ones, ones, mu=mu),
+                      ones_numpy.dot(as_matrix * ones_numpy))
