@@ -107,6 +107,39 @@ lti = m.to_lti().with_(T=1, time_stepper=ImplicitEulerTimeStepper(100))
 x = interact(lti, lti.parameters.space(0.01, 1))
 ```
 
+If we can also visualize the solutions of a reduced model by passing a `visualizer` and a
+`transform` of the solution:
+
+```{code-cell}
+:tags: [remove-output]
+p = thermal_block_problem([2,2])
+m, _ = discretize_stationary_cg(p, diameter=1/20)
+
+snapshots = cat_arrays([m.solve(mu) for mu in p.parameter_space.sample_randomly(20)])
+basis, svals = pod(snapshots, product=m.h1_product, modes=5)
+reductor = StationaryRBReductor(m, basis, product=m.h1_product)
+rom = reductor.reduce()
+
+interact(rom, p.parameter_space,
+         visualizer=m.visualize, transform=lambda u, mu: reductor.reconstruct(u))
+```
+
+We can even show the reduced solution along the FOM solution and the error:
+
+```{code-cell}
+:tags: [remove-output]
+from functools import partial
+
+def compare(u, mu):
+    U = m.solve(mu)
+    U_red = reductor.reconstruct(u)
+    return (U, U_red, U-U_red)
+
+interact(rom, p.parameter_space,
+	 visualizer=partial(m.visualize, separate_colorbars=True, legend=('FOM', 'ROM', 'ERR')),
+	 transform=compare)
+```
+
 Download the code:
 {download}`tutorial_interact.md`,
 {nb-download}`tutorial_interact.ipynb`.
