@@ -153,7 +153,7 @@ class BlockOperatorBase(Operator):
         blocks = np.zeros(self.blocks.shape, dtype=object)
         data_index = 0
         for (i, j) in np.ndindex(blocks.shape):
-            if not (i, j) in self.block_coords:
+            if (i, j) not in self.block_coords:
                 blocks[i, j] = ZeroOperator(self.range.subspaces[i], self.source.subspaces[j])
             else:
                 blocks[i, j] = self.blocks.data[data_index]
