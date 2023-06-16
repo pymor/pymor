@@ -16,7 +16,7 @@ from ipywidgets import Accordion, Button, Checkbox, FloatSlider, HBox, Label, La
 
 from pymor.core.base import BasicObject
 from pymor.models.basic import StationaryModel
-from pymor.parameters.base import Parameters, ParameterSpace
+from pymor.parameters.base import Mu, Parameters, ParameterSpace
 
 
 class ParameterSelector(BasicObject):
@@ -144,7 +144,7 @@ class ParameterSelector(BasicObject):
         self._call_handlers()
 
 
-def interact(model, parameter_space, show_solution=True, visualizer=None):
+def interact(model, parameter_space, show_solution=True, visualizer=None, transform=None):
     assert model.parameters == parameter_space.parameters
     if model.dim_input > 0:
         params = Parameters(model.parameters, input=model.dim_input)
@@ -157,8 +157,8 @@ def interact(model, parameter_space, show_solution=True, visualizer=None):
     tic = perf_counter()
     mu = parameter_selector.mu
     input = parameter_selector.mu.get('input', None)
-    mu = {k: mu.get_time_dependent_value(k) if mu.is_time_dependent(k) else mu[k]
-          for k in mu if k != 'input'}
+    mu = Mu({k: mu.get_time_dependent_value(k) if mu.is_time_dependent(k) else mu[k]
+            for k in mu if k != 'input'})
     data = model.compute(solution=show_solution, output=has_output, input=input, mu=mu)
     sim_time = perf_counter() - tic
 
@@ -189,7 +189,9 @@ def interact(model, parameter_space, show_solution=True, visualizer=None):
 
     if show_solution:
         U = data['solution']
-        visualizer = visualizer(U) if visualizer is not None else model.visualize(U, return_widget=True)
+        if transform:
+            U = transform(U, mu)
+        visualizer = (visualizer or model.visualize)(U, return_widget=True)
         visualizer.layout.flex = '0.6 0 auto'
         right_pane.layout.flex = '0.4 1 auto'
         widget = HBox([visualizer, right_pane])
@@ -202,13 +204,16 @@ def interact(model, parameter_space, show_solution=True, visualizer=None):
             input = mu.get_time_dependent_value('input') if mu.is_time_dependent('input') else mu['input']
         else:
             input = None
-        mu = {k: mu.get_time_dependent_value(k) if mu.is_time_dependent(k) else mu[k]
-              for k in mu if k != 'input'}
+        mu = Mu({k: mu.get_time_dependent_value(k) if mu.is_time_dependent(k) else mu[k]
+                for k in mu if k != 'input'})
         tic = perf_counter()
         data = model.compute(solution=show_solution, output=has_output, input=input, mu=mu)
         sim_time = perf_counter() - tic
         if show_solution:
-            visualizer.set(data['solution'])
+            U = data['solution']
+            if transform:
+                U = transform(U, mu)
+            visualizer.set(U)
         if has_output:
             output = data['output']
             if len(output) > 1:
