@@ -241,8 +241,8 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
         if scale_factor == 'auto':
             bb = grid.bounding_box()
             bb_fac = np.max(bb[1] - bb[0]) / 3 
-            scale_factors = [bb_fac/(max(abs(vmin), abs(vmax)) + 1e-15)  # prevent division by zero
-                             for vmin, vmax in zip(vmins[0], vmaxs[0])]
+            scale_factors = [bb_fac/(max(abs(vmin[0]), abs(vmax[0])) + 1e-15)  # prevent division by zero
+                             for vmin, vmax in zip(vmins, vmaxs)]
         else:
             scale_factors = [scale_factor] * len(U)
     else:
@@ -252,14 +252,15 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                              codim=codim,
                              grid_auto_fit=False,
                              camera_auto_fit=False,
-                             color_range=[vmin, vmax],
+                             color_range=[vmin[0], vmax[0]],  # rescale_colorbars not supported yet
                              color_map=color_map,
+                             colormap_scientific=True,
                              warp=sf,
                              show_mesh=show_mesh,
                              bounding_box=bounding_box,
                              height=height,
                              background_color=background_color)
-             for u, vmin, vmax, sf in zip(U, vmins[0], vmaxs[0], scale_factors)]
+             for u, vmin, vmax, sf in zip(U, vmins, vmaxs, scale_factors)]
 
     for p in plots[1:]:
         jslink((plots[0], 'camera'), (p, 'camera'))
@@ -302,8 +303,8 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
             tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
         vmins, vmaxs = _vmins_vmaxs(U, separate_colorbars, rescale_colorbars)
 
-        for u, p, vmin, vmax in zip(U, plots, vmins[0], vmaxs[0]):
-            p.set(u, vmin, vmax)
+        for u, p, vmin, vmax in zip(U, plots, vmins, vmaxs):
+            p.set(u, vmin[0], vmax[0])
 
     main_widget.set = set
 
