@@ -145,6 +145,30 @@ class ParameterSelector(BasicObject):
 
 
 def interact(model, parameter_space, show_solution=True, visualizer=None, transform=None):
+    """Interactively explore |Model| in jupyter environment.
+
+    This method dynamically creates a set of `ipywidgets` to interactively visualize
+    a model's solution and output.
+
+    Parameters
+    ----------
+    model
+        The |Model| to interact with.
+    parameter_space
+        |ParameterSpace| within which the |Parameters| of the model can be chosen.
+    show_solution
+        If `True`, show the model's solution for the given parameters.
+    visualizer
+        A method of the form `visualize(U, return_widget=True)` which is called to obtain
+        an `ipywidget` that renders the solution. If `None`, `model.visualize` is used.
+    transform
+        A method `transform(U, mu)` returning the data that is passed to the `visualizer`.
+        If `None` the solution `U` is passed directly.
+
+    Returns
+    -------
+    The created widgets as a single `ipywidget`.
+    """
     assert model.parameters == parameter_space.parameters
     if model.dim_input > 0:
         params = Parameters(model.parameters, input=model.dim_input)
