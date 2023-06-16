@@ -80,12 +80,19 @@ class LoewnerReductor(CacheableObject):
                             p0 = np.append(p0, len(s)-1)
                         else:
                             p1 = np.append(p1, len(s)-1)
+                if len(p0) != len(partitioning[0]) or len(p1) != len(partitioning[1]):
+                    self.logger.info('Added complex conjugates to parititionings. '
+                                     f'New partitioning sizes are ({len(p0)}, {len(p1)}).')
                 partitioning = (p0, p1)
             else:
+                s_new = s
                 for i, ss in enumerate(s):
                     if np.conj(ss) not in s:
-                        s = np.append(s, np.conj(ss))
+                        s_new = np.append(s_new, np.conj(ss))
                         Hs = np.append(Hs, np.conj(Hs[i])[np.newaxis, ...], axis=0)
+                if len(s) != len(s_new):
+                    self.logger.info(f'Added {len(s_new) - len(s)} complex conjugates to the data.')
+                s = s_new
 
         if len(Hs.shape) > 1:
             self.dim_output = Hs.shape[1]
@@ -117,11 +124,7 @@ class LoewnerReductor(CacheableObject):
             Reduced |LTIModel|.
         """
         L, Ls, V, W = self.loewner_quadruple()
-
-        LhLs = np.hstack([L, Ls])
-        Y, S1, _ = spla.svd(LhLs, full_matrices=False)
-        LvLs = np.vstack([L, Ls])
-        _, S2, Xh = spla.svd(LvLs, full_matrices=False)
+        Y, S1, S2, Xh = self._loewner_svds(L, Ls)
 
         r1 = len(S1[S1/S1[0] > tol])
         r2 = len(S2[S2/S2[0] > tol])
@@ -329,3 +332,13 @@ class LoewnerReductor(CacheableObject):
             W = np.concatenate(np.concatenate(W, axis=0), axis=1)
 
         return L, Ls, V, W
+
+    @cached
+    def _loewner_svds(self, L, Ls):
+        """Compute SVDs of stacked Loewner matrices."""
+        LhLs = np.hstack([L, Ls])
+        Y, S1, _ = spla.svd(LhLs, full_matrices=False)
+        LvLs = np.vstack([L, Ls])
+        _, S2, Xh = spla.svd(LvLs, full_matrices=False)
+
+        return Y, S1, S2, Xh
