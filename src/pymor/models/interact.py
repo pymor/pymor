@@ -54,7 +54,8 @@ class ParameterSelector(BasicObject):
                     texts[i].observe(text_changed, 'value')
 
                     stacks.append(Stack(children=[sliders[i], texts[i]], selected_index=0, layout=Layout(flex='1')))
-                    checkboxes.append(Checkbox(value=False, description='time dep.', indent=False, layout=Layout(flex='0')))
+                    checkboxes.append(Checkbox(value=False, description='time dep.',
+                                               indent=False, layout=Layout(flex='0')))
 
                     def check_box_clicked(change, idx):
                         stacks[idx].selected_index = int(change['new'])
@@ -103,12 +104,17 @@ class ParameterSelector(BasicObject):
         self._widgets = _widgets = {p: ParameterWidget(p) for p in space.parameters}
         for w in _widgets.values():
             w.on_change(self._update_mu)
-        self._auto_update = Checkbox(value=False, description='auto update')
+        self._auto_update = Checkbox(value=False, indent=False, description='auto update',
+                                     layout=Layout(flex='0'))
         self._update_button = Button(description='Update', disabled=False)
         self._update_button.on_click(self._on_update)
         jsdlink((self._auto_update, 'value'), (self._update_button, 'disabled'))
-        self.widget = VBox([w.widget for w in _widgets.values()] +
-                           [HBox([self._auto_update, self._update_button])])
+        controls = HBox([self._auto_update, self._update_button],
+                        layout=Layout(border='solid 1px lightgray',
+                                      margin='2px',
+                                      padding='2px',
+                                      justify_content='space-around'))
+        self.widget = VBox([w.widget for w in _widgets.values()] + [controls])
         self._update_mu()
         self.last_mu = self.mu
 
@@ -143,8 +149,6 @@ def interact(model, parameter_space, show_solution=True, visualizer=None):
     if model.dim_input > 0:
         params = Parameters(model.parameters, input=model.dim_input)
         parameter_space = ParameterSpace(params, dict(parameter_space.ranges, input=[-1,1]))
-        print(params)
-        print(parameter_space)
     right_pane = []
     parameter_selector = ParameterSelector(parameter_space, time_dependent=not isinstance(model, StationaryModel))
     right_pane.append(parameter_selector.widget)
@@ -167,12 +171,16 @@ def interact(model, parameter_space, show_solution=True, visualizer=None):
             plt.ioff()
             fig, ax = plt.subplots(1,1)
             fig.canvas.header_visible = False
+            fig.canvas.layout.flex = '1 0 320px'
+            fig.set_figwidth(320 / 100)
+            fig.set_figheight(200 / 100)
             output_lines = ax.plot(output)
             fig.legend([str(i) for i in range(model.dim_output)])
             output_widget = fig.canvas
         else:
-            output_widget = Label(str(output.ravel()))
-        right_pane.append(HBox([Label('output:'), output_widget]))
+            labels = [Text(str(o), description=f'{i}:', disabled=True) for i, o in enumerate(output.ravel())]
+            output_widget = VBox(labels)
+        right_pane.append(Accordion(titles=['output'], children=[output_widget], selected_index=0))
 
     sim_time_widget = Label(f'{sim_time}s')
     right_pane.append(HBox([Label('simulation time:'), sim_time_widget]))
@@ -182,9 +190,10 @@ def interact(model, parameter_space, show_solution=True, visualizer=None):
     if show_solution:
         U = data['solution']
         visualizer = visualizer(U) if visualizer is not None else model.visualize(U, return_widget=True)
-        visualizer.layout.flex = '0.6'
-        right_pane.layout.flex = '0.4'
+        visualizer.layout.flex = '0.6 0 auto'
+        right_pane.layout.flex = '0.4 1 auto'
         widget = HBox([visualizer, right_pane])
+        widget.layout.grid_gap = '5%'
     else:
         widget = right_pane
 
@@ -209,7 +218,8 @@ def interact(model, parameter_space, show_solution=True, visualizer=None):
                 ax.set_ylim(min(low, np.min(output)), max(high, np.max(output)))
                 output_widget.draw_idle()
             else:
-                output_widget.value = str(output.ravel())
+                for l, o in zip(output_widget.children, output.ravel()):
+                    l.value = str(o)
         sim_time_widget.value = f'{sim_time}s'
 
     parameter_selector.on_change(do_update)

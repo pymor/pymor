@@ -130,6 +130,8 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
 
     if return_widget:
         vis.fig.canvas.header_visible = False
+        vis.fig.canvas.layout.flex = '0 1 auto'
+        vis.fig.tight_layout()
         if do_animation:
             from ipywidgets import VBox
 
@@ -137,6 +139,7 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
 
             animation_widget = AnimationWidget(len(U[0]))
             widget = VBox([vis.fig.canvas, animation_widget])
+            widget.layout.align_items = 'stretch'
 
             def animate(change):
                 vis.set(idx=change['new'])
@@ -248,6 +251,8 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
 
     if return_widget:
         fig.canvas.header_visible = False
+        fig.canvas.layout.flex = '0 1 auto'
+        fig.tight_layout()
         if do_animation:
             from ipywidgets import VBox
 
@@ -255,6 +260,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
 
             animation_widget = AnimationWidget(len(U[0]))
             widget = VBox([fig.canvas, animation_widget])
+            widget.layout.align_items = 'stretch'
 
             def time_changed(change):
                 set_data(U=None, ind=change['new'])
