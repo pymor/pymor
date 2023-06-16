@@ -72,13 +72,39 @@ new {{ ParameterSpace }} using the {meth}`~pymor.parameters.base.Parameters.spac
 interact(m, m.parameters.space(0.1, 10), show_solution=False)
 ```
 
-Finally, {func}`~pymor.models.interact.interact` also works with time-dependent {{ Models }}:
+{func}`~pymor.models.interact.interact` also works with time-dependent {{ Models }}:
 
 ```{code-cell}
 :tags: [remove-output]
 pp = InstationaryProblem(p, initial_data=ConstantFunction(0., 2), T=1.)
 mm, _ = discretize_instationary_cg(pp, nt=10)
 interact(mm, p.parameter_space)
+```
+
+This is also the case for {{ LTIModels }}:
+
+```{code-cell}
+:tags: [remove-output]
+from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
+
+p = InstationaryProblem(
+StationaryProblem(
+    domain=LineDomain([0., 1.], left='robin', right='robin'),
+    diffusion=LincombFunction([ExpressionFunction('(x[0] <= 0.5) * 1.', 1),
+			       ExpressionFunction('(0.5 < x[0]) * 1.', 1)],
+			      [1,
+			       ProjectionParameterFunctional('diffusion')]),
+    robin_data=(ConstantFunction(1., 1), ExpressionFunction('(x[0] < 1e-10) * 1.', 1)),
+    outputs=(('l2_boundary', ExpressionFunction('(x[0] > (1 - 1e-10)) * 1.', 1)),),
+),
+ConstantFunction(0., 1),
+T=3.
+)
+
+m, _ = discretize_instationary_cg(p, diameter=1/100, nt=100)
+lti = m.to_lti().with_(T=1, time_stepper=ImplicitEulerTimeStepper(100))
+
+x = interact(lti, lti.parameters.space(0.01, 1))
 ```
 
 Download the code:
