@@ -131,22 +131,19 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
     if return_widget:
         vis.fig.canvas.header_visible = False
         if do_animation:
-            from ipywidgets import HBox, IntSlider, Play, VBox, jslink
-            speed = IntSlider(value=100, min=10, max=1000, description='speed', readout=False)
-            play = Play(min=None, max=len(U[0])-1)
-            animation_slider = IntSlider(0, 0, len(U[0])-1)
-            jslink((play, 'value'), (animation_slider, 'value'))
-            jslink((speed, 'value'), (play, 'interval'))
+            from ipywidgets import VBox
+
+            from pymor.discretizers.builtin.gui.jupyter.animation_widget import AnimationWidget
+
+            animation_widget = AnimationWidget(len(U[0]))
+            widget = VBox([vis.fig.canvas, animation_widget])
 
             def animate(change):
                 vis.set(idx=change['new'])
-
-            animation_slider.observe(animate, 'value')
-            controls = HBox([speed, play, animation_slider])
-            widget = VBox([vis.fig.canvas, controls])
+            animation_widget.frame_slider.observe(animate, 'value')
 
             def set(U):
-                vis.set(U, animation_slider.value)
+                vis.set(U, animation_widget.frame_slider.value)
             widget.set = set
         else:
             widget = vis.fig.canvas
@@ -252,22 +249,19 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     if return_widget:
         fig.canvas.header_visible = False
         if do_animation:
-            from ipywidgets import HBox, IntSlider, Play, VBox, jslink
-            speed = IntSlider(value=100, min=10, max=1000, description='speed', readout=False)
-            play = Play(min=None, max=len(U[0])-1)
-            animation_slider = IntSlider(0, 0, len(U[0])-1)
-            jslink((play, 'value'), (animation_slider, 'value'))
-            jslink((speed, 'value'), (play, 'interval'))
+            from ipywidgets import VBox
+
+            from pymor.discretizers.builtin.gui.jupyter.animation_widget import AnimationWidget
+
+            animation_widget = AnimationWidget(len(U[0]))
+            widget = VBox([fig.canvas, animation_widget])
 
             def time_changed(change):
                 set_data(U=None, ind=change['new'])
-
-            animation_slider.observe(time_changed, 'value')
-            controls = HBox([speed, play, animation_slider])
-            widget = VBox([fig.canvas, controls])
+            animation_widget.frame_slider.observe(time_changed, 'value')
 
             def set(U):
-                set_data(U, ind=animation_slider.value)
+                set_data(U, ind=animation_widget.frame_slider.value)
             widget.set = set
         else:
             widget = fig.canvas
