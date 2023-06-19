@@ -20,7 +20,7 @@ class PHLTIPGReductor(ProjectionBasedReductor):
         The basis of the trail space.
     QTE_orthonormal
         If `True`, no `E` matrix will be assembled for the reduced |Model|.
-        Set to `True` if `V` is orthonormal w.r.t. `fom.Q.apply_adjoint(fom.E)`.
+        Set to `True` if `V` is orthonormal w.r.t. `fom.Q.H @ fom.E`.
     """
 
     def __init__(self, fom, V, QTE_orthonormal=False):

@@ -61,7 +61,7 @@ class PHIRKAReductor(GenericIRKAReductor):
             - `'orth'`: projection matrix `V` is orthogonalized with
               respect to the Euclidean inner product.
             - `'QTEorth'`: projection matrix `V` is orthogonalized with
-              respect to the `fom.Q.apply_adjoint(fom.E)` product.
+              respect to the `fom.Q.H @ fom.E` product.
         conv_crit
             Convergence criterion:
 
@@ -119,9 +119,8 @@ class PHIRKAReductor(GenericIRKAReductor):
 
         self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy(b),
                                             sigma, orth=False)
-        gram_schmidt(self.V, atol=0, rtol=0,
-                     product=None if projection == 'orth' else fom.Q.apply_adjoint(fom.E),
-                     copy=False)
+        product = None if projection == 'orth' else fom.Q.H @ fom.E
+        gram_schmidt(self.V, atol=0, rtol=0, product=product, copy=False)
         
         self._pg_reductor = PHLTIPGReductor(fom, self.V, projection == 'QTEorth')
         self.W = self._pg_reductor.bases['W']
