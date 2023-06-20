@@ -609,12 +609,12 @@ class ComponentProjectionOperator(Operator):
 
     linear = True
 
-    def __init__(self, components, source, name=None):
+    def __init__(self, components, source, range_id=None, name=None):
         assert all(0 <= c < source.dim for c in components)
         components = np.array(components, dtype=np.int32)
 
         self.__auto_init(locals())
-        self.range = NumpyVectorSpace(len(components))
+        self.range = NumpyVectorSpace(len(components), range_id)
 
     def apply(self, U, mu=None):
         assert U in self.source
