@@ -121,6 +121,6 @@ class PHIRKAReductor(GenericIRKAReductor):
                                             sigma, orth=False)
         product = None if projection == 'orth' else fom.Q.H @ fom.E
         gram_schmidt(self.V, atol=0, rtol=0, product=product, copy=False)
-        
+
         self._pg_reductor = PHLTIPGReductor(fom, self.V, projection == 'QTEorth')
         self.W = self._pg_reductor.bases['W']

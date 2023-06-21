@@ -5,7 +5,7 @@
 
 import numpy as np
 from matplotlib import pyplot as plt
-from typer import run, Option
+from typer import Option, run
 
 from pymor.models.iosys import PHLTIModel
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
@@ -146,7 +146,7 @@ def main(
     for i, reductor in enumerate(reductors):
         plt.semilogy(reduced_order, h2_errors[i], label=reductor, marker=markers[reductor])
 
-    plt.ylabel('Relative $\mathcal{H}_2$-error')
+    plt.ylabel('Relative $\\mathcal{H}_2$-error')
     plt.xlabel('Reduced order r')
     plt.legend()
     plt.show()

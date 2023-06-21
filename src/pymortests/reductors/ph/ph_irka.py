@@ -4,10 +4,10 @@
 
 import numpy as np
 
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.models.iosys import LTIModel, PHLTIModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
-from pymor.algorithms.to_matrix import to_matrix
 
 
 def test_ph_irka():
