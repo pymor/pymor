@@ -25,3 +25,4 @@ repos:
   - id: markdownlint-cli2
 ci:
   autofix_prs: false
+  autoupdate_schedule: quarterly
