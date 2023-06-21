@@ -91,9 +91,9 @@ p = InstationaryProblem(
 StationaryProblem(
     domain=LineDomain([0., 1.], left='robin', right='robin'),
     diffusion=LincombFunction([ExpressionFunction('(x[0] <= 0.5) * 1.', 1),
-			       ExpressionFunction('(0.5 < x[0]) * 1.', 1)],
-			      [1,
-			       ProjectionParameterFunctional('diffusion')]),
+                               ExpressionFunction('(0.5 < x[0]) * 1.', 1)],
+                              [1,
+                               ProjectionParameterFunctional('diffusion')]),
     robin_data=(ConstantFunction(1., 1), ExpressionFunction('(x[0] < 1e-10) * 1.', 1)),
     outputs=(('l2_boundary', ExpressionFunction('(x[0] > (1 - 1e-10)) * 1.', 1)),),
 ),
@@ -136,8 +136,8 @@ def compare(u, mu):
     return (U, U_red, U-U_red)
 
 interact(rom, p.parameter_space,
-	 visualizer=partial(m.visualize, separate_colorbars=True, legend=('FOM', 'ROM', 'ERR')),
-	 transform=compare)
+         visualizer=partial(m.visualize, separate_colorbars=True, legend=('FOM', 'ROM', 'ERR')),
+         transform=compare)
 ```
 
 Download the code:
