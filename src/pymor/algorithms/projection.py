@@ -199,7 +199,7 @@ class ProjectRules(RuleTable):
     def action_EmpiricalInterpolatedOperator(self, op):
         range_basis, source_basis = self.range_basis, self.source_basis
         if len(op.interpolation_dofs) == 0:
-            return self.apply(ZeroOperator(op.range, op.source, self._add_suffix(op)))
+            return self.apply(ZeroOperator(op.range, op.source))
         elif not hasattr(op, 'restricted_operator') or source_basis is None:
             raise RuleNotMatchingError('Has no restricted operator or source_basis is None')
         if range_basis is not None:
@@ -209,8 +209,7 @@ class ProjectRules(RuleTable):
 
         return ProjectedEmpiricalInterpolatedOperator(op.restricted_operator, op.interpolation_matrix,
                                                       NumpyVectorSpace.make_array(source_basis.dofs(op.source_dofs)),
-                                                      projected_collateral_basis, op.triangular, None,
-                                                      self._add_suffix(op))
+                                                      projected_collateral_basis, op.triangular, None)
 
     @match_class(AffineOperator)
     def action_AffineOperator(self, op):
@@ -218,11 +217,11 @@ class ProjectRules(RuleTable):
 
     @match_class(LincombOperator)
     def action_LincombOperator(self, op):
-        return self.replace_children(op).with_(solver_options=None)
+        return self.replace_children(op).with_(solver_options=None, name=None)
 
     @match_class(SelectionOperator)
     def action_SelectionOperator(self, op):
-        return self.replace_children(op)
+        return self.replace_children(op).with_(name=None)
 
     @match_class(BlockOperatorBase)
     def action_BlockOperatorBase(self, op):
