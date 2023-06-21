@@ -18,6 +18,12 @@ def test_project(operator_with_arrays):
     assert np.all(almost_equal(X, Y))
 
 
+def test_project_no_bases(operator):
+    op, _ = operator
+    op_proj = project(op, None, None)
+    assert op_proj is op
+
+
 def test_project_2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     op_U = project(op, None, U)
