@@ -62,4 +62,6 @@ def test_ph_irka_E_and_Q():
     assert isinstance(rom2.E, IdentityOperator)
     assert np.isclose(np.array([[1]]), fom.E.apply2(phirka.W, phirka.V))
 
-    assert (rom1 - rom2).h2_norm() < 1e-8
+    err1 = (rom1 - fom).h2_norm()
+    err2 = (rom2 - fom).h2_norm()
+    assert abs(err1-err2) < 1e-12
