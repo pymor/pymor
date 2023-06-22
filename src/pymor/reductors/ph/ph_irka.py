@@ -5,8 +5,8 @@
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.krylov import tangential_rational_krylov
 from pymor.models.iosys import PHLTIModel
-from pymor.reductors.h2 import GenericIRKAReductor
 from pymor.reductors.basic import LTIPGReductor
+from pymor.reductors.h2 import GenericIRKAReductor
 from pymor.reductors.ph.basic import PHLTIPGReductor
 
 
@@ -129,7 +129,7 @@ class PHIRKAReductor(GenericIRKAReductor):
                                             sigma, orth=False)
         product = None if projection == 'orth' else fom.Q.H @ fom.E
         gram_schmidt(self.V, atol=0, rtol=0, product=product, copy=False)
-        
+
         self.W = self.fom.Q.apply(self.V)
         self._pg_reductor = LTIPGReductor(fom, self.W, self.V,
                                           projection == 'QTEorth')
