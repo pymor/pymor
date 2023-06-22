@@ -6,6 +6,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.krylov import tangential_rational_krylov
 from pymor.models.iosys import PHLTIModel
 from pymor.reductors.h2 import GenericIRKAReductor
+from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.ph.basic import PHLTIPGReductor
 
 
@@ -105,10 +106,14 @@ class PHIRKAReductor(GenericIRKAReductor):
             if self.conv_crit[-1] < tol:
                 break
 
+        # Return a |PHLTIModel| reduced-order model.
+        fom = self._assemble_fom()
+        self._pg_reductor = PHLTIPGReductor(fom, self.V, projection == 'QTEorth')
+        rom = self._pg_reductor.reduce()
         return rom
 
-    def _set_V_reductor(self, sigma, b, projection):
-        fom = (
+    def _assemble_fom(self):
+        return (
             self.fom.with_(
                 **{op: getattr(self.fom, op).assemble(mu=self.mu)
                    for op in ['A', 'B', 'C', 'D', 'E']}
@@ -117,10 +122,14 @@ class PHIRKAReductor(GenericIRKAReductor):
             else self.fom
         )
 
+    def _set_V_reductor(self, sigma, b, projection):
+        fom = self._assemble_fom()
+
         self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy(b),
                                             sigma, orth=False)
         product = None if projection == 'orth' else fom.Q.H @ fom.E
         gram_schmidt(self.V, atol=0, rtol=0, product=product, copy=False)
-
-        self._pg_reductor = PHLTIPGReductor(fom, self.V, projection == 'QTEorth')
-        self.W = self._pg_reductor.bases['W']
+        
+        self.W = self.fom.Q.apply(self.V)
+        self._pg_reductor = LTIPGReductor(fom, self.W, self.V,
+                                          projection == 'QTEorth')
