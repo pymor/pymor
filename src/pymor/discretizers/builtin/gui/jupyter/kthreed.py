@@ -240,7 +240,7 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
     if warp_by_scalar:
         if scale_factor == 'auto':
             bb = grid.bounding_box()
-            bb_fac = np.max(bb[1] - bb[0]) / 3 
+            bb_fac = np.max(bb[1] - bb[0]) / 3
             scale_factors = [bb_fac/(max(abs(vmin[0]), abs(vmax[0])) + 1e-15)  # prevent division by zero
                              for vmin, vmax in zip(vmins, vmaxs)]
         else:
