@@ -35,7 +35,7 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     Parameters
     ----------
     model
-        The |Model| used for the optimization.
+        The |Model| with output `J` used for the optimization.
     parameter_space
         If not `None`, the |ParameterSpace| for enforcing the box constraints on the
         |parameter values| `mu`. Otherwise a |ParameterSpace| with lower bound -1
@@ -100,10 +100,6 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
 
     data = {}
 
-    assert model.output_functional is not None
-    assert model.output_functional.range.dim == 1
-    output = lambda m: model.output(m)[0, 0]
-
     logger.info(f'Started projected BFGS algorithm for {model.output_functional}.')
 
     if parameter_space is None:
@@ -124,8 +120,15 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         assert callable(error_criterion) and callable(line_search_error_criterion)
         bfgs_armijo = partial(constrained_armijo, armijo_condition=line_search_error_criterion)
 
+    assert model.dim_output == 1
+    output = lambda m: model.output(m)[0, 0]
+
+    # make sure the model is instationary by checking length of output vectorarray
+    temp_output = model.output(mu)
+    assert len(temp_output) == 1
+    current_output = temp_output[0, 0].item()
+
     gradient = model.parameters.parse(model.output_d_mu(mu)).to_numpy()
-    current_output = output(mu)
     eps = np.linalg.norm(gradient)
 
     # compute norms
@@ -178,10 +181,10 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
 
         # update mu
         old_mu = mu.copy()
-        old_output = current_output.copy()
+        old_output = current_output
         mu += step_size * direction
         mu = parameter_space.clip(mu).to_numpy()
-        current_output = output(mu)
+        current_output = output(mu).item()
         data['mus'].append(mu.copy())
 
         # compute norms

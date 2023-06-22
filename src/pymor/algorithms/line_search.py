@@ -40,7 +40,7 @@ def armijo(f, starting_point, direction, grad=None, initial_value=None, alpha_in
     -------
     alpha
         Step size computed according to the Armijo condition.
-    iteration
+    iterations
         Number of total Armijo line search iterations.
     """
     def _unconstrained_armijo_condition(starting_point, initial_value, current_value, alpha, beta,
@@ -85,7 +85,7 @@ def constrained_armijo(f, starting_point, direction, armijo_condition=None, grad
     -------
     alpha
         Step size computed according to the Armijo condition.
-    iteration
+    iterations
         Number of total Armijo line search iterations.
     """
     assert armijo_condition is not None, 'Please provide a callable Armijo condition!'
@@ -132,7 +132,7 @@ def _armijo(f, starting_point, direction, armijo_condition, grad=None, initial_v
     -------
     alpha
         Step size computed according to the Armijo condition.
-    iteration
+    iterations
         Number of total Armijo line search iterations.
     """
     assert alpha_init > 0
@@ -148,7 +148,7 @@ def _armijo(f, starting_point, direction, armijo_condition, grad=None, initial_v
     if initial_value is None:
         initial_value = f(starting_point)
 
-    iteration = 0
+    iterations = 0
     slope = 0.0
 
     # Compute slope if gradient is provided
@@ -166,7 +166,7 @@ def _armijo(f, starting_point, direction, armijo_condition, grad=None, initial_v
             break
 
         # Check if maxiter is reached
-        if iteration >= maxiter:
+        if iterations >= maxiter:
             # Use default value as step size
             alpha = alpha_init
             # Log warning
@@ -174,8 +174,8 @@ def _armijo(f, starting_point, direction, armijo_condition, grad=None, initial_v
             logger.warning('Reached maximum number of line search steps; '
                            f'using initial step size of {alpha_init} instead.')
             break
-        iteration += 1
+        iterations += 1
         # Adjust step size
         alpha *= tau
 
-    return alpha, iteration
+    return alpha, iterations

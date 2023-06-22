@@ -26,6 +26,7 @@
 * Peter Oehme, oehme.pb@gmail.com
   * quadratic functionals and quadratic output keyword for CG discretization
   * simple algebraic operations for parameter values
+  * adaptive trust region algorithm and specific BFGS implementation for PDE-constrained optimization
 
 ### pyMOR 2022.2
 
