@@ -10,8 +10,7 @@ from scipy.special import erfinv
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.svd_va import qr_svd
-from pymor.core.base import ImmutableObject
-from pymor.core.cache import CacheableObject, cached
+from pymor.core.base import BasicObject, ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import AdjointOperator, IdentityOperator, InverseOperator, VectorArrayOperator
@@ -20,8 +19,8 @@ from pymor.tools.deprecated import Deprecated
 from pymor.vectorarrays.interface import VectorArray
 
 
-class RandomizedNormEstimator(CacheableObject):
-    """Approximates the norm of an |Operator| with randomized methods.
+class RandomizedNormEstimator(BasicObject):
+    r"""Approximates the norm of an |Operator| with randomized methods.
 
     Parameters
     ----------
@@ -35,14 +34,23 @@ class RandomizedNormEstimator(CacheableObject):
         A lower bound for the smallest eigenvalue of `source_product`. Defaults to `None`.
         If `None` and a `source_product` is given, the smallest eigenvalue will be computed
         using :func:`randomized GHEP <pymor.algorithms.rand_la.randomized_ghep>`.
+    complement_basis
+        If not `None` compute the norm of :math:`P_V \circ A`, where :math:`P_V` is the
+        `range_product`-orthogonal projection onto a subspace :math:`V` of the range of `A`
+        and `complement_basis` is a `range_product`-orthonormal basis of the orthogonal
+        complement of :math:`V`.
+
+        .. warning::
+            `RandomizedNormEstimator` does not copy the provided `complement_basis`. While
+            it checks whether the size of the basis has increased, it is always assumed that
+            only new orthonormal vectors are appended to the basis. Any other change of
+            `complement_basis` will lead to false results.
     complex
         If `True`, complex valued random vectors will be drawn.
     """
 
-    cache_region = 'memory'
-
     def __init__(self, A, source_product=None, range_product=None, subspace_iterations=0, lambda_min=None,
-                 complex=False):
+                 complement_basis=None, complex=False):
         if isinstance(A, VectorArray):
             A = VectorArrayOperator(A)
         assert isinstance(A, Operator)
@@ -56,37 +64,57 @@ class RandomizedNormEstimator(CacheableObject):
         assert isinstance(source_product, Operator)
         assert source_product.source == source_product.range == A.source
         assert lambda_min is None or isinstance(lambda_min, Number)
+        assert complement_basis is None or complement_basis in A.range
 
         self.__auto_init(locals())
         self._samplevecs = self.A.range.empty()
         self._norms = []
+        self._projection_coeffs = np.zeros((0,0))
 
-    @cached
-    def _lambda_min(self):
+    def _compute_lambda_min(self):
+        if self.lambda_min is not None:
+            return
         if isinstance(self.source_product, IdentityOperator):
-            return 1
-        elif self.lambda_min is None:
-            with self.logger.block('Estimating minimum singular value of source_product ...'):
-                return 1/randomized_ghep(InverseOperator(self.source_product), n=1)[0]
+            self.lambda_min = 1
         else:
-            return self.lambda_min
+            with self.logger.block('Estimating minimum singular value of source_product ...'):
+                self.lambda_min = 1/randomized_ghep(InverseOperator(self.source_product), n=1)[0]
+
+    def _orthonormalize(self, vectors, basis):
+        coeffs = np.empty((len(vectors), len(basis)))
+        for i_V, V in enumerate(vectors):
+            for i_B, B in enumerate(basis):
+                p = B.pairwise_inner(V, product=self.range_product)[0]
+                coeffs[i_V, i_B] = p
+                V.axpy(-p, B)
+        return coeffs
 
     def _draw_samples(self, num_testvecs):
         k = num_testvecs - len(self._samplevecs)
-        if k > 0:
-            W = self.A.source.random(k, distribution='normal')
-            if self.complex:
-                W += 1j * self.A.source.random(k, distribution='normal')
-            AW = self.A.apply(W)
-            self._samplevecs.append(AW)
-            self._norms.extend(AW.norm(self.range_product))
+        if k == 0:
+            return
 
-    def _estimate_norm(self, norms, p_fail):
-        num_testvecs = len(norms)
-        c = np.sqrt(2 * self._lambda_min()) * erfinv(p_fail ** (1 / num_testvecs))
-        return np.max(norms) / c
+        W = self.A.source.random(k, distribution='normal')
+        if self.complex:
+            W += 1j * self.A.source.random(k, distribution='normal')
+        AW = self.A.apply(W)
+        self._samplevecs.append(AW)
+        self._norms.extend(AW.norm(self.range_product))
 
-    def estimate_norm(self, num_testvecs, p_fail):
+        if self.complement_basis is not None:
+            coeffs = self._orthonormalize(self._samplevecs[-k:], self.complement_basis)
+            self._projection_coeffs = np.vstack([self._projection_coeffs, coeffs])
+
+    def _update_projection_coeffs(self):
+        if self.complement_basis is None:
+            return
+        new_basis_vecs = len(self.complement_basis) - self._projection_coeffs.shape[1]
+        if new_basis_vecs == 0:
+            return
+        new_coeffs = self._orthonormalize(self._samplevecs, self.complement_basis[-new_basis_vecs:])
+        self._projection_coeffs = np.hstack([self._projection_coeffs, new_coeffs])
+
+    def estimate_norm(self, num_testvecs, p_fail, complement_basis_size=None):
         r"""Randomized operator norm estimator from :cite:`BS18` (Definition 3.1).
 
         An upper bound on the operator norm with probability greater than or equal to
@@ -123,8 +151,22 @@ class RandomizedNormEstimator(CacheableObject):
         assert 0 < num_testvecs and isinstance(num_testvecs, Integral)
         assert 0 < p_fail < 1
 
+        self._compute_lambda_min()
+        self._update_projection_coeffs()
         self._draw_samples(num_testvecs)
-        return self._estimate_norm(self._norms[:num_testvecs], p_fail)
+
+        norms = np.array(self._norms[:num_testvecs])
+        if self.complement_basis is not None:
+            if complement_basis_size is None:
+                complement_basis_size = len(self.complement_basis)
+            assert complement_basis_size <= len(self.complement_basis)
+            norms = np.sqrt(
+                np.abs(norms**2) - spla.norm(self._projection_coeffs[:num_testvecs, :complement_basis_size], axis=0)**2
+            )
+
+        c = np.sqrt(2 * self.lambda_min) * erfinv(p_fail ** (1 / num_testvecs))
+
+        return np.max(norms) / c
 
 
 class RandomizedRangeFinder(ImmutableObject):
@@ -167,11 +209,7 @@ class RandomizedRangeFinder(ImmutableObject):
         if source_product is None:
             source_product = IdentityOperator(A.source)
 
-        estimator = RandomizedNormEstimator(A, source_product=source_product, range_product=range_product,
-                                            lambda_min=lambda_min, complex=complex)
-
         self.__auto_init(locals())
-        self._estimator = estimator
         self._coeffs = np.array([[]])
         self._Q = [self.A.range.empty()]
         for _ in range(subspace_iterations):
@@ -180,21 +218,9 @@ class RandomizedRangeFinder(ImmutableObject):
         self._Q = tuple(self._Q)
         self._adjoint_op = A if self_adjoint else AdjointOperator(A, source_product=source_product,
                                                                   range_product=range_product)
+        self._estimator = RandomizedNormEstimator(A, source_product=source_product, range_product=range_product,
+                                                  lambda_min=lambda_min, complement_basis=self._Q[-1], complex=complex)
 
-    def _compute_coefficients(self, basis_size, num_testvecs):
-        l, n = self._coeffs.shape
-        if basis_size > l or num_testvecs > n:
-            Q, W = self._find_range(basis_size), self._estimator._samplevecs[:num_testvecs]
-            gramian = Q.gramian(self.range_product)
-            rhs = Q.inner(W, self.range_product)
-            self._coeffs = spla.solve(gramian, rhs, assume_a='pos', overwrite_a=True, overwrite_b=True)
-        return self._coeffs[:basis_size, :num_testvecs]
-
-    def _estimate_error(self, basis_size, num_testvecs, p_fail):
-        self._estimator._draw_samples(num_testvecs)
-        norms = np.asarray(self._estimator._norms[:num_testvecs])
-        coeffs = self._compute_coefficients(basis_size, num_testvecs)
-        return self._estimator._estimate_norm(np.sqrt(np.abs(norms**2) - spla.norm(coeffs, axis=0)**2), p_fail)
 
     def estimate_error(self, basis_size, num_testvecs=20, p_fail=1e-14):
         r"""Randomized a posteriori error estimator for a given basis size.
@@ -230,10 +256,8 @@ class RandomizedRangeFinder(ImmutableObject):
         assert 0 < num_testvecs and isinstance(num_testvecs, Integral)
         assert 0 < p_fail < 1
 
-        err = self._estimate_error(basis_size, num_testvecs, p_fail)
-        self.logger.info(f'Estimated error (basis dimension {basis_size}): {err:.5e}.')
-
-        return err
+        self._find_range(basis_size)  # extend range basis if needed
+        return self._estimator.estimate_norm(num_testvecs, p_fail, complement_basis_size=basis_size)
 
     def _find_range(self, basis_size):
         k = basis_size - len(self._Q[-1])
@@ -327,13 +351,13 @@ class RandomizedRangeFinder(ImmutableObject):
                 self._find_range(basis_size)
 
             if tol is not None:
-                err = self._estimate_error(basis_size, num_testvecs, p_fail/N)
+                err = self.estimate_error(basis_size, num_testvecs, p_fail/N)
                 if err > tol:
                     with self.logger.block('Extending range basis adaptively ...'):
                         max_iter = min(max_basis_size, N)
                         while basis_size < max_iter:
                             basis_size += 1
-                            err = self._estimate_error(basis_size, num_testvecs, p_fail/N)
+                            err = self.estimate_error(basis_size, num_testvecs, p_fail/N)
                             self.logger.info(f'Basis dimension: {basis_size}/{max_iter}\t'
                                              + f'Estimated error: {err:.5e} (tol={tol:.2e})')
                             if err <= tol:
