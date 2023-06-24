@@ -34,7 +34,7 @@ cont_lyap_dense_solver_list = [
 ]
 disc_lyap_dense_solver_list = [
     'scipy',
-#    'slycot_bartels-stewart',
+    'slycot_bartels-stewart',
     'pymepack_gelyap',
     'pymepack_gelyap_refine',
 ]
