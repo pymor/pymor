@@ -17,9 +17,11 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.logger import getLogger
 from pymor.core.defaults import defaults
 
-@defaults('Q', 'Z', 'hess', 'block_size', 'solver', 'inplace')
-def pymepack_gelyap_solver_options(Q = None, Z = None, hess = None, block_size = None, solver = None, inplace = None):
-    """Return customized options for the pymepack.gelyap and pymepack.gglyap solvers.
+@defaults('Q', 'Z', 'hess', 'block_size', 'solver', 'max_it', 'tau')
+def pymepack_gelyap_options(Q = None, Z = None, hess = None,
+        block_size = None, solver = None, max_it = None, tau = None):
+    """Returns customized options for the pymepack.gelyap, pymepack.gglyap solvers
+    and their respective versions with iterative refinement.
     If no values are specified, pymepack uses its default settings.
     Refer to the `pymepack` documentation for default values.
 
@@ -35,8 +37,10 @@ def pymepack_gelyap_solver_options(Q = None, Z = None, hess = None, block_size =
         See `pymepack.gelyap`, `pymepack.gglyap`.
     solver
         See `pymepack.gelyap`, `pymepack.gglyap`.
-    inplace
-        See `pymepack.gelyap`, `pymepack.gglyap`.
+    max_it
+        See `pymepack.gelyap_refine`, `pymepack.gglyap_refine`.
+    tau
+        See `pymepack.gelyap_refine`, `pymepack.gglyap_refine`.
 
     Returns
     -------
@@ -49,53 +53,10 @@ def pymepack_gelyap_solver_options(Q = None, Z = None, hess = None, block_size =
     if hess: gelyap_opts['hess'] = hess
     if block_size: gelyap_opts['block_size'] = block_size
     if solver: gelyap_opts['solver'] = solver
-    if inplace: gelyap_opts['inplace'] = inplace
-
-    return gelyap_opts
-
-@defaults('AS', 'BS', 'Q', 'Z', 'X', 'max_it', 'tau', 'block_size', 'solver')
-def pymepack_gelyap_refine_solver_options(AS = None, BS = None, Q = None,
-                                          Z = None, X = None,
-                                          max_it = None, tau = None, 
-                                          block_size = None, solver = None):
-    """Return preconfigured options for the pymepack.gelyap_refine and pymepack.gglyap_refine solvers.
-    If no values are specified, pymepack uses its default settings.
-    Refer to the `pymepack` documentation for default values.
-
-    Parameters
-    ----------
-    AS
-        See `pymepack.gelyap_refine`, pymepack.gglyap_refine`.
-    BS
-        See `pymepack.gglyap_refine`.
-    Q
-        See `pymepack.gelyap_refine`, `pymepack.gglyap_refine`.
-    Z
-        See `pymepack.gglyap_refine`.
-    X
-        See `pymepack.gelyap_refine`, `pymepack.gglyap_refine`.
-    block_size
-        See `pymepack.gelyap_refine`, `pymepack.gglyap_refine`.
-    solver
-        See `pymepack.gelyap_refine`, `pymepack.gglyap_refine`.
-
-    Returns
-    -------
-    Dictionary of preconfigured solver options to be used instead of the default values for the pymepack backend.
-    """
-    gelyap_refine_opts = {}
-    if AS: gelyap_refine_opts['AS'] = AS
-    if BS: gelyap_refine_opts['BS'] = BS
-    if Q : gelyap_refine_opts['Q']  = Q
-    if Z : gelyap_refine_opts['Z']  = Z
-    if X : gelyap_refine_opts['X']  = X
-
     if max_it : gelyap_refine_opts['max_it'] = max_it
     if tau : gelyap_refine_opts['tau'] = tau
-    if block_size : gelyap_refine_opts['block_size'] = block_size
-    if solver : gelyap_refine_opts['solver'] = solver
 
-    return gelyap_refine_opts
+    return gelyap_opts
 
 
 def lyap_lrcf_solver_options():
@@ -107,9 +68,9 @@ def lyap_lrcf_solver_options():
     """
     return {
             'pymepack_gelyap': {'type': 'pymepack_gelyap',
-                                'opts': pymepack_gelyap_solver_options()},
+                                'opts': pymepack_gelyap_options()},
             'pymepack_gelyap_refine': {'type': 'pymepack_gelyap_refine',
-                                       'opts': pymepack_gelyap_refine_solver_options()},
+                                       'opts': pymepack_gelyap_options()},
             }
 
 def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
@@ -171,9 +132,9 @@ def lyap_dense_solver_options():
     """
     return {
             'pymepack_gelyap': {'type': 'pymepack_gelyap',
-                                'opts': pymepack_gelyap_solver_options()},
+                                'opts': pymepack_gelyap_options()},
             'pymepack_gelyap_refine': {'type': 'pymepack_gelyap_refine',
-                                       'opts': pymepack_gelyap_refine_solver_options()},
+                                       'opts': pymepack_gelyap_options()},
             }
 
 def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
@@ -186,9 +147,18 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
 
     for a general description.
 
-    This function uses `pymepack.gelyap` (if `E is None`) and `pymepack.gglyap` (if `E is not None`),
-    which are dense solvers. If options specify a solver with iterative refinement, `pymepack.gelyap_refine`
-    and `pymepack.gglyap_refine` are used in the aforementioned cases respectively.
+    In case of the continuous-time Lyapunov equation, this function uses
+    `pymepack.gelyap` (if `E is None`) and `pymepack.gglyap` (if `E is not None`), 
+    which are dense solvers. If options specify a solver with iterative refinement,
+    the initial guess is computed with the aforementioned solvers and then refined
+    with `pymepack.gelyap_refine` or `pymepack.gglyap_refine` respectively.
+
+    In case of the discrete-time Lyapunov equation, this function uses
+    `pymepack.gestein` (if `E is None`) and `pymepack.ggstein` (if `E is not None`), 
+    which are dense solvers. If options specify a solver with iterative refinement,
+    the initial guess is computed with one of the aforementioned solvers and then
+    refined with `pymepack.gestein_refine` or `pymepack.ggstein_refine` respectively. 
+
 
     Parameters
     ----------
@@ -214,10 +184,17 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     options = _parse_options(options, lyap_dense_solver_options(), 'pymepack_gelyap', None, False)
    
     C = -B.dot(B.T) if not trans else -B.T.dot(B)
+    Cf = C if C.flags.f_contiguous else C.copy(order='F')
+    Af = A.copy(order='F')
+
+    opts = options['opts']
+    refinement_opts = {}
+    if 'max_it' in opts : refinement_opts['max_it'] = opts.pop('max_it')
+    if 'tau' in opts : refinement_opts['tau'] = opts.pop('tau')
+    if 'block_size' in opts: refinement_opts['block_size'] = opts['block_size']
+    if 'solver' in opts : refinement_opts['solver'] = opts['solver']
+
     if options['type'] == 'pymepack_gelyap':
-        opts = options['opts']
-        Cf = C if C.flags.f_contiguous else C.copy(order='F')
-        Af = A.copy(order='F')
         if E is None:
             if cont_time:
                 pymepack.gelyap(Af, Cf, trans = trans, **opts)
@@ -229,22 +206,24 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
                 pymepack.gglyap(Af, Ef, Cf, trans = trans, **opts)
             else:
                 pymepack.ggstein(Af, Ef, Cf, trans = trans, **opts)
-        X = Cf
+        X = Cf     
     elif options['type'] == 'pymepack_gelyap_refine':
-        opts = options['opts']
-        Cf = C if C.flags.f_contiguous else C.copy(order='F')
-        Af = A if A.flags.f_contiguous else A.copy(order='F')
         if E is None:
             if cont_time:
-                X, *_ = pymepack.gelyap_refine(Af, Cf, trans = trans)
+                X,AS,Q = pymepack.gelyap(Af, Cf, trans = trans, **opts, inplace = False)
+                X, *_ = pymepack.gelyap_refine(Af, Cf, AS, Q, X, trans = trans, **refinement_opts)
             else:
-                X, *_ = pymepack.gestein_refine(Af, Cf, trans = trans)
+                X,AS,Q = pymepack.gestein(Af, Cf, trans = trans, **opts, inplace = False)
+                X, *_ = pymepack.gestein_refine(Af, Cf, AS, Q, X, trans = trans, **refinement_opts)
         else:
             Ef = E if E.flags.f_contiguous else E.copy(order='F')
             if cont_time:
-                X, *_ = pymepack.gglyap_refine(Af, Ef, Cf, trans = trans)
+                X,AS,ES,Q,Z = pymepack.gglyap(Af, Ef, Cf, trans = trans, **opts, inplace = False)
+                opts
+                X, *_ = pymepack.gglyap_refine(Af, Ef, Cf, AS, ES, Q, Z, X, trans = trans, **refinement_opts)
             else:
-                X, *_ = pymepack.ggstein_refine(Af, Ef, Cf, trans = trans)
+                X,AS,ES,Q,Z = pymepack.ggstein(Af, Ef, Cf, trans = trans, **opts, inplace = False)
+                X, *_ = pymepack.ggstein_refine(Af, Ef, Cf, AS, ES, Q, Z, X, trans = trans, **refinement_opts)
     else:
         raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 

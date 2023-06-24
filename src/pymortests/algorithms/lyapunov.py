@@ -24,19 +24,19 @@ n_list_small = [10, 20]
 n_list_big = [300]
 m_list = [1, 2]
 cont_lyap_lrcf_solver_list = [
-#    'pymess_lradi',
+    'pymess_lradi',
     'lradi',
 ]
 cont_lyap_dense_solver_list = [
     'scipy',
-#    'slycot_bartels-stewart',
-#    'pymess_glyap',
+    'slycot_bartels-stewart',
+    'pymess_glyap',
     'pymepack_gelyap',
     'pymepack_gelyap_refine',
 ]
 disc_lyap_dense_solver_list = [
     'scipy',
-#    'slycot_bartels-stewart',
+    'slycot_bartels-stewart',
     'pymepack_gelyap',
     'pymepack_gelyap_refine',
 ]
@@ -128,8 +128,8 @@ def relative_residual(A, E, B, X, cont_time, trans=False):
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n,lyap_solver', chain(product(n_list_small, cont_lyap_dense_solver_list),
                                                 product(n_list_big, cont_lyap_lrcf_solver_list)))
-#@skip_if_missing('SLYCOT')
-#@skip_if_missing('PYMESS')
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_cont_lrcf(n, m, with_E, trans, lyap_solver):
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 0.1, cont_time=True)
@@ -156,8 +156,8 @@ def test_cont_lrcf(n, m, with_E, trans, lyap_solver):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('lyap_solver', disc_lyap_dense_solver_list)
-#@skip_if_missing('SLYCOT')
-#@skip_if_missing('PYMESS')
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_disc_lrcf(n, m, with_E, trans, lyap_solver):
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 0.1, cont_time=False)
@@ -185,8 +185,8 @@ def test_disc_lrcf(n, m, with_E, trans, lyap_solver):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('lyap_solver', cont_lyap_dense_solver_list)
-#@skip_if_missing('SLYCOT')
-#@skip_if_missing('PYMESS')
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_cont_dense(n, m, with_E, trans, lyap_solver):
     A = np.random.randn(n, n)
     E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
@@ -205,8 +205,8 @@ def test_cont_dense(n, m, with_E, trans, lyap_solver):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('lyap_solver', disc_lyap_dense_solver_list)
-#@skip_if_missing('SLYCOT')
-#@skip_if_missing('PYMESS')
+@skip_if_missing('SLYCOT')
+@skip_if_missing('PYMESS')
 def test_disc_dense(n, m, with_E, trans, lyap_solver):
     A = np.random.randn(n, n)
     E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
