@@ -277,6 +277,8 @@ class Mu(FrozenDict):
     """
 
     __slots__ = ('_raw_values')
+    __array_priority__ = 100.0
+    __array_ufunc__ = None
 
     def __new__(cls, *args, **kwargs):
         raw_values = dict(*args, **kwargs)
@@ -373,6 +375,31 @@ class Mu(FrozenDict):
             except Exception:
                 return False
         return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
+
+    def __neg__(self):
+        return Mu({key: -value for key, value in self.items()})
+
+    def __add__(self, other):
+        if not isinstance(other, Mu):
+            other = self.parameters.parse(other)
+        assert self.keys() == other.keys()
+        return Mu({key: self[key] + other[key] for key in self})
+
+    def __radd__(self, other):
+        return self + other
+
+    def __sub__(self, other):
+        return self + -other
+
+    def __rsub__(self, other):
+        return -self + other
+
+    def __mul__(self, other):
+        assert isinstance(other, Number)
+        return Mu({key: self[key] * other for key in self})
+
+    def __rmul__(self, other):
+        return self * other
 
     def __str__(self):
         def format_value(k, v):
@@ -540,14 +567,13 @@ class ParameterSpace(ParametricObject):
         -------
         List of |parameter value| dicts.
         """
-        if isinstance(counts, dict):
-            pass
-        else:
+        if not isinstance(counts, dict):
             counts = {k: counts for k in self.parameters}
 
-        linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k]) for k in self.parameters)
-        iters = tuple(product(ls, repeat=max(0, np.zeros(sps).size))
-                      for ls, sps in zip(linspaces, self.parameters.values()))
+        linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k])
+                          for k in self.parameters)
+        iters = tuple(product(linspace, repeat=size)
+                      for linspace, size in zip(linspaces, self.parameters.values()))
         return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
                 for i in product(*iters)]
 
@@ -565,8 +591,55 @@ class ParameterSpace(ParametricObject):
         -------
         The sampled |parameter values|.
         """
-        get_param = lambda: Mu(((k, get_rng().uniform(self.ranges[k][0], self.ranges[k][1], size))
-                               for k, size in self.parameters.items()))
+        get_param = lambda: Mu((k, get_rng().uniform(self.ranges[k][0], self.ranges[k][1], size))
+                               for k, size in self.parameters.items())
+        if count is None:
+            return get_param()
+        else:
+            return [get_param() for _ in range(count)]
+
+    def sample_logarithmic_uniformly(self, counts):
+        """Logarithmically uniform sample |parameter values| from the space.
+
+        Parameters
+        ----------
+        counts
+            Number of samples to take per parameter and component
+            of the parameter. Either a dict of counts per |Parameter|
+            or a single count that is taken for each parameter in |Parameters|.
+
+        Returns
+        -------
+        List of |parameter value| dicts.
+        """
+        if not isinstance(counts, dict):
+            counts = {k: counts for k in self.parameters}
+
+        logspaces = tuple(np.geomspace(self.ranges[k][0], self.ranges[k][1], num=counts[k])
+                          for k in self.parameters)
+        iters = tuple(product(logspace, repeat=size)
+                      for logspace, size in zip(logspaces, self.parameters.values()))
+        return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
+                for i in product(*iters)]
+
+    def sample_logarithmic_randomly(self, count=None):
+        """Logarithmically scaled random sample |parameter values| from the space.
+
+        Parameters
+        ----------
+        count
+            If `None`, a single dict `mu` of |parameter values| is returned.
+            Otherwise, the number of logarithmically random samples to generate and return as
+            a list of |parameter values| dicts.
+
+        Returns
+        -------
+        The sampled |parameter values|.
+        """
+        get_param = lambda: Mu((k, np.exp(get_rng().uniform(np.log(self.ranges[k][0]),
+                                                            np.log( self.ranges[k][1]),
+                                                            size)))
+                               for k, size in self.parameters.items())
         if count is None:
             return get_param()
         else:

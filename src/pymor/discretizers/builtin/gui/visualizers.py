@@ -45,7 +45,7 @@ class PatchVisualizer(ImmutableObject):
         self.__auto_init(locals())
 
     def visualize(self, U, title=None, legend=None, separate_colorbars=False,
-                  rescale_colorbars=False, block=None, filename=None, columns=2):
+                  rescale_colorbars=False, block=None, filename=None, columns=2, **kwargs):
         """Visualize the provided data.
 
         Parameters
@@ -67,12 +67,14 @@ class PatchVisualizer(ImmutableObject):
         block
             If `True`, block execution until the plot window is closed. If `None`, use the
             default provided during instantiation.
-        filename
-            If specified, write the data to a VTK-file using
-            :func:`~pymor.discretizers.builtin.grids.vtkio.write_vtk` instead of displaying it.
         columns
             The number of columns in the visualizer GUI in case multiple plots are displayed
             at the same time.
+        filename
+            If specified, write the data to a VTK-file using
+            :func:`~pymor.discretizers.builtin.grids.vtkio.write_vtk` instead of displaying it.
+        kwargs
+            Additional backend-specific arguments.
         """
         assert isinstance(U, VectorArray) \
             or (isinstance(U, tuple)
@@ -90,14 +92,14 @@ class PatchVisualizer(ImmutableObject):
                 from pymor.discretizers.builtin.gui.jupyter import get_visualizer
                 return get_visualizer()(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                                         legend=legend, separate_colorbars=separate_colorbars,
-                                        rescale_colorbars=rescale_colorbars, columns=columns)
+                                        rescale_colorbars=rescale_colorbars, columns=columns, **kwargs)
             else:
                 block = self.block if block is None else block
                 from pymor.discretizers.builtin.gui.qt import visualize_patch
                 return visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                                        legend=legend, separate_colorbars=separate_colorbars,
                                        rescale_colorbars=rescale_colorbars, backend=self.backend, block=block,
-                                       columns=columns)
+                                       columns=columns, **kwargs)
 
 
 class OnedVisualizer(ImmutableObject):

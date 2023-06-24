@@ -166,7 +166,6 @@ _PACKAGES = {
     'PYMEPACK': lambda: bool(import_module('pymepack')),
     'PYMESS': lambda: bool(import_module('pymess')),
     'PYTEST': lambda: import_module('pytest').__version__,
-    'PYTHREEJS': lambda: import_module('pythreejs._version').__version__,
     'QT': _get_qt_version,
     'QTOPENGL': lambda: bool(_get_qt_version() and import_module('qtpy.QtOpenGL')),
     'SCIKIT_FEM': lambda: import_module('skfem').__version__,

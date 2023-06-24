@@ -159,7 +159,7 @@ class EmpiricalInterpolatedOperator(Operator):
         return d
 
 
-class ProjectedEmpiciralInterpolatedOperator(Operator):
+class ProjectedEmpiricalInterpolatedOperator(Operator):
     """A projected |EmpiricalInterpolatedOperator|."""
 
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,
@@ -227,6 +227,6 @@ class ProjectedEmpiciralInterpolatedOperator(Operator):
         old_sbd = self.source_basis_dofs
         source_basis_dofs = NumpyVectorSpace.make_array(old_sbd.to_numpy()[:, source_dofs])
 
-        return ProjectedEmpiciralInterpolatedOperator(restricted_operator, interpolation_matrix,
+        return ProjectedEmpiricalInterpolatedOperator(restricted_operator, interpolation_matrix,
                                                       source_basis_dofs, projected_collateral_basis, self.triangular,
                                                       solver_options=self.solver_options, name=self.name)

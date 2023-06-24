@@ -11,6 +11,7 @@ To use these routines you first have to execute ::
 inside the given notebook.
 """
 import IPython
+from packaging.version import parse as parse_version
 
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -21,14 +22,19 @@ _extension_loaded = False
 
 
 @defaults('backend')
-def get_visualizer(backend='MPL'):
-    if backend not in ('py3js', 'MPL', 'k3d'):
+def get_visualizer(backend='prefer_k3d'):
+    if backend not in ('MPL', 'k3d', 'prefer_k3d'):
         raise ValueError
-    if backend == 'py3js' and config.HAVE_PYTHREEJS:
-        from pymor.discretizers.builtin.gui.jupyter.threejs import visualize_py3js
-        return visualize_py3js
-    elif backend == 'k3d':
-        assert config.HAVE_K3D
+    if backend == 'prefer_k3d':
+        if config.HAVE_K3D:
+            import k3d
+            if parse_version(k3d.__version__) >= parse_version('2.15.4'):
+                backend = 'k3d'
+            else:
+                backend = 'MPL'
+        else:
+            backend = 'MPL'
+    if backend == 'k3d':
         from pymor.discretizers.builtin.gui.jupyter.kthreed import visualize_k3d
         return visualize_k3d
     else:

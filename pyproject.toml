@@ -67,7 +67,7 @@ tests = [
 
 # additional dependencies for pyMOR development
 dev = [
-    "ruff==0.0.265",      # our linter of choice
+    "ruff==0.0.272",      # our linter of choice
     "conda_lock==1.4.0",  # needed for make ci_conda_requirements
     "hatch",              # build frontend for building and publishing pyMOR images
 ]
@@ -116,7 +116,7 @@ jupyter = [
     "jupyter_contrib_nbextensions",
     "jupyter_server>1.3,<2.0",
     "ipywidgets>7",
-    "k3d>=2.15.1",
+    "k3d>=2.15.2",
 ]
 
 # VTK output for builtin discretizations
