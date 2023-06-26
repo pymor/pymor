@@ -167,7 +167,7 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
     general description.
 
     This function uses `slycot.sb02md` (if `E is None and S is None`) which is based on
-    the Schur vector approach, and `slycot.sb02od` (if `E is None and S is not None`) or 
+    the Schur vector approach, and `slycot.sb02od` (if `E is None and S is not None`) or
     `slycot.sg02ad` (if `E is not None`) which are both based on
     the method of deflating subspaces.
 
