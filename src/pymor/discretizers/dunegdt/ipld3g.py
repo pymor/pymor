@@ -2,12 +2,14 @@ import numpy as np
 
 from pymor.algorithms.preassemble import preassemble as preassemble_
 from pymor.analyticalproblems.elliptic import StationaryProblem
+from pymor.analyticalproblems.instationary import InstationaryProblem
+from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
 from pymor.bindings.dunegdt import DuneXTMatrixOperator
 from pymor.discretizers.dunegdt.problems import StationaryDuneProblem
 from pymor.discretizers.dunegdt.cg import _discretize_stationary_cg_dune
 from pymor.discretizers.dunegdt.ipdg import (
     _discretize_stationary_ipdg_dune, _IP_estimate_penalty_parameter, _IP_scheme_id)
-from pymor.models.basic import StationaryModel
+from pymor.models.basic import InstationaryModel, StationaryModel
 from pymor.operators.block import BlockOperator, BlockColumnOperator
 from pymor.operators.constructions import LincombOperator
 
@@ -22,7 +24,7 @@ from dune.xt.grid import (
     make_cube_dd_grid,
 )
 from dune.xt.functions import GridFunction as GF
-from dune.xt.la import Istl
+from dune.xt.la import Istl, IstlVector
 from dune.gdt import (
     BilinearForm,
     LocalIntersectionIntegralBilinearForm,
@@ -296,9 +298,11 @@ def discretize_stationary_ipld3g(
 
     # products
     local_l2_ops = np.empty((M, M), dtype=object)
+    local_l2_0_ops = np.empty((M, M), dtype=object)
     # - assemble subdomain contributions
     for I in range(M):
         local_l2_ops[I][I] = local_models[I].products['l2']
+        local_l2_0_ops[I][I] = local_models[I].products['l2_0']
         if 'weighted_h1_semi_penalty' in local_models[I].products:
             local_weighted_h1_semi_penalty_prod = local_models[I].products['weighted_h1_semi_penalty']
         else:
@@ -311,6 +315,7 @@ def discretize_stationary_ipld3g(
                 weighted_h1_semi_penalty_product_ops[I][I] += op
     products = {
         'l2': BlockOperator(local_l2_ops),
+        'l2_0': BlockOperator(local_l2_0_ops),
         'weighted_h1_semi_penalty': BlockOperator(weighted_h1_semi_penalty_product_ops),
         'h1': BlockOperator(local_l2_ops) + BlockOperator(weighted_h1_semi_penalty_product_ops)
         # check whether this is the h1 product
@@ -392,5 +397,71 @@ def discretize_stationary_ipld3g(
     if preassemble:
         data['unassembled_m'] = m
         m = preassemble_(m)
+
+    return m, data
+
+def discretize_instationary_ipld3g(analytical_problem, macro_diameter=None,
+                                   num_local_refinements=None, penalty_parameter=None,
+                                   # domain_discretizer=None, grid_type=None,
+                                   # grid=None, boundary_info=None, num_values=None,
+                                   time_stepper=None, nt=None,
+                                   # preassemble=True
+                                   ):
+    assert isinstance(analytical_problem, InstationaryProblem)
+    assert isinstance(analytical_problem.stationary_part, StationaryProblem)
+    # assert grid is None or boundary_info is not None
+    # assert boundary_info is None or grid is not None
+    # assert grid is None or domain_discretizer is None
+    assert (time_stepper is None) != (nt is None)
+
+    p = analytical_problem
+
+    if p.stationary_part.dirichlet_data is not None and 't' in p.stationary_part.dirichlet_data.parameters:
+        # we choose both mass and operator to be invertible.
+        # this leads to wrong results when the dirichlet values depend on time.
+        raise NotImplementedError('Time-dependent Dirichlet values not supported.')
+
+    m, data = discretize_stationary_ipld3g(p.stationary_part, macro_diameter=macro_diameter,
+                                           num_local_refinements=num_local_refinements,
+                                           penalty_parameter=penalty_parameter,
+                                           # domain_discretizer=domain_discretizer,
+                                           # grid_type=grid_type, grid=grid, boundary_info=boundary_info,
+                                           # preassemble=preassemble
+                                           )
+
+    if p.initial_data.parametric:
+        assert 0
+        I = InterpolationOperator(data['grid'], p.initial_data)
+    else:
+        # from the standard instationry discretizer
+        # I = p.initial_data.evaluate(data['grid'].centers(data['grid'].dim))
+        Is = []
+        for T in range(data['dd_grid'].num_subdomains):
+            local_grid = data['dd_grid'].local_grid(T)
+            vector = IstlVector(p.initial_data.evaluate(local_grid.centers(p.initial_data.dim_domain)))
+            Is.append(m.solution_space.subspaces[T].make_array([vector]))
+        I = m.solution_space.make_array(Is)
+
+    if time_stepper is None:
+        if p.stationary_part.diffusion is None:
+            time_stepper = ExplicitEulerTimeStepper(nt=nt)
+        else:
+            time_stepper = ImplicitEulerTimeStepper(nt=nt)
+
+    mass = m.l2_0_product
+
+    m = InstationaryModel(operator=m.operator, rhs=m.rhs, mass=mass, initial_data=I, T=p.T,
+                          products=m.products,
+                          output_functional=m.output_functional,
+                          time_stepper=time_stepper,
+                          visualizer=m.visualizer,
+                          num_values=None, name=f'{p.name}_CG')
+
+    # if preassemble:
+    #     # m has preassembled stationary parts, whose unassembled version we get from data
+    #     ua_m = data['unassembled_m']
+    #     unassembled_m = m.with_(operator=ua_m.operator, rhs=ua_m.rhs, products=ua_m.products)
+    #     data['unassembled_m'] = unassembled_m
+    #     m = preassemble_(m)
 
     return m, data
