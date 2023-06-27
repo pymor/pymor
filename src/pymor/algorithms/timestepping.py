@@ -82,10 +82,13 @@ class TimeStepper(ImmutableObject):
         -------
         |VectorArray| containing the solution trajectory.
         """
-        num_time_steps = self.estimate_time_step_number(initial_time, end_time)
+        try:
+            num_time_steps = self.estimate_time_step_count(initial_time, end_time)
+        except NotImplementedError:
+            num_time_steps = 0
         iterator = self.iterate(initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass, mu=mu,
                                 num_values=num_values)
-        U = operator.source.empty(reserve=min(num_time_steps, num_values) if num_values else num_time_steps)
+        U = operator.source.empty(reserve=num_values if num_values else num_time_steps)
         for U_n, _ in iterator:
             U.append(U_n)
         return U
@@ -152,7 +155,7 @@ class ImplicitEulerTimeStepper(TimeStepper):
     def __init__(self, nt, solver_options='operator'):
         self.__auto_init(locals())
 
-    def estimate_time_step_number(self, initial_time, end_time):
+    def estimate_time_step_count(self, initial_time, end_time):
         return self.nt + 1
 
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
@@ -236,7 +239,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
     def __init__(self, nt):
         self.__auto_init(locals())
 
-    def estimate_time_step_number(self, initial_time, end_time):
+    def estimate_time_step_count(self, initial_time, end_time):
         return self.nt + 1
 
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
@@ -321,7 +324,7 @@ class ImplicitMidpointTimeStepper(TimeStepper):
     def __init__(self, nt, solver_options='operator'):
         self.__auto_init(locals())
 
-    def estimate_time_step_number(self, initial_time, end_time):
+    def estimate_time_step_count(self, initial_time, end_time):
         return self.nt + 1
 
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
@@ -409,7 +412,7 @@ class DiscreteTimeStepper(TimeStepper):
     def __init__(self):
         pass
 
-    def estimate_time_step_number(self, initial_time, end_time):
+    def estimate_time_step_count(self, initial_time, end_time):
         return end_time - initial_time + 1
 
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
