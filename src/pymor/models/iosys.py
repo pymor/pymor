@@ -1785,7 +1785,7 @@ class PHLTIModel(LTIModel):
         G = BlockColumnOperator([self.G, other.G])
         P = BlockColumnOperator([self.P, other.P])
         S = self.S + other.S
-        N = self.S + other.S
+        N = self.N + other.N
         if isinstance(self.E, IdentityOperator) and isinstance(other.E, IdentityOperator):
             E = IdentityOperator(BlockVectorSpace([self.solution_space, other.solution_space]))
         else:
