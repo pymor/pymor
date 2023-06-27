@@ -10,6 +10,7 @@ from pymor.operators.constructions import (
     ConcatenationOperator,
     LincombOperator,
     ProjectedOperator,
+    QuadraticFunctional,
     SelectionOperator,
 )
 from pymor.operators.interface import Operator
@@ -30,7 +31,7 @@ class PreAssembleRules(RuleTable):
     def __init__(self):
         super().__init__(use_caching=True)
 
-    @match_class(Model, AffineOperator, ConcatenationOperator, SelectionOperator)
+    @match_class(Model, AffineOperator, ConcatenationOperator, SelectionOperator, QuadraticFunctional)
     def action_recurse(self, op):
         return self.replace_children(op)
 
