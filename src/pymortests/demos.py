@@ -150,7 +150,7 @@ DMD_ARGS = (
 )
 
 PHLTI_ARGS = (
-    ('phlti', []),
+    ('phlti', [10, 2, 4]),
 )
 
 SYMPLECTIC_WAVE_ARGS = (
