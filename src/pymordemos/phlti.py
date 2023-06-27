@@ -5,7 +5,7 @@
 
 import numpy as np
 from matplotlib import pyplot as plt
-from typer import Option, run
+from typer import Argument, run
 
 from pymor.models.iosys import PHLTIModel
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
@@ -27,36 +27,37 @@ def msd(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
     c_i
         The amount of damping.
     as_lti
-        If `True`, the matrices of the standard linear time-invariant system are returned,
-        otherwise the matrices of the port-hamiltonian linear time-invariant system are returned.
+        If `True`, the matrices of the standard linear time-invariant system are returned.
+        Otherwise, the matrices of the port-Hamiltonian linear time-invariant system are returned.
 
     Returns
     -------
     A
-        The lti |NumPy array| A, if `as_lti` is `True`.
+        The LTI |NumPy array| A, if `as_lti` is `True`.
     B
-        The lti |NumPy array| B, if `as_lti` is `True`.
+        The LTI |NumPy array| B, if `as_lti` is `True`.
     C
-        The lti |NumPy array| C, if `as_lti` is `True`.
+        The LTI |NumPy array| C, if `as_lti` is `True`.
     D
-        The lti |NumPy array| D, if `as_lti` is `True`.
+        The LTI |NumPy array| D, if `as_lti` is `True`.
     J
-        The ph |NumPy array| J, if `as_lti` is `False`.
+        The pH |NumPy array| J, if `as_lti` is `False`.
     R
-        The ph |NumPy array| R, if `as_lti` is `False`.
+        The pH |NumPy array| R, if `as_lti` is `False`.
     G
-        The ph |NumPy array| G, if `as_lti` is `False`.
+        The pH |NumPy array| G, if `as_lti` is `False`.
     P
-        The ph |NumPy array| P, if `as_lti` is `False`.
+        The pH |NumPy array| P, if `as_lti` is `False`.
     S
-        The ph |NumPy array| S, if `as_lti` is `False`.
+        The pH |NumPy array| S, if `as_lti` is `False`.
     N
-        The ph |NumPy array| N, if `as_lti` is `False`.
+        The pH |NumPy array| N, if `as_lti` is `False`.
     E
-        The lti |NumPy array| E, if `as_lti` is `True`, or
-        the ph |NumPy array| E, if `as_lti` is `False`.
+        The LTI |NumPy array| E, if `as_lti` is `True`, or
+        the pH |NumPy array| E, if `as_lti` is `False`.
     """
-    n = int(n / 2)
+    assert n % 2 == 0
+    n //= 2
 
     A = np.array(
         [[0, 1 / m_i, 0, 0, 0, 0], [-k_i, -c_i / m_i, k_i, 0, 0, 0],
@@ -119,36 +120,36 @@ def msd(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
 
 
 def main(
-        n: int = Option(100, help='Order of the Mass-Spring-Damper system.'),
-        m: int = Option(2, help='Number of inputs and outputs of the Mass-Spring-Damper system.')
+        n: int = Argument(100, help='Order of the mass-spring-damper system.'),
+        m: int = Argument(2, help='Number of inputs and outputs of the mass-spring-damper system.'),
+        reduced_order: int = Argument(0, help='The reduced order if positive. Otherwise, a range of values is used.'),
 ):
     J, R, G, P, S, N, E, Q = msd(n, m)
 
     fom = PHLTIModel.from_matrices(J, R, G, Q=Q)
-
-    h2 = fom.h2_norm()
 
     phirka = PHIRKAReductor(fom)
 
     reductors = {'pH-IRKA': phirka}
     markers = {'pH-IRKA': 's'}
 
-    reduced_order = range(2, 22, 2)
+    if reduced_order > 0:
+        reduced_order = [reduced_order]
+    else:
+        reduced_order = range(2, 22, 2)
     h2_errors = np.zeros((len(reductors), len(reduced_order)))
 
-    for i, reductor in enumerate(reductors):
+    for i, reductor in enumerate(reductors.values()):
         for j, r in enumerate(reduced_order):
-            rom = reductors[reductor].reduce(r)
+            rom = reductor.reduce(r)
+            h2_errors[i, j] = (rom - fom).h2_norm() / fom.h2_norm()
 
-            h2_errors[i, j] = (rom - fom).h2_norm() / h2
-
-    plt.figure()
-    for i, reductor in enumerate(reductors):
-        plt.semilogy(reduced_order, h2_errors[i], label=reductor, marker=markers[reductor])
-
-    plt.ylabel('Relative $\\mathcal{H}_2$-error')
-    plt.xlabel('Reduced order r')
-    plt.legend()
+    fig, ax = plt.subplots()
+    for i, reductor_name in enumerate(reductors):
+        ax.semilogy(reduced_order, h2_errors[i], label=reductor_name, marker=markers[reductor_name])
+    ax.set_xlabel('Reduced order $r$')
+    ax.set_ylabel('Relative $\\mathcal{H}_2$-error')
+    ax.legend()
     plt.show()
 
 if __name__ == '__main__':
