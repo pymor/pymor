@@ -317,6 +317,7 @@ class TRSurrogate(BasicObject):
         """
         with self.logger.block('Extending the basis...'):
             U_h_mu = self.fom.solve(mu)
+            self.fom_evaluations += 1
             self.new_reductor = deepcopy(self.reductor)
             try:
                 self.new_reductor.extend_basis(U_h_mu)
@@ -391,13 +392,14 @@ class DualTRSurrogate(TRSurrogate):
         """
         with self.logger.block('Extending the basis with primal and dual...'):
             U_h_mu = self.fom.solve(mu)
-            jacobian = self._fom.output_functional.jacobian(U_h_mu, self._fom.parameters.parse(mu))
+            jacobian = self.fom.output_functional.jacobian(U_h_mu, self._fom.parameters.parse(mu))
             dual_solutions = self._fom.solution_space.empty()
             for d in range(self._fom.dim_output):
-                dual_problem = self.fom.with_(operator=self._fom.operator.H, rhs=jacobian.H.as_range_array(mu)[d])
+                dual_problem = self._fom.with_(operator=self._fom.operator.H, rhs=jacobian.H.as_range_array(mu)[d])
                 P_h_mu = dual_problem.solve(mu)
                 dual_solutions.append(P_h_mu)
 
+            self.fom_evaluations += 1 + self._fom.dim_output
             self.new_reductor = deepcopy(self.reductor)
             try:
                 self.new_reductor.extend_basis(U_h_mu)
