@@ -18,7 +18,7 @@ pytestmark = pytest.mark.builtin
 
 
 def test_expand():
-    ops = [NumpyMatrixOperator(np.eye(1) * i) for i in range(8)]
+    ops = [NumpyMatrixOperator(np.eye(1) * i, source_id='id', range_id='id') for i in range(8)]
     pfs = [ProjectionParameterFunctional('p', 9, i) for i in range(8)]
     prods = [o * p for o, p in zip(ops, pfs)]
 
@@ -44,7 +44,7 @@ def test_expand_matrix_operator():
 
 
 def test_contract():
-    ops = [NumpyMatrixOperator(np.eye(1) * i) for i in range(1, 6)]
+    ops = [NumpyMatrixOperator(np.eye(1) * i, source_id='id', range_id='id') for i in range(1, 6)]
     pf = ProjectionParameterFunctional('p', 1, 0)
 
     op = (ops[0] * pf) @ (ops[1] + ops[2]) @ ops[3] @ (ops[4] * pf)

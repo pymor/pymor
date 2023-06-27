@@ -10,7 +10,7 @@ import pytest
 import scipy.io as spio
 import scipy.sparse as sps
 
-from pymor.models.iosys import LTIModel, SecondOrderModel
+from pymor.models.iosys import LTIModel, PHLTIModel, SecondOrderModel
 
 pytestmark = pytest.mark.builtin
 
@@ -38,6 +38,47 @@ def _test_matrices_lti(A, B, C, D, E,
         assert np.allclose(E, E2)
     else:
         assert E2 is None
+
+
+def _build_matrices_phlti(with_P, with_S, with_N, with_E, with_Q):
+    J = sps.csc_matrix([[0, -1], [1, 0]])
+    R = sps.csc_matrix([[1, 0], [0, 1]])
+    G = np.array([[1], [0]])
+    P = np.array([[2], [0]]) if with_P else None
+    S = np.array([[1]]) if with_S else None
+    N = np.array([[0]]) if with_N else None
+    E = np.array([[1, 0], [0, 2]]) if with_E else None
+    Q = np.array([[2, 0], [0, 1]]) if with_Q else None
+    return J, R, G, P, S, N, E, Q
+
+
+def _test_matrices_phlti(J, R, G, P, S, N, E, Q,
+                         J2, R2, G2, P2, S2, N2, E2, Q2,
+                         with_P, with_S, with_N, with_E, with_Q):
+    assert np.allclose(J.toarray(), J2.toarray())
+    assert np.allclose(R.toarray(), R2.toarray())
+    assert np.allclose(G, G2)
+
+    if with_P:
+        assert np.allclose(P, P2)
+    else:
+        assert P2 is None
+    if with_S:
+        assert np.allclose(S, S2)
+    else:
+        assert S2 is None
+    if with_N:
+        assert np.allclose(N, N2)
+    else:
+        assert N2 is None
+    if with_E:
+        assert np.allclose(E, E2)
+    else:
+        assert E2 is None
+    if with_Q:
+        assert np.allclose(Q, Q2)
+    else:
+        assert Q2 is None
 
 
 def _build_matrices_so(with_Cv, with_D):
@@ -143,6 +184,20 @@ def test_abcde_files(with_D, with_E):
     matrices2 = lti2.to_matrices()
 
     _test_matrices_lti(*matrices, *matrices2, with_D, with_E)
+
+
+@pytest.mark.parametrize('with_P', [False, True])
+@pytest.mark.parametrize('with_S', [False, True])
+@pytest.mark.parametrize('with_N', [False, True])
+@pytest.mark.parametrize('with_E', [False, True])
+@pytest.mark.parametrize('with_Q', [False, True])
+def test_matrices_phlti(with_P, with_S, with_N, with_E, with_Q):
+    matrices = _build_matrices_phlti(with_P, with_S, with_N, with_E, with_Q)
+
+    phlti = PHLTIModel.from_matrices(*matrices)
+    matrices2 = phlti.to_matrices()
+
+    _test_matrices_phlti(*matrices, *matrices2, with_P, with_S, with_N, with_E, with_Q)
 
 
 @pytest.mark.parametrize('with_Cv', [False, True])

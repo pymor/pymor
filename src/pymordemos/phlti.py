@@ -5,13 +5,14 @@
 
 import numpy as np
 from matplotlib import pyplot as plt
-from typer import Option, run
+from typer import Argument, run
 
 from pymor.models.iosys import PHLTIModel
+from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
 
 
-def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
+def msd(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
     """Mass-spring-damper model as (port-Hamiltonian) linear time-invariant system.
 
     Taken from :cite:`GPBV12`.
@@ -27,45 +28,51 @@ def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
     c_i
         The amount of damping.
     as_lti
-        If `True`, the matrices of the standard linear time-invariant system are returned,
-        otherwise the matrices of the port-hamiltonian linear time-invariant system are returned.
+        If `True`, the matrices of the standard linear time-invariant system are returned.
+        Otherwise, the matrices of the port-Hamiltonian linear time-invariant system are returned.
 
     Returns
     -------
     A
-        The lti |NumPy array| A, if `as_lti` is `True`.
+        The LTI |NumPy array| A, if `as_lti` is `True`.
     B
-        The lti |NumPy array| B, if `as_lti` is `True`.
+        The LTI |NumPy array| B, if `as_lti` is `True`.
     C
-        The lti |NumPy array| C, if `as_lti` is `True`.
+        The LTI |NumPy array| C, if `as_lti` is `True`.
     D
-        The lti |NumPy array| D, if `as_lti` is `True`.
+        The LTI |NumPy array| D, if `as_lti` is `True`.
     J
-        The ph |NumPy array| J, if `as_lti` is `False`.
+        The pH |NumPy array| J, if `as_lti` is `False`.
     R
-        The ph |NumPy array| R, if `as_lti` is `False`.
+        The pH |NumPy array| R, if `as_lti` is `False`.
     G
-        The ph |NumPy array| G, if `as_lti` is `False`.
+        The pH |NumPy array| G, if `as_lti` is `False`.
     P
-        The ph |NumPy array| P, if `as_lti` is `False`.
+        The pH |NumPy array| P, if `as_lti` is `False`.
     S
-        The ph |NumPy array| S, if `as_lti` is `False`.
+        The pH |NumPy array| S, if `as_lti` is `False`.
     N
-        The ph |NumPy array| N, if `as_lti` is `False`.
+        The pH |NumPy array| N, if `as_lti` is `False`.
     E
-        The lti |NumPy array| E, if `as_lti` is `True`, or
-        the ph |NumPy array| E, if `as_lti` is `False`.
+        The LTI |NumPy array| E, if `as_lti` is `True`, or
+        the pH |NumPy array| E, if `as_lti` is `False`.
     """
-    n = int(n / 2)
-    m = 1
+    assert n % 2 == 0
+    n //= 2
 
     A = np.array(
         [[0, 1 / m_i, 0, 0, 0, 0], [-k_i, -c_i / m_i, k_i, 0, 0, 0],
          [0, 0, 0, 1 / m_i, 0, 0], [k_i, 0, -2 * k_i, -c_i / m_i, k_i, 0],
          [0, 0, 0, 0, 0, 1 / m_i], [0, 0, k_i, 0, -2 * k_i, -c_i / m_i]])
 
-    B = np.array([[0, 1, 0, 0, 0, 0]]).T
-    C = np.array([[0, 1 / m_i, 0, 0, 0, 0]])
+    if m == 2:
+        B = np.array([[0, 1, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0]]).T
+        C = np.array([[0, 1 / m_i, 0, 0, 0, 0], [0, 0, 0, 1 / m_i, 0, 0]])
+    elif m == 1:
+        B = np.array([[0, 1, 0, 0, 0, 0]]).T
+        C = np.array([[0, 1 / m_i, 0, 0, 0, 0]])
+    else:
+        assert False
 
     J_i = np.array([[0, 1], [-1, 0]])
     J = np.kron(np.eye(3), J_i)
@@ -110,55 +117,42 @@ def msd(n=6, m_i=4, k_i=4, c_i=1, as_lti=False):
     if as_lti:
         return A, B, C, D, E
 
-    # Shift Q on LHS
-    E = Q.T @ E
-    J = Q.T @ J @ Q
-    R = Q.T @ R @ Q
-    G = Q.T @ G
-    P = Q.T @ P
-
-    return J, R, G, P, S, N, E
+    return J, R, G, P, S, N, E, Q
 
 
 def main(
-        n: int = Option(100, help='Order of the Mass-Spring-Damper system.'),
-        r: int = Option(20, help='Order of the reduced model.')
+        n: int = Argument(100, help='Order of the mass-spring-damper system.'),
+        m: int = Argument(2, help='Number of inputs and outputs of the mass-spring-damper system.'),
+        reduced_order: int = Argument(0, help='The reduced order if positive. Otherwise, a range of values is used.'),
 ):
-    J, R, G, P, S, N, E = msd(n)
+    J, R, G, P, S, N, E, Q = msd(n, m)
 
-    fom = PHLTIModel.from_matrices(J, R, G, P, S, N, E)
+    fom = PHLTIModel.from_matrices(J, R, G, Q=Q)
 
+    irka = IRKAReductor(fom)
     phirka = PHIRKAReductor(fom)
-    rom = phirka.reduce(r)
 
-    # Magnitude plot
-    w = (1e-2, 1e8)
+    reductors = {'IRKA': irka, 'pH-IRKA': phirka}
+    markers = {'IRKA': 'o', 'pH-IRKA': 's'}
+
+    if reduced_order > 0:
+        reduced_order = [reduced_order]
+    else:
+        reduced_order = range(2, 22, 2)
+    h2_errors = np.zeros((len(reductors), len(reduced_order)))
+
+    for i, reductor in enumerate(reductors.values()):
+        for j, r in enumerate(reduced_order):
+            rom = reductor.reduce(r)
+            h2_errors[i, j] = (rom - fom).h2_norm() / fom.h2_norm()
+
     fig, ax = plt.subplots()
-    fom.transfer_function.mag_plot(w, ax=ax, label='FOM')
-    rom.transfer_function.mag_plot(w, ax=ax, linestyle='--', label='ROM')
-    _ = ax.legend()
-    plt.show()
-
-    # Poles
-    poles = fom.poles()
-    poles_lti = rom.poles()
-
-    fig, ax = plt.subplots()
-    ax.scatter(poles_lti.real, poles_lti.imag, marker='x', label='LTI')
-    ax.scatter(poles.real, poles.imag, marker='o', facecolors='none', edgecolor='orange', label='PH')
-    ax.set_title('Poles')
+    for i, reductor_name in enumerate(reductors):
+        ax.semilogy(reduced_order, h2_errors[i], label=reductor_name, marker=markers[reductor_name])
+    ax.set_xlabel('Reduced order $r$')
+    ax.set_ylabel('Relative $\\mathcal{H}_2$-error')
     ax.legend()
-    ax.set(xlabel=r'Re($\lambda$)', ylabel=r'Im($\lambda$)')
     plt.show()
-
-    err = fom - rom
-    err.transfer_function.mag_plot(w)
-    plt.show()
-
-    print(f'Relative Hinf error:   {err.hinf_norm() / fom.hinf_norm():.3e}')
-    print(f'Relative H2 error:     {err.h2_norm() / fom.h2_norm():.3e}')
-    print(f'Relative Hankel error: {err.hankel_norm() / fom.hankel_norm():.3e}')
-
 
 if __name__ == '__main__':
     run(main)

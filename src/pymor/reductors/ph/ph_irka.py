@@ -2,8 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.krylov import tangential_rational_krylov
 from pymor.models.iosys import PHLTIModel
-from pymor.reductors.h2 import GenericIRKAReductor, OneSidedIRKAReductor
+from pymor.reductors.h2 import GenericIRKAReductor
 from pymor.reductors.ph.basic import PHLTIPGReductor
 
 
@@ -22,11 +24,10 @@ class PHIRKAReductor(GenericIRKAReductor):
         assert isinstance(fom, PHLTIModel)
         super().__init__(fom, mu=mu)
 
-    def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1, projection='orth', conv_crit='sigma',
+    def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1,
+               projection='orth', conv_crit='sigma',
                compute_errors=False):
         r"""Reduce using pH-IRKA.
-
-        It uses IRKA as the intermediate reductor.
 
         See :cite:`GPBV12`.
 
@@ -57,10 +58,10 @@ class PHIRKAReductor(GenericIRKAReductor):
         projection
             Projection method:
 
-            - `'orth'`: projection matrices are orthogonalized with
+            - `'orth'`: projection matrix `V` is orthogonalized with
               respect to the Euclidean inner product.
-            - `'Eorth'`: projection matrix is orthogonalized with
-              respect to the E product.
+            - `'QTEorth'`: projection matrix `V` is orthogonalized with
+              respect to the `fom.Q.H @ fom.E` product.
         conv_crit
             Convergence criterion:
 
@@ -80,11 +81,46 @@ class PHIRKAReductor(GenericIRKAReductor):
         rom
             Reduced-order |PHLTIModel|.
         """
-        one_sided_irka_reductor = OneSidedIRKAReductor(self.fom.to_lti(), 'V')
-        _ = one_sided_irka_reductor.reduce(rom0_params, tol=tol, maxit=maxit, num_prev=num_prev,
-                                           projection=projection, conv_crit=conv_crit, compute_errors=compute_errors)
+        if self.fom.sampling_time > 0:
+            raise NotImplementedError
 
-        self._pg_reductor = PHLTIPGReductor(self.fom, one_sided_irka_reductor.V)
-        rom = self._pg_reductor.reduce()
+        self._clear_lists()
+        sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params, False)
+        self._store_sigma_b_c(sigma, b, c)
+        self._check_common_args(tol, maxit, num_prev, conv_crit)
+        assert projection in ('orth', 'QTEorth')
+
+        self.logger.info('Starting pH-IRKA')
+        self._conv_data = (num_prev + 1) * [None]
+        if conv_crit == 'sigma':
+            self._conv_data[0] = sigma
+        for it in range(maxit):
+            self._set_V_reductor(sigma, b, projection)
+            rom = self._pg_reductor.reduce()
+            sigma, b, c = self._rom_to_sigma_b_c(rom, False)
+            self._store_sigma_b_c(sigma, b, c)
+            self._update_conv_data(sigma, rom, conv_crit)
+            self._compute_conv_crit(rom, conv_crit, it)
+            self._compute_error(rom, it, compute_errors)
+            if self.conv_crit[-1] < tol:
+                break
 
         return rom
+
+    def _assemble_fom(self):
+        return (
+            self.fom.with_(
+                **{op: getattr(self.fom, op).assemble(mu=self.mu)
+                   for op in 'JRGPSNEQ'}
+            )
+            if self.fom.parametric
+            else self.fom
+        )
+
+    def _set_V_reductor(self, sigma, b, projection):
+        fom = self._assemble_fom()
+        self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy(b), sigma, orth=False)
+        product = None if projection == 'orth' else fom.Q.H @ fom.E
+        gram_schmidt(self.V, atol=0, rtol=0, product=product, copy=False)
+        self._pg_reductor = PHLTIPGReductor(fom, self.V, projection == 'QTEorth')
+        self.W = self._pg_reductor.bases['W']

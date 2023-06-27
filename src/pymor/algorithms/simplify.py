@@ -4,7 +4,7 @@
 
 from pymor.algorithms.rules import RuleTable, match_class
 from pymor.models.interface import Model
-from pymor.operators.constructions import ConcatenationOperator, LincombOperator, VectorArrayOperator
+from pymor.operators.constructions import ConcatenationOperator, IdentityOperator, LincombOperator, VectorArrayOperator
 from pymor.operators.interface import Operator, as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ParameterFunctional
@@ -170,16 +170,21 @@ class ContractRules(RuleTable):
 
     @match_class(ConcatenationOperator)
     def action_ConcatenationOperator(self, op):
+        source_id = op.source.id
+        range_id = op.range.id
+
         op = self.replace_children(op)
 
         ops_rev = list(op.operators[::-1])
         i = 0
         while i + 1 < len(ops_rev):
-            if (ops_rev[i+1].linear and not ops_rev[i+1].parametric):
+            if isinstance(ops_rev[i], IdentityOperator) and len(ops_rev) > 1:
+                del ops_rev[i]
+            elif (ops_rev[i + 1].linear and not ops_rev[i + 1].parametric):
                 if isinstance(ops_rev[i], NumpyMatrixOperator):
                     if not ops_rev[i].sparse:  # do not touch sparse matrices
-                        U = ops_rev[i+1].source.from_numpy(ops_rev[i].matrix.T)
-                        ops_rev[i+1] = VectorArrayOperator(ops_rev[i+1].apply(U))
+                        U = ops_rev[i + 1].source.from_numpy(ops_rev[i].matrix.T)
+                        ops_rev[i + 1] = VectorArrayOperator(ops_rev[i + 1].apply(U), space_id=ops_rev[i].source.id)
                         del ops_rev[i]
                     else:
                         i += 1
@@ -189,7 +194,7 @@ class ContractRules(RuleTable):
                     # the following might in fact convert small sparse matrices in external solvers
                     # to dense ...
                     U = ops_rev[i].as_range_array()
-                    ops_rev[i+1] = VectorArrayOperator(ops_rev[i+1].apply(U))
+                    ops_rev[i + 1] = VectorArrayOperator(ops_rev[i + 1].apply(U), space_id=ops_rev[i].source.id)
                     del ops_rev[i]
                 else:
                     i += 1
@@ -200,7 +205,7 @@ class ContractRules(RuleTable):
             op = ops_rev[0]
             if isinstance(op, VectorArrayOperator) and isinstance(op.array.space, NumpyVectorSpace):
                 array = op.array.to_numpy()
-                op = NumpyMatrixOperator(array if op.adjoint else array.T)
+                op = NumpyMatrixOperator(array if op.adjoint else array.T, source_id=source_id, range_id=range_id)
             return op
 
         op = op.with_(operators=ops_rev[::-1])
