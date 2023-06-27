@@ -5,14 +5,14 @@
 import numpy as np
 import pytest
 
-from pymor.algorithms.tr import DualTRSurrogate, SimpleTRSurrogate, trust_region
+from pymor.algorithms.tr import PrimalAndDualTRSurrogate, PrimalOnlyTRSurrogate, trust_region
 from pymor.core.exceptions import TRError
 from pymor.parameters.functionals import MinThetaParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymordemos.linear_optimization import create_fom
 
 
-@pytest.mark.parametrize('surrogate_cls', [SimpleTRSurrogate, DualTRSurrogate])
+@pytest.mark.parametrize('surrogate_cls', [PrimalOnlyTRSurrogate, PrimalAndDualTRSurrogate])
 def test_tr(surrogate_cls):
     fom, mu_bar = create_fom(10)
     mu_opt = [1.42454, np.pi]

@@ -123,7 +123,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
         mu = initial_guess.to_numpy() if isinstance(initial_guess, Mu) else initial_guess
 
     def error_aware_bfgs_criterion(new_mu, current_value):
-        output_error = surrogate.estimate_output_error(new_mu, fom)
+        output_error = surrogate.estimate_output_error(new_mu)
         return output_error / abs(current_value) >= beta * radius
 
     def error_aware_line_search_criterion(starting_point, initial_value, current_value, step,
@@ -138,7 +138,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
         # check the convergence conditions of the line search
         # the first condition corresponds to the usual armijo descent criterion
         # the second condition checks if the new relative error is still within the trust region
-        output_error = surrogate.estimate_output_error(new_mu, fom)
+        output_error = surrogate.estimate_output_error(new_mu)
         return (current_value <= initial_value - (armijo_alpha / step) * np.linalg.norm(new_mu - initial_mu)**2
             and output_error / abs(current_value) <= radius)
 
@@ -176,7 +176,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
 
             with logger.block(f'Solving subproblem for mu {mu} with BFGS...'):
                 mu, sub_data = error_aware_bfgs(
-                    surrogate.rom, parameter_space, initial_guess=mu, miniter=miniter_subproblem,
+                    surrogate, parameter_space, initial_guess=mu, miniter=miniter_subproblem,
                     maxiter=maxiter_subproblem, rtol_output=rtol_output, rtol_mu=rtol_mu, tol_sub=tol_sub,
                     line_search_params=line_search_params, stagnation_window=stagnation_window,
                     stagnation_threshold=stagnation_threshold, error_aware=True,
@@ -186,12 +186,12 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
             # first BFGS iterate is AGC point
             index = 1 if len(sub_data['mus']) > 1 else 0
             compare_output = surrogate.output(sub_data['mus'][index])
-            estimate_output = surrogate.estimate_output_error(mu, fom)
+            estimate_output = surrogate.estimate_output_error(mu)
             current_output = surrogate.output(mu)
 
             with logger.block('Running output checks for TR parameters.'):
                 if current_output + estimate_output < compare_output:
-                    surrogate.extend(mu, fom)
+                    surrogate.extend(mu)
                     current_fom_output = fom.output(mu)
                     fom_output_diff = old_fom_output - current_fom_output
                     rom_output_diff = old_rom_output - current_output
@@ -210,7 +210,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
 
                     msg = 'Estimated output larger than previous output.'
                 else:
-                    surrogate.extend(mu, fom)
+                    surrogate.extend(mu)
                     current_output = surrogate.new_output(mu)
                     if current_output <= compare_output:
                         current_fom_output = fom.output(mu)
@@ -238,7 +238,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
                 data['subproblem_data'].append(sub_data)
 
                 with logger.block('Computing first order criticality...'):
-                    gradient = surrogate.rom.parameters.parse(fom.output_d_mu(mu)).to_numpy()
+                    gradient = fom.output_d_mu(mu).to_numpy()
                     first_order_criticality = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
                     foc_norms.append(first_order_criticality)
 
@@ -269,23 +269,26 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
 class TRSurrogate(BasicObject):
     """Base class for :func:`trust_region` surrogates.
 
-    Not intended to be used directly.
+    Not to be used directly.
     """
 
-    def __init__(self, reductor, initial_guess):
+    def __init__(self, reductor, initial_guess, name='TRSurrogate'):
         self.__auto_init(locals())
+        self.parameters = reductor.fom.parameters
+        self.dim_output = reductor.fom.dim_output
 
         self.fom_evaluations = 0
         self.rom_evaluations = 0
         self.enrichments = 0
 
-        # generate a first rom if none was given
+        # generate a first rom based on the initial guess
         if isinstance(initial_guess, Mu):
             initial_guess = initial_guess.to_numpy()
         assert isinstance(initial_guess, np.ndarray)
-        self.extend(initial_guess, reductor.fom)
+        self.extend(initial_guess)
         self.accept()
 
+        # so far, we only support 1-dimensional outputs
         assert self.rom.dim_output == 1
 
         # initialize placeholders for extension
@@ -294,29 +297,19 @@ class TRSurrogate(BasicObject):
 
     def output(self, mu):
         self.rom_evaluations += 1
-        return self.rom.output(mu)[0, 0]
+        return self.rom.output(mu)
+
+    def output_d_mu(self, mu):
+        self.rom_evaluations += 2
+        return self.rom.output_d_mu(mu)
+
+    def estimate_output_error(self, mu):
+        self.rom_evaluations += 1
+        return self.rom.estimate_output_error(mu)
 
     @abstractmethod
-    def estimate_output_error(self, mu, fom=None):
+    def extend(self, mu):
         pass
-
-    def extend(self, mu, fom):
-        """Extend the current ROM for new |parameter values|.
-
-        Parameters
-        ----------
-        mu
-            The `Mu` instance for which an extension is computed.
-        """
-        with self.logger.block('Extending the basis...'):
-            U_h_mu = fom.solve(mu)
-            self.fom_evaluations += 1
-            self.new_reductor = deepcopy(self.reductor)
-            try:
-                self.new_reductor.extend_basis(U_h_mu)
-            except ExtensionError:
-                self.new_reductor = self.reductor
-            self.new_rom = self.new_reductor.reduce()
 
     def new_output(self, mu):
         assert self.new_rom is not None, 'No new ROM found. Did you forget to call surrogate.extend()?'
@@ -348,8 +341,8 @@ class TRSurrogate(BasicObject):
         return len(self.reductor.bases['RB'])
 
 
-class SimpleTRSurrogate(TRSurrogate):
-    """Surrogate for the :func:`trust_region` using a simple error estimator.
+class PrimalOnlyTRSurrogate(TRSurrogate):
+    """Surrogate for the :func:`trust_region` only enriching with the primal solution.
 
     Parameters
     ----------
@@ -359,13 +352,28 @@ class SimpleTRSurrogate(TRSurrogate):
         The |parameter values| containing an initial guess for the optimal parameter value.
     """
 
-    def estimate_output_error(self, mu, fom=None):
-        U_mu, pr_err = self.rom.solve(mu, return_error_estimate=True)
-        return pr_err * (2 * self.rom.l2_norm(U_mu) + pr_err)
+    def extend(self, mu):
+        pass
+        """Extend the current ROM for new |parameter values|.
 
+        Parameters
+        ----------
+        mu
+            The `Mu` instance for which an extension is computed.
+        """
+        pass
+        with self.logger.block('Extending the basis...'):
+            U_h_mu = self.reductor.fom.solve(mu)
+            self.fom_evaluations += 1
+            self.new_reductor = deepcopy(self.reductor)
+            try:
+                self.new_reductor.extend_basis(U_h_mu)
+            except ExtensionError:
+                self.new_reductor = self.reductor
+            self.new_rom = self.new_reductor.reduce()
 
-class DualTRSurrogate(TRSurrogate):
-    """Surrogate for the :func:`trust_region` using a simple dual error estimator.
+class PrimalAndDualTRSurrogate(TRSurrogate):
+    """Surrogate for the :func:`trust_region` enriching with both the primal and dual solutions.
 
     Parameters
     ----------
@@ -375,7 +383,7 @@ class DualTRSurrogate(TRSurrogate):
         The |parameter values| containing an initial guess for the optimal parameter value.
     """
 
-    def extend(self, mu, fom):
+    def extend(self, mu):
         """Extend the current ROM for new |parameter values| with primal and dual solutions.
 
         Parameters
@@ -384,6 +392,7 @@ class DualTRSurrogate(TRSurrogate):
             The `Mu` instance for which an extension is computed.
         """
         with self.logger.block('Extending the basis with primal and dual...'):
+            fom = self.reductor.fom
             U_h_mu = fom.solve(mu)
             jacobian = fom.output_functional.jacobian(U_h_mu, self.reductor.fom.parameters.parse(mu))
             dual_solutions = fom.solution_space.empty()
@@ -404,24 +413,3 @@ class DualTRSurrogate(TRSurrogate):
             except ExtensionError:
                 pass
             self.new_rom = self.new_reductor.reduce()
-
-    def estimate_output_error(self, mu, fom=None):
-        U_mu, pr_err = self.rom.solve(mu, return_error_estimate=True)
-
-        jacobian = self.rom.output_functional.jacobian(U_mu, self.reductor.fom.parameters.parse(mu))
-        dual_sols = self.rom.solution_space.empty()
-        dual_terms = fom.solution_space.empty()
-        for d in range(self.rom.dim_output):
-            dual_problem = self.rom.with_(operator=self.rom.operator.H, rhs=jacobian.H.as_range_array(mu)[d])
-            dual_sol = dual_problem.solve(mu)
-            dual_sols.append(dual_sol)
-            op_H = fom.operator.H.apply(self.reductor.reconstruct(dual_sol), self.reductor.fom.parameters.parse(mu))
-            dual_terms.append(op_H)
-        jac_h = fom.output_functional.jacobian(self.reductor.reconstruct(U_mu), self.reductor.fom.parameters.parse(mu))
-        j_h = jac_h.as_vector(mu)
-        res_terms = dual_terms - j_h
-        riesz = self.reductor.products['RB'].apply_inverse(res_terms)
-        # Note: these are also fom_evaluations
-        dual_estimate = np.sqrt(self.reductor.products['RB'].apply2(riesz, riesz))
-        errs = (dual_estimate + pr_err) * pr_err
-        return errs
