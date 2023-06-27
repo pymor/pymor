@@ -88,7 +88,7 @@ class TimeStepper(ImmutableObject):
             num_time_steps = 0
         iterator = self.iterate(initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass, mu=mu,
                                 num_values=num_values)
-        U = operator.source.empty(reserve=num_values if num_values else num_time_steps)
+        U = operator.source.empty(reserve=num_values if num_values else num_time_steps + 1)
         for U_n, _ in iterator:
             U.append(U_n)
         return U
@@ -156,7 +156,7 @@ class ImplicitEulerTimeStepper(TimeStepper):
         self.__auto_init(locals())
 
     def estimate_time_step_count(self, initial_time, end_time):
-        return self.nt + 1
+        return self.nt
 
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         A, F, M, U0, t0, t1, nt = operator, rhs, mass, initial_data, initial_time, end_time, self.nt
@@ -240,7 +240,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
         self.__auto_init(locals())
 
     def estimate_time_step_count(self, initial_time, end_time):
-        return self.nt + 1
+        return self.nt
 
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         if mass is not None:
@@ -325,7 +325,7 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         self.__auto_init(locals())
 
     def estimate_time_step_count(self, initial_time, end_time):
-        return self.nt + 1
+        return self.nt
 
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         if not operator.linear:
@@ -413,7 +413,7 @@ class DiscreteTimeStepper(TimeStepper):
         pass
 
     def estimate_time_step_count(self, initial_time, end_time):
-        return end_time - initial_time + 1
+        return end_time - initial_time
 
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         A, F, M, U0, k0, k1 = operator, rhs, mass, initial_data, initial_time, end_time
