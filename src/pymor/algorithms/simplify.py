@@ -103,12 +103,12 @@ class ExpandRules(RuleTable):
         # merge child ConcatenationOperators
         if any(isinstance(o, ConcatenationOperator) for o in op.operators):
             ops = []
-            for o in ops:
+            for o in op.operators:
                 if isinstance(o, ConcatenationOperator):
                     ops.extend(o.operators)
                 else:
                     ops.append(o)
-            op = op.with_operators(ops)
+            op = op.with_(operators=ops)
 
         # expand concatenations with LincombOperators
         if any(isinstance(o, LincombOperator) for o in op.operators):

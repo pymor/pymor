@@ -129,7 +129,7 @@ class ProjectRules(RuleTable):
                 raise RuleNotMatchingError('apply_adjoint not implemented') from e
             if isinstance(op.source, NumpyVectorSpace):
                 from pymor.operators.numpy import NumpyMatrixOperator
-                return NumpyMatrixOperator(V.to_numpy(), source_id=op.source.id, name=op.name)
+                return NumpyMatrixOperator(V.to_numpy().conj(), source_id=op.source.id, name=op.name)
             else:
                 from pymor.operators.constructions import VectorArrayOperator
                 return VectorArrayOperator(V, adjoint=True, name=op.name)
