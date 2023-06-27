@@ -5,7 +5,6 @@
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.krylov import tangential_rational_krylov
 from pymor.models.iosys import PHLTIModel
-from pymor.reductors.basic import LTIPGReductor
 from pymor.reductors.h2 import GenericIRKAReductor
 from pymor.reductors.ph.basic import PHLTIPGReductor
 
@@ -26,7 +25,7 @@ class PHIRKAReductor(GenericIRKAReductor):
         super().__init__(fom, mu=mu)
 
     def reduce(self, rom0_params, tol=1e-4, maxit=100, num_prev=1,
-               force_sigma_in_rhp=False, projection='orth', conv_crit='sigma',
+               projection='orth', conv_crit='sigma',
                compute_errors=False):
         r"""Reduce using pH-IRKA.
 
@@ -86,7 +85,7 @@ class PHIRKAReductor(GenericIRKAReductor):
             raise NotImplementedError
 
         self._clear_lists()
-        sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params, force_sigma_in_rhp)
+        sigma, b, c = self._rom0_params_to_sigma_b_c(rom0_params, False)
         self._store_sigma_b_c(sigma, b, c)
         self._check_common_args(tol, maxit, num_prev, conv_crit)
         assert projection in ('orth', 'QTEorth')
@@ -98,7 +97,7 @@ class PHIRKAReductor(GenericIRKAReductor):
         for it in range(maxit):
             self._set_V_reductor(sigma, b, projection)
             rom = self._pg_reductor.reduce()
-            sigma, b, c = self._rom_to_sigma_b_c(rom, force_sigma_in_rhp)
+            sigma, b, c = self._rom_to_sigma_b_c(rom, False)
             self._store_sigma_b_c(sigma, b, c)
             self._update_conv_data(sigma, rom, conv_crit)
             self._compute_conv_crit(rom, conv_crit, it)
@@ -106,17 +105,13 @@ class PHIRKAReductor(GenericIRKAReductor):
             if self.conv_crit[-1] < tol:
                 break
 
-        # Return a |PHLTIModel| reduced-order model.
-        fom = self._assemble_fom()
-        self._pg_reductor = PHLTIPGReductor(fom, self.V, projection == 'QTEorth')
-        rom = self._pg_reductor.reduce()
         return rom
 
     def _assemble_fom(self):
         return (
             self.fom.with_(
                 **{op: getattr(self.fom, op).assemble(mu=self.mu)
-                   for op in ['A', 'B', 'C', 'D', 'E']}
+                   for op in 'JRGPSNEQ'}
             )
             if self.fom.parametric
             else self.fom
@@ -124,12 +119,7 @@ class PHIRKAReductor(GenericIRKAReductor):
 
     def _set_V_reductor(self, sigma, b, projection):
         fom = self._assemble_fom()
-
-        self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy(b),
-                                            sigma, orth=False)
+        self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy(b), sigma, orth=False)
         product = None if projection == 'orth' else fom.Q.H @ fom.E
         gram_schmidt(self.V, atol=0, rtol=0, product=product, copy=False)
-
-        self.W = self.fom.Q.apply(self.V)
-        self._pg_reductor = LTIPGReductor(fom, self.W, self.V,
-                                          projection == 'QTEorth')
+        self._pg_reductor = PHLTIPGReductor(fom, self.V, projection == 'QTEorth')
