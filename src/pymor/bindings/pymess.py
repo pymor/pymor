@@ -335,7 +335,7 @@ def ricc_lrcf_solver_options():
 
 
 @defaults('default_solver')
-def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None, default_solver=None):
+def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None, default_solver=None):
     """Compute an approximate low-rank solution of a Riccati equation.
 
     See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
@@ -369,6 +369,8 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None, default_solve
         The operator C as a |VectorArray| from `A.source`.
     R
         The matrix R as a 2D |NumPy array| or `None`.
+    S
+        The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the Riccati equation is
         transposed.
@@ -386,7 +388,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None, default_solve
         Low-rank Cholesky factor of the Riccati equation solution,
         |VectorArray| from `A.source`.
     """
-    _solve_ricc_check_args(A, E, B, C, R, trans)
+    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    if S is not None:
+        raise NotImplementedError
     if default_solver is None:
         default_solver = 'pymess_lrnm' if A.source.dim >= mat_eqn_sparse_min_size() else 'pymess_dense_nm_gmpcare'
     options = _parse_options(options, ricc_lrcf_solver_options(), default_solver, None, False)
@@ -432,7 +436,7 @@ def pos_ricc_lrcf_solver_options():
                                         'opts': dense_nm_gmpcare_solver_options()}}
 
 
-def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
+def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     """Compute an approximate low-rank solution of a positive Riccati equation.
 
     See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a
@@ -452,6 +456,8 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         The operator C as a |VectorArray| from `A.source`.
     R
         The matrix R as a 2D |NumPy array| or `None`.
+    S
+        The operator S as a |VectorArray| from `A.source` or `None`.
     trans
         Whether the first |Operator| in the Riccati equation is
         transposed.
@@ -465,7 +471,9 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, trans=False, options=None):
         Low-rank Cholesky factor of the Riccati equation solution,
         |VectorArray| from `A.source`.
     """
-    _solve_ricc_check_args(A, E, B, C, R, trans)
+    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    if S is not None:
+        raise NotImplementedError
     options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'pymess_dense_nm_gmpcare', None, False)
 
     if options['type'] == 'pymess_dense_nm_gmpcare':
