@@ -36,8 +36,7 @@ class TimeStepper(ImmutableObject):
     this interface.
     """
 
-    @abstractmethod
-    def estimate_time_step_number(self, initial_time, end_time):
+    def estimate_time_step_count(self, initial_time, end_time):
         """Estimate the number of time steps.
 
         Parameters
@@ -47,7 +46,7 @@ class TimeStepper(ImmutableObject):
         end_time
             The time until which to perform time-stepping.
         """
-        pass
+        raise NotImplementedError
 
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         """Apply time-stepper to the equation.
