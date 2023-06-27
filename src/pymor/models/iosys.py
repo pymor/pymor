@@ -1504,27 +1504,29 @@ class PHLTIModel(LTIModel):
         E(\mu) \dot{x}(t, \mu) & = (J(\mu) - R(\mu)) Q(\mu)   x(t, \mu) + (G(\mu) - P(\mu)) u(t), \\
                      y(t, \mu) & = (G(\mu) + P(\mu))^T Q(\mu) x(t, \mu) + (S(\mu) - N(\mu)) u(t),
 
-    with :math:`H(\mu) = Q(\mu)^T E(\mu) \succ 0`,
+    where :math:`H(\mu) = Q(\mu)^T E(\mu)`,
 
     .. math::
         \Gamma(\mu) =
         \begin{bmatrix}
             J(\mu) & G(\mu) \\
             -G(\mu)^T & N(\mu)
-        \end{bmatrix}
-
-        \qquad \text{and} \qquad
-
+        \end{bmatrix},
+        \text{ and }
         W(\mu) =
         \begin{bmatrix}
             R(\mu) & P(\mu) \\
             P(\mu)^T & S(\mu)
         \end{bmatrix}
-        \succeq 0.
+
+    satisfy
+    :math:`H(\mu) = H(\mu)^T \succ 0`,
+    :math:`\Gamma(\mu)^T = -\Gamma(\mu)`, and
+    :math:`W(\mu) = W(\mu)^T \succcurlyeq 0`.
 
     A dynamical system of this form, together with a given quadratic (energy) function
-    :math:`\mathcal{H} = \tfrac{1}{2} x(t, \mu)^T H(\mu) x(t, \mu)`, typically called Hamiltonian,
-    is called port-Hamiltonian system.
+    :math:`\mathcal{H}(x, \mu) = \tfrac{1}{2} x^T H(\mu) x`, typically called Hamiltonian,
+    is called a port-Hamiltonian system.
 
     All methods related to the transfer function
     (e.g., frequency response calculation and Bode plots)
