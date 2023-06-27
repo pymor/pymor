@@ -39,14 +39,19 @@ def get_model(name, sampling_time, parametric):
         D = NumpyMatrixOperator(np.array([[1]]))
         return LTIModel(A, B, C, D, sampling_time=sampling_time)
     elif name == 'PHLTIModel':
-        J = NumpyMatrixOperator(np.array([[0]]))
+        J = NumpyMatrixOperator(np.zeros((1, 1)))
         if not parametric:
-            R = NumpyMatrixOperator(np.array([[1]]))
+            R = NumpyMatrixOperator(np.eye(1))
         else:
             R = (NumpyMatrixOperator(np.array([[1]]))
                  + ProjectionParameterFunctional('mu') * NumpyMatrixOperator(np.eye(1)))
-        G = NumpyMatrixOperator(np.array([[1]]))
-        return PHLTIModel(J, R, G)
+        G = NumpyMatrixOperator(np.eye(1))
+        P = NumpyMatrixOperator(-np.eye(1))
+        S = NumpyMatrixOperator(np.eye(1))
+        N = NumpyMatrixOperator(np.zeros([1, 1]))
+        E = NumpyMatrixOperator(np.eye(1))
+        Q = NumpyMatrixOperator(np.eye(1))
+        return PHLTIModel(J, R, G, P=P, S=S, N=N, E=E, Q=Q)
     elif name == 'SecondOrderModel':
         M = NumpyMatrixOperator(np.array([[1]]))
         E = NumpyMatrixOperator(np.array([[1]]))
