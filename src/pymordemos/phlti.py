@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from typer import Argument, run
 
 from pymor.models.iosys import PHLTIModel
+from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
 
 
@@ -128,10 +129,11 @@ def main(
 
     fom = PHLTIModel.from_matrices(J, R, G, Q=Q)
 
+    irka = IRKAReductor(fom)
     phirka = PHIRKAReductor(fom)
 
-    reductors = {'pH-IRKA': phirka}
-    markers = {'pH-IRKA': 's'}
+    reductors = {'IRKA': irka, 'pH-IRKA': phirka}
+    markers = {'IRKA': 'o', 'pH-IRKA': 's'}
 
     if reduced_order > 0:
         reduced_order = [reduced_order]
