@@ -191,7 +191,7 @@ class ImplicitEulerTimeStepper(TimeStepper):
         assert U0 in A.source
         assert len(U0) == 1
 
-        time_steps = 1
+        num_ret_values = 1
         yield U0, t0
 
         options = (A.solver_options if self.solver_options == 'operator' else
@@ -215,8 +215,8 @@ class ImplicitEulerTimeStepper(TimeStepper):
             if F:
                 rhs += dt_F
             U = M_dt_A.apply_inverse(rhs, mu=mu, initial_guess=U)
-            while t - t0 + (min(dt, DT) * 0.5) >= time_steps * DT:
-                time_steps += 1
+            while t - t0 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+                num_ret_values += 1
                 yield U, t
 
 
@@ -272,7 +272,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
 
         dt = (t1 - t0) / nt
         DT = (t1 - t0) / (num_values - 1)
-        time_steps = 1
+        num_ret_values = 1
         yield U0, t0
 
         t = t0
@@ -285,8 +285,8 @@ class ExplicitEulerTimeStepper(TimeStepper):
                 t += dt
                 mu = mu.with_(t=t)
                 U.axpy(-dt, A.apply(U, mu=mu))
-                while t - t0 + (min(dt, DT) * 0.5) >= time_steps * DT:
-                    time_steps += 1
+                while t - t0 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+                    num_ret_values += 1
                     yield U, t
         else:
             for n in range(nt):
@@ -295,8 +295,8 @@ class ExplicitEulerTimeStepper(TimeStepper):
                 if F_time_dep:
                     F_ass = F.as_vector(mu)
                 U.axpy(dt, F_ass - A.apply(U, mu=mu))
-                while t - t0 + (min(dt, DT) * 0.5) >= time_steps * DT:
-                    time_steps += 1
+                while t - t0 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+                    num_ret_values += 1
                     yield U, t
 
 
@@ -362,7 +362,7 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         assert U0 in A.source
         assert len(U0) == 1
 
-        time_steps = 1
+        num_ret_values = 1
         yield U0, t0
 
         if self.solver_options == 'operator':
@@ -393,8 +393,8 @@ class ImplicitMidpointTimeStepper(TimeStepper):
             if F:
                 rhs += dt_F
             U = M_dt_A_impl.apply_inverse(rhs, mu=mu)
-            while t - t0 + (min(dt, DT) * 0.5) >= time_steps * DT:
-                time_steps += 1
+            while t - t0 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+                num_ret_values += 1
                 yield U, t
 
 
@@ -448,7 +448,7 @@ class DiscreteTimeStepper(TimeStepper):
         assert U0 in A.source
         assert len(U0) == 1
 
-        time_steps = 1
+        num_ret_values = 1
         yield U0, k0
 
         if not _depends_on_time(M, mu):
@@ -466,8 +466,8 @@ class DiscreteTimeStepper(TimeStepper):
             if F:
                 rhs += Fk
             U = M.apply_inverse(rhs, mu=mu, initial_guess=U)
-            while k - k0 + 1 + (min(dt, DT) * 0.5) >= time_steps * DT:
-                time_steps += 1
+            while k - k0 + 1 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+                num_ret_values += 1
                 yield U, k
 
 
