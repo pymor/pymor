@@ -177,49 +177,29 @@ class AssembleLincombRules(RuleTable):
         so_op = SecondOrderModelOperator(alpha, beta, A, B)
         return so_op
 
-    @match_class_all(BlockDiagonalOperator)
-    def action_BlockDiagonalOperator(self, ops):
-        coefficients = self.coefficients
-        num_source_blocks = ops[0].num_source_blocks
-        blocks = np.empty((num_source_blocks,), dtype=object)
-        if len(ops) > 1:
-            for i in range(num_source_blocks):
-                operators_i = [op.blocks[i, i] for op in ops]
-                blocks[i] = assemble_lincomb(operators_i, coefficients,
-                                             solver_options=self.solver_options, name=self.name)
-                if blocks[i] is None:
-                    return None
-            return BlockDiagonalOperator(blocks)
-        else:
-            c = coefficients[0]
-            if c == 1:
-                return ops[0]
-            for i in range(num_source_blocks):
-                blocks[i] = ops[0].blocks[i, i] * c
-            return BlockDiagonalOperator(blocks)
-
     @match_class_all(BlockOperatorBase)
     def action_BlockOperatorBase(self, ops):
         coefficients = self.coefficients
         shape = ops[0].blocks.shape
-        blocks = np.empty(shape, dtype=object)
+        blocks = np.zeros(shape, dtype=object)
         operator_type = ((BlockOperator if ops[0].blocked_source else BlockColumnOperator) if ops[0].blocked_range
                          else BlockRowOperator)
         if len(ops) > 1:
-            for (i, j) in np.ndindex(shape):
-                operators_ij = [op.blocks[i, j] for op in ops]
+            # the sparsity pattern can differ.
+            merged_coords = np.unique(np.vstack([op.block_coords for op in ops]), axis=0)
+            for (i, j) in merged_coords:
+                # currently we use a self-written slicing for coo_matrix in scipy.sparse
+                # TODO: find a better way to do it
+                operators_ij = [op.slice((i, j)) for op in ops if (i, j) in op.block_coords]
                 blocks[i, j] = assemble_lincomb(operators_ij, coefficients,
                                                 solver_options=self.solver_options, name=self.name)
-                if blocks[i, j] is None:
-                    return None
-            return operator_type(blocks)
         else:
             c = coefficients[0]
             if c == 1:
                 return ops[0]
-            for (i, j) in np.ndindex(shape):
-                blocks[i, j] = ops[0].blocks[i, j] * c
-            return operator_type(blocks)
+            for i, j, op in zip(ops[0].blocks.row, ops[0].blocks.col, ops[0].blocks.data):
+                blocks[i, j] = op * c
+        return operator_type(blocks)
 
     @match_generic(lambda ops: sum(1 for op in ops if isinstance(op, LowRankOperator)) >= 2)
     def action_merge_low_rank_operators(self, ops):
