@@ -54,7 +54,7 @@ def test_ph_irka_E_and_Q():
     rom1 = phirka.reduce(1)
     assert isinstance(rom1, PHLTIModel) and rom1.order == 1
     Er = to_matrix(rom1.E, format='dense')
-    assert not np.isclose(Er,np.array([[1]]))
+    assert not np.isclose(Er, np.array([[1]]))
     assert np.isclose(Er, fom.E.apply2(phirka.W, phirka.V))
 
     rom2 = phirka.reduce(1, projection='QTEorth')
@@ -64,4 +64,4 @@ def test_ph_irka_E_and_Q():
 
     err1 = (rom1 - fom).h2_norm()
     err2 = (rom2 - fom).h2_norm()
-    assert abs(err1-err2) < 1e-12
+    assert abs(err1 - err2) < 1e-12
