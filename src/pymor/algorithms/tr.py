@@ -341,7 +341,7 @@ class TRSurrogate(BasicObject):
         return len(self.reductor.bases['RB'])
 
 
-class PrimalOnlyTRSurrogate(TRSurrogate):
+class BasicTRSurrogate(TRSurrogate):
     """Surrogate for the :func:`trust_region` only enriching with the primal solution.
 
     Parameters
@@ -353,7 +353,6 @@ class PrimalOnlyTRSurrogate(TRSurrogate):
     """
 
     def extend(self, mu):
-        pass
         """Extend the current ROM for new |parameter values|.
 
         Parameters
@@ -361,7 +360,6 @@ class PrimalOnlyTRSurrogate(TRSurrogate):
         mu
             The `Mu` instance for which an extension is computed.
         """
-        pass
         with self.logger.block('Extending the basis...'):
             U_h_mu = self.reductor.fom.solve(mu)
             self.fom_evaluations += 1
@@ -372,7 +370,7 @@ class PrimalOnlyTRSurrogate(TRSurrogate):
                 self.new_reductor = self.reductor
             self.new_rom = self.new_reductor.reduce()
 
-class PrimalAndDualTRSurrogate(TRSurrogate):
+class PrimalDualTRSurrogate(TRSurrogate):
     """Surrogate for the :func:`trust_region` enriching with both the primal and dual solutions.
 
     Parameters
