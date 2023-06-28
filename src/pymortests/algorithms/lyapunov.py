@@ -15,8 +15,8 @@ from pymor.algorithms.lyapunov import (
     solve_disc_lyap_dense,
     solve_disc_lyap_lrcf,
 )
+from pymor.core.config import config
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymortests.base import skip_if_missing
 
 pytestmark = pytest.mark.builtin
 
@@ -36,6 +36,13 @@ disc_lyap_dense_solver_list = [
     'scipy',
     'slycot_bartels-stewart',
 ]
+
+
+def skip_if_missing_solver(solver):
+    if solver.startswith('slycot') and not config.HAVE_SLYCOT:
+        pytest.skip('slycot unavailable')
+    if solver.startswith('pymess') and not config.HAVE_PYMESS:
+        pytest.skip('pymess unavailable')
 
 
 def fro_norm(A):
@@ -122,11 +129,11 @@ def relative_residual(A, E, B, X, cont_time, trans=False):
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('n,lyap_solver', chain(product(n_list_small, cont_lyap_dense_solver_list),
-                                                product(n_list_big, cont_lyap_lrcf_solver_list)))
-@skip_if_missing('SLYCOT')
-@skip_if_missing('PYMESS')
-def test_cont_lrcf(n, m, with_E, trans, lyap_solver):
+@pytest.mark.parametrize('n,solver', chain(product(n_list_small, cont_lyap_dense_solver_list),
+                                           product(n_list_big, cont_lyap_lrcf_solver_list)))
+def test_cont_lrcf(n, m, with_E, trans, solver):
+    skip_if_missing_solver(solver)
+
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 0.1, cont_time=True)
         E = None
@@ -140,7 +147,7 @@ def test_cont_lrcf(n, m, with_E, trans, lyap_solver):
     Eop = NumpyMatrixOperator(E) if with_E else None
     Bva = Aop.source.from_numpy(B.T if not trans else B)
 
-    Zva = solve_cont_lyap_lrcf(Aop, Eop, Bva, trans=trans, options=lyap_solver)
+    Zva = solve_cont_lyap_lrcf(Aop, Eop, Bva, trans=trans, options=solver)
     assert len(Zva) <= n
 
     Z = Zva.to_numpy().T
@@ -151,10 +158,10 @@ def test_cont_lrcf(n, m, with_E, trans, lyap_solver):
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('lyap_solver', disc_lyap_dense_solver_list)
-@skip_if_missing('SLYCOT')
-@skip_if_missing('PYMESS')
-def test_disc_lrcf(n, m, with_E, trans, lyap_solver):
+@pytest.mark.parametrize('solver', disc_lyap_dense_solver_list)
+def test_disc_lrcf(n, m, with_E, trans, solver):
+    skip_if_missing_solver(solver)
+
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 0.1, cont_time=False)
         E = None
@@ -169,7 +176,7 @@ def test_disc_lrcf(n, m, with_E, trans, lyap_solver):
     Eop = NumpyMatrixOperator(E) if with_E else None
     Bva = Aop.source.from_numpy(B.T if not trans else B)
 
-    Zva = solve_disc_lyap_lrcf(Aop, Eop, Bva, trans=trans, options=lyap_solver)
+    Zva = solve_disc_lyap_lrcf(Aop, Eop, Bva, trans=trans, options=solver)
     assert len(Zva) <= n
 
     Z = Zva.to_numpy().T
@@ -180,17 +187,17 @@ def test_disc_lrcf(n, m, with_E, trans, lyap_solver):
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('lyap_solver', cont_lyap_dense_solver_list)
-@skip_if_missing('SLYCOT')
-@skip_if_missing('PYMESS')
-def test_cont_dense(n, m, with_E, trans, lyap_solver):
+@pytest.mark.parametrize('solver', cont_lyap_dense_solver_list)
+def test_cont_dense(n, m, with_E, trans, solver):
+    skip_if_missing_solver(solver)
+
     A = np.random.randn(n, n)
     E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
     B = np.random.randn(n, m)
     if trans:
         B = B.T
 
-    X = solve_cont_lyap_dense(A, E, B, trans=trans, options=lyap_solver)
+    X = solve_cont_lyap_dense(A, E, B, trans=trans, options=solver)
     assert type(X) is np.ndarray
 
     assert relative_residual(A, E, B, X, trans=trans, cont_time=True) < 1e-10
@@ -200,17 +207,17 @@ def test_cont_dense(n, m, with_E, trans, lyap_solver):
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('lyap_solver', disc_lyap_dense_solver_list)
-@skip_if_missing('SLYCOT')
-@skip_if_missing('PYMESS')
-def test_disc_dense(n, m, with_E, trans, lyap_solver):
+@pytest.mark.parametrize('solver', disc_lyap_dense_solver_list)
+def test_disc_dense(n, m, with_E, trans, solver):
+    skip_if_missing_solver(solver)
+
     A = np.random.randn(n, n)
     E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
     B = np.random.randn(n, m)
     if trans:
         B = B.T
 
-    X = solve_disc_lyap_dense(A, E, B, trans=trans, options=lyap_solver)
+    X = solve_disc_lyap_dense(A, E, B, trans=trans, options=solver)
     assert type(X) is np.ndarray
 
     assert relative_residual(A, E, B, X, trans=trans, cont_time=False) < 1e-10
