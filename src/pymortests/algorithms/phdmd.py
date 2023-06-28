@@ -15,8 +15,8 @@ from pymordemos.phlti import msd
 def _get_fitting_data(order, initial_J=False, initial_R=False):
     assert not (initial_J and initial_R)
 
-    J, R, G, P, S, N, E = msd(order)
-    fom = PHLTIModel.from_matrices(J, R, G, P, S, N, E)
+    J, R, G, P, S, N, E, Q = msd(order, 1)
+    fom = PHLTIModel.from_matrices(J, R, G, P, S, N, E, Q).to_berlin_form()
 
     dt = 4e-2
     time_stamps = np.arange(0., 4. + dt, dt)
