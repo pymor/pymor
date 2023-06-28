@@ -45,6 +45,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
           + C^T C = 0.
 
     If E is None, it is taken to be identity, and similarly for R.
+    If S is None, it is taken to be zero.
 
     We assume:
 
@@ -156,6 +157,9 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None,
           A^T X E + E^T X A
           - (E^T X B + S) R^{-1} (B^T X E + S^T)
           + C^T C = 0.
+
+    If E is None, it is taken to be identity, and similarly for R.
+    If S is None, it is taken to be zero.
 
     We assume:
 
@@ -274,6 +278,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
           + C^T C = 0.
 
     If E is None, it is taken to be identity, and similarly for R.
+    If S is None, it is taken to be zero.
 
     If the solver is not specified using the options argument, a solver
     backend is chosen based on availability in the following order:
