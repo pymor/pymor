@@ -137,23 +137,28 @@ ipykernel==6.23.0
     #   myst-nb
     #   nbclassic
     #   notebook
+ipympl==0.9.3
+    # via pymor (pyproject.toml)
 ipyparallel==8.6.1
     # via pymor (pyproject.toml)
 ipython==8.12.2
     # via
     #   dune-xt
     #   ipykernel
+    #   ipympl
     #   ipyparallel
     #   ipywidgets
     #   myst-nb
 ipython-genutils==0.2.0
     # via
+    #   ipympl
     #   jupyter-contrib-nbextensions
     #   nbclassic
     #   notebook
 ipywidgets==8.0.6
     # via
     #   dune-xt
+    #   ipympl
     #   k3d
     #   pymor (pyproject.toml)
 jedi==0.18.2
@@ -246,6 +251,7 @@ markupsafe==2.1.2
 matplotlib==3.7.1
     # via
     #   dune-xt
+    #   ipympl
     #   pymor (pyproject.toml)
     #   vtk
 matplotlib-inline==0.1.6
@@ -320,6 +326,7 @@ numpy==1.20.3
     #   contourpy
     #   dune-xt
     #   hypothesis
+    #   ipympl
     #   k3d
     #   matplotlib
     #   meshio
@@ -351,6 +358,7 @@ pickleshare==0.7.5
     # via ipython
 pillow==9.5.0
     # via
+    #   ipympl
     #   matplotlib
     #   pymor (pyproject.toml)
 pkgutil-resolve-name==1.3.10
@@ -565,6 +573,7 @@ traitlets==5.9.0
     # via
     #   comm
     #   ipykernel
+    #   ipympl
     #   ipyparallel
     #   ipython
     #   ipywidgets

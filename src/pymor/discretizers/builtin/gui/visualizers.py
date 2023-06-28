@@ -45,7 +45,8 @@ class PatchVisualizer(ImmutableObject):
         self.__auto_init(locals())
 
     def visualize(self, U, title=None, legend=None, separate_colorbars=False,
-                  rescale_colorbars=False, block=None, filename=None, columns=2, **kwargs):
+                  rescale_colorbars=False, block=None, filename=None, columns=2,
+                  return_widget=False, **kwargs):
         """Visualize the provided data.
 
         Parameters
@@ -73,6 +74,8 @@ class PatchVisualizer(ImmutableObject):
         filename
             If specified, write the data to a VTK-file using
             :func:`~pymor.discretizers.builtin.grids.vtkio.write_vtk` instead of displaying it.
+        return_widget
+            If `True`, create an interactive visualization that can be used as a jupyter widget.
         kwargs
             Additional backend-specific arguments.
         """
@@ -92,8 +95,11 @@ class PatchVisualizer(ImmutableObject):
                 from pymor.discretizers.builtin.gui.jupyter import get_visualizer
                 return get_visualizer()(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                                         legend=legend, separate_colorbars=separate_colorbars,
-                                        rescale_colorbars=rescale_colorbars, columns=columns, **kwargs)
+                                        rescale_colorbars=rescale_colorbars, columns=columns,
+                                        return_widget=return_widget, **kwargs)
             else:
+                if return_widget:
+                    raise NotImplementedError
                 block = self.block if block is None else block
                 from pymor.discretizers.builtin.gui.qt import visualize_patch
                 return visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
@@ -130,7 +136,7 @@ class OnedVisualizer(ImmutableObject):
         self.__auto_init(locals())
 
     def visualize(self, U, title=None, legend=None, separate_plots=False,
-                  rescale_axes=False, block=None, columns=2):
+                  rescale_axes=False, block=None, columns=2, return_widget=False):
         """Visualize the provided data.
 
         Parameters
@@ -154,13 +160,17 @@ class OnedVisualizer(ImmutableObject):
             default provided during instantiation.
         columns
             Number of columns the subplots are organized in.
+        return_widget
+            If `True`, create an interactive visualization that can be used as a jupyter widget.
         """
         if self.backend == 'jupyter':
             from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_matplotlib_1d
             return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
                                            separate_plots=separate_plots, rescale_axes=rescale_axes,
-                                           columns=columns)
+                                           columns=columns, return_widget=return_widget)
         else:
+            if return_widget:
+                raise NotImplementedError
             block = self.block if block is None else block
             from pymor.discretizers.builtin.gui.qt import visualize_matplotlib_1d
             return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
