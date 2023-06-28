@@ -27,7 +27,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
 
         min J(mu), mu in C
 
-    for a model with an output functional :math:`J` depending on a box-constrained `mu` using
+    for a model with an output :math:`J` depending on a box-constrained `mu` using
     an adaptive trust region method.
 
     The main idea for the algorithm can be found in :cite:`YM13`, and an application to
@@ -192,6 +192,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
             with logger.block('Running output checks for TR parameters.'):
                 if current_output + estimate_output < compare_output:
                     surrogate.extend(mu)
+                    # fom.output is potentially for free after enrichment, e.g. using caching
                     current_fom_output = fom.output(mu)
                     fom_output_diff = old_fom_output - current_fom_output
                     rom_output_diff = old_rom_output - current_output
@@ -213,6 +214,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
                     surrogate.extend(mu)
                     current_output = surrogate.new_output(mu)
                     if current_output <= compare_output:
+                        # fom.output is potentially for free after enrichment, e.g. using caching
                         current_fom_output = fom.output(mu)
                         fom_output_diff = old_fom_output - current_fom_output
                         rom_output_diff = old_rom_output - current_output
@@ -238,7 +240,8 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
                 data['subproblem_data'].append(sub_data)
 
                 with logger.block('Computing first order criticality...'):
-                    gradient = fom.output_d_mu(mu).to_numpy()
+                    # fom.output_d_mu is potentially for free after enrichment, e.g. using caching
+                    gradient = fom.parameters.parse(fom.output_d_mu(mu)).to_numpy()
                     first_order_criticality = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
                     foc_norms.append(first_order_criticality)
 
@@ -259,12 +262,40 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
     data['update_norms'] = np.array(update_norms)
     data['foc_norms'] = np.array(foc_norms)
     data['iterations'] = iteration
-    data['fom_evaluations'] = surrogate.fom_evaluations
     data['rom_evaluations'] = surrogate.rom_evaluations
     data['enrichments'] = surrogate.enrichments
 
     return mu, data
 
+def CoerciveRB_trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=.95, radius=.1,
+                            shrink_factor=.5, miniter=0, maxiter=30, miniter_subproblem=0, maxiter_subproblem=400,
+                            tol_criticality=1e-6, radius_tol=.75, rtol_output=1e-16, rtol_mu=1e-16, tol_sub=1e-8,
+                            armijo_alpha=1e-4, line_search_params=None, stagnation_window=3,
+                            stagnation_threshold=np.inf):
+    """Error aware Trust-Region method for a coercive RB model as surrogate.
+
+    see :func:`trust_region`.
+
+    """
+    assert isinstance(surrogate, (BasicTRSurrogate, PrimalDualTRSurrogate))
+    mu, data = trust_region(fom, surrogate, parameter_space=parameter_space, initial_guess=initial_guess,
+                            beta=beta, radius=radius, shrink_factor=shrink_factor, miniter=miniter,
+                            maxiter=maxiter, miniter_subproblem=miniter_subproblem,
+                            maxiter_subproblem=maxiter_subproblem, tol_criticality=tol_criticality,
+                            radius_tol=radius_tol, rtol_output=rtol_output, rtol_mu=rtol_mu, tol_sub=tol_sub,
+                            armijo_alpha=armijo_alpha, line_search_params=line_search_params,
+                            stagnation_window=stagnation_window, stagnation_threshold=stagnation_threshold)
+
+    # Note: this evaluation count assumes caching of the primal solution, see above.
+    if isinstance(surrogate, BasicTRSurrogate):
+        # for every gradient, one also requires the dual solution
+        fom_evaluations_outer = data['iterations']
+    else:
+        fom_evaluations_outer = 0
+
+    data['fom_evaluations'] = surrogate.fom_evaluations + fom_evaluations_outer
+
+    return mu, data
 
 class TRSurrogate(BasicObject):
     """Base class for :func:`trust_region` surrogates.
