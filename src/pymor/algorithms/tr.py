@@ -442,3 +442,23 @@ class PrimalDualTRSurrogate(TRSurrogate):
             except ExtensionError:
                 pass
             self.new_rom = self.new_reductor.reduce()
+
+class QuadraticOutputTRSurrogate(BasicTRSurrogate):
+    """Surrogate for the :func:`trust_region` with only the primal enrichment naive output estimate.
+
+    NOTE: This specialized TRSurrogate should soon be made obsolete when the quadratic
+          output estimation is included into a reductor.
+
+    Parameters
+    ----------
+    reductor
+        The reductor used to generate the reduced order models and estimate the output error.
+    initial_guess
+        The |parameter values| containing an initial guess for the optimal parameter value.
+    """
+
+    def estimate_output_error(self, mu):
+        self.rom_evaluations += 1
+        U, pr_err = self.rom.solve(mu, return_error_estimate=True)
+        # TODO: include continuity constant of output
+        return pr_err * (2 * self.rom.l2_norm(U) + pr_err)
