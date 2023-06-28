@@ -807,6 +807,10 @@ PDE-constrained optimization problems we refer to
 [KMSOV20](<https://doi.org/10.1051/m2an/2021019>) where for the latter a pyMOR
 implementation is available as supplementary material.
 
+Update: The trust-region methods are by now implemented in pyMOR which is shown
+in the respective demo {mod}`~pymordemos.tr`. An update of this
+tutorial is work in progress.
+
 Download the code:
 {download}`tutorial_optimization.md`
 {nb-download}`tutorial_optimization.ipynb`
