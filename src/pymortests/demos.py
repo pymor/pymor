@@ -143,7 +143,7 @@ OUTPUT_FUNCTIONAL_ARGS = (
     ('output_error_estimation_with_dwr', [0, 10, 4, 12]),
     ('output_error_estimation_with_dwr', [1, 10, 4, 8]),
     ('tr', [0, 40, 20]),
-    ('tr', [1, 40, 20])
+    ('tr', [1, 20, 20])
 )
 
 DMD_ARGS = (

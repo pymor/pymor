@@ -22,8 +22,9 @@ def test_tr(primal_dual):
     reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
 
     # successful run
-    mu_opt_tr, data = coercive_rb_trust_region(reductor, parameter_space, radius=.1,
-                                               initial_guess=initial_guess, primal_dual=primal_dual)
+    mu_opt_tr, data = coercive_rb_trust_region(reductor, primal_dual=primal_dual,
+                                               parameter_space=parameter_space, radius=.1,
+                                               initial_guess=initial_guess)
     assert len(data['mus']) == 4
     assert np.allclose(mu_opt_tr, mu_opt)
 
@@ -31,5 +32,6 @@ def test_tr(primal_dual):
     # reset reductor
     reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
     with pytest.raises(TRError):
-        mu, _ = coercive_rb_trust_region(reductor, parameter_space, radius=.1, initial_guess=initial_guess,
+        mu, _ = coercive_rb_trust_region(reductor, primal_dual=primal_dual, parameter_space=parameter_space,
+                                         radius=.1, initial_guess=initial_guess,
                                          maxiter=10, rtol_output=1e-6, rtol_mu=1e-6)
