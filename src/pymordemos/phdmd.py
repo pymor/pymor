@@ -24,9 +24,9 @@ def main(
     A Mass-Spring-Damper system is used as full order model and
     reduced order model. Both of these are then inferred using pH DMD.
     """
-    J, R, G, P, S, N, E = msd(n=fom_order)
+    J, R, G, P, S, N, E, Q = msd(n=fom_order, m=1)
 
-    fom = PHLTIModel.from_matrices(J, R, G, P, S, N, E)
+    fom = PHLTIModel.from_matrices(J, R, G, P, S, N, E, Q).to_berlin_form()
     phirka = PHIRKAReductor(fom)
     rom = phirka.reduce(rom_order)
     _, _, _, _, _, _, rom_E, _ = rom.to_matrices()
