@@ -21,9 +21,9 @@ RUN pip install --no-cache-dir -r requirements-ci-oldest.txt && \
 # slycot build uses newest numpy, which is api incompatible with what we use
     pip uninstall -y slycot && \
     pip install build && \
-    wget https://files.pythonhosted.org/packages/85/21/4e7110462f3529b2fbcff8a519b61bf64e0604b8fcbe9a07649c9bed9d7a/slycot-0.4.0.0.tar.gz && \
-    tar -xvf slycot-0.4.0.0.tar.gz && \
-    cd slycot-0.4.0.0 && \
+    wget https://files.pythonhosted.org/packages/56/db/4f0341828faa7e2751722cd2aae12f7cb976f428c0252cbd4679bbd4e45f/slycot-0.5.4.tar.gz && \
+    tar -xvf slycot-0.5.4.tar.gz && \
+    cd slycot-0.5.4 && \
     sed -i 's/numpy/oldest-supported-numpy/' pyproject.toml && \
     python -m build && \
-    pip install dist/slycot-0.4.0-cp38-cp38-linux_x86_64.whl
+    pip install dist/slycot-0.5.4-cp38-cp38-linux_x86_64.whl
