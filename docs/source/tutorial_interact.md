@@ -53,12 +53,15 @@ parameters are allowed to vary.
 
 ```{code-cell}
 :tags: [remove-output]
+
 interact(m, p.parameter_space)
 ```
 
 If the {{ Model }} has outputs, these are shown as well:
 
 ```{code-cell}
+:tags: [remove-output]
+
 p = p.with_(outputs=[('l2', ConstantFunction(1., 2)), ('l2', ExpressionFunction('x[0] >= 0.5', 2))])
 m, _ = discretize_stationary_cg(p)
 interact(m, m.parameters.space(0.1, 10))
@@ -69,6 +72,8 @@ new {{ ParameterSpace }} using the {meth}`~pymor.parameters.base.Parameters.spac
 {{ Parameters }}:
 
 ```{code-cell}
+:tags: [remove-output]
+
 interact(m, m.parameters.space(0.1, 10), show_solution=False)
 ```
 
@@ -76,6 +81,7 @@ interact(m, m.parameters.space(0.1, 10), show_solution=False)
 
 ```{code-cell}
 :tags: [remove-output]
+
 pp = InstationaryProblem(p, initial_data=ConstantFunction(0., 2), T=1.)
 mm, _ = discretize_instationary_cg(pp, nt=10)
 interact(mm, p.parameter_space)
@@ -85,6 +91,7 @@ This is also the case for {{ LTIModels }}:
 
 ```{code-cell}
 :tags: [remove-output]
+
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 
 p = InstationaryProblem(
@@ -112,6 +119,7 @@ If we can also visualize the solutions of a reduced model by passing a `visualiz
 
 ```{code-cell}
 :tags: [remove-output]
+
 p = thermal_block_problem([2,2])
 m, _ = discretize_stationary_cg(p, diameter=1/20)
 
@@ -128,6 +136,7 @@ We can even show the reduced solution along the FOM solution and the error:
 
 ```{code-cell}
 :tags: [remove-output]
+
 from functools import partial
 
 def compare(u, mu):
