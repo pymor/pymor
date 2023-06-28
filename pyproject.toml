@@ -158,7 +158,7 @@ full = [
 ]
 
 # install all optional dependencies, including those requiring a compiler toolchain to build
-full_compiled = [
+full-compiled = [
     "pymor[full,slycot,mpi]",
 ]
 
