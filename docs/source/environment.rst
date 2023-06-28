@@ -13,6 +13,10 @@ pyMOR respects the following environment variables:
     useful for debugging. See :mod:`pymor.core.cache` for more
     details.
 
+.. envvar:: PYMOR_COLORS_DISABLE
+
+    If ``1``, disable coloring of logging output.
+
 .. envvar:: PYMOR_CONFIG_DISABLE
 
     Whitespace separated list of :mod:`~pymor.core.config` items
@@ -20,25 +24,16 @@ pyMOR respects the following environment variables:
     E.g., `PYMOR_CONFIG_DISABLE="SLYCOT"` can be used to prevent pyMOR
     from importing the SLYCOT library.
 
-.. envvar:: PYMOR_COLORS_DISABLE
-
-    If ``1``, disable coloring of logging output.
-
-.. envvar:: PYMOR_FIXTURES_DISABLE_BUILTIN
-
-    If set, |VectorArray|, |Operator| and related fixtures only only use
-    external solver backends.
-
-.. envvar:: PYMOR_WITH_SPHINX
-
-    This variable is set to `1` during API documentation generation
-    using sphinx.
-
 .. envvar:: PYMOR_DEFAULTS
 
     If empty or ``NONE``, do not load any :mod:`~pymor.core.defaults`
     from file. Otherwise, a ``:``-separated list of the paths to a
     Python scripts containing defaults.
+
+.. envvar:: PYMOR_FIXTURES_DISABLE_BUILTIN
+
+    If set, |VectorArray|, |Operator| and related fixtures only only use
+    external solver backends.
 
 .. envvar:: PYMOR_HYPOTHESIS_PROFILE
 
@@ -51,3 +46,8 @@ pyMOR respects the following environment variables:
     If set controls the value for `mpi4py.rc.finalize`. If `PYMOR_MPI_FINALIZE` is unset the value
     of `mpi4py.rc.finalize` remains unchanged, unless `mpi4py.rc.finalize is None` in which
     case it is defaulted to `True`.
+
+.. envvar:: PYMOR_WITH_SPHINX
+
+    This variable is set to `1` during API documentation generation
+    using sphinx.
