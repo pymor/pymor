@@ -1011,6 +1011,8 @@ class LTIModel(Model):
                 has a unique solution, i.e. no pair of system poles adds to zero in the
                 continuous-time case and no pair of system poles multiplies to one in the
                 discrete-time case.
+                Additionally, for `'pr_c_lrcf'` and `'pr_o_lrcf'`, it is assumed that `D + D^T` is
+                invertible.
         mu
             |Parameter values|.
 
