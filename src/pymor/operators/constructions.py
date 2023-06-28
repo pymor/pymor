@@ -356,7 +356,7 @@ class ProjectedOperator(Operator):
 
     linear = False
 
-    def __init__(self, operator, range_basis, source_basis, product=None, solver_options=None):
+    def __init__(self, operator, range_basis, source_basis, product=None, solver_options=None, name=None):
         assert isinstance(operator, Operator)
         assert source_basis is None or source_basis in operator.source
         assert range_basis is None or range_basis in operator.range

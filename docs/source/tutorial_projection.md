@@ -568,11 +568,11 @@ be the first matching rule. We can take a look at it:
 ```{code-cell}
 :tags: [remove-cell]
 
-assert ProjectRules.rules[8].action_description == 'LincombOperator'
+assert ProjectRules.rules[7].action_description == 'LincombOperator'
 ```
 
 ```{code-cell}
-ProjectRules.rules[8]
+ProjectRules.rules[7]
 ```
 
 The implementation of the action for {{ LincombOperators }} uses the
@@ -592,11 +592,11 @@ will apply:
 ```{code-cell}
 :tags: [remove-cell]
 
-assert ProjectRules.rules[3].action_description == 'apply_basis'
+assert ProjectRules.rules[2].action_description == 'apply_basis'
 ```
 
 ```{code-cell}
-ProjectRules.rules[3]
+ProjectRules.rules[2]
 ```
 
 This action has special cases for all possible combinations of given or not-given
