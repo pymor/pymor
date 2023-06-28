@@ -99,10 +99,7 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
         R = D.T.dot(D) + R0.dot(R0.T) if with_R else None
         S = 1e-1 * C.T @ D if with_S else None
 
-    try:
-        X = solve_ricc_dense(A, E, B, C, R, S, trans=trans, options=solver)
-    except NotImplementedError:
-        return
+    X = solve_ricc_dense(A, E, B, C, R, S, trans=trans, options=solver)
 
     assert relative_residual(A, E, B, C, R, S, _chol(X), trans) < 1e-8
 
@@ -117,6 +114,9 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
                                            product(n_list_big, ricc_lrcf_solver_list_big)))
 def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
+    if with_S and (solver.startswith('pymess') or solver == 'lrradi'):
+        pytest.xfail('solver not implemented')
+
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
         E = None
@@ -140,10 +140,7 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     Cva = Aop.source.from_numpy(C)
     Sva = Aop.source.from_numpy((S if not trans else S.T)) if with_S else None
 
-    try:
-        Zva = solve_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
-    except NotImplementedError:
-        return
+    Zva = solve_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
 
     assert len(Zva) <= n
 
@@ -161,6 +158,9 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
 @pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
 def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
+    if with_S and solver.startswith('pymess'):
+        pytest.xfail('solver not implemented')
+
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
         E = None
@@ -184,10 +184,7 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     Cva = Aop.source.from_numpy(C)
     Sva = Aop.source.from_numpy((S if not trans else S.T)) if with_S else None
 
-    try:
-        Zva = solve_pos_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
-    except NotImplementedError:
-        return
+    Zva = solve_pos_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
 
     assert len(Zva) <= n
 
