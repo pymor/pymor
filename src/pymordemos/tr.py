@@ -7,22 +7,27 @@
 from time import perf_counter
 
 import numpy as np
-from typer import Option, run
+from typer import Argument, run
 
 from pymor.algorithms.bfgs import error_aware_bfgs
 from pymor.algorithms.greedy import rb_greedy
-from pymor.algorithms.tr import trust_region, DualTRSurrogate
-from pymor.basic import *
+from pymor.algorithms.tr import BasicTRSurrogate, CoerciveRB_trust_region, QuadraticOutputTRSurrogate
 from pymor.parameters.functionals import MinThetaParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymordemos.linear_optimization import create_fom
 
 
 def main(
-    grid_intervals: int = Option(10, help='Grid interval count.'),
-    training_samples: int = Option(25, help='Number of samples used for training the reduced basis.')
+    output_number: int = Argument(..., help='Selects type of output functional [0, 1], '
+                                         + 'where 0 stands for linear and 1 for a quadratic output'),
+    grid_intervals: int = Argument(..., help='Grid interval count.'),
+    training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.')
 ):
-    fom, mu_bar = create_fom(grid_intervals, output_type='quadratic')
+    assert output_number in [0, 1]
+    if output_number == 0:
+        fom, mu_bar = create_fom(grid_intervals, output_type='l2')
+    else:
+        fom, mu_bar = create_fom(grid_intervals, output_type='quadratic')
 
     parameter_space = fom.parameters.space(0, np.pi)
     initial_guess = fom.parameters.parse([0.25, 2.5])
@@ -45,23 +50,30 @@ def main(
     training_set = parameter_space.sample_uniformly(training_samples)
 
     greedy_reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
-    greedy_data = rb_greedy(fom, greedy_reductor, training_set, atol=1e-2)
+    greedy_data = rb_greedy(fom, greedy_reductor, training_set, atol=1e-4)
     greedy_rom = greedy_data['rom']
 
     tic = perf_counter()
     bfgs_mu, bfgs_data = error_aware_bfgs(greedy_rom, parameter_space)
     toc = perf_counter()
-    bfgs_data['time'] = toc - tic
+    bfgs_data['time'] = toc - tic + greedy_data['time']
 
     ################################
     # ROM optimization adaptive TR #
     ################################
 
     reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
-    surrogate = DualTRSurrogate(reductor, initial_guess)
+    if output_number == 0:
+        # In the linear case, all is hidden in the reductor
+        surrogate = BasicTRSurrogate(reductor, initial_guess)
+    else:
+        # in the quadratic case, we need a specialized TRSurrogate since quadratic error estimation
+        # is not yet available
+        surrogate = QuadraticOutputTRSurrogate(reductor, initial_guess)
 
     tic = perf_counter()
-    tr_mu, tr_data = trust_region(surrogate, parameter_space=parameter_space, initial_guess=initial_guess)
+    tr_mu, tr_data = CoerciveRB_trust_region(fom, surrogate, parameter_space=parameter_space,
+                                             initial_guess=initial_guess)
     toc = perf_counter()
     tr_data['time'] = toc - tic
 
