@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.algorithms.rules import RuleTable, match_always, match_class, match_generic
+from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
 from pymor.operators.block import BlockColumnOperator, BlockOperatorBase, BlockRowOperator
 from pymor.operators.constructions import (
@@ -72,6 +72,9 @@ def project(op, range_basis, source_basis, product=None):
     assert range_basis is None or range_basis in op.range
     assert product is None or product.source == product.range == op.range
 
+    if range_basis is None and source_basis is None:
+        return op  # do not change the name
+
     rb = product.apply(range_basis) if product is not None and range_basis is not None else range_basis
 
     try:
@@ -87,13 +90,6 @@ class ProjectRules(RuleTable):
     def __init__(self, range_basis, source_basis):
         super().__init__(use_caching=True)
         self.__auto_init(locals())
-
-    @match_always
-    def action_no_bases(self, op):
-        if self.range_basis is None and self.source_basis is None:
-            return op
-        else:
-            raise RuleNotMatchingError
 
     @match_class(ZeroOperator)
     def action_ZeroOperator(self, op):
