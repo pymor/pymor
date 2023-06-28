@@ -486,9 +486,8 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     E = to_matrix(E, format='dense') if E else None
     B = B.to_numpy().T
     C = C.to_numpy()
-    S = S.to_numpy() if S is not None else None
-    if S is not None and trans:
-        S = S.T
+    if S is not None:
+        S = S.to_numpy() if not trans else S.to_numpy().T
     X = solve_ricc_dense(A, E, B, C, R, S, trans, options)
 
     return A_source.from_numpy(_chol(X).T)
@@ -551,9 +550,9 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
             E = E.T
         if S is not None:
             S = S.T
-        X = solve_continuous_are(A.T, C.T, B.dot(B.T), R, E, S)
+        X = solve_continuous_are(A.T, C.T, B.dot(B.T), R, e=E, s=S)
     else:
-        X = solve_continuous_are(A, B, C.T.dot(C), R, E, S)
+        X = solve_continuous_are(A, B, C.T.dot(C), R, e=E, s=S)
 
     return X
 

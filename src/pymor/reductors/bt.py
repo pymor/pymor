@@ -227,3 +227,33 @@ class BRBTReductor(GenericBTReductor):
     def error_bounds(self):
         sv = self._sv_U_V()[0]
         return 2 * sv[:0:-1].cumsum()[::-1]
+
+
+class PRBTReductor(GenericBTReductor):
+    r"""Positive Real (PR) Balanced Truncation reductor.
+
+    See :cite:`DP84` and :cite:`BU22`.
+
+    Parameters
+    ----------
+    fom
+        The full-order |LTIModel| to reduce.
+    mu
+        |Parameter values|.
+    """
+
+    def __init__(self, fom, mu=None):
+        if fom.sampling_time > 0:
+            raise NotImplementedError
+        super().__init__(fom, mu=mu)
+
+    def _gramians(self):
+        cf = self.fom.gramian('pr_c_lrcf', mu=self.mu)
+        of = self.fom.gramian('pr_o_lrcf', mu=self.mu)
+        return cf, of
+
+    def _sv_U_V(self):
+        return self.fom._sv_U_V('pr', mu=self.mu)
+
+    def error_bounds(self):
+        raise NotImplementedError

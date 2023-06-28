@@ -40,6 +40,7 @@ from pymor.operators.constructions import (
     LincombOperator,
     LinearInputOperator,
     LowRankOperator,
+    VectorArrayOperator,
     VectorOperator,
     ZeroOperator,
 )
@@ -216,7 +217,8 @@ class LTIModel(Model):
         else:
             presets = {}
 
-        assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
+        assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense',
+                                                                   'ricc_lrcf', 'ricc_dense', 'ricc_pos_lrcf'}
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
@@ -918,6 +920,7 @@ class LTIModel(Model):
         A = self.A.assemble(mu)
         B = self.B
         C = self.C
+        D = self.D
         E = self.E.assemble(mu) if not isinstance(self.E, IdentityOperator) else None
         options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
         options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
@@ -954,15 +957,23 @@ class LTIModel(Model):
         elif typ == 'lqg_o_lrcf':
             return solve_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
                                    trans=True, options=options_ricc_lrcf)
+        elif typ == 'pr_c_lrcf':
+            return solve_pos_ricc_lrcf(A, E, A.source.zeros(), -C.as_source_array(mu=mu),
+                                       R=to_matrix(D + D.H, 'dense'), S=B.as_range_array(mu=mu),
+                                       trans=False, options=options_ricc_pos_lrcf)
+        elif typ == 'pr_o_lrcf':
+            return solve_pos_ricc_lrcf(A, E, -B.as_range_array(mu=mu), A.source.zeros(),
+                                       R=to_matrix(D + D.H, 'dense'), S=C.as_source_array(mu=mu),
+                                       trans=True, options=options_ricc_pos_lrcf)
         elif typ[0] == 'br_c_lrcf':
             return solve_pos_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
-                                       R=(typ[1]**2 * np.eye(self.dim_output)
+                                       R=(typ[1] ** 2 * np.eye(self.dim_output)
                                           if typ[1] != 1
                                           else None),
                                        trans=False, options=options_ricc_pos_lrcf)
         elif typ[0] == 'br_o_lrcf':
             return solve_pos_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
-                                       R=(typ[1]**2 * np.eye(self.dim_input)
+                                       R=(typ[1] ** 2 * np.eye(self.dim_input)
                                           if typ[1] != 1
                                           else None),
                                        trans=True, options=options_ricc_pos_lrcf)
@@ -989,6 +1000,10 @@ class LTIModel(Model):
               Gramian,
             - `('br_o_lrcf', gamma)`: low-rank Cholesky factor of the "observability" bounded real
               Gramian.
+            - `'pr_c_lrcf'`: low-rank Cholesky factor of the "controllability" positive real
+              Gramian,
+            - `'pr_o_lrcf'`: low-rank Cholesky factor of the "observability" positive real
+              Gramian.
 
             .. note::
                 For `'*_lrcf'` types, the method assumes the system is asymptotically stable.
@@ -996,6 +1011,8 @@ class LTIModel(Model):
                 has a unique solution, i.e. no pair of system poles adds to zero in the
                 continuous-time case and no pair of system poles multiplies to one in the
                 discrete-time case.
+                Additionally, for `'pr_c_lrcf'` and `'pr_o_lrcf'`, it is assumed that `D + D^T` is
+                invertible.
         mu
             |Parameter values|.
 
@@ -1004,7 +1021,8 @@ class LTIModel(Model):
         If typ ends with `'_lrcf'`, then the Gramian factor as a |VectorArray| from `self.A.source`.
         If typ ends with `'_dense'`, then the Gramian as a |NumPy array|.
         """
-        assert (typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'bs_c_lrcf', 'bs_o_lrcf', 'lqg_c_lrcf', 'lqg_o_lrcf')
+        assert (typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'bs_c_lrcf', 'bs_o_lrcf', 'lqg_c_lrcf', 'lqg_o_lrcf',
+                        'pr_c_lrcf', 'pr_o_lrcf')
                 or isinstance(typ, tuple) and len(typ) == 2 and typ[0] in ('br_c_lrcf', 'br_o_lrcf'))
 
         if ((isinstance(typ, str) and (typ.startswith('bs') or typ.startswith('lqg')) or isinstance(typ, tuple))
@@ -1040,6 +1058,7 @@ class LTIModel(Model):
             - `'lyap'`: Lyapunov Gramian,
             - `'bs'`: Bernoulli stabilized Gramian,
             - `'lqg'`: LQG Gramian,
+            - `'pr'`: positive real Gramian,
             - `('br', gamma)`: bounded real Gramian,
         mu
             |Parameter values|.
@@ -1065,6 +1084,9 @@ class LTIModel(Model):
         elif typ == 'lqg':
             cf = self.gramian('lqg_c_lrcf', mu=mu)
             of = self.gramian('lqg_o_lrcf', mu=mu)
+        elif typ == 'pr':
+            cf = self.gramian('pr_c_lrcf', mu=mu)
+            of = self.gramian('pr_o_lrcf', mu=mu)
         elif isinstance(typ, tuple) and typ[0] == 'br' and typ[1] > 0:
             gamma = typ[1]
             cf = self.gramian(('br_c_lrcf', gamma), mu=mu)
@@ -1622,8 +1644,6 @@ class PHLTIModel(LTIModel):
         assert Q.source == Q.range
         assert Q.source == J.source
 
-        assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
-
         super().__init__(A=J - R if isinstance(Q, IdentityOperator) else contract((J - R) @ Q),
                          B=G - P,
                          C=(G + P).H if isinstance(Q, IdentityOperator) else (G + P).H @ Q,
@@ -1652,6 +1672,34 @@ class PHLTIModel(LTIModel):
         P = contract(expand(self.Q.H @ self.P))
 
         return self.with_(E=E, J=J, R=R, G=G, P=P, Q=None)
+
+    @classmethod
+    def from_passive_LTIModel(cls, model):
+        """
+        Convert a passive |LTIModel| to a |PHLTIModel|.
+
+        Parameters
+        ----------
+        model
+            The passive |LTIModel| to convert.
+        generalized
+            If `True`, the resulting |PHLTIModel| will have :math:`Q=I`.
+        """
+        # Determine solution of KYP inequality
+        L = VectorArrayOperator(model.gramian('pr_o_lrcf'), adjoint=True)
+        X = L.H @ L
+
+        Q = X
+        E = model.E
+        J = 0.5 * (model.A @ InverseOperator(X) - InverseOperator(X) @ model.A.H)
+        R = -0.5 * (model.A @ InverseOperator(X) + InverseOperator(X) @ model.A.H)
+        G = 0.5 * (InverseOperator(X) @ model.C.H + model.B)
+        P = 0.5 * (InverseOperator(X) @ model.C.H - model.B)
+        S = 0.5 * (model.D + model.D.H)
+        N = 0.5 * (model.D - model.D.H)
+
+        return cls(E=E, J=J, R=R, G=G, P=P, S=S, N=N, Q=Q, solver_options=model.solver_options,
+                   error_estimator=model.error_estimator, visualizer=model.visualizer, name=model.name)
 
     def __str__(self):
         string = (
@@ -1737,7 +1785,7 @@ class PHLTIModel(LTIModel):
         if Q is not None:
             Q = NumpyMatrixOperator(Q, source_id=state_id, range_id=state_id)
 
-        return cls(J, R, G, P, S, N, E, Q,
+        return cls(J=J, R=R, G=G, P=P, S=S, N=N, E=E, Q=Q,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                    name=name)
 

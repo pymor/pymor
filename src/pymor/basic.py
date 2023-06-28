@@ -82,7 +82,7 @@ from pymor.parameters.functionals import (ExpressionParameterFunctional,
                                           ProjectionParameterFunctional)
 from pymor.reductors.basic import (InstationaryRBReductor, LTIPGReductor,
                                    SOLTIPGReductor, StationaryRBReductor)
-from pymor.reductors.bt import BRBTReductor, BTReductor, LQGBTReductor
+from pymor.reductors.bt import BRBTReductor, BTReductor, LQGBTReductor, PRBTReductor
 from pymor.reductors.coercive import (CoerciveRBReductor,
                                       SimpleCoerciveRBReductor)
 from pymor.reductors.h2 import (IRKAReductor, OneSidedIRKAReductor,

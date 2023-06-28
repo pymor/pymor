@@ -11,8 +11,7 @@ import scipy.linalg as spla
 from pymor.algorithms.lyapunov import _chol
 from pymor.algorithms.riccati import solve_pos_ricc_lrcf, solve_ricc_dense, solve_ricc_lrcf
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymortests.algorithms.lyapunov import conv_diff_1d_fd, conv_diff_1d_fem, fro_norm
-from pymortests.base import skip_if_missing
+from pymortests.algorithms.lyapunov import conv_diff_1d_fd, conv_diff_1d_fem, fro_norm, skip_if_missing_solver
 
 pytestmark = pytest.mark.builtin
 
@@ -77,9 +76,9 @@ def relative_residual(A, E, B, C, R, S, Z, trans):
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('solver', ricc_dense_solver_list)
-@skip_if_missing('SLYCOT')
-@skip_if_missing('PYMESS')
 def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
+    skip_if_missing_solver(solver)
+
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
         A = A.todense()
@@ -100,10 +99,7 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
         R = D.T.dot(D) + R0.dot(R0.T) if with_R else None
         S = 1e-1 * C.T @ D if with_S else None
 
-    try:
-        X = solve_ricc_dense(A, E, B, C, R, S, trans=trans, options=solver)
-    except NotImplementedError:
-        return
+    X = solve_ricc_dense(A, E, B, C, R, S, trans=trans, options=solver)
 
     assert relative_residual(A, E, B, C, R, S, _chol(X), trans) < 1e-8
 
@@ -116,9 +112,11 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n,solver', chain(product(n_list_small, ricc_lrcf_solver_list_small),
                                            product(n_list_big, ricc_lrcf_solver_list_big)))
-@skip_if_missing('SLYCOT')
-@skip_if_missing('PYMESS')
 def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
+    skip_if_missing_solver(solver)
+    if with_S and (solver.startswith('pymess') or solver == 'lrradi'):
+        pytest.xfail('solver not implemented')
+
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
         E = None
@@ -142,10 +140,7 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     Cva = Aop.source.from_numpy(C)
     Sva = Aop.source.from_numpy((S if not trans else S.T)) if with_S else None
 
-    try:
-        Zva = solve_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
-    except NotImplementedError:
-        return
+    Zva = solve_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
 
     assert len(Zva) <= n
 
@@ -161,9 +156,11 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
 @pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
-@skip_if_missing('SLYCOT')
-@skip_if_missing('PYMESS')
 def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
+    skip_if_missing_solver(solver)
+    if with_S and solver.startswith('pymess'):
+        pytest.xfail('solver not implemented')
+
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
         E = None
@@ -187,10 +184,7 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     Cva = Aop.source.from_numpy(C)
     Sva = Aop.source.from_numpy((S if not trans else S.T)) if with_S else None
 
-    try:
-        Zva = solve_pos_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
-    except NotImplementedError:
-        return
+    Zva = solve_pos_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
 
     assert len(Zva) <= n
 

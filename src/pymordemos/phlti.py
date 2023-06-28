@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from typer import Argument, run
 
 from pymor.models.iosys import PHLTIModel
+from pymor.reductors.bt import BTReductor, PRBTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
 
@@ -123,22 +124,27 @@ def msd(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
 def main(
         n: int = Argument(100, help='Order of the mass-spring-damper system.'),
         m: int = Argument(2, help='Number of inputs and outputs of the mass-spring-damper system.'),
-        reduced_order: int = Argument(0, help='The reduced order if positive. Otherwise, a range of values is used.'),
+        max_reduced_order: int = Argument(20, help=('The maximum reduced order (at least 2). '
+                                                    'Every even order below is used.')),
 ):
     J, R, G, P, S, N, E, Q = msd(n, m)
 
-    fom = PHLTIModel.from_matrices(J, R, G, Q=Q)
+    # tolerance for solving the Riccati equation instead of KYP-LMI
+    # by introducing a regularization feedthrough term D
+    eps = 1e-12
+    S += np.eye(S.shape[0]) * eps
 
+    fom = PHLTIModel.from_matrices(J, R, G, S=S, Q=Q, solver_options={'ricc_pos_lrcf': 'slycot'})
+
+    bt = BTReductor(fom)
+    prbt = PRBTReductor(fom)
     irka = IRKAReductor(fom)
     phirka = PHIRKAReductor(fom)
 
-    reductors = {'IRKA': irka, 'pH-IRKA': phirka}
-    markers = {'IRKA': 'o', 'pH-IRKA': 's'}
+    reductors = {'BT': bt, 'PRBT': prbt, 'IRKA': irka, 'pH-IRKA': phirka}
+    markers = {'BT': '.', 'PRBT': 'x', 'IRKA': 'o', 'pH-IRKA': 's'}
 
-    if reduced_order > 0:
-        reduced_order = [reduced_order]
-    else:
-        reduced_order = range(2, 22, 2)
+    reduced_order = range(2, max_reduced_order + 1, 2)
     h2_errors = np.zeros((len(reductors), len(reduced_order)))
 
     for i, reductor in enumerate(reductors.values()):
