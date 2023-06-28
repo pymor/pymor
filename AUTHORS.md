@@ -13,12 +13,19 @@
 
 ### pyMOR 2023.1
 
+* Steffen Müller, steffenmu@outlook.de
+  * positive-real balanced truncation
+
+* Mohamed Adel Naguib Ahmed, mohamedadel1551998@gmail.com
+  * input-output selection in `bode_plot` function
+
+* Jonas Nicodemus, jonas.nicodemus@simtech.uni-stuttgart.de
+  * port-Hamiltonian IRKA
+  * positive-real balanced truncation
+
 * Peter Oehme, oehme.pb@gmail.com
   * quadratic functionals and quadratic output keyword for CG discretization
   * simple algebraic operations for parameter values
-
-* Mohamed Adel Naguib Ahmed, mohamedadel1551998@gmail.com
-  * Input-output selection in `bode_plot` function
 
 ### pyMOR 2022.2
 
