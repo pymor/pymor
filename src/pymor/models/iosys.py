@@ -217,7 +217,8 @@ class LTIModel(Model):
         else:
             presets = {}
 
-        assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
+        assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense',
+                                                                   'ricc_lrcf', 'ricc_dense', 'ricc_pos_lrcf'}
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
@@ -1640,8 +1641,6 @@ class PHLTIModel(LTIModel):
         assert Q.linear
         assert Q.source == Q.range
         assert Q.source == J.source
-
-        assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense'}
 
         super().__init__(A=J - R if isinstance(Q, IdentityOperator) else contract((J - R) @ Q),
                          B=G - P,
