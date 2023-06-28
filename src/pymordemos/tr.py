@@ -11,7 +11,7 @@ from typer import Argument, run
 
 from pymor.algorithms.bfgs import error_aware_bfgs
 from pymor.algorithms.greedy import rb_greedy
-from pymor.algorithms.tr import BasicTRSurrogate, CoerciveRB_trust_region, QuadraticOutputTRSurrogate
+from pymor.algorithms.tr import coercive_rb_trust_region
 from pymor.parameters.functionals import MinThetaParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymordemos.linear_optimization import create_fom
@@ -63,17 +63,10 @@ def main(
     ################################
 
     reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
-    if output_number == 0:
-        # In the linear case, all is hidden in the reductor
-        surrogate = BasicTRSurrogate(reductor, initial_guess)
-    else:
-        # in the quadratic case, we need a specialized TRSurrogate since quadratic error estimation
-        # is not yet available
-        surrogate = QuadraticOutputTRSurrogate(reductor, initial_guess)
 
     tic = perf_counter()
-    tr_mu, tr_data = CoerciveRB_trust_region(fom, surrogate, parameter_space=parameter_space,
-                                             initial_guess=initial_guess)
+    tr_mu, tr_data = coercive_rb_trust_region(reductor, parameter_space=parameter_space,
+                                              initial_guess=initial_guess)
     toc = perf_counter()
     tr_data['time'] = toc - tic
 

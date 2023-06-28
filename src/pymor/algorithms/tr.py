@@ -11,6 +11,7 @@ from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import ExtensionError, TRError
 from pymor.core.logger import getLogger
+from pymor.operators.constructions import LincombOperator, QuadraticFunctional
 from pymor.parameters.base import Mu
 
 
@@ -267,18 +268,30 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
 
     return mu, data
 
-def CoerciveRB_trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=.95, radius=.1,
-                            shrink_factor=.5, miniter=0, maxiter=30, miniter_subproblem=0, maxiter_subproblem=400,
-                            tol_criticality=1e-6, radius_tol=.75, rtol_output=1e-16, rtol_mu=1e-16, tol_sub=1e-8,
-                            armijo_alpha=1e-4, line_search_params=None, stagnation_window=3,
-                            stagnation_threshold=np.inf):
+def coercive_rb_trust_region(reductor, parameter_space=None, initial_guess=None, beta=.95, radius=.1,
+                             shrink_factor=.5, miniter=0, maxiter=30, miniter_subproblem=0, maxiter_subproblem=400,
+                             tol_criticality=1e-6, radius_tol=.75, rtol_output=1e-16, rtol_mu=1e-16, tol_sub=1e-8,
+                             armijo_alpha=1e-4, line_search_params=None, stagnation_window=3,
+                             stagnation_threshold=np.inf, primal_dual=False):
     """Error aware Trust-Region method for a coercive RB model as surrogate.
 
     see :func:`trust_region`.
 
     """
-    assert isinstance(surrogate, (BasicTRSurrogate, PrimalDualTRSurrogate))
-    mu, data = trust_region(fom, surrogate, parameter_space=parameter_space, initial_guess=initial_guess,
+    if primal_dual:
+        surrogate = PrimalDualTRSurrogate(reductor, initial_guess)
+    else:
+        output = reductor.fom.output_functional
+        if isinstance(output, LincombOperator) and len(output.operators) == 1 and \
+            isinstance(output.operators[0], QuadraticFunctional):
+            # case for quadratic outputs. Should be obsolete soon, see QuadraticOutputTRSurrogate.
+            continuity_estimator_output = output.coefficients[0]
+            surrogate = QuadraticOutputTRSurrogate(reductor, initial_guess,
+                                                   continuity_estimator_output=continuity_estimator_output)
+        else:
+            surrogate = BasicTRSurrogate(reductor, initial_guess)
+
+    mu, data = trust_region(reductor.fom, surrogate, parameter_space=parameter_space, initial_guess=initial_guess,
                             beta=beta, radius=radius, shrink_factor=shrink_factor, miniter=miniter,
                             maxiter=maxiter, miniter_subproblem=miniter_subproblem,
                             maxiter_subproblem=maxiter_subproblem, tol_criticality=tol_criticality,
@@ -287,11 +300,11 @@ def CoerciveRB_trust_region(fom, surrogate, parameter_space=None, initial_guess=
                             stagnation_window=stagnation_window, stagnation_threshold=stagnation_threshold)
 
     # Note: this evaluation count assumes caching of the primal solution, see above.
-    if isinstance(surrogate, BasicTRSurrogate):
+    if primal_dual:
+        fom_evaluations_outer = 0
+    else:
         # for every gradient, one also requires the dual solution
         fom_evaluations_outer = data['iterations']
-    else:
-        fom_evaluations_outer = 0
 
     data['fom_evaluations'] = surrogate.fom_evaluations + fom_evaluations_outer
 
@@ -444,7 +457,7 @@ class PrimalDualTRSurrogate(TRSurrogate):
             self.new_rom = self.new_reductor.reduce()
 
 class QuadraticOutputTRSurrogate(BasicTRSurrogate):
-    """Surrogate for the :func:`trust_region` with only the primal enrichment naive output estimate.
+    """Surrogate for :func:`trust_region` with only the primal enrichment naive output estimate.
 
     NOTE: This specialized TRSurrogate should soon be made obsolete when the quadratic
           output estimation is included into a reductor.
@@ -455,10 +468,17 @@ class QuadraticOutputTRSurrogate(BasicTRSurrogate):
         The reductor used to generate the reduced order models and estimate the output error.
     initial_guess
         The |parameter values| containing an initial guess for the optimal parameter value.
+    continuity_estimator_output
+        Estimation for the continuity constant of the quadratic output functional.
     """
+
+    def __init__(self, reductor, initial_guess, continuity_estimator_output):
+        self.continuity_estimator_output = continuity_estimator_output
+        super().__init__(reductor, initial_guess)
 
     def estimate_output_error(self, mu):
         self.rom_evaluations += 1
         U, pr_err = self.rom.solve(mu, return_error_estimate=True)
-        # TODO: include continuity constant of output
-        return pr_err * (2 * self.rom.l2_norm(U) + pr_err)
+        cont_est = self.continuity_estimator_output
+        cont = cont_est.evaluate(self.parameters.parse(mu)) if hasattr(cont_est, 'evaluate') else cont_est
+        return cont * (pr_err * (2 * self.rom.l2_norm(U) + pr_err))
