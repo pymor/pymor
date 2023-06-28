@@ -232,7 +232,7 @@ class BRBTReductor(GenericBTReductor):
 class PRBTReductor(GenericBTReductor):
     r"""Positive Real (PR) Balanced Truncation reductor.
 
-    See :cite:`DP84` and :cite:`BU21`.
+    See :cite:`DP84` and :cite:`BU22`.
 
     Parameters
     ----------
