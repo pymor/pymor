@@ -9,6 +9,8 @@ from pymor.models.iosys import LTIModel
 from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.spectral_factor import SpectralFactorReductor
 
+pytestmark = pytest.mark.builtin
+
 
 def test_spectral_factor():
     R = np.array([[1, 0], [0, 2]])
