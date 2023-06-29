@@ -38,7 +38,7 @@ pyMOR respects the following environment variables:
 .. envvar:: PYMOR_FORCE_JUPYTER
 
     If set, forces pyMOR to believe that it is running in a Jupyter
-    environment even though automatic detection in 
+    environment even though automatic detection in
     :func:`~pymor.core.config.is_jupyter` failed.
 
 .. envvar:: PYMOR_HYPOTHESIS_PROFILE
@@ -55,7 +55,7 @@ pyMOR respects the following environment variables:
 
 .. envvar:: PYMOR_MPI_INIT_THREAD
 
-    Required threading level to require when pyMOR calls `mpi4py.MPI.Init_thread`. 
+    Required threading level to require when pyMOR calls `mpi4py.MPI.Init_thread`.
 
 .. envvar:: PYMOR_WITH_SPHINX
 
