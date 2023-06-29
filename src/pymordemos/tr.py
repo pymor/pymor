@@ -74,6 +74,7 @@ def main(
     toc = perf_counter()
     greedy_bfgs_data['time'] = toc - tic + greedy_data['time']
     greedy_bfgs_data['basis_size'] = greedy_rom.solution_space.dim
+    greedy_bfgs_data['fom_evaluations'] = greedy_rom.solution_space.dim
 
     ################################
     # ROM optimization adaptive TR #
@@ -112,8 +113,8 @@ def report(mu, output, reference_mu, reference_output, data, parse, descriptor=N
     print('  abs parameter error w.r.t. reference solution: {:.2e}'.format(np.linalg.norm(mu - reference_mu)))
     print('  abs output error w.r.t. reference solution:    {:.2e}'.format(np.linalg.norm(output - reference_output)))
     print('  num iterations:            {}'.format(data['iterations']))
-    if 'fom_evaluations' in data:
-        print('  num fom evaluations:       {}'.format(data['fom_evaluations']))
+    print('  num fom evaluations:       {}'.format(data['fom_evaluations']), end='')
+    print('  (offline/online splitting for estimators not counted)') if 'basis_size' in data else print('')
     if 'subproblem_data' in data:
         print('  num rom evaluations:       {}'.format(data['rom_evaluations']))
         print('  num enrichments:           {}'.format(data['enrichments']))
