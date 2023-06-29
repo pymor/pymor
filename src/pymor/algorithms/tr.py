@@ -276,6 +276,8 @@ def coercive_rb_trust_region(reductor, primal_dual=False, parameter_space=None, 
                              quadratic_output_product_name=None):
     """Error aware trust-region method for a coercive RB model as surrogate.
 
+    See :func:`trust_region`.
+
     Parameters
     ----------
     reductor
@@ -291,7 +293,6 @@ def coercive_rb_trust_region(reductor, primal_dual=False, parameter_space=None, 
     quadratic_output_product_name
         In case of a quadratic output functional, the name of the inner-product |Operator|
         of the ROM w.r.t. which the continuity constant for the output is estimated.
-    See :func:`trust_region`.
     """
     if not isinstance(reductor.fom, StationaryModel):
         raise NotImplementedError
