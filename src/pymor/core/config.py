@@ -139,16 +139,6 @@ def is_jupyter():
     return ipy.startswith('ipykernel.') or ipy.startswith('google.colab')
 
 
-def is_nbconvert():
-    """Check if a notebook is executed with `nbconvert`.
-
-    In some visualization cases we need to be able to detect if a notebook
-    is executed with `nbconvert` to disable async loading.
-    """
-    from os import environ
-    return is_jupyter() and bool(environ.get('PYMOR_NBCONVERT', False))
-
-
 _PACKAGES = {
     'DEALII': lambda: import_module('pymor_dealii').__version__,
     'DUNEGDT': _get_dunegdt_version,
