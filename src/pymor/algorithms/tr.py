@@ -286,8 +286,8 @@ def coercive_rb_trust_region(reductor, primal_dual=False, parameter_space=None, 
     quadratic_output
         Set to `True` if output is given by a quadratic functional.
     quadratic_output_continuity_estimator
-        In case of a quadratic output functional, a |ParameterFunctional| giving an upper bound for the
-        norm of the corresponding bilinear form.
+        In case of a quadratic output functional, a |ParameterFunctional| giving an upper bound for
+        the norm of the corresponding bilinear form.
     quadratic_output_product_name
         In case of a quadratic output functional, the name of the inner-product |Operator|
         of the ROM w.r.t. which the continuity constant for the output is estimated.
