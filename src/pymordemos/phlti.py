@@ -3,6 +3,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from functools import partial
+from time import perf_counter
+
 import numpy as np
 from matplotlib import pyplot as plt
 from typer import Argument, run
@@ -139,23 +142,43 @@ def main(
 
     bt = BTReductor(fom).reduce
     prbt = PRBTReductor(fom).reduce
-    irka = IRKAReductor(fom).reduce
+    irka = partial(IRKAReductor(fom).reduce, conv_crit='h2')
     phirka = PHIRKAReductor(fom).reduce
-    spectralFactor = SpectralFactorReductor(fom)
-    def spectralFactor_reduce(r):
-        return spectralFactor.reduce(
+    spectral_factor = SpectralFactorReductor(fom)
+    def spectral_factor_reduce(r):
+        return spectral_factor.reduce(
             lambda spectral_factor, mu : IRKAReductor(spectral_factor,mu).reduce(r))
 
-    reductors = {'BT': bt, 'PRBT': prbt, 'IRKA': irka, 'pH-IRKA': phirka, 'spectralFactor': spectralFactor_reduce}
-    markers = {'BT': '.', 'PRBT': 'x', 'IRKA': 'o', 'pH-IRKA': 's', 'spectralFactor': 'v'}
+    reductors = {
+        'BT': bt,
+        'PRBT': prbt,
+        'IRKA': irka,
+        'pH-IRKA': phirka,
+        'spectral_factor': spectral_factor_reduce,
+    }
+    markers = {
+        'BT': '.',
+        'PRBT': 'x',
+        'IRKA': 'o',
+        'pH-IRKA': 's',
+        'spectral_factor': 'v',
+    }
+    timings = {}
 
     reduced_order = range(2, max_reduced_order + 1, 2)
     h2_errors = np.zeros((len(reductors), len(reduced_order)))
 
-    for i, reduce in enumerate(reductors.values()):
+    for i, name in enumerate(reductors):
+        t0 = perf_counter()
         for j, r in enumerate(reduced_order):
-            rom = reduce(r)
+            rom = reductors[name](r)
             h2_errors[i, j] = (rom - fom).h2_norm() / fom.h2_norm()
+        t1 = perf_counter()
+        timings[name] = t1 - t0
+
+    print('Timings:')
+    for name, time in timings.items():
+        print(f'  {name}: {time:.2f}s')
 
     fig, ax = plt.subplots()
     for i, reductor_name in enumerate(reductors):
