@@ -3,6 +3,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from functools import partial
+from time import perf_counter
+
 import numpy as np
 from matplotlib import pyplot as plt
 from typer import Argument, run
@@ -11,6 +14,7 @@ from pymor.models.iosys import PHLTIModel
 from pymor.reductors.bt import BTReductor, PRBTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
+from pymor.reductors.spectral_factor import SpectralFactorReductor
 
 
 def msd(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
@@ -136,21 +140,45 @@ def main(
 
     fom = PHLTIModel.from_matrices(J, R, G, S=S, Q=Q, solver_options={'ricc_pos_lrcf': 'slycot'})
 
-    bt = BTReductor(fom)
-    prbt = PRBTReductor(fom)
-    irka = IRKAReductor(fom)
-    phirka = PHIRKAReductor(fom)
+    bt = BTReductor(fom).reduce
+    prbt = PRBTReductor(fom).reduce
+    irka = partial(IRKAReductor(fom).reduce, conv_crit='h2')
+    phirka = PHIRKAReductor(fom).reduce
+    spectral_factor = SpectralFactorReductor(fom)
+    def spectral_factor_reduce(r):
+        return spectral_factor.reduce(
+            lambda spectral_factor, mu : IRKAReductor(spectral_factor,mu).reduce(r))
 
-    reductors = {'BT': bt, 'PRBT': prbt, 'IRKA': irka, 'pH-IRKA': phirka}
-    markers = {'BT': '.', 'PRBT': 'x', 'IRKA': 'o', 'pH-IRKA': 's'}
+    reductors = {
+        'BT': bt,
+        'PRBT': prbt,
+        'IRKA': irka,
+        'pH-IRKA': phirka,
+        'spectral_factor': spectral_factor_reduce,
+    }
+    markers = {
+        'BT': '.',
+        'PRBT': 'x',
+        'IRKA': 'o',
+        'pH-IRKA': 's',
+        'spectral_factor': 'v',
+    }
+    timings = {}
 
     reduced_order = range(2, max_reduced_order + 1, 2)
     h2_errors = np.zeros((len(reductors), len(reduced_order)))
 
-    for i, reductor in enumerate(reductors.values()):
+    for i, name in enumerate(reductors):
+        t0 = perf_counter()
         for j, r in enumerate(reduced_order):
-            rom = reductor.reduce(r)
+            rom = reductors[name](r)
             h2_errors[i, j] = (rom - fom).h2_norm() / fom.h2_norm()
+        t1 = perf_counter()
+        timings[name] = t1 - t0
+
+    print('Timings:')
+    for name, time in timings.items():
+        print(f'  {name}: {time:.2f}s')
 
     fig, ax = plt.subplots()
     for i, reductor_name in enumerate(reductors):
