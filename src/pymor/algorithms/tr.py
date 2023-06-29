@@ -262,6 +262,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
     data['iterations'] = iteration
     data['rom_output_evaluations'] = surrogate.rom_output_evaluations
     data['rom_output_d_mu_evaluations'] = surrogate.rom_output_d_mu_evaluations
+    data['rom_output_estimations'] = surrogate.rom_output_estimations
     data['enrichments'] = surrogate.enrichments
     data['rom'] = surrogate.rom
 
@@ -312,15 +313,15 @@ def coercive_rb_trust_region(reductor, primal_dual=False, mu_bar=None, parameter
                             armijo_alpha=armijo_alpha, line_search_params=line_search_params,
                             stagnation_window=stagnation_window, stagnation_threshold=stagnation_threshold)
 
-    # Note: this evaluation count assumes caching of the primal solution, see above.
-    if primal_dual:
-        fom_evaluations_outer = 0
-    else:
-        # for every gradient, one also requires the dual solution (with the adjoint approach)
-        fom_evaluations_outer = data['iterations']
-
-    data['rom_evaluations'] = surrogate.rom_output_evaluations + 2 * surrogate.rom_output_d_mu_evaluations
     # factor 2 assumes adjoint approach, which is the default for the available coercive RB models.
+    data['rom_evaluations'] = surrogate.rom_output_evaluations + 2 * surrogate.rom_output_d_mu_evaluations
+    # every estimation included one rom evaluation for all available TRSurrogates
+    data['rom_evaluations'] += surrogate.rom_output_estimations
+
+    # Note: this evaluation count assumes caching of the primal solution, see above.
+    # for every gradient, one also requires the dual solution (with the adjoint approach)
+    # which is only available if primal_dual is `True`.
+    fom_evaluations_outer = 0 if primal_dual else data['iterations']
     data['fom_evaluations'] = surrogate.fom_evaluations + fom_evaluations_outer
 
     return mu, data
@@ -339,6 +340,7 @@ class TRSurrogate(BasicObject):
         self.fom_evaluations = 0
         self.rom_output_evaluations = 0
         self.rom_output_d_mu_evaluations = 0
+        self.rom_output_estimations = 0
         self.enrichments = 0
 
         # generate a first rom based on the initial guess
@@ -497,7 +499,7 @@ class QuadraticOutputTRSurrogate(BasicTRSurrogate):
         super().__init__(reductor, initial_guess)
 
     def estimate_output_error(self, mu):
-        self.rom_output_evaluations += 1
+        self.rom_output_estimations += 1
         U, pr_err = self.rom.solve(mu, return_error_estimate=True)
         cont_est = self.continuity_estimator_output
         cont = cont_est.evaluate(self.parameters.parse(mu)) if hasattr(cont_est, 'evaluate') else cont_est
