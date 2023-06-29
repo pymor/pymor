@@ -15,6 +15,7 @@
 
 * Steffen Müller, steffenmu@outlook.de
   * positive-real balanced truncation
+  * passivity preserving model reduction via spectral factorization
 
 * Mohamed Adel Naguib Ahmed, mohamedadel1551998@gmail.com
   * input-output selection in `bode_plot` function
