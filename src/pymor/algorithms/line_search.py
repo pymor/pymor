@@ -148,7 +148,7 @@ def _armijo(f, starting_point, direction, armijo_condition, grad=None, initial_v
     if initial_value is None:
         initial_value = f(starting_point)
 
-    iterations = 0
+    iterations = 1
     slope = 0.0
 
     # Compute slope if gradient is provided
@@ -166,7 +166,7 @@ def _armijo(f, starting_point, direction, armijo_condition, grad=None, initial_v
             break
 
         # Check if maxiter is reached
-        if iterations >= maxiter:
+        if iterations > maxiter:
             # Use default value as step size
             alpha = alpha_init
             # Log warning

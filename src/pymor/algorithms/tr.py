@@ -13,6 +13,7 @@ from pymor.core.exceptions import ExtensionError, TRError
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import LincombOperator, QuadraticFunctional
 from pymor.parameters.base import Mu
+from pymor.parameters.functionals import MaxThetaParameterFunctional
 
 
 @defaults('beta', 'radius', 'shrink_factor', 'miniter', 'maxiter', 'miniter_subproblem', 'maxiter_subproblem',
@@ -261,15 +262,16 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
     data['iterations'] = iteration
     data['rom_evaluations'] = surrogate.rom_evaluations
     data['enrichments'] = surrogate.enrichments
+    data['rom'] = surrogate.rom
 
     return mu, data
 
-def coercive_rb_trust_region(reductor, primal_dual=False, parameter_space=None, initial_guess=None, beta=.95, radius=.1,
-                             shrink_factor=.5, miniter=0, maxiter=30, miniter_subproblem=0, maxiter_subproblem=400,
-                             tol_criticality=1e-6, radius_tol=.75, rtol_output=1e-16, rtol_mu=1e-16, tol_sub=1e-8,
-                             armijo_alpha=1e-4, line_search_params=None, stagnation_window=3,
-                             stagnation_threshold=np.inf):
-    """Error aware Trust-Region method for a coercive RB model as surrogate.
+def coercive_rb_trust_region(reductor, primal_dual=False, mu_bar=None, parameter_space=None, initial_guess=None,
+                             beta=.95, radius=.1, shrink_factor=.5, miniter=0, maxiter=30, miniter_subproblem=0,
+                             maxiter_subproblem=400, tol_criticality=1e-6, radius_tol=.75, rtol_output=1e-16,
+                             rtol_mu=1e-16, tol_sub=1e-8, armijo_alpha=1e-4, line_search_params=None,
+                             stagnation_window=3, stagnation_threshold=np.inf):
+    """Error aware trust-region method for a coercive RB model as surrogate.
 
     Parameters
     ----------
@@ -278,6 +280,8 @@ def coercive_rb_trust_region(reductor, primal_dual=False, parameter_space=None, 
     primal_dual
         If `False`, only enrich with the primal solution. If `True`, additionally
         enrich with the dual solutions.
+    mu_bar
+        |Parameter| that is used for the max-theta approach, only required for quadratic functionals
 
     See :func:`trust_region`.
     """
@@ -288,9 +292,14 @@ def coercive_rb_trust_region(reductor, primal_dual=False, parameter_space=None, 
         if isinstance(output, LincombOperator) and len(output.operators) == 1 and \
             isinstance(output.operators[0], QuadraticFunctional):
             # case for quadratic outputs. Should be obsolete soon, see QuadraticOutputTRSurrogate.
-            continuity_estimator_output = output.coefficients[0]
+            # using max-theta approach for bilinear, gamma_mu_bar is currently estimated by 1.
+            # TODO: include algorithm for computing continuity constant of output.
+            gamma_mu_bar = 1.
+            continuity_estimator_output = MaxThetaParameterFunctional(output.coefficients, mu_bar,
+                                                                      gamma_mu_bar=gamma_mu_bar)
             surrogate = QuadraticOutputTRSurrogate(reductor, initial_guess,
-                                                   continuity_estimator_output=continuity_estimator_output)
+                                                   continuity_estimator_output=continuity_estimator_output,
+                                                   inner_product='energy')
         else:
             surrogate = BasicTRSurrogate(reductor, initial_guess)
 
@@ -389,7 +398,7 @@ class TRSurrogate(BasicObject):
 
 
 class BasicTRSurrogate(TRSurrogate):
-    """Surrogate for the :func:`trust_region` only enriching with the primal solution.
+    """Surrogate for :func:`trust_region` only enriching with the primal solution.
 
     Parameters
     ----------
@@ -418,7 +427,7 @@ class BasicTRSurrogate(TRSurrogate):
             self.new_rom = self.new_reductor.reduce()
 
 class PrimalDualTRSurrogate(TRSurrogate):
-    """Surrogate for the :func:`trust_region` enriching with both the primal and dual solutions.
+    """Surrogate for :func:`trust_region` enriching with both the primal and dual solutions.
 
     Parameters
     ----------
@@ -462,8 +471,9 @@ class PrimalDualTRSurrogate(TRSurrogate):
 class QuadraticOutputTRSurrogate(BasicTRSurrogate):
     """Surrogate for :func:`trust_region` with only the primal enrichment naive output estimate.
 
-    NOTE: This specialized TRSurrogate should soon be made obsolete when the quadratic
-          output estimation is included into a reductor.
+    .. note::
+        This specialized TRSurrogate should soon be made obsolete when the quadratic
+        output estimation is included into a reductor.
 
     Parameters
     ----------
@@ -473,10 +483,13 @@ class QuadraticOutputTRSurrogate(BasicTRSurrogate):
         The |parameter values| containing an initial guess for the optimal parameter value.
     continuity_estimator_output
         Estimation for the continuity constant of the quadratic output functional.
+    inner_product
+        string, referring to the inner product in the reductor with which the continuity constant
+        for the output is estimated
     """
 
-    def __init__(self, reductor, initial_guess, continuity_estimator_output):
-        self.continuity_estimator_output = continuity_estimator_output
+    def __init__(self, reductor, initial_guess, continuity_estimator_output, inner_product='energy'):
+        self.__auto_init(locals())
         super().__init__(reductor, initial_guess)
 
     def estimate_output_error(self, mu):
@@ -484,4 +497,5 @@ class QuadraticOutputTRSurrogate(BasicTRSurrogate):
         U, pr_err = self.rom.solve(mu, return_error_estimate=True)
         cont_est = self.continuity_estimator_output
         cont = cont_est.evaluate(self.parameters.parse(mu)) if hasattr(cont_est, 'evaluate') else cont_est
-        return cont * (pr_err * (2 * self.rom.l2_norm(U) + pr_err))
+        U_norm = np.sqrt(self.rom.products[self.inner_product].apply2(U, U))
+        return cont * (pr_err * (2 * U_norm + pr_err))

@@ -23,6 +23,19 @@ def main(
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.')
 ):
+    """Error aware trust-region method for PDE-constrained parameter optimization problems.
+
+    This demo compares three different approaches for solving PDE-constrained parameter
+    optimization problems with linear and quadratic output functionals.
+    As optimization method we compare:
+        1. The reference method: Projected BFGS, only based on the FOM.
+        2. The classical RB method: First standard Greedy for building a ROM, then projected BFGS
+           with ROM.
+        3. The error aware turst-region method proposed in :cite:`KMOSV21`.
+
+    The methods are compared in terms of computational time, iterations,
+    optimization error, and FOM/ROM evaluations.
+    """
     assert output_number in [0, 1]
     if output_number == 0:
         fom, mu_bar = create_fom(grid_intervals, output_type='l2')
@@ -40,6 +53,9 @@ def main(
     reference_mu, reference_data = error_aware_bfgs(fom, parameter_space)
     toc = perf_counter()
     reference_data['time'] = toc - tic
+    # assumes adjoint approach for gradient computation
+    reference_data['fom_evaluations'] = sum(reference_data['line_search_iterations']) \
+                                        + 2 * (reference_data['iterations'] + 1)
 
     #########################
     # ROM optimization BFGS #
@@ -54,9 +70,10 @@ def main(
     greedy_rom = greedy_data['rom']
 
     tic = perf_counter()
-    bfgs_mu, bfgs_data = error_aware_bfgs(greedy_rom, parameter_space)
+    greedy_bfgs_mu, greedy_bfgs_data = error_aware_bfgs(greedy_rom, parameter_space)
     toc = perf_counter()
-    bfgs_data['time'] = toc - tic + greedy_data['time']
+    greedy_bfgs_data['time'] = toc - tic + greedy_data['time']
+    greedy_bfgs_data['basis_size'] = greedy_rom.solution_space.dim
 
     ################################
     # ROM optimization adaptive TR #
@@ -66,21 +83,22 @@ def main(
 
     tic = perf_counter()
     tr_mu, tr_data = coercive_rb_trust_region(reductor, parameter_space=parameter_space,
-                                              initial_guess=initial_guess)
+                                              initial_guess=initial_guess, mu_bar=mu_bar)
     toc = perf_counter()
     tr_data['time'] = toc - tic
+    tr_data['basis_size'] = tr_data['rom'].solution_space.dim
 
     #############
     # Reporting #
     #############
 
     reference_output = fom.output(reference_mu)[0, 0]
-    bfgs_output = fom.output(bfgs_mu)[0, 0]
+    bfgs_output = fom.output(greedy_bfgs_mu)[0, 0]
     tr_output = fom.output(tr_mu)[0, 0]
 
     report(reference_mu, reference_output, reference_mu, reference_output, reference_data,
            parameter_space.parameters.parse, descriptor=' of optimization with FOM model')
-    report(bfgs_mu, bfgs_output, reference_mu, reference_output, bfgs_data,
+    report(greedy_bfgs_mu, bfgs_output, reference_mu, reference_output, greedy_bfgs_data,
            parameter_space.parameters.parse, descriptor=' of optimization with fixed ROM model and BFGS method')
     report(tr_mu, tr_output, reference_mu, reference_output, tr_data,
            parameter_space.parameters.parse, descriptor=' of optimization with adaptive ROM model and TR method')
@@ -89,24 +107,28 @@ def main(
 def report(mu, output, reference_mu, reference_output, data, parse, descriptor=None):
     print('')
     print('Report{}:'.format(descriptor or ''))
-    print('  mu_min:    {}'.format(parse(mu)))
-    print('  J(mu_min): {}'.format(output))
+    print('  mu_min:        {}'.format(parse(mu)))
+    print('  J(mu_min):     {}'.format(output))
     print('  abs parameter error w.r.t. reference solution: {:.2e}'.format(np.linalg.norm(mu - reference_mu)))
     print('  abs output error w.r.t. reference solution:    {:.2e}'.format(np.linalg.norm(output - reference_output)))
-    print('  num iterations:        {}'.format(data['iterations']))
+    print('  num iterations:            {}'.format(data['iterations']))
+    if 'fom_evaluations' in data:
+        print('  num fom evaluations:       {}'.format(data['fom_evaluations']))
     if 'subproblem_data' in data:
-        print('  num fom evaluations:   {}'.format(data['fom_evaluations']))
-        print('  num rom evaluations:   {}'.format(data['rom_evaluations']))
-        print('  num enrichments:       {}'.format(data['enrichments']))
+        print('  num rom evaluations:       {}'.format(data['rom_evaluations']))
+        print('  num enrichments:           {}'.format(data['enrichments']))
         subproblem_data = data['subproblem_data']
-        print('  num BFGS calls:        {}'.format(sum([subproblem_data[i]['iterations']
+        print('  total BFGS iterations:     {}'.format(sum([subproblem_data[i]['iterations']
             for i in range(len(subproblem_data))])))
         if 'line_search_iterations' in subproblem_data[0]:
-            print('  num line search calls: {}'.format(sum(np.concatenate([subproblem_data[i]['line_search_iterations']
-            for i in range(len(subproblem_data))]))))
+            print('  num line search calls:     {}'.format(
+                sum(np.concatenate([subproblem_data[i]['line_search_iterations']
+                                    for i in range(len(subproblem_data))]))))
     if 'line_search_iterations' in data:
-        print('  num line search calls: {}'.format(sum(data['line_search_iterations'])))
-    print('  time:                  {:.5f} seconds'.format(data['time']))
+        print('  num line search calls:     {}'.format(sum(data['line_search_iterations'])))
+    if 'basis_size' in data:
+        print('  RB size:                   {}'.format(data['basis_size']))
+    print('  time:                      {:.5f} seconds'.format(data['time']))
     print('')
 
 
