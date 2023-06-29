@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Number
+from numbers import Integral, Number
 
 import numpy as np
 from scipy.sparse import issparse
@@ -217,7 +217,8 @@ class NumpyVectorSpace(VectorSpace):
     """
 
     def __init__(self, dim, id=None):
-        self.dim = dim
+        assert isinstance(dim, Integral)
+        self.dim = int(dim)
         self.id = id
 
     def __eq__(self, other):
