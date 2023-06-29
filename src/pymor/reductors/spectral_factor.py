@@ -14,10 +14,12 @@ from pymor.parameters.base import Mu
 
 
 class SpectralFactorReductor(BasicObject):
-    r"""
-    Passivity preserving model reduction via spectral factorization.
+    r"""Passivity preserving model reduction via spectral factorization.
 
     See :cite:`BU22` (Algorithm 4).
+
+    .. note::
+        The reductor uses dense computations and converts the full-order model to dense matrices.
 
     Parameters
     ----------
@@ -42,37 +44,45 @@ class SpectralFactorReductor(BasicObject):
         Parameters
         ----------
         r_fn
-            A |Callable| which takes two arguments
-            - spectral_factor |LTIModel|
-            - mu |Parameter values|
-            and returns an |LTIModel| reduced-order model for the supplied spectral
+            A callable which takes two arguments
+
+            - `spectral_factor` (|LTIModel|),
+            - `mu` (|Parameter values|),
+
+            and returns a reduced-order |LTIModel| for the supplied spectral
             factor.
 
-            For example, a possible choice to obtain a reduced-order model of order 10 is
-            `lambda spectral_factor,mu : IRKAReductor(spectral_factor,mu).reduce(10)`
-            or
-            `lambda spectral_factor,mu : BTReductor(spectral_factor,mu).reduce(10)`.
+            For example, a possible choice to obtain a reduced-order model of order 10 is::
+
+                lambda spectral_factor, mu: IRKAReductor(spectral_factor, mu).reduce(10)
+
+            or::
+
+                lambda spectral_factor, mu: BTReductor(spectral_factor, mu).reduce(10)
 
             The method should preserve asymptotic stability.
         X
             A solution to the KYP inequality
 
-              .. math::
+            .. math::
                 \begin{bmatrix}
-                    -A^T X - X A & C^T - X B\\
-                    C - B^T X & D+D^T
-                \end{bmatrix} \geq 0.
+                    -A^T X - X A & C^T - X B \\
+                    C - B^T X & D + D^T
+                \end{bmatrix}
+                \succcurlyeq 0.
 
             as a |NumPy array|, which in turn is used for computation of the spectral
             factor.
 
-            If `None`, it is assumed that :math:`D+D^T` is nonsingular, where
+            If `None`, it is assumed that :math:`D + D^T` is nonsingular, where
             :math:`D` is the feed-through matrix of the full-order model.
             A minimal solution to the KYP inequality is then obtained internally
             by computing the minimal solution of the Riccati equation
-              .. math::
+
+            .. math::
                 A^T X E + E^T X A
-                + (C^T - E^T X B) (D+D^T)^{-1} (C - B^T X E) = 0.
+                + (C^T - E^T X B) (D + D^T)^{-1} (C - B^T X E) = 0.
+
             In the case that :math:`D+D^T` is singular, one can add a small
             perturbation, see :cite:`BU22` (Section 2.2.2).
         compute_errors
@@ -81,7 +91,7 @@ class SpectralFactorReductor(BasicObject):
         check_stability
             If `True`, the stability of the reduced spectral factor is
             checked. The stability is required to guarantee a positive definite
-            solution to the Lyapunov equation :cite:`BU22` (21).
+            solution to the Lyapunov equation in :cite:`BU22` in equation (21).
 
         Returns
         -------
@@ -90,25 +100,25 @@ class SpectralFactorReductor(BasicObject):
         """
         if X is None:
             # Compute minimal solution X to Riccati equation
-            assert not isinstance(self.fom.D,ZeroOperator), 'D+D^T must be invertible.'
+            assert not isinstance(self.fom.D, ZeroOperator), 'D+D^T must be invertible.'
             Z = self.fom.gramian('pr_o_lrcf', mu=self.mu).to_numpy()
-            X = Z.T@Z
+            X = Z.T @ Z
 
         # Compute Cholesky-like factorization of W(X)
         E = to_matrix(self.fom.E, format='dense')
         B = to_matrix(self.fom.B, format='dense')
         C = to_matrix(self.fom.C, format='dense')
         D = to_matrix(self.fom.D, format='dense')
-        M = _chol(D+D.T).T
-        L = np.linalg.solve(M.T, C-B.T@X@E)
+        M = _chol(D + D.T).T
+        L = np.linalg.solve(M.T, C - B.T @ X @ E)
 
         if compute_errors:
             A = to_matrix(self.fom.A, format='dense')
-            LTL = -A.T@X@E - X@A@E
-            relLTLerr = np.linalg.norm(L.T@L-LTL)/np.linalg.norm(LTL)
+            LTL = -A.T @ X @ E - X @ A @ E
+            relLTLerr = np.linalg.norm(L.T @ L - LTL) / np.linalg.norm(LTL)
             self.logger.info(f'Relative L^T*L error: {relLTLerr:.3e}')
-            LTM = C.T - E.T@X@B
-            relLTMerr = np.linalg.norm(L.T@M-LTM)/np.linalg.norm(LTM)
+            LTM = C.T - E.T @ X @ B
+            relLTMerr = np.linalg.norm(L.T @ M - LTM) / np.linalg.norm(LTM)
             self.logger.info(f'Relative L^T*M error: {relLTMerr:.3e}')
 
         spectral_factor = LTIModel(self.fom.A, self.fom.B,
@@ -130,10 +140,10 @@ class SpectralFactorReductor(BasicObject):
         Mr = to_matrix(spectral_factor_reduced.D, format='dense')
 
         if check_stability:
-            largest_pole = np.max(np.real(spectral_factor_reduced.poles()))
+            largest_pole = spectral_factor_reduced.poles().real.max()
             if largest_pole > 0:
                 self.logger.warn('Reduced system for spectral factor is not stable. '
-                                f'Real value of largest pole is {largest_pole}.')
+                                 f'Real value of largest pole is {largest_pole}.')
 
         Dr = 0.5*(Mr.T @ Mr) + 0.5*(D-D.T)
 
