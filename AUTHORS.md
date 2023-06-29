@@ -13,6 +13,9 @@
 
 ### pyMOR 2023.1
 
+* Tim Keil, tim.keil@uni-muenster.de
+  * adaptive trust region algorithm and specific BFGS implementation for PDE-constrained optimization
+
 * Steffen Müller, steffenmu@outlook.de
   * positive-real balanced truncation
   * passivity preserving model reduction via spectral factorization
@@ -27,6 +30,7 @@
 * Peter Oehme, oehme.pb@gmail.com
   * quadratic functionals and quadratic output keyword for CG discretization
   * simple algebraic operations for parameter values
+  * adaptive trust region algorithm and specific BFGS implementation for PDE-constrained optimization
 
 ### pyMOR 2022.2
 

@@ -11,7 +11,7 @@ from scipy.stats._multivariate import random_correlation_gen
 
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, Function
 from pymor.core.config import config
-from pymor.parameters.base import Mu
+from pymor.parameters.base import Mu, Parameters
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -480,6 +480,36 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
 def equal_tuples(draw, strategy, count):
     val = draw(strategy)
     return draw(hyst.tuples(*[hyst.just(val) for _ in range(count)]))
+
+
+@hyst.composite
+def active_mu_data(draw, min_num=1, max_num=3, min_dim=1, max_dim=5, num_mus=10):
+    from random import randint, sample
+
+    sizes = draw(hyst.lists(hyst.integers(min_value=min_dim, max_value=max_dim), min_size=min_num, max_size=max_num))
+    param_dict = {'foo_' + str(ind): size for ind, size in enumerate(sizes)}
+    space = Parameters(param_dict).space((0.1, 1))
+    dim = space.parameters.dim
+    mus = []
+    active_indices = []
+
+    for _ in range(num_mus):
+        num_indices = randint(0, dim)
+        num_low = randint(0, num_indices)
+        active_inds = sample(range(dim), num_indices)
+        low_active_indices = sample(active_inds, num_low)
+        high_active_indices = list(set(active_inds) - set(low_active_indices))
+
+        mu_range = list(space.ranges.values())[0]
+        val = .5 * (mu_range[0] + mu_range[1])
+        mu = val * np.ones(dim)
+        mu[low_active_indices] = mu_range[0]
+        mu[high_active_indices] = mu_range[1]
+
+        mus.append(mu)
+        active_indices.append(active_inds)
+
+    return space, mus, active_indices
 
 
 # stick to a few representative examples to avoid only seeing degenerate cases

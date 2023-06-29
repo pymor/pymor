@@ -179,7 +179,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, range_product=None, sourc
             else:
                 grad = - (jacobian.apply_adjoint(range_product.apply(residual))
                           + jacobian.apply(range_product.apply_adjoint(residual)))
-            step_size = armijo(res, U, update, grad=grad, initial_value=residual_norm, **(line_search_params or {}))
+            step_size, _ = armijo(res, U, update, grad=grad, initial_value=residual_norm, **(line_search_params or {}))
         else:
             raise ValueError('Unknown line search method.')
 
