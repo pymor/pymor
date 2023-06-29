@@ -3,11 +3,14 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.models.iosys import LTIModel, PHLTIModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
+
+pytestmark = pytest.mark.builtin
 
 
 def test_ph_irka():
