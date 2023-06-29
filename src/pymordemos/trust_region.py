@@ -12,7 +12,7 @@ from typer import Argument, run
 from pymor.algorithms.bfgs import error_aware_bfgs
 from pymor.algorithms.greedy import rb_greedy
 from pymor.algorithms.tr import coercive_rb_trust_region
-from pymor.parameters.functionals import MinThetaParameterFunctional
+from pymor.parameters.functionals import MaxThetaParameterFunctional, MinThetaParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor
 from pymordemos.linear_optimization import create_fom
 
@@ -81,10 +81,22 @@ def main(
     ################################
 
     reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
+    if output_number == 1:
+        output = reductor.fom.output_functional
+        # case for quadratic outputs. Will be obsolete, when an appropriate reductor with error
+        # estimators for quadratic functionals is available
+        args = {
+            'quadratic_output': True,
+            'quadratic_output_continuity_estimator': MaxThetaParameterFunctional(output.coefficients, mu_bar,
+                                                                                 gamma_mu_bar=1.),
+            'quadratic_output_product_name': 'energy'
+        }
+    else:
+        args = {}
 
     tic = perf_counter()
     tr_mu, tr_data = coercive_rb_trust_region(reductor, parameter_space=parameter_space,
-                                              initial_guess=initial_guess, mu_bar=mu_bar)
+                                              initial_guess=initial_guess, **args)
     toc = perf_counter()
     tr_data['time'] = toc - tic
     tr_data['basis_size'] = tr_data['rom'].solution_space.dim
