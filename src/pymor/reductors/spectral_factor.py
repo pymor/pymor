@@ -4,14 +4,14 @@
 
 import numpy as np
 
+from pymor.algorithms.lyapunov import _chol, solve_cont_lyap_dense
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
-from pymor.parameters.base import Mu
-from pymor.algorithms.lyapunov import solve_cont_lyap_dense
-from pymor.algorithms.to_matrix import to_matrix
-from pymor.algorithms.lyapunov import _chol
-from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.operators.constructions import ZeroOperator
+from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.parameters.base import Mu
+
 
 class SpectralFactorReductor(BasicObject):
     r"""
@@ -90,7 +90,7 @@ class SpectralFactorReductor(BasicObject):
         """
         if X is None:
             # Compute minimal solution X to Riccati equation
-            assert not isinstance(self.fom.D,ZeroOperator), "D+D^T must be invertible."
+            assert not isinstance(self.fom.D,ZeroOperator), 'D+D^T must be invertible.'
             Z = self.fom.gramian('pr_o_lrcf', mu=self.mu).to_numpy()
             X = Z.T@Z
 

@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 
 from pymor.models.iosys import LTIModel
-from pymor.reductors.spectral_factor import SpectralFactorReductor
 from pymor.reductors.h2 import IRKAReductor
+from pymor.reductors.spectral_factor import SpectralFactorReductor
 
 
 def test_spectral_factor():
@@ -18,7 +18,7 @@ def test_spectral_factor():
 
     Z = fom.gramian('pr_o_lrcf').to_numpy()
     X = Z.T@Z
-    assert np.all(np.linalg.eigvals(X) > 0), "Passive FOM expected."
+    assert np.all(np.linalg.eigvals(X) > 0), 'Passive FOM expected.'
 
     spectralFactor = SpectralFactorReductor(fom)
 
@@ -26,11 +26,11 @@ def test_spectral_factor():
         lambda spectral_factor, mu : IRKAReductor(spectral_factor,mu).reduce(1))
     assert isinstance(rom, LTIModel) and rom.order == 1
 
-    assert np.all(np.real(rom.poles()) < 0), "Asymptotically stable ROM expected."
+    assert np.all(np.real(rom.poles()) < 0), 'Asymptotically stable ROM expected.'
 
     Z2 = rom.gramian('pr_o_lrcf').to_numpy()
     X2 = Z2.T@Z2
-    assert np.all(np.linalg.eigvals(X2) > 0), "Passive ROM expected."
+    assert np.all(np.linalg.eigvals(X2) > 0), 'Passive ROM expected.'
 
 def test_spectral_factor_invertible_D_assertion():
     R = np.array([[1, 0], [0, 2]])
@@ -43,4 +43,4 @@ def test_spectral_factor_invertible_D_assertion():
         spectralFactor.reduce(
             lambda spectral_factor, mu : IRKAReductor(spectral_factor,mu).reduce(1))
 
-    assert "D+D^T must be invertible." in str(e.value)
+    assert 'D+D^T must be invertible.' in str(e.value)
