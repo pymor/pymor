@@ -12,7 +12,6 @@ from pymor.reductors.bt import BTReductor, PRBTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
 from pymor.reductors.spectral_factor import SpectralFactorReductor
-from pymor.reductors.h2 import IRKAReductor
 
 
 def msd(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
@@ -138,24 +137,24 @@ def main(
 
     fom = PHLTIModel.from_matrices(J, R, G, S=S, Q=Q, solver_options={'ricc_pos_lrcf': 'slycot'})
 
-    bt = BTReductor(fom)
-    prbt = PRBTReductor(fom)
-    irka = IRKAReductor(fom)
-    phirka = PHIRKAReductor(fom)
+    bt = BTReductor(fom).reduce
+    prbt = PRBTReductor(fom).reduce
+    irka = IRKAReductor(fom).reduce
+    phirka = PHIRKAReductor(fom).reduce
     spectralFactor = SpectralFactorReductor(fom)
     def spectralFactor_reduce(r):
         return spectralFactor.reduce(
             lambda spectral_factor, mu : IRKAReductor(spectral_factor,mu).reduce(r))
 
-    reductors = {'BT': bt, 'PRBT': prbt, 'IRKA': irka, 'pH-IRKA': phirka, 'spectralFactor': spectralFactor}
+    reductors = {'BT': bt, 'PRBT': prbt, 'IRKA': irka, 'pH-IRKA': phirka, 'spectralFactor': spectralFactor_reduce}
     markers = {'BT': '.', 'PRBT': 'x', 'IRKA': 'o', 'pH-IRKA': 's', 'spectralFactor': 'v'}
 
     reduced_order = range(2, max_reduced_order + 1, 2)
     h2_errors = np.zeros((len(reductors), len(reduced_order)))
 
-    for i, reductor in enumerate(reductors.values()):
+    for i, reduce in enumerate(reductors.values()):
         for j, r in enumerate(reduced_order):
-            rom = reductor.reduce(r)
+            rom = reduce(r)
             h2_errors[i, j] = (rom - fom).h2_norm() / fom.h2_norm()
 
     fig, ax = plt.subplots()

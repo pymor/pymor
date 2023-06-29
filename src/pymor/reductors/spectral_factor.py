@@ -47,7 +47,7 @@ class SpectralFactorReductor(BasicObject):
             - mu |Parameter values|
             and returns an |LTIModel| reduced-order model for the supplied spectral
             factor.
-            
+
             For example, a possible choice to obtain a reduced-order model of order 10 is
             `lambda spectral_factor,mu : IRKAReductor(spectral_factor,mu).reduce(10)`
             or
@@ -67,7 +67,7 @@ class SpectralFactorReductor(BasicObject):
             factor.
 
             If `None`, it is assumed that :math:`D+D^T` is nonsingular, where
-            :math:`D` is the feed-through matrix of the full-order model. 
+            :math:`D` is the feed-through matrix of the full-order model.
             A minimal solution to the KYP inequality is then obtained internally
             by computing the minimal solution of the Riccati equation
               .. math::
@@ -93,7 +93,7 @@ class SpectralFactorReductor(BasicObject):
             assert not isinstance(self.fom.D,ZeroOperator), "D+D^T must be invertible."
             Z = self.fom.gramian('pr_o_lrcf', mu=self.mu).to_numpy()
             X = Z.T@Z
-        
+
         # Compute Cholesky-like factorization of W(X)
         E = to_matrix(self.fom.E, format='dense')
         B = to_matrix(self.fom.B, format='dense')
@@ -115,7 +115,7 @@ class SpectralFactorReductor(BasicObject):
             NumpyMatrixOperator(L, source_id=self.fom.A.range.id),
             NumpyMatrixOperator(M, source_id=self.fom.B.source.id),
             self.fom.E)
-        
+
         spectral_factor_reduced = r_fn(spectral_factor, self.mu)
 
         if compute_errors:

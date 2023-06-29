@@ -27,7 +27,7 @@ def test_spectral_factor():
     assert isinstance(rom, LTIModel) and rom.order == 1
 
     assert np.all(np.real(rom.poles()) < 0), "Asymptotically stable ROM expected."
-    
+
     Z2 = rom.gramian('pr_o_lrcf').to_numpy()
     X2 = Z2.T@Z2
     assert np.all(np.linalg.eigvals(X2) > 0), "Passive ROM expected."
@@ -42,5 +42,5 @@ def test_spectral_factor_invertible_D_assertion():
     with pytest.raises(AssertionError) as e:
         spectralFactor.reduce(
             lambda spectral_factor, mu : IRKAReductor(spectral_factor,mu).reduce(1))
-        
+
     assert "D+D^T must be invertible." in str(e.value)
