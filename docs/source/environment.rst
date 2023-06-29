@@ -49,9 +49,13 @@ pyMOR respects the following environment variables:
 
 .. envvar:: PYMOR_MPI_FINALIZE
 
-    If set controls the value for `mpi4py.rc.finalize`. If `PYMOR_MPI_FINALIZE`
+    If set, controls the value for `mpi4py.rc.finalize`. If `PYMOR_MPI_FINALIZE`
     is unset the value of `mpi4py.rc.finalize` remains unchanged, unless
     `mpi4py.rc.finalize is None` in which case it is defaulted to `True`.
+
+.. envvar:: PYMOR_MPI_INIT_THREAD
+
+    Required threading level to require when pyMOR calls `mpi4py.MPI.Init_thread`. 
 
 .. envvar:: PYMOR_WITH_SPHINX
 
