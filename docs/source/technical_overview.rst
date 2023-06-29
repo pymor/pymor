@@ -359,7 +359,7 @@ This observation is particularly apparent in the case of the classical
 reduced basis method: the operators and functionals of a given discrete problem
 are projected onto the reduced basis space whereas the structure of the problem
 (i.e. the type of |Model| containing the operators) stays the same.
-pyMOR reflects this fact by offering with :class:`!GenericRBReductor`
+pyMOR reflects this fact by offering with :class:`~pymor.reductors.basic.ProjectionBasedReductor`
 a generic algorithm which can be used to RB-project any model available to pyMOR.
 It should be noted however that this reductor is only able to efficiently
 offline/online-decompose affinely |Parameter|-dependent linear problems.
@@ -367,6 +367,6 @@ Non-linear problems or such with no affine |Parameter| dependence require
 additional techniques such as :mod:`empirical interpolation <pymor.algorithms.ei>`.
 
 If you want to further dive into the inner workings of pyMOR, we
-recommend to study the source code of :class:`!GenericRBReductor`
+recommend to study the source code of :class:`~pymor.reductors.basic.ProjectionBasedReductor`
 and to step through calls of it's `reduce` method with a Python debugger, such as
 `ipdb <https://pypi.python.org/pypi/ipdb>`_.
