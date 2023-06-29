@@ -35,6 +35,12 @@ pyMOR respects the following environment variables:
     If set, |VectorArray|, |Operator| and related fixtures only use
     external solver backends.
 
+.. envvar:: PYMOR_FORCE_JUPYTER
+
+    If set, forces pyMOR to believe that it is running in a Jupyter
+    environment even though automatic detection in 
+    :func:`~pymor.core.config.is_jupyter` failed.
+
 .. envvar:: PYMOR_HYPOTHESIS_PROFILE
 
     Controls which profile the hypothesis pytest plugin uses to execute our
