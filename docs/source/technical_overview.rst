@@ -65,13 +65,13 @@ operating on objects of the following types:
     .. |dimension|        replace:: :attr:`dimension <pymor.vectorarrays.interface.VectorArray.dim>`
     .. |empty|            replace:: :meth:`~pymor.vectorarrays.interface.VectorSpace.empty`
     .. |id|               replace:: :meth:`~pymor.vectorarrays.interface.VectorSpace.id`
-    .. |indexed|          replace:: :meth:`indexed <pymor.vectorarrays.interface.VectorArray.__getitem__>`
+    .. |indexed|          replace:: :meth:`!indexed <pymor.vectorarrays.interface.VectorArray.__getitem__>`
     .. |inner products|   replace:: :meth:`inner products <pymor.vectorarrays.interface.VectorArray.inner>`
     .. |lincomb|          replace:: :meth:`~pymor.vectorarrays.interface.VectorArray.lincomb`
     .. |make_array|       replace:: :meth:`~pymor.vectorarrays.interface.VectorSpace.make_array`
-    .. |removed|          replace:: :meth:`deleted <pymor.vectorarrays.interface.VectorArray.__delitem__>`
+    .. |removed|          replace:: :meth:`!deleted <pymor.vectorarrays.interface.VectorArray.__delitem__>`
     .. |scaled|           replace:: :meth:`scaled <pymor.vectorarrays.interface.VectorArray.scal>`
-    .. |subtype|          replace:: :attr:`~pymor.vectorarrays.interface.VectorSpace.subtype`
+    .. |subtype|          replace:: :attr:`!~pymor.vectorarrays.interface.VectorSpace.subtype`
     .. |zeros|            replace:: :meth:`~pymor.vectorarrays.interface.VectorSpace.zeros`
 
 |Operators|
@@ -107,7 +107,7 @@ operating on objects of the following types:
     .. |apply2|            replace:: :meth:`~pymor.operators.interface.Operator.apply2`
     .. |apply_inverse|     replace:: :meth:`~pymor.operators.interface.Operator.apply_inverse`
     .. |assembled|         replace:: :meth:`assembled <pymor.operators.interface.Operator.assemble>`
-    .. |_assemble_lincomb| replace:: :meth:`~pymor.operators.interface.Operator._assemble_lincomb`
+    .. |_assemble_lincomb| replace:: :meth:`!~pymor.operators.interface.Operator._assemble_lincomb`
     .. |as_vector|         replace:: :meth:`~pymor.operators.interface.Operator.as_vector`
     .. |linear|            replace:: :attr:`~pymor.operators.interface.Operator.linear`
     .. |range|             replace:: :attr:`~pymor.operators.interface.Operator.range`
@@ -142,14 +142,14 @@ operating on objects of the following types:
     |solution_space|.
 
     .. |cached|           replace:: :mod:`cached <pymor.core.cache>`
-    .. |estimate|         replace:: :meth:`~pymor.models.interface.Model.estimate`
-    .. |functionals|      replace:: :attr:`~pymor.models.interface.Model.functionals`
-    .. |operators|        replace:: :attr:`~pymor.models.interface.Model.operators`
+    .. |estimate|         replace:: :meth:`!~pymor.models.interface.Model.estimate`
+    .. |functionals|      replace:: :attr:`!~pymor.models.interface.Model.functionals`
+    .. |operators|        replace:: :attr:`!~pymor.models.interface.Model.operators`
     .. |products|         replace:: :attr:`~pymor.models.interface.Model.products`
     .. |solution_space|   replace:: :attr:`~pymor.models.interface.Model.solution_space`
     .. |solve|            replace:: :meth:`~pymor.models.interface.Model.solve`
     .. |solving|          replace:: :meth:`solving <pymor.models.interface.Model.solve>`
-    .. |vector_operators| replace:: :attr:`~pymor.models.interface.Model.vector_operators`
+    .. |vector_operators| replace:: :attr:`!~pymor.models.interface.Model.vector_operators`
     .. |visualize|        replace:: :meth:`~pymor.models.interface.Model.visualize`
 
 
@@ -187,7 +187,7 @@ in which the attribute `a` now has the value `x` and the attribute `b` the
 value `y`. It can be generally assumed that calls to
 :meth:`~pymor.core.base.ImmutableObject.with_` are inexpensive. The
 set of allowed arguments can be found in the
-:attr:`~pymor.core.base.ImmutableObject.with_arguments` attribute.
+:attr:`!~pymor.core.base.ImmutableObject.with_arguments` attribute.
 
 All immutable classes in pyMOR and most other classes derive from
 |BasicObject| which, through its meta class, provides several convenience
@@ -270,7 +270,7 @@ as the union of all |Parameters| of the objects that are passed to it's `__init_
 For instance, an |Operator| that implements the L2-product with some user-provided
 |Function| will automatically inherit all |Parameters| of that |Function|.
 Additional |Parameters| can be easily added by setting the
-:attr:`~pymor.parameters.ParametricObject.parameters_own` attribute.
+:attr:`!~pymor.parameters.ParametricObject.parameters_own` attribute.
 
 
 Defaults
@@ -363,7 +363,7 @@ This observation is particularly apparent in the case of the classical
 reduced basis method: the operators and functionals of a given discrete problem
 are projected onto the reduced basis space whereas the structure of the problem
 (i.e. the type of |Model| containing the operators) stays the same.
-pyMOR reflects this fact by offering with :class:`~pymor.reductors.basic.GenericRBReductor`
+pyMOR reflects this fact by offering with :class:`!~pymor.reductors.basic.GenericRBReductor`
 a generic algorithm which can be used to RB-project any model available to pyMOR.
 It should be noted however that this reductor is only able to efficiently
 offline/online-decompose affinely |Parameter|-dependent linear problems.
@@ -371,6 +371,6 @@ Non-linear problems or such with no affine |Parameter| dependence require
 additional techniques such as :mod:`empirical interpolation <pymor.algorithms.ei>`.
 
 If you want to further dive into the inner workings of pyMOR, we
-recommend to study the source code of :class:`~pymor.reductors.basic.GenericRBReductor`
+recommend to study the source code of :class:`!~pymor.reductors.basic.GenericRBReductor`
 and to step through calls of it's `reduce` method with a Python debugger, such as
 `ipdb <https://pypi.python.org/pypi/ipdb>`_.
