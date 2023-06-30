@@ -24,4 +24,5 @@ developer_docs
 
 /autoapi/index
 /autoapi/pymor/index
+/autoapi/pymordemos/index
 ```

@@ -303,7 +303,7 @@ def linkcode_resolve(domain, info):
     return None
 
 
-autoapi_dirs = [src_dir / 'pymor']
+autoapi_dirs = [src_dir / 'pymor', src_dir / 'pymordemos']
 autoapi_type = 'python'
 # allows incremental build
 autoapi_keep_files = True
