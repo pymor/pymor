@@ -172,10 +172,10 @@ specifying how eigenvalues should be computed (`None` for computing all
 eigenvalues using dense methods or arguments for pyMOR's iterative eigensolver
 like in the code above).
 
-Before we use the {meth}`~pymor.reductors.bt.FDBTReductor.reduce` method to
-obtain a reduced-order model, we take a look at some a priori error bounds for
-the reductor. In particular, we get a {math}`\mathcal{L}_\infty` rather than the
-{math}`\mathcal{H}_\infty` error bound from classic balanced truncation.
+Before we use the `reduce` method to obtain a reduced-order model, we take a
+look at some a priori error bounds for the reductor. In particular, we get a
+{math}`\mathcal{L}_\infty` rather than the {math}`\mathcal{H}_\infty` error
+bound from classic balanced truncation.
 
 ```{code-cell}
 error_bounds = fdbt.error_bounds()
