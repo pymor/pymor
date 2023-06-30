@@ -339,7 +339,15 @@ Let's see, how good our reduced approximation is:
 (U-U_N).norm(fom.h1_0_product) / U.norm(fom.h1_0_product)
 ```
 
-With only 10 basis vectors, we have achieved a relative {math}`H^1`-error of 2%.
+```{code-cell}
+:tags: [remove-cell]
+
+
+# ensure the statement in the text below is accurate
+assert (U-U_N).norm(fom.h1_0_product) / U.norm(fom.h1_0_product) < 0.5
+```
+
+With only 10 basis vectors, we have achieved a relative {math}`H^1`-error of about 0.5%.
 We can also visually inspect our solution and the approximation error:
 
 ```{code-cell}
