@@ -1,4 +1,3 @@
-
 pyMOR 2021.2 (December 22, 2021)
 --------------------------------
 We are proud to announce the release of pyMOR 2021.2! New features in

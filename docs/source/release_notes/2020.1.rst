@@ -1,5 +1,3 @@
-
-
 pyMOR 2020.1 (July 23, 2020)
 ----------------------------
 We are proud to announce the release of pyMOR 2020.1! Highlights of this release
