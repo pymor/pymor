@@ -132,6 +132,7 @@ pygments_style = 'sphinx'
 nitpicky = True
 nitpick_ignore_regex = [
     ('py:class', 'Choices(.+)'),
+    ('py:.*', 'pymess.*'),
 ]
 
 
