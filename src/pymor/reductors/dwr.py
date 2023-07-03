@@ -24,7 +24,7 @@ class DWRCoerciveRBReductor(BasicObject):
     This also implements a DWR-based error estimator for the corrected output functional.
     The DWR approach requires the reduction of a dual problem for every dimension of the output
     functional. Each dual problem is defined by the dual operator and the corresponding component
-    of the output functional as right-hand side. See also :meth:`~pymor.reductors.dwr.dual_model`.
+    of the output functional as right-hand side. See also :meth:`create_dual_model`.
 
     Parameters
     ----------
@@ -33,7 +33,7 @@ class DWRCoerciveRBReductor(BasicObject):
     dual_foms
         List of the dual |Models| that correspond to each dimension of the output_functional.
         If `dual_foms` is `None`, the default dual models are constructed
-        by :meth:`~pymor.reductors.dwr.create_dual_model`, assuming a fully discrete perspective.
+        by :meth:`create_dual_model`, assuming a fully discrete perspective.
     primal_RB
         |VectorArray| containing the reduced basis on which to project the fom.
     dual_RBs
@@ -58,7 +58,7 @@ class DWRCoerciveRBReductor(BasicObject):
         if dual_RBs is not None:
             assert len(dual_RBs) == fom.dim_output
         assert (fom.output_functional is not None and fom.output_functional.linear), \
-            'DWRCoerciveRBReductor requires a linear ouput functional. ' + \
+            'DWRCoerciveRBReductor requires a linear output functional. ' + \
             'Please use CoerciveRBReductor instead.'
 
         self.primal_reductor = CoerciveRBReductor(fom, RB=primal_RB, product=product,
@@ -240,12 +240,12 @@ class CorrectedOutputFunctional(Operator):
     Parameters
     ----------
     output_functional
-        Original output_functional
+        Original output functional.
     dual_models
-        Dual models for the corrected output, see :meth:`~pymor.reductors.dwr.create_dual_model`
+        Dual models for the corrected output, see :meth:`~DWRCoerciveRBReductor.create_dual_model`.
     dual_projected_primal_residuals
         The primal residuals projected on the dual space (in the first argument) and on the
-        primal space (in the second argument)
+        primal space (in the second argument).
     """
 
     linear = False
