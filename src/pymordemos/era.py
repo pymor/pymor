@@ -57,7 +57,7 @@ def compute_markov_parameters(sys, n=100):
     Returns
     -------
     mp
-        |NumpyArray| of shape (n, sys.dim_ouputs, sys.dim_inputs).
+        |NumPy array| of shape `(n, sys.dim_output, sys.dim_input)`.
     """
     mp = np.zeros((n, sys.dim_output, sys.dim_input))
     A, B, C, *_ = sys.to_matrices()
