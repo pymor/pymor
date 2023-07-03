@@ -290,6 +290,8 @@ intersphinx_mapping = {
     'matplotlib': ('https://matplotlib.org/stable/', None),
     'Sphinx': (' https://www.sphinx-doc.org/en/stable/', None),
     'torch': ('https://pytorch.org/docs/stable/', None),
+    'ipywidgets': ('https://ipywidgets.readthedocs.io/en/stable/', None),
+    'k3d': ('https://k3d-jupyter.org/', None),
 }
 
 modindex_common_prefix = ['pymor.']
