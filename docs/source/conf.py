@@ -130,6 +130,9 @@ pygments_style = 'sphinx'
 
 # Ensure all our internal links work
 nitpicky = True
+nitpick_ignore_regex = [
+    ('py:class', 'Choices(.+)'),
+]
 
 
 # -----------------------------------------------------------------------------
