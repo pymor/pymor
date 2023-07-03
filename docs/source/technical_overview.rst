@@ -352,7 +352,7 @@ data (e.g. the reduced basis) to create reduced |Models|. For instance, the
 :class:`~pymor.reductors.basic.StationaryRBReductor` and
 :class:`~pymor.reductors.basic.InstationaryRBReductor` reductors can reduce any
 :class:`~pymor.models.basic.StationaryModel` and :class:`~pymor.models.basic.InstationaryModel`,
-while the :class:`~pymor.reductors.bt.GenericBTReductor` reduces
+while the :class:`~pymor.reductors.bt.BTReductor` reduces
 :class:`~pymor.models.iosys.LTIModel` (just to name a few).
 
 If proper offline/online decomposition is achieved by the reductor, the reduced
@@ -366,7 +366,7 @@ reduced basis method: the operators and functionals of a given discrete problem
 are projected onto the reduced basis space whereas the structure of the problem
 (i.e. the type of |Model| containing the operators) stays the same.
 pyMOR reflects this fact by offering with :meth:`~pymor.algorithms.projection.project`
-generic algorithms which can be used to RB-project any model available to pyMOR.
+generic algorithms which can be used to RB-project any |Operator| available to pyMOR.
 
 In addition to the projection of the |Model|, reductors may also assemble efficient
 offline-online decomposed a posterior error estimates (available via the
