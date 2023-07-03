@@ -33,7 +33,7 @@ Loewner reductor
 
 Optimization
 ~~~~~~~~~~~~
-In `[#1924] Adaptive Trust Region Algorithm <https://github.com/pymor/pymor/pull/1924>`_, an error-aware adaptive
+In `[#1924] <https://github.com/pymor/pymor/pull/1924>`_, an error-aware adaptive
 trust-region method was added. This method solves an optimization problem :math:`min J(mu), mu in C`.
 for a |Model| with an output :math:`J` depending on a box-constrained `mu`.
 The main idea of the algorithm can be found in :cite:`YM13`, and an RB application to box-constrained
@@ -57,7 +57,7 @@ Additional new features
 
 Output functionals
 ~~~~~~~~~~~~~~~~~~
-In `[#1796] Bilinear Functionals for use with output operators <https://github.com/pymor/pymor/pull/1796>`_,
+In `[#1796] <https://github.com/pymor/pymor/pull/1796>`_,
 two classes, |QuadraticFunctional| and |QuadraticProductFunctional|, are introduced to handle the cases
 of bilinear operators such as :math:`A(u, u) = u^T A u` and :math:`A(u, u) = (a(u), b(u))`, respectively.
 These can now be used as reducable output functionals. Moreover, the builtin cg-discretizer also supports
