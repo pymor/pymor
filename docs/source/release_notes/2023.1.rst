@@ -33,8 +33,15 @@ Loewner reductor
 
 Optimization
 ~~~~~~~~~~~~
-- `[#1796] Bilinear Functionals for use with output operators <https://github.com/pymor/pymor/pull/1796>`_
-- `[#1924] Adaptive Trust Region Algorithm <https://github.com/pymor/pymor/pull/1924>`_
+In `[#1924] Adaptive Trust Region Algorithm <https://github.com/pymor/pymor/pull/1924>`_, an error-aware adaptive
+trust-region method was added. This method solves an optimization problem :math:`min J(mu), mu in C`.
+for a |Model| with an output :math:`J` depending on a box-constrained `mu`.
+The main idea of the algorithm can be found in :cite:`YM13`, and an RB application to box-constrained
+parameters with possible enlarging of the trust radius in :cite:`KMOSV21`.
+This method contrasts itself from a standard trust region (TR) in the computation of the
+trust region: standard TR implementations use a metric distance, whereas this function uses an
+error estimator obtained from the surrogate. Additionally, the cheap model function
+surrogate here is only updated for each outer iteration, not entirely reconstructed.
 
 Visualization
 ~~~~~~~~~~~~~
@@ -47,6 +54,14 @@ Visualization
 
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
+
+Output functionals
+~~~~~~~~~~~~~~~~~~
+In `[#1796] Bilinear Functionals for use with output operators <https://github.com/pymor/pymor/pull/1796>`_,
+two classes, |QuadraticFunctional| and |QuadraticProductFunctional|, are introduced to handle the cases
+of bilinear operators such as :math:`A(u, u) = u^T A u` and :math:`A(u, u) = (a(u), b(u))`, respectively.
+These can now be used as reducable output functionals. Moreover, the builtin cg-discretizer also supports
+a `quadratic` argument for defining bilinear outputs conveniently.
 
 Tolerance argument for system norms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
