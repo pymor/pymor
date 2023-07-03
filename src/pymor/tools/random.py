@@ -70,13 +70,13 @@ def new_rng(seed_seq=42):
 class RNG(np.random.Generator):
     """Random number generator.
 
-    This class inherits from :class:`np.random.Generator` and inherits all its sampling
+    This class inherits from :class:`numpy.random.Generator` and inherits all its sampling
     methods. Further, the class can be used as a context manager, which upon entry
     installs the RNG as pyMOR's global RNG that is returned from :func:`get_rng`.
     When the context is left, the previous global RNG is installed again.
 
     When using a context manager is not feasible, i.e. in an interactive workflow, this
-    functionality can be accessed via the :meth:`~RNG.install` and :meth:`~RNG:uninstall`
+    functionality can be accessed via the :meth:`~RNG.install` and :meth:`~RNG.uninstall`
     methods.
 
     A new instance of this class should be obtained using :func:`new_rng`.
@@ -114,12 +114,12 @@ class RNG(np.random.Generator):
 
 
 def get_seed_seq():
-    """Returns :class:`~np.random.SeedSequence` of the current global |RNG|.
+    """Returns :class:`~numpy.random.SeedSequence` of the current global |RNG|.
 
-    This function returns the :class:`~np.random.SeedSequence` with which pyMOR's
+    This function returns the :class:`~numpy.random.SeedSequence` with which pyMOR's
     currently installed global |RNG| has been initialized. The returned instance can
-    be used to deterministically create a new :class:`~np.random.SeedSequence` via
-    the :meth:`~np.random.SeedSequence.spawn` method, which then can be used to
+    be used to deterministically create a new :class:`~numpy.random.SeedSequence` via
+    the :meth:`~numpy.random.SeedSequence.spawn` method, which then can be used to
     initialize a new random generator in external library code or concurrent code
     paths.
     """
