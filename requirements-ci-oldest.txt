@@ -4,7 +4,6 @@
 #
 #    pip-compile --extra-index-url=https://download.pytorch.org/whl/cpu --extra=ann --extra=docs-additional --extra=dune --extra=gmsh --extra=gui --extra=ipyparallel --extra=jupyter --extra=mpi --extra=ngsolve --extra=pymess --extra=scikit-fem --extra=slycot --extra=tests --extra=vtk --output-file=requirements-ci-oldest.txt --resolver=backtracking pyproject.toml requirements-ci-oldest-pins.in
 #
-#
 --extra-index-url https://download.pytorch.org/whl/cpu
 
 alabaster==0.7.13
