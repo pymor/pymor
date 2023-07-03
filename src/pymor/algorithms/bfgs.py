@@ -67,13 +67,13 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     error_criterion
         The additional error criterion used to check model confidence. This maps |parameter values|
         and an output value to a boolean indicating if the criterion is fulfilled.
-        Refer to :func:`error_aware_bfgs_criterion` in
-        :mod:`pymor.algorithms.tr` for an example.
+        Refer to function `error_aware_bfgs_criterion` in :func:`pymor.algorithms.tr.trust_region`
+        for an example.
     line_search_error_criterion
         The additional error criterion used to check model confidence in the line search.
         This maps |parameter values| and an output value to a boolean indicating if the
-        criterion is fulfilled. Refer to :func:`error_aware_line_search_criterion` in
-        :mod:`pymor.algorithms.tr` for an example.
+        criterion is fulfilled. Refer to function `error_aware_line_search_criterion` in
+        :func:`pymor.algorithms.tr.trust_region` for an example.
 
     Returns
     -------
