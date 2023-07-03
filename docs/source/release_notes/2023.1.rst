@@ -79,7 +79,11 @@ defining bilinear outputs conveniently.
 
 Time-stepping iterator
 ~~~~~~~~~~~~~~~~~~~~~~
-- `[#2053] Add iterable time stepping <https://github.com/pymor/pymor/pull/2053>`_
+The :meth:`~pymor.algorithms.timestepping.TimeStepper.iterate` method was added to
+:mod:`time-steppers <pymor.algorithms.timestepping>`,
+which returns a generator for solution snapshots `[#2053] <https://github.com/pymor/pymor/pull/2053>`_.
+Compared to the :meth:`~pymor.algorithms.timestepping.TimeStepper.solve` method,
+it allows iterating over solution snapshots without storing all computed snapshots.
 
 
 Backward incompatible changes
