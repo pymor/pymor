@@ -33,8 +33,8 @@ class WorkerPool(BasicObject):
         """Push a copy of `obj` to  all workers of the pool.
 
         A |RemoteObject| is returned as a handle to the pushed object.
-        This object can be used as a keyword argument to :meth:`~WorkerPool.apply`,
-        :meth:`~WorkerPool.apply_only`, :meth:`~WorkerPool.map`
+        This object can be used as a keyword argument to :meth:`apply`,
+        :meth:`apply_only`, :meth:`map`
         and will then be transparently mapped to the respective copy
         of the pushed object on the worker.
 
