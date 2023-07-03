@@ -28,10 +28,11 @@ def main(
     This demo compares three different approaches for solving PDE-constrained parameter
     optimization problems with linear and quadratic output functionals.
     As optimization method we compare:
-        1. The reference method: Projected BFGS, only based on the FOM.
-        2. The classical RB method: First standard Greedy for building a ROM, then projected BFGS
-           with ROM.
-        3. The error aware turst-region method proposed in :cite:`KMOSV21`.
+
+    1. The reference method: Projected BFGS, only based on the FOM.
+    2. The classical RB method: First standard Greedy for building a ROM, then projected BFGS
+       with ROM.
+    3. The error aware trust-region method proposed in :cite:`KMOSV21`.
 
     The methods are compared in terms of computational time, iterations,
     optimization error, and FOM/ROM evaluations.
