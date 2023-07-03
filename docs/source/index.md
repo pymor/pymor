@@ -8,6 +8,9 @@ allowing generic implementations to work with different backends,
 from NumPy/SciPy to external partial differential equation solver packages.
 
 ```{toctree}
+:hidden:
+:maxdepth: 5
+
 getting_started
 technical_overview
 environment
@@ -15,14 +18,5 @@ tutorials
 release_notes/all.rst
 bibliography
 developer_docs
-```
-
-## API Documentation
-
-```{toctree}
-:maxdepth: 5
-
 /autoapi/index
-/autoapi/pymor/index
-/autoapi/pymordemos/index
 ```
