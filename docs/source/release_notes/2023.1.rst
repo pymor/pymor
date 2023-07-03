@@ -77,10 +77,6 @@ These can now be used as reducible output functionals.
 Moreover, the builtin CG discretizer also supports a `quadratic` argument for
 defining bilinear outputs conveniently.
 
-Tolerance argument for system norms
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1983] Add tol to hinf_norm and linf_norm <https://github.com/pymor/pymor/pull/1983>`_
-
 Time-stepping iterator
 ~~~~~~~~~~~~~~~~~~~~~~
 - `[#2053] Add iterable time stepping <https://github.com/pymor/pymor/pull/2053>`_
@@ -112,6 +108,7 @@ Further notable improvements
 - `[#1959] Remove Unit Tests Results workflow <https://github.com/pymor/pymor/pull/1959>`_
 - `[#1963] Test different PDE backends in different CI jobs <https://github.com/pymor/pymor/pull/1963>`_
 - `[#1978] Some fixes in the cg discretizers <https://github.com/pymor/pymor/pull/1978>`_
+- `[#1983] Add tol to hinf_norm and linf_norm <https://github.com/pymor/pymor/pull/1983>`_
 - `[#1995] Improve basis generation tutorial <https://github.com/pymor/pymor/pull/1995>`_
 - `[#2003] Edit release checklist <https://github.com/pymor/pymor/pull/2003>`_
 - `[#2004] Algebraic ops for Mu instances <https://github.com/pymor/pymor/pull/2004>`_
