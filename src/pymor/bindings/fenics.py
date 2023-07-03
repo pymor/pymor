@@ -183,7 +183,7 @@ class FenicsMatrixBasedOperator(Operator):
         The `Form` object which is assembled to a matrix or vector.
     params
         Dict mapping parameters to dolfin `Constants` as returned by
-        :meth:`~pymor.analyticalproblems.functions.ExpressionFunction.to_fenics`.
+        :meth:`~pymor.analyticalproblems.functions.SymbolicExpressionFunction.to_fenics`.
     bc
         dolfin `DirichletBC` object to be applied.
     bc_zero
