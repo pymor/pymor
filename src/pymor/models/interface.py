@@ -88,13 +88,13 @@ class Model(CacheableObject, ParametricObject):
         This method is called by the default implementation of :meth:`compute`
         in :class:`pymor.models.interface.Model`. The assumption is made
         that the output is a derived quantity from the model's internal state
-        as returned my :meth:`_compute_solution`. When this is not the case,
-        the computation of the output should be implemented in :meth:`_compute`.
+        as returned by :meth:`!_compute_solution`. When this is not the case,
+        the computation of the output should be implemented in :meth:`!_compute`.
 
         .. note::
 
             The default implementation applies the |Operator| given by the
-            :attr:`output_functional` attribute to the given `solution`
+            :attr:`!output_functional` attribute to the given `solution`
             |VectorArray|.
 
         Parameters
@@ -201,8 +201,8 @@ class Model(CacheableObject, ParametricObject):
         This method is called by the default implementation of :meth:`compute`
         in :class:`pymor.models.interface.Model`. The assumption is made
         that the error estimate is a derived quantity from the model's internal state
-        as returned my :meth:`_compute_solution`. When this is not the case,
-        the computation of the error estimate should be implemented in :meth:`_compute`.
+        as returned by :meth:`!_compute_solution`. When this is not the case,
+        the computation of the error estimate should be implemented in :meth:`!_compute`.
 
         .. note::
 
@@ -235,8 +235,8 @@ class Model(CacheableObject, ParametricObject):
         This method is called by the default implementation of :meth:`compute`
         in :class:`pymor.models.interface.Model`. The assumption is made
         that the error estimate is a derived quantity from the model's internal state
-        as returned my :meth:`_compute_solution`. When this is not the case,
-        the computation of the error estimate should be implemented in :meth:`_compute`.
+        as returned by :meth:`!_compute_solution`. When this is not the case,
+        the computation of the error estimate should be implemented in :meth:`!_compute`.
 
         .. note::
 
@@ -253,7 +253,7 @@ class Model(CacheableObject, ParametricObject):
         return_vector
             If `True`, return the output estimate as a |NumPy array|,
             where each component corresponds to the respective component
-            of the :attr:`output_functional`.
+            of the :attr:`!output_functional`.
             Otherwise, return the Euclidean norm of all components.
         kwargs
             Additional keyword arguments to customize how the error estimate is
@@ -284,13 +284,13 @@ class Model(CacheableObject, ParametricObject):
         .. note::
 
             The default implementation defers the actual computations to
-            the methods :meth:`_compute_solution`, :meth:`_compute_output`,
-            :meth:`_compute_solution_error_estimate` and :meth:`_compute_output_error_estimate`.
-            The call to :meth:`_compute_solution` is :mod:`cached <pymor.core.cache>`.
-            In addition, |Model| implementors may implement :meth:`_compute` to
+            the methods :meth:`!_compute_solution`, :meth:`!_compute_output`,
+            :meth:`!_compute_solution_error_estimate` and :meth:`!_compute_output_error_estimate`.
+            The call to :meth:`!_compute_solution` is :mod:`cached <pymor.core.cache>`.
+            In addition, |Model| implementors may implement :meth:`!_compute` to
             simultaneously compute multiple values in an optimized way. The corresponding
             `_compute_XXX` methods will not be called for values already returned by
-            :meth:`_compute`.
+            :meth:`!_compute`.
 
         Parameters
         ----------
@@ -314,7 +314,7 @@ class Model(CacheableObject, ParametricObject):
         output_error_estimate_return_vector
             If `True`, return the output estimate as a |NumPy array|,
             where each component corresponds to the respective component
-            of the :attr:`output_functional`.
+            of the :attr:`!output_functional`.
             Otherwise, return the Euclidean norm of all components.
         mu
             |Parameter values| for which to compute the values.
@@ -487,7 +487,7 @@ class Model(CacheableObject, ParametricObject):
         return_error_estimate_vector
             If `True`, return the output estimate as a |NumPy array|,
             where each component corresponds to the respective component
-            of the :attr:`output_functional`.
+            of the :attr:`!output_functional`.
             Otherwise, return the Euclidean norm of all components.
         kwargs
             Additional keyword arguments passed to :meth:`compute` that
@@ -637,7 +637,7 @@ class Model(CacheableObject, ParametricObject):
         return_vector
             If `True`, return the output estimate as a |NumPy array|,
             where each component corresponds to the respective component
-            of the :attr:`output_functional`.
+            of the :attr:`!output_functional`.
             Otherwise, return the Euclidean norm of all components.
         kwargs
             Additional keyword arguments passed to :meth:`compute` that

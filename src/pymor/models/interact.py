@@ -20,6 +20,7 @@ from pymor.parameters.base import Mu, Parameters, ParameterSpace
 
 
 class ParameterSelector(BasicObject):
+    """Parameter selector."""
 
     def __init__(self, space, time_dependent):
         assert isinstance(space, ParameterSpace)
