@@ -9,6 +9,7 @@ from pymor.vectorarrays.list import NumpyListVectorSpace
 
 
 class ListVectorArrayOperatorBase(Operator):
+    """Base |Operator| for |ListVectorArrays|."""
 
     def _prepare_apply(self, U, mu, kind, least_squares=False):
         pass
@@ -70,6 +71,7 @@ class ListVectorArrayOperatorBase(Operator):
 
 
 class LinearComplexifiedListVectorArrayOperatorBase(ListVectorArrayOperatorBase):
+    """Base |Operator| for complexified |ListVectorArrays|."""
 
     linear = True
 
