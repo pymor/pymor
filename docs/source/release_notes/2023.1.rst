@@ -36,7 +36,11 @@ the ``S`` parameter was added to Riccati equation solvers `[#1837] <https://gith
 
 Loewner reductor
 ~~~~~~~~~~~~~~~~
-- `[#1952] Loewner Reductor <https://github.com/pymor/pymor/pull/1952>`_
+The reductor based on Loewner matrices was added `[#1952] <https://github.com/pymor/pymor/pull/1952>`_,
+for data-driven (tangential) Lagrange interpolation.
+This is extends and complements the available reductors for
+bitangential Hermite interpolation (:class:`~pymor.reductors.interpolation.TFBHIReductor`) and
+the (P)AAA algorithm (:class:`~pymor.reductors.aaa.PAAAReductor`).
 
 Optimization
 ~~~~~~~~~~~~
