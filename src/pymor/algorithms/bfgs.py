@@ -198,7 +198,7 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
         first_order_criticality = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
         foc_norms.append(first_order_criticality)
 
-        # set new active inactive threshhold
+        # set new active inactive threshold
         eps = np.linalg.norm(gradient)
 
         # update relative errors
