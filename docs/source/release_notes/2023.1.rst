@@ -21,11 +21,18 @@ Release highlights
 
 Model reduction methods for port-Hamiltonian systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1835] pH-IRKA <https://github.com/pymor/pymor/pull/1835>`_
-- `[#1836] Refactorization of PHLTIModel to inherit from LTIModel and support Q matrix <https://github.com/pymor/pymor/pull/1836>`_
-- `[#1837] Add S parameter to Riccati equation solvers <https://github.com/pymor/pymor/pull/1837>`_
-- `[#1847] Positive real balanced truncation (PRBT) <https://github.com/pymor/pymor/pull/1847>`_
-- `[#2033] Passivity preserving model reduction via spectral factorization <https://github.com/pymor/pymor/pull/2033>`_
+The previous release added |PHLTIModel| class for port-Hamiltonian systems.
+This release adds three MOR methods for port-Hamiltonian (or passive) systems:
+
+- port-Hamiltonian IRKA (pH-IRKA) `[#1835] <https://github.com/pymor/pymor/pull/1835>`_,
+- positive real balanced truncation (PRBT) `[#1847] <https://github.com/pymor/pymor/pull/1847>`_, and
+- passivity preserving model reduction via spectral factorization `[#2033] <https://github.com/pymor/pymor/pull/2033>`_.
+
+Additionally, |PHLTIModel| now inherits from |LTIModel|,
+supports the :math:`Q` matrix and
+adds conversion to the Berlin form `[#1836] <https://github.com/pymor/pymor/pull/1836>`_.
+To enable some solvers for positive real Riccati equations,
+the ``S`` parameter was added to Riccati equation solvers `[#1837] <https://github.com/pymor/pymor/pull/1837>`_.
 
 Loewner reductor
 ~~~~~~~~~~~~~~~~
