@@ -152,7 +152,7 @@ html_theme_options = {
     'html_minify': False,
     'css_minify': on_gitlab_ci,
     'nav_title': 'Documentation',
-    'globaltoc_depth': 5,
+    'globaltoc_depth': 6,
     'theme_color': 'indigo',
     'color_primary': 'indigo',
     'color_accent': 'blue',

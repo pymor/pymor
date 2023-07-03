@@ -9,7 +9,7 @@ from NumPy/SciPy to external partial differential equation solver packages.
 
 ```{toctree}
 :hidden:
-:maxdepth: 5
+:maxdepth: 6
 
 getting_started
 technical_overview
