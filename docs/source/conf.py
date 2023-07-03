@@ -58,7 +58,7 @@ myst_enable_extensions = [
     'substitution',
 ]
 myst_url_schemes = ('http', 'https', 'mailto')
-# auto genereated link anchors
+# auto generated link anchors
 myst_heading_anchors = 2
 import substitutions # noqa
 myst_substitutions = substitutions.myst_substitutions
