@@ -205,7 +205,7 @@ pluggy==1.2.0
     # via pytest
 prometheus-client==0.17.0
     # via jupyter-server
-prompt-toolkit==3.0.38
+prompt-toolkit==3.0.39
     # via ipython
 psutil==5.9.5
     # via

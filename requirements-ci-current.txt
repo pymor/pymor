@@ -367,7 +367,7 @@ prometheus-client==0.17.0
     #   jupyter-server
     #   nbclassic
     #   notebook
-prompt-toolkit==3.0.38
+prompt-toolkit==3.0.39
     # via ipython
 psutil==5.9.5
     # via
@@ -403,7 +403,7 @@ pygments==2.15.1
     #   sphinx
 pymess==1.0.0
     # via pymor (pyproject.toml)
-pyopengl==3.1.7
+pyopengl==3.1.6
     # via pymor (pyproject.toml)
 pyparsing==3.1.0
     # via matplotlib
