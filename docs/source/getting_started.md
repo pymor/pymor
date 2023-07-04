@@ -246,7 +246,7 @@ parameter values which maximizes reduction error.
 You can find more details on the above approaches,
 and even more,
 in the {doc}`tutorials`.
-Specific questions are answered in the {doc}`howtos` and
+Specific questions are answered in
 [GitHub discussions](https://github.com/pymor/pymor/discussions).
 The {ref}`technical_overview` provides discussion on fundamental pyMOR concepts
 and design decisions.
