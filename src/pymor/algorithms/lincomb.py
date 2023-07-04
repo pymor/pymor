@@ -42,7 +42,8 @@ def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
     |LincombOperator| and is not intended to be used directly.
 
     To form the linear combination of backend |Operators| (containing actual matrix data),
-    `_assemble_lincomb` will be called on the first |Operator| in the linear combination.
+    :meth:`~pymor.operators.interface.Operator._assemble_lincomb` will be called on the first
+    |Operator| in the linear combination.
 
     Parameters
     ----------
