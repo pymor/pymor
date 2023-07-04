@@ -106,7 +106,7 @@ operating on objects of the following types:
     .. |apply2|            replace:: :meth:`~pymor.operators.interface.Operator.apply2`
     .. |apply_inverse|     replace:: :meth:`~pymor.operators.interface.Operator.apply_inverse`
     .. |assembled|         replace:: :meth:`assembled <pymor.operators.interface.Operator.assemble>`
-    .. |_assemble_lincomb| replace:: :meth:`!~pymor.operators.interface.Operator._assemble_lincomb`
+    .. |_assemble_lincomb| replace:: :meth:`~pymor.operators.interface.Operator._assemble_lincomb`
     .. |as_vector|         replace:: :meth:`~pymor.operators.interface.Operator.as_vector`
     .. |linear|            replace:: :attr:`~pymor.operators.interface.Operator.linear`
     .. |range|             replace:: :attr:`~pymor.operators.interface.Operator.range`
