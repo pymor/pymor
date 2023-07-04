@@ -142,7 +142,7 @@ operating on objects of the following types:
     |solution_space|.
 
     .. |cached|           replace:: :mod:`cached <pymor.core.cache>`
-    .. |estimate|         replace:: :meth:`!~pymor.models.interface.Model.estimate`
+    .. |estimate|         replace:: :meth:`~pymor.models.interface.Model.estimate_error`
     .. |functionals|      replace:: :attr:`!~pymor.models.interface.Model.functionals`
     .. |operators|        replace:: :attr:`!~pymor.models.interface.Model.operators`
     .. |products|         replace:: :attr:`~pymor.models.interface.Model.products`
