@@ -131,8 +131,9 @@ pygments_style = 'sphinx'
 # Ensure all our internal links work
 nitpicky = True
 nitpick_ignore_regex = [
-    ('py:class', 'Choices(.+)'),
-    ('py:.*', 'pymess.*'),
+    ('py:class', 'Choices(.+)'),  # pymor.tools.typer.Choices(...) cannot be referred to
+    ('py:.*', 'pymess.*'),  # pymess does not have online Sphinx documentation
+    ('py:.*', 'matplotlib.backends.*'),  # matplotlib backends are not auto documented
 ]
 
 
