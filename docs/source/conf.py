@@ -130,6 +130,12 @@ pygments_style = 'sphinx'
 
 # Ensure all our internal links work
 nitpicky = True
+nitpick_ignore = [
+    ('py:obj', 'ipywidgets.HBox'),
+    ('py:obj', 'k3d.plot.Plot'),
+    ('py:obj', 'qtpy.QtWidgets.QOpenGLWidget'),
+    ('py:obj', 'qtpy.QtWidgets.QWidget'),
+]
 nitpick_ignore_regex = [
     ('py:class', 'Choices(.+)'),  # pymor.tools.typer.Choices(...) cannot be referred to
     ('py:.*', 'pymess.*'),  # pymess does not have online Sphinx documentation
