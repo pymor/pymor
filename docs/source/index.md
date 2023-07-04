@@ -12,7 +12,6 @@ getting_started
 technical_overview
 environment
 tutorials
-howtos
 release_notes/all.rst
 bibliography
 developer_docs
