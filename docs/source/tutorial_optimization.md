@@ -808,7 +808,7 @@ PDE-constrained optimization problems we refer to
 implementation is available as supplementary material.
 
 Update: The trust-region methods are by now implemented in pyMOR which is shown
-in the respective demo {mod}`~pymordemos.tr`. An update of this
+in the respective demo {mod}`~pymordemos.trust_region`. An update of this
 tutorial is work in progress.
 
 Download the code:
