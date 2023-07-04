@@ -71,7 +71,6 @@ operating on objects of the following types:
     .. |make_array|       replace:: :meth:`~pymor.vectorarrays.interface.VectorSpace.make_array`
     .. |removed|          replace:: :meth:`!deleted <pymor.vectorarrays.interface.VectorArray.__delitem__>`
     .. |scaled|           replace:: :meth:`scaled <pymor.vectorarrays.interface.VectorArray.scal>`
-    .. |subtype|          replace:: :attr:`!~pymor.vectorarrays.interface.VectorSpace.subtype`
     .. |zeros|            replace:: :meth:`~pymor.vectorarrays.interface.VectorSpace.zeros`
 
 |Operators|
@@ -115,11 +114,11 @@ operating on objects of the following types:
 
 |Models|
     Models in pyMOR encode the mathematical structure of a given
-    discrete problem by acting as container classes for operators. Each
-    model object has |operators|, |products| dictionaries holding the
-    |Operators| which appear in the formulation of the discrete problem. The
-    keys in these dictionaries describe the role of the respective operator
-    in the discrete problem.
+    discrete problem by acting as container classes for |Operators|. Each
+    model object has |Operators| and the |products| dictionary of |Operators|
+    which appear in the formulation of the discrete problem. The keys in the
+    |products| dictionary describe the role of the respective product in the
+    discrete problem.
 
     Apart from describing the discrete problem, models also implement
     algorithms for |solving| the given problem, returning |VectorArrays|
@@ -143,13 +142,10 @@ operating on objects of the following types:
 
     .. |cached|           replace:: :mod:`cached <pymor.core.cache>`
     .. |estimate|         replace:: :meth:`~pymor.models.interface.Model.estimate_error`
-    .. |functionals|      replace:: :attr:`!~pymor.models.interface.Model.functionals`
-    .. |operators|        replace:: :attr:`!~pymor.models.interface.Model.operators`
     .. |products|         replace:: :attr:`~pymor.models.interface.Model.products`
     .. |solution_space|   replace:: :attr:`~pymor.models.interface.Model.solution_space`
     .. |solve|            replace:: :meth:`~pymor.models.interface.Model.solve`
     .. |solving|          replace:: :meth:`solving <pymor.models.interface.Model.solve>`
-    .. |vector_operators| replace:: :attr:`!~pymor.models.interface.Model.vector_operators`
     .. |visualize|        replace:: :meth:`~pymor.models.interface.Model.visualize`
 
 
@@ -187,7 +183,7 @@ in which the attribute `a` now has the value `x` and the attribute `b` the
 value `y`. It can be generally assumed that calls to
 :meth:`~pymor.core.base.ImmutableObject.with_` are inexpensive. The
 set of allowed arguments can be found in the
-:attr:`!~pymor.core.base.ImmutableObject.with_arguments` attribute.
+:attr:`!~pymor.core.base.ImmutableObject._init_arguments` attribute.
 
 All immutable classes in pyMOR and most other classes derive from
 |BasicObject| which, through its meta class, provides several convenience
