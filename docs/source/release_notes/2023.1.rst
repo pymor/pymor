@@ -105,33 +105,16 @@ implementation.
 
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- `[#1528] [docs] Use envvar directives to describe environment <https://github.com/pymor/pymor/pull/1528>`_
-- `[#1827] Improve test coverage <https://github.com/pymor/pymor/pull/1827>`_
-- `[#1910] Migrate from flake8 to ruff <https://github.com/pymor/pymor/pull/1910>`_
-- `[#1911] Update and extend release checklist <https://github.com/pymor/pymor/pull/1911>`_
 - `[#1916] Input-output selection in bode_plot <https://github.com/pymor/pymor/pull/1916>`_
-- `[#1927] [tests] exercise the fenics discretizer <https://github.com/pymor/pymor/pull/1927>`_
 - `[#1940] Adding Log Sampling <https://github.com/pymor/pymor/pull/1940>`_
 - `[#1943] Implement BlockOperator.jacobian by computing Jacobians of blocks <https://github.com/pymor/pymor/pull/1943>`_
-- `[#1944] Edit README <https://github.com/pymor/pymor/pull/1944>`_
-- `[#1946] Release process/schedule <https://github.com/pymor/pymor/pull/1946>`_
 - `[#1948] Contributing file and developer docs <https://github.com/pymor/pymor/pull/1948>`_
 - `[#1953] Demo systems time-stepping <https://github.com/pymor/pymor/pull/1953>`_
-- `[#1958] Add github action to mirror external PRs in local branches <https://github.com/pymor/pymor/pull/1958>`_
-- `[#1959] Remove Unit Tests Results workflow <https://github.com/pymor/pymor/pull/1959>`_
-- `[#1963] Test different PDE backends in different CI jobs <https://github.com/pymor/pymor/pull/1963>`_
 - `[#1978] Some fixes in the cg discretizers <https://github.com/pymor/pymor/pull/1978>`_
 - `[#1983] Add tol to hinf_norm and linf_norm <https://github.com/pymor/pymor/pull/1983>`_
-- `[#1995] Improve basis generation tutorial <https://github.com/pymor/pymor/pull/1995>`_
-- `[#2003] Edit release checklist <https://github.com/pymor/pymor/pull/2003>`_
 - `[#2004] Algebraic ops for Mu instances <https://github.com/pymor/pymor/pull/2004>`_
-- `[#2008] Edit and document Markdown rules <https://github.com/pymor/pymor/pull/2008>`_
-- `[#2013] Update pyMOR summary in the docs <https://github.com/pymor/pymor/pull/2013>`_
 - `[#2014] Restructure packaging/ci infrastructure <https://github.com/pymor/pymor/pull/2014>`_
 - `[#2022] Separate out "Getting started" <https://github.com/pymor/pymor/pull/2022>`_
 - `[#2030] Replace .data by .detach() in neural network models <https://github.com/pymor/pymor/pull/2030>`_
-- `[#2047] Update developer docs to reflect recent packaging/CI changes <https://github.com/pymor/pymor/pull/2047>`_
-- `[#2057] Add assignment of issues to release process <https://github.com/pymor/pymor/pull/2057>`_
 - `[#2058] Fix problem description in heat demo <https://github.com/pymor/pymor/pull/2058>`_
-- `[#2064] Fix broken references in docs <https://github.com/pymor/pymor/pull/2064>`_
 - `[#2076] Improve parsing of time-dependent parameter values <https://github.com/pymor/pymor/pull/2076>`_
