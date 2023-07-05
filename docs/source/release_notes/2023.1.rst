@@ -36,11 +36,13 @@ the ``S`` parameter was added to Riccati equation solvers `[#1837] <https://gith
 
 Loewner reductor
 ~~~~~~~~~~~~~~~~
-The reductor based on Loewner matrices was added `[#1952] <https://github.com/pymor/pymor/pull/1952>`_,
+The reductor based on Loewner matrices was added in `[#1952] <https://github.com/pymor/pymor/pull/1952>`_,
 for data-driven (tangential) Lagrange interpolation.
-This is extends and complements the available reductors for
+This extends and complements the available reductors for
 bitangential Hermite interpolation (:class:`~pymor.reductors.interpolation.TFBHIReductor`) and
-the (P)AAA algorithm (:class:`~pymor.reductors.aaa.PAAAReductor`).
+the (P)AAA algorithm (:class:`~pymor.reductors.aaa.PAAAReductor`). The implementation supports various
+options for partitioning the data as well as handling MIMO systems. Additionally, the reductor is flexible
+as it works with a user provided data set or any model that has a associated transfer function.
 
 Optimization
 ~~~~~~~~~~~~
@@ -60,7 +62,7 @@ We have made several improvements to the user experience in `Jupyter <https://ju
 notebook environments.
 Apart from polishing the existing `matplotlib <https://matplotlib.org>`-based notebook visualizers
 `[#1949] <https://github.com/pymor/pymor/pull/1949>`_, `[#1988] <https://github.com/pymor/pymor/pull/1988>`_,
-we have stabilized and improved our new `K3D <https://k3d-jupyter.org>`-based visualizations. 
+we have stabilized and improved our new `K3D <https://k3d-jupyter.org>`-based visualizations.
 In particular, the K3D-visualizer is now used in our online documentation.
 Due to an outstanding bug in K3D, which leads to empty plots unless the browser window is resized,
 the new backend is only enabled by default in notebooks when the upcoming version 2.15.3 of K3D is
