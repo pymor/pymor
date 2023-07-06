@@ -242,66 +242,26 @@ err_lti = fom_lti - rom_lti
 _ = err_lti.transfer_function.mag_plot(w)
 ```
 
-## How to run demos?
+## Running demo scripts
 
-While we consider pyMOR mainly as a library for building MOR applications, we
-ship a few example scripts. These can be found in the `src/pymordemos`
-directory of the source repository. Try launching one of them using the
-`pymor-demo` script:
+pyMOR ships several example scripts that showcase various features of the library. 
+While many features are also covered in our {doc}`tutorials`, the demos are more extensive
+and often have various command-line flags which allow to run the script for different
+parameters or problems.
+All demos can be found in the [src/pymordemos](https://github.com/pymor/pymor/tree/main/src/pymordemos)
+directory of the source repository. 
 
-```
-pymor-demo thermalblock --plot-err --plot-solutions 3 2 3 32
-```
-
-The demo scripts can also be launched directly from the source tree:
+The demo scripts can be launched directly from the source tree:
 
 ```
 ./thermalblock.py --plot-err --plot-solutions 3 2 3 32
 ```
 
-This will reduce the so called thermal block problem using the reduced basis
-method with a greedy basis generation algorithm. The thermal block problem
-consists in solving the stationary heat equation
+or by using the `pymor-demo` script that is installed with pyMOR:
 
-$$
-\begin{align*}
-  -\nabla \cdot [ d(x, \mu) \nabla u(x, \mu) ] & = 1,
-  & \text{for } x \text{ in } \Omega, \\
-  u(x, \mu) & = 0,
-  & \text{for } x \text{ in } \partial\Omega,
-\end{align*}
-$$
-
-on the domain $\Omega = (0, 1)^2$ for the unknown $u$.
-The domain is partitioned into `XBLOCKS x YBLOCKS` blocks
-(`XBLOCKS` and `YBLOCKS` are the first two arguments to `thermalblock.py`).
-The thermal conductivity $d(x, \mu)$ is constant on each block $(i, j)$ with
-value $\mu_{ij}$:
-
-
-The real numbers $\mu_{ij}$ form the `XBLOCKS x YBLOCKS` - dimensional parameter
-on which the solution depends.
-
-Running `thermalblock.py` will first produce plots of two detailed
-solutions of the problem for different randomly chosen parameters
-using linear finite elements. (The size of the grid can be controlled
-via the `--grid` parameter. The randomly chosen parameters will
-actually be the same for each run, since a the random generator
-is initialized with a fixed default seed in
-{func}`~pymor.tools.random.default_random_state`.)
-
-After closing the window, the reduced basis for model order reduction
-is generated using a greedy search algorithm with error estimator.
-The third parameter `SNAPSHOTS` of `thermalblock.py` determines how many
-different values per parameter component $\mu_{ij}$ should be considered.
-I.e. the parameter training set for basis generation will have the
-size `SNAPSHOTS^(XBLOCKS x YBLOCKS)`. After the basis of size 32 (the
-last parameter) has been computed, the quality of the obtained reduced model
-(on the 32-dimensional reduced basis space) is evaluated by comparing the
-solutions of the reduced and detailed models for new, randomly chosen
-parameter values. Finally, plots of the detailed and reduced solutions, as well
-as the difference between the two, are displayed for the random
-parameter values which maximizes reduction error.
+```
+pymor-demo thermalblock --plot-err --plot-solutions 3 2 3 32
+```
 
 ## Learning More
 
