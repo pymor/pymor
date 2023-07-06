@@ -144,7 +144,7 @@ For that estimator, an parameter-dependent lower bound for the coercivity consta
 of the problem is provided as an {class}`~pymor.parameters.functionals.ExpressionParameterFunctional`.
 
 Using this reductor and its error estimator, we can build a reduced space with corrsponding
-reduced-order model using a {func}`~pymor.algorithms.greedy.weak_greedy` algorithms:
+reduced-order model using a {func}`weak greedy <pymor.algorithms.greedy.rb_greedy>` algorithm:
 
 ```{code-cell}
 from pymor.algorithms.greedy import rb_greedy
