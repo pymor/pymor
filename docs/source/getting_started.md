@@ -95,9 +95,9 @@ from pymor.models.examples import thermal_block_example
 fom_tb = thermal_block_example()
 ```
 
-This uses pyMOR's {doc}`builtin discretization toolkit <tutorial_builtin_discretizer>`
+This uses pyMOR's {mod}`builtin discretization toolkit <pymor.discretizers.builtin>`
 to construct the model.
-In the [builtin-discretizer tutorial](#tutorial-builtin-discretizer) you learn how
+In the {doc}`builtin-discretizer tutorial <tutorial_builtin_discretizer>` you learn how
 to define your own models using this toolkit.
 
 `fom_tb` is an instance of {{StationaryModel}}, which encodes the mathematical structure
