@@ -21,7 +21,7 @@ Release highlights
 
 Model reduction methods for port-Hamiltonian systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The previous release added |PHLTIModel| class for port-Hamiltonian systems.
+The previous release added a |PHLTIModel| class for port-Hamiltonian systems.
 This release adds three MOR methods for port-Hamiltonian (or passive) systems:
 
 - port-Hamiltonian IRKA (pH-IRKA) `[#1835] <https://github.com/pymor/pymor/pull/1835>`_,
@@ -36,7 +36,7 @@ the ``S`` parameter was added to Riccati equation solvers `[#1837] <https://gith
 
 Loewner reductor
 ~~~~~~~~~~~~~~~~
-The reductor based on Loewner matrices was added in `[#1952] <https://github.com/pymor/pymor/pull/1952>`_,
+A reductor based on Loewner matrices was added in `[#1952] <https://github.com/pymor/pymor/pull/1952>`_
 for data-driven (tangential) Lagrange interpolation.
 This extends and complements the available reductors for
 bitangential Hermite interpolation (:class:`~pymor.reductors.interpolation.TFBHIReductor`) and
@@ -47,28 +47,28 @@ as it works with a user provided data set or any model that has a associated tra
 Optimization
 ~~~~~~~~~~~~
 In `[#1924] <https://github.com/pymor/pymor/pull/1924>`_, an error-aware adaptive
-trust-region method was added. This method solves an optimization problem :math:`\min_{\mu \in C} J(\mu)`.
-for a |Model| with an output :math:`J` depending on a box-constrained :math:`\mu`.
+trust-region method was added. This method solves an optimization problem :math:`\min_{\mu \in C} J(\mu)`
+for |Models| with an output :math:`J` depending on a box-constrained :math:`\mu`.
 The main idea of the algorithm can be found in :cite:`YM13`, and an RB application to box-constrained
 parameters with possible enlarging of the trust radius in :cite:`KMOSV21`.
-This method contrasts itself from a standard trust region (TR) in the computation of the
+This method contrasts itself from a standard trust region (TR) method in the computation of the
 trust region: standard TR implementations use a metric distance, whereas this function uses an
 error estimator obtained from the surrogate. Additionally, the cheap model function
-surrogate here is only updated for each outer iteration, not entirely reconstructed.
+surrogate is only updated for each outer iteration, not entirely reconstructed.
 
 Jupyter support
 ~~~~~~~~~~~~~~~
-We have made several improvements to the user experience in `Jupyter <https://jupyter.org>`
+We have made several improvements to the user experience in `Jupyter <https://jupyter.org>`_
 notebook environments.
-Apart from polishing the existing `matplotlib <https://matplotlib.org>`-based notebook visualizers
+Apart from polishing the existing `matplotlib <https://matplotlib.org>`_-based notebook visualizers
 `[#1949] <https://github.com/pymor/pymor/pull/1949>`_, `[#1988] <https://github.com/pymor/pymor/pull/1988>`_,
-we have stabilized and improved our new `K3D <https://k3d-jupyter.org>`-based visualizations.
+we have stabilized and improved our new `K3D <https://k3d-jupyter.org>`_-based visualizations.
 In particular, the K3D-visualizer is now used in our online documentation.
 Due to an outstanding bug in K3D, which leads to empty plots unless the browser window is resized,
 the new backend is only enabled by default in notebooks when the upcoming version 2.15.3 of K3D is
 installed `[#1937] <https://github.com/pymor/pymor/pull/1937>`_.
 Further the new :func:`~pymor.models.interact.interact` function allows to interactively explore
-pyMOR |Models| via a dynamically created `ipywidgets <https://ipywidgets.readthedocs.io>`-based
+pyMOR |Models| via a dynamically created `ipywidgets <https://ipywidgets.readthedocs.io>`_-based
 user interface that shows the solution/output of a model depending on the selected inputs and parameters
 `[#2061] <https://github.com/pymor/pymor/pull/2061>`_.
 
@@ -76,12 +76,12 @@ user interface that shows the solution/output of a model depending on the select
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Output functionals
-~~~~~~~~~~~~~~~~~~
+Quadratic output functionals
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In `[#1796] <https://github.com/pymor/pymor/pull/1796>`_,
 two classes, :class:`~pymor.operators.constructions.QuadraticFunctional` and
 :class:`~pymor.operators.constructions.QuadraticProductFunctional`,
-are introduced to handle the cases of bilinear operators such as
+have been introduced to handle the cases of bilinear functionals of the form
 :math:`A(u, u) = u^T A u` and :math:`A(u, u) = (a(u), b(u))`, respectively.
 These can now be used as reducible output functionals.
 Moreover, the builtin CG discretizer also supports a `quadratic` argument for
