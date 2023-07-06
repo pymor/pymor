@@ -28,7 +28,7 @@ parameter derivatives. Moreover, :meth:`~pymor.models.interface.Model.output_d_m
 can be used to compute the parameter gradient of the output using the
 derivatives of the solutions. Alternatively, for a |StationaryModel| and a linear output, an
 adjoint variable can be used to speed up the computation of the gradient
-(see :meth:`!~pymor.models.basic.StationaryModel._compute_output_d_mu`).
+(see :meth:`!_compute_output_d_mu`).
 
 
 Neural network reductor for non-stationary problems
@@ -78,10 +78,10 @@ Additional new features
 
 Bode plot for input-output systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The :meth:`!~pymor.models.iosys.InputOutputModel.bode_plot` method for creating a
+The :meth:`!bode_plot` method for creating a
 Bode plot was added `[#1051] <https://github.com/pymor/pymor/pull/1051>`_,
-complementing the :meth:`!~pymor.models.iosys.InputOutputModel.mag_plot` method.
-Additionally, the :meth:`!~pymor.models.iosys.InputOutputModel.bode` method can
+complementing the :meth:`!mag_plot` method.
+Additionally, the :meth:`!bode` method can
 be used to compute the magnitudes and phases over the imaginary axis (for
 continuous-time systems).
 
@@ -138,7 +138,7 @@ the model outputs, i.e., the results of :meth:`~pymor.models.interface.Model.out
 are no longer generic |VectorArrays|, but NumPy arrays.
 For consistency, `input_space` and `output_space` were removed and
 `input_dim` and `output_dim` were renamed to `dim_input` and `dim_output`
-in :class:`!~pymor.models.iosys.InputOutputModel`
+in :class:`!InputOutputModel`
 `[#1089] <https://github.com/pymor/pymor/pull/1089>`_.
 
 
