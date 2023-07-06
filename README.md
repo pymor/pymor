@@ -64,8 +64,11 @@ For an installation with minimal dependencies, run
 
     pip install pymor
 
-Note that most included demo scripts additionally require `matplotlib` and
-Qt bindings such as `pyside2` to function.
+Note that most included demo scripts additionally require Qt bindings such as
+`pyside2` to function.
+Therefore we recommend install pyMOR with the `gui` extra:
+
+    pip install pymor[gui]  # 2023.1 and later
 
 ### Latest Release (with all Optional Dependencies)
 
@@ -113,7 +116,7 @@ might break (this is usually announced in our
 [discussion forum](https://github.com/pymor/pymor/discussions)),
 so you might prefer to install pyMOR from the current release branch:
 
-    pip install 'pymor[full] @ git+https://github.com/pymor/pymor@2022.2.x'
+    pip install 'pymor[full] @ git+https://github.com/pymor/pymor@2023.1.x'
 
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
