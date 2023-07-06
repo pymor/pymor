@@ -31,8 +31,26 @@ kernelspec:
 
 pyMOR includes a variety of model order reduction methods
 for different types of models.
-We illustrate it here on two examples and
+We illustrate how to use pyMOR on two basic examples and
 give pointers to further documentation.
+
+## Installation
+
+pyMOR can be installed via `pip`. To follow this guide, pyMOR should be installed with GUI support:
+
+```bash
+pip install pymor[gui]
+```
+
+If you follow along in a [Jupyter](https://jupyter.org) notebook, you should install pyMOR using
+the `jupyter` extra:
+
+```bash
+pip install pymor[jupyter]
+```
+
+We also provide [conda-forge](https://conda-forge.org) packages. 
+For further details see [README.md](https://github.com/pymor/pymor/blob/main/README.md).
 
 ## Reduced Basis Method for Elliptic Problem
 
