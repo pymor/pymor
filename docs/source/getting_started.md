@@ -54,8 +54,9 @@ For further details see [README.md](https://github.com/pymor/pymor/blob/main/REA
 
 ## Reduced Basis Method for Elliptic Problem
 
-Here we use a 2x2 thermal block example,
-which is described by the elliptic equation
+Here we show how to reduce a parametric linear elliptic problem using the Reduced Basis (RB) method.
+As an example we use a standard 2x2 thermal-block problem,
+which is given by the elliptic equation
 
 $$
 -\nabla \cdot [d(x, \mu) \nabla u(x, \mu)] = 1
@@ -65,11 +66,28 @@ on the domain $[0, 1]^2$ with Dirichlet zero boundary values.
 The domain is partitioned into 2x2 blocks and
 the diffusion function $d(x, \mu)$ is constant
 on each such block $i$ with value $\mu_i$.
+
+```
+(0,1)---------(1,1)
+|        |        |
+|  μ_2   |  μ_3   |
+|        |        |
+|------------------
+|        |        |
+|  μ_0   |  μ_1   |
+|        |        |
+(0,0)---------(1,0)
+```
+
 After discretization, the model has the form
 
 $$
 (L + \mu_0 L_0 + \mu_1 L_1 + \mu_2 L_2 + \mu_3 L_3) u(\mu) = f
 $$
+
+We can obtain this discrete full-order model in pyMOR using the
+{func}`~pymor.models.examples.thermal_block_example` function
+from the {mod}`pymor.models.examples` module:
 
 ```{code-cell}
 from pymor.models.examples import thermal_block_example
@@ -77,19 +95,25 @@ from pymor.models.examples import thermal_block_example
 fom_tb = thermal_block_example()
 ```
 
-We can check that the result is indeed a {{StationaryModel}}.
+This uses pyMOR's {doc}`builtin discretization toolkit <tutorial_builtin_discretizer>`
+to construct the model.
+In the [builtin-discretizer tutorial](#tutorial-builtin-discretizer) you learn how
+to define your own models using this toolkit.
+
+`fom_tb` is an instance of {{StationaryModel}}, which encodes the mathematical structure
+of the model through its {{Operators}}:
 
 ```{code-cell}
 fom_tb
 ```
 
-Its parameters can also be accessed.
+Its parameters can also be accessed:
 
 ```{code-cell}
 fom_tb.parameters
 ```
 
-Let us show the solution for a particular parameter value.
+Let us show the solution for particular parameter values:
 
 ```{code-cell}
 mu = [0.1, 0.2, 0.5, 1]
@@ -97,39 +121,70 @@ U = fom_tb.solve(mu)
 fom_tb.visualize(U)
 ```
 
-We can construct a reduced-order model using a reduced basis method.
+To construct a reduced-order model using the reduced basis method,
+we first need to create a {mod}`reductor <pymor.reductors>` which projects
+the model onto a given reduced space:
 
 ```{code-cell}
-from pymor.algorithms.greedy import rb_greedy
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.reductors.coercive import CoerciveRBReductor
 
-parameter_space = fom_tb.parameters.space(0.1, 1.)
 reductor = CoerciveRBReductor(
     fom_tb,
     product=fom_tb.h1_0_semi_product,
     coercivity_estimator=ExpressionParameterFunctional('min(diffusion)',
                                                        fom_tb.parameters)
 )
+```
+
+We use here {class}`~pymor.reductors.coercive.CoerciveRBReductor`, which
+also assembles an a posterior error estimator for the error w.r.t. the
+$H^1_0$-seminorm.
+For that estimator, an parameter-dependent lower bound for the coercivity constant
+of the problem is provided as an {class}`~pymor.parameters.functionals.ExpressionParameterFunctional`.
+
+Using this reductor and its error estimator, we can build a reduced space with corrsponding
+reduced-order model using a {func}`~pymor.algorithms.greedy.weak_greedy` algorithms:
+
+```{code-cell}
+from pymor.algorithms.greedy import rb_greedy
+
+parameter_space = fom_tb.parameters.space(0.1, 1)
 greedy_data = rb_greedy(fom_tb, reductor, parameter_space.sample_randomly(1000),
-                        rtol=1e-5)
+                        rtol=1e-2)
 rom_tb = greedy_data['rom']
 ```
 
+Here, the greedy algorithm operates on a randomly chosen set of 1000 training parameters from the
+{{ParameterSpace}} of admissible parameter values returned by
+{func}`~pymor.models.examples.thermal_block_example`.
+
 We can see that the reduced-order model is also a `StationaryModel`,
-but of lower order.
+but of lower order:
 
 ```{code-cell}
 rom_tb
 ```
 
 We can compute the reduced-order model's reconstructed solution
-for the same parameter value and show the error.
+for the same parameter value and show the error:
 
 ```{code-cell}
 Urom = rom_tb.solve(mu)
 Urec = reductor.reconstruct(Urom)
 fom_tb.visualize(U - Urec)
+```
+
+Finally, we check that the reduced-order model is indeed faster:
+
+```{code-cell}
+from time import perf_counter
+tic = perf_counter()
+fom_tb.solve(mu)
+toc = perf_counter()
+rom_tb.solve(mu)
+tac = perf_counter()
+print(f't_fom: {toc-tic}  t_rom: {tac-toc}  speedup: {(toc-tic)/(tac-toc)}')
 ```
 
 ## Balanced Truncation for LTI System
@@ -223,17 +278,6 @@ The domain is partitioned into `XBLOCKS x YBLOCKS` blocks
 The thermal conductivity $d(x, \mu)$ is constant on each block $(i, j)$ with
 value $\mu_{ij}$:
 
-```
-(0,1)------------------(1,1)
-|        |        |        |
-|  μ_11  |  μ_12  |  μ_13  |
-|        |        |        |
-|---------------------------
-|        |        |        |
-|  μ_21  |  μ_22  |  μ_23  |
-|        |        |        |
-(0,0)------------------(1,0)
-```
 
 The real numbers $\mu_{ij}$ form the `XBLOCKS x YBLOCKS` - dimensional parameter
 on which the solution depends.
