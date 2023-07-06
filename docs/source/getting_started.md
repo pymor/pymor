@@ -49,7 +49,7 @@ the `jupyter` extra:
 pip install pymor[jupyter]
 ```
 
-We also provide [conda-forge](https://conda-forge.org) packages. 
+We also provide [conda-forge](https://conda-forge.org) packages.
 For further details see [README.md](https://github.com/pymor/pymor/blob/main/README.md).
 
 ## Reduced Basis Method for Elliptic Problem
@@ -252,12 +252,12 @@ _ = err_lti.transfer_function.mag_plot(w)
 
 ## Running Demo Scripts
 
-pyMOR ships several example scripts that showcase various features of the library. 
+pyMOR ships several example scripts that showcase various features of the library.
 While many features are also covered in our {doc}`tutorials`, the demos are more extensive
 and often have various command-line flags which allow to run the script for different
 parameters or problems.
 All demos can be found in the [src/pymordemos](https://github.com/pymor/pymor/tree/main/src/pymordemos)
-directory of the source repository. 
+directory of the source repository.
 
 The demo scripts can be launched directly from the source tree:
 
