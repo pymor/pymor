@@ -250,7 +250,7 @@ err_lti = fom_lti - rom_lti
 _ = err_lti.transfer_function.mag_plot(w)
 ```
 
-## Running demo scripts
+## Running Demo Scripts
 
 pyMOR ships several example scripts that showcase various features of the library. 
 While many features are also covered in our {doc}`tutorials`, the demos are more extensive
