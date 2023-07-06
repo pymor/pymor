@@ -206,18 +206,26 @@ from pymor.models.examples import penzl_example
 fom_lti = penzl_example()
 ```
 
-The result is an {{LTIModel}}.
+The result is an {{LTIModel}}:
 
 ```{code-cell}
 fom_lti
 ```
 
 We can use the Bode plot to show the frequency response of the LTI system, i.e.,
-to see which input frequencies are amplified and phase-shifted in the output.
+to see which input frequencies are amplified and phase-shifted in the output:
 
 ```{code-cell}
 w = (1e-1, 1e4)
 _ = fom_lti.transfer_function.bode_plot(w)
+```
+
+Note that if you do not run this code in a [Jupyter](https://jupyter.org) notebook,
+you probably need to manually show the plot:
+
+```python3
+from matplotlib import pyplot as plt
+plt.show()
 ```
 
 We can run balanced truncation to obtain a reduced-order model.
