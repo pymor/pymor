@@ -1,0 +1,122 @@
+pyMOR 2023.1 (July 6, 2023)
+---------------------------
+
+We are proud to announce the release of pyMOR 2023.1!
+pyMOR now comes with three new MOR methods for port-Hamiltonian systems,
+a new data-driven MOR method,
+optimization methods for parametric problems, and
+an improved experience for Jupyter users.
+
+Over 880 single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2022.2.x...2023.1.x>`__.
+
+pyMOR 2023.1 contains contributions by Tim Keil, Steffen Müller,
+Mohamed Adel Naguib Ahmed, Jonas Nicodemus, and Peter Oehme.
+See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more
+details.
+
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+Model reduction methods for port-Hamiltonian systems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The previous release added a |PHLTIModel| class for port-Hamiltonian systems.
+This release adds three MOR methods for port-Hamiltonian (or passive) systems:
+
+- port-Hamiltonian IRKA (pH-IRKA) `[#1835] <https://github.com/pymor/pymor/pull/1835>`_,
+- positive real balanced truncation (PRBT) `[#1847] <https://github.com/pymor/pymor/pull/1847>`_, and
+- passivity preserving model reduction via spectral factorization `[#2033] <https://github.com/pymor/pymor/pull/2033>`_.
+
+Additionally, |PHLTIModel| now inherits from |LTIModel|,
+supports the :math:`Q` matrix and
+adds conversion to the Berlin form `[#1836] <https://github.com/pymor/pymor/pull/1836>`_.
+To enable some solvers for positive real Riccati equations,
+the ``S`` parameter was added to Riccati equation solvers `[#1837] <https://github.com/pymor/pymor/pull/1837>`_.
+
+Loewner reductor
+~~~~~~~~~~~~~~~~
+A reductor based on Loewner matrices was added in `[#1952] <https://github.com/pymor/pymor/pull/1952>`_
+for data-driven (tangential) Lagrange interpolation.
+This extends and complements the available reductors for
+bitangential Hermite interpolation (:class:`~pymor.reductors.interpolation.TFBHIReductor`) and
+the (P)AAA algorithm (:class:`~pymor.reductors.aaa.PAAAReductor`). The implementation supports various
+options for partitioning the data as well as handling MIMO systems. Additionally, the reductor is flexible
+as it works with a user provided data set or any model that has a associated transfer function.
+
+Optimization
+~~~~~~~~~~~~
+In `[#1924] <https://github.com/pymor/pymor/pull/1924>`_, an error-aware adaptive
+trust-region method was added. This method solves an optimization problem :math:`\min_{\mu \in C} J(\mu)`
+for |Models| with an output :math:`J` depending on a box-constrained :math:`\mu`.
+The main idea of the algorithm can be found in :cite:`YM13`, and an RB application to box-constrained
+parameters with possible enlarging of the trust radius in :cite:`KMOSV21`.
+This method contrasts itself from a standard trust region (TR) method in the computation of the
+trust region: standard TR implementations use a metric distance, whereas this function uses an
+error estimator obtained from the surrogate. Additionally, the cheap model function
+surrogate is only updated for each outer iteration, not entirely reconstructed.
+
+Jupyter support
+~~~~~~~~~~~~~~~
+We have made several improvements to the user experience in `Jupyter <https://jupyter.org>`_
+notebook environments.
+Apart from polishing the existing `matplotlib <https://matplotlib.org>`_-based notebook visualizers
+`[#1949] <https://github.com/pymor/pymor/pull/1949>`_, `[#1988] <https://github.com/pymor/pymor/pull/1988>`_,
+we have stabilized and improved our new `K3D <https://k3d-jupyter.org>`_-based visualizations.
+In particular, the K3D-visualizer is now used in our online documentation.
+Due to an outstanding bug in K3D, which leads to empty plots unless the browser window is resized,
+the new backend is only enabled by default in notebooks when the upcoming version 2.15.3 of K3D is
+installed `[#1937] <https://github.com/pymor/pymor/pull/1937>`_.
+Further the new :func:`~pymor.models.interact.interact` function allows to interactively explore
+pyMOR |Models| via a dynamically created `ipywidgets <https://ipywidgets.readthedocs.io>`_-based
+user interface that shows the solution/output of a model depending on the selected inputs and parameters
+`[#2061] <https://github.com/pymor/pymor/pull/2061>`_.
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Quadratic output functionals
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In `[#1796] <https://github.com/pymor/pymor/pull/1796>`_,
+two classes, :class:`~pymor.operators.constructions.QuadraticFunctional` and
+:class:`~pymor.operators.constructions.QuadraticProductFunctional`,
+have been introduced to handle the cases of bilinear functionals of the form
+:math:`A(u, u) = u^T A u` and :math:`A(u, u) = (a(u), b(u))`, respectively.
+These can now be used as reducible output functionals.
+Moreover, the builtin CG discretizer also supports a `quadratic` argument for
+defining bilinear outputs conveniently.
+
+Time-stepping iterator
+~~~~~~~~~~~~~~~~~~~~~~
+The :meth:`~pymor.algorithms.timestepping.TimeStepper.iterate` method was added to
+:mod:`time-steppers <pymor.algorithms.timestepping>`,
+which returns a generator for solution snapshots `[#2053] <https://github.com/pymor/pymor/pull/2053>`_.
+Compared to the :meth:`~pymor.algorithms.timestepping.TimeStepper.solve` method,
+it allows iterating over solution snapshots without storing all computed snapshots.
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Visualization
+~~~~~~~~~~~~~
+The pythreejs-based visualizer has been removed in favor of our new K3D-based
+implementation.
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- `[#1916] Input-output selection in bode_plot <https://github.com/pymor/pymor/pull/1916>`_
+- `[#1940] Adding Log Sampling <https://github.com/pymor/pymor/pull/1940>`_
+- `[#1943] Implement BlockOperator.jacobian by computing Jacobians of blocks <https://github.com/pymor/pymor/pull/1943>`_
+- `[#1948] Contributing file and developer docs <https://github.com/pymor/pymor/pull/1948>`_
+- `[#1953] Demo systems time-stepping <https://github.com/pymor/pymor/pull/1953>`_
+- `[#1978] Some fixes in the cg discretizers <https://github.com/pymor/pymor/pull/1978>`_
+- `[#1983] Add tol to hinf_norm and linf_norm <https://github.com/pymor/pymor/pull/1983>`_
+- `[#2004] Algebraic ops for Mu instances <https://github.com/pymor/pymor/pull/2004>`_
+- `[#2014] Restructure packaging/ci infrastructure <https://github.com/pymor/pymor/pull/2014>`_
+- `[#2022] Separate out "Getting started" <https://github.com/pymor/pymor/pull/2022>`_
+- `[#2030] Replace .data by .detach() in neural network models <https://github.com/pymor/pymor/pull/2030>`_
+- `[#2058] Fix problem description in heat demo <https://github.com/pymor/pymor/pull/2058>`_
+- `[#2076] Improve parsing of time-dependent parameter values <https://github.com/pymor/pymor/pull/2076>`_

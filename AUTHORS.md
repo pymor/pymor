@@ -106,7 +106,7 @@
   * second order derivatives for parameters
   * speed up of LincombOperators
   * add LincombParameterFunctional
-  * pruduct rule for ProductParameterFunctional
+  * product rule for ProductParameterFunctional
   * BaseMaxThetaParameterFunctional
 
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
@@ -149,7 +149,7 @@
 * Andreas Buhr, andreas@andreasbuhr.de
   * ability to rescale colorbar in each frame
   * SelectionOperator
-  * support for advection and rection terms in finite element discretizations
+  * support for advection and reaction terms in finite element discretizations
   * improved Robin boundary condition support
 
 * Michael Laier, m_laie01@uni-muenster.de
