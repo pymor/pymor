@@ -417,8 +417,8 @@ time step to the next. Therefore, these networks implement an internal memory th
 information over time. Furthermore, for each element of the input sequence, the same neural
 network is applied.
 
-In the {class}`~pymor.models.neural_network.NeuralNetworkLSTMInstationaryModel` and the
-corresponding {class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor`,
+In the {class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel` obtained by the
+{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor`,
 we make use of a specific type of recurrent neural network, namely a so-called
 *long short-term memory neural network (LSTM)*, first introduced in {cite}`HS97`, that tries to
 avoid problems like vanishing or exploding gradients that often occur during training of recurrent
@@ -535,12 +535,8 @@ basis coefficients (similar to the
 output quantities (similar to the
 {class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel`). For state approximations
 using a reduced basis, one can apply the
-{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor` and use the
-corresponding
-{class}`~pymor.models.neural_network.NeuralNetworkLSTMInstationaryModel`.
+{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor`.
 For a direct approximation of outputs using LSTMs, we provide the
-{class}`~pymor.models.neural_network.NeuralNetworkLSTMInstationaryStatefreeOutputModel` and the
-corresponding
 {class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryStatefreeOutputReductor`.
 
 Download the code:

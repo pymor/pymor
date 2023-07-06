@@ -119,9 +119,9 @@ print_source(fom.compute)
 What we see is a default implementation from {class}`~pymor.models.interface.Model` that
 takes care of checking the input {{ parameter_values }} `mu`, {mod}`caching <pymor.core.cache>` and
 {mod}`logging <pymor.core.logger>`, but defers the actual computations to further private methods.
-Implementors can directly implement {meth}`~pymor.models.interface.Model._compute` to compute
+Implementors can directly implement {meth}`!_compute` to compute
 multiple return values at once in an optimized way. Our given model, however, just implements
-{meth}`~pymor.models.interface.Model._compute_solution` where we can find the
+{meth}`!_compute_solution` where we can find the
 actual code:
 
 ```{code-cell}
@@ -143,7 +143,7 @@ L(u(\mu); \mu) = F(\mu)
 
 Here, {math}`L` is a linear or non-linear parametric {{ Operator }} and {math}`F` is a
 parametric right-hand side vector. In {{ StationaryModel }}, {math}`L` is represented by
-the {attr}`~pymor.models.basic.StationaryModel.operator` attribute. So
+the {attr}`!operator` attribute. So
 
 ```
 self.operator.apply_inverse(X, mu=mu)
@@ -151,9 +151,9 @@ self.operator.apply_inverse(X, mu=mu)
 
 determines the solution of this equation for the {{ parameter_values }} `mu` and a right-hand
 side given by `X`. As you see above, the right-hand side of the equation is given by the
-{attr}`~pymor.models.basic.StationaryModel.rhs` attribute.
+{attr}`!rhs` attribute.
 However, while {meth}`~pymor.operators.interface.Operator.apply_inverse` expects a
-{{ VectorArray }},  we see that {attr}`~pymor.models.basic.StationaryModel.rhs` is actually
+{{ VectorArray }},  we see that {attr}`!rhs` is actually
 an {{ Operator }}:
 
 ```{code-cell}
@@ -426,9 +426,9 @@ fom.operator
 We see that `operator` is a {{ LincombOperator }}, a linear combination of {{ Operators }}
 with coefficients that may either be a number or a parameter-dependent number,
 called a {{ ParameterFunctional }} in pyMOR. In our case, all
-{attr}`~pymor.operators.constructions.LincombOperator.operators` are
+{attr}`!operators` are
 {{ NumpyMatrixOperators }}, which themselves don't depend on any parameter. Only the
-{attr}`~pymor.operators.constructions.LincombOperator.coefficients` are
+{attr}`!coefficients` are
 parameter-dependent.  This allows us to easily build a parametric ROM that no longer
 requires any high-dimensional operations for its solution by projecting each
 {{ Operator }} in the sum separately:
@@ -635,12 +635,12 @@ u_N5 = rom.solve(mu)
 u_N.T - u_N5.to_numpy()
 ```
 
-As an additional feature, {meth}`~pymor.reductors.basic.StationaryRBReductor.reduce`
+As an additional feature, {meth}`!reduce`
 allows to project the model onto a smaller dimensional subspace of {math}`V_N` by
 extracting the ROM from a previously computed ROM for the full {math}`V_N`. This
 is useful, in particular, when assessing the ROM for different basis sizes. The
 actual projection is handled in the
-{meth}`~pymor.reductor.basic.StationaryRBReductor.project_operators` method,
+{meth}`!project_operators` method,
 where we can find some well-known code:
 
 ```{code-cell}
@@ -661,7 +661,7 @@ In the case of {class}`~pymor.reductors.basic.StationaryRBReductor`, however,
 `error_estimator` is always `None`.
 
 Reductors also allow to compute {math}`U_N(\mu)` from {math}`u_N(\mu)` using
-the {meth}`~pymor.reductors.basic.StationaryRBReductor.reconstruct` method:
+the {meth}`!reconstruct` method:
 
 ```{code-cell}
 U_N5 = reductor.reconstruct(u_N5)

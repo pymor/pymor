@@ -287,7 +287,7 @@ class ExpressionFunction(SymbolicExpressionFunction):
     For a full list see the `functions` class attribute.
 
     .. warning::
-       :meth:`eval` is used to evaluate the given expression.
+       :func:`eval` is used to evaluate the given expression.
        Using this class with expression strings from untrusted sources will cause
        mayhem and destruction!
 
@@ -444,7 +444,7 @@ class BitmapFunction(Function):
 class EmpiricalInterpolatedFunction(LincombFunction):
     """Empirically interpolated |Function|.
 
-    Instantiated by :func:`~pymor.algorithm.ei.interpolate_function`.
+    Instantiated by :func:`~pymor.algorithms.ei.interpolate_function`.
 
     Parameters
     ----------
@@ -454,7 +454,7 @@ class EmpiricalInterpolatedFunction(LincombFunction):
         |NumPy array| containing the coordinates at which the function
         is interpolated. Typically `X[dofs]` where `X` is the array of
         evaluation points used for snapshot data generation and `dofs`
-        is returned by :func:`~pymor.algorithm.ei.ei_greedy`.
+        is returned by :func:`~pymor.algorithms.ei.ei_greedy`.
     interpolation_matrix
         The interpolation matrix corresponding to the selected interpolation
         basis vectors and `interpolation_points` as returned by
@@ -469,7 +469,7 @@ class EmpiricalInterpolatedFunction(LincombFunction):
         Matrix of linear coefficients s.t. the i-th interpolation basis vector
         is given by a linear combination of the functions corresponding to
         `snapshot_mus` with the i-th row of `snapshot_coefficients` as
-        coefficients. Returned by :func:`~pymor.algorithm.ei.ei_greedy` as
+        coefficients. Returned by :func:`~pymor.algorithms.ei.ei_greedy` as
         `data['coefficients']`.
     evaluation_points
         Optional |NumPy array| of coordinates at which the function has been

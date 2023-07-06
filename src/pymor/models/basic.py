@@ -167,7 +167,7 @@ class StationaryModel(Model):
 
             L(u(μ) + u_0, μ) = F(μ)
 
-        When :attr:`~StationaryModel.operator` is linear, the affine shift is
+        When :attr:`!operator` is linear, the affine shift is
         moved to the right-hand side to obtain::
 
             L(u(μ), μ) = F(μ) - L(u_0, μ)
@@ -175,7 +175,7 @@ class StationaryModel(Model):
         Solutions of the original |Model| can be obtained by adding `u_0` to the
         solutions of the deaffinized |Model|.
 
-        The :attr:`~StationaryModel.output_functional` is adapted accordingly to
+        The :attr:`!output_functional` is adapted accordingly to
         yield the same output for given |parameter values|.
 
         Parameters

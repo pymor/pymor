@@ -17,6 +17,7 @@ from pymor.vectorarrays.interface import VectorArray
 
 
 class PatchVisualizer(BasicObject):
+    """Patch visualizer."""
 
     def __init__(self, grid, U, bounding_box=None, codim=2, title=None, legend=None,
                  separate_colorbars=False, rescale_colorbars=False, columns=2):

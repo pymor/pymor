@@ -136,7 +136,7 @@ class UberMeta(abc.ABCMeta):
                 if arg not in self.__dict__:
                     setattr(self, arg, locals_[arg])
 
-        auto_init_name = f'_{classname}__auto_init'
+        auto_init_name = f"_{classname.lstrip('_')}__auto_init"
         classdict[auto_init_name] = __auto_init
         c = abc.ABCMeta.__new__(cls, classname, bases, classdict)
         # by updating the qualified name we make filtering in sphinx possible

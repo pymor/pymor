@@ -160,8 +160,9 @@ class Operator(ParametricObject):
         """Apply the adjoint operator.
 
         For any given linear |Operator| `op`, |parameter values| `mu` and
-        |VectorArrays| `U`, `V` in the :attr:`~Operator.source`
-        resp. :attr:`~Operator.range` we have::
+        |VectorArrays| `U`, `V` in the
+        :attr:`~pymor.operators.interface.Operator.source` resp.
+        :attr:`~pymor.operators.interface.Operator.range` we have::
 
             op.apply_adjoint(V, mu).dot(U) == V.inner(op.apply(U, mu))
 
@@ -376,8 +377,9 @@ class Operator(ParametricObject):
         """Return a |VectorArray| representation of the operator in its range space.
 
         In the case of a linear operator with |NumpyVectorSpace| as
-        :attr:`~Operator.source`, this method returns for given |parameter values|
-        `mu` a |VectorArray| `V` in the operator's :attr:`~Operator.range`,
+        :attr:`~pymor.operators.interface.Operator.source`, this method returns
+        for given |parameter values| `mu` a |VectorArray| `V` in the operator's
+        :attr:`~pymor.operators.interface.Operator.range`,
         such that ::
 
             V.lincomb(U.to_numpy()) == self.apply(U, mu)
@@ -403,8 +405,9 @@ class Operator(ParametricObject):
         """Return a |VectorArray| representation of the operator in its source space.
 
         In the case of a linear operator with |NumpyVectorSpace| as
-        :attr:`~Operator.range`, this method returns for given |parameter values|
-        `mu` a |VectorArray| `V` in the operator's :attr:`~Operator.source`,
+        :attr:`~pymor.operators.interface.Operator.range`, this method returns
+        for given |parameter values| `mu` a |VectorArray| `V` in the operator's
+        :attr:`~pymor.operators.interface.Operator.source`,
         such that ::
 
             self.range.make_array(V.inner(U).T) == self.apply(U, mu)
@@ -429,9 +432,12 @@ class Operator(ParametricObject):
     def as_vector(self, mu=None):
         """Return a vector representation of a linear functional or vector operator.
 
-        Depending on the operator's :attr:`~Operator.source` and
-        :attr:`~Operator.range`, this method is equivalent to calling
-        :meth:`~Operator.as_range_array` or :meth:`~Operator.as_source_array`
+        Depending on the operator's
+        :attr:`~pymor.operators.interface.Operator.source` and
+        :attr:`~pymor.operators.interface.Operator.range`, this method is
+        equivalent to calling
+        :meth:`~pymor.operators.interface.Operator.as_range_array` or
+        :meth:`~pymor.operators.interface.Operator.as_source_array`
         respectively. The resulting |VectorArray| is required to have length 1.
 
         Parameters
@@ -536,14 +542,17 @@ class Operator(ParametricObject):
         ----------
         dofs
             One-dimensional |NumPy array| of degrees of freedom in the operator
-            :attr:`~Operator.range` to which to restrict.
+            :attr:`~pymor.operators.interface.Operator.range` to which to
+            restrict.
 
         Returns
         -------
         restricted_op
             The restricted operator as defined above. The operator will have
-            |NumpyVectorSpace| `(len(source_dofs))` as :attr:`~Operator.source`
-            and |NumpyVectorSpace| `(len(dofs))` as :attr:`~Operator.range`.
+            |NumpyVectorSpace| `(len(source_dofs))` as
+            :attr:`~pymor.operators.interface.Operator.source` and
+            |NumpyVectorSpace| `(len(dofs))` as
+            :attr:`~pymor.operators.interface.Operator.range`.
         source_dofs
             One-dimensional |NumPy array| of source degrees of freedom as
             defined above.

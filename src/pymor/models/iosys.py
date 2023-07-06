@@ -293,7 +293,7 @@ class LTIModel(Model):
             intermediate vector that is calculated is returned.
         presets
             A `dict` of preset attributes or `None`.
-            See :meth:`~pymor.models.iosys.LTIModel.__init__`.
+            See |LTIModel|.
         state_id
             Id of the state space.
         solver_options
@@ -393,7 +393,7 @@ class LTIModel(Model):
             intermediate vector that is calculated is returned.
         presets
             A `dict` of preset attributes or `None`.
-            See :meth:`~pymor.models.iosys.LTIModel.__init__`.
+            See |LTIModel|.
         state_id
             Id of the state space.
         solver_options
@@ -485,7 +485,7 @@ class LTIModel(Model):
             intermediate vector that is calculated is returned.
         presets
             A `dict` of preset attributes or `None`.
-            See :meth:`~pymor.models.iosys.LTIModel.__init__`.
+            See |LTIModel|.
         state_id
             Id of the state space.
         solver_options
@@ -570,7 +570,7 @@ class LTIModel(Model):
             intermediate vector that is calculated is returned.
         presets
             A `dict` of preset attributes or `None`.
-            See :meth:`~pymor.models.iosys.LTIModel.__init__`.
+            See |LTIModel|.
         state_id
             Id of the state space.
         solver_options

@@ -74,6 +74,7 @@ def contract(obj):
 
 
 class ExpandRules(RuleTable):
+    """|RuleTable| for the :func:`expand` algorithm."""
 
     def __init__(self):
         super().__init__(use_caching=True)
@@ -128,6 +129,7 @@ class ExpandRules(RuleTable):
 
 
 class ContractRules(RuleTable):
+    """|RuleTable| for the :func:`contract` algorithm."""
 
     def __init__(self):
         super().__init__(use_caching=True)

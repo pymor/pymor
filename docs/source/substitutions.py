@@ -79,7 +79,7 @@ common = '''
 .. |OnedGrid| replace:: :class:`~pymor.discretizers.builtin.grids.oned.OnedGrid`
 .. |RectGrid| replace:: :class:`~pymor.discretizers.builtin.grids.rect.RectGrid`
 .. |TriaGrid| replace:: :class:`~pymor.discretizers.builtin.grids.tria.TriaGrid`
-.. |GmshGrid| replace:: :class:`~pymor.discretizers.builtin.grids.gmsh.GmshGrid`
+.. |UnstructuredTriangleGrid| replace:: :class:`~pymor.discretizers.builtin.grids.unstructured.UnstructuredTriangleGrid`
 
 .. |NumpyVectorArray| replace:: :class:`~pymor.vectorarrays.numpy.NumpyVectorArray`
 .. |NumpyVectorArrays| replace:: :class:`NumpyVectorArrays <pymor.vectorarrays.numpy.NumpyVectorArray>`
@@ -117,7 +117,7 @@ common = '''
 .. |LinearDelayModel| replace:: :class:`~pymor.models.iosys.LinearDelayModel`
 .. |LinearDelayModels| replace:: :class:`LinearDelayModels <pymor.models.iosys.LinearDelayModel>`
 .. |NeuralNetworkModel| replace:: :class:`~pymor.models.neural_network.NeuralNetworkModel`
-.. |QuadraticHamiltonianModel| replace:: :class:`~pymor.model.symplectic.QuadraticHamiltonianModel`
+.. |QuadraticHamiltonianModel| replace:: :class:`~pymor.models.symplectic.QuadraticHamiltonianModel`
 
 .. |MoebiusTransformation| replace:: :class:`~pymor.models.transforms.MoebiusTransformation`
 .. |MoebiusTransformations| replace:: :class:`MoebiusTransformations <pymor.models.transforms.MoebiusTransformation>`

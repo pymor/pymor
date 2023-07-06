@@ -51,13 +51,13 @@ def adaptive(f, a, b, initial_num=10, max_num=2000, angle_tol=2, min_rel_dist=1e
     fvals
         A |NumPy array| of function values.
     """
-    plot = Adaptive(f, a, b, initial_num=initial_num, max_num=max_num,
-                    angle_tol=angle_tol, min_rel_dist=min_rel_dist,
-                    aspect_ratio=aspect_ratio, xscale=xscale, yscale=yscale)
+    plot = _Adaptive(f, a, b, initial_num=initial_num, max_num=max_num,
+                     angle_tol=angle_tol, min_rel_dist=min_rel_dist,
+                     aspect_ratio=aspect_ratio, xscale=xscale, yscale=yscale)
     return plot.compute()
 
 
-class Adaptive(BasicObject):
+class _Adaptive(BasicObject):
 
     def __init__(self, f, a, b, initial_num, max_num, angle_tol, min_rel_dist,
                  aspect_ratio, xscale, yscale):

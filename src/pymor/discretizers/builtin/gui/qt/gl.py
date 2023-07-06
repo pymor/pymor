@@ -8,7 +8,7 @@ This module provides a widget for displaying patch plots of
 scalar data assigned to 2D-grids using OpenGL. This widget is not
 intended to be used directly. Instead, use
 :meth:`~pymor.discretizers.builtin.gui.qt.visualize_patch` or
-:class:`~pymor.discretizers.builtin.gui.qt.PatchVisualizer`.
+:class:`~pymor.discretizers.builtin.gui.visualizers.PatchVisualizer`.
 """
 
 from pymor.core.config import config

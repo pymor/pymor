@@ -58,7 +58,7 @@ myst_enable_extensions = [
     'substitution',
 ]
 myst_url_schemes = ('http', 'https', 'mailto')
-# auto genereated link anchors
+# auto generated link anchors
 myst_heading_anchors = 2
 import substitutions # noqa
 myst_substitutions = substitutions.myst_substitutions
@@ -128,6 +128,20 @@ add_function_parentheses = False
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+# Ensure all our internal links work
+nitpicky = True
+nitpick_ignore = [
+    ('py:obj', 'ipywidgets.HBox'),
+    ('py:obj', 'k3d.plot.Plot'),
+    ('py:obj', 'qtpy.QtWidgets.QOpenGLWidget'),
+    ('py:obj', 'qtpy.QtWidgets.QWidget'),
+]
+nitpick_ignore_regex = [
+    ('py:class', 'Choices(.+)'),  # pymor.tools.typer.Choices(...) cannot be referred to
+    ('py:.*', 'pymess.*'),  # pymess does not have online Sphinx documentation
+    ('py:.*', 'matplotlib.backends.*'),  # matplotlib backends are not auto documented
+]
+
 
 # -----------------------------------------------------------------------------
 # HTML output
@@ -145,7 +159,7 @@ html_theme_options = {
     'html_minify': False,
     'css_minify': on_gitlab_ci,
     'nav_title': 'Documentation',
-    'globaltoc_depth': 5,
+    'globaltoc_depth': 6,
     'theme_color': 'indigo',
     'color_primary': 'indigo',
     'color_accent': 'blue',
@@ -275,12 +289,17 @@ coverage_ignore_c_items = {}
 # autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
 
 # PyQt5 inventory is only used internally, actual link targets PySide2
-intersphinx_mapping = {'python': ('https://docs.python.org/3/', None),
-                       'numpy': ('https://numpy.org/doc/stable/', None),
-                       'PyQt5': ('https://www.riverbankcomputing.com/static/Docs/PyQt5', None),
-                       'scipy': ('https://docs.scipy.org/doc/scipy/', None),
-                       'matplotlib': ('https://matplotlib.org/stable/', None),
-                       'Sphinx': (' https://www.sphinx-doc.org/en/stable/', None)}
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    'PyQt5': ('https://www.riverbankcomputing.com/static/Docs/PyQt5', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+    'matplotlib': ('https://matplotlib.org/stable/', None),
+    'Sphinx': (' https://www.sphinx-doc.org/en/stable/', None),
+    'torch': ('https://pytorch.org/docs/stable/', None),
+    'ipywidgets': ('https://ipywidgets.readthedocs.io/en/stable/', None),
+    'k3d': ('https://k3d-jupyter.org/', None),
+}
 
 modindex_common_prefix = ['pymor.']
 
@@ -303,7 +322,7 @@ def linkcode_resolve(domain, info):
     return None
 
 
-autoapi_dirs = [src_dir / 'pymor']
+autoapi_dirs = [src_dir / 'pymor', src_dir / 'pymordemos']
 autoapi_type = 'python'
 # allows incremental build
 autoapi_keep_files = True

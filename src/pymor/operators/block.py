@@ -10,6 +10,7 @@ from pymor.vectorarrays.block import BlockVectorSpace
 
 
 class BlockOperatorBase(Operator):
+    """Base block |Operator|."""
 
     def _operators(self):
         """Iterator over operators."""

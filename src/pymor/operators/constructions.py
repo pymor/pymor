@@ -599,7 +599,7 @@ class ComponentProjectionOperator(Operator):
     ----------
     components
         List or 1D |NumPy array| of the indices of the vector
-        :meth:`~pymor.vectorarrays.interface.VectorArray.components` that are
+        :meth:`~pymor.vectorarrays.interface.VectorArray.dofs` that are
         to be extracted by the operator.
     source
         Source |VectorSpace| of the operator.

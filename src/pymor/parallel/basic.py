@@ -39,6 +39,7 @@ class WorkerPoolDefaultImplementations:
 
 
 class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPool):
+    """Basic |WorkerPool|."""
 
     def __init__(self):
         self._pushed_immutable_objects = {}
@@ -96,6 +97,7 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPool):
 
 
 class GenericRemoteObject(RemoteObject):
+    """Generic |RemoteObject|."""
 
     def __init__(self, pool, remote_id, uid=None):
         self.pool = weakref.ref(pool)

@@ -61,6 +61,8 @@ SKIPS_RE = re.compile(r'(?:{})'.format('|'.join(map(re.escape, sorted(MANUAL_SKI
 
 
 def skip(app, what, name, obj, skip, options):
+    if name == 'pymor.operators.interface.Operator._assemble_lincomb':
+        return False
     try:
         if ':noindex:' in obj.docstring:
             print(f'HERE DO_SKIP {name}')

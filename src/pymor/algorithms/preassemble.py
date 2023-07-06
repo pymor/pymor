@@ -27,6 +27,7 @@ def preassemble(obj):
 
 
 class PreAssembleRules(RuleTable):
+    """|RuleTable| for the :func:`preassemble` algorithm."""
 
     def __init__(self):
         super().__init__(use_caching=True)
