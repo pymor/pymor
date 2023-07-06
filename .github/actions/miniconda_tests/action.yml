@@ -47,17 +47,17 @@ runs:
         ./mesa/systemwidedeploy.cmd
 
     - uses: actions/checkout@v3
-    - name: provision-with-micromamba
-      uses: mamba-org/provision-with-micromamba@v14
+    - name: setup-micromamba
+      uses: mamba-org/setup-micromamba@v1
 
       with:
-        extra-specs: |
+        create-args: >-
             python=${{ inputs.python }}
-        channels: conda-forge
-        channel-priority: strict
-        cache-env: true
+        condarc: |
+            channel_priority: strict
+        cache-environment: true
         cache-downloads: true
-        cache-env-key: ${{ inputs.python }}-${{ inputs.os }}
+        cache-envrionment-key: ${{ inputs.python }}-${{ inputs.os }}
         environment-name: pyMOR-ci
         environment-file: ${{ inputs.environment_file }}
         micromamba-version: "latest"
