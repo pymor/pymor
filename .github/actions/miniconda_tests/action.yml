@@ -57,7 +57,7 @@ runs:
             channel_priority: strict
         cache-environment: true
         cache-downloads: true
-        cache-envrionment-key: ${{ inputs.python }}-${{ inputs.os }}
+        cache-environment-key: ${{ inputs.python }}-${{ inputs.os }}
         environment-name: pyMOR-ci
         environment-file: ${{ inputs.environment_file }}
         micromamba-version: "latest"
