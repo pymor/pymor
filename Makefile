@@ -99,14 +99,14 @@ CONDA_EXTRAS = \
 	--extras mpi \
 	--extras gui \
 	--extras jupyter \
-	--extras vtk \
-	--extras gmsh
+	--extras vtk
 	# pymess, dune, ngsolve, scikit-fem (no recent version) not available as conda-forge packages
 	# pytorch not available for win64
 	# docs-additional not needed
+	# gmsh is incompatible with pyside6>=6.4.3 needed for windows ci not to hang
 
 ci_conda_requirements:
-	conda-lock --micromamba -c conda-forge --filter-extras --no-dev-dependencies $(CONDA_EXTRAS) -f pyproject.toml
+	conda-lock --micromamba -c conda-forge --filter-extras --no-dev-dependencies $(CONDA_EXTRAS) -f conda-base.yml -f pyproject.toml
 	conda-lock render $(CONDA_EXTRAS)
 
 ci_requirements: ci_current_requirements ci_oldest_requirements ci_fenics_requirements ci_conda_requirements
