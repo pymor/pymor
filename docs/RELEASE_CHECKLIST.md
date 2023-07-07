@@ -28,7 +28,8 @@ Replace `RELEASE_TAG` below with the actual release tag.
       Should have a `.x` as the last part of the branch name in contrast
       to the `RELEASE_TAG`.
       (Omit in case of a bugfix release.)
-- [ ] Use `hatch version` to update `__version__` in `sr/pymor/__init__.py`. Merge into release branch.
+- [ ] Use `hatch version RELEASE_TAG` to update `__version__` in `src/pymor/__init__.py`.
+      Merge into release branch.
 - [ ] Run
 
     ```bash
@@ -41,7 +42,10 @@ Replace `RELEASE_TAG` below with the actual release tag.
       Use an annotated tag (`git tag -a RELEASE_TAG -m RELEASE_TAG`) with the
       annotation being `RELEASE_TAG`.
       Push `RELEASE_TAG` to GitHub.
-- [ ] Wait for CI build for tagged commit to finish.
+- [ ] Wait for CI build for tagged commit to finish (see the list of pipelines at
+      [zivgitlab](https://zivgitlab.uni-muenster.de/pymor/pymor/-/pipelines)).
+- [ ] Merge the automatic PR at [`pymor/docs`](https://github.com/pymor/docs) and
+      wait for the CI build to finish.
 - [ ] Check again that documentation for tagged commit (not release branch) is built correctly.
       Check that binder links work and `.binder/Dockerfile` in `pymor/docs@RELEASE_TAG` uses the
       correctly tagged base image.
