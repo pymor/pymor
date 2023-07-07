@@ -123,16 +123,14 @@ so you might prefer to install pyMOR from the current release branch:
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
 
-## Installation via conda/mamba
+## Installation via conda
 
 We recommend installation of pyMOR in a
-[conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)
-with mamba.
+[conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
 
-pyMOR can be installed using conda/mamba by running
+pyMOR can be installed using conda by running
 
-    conda install -c conda-forge mamba
-    mamba install -c conda-forge pymor
+    conda install -c conda-forge pymor
 
 ## Documentation
 
