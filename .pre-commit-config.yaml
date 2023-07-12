@@ -23,6 +23,11 @@ repos:
   rev: v0.8.1
   hooks:
   - id: markdownlint-cli2
+- repo: https://github.com/tdegeus/GooseBib
+  rev: v0.8.1
+  hooks:
+  - id: GbibClean
+    args: [--sort-entries]
 ci:
   autofix_prs: false
   autoupdate_schedule: quarterly
