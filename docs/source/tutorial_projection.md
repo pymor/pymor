@@ -562,7 +562,7 @@ from pymor.algorithms.projection import ProjectRules
 ProjectRules
 ```
 
-In the case of `fom.operator`, which is a {{ LincombOperator }}, the rule with index 8 will
+In the case of `fom.operator`, which is a {{ LincombOperator }}, the rule with index 7 will
 be the first matching rule. We can take a look at it:
 
 ```{code-cell}
