@@ -120,9 +120,9 @@ problem = StationaryProblem(
 This problem definition can now be handed over to discretization methods
 (see {mod}`pymor.discretizers.builtin`) which assemble corresponding
 discrete full-order models. For finite elements, we use
-{func}`~pymor.discretizers.builtin.cg.discretize_stationary_cg`,
-which receives the maximum mesh element diameter via the `diameter`
-argument:
+{func}`~pymor.discretizers.builtin.cg.discretize_stationary_cg`
+(cg stands for continuous Galerkin), which receives the maximum mesh
+element diameter via the `diameter` argument:
 
 ```{code-cell}
 m, data = discretize_stationary_cg(problem, diameter=1/4)
