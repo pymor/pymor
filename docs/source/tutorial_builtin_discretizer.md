@@ -426,10 +426,10 @@ represented by indicator functions of point sets forming the letters
 letters. This admits a decomposition of the form
 
 ```{math}
-\sigma(x,y) = 1 + f_R \cdot (\mu_R - 1) + f_B \cdot (\mu_L - 1)
+\sigma(x,y) = 1 + f_R \cdot (\mu_R - 1) + f_B \cdot (\mu_B - 1)
 ```
 
-Again, we define {math}`f_R` and {math}`f_L` as {{ BitmapFunctions }} for
+Again, we define {math}`f_R` and {math}`f_B` as {{ BitmapFunctions }} for
 the following image files:
 
 ```{image} R.png
