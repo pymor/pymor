@@ -361,12 +361,16 @@ distinction between low- and high-dimensional |Models| in pyMOR. The only
 difference lies in the different types of operators, the |Model|
 contains.
 
-This observation is particularly apparent in the case of the classical
-reduced basis method: the operators and functionals of a given discrete problem
-are projected onto the reduced basis space whereas the structure of the problem
+In particular, in most projection-based MOR methods, only the
+operators and functionals of a given discrete problem are projected onto the
+reduced basis space, whereas the structure of the problem
 (i.e. the type of |Model| containing the operators) stays the same.
-pyMOR reflects this fact by offering with :meth:`~pymor.algorithms.projection.project`
-generic algorithms which can be used to RB-project any |Operator| available to pyMOR.
+The actual projection of an individual |Operator| is performed by the generic
+:meth:`~pymor.algorithms.projection.project` algorithm, which is able to perform a
+Petrov-Galerkin projection of any |Operator| available to pyMOR.
+The algorithm automatically exploits the structure of the given |Operator|
+(linearity, parameter separability, etc.) where possible
+to decouple the evaluation of the projected |Operator| from any high-dimensional spaces.
 
 In addition to the projection of the |Model|, reductors may also assemble efficient
 offline-online decomposed a posterior error estimates (available via the
@@ -375,11 +379,5 @@ about the underlying problem yielding the full order |Model| is available
 (a popular example is the `CoerciveRBReductor` for |Models| representing stationary
 coercive problems).
 
-It should be noted that a successfull reduction of more involved |Models| (say those
-arising from non-linear problems or such with no affine |Parameter| dependence) require
-additional techniques such as :mod:`empirical interpolation <pymor.algorithms.ei>`.
-
 If you want to further dive into the inner workings of pyMOR, we
-recommend to study the source code of :class:`~pymor.reductors.basic.ProjectionBasedReductor`
-and to step through calls of it's `reduce` method with a Python debugger, such as
-`ipdb <https://pypi.python.org/pypi/ipdb>`_.
+recommend to study the :doc:`Projecting a Model <tutorial_projection>` tutorial.
