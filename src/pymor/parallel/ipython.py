@@ -4,22 +4,19 @@
 
 from pymor.core.config import config
 
-config.require('IPYTHON')
+config.require('IPYPARALLEL')
 
 
 import os
 import time
 from itertools import chain
 
+from ipyparallel import Client, TimeoutError
+
 from pymor.core import defaults
 from pymor.core.base import BasicObject
 from pymor.parallel.basic import WorkerPoolBase
 from pymor.tools.counter import Counter
-
-try:
-    from ipyparallel import Client, TimeoutError
-except ImportError:
-    from IPython.parallel import Client, TimeoutError
 
 
 class new_ipcluster_pool(BasicObject):  # noqa: N801
