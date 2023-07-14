@@ -205,12 +205,12 @@ def test_random_normal(vector_array, realizations, loc, scale):
     try:
         x = v.to_numpy()
         assert x.shape == (c, v.dim)
-        import scipy.stats
+        import scipy.stats as spst
         n = x.size
         if n == 0:
             return
         # test for expected value
-        norm = scipy.stats.norm()
+        norm = spst.norm()
         gamma = 1 - 1e-7
         alpha = 1 - gamma
         lower = np.sum(x)/n - norm.ppf(1 - alpha/2) * scale / np.sqrt(n)

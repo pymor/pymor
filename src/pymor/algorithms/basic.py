@@ -5,7 +5,7 @@
 """Module containing some basic but generic linear algebra algorithms."""
 
 import numpy as np
-import scipy
+import scipy.linalg as spla
 
 from pymor.core.defaults import defaults
 from pymor.tools.floatcmp import float_cmp
@@ -92,7 +92,7 @@ def project_array(U, basis, product=None, orthonormal=True):
     else:
         gramian = basis.gramian(product)
         rhs = basis.inner(U, product)
-        coeffs = scipy.linalg.solve(gramian, rhs, assume_a='pos', overwrite_a=True, overwrite_b=True).T
+        coeffs = spla.solve(gramian, rhs, assume_a='pos', overwrite_a=True, overwrite_b=True).T
         return basis.lincomb(coeffs)
 
 

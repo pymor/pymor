@@ -18,7 +18,7 @@ This module provides the following |NumPy|-based |Operators|:
 from functools import reduce
 
 import numpy as np
-import scipy.sparse
+import scipy.sparse as sps
 from numpy.fft import fft, ifft, irfft, rfft
 from scipy.io import mmwrite, savemat
 from scipy.linalg import lu_factor, lu_solve
@@ -384,9 +384,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 identity_shift = identity_shift.real
             if operators[0].sparse:
                 try:
-                    matrix += (scipy.sparse.eye(matrix.shape[0]) * identity_shift)
+                    matrix += (sps.eye(matrix.shape[0]) * identity_shift)
                 except NotImplementedError:
-                    matrix = matrix + (scipy.sparse.eye(matrix.shape[0]) * identity_shift)
+                    matrix = matrix + (sps.eye(matrix.shape[0]) * identity_shift)
             else:
                 matrix += (np.eye(matrix.shape[0]) * identity_shift)
 
