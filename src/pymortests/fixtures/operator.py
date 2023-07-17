@@ -2,12 +2,14 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from importlib import import_module
 from itertools import product
 
 import numpy as np
 import pytest
 import scipy.sparse as sps
 from numpy.polynomial.polynomial import Polynomial
+from packaging.version import parse
 
 from pymor.core.config import config
 from pymor.operators.constructions import IdentityOperator
@@ -95,6 +97,10 @@ def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range
         rp = NumpyMatrixOperator(np.zeros((0, 0)), source_id=range_id, range_id=range_id)
     return op, None, U, V, sp, rp
 
+if parse(import_module('scipy').__version__) >= parse('1.8.0'):
+    _sparse_opts = (False, 'matrix', 'array')
+else:
+    _sparse_opts = (False, 'matrix')
 
 numpy_matrix_operator_with_arrays_factory_arguments = list(product(
     zip(
@@ -103,7 +109,7 @@ numpy_matrix_operator_with_arrays_factory_arguments = list(product(
         [3, 3, 3, 3],        # count_source
         [3, 3, 3, 3],        # count_range
     ),
-    [{'sparse': opt} for opt in (False, 'matrix', 'array')],
+    [{'sparse': opt} for opt in _sparse_opts],
 ))
 
 
