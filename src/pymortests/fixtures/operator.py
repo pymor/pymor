@@ -50,7 +50,7 @@ def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_sourc
     mat = np.random.random((dim_range, dim_source))
     if sparse == 'matrix':
         mat = sps.csc_matrix(mat)
-    else:
+    elif sparse == 'array':
         mat = sps.csc_array(mat)
     op = NumpyMatrixOperator(np.random.random((dim_range, dim_source)), source_id=source_id, range_id=range_id)
     s = op.source.make_array(np.random.random((count_source, dim_source)))
