@@ -28,13 +28,14 @@ def test_pod(vector_array, method):
 
     B = A.copy()
     orth_tol = 1e-10
-    U, s, V = pod(A, method=method, orth_tol=orth_tol, return_reduced_coefficients=True)
+    U, s, Vh = pod(A, method=method, orth_tol=orth_tol, return_reduced_coefficients=True)
     assert np.all(almost_equal(A, B))
-    assert len(U) == len(s) == len(V)
+    assert len(U) == len(s) == len(Vh)
     assert np.allclose(U.gramian(), np.eye(len(s)), atol=orth_tol)
-    assert np.allclose(U.inner(A) / s, V)
-    U.scal(s)
-    assert np.allclose(U.lincomb(V.T), A, rtol=4e-8)
+    if len(s) > 0:
+        U.scal(s)
+        UsVh = U.lincomb(Vh.T)
+        assert np.all(almost_equal(A, UsVh, rtol=4e-8))
 
 
 @pytest.mark.parametrize('method', methods)
