@@ -15,6 +15,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils as utils
+from rich.progress import BarColumn, Progress, TextColumn, TimeRemainingColumn
 
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project
@@ -109,8 +110,7 @@ class NeuralNetworkReductor(BasicObject):
                optimizer=optim.LBFGS, epochs=1000, batch_size=20, learning_rate=1.,
                loss_function=None, restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
                lr_scheduler_params={'step_size': 10, 'gamma': 0.7},
-               es_scheduler_params={'patience': 10, 'delta': 0.}, weight_decay=0.,
-               log_loss_frequency=0):
+               es_scheduler_params={'patience': 10, 'delta': 0.}, weight_decay=0.):
         """Reduce by training artificial neural networks.
 
         Parameters
@@ -156,10 +156,6 @@ class NeuralNetworkReductor(BasicObject):
             Weighting parameter for the l2-regularization of the weights and
             biases in the neural network. This regularization is not available
             for all optimizers; see the PyTorch documentation for more details.
-        log_loss_frequency
-            Frequency of epochs in which to log the current validation and
-            training loss during training of the neural networks.
-            If `0`, no intermediate logging of losses is done.
 
         Returns
         -------
@@ -230,8 +226,7 @@ class NeuralNetworkReductor(BasicObject):
             # run training algorithm with multiple restarts
             self.neural_network, self.losses = multiple_restarts_training(self.training_data, self.validation_data,
                                                                           neural_network, target_loss, restarts,
-                                                                          log_loss_frequency, training_parameters,
-                                                                          self.scaling_parameters)
+                                                                          training_parameters, self.scaling_parameters)
 
         self._check_tolerances()
 
@@ -664,8 +659,7 @@ class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
     def reduce(self, hidden_dimension='3*N + P', number_layers=1, optimizer=optim.LBFGS,
                epochs=1000, batch_size=20, learning_rate=1., loss_function=None, restarts=10,
                lr_scheduler=None, lr_scheduler_params={},
-               es_scheduler_params={'patience': 10, 'delta': 0.}, weight_decay=0.,
-               log_loss_frequency=0):
+               es_scheduler_params={'patience': 10, 'delta': 0.}, weight_decay=0.):
         """Reduce by LSTM neural networks.
 
         Parameters
@@ -698,15 +692,12 @@ class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
             See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
         weight_decay
             See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-        log_loss_frequency
-            See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
         """
         hidden_layers = [hidden_dimension, number_layers]
         return super().reduce(hidden_layers=hidden_layers, optimizer=optimizer, epochs=epochs,
                               batch_size=batch_size, learning_rate=learning_rate, loss_function=loss_function,
                               restarts=restarts, lr_scheduler=lr_scheduler, lr_scheduler_params=lr_scheduler_params,
-                              es_scheduler_params=es_scheduler_params, weight_decay=weight_decay,
-                              log_loss_frequency=log_loss_frequency)
+                              es_scheduler_params=es_scheduler_params, weight_decay=weight_decay)
 
     def _initialize_neural_network(self, params):
         """Initialize the neural network using the required parameters."""
@@ -979,7 +970,7 @@ class CustomDataset(utils.data.Dataset):
 
 
 def train_neural_network(training_data, validation_data, neural_network,
-                         training_parameters={}, scaling_parameters={}, log_loss_frequency=0):
+                         training_parameters={}, scaling_parameters={}):
     """Training algorithm for artificial neural networks.
 
     Trains a single neural network using the given training and validation data.
@@ -1033,9 +1024,6 @@ def train_neural_network(training_data, validation_data, neural_network,
         neural network. If not provided or each entry is `None`, no scaling is
         applied. Required keys are `'min_inputs'`, `'max_inputs'`, `'min_targets'`,
         and `'max_targets'`.
-    log_loss_frequency
-        Frequency of epochs in which to log the current validation and
-        training loss. If `0`, no intermediate logging of losses is done.
 
     Returns
     -------
@@ -1048,8 +1036,6 @@ def train_neural_network(training_data, validation_data, neural_network,
         (for the average loss on the validation set).
     """
     assert isinstance(neural_network, nn.Module)
-    assert isinstance(log_loss_frequency, int)
-
     for data in training_data, validation_data:
         assert isinstance(data, list)
         assert all(isinstance(datum, tuple) and len(datum) == 2 for datum in data)
@@ -1108,7 +1094,7 @@ def train_neural_network(training_data, validation_data, neural_network,
 
     phases = ['train', 'val']
 
-    logger.info('Starting optimization procedure ...')
+    logger.info(f'Starting optimization procedure for up to {epochs} epochs ...')
 
     if 'min_inputs' in scaling_parameters and 'max_inputs' in scaling_parameters:
         min_inputs = scaling_parameters['min_inputs']
@@ -1123,82 +1109,92 @@ def train_neural_network(training_data, validation_data, neural_network,
         min_targets = None
         max_targets = None
 
-    # perform optimization procedure
-    for epoch in range(epochs):
-        losses = {'full': 0.}
+    progress = Progress(
+        TextColumn('Training progress:', justify='right'),
+        BarColumn(bar_width=None),
+        '[progress.percentage]{task.percentage:>3.1f}%',
+        '•',
+        TimeRemainingColumn(),
+        '•',
+        TextColumn('val. loss: [bold blue]{task.fields[loss]}', justify='left')
+    )
+    task = progress.add_task('training', loss=None, start=True, total=epochs)
 
-        # alternate between training and validation phase
-        for phase in phases:
-            if phase == 'train':
-                neural_network.train()
-            else:
-                neural_network.eval()
+    with progress:
+        for epoch in range(epochs):
+            progress.update(task, advance=1)
+            losses = {'full': 0.}
 
-            running_loss = 0.0
-
-            # iterate over batches
-            for batch in dataloaders[phase]:
-                # scale inputs and outputs if desired
-                if min_inputs is not None and max_inputs is not None:
-                    diff = max_inputs - min_inputs
-                    diff[diff == 0] = 1.
-                    inputs = (batch[0] - min_inputs) / diff
+            # alternate between training and validation phase
+            for phase in phases:
+                if phase == 'train':
+                    neural_network.train()
                 else:
-                    inputs = batch[0]
-                if min_targets is not None and max_targets is not None:
-                    diff = max_targets - min_targets
-                    diff[diff == 0] = 1.
-                    targets = (batch[1] - min_targets) / diff
+                    neural_network.eval()
+
+                running_loss = 0.0
+
+                # iterate over batches
+                for batch in dataloaders[phase]:
+                    # scale inputs and outputs if desired
+                    if min_inputs is not None and max_inputs is not None:
+                        diff = max_inputs - min_inputs
+                        diff[diff == 0] = 1.
+                        inputs = (batch[0] - min_inputs) / diff
+                    else:
+                        inputs = batch[0]
+                    if min_targets is not None and max_targets is not None:
+                        diff = max_targets - min_targets
+                        diff[diff == 0] = 1.
+                        targets = (batch[1] - min_targets) / diff
+                    else:
+                        targets = batch[1]
+
+                    with torch.set_grad_enabled(phase == 'train'):
+                        def closure():
+                            if torch.is_grad_enabled():
+                                optimizer.zero_grad()
+                            outputs = neural_network(inputs)
+                            loss = loss_function(outputs, targets)
+                            if loss.requires_grad:
+                                loss.backward()
+                            return loss
+
+                        # perform optimization step
+                        if phase == 'train':
+                            optimizer.step(closure)
+
+                        # compute loss of current batch
+                        loss = closure()
+
+                    # update overall absolute loss
+                    running_loss += loss.item() * len(batch[0])
+
+                # compute average loss
+                if len(dataloaders[phase].dataset) > 0:
+                    epoch_loss = running_loss / len(dataloaders[phase].dataset)
                 else:
-                    targets = batch[1]
+                    epoch_loss = np.inf
 
-                with torch.set_grad_enabled(phase == 'train'):
-                    def closure():
-                        if torch.is_grad_enabled():
-                            optimizer.zero_grad()
-                        outputs = neural_network(inputs)
-                        loss = loss_function(outputs, targets)
-                        if loss.requires_grad:
-                            loss.backward()
-                        return loss
+                losses[phase] = epoch_loss
 
-                    # perform optimization step
-                    if phase == 'train':
-                        optimizer.step(closure)
+                losses['full'] += running_loss
 
-                    # compute loss of current batch
-                    loss = closure()
+                if phase == 'val':
+                    progress.update(task, loss=f'{losses[phase]:.3e}')
 
-                # update overall absolute loss
-                running_loss += loss.item() * len(batch[0])
+                if 'lr_scheduler' in training_parameters and training_parameters['lr_scheduler']:
+                    lr_scheduler.step()
 
-            # compute average loss
-            if len(dataloaders[phase].dataset) > 0:
-                epoch_loss = running_loss / len(dataloaders[phase].dataset)
-            else:
-                epoch_loss = np.inf
-
-            losses[phase] = epoch_loss
-
-            losses['full'] += running_loss
-
-            if log_loss_frequency > 0 and epoch % log_loss_frequency == 0:
-                logger.info(f'Epoch {epoch}: Current {phase} loss of {losses[phase]:.3e}')
-
-            if 'lr_scheduler' in training_parameters and training_parameters['lr_scheduler']:
-                lr_scheduler.step()
-
-            # check for early stopping
-            if phase == 'val' and es_scheduler(losses, neural_network):
-                logger.info(f'Stopping training process early after {epoch + 1} epochs with validation loss '
-                            f'of {es_scheduler.best_losses["val"]:.3e} ...')
-                return es_scheduler.best_neural_network, es_scheduler.best_losses
+                # check for early stopping
+                if phase == 'val' and es_scheduler(losses, neural_network):
+                    return es_scheduler.best_neural_network, es_scheduler.best_losses, epoch + 1
 
     return es_scheduler.best_neural_network, es_scheduler.best_losses
 
 
 def multiple_restarts_training(training_data, validation_data, neural_network,
-                               target_loss=None, max_restarts=10, log_loss_frequency=0,
+                               target_loss=None, max_restarts=10,
                                training_parameters={}, scaling_parameters={}):
     """Algorithm that performs multiple restarts of neural network training.
 
@@ -1222,9 +1218,6 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
         smallest loss is returned).
     max_restarts
         Maximum number of restarts to perform.
-    log_loss_frequency
-        Frequency of epochs in which to log the current validation and
-        training loss. If `0`, no intermediate logging of losses is done.
     training_parameters
         Additional parameters for the training algorithm,
         see :func:`train_neural_network` for more information.
@@ -1269,9 +1262,16 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
                     'to find the neural network with the lowest loss ...')
 
     with logger.block('Training neural network #0 ...'):
-        best_neural_network, losses = train_neural_network(training_data, validation_data,
-                                                           neural_network, training_parameters,
-                                                           scaling_parameters, log_loss_frequency)
+        results = train_neural_network(training_data, validation_data,
+                                       neural_network, training_parameters,
+                                       scaling_parameters)
+        if len(results) == 3:
+            best_neural_network, losses, epoch = results
+            logger.info(f'Stopping training process early after {epoch} epochs with validation loss '
+                        f'of {losses["val"]:.3e} ...')
+        else:
+            best_neural_network, losses = results
+
 
     # perform multiple restarts
     for run in range(1, max_restarts + 1):
@@ -1298,9 +1298,15 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
             reset_parameters_nn(neural_network)
 
             # perform training
-            current_nn, current_losses = train_neural_network(training_data, validation_data,
-                                                              neural_network, training_parameters,
-                                                              scaling_parameters, log_loss_frequency)
+            results = train_neural_network(training_data, validation_data,
+                                           neural_network, training_parameters,
+                                           scaling_parameters)
+            if len(results) == 3:
+                current_nn, current_losses, epoch = results
+                logger.info(f'Stopping training process early after {epoch} epochs with validation loss '
+                            f'of {losses["val"]:.3e} ...')
+            else:
+                current_nn, current_losses = results
 
         if current_losses['full'] < losses['full']:
             logger.info(f'Found better neural network (loss of {current_losses["full"]:.3e} '
