@@ -67,7 +67,7 @@ def pod(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         One-dimensional |NumPy array| of singular values.
     COEFFS
         If `return_reduced_coefficients` is `True`, a |NumPy array|
-        of right singular vectors.
+        of right singular vectors as conjugated rows.
     """
     assert isinstance(A, VectorArray)
     assert product is None or isinstance(product, Operator)
