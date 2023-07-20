@@ -3,7 +3,6 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import hashlib
-import importlib.resources
 import os
 import sys
 from functools import wraps
@@ -16,6 +15,11 @@ from pytest import skip
 from pymor.algorithms.basic import almost_equal, relative_error
 from pymor.core import config
 from pymor.core.exceptions import DependencyMissingError, NoResultDataError
+
+try:
+    import importlib_resources  # for Python 3.8
+except ImportError:
+    import importlib.resources as importlib_resources
 
 BUILTIN_DISABLED = bool(os.environ.get('PYMOR_FIXTURES_DISABLE_BUILTIN', False))
 
@@ -43,7 +47,7 @@ def check_results(test_name, params, results, *args):
     results = {k: np.asarray(results[k]) for k in keys.keys()}
     assert all(v.dtype != object for v in results.values())
 
-    basepath = importlib.resources.files('pymortests') / 'testdata/check_results'
+    basepath = importlib_resources.files('pymortests') / 'testdata/check_results'
     testname_dir = basepath / test_name
     arg_id = hashlib.sha1(params.encode()).hexdigest()
     filename = testname_dir / arg_id
