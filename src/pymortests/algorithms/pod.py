@@ -4,6 +4,7 @@
 
 import numpy as np
 import pytest
+import scipy.linalg as spla
 from hypothesis import HealthCheck, assume, settings
 from hypothesis.strategies import sampled_from
 
@@ -53,7 +54,7 @@ def test_pod_with_coefficients(vector_array, method):
     if len(s) > 0:
         U.scal(s)
         UsVh = U.lincomb(Vh.T)
-        assert np.all(almost_equal(A, UsVh, rtol=4e-8))
+        assert spla.norm((A - UsVh).norm() / spla.norm(A.norm())) < 4e-8
 
 
 @pytest.mark.parametrize('method', methods)
