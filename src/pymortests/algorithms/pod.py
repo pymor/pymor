@@ -54,7 +54,7 @@ def test_pod_with_coefficients(vector_array, method):
     if len(s) > 0:
         U.scal(s)
         UsVh = U.lincomb(Vh.T)
-        assert spla.norm((A - UsVh).norm() / spla.norm(A.norm())) < 1e-7
+        assert spla.norm((A - UsVh).norm()) / spla.norm(A.norm()) < 1e-7
 
 
 @pytest.mark.parametrize('method', methods)
