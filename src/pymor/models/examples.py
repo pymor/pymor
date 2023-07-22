@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import scipy.linalg as spla
 
 
 def thermal_block_example():
@@ -142,7 +143,7 @@ def msd_example(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
         A[2 * i - 1, 2 * i - 2] = -2 * k_i
         A[2 * i - 1, 2 * i - 4] = k_i
 
-    Q = np.linalg.solve(J - R, A)
+    Q = spla.solve(J - R, A)
     G = B
     P = np.zeros(G.shape)
     D = np.zeros((m, m))

@@ -4,6 +4,7 @@
 
 import numpy as np
 import pytest
+import scipy.linalg as spla
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.projection import project
@@ -500,7 +501,7 @@ def test_vectorarray_op_apply_inverse():
     V = op.range.random()
     U = op.apply_inverse(V)
     v = V.to_numpy()
-    u = np.linalg.solve(O.T, v.ravel())
+    u = spla.solve(O.T, v.ravel())
     assert np.all(almost_equal(U, U.space.from_numpy(u), rtol=1e-10))
 
 
