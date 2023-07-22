@@ -18,6 +18,7 @@ This module provides the following |NumPy|-based |Operators|:
 from functools import reduce
 
 import numpy as np
+import scipy.linalg as spla
 import scipy.sparse as sps
 from numpy.fft import fft, ifft, irfft, rfft
 from scipy.io import mmwrite, savemat
@@ -320,7 +321,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             if least_squares:
                 try:
-                    R, _, _, _ = np.linalg.lstsq(self.matrix, V.to_numpy().T, rcond=None)
+                    R, _, _, _ = spla.lstsq(self.matrix, V.to_numpy().T)
                 except np.linalg.LinAlgError as e:
                     raise InversionError(f'{str(type(e))}: {str(e)}') from e
                 R = R.T
