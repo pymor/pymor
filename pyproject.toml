@@ -76,7 +76,6 @@ dev = [
 
 
 ### Optional dependencies for MOR algorithms
-
 # dependencies for deep-learning based MOR methods
 ann = [
     "torch>=1.11.0",
@@ -101,7 +100,6 @@ mpi = [
 
 
 ### Builtin discretizations
-
 # GUI support for builtin discretizations
 gui = [
     "pyside6>=6.4.3",
@@ -133,7 +131,6 @@ gmsh = [
 
 
 ## Supported external solvers available on PyPI
-
 dune = [
     "dune-xt[visualisation]>=2022.5.3; platform_system==\"Linux\" and platform_machine==\"x86_64\"",
     "dune-gdt>=2022.5.3; platform_system==\"Linux\" and platform_machine==\"x86_64\"",
@@ -149,7 +146,6 @@ scikit-fem = [
 
 
 ## Meta dependencies
-
 # install all optional dependencies, except those requiring a compiler toolchain to build
 full = [
     "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,dune,ngsolve,scikit-fem]",
@@ -236,21 +232,22 @@ src = ["src"]
 line-length = 120
 select = ["D", "E", "F", "I", "ICN", "N", "Q", "W"]
 ignore = [
-    "D10", "D404",
-    "D401", "D405", "D407", "D410", "D411", "D414", # related to 'parameters'
-    "E402", "E731", "E741",
-    "F722",
-    "N802", "N803", "N806"]
-# D10? missing docstring in module, function, method, magic, __init__, public nested class
-# D404 First word of the docstring should not be "This"
-# D405, D407, D410, D411, D414 The linter thins the argument name 'parameters' is a docstring section
-# E402 module level import not at top of file (due to config.require("PKG") syntax)
-# E731 do not assign a lambda expression, use a def
-# E741 do not use variables named 'l', 'O', or 'I'
-# F722 syntax error in forward annotation
-# N802 function name should be lowercase
-# N803 argument name should be lowercase (we use single capital letters everywhere for vectorarrays)
-# N806 same for variables in function
+    "D10", # missing docstring in module, function, method, magic, __init__, public nested class
+    "D404", # First word of the docstring should not be "This"
+    "D401",
+    "D405", # The linter thinks the argument name 'parameters' is a docstring section
+    "D407", # same as above
+    "D410", # same as above
+    "D411", # same as above
+    "D414", # same as above
+    "E402", # module level import not at top of file (due to config.require("PKG") syntax)
+    "E731", # do not assign a lambda expression, use a def
+    "E741", # do not use variables named 'l', 'O', or 'I'
+    "F722", # syntax error in forward annotation
+    "N802", # function name should be lowercase
+    "N803", # argument name should be lowercase (we use single capital letters everywhere for vectorarrays)
+    "N806", # same for variables in function
+    ]
 
 [tool.ruff.flake8-import-conventions]
 banned-from = ["numpy.linalg"]  # avoids importing similar routines from numpy.linalg and scipy.linalg
