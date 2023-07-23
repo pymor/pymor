@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "pymor"
 dynamic = ["version"]
-description = " "
+description = "Library for building model order reduction applications with Python"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
 requires-python = ">=3.8"
@@ -141,7 +141,11 @@ pymor-demo = "pymor.scripts.pymor_demo:run"
 pymor-vis = "pymor.scripts.pymor_vis:run"
 
 [project.urls]
-Homepage = "https://pymor.org"
+homepage = "https://pymor.org"
+documentation = "https://docs.pymor.org"
+source = "https://github.com/pymor/pymor"
+tracker = "https://github.com/pymor/pymor/issues"
+"release notes" = "https://docs.pymor.org/latest/release_notes/all.html"
 
 # each entry is a list of paths that coverage will consider to be equivalent
 # this allows to map source files if pymor is imported from installed package
