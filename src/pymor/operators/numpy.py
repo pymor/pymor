@@ -243,9 +243,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert V in self.range
         return self.H.apply(V, mu=mu)
 
-    @defaults('check_finite', 'default_sparse_solver_backend')
+    @defaults('check_finite', 'check_cond', 'default_sparse_solver_backend')
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False,
-                      check_finite=True, default_sparse_solver_backend='scipy'):
+                      check_finite=True, check_cond=True, default_sparse_solver_backend='scipy'):
         """Apply the inverse operator.
 
         Parameters
@@ -272,6 +272,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             undesirable.
         check_finite
             Test if solution only contains finite values.
+        check_cond
+            Check condition number.
         default_sparse_solver_backend
             Default sparse solver backend to use (scipy, generic).
 
@@ -331,11 +333,12 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                         self._lu_factor = lu_factor(self.matrix, check_finite=check_finite)
                     except np.linalg.LinAlgError as e:
                         raise InversionError(f'{str(type(e))}: {str(e)}') from e
-                    gecon = get_lapack_funcs('gecon', self._lu_factor)
-                    rcond, _ = gecon(self._lu_factor[0], np.linalg.norm(self.matrix, ord=1), norm='1')
-                    if rcond < np.finfo(np.float64).eps:
-                        self.logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}) in apply_inverse: '
-                                            'result may not be accurate.')
+                    if check_cond:
+                        gecon = get_lapack_funcs('gecon', self._lu_factor)
+                        rcond, _ = gecon(self._lu_factor[0], np.linalg.norm(self.matrix, ord=1), norm='1')
+                        if rcond < np.finfo(np.float64).eps:
+                            self.logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}) in apply_inverse: '
+                                                'result may not be accurate.')
                 R = lu_solve(self._lu_factor, V.to_numpy().T, check_finite=check_finite).T
 
             if check_finite:
