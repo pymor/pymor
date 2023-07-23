@@ -26,6 +26,8 @@ def msd(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
     ----------
     n
         The order of the model.
+    m
+        The number or inputs and outputs of the model.
     m_i
         The weight of the masses.
     k_i
