@@ -196,7 +196,7 @@ class Parameters(SortedFrozenDict):
                     v = SymbolicExpressionFunction(Array([v.expression_obj]), dim_domain=1, variable='t')
 
                 len(v.shape_range) == 1 or fail(f'wrong shape_range of parameter function {k}')
-                v.shape_range[0] == self[k] or fail(f'wrong range dimension of prameter function {k}')
+                v.shape_range[0] == self[k] or fail(f'wrong range dimension of parameter function {k}')
                 return v
             elif isinstance(v, (tuple, list)):
                 all(isinstance(vv, (Number, str, Function)) for vv in v) or \
