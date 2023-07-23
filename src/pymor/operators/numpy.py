@@ -328,7 +328,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             else:
                 if not hasattr(self, '_lu_factor'):
                     try:
-                        self._lu_factor = lu_factor(self.matrix)
+                        self._lu_factor = lu_factor(self.matrix, check_finite=check_finite)
                     except np.linalg.LinAlgError as e:
                         raise InversionError(f'{str(type(e))}: {str(e)}') from e
                     gecon = get_lapack_funcs('gecon', self._lu_factor)
@@ -336,7 +336,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     if rcond < np.finfo(np.float64).eps:
                         self.logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}) in apply_inverse: '
                                             'result may not be accurate.')
-                R = lu_solve(self._lu_factor, V.to_numpy().T).T
+                R = lu_solve(self._lu_factor, V.to_numpy().T, check_finite=check_finite).T
 
             if check_finite:
                 if not np.isfinite(np.sum(R)):
