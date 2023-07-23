@@ -31,16 +31,16 @@ def _get_fitting_data(order, initial_J=False, initial_R=False):
 
     op = None
     if initial_J:
-        op = np.vstack([
-            np.hstack([J, G]),
-            np.hstack([-G.T, N])
+        op = np.block([
+            [Q.T @ J @ Q, Q.T @ G],
+            [-G.T @ Q, N]
         ])
     if initial_R:
-        op = np.vstack([
-            np.hstack([R, P]),
-            np.hstack([P.T, S])
+        op = np.block([
+            [Q.T @ R @ Q, Q.T @ P],
+            [P.T @ Q, S]
         ])
-    return fom_X, fom_Y, U, E, dt, op
+    return fom_X, fom_Y, U, E.T @ Q, dt, op
 
 
 @pytest.mark.parametrize('order', list(range(6, 21, 4)))
