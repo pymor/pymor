@@ -1,8 +1,6 @@
 name: Add Labels
-
 on:
-  - pull_request_target
-
+- pull_request_target
 jobs:
   # This action will triage pull requests and apply a label based on the
   # paths that are modified in the pull request.
@@ -12,4 +10,4 @@ jobs:
     steps:
     - uses: actions/labeler@v4
       with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        repo-token: ${{ secrets.GITHUB_TOKEN }}

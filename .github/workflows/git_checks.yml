@@ -2,27 +2,24 @@ on:
   pull_request:
   merge_group:
     types: [checks_requested]
-
 name: Git
-
 jobs:
   message-check:
     if: github.event_name != 'merge_group'
     name: Block Autosquash Commits
     runs-on: ubuntu-22.04
     steps:
-      - name: Block Autosquash Commits
-        uses: xt0rted/block-autosquash-commits-action@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
+    - name: Block Autosquash Commits
+      uses: xt0rted/block-autosquash-commits-action@v2
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
   merge_conflict_job:
     if: github.event_name != 'merge_group'
     runs-on: ubuntu-22.04
     name: Find merge conflicts
     steps:
       # Checkout the source code so we have some files to look at.
-      - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
       # Run the actual merge conflict finder
-      - name: Merge Conflict finder
-        uses: olivernybroe/action-conflict-finder@v4.0
+    - name: Merge Conflict finder
+      uses: olivernybroe/action-conflict-finder@v4.0
