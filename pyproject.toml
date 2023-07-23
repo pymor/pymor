@@ -227,7 +227,6 @@ ignore = [
   "D104", # missing docstring in public package
   "D105", # missing docstring in magic method
   "D106", # missing docstring in public nested class
-  "D107", # missing docstring in __init__
   "D401", # first line of docstring should be in imperative mood
   "D404", # first word of the docstring should not be "This"
   "D405", # the linter thinks the argument name 'parameters' is a docstring section
@@ -238,7 +237,6 @@ ignore = [
   "E402", # module level import not at top of file (due to config.require("PKG") syntax)
   "E731", # do not assign a lambda expression, use a def
   "E741", # do not use variables named 'l', 'O', or 'I'
-  "F722", # syntax error in forward annotation
   "N802", # function name should be lowercase
   "N803", # argument name should be lowercase (we use single capital letters everywhere for vectorarrays)
   "N806", # same for variables in function
@@ -261,7 +259,6 @@ inline-quotes = "single"
 "src/pymor/analyticalproblems/expressions.py" = ["N801"] # class name CapWords convention
 "src/pymor/basic.py" = ["F401"] # ununsed imports
 "src/pymordemos/*" = ["F403", "F405"] # undefined import due to pymor.basic functionality
-"versioneer.py" = ["N801"] # class name CapWords convention
 
 [tool.ruff.pycodestyle]
 max-doc-length = 100
