@@ -207,15 +207,30 @@ markers = [
 ]
 
 [tool.ruff]
-# this makes isort behave nicely
-src = ["src"]
+src = ["src"] # this makes isort behave nicely
 line-length = 120
-select = ["D", "E", "F", "I", "ICN", "N", "Q", "W"]
+select = [
+  "F", # Pyflakes
+  "W", # pycodestyle warning
+  "E", # pycodestyle error
+  "I", # isort
+  "N", # pep8-naming
+  "D", # pydocstyle
+  "ICN", # flake8-import-conventions
+  "Q", # flake8-quotes
+]
 ignore = [
-  "D10", # missing docstring in module, function, method, magic, __init__, public nested class
-  "D404", # First word of the docstring should not be "This"
-  "D401",
-  "D405", # The linter thinks the argument name 'parameters' is a docstring section
+  "D100", # missing docstring in public module
+  "D101", # missing docstring in public class
+  "D102", # missing docstring in public method
+  "D103", # missing docstring in public function
+  "D104", # missing docstring in public package
+  "D105", # missing docstring in magic method
+  "D106", # missing docstring in public nested class
+  "D107", # missing docstring in __init__
+  "D401", # first line of docstring should be in imperative mood
+  "D404", # first word of the docstring should not be "This"
+  "D405", # the linter thinks the argument name 'parameters' is a docstring section
   "D407", # same as above
   "D410", # same as above
   "D411", # same as above
@@ -240,13 +255,13 @@ scipy = "" # don't import scipy directly
 inline-quotes = "single"
 
 [tool.ruff.per-file-ignores]
-"__init__.py" = ["F401"]
+"__init__.py" = ["F401"] # module imported but unused
+"docs/source/try_on_binder.py" = ["N801"] # class name CapWords convention
 "src/pymor/algorithms/rules.py" = ["N801", "N805"] # class name CapWords convention, first argument should be `self`
 "src/pymor/analyticalproblems/expressions.py" = ["N801"] # class name CapWords convention
-"versioneer.py" = ["N801"] # class name CapWords convention
-"docs/source/try_on_binder.py" = ["N801"] # class name CapWords convention
-"src/pymordemos/*" = ["F403", "F405"] # undefined import due to pymor.basic functionality
 "src/pymor/basic.py" = ["F401"] # ununsed imports
+"src/pymordemos/*" = ["F403", "F405"] # undefined import due to pymor.basic functionality
+"versioneer.py" = ["N801"] # class name CapWords convention
 
 [tool.ruff.pycodestyle]
 max-doc-length = 100
