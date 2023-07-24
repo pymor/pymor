@@ -67,3 +67,18 @@ def test_pod_with_product(operator_with_arrays_and_products, method):
     assert np.all(almost_equal(A, B))
     assert len(U) == len(s)
     assert np.allclose(U.gramian(p), np.eye(len(s)))
+
+
+@pytest.mark.parametrize('method', methods)
+def test_pod_with_product_and_coefficients(operator_with_arrays_and_products, method):
+    _, _, A, _, p, _ = operator_with_arrays_and_products
+
+    B = A.copy()
+    with log_levels({'pymor.algorithms': 'ERROR'}):
+        U, s, Vh = pod(A, product=p, method=method, return_reduced_coefficients=True)
+    assert np.all(almost_equal(A, B))
+    assert len(U) == len(s) == len(Vh)
+    if len(s) > 0:
+        U.scal(s)
+        UsVh = U.lincomb(Vh.T)
+        assert spla.norm((A - UsVh).norm() / spla.norm(A.norm())) < 1e-7
