@@ -11,7 +11,11 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.exceptions import PHDMDError
 from pymor.core.logger import getLogger
 from pymor.models.iosys import PHLTIModel
+from pymor.operators.block import BlockOperator
+from pymor.operators.constructions import VectorArrayOperator
 from pymor.operators.interface import Operator
+from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
 
 
@@ -71,10 +75,8 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
 
     Returns
     -------
-    J
-        The `NumPy array` containing :math:`J`.
-    R
-        The `NumPy array` containing :math:`R`.
+    inf_model
+        The inferred |PHLTIModel|.
     data
         Dict containing the following fields:
 
@@ -114,58 +116,84 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
     Y = .5 * (Y[1:] + Y[:-1])
     U = .5 * (U[1:] + U[:-1])
 
+    block_space = BlockVectorSpace([X.space, U.space])
+    space_dim = X.dim
+    space_id = X.space.id
+
     if H is None:
         logger.warn('No H matrix provided. Did you intend this?')
-        H = np.eye(X.dim)
+        H = NumpyMatrixOperator(np.eye(X.dim), source_id=space_id, range_id=space_id)
     else:
-        if isinstance(H, Operator):
-            assert H.source == H.range == X.space
-            H = to_matrix(H)
+        if isinstance(H, np.ndarray):
+            assert len(H.shape) == 2
+            H = NumpyMatrixOperator(H, source_id=space_id, range_id=space_id)
         elif isinstance(H, VectorArray):
             assert len(H) == H.dim == X.dim
-            H = H.to_numpy()
+            H = VectorArrayOperator(H, space_id=space_id)
 
-    assert isinstance(H, np.ndarray)
-    assert len(H.shape) == 2
+    assert isinstance(H, Operator)
+    assert H.source == H.range == X.space
 
-    Xdot = Xdot.to_numpy().T
-    X = X.to_numpy().T
-    Y = Y.to_numpy().T
-    U = U.to_numpy().T
-
-    T = np.concatenate((X, U))
-    Z = np.concatenate((H @ Xdot, -Y))
+    T = block_space.make_array([X, U])
+    Z = block_space.make_array([H.apply(Xdot), -Y])
     data = {}
 
     if initial_J is None and initial_R is not None:
         logger.info('Solving skew-symmetric Procrustes problem to get initial operators...')
-        initial_J, skew_data = _skew_symmetric_procrustes(T, initial_R @ T + Z, rtol=skew_procrustes_rtol)
+        if isinstance(initial_R, np.ndarray):
+            initial_R = BlockOperator([
+                [
+                    NumpyMatrixOperator(initial_R[:space_dim, :space_dim], source_id=space_id, range_id=space_id),
+                    NumpyMatrixOperator(initial_R[:space_dim, space_dim:], range_id=space_id)
+                ],
+                [
+                    NumpyMatrixOperator(initial_R[space_dim:, :space_dim], source_id=space_id),
+                    NumpyMatrixOperator(initial_R[space_dim:, space_dim:])
+                ]
+            ])
+
+        assert initial_R.source == block_space and initial_R.range == block_space
+        initial_J, skew_data = _skew_symmetric_procrustes(T, initial_R.apply(T) + Z, rtol=skew_procrustes_rtol)
         data['skew_init_data'] = skew_data
     elif initial_J is not None and initial_R is None:
         logger.info('Solving spsd Procrustes problem to get initial operators...')
-        initial_R, spsd_data = _initial_psd_symmetric_procrustes(T, initial_J @ T - Z)
+        if isinstance(initial_J, np.ndarray):
+            initial_J = BlockOperator([
+                [
+                    NumpyMatrixOperator(initial_J[:space_dim, :space_dim], source_id=space_id, range_id=space_id),
+                    NumpyMatrixOperator(initial_J[:space_dim, space_dim:], range_id=space_id)
+                ],
+                [
+                    NumpyMatrixOperator(initial_J[space_dim:, :space_dim], source_id=space_id),
+                    NumpyMatrixOperator(initial_J[space_dim:, space_dim:])
+                ]
+            ])
+
+        assert initial_J.source == block_space and initial_J.range == block_space
+        initial_R, spsd_data = _initial_psd_symmetric_procrustes(T, initial_J.apply(T) - Z)
         data['spsd_init_data'] = spsd_data
     elif initial_J is None and initial_R is None:
         logger.info('Solving weighted problem to get initial operators...')
         initial_J, initial_R, weighted_data = _weighted_phdmd(T, Z, rtol=weighted_rtol)
         data['weighted_init_data'] = weighted_data
 
-    assert isinstance(initial_J, np.ndarray) and isinstance(initial_R, np.ndarray)
-    assert len(initial_J.shape) == 2 and len(initial_R.shape) == 2
+    assert isinstance(initial_J, BlockOperator) and isinstance(initial_R, BlockOperator)
+    assert initial_J.source == initial_R.source == initial_J.range == initial_R.range
+
     J = initial_J
     R = initial_R
 
     logger.info('Running pH DMD algorithm...')
 
-    sing_vals = eigh(T @ T.T, eigvals_only=True)
+    sing_vals = eigh(T.inner(T), eigvals_only=True)
     L = max(sing_vals)
     mu = min(sing_vals)
     sing_ratio = mu / L
 
     alphas = [initial_alpha]
     betas = []
-    abs_errs = [np.linalg.norm(Z - (J - R) @ T, 'fro')]
-    rel_errs = [abs_errs[0] / np.linalg.norm(Z, 'fro')]
+    abs_errs = [np.linalg.norm((Z - (J - R).apply(T)).to_numpy(), 'fro')]
+    rel_errs = [abs_errs[0] / np.linalg.norm(Z.to_numpy(), 'fro')]
     update_norms = []
     procrustes_data = []
 
@@ -199,14 +227,14 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
         J_prev = J
         last_alpha = alphas[-1]
 
-        Z_1 = Z + R @ T
+        Z_1 = Z + R.apply(T)
         logger.info('Solving skew-symmetric Procrustes subproblem...')
         J, skew_procrustes_data = _skew_symmetric_procrustes(T, Z_1, rtol=skew_procrustes_rtol)
         procrustes_data.append(skew_procrustes_data)
-        Z_2 = J @ T - Z
-        G = Q @ T @ T.T - Z_2 @ T.T
+        Z_2 = J.apply(T) - Z
+        G = Q.apply(T).to_numpy().T @ T.to_numpy() - Z_2.to_numpy().T @ T.to_numpy()
 
-        R = _project_spsd(Q - (1. / L) * G)
+        R = _project_spsd(to_matrix(Q) - (1. / L) * G, dim=space_dim, id=space_id)
         alpha = np.sqrt((last_alpha ** 2 - sing_ratio) ** 2 + 4 * last_alpha ** 2)
         alpha += (sing_ratio - last_alpha ** 2)
         alpha /= 2.
@@ -216,10 +244,10 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
         alphas.append(alpha)
         betas.append(beta)
 
-        abs_errs.append(np.linalg.norm(Z - (J - R) @ T, 'fro'))
-        rel_errs.append(abs_errs[-1] / np.linalg.norm(Z, 'fro'))
-        update_norm = np.linalg.norm(J_prev - J, 'fro') / np.linalg.norm(J, 'fro') \
-                    + np.linalg.norm(R_prev - R, 'fro') / np.linalg.norm(J, 'fro')
+        abs_errs.append(np.linalg.norm((Z - (J - R).apply(T)).to_numpy(), 'fro'))
+        rel_errs.append(abs_errs[-1] / np.linalg.norm(Z.to_numpy(), 'fro'))
+        update_norm = np.linalg.norm(to_matrix(J_prev - J), 'fro') / np.linalg.norm(to_matrix(J), 'fro') \
+                    + np.linalg.norm(to_matrix(R_prev - R), 'fro') / np.linalg.norm(to_matrix(J), 'fro')
         update_norms.append(update_norm)
 
     data['update_norms'] = np.array(update_norms)
@@ -228,15 +256,14 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
     data['iterations'] = iteration
     data['skew_procrustes_data'] = procrustes_data
 
-    data_dim = len(X)
-    inf_J = J[:data_dim, :data_dim]
-    inf_G = J[:data_dim, data_dim:]
-    inf_N = J[data_dim:, data_dim:]
-    inf_R = R[:data_dim, :data_dim]
-    inf_P = R[:data_dim, data_dim:]
-    inf_S = R[data_dim:, data_dim:]
-    inf_model = PHLTIModel.from_matrices(
-        inf_J, inf_R, inf_G, inf_P, inf_S, inf_N, H
+    inf_J = J.blocks[0, 0]
+    inf_G = J.blocks[0, 1]
+    inf_N = J.blocks[1, 1]
+    inf_R = R.blocks[0, 0]
+    inf_P = R.blocks[0, 1]
+    inf_S = R.blocks[1, 1]
+    inf_model = PHLTIModel(
+        J=inf_J, R=inf_R, G=inf_G, P=inf_P, N=inf_N, S=inf_S, E=H
     )
 
     return inf_model, data
@@ -262,9 +289,9 @@ def _weighted_phdmd(X, Y, rtol=1e-12):
     Parameters
     ----------
     X
-        The `NumPy array` of the system data.
+        The :class:`~pymor.vectorarrays.block.BlockVectorArray` of the system data.
     Y
-        The `NumPy array` of the system output data.
+        The :class:`~pymor.vectorarrays.block.BlockVectorArray` of the system output data.
     rtol
         Truncate the singular values when the ratio with respect to the largest singular value
         is below this threshold.
@@ -272,24 +299,25 @@ def _weighted_phdmd(X, Y, rtol=1e-12):
     Returns
     -------
     J
-        The `NumPy array` containing :math:`J`.
+        The initial :class:`~pymor.operators.block.BlockOperator` for `J`.
     R
-        The `NumPy array` containing :math:`R`.
+        The initial :class:`~pymor.operators.block.BlockOperator` for `R`.
     data
         Dict containing the following fields:
 
             :abs:   Value of absolute solution error.
             :rel:   Value of relative solution error.
     """
-    assert isinstance(X, np.ndarray) and isinstance(Y, np.ndarray)
-    assert len(X.shape) == 2 and len(Y.shape) == 2
-    assert X.shape[1] == Y.shape[1]
+    assert isinstance(X, VectorArray) and isinstance(Y, VectorArray)
+    assert X.space == Y.space
 
     logger = getLogger('pymor.algorithms.phdmd.weighted_phdmd')
 
-    data_dim = len(X)
+    total_data_dim = X.dim
+    space_dim = X.space.subspaces[0].dim
+    space_id = X.space.subspaces[0].id
 
-    U, s_vals, V = svd(X)
+    U, s_vals, V = svd(X.to_numpy().T)
 
     rank = np.argmax(s_vals / s_vals[0] < rtol)
     rank = rank if rank > 0 else len(s_vals)
@@ -297,35 +325,57 @@ def _weighted_phdmd(X, Y, rtol=1e-12):
     trunc_S = diags(s_vals[:rank])
     trunc_S_inv = diags(1. / s_vals[:rank])
 
-    if rank < data_dim:
-        logger.warn(f'Deficient rank ({rank} < {data_dim})!')
+    if rank < total_data_dim:
+        logger.warn(f'Deficient rank ({rank} < {total_data_dim})!')
 
-    Z_1 = U.T @ Y @ V.T
+    Z_1 = U.T @ Y.to_numpy().T @ V.T
 
     helper = trunc_S @ Z_1[:rank, :rank]
     J_11 = .5 * (helper - helper.T)
-    R_11 = _project_spsd(-helper)
+    R_11 = _project_spsd(-helper, dim=space_dim)
     J = U[:, :rank] @ trunc_S_inv @ J_11 @ trunc_S_inv @ U[:, :rank].T
-    R = U[:, :rank] @ trunc_S_inv @ R_11 @ trunc_S_inv @ U[:, :rank].T
+    R = U[:, :rank] @ trunc_S_inv @ to_matrix(R_11) @ trunc_S_inv @ U[:, :rank].T
 
-    if rank < data_dim:
+    if rank < total_data_dim:
         J_21, _, _, _ = lstsq(trunc_S.todense(), Z_1[rank:, :rank].T, cond=None)
-        top_filler = np.zeros((data_dim - rank, data_dim - rank))
-        top_comp = np.hstack((top_filler, J_21.T))
+        top_filler = np.zeros((total_data_dim - rank, total_data_dim - rank))
         bottom_filler = np.zeros((rank, rank))
-        bottom_comp = np.hstack((-J_21, bottom_filler))
-        compensation = np.vstack([top_comp, bottom_comp])
+        compensation = np.block([
+            [top_filler, J_21.T],
+            [-J_21, bottom_filler]
+        ])
 
         J = J + U @ compensation @ U.T
 
-    abs_err = np.linalg.norm(X.T @ Y - X.T @ (J - R) @ X, 'fro')
-    rel_err = abs_err / np.linalg.norm(X.T @ Y, 'fro')
+    J = BlockOperator([
+        [
+            NumpyMatrixOperator(J[:space_dim, :space_dim], source_id=space_id, range_id=space_id),
+            NumpyMatrixOperator(J[:space_dim, space_dim:], range_id=space_id)
+        ],
+        [
+            NumpyMatrixOperator(J[space_dim:, :space_dim], source_id=space_id),
+            NumpyMatrixOperator(J[space_dim:, space_dim:])
+        ]
+    ])
+    R = BlockOperator([
+        [
+            NumpyMatrixOperator(R[:space_dim, :space_dim], source_id=space_id, range_id=space_id),
+            NumpyMatrixOperator(R[:space_dim, space_dim:], range_id=space_id)
+        ],
+        [
+            NumpyMatrixOperator(R[space_dim:, :space_dim], source_id=space_id),
+            NumpyMatrixOperator(R[space_dim:, space_dim:])
+        ]
+    ])
+
+    abs_err = np.linalg.norm(X.inner(Y) - (J - R).apply2(X, X), 'fro')
+    rel_err = abs_err / np.linalg.norm(X.inner(Y), 'fro')
     data = {'abs': abs_err, 'rel': rel_err}
 
     return J, R, data
 
 
-def _project_spsd(matrix):
+def _project_spsd(matrix, dim, id=None):
     """Project the matrix onto the set of symmetric and positive semidefinite matrices.
 
     Not intended to be used directly.
@@ -334,13 +384,30 @@ def _project_spsd(matrix):
     ----------
     matrix
         The `NumPy array` containing the matrix to project.
+
+    Returns
+    -------
+    A
+        The :class:`~pymor.operators.block.BlockOperator` containing the projected matrix.
     """
     assert isinstance(matrix, np.ndarray)
     assert len(matrix.shape) == 2
 
     matrix = .5 * (matrix + matrix.T)
     eig_vals, eig_vecs = eigh(matrix)
-    return eig_vecs @ diags(eig_vals.clip(min = 0)) @ eig_vecs.T
+    projected = eig_vecs @ diags(eig_vals.clip(min = 0)) @ eig_vecs.T
+    A = BlockOperator([
+        [
+            NumpyMatrixOperator(projected[:dim, :dim], source_id=id, range_id=id),
+            NumpyMatrixOperator(projected[:dim, dim:], range_id=id)
+        ],
+        [
+            NumpyMatrixOperator(projected[dim:, :dim], source_id=id),
+            NumpyMatrixOperator(projected[dim:, dim:])
+        ]
+    ])
+
+    return A
 
 
 def _skew_symmetric_procrustes(X, Y, rtol=1e-12):
@@ -357,9 +424,9 @@ def _skew_symmetric_procrustes(X, Y, rtol=1e-12):
     Parameters
     ----------
     X
-        The `NumPy array` of the system data.
+        The :class:`~pymor.vectorarrays.block.BlockVectorArray` of the system data.
     Y
-        The `NumPy array` of the system output data.
+        The :class:`~pymor.vectorarrays.block.BlockVectorArray` of the system output data.
     rtol
         Truncate the singular values and matrix entries of :math:`A` when the ratio with respect
         to the largest value is below this threshold.
@@ -367,20 +434,21 @@ def _skew_symmetric_procrustes(X, Y, rtol=1e-12):
     Returns
     -------
     A
-        The `NumPy array` containing the matrix mapping `X` to `Y`.
+        The :class:`~pymor.operators.block.BlockOperator` containing the matrix mapping `X` to `Y`.
     data
         Dict containing the following fields:
 
             :abs:   Value of absolute fitting error.
             :rel:   Value of relative fitting error.
     """
-    assert isinstance(X, np.ndarray) and isinstance(Y, np.ndarray)
-    assert len(X.shape) == 2 and len(Y.shape) == 2
-    assert X.shape[1] == Y.shape[1]
+    assert isinstance(X, VectorArray) and isinstance(Y, VectorArray)
+    assert X.space == Y.space
 
-    data_dim = len(X)
+    total_data_dim = X.dim
+    space_dim = X.space.subspaces[0].dim
+    space_id = X.space.subspaces[0].id
 
-    U, s_vals, V = np.linalg.svd(X)
+    U, s_vals, V = np.linalg.svd(X.to_numpy().T)
     V = V.conj().T
 
     rank = np.argmax(s_vals / s_vals[0] < rtol)
@@ -389,7 +457,7 @@ def _skew_symmetric_procrustes(X, Y, rtol=1e-12):
     trunc_s_vals = s_vals[:rank]
     trunc_S = diags(trunc_s_vals)
 
-    Y_trans = U.T @ Y @ V
+    Y_trans = U.T @ Y.to_numpy().T @ V
     Z_1 = Y_trans[:rank, :rank]
     Z_3 = Y_trans[rank:, :rank].T
 
@@ -403,18 +471,30 @@ def _skew_symmetric_procrustes(X, Y, rtol=1e-12):
     # this then breaks the hstack(...) afterwards
     if A_2.ndim == 1:
         A_2 = A_2[:, np.newaxis]
-    A_4 = np.zeros((data_dim - rank, data_dim - rank))
-    A_1 = np.hstack((A_1, A_2))
-    A_4 = np.hstack((-A_2.T, A_4))
-    A = np.concatenate((A_1, A_4))
+    A_4 = np.zeros((total_data_dim - rank, total_data_dim - rank))
+    A = np.block([
+        [A_1, A_2],
+        [-A_2.T, A_4]
+    ])
     A = U @ A @ U.T
 
     A_abs = np.abs(A)
     indices = np.where(A_abs / np.amax(A_abs) < rtol)
     A[indices] = 0.
 
-    abs_err = np.linalg.norm(A @ X - Y, 'fro')
-    rel_err = abs_err / np.linalg.norm(Y, 'fro')
+    A = BlockOperator([
+        [
+            NumpyMatrixOperator(A[:space_dim, :space_dim], source_id=space_id, range_id=space_id),
+            NumpyMatrixOperator(A[:space_dim, space_dim:], range_id=space_id)
+        ],
+        [
+            NumpyMatrixOperator(A[space_dim:, :space_dim], source_id=space_id),
+            NumpyMatrixOperator(A[space_dim:, space_dim:])
+        ]
+    ])
+
+    abs_err = np.linalg.norm((A.apply(X) - Y).to_numpy(), 'fro')
+    rel_err = abs_err / np.linalg.norm(Y.to_numpy(), 'fro')
     data = {'abs': abs_err, 'rel': rel_err}
 
     return A, data
@@ -435,9 +515,9 @@ def _initial_psd_symmetric_procrustes(X, Y, reg=1e-6):
     Parameters
     ----------
     X
-        The `NumPy array` of the system data.
+        The :class:`~pymor.vectorarrays.block.BlockVectorArray` of the system data.
     Y
-        The `NumPy array` of the system output data.
+        The :class:`~pymor.vectorarrays.block.BlockVectorArray` of the system output data.
     reg
         Regularization parameter applied to every element on the main diagonal
         to avoid singular matrices.
@@ -445,22 +525,38 @@ def _initial_psd_symmetric_procrustes(X, Y, reg=1e-6):
     Returns
     -------
     A
-        The `NumPy array` containing the matrix mapping `X` to `Y`.
+        The :class:`~pymor.operators.block.BlockOperator` containing the matrix mapping `X` to `Y`.
     data
         Dict containing the following fields:
 
             :abs:   Value of absolute fitting error.
             :rel:   Value of relative fitting error.
     """
-    data_dim = len(X)
+    assert isinstance(X, VectorArray) and isinstance(Y, VectorArray)
+    assert X.space == Y.space
+
+    data_dim = X.dim
+    space_dim = X.space.subspaces[0].dim
+    space_id = X.space.subspaces[0].id
 
     A = np.zeros((data_dim, data_dim))
     for i in range(data_dim):
-        X_row = X[i]
-        A[i, i] = max(0, X_row @ Y[i].T) / np.linalg.norm(X_row) ** 2 + reg
+        X_row = X.to_numpy().T[i]
+        A[i, i] = max(0, X_row @ Y.to_numpy()[:, i]) / np.linalg.norm(X_row) ** 2 + reg
 
-    abs_err = np.linalg.norm(Y - A @ X, 'fro')
-    rel_err = abs_err / np.linalg.norm(Y, 'fro')
+    A = BlockOperator([
+        [
+            NumpyMatrixOperator(A[:space_dim, :space_dim], source_id=space_id, range_id=space_id),
+            NumpyMatrixOperator(A[:space_dim, space_dim:], range_id=space_id)
+        ],
+        [
+            NumpyMatrixOperator(A[space_dim:, :space_dim], source_id=space_id),
+            NumpyMatrixOperator(A[space_dim:, space_dim:])
+        ]
+    ])
+
+    abs_err = np.linalg.norm((Y - A.apply(X)).to_numpy(), 'fro')
+    rel_err = abs_err / np.linalg.norm(Y.to_numpy(), 'fro')
 
     data = {}
     data = {'abs': abs_err, 'rel': rel_err}

@@ -12,10 +12,10 @@ from pymordemos.phdmd import _implicit_midpoint, excitation_control
 from pymordemos.phlti import msd
 
 
-def _get_fitting_data(order, initial_J=False, initial_R=False):
+def _get_fitting_data(order, num_outputs=1, initial_J=False, initial_R=False):
     assert not (initial_J and initial_R)
 
-    J, R, G, P, S, N, E, Q = msd(order, 1)
+    J, R, G, P, S, N, E, Q = msd(order, m=num_outputs)
     fom = PHLTIModel.from_matrices(J, R, G, P, S, N, E, Q).to_berlin_form()
 
     dt = 4e-2

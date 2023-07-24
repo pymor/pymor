@@ -27,9 +27,11 @@ def main(
     J, R, G, P, S, N, E, Q = msd(n=fom_order, m=1)
 
     fom = PHLTIModel.from_matrices(J, R, G, P, S, N, E, Q).to_berlin_form()
+    fom_H = E.T @ Q
+
     phirka = PHIRKAReductor(fom)
     rom = phirka.reduce(rom_order)
-    _, _, _, _, _, _, rom_E, _ = rom.to_matrices()
+    _, _, _, _, _, _, rom_H, _ = rom.to_matrices()
 
     training_time_stamps = np.arange(0., final_training_time + dt, dt)
     validation_time_stamps = np.arange(0., final_validation_time + dt, dt)
@@ -50,8 +52,8 @@ def main(
     rom_Y = io_space.from_numpy(rom_Y.T)
     U = io_space.from_numpy(U.T)
 
-    inf_fom, fom_data = phdmd(fom_X, fom_Y, U, H=E, dt=dt, rtol=1e-8)
-    inf_rom, rom_data = phdmd(rom_X, rom_Y, U, H=rom_E, dt=dt)
+    inf_fom, fom_data = phdmd(fom_X, fom_Y, U, H=fom_H, dt=dt, rtol=1e-8)
+    inf_rom, rom_data = phdmd(rom_X, rom_Y, U, H=rom_H, dt=dt)
 
     _, _, fom_Y, _ = _implicit_midpoint(fom, validation_control(final_validation_time),
                                         fom_initial, validation_time_stamps)
@@ -79,11 +81,11 @@ def _implicit_midpoint(model, control, initial_condition, time_stamps, return_de
     assert isinstance(model, PHLTIModel)
     assert isinstance(model.Q, IdentityOperator), 'PHLTIModel has to be in generalized form!'
 
-    control_snapshots = control(time_stamps)
+    dt = time_stamps[1] - time_stamps[0]
+
+    control_snapshots = control(time_stamps + dt / 2.)
     if control_snapshots.ndim < 2:
         control_snapshots = control_snapshots[np.newaxis, :]
-
-    dt = time_stamps[1] - time_stamps[0]
 
     J, R, G, P, S, N, E, _ = model.to_matrices()
     A = J - R
