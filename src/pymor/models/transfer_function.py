@@ -554,52 +554,62 @@ class FactorizedTransferFunction(TransferFunction):
     """
 
     def __init__(self, dim_input, dim_output, K, B, C, D, dK=None, dB=None, dC=None, dD=None,
-                 parameters={}, sampling_time=0, name=None):
+                 parameters={'s': 1}, sampling_time=0, name=None):
         def tf(s, mu=None):
+            if mu is None:
+                mu = Mu({
+                    's': [s],
+                    **{ key: np.zeros(dim) for key, dim in parameters.items() }
+                })
             if dim_input <= dim_output:
-                B_vec = B(s).as_range_array(mu=mu)
-                Kinv_B = K(s).apply_inverse(B_vec, mu=mu)
-                res = C(s).apply(Kinv_B, mu=mu).to_numpy().T
+                B_vec = B.as_range_array(mu=mu)
+                Kinv_B = K.apply_inverse(B_vec, mu=mu)
+                res = C.apply(Kinv_B, mu=mu).to_numpy().T
             else:
-                C_vec_adj = C(s).as_source_array(mu=mu).conj()
-                Kinvadj_Cadj = K(s).apply_inverse_adjoint(C_vec_adj, mu=mu)
-                res = B(s).apply_adjoint(Kinvadj_Cadj, mu=mu).to_numpy().conj()
-            res += to_matrix(D(s), format='dense', mu=mu)
+                C_vec_adj = C.as_source_array(mu=mu).conj()
+                Kinvadj_Cadj = K.apply_inverse_adjoint(C_vec_adj, mu=mu)
+                res = B.apply_adjoint(Kinvadj_Cadj, mu=mu).to_numpy().conj()
+            res += to_matrix(D, format='dense', mu=mu)
             return res
 
         if dK is None or dB is None or dC is None:
             dtf = None
         else:
             def dtf(s, mu=None):
+                if mu is None:
+                    mu = Mu({
+                        's': [s],
+                        **{ key: np.zeros(dim) for key, dim in parameters.items() }
+                    })
                 if dim_input <= dim_output:
-                    B_vec = B(s).as_range_array(mu=mu)
-                    Ki_B = K(s).apply_inverse(B_vec, mu=mu)
-                    dC_Ki_B = dC(s).apply(Ki_B, mu=mu).to_numpy().T
+                    B_vec = B.as_range_array(mu=mu)
+                    Ki_B = K.apply_inverse(B_vec, mu=mu)
+                    dC_Ki_B = dC.apply(Ki_B, mu=mu).to_numpy().T
 
-                    dB_vec = dB(s).as_range_array(mu=mu)
-                    Ki_dB = K(s).apply_inverse(dB_vec, mu=mu)
-                    C_Ki_dB = C(s).apply(Ki_dB, mu=mu).to_numpy().T
+                    dB_vec = dB.as_range_array(mu=mu)
+                    Ki_dB = K.apply_inverse(dB_vec, mu=mu)
+                    C_Ki_dB = C.apply(Ki_dB, mu=mu).to_numpy().T
 
-                    dK_Ki_B = dK(s).apply(Ki_B, mu=mu)
-                    Ki_dK_Ki_B = K(s).apply_inverse(dK_Ki_B, mu=mu)
-                    C_Ki_dK_Ki_B = C(s).apply(Ki_dK_Ki_B, mu=mu).to_numpy().T
+                    dK_Ki_B = dK.apply(Ki_B, mu=mu)
+                    Ki_dK_Ki_B = K.apply_inverse(dK_Ki_B, mu=mu)
+                    C_Ki_dK_Ki_B = C.apply(Ki_dK_Ki_B, mu=mu).to_numpy().T
 
                     res = dC_Ki_B + C_Ki_dB - C_Ki_dK_Ki_B
                 else:
-                    C_vec_a = C(s).as_source_array(mu=mu).conj()
-                    Kia_Ca = K(s).apply_inverse_adjoint(C_vec_a, mu=mu)
-                    dC_Ki_B = dB(s).apply_adjoint(Kia_Ca, mu=mu).to_numpy().conj()
+                    C_vec_a = C.as_source_array(mu=mu).conj()
+                    Kia_Ca = K.apply_inverse_adjoint(C_vec_a, mu=mu)
+                    dC_Ki_B = dB.apply_adjoint(Kia_Ca, mu=mu).to_numpy().conj()
 
-                    dC_vec_a = dC(s).as_source_array(mu=mu).conj()
-                    Kia_dCa = K(s).apply_inverse_adjoint(dC_vec_a, mu=mu)
-                    CKidB = B(s).apply_adjoint(Kia_dCa, mu=mu).to_numpy().conj()
+                    dC_vec_a = dC.as_source_array(mu=mu).conj()
+                    Kia_dCa = K.apply_inverse_adjoint(dC_vec_a, mu=mu)
+                    CKidB = B.apply_adjoint(Kia_dCa, mu=mu).to_numpy().conj()
 
-                    dKa_Kiajd_Ca = dK(s).apply_adjoint(Kia_Ca, mu=mu)
-                    Kia_dKa_Kia_Ca = K(s).apply_inverse_adjoint(dKa_Kiajd_Ca, mu=mu)
-                    C_Ki_dK_Ki_B = B(s).apply_adjoint(Kia_dKa_Kia_Ca, mu=mu).to_numpy().conj()
+                    dKa_Kiajd_Ca = dK.apply_adjoint(Kia_Ca, mu=mu)
+                    Kia_dKa_Kia_Ca = K.apply_inverse_adjoint(dKa_Kiajd_Ca, mu=mu)
+                    C_Ki_dK_Ki_B = B.apply_adjoint(Kia_dKa_Kia_Ca, mu=mu).to_numpy().conj()
 
                     res = dC_Ki_B + CKidB - C_Ki_dK_Ki_B
-                res += to_matrix(dD(s), format='dense', mu=mu)
+                res += to_matrix(dD, format='dense', mu=mu)
                 return res
 
         super().__init__(dim_input, dim_output, tf, dtf=dtf, parameters=parameters,
@@ -618,20 +628,20 @@ class FactorizedTransferFunction(TransferFunction):
         if type(other) is not FactorizedTransferFunction:
             other = other.transfer_function
 
-        K = lambda s: BlockDiagonalOperator([self.K(s), other.K(s)])
-        B = lambda s: BlockColumnOperator([self.B(s), other.B(s)])
-        C = lambda s: BlockRowOperator([self.C(s), other.C(s)])
-        D = lambda s: self.D(s) + other.D(s)
-        dK = (lambda s: BlockDiagonalOperator([self.dK(s), other.dK(s)])
+        K = BlockDiagonalOperator([self.K, other.K])
+        B = BlockColumnOperator([self.B, other.B])
+        C = BlockRowOperator([self.C, other.C])
+        D = self.D + other.D
+        dK = (BlockDiagonalOperator([self.dK, other.dK])
               if self.dK is not None and other.dK is not None
               else None)
-        dB = (lambda s: BlockColumnOperator([self.dB(s), other.dB(s)])
+        dB = (BlockColumnOperator([self.dB, other.dB])
               if self.dB is not None and other.dB is not None
               else None)
-        dC = (lambda s: BlockRowOperator([self.dC(s), other.dC(s)])
+        dC = (BlockRowOperator([self.dC, other.dC])
               if self.dC is not None and other.dC is not None
               else None)
-        dD = (lambda s: self.dD(s) + other.dD(s)
+        dD = (self.dD + other.dD
               if self.dD is not None and other.dD is not None
               else None)
 
@@ -640,10 +650,10 @@ class FactorizedTransferFunction(TransferFunction):
     __radd__ = __add__
 
     def __neg__(self):
-        C = lambda s: -self.C(s)
-        D = lambda s: -self.D(s)
-        dC = lambda s: -self.dC(s) if self.dC is not None else None
-        dD = lambda s: -self.dD(s) if self.dD is not None else None
+        C = -self.C
+        D = -self.D
+        dC = -self.dC if self.dC is not None else None
+        dD = -self.dD if self.dD is not None else None
         return self.with_(C=C, D=D, dC=dC, dD=dD)
 
     def __mul__(self, other):
@@ -657,22 +667,22 @@ class FactorizedTransferFunction(TransferFunction):
         if type(other) is not FactorizedTransferFunction:
             other = other.transfer_function
 
-        K = lambda s: BlockOperator([[self.K(s), -self.B(s) @ other.C(s)],
-                                     [None, other.K(s)]])
-        B = lambda s: BlockColumnOperator([self.B(s) @ other.D(s), other.B(s)])
-        C = lambda s: BlockRowOperator([self.C(s), self.D(s) @ other.C(s)])
-        D = lambda s: self.D(s) @ other.D(s)
-        dK = (lambda s: BlockOperator([[self.dK(s), self.dB(s) @ other.C(s) + self.B(s) @ other.dC(s)],
-                                       [None, other.dK(s)]])
+        K = BlockOperator([[self.K, -self.B @ other.C],
+                                     [None, other.K]])
+        B = BlockColumnOperator([self.B @ other.D, other.B])
+        C = BlockRowOperator([self.C, self.D @ other.C])
+        D = self.D @ other.D
+        dK = (BlockOperator([[self.dK, self.dB @ other.C + self.B @ other.dC],
+                                       [None, other.dK]])
               if self.dK is not None and other.dK is not None and self.dB is not None and other.dC is not None
               else None)
-        dB = (lambda s: BlockColumnOperator([self.dB(s) @ other.D(s) + self.B(s) @ other.dD(s), other.dB(s)])
+        dB = (BlockColumnOperator([self.dB @ other.D + self.B @ other.dD, other.dB])
               if self.dB is not None and other.dB is not None and other.dD is not None
               else None)
-        dC = (lambda s: BlockRowOperator([self.dC(s), self.dD(s) @ other.C(s) + self.D(s) @ other.dC(s)])
+        dC = (BlockRowOperator([self.dC, self.dD @ other.C + self.D @ other.dC])
               if self.dC is not None and other.dC is not None and self.dD is not None
               else None)
-        dD = (lambda s: self.dD(s) @ other.D(s) + self.D(s) @ other.dD(s)
+        dD = (self.dD @ other.D + self.D @ other.dD
               if self.dD is not None and other.dD is not None
               else None)
 

@@ -46,6 +46,7 @@ from pymor.operators.constructions import (
 )
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu, Parameters
+from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
 
@@ -225,15 +226,17 @@ class LTIModel(Model):
         self.solution_space = A.source
         self.dim_output = C.range.dim
 
-        K = lambda s: s * self.E - self.A
-        B = lambda s: self.B
-        C = lambda s: self.C
-        D = lambda s: self.D
-        dK = lambda s: self.E
-        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
-        dC = lambda s: ZeroOperator(self.C.range, self.C.source)
-        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
-        parameters = Parameters.of(self.A, self.B, self.C, self.D, self.E)
+        parameters = Parameters.of(self.A, self.B, self.C, self.D, self.E) | Mu({'s': 1}).parameters
+        s_func = ProjectionParameterFunctional('s')
+
+        K = s_func * self.E - self.A
+        B = self.B
+        C = self.C
+        D = self.D
+        dK = self.E
+        dB = ZeroOperator(self.B.range, self.B.source)
+        dC = ZeroOperator(self.C.range, self.C.source)
+        dD = ZeroOperator(self.D.range, self.D.source)
 
         self.transfer_function = FactorizedTransferFunction(
             self.dim_input, self.dim_output,
