@@ -279,7 +279,7 @@ def psd_svd_like_decomp(U, modes, balance=True):
     return SymplecticBasis.from_array(S)
 
 
-def psd_cotengent_lift(U, modes):
+def psd_cotangent_lift(U, modes):
     """Generates a |SymplecticBasis| with the PSD cotangent lift.
 
     This is an implementation of Algorithm 1 in :cite:`PM16`.

@@ -7,7 +7,7 @@ import pytest
 
 from pymor.algorithms.symplectic import (
     psd_complex_svd,
-    psd_cotengent_lift,
+    psd_cotangent_lift,
     psd_svd_like_decomp,
     symplectic_gram_schmidt,
 )
@@ -19,11 +19,11 @@ pytestmark = pytest.mark.builtin
 
 
 METHODS_DICT = {
-    'psd_cotengent_lift': psd_cotengent_lift,
+    'psd_cotangent_lift': psd_cotangent_lift,
     'psd_complex_svd': psd_complex_svd,
     'psd_svd_like_decomp': psd_svd_like_decomp,
 }
-KEYS_ORTHOSYMPL_METHOD = ['psd_cotengent_lift', 'psd_complex_svd']
+KEYS_ORTHOSYMPL_METHOD = ['psd_cotangent_lift', 'psd_complex_svd']
 
 
 @pytest.mark.parametrize('key_method', METHODS_DICT.keys())
