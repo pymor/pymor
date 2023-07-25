@@ -241,7 +241,7 @@ def test_unit_outer_normals_normal(grid):
 
 @settings(deadline=None)
 @given(hy_grid)
-def test_unit_outer_normals_neighbours(grid):
+def test_unit_outer_normals_neighbors(grid):
     g = grid
     UON = g.unit_outer_normals()
     SE = g.superentities(1, 0)

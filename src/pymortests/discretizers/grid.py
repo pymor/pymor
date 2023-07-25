@@ -227,58 +227,58 @@ def test_superentity_indices_valid_entries(grid_and_dims):
 
 
 @given(hy_grid_and_dim_range_product())
-def test_neighbours_wrong_arguments(grid_and_dims):
+def test_neighbors_wrong_arguments(grid_and_dims):
     g, e, n = grid_and_dims
     with pytest.raises(AssertionError):
-        g.neighbours(e, n, -1)
+        g.neighbors(e, n, -1)
     with pytest.raises(AssertionError):
-        g.neighbours(e, n, g.dim + 1)
+        g.neighbors(e, n, g.dim + 1)
     with pytest.raises(AssertionError):
-        g.neighbours(e, n, e - 1)
+        g.neighbors(e, n, e - 1)
     with pytest.raises(AssertionError):
-        g.neighbours(e, n, n - 1)
+        g.neighbors(e, n, n - 1)
     with pytest.raises(AssertionError):
-        g.neighbours(e, g.dim + 1, g.dim)
+        g.neighbors(e, g.dim + 1, g.dim)
     with pytest.raises(AssertionError):
-        g.neighbours(e, -1, g.dim)
+        g.neighbors(e, -1, g.dim)
     with pytest.raises(AssertionError):
-        g.neighbours(g.dim + 1, g.dim, g.dim)
+        g.neighbors(g.dim + 1, g.dim, g.dim)
     with pytest.raises(AssertionError):
-        g.neighbours(-1, 0, g.dim)
+        g.neighbors(-1, 0, g.dim)
 
 
 @given(hy_grid_and_dim_range_product_and_s_max_en())
-def test_neighbours_shape(grid_and_dims):
+def test_neighbors_shape(grid_and_dims):
     g, e, n, s = grid_and_dims
-    assert g.neighbours(e, n, s).ndim == 2
-    assert g.neighbours(e, n, s).shape[0] == g.size(e)
+    assert g.neighbors(e, n, s).ndim == 2
+    assert g.neighbors(e, n, s).shape[0] == g.size(e)
 
 
 @given(hy_grid_and_dim_range_product_and_s_max_en())
-def test_neighbours_dtype(grid_and_dims):
+def test_neighbors_dtype(grid_and_dims):
     g, e, n, s = grid_and_dims
-    assert g.neighbours(e, n, s).dtype == np.dtype('int32')
+    assert g.neighbors(e, n, s).dtype == np.dtype('int32')
 
 
 @given(hy_grid_and_dim_range_product_and_s_max_en())
-def test_neighbours_entry_value_range(grid_and_dims):
+def test_neighbors_entry_value_range(grid_and_dims):
     g, e, n, s = grid_and_dims
-    np.testing.assert_array_less(g.neighbours(e, n, s), g.size(n))
-    np.testing.assert_array_less(-2, g.neighbours(e, n, s))
+    np.testing.assert_array_less(g.neighbors(e, n, s), g.size(n))
+    np.testing.assert_array_less(-2, g.neighbors(e, n, s))
 
 
 @given(hy_grid_and_dim_range_product_and_s_max_en())
-def test_neighbours_entry_values_unique(grid_and_dims):
+def test_neighbors_entry_values_unique(grid_and_dims):
     g, e, n, s = grid_and_dims
-    for S in g.neighbours(e, n, s):
+    for S in g.neighbors(e, n, s):
         S = S[S >= 0]
         assert S.size == np.unique(S).size
 
 
 @given(hy_grid_and_dim_range_product_and_s_max_en())
-def test_neighbours_each_entry_neighbour(grid_and_dims):
+def test_neighbors_each_entry_neighbor(grid_and_dims):
     g, e, n, s = grid_and_dims
-    N = g.neighbours(e, n, s)
+    N = g.neighbors(e, n, s)
     ESE = g.subentities(e, s)
     NSE = g.subentities(n, s)
     for index, neigh in np.ndenumerate(N):
@@ -291,9 +291,9 @@ def test_neighbours_each_entry_neighbour(grid_and_dims):
 
 
 @given(hy_grid_and_dim_range_product_and_s_max_en())
-def test_neighbours_each_neighbour_has_entry(grid_and_dims):
+def test_neighbors_each_neighbor_has_entry(grid_and_dims):
     g, e, n, s = grid_and_dims
-    N = g.neighbours(e, n, s)
+    N = g.neighbors(e, n, s)
     SUE = g.superentities(s, e)
     SUN = g.superentities(s, n)
     if e != n:
@@ -311,9 +311,9 @@ def test_neighbours_each_neighbour_has_entry(grid_and_dims):
 
 
 @given(hy_grid_and_dim_range_product_and_s_max_en())
-def test_neighbours_not_neighbour_of_itself(grid_and_dims):
+def test_neighbors_not_neighbor_of_itself(grid_and_dims):
     g, e, _, s = grid_and_dims
-    N = g.neighbours(e, e, s)
+    N = g.neighbors(e, e, s)
     for ei, E in enumerate(N):
         assert ei not in E,\
             f'Failed for\n{g}\ne={e}, s={s}, ei={ei}, E={E}'

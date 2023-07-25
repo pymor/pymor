@@ -231,7 +231,7 @@ class NonlinearAdvectionOperator(Operator):
         return self.with_(numerical_flux=self.numerical_flux.with_(**kwargs))
 
     def restricted(self, dofs):
-        source_dofs = np.setdiff1d(np.union1d(self.grid.neighbours(0, 0)[dofs].ravel(), dofs),
+        source_dofs = np.setdiff1d(np.union1d(self.grid.neighbors(0, 0)[dofs].ravel(), dofs),
                                    np.array([-1], dtype=np.int32),
                                    assume_unique=True)
         sub_grid = SubGrid(self.grid, source_dofs)
