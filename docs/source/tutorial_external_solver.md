@@ -31,7 +31,7 @@ kernelspec:
 
 One of pyMOR's main features is easy integration of external solvers that implement the full-order model. In this tutorial
 we will do this step-by-step for a custom toy solver written in C++.
-If you use the [FEniCS](<https://fenicsproject.org>) or [NGSovle](<https://ngsolve.org>) PDE solver libraries,
+If you use the [FEniCS](<https://fenicsproject.org>) or [NGSolve](<https://ngsolve.org>) PDE solver libraries,
 you can find ready-to-use pyMOR bindings in the {mod}`~pymor.bindings` package. pyMOR support for
 [deal.II](<https://dealii.org>) can be found in a [separate repository](<https://github.com/pymor/pymor-deal.II>).
 
