@@ -102,7 +102,7 @@ class GenericBHIReductor(BasicObject):
 
             - `'orth'`: projection matrices are orthogonalized with
               respect to the Euclidean inner product
-            - `'biorth'`: projection matrices are biorthogolized with
+            - `'biorth'`: projection matrices are biorthogonalized with
               respect to the E product
 
         Returns
@@ -203,7 +203,7 @@ class LTIBHIReductor(GenericBHIReductor):
 
             - `'orth'`: projection matrices are orthogonalized with
               respect to the Euclidean inner product
-            - `'biorth'`: projection matrices are biorthogolized with
+            - `'biorth'`: projection matrices are biorthogonalized with
               respect to the E product
             - `'arnoldi'`: projection matrices are orthogonalized using
               the rational Arnoldi process (available only for SISO
