@@ -25,7 +25,7 @@ def helmholtz_problem(domain=RectDomain(), rhs=None, parameter_range=(0., 100.),
     rhs
         The |Function| f(x, μ).
     parameter_range
-        A tuple `(k_min, k_max)` describing the interval in which k is allowd to vary.
+        A tuple `(k_min, k_max)` describing the interval in which k is allowed to vary.
     dirichlet_data
         |Function| providing the Dirichlet boundary values.
     neumann_data

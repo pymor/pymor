@@ -105,13 +105,13 @@ data as the original array, and the actual data will only be copied when one of
 the arrays is changed. Both |NumpyVectorArray| and |ListVectorArray| have been
 updated accordingly `[#55] <https://github.com/pymor/pymor/issues/55>`_.
 As a main benefit of this approach, |immutable| objects having a `VectorArrayInterface` as
-an attribute now can safely create copies of the passed `VectorArrayInterfacess` (to ensure
+an attribute now can safely create copies of the passed `VectorArrayInterfaces` (to ensure
 the immutability of their state) without having to worry about unnecessarily
 increased memory consumption.
 
 
-Improvements to pyMOR's discretizaion tookit
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Improvements to pyMOR's discretization tookit
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - An unstructured triangular |Grid| is now provided by :class:`!UnstructuredTriangleGrid`.
   Such a |Grid| can be obtained using the :meth:`!discretize_gmsh`
   method, which can parse `Gmsh <https://gmsh.info/>`_ output files. Moreover, this

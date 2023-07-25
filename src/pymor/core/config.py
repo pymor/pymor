@@ -32,7 +32,7 @@ def _get_fenics_version():
         # In dolfin.__init__ the dlopen flags are set to include RTDL_GLOBAL,
         # which can cause issues with other Python C extensions.
         # In particular, with the manylinux wheels for scipy 1.9.{2,3} this leads
-        # to segfaults in the Fortran L-BFGS-B implementatiton.
+        # to segfaults in the Fortran L-BFGS-B implementation.
         #
         # A MWE to trigger the segfault is:
         #     import sys
@@ -87,7 +87,7 @@ def is_macos_platform():
     return 'Darwin' in platform.system()
 
 
-def _get_matplotib_version():
+def _get_matplotlib_version():
     import matplotlib as mpl
     return mpl.__version__
 
@@ -139,7 +139,7 @@ _PACKAGES = {
     'IPYTHON': lambda: import_module('IPython').__version__,
     'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
     'K3D': lambda: import_module('k3d').__version__,
-    'MATPLOTLIB': _get_matplotib_version,
+    'MATPLOTLIB': _get_matplotlib_version,
     'MESHIO': lambda: import_module('meshio').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NGSOLVE': lambda: import_module('ngsolve').__version__,

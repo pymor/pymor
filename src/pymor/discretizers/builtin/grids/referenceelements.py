@@ -202,7 +202,7 @@ class Square(ReferenceElement):
             assert order is None or npoints is None, 'cannot specify "order" and "npoints"'
             if order is not None:
                 assert 0 <= order <= self._quadrature_order_map.size - 1,\
-                    ValueError(f'order {order} not implmented')
+                    ValueError(f'order {order} not implemented')
                 p = self._quadrature_order_map[order]
             else:
                 assert npoints in self._quadrature_npoints, f'not implemented with {npoints} points'

@@ -350,7 +350,7 @@ class ConjugateParameterFunctional(ParameterFunctional):
     Parameters
     ----------
     functional
-        The |ParameterFunctional| of which the complex conjuate is
+        The |ParameterFunctional| of which the complex conjugate is
         taken.
     name
         Name of the functional.

@@ -235,7 +235,7 @@ def _MPIOperator_apply_inverse(self, V, V_ind, mu, initial_guess, least_squares)
 
 
 def _MPIOperator_apply_inverse_adjoint(self, U, U_ind, mu, initial_guess, least_squares):
-    return self.apply_inverse_ajdoint(_indexed(U, U_ind), mu=mu,
+    return self.apply_inverse_adjoint(_indexed(U, U_ind), mu=mu,
                                       initial_guess=initial_guess, least_squares=least_squares)
 
 

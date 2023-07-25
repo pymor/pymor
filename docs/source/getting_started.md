@@ -143,7 +143,7 @@ $H^1_0$-seminorm.
 For that estimator, an parameter-dependent lower bound for the coercivity constant
 of the problem is provided as an {class}`~pymor.parameters.functionals.ExpressionParameterFunctional`.
 
-Using this reductor and its error estimator, we can build a reduced space with corrsponding
+Using this reductor and its error estimator, we can build a reduced space with corresponding
 reduced-order model using a {func}`weak greedy <pymor.algorithms.greedy.rb_greedy>` algorithm:
 
 ```{code-cell}

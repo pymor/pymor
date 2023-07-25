@@ -81,7 +81,7 @@ class LoewnerReductor(CacheableObject):
                         else:
                             p1 = np.append(p1, len(s)-1)
                 if len(p0) != len(partitioning[0]) or len(p1) != len(partitioning[1]):
-                    self.logger.info('Added complex conjugates to parititionings. '
+                    self.logger.info('Added complex conjugates to partitionings. '
                                      f'New partitioning sizes are ({len(p0)}, {len(p1)}).')
                 partitioning = (p0, p1)
             else:
@@ -152,7 +152,7 @@ class LoewnerReductor(CacheableObject):
 
     def _partition_frequencies(self):
         """Create a frequency partitioning."""
-        # must keep complex conjugate frequencies in the same partioning
+        # must keep complex conjugate frequencies in the same partitioning
         if self.conjugate:
             # partition frequencies corresponding to positive imaginary part
             pimidx = np.where(self.s.imag > 0)[0]

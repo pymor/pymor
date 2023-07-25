@@ -824,7 +824,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
                              subentity_centers[superentity_indices[:, 1][inner_mask]])
                    + embeddings[1][SE_I1_I, :])
 
-        # comute distances for gradient approximations
+        # compute distances for gradient approximations
         centers = grid.centers(1)
         orthogonal_centers = grid.orthogonal_centers()
         VOLS = grid.volumes(1)
