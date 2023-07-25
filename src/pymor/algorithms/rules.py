@@ -366,7 +366,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         """Determine children of given object.
 
         This method returns a list of the names of all
-        attributes `a`, for which one of the folling is true:
+        attributes `a`, for which one of the following is true:
 
             1. `a` is an |Operator|.
             2. `a` is a dict` and each of its values is either an |Operator| or `None`.
