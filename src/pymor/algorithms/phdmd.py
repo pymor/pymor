@@ -25,7 +25,8 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
 
     This method solves the optimization problem::
 
-        min ||Z - (J - R) T||_F
+    .. math::
+        \min_{J, R} ||Z - (J - R) T||_F
 
     such that :math:`J` is a skew-symmetric matrix and :math:`R` is symmetric and positive
     semidefinite. The data matrices :math:`T` and :math:`Z` are constructed as follows::
@@ -98,7 +99,7 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
     assert isinstance(Y, VectorArray)
     assert isinstance(U, VectorArray)
     assert len(X) == len(Y)
-    assert len(X) % len(U) == len(Y) % len(U) == 0
+    assert len(X) % len(U) == 0
     assert 0. < initial_alpha < 1.
 
     logger = getLogger('pymor.algorithms.phdmd.phdmd')
@@ -122,7 +123,7 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
 
     if H is None:
         logger.warn('No H matrix provided. Did you intend this?')
-        H = NumpyMatrixOperator(np.eye(X.dim), source_id=space_id, range_id=space_id)
+        H = IdentityOperator(X.space)
     else:
         if isinstance(H, np.ndarray):
             assert len(H.shape) == 2
@@ -192,8 +193,8 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
 
     alphas = [initial_alpha]
     betas = []
-    abs_errs = [np.linalg.norm((Z - (J - R).apply(T)).to_numpy(), 'fro')]
-    rel_errs = [abs_errs[0] / np.linalg.norm(Z.to_numpy(), 'fro')]
+    abs_errs = [np.linalg.norm((Z - (J - R).apply(T)).norm(), 'fro')]
+    rel_errs = [abs_errs[0] / np.linalg.norm(Z.norm(), 'fro')]
     update_norms = []
     procrustes_data = []
 
