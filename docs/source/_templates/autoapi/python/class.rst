@@ -44,7 +44,6 @@ This is currently not possible, see https://github.com/readthedocs/sphinx-autoap
    {% if visible_overview_methods %}
 
    .. admonition:: Methods
-      :class: admonition-methods
 
       .. autoapisummary::
          :nosignatures:
