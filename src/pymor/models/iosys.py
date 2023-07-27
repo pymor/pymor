@@ -1184,11 +1184,19 @@ class LTIModel(Model):
         """
         if 'hinf_norm' in self.presets:
             hinf_norm = self.presets['hinf_norm']
+        elif not return_fpeak:
+            hinf_norm = self.linf_norm(mu=mu, ab13dd_equilibrate=ab13dd_equilibrate, tol=tol)
         else:
-            hinf_norm = self.linf_norm(mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate, tol=tol)
-        assert hinf_norm >= 0
+            hinf_norm, fpeak = self.linf_norm(
+                mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate, tol=tol
+            )
 
-        return hinf_norm
+        if return_fpeak:
+            assert isinstance(fpeak, Number) and hinf_norm >= 0
+            return hinf_norm, fpeak
+        else:
+            assert hinf_norm >= 0
+            return hinf_norm
 
     def hankel_norm(self, mu=None):
         """Compute the Hankel-norm of the |LTIModel|.
