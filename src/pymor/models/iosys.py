@@ -46,7 +46,7 @@ from pymor.operators.constructions import (
 )
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu, Parameters
-from pymor.parameters.functionals import ProjectionParameterFunctional
+from pymor.parameters.functionals import ExpressionParameterFunctional, ProjectionParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
 
@@ -226,10 +226,10 @@ class LTIModel(Model):
         self.solution_space = A.source
         self.dim_output = C.range.dim
 
-        parameters = Parameters.of(self.A, self.B, self.C, self.D, self.E) | Mu({'s': 1}).parameters
-        s_func = ProjectionParameterFunctional('s')
+        parameters = Parameters.of(self.A, self.B, self.C, self.D, self.E)
+        s = ProjectionParameterFunctional('s')
 
-        K = s_func * self.E - self.A
+        K = s * self.E - self.A
         B = self.B
         C = self.C
         D = self.D
@@ -1979,14 +1979,17 @@ class SecondOrderModel(Model):
         self.solution_space = M.source
         self.dim_output = Cp.range.dim
 
-        K = lambda s: s ** 2 * self.M + s * self.E + self.K
-        B = lambda s: self.B
-        C = lambda s: self.Cp + s * self.Cv
-        D = lambda s: self.D
-        dK = lambda s: 2 * s * self.M + self.E
-        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
-        dC = lambda s: self.Cv
-        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
+        s = ProjectionParameterFunctional('s')
+        s_quad = ExpressionParameterFunctional('s[0]**2', parameters=s.parameters)
+
+        K = s_quad * self.M + s * self.E + self.K
+        B = self.B
+        C = self.Cp + s * self.Cv
+        D = self.D
+        dK = 2 * s * self.M + self.E
+        dB = ZeroOperator(self.B.range, self.B.source)
+        dC = self.Cv
+        dD = ZeroOperator(self.D.range, self.D.source)
         parameters = Parameters.of(self.M, self.E, self.K, self.B, self.Cp, self.Cv, self.D)
 
         self.transfer_function = FactorizedTransferFunction(
@@ -2675,14 +2678,17 @@ class LinearDelayModel(Model):
         self.dim_output = C.range.dim
         self.q = len(Ad)
 
-        K = lambda s: LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
-        B = lambda s: self.B
-        C = lambda s: self.C
-        D = lambda s: self.D
-        dK = lambda s: LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
-        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
-        dC = lambda s: ZeroOperator(self.C.range, self.C.source)
-        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
+        s = ProjectionParameterFunctional('s')
+        exp_tau_s = lambda taui: ExpressionParameterFunctional(f'exp(- {taui} * s[0])', parameters=s.parameters)
+
+        K = LincombOperator((E, A) + Ad, (s, -1) + tuple(-exp_tau_s(taui) for taui in self.tau))
+        B = self.B
+        C = self.C
+        D = self.D
+        dK = LincombOperator((E,) + Ad, (1,) + tuple(taui * exp_tau_s(taui) for taui in self.tau))
+        dB = ZeroOperator(self.B.range, self.B.source)
+        dC = ZeroOperator(self.C.range, self.C.source)
+        dD = ZeroOperator(self.D.range, self.D.source)
         parameters = Parameters.of(self.A, self.Ad, self.B, self.C, self.D, self.E)
 
         self.transfer_function = FactorizedTransferFunction(
