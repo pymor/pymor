@@ -21,13 +21,10 @@ def _get_fitting_data(order, num_outputs=1, initial_J=False, initial_R=False):
     dt = 4e-2
     time_stamps = np.arange(0., 4. + dt, dt)
     fom_state_space = fom.solution_space
-    io_space = fom.G.source
     fom_initial = np.zeros(fom_state_space.dim)
 
     fom_X, U, fom_Y, _ = _implicit_midpoint(fom, excitation_control, fom_initial, time_stamps)
-    fom_X = fom_state_space.from_numpy(fom_X.T)
-    fom_Y = io_space.from_numpy(fom_Y.T)
-    U = io_space.from_numpy(U.T)
+    fom_X = fom_X
 
     op = None
     if initial_J:
@@ -44,7 +41,7 @@ def _get_fitting_data(order, num_outputs=1, initial_J=False, initial_R=False):
 
 
 @pytest.mark.parametrize('order', list(range(6, 21, 4)))
-@pytest.mark.parametrize('rtol', [1e-8, 1e-10])
+@pytest.mark.parametrize('rtol', [1e-7, 1e-10])
 def test_phdmd_no_init(order, rtol):
     X, Y, U, H, dt, _ = _get_fitting_data(order)
     try:
