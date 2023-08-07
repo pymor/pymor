@@ -13,7 +13,7 @@ This module provides the following |NumPy|-based |Operators|:
 """
 
 import numpy as np
-from numpy.fft import fft, ifft, rfft, irfft
+from numpy.fft import fft, ifft, irfft, rfft
 
 from pymor.core.cache import CacheableObject, cached
 from pymor.operators.interface import Operator

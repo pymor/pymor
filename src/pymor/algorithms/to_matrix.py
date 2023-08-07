@@ -23,9 +23,9 @@ from pymor.operators.constructions import (
     VectorArrayOperator,
     ZeroOperator,
 )
+from pymor.operators.dft import CirculantOperator, HankelOperator, ToeplitzOperator
 from pymor.operators.interface import as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.operators.dft import CirculantOperator, HankelOperator, ToeplitzOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
