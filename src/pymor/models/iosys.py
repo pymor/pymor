@@ -1161,7 +1161,7 @@ class LTIModel(Model):
 
         .. note::
             Assumes the system is asymptotically stable. Under this is assumption the
-            :math:`\mathcal{H}_\infty`-norm is equal to the :math:`\mathcal{H}_\infty`-norm.
+            :math:`\mathcal{H}_\infty`-norm is equal to the :math:`\mathcal{L}_\infty`-norm.
             Accordingly, this method calls :meth:`~pymor.models.iosys.LTIModel.linf_norm`.
 
         Parameters
