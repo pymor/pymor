@@ -12,12 +12,20 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.config import config
 from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.operators.block import BlockDiagonalOperator
-from pymor.operators.constructions import (SelectionOperator, InverseOperator, InverseAdjointOperator, IdentityOperator,
-                                           LincombOperator, VectorArrayOperator)
-from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.operators.interface import as_array_max_length
+from pymor.operators.constructions import (
+    IdentityOperator,
+    InverseAdjointOperator,
+    InverseOperator,
+    LincombOperator,
+    QuadraticFunctional,
+    QuadraticProductFunctional,
+    SelectionOperator,
+    VectorArrayOperator,
+)
 from pymor.operators.dft import CirculantOperator, HankelOperator, ToeplitzOperator
-from pymor.parameters.functionals import GenericParameterFunctional, ExpressionParameterFunctional
+from pymor.operators.interface import as_array_max_length
+from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.parameters.functionals import ExpressionParameterFunctional, GenericParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import assert_all_almost_equal
