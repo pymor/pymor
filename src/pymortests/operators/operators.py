@@ -26,6 +26,7 @@ from pymor.operators.dft import CirculantOperator, HankelOperator, ToeplitzOpera
 from pymor.operators.interface import as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ExpressionParameterFunctional, GenericParameterFunctional
+from pymor.tools.random import new_rng
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import assert_all_almost_equal
@@ -554,13 +555,27 @@ def test_issue_1276():
 @pytest.mark.parametrize('structure', [CirculantOperator, HankelOperator, ToeplitzOperator])
 @pytest.mark.parametrize('iscomplex', [False, True])
 @pytest.mark.parametrize('even', [False, True])
-def test_DFTBasedOperator(structure, iscomplex, even):
-    s = 6 if even else 7
+@pytest.mark.parametrize('shape', ['fat', 'skinny', 'square'])
+def test_DFTBasedOperator(structure, iscomplex, even, shape):
+    rng = new_rng()
+    n = 6 if even else 7
+    nc = 2 if shape == 'fat' else n
+    nr = 2 if shape == 'skinny' else n
     if iscomplex:
-        mp = np.random.rand(s) + 1j * np.random.rand(s)
+        c = rng.random(nc) + 1j * rng.random(nc)
+        r = rng.random(nr) + 1j * rng.random(nr)
     else:
-        mp = np.random.rand(s)
-    op = structure(mp)
+        c = rng.random(nc)
+        r = rng.random(nr)
+
+    if structure == CirculantOperator:
+        op = structure(c)
+    elif structure == ToeplitzOperator:
+        r[0] = c[0]
+        op = structure(c, r=r)
+    elif structure == HankelOperator:
+        r[0] = c[-1]
+        op = structure(c, r=r)
 
     U = op.source.random(1)
     V = op.range.random(1)

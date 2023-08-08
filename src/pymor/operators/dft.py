@@ -259,8 +259,9 @@ class HankelOperator(DFTBasedOperator):
 
     @property
     def H(self):
-        return self.with_(c=self.r.conj(), r=self.c.conj(), source_id=self.range_id, range_id=self.source_id,
-                          name=self.name+'_adjoint')
+        h = np.concatenate([self.c, self.r[1:]]).conj()
+        return self.with_(c=h[:self.source.dim], r=h[self.source.dim-1:],
+                          source_id=self.range_id, range_id=self.source_id, name=self.name+'_adjoint')
 
 
 def _make_ops(cols, rows, structure):
