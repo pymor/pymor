@@ -23,7 +23,7 @@ from pymor.operators.constructions import (
     VectorArrayOperator,
     ZeroOperator,
 )
-from pymor.operators.dft import CirculantOperator, HankelOperator, ToeplitzOperator
+from pymor.operators.dft import BlockDFTBasedOperator, CirculantOperator, HankelOperator, ToeplitzOperator
 from pymor.operators.interface import as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -61,6 +61,21 @@ class ToMatrixRules(RuleTable):
     def __init__(self, format, mu):
         super().__init__()
         self.__auto_init(locals())
+
+    @match_class(BlockDFTBasedOperator)
+    def action_BlockDFTBasedOperator(self, op):
+        format = self.format
+        if format in (None, 'dense'):
+            dtype = float if all([np.isrealobj(o._arr) for o in op._ops.ravel()]) else complex
+            op_mat = np.zeros((op.range.dim, op.source.dim), dtype)
+            m, n = op._ops.shape
+            for i, j in np.ndindex(m, n):
+                o = op._ops[i, j]
+                a, b = o.range.dim, o.source.dim
+                op_mat[i::m, j::n][:a, :b] = to_matrix(o)
+            return op_mat
+        else:
+            raise NotImplementedError
 
     @match_class(CirculantOperator)
     def action_CirculantOperator(self, op):

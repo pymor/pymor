@@ -42,7 +42,6 @@ class DFTBasedOperator(Operator, CacheableObject):
 
     def __init__(self, _arr, source_id=None, range_id=None, name=None):
         _arr = np.squeeze(_arr)
-        print(_arr)
         assert _arr.ndim == 1
         _arr.setflags(write=False)  # make numpy arrays read-only
         self.__auto_init(locals())
@@ -264,29 +263,11 @@ class HankelOperator(DFTBasedOperator):
                           source_id=self.range_id, range_id=self.source_id, name=self.name+'_adjoint')
 
 
-def _make_ops(cols, rows, structure):
-    assert cols.ndim  == 3
-    if rows is not None:
-        assert rows.ndim == 3
-        assert cols.shape[1:] == rows.shape[1:]
-    _, p, m = cols.shape
-    ops = []
-    for i in range(p):
-        ops.append([])
-        for j in range(m):
-            if rows is None:
-                ops[i].append(structure(cols[:, i, j]))
-            else:
-                ops[i].append(structure(cols[:, i, j], r=rows[:, i, j]))
-    return np.array(ops)
-
-
 class BlockDFTBasedOperator(DFTBasedOperator):
     cache_region = None
 
     def __init__(self, _ops, source_id=None, range_id=None, name=None):
         assert _ops.ndim == 2
-        assert all(isinstance(op, type(_ops[0, 0])) for op in _ops.ravel())
         _ops.setflags(write=False)
         self.__auto_init(locals())
         p, m = self._ops.shape
@@ -294,40 +275,23 @@ class BlockDFTBasedOperator(DFTBasedOperator):
         range_dim = p * np.max([op.range.dim for op in self._ops.ravel()])
         self.source = NumpyVectorSpace(source_dim, source_id)
         self.range = NumpyVectorSpace(range_dim, range_id)
-        self.linear = True
+        self.linear = all([op.linear for op in self._ops.ravel()])
 
-    def apply(self, U):
+    def apply(self, U, mu=None):
         U = U.to_numpy().T
-        dtype = float if all([np.isrealobj(x) for x in [U, *[self._ops.ravel()]]]) else complex
+        dtype = float if all([np.isrealobj(x) for x in [U, *[op._arr for op in self._ops.ravel()]]]) else complex
         y = np.zeros((self.range.dim, U.shape[1]), dtype=dtype)
-        p, m = self._ops.shape
-        for i, j in np.ndindex(p, m):
+        m, n = self._ops.shape
+        for i, j in np.ndindex(m, n):
             op = self._ops[i, j]
-            y[i::p] += op.apply(op.source.from_numpy(U[j::m].T)).to_numpy().T
+            a, b = op.source.dim, op.range.dim
+            y[i::m][:b] += op.apply(op.source.from_numpy(U[j::n][:a].T)).to_numpy().T
         return self.range.from_numpy(y.T)
 
     @property
     def H(self):
-        adjoint_ops = np.zeros_like(self._ops)
-        for (i, j) in np.ndindex(adjoint_ops.shape):
+        adjoint_ops = np.zeros_like(self._ops).T
+        for i, j in np.ndindex(*adjoint_ops.shape):
             adjoint_ops[i, j] = self._ops[j, i].H
         return self.with_(_ops=adjoint_ops, source_id=self.range_id, range_id=self.source_id,
                           name=self.name + '_adjoint')
-
-
-class BlockToeplitzOperator(BlockDFTBasedOperator):
-    @classmethod
-    def from_numpy(cls, cols, rows=None, source_id=None, range_id=None, name=None):
-        return cls(_make_ops(cols, rows, ToeplitzOperator), source_id=source_id, range_id=range_id, name=name)
-
-
-class BlockCirculantOperator(BlockDFTBasedOperator):
-    @classmethod
-    def from_numpy(cls, cols, source_id=None, range_id=None, name=None):
-        return cls(_make_ops(cols, None, CirculantOperator), source_id=source_id, range_id=range_id, name=name)
-
-
-class BlockHankelOperator(BlockDFTBasedOperator):
-    @classmethod
-    def from_numpy(cls, cols, rows=None, source_id=None, range_id=None, name=None):
-        return cls(_make_ops(cols, rows, HankelOperator), source_id=source_id, range_id=range_id, name=name)

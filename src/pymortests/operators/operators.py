@@ -2,6 +2,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from itertools import product
+from random import sample
+
 import numpy as np
 import pytest
 import scipy.linalg as spla
@@ -22,11 +25,19 @@ from pymor.operators.constructions import (
     SelectionOperator,
     VectorArrayOperator,
 )
-from pymor.operators.dft import CirculantOperator, HankelOperator, ToeplitzOperator
+from pymor.operators.dft import (
+    BlockCirculantOperator,
+    BlockDFTBasedOperator,
+    BlockHankelOperator,
+    BlockToeplitzOperator,
+    CirculantOperator,
+    HankelOperator,
+    ToeplitzOperator,
+)
 from pymor.operators.interface import as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ExpressionParameterFunctional, GenericParameterFunctional
-from pymor.tools.random import new_rng
+from pymor.tools.random import get_rng
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import assert_all_almost_equal
@@ -552,12 +563,8 @@ def test_issue_1276():
     B.apply_inverse(v)
 
 
-@pytest.mark.parametrize('structure', [CirculantOperator, HankelOperator, ToeplitzOperator])
-@pytest.mark.parametrize('iscomplex', [False, True])
-@pytest.mark.parametrize('even', [False, True])
-@pytest.mark.parametrize('shape', ['fat', 'skinny', 'square'])
-def test_DFTBasedOperator(structure, iscomplex, even, shape):
-    rng = new_rng()
+def _make_DFTBasedOperator(structure, iscomplex, even, shape):
+    rng = get_rng()
     n = 6 if even else 7
     nc = 2 if shape == 'fat' else n
     nr = 2 if shape == 'skinny' else n
@@ -569,13 +576,53 @@ def test_DFTBasedOperator(structure, iscomplex, even, shape):
         r = rng.random(nr)
 
     if structure == CirculantOperator:
-        op = structure(c)
+        return structure(c)
     elif structure == ToeplitzOperator:
         r[0] = c[0]
-        op = structure(c, r=r)
+        return structure(c, r=r)
     elif structure == HankelOperator:
         r[0] = c[-1]
-        op = structure(c, r=r)
+        return structure(c, r=r)
+
+
+def _make_BlockDFTBasedOperator(structure):
+    m, n = 5, 2
+    structs = [CirculantOperator, HankelOperator, ToeplitzOperator]
+    yn = [True, False]
+    shapes = ['fat', 'skinny', 'square']
+    if structure == BlockDFTBasedOperator:
+        ops = [_make_DFTBasedOperator(*args) for args in sample(set(product(structs, yn, yn, shapes)), m*n)]
+    elif structure == BlockCirculantOperator:
+        ops = [_make_DFTBasedOperator(CirculantOperator, *args) for args in sample(set(product(yn, yn, shapes)), m*n)]
+    elif structure == BlockHankelOperator:
+        ops = [_make_DFTBasedOperator(HankelOperator, *args) for args in sample(set(product(yn, yn, shapes)), m*n)]
+    elif structure == BlockToeplitzOperator:
+        ops = [_make_DFTBasedOperator(ToeplitzOperator, *args) for args in sample(set(product(yn, yn, shapes)), m*n)]
+    return structure(np.array(ops).reshape(m, n))
+
+
+@pytest.mark.parametrize('structure', [CirculantOperator, HankelOperator, ToeplitzOperator])
+@pytest.mark.parametrize('iscomplex', [False, True])
+@pytest.mark.parametrize('even', [False, True])
+@pytest.mark.parametrize('shape', ['fat', 'skinny', 'square'])
+def test_DFTBasedOperator(structure, iscomplex, even, shape):
+    op = _make_DFTBasedOperator(structure, iscomplex, even, shape)
+
+    U = op.source.random(1)
+    V = op.range.random(1)
+    np.testing.assert_array_almost_equal(op.apply(U).to_numpy().T, to_matrix(op) @ U.to_numpy().T)
+    np.testing.assert_array_almost_equal(op.apply_adjoint(V).to_numpy().T, to_matrix(op).conj().T @ V.to_numpy().T)
+
+    U += 1j * op.source.random(1)
+    V += 1j * op.range.random(1)
+    np.testing.assert_array_almost_equal(op.apply(U).to_numpy().T, to_matrix(op) @ U.to_numpy().T)
+    np.testing.assert_array_almost_equal(op.apply_adjoint(V).to_numpy().T, to_matrix(op).conj().T @ V.to_numpy().T)
+
+
+@pytest.mark.parametrize('structure', [BlockDFTBasedOperator, BlockCirculantOperator,
+                                       BlockHankelOperator, BlockToeplitzOperator])
+def test_BlockDFTBasedOperator(structure):
+    op = _make_BlockDFTBasedOperator(structure)
 
     U = op.source.random(1)
     V = op.range.random(1)
