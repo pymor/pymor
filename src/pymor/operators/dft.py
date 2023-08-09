@@ -285,7 +285,7 @@ class BlockDFTBasedOperator(DFTBasedOperator):
         for i, j in np.ndindex(m, n):
             op = self._ops[i, j]
             a, b = op.source.dim, op.range.dim
-            y[i::m][:b] += op.apply(op.source.from_numpy(U[j::n][:a].T)).to_numpy().T
+            y[i::m][:b] += op.apply(op.source.from_numpy(U[j::n][:a].T), mu=mu).to_numpy().T
         return self.range.from_numpy(y.T)
 
     @property
