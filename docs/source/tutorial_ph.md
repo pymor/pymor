@@ -64,7 +64,10 @@ called Hamiltonian, is called a port-Hamiltonian system.
 In pyMOR, there exists {{ PHLTIModel }}. As of now, pyMOR only supports
 port-Hamiltonian systems with nonsingular E. {{ PHLTIModel }} inherits from
 {{ LTIModel }}, so {{ PHLTIModel }} can be used with all reductors which expect
-a {{ LTIModel }}.
+a {{ LTIModel }}. However, only specific reductors preserve the
+port-Hamiltonian structure, i.e., return a ROM of type {{ PHLTIModel }} or
+allow the conversion of the ROM to {{ PHLTIModel }}. In applications, it is
+often desirable to preserve the port-Hamiltonian structure.
 
 It is known that if the LTI system is minimal and stable, the following are equivalent:
 - The system is passive.
@@ -85,10 +88,10 @@ regularization feedthrough term.
 
 ```{code-cell}
 import numpy as np
-from pymor.models.examples.ph import msd
+from pymor.models.examples import msd_example
 from pymor.models.iosys import LTIModel, PHLTIModel
 
-A, B, C, D, E = msd(50, 2, as_lti=True)
+A, B, C, D, E = msd_example(50, 2, as_lti=True)
 
 # tolerance for solving the Riccati equation instead of KYP-LMI
 # by introducing a regularization feedthrough term D
@@ -115,11 +118,11 @@ If the reductor returns a passive ROM of type {{ LTIModel }}, it can be
 converted to {{ PHLTIModel }} as described above.
 
 ```{code-cell}
-J, R, G, P, S, N, E, Q = msd(50, 2)
+J, R, G, P, S, N, E, Q = msd_example(50, 2)
 
 # tolerance for solving the Riccati equation instead of KYP-LMI
 # by introducing a regularization feedthrough term D
-# (required for PRBT and )
+# (required for PRBT and spectral_factor)
 S += np.eye(S.shape[0]) * 1e-12
 
 fom = PHLTIModel.from_matrices(J, R, G, S=S, Q=Q, solver_options={'ricc_pos_lrcf': 'scipy'})

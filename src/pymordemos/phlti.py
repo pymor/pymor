@@ -10,7 +10,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from typer import Argument, run
 
-from pymor.models.examples.ph import msd
+from pymor.models.examples import msd_example
 from pymor.models.iosys import PHLTIModel
 from pymor.reductors.bt import BTReductor, PRBTReductor
 from pymor.reductors.h2 import IRKAReductor
@@ -24,7 +24,7 @@ def main(
         max_reduced_order: int = Argument(20, help=('The maximum reduced order (at least 2). '
                                                     'Every even order below is used.')),
 ):
-    J, R, G, P, S, N, E, Q = msd(n, m)
+    J, R, G, P, S, N, E, Q = msd_example(n, m)
 
     # tolerance for solving the Riccati equation instead of KYP-LMI
     # by introducing a regularization feedthrough term D
