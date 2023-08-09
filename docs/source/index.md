@@ -13,6 +13,7 @@ from NumPy/SciPy to external partial differential equation solver packages.
 
 getting_started
 tutorials
+guides
 /autoapi/index
 technical_overview
 release_notes/all.rst
