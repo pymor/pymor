@@ -6,10 +6,10 @@
 
 This module provides the following |NumPy|-based |Operators|:
 
-- |DFTBasedOperator| should be used as a base class for all |Operators| that use DFT matvecs.
-- |ToeplitzOperator| matrix-free operator of a Toeplitz matrix.
-- |CirculantOperator| matrix-free operator of a circulant matrix.
-- |HankelOperator| matrix-free operator of a Hankel matrix.
+- |NumpyDFTBasedOperator| should be used as a base class for all |Operators| that use DFT matvecs.
+- |NumpyToeplitzOperator| matrix-free operator of a Toeplitz matrix.
+- |NumpyCirculantOperator| matrix-free operator of a circulant matrix.
+- |NumpyHankelOperator| matrix-free operator of a Hankel matrix.
 """
 
 import numpy as np
@@ -20,7 +20,7 @@ from pymor.operators.interface import Operator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class DFTBasedOperator(Operator, CacheableObject):
+class NumpyDFTBasedOperator(Operator, CacheableObject):
     """Base class for operators whose `apply` can be expressed as a DFT operation.
 
     Implements efficient matrix-vector multiplications with DFT for matrix-free operations and
@@ -69,7 +69,7 @@ class DFTBasedOperator(Operator, CacheableObject):
         return self.H.apply(V, mu=mu)
 
 
-class ToeplitzOperator(DFTBasedOperator):
+class NumpyToeplitzOperator(NumpyDFTBasedOperator):
     r"""Matrix-free representation of a Toeplitz matrix by a |NumPy Array|.
 
     A Toeplitz matrix is a matrix with constant diagonals, i.e.:
@@ -96,7 +96,7 @@ class ToeplitzOperator(DFTBasedOperator):
     c
         The |NumPy array| that defines the first column of the Toeplitz matrix.
     r
-        The |NumPy array| that defines the first row of the Hankel matrix. If supplied, its first
+        The |NumPy array| that defines the first row of the Toeplitz matrix. If supplied, its first
         entry `r[0]` has to equal to `c[0]`. Defaults to `None`. If `r` is `None`, the behaviour
         of scipy.linalg.toeplitz is mimicked which sets `r = c.conj()` (except for the first entry).
     source_id
@@ -136,7 +136,7 @@ class ToeplitzOperator(DFTBasedOperator):
                           name=self.name + '_adjoint')
 
 
-class CirculantOperator(ToeplitzOperator):
+class NumpyCirculantOperator(NumpyToeplitzOperator):
     r"""Matrix-free representation of a circulant matrix by a |NumPy Array|.
 
     A circulant matrix is a special kind of Toeplitz matrix which is square and completely
@@ -174,7 +174,7 @@ class CirculantOperator(ToeplitzOperator):
         c = np.squeeze(c)
         assert c.ndim == 1
         c.setflags(write=False)
-        super(ToeplitzOperator, self).__init__(c, source_id=source_id, range_id=range_id, name=name)
+        super(NumpyToeplitzOperator, self).__init__(c, source_id=source_id, range_id=range_id, name=name)
         self.c = self._arr
         self.source = NumpyVectorSpace(c.size, source_id)
         self.range = NumpyVectorSpace(c.size, range_id)
@@ -190,7 +190,7 @@ class CirculantOperator(ToeplitzOperator):
                           source_id=self.range_id, range_id=self.source_id, name=self.name + '_adjoint')
 
 
-class HankelOperator(DFTBasedOperator):
+class NumpyHankelOperator(NumpyDFTBasedOperator):
     r"""Matrix-free representation of a Hankel matrix by a |NumPy Array|.
 
     A Hankel matrix is a matrix with constant anti-diagonals, i.e.:
@@ -263,7 +263,7 @@ class HankelOperator(DFTBasedOperator):
                           source_id=self.range_id, range_id=self.source_id, name=self.name+'_adjoint')
 
 
-class BlockDFTBasedOperator(DFTBasedOperator):
+class NumpyBlockDFTBasedOperator(NumpyDFTBasedOperator):
     cache_region = None
 
     def __init__(self, _ops, source_id=None, range_id=None, name=None):

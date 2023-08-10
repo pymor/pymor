@@ -23,9 +23,14 @@ from pymor.operators.constructions import (
     VectorArrayOperator,
     ZeroOperator,
 )
-from pymor.operators.dft import BlockDFTBasedOperator, CirculantOperator, HankelOperator, ToeplitzOperator
 from pymor.operators.interface import as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.operators.numpy_dft import (
+    NumpyBlockDFTBasedOperator,
+    NumpyCirculantOperator,
+    NumpyHankelOperator,
+    NumpyToeplitzOperator,
+)
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -62,7 +67,7 @@ class ToMatrixRules(RuleTable):
         super().__init__()
         self.__auto_init(locals())
 
-    @match_class(BlockDFTBasedOperator)
+    @match_class(NumpyBlockDFTBasedOperator)
     def action_BlockDFTBasedOperator(self, op):
         format = self.format
         if format in (None, 'dense'):
@@ -77,7 +82,7 @@ class ToMatrixRules(RuleTable):
         else:
             raise NotImplementedError
 
-    @match_class(CirculantOperator)
+    @match_class(NumpyCirculantOperator)
     def action_CirculantOperator(self, op):
         format = self.format
         if format in (None, 'dense'):
@@ -85,7 +90,7 @@ class ToMatrixRules(RuleTable):
         else:
             raise NotImplementedError
 
-    @match_class(HankelOperator)
+    @match_class(NumpyHankelOperator)
     def action_HankelOperator(self, op):
         format = self.format
         if format in (None, 'dense'):
@@ -93,7 +98,7 @@ class ToMatrixRules(RuleTable):
         else:
             raise NotImplementedError
 
-    @match_class(ToeplitzOperator)
+    @match_class(NumpyToeplitzOperator)
     def action_ToeplitzOperator(self, op):
         format = self.format
         if format in (None, 'dense'):

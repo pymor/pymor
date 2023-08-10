@@ -26,10 +26,10 @@ from pymor.operators.constructions import (
     VectorArrayOperator,
 )
 from pymor.operators.dft import (
-    BlockDFTBasedOperator,
-    CirculantOperator,
-    HankelOperator,
-    ToeplitzOperator,
+    NumpyBlockDFTBasedOperator,
+    NumpyCirculantOperator,
+    NumpyHankelOperator,
+    NumpyToeplitzOperator,
 )
 from pymor.operators.interface import as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -560,7 +560,7 @@ def test_issue_1276():
     B.apply_inverse(v)
 
 
-def _make_DFTBasedOperator(structure, iscomplex, even, shape):
+def _make_NumpyDFTBasedOperator(structure, iscomplex, even, shape):
     rng = get_rng()
     n = 6 if even else 7
     nc = 2 if shape == 'fat' else n
@@ -572,22 +572,22 @@ def _make_DFTBasedOperator(structure, iscomplex, even, shape):
         c = rng.random(nc)
         r = rng.random(nr)
 
-    if structure == CirculantOperator:
+    if structure == NumpyCirculantOperator:
         return structure(c)
-    elif structure == ToeplitzOperator:
+    elif structure == NumpyToeplitzOperator:
         r[0] = c[0]
         return structure(c, r=r)
-    elif structure == HankelOperator:
+    elif structure == NumpyHankelOperator:
         r[0] = c[-1]
         return structure(c, r=r)
 
 
-@pytest.mark.parametrize('structure', [CirculantOperator, HankelOperator, ToeplitzOperator])
+@pytest.mark.parametrize('structure', [NumpyCirculantOperator, NumpyHankelOperator, NumpyToeplitzOperator])
 @pytest.mark.parametrize('iscomplex', [False, True])
 @pytest.mark.parametrize('even', [False, True])
 @pytest.mark.parametrize('shape', ['fat', 'skinny', 'square'])
 def test_DFTBasedOperator(structure, iscomplex, even, shape):
-    op = _make_DFTBasedOperator(structure, iscomplex, even, shape)
+    op = _make_NumpyDFTBasedOperator(structure, iscomplex, even, shape)
 
     U = op.source.random(1)
     V = op.range.random(1)
@@ -603,11 +603,11 @@ def test_DFTBasedOperator(structure, iscomplex, even, shape):
 @pytest.mark.parametrize('m', [1, 2, 5])
 @pytest.mark.parametrize('n', [3, 5, 7])
 def test_BlockDFTBasedOperator(m, n):
-    structs = [CirculantOperator, HankelOperator, ToeplitzOperator]
+    structs = [NumpyCirculantOperator, NumpyHankelOperator, NumpyToeplitzOperator]
     yn = [True, False]
     shapes = ['fat', 'skinny', 'square']
-    ops = np.array([_make_DFTBasedOperator(*args) for args in sample(set(product(structs, yn, yn, shapes)), m*n)])
-    op = BlockDFTBasedOperator(ops.reshape(m, n))
+    ops = np.array([_make_NumpyDFTBasedOperator(*args) for args in sample(set(product(structs, yn, yn, shapes)), m*n)])
+    op = NumpyBlockDFTBasedOperator(ops.reshape(m, n))
 
     U = op.source.random(1)
     V = op.range.random(1)

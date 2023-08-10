@@ -98,12 +98,12 @@ common = """
 .. |NumpyVectorSpace| replace:: :func:`~pymor.vectorarrays.numpy.NumpyVectorSpace`
 .. |NumpyVectorSpaces| replace:: :func:`NumpyVectorSpaces <pymor.vectorarrays.numpy.NumpyVectorSpace>`
 
-.. |CirculantOperator| replace:: :class:`~pymor.operators.dft.CirculantOperator`
-.. |CirculantOperators| replace:: :class:`HankelOperators <pymor.operators.dft.CirculantOperator>`
-.. |HankelOperator| replace:: :class:`~pymor.operators.dft.HankelOperator`
-.. |HankelOperators| replace:: :class:`HankelOperators <pymor.operators.dft.HankelOperator>`
-.. |ToeplitzOperator| replace:: :class:`~pymor.operators.dft.ToeplitzOperator`
-.. |ToeplitzOperators| replace:: :class:`HankelOperators <pymor.operators.dft.ToeplitzOperator>`
+.. |NumpyCirculantOperator| replace:: :class:`~pymor.operators.numpy_dft.NumpyCirculantOperator`
+.. |NumpyCirculantOperators| replace:: :class:`HankelOperators <pymor.operators.numpy_dft.NumpyCirculantOperator>`
+.. |NumpyHankelOperator| replace:: :class:`~pymor.operators.numpy_dft.NumpyHankelOperator`
+.. |NumpyHankelOperators| replace:: :class:`HankelOperators <pymor.operators.numpy_dft.NumpyHankelOperator>`
+.. |NumpyToeplitzOperator| replace:: :class:`~pymor.operators.numpy_dft.NumpyToeplitzOperator`
+.. |NumpyToeplitzOperators| replace:: :class:`HankelOperators <pymor.operators.numpy_dft.NumpyToeplitzOperator>`
 
 .. |StationaryModel| replace:: :class:`~pymor.models.basic.StationaryModel`
 .. |StationaryModels| replace:: :class:`StationaryModels <pymor.models.basic.StationaryModel>`
