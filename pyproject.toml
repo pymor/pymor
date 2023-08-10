@@ -269,6 +269,7 @@ inline-quotes = "single"
 "versioneer.py" = ["N801"] # class name CapWords convention
 "docs/source/try_on_binder.py" = ["N801"] # class name CapWords convention
 "src/pymordemos/*" = ["F403", "F405"] # undefined import due to pymor.basic functionality
+"src/pymor/basic.py" = ["F401"] # ununsed imports
 
 [tool.ruff.pycodestyle]
 max-doc-length = 100
