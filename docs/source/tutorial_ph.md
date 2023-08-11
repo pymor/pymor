@@ -153,7 +153,7 @@ fom = PHLTIModel.from_matrices(J, R, G, S=S, Q=Q, solver_options={'ricc_pos_lrcf
 ```
 
 The `ricc_pos_lrcf` solver option refers to the solver used for the underlying
-Riccati equation relevant for {class}`~pymor.reductors.ph.ph_irka.PHIRKAReductor` and
+Riccati equation relevant for {class}`~pymor.reductors.bt.PRBTReductor` and
 {class}`~pymor.reductors.spectral_factor.SpectralFactorReductor`. Possible choices are
 `scipy`, `slycot` or `pymess` (if installed).
 
