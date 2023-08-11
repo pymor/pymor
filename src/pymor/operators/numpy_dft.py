@@ -77,15 +77,15 @@ class NumpyToeplitzOperator(NumpyDFTBasedOperator):
     .. math::
         T =
             \begin{bmatrix}
-                c_1 & r_2 & r_3 & \cdots & \cdots & r_n \\
-                c_2 & c_1 & r_2&&& \vdots\\
-                c_3 & c_2&\ddots&&&\vdots\\
-                \vdots &&&\ddots&r_2&r_3\\
-                \vdots &&&c_2& c_1 & r_2\\
-                c_m & \cdots & \cdots & c_3 & c_2& c_1
-            \end{bmatrix}\in\mathbb{C}^{m\times n},
+                c_1    & r_2    & r_3    & \cdots & \cdots & r_n \\
+                c_2    & c_1    & r_2    &        &        & \vdots \\
+                c_3    & c_2    & \ddots &        &        & \vdots \\
+                \vdots &        &        & \ddots & r_2    & r_3 \\
+                \vdots &        &        & c_2    & c_1    & r_2 \\
+                c_m    & \cdots & \cdots & c_3    & c_2    & c_1
+            \end{bmatrix} \in \mathbb{C}^{m \times n},
 
-    where :math:`c\in\mathbb{C}^m` and :math:`r\in\mathbb{C}^n` denote the first column and first
+    where :math:`c \in \mathbb{C}^m` and :math:`r \in \mathbb{C}^n` denote the first column and first
     row of the Toeplitz matrix, respectively. The matrix :math:`T` as seen above is not explicitly
     constructed, only the arrays `c` and `r` are stored. The operator's `apply` method takes
     advantage of the fact that any Toeplitz matrix can be embedded in a larger circulant matrix to
@@ -97,8 +97,8 @@ class NumpyToeplitzOperator(NumpyDFTBasedOperator):
         The |NumPy array| that defines the first column of the Toeplitz matrix.
     r
         The |NumPy array| that defines the first row of the Toeplitz matrix. If supplied, its first
-        entry `r[0]` has to equal to `c[0]`. Defaults to `None`. If `r` is `None`, the behaviour
-        of scipy.linalg.toeplitz is mimicked which sets `r = c.conj()` (except for the first entry).
+        entry `r[0]` has to equal to `c[0]`. Defaults to `None`. If `r` is `None`, the behavior
+        of :func:`scipy.linalg.toeplitz` is mimicked which sets `r = c.conj()` (except for the first entry).
     source_id
         The id of the operator's `source` |VectorSpace|.
     range_id
@@ -145,15 +145,15 @@ class NumpyCirculantOperator(NumpyToeplitzOperator):
     .. math::
         C =
             \begin{bmatrix}
-                c_1 & c_n & c_{n-1} & \cdots & \cdots & c_2 \\
-                c_2 & c_1 & c_n&&& \vdots\\
-                c_3 & c_2&\ddots&&&\vdots\\
-                \vdots &&&\ddots&c_n&c_{n-1}\\
-                \vdots &&&c_2& c_1 & c_n\\
-                c_n & \cdots & \cdots & c_3 & c_2& c_1
-            \end{bmatrix}\in\mathbb{C}^{n\times n},
+                c_1    & c_n    & c_{n-1} & \cdots & \cdots & c_2 \\
+                c_2    & c_1    & c_n     &        &        & \vdots \\
+                c_3    & c_2    & \ddots  &        &        & \vdots \\
+                \vdots &        &         & \ddots & c_n    & c_{n-1} \\
+                \vdots &        &         & c_2    & c_1    & c_n \\
+                c_n    & \cdots & \cdots  & c_3    & c_2    & c_1
+            \end{bmatrix} \in \mathbb{C}^{n \times n},
 
-    where the so-called circulant vector :math:`c\in\mathbb{C}^n` denotes the first column of the
+    where the so-called circulant vector :math:`c \in \mathbb{C}^n` denotes the first column of the
     matrix. The matrix :math:`C` as seen above is not explicitly constructed, only `c` is stored.
     Efficient matrix-vector multiplications are realized with DFT in the class' `apply` method.
     See :cite:`GVL13` Chapter 4.8.2. for details.
@@ -198,15 +198,15 @@ class NumpyHankelOperator(NumpyDFTBasedOperator):
     .. math::
         H =
             \begin{bmatrix}
-                c_1 & c_2 & c_3 & \cdots & \cdots & r_1 \\
-                c_2 & c_3 & &&& \vdots\\
-                c_3 &&&&&\vdots\\
-                \vdots &&&&&r_{n-2}\\
-                \vdots &&&& r_{n-2} & r_{n-1}\\
-                c_m & \cdots & \cdots & r_{n-2} & r_{n-1}& r_n
-            \end{bmatrix}\in\mathbb{C}^{m\times n},
+                c_1    & c_2    & c_3    & \cdots  & \cdots  & r_1 \\
+                c_2    & c_3    &        &         &         & \vdots \\
+                c_3    &        &        &         &         & \vdots \\
+                \vdots &        &        &         &         & r_{n-2} \\
+                \vdots &        &        &         & r_{n-2} & r_{n-1} \\
+                c_m    & \cdots & \cdots & r_{n-2} & r_{n-1} & r_n
+            \end{bmatrix} \in \mathbb{C}^{m \times n},
 
-    where :math:`c\in\mathbb{C}^m` and :math:`r\in\mathbb{C}^n` denote the first column and last
+    where :math:`c \in \mathbb{C}^m` and :math:`r \in \mathbb{C}^n` denote the first column and last
     row of the Hankel matrix, respectively.
     The matrix :math:`H` as seen above is not explicitly constructed, only the arrays `c` and `r`
     are stored. Efficient matrix-vector multiplications are realized with DFT in the class' `apply`
@@ -218,8 +218,8 @@ class NumpyHankelOperator(NumpyDFTBasedOperator):
         The |NumPy array| that defines the first column of the Hankel matrix.
     r
         The |NumPy array| that defines the last row of the Hankel matrix. If supplied, its first
-        entry `r[0]` has to equal to `c[-1]`. Defaults to `None`. If `r` is `None`, the behaviour
-        of scipy.linalg.hankel is mimicked which sets `r` to zero (except for the first entry).
+        entry `r[0]` has to equal to `c[-1]`. Defaults to `None`. If `r` is `None`, the behavior
+        of :func:`scipy.linalg.hankel` is mimicked which sets `r` to zero (except for the first entry).
     source_id
         The id of the operator's `source` |VectorSpace|.
     range_id
