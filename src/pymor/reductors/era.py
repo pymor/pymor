@@ -232,17 +232,18 @@ class ERAReductor(CacheableObject):
             r_tol = np.argmax(error_bounds <= tol) + 1
             r = r_tol if r is None else min(r, r_tol)
 
-        sv, U, V = sv[:r], U[:r], V[:r]
+        sv, U, V = sv[:r], U[:r].T, V[:r]
 
         num_left = m * s if num_left is None and m * s < p else num_left
         num_right = p * s if num_right is None and p * s < m else num_right
 
         self.logger.info(f'Constructing reduced realization of order {r} ...')
-        sqS = np.diag(np.sqrt(sv))
-        Zo = U.T @ sqS
-        A = NumpyMatrixOperator(spla.lstsq(Zo[: -(num_left or p)], Zo[(num_left or p):])[0])
-        B = NumpyMatrixOperator(sqS @ V[:, :(num_right or m)])
-        C = NumpyMatrixOperator(Zo[:(num_left or p)])
+        sqsv = np.sqrt(sv)
+        U *= sqsv.reshape(1, -1)
+        V *= sqsv.reshape(-1, 1)
+        A = NumpyMatrixOperator(spla.lstsq(U[: -(num_left or p)], U[(num_left or p):])[0])
+        B = NumpyMatrixOperator(V[:, :(num_right or m)])
+        C = NumpyMatrixOperator(U[:(num_left or p)])
 
         if num_left:
             self.logger.info('Backprojecting tangential output directions ...')
