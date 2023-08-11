@@ -10,7 +10,8 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
 from pymor.operators.interface import Operator
-from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
+from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.operators.numpy_dft import NumpyBlockDFTBasedOperator, NumpyHankelOperator
 
 
 class ERAReductor(CacheableObject):
@@ -123,7 +124,13 @@ class ERAReductor(CacheableObject):
         self.logger.info(f'Computing SVD of the {"projected " if num_left or num_right else ""}Hankel matrix ...')
         if self.force_stability:
             h = np.concatenate([h, np.zeros_like(h)[1:]], axis=0)
-        U, sv, V = spla.svd(to_matrix(NumpyHankelOperator(h)), full_matrices=False)
+
+        ops = np.zeros((p, m), dtype=object)
+        for i, j in np.ndindex(p, m):
+            ops[i, j] = NumpyHankelOperator(h[:s, i, j], r=h[s-1:, i, j])
+        H = NumpyBlockDFTBasedOperator(ops)
+
+        U, sv, V = spla.svd(to_matrix(H), full_matrices=False)
         return sv, U.T, V
 
     def output_projector(self, num_left):
