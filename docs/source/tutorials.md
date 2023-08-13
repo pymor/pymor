@@ -6,6 +6,7 @@ tutorial_basis_generation
 tutorial_projection
 tutorial_lti_systems
 tutorial_bt
+tutorial_interpolation
 tutorial_ph
 tutorial_unstable_lti_systems
 tutorial_mor_with_anns
