@@ -49,6 +49,6 @@ The release manager is responsible for ensuring that the following steps are per
 - [ ] At the day of the release:
   - [ ] Follow the steps outlined in [`RELEASE_CHECKLIST`](RELEASE_CHECKLIST.md).
 - [ ] In the first community meeting after the release:
-  - [ ] Select a new release manager for the next release.
+  - [ ] Select a new release manager for the next release and set the release day.
         However, the current release manager is still responsible for all point releases until the next release.
   - [ ] Assign a couple of issues (about 2 or 3) to each main developer and give them the milestone of the next release.
