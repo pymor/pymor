@@ -362,9 +362,9 @@ difference lies in the different types of operators, the |Model|
 contains.
 
 In particular, in most projection-based MOR methods, only the
-operators and functionals of a given discrete problem are projected onto the
-reduced basis space, whereas the structure of the problem
-(i.e. the type of |Model| containing the operators) stays the same.
+|Operators| of a given |Model| are projected onto the
+reduced-basis space, whereas the structure of the problem
+(i.e. the type of the |Model|) stays the same.
 The actual projection of an individual |Operator| is performed by the generic
 :meth:`~pymor.algorithms.projection.project` algorithm, which is able to perform a
 Petrov-Galerkin projection of any |Operator| available to pyMOR.
