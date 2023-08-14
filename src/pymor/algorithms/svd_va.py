@@ -77,7 +77,7 @@ def method_of_snapshots(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=
                    if modes is None or l2_err > 0.
                    else (max(len(B) - modes, 0), len(B) - 1))
 
-        evals, V = spla.eigh(B, overwrite_a=True, turbo=True, eigvals=eigvals)
+        evals, V = spla.eigh(B, overwrite_a=True, subset_by_index=eigvals)
         evals = evals[::-1]
         V = V.T[::-1, :]
 
