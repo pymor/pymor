@@ -354,7 +354,7 @@ thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
     [lambda args=args: thermalblock_fixedparam_factory(*args) for args in thermalblock_factory_arguments]
 
 
-num_misc_operators = 14
+num_misc_operators = 16
 
 
 def misc_operator_with_arrays_and_products_factory(n):
@@ -461,6 +461,24 @@ def misc_operator_with_arrays_and_products_factory(n):
         from pymor.vectorarrays.block import BlockVectorSpace
         space = BlockVectorSpace([NumpyVectorSpace(1), NumpyVectorSpace(2)])
         op = NumpyConversionOperator(space)
+        return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
+    elif n == 13:
+        from pymor.operators.numpy import NumpyCirculantOperator
+        s, p, m = 4, 2, 3
+        c = np.random.rand(s, p, m)
+        op = NumpyCirculantOperator(c)
+        return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
+    elif n == 14:
+        from pymor.operators.numpy import NumpyHankelOperator
+        s1, s2, p, m = 4, 2, 2, 3
+        c, r = np.random.rand(s1, p, m), np.random.rand(s2, p, m)
+        op = NumpyHankelOperator(c, r=r)
+        return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
+    elif n == 15:
+        from pymor.operators.numpy import NumpyToeplitzOperator
+        s1, s2, p, m = 4, 2, 2, 3
+        c = np.random.rand(s1, p, m), np.random.rand(s2, p, m)
+        op = NumpyToeplitzOperator(c, r=r)
         return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
     else:
         assert False

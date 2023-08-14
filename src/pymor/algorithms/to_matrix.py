@@ -24,11 +24,10 @@ from pymor.operators.constructions import (
     ZeroOperator,
 )
 from pymor.operators.interface import as_array_max_length
-from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.operators.numpy_dft import (
-    NumpyBlockDFTBasedOperator,
+from pymor.operators.numpy import (
     NumpyCirculantOperator,
     NumpyHankelOperator,
+    NumpyMatrixOperator,
     NumpyToeplitzOperator,
 )
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -67,42 +66,39 @@ class ToMatrixRules(RuleTable):
         super().__init__()
         self.__auto_init(locals())
 
-    @match_class(NumpyBlockDFTBasedOperator)
-    def action_BlockDFTBasedOperator(self, op):
+    @match_class(NumpyHankelOperator)
+    def action_NumpyHankelOperator(self, op):
         format = self.format
         if format in (None, 'dense'):
-            dtype = float if all([np.isrealobj(o._arr) for o in op._ops.ravel()]) else complex
-            op_mat = np.zeros((op.range.dim, op.source.dim), dtype)
-            m, n = op._ops.shape
-            for i, j in np.ndindex(m, n):
-                o = op._ops[i, j]
-                a, b = o.range.dim, o.source.dim
-                op_mat[i::m, j::n][:a, :b] = to_matrix(o)
+            p, m = op.c.shape[1:]
+            op_mat = np.zeros((op.range.dim, op.source.dim), dtype=op._arr.dtype)
+            for (i, j) in np.ndindex((p, m)):
+                op_mat[i::p, j::m] = spla.hankel(op.c[:, i, j], r=op.r[:, i, j])
+            return op_mat
+        else:
+            raise NotImplementedError
+
+    @match_class(NumpyToeplitzOperator)
+    def action_NumpyToeplitzOperator(self, op):
+        format = self.format
+        if format in (None, 'dense'):
+            p, m = op.c.shape[1:]
+            op_mat = np.zeros((op.range.dim, op.source.dim), dtype=op._arr.dtype)
+            for (i, j) in np.ndindex((p, m)):
+                op_mat[i::p, j::m] = spla.toeplitz(op.c[:, i, j], r=op.r[:, i, j])
             return op_mat
         else:
             raise NotImplementedError
 
     @match_class(NumpyCirculantOperator)
-    def action_CirculantOperator(self, op):
+    def action_NumpyCirculantOperator(self, op):
         format = self.format
         if format in (None, 'dense'):
-            return spla.circulant(op.c)
-        else:
-            raise NotImplementedError
-
-    @match_class(NumpyHankelOperator)
-    def action_HankelOperator(self, op):
-        format = self.format
-        if format in (None, 'dense'):
-            return spla.hankel(op.c, op.r)
-        else:
-            raise NotImplementedError
-
-    @match_class(NumpyToeplitzOperator)
-    def action_ToeplitzOperator(self, op):
-        format = self.format
-        if format in (None, 'dense'):
-            return spla.toeplitz(op.c, op.r)
+            p, m = op.c.shape[1:]
+            op_mat = np.zeros((op.range.dim, op.source.dim), dtype=op._arr.dtype)
+            for (i, j) in np.ndindex((p, m)):
+                op_mat[i::p, j::m] = spla.circulant(op.c[:, i, j])
+            return op_mat
         else:
             raise NotImplementedError
 
