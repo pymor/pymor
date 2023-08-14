@@ -376,7 +376,7 @@ In addition to the projection of the |Model|, reductors may also assemble effici
 offline-online decomposed a posterior error estimates (available via the
 `estimate_error` method of the resulting reduced order |Model|), if more information
 about the underlying problem yielding the full order |Model| is available
-(a popular example is the `CoerciveRBReductor` for |Models| representing stationary
+(a popular example is the :class:`~pymor.reductors.coercive.CoerciveRBReductor` for |Models| representing stationary
 coercive problems).
 
 If you want to further dive into the inner workings of pyMOR, we
