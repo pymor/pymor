@@ -20,7 +20,7 @@ def main(
     reductor_count: int = Argument(..., help='Reductor type for elliptic problems: \
                                    0: SimpleCoerciveReductor \
                                    1: CoerciveRBReductor. \
-                                   For parabolic FOMs [4, 5] ParabolicRBReductor is used.')):
+                                   For parabolic FOMs [3, 4] ParabolicRBReductor is used.')):
     set_log_levels({'pymor': 'WARN'})
     """Example script for using output error estimation"""
 
