@@ -61,7 +61,7 @@ class MTReductor(BasicObject):
 
             - `'orth'`: projection matrices are orthogonalized with
               respect to the Euclidean inner product
-            - `'biorth'`: projection matrices are biorthogolized with
+            - `'biorth'`: projection matrices are biorthogonalized with
               respect to the E product
         symmetric
             If `True`, assume A is symmetric and E is symmetric positive

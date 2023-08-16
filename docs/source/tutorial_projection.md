@@ -109,7 +109,7 @@ print_source(fom.solve)
 This does not look too interesting. Actually, {meth}`~pymor.models.interface.Model.solve`
 is just a convenience method around {meth}`~pymor.models.interface.Model.compute` which
 handles the actual computation of the solution and various other associated values like
-outputs or error estimates. Next, we take a look at the implemenation of
+outputs or error estimates. Next, we take a look at the implementation of
 {meth}`~pymor.models.interface.Model.compute`:
 
 ```{code-cell}
@@ -501,7 +501,7 @@ enables the *online efficient* solution of the ROM.
 
 For problems that do not allow such an decomposition and also for non-linear
 problems, more advanced techniques are necessary such as
-{mod}`empiricial interpolation <pymor.algorithms.ei>`.
+{mod}`empirical interpolation <pymor.algorithms.ei>`.
 
 ## Letting pyMOR do the work
 

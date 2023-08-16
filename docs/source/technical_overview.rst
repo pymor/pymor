@@ -128,7 +128,7 @@ operating on objects of the following types:
 
     While special model classes may be implemented which make use of
     the specific types of operators they contain (e.g. using some external
-    high-dimensional solver for the problem), it is generally favourable to
+    high-dimensional solver for the problem), it is generally favorable to
     implement the solution algorithms only through the interfaces provided by
     the operators contained in the model, as this allows to use the
     same model class to solve high-dimensional and reduced problems.

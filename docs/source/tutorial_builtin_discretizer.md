@@ -245,7 +245,7 @@ diffusion = ExpressionFunction(
 
 Here, we have used the `values` parameter of {{ ExpressionFunction }} to
 make `K` available as an additional constant in the defining
-expression. In particular, we can easily change `K` programatically
+expression. In particular, we can easily change `K` programmatically
 without having to resort to string manipulations. The solution looks
 like this:
 

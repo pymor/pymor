@@ -29,7 +29,7 @@ def main(
     fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
     rect: bool = Option(False, help='Use RectGrid instead of TriaGrid.'),
 ):
-    """Solves the Poisson equation in 2D using pyMOR's builtin discreization toolkit."""
+    """Solves the Poisson equation in 2D using pyMOR's builtin discretization toolkit."""
     rhss = [ExpressionFunction('10', 2),
             ExpressionFunction('(x[0] - 0.5) ** 2 * 1000', 2)]
     dirichlets = [ExpressionFunction('0', 2),

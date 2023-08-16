@@ -150,7 +150,7 @@ scikit-fem = [
 ]
 
 
-## Meta dependecies
+## Meta dependencies
 
 # install all optional dependencies, except those requiring a compiler toolchain to build
 # pymess is excluded here as installation from source is recommended by the developers

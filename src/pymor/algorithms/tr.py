@@ -302,7 +302,7 @@ def coercive_rb_trust_region(reductor, primal_dual=False, parameter_space=None, 
         surrogate = PrimalDualTRSurrogate(reductor, initial_guess)
     elif quadratic_output:
         # special case for a quadratic output functional as we do not have a reductor yet which
-        # assembles an approriate error estimator
+        # assembles an appropriate error estimator
         surrogate = QuadraticOutputTRSurrogate(reductor, initial_guess,
                                                continuity_estimator_output=quadratic_output_continuity_estimator,
                                                product_name=quadratic_output_product_name)

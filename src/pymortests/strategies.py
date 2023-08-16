@@ -180,29 +180,27 @@ def vector_arrays(draw, space_types, count=1, dtype=None, length=None, compatibl
 def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatible=True, index_strategy=None, **kwargs):
     """This decorator hides the combination details of given.
 
-    the decorated function will be first wrapped in a |hypothesis.given| (with expanded `given_args`
-    and then in |pytest.mark.parametrize| with selected implementation names. The decorated test
-    function must still draw (which a vector_arrays or similar strategy) from the `data` argument in
-    the default case.
+    The decorated function will be first wrapped in a |hypothesis.given| (with expanded
+    `given_args`) and then in |pytest.mark.parametrize| with selected implementation names.
+    The decorated test function must still draw (which a vector_arrays or similar strategy)
+    from the `data` argument in the default case.
 
     Parameters
     ----------
     which
         A list of implementation shortnames, or either of the special values 'all' and 'picklable'.
-
     kwargs
-        passed to `given` decorator as is, use for additional strategies
-
+        Passed to `given` decorator as is, use for additional strategies.
     count
-        how many vector arrays to return (in a list), count=1 is special cased to just return the
-        array
+        How many vector arrays to return (in a list), count=1 is special cased to just return the
+        array.
     dtype
-        dtype of the foundational numpy data the vector array is constructed from
+        dtype of the foundational numpy data the vector array is constructed from.
     length
-        a hypothesis.strategy how many vectors to generate in each vector array
+        A hypothesis.strategy how many vectors to generate in each vector array.
     compatible
-        if count > 1, this switch toggles generation of vector_arrays with compatible `dim`,
-        `length` and `dtype`
+        If count > 1, this switch toggles generation of vector_arrays with compatible `dim`,
+        `length` and `dtype`.
     """
     @functools.wraps(given)
     def inner_backend_decorator(func):
@@ -440,18 +438,22 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
 
     Parameters
     ----------
-    draw hypothesis control function object
-    count how many bases do you want
-    dtype dtype for the generated bases, defaults to `np.float_`
-    max_dim size limit for the generated
+    draw
+        Hypothesis control function object.
+    count
+        Number of bases.
+    dtype
+        dtype for the generated bases, defaults to `np.float_`.
+    max_dim
+        Dimension limit for the generated |VectorSpaces|.
 
     Returns
     -------
-    a list of |VectorArray| linear-independent objects of same dim and length
+    A list of |VectorArray| linear-independent objects of same dimension and length.
     """
     dtype = dtype or np.float_
     # simplest way currently of getting a |VectorSpace| to construct our new arrays from
-    space_types = _picklable_vector_space_types  + _other_vector_space_types
+    space_types = _picklable_vector_space_types + _other_vector_space_types
     space = draw(vector_arrays(count=1, dtype=dtype, length=hyst.just((1,)), compatible=True, space_types=space_types)
                  .filter(lambda x: x[0].space.dim > 0 and x[0].space.dim < max_dim)).space
     length = space.dim

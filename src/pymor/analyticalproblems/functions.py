@@ -249,7 +249,7 @@ class GenericFunction(Function):
 
 
 class SymbolicExpressionFunction(GenericFunction):
-    """Turns a sympbolic expression into a |Function|.
+    """Turns a symbolic expression into a |Function|.
 
     Parameters
     ----------

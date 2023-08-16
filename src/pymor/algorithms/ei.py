@@ -73,7 +73,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
 
             :errors:                Sequence of maximum approximation errors during
                                     greedy search.
-            :triangularity_errors:  Sequence of maximum absolute values of interoplation
+            :triangularity_errors:  Sequence of maximum absolute values of interpolation
                                     matrix coefficients in the upper triangle (should
                                     be near zero).
             :coefficients:          |NumPy array| of coefficients such that `collateral_basis`
@@ -134,7 +134,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         new_vec = U[max_err_ind].copy()
         new_dof = new_vec.amax()[0][0]
         if new_dof in interpolation_dofs:
-            logger.info(f'DOF {new_dof} selected twice for interplation! Stopping extension loop.')
+            logger.info(f'DOF {new_dof} selected twice for interpolation! Stopping extension loop.')
             break
         new_dof_value = new_vec.dofs([new_dof])[0, 0]
         if new_dof_value == 0.:
@@ -245,7 +245,7 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
         new_dof = ERR.amax()[0][0]
 
         if new_dof in interpolation_dofs:
-            logger.info(f'DOF {new_dof} selected twice for interplation! Stopping extension loop.')
+            logger.info(f'DOF {new_dof} selected twice for interpolation! Stopping extension loop.')
             break
 
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
@@ -364,7 +364,7 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
 
 def interpolate_function(function, parameter_sample, evaluation_points,
                          atol=None, rtol=None, max_interpolation_dofs=None):
-    """Parameter separable approximation of a |Function| using Empiricial Interpolation.
+    """Parameter separable approximation of a |Function| using Empirical Interpolation.
 
     This method computes a parameter separated |LincombFunction| approximating
     the input |Function| using Empirical Interpolation :cite`BMNP04`.

@@ -35,7 +35,7 @@ class CoerciveRBReductor(StationaryRBReductor):
         |Operators| given by `vector_ranged_operators` and for the computation of
         Riesz representatives of the residual. If `None`, the Euclidean product is used.
     coercivity_estimator
-        `None` or a |Parameterfunctional| returning a lower bound for the coercivity
+        `None` or a |ParameterFunctional| returning a lower bound for the coercivity
         constant of the given problem. Note that the computed error estimate is only
         guaranteed to be an upper bound for the error when an appropriate coercivity
         estimate is specified.
@@ -129,7 +129,7 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
         |Operators| given by `vector_ranged_operators` and for the computation of
         Riesz representatives of the residual. If `None`, the Euclidean product is used.
     coercivity_estimator
-        `None` or a |Parameterfunctional| returning a lower bound for the coercivity
+        `None` or a |ParameterFunctional| returning a lower bound for the coercivity
         constant of the given problem. Note that the computed error estimate is only
         guaranteed to be an upper bound for the error when an appropriate coercivity
         estimate is specified.
