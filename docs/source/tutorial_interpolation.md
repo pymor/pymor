@@ -32,19 +32,18 @@ kernelspec:
 Here we discuss interpolation-based methods
 (aka. moment matching, aka. Krylov subspace methods)
 for LTI systems,
-and demonstrate it on the heat equation example from
-{doc}`tutorial_lti_systems`.
-We start with simpler approaches (interpolation at infinity and at zero) and
-then move on to bitangential Hermite interpolation
-which is directly supported in pyMOR.
-
-We use the Penzl example
+and demonstrate it on
+[Penzl' FOM example](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/Penzl%27s_FOM).
 
 ```{code-cell}
 from pymor.models.examples import penzl_example
 
 fom = penzl_example()
 ```
+
+We start with simpler approaches (interpolation at infinity and at zero) and
+then move on to bitangential Hermite interpolation
+which is directly supported in pyMOR.
 
 ## Interpolation at infinity
 
@@ -57,18 +56,49 @@ Given an LTI system
 \end{align}
 ```
 
-the most straightforward interpolation method is using a Krylov subspace
+the most straightforward interpolation method is using Krylov subspaces
 
 ```{math}
-V =
-\begin{bmatrix}
-  B & A B & \cdots & A^{k - 1} B
-\end{bmatrix}
+\newcommand{\T}{\operatorname{T}}
+\begin{align*}
+  V
+  & =
+  \begin{bmatrix}
+    B & A B & \cdots & A^{r - 1} B
+  \end{bmatrix}, \\
+  W
+  & =
+  \begin{bmatrix}
+    C^{\T} & A^{\T} C^{\T} & \cdots & {\left(A^{\T}\right)}^{r - 1} C^{\T}
+  \end{bmatrix}
+\end{align*}
 ```
 
 to perform a Galerkin projection.
-This will achieve interpolation of the first $k$ moments at infinity
+This will achieve interpolation of the first $2 r$ moments at infinity
 of the transfer function.
+The moments at infinity, also called *Markov parameters*,
+are the coefficients in the Laurent series expansion:
+
+```{math}
+\begin{align*}
+  H(s)
+  & = C {(s I - A)}^{-1} B + D \\
+  & = C \frac{1}{s} {\left(I - \frac{1}{s} A \right)}^{-1} B + D \\
+  & = C \frac{1}{s}
+    \sum_{k = 0}^{\infty} {\left(\frac{1}{s} A \right)}^{k}
+    B + D \\
+  & = D + \sum_{k = 0}^{\infty} C A^k B \frac{1}{s^{k + 1}} \\
+  & = D + \sum_{k = 1}^{\infty} C A^{k - 1} B \frac{1}{s^{k}}.
+\end{align*}
+```
+
+The moments at infinity are thus
+
+```{math}
+M_0(\infty) = D, \quad
+M_k(\infty) = C A^{k - 1} B,  \text{ for } k \ge 1.
+```
 
 ```{code-cell}
 from pymor.algorithms.krylov import arnoldi
