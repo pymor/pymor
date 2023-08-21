@@ -92,7 +92,7 @@ a {{ LTIModel }}. For model reduction, it is often desirable to preserve the
 port-Hamiltonian structure, i.e., to compute a ROM which is also port-Hamiltonian.
 
 A passive {{ LTIModel }} can be converted into a {{ PHLTIModel }} using
-the {func}`~pymor.models.iosys.PHLTIModel.from_passive_LTIModel` function if desired.
+the {meth}`~pymor.models.iosys.PHLTIModel.from_passive_LTIModel` method if desired.
 Consequentely, one option to preserve port-Hamiltonian structure is to use a reductor
 which preserves passivity (but returns a ROM of type {{ LTIModel }}), and convert the
 ROM into a {{ PHLTIModel }} in a post-processing step.
@@ -117,10 +117,10 @@ The toy problem is included in pyMOR in the {mod}`pymor.models.examples` module 
 
 ## Structure-preserving model order reduction
 
-pyMOR provides three reductors which can be used for model order reduction 
+pyMOR provides three reductors which can be used for model order reduction
 while preserving the port-Hamiltonian structure:
 
-- pHIRKA ({class}`~pymor.reductors.ph.ph_irka.PHIRKAReductor`),
+- pH-IRKA ({class}`~pymor.reductors.ph.ph_irka.PHIRKAReductor`),
 - PRBT ({class}`~pymor.reductors.bt.PRBTReductor`),
 - passivity preserving model reduction via spectral factorization
   ({class}`~pymor.reductors.spectral_factor.SpectralFactorReductor`).
@@ -132,8 +132,8 @@ Note: Currently, the {class}`~pymor.reductors.bt.PRBTReductor` and
 {class}`~pymor.reductors.spectral_factor.SpectralFactorReductor` reductors require
 {math}`D` to be nonsingular. The MSD example has a zero {math}`D` matrix. Therefore,
 we have to add a small regularization feedthrough term. This is a limitation of the
-current implementation, since in the background the so-called KYP-LMI is converted
-into a so-called Riccati equation, which is only possible for nonsingular {math}`D`.
+current implementation, since in the background the KYP-LMI is converted
+into a Riccati equation, which is only possible for nonsingular {math}`D`.
 For {func}`~pymor.models.iosys.PHLTIModel.from_passive_LTIModel`, {math}`D` must be
 nonsingular for the same reasons.
 
@@ -175,7 +175,7 @@ print(f'rom1 is of type {type(rom1)}.')
 ### Positive-real balanced truncation (PRBT)
 
 Positive-real balanced truncation (PRBT) works similar to the general balanced truncation
-method described in {doc}`tutorial_bt`, but uses so-called positive real controllability
+method described in {doc}`tutorial_bt`, but uses positive real controllability
 and observability Gramians instead. PRBT preserves passivity, but returns a ROM
 of type {{ LTIModel }}. Thus, we convert the ROM into a {{ PHLTIModel }} in a
 post-processing step. PRBT can be used with any passive {{ LTIModel}} FOM.
@@ -192,7 +192,7 @@ print(f'rom2 is of type {type(rom1)}.')
 ### Passivity preserving model reduction via spectral factorization
 
 The {class}`~pymor.reductors.spectral_factor.SpectralFactorReductor` method
-is a wrapper reductor for another generic reductor. The method extracts a so-called
+is a wrapper reductor for another generic reductor. The method extracts a
 spectral factor from the FOM, which subsequentely is reduced by a reductor
 specified by the user. The spectral factor is a normal {{ LTIModel }}. Here, we opt
 for {class}`~pymor.reductors.h2.IRKAReductor` as the inner reductor. If the inner
@@ -217,7 +217,7 @@ print(f'rom3 is of type {type(rom1)}.')
 
 ### Comparison
 
-Let us compare the H2 errors of the three methods:
+Let us compare the {math}`\mathcal{H}_2` errors of the three methods:
 
 ```{code-cell}
 err1 = fom - rom1

@@ -4,6 +4,7 @@
 
 import numpy as np
 
+
 def thermal_block_example():
     """Return 2x2 thermal block example.
 
