@@ -32,7 +32,7 @@ kernelspec:
 In the [first section](#port-hamiltonian-lti-systems), we introduce the class of
 port-Hamiltonian systems and their relationship to two other system-theoretic properties called
 *passivity* and *positive realness*. After introducing a toy example in
-[A toy problem: Mass-spring-damper-problem](#a-toy-problem-mass-spring-damper-chain), we
+the [second section](#a-toy-problem-mass-spring-damper-chain), we
 have a look into structure-preserving model reduction for port-Hamiltonian systems
 in the [third section](#structure-preserving-model-order-reduction).
 
@@ -157,10 +157,10 @@ Riccati equation relevant for {class}`~pymor.reductors.bt.PRBTReductor` and
 {class}`~pymor.reductors.spectral_factor.SpectralFactorReductor`. Possible choices are
 `scipy`, `slycot` or `pymess` (if installed).
 
-### pHIRKA
+### pH-IRKA
 
-The pHIRKA reductor {class}`~pymor.reductors.ph.ph_irka.PHIRKAReductor` directly returns
-a ROM of type {{ PHLTIModel }}. pHIRKA works similar to the general IRKA reductor
+The pH-IRKA reductor {class}`~pymor.reductors.ph.ph_irka.PHIRKAReductor` directly returns
+a ROM of type {{ PHLTIModel }}. pH-IRKA works similar to the standard IRKA reductor
 {class}`~pymor.reductors.h2.IRKAReductor`, but with fewer degrees of freedom to preserve
 the port-Hamiltonian structure.
 
@@ -194,7 +194,7 @@ print(f'rom2 is of type {type(rom1)}.')
 The {class}`~pymor.reductors.spectral_factor.SpectralFactorReductor` method
 is a wrapper reductor for another generic reductor. The method extracts a
 spectral factor from the FOM, which subsequentely is reduced by a reductor
-specified by the user. The spectral factor is a normal {{ LTIModel }}. Here, we opt
+specified by the user. A spectral factor is a standard {{ LTIModel }}. Here, we opt
 for {class}`~pymor.reductors.h2.IRKAReductor` as the inner reductor. If the inner
 reductor returns a stable ROM, passivity is preserved.
 The spectral factor method and PRBT are related, since the computation of
