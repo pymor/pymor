@@ -36,7 +36,7 @@ def mat_eqn_sparse_min_size(value=1000):
 
 
 @defaults('default_sparse_solver_backend', 'default_dense_solver_backend')
-def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
+def solve_cont_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, options=None,
                          default_sparse_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND['cont']['sparse'],
                          default_dense_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND['cont']['dense']):
     """Compute an approximate low-rank solution of a continuous-time Lyapunov equation.
@@ -64,9 +64,25 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
       .. math::
           A^T X E + E^T X A + B^T B = 0.
 
+    - if hess is `True` and E is `None`, A is in upper Hessenberg form.
+
+    - if hess is `True` and E is an |Operator|, (A, E) is in generalized Hessenberg form.
+     
+
     We assume A and E are real |Operators|, E is invertible, and all the eigenvalues of (A, E) all
     lie in the open left half-plane. Operator B needs to be given as a |VectorArray| from
     `A.source`, and for large-scale problems, we assume `len(B)` is small.
+
+    If Q and S are given, they contain left and right Schur vectors of (A, E) respectively.
+    In this case, A contains its upper triangular matrix U and E contains its upper triangular matrix V
+    of the generalized Schur decomposition of (A, E), where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
+
+    If Q is given and S is `None`, E is supposed to be `None` as well. In this case, A contains its
+    upper triangular matrix U beeing the Schur decomposition of A, Q contains the Schur vectors of A.
+    :math:`A = Q*S*Q**T` .
+
+    Parameters `Q`, `S` and `hess` are supported only by pymepack solvers. When another solver is
+    selected, `NotImplementedError` will be raised.
 
     If the solver is not specified using the options argument, a solver backend is chosen based on
     availability in the following order:
@@ -81,7 +97,8 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
 
       1. `pymess` (see :func:`pymor.bindings.pymess.solve_lyap_lrcf`),
       2. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_lrcf`),
-      3. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_lrcf`).
+      3. `pymepack` (see :func:`pymor.bindings.pymepack.solve_lyap_lrcf`),
+      4. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_lrcf`).
 
     Parameters
     ----------
@@ -91,6 +108,12 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
         The non-parametric |Operator| E or `None`.
     B
         The operator B as a |VectorArray| from `A.source`.
+    Q
+        if E is `None`, Schur vectors of A, otherwise left Schur vectors of (A, E)        
+    S
+        if E is not `None`, right Schur vectors of (A, E)
+    hess
+        Whether A or (A, E) is in the (generalized) Hessenberg form.
     trans
         Whether the first |Operator| in the Lyapunov equation is transposed.
     options
@@ -100,12 +123,13 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
         - :func:`pymor.algorithms.lradi.lyap_lrcf_solver_options`,
         - :func:`pymor.bindings.scipy.lyap_lrcf_solver_options`,
         - :func:`pymor.bindings.slycot.lyap_lrcf_solver_options`,
-        - :func:`pymor.bindings.pymess.lyap_lrcf_solver_options`.
+        - :func:`pymor.bindings.pymess.lyap_lrcf_solver_options`,
+        - :func:`pymor.bindings.pymepack.lyap_lrcf_solver_options`.
 
     default_sparse_solver_backend
         Default sparse solver backend to use (pymess, lradi).
     default_dense_solver_backend
-        Default dense solver backend to use (pymess, slycot, scipy).
+        Default dense solver backend to use (pymess, slycot, pymepack, scipy).
 
     Returns
     -------
@@ -121,6 +145,11 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
             backend = default_sparse_solver_backend
         else:
             backend = default_dense_solver_backend
+    if backend != 'pymepack':
+        if (Q is not None or S is not None) :
+            raise NotImplementedError(f'Backend solver ({backend}) does not support Schur factorization.')
+        if hess:
+            raise NotImplementedError(f'Backend solver ({backend}) does not support Hessenberg form.')
     if backend == 'scipy':
         from pymor.bindings.scipy import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'slycot':
@@ -137,7 +166,7 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
 
 
 @defaults('default_dense_solver_backend')
-def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
+def solve_disc_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, options=None,
                          default_dense_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND['disc']['dense']):
     """Compute an approximate low-rank solution of a discrete-time Lyapunov equation.
 
@@ -164,15 +193,31 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
       .. math::
           A^T X A - E^T X E + B^T B = 0.
 
+    - if hess is `True` and E is `None`, A is in upper Hessenberg form.
+
+    - if hess is `True` and E is an |Operator|, (A, E) is in generalized Hessenberg form.
+
     We assume A and E are real |Operators|, E is invertible, and all the eigenvalues of (A, E) all
     lie inside the unit circle. Operator B needs to be given as a |VectorArray| from `A.source`, and
     for large-scale problems, we assume `len(B)` is small.
+
+    If Q and S are given, they contain left and right Schur vectors of (A, E) respectively.
+    In this case, A contains its upper triangular matrix U and E contains its upper triangular matrix V
+    of the generalized Schur decomposition of (A, E), where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
+
+    If Q is given and S is `None`, E is supposed to be `None` as well. In this case, A contains its
+    upper triangular matrix U beeing the Schur decomposition of A, Q contains the Schur vectors of A.
+    :math:`A = Q*S*Q**T` .
+
+    Parameters `Q`, `S` and `hess` are supported only by pymepack solvers. When another solver is
+    selected, `NotImplementedError` will be raised.
 
     If the solver is not specified using the options argument, a solver backend is chosen based on
     availability in the following order:
 
       1. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_lrcf`),
-      2. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_lrcf`).
+      2. `pymepack` (see :func:`pymor.bindings.pymepack.solve_lyap_lrcf`),
+      3. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_lrcf`).
 
     Parameters
     ----------
@@ -182,6 +227,12 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
         The non-parametric |Operator| E or `None`.
     B
         The operator B as a |VectorArray| from `A.source`.
+    Q
+        if E is `None`, Schur vectors of A, otherwise left Schur vectors of (A, E)        
+    S
+        if E is not `None`, right Schur vectors of (A, E)    
+    hess
+        Whether (A, E) or A is in (generalized) Hessenberg form.
     trans
         Whether the first |Operator| in the Lyapunov equation is transposed.
     options
@@ -189,10 +240,11 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
         See:
 
         - :func:`pymor.bindings.scipy.lyap_lrcf_solver_options`,
-        - :func:`pymor.bindings.slycot.lyap_lrcf_solver_options`.
+        - :func:`pymor.bindings.slycot.lyap_lrcf_solver_options`,
+        - :func:`pymor.bindings.pymepack.lyap_lrcf_solver_options`.
 
     default_dense_solver_backend
-        Default dense solver backend to use (slycot, scipy).
+        Default dense solver backend to use (slycot, pymepack, scipy).
 
     Returns
     -------
@@ -205,6 +257,11 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
         backend = solver.split('_')[0]
     else:
         backend = default_dense_solver_backend
+    if backend != 'pymepack':
+        if (Q is not None or S is not None) :
+            raise NotImplementedError(f'Backend solver ({backend}) does not support Schur factorization.')
+        if hess:
+            raise NotImplementedError(f'Backend solver ({backend}) does not support Hessenberg form.')
     if backend == 'scipy':
         from pymor.bindings.scipy import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'slycot':
@@ -229,7 +286,7 @@ def _solve_lyap_lrcf_check_args(A, E, B, trans):
 
 
 @defaults('default_solver_backend')
-def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
+def solve_cont_lyap_dense(A, E, B, Q=None, S=None, hess=False, trans=False, options=None,
                           default_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND['cont']['dense']):
     """Compute the solution of a continuous-time Lyapunov equation.
 
@@ -255,15 +312,31 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
       .. math::
           A^T X E + E^T X A + B^T B = 0.
 
+    - if hess is `True` and E is `None`, A is in upper Hessenberg form.
+
+    - if hess is `True` and E is an |Operator|, (A, E) is in generalized Hessenberg form.
+
     We assume A and E are real |NumPy arrays|, E is invertible, and that no two eigenvalues of
     (A, E) sum to zero (i.e., there exists a unique solution X).
+
+    If Q and S are given, they contain left and right Schur vectors of (A, E) respectively.
+    In this case, A contains its upper triangular matrix U and E contains its upper triangular matrix V
+    of the generalized Schur decomposition of (A, E), where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
+
+    If Q is given and S is `None`, E is supposed to be `None` as well. In this case, A contains its
+    upper triangular matrix U beeing the Schur decomposition of A, Q contains the Schur vectors of A.
+    :math:`A = Q*S*Q**T` .
+
+    Parameters `Q`, `S` and `hess` are supported only by pymepack solvers. When another solver is
+    selected, `NotImplementedError` will be raised.
 
     If the solver is not specified using the options argument, a solver backend is chosen based on
     availability in the following order:
 
     1. `pymess` (see :func:`pymor.bindings.pymess.solve_lyap_dense`)
     2. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_dense`)
-    3. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_dense`)
+    3. `pymepack` (see :func:`pymor.bindings.pymepack.solve_lyap_dense`)
+    4. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_dense`)
 
     Parameters
     ----------
@@ -273,6 +346,12 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
         The matrix E as a 2D |NumPy array| or `None`.
     B
         The matrix B as a 2D |NumPy array|.
+    Q
+        if E is `None`, Schur vectors of A, otherwise left Schur vectors of (A, E)        
+    S
+        if E is not `None`, right Schur vectors of (A, E)    
+    hess
+        Whether (A, E) or A is in (generalized) Hessenberg form.
     trans
         Whether the first operator in the Lyapunov equation is transposed.
     options
@@ -281,10 +360,11 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
 
         - :func:`pymor.bindings.scipy.lyap_dense_solver_options`,
         - :func:`pymor.bindings.slycot.lyap_dense_solver_options`,
-        - :func:`pymor.bindings.pymess.lyap_dense_solver_options`.
+        - :func:`pymor.bindings.pymess.lyap_dense_solver_options`,
+        - :func:`pymor.bindings.pymepack.lyap_dense_solver_options`.
 
     default_solver_backend
-        Default solver backend to use (pymess, slycot, scipy).
+        Default solver backend to use (pymess, slycot, pymepack, scipy).
 
     Returns
     -------
@@ -297,6 +377,11 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
         backend = solver.split('_')[0]
     else:
         backend = default_solver_backend
+    if backend != 'pymepack':
+        if (Q is not None or S is not None) :
+            raise NotImplementedError(f'Backend solver ({backend}) does not support Schur factorization.')
+        if hess:
+            raise NotImplementedError(f'Backend solver ({backend}) does not support Hessenberg form.')
     if backend == 'scipy':
         from pymor.bindings.scipy import solve_lyap_dense as solve_lyap_impl
     elif backend == 'slycot':
@@ -311,7 +396,7 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
 
 
 @defaults('default_solver_backend')
-def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
+def solve_disc_lyap_dense(A, E, B, Q=None, S=None, hess=False, trans=False, options=None,
                           default_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND['disc']['dense']):
     """Compute the solution of a discrete-time Lyapunov equation.
 
@@ -337,14 +422,30 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
       .. math::
           A^T X A - E^T X E + B^T B = 0.
 
+    - if hess is `True` and E is `None`, A is in upper Hessenberg form.
+
+    - if hess is `True` and E is an |Operator|, (A, E) is in generalized Hessenberg form.
+
     We assume A and E are real |NumPy arrays|, E is invertible, and that all pairwise products of
     two eigenvalues of (A, E) are not equal to one (i.e., there exists a unique solution X).
+
+    If Q and S are given, they contain left and right Schur vectors of (A, E) respectively.
+    In this case, A contains its upper triangular matrix U and E contains its upper triangular matrix V
+    of the generalized Schur decomposition of (A, E), where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
+
+    If Q is given and S is `None`, E is supposed to be `None` as well. In this case, A contains its
+    upper triangular matrix U beeing the Schur decomposition of A, Q contains the Schur vectors of A.
+    :math:`A = Q*S*Q**T` .
+
+    Parameters `Q`, `S` and `hess` are supported only by pymepack solvers. When another solver is
+    selected, `NotImplementedError` will be raised.
 
     If the solver is not specified using the options argument, a solver backend is chosen based on
     availability in the following order:
 
     1. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_dense`)
-    2. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_dense`)
+    2. `pymepack` (see :func:`pymor.bindings.pymepack.solve_lyap_dense`)
+    3. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_dense`)
 
     Parameters
     ----------
@@ -354,6 +455,12 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
         The matrix E as a 2D |NumPy array| or `None`.
     B
         The matrix B as a 2D |NumPy array|.
+    Q
+        if E is `None`, Schur vectors of A, otherwise left Schur vectors of (A, E)        
+    S
+        if E is not `None`, right Schur vectors of (A, E)    
+    hess
+        Whether (A, E) or A is in (generalized) Hessenberg form.
     trans
         Whether the first operator in the Lyapunov equation is
         transposed.
@@ -362,22 +469,28 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
         See:
 
         - :func:`pymor.bindings.scipy.lyap_dense_solver_options`,
-        - :func:`pymor.bindings.slycot.lyap_dense_solver_options`.
+        - :func:`pymor.bindings.slycot.lyap_dense_solver_options`,
+        - :func:`pymor.bindings.pymepack.lyap_dense_solver_options`.
 
     default_solver_backend
-        Default solver backend to use (slycot, scipy).
+        Default solver backend to use (slycot, pymepack, scipy).
 
     Returns
     -------
     X
         Lyapunov equation solution as a |NumPy array|.
     """
-    _solve_lyap_dense_check_args(A, E, B, trans)
+    _solve_lyap_dense_check_args(A, E, B, trans, Q, S)
     if options:
         solver = options if isinstance(options, str) else options['type']
         backend = solver.split('_')[0]
     else:
         backend = default_solver_backend
+    if backend != 'pymepack':
+        if (Q is not None or S is not None) :
+            raise NotImplementedError(f'Backend solver ({backend}) does not support Schur factorization.')
+        if hess:
+            raise NotImplementedError(f'Backend solver ({backend}) does not support Hessenberg form.')
     if backend == 'scipy':
         from pymor.bindings.scipy import solve_lyap_dense as solve_lyap_impl
     elif backend == 'slycot':
@@ -389,7 +502,7 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
     return solve_lyap_impl(A, E, B, trans=trans, cont_time=False, options=options)
 
 
-def _solve_lyap_dense_check_args(A, E, B, trans):
+def _solve_lyap_dense_check_args(A, E, B, trans, Q=None, S=None):
     assert isinstance(A, np.ndarray) and A.ndim == 2
     assert A.shape[0] == A.shape[1]
     if E is not None:
@@ -398,6 +511,15 @@ def _solve_lyap_dense_check_args(A, E, B, trans):
         assert E.shape[0] == A.shape[0]
     assert isinstance(B, np.ndarray) and A.ndim == 2
     assert not trans and B.shape[0] == A.shape[0] or trans and B.shape[1] == A.shape[0]
+    if Q is not None:
+        assert isinstance(Q, np.ndarray) and Q.ndim == 2
+        assert Q.shape[0] == Q.shape[1]
+        assert Q.shape[0] == A.shape[0]
+    if S is not None:
+        assert E is not None and Q is not None
+        assert isinstance(S, np.ndarray) and S.ndim == 2
+        assert S.shape[0] == S.shape[1]
+        assert S.shape[0] == A.shape[0]
 
 
 def _chol(A):
