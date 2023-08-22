@@ -129,7 +129,7 @@ parameter_space = fom.parameters.space(0.0001, 1.)
 
 Here, `0.0001` and `1.` are the common lower and upper bounds for the
 individual components of all |parameters| of `fom`. In our case `fom`
-expects a single parameter `'diffusion'` of 9 values:
+expects a single parameter `'diffusion'` of 6 values:
 
 ```{code-cell}
 fom.parameters
@@ -272,7 +272,7 @@ which determines {math}`\lambda_i` and, thus, {math}`v_{proj}`.
 
 Let's assemble and solve this equation system using pyMOR to determine
 the best-approximation error in `trivial_basis` for some test vector
-`V` which we take as another random solution of our {{ Model }}:
+`U` which we take as another random solution of our {{ Model }}:
 
 ```{code-cell}
 U = fom.solve(parameter_space.sample_randomly())
@@ -328,7 +328,7 @@ the same length can simply be subtracted, yielding a new array of the
 differences:
 
 ```{code-cell}
-# for some reason V_proj does not carry over from the previous cell
+# for some reason U_proj does not carry over from the previous cell
 U_proj = trivial_basis.lincomb(lambdas.T)
 fom.visualize((U, U_proj, U - U_proj),
               legend=('U', 'U_proj', 'best-approximation err'),

@@ -376,7 +376,7 @@ As a result, the solution of the primal equation is no longer expensive
 and the optimization method can evaluate the objective functional quickly.
 For this, we define a standard {class}`~pymor.reductors.coercive.CoerciveRBReductor`
 and use the {class}`~pymor.parameters.functionals.MinThetaParameterFunctional` for an
-estimation of the coerciviy constant.
+estimation of the coercivity constant.
 
 ```{code-cell}
 from pymor.algorithms.greedy import rb_greedy
@@ -448,7 +448,7 @@ report(rom_result, RB_minimization_data, reference_mu)
 
 Comparing the result to the FOM model, we see that the number of
 iterations and evaluations of the model are equal. As expected,
-we see that the optmization routine is very fast because the surrogate
+we see that the optimization routine is very fast because the surrogate
 enables almost instant evaluations of the primal equation.
 
 As mentioned above, we should not forget that we required the offline
@@ -620,7 +620,7 @@ We already figured out that the main drawback for using RB methods in the
 context of optimization is the expensive offline time to build the
 surrogate model. In the example above, we overcame this issue by
 choosing a large tolerance `atol`. As a result, we cannot be sure
-that our surrogate model is accurate enough for our purpuses. In other
+that our surrogate model is accurate enough for our purposes. In other
 words, either we invest too much time to build an accurate model or we
 face the danger of reducing with a bad surrogate for the whole parameter
 space. Thinking about this issue again, it is important to notice that
@@ -633,7 +633,7 @@ whole parameter space.
 
 One possible way for advanced RB methods is a reduction along the path
 of optimization. The idea is that we start with an empty basis and only
-enrich the model with the parameters that we will arive at. This
+enrich the model with the parameters that we will arrive at. This
 approach goes beyond the classical offline/online splitting of RB
 methods since it entirely skips the offline phase. In the following
 code, we will test this method.
@@ -806,6 +806,10 @@ PDE-constrained optimization problems we refer to
 [QGVW17](<https://epubs.siam.org/doi/abs/10.1137/16M1081981>) and
 [KMSOV20](<https://doi.org/10.1051/m2an/2021019>) where for the latter a pyMOR
 implementation is available as supplementary material.
+
+Update: The trust-region methods are by now implemented in pyMOR which is shown
+in the respective demo {mod}`~pymordemos.trust_region`. An update of this
+tutorial is work in progress.
 
 Download the code:
 {download}`tutorial_optimization.md`

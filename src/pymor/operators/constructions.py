@@ -356,7 +356,7 @@ class ProjectedOperator(Operator):
 
     linear = False
 
-    def __init__(self, operator, range_basis, source_basis, product=None, solver_options=None):
+    def __init__(self, operator, range_basis, source_basis, product=None, solver_options=None, name=None):
         assert isinstance(operator, Operator)
         assert source_basis is None or source_basis in operator.source
         assert range_basis is None or range_basis in operator.range
@@ -599,7 +599,7 @@ class ComponentProjectionOperator(Operator):
     ----------
     components
         List or 1D |NumPy array| of the indices of the vector
-        :meth:`~pymor.vectorarrays.interface.VectorArray.components` that are
+        :meth:`~pymor.vectorarrays.interface.VectorArray.dofs` that are
         to be extracted by the operator.
     source
         Source |VectorSpace| of the operator.
@@ -609,12 +609,12 @@ class ComponentProjectionOperator(Operator):
 
     linear = True
 
-    def __init__(self, components, source, name=None):
+    def __init__(self, components, source, range_id=None, name=None):
         assert all(0 <= c < source.dim for c in components)
         components = np.array(components, dtype=np.int32)
 
         self.__auto_init(locals())
-        self.range = NumpyVectorSpace(len(components))
+        self.range = NumpyVectorSpace(len(components), range_id)
 
     def apply(self, U, mu=None):
         assert U in self.source

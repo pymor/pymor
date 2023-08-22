@@ -8,11 +8,17 @@ function init_ssh {
       apk --update add openssh-client git rsync
 
     eval $(ssh-agent -s)
-    echo "$DOCS_DEPLOY_KEY" | tr -d '\r' | ssh-add - > /dev/null
+
+    chmod 600 "$DOCS_DEPLOY_KEY"
+    ssh-add "$DOCS_DEPLOY_KEY"
+
+    chmod 600 "$DOCS_DEPLOY_KEY_ZIV"
+    ssh-add "$DOCS_DEPLOY_KEY_ZIV"
 
     [[ -d ~/.ssh ]] || mkdir -p  ~/.ssh
     chmod 700 ~/.ssh
     ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+    ssh-keyscan -H docs-ng.pymor.org >> ~/.ssh/known_hosts
 }
 init_ssh
 
@@ -86,3 +92,5 @@ git add ${REPO_DIR}/.binder/
   git commit -am "Binder setup for ${CI_COMMIT_REF_NAME}"
 
 git push origin ${SLUG} -f
+
+ssh docs@docs-ng.pymor.org

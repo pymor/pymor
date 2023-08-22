@@ -10,13 +10,76 @@ config.require('MATPLOTLIB')
 import matplotlib.pyplot as plt
 import numpy as np
 
+from pymor.core.base import BasicObject
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 from pymor.discretizers.builtin.gui.matplotlib_base import Matplotlib1DAxes, MatplotlibPatchAxes
 from pymor.vectorarrays.interface import VectorArray
 
 
+class PatchVisualizer(BasicObject):
+    """Patch visualizer."""
+
+    def __init__(self, grid, U, bounding_box=None, codim=2, title=None, legend=None,
+                 separate_colorbars=False, rescale_colorbars=False, columns=2):
+        assert isinstance(U, VectorArray) \
+               or (isinstance(U, tuple)
+                   and all(isinstance(u, VectorArray) for u in U)
+                   and all(len(u) == len(U[0]) for u in U))
+
+        if isinstance(U, VectorArray):
+            U = (U,)
+        legend = (legend,) if isinstance(legend, str) else legend
+        assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
+
+        self.separate_colorbars, self.rescale_colorbars = separate_colorbars, rescale_colorbars
+
+        if len(U) == 1:
+            rows = columns = 1
+        else:
+            rows = int(np.ceil(len(U) / columns))
+
+        figsize = plt.rcParams['figure.figsize']
+        self.fig = fig = plt.figure(figsize=(figsize[0] * columns, figsize[1] * rows))
+
+        axs = []
+        plots = []
+        for i in range(len(U)):
+            ax = fig.add_subplot(rows, columns, i+1)
+            if legend:
+                ax.set_title(legend[i])
+            plot = MatplotlibPatchAxes(ax, grid, bounding_box=bounding_box, codim=codim)
+            axs.append(ax)
+            plots.append(plot)
+
+        self.plots = plots
+        self.fig = fig
+
+        if title is not None:
+            fig.suptitle(title)
+
+        self.set(U)
+
+    def set(self, U=None, idx=0):
+        if U is None:
+            U = self.U
+        else:
+            assert isinstance(U, VectorArray) \
+                   or (isinstance(U, tuple)
+                       and all(isinstance(u, VectorArray) for u in U)
+                       and all(len(u) == len(U[0]) for u in U))
+            self.U = U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+                tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+            from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs
+            self.vmins, self.vmaxs = _vmins_vmaxs(U, self.separate_colorbars, self.rescale_colorbars)
+
+        for vmin, vmax, u, plot in zip(self.vmins, self.vmaxs, U, self.plots):
+            plot.set(u[idx], vmin=vmin[idx], vmax=vmax[idx])
+        self.fig.canvas.draw_idle()
+
+
 def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None,
-                    separate_colorbars=False, rescale_colorbars=False, columns=2):
+                    separate_colorbars=False, rescale_colorbars=False, columns=2,
+                    return_widget=True):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -53,57 +116,62 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
                and all(isinstance(u, VectorArray) for u in U)
                and all(len(u) == len(U[0]) for u in U))
 
-    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-        tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
-    legend = (legend,) if isinstance(legend, str) else legend
-    assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
+    if isinstance(U, VectorArray):
+        U = (U,)
 
-    from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs
-    vmins, vmaxs = _vmins_vmaxs(U, separate_colorbars, rescale_colorbars)
+    if return_widget:
+        from IPython import get_ipython
+        get_ipython().run_line_magic('matplotlib', 'widget')
+        plt.ioff()
 
-    plots = []
+    vis = PatchVisualizer(grid, U, bounding_box=bounding_box, codim=codim, title=title, legend=legend,
+        separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars, columns=columns)
+
     do_animation = len(U[0]) > 1
-    if len(U) == 1:
-        fig, ax = plt.subplots()
-        axs = [ax]
+
+    if return_widget:
+        vis.fig.canvas.header_visible = False
+        vis.fig.canvas.layout.flex = '0 1 auto'
+        vis.fig.tight_layout()
+        if do_animation:
+            from ipywidgets import VBox
+
+            from pymor.discretizers.builtin.gui.jupyter.animation_widget import AnimationWidget
+
+            animation_widget = AnimationWidget(len(U[0]))
+            widget = VBox([vis.fig.canvas, animation_widget])
+            widget.layout.align_items = 'stretch'
+
+            def animate(change):
+                vis.set(idx=change['new'])
+            animation_widget.frame_slider.observe(animate, 'value')
+
+            def set(U):
+                vis.set(U, animation_widget.frame_slider.value)
+            widget.set = set
+        else:
+            widget = vis.fig.canvas
+            widget.set = vis.set
+        return widget
     else:
-        rows = int(np.ceil(len(U) / columns))
-        figsize = plt.rcParams['figure.figsize']
-        fig, axs = plt.subplots(rows, columns, figsize=(figsize[0]*columns, figsize[1]*rows))
-        axs = axs.flatten()
-        for ax in axs[len(U):]:
-            ax.set_axis_off()
+        if do_animation:
+            plt.rcParams['animation.html'] = 'jshtml'
+            delay_between_frames = 200  # ms
+            vis.fig.patch.set_alpha(0.0)
+            from matplotlib.animation import FuncAnimation
 
-    for i, (vmin, vmax, u, ax) in enumerate(zip(vmins, vmaxs, U, axs)):
-        plot = MatplotlibPatchAxes(ax, grid, bounding_box=bounding_box, codim=codim)
-        plot.set(u[0], vmin=vmin[0], vmax=vmax[0])
-        if legend:
-            ax.set_title(legend[i])
-        plots.append(plot)
+            def animate(i):
+                vis.set(idx=i)
 
-    if title is not None:
-        fig.suptitle(title)
-
-    if do_animation:
-        plt.rcParams['animation.html'] = 'jshtml'
-        delay_between_frames = 200  # ms
-
-        fig.patch.set_alpha(0.0)
-
-        def animate(i):
-            for p, u, vmin, vmax in zip(plots, U, vmins, vmaxs):
-                p.set(u[i], vmin=vmin[i], vmax=vmax[i])
-
-        from matplotlib.animation import FuncAnimation
-        anim = FuncAnimation(fig, animate, frames=len(U[0]), interval=delay_between_frames, blit=False)
-        plt.close(fig)
-        return anim
-    else:
-        plt.show()
+            anim = FuncAnimation(vis.fig, animate, frames=len(U[0]), interval=delay_between_frames, blit=False)
+            plt.close(vis.fig)
+            return anim
+        else:
+            plt.show()
 
 
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False,
-                            rescale_axes=False, columns=2):
+                            rescale_axes=False, columns=2, return_widget=True):
     """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either
@@ -151,6 +219,12 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
 
     do_animation = len(U[0]) > 1
 
+    if return_widget:
+        from IPython import get_ipython
+        get_ipython().run_line_magic('matplotlib', 'widget')
+        plt.ioff()
+
+
     figsize = plt.rcParams['figure.figsize']
     if separate_plots:
         rows = int(np.ceil(len(U) / columns))
@@ -162,23 +236,59 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     if title is not None:
         fig.suptitle(title)
 
-    if do_animation:
-        plt.rcParams['animation.html'] = 'jshtml'
-        delay_between_frames = 200  # ms
+    data = [U, vmins, vmaxs]
+    def set_data(U=None, ind=0):
+        if U is not None:
+            U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+                tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+            vmins, vmaxs = _vmins_vmaxs(U, separate_plots, rescale_axes)
+            data[0:3] = U, vmins, vmaxs
 
-        fig.patch.set_alpha(0.0)
+        U, vmins, vmaxs = data
+        plot.set([u[ind] for u in U],
+                 [vmin[ind] for vmin in vmins],
+                 [vmax[ind] for vmax in vmaxs])
+        fig.canvas.draw_idle()
 
-        def animate(ind):
-            plot.set([u[ind] for u in U],
-                     [vmin[ind] for vmin in vmins],
-                     [vmax[ind] for vmax in vmaxs])
+    if return_widget:
+        fig.canvas.header_visible = False
+        fig.canvas.layout.flex = '0 1 auto'
+        fig.tight_layout()
+        if do_animation:
+            from ipywidgets import VBox
 
-        from matplotlib.animation import FuncAnimation
-        anim = FuncAnimation(fig, animate, frames=len(U[0]), interval=delay_between_frames, blit=False)
-        plt.close(fig)
-        return anim
+            from pymor.discretizers.builtin.gui.jupyter.animation_widget import AnimationWidget
+
+            animation_widget = AnimationWidget(len(U[0]))
+            widget = VBox([fig.canvas, animation_widget])
+            widget.layout.align_items = 'stretch'
+
+            def time_changed(change):
+                set_data(U=None, ind=change['new'])
+            animation_widget.frame_slider.observe(time_changed, 'value')
+
+            def set(U):
+                set_data(U, ind=animation_widget.frame_slider.value)
+            widget.set = set
+        else:
+            widget = fig.canvas
+            widget.set = set_data
+        return widget
     else:
-        plot.set(U,
-                 [vmin[0] for vmin in vmins],
-                 [vmax[0] for vmax in vmaxs])
-        plt.show()
+        if do_animation:
+            plt.rcParams['animation.html'] = 'jshtml'
+            delay_between_frames = 200  # ms
+
+            fig.patch.set_alpha(0.0)
+
+            from matplotlib.animation import FuncAnimation
+            anim = FuncAnimation(fig, lambda ind: set_data(ind=ind), frames=len(U[0]),
+                                 interval=delay_between_frames, blit=False)
+            plt.close(fig)
+            return anim
+        else:
+            plot.set(U,
+                     [vmin[0] for vmin in vmins],
+                     [vmax[0] for vmax in vmaxs])
+            plt.show()
+

@@ -11,7 +11,7 @@ from scipy.stats._multivariate import random_correlation_gen
 
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, Function
 from pymor.core.config import config
-from pymor.parameters.base import Mu
+from pymor.parameters.base import Mu, Parameters
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -180,29 +180,27 @@ def vector_arrays(draw, space_types, count=1, dtype=None, length=None, compatibl
 def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatible=True, index_strategy=None, **kwargs):
     """This decorator hides the combination details of given.
 
-    the decorated function will be first wrapped in a |hypothesis.given| (with expanded `given_args`
-    and then in |pytest.mark.parametrize| with selected implementation names. The decorated test
-    function must still draw (which a vector_arrays or similar strategy) from the `data` argument in
-    the default case.
+    The decorated function will be first wrapped in a |hypothesis.given| (with expanded
+    `given_args`) and then in |pytest.mark.parametrize| with selected implementation names.
+    The decorated test function must still draw (which a vector_arrays or similar strategy)
+    from the `data` argument in the default case.
 
     Parameters
     ----------
     which
         A list of implementation shortnames, or either of the special values 'all' and 'picklable'.
-
     kwargs
-        passed to `given` decorator as is, use for additional strategies
-
+        Passed to `given` decorator as is, use for additional strategies.
     count
-        how many vector arrays to return (in a list), count=1 is special cased to just return the
-        array
+        How many vector arrays to return (in a list), count=1 is special cased to just return the
+        array.
     dtype
-        dtype of the foundational numpy data the vector array is constructed from
+        dtype of the foundational numpy data the vector array is constructed from.
     length
-        a hypothesis.strategy how many vectors to generate in each vector array
+        A hypothesis.strategy how many vectors to generate in each vector array.
     compatible
-        if count > 1, this switch toggles generation of vector_arrays with compatible `dim`,
-        `length` and `dtype`
+        If count > 1, this switch toggles generation of vector_arrays with compatible `dim`,
+        `length` and `dtype`.
     """
     @functools.wraps(given)
     def inner_backend_decorator(func):
@@ -440,18 +438,22 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
 
     Parameters
     ----------
-    draw hypothesis control function object
-    count how many bases do you want
-    dtype dtype for the generated bases, defaults to `np.float_`
-    max_dim size limit for the generated
+    draw
+        Hypothesis control function object.
+    count
+        Number of bases.
+    dtype
+        dtype for the generated bases, defaults to `np.float_`.
+    max_dim
+        Dimension limit for the generated |VectorSpaces|.
 
     Returns
     -------
-    a list of |VectorArray| linear-independent objects of same dim and length
+    A list of |VectorArray| linear-independent objects of same dimension and length.
     """
     dtype = dtype or np.float_
     # simplest way currently of getting a |VectorSpace| to construct our new arrays from
-    space_types = _picklable_vector_space_types  + _other_vector_space_types
+    space_types = _picklable_vector_space_types + _other_vector_space_types
     space = draw(vector_arrays(count=1, dtype=dtype, length=hyst.just((1,)), compatible=True, space_types=space_types)
                  .filter(lambda x: x[0].space.dim > 0 and x[0].space.dim < max_dim)).space
     length = space.dim
@@ -480,6 +482,36 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
 def equal_tuples(draw, strategy, count):
     val = draw(strategy)
     return draw(hyst.tuples(*[hyst.just(val) for _ in range(count)]))
+
+
+@hyst.composite
+def active_mu_data(draw, min_num=1, max_num=3, min_dim=1, max_dim=5, num_mus=10):
+    from random import randint, sample
+
+    sizes = draw(hyst.lists(hyst.integers(min_value=min_dim, max_value=max_dim), min_size=min_num, max_size=max_num))
+    param_dict = {'foo_' + str(ind): size for ind, size in enumerate(sizes)}
+    space = Parameters(param_dict).space((0.1, 1))
+    dim = space.parameters.dim
+    mus = []
+    active_indices = []
+
+    for _ in range(num_mus):
+        num_indices = randint(0, dim)
+        num_low = randint(0, num_indices)
+        active_inds = sample(range(dim), num_indices)
+        low_active_indices = sample(active_inds, num_low)
+        high_active_indices = list(set(active_inds) - set(low_active_indices))
+
+        mu_range = list(space.ranges.values())[0]
+        val = .5 * (mu_range[0] + mu_range[1])
+        mu = val * np.ones(dim)
+        mu[low_active_indices] = mu_range[0]
+        mu[high_active_indices] = mu_range[1]
+
+        mus.append(mu)
+        active_indices.append(active_inds)
+
+    return space, mus, active_indices
 
 
 # stick to a few representative examples to avoid only seeing degenerate cases

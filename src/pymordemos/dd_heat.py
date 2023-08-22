@@ -13,7 +13,9 @@ from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunct
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.logger import set_log_levels
 from pymor.discretizers.builtin import discretize_instationary_cg
+from pymor.models.transfer_function import TransferFunction
 from pymor.reductors.aaa import PAAAReductor
+from pymor.reductors.loewner import LoewnerReductor
 
 
 def run_mor_method_dd(fom, ss, reductor_cls, reductor_short_name, **reductor_kwargs):
@@ -41,8 +43,12 @@ def run_mor_method_dd(fom, ss, reductor_cls, reductor_short_name, **reductor_kwa
 
     fig, ax = plt.subplots(constrained_layout=True)
     fom.transfer_function.mag_plot(w, ax=ax, label='FOM')
-    rom.mag_plot(w, ax=ax, label='ROM', linestyle='dashed')
-    err.mag_plot(w, ax=ax, label='Error', linestyle='dotted')
+    if isinstance(rom, TransferFunction):
+        rom.mag_plot(w, ax=ax, label='ROM', linestyle='dashed')
+        err.mag_plot(w, ax=ax, label='Error', linestyle='dotted')
+    else:
+        rom.transfer_function.mag_plot(w, ax=ax, label='ROM', linestyle='dashed')
+        err.transfer_function.mag_plot(w, ax=ax, label='Error', linestyle='dotted')
     ax.set_title(fr'Magnitude plot for {reductor_short_name}')
     ax.legend()
 
@@ -75,6 +81,7 @@ def main(
     ss = np.logspace(-1, 4, n)
 
     run_mor_method_dd(lti, ss, PAAAReductor, 'AAA')
+    run_mor_method_dd(lti, ss, LoewnerReductor, 'Loewner')
 
 
 if __name__ == '__main__':

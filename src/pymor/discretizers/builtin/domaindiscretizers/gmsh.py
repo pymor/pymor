@@ -46,9 +46,9 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
     Returns
     -------
     grid
-        The generated :class:`~pymor.discretizers.builtin.grids.gmsh.GmshGrid`.
+        The generated |UnstructuredTriangleGrid|.
     boundary_info
-        The generated :class:`~pymor.discretizers.builtin.grids.gmsh.GmshBoundaryInfo`.
+        The generated |BoundaryInfo|.
     """
     assert domain_description is None or geo_file is None
     logger = getLogger('pymor.discretizers.builtin.domaindiscretizers.gmsh.discretize_gmsh')
@@ -187,7 +187,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         t_gmsh = toc - tic
         logger.info(f'Gmsh took {t_gmsh} s')
 
-        # Create |GmshGrid| and |GmshBoundaryInfo| form the just created MSH-file.
+        # Create |UnstructuredTriangleGrid| and |BoundaryInfo| from the just created MSH-file.
         grid, bi = load_gmsh(msh_file_path)
     finally:
         # delete tempfiles if they were created beforehand.

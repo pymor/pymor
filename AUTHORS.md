@@ -13,12 +13,24 @@
 
 ### pyMOR 2023.1
 
+* Tim Keil, tim.keil@uni-muenster.de
+  * adaptive trust region algorithm and specific BFGS implementation for PDE-constrained optimization
+
+* Steffen Müller, steffenmu@outlook.de
+  * positive-real balanced truncation
+  * passivity preserving model reduction via spectral factorization
+
+* Mohamed Adel Naguib Ahmed, mohamedadel1551998@gmail.com
+  * input-output selection in `bode_plot` function
+
+* Jonas Nicodemus, jonas.nicodemus@simtech.uni-stuttgart.de
+  * port-Hamiltonian IRKA
+  * positive-real balanced truncation
+
 * Peter Oehme, oehme.pb@gmail.com
   * quadratic functionals and quadratic output keyword for CG discretization
   * simple algebraic operations for parameter values
-
-* Mohamed Adel Naguib Ahmed, mohamedadel1551998@gmail.com
-  * Input-output selection in `bode_plot` function
+  * adaptive trust region algorithm and specific BFGS implementation for PDE-constrained optimization
 
 ### pyMOR 2022.2
 
@@ -94,7 +106,7 @@
   * second order derivatives for parameters
   * speed up of LincombOperators
   * add LincombParameterFunctional
-  * pruduct rule for ProductParameterFunctional
+  * product rule for ProductParameterFunctional
   * BaseMaxThetaParameterFunctional
 
 * Hendrik Kleikamp, hendrik.kleikamp@uni-muenster.de
@@ -137,7 +149,7 @@
 * Andreas Buhr, andreas@andreasbuhr.de
   * ability to rescale colorbar in each frame
   * SelectionOperator
-  * support for advection and rection terms in finite element discretizations
+  * support for advection and reaction terms in finite element discretizations
   * improved Robin boundary condition support
 
 * Michael Laier, m_laie01@uni-muenster.de

@@ -327,7 +327,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             with NamedTemporaryFile(mode='wb', delete=False) as f:
                 dump(data, f)
                 filename = f.name
-            subprocess.Popen(['python', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
+            subprocess.Popen(['python3', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
     U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \

@@ -90,6 +90,13 @@ def test_parse_parameter():
     assert mu_as_list == mu_as_parameter_and_back
 
 
+def test_parse_parameter_time_dep():
+    parameters = Parameters(b=2, a=1)
+    mu = parameters.parse([7, 't**2', 't[0]'])
+    assert list(mu.with_(t=3)['a']) == [7]
+    assert list(mu.with_(t=3)['b']) == [9, 3]
+
+
 @given(pyst.mus)
 def test_parse_mu(mu):
     parameters = mu.parameters

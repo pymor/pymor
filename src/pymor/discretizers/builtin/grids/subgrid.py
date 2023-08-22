@@ -27,7 +27,7 @@ class SubGrid(Grid):
     Attributes
     ----------
     parent_grid
-        The |Grid| from which the subgrid was constructed. :class:`Subgrid`
+        The |Grid| from which the subgrid was constructed. :class:`SubGrid`
         only stores a :mod:`weakref` to the grid, so accessing this property
         might return `None` if the original grid has been destroyed.
     """
@@ -118,13 +118,12 @@ class SubGrid(Grid):
 
 
 def make_sub_grid_boundary_info(sub_grid, parent_grid, parent_grid_boundary_info, new_boundary_type=None):
-    """Derives a |BoundaryInfo| for a :class:`~pymor.discretizers.builtin.grids.subgrid.SubGrid`.
+    """Derives a |BoundaryInfo| for a :class:`SubGrid`.
 
     Parameters
     ----------
     sub_grid
-        The :class:`~pymor.discretizers.builtin.grids.subgrid.SubGrid` for which a
-        |BoundaryInfo| is created.
+        The :class:`SubGrid` for which a |BoundaryInfo| is created.
     parent_grid
         The parent |Grid|.
     parent_grid_boundary_info

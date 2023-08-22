@@ -26,7 +26,7 @@ def main(
 
     fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
 ):
-    """Solves the Poisson equation in 2D using pyMOR's builtin discreization toolkit."""
+    """Solves the Poisson equation in 2D using pyMOR's builtin discretization toolkit."""
     norm = float(norm) if norm.lower() not in ('h1', 'l2') else norm.lower()
 
     rhss = [ExpressionFunction('10', 2),

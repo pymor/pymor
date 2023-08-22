@@ -74,6 +74,7 @@ class rule:
 
 
 class match_class_base(rule):
+    """Base class for |rules|."""
 
     def __init__(self, *classes):
         super().__init__()
@@ -267,11 +268,11 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         For each |rule|, it is checked if it :meth:`~rule.matches` the given
         object. If `False`, the next |rule| in the table is considered.
         If `True` the corresponding :attr:`~rule.action` is executed with
-        `obj` as parameter. If execution of :attr:`~action` raises
+        `obj` as parameter. If execution of :attr:`~rule.action` raises
         :class:`~pymor.core.exceptions.RuleNotMatchingError`, the rule is
         considered as not matching, and execution continues with evaluation
         of the next rule. Otherwise, execution is stopped and the return value
-        of :attr:`rule.action` is returned to the caller.
+        of :attr:`~rule.action` is returned to the caller.
 
         If no |rule| matches, a :class:`~pymor.core.exceptions.NoMatchingRuleError`
         is raised.
@@ -365,7 +366,7 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
         """Determine children of given object.
 
         This method returns a list of the names of all
-        attributes `a`, for which one of the folling is true:
+        attributes `a`, for which one of the following is true:
 
             1. `a` is an |Operator|.
             2. `a` is a dict` and each of its values is either an |Operator| or `None`.

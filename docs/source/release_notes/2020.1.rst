@@ -1,5 +1,3 @@
-
-
 pyMOR 2020.1 (July 23, 2020)
 ----------------------------
 We are proud to announce the release of pyMOR 2020.1! Highlights of this release
@@ -154,7 +152,7 @@ This release enables our `pythreejs <https://github.com/jupyter-widgets/pythreej
 for Jupyter Notebook environments by default. It acts as a drop in replacement for the previous default, which was
 matplotlib based. This new module improves interactive performance for visualizations
 with a large number of degrees of freedom by utilizing the user's graphics card via the browser's WebGL API.
-The old behaviour can be reactivated using
+The old behavior can be reactivated using
 
 .. code-block::
 

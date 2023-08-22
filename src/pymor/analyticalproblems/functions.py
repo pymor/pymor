@@ -248,14 +248,46 @@ class GenericFunction(Function):
         return v
 
 
-class ExpressionFunction(GenericFunction):
+class SymbolicExpressionFunction(GenericFunction):
+    """Turns a symbolic expression into a |Function|.
+
+    Parameters
+    ----------
+    expression
+        The :class:`pymor.analyticalproblems.expressions.Expression`.
+    dim_domain
+        The dimension of the domain.
+    variable
+        Name of the input variable in the given expression.
+    name
+        The name of the function.
+    """
+
+    def __init__(self, expression_obj, dim_domain=1, variable='x', name=None):
+        assert variable not in expression_obj.parameters or expression_obj.parameters[variable] == dim_domain
+        params = {k: v for k, v in expression_obj.parameters.items() if k != variable}
+        super().__init__(expression_obj.to_numpy([variable]), dim_domain, expression_obj.shape, params, name)
+        self.__auto_init(locals())
+
+    def to_fenics(self, mesh):
+        return self.expression_obj.to_fenics(mesh)
+
+    def __reduce__(self):
+        return (SymbolicExpressionFunction,
+                (self.expression_obj, self.dim_domain, self.variable, getattr(self, '_name', None)))
+
+    def __str__(self):
+        return f'{self.name}: {self.variable} -> {self.expression_obj}'
+
+
+class ExpressionFunction(SymbolicExpressionFunction):
     """Turns a Python expression given as a string into a |Function|.
 
     Some |NumPy| arithmetic functions like 'sin', 'log', 'min' are supported.
     For a full list see the `functions` class attribute.
 
     .. warning::
-       :meth:`eval` is used to evaluate the given expression.
+       :func:`eval` is used to evaluate the given expression.
        Using this class with expression strings from untrusted sources will cause
        mayhem and destruction!
 
@@ -279,13 +311,9 @@ class ExpressionFunction(GenericFunction):
     def __init__(self, expression, dim_domain=1, parameters={}, values={}, variable='x', name=None):
         params = parameters.copy()
         params[variable] = dim_domain
-        self.expression_obj = parse_expression(expression, parameters=params, values=values)
-        super().__init__(self.expression_obj.to_numpy([variable]),
-                         dim_domain, self.expression_obj.shape, parameters, name)
+        expression_obj = parse_expression(expression, parameters=params, values=values)
+        super().__init__(expression_obj, dim_domain, variable, name)
         self.__auto_init(locals())
-
-    def to_fenics(self, mesh):
-        return self.expression_obj.to_fenics(mesh)
 
     def __reduce__(self):
         return (ExpressionFunction,
@@ -416,7 +444,7 @@ class BitmapFunction(Function):
 class EmpiricalInterpolatedFunction(LincombFunction):
     """Empirically interpolated |Function|.
 
-    Instantiated by :func:`~pymor.algorithm.ei.interpolate_function`.
+    Instantiated by :func:`~pymor.algorithms.ei.interpolate_function`.
 
     Parameters
     ----------
@@ -426,7 +454,7 @@ class EmpiricalInterpolatedFunction(LincombFunction):
         |NumPy array| containing the coordinates at which the function
         is interpolated. Typically `X[dofs]` where `X` is the array of
         evaluation points used for snapshot data generation and `dofs`
-        is returned by :func:`~pymor.algorithm.ei.ei_greedy`.
+        is returned by :func:`~pymor.algorithms.ei.ei_greedy`.
     interpolation_matrix
         The interpolation matrix corresponding to the selected interpolation
         basis vectors and `interpolation_points` as returned by
@@ -441,7 +469,7 @@ class EmpiricalInterpolatedFunction(LincombFunction):
         Matrix of linear coefficients s.t. the i-th interpolation basis vector
         is given by a linear combination of the functions corresponding to
         `snapshot_mus` with the i-th row of `snapshot_coefficients` as
-        coefficients. Returned by :func:`~pymor.algorithm.ei.ei_greedy` as
+        coefficients. Returned by :func:`~pymor.algorithms.ei.ei_greedy` as
         `data['coefficients']`.
     evaluation_points
         Optional |NumPy array| of coordinates at which the function has been

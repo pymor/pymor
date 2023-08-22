@@ -19,7 +19,7 @@ that use external PDE solvers. Further advantages of using this expression libra
 - the shape of the resulting expressions is automatically determined.
 
 In the future, we will also provide support for symbolic differentiation of the
-given :class:`Expressions`.
+given :class:`Expression`.
 
 Every :class:`Expression` is built from the following atoms:
 
@@ -73,7 +73,15 @@ def parse_expression(expression, parameters={}, values={}):
     values = {name: parse_value(val) for name, val in values.items()}
 
     # parse Expression
-    tree = ast.parse(expression, mode='eval')
+    try:
+        tree = ast.parse(expression, mode='eval')
+    except SyntaxError as e:
+        raise ValueError(f"""
+Expression
+\t{expression}
+is malformed. The following error occurred:
+\t{e}
+""") from e
 
     # check if all names in given Expression are valid
     names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
@@ -113,6 +121,7 @@ evaluates to {type(expression).__name__} instead of Expression object.
 
 
 class TransformLiterals(ast.NodeTransformer):
+    """Transformer for literals."""
 
     in_subscript = False
 
@@ -139,6 +148,7 @@ class TransformLiterals(ast.NodeTransformer):
 
 
 class TransformChainedComparison(ast.NodeTransformer):
+    """Transformer for chained comparisons."""
 
     def visit_Compare(self, node):
         comparators = [node.left] + node.comparators

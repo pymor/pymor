@@ -46,6 +46,7 @@ def convert_to_numpy_list_vector_array(obj, space=None):
 
 
 class ConvertToNumpyListVectorArrayRules(RuleTable):
+    """|RuleTable| for the :func:`convert_to_numpy_list_vector_array` algorithm."""
 
     def __init__(self, space):
         super().__init__(use_caching=True)

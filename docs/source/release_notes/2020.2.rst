@@ -1,4 +1,3 @@
-
 pyMOR 2020.2 (December 10, 2020)
 --------------------------------
 We are proud to announce the release of pyMOR 2020.2! This release extends pyMOR's
@@ -29,7 +28,7 @@ parameter derivatives. Moreover, :meth:`~pymor.models.interface.Model.output_d_m
 can be used to compute the parameter gradient of the output using the
 derivatives of the solutions. Alternatively, for a |StationaryModel| and a linear output, an
 adjoint variable can be used to speed up the computation of the gradient
-(see :meth:`~pymor.models.basic.StationaryModel._compute_output_d_mu`).
+(see :meth:`!_compute_output_d_mu`).
 
 
 Neural network reductor for non-stationary problems
@@ -79,10 +78,10 @@ Additional new features
 
 Bode plot for input-output systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The :meth:`~pymor.models.iosys.InputOutputModel.bode_plot` method for creating a
+The :meth:`!bode_plot` method for creating a
 Bode plot was added `[#1051] <https://github.com/pymor/pymor/pull/1051>`_,
-complementing the :meth:`~pymor.models.iosys.InputOutputModel.mag_plot` method.
-Additionally, the :meth:`~pymor.models.iosys.InputOutputModel.bode` method can
+complementing the :meth:`!mag_plot` method.
+Additionally, the :meth:`!bode` method can
 be used to compute the magnitudes and phases over the imaginary axis (for
 continuous-time systems).
 
@@ -130,16 +129,16 @@ or :meth:`pymor.models.interface.Model.output` now act as convenience frontends 
 :meth:`~pymor.models.interface.Model.compute`.
 Existing custom |Models| have to be adapted to the new architecture.
 
-The `estimate` method has been renamed to :meth:`~pymor.model.interface.Model.estimate_error`
+The `estimate` method has been renamed to :meth:`~pymor.models.interface.Model.estimate_error`
 `[#1041] <https://github.com/pymor/pymor/pull/1041>`_.
 The old method is deprecated and will be removed in the next release.
 
 Further, to simplify interoperability with third-party packages,
-the model outputs, i.e., the results of :meth:`~pymor.models.interface.output`,
+the model outputs, i.e., the results of :meth:`~pymor.models.interface.Model.output`,
 are no longer generic |VectorArrays|, but NumPy arrays.
 For consistency, `input_space` and `output_space` were removed and
 `input_dim` and `output_dim` were renamed to `dim_input` and `dim_output`
-in :class:`~pymor.models.iosys.InputOutputModel`
+in :class:`!InputOutputModel`
 `[#1089] <https://github.com/pymor/pymor/pull/1089>`_.
 
 

@@ -9,6 +9,7 @@ from pymor.parallel.interface import RemoteObject, WorkerPool
 
 
 class DummyPool(WorkerPool):
+    """Dummy |WorkerPool|."""
 
     def __len__(self):
         return 1
@@ -52,6 +53,7 @@ dummy_pool = DummyPool()
 
 
 class DummyRemoteObject(RemoteObject):
+    """Dummy |RemoteObject|."""
 
     def __init__(self, obj):
         self.obj = obj

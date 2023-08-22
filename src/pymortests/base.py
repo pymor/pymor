@@ -10,12 +10,16 @@ from pickle import dump, load
 from pprint import pformat
 
 import numpy as np
-from pkg_resources import resource_filename, resource_stream
 from pytest import skip
 
 from pymor.algorithms.basic import almost_equal, relative_error
 from pymor.core import config
 from pymor.core.exceptions import DependencyMissingError, NoResultDataError
+
+try:
+    import importlib_resources  # for Python 3.8
+except ImportError:
+    import importlib.resources as importlib_resources
 
 BUILTIN_DISABLED = bool(os.environ.get('PYMOR_FIXTURES_DISABLE_BUILTIN', False))
 
@@ -43,24 +47,24 @@ def check_results(test_name, params, results, *args):
     results = {k: np.asarray(results[k]) for k in keys.keys()}
     assert all(v.dtype != object for v in results.values())
 
-    basepath = resource_filename('pymortests', 'testdata/check_results')
+    basepath = importlib_resources.files('pymortests') / 'testdata/check_results'
+    testname_dir = basepath / test_name
     arg_id = hashlib.sha1(params.encode()).hexdigest()
-    filename = resource_filename('pymortests', f'testdata/check_results/{test_name}/{arg_id}')
-    testname_dir = os.path.join(basepath, test_name)
+    filename = testname_dir / arg_id
 
     def _dump_results(fn, res):
-        with open(fn, 'wb') as f:
+        with fn.open('wb') as f:
             f.write((params + '\n').encode())
             res = {k: v.tolist() for k, v in res.items()}
             dump(res, f, protocol=2)
 
     try:
-        with resource_stream('pymortests', f'testdata/check_results/{test_name}/{arg_id}') as f:
+        with filename.open('rb') as f:
             f.readline()
             old_results = load(f)
     except FileNotFoundError:
-        if not os.path.exists(testname_dir):
-            os.mkdir(testname_dir)
+        if not testname_dir.exists():
+            testname_dir.mkdir()
         _dump_results(filename, results)
         raise NoResultDataError(msg=f'No results found for test {test_name} ({params}), saved current results.'
                                         f'Remember to check in {filename}.')
@@ -69,10 +73,11 @@ def check_results(test_name, params, results, *args):
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):
             abs_errs = np.abs(results[k] - old_results[k])
             rel_errs = abs_errs / np.abs(old_results[k])
-            _dump_results(filename + '_changed', results)
+            filename_changed = testname_dir / f'{arg_id}_changed'
+            _dump_results(filename_changed, results)
             assert False, (f'Results for test {test_name}({params}, key: {k}) have changed.\n'
                            f'(maximum error: {np.max(abs_errs)} abs / {np.max(rel_errs)} rel).\n'
-                           f'Saved new results in {filename}_changed')
+                           f'Saved new results in {filename_changed}')
 
 
 def assert_all_almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol=1e-14):

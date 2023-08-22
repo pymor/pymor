@@ -183,7 +183,7 @@ class FenicsMatrixBasedOperator(Operator):
         The `Form` object which is assembled to a matrix or vector.
     params
         Dict mapping parameters to dolfin `Constants` as returned by
-        :meth:`~pymor.analyticalproblems.functions.ExpressionFunction.to_fenics`.
+        :meth:`~pymor.analyticalproblems.functions.SymbolicExpressionFunction.to_fenics`.
     bc
         dolfin `DirichletBC` object to be applied.
     bc_zero
@@ -525,6 +525,7 @@ class FenicsOperator(Operator):
 
 
 class RestrictedFenicsOperator(Operator):
+    """Restricted :class:`FenicsOperator`."""
 
     linear = False
 
@@ -553,11 +554,11 @@ class RestrictedFenicsOperator(Operator):
         return NumpyMatrixOperator(JJ.matrix.array()[self.restricted_range_dofs, :])
 
 
-_DEFAULT_SOVLER = 'mumps' if 'mumps' in df.linear_solver_methods() else 'default'
+_DEFAULT_SOLVER = 'mumps' if 'mumps' in df.linear_solver_methods() else 'default'
 
 
 @defaults('solver', 'preconditioner', 'keep_solver')
-def _solver_options(solver=_DEFAULT_SOVLER,
+def _solver_options(solver=_DEFAULT_SOLVER,
                     preconditioner=None, keep_solver=True):
     return {'solver': solver, 'preconditioner': preconditioner, 'keep_solver': keep_solver}
 

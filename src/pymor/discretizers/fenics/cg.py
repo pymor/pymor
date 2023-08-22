@@ -42,7 +42,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, degree=1, preass
 
             :mesh:             The generated dolfin mesh object.
             :boundary_mask:    Codim-1 `MeshFunctionSizet` indicating which boundary type a
-                               bundary facet belongs to.
+                               boundary facet belongs to.
             :boundary_ids:     Dict mapping boundary types to ids used in `boundary_mask`.
             :unassembled_m:    In case `preassemble` is `True`, the generated |Model|
                                before preassembling operators.

@@ -237,7 +237,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
     For a full list see the `functions` class attribute.
 
     .. warning::
-       :meth:`eval` is used to evaluate the given expression.
+       :func:`eval` is used to evaluate the given expression.
        Using this class with expression strings from untrusted sources will cause
        mayhem and destruction!
 
@@ -350,7 +350,7 @@ class ConjugateParameterFunctional(ParameterFunctional):
     Parameters
     ----------
     functional
-        The |ParameterFunctional| of which the complex conjuate is
+        The |ParameterFunctional| of which the complex conjugate is
         taken.
     name
         Name of the functional.

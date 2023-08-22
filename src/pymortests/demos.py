@@ -142,6 +142,8 @@ OUTPUT_FUNCTIONAL_ARGS = (
     ('output_error_estimation', [4, 10, 10, 10, 1]),
     ('output_error_estimation_with_dwr', [0, 10, 4, 12]),
     ('output_error_estimation_with_dwr', [1, 10, 4, 8]),
+    ('trust_region', [0, 40, 20]),
+    ('trust_region', [1, 20, 20])
 )
 
 DMD_ARGS = (
@@ -150,7 +152,7 @@ DMD_ARGS = (
 )
 
 PHLTI_ARGS = (
-    ('phlti', []),
+    ('phlti', [10, 2, 4]),
 )
 
 SYMPLECTIC_WAVE_ARGS = (

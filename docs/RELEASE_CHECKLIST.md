@@ -1,5 +1,24 @@
 # Release checklist
 
+## After hard freeze
+
+- [ ] Bump all CI requirements to current versions:
+
+    ```bash
+    rm requirements-ci-current.txt requirements-ci-fenics.txt conda-lock.yml
+    make ci_requirements
+    ```
+
+    Commit all changes.
+    Before proceeding, wait until changes are merged.
+- [ ] Check if all tutorials are rendered correctly.
+- [ ] Check if binder links are functional.
+- [ ] Use `hatch build` to create wheel (`pip install hatch` or install pyMOR with `dev` extras).
+      `pip install` wheel (including extras) into new venv.
+      Check if installation is working as expected.
+
+## Release day
+
 Replace `RELEASE_TAG` below with the actual release tag.
 
 - [ ] Check that release notes are finished and merged.
@@ -9,37 +28,46 @@ Replace `RELEASE_TAG` below with the actual release tag.
       Should have a `.x` as the last part of the branch name in contrast
       to the `RELEASE_TAG`.
       (Omit in case of a bugfix release.)
-- [ ] Tag commit in `pymor/pymor` as `RELEASE_TAG`.
+- [ ] Use `hatch version RELEASE_TAG` to update `__version__` in `src/pymor/__init__.py`.
+      Merge into release branch.
+- [ ] Run
+
+    ```bash
+    rm -r ./dist  # ensure that we do not accidentally publish old wheels
+    hatch build
+    ```
+
+    to generate release sdist and wheel. Check that versions are correct.
+- [ ] Tag commit in release branch as `RELEASE_TAG`.
       Use an annotated tag (`git tag -a RELEASE_TAG -m RELEASE_TAG`) with the
       annotation being `RELEASE_TAG`.
-- [ ] Run `python setup.py sdist` (on checked out tag `RELEASE_TAG`) and check
-      that it produces `dist/pymor-RELEASE_TAG.tar.gz`.
-- [ ] Tag commit in `pymor/docker` as `RELEASE_TAG`, make sure to use the commit
-      mentioned in the `.env` in the tagged commit in `pymor/pymor`.
-      Use an annotated tag with the annotation being the version number.
-      For instance:
+      Push `RELEASE_TAG` to GitHub.
+- [ ] Wait for CI build for tagged commit to finish (see the list of pipelines at
+      [zivgitlab](https://zivgitlab.uni-muenster.de/pymor/pymor/-/pipelines)).
+- [ ] Merge the automatic PR at [`pymor/docs`](https://github.com/pymor/docs) and
+      wait for the CI build to finish.
+- [ ] Check again that documentation for tagged commit (not release branch) is built correctly.
+      Check that binder links work and `.binder/Dockerfile` in `pymor/docs@RELEASE_TAG` uses the
+      correctly tagged base image.
+      (Should, for some reason, CI fail to produce correct setup, manually push release tags to
+      registry using
 
-      ```bash
-      source pymor/pymor/.env
-      cd pymor/docker
-      git checkout "${CI_IMAGE_TAG}"
-      git tag -a RELEASE_TAG -m RELEASE_TAG
-      ```
+    ```bash
+    make ci_images_pull
+    make TARGET_TAG=RELEASE_TAG ci_images_push
+    ```
 
-- [ ] Push tag `RELEASE_TAG` to `pymor/docker`.
-- [ ] Wait for CI build to finish in `pymor/docker`.
-- [ ] Push tag `RELEASE_TAG` to `pymor/pymor`.
-- [ ] Wait for CI build to finish in `pymor/pymor`.
-      The tagged commit will be deployed to PyPI automatically, see
-      [the developer docs](https://docs.pymor.org/main/developer_docs.html#stage-deploy).
-- [ ] Bump/create demo docker, i.e., in `pymor/docker` go to the `demo` folder
-      and copy the subfolder of the last version, change the version in the
-      `Dockerfile` (lines 1 and 6) and extend the `DEMO_TAGS` in `common.mk`
-      (last line).
-      (Omit in case of a bugfix release.)
+    and update `Dockerfile` in TARGET_TAG branch of `pymor/docs` manually.)
+- [ ] Publish wheel to PyPI using
+
+    ```bash
+    hatch publish
+    ```
+
 - [ ] Update homepage
       (`gh-pages` branch in `pymor/pymor`, similar to changes in `README.md`).
-- [ ] Check if the [docs](https://docs.pymor.org) got updated.
+- [ ] Check if the [docs](https://docs.pymor.org) got updated to point to new release.
+      (Should happen hourly via `Release update` action. Can also be triggered manually.)
 - [ ] Check if [`conda-forge/pymor-feedstock`](https://github.com/conda-forge/pymor-feedstock)
       got updated.
 - [ ] Make a GitHub release
@@ -47,15 +75,19 @@ Replace `RELEASE_TAG` below with the actual release tag.
       announce the release in
       [GitHub Discussions](https://github.com/pymor/pymor/discussions)
       (can be done as part of making the release).
+- [ ] Close the [GitHub milestone](https://github.com/pymor/pymor/milestones)
+      for the release.
+      (Omit in case of a bugfix release.)
 - [ ] Update MOR Wiki:
       [pyMOR page](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/PyMOR),
       [software comparison table](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/Comparison_of_Software).
 - [ ] Submit release to [NA-digest](http://icl.utk.edu/na-digest/websubmit.html).
       (Omit in case of a bugfix release.)
+
+## After release
+
+- [ ] Bump version in main branch to NEXT_TARGET_TAG.dev0.
 - [ ] All developers check if (stale) branches can be pruned.
 - [ ] All developers check for `.mailmap` correctness.
 - [ ] Remove deprecated features in main in `pymor/pymor`.
-      (Omit in case of a bugfix release.)
-- [ ] Close the [GitHub milestone](https://github.com/pymor/pymor/milestones)
-      for the release.
       (Omit in case of a bugfix release.)

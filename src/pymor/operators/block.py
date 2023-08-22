@@ -10,13 +10,14 @@ from pymor.vectorarrays.block import BlockVectorSpace
 
 
 class BlockOperatorBase(Operator):
+    """Base block |Operator|."""
 
     def _operators(self):
         """Iterator over operators."""
         for (i, j) in np.ndindex(self.blocks.shape):
             yield self.blocks[i, j]
 
-    def __init__(self, blocks):
+    def __init__(self, blocks, name=None):
         self.blocks = blocks = np.array(blocks)
         assert 1 <= blocks.ndim <= 2
         if self.blocked_source and self.blocked_range:
@@ -50,6 +51,7 @@ class BlockOperatorBase(Operator):
             if blocks[i, j] is None:
                 self.blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
 
+        self.__auto_init(locals())
         self.source = BlockVectorSpace(source_spaces) if self.blocked_source else source_spaces[0]
         self.range = BlockVectorSpace(range_spaces) if self.blocked_range else range_spaces[0]
         self.num_source_blocks = len(source_spaces)
@@ -176,22 +178,22 @@ BlockColumnOperator.adjoint_type = BlockRowOperator
 
 class BlockProjectionOperator(BlockRowOperator):
 
-    def __init__(self, block_space, component):
+    def __init__(self, block_space, component, name=None):
         assert isinstance(block_space, BlockVectorSpace)
         assert 0 <= component < len(block_space.subspaces)
         blocks = [ZeroOperator(space, space) if i != component else IdentityOperator(space)
                   for i, space in enumerate(block_space.subspaces)]
-        super().__init__(blocks)
+        super().__init__(blocks, name=name)
 
 
 class BlockEmbeddingOperator(BlockColumnOperator):
 
-    def __init__(self, block_space, component):
+    def __init__(self, block_space, component, name=None):
         assert isinstance(block_space, BlockVectorSpace)
         assert 0 <= component < len(block_space.subspaces)
         blocks = [ZeroOperator(space, space) if i != component else IdentityOperator(space)
                   for i, space in enumerate(block_space.subspaces)]
-        super().__init__(blocks)
+        super().__init__(blocks, name=name)
 
 
 class BlockDiagonalOperator(BlockOperator):
@@ -201,7 +203,7 @@ class BlockDiagonalOperator(BlockOperator):
     block diagonal case.
     """
 
-    def __init__(self, blocks):
+    def __init__(self, blocks, name=None):
         blocks = np.array(blocks)
         assert 1 <= blocks.ndim <= 2
         if blocks.ndim == 2:
@@ -210,7 +212,7 @@ class BlockDiagonalOperator(BlockOperator):
         blocks2 = np.empty((n, n), dtype=object)
         for i, op in enumerate(blocks):
             blocks2[i, i] = op
-        super().__init__(blocks2)
+        super().__init__(blocks2, name=name)
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -303,10 +305,11 @@ class SecondOrderModelOperator(BlockOperator):
         |Operator|.
     """
 
-    def __init__(self, alpha, beta, A, B):
+    def __init__(self, alpha, beta, A, B, name=None):
         eye = IdentityOperator(A.source)
         super().__init__([[alpha * eye, beta * eye],
-                          [B, A]])
+                          [B, A]],
+                          name=name)
         self.__auto_init(locals())
 
     def apply(self, U, mu=None):

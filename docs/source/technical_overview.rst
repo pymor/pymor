@@ -65,13 +65,12 @@ operating on objects of the following types:
     .. |dimension|        replace:: :attr:`dimension <pymor.vectorarrays.interface.VectorArray.dim>`
     .. |empty|            replace:: :meth:`~pymor.vectorarrays.interface.VectorSpace.empty`
     .. |id|               replace:: :meth:`~pymor.vectorarrays.interface.VectorSpace.id`
-    .. |indexed|          replace:: :meth:`indexed <pymor.vectorarrays.interface.VectorArray.__getitem__>`
+    .. |indexed|          replace:: :meth:`!indexed`
     .. |inner products|   replace:: :meth:`inner products <pymor.vectorarrays.interface.VectorArray.inner>`
     .. |lincomb|          replace:: :meth:`~pymor.vectorarrays.interface.VectorArray.lincomb`
     .. |make_array|       replace:: :meth:`~pymor.vectorarrays.interface.VectorSpace.make_array`
-    .. |removed|          replace:: :meth:`deleted <pymor.vectorarrays.interface.VectorArray.__delitem__>`
+    .. |removed|          replace:: :meth:`!deleted`
     .. |scaled|           replace:: :meth:`scaled <pymor.vectorarrays.interface.VectorArray.scal>`
-    .. |subtype|          replace:: :attr:`~pymor.vectorarrays.interface.VectorSpace.subtype`
     .. |zeros|            replace:: :meth:`~pymor.vectorarrays.interface.VectorSpace.zeros`
 
 |Operators|
@@ -115,11 +114,11 @@ operating on objects of the following types:
 
 |Models|
     Models in pyMOR encode the mathematical structure of a given
-    discrete problem by acting as container classes for operators. Each
-    model object has |operators|, |products| dictionaries holding the
-    |Operators| which appear in the formulation of the discrete problem. The
-    keys in these dictionaries describe the role of the respective operator
-    in the discrete problem.
+    discrete problem by acting as container classes for |Operators|. Each
+    model object has |Operators| and the |products| dictionary of |Operators|
+    which appear in the formulation of the discrete problem. The keys in the
+    |products| dictionary describe the role of the respective product in the
+    discrete problem.
 
     Apart from describing the discrete problem, models also implement
     algorithms for |solving| the given problem, returning |VectorArrays|
@@ -129,7 +128,7 @@ operating on objects of the following types:
 
     While special model classes may be implemented which make use of
     the specific types of operators they contain (e.g. using some external
-    high-dimensional solver for the problem), it is generally favourable to
+    high-dimensional solver for the problem), it is generally favorable to
     implement the solution algorithms only through the interfaces provided by
     the operators contained in the model, as this allows to use the
     same model class to solve high-dimensional and reduced problems.
@@ -142,14 +141,11 @@ operating on objects of the following types:
     |solution_space|.
 
     .. |cached|           replace:: :mod:`cached <pymor.core.cache>`
-    .. |estimate|         replace:: :meth:`~pymor.models.interface.Model.estimate`
-    .. |functionals|      replace:: :attr:`~pymor.models.interface.Model.functionals`
-    .. |operators|        replace:: :attr:`~pymor.models.interface.Model.operators`
+    .. |estimate|         replace:: :meth:`~pymor.models.interface.Model.estimate_error`
     .. |products|         replace:: :attr:`~pymor.models.interface.Model.products`
     .. |solution_space|   replace:: :attr:`~pymor.models.interface.Model.solution_space`
     .. |solve|            replace:: :meth:`~pymor.models.interface.Model.solve`
     .. |solving|          replace:: :meth:`solving <pymor.models.interface.Model.solve>`
-    .. |vector_operators| replace:: :attr:`~pymor.models.interface.Model.vector_operators`
     .. |visualize|        replace:: :meth:`~pymor.models.interface.Model.visualize`
 
 
@@ -187,7 +183,7 @@ in which the attribute `a` now has the value `x` and the attribute `b` the
 value `y`. It can be generally assumed that calls to
 :meth:`~pymor.core.base.ImmutableObject.with_` are inexpensive. The
 set of allowed arguments can be found in the
-:attr:`~pymor.core.base.ImmutableObject.with_arguments` attribute.
+:attr:`!_init_arguments` attribute.
 
 All immutable classes in pyMOR and most other classes derive from
 |BasicObject| which, through its meta class, provides several convenience
@@ -270,7 +266,7 @@ as the union of all |Parameters| of the objects that are passed to it's `__init_
 For instance, an |Operator| that implements the L2-product with some user-provided
 |Function| will automatically inherit all |Parameters| of that |Function|.
 Additional |Parameters| can be easily added by setting the
-:attr:`~pymor.parameters.ParametricObject.parameters_own` attribute.
+:attr:`!parameters_own` attribute.
 
 
 Defaults
@@ -350,27 +346,38 @@ This approach has several advantages over an inheritance-based model:
 The Reduction Process
 ---------------------
 
-The reduction process in pyMOR is handled by so called :mod:`~pymor.reductors`
-which take arbitrary |Models| and additional data (e.g. the reduced
-basis) to create reduced |Models|. If proper offline/online
-decomposition is achieved by the reductor, the reduced |Model| will
-not store any high-dimensional data. Note that there is no inherent distinction
-between low- and high-dimensional |Models| in pyMOR. The only
+The reduction process in pyMOR is handled by so called :mod:`~pymor.reductors`,
+where each reductor takes arbitrary |Models| of associated type, and additional
+data (e.g. the reduced basis) to create reduced |Models|. For instance, the
+:class:`~pymor.reductors.basic.StationaryRBReductor` and
+:class:`~pymor.reductors.basic.InstationaryRBReductor` reductors can reduce any
+:class:`~pymor.models.basic.StationaryModel` and :class:`~pymor.models.basic.InstationaryModel`,
+while the :class:`~pymor.reductors.bt.BTReductor` reduces
+:class:`~pymor.models.iosys.LTIModel` (just to name a few).
+
+If proper offline/online decomposition is achieved by the reductor, the reduced
+|Model| will not store any high-dimensional data. Note that there is no inherent
+distinction between low- and high-dimensional |Models| in pyMOR. The only
 difference lies in the different types of operators, the |Model|
 contains.
 
-This observation is particularly apparent in the case of the classical
-reduced basis method: the operators and functionals of a given discrete problem
-are projected onto the reduced basis space whereas the structure of the problem
-(i.e. the type of |Model| containing the operators) stays the same.
-pyMOR reflects this fact by offering with :class:`~pymor.reductors.basic.GenericRBReductor`
-a generic algorithm which can be used to RB-project any model available to pyMOR.
-It should be noted however that this reductor is only able to efficiently
-offline/online-decompose affinely |Parameter|-dependent linear problems.
-Non-linear problems or such with no affine |Parameter| dependence require
-additional techniques such as :mod:`empirical interpolation <pymor.algorithms.ei>`.
+In particular, in most projection-based MOR methods, only the
+|Operators| of a given |Model| are projected onto the
+reduced-basis space, whereas the structure of the problem
+(i.e. the type of the |Model|) stays the same.
+The actual projection of an individual |Operator| is performed by the generic
+:meth:`~pymor.algorithms.projection.project` algorithm, which is able to perform a
+Petrov-Galerkin projection of any |Operator| available to pyMOR.
+The algorithm automatically exploits the structure of the given |Operator|
+(linearity, parameter separability, etc.) where possible
+to decouple the evaluation of the projected |Operator| from any high-dimensional spaces.
+
+In addition to the projection of the |Model|, reductors may also assemble efficient
+offline-online decomposed a posterior error estimates (available via the
+`estimate_error` method of the resulting reduced order |Model|), if more information
+about the underlying problem yielding the full order |Model| is available
+(a popular example is the :class:`~pymor.reductors.coercive.CoerciveRBReductor` for |Models| representing stationary
+coercive problems).
 
 If you want to further dive into the inner workings of pyMOR, we
-recommend to study the source code of :class:`~pymor.reductors.basic.GenericRBReductor`
-and to step through calls of it's `reduce` method with a Python debugger, such as
-`ipdb <https://pypi.python.org/pypi/ipdb>`_.
+recommend to study the :doc:`Projecting a Model <tutorial_projection>` tutorial.

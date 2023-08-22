@@ -16,7 +16,7 @@ def float_cmp(x, y, rtol=1e-14, atol=1e-14):
        float_cmp(x,y) <=> |x - y| <= atol + |y|*rtol
 
     .. note::
-       Numpy's :meth:`~numpy.allclose` method uses the same definition but
+       Numpy's :func:`~numpy.allclose` method uses the same definition but
        treats arrays containing infinities as close if the infinities are
        at the same places and all other entries are close.
        In our definition, arrays containing infinities can never be close

@@ -2,10 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-# flake8: noqa
-
 # define substitutions for all important interface classes
-interfaces = '''
+interfaces = """
 
 .. |BasicObject| replace:: :class:`~pymor.core.base.BasicObject`
 .. |BoundaryInfo| replace:: :class:`BoundaryInfo <pymor.discretizers.builtin.grids.interfaces.BoundaryInfo>`
@@ -39,10 +37,10 @@ interfaces = '''
 .. |WorkerPool| replace:: :class:`WorkerPool <pymor.parallel.interface.WorkerPool>`
 .. |WorkerPools| replace:: :class:`WorkerPools <pymor.parallel.interface.WorkerPool>`
 
-'''
+"""  # noqa: E501
 
 # substitutions for the most important classes and methods in pyMOR
-common = '''
+common = """
 .. |analytical problem| replace:: :mod:`analytical problem <pymor.analyticalproblems>`
 .. |analytical problems| replace:: :mod:`analytical problems <pymor.analyticalproblems>`
 
@@ -79,7 +77,7 @@ common = '''
 .. |OnedGrid| replace:: :class:`~pymor.discretizers.builtin.grids.oned.OnedGrid`
 .. |RectGrid| replace:: :class:`~pymor.discretizers.builtin.grids.rect.RectGrid`
 .. |TriaGrid| replace:: :class:`~pymor.discretizers.builtin.grids.tria.TriaGrid`
-.. |GmshGrid| replace:: :class:`~pymor.discretizers.builtin.grids.gmsh.GmshGrid`
+.. |UnstructuredTriangleGrid| replace:: :class:`~pymor.discretizers.builtin.grids.unstructured.UnstructuredTriangleGrid`
 
 .. |NumpyVectorArray| replace:: :class:`~pymor.vectorarrays.numpy.NumpyVectorArray`
 .. |NumpyVectorArrays| replace:: :class:`NumpyVectorArrays <pymor.vectorarrays.numpy.NumpyVectorArray>`
@@ -117,7 +115,7 @@ common = '''
 .. |LinearDelayModel| replace:: :class:`~pymor.models.iosys.LinearDelayModel`
 .. |LinearDelayModels| replace:: :class:`LinearDelayModels <pymor.models.iosys.LinearDelayModel>`
 .. |NeuralNetworkModel| replace:: :class:`~pymor.models.neural_network.NeuralNetworkModel`
-.. |QuadraticHamiltonianModel| replace:: :class:`~pymor.model.symplectic.QuadraticHamiltonianModel`
+.. |QuadraticHamiltonianModel| replace:: :class:`~pymor.models.symplectic.QuadraticHamiltonianModel`
 
 .. |MoebiusTransformation| replace:: :class:`~pymor.models.transforms.MoebiusTransformation`
 .. |MoebiusTransformations| replace:: :class:`MoebiusTransformations <pymor.models.transforms.MoebiusTransformation>`
@@ -166,14 +164,14 @@ common = '''
 .. |CanonicalSymplecticFormOperator| replace:: :class:`~pymor.operators.symplectic.CanonicalSymplecticFormOperator`
 
 .. |RNG| replace:: :class:`random number generator <pymor.tools.random.RNG>`
-'''
+"""  # noqa: E501
 
 substitutions = interfaces + common
 
 # list of (key, jinja_safe_key, substitution_value)
 jinja_subst = []
 for line in substitutions.split('\n'):
-    if line == "":
+    if line == '':
         continue
     key, subst = line.split(' replace:: ')
     key = key.strip()

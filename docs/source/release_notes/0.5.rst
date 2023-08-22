@@ -1,20 +1,18 @@
-
-
 pyMOR 0.5 (January 17, 2019)
 ----------------------------
 
 After more than two years of development, we are proud to announce the release
 of pyMOR 0.5! Highlights of this release are support for Python 3, bindings for
 the NGSolve finite element library, new linear algebra algorithms, various
-|VectorArray| usability improvements, as well as a redesign of pyMOR's
+`VectorArrayInterface` usability improvements, as well as a redesign of pyMOR's
 projection algorithms based on |RuleTables|.
 
 Especially we would like to highlight the addition of various system-theoretic
 reduction methods such as Balanced Truncation or IRKA. All algorithms are
-implemented in terms of pyMOR's |Operator| and |VectorArray| interfaces,
-allowing their application to any model implemented using one of the PDE solver
-supported by pyMOR. In particular, no import of the system matrices is
-required.
+implemented in terms of pyMOR's `OperatorInterface` and `VectorArrayInterface`
+interfaces, allowing their application to any model implemented using one of the
+PDE solver supported by pyMOR. In particular, no import of the system matrices
+is required.
 
 Over 1,500 single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/0.4.x...0.5.x>`__.
@@ -37,8 +35,8 @@ now standard in the scientific computing community and security updates for
 Python 2 will stop in less than a year (https://pythonclock.org), we decided to
 no longer support Python 2 and make pyMOR 0.5 a Python 3-only release. Switching
 to Python 3 also allows us to leverage newer language features such as the `@`
-binary operator for concatenation of |Operators|, keyword-only arguments or
-improved support for asynchronous programming.
+binary operator for concatenation of `OperatorInterfaces`, keyword-only
+arguments or improved support for asynchronous programming.
 
 
 
@@ -46,7 +44,7 @@ System-theoretic MOR methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 With 386 commits, `[#464] <https://github.com/pymor/pymor/pull/464>`_ added
-systems-theoretic methods to pyMOR. Module :mod:`pymor.discretizations.iosys`
+systems-theoretic methods to pyMOR. Module :mod:`!pymor.discretizations.iosys`
 contains new discretization classes for input-output systems, e.g. `LTISystem`,
 `SecondOrderSystem` and |TransferFunction|. At present, methods related to these
 classes mainly focus on continuous-time, non-parametric systems.
@@ -71,20 +69,20 @@ implemented in :class:`~pymor.reductors.bt.BTReductor` and
 are also available (:class:`~pymor.reductors.bt.LQGBTReductor`,
 :class:`~pymor.reductors.bt.BRBTReductor`). Bitangential Hermite interpolation
 (used in IRKA) is implemented in
-:class:`~pymor.reductors.interpolation.LTI_BHIReductor`. Two-Sided Iteration
+:class:`!LTI_BHIReductor`. Two-Sided Iteration
 Algorithm (TSIA), a method related to IRKA, is implemented in
 :class:`~pymor.reductors.h2.TSIAReductor`.
 
 Several structure-preserving MOR methods for second-order systems have been
 implemented. Balancing-based MOR methods are implemented in
 :mod:`pymor.reductors.sobt`, bitangential Hermite interpolation in
-:class:`~pymor.reductors.interpolation.SO_BHIReductor` and Second-Order Reduced
-IRKA (SOR-IRKA) in :class:`~pymor.reductors.sor_irka.SOR_IRKAReductor`.
+:class:`!SO_BHIReductor` and Second-Order Reduced
+IRKA (SOR-IRKA) in :class:`!SOR_IRKAReductor`.
 
 For more general transfer functions, MOR methods which return `LTISystems` are
 also available. Bitangential Hermite interpolation is implemented in
-:class:`~pymor.reductors.interpolation.TFInterpReductor` and Transfer Function
-IRKA (TF-IRKA) in :class:`~pymor.reductors.h2.TF_IRKAReductor`.
+:class:`!TFInterpReductor` and Transfer Function
+IRKA (TF-IRKA) in :class:`!TF_IRKAReductor`.
 
 Usage examples can be found in the `heat` and `string_equation` demo scripts.
 
@@ -93,9 +91,9 @@ NGSolve support
 ~~~~~~~~~~~~~~~
 
 We now ship bindings for the `NGSolve <https://ngsolve.org>`_ finite element
-library. Wrapper classes for |VectorArrays| and matrix-based |Operators| can be
-found in the :mod:`pymor.bindings.ngsolve` module. A usage example can be found
-in the `thermalblock_simple` demo script.
+library. Wrapper classes for `VectorArrayInterfaces` and matrix-based
+`OperatorInterfaces` can be found in the :mod:`pymor.bindings.ngsolve` module. A
+usage example can be found in the `thermalblock_simple` demo script.
 
 
 New linear algebra algorithms
@@ -116,42 +114,43 @@ In addition, the Gram-Schmidt biorthogonalization algorithm has been included in
 VectorArray improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-|VectorArrays| in pyMOR have undergone several usability improvements:
+`VectorArrayInterfaces` in pyMOR have undergone several usability improvements:
 
 - The somewhat dubious concept of a `subtype` has been superseded by the concept
-  of |VectorSpaces| which act as factories for |VectorArrays|. In particular,
-  instead of a `subtype`, |VectorSpaces| can now hold meaningful attributes
-  (e.g. the dimension) which are required to construct |VectorArrays| contained
-  in the space. The
-  :attr:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.id` attribute
+  of `VectorSpaceInterfaces` which act as factories for `VectorArrayInterfaces`.
+  In particular, instead of a `subtype`, `VectorSpaceInterfaces` can now hold
+  meaningful attributes (e.g. the dimension) which are required to construct
+  `VectorArrayInterfaces` contained in the space. The
+  :attr:`!id` attribute
   allows to differentiate between technically identical but mathematically
   different spaces `[#323] <https://github.com/pymor/pymor/pull/323>`_.
 
-- |VectorArrays| can now be indexed to select a subset of vectors to operate on.
-  In contrast to advanced indexing in |NumPy|, indexing a |VectorArray| will
-  always return a view onto the original array data
+- `VectorArrayInterfaces` can now be indexed to select a subset of vectors to
+  operate on.  In contrast to advanced indexing in |NumPy|, indexing a
+  `VectorArrayInterface` will always return a view onto the original array data
   `[#299] <https://github.com/pymor/pymor/pull/299>`_.
 
 - New methods with clear semantics have been introduced for the conversion of
-  |VectorArrays| to
-  (:meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.to_numpy`) and
-  from (:meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.from_numpy`)
+  `VectorArrayInterfaces` to
+  (:meth:`!to_numpy`) and
+  from (:meth:`!from_numpy`)
   |NumPy arrays| `[#446] <https://github.com/pymor/pymor/pull/446>`_.
 
-- Inner products between |VectorArrays| w.r.t. to a given inner product
-  |Operator| or their norm w.r.t. such an operator can now easily be computed by
-  passing the |Operator| as the optional `product` argument to the new
-  :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.inner` and
-  :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.norm` methods
+- Inner products between `VectorArrayInterfaces` w.r.t. to a given inner product
+  `OperatorInterface` or their norm w.r.t. such an operator can now easily be
+  computed by passing the `OperatorInterface` as the optional `product` argument
+  to the new
+  :meth:`!inner` and
+  :meth:`!norm` methods
   `[#407] <https://github.com/pymor/pymor/pull/407>`_.
 
-- The `components` method of |VectorArrays| has been renamed to the more
-  intuitive name
-  :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dofs`
+- The `components` method of `VectorArrayInterfaces` has been renamed to the
+  more intuitive name
+  :meth:`!dofs`
   `[#414] <https://github.com/pymor/pymor/pull/414>`_.
 
-- The :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.l2_norm2` and
-  :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.norm2` have been
+- The :meth:`!l2_norm2` and
+  :meth:`!norm2` have been
   introduced to compute the squared vector norms
   `[#237] <https://github.com/pymor/pymor/pull/237>`_.
 
@@ -163,24 +162,25 @@ RuleTable based algorithms
 In pyMOR 0.5, projection algorithms are implemented via recursively applied
 tables of transformation rules. This replaces the previous inheritance-based
 approach. In particular, the `projected` method to perform a (Petrov-)Galerkin
-projection of an arbitrary |Operator| has been removed and replaced by a free
-|project| function. Rule-based algorithms are implemented by deriving from the
-|RuleTable| base class `[#367] <https://github.com/pymor/pymor/pull/367>`_,
+projection of an arbitrary `OperatorInterface` has been removed and replaced by
+a free |project| function. Rule-based algorithms are implemented by deriving
+from the |RuleTable| base class
+`[#367] <https://github.com/pymor/pymor/pull/367>`_,
 `[#408] <https://github.com/pymor/pymor/pull/408>`_.
 
 This approach has several advantages:
 
 - Rules can match based on the class of the object, but also on more general
-  conditions, e.g. the name of the |Operator| or being linear and
+  conditions, e.g. the name of the `OperatorInterface` or being linear and
   non-|parametric|.
 - The entire mathematical algorithm can be specified in a single file even when
   the definition of the possible classes the algorithm can be applied to is
   scattered over various files.
 - The precedence of rules is directly apparent from the definition of the
   |RuleTable|.
-- Generic rules (e.g. the projection of a linear non-|parametric| |Operator| by
-  simply applying the basis) can be easily scheduled to take precedence over
-  more specific rules.
+- Generic rules (e.g. the projection of a linear non-|parametric|
+  `OperatorInterface` by simply applying the basis) can be easily scheduled to
+  take precedence over more specific rules.
 - Users can implement or modify |RuleTables| without modification of the classes
   shipped with pyMOR.
 
@@ -190,33 +190,35 @@ Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 - Reduction algorithms are now implemented using mutable reductor objects, e.g.
-  :class:`~pymor.reductors.basic.GenericRBReductor`, which store and
-  :meth:`extend <pymor.reductors.basic.GenericRBReductor.extend_basis>` the
+  :class:`!GenericRBReductor`, which store and
+  :meth:`!extend (extend_basis)` the
   reduced bases onto which the model is projected. The only return value of the
-  reductor's :meth:`~pymor.reductors.basic.GenericRBReductor.reduce` method is
+  reductor's :meth:`!reduce` method is
   now the reduced discretization. Instead of a separate reconstructor, the
-  reductor's :meth:`~pymor.reductors.basic.GenericRBReductor.reconstruct` method
+  reductor's :meth:`!reconstruct` method
   can be used to reconstruct a high-dimensional state-space representation.
   Additional reduction data (e.g. used to speed up repeated reductions in greedy
   algorithms) is now managed by the reductor
   `[#375] <https://github.com/pymor/pymor/pull/375>`_.
 
-- Linear combinations and concatenations of |Operators| can now easily be formed
-  using arithmetic operators `[#421] <https://github.com/pymor/pymor/pull/421>`_.
+- Linear combinations and concatenations of `OperatorInterfaces` can now easily
+  be formed using arithmetic operators
+  `[#421] <https://github.com/pymor/pymor/pull/421>`_.
 
 - The handling of complex numbers in pyMOR is now more consistent. See
   `[#458] <https://github.com/pymor/pymor/pull/459>`_,
   `[#362] <https://github.com/pymor/pymor/pull/362>`_,
   `[#447] <https://github.com/pymor/pymor/pull/447>`_
-  for details. As a consequence of these changes, the `rhs` |Operator| in
-  `StationaryDiscretization` is now a vector-like |Operator| instead of a functional.
+  for details. As a consequence of these changes, the `rhs` `OperatorInterface`
+  in `StationaryDiscretization` is now a vector-like `OperatorInterface` instead
+  of a functional.
 
 - The analytical problems and discretizers of pyMOR's discretization toolbox
   have been reorganized and improved. All problems are now implemented as
   instances of |StationaryProblem| or |InstationaryProblem|, which allows an
   easy exchange of data |Functions| of a predefined problem with user-defined
   |Functions|. Affine decomposition of |Functions| is now represented by
-  specifying a :class:`~pymor.functions.basic.LincombFunction` as the respective
+  specifying a :class:`!LincombFunction` as the respective
   data function
   `[#312] <https://github.com/pymor/pymor/pull/312>`_,
   `[#316] <https://github.com/pymor/pymor/pull/316>`_,
@@ -271,7 +273,7 @@ Backward incompatible changes
 - The `_matrix` attribute of |NumpyMatrixOperator| has been renamed to `matrix`
   `[#436] <https://github.com/pymor/pymor/pull/436>`_. If `matrix` holds a
   |NumPy array| this array is automatically made read-only to prevent accidental
-  modification of the |Operator| `[#462] <https://github.com/pymor/pymor/pull/462>`_.
+  modification of the `OperatorInterface` `[#462] <https://github.com/pymor/pymor/pull/462>`_.
 
 - The `BoundaryType` class has been removed in favor of simple strings `[#305]
   <https://github.com/pymor/pymor/pull/305>`_.
@@ -309,7 +311,7 @@ Further notable improvements
 - `[#441] fix #439 (assemble_lincomb "operators" parameter sometimes list, sometimes tuple) <https://github.com/pymor/pymor/pull/441>`_.
 - `[#452] Several improvements to pymor.algorithms.ei.deim <https://github.com/pymor/pymor/pull/452>`_.
 - `[#453] Extend test_assemble <https://github.com/pymor/pymor/pull/453>`_.
-- `[#480| [operators] Improve subtraction of LincombOperators <https://github.com/pymor/pymor/pull/480>`_.
+- `[#480] [operators] Improve subtraction of LincombOperators <https://github.com/pymor/pymor/pull/480>`_.
 - `[#481] [project] ensure solver_options are removed from projected operators <https://github.com/pymor/pymor/pull/481>`_.
 - `[#484] [docs] move all references to bibliography.rst <https://github.com/pymor/pymor/pull/484>`_.
 - `[#488] [operators.block] add BlockRowOperator, BlockColumnOperator <https://github.com/pymor/pymor/pull/488>`_.

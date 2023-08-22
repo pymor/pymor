@@ -14,7 +14,7 @@ from pymor.discretizers.builtin.grids.unstructured import UnstructuredTriangleGr
 
 
 def load_gmsh(filename):
-    """Parse a Gmsh file and create a corresponding :class:`GmshGrid` and :class:`GmshBoundaryInfo`.
+    """Parse a Gmsh file and create a corresponding grid and boundary info.
 
     Parameters
     ----------
@@ -24,9 +24,9 @@ def load_gmsh(filename):
     Returns
     -------
     grid
-        The generated :class:`GmshGrid`.
+        The generated |UnstructuredTriangleGrid|.
     boundary_info
-        The generated :class:`GmshBoundaryInfo`.
+        The generated |BoundaryInfo|.
     """
     if not config.HAVE_MESHIO:
         raise MeshioMissingError('meshio (>=4) is required for reading Gmsh files.')
@@ -58,7 +58,7 @@ def load_gmsh(filename):
     toc = time.perf_counter()
     t_grid = toc - tic
 
-    logger.info('Create GmshBoundaryInfo ...')
+    logger.info('Create BoundaryInfo ...')
     tic = time.perf_counter()
 
     boundary_types = {k: v[0] for k, v in data.field_data.items() if v[1] == 1}

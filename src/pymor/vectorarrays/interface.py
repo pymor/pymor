@@ -1013,9 +1013,10 @@ class VectorArrayImpl(BasicObject):
     The |VectorArray| base class defers all calls to interface methods to an
     internal `impl` object of this type. Indexing, error checking or non-standard
     inner products are handled by |VectorArray|. Possible indices are passed
-    to the methods of :class:`VectorArrayImpl` as `ind`, `oind` or `xind`
-    parameters. These can either be `None`, in case the array has not been indexed,
-    a `slice` object, or a Python list of non-negative numbers.
+    to the methods of :class:`~pymor.vectorarrays.interface.VectorArrayImpl` as
+    `ind`, `oind` or `xind` parameters. These can either be `None`, in case the
+    array has not been indexed, a `slice` object, or a Python list of
+    non-negative numbers.
     """
 
     @abstractmethod

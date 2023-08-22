@@ -4,6 +4,7 @@
 Release Notes
 *************
 
+.. include:: 2023.1.rst
 .. include:: 2022.2.rst
 .. include:: 2022.1.rst
 .. include:: 2021.2.rst

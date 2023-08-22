@@ -50,7 +50,7 @@ class ParabolicRBReductor(InstationaryRBReductor):
         The energy inner product |Operator| w.r.t. which the reduction error is
         estimated and `RB` is orthonormalized.
     coercivity_estimator
-        `None` or a |Parameterfunctional| returning a lower bound :math:`C_a(\mu)`
+        `None` or a |ParameterFunctional| returning a lower bound :math:`C_a(\mu)`
         for the coercivity constant of `fom.operator` w.r.t. `product`.
     """
 

@@ -39,6 +39,7 @@ The release manager is responsible for ensuring that the following steps are per
         it is moved by exactly one week.
         This has to be communicated.
 - [ ] At the day of the hard freeze:
+  - [ ] Follow the steps outlined in [`RELEASE_CHECKLIST`](RELEASE_CHECKLIST.md).
   - [ ] Communicate hard freeze (via GitHub discussions).
         At this point, no new pull requests (except for potential bug fixes) can enter the release.
         Merging into `main` branch is not allowed until the release has happened
@@ -48,6 +49,6 @@ The release manager is responsible for ensuring that the following steps are per
 - [ ] At the day of the release:
   - [ ] Follow the steps outlined in [`RELEASE_CHECKLIST`](RELEASE_CHECKLIST.md).
 - [ ] In the first community meeting after the release:
-  - [ ] Select a new release manager for the next release.
+  - [ ] Select a new release manager for the next release and set the release day.
         However, the current release manager is still responsible for all point releases until the next release.
   - [ ] Assign a couple of issues (about 2 or 3) to each main developer and give them the milestone of the next release.

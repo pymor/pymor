@@ -141,7 +141,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
     Parameters
     ----------
     tree
-        A :class:`Tree` defining the worker topology.
+        A :class:`Tree <Node>` defining the worker topology.
     snapshots
         A mapping `snapshots(node)` returning for each leaf node the
         associated snapshot vectors.

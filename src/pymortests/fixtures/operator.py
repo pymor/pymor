@@ -2,9 +2,14 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from importlib import import_module
+from itertools import product
+
 import numpy as np
 import pytest
+import scipy.sparse as sps
 from numpy.polynomial.polynomial import Polynomial
+from packaging.version import parse
 
 from pymor.core.config import config
 from pymor.operators.constructions import IdentityOperator
@@ -40,7 +45,13 @@ class MonomOperator(Operator):
 
 
 def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range,
-                                              source_id=None, range_id=None):
+                                              source_id=None, range_id=None, sparse=False):
+    assert not sparse or sparse in ('matrix', 'array')
+    mat = np.random.random((dim_range, dim_source))
+    if sparse == 'matrix':
+        mat = sps.csc_matrix(mat)
+    elif sparse == 'array':
+        mat = sps.csc_array(mat)
     op = NumpyMatrixOperator(np.random.random((dim_range, dim_source)), source_id=source_id, range_id=range_id)
     s = op.source.make_array(np.random.random((count_source, dim_source)))
     r = op.range.make_array(np.random.random((count_range, dim_range)))
@@ -48,10 +59,10 @@ def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_sourc
 
 
 def numpy_list_vector_array_matrix_operator_with_arrays_factory(
-    dim_source, dim_range, count_source, count_range, source_id=None, range_id=None
+    dim_source, dim_range, count_source, count_range, source_id=None, range_id=None, sparse=False,
 ):
     op, _, s, r = numpy_matrix_operator_with_arrays_factory(
-        dim_source, dim_range, count_source, count_range, source_id, range_id
+        dim_source, dim_range, count_source, count_range, source_id, range_id, sparse
     )
     op = op.with_(new_type=NumpyListVectorArrayMatrixOperator)
     s = op.source.from_numpy(s.to_numpy())
@@ -86,32 +97,40 @@ def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range
         rp = NumpyMatrixOperator(np.zeros((0, 0)), source_id=range_id, range_id=range_id)
     return op, None, U, V, sp, rp
 
+if parse(import_module('scipy').__version__) >= parse('1.8.0'):
+    _sparse_opts = (False, 'matrix', 'array')
+else:
+    _sparse_opts = (False, 'matrix')
 
-numpy_matrix_operator_with_arrays_factory_arguments = \
-    list(zip([0, 0, 2, 10],            # dim_source
-             [0, 1, 4, 10],            # dim_range
-             [3, 3, 3, 3],             # count_source
-             [3, 3, 3, 3]))            # count_range
+numpy_matrix_operator_with_arrays_factory_arguments = list(product(
+    zip(
+        [0, 0, 2, 10],       # dim_source
+        [0, 1, 4, 10],       # dim_range
+        [3, 3, 3, 3],        # count_source
+        [3, 3, 3, 3],        # count_range
+    ),
+    [{'sparse': opt} for opt in _sparse_opts],
+))
 
 
 numpy_matrix_operator_with_arrays_generators = \
-    [lambda args=args: numpy_matrix_operator_with_arrays_factory(*args)
-     for args in numpy_matrix_operator_with_arrays_factory_arguments]
+    [lambda args=args: numpy_matrix_operator_with_arrays_factory(*args, **kwargs)
+     for args, kwargs in numpy_matrix_operator_with_arrays_factory_arguments]
 
 
 numpy_matrix_operator_generators = \
-    [lambda args=args: numpy_matrix_operator_with_arrays_factory(*args)[0:2]
-     for args in numpy_matrix_operator_with_arrays_factory_arguments]
+    [lambda args=args: numpy_matrix_operator_with_arrays_factory(*args, **kwargs)[0:2]
+     for args, kwargs in numpy_matrix_operator_with_arrays_factory_arguments]
 
 
 numpy_list_vector_array_matrix_operator_with_arrays_generators = \
-    [lambda args=args: numpy_list_vector_array_matrix_operator_with_arrays_factory(*args)
-     for args in numpy_matrix_operator_with_arrays_factory_arguments]
+    [lambda args=args: numpy_list_vector_array_matrix_operator_with_arrays_factory(*args, **kwargs)
+     for args, kwargs in numpy_matrix_operator_with_arrays_factory_arguments]
 
 
 numpy_list_vector_array_matrix_operator_generators = \
-    [lambda args=args: numpy_list_vector_array_matrix_operator_with_arrays_factory(*args)[0:2]
-     for args in numpy_matrix_operator_with_arrays_factory_arguments]
+    [lambda args=args: numpy_list_vector_array_matrix_operator_with_arrays_factory(*args, **kwargs)[0:2]
+     for args, kwargs in numpy_matrix_operator_with_arrays_factory_arguments]
 
 
 def thermalblock_factory(xblocks, yblocks, diameter):

@@ -35,6 +35,14 @@ class NewtonError(Exception):
     """Is raised if the Newton algorithm fails to converge."""
 
 
+class BFGSError(Exception):
+    """Is raised if the BFGS algorithm fails to converge."""
+
+
+class TRError(Exception):
+    """Is raised if the TR algorithm fails to converge."""
+
+
 class CacheKeyGenerationError(Exception):
     """Is raised when cache key generation fails due to unsupported arguments."""
 

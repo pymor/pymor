@@ -37,12 +37,13 @@ def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
 
     where `O_i` are |Operators| and `c_i` scalar coefficients.
 
-    This function is called in the :meth:`assemble` method of |LincombOperator| and
-    is not intended to be used directly.
+    This function is called in the
+    :meth:`~pymor.operators.constructions.LincombOperator.assemble` method of
+    |LincombOperator| and is not intended to be used directly.
 
     To form the linear combination of backend |Operators| (containing actual matrix data),
-    :meth:`~pymor.operators.interface.Operator._assemble_lincomb` will be called
-    on the first |Operator| in the linear combination.
+    :meth:`~pymor.operators.interface.Operator._assemble_lincomb` will be called on the first
+    |Operator| in the linear combination.
 
     Parameters
     ----------
@@ -63,6 +64,18 @@ def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
 
 
 class AssembleLincombRules(RuleTable):
+    """|RuleTable| for the :func:`assemble_lincomb` algorithm.
+
+    Parameters
+    ----------
+    coefficients
+        Tuple of coefficients.
+    solver_options
+        |solver_options| for the assembled operator.
+    name
+        Name of the assembled operator.
+    """
+
     def __init__(self, coefficients, solver_options, name):
         super().__init__(use_caching=False)
         self.__auto_init(locals())

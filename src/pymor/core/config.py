@@ -32,7 +32,7 @@ def _get_fenics_version():
         # In dolfin.__init__ the dlopen flags are set to include RTDL_GLOBAL,
         # which can cause issues with other Python C extensions.
         # In particular, with the manylinux wheels for scipy 1.9.{2,3} this leads
-        # to segfaults in the Fortran L-BFGS-B implementatiton.
+        # to segfaults in the Fortran L-BFGS-B implementation.
         #
         # A MWE to trigger the segfault is:
         #     import sys
@@ -87,18 +87,9 @@ def is_macos_platform():
     return 'Darwin' in platform.system()
 
 
-def _get_matplotib_version():
+def _get_matplotlib_version():
     import matplotlib as mpl
     return mpl.__version__
-
-
-def _get_ipython_version():
-    try:
-        import ipyparallel
-        return ipyparallel.__version__
-    except ImportError:
-        import IPython.parallel
-        return getattr(IPython.parallel, '__version__', True)
 
 
 def _get_slycot_version():
@@ -136,17 +127,7 @@ def is_jupyter():
     if force is not None:
         return bool(force)
     ipy = type(get_ipython()).__module__
-    return ipy.startswith('ipykernel.') or ipy.startswith('google.colab')
-
-
-def is_nbconvert():
-    """Check if a notebook is executed with `nbconvert`.
-
-    In some visualization cases we need to be able to detect if a notebook
-    is executed with `nbconvert` to disable async loading.
-    """
-    from os import environ
-    return is_jupyter() and bool(environ.get('PYMOR_NBCONVERT', False))
+    return ipy.startswith('ipykernel.') or ipy.startswith('google.colab') or ipy.startswith('pyolite.')
 
 
 _PACKAGES = {
@@ -154,12 +135,12 @@ _PACKAGES = {
     'DUNEGDT': _get_dunegdt_version,
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
-    'IPYTHON': _get_ipython_version,
-    'MATPLOTLIB': _get_matplotib_version,
-    'VTKIO': lambda: _can_import(('meshio', 'pyevtk', 'lxml', 'xmljson')),
-    'MESHIO': lambda: import_module('meshio').__version__,
+    'IPYPARALLEL': lambda: import_module('ipyparallel').__version__,
+    'IPYTHON': lambda: import_module('IPython').__version__,
     'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
     'K3D': lambda: import_module('k3d').__version__,
+    'MATPLOTLIB': _get_matplotlib_version,
+    'MESHIO': lambda: import_module('meshio').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NGSOLVE': lambda: import_module('ngsolve').__version__,
     'NUMPY': lambda: import_module('numpy').__version__,
@@ -175,6 +156,7 @@ _PACKAGES = {
     'SPHINX': lambda: import_module('sphinx').__version__,
     'TORCH': lambda: import_module('torch').__version__,
     'TYPER': lambda: import_module('typer').__version__,
+    'VTKIO': lambda: _can_import(('meshio', 'pyevtk', 'lxml', 'xmljson')),
 }
 
 

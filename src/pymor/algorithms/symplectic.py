@@ -18,7 +18,7 @@ from pymor.vectorarrays.interface import VectorArray, VectorSpace
 class SymplecticBasis(BasicObject):
     """A canonically-symplectic basis based on pairs of basis vectors (e_i, f_i).
 
-    Is either initialzed (a) with a pair of |VectorArrays| E and F or (b) with a |VectorSpace|.
+    Is either initialized (a) with a pair of |VectorArrays| E and F or (b) with a |VectorSpace|.
     The basis vectors are each contained in a |VectorArray|
 
         E = (e_i)_{i=1}^n
@@ -141,7 +141,7 @@ class SymplecticBasis(BasicObject):
         Parameters
         ----------
         offset
-            Can be used to offset the check of symplecicity to the basis vectors with index bigger
+            Can be used to offset the check of symplecticity to the basis vectors with index bigger
             than the offset. This is useful in iterative methods to avoid checking multiple times.
             The offset needs to be even. The default value is 0, i.e. all basis vectors are checked
             by default.
@@ -151,7 +151,7 @@ class SymplecticBasis(BasicObject):
         Raises
         ------
         AccuracyError
-            Is raised when the symplecicity for some pair (e_i, f_i) exceeds check_tol.
+            Is raised when the symplecticity for some pair (e_i, f_i) exceeds check_tol.
         """
         idx = np.arange(offset, len(self))
 
@@ -227,14 +227,14 @@ class SymplecticBasis(BasicObject):
 
 
 def psd_svd_like_decomp(U, modes, balance=True):
-    """Generates a |SymplecticBasis| with the PSD SVD-like decompostion.
+    """Generates a |SymplecticBasis| with the PSD SVD-like decomposition.
 
     This is an implementation of Algorithm 1 in :cite:`BBH19`.
 
     Parameters
     ----------
     U
-        The |VectorArray| for which the PSD SVD-like decompostion is to be computed.
+        The |VectorArray| for which the PSD SVD-like decomposition is to be computed.
     modes
         Number of modes (needs to be even).
     balance
@@ -279,7 +279,7 @@ def psd_svd_like_decomp(U, modes, balance=True):
     return SymplecticBasis.from_array(S)
 
 
-def psd_cotengent_lift(U, modes):
+def psd_cotangent_lift(U, modes):
     """Generates a |SymplecticBasis| with the PSD cotangent lift.
 
     This is an implementation of Algorithm 1 in :cite:`PM16`.
@@ -287,7 +287,7 @@ def psd_cotengent_lift(U, modes):
     Parameters
     ----------
     U
-        The |VectorArray| for which the PSD SVD-like decompostion is to be computed.
+        The |VectorArray| for which the PSD SVD-like decomposition is to be computed.
     modes
         Number of modes (needs to be even).
 
@@ -318,7 +318,7 @@ def psd_complex_svd(U, modes):
     Parameters
     ----------
     U
-        The |VectorArray| for which the PSD SVD-like decompostion is to be computed.
+        The |VectorArray| for which the PSD SVD-like decomposition is to be computed.
     modes
         Number of modes (needs to be even).
 
@@ -437,9 +437,9 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
             # calculate new symplectic product
             old_sympl, sympl = sympl, abs(J.apply2(E[j], F[j]))
 
-            # remove vector pair if it got a too small symplecticty value
+            # remove vector pair if it got a too small symplecticity value
             if sympl < rtol * initial_sympl:
-                logger.info(f'Removing vector pair {j} due to small symplecticty value')
+                logger.info(f'Removing vector pair {j} due to small symplecticity value')
                 remove.append(j)
                 break
 
@@ -468,7 +468,7 @@ def symplectic_gram_schmidt(E, F, return_Lambda=False, atol=1e-13, rtol=1e-13, o
 
 
 def esr(E, F, J=None):
-    """Elemenraty SR factorization. Transforms E and F such that.
+    """Elementary SR factorization. Transforms E and F such that.
 
         [E, F] = S * diag(r11, r22)
 

@@ -7,7 +7,7 @@ import pytest
 
 from pymor.algorithms.symplectic import (
     psd_complex_svd,
-    psd_cotengent_lift,
+    psd_cotangent_lift,
     psd_svd_like_decomp,
     symplectic_gram_schmidt,
 )
@@ -19,11 +19,11 @@ pytestmark = pytest.mark.builtin
 
 
 METHODS_DICT = {
-    'psd_cotengent_lift': psd_cotengent_lift,
+    'psd_cotangent_lift': psd_cotangent_lift,
     'psd_complex_svd': psd_complex_svd,
     'psd_svd_like_decomp': psd_svd_like_decomp,
 }
-KEYS_ORTHOSYMPL_METHOD = ['psd_cotengent_lift', 'psd_complex_svd']
+KEYS_ORTHOSYMPL_METHOD = ['psd_cotangent_lift', 'psd_complex_svd']
 
 
 @pytest.mark.parametrize('key_method', METHODS_DICT.keys())
@@ -86,7 +86,7 @@ def test_symplectic_gram_schmidt(test_orthonormality, reiterate):
     assert np.allclose(arr_tsi_S.inner(M), Lambda)
     # check M = S * Lambda
     assert np.allclose(arr_S.lincomb(Lambda.T).to_numpy(), M.to_numpy())
-    # upper triangular of permuted matrx
+    # upper triangular of permuted matrix
     n = Lambda.shape[0] // 2
     perm = np.vstack([np.arange(0, n), np.arange(n, 2*n)]).T.reshape(-1)
     assert len(set(perm)) == len(perm) == 2*n

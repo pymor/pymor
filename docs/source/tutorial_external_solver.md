@@ -31,7 +31,7 @@ kernelspec:
 
 One of pyMOR's main features is easy integration of external solvers that implement the full-order model. In this tutorial
 we will do this step-by-step for a custom toy solver written in C++.
-If you use the [FEniCS](<https://fenicsproject.org>) or [NGSovle](<https://ngsolve.org>) PDE solver libraries,
+If you use the [FEniCS](<https://fenicsproject.org>) or [NGSolve](<https://ngsolve.org>) PDE solver libraries,
 you can find ready-to-use pyMOR bindings in the {mod}`~pymor.bindings` package. pyMOR support for
 [deal.II](<https://dealii.org>) can be found in a [separate repository](<https://github.com/pymor/pymor-deal.II>).
 
@@ -231,8 +231,8 @@ instances, we can instead implement a wrapper `WrappedVector` for a single `mode
 The {class}`~pymor.vectorarrays.list.CopyOnWriteVector` base class manages a reference count for
 us and automatically copies data when necessary in methods {meth}`~pymor.vectorarrays.list.CopyOnWriteVector.scal`
 and {meth}`~pymor.vectorarrays.list.CopyOnWriteVector.axpy`. To use this, we need to implement
-{meth}`~pymor.vectorarrays.list.CopyOnWriteVector._scal`
-and {meth}`~pymor.vectorarrays.list.CopyOnWriteVector._axpy` in addition to all the abstract
+{meth}`!_scal`
+and {meth}`!_axpy` in addition to all the abstract
 methods from  {class}`~pymor.vectorarrays.list.CopyOnWriteVector`. We can get away
 with using just a stub that raises an {class}`~NotImplementedError` in some methods that are not actually called in our example.
 

@@ -120,9 +120,9 @@ problem = StationaryProblem(
 This problem definition can now be handed over to discretization methods
 (see {mod}`pymor.discretizers.builtin`) which assemble corresponding
 discrete full-order models. For finite elements, we use
-{func}`~pymor.discretizers.builtin.cg.discretize_stationary_cg`,
-which receives the maximum mesh element diameter via the `diameter`
-argument:
+{func}`~pymor.discretizers.builtin.cg.discretize_stationary_cg`
+(cg stands for continuous Galerkin), which receives the maximum mesh
+element diameter via the `diameter` argument:
 
 ```{code-cell}
 m, data = discretize_stationary_cg(problem, diameter=1/4)
@@ -245,7 +245,7 @@ diffusion = ExpressionFunction(
 
 Here, we have used the `values` parameter of {{ ExpressionFunction }} to
 make `K` available as an additional constant in the defining
-expression. In particular, we can easily change `K` programatically
+expression. In particular, we can easily change `K` programmatically
 without having to resort to string manipulations. The solution looks
 like this:
 
@@ -426,10 +426,10 @@ represented by indicator functions of point sets forming the letters
 letters. This admits a decomposition of the form
 
 ```{math}
-\sigma(x,y) = 1 + f_R \cdot (\mu_R - 1) + f_B \cdot (\mu_L - 1)
+\sigma(x,y) = 1 + f_R \cdot (\mu_R - 1) + f_B \cdot (\mu_B - 1)
 ```
 
-Again, we define {math}`f_R` and {math}`f_L` as {{ BitmapFunctions }} for
+Again, we define {math}`f_R` and {math}`f_B` as {{ BitmapFunctions }} for
 the following image files:
 
 ```{image} R.png

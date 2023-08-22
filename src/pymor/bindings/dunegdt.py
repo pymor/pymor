@@ -7,6 +7,7 @@ from pymor.core.config import config
 
 config.require('DUNEGDT')
 
+from numbers import Integral
 
 import numpy as np
 from dune.xt.la import IstlVector
@@ -107,6 +108,8 @@ class DuneXTVectorSpace(ComplexifiedListVectorSpace):
     real_vector_type = DuneXTVector
 
     def __init__(self, dim, dune_vector_type=IstlVector, id='STATE'):
+        assert isinstance(dim, Integral)
+        dim = int(dim)
         self.__auto_init(locals())
 
     def __eq__(self, other):

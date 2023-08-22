@@ -2,6 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import bisect
+
 import numpy as np
 import scipy.linalg as spla
 
@@ -59,7 +61,7 @@ class MTReductor(BasicObject):
 
             - `'orth'`: projection matrices are orthogonalized with
               respect to the Euclidean inner product
-            - `'biorth'`: projection matrices are biorthogolized with
+            - `'biorth'`: projection matrices are biorthogonalized with
               respect to the E product
         symmetric
             If `True`, assume A is symmetric and E is symmetric positive
@@ -151,21 +153,32 @@ class MTReductor(BasicObject):
                 dominance = -(absres / np.abs(poles))
             elif method_options['which'] == 'NM':
                 dominance = -np.array(absres)
-        idx = sorted(range(len(poles)),
-                     key=lambda i: (dominance[i], -poles[i].real,
-                                    abs(poles[i].imag), 0 if poles[i].imag >= 0 else 1))
+        idx = np.where(poles.imag >= 0)[0]
+        poles = poles[idx]
+        rev = rev[idx]
+        lev = lev[idx]
+
+        idx = sorted(range(len(poles)), key=lambda i: (dominance[i], -poles[i].real, poles[i].imag))
         idx = idx[:r]
         poles = poles[idx]
         rev = rev[idx]
         lev = lev[idx]
 
+        count = np.ones(len(poles))
+        count[poles.imag > 0] = 2
+        cumulative_count = np.cumsum(count)
+        i = bisect.bisect_left(cumulative_count, r)
+        poles = poles[:i + 1]
+        rev = rev[:i + 1]
+        lev = lev[:i + 1]
+
+        real_index = np.where(poles.imag == 0)[0]
+        complex_index = np.where(poles.imag > 0)[0]
+
         self.V = fom.A.source.empty(reserve=r)
         self.W = fom.A.source.empty(reserve=r)
 
-        real_index = np.where(np.abs(poles.imag) / np.abs(poles) < 1e-6)[0]
-        complex_index = np.where((np.abs(poles.imag) / np.abs(poles) >= 1e-6) & (poles.imag > 0))[0]
-
-        if complex_index.size > 0 and complex_index[-1] == r-1:
+        if cumulative_count[i] > r:
             self.logger.warning('Chosen order r will split complex conjugated pair of poles.')
             if allow_complex_rom:
                 self.logger.info('Reduced model will be complex.')
