@@ -17,9 +17,8 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.logger import getLogger
 from pymor.core.defaults import defaults
 
-@defaults('Q', 'Z', 'hess', 'block_size', 'solver', 'max_it', 'tau')
-def pymepack_gelyap_options(Q = None, Z = None, hess = None,
-        block_size = None, solver = None, max_it = None, tau = None):
+@defaults('block_size', 'solver', 'max_it', 'tau')
+def pymepack_gelyap_options(block_size = None, solver = None, max_it = None, tau = None):
     """Returns customized options for the pymepack.gelyap, pymepack.gglyap solvers
     and their respective versions with iterative refinement.
     If no values are specified, pymepack uses its default settings.
@@ -27,12 +26,6 @@ def pymepack_gelyap_options(Q = None, Z = None, hess = None,
 
     Parameters
     ----------
-    Q
-        See `pymepack.gelyap`, `pymepack.gglyap`.
-    Z
-        See `pymepack.gglyap`.
-    hess
-        See `pymepack.gelyap`, `pymepack.gglyap`.
     block_size
         See `pymepack.gelyap`, `pymepack.gglyap`.
     solver
@@ -47,14 +40,11 @@ def pymepack_gelyap_options(Q = None, Z = None, hess = None,
     Dictionary of customized solver options to be used instead of the default values for the pymepack backend.
     """
     gelyap_opts = {}
-    if Q: gelyap_opts['Q']= Q
-    if Z: gelyap_opts['Z'] = Z
 
-    if hess: gelyap_opts['hess'] = hess
-    if block_size: gelyap_opts['block_size'] = block_size
-    if solver: gelyap_opts['solver'] = solver
-    if max_it : gelyap_refine_opts['max_it'] = max_it
-    if tau : gelyap_refine_opts['tau'] = tau
+    if block_size is not None: gelyap_opts['block_size'] = block_size
+    if solver is not None: gelyap_opts['solver'] = solver
+    if max_it is not None: gelyap_refine_opts['max_it'] = max_it
+    if tau is not None: gelyap_refine_opts['tau'] = tau
 
     return gelyap_opts
 
@@ -73,7 +63,7 @@ def lyap_lrcf_solver_options():
                                        'opts': pymepack_gelyap_options()},
             }
 
-def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
+def solve_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, cont_time=True, options=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
     See
@@ -137,7 +127,7 @@ def lyap_dense_solver_options():
                                        'opts': pymepack_gelyap_options()},
             }
 
-def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
+def solve_lyap_dense(A, E, B, Q=None, S=None, hess=False, trans=False, cont_time=True, options=None):
     """Compute the solution of a Lyapunov equation.
 
     See
@@ -186,6 +176,13 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     C = -B.dot(B.T) if not trans else -B.T.dot(B)
     Cf = C if C.flags.f_contiguous else C.copy(order='F')
     Af = A.copy(order='F')
+    X = None
+    Qf = None
+    Sf = None
+    if Q is not None:
+        Qf = Q if Q.flags.f_contiguous else Q.copy(order='F')
+    if S is not None:
+        Sf = S if S.flags.f_contiguous else S.copy(order='F')
 
     opts = options['opts']
     refinement_opts = {}
@@ -197,15 +194,15 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     if options['type'] == 'pymepack_gelyap':
         if E is None:
             if cont_time:
-                pymepack.gelyap(Af, Cf, trans = trans, **opts)
+                pymepack.gelyap(Af, Cf, Q = Qf, trans = trans, hess = hess, **opts)
             else:
-                pymepack.gestein(Af, Cf, trans = trans, **opts)
+                pymepack.gestein(Af, Cf, Q = Qf, trans = trans, hess = hess, **opts)
         else:
             Ef = E.copy(order='F')
             if cont_time:
-                pymepack.gglyap(Af, Ef, Cf, trans = trans, **opts)
+                pymepack.gglyap(Af, Ef, Cf, Q = Qf, Z = Sf, trans = trans, hess = hess, **opts)
             else:
-                pymepack.ggstein(Af, Ef, Cf, trans = trans, **opts)
+                pymepack.ggstein(Af, Ef, Cf, Q = Qf, Z = Sf, trans = trans, hess = hess, **opts)
         X = Cf     
     elif options['type'] == 'pymepack_gelyap_refine':
         if E is None:
