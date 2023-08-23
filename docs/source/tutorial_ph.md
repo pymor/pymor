@@ -186,7 +186,7 @@ from pymor.reductors.bt import PRBTReductor
 reductor = PRBTReductor(fom)
 rom2 = reductor.reduce(10)
 rom2 = PHLTIModel.from_passive_LTIModel(rom2)
-print(f'rom2 is of type {type(rom1)}.')
+print(f'rom2 is of type {type(rom2)}.')
 ```
 
 ### Passivity preserving model reduction via spectral factorization
@@ -212,7 +212,7 @@ rom3 = reductor.reduce(
     lambda spectral_factor, mu : IRKAReductor(spectral_factor, mu).reduce(10)
 )
 rom3 = PHLTIModel.from_passive_LTIModel(rom3)
-print(f'rom3 is of type {type(rom1)}.')
+print(f'rom3 is of type {type(rom3)}.')
 ```
 
 ### Comparison
