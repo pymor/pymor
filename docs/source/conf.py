@@ -16,7 +16,6 @@ if sphinx.__version__ < '3.4':
     raise RuntimeError('Sphinx 3.4 or newer required')
 
 needs_sphinx = '3.4'
-os.environ['PYMOR_WITH_SPHINX'] = '1'
 os.environ['PYBIND11_DIR'] = sysconfig.get_path('purelib')
 
 # -----------------------------------------------------------------------------
