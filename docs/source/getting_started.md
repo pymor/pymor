@@ -286,3 +286,7 @@ Should you have any problems regarding pyMOR, questions or
 do not hesitate to contact us via
 [GitHub discussions](https://github.com/pymor/pymor/discussions)
 or [email](mailto:main.developers@pymor.org)!
+
+Download the code:
+{download}`getting_started.md`
+{nb-download}`getting_started.ipynb`
