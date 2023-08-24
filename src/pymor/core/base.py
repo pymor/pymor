@@ -264,11 +264,6 @@ class ImmutableMeta(UberMeta):
 
         c = UberMeta.__new__(cls, classname, bases, classdict)
 
-        c._implements_reduce = ('__reduce__' in classdict
-                                or '__reduce_ex__' in classdict
-                                or any(getattr(base, '_implements_reduce', False)
-                                       for base in bases))
-
         # set __signature__ attribute on newly created class c to ensure that
         # inspect.signature(c) returns the signature of its __init__ arguments and not
         # the signature of ImmutableMeta.__call__
