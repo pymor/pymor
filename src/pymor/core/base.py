@@ -50,16 +50,13 @@ functionality:
 
 import abc
 import inspect
-import os
 import uuid
 from functools import wraps
-from types import FunctionType
 
 from pymor.core import logger
 from pymor.core.exceptions import ConstError
 from pymor.tools.formatrepr import _format_generic, format_repr
 
-DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1
 NoneType = type(None)
 
 
@@ -95,29 +92,9 @@ class UberMeta(abc.ABCMeta):
         abc.ABCMeta.__init__(cls, name, bases, namespace)
 
     def __new__(cls, classname, bases, classdict):
-        """I copy docstrings from base class methods to deriving classes.
-
-        Copying of docstrings is disabled when the `PYMOR_WITH_SPHINX` environment
-        variable is set to `1`.
-        """
         for attr in ('_init_arguments', '_init_defaults'):
             if attr in classdict:
                 raise ValueError(attr + ' is a reserved class attribute for subclasses of BasicObject')
-
-        for attr, item in classdict.items():
-            if isinstance(item, FunctionType):
-                # first copy docs
-                base_doc = None
-                for base in bases:
-                    base_func = getattr(base, item.__name__, None)
-                    if not DONT_COPY_DOCSTRINGS:
-                        if base_func:
-                            base_doc = getattr(base_func, '__doc__', None)
-                        if base_doc:
-                            doc = getattr(item, '__doc__', '')
-                            if doc is not None:
-                                base_doc = doc
-                            item.__doc__ = base_doc
 
         def __auto_init(self, locals_):
             """Automatically assign __init__ arguments.
@@ -263,11 +240,6 @@ class ImmutableMeta(UberMeta):
     def __new__(cls, classname, bases, classdict):
 
         c = UberMeta.__new__(cls, classname, bases, classdict)
-
-        c._implements_reduce = ('__reduce__' in classdict
-                                or '__reduce_ex__' in classdict
-                                or any(getattr(base, '_implements_reduce', False)
-                                       for base in bases))
 
         # set __signature__ attribute on newly created class c to ensure that
         # inspect.signature(c) returns the signature of its __init__ arguments and not
