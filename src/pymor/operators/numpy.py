@@ -19,7 +19,7 @@ from functools import reduce
 
 import numpy as np
 import scipy.linalg as spla
-import scipy.sparse as sps
+import scipy.sparse
 from numpy.fft import fft, ifft, irfft, rfft
 from scipy.io import mmwrite, savemat
 from scipy.linalg import lu_factor, lu_solve
@@ -388,9 +388,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 identity_shift = identity_shift.real
             if operators[0].sparse:
                 try:
-                    matrix += (sps.eye(matrix.shape[0]) * identity_shift)
+                    matrix += (scipy.sparse.eye(matrix.shape[0]) * identity_shift)
                 except NotImplementedError:
-                    matrix = matrix + (sps.eye(matrix.shape[0]) * identity_shift)
+                    matrix = matrix + (scipy.sparse.eye(matrix.shape[0]) * identity_shift)
             else:
                 matrix += (np.eye(matrix.shape[0]) * identity_shift)
 

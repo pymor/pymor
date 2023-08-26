@@ -261,14 +261,7 @@ banned-from = ["numpy.linalg"]
 
 [tool.ruff.flake8-import-conventions.extend-aliases]
 scipy = ""  # don't import scipy directly
-"scipy.integrate" = "spint"
-"scipy.io" = "spio"
 "scipy.linalg" = "spla"
-"scipy.optimize" = "spopt"
-"scipy.sparse.linalg" = "spsla"
-"scipy.sparse" = "sps"
-"scipy.special" = "spsp"
-"scipy.stats" = "spst"
 
 [tool.ruff.flake8-quotes]
 inline-quotes = "single"
