@@ -28,6 +28,13 @@ repos:
   rev: v0.23.1
   hooks:
   - id: toml-sort-fix
+- repo: https://github.com/lyz-code/yamlfix
+  rev: 1.15.0
+  hooks:
+  - id: yamlfix
+    types: [text]
+    files: \.yaml|\.yml|\.cff$
+    exclude: ^conda
 ci:
   autofix_prs: false
   autoupdate_schedule: quarterly
