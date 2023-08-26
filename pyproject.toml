@@ -10,10 +10,10 @@ readme = "README.md"
 license.file = "LICENSE.txt"
 requires-python = ">=3.8"
 authors = [
-  {name = "pyMOR developers", email = "main.developers@pymor.org"}
+  {name = "pyMOR developers", email = "main.developers@pymor.org"},
 ]
 maintainers = [
-  {name = "Stephan Rave", email = "stephan.rave@uni-muenster.de"}
+  {name = "Stephan Rave", email = "stephan.rave@uni-muenster.de"},
 ]
 classifiers = [
   "Intended Audience :: Science/Research",
@@ -22,7 +22,7 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
-  "Topic :: Scientific/Engineering :: Mathematics"
+  "Topic :: Scientific/Engineering :: Mathematics",
 ]
 dependencies = [
   "diskcache",
@@ -33,13 +33,13 @@ dependencies = [
   "pygments",
   "qtpy>=2.3.1",
   "scipy>=1.5.4",
-  "typer"
+  "typer",
 ]
 
 [project.optional-dependencies]
 # additional dependencies for building docs via 'make docs'
 docs = [
-  "pymor[docs_additional,jupyter,slycot,ann]"
+  "pymor[docs_additional,jupyter,slycot,ann]",
 ]
 # we have the docs-related additional dependencies as a separate extra here
 # to avoid pip-compile include pymor itself as a dependency, why is happening
@@ -53,7 +53,7 @@ docs-additional = [
   "sphinx-autoapi>=1.8,<2",
   "sphinx-material",
   "sphinx>=5.0,<5.2",
-  "sphinxcontrib-bibtex"
+  "sphinxcontrib-bibtex",
 ]
 # additional dependencies for running tests via 'make tests'
 tests = [
@@ -62,38 +62,38 @@ tests = [
   "notebook",
   "pytest-cov",
   "pytest-datadir",
-  "pytest>=7.2.1" # 7.2.0 causes format_source tests to fail do to wrong paths in co_filename
+  "pytest>=7.2.1", # 7.2.0 causes format_source tests to fail do to wrong paths in co_filename
 ]
 # additional dependencies for pyMOR development
 dev = [
   "ruff==0.0.292", # our linter of choice
   "conda_lock==1.4.0", # needed for make ci_conda_requirements
-  "hatch" # build frontend for building and publishing pyMOR images
+  "hatch", # build frontend for building and publishing pyMOR images
 ]
 # ## Optional dependencies for MOR algorithms
 # dependencies for deep-learning based MOR methods
 ann = [
-  "torch>=1.11.0"
+  "torch>=1.11.0",
 ]
 # dense matrix equation solver for system-theoretic methods and H-infinity norm calculation
 # requires OpenBLAS headers and a Fortran compiler
 slycot = [
-  "slycot>=0.5.4"
+  "slycot>=0.5.4",
 ]
 # parallelization of some MOR algorithms (e.g. greedy search) using ipyparallel
 ipyparallel = [
-  "ipyparallel>=6.2.5"
+  "ipyparallel>=6.2.5",
 ]
 # parallelization of some MOR algorithms (e.g. greedy search) using mpi
 # support for MPI-distributed solvers
 mpi = [
-  "mpi4py>=3.0.3"
+  "mpi4py>=3.0.3",
 ]
 # ## Builtin discretizations
 # GUI support for builtin discretizations
 gui = [
   "pyside6>=6.4.3",
-  "pyopengl!=3.1.7"
+  "pyopengl!=3.1.7",
 ]
 # jupyter integration
 jupyter = [
@@ -102,38 +102,38 @@ jupyter = [
   "jupyterlab",
   "jupyterlab-myst",
   "k3d>=2.15.2",
-  "notebook"
+  "notebook",
 ]
 # VTK output for builtin discretizations
 vtk = [
   "lxml",
   "meshio>=4.4",
   "pyevtk",
-  "xmljson"
+  "xmljson",
 ]
 # gmsh support for builtin discretizations
 gmsh = [
-  "gmsh"
+  "gmsh",
 ]
 # # Supported external solvers available on PyPI
 dune = [
   "dune-xt[visualisation]>=2022.5.3; platform_system==\"Linux\" and platform_machine==\"x86_64\"",
-  "dune-gdt>=2022.5.3; platform_system==\"Linux\" and platform_machine==\"x86_64\""
+  "dune-gdt>=2022.5.3; platform_system==\"Linux\" and platform_machine==\"x86_64\"",
 ]
 ngsolve = [
-  "ngsolve"
+  "ngsolve",
 ]
 scikit-fem = [
-  "scikit-fem>=6.0.0"
+  "scikit-fem>=6.0.0",
 ]
 # # Meta dependencies
 # install all optional dependencies, except those requiring a compiler toolchain to build
 full = [
-  "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,dune,ngsolve,scikit-fem]"
+  "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,dune,ngsolve,scikit-fem]",
 ]
 # install all optional dependencies, including those requiring a compiler toolchain to build
 full-compiled = [
-  "pymor[full,slycot,mpi]"
+  "pymor[full,slycot,mpi]",
 ]
 
 [project.scripts]
@@ -148,7 +148,7 @@ Homepage = "https://pymor.org"
 [tool.coverage.paths]
 root = [
   "/pymor",
-  "src/pymor"
+  "src/pymor",
 ]
 
 # omit the runtime compiled source of pymor.analyticalproblems.expression.Expression
@@ -157,35 +157,35 @@ omit = [
   "expression",
   "*/expression",
   "src/pymor/version.py",
-  "pymor/version"
+  "pymor/version",
 ]
 
 [tool.coverage.run]
 relative_files = true
 source = [
-  "src"
+  "src",
 ]
 source_pkgs = [
-  "pymor"
+  "pymor",
 ]
 omit = [
   "expression",
   "*/expression",
   "src/pymor/version.py",
-  "pymor/version"
+  "pymor/version",
 ]
 
 [tool.hatch.build.targets.sdist]
 include = [
   "/src",
   "/docs",
-  "CITATION.cff"
+  "CITATION.cff",
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = [
   "/src/pymor",
-  "/src/pymordemos"
+  "/src/pymordemos",
 ]
 
 [tool.hatch.version]
@@ -199,7 +199,7 @@ python_files = "*.py"
 addopts = "-p no:nb_regression --durations 10"
 junit_family = "xunit2"
 markers = [
-  "builtin: test does not require external PDE solver"
+  "builtin: test does not require external PDE solver",
 ]
 
 [tool.ruff]
@@ -222,7 +222,7 @@ ignore = [
   "F722", # syntax error in forward annotation
   "N802", # function name should be lowercase
   "N803", # argument name should be lowercase (we use single capital letters everywhere for vectorarrays)
-  "N806" # same for variables in function
+  "N806", # same for variables in function
 ]
 
 [tool.ruff.flake8-import-conventions]
@@ -249,3 +249,6 @@ max-doc-length = 100
 
 [tool.ruff.pydocstyle]
 convention = "numpy"
+
+[tool.tomlsort]
+trailing_comma_inline_array = true
