@@ -121,6 +121,7 @@ Plotting magnitude plot.
 
 ```{code-cell}
 import matplotlib.pyplot as plt
+plt.rcParams['axes.grid'] = True
 
 w = (1e-1, 1e4)
 
