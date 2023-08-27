@@ -146,9 +146,10 @@ Poles of the ROMs.
 
 ```{code-cell}
 fig, ax = plt.subplots()
-for i, rom in enumerate(roms):
+markers = '.x+12'
+for (i, rom), marker in zip(enumerate(roms), markers):
     poles = rom.poles()
-    ax.plot(poles.real, poles.imag, '.', label=f'ROM $r = {i + 1}$')
+    ax.plot(poles.real, poles.imag, marker, label=f'ROM $r = {i + 1}$')
 _ = ax.legend()
 ```
 
@@ -207,9 +208,9 @@ Poles of the ROMs.
 
 ```{code-cell}
 fig, ax = plt.subplots()
-for i, rom in enumerate(roms):
+for (i, rom), marker in zip(enumerate(roms), markers):
     poles = rom.poles()
-    ax.plot(poles.real, poles.imag, '.', label=f'ROM $r = {i + 1}$')
+    ax.plot(poles.real, poles.imag, marker, label=f'ROM $r = {i + 1}$')
 _ = ax.legend()
 ```
 
@@ -281,10 +282,10 @@ Poles of the ROMs.
 
 ```{code-cell}
 fig, ax = plt.subplots()
-for i, rom in enumerate(roms):
+for (i, rom), marker in zip(enumerate(roms), markers):
     r = 2 * (i + 1)
     poles = rom.poles()
-    ax.plot(poles.real, poles.imag, '.', label=f'ROM $r = {r}$')
+    ax.plot(poles.real, poles.imag, marker, label=f'ROM $r = {r}$')
 _ = ax.legend()
 ```
 
