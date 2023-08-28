@@ -54,8 +54,3 @@ is unset the value of `mpi4py.rc.finalize` remains unchanged, unless
 ```{envvar} PYMOR_MPI_INIT_THREAD
 Required threading level to require when pyMOR calls `mpi4py.MPI.Init_thread`.
 ```
-
-```{envvar} PYMOR_WITH_SPHINX
-This variable is set to `1` during API documentation generation
-using Sphinx.
-```
