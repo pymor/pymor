@@ -7,15 +7,13 @@ from pymor.core.config import config
 config.require('PYMEPACK')
 
 
-import numpy as np
-import scipy.linalg as spla
 import pymepack
 
 from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.lyapunov import _chol, _solve_lyap_dense_check_args, _solve_lyap_lrcf_check_args
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.core.logger import getLogger
 from pymor.core.defaults import defaults
+
 
 @defaults('block_size', 'solver', 'max_it', 'tau')
 def pymepack_gelyap_options(block_size = None, solver = None, max_it = None, tau = None):
@@ -74,7 +72,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     for a general description.
 
     This function uses `pymepack.gelyap` (if `E is None`) and `pymepack.gglyap` (if `E is not None`),
-    which are dense solvers. If options specify a solver with iterative refinement, `pymepack.gelyap_refine` 
+    which are dense solvers. If options specify a solver with iterative refinement, `pymepack.gelyap_refine`
     and `pymepack.gglyap_refine` are used in the aforementioned cases respectively. We assume A and E can
     be converted to |NumPy arrays| using :func:`~pymor.algorithms.to_matrix.to_matrix` and that
     `B.to_numpy` is implemented.
@@ -138,16 +136,16 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     for a general description.
 
     In case of the continuous-time Lyapunov equation, this function uses
-    `pymepack.gelyap` (if `E is None`) and `pymepack.gglyap` (if `E is not None`), 
+    `pymepack.gelyap` (if `E is None`) and `pymepack.gglyap` (if `E is not None`),
     which are dense solvers. If options specify a solver with iterative refinement,
     the initial guess is computed with the aforementioned solvers and then refined
     with `pymepack.gelyap_refine` or `pymepack.gglyap_refine` respectively.
 
     In case of the discrete-time Lyapunov equation, this function uses
-    `pymepack.gestein` (if `E is None`) and `pymepack.ggstein` (if `E is not None`), 
+    `pymepack.gestein` (if `E is None`) and `pymepack.ggstein` (if `E is not None`),
     which are dense solvers. If options specify a solver with iterative refinement,
     the initial guess is computed with one of the aforementioned solvers and then
-    refined with `pymepack.gestein_refine` or `pymepack.ggstein_refine` respectively. 
+    refined with `pymepack.gestein_refine` or `pymepack.ggstein_refine` respectively.
 
 
     Parameters
@@ -172,7 +170,7 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     """
     _solve_lyap_dense_check_args(A, E, B, trans)
     options = _parse_options(options, lyap_dense_solver_options(), 'pymepack_gelyap', None, False)
-   
+
     C = -B.dot(B.T) if not trans else -B.T.dot(B)
     Cf = C if C.flags.f_contiguous else C.copy(order='F')
     Af = A.copy(order='F')
@@ -197,7 +195,7 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
                 pymepack.gglyap(Af, Ef, Cf, trans = trans, **opts)
             else:
                 pymepack.ggstein(Af, Ef, Cf, trans = trans, **opts)
-        X = Cf     
+        X = Cf
     elif options['type'] == 'pymepack_gelyap_refine':
         if E is None:
             if cont_time:
