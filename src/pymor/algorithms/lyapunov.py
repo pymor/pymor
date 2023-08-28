@@ -73,13 +73,14 @@ def solve_cont_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, optio
     lie in the open left half-plane. Operator B needs to be given as a |VectorArray| from
     `A.source`, and for large-scale problems, we assume `len(B)` is small.
 
-    If Q and S are given, they contain left and right Schur vectors of (A, E) respectively.
-    In this case, A contains its upper triangular matrix U and E contains its upper triangular matrix V
-    of the generalized Schur decomposition of (A, E), where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
+    Q and S are real |Operators|. If they are given, they contain left and right Schur vectors of (A, E)
+    respectively. In this case, A contains its upper triangular matrix U and E contains its upper
+    triangular matrix V of the generalized Schur decomposition of (A, E), 
+    where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
 
     If Q is given and S is `None`, E is supposed to be `None` as well. In this case, A contains its
     upper triangular matrix U beeing the Schur decomposition of A, Q contains the Schur vectors of A.
-    :math:`A = Q*S*Q**T` .
+    :math:`A = Q U Q^T` .
 
     Parameters `Q`, `S` and `hess` are supported only by pymepack solvers. When another solver is
     selected, `NotImplementedError` will be raised.
@@ -109,9 +110,9 @@ def solve_cont_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, optio
     B
         The operator B as a |VectorArray| from `A.source`.
     Q
-        if E is `None`, Schur vectors of A, otherwise left Schur vectors of (A, E)        
+        The non-parametric |Operator| Q or `None`.
     S
-        if E is not `None`, right Schur vectors of (A, E)
+        The non-parametric |Operator| S or `None`.
     hess
         Whether A or (A, E) is in the (generalized) Hessenberg form.
     trans
@@ -136,7 +137,7 @@ def solve_cont_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, optio
     Z
         Low-rank Cholesky factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
     """
-    _solve_lyap_lrcf_check_args(A, E, B, trans)
+    _solve_lyap_lrcf_check_args(A, E, B, trans, Q, S)
     if options:
         solver = options if isinstance(options, str) else options['type']
         backend = solver.split('_')[0]
@@ -162,6 +163,8 @@ def solve_cont_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, optio
         from pymor.bindings.pymepack import solve_lyap_lrcf as solve_lyap_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
+    if backend == 'pymepack':
+        return solve_lyap_impl(A, E, B, Q=Q, S=S, hess=hess, trans=trans, cont_time=True, options=options)
     return solve_lyap_impl(A, E, B, trans=trans, cont_time=True, options=options)
 
 
@@ -201,13 +204,14 @@ def solve_disc_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, optio
     lie inside the unit circle. Operator B needs to be given as a |VectorArray| from `A.source`, and
     for large-scale problems, we assume `len(B)` is small.
 
-    If Q and S are given, they contain left and right Schur vectors of (A, E) respectively.
-    In this case, A contains its upper triangular matrix U and E contains its upper triangular matrix V
-    of the generalized Schur decomposition of (A, E), where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
+    Q and S are real |Operators|. If they are given, they contain left and right Schur vectors of (A, E)
+    respectively. In this case, A contains its upper triangular matrix U and E contains its upper
+    triangular matrix V of the generalized Schur decomposition of (A, E), 
+    where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
 
     If Q is given and S is `None`, E is supposed to be `None` as well. In this case, A contains its
     upper triangular matrix U beeing the Schur decomposition of A, Q contains the Schur vectors of A.
-    :math:`A = Q*S*Q**T` .
+    :math:`A = Q U Q^T` .
 
     Parameters `Q`, `S` and `hess` are supported only by pymepack solvers. When another solver is
     selected, `NotImplementedError` will be raised.
@@ -228,9 +232,9 @@ def solve_disc_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, optio
     B
         The operator B as a |VectorArray| from `A.source`.
     Q
-        if E is `None`, Schur vectors of A, otherwise left Schur vectors of (A, E)        
+        The non-parametric |Operator| Q or `None`.
     S
-        if E is not `None`, right Schur vectors of (A, E)    
+        The non-parametric |Operator| S or `None`.
     hess
         Whether (A, E) or A is in (generalized) Hessenberg form.
     trans
@@ -251,7 +255,7 @@ def solve_disc_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, optio
     Z
         Low-rank Cholesky factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
     """
-    _solve_lyap_lrcf_check_args(A, E, B, trans)
+    _solve_lyap_lrcf_check_args(A, E, B, trans, Q, S)
     if options:
         solver = options if isinstance(options, str) else options['type']
         backend = solver.split('_')[0]
@@ -270,10 +274,12 @@ def solve_disc_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, optio
         from pymor.bindings.pymepack import solve_lyap_lrcf as solve_lyap_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
+    if backend == 'pymepack':
+        return solve_lyap_impl(A, E, B, Q=Q, S=S, hess=hess, trans=trans, cont_time=False, options=options)
     return solve_lyap_impl(A, E, B, trans=trans, cont_time=False, options=options)
 
 
-def _solve_lyap_lrcf_check_args(A, E, B, trans):
+def _solve_lyap_lrcf_check_args(A, E, B, trans, Q=None, S=None):
     assert isinstance(A, Operator) and A.linear
     assert not A.parametric
     assert A.source == A.range
@@ -283,6 +289,10 @@ def _solve_lyap_lrcf_check_args(A, E, B, trans):
         assert E.source == E.range
         assert E.source == A.source
     assert B in A.source
+    if Q is not None:
+        assert isinstance(Q, Operator) and Q.linear
+    if S is not None:
+        assert isinstance(S, Operator) and S.linear
 
 
 @defaults('default_solver_backend')
@@ -314,18 +324,19 @@ def solve_cont_lyap_dense(A, E, B, Q=None, S=None, hess=False, trans=False, opti
 
     - if hess is `True` and E is `None`, A is in upper Hessenberg form.
 
-    - if hess is `True` and E is an |Operator|, (A, E) is in generalized Hessenberg form.
+    - if hess is `True` and E is a |NumPy array|, (A, E) is in generalized Hessenberg form.
 
     We assume A and E are real |NumPy arrays|, E is invertible, and that no two eigenvalues of
     (A, E) sum to zero (i.e., there exists a unique solution X).
 
-    If Q and S are given, they contain left and right Schur vectors of (A, E) respectively.
-    In this case, A contains its upper triangular matrix U and E contains its upper triangular matrix V
-    of the generalized Schur decomposition of (A, E), where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
+    Q and S are real |NumPy arrays|. If they are given, they contain left and right Schur vectors of (A, E)
+    respectively. In this case, A contains its upper triangular matrix U and E contains its upper
+    triangular matrix V of the generalized Schur decomposition of (A, E),
+    where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
 
     If Q is given and S is `None`, E is supposed to be `None` as well. In this case, A contains its
     upper triangular matrix U beeing the Schur decomposition of A, Q contains the Schur vectors of A.
-    :math:`A = Q*S*Q**T` .
+    :math:`A = Q U Q^T` .
 
     Parameters `Q`, `S` and `hess` are supported only by pymepack solvers. When another solver is
     selected, `NotImplementedError` will be raised.
@@ -347,9 +358,9 @@ def solve_cont_lyap_dense(A, E, B, Q=None, S=None, hess=False, trans=False, opti
     B
         The matrix B as a 2D |NumPy array|.
     Q
-        if E is `None`, Schur vectors of A, otherwise left Schur vectors of (A, E)        
+        The matrix Q as a 2D |NumPy array| or `None`.
     S
-        if E is not `None`, right Schur vectors of (A, E)    
+        The matrix S as a 2D |NumPy array| or `None`.
     hess
         Whether (A, E) or A is in (generalized) Hessenberg form.
     trans
@@ -392,6 +403,8 @@ def solve_cont_lyap_dense(A, E, B, Q=None, S=None, hess=False, trans=False, opti
         from pymor.bindings.pymepack import solve_lyap_dense as solve_lyap_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
+    if backend == 'pymepack':
+        return solve_lyap_impl(A, E, B, Q=Q, S=S, hess=hess, trans=trans, cont_time=True, options=options)
     return solve_lyap_impl(A, E, B, trans=trans, cont_time=True, options=options)
 
 
@@ -429,13 +442,14 @@ def solve_disc_lyap_dense(A, E, B, Q=None, S=None, hess=False, trans=False, opti
     We assume A and E are real |NumPy arrays|, E is invertible, and that all pairwise products of
     two eigenvalues of (A, E) are not equal to one (i.e., there exists a unique solution X).
 
-    If Q and S are given, they contain left and right Schur vectors of (A, E) respectively.
-    In this case, A contains its upper triangular matrix U and E contains its upper triangular matrix V
-    of the generalized Schur decomposition of (A, E), where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
+    Q and S are real |NumPy arrays|. If they are given, they contain left and right Schur vectors of (A, E)
+    respectively. In this case, A contains its upper triangular matrix U and E contains its upper
+    triangular matrix V of the generalized Schur decomposition of (A, E),
+    where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
 
     If Q is given and S is `None`, E is supposed to be `None` as well. In this case, A contains its
     upper triangular matrix U beeing the Schur decomposition of A, Q contains the Schur vectors of A.
-    :math:`A = Q*S*Q**T` .
+    :math:`A = Q S Q^T` .
 
     Parameters `Q`, `S` and `hess` are supported only by pymepack solvers. When another solver is
     selected, `NotImplementedError` will be raised.
@@ -456,9 +470,9 @@ def solve_disc_lyap_dense(A, E, B, Q=None, S=None, hess=False, trans=False, opti
     B
         The matrix B as a 2D |NumPy array|.
     Q
-        if E is `None`, Schur vectors of A, otherwise left Schur vectors of (A, E)        
+        The matrix Q as a 2D |NumPy array| or `None`.
     S
-        if E is not `None`, right Schur vectors of (A, E)    
+        The matrix S as a 2D |NumPy array| or `None`.
     hess
         Whether (A, E) or A is in (generalized) Hessenberg form.
     trans
@@ -499,6 +513,8 @@ def solve_disc_lyap_dense(A, E, B, Q=None, S=None, hess=False, trans=False, opti
         from pymor.bindings.pymepack import solve_lyap_dense as solve_lyap_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
+    if backend == 'pymepack':
+        return solve_lyap_impl(A, E, B, Q=Q, S=S, hess=hess, trans=trans, cont_time=False, options=options)
     return solve_lyap_impl(A, E, B, trans=trans, cont_time=False, options=options)
 
 
