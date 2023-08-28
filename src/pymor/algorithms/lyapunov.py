@@ -67,7 +67,7 @@ def solve_cont_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, optio
     - if hess is `True` and E is `None`, A is in upper Hessenberg form.
 
     - if hess is `True` and E is an |Operator|, (A, E) is in generalized Hessenberg form.
-     
+
 
     We assume A and E are real |Operators|, E is invertible, and all the eigenvalues of (A, E) all
     lie in the open left half-plane. Operator B needs to be given as a |VectorArray| from
@@ -75,7 +75,7 @@ def solve_cont_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, optio
 
     Q and S are real |Operators|. If they are given, they contain left and right Schur vectors of (A, E)
     respectively. In this case, A contains its upper triangular matrix U and E contains its upper
-    triangular matrix V of the generalized Schur decomposition of (A, E), 
+    triangular matrix V of the generalized Schur decomposition of (A, E),
     where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
 
     If Q is given and S is `None`, E is supposed to be `None` as well. In this case, A contains its
@@ -206,7 +206,7 @@ def solve_disc_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, optio
 
     Q and S are real |Operators|. If they are given, they contain left and right Schur vectors of (A, E)
     respectively. In this case, A contains its upper triangular matrix U and E contains its upper
-    triangular matrix V of the generalized Schur decomposition of (A, E), 
+    triangular matrix V of the generalized Schur decomposition of (A, E),
     where :math:`A = Q U S^T` and :math:`E = Q V S^T` .
 
     If Q is given and S is `None`, E is supposed to be `None` as well. In this case, A contains its
