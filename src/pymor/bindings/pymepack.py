@@ -63,7 +63,7 @@ def lyap_lrcf_solver_options():
                                        'opts': pymepack_gelyap_options()},
             }
 
-def solve_lyap_lrcf(A, E, B, Q=None, S=None, hess=False, trans=False, cont_time=True, options=None):
+def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
     See
@@ -127,7 +127,7 @@ def lyap_dense_solver_options():
                                        'opts': pymepack_gelyap_options()},
             }
 
-def solve_lyap_dense(A, E, B, Q=None, S=None, hess=False, trans=False, cont_time=True, options=None):
+def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     """Compute the solution of a Lyapunov equation.
 
     See
@@ -177,12 +177,6 @@ def solve_lyap_dense(A, E, B, Q=None, S=None, hess=False, trans=False, cont_time
     Cf = C if C.flags.f_contiguous else C.copy(order='F')
     Af = A.copy(order='F')
     X = None
-    Qf = None
-    Sf = None
-    if Q is not None:
-        Qf = Q if Q.flags.f_contiguous else Q.copy(order='F')
-    if S is not None:
-        Sf = S if S.flags.f_contiguous else S.copy(order='F')
 
     opts = options['opts']
     refinement_opts = {}
@@ -194,15 +188,15 @@ def solve_lyap_dense(A, E, B, Q=None, S=None, hess=False, trans=False, cont_time
     if options['type'] == 'pymepack_gelyap':
         if E is None:
             if cont_time:
-                pymepack.gelyap(Af, Cf, Q = Qf, trans = trans, hess = hess, **opts)
+                pymepack.gelyap(Af, Cf, trans = trans, **opts)
             else:
-                pymepack.gestein(Af, Cf, Q = Qf, trans = trans, hess = hess, **opts)
+                pymepack.gestein(Af, Cf, trans = trans, **opts)
         else:
             Ef = E.copy(order='F')
             if cont_time:
-                pymepack.gglyap(Af, Ef, Cf, Q = Qf, Z = Sf, trans = trans, hess = hess, **opts)
+                pymepack.gglyap(Af, Ef, Cf, trans = trans, **opts)
             else:
-                pymepack.ggstein(Af, Ef, Cf, Q = Qf, Z = Sf, trans = trans, hess = hess, **opts)
+                pymepack.ggstein(Af, Ef, Cf, trans = trans, **opts)
         X = Cf     
     elif options['type'] == 'pymepack_gelyap_refine':
         if E is None:
