@@ -179,7 +179,7 @@ class PAAAReductor(BasicObject):
         assert len(max_itpl) == len(svs)
 
         # start iteration with constant function
-        bary_func = np.vectorize(lambda *args: np.mean(samples))
+        bary_func = lambda *args: np.mean(samples)
 
         # iteration counter
         j = 0
@@ -187,8 +187,9 @@ class PAAAReductor(BasicObject):
         while any(len(i) < mi for i, mi in zip(self.itpl_part, max_itpl)):
 
             # compute approximation error over entire sampled data set
-            grid = np.meshgrid(*svs, indexing='ij')
-            err_mat = np.abs(bary_func(*grid) - samples)
+            err_mat = np.empty(samples.shape)
+            for idx, vals in zip(np.ndindex(*[len(sv) for sv in svs]), itertools.product(*svs)):
+                err_mat[idx] = np.abs(np.squeeze(bary_func(*vals)) - samples[idx])
 
             # set errors to zero such that new interpolation points are consistent with max_itpl
             zero_idx = []
@@ -243,7 +244,7 @@ class PAAAReductor(BasicObject):
             itpl_samples = samples[np.ix_(*self.itpl_part)]
             itpl_samples = np.reshape(itpl_samples, -1)
             itpl_nodes = [sv[lp] for sv, lp in zip(svs, self.itpl_part)]
-            bary_func = np.vectorize(make_bary_func(itpl_nodes, itpl_samples, coefs))
+            bary_func = make_bary_func(itpl_nodes, itpl_samples, coefs)
 
             if self.post_process and d_nsp >= 1:
                 self.logger.info('Converged due to non-trivial null space of Loewner matrix after post-processing.')
