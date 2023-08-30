@@ -18,7 +18,7 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
           maxiter=30, atol=1e-12, rtol=1e-10, weighted_rtol=1e-12, skew_procrustes_rtol=1e-12):
     r"""Solve the pH DMD problem.
 
-    This method solves the optimization problem::
+    This method solves the optimization problem
 
     .. math::
         \min_{J, R} ||Z - (J - R) T||_F
@@ -26,7 +26,7 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
     such that :math:`J \in \mathbb{R}^{(n + m) \times (n + m)}` is a skew-symmetric matrix and
     :math:`R \in \mathbb{R}^{(n + m) \times (n + m)}` is symmetric and positive semidefinite.
     The data matrices :math:`T \in \mathbb{R}^{(n + m) \times k}` and
-    :math:`Z \in \mathbb{R}^{(n + m) \times k}` are constructed as follows::
+    :math:`Z \in \mathbb{R}^{(n + m) \times k}` are constructed as follows
 
     .. math::
         T = (X^T, U^T)^T, Z = ({H \dot{X}}^T, -Y^T)^T
@@ -35,7 +35,7 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
     `U \in \mathbb{R}^{m \times k}`, and either derivative `Xdot \in \mathbb{R}^{n \times k}`
     or an approximation of the derivative data obtained from `X` itself.
 
-    The formal description of this algorithm can be found in :cite:`MMU22`.
+    The formal description of this algorithm can be found in :cite:`MMU23`.
 
     Parameters
     ----------
@@ -244,13 +244,13 @@ def phdmd(X, Y, U, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
 def _weighted_phdmd(X, Y, rtol=1e-12):
     r"""Solve the weighted pH DMD problem.
 
-    This method solves the optimization problem::
+    This method solves the optimization problem
 
     .. math::
         min_{J, R} ||T^T Z - T^T (J - R) T||_F
 
     such that :math:`J` is a skew-symmetric matrix and :math:`R` is symmetric and positive
-    semidefinite. The data matrices :math:`T` and :math:`Z` are constructed as follows::
+    semidefinite. The data matrices :math:`T` and :math:`Z` are constructed as follows
 
     .. math::
         T = (X, U)^T, Z = (H \dot{X}, -Y)^T
