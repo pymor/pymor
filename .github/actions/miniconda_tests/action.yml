@@ -30,7 +30,7 @@ runs:
       shell: bash
       if: runner.os == 'Linux'
       run: |
-        sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
+        sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 libegl-dev
     - name: Install
       shell: bash
       if: runner.os == 'Windows'
@@ -70,11 +70,11 @@ runs:
       run: |
         if [[ ${{ runner.os }} == Linux ]]; then
           echo "PYTEST_PREFIX=xvfb-run -a" >> $GITHUB_ENV
-          echo "QT_API=pyside2" >> $GITHUB_ENV
+          echo "QT_API=pyside6" >> $GITHUB_ENV
         fi
         # windows currently segfaults in first QT+MPL plot otherwise
         if [[ ${{ runner.os }} == Windows ]]; then
-          echo "QT_API=pyside2" >> $GITHUB_ENV
+          echo "QT_API=pyside6" >> $GITHUB_ENV
         fi
         echo "QT_DEBUG_PLUGINS=1" >> $GITHUB_ENV
     - name: Sanity check

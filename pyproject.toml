@@ -30,7 +30,7 @@ dependencies = [
     "packaging",
     "pillow",
     "pygments",
-    "qtpy>2.0",
+    "qtpy>=2.3.1",
     "scipy>=1.5.4",
     "typer",
 ]
@@ -107,7 +107,7 @@ mpi = [
 
 # GUI support for builtin discretizations
 gui = [
-    "PySide2>=5.15.2.1",
+    "pyside6>=6.4.3",
     "pyopengl!=3.1.7",
 ]
 
