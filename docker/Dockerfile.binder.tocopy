@@ -11,7 +11,7 @@ RUN pip install git+https://github.com/pymor/pymor@PYMOR_COMMIT
 ENV USER=${NB_USER} \
     HOME=/pymor
 
-COPY SLUG/* /pymor/
+RUN cd /pymor && wget NOTEBOOK_URLS
 RUN chown -R ${NB_USER} /pymor
 USER ${NB_USER}
 

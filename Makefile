@@ -51,6 +51,49 @@ CI_EXTRAS= \
 	--extra ngsolve \
 	--extra scikit-fem
 
+CI_FENICS_EXTRAS= \
+	--extra docs_additional \
+	--extra tests \
+	--extra ci \
+	--extra ann \
+	--extra ipyparallel \
+	--extra mpi
+
+BINDER_EXTRAS= \
+	--extra ann \
+	--extra slycot \
+	--extra ipyparallel \
+	--extra jupyter \
+	--extra vtk \
+	--extra gmsh \
+	--extra scikit-fem
+
+CONDA_EXTRAS = \
+	--extras tests \
+	--extras ci \
+	--extras slycot \
+	--extras ipyparallel \
+	--extras mpi \
+	--extras gui \
+	--extras jupyter \
+	--extras vtk
+	# pymess, dune, ngsolve, scikit-fem (no recent version) not available as conda-forge packages
+	# pytorch not available for win64
+	# docs-additional not needed
+	# gmsh is incompatible with pyside6>=6.4.3 needed for windows ci not to hang
+
+
+binder_requirements:
+	# we run pip-compile in a container to ensure that the right Python version is used
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src python:3.11-bullseye /bin/bash -c "\
+		cd /src && \
+		pip install pip-tools==6.13.0 && \
+		pip-compile --resolver backtracking \
+			$(BINDER_EXTRAS) \
+			--extra-index-url https://download.pytorch.org/whl/cpu \
+			-o requirements-binder.txt \
+		"
+
 ci_current_requirements:
 	# we run pip-compile in a container to ensure that the right Python version is used
 	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src python:3.11-bullseye /bin/bash -c "\
@@ -80,35 +123,19 @@ ci_fenics_requirements:
 		cd /src && \
 		pip install pip-tools==6.13.0 && \
 		pip-compile --resolver backtracking \
-			--extra docs_additional \
-			--extra tests \
-			--extra ci \
-			--extra ann \
-			--extra ipyparallel \
-			--extra mpi \
+			$(CI_FENICS_EXTRAS) \
 			--extra-index-url https://download.pytorch.org/whl/cpu \
 			-o requirements-ci-fenics.txt \
 		"
-
-CONDA_EXTRAS = \
-	--extras tests \
-	--extras ci \
-	--extras slycot \
-	--extras ipyparallel \
-	--extras mpi \
-	--extras gui \
-	--extras jupyter \
-	--extras vtk
-	# pymess, dune, ngsolve, scikit-fem (no recent version) not available as conda-forge packages
-	# pytorch not available for win64
-	# docs-additional not needed
-	# gmsh is incompatible with pyside6>=6.4.3 needed for windows ci not to hang
 
 ci_conda_requirements:
 	conda-lock --micromamba -c conda-forge --filter-extras --no-dev-dependencies $(CONDA_EXTRAS) -f conda-base.yml -f pyproject.toml
 	conda-lock render $(CONDA_EXTRAS)
 
 ci_requirements: ci_current_requirements ci_oldest_requirements ci_fenics_requirements ci_conda_requirements
+
+requirements: ci_requirements binder_requirements
+
 
 ci_current_image:
 	$(DOCKER) build -t pymor/ci-current:$(CI_CURRENT_IMAGE_TAG) -f $(THIS_DIR)/docker/Dockerfile.ci-current $(THIS_DIR)
