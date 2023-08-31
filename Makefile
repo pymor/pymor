@@ -41,7 +41,6 @@ CI_EXTRAS= \
 	--extra tests \
 	--extra ann \
 	--extra slycot \
-	--extra pymess \
 	--extra ipyparallel \
 	--extra mpi \
 	--extra gui \
@@ -69,7 +68,7 @@ ci_oldest_requirements:
 		cd /src && \
 		pip install pip-tools==6.13.0 && \
 		pip-compile --resolver backtracking \
-			$(CI_EXTRAS) \
+			$(CI_EXTRAS) --extra pymess \
 			--extra-index-url https://download.pytorch.org/whl/cpu \
 			-o requirements-ci-oldest.txt \
 			pyproject.toml requirements-ci-oldest-pins.in \
