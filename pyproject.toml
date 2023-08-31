@@ -61,6 +61,7 @@ docs-additional = [
 tests = [
     "hypothesis[numpy,pytest]==6.56.3",  # pin hypothesis version to ensure deterministic tests
     "pytest-notebook",
+    "notebook",
     "pytest-cov",
     "pytest-datadir",
     "pytest>=7.2.1",  # 7.2.0 causes format_source tests to fail do to wrong paths in co_filename

@@ -16,12 +16,16 @@ arrow==1.2.3
     # via isoduration
 asttokens==2.2.1
     # via stack-data
+async-lru==2.0.4
+    # via jupyterlab
 attrs==22.2.0
     # via
     #   hypothesis
     #   jsonschema
     #   pytest-notebook
     #   referencing
+babel==2.12.1
+    # via jupyterlab-server
 backcall==0.2.0
     # via ipython
 beautifulsoup4==4.12.2
@@ -82,7 +86,9 @@ idna==3.4
 iniconfig==2.0.0
     # via pytest
 ipykernel==6.25.1
-    # via ipyparallel
+    # via
+    #   ipyparallel
+    #   jupyterlab
 ipyparallel==8.6.1
     # via pymor (pyproject.toml)
 ipython==8.14.0
@@ -96,14 +102,19 @@ jedi==0.19.0
 jinja2==3.1.2
     # via
     #   jupyter-server
+    #   jupyterlab
+    #   jupyterlab-server
     #   nbconvert
     #   nbdime
     #   torch
+json5==0.9.14
+    # via jupyterlab-server
 jsonpointer==2.4
     # via jsonschema
 jsonschema[format-nongpl]==4.19.0
     # via
     #   jupyter-events
+    #   jupyterlab-server
     #   nbformat
     #   pytest-notebook
 jsonschema-specifications==2023.7.1
@@ -119,20 +130,34 @@ jupyter-core==5.3.1
     #   ipykernel
     #   jupyter-client
     #   jupyter-server
+    #   jupyterlab
     #   nbconvert
     #   nbformat
 jupyter-events==0.7.0
     # via jupyter-server
+jupyter-lsp==2.2.0
+    # via jupyterlab
 jupyter-server==2.7.3
     # via
+    #   jupyter-lsp
     #   jupyter-server-mathjax
+    #   jupyterlab
+    #   jupyterlab-server
     #   nbdime
+    #   notebook
+    #   notebook-shim
 jupyter-server-mathjax==0.2.6
     # via nbdime
 jupyter-server-terminals==0.4.4
     # via jupyter-server
+jupyterlab==4.0.5
+    # via notebook
 jupyterlab-pygments==0.2.2
     # via nbconvert
+jupyterlab-server==2.24.0
+    # via
+    #   jupyterlab
+    #   notebook
 kiwisolver==1.4.5
     # via matplotlib
 markupsafe==2.1.3
@@ -172,6 +197,12 @@ nest-asyncio==1.5.7
     #   nbclient
 networkx==3.1
     # via torch
+notebook==7.0.3
+    # via pymor (pyproject.toml)
+notebook-shim==0.2.3
+    # via
+    #   jupyterlab
+    #   notebook
 numpy==1.25.2
     # via
     #   contourpy
@@ -185,6 +216,8 @@ packaging==23.1
     # via
     #   ipykernel
     #   jupyter-server
+    #   jupyterlab
+    #   jupyterlab-server
     #   matplotlib
     #   nbconvert
     #   pymor (pyproject.toml)
@@ -267,7 +300,9 @@ referencing==0.30.2
     #   jsonschema-specifications
     #   jupyter-events
 requests==2.31.0
-    # via nbdime
+    # via
+    #   jupyterlab-server
+    #   nbdime
 rfc3339-validator==0.1.4
     # via
     #   jsonschema
@@ -316,7 +351,9 @@ tornado==6.3.3
     #   ipyparallel
     #   jupyter-client
     #   jupyter-server
+    #   jupyterlab
     #   nbdime
+    #   notebook
     #   terminado
 tqdm==4.66.1
     # via ipyparallel
@@ -330,6 +367,7 @@ traitlets==5.9.0
     #   jupyter-core
     #   jupyter-events
     #   jupyter-server
+    #   jupyterlab
     #   matplotlib-inline
     #   nbclient
     #   nbconvert
