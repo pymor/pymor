@@ -71,15 +71,18 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     data
         Dict containing the following fields:
 
-        :errors:                Sequence of maximum approximation errors during
-                                greedy search.
-        :triangularity_errors:  Sequence of maximum absolute values of interpolation
-                                matrix coefficients in the upper triangle (should
-                                be near zero).
-        :coefficients:          |NumPy array| of coefficients such that `collateral_basis`
-                                is given by `U.lincomb(coefficients)`.
-        :interpolation_matrix:  The interpolation matrix, i.e., the evaluation of
-                                `collateral_basis` at `interpolation_dofs`.
+        :errors:
+            Sequence of maximum approximation errors during greedy search.
+        :triangularity_errors:
+            Sequence of maximum absolute values of interpolation
+            matrix coefficients in the upper triangle (should
+            be near zero).
+        :coefficients:
+            |NumPy array| of coefficients such that `collateral_basis`
+            is given by `U.lincomb(coefficients)`.
+        :interpolation_matrix:
+            The interpolation matrix, i.e., the evaluation of
+            `collateral_basis` at `interpolation_dofs`.
     """
     assert not isinstance(error_norm, str) or error_norm == 'sup'
     if pool:  # dispatch to parallel implementation
@@ -212,7 +215,8 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
     data
         Dict containing the following fields:
 
-        :svals: POD singular values.
+        :svals:
+            POD singular values.
     """
     assert isinstance(U, VectorArray)
 
@@ -312,8 +316,10 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
     data
         Dict containing the following fields:
 
-        :dofs:     |NumPy array| of the DOFs at which the |Operators| have to be evaluated.
-        :basis:    |VectorArray| containing the generated collateral basis.
+        :dofs:
+            |NumPy array| of the DOFs at which the |Operators| have to be evaluated.
+        :basis:
+            |VectorArray| containing the generated collateral basis.
 
         In addition, `data` contains the fields of the `data` `dict` returned by
         :func:`ei_greedy`/:func:`deim`.
