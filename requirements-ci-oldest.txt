@@ -221,6 +221,7 @@ jupyter-server==2.7.3
     #   jupyter-lsp
     #   jupyter-server-mathjax
     #   jupyterlab
+    #   jupyterlab-myst
     #   jupyterlab-server
     #   nbdime
     #   notebook
@@ -233,6 +234,8 @@ jupyterlab==4.0.5
     # via
     #   notebook
     #   pymor (pyproject.toml)
+jupyterlab-myst==2.0.2
+    # via pymor (pyproject.toml)
 jupyterlab-pygments==0.2.2
     # via nbconvert
 jupyterlab-server==2.24.0

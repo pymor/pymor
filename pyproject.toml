@@ -116,6 +116,7 @@ jupyter = [
     "ipympl",
     "ipywidgets>7",
     "jupyterlab",
+    "jupyterlab-myst",
     "k3d>=2.15.2",
     "notebook",
 ]
