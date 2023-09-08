@@ -90,11 +90,8 @@ def _launch_qt_app(main_window_factory, block):
     main_window = main_window_factory()
     main_window.show()
 
-    if getattr(sys, '_called_from_test', False):
-        QTimer.singleShot(1000, main_window.closeEvent)
-
     if block:
-        app.exec_()
+        app.exec()
     else:
         global _qt_app
         _qt_app = app                 # deleting the app ref somehow closes the window

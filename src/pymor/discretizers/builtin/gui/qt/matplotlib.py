@@ -13,7 +13,7 @@ from pymor.core.config import config
 config.require('MATPLOTLIB')
 config.require('QT')
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from qtpy.QtWidgets import QSizePolicy
 
