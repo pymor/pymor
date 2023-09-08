@@ -11,6 +11,12 @@
 
 ## Contributors
 
+### pyMOR 2023.2
+
+* Art Pelling, a.pelling@tu-berlin.de
+  * refactoring of randomized linear algebra module
+  * RandomizedRangeFinder class
+
 ### pyMOR 2023.1
 
 * Tim Keil, tim.keil@uni-muenster.de
@@ -31,10 +37,6 @@
   * quadratic functionals and quadratic output keyword for CG discretization
   * simple algebraic operations for parameter values
   * adaptive trust region algorithm and specific BFGS implementation for PDE-constrained optimization
-
-* Art Pelling, a.pelling@tu-berlin.de
-  * refactoring of randomized linear algebra module
-  * RandomizedRangeFinder class
 
 ### pyMOR 2022.2
 
