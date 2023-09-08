@@ -9,6 +9,7 @@ tutorial_bt
 tutorial_unstable_lti_systems
 tutorial_mor_with_anns
 tutorial_optimization
-tutorial_external_solver
 tutorial_interact
+tutorial_vectorarray
+tutorial_external_solver
 ```
