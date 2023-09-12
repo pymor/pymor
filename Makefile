@@ -19,18 +19,24 @@ ifeq ($(PANDOC_MAJOR),1)
 	PANDOC_FORMAT=-f markdown_github
 endif
 
-.PHONY: README.html README test docs
+.PHONY: README.html README test docs help
+
+default: help
+
+# The following self-documenting help target is inspired by https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html.
+help: ## print this help prompt
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-30s %s\n", $$1, $$2}'
 
 # I want HTML (to preview the formatting :))
 README.html: README.md
 	pandoc $(PANDOC_FORMAT) -t html $< > $@
 
-README: README.html
+README: README.html ## generate the README for the docs
 
-test:
+test: ## run tests
 	xvfb-run pytest
 
-docs:
+docs: ## build the docs
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
 	./docs/fix_myst_in_notebooks.sh
 
@@ -109,7 +115,7 @@ ci_conda_requirements:
 	conda-lock --micromamba -c conda-forge --filter-extras --no-dev-dependencies $(CONDA_EXTRAS) -f conda-base.yml -f pyproject.toml
 	conda-lock render $(CONDA_EXTRAS)
 
-ci_requirements: ci_current_requirements ci_oldest_requirements ci_fenics_requirements ci_conda_requirements
+ci_requirements: ci_current_requirements ci_oldest_requirements ci_fenics_requirements ci_conda_requirements ## run the Docker CI images
 
 ci_current_image:
 	$(DOCKER) build -t pymor/ci-current:$(CI_CURRENT_IMAGE_TAG) -f $(THIS_DIR)/docker/Dockerfile.ci-current $(THIS_DIR)
@@ -120,7 +126,7 @@ ci_oldest_image:
 ci_fenics_image:
 	$(DOCKER) build -t pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG) -f $(THIS_DIR)/docker/Dockerfile.ci-fenics $(THIS_DIR)
 
-ci_images: ci_current_image ci_oldest_image ci_fenics_image
+ci_images: ci_current_image ci_oldest_image ci_fenics_image ## build the Docker CI images
 
 
 ci_current_image_pull:
@@ -132,7 +138,7 @@ ci_oldest_image_pull:
 ci_fenics_image_pull:
 	$(DOCKER) pull zivgitlab.wwu.io/pymor/pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG)
 
-ci_images_pull: ci_current_image_pull ci_oldest_image_pull ci_fenics_image_pull
+ci_images_pull: ci_current_image_pull ci_oldest_image_pull ci_fenics_image_pull ## pull the Docker CI images
 
 
 ci_current_image_push:
@@ -155,7 +161,7 @@ ci_preflight_image_push:
 	$(DOCKER) push pymor/ci-preflight \
 		zivgitlab.wwu.io/pymor/pymor/ci-preflight
 
-ci_images_push: ci_current_image_push ci_oldest_image_push ci_fenics_image_push
+ci_images_push: ci_current_image_push ci_oldest_image_push ci_fenics_image_push ## push the Docker CI images
 
 
 ci_current_image_run:
