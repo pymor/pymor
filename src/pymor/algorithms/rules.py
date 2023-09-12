@@ -394,6 +394,11 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
 
 
 def print_children(obj):
+    """Print tree of children of given object.
+
+    This method first tries to construct the tree with the :mod:`asciitree` package.
+    If this optional dependency is not installed, it defaults to :mod:`pprint`.
+    """
     def build_tree(obj):
 
         def process_child(child):
