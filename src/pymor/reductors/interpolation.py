@@ -68,10 +68,7 @@ class GenericBHIReductor(BasicObject):
         self._product = None
 
     def _B_apply(self, s, V):
-        mu = Mu({
-            's': [s],
-            **self.mu
-        })
+        mu = Mu({'s': [s], **self.mu})
         return self.fom.transfer_function.B.apply(V, mu=mu)
 
     def _C_apply_adjoint(self, s, V):

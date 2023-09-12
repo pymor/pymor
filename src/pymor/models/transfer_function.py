@@ -556,10 +556,7 @@ class FactorizedTransferFunction(TransferFunction):
     def __init__(self, dim_input, dim_output, K, B, C, D, dK=None, dB=None, dC=None, dD=None,
                  parameters={}, sampling_time=0, name=None):
         def tf(s, mu=None):
-            mu = Mu({
-                's': [s],
-                **{ key: np.zeros(dim) for key, dim in parameters.items() }
-            })
+            mu = Mu({'s': [s]}) if mu is None else  Mu({'s': [s], **mu})
             if dim_input <= dim_output:
                 B_vec = B.as_range_array(mu=mu)
                 Kinv_B = K.apply_inverse(B_vec, mu=mu)
