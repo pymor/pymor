@@ -150,12 +150,19 @@ scikit-fem = [
 ]
 
 
+## ASCII trees for rule printing
+
+asciitree = [
+    "asciitree",
+]
+
+
 ## Meta dependencies
 
 # install all optional dependencies, except those requiring a compiler toolchain to build
 # pymess is excluded here as installation from source is recommended by the developers
 full = [
-    "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,dune,ngsolve,scikit-fem]",
+    "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,dune,ngsolve,scikit-fem,asciitree]",
 ]
 
 # install all optional dependencies, including those requiring a compiler toolchain to build
