@@ -42,9 +42,9 @@ appearing in the FOM shall be applied to the vector.
 Instead of constantly converting between NumPy arrays and the solver's data structures
 -- which might even be impossible in some cases -- pyMOR uses {{ VectorArrays }} to access
 these vectors through a unified interface.
-So as soon as get in touch with a model's state-space data, e.g., by calling its
+So as soon as you get in touch with a model's state-space data, e.g., by calling its
 {meth}`~pymor.models.interface.Model.solve` method, you will work with {{ VectorArrays }}.
-Note that this also the case for ROM. pyMOR does not distinguish between FOMs and ROMs,
+Note that this also the case for ROMs. pyMOR does not distinguish between FOMs and ROMs,
 so even though no external solver is involved, the ROM state is still represented by
 {{ VectorArrays }}.
 
@@ -56,7 +56,7 @@ You will find {{ VectorSpaces }} as the {attr}`~pymor.operators.interface.Operat
 and {attr}`~pymor.operators.interface.Operator.range` space of {{ Operators }} or as the
 {attr}`~pymor.models.interface.Model.solution_space` of {{ Models }}.
 In the following, we will work with {{ NumpyVectorArrays }} that internally store the
-vectors as a two-dimensional NumPy arrays.
+vectors as two-dimensional NumPy arrays.
 The corresponding {{ VectorSpace }} is called {{ NumpyVectorSpace }}.
 To make a {{ NumpyVectorSpace }}, we need to specify the dimension of the contained vectors:
 
@@ -106,7 +106,7 @@ U.empty()
 ```
 
 You might wonder how to create {{ VectorArrays }} with more interesting data.
-When implementing {{ Operators }} or, for instance the
+When implementing {{ Operators }} or, for instance, the
 {meth}`~pymor.models.interface.Model.solve` method, you will get in touch with data
 from the actual solver backend you are using, that needs to be wrapped into a
 corresponding {{ VectorArray }}.
@@ -121,7 +121,7 @@ space.make_array(np.arange(0, 14).reshape((2, 7)))
 
 ## Converting NumPy arrays to VectorArrays
 
-Some, but not all, {{ VectorArrays }} can be initialized from NumPy arrays.
+Some but not all {{ VectorArrays }} can be initialized from NumPy arrays.
 For these arrays, the corresponding {{ VectorSpace }} implements the
 {meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy` method:
 
