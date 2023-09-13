@@ -23,8 +23,7 @@ def _chol_qr(V, product=None, gramian=None, check_finite=True):
             logger.info(f'Applying shift: {s}')
             np.fill_diagonal(X, np.diag(X)+s)
 
-    Q = spla.solve_triangular(R, V.to_numpy(), trans='T', overwrite_b=True, check_finite=check_finite)
-    return V.space.from_numpy(Q), R
+    return V.lincomb(spla.lapack.dtrtri(R)[0].T), R
 
 
 def cholesky_qr(V, product=None, maxiter=3, tol=None, check_finite=True, return_R=True, copy=True):
