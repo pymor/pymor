@@ -33,17 +33,16 @@ In the [first section](#port-hamiltonian-lti-systems), we introduce the class of
 port-Hamiltonian systems and their relationship to two other system-theoretic properties called
 *passivity* and *positive realness*. After introducing a toy example in
 the [second section](#a-toy-problem-mass-spring-damper-chain), we
-have a look into structure-preserving model reduction for port-Hamiltonian systems
+look into structure-preserving model reduction schemes for port-Hamiltonian systems
 in the [third section](#structure-preserving-model-order-reduction).
 
 ## Port-Hamiltonian LTI systems
 
-In this section, we give a formal definition of port-Hamiltonian systems.
 Port-Hamiltonian systems have several favorable properties for modeling, control and
-simulation, for example composability and stability. Furthermore, they adhere to a
-certain power balance equation. Port-Hamiltonian systems are especially suited for
+simulation, for example, composability and stability. Furthermore, they adhere to a
+power balance equation. Port-Hamiltonian systems are especially suited for
 network-based modeling and problems involving multi-physics phenomena. We refer to {cite}`MU23`
-for a general introduction to port-Hamiltonian systems and their applications.
+for a general introduction to port-Hamiltonian descriptor systems and their applications.
 
 We say a LTI system is *port-Hamiltonian* if it can be expressed as
 
@@ -52,16 +51,20 @@ E \dot{x}(t) & = (J - R) Q x(t) + (G-P) u(t), \\
 y(t) & = (G+P)^T Q x(t) + (S-N) u(t),
 ```
 
-where {math}`H := Q^T E`, and if
+with {math}`H := Q^T E`, and if the structure matrix
 
 ```{math}
-\Gamma =
+\Gamma :=
 \begin{bmatrix}
     J & G \\
     -G^T & N
-\end{bmatrix},
-\text{ and }
-W =
+\end{bmatrix}
+```
+
+and the dissipation matrix
+
+```{math}
+\mathcal{W} :=
 \begin{bmatrix}
     R & P \\
     P^T & S
@@ -71,7 +74,7 @@ W =
 satisfy
 {math}`H = H^T \succ 0`,
 {math}`\Gamma^T = -\Gamma`, and
-{math}`W = W^T \succcurlyeq 0`.
+{math}`\mathcal{W} = \mathcal{W}^T \succcurlyeq 0`.
 
 The quadratic (energy) function {math}`\mathcal{H}(x) := \tfrac{1}{2} x^T H x`,
 typically called Hamiltonian, corresponds to the energy stored in the system. In
@@ -85,16 +88,16 @@ It is known that if the LTI system is minimal and stable, the following are equi
 
 See for example {cite}`BU22` for more details.
 
-In pyMOR, there exists a {{ PHLTIModel }} class. As of now, pyMOR only supports
+In pyMOR, there exists a {{ PHLTIModel }} class. Currently, pyMOR only supports
 port-Hamiltonian systems with nonsingular E. {{ PHLTIModel }} inherits from
-{{ LTIModel }}, so {{ PHLTIModel }} can be used with all reductors which expect
-a {{ LTIModel }}. For model reduction, it is often desirable to preserve the
-port-Hamiltonian structure, i.e., to compute a ROM which is also port-Hamiltonian.
+{{ LTIModel }}, so {{ PHLTIModel }} can be used with all reductors that expect
+an {{ LTIModel }}. For model reduction, it is often desirable to preserve the
+port-Hamiltonian structure, i.e., to compute a ROM that is also port-Hamiltonian.
 
-A passive {{ LTIModel }} can be converted into a {{ PHLTIModel }} using
-the {meth}`~pymor.models.iosys.PHLTIModel.from_passive_LTIModel` method if desired.
+If desired, a passive {{ LTIModel }} can be converted into a {{ PHLTIModel }} using
+the {meth}`~pymor.models.iosys.PHLTIModel.from_passive_LTIModel` method.
 Consequentely, one option to preserve port-Hamiltonian structure is to use a reductor
-which preserves passivity (but returns a ROM of type {{ LTIModel }}), and convert the
+that preserves passivity (but returns a ROM of type {{ LTIModel }}) and convert the
 ROM into a {{ PHLTIModel }} in a post-processing step.
 
 ## A toy problem: Mass-spring-damper chain
@@ -120,21 +123,23 @@ The toy problem is included in pyMOR in the {mod}`pymor.models.examples` module 
 pyMOR provides three reductors which can be used for model order reduction
 while preserving the port-Hamiltonian structure:
 
-- pH-IRKA ({class}`~pymor.reductors.ph.ph_irka.PHIRKAReductor`),
-- PRBT ({class}`~pymor.reductors.bt.PRBTReductor`),
+- pH-IRKA ({class}`~pymor.reductors.ph.ph_irka.PHIRKAReductor`) {cite}`GPBV12`,
+- PRBT ({class}`~pymor.reductors.bt.PRBTReductor`) {cite}`DP84,GA04,HJS94`,
 - passivity preserving model reduction via spectral factorization
-  ({class}`~pymor.reductors.spectral_factor.SpectralFactorReductor`).
+  ({class}`~pymor.reductors.spectral_factor.SpectralFactorReductor`) {cite}`BU22`.
 
 In this section, we apply all three reductors on our toy example and compare
 their performance. All three reductors are described in {cite}`BU22` in more detail.
 
 Note: Currently, the {class}`~pymor.reductors.bt.PRBTReductor` and
 {class}`~pymor.reductors.spectral_factor.SpectralFactorReductor` reductors require
-{math}`D` to be nonsingular. The MSD example has a zero {math}`D` matrix. Therefore,
-we have to add a small regularization feedthrough term. This is a limitation of the
-current implementation, since in the background the KYP-LMI is converted
-into a Riccati equation, which is only possible for nonsingular {math}`D`.
-For {func}`~pymor.models.iosys.PHLTIModel.from_passive_LTIModel`, {math}`D` must be
+the symmetric part of {math}`D` (i.e., the $S$ matrix in the port-Hamiltonian system)
+to be nonsingular. The MSD example has a zero {math}`D` matrix. Therefore,
+we have to add a small regularization feedthrough term, i.e., we replace $D$ with
+$D+\varepsilon I_m$. This is a limitation of the current implementation since the
+numerical solution of the KYP-LMI is obtained by solving a related Riccati
+equation, which is only possible if $D + D^\top$ is nonsingular.
+For {func}`~pymor.models.iosys.PHLTIModel.from_passive_LTIModel`, $D + D^\top$ must be
 nonsingular for the same reasons.
 
 ```{code-cell}
@@ -163,8 +168,10 @@ the associated Hamiltonian pencil has eigenvalues close to the imaginary axis.
 
 The pH-IRKA reductor {class}`~pymor.reductors.ph.ph_irka.PHIRKAReductor` directly returns
 a ROM of type {{ PHLTIModel }}. pH-IRKA works similar to the standard IRKA reductor
-{class}`~pymor.reductors.h2.IRKAReductor`, but with fewer degrees of freedom to preserve
-the port-Hamiltonian structure.
+{class}`~pymor.reductors.h2.IRKAReductor` but with fewer degrees of freedom to preserve
+the port-Hamiltonian structure. In more detail, the IRKA fixed-point iteration is performed,
+but the left projection matrix is chosen as $W = QV$, which then automatically yields a
+reduced pH system with $\hat{Q} = I_r$.
 
 ```{code-cell}
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
@@ -176,11 +183,11 @@ print(f'rom1 is of type {type(rom1)}.')
 
 ### Positive-real balanced truncation (PRBT)
 
-Positive-real balanced truncation (PRBT) works similar to the general balanced truncation
+Positive-real balanced truncation (PRBT) works analogously to the standard balanced truncation
 method described in {doc}`tutorial_bt`, but uses positive real controllability
-and observability Gramians instead. PRBT preserves passivity, but returns a ROM
+and observability Gramians instead. PRBT preserves passivity but returns a ROM
 of type {{ LTIModel }}. Thus, we convert the ROM into a {{ PHLTIModel }} in a
-post-processing step. PRBT can be used with any passive {{ LTIModel}} FOM.
+post-processing step. Note that PRBT can be used with any passive {{ LTIModel}} FOM.
 
 ```{code-cell}
 from pymor.reductors.bt import PRBTReductor
@@ -196,13 +203,14 @@ print(f'rom2 is of type {type(rom2)}.')
 
 The {class}`~pymor.reductors.spectral_factor.SpectralFactorReductor` method
 is a wrapper reductor for another generic reductor. The method extracts a
-spectral factor from the FOM, which subsequentely is reduced by a reductor
-specified by the user. A spectral factor is a standard {{ LTIModel }}. Here, we opt
-for {class}`~pymor.reductors.h2.IRKAReductor` as the inner reductor. If the inner
-reductor returns a stable ROM, passivity is preserved.
-The spectral factor method and PRBT are related, since the computation of
+spectral factor from the FOM (this is only possible if the system is passive),
+which subsequentely is reduced by a reductor specified by the user.
+A spectral factor is a standard {{ LTIModel }}, and hence any LTI reduction can be used.
+For our example, we use the {class}`~pymor.reductors.h2.IRKAReductor` as the inner reductor.
+If the inner reductor returns a stable ROM, passivity is preserved.
+The spectral factor method and PRBT are related since the computation of
 the optimal spectral factor for model reduction depends on the computation of
-the positive real observability Gramian. The spectral factor method can be used with
+the positive-real observability Gramian. The spectral factor method can be used with
 any passive {{ LTIModel}} FOM. Again, we convert the ROM of type {{ LTIModel}} into a
 {{ PHLTIModel }} in a post-processing step.
 

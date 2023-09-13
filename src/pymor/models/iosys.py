@@ -1535,7 +1535,7 @@ class PHLTIModel(LTIModel):
             -G(\mu)^T & N(\mu)
         \end{bmatrix},
         \text{ and }
-        W(\mu) =
+        \mathcal{W}(\mu) =
         \begin{bmatrix}
             R(\mu) & P(\mu) \\
             P(\mu)^T & S(\mu)
@@ -1544,7 +1544,7 @@ class PHLTIModel(LTIModel):
     satisfy
     :math:`H(\mu) = H(\mu)^T \succ 0`,
     :math:`\Gamma(\mu)^T = -\Gamma(\mu)`, and
-    :math:`W(\mu) = W(\mu)^T \succcurlyeq 0`.
+    :math:`\mathcal{W}(\mu) = \mathcal{W}(\mu)^T \succcurlyeq 0`.
 
     A dynamical system of this form, together with a given quadratic (energy) function
     :math:`\mathcal{H}(x, \mu) = \tfrac{1}{2} x^T H(\mu) x`, typically called Hamiltonian,
