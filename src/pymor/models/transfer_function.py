@@ -37,6 +37,9 @@ class TransferFunction(CacheableObject, ParametricObject):
     sampling_time
         `0` if the system is continuous-time, otherwise a positive number that denotes the
         sampling time (in seconds).
+    presets
+        A `dict` of preset attributes or `None`. The dict must only contain keys that correspond to
+        attributes of |TransferFunction| such as `h2_norm`.
     name
         Name of the system.
 
@@ -54,11 +57,18 @@ class TransferFunction(CacheableObject, ParametricObject):
 
     cache_region = 'memory'
 
-    def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, sampling_time=0, name=None):
+    def __init__(self, dim_input, dim_output, tf, dtf=None, parameters={}, sampling_time=0, presets=None, name=None):
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
 
         self.parameters_own = parameters
+
+        assert presets is None or presets.keys() <= {'h2_norm'}
+        if presets:
+            assert parameters == {}
+        else:
+            presets = {}
+
         self.__auto_init(locals())
 
     def __str__(self):
@@ -402,27 +412,32 @@ class TransferFunction(CacheableObject, ParametricObject):
         norm
             Computed H2-norm.
         norm_relerr
-            Relative error estimate (returned if `return_norm_only` is `False`).
+            Relative error estimate (returned if `return_norm_only` is `False` and `presets` does
+            not contain `'h2_norm'`).
         info
-            Quadrature info (returned if `return_norm_only` is `False` and `full_output` is `True`).
+            Quadrature info (returned if `return_norm_only` is `False` and `full_output` is `True`
+            and `presets` does not contain `'h2_norm'`).
             See `scipy.integrate.quad` documentation for more details.
         """
         if self.sampling_time > 0:
             raise NotImplementedError
 
-        import scipy.integrate as spint
-        quad_kwargs.setdefault('epsabs', 0)
-        quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j, mu=mu))**2,
-                              0, np.inf,
-                              **quad_kwargs)
-        norm = np.sqrt(quad_out[0] / np.pi)
-        if return_norm_only:
-            return norm
-        norm_relerr = quad_out[1] / (2 * quad_out[0])
-        if len(quad_out) == 2:
-            return norm, norm_relerr
+        if 'h2_norm' in self.presets:
+            return self.presets['h2_norm']
         else:
-            return norm, norm_relerr, quad_out[2:]
+            import scipy.integrate as spint
+            quad_kwargs.setdefault('epsabs', 0)
+            quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j, mu=mu))**2,
+                                0, np.inf,
+                                **quad_kwargs)
+            norm = np.sqrt(quad_out[0] / np.pi)
+            if return_norm_only:
+                return norm
+            norm_relerr = quad_out[1] / (2 * quad_out[0])
+            if len(quad_out) == 2:
+                return norm, norm_relerr
+            else:
+                return norm, norm_relerr, quad_out[2:]
 
     def h2_inner(self, lti, mu=None):
         """Compute H2 inner product with an |LTIModel|.
