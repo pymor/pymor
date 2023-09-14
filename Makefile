@@ -32,6 +32,7 @@ test:
 
 docs:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
+	./docs/fix_myst_in_notebooks.sh
 
 ci_preflight_image:
 	$(DOCKER) build -t pymor/ci-preflight -f $(THIS_DIR)/docker/Dockerfile.ci-preflight $(THIS_DIR)
