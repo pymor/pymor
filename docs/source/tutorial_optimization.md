@@ -743,8 +743,7 @@ still dependent on the tolerance `atol=1e-2` that we chose without
 knowing that this tolerance suffices to reach the actual minimum.
 An easy way around this would be to do one optimization step with the FOM
 after converging. If this changes anything, the ROM tolerance `atol`
-was too large. To conclude, we once again
-compare all methods that we have discussed in this notebook.
+was too large.
 
 ```{code-cell}
 print('FOM with finite differences')
@@ -774,6 +773,88 @@ assert opt_along_path_result.nit == 7
 assert opt_along_path_minimization_data['num_evals'] == 9
 assert opt_along_path_minimization_data['enrichments'] == 9
 assert opt_along_path_adaptively_minimization_data['enrichments'] == 4
+```
+
+## Adaptive trust-region optimization
+
+Moreover, we can use trust-region methods to extend the adaptive enrichment with
+respect to the underlying error estimator.
+In the trust-region method, we replace the global problem with local surrogates,
+compute local solutions to these surrogate problems, and enhance the surrogate models
+when we either are close to the border of the trust-region or when the model confidence
+decreases such that we require more data.
+In effect, this creates two loops: the outer iterates over global parameter space and
+constructs local trust-regions along with their corresponding surrogates, whereas the
+inner solves the local problems with BFGS.
+For a fixed parameter in the outer iteration {math}`\mu` and the current surrogate model
+{math}`J_r`, this approach takes the shape
+
+```{math}
+\min_{\mu + s \in \Delta} J_r(u_{\mu + s}, \mu + s),  \tag{\hat{P}_r}.
+```
+
+In the formulation of ({math}`\hat{P}_r`), {math}`\Delta \subseteq \mathcal{P}` is the
+trust-region with tolerance {math}`\tau > 0` for an error estimator of our choice {math}`e_r`
+in which the updated parameter {math}`\mu + s` satisfies
+
+```{math}
+e_r(\mu + s) < \tau.
+```
+
+In metric settings such as with the {math}`2`-norm, these trust-regions correspond to
+open balls of radius {math}`\tau`, however the typical estimators in this tutorial's
+setting create much more complex shapes.
+
+The adaptive component of this algorithm is the choice of the trust-radius and the enrichment.
+If a local optimization in the inner loop fails, we retry the surrogate problem with a
+smaller trust-region, thus limiting the use of the current model.
+In contrast, when we quickly converge close to the boundary of the trust-region, it is a
+reasonable assumption that the globally optimal parameter is outside of the current region,
+therefore allowing us to enlarge the radius to include more parameter options in the
+inner optimization problem.
+After computing an inner solution we then have the option to keep the current surrogate
+model or enrich it by adding the solution snapshot of the current local optimum.
+In this sense, the adaptive trust-region algorithm resembles the adaptive path
+enrichment described above.
+
+```{code-cell}
+from pymor.algorithms.tr import coercive_rb_trust_region
+
+pdeopt_reductor = CoerciveRBReductor(
+    fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
+
+tic = perf_counter()
+tr_mu, tr_data = coercive_rb_trust_region(pdeopt_reductor, parameter_space=parameter_space,
+                                            initial_guess=np.array(initial_guess))
+toc = perf_counter()
+
+tr_data['time'] = toc - tic
+tr_output = fom.output(tr_mu)[0, 0]
+```
+
+Again, we only need {math}`4` enrichments and ended up with an approximation
+error of about `1e-06` which is comparable to the result obtained from adaptive
+enrichment. Unfortunately, the trust-region method takes longer because of
+the overhead of ROM evaluations and line searches performed in the BFGS step.
+To conclude, we once again compare all methods that we have discussed in this notebook.
+
+```{code-cell}
+from pymordemos.trust_region import report as tr_report
+
+tr_report(tr_mu, tr_output, reference_mu, fom_objective_functional(reference_mu), tr_data,
+        parameter_space.parameters.parse, descriptor=' of optimization with adaptive ROM model and TR method')
+```
+
+```{code-cell}
+:tags: [remove-cell]
+
+subproblem_data = tr_data['subproblem_data']
+
+assert tr_data['fom_evaluations'] == 7
+assert tr_data['rom_evaluations'] == 224
+assert tr_data['enrichments'] == 4
+assert sum([subproblem_data[i]['iterations'] for i in range(len(subproblem_data))]) == 18
+assert sum(np.concatenate([subproblem_data[i]['line_search_iterations'] for i in range(len(subproblem_data))])) == 114
 ```
 
 ## Conclusion and some general words about MOR methods for optimization
@@ -807,8 +888,7 @@ PDE-constrained optimization problems we refer to
 implementation is available as supplementary material.
 
 Update: The trust-region methods are by now implemented in pyMOR which is shown
-in the respective demo {mod}`~pymordemos.trust_region`. An update of this
-tutorial is work in progress.
+in the respective demo {mod}`~pymordemos.trust_region`.
 
 Download the code:
 {download}`tutorial_optimization.md`
