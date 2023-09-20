@@ -1699,10 +1699,10 @@ class PHLTIModel(LTIModel):
 
         Q = X
         E = model.E
-        J = 0.5 * (model.A @ InverseOperator(X) - InverseOperator(X) @ model.A.H)
-        R = -0.5 * (model.A @ InverseOperator(X) + InverseOperator(X) @ model.A.H)
-        G = 0.5 * (InverseOperator(X) @ model.C.H + model.B)
-        P = 0.5 * (InverseOperator(X) @ model.C.H - model.B)
+        J = contract(0.5 * (model.A @ InverseOperator(X) - InverseOperator(X) @ model.A.H))
+        R = contract(-0.5 * (model.A @ InverseOperator(X) + InverseOperator(X) @ model.A.H))
+        G = contract(0.5 * (InverseOperator(X) @ model.C.H + model.B))
+        P = contract(0.5 * (InverseOperator(X) @ model.C.H - model.B))
         S = 0.5 * (model.D + model.D.H)
         N = 0.5 * (model.D - model.D.H)
 
