@@ -970,7 +970,7 @@ class NonlinearReactionOperator(Operator):
             u_dofs = U[subentities[e]]
             wert = np.dot(u_dofs, SF)
             wert = np.reshape(wert, (3, 1))
-            c_nl[e] = self.reaction_function(wert)
+            c_nl[e] = self.reaction_function(wert, mu = mu)
         SF_INTS = np.einsum('ji,ei,e,e,i->ej', SF, c_nl, C, self.grid.volumes(0), w).ravel()
 
         del C, c_nl, SF
@@ -1025,7 +1025,7 @@ class NonlinearReactionOperator(Operator):
             u_dofs = U[subentities[e]]
             wert = np.dot(u_dofs, SF)
             wert = np.reshape(wert, (3, 1))
-            c_nl_prime[e] = self.reaction_function_derivative(wert)
+            c_nl_prime[e] = self.reaction_function_derivative(wert, mu = mu)
         SF_INTS = np.einsum('pi,qi,ei,e,e,i->epq', SF, SF, c_nl_prime, C, self.grid.volumes(0), w).ravel()
 
         del C, c_nl_prime, SF
@@ -1100,7 +1100,7 @@ class element_NonlinearReactionOperator(Operator):
             u_dofs = U[subentities[e]]
             wert = np.dot(u_dofs, SF)
             wert = np.reshape(wert, (3, 1))
-            c_nl[e] = self.reaction_function(wert)
+            c_nl[e] = self.reaction_function(wert, mu = mu)
         SF_INTS = np.einsum('ji,ei,e,e,i->ej', SF, c_nl, C, self.grid.volumes(0), w).ravel()
 
         # for e in range(len(NonZeroIndices)):
@@ -1145,7 +1145,7 @@ class element_NonlinearReactionOperator(Operator):
             u_dofs = U[subentities[e]]
             wert = np.dot(u_dofs, SF)
             wert = np.reshape(wert, (3, 1))
-            c_nl_prime[e] = self.reaction_function_derivative(wert)
+            c_nl_prime[e] = self.reaction_function_derivative(wert, mu = mu)
         SF_INTS = np.einsum('pi,qi,ei,e,e,i->epq', SF, SF, c_nl_prime, C, self.grid.volumes(0), w).ravel()
 
         del C, c_nl_prime, SF
