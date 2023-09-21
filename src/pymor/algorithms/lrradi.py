@@ -57,7 +57,8 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
     general description.
 
-    This function is an implementation of Algorithm 2 in :cite:`BBKS18`.
+    This function is an extension of Algorithm 2 in :cite:`BBKS18`
+    allowing usage of symmetric nonsingular R and nontrivial S.
 
     Parameters
     ----------
@@ -87,8 +88,6 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         |VectorArray| from `A.source`.
     """
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
-    if S is not None:
-        raise NotImplementedError
     options = _parse_options(options, ricc_lrcf_solver_options(), 'lrradi', None, False)
     logger = getLogger('pymor.algorithms.lrradi.solve_ricc_lrcf')
 
@@ -113,8 +112,10 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     Z = A.source.empty(reserve=len(C) * options['maxiter'])
     Y = np.empty((0, 0))
 
-    K = A.source.zeros(len(B))
-    RF = C.copy()
+    K = A.source.zeros(len(B)) if S is None else S.lincomb(Rinv) # Rinv symmetric
+    RF = cat_arrays([C.copy(), K.copy(deep=True)])
+
+    RC = spla.block_diag(np.eye(len(C)), R)
 
     j = 0
     j_shift = 0
@@ -129,7 +130,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
             AsE = A + shifts[j_shift] * E
         else:
             AsE = A + np.conj(shifts[j_shift]) * E
-        if j == 0:
+        if j == 0 and S is None:
             if not trans:
                 V = AsE.apply_inverse(RF) * np.sqrt(-2 * shifts[j_shift].real)
             else:
@@ -148,7 +149,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         if np.imag(shifts[j_shift]) == 0:
             Z.append(V)
             VB = V.inner(B)
-            Yt = np.eye(len(C)) - (VB @ Rinv @ VB.T) / (2 * shifts[j_shift].real)
+            Yt = np.eye(len(RF)) - (VB @ Rinv @ VB.T) / (2 * shifts[j_shift].real)
             Y = spla.block_diag(Y, Yt)
             if not trans:
                 EVYt = E.apply(V).lincomb(np.linalg.inv(Yt))
@@ -172,10 +173,10 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
                 Vi
             ))
             F3 = np.vstack((
-                shifts[j_shift].imag/sa * np.eye(len(C)),
-                shifts[j_shift].real/sa * np.eye(len(C))
+                shifts[j_shift].imag/sa * np.eye(len(RF)),
+                shifts[j_shift].real/sa * np.eye(len(RF))
             ))
-            Yt = spla.block_diag(np.eye(len(C)), 0.5 * np.eye(len(C))) \
+            Yt = spla.block_diag(np.eye(len(RF)), 0.5 * np.eye(len(RF))) \
                 - (F1 @ Rinv @ F1.T) / (4 * shifts[j_shift].real)  \
                 - (F2 @ Rinv @ F2.T) / (4 * shifts[j_shift].real)  \
                 - (F3 @ F3.T) / 2
@@ -184,11 +185,11 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
                 EVYt = E.apply(cat_arrays([V.real, V.imag])).lincomb(np.linalg.inv(Yt))
             else:
                 EVYt = E.apply_adjoint(cat_arrays([V.real, V.imag])).lincomb(np.linalg.inv(Yt))
-            RF.axpy(np.sqrt(-2 * shifts[j_shift].real), EVYt[:len(C)])
+            RF.axpy(np.sqrt(-2 * shifts[j_shift].real), EVYt[:len(RF)])
             K += EVYt.lincomb(F2.T).lincomb(Rinv)
             j += 2
         j_shift += 1
-        res = np.linalg.norm(RF.gramian(), ord=2)
+        res = np.linalg.norm(RF.gramian() @ RC, ord='fro')
         logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
         if j_shift >= shifts.size:
             shifts = iteration_shifts(A, E, B, RF, K, Z, shift_options)
