@@ -16,7 +16,7 @@ from pymor.algorithms.lyapunov import (
     solve_disc_lyap_dense,
     solve_disc_lyap_lrcf,
 )
-from pymor.algorithms.riccati import solve_pos_ricc_lrcf, solve_ricc_lrcf
+from pymor.algorithms.riccati import solve_pos_ricc_dense, solve_pos_ricc_lrcf, solve_ricc_lrcf
 from pymor.algorithms.simplify import contract, expand
 from pymor.algorithms.timestepping import DiscreteTimeStepper, TimeStepper
 from pymor.algorithms.to_matrix import to_matrix
@@ -219,7 +219,8 @@ class LTIModel(Model):
             presets = {}
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense',
-                                                                   'ricc_lrcf', 'ricc_dense', 'ricc_pos_lrcf'}
+                                                                   'ricc_lrcf', 'ricc_dense',
+                                                                   'ricc_pos_dense', 'ricc_pos_lrcf'}
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
@@ -928,6 +929,7 @@ class LTIModel(Model):
         options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
         options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
         options_ricc_lrcf = self.solver_options.get('ricc_lrcf') if self.solver_options else None
+        options_ricc_pos_dense = self.solver_options.get('ricc_pos_dense') if self.solver_options else None
         options_ricc_pos_lrcf = self.solver_options.get('ricc_pos_lrcf') if self.solver_options else None
         solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
         solve_lyap_dense = solve_cont_lyap_dense if self.sampling_time == 0 else solve_disc_lyap_dense
@@ -968,6 +970,16 @@ class LTIModel(Model):
             return solve_pos_ricc_lrcf(A, E, -B.as_range_array(mu=mu), A.source.zeros(),
                                        R=to_matrix(D + D.H, 'dense'), S=C.as_source_array(mu=mu),
                                        trans=True, options=options_ricc_pos_lrcf)
+        elif typ == 'pr_c_dense':
+            return solve_pos_ricc_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
+                                        A.source.zeros().to_numpy().T, -to_matrix(C, format='dense'),
+                                        R=to_matrix(D + D.H, 'dense'), S=to_matrix(B, format='dense').T,
+                                        trans=False, options=options_ricc_pos_dense)
+        elif typ == 'pr_o_dense':
+            return solve_pos_ricc_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
+                                        -to_matrix(B, format='dense'), A.source.zeros().to_numpy(),
+                                        R=to_matrix(D + D.H, 'dense'), S=to_matrix(C, format='dense').T,
+                                        trans=True, options=options_ricc_pos_dense)
         elif typ[0] == 'br_c_lrcf':
             return solve_pos_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
                                        R=(typ[1] ** 2 * np.eye(self.dim_output)
@@ -1025,7 +1037,7 @@ class LTIModel(Model):
         If typ ends with `'_dense'`, then the Gramian as a |NumPy array|.
         """
         assert (typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'bs_c_lrcf', 'bs_o_lrcf', 'lqg_c_lrcf', 'lqg_o_lrcf',
-                        'pr_c_lrcf', 'pr_o_lrcf')
+                        'pr_c_lrcf', 'pr_o_lrcf', 'pr_c_dense', 'pr_o_dense')
                 or isinstance(typ, tuple) and len(typ) == 2 and typ[0] in ('br_c_lrcf', 'br_o_lrcf'))
 
         if ((isinstance(typ, str) and (typ.startswith('bs') or typ.startswith('lqg')) or isinstance(typ, tuple))
