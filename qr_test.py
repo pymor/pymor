@@ -7,8 +7,8 @@ from pymor.algorithms.qr import qr
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.core.logger import set_log_levels
 
-set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
-
+set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING',
+                'pymor.algorithms.cholesky_qr.cholesky_qr': 'WARNING'})
 
 def random_svd_va(m, n, cond):
     rng = np.random.default_rng(0)
