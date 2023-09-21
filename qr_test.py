@@ -1,9 +1,13 @@
 import numpy as np
 import scipy.linalg as spla
 from time import perf_counter
+from pymor.algorithms.gram_schmidt import gram_schmidt
 
 from pymor.algorithms.qr import qr
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.core.logger import set_log_levels
+
+set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
 
 
 def random_svd_va(m, n, cond):
@@ -21,10 +25,14 @@ if __name__ == '__main__':
 
     return_R = True
 
-    for solver in ('cholesky_qr',):
+    cholesky_kwargs = {'tol': 1e-14, 'maxiter': 10}
+    gram_schmidt_kwargs = {'rtol': 0}
+
+    for solver in ('cholesky_qr', 'gram_schmidt'):
         print(f'Solver: \"{solver}\"')
         tic = perf_counter()
-        Q, R = qr(A, solver=solver, return_R=return_R, tol=1e-14, maxiter=10)
+        kwargs = cholesky_kwargs if solver == 'cholesky_qr' else gram_schmidt_kwargs
+        Q, R = qr(A, solver=solver, return_R=return_R, **kwargs)
         toc = perf_counter()
         print(f'len(Q): {len(Q)}')
         print(f'Time:\t\t\t{toc-tic} s')
