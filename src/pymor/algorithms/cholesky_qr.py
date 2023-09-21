@@ -3,7 +3,6 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.eigs import eigs
 from pymor.core.logger import getLogger
 
 logger = getLogger('pymor.algorithms.cholesky_qr.cholesky_qr')
@@ -18,6 +17,7 @@ def _chol_qr(A, product=None, gramian=None, check_finite=True):
             break
         except spla.LinAlgError:
             logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
+            from pymor.algorithms.eigs import eigs
             m, n = A.dim, len(A)
             eps = np.finfo(X.dtype).eps
             s = m*n+n*(n+1) if product is None else 2*m*np.sqrt(m*n)+n*(n+1)*np.sqrt(np.abs(eigs(product, k=1)[0][0]))
