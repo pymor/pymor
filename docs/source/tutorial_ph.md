@@ -178,7 +178,7 @@ from pymor.reductors.ph.ph_irka import PHIRKAReductor
 
 reductor = PHIRKAReductor(fom)
 rom1 = reductor.reduce(10)
-print(f'rom1 is of type {type(rom1)}.')
+print(f'rom1 is of type {type(rom1).__qualname__}.')
 ```
 
 ### Positive-real balanced truncation (PRBT)
@@ -196,7 +196,7 @@ reductor = PRBTReductor(fom)
 rom2 = reductor.reduce(10)
 rom2 = rom2.with_(solver_options={'ricc_pos_lrcf': 'slycot'})
 rom2 = PHLTIModel.from_passive_LTIModel(rom2)
-print(f'rom2 is of type {type(rom2)}.')
+print(f'rom2 is of type {type(rom2).__qualname__}.')
 ```
 
 ### Passivity preserving model reduction via spectral factorization
@@ -224,7 +224,7 @@ rom3 = reductor.reduce(
 )
 rom3 = rom3.with_(solver_options={'ricc_pos_lrcf': 'slycot'})
 rom3 = PHLTIModel.from_passive_LTIModel(rom3)
-print(f'rom3 is of type {type(rom3)}.')
+print(f'rom3 is of type {type(rom3).__qualname__}.')
 ```
 
 ### Comparison
