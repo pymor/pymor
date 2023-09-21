@@ -349,3 +349,32 @@ def gram_schmidt_biorth(V, W, product=None,
                 raise AccuracyError(f'result not biorthogonal (max err={err})')
 
     return V, W
+
+
+def block_gram_schmidt(A, block_size=10, product=None, return_R=False, offset=0,
+                       copy=True, **kwargs):
+    getLogger('pymor.algorithms.gram_schmidt.block_gram_schmidt')
+
+    if copy:
+        A = A.copy()
+
+    R = np.zeros((len(A), len(A)))
+    i = offset
+    while i < len(A):
+        block = A[i:i+block_size]
+        coeffs = block.inner(A[:i], product)
+        proj_block = A[:i].lincomb(coeffs)
+        block.axpy(-1, proj_block)
+        _, R_block = gram_schmidt_vec(block, product=product, copy=False, return_R=True, **kwargs)
+        coeffs2 = block.inner(A[:i], product)
+        proj_block2 = A[:i].lincomb(coeffs2)
+        block.axpy(-1, proj_block2)
+        _, R_block2 = gram_schmidt_vec(block, product=product, copy=False, return_R=True, **kwargs)
+        R[:i,i:i+block_size] = coeffs.T + coeffs2.T @ R_block2
+        R[i:i+block_size,i:i+block_size] = R_block2 @ R_block
+        i = i+block_size
+
+    if return_R:
+        return A, R
+    else:
+        return A
