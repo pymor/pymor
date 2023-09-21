@@ -171,6 +171,12 @@ class NumpyMatrixBasedOperator(Operator):
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     """Wraps a 2D |NumPy Array| or |SciPy spmatrix| as an |Operator|.
 
+    .. note::
+        In the case of a |NumPy array|, the `apply_inverse` method by default
+        uses `check_finite=True` and `check_cond=True`.
+        Setting them to `False` (e.g., via `defaults`) can significantly speed
+        up the computation, especially for smaller matrices.
+
     Parameters
     ----------
     matrix
@@ -273,7 +279,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         check_finite
             Test if solution only contains finite values.
         check_cond
-            Check condition number.
+            Check condition number in case the matrix is a |NumPy array|.
         default_sparse_solver_backend
             Default sparse solver backend to use (scipy, generic).
 
