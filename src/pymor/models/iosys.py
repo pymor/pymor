@@ -807,8 +807,8 @@ class LTIModel(Model):
         y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
         for i, X in enumerate(Xs):
             y[:, :, i] = self.C.apply(X, mu=mu).to_numpy()
-        if self.sampling_time > 0 and isinstance(self.D, ZeroOperator):
-            y[0] += to_matrix(self.D, mu=mu, format='dense')
+        if self.sampling_time > 0 and not isinstance(self.D, ZeroOperator):
+            y[0] += to_matrix(self.D, mu=mu, format='dense') / self.sampling_time
 
         if return_solution:
             return y, Xs
