@@ -28,7 +28,7 @@ if __name__ == '__main__':
     cholesky_kwargs = {'tol': 1e-14, 'maxiter': 10}
     gram_schmidt_kwargs = {'rtol': 0.0, 'atol': 0.}
 
-    for solver in ('cholesky_qr', 'gram_schmidt', 'gram_schmidt_vec', 'block_gram_schmidt'):
+    for solver in ('scipy', 'cholesky_qr', 'gram_schmidt', 'block_gram_schmidt'):
         print(f'Solver: \"{solver}\"')
         tic = perf_counter()
         kwargs = cholesky_kwargs if solver == 'cholesky_qr' else gram_schmidt_kwargs

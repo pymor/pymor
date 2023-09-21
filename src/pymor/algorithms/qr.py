@@ -1,3 +1,5 @@
+import scipy.linalg as spla
+
 from pymor.algorithms.cholesky_qr import cholesky_qr
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_vec, block_gram_schmidt
 
@@ -11,3 +13,6 @@ def qr(V, solver='gram_schmidt', **solver_kwargs):
         return cholesky_qr(V, **solver_kwargs)
     elif solver == 'block_gram_schmidt':
         return block_gram_schmidt(V, **solver_kwargs)
+    elif solver == 'scipy':
+        Q, R = spla.qr(V.to_numpy().T, mode='economic')
+        return V.space.from_numpy(Q.T), R
