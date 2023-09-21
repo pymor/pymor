@@ -114,7 +114,7 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
                                            product(n_list_big, ricc_lrcf_solver_list_big)))
 def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
-    if with_S and (solver.startswith('pymess') or solver == 'lrradi'):
+    if with_S and (solver.startswith('pymess')):
         pytest.xfail('solver not implemented')
 
     if not with_E:
