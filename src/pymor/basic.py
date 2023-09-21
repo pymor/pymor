@@ -13,12 +13,13 @@ from pymor.algorithms.basic import almost_equal, project_array, relative_error
 from pymor.algorithms.dmd import dmd
 from pymor.algorithms.ei import deim, ei_greedy, interpolate_function, interpolate_operators
 from pymor.algorithms.error import plot_reduction_error_analysis, reduction_error_analysis
-from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.algorithms.gram_schmidt import gram_schmidt_biorth
 from pymor.algorithms.greedy import rb_greedy
 from pymor.algorithms.newton import newton
 from pymor.algorithms.pod import pod
 from pymor.algorithms.preassemble import preassemble
 from pymor.algorithms.projection import project, project_to_subbasis
+from pymor.algorithms.qr import qr
 from pymor.algorithms.simplify import expand
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
 from pymor.analyticalproblems.domaindescriptions import (

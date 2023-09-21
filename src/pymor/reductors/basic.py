@@ -7,9 +7,9 @@ from numbers import Number
 import numpy as np
 
 from pymor.algorithms.basic import almost_equal
-from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
+from pymor.algorithms.qr import qr
 from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError, ExtensionError
@@ -123,7 +123,7 @@ class ProjectionBasedReductor(BasicObject):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
         return self.bases[basis][:u.dim].lincomb(u.to_numpy())
 
-    def extend_basis(self, U, basis='RB', method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
+    def extend_basis(self, U, basis='RB', method='qr', pod_modes=1, pod_orthonormalize=True, copy_U=True):
         basis_length = len(self.bases[basis])
 
         extend_basis(U, self.bases[basis], self.products.get(basis), method=method, pod_modes=pod_modes,
@@ -462,8 +462,8 @@ class DelayLTIPGReductor(ProjectionBasedReductor):
         return super().reconstruct(u, basis)
 
 
-def extend_basis(U, basis, product=None, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
-    assert method in ('trivial', 'gram_schmidt', 'pod')
+def extend_basis(U, basis, product=None, method='qr', pod_modes=1, pod_orthonormalize=True, copy_U=True):
+    assert method in ('trivial', 'qr', 'pod')
 
     basis_length = len(basis)
 
@@ -474,16 +474,16 @@ def extend_basis(U, basis, product=None, method='gram_schmidt', pod_modes=1, pod
                 remove.add(i)
         basis.append(U[[i for i in range(len(U)) if i not in remove]],
                      remove_from_other=(not copy_U))
-    elif method == 'gram_schmidt':
+    elif method == 'qr':
         basis.append(U, remove_from_other=(not copy_U))
-        gram_schmidt(basis, offset=basis_length, product=product, copy=False, check=False)
+        qr(basis, offset=basis_length, product=product, copy=False, check=False)
     elif method == 'pod':
         U_proj_err = U - basis.lincomb(U.inner(basis, product))
 
         basis.append(pod(U_proj_err, modes=pod_modes, product=product, orth_tol=np.inf)[0])
 
         if pod_orthonormalize:
-            gram_schmidt(basis, offset=basis_length, product=product, copy=False, check=False)
+            qr(basis, offset=basis_length, product=product, copy=False, check=False)
 
     if len(basis) <= basis_length:
         raise ExtensionError

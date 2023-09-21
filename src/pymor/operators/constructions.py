@@ -828,9 +828,9 @@ class VectorArrayOperator(Operator):
 
         from numpy.linalg import lstsq
 
-        from pymor.algorithms.gram_schmidt import gram_schmidt
+        from pymor.algorithms.qr import qr
 
-        Q, R = gram_schmidt(self.array, return_R=True, reiterate=False)
+        Q, R = qr(self.array, return_R=True, reiterate=False)
         if self.adjoint:
             v = lstsq(R.T.conj(), V.to_numpy().T, rcond=None)[0]
             U = Q.lincomb(v.T)

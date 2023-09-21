@@ -5,8 +5,9 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.algorithms.gram_schmidt import gram_schmidt_biorth
 from pymor.algorithms.projection import project
+from pymor.algorithms.qr import qr
 from pymor.core.base import BasicObject
 from pymor.models.iosys import SecondOrderModel
 from pymor.operators.constructions import IdentityOperator
@@ -85,8 +86,8 @@ class GenericSOBTpvReductor(BasicObject):
             self.V.scal(alpha)
             self.W.scal(alpha)
         elif projection == 'bfsr':
-            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
-            gram_schmidt(self.W, atol=0, rtol=0, copy=False)
+            qr(self.V, atol=0, rtol=0, copy=False)
+            qr(self.W, atol=0, rtol=0, copy=False)
         elif projection == 'biorth':
             gram_schmidt_biorth(self.V, self.W, product=self.fom.M, copy=False)
 
@@ -275,9 +276,9 @@ class SOBTfvReductor(BasicObject):
             alpha = 1 / np.sqrt(sp[:r])
             self.V.scal(alpha)
         elif projection == 'bfsr':
-            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
+            qr(self.V, atol=0, rtol=0, copy=False)
         elif projection == 'biorth':
-            gram_schmidt(self.V, product=self.fom.M, atol=0, rtol=0, copy=False)
+            qr(self.V, product=self.fom.M, atol=0, rtol=0, copy=False)
         self.W = self.V
 
         # find the reduced model
@@ -375,10 +376,10 @@ class SOBTReductor(BasicObject):
             W1TV1invW1TV2 = self.W1.inner(self.V2)
             projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r))}
         elif projection == 'bfsr':
-            gram_schmidt(self.V1, atol=0, rtol=0, copy=False)
-            gram_schmidt(self.W1, atol=0, rtol=0, copy=False)
-            gram_schmidt(self.V2, atol=0, rtol=0, copy=False)
-            gram_schmidt(self.W2, atol=0, rtol=0, copy=False)
+            qr(self.V1, atol=0, rtol=0, copy=False)
+            qr(self.W1, atol=0, rtol=0, copy=False)
+            qr(self.V2, atol=0, rtol=0, copy=False)
+            qr(self.W2, atol=0, rtol=0, copy=False)
             W1TV1invW1TV2 = spla.solve(self.W1.inner(self.V1), self.W1.inner(self.V2))
             projected_ops = {'M': project(self.fom.M, range_basis=self.W2, source_basis=self.V2)}
         elif projection == 'biorth':

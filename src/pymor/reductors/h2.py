@@ -9,8 +9,9 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.algorithms.gram_schmidt import gram_schmidt_biorth
 from pymor.algorithms.krylov import tangential_rational_krylov
+from pymor.algorithms.qr import qr
 from pymor.algorithms.riccati import solve_ricc_dense
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
@@ -411,13 +412,13 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
         if self.version == 'V':
             self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy(b), sigma,
                                                 orth=False)
-            gram_schmidt(self.V, atol=0, rtol=0,
+            qr(self.V, atol=0, rtol=0,
                          product=None if projection == 'orth' else fom.E,
                          copy=False)
         else:
             self.V = tangential_rational_krylov(fom.A, fom.E, fom.C, fom.C.range.from_numpy(c), sigma, trans=True,
                                                 orth=False)
-            gram_schmidt(self.V, atol=0, rtol=0,
+            qr(self.V, atol=0, rtol=0,
                          product=None if projection == 'orth' else fom.E,
                          copy=False)
         self.W = self.V
@@ -541,8 +542,8 @@ class TSIAReductor(GenericIRKAReductor):
                                           B=fom.B, Br=rom.B,
                                           C=fom.C, Cr=rom.C)
         if projection == 'orth':
-            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
-            gram_schmidt(self.W, atol=0, rtol=0, copy=False)
+            qr(self.V, atol=0, rtol=0, copy=False)
+            qr(self.W, atol=0, rtol=0, copy=False)
         elif projection == 'biorth':
             gram_schmidt_biorth(self.V, self.W, product=fom.E, copy=False)
         self._pg_reductor = LTIPGReductor(fom, self.W, self.V,

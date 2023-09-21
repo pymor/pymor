@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.qr import qr
 from pymor.algorithms.svd_va import method_of_snapshots, qr_svd
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
@@ -75,6 +75,6 @@ def pod(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         err = np.max(np.abs(POD.inner(POD, product) - np.eye(len(POD))))
         if err >= orth_tol:
             logger.info('Reorthogonalizing POD modes ...')
-            gram_schmidt(POD, product=product, atol=0., rtol=0., copy=False)
+            qr(POD, product=product, atol=0., rtol=0., copy=False)
 
     return POD, SVALS

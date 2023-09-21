@@ -7,7 +7,7 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.qr import qr
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.interface import Operator
@@ -161,7 +161,7 @@ def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
     logger = getLogger('pymor.algorithms.svd_va.qr_svd')
 
     with logger.block('Computing QR decomposition ...'):
-        Q, R = gram_schmidt(A, product=product, return_R=True, check=False)
+        Q, R = qr(A, product=product, return_R=True, check=False)
 
     with logger.block('Computing SVD of R ...'):
         U2, s, Vh = spla.svd(R, lapack_driver='gesvd')

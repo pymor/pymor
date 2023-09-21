@@ -5,7 +5,7 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.qr import qr
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
@@ -147,8 +147,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
 
         X.append(x)
         V.append(v)
-        gram_schmidt(V, atol=0, rtol=0, copy=False)
-        gram_schmidt(X, atol=0, rtol=0, copy=False)
+        qr(V, atol=0, rtol=0, copy=False)
+        qr(X, atol=0, rtol=0, copy=False)
 
         AX.append(A.apply(X[k-1]))
 
@@ -238,8 +238,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
                     V = A.source.empty()
 
                 if np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
-                    gram_schmidt(V, atol=0, rtol=0, copy=False)
-                    gram_schmidt(X, atol=0, rtol=0, copy=False)
+                    qr(V, atol=0, rtol=0, copy=False)
+                    qr(X, atol=0, rtol=0, copy=False)
 
                 B_defl -= E.apply(Q[-1].lincomb(Qt[-1].inner(B_defl).T))
                 C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].inner(C_defl).T))
@@ -271,8 +271,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
                         Q[-1].scal(1 / nqqt)
                         Qs[-1].scal(1 / nqqt)
 
-                        gram_schmidt(V, atol=0, rtol=0, copy=False)
-                        gram_schmidt(X, atol=0, rtol=0, copy=False)
+                        qr(V, atol=0, rtol=0, copy=False)
+                        qr(X, atol=0, rtol=0, copy=False)
 
                         B_defl -= E.apply(Q[-1].lincomb(Qt[-1].inner(B_defl).T))
                         C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].inner(C_defl).T))
@@ -308,8 +308,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
                 X = X.lincomb(UR[:, minidx])
                 V = V.lincomb(URt[:, minidx])
 
-                gram_schmidt(V, atol=0, rtol=0, copy=False)
-                gram_schmidt(X, atol=0, rtol=0, copy=False)
+                qr(V, atol=0, rtol=0, copy=False)
+                qr(X, atol=0, rtol=0, copy=False)
 
                 G = V.inner(E.apply(X))
                 AX = A.apply(X)
@@ -327,8 +327,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
             X = X.lincomb(UR[:, minidx])
             V = V.lincomb(URt[:, minidx])
 
-            gram_schmidt(V, atol=0, rtol=0, copy=False)
-            gram_schmidt(X, atol=0, rtol=0, copy=False)
+            qr(V, atol=0, rtol=0, copy=False)
+            qr(X, atol=0, rtol=0, copy=False)
 
             G = V.inner(E.apply(X))
             AX = A.apply(X)
