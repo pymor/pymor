@@ -31,7 +31,9 @@ def main(
     eps = 1e-12
     S += np.eye(S.shape[0]) * eps
 
-    fom = PHLTIModel.from_matrices(J, R, G, S=S, Q=Q, solver_options={'ricc_pos_lrcf': 'slycot'})
+    fom = PHLTIModel.from_matrices(J, R, G, S=S, Q=Q, solver_options={
+        'ricc_pos_lrcf': 'slycot', 'ricc_pos_dense': 'slycot'
+    })
 
     bt = BTReductor(fom).reduce
     prbt = PRBTReductor(fom).reduce

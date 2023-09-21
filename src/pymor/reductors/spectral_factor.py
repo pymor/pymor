@@ -102,8 +102,7 @@ class SpectralFactorReductor(BasicObject):
         if X is None:
             # Compute minimal solution X to Riccati equation
             assert not isinstance(self.fom.D, ZeroOperator), 'D+D^T must be invertible.'
-            Z = self.fom.gramian('pr_o_lrcf', mu=self.mu).to_numpy()
-            X = Z.T @ Z
+            X = self.fom.gramian('pr_o_dense', mu=self.mu)
 
         # Compute Cholesky-like factorization of W(X)
         E = to_matrix(self.fom.E, format='dense')
