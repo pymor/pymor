@@ -394,29 +394,36 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
 
 def print_children(obj):
 
-    from rich import print
-    from rich.tree import Tree
+    child_p =      '│   '
+    new_child_p =  '├── '
+    last_child_p = '└── '
+    space =        '    '
 
-    def process_children(obj, tree):
-        for child in sorted(RuleTable.get_children(obj)):
+    print(obj.name)
+    def print_children(obj, prefix):
+        children = list(sorted(RuleTable.get_children(obj)))
+        for i, child in enumerate(children):
             c = getattr(obj, child)
+            c_p = last_child_p if i+1 == len(children) else new_child_p
             if isinstance(c, Mapping):
-                t = tree.add(child)
-                for k, v in sorted(c.items()):
-                    tt = t.add(f'{k}: {v.name}')
-                    process_children(v, tt)
+                print(f'{prefix}{c_p}{child}')
+                c_p = space if i+1 == len(children) else child_p
+                for j, (k, v) in enumerate(sorted(c.items())):
+                    cc_p = last_child_p if j+1 == len(c) else new_child_p
+                    print(f'{prefix}{c_p}{cc_p}{k}: {v.name}')
+                    print_children(v, f'{prefix}{c_p}{space}')
             elif isinstance(c, Iterable):
-                t = tree.add(child)
-                for i, v in enumerate(c):
-                    tt = t.add(f'{i}: {v.name}')
-                    process_children(v, tt)
+                print(f'{prefix}{c_p}{child}')
+                c_p = space if i+1 == len(children) else child_p
+                for j, v in enumerate(c):
+                    cc_p = last_child_p if j+1 == len(c) else new_child_p
+                    print(f'{prefix}{c_p}{cc_p}{j}: {v.name}')
+                    print_children(v, f'{prefix}{c_p}{space}')
             else:
-                t = tree.add(f'{child}: {c.name}')
-                process_children(c, t)
+                print(f'{prefix}{c_p}{child}: {c.name}')
+                print_children(c, f'{prefix}{child_p}')
+    print_children(obj, '')
 
-    tree = Tree(obj.name)
-    process_children(obj, tree)
-    print(tree)
 
 
 def format_rules(rules):
