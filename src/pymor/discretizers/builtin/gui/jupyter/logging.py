@@ -33,7 +33,7 @@ class LogViewer(logging.Handler):
                 display(self.accordion)
             self.first_emit = False
         record = self.formatter.format_html(record)
-        self.out.value += f'<p style="line-height:120%">{record}</p>'
+        self.out.value += f'<div style="font-family:monospace,monospace;line-height:120%">{record}<br></div>'
 
     @property
     def empty(self):
