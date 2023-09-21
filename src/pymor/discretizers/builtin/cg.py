@@ -962,20 +962,23 @@ class NonlinearReactionOperator(Operator):
         SF = np.array(tuple(f(q) for f in SF))
         C = self.reaction_coefficient(self.grid.centers(0), mu=mu)
         subentities = self.grid.subentities(0, self.grid.dim)
-        c_nl = np.zeros(np.shape(subentities))
-        # Damit bin ich noch nicht zufrieden!
-        for e in range(self.grid.size(0)):
-            u_dofs = U[subentities[e]]
-            wert = np.dot(u_dofs, SF)
-            wert = np.reshape(wert, (3, 1))
-            c_nl[e] = self.reaction_function(wert, mu = mu)
+        # c_nl = np.zeros(np.shape(subentities))
+        # # Damit bin ich noch nicht zufrieden!
+        # for e in range(self.grid.size(0)):
+        #     u_dofs = U[subentities[e]]
+        #     wert = np.dot(u_dofs, SF)
+        #     wert = np.reshape(wert, (3, 1))
+        #     c_nl[e] = self.reaction_function(wert, mu = mu)
+        u_dofs = U[subentities]
+        lincomb = np.dot(u_dofs, SF)
+        c_nl = self.reaction_function(lincomb.reshape(lincomb.shape + (1,)), mu=mu)
         SF_INTS = np.einsum('ji,ei,e,e,i->ej', SF, c_nl, C, self.grid.volumes(0), w).ravel()
 
         del C, c_nl, SF
         A = coo_matrix((SF_INTS, (subentities.ravel(), np.zeros_like(subentities.ravel()))),
                        shape=(self.grid.size(self.grid.dim), 1)).toarray().ravel()
 
-        del subentities, SF_INTS
+        del subentities, SF_INTS, u_dofs, lincomb
 
         if self.boundary_info.has_dirichlet:
             DI = self.boundary_info.dirichlet_boundaries(self.grid.dim)
@@ -991,16 +994,19 @@ class NonlinearReactionOperator(Operator):
         subentities = self.grid.subentities(0, self.grid.dim)
         SF_I0 = np.repeat(self.grid.subentities(0, self.grid.dim), self.grid.dim + 1, axis=1).ravel()
         SF_I1 = np.tile(self.grid.subentities(0, self.grid.dim), [1, self.grid.dim + 1]).ravel()
-        c_nl_prime = np.zeros(np.shape(subentities))
-        # Damit bin ich noch nicht zufrieden!
-        for e in range(self.grid.size(0)):
-            u_dofs = U[subentities[e]]
-            wert = np.dot(u_dofs, SF)
-            wert = np.reshape(wert, (3, 1))
-            c_nl_prime[e] = self.reaction_function_derivative(wert, mu = mu)
+        # c_nl_prime = np.zeros(np.shape(subentities))
+        # # Damit bin ich noch nicht zufrieden!
+        # for e in range(self.grid.size(0)):
+        #     u_dofs = U[subentities[e]]
+        #     wert = np.dot(u_dofs, SF)
+        #     wert = np.reshape(wert, (3, 1))
+        #     c_nl_prime[e] = self.reaction_function_derivative(wert, mu = mu)
+        u_dofs = U[subentities]
+        lincomb = np.dot(u_dofs, SF)
+        c_nl_prime = self.reaction_function_derivative(lincomb.reshape(lincomb.shape + (1,)), mu=mu)
         SF_INTS = np.einsum('pi,qi,ei,e,e,i->epq', SF, SF, c_nl_prime, C, self.grid.volumes(0), w).ravel()
 
-        del C, c_nl_prime, SF
+        del C, c_nl_prime, SF, u_dofs, lincomb
 
         if self.boundary_info.has_dirichlet:
             SF_INTS = np.where(self.boundary_info.dirichlet_mask(self.grid.dim)[SF_I0], 0, SF_INTS)
@@ -1068,8 +1074,6 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     if not (p.nonlinear_advection # noqa: E714
             == p.nonlinear_advection_derivative
-            # == p.nonlinear_reaction
-            # == p.nonlinear_reaction_derivative
             is None):
         raise NotImplementedError
 
