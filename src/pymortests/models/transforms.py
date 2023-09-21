@@ -36,8 +36,6 @@ def test_inv(m):
     m_inv = m.inverse()
     mm_inv = MoebiusTransformation((m @ m_inv).coefficients, normalize=True)
     m_invm = MoebiusTransformation((m_inv @ m).coefficients, normalize=True)
-    print(mm_inv.coefficients)
-    print(m_invm.coefficients)
     assert np.allclose(np.eye(2).ravel(), mm_inv.coefficients)
     assert np.allclose(np.eye(2).ravel(), m_invm.coefficients)
 
