@@ -975,8 +975,10 @@ class NonlinearReactionOperator(Operator):
         SF_INTS = np.einsum('ji,ei,e,e,i->ej', SF, c_nl, C, self.grid.volumes(0), w).ravel()
 
         del C, c_nl, SF
-        A = coo_matrix((SF_INTS, (subentities.ravel(), np.zeros_like(subentities.ravel()))),
-                       shape=(self.grid.size(self.grid.dim), 1)).toarray().ravel()
+        # A = coo_matrix((SF_INTS, (subentities.ravel(), np.zeros_like(subentities.ravel()))),
+        #                shape=(self.grid.size(self.grid.dim), 1)).toarray().ravel()
+        A = np.zeros((self.grid.size(self.grid.dim)))
+        np.add.at(A, subentities.ravel(), SF_INTS)
 
         del subentities, SF_INTS, u_dofs, lincomb
 
