@@ -257,7 +257,7 @@ ignore = [
 # N806 same for variables in function
 
 [tool.ruff.flake8-import-conventions]
-banned-from = ["numpy.linalg"]
+banned-from = ["numpy.linalg"]  # avoids importing similar routines from numpy.linalg and scipy.linalg
 
 [tool.ruff.flake8-import-conventions.extend-aliases]
 scipy = ""  # don't import scipy directly
