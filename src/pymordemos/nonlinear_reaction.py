@@ -1,15 +1,7 @@
 from pymor.basic import *
-from functools import partial
-import numpy as np
-from time import perf_counter
-import trust_region_method
-from scipy.sparse import coo_matrix, csc_matrix, dia_matrix
 from pymor.algorithms.newton import newton
-from discretize_cg_with_nonlinear_reactionoperator import discretize_stationary_cg as discretizer
-from discretize_cg_with_nonlinear_reactionoperator import element_NonlinearReactionOperator
-from discretize_cg_with_nonlinear_reactionoperator import quadratic_functional, element_quadratic_functional
-import stationary_problem
-from scipy.optimize import linprog
+from pymor.discretizers.builtin.cg import discretize_stationary_cg as discretizer
+from pymor.analyticalproblems.elliptic import StationaryProblem
 
 set_log_levels({'pymor': 'INFO'})
 
@@ -24,7 +16,7 @@ diameter = 1/40
 nonlinear_reaction_coefficient = ConstantFunction(1,2)
 test_nonlinearreaction = ExpressionFunction('reaction[0] * (exp(reaction[1] * u[0]) - 1) / reaction[1]', dim_domain = 1, parameters = parameters, variable = 'u')
 test_nonlinearreaction_derivative = ExpressionFunction('reaction[0] * exp(reaction[1] * u[0])', dim_domain = 1, parameters = parameters, variable = 'u')
-problem = stationary_problem.StationaryProblem(domain = domain, rhs = l, diffusion = diffusion,  nonlinear_reaction_coefficient = nonlinear_reaction_coefficient,
+problem = StationaryProblem(domain = domain, rhs = l, diffusion = diffusion, nonlinear_reaction_coefficient = nonlinear_reaction_coefficient,
                                                nonlinear_reaction = test_nonlinearreaction, nonlinear_reaction_derivative = test_nonlinearreaction_derivative)
 grid, boundary_info = discretize_domain_default(problem.domain, diameter=diameter)
 print('Anzahl Element', grid.size(0))

@@ -20,7 +20,8 @@ from pymor.discretizers.builtin.grids.referenceelements import line, square, tri
 from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer, PatchVisualizer
 from pymor.models.basic import InstationaryModel, StationaryModel
 from pymor.operators.constructions import LincombOperator, QuadraticFunctional
-from pymor.operators.numpy import NumpyMatrixBasedOperator
+from pymor.operators.interface import Operator
+from pymor.operators.numpy import NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 LagrangeShapeFunctions = {
@@ -937,6 +938,413 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
         return self.function.evaluate(self.grid.centers(self.grid.dim), mu=mu).reshape((-1, 1))
 
 
+class NonlinearReactionOperator(Operator):
+    """ The operator is of the form::
+
+    L(u,mu)(x) = q(x, mu) * c_nl(u(x, mu))
+
+    reaction_coefficient
+        The function 'q'
+    reaction_function
+        The function 'c_nl'
+    """
+    linear = False
+
+    def __init__(self, grid, boundary_info, reaction_coefficient, reaction_function, reaction_function_derivative, space_id = 'STATE', name = None):
+        self.__auto_init(locals())
+        self.source = self.range = CGVectorSpace(grid, space_id)
+
+
+    def apply(self, U, mu = None, element_contribution = False, element_contribution_operator = False, rho = None):
+        U = U.to_numpy().ravel()
+        q, w = self.grid.reference_element.quadrature(order=2)
+        SF = LagrangeShapeFunctions[self.grid.reference_element][1]
+        SF = np.array(tuple(f(q) for f in SF))
+        C = self.reaction_coefficient(self.grid.centers(0), mu=mu)
+        # C = reaction_coefficient(q, mu = mu) #Warum nehme ich nicht die Qaudraturpunkte?
+        subentities = self.grid.subentities(0, self.grid.dim)
+        c_nl = np.zeros(np.shape(subentities))
+        # Damit bin ich noch nicht zufrieden!
+        for e in range(self.grid.size(0)):
+            u_dofs = U[subentities[e]]
+            wert = np.dot(u_dofs, SF)
+            wert = np.reshape(wert, (3, 1))
+            c_nl[e] = self.reaction_function(wert, mu = mu)
+        SF_INTS = np.einsum('ji,ei,e,e,i->ej', SF, c_nl, C, self.grid.volumes(0), w).ravel()
+
+        del C, c_nl, SF
+        A = coo_matrix((SF_INTS, (subentities.ravel(), np.zeros_like(subentities.ravel()))),
+                       shape=(self.grid.size(self.grid.dim), 1)).toarray().ravel()
+
+        # if element_contribution_operator and self.boundary_info.has_dirichlet:
+        #     assert rho is not None, 'rho muss übergeben werden'
+        #     A_e_op = coo_matrix(([],([],[])), shape = (self.grid.size(self.grid.dim), 1))
+        #     NonZeroIndices = np.where(rho != 0)[0]
+        #     for e in NonZeroIndices:
+        #         A_e_op = A_e_op + coo_matrix((SF_INTS[3*e:3*(e+1)], (SF_I[3*e:3*(e+1)], [0,0,0])), shape = (self.grid.size(self.grid.dim), 1))
+        #     DI = self.boundary_info.dirichlet_boundaries(self.grid.dim)
+        #     A_e_op[DI] = 0
+        #     return self.range.make_array(A_e_op.toarray().ravel())
+
+        #geht das auch, wenn die Dim des Problems größer als 2 ist?
+        if element_contribution and self.boundary_info.has_dirichlet:
+            A_e_list = []
+            DI = self.boundary_info.dirichlet_boundaries(self.grid.dim)
+            SF_I = subentities.ravel()
+            #geht das auch anders als eine for-Schleife?
+            for e in range(self.grid.size(0)):
+                A_e = coo_matrix((SF_INTS[3*e:3*(e+1)], (SF_I[3*e:3*(e+1)], [0,0,0])), shape = (self.grid.size(self.grid.dim), 1)).toarray().ravel()
+                A_e[DI] = 0
+                A_e_list.append(self.range.make_array(A_e))
+            A[DI] = 0
+            del subentities, SF_INTS
+            return A, A_e_list
+
+        del subentities, SF_INTS
+
+        if self.boundary_info.has_dirichlet:
+            DI = self.boundary_info.dirichlet_boundaries(self.grid.dim)
+            A[DI] = 0
+        #return self.range.make_array(A.reshape((-1,1)))
+        return self.range.make_array(A)
+
+    def jacobian(self, U, mu = None, element_contribution = False, element_contribution_operator = False, rho = None):
+        U = U.to_numpy().ravel()
+        q, w = self.grid.reference_element.quadrature(order=2)
+        SF = LagrangeShapeFunctions[self.grid.reference_element][1]
+        SF = np.array(tuple(f(q) for f in SF))
+        C = self.reaction_coefficient(self.grid.centers(0), mu=mu)
+        # C = reaction_coefficient(q, mu = mu) #Warum nehme ich nicht die Qaudraturpunkte?
+        subentities = self.grid.subentities(0, self.grid.dim)
+        SF_I0 = np.repeat(self.grid.subentities(0, self.grid.dim), self.grid.dim + 1, axis=1).ravel()
+        SF_I1 = np.tile(self.grid.subentities(0, self.grid.dim), [1, self.grid.dim + 1]).ravel()
+        c_nl_prime = np.zeros(np.shape(subentities))
+        # Damit bin ich noch nicht zufrieden!
+        for e in range(self.grid.size(0)):
+            u_dofs = U[subentities[e]]
+            wert = np.dot(u_dofs, SF)
+            wert = np.reshape(wert, (3, 1))
+            c_nl_prime[e] = self.reaction_function_derivative(wert, mu = mu)
+        SF_INTS = np.einsum('pi,qi,ei,e,e,i->epq', SF, SF, c_nl_prime, C, self.grid.volumes(0), w).ravel()
+
+        del C, c_nl_prime, SF
+
+        if self.boundary_info.has_dirichlet:
+            SF_INTS = np.where(self.boundary_info.dirichlet_mask(self.grid.dim)[SF_I0], 0, SF_INTS)
+        A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(self.grid.size(self.grid.dim), self.grid.size(self.grid.dim)))
+
+        # if element_contribution_operator and self.boundary_info.has_dirichlet:
+        #     assert rho is not None, 'rho muss übergeben werden'
+        #     A_e_op = coo_matrix(([],([],[])), shape = (self.grid.size(self.grid.dim), self.grid.size(self.grid.dim)))
+        #     NonZeroIndices = np.where(rho != 0)[0]
+        #     for e in NonZeroIndices:
+        #         A_e_op = A_e_op + coo_matrix((SF_INTS[9*e:9*(e+1)], (SF_I0[9*e:9*(e+1)], SF_I1[9*e:9*(e+1)])), shape = (self.grid.size(self.grid.dim), self.grid.size(self.grid.dim)))
+        #     DI = self.boundary_info.dirichlet_boundaries(self.grid.dim)
+        #     A_e_op[DI] = 0
+        #     A_e_op.eliminate_zeros()
+        #     A_e_op = csc_matrix(A_e_op).copy()
+        #     return NumpyMatrixOperator(A_e_op, source_id = self.source.id, range_id = self.range.id)
+
+        #geht das auch, wenn die Dimension der PDE größer als 2 ist?
+        if element_contribution:
+            A_e_list = []
+            for e in range(self.grid.size(0)):
+                A_e = coo_matrix((SF_INTS[9*e:9*(e+1)],(SF_I0[9*e:9*(e+1)], SF_I1[9*e:9*(e+1)])),  shape = (self.grid.size(self.grid.dim), self.grid.size(self.grid.dim)))
+                A_e.eliminate_zeros()
+                A_e = csc_matrix(A_e).copy()
+                A_e_list.append(NumpyMatrixOperator(A_e, source_id = self.source.id, range_id = self.range.id))
+        del SF_INTS, SF_I0, SF_I1
+
+        A.eliminate_zeros()
+        A = csc_matrix(A).copy()
+        if element_contribution:
+            return NumpyMatrixOperator(A, source_id = self.source.id, range_id = self.range.id), A_e_list
+        else:
+            return NumpyMatrixOperator(A, source_id = self.source.id, range_id = self.range.id)
+
+
+class element_NonlinearReactionOperator(Operator):
+    """ The operator is of the form::
+
+    L(u,mu)(x) = q(x, mu) * c_nl(u(x,mu))
+
+    reaction_coefficient
+        The function 'q'
+    reaction_function
+        The function 'c_nl'
+    Only for special Elements
+    """
+    linear = False
+
+    def __init__(self, grid, boundary_info, reaction_coefficient, reaction_function, reaction_function_derivative, rho, space_id = 'STATE', name = None):
+        self.__auto_init(locals())
+        self.source = self.range = CGVectorSpace(grid, space_id)
+
+    def apply(self, U, mu=None):
+        #macht es hier mehr Sinn wie test vorzugehen?
+        NonZeroIndices = np.where(self.rho != 0)[0]
+        U = U.to_numpy().ravel()
+        q, w = self.grid.reference_element.quadrature(order=2)
+        SF = LagrangeShapeFunctions[self.grid.reference_element][1]
+        SF = np.array(tuple(f(q) for f in SF))
+        #test1 = self.reaction_coefficient(self.grid.centers(0)[NonZeroIndices], mu = mu)
+        C = self.reaction_coefficient(self.grid.centers(0), mu=mu)
+        # C = reaction_coefficient(q, mu = mu) #Warum nehme ich nicht die Qaudraturpunkte?
+        subentities = self.grid.subentities(0, self.grid.dim)
+        #test2 = self.grid.subentities(0, self.grid.dim)[NonZeroIndices]
+        c_nl = np.zeros(np.shape(subentities))
+        #test3 = np.zeros((np.shape(test2)))
+        # Damit bin ich noch nicht zufrieden!
+        for e in NonZeroIndices:
+            u_dofs = U[subentities[e]]
+            wert = np.dot(u_dofs, SF)
+            wert = np.reshape(wert, (3, 1))
+            c_nl[e] = self.reaction_function(wert, mu = mu)
+        SF_INTS = np.einsum('ji,ei,e,e,i->ej', SF, c_nl, C, self.grid.volumes(0), w).ravel()
+
+        # for e in range(len(NonZeroIndices)):
+        #     u_dofs = U[test2[e]]
+        #     wert = np.dot(u_dofs, SF)
+        #     wert = np.reshape(wert, (3, 1))
+        #     test3[e] = self.reaction_function(wert)
+        # test4 =  np.einsum('ji,ei,e,e,i->ej', SF, test3, test1, self.grid.volumes(0)[NonZeroIndices], w).ravel()
+
+        del C, c_nl, SF
+        A_e = coo_matrix(([], ([], [])), shape=(self.grid.size(self.grid.dim), 1))
+        #test5 = coo_matrix(([], ([], [])), shape=(self.grid.size(self.grid.dim), 1))
+        SF_I = subentities.ravel()
+        for e in NonZeroIndices:
+            A_e = A_e + self.rho[e] * coo_matrix((SF_INTS[3 * e:3 * (e + 1)], (SF_I[3 * e:3 * (e + 1)], [0, 0, 0])),
+                                                 shape=(self.grid.size(self.grid.dim), 1)).toarray()
+        # test6 = test2.ravel()
+        # for e in range(len(NonZeroIndices)):
+        #     test5 = test5 + self.rho[NonZeroIndices[e]] * coo_matrix((test4[3 * e:3 * (e + 1)], (test6[3 * e:3 * (e + 1)], [0, 0, 0])),
+        #                                          shape=(self.grid.size(self.grid.dim), 1)).toarray()
+        DI = self.boundary_info.dirichlet_boundaries(self.grid.dim)
+        A_e[DI] = 0
+
+        del subentities, SF_INTS
+
+        return self.range.make_array(A_e.ravel())
+
+
+    def jacobian(self, U, mu = None):
+        U = U.to_numpy().ravel()
+        q, w = self.grid.reference_element.quadrature(order=2)
+        SF = LagrangeShapeFunctions[self.grid.reference_element][1]
+        SF = np.array(tuple(f(q) for f in SF))
+        C = self.reaction_coefficient(self.grid.centers(0), mu=mu)
+        # C = reaction_coefficient(q, mu = mu) #Warum nehme ich nicht die Qaudraturpunkte?
+        subentities = self.grid.subentities(0, self.grid.dim)
+        SF_I0 = np.repeat(self.grid.subentities(0, self.grid.dim), self.grid.dim + 1, axis=1).ravel()
+        SF_I1 = np.tile(self.grid.subentities(0, self.grid.dim), [1, self.grid.dim + 1]).ravel()
+        c_nl_prime = np.zeros(np.shape(subentities))
+        # Damit bin ich noch nicht zufrieden!
+        for e in range(self.grid.size(0)):
+            u_dofs = U[subentities[e]]
+            wert = np.dot(u_dofs, SF)
+            wert = np.reshape(wert, (3, 1))
+            c_nl_prime[e] = self.reaction_function_derivative(wert, mu = mu)
+        SF_INTS = np.einsum('pi,qi,ei,e,e,i->epq', SF, SF, c_nl_prime, C, self.grid.volumes(0), w).ravel()
+
+        del C, c_nl_prime, SF
+
+        if self.boundary_info.has_dirichlet:
+            SF_INTS = np.where(self.boundary_info.dirichlet_mask(self.grid.dim)[SF_I0], 0, SF_INTS)
+
+        #A_e_op = lil_matrix((self.grid.size(self.grid.dim), self.grid.size(self.grid.dim)))
+        A_e_op = coo_matrix(([],([],[])), shape = (self.grid.size(self.grid.dim), self.grid.size(self.grid.dim)))
+        NonZeroIndices = np.where(self.rho != 0)[0]
+        for e in NonZeroIndices:
+            A_e_op = A_e_op + self.rho[e] * coo_matrix((SF_INTS[9*e:9*(e+1)], (SF_I0[9*e:9*(e+1)], SF_I1[9*e:9*(e+1)])), shape = (self.grid.size(self.grid.dim), self.grid.size(self.grid.dim)))
+        DI = self.boundary_info.dirichlet_boundaries(self.grid.dim)
+        A_e_op.eliminate_zeros()
+        A_e_op = csc_matrix(A_e_op).copy()
+
+        del SF_INTS, SF_I0, SF_I1
+
+        return NumpyMatrixOperator(A_e_op, source_id = self.source.id, range_id = self.range.id)
+
+class quadratic_functional(Operator):
+    linear = False
+    """The following Operator
+
+    j(u,mu) = 1/2 * ||u - u_d||_{L^2}^2 + 1/2 ||mu - mu_d||_2^2
+
+    where mu_d is a given parameter and u_d = u(mu_d) is the solution of a parametrized PDE
+    for mu_d
+
+    """
+
+    def __init__(self, grid, u_d, mu_d, name = None):
+        self.__auto_init(locals())
+        self.source = CGVectorSpace(grid)
+        self.range = NumpyVectorSpace(1, id = 'STATE')
+
+    def apply(self, U, mu = None, element_contribution = False):
+        U = U.to_numpy().ravel()
+        U_d = self.u_d.to_numpy().ravel()
+        q, w = self.grid.reference_element.quadrature(order=2)
+        SF = LagrangeShapeFunctions[self.grid.reference_element][1]
+        SF = np.array(tuple(f(q) for f in SF))
+        subentities = self.grid.subentities(0, self.grid.dim)
+        from pymor.analyticalproblems.functions import ExpressionFunction
+        quadatric_function = ExpressionFunction('u[0] * u[0]', dim_domain = 1, variable = 'u')
+        F = np.zeros(np.shape(subentities))
+        # Damit bin ich noch nicht zufrieden!
+        dofs = U - U_d
+        for e in range(self.grid.size(0)):
+            u_dofs = dofs[subentities[e]]
+            wert = np.dot(u_dofs, SF)
+            wert = np.reshape(wert, (3, 1))
+            F[e] = quadatric_function(wert)
+        SF_INTS = np.einsum('ei,e,i->e', F, self.grid.volumes(0), w).ravel()
+        del F, SF, quadatric_function
+        A = 0.5 * sum(SF_INTS) + 0.5 * np.linalg.norm(mu.to_numpy() - self.mu_d.to_numpy())**2
+
+        if element_contribution:
+            A_e_list = []
+            grid_volumes = self.grid.volumes(0)
+            volume_grid = sum(grid_volumes)
+            norm_parameter = np.linalg.norm(mu.to_numpy() - self.mu_d.to_numpy())**2
+            for e in range(self.grid.size(0)):
+                A_e = 0.5 * SF_INTS[e] + 0.5 * grid_volumes[e]/volume_grid * norm_parameter
+                A_e_list.append(self.range.make_array(A_e))
+            del subentities, SF_INTS, grid_volumes, volume_grid, norm_parameter
+            return A, A_e_list
+
+        del SF_INTS, subentities
+        return A
+
+    def jacobian(self, U, mu=None, element_contribution = False):
+        U = U.to_numpy().ravel()
+        U_d = self.u_d.to_numpy().ravel()
+        q, w = self.grid.reference_element.quadrature(order=2)
+        SF = LagrangeShapeFunctions[self.grid.reference_element][1]
+        SF = np.array(tuple(f(q) for f in SF))
+        subentities = self.grid.subentities(0, self.grid.dim)
+        from pymor.analyticalproblems.functions import ExpressionFunction
+        quadatric_function_derivative = ExpressionFunction('2 * u[0]', dim_domain = 1, variable = 'u')
+        F = np.zeros(np.shape(subentities))
+        # Damit bin ich noch nicht zufrieden!
+        dofs = U - U_d
+        for e in range(self.grid.size(0)):
+            u_dofs = dofs[subentities[e]]
+            wert = np.dot(u_dofs, SF)
+            wert = np.reshape(wert, (3, 1))
+            F[e] = quadatric_function_derivative(wert)
+        SF_INTS = np.einsum('ji,ei,e,i->ej', SF, F, self.grid.volumes(0), w).ravel()
+        del F, SF, quadatric_function_derivative
+
+        A = coo_matrix((SF_INTS, (subentities.ravel(), np.zeros_like(subentities.ravel()))),
+                       shape=(self.grid.size(self.grid.dim), 1)).toarray().ravel()
+
+        if element_contribution:
+            A_e_list = []
+            SF_I = subentities.ravel()
+            # geht das auch anders als eine for-Schleife?
+            for e in range(self.grid.size(0)):
+                A_e = coo_matrix((SF_INTS[3 * e:3 * (e + 1)], (SF_I[3 * e:3 * (e + 1)], [0, 0, 0])),
+                                     shape=(self.grid.size(self.grid.dim), 1)).toarray().ravel()
+                A_e_list.append(NumpyMatrixOperator(A_e, source_id = self.source.id, range_id = self.range.id).H)
+            del SF_INTS, subentities, SF_I
+            return NumpyMatrixOperator(A, source_id = self.source.id, range_id = self.range.id).H, A_e_list
+
+        del SF_INTS, subentities
+        return NumpyMatrixOperator(A, source_id = self.source.id, range_id = self.range.id).H
+
+    def d_mu(self, mu, index = 0, element_contribution = False):
+        if element_contribution:
+            #Hier ignoriere ich mal kurz den Index!!!!
+            element_contribution_grid = self.grid.volumes(0)
+            grid_volume = sum(element_contribution_grid)
+            diff = mu.to_numpy() - self.mu_d.to_numpy()
+            A_e_list = []
+            for e in range(self.grid.size(0)):
+                A_e = element_contribution_grid[e]/grid_volume * diff
+                A_e_list.append(A_e)
+            return mu.to_numpy()[index] - self.mu_d.to_numpy()[index], A_e_list
+        return mu.to_numpy()[index] - self.mu_d.to_numpy()[index]
+
+
+class element_quadratic_functional(Operator):
+    """The following Operator
+
+    j(u,mu) = 1/2 * ||u - u_d||_{L^2}^2 + 1/2 ||mu - mu_d||_2^2
+
+    where mu_d is a given parameter and u_d = u(mu_d) is the solution of a parametrized PDE
+    for mu_d in Element_form
+
+    """
+
+    def __init__(self, grid, u_d, mu_d, rho = None, name = None):
+        self.__auto_init(locals())
+        self.source = CGVectorSpace(grid)
+        self.range = NumpyVectorSpace(1, id='STATE')
+
+    def apply(self, U, mu = None):
+        NonZeroIndices = np.where(self.rho != 0)[0]
+        U = U.to_numpy().ravel()
+        U_d = self.u_d.to_numpy().ravel()
+        q, w = self.grid.reference_element.quadrature(order=2)
+        SF = LagrangeShapeFunctions[self.grid.reference_element][1]
+        SF = np.array(tuple(f(q) for f in SF))
+        subentities = self.grid.subentities(0, self.grid.dim)[NonZeroIndices]
+        from pymor.analyticalproblems.functions import ExpressionFunction
+        quadatric_function = ExpressionFunction('u[0] * u[0]', dim_domain = 1, variable = 'u')
+        F = np.zeros(np.shape(subentities))
+        # Damit bin ich noch nicht zufrieden!
+        dofs = U - U_d
+        for e in range(len(NonZeroIndices)):
+            u_dofs = dofs[subentities[e]]
+            wert = np.dot(u_dofs, SF)
+            wert = np.reshape(wert, (3, 1))
+            F[e] = quadatric_function(wert)
+        SF_INTS = np.einsum('ei,e,i->e', F, self.grid.volumes(0)[NonZeroIndices], w).ravel()
+        del F, SF, quadatric_function
+        #da ||mu - mu_d|| keine Darstellung über die Summe aller Elemente besitzt, erzwinge ich diese durch
+        # || mu - mu_d || = \sum |\Omega_e| / |Omega| * || mu - mu_d ||
+
+        grid_volumes = self.grid.volumes(0)
+        element_contribution_grid = grid_volumes[NonZeroIndices]
+        volume_grid = sum(grid_volumes)
+        norm_parameter = np.linalg.norm(mu.to_numpy() - self.mu_d.to_numpy())**2
+        A_e = (self.rho[NonZeroIndices]).dot(0.5 * SF_INTS + 0.5 * element_contribution_grid/volume_grid * norm_parameter)
+        del SF_INTS, subentities, grid_volumes, element_contribution_grid, norm_parameter
+        return A_e
+
+    def jacobian(self, U, mu=None):
+        NonZeroIndices = np.where(self.rho != 0)[0]
+        U = U.to_numpy().ravel()
+        U_d = self.u_d.to_numpy().ravel()
+        q, w = self.grid.reference_element.quadrature(order=2)
+        SF = LagrangeShapeFunctions[self.grid.reference_element][1]
+        SF = np.array(tuple(f(q) for f in SF))
+        subentities = self.grid.subentities(0, self.grid.dim)[NonZeroIndices]
+        from pymor.analyticalproblems.functions import ExpressionFunction
+        quadatric_function_derivative = ExpressionFunction('2 * u[0]', dim_domain=1, variable='u')
+        F = np.zeros(np.shape(subentities))
+        # Damit bin ich noch nicht zufrieden!
+        dofs = U - U_d
+        for e in range(len(NonZeroIndices)):
+            u_dofs = dofs[subentities[e]]
+            wert = np.dot(u_dofs, SF)
+            wert = np.reshape(wert, (3, 1))
+            F[e] = quadatric_function_derivative(wert)
+        SF_INTS = np.einsum('ji,ei,e,i->ej', SF, F, self.grid.volumes(0)[NonZeroIndices], w).ravel()
+        del F, SF, quadatric_function_derivative
+        A_e = coo_matrix(([], ([],[])), shape = (self.grid.size(2), 1))
+
+        for e in range(len(NonZeroIndices)):
+            A_e = A_e + self.rho[NonZeroIndices[e]] * coo_matrix((SF_INTS[3*e:3*(e+1)], (subentities.ravel()[3*e:3*(e+1)], [0,0,0])), shape = (self.grid.size(self.grid.dim), 1))
+        del SF_INTS, subentities
+        return NumpyMatrixOperator(A_e.toarray().ravel(), source_id = self.source.id, range_id = self.range.id).H
+
+    def d_mu(self, mu, index = 0):
+        NonZeroIndices = np.where(self.rho != 0)[0]
+        element_contribution_grid = self.grid.volumes(0)[NonZeroIndices]
+        return sum(element_contribution_grid)/sum(self.grid.volumes(0)) * (mu.to_numpy()[index] - self.mu_d.to_numpy()[index])
+
 def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretizer=None,
                              grid_type=None, grid=None, boundary_info=None,
                              preassemble=True, mu_energy_product=None):
@@ -983,7 +1391,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
             :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
                              before preassembling operators.
     """
-    assert isinstance(analytical_problem, StationaryProblem)
+    # assert isinstance(analytical_problem, StationaryProblem)
     assert grid is None or boundary_info is not None
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
@@ -993,8 +1401,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     if not (p.nonlinear_advection # noqa: E714
             == p.nonlinear_advection_derivative
-            == p.nonlinear_reaction
-            == p.nonlinear_reaction_derivative
+            # == p.nonlinear_reaction
+            # == p.nonlinear_reaction_derivative
             is None):
         raise NotImplementedError
 
@@ -1073,6 +1481,11 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
             eLi += [ReactionOperator(grid, boundary_info, coefficient_function=p.reaction, dirichlet_clear_columns=True,
                                      dirichlet_clear_diag=True)]
         coefficients.append(1.)
+    # nonlinear reaction part
+    if p.nonlinear_reaction is not None:
+        Li += [NonlinearReactionOperator(grid, boundary_info, reaction_coefficient = p.nonlinear_reaction_coefficient,
+                                        reaction_function = p.nonlinear_reaction, reaction_function_derivative = p.nonlinear_reaction_derivative)]
+        coefficients += [1.]
 
     # robin boundaries
     if p.robin_data is not None:

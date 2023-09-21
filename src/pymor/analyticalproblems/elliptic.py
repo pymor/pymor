@@ -83,7 +83,7 @@ class StationaryProblem(ParametricObject):
     def __init__(self, domain,
                  rhs=None, diffusion=None,
                  advection=None, nonlinear_advection=None, nonlinear_advection_derivative=None,
-                 reaction=None, nonlinear_reaction=None, nonlinear_reaction_derivative=None,
+                 reaction=None, nonlinear_reaction_coefficient = None, nonlinear_reaction=None, nonlinear_reaction_derivative=None,
                  dirichlet_data=None, neumann_data=None, robin_data=None, outputs=None,
                  parameter_ranges=None, name=None):
 
