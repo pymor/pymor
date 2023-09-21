@@ -113,15 +113,18 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     Y = np.empty((0, 0))
 
     K = A.source.zeros(len(B)) if S is None else S.lincomb(Rinv) # Rinv symmetric
-    RF = cat_arrays([C.copy(), K.copy(deep=True)])
-
-    RC = spla.block_diag(np.eye(len(C)), np.eye(len(B)) if R is None else R)
+    if S is None:
+        RF = C.copy()
+        RC = np.eye(len(C))
+    else:
+        RF = cat_arrays([C.copy(), K.copy(deep=True)])
+        RC = spla.block_diag(np.eye(len(C)), np.eye(len(B)) if R is None else R)
 
     j = 0
     j_shift = 0
     shifts = init_shifts(A, E, B, C, shift_options)
 
-    res = np.linalg.norm(RF.gramian(), ord=2)
+    res = np.linalg.norm(RF.gramian() @ RC, ord='fro')
     init_res = res
     Ctol = res * options['tol']
 
