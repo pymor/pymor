@@ -2,7 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from collections import OrderedDict
 from collections.abc import Iterable, Mapping
 from weakref import WeakValueDictionary
 
@@ -394,25 +393,30 @@ class RuleTable(BasicObject, metaclass=RuleTableMeta):
 
 
 def print_children(obj):
-    def build_tree(obj):
 
-        def process_child(child):
+    from rich import print
+    from rich.tree import Tree
+
+    def process_children(obj, tree):
+        for child in sorted(RuleTable.get_children(obj)):
             c = getattr(obj, child)
             if isinstance(c, Mapping):
-                return child, OrderedDict((k + ': ' + v.name, build_tree(v)) for k, v in sorted(c.items()))
+                t = tree.add(child)
+                for k, v in sorted(c.items()):
+                    tt = t.add(f'{k}: {v.name}')
+                    process_children(v, tt)
             elif isinstance(c, Iterable):
-                return child, OrderedDict((str(i) + ': ' + v.name, build_tree(v)) for i, v in enumerate(c))
+                t = tree.add(child)
+                for i, v in enumerate(c):
+                    tt = t.add(f'{i}: {v.name}')
+                    process_children(v, tt)
             else:
-                return child + ': ' + c.name, build_tree(c)
+                t = tree.add(f'{child}: {c.name}')
+                process_children(c, t)
 
-        return OrderedDict(process_child(child) for child in sorted(RuleTable.get_children(obj)))
-
-    try:
-        from asciitree import LeftAligned
-        print(LeftAligned()({obj.name: build_tree(obj)}))
-    except ImportError:
-        from pprint import pprint
-        pprint({obj.name: build_tree(obj)})
+    tree = Tree(obj.name)
+    process_children(obj, tree)
+    print(tree)
 
 
 def format_rules(rules):
