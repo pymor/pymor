@@ -115,7 +115,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     K = A.source.zeros(len(B)) if S is None else S.lincomb(Rinv) # Rinv symmetric
     RF = cat_arrays([C.copy(), K.copy(deep=True)])
 
-    RC = spla.block_diag(np.eye(len(C)), R)
+    RC = spla.block_diag(np.eye(len(C)), np.eye(len(B)) if R is None else R)
 
     j = 0
     j_shift = 0
