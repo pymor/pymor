@@ -9,5 +9,5 @@ def qr(V, solver='gram_schmidt', **solver_kwargs):
         return gram_schmidt_vec(V, **solver_kwargs)
     elif solver == 'cholesky_qr':
         return cholesky_qr(V, **solver_kwargs)
-    elif solver == 'block_gram_schmidt'
+    elif solver == 'block_gram_schmidt':
         return block_gram_schmidt(V, **solver_kwargs)
