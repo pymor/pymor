@@ -10,7 +10,9 @@ import scipy.linalg as spla
 import scipy.sparse as sps
 
 from pymor.algorithms.lyapunov import _chol
-from pymor.algorithms.riccati import solve_pos_ricc_lrcf, solve_ricc_dense, solve_ricc_lrcf
+from pymor.algorithms.riccati import (
+    solve_pos_ricc_dense, solve_pos_ricc_lrcf, solve_ricc_dense, solve_ricc_lrcf
+)
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.algorithms.lyapunov import conv_diff_1d_fd, conv_diff_1d_fem, fro_norm, skip_if_missing_solver
 
@@ -124,6 +126,44 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
     for mat1, mat2 in zip(mat_old, mat_new):
         assert type(mat1) == type(mat2)
         assert np.all(mat1 == mat2)
+
+
+@pytest.mark.parametrize('m', m_list)
+@pytest.mark.parametrize('p', p_list)
+@pytest.mark.parametrize('with_E', [False, True])
+@pytest.mark.parametrize('with_R', [False, True])
+@pytest.mark.parametrize('with_S', [False, True])
+@pytest.mark.parametrize('trans', [False, True])
+@pytest.mark.parametrize('n', n_list_small)
+@pytest.mark.parametrize('solver', ricc_dense_solver_list)
+def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
+    skip_if_missing_solver(solver)
+
+    if not with_E:
+        A = conv_diff_1d_fd(n, 1, 1)
+        A = A.todense()
+        E = None
+    else:
+        A, E = conv_diff_1d_fem(n, 1, 1)
+        A = A.todense()
+        E = E.todense()
+    B = np.random.randn(n, m)
+    C = np.random.randn(p, n)
+    D = np.random.randn(p, m)
+    if not trans:
+        R0 = np.random.randn(p, p)
+        R = D.dot(D.T) + R0.dot(R0.T) if with_R else None
+        S = 1e-1 * D @ B.T if with_S else None
+    else:
+        R0 = np.random.randn(m, m)
+        R = D.T.dot(D) + R0.dot(R0.T) if with_R else None
+        S = 1e-1 * C.T @ D if with_S else None
+
+    X = solve_pos_ricc_dense(A, E, B, C, R, S, trans=trans, options=solver)
+
+    if not with_R:
+        R = np.eye(p if not trans else m)
+    assert relative_residual(A, E, B, C, -R, S, _chol(X), trans) < 1e-8
 
 
 @pytest.mark.parametrize('m', m_list)

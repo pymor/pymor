@@ -557,6 +557,51 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
     return X
 
 
+def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
+    """Compute the solution of a Riccati equation.
+
+    See :func:`pymor.algorithms.riccati.solve_pos_ricc_dense` for a general
+    description.
+
+    This function uses `scipy.linalg.solve_continuous_are`, which
+    is a dense solver.
+
+    Parameters
+    ----------
+    A
+        The matrix A as a 2D |NumPy array|.
+    E
+        The matrix E as a 2D |NumPy array| or `None`.
+    B
+        The matrix B as a 2D |NumPy array|.
+    C
+        The matrix C as a 2D |NumPy array|.
+    R
+        The matrix R as a 2D |NumPy array| or `None`.
+    S
+        The matrix S as a 2D |NumPy array| or `None`.
+    trans
+        Whether the first operator in the Riccati equation is
+        transposed.
+    options
+        The solver options to use (see
+        :func:`ricc_dense_solver_options`).
+
+    Returns
+    -------
+    X
+        Riccati equation solution as a |NumPy array|.
+    """
+    _solve_ricc_dense_check_args(A, E, B, C, R, S, trans)
+    options = _parse_options(options, ricc_dense_solver_options(), 'scipy', None, False)
+    if options['type'] != 'scipy':
+        raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
+    
+    if R is None:
+        R = np.eye(np.shape(C)[0] if not trans else np.shape(B)[1])
+    return solve_ricc_dense(A, E, B, C, -R, S, trans, options)
+
+
 def pos_ricc_lrcf_solver_options():
     """Return available positive Riccati solvers with default options for the SciPy backend.
 
