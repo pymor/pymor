@@ -9,10 +9,6 @@ from packaging.version import parse as parse_version
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 
-# AFAICT there is no robust way to query for loaded extensions
-# and we have to make sure we do not setup two redirects
-_extension_loaded = False
-
 
 @defaults('backend')
 def get_visualizer(backend='prefer_k3d'):
@@ -33,19 +29,3 @@ def get_visualizer(backend='prefer_k3d'):
     else:
         from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_patch
         return visualize_patch
-
-
-def load_ipython_extension(ipython):
-    global _extension_loaded
-    from pymor.discretizers.builtin.gui.jupyter.logging import redirect_logging
-    ipython.events.register('pre_run_cell', redirect_logging.start)
-    ipython.events.register('post_run_cell', redirect_logging.stop)
-    _extension_loaded = True
-
-
-def unload_ipython_extension(ipython):
-    global _extension_loaded
-    from pymor.discretizers.builtin.gui.jupyter.logging import redirect_logging
-    ipython.events.unregister('pre_run_cell', redirect_logging.start)
-    ipython.events.unregister('post_run_cell', redirect_logging.stop)
-    _extension_loaded = False
