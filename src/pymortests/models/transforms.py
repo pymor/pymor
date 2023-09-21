@@ -10,7 +10,8 @@ import pytest
 from pymor.models.iosys import LTIModel
 from pymor.models.transforms import BilinearTransformation, CayleyTransformation, MoebiusTransformation
 
-type_list = ['BilinearTransformation', 'CayleyTransformation', 'MoebiusTransformation-real', 'MoebiusTransformation-complex']
+type_list = ['BilinearTransformation', 'CayleyTransformation', 'MoebiusTransformation-real',
+             'MoebiusTransformation-complex']
 points_list = list(combinations([0, 1, -1, 1j, -1j, np.inf], 3))
 sampling_time_list = [0, 1/100, 2]
 
