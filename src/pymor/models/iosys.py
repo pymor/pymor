@@ -1699,6 +1699,9 @@ class PHLTIModel(LTIModel):
         """
         Convert a passive |LTIModel| to a |PHLTIModel|.
 
+        .. note::
+            The method uses dense computations and converts `model` to dense matrices.
+
         Parameters
         ----------
         model
@@ -1707,20 +1710,24 @@ class PHLTIModel(LTIModel):
             If `True`, the resulting |PHLTIModel| will have :math:`Q=I`.
         """
         # Determine solution of KYP inequality
-        L = VectorArrayOperator(model.gramian('pr_o_lrcf'), adjoint=True)
-        X = L.H @ L
+        X = model.gramian('pr_o_dense')
+        A, B, C, D, E = model.to_matrices()
+
+        XinvAT = np.linalg.solve(X, A.T)
+        AXinv = XinvAT.T # X is symmetric
+        XinvCT = np.linalg.solve(X, C.T)
 
         Q = X
-        E = model.E
-        J = 0.5 * (model.A @ InverseOperator(X) - InverseOperator(X) @ model.A.H)
-        R = -0.5 * (model.A @ InverseOperator(X) + InverseOperator(X) @ model.A.H)
-        G = 0.5 * (InverseOperator(X) @ model.C.H + model.B)
-        P = 0.5 * (InverseOperator(X) @ model.C.H - model.B)
-        S = 0.5 * (model.D + model.D.H)
-        N = 0.5 * (model.D - model.D.H)
+        J = 0.5 * (AXinv - XinvAT)
+        R = -0.5 * (AXinv + XinvAT)
+        G = 0.5 * (XinvCT + B)
+        P = 0.5 * (XinvCT - B)
+        S = 0.5 * (D + D.T)
+        N = 0.5 * (D - D.T)
 
-        return cls(E=E, J=J, R=R, G=G, P=P, S=S, N=N, Q=Q, solver_options=model.solver_options,
-                   error_estimator=model.error_estimator, visualizer=model.visualizer, name=model.name)
+        return PHLTIModel.from_matrices(J, R, G, P=P, S=S, N=N, E=E, Q=Q, solver_options=model.solver_options,
+                                        error_estimator=model.error_estimator, visualizer=model.visualizer,
+                                        name=model.name)
 
     def __str__(self):
         string = (

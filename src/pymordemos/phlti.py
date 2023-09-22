@@ -67,6 +67,11 @@ def main(
         t0 = perf_counter()
         for j, r in enumerate(reduced_order):
             rom = reductors[name](r)
+
+            if name in ('PRBT', 'spectral_factor'):
+               print('Converting ROM to PHLTIModel.')
+               rom = PHLTIModel.from_passive_LTIModel(rom)
+
             h2_errors[i, j] = (rom - fom).h2_norm() / fom.h2_norm()
         t1 = perf_counter()
         timings[name] = t1 - t0
