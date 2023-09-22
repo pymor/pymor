@@ -340,8 +340,16 @@ class LTIModel(Model):
                    time_stepper=time_stepper, num_values=num_values, presets=presets,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
-    def to_matrices(self):
+    def to_matrices(self, format=None):
         """Return operators as matrices.
+
+        Parameters
+        ----------
+        format
+            Format of the resulting matrices: |NumPy array| if 'dense',
+            otherwise the appropriate |SciPy spmatrix|.
+            If `None`, a choice between dense and sparse format is
+            automatically made.
 
         Returns
         -------
@@ -356,11 +364,37 @@ class LTIModel(Model):
         E
             The |NumPy array| or |SciPy spmatrix| E or `None` (if E is an `IdentityOperator`).
         """
-        A = to_matrix(self.A)
-        B = to_matrix(self.B)
-        C = to_matrix(self.C)
-        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D)
-        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E)
+        return self.to_abcde_matrices(format)
+    
+    def to_abcde_matrices(self, format=None):
+        """Return A, B, C and D operators as matrices.
+
+        Parameters
+        ----------
+        format
+            Format of the resulting matrices: |NumPy array| if 'dense',
+            otherwise the appropriate |SciPy spmatrix|.
+            If `None`, a choice between dense and sparse format is
+            automatically made.
+
+        Returns
+        -------
+        A
+            The |NumPy array| or |SciPy spmatrix| A.
+        B
+            The |NumPy array| or |SciPy spmatrix| B.
+        C
+            The |NumPy array| or |SciPy spmatrix| C.
+        D
+            The |NumPy array| or |SciPy spmatrix| D or `None` (if D is a `ZeroOperator`).
+        E
+            The |NumPy array| or |SciPy spmatrix| E or `None` (if E is an `IdentityOperator`).
+        """
+        A = to_matrix(self.A, format)
+        B = to_matrix(self.B, format)
+        C = to_matrix(self.C, format)
+        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D, format)
+        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format)
         return A, B, C, D, E
 
     @classmethod
@@ -1817,8 +1851,16 @@ class PHLTIModel(LTIModel):
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                    name=name)
 
-    def to_matrices(self):
+    def to_matrices(self, format=None):
         """Return operators as matrices.
+
+        Parameters
+        ----------
+        format
+            Format of the resulting matrices: |NumPy array| if 'dense',
+            otherwise the appropriate |SciPy spmatrix|.
+            If `None`, a choice between dense and sparse format is
+            automatically made.
 
         Returns
         -------
@@ -1839,14 +1881,14 @@ class PHLTIModel(LTIModel):
         Q
             The |NumPy array| or |SciPy spmatrix| Q  or `None` (if Q is an `IdentityOperator`).
         """
-        J = to_matrix(self.J)
-        R = to_matrix(self.R)
-        G = to_matrix(self.G)
-        P = None if isinstance(self.P, ZeroOperator) else to_matrix(self.P)
-        S = None if isinstance(self.S, ZeroOperator) else to_matrix(self.S)
-        N = None if isinstance(self.N, ZeroOperator) else to_matrix(self.N)
-        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E)
-        Q = None if isinstance(self.Q, IdentityOperator) else to_matrix(self.Q)
+        J = to_matrix(self.J, format)
+        R = to_matrix(self.R, format)
+        G = to_matrix(self.G, format)
+        P = None if isinstance(self.P, ZeroOperator) else to_matrix(self.P, format)
+        S = None if isinstance(self.S, ZeroOperator) else to_matrix(self.S, format)
+        N = None if isinstance(self.N, ZeroOperator) else to_matrix(self.N, format)
+        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format)
+        Q = None if isinstance(self.Q, IdentityOperator) else to_matrix(self.Q, format)
 
         return J, R, G, P, S, N, E, Q
 
