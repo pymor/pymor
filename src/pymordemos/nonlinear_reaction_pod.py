@@ -11,7 +11,7 @@ l = ExpressionFunction('100 * sin(2 * pi * x[0]) * sin(2 * pi * x[1])', dim_doma
 parameters = Parameters({'reaction': 2})
 diffusion = ConstantFunction(1,2)
 
-diameter = 1/100
+diameter = 1/40
 this_mu = [10, 10]
 
 nonlinear_reaction_coefficient = ConstantFunction(1,2)
