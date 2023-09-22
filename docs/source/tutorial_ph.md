@@ -138,7 +138,11 @@ to be nonsingular. The MSD example has a zero {math}`D` matrix. Therefore,
 we have to add a small regularization feedthrough term, i.e., we replace $D$ with
 $D+\varepsilon I_m$. This is a limitation of the current implementation since the
 numerical solution of the KYP-LMI is obtained by solving a related Riccati
-equation, which is only possible if $D + D^\top$ is nonsingular.
+equation, for instance 
+```{math}
+A^T X E + E^T X A+ (C^T - E^T X B) (D + D^T)^{-1} (C - B^T X E) = 0,
+```
+which is only possible if $D + D^\top$ is nonsingular.
 For {func}`~pymor.models.iosys.PHLTIModel.from_passive_LTIModel`, $D + D^\top$ must be
 nonsingular for the same reasons.
 
