@@ -14,7 +14,7 @@ class StationaryProblem(ParametricObject):
     The problem consists in solving ::
 
         - ∇ ⋅ [d(x, μ) ∇ u(x, μ)] + ∇ ⋅ [f_l(x, μ)u(x, μ)]
-        + ∇ ⋅ f_n(u(x, μ), μ) + c_l(x, μ) + c_n(u(x, μ), μ) = g(x, μ)
+        + ∇ ⋅ f_n(u(x, μ), μ) + c_l(x, μ) u(x, μ) + c_n(u(x, μ), μ) = g(x, μ)
 
     for u.
 
