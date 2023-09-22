@@ -6,7 +6,6 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.lyapunov import _chol, solve_cont_lyap_dense
-from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import ZeroOperator

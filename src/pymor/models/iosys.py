@@ -40,7 +40,6 @@ from pymor.operators.constructions import (
     LincombOperator,
     LinearInputOperator,
     LowRankOperator,
-    VectorArrayOperator,
     VectorOperator,
     ZeroOperator,
 )
@@ -365,7 +364,7 @@ class LTIModel(Model):
             The |NumPy array| or |SciPy spmatrix| E or `None` (if E is an `IdentityOperator`).
         """
         return self.to_abcde_matrices(format)
-    
+
     def to_abcde_matrices(self, format=None):
         """Return A, B, C and D operators as matrices.
 

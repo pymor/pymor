@@ -10,9 +10,7 @@ import scipy.linalg as spla
 import scipy.sparse as sps
 
 from pymor.algorithms.lyapunov import _chol
-from pymor.algorithms.riccati import (
-    solve_pos_ricc_dense, solve_pos_ricc_lrcf, solve_ricc_dense, solve_ricc_lrcf
-)
+from pymor.algorithms.riccati import solve_pos_ricc_dense, solve_pos_ricc_lrcf, solve_ricc_dense, solve_ricc_lrcf
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymortests.algorithms.lyapunov import conv_diff_1d_fd, conv_diff_1d_fem, fro_norm, skip_if_missing_solver
 

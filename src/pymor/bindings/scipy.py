@@ -596,7 +596,7 @@ def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
     options = _parse_options(options, ricc_dense_solver_options(), 'scipy', None, False)
     if options['type'] != 'scipy':
         raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
-    
+
     if R is None:
         R = np.eye(np.shape(C)[0] if not trans else np.shape(B)[1])
     return solve_ricc_dense(A, E, B, C, -R, S, trans, options)
