@@ -12,13 +12,13 @@ import k3d
 import numpy as np
 from ipywidgets import GridspecLayout, Label, Layout, VBox, jslink
 from k3d.plot import Plot as K3DPlot
-from matplotlib.cm import get_cmap
 from matplotlib.colors import Colormap
 
 from pymor.core.defaults import defaults
 from pymor.discretizers.builtin.grids.constructions import flatten_grid
 from pymor.discretizers.builtin.grids.referenceelements import triangle
 from pymor.discretizers.builtin.gui.jupyter.animation_widget import AnimationWidget
+from pymor.discretizers.builtin.gui.matplotlib_base import get_cmap
 from pymor.vectorarrays.interface import VectorArray
 
 
