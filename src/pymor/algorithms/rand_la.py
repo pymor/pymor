@@ -161,7 +161,7 @@ class RandomizedNormEstimator(BasicObject):
                 complement_basis_size = len(self.complement_basis)
             assert complement_basis_size <= len(self.complement_basis)
             norms = np.sqrt(
-                np.abs(norms**2) - spla.norm(self._projection_coeffs[:num_testvecs, :complement_basis_size], axis=1)**2
+                np.abs(norms**2 - spla.norm(self._projection_coeffs[:num_testvecs, :complement_basis_size], axis=1)**2)
             )
 
         c = np.sqrt(2 * self.lambda_min) * erfinv(p_fail ** (1 / num_testvecs))
