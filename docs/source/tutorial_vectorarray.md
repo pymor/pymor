@@ -170,7 +170,7 @@ vector_array
 Do not use {meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
 in generic code that is supposed to work with arbitrary external solvers that might
 not support converting data from NumPy or only at high costs.
-Using it is fine, however, when you now that you are dealing with {{ NumpyVectorArrays }},
+Using it is fine, however, when you know that you are dealing with {{ NumpyVectorArrays }},
 for instance when building ROMs.
 ```
 
