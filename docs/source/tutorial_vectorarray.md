@@ -685,3 +685,6 @@ As most PDE solver libraries only know of single vectors and have no notion of a
 {class}`~pymor.vectorarrays.list.ListVectorArrayImpl`.
 In that case, only the interface methods for a single {class}`~pymor.vectorarrays.list.Vector` object
 have to be implemented.
+Note that for NumPy-based data, {{ NumpyVectorArray }} is the default {{ VectorArray }} type used throughout
+pyMOR, as it can benefit from vectorized operations on the underlying NumPy array.
+{class}`~pymor.vectorarrays.list.NumpyListVectorSpace` is only implemented in pyMOR for testing purposes.
