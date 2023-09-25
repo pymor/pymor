@@ -81,7 +81,7 @@ set_log_format()
 def auto_load_jupyter_extension(enabled=True):
     if not enabled:
         return
-    if is_jupyter():
+    if is_jupyter() and config.HAVE_IPYWIDGETS:
         from IPython import get_ipython
         ip = get_ipython()
         ip.run_line_magic('load_ext', 'pymor.tools.jupyter')
