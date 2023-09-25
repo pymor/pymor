@@ -472,12 +472,14 @@ def misc_operator_with_arrays_and_products_factory(n):
         from pymor.operators.numpy import NumpyHankelOperator
         s1, s2, p, m = 4, 2, 2, 3
         c, r = np.random.rand(s1, p, m), np.random.rand(s2, p, m)
+        r[0] = c[-1]
         op = NumpyHankelOperator(c, r=r)
         return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
     elif n == 15:
         from pymor.operators.numpy import NumpyToeplitzOperator
         s1, s2, p, m = 4, 2, 2, 3
-        c = np.random.rand(s1, p, m), np.random.rand(s2, p, m)
+        c, r = np.random.rand(s1, p, m), np.random.rand(s2, p, m)
+        r[0] = c[0]
         op = NumpyToeplitzOperator(c, r=r)
         return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
     else:
