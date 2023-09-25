@@ -579,7 +579,7 @@ class NumpyToeplitzOperator(NumpyCirculantOperator):
         assert U in self.source
         n, _, m = self._arr.shape
         U = np.concatenate([U.to_numpy().T, np.zeros((n*m - U.dim, len(U)))])
-        return self.range.make_array(self._circular_matvec(U)[:self.range.dim])
+        return self.range.make_array(self._circular_matvec(U)[:, :self.range.dim])
 
     @property
     def H(self):
@@ -661,7 +661,7 @@ class NumpyHankelOperator(NumpyCirculantOperator):
         x = np.zeros((n*m, U.shape[1]), dtype=U.dtype)
         for j in range(m):
             x[:self.source.dim][j::m] = np.flip(U[j::m], axis=0)
-        return self.range.make_array(self._circular_matvec(x)[:self.range.dim])
+        return self.range.make_array(self._circular_matvec(x)[:, :self.range.dim])
 
     @property
     def H(self):
