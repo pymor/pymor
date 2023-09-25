@@ -85,11 +85,16 @@ def newton(operator, rhs, initial_guess=None, mu=None, range_product=None, sourc
     data
         Dict containing the following fields:
 
-            :solution_norms:  |NumPy array| of the solution norms after each iteration.
-            :update_norms:    |NumPy array| of the norms of the update vectors for each iteration.
-            :residual_norms:  |NumPy array| of the residual norms after each iteration.
-            :stages:          See `return_stages`.
-            :residuals:       See `return_residuals`.
+        :solution_norms:
+            |NumPy array| of the solution norms after each iteration.
+        :update_norms:
+            |NumPy array| of the norms of the update vectors for each iteration.
+        :residual_norms:
+            |NumPy array| of the residual norms after each iteration.
+        :stages:
+            See `return_stages`.
+        :residuals:
+            See `return_residuals`.
 
     Raises
     ------

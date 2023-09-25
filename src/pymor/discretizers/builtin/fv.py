@@ -944,10 +944,12 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     data
         Dictionary with the following entries:
 
-            :grid:           The generated |Grid|.
-            :boundary_info:  The generated |BoundaryInfo|.
-            :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
-                             before preassembling operators.
+        :grid:
+            The generated |Grid|.
+        :boundary_info:
+            The generated |BoundaryInfo|.
+        :unassembled_m:
+            In case `preassemble` is `True`, the generated |Model| before preassembling operators.
     """
     assert isinstance(analytical_problem, StationaryProblem)
     assert grid is None or boundary_info is not None
@@ -1161,10 +1163,12 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
     data
         Dictionary with the following entries:
 
-            :grid:           The generated |Grid|.
-            :boundary_info:  The generated |BoundaryInfo|.
-            :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
-                             before preassembling operators.
+        :grid:
+            The generated |Grid|.
+        :boundary_info:
+            The generated |BoundaryInfo|.
+        :unassembled_m:
+            In case `preassemble` is `True`, the generated |Model| before preassembling operators.
     """
     assert isinstance(analytical_problem, InstationaryProblem)
     assert isinstance(analytical_problem.stationary_part, StationaryProblem)
