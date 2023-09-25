@@ -86,11 +86,6 @@ slycot = [
     "slycot>=0.5.4",
 ]
 
-# dense and sparse matrix equation solvers for system-theoretic methods (recommended to be installed from source)
-pymess = [
-    "pymess"
-]
-
 # parallelization of some MOR algorithms (e.g. greedy search) using ipyparallel
 ipyparallel = [
     "ipyparallel>=6.2.5",
@@ -154,7 +149,6 @@ scikit-fem = [
 ## Meta dependencies
 
 # install all optional dependencies, except those requiring a compiler toolchain to build
-# pymess is excluded here as installation from source is recommended by the developers
 full = [
     "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,dune,ngsolve,scikit-fem]",
 ]
