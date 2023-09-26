@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
@@ -6,10 +7,10 @@ import numpy as np
 from typer import Option, run
 
 from pymor.algorithms.phdmd import phdmd
+from pymor.models.examples import msd_example
 from pymor.models.iosys import PHLTIModel
 from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
-from pymordemos.phlti import msd
 
 
 def main(
@@ -24,7 +25,7 @@ def main(
     A Mass-Spring-Damper system is used as full order model and
     reduced order model. Both of these are then inferred using pH DMD.
     """
-    J, R, G, P, S, N, E, Q = msd(n=fom_order, m=1)
+    J, R, G, P, S, N, E, Q = msd_example(n=fom_order, m=1)
 
     fom = PHLTIModel.from_matrices(J, R, G, P, S, N, E, Q).to_berlin_form()
     fom_H = E.T @ Q
@@ -38,19 +39,12 @@ def main(
 
     fom_state_space = fom.solution_space
     rom_state_space = rom.solution_space
-    io_space = fom.G.source
 
     fom_initial = np.zeros(fom_state_space.dim)
     rom_initial = np.zeros(rom_state_space.dim)
 
     fom_X, U, fom_Y, _ = _implicit_midpoint(fom, excitation_control, fom_initial, training_time_stamps)
     rom_X, _, rom_Y, _ = _implicit_midpoint(rom, excitation_control, rom_initial, training_time_stamps)
-
-    fom_X = fom_state_space.from_numpy(fom_X.T)
-    rom_X = rom_state_space.from_numpy(rom_X.T)
-    fom_Y = io_space.from_numpy(fom_Y.T)
-    rom_Y = io_space.from_numpy(rom_Y.T)
-    U = io_space.from_numpy(U.T)
 
     inf_fom, fom_data = phdmd(fom_X, fom_Y, U, H=fom_H, dt=dt, rtol=1e-8)
     inf_rom, rom_data = phdmd(rom_X, rom_Y, U, H=rom_H, dt=dt)
