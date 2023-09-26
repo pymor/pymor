@@ -68,28 +68,19 @@ class GenericBHIReductor(BasicObject):
         self._product = None
 
     def _B_apply(self, s, V):
-        mu = Mu({'s': [s], **self.mu})
+        mu = self.mu.with_(s=s)
         return self.fom.transfer_function.B.apply(V, mu=mu)
 
     def _C_apply_adjoint(self, s, V):
-        mu = Mu({
-            's': [s],
-            **self.mu
-        })
+        mu = self.mu.with_(s=s)
         return self.fom.transfer_function.C.apply_adjoint(V, mu=mu)
 
     def _K_apply_inverse(self, s, V):
-        mu = Mu({
-            's': [s],
-            **self.mu
-        })
+        mu = self.mu.with_(s=s)
         return self.fom.transfer_function.K.apply_inverse(V, mu=mu)
 
     def _K_apply_inverse_adjoint(self, s, V):
-        mu = Mu({
-            's': [s],
-            **self.mu
-        })
+        mu = self.mu.with_(s=s)
         return self.fom.transfer_function.K.apply_inverse_adjoint(V, mu=mu)
 
     @abstractmethod
