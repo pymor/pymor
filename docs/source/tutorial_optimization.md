@@ -613,7 +613,7 @@ The online phase is even faster but the offline time of course remains the same.
 We also conclude that the ROM model eventually gives less speedup by using a better optimization
 method for the FOM and ROM.
 
-## Beyond the traditional offline/online splitting: enrich along the path of optimization
+## Adaptive trust-region optimization
 
 We already figured out that the main drawback for using RB methods in the
 context of optimization is the expensive offline time to build the
@@ -630,164 +630,17 @@ gives hope that there must exist a more efficient way of using RB
 methods without trying to approximate the FOM across the
 whole parameter space.
 
-One possible way for advanced RB methods is a reduction along the path
-of optimization. The idea is that we start with an empty basis and only
-enrich the model with the parameters that we will arrive at. This
-approach goes beyond the classical offline/online splitting of RB
-methods since it entirely skips the offline phase. In the following
-code, we will test this method.
-
-```{code-cell}
-pdeopt_reductor = CoerciveRBReductor(
-    fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
-```
-
-In the next function, we implement the above mentioned way of enriching
-the basis along the path of optimization.
-
-```{code-cell}
-def enrich_and_compute_objective_function(mu, data, opt_dict):
-    U = fom.solve(mu)
-    try:
-        pdeopt_reductor.extend_basis(U)
-        data['enrichments'] += 1
-    except:
-        print('Extension failed')
-    opt_rom = pdeopt_reductor.reduce()
-    QoI = opt_rom.output(mu)
-    return QoI, data, opt_rom
-
-def compute_gradient_with_opt_rom(opt_dict, mu):
-    opt_rom = opt_dict['opt_rom']
-    return opt_rom.output_d_mu(opt_rom.parameters.parse(mu)).to_numpy()
-```
-
-With this definitions, we can start the optimization method.
-
-```{code-cell}
-opt_along_path_minimization_data = prepare_data(enrichments=True)
-
-opt_dict = {}
-opt_along_path_result = optimize(enrich_and_compute_objective_function,
-                                 opt_along_path_minimization_data, ranges,
-                                 gradient=partial(compute_gradient_with_opt_rom, opt_dict),
-                                 adaptive_enrichment=True, opt_dict=opt_dict)
-```
-
-```{code-cell}
-report(opt_along_path_result, opt_along_path_minimization_data, reference_mu)
-```
-
-The computational time looks at least better than the FOM optimization
-and we are very close to the reference parameter.
-But we are following the exact same path than the
-FOM and thus we need to solve the FOM model as often as before
-(due to the enrichments). The only computational time that we safe is the one
-for the gradients since we compute the dual solutions with the ROM.
-
-## Adaptively enriching along the path
-
-In order to further speedup the above algorithm, we enhance it
-by only adaptive enrichments of the model.
-For instance it may happen that the model is already good at
-the next iteration, which we can easily check by evaluating the standard
-error estimator which is also used in the greedy algorithm. In the next
-example we will implement this adaptive way of enriching and set a
-tolerance which is equal to the one that we had as error tolerance
-in the greedy algorithm.
-
-```{code-cell}
-pdeopt_reductor = CoerciveRBReductor(
-    fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
-opt_rom = pdeopt_reductor.reduce()
-```
-
-```{code-cell}
-def enrich_adaptively_and_compute_objective_function(mu, data, opt_dict):
-    opt_rom = opt_dict['opt_rom']
-    primal_estimate = opt_rom.estimate_error(opt_rom.parameters.parse(mu))
-    if primal_estimate > 1e-2:
-        print('Enriching the space because primal estimate is {} ...'.format(primal_estimate))
-        U = fom.solve(mu)
-        try:
-            pdeopt_reductor.extend_basis(U)
-            data['enrichments'] += 1
-            opt_rom = pdeopt_reductor.reduce()
-        except:
-            print('... Extension failed')
-    else:
-        print('Do NOT enrich the space because primal estimate is {} ...'.format(primal_estimate))
-    opt_rom = pdeopt_reductor.reduce()
-    QoI = opt_rom.output(mu)[0, 0]
-    return QoI, data, opt_rom
-```
-
-```{code-cell}
-opt_along_path_adaptively_minimization_data = prepare_data(enrichments=True)
-
-opt_dict = {'opt_rom': opt_rom}
-opt_along_path_adaptively_result = optimize(enrich_adaptively_and_compute_objective_function,
-                                            opt_along_path_adaptively_minimization_data, ranges,
-                                            gradient=partial(compute_gradient_with_opt_rom, opt_dict),
-                                            adaptive_enrichment=True, opt_dict=opt_dict)
-```
-
-```{code-cell}
-report(opt_along_path_adaptively_result, opt_along_path_adaptively_minimization_data, reference_mu)
-```
-
-Now, we actually only needed {math}`4` enrichments and ended up with an
-approximation error of about `1e-07` while getting the highest speed up
-amongst all methods that we have seen above. Note, however, that this is
-still dependent on the tolerance `atol=1e-2` that we chose without
-knowing that this tolerance suffices to reach the actual minimum.
-An easy way around this would be to do one optimization step with the FOM
-after converging. If this changes anything, the ROM tolerance `atol`
-was too large.
-
-```{code-cell}
-print('FOM with finite differences')
-report(fom_result, reference_minimization_data, reference_mu)
-
-print('\nROM with finite differences')
-report(rom_result, RB_minimization_data, reference_mu)
-
-print('\nFOM with gradient')
-report(opt_fom_result, opt_fom_minimization_data, reference_mu)
-
-print('\nROM with gradient')
-report(opt_rom_result, opt_rom_minimization_data, reference_mu)
-
-print('\nAlways enrich along the path')
-report(opt_along_path_result, opt_along_path_minimization_data, reference_mu)
-
-print('\nAdaptively enrich along the path')
-report(opt_along_path_adaptively_result, opt_along_path_adaptively_minimization_data, reference_mu)
-```
-
-```{code-cell}
-:tags: [remove-cell]
-
-assert fom_result.nit == 7
-assert opt_along_path_result.nit == 7
-assert opt_along_path_minimization_data['num_evals'] == 9
-assert opt_along_path_minimization_data['enrichments'] == 9
-assert opt_along_path_adaptively_minimization_data['enrichments'] == 4
-```
-
-## Adaptive trust-region optimization
-
-Moreover, we can use trust-region methods to extend the adaptive enrichment with
-respect to the underlying error estimator.
-In the trust-region method, we replace the global problem with local surrogates,
+To this end, we can use trust-region methods to adaptively enrich the ROM with respect to
+the underlying error estimator.
+In the trust-region method, we iteratively replace the global problem with local surrogates,
 compute local solutions to these surrogate problems, and enhance the surrogate models
-when we either are close to the border of the trust-region or when the model confidence
+when we either are close to the boundary of the trust-region or when the model confidence
 decreases such that we require more data.
-In effect, this creates two loops: the outer iterates over global parameter space and
-constructs local trust-regions along with their corresponding surrogates, whereas the
-inner solves the local problems with BFGS.
-For a fixed parameter in the outer iteration {math}`\mu` and the current surrogate model
-{math}`J_r`, this approach takes the shape
+Thus, the TR consists of one outer loop and many inner loops. The outer loop iterates over
+global parameter space and constructs local trust-regions along with their corresponding
+surrogates, whereas the inner loops use a modified version of the projected BFGS to solve
+the local problems. For a fixed parameter in the outer iteration {math}`\mu` and the current
+surrogate model {math}`J_r`, the local problems can be written as
 
 ```{math}
 \min_{\mu + s \in \Delta} J_r(u_{\mu + s}, \mu + s),  \tag{\hat{P}_r}.
@@ -802,20 +655,22 @@ e_r(\mu + s) < \tau.
 ```
 
 In metric settings such as with the {math}`2`-norm, these trust-regions correspond to
-open balls of radius {math}`\tau`, however the typical estimators in this tutorial's
-setting create much more complex shapes.
+open balls of radius {math}`\tau`, however using model reduction estimators as estimators
+in this tutorial's setting creates much more complex shapes.
 
 The adaptive component of this algorithm is the choice of the trust-radius and the enrichment.
-If a local optimization in the inner loop fails, we retry the surrogate problem with a
-smaller trust-region, thus limiting the use of the current model.
+If a local optimization in an inner loop fails, we retry the surrogate problem with a
+smaller trust-region, thus limiting the trustworthiness of the current model.
 In contrast, when we quickly converge close to the boundary of the trust-region, it is a
-reasonable assumption that the globally optimal parameter is outside of the current region,
-therefore allowing us to enlarge the radius to include more parameter options in the
-inner optimization problem.
-After computing an inner solution we then have the option to keep the current surrogate
-model or enrich it by adding the solution snapshot of the current local optimum.
-In this sense, the adaptive trust-region algorithm resembles the adaptive path
-enrichment described above.
+reasonable assumption that the globally optimal parameter is outside of the trust-region
+and thus we stop the inner iteration. After computing an inner solution we then have the
+option to keep the current surrogate model, enlarge the trust-radius of the local model
+or further enrich it by adding the solution snapshot of the current local optimum.
+In this sense, the adaptive trust-region algorithm can reduce the number of FOM evaluations
+by estimating if the current surrogate is trustworthy enough to increase the trust-radius
+and only enrich the model if the estimated quality is no longer sufficient.
+
+The algorithm described above can be executed as follows.
 
 ```{code-cell}
 from pymor.algorithms.tr import coercive_rb_trust_region
@@ -824,38 +679,62 @@ pdeopt_reductor = CoerciveRBReductor(
     fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
 
 tic = perf_counter()
-tr_mu, tr_data = coercive_rb_trust_region(pdeopt_reductor, parameter_space=parameter_space,
+tr_mu, tr_minimization_data = coercive_rb_trust_region(pdeopt_reductor, parameter_space=parameter_space,
                                             initial_guess=np.array(initial_guess))
 toc = perf_counter()
 
-tr_data['time'] = toc - tic
+tr_minimization_data['time'] = toc - tic
 tr_output = fom.output(tr_mu)[0, 0]
 ```
 
-Again, we only need {math}`4` enrichments and ended up with an approximation
-error of about `1e-06` which is comparable to the result obtained from adaptive
-enrichment. Unfortunately, the trust-region method takes longer because of
+Now, we only need {math}`4` enrichments and end up with an approximation
+error of about `1e-06` which is comparable to the result obtained from the
+previous methods. Unfortunately, the trust-region method takes longer because of
 the overhead of ROM evaluations and line searches performed in the BFGS step.
 To conclude, we once again compare all methods that we have discussed in this notebook.
 
 ```{code-cell}
 from pymordemos.trust_region import report as tr_report
+reference_fun = fom_objective_functional(reference_mu)
 
-tr_report(tr_mu, tr_output, reference_mu, fom_objective_functional(reference_mu), tr_data,
-        parameter_space.parameters.parse, descriptor=' of optimization with adaptive ROM model and TR method')
+print('FOM with finite differences')
+report(fom_result, reference_minimization_data, reference_mu)
+
+print('\nROM with finite differences')
+report(rom_result, RB_minimization_data, reference_mu)
+
+print('\nFOM with gradient')
+report(opt_fom_result, opt_fom_minimization_data, reference_mu)
+
+print('\nROM with gradient')
+report(opt_rom_result, opt_rom_minimization_data, reference_mu)
+
+tr_report(tr_mu, tr_output, reference_mu, reference_fun, tr_minimization_data,
+    parameter_space.parameters.parse, descriptor=' of optimization with adaptive ROM model and TR method')
 ```
+
+It is apparent that for this example, no drastic changes occur when using different
+methods. Importantly, all ROM methods are noticeably faster than the FOM-based methods,
+but due to the simplicity of the model under consideration the adaptive trust-region
+algorithm is slightly slower than the other two ROM methods. It is expected that this
+downside no longer happens for problems of a larger scale. Crucially, the number of
+necessary FOM evaluations in the trust-region is smaller than for the other methods
+because we use the information in the local surrogates more efficiently.
 
 ```{code-cell}
 :tags: [remove-cell]
 
-subproblem_data = tr_data['subproblem_data']
+subproblem_data = tr_minimization_data['subproblem_data']
 
-assert tr_data['fom_evaluations'] == 7
-assert tr_data['rom_evaluations'] == 224
-assert tr_data['enrichments'] == 4
+assert tr_minimization_data['fom_evaluations'] == 7
+assert tr_minimization_data['rom_evaluations'] == 224
+assert tr_minimization_data['enrichments'] == 4
 assert sum([subproblem_data[i]['iterations'] for i in range(len(subproblem_data))]) == 18
 assert sum(np.concatenate([subproblem_data[i]['line_search_iterations'] for i in range(len(subproblem_data))])) == 114
 ```
+
+Note: A more extensive showcase of the trust-region methods is implemented
+in the respective demo {mod}`~pymordemos.trust_region`.
 
 ## Conclusion and some general words about MOR methods for optimization
 
@@ -870,10 +749,8 @@ optimization problem needs to be solved multiple times.
 Moreover, we focused on the lack of overall efficiency of standard RB methods.
 To overcome this, we reduced the (normally) expensive offline time by choosing larger
 tolerances for the greedy algorithm.
-We have also seen a way to overcome
-the traditional offline/online splitting by only enriching the model along
-the path of optimization or (even better) only enrich
-the model if the standard error estimator goes above a certain tolerance.
+We have also seen a way to efficiently use local surrogate models in a trust-region
+algorithm to reduce the number of FOM evaluations required during optimization.
 
 In this tutorial we have only covered a few basic approaches to combine model
 reduction with optimization.
@@ -886,9 +763,6 @@ PDE-constrained optimization problems we refer to
 [QGVW17](<https://epubs.siam.org/doi/abs/10.1137/16M1081981>) and
 [KMSOV20](<https://doi.org/10.1051/m2an/2021019>) where for the latter a pyMOR
 implementation is available as supplementary material.
-
-Update: The trust-region methods are by now implemented in pyMOR which is shown
-in the respective demo {mod}`~pymordemos.trust_region`.
 
 Download the code:
 {download}`tutorial_optimization.md`
