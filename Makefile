@@ -32,6 +32,7 @@ test:
 
 docs:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
+	./docs/fix_myst_in_notebooks.sh
 
 ci_preflight_image:
 	$(DOCKER) build -t pymor/ci-preflight -f $(THIS_DIR)/docker/Dockerfile.ci-preflight $(THIS_DIR)
@@ -68,7 +69,7 @@ ci_oldest_requirements:
 		cd /src && \
 		pip install pip-tools==6.13.0 && \
 		pip-compile --resolver backtracking \
-			$(CI_EXTRAS) --extra pymess \
+			$(CI_EXTRAS) \
 			--extra-index-url https://download.pytorch.org/whl/cpu \
 			-o requirements-ci-oldest.txt \
 			pyproject.toml requirements-ci-oldest-pins.in \
@@ -99,7 +100,7 @@ CONDA_EXTRAS = \
 	--extras gui \
 	--extras jupyter \
 	--extras vtk
-	# pymess, dune, ngsolve, scikit-fem (no recent version) not available as conda-forge packages
+	# dune, ngsolve, scikit-fem (no recent version) not available as conda-forge packages
 	# pytorch not available for win64
 	# docs-additional not needed
 	# gmsh is incompatible with pyside6>=6.4.3 needed for windows ci not to hang

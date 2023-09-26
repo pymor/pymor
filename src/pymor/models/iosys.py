@@ -807,8 +807,8 @@ class LTIModel(Model):
         y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
         for i, X in enumerate(Xs):
             y[:, :, i] = self.C.apply(X, mu=mu).to_numpy()
-        if self.sampling_time > 0 and isinstance(self.D, ZeroOperator):
-            y[0] += to_matrix(self.D, mu=mu, format='dense')
+        if self.sampling_time > 0 and not isinstance(self.D, ZeroOperator):
+            y[0] += to_matrix(self.D, mu=mu, format='dense') / self.sampling_time
 
         if return_solution:
             return y, Xs
@@ -1184,11 +1184,19 @@ class LTIModel(Model):
         """
         if 'hinf_norm' in self.presets:
             hinf_norm = self.presets['hinf_norm']
+        elif not return_fpeak:
+            hinf_norm = self.linf_norm(mu=mu, ab13dd_equilibrate=ab13dd_equilibrate, tol=tol)
         else:
-            hinf_norm = self.linf_norm(mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate, tol=tol)
-        assert hinf_norm >= 0
+            hinf_norm, fpeak = self.linf_norm(
+                mu=mu, return_fpeak=return_fpeak, ab13dd_equilibrate=ab13dd_equilibrate, tol=tol
+            )
 
-        return hinf_norm
+        if return_fpeak:
+            assert isinstance(fpeak, Number) and hinf_norm >= 0
+            return hinf_norm, fpeak
+        else:
+            assert hinf_norm >= 0
+            return hinf_norm
 
     def hankel_norm(self, mu=None):
         """Compute the Hankel-norm of the |LTIModel|.
@@ -1450,17 +1458,15 @@ class LTIModel(Model):
         """
         assert isinstance(M, MoebiusTransformation)
 
-        a, b, c, d = M.coefficients
-        s = a * d - b * c
-        v = np.sqrt(np.abs(s))
+        a, b, c, d = MoebiusTransformation(M.coefficients, normalize=True).coefficients
 
-        Et = d * self.E + c * self.A
-        At = a * self.A + b * self.E
-        Bt = np.sign(s) * v * self.B
-        Ct = v * self.C @ InverseOperator(Et)
-        Dt = self.D - c * self.C @ InverseOperator(Et) @ self.B
+        Et = a * self.E - c * self.A
+        At = d * self.A - b * self.E
+        C = VectorArrayOperator(Et.apply_inverse_adjoint(self.C.H.as_range_array())).H
+        Ct = C @ self.E
+        Dt = self.D + c * C @ self.B
 
-        return LTIModel(At, Bt, Ct, D=Dt, E=Et, sampling_time=sampling_time)
+        return LTIModel(At, self.B, Ct, D=Dt, E=Et, sampling_time=sampling_time)
 
     def to_discrete(self, sampling_time, method='Tustin', w0=0):
         """Converts a continuous-time |LTIModel| to a discrete-time |LTIModel|.
@@ -1488,7 +1494,7 @@ class LTIModel(Model):
         assert sampling_time > 0
         assert isinstance(w0, Number)
         x = 2 / sampling_time if w0 == 0 else w0 / np.tan(w0 * sampling_time / 2)
-        c2d = BilinearTransformation(x).inverse()
+        c2d = BilinearTransformation(x)
         return self.moebius_substitution(c2d, sampling_time=sampling_time)
 
     def to_continuous(self, method='Tustin', w0=0):
@@ -1513,7 +1519,7 @@ class LTIModel(Model):
         assert self.sampling_time > 0
         assert isinstance(w0, Number)
         x = 2 / self.sampling_time if w0 == 0 else w0 / np.tan(w0 * self.sampling_time / 2)
-        d2c = BilinearTransformation(x)
+        d2c = BilinearTransformation(x).inverse()
         return self.moebius_substitution(d2c, sampling_time=0)
 
 
@@ -1535,7 +1541,7 @@ class PHLTIModel(LTIModel):
             -G(\mu)^T & N(\mu)
         \end{bmatrix},
         \text{ and }
-        W(\mu) =
+        \mathcal{W}(\mu) =
         \begin{bmatrix}
             R(\mu) & P(\mu) \\
             P(\mu)^T & S(\mu)
@@ -1544,7 +1550,7 @@ class PHLTIModel(LTIModel):
     satisfy
     :math:`H(\mu) = H(\mu)^T \succ 0`,
     :math:`\Gamma(\mu)^T = -\Gamma(\mu)`, and
-    :math:`W(\mu) = W(\mu)^T \succcurlyeq 0`.
+    :math:`\mathcal{W}(\mu) = \mathcal{W}(\mu)^T \succcurlyeq 0`.
 
     A dynamical system of this form, together with a given quadratic (energy) function
     :math:`\mathcal{H}(x, \mu) = \tfrac{1}{2} x^T H(\mu) x`, typically called Hamiltonian,

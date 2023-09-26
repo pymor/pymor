@@ -82,14 +82,16 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     data
         Dict containing the following fields:
 
-            :mus:                       `list` of |parameter values| after each iteration.
-            :foc_norms:                 |NumPy array| of the first order criticality norms
-                                        after each iteration.
-            :update_norms:              |NumPy array| of the norms of the update vectors
-                                        after each iteration.
-            :iterations:                Number of total BFGS iterations.
-            :line_search_iterations:    |NumPy array| of the number of line search
-                                        iterations per BFGS iteration.
+        :mus:
+            `list` of |parameter values| after each iteration.
+        :foc_norms:
+            |NumPy array| of the first order criticality norms after each iteration.
+        :update_norms:
+            |NumPy array| of the norms of the update vectors after each iteration.
+        :iterations:
+            Number of total BFGS iterations.
+        :line_search_iterations:
+            |NumPy array| of the number of line search iterations per BFGS iteration.
 
     Raises
     ------

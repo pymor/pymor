@@ -88,11 +88,6 @@ slycot = [
     "slycot>=0.5.4",
 ]
 
-# dense and sparse matrix equation solvers for system-theoretic methods (recommended to be installed from source)
-pymess = [
-    "pymess"
-]
-
 # parallelization of some MOR algorithms (e.g. greedy search) using ipyparallel
 ipyparallel = [
     "ipyparallel>=6.2.5",
@@ -117,8 +112,10 @@ gui = [
 jupyter = [
     "ipympl",
     "ipywidgets>7",
-    "jupyter_server>1.3,<2.0",
+    "jupyterlab",
+    "jupyterlab-myst",
     "k3d>=2.15.2",
+    "notebook",
 ]
 
 # VTK output for builtin discretizations
@@ -154,7 +151,6 @@ scikit-fem = [
 ## Meta dependencies
 
 # install all optional dependencies, except those requiring a compiler toolchain to build
-# pymess is excluded here as installation from source is recommended by the developers
 full = [
     "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,dune,ngsolve,scikit-fem]",
 ]
@@ -257,7 +253,10 @@ ignore = [
 # N806 same for variables in function
 
 [tool.ruff.flake8-import-conventions]
+banned-from = ["numpy.linalg"]  # avoids importing similar routines from numpy.linalg and scipy.linalg
+
 [tool.ruff.flake8-import-conventions.extend-aliases]
+scipy = ""  # don't import scipy directly
 "scipy.linalg" = "spla"
 
 [tool.ruff.flake8-quotes]

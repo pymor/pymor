@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import scipy.linalg as spla
 
 from pymor.algorithms.lyapunov import _chol, solve_cont_lyap_dense
 from pymor.algorithms.to_matrix import to_matrix
@@ -110,7 +111,7 @@ class SpectralFactorReductor(BasicObject):
         C = to_matrix(self.fom.C, format='dense')
         D = to_matrix(self.fom.D, format='dense')
         M = _chol(D + D.T).T
-        L = np.linalg.solve(M.T, C - B.T @ X @ E)
+        L = spla.solve(M.T, C - B.T @ X @ E)
 
         if compute_errors:
             A = to_matrix(self.fom.A, format='dense')

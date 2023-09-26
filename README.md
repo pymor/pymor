@@ -95,13 +95,6 @@ because they need additional setup on your system:
 
       pip install slycot
 
-* [Py-M.E.S.S.](https://www.mpi-magdeburg.mpg.de/projects/mess):
-  dense and sparse matrix equation solvers for system-theoretic methods
-  (it is recommended to install from
-  [source](https://gitlab.mpi-magdeburg.mpg.de/mess/cmess-releases)):
-
-      pip install pymess
-
 ### Latest Development Version
 
 To install the latest development version of pyMOR, execute

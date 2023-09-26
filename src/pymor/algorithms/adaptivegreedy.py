@@ -67,16 +67,25 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
 
     Returns
     -------
-    Dict with the following fields:
+    data
+        Dict with the following fields:
 
-        :extensions:             Number of greedy iterations.
-        :max_errs:               Sequence of maximum errors during the greedy run.
-        :max_err_mus:            The parameters corresponding to `max_errs`.
-        :max_val_errs:           Sequence of maximum errors on the validation set.
-        :max_val_err_mus:        The parameters corresponding to `max_val_errs`.
-        :refinements:            Number of refinements made in each extension step.
-        :training_set_sizes:     The final size of the training set in each extension step.
-        :time:                   Duration of the algorithm.
+        :extensions:
+            Number of greedy iterations.
+        :max_errs:
+            Sequence of maximum errors during the greedy run.
+        :max_err_mus:
+            The parameters corresponding to `max_errs`.
+        :max_val_errs:
+            Sequence of maximum errors on the validation set.
+        :max_val_err_mus:
+            The parameters corresponding to `max_val_errs`.
+        :refinements:
+            Number of refinements made in each extension step.
+        :training_set_sizes:
+            The final size of the training set in each extension step.
+        :time:
+            Duration of the algorithm.
     """
     logger = getLogger('pymor.algorithms.adaptivegreedy.adaptive_weak_greedy')
 
@@ -272,18 +281,27 @@ def rb_adaptive_greedy(fom, reductor, parameter_space,
 
     Returns
     -------
-    Dict with the following fields:
+    data
+        Dict with the following fields:
 
-        :rom:                    The reduced |Model| obtained for the
-                                 computed basis.
-        :extensions:             Number of greedy iterations.
-        :max_errs:               Sequence of maximum errors during the greedy run.
-        :max_err_mus:            The parameters corresponding to `max_errs`.
-        :max_val_errs:           Sequence of maximum errors on the validation set.
-        :max_val_err_mus:        The parameters corresponding to `max_val_errs`.
-        :refinements:            Number of refinements made in each extension step.
-        :training_set_sizes:     The final size of the training set in each extension step.
-        :time:                   Duration of the algorithm.
+        :rom:
+            The reduced |Model| obtained for the computed basis.
+        :extensions:
+            Number of greedy iterations.
+        :max_errs:
+            Sequence of maximum errors during the greedy run.
+        :max_err_mus:
+            The parameters corresponding to `max_errs`.
+        :max_val_errs:
+            Sequence of maximum errors on the validation set.
+        :max_val_err_mus:
+            The parameters corresponding to `max_val_errs`.
+        :refinements:
+            Number of refinements made in each extension step.
+        :training_set_sizes:
+            The final size of the training set in each extension step.
+        :time:
+            Duration of the algorithm.
     """
     surrogate = RBSurrogate(fom, reductor, use_error_estimator, error_norm, extension_params, pool or dummy_pool)
 

@@ -4,7 +4,7 @@
 
 import numpy as np
 import pytest
-import scipy as sp
+import scipy.linalg as spla
 from numpy.random import uniform
 
 from pymor.algorithms.rand_la import adaptive_rrf, random_generalized_svd, random_ghep, rrf
@@ -70,7 +70,7 @@ def test_random_generalized_svd():
 
     modes = 3
     U, s, Vh = random_generalized_svd(E_op, modes=modes, p=1)
-    U_real, s_real, Vh_real = sp.linalg.svd(E)
+    U_real, s_real, Vh_real = spla.svd(E)
 
     assert abs(np.linalg.norm(s-s_real[:modes])) <= 1e-2
     assert len(U) == modes
@@ -88,7 +88,7 @@ def test_random_ghep():
     modes = 3
     w1, V1 = random_ghep(D_op, modes=modes, p=1, single_pass=False)
     w2, V2 = random_ghep(D_op, modes=modes, p=1, single_pass=True)
-    w_real, V_real = sp.linalg.eigh(D)
+    w_real, V_real = spla.eigh(D)
     w_real = w_real[::-1]
     V_real = V_real[:, ::-1]
 

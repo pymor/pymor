@@ -6,7 +6,7 @@
 # --keep-going lets sphinx process the full build instead of aborting on first warning
 #   this is esp. necessary for myst-nb code-cells that otherwise show no visible code error
 SPHINXOPTS    = -W --keep-going
-SPHINXBUILD   = PYMOR_FORCE_JUPYTER=1 sphinx-build -j auto -v source
+SPHINXBUILD   = sphinx-build -j auto -v source
 PAPER         =
 BUILDDIR      = _build
 

@@ -14,7 +14,7 @@ class StationaryProblem(ParametricObject):
     The problem consists in solving ::
 
         - ∇ ⋅ [d(x, μ) ∇ u(x, μ)] + ∇ ⋅ [f_l(x, μ)u(x, μ)]
-        + ∇ ⋅ f_n(u(x, μ), μ) + c_l(x, μ) + c_n(u(x, μ), μ) = g(x, μ)
+        + ∇ ⋅ f_n(u(x, μ), μ) + c_l(x, μ) u(x, μ) + c_n(u(x, μ), μ) = g(x, μ)
 
     for u.
 
@@ -53,11 +53,12 @@ class StationaryProblem(ParametricObject):
         the corresponding coefficient function. Currently implemented `functional_types`
         are:
 
-            :l2:            Evaluate the l2-product with the given data function.
-            :l2_boundary:   Evaluate the l2-product with the given data function
-                            on the boundary.
-            :quadratic:     Evaluate the integral of the data function scaled by
-                            the squared solution (u, u).
+        :l2:
+            Evaluate the l2-product with the given data function.
+        :l2_boundary:
+            Evaluate the l2-product with the given data function on the boundary.
+        :quadratic:
+            Evaluate the integral of the data function scaled by the squared solution (u, u).
     parameter_ranges
         Ranges of interest for the |Parameters| of the problem.
     name
