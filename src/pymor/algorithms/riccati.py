@@ -9,15 +9,11 @@ from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.operators.interface import Operator
 
-_DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
-                                            'lrradi')
+_DEFAULT_RICC_LRCF_SPARSE_SOLVER_BACKEND = 'lrradi'
 
-_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
-                                           'slycot' if config.HAVE_SLYCOT else
-                                           'scipy')
+_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND = 'slycot' if config.HAVE_SLYCOT else 'scipy'
 
-_DEFAULT_RICC_DENSE_SOLVER_BACKEND = ('slycot' if config.HAVE_SLYCOT else
-                                      'scipy')
+_DEFAULT_RICC_DENSE_SOLVER_BACKEND = 'slycot' if config.HAVE_SLYCOT else 'scipy'
 
 
 @defaults('default_sparse_solver_backend', 'default_dense_solver_backend')
@@ -67,15 +63,13 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     - for sparse problems (minimum size specified by
       :func:`~pymor.algorithms.lyapunov.mat_eqn_sparse_min_size`)
 
-      1. `pymess` (see :func:`pymor.bindings.pymess.solve_ricc_lrcf`),
-      2. `lrradi` (see :func:`pymor.algorithms.lrradi.solve_ricc_lrcf`),
+      1. `lrradi` (see :func:`pymor.algorithms.lrradi.solve_ricc_lrcf`),
 
     - for dense problems (smaller than
       :func:`~pymor.algorithms.lyapunov.mat_eqn_sparse_min_size`)
 
-      1. `pymess` (see :func:`pymor.bindings.pymess.solve_ricc_lrcf`),
-      2. `slycot` (see :func:`pymor.bindings.slycot.solve_ricc_lrcf`),
-      3. `scipy` (see :func:`pymor.bindings.scipy.solve_ricc_lrcf`).
+      1. `slycot` (see :func:`pymor.bindings.slycot.solve_ricc_lrcf`),
+      2. `scipy` (see :func:`pymor.bindings.scipy.solve_ricc_lrcf`).
 
     Parameters
     ----------
@@ -104,9 +98,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         - :func:`pymor.algorithms.lrradi.ricc_lrcf_solver_options`.
 
     default_sparse_solver_backend
-        Default sparse solver backend to use (pymess, lrradi).
+        Default sparse solver backend to use (lrradi, pymess).
     default_dense_solver_backend
-        Default dense solver backend to use (pymess, slycot, scipy).
+        Default dense solver backend to use (slycot, scipy, pymess).
 
     Returns
     -------
@@ -249,9 +243,7 @@ def _solve_ricc_dense_check_args(A, E, B, C, R, S, trans):
             assert S.shape[1] == B.shape[1]
 
 
-_DEFAULT_POS_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS else
-                                               'slycot' if config.HAVE_SLYCOT else
-                                               'scipy')
+_DEFAULT_POS_RICC_LRCF_DENSE_SOLVER_BACKEND = 'slycot' if config.HAVE_SLYCOT else 'scipy'
 
 
 @defaults('default_dense_solver_backend')
@@ -283,9 +275,8 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     If the solver is not specified using the options argument, a solver
     backend is chosen based on availability in the following order:
 
-    1. `pymess` (see :func:`pymor.bindings.pymess.solve_pos_ricc_lrcf`),
-    2. `slycot` (see :func:`pymor.bindings.slycot.solve_pos_ricc_lrcf`),
-    3. `scipy` (see :func:`pymor.bindings.scipy.solve_pos_ricc_lrcf`).
+    1. `slycot` (see :func:`pymor.bindings.slycot.solve_pos_ricc_lrcf`),
+    2. `scipy` (see :func:`pymor.bindings.scipy.solve_pos_ricc_lrcf`).
 
     Parameters
     ----------
@@ -313,7 +304,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         - :func:`pymor.bindings.pymess.pos_ricc_lrcf_solver_options`.
 
     default_dense_solver_backend
-        Default dense solver backend to use (pymess, slycot, scipy).
+        Default dense solver backend to use (slycot, scipy, pymess).
 
     Returns
     -------
