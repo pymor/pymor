@@ -248,7 +248,7 @@ class RandomizedRangeFinder(ImmutableObject):
         err
             The approximate error of the basis.
         """
-        assert isinstance(basis_size, Integral) and basis_size > 0
+        assert isinstance(basis_size, Integral) and basis_size >= 0
         if basis_size > min(self.A.source.dim, self.A.range.dim):
             self.logger.warning('Requested basis is larger than the rank of the operator!')
             self.logger.info('Proceeding with maximum operator rank.')
@@ -336,7 +336,7 @@ class RandomizedRangeFinder(ImmutableObject):
             probability :math:`1-\texttt{p_fail}`, if supplied).
         """
         assert isinstance(max_basis_size, Integral) and max_basis_size > 0
-        assert isinstance(basis_size, Integral) and 0 < basis_size
+        assert isinstance(basis_size, Integral) and 0 <= basis_size
         N = min(self.A.source.dim, self.A.range.dim)
         if basis_size > N:
             self.logger.warning('Requested basis is larger than the rank of the operator!')
@@ -412,7 +412,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
     """
     RRF = RandomizedRangeFinder(A, subspace_iterations=0, source_product=source_product, range_product=range_product,
                                 lambda_min=lambda_min, complex=iscomplex)
-    return RRF.find_range(basis_size=1, tol=tol, num_testvecs=num_testvecs, p_fail=failure_tolerance)
+    return RRF.find_range(basis_size=0, tol=tol, num_testvecs=num_testvecs, p_fail=failure_tolerance)
 
 
 @defaults('q', 'l')
