@@ -15,7 +15,7 @@ from hypothesis import given
 from pymor.core.config import config
 from pymor.core.logger import getLogger
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
-from pymor.tools import formatsrc, timing
+from pymor.tools import formatsrc
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
 from pymor.tools.formatsrc import print_source
@@ -156,30 +156,6 @@ def test_vtkio(grid):
             meshes = read_vtkfile(fn)
             assert len(meshes) == len(data)
             assert all((a is not None and b is not None for a, b in meshes))
-
-
-def testTimingContext():
-    with timing.Timer('busywait', logger):
-        timing.busywait(100)
-    with timing.Timer('defaultlog'):
-        timing.busywait(100)
-
-
-def testTimingDecorator():
-
-    @timing.Timer('busywait_decorator', logger)
-    def wait():
-        timing.busywait(1000)
-
-    wait()
-
-
-def testTiming():
-    timer = timing.Timer('busywait', logger)
-    timer.start()
-    timing.busywait(1000)
-    timer.stop()
-    logger.info('plain timing took %s seconds', timer.dt)
 
 
 def testDeprecated():
