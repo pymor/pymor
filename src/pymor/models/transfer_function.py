@@ -424,20 +424,20 @@ class TransferFunction(CacheableObject, ParametricObject):
 
         if 'h2_norm' in self.presets:
             return self.presets['h2_norm']
+
+        import scipy.integrate as spint
+        quad_kwargs.setdefault('epsabs', 0)
+        quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j, mu=mu))**2,
+                              0, np.inf,
+                              **quad_kwargs)
+        norm = np.sqrt(quad_out[0] / np.pi)
+        if return_norm_only:
+            return norm
+        norm_relerr = quad_out[1] / (2 * quad_out[0])
+        if len(quad_out) == 2:
+            return norm, norm_relerr
         else:
-            import scipy.integrate as spint
-            quad_kwargs.setdefault('epsabs', 0)
-            quad_out = spint.quad(lambda w: spla.norm(self.eval_tf(w * 1j, mu=mu))**2,
-                                0, np.inf,
-                                **quad_kwargs)
-            norm = np.sqrt(quad_out[0] / np.pi)
-            if return_norm_only:
-                return norm
-            norm_relerr = quad_out[1] / (2 * quad_out[0])
-            if len(quad_out) == 2:
-                return norm, norm_relerr
-            else:
-                return norm, norm_relerr, quad_out[2:]
+            return norm, norm_relerr, quad_out[2:]
 
     def h2_inner(self, lti, mu=None):
         """Compute H2 inner product with an |LTIModel|.
