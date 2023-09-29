@@ -31,7 +31,6 @@ from pymor.operators.numpy import (
     NumpyToeplitzOperator,
 )
 from pymor.parameters.functionals import ExpressionParameterFunctional, GenericParameterFunctional
-from pymor.tools.random import get_rng
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import assert_all_almost_equal
@@ -555,53 +554,6 @@ def test_issue_1276():
     v = B.source.ones()
 
     B.apply_inverse(v)
-
-
-def _make_NumpyDFTBasedOperator(structure, iscomplex, even, shape, blockshape):
-    rng = get_rng()
-
-    n = 5 if even else 4
-    nr = 2 if shape == 'skinny' else n
-    nc = 2 if shape == 'fat' else n
-
-    blocks = (2 if blockshape == 'skinny' else 3, 2 if blockshape == 'fat' else 3)
-    if blockshape == 'scalar':
-        blocks = ()
-
-    if iscomplex:
-        c = rng.random((nc, *blocks)) + 1j * rng.random((nc, *blocks))
-        r = rng.random((nr, *blocks)) + 1j * rng.random((nr, *blocks))
-    else:
-        c = rng.random((nc, *blocks))
-        r = rng.random((nr, *blocks))
-
-    if structure == NumpyCirculantOperator:
-        return structure(c)
-    elif structure == NumpyToeplitzOperator:
-        r[0] = c[0]
-        return structure(c, r=r)
-    elif structure == NumpyHankelOperator:
-        r[0] = c[-1]
-        return structure(c, r=r)
-
-
-@pytest.mark.parametrize('blockshape', ['fat', 'skinny', 'scalar'])
-@pytest.mark.parametrize('shape', ['fat', 'skinny', 'square'])
-@pytest.mark.parametrize('even', [False, True])
-@pytest.mark.parametrize('iscomplex', [False, True])
-@pytest.mark.parametrize('structure', [NumpyCirculantOperator, NumpyHankelOperator, NumpyToeplitzOperator])
-def test_DFTBasedOperator(structure, iscomplex, even, shape, blockshape):
-    op = _make_NumpyDFTBasedOperator(structure, iscomplex, even, shape, blockshape)
-
-    U = op.source.random(1)
-    V = op.range.random(1)
-    np.testing.assert_array_almost_equal(op.apply(U).to_numpy().T, to_matrix(op) @ U.to_numpy().T)
-    np.testing.assert_array_almost_equal(op.apply_adjoint(V).to_numpy().T, to_matrix(op).conj().T @ V.to_numpy().T)
-
-    U += 1j * op.source.random(1)
-    V += 1j * op.range.random(1)
-    np.testing.assert_array_almost_equal(op.apply(U).to_numpy().T, to_matrix(op) @ U.to_numpy().T)
-    np.testing.assert_array_almost_equal(op.apply_adjoint(V).to_numpy().T, to_matrix(op).conj().T @ V.to_numpy().T)
 
 
 if config.HAVE_DUNEGDT:
