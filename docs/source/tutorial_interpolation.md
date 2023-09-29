@@ -129,8 +129,8 @@ bode_plot_opts = dict(sharex=True, squeeze=False, figsize=(6, 8), constrained_la
 
 fig, ax = plt.subplots(2, 1, **bode_plot_opts)
 fom.transfer_function.bode_plot(w, ax=ax, label='FOM')
-for i, rom in enumerate(roms_inf):
-    rom.transfer_function.bode_plot(w, ax=ax, label=f'ROM $r = {i + 1}$')
+for rom in roms_inf:
+    rom.transfer_function.bode_plot(w, ax=ax, label=f'ROM $r = {rom.order}$')
 _ = ax[0, 0].legend()
 _ = ax[1, 0].legend()
 ```
@@ -140,9 +140,9 @@ Drawing the magnitude of the error makes it clearer.
 
 ```{code-cell} ipython3
 fig, ax = plt.subplots()
-for i, rom in enumerate(roms_inf):
+for rom in roms_inf:
     err = fom - rom
-    err.transfer_function.mag_plot(w, ax=ax, label=f'Error $r = {i + 1}$')
+    err.transfer_function.mag_plot(w, ax=ax, label=f'Error $r = {rom.order}$')
 _ = ax.legend()
 ```
 
@@ -151,16 +151,18 @@ To check the stability of the ROM's, we can plot their poles and compute the max
 ```{code-cell} ipython3
 fig, ax = plt.subplots()
 markers = '.x+12'
-spectral_abscisas = []
-for (i, rom), marker in zip(enumerate(roms_inf), markers):
+spectral_abscissas = []
+for rom, marker in zip(roms_inf, markers):
     poles = rom.poles()
-    spectral_abscisas.append(poles.real.max())
-    ax.plot(poles.real, poles.imag, marker, label=f'ROM $r = {i + 1}$')
+    spectral_abscissas.append(poles.real.max())
+    ax.plot(poles.real, poles.imag, marker, label=f'ROM $r = {rom.order}$')
 _ = ax.legend()
-print(f'Maximum real part: {max(spectral_abscisas)}')
+print(f'Maximum real part: {max(spectral_abscissas)}')
 ```
 
 We see that they are all asymptotically stable.
+
++++
 
 ## Interpolation at zero
 
@@ -234,8 +236,8 @@ roms_zero = [pg.reduce(i + 1) for i in range(r_max)]
 ```{code-cell} ipython3
 fig, ax = plt.subplots(2, 1, **bode_plot_opts)
 fom.transfer_function.bode_plot(w, ax=ax, label='FOM')
-for i, rom in enumerate(roms_zero):
-    rom.transfer_function.bode_plot(w, ax=ax, label=f'ROM $r = {i + 1}$')
+for rom in roms_zero:
+    rom.transfer_function.bode_plot(w, ax=ax, label=f'ROM $r = {rom.order}$')
 _ = ax[0, 0].legend()
 _ = ax[1, 0].legend()
 ```
@@ -246,9 +248,9 @@ The error plot shows this better.
 
 ```{code-cell} ipython3
 fig, ax = plt.subplots()
-for i, rom in enumerate(roms_zero):
+for rom in roms_zero:
     err = fom - rom
-    err.transfer_function.mag_plot(w, ax=ax, label=f'Error $r = {i + 1}$')
+    err.transfer_function.mag_plot(w, ax=ax, label=f'Error $r = {rom.order}$')
 _ = ax.legend()
 ```
 
@@ -256,14 +258,18 @@ Checking stability using the poles of the ROMs.
 
 ```{code-cell} ipython3
 fig, ax = plt.subplots()
-spectral_abscisas = []
-for (i, rom), marker in zip(enumerate(roms_zero), markers):
+spectral_abscissas = []
+for rom, marker in zip(roms_zero, markers):
     poles = rom.poles()
-    spectral_abscisas.append(poles.real.max())
-    ax.plot(poles.real, poles.imag, marker, label=f'ROM $r = {i + 1}$')
+    spectral_abscissas.append(poles.real.max())
+    ax.plot(poles.real, poles.imag, marker, label=f'ROM $r = {rom.order}$')
 _ = ax.legend()
-print(f'Maximum real part: {max(spectral_abscisas)}')
+print(f'Maximum real part: {max(spectral_abscissas)}')
 ```
+
+The ROMs are again all asymptotically stable.
+
++++
 
 ## Interpolation at an arbitrary finite point
 
@@ -362,9 +368,8 @@ Then draw the Bode plots.
 ```{code-cell} ipython3
 fig, ax = plt.subplots(2, 1, **bode_plot_opts)
 fom.transfer_function.bode_plot(w, ax=ax, label='FOM')
-for i, rom in enumerate(roms_sigma):
-    r = 2 * (i + 1)
-    rom.transfer_function.bode_plot(w, ax=ax, label=f'ROM $r = {r}$')
+for rom in roms_sigma:
+    rom.transfer_function.bode_plot(w, ax=ax, label=f'ROM $r = {rom.order}$')
 _ = ax[0, 0].legend()
 _ = ax[1, 0].legend()
 ```
@@ -373,10 +378,9 @@ The ROMs are now more accurate around the interpolated frequency, which the erro
 
 ```{code-cell} ipython3
 fig, ax = plt.subplots()
-for i, rom in enumerate(roms_sigma):
-    r = 2 * (i + 1)
+for rom in roms_sigma:
     err = fom - rom
-    err.transfer_function.mag_plot(w, ax=ax, label=f'Error $r = {r}$')
+    err.transfer_function.mag_plot(w, ax=ax, label=f'Error $r = {rom.order}$')
 _ = ax.legend()
 ```
 
@@ -384,19 +388,76 @@ Poles of the ROMs.
 
 ```{code-cell} ipython3
 fig, ax = plt.subplots()
-spectral_abscisas = []
-for (i, rom), marker in zip(enumerate(roms_sigma), markers):
-    r = 2 * (i + 1)
+spectral_abscissas = []
+for rom, marker in zip(roms_sigma, markers):
     poles = rom.poles()
-    spectral_abscisas.append(poles.real.max())
-    ax.plot(poles.real, poles.imag, marker, label=f'ROM $r = {r}$')
+    spectral_abscissas.append(poles.real.max())
+    ax.plot(poles.real, poles.imag, marker, label=f'ROM $r = {rom.order}$')
 _ = ax.legend()
-print(f'Maximum real part: {max(spectral_abscisas)}')
+print(f'Maximum real part: {max(spectral_abscissas)}')
 ```
 
 We observe that some of the ROMs are unstable.
 In particular, interpolation does not necessarily preserve stability,
 just as Petrov-Galerkin projection in general.
+
++++
+
+## Interpolation at multiple points
+
+To achieve good approximation over a larger frequency range,
+instead of local approximation given by higher-order interpolation at a single point,
+one idea is to do interpolation at multiple points (sometimes called *multipoint Padé*),
+whether of lower or higher-order.
+pyMOR implements bitangential Hermite interpolation (BHI) for different types of {{ Models }}.
+
+Bitangential interpolation is relevant for systems with multiple inputs and outputs.
+Here we focus on standard interpolation.
+
+```{code-cell} ipython3
+import numpy as np
+from pymor.reductors.interpolation import LTIBHIReductor
+
+bhi = LTIBHIReductor(fom)
+sigma = np.array([0.5, 5, 50, 500, 5000])
+sigma = np.concatenate([1j * sigma, -1j * sigma])
+b = np.ones((10, 1))
+c = np.ones((10, 1))
+rom_bhi = bhi.reduce(sigma, b, c)
+```
+
+We can compare the Bode plots.
+
+```{code-cell} ipython3
+fig, ax = plt.subplots(2, 1, **bode_plot_opts)
+fom.transfer_function.bode_plot(w, ax=ax, label='FOM')
+rom_bhi.transfer_function.bode_plot(w, ax=ax, label=f'ROM $r = {rom_bhi.order}$')
+_ = ax[0, 0].legend()
+_ = ax[1, 0].legend()
+```
+
+The error plot shows interpolation more clearly.
+
+```{code-cell} ipython3
+fig, ax = plt.subplots()
+err = fom - rom_bhi
+err.transfer_function.mag_plot(w, label=f'Error $r = {rom_bhi.order}$')
+_ = ax.legend()
+```
+
+We can check stability of the system.
+
+```{code-cell} ipython3
+fig, ax = plt.subplots()
+poles = rom_bhi.poles()
+ax.plot(poles.real, poles.imag, '.', label=f'ROM $r = {rom.order}$')
+_ = ax.legend()
+print(f'Maximum real part: {poles.real.max()}')
+```
+
+In this case, the ROM is asymptotically stable.
+
++++
 
 Download the code:
 {download}`tutorial_interpolation.md`,
