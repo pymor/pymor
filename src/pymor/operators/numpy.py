@@ -558,8 +558,8 @@ class NumpyToeplitzOperator(NumpyCirculantOperator):
         c = c.reshape(-1, 1, 1) if c.ndim == 1 else c
         assert c.ndim == 3
         if r is None:
-            r = np.zeros_like(c)
-            r[0] = c[-1]
+            r = np.conjugate(c)
+            r[0] = c[0]
         else:
             assert isinstance(r, np.ndarray)
             r = r.reshape(-1, 1, 1) if r.ndim == 1 else r
