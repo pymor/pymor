@@ -1,26 +1,20 @@
 ---
 jupytext:
   text_representation:
-   format_name: myst
-jupyter:
-  jupytext:
-    cell_metadata_filter: -all
-    formats: ipynb,myst
-    main_language: python
-    text_representation:
-      format_name: myst
-      extension: .md
-      format_version: '1.3'
-      jupytext_version: 1.11.2
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.15.2
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
+  language: python
   name: python3
 ---
 
 ```{try_on_binder}
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 :load: myst_code_init.py
 :tags: [remove-cell]
 
@@ -34,20 +28,20 @@ Here we discuss interpolation-based methods
 moment matching,
 Krylov subspace methods, and
 Padé approximation)
-for LTI systems,
-and demonstrate it on
-[Penzl' FOM example](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/Penzl%27s_FOM).
-
-```{code-cell}
-from pymor.models.examples import penzl_example
-
-fom = penzl_example()
-```
-
+for LTI systems.
 We start with simpler approaches
 (higher-order interpolation at single point {cite}`G97`) and
 then move on to bitangential Hermite interpolation
 which is directly supported in pyMOR.
+
+We demonstrate them on
+[Penzl's FOM example](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/Penzl%27s_FOM).
+
+```{code-cell} ipython3
+from pymor.models.examples import penzl_example
+
+fom = penzl_example()
+```
 
 ## Interpolation at infinity
 
@@ -101,13 +95,13 @@ The moments at infinity are thus
 
 ```{math}
 M_0(\infty) = D, \quad
-M_k(\infty) = C A^{k - 1} B,  \text{ for } k \ge 1.
+M_k(\infty) = C A^{k - 1} B,  \text{ for } k \geqslant 1.
 ```
 
 We can compute {math}`V` and {math}`W` using the
 {func}`~pymor.algorithms.krylov.arnoldi` function.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.algorithms.krylov import arnoldi
 
 r_max = 5
@@ -115,50 +109,55 @@ V = arnoldi(fom.A, fom.E, fom.B.as_range_array(), r_max)
 W = arnoldi(fom.A.H, fom.E.H, fom.C.as_source_array(), r_max)
 ```
 
-We then use those to perform a Petrov-Galerkin projection gives
+We then use those to perform a Petrov-Galerkin projection.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.reductors.basic import LTIPGReductor
 
 pg = LTIPGReductor(fom, W, V)
-roms = [pg.reduce(i + 1) for i in range(r_max)]
+roms_inf = [pg.reduce(i + 1) for i in range(r_max)]
 ```
 
-To compare, we first draw magnitude plots.
+To compare, we first draw the Bode plots.
 
-```{code-cell}
+```{code-cell} ipython3
 import matplotlib.pyplot as plt
 plt.rcParams['axes.grid'] = True
 
 w = (1e-1, 1e4)
+bode_plot_opts = dict(sharex=True, squeeze=False, figsize=(6, 8), constrained_layout=True)
 
-fig, ax = plt.subplots()
-fom.transfer_function.mag_plot(w, ax=ax, label='FOM')
-for i, rom in enumerate(roms):
-    rom.transfer_function.mag_plot(w, ax=ax, label=f'ROM $r = {i + 1}$')
-_ = ax.legend()
+fig, ax = plt.subplots(2, 1, **bode_plot_opts)
+fom.transfer_function.bode_plot(w, ax=ax, label='FOM')
+for i, rom in enumerate(roms_inf):
+    rom.transfer_function.bode_plot(w, ax=ax, label=f'ROM $r = {i + 1}$')
+_ = ax[0, 0].legend()
+_ = ax[1, 0].legend()
 ```
 
 As expected, we see good approximation for higher frequencies.
 Drawing the magnitude of the error makes it clearer.
 
-```{code-cell}
+```{code-cell} ipython3
 fig, ax = plt.subplots()
-for i, rom in enumerate(roms):
+for i, rom in enumerate(roms_inf):
     err = fom - rom
     err.transfer_function.mag_plot(w, ax=ax, label=f'Error $r = {i + 1}$')
 _ = ax.legend()
 ```
 
-To check the stability of the ROM's, we can plot their poles.
+To check the stability of the ROM's, we can plot their poles and compute the maximum real part.
 
-```{code-cell}
+```{code-cell} ipython3
 fig, ax = plt.subplots()
 markers = '.x+12'
-for (i, rom), marker in zip(enumerate(roms), markers):
+spectral_abscisas = []
+for (i, rom), marker in zip(enumerate(roms_inf), markers):
     poles = rom.poles()
+    spectral_abscisas.append(poles.real.max())
     ax.plot(poles.real, poles.imag, marker, label=f'ROM $r = {i + 1}$')
 _ = ax.legend()
+print(f'Maximum real part: {max(spectral_abscisas)}')
 ```
 
 We see that they are all asymptotically stable.
@@ -213,7 +212,7 @@ M_k(0) = -C A^{-(k + 1)} B,  \text{ for } k \ge 1.
 We can again use the {func}`~pymor.algorithms.krylov.arnoldi` function
 to compute {math}`V` and {math}`W`.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.operators.constructions import InverseOperator
 
 r_max = 5
@@ -225,28 +224,29 @@ W = arnoldi(InverseOperator(fom.A.H), InverseOperator(fom.E.H), w0, r_max)
 
 Then, in the same way, compute the Petrov-Galerkin projection...
 
-```{code-cell}
+```{code-cell} ipython3
 pg = LTIPGReductor(fom, W, V)
-roms = [pg.reduce(i + 1) for i in range(r_max)]
+roms_zero = [pg.reduce(i + 1) for i in range(r_max)]
 ```
 
-...and draw the magnitude plot.
+...and draw the Bode plot.
 
-```{code-cell}
-fig, ax = plt.subplots()
-fom.transfer_function.mag_plot(w, ax=ax, label='FOM')
-for i, rom in enumerate(roms):
-    rom.transfer_function.mag_plot(w, ax=ax, label=f'ROM $r = {i + 1}$')
-_ = ax.legend()
+```{code-cell} ipython3
+fig, ax = plt.subplots(2, 1, **bode_plot_opts)
+fom.transfer_function.bode_plot(w, ax=ax, label='FOM')
+for i, rom in enumerate(roms_zero):
+    rom.transfer_function.bode_plot(w, ax=ax, label=f'ROM $r = {i + 1}$')
+_ = ax[0, 0].legend()
+_ = ax[1, 0].legend()
 ```
 
 Now, because of interpolation at zero, we get good approximation for lower
 frequencies.
 The error plot shows this better.
 
-```{code-cell}
+```{code-cell} ipython3
 fig, ax = plt.subplots()
-for i, rom in enumerate(roms):
+for i, rom in enumerate(roms_zero):
     err = fom - rom
     err.transfer_function.mag_plot(w, ax=ax, label=f'Error $r = {i + 1}$')
 _ = ax.legend()
@@ -254,12 +254,15 @@ _ = ax.legend()
 
 Checking stability using the poles of the ROMs.
 
-```{code-cell}
+```{code-cell} ipython3
 fig, ax = plt.subplots()
-for (i, rom), marker in zip(enumerate(roms), markers):
+spectral_abscisas = []
+for (i, rom), marker in zip(enumerate(roms_zero), markers):
     poles = rom.poles()
+    spectral_abscisas.append(poles.real.max())
     ax.plot(poles.real, poles.imag, marker, label=f'ROM $r = {i + 1}$')
 _ = ax.legend()
+print(f'Maximum real part: {max(spectral_abscisas)}')
 ```
 
 ## Interpolation at an arbitrary finite point
@@ -326,7 +329,7 @@ M_k(\sigma) = -C {(A - \sigma I)}^{-(k + 1)} B,  \text{ for } k \ge 1.
 
 To preserve realness in the ROMs, we interpolate at a conjugate pair of points.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.algorithms.gram_schmidt import gram_schmidt
 
 s = 200j
@@ -335,41 +338,42 @@ v0 = (s * fom.E - fom.A).apply_inverse(fom.B.as_range_array())
 V_complex = arnoldi(InverseOperator(s * fom.E - fom.A), InverseOperator(fom.E), v0, r_max)
 V = fom.A.source.empty(reserve=2 * r_max)
 for v1, v2 in zip(V_complex.real, V_complex.imag):
-  V.append(v1)
-  V.append(v2)
+    V.append(v1)
+    V.append(v2)
 _ = gram_schmidt(V, atol=0, rtol=0, copy=False)
 w0 = (s * fom.E - fom.A).apply_inverse_adjoint(fom.C.as_source_array())
 W_complex = arnoldi(InverseOperator(s * fom.E.H - fom.A.H), InverseOperator(fom.E), w0, r_max)
 W = fom.A.source.empty(reserve=2 * r_max)
 for w1, w2 in zip(W_complex.real, W_complex.imag):
-  W.append(w1)
-  W.append(w2)
+    W.append(w1)
+    W.append(w2)
 _ = gram_schmidt(W, atol=0, rtol=0, copy=False)
 ```
 
-Projection gives
+We perform a Petrov-Galerkin projection.
 
-```{code-cell}
+```{code-cell} ipython3
 pg = LTIPGReductor(fom, W, V)
-roms = [pg.reduce(2 * (i + 1)) for i in range(r_max)]
+roms_sigma = [pg.reduce(2 * (i + 1)) for i in range(r_max)]
 ```
 
-Plotting magnitude plot.
+Then draw the Bode plots.
 
-```{code-cell}
-fig, ax = plt.subplots()
-fom.transfer_function.mag_plot(w, ax=ax, label='FOM')
-for i, rom in enumerate(roms):
+```{code-cell} ipython3
+fig, ax = plt.subplots(2, 1, **bode_plot_opts)
+fom.transfer_function.bode_plot(w, ax=ax, label='FOM')
+for i, rom in enumerate(roms_sigma):
     r = 2 * (i + 1)
-    rom.transfer_function.mag_plot(w, ax=ax, label=f'ROM $r = {r}$')
-_ = ax.legend()
+    rom.transfer_function.bode_plot(w, ax=ax, label=f'ROM $r = {r}$')
+_ = ax[0, 0].legend()
+_ = ax[1, 0].legend()
 ```
 
-Plotting error.
+The ROMs are now more accurate around the interpolated frequency, which the error plot also shows.
 
-```{code-cell}
+```{code-cell} ipython3
 fig, ax = plt.subplots()
-for i, rom in enumerate(roms):
+for i, rom in enumerate(roms_sigma):
     r = 2 * (i + 1)
     err = fom - rom
     err.transfer_function.mag_plot(w, ax=ax, label=f'Error $r = {r}$')
@@ -378,13 +382,16 @@ _ = ax.legend()
 
 Poles of the ROMs.
 
-```{code-cell}
+```{code-cell} ipython3
 fig, ax = plt.subplots()
-for (i, rom), marker in zip(enumerate(roms), markers):
+spectral_abscisas = []
+for (i, rom), marker in zip(enumerate(roms_sigma), markers):
     r = 2 * (i + 1)
     poles = rom.poles()
+    spectral_abscisas.append(poles.real.max())
     ax.plot(poles.real, poles.imag, marker, label=f'ROM $r = {r}$')
 _ = ax.legend()
+print(f'Maximum real part: {max(spectral_abscisas)}')
 ```
 
 We observe that some of the ROMs are unstable.
