@@ -222,7 +222,7 @@ def test_disc_lrcf(n, m, with_E, trans, solver):
 def test_cont_dense(n, m, with_E, trans, solver):
     skip_if_missing_solver(solver)
 
-    A = np.random.randn(n, n)
+    A = np.asfortranarray(np.random.randn(n, n))
     E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
     B = np.random.randn(n, m)
     if trans:
@@ -256,7 +256,7 @@ def test_cont_dense(n, m, with_E, trans, solver):
 def test_disc_dense(n, m, with_E, trans, solver):
     skip_if_missing_solver(solver)
 
-    A = np.random.randn(n, n)
+    A = np.asfortranarray(np.random.randn(n, n))
     E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
     B = np.random.randn(n, m)
     if trans:
