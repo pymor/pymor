@@ -139,6 +139,7 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
             uplo = 'L'
             Q = np.zeros((n, n))
             Z = np.zeros((n, n))
+            A, E = A.copy(), E.copy()  # avoid overwriting (see #2168)
             _, _, _, _, X, scale, sep, ferr, _, _, _ = slycot.sg03ad(dico, job, fact, trana, uplo,
                                                                      n, A, E,
                                                                      Q, Z, C)
