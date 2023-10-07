@@ -79,16 +79,27 @@ def relative_residual(A, E, B, C, R, S, Z, trans):
 def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
 
+    mat_old = []
+    mat_new = []
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
-        A = A.todense()
+        A = A.toarray()
         E = None
     else:
         A, E = conv_diff_1d_fem(n, 1, 1)
-        A = A.todense()
-        E = E.todense()
+        A = A.toarray()
+        E = E.toarray()
+        mat_old.append(E.copy())
+        mat_new.append(E)
+    A = np.asfortranarray(A)
+    mat_old.append(A.copy())
+    mat_new.append(A)
     B = np.random.randn(n, m)
+    mat_old.append(B.copy())
+    mat_new.append(B)
     C = np.random.randn(p, n)
+    mat_old.append(C.copy())
+    mat_new.append(C)
     D = np.random.randn(p, m)
     if not trans:
         R0 = np.random.randn(p, p)
@@ -98,10 +109,20 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
         R0 = np.random.randn(m, m)
         R = D.T.dot(D) + R0.dot(R0.T) if with_R else None
         S = 1e-1 * C.T @ D if with_S else None
+    if with_R:
+        mat_old.append(R.copy())
+        mat_new.append(R)
+    if with_S:
+        mat_old.append(S.copy())
+        mat_new.append(S)
 
     X = solve_ricc_dense(A, E, B, C, R, S, trans=trans, options=solver)
 
     assert relative_residual(A, E, B, C, R, S, _chol(X), trans) < 1e-8
+
+    for mat1, mat2 in zip(mat_old, mat_new):
+        assert type(mat1) == type(mat2)
+        assert np.all(mat1 == mat2)
 
 
 @pytest.mark.parametrize('m', m_list)
