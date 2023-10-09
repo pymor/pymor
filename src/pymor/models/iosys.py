@@ -20,7 +20,7 @@ from pymor.algorithms.riccati import solve_pos_ricc_dense, solve_pos_ricc_lrcf, 
 from pymor.algorithms.simplify import contract, expand
 from pymor.algorithms.timestepping import DiscreteTimeStepper, TimeStepper
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.analyticalproblems.functions import GenericFunction
+from pymor.analyticalproblems.functions import ConstantFunction, GenericFunction
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -788,70 +788,49 @@ class LTIModel(Model):
 
         Returns
         -------
-        y
+        output
             Impulse response as a 3D |NumPy array| where
-            `y.shape[0]` is the number of time steps,
-            `y.shape[1]` is the number of outputs, and
-            `y.shape[2]` is the number of inputs.
-        Xs
+            `output.shape[0]` is the number of time steps,
+            `output.shape[1]` is the number of outputs, and
+            `output.shape[2]` is the number of inputs.
+        solution
             The tuple of solution |VectorArrays| for every input.
             Returned only when `return_solution` is `True`.
         """
         assert self.T is not None
 
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
+        n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+        output = np.empty((n, self.dim_output, self.dim_input))
+        if return_solution:
+            solution = np.empty((n, self.dim_output, self.dim_input))
 
-        # solution computation
-        common_solver_opts = dict(
-            operator=-self.A,
-            mass=None if isinstance(self.E, IdentityOperator) else self.E,
-            initial_time=0,
-            end_time=self.T,
-            num_values=self.num_values,
-        )
         if self.sampling_time == 0:
-            Xs0 = self.E.apply_inverse(self.B.as_range_array(mu=mu), mu=mu)
-            Xs = tuple(
-                self.time_stepper.solve(
-                    rhs=None,
-                    initial_data=X0,
-                    mu=mu,
-                    **common_solver_opts,
-                )
-                for X0 in Xs0
-            )
-        else:
-            rhs = LinearInputOperator(self.B)
-            Xs = []
-            for i in range(self.dim_input):
-                def input_i(t, i=i):
-                    if t == 0:
-                        e_i = np.zeros(self.dim_input)
-                        e_i[i] = 1/self.sampling_time
-                        return e_i
-                    return np.zeros(self.dim_input)
-                Xs.append(
-                    self.time_stepper.solve(
-                        rhs=rhs,
-                        initial_data=self.solution_space.zeros(1),
-                        mu=mu.with_(input=GenericFunction(input_i, shape_range=(self.dim_input,))),
-                        **common_solver_opts,
-                    )
-                )
-            Xs = tuple(Xs)
+            initial_data = self.E.apply_inverse(self.B.as_range_array(mu=mu), mu=mu)
 
-        # output computation
-        y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
-        for i, X in enumerate(Xs):
-            y[:, :, i] = self.C.apply(X, mu=mu).to_numpy()
-        if self.sampling_time > 0 and not isinstance(self.D, ZeroOperator):
-            y[0] += to_matrix(self.D, mu=mu, format='dense') / self.sampling_time
+        for i in range(self.dim_input):
+            if self.sampling_time == 0:
+                input = ConstantFunction(np.zeros(self.dim_input))
+                data = self.with_(initial_data=initial_data[i]).compute(input=input,
+                                                                        output=True,
+                                                                        solution=return_solution,
+                                                                        mu=mu)
+            else:
+                def input(t):
+                    e = np.zeros(self.dim_input)
+                    if t == 0:
+                        e[i] =  1 * self.sampling_time if self.sampling_time > 0 else 1  # noqa: B023
+                    return e
+                input = GenericFunction(mapping=input, shape_range=(self.dim_input,))
+                data = self.compute(input=input, output=True, solution=return_solution, mu=mu)
+
+            output[..., i] = data['output']
+            if return_solution:
+                solution[..., i]= data['solution']
 
         if return_solution:
-            return y, Xs
+            return output, solution
 
-        return y
+        return output
 
     def step_resp(self, mu=None, return_solution=False):
         """Compute step response from all inputs.
@@ -865,45 +844,38 @@ class LTIModel(Model):
 
         Returns
         -------
-        y
+        output
             Step response as a 3D |NumPy array| where
-            `y.shape[0]` is the number of time steps,
-            `y.shape[1]` is the number of outputs, and
-            `y.shape[2]` is the number of inputs.
-        Xs
+            `output.shape[0]` is the number of time steps,
+            `output.shape[1]` is the number of outputs, and
+            `output.shape[2]` is the number of inputs.
+        solution
             The tuple of solution |VectorArrays| for every input.
             Returned only when `return_solution` is `True`.
         """
         assert self.T is not None
 
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
+        n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+        output = np.empty((n, self.dim_output, self.dim_input))
+        if return_solution:
+            solution = np.empty((n, self.dim_output, self.dim_input))
 
-        # solution computation
-        B_va = self.B.as_range_array(mu)
-        Xs = tuple(
-            self.time_stepper.solve(
-                operator=-self.A,
-                rhs=b,
-                initial_data=self.solution_space.zeros(1),
-                mass=None if isinstance(self.E, IdentityOperator) else self.E,
-                initial_time=0,
-                end_time=self.T,
-                mu=mu,
-                num_values=self.num_values,
-            )
-            for b in B_va
-        )
+        for i in range(self.dim_input):
+            def input(t):
+                e = np.zeros(self.dim_input)
+                e[i] =  1 * self.sampling_time if self.sampling_time > 0 else 1  # noqa: B023
+                return e
 
-        # output computation
-        y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
-        for i, X in enumerate(Xs):
-            y[:, :, i] = self.C.apply(X, mu=mu).to_numpy()
+            input = GenericFunction(mapping=input, shape_range=(self.dim_input,))
+            data = self.compute(input=input, output=True, solution=return_solution, mu=mu)
+            output[..., i] = data['output']
+            if return_solution:
+                solution[..., i]= data['solution']
 
         if return_solution:
-            return y, Xs
+            return output, solution
 
-        return y
+        return output
 
     @cached
     def _poles(self, mu=None):
