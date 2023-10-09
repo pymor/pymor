@@ -1379,7 +1379,7 @@ class LTIModel(Model):
         if self.ast_pole_data is not None:
             if isinstance(E, IdentityOperator):
                 E = None
-            if type(self.ast_pole_data) == dict:
+            if isinstance(self.ast_pole_data, dict):
                 ew, rev = eigs(A, E, left_evp=False, **self.ast_pole_data)
                 ast_idx = (ew.real > 0)
                 ast_ews = ew[ast_idx]
@@ -1392,7 +1392,7 @@ class LTIModel(Model):
                     _, lev = eigs(A, E, k=1, l=3, sigma=ae, left_evp=True)
                     ast_levs.append(lev)
                 return ast_levs, ast_ews, rev[ast_idx]
-            elif type(self.ast_pole_data) == list:
+            elif isinstance(self.ast_pole_data, list):
                 assert all(np.real(self.ast_pole_data) > 0)
                 ast_pole_data = np.sort(self.ast_pole_data)
                 ast_levs = A.source.empty(reserve=len(ast_pole_data))
