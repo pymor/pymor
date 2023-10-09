@@ -667,11 +667,14 @@ class LTIModel(Model):
 
     def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                  solution_error_estimate=False, output_error_estimate=False,
-                 output_d_mu_return_array=False, mu=None, **kwargs):
+                 output_d_mu_return_array=False, mu=None):
         if not solution and not output:
             return {}
 
         assert self.T is not None
+
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
 
         # solution computation
         mu = mu.with_(t=0)
@@ -691,11 +694,8 @@ class LTIModel(Model):
 
         # output computation
         if output:
-            Cx = self.C.apply(X, mu=mu).to_numpy()
-            if input is None or isinstance(self.D, ZeroOperator):
-                data['output'] = Cx
-            else:
-                raise NotImplementedError
+            D = LinearInputOperator(self.D)
+            data['output'] = self.C.apply(X, mu=mu).to_numpy() + D.apply(D.source.ones(1), mu=mu).to_numpy()
 
         return data
 
