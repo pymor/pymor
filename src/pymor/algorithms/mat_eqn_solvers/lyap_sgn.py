@@ -15,7 +15,7 @@ import scipy.linalg as spla
 from pymor.core.logger import getLogger
 
 
-def lyap_sgn(A, G, E, atol=0, rtol=None, maxiter=100):
+def lyap_sgn(A, G, E, maxiter=100, atol=0, rtol=None):
     """Solve continuous-time Lyapunov equation.
 
     Computes the solution matrix of the standard continuous-time Lyapunov
@@ -25,19 +25,20 @@ def lyap_sgn(A, G, E, atol=0, rtol=None, maxiter=100):
 
     or of the generalized Lyapunov equation
 
-        A*X*E^T + E*X*A^T + G = 0,                                        (2)
+        A*X*E^T + E*X*A^T + G = 0,                                       (2)
 
     using the sign function iteration. It is assumed that the eigenvalues
     of A (or s*E - A) lie in the open left half-plane.
+    See :cite:`BCQ98`.
 
     Parameters
     ----------
     A
-        Matrix with dimensions n x n in (1) or (2).
+        |NumPy array| with dimensions n x n in (1) or (2).
     G
-        Matrix with dimensions n x n in (1) or (2).
+        |NumPy array| with dimensions n x n in (1) or (2).
     E
-        Matrix with dimensions n x n in (2).
+        |NumPy array| with dimensions n x n in (2).
         If `None`, the standard equation (1) is solved.
     maxiter
         Positive integer, maximum number of iteration steps.
@@ -52,7 +53,7 @@ def lyap_sgn(A, G, E, atol=0, rtol=None, maxiter=100):
     Returns
     -------
     X
-        Solution matrix of (1) or (2).
+        Solution matrix of (1) or (2) as a |NumPy array| with dimensions n x n.
     info
         Dict with the following fields:
 
@@ -65,14 +66,12 @@ def lyap_sgn(A, G, E, atol=0, rtol=None, maxiter=100):
         :num_iter:
             Number of performed iteration steps.
 
-    REFERENCE:
-      P. Benner, J. M. Claver, E. S. Quintana-Orti, Efficient solution of
-      coupled Lyapunov equations via matrix sign function iteration, in:
-      Proc. 3rd Portuguese Conf. on Automatic Control CONTROLO'98, Coimbra,
-      1998, pp. 205--210.
-
-    See also lyap_sgn_fac, lyap_sgn_ldl.
+    See Also
+    --------
+    lyap_sgn_fac
+    lyap_sgn_ldl
     """
+    # check inputs
     assert isinstance(A, np.ndarray)
     assert A.ndim == 2
     assert A.shape[0] == A.shape[1]
@@ -95,12 +94,14 @@ def lyap_sgn(A, G, E, atol=0, rtol=None, maxiter=100):
     n = A.shape[0]
 
     # check and assign optional parameters
+    assert isinstance(maxiter, Integral)
+    assert maxiter >= 1
+
     assert atol >= 0
+
     if rtol is None:
         rtol = 10 * n * np.finfo(np.float64).eps
     assert rtol >= 0
-    assert isinstance(maxiter, Integral)
-    assert maxiter >= 1
 
     # case of empty data
     if n == 0:
@@ -121,11 +122,8 @@ def lyap_sgn(A, G, E, atol=0, rtol=None, maxiter=100):
 
     # sign function iteration
     while niter <= maxiter and not converged:
-        EAinv = spla.solve(A.T, E.T, check_finite=False).T
-        if hasE:
-            EAinvE = EAinv * E
-        else:
-            EAinvE = EAinv
+        EAinv = spla.solve(A.T, E.T).T
+        EAinvE = EAinv * E if hasE else EAinv
 
         # scaling factor for convergence acceleration
         if niter == 1 or rel_err[-1] > 1e-2:
@@ -151,10 +149,7 @@ def lyap_sgn(A, G, E, atol=0, rtol=None, maxiter=100):
         converged = abs_err[-1] <= atol or rel_err[-1] <= rtol
         niter += 1
 
-    if hasE:
-        X = 0.5 * spla.solve(E, spla.solve(E, X.T, check_finite=False).T, check_finite=False)
-    else:
-        X = 0.5 * X
+    X = 0.5 * spla.solve(E, spla.solve(E, X.T).T) if hasE else 0.5 * X
 
     niter -= 1
 
@@ -173,3 +168,5 @@ def lyap_sgn(A, G, E, atol=0, rtol=None, maxiter=100):
         'rel_err': np.array(rel_err),
         'num_iter': niter,
     }
+
+    return X, info
