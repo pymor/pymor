@@ -20,12 +20,11 @@ from functools import reduce
 
 import numpy as np
 import scipy.linalg as spla
-import scipy.sparse
+import scipy.sparse as sps
 from numpy.fft import fft, ifft, irfft, rfft
 from scipy.io import mmwrite, savemat
 from scipy.linalg import lu_factor, lu_solve
 from scipy.linalg.lapack import get_lapack_funcs
-from scipy.sparse import issparse
 
 from pymor.core.base import abstractmethod
 from pymor.core.cache import CacheableObject, cached
@@ -205,7 +204,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         self.__auto_init(locals())
         self.source = NumpyVectorSpace(matrix.shape[1], source_id)
         self.range = NumpyVectorSpace(matrix.shape[0], range_id)
-        self.sparse = issparse(matrix)
+        self.sparse = sps.issparse(matrix)
 
     @classmethod
     def from_file(cls, path, key=None, source_id=None, range_id=None, solver_options=None, name=None):
@@ -396,9 +395,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 identity_shift = identity_shift.real
             if operators[0].sparse:
                 try:
-                    matrix += (scipy.sparse.eye(matrix.shape[0]) * identity_shift)
+                    matrix += (sps.eye(matrix.shape[0]) * identity_shift)
                 except NotImplementedError:
-                    matrix = matrix + (scipy.sparse.eye(matrix.shape[0]) * identity_shift)
+                    matrix = matrix + (sps.eye(matrix.shape[0]) * identity_shift)
             else:
                 matrix += (np.eye(matrix.shape[0]) * identity_shift)
 
@@ -456,7 +455,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
 
     cache_region = 'memory'
 
-    def __init__(self, c, source_id=None, range_id=None, name=None, scipy=True):
+    def __init__(self, c, source_id=None, range_id=None, name=None):
         assert isinstance(c, np.ndarray)
         if c.ndim == 1:
             c = c.reshape(-1, 1, 1)
