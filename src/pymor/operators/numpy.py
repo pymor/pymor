@@ -454,6 +454,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
     """
 
     cache_region = 'memory'
+    linear = True
 
     def __init__(self, c, source_id=None, range_id=None, name=None):
         assert isinstance(c, np.ndarray)
@@ -513,7 +514,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
                           source_id=self.range_id, range_id=self.source_id, name=self.name + '_adjoint')
 
 
-class NumpyToeplitzOperator(NumpyCirculantOperator):
+class NumpyToeplitzOperator(Operator):
     r"""Matrix-free representation of a Toeplitz matrix by a |NumPy Array|.
 
     A Toeplitz matrix is a matrix with constant diagonals, i.e.:
@@ -552,6 +553,8 @@ class NumpyToeplitzOperator(NumpyCirculantOperator):
         Name of the operator.
     """
 
+    linear = True
+
     def __init__(self, c, r=None, source_id=None, range_id=None, name=None):
         assert isinstance(c, np.ndarray)
         c = c.reshape(-1, 1, 1) if c.ndim == 1 else c
@@ -567,18 +570,23 @@ class NumpyToeplitzOperator(NumpyCirculantOperator):
             assert np.allclose(c[0], r[0])
         c.setflags(write=False)
         r.setflags(write=False)
-        super().__init__(np.concatenate([c, r[:0:-1]]), source_id=source_id, range_id=range_id, name=name)
-        _, p, m = self._arr.shape
+        self.__auto_init(locals())
+        self._circulant = NumpyCirculantOperator(
+            np.concatenate([c, r[:0:-1]]), source_id=source_id, range_id=range_id,
+            name=self.name + ' (implicit circulant)')
+        _, p, m = self._circulant._arr.shape
         self.source = NumpyVectorSpace(m*r.shape[0], source_id)
         self.range = NumpyVectorSpace(p*c.shape[0], range_id)
-        self.c = c
-        self.r = r
 
     def apply(self, U, mu=None):
         assert U in self.source
-        n, _, m = self._arr.shape
+        n, _, m = self._circulant._arr.shape
         U = np.concatenate([U.to_numpy().T, np.zeros((n*m - U.dim, len(U)))])
-        return self.range.make_array(self._circular_matvec(U)[:, :self.range.dim])
+        return self.range.make_array(self._circulant._circular_matvec(U)[:, :self.range.dim])
+
+    def apply_adjoint(self, V, mu=None):
+        assert V in self.range
+        return self.H.apply(V, mu=mu)
 
     @property
     def H(self):
@@ -586,7 +594,7 @@ class NumpyToeplitzOperator(NumpyCirculantOperator):
                           source_id=self.range_id, range_id=self.source_id, name=self.name + '_adjoint')
 
 
-class NumpyHankelOperator(NumpyCirculantOperator):
+class NumpyHankelOperator(Operator):
     r"""Matrix-free representation of a Hankel matrix by a |NumPy Array|.
 
     A Hankel matrix is a matrix with constant anti-diagonals, i.e.:
@@ -625,6 +633,8 @@ class NumpyHankelOperator(NumpyCirculantOperator):
         Name of the operator.
     """
 
+    linear = True
+
     def __init__(self, c, r=None, source_id=None, range_id=None, name=None):
         assert isinstance(c, np.ndarray)
         c = c.reshape(-1, 1, 1) if c.ndim == 1 else c
@@ -640,27 +650,31 @@ class NumpyHankelOperator(NumpyCirculantOperator):
             assert np.allclose(r[0], c[-1])
         c.setflags(write=False)
         r.setflags(write=False)
+        self.__auto_init(locals())
         k, l = c.shape[0], r.shape[0]
         n = k + l - 1
         # zero pad to even length if real to avoid slow irfft
         z = int(np.isrealobj(c) and np.isrealobj(r) and n % 2)
         h = np.concatenate((c, r[1:], np.zeros([z, *c.shape[1:]])))
         shift = n // 2 + int(np.ceil((k - l) / 2)) + (n % 2) + z # this works
-        super().__init__(np.roll(h, shift, axis=0), source_id=source_id, range_id=range_id, name=name)
-        p, m = self._arr.shape[1:]
+        self._circulant = NumpyCirculantOperator(
+            np.roll(h, shift, axis=0), source_id=source_id, range_id=range_id, name=self.name + ' (implicit circulant)')
+        p, m = self._circulant._arr.shape[1:]
         self.source = NumpyVectorSpace(l*m, source_id)
         self.range = NumpyVectorSpace(k*p, range_id)
-        self.c = c
-        self.r = r
 
     def apply(self, U, mu=None):
         assert U in self.source
         U = U.to_numpy().T
-        n, p, m = self._arr.shape
+        n, p, m = self._circulant._arr.shape
         x = np.zeros((n*m, U.shape[1]), dtype=U.dtype)
         for j in range(m):
             x[:self.source.dim][j::m] = np.flip(U[j::m], axis=0)
-        return self.range.make_array(self._circular_matvec(x)[:, :self.range.dim])
+        return self.range.make_array(self._circulant._circular_matvec(x)[:, :self.range.dim])
+
+    def apply_adjoint(self, V, mu=None):
+        assert V in self.range
+        return self.H.apply(V, mu=mu)
 
     @property
     def H(self):

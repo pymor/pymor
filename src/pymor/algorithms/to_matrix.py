@@ -71,7 +71,7 @@ class ToMatrixRules(RuleTable):
         format = self.format
         if format in (None, 'dense'):
             p, m = op.c.shape[1:]
-            op_mat = np.zeros((op.range.dim, op.source.dim), dtype=op._arr.dtype)
+            op_mat = np.zeros((op.range.dim, op.source.dim), dtype=op._circulant._arr.dtype)
             for (i, j) in np.ndindex((p, m)):
                 op_mat[i::p, j::m] = spla.hankel(op.c[:, i, j], r=op.r[:, i, j])
             return op_mat
@@ -83,7 +83,7 @@ class ToMatrixRules(RuleTable):
         format = self.format
         if format in (None, 'dense'):
             p, m = op.c.shape[1:]
-            op_mat = np.zeros((op.range.dim, op.source.dim), dtype=op._arr.dtype)
+            op_mat = np.zeros((op.range.dim, op.source.dim), dtype=op._circulant._arr.dtype)
             for (i, j) in np.ndindex((p, m)):
                 op_mat[i::p, j::m] = spla.toeplitz(op.c[:, i, j], r=op.r[:, i, j])
             return op_mat
