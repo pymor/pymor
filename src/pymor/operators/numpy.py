@@ -470,7 +470,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
 
     @cached
     def _circulant(self):
-        return (rfft(self._arr, axis=0) if np.isrealobj(self._arr) else fft(self._arr, axis=0))
+        return rfft(self._arr, axis=0) if np.isrealobj(self._arr) else fft(self._arr, axis=0)
 
     def _circular_matvec(self, vec):
         n, p, m = self._arr.shape
