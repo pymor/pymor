@@ -139,6 +139,7 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
             uplo = 'L'
             Q = np.zeros((n, n))
             Z = np.zeros((n, n))
+            A, E = A.copy(), E.copy()  # avoid overwriting (see #2168)
             _, _, _, _, X, scale, sep, ferr, _, _, _ = slycot.sg03ad(dico, job, fact, trana, uplo,
                                                                      n, A, E,
                                                                      Q, Z, C)
@@ -226,9 +227,14 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
         p = B.shape[1] if not trans else C.shape[0]
         if R is None:
             R = np.eye(m)
+        else:
+            R = R.copy()  # fix overwrite issue (#2200)
+        S = S.copy()  # fix overwrite issue (#2200)
         if trans:
+            C = C.copy()  # fix overwrite issue (#2200)
             X, rcond = slycot.sb02od(n, m, A, B, C, R, dico, p=p, L=S, fact='C')[:2]
         else:
+            B = B.copy()  # fix overwrite issue (#2200)
             X, rcond = slycot.sb02od(n, m, A.T, C.T, B.T, R, dico, p=p, L=S.T, fact='C')[:2]
         _ricc_rcond_check('slycot.sb02od', rcond)
     else:

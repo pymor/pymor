@@ -24,7 +24,7 @@ from pymor.bindings.scipy import _solve_ricc_check_args
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
-from pymor.tools import Deprecated
+from pymor.tools.deprecated import Deprecated
 
 
 @defaults('adi_maxit', 'adi_memory_usage', 'adi_output', 'adi_rel_change_tol', 'adi_res2_tol', 'adi_res2c_tol',
