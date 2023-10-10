@@ -20,7 +20,7 @@ from pymor.algorithms.riccati import solve_pos_ricc_dense, solve_pos_ricc_lrcf, 
 from pymor.algorithms.simplify import contract, expand
 from pymor.algorithms.timestepping import DiscreteTimeStepper, TimeStepper
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.analyticalproblems.functions import ConstantFunction, GenericFunction
+from pymor.analyticalproblems.functions import GenericFunction
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -809,8 +809,7 @@ class LTIModel(Model):
 
         for i in range(self.dim_input):
             if self.sampling_time == 0:
-                input = ConstantFunction(np.zeros(self.dim_input))
-                data = self.with_(initial_data=initial_data[i]).compute(input=input,
+                data = self.with_(initial_data=initial_data[i]).compute(input=np.zeros(self.dim_input),
                                                                         output=True,
                                                                         solution=return_solution,
                                                                         mu=mu)
