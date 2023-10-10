@@ -15,7 +15,12 @@ from pymor.core.config import config
 from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 from pymor.operators.list import NumpyListVectorArrayMatrixOperator
-from pymor.operators.numpy import NumpyCirculantOperator, NumpyHankelOperator, NumpyMatrixOperator, NumpyToeplitzOperator
+from pymor.operators.numpy import (
+    NumpyCirculantOperator,
+    NumpyHankelOperator,
+    NumpyMatrixOperator,
+    NumpyToeplitzOperator,
+)
 from pymor.tools.random import get_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import BUILTIN_DISABLED

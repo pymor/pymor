@@ -25,10 +25,7 @@ from pymor.operators.constructions import (
 )
 from pymor.operators.interface import as_array_max_length
 from pymor.operators.numpy import (
-    NumpyCirculantOperator,
-    NumpyHankelOperator,
     NumpyMatrixOperator,
-    NumpyToeplitzOperator,
 )
 from pymor.parameters.functionals import ExpressionParameterFunctional, GenericParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
