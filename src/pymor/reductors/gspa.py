@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.projection import project
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
@@ -66,8 +66,6 @@ class GSPAReductor(BasicObject):
             - `'bfsr'`: balancing-free square root method (default, since it avoids scaling by
               singular values and orthogonalizes the projection matrices, which might make it more
               accurate than the square root method)
-            - `'biorth'`: like the balancing-free square root method, except it biorthogonalizes the
-              projection matrices (using :func:`~pymor.algorithms.gram_schmidt.gram_schmidt_biorth`)
 
         Returns
         -------
@@ -76,7 +74,7 @@ class GSPAReductor(BasicObject):
         """
         assert r is not None or tol is not None
         assert r is None or 0 < r < self.fom.order
-        assert projection in ('sr', 'bfsr', 'biorth')
+        assert projection in ('sr', 'bfsr')
 
         cf, of = self._gramians()
         sv, sU, sV = self._sv_U_V()
@@ -99,8 +97,6 @@ class GSPAReductor(BasicObject):
         elif projection == 'bfsr':
             gram_schmidt(self.V, atol=0, rtol=0, copy=False)
             gram_schmidt(self.W, atol=0, rtol=0, copy=False)
-        elif projection == 'biorth':
-            gram_schmidt_biorth(self.V, self.W, product=self.fom.E, copy=False)
 
         # find reduced-order model
         if self.fom.parametric:
@@ -110,7 +106,7 @@ class GSPAReductor(BasicObject):
             fom_mu = self.fom
 
         if s0 == np.inf:
-            self._pg_reductor = LTIPGReductor(fom_mu, self.W, self.V, projection in ('sr', 'biorth'))
+            self._pg_reductor = LTIPGReductor(fom_mu, self.W, self.V, projection == 'sr')
             rom = self._pg_reductor.reduce()
         else:
             M = MoebiusTransformation(np.array([0, 1j, 1j, -s0]), normalize=True) if MT is None else MT
