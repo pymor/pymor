@@ -735,7 +735,7 @@ class LTIModel(Model):
             self.logger.info(f'Solving {self.name} for {mu} ...')
 
         # solution computation
-        n = self.num_values if self.num_values else self.time_stepper.estimate_time_step_count(0, self.T)
+        n = (self.num_values if self.num_values else self.time_stepper.estimate_time_step_count(0, self.T)) + 1
         iterator = self.time_stepper.iterate(
             0,  # initial_time
             self.T,  # end_time
@@ -748,10 +748,10 @@ class LTIModel(Model):
         )
         data = {}
         if solution:
-            data['solution'] = self.A.source.empty(reserve=n + 1)
+            data['solution'] = self.A.source.empty(reserve=n)
         if output:
             D = LinearInputOperator(self.D)
-            data['output'] = np.empty((n + 1, self.dim_output))
+            data['output'] = np.empty((n, self.dim_output))
         for i, (x, t) in enumerate(iterator):
             if solution:
                 data['solution'].append(x)
@@ -907,7 +907,7 @@ class LTIModel(Model):
         n = (self.num_values if self.num_values else self.time_stepper.estimate_time_step_count(0, self.T)) + 1
         output = np.empty((n, self.dim_output, self.dim_input))
         if return_solution:
-            solution = np.empty((n, self.dim_output, self.dim_input))
+            solution = []
 
         if self.sampling_time == 0:
             initial_data = self.E.apply_inverse(self.B.as_range_array(mu=mu), mu=mu)
@@ -929,10 +929,10 @@ class LTIModel(Model):
 
             output[..., i] = data['output']
             if return_solution:
-                solution[..., i]= data['solution']
+                solution.append(data['solution'])
 
         if return_solution:
-            return output, solution
+            return output, tuple(solution)
 
         return output
 
@@ -962,7 +962,7 @@ class LTIModel(Model):
         n = (self.num_values if self.num_values else self.time_stepper.estimate_time_step_count(0, self.T)) + 1
         output = np.empty((n, self.dim_output, self.dim_input))
         if return_solution:
-            solution = np.empty((n, self.dim_output, self.dim_input))
+            solution = []
 
         for i in range(self.dim_input):
             def input(t):
@@ -974,10 +974,10 @@ class LTIModel(Model):
             data = self.compute(input=input, output=True, solution=return_solution, mu=mu)
             output[..., i] = data['output']
             if return_solution:
-                solution[..., i]= data['solution']
+                solution.append(data['solution'])
 
         if return_solution:
-            return output, solution
+            return output, tuple(solution)
 
         return output
 
