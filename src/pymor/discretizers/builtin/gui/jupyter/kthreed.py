@@ -9,6 +9,7 @@ config.require('K3D')
 config.require('MATPLOTLIB')
 
 import k3d
+import matplotlib as mpl
 import numpy as np
 from ipywidgets import GridspecLayout, Label, Layout, VBox, jslink
 from k3d.plot import Plot as K3DPlot
@@ -18,7 +19,6 @@ from pymor.core.defaults import defaults
 from pymor.discretizers.builtin.grids.constructions import flatten_grid
 from pymor.discretizers.builtin.grids.referenceelements import triangle
 from pymor.discretizers.builtin.gui.jupyter.animation_widget import AnimationWidget
-from pymor.discretizers.builtin.gui.matplotlib_base import get_cmap
 from pymor.vectorarrays.interface import VectorArray
 
 
@@ -174,7 +174,7 @@ class VectorArrayPlot(K3DPlot):
 def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                   separate_colorbars=False, rescale_colorbars=False, columns=2,
                   warp_by_scalar=True, scale_factor='auto', show_mesh=True, height=300,
-                  color_map=get_cmap('viridis'), background_color=0xffffff, return_widget=True):
+                  color_map=mpl.colormaps['viridis'], background_color=0xffffff, return_widget=True):
     """Generate a k3d Plot for scalar data associated to a two-dimensional |Grid|.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either

@@ -18,15 +18,6 @@ from pymor.discretizers.builtin.grids.constructions import flatten_grid
 from pymor.discretizers.builtin.grids.referenceelements import square, triangle
 
 
-def get_cmap(name='viridis'):
-    try:
-        import matplotlib as mpl
-        return mpl.colormaps[name]
-    except AttributeError:  # matplotlib < 3.5
-        from matplotlib.pyplot import get_cmap
-        return get_cmap(name)
-
-
 class MatplotlibPatchAxes:
 
     def __init__(self, ax, grid, bounding_box=None, codim=2):
