@@ -97,6 +97,11 @@ def test_parse_parameter_time_dep():
     assert list(mu.with_(t=3)['b']) == [9, 3]
 
 
+def test_parse_parameter_scalar_time_dep():
+    parameters = Parameters(a=1)
+    parameters.parse(ConstantFunction(np.ones(1)))
+
+
 @given(pyst.mus)
 def test_parse_mu(mu):
     parameters = mu.parameters
