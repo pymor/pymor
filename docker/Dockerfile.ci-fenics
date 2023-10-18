@@ -13,7 +13,7 @@ RUN apt-get -q update && \
     	libglu1-mesa libxcursor1 libxinerama1 && \
     apt-get -qy install libpetsc-real-dev git && \
     apt-get -qy install fenics python3.11-venv && \
-# aviod mpl_toolkits being import from system site packages
+# avoid mpl_toolkits being imported from system site packages
     apt-get -qy remove python3-matplotlib && \
     python3 -m venv --system-site-packages /venv && \
     echo ". /venv/bin/activate" >> /etc/profile
