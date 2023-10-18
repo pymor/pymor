@@ -1458,14 +1458,15 @@ class LTIModel(Model):
         assert isinstance(M, MoebiusTransformation)
 
         a, b, c, d = MoebiusTransformation(M.coefficients, normalize=True).coefficients
-
+        kappa = d*a - b*c
         Et = a * self.E - c * self.A
         At = d * self.A - b * self.E
+        Bt = np.sqrt(kappa) * self.B
         C = VectorArrayOperator(Et.apply_inverse_adjoint(self.C.H.as_range_array())).H
-        Ct = C @ self.E
+        Ct = np.sqrt(kappa) * C @ self.E
         Dt = self.D + c * C @ self.B
 
-        return LTIModel(At, self.B, Ct, D=Dt, E=Et, sampling_time=sampling_time)
+        return LTIModel(At, Bt, Ct, D=Dt, E=Et, sampling_time=sampling_time)
 
     def to_discrete(self, sampling_time, method='Tustin', w0=0):
         """Converts a continuous-time |LTIModel| to a discrete-time |LTIModel|.
