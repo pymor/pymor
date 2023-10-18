@@ -20,6 +20,7 @@ config.require('GL')
 import math as m
 from ctypes import c_void_p
 
+import matplotlib as mpl
 import numpy as np
 import OpenGL.GL as gl  # noqa: N811
 from qtpy.QtGui import QFontMetrics, QPainter
@@ -94,18 +95,7 @@ def colormap_texture(name='viridis'):
     gl.glTexParameteri(gl.GL_TEXTURE_1D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
     gl.glTexParameteri(gl.GL_TEXTURE_1D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
     colormap = np.empty((resolution, 4), dtype='f4')
-    from matplotlib.pyplot import get_cmap
-    try:
-        cmap = get_cmap(name)
-    except ValueError:
-        from pymor.core.logger import getLogger
-
-        # this is our default which might not exist for older matplotlib
-        # so a warning would be annoying
-        if name != 'viridis':
-            msg = f'Unknown colormap {name}, using default colormap'
-            getLogger('pymor.discretizers.builtin.gui.gl.colormap_texture').warning(msg)
-        cmap = get_cmap()
+    cmap = mpl.colormaps[name]
     colormap[:] = cmap(np.linspace(0., 1., resolution))
     gl.glTexImage1D(gl.GL_TEXTURE_1D, 0, gl.GL_RGBA, resolution, 0, gl.GL_RGBA, gl.GL_FLOAT, colormap)
     gl.glBindTexture(gl.GL_TEXTURE_1D, 0)
