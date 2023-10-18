@@ -35,7 +35,7 @@ class Parameters(SortedFrozenDict):
     __slots__ = ()
 
     def _post_init(self):
-        assert all(type(k) is str and type(v) is int and 0 <= v
+        assert all(isinstance(k, str) and isinstance(v, int) and 0 <= v
                    for k, v in self.items())
         assert self.get('t', 1) == 1, 'time parameter must have length 1'
 
