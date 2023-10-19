@@ -3,9 +3,9 @@
 DOCKER ?= docker
 THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-CI_CURRENT_IMAGE_TAG := $(shell sha256sum $(THIS_DIR)/requirements-ci-current.txt | cut -d " " -f 1)
-CI_OLDEST_IMAGE_TAG  := $(shell sha256sum $(THIS_DIR)/requirements-ci-oldest.txt  | cut -d " " -f 1)
-CI_FENICS_IMAGE_TAG  := $(shell sha256sum $(THIS_DIR)/requirements-ci-fenics.txt  | cut -d " " -f 1)
+CI_CURRENT_IMAGE_TAG := $(shell cat $(THIS_DIR)/docker/Dockerfile.ci-current $(THIS_DIR)/requirements-ci-current.txt | sha256sum | cut -d " " -f 1)
+CI_OLDEST_IMAGE_TAG  := $(shell cat $(THIS_DIR)/docker/Dockerfile.ci-oldest  $(THIS_DIR)/requirements-ci-oldest.txt  | sha256sum | cut -d " " -f 1)
+CI_FENICS_IMAGE_TAG  := $(shell cat $(THIS_DIR)/docker/Dockerfile.ci-fenics  $(THIS_DIR)/requirements-ci-fenics.txt  | sha256sum | cut -d " " -f 1)
 
 CI_CURRENT_IMAGE_TARGET_TAG := $(or $(TARGET_TAG),$(CI_CURRENT_IMAGE_TAG))
 CI_OLDEST_IMAGE_TARGET_TAG  := $(or $(TARGET_TAG),$(CI_OLDEST_IMAGE_TAG))
@@ -54,7 +54,7 @@ CI_EXTRAS= \
 
 ci_current_requirements:
 	# we run pip-compile in a container to ensure that the right Python version is used
-	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src python:3.10-bullseye /bin/bash -c "\
+	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src python:3.11-bullseye /bin/bash -c "\
 		cd /src && \
 		pip install pip-tools==6.13.0 && \
 		pip-compile --resolver backtracking \

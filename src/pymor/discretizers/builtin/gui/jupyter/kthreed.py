@@ -119,7 +119,7 @@ class VectorArrayPlot(K3DPlot):
             self.camera_no_rotate = True
             self.camera_no_zoom = True
 
-        self.grid_visible = True
+        self.grid_visible = False
         self.menu_visibility = False
         self.axes_helper = 0
         center = np.hstack([(bounding_box[1] + bounding_box[0]) / 2, 0.])
