@@ -158,7 +158,7 @@ html .md-typeset .admonition > :last-child, html .md-typeset details > :last-chi
     z-index: 0 !important;
 }
 
-.toctree-l2 ul {
+li[class*="toctree-l"] ul, li[class^="toctree-l"] ul {
     display: none;
 }
 
