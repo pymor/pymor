@@ -18,7 +18,7 @@ def test_repr():
 def test_entries():
     for p in _PACKAGES:
         assert hasattr(config, 'HAVE_' + p)
-        assert type(getattr(config, 'HAVE_' + p)) is bool
+        assert isinstance(getattr(config, 'HAVE_' + p), bool)
         getattr(config, p + '_VERSION')
 
 
