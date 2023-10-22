@@ -210,6 +210,8 @@ class BlockVectorSpace(VectorSpace):
         subspaces = tuple(subspaces)
         assert all([isinstance(subspace, VectorSpace) for subspace in subspaces])
         self.subspaces = subspaces
+        if len(self.subspaces) == 1 and self.subspaces[0].is_scalar:
+            self.is_scalar = True
 
     def __eq__(self, other):
         return (type(other) is BlockVectorSpace
