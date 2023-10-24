@@ -8,7 +8,7 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.core.base import BasicObject
-from pymor.models.transfer_function import TransferFunction
+from pymor.models.transfer_function import GeneralizedBarycentricTransferFunction, TransferFunction
 from pymor.tools.random import new_rng
 
 
@@ -48,7 +48,7 @@ class TrigPAAAReductor(BasicObject):
         assert isinstance(sampling_values, list)
         assert all(isinstance(sv, np.ndarray) for sv in sampling_values)
 
-        self.dist_fctns = {1:_scalar_dist_fctn, 2:_sphere_dist_fctn}
+        self.dist_fctns = {0:_scalar_dist_fctn, 1:_sphere_dist_fctn}
 
         if isinstance(samples_or_fom, TransferFunction) or hasattr(samples_or_fom, 'transfer_function'):
             fom = samples_or_fom
@@ -210,6 +210,7 @@ class TrigPAAAReductor(BasicObject):
             # coefs_matrix = np.reshape(coefs, (len(self.itpl_part[0]),len(self.itpl_part[1])))
             # U, S, V = spla.svd(coefs_matrix, full_matrices=False, lapack_driver='gesvd')
             # coefs = np.kron(U[:,0], V[0])
+            # coefs = np.ones((np.prod([len(i) for i in self.itpl_part])))/ np.prod([len(i) for i in self.itpl_part])
 
             # update barycentric form
             itpl_samples = samples[np.ix_(*self.itpl_part)]
@@ -224,12 +225,8 @@ class TrigPAAAReductor(BasicObject):
 
         bary_func = make_bary_func(itpl_nodes, itpl_samples, coefs, self.dist_fctns)
 
-        if self.num_vars > 1:
-            return TransferFunction(self._dim_input, self._dim_output,
-                                    lambda s, mu: bary_func(s, mu.to_numpy()),
-                                    parameters=self._parameters)
-        else:
-            return TransferFunction(self._dim_input, self._dim_output, bary_func)
+        return GeneralizedBarycentricTransferFunction(itpl_nodes, itpl_samples, coefs, dist_fctns=self.dist_fctns,
+                                                      parameters=self._parameters)
 
 
 def nd_loewner(samples, svs, itpl_part, dist_fctns):
@@ -399,4 +396,25 @@ def _sphere_dist_fctn(x,y):
     S = np.sin(p1)*np.sin(p2)
     C = np.cos(p1)*np.cos(p2)
     D = np.cos(np.abs(l1 - l2))
-    return np.arccos(S + C * D)
+    return np.arccos(S + C * D)**2
+
+def _arctan_sphere_dist_fctn(x,y):
+    x = np.atleast_2d(x)
+    y = np.atleast_2d(y)
+    l1 = x[:,0][:, np.newaxis]
+    p1 = x[:,1][:, np.newaxis]
+    l2 = y[:,0][np.newaxis, :]
+    p2 = y[:,1][np.newaxis, :]
+
+    cp1 = np.cos(p1)
+    sp1 = np.sin(p1)
+    cp2 = np.cos(p2)
+    sp2 = np.sin(p2)
+    d = np.abs(l1 - l2)
+    sd = np.sin(d)
+    cd = np.cos(d)
+
+    N = np.sqrt((cp2*sd)**2 + (cp1*sp2 - sp1*cp2*cd)**2)
+    D = sp1*sp2 + cp1*cp2*cd
+
+    return np.arctan(N/D)

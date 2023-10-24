@@ -682,3 +682,112 @@ class FactorizedTransferFunction(TransferFunction):
         if not hasattr(other, 'transfer_function'):
             return NotImplemented
         return other.transfer_function * self
+
+class GeneralizedBarycentricTransferFunction(TransferFunction):
+    r"""Transfer function in barycentric form.
+
+    Parameters
+    ----------
+    itpl_nodes
+        Interpolation nodes.
+    itpl_vals
+        Vector of interpolation values with `len(itpl_nodes[0])*...*len(itpl_nodes[-1])`
+        entries.
+    coefs
+        Vector of barycentric coefficients with `len(itpl_nodes[0])*...*len(itpl_nodes[-1])`
+        entries.
+    dist_fctns
+        Distance function for vector-valued parameters.
+    removable_singularity_tol
+        Tolerance for evaluating the barycentric function at a removable singularity
+        and performing pole cancellation.
+    """
+
+    def __init__(self, itpl_nodes, itpl_vals, coefs, dist_fctns=None, removable_singularity_tol=1e-14,
+                 sampling_time=0, parameters={}, name=None):
+        all_dist_fctns = {}
+        for i in range(len(itpl_nodes)):
+            all_dist_fctns[i] = (lambda x,y: _scalar_dist_fctn(x,y)) if np.isscalar(itpl_nodes[i][0]) \
+                else (lambda x,y: _vector_dist_fctn(x,y))
+        if dist_fctns is not None:
+            for k in dist_fctns.keys():
+                all_dist_fctns[k] = dist_fctns[k]
+        self.dist_fctns = all_dist_fctns
+        samples_shape = np.atleast_2d(itpl_vals[0]).shape
+        dim_input = samples_shape[1]
+        dim_output = samples_shape[0]
+        def tf(s, mu=None):
+            args = (s, mu.to_numpy()) if mu is not None else s
+            pd = 1
+            # this loop is for pole cancellation which occurs at interpolation nodes
+            for i, (arg, itpl_node) in enumerate(zip(args, itpl_nodes)):
+                d = self.dist_fctns[i](arg, itpl_node)
+                d_zero = d[np.abs(d) < removable_singularity_tol]
+                if len(d_zero) > 0:
+                    d_min_idx = np.argmin(np.abs(d))
+                    d = np.eye(1, d.shape[1], d_min_idx)
+                else:
+                    d = 1 / d
+                pd = np.kron(pd, d)
+            coefs_pd = coefs * pd
+            num = np.inner(coefs_pd, itpl_vals)
+            denom = np.sum(coefs_pd)
+            nd = num / denom
+            return np.atleast_2d(nd)
+
+        super().__init__(dim_input, dim_output, tf, dtf=None, parameters=parameters,
+                         sampling_time=sampling_time, name=name)
+        self.__auto_init(locals())
+
+    def to_lti(self, mu=None):
+        from pymor.models.iosys import LTIModel
+        if not isinstance(mu, Mu):
+            mu = self.parameters.parse(mu)
+        assert self.parameters.assert_compatible(mu)
+
+        if self.dim_input != 1 or self.dim_output != 1:
+            raise NotImplementedError
+
+        s = self.itpl_nodes[0]
+        n_s = len(s)
+        E = np.zeros((n_s, n_s))
+        E[0:n_s-1, 0] = np.ones((n_s-1,))
+        E[0:n_s-1, 1:n_s] = -np.eye(n_s-1)
+
+        A = np.zeros((n_s, n_s))
+        A[0:n_s-1, 0] = np.ones((n_s-1,)) * s[0]
+        A[0:n_s-1, 1:n_s] = -np.diag(s[1:])
+
+        M = np.reshape(self.coefs, (n_s, -1))
+        H = np.reshape(self.itpl_vals, (n_s, -1))
+        MH = M * H
+
+        pd = 1
+        # this loop is for pole cancellation which occurs at interpolation nodes
+        for i, (arg, itpl_node) in enumerate(zip(mu.to_numpy(), self.itpl_nodes[1:])):
+            d = self.dist_fctns[i+1](arg, itpl_node)
+            d_zero = d[np.abs(d) < self.removable_singularity_tol]
+            if len(d_zero) > 0:
+                d_min_idx = np.argmin(np.abs(d))
+                d = np.eye(1, d.shape[1], d_min_idx)
+            else:
+                d = 1 / d
+            pd = np.kron(pd, d)
+
+        alpha = M @ np.squeeze(pd)
+        A[-1,:] = -alpha
+        C = pd @ MH.T
+        B = np.zeros((n_s,1))
+        B[-1] = 1
+
+        return LTIModel.from_matrices(A, B, C, E=E)
+
+def _scalar_dist_fctn(x,y):
+    x = np.atleast_1d(x)[:, np.newaxis]
+    y = np.atleast_1d(y)[np.newaxis, :]
+    return x - y
+
+def _vector_dist_fctn(x,y):
+    x = np.atleast_2d(x)[:, np.newaxis, :]
+    y = np.atleast_2d(y)[np.newaxis, :, :]
+    return spla.norm(x - y, axis=2)**2
