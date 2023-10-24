@@ -7,8 +7,8 @@ import scipy.linalg as spla
 
 from pymor.algorithms.eigs import _arnoldi
 from pymor.algorithms.genericsolvers import _parse_options
-from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.lyapunov import _solve_lyap_lrcf_check_args
+from pymor.algorithms.qr import qr
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
@@ -192,7 +192,7 @@ def projection_shifts_init(A, E, B, shift_options):
     """
     rng = new_rng(0)
     for i in range(shift_options['init_maxiter']):
-        Q = gram_schmidt(B, atol=0, rtol=0)
+        Q, _ = qr(B)
         shifts = spla.eigvals(A.apply2(Q, Q), E.apply2(Q, Q))
         shifts = shifts[shifts.real < 0]
         if shifts.size == 0:
@@ -233,12 +233,12 @@ def projection_shifts(A, E, V, Z, prev_shifts, shift_options):
     """
     if shift_options['subspace_columns'] == 1:
         if prev_shifts[-1].imag != 0:
-            Q = gram_schmidt(cat_arrays([V.real, V.imag]), atol=0, rtol=0)
+            Q, _ = qr(cat_arrays([V.real, V.imag]))
         else:
-            Q = gram_schmidt(V, atol=0, rtol=0)
+            Q, _ = qr(V)
     else:
         num_columns = shift_options['subspace_columns'] * len(V)
-        Q = gram_schmidt(Z[-num_columns:], atol=0, rtol=0)
+        Q, _ = qr(Z[-num_columns:])
 
     shifts = spla.eigvals(A.apply2(Q, Q), E.apply2(Q, Q))
     shifts = shifts[shifts.real < 0]
