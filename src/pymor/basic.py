@@ -19,6 +19,7 @@ from pymor.algorithms.newton import newton
 from pymor.algorithms.pod import pod
 from pymor.algorithms.preassemble import preassemble
 from pymor.algorithms.projection import project, project_to_subbasis
+from pymor.algorithms.qr import qr, rrqr
 from pymor.algorithms.simplify import expand
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
 from pymor.analyticalproblems.domaindescriptions import (
