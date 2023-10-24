@@ -5,7 +5,7 @@
 from pymor.algorithms.gram_schmidt import gram_schmidt
 
 
-def qr(A, product=None, offset=0, copy=True):
+def qr(A, product=None, offset=0, check=True, check_tol=1e-3, copy=True):
     """Compute a QR decomposition.
 
     Parameters
@@ -18,6 +18,10 @@ def qr(A, product=None, offset=0, copy=True):
     offset
         Assume that the first `offset` vectors are already orthonormal and start the
         algorithm at the `offset + 1`-th vector.
+    check
+        If `True`, check if the resulting |VectorArray| is really orthonormal.
+    check_tol
+        Tolerance for the check.
     copy
         If `True`, create a copy of `A` instead of modifying `A` in-place.
 
@@ -28,10 +32,11 @@ def qr(A, product=None, offset=0, copy=True):
     R
         The upper-triangular/trapezoidal matrix.
     """
-    return gram_schmidt(A, product=product, return_R=True, atol=0, rtol=0, offset=offset, copy=copy)
+    return gram_schmidt(A, product=product, return_R=True, atol=0, rtol=0, offset=offset,
+                        check=check, check_tol=check_tol, copy=copy)
 
 
-def rrqr(A, product=None, offset=0, copy=True):
+def rrqr(A, product=None, offset=0, check=True, check_tol=1e-3, copy=True):
     """Compute a rank-revealing QR (RRQR) decomposition.
 
     Parameters
@@ -44,6 +49,10 @@ def rrqr(A, product=None, offset=0, copy=True):
     offset
         Assume that the first `offset` vectors are already orthonormal and start the
         algorithm at the `offset + 1`-th vector.
+    check
+        If `True`, check if the resulting |VectorArray| is really orthonormal.
+    check_tol
+        Tolerance for the check.
     copy
         If `True`, create a copy of `A` instead of modifying `A` in-place.
 
@@ -54,4 +63,5 @@ def rrqr(A, product=None, offset=0, copy=True):
     R
         The upper-triangular/trapezoidal matrix.
     """
-    return gram_schmidt(A, product=product, return_R=True, offset=offset, copy=copy)
+    return gram_schmidt(A, product=product, return_R=True, offset=offset,
+                        check=check, check_tol=check_tol, copy=copy)
