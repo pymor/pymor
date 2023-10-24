@@ -754,7 +754,7 @@ class GeneralizedBarycentricTransferFunction(TransferFunction):
         E[0:n_s-1, 0] = np.ones((n_s-1,))
         E[0:n_s-1, 1:n_s] = -np.eye(n_s-1)
 
-        A = np.zeros((n_s, n_s))
+        A = np.zeros((n_s, n_s), s.dtype)
         A[0:n_s-1, 0] = np.ones((n_s-1,)) * s[0]
         A[0:n_s-1, 1:n_s] = -np.diag(s[1:])
 
@@ -764,7 +764,7 @@ class GeneralizedBarycentricTransferFunction(TransferFunction):
 
         pd = 1
         # this loop is for pole cancellation which occurs at interpolation nodes
-        for i, (arg, itpl_node) in enumerate(zip(mu.to_numpy(), self.itpl_nodes[1:])):
+        for i, (arg, itpl_node) in enumerate(zip([mu.to_numpy()], self.itpl_nodes[1:])):
             d = self.dist_fctns[i+1](arg, itpl_node)
             d_zero = d[np.abs(d) < self.removable_singularity_tol]
             if len(d_zero) > 0:
