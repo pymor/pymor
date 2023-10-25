@@ -966,7 +966,7 @@ class LTIModel(Model):
         for i in range(self.dim_input):
             def input(t):
                 e = np.zeros(self.dim_input)
-                e[i] =  1 * self.sampling_time if self.sampling_time > 0 else 1  # noqa: B023
+                e[i] = self.sampling_time if self.sampling_time > 0 else 1  # noqa: B023
                 return e
 
             input = GenericFunction(mapping=input, shape_range=(self.dim_input,))
