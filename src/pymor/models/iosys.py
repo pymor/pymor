@@ -665,9 +665,7 @@ class LTIModel(Model):
         if E is not None:
             _mmwrite(Path(files_basename + '.E'), E)
 
-    def compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
-                solution_error_estimate=False, output_error_estimate=False, output_d_mu_return_array=False,
-                output_error_estimate_return_vector=False, mu=None, input=None, **kwargs):
+    def compute(self, solution=False, output=False, mu=None, input=None):
         """Compute the solution of the model and associated quantities.
 
         This method computes the output of the model, its internal state,
@@ -679,24 +677,6 @@ class LTIModel(Model):
             If `True`, return the model's internal state.
         output
             If `True`, return the model output.
-        solution_d_mu
-            If not `False`, either `True` to return the derivative of the model's
-            internal state w.r.t. all parameter components or a tuple `(parameter, index)`
-            to return the derivative of a single parameter component.
-        output_d_mu
-            If `True`, return the gradient of the model output w.r.t. the |Parameter|.
-        solution_error_estimate
-            If `True`, return an error estimate for the computed internal state.
-        output_error_estimate
-            If `True`, return an error estimate for the computed output.
-        output_d_mu_return_array
-            If `True`, return the output gradient as a |NumPy array|.
-            Otherwise, return a dict of gradients for each |Parameter|.
-        output_error_estimate_return_vector
-            If `True`, return the output estimate as a |NumPy array|,
-            where each component corresponds to the respective component
-            of the :attr:`!output_functional`.
-            Otherwise, return the Euclidean norm of all components.
         mu
             |Parameter values| for which to compute the values.
         input
@@ -705,16 +685,12 @@ class LTIModel(Model):
             mapping time to input, or a `str` expression with `t` as variable that
             can be used to instantiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
-        kwargs
-            Further keyword arguments to select further quantities that should
-            be returned or to customize how the values are computed.
 
         Returns
         -------
         A dict with the computed values.
         """
         assert self.T is not None
-        assert kwargs.keys() <= self._compute_allowed_kwargs
         assert input is not None or self.dim_input == 0
 
         # parse parameter values
@@ -758,49 +734,6 @@ class LTIModel(Model):
             if output:
                 data['output'][i] = (self.C.apply(x, mu=mu).to_numpy()
                     + D.as_range_array(mu=mu.with_(t=t)).to_numpy())
-
-        if solution_d_mu:
-            if isinstance(solution_d_mu, tuple):
-                retval = self._compute_solution_d_mu_single_direction(
-                    solution_d_mu[0], solution_d_mu[1], data['solution'], mu=mu, **kwargs)
-            else:
-                retval = self._compute_solution_d_mu(data['solution'], mu=mu, **kwargs)
-            # retval is always a dict
-            if isinstance(retval, dict) and 'solution_d_mu' in retval:
-                data.update(retval)
-            else:
-                data['solution_d_mu'] = retval
-
-        if output_d_mu and 'output_d_mu' not in data:
-            # TODO use caching here (requires skipping args in key generation)
-            retval = self._compute_output_d_mu(data['solution'], mu=mu,
-                                               return_array=output_d_mu_return_array,
-                                               **kwargs)
-            # retval is always a dict
-            if isinstance(retval, dict) and 'output_d_mu' in retval:
-                data.update(retval)
-            else:
-                data['output_d_mu'] = retval
-
-        if solution_error_estimate and 'solution_error_estimate' not in data:
-            # TODO use caching here (requires skipping args in key generation)
-            retval = self._compute_solution_error_estimate(data['solution'], mu=mu, **kwargs)
-            if isinstance(retval, dict):
-                assert 'solution_error_estimate' in retval
-                data.update(retval)
-            else:
-                data['solution_error_estimate'] = retval
-
-        if output_error_estimate and 'output_error_estimate' not in data:
-            # TODO use caching here (requires skipping args in key generation)
-            retval = self._compute_output_error_estimate(
-                data['solution'], mu=mu,
-                return_vector=output_error_estimate_return_vector, **kwargs)
-            if isinstance(retval, dict):
-                assert 'output_error_estimate' in retval
-                data.update(retval)
-            else:
-                data['output_error_estimate'] = retval
 
         return data
 
