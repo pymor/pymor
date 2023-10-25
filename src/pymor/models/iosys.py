@@ -748,7 +748,7 @@ class LTIModel(Model):
         )
         data = {}
         if solution:
-            data['solution'] = self.A.source.empty(reserve=n)
+            data['solution'] = self.solution_space.empty(reserve=n)
         if output:
             D = LinearInputOperator(self.D)
             data['output'] = np.empty((n, self.dim_output))
@@ -756,8 +756,8 @@ class LTIModel(Model):
             if solution:
                 data['solution'].append(x)
             if output:
-                data['output'][i] = self.C.apply(x, mu=mu).to_numpy() \
-                    + D.apply(D.source.ones(1), mu=mu.with_(t=t)).to_numpy()
+                data['output'][i] = (self.C.apply(x, mu=mu).to_numpy()
+                    + D.as_range_array(mu=mu.with_(t=t)).to_numpy())
 
         if solution_d_mu:
             if isinstance(solution_d_mu, tuple):
@@ -914,18 +914,17 @@ class LTIModel(Model):
 
         for i in range(self.dim_input):
             if self.sampling_time == 0:
-                data = self.with_(initial_data=initial_data[i]).compute(input=np.zeros(self.dim_input),
-                                                                        output=True,
-                                                                        solution=return_solution,
-                                                                        mu=mu)
+                data = self.with_(initial_data=initial_data[i]).compute(
+                    input=np.zeros(self.dim_input), output=True, solution=return_solution, mu=mu)
             else:
                 def input(t):
                     e = np.zeros(self.dim_input)
                     if t == 0:
-                        e[i] =  1 * self.sampling_time if self.sampling_time > 0 else 1  # noqa: B023
+                        e[i] = self.sampling_time  # noqa: B023
                     return e
                 input = GenericFunction(mapping=input, shape_range=(self.dim_input,))
-                data = self.compute(input=input, output=True, solution=return_solution, mu=mu)
+                data = self.with_(initial_data=self.solution_space.zeros(1)).compute(
+                    input=input, output=True, solution=return_solution, mu=mu)
 
             output[..., i] = data['output']
             if return_solution:
