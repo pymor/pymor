@@ -739,7 +739,6 @@ class LTIModel(Model):
             self.logger.info(f'Solving {self.name} for {mu} ...')
 
         # solution computation
-        n = (self.num_values if self.num_values else self.time_stepper.estimate_time_step_count(0, self.T)) + 1
         iterator = self.time_stepper.iterate(
             0,  # initial_time
             self.T,  # end_time
@@ -748,8 +747,15 @@ class LTIModel(Model):
             rhs=LinearInputOperator(self.B),
             mass=None if isinstance(self.E, IdentityOperator) else self.E,
             mu=mu.with_(t=0),
-            num_values=n
+            num_values=self.num_values
         )
+        if self.num_values is None:
+            try:
+                n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+            except NotImplementedError:
+                n = 0
+        else:
+            n = self.num_values + 1
         data = {}
         if solution:
             data['solution'] = self.solution_space.empty(reserve=n)
