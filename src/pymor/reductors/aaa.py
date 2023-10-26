@@ -445,7 +445,7 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
                 d = 1 / d
             pd = np.kron(pd, d)
         coefs_pd = coefs * pd
-        num = np.inner(coefs_pd, itpl_vals)
+        num = np.tensordot(coefs_pd, itpl_vals, axes=1)
         denom = np.sum(coefs_pd)
         nd = num / denom
         return np.atleast_2d(nd)
