@@ -406,18 +406,24 @@ def solve_separable_LS(L, k, q, beta=None, gamma=None, l=None, change_tol=1e-8, 
         i = i + 1
         LTb = np.einsum('ijk,j->ik', LT, beta)
         if l is None:
-            _, V = spla.eigh(LTb.conj().T @ LTb)
+            _, S, V = spla.svd(LTb, full_matrices=False, lapack_driver='gesvd')
+            VH = V.T.conj()
+            gamma_new = VH[:, -1]
         else:
             _, V = spla.eigh(LTb.conj().T @ LTb + l * np.eye(q))
-        gamma_new = V[:, 0]
+            gamma_new = V[:, 0]
+
         gamma_new = gamma_new * np.sign(np.real(gamma_new[0]))
 
         LTg = np.einsum('ijk,k->ij', LT, gamma_new)
         if l is None:
-            _, V = spla.eigh(LTg.conj().T @ LTg)
+            _, S, V = spla.svd(LTg, full_matrices=False, lapack_driver='gesvd')
+            VH = V.T.conj()
+            beta_new = VH[:, -1]
         else:
             _, V = spla.eigh(LTg.conj().T @ LTg + l * np.eye(k))
-        beta_new = V[:, 0]
+            beta_new = V[:, 0]
+
         beta_new = beta_new * np.sign(np.real(beta_new[0]))
 
         diff = spla.norm(gamma - gamma_new) + spla.norm(beta - beta_new)
