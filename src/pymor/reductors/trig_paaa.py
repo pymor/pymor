@@ -48,7 +48,7 @@ class TrigPAAAReductor(BasicObject):
         assert isinstance(sampling_values, list)
         assert all(isinstance(sv, np.ndarray) for sv in sampling_values)
 
-        self.dist_fctns = {0:_scalar_dist_fctn, 1:_sphere_dist_fctn}
+        self.dist_fctns = {0:_scalar_dist_fctn, 1:_arctan_sphere_dist_fctn}
 
         if isinstance(samples_or_fom, TransferFunction) or hasattr(samples_or_fom, 'transfer_function'):
             fom = samples_or_fom
@@ -165,6 +165,10 @@ class TrigPAAAReductor(BasicObject):
         # iteration counter
         j = 0
 
+        # barycentric coefficients
+        beta = np.ones(1, dtype=np.cdouble)
+        gamma = np.ones(1, dtype=np.cdouble)
+
         while any(len(i) < mi for i, mi in zip(self.itpl_part, max_itpl)):
 
             # compute approximation error over entire sampled data set
@@ -203,14 +207,20 @@ class TrigPAAAReductor(BasicObject):
 
             # solve LS problem
             L = full_nd_loewner(samples, svs, self.itpl_part, self.dist_fctns)
-            _, S, V = spla.svd(L, full_matrices=False, lapack_driver='gesvd')
-            VH = V.T.conj()
-            coefs = VH[:, -1]
+            # _, S, V = spla.svd(L, full_matrices=False, lapack_driver='gesvd')
+            # VH = V.T.conj()
+            # coefs = VH[:, -1]
 
-            # coefs_matrix = np.reshape(coefs, (len(self.itpl_part[0]),len(self.itpl_part[1])))
-            # U, S, V = spla.svd(coefs_matrix, full_matrices=False, lapack_driver='gesvd')
-            # coefs = np.kron(U[:,0], V[0])
-            # coefs = np.ones((np.prod([len(i) for i in self.itpl_part])))/ np.prod([len(i) for i in self.itpl_part])
+            # beta0 = np.zeros(len(self.itpl_part[0]), dtype=beta.dtype)
+            # beta0[:len(beta)] = beta
+
+            # gamma0 = np.zeros(len(self.itpl_part[1]), dtype=beta.dtype)
+            # gamma0[:len(gamma)] = gamma
+
+            beta, gamma, of = solve_separable_LS(L, len(self.itpl_part[0]), len(self.itpl_part[1])) # , beta0, gamma0)
+            # self.logger.info(f'Separable LS objective function at step {j}: {of:.5e} '
+            #                  f'vs standard LS {(spla.norm(L @ coefs)):.5e}')
+            coefs = np.kron(beta, gamma)
 
             # update barycentric form
             itpl_samples = samples[np.ix_(*self.itpl_part)]
@@ -380,6 +390,45 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, dist_fctns, removable_singulari
 
     return bary_func
 
+def solve_separable_LS(L, k, q, beta=None, gamma=None, l=None, change_tol=1e-8, objective_tol=1e-13, max_iter=30):
+    diff = np.inf
+    of = np.inf
+    LT = np.reshape(L, (-1, k, q))
+
+    if beta is None:
+        beta = np.ones((k,)) / k
+
+    if gamma is None:
+        gamma = np.ones((q,)) / q
+
+    i = 0
+    while diff > change_tol and i <= max_iter: # and of > objective_tol:
+        i = i + 1
+        LTb = np.einsum('ijk,j->ik', LT, beta)
+        if l is None:
+            _, V = spla.eigh(LTb.conj().T @ LTb)
+        else:
+            _, V = spla.eigh(LTb.conj().T @ LTb + l * np.eye(q))
+        gamma_new = V[:, 0]
+        gamma_new = gamma_new * np.sign(np.real(gamma_new[0]))
+
+        LTg = np.einsum('ijk,k->ij', LT, gamma_new)
+        if l is None:
+            _, V = spla.eigh(LTg.conj().T @ LTg)
+        else:
+            _, V = spla.eigh(LTg.conj().T @ LTg + l * np.eye(k))
+        beta_new = V[:, 0]
+        beta_new = beta_new * np.sign(np.real(beta_new[0]))
+
+        diff = spla.norm(gamma - gamma_new) + spla.norm(beta - beta_new)
+
+        print(f'ALS iteration {i} difference {diff}.')
+
+        gamma = gamma_new
+        beta = beta_new
+
+    of = spla.norm(L @ np.kron(beta, gamma))
+    return beta, gamma, of
 
 def _scalar_dist_fctn(x,y):
     x = np.atleast_1d(x)[:, np.newaxis]
@@ -416,5 +465,10 @@ def _arctan_sphere_dist_fctn(x,y):
 
     N = np.sqrt((cp2*sd)**2 + (cp1*sp2 - sp1*cp2*cd)**2)
     D = sp1*sp2 + cp1*cp2*cd
+    return (np.arctan2(N, D) / np.pi)**4
 
-    return np.arctan(N/D)
+
+def _vector_dist_fctn(x,y):
+    x = np.atleast_2d(x)[:, np.newaxis, :]
+    y = np.atleast_2d(y)[np.newaxis, :, :]
+    return spla.norm(x - y, axis=2)**2
