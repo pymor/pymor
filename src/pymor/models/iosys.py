@@ -717,6 +717,10 @@ class LTIModel(Model):
         assert kwargs.keys() <= self._compute_allowed_kwargs
         assert input is not None or self.dim_input == 0
 
+        if any([solution_d_mu, output_d_mu, solution_error_estimate,
+                output_error_estimate, output_d_mu_return_array, output_error_estimate_return_vector]):
+            raise NotImplementedError
+
         # parse parameter values
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
@@ -758,50 +762,6 @@ class LTIModel(Model):
             if output:
                 data['output'][i] = (self.C.apply(x, mu=mu).to_numpy()
                     + D.as_range_array(mu=mu.with_(t=t)).to_numpy())
-
-        if solution_d_mu:
-            if isinstance(solution_d_mu, tuple):
-                retval = self._compute_solution_d_mu_single_direction(
-                    solution_d_mu[0], solution_d_mu[1], data['solution'], mu=mu, **kwargs)
-            else:
-                retval = self._compute_solution_d_mu(data['solution'], mu=mu, **kwargs)
-            # retval is always a dict
-            if isinstance(retval, dict) and 'solution_d_mu' in retval:
-                data.update(retval)
-            else:
-                data['solution_d_mu'] = retval
-
-        if output_d_mu and 'output_d_mu' not in data:
-            # TODO use caching here (requires skipping args in key generation)
-            retval = self._compute_output_d_mu(data['solution'], mu=mu,
-                                               return_array=output_d_mu_return_array,
-                                               **kwargs)
-            # retval is always a dict
-            if isinstance(retval, dict) and 'output_d_mu' in retval:
-                data.update(retval)
-            else:
-                data['output_d_mu'] = retval
-
-        if solution_error_estimate and 'solution_error_estimate' not in data:
-            # TODO use caching here (requires skipping args in key generation)
-            retval = self._compute_solution_error_estimate(data['solution'], mu=mu, **kwargs)
-            if isinstance(retval, dict):
-                assert 'solution_error_estimate' in retval
-                data.update(retval)
-            else:
-                data['solution_error_estimate'] = retval
-
-        if output_error_estimate and 'output_error_estimate' not in data:
-            # TODO use caching here (requires skipping args in key generation)
-            retval = self._compute_output_error_estimate(
-                data['solution'], mu=mu,
-                return_vector=output_error_estimate_return_vector, **kwargs)
-            if isinstance(retval, dict):
-                assert 'output_error_estimate' in retval
-                data.update(retval)
-            else:
-                data['output_error_estimate'] = retval
-
         return data
 
     def __add__(self, other):
