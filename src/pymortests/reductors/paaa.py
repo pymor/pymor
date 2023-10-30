@@ -9,8 +9,6 @@ from pymor.reductors.aaa import PAAAReductor
 
 pytestmark = pytest.mark.builtin
 
-np.random.seed(0)
-
 test_data = [
     (3, 2, True),
     (3, 2, False),
@@ -25,6 +23,7 @@ test_data = [
 
 @pytest.mark.parametrize('m,p,is_parametric', test_data)
 def test_paaa(m,p,is_parametric):
+    np.random.seed(0)
     if is_parametric:
         sampling_values = [np.random.rand(10), np.random.rand(10)]
         samples = np.random.rand(10, 10, p, m)
