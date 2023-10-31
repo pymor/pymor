@@ -8,16 +8,14 @@ from pymor.core.logger import getLogger
 logger = getLogger('pymor.algorithms.cholesky_qr.cholesky_qr')
 
 
-def _chol_qr(A, product=None, gramian=None, check_finite=True):
-    X = A.gramian(product=product) if gramian is None else gramian
-
+def _shifted_cholesky(X, m, n, product=None, check_finite=True):
+    """This will return the Cholesky factor and keep applying shifts if it breaks down."""
     while True:
         try:
             R = spla.cholesky(X, overwrite_a=True, check_finite=check_finite)
             break
         except spla.LinAlgError:
             logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
-            m, n = A.dim, len(A)
             eps = np.finfo(X.dtype).eps
             if product is None:
                 s = m*n+n*(n+1)
@@ -25,40 +23,55 @@ def _chol_qr(A, product=None, gramian=None, check_finite=True):
             else:
                 from pymor.algorithms.eigs import eigs
                 s = 2*m*np.sqrt(m*n)+n*(n+1)
-                s *= 11*eps*spla.norm(A, ord=2, check_finite=check_finite)**2
+                # TODO fix norm estimation!
+                s *= 11*eps*spla.norm(X, ord=2, check_finite=check_finite)**2
                 s *= np.sqrt(np.abs(eigs(product, k=1)[0][0]))
             logger.info(f'Applying shift: {s}')
             np.fill_diagonal(X, np.diag(X) + s)
 
-    return A.lincomb(spla.lapack.dtrtri(R)[0].T), R
+    return R
 
 
-def cholesky_qr(A, product=None, maxiter=3, tol=None, check_finite=True, return_R=True, copy=True):
-    if copy:
-        A = A.copy()
+def cholesky_qr(A, product=None, maxiter=5, tol=None, check_finite=True, return_R=True, offset=0):
+    """No copy kwarg, because we cannot work in place anyway."""
+    assert 0 <= offset < len(A)
+    m, n = A.dim, len(A) - offset
 
     iter = 1
-    with logger.block(f'Iteration {iter}'):
-        A, R = _chol_qr(A, product=product, gramian=None, check_finite=check_finite)
-
-    while iter < maxiter:
-        iter += 1
-        if tol is None:
-            X = None
-        else:
-            X = A.gramian(product=product)
-            res = spla.norm(X - np.eye(len(A)), ord='fro', check_finite=check_finite)
-            logger.info(f'Residual = {res}')
-            if res <= tol*np.sqrt(len(A)):
-                break
-
+    while iter <= maxiter:
         with logger.block(f'Iteration {iter}'):
-            A, S = _chol_qr(A, product=product, gramian=X, check_finite=check_finite)
+            # compute only the necessary parts of the Gramian matrix
+            A_orth, A_todo = A[:offset].copy(), A[offset:]
+            B, X = np.split(A_todo.inner(A, product=product), [offset], axis=1)
+            # check orthogonality
+            if tol is not None and iter > 1:
+                res = spla.norm(X - np.eye(n), ord='fro', check_finite=check_finite)
+                logger.info(f'Residual = {res}')
+                if res <= tol*np.sqrt(n):
+                    break
+            # compute Cholesky factor of lower right block
+            Rx = _shifted_cholesky(X, m, n, product=product, check_finite=check_finite)
+            # assemble the entire inverse Cholesky factor
+            Rinv = spla.lapack.dtrtri(Rx)[0].T
+            if offset == 0:
+                A = A.lincomb(Rinv)
+            else:
+                A_orth.append(A_orth.lincomb(-Rinv@B) + A_todo.lincomb(Rinv))
+                A = A_orth
 
             if return_R:
-                spla.blas.dtrmm(1, S, R, overwrite_b=True)
+                if iter == 1:
+                    Bi = B.T
+                    Ri = Rx
+                else:
+                    Bi += B.T @ Rx
+                    spla.blas.dtrmm(1, Rx, Ri, overwrite_b=True)
+            iter += 1
 
     if return_R:
+        R = np.eye(len(A))
+        R[:offset, offset:] = Bi
+        R[offset:, offset:] = Ri
         return A, R
     else:
         return A
