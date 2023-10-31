@@ -665,54 +665,10 @@ class LTIModel(Model):
         if E is not None:
             _mmwrite(Path(files_basename + '.E'), E)
 
-    def compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
+    def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                 solution_error_estimate=False, output_error_estimate=False, output_d_mu_return_array=False,
                 output_error_estimate_return_vector=False, mu=None, input=None, **kwargs):
-        """Compute the solution of the model and associated quantities.
 
-        This method computes the output of the model, its internal state,
-        and various associated quantities for given |parameter values| `mu`.
-
-        Parameters
-        ----------
-        solution
-            If `True`, return the model's internal state.
-        output
-            If `True`, return the model output.
-        solution_d_mu
-            If not `False`, either `True` to return the derivative of the model's
-            internal state w.r.t. all parameter components or a tuple `(parameter, index)`
-            to return the derivative of a single parameter component.
-        output_d_mu
-            If `True`, return the gradient of the model output w.r.t. the |Parameter|.
-        solution_error_estimate
-            If `True`, return an error estimate for the computed internal state.
-        output_error_estimate
-            If `True`, return an error estimate for the computed output.
-        output_d_mu_return_array
-            If `True`, return the output gradient as a |NumPy array|.
-            Otherwise, return a dict of gradients for each |Parameter|.
-        output_error_estimate_return_vector
-            If `True`, return the output estimate as a |NumPy array|,
-            where each component corresponds to the respective component
-            of the :attr:`!output_functional`.
-            Otherwise, return the Euclidean norm of all components.
-        mu
-            |Parameter values| for which to compute the values.
-        input
-            The model input. Either a |NumPy array| of shape `(self.dim_input,)`,
-            a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
-            mapping time to input, or a `str` expression with `t` as variable that
-            can be used to instantiate an |ExpressionFunction| of this type.
-            Can be `None` if `self.dim_input == 0`.
-        kwargs
-            Further keyword arguments to select further quantities that should
-            be returned or to customize how the values are computed.
-
-        Returns
-        -------
-        A dict with the computed values.
-        """
         assert self.T is not None
         assert kwargs.keys() <= self._compute_allowed_kwargs
         assert input is not None or self.dim_input == 0
@@ -720,16 +676,6 @@ class LTIModel(Model):
         if any([solution_d_mu, output_d_mu, solution_error_estimate,
                 output_error_estimate, output_d_mu_return_array, output_error_estimate_return_vector]):
             raise NotImplementedError
-
-        # parse parameter values
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
-
-        # parse input and add it to the parameter values
-        mu_input = Parameters(input=self.dim_input).parse(input)
-        input = mu_input.get_time_dependent_value('input') if mu_input.is_time_dependent('input') else mu_input['input']
-        mu = mu.with_(input=input)
 
         if not solution and not output:
             return {}
