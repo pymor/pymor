@@ -352,7 +352,7 @@ class Model(CacheableObject, ParametricObject):
             self.logger.info(f'Solving {self.name} for {mu} ...')
 
         # first call _compute to give subclasses more control
-        data = self._compute(solution=solution, output=output, input=input,
+        data = self._compute(solution=solution, output=output,
                              solution_d_mu=solution_d_mu, output_d_mu=output_d_mu,
                              solution_error_estimate=solution_error_estimate,
                              output_error_estimate=output_error_estimate,

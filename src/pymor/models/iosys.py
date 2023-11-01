@@ -667,11 +667,9 @@ class LTIModel(Model):
 
     def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                 solution_error_estimate=False, output_error_estimate=False, output_d_mu_return_array=False,
-                output_error_estimate_return_vector=False, mu=None, input=None, **kwargs):
+                 output_error_estimate_return_vector=False, mu=None, **kwargs):
 
         assert self.T is not None
-        assert kwargs.keys() <= self._compute_allowed_kwargs
-        assert input is not None or self.dim_input == 0
 
         if any([solution_d_mu, output_d_mu, solution_error_estimate,
                 output_error_estimate, output_d_mu_return_array, output_error_estimate_return_vector]):
