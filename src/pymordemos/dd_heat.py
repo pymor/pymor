@@ -15,6 +15,7 @@ from pymor.core.logger import set_log_levels
 from pymor.discretizers.builtin import discretize_instationary_cg
 from pymor.models.transfer_function import TransferFunction
 from pymor.reductors.aaa import PAAAReductor
+from pymor.reductors.h2 import VectorFittingReductor
 from pymor.reductors.loewner import LoewnerReductor
 
 
@@ -82,6 +83,21 @@ def main(
 
     run_mor_method_dd(lti, ss, PAAAReductor, 'AAA')
     run_mor_method_dd(lti, ss, LoewnerReductor, 'Loewner')
+    vf = VectorFittingReductor(ss * 1j, lti.transfer_function.freq_resp(ss).squeeze())
+    rom = vf.reduce(2, maxit=500)
+    err = lti - rom
+
+    n_w = 50
+    w = np.geomspace(ss[0]/2, ss[-1]*2, n_w)
+
+    fig, ax = plt.subplots(constrained_layout=True)
+    lti.transfer_function.mag_plot(w, ax=ax, label='FOM')
+    rom.transfer_function.mag_plot(w, ax=ax, label='ROM', linestyle='dashed')
+    err.transfer_function.mag_plot(w, ax=ax, label='Error', linestyle='dotted')
+    ax.set_title('Magnitude plot for VF')
+    ax.legend()
+
+    plt.show()
 
 
 if __name__ == '__main__':
