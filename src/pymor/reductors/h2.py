@@ -831,3 +831,71 @@ class GapIRKAReductor(GenericIRKAReductor):
 
         self.conv_crit.append(dist)
         self.logger.info(f'Convergence criterion in iteration {it + 1}: {dist:e}')
+
+
+class VectorFittingReductor(BasicObject):
+    """Vector-fitting reductor.
+
+    Only for single-input single-output (SISO) systems.
+
+    Parameters
+    ----------
+    points
+        Sampling points.
+    data
+        Data.
+    weights
+        Weights.
+    """
+
+    def __init__(self, points, data, weights=None):
+        assert isinstance(points, np.ndarray)
+        assert points.ndim == 1
+
+        assert isinstance(data, np.ndarray)
+        assert data.ndim == 1
+
+        if weights is None:
+            weights = np.ones(len(points))
+        assert isinstance(weights, np.ndarray)
+        assert weights.ndim == 1
+
+        assert len(points) == len(data)
+        assert len(points) == len(weights)
+        self.__auto_init(locals())
+
+    def reduce(self, r, tol=1e-4, maxit=100):
+        """Reduce using vector-fitting.
+
+        Parameters
+        ----------
+        r
+            Reduced order.
+        tol
+            Tolerance for the convergence criterion.
+        maxit
+            Maximum number of iterations.
+
+        Returns
+        -------
+        rom
+            Reduced-order |LTIModel|.
+        """
+        lambdas = -np.logspace(0, 1, r)
+        for i in range(maxit):
+            self.logger.info(f'Iteration {i + 1}')
+            A1 = self.weights[:, np.newaxis] / (self.points[:, np.newaxis] - lambdas)
+            A2 = -self.weights[:, np.newaxis] * self.data[:, np.newaxis] / (self.points[:, np.newaxis] - lambdas)
+            A = np.hstack((A1, A2))
+            b = self.weights * self.data
+            x = spla.lstsq(A, b)[0]
+            psi = x[:r]
+            phi = x[r:]
+            error = spla.norm(phi, ord=np.inf)
+            self.logger.info(f'{error=:.3e}')
+            if error < tol:
+                break
+            A_zeros = np.diag(lambdas) + phi
+            zeros = spla.eigvals(A_zeros)
+            lambdas = -np.abs(zeros.real) + 1j * zeros.imag
+        return _poles_b_c_to_lti(lambdas, psi[:, np.newaxis], np.ones((r, 1)))
