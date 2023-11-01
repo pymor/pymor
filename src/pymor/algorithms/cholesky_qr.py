@@ -3,12 +3,45 @@
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.core.base import BasicObject
+from pymor.core.cache import CacheableObject, cached
 from pymor.core.logger import getLogger
 
 logger = getLogger('pymor.algorithms.cholesky_qr.cholesky_qr')
 
 
-def _shifted_cholesky(X, m, n, product=None, check_finite=True):
+class _ProductNorm(CacheableObject):
+    cache_region = 'memory'
+
+    def __init__(self, product):
+        self.__auto_init(locals())
+
+    @cached
+    def norm(self):
+        if self.product is None:
+            return 1
+        else:
+            from pymor.algorithms.eigs import eigs
+            return np.sqrt(np.abs(eigs(self.product, k=1)[0][0]))
+
+
+class _CholeskyShifter(BasicObject):
+    def __init__(self, A, product, product_norm):
+        self.__auto_init(locals())
+
+    def compute_shift(self, X, check_finite=True):
+        m, n = self.A.dim, len(self.A)
+        if self.product is None:
+            s = m*n+n*(n+1)
+        else:
+            s = 2*m*np.sqrt(m*n)+n*(n+1)*self.product_norm.norm()
+            X = self.A.gramian(product=self.product)
+        eps = np.finfo(X.dtype).eps
+        s *= 11*eps*spla.norm(X, ord=2, check_finite=check_finite)
+        return s
+
+
+def _shifted_cholesky(X, shifter, check_finite=True):
     """This will return the Cholesky factor and keep applying shifts if it breaks down."""
     while True:
         try:
@@ -16,18 +49,9 @@ def _shifted_cholesky(X, m, n, product=None, check_finite=True):
             break
         except spla.LinAlgError:
             logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
-            eps = np.finfo(X.dtype).eps
-            if product is None:
-                s = m*n+n*(n+1)
-                s *= 11*eps*spla.norm(X, ord=2, check_finite=check_finite)
-            else:
-                from pymor.algorithms.eigs import eigs
-                s = 2*m*np.sqrt(m*n)+n*(n+1)
-                # TODO fix norm estimation!
-                s *= 11*eps*spla.norm(X, ord=2, check_finite=check_finite)**2
-                s *= np.sqrt(np.abs(eigs(product, k=1)[0][0]))
-            logger.info(f'Applying shift: {s}')
-            np.fill_diagonal(X, np.diag(X) + s)
+            shift = shifter.compute_shift(X, check_finite=check_finite)
+            logger.info(f'Applying shift: {shift}')
+            np.fill_diagonal(X, np.diag(X) + shift)
 
     return R
 
@@ -35,9 +59,9 @@ def _shifted_cholesky(X, m, n, product=None, check_finite=True):
 def cholesky_qr(A, product=None, maxiter=5, tol=None, check_finite=True, return_R=True, offset=0):
     """No copy kwarg, because we cannot work in place anyway."""
     assert 0 <= offset < len(A)
-    m, n = A.dim, len(A) - offset
 
     iter = 1
+    product_norm = _ProductNorm(product)
     while iter <= maxiter:
         with logger.block(f'Iteration {iter}'):
             if tol is None or iter == 1:
@@ -46,7 +70,10 @@ def cholesky_qr(A, product=None, maxiter=5, tol=None, check_finite=True, return_
                 B, X = np.split(A_todo.inner(A, product=product), [offset], axis=1)
 
             # compute Cholesky factor of lower right block
-            Rx = _shifted_cholesky(X, m, n, product=product, check_finite=check_finite)
+            shifter = _CholeskyShifter(A_todo, product, product_norm)
+            Rx = _shifted_cholesky(X, shifter, check_finite=check_finite)
+
+            # orthogonalize
             Rinv = spla.lapack.dtrtri(Rx)[0].T
             if offset == 0:
                 A = A.lincomb(Rinv)
@@ -67,9 +94,9 @@ def cholesky_qr(A, product=None, maxiter=5, tol=None, check_finite=True, return_
             if tol is not None:
                 A_orth, A_todo = A[:offset].copy(), A[offset:]
                 B, X = np.split(A_todo.inner(A, product=product), [offset], axis=1)
-                res = spla.norm(X - np.eye(n), ord='fro', check_finite=check_finite)
+                res = spla.norm(X - np.eye(len(A_todo)), ord='fro', check_finite=check_finite)
                 logger.info(f'Residual = {res}')
-                if res <= tol*np.sqrt(n):
+                if res <= tol*np.sqrt(len(A)):
                     break
 
             iter += 1
