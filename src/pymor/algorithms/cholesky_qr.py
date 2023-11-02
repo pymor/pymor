@@ -70,6 +70,7 @@ def shifted_cholqr(A, product=None, return_R=True, maxiter=3, offset=0, check_to
     - `shifted_cholqr(A, product=<some_product>, maxiter=3, check_tol=None)` is equivalent to the
     shifted CholeskyQR3 algorithm in an oblique inner product (Algorithm 5.1 in :cite:`FKNYY20`).
 
+
     .. note::
         Note that the unshifted single iteration CholeskyQR algorithm is unstable.
         Setting `maxiter=1` will perform the simple shifted CholeskyQR algorithm (Algorithm 2.1
