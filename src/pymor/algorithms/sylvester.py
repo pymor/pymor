@@ -2,11 +2,15 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.operators.constructions import IdentityOperator
+from pymor.core.logger import getLogger
+from pymor.operators.constructions import IdentityOperator, VectorArrayOperator
 from pymor.operators.interface import Operator
+from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.vectorarrays.interface import VectorArray
 
 
 def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
@@ -146,3 +150,144 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
         return V
     else:
         return W
+
+
+def solve_bilinear_sylv(A, Ar, E, Er, N, Nr, R, trans=False, maxit=2, tol=1e-10):
+    r"""Solve a bilinear Sylvester equation.
+
+    Returns the solution as a |VectorArray| from `A.source`.
+
+    The equation is given by
+
+    .. math::
+        A X E_r^T
+        + E X A_r^T
+        + \sum_{k = 1}^m N_i X N_{r, i}^T
+        + R
+        = 0
+
+    if `trans` is `False` or
+
+    .. math::
+        A^T X E_r
+        + E^T X A_r
+        + \sum_{k = 1}^m N_i^T X N_{r, i}
+        + R
+        = 0
+
+    if `trans` is `True`.
+
+    Parameters
+    ----------
+    A
+        The non-parametric |Operator| A.
+    Ar
+        The matrix Ar as a 2D |NumPy array|.
+    E
+        The non-parametric |Operator| E or `None`.
+    Er
+        The matrix Er as a 2D |NumPy array| or `None`.
+    N
+        The tuple of non-parametric |Operators| N_i.
+    Nr
+        The tuple of matrices N_{r, i} as 2D |NumPy arrays|.
+    R
+        The matrix R as a |VectorArray| from `A.source`.
+    trans
+        Whether the first |Operator| in the Sylvester equation is transposed.
+    maxit
+        Maximum number of iterations.
+    tol
+        Relative error tolerance.
+
+    Returns
+    -------
+    X
+        The Sylvester equation solution as a |VectorArray| from `A.source`.
+    """
+    assert isinstance(A, Operator)
+    assert A.source == A.range
+    assert isinstance(Ar, np.ndarray)
+    assert Ar.ndim == 2
+    assert Ar.shape[0] == Ar.shape[1]
+
+    if E is None:
+        E = IdentityOperator(A.source)
+    if Er is None:
+        Er = np.eye(A.shape)
+    assert isinstance(E, Operator)
+    assert E.source == E.range
+    assert E.source == A.source
+    assert isinstance(Er, np.ndarray)
+    assert Er.ndim == 2
+    assert Er.shape[0] == Er.shape[1]
+    assert Er.shape[0] == Ar.shape[0]
+
+    assert isinstance(N, tuple)
+    assert all(isinstance(Ni, Operator) for Ni in N)
+    assert all(Ni.source == Ni.range for Ni in N)
+    assert all(Ni.source == A.source for Ni in N)
+    assert isinstance(Nr, tuple)
+    assert all(isinstance(Nri, np.ndarray) for Nri in Nr)
+    assert all(Nri.ndim == 2 for Nri in Nr)
+    assert all(Nri.shape[0] == Nri.shape[1] for Nri in Nr)
+
+    assert isinstance(R, VectorArray)
+    assert R in A.source
+    assert len(R) == Ar.shape[0]
+
+    assert maxit > 0
+    assert tol >= 0
+
+    logger = getLogger('pymor.algorithms.sylvester.solve_bilinear_sylv')
+    Ar_op = NumpyMatrixOperator(Ar)
+    Er_op = NumpyMatrixOperator(Er)
+    R_updated = R
+    for i in range(maxit):
+        with logger.block(f'Iteration {i + 1}'):
+            logger.info('Solving Sylvester equation ...')
+            if not trans:
+                X = solve_sylv_schur(
+                    A, Ar_op, E, Er_op,
+                    VectorArrayOperator(R_updated),
+                    IdentityOperator(Ar_op.source),
+                )
+            else:
+                X = solve_sylv_schur(
+                    A, Ar_op, E, Er_op,
+                    C=VectorArrayOperator(R_updated, adjoint=True),
+                    Cr=IdentityOperator(Ar_op.source),
+                )
+            if tol > 0:
+                logger.info('Computing error ...')
+                error = _compute_bilinear_sylv_error(A, Ar, E, Er, N, Nr, R, X, trans)
+                logger.info(f'Error: {error:.3e}')
+                if error <= tol:
+                    break
+            if i < maxit - 1:
+                logger.info('Updating R ...')
+                if not trans:
+                    R_updated = R + sum(Ni.apply(X.lincomb(Nri)) for Ni, Nri in zip(N, Nr))
+                else:
+                    R_updated = R + sum(Ni.apply_adjoint(X.lincomb(Nri.T)) for Ni, Nri in zip(N, Nr))
+    return X
+
+
+def _compute_bilinear_sylv_error(A, Ar, E, Er, N, Nr, R, X, trans):
+    if not trans:
+        Y = (
+            A.apply(X.lincomb(Er))
+            + E.apply(X.lincomb(Ar))
+            + sum(Ni.apply(X.lincomb(Nri)) for Ni, Nri in zip(N, Nr))
+            + R
+        )
+    else:
+        Y = (
+            A.apply_adjoint(X.lincomb(Er.T))
+            + E.apply_adjoint(X.lincomb(Ar.T))
+            + sum(Ni.apply_adjoint(X.lincomb(Nri.T)) for Ni, Nri in zip(N, Nr))
+            + R
+        )
+    error = spla.norm(Y.norm())
+    R_norm = spla.norm(R.norm())
+    return error / R_norm
