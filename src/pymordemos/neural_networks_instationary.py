@@ -10,7 +10,6 @@ from typer import Argument, Option, run
 
 from pymor.basic import *
 from pymor.core.config import config
-from pymor.models.examples import navier_stokes_example
 from pymor.reductors.neural_network import (
     NeuralNetworkInstationaryReductor,
     NeuralNetworkInstationaryStatefreeOutputReductor,
@@ -167,6 +166,7 @@ def create_fom(problem_number, grid_intervals, time_steps):
     print('Discretize ...')
     if problem_number == 0:
         config.require('FENICS')
+        from pymor.models.examples import navier_stokes_example
         fom, plot_function = navier_stokes_example(grid_intervals, time_steps)
     elif problem_number == 1:
         problem = burgers_problem()

@@ -539,6 +539,112 @@ using a reduced basis, one can apply the
 For a direct approximation of outputs using LSTMs, we provide the
 {class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryStatefreeOutputReductor`.
 
+### Instationary neural network reductors in practice
+
+In the following we apply two neural network reductors to a Navier-Stokes equation example.
+For simplicity, we restrict our attention to the approximation of an output functional.
+The discretization of the incompressible Navier-Stokes equation in a two-dimensional
+cavity where the Reynolds number serves as parameter is implemented using the FEniCS bindings
+of pyMOR and is available in the {mod}`~pymor.models.examples` module (to diminish the execution
+time of the example, we use a very coarse discretization):
+
+```{code-cell}
+from pymor.models.examples import navier_stokes_example
+grid_intervals = 10
+time_steps = 3
+fom, plot_function = navier_stokes_example(grid_intervals, time_steps)
+```
+
+We further define the parameter space for the Reynolds number:
+
+```{code-cell}
+parameter_space = fom.parameters.space(1., 50.)
+```
+
+Additionally, we sample training, validation and test sets from the parameter space:
+
+```{code-cell}
+training_set = parameter_space.sample_uniformly(15)
+validation_set = parameter_space.sample_randomly(3)
+test_set = parameter_space.sample_randomly(10)
+```
+
+To check how the two output reductors perform, we write a simple function that measures the
+errors and the speedups on a test parameter set:
+
+```{code-cell}
+def compute_errors_output(output_rom):
+    outputs = []
+    outputs_red = []
+    outputs_speedups = []
+
+    print(f'Performing test on set of size {len(test_set)} ...')
+
+    for mu in test_set:
+        tic = time.perf_counter()
+        outputs.append(fom.compute(output=True, mu=mu)['output'][1:])
+        time_fom = time.perf_counter() - tic
+        tic = time.perf_counter()
+        outputs_red.append(output_rom.compute(output=True, mu=mu)['output'][1:])
+        time_red = time.perf_counter() - tic
+
+        outputs_speedups.append(time_fom / time_red)
+
+    outputs = np.squeeze(np.array(outputs))
+    outputs_red = np.squeeze(np.array(outputs_red))
+
+    outputs_absolute_errors = np.abs(outputs - outputs_red)
+    outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
+
+    return outputs_absolute_errors, outputs_relative_errors, outputs_speedups
+```
+
+We now run the
+{class}`~pymor.reductors.neural_network.NeuralNetworkInstationaryStatefreeOutputReductor`
+and the
+{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryStatefreeOutputReductor`
+with different parameters and evaluate their performance:
+
+```{code-cell}
+output_reductor = NeuralNetworkInstationaryStatefreeOutputReductor(fom, time_steps+1, training_set,
+                                                                   validation_set, validation_loss=1e-5,
+                                                                   scale_outputs=True)
+output_rom = output_reductor.reduce(restarts=100)
+
+outputs_abs_errors, outputs_rel_errors, outputs_speedups = compute_errors_output(output_rom)
+
+output_reductor_lstm = NeuralNetworkLSTMInstationaryStatefreeOutputReductor(fom, time_steps+1, training_set,
+                                                                            validation_set, validation_loss=None,
+                                                                            scale_inputs=False, scale_outputs=True)
+output_rom_lstm = output_reductor_lstm.reduce(restarts=0, number_layers=3, hidden_dimension=50,
+                                              learning_rate=0.1)
+
+outputs_abs_errors_lstm, outputs_rel_errors_lstm, outputs_speedups_lstm = compute_errors_output(output_rom_lstm)
+```
+
+We finally print the results:
+
+```{code-cell}
+print('Results for output approximation:')
+print('=================================')
+print()
+print('Approach by Hesthaven and Ubbiali using feedforward ANNs:')
+print('---------------------------------------------------------')
+print(f'Average absolute error: {np.average(outputs_abs_errors)}')
+print(f'Average relative error: {np.average(outputs_rel_errors)}')
+print(f'Median of speedup: {np.median(outputs_speedups)}')
+print()
+print('Approach using long short-term memory ANNs:')
+print('-------------------------------------------')
+print(f'Average absolute error: {np.average(outputs_abs_errors_lstm)}')
+print(f'Average relative error: {np.average(outputs_rel_errors_lstm)}')
+print(f'Median of speedup: {np.median(outputs_speedups_lstm)}')
+```
+
+In this example, we observe that the speedup of the feedforward neural networks is about twice as
+large as the speedup of the LSTMs, while the LSTMs reach a relative error that is about an order
+of magnitude smaller.
+
 Download the code:
 {download}`tutorial_mor_with_anns.md`
 {nb-download}`tutorial_mor_with_anns.ipynb`

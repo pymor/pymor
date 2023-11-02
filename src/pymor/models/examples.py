@@ -5,6 +5,7 @@
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.core.config import config
 from pymor.tools import mpi
 
 
@@ -173,6 +174,7 @@ def navier_stokes_example(n, nt):
 
 
 def _discretize_navier_stokes(n, nt):
+    config.require('FENICS')
     import dolfin as df
     import matplotlib.pyplot as plt
 
