@@ -85,8 +85,6 @@ def pod(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=0.,
         if err >= orth_tol:
             logger.info('Reorthogonalizing POD modes ...')
             gram_schmidt(POD, product=product, atol=0., rtol=0., copy=False)
-            if return_reduced_coefficients:
-                COEFFS = POD.inner(A, product) / SVALS[:, np.newaxis]
 
     if return_reduced_coefficients:
         return POD, SVALS, COEFFS
