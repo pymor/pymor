@@ -1,0 +1,31 @@
+pyMOR 2023.2 (December 7, 2023)
+---------------------------
+
+We are proud to announce the release of pyMOR 2023.2!
+...
+
+Over ... single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2023.1.x...2023.2.x>`__.
+
+pyMOR 2023.2 contains contributions by ...
+See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more
+details.
+
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
