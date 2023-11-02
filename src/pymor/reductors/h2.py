@@ -12,14 +12,14 @@ import scipy.linalg as spla
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.krylov import tangential_rational_krylov
 from pymor.algorithms.riccati import solve_ricc_dense
-from pymor.algorithms.sylvester import solve_sylv_schur
+from pymor.algorithms.sylvester import solve_bilinear_sylv, solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
-from pymor.models.iosys import LTIModel, _lti_to_poles_b_c, _poles_b_c_to_lti
+from pymor.models.iosys import BilinearModel, LTIModel, _lti_to_poles_b_c, _poles_b_c_to_lti
 from pymor.models.transfer_function import TransferFunction
 from pymor.operators.constructions import IdentityOperator
 from pymor.parameters.base import Mu
-from pymor.reductors.basic import LTIPGReductor
+from pymor.reductors.basic import BilinearPGReductor, LTIPGReductor
 from pymor.reductors.interpolation import LTIBHIReductor, TFBHIReductor
 from pymor.tools.random import new_rng
 
@@ -828,3 +828,127 @@ class GapIRKAReductor(GenericIRKAReductor):
 
         self.conv_crit.append(dist)
         self.logger.info(f'Convergence criterion in iteration {it + 1}: {dist:e}')
+
+
+class BIRKAReductor(GenericIRKAReductor):
+    """Bilinear IRKA (B-IRKA) reductor.
+
+    Parameters
+    ----------
+    fom
+        The full-order |BilinearModel| to reduce.
+    mu
+        |Parameter values|.
+    """
+
+    def __init__(self, fom, mu=None):
+        assert isinstance(fom, BilinearModel)
+        super().__init__(fom, mu=mu)
+        self.logger.setLevel('INFO')
+
+    def reduce(self, rom0, tol=1e-4, maxit=100, num_prev=1, projection='orth', compute_errors=False):
+        r"""Reduce using B-IRKA.
+
+        Parameters
+        ----------
+        rom0
+            Initial reduced-order model (|BilinearModel|).
+        tol
+            Tolerance for the convergence criterion.
+        maxit
+            Maximum number of iterations.
+        num_prev
+            Number of previous iterations to compare the current
+            iteration to. Larger number can avoid occasional cyclic
+            behavior.
+        projection
+            Projection method:
+
+            - `'orth'`: projection matrices are orthogonalized with
+              respect to the Euclidean inner product
+            - `'biorth'`: projection matrices are biorthogonalized with
+              respect to the E product
+        compute_errors
+            Should the relative :math:`\mathcal{H}_2`-errors of
+            intermediate reduced-order models be computed.
+
+            .. warning::
+                Computing :math:`\mathcal{H}_2`-errors is expensive. Use
+                this option only if necessary.
+
+        Returns
+        -------
+        rom
+            Reduced |BilinearModel|.
+        """
+        if self.fom.sampling_time > 0:
+            raise NotImplementedError
+
+        self._clear_lists()
+        rom = rom0
+        conv_crit = 'h2'
+        self._check_common_args(tol, maxit, num_prev, conv_crit)
+        assert projection in ('orth', 'biorth')
+
+        self.logger.info('Starting B-IRKA')
+        self._conv_data = (num_prev + 1) * [None]
+        self._conv_data[0] = rom
+        for it in range(maxit):
+            self._set_V_W_reductor(rom, projection)
+            rom = self._pg_reductor.reduce()
+            self._update_conv_data(None, rom, conv_crit)
+            self._compute_conv_crit(rom, conv_crit, it)
+            self._compute_error(rom, it, compute_errors)
+            if self.conv_crit[-1] < tol:
+                break
+
+        return rom
+
+    def _set_V_W_reductor(self, rom, projection):
+        fom = (
+            self.fom.with_(
+                A=self.fom.A.assemble(mu=self.mu),
+                N=tuple(Ni.assemble(mu=self.mu) for Ni in self.fom.N),
+                B=self.fom.B.assemble(mu=self.mu),
+                C=self.fom.C.assemble(mu=self.mu),
+                D=self.fom.D.assemble(mu=self.mu),
+                E=self.fom.E.assemble(mu=self.mu),
+            )
+            if self.fom.parametric
+            else self.fom
+        )
+        if self.fom.solver_options is None:
+            opts = {}
+        else:
+            opts = self.fom.solver_options.get('bilinear_lyap_dense', {})
+        self.V = solve_bilinear_sylv(
+            fom.A,
+            to_matrix(rom.A, format='dense'),
+            fom.E,
+            to_matrix(rom.E, format='dense'),
+            fom.N,
+            tuple(to_matrix(Ni, format='dense') for Ni in rom.N),
+            fom.B.apply(rom.B.as_source_array()),
+            **opts,
+        )
+        if self.fom.solver_options is None:
+            opts = {}
+        else:
+            opts = self.fom.solver_options.get('bilinear_lyap_dense', {})
+        self.W = solve_bilinear_sylv(
+            fom.A,
+            to_matrix(rom.A, format='dense'),
+            fom.E,
+            to_matrix(rom.E, format='dense'),
+            fom.N,
+            tuple(to_matrix(Ni, format='dense') for Ni in rom.N),
+            fom.C.apply_adjoint(rom.C.as_range_array()),
+            trans=True,
+            **opts,
+        )
+        if projection == 'orth':
+            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
+            gram_schmidt(self.W, atol=0, rtol=0, copy=False)
+        elif projection == 'biorth':
+            gram_schmidt_biorth(self.V, self.W, product=fom.E, copy=False)
+        self._pg_reductor = BilinearPGReductor(fom, self.W, self.V, projection == 'biorth')
