@@ -10,13 +10,13 @@ from typer import Argument, Option, run
 
 from pymor.basic import *
 from pymor.core.config import config
+from pymor.models.examples import navier_stokes_example
 from pymor.reductors.neural_network import (
     NeuralNetworkInstationaryReductor,
     NeuralNetworkInstationaryStatefreeOutputReductor,
     NeuralNetworkLSTMInstationaryReductor,
     NeuralNetworkLSTMInstationaryStatefreeOutputReductor,
 )
-from pymor.tools import mpi
 
 
 def main(
@@ -167,7 +167,7 @@ def create_fom(problem_number, grid_intervals, time_steps):
     print('Discretize ...')
     if problem_number == 0:
         config.require('FENICS')
-        fom, plot_function = discretize_navier_stokes(grid_intervals, time_steps)
+        fom, plot_function = navier_stokes_example(grid_intervals, time_steps)
     elif problem_number == 1:
         problem = burgers_problem()
         f = LincombFunction(
@@ -181,132 +181,6 @@ def create_fom(problem_number, grid_intervals, time_steps):
         raise ValueError(f'Unknown problem number {problem_number}')
 
     return fom, plot_function
-
-
-def discretize_navier_stokes(n, nt):
-    if mpi.parallel:
-        from pymor.models.mpi import mpi_wrap_model
-        fom = mpi_wrap_model(lambda: _discretize_navier_stokes(n, nt),
-                             use_with=True, pickle_local_spaces=False)
-        plot_function = None
-    else:
-        fom, plot_function = _discretize_navier_stokes(n, nt)
-    return fom, plot_function
-
-
-def _discretize_navier_stokes(n, nt):
-    import dolfin as df
-    import matplotlib.pyplot as plt
-
-    from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
-    from pymor.bindings.fenics import FenicsMatrixOperator, FenicsOperator, FenicsVectorSpace, FenicsVisualizer
-
-    # create square mesh
-    mesh = df.UnitSquareMesh(n, n)
-
-    # create Finite Elements for the pressure and the velocity
-    P = df.FiniteElement('P', mesh.ufl_cell(), 1)
-    V = df.VectorElement('P', mesh.ufl_cell(), 2, dim=2)
-    # create mixed element and function space
-    TH = df.MixedElement([P, V])
-    W = df.FunctionSpace(mesh, TH)
-
-    # extract components of mixed space
-    W_p = W.sub(0)
-    W_u = W.sub(1)
-
-    # define trial and test functions for mass matrix
-    u = df.TrialFunction(W_u)
-    psi_u = df.TestFunction(W_u)
-
-    # assemble mass matrix for velocity
-    mass_mat = df.assemble(df.inner(u, psi_u) * df.dx)
-
-    # define trial and test functions
-    psi_p, psi_u = df.TestFunctions(W)
-    w = df.Function(W)
-    p, u = df.split(w)
-
-    # set Reynolds number, which will serve as parameter
-    Re = df.Constant(1.)
-
-    # define walls
-    top_wall = 'near(x[1], 1.)'
-    walls = 'near(x[0], 0.) | near(x[0], 1.) | near(x[1], 0.)'
-
-    # define no slip boundary conditions on all but the top wall
-    bcu_noslip_const = df.Constant((0., 0.))
-    bcu_noslip  = df.DirichletBC(W_u, bcu_noslip_const, walls)
-    # define Dirichlet boundary condition for the velocity on the top wall
-    bcu_lid_const = df.Constant((1., 0.))
-    bcu_lid = df.DirichletBC(W_u, bcu_lid_const, top_wall)
-
-    # fix pressure at a single point of the domain to obtain unique solutions
-    pressure_point = 'near(x[0],  0.) & (x[1] <= ' + str(2./n) + ')'
-    bcp_const = df.Constant(0.)
-    bcp = df.DirichletBC(W_p, bcp_const, pressure_point)
-
-    # collect boundary conditions
-    bc = [bcu_noslip, bcu_lid, bcp]
-
-    mass = -psi_p * df.div(u)
-    momentum = (df.dot(psi_u, df.dot(df.grad(u), u))
-                - df.div(psi_u) * p
-                + 2.*(1./Re) * df.inner(df.sym(df.grad(psi_u)), df.sym(df.grad(u))))
-    F = (mass + momentum) * df.dx
-
-    df.solve(F == 0, w, bc)
-
-    # define pyMOR operators
-    space = FenicsVectorSpace(W)
-    mass_op = FenicsMatrixOperator(mass_mat, W, W, name='mass')
-    op = FenicsOperator(F, space, space, w, bc,
-                        parameter_setter=lambda mu: Re.assign(mu['Re'].item()),
-                        parameters={'Re': 1})
-
-    # timestep size for the implicit Euler timestepper
-    dt = 0.01
-    ie_stepper = ImplicitEulerTimeStepper(nt=nt)
-
-    # define initial condition and right hand side as zero
-    fom_init = VectorOperator(op.range.zeros())
-    rhs = VectorOperator(op.range.zeros())
-    # define output functional
-    output_func = VectorFunctional(op.range.ones())
-
-    # construct instationary model
-    fom = InstationaryModel(dt * nt,
-                            fom_init,
-                            op,
-                            rhs,
-                            mass=mass_op,
-                            time_stepper=ie_stepper,
-                            output_functional=output_func,
-                            visualizer=FenicsVisualizer(space))
-
-    def plot_fenics(w, title=''):
-        v = df.Function(W)
-        v.leaf_node().vector()[:] = (w.to_numpy()[-1, :]).squeeze()
-        p, u  = v.split()
-
-        fig_u = df.plot(u)
-        plt.title('Velocity vector field ' + title)
-        plt.xlabel('$x$')
-        plt.ylabel('$y$')
-        plt.colorbar(fig_u)
-        plt.show()
-
-        fig_p = df.plot(p)
-        plt.title('Pressure field ' + title)
-        plt.xlabel('$x$')
-        plt.ylabel('$y$')
-        plt.colorbar(fig_p)
-        plt.show()
-
-    if mpi.parallel:
-        return fom
-    else:
-        return fom, plot_fenics
 
 
 if __name__ == '__main__':
