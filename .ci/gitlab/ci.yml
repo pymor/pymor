@@ -272,7 +272,7 @@ docs build:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
         - when: on_success
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
+    image: zivgitlab.wwu.io/pymor/pymor/ci-fenics:${CI_FENICS_IMAGE_TAG}
     script:
         - ${CI_PROJECT_DIR}/.ci/gitlab/test_docs.bash
     stage: test/build
