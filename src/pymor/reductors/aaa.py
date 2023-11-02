@@ -496,6 +496,19 @@ class AAAReductor(BasicObject):
         if len(Hs.shape) > 1:
             self._dim_output = Hs.shape[1]
             self._dim_input = Hs.shape[2]
+            rng = new_rng(0)
+            if any(np.iscomplex(s)):
+                w = 1j * rng.normal(scale=np.sqrt(2)/2, size=(self._dim_output,)) \
+                    + rng.normal(scale=np.sqrt(2)/2, size=(self._dim_output,))
+                v = 1j * rng.normal(scale=np.sqrt(2)/2, size=(self._dim_input,)) \
+                    + rng.normal(scale=np.sqrt(2)/2, size=(self._dim_input,))
+            else:
+                w = rng.normal(size=(self._dim_output,))
+                v = rng.normal(size=(self._dim_input,))
+            w /= np.linalg.norm(w)
+            v /= np.linalg.norm(v)
+            self.MIMO_Hs = Hs
+            self.Hs = Hs @ v @ w
         else:
             self._dim_input = 1
             self._dim_output = 1
@@ -557,7 +570,9 @@ class AAAReductor(BasicObject):
         while len(self.itpl_part) < max_itpl:
 
             # compute approximation error over LS partiation of sampled data
-            errs = np.abs(tf(self.s[ls_part]) - self.Hs[ls_part])
+            errs = np.empty(len(ls_part))
+            for i, ls_s in enumerate(self.s[ls_part]):
+                errs[i] = np.abs(tf(ls_s) - self.Hs[ls_part[i]])
 
             # errors for greedy selection
             ls_part_idx = np.argmax(errs)
@@ -587,22 +602,34 @@ class AAAReductor(BasicObject):
             # compute Loewner matrices
             L = nd_loewner(self.Hs, [self.s], [self.itpl_part])
 
-            _, S, _ = spla.svd(L)
-
             # solve LS problem and define data for barycentric form
             coefs = -spla.pinv(L) @ self.Hs[ls_part]
             itpl_vals = self.Hs[self.itpl_part]
             itpl_nodes = self.s[self.itpl_part]
 
-            tf = np.vectorize(
-                make_strictly_proper_bary_func(itpl_nodes, itpl_vals, coefs)
-            )
-            dtf = np.vectorize(
-                make_bary_func_derivative(itpl_nodes, itpl_vals, coefs)
-            )
+            tf = make_strictly_proper_bary_func(itpl_nodes, itpl_vals, coefs)
+            dtf = make_bary_func_derivative(itpl_nodes, itpl_vals, coefs)
 
-            if rom_form == 'barycentric':
+        if rom_form == 'barycentric':
+            if self._dim_input != 1 or self._dim_output != 1:
+                itpl_vals = self.MIMO_Hs[self.itpl_part]
+                MIMO_tf = make_strictly_proper_bary_func(itpl_nodes, itpl_vals, coefs)
+                MIMO_dtf = make_bary_func_derivative(itpl_nodes, itpl_vals, coefs)
+                rom = TransferFunction(self._dim_input, self._dim_output, MIMO_tf, MIMO_dtf)
+            else:
                 rom = TransferFunction(self._dim_input, self._dim_output, tf, dtf)
+        else:
+            if self._dim_input != 1 or self._dim_output != 1:
+                itpl_vals = self.MIMO_Hs[self.itpl_part]
+                r = len(self.itpl_part)
+                Im = np.eye(self._dim_input)
+                Br = np.kron(coefs, Im).T
+                Cr = np.empty((self._dim_output,r*self._dim_input), dtype=itpl_vals.dtype)
+                for i in range(r):
+                    Cr[:,self._dim_input*i:self._dim_input*(i+1)] = itpl_vals[i,:]
+                L = np.diag(itpl_nodes)
+                e = np.ones(r)
+                Ar = np.kron(L, Im) - Br @ (np.kron(e.T, Im))
             else:
                 r = len(self.itpl_part)
                 b = coefs
@@ -627,10 +654,11 @@ class AAAReductor(BasicObject):
                     Br = (np.sqrt(2) / 2) * (T @ Br).real
                     Cr = (np.sqrt(2) / 2) * (Cr @ T.conj().T).real
 
-                rom = LTIModel.from_matrices(Ar, Br, Cr)
+
+            rom = LTIModel.from_matrices(Ar, Br, Cr)
 
             # store history of ROMs for error analysis
-            self.rom_history.append(rom)
+            # self.rom_history.append(rom)
 
         return rom
 
@@ -684,8 +712,9 @@ def make_strictly_proper_bary_func(itpl_nodes, itpl_vals, coefs, removable_singu
             d_min_idx = np.argmin(np.abs(d))
             return np.atleast_2d(itpl_vals[d_min_idx])
         di = 1 / d
-        N = np.inner(di, coefs * itpl_vals)
-        D = np.inner(di, coefs)
+        coefs_di = coefs * di
+        N = np.tensordot(coefs_di,  itpl_vals, axes=1)
+        D = np.sum(coefs_di)
         return np.atleast_2d(N / (D + 1))
 
     return bary_func

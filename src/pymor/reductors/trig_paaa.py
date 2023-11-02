@@ -471,7 +471,7 @@ def _arctan_sphere_dist_fctn(x,y):
 
     N = np.sqrt((cp2*sd)**2 + (cp1*sp2 - sp1*cp2*cd)**2)
     D = sp1*sp2 + cp1*cp2*cd
-    return (np.arctan2(N, D) / np.pi)**4
+    return (np.arctan2(N, D) / np.pi)**2
 
 
 def _vector_dist_fctn(x,y):

@@ -704,7 +704,7 @@ class GeneralizedBarycentricTransferFunction(TransferFunction):
     """
 
     def __init__(self, itpl_nodes, itpl_vals, coefs, dist_fctns=None, removable_singularity_tol=1e-14,
-                 sampling_time=0, parameters={}, name=None):
+                  sampling_time=0, parameters={}, name=None):
         all_dist_fctns = {}
         for i in range(len(itpl_nodes)):
             all_dist_fctns[i] = (lambda x,y: _scalar_dist_fctn(x,y)) if np.isscalar(itpl_nodes[i][0]) \
@@ -712,12 +712,18 @@ class GeneralizedBarycentricTransferFunction(TransferFunction):
         if dist_fctns is not None:
             for k in dist_fctns.keys():
                 all_dist_fctns[k] = dist_fctns[k]
+        parameter_dims = []
+        for i_n in itpl_nodes:
+            if np.isscalar(i_n[0]):
+                parameter_dims.append(1)
+            else:
+                parameter_dims.append(len(i_n[0]))
         self.dist_fctns = all_dist_fctns
         samples_shape = np.atleast_2d(itpl_vals[0]).shape
         dim_input = samples_shape[1]
         dim_output = samples_shape[0]
         def tf(s, mu=None):
-            args = (s, mu.to_numpy()) if mu is not None else s
+            args = [s, *np.split(mu.to_numpy(), np.cumsum(parameter_dims)[:-1])] if mu is not None else [s]
             pd = 1
             # this loop is for pole cancellation which occurs at interpolation nodes
             for i, (arg, itpl_node) in enumerate(zip(args, itpl_nodes)):
@@ -730,7 +736,7 @@ class GeneralizedBarycentricTransferFunction(TransferFunction):
                     d = 1 / d
                 pd = np.kron(pd, d)
             coefs_pd = coefs * pd
-            num = np.inner(coefs_pd, itpl_vals)
+            num = np.tensordot(coefs_pd, itpl_vals, axes=1)[0]
             denom = np.sum(coefs_pd)
             nd = num / denom
             return np.atleast_2d(nd)
