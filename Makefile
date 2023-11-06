@@ -19,19 +19,16 @@ ifeq ($(PANDOC_MAJOR),1)
 	PANDOC_FORMAT=-f markdown_github
 endif
 
-.PHONY: README.html README test docs help
-
-default: help
+.PHONY: README test docs help
 
 # The following self-documenting help target is inspired by https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html.
 help: ## print this help prompt
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-30s %s\n", $$1, $$2}'
 
-# I want HTML (to preview the formatting :))
 README.html: README.md
 	pandoc $(PANDOC_FORMAT) -t html $< > $@
 
-README: README.html ## generate the README for the docs
+README: README.html ## convert README.md to other formats
 
 test: ## run tests
 	xvfb-run pytest
