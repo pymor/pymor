@@ -218,8 +218,8 @@ def phdmd(X, U, Y, Xdot=None, dt=None, H=None, initial_J=None, initial_R=None, i
         procrustes_data.append(skew_procrustes_data)
         Z_2 = J @ T - Z
         G = Q @ T @ T.T - Z_2 @ T.T
-
         R = _project_spsd(Q - G / L)
+
         alpha = np.sqrt((last_alpha ** 2 - sing_ratio) ** 2 + 4 * last_alpha ** 2)
         alpha += sing_ratio - last_alpha ** 2
         alpha /= 2.
@@ -293,41 +293,34 @@ def _weighted_phdmd(T, Z, rtol=1e-12):
     assert T.shape[1] == Z.shape[1]
     assert rtol < 1
 
-    logger = getLogger('pymor.algorithms.phdmd.weighted_phdmd')
+    logger = getLogger('pymor.algorithms.phdmd._weighted_phdmd')
 
     data_dim = T.shape[0]
 
     V, s_vals, Wh = spla.svd(T, full_matrices=False, lapack_driver='gesvd')
+    W = Wh.T
 
-    rank = np.argmax(s_vals / s_vals[0] <= rtol)
+    rank = np.sum(s_vals / s_vals[0] > rtol)
 
     V1 = V[:, :rank]
     s1 = s_vals[:rank]
-    W1 = Wh[:rank].T
-
-    S1 = np.diag(s1)
 
     if rank < data_dim:
         logger.warn(f'Deficient rank ({rank} < {data_dim})!')
 
-    Z1 = V1.T @ Z @ W1
+    Z1 = V.T @ Z @ W
 
-    tZ1 = s1[:, np.newaxis] @ Z1
-    J_11 = (tZ1 - tZ1.T) / 2
-    R_11 = _project_spsd(-tZ1)
-    J = V1 @ (s1[:, np.newaxis] @ J_11 * s1) @ V1.T
-    R = V1 @ (s1[:, np.newaxis] @ R_11 * s1) @ V1.T
+    tZ1 = s1[:, np.newaxis] * Z1[:rank, :rank]
+    J11 = (tZ1 - tZ1.T) / 2
+    R11 = _project_spsd(-tZ1)
+    J = V1 @ (s1[:, np.newaxis] * J11 * s1) @ V1.T
+    R = V1 @ (s1[:, np.newaxis] * R11 * s1) @ V1.T
 
     if rank < data_dim:
-        J_21 = spla.lstsq(S1, Z1.T)[0].T
-
-        top_filler = np.zeros((rank, rank))
-        bottom_filler = np.zeros((data_dim - rank, data_dim - rank))
-        compensation = np.block([
-            [top_filler, -J_21.T],
-            [J_21, bottom_filler]
-        ])
-
+        J21 = Z1[rank:, :rank] / s1
+        compensation = np.zeros((data_dim, data_dim))
+        compensation[rank:, :rank] = J21
+        compensation[:rank, rank:] = -J21.T
         J = J + V @ compensation @ V.T
 
     abs_err = spla.norm(T.T @ Z - T.T @ (J - R) @ T)
@@ -398,16 +391,15 @@ def _skew_symmetric_procrustes(T, Z, rtol=1e-12):
     V, s_vals, Wh = spla.svd(T, lapack_driver='gesvd')
     W = Wh.T
 
-    rank = np.argmax(s_vals / s_vals[0] < rtol)
+    rank = np.sum(s_vals / s_vals[0] > rtol)
     s1 = s_vals[:rank]
 
-    Y_trans = V @ Z @ W[:, :rank].T
+    Y_trans = V @ Z @ W[:rank].T
     Z1 = Y_trans[:rank]
     Z3 = Y_trans[rank:]
 
     Phi = 1. / (s1[:, np.newaxis]**2 + s1**2)
     Z1_S1 = Z1 * s1
-
     J1 = Phi * (Z1_S1 - Z1_S1.T)
     J2 = Z3 / s1[: np.newaxis]
     J4 = np.zeros((data_dim - rank, data_dim - rank))
