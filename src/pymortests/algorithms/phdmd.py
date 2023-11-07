@@ -7,15 +7,15 @@ import pytest
 
 from pymor.algorithms.phdmd import phdmd
 from pymor.core.exceptions import PHDMDError
+from pymor.models.examples import msd_example
 from pymor.models.iosys import PHLTIModel
 from pymordemos.phdmd import _implicit_midpoint, excitation_control
-from pymordemos.phlti import msd
 
 
 def _get_fitting_data(order, num_outputs=1, initial_J=False, initial_R=False):
     assert not (initial_J and initial_R)
 
-    J, R, G, P, S, N, E, Q = msd(order, m=num_outputs)
+    J, R, G, P, S, N, E, Q = msd_example(order, m=num_outputs)
     fom = PHLTIModel.from_matrices(J, R, G, P, S, N, E, Q).to_berlin_form()
 
     dt = 4e-2
