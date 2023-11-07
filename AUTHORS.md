@@ -11,6 +11,11 @@
 
 ## Contributors
 
+### pyMOR 2023.2
+
+* Peter Oehme, oehme.pb@gmail.com
+  * port-Hamiltonian dynamic mode decomposition
+
 ### pyMOR 2023.1
 
 * Tim Keil, tim.keil@uni-muenster.de
