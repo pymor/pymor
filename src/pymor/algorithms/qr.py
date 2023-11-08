@@ -53,6 +53,8 @@ def qr(A, product=None, offset=0,
         A_orig = A if copy else A.copy()
     Q, R = gram_schmidt(A, product=product, return_R=True, atol=0, rtol=0, offset=offset,
                         check=False, copy=copy, **kwargs)
+    if len(Q) < len(A):
+        raise RuntimeError('Could not construct an orthonormal basis of full length.')
     if check:
         _check_qr(A_orig, Q, R, product, check_orth_tol, check_recon_tol)
     return Q, R
@@ -110,6 +112,6 @@ def _check_qr(A, Q, R, product, check_orth_tol, check_recon_tol):
             raise AccuracyError(f'Q not orthonormal (orth err={err})')
     A_norm = spla.norm(A.norm())
     recon_err = spla.norm((A - Q.lincomb(R.T)).norm())
-    recon_err_rel = recon_err / A_norm
-    if recon_err_rel > check_recon_tol:
+    recon_err_rel = recon_err / A_norm if A_norm > 0 else 0
+    if recon_err > check_recon_tol * A_norm:
         raise AccuracyError(f'QR not accurate (rel recon err={recon_err_rel})')
