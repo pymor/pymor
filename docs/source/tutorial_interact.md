@@ -1,26 +1,20 @@
 ---
 jupytext:
   text_representation:
-   format_name: myst
-jupyter:
-  jupytext:
-    cell_metadata_filter: -all
-    formats: ipynb,myst
-    main_language: python
-    text_representation:
-      format_name: myst
-      extension: .md
-      format_version: '1.3'
-      jupytext_version: 1.11.2
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.15.2
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
+  language: python
   name: python3
 ---
 
 ```{try_on_binder}
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 :load: myst_code_init.py
 :tags: [remove-cell]
 
@@ -39,7 +33,7 @@ Python kernel and will not be shown in the HTML version of this document.
 
 First, we create a standard thermal-block benchmark model:
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.basic import *
 
 p = thermal_block_problem([2,2])
@@ -51,7 +45,7 @@ its {{ Parameters }}.
 In addition to `m`, we pass a {{ ParameterSpace }} in order to specify the ranges in which the
 parameters are allowed to vary.
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [remove-output]
 
 interact(m, p.parameter_space)
@@ -59,7 +53,7 @@ interact(m, p.parameter_space)
 
 If the {{ Model }} has outputs, these are shown as well:
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [remove-output]
 
 p = p.with_(outputs=[('l2', ConstantFunction(1., 2)), ('l2', ExpressionFunction('x[0] >= 0.5', 2))])
@@ -71,7 +65,7 @@ In the following example, we only look at the output and specify new parameter r
 new {{ ParameterSpace }} using the {meth}`~pymor.parameters.base.Parameters.space` method of `m`'s
 {{ Parameters }}:
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [remove-output]
 
 interact(m, m.parameters.space(0.1, 10), show_solution=False)
@@ -79,7 +73,7 @@ interact(m, m.parameters.space(0.1, 10), show_solution=False)
 
 {func}`~pymor.models.interact.interact` also works with time-dependent {{ Models }}:
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [remove-output]
 
 pp = InstationaryProblem(p, initial_data=ConstantFunction(0., 2), T=1.)
@@ -89,7 +83,7 @@ interact(mm, p.parameter_space)
 
 This is also the case for {{ LTIModels }}:
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [remove-output]
 
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
@@ -117,7 +111,7 @@ interact(lti, lti.parameters.space(0.01, 1))
 If we can also visualize the solutions of a reduced model by passing a `visualizer` and a
 `transform` of the solution:
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [remove-output]
 
 p = thermal_block_problem([2,2])
@@ -134,7 +128,7 @@ interact(rom, p.parameter_space,
 
 We can even show the reduced solution along the FOM solution and the error:
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [remove-output]
 
 from functools import partial

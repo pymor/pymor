@@ -1,26 +1,20 @@
 ---
 jupytext:
   text_representation:
-   format_name: myst
-jupyter:
-  jupytext:
-    cell_metadata_filter: -all
-    formats: ipynb,myst
-    main_language: python
-    text_representation:
-      format_name: myst
-      extension: .md
-      format_version: '1.3'
-      jupytext_version: 1.11.2
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.15.2
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
+  language: python
   name: python3
 ---
 
 ```{try_on_binder}
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 :load: myst_code_init.py
 :tags: [remove-cell]
 
@@ -93,7 +87,7 @@ which instantiates an {{ LTIModel }} from NumPy or SciPy matrices.
 
 First, we do the necessary imports and some matplotlib style choices.
 
-```{code-cell}
+```{code-cell} ipython3
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sps
@@ -105,7 +99,7 @@ plt.rcParams['axes.grid'] = True
 Next, we can assemble the matrices based on a centered finite difference
 approximation using standard methods of NumPy and SciPy.
 
-```{code-cell}
+```{code-cell} ipython3
 :load: heat_equation.py
 
 
@@ -114,13 +108,13 @@ approximation using standard methods of NumPy and SciPy.
 Then, we can create an {{ LTIModel }} from NumPy and SciPy matrices `A`, `B`, `C`,
 `E`.
 
-```{code-cell}
+```{code-cell} ipython3
 fom = LTIModel.from_matrices(A, B, C, E=E)
 ```
 
 We can take a look at the internal representation of the {{ LTIModel }} `fom`.
 
-```{code-cell}
+```{code-cell} ipython3
 fom
 ```
 
@@ -132,7 +126,7 @@ The operators in an {{ LTIModel }} can be accessed via its attributes, e.g.,
 
 We can also see some basic information from `fom`'s string representation
 
-```{code-cell}
+```{code-cell} ipython3
 print(fom)
 ```
 
@@ -148,14 +142,14 @@ This could have been done in the `from_matrices` call.
 Instead of creating a new model using `from_matrices`,
 we can redefine `fom` using its `with_` method.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 fom = fom.with_(T=4, time_stepper=ImplicitEulerTimeStepper(200))
 ```
 
 With this done, we can compute the output for some given input and plot it.
 
-```{code-cell}
+```{code-cell} ipython3
 Y = fom.output(input='[sin(4 * t[0]), sin(6 * t[0])]')
 fig, ax = plt.subplots()
 for i, y in enumerate(Y.T):
@@ -185,7 +179,7 @@ E \dot{x}_i(t) = A x_i(t),\ x_i(0) = E^{-1} B e_i
 for canonical basis vectors {math}`e_i` to get the {math}`i`-th column of
 {math}`h_i(t) = C x_i(t)`.
 
-```{code-cell}
+```{code-cell} ipython3
 y_impulse = fom.impulse_resp()
 fig, ax = plt.subplots(fom.dim_output, fom.dim_input, sharex=True, constrained_layout=True)
 for i in range(fom.dim_output):
@@ -202,7 +196,7 @@ _ = fig.suptitle('Impulse response')
 Step response for continuous-time LTI systems is the output corresponding to the
 zero initial condition and inputs {math}`u_i(t) = e_i`.
 
-```{code-cell}
+```{code-cell} ipython3
 y_step = fom.step_resp()
 fig, ax = plt.subplots(fom.dim_output, fom.dim_input, sharex=True, constrained_layout=True)
 for i in range(fom.dim_output):
@@ -250,7 +244,7 @@ It can be evaluated using its
 {meth}`~pymor.models.transfer_function.TransferFunction.eval_tf` method.
 The result is a NumPy array.
 
-```{code-cell}
+```{code-cell} ipython3
 print(fom.transfer_function.eval_tf(0))
 print(fom.transfer_function.eval_tf(1))
 print(fom.transfer_function.eval_tf(1j))
@@ -260,7 +254,7 @@ Similarly, the derivative of the transfer function can be computed using the
 {meth}`~pymor.models.transfer_function.TransferFunction.eval_dtf` method.
 The result is again a NumPy array.
 
-```{code-cell}
+```{code-cell} ipython3
 print(fom.transfer_function.eval_dtf(0))
 print(fom.transfer_function.eval_dtf(1))
 print(fom.transfer_function.eval_dtf(1j))
@@ -307,7 +301,7 @@ One way is the "magnitude plot", a visualization of the mapping
 using the {meth}`~pymor.models.transfer_function.TransferFunction.mag_plot`
 method.
 
-```{code-cell}
+```{code-cell} ipython3
 w = (1e-2, 1e3)
 _ = fom.transfer_function.mag_plot(w)
 ```
@@ -326,7 +320,7 @@ is in subplot {math}`(2 i - 1, j)` and
 {math}`\omega \mapsto \arg(H_{ij}(\boldsymbol{\imath} \omega))`
 is in subplot {math}`(2 i, j)`.
 
-```{code-cell}
+```{code-cell} ipython3
 fig, axs = plt.subplots(6, 2, figsize=(8, 10), sharex=True, constrained_layout=True)
 _ = fom.transfer_function.bode_plot(w, ax=axs)
 ```
@@ -335,7 +329,7 @@ To restrict which inputs and outputs are plotted by `bode_plot`,
 its parameters `input_indices` and `output_indices` can be used.
 The following restricts the plot to the second input {math}`u_2` and the first output {math}`y_1`.
 
-```{code-cell}
+```{code-cell} ipython3
 fig, axs = plt.subplots(2, 1, figsize=(8, 10), sharex=True, constrained_layout=True)
 _ = fom.transfer_function.bode_plot(w, ax=axs, input_indices=[1], output_indices=[0])
 ```
@@ -357,7 +351,7 @@ The poles of an {{ LTIModel }} can be obtained using its
 {meth}`~pymor.models.iosys.LTIModel.poles` method
 (assuming the system is minimal).
 
-```{code-cell}
+```{code-cell} ipython3
 poles = fom.poles()
 fig, ax = plt.subplots()
 ax.plot(poles.real, poles.imag, '.')
@@ -428,7 +422,7 @@ factor.
 For example, the following computes the low-rank Cholesky factor of the
 controllability Gramian as a {{ VectorArray }}:
 
-```{code-cell}
+```{code-cell} ipython3
 fom.gramian('c_lrcf')
 ```
 
@@ -442,7 +436,7 @@ Plotting the Hankel singular values shows us how well an LTI system can be
 approximated by a reduced-order model.
 The {meth}`~pymor.models.iosys.LTIModel.hsv` method can be used to compute them.
 
-```{code-cell}
+```{code-cell} ipython3
 hsv = fom.hsv()
 fig, ax = plt.subplots()
 ax.semilogy(range(1, len(hsv) + 1), hsv, '.-')
@@ -507,7 +501,7 @@ Gramians
 The {meth}`~pymor.models.iosys.LTIModel.h2_norm` method of an {{ LTIModel }} can be
 used to compute it.
 
-```{code-cell}
+```{code-cell} ipython3
 fom.h2_norm()
 ```
 
@@ -543,7 +537,7 @@ The {meth}`~pymor.models.iosys.LTIModel.hinf_norm` method uses a dense solver
 from [Slycot](<https://github.com/python-control/Slycot>) to compute the
 {math}`\mathcal{H}_\infty` norm.
 
-```{code-cell}
+```{code-cell} ipython3
 fom.hinf_norm()
 ```
 
@@ -586,7 +580,7 @@ The computation of the Hankel norm in
 {meth}`~pymor.models.iosys.LTIModel.hankel_norm` relies on the
 {meth}`~pymor.models.iosys.LTIModel.hsv` method.
 
-```{code-cell}
+```{code-cell} ipython3
 fom.hankel_norm()
 ```
 

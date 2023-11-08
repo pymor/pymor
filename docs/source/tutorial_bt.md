@@ -1,26 +1,20 @@
 ---
 jupytext:
   text_representation:
-   format_name: myst
-jupyter:
-  jupytext:
-    cell_metadata_filter: -all
-    formats: ipynb,myst
-    main_language: python
-    text_representation:
-      format_name: myst
-      extension: .md
-      format_version: '1.3'
-      jupytext_version: 1.11.2
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.15.2
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
+  language: python
   name: python3
 ---
 
 ```{try_on_binder}
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 :load: myst_code_init.py
 :tags: [remove-cell]
 
@@ -36,7 +30,7 @@ and demonstrate it on the heat equation example from
 First, we import necessary packages, including
 {class}`~pymor.reductors.bt.BTReductor`.
 
-```{code-cell}
+```{code-cell} ipython3
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sps
@@ -48,7 +42,7 @@ plt.rcParams['axes.grid'] = True
 
 Then we build the matrices
 
-```{code-cell}
+```{code-cell} ipython3
 :load: heat_equation.py
 
 
@@ -56,7 +50,7 @@ Then we build the matrices
 
 and form the full-order model.
 
-```{code-cell}
+```{code-cell} ipython3
 fom = LTIModel.from_matrices(A, B, C, E=E)
 ```
 
@@ -157,7 +151,7 @@ the lower bound
 
 To run balanced truncation in pyMOR, we first need the reductor object
 
-```{code-cell}
+```{code-cell} ipython3
 bt = BTReductor(fom)
 ```
 
@@ -166,7 +160,7 @@ balanced truncation algorithm. This reductor additionally has an `error_bounds`
 method which can compute the a priori {math}`\mathcal{H}_\infty` error bounds
 based on the Hankel singular values:
 
-```{code-cell}
+```{code-cell} ipython3
 error_bounds = bt.error_bounds()
 hsv = fom.hsv()
 fig, ax = plt.subplots()
@@ -179,7 +173,7 @@ _ = ax.set_title(r'Upper and lower $\mathcal{H}_\infty$ error bounds')
 To get a reduced-order model of order 10, we call the `reduce` method with the
 appropriate argument:
 
-```{code-cell}
+```{code-cell} ipython3
 rom = bt.reduce(10)
 ```
 
@@ -191,7 +185,7 @@ The used Petrov-Galerkin bases are stored in `bt.V` and `bt.W`.
 We can compare the magnitude plots between the full-order and reduced-order
 models
 
-```{code-cell}
+```{code-cell} ipython3
 w = (1e-2, 1e3)
 fig, ax = plt.subplots()
 fom.transfer_function.mag_plot(w, ax=ax, label='FOM')
@@ -201,7 +195,7 @@ _ = ax.legend()
 
 as well as Bode plots
 
-```{code-cell}
+```{code-cell} ipython3
 fig, axs = plt.subplots(6, 2, figsize=(8, 10), sharex=True, constrained_layout=True)
 fom.transfer_function.bode_plot(w, ax=axs)
 _ = rom.transfer_function.bode_plot(w, ax=axs, linestyle='--')
@@ -247,21 +241,21 @@ which is again an LTI system.
 \end{align}
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 err = fom - rom
 _ = err.transfer_function.mag_plot(w)
 ```
 
 and its Bode plot
 
-```{code-cell}
+```{code-cell} ipython3
 fig, axs = plt.subplots(6, 2, figsize=(8, 10), sharex=True, constrained_layout=True)
 _ = err.transfer_function.bode_plot(w, ax=axs)
 ```
 
 Finally, we can compute the relative errors in different system norms.
 
-```{code-cell}
+```{code-cell} ipython3
 print(f'Relative Hinf error:   {err.hinf_norm() / fom.hinf_norm():.3e}')
 print(f'Relative H2 error:     {err.h2_norm() / fom.h2_norm():.3e}')
 print(f'Relative Hankel error: {err.hankel_norm() / fom.hankel_norm():.3e}')

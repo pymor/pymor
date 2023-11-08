@@ -1,26 +1,20 @@
 ---
 jupytext:
   text_representation:
-   format_name: myst
-jupyter:
-  jupytext:
-    cell_metadata_filter: -all
-    formats: ipynb,myst
-    main_language: python
-    text_representation:
-      format_name: myst
-      extension: .md
-      format_version: '1.3'
-      jupytext_version: 1.11.2
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.15.2
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
+  language: python
   name: python3
 ---
 
 ```{try_on_binder}
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 :load: myst_code_init.py
 :tags: [remove-cell]
 
@@ -192,7 +186,7 @@ In the next step, we will switch to a bash terminal and actually compile this mo
 After creating a build directory for the module, we let cmake initialize the build and call make to execute the
 compilation.
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [raises-exception]
 
 %%bash
@@ -204,7 +198,7 @@ make -C minimal_cpp_demo/build
 To be able to use this extension module we need to insert the build directory into the path where the Python
 interpreter looks for things to import. Afterwards we can import the module and create and use the exported classes.
 
-```{code-cell}
+```{code-cell} ipython3
 import sys
 sys.path.insert(0, 'minimal_cpp_demo/build')
 
@@ -236,7 +230,7 @@ and {meth}`!_axpy` in addition to all the abstract
 methods from  {class}`~pymor.vectorarrays.list.CopyOnWriteVector`. We can get away
 with using just a stub that raises an {class}`~NotImplementedError` in some methods that are not actually called in our example.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
@@ -295,7 +289,7 @@ class WrappedVector(CopyOnWriteVector):
 The implementation of the `WrappedVectorSpace` is very short as most of the necessary methods
 of {{ VectorSpace }} are implemented in {class}`~pymor.vectorarrays.list.ListVectorSpace`.
 
-```{code-cell}
+```{code-cell} ipython3
 class WrappedVectorSpace(ListVectorSpace):
 
     def __init__(self, dim):
@@ -316,7 +310,7 @@ Wrapping the `model.DiffusionOperator` is straightforward as well. We just need 
 suitable {{ VectorSpaces }} to the class and implement the application of the operator on a {{ VectorArray }}
 as a sequence of applications on single vectors.
 
-```{code-cell}
+```{code-cell} ipython3
 class WrappedDiffusionOperator(Operator):
     def __init__(self, op):
         assert isinstance(op, DiffusionOperator)
@@ -355,7 +349,7 @@ coefficient  {math}`\alpha_\mu`.
 First up, we implement a `discretize` function that uses the `WrappedDiffusionOperator` and `WrappedVectorSpace`
 to assemble an {{ InstationaryModel }}.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.algorithms.pod import pod
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
 from pymor.discretizers.builtin.gui.visualizers import OnedVisualizer
@@ -396,7 +390,7 @@ def discretize(n, nt, blocks):
 Now we can build a reduced basis for our model. Note that this code is not specific to our wrapped classes.
 Those wrapped classes are only directly used in the `discretize` call.
 
-```{code-cell}
+```{code-cell} ipython3
 %matplotlib inline
 # discretize
 fom = discretize(50, 10000, 4)
@@ -434,7 +428,7 @@ fom.visualize((U_RB, U), title=f'mu = {mu}', legend=('reduced', 'detailed'))
 As you can see in this comparison, we get a good approximation of the full-order model here and
 the error plot confirms it:
 
-```{code-cell}
+```{code-cell} ipython3
 fom.visualize((U-U_RB), title=f'mu = {mu}', legend=('error'))
 ```
 

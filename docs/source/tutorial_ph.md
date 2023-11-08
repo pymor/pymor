@@ -1,26 +1,20 @@
 ---
 jupytext:
   text_representation:
-   format_name: myst
-jupyter:
-  jupytext:
-    cell_metadata_filter: -all
-    formats: ipynb,myst
-    main_language: python
-    text_representation:
-      format_name: myst
-      extension: .md
-      format_version: '1.3'
-      jupytext_version: 1.11.2
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.15.2
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
+  language: python
   name: python3
 ---
 
 ```{try_on_binder}
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 :load: myst_code_init.py
 :tags: [remove-cell]
 
@@ -148,7 +142,7 @@ which is only possible if $D + D^\top$ is nonsingular.
 For {func}`~pymor.models.iosys.PHLTIModel.from_passive_LTIModel`, $D + D^\top$ must be
 nonsingular for the same reasons.
 
-```{code-cell}
+```{code-cell} ipython3
 import numpy as np
 from pymor.models.iosys import PHLTIModel
 from pymor.models.examples import msd_example
@@ -179,7 +173,7 @@ the port-Hamiltonian structure. In more detail, the IRKA fixed-point iteration i
 but the left projection matrix is chosen as $W = QV$, which then automatically yields a
 reduced pH system with $\hat{Q} = I_r$.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
 
 reductor = PHIRKAReductor(fom)
@@ -195,7 +189,7 @@ and observability Gramians instead. PRBT preserves passivity but returns a ROM
 of type {{ LTIModel }}. Thus, we convert the ROM into a {{ PHLTIModel }} in a
 post-processing step. Note that PRBT can be used with any passive {{ LTIModel}} FOM.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.reductors.bt import PRBTReductor
 
 reductor = PRBTReductor(fom)
@@ -220,7 +214,7 @@ the positive-real observability Gramian. The spectral factor method can be used 
 any passive {{ LTIModel}} FOM. Again, we convert the ROM of type {{ LTIModel}} into a
 {{ PHLTIModel }} in a post-processing step.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.reductors.spectral_factor import SpectralFactorReductor
 from pymor.reductors.h2 import IRKAReductor
 
@@ -237,7 +231,7 @@ print(f'rom3 is of type {type(rom3).__qualname__}.')
 
 Let us compare the {math}`\mathcal{H}_2` errors of the three methods:
 
-```{code-cell}
+```{code-cell} ipython3
 err1 = fom - rom1
 err2 = fom - rom2
 err3 = fom - rom3
@@ -249,7 +243,7 @@ print(f'spectral_factor - Relative H2 error: {err3.h2_norm() / fom.h2_norm():.3e
 
 We can plot a magnitude plot of the three error systems:
 
-```{code-cell}
+```{code-cell} ipython3
 import matplotlib.pyplot as plt
 w = (1e-4, 1e3)
 fig, ax = plt.subplots()

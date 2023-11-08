@@ -1,26 +1,20 @@
 ---
 jupytext:
   text_representation:
-   format_name: myst
-jupyter:
-  jupytext:
-    cell_metadata_filter: -all
-    formats: ipynb,myst
-    main_language: python
-    text_representation:
-      format_name: myst
-      extension: .md
-      format_version: '1.3'
-      jupytext_version: 1.11.2
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.15.2
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
+  language: python
   name: python3
 ---
 
 ```{try_on_binder}
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 :load: myst_code_init.py
 :tags: [remove-cell]
 
@@ -76,7 +70,7 @@ build the {{ LTIModel }} we follow the lines of {doc}`tutorial_lti_systems`.
 
 First, we do the necessary imports and some matplotlib style choices.
 
-```{code-cell}
+```{code-cell} ipython3
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.sparse as sps
@@ -89,7 +83,7 @@ Next, we can assemble the matrices based on a centered finite difference
 approximation using standard methods of NumPy and SciPy. Here we use
 {math}`\lambda = 50`.
 
-```{code-cell}
+```{code-cell} ipython3
 :load: unstable_heat_equation.py
 
 
@@ -98,7 +92,7 @@ approximation using standard methods of NumPy and SciPy. Here we use
 Then, we can create an {{ LTIModel }} from NumPy and SciPy matrices `A`, `B`, `C`,
 `E`.
 
-```{code-cell}
+```{code-cell} ipython3
 fom = LTIModel.from_matrices(A, B, C, E=E)
 ```
 
@@ -107,7 +101,7 @@ method {meth}`~pymor.models.iosys.LTIModel.get_ast_spectrum`, which will
 compute the subset of system poles with a positive real part and the corresponding
 eigenvectors as well.
 
-```{code-cell}
+```{code-cell} ipython3
 ast_spectrum = fom.get_ast_spectrum()
 print(ast_spectrum[1])
 ```
@@ -119,7 +113,7 @@ computing eigenvalues. The code below redefines `fom` to compute 10 system poles
 that are close to 0 using pyMOR's iterative eigensolver and filters the result
 for values with a positive real part.
 
-```{code-cell}
+```{code-cell} ipython3
 fom = fom.with_(ast_pole_data={'k': 10, 'sigma': 0})
 ast_spectrum = fom.get_ast_spectrum()
 print(ast_spectrum[1])
@@ -158,7 +152,7 @@ by the {class}`~pymor.reductors.bt.FDBTReductor`.
 
 Let us start with initializing a reductor object
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.reductors.bt import FDBTReductor
 fdbt = FDBTReductor(fom)
 ```
@@ -177,7 +171,7 @@ look at some a priori error bounds for the reductor. In particular, we get a
 {math}`\mathcal{L}_\infty` rather than the {math}`\mathcal{H}_\infty` error
 bound from classic balanced truncation.
 
-```{code-cell}
+```{code-cell} ipython3
 error_bounds = fdbt.error_bounds()
 fig, ax = plt.subplots()
 ax.semilogy(range(1, len(error_bounds) + 1), error_bounds, '.-')
@@ -188,7 +182,7 @@ _ = ax.set_title(r'$\mathcal{L}_\infty$ error bounds')
 To get a reduced-order model of order 10, we call the `reduce` method with the
 appropriate argument:
 
-```{code-cell}
+```{code-cell} ipython3
 rom = fdbt.reduce(10)
 ```
 
@@ -198,7 +192,7 @@ of the reduced model.
 Finally, we can compute the relative {math}`\mathcal{L}_\infty` error to check
 the quality of the reduced-order model.
 
-```{code-cell}
+```{code-cell} ipython3
 err = fom - rom
 print(f'Relative Linf error:   {err.linf_norm() / fom.linf_norm():.3e}')
 ```
@@ -206,7 +200,7 @@ print(f'Relative Linf error:   {err.linf_norm() / fom.linf_norm():.3e}')
 Clearly, this result is in accordance with our previously computed
 {math}`\mathcal{L}_\infty` error bound:
 
-```{code-cell}
+```{code-cell} ipython3
 print(f'Linf error:   {err.linf_norm():.3e}')
 print(f'Linf upper bound:   {error_bounds[9]:.3e}')
 ```
@@ -229,7 +223,7 @@ no a priori information about the system poles is required. However, we do not
 obtain an a priori {math}`\mathcal{L}_\infty` error bound. Let us compute a
 reduced-order model of order 10 using the {class}`~pymor.reductors.h2.GapIRKAReductor`.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.reductors.h2 import GapIRKAReductor
 gapirka = GapIRKAReductor(fom)
 rom = gapirka.reduce(10)
@@ -246,7 +240,7 @@ any of the chosen stopping criterion.
 
 Again, we can compute the relative {math}`\mathcal{L}_\infty` error.
 
-```{code-cell}
+```{code-cell} ipython3
 err = fom - rom
 print(f'Relative Linf error:   {err.linf_norm() / fom.linf_norm():.3e}')
 ```

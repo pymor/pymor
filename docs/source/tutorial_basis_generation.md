@@ -1,26 +1,20 @@
 ---
 jupytext:
   text_representation:
-   format_name: myst
-jupyter:
-  jupytext:
-    cell_metadata_filter: -all
-    formats: ipynb,myst
-    main_language: python
-    text_representation:
-      format_name: myst
-      extension: .md
-      format_version: '1.3'
-      jupytext_version: 1.11.2
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.15.2
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
+  language: python
   name: python3
 ---
 
 ```{try_on_binder}
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 :load: myst_code_init.py
 :tags: [remove-cell]
 
@@ -104,7 +98,7 @@ some more assumptions have to be made on the {{ Model }}.
 
 First we import everything we need:
 
-```{code-cell}
+```{code-cell} ipython3
 import numpy as np
 from pymor.basic import *
 ```
@@ -113,7 +107,7 @@ Then we build a 3-by-2 thermalblock problem that we discretize using pyMOR's
 {mod}`built-in discretizers <pymor.discretizers.builtin>` (see
 {doc}`tutorial_builtin_discretizer` for an introduction to pyMOR's discretization toolkit).
 
-```{code-cell}
+```{code-cell} ipython3
 problem = thermal_block_problem((3,2))
 fom, _ = discretize_stationary_cg(problem, diameter=1/100)
 ```
@@ -123,7 +117,7 @@ the solutions of the full-order model `fom` should be approximated by the reduce
 We do this by calling the {meth}`~pymor.parameters.base.Parameters.space` method
 of the |parameters| of `fom`:
 
-```{code-cell}
+```{code-cell} ipython3
 parameter_space = fom.parameters.space(0.0001, 1.)
 ```
 
@@ -131,7 +125,7 @@ Here, `0.0001` and `1.` are the common lower and upper bounds for the
 individual components of all |parameters| of `fom`. In our case `fom`
 expects a single parameter `'diffusion'` of 6 values:
 
-```{code-cell}
+```{code-cell} ipython3
 fom.parameters
 ```
 
@@ -152,7 +146,7 @@ of the `fom` for certain {{ parameter_values }}. The easiest
 approach is to just pick these values randomly, what we will do in the
 following. First we define a training set of 25 parameters:
 
-```{code-cell}
+```{code-cell} ipython3
 training_set = parameter_space.sample_randomly(25)
 print(training_set)
 ```
@@ -169,7 +163,7 @@ is the right {{ VectorSpace }}? All {meth}`solutions <pymor.models.interface.Mod
 of a {{ Model }} belong to its {attr}`~pymor.models.interface.Model.solution_space`,
 so we write:
 
-```{code-cell}
+```{code-cell} ipython3
 training_data = fom.solution_space.empty()
 for mu in training_set:
     training_data.append(fom.solve(mu))
@@ -183,7 +177,7 @@ What exactly is a {{ VectorSpace }}? A {{ VectorSpace }} in pyMOR holds all
 information necessary to build {{ VectorArrays }} containing vector objects
 of a certain type. In our case we have
 
-```{code-cell}
+```{code-cell} ipython3
 fom.solution_space
 ```
 
@@ -199,7 +193,7 @@ instead of the dimension.
 After appending all solutions vectors to `training_data`, we can verify that
 `training_data` now really contains 25 vectors:
 
-```{code-cell}
+```{code-cell} ipython3
 len(training_data)
 ```
 
@@ -212,7 +206,7 @@ the {meth}`~pymor.models.interface.Model.visualize` method of `fom`.
 A {{ VectorArray }} containing multiple vectors is visualized as a
 time series:
 
-```{code-cell}
+```{code-cell} ipython3
 fom.visualize(training_data)
 ```
 
@@ -221,7 +215,7 @@ fom.visualize(training_data)
 Given some snapshot data, the easiest option to get a reduced basis
 is to just use the snapshot vectors as the basis:
 
-```{code-cell}
+```{code-cell} ipython3
 trivial_basis = training_data.copy()
 ```
 
@@ -274,7 +268,7 @@ Let's assemble and solve this equation system using pyMOR to determine
 the best-approximation error in `trivial_basis` for some test vector
 `U` which we take as another random solution of our {{ Model }}:
 
-```{code-cell}
+```{code-cell} ipython3
 U = fom.solve(parameter_space.sample_randomly())
 ```
 
@@ -283,7 +277,7 @@ is a so called [Gramian matrix](<https://en.wikipedia.org/wiki/Gramian_matrix>).
 Consequently, every {{ VectorArray }} has a {meth}`~pymor.vectorarrays.interface.VectorArray.gramian`
 method, which computes precisely this matrix:
 
-```{code-cell}
+```{code-cell} ipython3
 G = trivial_basis.gramian()
 ```
 
@@ -293,13 +287,13 @@ products between the vectors in `trivial_basis` and (the single vector in)
 `U`. For that, we can use the {meth}`~pymor.vectorarrays.interface.VectorArray.inner`
 method:
 
-```{code-cell}
+```{code-cell} ipython3
 R = trivial_basis.inner(U)
 ```
 
 which will give us a {math}`25\times 1` {{ NumPy_array }} of all inner products.
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [remove-cell]
 
 assert R.shape == (25,1)
@@ -307,7 +301,7 @@ assert R.shape == (25,1)
 
 Now, we can use {{ NumPy }} to solve the linear equation system:
 
-```{code-cell}
+```{code-cell} ipython3
 lambdas = np.linalg.solve(G, R)
 ```
 
@@ -319,7 +313,7 @@ using the {meth}`~pymor.vectorarrays.interface.VectorArray.lincomb` method
 of `trivial_basis`. It expects row vectors of linear coefficients, but
 `solve` returns column vectors, so we need to take the transpose:
 
-```{code-cell}
+```{code-cell} ipython3
 U_proj = trivial_basis.lincomb(lambdas.T)
 ```
 
@@ -327,7 +321,7 @@ Let's look at `U`, `U_proj` and the difference of both. {{ VectorArrays }} of
 the same length can simply be subtracted, yielding a new array of the
 differences:
 
-```{code-cell}
+```{code-cell} ipython3
 # for some reason U_proj does not carry over from the previous cell
 U_proj = trivial_basis.lincomb(lambdas.T)
 fom.visualize((U, U_proj, U - U_proj),
@@ -349,7 +343,7 @@ the Sobolev semi-norm (of order one) is a natural choice. Among other useful pro
 assembled a corresponding inner product {{ Operator }} for us, which is available
 as
 
-```{code-cell}
+```{code-cell} ipython3
 fom.h1_0_semi_product
 ```
 
@@ -368,7 +362,7 @@ projection error, we can simply pass it as the optional `product` argument to
 {meth}`~pymor.vectorarrays.interface.VectorArray.gramian` and
 {meth}`~pymor.vectorarrays.interface.VectorArray.inner`:
 
-```{code-cell}
+```{code-cell} ipython3
 G = trivial_basis[:10].gramian(product=fom.h1_0_semi_product)
 R = trivial_basis[:10].inner(U, product=fom.h1_0_semi_product)
 lambdas = np.linalg.solve(G, R)
@@ -392,7 +386,7 @@ To optimize the computation of the projection matrix and the right-hand
 side for varying basis sizes, we first compute these for the full basis
 and then extract appropriate sub-matrices:
 
-```{code-cell}
+```{code-cell} ipython3
 def compute_proj_errors(basis, V, product):
     G = basis.gramian(product=product)
     R = basis.inner(V, product=product)
@@ -419,7 +413,7 @@ norms of the vectors are computed.
 
 Let's plot the projection errors:
 
-```{code-cell}
+```{code-cell} ipython3
 from matplotlib import pyplot as plt
 plt.figure()
 plt.semilogy(trivial_errors)
@@ -444,7 +438,7 @@ currently worst-approximated snapshot vector to the basis of {math}`V_N`.
 
 We can easily implement it as follows:
 
-```{code-cell}
+```{code-cell} ipython3
 def strong_greedy(U, product, N):
     basis = U.space.empty()
 
@@ -466,13 +460,13 @@ Obviously, this algorithm is not optimized as we keep computing inner
 products we already know, but it will suffice for our purposes. Let's
 compute a reduced basis using the strong greedy algorithm:
 
-```{code-cell}
+```{code-cell} ipython3
 greedy_basis = strong_greedy(training_data, fom.h1_0_product, 25)
 ```
 
 We compute the approximation errors for the training data as before:
 
-```{code-cell}
+```{code-cell} ipython3
 greedy_errors = compute_proj_errors(greedy_basis, training_data, fom.h1_0_semi_product)
 
 plt.figure()
@@ -496,7 +490,7 @@ There is one technical problem with both algorithms however: the
 condition numbers of the Gramians used to compute the projection
 onto {math}`V_N` explode:
 
-```{code-cell}
+```{code-cell} ipython3
 G_trivial = trivial_basis.gramian(fom.h1_0_semi_product)
 G_greedy = greedy_basis.gramian(fom.h1_0_semi_product)
 trivial_conds, greedy_conds = [], []
@@ -521,7 +515,7 @@ algorithm in pyMOR to do so, is a modified
 {meth}`~pymor.algorithms.gram_schmidt.gram_schmidt` procedure with
 re-orthogonalization to improve numerical accuracy:
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [remove-output]
 
 gram_schmidt(greedy_basis, product=fom.h1_0_semi_product, copy=False)
@@ -536,7 +530,7 @@ Since the vectors in `greedy_basis` and `trivial_basis` are now orthonormal,
 their Gramians are identity matrices (up to numerics). Thus, their condition
 numbers should be near 1:
 
-```{code-cell}
+```{code-cell} ipython3
 G_trivial = trivial_basis.gramian(fom.h1_0_semi_product)
 G_greedy = greedy_basis.gramian(fom.h1_0_semi_product)
 
@@ -548,7 +542,7 @@ Orthonormalizing the bases does not change their linear span, so
 best-approximation errors stay the same. Also, we can
 compute these errors now more easily by exploiting orthogonality:
 
-```{code-cell}
+```{code-cell} ipython3
 def compute_proj_errors_orth_basis(basis, V, product):
     errors = []
     for N in range(len(basis) + 1):
@@ -631,21 +625,21 @@ with orthonormal vectors {math}`u_i` and {math}`v_i` that generalizes the SVD of
 The POD in this more general form is implemented in pyMOR by the
 {meth}`~pymor.algorithms.pod.pod` method, which can be called as follows:
 
-```{code-cell}
+```{code-cell} ipython3
 pod_basis, pod_singular_values = pod(training_data, product=fom.h1_0_semi_product, modes=25)
 ```
 
 We said that the POD modes (left-singular vectors) are orthonormal with respect to the
 inner product on the target Hilbert-space. Let's check that:
 
-```{code-cell}
+```{code-cell} ipython3
 np.linalg.cond(pod_basis.gramian(fom.h1_0_semi_product))
 ```
 
 Now, let us compare how the POD performs against the greedy algorithm in the worst-case
 best-approximation error:
 
-```{code-cell}
+```{code-cell} ipython3
 pod_errors = compute_proj_errors_orth_basis(pod_basis, training_data, fom.h1_0_semi_product)
 
 plt.figure()
@@ -675,7 +669,7 @@ differences between both spaces may be more significant.
 
 Finally, it is often insightful to look at the POD modes themselves:
 
-```{code-cell}
+```{code-cell} ipython3
 fom.visualize(pod_basis)
 ```
 
@@ -731,7 +725,7 @@ In order to do so, we need to be able to build a reduced-order
 model with an appropriate error estimator. For the given (linear coercive) thermal block problem
 we can use {class}`~pymor.reductors.coercive.CoerciveRBReductor`:
 
-```{code-cell}
+```{code-cell} ipython3
 reductor = CoerciveRBReductor(
     fom,
     product=fom.h1_0_semi_product,
@@ -753,7 +747,7 @@ method. Furthermore, we need to specify the number of basis vectors we want to c
 As the surrogate is cheap to evaluate, we choose here a training set of 1000 different
 {{ parameter_values }}:
 
-```{code-cell}
+```{code-cell} ipython3
 greedy_data = rb_greedy(fom, reductor, parameter_space.sample_randomly(1000),
                         max_extensions=25)
 ```
@@ -765,13 +759,13 @@ The returned `greedy_data` dictionary contains various information about the run
 of the algorithm, including the final ROM. Here, however, we are interested in the
 generated reduced basis, which is managed by the `reductor`:
 
-```{code-cell}
+```{code-cell} ipython3
 weak_greedy_basis = reductor.bases['RB']
 ```
 
 Let's see, how the weak-greedy basis performs:
 
-```{code-cell}
+```{code-cell} ipython3
 weak_greedy_errors = compute_proj_errors_orth_basis(weak_greedy_basis, training_data, fom.h1_0_semi_product)
 
 plt.figure()
@@ -794,7 +788,7 @@ data set, but likely do not generalize well to the entire solution manifold
 
 To check this, we compute an additional validation data set of 100 new parameter values:
 
-```{code-cell}
+```{code-cell} ipython3
 validation_set = parameter_space.sample_randomly(100)
 validation_data = fom.solution_space.empty()
 for mu in validation_set:
@@ -803,7 +797,7 @@ for mu in validation_set:
 
 Let's see how the approximation error decays on the validation set:
 
-```{code-cell}
+```{code-cell} ipython3
 trivial_errors = compute_proj_errors_orth_basis(trivial_basis, validation_data, fom.h1_0_semi_product)
 greedy_errors  = compute_proj_errors_orth_basis(greedy_basis, validation_data, fom.h1_0_semi_product)
 pod_errors = compute_proj_errors_orth_basis(pod_basis, validation_data, fom.h1_0_semi_product)

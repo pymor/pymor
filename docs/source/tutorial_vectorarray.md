@@ -1,26 +1,20 @@
 ---
 jupytext:
   text_representation:
-   format_name: myst
-jupyter:
-  jupytext:
-    cell_metadata_filter: -all
-    formats: ipynb,myst
-    main_language: python
-    text_representation:
-      format_name: myst
-      extension: .md
-      format_version: '1.3'
-      jupytext_version: 1.11.2
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.15.2
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
+  language: python
   name: python3
 ---
 
 ```{try_on_binder}
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 :load: myst_code_init.py
 :tags: [remove-cell]
 
@@ -60,7 +54,7 @@ vectors as two-dimensional NumPy arrays.
 The corresponding {{ VectorSpace }} is called {{ NumpyVectorSpace }}.
 To make a {{ NumpyVectorSpace }}, we need to specify the dimension of the contained vectors:
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.basic import NumpyVectorSpace
 import numpy as np
 
@@ -70,19 +64,19 @@ space = NumpyVectorSpace(7)
 The dimension can be accessed via the {attr}`~pymor.vectorarrays.interface.VectorSpace.dim`
 attribute:
 
-```{code-cell}
+```{code-cell} ipython3
 space.dim
 ```
 
 Our first {{ VectorArray }} will only contain three zero vectors:
 
-```{code-cell}
+```{code-cell} ipython3
 U = space.zeros(3)
 ```
 
 To check that we indeed have created three zero vectors of dimension 7, we can do the following:
 
-```{code-cell}
+```{code-cell} ipython3
 print(len(U))
 print(U.dim)
 print(U.norm())
@@ -91,7 +85,7 @@ print(U.norm())
 Just zero vectors are boring.
 To create vectors with different entries, we can use the following methods:
 
-```{code-cell}
+```{code-cell} ipython3
 print(space.ones(1))
 print(space.full(42, count=4))
 print(space.random(2))
@@ -101,7 +95,7 @@ Sometimes, for instance when accumulating vectors in a loop, we want to initiali
 {{ VectorArray }} with no vectors in it.
 We can use the {meth}`~pymor.vectorarrays.interface.VectorSpace.empty` method for that:
 
-```{code-cell}
+```{code-cell} ipython3
 U.empty()
 ```
 
@@ -115,7 +109,7 @@ For that, every {{ VectorSpace }} has a
 wrapping for you.
 In case of {{ NumpyVectorSpace }}, the backend is NumPy and the data is given as NumPy arrays:
 
-```{code-cell}
+```{code-cell} ipython3
 space.make_array(np.arange(0, 14).reshape((2, 7)))
 ```
 
@@ -125,7 +119,7 @@ Some but not all {{ VectorArrays }} can be initialized from NumPy arrays.
 For these arrays, the corresponding {{ VectorSpace }} implements the
 {meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy` method:
 
-```{code-cell}
+```{code-cell} ipython3
 space = NumpyVectorSpace(4)
 numpy_array = np.linspace(0, 4, 8).reshape((2, 4))
 print(numpy_array)
@@ -140,14 +134,14 @@ In particular, this is the case for {{ NumpyVectorArrays }}.
 So if you change the {{ VectorArray }}, the original array will change and vice versa:
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 numpy_array[0, 0] = 99
 vector_array
 ```
 
 To avoid this problem, you can set `ensure_copy` to `True`:
 
-```{code-cell}
+```{code-cell} ipython3
 numpy_array = np.linspace(0, 4, 8).reshape((2, 4))
 vector_array = space.from_numpy(numpy_array, ensure_copy=True)
 
@@ -161,7 +155,7 @@ If you quickly want to create a {{ NumpyVectorArray }}, you can also use
 as a class method of {{ NumpyVectorSpace }}, which will infer the dimension of the
 space from the data:
 
-```{code-cell}
+```{code-cell} ipython3
 vector_array = NumpyVectorSpace.from_numpy(numpy_array)
 vector_array
 ```
@@ -180,13 +174,13 @@ Some {{ VectorArrays }} also implement a
 {meth}`~pymor.vectorarrays.interface.VectorArray.to_numpy` method that returns the
 internal data as a NumPy array:
 
-```{code-cell}
+```{code-cell} ipython3
 space = NumpyVectorSpace(4)
 vector_array = space.random(3)
 vector_array
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 array = vector_array.to_numpy()
 array
 ```
@@ -195,7 +189,7 @@ array
 Again, the returned NumPy array might share data with the {{ VectorArray }}:
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 array[:] = 0
 vector_array
 ```
@@ -203,7 +197,7 @@ vector_array
 As with {meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
 we can use the `ensure_copy` parameter to make sure we get a copy:
 
-```{code-cell}
+```{code-cell} ipython3
 vector_array = space.random(3)
 array = vector_array.to_numpy(ensure_copy=True)
 array[:] = 0
@@ -230,7 +224,7 @@ stored consecutively in memory.)
 
 ## Basic operations
 
-```{code-cell}
+```{code-cell} ipython3
 space = NumpyVectorSpace(5)
 
 U = space.ones(2)
@@ -244,7 +238,7 @@ print(W)
 We can {meth}`~pymor.vectorarrays.interface.VectorArray.append` the vectors from one array
 to another:
 
-```{code-cell}
+```{code-cell} ipython3
 V.append(space.full(3))
 print(V)
 ```
@@ -255,7 +249,7 @@ If we do not want to copy the vectors but remove them from the original array, w
 
 We can add {{ VectorArrays }} and multiply by a scalar:
 
-```{code-cell}
+```{code-cell} ipython3
 print(U + V)
 print(U * 2)
 ```
@@ -263,14 +257,14 @@ print(U * 2)
 All operations are vectorized as they are for NumPy arrays.
 Addition and other operations also allow 'broadcasting' a single vector to the entire array:
 
-```{code-cell}
+```{code-cell} ipython3
 print(V + W)
 ```
 
 {{ VectorArrays }} can be scaled in place using the
 {meth}`~pymor.vectorarrays.interface.VectorArray.scal` method:
 
-```{code-cell}
+```{code-cell} ipython3
 U.scal(3)
 print(U)
 ```
@@ -278,14 +272,14 @@ print(U)
 Adding a scalar multiple can be achieved using
 {meth}`~pymor.vectorarrays.interface.VectorArray.axpy`:
 
-```{code-cell}
+```{code-cell} ipython3
 U.axpy(2, V)
 print(U)
 ```
 
 The same could be achieved with:
 
-```{code-cell}
+```{code-cell} ipython3
 U = space.ones(2)
 U += 2 * V
 print(U)
@@ -295,7 +289,7 @@ However, this would create an unnecessary temporary for `2 * V`.
 {meth}`~pymor.vectorarrays.interface.VectorArray.axpy` also allows broadcasting
 or specifying multiple coefficients:
 
-```{code-cell}
+```{code-cell} ipython3
 U = space.ones(2)
 U.axpy(2, W)
 print(U)
@@ -309,13 +303,13 @@ Often, a {{ VectorArray }} represents a basis, and we want to form linear combin
 w.r.t. this basis.
 For this, we can use the {meth}`~pymor.vectorarrays.interface.VectorArray.lincomb` method:
 
-```{code-cell}
+```{code-cell} ipython3
 V.lincomb(np.array([2,3]))
 ```
 
 This can also be vectorized:
 
-```{code-cell}
+```{code-cell} ipython3
 V.lincomb(np.array([[2,3],
                     [1,0],
                     [0,1]]))
@@ -324,7 +318,7 @@ V.lincomb(np.array([[2,3],
 Inner products can be computed using the {meth}`~pymor.vectorarrays.interface.VectorArray.inner`
 method:
 
-```{code-cell}
+```{code-cell} ipython3
 print(U)
 print(V)
 U.inner(V)
@@ -334,7 +328,7 @@ U.inner(V)
 {meth}`~pymor.vectorarrays.interface.VectorArray.pairwise_inner` only returns the inner product
 between the i-th vector in `U` and the i-th vector in `V`:
 
-```{code-cell}
+```{code-cell} ipython3
 U.pairwise_inner(V)
 ```
 
@@ -342,7 +336,7 @@ Norms can be conveniently computed using using the
 {meth}`~pymor.vectorarrays.interface.VectorArray.norm` or
 {meth}`~pymor.vectorarrays.interface.VectorArray.norm2` methods:
 
-```{code-cell}
+```{code-cell} ipython3
 print(U.norm())
 print(np.sqrt(U.norm2()))
 print(np.sqrt(U.pairwise_inner(U)))
@@ -351,7 +345,7 @@ print(np.sqrt(U.pairwise_inner(U)))
 The `norm` and `inner` methods have an optional `product` argument that can be used to compute
 norms and inner products w.r.t. the specified product {{ Operator }}:
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.operators.numpy import NumpyMatrixOperator
 mat = np.diag(np.arange(5) + 1.)
 print(mat)
@@ -363,7 +357,7 @@ print(U.norm2(product=prod))
 Finally, we can use the {meth}`~pymor.vectorarrays.interface.VectorArray.gramian` method as a
 shorthand to compute the matrix of all inner products of vectors in `U`:
 
-```{code-cell}
+```{code-cell} ipython3
 print(U.gramian())
 ```
 
@@ -372,7 +366,7 @@ print(U.gramian())
 Remember that assignment using `=` never copies data in Python, but only assigns a new name
 to an existing object:
 
-```{code-cell}
+```{code-cell} ipython3
 space = NumpyVectorSpace(3)
 U = space.ones()
 V = U
@@ -383,7 +377,7 @@ print(V)
 
 To get a new array we use the {meth}`~pymor.vectorarrays.interface.VectorArray.copy` method:
 
-```{code-cell}
+```{code-cell} ipython3
 U = space.ones()
 V = U.copy()
 U *= 0
@@ -405,7 +399,7 @@ slices or lists of integers.
 This *always* results in a new {{ VectorArray }} that is a view onto the data in the original
 array.
 
-```{code-cell}
+```{code-cell} ipython3
 space = NumpyVectorSpace(4)
 U = space.ones(5)
 print(U)
@@ -421,7 +415,7 @@ Indexing with lists of indices creates a view as well.
 This is different from NumPy where 'advanced indexing' always yields a copy.
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 V = U[[3,0]]
 print(V.is_view)
 print(V.base is U)
@@ -449,7 +443,7 @@ For that reason, most {{ VectorArrays }} implement the
 {meth}`~pymor.vectorarrays.interface.VectorArray.dofs` method, which allows extracting the
 values of certain degrees of freedom:
 
-```{code-cell}
+```{code-cell} ipython3
 space = NumpyVectorSpace(6)
 U = space.from_numpy(np.arange(6) * 2.)
 U.append(space.full(-1))
@@ -460,7 +454,7 @@ print(U.dofs(np.array([3, 5])))
 Related methods are {meth}`~pymor.vectorarrays.interface.VectorArray.sup_norm` and
 {meth}`~pymor.vectorarrays.interface.VectorArray.amax`:
 
-```{code-cell}
+```{code-cell} ipython3
 print(U.sup_norm())
 dofs, values = U.amax()
 print(dofs, values)
@@ -475,7 +469,7 @@ We further assume that, if defined,
 values at all degrees of freedom and that {meth}`~pymor.vectorarrays.interface.VectorArray.inner`
 is just the Euclidean inner product of these coefficient vectors:
 
-```{code-cell}
+```{code-cell} ipython3
 numpy_array = U.dofs(np.arange(U.dim))
 print(numpy_array)
 print(numpy_array == U.to_numpy())
@@ -495,7 +489,7 @@ designed to be used to only extract a small amount of degrees of freedom.
 Like NumPy, {{ VectorArrays }} transparently handle complex entries and {{ VectorSpaces }}
 do not distinguish between being complex or not:
 
-```{code-cell}
+```{code-cell} ipython3
 space = NumpyVectorSpace(3)
 U = space.ones(2)
 U[1].scal(1j)
@@ -511,7 +505,7 @@ For any {{ VectorArray }}, those can be accessed through the
 {attr}`~pymor.vectorarrays.interface.VectorArray.imag`
 attributes:
 
-```{code-cell}
+```{code-cell} ipython3
 U.real, U.imag
 ```
 
@@ -521,7 +515,7 @@ array.
 When it comes to inner products, the convention in pyMOR is that inner products are anti-linear
 in the first argument:
 
-```{code-cell}
+```{code-cell} ipython3
 print((U * 1j).inner(U) == U.inner(U) * (-1j))
 print(U.inner(U * 1j) == U.inner(U) * 1j)
 ```
@@ -532,7 +526,7 @@ print(U.inner(U * 1j) == U.inner(U) * 1j)
 to make different spaces with the same properties (e.g. dimension) distinguishable and protect
 the user from potential errors.
 
-```{code-cell}
+```{code-cell} ipython3
 space = NumpyVectorSpace(3)
 different_space = NumpyVectorSpace(3, id='different')
 print(space == different_space)
@@ -543,7 +537,7 @@ print(U in space, U in different_space)
 
 It is not allowed to combine arrays from different spaces, in particular from spaces with different ids:
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [raises-exception]
 
 V = different_space.zeros()
@@ -556,7 +550,7 @@ U + V
 Finally, we want to take brief look at the internals of {{ VectorArrays }} and also try one other type of
 array. Let's first build another {{ NumpyVectorArray }}.
 
-```{code-cell}
+```{code-cell} ipython3
 space = NumpyVectorSpace(4)
 U = space.random(3)
 ```
@@ -566,14 +560,14 @@ So where does `U` actually store its data?
 arguments checking and indexing.
 The actual work, however, is performed by an implementation object, which also holds the data:
 
-```{code-cell}
+```{code-cell} ipython3
 type(U.impl)
 ```
 
 In the case of {class}`~pymor.vectorarrays.numpy.NumpyVectorArrayImpl`, the data is stored in the
 private `_array` attribute:
 
-```{code-cell}
+```{code-cell} ipython3
 U.impl._array
 ```
 
@@ -590,21 +584,21 @@ which allows the user to give the {{ VectorArray }} implementation a hint how la
 might grow.+
 The implementation can use this to over-allocate memory to improve performance:
 
-```{code-cell}
+```{code-cell} ipython3
 V = space.ones(reserve=5)
 V.impl._array
 ```
 
 Here, `_array` is large enough to store 5 vectors, even though the array only contains one vector:
 
-```{code-cell}
+```{code-cell} ipython3
 print(len(V))
 print(V.to_numpy())
 ```
 
 If we append one vector, the second row in the array is overwritten:
 
-```{code-cell}
+```{code-cell} ipython3
 V.append(space.full(2))
 V.impl._array
 ```
@@ -616,7 +610,7 @@ However, this is only useful for implementations which do store the data consecu
 We will now look at another type of {{ VectorArray }}, which uses Python lists of one-dimensional
 NumPy arrays to store the data as a list of vectors:
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.vectorarrays.list import NumpyListVectorSpace
 space = NumpyListVectorSpace(4)
 W = space.random(3)
@@ -625,13 +619,13 @@ W = space.random(3)
 `W` behaves as any other array.
 It also implements `to_numpy` so that we can look at the data directly:
 
-```{code-cell}
+```{code-cell} ipython3
 W.to_numpy()
 ```
 
 However, the implementation class now holds a list of vector objects:
 
-```{code-cell}
+```{code-cell} ipython3
 print(type(W))
 print(type(W.impl))
 print(W.impl._list)
@@ -641,7 +635,7 @@ print(type(W.impl._list))
 Each of these {class}`~pymor.vectorarrays.list.NumpyVector` objects now stores one of the vectors
 in the array:
 
-```{code-cell}
+```{code-cell} ipython3
 W.impl._list[1]._array
 ```
 
@@ -651,7 +645,7 @@ We choose {meth}`~pymor.vectorarrays.interface.VectorArray.pairwise_inner` as th
 particularly simple.
 Here is the implementation for {{ NumpyVectorArray }}:
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.tools.formatsrc import print_source
 print_source(U.impl.pairwise_inner)
 ```
@@ -666,7 +660,7 @@ are selected.
 
 Here is the code for the `list`-based array:
 
-```{code-cell}
+```{code-cell} ipython3
 print_source(W.impl.pairwise_inner)
 ```
 
@@ -676,7 +670,7 @@ The implementation just loops over all pairs `a, b` of vector objects in both ar
 {meth}`~pymor.vectorarrays.interface.VectorArray.inner` method, which computes the actual inner product.
 In case of {class}`~pymor.vectorarrays.list.NumpyVector`, the code looks like this:
 
-```{code-cell}
+```{code-cell} ipython3
 print_source(W.impl._list[0].inner)
 ```
 

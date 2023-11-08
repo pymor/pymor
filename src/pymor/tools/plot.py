@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import math
+import warnings
 
 import numpy as np
 
@@ -120,7 +121,9 @@ class _Adaptive(BasicObject):
         dx = dx.reshape(dx.shape + (dy.ndim - 1) * (1,))
         dists = np.sqrt(dx**2 + dy**2)
         inner_products = -(dx[:-1] * dx[1:] + dy[:-1] * dy[1:])
-        inner_products_normed = inner_products / (dists[:-1] * dists[1:])
+        with warnings.catch_warnings():  # ignore divide warnings
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            inner_products_normed = inner_products / (dists[:-1] * dists[1:])
         angles = np.arccos(np.clip(inner_products_normed, -1, 1))
         return angles, dists
 

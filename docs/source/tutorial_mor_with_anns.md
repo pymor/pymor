@@ -1,26 +1,20 @@
 ---
 jupytext:
   text_representation:
-   format_name: myst
-jupyter:
-  jupytext:
-    cell_metadata_filter: -all
-    formats: ipynb,myst
-    main_language: python
-    text_representation:
-      format_name: myst
-      extension: .md
-      format_version: '1.3'
-      jupytext_version: 1.11.2
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.15.2
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
+  language: python
   name: python3
 ---
 
 ```{try_on_binder}
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 :load: myst_code_init.py
 :tags: [remove-cell]
 
@@ -110,7 +104,7 @@ u((x_1, x_2), \mu) = 2x_1\mu + 0.5,\quad x=(x_1, x_2) \in \partial\Omega.
 We discretize the problem using pyMOR's built-in discretization toolkit as
 explained in {doc}`tutorial_builtin_discretizer`:
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.basic import *
 
 problem = StationaryProblem(
@@ -137,7 +131,7 @@ fom, _ = discretize_stationary_cg(problem, diameter=1/50)
 Since we employ a single {{ Parameter }}, and thus use the same range for each
 parameter, we can create the {{ ParameterSpace }} using the following line:
 
-```{code-cell}
+```{code-cell} ipython3
 parameter_space = fom.parameters.space((0.1, 1))
 ```
 
@@ -169,7 +163,7 @@ Furthermore, it is also possible to change the deployed activation function.
 To train the neural network, we create a training and a validation set
 consisting of 100 and 20 randomly chosen {{ parameter_values }}, respectively:
 
-```{code-cell}
+```{code-cell} ipython3
 training_set = parameter_space.sample_uniformly(100)
 validation_set = parameter_space.sample_randomly(20)
 ```
@@ -197,7 +191,7 @@ model (perhaps with insufficient approximation properties).
 We can now construct a reductor with prescribed error for the basis and mean
 squared error of the neural network:
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.reductors.neural_network import NeuralNetworkReductor
 
 reductor = NeuralNetworkReductor(fom,
@@ -211,14 +205,14 @@ To reduce the model, i.e. compute a reduced basis via POD and train the neural
 network, we use the respective function of the
 {class}`~pymor.reductors.neural_network.NeuralNetworkReductor`:
 
-```{code-cell}
+```{code-cell} ipython3
 rom = reductor.reduce(restarts=100)
 ```
 
 We are now ready to test our reduced model by solving for a random parameter value
 the full problem and the reduced model and visualize the result:
 
-```{code-cell}
+```{code-cell} ipython3
 mu = parameter_space.sample_randomly()
 
 U = fom.solve(mu)
@@ -233,14 +227,14 @@ Finally, we measure the error of our neural network and the performance
 compared to the solution of the full order problem on a training set. To this
 end, we sample randomly some {{ parameter_values }} from our {{ ParameterSpace }}:
 
-```{code-cell}
+```{code-cell} ipython3
 test_set = parameter_space.sample_randomly(10)
 ```
 
 Next, we create empty solution arrays for the full and reduced solutions and an
 empty list for the speedups:
 
-```{code-cell}
+```{code-cell} ipython3
 U = fom.solution_space.empty(reserve=len(test_set))
 U_red = fom.solution_space.empty(reserve=len(test_set))
 
@@ -250,7 +244,7 @@ speedups = []
 Now, we iterate over the test set, compute full and reduced solutions to the
 respective parameters and measure the speedup:
 
-```{code-cell}
+```{code-cell} ipython3
 import time
 
 for mu in test_set:
@@ -267,14 +261,14 @@ for mu in test_set:
 
 We can now derive the absolute and relative errors on the training set as
 
-```{code-cell}
+```{code-cell} ipython3
 absolute_errors = (U - U_red).norm()
 relative_errors = (U - U_red).norm() / U.norm()
 ```
 
 The average absolute error amounts to
 
-```{code-cell}
+```{code-cell} ipython3
 import numpy as np
 
 np.average(absolute_errors)
@@ -282,14 +276,14 @@ np.average(absolute_errors)
 
 On the other hand, the average relative error is
 
-```{code-cell}
+```{code-cell} ipython3
 np.average(relative_errors)
 ```
 
 Using neural networks results in the following median speedup compared to
 solving the full order problem:
 
-```{code-cell}
+```{code-cell} ipython3
 np.median(speedups)
 ```
 
@@ -317,21 +311,21 @@ computing a reduced state at all.
 For the definition of the output, we define the output of out problem as the l2-product of the
 solution with the right hand side respectively Dirichlet boundary data of our original problem:
 
-```{code-cell}
+```{code-cell} ipython3
 problem = problem.with_(outputs=[('l2', problem.rhs), ('l2_boundary', problem.dirichlet_data)])
 ```
 
 Consequently, the output dimension is {math}`q=2`. After adjusting the problem definition,
 we also have to update the full order model to be aware of the output quantities:
 
-```{code-cell}
+```{code-cell} ipython3
 fom, _ = discretize_stationary_cg(problem, diameter=1/50)
 ```
 
 We can now import the {class}`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`
 and initialize the reductor using the same data as before:
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.reductors.neural_network import NeuralNetworkStatefreeOutputReductor
 
 output_reductor = NeuralNetworkStatefreeOutputReductor(fom,
@@ -350,7 +344,7 @@ the problem including the output quantities).
 We now perform the reduction and run some tests with the resulting
 {class}`~pymor.models.neural_network.NeuralNetworkStatefreeOutputModel`:
 
-```{code-cell}
+```{code-cell} ipython3
 output_rom = output_reductor.reduce(restarts=100)
 
 outputs = []
@@ -377,19 +371,19 @@ outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
 
 The average absolute error (component-wise) on the training set is given by
 
-```{code-cell}
+```{code-cell} ipython3
 np.average(outputs_absolute_errors)
 ```
 
 The average relative error is
 
-```{code-cell}
+```{code-cell} ipython3
 np.average(outputs_relative_errors)
 ```
 
 and the median of the speedups amounts to
 
-```{code-cell}
+```{code-cell} ipython3
 np.median(outputs_speedups)
 ```
 

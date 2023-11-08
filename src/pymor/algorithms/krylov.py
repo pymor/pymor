@@ -7,6 +7,56 @@
 from pymor.algorithms.gram_schmidt import gram_schmidt
 
 
+def arnoldi(A, E, b, r):
+    r"""Arnoldi algorithm.
+
+    Computes a real orthonormal basis for the Krylov subspace
+
+    .. math::
+        \mathrm{span}\left\{
+            E^{-1} b,
+            E^{-1} A E^{-1} b,
+            {\left(E^{-1} A\right)}^2 E^{-1} b,
+            \ldots,
+            {\left(E^{-1} A\right)}^{r - 1} E^{-1} b,
+        \right\}.
+
+    Parameters
+    ----------
+    A
+        Real |Operator| A.
+    E
+        Real |Operator| E.
+    b
+        Real |VectorArray| of length 1.
+    r
+        Order of the Krylov subspace (positive integer).
+
+    Returns
+    -------
+    V
+        Orthonormal basis for the Krylov subspace as a |VectorArray|.
+    """
+    assert A.source == A.range
+    assert E.source == A.source
+    assert E.range == A.source
+    assert b in A.source
+    assert len(b) == 1
+
+    V = A.source.empty(reserve=r)
+    v = E.apply_inverse(b)
+    v.scal(1 / v.norm()[0])
+    V.append(v)
+
+    for i in range(1, r):
+        v = A.apply(V[i - 1])
+        v = E.apply_inverse(v)
+        V.append(v)
+        gram_schmidt(V, atol=0, rtol=0, offset=len(V) - 1, copy=False)
+
+    return V
+
+
 def rational_arnoldi(A, E, b, sigma, trans=False):
     r"""Rational Arnoldi algorithm.
 
@@ -68,7 +118,7 @@ def rational_arnoldi(A, E, b, sigma, trans=False):
     Returns
     -------
     V
-        Orthonormal basis for the Krylov subspace |VectorArray|.
+        Orthonormal basis for the Krylov subspace as a |VectorArray|.
     """
     assert A.source == A.range
     assert E.source == A.source
@@ -154,7 +204,7 @@ def tangential_rational_krylov(A, E, B, b, sigma, trans=False, orth=True):
     Returns
     -------
     V
-        Optionally orthonormal basis for the Krylov subspace |VectorArray|.
+        Optionally orthonormal basis for the Krylov subspace as a |VectorArray|.
     """
     assert A.source == A.range
     assert E.source == A.source
