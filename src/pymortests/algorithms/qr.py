@@ -10,24 +10,33 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 pytestmark = pytest.mark.builtin
 
 
+@pytest.mark.parametrize('complex', [False, True])
 @pytest.mark.parametrize('copy', [False, True])
-def test_qr_random(copy):
+def test_qr_random(copy, complex):
     V = NumpyVectorSpace(5).random(3)
+    if complex:
+        V += 1j * NumpyVectorSpace(5).random(3)
     Q, R = qr(V, copy=copy)
     assert len(V) == len(Q) == 3
 
 
+@pytest.mark.parametrize('complex', [False, True])
 @pytest.mark.parametrize('copy', [False, True])
-def test_qr_random_offset(copy):
+def test_qr_random_offset(copy, complex):
     V = NumpyVectorSpace(5).random(3)
+    if complex:
+        V += 1j * NumpyVectorSpace(5).random(3)
     V[0].scal(1 / V[0].norm())
     Q, R = qr(V, offset=1, copy=copy)
     assert len(V) == len(Q) == 3
 
 
+@pytest.mark.parametrize('complex', [False, True])
 @pytest.mark.parametrize('copy', [False, True])
-def test_qr_ones(copy):
+def test_qr_ones(copy, complex):
     V = NumpyVectorSpace(5).ones(2)
+    if complex:
+        V += 1j * NumpyVectorSpace(5).ones(2)
     with pytest.raises(RuntimeError):
         Q, R = qr(V, copy=copy)
 
@@ -46,24 +55,33 @@ def test_qr_empty(copy):
     assert len(V) == len(Q) == 0
 
 
+@pytest.mark.parametrize('complex', [False, True])
 @pytest.mark.parametrize('copy', [False, True])
-def test_rrqr_random(copy):
+def test_rrqr_random(copy, complex):
     V = NumpyVectorSpace(5).random(3)
+    if complex:
+        V += 1j * NumpyVectorSpace(5).random(3)
     Q, R = rrqr(V, copy=copy)
     assert len(V) == len(Q) == 3
 
 
+@pytest.mark.parametrize('complex', [False, True])
 @pytest.mark.parametrize('copy', [False, True])
-def test_rrqr_random_offset(copy):
+def test_rrqr_random_offset(copy, complex):
     V = NumpyVectorSpace(5).random(3)
+    if complex:
+        V += 1j * NumpyVectorSpace(5).random(3)
     V[0].scal(1 / V[0].norm())
     Q, R = rrqr(V, offset=1, copy=copy)
     assert len(V) == len(Q) == 3
 
 
+@pytest.mark.parametrize('complex', [False, True])
 @pytest.mark.parametrize('copy', [False, True])
-def test_rrqr_ones(copy):
+def test_rrqr_ones(copy, complex):
     V = NumpyVectorSpace(5).ones(2)
+    if complex:
+        V += 1j * NumpyVectorSpace(5).ones(2)
     Q, R = rrqr(V, copy=copy)
     if copy:
         assert len(V) == 2
