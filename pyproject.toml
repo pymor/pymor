@@ -7,7 +7,7 @@ name = "pymor"
 dynamic = ["version"]
 description = " "
 readme = "README.md"
-license.file = "LICENSE.txt"
+license = {file = "LICENSE.txt"}
 requires-python = ">=3.8"
 authors = [
   {name = "pyMOR developers", email = "main.developers@pymor.org"},
