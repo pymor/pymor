@@ -10,6 +10,7 @@ from pymor.core.cache import CacheableObject, cached
 from pymor.core.logger import getLogger
 from pymor.discretizers.builtin.inverse import inv_transposed_two_by_two
 from pymor.discretizers.builtin.relations import inverse_relation
+from pymor.tools.deprecated import Deprecated
 
 
 class ReferenceElement(CacheableObject):
@@ -240,49 +241,53 @@ class Grid(CacheableObject):
         SE = self.subentities(superentity_codim, codim)
         return inverse_relation(SE, size_rhs=self.size(codim), with_indices=True)
 
-    def neighbours(self, codim, neighbour_codim, intersection_codim=None):
-        """Maps entity index and local neighbour index to global neighbour index.
+    @Deprecated('neighbors')
+    def neighbours(self, *args, **kwargs):
+        self.neighbors(*args, **kwargs)
 
-        `retval[e,n]` is the global index of the `n`-th codim-`neighbour_codim` entity of the
+    def neighbors(self, codim, neighbor_codim, intersection_codim=None):
+        """Maps entity index and local neighbor index to global neighbor index.
+
+        `retval[e,n]` is the global index of the `n`-th codim-`neighbor_codim` entity of the
         codim-`codim` entity `e` that shares with `e` a subentity of codimension
         `intersection_codim`.
 
-        If `intersection_codim == None`, it is set to `codim + 1` if `codim == neighbour_codim` and
-        to `min(codim, neighbour_codim)` otherwise.
+        If `intersection_codim == None`, it is set to `codim + 1` if `codim == neighbor_codim` and
+        to `min(codim, neighbor_codim)` otherwise.
 
         The default implementation is to compute the result from
         `subentities(codim, intersection_codim)` and
-        `superentities(intersection_codim, neihbour_codim)`.
+        `superentities(intersection_codim, neighbor_codim)`.
         """
-        return self._neighbours(codim, neighbour_codim, intersection_codim)
+        return self._neighbors(codim, neighbor_codim, intersection_codim)
 
     @cached
-    def _neighbours(self, codim, neighbour_codim, intersection_codim):
+    def _neighbors(self, codim, neighbor_codim, intersection_codim):
         assert 0 <= codim <= self.dim, 'Invalid codimension'
-        assert 0 <= neighbour_codim <= self.dim, 'Invalid codimension'
+        assert 0 <= neighbor_codim <= self.dim, 'Invalid codimension'
         if intersection_codim is None:
-            if codim == neighbour_codim:
+            if codim == neighbor_codim:
                 intersection_codim = codim + 1
             else:
-                intersection_codim = max(codim, neighbour_codim)
-        assert max(codim, neighbour_codim) <= intersection_codim <= self.dim, 'Invalid codimension'
+                intersection_codim = max(codim, neighbor_codim)
+        assert max(codim, neighbor_codim) <= intersection_codim <= self.dim, 'Invalid codimension'
 
-        if intersection_codim == max(codim, neighbour_codim):
-            if codim < neighbour_codim:
-                return self.subentities(codim, neighbour_codim)
-            elif codim > neighbour_codim:
-                return self.superentities(codim, neighbour_codim)
+        if intersection_codim == max(codim, neighbor_codim):
+            if codim < neighbor_codim:
+                return self.subentities(codim, neighbor_codim)
+            elif codim > neighbor_codim:
+                return self.superentities(codim, neighbor_codim)
             else:
                 return np.zeros((self.size(codim), 0), dtype=np.int32)
         else:
             EI = self.subentities(codim, intersection_codim)
-            ISE = self.superentities(intersection_codim, neighbour_codim)
+            ISE = self.superentities(intersection_codim, neighbor_codim)
 
             NB = np.empty((EI.shape[0], EI.shape[1] * ISE.shape[1]), dtype=np.int32)
             NB.fill(-1)
             NB_COUNTS = np.zeros(EI.shape[0], dtype=np.int32)
 
-            if codim == neighbour_codim:
+            if codim == neighbor_codim:
                 for ii, i in np.ndenumerate(EI):
                     if i >= 0:
                         for _, n in np.ndenumerate(ISE[i]):
