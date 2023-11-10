@@ -810,7 +810,13 @@ class LTIModel(Model):
         """
         assert self.T is not None
 
-        n = (self.num_values if self.num_values else self.time_stepper.estimate_time_step_count(0, self.T)) + 1
+        if self.num_values is None:
+            try:
+                n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+            except NotImplementedError:
+                n = 0
+        else:
+            n = self.num_values + 1
         output = np.empty((n, self.dim_output, self.dim_input))
         if return_solution:
             solution = []
@@ -864,7 +870,13 @@ class LTIModel(Model):
         """
         assert self.T is not None
 
-        n = (self.num_values if self.num_values else self.time_stepper.estimate_time_step_count(0, self.T)) + 1
+        if self.num_values is None:
+            try:
+                n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+            except NotImplementedError:
+                n = 0
+        else:
+            n = self.num_values + 1
         output = np.empty((n, self.dim_output, self.dim_input))
         if return_solution:
             solution = []
