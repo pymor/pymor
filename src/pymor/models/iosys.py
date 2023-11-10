@@ -666,7 +666,7 @@ class LTIModel(Model):
             _mmwrite(Path(files_basename + '.E'), E)
 
     def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
-                solution_error_estimate=False, output_error_estimate=False, output_d_mu_return_array=False,
+                 solution_error_estimate=False, output_error_estimate=False, output_d_mu_return_array=False,
                  output_error_estimate_return_vector=False, mu=None, **kwargs):
 
         assert self.T is not None
