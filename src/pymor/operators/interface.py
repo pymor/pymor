@@ -253,6 +253,8 @@ class Operator(ParametricObject):
                             raise InversionError
                         else:
                             self.logger.warning('Failed.')
+                else:
+                    mat_op = self._mat_op
                 if mat_op is not None:
                     v = mat_op.range.from_numpy(V.to_numpy())
                     i = None if initial_guess is None else mat_op.source.from_numpy(initial_guess.to_numpy())
