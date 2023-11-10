@@ -8,18 +8,18 @@ from pymor.core.logger import getLogger
 logger = getLogger('pymor.algorithms.cholesky_qr.shifted_cholqr')
 
 
-def shifted_cholqr(A, product=None, return_R=True, maxiter=3, offset=0, check_tol=None, check_finite=True, copy=True):
+def shifted_cholqr(A, product=None, return_R=True, maxiter=3, offset=0, orth_tol=None, check_finite=True, copy=True):
     r"""Orthonormalize a |VectorArray| using the shifted CholeskyQR algorithm.
 
     This method computes a QR decomposition of a |VectorArray| via Cholesky factorizations
     of its Gramian matrix according to :cite:`FKNYY20`. For ill-conditioned matrices, the Cholesky
     factorization will break down. In this case a diagonal shift will be applied to the Gramian.
 
-    - `shifted_cholqr(A, maxiter=3, check_tol=None)` is equivalent to the shifted CholeskyQR3
+    - `shifted_cholqr(A, maxiter=3, orth_tol=None)` is equivalent to the shifted CholeskyQR3
     algorithm (Algorithm 4.2 in :cite:`FKNYY20`).
-    - `shifted_cholqr(A, maxiter=np.inf, check_tol=<some_number>)` is equivalent to the shifted
+    - `shifted_cholqr(A, maxiter=np.inf, orth_tol=<some_number>)` is equivalent to the shifted
     CholeskyQR algorithm (Algorithm 4.1 in :cite:`FKNYY20`).
-    - `shifted_cholqr(A, product=<some_product>, maxiter=3, check_tol=None)` is equivalent to the
+    - `shifted_cholqr(A, product=<some_product>, maxiter=3, orth_tol=None)` is equivalent to the
     shifted CholeskyQR3 algorithm in an oblique inner product (Algorithm 5.1 in :cite:`FKNYY20`).
 
 
@@ -47,10 +47,9 @@ def shifted_cholqr(A, product=None, return_R=True, maxiter=3, offset=0, check_to
     offset
         Assume that the first `offset` vectors are already orthonormal and apply the
         algorithm for the vectors starting at `offset + 1`.
-    check_tol
+    orth_tol
         If not `None`, check if the resulting |VectorArray| is really orthornormal and
-        repeat the algorithm until the check passes
-        or `maxiter` is reached.
+        repeat the algorithm until the check passes or `maxiter` is reached.
     check_finite
         This argument is passed down to |SciPy linalg| functions. Disabling may give a
         performance gain, but may result in problems (crashes, non-termination) if the
@@ -67,7 +66,7 @@ def shifted_cholqr(A, product=None, return_R=True, maxiter=3, offset=0, check_to
     """
     assert 0 <= offset < len(A)
     assert 0 < maxiter
-    assert check_tol is None or 0 < check_tol
+    assert orth_tol is None or 0 < orth_tol
 
     if maxiter == 1:
         logger.warning('Single iteration shifted CholeskyQR can lead to poor orthogonality!')
@@ -79,7 +78,7 @@ def shifted_cholqr(A, product=None, return_R=True, maxiter=3, offset=0, check_to
     shift = None
     while iter <= maxiter:
         with logger.block(f'Iteration {iter}'):
-            if check_tol is None or iter == 1:
+            if orth_tol is None or iter == 1:
                 # compute only the necessary parts of the Gramian
                 B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
 
@@ -122,11 +121,11 @@ def shifted_cholqr(A, product=None, return_R=True, maxiter=3, offset=0, check_to
                     spla.blas.dtrmm(1, Rx, Ri, overwrite_b=True)
 
             # check orthogonality (for an iterative algorithm)
-            if check_tol is not None:
+            if orth_tol is not None:
                 B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
                 res = spla.norm(X - np.eye(len(A) - offset), ord='fro', check_finite=check_finite)
                 logger.info(f'Residual = {res}')
-                if res <= check_tol*np.sqrt(len(A)):
+                if res <= orth_tol*np.sqrt(len(A)):
                     break
 
             iter += 1
