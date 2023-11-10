@@ -149,6 +149,7 @@ OUTPUT_FUNCTIONAL_ARGS = (
 DMD_ARGS = (
     ('burgers_dmd', [1.5, '--grid=10', '--nt=100']),
     ('dmd_identification', ['--n=4', '--m=10']),
+    ('phdmd', ['--fom-order=4', '--rom-order=10']),
 )
 
 PHLTI_ARGS = (
