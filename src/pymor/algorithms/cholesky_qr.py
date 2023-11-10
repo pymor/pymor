@@ -5,8 +5,6 @@ import scipy.linalg as spla
 
 from pymor.core.logger import getLogger
 
-logger = getLogger('pymor.algorithms.cholesky_qr.shifted_chol_qr')
-
 
 def shifted_chol_qr(A, product=None, return_R=True, maxiter=3, offset=0, orth_tol=None, check_finite=True, copy=True):
     r"""Orthonormalize a |VectorArray| using the shifted CholeskyQR algorithm.
@@ -67,6 +65,8 @@ def shifted_chol_qr(A, product=None, return_R=True, maxiter=3, offset=0, orth_to
     assert 0 <= offset < len(A)
     assert 0 < maxiter
     assert orth_tol is None or 0 < orth_tol
+
+    logger = getLogger('pymor.algorithms.cholesky_qr.shifted_chol_qr')
 
     if maxiter == 1:
         logger.warning('Single iteration shifted CholeskyQR can lead to poor orthogonality!')
