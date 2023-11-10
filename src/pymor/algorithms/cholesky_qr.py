@@ -5,21 +5,21 @@ import scipy.linalg as spla
 
 from pymor.core.logger import getLogger
 
-logger = getLogger('pymor.algorithms.cholesky_qr.shifted_cholqr')
+logger = getLogger('pymor.algorithms.cholesky_qr.shifted_chol_qr')
 
 
-def shifted_cholqr(A, product=None, return_R=True, maxiter=3, offset=0, orth_tol=None, check_finite=True, copy=True):
+def shifted_chol_qr(A, product=None, return_R=True, maxiter=3, offset=0, orth_tol=None, check_finite=True, copy=True):
     r"""Orthonormalize a |VectorArray| using the shifted CholeskyQR algorithm.
 
     This method computes a QR decomposition of a |VectorArray| via Cholesky factorizations
     of its Gramian matrix according to :cite:`FKNYY20`. For ill-conditioned matrices, the Cholesky
     factorization will break down. In this case a diagonal shift will be applied to the Gramian.
 
-    - `shifted_cholqr(A, maxiter=3, orth_tol=None)` is equivalent to the shifted CholeskyQR3
+    - `shifted_chol_qr(A, maxiter=3, orth_tol=None)` is equivalent to the shifted CholeskyQR3
     algorithm (Algorithm 4.2 in :cite:`FKNYY20`).
-    - `shifted_cholqr(A, maxiter=np.inf, orth_tol=<some_number>)` is equivalent to the shifted
+    - `shifted_chol_qr(A, maxiter=np.inf, orth_tol=<some_number>)` is equivalent to the shifted
     CholeskyQR algorithm (Algorithm 4.1 in :cite:`FKNYY20`).
-    - `shifted_cholqr(A, product=<some_product>, maxiter=3, orth_tol=None)` is equivalent to the
+    - `shifted_chol_qr(A, product=<some_product>, maxiter=3, orth_tol=None)` is equivalent to the
     shifted CholeskyQR3 algorithm in an oblique inner product (Algorithm 5.1 in :cite:`FKNYY20`).
 
 
