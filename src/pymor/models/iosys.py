@@ -678,10 +678,6 @@ class LTIModel(Model):
         if not solution and not output:
             return {}
 
-        # explicitly checking if logging is disabled saves some cpu cycles
-        if not self.logging_disabled:
-            self.logger.info(f'Solving {self.name} for {mu} ...')
-
         # solution computation
         iterator = self.time_stepper.iterate(
             0,  # initial_time
