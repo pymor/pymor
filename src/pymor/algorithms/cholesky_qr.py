@@ -103,7 +103,8 @@ def shifted_cholqr(A, product=None, return_R=True, maxiter=3, offset=0, orth_tol
                         shift *= 11*eps*spla.norm(XX, ord=2, check_finite=check_finite)
 
                     logger.info(f'Applying shift: {shift}')
-                    np.fill_diagonal(X, np.diag(X) + shift)
+                    idx = range(len(X))
+                    X[idx, idx] += shift
 
             # orthogonalize
             Rinv = spla.lapack.dtrtri(Rx)[0].T
