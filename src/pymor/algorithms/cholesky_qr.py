@@ -120,7 +120,7 @@ def shifted_cholqr(A, product=None, return_R=True, maxiter=3, offset=0, orth_tol
                     Bi += B.T @ Rx
                     spla.blas.dtrmm(1, Rx, Ri, overwrite_b=True)
 
-            # check orthogonality (for an iterative algorithm)
+            # check orthonormality (for an iterative algorithm)
             if orth_tol is not None:
                 B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
                 res = spla.norm(X - np.eye(len(A) - offset), ord='fro', check_finite=check_finite)
@@ -130,11 +130,12 @@ def shifted_cholqr(A, product=None, return_R=True, maxiter=3, offset=0, orth_tol
 
             iter += 1
 
+    return_args = [A]
     if return_R:
         # construct R from blocks
         R = np.eye(len(A))
         R[:offset, offset:] = Bi
         R[offset:, offset:] = Ri
-        return A, R
-    else:
-        return A
+        return_args.append(R)
+
+    return tuple(return_args)
