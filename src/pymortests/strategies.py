@@ -251,8 +251,7 @@ def valid_inds(v, length=None):
         #  'dtype=object' when creating the ndarray.
         length = 32
     if len(v) > 0:
-        for ind in [-len(v), 0, len(v) - 1]:
-            yield ind
+        yield from [-len(v), 0, len(v) - 1]
         if len(v) == length:
             yield slice(None)
         yield list(np.random.randint(-len(v), len(v), size=length))

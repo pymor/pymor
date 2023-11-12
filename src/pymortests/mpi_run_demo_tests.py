@@ -58,5 +58,5 @@ if __name__ == '__main__':
         args.append(extra)
     success = pytest.main(args) == pytest.ExitCode.OK
     result_file_fn.parent.resolve().mkdir(parents=True, exist_ok=True)
-    with open(result_file_fn, 'wt') as result_file:
+    with open(result_file_fn, 'w') as result_file:
         result_file.write(f'{success}')

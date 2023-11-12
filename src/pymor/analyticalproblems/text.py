@@ -72,7 +72,7 @@ def _get_font(font_name):
     for filename in font_list:
         try:
             return ImageFont.truetype(filename, 64)  # load some font from file of given size
-        except (OSError, IOError):
+        except OSError:
             pass
     warnings.warn(f'Falling back to pillow default font. Could not load any of {font_list}',
                   ResourceWarning, stacklevel=1)

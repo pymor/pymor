@@ -167,7 +167,7 @@ html_theme_options = {
 }
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = '%s v%s Manual' % (project, version)
+html_title = f'{project} v{version} Manual'
 
 # The name of an image file (within the static path) to place at the top of
 # the sidebar.

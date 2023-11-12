@@ -77,7 +77,7 @@ def test_lincomb_op():
     p12 = p1 + p2
     p0 = p1 - p1
     x = np.linspace(-1., 1., num=3)
-    vx = p1.source.make_array((x[:, np.newaxis]))
+    vx = p1.source.make_array(x[:, np.newaxis])
     one = p1.source.make_array([1])
     assert np.allclose(p0.apply(vx).to_numpy(), [0.])
     assert np.allclose(p12.apply(vx).to_numpy(), (x * x + x)[:, np.newaxis])
@@ -106,7 +106,7 @@ def test_lincomb_op_with_zero_coefficients():
     p10 = p1 + 0 * p2
     p0 = 0 * p1 + 0 * p1
     x = np.linspace(-1., 1., num=3)
-    vx = p1.source.make_array((x[:, np.newaxis]))
+    vx = p1.source.make_array(x[:, np.newaxis])
 
     pc1 = NumpyMatrixOperator(np.eye(p1.source.dim))
     pc2 = NumpyMatrixOperator(2*np.eye(p1.source.dim))

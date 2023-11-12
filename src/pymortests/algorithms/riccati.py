@@ -238,7 +238,7 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     Eop = NumpyMatrixOperator(E) if with_E else None
     Bva = Aop.source.from_numpy(B.T)
     Cva = Aop.source.from_numpy(C)
-    Sva = Aop.source.from_numpy((S if not trans else S.T)) if with_S else None
+    Sva = Aop.source.from_numpy(S if not trans else S.T) if with_S else None
 
     Zva = solve_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
 
@@ -306,7 +306,7 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     Eop = NumpyMatrixOperator(E) if with_E else None
     Bva = Aop.source.from_numpy(B.T)
     Cva = Aop.source.from_numpy(C)
-    Sva = Aop.source.from_numpy((S if not trans else S.T)) if with_S else None
+    Sva = Aop.source.from_numpy(S if not trans else S.T) if with_S else None
 
     Zva = solve_pos_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
 

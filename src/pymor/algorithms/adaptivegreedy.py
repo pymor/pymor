@@ -477,8 +477,7 @@ class AdaptiveSampleSet(BasicObject):
         def walk(node):
             if node.children:
                 for node in node.children:
-                    for leaf in walk(node):
-                        yield leaf
+                    yield from walk(node)
             else:
                 yield node
 

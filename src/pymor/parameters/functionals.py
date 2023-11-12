@@ -226,7 +226,7 @@ class GenericParameterFunctional(ParameterFunctional):
                                 derivative_mappings={}
                             )
                 else:
-                    raise ValueError('derivative expressions do not contain item {}'.format(parameter))
+                    raise ValueError(f'derivative expressions do not contain item {parameter}')
         return ConstantParameterFunctional(0, name=f'{self.name}_d_{parameter}_{index}')
 
 

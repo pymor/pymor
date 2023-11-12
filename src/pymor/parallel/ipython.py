@@ -70,9 +70,9 @@ class new_ipcluster_pool(BasicObject):  # noqa: N801
         while client is None:
             try:
                 client = Client(profile=self.profile, cluster_id=self.cluster_id)
-            except (IOError, TimeoutError) as e:
+            except (OSError, TimeoutError) as e:
                 if waited >= self.timeout:
-                    raise IOError('Could not connect to IPython cluster controller') from e
+                    raise OSError('Could not connect to IPython cluster controller') from e
                 if waited % 10 == 0:
                     self.logger.info('Waiting for controller to start ...')
                 time.sleep(1)
@@ -85,7 +85,7 @@ class new_ipcluster_pool(BasicObject):  # noqa: N801
                 time.sleep(1)
                 waited += 1
             if len(client) == 0:
-                raise IOError('IPython cluster engines failed to start')
+                raise OSError('IPython cluster engines failed to start')
             wait = min(waited, timeout - waited)
             if wait > 0:
                 self.logger.info(f'Waiting {wait} more seconds for engines to start ...')
@@ -100,7 +100,7 @@ class new_ipcluster_pool(BasicObject):  # noqa: N801
                 running = len(client)
             running = len(client)
             if running < num_engines:
-                raise IOError(f'{num_engines-running} of {num_engines} IPython cluster engines failed to start')
+                raise OSError(f'{num_engines-running} of {num_engines} IPython cluster engines failed to start')
         # make sure all (potential) engines are in the same cwd, so they can import the same code
         client[:].apply_sync(os.chdir, os.getcwd())
         client.close()

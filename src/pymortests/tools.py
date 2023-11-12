@@ -149,8 +149,8 @@ def test_vtkio(grid):
     from pymor.discretizers.builtin.grids.vtkio import write_vtk
     from pymor.tools.io.vtk import read_vtkfile
     steps = 4
-    for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.ones((steps, grid.size(c))))
-                                  for c in range(grid.dim+1))):
+    for codim, data in enumerate(NumpyVectorSpace.from_numpy(np.ones((steps, grid.size(c))))
+                                  for c in range(grid.dim+1)):
         with safe_temporary_filename('wb') as out_name:
             fn = write_vtk(grid, data, out_name, codim=codim)
             meshes = read_vtkfile(fn)

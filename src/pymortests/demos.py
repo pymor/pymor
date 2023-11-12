@@ -199,7 +199,7 @@ def _skip_if_no_solver(param):
 
 def _demo_ids(demo_args):
     def _key(b):
-        return ' '.join((str(s) for s in b))
+        return ' '.join(str(s) for s in b)
     return [f'{a}:"{_key(b)}"'.replace('pymordemos.', '') for a, b in demo_args]
 
 

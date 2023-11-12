@@ -187,7 +187,7 @@ for line in substitutions.split('\n'):
 inline_directives = ['math', 'meth', 'class', 'ref', 'mod', 'attr', 'doc', ]
 
 if __name__ == '__main__':
-    with open('rst_to_myst.sed', 'wt') as out:
+    with open('rst_to_myst.sed', 'w') as out:
         for dr in inline_directives:
             out.write(f's;:{dr}:;{{{dr}}};g\n')
         l = '{{\\ '
