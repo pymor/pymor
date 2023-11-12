@@ -18,6 +18,8 @@ repos:
         exclude: src/pymor/algorithms/rules.py
       - id: destroyed-symlinks
       - id: end-of-file-fixer
+      - id: file-contents-sorter
+        files: ^\.mailmap$
       - id: pretty-format-json
         args:
           - --autofix
