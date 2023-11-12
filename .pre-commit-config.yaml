@@ -21,6 +21,14 @@ repos:
       - id: file-contents-sorter
         files: ^\.mailmap$
       - id: mixed-line-ending
+      - id: no-commit-to-branch
+        args:
+          - -b
+          - main
+          - -b
+          - pymor-paper
+          - -p
+          - \d+\.\d+\.x
       - id: pretty-format-json
         args:
           - --autofix
