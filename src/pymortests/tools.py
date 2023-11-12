@@ -38,10 +38,10 @@ FUNCTIONS = (('sin(2x pi)', lambda x: sin(2 * x * pi), 0),
 
 def polynomials(max_order):
     for n in range(max_order + 1):
-        def f(x):
+        def f(x, n=n):
             return np.power(x, n)
 
-        def deri(k):
+        def deri(k, n=n):
             if k > n:
                 return lambda _: 0
             return lambda x: (factorial(n) / factorial(n - k)) * np.power(x, n - k)

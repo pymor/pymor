@@ -1176,7 +1176,7 @@ def train_neural_network(training_data, validation_data, neural_network,
                     targets = batch[1]
 
                 with torch.set_grad_enabled(phase == 'train'):
-                    def closure():
+                    def closure(inputs=inputs, targets=targets):
                         if torch.is_grad_enabled():
                             optimizer.zero_grad()
                         outputs = neural_network(inputs)

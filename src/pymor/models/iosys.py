@@ -825,7 +825,7 @@ class LTIModel(Model):
             rhs = LinearInputOperator(self.B)
             Xs = []
             for i in range(self.dim_input):
-                def input_i(t):
+                def input_i(t, i=i):
                     if t == 0:
                         e_i = np.zeros(self.dim_input)
                         e_i[i] = 1/self.sampling_time

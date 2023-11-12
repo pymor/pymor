@@ -60,12 +60,12 @@ def check_results(test_name, params, results, *args):
         with filename.open('rb') as f:
             f.readline()
             old_results = load(f)
-    except FileNotFoundError:
+    except FileNotFoundError as e:
         if not testname_dir.exists():
             testname_dir.mkdir()
         _dump_results(filename, results)
         raise NoResultDataError(msg=f'No results found for test {test_name} ({params}), saved current results.'
-                                        f'Remember to check in {filename}.')
+                                    f'Remember to check in {filename}.') from e
 
     for k, (atol, rtol) in keys.items():
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):

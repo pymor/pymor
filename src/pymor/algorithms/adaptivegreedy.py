@@ -476,8 +476,8 @@ class AdaptiveSampleSet(BasicObject):
     def _iter_leafs(self):
         def walk(node):
             if node.children:
-                for node in node.children:
-                    yield from walk(node)
+                for child in node.children:
+                    yield from walk(child)
             else:
                 yield node
 

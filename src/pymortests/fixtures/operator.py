@@ -157,22 +157,22 @@ numpy_structured_matrix_operator_with_arrays_factory_arguments = list(product(
 ))
 
 numpy_matrix_operator_with_arrays_generators = \
-    [lambda args=args: numpy_matrix_operator_with_arrays_factory(*args, **kwargs)
+    [lambda args=args, kwargs=kwargs: numpy_matrix_operator_with_arrays_factory(*args, **kwargs)
      for args, kwargs in numpy_matrix_operator_with_arrays_factory_arguments]
 
 
 numpy_matrix_operator_generators = \
-    [lambda args=args: numpy_matrix_operator_with_arrays_factory(*args, **kwargs)[0:2]
+    [lambda args=args, kwargs=kwargs: numpy_matrix_operator_with_arrays_factory(*args, **kwargs)[0:2]
      for args, kwargs in numpy_matrix_operator_with_arrays_factory_arguments]
 
 
 numpy_list_vector_array_matrix_operator_with_arrays_generators = \
-    [lambda args=args: numpy_list_vector_array_matrix_operator_with_arrays_factory(*args, **kwargs)
+    [lambda args=args, kwargs=kwargs: numpy_list_vector_array_matrix_operator_with_arrays_factory(*args, **kwargs)
      for args, kwargs in numpy_matrix_operator_with_arrays_factory_arguments]
 
 
 numpy_list_vector_array_matrix_operator_generators = \
-    [lambda args=args: numpy_list_vector_array_matrix_operator_with_arrays_factory(*args, **kwargs)[0:2]
+    [lambda args=args, kwargs=kwargs: numpy_list_vector_array_matrix_operator_with_arrays_factory(*args, **kwargs)[0:2]
      for args, kwargs in numpy_matrix_operator_with_arrays_factory_arguments]
 
 

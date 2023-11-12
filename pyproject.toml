@@ -219,11 +219,18 @@ select = [
   "UP", # pyupgrade
   "YTT", # flake8-2020
   "ASYNC", # flake8-async
+  "B", # flake8-bugbear
   "ICN", # flake8-import-conventions
   "PT", # flake8-pytest-style
   "Q", # flake8-quotes
 ]
 ignore = [
+  "B006", # do not use mutable data structures for argument defaults
+  "B007", # loop control variable not used within loop body
+  "B008", # do not perform function call in argument defaults
+  "B011", # do not `assert False`
+  "B017", # pytest.raises(Exception) should be considered evil
+  "B028", # no explicit `stacklevel` keyword argument found
   "D100", # missing docstring in public module
   "D101", # missing docstring in public class
   "D102", # missing docstring in public method

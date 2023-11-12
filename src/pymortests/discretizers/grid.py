@@ -339,7 +339,7 @@ def test_boundary_mask_shape(grid):
 def test_boundary_mask_dtype(grid):
     g = grid
     for d in range(g.dim + 1):
-        g.boundary_mask(d).dtype == np.dtype('bool')
+        assert g.boundary_mask(d).dtype == np.dtype('bool')
 
 
 @given(hy_grid)

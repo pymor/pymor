@@ -248,9 +248,9 @@ class Operator(ParametricObject):
                         mat_op = NumpyMatrixOperator(mat)
                         if not self.parametric:
                             self._mat_op = mat_op
-                    except (NoMatchingRuleError, NotImplementedError):
+                    except (NoMatchingRuleError, NotImplementedError) as e:
                         if solver_type == 'to_matrix':
-                            raise InversionError
+                            raise InversionError from e
                         else:
                             self.logger.warning('Failed.')
                 else:
