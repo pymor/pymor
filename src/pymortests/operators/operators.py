@@ -415,8 +415,9 @@ def test_restricted(operator_with_arrays):
     op, mu, U, _, = operator_with_arrays
     if op.range.dim == 0:
         return
+    rng = np.random.default_rng(0)
     for num in [0, 1, 3, 7]:
-        dofs = np.random.randint(0, op.range.dim, num)
+        dofs = rng.integers(0, op.range.dim, num)
         try:
             rop, source_dofs = op.restricted(dofs)
         except NotImplementedError:
@@ -430,8 +431,9 @@ def test_restricted_jacobian(operator_with_arrays):
     op, mu, U, _, = operator_with_arrays
     if op.range.dim == 0:
         return
+    rng = np.random.default_rng(0)
     for num in [0, 1, 3, 7]:
-        dofs = np.random.randint(0, op.range.dim, num)
+        dofs = rng.integers(0, op.range.dim, num)
         try:
             rop, source_dofs = op.restricted(dofs)
         except NotImplementedError:

@@ -43,7 +43,8 @@ def assert_type_and_allclose(A, Aop, default_format):
 
 @pytest.mark.builtin()
 def test_to_matrix_NumpyMatrixOperator():
-    A = np.random.randn(2, 2)
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((2, 2))
 
     Aop = NumpyMatrixOperator(A)
     assert_type_and_allclose(A, Aop, 'dense')
@@ -54,10 +55,11 @@ def test_to_matrix_NumpyMatrixOperator():
 
 @pytest.mark.builtin()
 def test_to_matrix_BlockOperator():
-    A11 = np.random.randn(2, 2)
-    A12 = np.random.randn(2, 3)
-    A21 = np.random.randn(3, 2)
-    A22 = np.random.randn(3, 3)
+    rng = np.random.default_rng(0)
+    A11 = rng.standard_normal((2, 2))
+    A12 = rng.standard_normal((2, 3))
+    A21 = rng.standard_normal((3, 2))
+    A22 = rng.standard_normal((3, 3))
     B = np.block([[A11, A12], [A21, A22]])
 
     A11op = NumpyMatrixOperator(A11)
@@ -77,8 +79,9 @@ def test_to_matrix_BlockOperator():
 
 @pytest.mark.builtin()
 def test_to_matrix_BlockDiagonalOperator():
-    A1 = np.random.randn(2, 2)
-    A2 = np.random.randn(3, 3)
+    rng = np.random.default_rng(0)
+    A1 = rng.standard_normal((2, 2))
+    A2 = rng.standard_normal((3, 3))
     B = np.block([[A1, np.zeros((2, 3))],
                   [np.zeros((3, 2)), A2]])
 
@@ -95,10 +98,11 @@ def test_to_matrix_BlockDiagonalOperator():
 
 @pytest.mark.builtin()
 def test_to_matrix_AdjointOperator():
-    A = np.random.randn(2, 2)
-    S = np.random.randn(2, 2)
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((2, 2))
+    S = rng.standard_normal((2, 2))
     S = S.dot(S.T)
-    R = np.random.randn(2, 2)
+    R = rng.standard_normal((2, 2))
     R = R.dot(R.T)
 
     Aop = NumpyMatrixOperator(A)
@@ -148,8 +152,9 @@ def test_to_matrix_ComponentProjectionOperator():
 
 @pytest.mark.builtin()
 def test_to_matrix_ConcatenationOperator():
-    A = np.random.randn(2, 3)
-    B = np.random.randn(3, 4)
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((2, 3))
+    B = rng.standard_normal((3, 4))
     C = A.dot(B)
 
     Aop = NumpyMatrixOperator(A)
@@ -184,10 +189,11 @@ def test_to_matrix_IdentityOperator():
 
 @pytest.mark.builtin()
 def test_to_matrix_LincombOperator():
-    A = np.random.randn(3, 3)
-    B = np.random.randn(3, 2)
-    a = np.random.randn()
-    b = np.random.randn()
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((3, 3))
+    B = rng.standard_normal((3, 2))
+    a = rng.standard_normal()
+    b = rng.standard_normal()
     C = a * A + b * B.dot(B.T)
 
     Aop = NumpyMatrixOperator(A)
@@ -216,10 +222,11 @@ def test_to_matrix_LowRankOperator():
     m = 6
     n = 5
     r = 2
-    L = np.random.randn(m, r)
+    rng = np.random.default_rng(0)
+    L = rng.standard_normal((m, r))
     Lva = NumpyVectorSpace.make_array(L.T)
-    C = np.random.randn(r, r)
-    R = np.random.randn(n, r)
+    C = rng.standard_normal((r, r))
+    R = rng.standard_normal((n, r))
     Rva = NumpyVectorSpace.make_array(R.T)
 
     LR = LowRankOperator(Lva, C, Rva)
@@ -234,12 +241,13 @@ def test_to_matrix_LowRankUpdatedOperator():
     m = 6
     n = 5
     r = 2
-    A = np.random.randn(m, n)
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((m, n))
     Aop = NumpyMatrixOperator(A)
-    L = np.random.randn(m, r)
+    L = rng.standard_normal((m, r))
     Lva = NumpyVectorSpace.make_array(L.T)
-    C = np.random.randn(r, r)
-    R = np.random.randn(n, r)
+    C = rng.standard_normal((r, r))
+    R = rng.standard_normal((n, r))
     Rva = NumpyVectorSpace.make_array(R.T)
     LR = LowRankOperator(Lva, C, Rva)
 
@@ -249,7 +257,8 @@ def test_to_matrix_LowRankUpdatedOperator():
 
 @pytest.mark.builtin()
 def test_to_matrix_VectorArrayOperator():
-    V = np.random.randn(10, 2)
+    rng = np.random.default_rng(0)
+    V = rng.standard_normal((10, 2))
 
     Vva = NumpyVectorSpace.make_array(V.T)
     Vop = VectorArrayOperator(Vva)
@@ -275,7 +284,8 @@ if config.HAVE_DUNEGDT:
     from pymor.bindings.dunegdt import DuneXTMatrixOperator
 
     def test_to_matrix_DuneXTMatrixOperator():
-        A = np.random.randn(2, 2)
+        rng = np.random.default_rng(0)
+        A = rng.standard_normal((2, 2))
 
         pattern = SparsityPatternDefault(2)
         for ii in range(2):

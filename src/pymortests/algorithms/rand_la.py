@@ -5,7 +5,6 @@
 import numpy as np
 import pytest
 import scipy.linalg as spla
-from numpy.random import uniform
 
 from pymor.algorithms.rand_la import adaptive_rrf, random_generalized_svd, random_ghep, rrf
 from pymor.operators.constructions import VectorArrayOperator
@@ -15,11 +14,12 @@ pytestmark = pytest.mark.builtin
 
 
 def test_adaptive_rrf():
-    A = uniform(low=-1.0, high=1.0, size=(100, 100))
+    rng = np.random.default_rng(0)
+    A = rng.uniform(low=-1.0, high=1.0, size=(100, 100))
     A = A @ A.T
     range_product = NumpyMatrixOperator(A)
 
-    B = uniform(low=-1.0, high=1.0, size=(10, 10))
+    B = rng.uniform(low=-1.0, high=1.0, size=(10, 10))
     B = B.dot(B.T)
     source_product = NumpyMatrixOperator(B)
 
@@ -39,11 +39,12 @@ def test_adaptive_rrf():
 
 
 def test_rrf():
-    A = uniform(low=-1.0, high=1.0, size=(100, 100))
+    rng = np.random.default_rng(0)
+    A = rng.uniform(low=-1.0, high=1.0, size=(100, 100))
     A = A @ A.T
     range_product = NumpyMatrixOperator(A)
 
-    B = uniform(low=-1.0, high=1.0, size=(10, 10))
+    B = rng.uniform(low=-1.0, high=1.0, size=(10, 10))
     B = B @ B.T
     source_product = NumpyMatrixOperator(B)
 
@@ -65,7 +66,8 @@ def test_rrf():
 
 
 def test_random_generalized_svd():
-    E = uniform(low=-1.0, high=1.0, size=(5, 5))
+    rng = np.random.default_rng(0)
+    E = rng.uniform(low=-1.0, high=1.0, size=(5, 5))
     E_op = NumpyMatrixOperator(E)
 
     modes = 3
@@ -81,7 +83,8 @@ def test_random_generalized_svd():
 
 
 def test_random_ghep():
-    D = uniform(low=-1.0, high=1.0, size=(5, 5))
+    rng = np.random.default_rng(0)
+    D = rng.uniform(low=-1.0, high=1.0, size=(5, 5))
     D = D @ D.T
     D_op = NumpyMatrixOperator(D)
 

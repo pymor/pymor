@@ -11,8 +11,8 @@ from pymor.reductors.loewner import LoewnerReductor
 
 pytestmark = pytest.mark.builtin
 
-np.random.seed(0)
-custom_partitioning = np.random.permutation(40)
+rng = np.random.default_rng(0)
+custom_partitioning = rng.permutation(40)
 
 test_data = [
     ({'r': 20}, {}),
@@ -26,7 +26,7 @@ test_data = [
     ({'tol': 1e-12}, {'conjugate': False}),
     ({'tol': 1e-12}, {'mimo_handling': 'full'}),
     ({'tol': 1e-12}, {'mimo_handling': 'random'}),
-    ({'tol': 1e-12}, {'mimo_handling': (np.random.rand(40, 3), np.random.rand(2, 40))})
+    ({'tol': 1e-12}, {'mimo_handling': (rng.random((40, 3)), rng.random((2, 40)))})
 ]
 
 

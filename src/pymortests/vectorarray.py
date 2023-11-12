@@ -772,7 +772,8 @@ def test_dofs(vectors_and_indices, random_count):
 
     assume(v.dim > 0)
 
-    c_ind = np.random.randint(0, v.dim, random_count)
+    rng = np.random.default_rng(0)
+    c_ind = rng.integers(0, v.dim, random_count)
     c = v.copy()
     dofs = c[ind].dofs(c_ind)
     assert dofs.shape == (v.len_ind(ind), random_count)

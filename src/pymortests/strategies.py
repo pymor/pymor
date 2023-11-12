@@ -254,7 +254,8 @@ def valid_inds(v, length=None):
         yield from [-len(v), 0, len(v) - 1]
         if len(v) == length:
             yield slice(None)
-        yield list(np.random.randint(-len(v), len(v), size=length))
+        rng = np.random.default_rng(0)
+        yield list(rng.integers(-len(v), len(v), size=length))
     else:
         if len(v) == 0:
             yield slice(0, 0)
@@ -300,11 +301,12 @@ def valid_inds_of_same_length(v1, v2):
         yield -len(v1), -len(v2)
         yield [0], 0
         yield (list(range(min(len(v1), len(v2))//2)),) * 2
+        rng = np.random.default_rng(0)
         for count in np.linspace(0, min(len(v1), len(v2)), 3).astype(int):
-            yield (list(np.random.randint(-len(v1), len(v1), size=count)),
-                   list(np.random.randint(-len(v2), len(v2), size=count)))
-        yield slice(None), np.random.randint(-len(v2), len(v2), size=len(v1))
-        yield np.random.randint(-len(v1), len(v1), size=len(v2)), slice(None)
+            yield (list(rng.integers(-len(v1), len(v1), size=count)),
+                   list(rng.integers(-len(v2), len(v2), size=count)))
+        yield slice(None), rng.integers(-len(v2), len(v2), size=len(v1))
+        yield rng.integers(-len(v1), len(v1), size=len(v2)), slice(None)
 
 
 @hyst.composite
@@ -354,14 +356,15 @@ def valid_inds_of_different_length(v1, v2):
             yield 0, [0, 1]
             yield [0], [0, 1]
         for count1 in np.linspace(0, len(v1), 3).astype(int):
-            count2 = np.random.randint(0, len(v2))
+            rng = np.random.default_rng(0)
+            count2 = rng.integers(0, len(v2))
             if count2 == count1:
                 count2 += 1
                 if count2 == len(v2):
                     count2 -= 2
             if count2 >= 0:
-                yield (list(np.random.randint(-len(v1), len(v1), size=count1)),
-                       list(np.random.randint(-len(v2), len(v2), size=count2)))
+                yield (list(rng.integers(-len(v1), len(v1), size=count1)),
+                       list(rng.integers(-len(v2), len(v2), size=count2)))
 
 
 @hyst.composite

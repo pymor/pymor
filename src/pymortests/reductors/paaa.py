@@ -23,13 +23,13 @@ test_data = [
 
 @pytest.mark.parametrize(('m', 'p', 'is_parametric'), test_data)
 def test_paaa(m,p,is_parametric):
-    np.random.seed(0)
+    rng = np.random.default_rng(0)
     if is_parametric:
-        sampling_values = [np.random.rand(10), np.random.rand(10)]
-        samples = np.random.rand(10, 10, p, m)
+        sampling_values = [rng.random(10), rng.random(10)]
+        samples = rng.random((10, 10, p, m))
     else:
-        sampling_values = np.random.rand(10)
-        samples = np.random.rand(10, p, m)
+        sampling_values = rng.random(10)
+        samples = rng.random((10, p, m))
     paaa = PAAAReductor(sampling_values, samples)
     rom = paaa.reduce(tol=1e-3)
     if is_parametric:

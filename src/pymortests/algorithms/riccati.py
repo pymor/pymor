@@ -77,8 +77,8 @@ def relative_residual(A, E, B, C, R, S, Z, trans):
 @pytest.mark.parametrize('solver', ricc_dense_solver_list)
 def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
-    np.random.seed(0)
 
+    rng = np.random.default_rng(0)
     mat_old = []
     mat_new = []
     if not with_E:
@@ -94,19 +94,19 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
     A = np.asfortranarray(A)
     mat_old.append(A.copy())
     mat_new.append(A)
-    B = np.random.randn(n, m)
+    B = rng.standard_normal((n, m))
     mat_old.append(B.copy())
     mat_new.append(B)
-    C = np.random.randn(p, n)
+    C = rng.standard_normal((p, n))
     mat_old.append(C.copy())
     mat_new.append(C)
-    D = np.random.randn(p, m)
+    D = rng.standard_normal((p, m))
     if not trans:
-        R0 = np.random.randn(p, p)
+        R0 = rng.standard_normal((p, p))
         R = D.dot(D.T) + R0.dot(R0.T) if with_R else None
         S = 1e-1 * D @ B.T if with_S else None
     else:
-        R0 = np.random.randn(m, m)
+        R0 = rng.standard_normal((m, m))
         R = D.T.dot(D) + R0.dot(R0.T) if with_R else None
         S = 1e-1 * C.T @ D if with_S else None
     if with_R:
@@ -135,8 +135,8 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
 @pytest.mark.parametrize('solver', ricc_dense_solver_list)
 def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
-    np.random.seed(0)
 
+    rng = np.random.default_rng(0)
     mat_old = []
     mat_new = []
     if not with_E:
@@ -152,19 +152,19 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
     A = np.asfortranarray(A)
     mat_old.append(A.copy())
     mat_new.append(A)
-    B = np.random.randn(n, m)
+    B = rng.standard_normal((n, m))
     mat_old.append(B.copy())
     mat_new.append(B)
-    C = np.random.randn(p, n)
+    C = rng.standard_normal((p, n))
     mat_old.append(C.copy())
     mat_new.append(C)
-    D = np.random.randn(p, m)
+    D = rng.standard_normal((p, m))
     if not trans:
-        R0 = np.random.randn(p, p)
+        R0 = rng.standard_normal((p, p))
         R = D.dot(D.T) + R0.dot(R0.T) if with_R else None
         S = 1e-1 * D @ B.T if with_S else None
     else:
-        R0 = np.random.randn(m, m)
+        R0 = rng.standard_normal((m, m))
         R = D.T.dot(D) + R0.dot(R0.T) if with_R else None
         S = 1e-1 * C.T @ D if with_S else None
     if with_R:
@@ -195,10 +195,10 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
                                                 product(n_list_big, ricc_lrcf_solver_list_big)))
 def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
-    np.random.seed(0)
     if with_S and solver == 'lrradi':
         pytest.xfail('solver not implemented')
 
+    rng = np.random.default_rng(0)
     mat_old = []
     mat_new = []
     if not with_E:
@@ -210,19 +210,19 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
         mat_new.append(E)
     mat_old.append(A.copy())
     mat_new.append(A)
-    B = np.random.randn(n, m)
+    B = rng.standard_normal((n, m))
     mat_old.append(B.copy())
     mat_new.append(B)
-    C = np.random.randn(p, n)
+    C = rng.standard_normal((p, n))
     mat_old.append(C.copy())
     mat_new.append(C)
-    D = np.random.randn(p, m)
+    D = rng.standard_normal((p, m))
     if not trans:
-        R0 = np.random.randn(p, p)
+        R0 = rng.standard_normal((p, p))
         R = D.dot(D.T) + R0.dot(R0.T) if with_R else None
         S = 1e-1 * D @ B.T if with_S else None
     else:
-        R0 = np.random.randn(m, m)
+        R0 = rng.standard_normal((m, m))
         R = D.T.dot(D) + R0.dot(R0.T) if with_R else None
         S = 1e-1 * C.T @ D if with_S else None
     if with_R:
@@ -263,8 +263,8 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
 @pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
 def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
-    np.random.seed(0)
 
+    rng = np.random.default_rng(0)
     mat_old = []
     mat_new = []
     if not with_E:
@@ -276,21 +276,21 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
         mat_new.append(E)
     mat_old.append(A.copy())
     mat_new.append(A)
-    B = np.random.randn(n, m)
+    B = rng.standard_normal((n, m))
     mat_old.append(B.copy())
     mat_new.append(B)
-    C = np.random.randn(p, n)
+    C = rng.standard_normal((p, n))
     mat_old.append(C.copy())
     mat_new.append(C)
-    D = np.random.randn(p, m)
+    D = rng.standard_normal((p, m))
     if not trans:
-        R0 = np.random.randn(p, p)
+        R0 = rng.standard_normal((p, p))
         R = D.dot(D.T) + 10 * R0.dot(R0.T) if with_R else None
-        S = np.random.randn(p,n) if with_S else None
+        S = rng.standard_normal((p, n)) if with_S else None
     else:
-        R0 = np.random.randn(m, m)
+        R0 = rng.standard_normal((m, m))
         R = D.T.dot(D) + 10 * R0.dot(R0.T) if with_R else None
-        S = np.random.randn(n,m) if with_S else None
+        S = rng.standard_normal((n, m)) if with_S else None
     if with_R:
         mat_old.append(R.copy())
         mat_new.append(R)

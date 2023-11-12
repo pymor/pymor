@@ -25,7 +25,8 @@ def test_bernoulli(n, with_E, trans):
     E = -ortho_group.rvs(dim=n)
     A = np.diag(np.concatenate((np.arange(-n + 4, 0), np.arange(1, 5)))) @ E
     A = A + 1.j * A
-    B = np.random.randn(n, 1)
+    rng = np.random.default_rng(0)
+    B = rng.standard_normal((n, 1))
 
     if not trans:
         B = B.conj().T
@@ -47,7 +48,8 @@ def test_bernoulli_stabilize(n, trans):
     A = sps.random(n, n, density=0.3)
     Aop = NumpyMatrixOperator(A)
 
-    B = np.random.randn(1, n)
+    rng = np.random.default_rng(0)
+    B = rng.standard_normal((1, n))
     if not trans:
         Bva = Aop.range.from_numpy(B)
     else:

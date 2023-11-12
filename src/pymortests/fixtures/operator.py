@@ -414,7 +414,8 @@ def misc_operator_with_arrays_and_products_factory(n):
     if n == 0:
         from pymor.operators.constructions import ComponentProjectionOperator
         _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 10, 4, 3)
-        op = ComponentProjectionOperator(np.random.randint(0, 100, 10), U.space)
+        rng = np.random.default_rng(0)
+        op = ComponentProjectionOperator(rng.integers(0, 100, 10), U.space)
         return op, _, U, V, sp, rp
     elif n == 1:
         from pymor.operators.constructions import ComponentProjectionOperator
