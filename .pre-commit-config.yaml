@@ -7,6 +7,7 @@ repos:
     rev: v4.4.0
     hooks:
       - id: check-added-large-files
+      - id: check-case-conflict
       - id: check-json
       - id: check-symlinks
       - id: check-yaml
