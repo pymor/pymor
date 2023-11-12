@@ -35,9 +35,8 @@ class SubGrid(Grid):
     reference_element = None
 
     def __init__(self, parent_grid, parent_entities):
-        assert parent_grid is not None, \
-            'parent_grid is None. Maybe you have called sub_grid.with(parent_entities=e)\n' \
-            'on a SubGrid for which the parent grid has been destroyed?'
+        assert parent_grid is not None, ('parent_grid is None. Maybe you have called sub_grid.with(parent_entities=e)\n'
+                                         'on a SubGrid for which the parent grid has been destroyed?')
         assert isinstance(parent_grid, Grid)
         self.dim = parent_grid.dim
         self.reference_element = parent_grid.reference_element

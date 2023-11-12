@@ -159,7 +159,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
             if iteration >= miniter:
                 if first_order_criticality < tol_criticality:
                     logger.info(
-                        f'TR converged in {iteration} iterations because first order criticality tolerance of' \
+                        f'TR converged in {iteration} iterations because first order criticality tolerance of'
                         f' {tol_criticality} was reached. The reduced basis is of size {surrogate.rb_size()}.')
                     break
                 if iteration >= maxiter:

@@ -625,8 +625,8 @@ class Operator(ParametricObject):
         return self * (-1.)
 
     def __str__(self):
-        return f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  ' \
-               f'(parameters: {self.parameters}, class: {self.__class__.__name__})'
+        return (f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  '
+                f'(parameters: {self.parameters}, class: {self.__class__.__name__})')
 
 
 @defaults('value')

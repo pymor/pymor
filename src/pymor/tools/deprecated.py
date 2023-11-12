@@ -26,9 +26,9 @@ class Deprecated:
         def new_func(*args, **kwargs):
             func_name = f'{func.__module__}.{func.__qualname__}'
             frame = inspect.currentframe().f_back
-            msg = f'DeprecationWarning. Call to deprecated function {func_name}  in ' \
-                  f'{frame.f_code.co_filename}:{frame.f_code.co_firstlineno}\n' \
-                  f'Use {self._alt} instead'
+            msg = (f'DeprecationWarning. Call to deprecated function {func_name} in '
+                   f'{frame.f_code.co_filename}:{frame.f_code.co_firstlineno}\n'
+                   f'Use {self._alt} instead')
             warnings.warn(msg, DeprecationWarning, stacklevel=2)
             return func(*args, **kwargs)
         return new_func

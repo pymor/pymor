@@ -615,7 +615,7 @@ class FenicsVisualizer(ImmutableObject):
             suffix = Path(filename).suffix
             if suffix not in supported:
                 msg = ('FenicsVisualizer needs a filename with a suffix indicating a supported backend\n'
-                       + f'defaulting to .pvd (possible choices: {supported})')
+                       f'defaulting to .pvd (possible choices: {supported})')
                 self.logger.warning(msg)
                 filename = f'{filename}.pvd'
             f = df.File(str(filename))

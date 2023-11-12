@@ -18,8 +18,8 @@ from pymordemos.linear_optimization import create_fom
 
 
 def main(
-    output_number: int = Argument(..., help='Selects type of output functional [0, 1], '
-                                         + 'where 0 stands for linear and 1 for a quadratic output'),
+    output_number: int = Argument(..., help=('Selects type of output functional [0, 1], '
+                                             'where 0 stands for linear and 1 for a quadratic output.')),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.')
 ):

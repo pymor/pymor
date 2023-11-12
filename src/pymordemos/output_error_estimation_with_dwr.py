@@ -13,8 +13,8 @@ from pymor.reductors.dwr import DWRCoerciveRBReductor
 
 
 def main(
-    fom_number: int = Argument(..., help='Selects FOMs [0, 1] for elliptic problems '
-                                         + 'with scalar and vector valued outputs '),
+    fom_number: int = Argument(..., help=('Selects FOMs [0, 1] for elliptic problems '
+                                          'with scalar and vector valued outputs.')),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.'),
     modes: int = Argument(..., help='Number of basis functions for the RB spaces (generated with POD)')

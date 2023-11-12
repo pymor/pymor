@@ -223,6 +223,7 @@ select = [
   "C4", # flake8-comprehensions
   "DTZ", # flake8-datetimez
   "EXE", # flake8-executable
+  "ISC", # flake8-implicit-str-concat
   "ICN", # flake8-import-conventions
   "PT", # flake8-pytest-style
   "Q", # flake8-quotes
