@@ -218,6 +218,7 @@ select = [
   "D", # pydocstyle
   "UP", # pyupgrade
   "YTT", # flake8-2020
+  "ASYNC", # flake8-async
   "ICN", # flake8-import-conventions
   "PT", # flake8-pytest-style
   "Q", # flake8-quotes
