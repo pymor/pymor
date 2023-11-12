@@ -16,6 +16,7 @@ repos:
       - id: check-yaml
       - id: debug-statements
         exclude: src/pymor/algorithms/rules.py
+      - id: destroyed-symlinks
       - id: pretty-format-json
         args:
           - --autofix
