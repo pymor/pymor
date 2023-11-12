@@ -125,7 +125,7 @@ def discretize_fom(T=50):
     ])
 
     fom = QuadraticHamiltonianModel(T, initial_data, H_op, nt=nt, name='hamiltonian_wave_equation')
-    # fom.operator = fom.operator.with_(solver_options={'type': 'to_matrix'}) #TODO
+    # TODO: fom.operator = fom.operator.with_(solver_options={'type': 'to_matrix'})
     return fom
 
 

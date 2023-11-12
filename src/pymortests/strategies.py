@@ -104,7 +104,7 @@ def _block_vector_spaces(draw, np_data_list, compatible, count, dims):
         if c == 0 or (not compatible and c > 0):
             block_dims = _block_dims(d)
         constituent_spaces = [NumpyVectorSpace(dim) for dim in block_dims]
-        # TODO this needs to be relaxed again
+        # TODO: this needs to be relaxed again
         assume(len(constituent_spaces))
         ret.append((BlockVectorSpace(constituent_spaces), ar))
     return ret
@@ -229,7 +229,7 @@ def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatibl
     return inner_backend_decorator
 
 
-# TODO match st_valid_inds results to this
+# TODO: match st_valid_inds results to this
 def valid_inds(v, length=None):
     if length is None:
         yield []
@@ -242,7 +242,7 @@ def valid_inds(v, length=None):
         yield list(range(-len(v), len(v)))
         yield list(range(int(len(v)/2)))
         yield list(range(len(v))) * 2
-        # TODO what's with the magic number here?
+        # TODO: what's with the magic number here?
         # Maybe related to this?
         # pymortests/vectorarray.py:910: VisibleDeprecationWarning:
         #   Creating an ndarray from nested sequences exceeding
@@ -283,7 +283,7 @@ def valid_indices(draw, array_strategy, length=None):
     return v, draw(indices)
 
 
-# TODO match st_valid_inds_of_same_length results to this
+# TODO: match st_valid_inds_of_same_length results to this
 def valid_inds_of_same_length(v1, v2):
     if len(v1) == len(v2):
         yield slice(None), slice(None)
@@ -311,7 +311,7 @@ def valid_inds_of_same_length(v1, v2):
 def st_valid_inds_of_same_length(draw, v1, v2):
     len1, len2 = len(v1), len(v2)
     ret = hyst.just(([], []))
-    # TODO we should include integer arrays here by chaining
+    # TODO: we should include integer arrays here by chaining
     # `| hynp.integer_array_indices(shape=(LEN_X,))`
     if len1 == len2:
         ints = hyst.integers(min_value=-len1, max_value=max(len1 - 1, 0))
@@ -338,7 +338,7 @@ def st_scaling_value(draw, v1, v2=None):
     return v1, r1
 
 
-# TODO match st_valid_inds_of_different_length results to this
+# TODO: match st_valid_inds_of_different_length results to this
 def valid_inds_of_different_length(v1, v2):
     # note this potentially yields no result at all for dual 0 length inputs
     if len(v1) != len(v2):
@@ -376,7 +376,7 @@ def st_valid_inds_of_different_length(draw, v1, v2):
         return False  # both scalars => not of different length
 
     len1, len2 = len(v1), len(v2)
-    # TODO we should include integer arrays here
+    # TODO: we should include integer arrays here
     val1 = hyst.slices(len1)  # | hynp.integer_array_indices(shape=(len1,))
     val2 = hyst.slices(len2)  # | hynp.integer_array_indices(shape=(len1,))
     ret = hyst.tuples(val1, val2).filter(_filter)

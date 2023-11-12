@@ -98,7 +98,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         SF_INTS = np.einsum('e,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
         # map local DOFs to global DOFs
-        # FIXME This implementation is horrible, find a better way!
+        # TODO: This implementation is horrible, find a better way!
         SF_I = g.subentities(0, g.dim).ravel()
         I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
 
@@ -246,7 +246,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         SF_INTS = np.einsum('e,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
         # map local DOFs to global DOFs
-        # FIXME This implementation is horrible, find a better way!
+        # TODO: This implementation is horrible, find a better way!
         SF_I = g.subentities(0, g.dim).ravel()
         I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
 

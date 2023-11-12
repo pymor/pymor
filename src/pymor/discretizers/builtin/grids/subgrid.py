@@ -87,7 +87,7 @@ class SubGrid(Grid):
         """
         assert 0 <= codim <= self.dim, 'Invalid codimension'
         ind = ind.ravel()
-        # TODO Find better implementation of the following
+        # TODO: Find better implementation of the following
         R = np.argmax(ind[:, np.newaxis] - self.__parent_indices[codim][np.newaxis, :] == 0, axis=1)
         if not np.all(self.__parent_indices[codim][R] == ind):
             raise ValueError('Not all parent indices found')

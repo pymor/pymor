@@ -81,7 +81,7 @@ def test_almost_equal_self(vectors_and_indices, tolerances, sup_norm):
     assert isinstance(r, np.ndarray)
     assert r.shape == (v.len_ind(ind),)
     assert np.all(r)
-    # TODO drop assumptions
+    # TODO: drop assumptions
     # the first assumption here is a direct translation of the old loop abort
     assume(v.len_ind(ind) > 0 and np.max(v[ind].sup_norm() > 0))
     # the second one accounts for old input missing very-near zero data

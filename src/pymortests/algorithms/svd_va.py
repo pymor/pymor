@@ -22,7 +22,7 @@ methods = [method_of_snapshots, qr_svd]
 def test_method_of_snapshots(vector_array, method):
     A = vector_array
 
-    # TODO assumption here masks a potential issue with the algorithm
+    # TODO: assumption here masks a potential issue with the algorithm
     #      where it fails in internal lapack instead of a proper error
     assume(len(A) > 1 or A.dim > 1)
     assume(not contains_zero_vector(A, rtol=1e-13, atol=1e-13))
