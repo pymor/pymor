@@ -28,14 +28,18 @@ class BaseQuadraticHamiltonianModel(InstationaryModel):
         # interface to use ImplicitMidpointTimeStepper via parameter nt
         if time_stepper is not None and nt is not None:
             # this case is required to use "with_" in combination with this model
-            assert hasattr(time_stepper, 'nt') and time_stepper.nt == nt
+            assert hasattr(time_stepper, 'nt')
+            assert time_stepper.nt == nt
         if time_stepper is None and nt is None:
             raise ValueError('Specify time_stepper or nt (or both)')
         if time_stepper is None:
             time_stepper = ImplicitMidpointTimeStepper(nt)
 
-        assert (isinstance(J, Operator) and isinstance(H_op, Operator)
-                and J.range == J.source == H_op.range == H_op.source)
+        assert isinstance(J, Operator)
+        assert isinstance(H_op, Operator)
+        assert J.source == J.range
+        assert H_op.source == H_op.range
+        assert J.source == H_op.source
 
         # minus (in J.H) is required since operator in an InstationaryModel is on the LHS
         if isinstance(H_op.range, BlockVectorSpace) and isinstance(H_op, BlockOperator):
@@ -139,8 +143,10 @@ class QuadraticHamiltonianModel(BaseQuadraticHamiltonianModel):
 
     def __init__(self, T, initial_data, H_op, h=None, time_stepper=None, nt=None, num_values=None,
                  output_functional=None, visualizer=None, name=None):
-        assert isinstance(H_op, Operator) and H_op.linear and H_op.range == H_op.source \
-               and H_op.range.dim % 2 == 0
+        assert isinstance(H_op, Operator)
+        assert H_op.linear
+        assert H_op.range == H_op.source
+        assert H_op.range.dim % 2 == 0
 
         if isinstance(H_op.range, NumpyVectorSpace):
             # make H_op compatible with blocked phase_space

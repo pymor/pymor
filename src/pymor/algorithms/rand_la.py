@@ -141,8 +141,10 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
     else:
         assert isinstance(source_product, Operator)
 
-    assert 0 <= l <= min(A.source.dim, A.range.dim) and isinstance(l, int)
-    assert q >= 0 and isinstance(q, int)
+    assert 0 <= l <= min(A.source.dim, A.range.dim)
+    assert isinstance(l, int)
+    assert q >= 0
+    assert isinstance(q, int)
 
     R = A.source.random(l, distribution='normal')
 
@@ -219,9 +221,12 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
 
     assert isinstance(A, Operator)
 
-    assert 0 <= modes <= max(A.source.dim, A.range.dim) and isinstance(modes, int)
-    assert 0 <= p <= max(A.source.dim, A.range.dim) - modes and isinstance(p, int)
-    assert q >= 0 and isinstance(q, int)
+    assert 0 <= modes <= max(A.source.dim, A.range.dim)
+    assert isinstance(modes, int)
+    assert 0 <= p <= max(A.source.dim, A.range.dim) - modes
+    assert isinstance(p, int)
+    assert q >= 0
+    assert isinstance(q, int)
 
     if range_product is None:
         range_product = IdentityOperator(A.range)
@@ -299,17 +304,22 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
     """
     logger = getLogger('pymor.algorithms.rand_la')
 
-    assert isinstance(A, Operator) and A.linear
+    assert isinstance(A, Operator)
+    assert A.linear
     assert not A.parametric
     assert A.source == A.range
-    assert 0 <= modes <= max(A.source.dim, A.range.dim) and isinstance(modes, int)
-    assert 0 <= p <= max(A.source.dim, A.range.dim) - modes and isinstance(p, int)
-    assert q >= 0 and isinstance(q, int)
+    assert 0 <= modes <= max(A.source.dim, A.range.dim)
+    assert isinstance(modes, int)
+    assert 0 <= p <= max(A.source.dim, A.range.dim) - modes
+    assert isinstance(p, int)
+    assert q >= 0
+    assert isinstance(q, int)
 
     if E is None:
         E = IdentityOperator(A.source)
     else:
-        assert isinstance(E, Operator) and E.linear
+        assert isinstance(E, Operator)
+        assert E.linear
         assert not E.parametric
         assert E.source == E.range
         assert E.source == A.source

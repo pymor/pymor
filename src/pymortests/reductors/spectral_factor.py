@@ -27,7 +27,8 @@ def test_spectral_factor():
 
     rom = spectralFactor.reduce(
         lambda spectral_factor, mu : IRKAReductor(spectral_factor,mu).reduce(1))
-    assert isinstance(rom, LTIModel) and rom.order == 1
+    assert isinstance(rom, LTIModel)
+    assert rom.order == 1
 
     assert np.all(np.real(rom.poles()) < 0), 'Asymptotically stable ROM expected.'
 

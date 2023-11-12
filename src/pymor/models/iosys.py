@@ -547,7 +547,8 @@ class LTIModel(Model):
         import scipy.io as spio
         mat_dict = spio.loadmat(file_name)
 
-        assert 'A' in mat_dict and 'B' in mat_dict
+        assert 'A' in mat_dict
+        assert 'B' in mat_dict
 
         matrices = [
             mat_dict['A'],
@@ -939,7 +940,8 @@ class LTIModel(Model):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
         poles = self.presets['poles'] if 'poles' in self.presets else self._poles(mu=mu)
-        assert isinstance(poles, np.ndarray) and poles.shape == (self.A.source.dim,)
+        assert isinstance(poles, np.ndarray)
+        assert poles.shape == (self.A.source.dim,)
 
         return poles
 
@@ -1161,7 +1163,8 @@ class LTIModel(Model):
             One-dimensional |NumPy array| of singular values.
         """
         hsv = self.presets['hsv'] if 'hsv' in self.presets else self._sv_U_V(mu=mu)[0]
-        assert isinstance(hsv, np.ndarray) and hsv.ndim == 1
+        assert isinstance(hsv, np.ndarray)
+        assert hsv.ndim == 1
 
         return hsv
 
@@ -1240,7 +1243,8 @@ class LTIModel(Model):
             )
 
         if return_fpeak:
-            assert isinstance(fpeak, Number) and hinf_norm >= 0
+            assert isinstance(fpeak, Number)
+            assert hinf_norm >= 0
             return hinf_norm, fpeak
         else:
             assert hinf_norm >= 0
@@ -1393,7 +1397,8 @@ class LTIModel(Model):
             linf_norm, fpeak = self._linf_norm(mu=mu, ab13dd_equilibrate=ab13dd_equilibrate, tol=tol)
 
         if return_fpeak:
-            assert isinstance(fpeak, Number) and linf_norm >= 0
+            assert isinstance(fpeak, Number)
+            assert linf_norm >= 0
             return linf_norm, fpeak
         else:
             assert linf_norm >= 0
@@ -2017,17 +2022,28 @@ class SecondOrderModel(Model):
     def __init__(self, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
                  solver_options=None, error_estimator=None, visualizer=None, name=None):
 
-        assert M.linear and M.source == M.range
-        assert E.linear and E.source == E.range == M.source
-        assert K.linear and K.source == K.range == M.source
-        assert B.linear and B.range == M.source
-        assert Cp.linear and Cp.source == M.range
+        assert M.linear
+        assert M.source == M.range
+        assert E.linear
+        assert E.source == E.range
+        assert E.source == M.source
+        assert K.linear
+        assert K.source == K.range
+        assert K.source == M.source
+        assert B.linear
+        assert B.range == M.source
+        assert Cp.linear
+        assert Cp.source == M.range
 
         Cv = Cv or ZeroOperator(Cp.range, Cp.source)
-        assert Cv.linear and Cv.source == M.range and Cv.range == Cp.range
+        assert Cv.linear
+        assert Cv.source == M.range
+        assert Cv.range == Cp.range
 
         D = D or ZeroOperator(Cp.range, B.source)
-        assert D.linear and D.source == B.source and D.range == Cp.range
+        assert D.linear
+        assert D.source == B.source
+        assert D.range == Cp.range
 
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
@@ -2711,9 +2727,14 @@ class LinearDelayModel(Model):
 
         assert A.linear
         assert A.source == A.range
-        assert isinstance(Ad, tuple) and len(Ad) > 0
-        assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in Ad)
-        assert isinstance(tau, tuple) and len(tau) == len(Ad) and all(taui > 0 for taui in tau)
+        assert isinstance(Ad, tuple)
+        assert len(Ad) > 0
+        assert all(Ai.linear for Ai in Ad)
+        assert all(Ai.source == Ai.range for Ai in Ad)
+        assert all(Ai.source == A.source for Ai in Ad)
+        assert isinstance(tau, tuple)
+        assert len(tau) == len(Ad)
+        assert all(taui > 0 for taui in tau)
         assert B.linear
         assert B.range == A.source
         assert C.linear
@@ -2994,17 +3015,27 @@ class LinearStochasticModel(Model):
     def __init__(self, A, As, B, C, D=None, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
-        assert A.linear and A.source == A.range
-        assert isinstance(As, tuple) and len(As) > 0
-        assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in As)
-        assert B.linear and B.range == A.source
-        assert C.linear and C.source == A.range
+        assert A.linear
+        assert A.source == A.range
+        assert isinstance(As, tuple)
+        assert len(As) > 0
+        assert all(Ai.linear for Ai in As)
+        assert all(Ai.source == Ai.range for Ai in As)
+        assert all(Ai.source == A.source for Ai in As)
+        assert B.linear
+        assert B.range == A.source
+        assert C.linear
+        assert C.source == A.range
 
         D = D or ZeroOperator(C.range, B.source)
-        assert D.linear and D.source == B.source and D.range == C.range
+        assert D.linear
+        assert D.source == B.source
+        assert D.range == C.range
 
         E = E or IdentityOperator(A.source)
-        assert E.linear and E.source == E.range == A.source
+        assert E.linear
+        assert E.source == E.range
+        assert E.source == A.source
 
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
@@ -3123,17 +3154,27 @@ class BilinearModel(Model):
     def __init__(self, A, N, B, C, D, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
-        assert A.linear and A.source == A.range
-        assert B.linear and B.range == A.source
-        assert isinstance(N, tuple) and len(N) == B.source.dim
-        assert all(Ni.linear and Ni.source == Ni.range == A.source for Ni in N)
-        assert C.linear and C.source == A.range
+        assert A.linear
+        assert A.source == A.range
+        assert B.linear
+        assert B.range == A.source
+        assert isinstance(N, tuple)
+        assert len(N) == B.source.dim
+        assert all(Ni.linear for Ni in N)
+        assert all(Ni.source == Ni.range for Ni in N)
+        assert all(Ni.source == A.source for Ni in N)
+        assert C.linear
+        assert C.source == A.range
 
         D = D or ZeroOperator(C.range, B.source)
-        assert D.linear and D.source == B.source and D.range == C.range
+        assert D.linear
+        assert D.source == B.source
+        assert D.range == C.range
 
         E = E or IdentityOperator(A.source)
-        assert E.linear and E.source == E.range == A.source
+        assert E.linear
+        assert E.source == E.range
+        assert E.source == A.source
 
         sampling_time = float(sampling_time)
         assert sampling_time >= 0

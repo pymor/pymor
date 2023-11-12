@@ -39,7 +39,7 @@ def test_log_levels():
     assert before_name == logging.getLevelName(logger.level)
 
 
-@pytest.mark.parametrize('verb', ('info', 'error', 'fatal', 'debug', 'block', 'info2', 'info3', 'warning'))
+@pytest.mark.parametrize('verb', ['info', 'error', 'fatal', 'debug', 'block', 'info2', 'info3', 'warning'])
 def test_once(verb, capsys):
     logger = NumpyMatrixOperator._logger
     logger.setLevel('DEBUG')

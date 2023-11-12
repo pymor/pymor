@@ -557,19 +557,23 @@ class ListVectorSpace(VectorSpace):
         raise NotImplementedError
 
     def zeros(self, count=1, reserve=0):
-        assert count >= 0 and reserve >= 0
+        assert count >= 0
+        assert reserve >= 0
         return ListVectorArray(self, ListVectorArrayImpl([self.zero_vector() for _ in range(count)], self))
 
     def ones(self, count=1, reserve=0):
-        assert count >= 0 and reserve >= 0
+        assert count >= 0
+        assert reserve >= 0
         return ListVectorArray(self, ListVectorArrayImpl([self.ones_vector() for _ in range(count)], self))
 
     def full(self, value, count=1, reserve=0):
-        assert count >= 0 and reserve >= 0
+        assert count >= 0
+        assert reserve >= 0
         return ListVectorArray(self, ListVectorArrayImpl([self.full_vector(value) for _ in range(count)], self))
 
     def random(self, count=1, distribution='uniform', reserve=0, **kwargs):
-        assert count >= 0 and reserve >= 0
+        assert count >= 0
+        assert reserve >= 0
         return ListVectorArray(
             self,
             ListVectorArrayImpl([self.random_vector(distribution=distribution, **kwargs)
@@ -680,7 +684,8 @@ class NumpyListVectorSpace(ListVectorSpace):
 
     def make_vector(self, obj):
         obj = np.asarray(obj)
-        assert obj.ndim == 1 and len(obj) == self.dim
+        assert obj.ndim == 1
+        assert len(obj) == self.dim
         return NumpyVector(obj)
 
     def vector_from_numpy(self, data, ensure_copy=False):

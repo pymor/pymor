@@ -129,13 +129,15 @@ class ERAReductor(CacheableObject):
 
     def output_projector(self, num_left):
         """Construct the left/output projector :math:`W_1`."""
-        assert isinstance(num_left, int) and num_left <= self.data.shape[1]
+        assert isinstance(num_left, int)
+        assert num_left <= self.data.shape[1]
         self.logger.info(f'Constructing output projector ({num_left} tangential directions) ...')
         return self._s1_W1()[1][:, :num_left]
 
     def input_projector(self, num_right):
         """Construct the right/input projector :math:`W_2`."""
-        assert isinstance(num_right, int) and num_right <= self.data.shape[2]
+        assert isinstance(num_right, int)
+        assert num_right <= self.data.shape[2]
         self.logger.info(f'Constructing input projector ({num_right} tangential directions) ...')
         return self._s2_W2()[1][:, :num_right]
 

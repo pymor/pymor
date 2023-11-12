@@ -412,8 +412,9 @@ def interpolate_function(function, parameter_sample, evaluation_points,
         `dict` of additional data as returned by :func:`ei_greedy`.
     """
     assert isinstance(function, Function)
-    assert isinstance(evaluation_points, np.ndarray) and evaluation_points.ndim == 2 and \
-        evaluation_points.shape[1] == function.dim_domain
+    assert isinstance(evaluation_points, np.ndarray)
+    assert evaluation_points.ndim == 2
+    assert evaluation_points.shape[1] == function.dim_domain
 
     snapshot_data = NumpyVectorSpace.from_numpy(
         np.array([function(evaluation_points, mu=mu) for mu in parameter_sample])

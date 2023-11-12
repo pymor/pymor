@@ -45,7 +45,8 @@ class SymplecticBasis(BasicObject):
 
     def __init__(self, E=None, F=None, phase_space=None, check_symplecticity=True):
         if phase_space is None:
-            assert E is not None and F is not None
+            assert E is not None
+            assert F is not None
             phase_space = E.space
         if E is None:
             E = phase_space.empty()
@@ -54,7 +55,8 @@ class SymplecticBasis(BasicObject):
         assert isinstance(phase_space, VectorSpace)
         assert isinstance(E, VectorArray)
         assert isinstance(F, VectorArray)
-        assert E.space == F.space == phase_space and len(E) == len(F)
+        assert E.space == F.space == phase_space
+        assert len(E) == len(F)
         self.__auto_init(locals())
 
         if check_symplecticity and len(E) > 0:
@@ -173,7 +175,8 @@ class SymplecticBasis(BasicObject):
         assert isinstance(coefficients, np.ndarray)
         if coefficients.ndim == 1:
             coefficients = coefficients[np.newaxis, ...]
-        assert len(coefficients.shape) == 2 and coefficients.shape[1] == 2*len(self)
+        assert len(coefficients.shape) == 2
+        assert coefficients.shape[1] == 2*len(self)
         result = self.E.lincomb(coefficients[:, :len(self)])
         result += self.F.lincomb(coefficients[:, len(self):])
         return result
@@ -296,8 +299,9 @@ def psd_cotangent_lift(U, modes):
     BASIS
         The |SymplecticBasis|.
     """
-    assert isinstance(U.space, BlockVectorSpace) and len(U.space.subspaces) == 2 and \
-        U.space.subspaces[0] == U.space.subspaces[1]
+    assert isinstance(U.space, BlockVectorSpace)
+    assert len(U.space.subspaces) == 2
+    assert U.space.subspaces[0] == U.space.subspaces[1]
     assert modes % 2 == 0
 
     X = U.blocks[0].copy()
@@ -327,8 +331,9 @@ def psd_complex_svd(U, modes):
     BASIS
         The |SymplecticBasis|.
     """
-    assert isinstance(U.space, BlockVectorSpace) and len(U.space.subspaces) == 2 and \
-        U.space.subspaces[0] == U.space.subspaces[1]
+    assert isinstance(U.space, BlockVectorSpace)
+    assert len(U.space.subspaces) == 2
+    assert U.space.subspaces[0] == U.space.subspaces[1]
     assert modes % 2 == 0
 
     X = U.blocks[0] + U.blocks[1] * 1j

@@ -729,6 +729,6 @@ def picklable_operator(reset_rng, request):
     return request.param()
 
 
-@pytest.fixture
+@pytest.fixture()
 def loadable_matrices(shared_datadir):
     return (shared_datadir / 'matrices').glob('*')

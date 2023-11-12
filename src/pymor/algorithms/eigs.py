@@ -78,14 +78,16 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
     """
     logger = getLogger('pymor.algorithms.eigs.eigs')
 
-    assert isinstance(A, Operator) and A.linear
+    assert isinstance(A, Operator)
+    assert A.linear
     assert not A.parametric
     assert A.source == A.range
 
     if E is None:
         E = IdentityOperator(A.source)
     else:
-        assert isinstance(E, Operator) and E.linear
+        assert isinstance(E, Operator)
+        assert E.linear
         assert not E.parametric
         assert E.source == E.range
         assert E.source == A.source

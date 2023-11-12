@@ -184,7 +184,7 @@ def test_project_array(vector_arrays):
     assert np.all(err <= tol)
 
 
-@pytest.mark.builtin
+@pytest.mark.builtin()
 def test_project_array_with_product():
     U = NumpyVectorSpace.from_numpy(np.random.random((1, 10)))
     basis = NumpyVectorSpace.from_numpy(np.random.random((3, 10)))

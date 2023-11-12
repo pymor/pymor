@@ -283,7 +283,7 @@ def test_demos(demo_args):
     assert result.exit_code == 0
 
 
-@pytest.mark.builtin
+@pytest.mark.builtin()
 def test_analyze_pickle1():
     d = mkdtemp()
     try:
@@ -294,7 +294,7 @@ def test_analyze_pickle1():
         shutil.rmtree(d)
 
 
-@pytest.mark.builtin
+@pytest.mark.builtin()
 def test_analyze_pickle2():
     d = mkdtemp()
     try:
@@ -306,7 +306,7 @@ def test_analyze_pickle2():
         shutil.rmtree(d)
 
 
-@pytest.mark.builtin
+@pytest.mark.builtin()
 def test_analyze_pickle3():
     d = mkdtemp()
     try:
@@ -318,7 +318,7 @@ def test_analyze_pickle3():
         shutil.rmtree(d)
 
 
-@pytest.mark.builtin
+@pytest.mark.builtin()
 def test_analyze_pickle4():
     d = mkdtemp()
     try:
@@ -364,7 +364,7 @@ def test_thermalblock_results(thermalblock_args):
                   'min_effectivities', 'max_effectivities', 'errors')
 
 
-@pytest.mark.builtin
+@pytest.mark.builtin()
 def test_burgers_ei_results():
     from pymordemos import burgers_ei
     app = Typer()
@@ -377,7 +377,7 @@ def test_burgers_ei_results():
                   (1e-13, 1e-7), 'errors', 'triangularity_errors', 'greedy_max_errs')
 
 
-@pytest.mark.builtin
+@pytest.mark.builtin()
 def test_parabolic_mor_results():
     from pymordemos import parabolic_mor
     args = ['pymor', 'greedy', 5, 20, 3]
@@ -389,7 +389,7 @@ def test_parabolic_mor_results():
                   'min_effectivities', 'max_effectivities', 'errors')
 
 
-@pytest.mark.builtin
+@pytest.mark.builtin()
 def test_check_check_results_missing(tmp_path):
     test_name = tmp_path.name
     args = ['NONE', tmp_path]

@@ -471,9 +471,9 @@ class LowRankOperator(Operator):
         assert isinstance(left, VectorArray)
         assert isinstance(right, VectorArray)
         assert len(left) == len(right)
-        assert (isinstance(core, np.ndarray)
-                and core.ndim == 2
-                and core.shape[0] == core.shape[1] == len(left))
+        assert isinstance(core, np.ndarray)
+        assert core.ndim == 2
+        assert core.shape[0] == core.shape[1] == len(left)
 
         self.__auto_init(locals())
         self.source = right.space

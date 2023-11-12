@@ -399,7 +399,8 @@ class Operator(ParametricObject):
         V
             The |VectorArray| defined above.
         """
-        assert isinstance(self.source, NumpyVectorSpace) and self.linear
+        assert isinstance(self.source, NumpyVectorSpace)
+        assert self.linear
         assert self.source.dim <= as_array_max_length()
         return self.apply(self.source.from_numpy(np.eye(self.source.dim)), mu=mu)
 
@@ -427,7 +428,8 @@ class Operator(ParametricObject):
         V
             The |VectorArray| defined above.
         """
-        assert isinstance(self.range, NumpyVectorSpace) and self.linear
+        assert isinstance(self.range, NumpyVectorSpace)
+        assert self.linear
         assert self.range.dim <= as_array_max_length()
         return self.apply_adjoint(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
 

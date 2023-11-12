@@ -33,7 +33,8 @@ class MatplotlibPatchAxes:
 
         if bounding_box is None:
             bounding_box = grid.bounding_box()
-        assert len(bounding_box) == 2 and all(len(b) == 2 for b in bounding_box)
+        assert len(bounding_box) == 2
+        assert all(len(b) == 2 for b in bounding_box)
         aspect_ratio = (bounding_box[1][1] - bounding_box[0][1]) / (bounding_box[1][0] - bounding_box[0][0])
 
         self.codim = codim

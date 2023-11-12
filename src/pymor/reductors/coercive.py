@@ -137,7 +137,8 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
 
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
                  check_orthonormality=None, check_tol=None):
-        assert fom.operator.linear and fom.rhs.linear
+        assert fom.operator.linear
+        assert fom.rhs.linear
         assert isinstance(fom.operator, LincombOperator)
         assert all(not op.parametric for op in fom.operator.operators)
         if fom.rhs.parametric:

@@ -213,7 +213,9 @@ class ImplicitEulerResidualReductor(BasicObject):
 
     def __init__(self, RB, operator, mass, dt, rhs=None, product=None):
         assert RB in operator.source
-        assert rhs.source.is_scalar and rhs.range == operator.range and rhs.linear
+        assert rhs.source.is_scalar
+        assert rhs.range == operator.range
+        assert rhs.linear
         assert product is None or product.source == product.range == operator.range
 
         self.__auto_init(locals())
