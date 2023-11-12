@@ -21,7 +21,7 @@ def main(
 ):
     """Reduction of a FEniCS model using neural networks (approach by Hesthaven and Ubbiali)."""
     if not config.HAVE_TORCH:
-        raise TorchMissingError()
+        raise TorchMissingError
 
     fom, parameter_space = discretize_fenics()
 

@@ -25,7 +25,7 @@ def main(
 ):
     """Model oder reduction with neural networks (approach by Hesthaven and Ubbiali)."""
     if not config.HAVE_TORCH:
-        raise TorchMissingError()
+        raise TorchMissingError
 
     fom = create_fom(fv, grid_intervals)
 

@@ -105,7 +105,7 @@ def write_vtk_collection(filename_base, meshes, metadata=None):
     full filename of saved file
     """
     if not config.HAVE_VTKIO:
-        raise IOLibsMissingError()
+        raise IOLibsMissingError
     from pyevtk.vtk import VtkGroup
 
     fn_tpl = '{}_{:08d}.vtu'

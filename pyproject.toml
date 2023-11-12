@@ -227,6 +227,7 @@ select = [
   "ICN", # flake8-import-conventions
   "PT", # flake8-pytest-style
   "Q", # flake8-quotes
+  "RSE", # flake8-raise
 ]
 ignore = [
   "B006", # do not use mutable data structures for argument defaults
