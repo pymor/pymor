@@ -217,6 +217,7 @@ select = [
   "N", # pep8-naming
   "D", # pydocstyle
   "UP", # pyupgrade
+  "YTT", # flake8-2020
   "ICN", # flake8-import-conventions
   "PT", # flake8-pytest-style
   "Q", # flake8-quotes
