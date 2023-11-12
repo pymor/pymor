@@ -131,8 +131,8 @@ class SpectralFactorReductor(BasicObject):
         if check_stability:
             largest_pole = spectral_factor_rom.poles().real.max()
             if largest_pole > 0:
-                self.logger.warn('Reduced system for spectral factor is not stable. '
-                                 f'Real value of largest pole is {largest_pole}.')
+                self.logger.warning('Reduced system for spectral factor is not stable. '
+                                    f'Real value of largest pole is {largest_pole}.')
 
         Ar, Br, Lr, Mr, Er = spectral_factor_rom.to_abcde_matrices()
         Dr = 0.5*(Mr.T @ Mr) + 0.5*(D-D.T)

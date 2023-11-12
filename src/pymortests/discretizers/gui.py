@@ -26,9 +26,9 @@ def test_visualize_patch(backend_gridtype):
     backend, gridtype = backend_gridtype
     domain = LineDomain() if gridtype is OnedGrid else RectDomain()
     dim = 1 if gridtype is OnedGrid else 2
-    rhs = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim)  # NOQA
-    dirichlet = GenericFunction(lambda X: np.zeros(X.shape[:-1]), dim)  # NOQA
-    diffusion = GenericFunction(lambda X: np.ones(X.shape[:-1]), dim)  # NOQA
+    rhs = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim)
+    dirichlet = GenericFunction(lambda X: np.zeros(X.shape[:-1]), dim)
+    diffusion = GenericFunction(lambda X: np.ones(X.shape[:-1]), dim)
     problem = StationaryProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet, diffusion=diffusion)
     grid, bi = discretize_domain_default(problem.domain, grid_type=gridtype)
     m, data = discretize_stationary_cg(analytical_problem=problem, grid=grid, boundary_info=bi)

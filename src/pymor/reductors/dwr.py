@@ -189,7 +189,7 @@ class DWRCoerciveRBReductor(BasicObject):
             # case where model.dim_output == 1 and
             # more general case without using the structure of BlockColumnOperator
             if model.dim_output > 1:
-                model.logger.warn('Using inefficient concatenation for the right-hand side')
+                model.logger.warning('Using inefficient concatenation for the right-hand side')
             e_i_vec = model.output_functional.range.from_numpy(np.eye(1, model.dim_output, dim))
             dual_rhs = - output.H @ VectorOperator(e_i_vec) if model.dim_output > 1 else - output.H
         dual_operator = model.operator.H

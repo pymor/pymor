@@ -214,7 +214,7 @@ def main(
     sys.stdout.flush()
     if plot_error_landscape:
         import matplotlib.pyplot as plt
-        import mpl_toolkits.mplot3d  # NOQA
+        import mpl_toolkits.mplot3d  # noqa: F401
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         # rescale the errors since matplotlib does not support logarithmic scales on 3d plots

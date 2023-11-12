@@ -596,33 +596,33 @@ def _broadcastable_shapes(first, second):
     return all(f == s or f == 1 or s == 1 for f, s in zip(first[::-1], second[::-1]))
 
 
-class Sum(BinaryOp):  numpy_symbol = '+'; fenics_symbol = operator.add;     fenics_conditional=False  # NOQA
-class Diff(BinaryOp): numpy_symbol = '-'; fenics_symbol = operator.sub;     fenics_conditional=False  # NOQA
-class Prod(BinaryOp): numpy_symbol = '*'; fenics_symbol = operator.mul;     fenics_conditional=False  # NOQA
-class Div(BinaryOp):  numpy_symbol = '/'; fenics_symbol = operator.truediv; fenics_conditional=False  # NOQA
+class Sum(BinaryOp):  numpy_symbol = '+'; fenics_symbol = operator.add;     fenics_conditional=False  # noqa: E701, E702
+class Diff(BinaryOp): numpy_symbol = '-'; fenics_symbol = operator.sub;     fenics_conditional=False  # noqa: E701, E702
+class Prod(BinaryOp): numpy_symbol = '*'; fenics_symbol = operator.mul;     fenics_conditional=False  # noqa: E701, E702
+class Div(BinaryOp):  numpy_symbol = '/'; fenics_symbol = operator.truediv; fenics_conditional=False  # noqa: E701, E702
 
 
-class Pow(BinaryOp):  numpy_symbol = '**'; fenics_symbol = 'elem_pow'; fenics_conditional=False  # NOQA
-class LE(BinaryOp):   numpy_symbol = '<='; fenics_symbol = 'le';       fenics_conditional=True   # NOQA
-class GE(BinaryOp):   numpy_symbol = '>='; fenics_symbol = 'ge';       fenics_conditional=True   # NOQA
-class LT(BinaryOp):   numpy_symbol = '<';  fenics_symbol = 'lt';       fenics_conditional=True   # NOQA
-class GT(BinaryOp):   numpy_symbol = '>';  fenics_symbol = 'gt';       fenics_conditional=True   # NOQA
-class Mod(BinaryOp):  numpy_symbol = '%';  fenics_symbol = None;       fenics_conditional=None   # NOQA
+class Pow(BinaryOp):  numpy_symbol = '**'; fenics_symbol = 'elem_pow'; fenics_conditional=False  # noqa: E701, E702
+class LE(BinaryOp):   numpy_symbol = '<='; fenics_symbol = 'le';       fenics_conditional=True   # noqa: E701, E702
+class GE(BinaryOp):   numpy_symbol = '>='; fenics_symbol = 'ge';       fenics_conditional=True   # noqa: E701, E702
+class LT(BinaryOp):   numpy_symbol = '<';  fenics_symbol = 'lt';       fenics_conditional=True   # noqa: E701, E702
+class GT(BinaryOp):   numpy_symbol = '>';  fenics_symbol = 'gt';       fenics_conditional=True   # noqa: E701, E702
+class Mod(BinaryOp):  numpy_symbol = '%';  fenics_symbol = None;       fenics_conditional=None   # noqa: E701, E702
 
 
-class sin(UnaryFunctionCall):      numpy_symbol = 'sin';     fenics_symbol = 'sin'       # NOQA
-class cos(UnaryFunctionCall):      numpy_symbol = 'cos';     fenics_symbol = 'cos'       # NOQA
-class tan(UnaryFunctionCall):      numpy_symbol = 'tan';     fenics_symbol = 'tan'       # NOQA
-class arcsin(UnaryFunctionCall):   numpy_symbol = 'arcsin';  fenics_symbol = 'asin'      # NOQA
-class arccos(UnaryFunctionCall):   numpy_symbol = 'arccos';  fenics_symbol = 'acos'      # NOQA
-class arctan(UnaryFunctionCall):   numpy_symbol = 'arctan';  fenics_symbol = 'atan'      # NOQA
-class sinh(UnaryFunctionCall):     numpy_symbol = 'sinh';    fenics_symbol = 'sinh'      # NOQA
-class cosh(UnaryFunctionCall):     numpy_symbol = 'cosh';    fenics_symbol = 'cosh'      # NOQA
-class tanh(UnaryFunctionCall):     numpy_symbol = 'tanh';    fenics_symbol = 'tanh'      # NOQA
-class exp(UnaryFunctionCall):      numpy_symbol = 'exp';     fenics_symbol = 'exp'       # NOQA
-class log(UnaryFunctionCall):      numpy_symbol = 'log';     fenics_symbol = 'ln'        # NOQA
-class sqrt(UnaryFunctionCall):     numpy_symbol = 'sqrt';    fenics_symbol = 'sqrt'      # NOQA
-class sign(UnaryFunctionCall):     numpy_symbol = 'sign';    fenics_symbol = 'sign'      # NOQA
+class sin(UnaryFunctionCall):      numpy_symbol = 'sin';     fenics_symbol = 'sin'       # noqa: E701, E702
+class cos(UnaryFunctionCall):      numpy_symbol = 'cos';     fenics_symbol = 'cos'       # noqa: E701, E702
+class tan(UnaryFunctionCall):      numpy_symbol = 'tan';     fenics_symbol = 'tan'       # noqa: E701, E702
+class arcsin(UnaryFunctionCall):   numpy_symbol = 'arcsin';  fenics_symbol = 'asin'      # noqa: E701, E702
+class arccos(UnaryFunctionCall):   numpy_symbol = 'arccos';  fenics_symbol = 'acos'      # noqa: E701, E702
+class arctan(UnaryFunctionCall):   numpy_symbol = 'arctan';  fenics_symbol = 'atan'      # noqa: E701, E702
+class sinh(UnaryFunctionCall):     numpy_symbol = 'sinh';    fenics_symbol = 'sinh'      # noqa: E701, E702
+class cosh(UnaryFunctionCall):     numpy_symbol = 'cosh';    fenics_symbol = 'cosh'      # noqa: E701, E702
+class tanh(UnaryFunctionCall):     numpy_symbol = 'tanh';    fenics_symbol = 'tanh'      # noqa: E701, E702
+class exp(UnaryFunctionCall):      numpy_symbol = 'exp';     fenics_symbol = 'exp'       # noqa: E701, E702
+class log(UnaryFunctionCall):      numpy_symbol = 'log';     fenics_symbol = 'ln'        # noqa: E701, E702
+class sqrt(UnaryFunctionCall):     numpy_symbol = 'sqrt';    fenics_symbol = 'sqrt'      # noqa: E701, E702
+class sign(UnaryFunctionCall):     numpy_symbol = 'sign';    fenics_symbol = 'sign'      # noqa: E701, E702
 
 
 class arcsinh(UnaryFunctionCall):
@@ -704,10 +704,10 @@ class angle(UnaryFunctionCall):
         ).reshape(())
 
 
-class min(UnaryReductionCall):  numpy_symbol = 'min';  fenics_op = 'min_value'   # NOQA
-class max(UnaryReductionCall):  numpy_symbol = 'max';  fenics_op = 'max_value'   # NOQA
-class sum(UnaryReductionCall):  numpy_symbol = 'sum';  fenics_op = operator.add  # NOQA
-class prod(UnaryReductionCall): numpy_symbol = 'prod'; fenics_op = operator.mul  # NOQA
+class min(UnaryReductionCall):  numpy_symbol = 'min';  fenics_op = 'min_value'   # noqa: E701, E702
+class max(UnaryReductionCall):  numpy_symbol = 'max';  fenics_op = 'max_value'   # noqa: E701, E702
+class sum(UnaryReductionCall):  numpy_symbol = 'sum';  fenics_op = operator.add  # noqa: E701, E702
+class prod(UnaryReductionCall): numpy_symbol = 'prod'; fenics_op = operator.mul  # noqa: E701, E702
 
 
 class norm(UnaryReductionCall):
@@ -717,8 +717,8 @@ class norm(UnaryReductionCall):
         return sqrt(sum(self.arg**Constant(2))).fenics_expr(params)
 
 
-class Pi(BaseConstant): numpy_symbol = 'pi'; fenics_symbol = 'pi'  # NOQA
-class E(BaseConstant):  numpy_symbol = 'e';  fenics_symbol = 'e'   # NOQA
+class Pi(BaseConstant): numpy_symbol = 'pi'; fenics_symbol = 'pi'  # noqa: E701, E702
+class E(BaseConstant):  numpy_symbol = 'e';  fenics_symbol = 'e'   # noqa: E701, E702
 
 
 pi = Pi()

@@ -717,7 +717,7 @@ class LTIModel(Model):
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         if self.T is not None and other.T is not None:
-            if type(self.time_stepper) != type(other.time_stepper):  # noqa
+            if type(self.time_stepper) != type(other.time_stepper):  # noqa: E721
                 raise TypeError('The time-steppers are not of the same type.')
             T = min(self.T, other.T)
             initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
@@ -759,7 +759,7 @@ class LTIModel(Model):
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         if self.T is not None and other.T is not None:
-            if type(self.time_stepper) != type(other.time_stepper):  # noqa
+            if type(self.time_stepper) != type(other.time_stepper):  # noqa: E721
                 raise TypeError('The time-steppers are not of the same type.')
             T = min(self.T, other.T)
             initial_data = BlockColumnOperator([self.initial_data, other.initial_data])

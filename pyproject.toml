@@ -230,6 +230,7 @@ select = [
   "RSE", # flake8-raise
   "SIM", # flake8-simplify
   "TD", # flake8-todos
+  "PGH", # pygrep-hooks
 ]
 ignore = [
   "B006", # do not use mutable data structures for argument defaults
@@ -259,6 +260,7 @@ ignore = [
   "N802", # function name should be lowercase
   "N803", # argument name should be lowercase (we use single capital letters everywhere for vectorarrays)
   "N806", # same for variables in function
+  "PGH001", # no builtin eval allowed
   "PT004", # fixture does not return anything, add leading underscore
   "PT011", # pytest.raises(Exception) is too broad
   "PT012", # pytest.raises() block should contain a single simple statement
