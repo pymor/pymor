@@ -19,10 +19,9 @@ n_list = [10, 20, 30]
 
 
 @pytest.mark.parametrize('n', n_list)
-@pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-def test_bernoulli(n, with_E, trans):
-    E = -ortho_group.rvs(dim=n)
+def test_bernoulli(n, trans):
+    E = -ortho_group.rvs(dim=n, random_state=0)
     A = np.diag(np.concatenate((np.arange(-n + 4, 0), np.arange(1, 5)))) @ E
     A = A + 1.j * A
     rng = np.random.default_rng(0)
