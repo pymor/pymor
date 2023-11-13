@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from pymor.algorithms.qr import qr, rrqr
+from pymor.core.exceptions import LinAlgError
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -55,7 +56,7 @@ def test_qr_ones(copy, complex):
     V = NumpyVectorSpace(n).ones(m)
     if complex:
         V += 1j * NumpyVectorSpace(n).ones(m)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(LinAlgError):
         Q, R = qr(V, copy=copy)
 
 
@@ -63,7 +64,7 @@ def test_qr_ones(copy, complex):
 def test_qr_zeros(copy):
     n, m = 5, 3
     V = NumpyVectorSpace(n).zeros(m)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(LinAlgError):
         Q, R = qr(V, copy=copy)
 
 
