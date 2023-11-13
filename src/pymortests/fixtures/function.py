@@ -66,7 +66,8 @@ def picklable_function(request):
 
 
 def function_argument(f, count):
+    rng = np.random.default_rng(0)
     if isinstance(count, tuple):
-        return np.random.random(count + (f.dim_domain,))
+        return rng.random(count + (f.dim_domain,))
     else:
-        return np.random.random((count, f.dim_domain))
+        return rng.random((count, f.dim_domain))

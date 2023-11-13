@@ -503,7 +503,8 @@ def test_InverseAdjointOperator(operator_with_arrays):
 
 @pytest.mark.builtin()
 def test_vectorarray_op_apply_inverse():
-    O = np.random.random((5, 5))
+    rng = np.random.default_rng(0)
+    O = rng.random((5, 5))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
     V = op.range.random()
     U = op.apply_inverse(V)
@@ -514,7 +515,8 @@ def test_vectorarray_op_apply_inverse():
 
 @pytest.mark.builtin()
 def test_vectorarray_op_apply_inverse_lstsq():
-    O = np.random.random((3, 5))
+    rng = np.random.default_rng(0)
+    O = rng.random((3, 5))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
     V = op.range.random()
     U = op.apply_inverse(V, least_squares=True)
@@ -525,7 +527,8 @@ def test_vectorarray_op_apply_inverse_lstsq():
 
 @pytest.mark.builtin()
 def test_adjoint_vectorarray_op_apply_inverse_lstsq():
-    O = np.random.random((3, 5))
+    rng = np.random.default_rng(0)
+    O = rng.random((3, 5))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O), adjoint=True)
     V = op.range.random()
     U = op.apply_inverse(V, least_squares=True)

@@ -12,7 +12,8 @@ def test_project(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     op_UV = project(op, V, U)
     assert op_UV.name == op_UV.__class__.__name__
-    coeffs = np.random.random(len(U))
+    rng = np.random.default_rng(0)
+    coeffs = rng.random(len(U))
     X = op_UV.apply(op_UV.source.make_array(coeffs), mu=mu)
     Y = op_UV.range.make_array(V.inner(op.apply(U.lincomb(coeffs), mu=mu)).T)
     assert np.all(almost_equal(X, Y))
@@ -35,7 +36,8 @@ def test_project_2(operator_with_arrays):
     op_V_U = project(op_V, None, U)
     assert op_V_U.name == op_V_U.__class__.__name__
     op_UV = project(op, V, U)
-    W = op_UV.source.make_array(np.random.random(len(U)))
+    rng = np.random.default_rng(0)
+    W = op_UV.source.make_array(rng.random(len(U)))
     Y0 = op_UV.apply(W, mu=mu)
     Y1 = op_U_V.apply(W, mu=mu)
     Y2 = op_V_U.apply(W, mu=mu)
@@ -47,7 +49,8 @@ def test_project_with_product(operator_with_arrays_and_products):
     op, mu, U, V, sp, rp = operator_with_arrays_and_products
     op_UV = project(op, V, U, product=rp)
     assert op_UV.name == op_UV.__class__.__name__
-    coeffs = np.random.random(len(U))
+    rng = np.random.default_rng(0)
+    coeffs = rng.random(len(U))
     X = op_UV.apply(op_UV.source.make_array(coeffs), mu=mu)
     Y = op_UV.range.make_array(rp.apply2(op.apply(U.lincomb(coeffs), mu=mu), V))
     assert np.all(almost_equal(X, Y))
@@ -64,7 +67,8 @@ def test_project_with_product_2(operator_with_arrays_and_products):
     op_V_U = project(op_V, None, U)
     assert op_V_U.name == op_V_U.__class__.__name__
     op_UV = project(op, V, U, product=rp)
-    W = op_UV.source.make_array(np.random.random(len(U)))
+    rng = np.random.default_rng(0)
+    W = op_UV.source.make_array(rng.random(len(U)))
     Y0 = op_UV.apply(W, mu=mu)
     Y1 = op_U_V.apply(W, mu=mu)
     Y2 = op_V_U.apply(W, mu=mu)
@@ -75,6 +79,7 @@ def test_project_with_product_2(operator_with_arrays_and_products):
 def test_project_to_subbasis(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     op_UV = project(op, V, U)
+    rng = np.random.default_rng(0)
 
     for dim_range in {None, 0, len(V)//2, len(V)}:
         for dim_source in {None, 0, len(U)//2, len(U)}:
@@ -89,7 +94,7 @@ def test_project_to_subbasis(operator_with_arrays):
 
             op_UV_sb2 = project(op, range_basis, source_basis)
 
-            u = op_UV_sb2.source.make_array(np.random.random(len(source_basis)))
+            u = op_UV_sb2.source.make_array(rng.random(len(source_basis)))
 
             assert np.all(almost_equal(op_UV_sb.apply(u, mu=mu),
                                        op_UV_sb2.apply(u, mu=mu)))
@@ -98,6 +103,7 @@ def test_project_to_subbasis(operator_with_arrays):
 def test_project_to_subbasis_no_range_basis(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     op_U = project(op, None, U)
+    rng = np.random.default_rng(0)
 
     for dim_source in {None, 0, len(U)//2, len(U)}:
         op_U_sb = project_to_subbasis(op_U, None, dim_source)
@@ -110,7 +116,7 @@ def test_project_to_subbasis_no_range_basis(operator_with_arrays):
 
         op_U_sb2 = project(op, None, source_basis)
 
-        u = op_U_sb2.source.make_array(np.random.random(len(source_basis)))
+        u = op_U_sb2.source.make_array(rng.random(len(source_basis)))
 
         assert np.all(almost_equal(op_U_sb.apply(u, mu=mu),
                                    op_U_sb2.apply(u, mu=mu)))

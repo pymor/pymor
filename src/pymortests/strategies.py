@@ -465,18 +465,19 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     # scipy performs this check although technically numpy accepts a different range
     assume(0 <= random.seed < 2**32 - 1)
     random_correlation = random_correlation_gen(random.seed)
+    rng = np.random.default_rng(0)
 
     def _eigs():
         """Sum must equal to `length` for the scipy construct method."""
         min_eig, max_eig = 0.001, 1.
-        eigs = np.asarray((max_eig-min_eig)*np.random.random(length-1) + min_eig, dtype=float)
+        eigs = np.asarray(rng.uniform(min_eig, max_eig, length-1), dtype=float)
         return np.append(eigs, [length - np.sum(eigs)])
 
     if length > 1:
         mat = [random_correlation.rvs(_eigs(), tol=1e-12) for _ in range(count)]
         return [space.from_numpy(m) for m in mat]
     else:
-        scalar = 4*np.random.random((1, 1))+0.1
+        scalar = rng.uniform(0.1, 4, (1, 1))
         return [space.from_numpy(scalar) for _ in range(count)]
 
 
