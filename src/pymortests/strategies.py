@@ -162,7 +162,10 @@ _picklable_vector_space_types = [] if BUILTIN_DISABLED else ['numpy', 'numpy_lis
 def vector_arrays(draw, space_types, count=1, dtype=None, length=None, compatible=True):
     dims = draw(_hy_dims(count, compatible))
     dtype = dtype or draw(hy_dtypes)
-    lngs = draw(length or hyst.tuples(*[hy_lengths for _ in range(count)]))
+    if length is not None:
+        lngs = draw(length)
+    else:
+        lngs = draw(hyst.tuples(*[hy_lengths for _ in range(count)]))
     np_data_list = [draw(_np_arrays(l, dim, dtype=dtype)) for l, dim in zip(lngs, dims)]
     space_type = draw(hyst.sampled_from(space_types))
     space_data = globals()[f'_{space_type}_vector_spaces'](draw, np_data_list, compatible, count, dims)
