@@ -7,7 +7,7 @@ import numpy as np
 from hypothesis import assume, given
 from hypothesis import strategies as hyst
 from hypothesis.extra import numpy as hynp
-from scipy.stats._multivariate import random_correlation_gen
+from scipy.stats import random_correlation
 
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, Function
 from pymor.core.config import config
@@ -464,11 +464,8 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     length = space.dim
 
     # this lets hypothesis control np's random state too
-    random = draw(hyst.random_module())
-    # scipy performs this check although technically numpy accepts a different range
-    assume(0 <= random.seed < 2**32 - 1)
-    random_correlation = random_correlation_gen(random.seed)
-    rng = np.random.default_rng(0)
+    random = draw(hyst.randoms())
+    rng = np.random.default_rng(random.randint(0, 2**32-1))
 
     def _eigs():
         """Sum must equal to `length` for the scipy construct method."""
@@ -477,7 +474,7 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
         return np.append(eigs, [length - np.sum(eigs)])
 
     if length > 1:
-        mat = [random_correlation.rvs(_eigs(), tol=1e-12) for _ in range(count)]
+        mat = [random_correlation.rvs(_eigs(), tol=1e-12, random_state=rng) for _ in range(count)]
         return [space.from_numpy(m) for m in mat]
     else:
         scalar = rng.uniform(0.1, 4, (1, 1))
