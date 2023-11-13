@@ -328,7 +328,7 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
     else:
         C = InverseOperator(E) @ A
         Y, Omega = rrf(C, q=q, l=modes+p, return_rand=True)
-        Q = rrqr(Y, product=E)
+        Q = rrqr(Y, product=E)[0]
         T = A.apply2(Q, Q)
 
     w, S = eigh(T)
