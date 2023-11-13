@@ -191,8 +191,8 @@ def _check_qr(V, Q, R, product, offset, check_orth_tol, check_recon_tol):
         if orth_err > check_orth_tol:
             raise AccuracyError(f'Q not orthonormal (orth err={orth_err})')
     if np.isfinite(check_recon_tol):
-        V_norm = spla.norm(V.norm(product))
-        recon_err = spla.norm((V - Q.lincomb(R.T)).norm(product))
+        V_norm = np.linalg.norm(V.norm(product))
+        recon_err = np.linalg.norm((V - Q.lincomb(R.T)).norm(product))
         recon_err_rel = recon_err / V_norm if V_norm > 0 else 0
         if recon_err > check_recon_tol * V_norm:
             raise AccuracyError(f'QR not accurate (rel recon err={recon_err_rel})')
