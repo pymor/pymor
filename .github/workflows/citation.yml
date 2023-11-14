@@ -2,7 +2,8 @@
 name: Citation.cff
 on:
   push:
-    paths: [CITATION.cff]
+    paths:
+      - CITATION.cff
 jobs:
   validate_cff:
     name: validate cff

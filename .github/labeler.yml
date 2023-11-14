@@ -7,4 +7,6 @@ infrastructure:
   - pyproject.toml
   - dependencies.py
   - versioneer.py
-management: [CONTRIBUTING.md, LICENSE.txt]
+management:
+  - CONTRIBUTING.md
+  - LICENSE.txt

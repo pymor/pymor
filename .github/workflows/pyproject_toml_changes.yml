@@ -2,8 +2,12 @@
 name: pyproject_toml_changes
 on:
   pull_request_target:
-    types: [opened, synchronize]
-    paths: [pyproject.toml, requirements-ci-oldest-pins.in]
+    types:
+      - opened
+      - synchronize
+    paths:
+      - pyproject.toml
+      - requirements-ci-oldest-pins.in
 jobs:
   comment:
     runs-on: ubuntu-latest

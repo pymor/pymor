@@ -2,7 +2,9 @@
 name: external_pr_mirror
 on:
   pull_request_target:
-    types: [opened, synchronize]
+    types:
+      - opened
+      - synchronize
 jobs:
   push:
     if: github.event.pull_request.head.repo.owner.login != 'pymor'

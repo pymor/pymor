@@ -2,7 +2,8 @@
 name: external_pr_unmirror
 on:
   pull_request_target:
-    types: [closed]
+    types:
+      - closed
 jobs:
   delete_branch:
     if: github.event.pull_request.head.repo.owner.login != 'pymor'

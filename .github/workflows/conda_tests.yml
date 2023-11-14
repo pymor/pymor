@@ -4,10 +4,14 @@ on:
   # run tests on pull requests for main and release branches
   # and (after a merge) on the target branch
   push:
-    branches: [main, 20*.*.x, create-pull-request/patch*]
+    branches:
+      - main
+      - 20*.*.x
+      - create-pull-request/patch*
   pull_request:
   merge_group:
-    types: [checks_requested]
+    types:
+      - checks_requested
 jobs:
   bugout:
     name: Cancel superseded jobs
@@ -36,8 +40,13 @@ jobs:
     timeout-minutes: 90
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-12, windows-2022]
-        python: ['3.8', '3.11']
+        os:
+          - ubuntu-22.04
+          - macos-12
+          - windows-2022
+        python:
+          - '3.8'
+          - '3.11'
         include:
           - os: ubuntu-22.04
             prefix: /usr/share/miniconda3/envs/pyMOR-ci
@@ -68,7 +77,8 @@ jobs:
   coverage_to_html:
     name: Upload HTML Coverage Report
     runs-on: ubuntu-22.04
-    needs: [miniconda]
+    needs:
+      - miniconda
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3

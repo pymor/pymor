@@ -4,7 +4,8 @@ name: Link Check
 on:
   pull_request:
   merge_group:
-    types: [checks_requested]
+    types:
+      - checks_requested
 jobs:
   markdown-link-check:
     name: Markdown

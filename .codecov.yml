@@ -3,7 +3,8 @@ codecov:
   notify:
     after_n_builds: 2
   require_ci_to_pass: true
-  ci: [zivgitlab.uni-muenster.de]
+  ci:
+    - zivgitlab.uni-muenster.de
 comment:
   behavior: once
   layout: header, flags, files
@@ -19,13 +20,21 @@ coverage:
       pymor:
             # since we have no policy on this might as well turn this off entirely
         target: 0%
-        flags: [gitlab_ci, github_actions]
-        paths: [src/, '!src/pymortests/', '!src/pymor/version.py']
+        flags:
+          - gitlab_ci
+          - github_actions
+        paths:
+          - src/
+          - '!src/pymortests/'
+          - '!src/pymor/version.py'
       tests:
             # if test coverage decreases, something very wrong is happening in CI
         target: 95%
-        flags: [gitlab_ci, github_actions]
-        paths: [src/pymortests/]
+        flags:
+          - gitlab_ci
+          - github_actions
+        paths:
+          - src/pymortests/
     patch:
       pymor:
         target: 0%

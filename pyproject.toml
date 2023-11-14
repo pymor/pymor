@@ -268,3 +268,6 @@ convention = "numpy"
 
 [tool.tomlsort]
 trailing_comma_inline_array = true
+
+[tool.yamlfix]
+sequence_style = "block_style"
