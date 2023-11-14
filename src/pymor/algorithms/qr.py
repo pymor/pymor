@@ -25,8 +25,14 @@ def qr(V, product=None, offset=0,
     the thin QR decomposition of `V` consists of the unique
     orthonormal |VectorArray| `Q` and
     upper-triangular matrix `R` such that
-    `V == Q.lincomb(R.T)`, `len(V) == len(Q)`, and
+    `V == Q.lincomb(R.T)`, `len(Q) == len(V)`, and
     `R` has positive diagonal entries.
+
+    The method assumes that `V` has linearly independent vectors and
+    may fail if linear dependence is detected
+    (it may or may not work for sets of vectors that are almost linearly dependent).
+    In particular, it will either return a `Q` such that `len(Q) == len(V)` or
+    raise an exception.
 
     Parameters
     ----------
@@ -67,6 +73,10 @@ def qr(V, product=None, offset=0,
         If the orthogonality or reconstruction check fail.
     LinAlgError
         If the vectors in `V` are detected to be linearly dependent.
+
+    See Also
+    --------
+    rrqr : Rank-revealing QR decomposition with truncation.
     """
     assert isinstance(V, VectorArray)
     if product is not None:
@@ -110,6 +120,8 @@ def rrqr(V, product=None, atol=1e-13, rtol=1e-13, offset=0,
     the norm of `V - Q.lincomb(R.T)` is "small" and
     `len(Q) <= len(V)`.
 
+    In particular, increasing `atol` and/or `rtol` should decrease the resulting `len(Q)`.
+
     Parameters
     ----------
     V
@@ -152,6 +164,10 @@ def rrqr(V, product=None, atol=1e-13, rtol=1e-13, offset=0,
     ------
     AccuracyError
         If the orthogonality or reconstruction check fail.
+
+    See Also
+    --------
+    qr : Thin QR decomposition without truncation.
     """
     assert isinstance(V, VectorArray)
     if product is not None:
