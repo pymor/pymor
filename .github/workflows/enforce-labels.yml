@@ -1,19 +1,26 @@
+---
 name: Enforce Labels
-
 on:
   pull_request:
-    types: [labeled, unlabeled, opened, edited, synchronize]
+    types:
+      - labeled
+      - unlabeled
+      - opened
+      - edited
+      - synchronize
   merge_group:
-    types: [checks_requested]
+    types:
+      - checks_requested
 jobs:
   enforce-label:
     if: github.event_name != 'merge_group'
-    name: "Enforce pr:*"
+    name: Enforce pr:*
     runs-on: ubuntu-22.04
     steps:
-    - uses: yogevbd/enforce-label-action@2.2.2
-      with:
-        REQUIRED_LABELS_ANY: "pr:change,pr:deprecation,pr:fix,pr:new-feature,pr:removal"
-        REQUIRED_LABELS_ANY_DESCRIPTION: "Select at least one label with a 'pr:' prefix for this pull request"
-        BANNED_LABELS: "bug"
-        BANNED_LABELS_DESCRIPTION: "The 'bug' label should only be used on issues"
+      - uses: yogevbd/enforce-label-action@2.2.2
+        with:
+          REQUIRED_LABELS_ANY: pr:change,pr:deprecation,pr:fix,pr:new-feature,pr:removal
+          REQUIRED_LABELS_ANY_DESCRIPTION: Select at least one label with a 'pr:'
+            prefix for this pull request
+          BANNED_LABELS: bug
+          BANNED_LABELS_DESCRIPTION: The 'bug' label should only be used on issues

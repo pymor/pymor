@@ -1,19 +1,17 @@
+---
 name: Citation.cff
-
 on:
   push:
     paths:
       - CITATION.cff
-
 jobs:
   validate_cff:
-    name: "validate cff"
+    name: validate cff
     runs-on: ubuntu-22.04
     steps:
       - name: Check out a copy of the repository
         uses: actions/checkout@v3
-
       - name: Check whether the citation metadata from CITATION.cff is valid
         uses: citation-file-format/cffconvert-github-action@2.0.0
         with:
-          args: "--validate"
+          args: --validate

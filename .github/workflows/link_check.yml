@@ -1,20 +1,20 @@
+---
 # homepage: https://github.com/gaurav-nelson/github-action-markdown-link-check
 name: Link Check
-
 on:
   pull_request:
   merge_group:
-    types: [checks_requested]
-
+    types:
+      - checks_requested
 jobs:
   markdown-link-check:
     name: Markdown
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
-    - uses: renefritze/github-action-markdown-link-check@master
-      with:
-        use-verbose-mode: 'yes'
-        base-branch: 'main'
-        check-modified-files-only: 'yes'
-        config-file: .github/markdown_link_check_config.json
+      - uses: actions/checkout@v3
+      - uses: renefritze/github-action-markdown-link-check@master
+        with:
+          use-verbose-mode: 'yes'
+          base-branch: main
+          check-modified-files-only: 'yes'
+          config-file: .github/markdown_link_check_config.json

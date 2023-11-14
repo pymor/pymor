@@ -1,5 +1,5 @@
-name: "Run tests in miniconda environment"
-
+---
+name: Run tests in miniconda environment
 inputs:
   python:
     required: true
@@ -22,9 +22,9 @@ inputs:
   hypothesis_profile:
     required: false
     type: string
-    default: "dev"
+    default: dev
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Install required X libs (Linux)
       shell: bash
@@ -38,29 +38,26 @@ runs:
         curl --output mesa.7z -L https://github.com/pal1000/mesa-dist-win/releases/download/20.3.4/mesa3d-20.3.4-release-msvc.7z
         7z x mesa.7z -omesa -y
 
-
         # The script requires user input (choice of options) so need to
         # fiddle to get it to run automatically. Not a clean way to do it,
         # but works.
         sed -i 's/@echo Please make a deployment choice:/@GOTO desktopgl/g' ./mesa/systemwidedeploy.cmd
         sed -i 's/@echo Desktop OpenGL drivers deploy complete./@exit/g' ./mesa/systemwidedeploy.cmd
         ./mesa/systemwidedeploy.cmd
-
     - uses: actions/checkout@v3
     - name: setup-micromamba
       uses: mamba-org/setup-micromamba@v1
-
       with:
         create-args: >-
-            python=${{ inputs.python }}
+          python=${{ inputs.python }}
         condarc: |
-            channel_priority: strict
+          channel_priority: strict
         cache-environment: true
         cache-downloads: true
         cache-environment-key: ${{ inputs.python }}-${{ inputs.os }}
         environment-name: pyMOR-ci
         environment-file: ${{ inputs.environment_file }}
-        micromamba-version: "latest"
+        micromamba-version: latest
     - name: Export Conda Env
       shell: bash -l {0}
       run: |
@@ -90,7 +87,7 @@ runs:
         PYTHONPATH: ./src
         PYMOR_HYPOTHESIS_PROFILE: ${{ inputs.hypothesis_profile }}
         # we may be able to limit this to macos
-        COMMON_PYTEST_OPTS: "--cov-report= --cov --cov-context=test --junitxml=${{ inputs.results_file }}"
+        COMMON_PYTEST_OPTS: --cov-report= --cov --cov-context=test --junitxml=${{ inputs.results_file }}
         COVERAGE_FILE: ${{ inputs.coverage_file }}
       run: |
         ${PYTEST_PREFIX} pytest ${COMMON_PYTEST_OPTS}

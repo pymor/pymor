@@ -1,3 +1,4 @@
+---
 codecov:
   notify:
     after_n_builds: 2
@@ -6,7 +7,7 @@ codecov:
     - zivgitlab.uni-muenster.de
 comment:
   behavior: once
-  layout: 'header, flags, files'
+  layout: header, flags, files
   after_n_builds: 2
 coverage:
   precision: 2
@@ -15,25 +16,25 @@ coverage:
   status:
     changes: false
     project:
-        default: false
-        pymor:
+      default: false
+      pymor:
             # since we have no policy on this might as well turn this off entirely
-            target: 0%
-            flags:
-                - gitlab_ci
-                - github_actions
-            paths:
-                - "src/"
-                - "!src/pymortests/"
-                - "!src/pymor/version.py"
-        tests:
+        target: 0%
+        flags:
+          - gitlab_ci
+          - github_actions
+        paths:
+          - src/
+          - '!src/pymortests/'
+          - '!src/pymor/version.py'
+      tests:
             # if test coverage decreases, something very wrong is happening in CI
-            target: 95%
-            flags:
-                - gitlab_ci
-                - github_actions
-            paths:
-                - "src/pymortests/"
+        target: 95%
+        flags:
+          - gitlab_ci
+          - github_actions
+        paths:
+          - src/pymortests/
     patch:
       pymor:
         target: 0%
