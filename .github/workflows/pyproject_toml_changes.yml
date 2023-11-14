@@ -1,21 +1,16 @@
+---
 name: pyproject_toml_changes
-
 on:
   pull_request_target:
-    types:
-      - opened
-      - synchronize
-    paths:
-      - pyproject.toml
-      - requirements-ci-oldest-pins.in
-
+    types: [opened, synchronize]
+    paths: [pyproject.toml, requirements-ci-oldest-pins.in]
 jobs:
   comment:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v6
         with:
-          script: |
+          script: |-
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

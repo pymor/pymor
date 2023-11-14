@@ -1,4 +1,6 @@
+---
 contact_links:
   - name: GitHub Discussions
     url: https://github.com/pymor/pymor/discussions
-    about: A good place to ask questions about how to use pyMOR or other pyMOR-related topics.
+    about: A good place to ask questions about how to use pyMOR or other pyMOR-related
+      topics.
