@@ -72,7 +72,7 @@ if [[ "${SLUG}" != "main" ]] ; then
 	git checkout --orphan ${SLUG}
 	git rm -rf .
 else
-	rm -rf ${REPO_DIR}/.binder
+	git rm -rf ./.binder
 fi
 mkdir .binder
 
