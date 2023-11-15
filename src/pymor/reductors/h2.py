@@ -846,22 +846,39 @@ class VectorFittingReductor(BasicObject):
         Data.
     weights
         Weights.
+    conjugate
+        Whether to include conjugated data.
     """
 
-    def __init__(self, points, data, weights=None):
+    def __init__(self, points, data, weights=None, conjugate=True):
         assert isinstance(points, np.ndarray)
         assert points.ndim == 1
 
         assert isinstance(data, np.ndarray)
         assert data.ndim == 1
+        assert len(data) == len(points)
 
         if weights is None:
             weights = np.ones(len(points))
         assert isinstance(weights, np.ndarray)
         assert weights.ndim == 1
+        assert len(weights) == len(points)
 
-        assert len(points) == len(data)
-        assert len(points) == len(weights)
+        # add complex conjugate samples
+        if conjugate:
+            points_conj_list = []
+            data_conj_list = []
+            weights_list = []
+            for i, s in enumerate(points):
+                if s.conjugate() not in points:
+                    points_conj_list.append(s.conjugate())
+                    data_conj_list.append(data[i].conjugate())
+                    weights_list.append(weights[i])
+            if points_conj_list:
+                points = np.concatenate((points, points_conj_list))
+                data = np.concatenate((data, data_conj_list))
+                weights = np.concatenate((weights, weights_list))
+
         self.__auto_init(locals())
 
     def reduce(self, r, tol=1e-4, maxit=100):
