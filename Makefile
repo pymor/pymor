@@ -19,22 +19,25 @@ ifeq ($(PANDOC_MAJOR),1)
 	PANDOC_FORMAT=-f markdown_github
 endif
 
-.PHONY: README.html README test docs
+.PHONY: README test docs help
 
-# I want HTML (to preview the formatting :))
+# The following self-documenting help target is inspired by https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html.
+help: ## print this help prompt
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-30s %s\n", $$1, $$2}'
+
 README.html: README.md
 	pandoc $(PANDOC_FORMAT) -t html $< > $@
 
-README: README.html
+README: README.html ## convert README.md to other formats
 
-test:
+test: ## run tests
 	xvfb-run pytest
 
-docs:
+docs: ## build the docs
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
 	./docs/fix_myst_in_notebooks.sh
 
-ci_preflight_image:
+ci_preflight_image: ## build CI image used in preflight stage
 	$(DOCKER) build -t pymor/ci-preflight -f $(THIS_DIR)/docker/Dockerfile.ci-preflight $(THIS_DIR)
 
 CI_EXTRAS= \
@@ -109,7 +112,7 @@ ci_conda_requirements:
 	conda-lock --micromamba -c conda-forge --filter-extras --no-dev-dependencies $(CONDA_EXTRAS) -f conda-base.yml -f pyproject.toml
 	conda-lock render $(CONDA_EXTRAS)
 
-ci_requirements: ci_current_requirements ci_oldest_requirements ci_fenics_requirements ci_conda_requirements
+ci_requirements: ci_current_requirements ci_oldest_requirements ci_fenics_requirements ci_conda_requirements ## build the CI requirement files
 
 ci_current_image:
 	$(DOCKER) build -t pymor/ci-current:$(CI_CURRENT_IMAGE_TAG) -f $(THIS_DIR)/docker/Dockerfile.ci-current $(THIS_DIR)
@@ -120,19 +123,19 @@ ci_oldest_image:
 ci_fenics_image:
 	$(DOCKER) build -t pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG) -f $(THIS_DIR)/docker/Dockerfile.ci-fenics $(THIS_DIR)
 
-ci_images: ci_current_image ci_oldest_image ci_fenics_image
+ci_images: ci_current_image ci_oldest_image ci_fenics_image ## build the Docker CI images
 
 
-ci_current_image_pull:
+ci_current_image_pull:  ## pull 'current' CI image from zivgitlab.wwu.io
 	$(DOCKER) pull zivgitlab.wwu.io/pymor/pymor/ci-current:$(CI_CURRENT_IMAGE_TAG)
 
-ci_oldest_image_pull:
+ci_oldest_image_pull:  ## pull 'oldest' CI image from zivgitlab.wwu.io
 	$(DOCKER) pull zivgitlab.wwu.io/pymor/pymor/ci-oldest:$(CI_OLDEST_IMAGE_TAG)
 
-ci_fenics_image_pull:
+ci_fenics_image_pull:  ## pull 'fenics' CI image from zivgitlab.wwu.io
 	$(DOCKER) pull zivgitlab.wwu.io/pymor/pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG)
 
-ci_images_pull: ci_current_image_pull ci_oldest_image_pull ci_fenics_image_pull
+ci_images_pull: ci_current_image_pull ci_oldest_image_pull ci_fenics_image_pull  ## pull all CI images from zivgitlab.wwu.io
 
 
 ci_current_image_push:
@@ -155,23 +158,23 @@ ci_preflight_image_push:
 	$(DOCKER) push pymor/ci-preflight \
 		zivgitlab.wwu.io/pymor/pymor/ci-preflight
 
-ci_images_push: ci_current_image_push ci_oldest_image_push ci_fenics_image_push
+ci_images_push: ci_current_image_push ci_oldest_image_push ci_fenics_image_push ## push the CI images to zivgitlab.wwu.io
 
 
-ci_current_image_run:
+ci_current_image_run:  ## run the 'current' CI image (needs to be pulled first)
 	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-current:$(CI_CURRENT_IMAGE_TAG)
 
-ci_oldest_image_run:
+ci_oldest_image_run:  ## run the 'oldest' CI image (needs to be pulled first)
 	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-oldest:$(CI_OLDEST_IMAGE_TAG)
 
-ci_fenics_image_run:
+ci_fenics_image_run:  ## run the 'fenics' CI image (needs to be pulled first)
 	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src pymor/ci-fenics:$(CI_FENICS_IMAGE_TAG)
 
 
-ci_current_image_run_notebook:
+ci_current_image_run_notebook:  ## run jupyter in 'current' CI image (needs to be pulled first)
 	$(DOCKER) run --rm -it -p 8888:8888 -v=$(THIS_DIR):/src pymor/ci-current:$(CI_CURRENT_IMAGE_TAG) \
 		bash -c "pip install -e . && jupyter notebook --allow-root --ip=0.0.0.0"
 
-ci_oldest_image_run_notebook:
+ci_oldest_image_run_notebook:  ## run jupyter in 'oldest' CI image (needs to be pulled first)
 	$(DOCKER) run --rm -it -p 8888:8888 -v=$(THIS_DIR):/src pymor/ci-oldest:$(CI_OLDEST_IMAGE_TAG) \
 		bash -c "pip install -e . && jupyter notebook --allow-root --ip=0.0.0.0"
