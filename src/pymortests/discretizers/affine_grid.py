@@ -318,7 +318,7 @@ def test_quadrature_points_wrong_arguments(grid):
         with pytest.raises(Exception):
             g.quadrature_points(d)
         os, ps = g.reference_element(d).quadrature_info()
-        for t in os.keys():
+        for t in os:
             with pytest.raises(Exception):
                 g.quadrature_points(d, order=max(os[t]) + 1, quadrature_type=t)
             with pytest.raises(Exception):
@@ -330,7 +330,7 @@ def test_quadrature_points_shape(grid):
     g = grid
     for d in range(g.dim):
         os, ps = g.reference_element(d).quadrature_info()
-        for t in os.keys():
+        for t in os:
             for o, p in zip(os[t], ps[t]):
                 assert g.quadrature_points(d, order=o, quadrature_type=t).shape == (g.size(d), p, g.dim)
                 assert g.quadrature_points(d, npoints=p, quadrature_type=t).shape == (g.size(d), p, g.dim)
@@ -342,7 +342,7 @@ def test_quadrature_points_values(grid):
     for d in range(g.dim):
         A, B = g.embeddings(d)
         os, ps = g.reference_element(d).quadrature_info()
-        for t in os.keys():
+        for t in os:
             for o, p in zip(os[t], ps[t]):
                 Q = g.quadrature_points(d, order=o, quadrature_type=t)
                 q, _ = g.reference_element(d).quadrature(order=o, quadrature_type=t)

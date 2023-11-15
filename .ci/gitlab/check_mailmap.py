@@ -19,13 +19,15 @@ for user in (f.split(fmtsep) for f in set(check_output(cmd, universal_newlines=T
     seen[name].append(email)
 
 mailmap = Path(sys.argv[1]).resolve()
-contents = open(mailmap).read()
+with open(mailmap) as f:
+    contents = f.read()
 # name is in mailmap, but email is new
 missing = [(u, e) for u, e in seen_set if u in contents and e not in contents]
 # name occurs with multiple mails, but no mailmap entry
 duplicates = [(u, mails) for u, mails in seen.items() if len(mails) > 1]
 
-lines = [l for l in open(mailmap).readlines() if not l.startswith('#')]
+with open(mailmap) as f:
+    lines = [l for l in f.readlines() if not l.startswith('#')]
 for user, email in missing:
     print(f'missing mailmap entry for {user} {email}')
 for user, emails in duplicates:

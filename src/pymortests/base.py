@@ -42,7 +42,7 @@ def check_results(test_name, params, results, *args):
     assert results is not None
     assert set(keys.keys()) <= set(results.keys()), \
         f'Keys {set(keys.keys()) - set(results.keys())} missing in results dict'
-    results = {k: np.asarray(results[k]) for k in keys.keys()}
+    results = {k: np.asarray(results[k]) for k in keys}
     assert all(v.dtype != object for v in results.values())
 
     basepath = importlib_resources.files('pymortests') / 'testdata/check_results'

@@ -572,7 +572,7 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
         assert gamma_mu_bar > 0
         self.__auto_init(locals())
         self.thetas_mu_bar = thetas_mu_bar
-        self.theta_mu_bar_has_negative = True if np.any(thetas_mu_bar < 0) else False
+        self.theta_mu_bar_has_negative = np.any(thetas_mu_bar < 0)
         if self.theta_mu_bar_has_negative:
             # If 0 is in theta_prime(mu), we need to use the absolute value to ensure
             # that the bound is still valid (and not zero)

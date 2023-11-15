@@ -111,7 +111,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
                 geo_file = tempfile.NamedTemporaryFile(mode='wt', delete=False, suffix='.geo')
                 geo_file_path = geo_file.name
             else:
-                geo_file = open(geo_file_path, 'w')
+                geo_file = open(geo_file_path, 'w')  # noqa: SIM115
 
             if isinstance(domain_description, PolygonalDomain):
                 points, boundary_types = discretize_PolygonalDomain()

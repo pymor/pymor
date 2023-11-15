@@ -116,11 +116,9 @@ def test_float_cmp():
 
         assert not float_cmp(nan, nan, rtol, atol), msg
         assert nan != nan
-        assert not (nan == nan)
         assert not float_cmp(-nan, nan, rtol, atol), msg
 
         assert not float_cmp(inf, inf, rtol, atol), msg
-        assert not (inf != inf)
         assert inf == inf
         if rtol > 0:
             assert float_cmp(-inf, inf, rtol, atol), msg
@@ -139,8 +137,10 @@ def test_almost_less():
         assert almost_less(0., 1, rtol, atol), msg
         assert almost_less(-1., 1., rtol, atol), msg
         assert almost_less(atol, 0., rtol, atol), msg
-        assert (rtol == 0.0 and not almost_less(0., inf, rtol, atol), msg) or \
-               almost_less(0., inf, rtol, atol), msg
+        if rtol > 0:
+            assert almost_less(0., inf, rtol, atol), msg
+        else:
+            assert not almost_less(0., inf, rtol, atol), msg
 
 
 @pytest.mark.skipif(not config.HAVE_VTKIO, reason='VTKIO support libraries missing')

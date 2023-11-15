@@ -317,7 +317,7 @@ class PolygonalDomain(DomainDescription):
 
             boundary_types = dict(boundary_types_dict)
 
-        for bt in boundary_types.keys():
+        for bt in boundary_types:
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
                 self.logger.warning(f'Unknown boundary type: {bt}')
 

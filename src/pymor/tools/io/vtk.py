@@ -36,7 +36,9 @@ def _get_collection_data(filename):
     path = Path(filename)
     assert path.is_file()
     bf = BadgerFish(dict_type=OrderedDict)
-    return path, bf.data(fromstring(open(path, 'rb').read()))
+    with open(path, 'rb') as f:
+        string = f.read()
+    return path, bf.data(fromstring(string))
 
 
 def _get_vtk_type(path):
@@ -112,7 +114,7 @@ def write_vtk_collection(filename_base, meshes, metadata=None):
     metadata = metadata or {'timestep': list(range(len(meshes)))}
 
     def _meta(key, i):
-        if key in metadata.keys():
+        if key in metadata:
             return metadata[key][0] if len(metadata[key]) == 1 else metadata[key][i]
         # carry over defaults from pyevtk to not break backwards compat
         return {'timestep': 0, 'group': '', 'name': '', 'part': '0'}[key]

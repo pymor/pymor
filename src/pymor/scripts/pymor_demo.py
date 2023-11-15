@@ -51,7 +51,7 @@ Arguments:
         usage()
     demo = sys.argv[1]
     if demo in shorts:
-        if demo in fails.keys():
+        if demo in fails:
             print(str(fails[demo]))
             print(f'\nThe {demo} pyMOR demo needs additional packages to be installed (see above error for details).')
             print('\nYou can try to `pip install pymor[full]` to install optional dependencies.\n')

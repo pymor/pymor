@@ -228,6 +228,7 @@ select = [
   "PT", # flake8-pytest-style
   "Q", # flake8-quotes
   "RSE", # flake8-raise
+  "SIM", # flake8-simplify
 ]
 ignore = [
   "B006", # do not use mutable data structures for argument defaults
@@ -261,6 +262,12 @@ ignore = [
   "PT011", # pytest.raises(Exception) is too broad
   "PT012", # pytest.raises() block should contain a single simple statement
   "PT015", # assertion always fails, replace with `pytest.fail()`
+  "SIM102", # use a single if statement instead of nested if statements
+  "SIM105", # use contextlib.suppress instead of try-except-pass
+  "SIM108", # use ternary operator instead of if-else-block
+  "SIM114", # combine if branches using logical or operator
+  "SIM116", # use a dictionary instead of consecutive `if` statements
+  "SIM300", # Yoda conditions
 ]
 
 [tool.ruff.flake8-import-conventions]
