@@ -864,11 +864,11 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, boundary_info, robin_data=None, solver_options=None, name=None):
         assert robin_data is None or (isinstance(robin_data, tuple) and len(robin_data) == 2)
-        assert robin_data is None or all([isinstance(f, Function)
+        assert robin_data is None or all(isinstance(f, Function)
                                           and f.dim_domain == grid.dim
                                           and (f.shape_range == ()
                                                or f.shape_range == (grid.dim,))
-                                          for f in robin_data])
+                                          for f in robin_data)
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
 

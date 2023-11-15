@@ -220,6 +220,7 @@ select = [
   "YTT", # flake8-2020
   "ASYNC", # flake8-async
   "B", # flake8-bugbear
+  "C4", # flake8-comprehensions
   "ICN", # flake8-import-conventions
   "PT", # flake8-pytest-style
   "Q", # flake8-quotes
@@ -231,6 +232,7 @@ ignore = [
   "B011", # do not `assert False`
   "B017", # pytest.raises(Exception) should be considered evil
   "B028", # no explicit `stacklevel` keyword argument found
+  "C408", # unnecessary collection (dict, list, tuple) call
   "D100", # missing docstring in public module
   "D101", # missing docstring in public class
   "D102", # missing docstring in public method

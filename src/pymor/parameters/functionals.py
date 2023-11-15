@@ -469,7 +469,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
     def __init__(self, thetas, mu_bar, alpha_mu_bar=1., name=None):
         assert isinstance(thetas, (list, tuple))
         assert len(thetas) > 0
-        assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas])
+        assert all(isinstance(theta, (Number, ParameterFunctional)) for theta in thetas)
         thetas = tuple(ConstantParameterFunctional(theta) if not isinstance(theta, ParameterFunctional) else theta
                        for theta in thetas)
         if not isinstance(mu_bar, Mu):
@@ -557,8 +557,8 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
         assert isinstance(thetas, (list, tuple))
         assert len(thetas) > 0
         assert len(thetas) == len(thetas_prime)
-        assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas])
-        assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas_prime])
+        assert all(isinstance(theta, (Number, ParameterFunctional)) for theta in thetas)
+        assert all(isinstance(theta, (Number, ParameterFunctional)) for theta in thetas_prime)
         thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
                        for f in thetas)
         thetas_prime = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f

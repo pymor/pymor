@@ -424,7 +424,7 @@ class FenicsOperator(Operator):
                     if ld in dofs:
                         affected_cell_indices.add(cell_index)
                         continue
-            affected_cell_indices = list(sorted(affected_cell_indices))
+            affected_cell_indices = sorted(affected_cell_indices)
 
             if any(i.integral_type() not in ('cell', 'exterior_facet')
                    for i in self.form.integrals()):
