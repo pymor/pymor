@@ -8,7 +8,7 @@ import scipy.linalg as spla
 from pymor.core.logger import getLogger
 
 
-def shifted_chol_qr(A, product=None, return_R=True, maxiter=3, offset=0, orth_tol=None, check_finite=True, copy=True):
+def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_finite=True, copy=True):
     r"""Orthonormalize a |VectorArray| using the shifted CholeskyQR algorithm.
 
     This method computes a QR decomposition of a |VectorArray| via Cholesky factorizations
@@ -40,8 +40,6 @@ def shifted_chol_qr(A, product=None, return_R=True, maxiter=3, offset=0, orth_to
     product
         The inner product |Operator| w.r.t. which to orthonormalize.
         If `None`, the Euclidean product is used.
-    return_R
-        If `True`, the R matrix from QR decomposition is returned.
     maxiter
         Maximum number of iterations. Defaults to 3.
     offset
@@ -116,13 +114,12 @@ def shifted_chol_qr(A, product=None, return_R=True, maxiter=3, offset=0, orth_to
             A.append(A_todo)
 
             # update blocks of R
-            if return_R:
-                if iter == 1:
-                    Bi = B.T
-                    Ri = Rx
-                else:
-                    Bi += B.T @ Rx
-                    spla.blas.dtrmm(1, Rx, Ri, overwrite_b=True)
+            if iter == 1:
+                Bi = B.T
+                Ri = Rx
+            else:
+                Bi += B.T @ Rx
+                spla.blas.dtrmm(1, Rx, Ri, overwrite_b=True)
 
             # check orthonormality (for an iterative algorithm)
             if orth_tol is not None:
@@ -134,12 +131,9 @@ def shifted_chol_qr(A, product=None, return_R=True, maxiter=3, offset=0, orth_to
 
             iter += 1
 
-    return_args = [A]
-    if return_R:
-        # construct R from blocks
-        R = np.eye(len(A))
-        R[:offset, offset:] = Bi
-        R[offset:, offset:] = Ri
-        return_args.append(R)
+    # construct R from blocks
+    R = np.eye(len(A))
+    R[:offset, offset:] = Bi
+    R[offset:, offset:] = Ri
 
-    return tuple(return_args)
+    return A, R
