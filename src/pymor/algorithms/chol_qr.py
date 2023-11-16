@@ -65,7 +65,7 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
     assert 0 < maxiter
     assert orth_tol is None or 0 < orth_tol
 
-    logger = getLogger('pymor.algorithms.cholesky_qr.shifted_chol_qr')
+    logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
 
     if maxiter == 1:
         logger.warning('Single iteration shifted CholeskyQR can lead to poor orthogonality!')
