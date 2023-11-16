@@ -11,6 +11,11 @@
 
 ## Contributors
 
+### pyMOR 2023.2
+
+* Art Pelling, a.pelling@tu-berlin.de
+  * shifted Cholesky-QR algorithm
+
 ### pyMOR 2023.1
 
 * Tim Keil, tim.keil@uni-muenster.de
