@@ -74,14 +74,24 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
     if copy:
         A = A.copy()
 
+    B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
+    B = B.conj()
+
+    dtype = np.promote_types(X.dtype, np.float32)
+    eps = np.finfo(dtype).eps
+    if dtype == np.float32:
+        xtrmm, xtrtri = spla.blas.strmm, spla.lapack.strtri
+    elif dtype == np.float64:
+        xtrmm, xtrtri = spla.blas.dtrmm, spla.lapack.dtrtri
+    elif dtype == np.complex64:
+        xtrmm, xtrtri = spla.blas.ctrmm, spla.lapack.ctrtri
+    elif dtype == np.complex128:
+        xtrmm, xtrtri = spla.blas.ztrmm, spla.lapack.ztrtri
+
     iter = 1
     shift = None
     while iter <= maxiter:
         with logger.block(f'Iteration {iter}'):
-            if orth_tol is None or iter == 1:
-                # compute only the necessary parts of the Gramian
-                B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
-
             # This will compute the Cholesky factor of the lower right block
             # and keep applying shifts if it breaks down.
             while True:
@@ -100,7 +110,6 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
                         from pymor.algorithms.eigs import eigs
                         shift = 2*m*np.sqrt(m*n)+n*(n+1)*np.sqrt(np.abs(eigs(product, k=1)[0][0]))
                         XX = A[offset:].gramian(product=product)
-                    eps = np.finfo(XX.dtype).eps
                     shift *= 11*eps*spla.norm(XX, ord=2, check_finite=check_finite)
 
                 logger.info(f'Applying shift: {shift}')
@@ -108,7 +117,7 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
                 X[idx, idx] += shift
 
             # orthogonalize
-            Rinv = spla.lapack.dtrtri(Rx)[0].T
+            Rinv = xtrtri(Rx)[0].T
             A_todo = A[:offset].lincomb(-Rinv@B) + A[offset:].lincomb(Rinv)
             del A[offset:]
             A.append(A_todo)
@@ -119,20 +128,29 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
                 Ri = Rx
             else:
                 Bi += B.T @ Rx
-                spla.blas.dtrmm(1, Rx, Ri, overwrite_b=True)
+                xtrmm(1, Rx, Ri, overwrite_b=True)
+
+            # computation not needed in the last iteration
+            if iter < maxiter:
+                B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
+                B = B.conj()
+            elif orth_tol is not None:
+                X = A[offset:].gramian(product=product)
 
             # check orthonormality (for an iterative algorithm)
             if orth_tol is not None:
-                B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
                 res = spla.norm(X - np.eye(len(A) - offset), ord='fro', check_finite=check_finite)
                 logger.info(f'Residual = {res}')
                 if res <= orth_tol*np.sqrt(len(A)):
                     break
+                elif iter == maxiter:
+                    logger.warning('Orthonormality could not be achieved within the given tolerance. \
+                    Consider increasing maxiter.')
 
             iter += 1
 
     # construct R from blocks
-    R = np.eye(len(A))
+    R = np.eye(len(A), dtype=dtype)
     R[:offset, offset:] = Bi
     R[offset:, offset:] = Ri
 
