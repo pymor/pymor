@@ -61,17 +61,20 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
     R
         The upper-triangular/trapezoidal matrix (if `compute_R` is `True`).
     """
-    assert 0 <= offset < len(A)
+    assert 0 <= offset <= len(A)
     assert 0 < maxiter
     assert orth_tol is None or 0 < orth_tol
+
+    if copy:
+        A = A.copy()
+
+    if len(A) == 0 or offset == len(A):
+        return A, np.eye(len(A))
 
     logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
 
     if maxiter == 1:
         logger.warning('Single iteration shifted CholeskyQR can lead to poor orthogonality!')
-
-    if copy:
-        A = A.copy()
 
     B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
     B = B.conj()

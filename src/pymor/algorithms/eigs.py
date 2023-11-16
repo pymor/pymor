@@ -102,6 +102,9 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
     if l is None:
         l = min(n - 1, max(2 * k + 1, l_min))
 
+    if k == n:
+        return A.apply(E.apply_inverse(E.source.ones(1))).to_numpy()
+
     assert k < n
     assert l > k
 
