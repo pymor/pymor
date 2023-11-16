@@ -91,22 +91,23 @@ def shifted_chol_qr(A, product=None, return_R=True, maxiter=3, offset=0, orth_to
                     Rx = spla.cholesky(X, overwrite_a=True, check_finite=check_finite)
                     break
                 except spla.LinAlgError:
-                    logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
-                    if shift is None:
-                        m, n = A.dim, len(A[offset:])
-                        if product is None:
-                            shift = m*n+n*(n+1)
-                            XX = X
-                        else:
-                            from pymor.algorithms.eigs import eigs
-                            shift = 2*m*np.sqrt(m*n)+n*(n+1)*np.sqrt(np.abs(eigs(product, k=1)[0][0]))
-                            XX = A[offset:].gramian(product=product)
-                        eps = np.finfo(XX.dtype).eps
-                        shift *= 11*eps*spla.norm(XX, ord=2, check_finite=check_finite)
+                    pass
+                logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
+                if shift is None:
+                    m, n = A.dim, len(A[offset:])
+                    if product is None:
+                        shift = m*n+n*(n+1)
+                        XX = X
+                    else:
+                        from pymor.algorithms.eigs import eigs
+                        shift = 2*m*np.sqrt(m*n)+n*(n+1)*np.sqrt(np.abs(eigs(product, k=1)[0][0]))
+                        XX = A[offset:].gramian(product=product)
+                    eps = np.finfo(XX.dtype).eps
+                    shift *= 11*eps*spla.norm(XX, ord=2, check_finite=check_finite)
 
-                    logger.info(f'Applying shift: {shift}')
-                    idx = range(len(X))
-                    X[idx, idx] += shift
+                logger.info(f'Applying shift: {shift}')
+                idx = range(len(X))
+                X[idx, idx] += shift
 
             # orthogonalize
             Rinv = spla.lapack.dtrtri(Rx)[0].T
