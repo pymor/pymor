@@ -11,6 +11,11 @@
 
 ## Contributors
 
+### pyMOR 2024.1
+
+* Art Pelling, a.pelling@tu-berlin.de
+  * shifted Cholesky-QR algorithm
+  
 ### pyMOR 2023.2
 
 * Steffen Müller, @steff-mueller
