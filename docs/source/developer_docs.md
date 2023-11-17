@@ -44,13 +44,11 @@ or, to install all optional dependencies and development tools:
 
 ```
 pip install -e '.[full-compiled,dev]'
-pip install pymess
 ```
 
 Note that the `full-compiled` extra will install `mpi4py` and `slycot`, which will require C and
 Fortran compilers as well as MPI and OpenBLAS headers.
 Alternatively, use the `full` extra to avoid building these additional packages.
-`pymess` is not included in `full-compiled` as the developers recommend to install it from source.
 
 ### Environment with CI images
 

@@ -1,602 +1,723 @@
-
-@Book{A05,
-  author =       {Antoulas, A.~C.},
-  title =        {Approximation of Large-Scale Dynamical Systems},
-  publisher =    {{SIAM} Publications},
-  year =         2005,
-  volume =       6,
-  series =       {Adv. Des. Control},
-  address =      {Philadelphia, PA},
-  isbn =         9780898715293,
-  doi =          {10.1137/1.9780898718713}
+@book{A05,
+  title         = {Approximation of Large-Scale Dynamical Systems},
+  author        = {Antoulas, A. C.},
+  year          = 2005,
+  publisher     = {{SIAM} Publications},
+  address       = {Philadelphia, PA},
+  series        = {Adv. Des. Control},
+  volume        = 6,
+  doi           = {10.1137/1.9780898718713},
+  isbn          = 9780898715293,
 }
 
-@InCollection{ABG10,
-  author =       {A.~C. Antoulas and C.~A. Beattie and S. Gugercin},
-  title =        {Interpolatory Model Reduction of Large-Scale Dynamical
-                  Systems},
-  booktitle =    {Efficient Modeling and Control of Large-Scale Systems},
-  publisher =    {Springer US},
-  year =         2010,
-  editor =       {Mohammadpour, Javad and Grigoriadis, Karolos M.},
-  pages =        {3--58},
-  isbn =         {978-1-4419-5756-6},
-  doi =          {10.1007/978-1-4419-5757-3_1}
+@incollection{ABG10,
+  title         = {Interpolatory Model Reduction of Large-Scale Dynamical Systems},
+  author        = {A. C. Antoulas and C. A. Beattie and S. Gugercin},
+  year          = 2010,
+  booktitle     = {Efficient Modeling and Control of Large-Scale Systems},
+  publisher     = {Springer US},
+  pages         = {3--58},
+  doi           = {10.1007/978-1-4419-5757-3\_1},
+  isbn          = {978-1-4419-5756-6},
+  editor        = {Mohammadpour, J. and Grigoriadis, K. M.},
 }
 
-@InCollection{BBG19,
-    title={{$\mathcal{H}_2$}-gap model reduction for stabilizable and detectable systems},
-    author={Tobias Breiten and Chris A. Beattie and Serkan Gugercin},
-    bookTitle={Realization and Model Reduction of Dynamical Systems: A Festschrift in Honor of the 70th Birthday of Thanos Antoulas},
-    editor={Beattie, Christopher and Benner, Peter and Embree, Mark and Gugercin, Serkan and Lefteriu, Sanda},
-    publisher={Springer International Publishing},
-    year={2022},
-    address={Cham},
-    pages={317--334},
-    isbn={978-3-030-95157-3},
-    doi={10.1007/978-3-030-95157-3_17}
+@incollection{ALI17,
+  title         = {A Tutorial Introduction to the {L}oewner Framework for Model Reduction},
+  author        = {A. C. Antoulas and S. Lefteriu and A. C. Ionita},
+  year          = 2017,
+  booktitle     = {Model Reduction and Approximation: Theory and Algorithms},
+  publisher     = {SIAM},
+  pages         = {335--376},
+  doi           = {10.1137/1.9781611974829.ch8},
+  editor        = {Benner, P. and Cohen, A. and Ohlberger, M. and Willcox, K.},
 }
 
-@article{BBKS18,
-  title={RADI: a low-rank ADI-type algorithm for large scale algebraic Riccati equations},
-  author={Benner, Peter and Bujanovi{\'c}, Zvonimir and K{\"u}rschner, Patrick and Saak, Jens},
-  journal={Numerische mathematik},
-  volume={138},
-  number={2},
-  pages={301--330},
-  year={2018},
-  publisher={Springer}
-}
-
-@Article{BBQ07,
-  author =       {Barrachina, S. and Benner, P. and Quintana-Ort{\'i}, E.~S.},
-  title =        {Efficient algorithms for generalized algebraic {B}ernoulli
-                  equations based on the matrix sign function},
-  journal =      {Numer. Algorithms},
-  year =         2007,
-  volume =       46,
-  number =       4,
-  pages =        {351--368},
-  doi =          {10.1007/s11075-007-9143-x},
-  issn =         {1017-1398},
-  keywords =     {Bernoulli equation; Linear and nonlinear matrix equations;
-                  Matrix sign function; Control and systems theory; Parallel
-                  linear algebra libraries; 65F30; 93C05; 93D15; 65Y05},
-  language =     {English},
-  publisher =    {Springer US}
-}
-
-@article{BMNP04,
-  title = {An `empirical Interpolation' Method: Application to Efficient Reduced-Basis Discretization of Partial Differential Equations},
-  author = {Barrault, Maxime and Maday, Yvon and Nguyen, Ngoc Cuong and Patera, Anthony T.},
-  year = {2004},
-  volume = {339},
-  pages = {667--672},
-  issn = {1631-073X},
-  doi = {10.1016/j.crma.2004.08.006},
-  journal = {Comptes Rendus Mathematique. Academie des Sciences. Paris},
-  number = {9},
-}
-
-@Article{BG09,
-  author =       {Beattie, C.~A. and Gugercin, S.},
-  title =        {Interpolatory Projection Methods for Structure-preserving
-                  Model Reduction},
-  journal =      {Systems Control Lett.},
-  year =         2009,
-  volume =       58,
-  number =       3,
-  pages =        {225--232},
-  doi =          {10.1016/j.sysconle.2008.10.016}
-}
-
-@InProceedings{BG12,
-  author =       {Beattie, C.~A. and Gugercin, S.},
-  title =        {Realization-independent {$\mathcal{H}_2$}-approximation},
-  booktitle =    {51st IEEE Conference on Decision and Control (CDC)},
-  year =         2012,
-  pages =        {4953--4958},
-  doi =          {10.1109/CDC.2012.6426344}
-}
-
-@TechReport{BKS11,
-  author =       {P. Benner and M. K{\"o}hler and J. Saak},
-  title =        {Sparse-Dense {S}ylvester Equations in {${H}_2$}-Model Order
-                  Reduction},
-  institution =  {Max Planck Institute Magdeburg},
-  year =         2011,
-  type =         {Preprint},
-  number =       {MPIMD/11-11},
-  url =          {https://csc.mpi-magdeburg.mpg.de/preprints/2011/11/},
-  month =        dec
-}
-
-@article{BCDDPW11,
-  title={Convergence rates for greedy algorithms in reduced basis methods},
-  author={Binev, Peter and Cohen, Albert and Dahmen, Wolfgang and DeVore, Ronald and Petrova, Guergana and Wojtaszczyk, Przemyslaw},
-  journal={SIAM journal on mathematical analysis},
-  volume={43},
-  number={3},
-  pages={1457--1472},
-  year={2011},
-  publisher={SIAM}
+@incollection{BBG19,
+  title         = {
+    {$\mathcal{H}_2$}-gap model reduction for stabilizable and detectable
+    systems
+  },
+  author        = {T. Breiten and C. Beattie and S. Gugercin},
+  year          = 2022,
+  booktitle     = {
+    Realization and Model Reduction of Dynamical Systems: A {F}estschrift in
+    Honor of the 70th Birthday of {T}hanos {A}ntoulas
+  },
+  publisher     = {Springer International Publishing},
+  address       = {Cham},
+  pages         = {317--334},
+  doi           = {10.1007/978-3-030-95157-3\_17},
+  isbn          = {978-3-030-95157-3},
+  editor        = {
+    Beattie, C. and Benner, P. and Embree, M. and Gugercin, S. and Lefteriu, S.
+  },
 }
 
 @article{BBH19,
-  author         = {Buchfink, Patrick and Bhatt, Ashish and Haasdonk, Bernard},
-  title          = {Symplectic Model Order Reduction with Non-Orthonormal Bases},
-  journal        = {Mathematical and Computational Applications},
-  year           = {2019},
-  volume         = {24},
-  number         = {2},
-  issn           = {2297--8747},
-  article-number = {43},
-  doi            = {10.3390/mca24020043},
+  title         = {Symplectic Model Order Reduction with Non-Orthonormal Bases},
+  author        = {Buchfink, P. and Bhatt, A. and Haasdonk, B.},
+  year          = 2019,
+  journal       = {Mathematical and Computational Applications},
+  volume        = 24,
+  number        = 2,
+  doi           = {10.3390/mca24020043},
+  issn          = {2297--8747},
+  article-number = 43,
 }
 
-@article{BEOR14,
-  title={A numerically stable a posteriori error estimator for reduced basis approximations of elliptic equations},
-  author={Buhr, Andreas and Engwer, Christian and Ohlberger, Mario and Rave, Stephan},
-  journal={arXiv preprint arXiv:1407.8005},
-  year={2014}
+@article{BBKS18,
+  title         = {
+    {RADI}: a low-rank {ADI}-type algorithm for large scale algebraic {R}iccati
+    equations
+  },
+  author        = {Benner, P. and Bujanovi{\'c}, Z. and K{\"u}rschner, P. and Saak, J.},
+  year          = 2018,
+  journal       = {Numerische Mathematik},
+  publisher     = {Springer},
+  volume        = 138,
+  number        = 2,
+  pages         = {301--330},
+  doi           = {10.1007/s00211-017-0907-5},
+}
+
+@article{BBQ07,
+  title         = {
+    Efficient algorithms for generalized algebraic {B}ernoulli equations based
+    on the matrix sign function
+  },
+  author        = {Barrachina, S. and Benner, P. and Quintana-Ort{\'i}, E. S.},
+  year          = 2007,
+  journal       = {Numer. Algorithms},
+  publisher     = {Springer US},
+  volume        = 46,
+  number        = 4,
+  pages         = {351--368},
+  doi           = {10.1007/s11075-007-9143-x},
+  issn          = {1017-1398},
+  language      = {English},
+}
+
+@article{BCDDPW11,
+  title         = {Convergence rates for greedy algorithms in reduced basis methods},
+  author        = {
+    Binev, P. and Cohen, A. and Dahmen, W. and DeVore, R. and Petrova, G. and
+    Wojtaszczyk, P.
+  },
+  year          = 2011,
+  journal       = {SIAM Journal on Mathematical Analysis},
+  publisher     = {SIAM},
+  volume        = 43,
+  number        = 3,
+  pages         = {1457--1472},
+  doi           = {10.1137/100795772},
+}
+
+@unpublished{BEOR14,
+  title         = {
+    A numerically stable a posteriori error estimator for reduced basis
+    approximations of elliptic equations
+  },
+  author        = {Buhr, A. and Engwer, C. and Ohlberger, M. and Rave, S.},
+  year          = 2014,
+  doi           = {10.48550/arXiv.1407.8005},
+  note          = {arXiv preprint 1407.8005},
+}
+
+@article{BG09,
+  title         = {Interpolatory Projection Methods for Structure-preserving Model Reduction},
+  author        = {Beattie, C. and Gugercin, S.},
+  year          = 2009,
+  journal       = {Systems Control Lett.},
+  volume        = 58,
+  number        = 3,
+  pages         = {225--232},
+  doi           = {10.1016/j.sysconle.2008.10.016},
+}
+
+@inproceedings{BG12,
+  title         = {Realization-independent {$\mathcal{H}_2$}-approximation},
+  author        = {Beattie, C. and Gugercin, S.},
+  year          = 2012,
+  booktitle     = {51st IEEE Conference on Decision and Control (CDC)},
+  pages         = {4953--4958},
+  doi           = {10.1109/CDC.2012.6426344},
+}
+
+@techreport{BKS11,
+  title         = {Sparse-Dense {S}ylvester Equations in {${H}_2$}-Model Order Reduction},
+  author        = {P. Benner and M. K{\"o}hler and J. Saak},
+  year          = 2011,
+  month         = dec,
+  number        = {MPIMD/11-11},
+  url           = {https://csc.mpi-magdeburg.mpg.de/preprints/2011/11/},
+  institution   = {Max Planck Institute Magdeburg},
+  type          = {Preprint},
+}
+
+@article{BMNP04,
+  title         = {
+    An `empirical interpolation' method: application to efficient reduced-basis
+    discretization of partial differential equations
+  },
+  author        = {Barrault, M. and Maday, Y. and Nguyen, N. C. and Patera, A. T.},
+  year          = 2004,
+  journal       = {Comptes Rendus Mathematique. Academie des Sciences. Paris},
+  volume        = 339,
+  number        = 9,
+  pages         = {667--672},
+  doi           = {10.1016/j.crma.2004.08.006},
+  issn          = {1631-073X},
 }
 
 @article{BS18,
-  title={Randomized local model order reduction},
-  author={Buhr, Andreas and Smetana, Kathrin},
-  journal={SIAM journal on scientific computing},
-  volume={40},
-  number={4},
-  pages={A2120--A2151},
-  year={2018},
-  publisher={SIAM}
+  title         = {Randomized local model order reduction},
+  author        = {Buhr, A. and Smetana, K.},
+  year          = 2018,
+  journal       = {SIAM Journal on Scientific Computing},
+  publisher     = {SIAM},
+  volume        = 40,
+  number        = 4,
+  pages         = {A2120--A2151},
+  doi           = {10.1137/17M1138480},
 }
 
 @article{BU22,
-    title = {Passivity preserving model reduction via spectral factorization},
-    journal = {Automatica},
-    volume = {142},
-    pages = {110368},
-    year = {2022},
-    issn = {0005-1098},
-    doi = {10.1016/j.automatica.2022.110368},
-    author = {Tobias Breiten and Benjamin Unger},
+  title         = {Passivity preserving model reduction via spectral factorization},
+  author        = {T. Breiten and B. Unger},
+  year          = 2022,
+  journal       = {Automatica},
+  volume        = 142,
+  pages         = 110368,
+  doi           = {10.1016/j.automatica.2022.110368},
 }
 
 @article{CCA96,
-  author={Clapperton, B. and Crusca, F. and Aldeen, M.},
-  journal={IEEE Transactions on Automatic Control},
-  title={Bilinear transformation and generalized singular perturbation model reduction},
-  year={1996},
-  volume={41},
-  number={4},
-  pages={589-593},
-  doi={10.1109/9.489281}
+  title         = {
+    Bilinear transformation and generalized singular perturbation model
+    reduction
+  },
+  author        = {Clapperton, B. and Crusca, F. and Aldeen, M.},
+  year          = 1996,
+  journal       = {IEEE Transactions on Automatic Control},
+  volume        = 41,
+  number        = 4,
+  pages         = {589--593},
+  doi           = {10.1109/9.489281},
 }
 
-@Article{CLVV06,
-  author =       {Chahlaoui, Y. and Lemonnier, D. and Vandendorpe, A.  and
-                  Van~Dooren, P.},
-  title =        {Second-order balanced truncation},
-  journal =      {Linear Algebra Appl.},
-  year =         2006,
-  volume =       415,
-  number =       {2--3},
-  pages =        {373--384},
-  doi =          {10.1016/j.laa.2004.03.032}
+@article{CLVV06,
+  title         = {Second-order balanced truncation},
+  author        = {Chahlaoui, Y. and Lemonnier, D. and Vandendorpe, A.  and Van Dooren, P.},
+  year          = 2006,
+  journal       = {Linear Algebra Appl.},
+  volume        = 415,
+  number        = {2--3},
+  pages         = {373--384},
+  doi           = {10.1016/j.laa.2004.03.032},
 }
 
-@Unpublished{CRBG20,
-  doi = {10.48550/ARXIV.2003.06536},
-  url = {https://arxiv.org/abs/2003.06536},
-  author = {Carracedo Rodriguez, Andrea and Balicki, Linus and Gugercin, Serkan},
-  title = {The p-AAA algorithm for data driven modeling of parametric dynamical systems},
-  note = {arXiv},
-  year = {2020},
-}
-
-@Article{DPW13,
- author = {R. DeVore, G. Petrova & P. Wojtaszczyk},
- title = {Greedy Algorithms for Reduced Bases in Banach Spaces},
- journal = {Constructive Approximation},
- issue = {37},
- pages = {455–466},
- year = {2013}
-}
-
-@article{GP05,
-  title={A posteriori error bounds for reduced-basis approximations of parametrized parabolic partial differential equations},
-  author={Grepl, Martin A and Patera, Anthony T},
-  journal={ESAIM: Mathematical Modelling and Numerical Analysis},
-  volume={39},
-  number={1},
-  pages={157--181},
-  year={2005},
-  publisher={EDP Sciences}
-}
-
-@Article{GAB08,
-  author =       {Gugercin, S. and Antoulas, A.~C. and Beattie, C.},
-  title =        {{$\mathcal{H}_2$} Model Reduction for Large-Scale Linear
-                  Dynamical Systems},
-  journal =      {{SIAM} J. Matrix Anal. Appl.},
-  year =         2008,
-  volume =       30,
-  number =       2,
-  pages =        {609--638},
-  doi =          {10.1137/060666123}
-}
-
-@Article{GPBV12,
-    author =    {Gugercin, S. and Polyuga, Rostyslav V. and Beattie, C. and {van der Schaft}, A.},
-	title =     {Structure-preserving tangential interpolation for model reduction of port-{H}amiltonian systems},
-	journal =   {Automatica},
-	volume =    {48},
-	number =    {9},
-	pages =     {1963--1974},
-	year =      {2012},
-	doi =       {10.1016/j.automatica.2012.05.052},
-}
-
-@InCollection{Haa17,
-  author =       {Haasdonk, B.},
-  title =        {Reduced Basis Methods for Parametrized {PDE}s---A Tutorial
-                  Introduction for Stationary and Instationary Problems},
-  booktitle =    {Model Reduction and Approximation: Theory and Algorithms},
-  publisher =    {SIAM},
-  year =         2017,
-  editor =       {Benner, P. and Cohen, A. and Ohlberger, M. and Willcox, K.},
-  pages =        {65--136},
-  doi =          {10.1137/1.9781611974829.ch2}
-}
-
-@InCollection{ALI17,,
-  author = {Athanasios C. Antoulas and Sanda Lefteriu and A. Cosmin Ionita},
-  title = {A Tutorial Introduction to the Loewner Framework for Model Reduction},
-  booktitle =    {Model Reduction and Approximation: Theory and Algorithms},
-  publisher =    {SIAM},
-  year =         2017,
-  editor =       {Benner, P. and Cohen, A. and Ohlberger, M. and Willcox, K.},
-  pages = {335--376},
-  doi = {10.1137/1.9781611974829.ch8},
-}
-
-@Article{HDO11,
-  author =       {Haasdonk, B. and Dihlmann, M. and Ohlberger, M.},
-  title =        {A Training Set and Multiple Basis Generation Approach for
-                  Parametrized Model Reduction Based on Adaptive Grids in
-                  Parameter Space},
-  journal =      {Math. Comput. Model. Dyn. Syst.},
-  year =         2011,
-  volume =       17,
-  number =       4,
-  pages =        {423--442}
-}
-
-@Article{HO08,
-  author =       {Haasdonk, B. and Ohlberger, M.},
-  title =        {Reduced basis method for finite volume approximations of
-                  parametrized linear evolution equations},
-  journal =      {{ESAIM}: Math. Model. Numer. Anal.},
-  year =         2008,
-  volume =       42,
-  number =       2,
-  pages =        {277--302},
-  fjournal =     {M2AN. Mathematical Modelling and Numerical Analysis},
-  issn =         {0764-583X}
-}
-
-@article{HMT11,
-  title={Finding structure with randomness: Probabilistic algorithms for constructing approximate matrix decompositions},
-  author={Halko, Nathan and Martinsson, Per-Gunnar and Tropp, Joel A},
-  journal={SIAM review},
-  volume={53},
-  number={2},
-  pages={217--288},
-  year={2011},
-  publisher={SIAM}
-}
-
-@Article{HLR18,
-  author =       {Himpe, C. and Leibner, T. and Rave, S.},
-  title =        {Hierarchical Approximate Proper Orthogonal Decomposition},
-  journal =      {{SIAM} J. Sci. Comput.},
-  year =         2018,
-  volume =       40,
-  number =       5,
-  pages =        {A3267--A3292},
-  doi =          {10.1137/16M1085413}
-}
-
-@book{HPUU09,
-  title={Optimization with PDE constraints},
-  author={Hinze, Michael and Pinnau, Ren{\'e} and Ulbrich, Michael and Ulbrich, Stefan},
-  volume={23},
-  year={2008},
-  publisher={Springer Science \& Business Media}
-}
-
-@article{HS97,
-  author={Hochreiter, Sepp and Schmidhuber, Jürgen},
-  title={Long Short-Term Memory},
-  journal={Neural Computation},
-  volume={9},
-  number={8},
-  pages={1735-1780},
-  year={1997},
-  month={11},
-  issn={0899-7667},
-  doi={10.1162/neco.1997.9.8.1735}
-}
-
-@article{HU18,
-  title={Non-intrusive reduced order modeling of nonlinear problems using neural networks},
-  author={Hesthaven, Jan S and Ubbiali, Stefano},
-  journal={Journal of Computational Physics},
-  volume={363},
-  pages={55--78},
-  year={2018},
-  publisher={Elsevier}
-}
-
-@phdthesis{PK16,
-  title={Efficient low-rank solution of large-scale matrix equations},
-  author={K{\"u}rschner, Patrick},
-  year={2016},
-  url={http://pubman.mpdl.mpg.de/pubman/},
-  school={Shaker Verlag Aachen}
-}
-
-@Article{KG16,
-  title = {Tangential {{Interpolation-Based Eigensystem Realization Algorithm}} for {{MIMO Systems}}},
-  author = {Kramer, B. and Gugercin, S.},
-  year = {2016},
-  journal = {Mathematical and Computer Modelling of Dynamical Systems},
-  volume = {22},
-  number = {4},
-  pages = {282--306},
-  issn = {1387-3954, 1744-5051},
-  doi = {10.1080/13873954.2016.1198389},
-}
-
-@InProceedings{K78,
-  title = {A New Identification and Model Reduction Algorithm via Singular Value Decomposition},
-  booktitle = {Proceedings of the 12th {{Asilomar Conference}} on {{Circuits}}, {{Systems}} and {{Computers}}},
-  author = {Kung, S.},
-  year = {1978},
-  pages = {705--714}
-}
-
-@Article{KMOSV21,
-	author =       {Keil, Tim and Mechelli, Luca and Ohlberger, Mario and Schindler, Felix and Volkwein, Stefan},
-	title =        {A non-conforming dual approach for adaptive Trust-Region reduced basis approximation of PDE-constrained parameter optimization},
-	DOI=           {10.1051/m2an/2021019},
-	journal =      {ESAIM: M2AN},
-	year =         2021,
-	volume =       55,
-	number =       3,
-	pages =        {1239--1269}
-}
-
-@Article{LiW02,
-  author =       {J.-R. Li and J. White},
-  title =        {Low Rank Solution of {L}yapunov Equations},
-  journal =      {SIAM J. Matrix Anal. Appl.},
-  year =         2002,
-  volume =       24,
-  number =       1,
-  pages =        {260--280},
-  issn =         {0895-4798},
-  doi =          {10.1137/S0895479801384937}
-}
-
-@Article{MS96,
-  author =       {Meyer, D.~G. and Srinivasan, S.},
-  title =        {Balancing and model reduction for second-order form linear
-                  systems},
-  journal =      {{IEEE} Trans. Autom. Control},
-  year =         1996,
-  volume =       41,
-  number =       11,
-  pages =        {1632--1644},
-  doi =          {10.1109/9.544000}
-}
-
-@Article{MG91,
-  author =       {Mustafa, D. and Glover, K.},
-  title =        {Controller Reduction by $\mathcal{H}_\infty$-Balanced
-                  Truncation},
-  journal =      {{IEEE} Trans. Autom. Control},
-  year =         1991,
-  volume =       36,
-  number =       6,
-  pages =        {668--682},
-  doi =          {10.1109/9.86941}
-}
-
-@Article{MSKC21,
-  title = {Efficient Algorithms for Eigensystem Realization Using Randomized SVD},
-  author = {Minster, Rachel and Saibaba, Arvind K. and Kar, Jishnudeep and Chakrabortty, Aranya},
-  year = 2021,
-  journal = {SIAM Journal on Matrix Analysis and Applications},
-  volume = {42},
-  number = {2},
-  pages = {1045--1072},
-  doi = {10.1137/20M1327616},
-  url = {https://epubs.siam.org/doi/10.1137/20M1327616},
-}
-
-@Article{NST18,
-  author = {Nakatsukasa, Yuji and S\`{e}te, Olivier and Trefethen, Lloyd N.},
-  title = {The AAA Algorithm for Rational Approximation},
-  journal = {SIAM Journal on Scientific Computing},
-  volume = {40},
-  number = {3},
-  pages = {A1494-A1522},
-  year = {2018},
-  doi = {10.1137/16M1106122},
-  URL = {https://doi.org/10.1137/16M1106122}
-}
-
-@book{NW06,
-  title={Numerical optimization},
-  author={Nocedal, Jorge and Wright, Stephen},
-  year={2006},
-  publisher={Springer Science \& Business Media}
-}
-
-@Article{OJ88,
-  author =       {P.~C. Opdenacker and E.~A. Jonckheere},
-  title =        {A contraction mapping preserving balanced reduction scheme and
-                  its infinity norm error bounds},
-  journal =      {{IEEE} Trans. Circuits Syst.},
-  year =         1988,
-  volume =       35,
-  number =       2,
-  pages =        {184--189},
-  doi =          {10.1109/31.1720}
-}
-
-@article{PM16,
-  author  = {Peng, L. and Mohseni, K.},
-  title   = {Symplectic Model Reduction of Hamiltonian Systems},
-  journal = {SIAM Journal on Scientific Computing},
-  year    = {2016},
-  volume  = {38},
-  number  = {1},
-  pages   = {A1--A27},
-  doi     = {10.1137/140978922},
-}
-
-@phdthesis{RL95,
-  title={Analysis and implementation of an implicitly restarted Arnoldi iteration},
-  author={Lehoucq, Richard Bruno},
-  school={Rice University, Houston, USA},
-  year={1995},
-  url={https://scholarship.rice.edu/handle/1911/16844}
-}
-
-@Article{RS08,
-  author =       {Reis, T. and Stykel, T.},
-  title =        {Balanced truncation model reduction of second-order systems},
-  journal =      {Math. Comput. Model. Dyn. Syst.},
-  year =         2008,
-  volume =       14,
-  number =       5,
-  pages =        {391--406},
-  doi =          {10.1080/13873950701844170}
-}
-
-@article{RM06,
-  title={Efficient computation of multivariable transfer function dominant poles using subspace acceleration},
-  author={Rommes, Joost and Martins, Nelson},
-  journal={IEEE transactions on power systems},
-  volume={21},
-  number={4},
-  pages={1471--1483},
-  year={2006},
-  publisher={IEEE}
-}
-
-@article{SHB21,
-  title = {Randomized algorithms for generalized singular value decomposition with application to sensitivity analysis},
-  author = {Saibaba AK, Hart J, van BloemenWaanders B.},
-  journal = {Numerical Linear Algebra with Applications},
-  volume = {8},
-  issue = {4},
-  year = {2021}
-}
-
-@article{SJK16,
-  title = {Randomized algorithms for generalized {H}ermitian eigenvalue problems with application to computing Karhunen Loeve expansion},
-  author = {Saibaba AK, Lee J. and Kitanidis PK},
-  journal = {Numerical Linear Algebra with Applications},
-  year = {2016},
-  DOI = { 10.1002/nla.2026}
-}
-
-@article{S11,
-  title={Symplectic Gram-Schmidt Algorithm with Re-Orthogonalization},
-  author={Al-Aidarous, Eman Salem},
-  journal={Journal of King Abdulaziz University: Science},
-  volume={23},
-  number={1},
-  pages={11--20},
-  year = {2011},
-  doi = {10.4197/Sci.23-1.2}
-}
-
-@article{TRLBK14,
-  author = {Tu, J. H. and Rowley, C. W. and Luchtenburg, D. M. and Brunton, S. L. and Kutz, J. N.},
-  title = {On Dynamic Mode Decomposition: Theory and Applications},
-  journal = {Journal of Computational Dynamics},
-  issue = {1(2)},
-  pages = {391--421},
-  year = {2014}
+@article{CRBG23,
+  title         = {
+    The p-{AAA} algorithm for data-driven modeling of parametric dynamical
+    systems
+  },
+  author        = {Carracedo~Rodriguez, A. and Balicki, L. and Gugercin, S.},
+  year          = 2023,
+  journal       = {SIAM Journal on Scientific Computing},
+  volume        = 45,
+  number        = 3,
+  pages         = {A1332-A1358},
+  doi           = {10.1137/20M1322698},
 }
 
 @article{DP84,
-  author={Desai, U. and Pal, D.},
-  journal={IEEE Transactions on Automatic Control},
-  title={A transformation approach to stochastic model reduction},
-  year={1984},
-  volume={29},
-  number={12},
-  pages={1097-1100},
-  doi={10.1109/TAC.1984.1103438}
+  title         = {A transformation approach to stochastic model reduction},
+  author        = {Desai, U. and Pal, D.},
+  year          = 1984,
+  journal       = {IEEE Transactions on Automatic Control},
+  volume        = 29,
+  number        = 12,
+  pages         = {1097--1100},
+  doi           = {10.1109/TAC.1984.1103438},
 }
 
-@PhdThesis{W12,
-  author =       {Wyatt, S.},
-  title =        {Issues in Interpolatory Model Reduction: Inexact Solves,
-                  Second-order Systems and {DAE}s},
-  school =       {Virginia Polytechnic Institute and State University},
-  year =         2012,
-  address =      {Blacksburg, Virginia, USA},
-  month =        may,
-  url =          {http://hdl.handle.net/10919/27668}
+@article{DPW13,
+  title         = {Greedy Algorithms for Reduced Bases in {B}anach Spaces},
+  author        = {R. DeVore and G. Petrova and P. Wojtaszczyk},
+  year          = 2013,
+  journal       = {Constructive Approximation},
+  pages         = {455–466},
+  doi           = {10.1007/s00365-013-9186-2},
+  issue         = 37,
+}
+
+@article{GA04,
+  title         = {A survey of model reduction by balanced truncation and some new results},
+  author        = {S. Gugercin and A. C. Antoulas},
+  year          = 2004,
+  journal       = {International Journal of Control},
+  volume        = 77,
+  number        = 8,
+  pages         = {748--766},
+  doi           = {10.1080/00207170410001713448},
+}
+
+@article{GAB08,
+  title         = {{$\mathcal{H}_2$} Model Reduction for Large-Scale Linear Dynamical Systems},
+  author        = {Gugercin, S. and Antoulas, A. C. and Beattie, C.},
+  year          = 2008,
+  journal       = {{SIAM} J. Matrix Anal. Appl.},
+  volume        = 30,
+  number        = 2,
+  pages         = {609--638},
+  doi           = {10.1137/060666123},
+}
+
+@article{GP05,
+  title         = {
+    A posteriori error bounds for reduced-basis approximations of parametrized
+    parabolic partial differential equations
+  },
+  author        = {Grepl, M. A. and Patera, A. T.},
+  year          = 2005,
+  journal       = {ESAIM: Mathematical Modelling and Numerical Analysis},
+  publisher     = {EDP Sciences},
+  volume        = 39,
+  number        = 1,
+  pages         = {157--181},
+  doi           = {10.1051/m2an:2005006},
+}
+
+@article{GPBV12,
+  title         = {
+    Structure-preserving tangential interpolation for model reduction of
+    port-{H}amiltonian systems
+  },
+  author        = {Gugercin, S. and Polyuga, R. V. and Beattie, C. and van der Schaft, A.},
+  year          = 2012,
+  journal       = {Automatica},
+  volume        = 48,
+  number        = 9,
+  pages         = {1963--1974},
+  doi           = {10.1016/j.automatica.2012.05.052},
+}
+
+@incollection{Haa17,
+  title         = {
+    Reduced Basis Methods for Parametrized {PDE}s---A Tutorial Introduction for
+    Stationary and Instationary Problems
+  },
+  author        = {Haasdonk, B.},
+  year          = 2017,
+  booktitle     = {Model Reduction and Approximation: Theory and Algorithms},
+  publisher     = {SIAM},
+  pages         = {65--136},
+  doi           = {10.1137/1.9781611974829.ch2},
+  editor        = {Benner, P. and Cohen, A. and Ohlberger, M. and Willcox, K.},
+}
+
+@article{HDO11,
+  title         = {
+    A Training Set and Multiple Basis Generation Approach for Parametrized
+    Model Reduction Based on Adaptive Grids in Parameter Space
+  },
+  author        = {Haasdonk, B. and Dihlmann, M. and Ohlberger, M.},
+  year          = 2011,
+  journal       = {Math. Comput. Model. Dyn. Syst.},
+  volume        = 17,
+  number        = 4,
+  pages         = {423--442},
+  doi           = {10.1080/13873954.2011.547674},
+}
+
+@article{HJS94,
+  title         = {Stochastic Balancing and Approximation-Stability and Minimality},
+  author        = {Harshavardhana, P. and Jonckheere, E.A. and Silverman, L.M.},
+  year          = 1984,
+  journal       = {IEEE Transactions on Automatic Control},
+  volume        = 29,
+  number        = 8,
+  pages         = {744--746},
+  doi           = {10.1109/TAC.1984.1103631},
+}
+
+@article{HLR18,
+  title         = {Hierarchical Approximate Proper Orthogonal Decomposition},
+  author        = {Himpe, C. and Leibner, T. and Rave, S.},
+  year          = 2018,
+  journal       = {{SIAM} J. Sci. Comput.},
+  volume        = 40,
+  number        = 5,
+  pages         = {A3267--A3292},
+  doi           = {10.1137/16M1085413},
+}
+
+@article{HMT11,
+  title         = {
+    Finding structure with randomness: Probabilistic algorithms for
+    constructing approximate matrix decompositions
+  },
+  author        = {Halko, N. and Martinsson, P. G. and Tropp, J. A.},
+  year          = 2011,
+  journal       = {SIAM Review},
+  publisher     = {SIAM},
+  volume        = 53,
+  number        = 2,
+  pages         = {217--288},
+  doi           = {10.1137/090771806},
+}
+
+@article{HO08,
+  title         = {
+    Reduced basis method for finite volume approximations of parametrized
+    linear evolution equations
+  },
+  author        = {Haasdonk, B. and Ohlberger, M.},
+  year          = 2008,
+  journal       = {{ESAIM}: Math. Model. Numer. Anal.},
+  volume        = 42,
+  number        = 2,
+  pages         = {277--302},
+  doi           = {10.1051/m2an:2008001},
+  fjournal      = {M2AN. Mathematical Modelling and Numerical Analysis},
+}
+
+@book{HPUU09,
+  title         = {Optimization with {PDE} constraints},
+  author        = {Hinze, M. and Pinnau, R. and Ulbrich, M. and Ulbrich, S.},
+  year          = 2008,
+  publisher     = {Springer Science \& Business Media},
+  volume        = 23,
+  doi           = {10.1007/978-1-4020-8839-1},
+}
+
+@article{HS97,
+  title         = {Long Short-Term Memory},
+  author        = {Hochreiter, S. and Schmidhuber, J.},
+  year          = 1997,
+  month         = nov,
+  journal       = {Neural Computation},
+  volume        = 9,
+  number        = 8,
+  pages         = {1735--1780},
+  doi           = {10.1162/neco.1997.9.8.1735},
+}
+
+@article{HU18,
+  title         = {
+    Non-intrusive reduced order modeling of nonlinear problems using neural
+    networks
+  },
+  author        = {Hesthaven, J. S. and Ubbiali, S.},
+  year          = 2018,
+  journal       = {Journal of Computational Physics},
+  publisher     = {Elsevier},
+  volume        = 363,
+  pages         = {55--78},
+  doi           = {10.1016/j.jcp.2018.02.037},
+}
+
+@inproceedings{K78,
+  title         = {
+    A New Identification and Model Reduction Algorithm via Singular Value
+    Decomposition
+  },
+  author        = {Kung, S.},
+  year          = 1978,
+  booktitle     = {
+    Proceedings of the 12th Asilomar Conference on Circuits, Systems and
+    Computers
+  },
+  pages         = {705--714},
+}
+
+@article{KG16,
+  title         = {
+    Tangential Interpolation-Based Eigensystem Realization Algorithm for {MIMO}
+    Systems
+  },
+  author        = {Kramer, B. and Gugercin, S.},
+  year          = 2016,
+  journal       = {Mathematical and Computer Modelling of Dynamical Systems},
+  volume        = 22,
+  number        = 4,
+  pages         = {282--306},
+  doi           = {10.1080/13873954.2016.1198389},
+}
+
+@article{KMOSV21,
+  title         = {
+    A non-conforming dual approach for adaptive {T}rust-{R}egion reduced basis
+    approximation of {PDE}-constrained parameter optimization
+  },
+  author        = {
+    Keil, T. and Mechelli, L. and Ohlberger, M. and Schindler, F. and Volkwein,
+    S.
+  },
+  year          = 2021,
+  journal       = {ESAIM: M2AN},
+  volume        = 55,
+  number        = 3,
+  pages         = {1239--1269},
+  doi           = {10.1051/m2an/2021019},
+}
+
+@article{LiW02,
+  title         = {Low Rank Solution of {L}yapunov Equations},
+  author        = {J.-R. Li and J. White},
+  year          = 2002,
+  journal       = {SIAM J. Matrix Anal. Appl.},
+  volume        = 24,
+  number        = 1,
+  pages         = {260--280},
+  doi           = {10.1137/S0895479801384937},
+}
+
+@article{MG91,
+  title         = {Controller Reduction by $\mathcal{H}_\infty$-Balanced Truncation},
+  author        = {Mustafa, D. and Glover, K.},
+  year          = 1991,
+  journal       = {{IEEE} Trans. Autom. Control},
+  volume        = 36,
+  number        = 6,
+  pages         = {668--682},
+  doi           = {10.1109/9.86941},
+}
+
+@article{MS96,
+  title         = {Balancing and model reduction for second-order form linear systems},
+  author        = {Meyer, D.~G. and Srinivasan, S.},
+  year          = 1996,
+  journal       = {{IEEE} Trans. Autom. Control},
+  volume        = 41,
+  number        = 11,
+  pages         = {1632--1644},
+  doi           = {10.1109/9.544000},
+}
+
+@article{MSKC21,
+  title         = {Efficient Algorithms for Eigensystem Realization Using Randomized {SVD}},
+  author        = {Minster, R. and Saibaba, A. K. and Kar, J. and Chakrabortty, A.},
+  year          = 2021,
+  journal       = {SIAM Journal on Matrix Analysis and Applications},
+  volume        = 42,
+  number        = 2,
+  pages         = {1045--1072},
+  doi           = {10.1137/20M1327616},
+}
+
+@article{MU23,
+  title         = {
+    Control of port-{H}amiltonian differential-algebraic systems and
+    applications
+  },
+  author        = {Mehrmann, V. and Unger, B.},
+  year          = 2023,
+  journal       = {Acta Numerica},
+  publisher     = {Cambridge University Press},
+  volume        = 32,
+  pages         = {395--515},
+  doi           = {10.1017/S0962492922000083},
+}
+
+@article{NST18,
+  title         = {The {AAA} Algorithm for Rational Approximation},
+  author        = {Nakatsukasa, Y. and S\`{e}te, O. and Trefethen, L. N.},
+  year          = 2018,
+  journal       = {SIAM Journal on Scientific Computing},
+  volume        = 40,
+  number        = 3,
+  pages         = {A1494-A1522},
+  doi           = {10.1137/16M1106122},
+}
+
+@book{NW06,
+  title         = {Numerical optimization},
+  author        = {Nocedal, Jorge and Wright, Stephen},
+  year          = 2006,
+  publisher     = {Springer Science \& Business Media},
+  doi           = {10.1007/978-0-387-40065-5},
+}
+
+@article{OJ88,
+  title         = {
+    A contraction mapping preserving balanced reduction scheme and its infinity
+    norm error bounds
+  },
+  author        = {P. C. Opdenacker and E. A. Jonckheere},
+  year          = 1988,
+  journal       = {{IEEE} Trans. Circuits Syst.},
+  volume        = 35,
+  number        = 2,
+  pages         = {184--189},
+  doi           = {10.1109/31.1720},
+}
+
+@phdthesis{PK16,
+  title         = {Efficient low-rank solution of large-scale matrix equations},
+  author        = {K{\"u}rschner, P.},
+  year          = 2016,
+  url           = {http://pubman.mpdl.mpg.de/pubman/},
+  school        = {Shaker Verlag Aachen},
+}
+
+@article{PM16,
+  title         = {Symplectic Model Reduction of {H}amiltonian Systems},
+  author        = {Peng, L. and Mohseni, K.},
+  year          = 2016,
+  journal       = {SIAM Journal on Scientific Computing},
+  volume        = 38,
+  number        = 1,
+  pages         = {A1--A27},
+  doi           = {10.1137/140978922},
+}
+
+@phdthesis{RL95,
+  title         = {Analysis and implementation of an implicitly restarted {A}rnoldi iteration},
+  author        = {Lehoucq, R. B.},
+  year          = 1995,
+  url           = {https://scholarship.rice.edu/handle/1911/16844},
+  school        = {Rice University, Houston, USA},
+}
+
+@article{RM06,
+  title         = {
+    Efficient computation of multivariable transfer function dominant poles
+    using subspace acceleration
+  },
+  author        = {Rommes, J. and Martins, N.},
+  year          = 2006,
+  journal       = {IEEE Transactions on Power Systems},
+  publisher     = {IEEE},
+  volume        = 21,
+  number        = 4,
+  pages         = {1471--1483},
+  doi           = {10.1109/TPWRS.2006.881154},
+}
+
+@article{RS08,
+  title         = {Balanced truncation model reduction of second-order systems},
+  author        = {Reis, T. and Stykel, T.},
+  year          = 2008,
+  journal       = {Math. Comput. Model. Dyn. Syst.},
+  volume        = 14,
+  number        = 5,
+  pages         = {391--406},
+  doi           = {10.1080/13873950701844170},
+}
+
+@article{S11,
+  title         = {Symplectic {G}ram-{S}chmidt Algorithm with Re-Orthogonalization},
+  author        = {Al-Aidarous, E. S.},
+  year          = 2011,
+  journal       = {Journal of King Abdulaziz University: Science},
+  volume        = 23,
+  number        = 1,
+  pages         = {11--20},
+  doi           = {10.4197/Sci.23-1.2},
+}
+
+@article{SHB21,
+  title         = {
+    Randomized algorithms for generalized singular value decomposition with
+    application to sensitivity analysis
+  },
+  author        = {Saibaba, A. K. and Hart, J. and van Bloemen Waanders, B.},
+  year          = 2021,
+  journal       = {Numerical Linear Algebra with Applications},
+  volume        = 8,
+  doi           = {10.1002/nla.2364},
+  issue         = 4,
+}
+
+@article{SJK16,
+  title         = {
+    Randomized algorithms for generalized {H}ermitian eigenvalue problems with
+    application to computing {K}arhunen-{L}o{\`e}ve expansion
+  },
+  author        = {Saibaba, A. K. and Lee, J. and Kitanidis, P. K.},
+  year          = 2016,
+  journal       = {Numerical Linear Algebra with Applications},
+  doi           = {10.1002/nla.2026},
+}
+
+@article{TRLBK14,
+  title         = {On Dynamic Mode Decomposition: Theory and Applications},
+  author        = {
+    Tu, J. H. and Rowley, C. W. and Luchtenburg, D. M. and Brunton, S. L. and
+    Kutz, J. N.
+  },
+  year          = 2014,
+  journal       = {Journal of Computational Dynamics},
+  volume        = 1,
+  pages         = {391--421},
+  doi           = {10.3934/jcd.2014.1.391},
+  issue         = 2,
+}
+
+@phdthesis{W12,
+  title         = {
+    Issues in Interpolatory Model Reduction: Inexact Solves, Second-order
+    Systems and {DAE}s
+  },
+  author        = {Wyatt, S.},
+  year          = 2012,
+  month         = may,
+  address       = {Blacksburg, Virginia, USA},
+  url           = {http://hdl.handle.net/10919/27668},
+  school        = {Virginia Polytechnic Institute and State University},
 }
 
 @article{WHR19,
-  title={Non-intrusive reduced order modeling of unsteady flows using artificial neural networks with application to a combustion problem},
-  author={Wang, Qian and Hesthaven, Jan S and Ray, Deep},
-  journal={Journal of computational physics},
-  volume={384},
-  pages={289--307},
-  year={2019},
-  publisher={Elsevier}
+  title         = {
+    Non-intrusive reduced order modeling of unsteady flows using artificial
+    neural networks with application to a combustion problem
+  },
+  author        = {Wang, Q. and Hesthaven, J. S. and Ray, D.},
+  year          = 2019,
+  journal       = {Journal of Computational Physics},
+  publisher     = {Elsevier},
+  volume        = 384,
+  pages         = {289--307},
+  doi           = {10.1016/j.jcp.2019.01.031},
 }
 
-@Article{XZ11,
-  author =       {Xu, Y. and Zeng, T.},
-  title =        {Optimal {$\mathcal{H}_2$} Model Reduction for Large Scale
-                  {MIMO} Systems via Tangential Interpolation},
-  journal =      {Int. J. Numer. Anal. Model.},
-  year =         2011,
-  volume =       8,
-  number =       1,
-  pages =        {174--188},
-  url =          {http://www.math.ualberta.ca/ijnam/Volume-8-2011/No-1-11/2011-01-10.pdf}
+@article{XZ11,
+  title         = {
+    Optimal {$\mathcal{H}_2$} Model Reduction for Large Scale {MIMO} Systems
+    via Tangential Interpolation
+  },
+  author        = {Xu, Y. and Zeng, T.},
+  year          = 2011,
+  journal       = {Int. J. Numer. Anal. Model.},
+  volume        = 8,
+  number        = 1,
+  pages         = {174--188},
+  url           = {http://www.math.ualberta.ca/ijnam/Volume-8-2011/No-1-11/2011-01-10.pdf},
 }
 
-@Article{YM13,
-  author =       {Yue, Y. and Meerbergen, K.},
-  title =        {Accelerating Optimization of Parametric Linear Systems by Model Order Reduction},
-  journal =      {SIAM Journal on Optimization},
-  year =         2013,
-  volume =       23,
-  number =       2,
-  pages =        {1344--1370},
-  doi =          {10.1137/120869171}
+@article{YM13,
+  title         = {
+    Accelerating Optimization of Parametric Linear Systems by Model Order
+    Reduction
+  },
+  author        = {Yue, Y. and Meerbergen, K.},
+  year          = 2013,
+  journal       = {SIAM Journal on Optimization},
+  volume        = 23,
+  number        = 2,
+  pages         = {1344--1370},
+  doi           = {10.1137/120869171},
 }
 
-@Article{ZSW99,
-  author =       {K. Zhou and G. Salomon and E. Wu},
-  title =        {Balanced realization and model reduction for unstable systems},
-  journal =      {Internat. J. Robust Nonlinear Control},
-  year =         1999,
-  volume =       9,
-  number =       3,
-  pages =        {183--198},
-  doi =          {10.1002/(SICI)1099-1239(199903)9:3<183::AID-RNC399>3.0.CO;2-E}
+@article{ZSW99,
+  title         = {Balanced realization and model reduction for unstable systems},
+  author        = {K. Zhou and G. Salomon and E. Wu},
+  year          = 1999,
+  journal       = {Internat. J. Robust Nonlinear Control},
+  volume        = 9,
+  number        = 3,
+  pages         = {183--198},
+  doi           = {10.1002/(SICI)1099-1239(199903)9:3<183::AID-RNC399>3.0.CO;2-E},
 }

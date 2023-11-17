@@ -9,10 +9,10 @@ config.require('K3D')
 config.require('MATPLOTLIB')
 
 import k3d
+import matplotlib as mpl
 import numpy as np
 from ipywidgets import GridspecLayout, Label, Layout, VBox, jslink
 from k3d.plot import Plot as K3DPlot
-from matplotlib.cm import get_cmap
 from matplotlib.colors import Colormap
 
 from pymor.core.defaults import defaults
@@ -119,7 +119,7 @@ class VectorArrayPlot(K3DPlot):
             self.camera_no_rotate = True
             self.camera_no_zoom = True
 
-        self.grid_visible = True
+        self.grid_visible = False
         self.menu_visibility = False
         self.axes_helper = 0
         center = np.hstack([(bounding_box[1] + bounding_box[0]) / 2, 0.])
@@ -174,7 +174,7 @@ class VectorArrayPlot(K3DPlot):
 def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                   separate_colorbars=False, rescale_colorbars=False, columns=2,
                   warp_by_scalar=True, scale_factor='auto', show_mesh=True, height=300,
-                  color_map=get_cmap('viridis'), background_color=0xffffff, return_widget=True):
+                  color_map=mpl.colormaps['viridis'], background_color=0xffffff, return_widget=True):
     """Generate a k3d Plot for scalar data associated to a two-dimensional |Grid|.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either

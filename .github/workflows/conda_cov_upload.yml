@@ -1,10 +1,11 @@
+---
 name: Upload coverage
 on:
   workflow_run:
-    workflows: ["Conda Tests"]
+    workflows:
+      - Conda Tests
     types:
       - completed
-
 jobs:
   coverage_to_codecov:
     name: Report Coverage to codecov.io

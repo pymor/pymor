@@ -10,7 +10,8 @@ import pytest
 from pymor.models.iosys import LTIModel
 from pymor.models.transforms import BilinearTransformation, CayleyTransformation, MoebiusTransformation
 
-type_list = ['BilinearTransformation', 'CayleyTransformation', 'MoebiusTransformation']
+type_list = ['BilinearTransformation', 'CayleyTransformation', 'MoebiusTransformation-real',
+             'MoebiusTransformation-complex']
 points_list = list(combinations([0, 1, -1, 1j, -1j, np.inf], 3))
 sampling_time_list = [0, 1/100, 2]
 
@@ -22,7 +23,9 @@ def get_transformation(name):
         return BilinearTransformation(2)
     elif name == 'CayleyTransformation':
         return CayleyTransformation()
-    elif name == 'MoebiusTransformation':
+    elif name == 'MoebiusTransformation-real':
+        return MoebiusTransformation([1, 2, 3, 4])
+    elif name == 'MoebiusTransformation-complex':
         return MoebiusTransformation([1+2j, 2+3j, 4+5j, 6+7j])
     else:
         raise KeyError
@@ -47,6 +50,16 @@ def test_matmul(m1, m2):
     assert np.allclose(m.coefficients.reshape(2, 2), m1.coefficients.reshape(2, 2) @ m2.coefficients.reshape(2, 2))
 
 
+@pytest.mark.parametrize('m1', type_list)
+def test_normalization(m1):
+    m1 = get_transformation(m1)
+    m2 = MoebiusTransformation(m1.coefficients, normalize=True)
+    a, b, c, d = m2.coefficients
+    assert np.isrealobj(m1.coefficients) == np.isrealobj(m2.coefficients)
+    assert np.allclose(m1(0), m2(0))
+    assert np.allclose(m1(1), m2(1))
+    assert np.allclose(m1(np.inf), m2(np.inf))
+
 @pytest.mark.parametrize('p1', points_list)
 @pytest.mark.parametrize('p2', points_list)
 def test_from_points(p1, p2):
@@ -64,13 +77,26 @@ def test_from_points(p1, p2):
 
 
 @pytest.mark.parametrize('sampling_time', sampling_time_list)
-def test_substitution(sampling_time):
-    sys1 = LTIModel.from_matrices(np.array([-1]), np.array([[1]]), np.array([[1]]), sampling_time=sampling_time)
+def test_tustin(sampling_time):
+    sys1 = LTIModel.from_matrices(np.array([1]), np.array([[1]]), np.array([[1]]), sampling_time=sampling_time)
     if sampling_time:
         sys2 = sys1.to_continuous()
         assert isinstance(sys2, LTIModel)
         assert sys2.sampling_time == 0
+        A2, B2, C2, D2, E2 = sys2.to_discrete(sampling_time).to_matrices()
     else:
         sys2 = sys1.to_discrete(1)
         assert isinstance(sys2, LTIModel)
         assert sys2.sampling_time == 1
+        A2, B2, C2, D2, E2 = sys2.to_continuous().to_matrices()
+
+    D2 = np.zeros((C2.shape[0], B2.shape[1])) if D2 is None else D2
+    E2 = np.eye(A2.shape[0]) if E2 is None else E2
+    A1, B1, C1, D1, E1 = sys1.to_matrices()
+    D1 = np.zeros((C1.shape[0], B1.shape[1])) if D1 is None else D1
+    E1 = np.eye(A1.shape[0]) if E1 is None else E1
+    assert np.allclose(A1, A2)
+    assert np.allclose(B1, B2)
+    assert np.allclose(C1, C2)
+    assert np.allclose(D1, D2)
+    assert np.allclose(E1, E2)

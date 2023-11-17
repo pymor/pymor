@@ -14,7 +14,7 @@ a single function call.
 """
 
 import numpy as np
-from scipy.linalg import solve
+import scipy.linalg as spla
 
 from pymor.algorithms.pod import pod as pod_alg
 from pymor.analyticalproblems.functions import EmpiricalInterpolatedFunction, Function
@@ -71,15 +71,18 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     data
         Dict containing the following fields:
 
-            :errors:                Sequence of maximum approximation errors during
-                                    greedy search.
-            :triangularity_errors:  Sequence of maximum absolute values of interpolation
-                                    matrix coefficients in the upper triangle (should
-                                    be near zero).
-            :coefficients:          |NumPy array| of coefficients such that `collateral_basis`
-                                    is given by `U.lincomb(coefficients)`.
-            :interpolation_matrix:  The interpolation matrix, i.e., the evaluation of
-                                    `collateral_basis` at `interpolation_dofs`.
+        :errors:
+            Sequence of maximum approximation errors during greedy search.
+        :triangularity_errors:
+            Sequence of maximum absolute values of interpolation
+            matrix coefficients in the upper triangle (should
+            be near zero).
+        :coefficients:
+            |NumPy array| of coefficients such that `collateral_basis`
+            is given by `U.lincomb(coefficients)`.
+        :interpolation_matrix:
+            The interpolation matrix, i.e., the evaluation of
+            `collateral_basis` at `interpolation_dofs`.
     """
     assert not isinstance(error_norm, str) or error_norm == 'sup'
     if pool:  # dispatch to parallel implementation
@@ -164,7 +167,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
 
     if nodal_basis:
         logger.info('Building nodal basis.')
-        inv_interpolation_matrix = np.linalg.inv(interpolation_matrix)
+        inv_interpolation_matrix = spla.inv(interpolation_matrix)
         collateral_basis = collateral_basis.lincomb(inv_interpolation_matrix.T)
         coefficients = inv_interpolation_matrix.T @ coefficients
         interpolation_matrix = np.eye(len(collateral_basis))
@@ -212,7 +215,8 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
     data
         Dict containing the following fields:
 
-            :svals: POD singular values.
+        :svals:
+            POD singular values.
     """
     assert isinstance(U, VectorArray)
 
@@ -234,8 +238,8 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
         logger.info(f'Choosing interpolation point for basis vector {i}.')
 
         if len(interpolation_dofs) > 0:
-            coefficients = solve(interpolation_matrix,
-                                 collateral_basis[i].dofs(interpolation_dofs).T).T
+            coefficients = spla.solve(interpolation_matrix,
+                                      collateral_basis[i].dofs(interpolation_dofs).T).T
             U_interpolated = collateral_basis[:len(interpolation_dofs)].lincomb(coefficients)
             ERR = collateral_basis[i] - U_interpolated
         else:
@@ -312,8 +316,10 @@ def interpolate_operators(fom, operator_names, parameter_sample, error_norm=None
     data
         Dict containing the following fields:
 
-            :dofs:     |NumPy array| of the DOFs at which the |Operators| have to be evaluated.
-            :basis:    |VectorArray| containing the generated collateral basis.
+        :dofs:
+            |NumPy array| of the DOFs at which the |Operators| have to be evaluated.
+        :basis:
+            |VectorArray| containing the generated collateral basis.
 
         In addition, `data` contains the fields of the `data` `dict` returned by
         :func:`ei_greedy`/:func:`deim`.
@@ -512,7 +518,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
 
     if nodal_basis:
         logger.info('Building nodal basis.')
-        inv_interpolation_matrix = np.linalg.inv(interpolation_matrix)
+        inv_interpolation_matrix = spla.inv(interpolation_matrix)
         collateral_basis = collateral_basis.lincomb(inv_interpolation_matrix.T)
         coefficients = inv_interpolation_matrix.T @ coefficients
         interpolation_matrix = np.eye(len(collateral_basis))

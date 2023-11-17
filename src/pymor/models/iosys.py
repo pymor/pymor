@@ -46,6 +46,7 @@ from pymor.operators.constructions import (
 )
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu, Parameters
+from pymor.parameters.functionals import ExpressionParameterFunctional, ProjectionParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
 
@@ -225,15 +226,17 @@ class LTIModel(Model):
         self.solution_space = A.source
         self.dim_output = C.range.dim
 
-        K = lambda s: s * self.E - self.A
-        B = lambda s: self.B
-        C = lambda s: self.C
-        D = lambda s: self.D
-        dK = lambda s: self.E
-        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
-        dC = lambda s: ZeroOperator(self.C.range, self.C.source)
-        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
         parameters = Parameters.of(self.A, self.B, self.C, self.D, self.E)
+        s = ProjectionParameterFunctional('s')
+
+        K = s * self.E - self.A
+        B = self.B
+        C = self.C
+        D = self.D
+        dK = self.E
+        dB = ZeroOperator(self.B.range, self.B.source)
+        dC = ZeroOperator(self.C.range, self.C.source)
+        dD = ZeroOperator(self.D.range, self.D.source)
 
         self.transfer_function = FactorizedTransferFunction(
             self.dim_input, self.dim_output,
@@ -807,8 +810,8 @@ class LTIModel(Model):
         y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
         for i, X in enumerate(Xs):
             y[:, :, i] = self.C.apply(X, mu=mu).to_numpy()
-        if self.sampling_time > 0 and isinstance(self.D, ZeroOperator):
-            y[0] += to_matrix(self.D, mu=mu, format='dense')
+        if self.sampling_time > 0 and not isinstance(self.D, ZeroOperator):
+            y[0] += to_matrix(self.D, mu=mu, format='dense') / self.sampling_time
 
         if return_solution:
             return y, Xs
@@ -1379,7 +1382,7 @@ class LTIModel(Model):
         if self.ast_pole_data is not None:
             if isinstance(E, IdentityOperator):
                 E = None
-            if type(self.ast_pole_data) == dict:
+            if isinstance(self.ast_pole_data, dict):
                 ew, rev = eigs(A, E, left_evp=False, **self.ast_pole_data)
                 ast_idx = (ew.real > 0)
                 ast_ews = ew[ast_idx]
@@ -1392,7 +1395,7 @@ class LTIModel(Model):
                     _, lev = eigs(A, E, k=1, l=3, sigma=ae, left_evp=True)
                     ast_levs.append(lev)
                 return ast_levs, ast_ews, rev[ast_idx]
-            elif type(self.ast_pole_data) == list:
+            elif isinstance(self.ast_pole_data, list):
                 assert all(np.real(self.ast_pole_data) > 0)
                 ast_pole_data = np.sort(self.ast_pole_data)
                 ast_levs = A.source.empty(reserve=len(ast_pole_data))
@@ -1458,17 +1461,15 @@ class LTIModel(Model):
         """
         assert isinstance(M, MoebiusTransformation)
 
-        a, b, c, d = M.coefficients
-        s = a * d - b * c
-        v = np.sqrt(np.abs(s))
+        a, b, c, d = MoebiusTransformation(M.coefficients, normalize=True).coefficients
 
-        Et = d * self.E + c * self.A
-        At = a * self.A + b * self.E
-        Bt = np.sign(s) * v * self.B
-        Ct = v * self.C @ InverseOperator(Et)
-        Dt = self.D - c * self.C @ InverseOperator(Et) @ self.B
+        Et = a * self.E - c * self.A
+        At = d * self.A - b * self.E
+        C = VectorArrayOperator(Et.apply_inverse_adjoint(self.C.H.as_range_array())).H
+        Ct = C @ self.E
+        Dt = self.D + c * C @ self.B
 
-        return LTIModel(At, Bt, Ct, D=Dt, E=Et, sampling_time=sampling_time)
+        return LTIModel(At, self.B, Ct, D=Dt, E=Et, sampling_time=sampling_time)
 
     def to_discrete(self, sampling_time, method='Tustin', w0=0):
         """Converts a continuous-time |LTIModel| to a discrete-time |LTIModel|.
@@ -1496,7 +1497,7 @@ class LTIModel(Model):
         assert sampling_time > 0
         assert isinstance(w0, Number)
         x = 2 / sampling_time if w0 == 0 else w0 / np.tan(w0 * sampling_time / 2)
-        c2d = BilinearTransformation(x).inverse()
+        c2d = BilinearTransformation(x)
         return self.moebius_substitution(c2d, sampling_time=sampling_time)
 
     def to_continuous(self, method='Tustin', w0=0):
@@ -1521,7 +1522,7 @@ class LTIModel(Model):
         assert self.sampling_time > 0
         assert isinstance(w0, Number)
         x = 2 / self.sampling_time if w0 == 0 else w0 / np.tan(w0 * self.sampling_time / 2)
-        d2c = BilinearTransformation(x)
+        d2c = BilinearTransformation(x).inverse()
         return self.moebius_substitution(d2c, sampling_time=0)
 
 
@@ -1543,7 +1544,7 @@ class PHLTIModel(LTIModel):
             -G(\mu)^T & N(\mu)
         \end{bmatrix},
         \text{ and }
-        W(\mu) =
+        \mathcal{W}(\mu) =
         \begin{bmatrix}
             R(\mu) & P(\mu) \\
             P(\mu)^T & S(\mu)
@@ -1552,7 +1553,7 @@ class PHLTIModel(LTIModel):
     satisfy
     :math:`H(\mu) = H(\mu)^T \succ 0`,
     :math:`\Gamma(\mu)^T = -\Gamma(\mu)`, and
-    :math:`W(\mu) = W(\mu)^T \succcurlyeq 0`.
+    :math:`\mathcal{W}(\mu) = \mathcal{W}(\mu)^T \succcurlyeq 0`.
 
     A dynamical system of this form, together with a given quadratic (energy) function
     :math:`\mathcal{H}(x, \mu) = \tfrac{1}{2} x^T H(\mu) x`, typically called Hamiltonian,
@@ -1978,14 +1979,17 @@ class SecondOrderModel(Model):
         self.solution_space = M.source
         self.dim_output = Cp.range.dim
 
-        K = lambda s: s ** 2 * self.M + s * self.E + self.K
-        B = lambda s: self.B
-        C = lambda s: self.Cp + s * self.Cv
-        D = lambda s: self.D
-        dK = lambda s: 2 * s * self.M + self.E
-        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
-        dC = lambda s: self.Cv
-        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
+        s = ProjectionParameterFunctional('s')
+        s_quad = ExpressionParameterFunctional('s[0]**2', parameters=s.parameters)
+
+        K = s_quad * self.M + s * self.E + self.K
+        B = self.B
+        C = self.Cp + s * self.Cv
+        D = self.D
+        dK = 2 * s * self.M + self.E
+        dB = ZeroOperator(self.B.range, self.B.source)
+        dC = self.Cv
+        dD = ZeroOperator(self.D.range, self.D.source)
         parameters = Parameters.of(self.M, self.E, self.K, self.B, self.Cp, self.Cv, self.D)
 
         self.transfer_function = FactorizedTransferFunction(
@@ -2674,14 +2678,17 @@ class LinearDelayModel(Model):
         self.dim_output = C.range.dim
         self.q = len(Ad)
 
-        K = lambda s: LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
-        B = lambda s: self.B
-        C = lambda s: self.C
-        D = lambda s: self.D
-        dK = lambda s: LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
-        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
-        dC = lambda s: ZeroOperator(self.C.range, self.C.source)
-        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
+        s = ProjectionParameterFunctional('s')
+        exp_tau_s = lambda taui: ExpressionParameterFunctional(f'exp(- {taui} * s[0])', parameters=s.parameters)
+
+        K = LincombOperator((E, A) + Ad, (s, -1) + tuple(-exp_tau_s(taui) for taui in self.tau))
+        B = self.B
+        C = self.C
+        D = self.D
+        dK = LincombOperator((E,) + Ad, (1,) + tuple(taui * exp_tau_s(taui) for taui in self.tau))
+        dB = ZeroOperator(self.B.range, self.B.source)
+        dC = ZeroOperator(self.C.range, self.C.source)
+        dD = ZeroOperator(self.D.range, self.D.source)
         parameters = Parameters.of(self.A, self.Ad, self.B, self.C, self.D, self.E)
 
         self.transfer_function = FactorizedTransferFunction(

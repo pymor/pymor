@@ -68,16 +68,20 @@ class GenericBHIReductor(BasicObject):
         self._product = None
 
     def _B_apply(self, s, V):
-        return self.fom.transfer_function.B(s).apply(V, mu=self.mu)
+        mu = self.mu.with_(s=s)
+        return self.fom.transfer_function.B.apply(V, mu=mu)
 
     def _C_apply_adjoint(self, s, V):
-        return self.fom.transfer_function.C(s).apply_adjoint(V, mu=self.mu)
+        mu = self.mu.with_(s=s)
+        return self.fom.transfer_function.C.apply_adjoint(V, mu=mu)
 
     def _K_apply_inverse(self, s, V):
-        return self.fom.transfer_function.K(s).apply_inverse(V, mu=self.mu)
+        mu = self.mu.with_(s=s)
+        return self.fom.transfer_function.K.apply_inverse(V, mu=mu)
 
     def _K_apply_inverse_adjoint(self, s, V):
-        return self.fom.transfer_function.K(s).apply_inverse_adjoint(V, mu=self.mu)
+        mu = self.mu.with_(s=s)
+        return self.fom.transfer_function.K.apply_inverse_adjoint(V, mu=mu)
 
     @abstractmethod
     def _fom_assemble(self):

@@ -1,14 +1,13 @@
 ---
 # Markdown linter rules
 # linter rules doc: https://github.com/DavidAnson/markdownlint
-
 MD003:
-  style: atx # use "#" for headers
+  style: atx  # use "#" for headers
 MD013:
-  line_length: 120 # line length 80 is far too short
+  line_length: 120  # line length 80 is far too short
 MD033:
-  allowed_elements: # allowed HTML tags
+  allowed_elements:  # allowed HTML tags
     - img
-MD034: false # allow bare URLs
-MD040: false # ``` fenced code must have language set
-MD041: false # require heading as first line in file
+MD034: false  # allow bare URLs
+MD040: false  # ``` fenced code must have language set
+MD041: false  # require heading as first line in file

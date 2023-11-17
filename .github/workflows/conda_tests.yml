@@ -1,3 +1,4 @@
+---
 name: Conda Tests
 on:
   # run tests on pull requests for main and release branches
@@ -9,8 +10,8 @@ on:
       - create-pull-request/patch*
   pull_request:
   merge_group:
-    types: [checks_requested]
-
+    types:
+      - checks_requested
 jobs:
   bugout:
     name: Cancel superseded jobs
@@ -25,42 +26,47 @@ jobs:
           access_token: ${{ github.token }}
   event_file:
     # this is input for the pytest_results workflow
-    name: "Event File"
+    name: Event File
     runs-on: ubuntu-22.04
     steps:
-    - name: Upload
-      uses: actions/upload-artifact@v3
-      with:
-        name: Event File
-        path: ${{ github.event_path }}
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: Event File
+          path: ${{ github.event_path }}
   miniconda:
     name: ${{ matrix.os }} - Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     strategy:
-        matrix:
-            os: [ubuntu-22.04, macos-12, windows-2022]
-            python: ["3.8", "3.10"]
-            include:
-              - os: ubuntu-22.04
-                prefix: /usr/share/miniconda3/envs/pyMOR-ci
-                environment_file: conda-linux-64.lock
-              - os: macos-12
-                prefix: /Users/runner/miniconda3/envs/pyMOR-ci
-                environment_file: conda-osx-64.lock
-              - os: macos-12
-                python: 3.8
-                prefix: /Users/runner/miniconda3/envs/pyMOR-ci
-                environment_file: conda-osx-64.lock
-              - os: windows-2022
-                prefix: C:\Miniconda3\envs\pyMOR-ci
-                environment_file: conda-win-64.lock
+      matrix:
+        os:
+          - ubuntu-22.04
+          - macos-12
+          - windows-2022
+        python:
+          - '3.8'
+          - '3.11'
+        include:
+          - os: ubuntu-22.04
+            prefix: /usr/share/miniconda3/envs/pyMOR-ci
+            environment_file: conda-linux-64.lock
+          - os: macos-12
+            prefix: /Users/runner/miniconda3/envs/pyMOR-ci
+            environment_file: conda-osx-64.lock
+          - os: macos-12
+            python: 3.8
+            prefix: /Users/runner/miniconda3/envs/pyMOR-ci
+            environment_file: conda-osx-64.lock
+          - os: windows-2022
+            prefix: C:\Miniconda3\envs\pyMOR-ci
+            environment_file: conda-win-64.lock
             # avoid failure in one job immeadiately cancelling all others
-        fail-fast: false
+      fail-fast: false
     steps:
       - uses: actions/checkout@v3
       - name: Miniconda Steps
-        uses:  ./.github/actions/miniconda_tests
+        uses: ./.github/actions/miniconda_tests
         with:
           python: ${{ matrix.python }}
           prefix: ${{ matrix.prefix }}
@@ -68,11 +74,11 @@ jobs:
           results_file: result_${{ matrix.os }}-${{ matrix.python }}.xml
           coverage_file: coverage_${{ matrix.os }}-${{ matrix.python }}
           environment_file: ${{ matrix.environment_file }}
-
   coverage_to_html:
     name: Upload HTML Coverage Report
     runs-on: ubuntu-22.04
-    needs: [miniconda]
+    needs:
+      - miniconda
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
@@ -82,7 +88,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.11'
       - name: Install dependencies
         run: |
           pip install coverage[toml]

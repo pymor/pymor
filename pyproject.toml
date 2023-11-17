@@ -5,200 +5,155 @@ build-backend = "hatchling.build"
 [project]
 name = "pymor"
 dynamic = ["version"]
-description = " "
+description = "Library for building model order reduction applications with Python"
 readme = "README.md"
-license.file = "LICENSE.txt"
+license = {file = "LICENSE.txt"}
 requires-python = ">=3.8"
 authors = [
-    { name = "pyMOR developers", email = "main.developers@pymor.org" },
+  {name = "pyMOR developers", email = "main.developers@pymor.org"},
 ]
 maintainers = [
-    { name = "Stephan Rave", email = "stephan.rave@uni-muenster.de" },
+  {name = "Stephan Rave", email = "stephan.rave@uni-muenster.de"},
 ]
 classifiers = [
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: BSD License",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Topic :: Scientific/Engineering :: Mathematics",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Scientific/Engineering :: Mathematics",
 ]
 dependencies = [
-    "diskcache",
-    "matplotlib",
-    "numpy>=1.20.3,!=1.25.0",  # 1.25.0 crashes CI
-    "packaging",
-    "pillow",
-    "pygments",
-    "qtpy>=2.3.1",
-    "scipy>=1.5.4",
-    "typer",
+  "diskcache",
+  "matplotlib>=3.5.0",
+  "numpy>=1.20.3,!=1.25.0", # 1.25.0 crashes CI
+  "packaging",
+  "pillow",
+  "pygments",
+  "qtpy>=2.3.1",
+  "scipy>=1.5.4",
+  "typer",
 ]
 
 [project.optional-dependencies]
 # additional dependencies for building docs via 'make docs'
 docs = [
-   "pymor[docs_additional,jupyter,slycot,ann]"
+  "pymor[docs_additional,jupyter,slycot,ann]",
 ]
-
 # we have the docs-related additional dependencies as a separate extra here
 # to avoid pip-compile include pymor itself as a dependency, why is happening
 # when recursive extras are used within recursive extras
 docs-additional = [
-    "bash_kernel",
-    "docutils",
-    "myst-nb>=0.16",
-    "pybind11[global]",
-    "python-slugify",
-    "sphinx-autoapi>=1.8,<2",
-    "sphinx-material",
-    "sphinx>=5.0,<5.2",
-    "sphinxcontrib-bibtex",
+  "bash_kernel",
+  "docutils",
+  "myst-nb>=0.16",
+  "pybind11[global]",
+  "python-slugify",
+  "sphinx-autoapi>=1.8,<2",
+  "sphinx-material",
+  "sphinx>=5.0,<5.2",
+  "sphinxcontrib-bibtex",
 ]
-
 # additional dependencies for running tests via 'make tests'
 tests = [
-    "hypothesis[numpy,pytest]==6.56.3",  # pin hypothesis version to ensure deterministic tests
-    "pytest-notebook",
-    "pytest-cov",
-    "pytest-datadir",
-    "pytest>=7.2.1",  # 7.2.0 causes format_source tests to fail do to wrong paths in co_filename
+  "hypothesis[numpy,pytest]==6.56.3", # pin hypothesis version to ensure deterministic tests
+  "pytest-notebook",
+  "notebook",
+  "pytest-cov",
+  "pytest-datadir",
+  "pytest>=7.2.1", # 7.2.0 causes format_source tests to fail do to wrong paths in co_filename
 ]
-
 # additional dependencies for pyMOR development
 dev = [
-    "ruff==0.0.276",      # our linter of choice
-    "conda_lock==1.4.0",  # needed for make ci_conda_requirements
-    "hatch",              # build frontend for building and publishing pyMOR images
+  "ruff==0.0.292", # our linter of choice
+  "conda_lock==1.4.0", # needed for make ci_conda_requirements
+  "hatch", # build frontend for building and publishing pyMOR images
 ]
-
-
-### Optional dependencies for MOR algorithms
-
+# ## Optional dependencies for MOR algorithms
 # dependencies for deep-learning based MOR methods
 ann = [
-    "torch>=1.11.0",
+  "torch>=1.11.0",
 ]
-
 # dense matrix equation solver for system-theoretic methods and H-infinity norm calculation
 # requires OpenBLAS headers and a Fortran compiler
 slycot = [
-    "slycot>=0.5.4",
+  "slycot>=0.5.4",
 ]
-
-# dense and sparse matrix equation solvers for system-theoretic methods (recommended to be installed from source)
-pymess = [
-    "pymess"
-]
-
 # parallelization of some MOR algorithms (e.g. greedy search) using ipyparallel
 ipyparallel = [
-    "ipyparallel>=6.2.5",
+  "ipyparallel>=6.2.5",
 ]
-
 # parallelization of some MOR algorithms (e.g. greedy search) using mpi
 # support for MPI-distributed solvers
 mpi = [
-    "mpi4py>=3.0.3",
+  "mpi4py>=3.0.3",
 ]
-
-
-### Builtin discretizations
-
+# ## Builtin discretizations
 # GUI support for builtin discretizations
 gui = [
-    "pyside6>=6.4.3",
-    "pyopengl!=3.1.7",
+  "pyside6>=6.4.3",
+  "pyopengl!=3.1.7",
 ]
-
 # jupyter integration
 jupyter = [
-    "ipympl",
-    "ipywidgets>7",
-    "jupyter_contrib_nbextensions",
-    "jupyter_server>1.3,<2.0",
-    "k3d>=2.15.2",
+  "ipympl",
+  "ipywidgets>7",
+  "jupyterlab",
+  "jupyterlab-myst",
+  "k3d>=2.15.2",
+  "notebook",
 ]
-
 # VTK output for builtin discretizations
 vtk = [
-    "lxml",
-    "meshio>=4.4",
-    "pyevtk",
-    "xmljson",
+  "lxml",
+  "meshio>=4.4",
+  "pyevtk",
+  "xmljson",
 ]
-
 # gmsh support for builtin discretizations
 gmsh = [
-    "gmsh",
+  "gmsh",
 ]
-
-
-## Supported external solvers available on PyPI
-
+# # Supported external solvers available on PyPI
 dune = [
-    "dune-xt[visualisation]>=2022.5.3; platform_system==\"Linux\" and platform_machine==\"x86_64\"",
-    "dune-gdt>=2022.5.3; platform_system==\"Linux\" and platform_machine==\"x86_64\"",
+  "dune-xt[visualisation]>=2022.5.3; platform_system==\"Linux\" and platform_machine==\"x86_64\"",
+  "dune-gdt>=2022.5.3; platform_system==\"Linux\" and platform_machine==\"x86_64\"",
 ]
-
 ngsolve = [
-    "ngsolve",
+  "ngsolve",
 ]
-
 scikit-fem = [
-    "scikit-fem>=6.0.0",
+  "scikit-fem>=6.0.0",
 ]
-
-
-## Meta dependencies
-
+# # Meta dependencies
 # install all optional dependencies, except those requiring a compiler toolchain to build
-# pymess is excluded here as installation from source is recommended by the developers
 full = [
-    "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,dune,ngsolve,scikit-fem]",
+  "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,dune,ngsolve,scikit-fem]",
 ]
-
 # install all optional dependencies, including those requiring a compiler toolchain to build
 full-compiled = [
-    "pymor[full,slycot,mpi]",
+  "pymor[full,slycot,mpi]",
 ]
-
 
 [project.scripts]
 pymor-demo = "pymor.scripts.pymor_demo:run"
 pymor-vis = "pymor.scripts.pymor_vis:run"
 
 [project.urls]
-Homepage = "https://pymor.org"
+homepage = "https://pymor.org"
+documentation = "https://docs.pymor.org"
+source = "https://github.com/pymor/pymor"
+tracker = "https://github.com/pymor/pymor/issues"
+"release notes" = "https://docs.pymor.org/latest/release_notes/all.html"
 
-[tool.hatch.version]
-path = "src/pymor/__init__.py"
-
-[tool.hatch.build.targets.sdist]
-include = [
-    "/src",
-    "/docs",
-    "CITATION.cff"
+# each entry is a list of paths that coverage will consider to be equivalent
+# this allows to map source files if pymor is imported from installed package
+[tool.coverage.paths]
+root = [
+  "/pymor",
+  "src/pymor",
 ]
-
-[tool.hatch.build.targets.wheel]
-packages = [
-    "/src/pymor",
-    "/src/pymordemos",
-]
-
-
-[tool.pytest.ini_options]
-pythonpath = "src"
-testpaths = "src/pymortests"
-python_files = "*.py"
-# exclude misbehaving plugin from auto load
-addopts = "-p no:nb_regression --durations 10"
-junit_family = "xunit2"
-markers = [
-    "builtin: test does not require external PDE solver"
-]
-
 
 # omit the runtime compiled source of pymor.analyticalproblems.expression.Expression
 [tool.coverage.report]
@@ -224,55 +179,95 @@ omit = [
   "pymor/version",
 ]
 
-# each entry is a list of paths that coverage will consider to be equivalent
-# this allows to map source files if pymor is imported from installed package
-[tool.coverage.paths]
-root = [
-  "/pymor",
-  "src/pymor",
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/docs",
+  "CITATION.cff",
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = [
+  "/src/pymor",
+  "/src/pymordemos",
+]
+
+[tool.hatch.version]
+path = "src/pymor/__init__.py"
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+testpaths = "src/pymortests"
+python_files = "*.py"
+# exclude misbehaving plugin from auto load
+addopts = "-p no:nb_regression --durations 10"
+junit_family = "xunit2"
+markers = [
+  "builtin: test does not require external PDE solver",
+]
 
 [tool.ruff]
-# this makes isort behave nicely
-src = ["src"]
+src = ["src"] # this makes isort behave nicely
 line-length = 120
-select = ["D", "E", "F", "I", "ICN", "N", "Q", "W"]
+select = [
+  "F", # Pyflakes
+  "W", # pycodestyle warning
+  "E", # pycodestyle error
+  "I", # isort
+  "N", # pep8-naming
+  "D", # pydocstyle
+  "ICN", # flake8-import-conventions
+  "Q", # flake8-quotes
+]
 ignore = [
-    "D10", "D404",
-    "D401", "D405", "D407", "D410", "D411", "D414", # related to 'parameters'
-    "E402", "E731", "E741",
-    "F722",
-    "N802", "N803", "N806"]
-# D10? missing docstring in module, function, method, magic, __init__, public nested class
-# D404 First word of the docstring should not be "This"
-# D405, D407, D410, D411, D414 The linter thins the argument name 'parameters' is a docstring section
-# E402 module level import not at top of file (due to config.require("PKG") syntax)
-# E731 do not assign a lambda expression, use a def
-# E741 do not use variables named 'l', 'O', or 'I'
-# F722 syntax error in forward annotation
-# N802 function name should be lowercase
-# N803 argument name should be lowercase (we use single capital letters everywhere for vectorarrays)
-# N806 same for variables in function
+  "D100", # missing docstring in public module
+  "D101", # missing docstring in public class
+  "D102", # missing docstring in public method
+  "D103", # missing docstring in public function
+  "D104", # missing docstring in public package
+  "D105", # missing docstring in magic method
+  "D106", # missing docstring in public nested class
+  "D401", # first line of docstring should be in imperative mood
+  "D404", # first word of the docstring should not be "This"
+  "D405", # the linter thinks the argument name 'parameters' is a docstring section
+  "D407", # same as above
+  "D410", # same as above
+  "D411", # same as above
+  "D414", # same as above
+  "E402", # module level import not at top of file (due to config.require("PKG") syntax)
+  "E731", # do not assign a lambda expression, use a def
+  "E741", # do not use variables named 'l', 'O', or 'I'
+  "N802", # function name should be lowercase
+  "N803", # argument name should be lowercase (we use single capital letters everywhere for vectorarrays)
+  "N806", # same for variables in function
+]
 
 [tool.ruff.flake8-import-conventions]
+banned-from = ["numpy.linalg"] # avoids importing similar routines from numpy.linalg and scipy.linalg
+
 [tool.ruff.flake8-import-conventions.extend-aliases]
+scipy = "" # don't import scipy directly
 "scipy.linalg" = "spla"
 
 [tool.ruff.flake8-quotes]
 inline-quotes = "single"
 
 [tool.ruff.per-file-ignores]
-"__init__.py" = ["F401"]
+"__init__.py" = ["F401"] # module imported but unused
+"docs/source/try_on_binder.py" = ["N801"] # class name CapWords convention
 "src/pymor/algorithms/rules.py" = ["N801", "N805"] # class name CapWords convention, first argument should be `self`
 "src/pymor/analyticalproblems/expressions.py" = ["N801"] # class name CapWords convention
-"versioneer.py" = ["N801"] # class name CapWords convention
-"docs/source/try_on_binder.py" = ["N801"] # class name CapWords convention
-"src/pymordemos/*" = ["F403", "F405"] # undefined import due to pymor.basic functionality
 "src/pymor/basic.py" = ["F401"] # ununsed imports
+"src/pymordemos/*" = ["F403", "F405"] # undefined import due to pymor.basic functionality
 
 [tool.ruff.pycodestyle]
 max-doc-length = 100
 
 [tool.ruff.pydocstyle]
 convention = "numpy"
+
+[tool.tomlsort]
+trailing_comma_inline_array = true
+
+[tool.yamlfix]
+sequence_style = "block_style"

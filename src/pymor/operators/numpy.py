@@ -18,6 +18,7 @@ This module provides the following |NumPy|-based |Operators|:
 from functools import reduce
 
 import numpy as np
+import scipy.linalg as spla
 import scipy.sparse
 from numpy.fft import fft, ifft, irfft, rfft
 from scipy.io import mmwrite, savemat
@@ -170,6 +171,12 @@ class NumpyMatrixBasedOperator(Operator):
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     """Wraps a 2D |NumPy Array| or |SciPy spmatrix| as an |Operator|.
 
+    .. note::
+        In the case of a |NumPy array|, the `apply_inverse` method by default
+        uses `check_finite=True` and `check_cond=True`.
+        Setting them to `False` (e.g., via `defaults`) can significantly speed
+        up the computation, especially for smaller matrices.
+
     Parameters
     ----------
     matrix
@@ -242,9 +249,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert V in self.range
         return self.H.apply(V, mu=mu)
 
-    @defaults('check_finite', 'default_sparse_solver_backend')
+    @defaults('check_finite', 'check_cond', 'default_sparse_solver_backend')
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False,
-                      check_finite=True, default_sparse_solver_backend='scipy'):
+                      check_finite=True, check_cond=True, default_sparse_solver_backend='scipy'):
         """Apply the inverse operator.
 
         Parameters
@@ -271,6 +278,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             undesirable.
         check_finite
             Test if solution only contains finite values.
+        check_cond
+            Check condition number in case the matrix is a |NumPy array|.
         default_sparse_solver_backend
             Default sparse solver backend to use (scipy, generic).
 
@@ -320,22 +329,23 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             if least_squares:
                 try:
-                    R, _, _, _ = np.linalg.lstsq(self.matrix, V.to_numpy().T, rcond=None)
+                    R, _, _, _ = spla.lstsq(self.matrix, V.to_numpy().T)
                 except np.linalg.LinAlgError as e:
                     raise InversionError(f'{str(type(e))}: {str(e)}') from e
                 R = R.T
             else:
                 if not hasattr(self, '_lu_factor'):
                     try:
-                        self._lu_factor = lu_factor(self.matrix)
+                        self._lu_factor = lu_factor(self.matrix, check_finite=check_finite)
                     except np.linalg.LinAlgError as e:
                         raise InversionError(f'{str(type(e))}: {str(e)}') from e
-                    gecon = get_lapack_funcs('gecon', self._lu_factor)
-                    rcond, _ = gecon(self._lu_factor[0], np.linalg.norm(self.matrix, ord=1), norm='1')
-                    if rcond < np.finfo(np.float64).eps:
-                        self.logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}) in apply_inverse: '
-                                            'result may not be accurate.')
-                R = lu_solve(self._lu_factor, V.to_numpy().T).T
+                    if check_cond:
+                        gecon = get_lapack_funcs('gecon', self._lu_factor)
+                        rcond, _ = gecon(self._lu_factor[0], np.linalg.norm(self.matrix, ord=1), norm='1')
+                        if rcond < np.finfo(np.float64).eps:
+                            self.logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}) in apply_inverse: '
+                                                'result may not be accurate.')
+                R = lu_solve(self._lu_factor, V.to_numpy().T, check_finite=check_finite).T
 
             if check_finite:
                 if not np.isfinite(np.sum(R)):

@@ -15,6 +15,8 @@ function init_ssh {
     chmod 600 "$DOCS_DEPLOY_KEY_ZIV"
     ssh-add "$DOCS_DEPLOY_KEY_ZIV"
 
+    chmod 600 "$BINDER_DEPLOY_KEY"
+
     [[ -d ~/.ssh ]] || mkdir -p  ~/.ssh
     chmod 700 ~/.ssh
     ssh-keyscan -H github.com >> ~/.ssh/known_hosts
@@ -56,9 +58,23 @@ git add list.html
 
 git push || (git pull --rebase && git push )
 
-[[ "${SLUG}" != "main" ]] && git checkout -b ${SLUG}
-rm -rf ${REPO_DIR}/.binder
-mkdir ${REPO_DIR}/.binder
+ssh docs@docs-ng.pymor.org
+
+
+## binder
+cd "${PYMOR_ROOT}"
+git clone --depth 2 git@github.com:pymor/binder.git binder_repo
+cd binder_repo
+git config user.name "pyMOR Bot"
+git config user.email "gitlab-ci@pymor.org"
+
+if [[ "${SLUG}" != "main" ]] ; then
+	git checkout --orphan ${SLUG}
+	git rm -rf .
+else
+	git rm -rf ./.binder
+fi
+mkdir .binder
 
 if [ -v CI_COMMIT_TAG ] ; then
 	IMAGE_TAG=$CI_COMMIT_TAG
@@ -71,26 +87,34 @@ elif [ -v CI_COMMIT_BRANCH ] ; then
 else
 	IMAGE_TAG="${CI_CURRENT_IMAGE_TAG}"
 fi
-# cp ${PYMOR_ROOT}/requirements-ci.txt ${REPO_DIR}/.binder/requirements.txt
-# echo "python-3.10" > ${REPO_DIR}/.binder/runtime.txt
+
+NOTEBOOK_URLS=""
+pushd ${PYMOR_ROOT}/docs/_build/html/
+for nb in $(find _downloads/ -name "*.ipynb") ; do
+	NOTEBOOK_URLS="${NOTEBOOK_URLS} https://docs.pymor.org/${SLUG}/${nb}"
+done
+popd
+
 # this needs to go into the repo root, not the subdir!
 sed -e "s;BINDERIMAGE;zivgitlab.wwu.io/pymor/pymor/ci-current:${IMAGE_TAG};g" -e "s;SLUG;${SLUG};g" \
     -e "s;PYMOR_COMMIT;${CI_COMMIT_SHA};g" \
-	${PYMOR_ROOT}/docker/Dockerfile.binder.tocopy > ${REPO_DIR}/.binder/Dockerfile
+    -e "s;NOTEBOOK_URLS;${NOTEBOOK_URLS};g" \
+	${PYMOR_ROOT}/docker/Dockerfile.binder.tocopy > .binder/Dockerfile
 
 # for binder the notebooks need to exist alongside their .rst version
-cd ${TARGET_DIR}
-for nb in $(find ./_downloads/ -name "*.ipynb") ; do
-  # cannot use symlinks here due to github pages limitation
-  cp -a ${nb} .
-done
+# cd ${TARGET_DIR}
 
-git add ${TARGET_DIR}/*ipynb
-git add ${REPO_DIR}/.binder/
+# echo "python-3.11" > .binder/runtime.txt
+# cp ${PYMOR_ROOT}/conda-linux-64.lock .binder/environment.yml
+# echo "pymor @ git+https://github.com/pymor/pymor@${CI_COMMIT_SHA}" > .binder/requirements.txt
+
+# git add ${REPO_DIR}/*ipynb
+git add .binder/
 
 (git diff --quiet && git diff --staged --quiet) || \
   git commit -am "Binder setup for ${CI_COMMIT_REF_NAME}"
 
+# ensure that git uses the right deploy key
+ssh-add -D
+ssh-add "$BINDER_DEPLOY_KEY"
 git push origin ${SLUG} -f
-
-ssh docs@docs-ng.pymor.org

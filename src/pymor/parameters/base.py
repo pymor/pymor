@@ -35,7 +35,7 @@ class Parameters(SortedFrozenDict):
     __slots__ = ()
 
     def _post_init(self):
-        assert all(type(k) is str and type(v) is int and 0 <= v
+        assert all(isinstance(k, str) and isinstance(v, int) and 0 <= v
                    for k, v in self.items())
         assert self.get('t', 1) == 1, 'time parameter must have length 1'
 
@@ -164,7 +164,8 @@ class Parameters(SortedFrozenDict):
             parsed_mu = {}
             for k, v in self.items():
                 if len(mu) > 0 and isinstance(mu[0], Function) and \
-                        len(mu[0].shape_range) == 1 and mu[0].shape_range[0] > 1:
+                        len(mu[0].shape_range) == 1 and \
+                        (mu[0].shape_range[0] > 1 or v == 1):
                     p, mu = mu[0], mu[1:]
                     p.shape_range[0] == v or \
                         fail(f'shape of parameter function for parameter {k} must be {v} (not {p.shape_range[0]}):\n'

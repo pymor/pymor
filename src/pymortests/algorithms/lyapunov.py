@@ -138,14 +138,23 @@ def relative_residual(A, E, B, X, cont_time, trans=False):
 def test_cont_lrcf(n, m, with_E, trans, solver):
     skip_if_missing_solver(solver)
 
+    mat_old = []
+    mat_new = []
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 0.1, cont_time=True)
         E = None
     else:
         A, E = conv_diff_1d_fem(n, 1, 0.1, cont_time=True)
+        mat_old.append(E.copy())
+        mat_new.append(E)
+    mat_old.append(A.copy())
+    mat_new.append(A)
+
     B = np.random.randn(n, m)
     if trans:
         B = B.T
+    mat_old.append(B.copy())
+    mat_new.append(B)
 
     Aop = NumpyMatrixOperator(A)
     Eop = NumpyMatrixOperator(E) if with_E else None
@@ -157,6 +166,13 @@ def test_cont_lrcf(n, m, with_E, trans, solver):
     Z = Zva.to_numpy().T
     assert relative_residual(A, E, B, Z @ Z.T, trans=trans, cont_time=True) < 1e-10
 
+    for mat1, mat2 in zip(mat_old, mat_new):
+        assert type(mat1) == type(mat2)
+        if sps.issparse(mat1):
+            mat1 = mat1.toarray()
+            mat2 = mat2.toarray()
+        assert np.all(mat1 == mat2)
+
 
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
@@ -166,15 +182,23 @@ def test_cont_lrcf(n, m, with_E, trans, solver):
 def test_disc_lrcf(n, m, with_E, trans, solver):
     skip_if_missing_solver(solver)
 
+    mat_old = []
+    mat_new = []
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 0.1, cont_time=False)
         E = None
     else:
         A, E = conv_diff_1d_fem(n, 1, 0.1, cont_time=False)
+        mat_old.append(E.copy())
+        mat_new.append(E)
+    mat_old.append(A.copy())
+    mat_new.append(A)
 
     B = np.random.randn(n, m)
     if trans:
         B = B.T
+    mat_old.append(B.copy())
+    mat_new.append(B)
 
     Aop = NumpyMatrixOperator(A)
     Eop = NumpyMatrixOperator(E) if with_E else None
@@ -186,6 +210,13 @@ def test_disc_lrcf(n, m, with_E, trans, solver):
     Z = Zva.to_numpy().T
     assert relative_residual(A, E, B, Z @ Z.T, trans=trans, cont_time=False) < 1e-10
 
+    for mat1, mat2 in zip(mat_old, mat_new):
+        assert type(mat1) == type(mat2)
+        if sps.issparse(mat1):
+            mat1 = mat1.toarray()
+            mat2 = mat2.toarray()
+        assert np.all(mat1 == mat2)
+
 
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
@@ -195,16 +226,30 @@ def test_disc_lrcf(n, m, with_E, trans, solver):
 def test_cont_dense(n, m, with_E, trans, solver):
     skip_if_missing_solver(solver)
 
-    A = np.random.randn(n, n)
+    A = np.asfortranarray(np.random.randn(n, n))
     E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
     B = np.random.randn(n, m)
     if trans:
         B = B.T
 
+    mat_old = []
+    mat_new = []
+    if E is not None:
+        mat_old.append(E.copy())
+        mat_new.append(E)
+    mat_old.append(A.copy())
+    mat_new.append(A)
+    mat_old.append(B.copy())
+    mat_new.append(B)
+
     X = solve_cont_lyap_dense(A, E, B, trans=trans, options=solver)
     assert type(X) is np.ndarray
 
     assert relative_residual(A, E, B, X, trans=trans, cont_time=True) < 1e-10
+
+    for mat1, mat2 in zip(mat_old, mat_new):
+        assert type(mat1) == type(mat2)
+        assert np.all(mat1 == mat2)
 
 
 @pytest.mark.parametrize('n', n_list_small)
@@ -215,13 +260,27 @@ def test_cont_dense(n, m, with_E, trans, solver):
 def test_disc_dense(n, m, with_E, trans, solver):
     skip_if_missing_solver(solver)
 
-    A = np.random.randn(n, n)
+    A = np.asfortranarray(np.random.randn(n, n))
     E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
     B = np.random.randn(n, m)
     if trans:
         B = B.T
 
+    mat_old = []
+    mat_new = []
+    if E is not None:
+        mat_old.append(E.copy())
+        mat_new.append(E)
+    mat_old.append(A.copy())
+    mat_new.append(A)
+    mat_old.append(B.copy())
+    mat_new.append(B)
+
     X = solve_disc_lyap_dense(A, E, B, trans=trans, options=solver)
     assert type(X) is np.ndarray
 
     assert relative_residual(A, E, B, X, trans=trans, cont_time=False) < 1e-10
+
+    for mat1, mat2 in zip(mat_old, mat_new):
+        assert type(mat1) == type(mat2)
+        assert np.all(mat1 == mat2)

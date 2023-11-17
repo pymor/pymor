@@ -1,28 +1,45 @@
+---
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 exclude: .ci/gitlab/ci.yml
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
-    -   id: trailing-whitespace
-    -   id: check-yaml
-    -   id: check-json
-    -   id: check-symlinks
-    -   id: check-added-large-files
-    -   id: debug-statements
-        exclude: "src/pymor/algorithms/rules.py"
-    -   id: pretty-format-json
-        args: [--autofix]
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: 'v0.0.276'
-  hooks:
-    - id: ruff
-      args: ["--fix"]
-- repo: https://github.com/DavidAnson/markdownlint-cli2
-  rev: v0.8.1
-  hooks:
-  - id: markdownlint-cli2
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-json
+      - id: check-symlinks
+      - id: check-added-large-files
+      - id: debug-statements
+        exclude: src/pymor/algorithms/rules.py
+      - id: pretty-format-json
+        args:
+          - --autofix
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.0.292
+    hooks:
+      - id: ruff
+        args:
+          - --fix
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.10.0
+    hooks:
+      - id: markdownlint-cli2
+        args:
+          - --fix
+  - repo: https://github.com/pappasam/toml-sort.git
+    rev: v0.23.1
+    hooks:
+      - id: toml-sort-fix
+  - repo: https://github.com/lyz-code/yamlfix
+    rev: 1.15.0
+    hooks:
+      - id: yamlfix
+        types:
+          - text
+        files: \.yaml|\.yml|\.cff$
+        exclude: ^conda
 ci:
   autofix_prs: false
   autoupdate_schedule: quarterly

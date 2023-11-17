@@ -33,7 +33,7 @@ class LogViewer(logging.Handler):
                 display(self.accordion)
             self.first_emit = False
         record = self.formatter.format_html(record)
-        self.out.value += f'<p style="line-height:120%">{record}</p>'
+        self.out.value += f'<div style="font-family:monospace,monospace;line-height:120%">{record}<br></div>'
 
     @property
     def empty(self):
@@ -96,3 +96,20 @@ class LoggingRedirector:
 
 
 redirect_logging = LoggingRedirector()
+
+# AFAICT there is no robust way to query for loaded extensions
+# and we have to make sure we do not setup two redirects
+_extension_loaded = False
+
+def load_ipython_extension(ipython):
+    global _extension_loaded
+    ipython.events.register('pre_run_cell', redirect_logging.start)
+    ipython.events.register('post_run_cell', redirect_logging.stop)
+    _extension_loaded = True
+
+
+def unload_ipython_extension(ipython):
+    global _extension_loaded
+    ipython.events.unregister('pre_run_cell', redirect_logging.start)
+    ipython.events.unregister('post_run_cell', redirect_logging.stop)
+    _extension_loaded = False

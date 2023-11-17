@@ -246,10 +246,10 @@ def _qr_iteration(H, shifts, complex_evp=False):
     while i < len(shifts) - 1:
         s = shifts[i]
         if not complex_evp and shifts[i].imag != 0:
-            Q, _ = np.linalg.qr(H @ H - 2 * s.real * H + np.abs(s)**2 * np.eye(len(H)))
+            Q, _ = spla.qr(H @ H - 2 * s.real * H + np.abs(s)**2 * np.eye(len(H)))
             i += 2
         else:
-            Q, _ = np.linalg.qr(H - s * np.eye(len(H)))
+            Q, _ = spla.qr(H - s * np.eye(len(H)))
             i += 1
         Qs = Qs @ Q
         H = Q.T @ H @ Q

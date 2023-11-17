@@ -1,6 +1,8 @@
 # pin some packages to oldest supported version
 numpy==1.20.3
 scipy==1.5.4
+matplotlib==3.6.2  # older mpl cannot be tested due to incompatibility with
+                   # pyside6>=6.4
 torch==1.11.0
 k3d==2.15.2
 scikit-fem==6.0.0

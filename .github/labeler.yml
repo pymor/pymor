@@ -1,3 +1,4 @@
+---
 infrastructure:
   - .ci/**/*
   - .github/**/*
@@ -6,8 +7,6 @@ infrastructure:
   - pyproject.toml
   - dependencies.py
   - versioneer.py
-
 management:
   - CONTRIBUTING.md
   - LICENSE.txt
-

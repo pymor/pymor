@@ -12,12 +12,17 @@
         $(window).scrollTop(target_position - header_height);
     }
 
-    $(document).ready(function(){
+    $(document).ready(function() {
         window.setTimeout(function() {
             scrollToTarget();
         }, 15);
     });
 
     window.onhashchange = scrollToTarget;
+
+    $(window).on('load', function() {
+        $("<a class='list-opener' style='margin-left: 1em; cursor: pointer;'>&#x25BE;</a>").insertAfter($("[class^=toctree-l] > ul").prev("a"));
+        $(".list-opener").on("click", function() {$(this).next().toggleClass("active");});
+    });
 </script>
 {%- endblock %}

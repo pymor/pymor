@@ -24,6 +24,7 @@ from pymor.bindings.scipy import _solve_ricc_check_args
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
+from pymor.tools.deprecated import Deprecated
 
 
 @defaults('adi_maxit', 'adi_memory_usage', 'adi_output', 'adi_rel_change_tol', 'adi_res2_tol', 'adi_res2c_tol',
@@ -104,6 +105,7 @@ def lyap_lrcf_solver_options():
                              'opts': lradi_solver_options()}}
 
 
+@Deprecated('lradi, slycot or scipy')
 @defaults('default_solver')
 def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None, default_solver=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
@@ -190,6 +192,7 @@ def lyap_dense_solver_options():
     return {'pymess_glyap': {'type': 'pymess_glyap'}}
 
 
+@Deprecated('slycot or scipy')
 def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     """Compute the solution of a Lyapunov equation.
 
@@ -334,6 +337,7 @@ def ricc_lrcf_solver_options():
                                         'opts': lrnm_solver_options()}}
 
 
+@Deprecated('lrradi, slycot or scipy')
 @defaults('default_solver')
 def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None, default_solver=None):
     """Compute an approximate low-rank solution of a Riccati equation.
@@ -436,6 +440,7 @@ def pos_ricc_lrcf_solver_options():
                                         'opts': dense_nm_gmpcare_solver_options()}}
 
 
+@Deprecated('slycot or scipy')
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     """Compute an approximate low-rank solution of a positive Riccati equation.
 
