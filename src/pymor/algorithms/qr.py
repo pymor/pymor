@@ -16,23 +16,17 @@ from pymor.vectorarrays.interface import VectorArray
 
 @defaults('check', 'check_orth_tol', 'check_recon_tol', 'method')
 def qr(V, product=None, offset=0,
-       check=True, check_orth_tol=1e-3, check_recon_tol=1e-3,
+       check=True, check_orth_tol=1e-12, check_recon_tol=1e-12,
        copy=True, method='gram_schmidt', **kwargs):
     """Compute a thin QR decomposition.
 
-    For a |VectorArray| `V` of linearly independent vectors and
-    inner product |Operator| `product`,
-    the thin QR decomposition of `V` consists of the unique
-    orthonormal |VectorArray| `Q` and
-    upper-triangular matrix `R` such that
-    `V == Q.lincomb(R.T)`, `len(Q) == len(V)`, and
-    `R` has positive diagonal entries.
+    For a |VectorArray| `V` and inner product |Operator| `product`,
+    a thin QR decomposition of `V` consists of
+    an orthonormal |VectorArray| `Q` and
+    an upper-triangular matrix `R` such that
+    `len(Q) == len(V)` and `V == Q.lincomb(R.T)`.
 
-    The method assumes that `V` has linearly independent vectors and
-    may fail if linear dependence is detected
-    (it may or may not work for sets of vectors that are almost linearly dependent).
-    In particular, it will either return a `Q` such that `len(Q) == len(V)` or
-    raise an exception.
+    The method may fail if `V` has linearly dependent vectors.
 
     Parameters
     ----------
@@ -76,7 +70,7 @@ def qr(V, product=None, offset=0,
 
     See Also
     --------
-    rrqr : Rank-revealing QR decomposition with truncation.
+    :func:`~pymor.algorithms.qr.rrqr` : Rank-revealing QR decomposition with truncation.
     """
     assert isinstance(V, VectorArray)
     if product is not None:
@@ -109,7 +103,7 @@ def qr(V, product=None, offset=0,
 
 @defaults('atol', 'rtol', 'check', 'check_orth_tol', 'check_recon_tol', 'method')
 def rrqr(V, product=None, atol=1e-13, rtol=1e-13, offset=0,
-         check=True, check_orth_tol=1e-3, check_recon_tol=1e-3,
+         check=True, check_orth_tol=1e-12, check_recon_tol=1e-12,
          copy=True, method='gram_schmidt', **kwargs):
     """Compute a rank-revealing QR (RRQR) decomposition.
 
@@ -167,7 +161,7 @@ def rrqr(V, product=None, atol=1e-13, rtol=1e-13, offset=0,
 
     See Also
     --------
-    qr : Thin QR decomposition without truncation.
+    :func:`~pymor.algorithms.qr.qr` : Thin QR decomposition without truncation.
     """
     assert isinstance(V, VectorArray)
     if product is not None:
