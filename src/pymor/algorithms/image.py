@@ -208,11 +208,11 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
                                        orthonormalize=False, product=product,
                                        riesz_representatives=riesz_representatives)
 
-        gram_schmidt_offset = len(image)
+        offset = len(image)
         image.append(new_image, remove_from_other=True)
         if orthonormalize:
             with logger.block('Orthonormalizing ...'):
-                rrqr(image, offset=gram_schmidt_offset, product=product, copy=False)
+                rrqr(image, offset=offset, product=product, copy=False)
             image_dims.append(len(image))
 
     return image, image_dims
