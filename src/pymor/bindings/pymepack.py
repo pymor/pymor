@@ -192,15 +192,15 @@ def solve_lyap_dense(A, E, B, Q=None, S=None, hess=False, trans=False, cont_time
     if options['type'] == 'pymepack_gelyap':
         if E is None:
             if cont_time:
-                pymepack.gelyap(Af, Cf, Q = Qf, trans = trans, hess = hess, **opts)
+                pymepack.gelyap(Af, Cf, Q = Qf, trans = trans, hess = hess, inplace = True, **opts)
             else:
-                pymepack.gestein(Af, Cf, Q = Qf, trans = trans, hess = hess, **opts)
+                pymepack.gestein(Af, Cf, Q = Qf, trans = trans, hess = hess, inplace = True, **opts)
         else:
             Ef = E.copy(order='F')
             if cont_time:
-                pymepack.gglyap(Af, Ef, Cf, Q = Qf, Z = Sf, trans = trans, hess = hess, **opts)
+                pymepack.gglyap(Af, Ef, Cf, Q = Qf, Z = Sf, trans = trans, hess = hess, inplace = True, **opts)
             else:
-                pymepack.ggstein(Af, Ef, Cf, Q = Qf, Z = Sf, trans = trans, hess = hess, **opts)
+                pymepack.ggstein(Af, Ef, Cf, Q = Qf, Z = Sf, trans = trans, hess = hess, inplace = True, **opts)
         X = Cf
     elif options['type'] == 'pymepack_gelyap_refine':
         if E is None:
