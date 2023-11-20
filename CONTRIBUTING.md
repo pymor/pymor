@@ -59,11 +59,12 @@ of your code under the same license.
 
 ## Attribution
 
-When you have contributed code to pyMOR you and the content of your
-contribution will be mentioned in the project's AUTHORS.md file.
-Contributions are grouped by release, so if you have contributed
-code to multiple releases, you will be mentioned for each of
-these releases. Moreover, you may add attribution notices (e.g.
+When you have contributed code to pyMOR, you and the content of your
+contribution will be mentioned in the project's AUTHORS.md file
+along with your GitHub user name and the name you have set in your
+GitHub profile. Contributions are grouped by release, so if you have
+contributed code to multiple releases, you will be mentioned for each
+of these releases. Moreover, you may add attribution notices (e.g.
 author name, corresponding publications, funding institutions)
 to the code you contribute.
 
