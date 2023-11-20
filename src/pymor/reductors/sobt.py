@@ -7,7 +7,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt_biorth
 from pymor.algorithms.projection import project
-from pymor.algorithms.qr import qr
+from pymor.algorithms.orth import orth
 from pymor.core.base import BasicObject
 from pymor.models.iosys import SecondOrderModel
 from pymor.operators.constructions import IdentityOperator
@@ -86,8 +86,8 @@ class GenericSOBTpvReductor(BasicObject):
             self.V.scal(alpha)
             self.W.scal(alpha)
         elif projection == 'bfsr':
-            qr(self.V, copy=False)
-            qr(self.W, copy=False)
+            orth(self.V, allow_truncation=False, copy=False)
+            orth(self.W, allow_truncation=False, copy=False)
         elif projection == 'biorth':
             gram_schmidt_biorth(self.V, self.W, product=self.fom.M, copy=False)
 
@@ -276,9 +276,9 @@ class SOBTfvReductor(BasicObject):
             alpha = 1 / np.sqrt(sp[:r])
             self.V.scal(alpha)
         elif projection == 'bfsr':
-            qr(self.V, copy=False)
+            orth(self.V, allow_truncation=False, copy=False)
         elif projection == 'biorth':
-            qr(self.V, product=self.fom.M, copy=False)
+            orth(self.V, allow_truncation=False, product=self.fom.M, copy=False)
         self.W = self.V
 
         # find the reduced model
@@ -376,10 +376,10 @@ class SOBTReductor(BasicObject):
             W1TV1invW1TV2 = self.W1.inner(self.V2)
             projected_ops = {'M': IdentityOperator(NumpyVectorSpace(r))}
         elif projection == 'bfsr':
-            qr(self.V1, copy=False)
-            qr(self.W1, copy=False)
-            qr(self.V2, copy=False)
-            qr(self.W2, copy=False)
+            orth(self.V1, allow_truncation=False, copy=False)
+            orth(self.W1, allow_truncation=False, copy=False)
+            orth(self.V2, allow_truncation=False, copy=False)
+            orth(self.W2, allow_truncation=False, copy=False)
             W1TV1invW1TV2 = spla.solve(self.W1.inner(self.V1), self.W1.inner(self.V2))
             projected_ops = {'M': project(self.fom.M, range_basis=self.W2, source_basis=self.V2)}
         elif projection == 'biorth':

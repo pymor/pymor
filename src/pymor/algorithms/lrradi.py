@@ -6,7 +6,7 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.genericsolvers import _parse_options
-from pymor.algorithms.qr import qr
+from pymor.algorithms.orth import orth
 from pymor.algorithms.riccati import _solve_ricc_check_args
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
@@ -231,7 +231,7 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
     """
     rng = new_rng(0)
     for _ in range(shift_options['init_maxiter']):
-        Q, _ = qr(C)
+        Q, _ = orth(C, pad=True)
         Ap = A.apply2(Q, Q)
         QB = Q.inner(B)
         Gp = QB.dot(QB.T)
@@ -310,7 +310,7 @@ def hamiltonian_shifts(A, E, B, R, K, Z, shift_options):
     if len(Z) < l:
         l = len(Z)
 
-    Q, _ = qr(Z[-l:])
+    Q, _ = orth(Z[-l:], pad=True)
     Ap = A.apply2(Q, Q)
     KBp = Q.inner(K) @ Q.inner(B).T
     AAp = Ap - KBp

@@ -5,7 +5,7 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.qr import qr
+from pymor.algorithms.orth import orth
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
@@ -147,8 +147,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
 
         X.append(x)
         V.append(v)
-        qr(V, copy=False)
-        qr(X, copy=False)
+        orth(V, pad=True, copy=False)
+        orth(X, pad=True, copy=False)
 
         AX.append(A.apply(X[k-1]))
 
@@ -238,8 +238,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
                     V = A.source.empty()
 
                 if np.abs(np.imag(theta)) / np.abs(theta) < imagtol:
-                    qr(V, copy=False)
-                    qr(X, copy=False)
+                    orth(V, pad=True, copy=False)
+                    orth(X, pad=True, copy=False)
 
                 B_defl -= E.apply(Q[-1].lincomb(Qt[-1].inner(B_defl).T))
                 C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].inner(C_defl).T))
@@ -271,8 +271,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
                         Q[-1].scal(1 / nqqt)
                         Qs[-1].scal(1 / nqqt)
 
-                        qr(V, copy=False)
-                        qr(X, copy=False)
+                        orth(V, pad=True, copy=False)
+                        orth(X, pad=True, copy=False)
 
                         B_defl -= E.apply(Q[-1].lincomb(Qt[-1].inner(B_defl).T))
                         C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].inner(C_defl).T))
@@ -308,8 +308,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
                 X = X.lincomb(UR[:, minidx])
                 V = V.lincomb(URt[:, minidx])
 
-                qr(V, copy=False)
-                qr(X, copy=False)
+                orth(V, pad=True, copy=False)
+                orth(X, pad=True, copy=False)
 
                 G = V.inner(E.apply(X))
                 AX = A.apply(X)
@@ -327,8 +327,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
             X = X.lincomb(UR[:, minidx])
             V = V.lincomb(URt[:, minidx])
 
-            qr(V, copy=False)
-            qr(X, copy=False)
+            orth(V, pad=True, copy=False)
+            orth(X, pad=True, copy=False)
 
             G = V.inner(E.apply(X))
             AX = A.apply(X)
