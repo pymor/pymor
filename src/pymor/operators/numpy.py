@@ -420,10 +420,10 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
 
 class NumpyCirculantOperator(Operator, CacheableObject):
-    r"""Matrix-free representation of a circulant matrix by a |NumPy Array|.
+    r"""Matrix-free representation of a (block) circulant matrix by a |NumPy Array|.
 
-    A circulant matrix is a special kind of Toeplitz matrix which is square and completely
-    determined by its first column via
+    A (block) circulant matrix is a special kind of (block) Toeplitz matrix which is (block) square
+    and completely determined by its first (matrix-valued) column via
 
     .. math::
         C =
@@ -434,17 +434,17 @@ class NumpyCirculantOperator(Operator, CacheableObject):
                 \vdots &        &         & \ddots & c_n    & c_{n-1} \\
                 \vdots &        &         & c_2    & c_1    & c_n \\
                 c_n    & \cdots & \cdots  & c_3    & c_2    & c_1
-            \end{bmatrix} \in \mathbb{C}^{n \times n},
+            \end{bmatrix} \in \mathbb{C}^{n*p \times n*m},
 
-    where the so-called circulant vector :math:`c \in \mathbb{C}^n` denotes the first column of the
-    matrix. The matrix :math:`C` as seen above is not explicitly constructed, only `c` is stored.
-    Efficient matrix-vector multiplications are realized with DFT in the class' `apply` method.
-    See :cite:`GVL13` Chapter 4.8.2. for details.
+    where the so-called circulant vector :math:`c \in \mathbb{C}^{\times n\times p\times m}` denotes
+    the first (matrix-valued) column of the matrix. The matrix :math:`C` as seen above is not
+    explicitly constructed, only `c` is stored. Efficient matrix-vector multiplications are realized
+    with DFT in the class' `apply` method. See :cite:`GVL13` Chapter 4.8.2. for details.
 
     Parameters
     ----------
     c
-        The |NumPy array| that defines the circulant vector.
+        The |NumPy array| of shape `(n)` or `(n, p, m)` that defines the circulant vector.
     source_id
         The id of the operator's `source` |VectorSpace|.
     range_id
@@ -515,9 +515,10 @@ class NumpyCirculantOperator(Operator, CacheableObject):
 
 
 class NumpyToeplitzOperator(Operator):
-    r"""Matrix-free representation of a Toeplitz matrix by a |NumPy Array|.
+    r"""Matrix-free representation of a finite dimensional Toeplitz matrix by a |NumPy Array|.
 
-    A Toeplitz matrix is a matrix with constant diagonals, i.e.:
+    A finite dimensional Toeplitz operator can be represented by a (block) matrix with constant
+    diagonals (diagonal blocks), i.e.:
 
     .. math::
         T =
@@ -528,23 +529,25 @@ class NumpyToeplitzOperator(Operator):
                 \vdots &        &        & \ddots & r_2    & r_3 \\
                 \vdots &        &        & c_2    & c_1    & r_2 \\
                 c_m    & \cdots & \cdots & c_3    & c_2    & c_1
-            \end{bmatrix} \in \mathbb{C}^{m \times n},
+            \end{bmatrix} \in \mathbb{C}^{n*p \times k*m},
 
-    where :math:`c \in\mathbb{C}^m` and :math:`r \in \mathbb{C}^n` denote the first column and first
-    row of the Toeplitz matrix, respectively. The matrix :math:`T` as seen above is not explicitly
+    where :math:`c\in\mathbb{C}^{n\times p\times m}` and :math:`r\in\mathbb{C}^{k\times p\times m}`
+    denote the first (matrix-valued) column and first (matrix-valued) row of the (block) Toeplitz
+    matrix, respectively. The matrix :math:`T` as seen above is not explicitly
     constructed, only the arrays `c` and `r` are stored. The operator's `apply` method takes
-    advantage of the fact that any Toeplitz matrix can be embedded in a larger circulant matrix to
-    leverage efficient matrix-vector multiplications with DFT.
+    advantage of the fact that any (block) Toeplitz matrix can be embedded in a larger (block)
+    circulant matrix to leverage efficient matrix-vector multiplications with DFT.
 
     Parameters
     ----------
     c
-        The |NumPy array| that defines the first column of the Toeplitz matrix.
+        The |NumPy array| of shape either `(n)` or `(n, p, m)` that defines the first column of the
+        (block) Toeplitz matrix.
     r
-        The |NumPy array| that defines the first row of the Toeplitz matrix. If supplied, its first
-        entry `r[0]` has to equal to `c[0]`. Defaults to `None`. If `r` is `None`, the behavior
-        of :func:`scipy.linalg.toeplitz` is mimicked which sets `r = c.conj()`
-        (except for the first entry).
+        The |NumPy array|  of shape `(k,)` or `(k, p, m)` that defines the first row of the Toeplitz
+        matrix. If supplied, its first entry `r[0]` has to be equal to `c[0]`.
+        Defaults to `None`. If `r` is `None`, the behavior of :func:`scipy.linalg.toeplitz` is
+        mimicked which sets `r = c.conj()` (except for the first entry).
     source_id
         The id of the operator's `source` |VectorSpace|.
     range_id
@@ -595,9 +598,10 @@ class NumpyToeplitzOperator(Operator):
 
 
 class NumpyHankelOperator(Operator):
-    r"""Matrix-free representation of a Hankel matrix by a |NumPy Array|.
+    r"""Matrix-free representation of a finite dimensional Hankel operator by a |NumPy Array|.
 
-    A Hankel matrix is a matrix with constant anti-diagonals, i.e.:
+    A finite dimensional Hankel operator can be represented by a (block) matrix with constant
+    anti-diagonals (anti-diagonal blocks), i.e.:
 
     .. math::
         H =
@@ -608,23 +612,24 @@ class NumpyHankelOperator(Operator):
                 \vdots &        &        &         &         & r_{n-2} \\
                 \vdots &        &        &         & r_{n-2} & r_{n-1} \\
                 c_m    & \cdots & \cdots & r_{n-2} & r_{n-1} & r_n
-            \end{bmatrix} \in \mathbb{C}^{m \times n},
+            \end{bmatrix} \in \mathbb{C}^{n*p \times k*m},
 
-    where :math:`c \in \mathbb{C}^m` and :math:`r \in \mathbb{C}^n` denote the first column and last
-    row of the Hankel matrix, respectively.
-    The matrix :math:`H` as seen above is not explicitly constructed, only the arrays `c` and `r`
-    are stored. Efficient matrix-vector multiplications are realized with DFT in the class' `apply`
-    method (see :cite:`MSKC21` Algorithm 3.1. for details).
+    where :math:`c\in\mathbb{C}^{s\times p\times m}` and :math:`r\in\mathbb{C}^{k\times p\times m}`
+    denote the first (matrix-valued) column and last (matrix-valued) row of the (block) Hankel
+    matrix, respectively. The matrix :math:`H` as seen above is not explicitly constructed, only the
+    arrays `c` and `r` are stored. Efficient matrix-vector multiplications are realized with DFT in
+    the class' `apply` method (see :cite:`MSKC21` Algorithm 3.1. for details).
 
     Parameters
     ----------
     c
-        The |NumPy array| that defines the first column of the Hankel matrix.
+        The |NumPy array| of shape `(n)` or `(n, p, m)` that defines the first column of the
+        (block) Hankel matrix.
     r
-        The |NumPy array| that defines the last row of the Hankel matrix. If supplied, its first
-        entry `r[0]` has to equal to `c[-1]`. Defaults to `None`. If `r` is `None`, the behavior
-        of :func:`scipy.linalg.hankel` is mimicked which sets `r` to zero
-        (except for the first entry).
+        The |NumPy array| of shape `(k,)` or `(k, p, m)` that defines the last row of the (block)
+        Hankel matrix. If supplied, its first entry `r[0]` has to be equal to `c[-1]`.
+        Defaults to `None`. If `r` is `None`, the behavior of :func:`scipy.linalg.hankel` is
+        mimicked which sets `r` to zero (except for the first entry).
     source_id
         The id of the operator's `source` |VectorSpace|.
     range_id
