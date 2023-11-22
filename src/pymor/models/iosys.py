@@ -39,6 +39,7 @@ from pymor.operators.constructions import (
     LincombOperator,
     LinearInputOperator,
     LowRankOperator,
+    VectorArrayOperator,
     VectorOperator,
     ZeroOperator,
 )
