@@ -64,16 +64,16 @@ def test_normalization(m1):
 @pytest.mark.parametrize('p2', points_list)
 def test_from_points(p1, p2):
     p1, p2 = np.asarray(p1), np.asarray(p2)
-    M1 = MoebiusTransformation.from_points(p1, z=p2)
-    m1 = M1(p2)
+    M1 = MoebiusTransformation.from_points(p1, w=p2)
+    m1 = M1(p1)
 
     for i in range(3):
-        if np.isinf(p1[i]):
-            assert np.isinf(m1[i]) or np.abs(m1[i]) >= 1e+15 or np.allclose(p1[i], m1[i])
+        if np.isinf(p2[i]):
+            assert np.isinf(m1[i]) or np.abs(m1[i]) >= 1e+15 or np.allclose(p2[i], m1[i])
         elif np.isinf(m1[i]):
-            assert np.abs(p1[i]) >= 1e+15 or np.allclose(p1[i], m1[i])
+            assert np.abs(p2[i]) >= 1e+15 or np.allclose(p2[i], m1[i])
         else:
-            assert np.allclose(p1[i], m1[i])
+            assert np.allclose(p2[i], m1[i])
 
 
 @pytest.mark.parametrize('sampling_time', sampling_time_list)

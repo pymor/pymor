@@ -48,7 +48,7 @@ class MoebiusTransformation(ImmutableObject):
         self.__auto_init(locals())
 
     @classmethod
-    def from_points(cls, w, z=(0, 1, np.inf), name=None):
+    def from_points(cls, z, w=(0, 1, np.inf), name=None):
         """Constructs a Moebius transformation from three points and their images.
 
         A Moebius transformation is completely determined by the images of three distinct points on
@@ -56,10 +56,10 @@ class MoebiusTransformation(ImmutableObject):
 
         Parameters
         ----------
-        w
-            A tuple, list or |NumPy array| of three complex numbers that are transformed.
         z
-            A tuple, list or |NumPy array| of three complex numbers represent the images of `w`.
+            A tuple, list or |NumPy array| of three complex numbers that are transformed.
+        w
+            A tuple, list or |NumPy array| of three complex numbers represent the images of `z`.
             Defaults to `(0, 1, np.inf)`.
         name
             Name of the transformation.
@@ -67,7 +67,7 @@ class MoebiusTransformation(ImmutableObject):
         Returns
         -------
         M
-            The corresponding |MoebiusTransformation|.
+            The corresponding |MoebiusTransformation| that fulfills M(z)=w.
         """
         assert len(z) == 3
         assert len(w) == 3
