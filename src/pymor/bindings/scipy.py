@@ -563,7 +563,7 @@ def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
     See :func:`pymor.algorithms.riccati.solve_pos_ricc_dense` for a general
     description.
 
-    This function uses `scipy.linalg.solve_continuous_are`, which
+    This function uses :func:`scipy.linalg.solve_continuous_are`, which
     is a dense solver.
 
     Parameters
