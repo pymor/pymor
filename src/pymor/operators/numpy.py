@@ -21,7 +21,7 @@ from functools import reduce
 import numpy as np
 import scipy.linalg as spla
 import scipy.sparse as sps
-from numpy.fft import fft, ifft, irfft, rfft
+from scipy.fft import fft, ifft, irfft, rfft
 from scipy.io import mmwrite, savemat
 from scipy.linalg import lu_factor, lu_solve
 from scipy.linalg.lapack import get_lapack_funcs
