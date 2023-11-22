@@ -136,7 +136,7 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
                                            product(n_list_big, ricc_lrcf_solver_list_big)))
 def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
-    if with_S and (solver.startswith('pymess') or solver == 'lrradi'):
+    if with_S and (solver.startswith('pymess')):
         pytest.xfail('solver not implemented')
 
     mat_old = []
@@ -193,14 +193,14 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
         assert np.all(mat1 == mat2)
 
 
-@pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('with_R', [False, True])
 @pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
+@pytest.mark.parametrize('n,solver', chain(product(n_list_small, ricc_lrcf_solver_list_small),
+                                           product(n_list_big, ricc_lrcf_solver_list_big)))
 def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
     if with_S and solver.startswith('pymess'):

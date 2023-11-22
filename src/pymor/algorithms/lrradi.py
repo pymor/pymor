@@ -10,7 +10,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.riccati import _solve_ricc_check_args
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import IdentityOperator
+from pymor.operators.constructions import IdentityOperator, LowRankOperator
 from pymor.tools.random import new_rng
 from pymor.vectorarrays.constructions import cat_arrays
 
@@ -87,8 +87,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         |VectorArray| from `A.source`.
     """
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
-    if S is not None:
-        raise NotImplementedError
+
     options = _parse_options(options, ricc_lrcf_solver_options(), 'lrradi', None, False)
     logger = getLogger('pymor.algorithms.lrradi.solve_ricc_lrcf')
 
@@ -103,12 +102,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         E = IdentityOperator(A.source)
 
     if R is not None:
-        Rc = spla.cholesky(R)                                 # R = Rc^T * Rc
-        Rci = spla.solve_triangular(Rc, np.eye(Rc.shape[0]))  # R^{-1} = Rci * Rci^T
-        if not trans:
-            C = C.lincomb(Rci.T)  # C <- Rci^T * C = (C^T * Rci)^T
-        else:
-            B = B.lincomb(Rci.T)  # B <- B * Rci
+        Rinv = spla.solve(R, np.eye(R.shape[0]))
+    else:
+        R = Rinv = np.eye(len(B))
 
     if not trans:
         B, C = C, B
@@ -116,14 +112,23 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     Z = A.source.empty(reserve=len(C) * options['maxiter'])
     Y = np.empty((0, 0))
 
-    K = A.source.zeros(len(B))
-    RF = C.copy()
+    K = A.source.zeros(len(B)) if S is None else S
+    if S is None:
+        RF = C.copy()
+        RC = np.eye(len(C))
+    else:
+        RF = cat_arrays([C.copy(), S.copy()])
+        RC = spla.block_diag(np.eye(len(C)), -Rinv)
 
     j = 0
     j_shift = 0
     shifts = init_shifts(A, E, B, C, shift_options)
 
-    res = np.linalg.norm(RF.gramian(), ord=2)
+    if S is None:
+        res = np.linalg.norm(RF.gramian(), ord='fro')
+    else:
+        res = np.linalg.norm(RF.gramian() @ RC, ord='fro')
+
     init_res = res
     Ctol = res * options['tol']
 
@@ -139,19 +144,18 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
                 V = AsE.apply_inverse_adjoint(RF) * np.sqrt(-2 * shifts[j_shift].real)
         else:
             if not trans:
-                LN = AsE.apply_inverse(cat_arrays([RF, K]))
+                BRiK = LowRankOperator(K, Rinv, B)
+                AsEBRiK = AsE - BRiK
+                V = AsEBRiK.apply_inverse(RF) * np.sqrt(-2 * shifts[j_shift].real)
             else:
-                LN = AsE.apply_inverse_adjoint(cat_arrays([RF, K]))
-            L = LN[:len(RF)]
-            N = LN[-len(K):]
-            ImBN = np.eye(len(K)) - B.inner(N)
-            ImBNKL = spla.solve(ImBN, B.inner(L))
-            V = (L + N.lincomb(ImBNKL.T)) * np.sqrt(-2 * shifts[j_shift].real)
-
+                BRiK = LowRankOperator(B, Rinv, K)
+                AsEBRiK = AsE - BRiK
+                V = AsEBRiK.apply_inverse_adjoint(RF) * np.sqrt(-2 * shifts[j_shift].real)
         if np.imag(shifts[j_shift]) == 0:
+            V = V.real
             Z.append(V)
             VB = V.inner(B)
-            Yt = np.eye(len(C)) - (VB @ VB.T) / (2 * shifts[j_shift].real)
+            Yt = RC - (VB @ Rinv @ VB.T) / (2 * shifts[j_shift].real)
             Y = spla.block_diag(Y, Yt)
             if not trans:
                 EVYt = E.apply(V).lincomb(spla.inv(Yt))
@@ -175,13 +179,13 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
                 Vi
             ))
             F3 = np.vstack((
-                shifts[j_shift].imag/sa * np.eye(len(C)),
-                shifts[j_shift].real/sa * np.eye(len(C))
+                shifts[j_shift].imag/sa * np.eye(len(RF)),
+                shifts[j_shift].real/sa * np.eye(len(RF))
             ))
-            Yt = spla.block_diag(np.eye(len(C)), 0.5 * np.eye(len(C))) \
-                - (F1 @ F1.T) / (4 * shifts[j_shift].real)  \
-                - (F2 @ F2.T) / (4 * shifts[j_shift].real)  \
-                - (F3 @ F3.T) / 2
+            Yt = spla.block_diag(RC, 0.5 * RC) \
+                - (F1 @ Rinv @ F1.T) / (4 * shifts[j_shift].real)  \
+                - (F2 @ Rinv @ F2.T) / (4 * shifts[j_shift].real)  \
+                - (F3 @ RC @ F3.T) / 2
             Y = spla.block_diag(Y, Yt)
             if not trans:
                 EVYt = E.apply(cat_arrays([V.real, V.imag])).lincomb(spla.inv(Yt))
@@ -191,7 +195,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
             K += EVYt.lincomb(F2.T)
             j += 2
         j_shift += 1
-        res = np.linalg.norm(RF.gramian(), ord=2)
+        res = np.linalg.norm(RF.gramian() @ RC, ord='fro')
         logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
         if j_shift >= shifts.size:
             shifts = iteration_shifts(A, E, B, RF, K, Z, shift_options)
@@ -200,6 +204,48 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     cf = spla.cholesky(Y)
     Z_cf = Z.lincomb(spla.solve_triangular(cf, np.eye(len(Z))).T)
     return Z_cf
+
+def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+    """Compute an approximate low-rank solution of a positive Riccati equation.
+
+    See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a
+    general description.
+
+    Parameters
+    ----------
+    A
+        The non-parametric |Operator| A.
+    E
+        The non-parametric |Operator| E or `None`.
+    B
+        The operator B as a |VectorArray| from `A.source`.
+    C
+        The operator C as a |VectorArray| from `A.source`.
+    R
+        The matrix R as a 2D |NumPy array| or `None`.
+    S
+        The operator S as a |VectorArray| from `A.source` or `None`.
+    trans
+        Whether the first |Operator| in the positive Riccati equation is
+        transposed.
+    options
+        The solver options to use (see
+        :func:`ricc_lrcf_solver_options`).
+
+    Returns
+    -------
+    Z
+        Low-rank Cholesky factor of the positive Riccati equation
+        solution, |VectorArray| from `A.source`.
+    """
+    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    options = _parse_options(options, ricc_lrcf_solver_options(), 'lrradi', None, False)
+    if options['type'] != 'lrradi':
+        raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
+
+    if R is None:
+        R = np.eye(len(C) if not trans else len(B))
+    return solve_ricc_lrcf(A, E, B, C, -R, S, trans, options)
 
 
 def hamiltonian_shifts_init(A, E, B, C, shift_options):

@@ -324,6 +324,8 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         from pymor.bindings.slycot import solve_pos_ricc_lrcf as solve_ricc_impl
     elif backend == 'pymess':
         from pymor.bindings.pymess import solve_pos_ricc_lrcf as solve_ricc_impl
+    elif backend == 'lrradi':
+        from pymor.algorithms.lrradi import solve_pos_ricc_lrcf as solve_ricc_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
     return solve_ricc_impl(A, E, B, C, R, S, trans=trans, options=options)
