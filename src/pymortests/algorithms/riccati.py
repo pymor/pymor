@@ -79,6 +79,7 @@ def relative_residual(A, E, B, C, R, S, Z, trans):
 @pytest.mark.parametrize('solver', ricc_dense_solver_list)
 def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
+    np.random.seed(0)
 
     mat_old = []
     mat_new = []
@@ -136,6 +137,7 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
 @pytest.mark.parametrize('solver', ricc_dense_solver_list)
 def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
+    np.random.seed(0)
 
     mat_old = []
     mat_new = []
@@ -195,6 +197,7 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
                                            product(n_list_big, ricc_lrcf_solver_list_big)))
 def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
+    np.random.seed(0)
     if with_S and (solver.startswith('pymess') or solver == 'lrradi'):
         pytest.xfail('solver not implemented')
 
@@ -262,6 +265,7 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
 @pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
 def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
+    np.random.seed(0)
     if with_S and solver.startswith('pymess'):
         pytest.xfail('solver not implemented')
 
