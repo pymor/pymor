@@ -298,8 +298,8 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         The solver options to use.
         See:
 
-        - :func:`pymor.bindings.scipy.pos_ricc_lrcf_solver_options`,
-        - :func:`pymor.bindings.slycot.pos_ricc_lrcf_solver_options`,
+        - :func:`pymor.bindings.scipy.ricc_lrcf_solver_options`,
+        - :func:`pymor.bindings.slycot.ricc_lrcf_solver_options`,
         - :func:`pymor.bindings.pymess.pos_ricc_lrcf_solver_options`.
 
     default_dense_solver_backend

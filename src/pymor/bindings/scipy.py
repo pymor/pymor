@@ -602,16 +602,6 @@ def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
     return solve_ricc_dense(A, E, B, C, -R, S, trans, options)
 
 
-def pos_ricc_lrcf_solver_options():
-    """Return available positive Riccati solvers with default options for the SciPy backend.
-
-    Returns
-    -------
-    A dict of available solvers with default solver options.
-    """
-    return {'scipy': {'type': 'scipy'}}
-
-
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     """Compute an approximate low-rank solution of a positive Riccati equation.
 
@@ -644,7 +634,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         transposed.
     options
         The solver options to use (see
-        :func:`pos_ricc_lrcf_solver_options`).
+        :func:`ricc_lrcf_solver_options`).
 
     Returns
     -------
@@ -653,7 +643,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         solution, |VectorArray| from `A.source`.
     """
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'scipy', None, False)
+    options = _parse_options(options, ricc_lrcf_solver_options(), 'scipy', None, False)
     if options['type'] != 'scipy':
         raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
 
