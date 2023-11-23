@@ -31,10 +31,14 @@ cont_lyap_dense_solver_list = [
     'scipy',
     'slycot_bartels-stewart',
     'pymess_glyap',
+    'pymepack_gelyap',
+    'pymepack_gelyap_refine',
 ]
 disc_lyap_dense_solver_list = [
     'scipy',
     'slycot_bartels-stewart',
+    'pymepack_gelyap',
+    'pymepack_gelyap_refine',
 ]
 
 
