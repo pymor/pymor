@@ -7,7 +7,7 @@ from scipy.linalg import eigh, lu_factor, lu_solve, svd
 from scipy.sparse.linalg import LinearOperator, eigsh
 from scipy.special import erfinv
 
-from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.orth import orth
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
@@ -89,7 +89,7 @@ def adaptive_rrf(A, source_product=None, range_product=None, tol=1e-4,
         if iscomplex:
             v += 1j*A.source.random(distribution='normal')
         B.append(A.apply(v))
-        gram_schmidt(B, range_product, atol=0, rtol=0, offset=basis_length, copy=False)
+        orth(B, product=range_product, offset=basis_length, copy=False)
         M -= B.lincomb(B.inner(M, range_product).T)
         maxnorm = np.max(M.norm(range_product))
 
@@ -150,14 +150,14 @@ def rrf(A, source_product=None, range_product=None, q=2, l=8, return_rand=False,
         R += 1j*A.source.random(l, distribution='normal')
 
     Q = A.apply(R)
-    gram_schmidt(Q, range_product, atol=0, rtol=0, copy=False)
+    orth(Q, product=range_product, copy=False)
 
     for i in range(q):
         Q = A.apply_adjoint(range_product.apply(Q))
         Q = source_product.apply_inverse(Q)
-        gram_schmidt(Q, source_product, atol=0, rtol=0, copy=False)
+        orth(Q, product=source_product, copy=False)
         Q = A.apply(Q)
-        gram_schmidt(Q, range_product, atol=0, rtol=0, copy=False)
+        orth(Q, product=range_product, copy=False)
 
     if return_rand:
         return Q, R
@@ -240,7 +240,7 @@ def random_generalized_svd(A, range_product=None, source_product=None, modes=6, 
 
     Q = rrf(A, source_product=source_product, range_product=range_product, q=q, l=modes+p)
     B = A.apply_adjoint(range_product.apply(Q))
-    Q_B, R_B = gram_schmidt(source_product.apply_inverse(B), product=source_product, return_R=True)
+    Q_B, R_B = orth(source_product.apply_inverse(B), product=source_product)
     U_b, s, Vh_b = svd(R_B.T, full_matrices=False)
 
     with logger.block(f'Computing generalized left-singular vectors ({modes} vectors) ...'):
@@ -321,14 +321,14 @@ def random_ghep(A, E=None, modes=6, p=20, q=2, single_pass=False):
         Omega = A.source.random(modes+p, distribution='normal')
         Y_bar = A.apply(Omega)
         Y = E.apply_inverse(Y_bar)
-        Q, R = gram_schmidt(Y, product=E, return_R=True)
+        Q, R = orth(Y, product=E, hierarchical=True)
         X = E.apply2(Omega, Q)
         X_lu = lu_factor(X)
         T = lu_solve(X_lu, lu_solve(X_lu, Omega.inner(Y_bar)).T).T
     else:
         C = InverseOperator(E) @ A
         Y, Omega = rrf(C, q=q, l=modes+p, return_rand=True)
-        Q = gram_schmidt(Y, product=E)
+        Q = orth(Y, product=E)[0]
         T = A.apply2(Q, Q)
 
     w, S = eigh(T)

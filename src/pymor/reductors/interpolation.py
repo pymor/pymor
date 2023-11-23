@@ -6,8 +6,9 @@ from abc import abstractmethod
 
 import numpy as np
 
-from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.algorithms.gram_schmidt import gram_schmidt_biorth
 from pymor.algorithms.krylov import rational_arnoldi
+from pymor.algorithms.orth import orth
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LinearDelayModel, LTIModel, SecondOrderModel
 from pymor.models.transfer_function import TransferFunction
@@ -146,8 +147,8 @@ class GenericBHIReductor(BasicObject):
                 self.W.append(w.real)
                 self.W.append(w.imag)
         if projection == 'orth':
-            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
-            gram_schmidt(self.W, atol=0, rtol=0, copy=False)
+            orth(self.V, allow_truncation=False, copy=False)
+            orth(self.W, allow_truncation=False, copy=False)
         elif projection == 'biorth':
             gram_schmidt_biorth(self.V, self.W, product=self._product, copy=False)
 

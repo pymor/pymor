@@ -4,7 +4,8 @@
 
 import numpy as np
 
-from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.algorithms.gram_schmidt import gram_schmidt_biorth
+from pymor.algorithms.orth import orth
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
 from pymor.parameters.base import Mu
@@ -92,8 +93,8 @@ class GenericBTReductor(BasicObject):
             self.V.scal(alpha)
             self.W.scal(alpha)
         elif projection == 'bfsr':
-            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
-            gram_schmidt(self.W, atol=0, rtol=0, copy=False)
+            orth(self.V, allow_truncation=False, copy=False)
+            orth(self.W, allow_truncation=False, copy=False)
         elif projection == 'biorth':
             gram_schmidt_biorth(self.V, self.W, product=self.fom.E, copy=False)
 

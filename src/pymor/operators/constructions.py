@@ -826,15 +826,17 @@ class VectorArrayOperator(Operator):
         if not least_squares and len(self.array) != self.array.dim:
             raise InversionError
 
-        from pymor.algorithms.gram_schmidt import gram_schmidt
+        from pymor.algorithms.svd_va import qr_svd
 
-        Q, R = gram_schmidt(self.array, return_R=True, reiterate=False)
+        U_array, s_array, Vh_array = qr_svd(self.array)
         if self.adjoint:
-            v = spla.lstsq(R.T.conj(), V.to_numpy().T)[0]
-            U = Q.lincomb(v.T)
+            Vh_V = Vh_array @  V.to_numpy().T
+            s_inv_Vh_V = Vh_V / s_array[:, np.newaxis]
+            U = U_array.lincomb(s_inv_Vh_V.T)
         else:
-            v = Q.inner(V)
-            u = spla.lstsq(R, v)[0]
+            Uh_V = U_array.inner(V)
+            s_inv_Uh_V = Uh_V / s_array[:, np.newaxis]
+            u = Vh_array.conj().T @ s_inv_Uh_V
             U = self.source.make_array(u.T)
 
         return U

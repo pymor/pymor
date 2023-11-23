@@ -7,7 +7,8 @@ import bisect
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.algorithms.gram_schmidt import gram_schmidt_biorth
+from pymor.algorithms.orth import orth
 from pymor.algorithms.samdp import samdp
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
@@ -200,8 +201,8 @@ class MTReductor(BasicObject):
         self.W.append(lev[complex_index].imag)
 
         if projection == 'orth':
-            gram_schmidt(self.V, atol=0, rtol=0, copy=False)
-            gram_schmidt(self.W, atol=0, rtol=0, copy=False)
+            orth(self.V, allow_truncation=False, copy=False)
+            orth(self.W, allow_truncation=False, copy=False)
         elif projection == 'biorth':
             gram_schmidt_biorth(self.V, self.W, product=fom.E, copy=False)
 

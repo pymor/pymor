@@ -7,9 +7,9 @@ from numbers import Number
 import numpy as np
 
 from pymor.algorithms.basic import almost_equal
-from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.pod import pod
 from pymor.algorithms.projection import project, project_to_subbasis
+from pymor.algorithms.orth import orth
 from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError, ExtensionError
@@ -476,14 +476,15 @@ def extend_basis(U, basis, product=None, method='gram_schmidt', pod_modes=1, pod
                      remove_from_other=(not copy_U))
     elif method == 'gram_schmidt':
         basis.append(U, remove_from_other=(not copy_U))
-        gram_schmidt(basis, offset=basis_length, product=product, copy=False, check=False)
+        orth(basis, hierarchical=True, offset=basis_length, product=product, copy=False, check=False,
+             method='gram_schmidt')
     elif method == 'pod':
         U_proj_err = U - basis.lincomb(U.inner(basis, product))
 
         basis.append(pod(U_proj_err, modes=pod_modes, product=product, orth_tol=np.inf)[0])
 
         if pod_orthonormalize:
-            gram_schmidt(basis, offset=basis_length, product=product, copy=False, check=False)
+            orth(basis, offset=basis_length, product=product, copy=False, check=False)
 
     if len(basis) <= basis_length:
         raise ExtensionError

@@ -2,6 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import warnings
+
 import numpy as np
 
 from pymor.core.defaults import defaults
@@ -50,7 +52,7 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
     Q
         The orthonormalized |VectorArray|.
     R
-        The upper-triangular/trapezoidal matrix (if `compute_R` is `True`).
+        The upper-triangular/trapezoidal matrix (if `return_R` is `True`).
     """
     logger = getLogger('pymor.algorithms.gram_schmidt.gram_schmidt')
 
@@ -109,6 +111,8 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
         R = np.delete(R, remove, axis=0)
 
     if check:
+        warnings.warn('check and check_tol are deprecated (use qr or rrqr from pymor.algorithms.qr)',
+                      DeprecationWarning, stacklevel=2)
         error_matrix = A[offset:len(A)].inner(A, product)
         error_matrix[:len(A) - offset, offset:len(A)] -= np.eye(len(A) - offset)
         if error_matrix.size > 0:
