@@ -276,6 +276,9 @@ class SymbolicExpressionFunction(GenericFunction):
         return (SymbolicExpressionFunction,
                 (self.expression_obj, self.dim_domain, self.variable, getattr(self, '_name', None)))
 
+    def _cache_key_reduce(self):
+        return (self.expression_obj, self.dim_domain, self.variable)
+
     def __str__(self):
         return f'{self.name}: {self.variable} -> {self.expression_obj}'
 

@@ -288,6 +288,9 @@ class Expression(ParametricObject):
     def __bool__(self):
         raise TypeError("Cannot convert Expression to bool. (Don't use boolean operators or two-sided comparisons.)")
 
+    def _cache_key_reduce(self):
+        return self.numpy_expr()
+
 
 class BaseConstant(Expression):
     """A constant value."""

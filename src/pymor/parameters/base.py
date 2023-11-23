@@ -466,6 +466,9 @@ class Mu(FrozenDict):
     def __repr__(self):
         return f'Mu({dict(sorted(self._raw_values.items()))})'
 
+    def _cache_key_reduce(self):
+        return self._raw_values
+
 
 class ParametricObject(ImmutableObject):
     """Base class for immutable mathematical entities depending on some |Parameters|.
