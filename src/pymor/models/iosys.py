@@ -366,7 +366,7 @@ class LTIModel(Model):
         return self.to_abcde_matrices(format)
 
     def to_abcde_matrices(self, format=None):
-        """Return A, B, C and D operators as matrices.
+        """Return A, B, C, D, and E operators as matrices.
 
         Parameters
         ----------
