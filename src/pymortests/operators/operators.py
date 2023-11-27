@@ -2,6 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+
 import numpy as np
 import pytest
 import scipy.linalg as spla
@@ -23,7 +24,9 @@ from pymor.operators.constructions import (
     VectorArrayOperator,
 )
 from pymor.operators.interface import as_array_max_length
-from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
+from pymor.operators.numpy import (
+    NumpyMatrixOperator,
+)
 from pymor.parameters.functionals import ExpressionParameterFunctional, GenericParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -548,27 +551,6 @@ def test_issue_1276():
     v = B.source.ones()
 
     B.apply_inverse(v)
-
-
-@pytest.mark.builtin
-@pytest.mark.parametrize('iscomplex', [False, True])
-def test_hankel_operator(iscomplex):
-    s, p, m = 4, 2, 3
-    if iscomplex:
-        mp = np.random.rand(s, p, m) + 1j * np.random.rand(s, p, m)
-    else:
-        mp = np.random.rand(s, p, m)
-    op = NumpyHankelOperator(mp)
-
-    U = op.source.random(1)
-    V = op.range.random(1)
-    np.testing.assert_array_almost_equal(op.apply(U).to_numpy().T, to_matrix(op) @ U.to_numpy().T)
-    np.testing.assert_array_almost_equal(op.apply_adjoint(V).to_numpy().T, to_matrix(op).conj().T @ V.to_numpy().T)
-
-    U += 1j * op.source.random(1)
-    V += 1j * op.range.random(1)
-    np.testing.assert_array_almost_equal(op.apply(U).to_numpy().T, to_matrix(op) @ U.to_numpy().T)
-    np.testing.assert_array_almost_equal(op.apply_adjoint(V).to_numpy().T, to_matrix(op).conj().T @ V.to_numpy().T)
 
 
 if config.HAVE_DUNEGDT:

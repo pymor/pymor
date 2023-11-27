@@ -11,22 +11,23 @@ This module provides the following |NumPy|-based |Operators|:
   which assemble into a |NumpyMatrixOperator|.
 - |NumpyGenericOperator| wraps an arbitrary Python function between
   |NumPy arrays| as an |Operator|.
-- |NumpyHankelOperator| implicitly constructs a Hankel operator from a |NumPy array| of
-  Markov parameters.
+- |NumpyCirculantOperator| matrix-free operator of a circulant matrix.
+- |NumpyToeplitzOperator| matrix-free operator of a Toeplitz matrix.
+- |NumpyHankelOperator| matrix-free operator of a Hankel matrix.
 """
 
 from functools import reduce
 
 import numpy as np
 import scipy.linalg as spla
-import scipy.sparse
-from numpy.fft import fft, ifft, irfft, rfft
+import scipy.sparse as sps
+from scipy.fft import fft, ifft, irfft, rfft
 from scipy.io import mmwrite, savemat
 from scipy.linalg import lu_factor, lu_solve
 from scipy.linalg.lapack import get_lapack_funcs
-from scipy.sparse import issparse
 
 from pymor.core.base import abstractmethod
+from pymor.core.cache import CacheableObject, cached
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
@@ -203,7 +204,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         self.__auto_init(locals())
         self.source = NumpyVectorSpace(matrix.shape[1], source_id)
         self.range = NumpyVectorSpace(matrix.shape[0], range_id)
-        self.sparse = issparse(matrix)
+        self.sparse = sps.issparse(matrix)
 
     @classmethod
     def from_file(cls, path, key=None, source_id=None, range_id=None, solver_options=None, name=None):
@@ -394,9 +395,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 identity_shift = identity_shift.real
             if operators[0].sparse:
                 try:
-                    matrix += (scipy.sparse.eye(matrix.shape[0]) * identity_shift)
+                    matrix += (sps.eye(matrix.shape[0]) * identity_shift)
                 except NotImplementedError:
-                    matrix = matrix + (scipy.sparse.eye(matrix.shape[0]) * identity_shift)
+                    matrix = matrix + (sps.eye(matrix.shape[0]) * identity_shift)
             else:
                 matrix += (np.eye(matrix.shape[0]) * identity_shift)
 
@@ -418,59 +419,32 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return super()._format_repr(max_width, verbosity, override={'matrix': matrix_repr})
 
 
-class NumpyHankelOperator(NumpyGenericOperator):
-    r"""Implicit representation of a Hankel operator by a |NumPy Array|.
+class NumpyCirculantOperator(Operator, CacheableObject):
+    r"""Matrix-free representation of a (block) circulant matrix by a |NumPy Array|.
 
-    Let
-
-    .. math::
-        h =
-        \begin{pmatrix}
-            h_1 & h_2 & \dots & h_n
-        \end{pmatrix},\quad h_i\in\mathbb{C}^{p\times m},\,i=1,\,\dots,\,n,\quad n,m,p\in\mathbb{N}
-
-    be a finite (matrix-valued) sequence. If :math:`h` has an odd number :math:`n=2s-1`
-    of elements, the corresponding Hankel operator can be represented by the matrix
+    A (block) circulant matrix is a special kind of (block) Toeplitz matrix which is (block) square
+    and completely determined by its first (matrix-valued) column via
 
     .. math::
-        H =
-        \begin{bmatrix}
-            h_1 & h_2 & \dots & h_s \\
-            h_2 & h_3 & \dots & h_{s+1}\\
-            \vdots & \vdots & \ddots & \vdots\\
-            h_s & h_{s+1} & \dots & h_{2s-1}
-        \end{bmatrix}\in\mathbb{C}^{ms\times ps}.
+        C =
+            \begin{bmatrix}
+                c_1    & c_n    & c_{n-1} & \cdots & \cdots & c_2 \\
+                c_2    & c_1    & c_n     &        &        & \vdots \\
+                c_3    & c_2    & \ddots  &        &        & \vdots \\
+                \vdots &        &         & \ddots & c_n    & c_{n-1} \\
+                \vdots &        &         & c_2    & c_1    & c_n \\
+                c_n    & \cdots & \cdots  & c_3    & c_2    & c_1
+            \end{bmatrix} \in \mathbb{C}^{n*p \times n*m},
 
-    For an even number :math:`n=2s` of elements, the corresponding matrix
-    representation is given by
-
-    .. math::
-        H =
-        \begin{bmatrix}
-            h_1 & h_2 & \dots & h_s & h_{s+1}\\
-            h_2 & h_3 & \dots & h_{s+1} & h_{s+2}\\
-            \vdots & \vdots & \ddots & \vdots & \vdots\\
-            h_s & h_{s+1} & \dots & h_{2s-1} & h_{2s}\\
-            h_{s+1} & h_{s+2} & \dots & h_{2s} & 0
-        \end{bmatrix}\in\mathbb{C}^{m(s+1)\times p(s+1)}.
-
-    The matrix :math:`H` as seen above is not explicitly constructed, only the sequence `h` is
-    stored. Efficient matrix-vector multiplications are realized via circulant matrices with DFT in
-    the class' `apply` method (see :cite:`MSKC21` Algorithm 3.1. for details).
+    where the so-called circulant vector :math:`c \in \mathbb{C}^{\times n\times p\times m}` denotes
+    the first (matrix-valued) column of the matrix. The matrix :math:`C` as seen above is not
+    explicitly constructed, only `c` is stored. Efficient matrix-vector multiplications are realized
+    with DFT in the class' `apply` method. See :cite:`GVL13` Chapter 4.8.2. for details.
 
     Parameters
     ----------
-    h
-        The |NumPy array| that defines the Hankel operator. Has to be one- or three-dimensional with
-        either:
-
-            h.shape = (n,)
-
-        for scalar-valued sequences or::
-
-            h.shape = (n, p, m)
-
-        for matrix-valued of sequences with elements of dimension :math:`p\times m`.
+    c
+        The |NumPy array| of shape `(n)` or `(n, p, m)` that defines the circulant vector.
     source_id
         The id of the operator's `source` |VectorSpace|.
     range_id
@@ -479,57 +453,236 @@ class NumpyHankelOperator(NumpyGenericOperator):
         Name of the operator.
     """
 
-    def __init__(self, h, source_id=None, range_id=None, name=None):
-        if h.ndim == 1:
-            h = h.reshape(-1, 1, 1)
-        assert h.ndim == 3
-        h.setflags(write=False)  # make numpy arrays read-only
+    cache_region = 'memory'
+    linear = True
+
+    def __init__(self, c, source_id=None, range_id=None, name=None):
+        assert isinstance(c, np.ndarray)
+        if c.ndim == 1:
+            c = c.reshape(-1, 1, 1)
+        assert c.ndim == 3
+        c.setflags(write=False)  # make numpy arrays read-only
         self.__auto_init(locals())
-        n, p, m = h.shape
-        s = n // 2 + 1
-        self.source = NumpyVectorSpace(m * s, source_id)
-        self.range = NumpyVectorSpace(p * s, range_id)
+        n, p, m = c.shape
+        self._arr = c
         self.linear = True
-        self._circulant = None
+        self.source = NumpyVectorSpace(n*m, source_id)
+        self.range = NumpyVectorSpace(n*p, range_id)
+
+    @cached
+    def _circulant(self):
+        return rfft(self._arr, axis=0) if np.isrealobj(self._arr) else fft(self._arr, axis=0)
+
+    def _circular_matvec(self, vec):
+        n, p, m = self._arr.shape
+        s, k = vec.shape
+
+        # use real arithmetic if possible
+        isreal = np.isrealobj(self._arr) and np.isrealobj(vec)
+        ismixed = np.isrealobj(self._arr) and np.iscomplexobj(vec)
+
+        C = self._circulant()
+        if ismixed:
+            l =  s // m - C.shape[0] + 1
+            C = np.concatenate([C, C[1:l].conj()[::-1]])
+
+        dtype = float if isreal else complex
+        y = np.zeros((self.range.dim, k), dtype=dtype)
+        for j in range(m):
+            x = vec[j::m]
+            X = rfft(x, axis=0) if isreal else fft(x, axis=0)
+            for i in range(p):
+                Y = X*C[:, i, j].reshape(-1, 1)
+                # setting n=n below is necessary to allow uneven lengths but considerably slower
+                # Hankel operator will always pad to even length to avoid that
+                Y = irfft(Y, n=n, axis=0) if isreal else ifft(Y, axis=0)
+                y[i::p] += Y[:self.range.dim // p]
+        return y.T
 
     def apply(self, U, mu=None):
         assert U in self.source
         U = U.to_numpy().T
-        k = U.shape[1]
-        s, p, m = self.h.shape
-        n = s // 2 + 1
-
-        FFT, iFFT = fft, ifft
-        c = self._calc_circulant()
-        dtype = complex
-        if np.isrealobj(self.h):
-            if np.isrealobj(U):
-                FFT, iFFT = rfft, irfft
-                dtype = float
-            else:
-                c = np.concatenate([c, np.flip(c[1:-1], axis=0).conj()])
-
-        y = np.zeros([self.range.dim, k], dtype=dtype)
-        for (i, j) in np.ndindex((p, m)):
-            x = np.concatenate([np.flip(U[j::m], axis=0), np.zeros([n, k])])
-            cx = iFFT(FFT(x, axis=0) * c[:, i, j].reshape(-1, 1), axis=0)
-            y[i::p] += cx[:n]
-
-        return self.range.make_array(y.T)
+        return self.range.make_array(self._circular_matvec(U))
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         return self.H.apply(V, mu=mu)
 
-    def _calc_circulant(self):
-        if self._circulant is None:
-            FFT = rfft if np.isrealobj(self.h) else fft
-            s, p, m = self.h.shape
-            self._circulant = FFT(np.roll(
-                np.concatenate([np.zeros([1, p, m]), self.h, np.zeros([1 - s % 2, p, m])]), s // 2 + 1, axis=0), axis=0)
-        return self._circulant
+    @property
+    def H(self):
+        return self.with_(c=np.roll(self._arr.conj(), -1, axis=0)[::-1].transpose(0, 2, 1),
+                          source_id=self.range_id, range_id=self.source_id, name=self.name + '_adjoint')
+
+
+class NumpyToeplitzOperator(Operator):
+    r"""Matrix-free representation of a finite dimensional Toeplitz matrix by a |NumPy Array|.
+
+    A finite dimensional Toeplitz operator can be represented by a (block) matrix with constant
+    diagonals (diagonal blocks), i.e.:
+
+    .. math::
+        T =
+            \begin{bmatrix}
+                c_1    & r_2    & r_3    & \cdots & \cdots & r_n \\
+                c_2    & c_1    & r_2    &        &        & \vdots \\
+                c_3    & c_2    & \ddots &        &        & \vdots \\
+                \vdots &        &        & \ddots & r_2    & r_3 \\
+                \vdots &        &        & c_2    & c_1    & r_2 \\
+                c_m    & \cdots & \cdots & c_3    & c_2    & c_1
+            \end{bmatrix} \in \mathbb{C}^{n*p \times k*m},
+
+    where :math:`c\in\mathbb{C}^{n\times p\times m}` and :math:`r\in\mathbb{C}^{k\times p\times m}`
+    denote the first (matrix-valued) column and first (matrix-valued) row of the (block) Toeplitz
+    matrix, respectively. The matrix :math:`T` as seen above is not explicitly
+    constructed, only the arrays `c` and `r` are stored. The operator's `apply` method takes
+    advantage of the fact that any (block) Toeplitz matrix can be embedded in a larger (block)
+    circulant matrix to leverage efficient matrix-vector multiplications with DFT.
+
+    Parameters
+    ----------
+    c
+        The |NumPy array| of shape either `(n)` or `(n, p, m)` that defines the first column of the
+        (block) Toeplitz matrix.
+    r
+        The |NumPy array|  of shape `(k,)` or `(k, p, m)` that defines the first row of the Toeplitz
+        matrix. If supplied, its first entry `r[0]` has to be equal to `c[0]`.
+        Defaults to `None`. If `r` is `None`, the behavior of :func:`scipy.linalg.toeplitz` is
+        mimicked which sets `r = c.conj()` (except for the first entry).
+    source_id
+        The id of the operator's `source` |VectorSpace|.
+    range_id
+        The id of the operator's `range` |VectorSpace|.
+    name
+        Name of the operator.
+    """
+
+    linear = True
+
+    def __init__(self, c, r=None, source_id=None, range_id=None, name=None):
+        assert isinstance(c, np.ndarray)
+        c = c.reshape(-1, 1, 1) if c.ndim == 1 else c
+        assert c.ndim == 3
+        if r is None:
+            r = np.conjugate(c)
+            r[0] = c[0]
+        else:
+            assert isinstance(r, np.ndarray)
+            r = r.reshape(-1, 1, 1) if r.ndim == 1 else r
+            assert r.ndim == 3
+            assert c.shape[1:] == r.shape[1:]
+            assert np.allclose(c[0], r[0])
+        c.setflags(write=False)
+        r.setflags(write=False)
+        self.__auto_init(locals())
+        self._circulant = NumpyCirculantOperator(
+            np.concatenate([c, r[:0:-1]]), source_id=source_id, range_id=range_id,
+            name=self.name + ' (implicit circulant)')
+        _, p, m = self._circulant._arr.shape
+        self.source = NumpyVectorSpace(m*r.shape[0], source_id)
+        self.range = NumpyVectorSpace(p*c.shape[0], range_id)
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        n, _, m = self._circulant._arr.shape
+        U = np.concatenate([U.to_numpy().T, np.zeros((n*m - U.dim, len(U)))])
+        return self.range.make_array(self._circulant._circular_matvec(U)[:, :self.range.dim])
+
+    def apply_adjoint(self, V, mu=None):
+        assert V in self.range
+        return self.H.apply(V, mu=mu)
 
     @property
     def H(self):
-        adjoint_h = self.h.transpose(0, 2, 1).conj()
-        return self.with_(h=adjoint_h, source_id=self.range_id, range_id=self.source_id, name=self.name + '_adjoint')
+        return self.with_(c=self.r.conj().transpose(0, 2, 1), r=self.c.conj().transpose(0, 2, 1),
+                          source_id=self.range_id, range_id=self.source_id, name=self.name + '_adjoint')
+
+
+class NumpyHankelOperator(Operator):
+    r"""Matrix-free representation of a finite dimensional Hankel operator by a |NumPy Array|.
+
+    A finite dimensional Hankel operator can be represented by a (block) matrix with constant
+    anti-diagonals (anti-diagonal blocks), i.e.:
+
+    .. math::
+        H =
+            \begin{bmatrix}
+                c_1    & c_2    & c_3    & \cdots  & \cdots  & r_1 \\
+                c_2    & c_3    &        &         &         & \vdots \\
+                c_3    &        &        &         &         & \vdots \\
+                \vdots &        &        &         &         & r_{n-2} \\
+                \vdots &        &        &         & r_{n-2} & r_{n-1} \\
+                c_m    & \cdots & \cdots & r_{n-2} & r_{n-1} & r_n
+            \end{bmatrix} \in \mathbb{C}^{n*p \times k*m},
+
+    where :math:`c\in\mathbb{C}^{s\times p\times m}` and :math:`r\in\mathbb{C}^{k\times p\times m}`
+    denote the first (matrix-valued) column and last (matrix-valued) row of the (block) Hankel
+    matrix, respectively. The matrix :math:`H` as seen above is not explicitly constructed, only the
+    arrays `c` and `r` are stored. Efficient matrix-vector multiplications are realized with DFT in
+    the class' `apply` method (see :cite:`MSKC21` Algorithm 3.1. for details).
+
+    Parameters
+    ----------
+    c
+        The |NumPy array| of shape `(n)` or `(n, p, m)` that defines the first column of the
+        (block) Hankel matrix.
+    r
+        The |NumPy array| of shape `(k,)` or `(k, p, m)` that defines the last row of the (block)
+        Hankel matrix. If supplied, its first entry `r[0]` has to be equal to `c[-1]`.
+        Defaults to `None`. If `r` is `None`, the behavior of :func:`scipy.linalg.hankel` is
+        mimicked which sets `r` to zero (except for the first entry).
+    source_id
+        The id of the operator's `source` |VectorSpace|.
+    range_id
+        The id of the operator's `range` |VectorSpace|.
+    name
+        Name of the operator.
+    """
+
+    linear = True
+
+    def __init__(self, c, r=None, source_id=None, range_id=None, name=None):
+        assert isinstance(c, np.ndarray)
+        c = c.reshape(-1, 1, 1) if c.ndim == 1 else c
+        assert c.ndim == 3
+        if r is None:
+            r = np.zeros_like(c)
+            r[0] = c[-1]
+        else:
+            assert isinstance(r, np.ndarray)
+            r = r.reshape(-1, 1, 1) if r.ndim == 1 else r
+            assert r.ndim == 3
+            assert c.shape[1:] == r.shape[1:]
+            assert np.allclose(r[0], c[-1])
+        c.setflags(write=False)
+        r.setflags(write=False)
+        self.__auto_init(locals())
+        k, l = c.shape[0], r.shape[0]
+        n = k + l - 1
+        # zero pad to even length if real to avoid slow irfft
+        z = int(np.isrealobj(c) and np.isrealobj(r) and n % 2)
+        h = np.concatenate((c, r[1:], np.zeros([z, *c.shape[1:]])))
+        shift = n // 2 + int(np.ceil((k - l) / 2)) + (n % 2) + z # this works
+        self._circulant = NumpyCirculantOperator(
+            np.roll(h, shift, axis=0), source_id=source_id, range_id=range_id, name=self.name + ' (implicit circulant)')
+        p, m = self._circulant._arr.shape[1:]
+        self.source = NumpyVectorSpace(l*m, source_id)
+        self.range = NumpyVectorSpace(k*p, range_id)
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        U = U.to_numpy().T
+        n, p, m = self._circulant._arr.shape
+        x = np.zeros((n*m, U.shape[1]), dtype=U.dtype)
+        for j in range(m):
+            x[:self.source.dim][j::m] = np.flip(U[j::m], axis=0)
+        return self.range.make_array(self._circulant._circular_matvec(x)[:, :self.range.dim])
+
+    def apply_adjoint(self, V, mu=None):
+        assert V in self.range
+        return self.H.apply(V, mu=mu)
+
+    @property
+    def H(self):
+        h = np.concatenate([self.c, self.r[1:]], axis=0).conj().transpose(0, 2, 1)
+        return self.with_(c=h[:self.r.shape[0]], r=h[self.r.shape[0]-1:],
+                          source_id=self.range_id, range_id=self.source_id, name=self.name+'_adjoint')

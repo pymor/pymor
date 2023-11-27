@@ -15,7 +15,13 @@ from pymor.core.config import config
 from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 from pymor.operators.list import NumpyListVectorArrayMatrixOperator
-from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.operators.numpy import (
+    NumpyCirculantOperator,
+    NumpyHankelOperator,
+    NumpyMatrixOperator,
+    NumpyToeplitzOperator,
+)
+from pymor.tools.random import get_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import BUILTIN_DISABLED
 
@@ -70,6 +76,33 @@ def numpy_list_vector_array_matrix_operator_with_arrays_factory(
     return op, None, s, r
 
 
+def numpy_structured_matrix_operator_with_arrays_factory(structure, iscomplex, even, r_none, shape, blockshape,
+                                                         count_source, count_range, source_id=None, range_id=None):
+    rng = get_rng()
+    n = 5 if even else 4
+    nr = 2 if shape == 'skinny' else n
+    nc = 2 if shape == 'fat' else n
+    blocks = (2 if blockshape == 'skinny' else 3, 2 if blockshape == 'fat' else 3)
+    if blockshape == 'scalar':
+        blocks = ()
+    if iscomplex:
+        c = rng.random((nc, *blocks)) + 1j * rng.random((nc, *blocks))
+        r = rng.random((nr, *blocks)) + 1j * rng.random((nr, *blocks))
+    else:
+        c = rng.random((nc, *blocks))
+        r = rng.random((nr, *blocks))
+    if structure == NumpyCirculantOperator:
+        op = structure(c, source_id=source_id, range_id=range_id)
+    elif structure == NumpyToeplitzOperator:
+        r[0] = c[0]
+        op = structure(c, r=None if r_none else r, source_id=source_id, range_id=range_id)
+    elif structure == NumpyHankelOperator:
+        r[0] = c[-1]
+        op = structure(c, r=None if r_none else r, source_id=source_id, range_id=range_id)
+    U, V = op.source.random(count_source), op.range.random(count_range)
+    return op, None, U, V
+
+
 def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range, count_source, count_range,
                                                            source_id=None, range_id=None):
     from scipy.linalg import eigh
@@ -112,6 +145,16 @@ numpy_matrix_operator_with_arrays_factory_arguments = list(product(
     [{'sparse': opt} for opt in _sparse_opts],
 ))
 
+numpy_structured_matrix_operator_with_arrays_factory_arguments = list(product(
+    [NumpyCirculantOperator, NumpyHankelOperator, NumpyToeplitzOperator],
+    [False, True],
+    [False, True],
+    [False, True],
+    ['fat', 'skinny', 'square'],
+    ['fat', 'skinny', 'square'],
+    [1, 3],
+    [1, 3],
+))
 
 numpy_matrix_operator_with_arrays_generators = \
     [lambda args=args: numpy_matrix_operator_with_arrays_factory(*args, **kwargs)
@@ -131,6 +174,16 @@ numpy_list_vector_array_matrix_operator_with_arrays_generators = \
 numpy_list_vector_array_matrix_operator_generators = \
     [lambda args=args: numpy_list_vector_array_matrix_operator_with_arrays_factory(*args, **kwargs)[0:2]
      for args, kwargs in numpy_matrix_operator_with_arrays_factory_arguments]
+
+
+numpy_structured_matrix_operator_with_arrays_generators = \
+    [lambda args=args: numpy_structured_matrix_operator_with_arrays_factory(*args)
+     for args in numpy_structured_matrix_operator_with_arrays_factory_arguments]
+
+
+numpy_structured_matrix_operator_generators = \
+    [lambda args=args: numpy_structured_matrix_operator_with_arrays_factory(*args)[0:2]
+     for args in numpy_structured_matrix_operator_with_arrays_factory_arguments]
 
 
 def thermalblock_factory(xblocks, yblocks, diameter):
@@ -354,7 +407,7 @@ thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
     [lambda args=args: thermalblock_fixedparam_factory(*args) for args in thermalblock_factory_arguments]
 
 
-num_misc_operators = 14
+num_misc_operators = 13
 
 
 def misc_operator_with_arrays_and_products_factory(n):
@@ -461,12 +514,6 @@ def misc_operator_with_arrays_and_products_factory(n):
         from pymor.vectorarrays.block import BlockVectorSpace
         space = BlockVectorSpace([NumpyVectorSpace(1), NumpyVectorSpace(2)])
         op = NumpyConversionOperator(space)
-        return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
-    elif n == 13:
-        from pymor.operators.numpy import NumpyHankelOperator
-        s, p, m = 4, 2, 3
-        mp = np.random.rand(s, p, m)
-        op = NumpyHankelOperator(mp)
         return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
     else:
         assert False
@@ -608,6 +655,7 @@ builtin_operator_with_arrays_generators = (
     [] if BUILTIN_DISABLED else
     numpy_matrix_operator_with_arrays_generators
     + numpy_list_vector_array_matrix_operator_with_arrays_generators
+    + numpy_structured_matrix_operator_with_arrays_generators
     + thermalblock_operator_with_arrays_generators
     + thermalblock_assemble_operator_with_arrays_generators
     + thermalblock_concatenation_operator_with_arrays_generators
@@ -634,6 +682,7 @@ builtin_operator_generators = (
     [] if BUILTIN_DISABLED else
     numpy_matrix_operator_generators
     + numpy_list_vector_array_matrix_operator_generators
+    + numpy_structured_matrix_operator_generators
     + thermalblock_operator_generators
     + thermalblock_assemble_operator_generators
     + thermalblock_concatenation_operator_generators
@@ -659,6 +708,7 @@ builtin_picklable_operator_generators = (
     [] if BUILTIN_DISABLED else
     numpy_matrix_operator_generators
     + numpy_list_vector_array_matrix_operator_generators
+    + numpy_structured_matrix_operator_generators
     + thermalblock_operator_generators
     + thermalblock_assemble_operator_generators
     + thermalblock_concatenation_operator_generators

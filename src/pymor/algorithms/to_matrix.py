@@ -24,7 +24,12 @@ from pymor.operators.constructions import (
     ZeroOperator,
 )
 from pymor.operators.interface import as_array_max_length
-from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
+from pymor.operators.numpy import (
+    NumpyCirculantOperator,
+    NumpyHankelOperator,
+    NumpyMatrixOperator,
+    NumpyToeplitzOperator,
+)
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -65,15 +70,35 @@ class ToMatrixRules(RuleTable):
     def action_NumpyHankelOperator(self, op):
         format = self.format
         if format in (None, 'dense'):
-            n, p, m = op.h.shape
-            s = n // 2 + 1
-            op_mp = np.concatenate([op.h, np.zeros([1 - n % 2, p, m])])
-            r, c = op_mp[:s], op_mp[s - 1:]
-            op_matrix = np.zeros([p * s, m * s], dtype=op_mp.dtype)
+            p, m = op.c.shape[1:]
+            op_mat = np.zeros((op.range.dim, op.source.dim), dtype=op._circulant._arr.dtype)
             for (i, j) in np.ndindex((p, m)):
-                op_matrix[i::p, j::m] = spla.hankel(r[:, i, j], c[:, i, j])
+                op_mat[i::p, j::m] = spla.hankel(op.c[:, i, j], r=op.r[:, i, j])
+            return op_mat
+        else:
+            raise NotImplementedError
 
-            return op_matrix
+    @match_class(NumpyToeplitzOperator)
+    def action_NumpyToeplitzOperator(self, op):
+        format = self.format
+        if format in (None, 'dense'):
+            p, m = op.c.shape[1:]
+            op_mat = np.zeros((op.range.dim, op.source.dim), dtype=op._circulant._arr.dtype)
+            for (i, j) in np.ndindex((p, m)):
+                op_mat[i::p, j::m] = spla.toeplitz(op.c[:, i, j], r=op.r[:, i, j])
+            return op_mat
+        else:
+            raise NotImplementedError
+
+    @match_class(NumpyCirculantOperator)
+    def action_NumpyCirculantOperator(self, op):
+        format = self.format
+        if format in (None, 'dense'):
+            p, m = op.c.shape[1:]
+            op_mat = np.zeros((op.range.dim, op.source.dim), dtype=op._arr.dtype)
+            for (i, j) in np.ndindex((p, m)):
+                op_mat[i::p, j::m] = spla.circulant(op.c[:, i, j])
+            return op_mat
         else:
             raise NotImplementedError
 

@@ -84,8 +84,6 @@ common = """
 .. |ListVectorArray| replace:: :class:`~pymor.vectorarrays.list.ListVectorArray`
 .. |ListVectorArrays| replace:: :class:`ListVectorArrays <pymor.vectorarrays.list.ListVectorArray>`
 
-.. |NumpyHankelOperator| replace:: :class:`~pymor.operators.numpy.NumpyHankelOperator`
-.. |NumpyHankelOperators| replace:: :class:`NumpyHankelOperators <pymor.operators.numpy.NumpyHankelOperator>`
 .. |NumpyMatrixOperator| replace:: :class:`~pymor.operators.numpy.NumpyMatrixOperator`
 .. |NumpyMatrixOperators| replace:: :class:`NumpyMatrixOperators <pymor.operators.numpy.NumpyMatrixOperator>`
 .. |NumpyMatrixBasedOperator| replace:: :class:`~pymor.operators.numpy.NumpyMatrixBasedOperator`
@@ -99,6 +97,13 @@ common = """
 .. |VectorFunctional| replace:: :class:`~pymor.operators.constructions.VectorFunctional`
 .. |NumpyVectorSpace| replace:: :func:`~pymor.vectorarrays.numpy.NumpyVectorSpace`
 .. |NumpyVectorSpaces| replace:: :func:`NumpyVectorSpaces <pymor.vectorarrays.numpy.NumpyVectorSpace>`
+
+.. |NumpyCirculantOperator| replace:: :class:`~pymor.operators.numpy.NumpyCirculantOperator`
+.. |NumpyCirculantOperators| replace:: :class:`HankelOperators <pymor.operators.numpy.NumpyCirculantOperator>`
+.. |NumpyHankelOperator| replace:: :class:`~pymor.operators.numpy.NumpyHankelOperator`
+.. |NumpyHankelOperators| replace:: :class:`HankelOperators <pymor.operators.numpy.NumpyHankelOperator>`
+.. |NumpyToeplitzOperator| replace:: :class:`~pymor.operators.numpy.NumpyToeplitzOperator`
+.. |NumpyToeplitzOperators| replace:: :class:`HankelOperators <pymor.operators.numpy.NumpyToeplitzOperator>`
 
 .. |StationaryModel| replace:: :class:`~pymor.models.basic.StationaryModel`
 .. |StationaryModels| replace:: :class:`StationaryModels <pymor.models.basic.StationaryModel>`
