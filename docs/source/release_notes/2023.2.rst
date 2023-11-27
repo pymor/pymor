@@ -1,5 +1,5 @@
 pyMOR 2023.2 (December 7, 2023)
----------------------------
+-------------------------------
 
 We are proud to announce the release of pyMOR 2023.2!
 ...
@@ -15,17 +15,57 @@ details.
 Release highlights
 ^^^^^^^^^^^^^^^^^^
 
+New Tutorials
+~~~~~~~~~~~~~
+In order to give users a good introduction to pyMOR and the available model
+reduction methods, adding tutorials has been a big part of previous releases.
+Similarly, this release features new tutorials via
+
+- Add tutorial for port-Hamiltonian systems `[#2132] <https://github.com/pymor/pymor/pull/2132>`_
+- Add tutorial on VectorArray basics `[#2176] <https://github.com/pymor/pymor/pull/2176>`_
+
+Additionally, rendering of tutorial notebooks has been drastically improved
+through `[#2174] <https://github.com/pymor/pymor/pull/2174>`_ and
+`[#2175] <https://github.com/pymor/pymor/pull/2175>`_
+
+DFT-based Operators
+~~~~~~~~~~~~~~~~~~~
+`[#2138] <https://github.com/pymor/pymor/pull/2138>`_
 
 
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+Add optional argument for returning coefficients in POD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`[#2114] <https://github.com/pymor/pymor/pull/2114>`_
+
+Allow time-dependent Mus as arguments of cached functions / make cache key generation more flexible
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`[#2230] <https://github.com/pymor/pymor/pull/2230>`_
 
 
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fix "cotangent" typo
+~~~~~~~~~~~~~~~~~~~~
+`[#2131] <https://github.com/pymor/pymor/pull/2131>`_
 
+Fix "neighbor" typo
+~~~~~~~~~~~~~~~~~~~
+`[#2130] <https://github.com/pymor/pymor/pull/2130>`_
+
+Deprecate pymess
+~~~~~~~~~~~~~~~~
+`[#2193] <https://github.com/pymor/pymor/pull/2193>`_
+
+Remove pymor.tools.timer
+~~~~~~~~~~~~~~~~~~~~~~~~
+`[#2194] <https://github.com/pymor/pymor/pull/2194>`_
 
 
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- `[#2171] Support Python 3.11 <https://github.com/pymor/pymor/pull/2171>`_
+- `[#2128] Operator-valued functions in FactorizedTransferFunction <https://github.com/pymor/pymor/pull/2128>`_
+- `[#2111] Add check_finite and check_cond in NumpyMatrixOperator and use SciPy solvers elsewhere <https://github.com/pymor/pymor/pull/2111>`_
