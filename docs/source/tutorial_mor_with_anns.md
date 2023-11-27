@@ -539,6 +539,127 @@ using a reduced basis, one can apply the
 For a direct approximation of outputs using LSTMs, we provide the
 {class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryStatefreeOutputReductor`.
 
+### Instationary neural network reductors in practice
+
+In the following we apply two neural network reductors to a parametrized parabolic equation.
+First, we define the parametrized heat equation with a high-diffusivity channel as follows:
+
+```{code-cell}
+grid_intervals = 50
+nt = 50
+
+problem = InstationaryProblem(
+    StationaryProblem(
+        domain=RectDomain(top='dirichlet', bottom='neumann'),
+        diffusion=LincombFunction(
+            [ConstantFunction(1., dim_domain=2),
+             ExpressionFunction('(0.45 < x[0] < 0.55) * (x[1] < 0.7) * 1.',
+                                dim_domain=2),
+             ExpressionFunction('(0.35 < x[0] < 0.40) * (x[1] > 0.3) * 1. + '
+                                '(0.60 < x[0] < 0.65) * (x[1] > 0.3) * 1.',
+                                dim_domain=2)],
+            [1.,
+             100. - 1.,
+             ExpressionParameterFunctional('top[0] - 1.', {'top': 1})]
+        ),
+        rhs=ConstantFunction(value=100., dim_domain=2) * ExpressionParameterFunctional('sin(10*pi*t[0])', {'t': 1}),
+        dirichlet_data=ConstantFunction(value=0., dim_domain=2),
+        neumann_data=ExpressionFunction('(0.45 < x[0] < 0.55) * -1000.', dim_domain=2),
+    ),
+    T=1.,
+    initial_data=ExpressionFunction('(0.45 < x[0] < 0.55) * (x[1] < 0.7) * 10.', dim_domain=2)
+)
+
+# discretize using continuous finite elements
+fom, _ = discretize_instationary_cg(analytical_problem=problem, diameter=1./grid_intervals, nt=nt)
+product = fom.h1_0_semi_product
+```
+
+We further define the parameter space:
+
+```{code-cell}
+parameter_space = fom.parameters.space(1, 25)
+```
+
+Additionally, we sample training, validation and test sets from the parameter space:
+
+```{code-cell}
+training_set = parameter_space.sample_uniformly(15)
+validation_set = parameter_space.sample_randomly(3)
+test_set = parameter_space.sample_randomly(10)
+```
+
+To check how the two reductors perform, we write a simple function that measures the
+errors and the speedups on a test parameter set:
+
+```{code-cell}
+def compute_errors(rom, reductor):
+    speedups = []
+
+    U = fom.solution_space.empty(reserve=len(test_set))
+    U_red = fom.solution_space.empty(reserve=len(test_set))
+
+    for mu in test_set:
+        tic = time.time()
+        u_fom = fom.solve(mu)[1:]
+        U.append(u_fom)
+        time_fom = time.time() - tic
+
+        tic = time.time()
+        u_red = reductor.reconstruct(rom.solve(mu))[1:]
+        U_red.append(u_red)
+        time_red = time.time() - tic
+
+        speedups.append(time_fom / time_red)
+
+    relative_errors = (U - U_red).norm2() / U.norm2()
+
+    return relative_errors, speedups
+```
+
+We now run the
+{class}`~pymor.reductors.neural_network.NeuralNetworkInstationaryReductor`
+and the
+{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor`
+with different parameters and evaluate their performance:
+
+```{code-cell}
+from pymor.reductors.neural_network import NeuralNetworkInstationaryReductor, NeuralNetworkLSTMInstationaryReductor
+
+basis_size = 20
+
+reductor = NeuralNetworkInstationaryReductor(fom, training_set, validation_set, basis_size=basis_size,
+                                             pod_params={'product': product}, ann_mse=None, scale_inputs=True,
+                                             scale_outputs=True)
+rom = reductor.reduce(restarts=0)
+rel_errors, speedups = compute_errors(rom, reductor)
+reductor_lstm = NeuralNetworkLSTMInstationaryReductor(fom, training_set, validation_set, basis_size=basis_size,
+                                                      pod_params={'product': product}, ann_mse=None, scale_inputs=True,
+                                                      scale_outputs=True)
+rom_lstm = reductor_lstm.reduce(restarts=0, number_layers=1, hidden_dimension=25, learning_rate=0.01)
+rel_errors_lstm, speedups_lstm = compute_errors(rom_lstm, reductor_lstm)
+```
+
+We finally print the results:
+
+```{code-cell}
+print('Results for the state approximation:')
+print('====================================')
+print()
+print('Approach by Hesthaven and Ubbiali using feedforward ANNs:')
+print('---------------------------------------------------------')
+print(f'Average relative error: {np.average(rel_errors)}')
+print(f'Median of speedup: {np.median(speedups)}')
+print()
+print('Approach using long short-term memory ANNs:')
+print('-------------------------------------------')
+print(f'Average relative error: {np.average(rel_errors_lstm)}')
+print(f'Median of speedup: {np.median(speedups_lstm)}')
+```
+
+In this example, we observe that the LSTMs perform much better than the feedforward ANNs in terms
+of accuracy and runtime.
+
 Download the code:
 {download}`tutorial_mor_with_anns.md`
 {nb-download}`tutorial_mor_with_anns.ipynb`
