@@ -6,7 +6,6 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.lyapunov import _chol, solve_cont_lyap_dense
-from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.base import BasicObject
 from pymor.models.iosys import LTIModel
 from pymor.operators.constructions import ZeroOperator
@@ -102,23 +101,18 @@ class SpectralFactorReductor(BasicObject):
         if X is None:
             # Compute minimal solution X to Riccati equation
             assert not isinstance(self.fom.D, ZeroOperator), 'D+D^T must be invertible.'
-            Z = self.fom.gramian('pr_o_lrcf', mu=self.mu).to_numpy()
-            X = Z.T @ Z
+            X = self.fom.gramian('pr_o_dense', mu=self.mu)
 
         # Compute Cholesky-like factorization of W(X)
-        E = to_matrix(self.fom.E, format='dense')
-        B = to_matrix(self.fom.B, format='dense')
-        C = to_matrix(self.fom.C, format='dense')
-        D = to_matrix(self.fom.D, format='dense')
+        A, B, C, D, E = self.fom.to_abcde_matrices()
         M = _chol(D + D.T).T
-        L = spla.solve(M.T, C - B.T @ X @ E)
+        L = spla.solve(M.T, C - B.T @ X if E is None else C - B.T @ X @ E)
 
         if compute_errors:
-            A = to_matrix(self.fom.A, format='dense')
-            LTL = -A.T @ X @ E - X @ A @ E
+            LTL = -A.T @ X - X @ A if E is None else -A.T @ X @ E - X @ A @ E
             relLTLerr = np.linalg.norm(L.T @ L - LTL) / np.linalg.norm(LTL)
             self.logger.info(f'Relative L^T*L error: {relLTLerr:.3e}')
-            LTM = C.T - E.T @ X @ B
+            LTM = C.T - X @ B if E is None else C.T - E.T @ X @ B
             relLTMerr = np.linalg.norm(L.T @ M - LTM) / np.linalg.norm(LTM)
             self.logger.info(f'Relative L^T*M error: {relLTMerr:.3e}')
 
@@ -127,28 +121,22 @@ class SpectralFactorReductor(BasicObject):
             NumpyMatrixOperator(M, source_id=self.fom.B.source.id),
             self.fom.E)
 
-        spectral_factor_reduced = r_fn(spectral_factor, self.mu)
+        spectral_factor_rom = r_fn(spectral_factor, self.mu)
 
         if compute_errors:
-            spectralH2err = spectral_factor_reduced - spectral_factor
+            spectralH2err = spectral_factor_rom - spectral_factor
             self.logger.info('Relative H2 error of reduced spectral factor: '
                 f'{spectralH2err.h2_norm() / spectral_factor.h2_norm():.3e}')
 
-        Er = to_matrix(spectral_factor_reduced.E, format='dense')
-        Ar = to_matrix(spectral_factor_reduced.A, format='dense')
-        Br = to_matrix(spectral_factor_reduced.B, format='dense')
-        Lr = to_matrix(spectral_factor_reduced.C, format='dense')
-        Mr = to_matrix(spectral_factor_reduced.D, format='dense')
-
         if check_stability:
-            largest_pole = spectral_factor_reduced.poles().real.max()
+            largest_pole = spectral_factor_rom.poles().real.max()
             if largest_pole > 0:
                 self.logger.warn('Reduced system for spectral factor is not stable. '
                                  f'Real value of largest pole is {largest_pole}.')
 
+        Ar, Br, Lr, Mr, Er = spectral_factor_rom.to_abcde_matrices()
         Dr = 0.5*(Mr.T @ Mr) + 0.5*(D-D.T)
-
         Xr = solve_cont_lyap_dense(A=Ar, E=Er, B=Lr, trans=True)
-        Cr = Br.T @ Xr @ Er + Mr.T @ Lr
+        Cr = Br.T @ Xr + Mr.T @ Lr if Er is None else Br.T @ Xr @ Er + Mr.T @ Lr
 
         return LTIModel.from_matrices(Ar, Br, Cr, Dr, Er)

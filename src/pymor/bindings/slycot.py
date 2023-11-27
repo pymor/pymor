@@ -257,6 +257,54 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
     return X
 
 
+def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
+    """Compute the solution of a Riccati equation.
+
+    See :func:`pymor.algorithms.riccati.solve_pos_ricc_dense` for a
+    general description.
+
+    This function uses `slycot.sb02md` (if `E is None and S is None`) which is based on
+    the Schur vector approach, and `slycot.sb02od` (if `E is None and S is not None`) or
+    `slycot.sg02ad` (if `E is not None`) which are both based on
+    the method of deflating subspaces.
+
+    Parameters
+    ----------
+    A
+        The matrix A as a 2D |NumPy array|.
+    E
+        The matrix E as a 2D |NumPy array| or `None`.
+    B
+        The matrix B as a 2D |NumPy array|.
+    C
+        The matrix C as a 2D |NumPy array|.
+    R
+        The matrix R as a 2D |NumPy array| or `None`.
+    S
+        The matrix S as a 2D |NumPy array| or `None`.
+    trans
+        Whether the first matrix in the Riccati equation is
+        transposed.
+    options
+        The solver options to use (see
+        :func:`ricc_dense_solver_options`).
+
+    Returns
+    -------
+    X
+        Riccati equation solution as a |NumPy array|.
+    """
+    _solve_ricc_dense_check_args(A, E, B, C, R, S, trans)
+    options = _parse_options(options, ricc_dense_solver_options(), 'slycot', None, False)
+
+    if options['type'] != 'slycot':
+        raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
+
+    if R is None:
+        R = np.eye(np.shape(C)[0] if not trans else np.shape(B)[1])
+    return solve_ricc_dense(A, E, B, C, -R, S, trans, options)
+
+
 def ricc_dense_solver_options():
     """Return available Riccati solvers with default options for the slycot backend.
 
@@ -349,16 +397,6 @@ def _ricc_rcond_check(solver, rcond):
                        f'Result may not be accurate.')
 
 
-def pos_ricc_lrcf_solver_options():
-    """Return available positive Riccati solvers with default options for the slycot backend.
-
-    Returns
-    -------
-    A dict of available solvers with default solver options.
-    """
-    return {'slycot': {'type': 'slycot'}}
-
-
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     """Compute an approximate low-rank solution of a positive Riccati equation.
 
@@ -391,7 +429,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         equation is transposed.
     options
         The solver options to use (see
-        :func:`pos_ricc_lrcf_solver_options`).
+        :func:`ricc_lrcf_solver_options`).
 
     Returns
     -------
@@ -400,7 +438,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         solution, |VectorArray| from `A.source`.
     """
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'slycot', None, False)
+    options = _parse_options(options, ricc_lrcf_solver_options(), 'slycot', None, False)
     if options['type'] != 'slycot':
         raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
 

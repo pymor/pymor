@@ -243,9 +243,6 @@ def _solve_ricc_dense_check_args(A, E, B, C, R, S, trans):
             assert S.shape[1] == B.shape[1]
 
 
-_DEFAULT_POS_RICC_LRCF_DENSE_SOLVER_BACKEND = 'slycot' if config.HAVE_SLYCOT else 'scipy'
-
-
 @defaults('default_dense_solver_backend')
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
                         default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND):
@@ -278,6 +275,8 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     1. `slycot` (see :func:`pymor.bindings.slycot.solve_pos_ricc_lrcf`),
     2. `scipy` (see :func:`pymor.bindings.scipy.solve_pos_ricc_lrcf`).
 
+    Currently, only dense solvers are provided.
+
     Parameters
     ----------
     A
@@ -299,8 +298,8 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         The solver options to use.
         See:
 
-        - :func:`pymor.bindings.scipy.pos_ricc_lrcf_solver_options`,
-        - :func:`pymor.bindings.slycot.pos_ricc_lrcf_solver_options`,
+        - :func:`pymor.bindings.scipy.ricc_lrcf_solver_options`,
+        - :func:`pymor.bindings.slycot.ricc_lrcf_solver_options`,
         - :func:`pymor.bindings.pymess.pos_ricc_lrcf_solver_options`.
 
     default_dense_solver_backend
@@ -327,6 +326,93 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
     return solve_ricc_impl(A, E, B, C, R, S, trans=trans, options=options)
+
+
+@defaults('default_solver_backend')
+def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None,
+                     default_solver_backend=_DEFAULT_RICC_DENSE_SOLVER_BACKEND):
+    """Compute the solution of a Riccati equation.
+
+    Returns the solution :math:`X` of a (generalized) continuous-time
+    algebraic Riccati equation:
+
+    - if trans is `False`
+
+      .. math::
+          A X E^T + E X A^T
+          + (E X C^T + S^T) R^{-1} (C X E^T + S)
+          + B B^T = 0.
+
+    - if trans is `True`
+
+      .. math::
+          A^T X E + E^T X A
+          + (E^T X B + S) R^{-1} (B^T X E + S^T)
+          + C^T C = 0.
+
+    If E is None, it is taken to be identity, and similarly for R.
+    If S is None, it is taken to be zero.
+
+    We assume:
+
+    - A, E, B, C, R, S are real |NumPy arrays|,
+    - E is nonsingular,
+    - (E, A, B, C) is stabilizable and detectable,
+    - R is symmetric positive definite, and
+    - :math:`B B^T - S^T R^{-1} S` (:math:`C^T C - S R^{-1} S^T`) is
+      positive semi-definite if trans is `False` (`True`).
+
+    If the solver is not specified using the options argument, a solver
+    backend is chosen based on availability in the following order:
+
+    1. `slycot` (see :func:`pymor.bindings.slycot.solve_ricc_dense`)
+    2. `scipy` (see :func:`pymor.bindings.scipy.solve_ricc_dense`)
+
+    Parameters
+    ----------
+    A
+        The matrix A as a 2D |NumPy array|.
+    E
+        The matrix E as a 2D |NumPy array| or `None`.
+    B
+        The matrix B as a 2D |NumPy array|.
+    C
+        The matrix C as a 2D |NumPy array|.
+    R
+        The matrix B as a 2D |NumPy array| or `None`.
+    S
+        The matrix S as a 2D |NumPy array| or `None`.
+    trans
+        Whether the first matrix in the Riccati equation is
+        transposed.
+    options
+        The solver options to use.
+        See:
+
+        - :func:`pymor.bindings.slycot.ricc_dense_solver_options`,
+        - :func:`pymor.bindings.scipy.ricc_dense_solver_options`.
+
+    default_solver_backend
+        Default solver backend to use (slycot, scipy).
+
+    Returns
+    -------
+    X
+        Riccati equation solution as a |NumPy array|.
+    """
+    _solve_ricc_dense_check_args(A, E, B, C, R, S, trans)
+    if options:
+        solver = options if isinstance(options, str) else options['type']
+        backend = solver.split('_')[0]
+    else:
+        backend = default_solver_backend
+    if backend == 'scipy':
+        from pymor.bindings.scipy import solve_pos_ricc_dense as solve_ricc_impl
+    elif backend == 'slycot':
+        from pymor.bindings.slycot import solve_pos_ricc_dense as solve_ricc_impl
+    else:
+        raise ValueError(f'Unknown solver backend ({backend}).')
+    return solve_ricc_impl(A, E, B, C, R, S, trans, options=options)
 
 
 def _solve_ricc_check_args(A, E, B, C, R, S, trans):
