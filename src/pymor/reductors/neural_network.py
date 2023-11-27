@@ -296,26 +296,43 @@ class NeuralNetworkReductor(BasicObject):
         sample = (torch.DoubleTensor(prepare_datum(sample[0])), torch.DoubleTensor(prepare_datum(sample[1])))
 
         if self.scale_inputs:
+            if sample[0].ndim > 1:
+                s_in_min, _ = torch.min(sample[0], 0)
+            else:
+                s_in_min = sample[0]
             if self.scaling_parameters['min_inputs'] is not None:
-                self.scaling_parameters['min_inputs'] = torch.min(self.scaling_parameters['min_inputs'], sample[0])
+
+                self.scaling_parameters['min_inputs'] = torch.min(self.scaling_parameters['min_inputs'], s_in_min)
             else:
-                self.scaling_parameters['min_inputs'] = sample[0]
+                self.scaling_parameters['min_inputs'] = s_in_min
+            if sample[0].ndim > 1:
+                s_in_max, _ = torch.max(sample[0], 0)
+            else:
+                s_in_max = sample[0]
             if self.scaling_parameters['max_inputs'] is not None:
-                self.scaling_parameters['max_inputs'] = torch.max(self.scaling_parameters['max_inputs'], sample[0])
+                self.scaling_parameters['max_inputs'] = torch.max(self.scaling_parameters['max_inputs'], s_in_max)
             else:
-                self.scaling_parameters['max_inputs'] = sample[0]
+                self.scaling_parameters['max_inputs'] = s_in_max
 
         if self.scale_outputs:
+            if sample[1].ndim > 1:
+                s_out_min, _ = torch.min(sample[1], 0)
+            else:
+                s_out_min = sample[1]
             if self.scaling_parameters['min_targets'] is not None:
                 self.scaling_parameters['min_targets'] = torch.min(self.scaling_parameters['min_targets'],
-                                                                   sample[1])
+                                                                   s_out_min)
             else:
-                self.scaling_parameters['min_targets'] = sample[1]
+                self.scaling_parameters['min_targets'] = s_out_min
+            if sample[1].ndim > 1:
+                s_out_max, _ = torch.max(sample[1], 0)
+            else:
+                s_out_max = sample[1]
             if self.scaling_parameters['max_targets'] is not None:
                 self.scaling_parameters['max_targets'] = torch.max(self.scaling_parameters['max_targets'],
-                                                                   sample[1])
+                                                                   s_out_max)
             else:
-                self.scaling_parameters['max_targets'] = sample[1]
+                self.scaling_parameters['max_targets'] = s_out_max
 
     def _compute_sample(self, mu, u=None):
         """Transform parameter and corresponding solution to |NumPy arrays|."""
@@ -1311,8 +1328,8 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
             logger.info(f'Rejecting neural network with loss of {current_losses["full"]:.3e} '
                         f'(instead of {losses["full"]:.3e}) ...')
 
-    if target_loss:
+    if target_loss and losses['full'] > target_loss:
         raise NeuralNetworkTrainingError(f'Could not find neural network with prescribed loss of '
-                                          f'{target_loss:.3e} (best one found was {losses["full"]:.3e})!')
+                                         f'{target_loss:.3e} (best one found was {losses["full"]:.3e})!')
     logger.info(f'Found neural network with error of {losses["full"]:.3e} ...')
     return best_neural_network, losses
