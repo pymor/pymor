@@ -410,6 +410,10 @@ class BitmapFunction(Function):
         2d |NumPy array| of the discrete function values.
     bounding_box
         Lower left and upper right coordinates of the domain of the function.
+    range
+        Deprecated, only works in conjunction with filename). Don't use.
+    filename
+        Deprecated, use :meth:`BitmapFunction.from_file` instead.
     """
 
     dim_domain = 2
