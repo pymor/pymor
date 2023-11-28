@@ -38,7 +38,7 @@ def main(
     if getattr(sys, '_called_from_test', False):
         reductor = NeuralNetworkReductor(fom=fom, training_set=training_set, validation_set=validation_set,
                                          l2_err=1e-5, ann_mse=1e-5)
-        rom = reductor.reduce(restarts=100, log_loss_frequency=10)
+        rom = reductor.reduce(restarts=100)
 
         U_red = fom.solution_space.empty(reserve=len(test_set))
         for mu in test_set:
@@ -54,7 +54,7 @@ def main(
 
     reductor_data_driven = NeuralNetworkReductor(training_set=training_data, validation_set=validation_data,
                                                  l2_err=1e-5, ann_mse=1e-5)
-    rom_data_driven = reductor_data_driven.reduce(restarts=100, log_loss_frequency=10)
+    rom_data_driven = reductor_data_driven.reduce(restarts=100, epochs=100)
 
     speedups_data_driven = []
 
@@ -82,7 +82,7 @@ def main(
                       legend=('Full solution', 'Reduced solution (data-driven)'))
 
     output_reductor = NeuralNetworkStatefreeOutputReductor(fom, training_set, validation_set, validation_loss=1e-5)
-    output_rom = output_reductor.reduce(restarts=100, log_loss_frequency=10)
+    output_rom = output_reductor.reduce(restarts=100)
 
     outputs = []
     outputs_red = []
