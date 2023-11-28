@@ -411,7 +411,7 @@ class BitmapFunction(Function):
     bounding_box
         Lower left and upper right coordinates of the domain of the function.
     range
-        Deprecated, only works in conjunction with filename). Don't use.
+        Deprecated, only works in conjunction with filename. Don't use.
     filename
         Deprecated, use :meth:`BitmapFunction.from_file` instead.
     """
