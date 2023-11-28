@@ -12,6 +12,7 @@ from pymor.core.base import abstractmethod
 from pymor.core.config import config
 from pymor.parameters.base import Mu, ParametricObject
 from pymor.parameters.functionals import ParameterFunctional
+from pymor.tools.random import get_rng
 
 
 class Function(ParametricObject):
@@ -404,23 +405,68 @@ class ProductFunction(Function):
 
 
 class BitmapFunction(Function):
-    """Define a 2D |Function| via a grayscale image.
+    """Define a piecewise constant 2D |Function| via a bitmap array.
 
     Parameters
     ----------
-    filename
-        Path of the image representing the function.
+    bitmap
+        2d |NumPy array| of the discrete function values.
     bounding_box
         Lower left and upper right coordinates of the domain of the function.
     range
-        A pixel of value p is mapped to `(p / 255.) * range[1] + range[0]`.
+        Deprecated, only works in conjunction with filename. Don't use.
+    filename
+        Deprecated, use :meth:`BitmapFunction.from_file` instead.
     """
 
     dim_domain = 2
     shape_range = ()
 
-    def __init__(self, filename, bounding_box=None, range=None):
+    def __init__(self, bitmap=None, bounding_box=None, range=None, filename=None):
+        # TODO: remove entire if clause after release, remove range and filename args
+        if filename is not None or isinstance(bitmap, str):
+            import warnings
+            warnings.warn('DeprecationWarning. Call BitmapFunction.from_file to instantiate'
+                          'BitmapFunction from a graphics file')
+            if bitmap is not None and filename is not None:
+                raise ValueError
+            filename = bitmap if bitmap is not None else filename
+            assert isinstance(filename, str)
+            range = range or [0., 1.]
+            try:
+                from PIL import Image
+            except ImportError as e:
+                raise ImportError("PIL is needed for loading images. Try 'pip install pillow'") from e
+            img = Image.open(filename)
+            if not img.mode == 'L':
+                self.logger.warning('Image ' + filename + ' not in grayscale mode. Converting to grayscale.')
+                img = img.convert('L')
+            bitmap = np.array(img).T[:, ::-1]
+            bitmap = bitmap * ((range[1] - range[0]) / 255.)  # copy to change dtype
+            bitmap += range[0]
+            filename = None
+            range = None
+        assert isinstance(bitmap, np.ndarray)
+        assert range is None, 'only for deprecated interface'
+        assert filename is None, 'only for deprecated interface'
         bounding_box = bounding_box or [[0., 0.], [1., 1.]]
+        self.__auto_init(locals())
+        self.lower_left = np.array(bounding_box[0])
+        self.size = np.array(bounding_box[1] - self.lower_left)
+
+    @classmethod
+    def from_file(cls, filename, bounding_box=None, range=None):
+        """Create a |BitmapFunction| from a grayscale image file.
+
+        Parameters
+        ----------
+        filename
+            Path of the image representing the function.
+        bounding_box
+            Lower left and upper right coordinates of the domain of the function.
+        range
+            A pixel of value p is mapped to `(p / 255.) * range[1] + range[0]`.
+        """
         range = range or [0., 1.]
         try:
             from PIL import Image
@@ -428,19 +474,32 @@ class BitmapFunction(Function):
             raise ImportError("PIL is needed for loading images. Try 'pip install pillow'") from e
         img = Image.open(filename)
         if not img.mode == 'L':
-            self.logger.warning('Image ' + filename + ' not in grayscale mode. Converting to grayscale.')
+            cls._logger.warning('Image ' + filename + ' not in grayscale mode. Converting to grayscale.')
             img = img.convert('L')
-        self.__auto_init(locals())
-        self.bitmap = np.array(img).T[:, ::-1]
-        self.lower_left = np.array(bounding_box[0])
-        self.size = np.array(bounding_box[1] - self.lower_left)
+        bitmap = np.array(img).T[:, ::-1]
+        bitmap = bitmap * ((range[1] - range[0]) / 255.)  # copy to change dtype
+        bitmap += range[0]
+        return cls(bitmap, bounding_box=bounding_box)
+
+    @classmethod
+    def random(cls, shape=(1, 1), bounding_box=((0., 0.), (1., 1.)), range=(0., 1.)):
+        """Create a random |BitmapFunction| with uniform distribution of values.
+
+        Parameters
+        ----------
+        bounding_box
+            Lower left and upper right coordinates of the domain of the function.
+        range
+            Tuple of minimum and maximum function values.
+        """
+        a, b = range[0], range[1]
+        random_field = get_rng().uniform(a, b, np.prod(shape)).reshape(shape)
+        return cls(random_field, bounding_box=bounding_box)
 
     def evaluate(self, x, mu=None):
         indices = np.maximum(np.floor((x - self.lower_left) * np.array(self.bitmap.shape) / self.size).astype(int), 0)
-        F = (self.bitmap[np.minimum(indices[..., 0], self.bitmap.shape[0] - 1),
-                         np.minimum(indices[..., 1], self.bitmap.shape[1] - 1)]
-             * ((self.range[1] - self.range[0]) / 255.)
-             + self.range[0])
+        F = self.bitmap[np.minimum(indices[..., 0], self.bitmap.shape[0] - 1),
+                        np.minimum(indices[..., 1], self.bitmap.shape[1] - 1)]
         return F
 
 

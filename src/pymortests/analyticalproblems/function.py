@@ -70,3 +70,16 @@ def test_pickle_by_evaluation(function):
 def test_invalid_expressions():
     with pytest.raises(TypeError):
         ExpressionFunction('(-1 < x[0]) and (x[0] < 1)', 1)
+
+
+def test_random_bitmap_function():
+    from pymor.analyticalproblems.functions import BitmapFunction
+    f = BitmapFunction.random(shape=(10, 10))
+    for i in range(9):
+        for j in range(9):
+            # all values are between 0 and 1
+            assert 0 <= f([i / 10., j / 10.]) <= 1
+            # neighboring cells have different values
+            assert (f([i/10., j/10.]) != f([(i+1)/10., (j+1)/10.]))
+            # values in same cell are equal
+            assert (f([i/10., j/10.]) == f([(i+0.3)/10., (j+0.3)/10.]))
