@@ -43,6 +43,7 @@ CI_EXTRAS= \
 	--extra tests \
 	--extra ann \
 	--extra slycot \
+	--extra pymepack \
 	--extra ipyparallel \
 	--extra mpi \
 	--extra gui \
@@ -100,7 +101,7 @@ CONDA_EXTRAS = \
 	--extras gui \
 	--extras jupyter \
 	--extras vtk
-	# dune, ngsolve, scikit-fem (no recent version) not available as conda-forge packages
+	# pymepack, dune, ngsolve, scikit-fem (no recent version) not available as conda-forge packages
 	# pytorch not available for win64
 	# docs-additional not needed
 	# gmsh is incompatible with pyside6>=6.4.3 needed for windows ci not to hang
