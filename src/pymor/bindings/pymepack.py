@@ -17,7 +17,9 @@ from pymor.core.defaults import defaults
 
 @defaults('block_size', 'solver', 'max_it', 'tau')
 def pymepack_gelyap_options(block_size = None, solver = None, max_it = None, tau = None):
-    """Returns customized options for the pymepack.gelyap, pymepack.gglyap solvers
+    """Return pymepack solver options.
+
+    Customized options for the pymepack.gelyap, pymepack.gglyap solvers
     and their respective versions with iterative refinement.
     If no values are specified, pymepack uses its default settings.
     Refer to the `pymepack` documentation for default values.
@@ -35,14 +37,19 @@ def pymepack_gelyap_options(block_size = None, solver = None, max_it = None, tau
 
     Returns
     -------
-    Dictionary of customized solver options to be used instead of the default values for the pymepack backend.
+    Dictionary of customized solver options to be used instead of the default
+    values for the pymepack backend.
     """
     gelyap_opts = {}
 
-    if block_size is not None: gelyap_opts['block_size'] = block_size
-    if solver is not None: gelyap_opts['solver'] = solver
-    if max_it is not None: gelyap_refine_opts['max_it'] = max_it
-    if tau is not None: gelyap_refine_opts['tau'] = tau
+    if block_size is not None:
+        gelyap_opts['block_size'] = block_size
+    if solver is not None:
+        gelyap_opts['solver'] = solver
+    if max_it is not None:
+        gelyap_opts['max_it'] = max_it
+    if tau is not None:
+        gelyap_opts['tau'] = tau
 
     return gelyap_opts
 
@@ -71,11 +78,12 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
 
     for a general description.
 
-    This function uses `pymepack.gelyap` (if `E is None`) and `pymepack.gglyap` (if `E is not None`),
-    which are dense solvers. If options specify a solver with iterative refinement, `pymepack.gelyap_refine`
-    and `pymepack.gglyap_refine` are used in the aforementioned cases respectively. We assume A and E can
-    be converted to |NumPy arrays| using :func:`~pymor.algorithms.to_matrix.to_matrix` and that
-    `B.to_numpy` is implemented.
+    This function uses `pymepack.gelyap` (if `E is None`) and `pymepack.gglyap`
+    (if `E is not None`), which are dense solvers.
+    If options specify a solver with iterative refinement, `pymepack.gelyap_refine` and
+    `pymepack.gglyap_refine` are used in the aforementioned cases respectively.
+    We assume A and E can be converted to |NumPy arrays| using
+    :func:`~pymor.algorithms.to_matrix.to_matrix` and that `B.to_numpy` is implemented.
 
     Parameters
     ----------
@@ -178,10 +186,14 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
 
     opts = options['opts']
     refinement_opts = {}
-    if 'max_it' in opts : refinement_opts['max_it'] = opts.pop('max_it')
-    if 'tau' in opts : refinement_opts['tau'] = opts.pop('tau')
-    if 'block_size' in opts: refinement_opts['block_size'] = opts['block_size']
-    if 'solver' in opts : refinement_opts['solver'] = opts['solver']
+    if 'max_it' in opts:
+        refinement_opts['max_it'] = opts.pop('max_it')
+    if 'tau' in opts:
+        refinement_opts['tau'] = opts.pop('tau')
+    if 'block_size' in opts:
+        refinement_opts['block_size'] = opts['block_size']
+    if 'solver' in opts:
+        refinement_opts['solver'] = opts['solver']
 
     if options['type'] == 'pymepack_gelyap':
         if E is None:
