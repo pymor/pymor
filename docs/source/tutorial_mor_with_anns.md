@@ -658,7 +658,7 @@ print(f'Median of speedup: {np.median(speedups_lstm)}')
 ```
 
 In this example, we observe that the LSTMs perform much better than the feedforward ANNs in terms
-of accuracy and runtime.
+of accuracy while the speedups of both methods lie in the same order of magnitude.
 
 Download the code:
 {download}`tutorial_mor_with_anns.md`
