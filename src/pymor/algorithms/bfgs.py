@@ -119,7 +119,8 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     if error_aware:
         assert error_criterion is not None
         assert line_search_error_criterion is not None
-        assert callable(error_criterion) and callable(line_search_error_criterion)
+        assert callable(error_criterion)
+        assert callable(line_search_error_criterion)
         bfgs_armijo = partial(constrained_armijo, armijo_condition=line_search_error_criterion)
 
     assert model.dim_output == 1

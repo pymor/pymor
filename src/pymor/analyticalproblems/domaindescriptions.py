@@ -351,7 +351,8 @@ class CircularSectorDomain(PolygonalDomain):
     """
 
     def __init__(self, angle, radius, arc='dirichlet', radii='dirichlet', num_points=100):
-        assert (0 < angle) and (angle < 2*np.pi)
+        assert 0 < angle
+        assert angle < 2*np.pi
         assert radius > 0
         assert num_points > 0
 

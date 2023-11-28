@@ -1078,7 +1078,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     # robin boundaries
     if p.robin_data is not None:
-        assert isinstance(p.robin_data, tuple) and len(p.robin_data) == 2
+        assert isinstance(p.robin_data, tuple)
+        assert len(p.robin_data) == 2
         if isinstance(p.robin_data[0], LincombFunction):
             for i, rd in enumerate(p.robin_data[0].functions):
                 robin_tuple = (rd, p.robin_data[1])

@@ -221,7 +221,8 @@ class LTIBHIReductor(GenericBHIReductor):
         if projection != 'arnoldi':
             return super().reduce(sigma, b, c, projection=projection)
 
-        assert self.fom.dim_input == 1 and self.fom.dim_output == 1
+        assert self.fom.dim_input == 1
+        assert self.fom.dim_output == 1
         r = len(sigma)
         assert b.shape == (r, self.fom.dim_input)
         assert c.shape == (r, self.fom.dim_output)

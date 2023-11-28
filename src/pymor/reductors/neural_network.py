@@ -98,7 +98,8 @@ class NeuralNetworkReductor(BasicObject):
                                    'min_targets': None, 'max_targets': None}
 
         if not fom:
-            assert training_set is not None and len(training_set) > 0
+            assert training_set is not None
+            assert len(training_set) > 0
             self.parameters_dim = training_set[0][0].parameters.dim
         else:
             self.parameters_dim = fom.parameters.dim
@@ -431,7 +432,8 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
                                    'min_targets': None, 'max_targets': None}
 
         if not fom:
-            assert training_set is not None and len(training_set) > 0
+            assert training_set is not None
+            assert len(training_set) > 0
             self.parameters_dim = training_set[0][0].parameters.dim
             self.dim_output = len(training_set[0][1].flatten())
         else:
@@ -543,7 +545,8 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
                                    'min_targets': None, 'max_targets': None}
 
         if not fom:
-            assert training_set is not None and len(training_set) > 0
+            assert training_set is not None
+            assert len(training_set) > 0
             assert T is not None
             self.parameters_dim = training_set[0][0].parameters.dim
             self.T = T
@@ -786,7 +789,8 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
                                    'min_targets': None, 'max_targets': None}
 
         if not fom:
-            assert training_set is not None and len(training_set) > 0
+            assert training_set is not None
+            assert len(training_set) > 0
             assert T is not None
             self.parameters_dim = training_set[0][0].parameters.dim
             self.dim_output = len(training_set[0][1].flatten())
@@ -1064,9 +1068,11 @@ def train_neural_network(training_data, validation_data, neural_network,
 
     optimizer = optim.LBFGS if 'optimizer' not in training_parameters else training_parameters['optimizer']
     epochs = 1000 if 'epochs' not in training_parameters else training_parameters['epochs']
-    assert isinstance(epochs, int) and epochs > 0
+    assert isinstance(epochs, int)
+    assert epochs > 0
     batch_size = 20 if 'batch_size' not in training_parameters else training_parameters['batch_size']
-    assert isinstance(batch_size, int) and batch_size > 0
+    assert isinstance(batch_size, int)
+    assert batch_size > 0
     learning_rate = 1. if 'learning_rate' not in training_parameters else training_parameters['learning_rate']
     assert learning_rate > 0.
     loss_function = (nn.MSELoss() if (training_parameters.get('loss_function') is None)
@@ -1246,7 +1252,8 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
         of restarts.
     """
     assert isinstance(training_parameters, dict)
-    assert isinstance(max_restarts, int) and max_restarts >= 0
+    assert isinstance(max_restarts, int)
+    assert max_restarts >= 0
 
     logger = getLogger('pymor.algorithms.neural_network.multiple_restarts_training')
 

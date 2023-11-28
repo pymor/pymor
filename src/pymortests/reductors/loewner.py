@@ -30,7 +30,7 @@ test_data = [
 ]
 
 
-@pytest.mark.parametrize('reduce_kwargs,loewner_kwargs', test_data)
+@pytest.mark.parametrize(('reduce_kwargs', 'loewner_kwargs'), test_data)
 def test_loewner_lti(reduce_kwargs, loewner_kwargs):
     fom = make_fom(10)
     s = np.logspace(1, 3, 40)*1j
@@ -40,7 +40,7 @@ def test_loewner_lti(reduce_kwargs, loewner_kwargs):
         / np.abs(fom.transfer_function.eval_tf(ss)) < 1e-10 for ss in s])
 
 
-@pytest.mark.parametrize('reduce_kwargs,loewner_kwargs', test_data)
+@pytest.mark.parametrize(('reduce_kwargs', 'loewner_kwargs'), test_data)
 def test_loewner_tf(reduce_kwargs, loewner_kwargs):
     fom = make_fom(10)
     s = np.logspace(1, 3, 40)*1j
@@ -50,7 +50,7 @@ def test_loewner_tf(reduce_kwargs, loewner_kwargs):
         / np.abs(fom.transfer_function.eval_tf(ss)) < 1e-10 for ss in s])
 
 
-@pytest.mark.parametrize('reduce_kwargs,loewner_kwargs', test_data)
+@pytest.mark.parametrize(('reduce_kwargs', 'loewner_kwargs'), test_data)
 def test_loewner_data(reduce_kwargs, loewner_kwargs):
     fom = make_fom(10)
     s = np.logspace(1, 3, 40)

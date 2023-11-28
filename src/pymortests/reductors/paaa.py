@@ -21,7 +21,7 @@ test_data = [
 ]
 
 
-@pytest.mark.parametrize('m,p,is_parametric', test_data)
+@pytest.mark.parametrize(('m', 'p', 'is_parametric'), test_data)
 def test_paaa(m,p,is_parametric):
     np.random.seed(0)
     if is_parametric:

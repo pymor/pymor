@@ -17,9 +17,9 @@ class CanonicalSymplecticFormOperator(BlockOperator):
     """
 
     def __init__(self, phase_space):
-        assert (isinstance(phase_space, BlockVectorSpace)
-                and len(phase_space.subspaces) == 2
-                and phase_space.subspaces[0] == phase_space.subspaces[1])
+        assert isinstance(phase_space, BlockVectorSpace)
+        assert len(phase_space.subspaces) == 2
+        assert phase_space.subspaces[0] == phase_space.subspaces[1]
         self.__auto_init(locals())
         half_space = phase_space.subspaces[0]
         super().__init__([[None, IdentityOperator(half_space)],

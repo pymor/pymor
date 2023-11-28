@@ -553,13 +553,14 @@ class EmpiricalInterpolatedFunction(LincombFunction):
         assert isinstance(function, Function)
         if len(function.shape_range) > 0:
             raise NotImplementedError
-        assert isinstance(interpolation_points, np.ndarray) and interpolation_points.ndim == 2 and \
-            interpolation_points.shape[1] == function.dim_domain
-        assert isinstance(interpolation_matrix, np.ndarray) and \
-            interpolation_matrix.shape == (len(interpolation_points),) * 2
+        assert isinstance(interpolation_points, np.ndarray)
+        assert interpolation_points.ndim == 2
+        assert interpolation_points.shape[1] == function.dim_domain
+        assert isinstance(interpolation_matrix, np.ndarray)
+        assert interpolation_matrix.shape == (len(interpolation_points),) * 2
         assert all(isinstance(mu, Mu) for mu in snapshot_mus)
-        assert isinstance(snapshot_coefficients, np.ndarray) and \
-            snapshot_coefficients.shape == (len(interpolation_points), len(snapshot_mus))
+        assert isinstance(snapshot_coefficients, np.ndarray)
+        assert snapshot_coefficients.shape == (len(interpolation_points), len(snapshot_mus))
         assert (evaluation_points is None) == (basis_evaluations is None)
         assert evaluation_points is None or isinstance(evaluation_points, np.ndarray) and \
             evaluation_points.ndim == 2 and evaluation_points.shape[1] == function.dim_domain

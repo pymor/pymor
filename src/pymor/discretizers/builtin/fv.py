@@ -314,7 +314,8 @@ class NonlinearAdvectionOperator(Operator):
         return self.range.make_array(R[:, :-1])
 
     def jacobian(self, U, mu=None):
-        assert U in self.source and len(U) == 1
+        assert U in self.source
+        assert len(U) == 1
         assert self.parameters.assert_compatible(mu)
 
         if not hasattr(self, '_grid_data'):
@@ -565,7 +566,8 @@ class ReactionOperator(NumpyMatrixBasedOperator):
     sparse = True
 
     def __init__(self, grid, reaction_coefficient, solver_options=None, name=None):
-        assert reaction_coefficient.dim_domain == grid.dim and reaction_coefficient.shape_range == ()
+        assert reaction_coefficient.dim_domain == grid.dim
+        assert reaction_coefficient.shape_range == ()
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid)
 

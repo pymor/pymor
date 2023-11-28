@@ -217,6 +217,7 @@ select = [
   "N", # pep8-naming
   "D", # pydocstyle
   "ICN", # flake8-import-conventions
+  "PT", # flake8-pytest-style
   "Q", # flake8-quotes
 ]
 ignore = [
@@ -240,6 +241,10 @@ ignore = [
   "N802", # function name should be lowercase
   "N803", # argument name should be lowercase (we use single capital letters everywhere for vectorarrays)
   "N806", # same for variables in function
+  "PT004", # fixture does not return anything, add leading underscore
+  "PT011", # pytest.raises(Exception) is too broad
+  "PT012", # pytest.raises() block should contain a single simple statement
+  "PT015", # assertion always fails, replace with `pytest.fail()`
 ]
 
 [tool.ruff.flake8-import-conventions]

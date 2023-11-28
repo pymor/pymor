@@ -218,16 +218,21 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None,
 
 
 def _solve_ricc_dense_check_args(A, E, B, C, R, S, trans):
-    assert isinstance(A, np.ndarray) and A.ndim == 2
+    assert isinstance(A, np.ndarray)
+    assert A.ndim == 2
     assert A.shape[0] == A.shape[1]
     if E is not None:
-        assert isinstance(E, np.ndarray) and E.ndim == 2
+        assert isinstance(E, np.ndarray)
+        assert E.ndim == 2
         assert E.shape[0] == E.shape[1]
         assert E.shape[0] == A.shape[0]
-    assert isinstance(B, np.ndarray) and isinstance(C, np.ndarray)
-    assert B.shape[0] == A.shape[0] and C.shape[1] == A.shape[0]
+    assert isinstance(B, np.ndarray)
+    assert isinstance(C, np.ndarray)
+    assert B.shape[0] == A.shape[0]
+    assert C.shape[1] == A.shape[0]
     if R is not None:
-        assert isinstance(R, np.ndarray) and R.ndim == 2
+        assert isinstance(R, np.ndarray)
+        assert R.ndim == 2
         assert R.shape[0] == R.shape[1]
         if not trans:
             assert R.shape[0] == C.shape[0]
@@ -416,17 +421,20 @@ def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None,
 
 
 def _solve_ricc_check_args(A, E, B, C, R, S, trans):
-    assert isinstance(A, Operator) and A.linear
+    assert isinstance(A, Operator)
+    assert A.linear
     assert not A.parametric
     assert A.source == A.range
     if E is not None:
-        assert isinstance(E, Operator) and E.linear
+        assert isinstance(E, Operator)
+        assert E.linear
         assert not E.parametric
         assert E.source == E.range == A.source
     assert B in A.source
     assert C in A.source
     if R is not None:
-        assert isinstance(R, np.ndarray) and R.ndim == 2
+        assert isinstance(R, np.ndarray)
+        assert R.ndim == 2
         assert R.shape[0] == R.shape[1]
         if not trans:
             assert R.shape[0] == len(C)

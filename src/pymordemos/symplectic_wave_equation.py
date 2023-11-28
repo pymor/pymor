@@ -131,9 +131,12 @@ def discretize_fom(T=50):
 
 def run_mor(fom, U_fom, method, red_dims):
     assert isinstance(fom, QuadraticHamiltonianModel)
-    assert isinstance(U_fom, VectorArray) and U_fom in fom.H_op.range
-    assert isinstance(method, str) and method in METHODS
-    assert isinstance(red_dims, np.ndarray) and red_dims.dtype == int
+    assert isinstance(U_fom, VectorArray)
+    assert U_fom in fom.H_op.range
+    assert isinstance(method, str)
+    assert method in METHODS
+    assert isinstance(red_dims, np.ndarray)
+    assert red_dims.dtype == int
     assert fom.time_stepper.nt + 1 == len(U_fom)
 
     # compute basis of maximal size

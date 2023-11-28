@@ -66,7 +66,9 @@ class StationaryModel(Model):
             rhs = VectorOperator(rhs, name='rhs')
         output_functional = output_functional or ZeroOperator(NumpyVectorSpace(0), operator.source)
 
-        assert rhs.range == operator.range and rhs.source.is_scalar and rhs.linear
+        assert rhs.range == operator.range
+        assert rhs.source.is_scalar
+        assert rhs.linear
         assert output_functional.source == operator.source
 
         super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
@@ -193,7 +195,8 @@ class StationaryModel(Model):
         if not isinstance(arg, VectorArray):
             mu = self.parameters.parse(arg)
             arg = self.solve(mu)
-        assert arg in self.solution_space and len(arg) == 1
+        assert arg in self.solution_space
+        assert len(arg) == 1
 
         affine_shift = arg
 
@@ -293,8 +296,12 @@ class InstationaryModel(Model):
         assert isinstance(time_stepper, TimeStepper)
         assert initial_data.source.is_scalar
         assert operator.source == initial_data.range
-        assert rhs.linear and rhs.range == operator.range and rhs.source.is_scalar
-        assert mass.linear and mass.source == mass.range == operator.source
+        assert rhs.linear
+        assert rhs.range == operator.range
+        assert rhs.source.is_scalar
+        assert mass.linear
+        assert mass.source == mass.range
+        assert mass.source == operator.source
         assert output_functional.source == operator.source
 
         try:

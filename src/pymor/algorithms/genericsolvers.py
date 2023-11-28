@@ -190,8 +190,9 @@ def _parse_options(options, default_options, default_solver, default_least_squar
     elif isinstance(options, str):
         options = default_options[options]
     else:
-        assert 'type' in options and options['type'] in default_options \
-            and options.keys() <= default_options[options['type']].keys()
+        assert 'type' in options
+        assert options['type'] in default_options
+        assert options.keys() <= default_options[options['type']].keys()
         user_options = options
         options = default_options[user_options['type']]
         options.update(user_options)

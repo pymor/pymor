@@ -390,7 +390,8 @@ class FenicsOperator(Operator):
         return self.range.make_array(R)
 
     def jacobian(self, U, mu=None):
-        assert U in self.source and len(U) == 1
+        assert U in self.source
+        assert len(U) == 1
         if U.vectors[0].imag_part is not None:
             raise NotImplementedError
         self._set_mu(mu)
@@ -547,7 +548,8 @@ class RestrictedFenicsOperator(Operator):
         return V
 
     def jacobian(self, U, mu=None):
-        assert U in self.source and len(U) == 1
+        assert U in self.source
+        assert len(U) == 1
         UU = self.op.source.zeros()
         UU.vectors[0].real_part.impl[:] = np.ascontiguousarray(U.to_numpy()[0])
         JJ = self.op.jacobian(UU, mu=mu)

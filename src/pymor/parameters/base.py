@@ -56,7 +56,8 @@ class Parameters(SortedFrozenDict):
         parameters = {}
 
         def check_dims(param, dim1, dim2):
-            assert isinstance(dim2, int) and dim2 >= 0, f'Dimension of parameter {param} not an int or negative'
+            assert isinstance(dim2, int), f'Dimension of parameter {param} not an int'
+            assert dim2 >= 0, f'Dimension of parameter {param} negative'
             assert dim1 is None or dim1 == dim2, \
                 f'Dimension mismatch for parameter {param} (got {dim1} and {dim2})'
             return True
@@ -345,7 +346,9 @@ class Mu(FrozenDict):
                 # time dependency significantly more expensive).
                 from pymor.analyticalproblems.functions import Function
                 assert k != 't'
-                assert isinstance(v, Function) and v.dim_domain == 1 and len(v.shape_range) == 1
+                assert isinstance(v, Function)
+                assert v.dim_domain == 1
+                assert len(v.shape_range) == 1
                 vv = v(raw_values.get('t', 0))
             else:
                 vv = np.array(v, copy=False, ndmin=1)

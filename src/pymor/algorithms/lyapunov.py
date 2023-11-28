@@ -205,11 +205,13 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
 
 
 def _solve_lyap_lrcf_check_args(A, E, B, trans):
-    assert isinstance(A, Operator) and A.linear
+    assert isinstance(A, Operator)
+    assert A.linear
     assert not A.parametric
     assert A.source == A.range
     if E is not None:
-        assert isinstance(E, Operator) and E.linear
+        assert isinstance(E, Operator)
+        assert E.linear
         assert not E.parametric
         assert E.source == E.range
         assert E.source == A.source
@@ -373,13 +375,16 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
 
 
 def _solve_lyap_dense_check_args(A, E, B, trans):
-    assert isinstance(A, np.ndarray) and A.ndim == 2
+    assert isinstance(A, np.ndarray)
+    assert A.ndim == 2
     assert A.shape[0] == A.shape[1]
     if E is not None:
-        assert isinstance(E, np.ndarray) and E.ndim == 2
+        assert isinstance(E, np.ndarray)
+        assert E.ndim == 2
         assert E.shape[0] == E.shape[1]
         assert E.shape[0] == A.shape[0]
-    assert isinstance(B, np.ndarray) and A.ndim == 2
+    assert isinstance(B, np.ndarray)
+    assert A.ndim == 2
     assert not trans and B.shape[0] == A.shape[0] or trans and B.shape[1] == A.shape[0]
 
 
@@ -398,7 +403,8 @@ def _chol(A):
     L
         Cholesky factor of A (in the sense that L * L^T approximates A).
     """
-    assert isinstance(A, np.ndarray) and A.ndim == 2
+    assert isinstance(A, np.ndarray)
+    assert A.ndim == 2
     assert A.shape[0] == A.shape[1]
 
     U, s, _ = spla.svd(A, lapack_driver='gesvd')
