@@ -389,14 +389,14 @@ def build_cache_key(obj):
 
     def transform_obj(obj):
         t = type(obj)
-        if t in (NoneType, bool, int, float, str, bytes):
+        if hasattr(obj, '_cache_key_reduce'):
+            return transform_obj(obj._cache_key_reduce())
+        elif t in (NoneType, bool, int, float, str, bytes):
             return obj
         elif t is np.ndarray:
             if obj.dtype == object:
                 raise CacheKeyGenerationError('Cannot generate cache key for provided arguments')
             return obj
-        elif t is Mu:
-            return transform_obj(obj._raw_values)
         elif t in (list, tuple):
             return tuple(transform_obj(o) for o in obj)
         elif t in (set, frozenset):
