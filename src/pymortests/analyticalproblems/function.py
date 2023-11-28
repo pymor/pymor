@@ -79,5 +79,7 @@ def test_random_bitmap_function():
         for j in range(9):
             # all values are between 0 and 1
             assert 0 <= f([i / 10., j / 10.]) <= 1
-            # all values are different
+            # neighboring cells have different values
             assert (f([i/10., j/10.]) != f([(i+1)/10., (j+1)/10.]))
+            # values in same cell are equal
+            assert (f([i/10., j/10.]) == f([(i+0.3)/10., (j+0.3)/10.]))
