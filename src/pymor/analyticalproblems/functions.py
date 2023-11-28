@@ -483,7 +483,7 @@ class BitmapFunction(Function):
         bounding_box
             Lower left and upper right coordinates of the domain of the function.
         range
-            Tuple of minimum and maximum functuion values.
+            Tuple of minimum and maximum function values.
         """
         a, b = range[0], range[1]
         random_field = get_rng().uniform(a, b, np.prod(shape)).reshape(shape)
