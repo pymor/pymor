@@ -4,7 +4,7 @@
 
 """Module for computing (rational) Krylov subspaces' bases."""
 
-from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.qr import qr
 
 
 def rational_arnoldi(A, E, b, sigma, trans=False):
@@ -95,11 +95,11 @@ def rational_arnoldi(A, E, b, sigma, trans=False):
             v = sEmA.apply_inverse_adjoint(v if len(V) == 0 else E.apply_adjoint(v))
         if sigma[i].imag == 0:
             V.append(v)
-            gram_schmidt(V, atol=0, rtol=0, offset=len(V) - 1, copy=False)
+            qr(V, offset=len(V) - 1, copy=False)
         else:
             V.append(v.real)
             V.append(v.imag)
-            gram_schmidt(V, atol=0, rtol=0, offset=len(V) - 2, copy=False)
+            qr(V, offset=len(V) - 2, copy=False)
         v = V[-1]
 
     return V
@@ -185,5 +185,5 @@ def tangential_rational_krylov(A, E, B, b, sigma, trans=False, orth=True):
             V.append(v.real)
             V.append(v.imag)
     if orth:
-        gram_schmidt(V, atol=0, rtol=0, copy=False)
+        qr(V, copy=False)
     return V

@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.qr import rrqr
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.core.exceptions import ImageCollectionError, NoMatchingRuleError
 from pymor.core.logger import getLogger
@@ -106,7 +106,7 @@ def estimate_image(operators=(), vectors=(),
         image = product.apply_inverse(image)
 
     if orthonormalize:
-        gram_schmidt(image, product=product, copy=False)
+        rrqr(image, product=product, copy=False)
 
     return image
 
@@ -208,11 +208,11 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
                                        orthonormalize=False, product=product,
                                        riesz_representatives=riesz_representatives)
 
-        gram_schmidt_offset = len(image)
+        offset = len(image)
         image.append(new_image, remove_from_other=True)
         if orthonormalize:
             with logger.block('Orthonormalizing ...'):
-                gram_schmidt(image, offset=gram_schmidt_offset, product=product, copy=False)
+                rrqr(image, offset=offset, product=product, copy=False)
             image_dims.append(len(image))
 
     return image, image_dims

@@ -5,7 +5,7 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.qr import qr
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, InverseOperator
 from pymor.operators.interface import Operator
@@ -209,7 +209,7 @@ def _arnoldi(A, l, b, complex_evp):
         v = A.apply(v)
         V.append(v)
 
-        _, R = gram_schmidt(V, return_R=True, atol=0, rtol=0, offset=len(V) - 1, copy=False)
+        _, R = qr(V, offset=len(V) - 1, copy=False)
         H[:i + 2, i] = R[:l, i + 1]
         v = V[-1]
 
@@ -232,7 +232,7 @@ def _extend_arnoldi(A, V, H, f, p):
     for i in range(k, k + p):
         v = A.apply(v)
         V.append(v)
-        _, R = gram_schmidt(V, return_R=True, atol=0, rtol=0, offset=len(V) - 1, copy=False)
+        _, R = qr(V, offset=len(V) - 1, copy=False)
         H[:i + 2, i] = R[:k + p, i + 1]
 
         v = V[-1]

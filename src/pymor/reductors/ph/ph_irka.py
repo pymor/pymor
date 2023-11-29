@@ -2,8 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.krylov import tangential_rational_krylov
+from pymor.algorithms.qr import qr
 from pymor.models.iosys import PHLTIModel
 from pymor.reductors.h2 import GenericIRKAReductor
 from pymor.reductors.ph.basic import PHLTIPGReductor
@@ -121,6 +121,6 @@ class PHIRKAReductor(GenericIRKAReductor):
         fom = self._assemble_fom()
         self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy(b), sigma, orth=False)
         product = None if projection == 'orth' else fom.Q.H @ fom.E
-        gram_schmidt(self.V, atol=0, rtol=0, product=product, copy=False)
+        qr(self.V, product=product, copy=False)
         self._pg_reductor = PHLTIPGReductor(fom, self.V, projection == 'QTEorth')
         self.W = self._pg_reductor.bases['W']
