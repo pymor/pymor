@@ -156,7 +156,7 @@ def msd_example(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
 
     return J, R, G, P, S, N, E, Q
 
-def heat_equation_example(grid_intervals, nt):
+def heat_equation_example(grid_intervals=50, nt=50):
     """Return heat equation example with a high-conductivity and two parametrized channels.
 
     Parameters

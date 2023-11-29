@@ -100,7 +100,7 @@ def main(
 
 def discretize_pymor():
     from pymor.models.examples import heat_equation_example
-    fom = heat_equation_example(GRID_INTERVALS, NT)
+    fom = heat_equation_example(grid_intervals=GRID_INTERVALS, nt=NT)
     fom.enable_caching('disk')
     return fom
 

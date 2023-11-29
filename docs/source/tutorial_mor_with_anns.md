@@ -545,11 +545,8 @@ In the following we apply two neural network reductors to a parametrized parabol
 First, we import the parametrized heat equation example from {mod}`~pymor.models.examples`:
 
 ```{code-cell}
-grid_intervals = 50
-nt = 50
-
 from pymor.models.examples import heat_equation_example
-fom = heat_equation_example(grid_intervals, nt)
+fom = heat_equation_example()
 product = fom.h1_0_semi_product
 ```
 
