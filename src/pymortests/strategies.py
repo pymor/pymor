@@ -501,7 +501,7 @@ def active_mu_data(draw, min_num=1, max_num=3, min_dim=1, max_dim=5, num_mus=10)
         low_active_indices = sample(active_inds, num_low)
         high_active_indices = list(set(active_inds) - set(low_active_indices))
 
-        mu_range = list(space.ranges.values())[0]
+        mu_range = next(iter(space.ranges.values()))
         val = .5 * (mu_range[0] + mu_range[1])
         mu = val * np.ones(dim)
         mu[low_active_indices] = mu_range[0]

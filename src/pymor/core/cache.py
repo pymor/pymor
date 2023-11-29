@@ -140,7 +140,7 @@ class CacheRegion:
 
 class MemoryRegion(CacheRegion):
 
-    NO_VALUE = {}
+    NO_VALUE = {}  # noqa: RUF012
 
     def __init__(self, max_keys):
         self.max_keys = max_keys

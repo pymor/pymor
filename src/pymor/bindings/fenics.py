@@ -708,7 +708,7 @@ def compute_parent_facet_indices(submesh, mesh):
         for f in facets[1:]:
             common_facets = common_facets.intersection(f)
         assert len(common_facets) == 1
-        parent_facet_index = list(common_facets)[0]
+        parent_facet_index = next(iter(common_facets))
 
         # Set value
         parent_facet_indices[local_facet.index()] = parent_facet_index

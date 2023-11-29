@@ -20,7 +20,7 @@ def test_logger():
         logger.setLevel(lvl)
         assert logger.isEnabledFor(lvl)
     for verb in ['warning', 'error', 'debug', 'info']:
-        getattr(logger, verb)(f'{verb} -- logger {str(logger)}')
+        getattr(logger, verb)(f'{verb} -- logger {logger!s}')
 
 
 def test_empty_log_message():
@@ -44,7 +44,7 @@ def test_once(verb, capsys):
     logger = NumpyMatrixOperator._logger
     logger.setLevel('DEBUG')
     func = getattr(logger, f'{verb}_once')
-    msg = f'{verb} -- logger {str(logger)}'
+    msg = f'{verb} -- logger {logger!s}'
     func(msg)
     # this just clears the capture buffer
     capsys.readouterr()
