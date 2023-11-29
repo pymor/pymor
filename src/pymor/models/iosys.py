@@ -671,10 +671,6 @@ class LTIModel(Model):
 
         assert self.T is not None
 
-        if any([solution_d_mu, output_d_mu, solution_error_estimate,
-                output_error_estimate, output_d_mu_return_array, output_error_estimate_return_vector]):
-            raise NotImplementedError
-
         if not solution and not output:
             return {}
 
