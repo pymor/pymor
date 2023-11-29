@@ -128,7 +128,7 @@ class MoebiusTransformation(ImmutableObject):
         denominator = f'({self.coefficients[2]:.1f})*z + ({self.coefficients[3]:.1f})'
         n = max(len(numerator), len(denominator))
         line = '\nf(z) = ' + n*'-' + '\n'
-        return f'{self.name}: ℂ --> ℂ\n' + 7*' ' + numerator.center(n) + line + 7*' ' + denominator.center(n)
+        return f'{self.name}: ℂ --> ℂ\n' + 7*' ' + numerator.center(n) + line + 7*' ' + denominator.center(n)  # noqa: RUF001
 
 
 class BilinearTransformation(MoebiusTransformation):

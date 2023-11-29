@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
@@ -214,7 +214,7 @@ def main(
     sys.stdout.flush()
     if plot_error_landscape:
         import matplotlib.pyplot as plt
-        import mpl_toolkits.mplot3d  # NOQA
+        import mpl_toolkits.mplot3d  # noqa: F401
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         # rescale the errors since matplotlib does not support logarithmic scales on 3d plots

@@ -35,9 +35,8 @@ class SubGrid(Grid):
     reference_element = None
 
     def __init__(self, parent_grid, parent_entities):
-        assert parent_grid is not None, \
-            'parent_grid is None. Maybe you have called sub_grid.with(parent_entities=e)\n' \
-            'on a SubGrid for which the parent grid has been destroyed?'
+        assert parent_grid is not None, ('parent_grid is None. Maybe you have called sub_grid.with(parent_entities=e)\n'
+                                         'on a SubGrid for which the parent grid has been destroyed?')
         assert isinstance(parent_grid, Grid)
         self.dim = parent_grid.dim
         self.reference_element = parent_grid.reference_element
@@ -88,7 +87,7 @@ class SubGrid(Grid):
         """
         assert 0 <= codim <= self.dim, 'Invalid codimension'
         ind = ind.ravel()
-        # TODO Find better implementation of the following
+        # TODO: Find better implementation of the following
         R = np.argmax(ind[:, np.newaxis] - self.__parent_indices[codim][np.newaxis, :] == 0, axis=1)
         if not np.all(self.__parent_indices[codim][R] == ind):
             raise ValueError('Not all parent indices found')

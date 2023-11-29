@@ -31,7 +31,7 @@ class VectorArrayPlot(K3DPlot):
             color_map = [(x, *color_map(x)[:3]) for x in np.linspace(0, 1, 256)]
 
         super().__init__(*args, **kwargs)
-        if 'transform' in kwargs.keys():
+        if 'transform' in kwargs:
             raise RuntimeError('supplying transforms is currently not supported for time series Data')
 
         self.codim, self.warp, self.reference_element = codim, warp, grid.reference_element

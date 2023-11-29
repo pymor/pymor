@@ -717,7 +717,7 @@ class LTIModel(Model):
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         if self.T is not None and other.T is not None:
-            if type(self.time_stepper) != type(other.time_stepper):  # noqa
+            if type(self.time_stepper) != type(other.time_stepper):  # noqa: E721
                 raise TypeError('The time-steppers are not of the same type.')
             T = min(self.T, other.T)
             initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
@@ -759,7 +759,7 @@ class LTIModel(Model):
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         if self.T is not None and other.T is not None:
-            if type(self.time_stepper) != type(other.time_stepper):  # noqa
+            if type(self.time_stepper) != type(other.time_stepper):  # noqa: E721
                 raise TypeError('The time-steppers are not of the same type.')
             T = min(self.T, other.T)
             initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
@@ -825,7 +825,7 @@ class LTIModel(Model):
             rhs = LinearInputOperator(self.B)
             Xs = []
             for i in range(self.dim_input):
-                def input_i(t):
+                def input_i(t, i=i):
                     if t == 0:
                         e_i = np.zeros(self.dim_input)
                         e_i[i] = 1/self.sampling_time

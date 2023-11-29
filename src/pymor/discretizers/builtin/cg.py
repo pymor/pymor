@@ -98,7 +98,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         SF_INTS = np.einsum('e,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
         # map local DOFs to global DOFs
-        # FIXME This implementation is horrible, find a better way!
+        # TODO: This implementation is horrible, find a better way!
         SF_I = g.subentities(0, g.dim).ravel()
         I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
 
@@ -246,7 +246,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         SF_INTS = np.einsum('e,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
         # map local DOFs to global DOFs
-        # FIXME This implementation is horrible, find a better way!
+        # TODO: This implementation is horrible, find a better way!
         SF_I = g.subentities(0, g.dim).ravel()
         I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
 
@@ -864,11 +864,11 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, boundary_info, robin_data=None, solver_options=None, name=None):
         assert robin_data is None or (isinstance(robin_data, tuple) and len(robin_data) == 2)
-        assert robin_data is None or all([isinstance(f, Function)
+        assert robin_data is None or all(isinstance(f, Function)
                                           and f.dim_domain == grid.dim
                                           and (f.shape_range == ()
                                                or f.shape_range == (grid.dim,))
-                                          for f in robin_data])
+                                          for f in robin_data)
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
 
@@ -993,7 +993,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     p = analytical_problem
 
-    if not (p.nonlinear_advection # noqa: E714
+    if not (p.nonlinear_advection
             == p.nonlinear_advection_derivative
             == p.nonlinear_reaction
             == p.nonlinear_reaction_derivative

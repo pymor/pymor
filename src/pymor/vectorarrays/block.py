@@ -97,7 +97,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         assert other._blocks_are_valid()
         prods = [_indexed(block, ind).inner(_indexed(other_block, oind))
                  for block, other_block in zip(self._blocks, other._blocks)]
-        assert all([prod.shape == prods[0].shape for prod in prods])
+        assert all(prod.shape == prods[0].shape for prod in prods)
         common_dtype = reduce(np.promote_types, (prod.dtype for prod in prods))
         ret = np.zeros(prods[0].shape, dtype=common_dtype)
         for prod in prods:
@@ -109,7 +109,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         assert other._blocks_are_valid()
         prods = [_indexed(block, ind).pairwise_inner(_indexed(other_block, oind))
                  for block, other_block in zip(self._blocks, other._blocks)]
-        assert all([prod.shape == prods[0].shape for prod in prods])
+        assert all(prod.shape == prods[0].shape for prod in prods)
         common_dtype = reduce(np.promote_types, (prod.dtype for prod in prods))
         ret = np.zeros(prods[0].shape, dtype=common_dtype)
         for prod in prods:
@@ -150,7 +150,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         return inds[block_inds, ar], vals[block_inds, ar]
 
     def _blocks_are_valid(self, after_creation=True):
-        assert all([len(block) == len(self._blocks[0]) for block in self._blocks]), \
+        assert all(len(block) == len(self._blocks[0]) for block in self._blocks), \
             (f'All blocks in a BlockVectorArray must be of the same length '
              f'(lengths: {[len(block) for block in self._blocks]})'
              + ('Likely, an array has been modified that has been accessed via BlockVectorArray.blocks'
@@ -208,7 +208,7 @@ class BlockVectorSpace(VectorSpace):
 
     def __init__(self, subspaces):
         subspaces = tuple(subspaces)
-        assert all([isinstance(subspace, VectorSpace) for subspace in subspaces])
+        assert all(isinstance(subspace, VectorSpace) for subspace in subspaces)
         self.subspaces = subspaces
 
     def __eq__(self, other):

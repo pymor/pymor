@@ -23,7 +23,7 @@ def _can_import(module):
         return False
     if not isinstance(module, (list, tuple)):
         module = [module]
-    return all((_can_import_single(m) for m in module))
+    return all(_can_import_single(m) for m in module)
 
 
 def _get_fenics_version():

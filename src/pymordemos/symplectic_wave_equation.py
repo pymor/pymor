@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
@@ -125,7 +125,7 @@ def discretize_fom(T=50):
     ])
 
     fom = QuadraticHamiltonianModel(T, initial_data, H_op, nt=nt, name='hamiltonian_wave_equation')
-    # fom.operator = fom.operator.with_(solver_options={'type': 'to_matrix'}) #TODO
+    # TODO: fom.operator = fom.operator.with_(solver_options={'type': 'to_matrix'})
     return fom
 
 
@@ -149,7 +149,7 @@ def run_mor(fom, U_fom, method, red_dims):
         elif method == 'svd_like':
             MAX_RB = psd_svd_like_decomp(U_fom, max_red_dim)
         else:
-            raise NotImplementedError('Unknown method: {}'.format(method))
+            raise NotImplementedError(f'Unknown method: {method}')
     else:
         assert method == 'pod'
         MAX_RB, svals = pod(U_fom, modes=max_red_dim)

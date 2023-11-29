@@ -424,7 +424,7 @@ class FenicsOperator(Operator):
                     if ld in dofs:
                         affected_cell_indices.add(cell_index)
                         continue
-            affected_cell_indices = list(sorted(affected_cell_indices))
+            affected_cell_indices = sorted(affected_cell_indices)
 
             if any(i.integral_type() not in ('cell', 'exterior_facet')
                    for i in self.form.integrals()):
@@ -615,7 +615,7 @@ class FenicsVisualizer(ImmutableObject):
             suffix = Path(filename).suffix
             if suffix not in supported:
                 msg = ('FenicsVisualizer needs a filename with a suffix indicating a supported backend\n'
-                       + f'defaulting to .pvd (possible choices: {supported})')
+                       f'defaulting to .pvd (possible choices: {supported})')
                 self.logger.warning(msg)
                 filename = f'{filename}.pvd'
             f = df.File(str(filename))
@@ -708,7 +708,7 @@ def compute_parent_facet_indices(submesh, mesh):
         for f in facets[1:]:
             common_facets = common_facets.intersection(f)
         assert len(common_facets) == 1
-        parent_facet_index = list(common_facets)[0]
+        parent_facet_index = next(iter(common_facets))
 
         # Set value
         parent_facet_indices[local_facet.index()] = parent_facet_index

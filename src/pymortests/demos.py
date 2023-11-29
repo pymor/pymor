@@ -199,7 +199,7 @@ def _skip_if_no_solver(param):
 
 def _demo_ids(demo_args):
     def _key(b):
-        return ' '.join((str(s) for s in b))
+        return ' '.join(str(s) for s in b)
     return [f'{a}:"{_key(b)}"'.replace('pymordemos.', '') for a, b in demo_args]
 
 
@@ -224,13 +224,7 @@ def _test_demo(demo):
 
     try:
         from matplotlib import pyplot as plt
-        if sys.version_info[:2] > (3, 7) or (
-                sys.version_info[0] == 3 and sys.version_info[1] == 6):
-            plt.ion()
-        else:
-            # the ion switch results in interpreter segfaults during multiple
-            # demo tests on 3.7 -> fall back on old monkeying solution
-            plt.show = nop
+        plt.ion()
     except ImportError:
         pass
     try:

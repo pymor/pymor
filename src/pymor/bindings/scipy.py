@@ -202,8 +202,7 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
                 else:
-                    raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
-                                         format(info))
+                    raise InversionError(f'bicgstab failed with error code {info} (illegal input or breakdown)')
     elif options['type'] == 'scipy_bicgstab_spilu':
         ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
                     drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
@@ -215,8 +214,7 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
                 else:
-                    raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
-                                         format(info))
+                    raise InversionError(f'bicgstab failed with error code {info} (illegal input or breakdown)')
     elif options['type'] == 'scipy_spsolve':
         try:
             # maybe remove unusable factorization:

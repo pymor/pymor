@@ -291,7 +291,7 @@ class NeuralNetworkReductor(BasicObject):
             sample = sample[0]
 
         def prepare_datum(datum):
-            if not (isinstance(datum, torch.DoubleTensor) or isinstance(datum, np.ndarray)):
+            if not (isinstance(datum, (torch.DoubleTensor, np.ndarray))):
                 return datum.to_numpy()
             return datum
         sample = (torch.DoubleTensor(prepare_datum(sample[0])), torch.DoubleTensor(prepare_datum(sample[1])))
@@ -1076,7 +1076,7 @@ def train_neural_network(training_data, validation_data, neural_network,
         assert all(isinstance(datum, tuple) and len(datum) == 2 for datum in data)
 
     def prepare_datum(datum):
-        if not (isinstance(datum, torch.DoubleTensor) or isinstance(datum, np.ndarray)):
+        if not (isinstance(datum, (torch.DoubleTensor, np.ndarray))):
             return datum.to_numpy()
         return datum
 
@@ -1176,7 +1176,7 @@ def train_neural_network(training_data, validation_data, neural_network,
                     targets = batch[1]
 
                 with torch.set_grad_enabled(phase == 'train'):
-                    def closure():
+                    def closure(inputs=inputs, targets=targets):
                         if torch.is_grad_enabled():
                             optimizer.zero_grad()
                         outputs = neural_network(inputs)

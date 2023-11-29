@@ -339,7 +339,7 @@ def test_boundary_mask_shape(grid):
 def test_boundary_mask_dtype(grid):
     g = grid
     for d in range(g.dim + 1):
-        g.boundary_mask(d).dtype == np.dtype('bool')
+        assert g.boundary_mask(d).dtype == np.dtype('bool')
 
 
 @given(hy_grid)
@@ -428,13 +428,7 @@ def test_visualize(grids_with_visualize):
         pass
     try:
         from matplotlib import pyplot as plt
-        if sys.version_info[:2] > (3, 7) or (
-                sys.version_info[0] == 3 and sys.version_info[1] == 6):
-            plt.ion()
-        else:
-            # the ion switch results in interpreter segfaults during multiple
-            # demo tests on 3.7 -> fall back on old monkeying solution
-            plt.show = nop
+        plt.ion()
     except ImportError:
         pass
 

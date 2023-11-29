@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
@@ -12,8 +12,8 @@ from pymor.basic import *
 
 
 def main(
-    fom_number: int = Argument(..., help='Selects FOMs [0, 1, 2] for elliptic problems and [3, 4] for '
-                                         + 'parabolic problems with scalar and vector valued outputs '),
+    fom_number: int = Argument(..., help=('Selects FOMs [0, 1, 2] for elliptic problems and [3, 4] for '
+                                          'parabolic problems with scalar and vector valued outputs.')),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.'),
     modes: int = Argument(..., help='Number of basis functions for the RB space (generated with POD)'),

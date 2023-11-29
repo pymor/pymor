@@ -740,7 +740,7 @@ class VectorArray(BasicObject):
         return (type(ind) is slice
                 or isinstance(ind, Number) and -l <= ind < l
                 or isinstance(ind, (list, np.ndarray))
-                and len(set(i if i >= 0 else l+i for i in ind if -l <= i < l)) == len(ind))
+                and len({i if i >= 0 else l+i for i in ind if -l <= i < l}) == len(ind))
 
     def len_ind(self, ind):
         """Return the number of given indices."""

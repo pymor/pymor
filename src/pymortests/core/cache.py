@@ -5,7 +5,7 @@ import contextlib
 import os
 import tempfile
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import numpy as np
@@ -68,11 +68,11 @@ class IWillBeCopied(cache.CacheableObject):
 def test_runtime(class_type):
     r = class_type()
     val = 'koko'
-    int0 = datetime.now()
+    int0 = datetime.now(tz=timezone.utc)
     r.me_takey_long_time(val)
-    int1 = datetime.now()
+    int1 = datetime.now(tz=timezone.utc)
     r.me_takey_long_time(val)
-    int2 = datetime.now()
+    int2 = datetime.now(tz=timezone.utc)
     assert int0 < int1 <= int2
     delta1 = int1 - int0
     delta2 = int2 - int1

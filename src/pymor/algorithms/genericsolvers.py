@@ -744,7 +744,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
            'Cond(Abar) seems to be too large for this machine         ',
            'The iteration limit has been reached                      ')
 
-    hdg1 = '   itn      x(1)       norm r    norm A''r'
+    hdg1 = '   itn      x(1)       norm r    norm Ar'
     hdg2 = ' compatible   LS      norm A   cond A'
     pfreq = 20   # print frequency (for repeating the heading)
     pcount = 0   # print counter

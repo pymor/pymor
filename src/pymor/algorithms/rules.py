@@ -401,7 +401,7 @@ def print_children(obj):
 
     print(obj.name)
     def print_children(obj, prefix):
-        children = list(sorted(RuleTable.get_children(obj)))
+        children = sorted(RuleTable.get_children(obj))
         for i, child in enumerate(children):
             c = getattr(obj, child)
             c_p = last_child_p if i+1 == len(children) else new_child_p

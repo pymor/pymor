@@ -16,7 +16,7 @@ from pymortests.base import runmodule
 @pyst.given_vector_arrays()
 def test_gram_schmidt(vector_array):
     U = vector_array
-    # TODO assumption here masks a potential issue with the algorithm
+    # TODO: assumption here masks a potential issue with the algorithm
     #      where it fails in del instead of a proper error
     assume(len(U) > 1 or not contains_zero_vector(U))
 
@@ -24,7 +24,7 @@ def test_gram_schmidt(vector_array):
     onb = gram_schmidt(U, copy=True)
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.inner(onb), np.eye(len(onb)))
-    # TODO maybe raise tolerances again
+    # TODO: maybe raise tolerances again
     assert np.all(almost_equal(U, onb.lincomb(onb.inner(U).T), atol=1e-13, rtol=1e-13))
 
     onb2 = gram_schmidt(U, copy=False)
@@ -36,7 +36,7 @@ def test_gram_schmidt(vector_array):
 @settings(deadline=None)
 def test_gram_schmidt_with_R(vector_array):
     U = vector_array
-    # TODO assumption here masks a potential issue with the algorithm
+    # TODO: assumption here masks a potential issue with the algorithm
     #      where it fails in del instead of a proper error
     assume(len(U) > 1 or not contains_zero_vector(U))
 

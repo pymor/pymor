@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
@@ -145,10 +145,10 @@ def report(result, parse, data, reference_mu):
         print('\n failed!')
     else:
         print('\n succeeded!')
-        print('  mu_min:    {}'.format(parse(result.x)))
-        print('  J(mu_min): {}'.format(result.fun))
-        print('  absolute error w.r.t. reference solution: {:.2e}'.format(np.linalg.norm(result.x-reference_mu)))
-        print('  num iterations:        {}'.format(result.nit))
+        print(f'  mu_min:    {parse(result.x)}')
+        print(f'  J(mu_min): {result.fun}')
+        print(f'  absolute error w.r.t. reference solution: {np.linalg.norm(result.x-reference_mu):.2e}')
+        print(f'  num iterations:        {result.nit}')
         print('  num function calls:    {}'.format(data['num_evals']))
         print('  time:                  {:.5f} seconds'.format(data['time']))
         if 'offline_time' in data:

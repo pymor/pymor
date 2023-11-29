@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
@@ -18,8 +18,8 @@ from pymordemos.linear_optimization import create_fom
 
 
 def main(
-    output_number: int = Argument(..., help='Selects type of output functional [0, 1], '
-                                         + 'where 0 stands for linear and 1 for a quadratic output'),
+    output_number: int = Argument(..., help=('Selects type of output functional [0, 1], '
+                                             'where 0 stands for linear and 1 for a quadratic output.')),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.')
 ):
@@ -121,10 +121,10 @@ def main(
 def report(mu, output, reference_mu, reference_output, data, parse, descriptor=None):
     print('')
     print('Report{}:'.format(descriptor or ''))
-    print('  mu_min:        {}'.format(parse(mu)))
-    print('  J(mu_min):     {}'.format(output))
-    print('  abs parameter error w.r.t. reference solution: {:.2e}'.format(np.linalg.norm(mu - reference_mu)))
-    print('  abs output error w.r.t. reference solution:    {:.2e}'.format(np.linalg.norm(output - reference_output)))
+    print(f'  mu_min:        {parse(mu)}')
+    print(f'  J(mu_min):     {output}')
+    print(f'  abs parameter error w.r.t. reference solution: {np.linalg.norm(mu - reference_mu):.2e}')
+    print(f'  abs output error w.r.t. reference solution:    {np.linalg.norm(output - reference_output):.2e}')
     print('  num iterations:            {}'.format(data['iterations']))
     print('  num fom evaluations:       {}'.format(data['fom_evaluations']), end='')
     print('  (offline/online splitting for estimators not counted)') if 'basis_size' in data else print('')

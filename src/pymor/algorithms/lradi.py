@@ -161,7 +161,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
 
     if res > Btol:
         logger.warning(f'Prescribed relative residual tolerance was not achieved '
-                       f'({res/init_res:e} > {options["tol"]:e}) after ' f'{options["maxiter"]} ADI steps.')
+                       f'({res/init_res:e} > {options["tol"]:e}) after {options["maxiter"]} ADI steps.')
 
     return Z
 

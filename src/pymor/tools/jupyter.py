@@ -44,7 +44,7 @@ class LogViewer(logging.Handler):
             self.accordion.close()
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.out)
+        return f'<{self.__class__.__name__} {self.out}>'
 
 
 class LoggingRedirector:

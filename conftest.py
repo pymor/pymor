@@ -23,7 +23,7 @@ settings.register_profile('ci', derandomize=True, max_examples=80, **_common_set
 settings.register_profile('dev', derandomize=True, max_examples=10, **_common_settings)
 _common_settings['verbosity'] = Verbosity.verbose
 settings.register_profile('debug', derandomize=True, max_examples=10, **_common_settings)
-settings.load_profile(os.getenv(u'PYMOR_HYPOTHESIS_PROFILE', 'dev'))
+settings.load_profile(os.getenv('PYMOR_HYPOTHESIS_PROFILE', 'dev'))
 
 """ This makes sure all our fixtures are available to all tests
 

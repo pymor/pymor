@@ -152,7 +152,7 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
                 # visualization
                 if visualize:
                     import matplotlib.pyplot as plt
-                    from mpl_toolkits.mplot3d import Axes3D  # NOQA
+                    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
                     plt.figure()
                     plt.subplot(2, 2, 1, projection=None if sample_set.dim == 2 else '3d')
                     plt.title('estimated errors')
@@ -439,7 +439,7 @@ class AdaptiveSampleSet(BasicObject):
                              [0., 0., 1.]])
 
             import matplotlib.pyplot as plt
-            from mpl_toolkits.mplot3d import Axes3D  # NOQA
+            from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
             if new_figure:
                 plt.figure()
                 plt.gca().add_subplot(111, projection='3d')
@@ -476,9 +476,8 @@ class AdaptiveSampleSet(BasicObject):
     def _iter_leafs(self):
         def walk(node):
             if node.children:
-                for node in node.children:
-                    for leaf in walk(node):
-                        yield leaf
+                for child in node.children:
+                    yield from walk(child)
             else:
                 yield node
 

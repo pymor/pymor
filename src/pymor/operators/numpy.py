@@ -332,14 +332,14 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 try:
                     R, _, _, _ = spla.lstsq(self.matrix, V.to_numpy().T)
                 except np.linalg.LinAlgError as e:
-                    raise InversionError(f'{str(type(e))}: {str(e)}') from e
+                    raise InversionError(f'{type(e)!s}: {e!s}') from e
                 R = R.T
             else:
                 if not hasattr(self, '_lu_factor'):
                     try:
                         self._lu_factor = lu_factor(self.matrix, check_finite=check_finite)
                     except np.linalg.LinAlgError as e:
-                        raise InversionError(f'{str(type(e))}: {str(e)}') from e
+                        raise InversionError(f'{type(e)!s}: {e!s}') from e
                     if check_cond:
                         gecon = get_lapack_funcs('gecon', self._lu_factor)
                         rcond, _ = gecon(self._lu_factor[0], np.linalg.norm(self.matrix, ord=1), norm='1')

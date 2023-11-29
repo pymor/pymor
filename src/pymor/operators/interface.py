@@ -248,9 +248,9 @@ class Operator(ParametricObject):
                         mat_op = NumpyMatrixOperator(mat)
                         if not self.parametric:
                             self._mat_op = mat_op
-                    except (NoMatchingRuleError, NotImplementedError):
+                    except (NoMatchingRuleError, NotImplementedError) as e:
                         if solver_type == 'to_matrix':
-                            raise InversionError
+                            raise InversionError from e
                         else:
                             self.logger.warning('Failed.')
                 else:
@@ -625,8 +625,8 @@ class Operator(ParametricObject):
         return self * (-1.)
 
     def __str__(self):
-        return f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  ' \
-               f'(parameters: {self.parameters}, class: {self.__class__.__name__})'
+        return (f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  '
+                f'(parameters: {self.parameters}, class: {self.__class__.__name__})')
 
 
 @defaults('value')

@@ -15,36 +15,36 @@ def _loadmat(path, key=None):
     try:
         data = loadmat(path, mat_dtype=True)
     except Exception as e:
-        raise IOError(e) from e
+        raise OSError(e) from e
 
     if key:
         try:
             return data[key]
         except KeyError as e:
-            raise IOError(f'"{key}" not found in MATLAB file {path}') from e
+            raise OSError(f'"{key}" not found in MATLAB file {path}') from e
 
     data = [v for v in data.values() if isinstance(v, np.ndarray) or issparse(v)]
 
     if len(data) == 0:
-        raise IOError(f'No matrix data contained in MATLAB file {path}')
+        raise OSError(f'No matrix data contained in MATLAB file {path}')
     elif len(data) > 1:
-        raise IOError(f'More than one matrix object stored in MATLAB file {path}')
+        raise OSError(f'More than one matrix object stored in MATLAB file {path}')
     else:
         return data[0]
 
 
 def _savemat(path, matrix, key=None):
     if key is None:
-        raise IOError('"key" must be specified for MATLAB file')
+        raise OSError('"key" must be specified for MATLAB file')
     try:
         savemat(path, {key: matrix})
     except Exception as e:
-        raise IOError(e) from e
+        raise OSError(e) from e
 
 
 def _mmread(path, key=None):
     if key:
-        raise IOError('Cannot specify "key" for Matrix Market file')
+        raise OSError('Cannot specify "key" for Matrix Market file')
     try:
         matrix = mmread(path)
         if issparse(matrix):
@@ -54,12 +54,12 @@ def _mmread(path, key=None):
         # fallback for older scipys that do not accept pathlib.Path
         return _mmread(path=str(path), key=key)
     except Exception as e:
-        raise IOError(e) from e
+        raise OSError(e) from e
 
 
 def _mmwrite(path, matrix, key=None):
     if key:
-        raise IOError('Cannot specify "key" for Matrix Market file')
+        raise OSError('Cannot specify "key" for Matrix Market file')
     try:
         if path.suffix != '.gz':
             open_file = open
@@ -73,40 +73,40 @@ def _mmwrite(path, matrix, key=None):
         # fallback for older scipys that do not accept pathlib.Path
         return _mmwrite(path=str(path), matrix=matrix, key=key)
     except Exception as e:
-        raise IOError(e) from e
+        raise OSError(e) from e
 
 
 def _load(path, key=None):
     try:
         data = np.load(path)
     except Exception as e:
-        raise IOError(e) from e
+        raise OSError(e) from e
     if isinstance(data, (dict, np.lib.npyio.NpzFile)):
         if key:
             try:
                 matrix = data[key]
             except KeyError as e:
-                raise IOError(f'"{key}" not found in NPY file {path}') from e
+                raise OSError(f'"{key}" not found in NPY file {path}') from e
         elif len(data) == 0:
-            raise IOError(f'No data contained in NPY file {path}')
+            raise OSError(f'No data contained in NPY file {path}')
         elif len(data) > 1:
-            raise IOError(f'More than one object stored in NPY file {path} for key {key}')
+            raise OSError(f'More than one object stored in NPY file {path} for key {key}')
         else:
             matrix = next(iter(data.values()))
     else:
         matrix = data
     if not isinstance(matrix, np.ndarray) and not issparse(matrix):
-        raise IOError(f'Loaded data is not a matrix in NPY file {path}')
+        raise OSError(f'Loaded data is not a matrix in NPY file {path}')
     return matrix
 
 
 def _save(path, matrix, key=None):
     if key:
-        raise IOError('Cannot specify "key" for NPY file')
+        raise OSError('Cannot specify "key" for NPY file')
     try:
         np.save(path, matrix)
     except Exception as e:
-        raise IOError(e) from e
+        raise OSError(e) from e
 
 
 def _savez(path, matrix, key=None):
@@ -116,25 +116,25 @@ def _savez(path, matrix, key=None):
         else:
             np.savez(path, **{key: matrix})
     except Exception as e:
-        raise IOError(e) from e
+        raise OSError(e) from e
 
 
 def _loadtxt(path, key=None):
     if key:
-        raise IOError('Cannot specify "key" for TXT file')
+        raise OSError('Cannot specify "key" for TXT file')
     try:
         return np.loadtxt(path)
     except Exception as e:
-        raise IOError(e) from e
+        raise OSError(e) from e
 
 
 def _savetxt(path, matrix, key=None):
     if key:
-        raise IOError('Cannot specify "key" for TXT file')
+        raise OSError('Cannot specify "key" for TXT file')
     try:
         return np.savetxt(path, matrix)
     except Exception as e:
-        raise IOError(e) from e
+        raise OSError(e) from e
 
 
 def _get_file_extension(path):
@@ -195,10 +195,10 @@ def load_matrix(path, key=None):
     for loader in loaders:
         try:
             return loader(path, key)
-        except IOError:
+        except OSError:
             pass
 
-    raise IOError(f'Could not load file {path} (key = {key})')
+    raise OSError(f'Could not load file {path} (key = {key})')
 
 
 def save_matrix(path, matrix, key=None):
@@ -239,4 +239,4 @@ def save_matrix(path, matrix, key=None):
         logger.info(file_type + ' file detected.')
         return saver(path, matrix, key)
 
-    raise IOError(f'Unknown extension "{extension}"')
+    raise OSError(f'Unknown extension "{extension}"')

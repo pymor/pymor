@@ -181,7 +181,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
             basis_sizes = min(rom.solution_space.dim + 1, basis_sizes)
             basis_sizes = np.linspace(0, rom.solution_space.dim, basis_sizes).astype(int)
     elif isinstance(basis_sizes, (list, tuple)):
-        assert all([isinstance(sz, Number) for sz in basis_sizes])
+        assert all(isinstance(sz, Number) for sz in basis_sizes)
         basis_sizes = np.array(basis_sizes)
     if error_norm_names is None:
         error_norm_names = tuple(norm.name for norm in error_norms)

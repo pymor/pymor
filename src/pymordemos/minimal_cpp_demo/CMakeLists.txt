@@ -11,5 +11,3 @@ add_library(model MODULE model.cc)
 target_link_libraries(model pybind11::module)
 set_target_properties(model PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}")
 set_target_properties(model PROPERTIES SUFFIX "${PYTHON_MODULE_EXTENSION}")
-
-

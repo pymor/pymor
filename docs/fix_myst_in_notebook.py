@@ -14,7 +14,7 @@ for cell in notebook.cells:
 
     md = re.sub(r'```{try_on_binder}.*?```',
                 r'',
-                md, 0, re.DOTALL)
+                md, count=0, flags=re.DOTALL)
 
     md = re.sub(r'{(mod|class|func|meth|attr)}`~[^`]*\.([^`]*)`',
                 r'`\2`',

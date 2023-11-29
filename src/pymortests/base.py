@@ -42,7 +42,7 @@ def check_results(test_name, params, results, *args):
     assert results is not None
     assert set(keys.keys()) <= set(results.keys()), \
         f'Keys {set(keys.keys()) - set(results.keys())} missing in results dict'
-    results = {k: np.asarray(results[k]) for k in keys.keys()}
+    results = {k: np.asarray(results[k]) for k in keys}
     assert all(v.dtype != object for v in results.values())
 
     basepath = importlib_resources.files('pymortests') / 'testdata/check_results'
@@ -60,12 +60,12 @@ def check_results(test_name, params, results, *args):
         with filename.open('rb') as f:
             f.readline()
             old_results = load(f)
-    except FileNotFoundError:
+    except FileNotFoundError as e:
         if not testname_dir.exists():
             testname_dir.mkdir()
         _dump_results(filename, results)
         raise NoResultDataError(msg=f'No results found for test {test_name} ({params}), saved current results.'
-                                        f'Remember to check in {filename}.')
+                                    f'Remember to check in {filename}.') from e
 
     for k, (atol, rtol) in keys.items():
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):
@@ -80,8 +80,8 @@ def check_results(test_name, params, results, *args):
 
 def assert_all_almost_equal(U, V, product=None, sup_norm=False, rtol=1e-14, atol=1e-14):
     cmp_array = almost_equal(U, V, product=product, sup_norm=sup_norm, rtol=rtol, atol=atol)
-    too_large_relative_errors = dict((i, relative_error(u, v, product=product))
-                                     for i, (u, v, f) in enumerate(zip(U, V, cmp_array)) if not f)
+    too_large_relative_errors = {i: relative_error(u, v, product=product)
+                                     for i, (u, v, f) in enumerate(zip(U, V, cmp_array)) if not f}
     assert np.all(cmp_array), f'Relative errors for not-equal elements:{pformat(too_large_relative_errors)}'
 
 def skip_if_missing(config_name):

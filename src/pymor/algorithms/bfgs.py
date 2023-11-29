@@ -105,7 +105,7 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     logger.info(f'Started projected BFGS algorithm for {model.name}.')
 
     if parameter_space is None:
-        logger.warn('No parameter space given. Assuming uniform parameter bounds of (-1, 1).')
+        logger.warning('No parameter space given. Assuming uniform parameter bounds of (-1, 1).')
         parameter_space = model.parameters.space(-1., 1.)
 
     if initial_guess is None:

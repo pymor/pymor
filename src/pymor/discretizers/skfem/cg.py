@@ -283,8 +283,10 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
             else:
                 boundary_basis = boundary_basis or BoundaryFacetBasis(mesh, element)
                 outputs.append(
-                    _assemble_operator(v[1], 'l2_boundary_output',
-                                       lambda f, n: L2Functional(boundary_basis, f, name=n).H)
+                    _assemble_operator(
+                        v[1], 'l2_boundary_output',
+                        lambda f, n, boundary_basis=boundary_basis: L2Functional(boundary_basis, f, name=n).H
+                    )
                 )
         if len(outputs) > 1:
             from pymor.operators.block import BlockColumnOperator

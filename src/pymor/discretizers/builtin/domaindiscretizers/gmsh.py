@@ -111,7 +111,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
                 geo_file = tempfile.NamedTemporaryFile(mode='wt', delete=False, suffix='.geo')
                 geo_file_path = geo_file.name
             else:
-                geo_file = open(geo_file_path, 'w')
+                geo_file = open(geo_file_path, 'w')  # noqa: SIM115
 
             if isinstance(domain_description, PolygonalDomain):
                 points, boundary_types = discretize_PolygonalDomain()
@@ -157,7 +157,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             # write boundaries.
             for boundary_type, bs in boundary_types.items():
                 geo_file.write('Physical Line' + '("' + str(boundary_type) + '")' + ' = '
-                               + str([l_id for l_id in bs]).replace('[', '{').replace(']', '}') + ';\n')
+                               + str(list(bs)).replace('[', '{').replace(']', '}') + ';\n')
 
             geo_file.close()
         # When a GEO-File is provided just get the corresponding file path.
