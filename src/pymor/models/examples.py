@@ -155,3 +155,60 @@ def msd_example(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
         return A, B, C, D, E
 
     return J, R, G, P, S, N, E, Q
+
+def heat_equation_example(grid_intervals=50, nt=50):
+    """Return heat equation example with a high-conductivity and two parametrized channels.
+
+    Parameters
+    ----------
+    grid_intervals
+        Number of intervals in each direction of the two-dimensional |RectDomain|.
+    nt
+        Number of time steps.
+
+    Returns
+    -------
+    fom
+        Heat equation problem as an |InstationaryModel|.
+    """
+    from pymor.analyticalproblems.domaindescriptions import RectDomain
+    from pymor.analyticalproblems.elliptic import StationaryProblem
+    from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, LincombFunction
+    from pymor.analyticalproblems.instationary import InstationaryProblem
+    from pymor.discretizers.builtin import discretize_instationary_cg
+    from pymor.parameters.functionals import ExpressionParameterFunctional
+
+    # setup analytical problem
+    problem = InstationaryProblem(
+
+        StationaryProblem(
+            domain=RectDomain(top='dirichlet', bottom='neumann'),
+
+            diffusion=LincombFunction(
+                [ConstantFunction(1., dim_domain=2),
+                 ExpressionFunction('(0.45 < x[0] < 0.55) * (x[1] < 0.7) * 1.',
+                                    dim_domain=2),
+                 ExpressionFunction('(0.35 < x[0] < 0.40) * (x[1] > 0.3) * 1. + '
+                                    '(0.60 < x[0] < 0.65) * (x[1] > 0.3) * 1.',
+                                    dim_domain=2)],
+                [1.,
+                 100. - 1.,
+                 ExpressionParameterFunctional('top[0] - 1.', {'top': 1})]
+            ),
+
+            rhs=ConstantFunction(value=100., dim_domain=2) * ExpressionParameterFunctional('sin(10*pi*t[0])', {'t': 1}),
+
+            dirichlet_data=ConstantFunction(value=0., dim_domain=2),
+
+            neumann_data=ExpressionFunction('(0.45 < x[0] < 0.55) * -1000.', dim_domain=2),
+        ),
+
+        T=1.,
+
+        initial_data=ExpressionFunction('(0.45 < x[0] < 0.55) * (x[1] < 0.7) * 10.', dim_domain=2)
+    )
+
+    # discretize using continuous finite elements
+    fom, _ = discretize_instationary_cg(analytical_problem=problem, diameter=1./grid_intervals, nt=nt)
+
+    return fom
