@@ -698,12 +698,21 @@ class LTIModel(Model):
         if output:
             D = LinearInputOperator(self.D)
             data['output'] = np.empty((n, self.dim_output))
+            data_output_extra = []
         for i, (x, t) in enumerate(iterator):
             if solution:
                 data['solution'].append(x)
             if output:
-                data['output'][i] = (self.C.apply(x, mu=mu).to_numpy()
-                    + D.as_range_array(mu=mu.with_(t=t)).to_numpy())
+                y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.with_(t=t)).to_numpy()
+                if i < n:
+                    data['output'][i] = y
+                else:
+                    data_output_extra.append(y)
+        if output:
+            if data_output_extra:
+                data['output'] = np.vstack((data['output'], data_output_extra))
+            if len(data['output']) < i + 1:
+                data['output'] = data['output'][:i + 1]
         return data
 
     def __add__(self, other):
