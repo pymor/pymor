@@ -99,41 +99,9 @@ def main(
 
 
 def discretize_pymor():
-
-    # setup analytical problem
-    problem = InstationaryProblem(
-
-        StationaryProblem(
-            domain=RectDomain(top='dirichlet', bottom='neumann'),
-
-            diffusion=LincombFunction(
-                [ConstantFunction(1., dim_domain=2),
-                 ExpressionFunction('(0.45 < x[0] < 0.55) * (x[1] < 0.7) * 1.',
-                                    dim_domain=2),
-                 ExpressionFunction('(0.35 < x[0] < 0.40) * (x[1] > 0.3) * 1. + '
-                                    '(0.60 < x[0] < 0.65) * (x[1] > 0.3) * 1.',
-                                    dim_domain=2)],
-                [1.,
-                 100. - 1.,
-                 ExpressionParameterFunctional('top[0] - 1.', {'top': 1})]
-            ),
-
-            rhs=ConstantFunction(value=100., dim_domain=2) * ExpressionParameterFunctional('sin(10*pi*t[0])', {'t': 1}),
-
-            dirichlet_data=ConstantFunction(value=0., dim_domain=2),
-
-            neumann_data=ExpressionFunction('(0.45 < x[0] < 0.55) * -1000.', dim_domain=2),
-        ),
-
-        T=1.,
-
-        initial_data=ExpressionFunction('(0.45 < x[0] < 0.55) * (x[1] < 0.7) * 10.', dim_domain=2)
-    )
-
-    # discretize using continuous finite elements
-    fom, _ = discretize_instationary_cg(analytical_problem=problem, diameter=1./GRID_INTERVALS, nt=NT)
+    from pymor.models.examples import heat_equation_example
+    fom = heat_equation_example(GRID_INTERVALS, NT)
     fom.enable_caching('disk')
-
     return fom
 
 
