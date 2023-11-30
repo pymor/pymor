@@ -18,7 +18,8 @@
   * computation of an LTIModel's forced response
 
 * Steffen Müller, @steff-mueller
-  * tutorial for port-Hamiltonian systems 
+  * tutorial for port-Hamiltonian systems
+  * interface for dense solvers of positive Riccati equations and dense positive-real Gramians
 
 ### pyMOR 2023.1
 
