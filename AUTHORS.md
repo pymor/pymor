@@ -17,6 +17,9 @@
   * matrix-free implementation of circulant, Hankel and Toeplitz operators
   * computation of an LTIModel's forced response
 
+* Steffen Müller, @steff-mueller
+  * tutorial for port-Hamiltonian systems 
+
 ### pyMOR 2023.1
 
 * Tim Keil, @TiKeil
