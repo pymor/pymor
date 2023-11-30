@@ -7,7 +7,7 @@ We are proud to announce the release of pyMOR 2023.2!
 Over ... single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/2023.1.x...2023.2.x>`__.
 
-pyMOR 2023.2 contains contributions by ...
+pyMOR 2023.2 contains contributions by Art Pelling and Steffen Müller.
 See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more
 details.
 
@@ -19,12 +19,13 @@ New Tutorials
 ~~~~~~~~~~~~~
 In order to give users a good introduction to pyMOR and the available model
 reduction methods, adding tutorials has been a big part of previous releases.
-Similarly, this release features new tutorials via
+Similarly, this release features new tutorials and updates to tutorials via
 
 - Add tutorial for port-Hamiltonian systems `[#2132] <https://github.com/pymor/pymor/pull/2132>`_
 - Add tutorial on VectorArray basics `[#2176] <https://github.com/pymor/pymor/pull/2176>`_
+- Add instationary ANN reductors to tutorial `[#2231] <https://github.com/pymor/pymor/pull/2231>`_
 
-Additionally, rendering of tutorial notebooks has been drastically improved
+Additionally, rendering of tutorial notebooks has been improved
 through `[#2174] <https://github.com/pymor/pymor/pull/2174>`_ and
 `[#2175] <https://github.com/pymor/pymor/pull/2175>`_
 
@@ -36,6 +37,10 @@ DFT-based Operators
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+LTIModel forced response computation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`[#2203] <https://github.com/pymor/pymor/pull/2203>`_
+
 Add optional argument for returning coefficients in POD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 `[#2114] <https://github.com/pymor/pymor/pull/2114>`_
@@ -43,6 +48,10 @@ Add optional argument for returning coefficients in POD
 Allow time-dependent Mus as arguments of cached functions / make cache key generation more flexible
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 `[#2230] <https://github.com/pymor/pymor/pull/2230>`_
+
+Add 'from_file' and 'random' factory functions to BitmapFunction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`[#2228] <https://github.com/pymor/pymor/pull/2228>`_
 
 
 Backward incompatible changes
