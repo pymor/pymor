@@ -666,37 +666,53 @@ class LTIModel(Model):
             _mmwrite(Path(files_basename + '.E'), E)
 
     def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
-                 solution_error_estimate=False, output_error_estimate=False,
-                 output_d_mu_return_array=False, mu=None, **kwargs):
-        if not solution and not output:
-            return {}
+                 solution_error_estimate=False, output_error_estimate=False, output_d_mu_return_array=False,
+                 output_error_estimate_return_vector=False, mu=None, **kwargs):
 
         assert self.T is not None
 
+        if not solution and not output:
+            return {}
+
         # solution computation
-        mu = mu.with_(t=0)
-        X0 = self.initial_data.as_range_array(mu)
-        rhs = LinearInputOperator(self.B)
-        X = self.time_stepper.solve(
-            operator=-self.A,
-            rhs=rhs,
-            initial_data=X0,
+        iterator = self.time_stepper.iterate(
+            0,  # initial_time
+            self.T,  # end_time
+            self.initial_data.as_range_array(mu),  # initial_data
+            -self.A,  # operator
+            rhs=LinearInputOperator(self.B),
             mass=None if isinstance(self.E, IdentityOperator) else self.E,
-            initial_time=0,
-            end_time=self.T,
-            mu=mu,
-            num_values=self.num_values,
+            mu=mu.with_(t=0),
+            num_values=self.num_values
         )
-        data = {'solution': X}
-
-        # output computation
+        if self.num_values is None:
+            try:
+                n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+            except NotImplementedError:
+                n = 0
+        else:
+            n = self.num_values + 1
+        data = {}
+        if solution:
+            data['solution'] = self.solution_space.empty(reserve=n)
         if output:
-            Cx = self.C.apply(X, mu=mu).to_numpy()
-            if input is None or isinstance(self.D, ZeroOperator):
-                data['output'] = Cx
-            else:
-                raise NotImplementedError
-
+            D = LinearInputOperator(self.D)
+            data['output'] = np.empty((n, self.dim_output))
+            data_output_extra = []
+        for i, (x, t) in enumerate(iterator):
+            if solution:
+                data['solution'].append(x)
+            if output:
+                y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.with_(t=t)).to_numpy()
+                if i < n:
+                    data['output'][i] = y
+                else:
+                    data_output_extra.append(y)
+        if output:
+            if data_output_extra:
+                data['output'] = np.vstack((data['output'], data_output_extra))
+            if len(data['output']) < i + 1:
+                data['output'] = data['output'][:i + 1]
         return data
 
     def __add__(self, other):
@@ -788,70 +804,53 @@ class LTIModel(Model):
 
         Returns
         -------
-        y
+        output
             Impulse response as a 3D |NumPy array| where
-            `y.shape[0]` is the number of time steps,
-            `y.shape[1]` is the number of outputs, and
-            `y.shape[2]` is the number of inputs.
-        Xs
+            `output.shape[0]` is the number of time steps,
+            `output.shape[1]` is the number of outputs, and
+            `output.shape[2]` is the number of inputs.
+        solution
             The tuple of solution |VectorArrays| for every input.
             Returned only when `return_solution` is `True`.
         """
         assert self.T is not None
 
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-
-        # solution computation
-        common_solver_opts = dict(
-            operator=-self.A,
-            mass=None if isinstance(self.E, IdentityOperator) else self.E,
-            initial_time=0,
-            end_time=self.T,
-            num_values=self.num_values,
-        )
-        if self.sampling_time == 0:
-            Xs0 = self.E.apply_inverse(self.B.as_range_array(mu=mu), mu=mu)
-            Xs = tuple(
-                self.time_stepper.solve(
-                    rhs=None,
-                    initial_data=X0,
-                    mu=mu,
-                    **common_solver_opts,
-                )
-                for X0 in Xs0
-            )
+        if self.num_values is None:
+            try:
+                n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+            except NotImplementedError:
+                n = 0
         else:
-            rhs = LinearInputOperator(self.B)
-            Xs = []
-            for i in range(self.dim_input):
-                def input_i(t, i=i):
-                    if t == 0:
-                        e_i = np.zeros(self.dim_input)
-                        e_i[i] = 1/self.sampling_time
-                        return e_i
-                    return np.zeros(self.dim_input)
-                Xs.append(
-                    self.time_stepper.solve(
-                        rhs=rhs,
-                        initial_data=self.solution_space.zeros(1),
-                        mu=mu.with_(input=GenericFunction(input_i, shape_range=(self.dim_input,))),
-                        **common_solver_opts,
-                    )
-                )
-            Xs = tuple(Xs)
+            n = self.num_values + 1
+        output = np.empty((n, self.dim_output, self.dim_input))
+        if return_solution:
+            solution = []
 
-        # output computation
-        y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
-        for i, X in enumerate(Xs):
-            y[:, :, i] = self.C.apply(X, mu=mu).to_numpy()
-        if self.sampling_time > 0 and not isinstance(self.D, ZeroOperator):
-            y[0] += to_matrix(self.D, mu=mu, format='dense') / self.sampling_time
+        if self.sampling_time == 0:
+            initial_data = self.E.apply_inverse(self.B.as_range_array(mu=mu), mu=mu)
+
+        for i in range(self.dim_input):
+            if self.sampling_time == 0:
+                data = self.with_(initial_data=initial_data[i]).compute(
+                    input=np.zeros(self.dim_input), output=True, solution=return_solution, mu=mu)
+            else:
+                def input(t):
+                    e = np.zeros(self.dim_input)
+                    if t == 0:
+                        e[i] = self.sampling_time  # noqa: B023
+                    return e
+                input = GenericFunction(mapping=input, shape_range=(self.dim_input,))
+                data = self.with_(initial_data=self.solution_space.zeros(1)).compute(
+                    input=input, output=True, solution=return_solution, mu=mu)
+
+            output[..., i] = data['output']
+            if return_solution:
+                solution.append(data['solution'])
 
         if return_solution:
-            return y, Xs
+            return output, tuple(solution)
 
-        return y
+        return output
 
     def step_resp(self, mu=None, return_solution=False):
         """Compute step response from all inputs.
@@ -865,45 +864,44 @@ class LTIModel(Model):
 
         Returns
         -------
-        y
+        output
             Step response as a 3D |NumPy array| where
-            `y.shape[0]` is the number of time steps,
-            `y.shape[1]` is the number of outputs, and
-            `y.shape[2]` is the number of inputs.
-        Xs
+            `output.shape[0]` is the number of time steps,
+            `output.shape[1]` is the number of outputs, and
+            `output.shape[2]` is the number of inputs.
+        solution
             The tuple of solution |VectorArrays| for every input.
             Returned only when `return_solution` is `True`.
         """
         assert self.T is not None
 
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
+        if self.num_values is None:
+            try:
+                n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+            except NotImplementedError:
+                n = 0
+        else:
+            n = self.num_values + 1
+        output = np.empty((n, self.dim_output, self.dim_input))
+        if return_solution:
+            solution = []
 
-        # solution computation
-        B_va = self.B.as_range_array(mu)
-        Xs = tuple(
-            self.time_stepper.solve(
-                operator=-self.A,
-                rhs=b,
-                initial_data=self.solution_space.zeros(1),
-                mass=None if isinstance(self.E, IdentityOperator) else self.E,
-                initial_time=0,
-                end_time=self.T,
-                mu=mu,
-                num_values=self.num_values,
-            )
-            for b in B_va
-        )
+        for i in range(self.dim_input):
+            def input(t):
+                e = np.zeros(self.dim_input)
+                e[i] = self.sampling_time if self.sampling_time > 0 else 1  # noqa: B023
+                return e
 
-        # output computation
-        y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
-        for i, X in enumerate(Xs):
-            y[:, :, i] = self.C.apply(X, mu=mu).to_numpy()
+            input = GenericFunction(mapping=input, shape_range=(self.dim_input,))
+            data = self.compute(input=input, output=True, solution=return_solution, mu=mu)
+            output[..., i] = data['output']
+            if return_solution:
+                solution.append(data['solution'])
 
         if return_solution:
-            return y, Xs
+            return output, tuple(solution)
 
-        return y
+        return output
 
     @cached
     def _poles(self, mu=None):

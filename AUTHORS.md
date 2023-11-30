@@ -13,8 +13,9 @@
 
 ### pyMOR 2023.2
 
-* Art Pelling, a.pelling@tu-berlin.de
+* Art Pelling, @artpelling
   * matrix-free implementation of circulant, Hankel and Toeplitz operators
+  * computation of an LTIModel's forced response
 
 ### pyMOR 2023.1
 
