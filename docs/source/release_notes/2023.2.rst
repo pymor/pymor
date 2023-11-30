@@ -31,15 +31,23 @@ through `[#2174] <https://github.com/pymor/pymor/pull/2174>`_ and
 
 DFT-based Operators
 ~~~~~~~~~~~~~~~~~~~
-`[#2138] <https://github.com/pymor/pymor/pull/2138>`_
+A previous pyMOR release added |NumpyHankelOperator|.
+This release adds the related |NumpyCirculantOperator| and
+|NumpyToeplitzOperator|
+(see `[#2138] <https://github.com/pymor/pymor/pull/2138>`_).
 
 
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-LTIModel forced response computation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`[#2203] <https://github.com/pymor/pymor/pull/2203>`_
+LTIModel iterable time-stepping
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previous pyMOR releases added time-domain analysis methods to |LTIModel| and
+iterable time-stepping.
+This release modifies the time-domain methods to use iterable time-stepping,
+improving performance when only system output is required.
+Additionally, it allows handling the feedthrough term
+(see `[#2203] <https://github.com/pymor/pymor/pull/2203>`_).
 
 Add optional argument for returning coefficients in POD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,17 +64,19 @@ Add 'from_file' and 'random' factory functions to BitmapFunction
 
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Fix "cotangent" typo
-~~~~~~~~~~~~~~~~~~~~
-`[#2131] <https://github.com/pymor/pymor/pull/2131>`_
 
-Fix "neighbor" typo
-~~~~~~~~~~~~~~~~~~~
-`[#2130] <https://github.com/pymor/pymor/pull/2130>`_
+Renamed methods due to typos
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The `psd_cotengent_lift` was renamed to `psd_cotangent_lift`
+(`[#2131] <https://github.com/pymor/pymor/pull/2131>`_).
+Furthermore, methods with "neighbour" in the name were renamed to use "neighbor"
+(`[#2130] <https://github.com/pymor/pymor/pull/2130>`_).
 
 Deprecate pymess
 ~~~~~~~~~~~~~~~~
-`[#2193] <https://github.com/pymor/pymor/pull/2193>`_
+Due to `pymess` not supporting Python 3.11,
+it is deprecated in this release
+(`[#2193] <https://github.com/pymor/pymor/pull/2193>`_).
 
 Remove pymor.tools.timer
 ~~~~~~~~~~~~~~~~~~~~~~~~
