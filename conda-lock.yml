@@ -2755,7 +2755,7 @@ package:
   hash:
     md5: cc47e1facc155f91abd89b11e48e72ff
     sha256: e12fd90ef6601da2875ebc432452590bc82a893041473bc1c13ef29001a73ea8
-  category: gui
+  category: vtk
   optional: true
 - name: icu
   version: '73.2'
@@ -2766,7 +2766,7 @@ package:
   hash:
     md5: 5cc301d759ec03f28328428e28f65591
     sha256: f66362dc36178ac9b7c7a9b012948a9d2d050b3debec24bbd94aadbc44854185
-  category: gui
+  category: vtk
   optional: true
 - name: icu
   version: '73.2'
@@ -4407,7 +4407,7 @@ package:
   hash:
     md5: 30186d27e2c9fa62b45fb1476b7200e3
     sha256: 150c05a6e538610ca7c43beb3a40d65c90537497a4f6a5f4d15ec0451b6f5ebb
-  category: gui
+  category: vtk
   optional: true
 - name: kiwisolver
   version: 1.4.5
@@ -4468,7 +4468,7 @@ package:
   hash:
     md5: cd95826dbd331ed1be26bdf401432844
     sha256: 259bfaae731989b252b7d2228c1330ef91b641c9d68ff87dae02cbae682cb3e4
-  category: gui
+  category: vtk
   optional: true
 - name: krb5
   version: 1.21.2
@@ -4482,7 +4482,7 @@ package:
   hash:
     md5: 80505a68783f01dc8d7308c075261b2f
     sha256: 081ae2008a21edf57c048f331a17c65d1ccb52d6ca2f87ee031a73eff4dc0fc6
-  category: gui
+  category: vtk
   optional: true
 - name: krb5
   version: 1.21.2
@@ -4497,7 +4497,7 @@ package:
   hash:
     md5: 6e8b0f22b4eef3b3cb3849bb4c3d47f9
     sha256: 6002adff9e3dcfc9732b861730cb9e33d45fd76b2035b2cdb4e6daacb8262c0b
-  category: gui
+  category: vtk
   optional: true
 - name: lame
   version: '3.100'
@@ -5072,7 +5072,7 @@ package:
   hash:
     md5: 4d331e44109e3f0e19b4cb8f9b82f3e1
     sha256: a57d37c236d8f7c886e01656f4949d9dcca131d2a0728609c6f7fa338b65f1cf
-  category: gui
+  category: vtk
   optional: true
 - name: libedit
   version: 3.1.20191231
@@ -5084,7 +5084,7 @@ package:
   hash:
     md5: 6016a8a1d0e63cac3de2c352cd40208b
     sha256: dbd3c3f2eca1d21c52e4c03b21930bbce414c4592f8ce805801575b9e9256095
-  category: gui
+  category: vtk
   optional: true
 - name: libev
   version: '4.33'
@@ -5388,7 +5388,7 @@ package:
   hash:
     md5: b62b52da46c39ee2bc3c162ac7f1804d
     sha256: 6a81ebac9f1aacdf2b4f945c87ad62b972f0f69c8e0981d68e111739e6720fd7
-  category: gui
+  category: vtk
   optional: true
 - name: libiconv
   version: '1.17'
@@ -5399,7 +5399,7 @@ package:
   hash:
     md5: 691d103d11180486154af49c037b7ed9
     sha256: 4a3294037d595754f7da7c11a41f3922f995aaa333f3cb66f02d8afa032a7bc2
-  category: gui
+  category: vtk
   optional: true
 - name: libiconv
   version: '1.17'
@@ -6170,7 +6170,7 @@ package:
   hash:
     md5: 427a3e59d66cb5d145020bd9c6493334
     sha256: e6183d5e57ee48cc1fc4340477c31a6bd8be4d3ba5dded82cbca0d5280591086
-  category: gui
+  category: vtk
   optional: true
 - name: libxml2
   version: 2.11.6
@@ -6185,7 +6185,7 @@ package:
   hash:
     md5: 2b6ec8c6366ea74db4b910469addad1d
     sha256: b5b1c3df3e6d0d294764938e79d7f413191cc5b1af2ede49f42b1df04d068a18
-  category: gui
+  category: vtk
   optional: true
 - name: libxml2
   version: 2.11.6
@@ -6214,7 +6214,7 @@ package:
   hash:
     md5: f27960e8873abb5476e96ef33bdbdccd
     sha256: 98739c3a7e1f6a8fb05e0bf54784fec4dfa2a640e4680ad0efc5cb65f5581cc8
-  category: gui
+  category: vtk
   optional: true
 - name: libxslt
   version: 1.1.37
@@ -6226,7 +6226,7 @@ package:
   hash:
     md5: 177817e2ba32a7d5ffdfbcb876fd4f10
     sha256: 588c2b16f9f09e5cd86765d0e3ae83d9078cd89416f7453e939d22898280c009
-  category: gui
+  category: vtk
   optional: true
 - name: libxslt
   version: 1.1.37
@@ -6241,7 +6241,7 @@ package:
   hash:
     md5: b9ed82b82e2f292f75f1af56f35f8c9f
     sha256: 491c40fd21aae219cbdaaf8f2b2963ef3ebd73217d9007b15e2e65b0255925aa
-  category: gui
+  category: vtk
   optional: true
 - name: libzip
   version: 1.10.1
@@ -6411,7 +6411,7 @@ package:
   hash:
     md5: 318b08df404f9c9be5712aaa5a6f0bb0
     sha256: 1b4c105a887f9b2041219d57036f72c4739ab9e9fe5a1486f094e58c76b31f5f
-  category: gui
+  category: vtk
   optional: true
 - name: lz4-c
   version: 1.9.4
@@ -11883,7 +11883,7 @@ package:
   hash:
     md5: 68c34ec6149623be41a1933ab996a209
     sha256: 9887a04d7e7cb14bd2b52fa01858f05a6d7f002c890f618d9fcd864adbfecb1b
-  category: gui
+  category: vtk
   optional: true
 - name: zlib
   version: 1.2.13
@@ -11895,7 +11895,7 @@ package:
   hash:
     md5: 75a8a98b1c4671c5d2897975731da42d
     sha256: d1f4c82fd7bd240a78ce8905e931e68dca5f523c7da237b6b63c87d5625c5b35
-  category: gui
+  category: vtk
   optional: true
 - name: zlib
   version: 1.2.13
@@ -11910,7 +11910,7 @@ package:
   hash:
     md5: a318e8622e11663f645cc7fa3260f462
     sha256: 0f91b719c7558046bcd37fdc7ae4b9eb2b7a8e335beb8b59ae7ccb285a46aa46
-  category: gui
+  category: vtk
   optional: true
 - name: zstd
   version: 1.5.5
