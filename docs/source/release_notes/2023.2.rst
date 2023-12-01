@@ -41,7 +41,7 @@ Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 LTIModel iterable time-stepping
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Previous pyMOR releases added time-domain analysis methods to |LTIModel| and
 iterable time-stepping.
 This release modifies the time-domain methods to use iterable time-stepping,
@@ -51,7 +51,11 @@ Additionally, it allows handling the feedthrough term
 
 Add optional argument for returning coefficients in POD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`[#2114] <https://github.com/pymor/pymor/pull/2114>`_
+It is now possible to also directly obtain the right singular vectors when calling the
+:meth:`~pymor.algorithms.pod.pod` method in pyMOR. The behavior of the
+:meth:`~pymor.algorithms.pod.pod` method with respect to returning the right singular
+vectors is controlled using the `return_reduced_coefficients` argument which was added
+in `[#2114] <https://github.com/pymor/pymor/pull/2114>`_.
 
 Allow time-dependent Mus as arguments of cached functions / make cache key generation more flexible
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
