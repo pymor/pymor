@@ -62,9 +62,7 @@ comm==0.1.4
 contourpy==1.1.1
     # via matplotlib
 coverage[toml]==7.3.2
-    # via
-    #   coverage
-    #   pytest-cov
+    # via pytest-cov
 css-html-js-minify==2.5.5
     # via sphinx-material
 cycler==0.12.1
@@ -91,7 +89,6 @@ dune-gdt==2022.5.3 ; platform_system == "Linux" and platform_machine == "x86_64"
 dune-xt[visualisation]==2022.5.3 ; platform_system == "Linux" and platform_machine == "x86_64"
     # via
     #   dune-gdt
-    #   dune-xt
     #   pymor (pyproject.toml)
 entrypoints==0.4
     # via ipyparallel
@@ -117,9 +114,7 @@ gmsh==4.11.1
 greenlet==3.0.0
     # via sqlalchemy
 hypothesis[numpy,pytest]==6.56.3
-    # via
-    #   hypothesis
-    #   pymor (pyproject.toml)
+    # via pymor (pyproject.toml)
 idna==3.4
     # via
     #   anyio

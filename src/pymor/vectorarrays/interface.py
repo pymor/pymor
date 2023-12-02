@@ -63,6 +63,10 @@ class VectorArray(BasicObject):
     ind
         In case the array is a view, the indices with which the :attr:`~VectorArray.base`
         array is indexed with.
+    real
+        The real part of the vectors in the array.
+    imag
+        The imaginary part of the vectors in the array.
     """
 
     # override NumPy binary operations and ufuncs
