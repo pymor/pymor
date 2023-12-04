@@ -61,7 +61,7 @@ class LoggingRedirector:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
 
-    def start(self):
+    def start(self, info):
         out = ipywidgets.HTML(layout=ipywidgets.Layout(width='100%', height='16em', overflow_y='auto'))
 
         self.accordion = ipywidgets.widgets.Accordion(children=[out])
@@ -80,7 +80,7 @@ class LoggingRedirector:
         for name in logging.root.manager.loggerDict:
             logging.getLogger(name).handlers = [self.new_handler]
 
-    def stop(self):
+    def stop(self, result):
         if self.old_default is None:
             # %load_ext in the first cell triggers a post_run_cell
             # with no matching pre_run_cell event before
