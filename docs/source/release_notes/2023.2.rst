@@ -3,9 +3,9 @@ pyMOR 2023.2 (December 7, 2023)
 
 We are proud to announce the release of pyMOR 2023.2!
 This release features new and improved tutorials and new |Operators| which
-enable fast computation for certain structured problem.
+enable fast computation for certain structured problems.
 
-Over ... single commits have entered this release. For a full list of changes
+Over 375 single commits have entered this release. For a full list of changes
 see `here <https://github.com/pymor/pymor/compare/2023.1.x...2023.2.x>`__.
 
 pyMOR 2023.2 contains contributions by Art Pelling and Steffen Müller.
@@ -35,7 +35,9 @@ DFT-based Operators
 A previous pyMOR release added |NumpyHankelOperator|.
 This release adds the related |NumpyCirculantOperator| and
 |NumpyToeplitzOperator|
-(see `[#2138] <https://github.com/pymor/pymor/pull/2138>`_).
+(see `[#2138] <https://github.com/pymor/pymor/pull/2138>`_). These |Operators|
+allow for performing fast matrix vector multiplications by exploiting an
+underlying circulant or Toeplitz structure.
 
 
 Additional new features
@@ -58,13 +60,10 @@ It is now possible to also directly obtain the right singular vectors when calli
 vectors is controlled using the `return_reduced_coefficients` argument which was added
 in `[#2114] <https://github.com/pymor/pymor/pull/2114>`_.
 
-Allow time-dependent Mus as arguments of cached functions / make cache key generation more flexible
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`[#2230] <https://github.com/pymor/pymor/pull/2230>`_
-
 Add 'from_file' and 'random' factory functions to BitmapFunction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`[#2228] <https://github.com/pymor/pymor/pull/2228>`_
+With `[#2228] <https://github.com/pymor/pymor/pull/2228>`_ loading bitmaps
+or creating random ones is supported. This makes working with bitmaps easier.
 
 
 Backward incompatible changes
@@ -85,7 +84,8 @@ it is deprecated in this release
 
 Remove pymor.tools.timer
 ~~~~~~~~~~~~~~~~~~~~~~~~
-`[#2194] <https://github.com/pymor/pymor/pull/2194>`_
+Since timing is supported by various other libraries we drop pyMOR's timer with
+`[#2194] <https://github.com/pymor/pymor/pull/2194>`_.
 
 
 Further notable improvements
@@ -93,3 +93,4 @@ Further notable improvements
 - `[#2171] Support Python 3.11 <https://github.com/pymor/pymor/pull/2171>`_
 - `[#2128] Operator-valued functions in FactorizedTransferFunction <https://github.com/pymor/pymor/pull/2128>`_
 - `[#2111] Add check_finite and check_cond in NumpyMatrixOperator and use SciPy solvers elsewhere <https://github.com/pymor/pymor/pull/2111>`_
+- `[#2230] Allow time-dependent Mus as arguments of cached functions / make cache key generation more flexible <https://github.com/pymor/pymor/pull/2230>`_
