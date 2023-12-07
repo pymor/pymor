@@ -94,14 +94,14 @@ Since timing is supported by various other libraries we drop pyMOR's timer with
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - `[#2111] Add check_finite and check_cond in NumpyMatrixOperator and use SciPy solvers elsewhere <https://github.com/pymor/pymor/pull/2111>`_
-- `[#2113] Avoid assumption of exact complex conjugation in MTReductor <https://github.com/pymor/pymor/pull/2113>`
+- `[#2113] Avoid assumption of exact complex conjugation in MTReductor <https://github.com/pymor/pymor/pull/2113>`_
 - `[#2128] Operator-valued functions in FactorizedTransferFunction <https://github.com/pymor/pymor/pull/2128>`_
-- `[#2134] Fix return_fpeak handling in pymor.models.iosys <https://github.com/pymor/pymor/pull/2134>`
+- `[#2134] Fix return_fpeak handling in pymor.models.iosys <https://github.com/pymor/pymor/pull/2134>`_
 - `[#2171] Support Python 3.11 <https://github.com/pymor/pymor/pull/2171>`_
-- `[#2180] Add H2 norm preset for TransferFunction <https://github.com/pymor/pymor/pull/2180>`
-- `[#2182] fix MoebiusTransformation <https://github.com/pymor/pymor/pull/2182>`
-- `[#2184] Refactoring pH and matrix solvers <https://github.com/pymor/pymor/pull/2184>`
-- `[#2200] Fix Slycot matrix mutation <https://github.com/pymor/pymor/pull/2200>`
-- `[#2212] p-AAA MIMO Fix <https://github.com/pymor/pymor/pull/2212>`
-- `[#2220] fix misleading from_points classmethod <https://github.com/pymor/pymor/pull/2220>`
+- `[#2180] Add H2 norm preset for TransferFunction <https://github.com/pymor/pymor/pull/2180>`_
+- `[#2182] fix MoebiusTransformation <https://github.com/pymor/pymor/pull/2182>`_
+- `[#2184] Refactoring pH and matrix solvers <https://github.com/pymor/pymor/pull/2184>`_
+- `[#2200] Fix Slycot matrix mutation <https://github.com/pymor/pymor/pull/2200>`_
+- `[#2212] p-AAA MIMO Fix <https://github.com/pymor/pymor/pull/2212>`_
+- `[#2220] fix misleading from_points classmethod <https://github.com/pymor/pymor/pull/2220>`_
 - `[#2230] Allow time-dependent Mus as arguments of cached functions / make cache key generation more flexible <https://github.com/pymor/pymor/pull/2230>`_
