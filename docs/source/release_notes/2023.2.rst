@@ -61,8 +61,11 @@ in `[#2114] <https://github.com/pymor/pymor/pull/2114>`_.
 
 Creating BitmapFunctions from matrices or random data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-With `[#2228] <https://github.com/pymor/pymor/pull/2228>`_ loading bitmaps
-or creating random ones is supported. This makes working with bitmaps easier.
+|BitmapFunction| can now be instantiated directly from an existing data array.
+A random field can be generated with the new `random` factory method.
+The existing functionality to load the data from a given bitmap file is now provided
+by the `from_file` factory method
+(see `[#2228] <https://github.com/pymor/pymor/pull/2228>`_).
 
 
 Backward incompatible changes
