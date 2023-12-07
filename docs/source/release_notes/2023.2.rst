@@ -18,15 +18,14 @@ Release highlights
 
 New Tutorials
 ~~~~~~~~~~~~~
-In order to give users a good introduction to pyMOR and the available model
-reduction methods, adding tutorials has been a big part of previous releases.
-Similarly, this release features new tutorials and updates to tutorials via
+This release includes new tutorials and updates to existing tutorials on the
+following topics:
 
-- Add tutorial for port-Hamiltonian systems `[#2132] <https://github.com/pymor/pymor/pull/2132>`_
-- Add tutorial on VectorArray basics `[#2176] <https://github.com/pymor/pymor/pull/2176>`_
-- Add instationary ANN reductors to tutorial `[#2231] <https://github.com/pymor/pymor/pull/2231>`_
+- port-Hamiltonian systems `[#2132] <https://github.com/pymor/pymor/pull/2132>`_
+- VectorArray basics `[#2176] <https://github.com/pymor/pymor/pull/2176>`_
+- ANN reductors for time-dependent problems `[#2231] <https://github.com/pymor/pymor/pull/2231>`_
 
-Additionally, rendering of tutorial notebooks has been improved
+Additionally, the rendering of tutorial notebooks has been improved
 through `[#2174] <https://github.com/pymor/pymor/pull/2174>`_ and
 `[#2175] <https://github.com/pymor/pymor/pull/2175>`_
 
