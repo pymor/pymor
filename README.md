@@ -116,7 +116,7 @@ might break (this is usually announced in our
 [discussion forum](https://github.com/pymor/pymor/discussions)),
 so you might prefer to install pyMOR from the current release branch:
 
-    pip install 'pymor[full] @ git+https://github.com/pymor/pymor@2023.1.x'
+    pip install 'pymor[full] @ git+https://github.com/pymor/pymor@2023.2.x'
 
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
