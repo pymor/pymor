@@ -83,6 +83,7 @@ Deprecated pymess bindings
 Due to `pymess` not supporting Python 3.11,
 it is deprecated in this release
 (`[#2193] <https://github.com/pymor/pymor/pull/2193>`_).
+Support will be removed with the 2024.1 release.
 
 pymor.tools.timer has been removed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
