@@ -13,6 +13,15 @@
 
 ### pyMOR 2023.2
 
+* Steffen Müller, @steff-mueller
+  * tutorial for port-Hamiltonian systems
+  * interface for dense solvers of positive Riccati equations and dense positive-real Gramians
+
+* Peter Oehme, @peoe
+  * self-documenting help target for Makefile
+  * Operator-valued functions in FactorizedTransferFunction
+  * H2 norm preset for TransferFunction
+
 * Art Pelling, @artpelling
   * matrix-free implementation of circulant, Hankel and Toeplitz operators
   * computation of an LTIModel's forced response

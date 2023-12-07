@@ -1,0 +1,107 @@
+pyMOR 2023.2 (December 7, 2023)
+-------------------------------
+
+We are proud to announce the release of pyMOR 2023.2!
+This release features new and improved tutorials and new |Operators| which
+enable fast computation for certain structured problems.
+
+Over 375 single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2023.1.x...2023.2.x>`__.
+
+pyMOR 2023.2 contains contributions by Steffen Müller, Peter Oehme and Art Pelling.
+See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more
+details.
+
+
+Release highlights
+^^^^^^^^^^^^^^^^^^
+
+New Tutorials
+~~~~~~~~~~~~~
+This release includes new tutorials and updates to existing tutorials on the
+following topics:
+
+- port-Hamiltonian systems `[#2132] <https://github.com/pymor/pymor/pull/2132>`_
+- VectorArray basics `[#2176] <https://github.com/pymor/pymor/pull/2176>`_
+- ANN reductors for time-dependent problems `[#2231] <https://github.com/pymor/pymor/pull/2231>`_
+
+Additionally, the rendering of tutorial notebooks has been improved
+through `[#2174] <https://github.com/pymor/pymor/pull/2174>`_ and
+`[#2175] <https://github.com/pymor/pymor/pull/2175>`_
+
+DFT-based Operators
+~~~~~~~~~~~~~~~~~~~
+A previous pyMOR release added |NumpyHankelOperator|.
+This release adds the related |NumpyCirculantOperator| and
+|NumpyToeplitzOperator|
+(see `[#2138] <https://github.com/pymor/pymor/pull/2138>`_). These |Operators|
+allow for performing fast matrix vector multiplications by exploiting an
+underlying circulant or Toeplitz structure.
+
+
+Additional new features
+^^^^^^^^^^^^^^^^^^^^^^^
+
+LTIModel iterable time-stepping
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previous pyMOR releases added time-domain analysis methods to |LTIModel| and
+iterable time-stepping.
+This release modifies the time-domain methods to use iterable time-stepping,
+improving performance when only system output is required.
+Additionally, it allows handling the feedthrough term
+(see `[#2203] <https://github.com/pymor/pymor/pull/2203>`_).
+
+Returning right singular vectors in POD computations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+It is now possible to also directly obtain the right singular vectors when calling the
+:meth:`~pymor.algorithms.pod.pod` method in pyMOR. The behavior of the
+:meth:`~pymor.algorithms.pod.pod` method with respect to returning the right singular
+vectors is controlled using the `return_reduced_coefficients` argument which was added
+in `[#2114] <https://github.com/pymor/pymor/pull/2114>`_.
+
+Creating BitmapFunctions from matrices or random data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+|BitmapFunction| can now be instantiated directly from an existing data array.
+A random field can be generated with the new `random` factory method.
+The existing functionality to load the data from a given bitmap file is now provided
+by the `from_file` factory method
+(see `[#2228] <https://github.com/pymor/pymor/pull/2228>`_).
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Renamed methods due to typos
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The `psd_cotengent_lift` was renamed to `psd_cotangent_lift`
+(`[#2131] <https://github.com/pymor/pymor/pull/2131>`_).
+Furthermore, methods with "neighbour" in the name were renamed to use "neighbor"
+(`[#2130] <https://github.com/pymor/pymor/pull/2130>`_).
+
+Deprecated pymess bindings
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Due to `pymess` not supporting Python 3.11,
+it is deprecated in this release
+(`[#2193] <https://github.com/pymor/pymor/pull/2193>`_).
+Support will be removed with the 2024.1 release.
+
+pymor.tools.timer has been removed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Since timing is supported by various other libraries we drop pyMOR's timer with
+`[#2194] <https://github.com/pymor/pymor/pull/2194>`_.
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- `[#2111] Add check_finite and check_cond in NumpyMatrixOperator and use SciPy solvers elsewhere <https://github.com/pymor/pymor/pull/2111>`_
+- `[#2113] Avoid assumption of exact complex conjugation in MTReductor <https://github.com/pymor/pymor/pull/2113>`_
+- `[#2128] Operator-valued functions in FactorizedTransferFunction <https://github.com/pymor/pymor/pull/2128>`_
+- `[#2134] Fix return_fpeak handling in pymor.models.iosys <https://github.com/pymor/pymor/pull/2134>`_
+- `[#2171] Support Python 3.11 <https://github.com/pymor/pymor/pull/2171>`_
+- `[#2180] Add H2 norm preset for TransferFunction <https://github.com/pymor/pymor/pull/2180>`_
+- `[#2182] fix MoebiusTransformation <https://github.com/pymor/pymor/pull/2182>`_
+- `[#2184] Refactoring pH and matrix solvers <https://github.com/pymor/pymor/pull/2184>`_
+- `[#2200] Fix Slycot matrix mutation <https://github.com/pymor/pymor/pull/2200>`_
+- `[#2212] p-AAA MIMO Fix <https://github.com/pymor/pymor/pull/2212>`_
+- `[#2220] fix misleading from_points classmethod <https://github.com/pymor/pymor/pull/2220>`_
+- `[#2230] Allow time-dependent Mus as arguments of cached functions / make cache key generation more flexible <https://github.com/pymor/pymor/pull/2230>`_
