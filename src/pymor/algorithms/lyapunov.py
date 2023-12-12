@@ -92,12 +92,11 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
         - :func:`pymor.algorithms.lradi.lyap_lrcf_solver_options`,
         - :func:`pymor.bindings.scipy.lyap_lrcf_solver_options`,
         - :func:`pymor.bindings.slycot.lyap_lrcf_solver_options`,
-        - :func:`pymor.bindings.pymess.lyap_lrcf_solver_options`.
 
     default_sparse_solver_backend
-        Default sparse solver backend to use (lradi, pymess).
+        Default sparse solver backend to use (lradi).
     default_dense_solver_backend
-        Default dense solver backend to use (slycot, scipy, pymess).
+        Default dense solver backend to use (slycot, scipy).
 
     Returns
     -------
@@ -117,8 +116,6 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
         from pymor.bindings.scipy import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'slycot':
         from pymor.bindings.slycot import solve_lyap_lrcf as solve_lyap_impl
-    elif backend == 'pymess':
-        from pymor.bindings.pymess import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'lradi':
         from pymor.algorithms.lradi import solve_lyap_lrcf as solve_lyap_impl
     else:
@@ -270,10 +267,9 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
 
         - :func:`pymor.bindings.scipy.lyap_dense_solver_options`,
         - :func:`pymor.bindings.slycot.lyap_dense_solver_options`,
-        - :func:`pymor.bindings.pymess.lyap_dense_solver_options`.
 
     default_solver_backend
-        Default solver backend to use (slycot, scipy, pymess).
+        Default solver backend to use (slycot, scipy).
 
     Returns
     -------
@@ -290,8 +286,6 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
         from pymor.bindings.scipy import solve_lyap_dense as solve_lyap_impl
     elif backend == 'slycot':
         from pymor.bindings.slycot import solve_lyap_dense as solve_lyap_impl
-    elif backend == 'pymess':
-        from pymor.bindings.pymess import solve_lyap_dense as solve_lyap_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
     return solve_lyap_impl(A, E, B, trans=trans, cont_time=True, options=options)

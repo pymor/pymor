@@ -137,7 +137,6 @@ nitpick_ignore = [
 ]
 nitpick_ignore_regex = [
     ('py:class', 'Choices(.+)'),  # pymor.tools.typer.Choices(...) cannot be referred to
-    ('py:.*', 'pymess.*'),  # pymess does not have online Sphinx documentation
     ('py:.*', 'matplotlib.backends.*'),  # matplotlib backends are not auto documented
 ]
 
