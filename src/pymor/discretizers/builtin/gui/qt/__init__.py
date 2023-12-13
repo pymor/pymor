@@ -481,7 +481,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             with NamedTemporaryFile(mode='wb', delete=False) as f:
                 dump(data, f)
                 filename = f.name
-            subprocess.Popen(['python', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
+            subprocess.Popen(['python3', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
     U = (U.to_numpy(),) if isinstance(U, VectorArray) else tuple(u.to_numpy() for u in U)
