@@ -24,10 +24,8 @@ p_list = [1, 2]
 ricc_lrcf_solver_list_small = [
     'scipy',
     'slycot',
-    'pymess_dense_nm_gmpcare',
 ]
 ricc_lrcf_solver_list_big = [
-    'pymess_lrnm',
     'lrradi'
 ]
 ricc_dense_solver_list = [
@@ -198,7 +196,7 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
 def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
     np.random.seed(0)
-    if with_S and (solver.startswith('pymess') or solver == 'lrradi'):
+    if with_S and solver == 'lrradi':
         pytest.xfail('solver not implemented')
 
     mat_old = []
@@ -266,8 +264,6 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
 def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     skip_if_missing_solver(solver)
     np.random.seed(0)
-    if with_S and solver.startswith('pymess'):
-        pytest.xfail('solver not implemented')
 
     mat_old = []
     mat_new = []

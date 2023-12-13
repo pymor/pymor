@@ -94,13 +94,12 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
 
         - :func:`pymor.bindings.scipy.ricc_lrcf_solver_options`,
         - :func:`pymor.bindings.slycot.ricc_lrcf_solver_options`,
-        - :func:`pymor.bindings.pymess.ricc_lrcf_solver_options`.
         - :func:`pymor.algorithms.lrradi.ricc_lrcf_solver_options`.
 
     default_sparse_solver_backend
-        Default sparse solver backend to use (lrradi, pymess).
+        Default sparse solver backend to use (lrradi).
     default_dense_solver_backend
-        Default dense solver backend to use (slycot, scipy, pymess).
+        Default dense solver backend to use (slycot, scipy).
 
     Returns
     -------
@@ -121,8 +120,6 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         from pymor.bindings.scipy import solve_ricc_lrcf as solve_ricc_impl
     elif backend == 'slycot':
         from pymor.bindings.slycot import solve_ricc_lrcf as solve_ricc_impl
-    elif backend == 'pymess':
-        from pymor.bindings.pymess import solve_ricc_lrcf as solve_ricc_impl
     elif backend == 'lrradi':
         from pymor.algorithms.lrradi import solve_ricc_lrcf as solve_ricc_impl
     else:
@@ -305,10 +302,9 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
 
         - :func:`pymor.bindings.scipy.ricc_lrcf_solver_options`,
         - :func:`pymor.bindings.slycot.ricc_lrcf_solver_options`,
-        - :func:`pymor.bindings.pymess.pos_ricc_lrcf_solver_options`.
 
     default_dense_solver_backend
-        Default dense solver backend to use (slycot, scipy, pymess).
+        Default dense solver backend to use (slycot, scipy).
 
     Returns
     -------
@@ -326,8 +322,6 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
         from pymor.bindings.scipy import solve_pos_ricc_lrcf as solve_ricc_impl
     elif backend == 'slycot':
         from pymor.bindings.slycot import solve_pos_ricc_lrcf as solve_ricc_impl
-    elif backend == 'pymess':
-        from pymor.bindings.pymess import solve_pos_ricc_lrcf as solve_ricc_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
     return solve_ricc_impl(A, E, B, C, R, S, trans=trans, options=options)

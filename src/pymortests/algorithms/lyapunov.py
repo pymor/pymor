@@ -24,13 +24,11 @@ n_list_small = [10, 20]
 n_list_big = [300]
 m_list = [1, 2]
 cont_lyap_lrcf_solver_list = [
-    'pymess_lradi',
     'lradi',
 ]
 cont_lyap_dense_solver_list = [
     'scipy',
     'slycot_bartels-stewart',
-    'pymess_glyap',
 ]
 disc_lyap_dense_solver_list = [
     'scipy',
@@ -41,8 +39,6 @@ disc_lyap_dense_solver_list = [
 def skip_if_missing_solver(solver):
     if solver.startswith('slycot') and not config.HAVE_SLYCOT:
         pytest.skip('slycot unavailable')
-    if solver.startswith('pymess') and not config.HAVE_PYMESS:
-        pytest.skip('pymess unavailable')
 
 
 def fro_norm(A):

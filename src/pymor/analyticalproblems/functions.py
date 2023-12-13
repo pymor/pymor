@@ -413,42 +413,13 @@ class BitmapFunction(Function):
         2d |NumPy array| of the discrete function values.
     bounding_box
         Lower left and upper right coordinates of the domain of the function.
-    range
-        Deprecated, only works in conjunction with filename. Don't use.
-    filename
-        Deprecated, use :meth:`BitmapFunction.from_file` instead.
     """
 
     dim_domain = 2
     shape_range = ()
 
-    def __init__(self, bitmap=None, bounding_box=None, range=None, filename=None):
-        # TODO: remove entire if clause after release, remove range and filename args
-        if filename is not None or isinstance(bitmap, str):
-            import warnings
-            warnings.warn('DeprecationWarning. Call BitmapFunction.from_file to instantiate'
-                          'BitmapFunction from a graphics file')
-            if bitmap is not None and filename is not None:
-                raise ValueError
-            filename = bitmap if bitmap is not None else filename
-            assert isinstance(filename, str)
-            range = range or [0., 1.]
-            try:
-                from PIL import Image
-            except ImportError as e:
-                raise ImportError("PIL is needed for loading images. Try 'pip install pillow'") from e
-            img = Image.open(filename)
-            if img.mode != 'L':
-                self.logger.warning('Image ' + filename + ' not in grayscale mode. Converting to grayscale.')
-                img = img.convert('L')
-            bitmap = np.array(img).T[:, ::-1]
-            bitmap = bitmap * ((range[1] - range[0]) / 255.)  # copy to change dtype
-            bitmap += range[0]
-            filename = None
-            range = None
+    def __init__(self, bitmap, bounding_box=None):
         assert isinstance(bitmap, np.ndarray)
-        assert range is None, 'only for deprecated interface'
-        assert filename is None, 'only for deprecated interface'
         bounding_box = bounding_box or [[0., 0.], [1., 1.]]
         self.__auto_init(locals())
         self.lower_left = np.array(bounding_box[0])

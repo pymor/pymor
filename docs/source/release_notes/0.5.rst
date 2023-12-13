@@ -59,7 +59,7 @@ solvers for Lyapunov and Riccati equations from |SciPy|,
 `Slycot <https://github.com/python-control/Slycot>`_ and
 `Py-M.E.S.S. <https://www.mpi-magdeburg.mpg.de/projects/mess>`_ are provided in
 :mod:`pymor.bindings.scipy`, :mod:`pymor.bindings.slycot` and
-:mod:`pymor.bindings.pymess`. A generic Schur decomposition-based solver for
+`pymor.bindings.pymess`. A generic Schur decomposition-based solver for
 sparse-dense Sylvester equations is implemented in
 :mod:`pymor.algorithms.sylvester`.
 

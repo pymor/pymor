@@ -10,7 +10,6 @@ from pymor.core.cache import CacheableObject, cached
 from pymor.core.logger import getLogger
 from pymor.discretizers.builtin.inverse import inv_transposed_two_by_two
 from pymor.discretizers.builtin.relations import inverse_relation
-from pymor.tools.deprecated import Deprecated
 
 
 class ReferenceElement(CacheableObject):
@@ -240,10 +239,6 @@ class Grid(CacheableObject):
         assert 0 <= superentity_codim <= codim, f'Invalid codimension (was {superentity_codim})'
         SE = self.subentities(superentity_codim, codim)
         return inverse_relation(SE, size_rhs=self.size(codim), with_indices=True)
-
-    @Deprecated('neighbors')
-    def neighbours(self, *args, **kwargs):
-        self.neighbors(*args, **kwargs)
 
     def neighbors(self, codim, neighbor_codim, intersection_codim=None):
         """Maps entity index and local neighbor index to global neighbor index.

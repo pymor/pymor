@@ -166,9 +166,9 @@ fom = PHLTIModel.from_matrices(J, R, G, P=P, S=S, N=N, E=E, Q=Q, solver_options=
 The `ricc_pos_lrcf` solver option refers to the solver used for the underlying
 Riccati equation relevant for {class}`~pymor.reductors.bt.PRBTReductor` and
 {class}`~pymor.reductors.spectral_factor.SpectralFactorReductor`. Possible choices are
-`scipy`, `slycot` or `pymess` (if installed). Currently, we recommend `slycot`, since pyMOR's
-`pymess` binding does not support all use cases yet, and `scipy` gets into trouble if
-the associated Hamiltonian pencil has eigenvalues close to the imaginary axis.
+`scipy` or `slycot` (if installed). Currently, we recommend `slycot`, since `scipy`
+gets into trouble if the associated Hamiltonian pencil has eigenvalues close to the
+imaginary axis.
 
 ### pH-IRKA
 
