@@ -11,6 +11,7 @@ that you may use. Please use the logo as is and make no modifications. In partic
 
 If you want to create a derived version of the logo for your own project, please ask us first.
 
+<!-- markdownlint-disable MD045 -->
 type  | PNG                                                 | SVG
 ------|-----------------------------------------------------|----------------------------------------------------
 color | <img src="pymor_logo.png" width=320>                | <img src="pymor_logo.svg" width=320>
