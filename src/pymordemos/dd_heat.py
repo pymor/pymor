@@ -14,7 +14,7 @@ from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.logger import set_log_levels
 from pymor.discretizers.builtin import discretize_instationary_cg
 from pymor.models.transfer_function import TransferFunction
-from pymor.reductors.aaa import PAAAReductor
+from pymor.reductors.aaa import AAAReductor, PAAAReductor
 from pymor.reductors.loewner import LoewnerReductor
 
 
@@ -80,6 +80,7 @@ def main(
 
     ss = np.logspace(-1, 4, n)
 
+    run_mor_method_dd(lti, ss, AAAReductor, 'AAA Strictly Proper')
     run_mor_method_dd(lti, ss, PAAAReductor, 'AAA')
     run_mor_method_dd(lti, ss, LoewnerReductor, 'Loewner')
 
