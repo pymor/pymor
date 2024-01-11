@@ -500,14 +500,8 @@ class AAAReductor(BasicObject):
             self._dim_output = Hs.shape[1]
             self._dim_input = Hs.shape[2]
             rng = new_rng(0)
-            if any(np.iscomplex(s)):
-                w = 1j * rng.normal(scale=np.sqrt(2)/2, size=(self._dim_output,)) \
-                    + rng.normal(scale=np.sqrt(2)/2, size=(self._dim_output,))
-                v = 1j * rng.normal(scale=np.sqrt(2)/2, size=(self._dim_input,)) \
-                    + rng.normal(scale=np.sqrt(2)/2, size=(self._dim_input,))
-            else:
-                w = rng.normal(size=(self._dim_output,))
-                v = rng.normal(size=(self._dim_input,))
+            w = rng.normal(size=(self._dim_output,))
+            v = rng.normal(size=(self._dim_input,))
             w /= np.linalg.norm(w)
             v /= np.linalg.norm(v)
             self.MIMO_Hs = Hs
@@ -614,26 +608,6 @@ class AAAReductor(BasicObject):
             else:
                 rom = TransferFunction(self._dim_input, self._dim_output, tf)
         else:
-            if self._dim_input != 1 or self._dim_output != 1:
-                itpl_vals = self.MIMO_Hs[self.itpl_part]
-                r = len(self.itpl_part)
-                Im = np.eye(self._dim_input)
-                Br = np.kron(coefs, Im).T
-                Cr = np.empty((self._dim_output,r*self._dim_input), dtype=itpl_vals.dtype)
-                for i in range(r):
-                    Cr[:,self._dim_input*i:self._dim_input*(i+1)] = itpl_vals[i,:]
-                L = np.diag(itpl_nodes)
-                e = np.ones(r)
-                Ar = np.kron(L, Im) - Br @ (np.kron(e.T, Im))
-            else:
-                r = len(self.itpl_part)
-                b = coefs
-                Cr = itpl_vals
-                L = np.diag(itpl_nodes)
-                e = np.ones((1, r))
-                Ar = L - np.outer(b,e)
-                Br = b[:, np.newaxis]
-
             if self.conjugate:
                 T = np.zeros((r, r), dtype=np.complex_)
                 for i in range(r):
@@ -647,12 +621,38 @@ class AAAReductor(BasicObject):
                             T[j, i] = -1j
                             T[j, j] = 1j
 
-                if self._dim_input != 1 or self._dim_output != 1:
-                    T = np.kron(T, Im)
+                T = (np.sqrt(2) / 2) * T
 
-                Ar = 0.5 * (T @ Ar @ T.conj().T)
-                Br = (np.sqrt(2) / 2) * (T @ Br)
-                Cr = (np.sqrt(2) / 2) * (Cr @ T.conj().T)
+            if self._dim_input != 1 or self._dim_output != 1:
+                itpl_vals = self.MIMO_Hs[self.itpl_part]
+                r = len(self.itpl_part)
+                Im = np.eye(self._dim_input)
+                Cr = np.empty((self._dim_output,r*self._dim_input), dtype=itpl_vals.dtype)
+                for i in range(r):
+                    Cr[:,self._dim_input*i:self._dim_input*(i+1)] = itpl_vals[i,:]
+                L = np.diag(itpl_nodes)
+                e = np.ones((1, r))
+
+                if self.conjugate:
+                    Br = np.kron(coefs @ T.T, Im).T.real
+                    Cr = (Cr @ np.kron(T.conj().T,Im)).real
+                    Ar = np.kron(T @ (L - np.outer(coefs,e)) @ T.conj().T, Im).real
+                else:
+                    Br = np.kron(coefs, Im).T
+                    Ar = np.kron(L - np.outer(coefs,e), Im)
+            else:
+                r = len(self.itpl_part)
+                b = coefs
+                Cr = itpl_vals
+                L = np.diag(itpl_nodes)
+                e = np.ones((1, r))
+                Ar = L - np.outer(b,e)
+                Br = b[:, np.newaxis]
+
+                if self.conjugate:
+                    Ar = (T @ Ar @ T.conj().T).real
+                    Br = (T @ Br).real
+                    Cr = (Cr @ T.conj().T).real
 
             rom = LTIModel.from_matrices(Ar, Br, Cr)
 
