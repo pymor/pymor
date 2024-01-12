@@ -577,7 +577,7 @@ class FactorizedTransferFunction(TransferFunction):
                 Kinv_B = K.apply_inverse(B_vec, mu=mu)
                 res = C.apply(Kinv_B, mu=mu).to_numpy().T
             else:
-                C_vec_adj = C.as_source_array(mu=mu).conj()
+                C_vec_adj = C.as_source_array(mu=mu)
                 Kinvadj_Cadj = K.apply_inverse_adjoint(C_vec_adj, mu=mu)
                 res = B.apply_adjoint(Kinvadj_Cadj, mu=mu).to_numpy().conj()
             res += to_matrix(D, format='dense', mu=mu)
