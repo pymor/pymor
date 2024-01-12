@@ -456,8 +456,13 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
 class AAAReductor(BasicObject):
     """Reductor implementing the AAA algorithm.
 
-    See :cite:`NST18` for the algorithm. This version uses a strictly proper barycentric form
-    as the rational approximant.
+    See :cite:`NST18` for the algorithm. This reductor uses a strictly proper barycentric form
+    as the rational approximant and allows for computing the ROM as an |LTIModel|. See :cite:`AG23`
+    for this version of the algorithm.
+
+    .. note::
+       In order to apply the AAA algorithm with a proper barycentric form the
+       :class:`~pymor.reductors.aaa.PAAAReductor` can be used.
 
     Parameters
     ----------
@@ -515,7 +520,7 @@ class AAAReductor(BasicObject):
 
         self.__auto_init(locals())
 
-    def reduce(self, tol=1e-7, itpl_part=None, rom_form='LTI',  max_itpl=None):
+    def reduce(self, tol=1e-7, itpl_part=None, max_itpl=None, rom_form='LTI'):
         """Reduce using AAA.
 
         Parameters
@@ -532,6 +537,9 @@ class AAAReductor(BasicObject):
             Maximum number of interpolation points to use with respect to each
             variable. Should be `None` or a list such that `self.num_vars == len(max_itpl)`.
             If `None` `max_itpl[i]` will be set to `len(self.sampling_values[i]) - 1`.
+        rom_form
+            Can either be `'barycentric'` or `'lti'`. In the first case the returned reduced
+            model is a |TransferFunction| in the latter case the reduced model is an |LTIModel|.
 
         Returns
         -------
