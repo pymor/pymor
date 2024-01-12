@@ -44,8 +44,10 @@ Replace `RELEASE_TAG` below with the actual release tag.
       Push `RELEASE_TAG` to GitHub.
 - [ ] Wait for CI build for tagged commit to finish (see the list of pipelines at
       [zivgitlab](https://zivgitlab.uni-muenster.de/pymor/pymor/-/pipelines)).
-- [ ] Merge the automatic PR at [`pymor/docs`](https://github.com/pymor/docs) and
-      wait for the CI build to finish.
+- [ ] Check that https://docs.pymor.org/list.html shows tagged version
+      (~5 min. after CI build has finished).
+- [ ] Check that https://docs.pymor.org/ points to tagged version and that list of available
+      versions is correct (~5 min. after CI build has finished).
 - [ ] Check again that documentation for tagged commit (not release branch) is built correctly.
       Check that binder links work and `.binder/Dockerfile` in `pymor/docs@RELEASE_TAG` uses the
       correctly tagged base image.
