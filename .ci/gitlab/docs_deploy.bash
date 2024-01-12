@@ -9,6 +9,9 @@ function init_ssh {
 
     eval $(ssh-agent -s)
 
+    chmod 600 "$DOCS_DEPLOY_KEY"
+    ssh-add "$DOCS_DEPLOY_KEY"
+
     chmod 600 "$DOCS_DEPLOY_KEY_ZIV"
     ssh-add "$DOCS_DEPLOY_KEY_ZIV"
 
