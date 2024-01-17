@@ -453,6 +453,7 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
 
     return bary_func
 
+
 class AAAReductor(BasicObject):
     """Reductor implementing the AAA algorithm.
 
@@ -504,19 +505,19 @@ class AAAReductor(BasicObject):
         if len(Hs.shape) > 1:
             self._dim_output = Hs.shape[1]
             self._dim_input = Hs.shape[2]
-            rng = new_rng(0)
-            w = rng.normal(size=(self._dim_output,))
-            v = rng.normal(size=(self._dim_input,))
-            w /= np.linalg.norm(w)
-            v /= np.linalg.norm(v)
-            self.MIMO_Hs = Hs
-            self.Hs = Hs @ v @ w
+            if self._dim_input == self._dim_output == 1:
+                Hs = np.squeeze(Hs)
+            else:
+                rng = new_rng(0)
+                w = rng.normal(size=(self._dim_output,))
+                v = rng.normal(size=(self._dim_input,))
+                w /= np.linalg.norm(w)
+                v /= np.linalg.norm(v)
+                self.MIMO_Hs = Hs
+                self.Hs = Hs @ v @ w
         else:
-            self._dim_input = 1
             self._dim_output = 1
-
-        if self._dim_input == self._dim_output == 1:
-            Hs = np.squeeze(Hs)
+            self._dim_input = 1
 
         self.__auto_init(locals())
 
@@ -528,15 +529,10 @@ class AAAReductor(BasicObject):
         tol
             Convergence tolerance for relative error of `rom` over the set of samples.
         itpl_part
-            Initial partition for interpolation values. Should be `None` or a nested list
-            such that `itpl_part[i]` corresponds to indices of interpolated values with
-            respect to the `i`-th variable. I.e., `self.sampling_values[i][itpl_part[i]]`
-            represents a list of all initially interpolated samples of the `i`-th variable.
-            If `None` p-AAA will start with no interpolated values.
+            Initial partition for interpolation values. Should be `None` or a list with indices
+            for interpolated data. If `None` AAA will start with no interpolated values.
         max_itpl
-            Maximum number of interpolation points to use with respect to each
-            variable. Should be `None` or a list such that `self.num_vars == len(max_itpl)`.
-            If `None` `max_itpl[i]` will be set to `len(self.sampling_values[i]) - 1`.
+            Maximum number of interpolation points to use.
         rom_form
             Can either be `'barycentric'` or `'lti'`. In the first case the returned reduced
             model is a |TransferFunction| in the latter case the reduced model is an |LTIModel|.
@@ -548,8 +544,10 @@ class AAAReductor(BasicObject):
         """
         if itpl_part is None:
             self.itpl_part = []
+            ls_part = range(len(self.s))
         else:
             self.itpl_part = itpl_part
+            ls_part = sorted(set(range(len(self.s))) - set(self.itpl_part))
 
         if max_itpl is None or max_itpl > len(self.s)-1:
             max_itpl = len(self.s)-1
@@ -562,18 +560,13 @@ class AAAReductor(BasicObject):
         # Define ROM with constant output
         tf = np.vectorize(lambda s: np.mean(self.Hs))
 
-        self.itpl_part = []
-        ls_part = range(len(self.s))
-
         j = 0
         r = 0
 
         while len(self.itpl_part) < max_itpl:
 
-            # compute approximation error over LS partiation of sampled data
-            errs = np.empty(len(ls_part))
-            for i, ls_s in enumerate(self.s[ls_part]):
-                errs[i] = np.abs(tf(ls_s) - self.Hs[ls_part[i]])
+            # compute approximation error over LS partition of sampled data
+            errs = np.array([np.abs(tf(self.s[i]) - self.Hs[i]) for i in ls_part])
 
             # errors for greedy selection
             ls_part_idx = np.argmax(errs)
@@ -585,7 +578,7 @@ class AAAReductor(BasicObject):
             j += 1
             self.logger.info(f'Step {j} relative H(s) error: {err / max_Hs:.5e}, interpolation points {r}')
 
-            if err < rel_tol:
+            if err < rel_tol and len(self.itpl_part) > 0:
                 break
 
             # add greedy search result to interpolation set
