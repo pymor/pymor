@@ -139,6 +139,12 @@ class ReferenceElement(CacheableObject):
         o, _ = self.quadrature_info()
         return frozenset(o.keys())
 
+    def __eq__(self, other):
+        return type(self) == type(other)
+
+    def __hash__(self):
+        return hash(type(self).__name__)
+
 
 class Grid(CacheableObject):
     """Affine grid.
