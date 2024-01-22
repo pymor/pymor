@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# This script is periodically executed on docs.pymor.org.
 
 import sys
 from pathlib import Path
