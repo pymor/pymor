@@ -339,7 +339,7 @@ class LTIModel(Model):
                    time_stepper=time_stepper, num_values=num_values, presets=presets,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
-    def to_matrices(self, format=None):
+    def to_matrices(self, format=None, mu=None):
         """Return operators as matrices.
 
         Parameters
@@ -363,9 +363,9 @@ class LTIModel(Model):
         E
             The |NumPy array| or |SciPy spmatrix| E or `None` (if E is an `IdentityOperator`).
         """
-        return self.to_abcde_matrices(format)
+        return self.to_abcde_matrices(format, mu)
 
-    def to_abcde_matrices(self, format=None):
+    def to_abcde_matrices(self, format=None, mu=None):
         """Return A, B, C, D, and E operators as matrices.
 
         Parameters
@@ -389,11 +389,11 @@ class LTIModel(Model):
         E
             The |NumPy array| or |SciPy spmatrix| E or `None` (if E is an `IdentityOperator`).
         """
-        A = to_matrix(self.A, format)
-        B = to_matrix(self.B, format)
-        C = to_matrix(self.C, format)
-        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D, format)
-        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format)
+        A = to_matrix(self.A, format, mu)
+        B = to_matrix(self.B, format, mu)
+        C = to_matrix(self.C, format, mu)
+        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D, format, mu)
+        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format, mu)
         return A, B, C, D, E
 
     @classmethod
