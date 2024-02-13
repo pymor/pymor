@@ -349,6 +349,8 @@ class LTIModel(Model):
             otherwise the appropriate |SciPy spmatrix|.
             If `None`, a choice between dense and sparse format is
             automatically made.
+        mu
+            The |parameter values| for which to convert the operators.
 
         Returns
         -------
@@ -375,6 +377,8 @@ class LTIModel(Model):
             otherwise the appropriate |SciPy spmatrix|.
             If `None`, a choice between dense and sparse format is
             automatically made.
+        mu
+            The |parameter values| for which to convert the operators.
 
         Returns
         -------
@@ -466,7 +470,7 @@ class LTIModel(Model):
                                  solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                                  name=name)
 
-    def to_files(self, A_file, B_file, C_file, D_file=None, E_file=None):
+    def to_files(self, A_file, B_file, C_file, D_file=None, E_file=None, mu=None):
         """Write operators to files as matrices.
 
         Parameters
@@ -482,6 +486,8 @@ class LTIModel(Model):
         E_file
             The name of the file (with extension) containing E or `None` if E is an
             `IdentityOperator`.
+        mu
+            The |parameter values| for which to write the operators to files.
         """
         if D_file is None and not isinstance(self.D, ZeroOperator):
             raise ValueError('D is not zero, D_file must be given')
@@ -490,7 +496,7 @@ class LTIModel(Model):
 
         from pymor.tools.io import save_matrix
 
-        A, B, C, D, E = self.to_matrices()
+        A, B, C, D, E = self.to_matrices(mu=mu)
         for mat, file in [(A, A_file), (B, B_file), (C, C_file), (D, D_file), (E, E_file)]:
             if mat is None:
                 continue
@@ -569,16 +575,18 @@ class LTIModel(Model):
                                  solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                                  name=name)
 
-    def to_mat_file(self, file_name):
+    def to_mat_file(self, file_name, mu=None):
         """Save operators as matrices to .mat file.
 
         Parameters
         ----------
         file_name
             The name of the .mat file (extension .mat does not need to be included).
+        mu
+            The |parameter values| for which to write the operators to files.
         """
         import scipy.io as spio
-        A, B, C, D, E = self.to_matrices()
+        A, B, C, D, E = self.to_matrices(mu=mu)
         mat_dict = {'A': A, 'B': B, 'C': C}
         if D is not None:
             mat_dict['D'] = D
@@ -645,18 +653,20 @@ class LTIModel(Model):
                                  solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                                  name=name)
 
-    def to_abcde_files(self, files_basename):
+    def to_abcde_files(self, files_basename, mu=None):
         """Save operators as matrices to .[ABCDE] files in Matrix Market format.
 
         Parameters
         ----------
         files_basename
             The basename of files containing the operators.
+        mu
+            The |parameter values| for which to write the operators to files.
         """
         from pathlib import Path
 
         from pymor.tools.io.matrices import _mmwrite
-        A, B, C, D, E = self.to_matrices()
+        A, B, C, D, E = self.to_matrices(mu=mu)
         _mmwrite(Path(files_basename + '.A'), A)
         _mmwrite(Path(files_basename + '.B'), B)
         _mmwrite(Path(files_basename + '.C'), C)
@@ -2168,8 +2178,13 @@ class SecondOrderModel(Model):
         return cls(M, E, K, B, Cp, Cv, D, sampling_time=sampling_time,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
-    def to_matrices(self):
+    def to_matrices(self, mu=None):
         """Return operators as matrices.
+
+        Parameters
+        ----------
+        mu
+            The |parameter values| for which to convert the operators.
 
         Returns
         -------
@@ -2188,13 +2203,13 @@ class SecondOrderModel(Model):
         D
             The |NumPy array| or |SciPy spmatrix| D or `None` (if D is a `ZeroOperator`).
         """
-        M = to_matrix(self.M)
-        E = to_matrix(self.E)
-        K = to_matrix(self.K)
-        B = to_matrix(self.B)
-        Cp = to_matrix(self.Cp)
-        Cv = None if isinstance(self.Cv, ZeroOperator) else to_matrix(self.Cv)
-        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D)
+        M = to_matrix(self.M, mu=mu)
+        E = to_matrix(self.E, mu=mu)
+        K = to_matrix(self.K, mu=mu)
+        B = to_matrix(self.B, mu=mu)
+        Cp = to_matrix(self.Cp, mu=mu)
+        Cv = None if isinstance(self.Cv, ZeroOperator) else to_matrix(self.Cv, mu=mu)
+        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D, mu=mu)
         return M, E, K, B, Cp, Cv, D
 
     @classmethod
@@ -2257,7 +2272,7 @@ class SecondOrderModel(Model):
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
-    def to_files(self, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None):
+    def to_files(self, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, mu=None):
         """Write operators to files as matrices.
 
         Parameters
@@ -2276,6 +2291,8 @@ class SecondOrderModel(Model):
             The name of the file (with extension) containing Cv or `None` if D is a `ZeroOperator`.
         D_file
             The name of the file (with extension) containing D or `None` if D is a `ZeroOperator`.
+        mu
+            The |parameter values| for which to write the operators to files.
         """
         if Cv_file is None and not isinstance(self.Cv, ZeroOperator):
             raise ValueError('Cv is not zero, Cv_file must be given')
@@ -2284,7 +2301,7 @@ class SecondOrderModel(Model):
 
         from pymor.tools.io import save_matrix
 
-        M, E, K, B, Cp, Cv, D = self.to_matrices()
+        M, E, K, B, Cp, Cv, D = self.to_matrices(mu=mu)
         for mat, file in [(M, M_file), (E, E_file), (K, K_file),
                           (B, B_file), (Cp, Cp_file), (Cv, Cv_file), (D, D_file)]:
             if mat is None:
