@@ -1863,7 +1863,7 @@ class PHLTIModel(LTIModel):
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                    name=name)
 
-    def to_matrices(self, format=None):
+    def to_matrices(self, format=None, mu=None):
         """Return operators as matrices.
 
         Parameters
@@ -1873,6 +1873,8 @@ class PHLTIModel(LTIModel):
             otherwise the appropriate |SciPy spmatrix|.
             If `None`, a choice between dense and sparse format is
             automatically made.
+        mu
+            The |parameter values| for which to convert the operators.
 
         Returns
         -------
@@ -1893,14 +1895,14 @@ class PHLTIModel(LTIModel):
         Q
             The |NumPy array| or |SciPy spmatrix| Q  or `None` (if Q is an `IdentityOperator`).
         """
-        J = to_matrix(self.J, format)
-        R = to_matrix(self.R, format)
-        G = to_matrix(self.G, format)
-        P = None if isinstance(self.P, ZeroOperator) else to_matrix(self.P, format)
-        S = None if isinstance(self.S, ZeroOperator) else to_matrix(self.S, format)
-        N = None if isinstance(self.N, ZeroOperator) else to_matrix(self.N, format)
-        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format)
-        Q = None if isinstance(self.Q, IdentityOperator) else to_matrix(self.Q, format)
+        J = to_matrix(self.J, format, mu)
+        R = to_matrix(self.R, format, mu)
+        G = to_matrix(self.G, format, mu)
+        P = None if isinstance(self.P, ZeroOperator) else to_matrix(self.P, format, mu)
+        S = None if isinstance(self.S, ZeroOperator) else to_matrix(self.S, format, mu)
+        N = None if isinstance(self.N, ZeroOperator) else to_matrix(self.N, format, mu)
+        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format, mu)
+        Q = None if isinstance(self.Q, IdentityOperator) else to_matrix(self.Q, format, mu)
 
         return J, R, G, P, S, N, E, Q
 
