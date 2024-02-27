@@ -6,7 +6,6 @@ from numbers import Number
 
 import numpy as np
 from scipy.optimize import linprog
-from scipy.sparse.linalg import LinearOperator, eigsh
 from scipy.spatial import KDTree
 
 from pymor.analyticalproblems.expressions import parse_expression
@@ -642,29 +641,14 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
             self.kdtree = KDTree(np.array([mu.to_numpy() for mu in self.constraint_parameters]))
 
         if bounds is None:
+            from pymor.algorithms.eigs import eigs
             def lower_bound(operator):
-                def mv(v):
-                    return operator.apply(operator.source.from_numpy(v)).to_numpy()
-
-                def mvinv(v):
-                    return operator.apply_inverse(operator.range.from_numpy(v)).to_numpy()
-
-                L = LinearOperator((operator.source.dim, operator.range.dim), matvec=mv)
-                Linv = LinearOperator((operator.range.dim, operator.source.dim), matvec=mvinv)
-                lambda_min = eigsh(L, sigma=0, which='LM', return_eigenvectors=False, k=1, OPinv=Linv)[0]
-                return lambda_min
+                eigvals, _ = eigs(operator, k=1, which='SM')
+                return eigvals[0].real
 
             def upper_bound(operator):
-                def mv(v):
-                    return operator.apply(operator.source.from_numpy(v)).to_numpy()
-
-                def mvinv(v):
-                    return operator.apply_inverse(operator.range.from_numpy(v)).to_numpy()
-
-                L = LinearOperator((operator.source.dim, operator.range.dim), matvec=mv)
-                Linv = LinearOperator((operator.range.dim, operator.source.dim), matvec=mvinv)
-                lambda_max = eigsh(L, which='LM', return_eigenvectors=False, k=1, OPinv=Linv)[0]
-                return lambda_max
+                eigvals, _ = eigs(operator, k=1, which='LM')
+                return eigvals[0].real
 
             self.logger.info('Computing bounds on design variables by solving eigenvalue problems ...')
             self.bounds = [(lower_bound(aq), upper_bound(aq)) for aq in self.operators]
@@ -673,19 +657,14 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
         assert all(isinstance(b, tuple) and len(b) == 2 for b in self.bounds)
 
         if coercivity_constants is None:
+            from pymor.algorithms.eigs import eigs
+            from pymor.operators.constructions import FixedParameterOperator
             self.logger.info('Computing coercivity constants for parameters by solving eigenvalue problems ...')
             self.coercivity_constants = []
             for mu in constraint_parameters:
-                def mv(v):
-                    return self.operator.apply(self.operator.source.from_numpy(v), mu=mu).to_numpy()
-
-                def mvinv(v):
-                    return self.operator.apply_inverse(self.operator.range.from_numpy(v), mu=mu).to_numpy()
-
-                L = LinearOperator((self.operator.source.dim, self.operator.range.dim), matvec=mv)
-                Linv = LinearOperator((self.operator.range.dim, self.operator.source.dim), matvec=mvinv)
-                lambda_min = eigsh(L, sigma=0, which='LM', return_eigenvectors=False, k=1, OPinv=Linv)[0]
-                self.coercivity_constants.append(lambda_min)
+                fixed_parameter_op = FixedParameterOperator(operator, mu=mu)
+                eigvals, _ = eigs(fixed_parameter_op, k=1, which='SM')
+                self.coercivity_constants.append(eigvals[0].real)
 
         assert len(self.coercivity_constants) == len(self.constraint_parameters)
 
@@ -716,18 +695,13 @@ class UBSuccessiveConstraintsFunctional(ParameterFunctional):
         self.thetas = operator.coefficients
 
         self.minimizers = []
+        from pymor.algorithms.eigs import eigs
+        from pymor.operators.constructions import FixedParameterOperator
         for mu in constraint_parameters:
-            def mv(v):
-                return self.operator.apply(self.operator.source.from_numpy(v), mu=mu).to_numpy()
-
-            def mvinv(v):
-                return self.operator.apply_inverse(self.operator.range.from_numpy(v), mu=mu).to_numpy()
-
-            L = LinearOperator((self.operator.source.dim, self.operator.range.dim), matvec=mv)
-            Linv = LinearOperator((self.operator.range.dim, self.operator.source.dim), matvec=mvinv)
-            minimizer, _ = eigsh(L, sigma=0, which='LM', return_eigenvectors=True, k=1, OPinv=Linv)
-            minimizer = operator.source.from_numpy(minimizer[0])
-            minimizer_squared_norm = minimizer.norm()
+            fixed_parameter_op = FixedParameterOperator(operator, mu=mu)
+            _, minimizers = eigs(fixed_parameter_op, k=1, which='SM')
+            minimizer = minimizers[0]
+            minimizer_squared_norm = minimizer.norm() ** 2
             y_opt = np.array([op.apply2(minimizer, minimizer) / minimizer_squared_norm for op in self.operators])
             self.minimizers.append(y_opt)
 
