@@ -15,12 +15,13 @@ from typer import Argument, run
 
 from pymor.basic import *
 from pymor.core.config import config
+from pymor.parameters.functionals import LBSuccessiveConstraintsFunctional
 from pymor.tools.typer import Choices
 
 # parameters for high-dimensional models
 XBLOCKS = 2             # pyMOR/FEniCS
 YBLOCKS = 2             # pyMOR/FEniCS
-GRID_INTERVALS = 100    # pyMOR/FEniCS
+GRID_INTERVALS = 20     # pyMOR/FEniCS
 FENICS_ORDER = 2
 NGS_ORDER = 4
 TEXT = 'pyMOR'
@@ -59,9 +60,7 @@ def main(
 
     # select reduction algorithm with error estimator
     #################################################
-    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
-    from pymor.parameters.functionals import LBSuccessiveConstraintsFunctional
-    bounds = [(.1, 1.)] * (len(fom.operator.operators) - 1)
+    bounds = None
     coercivity_constants = None
     coercivity_estimator = LBSuccessiveConstraintsFunctional(fom.operator, parameter_space.sample_randomly(100), M=5,
                                                              bounds=bounds, coercivity_constants=coercivity_constants)
