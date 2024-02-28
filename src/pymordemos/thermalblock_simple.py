@@ -15,13 +15,13 @@ from typer import Argument, run
 
 from pymor.basic import *
 from pymor.core.config import config
-from pymor.parameters.functionals import LBSuccessiveConstraintsFunctional
+from pymor.parameters.functionals import LBSuccessiveConstraintsFunctional, UBSuccessiveConstraintsFunctional
 from pymor.tools.typer import Choices
 
 # parameters for high-dimensional models
 XBLOCKS = 2             # pyMOR/FEniCS
 YBLOCKS = 2             # pyMOR/FEniCS
-GRID_INTERVALS = 20     # pyMOR/FEniCS
+GRID_INTERVALS = 10     # pyMOR/FEniCS
 FENICS_ORDER = 2
 NGS_ORDER = 4
 TEXT = 'pyMOR'
@@ -62,8 +62,13 @@ def main(
     #################################################
     bounds = None
     coercivity_constants = None
-    coercivity_estimator = LBSuccessiveConstraintsFunctional(fom.operator, parameter_space.sample_randomly(100), M=5,
+    constraint_parameters = parameter_space.sample_randomly(100)
+    coercivity_estimator = LBSuccessiveConstraintsFunctional(fom.operator, constraint_parameters, M=5,
                                                              bounds=bounds, coercivity_constants=coercivity_constants)
+    upper_coercivity_estimator = UBSuccessiveConstraintsFunctional(fom.operator, constraint_parameters)
+    test_parameters = parameter_space.sample_randomly(10)
+    for mu in test_parameters:
+        print(f'mu: {mu}\tlb: {coercivity_estimator.evaluate(mu)}\tub: {upper_coercivity_estimator.evaluate(mu)}')
     reductor = CoerciveRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator,
                                   check_orthonormality=False)
 
