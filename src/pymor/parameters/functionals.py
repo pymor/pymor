@@ -633,8 +633,9 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
     def __init__(self, operator, constraint_parameters,
                  method='highs', options={}, M=None, bounds=None, coercivity_constants=None):
         self.__auto_init(locals())
-        self.operators = operator.operators[1:]  # workaround to exclude boundary operator; not a general solution
-        self.thetas = operator.coefficients[1:]  # workaround to exclude boundary operator; not a general solution
+        self.operators = operator.operators
+        self.thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
+                            for f in operator.coefficients)
 
         if self.M is not None:
             self.logger.info('Setting up KDTree to find neighboring parameters ...')
@@ -681,31 +682,33 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
         else:
             indices = list(range(len(self.constraint_parameters)))
             selected_parameters = self.constraint_parameters
-        c = np.array([theta(mu) if callable(theta) else theta for theta in self.thetas])
-        A_ub = - np.array([[theta(mu_con) if callable(theta) else theta for theta in self.thetas]
+        c = np.array([theta(mu) for theta in self.thetas])
+        A_ub = - np.array([[theta(mu_con) for theta in self.thetas]
                            for mu_con in selected_parameters])
         b_ub = - np.array([self.coercivity_constants[i] for i in list(indices)])
         return c, A_ub, b_ub
 
 
 class UBSuccessiveConstraintsFunctional(ParameterFunctional):
-    def __init__(self, operator, thetas, constraint_parameters):
+    def __init__(self, operator, constraint_parameters):
         self.__auto_init(locals())
         self.operators = operator.operators
-        self.thetas = operator.coefficients
+        self.thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
+                            for f in operator.coefficients)
 
         self.minimizers = []
         from pymor.algorithms.eigs import eigs
         from pymor.operators.constructions import FixedParameterOperator
-        for mu in constraint_parameters:
+        for mu in self.constraint_parameters:
             fixed_parameter_op = FixedParameterOperator(operator, mu=mu)
             _, minimizers = eigs(fixed_parameter_op, k=1, which='SM')
             minimizer = minimizers[0]
             minimizer_squared_norm = minimizer.norm() ** 2
-            y_opt = np.array([op.apply2(minimizer, minimizer) / minimizer_squared_norm for op in self.operators])
+            y_opt = np.array([op.apply2(minimizer, minimizer)[0].real / minimizer_squared_norm
+                              for op in self.operators])
             self.minimizers.append(y_opt)
 
     def evaluate(self, mu=None):
-        objective_values = [np.sum([theta(mu) * min_y for theta, min_y in zip(self.thetas, self.minimizers[i])])
-                            for i, mu_con in enumerate(self.constraint_parameters)]
+        objective_values = [np.sum([theta(mu) * min_y for theta, min_y in zip(self.thetas, mins)])
+                            for mins in self.minimizers]
         return np.min(objective_values)
