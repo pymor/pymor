@@ -15,13 +15,12 @@ from typer import Argument, run
 
 from pymor.basic import *
 from pymor.core.config import config
-from pymor.parameters.functionals import LBSuccessiveConstraintsFunctional, UBSuccessiveConstraintsFunctional
 from pymor.tools.typer import Choices
 
 # parameters for high-dimensional models
 XBLOCKS = 2             # pyMOR/FEniCS
 YBLOCKS = 2             # pyMOR/FEniCS
-GRID_INTERVALS = 10     # pyMOR/FEniCS
+GRID_INTERVALS = 100    # pyMOR/FEniCS
 FENICS_ORDER = 2
 NGS_ORDER = 4
 TEXT = 'pyMOR'
@@ -60,22 +59,7 @@ def main(
 
     # select reduction algorithm with error estimator
     #################################################
-    bounds = None
-    coercivity_constants = None
-    num_constraint_parameters = 20
-    constraint_parameters = parameter_space.sample_randomly(num_constraint_parameters)
-    coercivity_estimator = LBSuccessiveConstraintsFunctional(fom.operator, constraint_parameters, M=5,
-                                                             bounds=bounds, coercivity_constants=coercivity_constants)
-    upper_coercivity_estimator = UBSuccessiveConstraintsFunctional(fom.operator, constraint_parameters)
-
-    num_test_parameters = 10
-    test_parameters = parameter_space.sample_randomly(num_test_parameters)
-    print(f'Results for coercivity estimation on a set of {num_test_parameters} randomly chosen test parameters:')
-    for mu in test_parameters:
-        lb = coercivity_estimator.evaluate(mu)
-        ub = upper_coercivity_estimator.evaluate(mu)
-        print(f'\tlb: {lb:.5f}\tub: {ub:.5f}\trel.err.: {2 * (ub-lb) / (lb + ub):.5f}')
-
+    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
     reductor = CoerciveRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator,
                                   check_orthonormality=False)
 
