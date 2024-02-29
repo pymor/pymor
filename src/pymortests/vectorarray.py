@@ -155,8 +155,7 @@ if config.HAVE_DUNEGDT:
 
 
 def _test_random_uniform(vector_array, realizations, low, high):
-    # avoid Overflow in rng.randomState.uniform
-    assume(np.isfinite(high-low))
+    assume(np.isfinite(high-low))  # avoid overflow in np.random.RandomState.uniform
     with pytest.raises(Exception):
         vector_array.random(-1)
     c = realizations
