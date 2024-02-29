@@ -62,7 +62,8 @@ def main(
     #################################################
     bounds = None
     coercivity_constants = None
-    constraint_parameters = parameter_space.sample_randomly(100)
+    num_constraint_parameters = 20
+    constraint_parameters = parameter_space.sample_randomly(num_constraint_parameters)
     coercivity_estimator = LBSuccessiveConstraintsFunctional(fom.operator, constraint_parameters, M=5,
                                                              bounds=bounds, coercivity_constants=coercivity_constants)
     upper_coercivity_estimator = UBSuccessiveConstraintsFunctional(fom.operator, constraint_parameters)

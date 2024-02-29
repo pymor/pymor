@@ -685,7 +685,7 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
         c = np.array([theta(mu) for theta in self.thetas])
         A_ub = - np.array([[theta(mu_con) for theta in self.thetas]
                            for mu_con in selected_parameters])
-        b_ub = - np.array([self.coercivity_constants[i] for i in list(indices)])
+        b_ub = - np.array(self.coercivity_constants)[list(indices)]
         return c, A_ub, b_ub
 
 
