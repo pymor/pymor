@@ -67,9 +67,15 @@ def main(
     coercivity_estimator = LBSuccessiveConstraintsFunctional(fom.operator, constraint_parameters, M=5,
                                                              bounds=bounds, coercivity_constants=coercivity_constants)
     upper_coercivity_estimator = UBSuccessiveConstraintsFunctional(fom.operator, constraint_parameters)
-    test_parameters = parameter_space.sample_randomly(10)
+
+    num_test_parameters = 10
+    test_parameters = parameter_space.sample_randomly(num_test_parameters)
+    print(f'Results for coercivity estimation on a set of {num_test_parameters} randomly chosen test parameters:')
     for mu in test_parameters:
-        print(f'mu: {mu}\tlb: {coercivity_estimator.evaluate(mu)}\tub: {upper_coercivity_estimator.evaluate(mu)}')
+        lb = coercivity_estimator.evaluate(mu)
+        ub = upper_coercivity_estimator.evaluate(mu)
+        print(f'\tlb: {lb:.5f}\tub: {ub:.5f}\trel.err.: {2 * (ub-lb) / (lb + ub):.5f}')
+
     reductor = CoerciveRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator,
                                   check_orthonormality=False)
 
