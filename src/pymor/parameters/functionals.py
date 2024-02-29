@@ -459,7 +459,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
     Parameters
     ----------
     thetas
-        List or tuple of |ParameterFunctional|
+        List or tuple of |ParameterFunctionals|.
     mu_bar
         Parameter associated with alpha_mu_bar.
     alpha_mu_bar
@@ -616,7 +616,7 @@ class MaxThetaParameterFunctional(BaseMaxThetaParameterFunctional):
     Parameters
     ----------
     thetas
-        List or tuple of |ParameterFunctional|
+        List or tuple of |ParameterFunctionals|.
     mu_bar
         Parameter associated with gamma_mu_bar.
     gamma_mu_bar
@@ -630,19 +630,48 @@ class MaxThetaParameterFunctional(BaseMaxThetaParameterFunctional):
 
 
 class LBSuccessiveConstraintsFunctional(ParameterFunctional):
+    """|ParameterFunctional| providing the lower bound from the successive constraints method.
+
+    See :cite:`HRSP07`.
+
+    Parameters
+    ----------
+    operator
+        |LincombOperator| for which to provide a lower bound on the coercivity constant.
+    constraint_parameters
+        List of |Parameters| used to construct the constraints.
+    method
+        Name of the algorithm to use for solving the linear program using `scipy.optimize.linprog`.
+    options
+        Dictionary of additional solver options passed to `scipy.optimize.linprog`.
+    M
+        Number of parameters from `constraint_parameters` to use for estimating the coercivity
+        constant. The `M` closest parameters (with respect to the Euclidean distance) are chosen.
+        If `None`, all parameters from `constraint_parameters` are used.
+    bounds
+        Either `None` or a list of tuples containing lower and upper bounds
+        for the design variables.
+    coercivity_constants
+        Either `None` or a list of coercivity constants for the `constraint_parameters`.
+    """
+
     def __init__(self, operator, constraint_parameters,
                  method='highs', options={}, M=None, bounds=None, coercivity_constants=None):
+        from pymor.operators.constructions import LincombOperator
+        assert isinstance(operator, LincombOperator)
         self.__auto_init(locals())
         self.operators = operator.operators
         self.thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
                             for f in operator.coefficients)
 
         if self.M is not None:
-            self.logger.info('Setting up KDTree to find neighboring parameters ...')
+            self.M = min(self.M, len(self.constraint_parameters))
+            self.logger.info(f'Setting up KDTree to find {self.M} neighboring parameters ...')
             self.kdtree = KDTree(np.array([mu.to_numpy() for mu in self.constraint_parameters]))
 
         if bounds is None:
             from pymor.algorithms.eigs import eigs
+
             def lower_bound(operator):
                 eigvals, _ = eigs(operator, k=1, which='SM')
                 return eigvals[0].real
@@ -690,7 +719,21 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
 
 
 class UBSuccessiveConstraintsFunctional(ParameterFunctional):
+    """|ParameterFunctional| providing the upper bound from the successive constraints method.
+
+    See :cite:`HRSP07`.
+
+    Parameters
+    ----------
+    operator
+        |LincombOperator| for which to provide a lower bound on the coercivity constant.
+    constraint_parameters
+        List of |Parameters| used to construct the constraints.
+    """
+
     def __init__(self, operator, constraint_parameters):
+        from pymor.operators.constructions import FixedParameterOperator, LincombOperator
+        assert isinstance(operator, LincombOperator)
         self.__auto_init(locals())
         self.operators = operator.operators
         self.thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
@@ -698,7 +741,6 @@ class UBSuccessiveConstraintsFunctional(ParameterFunctional):
 
         self.minimizers = []
         from pymor.algorithms.eigs import eigs
-        from pymor.operators.constructions import FixedParameterOperator
         for mu in self.constraint_parameters:
             fixed_parameter_op = FixedParameterOperator(operator, mu=mu)
             _, minimizers = eigs(fixed_parameter_op, k=1, which='SM')
