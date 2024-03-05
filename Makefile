@@ -97,7 +97,6 @@ CONDA_EXTRAS = \
 	--extras ci \
 	--extras slycot \
 	--extras ipyparallel \
-	--extras mpi \
 	--extras gui \
 	--extras jupyter \
 	--extras vtk
@@ -105,6 +104,7 @@ CONDA_EXTRAS = \
 	# pytorch not available for win64
 	# docs-additional not needed
 	# gmsh is incompatible with pyside6>=6.4.3 needed for windows ci not to hang
+	# mpi segfaults on windows
 
 ci_conda_requirements:
 	conda-lock --micromamba -c conda-forge --filter-extras --no-dev-dependencies $(CONDA_EXTRAS) -f conda-base.yml -f pyproject.toml

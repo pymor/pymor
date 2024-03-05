@@ -6,8 +6,8 @@
 #
 # Install this environment as "YOURENV" with:
 #     conda-lock install -n YOURENV --file conda-lock.yml
-# This lock contains optional dependency categories gui, ipyparallel, jupyter, mpi, slycot, tests, vtk. Include them in the installed environment with:
-#     conda-lock install -e gui -e ipyparallel -e jupyter -e mpi -e slycot -e tests -e vtk -n YOURENV --file conda-lock.yml
+# This lock contains optional dependency categories gui, ipyparallel, jupyter, slycot, tests, vtk. Include them in the installed environment with:
+#     conda-lock install -e gui -e ipyparallel -e jupyter -e slycot -e tests -e vtk -n YOURENV --file conda-lock.yml
 # To update a single package to the latest version compatible with the version constraints in the source:
 #     conda-lock lock  --lockfile conda-lock.yml --update PACKAGE
 # To re-solve the entire environment, e.g. after changing a version constraint in the source file:
@@ -15,9 +15,9 @@
 version: 1
 metadata:
   content_hash:
-    linux-64: 09c5006c718d95906efbbf6626711ffa9c15d55411d6851c984b4c4159bb09d4
-    osx-64: ddd831b4339f20ef93dd47d9a545cea8ea8f8560da40ffa973324d8756c020b8
-    win-64: b0d40a3528068f1fe5850e573f0f33634be5b73aad957c1d2f4f3d22ea387db3
+    linux-64: ef62f45b3e12be47151b5cb2f1d724735a22621d70b4882199625d2bee52a854
+    osx-64: 3d2e414702af99b06b19c06ac7122793f1f04af6bf21b92b6f87d3b375f319d0
+    win-64: b289c6935ac680475d2b3400e9c324903b7edf8f211f529d68108b19e135a483
   channels:
   - url: conda-forge
     used_env_vars: []
@@ -79,7 +79,7 @@ package:
   hash:
     md5: ac95aa8ed65adfdde51132595c79aade
     sha256: 86aca4a31c09f9b4dbdb332cd9a6a7dbab62ca734d3f832651c0ab59c6a7f52e
-  category: jupyter
+  category: tests
   optional: true
 - name: anyio
   version: 4.3.0
@@ -95,7 +95,7 @@ package:
   hash:
     md5: ac95aa8ed65adfdde51132595c79aade
     sha256: 86aca4a31c09f9b4dbdb332cd9a6a7dbab62ca734d3f832651c0ab59c6a7f52e
-  category: jupyter
+  category: tests
   optional: true
 - name: anyio
   version: 4.3.0
@@ -111,7 +111,7 @@ package:
   hash:
     md5: ac95aa8ed65adfdde51132595c79aade
     sha256: 86aca4a31c09f9b4dbdb332cd9a6a7dbab62ca734d3f832651c0ab59c6a7f52e
-  category: jupyter
+  category: tests
   optional: true
 - name: appnope
   version: 0.1.4
@@ -137,7 +137,7 @@ package:
   hash:
     md5: 3afef1f55a1366b4d3b6a0d92e2235e4
     sha256: 130766446f5507bd44df957b6b5c898a8bd98f024bb426ed6cb9ff1ad67fc677
-  category: jupyter
+  category: tests
   optional: true
 - name: argon2-cffi
   version: 23.1.0
@@ -151,7 +151,7 @@ package:
   hash:
     md5: 3afef1f55a1366b4d3b6a0d92e2235e4
     sha256: 130766446f5507bd44df957b6b5c898a8bd98f024bb426ed6cb9ff1ad67fc677
-  category: jupyter
+  category: tests
   optional: true
 - name: argon2-cffi
   version: 23.1.0
@@ -165,7 +165,7 @@ package:
   hash:
     md5: 3afef1f55a1366b4d3b6a0d92e2235e4
     sha256: 130766446f5507bd44df957b6b5c898a8bd98f024bb426ed6cb9ff1ad67fc677
-  category: jupyter
+  category: tests
   optional: true
 - name: argon2-cffi-bindings
   version: 21.2.0
@@ -180,7 +180,7 @@ package:
   hash:
     md5: de5b16869a430949b02161b04b844a30
     sha256: 104194af519b4e667aa5341068b94b521a791aaaa05ec0091f8f0bdba43a60ac
-  category: jupyter
+  category: tests
   optional: true
 - name: argon2-cffi-bindings
   version: 21.2.0
@@ -194,7 +194,7 @@ package:
   hash:
     md5: e2aba0ad0f533ee73f9d4330d2e32549
     sha256: be27659496bcb660fc9c3f5f74128a7bb090336897e9c7cfbcc55ae66f13b8d8
-  category: jupyter
+  category: tests
   optional: true
 - name: argon2-cffi-bindings
   version: 21.2.0
@@ -211,7 +211,7 @@ package:
   hash:
     md5: e95c947541bf1cb821ea4a6bf7d5794c
     sha256: 0b8eb99e7ac6b409abbb5f3b9733f883865ff4314e85146380f072f6f6234929
-  category: jupyter
+  category: tests
   optional: true
 - name: arrow
   version: 1.3.0
@@ -225,7 +225,7 @@ package:
   hash:
     md5: b77d8c2313158e6e461ca0efb1c2c508
     sha256: ff49825c7f9e29e09afa6284300810e7a8640d621740efb47c4541f4dc4969db
-  category: jupyter
+  category: tests
   optional: true
 - name: arrow
   version: 1.3.0
@@ -239,7 +239,7 @@ package:
   hash:
     md5: b77d8c2313158e6e461ca0efb1c2c508
     sha256: ff49825c7f9e29e09afa6284300810e7a8640d621740efb47c4541f4dc4969db
-  category: jupyter
+  category: tests
   optional: true
 - name: arrow
   version: 1.3.0
@@ -253,7 +253,7 @@ package:
   hash:
     md5: b77d8c2313158e6e461ca0efb1c2c508
     sha256: ff49825c7f9e29e09afa6284300810e7a8640d621740efb47c4541f4dc4969db
-  category: jupyter
+  category: tests
   optional: true
 - name: asttokens
   version: 2.4.1
@@ -355,7 +355,7 @@ package:
   hash:
     md5: 5e4c0743c70186509d1412e03c2d8dfa
     sha256: 77c7d03bdb243a048fff398cedc74327b7dc79169ebe3b4c8448b0331ea55fea
-  category: jupyter
+  category: tests
   optional: true
 - name: attrs
   version: 23.2.0
@@ -367,7 +367,7 @@ package:
   hash:
     md5: 5e4c0743c70186509d1412e03c2d8dfa
     sha256: 77c7d03bdb243a048fff398cedc74327b7dc79169ebe3b4c8448b0331ea55fea
-  category: jupyter
+  category: tests
   optional: true
 - name: attrs
   version: 23.2.0
@@ -379,7 +379,7 @@ package:
   hash:
     md5: 5e4c0743c70186509d1412e03c2d8dfa
     sha256: 77c7d03bdb243a048fff398cedc74327b7dc79169ebe3b4c8448b0331ea55fea
-  category: jupyter
+  category: tests
   optional: true
 - name: babel
   version: 2.14.0
@@ -473,7 +473,7 @@ package:
   hash:
     md5: 332493000404d8411859539a5a630865
     sha256: 7b05b2d0669029326c623b9df7a29fa49d1982a9e7e31b2fea34b4c9a4a72317
-  category: jupyter
+  category: tests
   optional: true
 - name: beautifulsoup4
   version: 4.12.3
@@ -486,7 +486,7 @@ package:
   hash:
     md5: 332493000404d8411859539a5a630865
     sha256: 7b05b2d0669029326c623b9df7a29fa49d1982a9e7e31b2fea34b4c9a4a72317
-  category: jupyter
+  category: tests
   optional: true
 - name: beautifulsoup4
   version: 4.12.3
@@ -499,7 +499,7 @@ package:
   hash:
     md5: 332493000404d8411859539a5a630865
     sha256: 7b05b2d0669029326c623b9df7a29fa49d1982a9e7e31b2fea34b4c9a4a72317
-  category: jupyter
+  category: tests
   optional: true
 - name: black
   version: 24.2.0
@@ -569,7 +569,7 @@ package:
   hash:
     md5: 0ed9d7c0e9afa7c025807a9a8136ea3e
     sha256: 845e77ef495376c5c3c328ccfd746ca0ef1978150cae8eae61a300fe7755fb08
-  category: jupyter
+  category: tests
   optional: true
 - name: bleach
   version: 6.1.0
@@ -585,7 +585,7 @@ package:
   hash:
     md5: 0ed9d7c0e9afa7c025807a9a8136ea3e
     sha256: 845e77ef495376c5c3c328ccfd746ca0ef1978150cae8eae61a300fe7755fb08
-  category: jupyter
+  category: tests
   optional: true
 - name: bleach
   version: 6.1.0
@@ -601,7 +601,7 @@ package:
   hash:
     md5: 0ed9d7c0e9afa7c025807a9a8136ea3e
     sha256: 845e77ef495376c5c3c328ccfd746ca0ef1978150cae8eae61a300fe7755fb08
-  category: jupyter
+  category: tests
   optional: true
 - name: blosc
   version: 1.21.5
@@ -756,7 +756,7 @@ package:
   hash:
     md5: cce9e7c3f1c307f2a5fb08a2922d6164
     sha256: 559093679e9fdb6061b7b80ca0f9a31fe6ffc213f1dae65bc5c82e2cd1a94107
-  category: jupyter
+  category: tests
   optional: true
 - name: brotli-python
   version: 1.1.0
@@ -770,7 +770,7 @@ package:
   hash:
     md5: 546fdccabb90492fbaf2da4ffb78f352
     sha256: 0f5e0a7de58006f349220365e32db521a1fe494c37ee455e5ecf05b8fe567dcc
-  category: jupyter
+  category: tests
   optional: true
 - name: brotli-python
   version: 1.1.0
@@ -786,7 +786,7 @@ package:
   hash:
     md5: 42fbf4e947c17ea605e6a4d7f526669a
     sha256: 5390e1e5e8e159d4893ecbfd2c08ca75ef51bdce1a4a44ff4ee9e2d596004aac
-  category: jupyter
+  category: tests
   optional: true
 - name: bzip2
   version: 1.0.8
@@ -891,7 +891,7 @@ package:
   hash:
     md5: 9b347a7ec10940d3f7941ff6c460b551
     sha256: 561e6660f26c35d137ee150187d89767c988413c978e1b712d53f27ddf70ea17
-  category: jupyter
+  category: tests
   optional: true
 - name: cached-property
   version: 1.5.2
@@ -903,7 +903,7 @@ package:
   hash:
     md5: 9b347a7ec10940d3f7941ff6c460b551
     sha256: 561e6660f26c35d137ee150187d89767c988413c978e1b712d53f27ddf70ea17
-  category: jupyter
+  category: tests
   optional: true
 - name: cached-property
   version: 1.5.2
@@ -915,7 +915,7 @@ package:
   hash:
     md5: 9b347a7ec10940d3f7941ff6c460b551
     sha256: 561e6660f26c35d137ee150187d89767c988413c978e1b712d53f27ddf70ea17
-  category: jupyter
+  category: tests
   optional: true
 - name: cached_property
   version: 1.5.2
@@ -927,7 +927,7 @@ package:
   hash:
     md5: 576d629e47797577ab0f1b351297ef4a
     sha256: 6dbf7a5070cc43d90a1e4c2ec0c541c69d8e30a0e25f50ce9f6e4a432e42c5d7
-  category: jupyter
+  category: tests
   optional: true
 - name: cached_property
   version: 1.5.2
@@ -939,7 +939,7 @@ package:
   hash:
     md5: 576d629e47797577ab0f1b351297ef4a
     sha256: 6dbf7a5070cc43d90a1e4c2ec0c541c69d8e30a0e25f50ce9f6e4a432e42c5d7
-  category: jupyter
+  category: tests
   optional: true
 - name: cached_property
   version: 1.5.2
@@ -951,7 +951,7 @@ package:
   hash:
     md5: 576d629e47797577ab0f1b351297ef4a
     sha256: 6dbf7a5070cc43d90a1e4c2ec0c541c69d8e30a0e25f50ce9f6e4a432e42c5d7
-  category: jupyter
+  category: tests
   optional: true
 - name: cairo
   version: 1.18.0
@@ -1076,7 +1076,7 @@ package:
   hash:
     md5: b3469563ac5e808b0cd92810d0697043
     sha256: b71c94528ca0c35133da4b7ef69b51a0b55eeee570376057f3d2ad60c3ab1444
-  category: jupyter
+  category: tests
   optional: true
 - name: cffi
   version: 1.16.0
@@ -1091,7 +1091,7 @@ package:
   hash:
     md5: 15d07b82223cac96af629e5e747ba27a
     sha256: 1f13a5fa7f310fdbd27f5eddceb9e62cfb10012c58a58c923dd6f51fa979748a
-  category: jupyter
+  category: tests
   optional: true
 - name: cffi
   version: 1.16.0
@@ -1108,7 +1108,7 @@ package:
   hash:
     md5: d109d6e767c4890ea32880b8bfa4a3b6
     sha256: eb7463fe3785dd9ac0b3b1e5fea3b721d20eb082e194cab0af8d9ff28c28934f
-  category: jupyter
+  category: tests
   optional: true
 - name: cftime
   version: 1.6.3
@@ -1166,7 +1166,7 @@ package:
   hash:
     md5: 7f4a9e3fcff3f6356ae99244a014da6a
     sha256: 20cae47d31fdd58d99c4d2e65fbdcefa0b0de0c84e455ba9d6356a4bdbc4b5b9
-  category: jupyter
+  category: tests
   optional: true
 - name: charset-normalizer
   version: 3.3.2
@@ -1178,7 +1178,7 @@ package:
   hash:
     md5: 7f4a9e3fcff3f6356ae99244a014da6a
     sha256: 20cae47d31fdd58d99c4d2e65fbdcefa0b0de0c84e455ba9d6356a4bdbc4b5b9
-  category: jupyter
+  category: tests
   optional: true
 - name: charset-normalizer
   version: 3.3.2
@@ -1190,7 +1190,7 @@ package:
   hash:
     md5: 7f4a9e3fcff3f6356ae99244a014da6a
     sha256: 20cae47d31fdd58d99c4d2e65fbdcefa0b0de0c84e455ba9d6356a4bdbc4b5b9
-  category: jupyter
+  category: tests
   optional: true
 - name: click
   version: 8.1.7
@@ -1543,7 +1543,7 @@ package:
   hash:
     md5: 961b3a227b437d82ad7054484cfa71b2
     sha256: 9717a059677553562a8f38ff07f3b9f61727bd614f505658b0a5ecbcf8df89be
-  category: jupyter
+  category: tests
   optional: true
 - name: defusedxml
   version: 0.7.1
@@ -1555,7 +1555,7 @@ package:
   hash:
     md5: 961b3a227b437d82ad7054484cfa71b2
     sha256: 9717a059677553562a8f38ff07f3b9f61727bd614f505658b0a5ecbcf8df89be
-  category: jupyter
+  category: tests
   optional: true
 - name: defusedxml
   version: 0.7.1
@@ -1567,7 +1567,7 @@ package:
   hash:
     md5: 961b3a227b437d82ad7054484cfa71b2
     sha256: 9717a059677553562a8f38ff07f3b9f61727bd614f505658b0a5ecbcf8df89be
-  category: jupyter
+  category: tests
   optional: true
 - name: diskcache
   version: 5.6.3
@@ -1654,7 +1654,7 @@ package:
   hash:
     md5: 3cf04868fee0a029769bd41f4b2fbf2d
     sha256: 2ec4a0900a4a9f42615fc04d0fb3286b796abe56590e8e042f6ec25e102dd5af
-  category: jupyter
+  category: tests
   optional: true
 - name: entrypoints
   version: '0.4'
@@ -1666,7 +1666,7 @@ package:
   hash:
     md5: 3cf04868fee0a029769bd41f4b2fbf2d
     sha256: 2ec4a0900a4a9f42615fc04d0fb3286b796abe56590e8e042f6ec25e102dd5af
-  category: jupyter
+  category: tests
   optional: true
 - name: entrypoints
   version: '0.4'
@@ -1678,7 +1678,7 @@ package:
   hash:
     md5: 3cf04868fee0a029769bd41f4b2fbf2d
     sha256: 2ec4a0900a4a9f42615fc04d0fb3286b796abe56590e8e042f6ec25e102dd5af
-  category: jupyter
+  category: tests
   optional: true
 - name: exceptiongroup
   version: 1.2.0
@@ -1690,7 +1690,7 @@ package:
   hash:
     md5: 8d652ea2ee8eaee02ed8dc820bc794aa
     sha256: a6ae416383bda0e3ed14eaa187c653e22bec94ff2aa3b56970cdf0032761e80d
-  category: jupyter
+  category: tests
   optional: true
 - name: exceptiongroup
   version: 1.2.0
@@ -1702,7 +1702,7 @@ package:
   hash:
     md5: 8d652ea2ee8eaee02ed8dc820bc794aa
     sha256: a6ae416383bda0e3ed14eaa187c653e22bec94ff2aa3b56970cdf0032761e80d
-  category: jupyter
+  category: tests
   optional: true
 - name: exceptiongroup
   version: 1.2.0
@@ -1714,7 +1714,7 @@ package:
   hash:
     md5: 8d652ea2ee8eaee02ed8dc820bc794aa
     sha256: a6ae416383bda0e3ed14eaa187c653e22bec94ff2aa3b56970cdf0032761e80d
-  category: jupyter
+  category: tests
   optional: true
 - name: executing
   version: 2.0.1
@@ -2110,7 +2110,7 @@ package:
   hash:
     md5: 642d35437078749ef23a5dca2c9bb1f3
     sha256: 6cfd1f9bcd2358a69fb571f4b3af049b630d52647d906822dbedac03e84e4f63
-  category: jupyter
+  category: tests
   optional: true
 - name: fqdn
   version: 1.5.1
@@ -2123,7 +2123,7 @@ package:
   hash:
     md5: 642d35437078749ef23a5dca2c9bb1f3
     sha256: 6cfd1f9bcd2358a69fb571f4b3af049b630d52647d906822dbedac03e84e4f63
-  category: jupyter
+  category: tests
   optional: true
 - name: fqdn
   version: 1.5.1
@@ -2136,7 +2136,7 @@ package:
   hash:
     md5: 642d35437078749ef23a5dca2c9bb1f3
     sha256: 6cfd1f9bcd2358a69fb571f4b3af049b630d52647d906822dbedac03e84e4f63
-  category: jupyter
+  category: tests
   optional: true
 - name: freetype
   version: 2.12.1
@@ -3047,7 +3047,7 @@ package:
   hash:
     md5: 1a76f09108576397c41c0b0c5bd84134
     sha256: 6ee4c986d69ce61e60a20b2459b6f2027baeba153f0a64995fd3cb47c2cc7e07
-  category: jupyter
+  category: tests
   optional: true
 - name: idna
   version: '3.6'
@@ -3059,7 +3059,7 @@ package:
   hash:
     md5: 1a76f09108576397c41c0b0c5bd84134
     sha256: 6ee4c986d69ce61e60a20b2459b6f2027baeba153f0a64995fd3cb47c2cc7e07
-  category: jupyter
+  category: tests
   optional: true
 - name: idna
   version: '3.6'
@@ -3071,31 +3071,7 @@ package:
   hash:
     md5: 1a76f09108576397c41c0b0c5bd84134
     sha256: 6ee4c986d69ce61e60a20b2459b6f2027baeba153f0a64995fd3cb47c2cc7e07
-  category: jupyter
-  optional: true
-- name: impi_rt
-  version: 2021.11.0
-  manager: conda
-  platform: linux-64
-  dependencies:
-    mpi: '1.0'
-  url: https://conda.anaconda.org/conda-forge/linux-64/impi_rt-2021.11.0-ha770c72_49494.conda
-  hash:
-    md5: b78283354d88d956b31f6d54636c9ff1
-    sha256: 2d15b2c6262efedb4fabd677f4af942c05d41080d91a2d046ab7b980cfe553d9
-  category: mpi
-  optional: true
-- name: impi_rt
-  version: 2021.11.0
-  manager: conda
-  platform: win-64
-  dependencies:
-    mpi: '1.0'
-  url: https://conda.anaconda.org/conda-forge/win-64/impi_rt-2021.11.0-h57928b3_49500.conda
-  hash:
-    md5: 1c13bc3ef2f6d0d140f3839340cee723
-    sha256: f97732bdbb0cdef2ff67356c5adf88113bcdfe624f3ef57cbe22109e7a318c65
-  category: mpi
+  category: tests
   optional: true
 - name: importlib-metadata
   version: 7.0.1
@@ -3108,7 +3084,7 @@ package:
   hash:
     md5: 746623a787e06191d80a2133e5daff17
     sha256: e72d05f171f4567004c9360a838e9d5df21e23dcfeb945066b53a6e5f754b861
-  category: jupyter
+  category: tests
   optional: true
 - name: importlib-metadata
   version: 7.0.1
@@ -3121,7 +3097,7 @@ package:
   hash:
     md5: 746623a787e06191d80a2133e5daff17
     sha256: e72d05f171f4567004c9360a838e9d5df21e23dcfeb945066b53a6e5f754b861
-  category: jupyter
+  category: tests
   optional: true
 - name: importlib-metadata
   version: 7.0.1
@@ -3134,7 +3110,7 @@ package:
   hash:
     md5: 746623a787e06191d80a2133e5daff17
     sha256: e72d05f171f4567004c9360a838e9d5df21e23dcfeb945066b53a6e5f754b861
-  category: jupyter
+  category: tests
   optional: true
 - name: importlib-resources
   version: 5.13.0
@@ -3185,7 +3161,7 @@ package:
   hash:
     md5: 4a2f43a20fa404b998859c6a470ba316
     sha256: bc362df1d4f5a04c38dff29cd9c2d0ac584f9c4b45d3e4683ee090944a38fba4
-  category: jupyter
+  category: tests
   optional: true
 - name: importlib_metadata
   version: 7.0.1
@@ -3197,7 +3173,7 @@ package:
   hash:
     md5: 4a2f43a20fa404b998859c6a470ba316
     sha256: bc362df1d4f5a04c38dff29cd9c2d0ac584f9c4b45d3e4683ee090944a38fba4
-  category: jupyter
+  category: tests
   optional: true
 - name: importlib_metadata
   version: 7.0.1
@@ -3209,7 +3185,7 @@ package:
   hash:
     md5: 4a2f43a20fa404b998859c6a470ba316
     sha256: bc362df1d4f5a04c38dff29cd9c2d0ac584f9c4b45d3e4683ee090944a38fba4
-  category: jupyter
+  category: tests
   optional: true
 - name: importlib_resources
   version: 5.13.0
@@ -3222,7 +3198,7 @@ package:
   hash:
     md5: 748955a096313b51b314263402b83250
     sha256: f6a7af42e185bb188e6959c4af909cebacd291e2e1ceea6b2f246bb4da93eb7e
-  category: jupyter
+  category: tests
   optional: true
 - name: importlib_resources
   version: 5.13.0
@@ -3235,7 +3211,7 @@ package:
   hash:
     md5: 748955a096313b51b314263402b83250
     sha256: f6a7af42e185bb188e6959c4af909cebacd291e2e1ceea6b2f246bb4da93eb7e
-  category: jupyter
+  category: tests
   optional: true
 - name: importlib_resources
   version: 5.13.0
@@ -3248,7 +3224,7 @@ package:
   hash:
     md5: 748955a096313b51b314263402b83250
     sha256: f6a7af42e185bb188e6959c4af909cebacd291e2e1ceea6b2f246bb4da93eb7e
-  category: jupyter
+  category: tests
   optional: true
 - name: iniconfig
   version: 2.0.0
@@ -3669,7 +3645,7 @@ package:
   hash:
     md5: 4cb68948e0b8429534380243d063a27a
     sha256: 7bb5c4d994361022f47a807b5e7d101b3dce16f7dd8a0af6ffad9f479d346493
-  category: jupyter
+  category: tests
   optional: true
 - name: isoduration
   version: 20.11.0
@@ -3682,7 +3658,7 @@ package:
   hash:
     md5: 4cb68948e0b8429534380243d063a27a
     sha256: 7bb5c4d994361022f47a807b5e7d101b3dce16f7dd8a0af6ffad9f479d346493
-  category: jupyter
+  category: tests
   optional: true
 - name: isoduration
   version: 20.11.0
@@ -3695,7 +3671,7 @@ package:
   hash:
     md5: 4cb68948e0b8429534380243d063a27a
     sha256: 7bb5c4d994361022f47a807b5e7d101b3dce16f7dd8a0af6ffad9f479d346493
-  category: jupyter
+  category: tests
   optional: true
 - name: jedi
   version: 0.19.1
@@ -3747,7 +3723,7 @@ package:
   hash:
     md5: e7d8df6509ba635247ff9aea31134262
     sha256: fd517b7dd3a61eca34f8a6f9f92f306397149cae1204fce72ac3d227107dafdc
-  category: jupyter
+  category: tests
   optional: true
 - name: jinja2
   version: 3.1.3
@@ -3760,7 +3736,7 @@ package:
   hash:
     md5: e7d8df6509ba635247ff9aea31134262
     sha256: fd517b7dd3a61eca34f8a6f9f92f306397149cae1204fce72ac3d227107dafdc
-  category: jupyter
+  category: tests
   optional: true
 - name: jinja2
   version: 3.1.3
@@ -3773,7 +3749,7 @@ package:
   hash:
     md5: e7d8df6509ba635247ff9aea31134262
     sha256: fd517b7dd3a61eca34f8a6f9f92f306397149cae1204fce72ac3d227107dafdc
-  category: jupyter
+  category: tests
   optional: true
 - name: json5
   version: 0.9.20
@@ -3822,7 +3798,7 @@ package:
   hash:
     md5: 41d52d822edf991bf0e6b08c1921a8ec
     sha256: 976f7bf3c3a49c3066f36b67c12ae06b31542e53b843bb4362f31c9e449c6c46
-  category: jupyter
+  category: tests
   optional: true
 - name: jsonpointer
   version: '2.4'
@@ -3835,7 +3811,7 @@ package:
   hash:
     md5: ed1c23d0e55abd27d8b9e31c58105140
     sha256: b0ba738e1dbf3b69558557cd1e63310364e045b8c8e7f73fdce7e71928b5f22a
-  category: jupyter
+  category: tests
   optional: true
 - name: jsonpointer
   version: '2.4'
@@ -3848,7 +3824,7 @@ package:
   hash:
     md5: db8fc59f9215e668e602f769d0bf67bb
     sha256: 13042586b08e8caa60615e7c42d05601f9421e8bda5df932e3ef9d2401bf2435
-  category: jupyter
+  category: tests
   optional: true
 - name: jsonschema
   version: 4.21.1
@@ -3866,7 +3842,7 @@ package:
   hash:
     md5: 8a3a3d01629da20befa340919e3dd2c4
     sha256: c5c1b4e08e91fdd697289015be1a176409b4e63942899a43b276f1f250be8129
-  category: jupyter
+  category: tests
   optional: true
 - name: jsonschema
   version: 4.21.1
@@ -3884,7 +3860,7 @@ package:
   hash:
     md5: 8a3a3d01629da20befa340919e3dd2c4
     sha256: c5c1b4e08e91fdd697289015be1a176409b4e63942899a43b276f1f250be8129
-  category: jupyter
+  category: tests
   optional: true
 - name: jsonschema
   version: 4.21.1
@@ -3902,7 +3878,7 @@ package:
   hash:
     md5: 8a3a3d01629da20befa340919e3dd2c4
     sha256: c5c1b4e08e91fdd697289015be1a176409b4e63942899a43b276f1f250be8129
-  category: jupyter
+  category: tests
   optional: true
 - name: jsonschema-specifications
   version: 2023.12.1
@@ -3916,7 +3892,7 @@ package:
   hash:
     md5: a0e4efb5f35786a05af4809a2fb1f855
     sha256: a9630556ddc3121c0be32f4cbf792dd9102bd380d5cd81d57759d172cf0c2da2
-  category: jupyter
+  category: tests
   optional: true
 - name: jsonschema-specifications
   version: 2023.12.1
@@ -3930,7 +3906,7 @@ package:
   hash:
     md5: a0e4efb5f35786a05af4809a2fb1f855
     sha256: a9630556ddc3121c0be32f4cbf792dd9102bd380d5cd81d57759d172cf0c2da2
-  category: jupyter
+  category: tests
   optional: true
 - name: jsonschema-specifications
   version: 2023.12.1
@@ -3944,7 +3920,7 @@ package:
   hash:
     md5: a0e4efb5f35786a05af4809a2fb1f855
     sha256: a9630556ddc3121c0be32f4cbf792dd9102bd380d5cd81d57759d172cf0c2da2
-  category: jupyter
+  category: tests
   optional: true
 - name: jsonschema-with-format-nongpl
   version: 4.21.1
@@ -3965,7 +3941,7 @@ package:
   hash:
     md5: 26bce4b5405738c09304d4f4796b2c2a
     sha256: 6e458c325c097956ac4605ef386f0d67bad5223041cedd66819892988b72f83a
-  category: jupyter
+  category: tests
   optional: true
 - name: jsonschema-with-format-nongpl
   version: 4.21.1
@@ -3986,7 +3962,7 @@ package:
   hash:
     md5: 26bce4b5405738c09304d4f4796b2c2a
     sha256: 6e458c325c097956ac4605ef386f0d67bad5223041cedd66819892988b72f83a
-  category: jupyter
+  category: tests
   optional: true
 - name: jsonschema-with-format-nongpl
   version: 4.21.1
@@ -4007,7 +3983,7 @@ package:
   hash:
     md5: 26bce4b5405738c09304d4f4796b2c2a
     sha256: 6e458c325c097956ac4605ef386f0d67bad5223041cedd66819892988b72f83a
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter-lsp
   version: 2.2.3
@@ -4106,7 +4082,7 @@ package:
   hash:
     md5: 6bd3f1069cdebb44c7ae9efb900e312d
     sha256: 86cbb9070862cf23a245451efce539ca214e610849d0950bb8ac90c545bd158d
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_client
   version: 8.6.0
@@ -4124,7 +4100,7 @@ package:
   hash:
     md5: 6bd3f1069cdebb44c7ae9efb900e312d
     sha256: 86cbb9070862cf23a245451efce539ca214e610849d0950bb8ac90c545bd158d
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_client
   version: 8.6.0
@@ -4142,7 +4118,7 @@ package:
   hash:
     md5: 6bd3f1069cdebb44c7ae9efb900e312d
     sha256: 86cbb9070862cf23a245451efce539ca214e610849d0950bb8ac90c545bd158d
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_core
   version: 5.7.1
@@ -4157,7 +4133,7 @@ package:
   hash:
     md5: 175a430872841f7c351879f4c4c85b9e
     sha256: fcfaa3875882ff564e1ea40d8a0d9b615d1f7782bf197c94983da9538e2e30fe
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_core
   version: 5.7.1
@@ -4172,7 +4148,7 @@ package:
   hash:
     md5: dba0081b62395e6a79a63d26d75da2b3
     sha256: f86209d1e2bc1a0e8133c3ca7e5f8296a0ca2bf25c2c16689805c487363bd304
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_core
   version: 5.7.1
@@ -4188,7 +4164,7 @@ package:
   hash:
     md5: 35203ed9825f536e070fa6cbf8ffe2f1
     sha256: b46d51e3a79772ea038bd1902540472c75255be3bc32ef0299c25b2202759330
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_events
   version: 0.9.0
@@ -4207,7 +4183,7 @@ package:
   hash:
     md5: 00ba25993f0dba38cf72a7224e33289f
     sha256: 713f0cc927a862862a6d35bfb29c4114f987e4f59e2a8a14f71f23fcd7edfec3
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_events
   version: 0.9.0
@@ -4226,7 +4202,7 @@ package:
   hash:
     md5: 00ba25993f0dba38cf72a7224e33289f
     sha256: 713f0cc927a862862a6d35bfb29c4114f987e4f59e2a8a14f71f23fcd7edfec3
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_events
   version: 0.9.0
@@ -4245,7 +4221,7 @@ package:
   hash:
     md5: 00ba25993f0dba38cf72a7224e33289f
     sha256: 713f0cc927a862862a6d35bfb29c4114f987e4f59e2a8a14f71f23fcd7edfec3
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_server
   version: 2.13.0
@@ -4275,7 +4251,7 @@ package:
   hash:
     md5: e242df505f194c4932fbb840a99207e2
     sha256: 7e3259506b1b8500ebac4b4b097629ca8c32ee70d1c1df122052fea65c7cbae0
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_server
   version: 2.13.0
@@ -4305,7 +4281,7 @@ package:
   hash:
     md5: e242df505f194c4932fbb840a99207e2
     sha256: 7e3259506b1b8500ebac4b4b097629ca8c32ee70d1c1df122052fea65c7cbae0
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_server
   version: 2.13.0
@@ -4335,7 +4311,7 @@ package:
   hash:
     md5: e242df505f194c4932fbb840a99207e2
     sha256: 7e3259506b1b8500ebac4b4b097629ca8c32ee70d1c1df122052fea65c7cbae0
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_server_terminals
   version: 0.5.2
@@ -4348,7 +4324,7 @@ package:
   hash:
     md5: a0152d13c9deb13639fc84df884d50b6
     sha256: a625150744fdffb646fb4451edc68b3eff56eeace4e86b83dc4a860479c9857c
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_server_terminals
   version: 0.5.2
@@ -4361,7 +4337,7 @@ package:
   hash:
     md5: a0152d13c9deb13639fc84df884d50b6
     sha256: a625150744fdffb646fb4451edc68b3eff56eeace4e86b83dc4a860479c9857c
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyter_server_terminals
   version: 0.5.2
@@ -4374,7 +4350,7 @@ package:
   hash:
     md5: a0152d13c9deb13639fc84df884d50b6
     sha256: a625150744fdffb646fb4451edc68b3eff56eeace4e86b83dc4a860479c9857c
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyterlab
   version: 4.1.3
@@ -4504,7 +4480,7 @@ package:
   hash:
     md5: afcd1b53bcac8844540358e33f33d28f
     sha256: 4aa622bbcf97e44cd1adf0100b7ff71b7e20268f043bdf6feae4d16152f1f242
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyterlab_pygments
   version: 0.3.0
@@ -4517,7 +4493,7 @@ package:
   hash:
     md5: afcd1b53bcac8844540358e33f33d28f
     sha256: 4aa622bbcf97e44cd1adf0100b7ff71b7e20268f043bdf6feae4d16152f1f242
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyterlab_pygments
   version: 0.3.0
@@ -4530,7 +4506,7 @@ package:
   hash:
     md5: afcd1b53bcac8844540358e33f33d28f
     sha256: 4aa622bbcf97e44cd1adf0100b7ff71b7e20268f043bdf6feae4d16152f1f242
-  category: jupyter
+  category: tests
   optional: true
 - name: jupyterlab_server
   version: 2.25.3
@@ -6104,7 +6080,7 @@ package:
   hash:
     md5: c3788462a6fbddafdb413a9f9053e58d
     sha256: 53da0c8b79659df7b53eebdb80783503ce72fb4b10ed6e9e05cc0e9e4207a130
-  category: jupyter
+  category: tests
   optional: true
 - name: libsodium
   version: 1.0.18
@@ -6115,7 +6091,7 @@ package:
   hash:
     md5: 24632c09ed931af617fe6d5292919cab
     sha256: 2da45f14e3d383b4b9e3a8bacc95cd2832aac2dbf9fbc70d255d384a310c5660
-  category: jupyter
+  category: tests
   optional: true
 - name: libsodium
   version: 1.0.18
@@ -6128,7 +6104,7 @@ package:
   hash:
     md5: 5c1fb45b5e2912c19098750ae8a32604
     sha256: ecc463f0ab6eaf6bc5bd6ff9c17f65595de6c7a38db812222ab8ffde0d3f4bc2
-  category: jupyter
+  category: tests
   optional: true
 - name: libsqlite
   version: 3.45.1
@@ -6851,7 +6827,7 @@ package:
   hash:
     md5: a322b4185121935c871d201ae00ac143
     sha256: 14912e557a6576e03f65991be89e9d289c6e301921b6ecfb4e7186ba974f453d
-  category: jupyter
+  category: tests
   optional: true
 - name: markupsafe
   version: 2.1.5
@@ -6864,7 +6840,7 @@ package:
   hash:
     md5: 75abe7e2e3a0874a49d7c175115f443f
     sha256: 83a2b764a4946a04e693a4dd8fe5a35bf093a378da9ce18bf0689cd5dcb3c3fe
-  category: jupyter
+  category: tests
   optional: true
 - name: markupsafe
   version: 2.1.5
@@ -6880,7 +6856,7 @@ package:
   hash:
     md5: 07da1326e2837e055ef6f44ef3334b0a
     sha256: c629f79fe78b5df7f08daa6b7f125f7a67f789bf734949c6d68aa063d7296208
-  category: jupyter
+  category: tests
   optional: true
 - name: matplotlib-base
   version: 3.8.3
@@ -7098,7 +7074,7 @@ package:
   hash:
     md5: 5cbee699846772cc939bef23a0d524ed
     sha256: f95cb70007e3cc2ba44e17c29a056b499e6dadf08746706d0c817c8e2f47e05c
-  category: jupyter
+  category: tests
   optional: true
 - name: mistune
   version: 3.0.2
@@ -7110,7 +7086,7 @@ package:
   hash:
     md5: 5cbee699846772cc939bef23a0d524ed
     sha256: f95cb70007e3cc2ba44e17c29a056b499e6dadf08746706d0c817c8e2f47e05c
-  category: jupyter
+  category: tests
   optional: true
 - name: mistune
   version: 3.0.2
@@ -7122,7 +7098,7 @@ package:
   hash:
     md5: 5cbee699846772cc939bef23a0d524ed
     sha256: f95cb70007e3cc2ba44e17c29a056b499e6dadf08746706d0c817c8e2f47e05c
-  category: jupyter
+  category: tests
   optional: true
 - name: mkl
   version: 2024.0.0
@@ -7149,100 +7125,6 @@ package:
     md5: 3f1017b4141e943d9bc8739237f749e8
     sha256: 512f4ad7eda3b2c9a1cc9f7931932aefa6e79567e35b76de03895e769cb3b43c
   category: gui
-  optional: true
-- name: mpi
-  version: '1.0'
-  manager: conda
-  platform: linux-64
-  dependencies: {}
-  url: https://conda.anaconda.org/conda-forge/linux-64/mpi-1.0-impi.conda
-  hash:
-    md5: 39f492b9ff8543bc991c543484a8bb93
-    sha256: c01194d779d9053dd3748e7b4e5337382df8656b587ebc291bee9f3a5316f8dc
-  category: mpi
-  optional: true
-- name: mpi
-  version: '1.0'
-  manager: conda
-  platform: osx-64
-  dependencies: {}
-  url: https://conda.anaconda.org/conda-forge/osx-64/mpi-1.0-mpich.tar.bz2
-  hash:
-    md5: 7316a634ed27146b42d28433ec3bc227
-    sha256: f6ed94ef0df7992198eba976af4d509863acd2911964501d263eef8b44521da6
-  category: mpi
-  optional: true
-- name: mpi
-  version: '1.0'
-  manager: conda
-  platform: win-64
-  dependencies: {}
-  url: https://conda.anaconda.org/conda-forge/win-64/mpi-1.0-impi.conda
-  hash:
-    md5: 85a05e63c836b15505e5f21a187a83c2
-    sha256: 5fc178052e0b216bbce4fe4b876f2194b7b3b28320b18da682614432d436e618
-  category: mpi
-  optional: true
-- name: mpi4py
-  version: 3.1.5
-  manager: conda
-  platform: linux-64
-  dependencies:
-    impi_rt: '>=2021.11.0,<2021.11.1.0a0'
-    libgcc-ng: '>=12'
-    python: '>=3.11,<3.12.0a0'
-    python_abi: 3.11.*
-  url: https://conda.anaconda.org/conda-forge/linux-64/mpi4py-3.1.5-py311he9ffdee_1.conda
-  hash:
-    md5: 5a971360c96d3c7d6cc637249bc444cb
-    sha256: dac7db8031badc9ebea9da6b83d8e8aadbc4f6889069e30aa76bde08fbe6a0b1
-  category: mpi
-  optional: true
-- name: mpi4py
-  version: 3.1.5
-  manager: conda
-  platform: osx-64
-  dependencies:
-    mpich: '>=4.2.0,<5.0a0'
-    python: '>=3.11,<3.12.0a0'
-    python_abi: 3.11.*
-  url: https://conda.anaconda.org/conda-forge/osx-64/mpi4py-3.1.5-py311hb2c60fe_1.conda
-  hash:
-    md5: 715edbe8cd98ad6108414c57c1ad110e
-    sha256: bf5c5d93b8068f1f840738e5dd00dabc9f25b45e69da7ca2d2a49413a421624e
-  category: mpi
-  optional: true
-- name: mpi4py
-  version: 3.1.5
-  manager: conda
-  platform: win-64
-  dependencies:
-    impi_rt: '>=2021.11.0,<2021.11.1.0a0'
-    python: '>=3.11,<3.12.0a0'
-    python_abi: 3.11.*
-    ucrt: '>=10.0.20348.0'
-    vc: '>=14.2,<15'
-    vc14_runtime: '>=14.29.30139'
-  url: https://conda.anaconda.org/conda-forge/win-64/mpi4py-3.1.5-py311h752e774_1.conda
-  hash:
-    md5: b7590d94ffb4baac8e3e40ab7433a353
-    sha256: 57af2434aa740814d36da53683341ef3d61331d6275882af814277e30a933455
-  category: mpi
-  optional: true
-- name: mpich
-  version: 4.2.0
-  manager: conda
-  platform: osx-64
-  dependencies:
-    libcxx: '>=16'
-    libgfortran: 5.*
-    libgfortran5: '>=13.2.0'
-    mpi: '1.0'
-  url: https://conda.anaconda.org/conda-forge/osx-64/mpich-4.2.0-hd33e60e_100.conda
-  hash:
-    md5: 83ef938eb262292fbf7c7a9eebec4d3c
-    sha256: 098f3e210ca7570ca3763dd50180d38ed83200bc61fab838f0afa2a02bfdb9e4
-  category: mpi
   optional: true
 - name: msgpack-python
   version: 1.0.7
@@ -7449,7 +7331,7 @@ package:
   hash:
     md5: 3edde88a191701cf052216c4ba353a83
     sha256: 1b9d7e31e2dffc486b9fa567254eca002bfc738fafc3e466604487af5223b053
-  category: jupyter
+  category: tests
   optional: true
 - name: nbclient
   version: 0.5.13
@@ -7465,7 +7347,7 @@ package:
   hash:
     md5: 3edde88a191701cf052216c4ba353a83
     sha256: 1b9d7e31e2dffc486b9fa567254eca002bfc738fafc3e466604487af5223b053
-  category: jupyter
+  category: tests
   optional: true
 - name: nbclient
   version: 0.5.13
@@ -7481,7 +7363,7 @@ package:
   hash:
     md5: 3edde88a191701cf052216c4ba353a83
     sha256: 1b9d7e31e2dffc486b9fa567254eca002bfc738fafc3e466604487af5223b053
-  category: jupyter
+  category: tests
   optional: true
 - name: nbconvert-core
   version: 7.16.2
@@ -7509,7 +7391,7 @@ package:
   hash:
     md5: 5ab3248dd05c543dc631276455ef6a54
     sha256: e1fe894114763addc98ef147a78fcd9a518bf97d268394c356b80c572c78c82f
-  category: jupyter
+  category: tests
   optional: true
 - name: nbconvert-core
   version: 7.16.2
@@ -7537,7 +7419,7 @@ package:
   hash:
     md5: 5ab3248dd05c543dc631276455ef6a54
     sha256: e1fe894114763addc98ef147a78fcd9a518bf97d268394c356b80c572c78c82f
-  category: jupyter
+  category: tests
   optional: true
 - name: nbconvert-core
   version: 7.16.2
@@ -7565,7 +7447,7 @@ package:
   hash:
     md5: 5ab3248dd05c543dc631276455ef6a54
     sha256: e1fe894114763addc98ef147a78fcd9a518bf97d268394c356b80c572c78c82f
-  category: jupyter
+  category: tests
   optional: true
 - name: nbdime
   version: 4.0.1
@@ -7644,7 +7526,7 @@ package:
   hash:
     md5: 61ba076de6530d9301a0053b02f093d2
     sha256: fc82c5a9116820757b03ffb836b36f0f50e4cd390018024dbadb0ee0217f6992
-  category: jupyter
+  category: tests
   optional: true
 - name: nbformat
   version: 5.9.2
@@ -7660,7 +7542,7 @@ package:
   hash:
     md5: 61ba076de6530d9301a0053b02f093d2
     sha256: fc82c5a9116820757b03ffb836b36f0f50e4cd390018024dbadb0ee0217f6992
-  category: jupyter
+  category: tests
   optional: true
 - name: nbformat
   version: 5.9.2
@@ -7676,7 +7558,7 @@ package:
   hash:
     md5: 61ba076de6530d9301a0053b02f093d2
     sha256: fc82c5a9116820757b03ffb836b36f0f50e4cd390018024dbadb0ee0217f6992
-  category: jupyter
+  category: tests
   optional: true
 - name: ncurses
   version: '6.4'
@@ -7712,7 +7594,7 @@ package:
   hash:
     md5: 6598c056f64dc8800d40add25e4e2c34
     sha256: 30db21d1f7e59b3408b831a7e0417b83b53ee6223afae56482c5f26da3ceb49a
-  category: jupyter
+  category: tests
   optional: true
 - name: nest-asyncio
   version: 1.6.0
@@ -7724,7 +7606,7 @@ package:
   hash:
     md5: 6598c056f64dc8800d40add25e4e2c34
     sha256: 30db21d1f7e59b3408b831a7e0417b83b53ee6223afae56482c5f26da3ceb49a
-  category: jupyter
+  category: tests
   optional: true
 - name: nest-asyncio
   version: 1.6.0
@@ -7736,7 +7618,7 @@ package:
   hash:
     md5: 6598c056f64dc8800d40add25e4e2c34
     sha256: 30db21d1f7e59b3408b831a7e0417b83b53ee6223afae56482c5f26da3ceb49a
-  category: jupyter
+  category: tests
   optional: true
 - name: netcdf4
   version: 1.6.5
@@ -7817,7 +7699,7 @@ package:
   hash:
     md5: f1a93f00b030dbede427001862c2854b
     sha256: ea6184c7c3d8c24ebb0241c74df70ffa6171952f91a4f58cd0812d7175cf79b6
-  category: tests
+  category: jupyter
   optional: true
 - name: notebook
   version: 7.1.1
@@ -7834,7 +7716,7 @@ package:
   hash:
     md5: f1a93f00b030dbede427001862c2854b
     sha256: ea6184c7c3d8c24ebb0241c74df70ffa6171952f91a4f58cd0812d7175cf79b6
-  category: tests
+  category: jupyter
   optional: true
 - name: notebook
   version: 7.1.1
@@ -7851,7 +7733,7 @@ package:
   hash:
     md5: f1a93f00b030dbede427001862c2854b
     sha256: ea6184c7c3d8c24ebb0241c74df70ffa6171952f91a4f58cd0812d7175cf79b6
-  category: tests
+  category: jupyter
   optional: true
 - name: notebook-shim
   version: 0.2.4
@@ -8058,7 +7940,7 @@ package:
   hash:
     md5: 24fba5a9d161ad8103d4e84c0e1a3ed4
     sha256: 5e238e5e646414d517a13f6786c7227206ace58271e3ef63f6adca4d6a4c2839
-  category: jupyter
+  category: tests
   optional: true
 - name: overrides
   version: 7.7.0
@@ -8071,7 +7953,7 @@ package:
   hash:
     md5: 24fba5a9d161ad8103d4e84c0e1a3ed4
     sha256: 5e238e5e646414d517a13f6786c7227206ace58271e3ef63f6adca4d6a4c2839
-  category: jupyter
+  category: tests
   optional: true
 - name: overrides
   version: 7.7.0
@@ -8084,7 +7966,7 @@ package:
   hash:
     md5: 24fba5a9d161ad8103d4e84c0e1a3ed4
     sha256: 5e238e5e646414d517a13f6786c7227206ace58271e3ef63f6adca4d6a4c2839
-  category: jupyter
+  category: tests
   optional: true
 - name: packaging
   version: '23.2'
@@ -8132,7 +8014,7 @@ package:
   hash:
     md5: 457c2c8c08e54905d6954e79cb5b5db9
     sha256: 2bb9ba9857f4774b85900c2562f7e711d08dd48e2add9bee4e1612fbee27e16f
-  category: jupyter
+  category: tests
   optional: true
 - name: pandocfilters
   version: 1.5.0
@@ -8144,7 +8026,7 @@ package:
   hash:
     md5: 457c2c8c08e54905d6954e79cb5b5db9
     sha256: 2bb9ba9857f4774b85900c2562f7e711d08dd48e2add9bee4e1612fbee27e16f
-  category: jupyter
+  category: tests
   optional: true
 - name: pandocfilters
   version: 1.5.0
@@ -8156,7 +8038,7 @@ package:
   hash:
     md5: 457c2c8c08e54905d6954e79cb5b5db9
     sha256: 2bb9ba9857f4774b85900c2562f7e711d08dd48e2add9bee4e1612fbee27e16f
-  category: jupyter
+  category: tests
   optional: true
 - name: parso
   version: 0.8.3
@@ -8496,7 +8378,7 @@ package:
   hash:
     md5: 405678b942f2481cecdb3e010f4925d9
     sha256: fecf95377134b0e8944762d92ecf7b0149c07d8186fb5db583125a2705c7ea0a
-  category: jupyter
+  category: tests
   optional: true
 - name: pkgutil-resolve-name
   version: 1.3.10
@@ -8508,7 +8390,7 @@ package:
   hash:
     md5: 405678b942f2481cecdb3e010f4925d9
     sha256: fecf95377134b0e8944762d92ecf7b0149c07d8186fb5db583125a2705c7ea0a
-  category: jupyter
+  category: tests
   optional: true
 - name: pkgutil-resolve-name
   version: 1.3.10
@@ -8520,7 +8402,7 @@ package:
   hash:
     md5: 405678b942f2481cecdb3e010f4925d9
     sha256: fecf95377134b0e8944762d92ecf7b0149c07d8186fb5db583125a2705c7ea0a
-  category: jupyter
+  category: tests
   optional: true
 - name: platformdirs
   version: 4.2.0
@@ -8532,7 +8414,7 @@ package:
   hash:
     md5: a0bc3eec34b0fab84be6b2da94e98e20
     sha256: 2ebfb971236ab825dd79dd6086ea742a9901008ffb9c6222c1f2b5172a8039d3
-  category: jupyter
+  category: tests
   optional: true
 - name: platformdirs
   version: 4.2.0
@@ -8544,7 +8426,7 @@ package:
   hash:
     md5: a0bc3eec34b0fab84be6b2da94e98e20
     sha256: 2ebfb971236ab825dd79dd6086ea742a9901008ffb9c6222c1f2b5172a8039d3
-  category: jupyter
+  category: tests
   optional: true
 - name: platformdirs
   version: 4.2.0
@@ -8556,7 +8438,7 @@ package:
   hash:
     md5: a0bc3eec34b0fab84be6b2da94e98e20
     sha256: 2ebfb971236ab825dd79dd6086ea742a9901008ffb9c6222c1f2b5172a8039d3
-  category: jupyter
+  category: tests
   optional: true
 - name: pluggy
   version: 1.4.0
@@ -8604,7 +8486,7 @@ package:
   hash:
     md5: 9a19b94034dd3abb2b348c8b93388035
     sha256: 757cd91d01c2e0b64fadf6bc9a11f558cf7638d897dfbaf7415ddf324d5405c9
-  category: jupyter
+  category: tests
   optional: true
 - name: prometheus_client
   version: 0.20.0
@@ -8616,7 +8498,7 @@ package:
   hash:
     md5: 9a19b94034dd3abb2b348c8b93388035
     sha256: 757cd91d01c2e0b64fadf6bc9a11f558cf7638d897dfbaf7415ddf324d5405c9
-  category: jupyter
+  category: tests
   optional: true
 - name: prometheus_client
   version: 0.20.0
@@ -8628,7 +8510,7 @@ package:
   hash:
     md5: 9a19b94034dd3abb2b348c8b93388035
     sha256: 757cd91d01c2e0b64fadf6bc9a11f558cf7638d897dfbaf7415ddf324d5405c9
-  category: jupyter
+  category: tests
   optional: true
 - name: prompt-toolkit
   version: 3.0.42
@@ -8769,7 +8651,7 @@ package:
   hash:
     md5: 359eeb6536da0e687af562ed265ec263
     sha256: fb31e006a25eb2e18f3440eb8d17be44c8ccfae559499199f73584566d0a444a
-  category: jupyter
+  category: tests
   optional: true
 - name: ptyprocess
   version: 0.7.0
@@ -8781,7 +8663,7 @@ package:
   hash:
     md5: 359eeb6536da0e687af562ed265ec263
     sha256: fb31e006a25eb2e18f3440eb8d17be44c8ccfae559499199f73584566d0a444a
-  category: jupyter
+  category: tests
   optional: true
 - name: pulseaudio-client
   version: '16.1'
@@ -8845,7 +8727,7 @@ package:
   hash:
     md5: 076becd9e05608f8dc72757d5f3a91ff
     sha256: 74c63fd03f1f1ea2b54e8bc529fd1a600aaafb24027b738d0db87909ee3a33dc
-  category: jupyter
+  category: tests
   optional: true
 - name: pycparser
   version: '2.21'
@@ -8857,7 +8739,7 @@ package:
   hash:
     md5: 076becd9e05608f8dc72757d5f3a91ff
     sha256: 74c63fd03f1f1ea2b54e8bc529fd1a600aaafb24027b738d0db87909ee3a33dc
-  category: jupyter
+  category: tests
   optional: true
 - name: pycparser
   version: '2.21'
@@ -8869,7 +8751,7 @@ package:
   hash:
     md5: 076becd9e05608f8dc72757d5f3a91ff
     sha256: 74c63fd03f1f1ea2b54e8bc529fd1a600aaafb24027b738d0db87909ee3a33dc
-  category: jupyter
+  category: tests
   optional: true
 - name: pyevtk
   version: 1.6.0
@@ -8959,7 +8841,7 @@ package:
   hash:
     md5: e5a3b39d0ad3ec4cad4438ca51ce6a65
     sha256: b3c7c35b52460bf64cf7854ea5dc083370419f16f3b4d5b16081be623bc52118
-  category: jupyter
+  category: tests
   optional: true
 - name: pyobjc-framework-cocoa
   version: '10.1'
@@ -8974,7 +8856,7 @@ package:
   hash:
     md5: 03de24825bd26bf77746aa3eacb6f980
     sha256: 0062a6ec46b41845a97ca689e056e010fba98a0deaec0ff5d7dfe47eb14ccec4
-  category: jupyter
+  category: tests
   optional: true
 - name: pyopengl
   version: 3.1.6
@@ -9120,7 +9002,7 @@ package:
   hash:
     md5: 2a7de29fb590ca14b5243c4c812c8025
     sha256: a42f826e958a8d22e65b3394f437af7332610e43ee313393d1cf143f0a2d274b
-  category: jupyter
+  category: tests
   optional: true
 - name: pysocks
   version: 1.7.1
@@ -9133,7 +9015,7 @@ package:
   hash:
     md5: 2a7de29fb590ca14b5243c4c812c8025
     sha256: a42f826e958a8d22e65b3394f437af7332610e43ee313393d1cf143f0a2d274b
-  category: jupyter
+  category: tests
   optional: true
 - name: pysocks
   version: 1.7.1
@@ -9147,7 +9029,7 @@ package:
   hash:
     md5: 56cd9fe388baac0e90c7149cfac95b60
     sha256: b3a612bc887f3dd0fb7c4199ad8e342bd148cf69a9b74fd9468a18cf2bef07b7
-  category: jupyter
+  category: tests
   optional: true
 - name: pytest
   version: 8.0.2
@@ -9507,7 +9389,7 @@ package:
   hash:
     md5: 4d3ceee3af4b0f9a1f48f57176bf8625
     sha256: 38b2db169d65cc5595e3ce63294c4fdb6a242ecf71f70b3ad8cad3bd4230d82f
-  category: jupyter
+  category: tests
   optional: true
 - name: python-fastjsonschema
   version: 2.19.1
@@ -9519,7 +9401,7 @@ package:
   hash:
     md5: 4d3ceee3af4b0f9a1f48f57176bf8625
     sha256: 38b2db169d65cc5595e3ce63294c4fdb6a242ecf71f70b3ad8cad3bd4230d82f
-  category: jupyter
+  category: tests
   optional: true
 - name: python-fastjsonschema
   version: 2.19.1
@@ -9531,7 +9413,7 @@ package:
   hash:
     md5: 4d3ceee3af4b0f9a1f48f57176bf8625
     sha256: 38b2db169d65cc5595e3ce63294c4fdb6a242ecf71f70b3ad8cad3bd4230d82f
-  category: jupyter
+  category: tests
   optional: true
 - name: python-json-logger
   version: 2.0.7
@@ -9543,7 +9425,7 @@ package:
   hash:
     md5: a61bf9ec79426938ff785eb69dbb1960
     sha256: 4790787fe1f4e8da616edca4acf6a4f8ed4e7c6967aa31b920208fc8f95efcca
-  category: jupyter
+  category: tests
   optional: true
 - name: python-json-logger
   version: 2.0.7
@@ -9555,7 +9437,7 @@ package:
   hash:
     md5: a61bf9ec79426938ff785eb69dbb1960
     sha256: 4790787fe1f4e8da616edca4acf6a4f8ed4e7c6967aa31b920208fc8f95efcca
-  category: jupyter
+  category: tests
   optional: true
 - name: python-json-logger
   version: 2.0.7
@@ -9567,7 +9449,7 @@ package:
   hash:
     md5: a61bf9ec79426938ff785eb69dbb1960
     sha256: 4790787fe1f4e8da616edca4acf6a4f8ed4e7c6967aa31b920208fc8f95efcca
-  category: jupyter
+  category: tests
   optional: true
 - name: python_abi
   version: '3.11'
@@ -9652,7 +9534,7 @@ package:
   hash:
     md5: 25df0fc55722ea1a94494f41302e2d1c
     sha256: 79d942817bdaf384602113e5fcb9158dc45cae4044bed308918a5db97f141fdb
-  category: jupyter
+  category: tests
   optional: true
 - name: pywinpty
   version: 2.0.13
@@ -9669,7 +9551,7 @@ package:
   hash:
     md5: 8cec3af6f3eed98cc6edf8f7fb26a7d4
     sha256: 07ee90dfcc15982f282ddf82cf4bbbcf0c9ecfabb51daad9341022a7405fb4c8
-  category: jupyter
+  category: tests
   optional: true
 - name: pyyaml
   version: 6.0.1
@@ -9684,7 +9566,7 @@ package:
   hash:
     md5: 52719a74ad130de8fb5d047dc91f247a
     sha256: 28729ef1ffa7f6f9dfd54345a47c7faac5d34296d66a2b9891fb147f4efe1348
-  category: jupyter
+  category: tests
   optional: true
 - name: pyyaml
   version: 6.0.1
@@ -9698,7 +9580,7 @@ package:
   hash:
     md5: 9283f991b5e5856a99f8aabba9927df5
     sha256: 8ce2ba443414170a2570514d0ce6d03625a847e91af9763d48dc58c338e6f7f3
-  category: jupyter
+  category: tests
   optional: true
 - name: pyyaml
   version: 6.0.1
@@ -9715,7 +9597,7 @@ package:
   hash:
     md5: 2b4128962cd665153e946f2a88667a3b
     sha256: 4fb0770fc70381a8ab3ced33413ad9dc5e82d4c535b593edd580113ce8760298
-  category: jupyter
+  category: tests
   optional: true
 - name: pyzmq
   version: 25.1.2
@@ -9732,7 +9614,7 @@ package:
   hash:
     md5: 819aa640a0493d4b52faf938e94d129e
     sha256: 54ccdde1370d8a373e516b84bd7fe4af394f8c6f3778eb050de82f04ffb86160
-  category: jupyter
+  category: tests
   optional: true
 - name: pyzmq
   version: 25.1.2
@@ -9749,7 +9631,7 @@ package:
   hash:
     md5: 241fde77a74bd223562662af26f4828b
     sha256: a8cb598edd68b3d2ca88cd2cdbc60c9180a392c393dd58aaf25e9897697d28d3
-  category: jupyter
+  category: tests
   optional: true
 - name: pyzmq
   version: 25.1.2
@@ -9767,7 +9649,7 @@ package:
   hash:
     md5: 9a0376e721950ec687fc53f7e8a9582f
     sha256: f33f21226e4b0146727419a4bcf5ddcc06ea8544ea3895fcfd036069bec5e610
-  category: jupyter
+  category: tests
   optional: true
 - name: qt6-main
   version: 6.6.2
@@ -9962,7 +9844,7 @@ package:
   hash:
     md5: bc415a1c6cf049166215d6b596e0fcbe
     sha256: 5707eb9ee2c7cfcc56a5223b24ab3133ff61aaa796931f3b22068e0a43ea6ecf
-  category: jupyter
+  category: tests
   optional: true
 - name: referencing
   version: 0.33.0
@@ -9976,7 +9858,7 @@ package:
   hash:
     md5: bc415a1c6cf049166215d6b596e0fcbe
     sha256: 5707eb9ee2c7cfcc56a5223b24ab3133ff61aaa796931f3b22068e0a43ea6ecf
-  category: jupyter
+  category: tests
   optional: true
 - name: referencing
   version: 0.33.0
@@ -9990,7 +9872,7 @@ package:
   hash:
     md5: bc415a1c6cf049166215d6b596e0fcbe
     sha256: 5707eb9ee2c7cfcc56a5223b24ab3133ff61aaa796931f3b22068e0a43ea6ecf
-  category: jupyter
+  category: tests
   optional: true
 - name: requests
   version: 2.31.0
@@ -10006,7 +9888,7 @@ package:
   hash:
     md5: a30144e4156cdbb236f99ebb49828f8b
     sha256: 9f629d6fd3c8ac5f2a198639fe7af87c4db2ac9235279164bfe0fcb49d8c4bad
-  category: jupyter
+  category: tests
   optional: true
 - name: requests
   version: 2.31.0
@@ -10022,7 +9904,7 @@ package:
   hash:
     md5: a30144e4156cdbb236f99ebb49828f8b
     sha256: 9f629d6fd3c8ac5f2a198639fe7af87c4db2ac9235279164bfe0fcb49d8c4bad
-  category: jupyter
+  category: tests
   optional: true
 - name: requests
   version: 2.31.0
@@ -10038,7 +9920,7 @@ package:
   hash:
     md5: a30144e4156cdbb236f99ebb49828f8b
     sha256: 9f629d6fd3c8ac5f2a198639fe7af87c4db2ac9235279164bfe0fcb49d8c4bad
-  category: jupyter
+  category: tests
   optional: true
 - name: rfc3339-validator
   version: 0.1.4
@@ -10051,7 +9933,7 @@ package:
   hash:
     md5: fed45fc5ea0813240707998abe49f520
     sha256: 7c7052b51de0b5c558f890bb11f8b5edbb9934a653d76be086b1182b9f54185d
-  category: jupyter
+  category: tests
   optional: true
 - name: rfc3339-validator
   version: 0.1.4
@@ -10064,7 +9946,7 @@ package:
   hash:
     md5: fed45fc5ea0813240707998abe49f520
     sha256: 7c7052b51de0b5c558f890bb11f8b5edbb9934a653d76be086b1182b9f54185d
-  category: jupyter
+  category: tests
   optional: true
 - name: rfc3339-validator
   version: 0.1.4
@@ -10077,7 +9959,7 @@ package:
   hash:
     md5: fed45fc5ea0813240707998abe49f520
     sha256: 7c7052b51de0b5c558f890bb11f8b5edbb9934a653d76be086b1182b9f54185d
-  category: jupyter
+  category: tests
   optional: true
 - name: rfc3986-validator
   version: 0.1.1
@@ -10089,7 +9971,7 @@ package:
   hash:
     md5: 912a71cc01012ee38e6b90ddd561e36f
     sha256: 2a5b495a1de0f60f24d8a74578ebc23b24aa53279b1ad583755f223097c41c37
-  category: jupyter
+  category: tests
   optional: true
 - name: rfc3986-validator
   version: 0.1.1
@@ -10101,7 +9983,7 @@ package:
   hash:
     md5: 912a71cc01012ee38e6b90ddd561e36f
     sha256: 2a5b495a1de0f60f24d8a74578ebc23b24aa53279b1ad583755f223097c41c37
-  category: jupyter
+  category: tests
   optional: true
 - name: rfc3986-validator
   version: 0.1.1
@@ -10113,7 +9995,7 @@ package:
   hash:
     md5: 912a71cc01012ee38e6b90ddd561e36f
     sha256: 2a5b495a1de0f60f24d8a74578ebc23b24aa53279b1ad583755f223097c41c37
-  category: jupyter
+  category: tests
   optional: true
 - name: rich
   version: 13.7.1
@@ -10172,7 +10054,7 @@ package:
   hash:
     md5: 688a1190531dc4e8c00e25d0d1de4135
     sha256: 37d8f344b080ddceb5f1c6224049c2123e65c5d10eddd5b6e6284c8ac6044bb1
-  category: jupyter
+  category: tests
   optional: true
 - name: rpds-py
   version: 0.18.0
@@ -10185,7 +10067,7 @@ package:
   hash:
     md5: 18f9280b452bd1557e98147d53cd4276
     sha256: 4183fe5ebf84a707efe71abcb6e6f78646483dcb1a6958bf182eca771196a7d2
-  category: jupyter
+  category: tests
   optional: true
 - name: rpds-py
   version: 0.18.0
@@ -10201,7 +10083,7 @@ package:
   hash:
     md5: 9851ab425910f099cc2d512996fc01ce
     sha256: 46766bb9b8df78ef7c8125f5a51f2cd77ddfbdc622a7db1a5c19c41b8d034965
-  category: jupyter
+  category: tests
   optional: true
 - name: scipy
   version: 1.12.0
@@ -10275,7 +10157,7 @@ package:
   hash:
     md5: ada5a17adcd10be4fc7e37e4166ba0e2
     sha256: e74d3faf51a6cc429898da0209d95b209270160f3edbf2f6d8b61a99428301cd
-  category: jupyter
+  category: tests
   optional: true
 - name: send2trash
   version: 1.8.2
@@ -10289,7 +10171,7 @@ package:
   hash:
     md5: 2657c3de5371c571aef6678afb4aaadd
     sha256: dca4022bae47618ed738ab7d45ead5202d174b741cfb98e4484acdc6e76da32a
-  category: jupyter
+  category: tests
   optional: true
 - name: send2trash
   version: 1.8.2
@@ -10303,7 +10185,7 @@ package:
   hash:
     md5: c00d32dfa733d381b6a1908d0d67e0d7
     sha256: 55208c6b48d68dc9ad2e2cf81ab9dc6b8a1d607e67acf9115bdc7794accc84bc
-  category: jupyter
+  category: tests
   optional: true
 - name: setuptools
   version: 69.1.1
@@ -10558,7 +10440,7 @@ package:
   hash:
     md5: 490730480d76cf9c8f8f2849719c6e2b
     sha256: bc12100b2d8836b93c55068b463190505b8064d0fc7d025e89f20ebf22fe6c2b
-  category: jupyter
+  category: tests
   optional: true
 - name: sniffio
   version: 1.3.1
@@ -10570,7 +10452,7 @@ package:
   hash:
     md5: 490730480d76cf9c8f8f2849719c6e2b
     sha256: bc12100b2d8836b93c55068b463190505b8064d0fc7d025e89f20ebf22fe6c2b
-  category: jupyter
+  category: tests
   optional: true
 - name: sniffio
   version: 1.3.1
@@ -10582,7 +10464,7 @@ package:
   hash:
     md5: 490730480d76cf9c8f8f2849719c6e2b
     sha256: bc12100b2d8836b93c55068b463190505b8064d0fc7d025e89f20ebf22fe6c2b
-  category: jupyter
+  category: tests
   optional: true
 - name: sortedcontainers
   version: 2.4.0
@@ -10630,7 +10512,7 @@ package:
   hash:
     md5: 3f144b2c34f8cb5a9abd9ed23a39c561
     sha256: 54ae221033db8fbcd4998ccb07f3c3828b4d77e73b0c72b18c1d6a507059059c
-  category: jupyter
+  category: tests
   optional: true
 - name: soupsieve
   version: '2.5'
@@ -10642,7 +10524,7 @@ package:
   hash:
     md5: 3f144b2c34f8cb5a9abd9ed23a39c561
     sha256: 54ae221033db8fbcd4998ccb07f3c3828b4d77e73b0c72b18c1d6a507059059c
-  category: jupyter
+  category: tests
   optional: true
 - name: soupsieve
   version: '2.5'
@@ -10654,7 +10536,7 @@ package:
   hash:
     md5: 3f144b2c34f8cb5a9abd9ed23a39c561
     sha256: 54ae221033db8fbcd4998ccb07f3c3828b4d77e73b0c72b18c1d6a507059059c
-  category: jupyter
+  category: tests
   optional: true
 - name: stack_data
   version: 0.6.2
@@ -10729,7 +10611,7 @@ package:
   hash:
     md5: e463f348b8b0eb62c9f7c6fbc780286c
     sha256: e90139ef15ea9d75a69cd6b6302c29ed5b01c03ddfa717b71acb32b60af74269
-  category: jupyter
+  category: tests
   optional: true
 - name: terminado
   version: 0.18.0
@@ -10744,7 +10626,7 @@ package:
   hash:
     md5: 14759b57f5b9d97033e633fff0a2d27e
     sha256: 8e8741c688ade9be8f86c0b209780c7fbe4a97e4265311ca9d8dda5fcedc6a28
-  category: jupyter
+  category: tests
   optional: true
 - name: terminado
   version: 0.18.0
@@ -10759,7 +10641,7 @@ package:
   hash:
     md5: f2fc93bc1e08e04612c4d19361bb0011
     sha256: 4353d8d2372ad050cbdab05890c057356ea8693ecfb959396ebb8ffdfc1948bf
-  category: jupyter
+  category: tests
   optional: true
 - name: tinycss2
   version: 1.2.1
@@ -10772,7 +10654,7 @@ package:
   hash:
     md5: 7234c9eefff659501cd2fe0d2ede4d48
     sha256: f0db1a2298a5e10e30f4b947566c7229442834702f549dded40a73ecdea7502d
-  category: jupyter
+  category: tests
   optional: true
 - name: tinycss2
   version: 1.2.1
@@ -10785,7 +10667,7 @@ package:
   hash:
     md5: 7234c9eefff659501cd2fe0d2ede4d48
     sha256: f0db1a2298a5e10e30f4b947566c7229442834702f549dded40a73ecdea7502d
-  category: jupyter
+  category: tests
   optional: true
 - name: tinycss2
   version: 1.2.1
@@ -10798,7 +10680,7 @@ package:
   hash:
     md5: 7234c9eefff659501cd2fe0d2ede4d48
     sha256: f0db1a2298a5e10e30f4b947566c7229442834702f549dded40a73ecdea7502d
-  category: jupyter
+  category: tests
   optional: true
 - name: tk
   version: 8.6.13
@@ -10885,7 +10767,7 @@ package:
   hash:
     md5: 5844808ffab9ebdb694585b50ba02a96
     sha256: 4cd48aba7cd026d17e86886af48d0d2ebc67ed36f87f6534f4b67138f5a5a58f
-  category: jupyter
+  category: tests
   optional: true
 - name: tomli
   version: 2.0.1
@@ -10897,7 +10779,7 @@ package:
   hash:
     md5: 5844808ffab9ebdb694585b50ba02a96
     sha256: 4cd48aba7cd026d17e86886af48d0d2ebc67ed36f87f6534f4b67138f5a5a58f
-  category: jupyter
+  category: tests
   optional: true
 - name: tomli
   version: 2.0.1
@@ -10909,7 +10791,7 @@ package:
   hash:
     md5: 5844808ffab9ebdb694585b50ba02a96
     sha256: 4cd48aba7cd026d17e86886af48d0d2ebc67ed36f87f6534f4b67138f5a5a58f
-  category: jupyter
+  category: tests
   optional: true
 - name: tornado
   version: '6.4'
@@ -10923,7 +10805,7 @@ package:
   hash:
     md5: cc7727006191b8f3630936b339a76cd0
     sha256: 5bb1e24d1767e403183e4cc842d184b2da497e778f0311c5b1d023fb3af9e6b6
-  category: jupyter
+  category: tests
   optional: true
 - name: tornado
   version: '6.4'
@@ -10936,7 +10818,7 @@ package:
   hash:
     md5: 40845aadca8df7ccc21c393ba3aa9eac
     sha256: 0b994ce7984953d1d528b7e19a97db0b34da09398feaf592500df637719d5623
-  category: jupyter
+  category: tests
   optional: true
 - name: tornado
   version: '6.4'
@@ -10952,7 +10834,7 @@ package:
   hash:
     md5: 7bbff4fa9c26e56821e2eb89466436b1
     sha256: ce73a6cede35941e1d82098e37ab483e0f322503a87c48ea39e8ac05798f9e39
-  category: jupyter
+  category: tests
   optional: true
 - name: tqdm
   version: 4.66.2
@@ -11003,7 +10885,7 @@ package:
   hash:
     md5: 1c6acfdc7ecbfe09954c4216da99c146
     sha256: fa78d68f74ec8aae5c93f135140bfdbbf0ab60a79c6062b55d73c316068545ec
-  category: jupyter
+  category: tests
   optional: true
 - name: traitlets
   version: 5.14.1
@@ -11015,7 +10897,7 @@ package:
   hash:
     md5: 1c6acfdc7ecbfe09954c4216da99c146
     sha256: fa78d68f74ec8aae5c93f135140bfdbbf0ab60a79c6062b55d73c316068545ec
-  category: jupyter
+  category: tests
   optional: true
 - name: traitlets
   version: 5.14.1
@@ -11027,7 +10909,7 @@ package:
   hash:
     md5: 1c6acfdc7ecbfe09954c4216da99c146
     sha256: fa78d68f74ec8aae5c93f135140bfdbbf0ab60a79c6062b55d73c316068545ec
-  category: jupyter
+  category: tests
   optional: true
 - name: traittypes
   version: 0.2.1
@@ -11129,7 +11011,7 @@ package:
   hash:
     md5: c9096a546660b9079dce531c0039e074
     sha256: 09ef8cc587bdea80a83b6f820dbae24daadcf82be088fb0a9f6495781653e300
-  category: jupyter
+  category: tests
   optional: true
 - name: types-python-dateutil
   version: 2.8.19.20240106
@@ -11141,7 +11023,7 @@ package:
   hash:
     md5: c9096a546660b9079dce531c0039e074
     sha256: 09ef8cc587bdea80a83b6f820dbae24daadcf82be088fb0a9f6495781653e300
-  category: jupyter
+  category: tests
   optional: true
 - name: types-python-dateutil
   version: 2.8.19.20240106
@@ -11153,7 +11035,7 @@ package:
   hash:
     md5: c9096a546660b9079dce531c0039e074
     sha256: 09ef8cc587bdea80a83b6f820dbae24daadcf82be088fb0a9f6495781653e300
-  category: jupyter
+  category: tests
   optional: true
 - name: typing-extensions
   version: 4.10.0
@@ -11237,7 +11119,7 @@ package:
   hash:
     md5: eb67e3cace64c66233e2d35949e20f92
     sha256: 9e3758b620397f56fb709f796969de436d63b7117897159619b87938e1f78739
-  category: jupyter
+  category: tests
   optional: true
 - name: typing_utils
   version: 0.1.0
@@ -11249,7 +11131,7 @@ package:
   hash:
     md5: eb67e3cace64c66233e2d35949e20f92
     sha256: 9e3758b620397f56fb709f796969de436d63b7117897159619b87938e1f78739
-  category: jupyter
+  category: tests
   optional: true
 - name: typing_utils
   version: 0.1.0
@@ -11261,7 +11143,7 @@ package:
   hash:
     md5: eb67e3cace64c66233e2d35949e20f92
     sha256: 9e3758b620397f56fb709f796969de436d63b7117897159619b87938e1f78739
-  category: jupyter
+  category: tests
   optional: true
 - name: tzdata
   version: 2024a
@@ -11317,7 +11199,7 @@ package:
   hash:
     md5: 0944dc65cb4a9b5b68522c3bb585d41c
     sha256: b76904b53721dc88a46352324c79d2b077c2f74a9f7208ad2c4249892669ae94
-  category: jupyter
+  category: tests
   optional: true
 - name: uri-template
   version: 1.3.0
@@ -11329,7 +11211,7 @@ package:
   hash:
     md5: 0944dc65cb4a9b5b68522c3bb585d41c
     sha256: b76904b53721dc88a46352324c79d2b077c2f74a9f7208ad2c4249892669ae94
-  category: jupyter
+  category: tests
   optional: true
 - name: uri-template
   version: 1.3.0
@@ -11341,7 +11223,7 @@ package:
   hash:
     md5: 0944dc65cb4a9b5b68522c3bb585d41c
     sha256: b76904b53721dc88a46352324c79d2b077c2f74a9f7208ad2c4249892669ae94
-  category: jupyter
+  category: tests
   optional: true
 - name: urllib3
   version: 2.2.1
@@ -11355,7 +11237,7 @@ package:
   hash:
     md5: 08807a87fa7af10754d46f63b368e016
     sha256: d4009dcc9327684d6409706ce17656afbeae690d8522d3c9bc4df57649a352cd
-  category: jupyter
+  category: tests
   optional: true
 - name: urllib3
   version: 2.2.1
@@ -11369,7 +11251,7 @@ package:
   hash:
     md5: 08807a87fa7af10754d46f63b368e016
     sha256: d4009dcc9327684d6409706ce17656afbeae690d8522d3c9bc4df57649a352cd
-  category: jupyter
+  category: tests
   optional: true
 - name: urllib3
   version: 2.2.1
@@ -11383,7 +11265,7 @@ package:
   hash:
     md5: 08807a87fa7af10754d46f63b368e016
     sha256: d4009dcc9327684d6409706ce17656afbeae690d8522d3c9bc4df57649a352cd
-  category: jupyter
+  category: tests
   optional: true
 - name: vc
   version: '14.3'
@@ -11467,7 +11349,7 @@ package:
   hash:
     md5: 166212fe82dad8735550030488a01d03
     sha256: 6e097d5fe92849ad3af2c2a313771ad2fbf1cadd4dc4afd552303b2bf3f85211
-  category: jupyter
+  category: tests
   optional: true
 - name: webcolors
   version: '1.13'
@@ -11479,7 +11361,7 @@ package:
   hash:
     md5: 166212fe82dad8735550030488a01d03
     sha256: 6e097d5fe92849ad3af2c2a313771ad2fbf1cadd4dc4afd552303b2bf3f85211
-  category: jupyter
+  category: tests
   optional: true
 - name: webcolors
   version: '1.13'
@@ -11491,7 +11373,7 @@ package:
   hash:
     md5: 166212fe82dad8735550030488a01d03
     sha256: 6e097d5fe92849ad3af2c2a313771ad2fbf1cadd4dc4afd552303b2bf3f85211
-  category: jupyter
+  category: tests
   optional: true
 - name: webencodings
   version: 0.5.1
@@ -11503,7 +11385,7 @@ package:
   hash:
     md5: daf5160ff9cde3a468556965329085b9
     sha256: 2adf9bd5482802837bc8814cbe28d7b2a4cbd2e2c52e381329eaa283b3ed1944
-  category: jupyter
+  category: tests
   optional: true
 - name: webencodings
   version: 0.5.1
@@ -11515,7 +11397,7 @@ package:
   hash:
     md5: daf5160ff9cde3a468556965329085b9
     sha256: 2adf9bd5482802837bc8814cbe28d7b2a4cbd2e2c52e381329eaa283b3ed1944
-  category: jupyter
+  category: tests
   optional: true
 - name: webencodings
   version: 0.5.1
@@ -11527,7 +11409,7 @@ package:
   hash:
     md5: daf5160ff9cde3a468556965329085b9
     sha256: 2adf9bd5482802837bc8814cbe28d7b2a4cbd2e2c52e381329eaa283b3ed1944
-  category: jupyter
+  category: tests
   optional: true
 - name: websocket-client
   version: 1.7.0
@@ -11539,7 +11421,7 @@ package:
   hash:
     md5: 50ad31e07d706aae88b14a4ac9c73f23
     sha256: d9b537d5b7c5aa7a02a4ce4c6b755e458bd8083b67752a73c92d113ccec6c10f
-  category: jupyter
+  category: tests
   optional: true
 - name: websocket-client
   version: 1.7.0
@@ -11551,7 +11433,7 @@ package:
   hash:
     md5: 50ad31e07d706aae88b14a4ac9c73f23
     sha256: d9b537d5b7c5aa7a02a4ce4c6b755e458bd8083b67752a73c92d113ccec6c10f
-  category: jupyter
+  category: tests
   optional: true
 - name: websocket-client
   version: 1.7.0
@@ -11563,7 +11445,7 @@ package:
   hash:
     md5: 50ad31e07d706aae88b14a4ac9c73f23
     sha256: d9b537d5b7c5aa7a02a4ce4c6b755e458bd8083b67752a73c92d113ccec6c10f
-  category: jupyter
+  category: tests
   optional: true
 - name: wheel
   version: 0.42.0
@@ -11648,7 +11530,7 @@ package:
   hash:
     md5: 30878ecc4bd36e8deeea1e3c151b2e0b
     sha256: a11ae693a0645bf6c7b8a47bac030be9c0967d0b1924537b9ff7458e832c0511
-  category: jupyter
+  category: tests
   optional: true
 - name: winpty
   version: 0.4.3
@@ -11659,7 +11541,7 @@ package:
   hash:
     md5: 1cee351bf20b830d991dbe0bc8cd7dfe
     sha256: 9df10c5b607dd30e05ba08cbd940009305c75db242476f4e845ea06008b0a283
-  category: jupyter
+  category: tests
   optional: true
 - name: xcb-util
   version: 0.4.0
@@ -12026,7 +11908,7 @@ package:
   hash:
     md5: 4cb3ad778ec2d5a7acbdf254eb1c42ae
     sha256: a4e34c710eeb26945bdbdaba82d3d74f60a78f54a874ec10d373811a5d217535
-  category: jupyter
+  category: tests
   optional: true
 - name: yaml
   version: 0.2.5
@@ -12037,7 +11919,7 @@ package:
   hash:
     md5: d7e08fcf8259d742156188e8762b4d20
     sha256: 5301417e2c8dea45b401ffee8df3957d2447d4ce80c83c5ff151fc6bfe1c4148
-  category: jupyter
+  category: tests
   optional: true
 - name: yaml
   version: 0.2.5
@@ -12050,7 +11932,7 @@ package:
   hash:
     md5: adbfb9f45d1004a26763652246a33764
     sha256: 4e2246383003acbad9682c7c63178e2e715ad0eb84f03a8df1fbfba455dfedc5
-  category: jupyter
+  category: tests
   optional: true
 - name: zeromq
   version: 4.3.5
@@ -12064,7 +11946,7 @@ package:
   hash:
     md5: 7fc9d3288d2420bb3637647621018000
     sha256: 3bec658f5c23abf5e200d98418add7a20ff7b45c928ad4560525bef899496256
-  category: jupyter
+  category: tests
   optional: true
 - name: zeromq
   version: 4.3.5
@@ -12078,7 +11960,7 @@ package:
   hash:
     md5: 4c055e46b394be36681fe476c1e2ee6e
     sha256: 19be553b3cc8352b6e842134b8de66ae39fcae80bc575c203076370faab6009c
-  category: jupyter
+  category: tests
   optional: true
 - name: zeromq
   version: 4.3.5
@@ -12093,7 +11975,7 @@ package:
   hash:
     md5: e8867cc4d023f41f54bd64a33436b0a1
     sha256: c9089e80a724a4d21f9df4bcc99ccbddb93c8cce3f6b0c9cb74b4f98b641dfc2
-  category: jupyter
+  category: tests
   optional: true
 - name: zipp
   version: 3.17.0
@@ -12105,7 +11987,7 @@ package:
   hash:
     md5: 2e4d6bc0b14e10f895fc6791a7d9b26a
     sha256: bced1423fdbf77bca0a735187d05d9b9812d2163f60ab426fc10f11f92ecbe26
-  category: jupyter
+  category: tests
   optional: true
 - name: zipp
   version: 3.17.0
@@ -12117,7 +11999,7 @@ package:
   hash:
     md5: 2e4d6bc0b14e10f895fc6791a7d9b26a
     sha256: bced1423fdbf77bca0a735187d05d9b9812d2163f60ab426fc10f11f92ecbe26
-  category: jupyter
+  category: tests
   optional: true
 - name: zipp
   version: 3.17.0
@@ -12129,7 +12011,7 @@ package:
   hash:
     md5: 2e4d6bc0b14e10f895fc6791a7d9b26a
     sha256: bced1423fdbf77bca0a735187d05d9b9812d2163f60ab426fc10f11f92ecbe26
-  category: jupyter
+  category: tests
   optional: true
 - name: zlib
   version: 1.2.13
