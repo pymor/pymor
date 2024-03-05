@@ -169,6 +169,9 @@ Defaults
         else:
             raise ValueError('No default value matching the specified criteria')
 
+    def __iter__(self):
+        return iter(self._data)
+
     def __getitem__(self, key):
         assert isinstance(key, str)
         self.get(key)[0]
@@ -282,7 +285,7 @@ def print_defaults(import_all=True, shorten_paths=2):
 
     keys, values, comments = [], [], []
 
-    for k in sorted(_default_container.keys()):
+    for k in sorted(_default_container):
         v, c = _default_container.get(k)
         k_parts = k.split('.')
         if len(k_parts) >= shorten_paths + 2:
