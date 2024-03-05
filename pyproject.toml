@@ -232,6 +232,7 @@ select = [
   "TD", # flake8-todos
   "PGH", # pygrep-hooks
   "RUF", # Ruff-specific rules
+  "NPY", # NumPy-specific rules
 ]
 ignore = [
   "B006", # do not use mutable data structures for argument defaults

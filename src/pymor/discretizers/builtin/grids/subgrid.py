@@ -151,7 +151,7 @@ def make_sub_grid_boundary_info(sub_grid, parent_grid, parent_grid_boundary_info
             else:
                 masks[t].append(m)
         if new_boundary_type is not None and new_boundary_type not in boundary_types:
-            m = np.zeros(sub_grid.size(codim), dtype=np.bool)
+            m = np.zeros(sub_grid.size(codim), dtype=bool)
             m[new_boundaries_sg_indices] = True
             if codim == 1:
                 masks[new_boundary_type] = [m]

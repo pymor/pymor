@@ -155,8 +155,7 @@ if config.HAVE_DUNEGDT:
 
 
 def _test_random_uniform(vector_array, realizations, low, high):
-    # avoid Overflow in np.random.RandomState.uniform
-    assume(np.isfinite(high-low))
+    assume(np.isfinite(high-low))  # avoid overflow in np.random.RandomState.uniform
     with pytest.raises(Exception):
         vector_array.random(-1)
     c = realizations
@@ -205,12 +204,11 @@ def test_random_normal(vector_array, realizations, loc, scale):
     try:
         x = v.to_numpy()
         assert x.shape == (c, v.dim)
-        import scipy.stats
+        from scipy.stats import norm
         n = x.size
         if n == 0:
             return
         # test for expected value
-        norm = scipy.stats.norm()
         gamma = 1 - 1e-7
         alpha = 1 - gamma
         lower = np.sum(x)/n - norm.ppf(1 - alpha/2) * scale / np.sqrt(n)
@@ -405,7 +403,8 @@ def test_scal(vectors_and_indices):
     assert np.all(almost_equal(c[ind], v.zeros(v.len_ind(ind))))
     assert np.all(almost_equal(c[ind_complement_], v[ind_complement_]))
 
-    for x in (1., 1.4, np.random.random(v.len_ind(ind))):
+    rng = np.random.default_rng(0)
+    for x in (1., 1.4, rng.random(v.len_ind(ind))):
         c = v.copy()
         c[ind].scal(x)
         assert np.all(almost_equal(c[ind_complement_], v[ind_complement_]))
@@ -648,7 +647,8 @@ def test_inner_self(vectors_and_indices):
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices, random=hyst.random_module())
 def test_lincomb_1d(vectors_and_indices, random):
     v, ind = vectors_and_indices
-    coeffs = np.random.random(v.len_ind(ind))
+    rng = np.random.default_rng(0)
+    coeffs = rng.random(v.len_ind(ind))
     lc = v[ind].lincomb(coeffs)
     assert lc.space == v.space
     assert len(lc) == 1
@@ -661,8 +661,9 @@ def test_lincomb_1d(vectors_and_indices, random):
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices, random=hyst.random_module())
 def test_lincomb_2d(vectors_and_indices, random):
     v, ind = vectors_and_indices
+    rng = np.random.default_rng(0)
     for count in (0, 1, 5):
-        coeffs = np.random.random((count, v.len_ind(ind)))
+        coeffs = rng.random((count, v.len_ind(ind)))
         lc = v[ind].lincomb(coeffs)
         assert lc.space == v.space
         assert len(lc) == count
@@ -675,14 +676,15 @@ def test_lincomb_2d(vectors_and_indices, random):
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices, random=hyst.random_module())
 def test_lincomb_wrong_coefficients(vectors_and_indices, random):
     v, ind = vectors_and_indices
-    coeffs = np.random.random(v.len_ind(ind) + 1)
+    rng = np.random.default_rng(0)
+    coeffs = rng.random(v.len_ind(ind) + 1)
     with pytest.raises(Exception):
         v[ind].lincomb(coeffs)
-    coeffs = np.random.random(v.len_ind(ind)).reshape((1, 1, -1))
+    coeffs = rng.random(v.len_ind(ind)).reshape((1, 1, -1))
     with pytest.raises(Exception):
         v[ind].lincomb(coeffs)
     if v.len_ind(ind) > 0:
-        coeffs = np.random.random(v.len_ind(ind) - 1)
+        coeffs = rng.random(v.len_ind(ind) - 1)
         with pytest.raises(Exception):
             v[ind].lincomb(coeffs)
         coeffs = np.array([])
@@ -772,7 +774,8 @@ def test_dofs(vectors_and_indices, random_count):
 
     assume(v.dim > 0)
 
-    c_ind = np.random.randint(0, v.dim, random_count)
+    rng = np.random.default_rng(0)
+    c_ind = rng.integers(0, v.dim, random_count)
     c = v.copy()
     dofs = c[ind].dofs(c_ind)
     assert dofs.shape == (v.len_ind(ind), random_count)
@@ -1019,9 +1022,10 @@ def test_wrong_ind_raises_exception(vectors_and_indices):
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
 def test_scal_wrong_coefficients(vectors_and_indices):
     v, ind = vectors_and_indices
-    for alpha in ([np.array([]), np.eye(v.len_ind(ind)), np.random.random(v.len_ind(ind) + 1)]
+    rng = np.random.default_rng(0)
+    for alpha in ([np.array([]), np.eye(v.len_ind(ind)), rng.random(v.len_ind(ind) + 1)]
                   if v.len_ind(ind) > 0 else
-                  [np.random.random(1)]):
+                  [rng.random(1)]):
         with pytest.raises(Exception):
             v[ind].scal(alpha)
 
@@ -1029,9 +1033,10 @@ def test_scal_wrong_coefficients(vectors_and_indices):
 @pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length)
 def test_axpy_wrong_coefficients(vectors_and_indices):
     (v1, v2), (ind1, ind2) = vectors_and_indices
-    for alpha in ([np.array([]), np.eye(v1.len_ind(ind1)), np.random.random(v1.len_ind(ind1) + 1)]
+    rng = np.random.default_rng(0)
+    for alpha in ([np.array([]), np.eye(v1.len_ind(ind1)), rng.random(v1.len_ind(ind1) + 1)]
                   if v1.len_ind(ind1) > 0 else
-                  [np.random.random(1)]):
+                  [rng.random(1)]):
         with pytest.raises(Exception):
             v1[ind1].axpy(alpha, v2[ind2])
 

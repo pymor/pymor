@@ -61,4 +61,3 @@ def monkey_np_testing(monkeypatch):
 @pytest.fixture(autouse=True)
 def reset_rng():
     new_rng(42).install()
-    np.random.seed(42)

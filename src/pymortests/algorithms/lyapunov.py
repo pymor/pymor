@@ -142,7 +142,8 @@ def test_cont_lrcf(n, m, with_E, trans, solver):
     mat_old.append(A.copy())
     mat_new.append(A)
 
-    B = np.random.randn(n, m)
+    rng = np.random.default_rng(0)
+    B = rng.standard_normal((n, m))
     if trans:
         B = B.T
     mat_old.append(B.copy())
@@ -186,7 +187,8 @@ def test_disc_lrcf(n, m, with_E, trans, solver):
     mat_old.append(A.copy())
     mat_new.append(A)
 
-    B = np.random.randn(n, m)
+    rng = np.random.default_rng(0)
+    B = rng.standard_normal((n, m))
     if trans:
         B = B.T
     mat_old.append(B.copy())
@@ -218,9 +220,10 @@ def test_disc_lrcf(n, m, with_E, trans, solver):
 def test_cont_dense(n, m, with_E, trans, solver):
     skip_if_missing_solver(solver)
 
-    A = np.asfortranarray(np.random.randn(n, n))
-    E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
-    B = np.random.randn(n, m)
+    rng = np.random.default_rng(0)
+    A = np.asfortranarray(rng.standard_normal((n, n)))
+    E = np.eye(n) + rng.standard_normal((n, n)) / n if with_E else None
+    B = rng.standard_normal((n, m))
     if trans:
         B = B.T
 
@@ -252,9 +255,10 @@ def test_cont_dense(n, m, with_E, trans, solver):
 def test_disc_dense(n, m, with_E, trans, solver):
     skip_if_missing_solver(solver)
 
-    A = np.asfortranarray(np.random.randn(n, n))
-    E = np.eye(n) + np.random.randn(n, n) / n if with_E else None
-    B = np.random.randn(n, m)
+    rng = np.random.default_rng(0)
+    A = np.asfortranarray(rng.standard_normal((n, n)))
+    E = np.eye(n) + rng.standard_normal((n, n)) / n if with_E else None
+    B = rng.standard_normal((n, m))
     if trans:
         B = B.T
 

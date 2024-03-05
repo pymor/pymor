@@ -50,12 +50,12 @@ def diff_conv_1d_fem(n, a, b):
 @pytest.mark.parametrize('r', r_list)
 @pytest.mark.parametrize('m', m_list)
 def test_sylv_schur_V(n, r, m):
-
+    rng = np.random.default_rng(0)
     A = diff_conv_1d_fd(n, 1, 1)
-    B = np.random.randn(n, m)
+    B = rng.standard_normal((n, m))
 
-    Ar = np.random.randn(r, r) - r * np.eye(r)
-    Br = np.random.randn(r, m)
+    Ar = rng.standard_normal((r, r)) - r * np.eye(r)
+    Br = rng.standard_normal((r, m))
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
@@ -77,15 +77,15 @@ def test_sylv_schur_V(n, r, m):
 @pytest.mark.parametrize('r', r_list)
 @pytest.mark.parametrize('m', m_list)
 def test_sylv_schur_V_E(n, r, m):
-
+    rng = np.random.default_rng(0)
     A, E = diff_conv_1d_fem(n, 1, 1)
-    B = np.random.randn(n, m)
+    B = rng.standard_normal((n, m))
 
-    Ar = np.random.randn(r, r) - r * np.eye(r)
-    Er = np.random.randn(r, r)
+    Ar = rng.standard_normal((r, r)) - r * np.eye(r)
+    Er = rng.standard_normal((r, r))
     Er = (Er + Er.T) / 2
     Er += r * np.eye(r)
-    Br = np.random.randn(r, m)
+    Br = rng.standard_normal((r, m))
 
     Aop = NumpyMatrixOperator(A)
     Eop = NumpyMatrixOperator(E)
@@ -109,12 +109,12 @@ def test_sylv_schur_V_E(n, r, m):
 @pytest.mark.parametrize('r', r_list)
 @pytest.mark.parametrize('p', p_list)
 def test_sylv_schur_W(n, r, p):
-
+    rng = np.random.default_rng(0)
     A = diff_conv_1d_fd(n, 1, 1)
-    C = np.random.randn(p, n)
+    C = rng.standard_normal((p, n))
 
-    Ar = np.random.randn(r, r) - r * np.eye(r)
-    Cr = np.random.randn(p, r)
+    Ar = rng.standard_normal((r, r)) - r * np.eye(r)
+    Cr = rng.standard_normal((p, r))
 
     Aop = NumpyMatrixOperator(A)
     Cop = NumpyMatrixOperator(C)
@@ -136,15 +136,15 @@ def test_sylv_schur_W(n, r, p):
 @pytest.mark.parametrize('r', r_list)
 @pytest.mark.parametrize('p', p_list)
 def test_sylv_schur_W_E(n, r, p):
-
+    rng = np.random.default_rng(0)
     A, E = diff_conv_1d_fem(n, 1, 1)
-    C = np.random.randn(p, n)
+    C = rng.standard_normal((p, n))
 
-    Ar = np.random.randn(r, r) - r * np.eye(r)
-    Er = np.random.randn(r, r)
+    Ar = rng.standard_normal((r, r)) - r * np.eye(r)
+    Er = rng.standard_normal((r, r))
     Er = (Er + Er.T) / 2
     Er += r * np.eye(r)
-    Cr = np.random.randn(p, r)
+    Cr = rng.standard_normal((p, r))
 
     Aop = NumpyMatrixOperator(A)
     Eop = NumpyMatrixOperator(E)

@@ -21,10 +21,11 @@ def test_linear_function_fitting():
     d_in = 3
     d_out = 2
 
-    a = np.random.rand(d_in, d_out)
-    b = np.random.rand(d_out)
+    rng = np.random.default_rng(0)
+    a = rng.random((d_in, d_out))
+    b = rng.random(d_out)
 
-    points = np.random.rand(n, d_in)
+    points = rng.random((n, d_in))
     vals = points.dot(a) + b
 
     data = list(zip(points, vals))
@@ -77,7 +78,8 @@ def test_no_training_data():
     validation_data = []
     neural_network = FullyConnectedNN([d_in, 3 * (d_in + d_out), 3 * (d_in + d_out), d_out]).double()
     best_neural_network, _ = multiple_restarts_training(training_data, validation_data, neural_network)
-    assert np.allclose(best_neural_network(torch.DoubleTensor(np.random.rand(n, d_in))).detach(), np.zeros(d_out))
+    rng = np.random.default_rng(0)
+    assert np.allclose(best_neural_network(torch.DoubleTensor(rng.random((n, d_in)))).detach(), np.zeros(d_out))
 
 
 @skip_if_missing('TORCH')

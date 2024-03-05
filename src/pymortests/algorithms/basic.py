@@ -186,9 +186,10 @@ def test_project_array(vector_arrays):
 
 @pytest.mark.builtin()
 def test_project_array_with_product():
-    U = NumpyVectorSpace.from_numpy(np.random.random((1, 10)))
-    basis = NumpyVectorSpace.from_numpy(np.random.random((3, 10)))
-    product = np.random.random((10, 10))
+    rng = np.random.default_rng(0)
+    U = NumpyVectorSpace.from_numpy(rng.random((1, 10)))
+    basis = NumpyVectorSpace.from_numpy(rng.random((3, 10)))
+    product = rng.random((10, 10))
     product = NumpyMatrixOperator(product.T.dot(product))
     U_p = project_array(U, basis, product=product, orthonormal=False)
     onb = gram_schmidt(basis, product=product)

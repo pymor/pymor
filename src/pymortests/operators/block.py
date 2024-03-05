@@ -15,10 +15,11 @@ pytestmark = pytest.mark.builtin
 
 
 def test_apply():
-    A11 = np.random.randn(2, 3)
-    A12 = np.random.randn(2, 4)
+    rng = np.random.default_rng(0)
+    A11 = rng.standard_normal((2, 3))
+    A12 = rng.standard_normal((2, 4))
     A21 = np.zeros((5, 3))
-    A22 = np.random.randn(5, 4)
+    A22 = rng.standard_normal((5, 4))
     A = np.vstack((np.hstack((A11, A12)),
                    np.hstack((A21, A22))))
     A11op = NumpyMatrixOperator(A11)
@@ -26,8 +27,8 @@ def test_apply():
     A22op = NumpyMatrixOperator(A22)
     Aop = BlockOperator(np.array([[A11op, A12op], [None, A22op]]))
 
-    v1 = np.random.randn(3)
-    v2 = np.random.randn(4)
+    v1 = rng.standard_normal(3)
+    v2 = rng.standard_normal(4)
     v = np.hstack((v1, v2))
     v1va = NumpyVectorSpace.from_numpy(v1)
     v2va = NumpyVectorSpace.from_numpy(v2)
@@ -39,10 +40,11 @@ def test_apply():
 
 
 def test_apply_adjoint():
-    A11 = np.random.randn(2, 3)
-    A12 = np.random.randn(2, 4)
+    rng = np.random.default_rng(0)
+    A11 = rng.standard_normal((2, 3))
+    A12 = rng.standard_normal((2, 4))
     A21 = np.zeros((5, 3))
-    A22 = np.random.randn(5, 4)
+    A22 = rng.standard_normal((5, 4))
     A = np.vstack((np.hstack((A11, A12)),
                    np.hstack((A21, A22))))
     A11op = NumpyMatrixOperator(A11)
@@ -50,8 +52,8 @@ def test_apply_adjoint():
     A22op = NumpyMatrixOperator(A22)
     Aop = BlockOperator(np.array([[A11op, A12op], [None, A22op]]))
 
-    v1 = np.random.randn(2)
-    v2 = np.random.randn(5)
+    v1 = rng.standard_normal(2)
+    v2 = rng.standard_normal(5)
     v = np.hstack((v1, v2))
     v1va = NumpyVectorSpace.from_numpy(v1)
     v2va = NumpyVectorSpace.from_numpy(v2)
@@ -63,8 +65,9 @@ def test_apply_adjoint():
 
 
 def test_block_diagonal():
-    A = np.random.randn(2, 3)
-    B = np.random.randn(4, 5)
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((2, 3))
+    B = rng.standard_normal((4, 5))
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
     Cop = BlockDiagonalOperator((Aop, Bop))
@@ -73,15 +76,16 @@ def test_block_diagonal():
 
 
 def test_blk_diag_apply_inverse():
-    A = np.random.randn(2, 2)
-    B = np.random.randn(3, 3)
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((2, 2))
+    B = rng.standard_normal((3, 3))
     C = spla.block_diag(A, B)
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
     Cop = BlockDiagonalOperator((Aop, Bop))
 
-    v1 = np.random.randn(2)
-    v2 = np.random.randn(3)
+    v1 = rng.standard_normal(2)
+    v2 = rng.standard_normal(3)
     v = np.hstack((v1, v2))
     v1va = NumpyVectorSpace.from_numpy(v1)
     v2va = NumpyVectorSpace.from_numpy(v2)
@@ -93,15 +97,16 @@ def test_blk_diag_apply_inverse():
 
 
 def test_blk_diag_apply_inverse_adjoint():
-    A = np.random.randn(2, 2)
-    B = np.random.randn(3, 3)
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((2, 2))
+    B = rng.standard_normal((3, 3))
     C = spla.block_diag(A, B)
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
     Cop = BlockDiagonalOperator((Aop, Bop))
 
-    v1 = np.random.randn(2)
-    v2 = np.random.randn(3)
+    v1 = rng.standard_normal(2)
+    v2 = rng.standard_normal(3)
     v = np.hstack((v1, v2))
     v1va = NumpyVectorSpace.from_numpy(v1)
     v2va = NumpyVectorSpace.from_numpy(v2)
@@ -115,9 +120,10 @@ def test_blk_diag_apply_inverse_adjoint():
 def test_block_jacobian():
     from pymor.operators.constructions import QuadraticFunctional
 
-    A = np.random.randn(2, 2)
-    B = np.random.randn(3, 3)
-    C = np.random.randn(4, 4)
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((2, 2))
+    B = rng.standard_normal((3, 3))
+    C = rng.standard_normal((4, 4))
     Aop = QuadraticFunctional(NumpyMatrixOperator(A))
     Bop = QuadraticFunctional(NumpyMatrixOperator(B))
     Cop = NumpyMatrixOperator(C)
@@ -126,9 +132,9 @@ def test_block_jacobian():
     assert not Dop.linear
     assert not Dop_single_block.linear
 
-    v1 = np.random.randn(2)
-    v2 = np.random.randn(3)
-    v3 = np.random.randn(4)
+    v1 = rng.standard_normal(2)
+    v2 = rng.standard_normal(3)
+    v3 = rng.standard_normal(4)
     v1va = NumpyVectorSpace.from_numpy(v1)
     v2va = NumpyVectorSpace.from_numpy(v2)
     v3va = NumpyVectorSpace.from_numpy(v3)

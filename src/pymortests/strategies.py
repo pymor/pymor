@@ -7,7 +7,7 @@ import numpy as np
 from hypothesis import assume, given
 from hypothesis import strategies as hyst
 from hypothesis.extra import numpy as hynp
-from scipy.stats._multivariate import random_correlation_gen
+from scipy.stats import random_correlation
 
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, Function
 from pymor.core.config import config
@@ -162,7 +162,10 @@ _picklable_vector_space_types = [] if BUILTIN_DISABLED else ['numpy', 'numpy_lis
 def vector_arrays(draw, space_types, count=1, dtype=None, length=None, compatible=True):
     dims = draw(_hy_dims(count, compatible))
     dtype = dtype or draw(hy_dtypes)
-    lngs = draw(length or hyst.tuples(*[hy_lengths for _ in range(count)]))
+    if length is not None:
+        lngs = draw(length)
+    else:
+        lngs = draw(hyst.tuples(*[hy_lengths for _ in range(count)]))
     np_data_list = [draw(_np_arrays(l, dim, dtype=dtype)) for l, dim in zip(lngs, dims)]
     space_type = draw(hyst.sampled_from(space_types))
     space_data = globals()[f'_{space_type}_vector_spaces'](draw, np_data_list, compatible, count, dims)
@@ -254,7 +257,8 @@ def valid_inds(v, length=None):
         yield from [-len(v), 0, len(v) - 1]
         if len(v) == length:
             yield slice(None)
-        yield list(np.random.randint(-len(v), len(v), size=length))
+        rng = np.random.default_rng(0)
+        yield list(rng.integers(-len(v), len(v), size=length))
     else:
         if len(v) == 0:
             yield slice(0, 0)
@@ -300,11 +304,12 @@ def valid_inds_of_same_length(v1, v2):
         yield -len(v1), -len(v2)
         yield [0], 0
         yield (list(range(min(len(v1), len(v2))//2)),) * 2
+        rng = np.random.default_rng(0)
         for count in np.linspace(0, min(len(v1), len(v2)), 3).astype(int):
-            yield (list(np.random.randint(-len(v1), len(v1), size=count)),
-                   list(np.random.randint(-len(v2), len(v2), size=count)))
-        yield slice(None), np.random.randint(-len(v2), len(v2), size=len(v1))
-        yield np.random.randint(-len(v1), len(v1), size=len(v2)), slice(None)
+            yield (list(rng.integers(-len(v1), len(v1), size=count)),
+                   list(rng.integers(-len(v2), len(v2), size=count)))
+        yield slice(None), rng.integers(-len(v2), len(v2), size=len(v1))
+        yield rng.integers(-len(v1), len(v1), size=len(v2)), slice(None)
 
 
 @hyst.composite
@@ -354,14 +359,15 @@ def valid_inds_of_different_length(v1, v2):
             yield 0, [0, 1]
             yield [0], [0, 1]
         for count1 in np.linspace(0, len(v1), 3).astype(int):
-            count2 = np.random.randint(0, len(v2))
+            rng = np.random.default_rng(0)
+            count2 = rng.integers(0, len(v2))
             if count2 == count1:
                 count2 += 1
                 if count2 == len(v2):
                     count2 -= 2
             if count2 >= 0:
-                yield (list(np.random.randint(-len(v1), len(v1), size=count1)),
-                       list(np.random.randint(-len(v2), len(v2), size=count2)))
+                yield (list(rng.integers(-len(v1), len(v1), size=count1)),
+                       list(rng.integers(-len(v2), len(v2), size=count2)))
 
 
 @hyst.composite
@@ -458,22 +464,20 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     length = space.dim
 
     # this lets hypothesis control np's random state too
-    random = draw(hyst.random_module())
-    # scipy performs this check although technically numpy accepts a different range
-    assume(0 <= random.seed < 2**32 - 1)
-    random_correlation = random_correlation_gen(random.seed)
+    random = draw(hyst.randoms())
+    rng = np.random.default_rng(random.randint(0, 2**32-1))
 
     def _eigs():
         """Sum must equal to `length` for the scipy construct method."""
         min_eig, max_eig = 0.001, 1.
-        eigs = np.asarray((max_eig-min_eig)*np.random.random(length-1) + min_eig, dtype=float)
+        eigs = np.asarray(rng.uniform(min_eig, max_eig, length-1), dtype=float)
         return np.append(eigs, [length - np.sum(eigs)])
 
     if length > 1:
-        mat = [random_correlation.rvs(_eigs(), tol=1e-12) for _ in range(count)]
+        mat = [random_correlation.rvs(_eigs(), tol=1e-12, random_state=rng) for _ in range(count)]
         return [space.from_numpy(m) for m in mat]
     else:
-        scalar = 4*np.random.random((1, 1))+0.1
+        scalar = rng.uniform(0.1, 4, (1, 1))
         return [space.from_numpy(scalar) for _ in range(count)]
 
 

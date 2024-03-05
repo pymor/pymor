@@ -8,8 +8,9 @@ from pymor.parameters.base import Mu
 
 
 def mu_of_type(parameters):
+    rng = np.random.default_rng(0)
     while True:
         if parameters is None:
             yield None
         else:
-            yield Mu({k: np.random.random(v) for k, v in parameters.items()})
+            yield Mu({k: rng.random(v) for k, v in parameters.items()})
