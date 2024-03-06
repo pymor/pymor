@@ -98,9 +98,9 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         SF_INTS = np.einsum('e,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
         # map local DOFs to global DOFs
-        # TODO: This implementation is horrible, find a better way!
         SF_I = g.subentities(0, g.dim).ravel()
-        I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
+        I = np.zeros(g.size(g.dim))
+        np.add.at(I, SF_I, SF_INTS)
 
         if self.dirichlet_clear_dofs and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
@@ -156,7 +156,8 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
             SF = np.array([1 - q, q])
             SF_INTS = np.einsum('e,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
             SF_I = g.subentities(1, 2)[NI].ravel()
-            I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
+            I = np.zeros(self.range.dim)
+            np.add.at(I, SF_I, SF_INTS)
 
         if self.dirichlet_clear_dofs and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
@@ -246,9 +247,9 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         SF_INTS = np.einsum('e,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
         # map local DOFs to global DOFs
-        # TODO: This implementation is horrible, find a better way!
         SF_I = g.subentities(0, g.dim).ravel()
-        I = coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
+        I = np.zeros(g.size(g.dim))
+        np.add.at(I, SF_I, SF_INTS)
 
         if self.dirichlet_clear_dofs and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
