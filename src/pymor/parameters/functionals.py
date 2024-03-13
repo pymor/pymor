@@ -5,6 +5,8 @@
 from numbers import Number
 
 import numpy as np
+from scipy.optimize import linprog
+from scipy.spatial import KDTree
 
 from pymor.analyticalproblems.expressions import parse_expression
 from pymor.core.base import abstractmethod
@@ -457,7 +459,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
     Parameters
     ----------
     thetas
-        List or tuple of |ParameterFunctional|
+        List or tuple of |ParameterFunctionals|.
     mu_bar
         Parameter associated with alpha_mu_bar.
     alpha_mu_bar
@@ -614,7 +616,7 @@ class MaxThetaParameterFunctional(BaseMaxThetaParameterFunctional):
     Parameters
     ----------
     thetas
-        List or tuple of |ParameterFunctional|
+        List or tuple of |ParameterFunctionals|.
     mu_bar
         Parameter associated with gamma_mu_bar.
     gamma_mu_bar
@@ -625,3 +627,130 @@ class MaxThetaParameterFunctional(BaseMaxThetaParameterFunctional):
 
     def __init__(self, thetas, mu_bar, gamma_mu_bar=1., name=None):
         super().__init__(thetas, thetas, mu_bar, gamma_mu_bar, name)
+
+
+class LBSuccessiveConstraintsFunctional(ParameterFunctional):
+    """|ParameterFunctional| providing the lower bound from the successive constraints method.
+
+    See :cite:`HRSP07`.
+
+    Parameters
+    ----------
+    operator
+        |LincombOperator| for which to provide a lower bound on the coercivity constant.
+    constraint_parameters
+        List of |Parameters| used to construct the constraints.
+    method
+        Name of the algorithm to use for solving the linear program using `scipy.optimize.linprog`.
+    options
+        Dictionary of additional solver options passed to `scipy.optimize.linprog`.
+    M
+        Number of parameters from `constraint_parameters` to use for estimating the coercivity
+        constant. The `M` closest parameters (with respect to the Euclidean distance) are chosen.
+        If `None`, all parameters from `constraint_parameters` are used.
+    bounds
+        Either `None` or a list of tuples containing lower and upper bounds
+        for the design variables.
+    coercivity_constants
+        Either `None` or a list of coercivity constants for the `constraint_parameters`.
+    """
+
+    def __init__(self, operator, constraint_parameters,
+                 method='highs', options={}, M=None, bounds=None, coercivity_constants=None):
+        from pymor.operators.constructions import LincombOperator
+        assert isinstance(operator, LincombOperator)
+        self.__auto_init(locals())
+        self.operators = operator.operators
+        self.thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
+                            for f in operator.coefficients)
+
+        if self.M is not None:
+            self.M = min(self.M, len(self.constraint_parameters))
+            self.logger.info(f'Setting up KDTree to find {self.M} neighboring parameters ...')
+            self.kdtree = KDTree(np.array([mu.to_numpy() for mu in self.constraint_parameters]))
+
+        if bounds is None:
+            from pymor.algorithms.eigs import eigs
+
+            def lower_bound(operator):
+                eigvals, _ = eigs(operator, k=1, which='SM')
+                return eigvals[0].real
+
+            def upper_bound(operator):
+                eigvals, _ = eigs(operator, k=1, which='LM')
+                return eigvals[0].real
+
+            self.logger.info('Computing bounds on design variables by solving eigenvalue problems ...')
+            self.bounds = [(lower_bound(aq), upper_bound(aq)) for aq in self.operators]
+
+        assert len(self.bounds) == len(self.operators)
+        assert all(isinstance(b, tuple) and len(b) == 2 for b in self.bounds)
+
+        if coercivity_constants is None:
+            from pymor.algorithms.eigs import eigs
+            from pymor.operators.constructions import FixedParameterOperator
+            self.logger.info('Computing coercivity constants for parameters by solving eigenvalue problems ...')
+            self.coercivity_constants = []
+            for mu in constraint_parameters:
+                fixed_parameter_op = FixedParameterOperator(operator, mu=mu)
+                eigvals, _ = eigs(fixed_parameter_op, k=1, which='SM')
+                self.coercivity_constants.append(eigvals[0].real)
+
+        assert len(self.coercivity_constants) == len(self.constraint_parameters)
+
+    def evaluate(self, mu=None):
+        c, A_ub, b_ub = self._construct_linear_program(mu)
+        res = linprog(c, A_ub=A_ub, b_ub=b_ub, bounds=self.bounds,
+                      method=self.method, options=self.options)
+        return res['fun']
+
+    def _construct_linear_program(self, mu):
+        if self.M is not None:
+            _, indices = self.kdtree.query(mu.to_numpy(), k=self.M)
+            selected_parameters = [self.constraint_parameters[i] for i in list(indices)]
+        else:
+            indices = list(range(len(self.constraint_parameters)))
+            selected_parameters = self.constraint_parameters
+        c = np.array([theta(mu) for theta in self.thetas])
+        A_ub = - np.array([[theta(mu_con) for theta in self.thetas]
+                           for mu_con in selected_parameters])
+        b_ub = - np.array(self.coercivity_constants)[list(indices)]
+        return c, A_ub, b_ub
+
+
+class UBSuccessiveConstraintsFunctional(ParameterFunctional):
+    """|ParameterFunctional| providing the upper bound from the successive constraints method.
+
+    See :cite:`HRSP07`.
+
+    Parameters
+    ----------
+    operator
+        |LincombOperator| for which to provide a lower bound on the coercivity constant.
+    constraint_parameters
+        List of |Parameters| used to construct the constraints.
+    """
+
+    def __init__(self, operator, constraint_parameters):
+        from pymor.operators.constructions import FixedParameterOperator, LincombOperator
+        assert isinstance(operator, LincombOperator)
+        self.__auto_init(locals())
+        self.operators = operator.operators
+        self.thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
+                            for f in operator.coefficients)
+
+        self.minimizers = []
+        from pymor.algorithms.eigs import eigs
+        for mu in self.constraint_parameters:
+            fixed_parameter_op = FixedParameterOperator(operator, mu=mu)
+            _, minimizers = eigs(fixed_parameter_op, k=1, which='SM')
+            minimizer = minimizers[0]
+            minimizer_squared_norm = minimizer.norm() ** 2
+            y_opt = np.array([op.apply2(minimizer, minimizer)[0].real / minimizer_squared_norm
+                              for op in self.operators])
+            self.minimizers.append(y_opt)
+
+    def evaluate(self, mu=None):
+        objective_values = [np.sum([theta(mu) * min_y for theta, min_y in zip(self.thetas, mins)])
+                            for mins in self.minimizers]
+        return np.min(objective_values)
