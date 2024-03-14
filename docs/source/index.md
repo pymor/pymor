@@ -14,6 +14,7 @@ from NumPy/SciPy to external partial differential equation solver packages.
 getting_started
 technical_overview
 environment
+mor_methods
 tutorials
 release_notes/all.rst
 bibliography
