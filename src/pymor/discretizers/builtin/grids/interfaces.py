@@ -161,8 +161,8 @@ class Grid(CacheableObject):
 
     # if relative difference between domain points gets too large or too small
     # reference mapping etc numerics fail due to limited precision
-    MAX_DOMAIN_WIDTH = 1e12
-    MIN_DOMAIN_WIDTH = 1e-12
+    MAX_DOMAIN_WIDTH = 1e10
+    MIN_DOMAIN_WIDTH = 1e-10
     MAX_DOMAIN_RATIO = 1e6
 
     @abstractmethod
