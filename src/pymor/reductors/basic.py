@@ -14,7 +14,7 @@ from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError, ExtensionError
 from pymor.models.basic import InstationaryModel, StationaryModel
-from pymor.models.iosys import LinearDelayModel, LTIModel, SecondOrderModel
+from pymor.models.iosys import BilinearModel, LinearDelayModel, LTIModel, SecondOrderModel
 from pymor.operators.constructions import ConcatenationOperator, IdentityOperator, InverseOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 
@@ -446,6 +446,62 @@ class DelayLTIPGReductor(ProjectionBasedReductor):
         dim = dims['V']
         projected_operators = {'A': project_to_subbasis(rom.A, dim, dim),
                                'Ad': tuple(project_to_subbasis(op, dim, dim) for op in rom.Ad),
+                               'B': project_to_subbasis(rom.B, dim, None),
+                               'C': project_to_subbasis(rom.C, None, dim),
+                               'D': rom.D,
+                               'E': None if self.E_biorthonormal else project_to_subbasis(rom.E, dim, dim)}
+        return projected_operators
+
+    def build_rom(self, projected_operators, error_estimator):
+        return LinearDelayModel(tau=self.fom.tau, error_estimator=error_estimator, **projected_operators)
+
+    def extend_basis(self, **kwargs):
+        raise NotImplementedError
+
+    def reconstruct(self, u, basis='V'):
+        return super().reconstruct(u, basis)
+
+
+class BilinearPGReductor(ProjectionBasedReductor):
+    """Petrov-Galerkin projection of a |BilinearModel|.
+
+    Parameters
+    ----------
+    fom
+        The full order |Model| to reduce.
+    W
+        The basis of the test space.
+    V
+        The basis of the ansatz space.
+    E_biorthonormal
+        If `True`, no `E` matrix will be assembled for the reduced |Model|.
+        Set to `True` if `W` and `V` are biorthonormal w.r.t. `fom.E`.
+    """
+
+    def __init__(self, fom, W, V, E_biorthonormal=False):
+        assert isinstance(fom, BilinearModel)
+        super().__init__(fom, {'W': W, 'V': V})
+        self.E_biorthonormal = E_biorthonormal
+
+    def project_operators(self):
+        fom = self.fom
+        W = self.bases['W']
+        V = self.bases['V']
+        projected_operators = {'A': project(fom.A, W, V),
+                               'N': tuple(project(op, W, V) for op in fom.N),
+                               'B': project(fom.B, W, None),
+                               'C': project(fom.C, None, V),
+                               'D': fom.D,
+                               'E': None if self.E_biorthonormal else project(fom.E, W, V)}
+        return projected_operators
+
+    def project_operators_to_subbasis(self, dims):
+        if dims['W'] != dims['V']:
+            raise ValueError
+        rom = self._last_rom
+        dim = dims['V']
+        projected_operators = {'A': project_to_subbasis(rom.A, dim, dim),
+                               'N': tuple(project_to_subbasis(op, dim, dim) for op in rom.N),
                                'B': project_to_subbasis(rom.B, dim, None),
                                'C': project_to_subbasis(rom.C, None, dim),
                                'D': rom.D,
