@@ -112,6 +112,13 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
             self._array = self._array.astype(dtype, copy=False)
 
         if type(alpha) is np.ndarray:
+            if len(B) == 1:
+                from scipy.linalg.blas import dger
+                a = self._array[ind]
+                if len(a) == 0:
+                    return
+                dger(1., B.ravel(), alpha, a=a.T, overwrite_x=0, overwrite_y=0, overwrite_a=1)
+                return
             alpha = alpha[:, np.newaxis]
 
         if isinstance(alpha, Number):
