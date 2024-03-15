@@ -49,9 +49,9 @@ CI_EXTRAS= \
 	--extra jupyter \
 	--extra vtk \
 	--extra gmsh \
-	--extra dune \
 	--extra ngsolve \
 	--extra scikit-fem
+	# dune not available for Python 3.12
 
 ci_current_requirements:
 	# we run pip-compile in a container to ensure that the right Python version is used
@@ -70,7 +70,7 @@ ci_oldest_requirements:
 		cd /src && \
 		pip install pip-tools==6.13.0 && \
 		pip-compile --resolver backtracking \
-			$(CI_EXTRAS) \
+			$(CI_EXTRAS) --extra dune \
 			--extra-index-url https://download.pytorch.org/whl/cpu \
 			-o requirements-ci-oldest.txt \
 			pyproject.toml requirements-ci-oldest-pins.in \
