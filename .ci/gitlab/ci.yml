@@ -348,6 +348,8 @@ docs:
 tag docker images:
     extends: .test_base
     rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
         - if: $CI_COMMIT_TAG || ($CI_COMMIT_BRANCH == "main")
           when: on_success
         - when: never
