@@ -306,17 +306,6 @@ submit coverage:
         - preflight
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
 
-submit coverage weekly:
-    extends: .submit
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"
-          when: always
-    environment:
-        name: safe
-    dependencies:
-        - vanilla current weekly
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
-
 coverage html:
     extends: .submit
     needs: 
