@@ -8,6 +8,7 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.core.base import BasicObject
+from pymor.models.iosys import LTIModel
 from pymor.models.transfer_function import TransferFunction
 from pymor.tools.random import new_rng
 
@@ -449,5 +450,234 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
         denom = np.sum(coefs_pd)
         nd = num / denom
         return np.atleast_2d(nd)
+
+    return bary_func
+
+
+class AAAReductor(BasicObject):
+    """Reductor implementing the AAA algorithm.
+
+    See :cite:`NST18` for the algorithm. This reductor uses a strictly proper barycentric form
+    as the rational approximant and allows for computing the ROM as an |LTIModel|. See :cite:`AG23`
+    for this version of the algorithm.
+
+    .. note::
+       In order to apply the AAA algorithm with a proper barycentric form the
+       :class:`~pymor.reductors.aaa.PAAAReductor` can be used.
+
+    Parameters
+    ----------
+    s
+        |Numpy Array| of shape (n,) containing the frequencies.
+    Hs
+        |Numpy Array| of shape (n, p, m) for MIMO systems with p outputs and m inputs or
+        |Numpy Array| of shape (n,) for SISO systems where the |Numpy Arrays| resemble the transfer
+        function samples. Alternatively, |TransferFunction| or `Model` with `transfer_function`
+        attribute.
+    conjugate
+        If `True` complex samples will always be interpolated in complex conjugate pairs. This
+        allows for constructing real-valued state-space representations.
+    """
+
+    def __init__(self, s, Hs, conjugate=True):
+        assert isinstance(s, np.ndarray)
+        if hasattr(Hs, 'transfer_function'):
+            Hs = Hs.transfer_function
+        assert isinstance(Hs, (TransferFunction, np.ndarray, list))
+
+        if isinstance(Hs, TransferFunction):
+            Hss = np.empty((len(s), Hs.dim_output, Hs.dim_input), dtype=s[0].dtype)
+            for i, ss in enumerate(s):
+                Hss[i] = Hs.eval_tf(ss)
+            if Hs.dim_output == 1 and Hs.dim_input == 1:
+                Hss = np.squeeze(Hss)
+            Hs = Hss
+        else:
+            assert Hs.shape[0] == len(s)
+
+        # ensure that complex sampling values appear in complex conjugate pairs
+        if conjugate:
+            for i, ss in enumerate(s):
+                if np.conj(ss) not in s:
+                    s = np.append(s, np.conj(ss))
+                    Hs = np.append(Hs, np.conj(Hs[i])[np.newaxis, ...], axis=0)
+
+        if len(Hs.shape) > 1:
+            self._dim_output = Hs.shape[1]
+            self._dim_input = Hs.shape[2]
+            if self._dim_input == self._dim_output == 1:
+                Hs = np.squeeze(Hs)
+            else:
+                rng = new_rng(0)
+                w = rng.normal(size=(self._dim_output,))
+                v = rng.normal(size=(self._dim_input,))
+                w /= np.linalg.norm(w)
+                v /= np.linalg.norm(v)
+                self.MIMO_Hs = Hs
+                self.Hs = Hs @ v @ w
+        else:
+            self._dim_output = 1
+            self._dim_input = 1
+
+        self.__auto_init(locals())
+
+    def reduce(self, tol=1e-7, itpl_part=None, max_itpl=None, rom_form='LTI'):
+        """Reduce using AAA.
+
+        Parameters
+        ----------
+        tol
+            Convergence tolerance for relative error of `rom` over the set of samples.
+        itpl_part
+            Initial partition for interpolation values. Should be `None` or a list with indices
+            for interpolated data. If `None` AAA will start with no interpolated values.
+        max_itpl
+            Maximum number of interpolation points to use.
+        rom_form
+            Can either be `'barycentric'` or `'lti'`. In the first case the returned reduced
+            model is a |TransferFunction| in the latter case the reduced model is an |LTIModel|.
+
+        Returns
+        -------
+        rom
+            Reduced |TransferFunction| or |LTIModel| instance.
+        """
+        if itpl_part is None:
+            self.itpl_part = []
+            ls_part = range(len(self.s))
+        else:
+            self.itpl_part = itpl_part
+            ls_part = sorted(set(range(len(self.s))) - set(self.itpl_part))
+
+        if max_itpl is None or max_itpl > len(self.s)-1:
+            max_itpl = len(self.s)-1
+
+        max_Hs = np.max(np.abs(self.Hs))
+        rel_tol = tol * max_Hs
+
+        err = np.inf
+
+        # Define ROM with constant output
+        tf = np.vectorize(lambda s: np.mean(self.Hs))
+
+        j = 0
+        r = 0
+
+        while len(self.itpl_part) < max_itpl:
+
+            # compute approximation error over LS partition of sampled data
+            errs = np.array([np.abs(tf(self.s[i]) - self.Hs[i]) for i in ls_part])
+
+            # errors for greedy selection
+            ls_part_idx = np.argmax(errs)
+            greedy_val = self.s[ls_part][ls_part_idx]
+            greedy_idx = int(np.argwhere(self.s == greedy_val)[0])
+
+            err = np.max(errs)
+
+            j += 1
+            self.logger.info(f'Step {j} relative H(s) error: {err / max_Hs:.5e}, interpolation points {r}')
+
+            if err < rel_tol and len(self.itpl_part) > 0:
+                break
+
+            # add greedy search result to interpolation set
+            self.itpl_part.append(greedy_idx)
+            if self.conjugate and np.imag(self.s[greedy_idx]) != 0:
+                conj_sample = np.conj(self.s[greedy_idx])
+                conj_idx = np.argwhere(self.s == conj_sample)[0]
+                self.itpl_part.append(int(conj_idx))
+
+            ls_part = sorted(set(range(len(self.s))) - set(self.itpl_part))
+            r = len(self.itpl_part)
+
+            # compute Loewner matrices
+            L = nd_loewner(self.Hs, [self.s], [self.itpl_part])
+
+            # solve LS problem and define data for barycentric form
+            coefs = -spla.pinv(L) @ self.Hs[ls_part]
+            itpl_vals = self.Hs[self.itpl_part]
+            itpl_nodes = self.s[self.itpl_part]
+
+            tf = make_strictly_proper_bary_func(itpl_nodes, itpl_vals, coefs)
+
+        if rom_form == 'barycentric':
+            if self._dim_input != 1 or self._dim_output != 1:
+                itpl_vals = self.MIMO_Hs[self.itpl_part]
+                MIMO_tf = make_strictly_proper_bary_func(itpl_nodes, itpl_vals, coefs)
+                rom = TransferFunction(self._dim_input, self._dim_output, MIMO_tf)
+            else:
+                rom = TransferFunction(self._dim_input, self._dim_output, tf)
+        else:
+            if self.conjugate:
+                T = np.zeros((r, r), dtype=np.complex_)
+                for i in range(r):
+                    if self.s[self.itpl_part][i].imag == 0:
+                        T[i, i] = 1
+                    else:
+                        j = np.argmin(np.abs(self.s[self.itpl_part] - self.s[self.itpl_part][i].conjugate()))
+                        if i < j:
+                            T[i, i] = 1
+                            T[i, j] = 1
+                            T[j, i] = -1j
+                            T[j, j] = 1j
+
+                T = (np.sqrt(2) / 2) * T
+
+            if self._dim_input != 1 or self._dim_output != 1:
+                itpl_vals = self.MIMO_Hs[self.itpl_part]
+                r = len(self.itpl_part)
+                Im = np.eye(self._dim_input)
+                Cr = np.empty((self._dim_output,r*self._dim_input), dtype=itpl_vals.dtype)
+                for i in range(r):
+                    Cr[:,self._dim_input*i:self._dim_input*(i+1)] = itpl_vals[i,:]
+                L = np.diag(itpl_nodes)
+                e = np.ones((1, r))
+
+                if self.conjugate:
+                    Br = np.kron(coefs @ T.T, Im).T.real
+                    Cr = (Cr @ np.kron(T.conj().T,Im)).real
+                    Ar = np.kron(T @ (L - np.outer(coefs,e)) @ T.conj().T, Im).real
+                else:
+                    Br = np.kron(coefs, Im).T
+                    Ar = np.kron(L - np.outer(coefs,e), Im)
+            else:
+                r = len(self.itpl_part)
+                b = coefs
+                Cr = itpl_vals
+                L = np.diag(itpl_nodes)
+                e = np.ones((1, r))
+                Ar = L - np.outer(b,e)
+                Br = b[:, np.newaxis]
+
+                if self.conjugate:
+                    Ar = (T @ Ar @ T.conj().T).real
+                    Br = (T @ Br).real
+                    Cr = (Cr @ T.conj().T).real
+
+            rom = LTIModel.from_matrices(Ar, Br, Cr)
+
+        return rom
+
+def make_strictly_proper_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14):
+    r"""Return function for strictly proper barycentric form.
+
+    Returns
+    -------
+    bary_func
+        Rational function in strictly proper barycentric form.
+    """
+    def bary_func(s):
+        d = s - itpl_nodes
+        d_zero = d[np.abs(d) < removable_singularity_tol]
+        # if interpolation occurs simply return interpolation value
+        if len(d_zero) > 0:
+            d_min_idx = np.argmin(np.abs(d))
+            return np.atleast_2d(itpl_vals[d_min_idx])
+        di = 1 / d
+        coefs_di = coefs * di
+        N = np.tensordot(coefs_di,  itpl_vals, axes=1)
+        D = np.sum(coefs_di)
+        return np.atleast_2d(N / (D + 1))
 
     return bary_func
