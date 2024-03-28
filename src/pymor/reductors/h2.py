@@ -842,7 +842,7 @@ class VectorFittingReductor(BasicObject):
     ----------
     points
         Sampling points.
-    data
+    data_or_fom
         Data.
     weights
         Weights.
@@ -850,10 +850,16 @@ class VectorFittingReductor(BasicObject):
         Whether to include conjugated data.
     """
 
-    def __init__(self, points, data, weights=None, conjugate=True):
+    def __init__(self, points, data_or_fom, weights=None, conjugate=True):
         assert isinstance(points, np.ndarray)
         assert points.ndim == 1
 
+        if isinstance(data_or_fom, TransferFunction):
+            data = data_or_fom.freq_resp(points).squeeze()
+        elif hasattr(data_or_fom, 'transfer_function'):
+            data = data_or_fom.transfer_function.freq_resp(points).squeeze()
+        else:
+            data = data_or_fom
         assert isinstance(data, np.ndarray)
         assert data.ndim == 1
         assert len(data) == len(points)
@@ -863,6 +869,7 @@ class VectorFittingReductor(BasicObject):
         assert isinstance(weights, np.ndarray)
         assert weights.ndim == 1
         assert len(weights) == len(points)
+        assert np.all(weights > 0)
 
         # add complex conjugate samples
         if conjugate:
@@ -879,7 +886,9 @@ class VectorFittingReductor(BasicObject):
                 data = np.concatenate((data, data_conj_list))
                 weights = np.concatenate((weights, weights_list))
 
-        self.__auto_init(locals())
+        self.points = points
+        self.data = data
+        self.weights_sqrt = np.sqrt(weights)
 
     def reduce(self, r, tol=1e-4, maxit=100):
         """Reduce using vector-fitting.
@@ -899,20 +908,47 @@ class VectorFittingReductor(BasicObject):
             Reduced-order |LTIModel|.
         """
         lambdas = -np.logspace(0, 1, r)
+        b = self.weights_sqrt * self.data
         for i in range(maxit):
             self.logger.info(f'Iteration {i + 1}')
-            A1 = self.weights[:, np.newaxis] / (self.points[:, np.newaxis] - lambdas)
-            A2 = -self.weights[:, np.newaxis] * self.data[:, np.newaxis] / (self.points[:, np.newaxis] - lambdas)
+
+            # least squares problem
+            A1 = self.weights_sqrt[:, np.newaxis] / (self.points[:, np.newaxis] - lambdas)
+            A2 = -self.weights_sqrt[:, np.newaxis] * self.data[:, np.newaxis] / (self.points[:, np.newaxis] - lambdas)
             A = np.hstack((A1, A2))
-            b = self.weights * self.data
             x = spla.lstsq(A, b)[0]
-            psi = x[:r]
-            phi = x[r:]
-            error = spla.norm(phi, ord=np.inf)
+            psis = x[:r]
+            phis = x[r:]
+
+            # convergence check
+            error = spla.norm(phis, ord=np.inf)
             self.logger.info(f'{error=:.3e}')
             if error < tol:
                 break
-            A_zeros = np.diag(lambdas) + phi
+
+            # real version of A_zeros = np.diag(lambdas) + ones * phi.T
+            A_zeros = np.zeros((r, r))
+            ones = np.ones(r)
+            phis_real = np.empty(r)
+            k = 0
+            for lam, phi in zip(lambdas, phis):
+                if lam.imag == 0:
+                    A_zeros[k, k] = lam.real
+                    phis_real[k] = phi.real
+                    k += 1
+                elif lam.imag > 0:
+                    A_zeros[k, k] = lam.real
+                    A_zeros[k, k + 1] = lam.imag
+                    A_zeros[k + 1, k] = -lam.imag
+                    A_zeros[k + 1, k + 1] = lam.real
+                    ones[k] = 2
+                    ones[k + 1] = 0
+                    phis_real[k] = phi.real
+                    phis_real[k + 1] = phi.imag
+                    k += 2
+            A_zeros += np.outer(ones, phis_real)
             zeros = spla.eigvals(A_zeros)
+
+            # new lambdas
             lambdas = -np.abs(zeros.real) + 1j * zeros.imag
-        return _poles_b_c_to_lti(lambdas, psi[:, np.newaxis], np.ones((r, 1)))
+        return _poles_b_c_to_lti(lambdas, psis[:, np.newaxis], np.ones((r, 1)))

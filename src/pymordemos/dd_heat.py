@@ -19,7 +19,7 @@ from pymor.reductors.h2 import VectorFittingReductor
 from pymor.reductors.loewner import LoewnerReductor
 
 
-def run_mor_method_dd(fom, ss, reductor_cls, reductor_short_name, **reductor_kwargs):
+def run_mor_method_dd(fom, ss, reductor_cls, reductor_short_name, reductor_kwargs={}, reduce_args=(), reduce_kwargs={}):
     """Plot data-driven reductor.
 
     Parameters
@@ -34,9 +34,13 @@ def run_mor_method_dd(fom, ss, reductor_cls, reductor_short_name, **reductor_kwa
         A short name for the reductor.
     reductor_kwargs
         Optional keyword arguments for the reductor class.
+    reduce_args
+        Optional positional arguments for the reduce method.
+    reduce_kwargs
+        Optional keyword arguments for the reduce method.
     """
     # Reduction
-    rom = reductor_cls(ss * 1j, fom, **reductor_kwargs).reduce()
+    rom = reductor_cls(ss * 1j, fom, **reductor_kwargs).reduce(*reduce_args, **reduce_kwargs)
     err = fom - rom
 
     n_w = 50
@@ -52,8 +56,6 @@ def run_mor_method_dd(fom, ss, reductor_cls, reductor_short_name, **reductor_kwa
         err.transfer_function.mag_plot(w, ax=ax, label='Error', linestyle='dotted')
     ax.set_title(fr'Magnitude plot for {reductor_short_name}')
     ax.legend()
-
-    plt.show()
 
 
 def main(
@@ -83,19 +85,7 @@ def main(
 
     run_mor_method_dd(lti, ss, PAAAReductor, 'AAA')
     run_mor_method_dd(lti, ss, LoewnerReductor, 'Loewner')
-    vf = VectorFittingReductor(ss * 1j, lti.transfer_function.freq_resp(ss).squeeze())
-    rom = vf.reduce(2, maxit=500)
-    err = lti - rom
-
-    n_w = 50
-    w = np.geomspace(ss[0]/2, ss[-1]*2, n_w)
-
-    fig, ax = plt.subplots(constrained_layout=True)
-    lti.transfer_function.mag_plot(w, ax=ax, label='FOM')
-    rom.transfer_function.mag_plot(w, ax=ax, label='ROM', linestyle='dashed')
-    err.transfer_function.mag_plot(w, ax=ax, label='Error', linestyle='dotted')
-    ax.set_title('Magnitude plot for VF')
-    ax.legend()
+    run_mor_method_dd(lti, ss, VectorFittingReductor, 'VF', reduce_args=(10,), reduce_kwargs={'maxit': 50})
 
     plt.show()
 
