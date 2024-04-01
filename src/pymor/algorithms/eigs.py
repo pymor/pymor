@@ -200,7 +200,7 @@ def _arnoldi(A, l, b, complex_evp):
     """Compute an Arnoldi factorization."""
     v = b * (1 / b.norm()[0])
 
-    H = np.zeros((l, l), dtype=np.complex_ if complex_evp else np.float_)
+    H = np.zeros((l, l), dtype=np.complex128 if complex_evp else np.float64)
     V = A.source.empty(reserve=l)
 
     V.append(v)

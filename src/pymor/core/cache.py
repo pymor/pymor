@@ -290,7 +290,7 @@ class CacheableObject(ImmutableObject):
             self.__dict__['cache_region'] = None
         else:
             self.__dict__['cache_region'] = region
-            r = cache_regions.get(region, None)
+            r = cache_regions.get(region)
             if r and r.persistent and cache_id is None:
                 raise ValueError('For persistent CacheRegions a cache_id has to be specified.')
 

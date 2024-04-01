@@ -345,10 +345,10 @@ class TFBHIReductor(BasicObject):
         c = c * (1 / np.linalg.norm(c)) if c.shape[1] > 1 else np.ones((r, 1))
 
         # matrices of the interpolatory LTI system
-        Er = np.empty((r, r), dtype=np.complex_)
-        Ar = np.empty((r, r), dtype=np.complex_)
-        Br = np.empty((r, self.fom.dim_input), dtype=np.complex_)
-        Cr = np.empty((self.fom.dim_output, r), dtype=np.complex_)
+        Er = np.empty((r, r), dtype=np.complex128)
+        Ar = np.empty((r, r), dtype=np.complex128)
+        Br = np.empty((r, self.fom.dim_input), dtype=np.complex128)
+        Cr = np.empty((self.fom.dim_output, r), dtype=np.complex128)
 
         Hs = [self.fom.eval_tf(s, mu=self.mu) for s in sigma]
         dHs = [self.fom.eval_dtf(s, mu=self.mu) for s in sigma]
@@ -366,7 +366,7 @@ class TFBHIReductor(BasicObject):
             Cr[:, i] = Hs[i] @ b[i]
 
         # transform the system to have real matrices
-        T = np.zeros((r, r), dtype=np.complex_)
+        T = np.zeros((r, r), dtype=np.complex128)
         for i in range(r):
             if sigma[i].imag == 0:
                 T[i, i] = 1

@@ -568,7 +568,7 @@ class LTIModel(Model):
         for i in range(len(matrices)):
             mat = matrices[i]
             if mat is not None and np.issubdtype(mat.dtype, np.integer):
-                matrices[i] = mat.astype(np.float_)
+                matrices[i] = mat.astype(np.float64)
 
         return cls.from_matrices(*matrices, sampling_time=sampling_time, T=T, time_stepper=time_stepper,
                                  num_values=num_values, presets=presets, state_id=state_id,

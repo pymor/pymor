@@ -1208,7 +1208,7 @@ def train_neural_network(training_data, validation_data, neural_network,
             if log_loss_frequency > 0 and epoch % log_loss_frequency == 0:
                 logger.info(f'Epoch {epoch}: Current {phase} loss of {losses[phase]:.3e}')
 
-            if 'lr_scheduler' in training_parameters and training_parameters['lr_scheduler']:
+            if training_parameters.get('lr_scheduler'):
                 lr_scheduler.step()
 
             # check for early stopping
