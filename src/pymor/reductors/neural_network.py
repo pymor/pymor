@@ -1083,14 +1083,14 @@ def train_neural_network(training_data, validation_data, neural_network,
     training_data = [(prepare_datum(datum[0]), prepare_datum(datum[1])) for datum in training_data]
     validation_data = [(prepare_datum(datum[0]), prepare_datum(datum[1])) for datum in validation_data]
 
-    optimizer = optim.LBFGS if 'optimizer' not in training_parameters else training_parameters['optimizer']
-    epochs = 1000 if 'epochs' not in training_parameters else training_parameters['epochs']
+    optimizer = training_parameters.get('optimizer', optim.LBFGS)
+    epochs = training_parameters.get('epochs', 1000)
     assert isinstance(epochs, int)
     assert epochs > 0
-    batch_size = 20 if 'batch_size' not in training_parameters else training_parameters['batch_size']
+    batch_size = training_parameters.get('batch_size', 20)
     assert isinstance(batch_size, int)
     assert batch_size > 0
-    learning_rate = 1. if 'learning_rate' not in training_parameters else training_parameters['learning_rate']
+    learning_rate = training_parameters.get('learning_rate', 1.0)
     assert learning_rate > 0.
     loss_function = (nn.MSELoss() if (training_parameters.get('loss_function') is None)
                      else training_parameters['loss_function'])
