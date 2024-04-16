@@ -92,6 +92,7 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
 
     iter = 1
     shift = None
+    eig = None
     while iter <= maxiter:
         shift = None
         with logger.block(f'Iteration {iter}'):
@@ -111,7 +112,10 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
                         XX = X
                     else:
                         from pymor.algorithms.eigs import eigs
-                        shift = 2*m*np.sqrt(m*n)+n*(n+1)*np.sqrt(np.abs(eigs(product, k=1)[0][0]))
+                        if not eig:
+                            eig = eigs(product, k=1)[0][0]
+
+                        shift = 2*m*np.sqrt(m*n)+n*(n+1)*np.sqrt(np.abs(eig))
                         XX = A[offset:].gramian(product=product)
                     shift *= 11*eps*spla.norm(XX, ord=2, check_finite=check_finite)
 
