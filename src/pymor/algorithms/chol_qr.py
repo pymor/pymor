@@ -100,7 +100,7 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
             # and keep applying shifts if it breaks down.
             while True:
                 try:
-                    Rx = spla.cholesky(X, overwrite_a=True, check_finite=check_finite)
+                    Rx = spla.cholesky(X - B@B.T, overwrite_a=True, check_finite=check_finite)
                     break
                 except spla.LinAlgError:
                     pass
