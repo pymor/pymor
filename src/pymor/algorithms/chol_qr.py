@@ -117,7 +117,7 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
 
                         shift = 2*m*np.sqrt(m*n)+n*(n+1)*np.sqrt(np.abs(eig))
                         XX = A[offset:].gramian(product=product)
-                    shift *= 11*eps*spla.norm(XX, ord=2, check_finite=check_finite)
+                    shift *= 11*eps*spla.norm(XX, ord=2, check_finite=check_finite)**2
 
                 logger.info(f'Applying shift: {shift}')
                 idx = range(len(X))
