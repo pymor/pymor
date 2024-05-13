@@ -456,7 +456,7 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     -------
     A list of |VectorArray| linear-independent objects of same dimension and length.
     """
-    dtype = dtype or np.float_
+    dtype = dtype or np.float64
     # simplest way currently of getting a |VectorSpace| to construct our new arrays from
     space_types = _picklable_vector_space_types + _other_vector_space_types
     space = draw(vector_arrays(count=1, dtype=dtype, length=hyst.just((1,)), compatible=True, space_types=space_types)
