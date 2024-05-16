@@ -15,7 +15,10 @@
 
 * Art Pelling, a.pelling@tu-berlin.de
   * shifted Cholesky-QR algorithm
-  
+
+* Maximilian Bindhak, bindhak@mpi-magdeburg.mpg.de
+  * shifted Cholesky-QR algorithm
+
 ### pyMOR 2023.2
 
 * Steffen Müller, @steff-mueller
