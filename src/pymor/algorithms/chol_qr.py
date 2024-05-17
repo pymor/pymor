@@ -68,7 +68,10 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
     if copy:
         A = A.copy()
 
-    if len(A) == 0 or offset == len(A):
+    if len(A) == 0 or A.sup_norm().max() < 1e-16:
+        del A[:]
+        return A, np.eye(0)
+    elif offset == len(A):
         return A, np.eye(len(A))
 
     logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')

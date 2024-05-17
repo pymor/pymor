@@ -3,11 +3,13 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
+import pytest
 from hypothesis import assume, settings
 
 import pymortests.strategies as pyst
 from pymor.algorithms.basic import almost_equal, contains_zero_vector
 from pymor.algorithms.chol_qr import shifted_chol_qr
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 @pyst.given_vector_arrays()
@@ -53,3 +55,33 @@ def test_shifted_chol_qr_with_product(operator_with_arrays_and_products):
     assert np.all(almost_equal(onb, onb2))
     assert np.all(R == R2)
     assert np.all(almost_equal(onb, U))
+
+
+@pytest.mark.parametrize('copy', [False, True])
+def test_chol_qr_zeros(copy):
+    n, m = 5, 2
+    V = NumpyVectorSpace(n).zeros(m)
+    Q, R = shifted_chol_qr(V, copy=copy)
+    if copy:
+        assert len(V) == m
+    else:
+        assert len(V) == 0
+    assert len(Q) == 0
+
+
+@pytest.mark.parametrize('copy', [False, True])
+def test_chol_qr_empty(copy):
+    n = 5
+    V = NumpyVectorSpace(n).empty(0)
+    Q, R = shifted_chol_qr(V, copy=copy)
+    assert len(V) == len(Q) == 0
+
+
+if __name__ == '__main__':
+    U = NumpyVectorSpace(5).empty()
+    V = U.copy()
+    onb, R = shifted_chol_qr(U, copy=False)
+
+    print(len(onb), R.shape)
+    print(len(onb.lincomb(R)))
+    almost_equal(V, onb.lincomb(R.T))
