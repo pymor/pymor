@@ -26,7 +26,7 @@ def main(
         return fom.output(mu)[0, 0]
 
     def fom_gradient_of_functional(mu):
-        return fom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=True)
+        return fom.output_d_mu(fom.parameters.parse(mu), use_adjoint=True).to_numpy()
 
     from functools import partial
     from time import perf_counter
@@ -65,7 +65,7 @@ def main(
         return rom.output(mu)[0, 0]
 
     def rom_gradient_of_functional(mu):
-        return rom.output_d_mu(fom.parameters.parse(mu), return_array=True, use_adjoint=True)
+        return rom.output_d_mu(fom.parameters.parse(mu), use_adjoint=True).to_numpy()
 
     opt_rom_minimization_data = {'num_evals': 0,
                                  'evaluations': [],

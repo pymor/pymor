@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepper
-from pymor.models.interface import Model
+from pymor.models.interface import Model, OutputDMuResult
 from pymor.operators.constructions import ConstantOperator, IdentityOperator, VectorOperator, ZeroOperator
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -96,7 +96,7 @@ class StationaryModel(Model):
         rhs = rhs_d_mu - lhs_d_mu
         return self.operator.jacobian(solution, mu=mu).apply_inverse(rhs)
 
-    def _compute_output_d_mu(self, solution, mu, return_array=False, use_adjoint=None):
+    def _compute_output_d_mu(self, solution, mu, use_adjoint=None):
         """Compute the gradient of the output functional  w.r.t. the parameters.
 
         Parameters
@@ -105,9 +105,6 @@ class StationaryModel(Model):
             Internal model state for the given |Parameter value|
         mu
             |Parameter value| for which to compute the gradient
-        return_array
-            if `True`, return the output gradient as a |NumPy array|.
-            Otherwise, return a dict of gradients for each |Parameter|.
         use_adjoint
             if `None` use standard approach, if `True`, use
             the adjoint solution for a more efficient way of computing the gradient.
@@ -116,12 +113,16 @@ class StationaryModel(Model):
 
         Returns
         -------
-        The gradient as a |NumPy array| or a dict of |NumPy arrays|.
+        The gradient as a dict of 2D |NumPy arrays|, where axis 0 corresponds to the
+        parameter index and axis 1 corresponds to the output component.
+        The returned :class:`OutputDMuResult` object has a `meth`:~OutputDMuResult.to_numpy`
+        method to convert it into a single NumPy array, e.g., for use in optimization
+        libraries.
         """
         if use_adjoint is None:
             use_adjoint = self.output_functional.linear and self.operator.linear
         if not use_adjoint:
-            return super()._compute_output_d_mu(solution, mu, return_array)
+            return super()._compute_output_d_mu(solution, mu)
         else:
             assert self.operator.linear
             jacobian = self.output_functional.jacobian(solution, mu)
@@ -131,7 +132,7 @@ class StationaryModel(Model):
                 dual_problem = self.with_(operator=self.operator.H,
                                           rhs=jacobian.H.as_range_array(mu)[d])
                 dual_solutions.append(dual_problem.solve(mu))
-            gradients = [] if return_array else {}
+            gradients = {}
             for (parameter, size) in self.parameters.items():
                 result = []
                 for index in range(size):
@@ -141,14 +142,8 @@ class StationaryModel(Model):
                     rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:, 0]
                     result.append(output_partial_dmu + rhs_d_mu - lhs_d_mu)
                 result = np.array(result)
-                if return_array:
-                    gradients.extend(result)
-                else:
-                    gradients[parameter] = result
-        if return_array:
-            return np.array(gradients)
-        else:
-            return gradients
+                gradients[parameter] = result
+        return OutputDMuResult(gradients)
 
     def deaffinize(self, arg):
         """Build |Model| with linear solution space.

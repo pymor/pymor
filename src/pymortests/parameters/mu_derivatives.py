@@ -280,8 +280,8 @@ def test_d_mu_of_LincombOperator():
 
 
 def run_test_on_model(model, mu, parameter_name=None):
-    gradient_with_adjoint_approach = model.output_d_mu(mu, return_array=True, use_adjoint=True)
-    gradient_with_sensitivities = model.output_d_mu(mu, return_array=True, use_adjoint=False)
+    gradient_with_adjoint_approach = model.output_d_mu(mu, use_adjoint=True).to_numpy()
+    gradient_with_sensitivities = model.output_d_mu(mu, use_adjoint=False).to_numpy()
     assert np.allclose(gradient_with_adjoint_approach, gradient_with_sensitivities)
     if parameter_name is not None:
         u_d_mu = model.solve_d_mu(parameter_name, 1, mu=mu).to_numpy()

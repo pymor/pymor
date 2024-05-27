@@ -57,7 +57,6 @@ class Model(CacheableObject, ParametricObject):
 
     def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                  solution_error_estimate=False, output_error_estimate=False,
-                 output_d_mu_return_array=False,
                  mu=None, **kwargs):
         return {}
 
@@ -157,7 +156,7 @@ class Model(CacheableObject, ParametricObject):
             sensitivities[parameter] = sens_for_param
         return sensitivities
 
-    def _compute_output_d_mu(self, solution, mu=None, return_array=False, **kwargs):
+    def _compute_output_d_mu(self, solution, mu=None, **kwargs):
         """Compute the gradient w.r.t. the parameter of the output functional.
 
         Parameters
@@ -166,17 +165,18 @@ class Model(CacheableObject, ParametricObject):
             Internal model state for the given |Parameter value|.
         mu
             |Parameter value| for which to compute the gradient
-        return_array
-            if `True`, return the output gradient as a |NumPy array|.
-            Otherwise, return a dict of gradients for each |Parameter|.
 
         Returns
         -------
-        The gradient as a |NumPy array| or a dict of |NumPy arrays|.
+        The gradient as a dict of 2D |NumPy arrays|, where axis 0 corresponds to the
+        parameter index and axis 1 corresponds to the output component.
+        The returned :class:`OutputDMuResult` object has a `meth`:~OutputDMuResult.to_numpy`
+        method to convert it into a single NumPy array, e.g., for use in optimization
+        libraries.
         """
         assert self.output_functional is not None
         U_d_mus = self._compute_solution_d_mu(solution, mu)
-        gradients = [] if return_array else {}
+        gradients = {}
         for (parameter, size) in self.parameters.items():
             result = []
             for index in range(size):
@@ -186,14 +186,8 @@ class Model(CacheableObject, ParametricObject):
                 result.append(output_partial_dmu + self.output_functional.jacobian(
                     solution, mu).apply(U_d_mu, mu).to_numpy()[0])
             result = np.array(result)
-            if return_array:
-                gradients.extend(result)
-            else:
-                gradients[parameter] = result
-        if return_array:
-            return np.array(gradients)
-        else:
-            return gradients
+            gradients[parameter] = result
+        return OutputDMuResult(gradients)
 
     def _compute_solution_error_estimate(self, solution, mu=None, **kwargs):
         """Compute an error estimate for the computed internal state.
@@ -267,7 +261,6 @@ class Model(CacheableObject, ParametricObject):
 
     def compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                 solution_error_estimate=False, output_error_estimate=False,
-                output_d_mu_return_array=False,
                 *, mu=None, input=None, **kwargs):
         """Compute the solution of the model and associated quantities.
 
@@ -301,9 +294,6 @@ class Model(CacheableObject, ParametricObject):
             If `True`, return an error estimate for the computed internal state.
         output_error_estimate
             If `True`, return an error estimate for the computed output.
-        output_d_mu_return_array
-            If `True`, return the output gradient as a |NumPy array|.
-            Otherwise, return a dict of gradients for each |Parameter|.
         mu
             |Parameter values| for which to compute the values.
         input
@@ -378,9 +368,7 @@ class Model(CacheableObject, ParametricObject):
 
         if output_d_mu and 'output_d_mu' not in data:
             # TODO: use caching here (requires skipping args in key generation)
-            retval = self._compute_output_d_mu(data['solution'], mu=mu,
-                                               return_array=output_d_mu_return_array,
-                                               **kwargs)
+            retval = self._compute_output_d_mu(data['solution'], mu=mu, **kwargs)
             # retval is always a dict
             if isinstance(retval, dict) and 'output_d_mu' in retval:
                 data.update(retval)
@@ -524,7 +512,7 @@ class Model(CacheableObject, ParametricObject):
         )
         return data['solution_d_mu']
 
-    def output_d_mu(self, mu=None, input=None, return_array=False, **kwargs):
+    def output_d_mu(self, mu=None, input=None, **kwargs):
         """Compute the gradient w.r.t. the parameter of the output functional.
 
         Parameters
@@ -537,19 +525,19 @@ class Model(CacheableObject, ParametricObject):
             mapping time to input, or a `str` expression with `t` as variable that
             can be used to instantiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
-        return_array
-            if `True`, return the output gradient as a |NumPy array|.
-            Otherwise, return a dict of gradients for each |Parameter|.
 
         Returns
         -------
-        The gradient as a |NumPy array| or a dict of |NumPy arrays|.
+        The gradient as a dict of 2D |NumPy arrays|, where axis 0 corresponds to the
+        parameter index and axis 1 corresponds to the output component.
+        The returned :class:`OutputDMuResult` object has a `meth`:~OutputDMuResult.to_numpy`
+        method to convert it into a single NumPy array, e.g., for use in optimization
+        libraries.
         """
         data = self.compute(
             output_d_mu=True,
             mu=mu,
             input=input,
-            output_d_mu_return_array=return_array,
             **kwargs
         )
         return data['output_d_mu']
@@ -652,3 +640,15 @@ class Model(CacheableObject, ParametricObject):
             return self.visualizer.visualize(U, **kwargs)
         else:
             raise NotImplementedError('Model has no visualizer.')
+
+
+class OutputDMuResult(FrozenDict):
+    """Immutable dict of gradients returned by :meth:`~Model.output_d_mu`."""
+
+    def to_numpy(self):
+        """Return gradients as a single 2D NumPy array.
+
+        The array is obtained by stacking the individual arrays along axis 0,
+        ordered by alphabetically ordered parameter name.
+        """
+        return np.vstack([v for k, v in sorted(self.items())])

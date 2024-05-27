@@ -154,8 +154,7 @@ class NeuralNetworkStatefreeOutputModel(BaseNeuralNetworkModel):
         self.__auto_init(locals())
 
     def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
-                 solution_error_estimate=False, output_error_estimate=False,
-                 output_d_mu_return_array=False, mu=None, **kwargs):
+                 solution_error_estimate=False, output_error_estimate=False, mu=None, **kwargs):
         if output:
             converted_input = torch.from_numpy(mu.to_numpy()).double()
             converted_input = self._scale_input(converted_input)
@@ -285,8 +284,7 @@ class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
         self.__auto_init(locals())
 
     def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
-                 solution_error_estimate=False, output_error_estimate=False,
-                 output_d_mu_return_array=False, mu=None, **kwargs):
+                 solution_error_estimate=False, output_error_estimate=False, mu=None, **kwargs):
 
         if output:
             inputs = self._scale_input(torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
