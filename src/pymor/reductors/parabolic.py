@@ -111,7 +111,7 @@ class ParabolicRBEstimator(ImmutableObject):
                  coercivity_estimator, projected_output_adjoint=None):
         self.__auto_init(locals())
 
-    def estimate_error(self, U, mu, m, return_error_sequence=False):
+    def estimate_error(self, U, mu, m):
         dt = m.T / m.time_stepper.nt
         C = self.coercivity_estimator(mu) if self.coercivity_estimator else 1.
 
@@ -128,19 +128,16 @@ class ParabolicRBEstimator(ImmutableObject):
         est[1:] *= (dt/C**2)
         est = np.sqrt(np.cumsum(est))
 
-        return est if return_error_sequence else est[-1]
+        return est
 
-    def estimate_output_error(self, U, mu, m, return_error_sequence=False, return_vector=False):
+    def estimate_output_error(self, U, mu, m):
         if self.projected_output_adjoint is None:
             raise NotImplementedError
-        estimate = self.estimate_error(U, mu, m, return_error_sequence=return_error_sequence)
+        estimate = self.estimate_error(U, mu, m)
         # scale with dual norm of the output functional
         output_functional_norms = self.projected_output_adjoint.as_range_array(mu).norm()
-        errs = (estimate * output_functional_norms[:, np.newaxis]).T
-        if return_vector:
-            return errs
-        else:
-            return np.linalg.norm(errs, axis=1)
+        errs = estimate[:, np.newaxis] * output_functional_norms[np.newaxis, :]
+        return errs
 
     def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims and self.initial_residual_range_dims:

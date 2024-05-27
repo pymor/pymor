@@ -278,8 +278,6 @@ class InstationaryModel(Model):
         Name of the model.
     """
 
-    _compute_allowed_kwargs = frozenset({'return_error_sequence'})
-
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
                  output_functional=None, products=None, error_estimator=None, visualizer=None, name=None):
 
