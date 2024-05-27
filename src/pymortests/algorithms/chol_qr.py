@@ -75,13 +75,3 @@ def test_chol_qr_empty(copy):
     V = NumpyVectorSpace(n).empty(0)
     Q, R = shifted_chol_qr(V, copy=copy)
     assert len(V) == len(Q) == 0
-
-
-if __name__ == '__main__':
-    U = NumpyVectorSpace(5).empty()
-    V = U.copy()
-    onb, R = shifted_chol_qr(U, copy=False)
-
-    print(len(onb), R.shape)
-    print(len(onb.lincomb(R)))
-    almost_equal(V, onb.lincomb(R.T))
