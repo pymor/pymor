@@ -114,8 +114,8 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
                         shift = m*n+n*(n+1)
                         XX = X
                     else:
-                        from pymor.algorithms.eigs import eigs
                         if not eig:
+                            from pymor.algorithms.eigs import eigs
                             eig = eigs(product, k=1)[0][0]
 
                         shift = 2*m*np.sqrt(m*n)+n*(n+1)*np.sqrt(np.abs(eig))
