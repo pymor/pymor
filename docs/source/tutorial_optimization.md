@@ -560,19 +560,16 @@ already available in pyMOR.
 
 ## Optimizing using a gradient in FOM
 
-We can easily include a function to compute the gradient to {func}`~scipy.optimize.minimize`.
-Since we use a linear operator and a linear objective functional, the `use_adjoint` argument
-is automatically enabled.
-Note that using the (more general) implementation `use_adjoint=False` results
-in the exact same gradient but lacks computational speed.
-Moreover, the function `output_d_mu` returns a dict w.r.t. the parameters.
-In order to use the output for {func}`~scipy.optimize.minimize` we thus its
-{meth}`~pymor.models.interface.OutputDMuResult.to_numpy` method to convert the values to a
-NumPy array.
+We can easily include a function to compute the gradient to {func}`~scipy.optimize.minimize`
+by using the {meth}`~pymor.models.interface.Model.output_d_mu` method.
+However, this method returns a dict w.r.t. the parameters.
+In order to use the output for {func}`~scipy.optimize.minimize` we use the output's
+{meth}`~pymor.models.interface.OutputDMuResult.to_numpy` method
+to convert the values to a single NumPy array.
 
 ```{code-cell}
 def fom_gradient_of_functional(mu):
-    return fom.output_d_mu(fom.parameters.parse(mu), use_adjoint=True).to_numpy()
+    return fom.output_d_mu(fom.parameters.parse(mu)).to_numpy()
 
 opt_fom_minimization_data = prepare_data()
 
@@ -600,7 +597,7 @@ output functional.
 
 ```{code-cell}
 def rom_gradient_of_functional(mu):
-    return rom.output_d_mu(rom.parameters.parse(mu), use_adjoint=True).to_numpy()
+    return rom.output_d_mu(rom.parameters.parse(mu)).to_numpy()
 
 opt_rom_minimization_data = prepare_data(offline_time=RB_greedy_data['time'])
 
@@ -662,7 +659,7 @@ def enrich_and_compute_objective_function(mu, data, opt_dict):
 
 def compute_gradient_with_opt_rom(opt_dict, mu):
     opt_rom = opt_dict['opt_rom']
-    return opt_rom.output_d_mu(opt_rom.parameters.parse(mu), use_adjoint=True).to_numpy()
+    return opt_rom.output_d_mu(opt_rom.parameters.parse(mu)).to_numpy()
 ```
 
 With this definitions, we can start the optimization method.

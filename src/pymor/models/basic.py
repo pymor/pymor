@@ -52,14 +52,17 @@ class StationaryModel(Model):
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
         to the model which forwards its arguments to the
         visualizer's `visualize` method.
+    output_d_mu_use_adjoint
+        If `True`, use adjoint solution for computing ouput gradients
+        (default behavior). See Section 1.6.2 in :cite:`HPUU09` for more
+        details.
     name
         Name of the model.
     """
 
-    _compute_allowed_kwargs = frozenset({'use_adjoint'})
-
     def __init__(self, operator, rhs, output_functional=None, products=None,
-                 error_estimator=None, visualizer=None, name=None):
+                 error_estimator=None, visualizer=None, output_d_mu_use_adjoint=None,
+                 name=None):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
@@ -96,7 +99,7 @@ class StationaryModel(Model):
         rhs = rhs_d_mu - lhs_d_mu
         return self.operator.jacobian(solution, mu=mu).apply_inverse(rhs)
 
-    def _compute_output_d_mu(self, solution, mu, use_adjoint=None):
+    def _compute_output_d_mu(self, solution, mu):
         """Compute the gradient of the output functional  w.r.t. the parameters.
 
         Parameters
@@ -105,11 +108,6 @@ class StationaryModel(Model):
             Internal model state for the given |Parameter value|
         mu
             |Parameter value| for which to compute the gradient
-        use_adjoint
-            if `None` use standard approach, if `True`, use
-            the adjoint solution for a more efficient way of computing the gradient.
-            See Section 1.6.2 in :cite:`HPUU09` for more details.
-            So far, the adjoint approach is only valid for linear models.
 
         Returns
         -------
@@ -119,12 +117,15 @@ class StationaryModel(Model):
         method to convert it into a single NumPy array, e.g., for use in optimization
         libraries.
         """
-        if use_adjoint is None:
+        if self.output_d_mu_use_adjoint is None:
             use_adjoint = self.output_functional.linear and self.operator.linear
+        else:
+            use_adjoint = self.output_d_mu_use_adjoint
         if not use_adjoint:
             return super()._compute_output_d_mu(solution, mu)
         else:
-            assert self.operator.linear
+            if not self.operator.linear:
+                raise NotImplementedError
             jacobian = self.output_functional.jacobian(solution, mu)
             assert jacobian.linear
             dual_solutions = self.operator.range.empty()
