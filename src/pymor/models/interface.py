@@ -71,8 +71,8 @@ class Model(CacheableObject, ParametricObject):
         mu
             |Parameter values| for which to compute the solution.
         kwargs
-            Additional keyword arguments to customize how the solution is
-            computed or to select additional data to be returned.
+            Additional keyword arguments to select further quantities that should
+            be computed.
 
         Returns
         -------
@@ -103,8 +103,8 @@ class Model(CacheableObject, ParametricObject):
         mu
             |Parameter values| for which to compute the output.
         kwargs
-            Additional keyword arguments to customize how the output is
-            computed or to select additional data to be returned.
+            Additional keyword arguments to select further quantities that should
+            be computed.
 
         Returns
         -------
@@ -211,8 +211,8 @@ class Model(CacheableObject, ParametricObject):
         mu
             |Parameter values| for which to compute the error estimate.
         kwargs
-            Additional keyword arguments to customize how the error estimate is
-            computed or to select additional data to be returned.
+            Additional keyword arguments to select further quantities that should
+            be computed.
 
         Returns
         -------
@@ -245,8 +245,8 @@ class Model(CacheableObject, ParametricObject):
         mu
             |Parameter values| for which to compute the error estimate.
         kwargs
-            Additional keyword arguments to customize how the error estimate is
-            computed or to select additional data to be returned.
+            Additional keyword arguments to select further quantities that should
+            be computed.
 
         Returns
         -------
@@ -303,8 +303,8 @@ class Model(CacheableObject, ParametricObject):
             can be used to instantiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
         kwargs
-            Further keyword arguments to select further quantities that should
-            be returned or to customize how the values are computed.
+            Additional keyword arguments to select further quantities that should
+            be computed.
 
         Returns
         -------
@@ -396,7 +396,7 @@ class Model(CacheableObject, ParametricObject):
 
         return data
 
-    def solve(self, mu=None, input=None, return_error_estimate=False, **kwargs):
+    def solve(self, mu=None, input=None, return_error_estimate=False):
         """Solve the discrete problem for the |parameter values| `mu`.
 
         This method returns a |VectorArray| with a internal state
@@ -419,9 +419,6 @@ class Model(CacheableObject, ParametricObject):
             Can be `None` if `self.dim_input == 0`.
         return_error_estimate
             If `True`, also return an error estimate for the computed solution.
-        kwargs
-            Additional keyword arguments passed to :meth:`compute` that
-            might affect how the solution is computed.
 
         Returns
         -------
@@ -433,14 +430,13 @@ class Model(CacheableObject, ParametricObject):
             solution_error_estimate=return_error_estimate,
             mu=mu,
             input=input,
-            **kwargs
         )
         if return_error_estimate:
             return data['solution'], data['solution_error_estimate']
         else:
             return data['solution']
 
-    def output(self, mu=None, input=None, return_error_estimate=False, **kwargs):
+    def output(self, mu=None, input=None, return_error_estimate=False):
         """Return the model output for given |parameter values| `mu`.
 
         This method is a convenience wrapper around :meth:`compute`.
@@ -457,9 +453,6 @@ class Model(CacheableObject, ParametricObject):
             Can be `None` if `self.dim_input == 0`.
         return_error_estimate
             If `True`, also return an error estimate for the computed output.
-        kwargs
-            Additional keyword arguments passed to :meth:`compute` that
-            might affect how the solution is computed.
 
         Returns
         -------
@@ -475,14 +468,13 @@ class Model(CacheableObject, ParametricObject):
             output_error_estimate=return_error_estimate,
             mu=mu,
             input=input,
-            **kwargs
         )
         if return_error_estimate:
             return data['output'], data['output_error_estimate']
         else:
             return data['output']
 
-    def solve_d_mu(self, parameter, index, mu=None, input=None, **kwargs):
+    def solve_d_mu(self, parameter, index, mu=None, input=None):
         """Solve for the partial derivative of the solution w.r.t. a parameter index.
 
         Parameters
@@ -508,11 +500,10 @@ class Model(CacheableObject, ParametricObject):
             solution_d_mu=(parameter, index),
             mu=mu,
             input=input,
-            **kwargs
         )
         return data['solution_d_mu']
 
-    def output_d_mu(self, mu=None, input=None, **kwargs):
+    def output_d_mu(self, mu=None, input=None):
         """Compute the gradient w.r.t. the parameter of the output functional.
 
         Parameters
@@ -538,11 +529,10 @@ class Model(CacheableObject, ParametricObject):
             output_d_mu=True,
             mu=mu,
             input=input,
-            **kwargs
         )
         return data['output_d_mu']
 
-    def estimate_error(self, mu=None, input=None, **kwargs):
+    def estimate_error(self, mu=None, input=None):
         """Estimate the error for the computed internal state.
 
         For given |parameter values| `mu` this method returns an
@@ -564,9 +554,6 @@ class Model(CacheableObject, ParametricObject):
             mapping time to input, or a `str` expression with `t` as variable that
             can be used to instantiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
-        kwargs
-            Additional keyword arguments passed to :meth:`compute` that
-            might affect how the error estimate (or the solution) is computed.
 
         Returns
         -------
@@ -580,10 +567,9 @@ class Model(CacheableObject, ParametricObject):
             solution_error_estimate=True,
             mu=mu,
             input=input,
-            **kwargs
         )['solution_error_estimate']
 
-    def estimate_output_error(self, mu=None, input=None, **kwargs):
+    def estimate_output_error(self, mu=None, input=None):
         """Estimate the error for the computed output.
 
         For given |parameter values| `mu` this method returns an
@@ -605,9 +591,6 @@ class Model(CacheableObject, ParametricObject):
             mapping time to input, or a `str` expression with `t` as variable that
             can be used to instantiate an |ExpressionFunction| of this type.
             Can be `None` if `self.dim_input == 0`.
-        kwargs
-            Additional keyword arguments passed to :meth:`compute` that
-            might affect how the error estimate (or the output) is computed.
 
         Returns
         -------
@@ -620,8 +603,7 @@ class Model(CacheableObject, ParametricObject):
         return self.compute(
             output_error_estimate=True,
             mu=mu,
-            input=input,
-            **kwargs
+            input=input
         )['output_error_estimate']
 
     def visualize(self, U, **kwargs):
