@@ -634,3 +634,6 @@ class OutputDMuResult(FrozenDict):
         ordered by alphabetically ordered parameter name.
         """
         return np.vstack([v for k, v in sorted(self.items())])
+
+    def __repr__(self):
+        return f'OutputDMuResult({dict(sorted(self.items()))})'
