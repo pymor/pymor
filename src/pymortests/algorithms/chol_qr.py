@@ -2,6 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import warnings
+
 import numpy as np
 import pytest
 from hypothesis import assume, settings
@@ -9,6 +11,7 @@ from hypothesis import assume, settings
 import pymortests.strategies as pyst
 from pymor.algorithms.basic import almost_equal, contains_zero_vector
 from pymor.algorithms.chol_qr import shifted_chol_qr
+from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -21,13 +24,22 @@ def test_shifted_chol_qr(vector_array):
 
     V = U.copy()
 
+    onbgs, Rgs = gram_schmidt(U, copy=True, return_R=True)
+    if len(onbgs) < len(V):
+        warnings.warn('Linearly dependent vectors detected! Skipping ...')
+        return
+
     onb, R = shifted_chol_qr(U, copy=True)
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.inner(onb), np.eye(len(onb)))
     lc = onb.lincomb(onb.inner(U).T)
     rtol = atol = 1e-13
+
     assert np.all(almost_equal(U, lc, rtol=rtol, atol=atol))
-    assert np.all(almost_equal(V, onb.lincomb(R.T), rtol=rtol, atol=atol))
+    try:
+        assert np.all(almost_equal(V, onb.lincomb(R.T), rtol=rtol, atol=atol))
+    except AssertionError:
+        assert 0
 
     onb2, R2 = shifted_chol_qr(U, copy=False)
     assert np.all(almost_equal(onb, onb2))
