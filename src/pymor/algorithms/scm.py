@@ -28,6 +28,9 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
         List of |Parameters| used to construct the constraints.
     coercivity_constants
         A list of coercivity constants for the `constraint_parameters`.
+    bounds
+        Either `None` or a list of tuples containing lower and upper bounds
+        for the design variables, i.e. the unknowns in the linear program.
     linprog_method
         Name of the algorithm to use for solving the linear program using `scipy.optimize.linprog`.
     linprog_options
@@ -36,14 +39,11 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
         Number of parameters from `constraint_parameters` to use for estimating the coercivity
         constant. The `M` closest parameters (with respect to the Euclidean distance) are chosen.
         If `None`, all parameters from `constraint_parameters` are used.
-    bounds
-        Either `None` or a list of tuples containing lower and upper bounds
-        for the design variables, i.e. the unknowns in the linear program.
     """
 
     @defaults('linprog_method')
-    def __init__(self, operator, constraint_parameters, coercivity_constants,
-                 linprog_method='highs', linprog_options={}, M=None, bounds=None):
+    def __init__(self, operator, constraint_parameters, coercivity_constants, bounds,
+                 linprog_method='highs', linprog_options={}, M=None):
         assert isinstance(operator, LincombOperator)
         assert all(op.linear and not op.parametric for op in operator.operators)
         self.__auto_init(locals())
@@ -57,20 +57,6 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
                 self.M = len(self.constraint_parameters)
             self.logger.info(f'Setting up KDTree to find {self.M} neighboring parameters ...')
             self.kdtree = KDTree(np.array([mu.to_numpy() for mu in self.constraint_parameters]))
-
-        if bounds is None:
-
-            def lower_bound(operator):
-                # some dispatch should be added here in the future
-                eigvals, _ = eigs(operator, k=1, which='SM')
-                return eigvals[0].real
-
-            def upper_bound(operator):
-                eigvals, _ = eigs(operator, k=1, which='LM')
-                return eigvals[0].real
-
-            self.logger.info('Computing bounds on design variables by solving eigenvalue problems ...')
-            self.bounds = [(lower_bound(aq), upper_bound(aq)) for aq in self.operators]
 
         assert len(self.bounds) == len(self.operators)
         assert all(isinstance(b, tuple) and len(b) == 2 for b in self.bounds)
@@ -125,8 +111,7 @@ class UBSuccessiveConstraintsFunctional(ParameterFunctional):
         return np.min(objective_values)
 
 
-def construct_scm_functionals(operator, constraint_parameters, linprog_method='highs', linprog_options={}, M=None,
-                              bounds=None):
+def construct_scm_functionals(operator, constraint_parameters, linprog_method='highs', linprog_options={}, M=None):
     assert isinstance(operator, LincombOperator)
     assert all(op.linear and not op.parametric for op in operator.operators)
     operators = operator.operators
@@ -147,8 +132,20 @@ def construct_scm_functionals(operator, constraint_parameters, linprog_method='h
                               for op in operators])
             minimizers.append(y_opt)
 
-    lb_functional = LBSuccessiveConstraintsFunctional(operator, constraint_parameters, coercivity_constants,
+    with logger.block('Computing bounds on design variables by solving eigenvalue problems ...'):
+        def lower_bound(operator):
+            # some dispatch should be added here in the future
+            eigvals, _ = eigs(operator, k=1, which='SM')
+            return eigvals[0].real
+
+        def upper_bound(operator):
+            eigvals, _ = eigs(operator, k=1, which='LM')
+            return eigvals[0].real
+
+        bounds = [(lower_bound(aq), upper_bound(aq)) for aq in operators]
+
+    lb_functional = LBSuccessiveConstraintsFunctional(operator, constraint_parameters, coercivity_constants, bounds,
                                                       linprog_method=linprog_method, linprog_options=linprog_options,
-                                                      M=M, bounds=bounds)
+                                                      M=M)
     ub_functional = UBSuccessiveConstraintsFunctional(operator, constraint_parameters, minimizers)
     return lb_functional, ub_functional
