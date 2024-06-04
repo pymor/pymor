@@ -120,7 +120,7 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
                             from pymor.algorithms.eigs import eigs
                             eig = eigs(product, k=1)[0][0]
 
-                        shift = 2*m*np.sqrt(m*n)+n*(n+1)*np.sqrt(np.abs(eig))
+                        shift = 2*m*np.sqrt(m*n)+n*(n+1)*np.abs(eig)
                         XX = A[offset:].gramian(product=product)
                     shift *= 11*eps*spla.eigh(XX, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]**2
 
