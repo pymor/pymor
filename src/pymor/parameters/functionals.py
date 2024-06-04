@@ -692,7 +692,7 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
             self.logger.info('Computing coercivity constants for parameters by solving eigenvalue problems ...')
             self.coercivity_constants = []
             for mu in constraint_parameters:
-                fixed_parameter_op = FixedParameterOperator(operator, mu=mu)
+                fixed_parameter_op = operator.assemble(mu)
                 eigvals, _ = eigs(fixed_parameter_op, k=1, which='SM')
                 self.coercivity_constants.append(eigvals[0].real)
 
@@ -709,7 +709,7 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
             _, indices = self.kdtree.query(mu.to_numpy(), k=self.M)
             selected_parameters = [self.constraint_parameters[i] for i in list(indices)]
         else:
-            indices = list(range(len(self.constraint_parameters)))
+            indices = np.arange(len(self.constraint_parameters))
             selected_parameters = self.constraint_parameters
         c = np.array([theta(mu) for theta in self.thetas])
         A_ub = - np.array([[theta(mu_con) for theta in self.thetas]
@@ -726,7 +726,7 @@ class UBSuccessiveConstraintsFunctional(ParameterFunctional):
     Parameters
     ----------
     operator
-        |LincombOperator| for which to provide a lower bound on the coercivity constant.
+        |LincombOperator| for which to provide an upper bound on the coercivity constant.
     constraint_parameters
         List of |Parameters| used to construct the constraints.
     """
