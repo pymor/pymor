@@ -11,8 +11,8 @@ Usage:
 
 from typer import Argument, run
 
+from pymor.algorithms.scm import construct_scm_functionals
 from pymor.basic import *
-from pymor.parameters.functionals import LBSuccessiveConstraintsFunctional, UBSuccessiveConstraintsFunctional
 from pymor.tools.typer import Choices
 
 # parameters for high-dimensional models
@@ -45,8 +45,8 @@ def main(
     #################################################
     num_constraint_parameters = 20
     constraint_parameters = parameter_space.sample_randomly(num_constraint_parameters)
-    coercivity_estimator = LBSuccessiveConstraintsFunctional(fom.operator, constraint_parameters, M=5)
-    upper_coercivity_estimator = UBSuccessiveConstraintsFunctional(fom.operator, constraint_parameters)
+    coercivity_estimator, upper_coercivity_estimator = construct_scm_functionals(fom.operator, constraint_parameters,
+                                                                                 M=5)
 
     num_test_parameters = 10
     test_parameters = parameter_space.sample_randomly(num_test_parameters)
