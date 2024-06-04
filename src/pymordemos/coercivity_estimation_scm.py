@@ -43,12 +43,9 @@ def main(
 
     # select reduction algorithm with error estimator
     #################################################
-    bounds = None
-    coercivity_constants = None
     num_constraint_parameters = 20
     constraint_parameters = parameter_space.sample_randomly(num_constraint_parameters)
-    coercivity_estimator = LBSuccessiveConstraintsFunctional(fom.operator, constraint_parameters, M=5,
-                                                             bounds=bounds, coercivity_constants=coercivity_constants)
+    coercivity_estimator = LBSuccessiveConstraintsFunctional(fom.operator, constraint_parameters, M=5)
     upper_coercivity_estimator = UBSuccessiveConstraintsFunctional(fom.operator, constraint_parameters)
 
     num_test_parameters = 10

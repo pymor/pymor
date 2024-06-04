@@ -10,6 +10,7 @@ from scipy.spatial import KDTree
 
 from pymor.analyticalproblems.expressions import parse_expression
 from pymor.core.base import abstractmethod
+from pymor.core.defaults import defaults
 from pymor.parameters.base import Mu, Parameters, ParametricObject
 from pymor.tools.floatcmp import float_cmp
 
@@ -640,7 +641,7 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
         |LincombOperator| for which to provide a lower bound on the coercivity constant.
     constraint_parameters
         List of |Parameters| used to construct the constraints.
-    method
+    linprog_method
         Name of the algorithm to use for solving the linear program using `scipy.optimize.linprog`.
     options
         Dictionary of additional solver options passed to `scipy.optimize.linprog`.
@@ -650,22 +651,26 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
         If `None`, all parameters from `constraint_parameters` are used.
     bounds
         Either `None` or a list of tuples containing lower and upper bounds
-        for the design variables.
+        for the design variables, i.e. the unknowns in the linear program.
     coercivity_constants
         Either `None` or a list of coercivity constants for the `constraint_parameters`.
     """
 
+    @defaults('linprog_method')
     def __init__(self, operator, constraint_parameters,
-                 method='highs', options={}, M=None, bounds=None, coercivity_constants=None):
+                 linprog_method='highs', options={}, M=None, bounds=None, coercivity_constants=None):
         from pymor.operators.constructions import LincombOperator
         assert isinstance(operator, LincombOperator)
+        assert all(op.linear and not op.parametric for op in operator.operators)
         self.__auto_init(locals())
         self.operators = operator.operators
         self.thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
                             for f in operator.coefficients)
 
         if self.M is not None:
-            self.M = min(self.M, len(self.constraint_parameters))
+            if len(self.constraint_parameters) < self.M:
+                self.logger.warning(f'Only {len(self.constraint_parameters)} parameters available, M is clipped ...')
+                self.M = len(self.constraint_parameters)
             self.logger.info(f'Setting up KDTree to find {self.M} neighboring parameters ...')
             self.kdtree = KDTree(np.array([mu.to_numpy() for mu in self.constraint_parameters]))
 
@@ -673,6 +678,7 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
             from pymor.algorithms.eigs import eigs
 
             def lower_bound(operator):
+                # some dispatch should be added here in the future
                 eigvals, _ = eigs(operator, k=1, which='SM')
                 return eigvals[0].real
 
@@ -688,7 +694,6 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
 
         if coercivity_constants is None:
             from pymor.algorithms.eigs import eigs
-            from pymor.operators.constructions import FixedParameterOperator
             self.logger.info('Computing coercivity constants for parameters by solving eigenvalue problems ...')
             self.coercivity_constants = []
             for mu in constraint_parameters:
@@ -701,7 +706,7 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
     def evaluate(self, mu=None):
         c, A_ub, b_ub = self._construct_linear_program(mu)
         res = linprog(c, A_ub=A_ub, b_ub=b_ub, bounds=self.bounds,
-                      method=self.method, options=self.options)
+                      method=self.linprog_method, options=self.options)
         return res['fun']
 
     def _construct_linear_program(self, mu):
@@ -732,8 +737,9 @@ class UBSuccessiveConstraintsFunctional(ParameterFunctional):
     """
 
     def __init__(self, operator, constraint_parameters):
-        from pymor.operators.constructions import FixedParameterOperator, LincombOperator
+        from pymor.operators.constructions import LincombOperator
         assert isinstance(operator, LincombOperator)
+        assert all(op.linear and not op.parametric for op in operator.operators)
         self.__auto_init(locals())
         self.operators = operator.operators
         self.thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
@@ -742,7 +748,7 @@ class UBSuccessiveConstraintsFunctional(ParameterFunctional):
         self.minimizers = []
         from pymor.algorithms.eigs import eigs
         for mu in self.constraint_parameters:
-            fixed_parameter_op = FixedParameterOperator(operator, mu=mu)
+            fixed_parameter_op = operator.assemble(mu)
             _, minimizers = eigs(fixed_parameter_op, k=1, which='SM')
             minimizer = minimizers[0]
             minimizer_squared_norm = minimizer.norm() ** 2
