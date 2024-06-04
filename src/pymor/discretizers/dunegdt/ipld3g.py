@@ -130,6 +130,7 @@ def discretize_stationary_ipld3g(
                     local_problems[I].grid, local_models_data[I]['space'],
                     symmetry_factor, weight_parameter)
         penalty_parameter = np.max([data['IP_penalty_parameter'] for data in local_models_data])
+        print(f'penalty parameter is {penalty_parameter}')
     # weight for the diffusion part of the IPDG scheme (see above)
     if weight_parameter is None:
         if locally_continuous:
