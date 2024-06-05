@@ -113,19 +113,19 @@ class Model(CacheableObject, ParametricObject):
         """
         return self.output_functional.apply(solution, mu=mu).to_numpy()
 
-    def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu=None, **kwargs):
-        """Compute the partial derivative of the solution w.r.t. a parameter index.
+    def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu=None):
+        """Compute the solution sensitivity w.r.t. a single parameter.
 
         Parameters
         ----------
         parameter
-            parameter for which to compute the sensitivity
+            Parameter for which to compute the sensitivity.
         index
-            parameter index for which to compute the sensitivity
+            Parameter index for which to compute the sensitivity.
         solution
-            Internal model state for the given |Parameter value|.
+            Solution of the Model for `mu`.
         mu
-            |Parameter value| for which to solve
+            |Parameter value| at which to compute the sensitivity.
 
         Returns
         -------
@@ -133,27 +133,30 @@ class Model(CacheableObject, ParametricObject):
         """
         raise NotImplementedError
 
-    def _compute_solution_d_mu(self, solution, mu=None, **kwargs):
-        """Compute all partial derivative of the solution w.r.t. a parameter index.
+    def _compute_solution_d_mu(self, solution, directions, mu=None):
+        """Compute solution sensitivities w.r.t. to given parameters.
 
         Parameters
         ----------
         solution
-            Internal model state for the given |Parameter value|.
+            Solution of the Model for `mu`.
+        directions
+            Either `True`, to compute solution sensitivities w.r.t. all parameters
+            or a sequence of tuples `(parameter, index)` to compute the solution
+            sensitivities for selected parameters.
         mu
-            |Parameter value| for which to solve
+            |Parameter value| at which to compute the sensitivities.
 
         Returns
         -------
-        A dict of all partial sensitivities of the solution.
+        A dict with keys `(parameter, index)` of all computed solution sensitivities.
         """
         sensitivities = {}
-        for (parameter, size) in self.parameters.items():
-            sens_for_param = self.solution_space.empty()
-            for l in range(size):
-                sens_for_param.append(self._compute_solution_d_mu_single_direction(
-                    parameter, l, solution, mu))
-            sensitivities[parameter] = sens_for_param
+        if directions is True:
+            directions = ((param, idx) for param, dim in self.parameters.items() for idx in range(dim))
+        for (param, idx) in directions:
+            sens_for_param = self._compute_solution_d_mu_single_direction(param, idx, solution, mu)
+            sensitivities[(param, idx)] = sens_for_param
         return sensitivities
 
     def _compute_output_d_mu(self, solution, mu=None, **kwargs):
@@ -175,14 +178,14 @@ class Model(CacheableObject, ParametricObject):
         libraries.
         """
         assert self.output_functional is not None
-        U_d_mus = self._compute_solution_d_mu(solution, mu)
+        U_d_mus = self._compute_solution_d_mu(solution, True, mu)
         gradients = {}
         for (parameter, size) in self.parameters.items():
             result = []
             for index in range(size):
                 output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
                     solution, mu=mu).to_numpy()[0]
-                U_d_mu = U_d_mus[parameter][index]
+                U_d_mu = U_d_mus[(parameter, index)]
                 result.append(output_partial_dmu + self.output_functional.jacobian(
                     solution, mu).apply(U_d_mu, mu).to_numpy()[0])
             result = np.array(result)
@@ -285,9 +288,9 @@ class Model(CacheableObject, ParametricObject):
         output
             If `True`, return the model output.
         solution_d_mu
-            If not `False`, either `True` to return the derivative of the model's
-            internal state w.r.t. all parameter components or a tuple `(parameter, index)`
-            to return the derivative of a single parameter component.
+            If not `False`, either `True` to return the sensitivities of the model's
+            solution w.r.t. all parameters, or a sequence of tuples `(parameter, index)`
+            to compute the solution sensitivities for selected parameters.
         output_d_mu
             If `True`, return the gradient of the model output w.r.t. the |Parameter|.
         solution_error_estimate
@@ -355,16 +358,8 @@ class Model(CacheableObject, ParametricObject):
                 data['output'] = retval
 
         if solution_d_mu and 'solution_d_mu' not in data:
-            if isinstance(solution_d_mu, tuple):
-                retval = self._compute_solution_d_mu_single_direction(
-                    solution_d_mu[0], solution_d_mu[1], data['solution'], mu=mu, **kwargs)
-            else:
-                retval = self._compute_solution_d_mu(data['solution'], mu=mu, **kwargs)
-            # retval is always a dict
-            if isinstance(retval, dict) and 'solution_d_mu' in retval:
-                data.update(retval)
-            else:
-                data['solution_d_mu'] = retval
+            retval = self._compute_solution_d_mu(data['solution'], solution_d_mu, mu=mu)
+            data['solution_d_mu'] = retval
 
         if output_d_mu and 'output_d_mu' not in data:
             # TODO: use caching here (requires skipping args in key generation)
@@ -475,16 +470,16 @@ class Model(CacheableObject, ParametricObject):
             return data['output']
 
     def solve_d_mu(self, parameter, index, mu=None, input=None):
-        """Solve for the partial derivative of the solution w.r.t. a parameter index.
+        """Compute the solution sensitivity w.r.t. a single parameter.
 
         Parameters
         ----------
         parameter
-            parameter for which to compute the sensitivity
+            Parameter for which to compute the sensitivity.
         index
-            parameter index for which to compute the sensitivity
+            Parameter index for which to compute the sensitivity.
         mu
-            |Parameter value| for which to solve
+            |Parameter value| at which to compute the sensitivity.
         input
             The model input. Either a |NumPy array| of shape `(self.dim_input,)`,
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
@@ -497,11 +492,11 @@ class Model(CacheableObject, ParametricObject):
         The sensitivity of the solution as a |VectorArray|.
         """
         data = self.compute(
-            solution_d_mu=(parameter, index),
+            solution_d_mu=[(parameter, index)],
             mu=mu,
             input=input,
         )
-        return data['solution_d_mu']
+        return data['solution_d_mu'][parameter, index]
 
     def output_d_mu(self, mu=None, input=None):
         """Compute the gradient w.r.t. the parameter of the output functional.
