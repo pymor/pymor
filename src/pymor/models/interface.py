@@ -159,38 +159,37 @@ class Model(CacheableObject, ParametricObject):
             sensitivities[(param, idx)] = sens_for_param
         return sensitivities
 
-    def _compute_output_d_mu(self, solution, mu=None, **kwargs):
-        """Compute the gradient w.r.t. the parameter of the output functional.
+    def _compute_output_d_mu(self, solution, mu=None):
+        """Compute the output sensitivites w.r.t. the model's parameters.
 
         Parameters
         ----------
         solution
-            Internal model state for the given |Parameter value|.
+            Solution of the Model for `mu`.
         mu
-            |Parameter value| for which to compute the gradient
+            |Parameter value| at which to compute the sensitivities.
 
         Returns
         -------
-        The gradient as a dict of 2D |NumPy arrays|, where axis 0 corresponds to the
-        parameter index and axis 1 corresponds to the output component.
+        The output sensitivities as a dict `{(parameter, index): sensitivity}` where
+        `sensitivity` is a 2D |NumPy arrays| with axis 0 corresponding to time and axis 1
+        corresponding to the output component.
         The returned :class:`OutputDMuResult` object has a `meth`:~OutputDMuResult.to_numpy`
         method to convert it into a single NumPy array, e.g., for use in optimization
         libraries.
         """
         assert self.output_functional is not None
         U_d_mus = self._compute_solution_d_mu(solution, True, mu)
-        gradients = {}
+        sensitivities = {}
         for (parameter, size) in self.parameters.items():
-            result = []
             for index in range(size):
-                output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
-                    solution, mu=mu).to_numpy()[0]
-                U_d_mu = U_d_mus[(parameter, index)]
-                result.append(output_partial_dmu + self.output_functional.jacobian(
-                    solution, mu).apply(U_d_mu, mu).to_numpy()[0])
-            result = np.array(result)
-            gradients[parameter] = result
-        return OutputDMuResult(gradients)
+                output_d_mu = self.output_functional.d_mu(parameter, index).apply(
+                    solution, mu=mu).to_numpy()
+                U_d_mu = U_d_mus[parameter, index]
+                for t, U in enumerate(U_d_mu):
+                    output_d_mu[t] += self.output_functional.jacobian(solution[t], mu).apply(U, mu).to_numpy()[0]
+                sensitivities[parameter, index] = output_d_mu
+        return OutputDMuResult(sensitivities)
 
     def _compute_solution_error_estimate(self, solution, mu=None, **kwargs):
         """Compute an error estimate for the computed internal state.
@@ -292,7 +291,7 @@ class Model(CacheableObject, ParametricObject):
             solution w.r.t. all parameters, or a sequence of tuples `(parameter, index)`
             to compute the solution sensitivities for selected parameters.
         output_d_mu
-            If `True`, return the gradient of the model output w.r.t. the |Parameter|.
+            If `True`, return the output sensitivities w.r.t. the model's parameters.
         solution_error_estimate
             If `True`, return an error estimate for the computed internal state.
         output_error_estimate
@@ -363,12 +362,8 @@ class Model(CacheableObject, ParametricObject):
 
         if output_d_mu and 'output_d_mu' not in data:
             # TODO: use caching here (requires skipping args in key generation)
-            retval = self._compute_output_d_mu(data['solution'], mu=mu, **kwargs)
-            # retval is always a dict
-            if isinstance(retval, dict) and 'output_d_mu' in retval:
-                data.update(retval)
-            else:
-                data['output_d_mu'] = retval
+            retval = self._compute_output_d_mu(data['solution'], mu=mu)
+            data['output_d_mu'] = retval
 
         if solution_error_estimate and 'solution_error_estimate' not in data:
             # TODO: use caching here (requires skipping args in key generation)
@@ -499,12 +494,12 @@ class Model(CacheableObject, ParametricObject):
         return data['solution_d_mu'][parameter, index]
 
     def output_d_mu(self, mu=None, input=None):
-        """Compute the gradient w.r.t. the parameter of the output functional.
+        """Compute the output sensitivites w.r.t. the model's parameters.
 
         Parameters
         ----------
         mu
-            |Parameter value| for which to compute the gradient
+            |Parameter value| at which to compute the output sensitivities.
         input
             The model input. Either a |NumPy array| of shape `(self.dim_input,)`,
             a |Function| with `dim_domain == 1` and `shape_range == (self.dim_input,)`
@@ -514,8 +509,9 @@ class Model(CacheableObject, ParametricObject):
 
         Returns
         -------
-        The gradient as a dict of 2D |NumPy arrays|, where axis 0 corresponds to the
-        parameter index and axis 1 corresponds to the output component.
+        The output sensitivities as a dict `{(parameter, index): sensitivity}` where
+        `sensitivity` is a 2D |NumPy arrays| with axis 0 corresponding to time and axis 1
+        corresponding to the output component.
         The returned :class:`OutputDMuResult` object has a `meth`:~OutputDMuResult.to_numpy`
         method to convert it into a single NumPy array, e.g., for use in optimization
         libraries.

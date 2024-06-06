@@ -2,7 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepper
 from pymor.models.interface import Model, OutputDMuResult
@@ -100,19 +99,20 @@ class StationaryModel(Model):
         return self.operator.jacobian(solution, mu=mu).apply_inverse(rhs)
 
     def _compute_output_d_mu(self, solution, mu):
-        """Compute the gradient of the output functional  w.r.t. the parameters.
+        """Compute the output sensitivites w.r.t. the model's parameters.
 
         Parameters
         ----------
         solution
-            Internal model state for the given |Parameter value|
+            Solution of the Model for `mu`.
         mu
-            |Parameter value| for which to compute the gradient
+            |Parameter value| at which to compute the sensitivities.
 
         Returns
         -------
-        The gradient as a dict of 2D |NumPy arrays|, where axis 0 corresponds to the
-        parameter index and axis 1 corresponds to the output component.
+        The output sensitivities as a dict `{(parameter, index): sensitivity}` where
+        `sensitivity` is a 2D |NumPy arrays| with axis 0 corresponding to time and axis 1
+        corresponding to the output component.
         The returned :class:`OutputDMuResult` object has a `meth`:~OutputDMuResult.to_numpy`
         method to convert it into a single NumPy array, e.g., for use in optimization
         libraries.
@@ -133,18 +133,15 @@ class StationaryModel(Model):
                 dual_problem = self.with_(operator=self.operator.H,
                                           rhs=jacobian.H.as_range_array(mu)[d])
                 dual_solutions.append(dual_problem.solve(mu))
-            gradients = {}
+            sensitivities = {}
             for (parameter, size) in self.parameters.items():
-                result = []
                 for index in range(size):
                     output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution,
                                                                                              mu=mu).to_numpy()[0]
                     lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu)[:, 0]
                     rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:, 0]
-                    result.append(output_partial_dmu + rhs_d_mu - lhs_d_mu)
-                result = np.array(result)
-                gradients[parameter] = result
-        return OutputDMuResult(gradients)
+                    sensitivities[parameter, index] = (output_partial_dmu + rhs_d_mu - lhs_d_mu).reshape((1, -1))
+        return OutputDMuResult(sensitivities)
 
     def deaffinize(self, arg):
         """Build |Model| with linear solution space.
