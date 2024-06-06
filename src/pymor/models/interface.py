@@ -60,7 +60,7 @@ class Model(CacheableObject, ParametricObject):
                  mu=None, **kwargs):
         return {}
 
-    def _compute_solution(self, mu=None, **kwargs):
+    def _compute_solution(self, mu=None):
         """Compute the model's solution for |parameter values| `mu`.
 
         This method is called by the default implementation of :meth:`compute`
@@ -70,9 +70,6 @@ class Model(CacheableObject, ParametricObject):
         ----------
         mu
             |Parameter values| for which to compute the solution.
-        kwargs
-            Additional keyword arguments to select further quantities that should
-            be computed.
 
         Returns
         -------
@@ -81,7 +78,7 @@ class Model(CacheableObject, ParametricObject):
         """
         raise NotImplementedError
 
-    def _compute_output(self, solution, mu=None, **kwargs):
+    def _compute_output(self, solution, mu=None):
         """Compute the model's output for |parameter values| `mu`.
 
         This method is called by the default implementation of :meth:`compute`
@@ -102,9 +99,6 @@ class Model(CacheableObject, ParametricObject):
             Internal model state for the given |parameter values|.
         mu
             |Parameter values| for which to compute the output.
-        kwargs
-            Additional keyword arguments to select further quantities that should
-            be computed.
 
         Returns
         -------
@@ -191,7 +185,7 @@ class Model(CacheableObject, ParametricObject):
                 sensitivities[parameter, index] = output_d_mu
         return OutputDMuResult(sensitivities)
 
-    def _compute_solution_error_estimate(self, solution, mu=None, **kwargs):
+    def _compute_solution_error_estimate(self, solution, mu=None):
         """Compute an error estimate for the computed internal state.
 
         This method is called by the default implementation of :meth:`compute`
@@ -204,7 +198,7 @@ class Model(CacheableObject, ParametricObject):
 
             The default implementation calls the `estimate_error` method of the object
             given by the :attr:`error_estimator` attribute, passing `solution`,
-            `mu`, `self` and `**kwargs`.
+            `mu` and `self`.
 
         Parameters
         ----------
@@ -212,9 +206,6 @@ class Model(CacheableObject, ParametricObject):
             Internal model state for the given |parameter values|.
         mu
             |Parameter values| for which to compute the error estimate.
-        kwargs
-            Additional keyword arguments to select further quantities that should
-            be computed.
 
         Returns
         -------
@@ -223,9 +214,9 @@ class Model(CacheableObject, ParametricObject):
         """
         if self.error_estimator is None:
             raise ValueError('Model has no error estimator')
-        return self.error_estimator.estimate_error(solution, mu, self, **kwargs)
+        return self.error_estimator.estimate_error(solution, mu, self)
 
-    def _compute_output_error_estimate(self, solution, mu=None, **kwargs):
+    def _compute_output_error_estimate(self, solution, mu=None):
         """Compute an error estimate for the computed model output.
 
         This method is called by the default implementation of :meth:`compute`
@@ -238,7 +229,7 @@ class Model(CacheableObject, ParametricObject):
 
             The default implementation calls the `estimate_output_error` method of the object
             given by the :attr:`error_estimator` attribute, passing `solution`,
-            `mu`, `self` and `**kwargs`.
+            `mu` and `self`.
 
         Parameters
         ----------
@@ -246,9 +237,6 @@ class Model(CacheableObject, ParametricObject):
             Internal model state for the given |parameter values|.
         mu
             |Parameter values| for which to compute the error estimate.
-        kwargs
-            Additional keyword arguments to select further quantities that should
-            be computed.
 
         Returns
         -------
@@ -257,7 +245,7 @@ class Model(CacheableObject, ParametricObject):
         """
         if self.error_estimator is None:
             raise ValueError('Model has no error estimator')
-        return self.error_estimator.estimate_output_error(solution, mu, self, **kwargs)
+        return self.error_estimator.estimate_output_error(solution, mu, self)
 
     _compute_allowed_kwargs = frozenset()
 
@@ -340,7 +328,7 @@ class Model(CacheableObject, ParametricObject):
 
         if (solution or solution_error_estimate or solution_d_mu) and 'solution' not in data \
            or (output or output_error_estimate or output_d_mu) and 'output' not in data:
-            retval = self.cached_method_call(self._compute_solution, mu=mu, **kwargs)
+            retval = self.cached_method_call(self._compute_solution, mu=mu)
             if isinstance(retval, dict):
                 assert 'solution' in retval
                 data.update(retval)
@@ -349,7 +337,7 @@ class Model(CacheableObject, ParametricObject):
 
         if output and 'output' not in data:
             # TODO: use caching here (requires skipping args in key generation)
-            retval = self._compute_output(data['solution'], mu=mu, **kwargs)
+            retval = self._compute_output(data['solution'], mu=mu)
             if isinstance(retval, dict):
                 assert 'output' in retval
                 data.update(retval)
@@ -367,7 +355,7 @@ class Model(CacheableObject, ParametricObject):
 
         if solution_error_estimate and 'solution_error_estimate' not in data:
             # TODO: use caching here (requires skipping args in key generation)
-            retval = self._compute_solution_error_estimate(data['solution'], mu=mu, **kwargs)
+            retval = self._compute_solution_error_estimate(data['solution'], mu=mu)
             if isinstance(retval, dict):
                 assert 'solution_error_estimate' in retval
                 data.update(retval)
@@ -376,8 +364,7 @@ class Model(CacheableObject, ParametricObject):
 
         if output_error_estimate and 'output_error_estimate' not in data:
             # TODO: use caching here (requires skipping args in key generation)
-            retval = self._compute_output_error_estimate(
-                data['solution'], mu=mu, **kwargs)
+            retval = self._compute_output_error_estimate(data['solution'], mu=mu)
             if isinstance(retval, dict):
                 assert 'output_error_estimate' in retval
                 data.update(retval)

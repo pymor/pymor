@@ -89,7 +89,7 @@ class StationaryModel(Model):
             f'    dim_output:      {self.dim_output}'
         )
 
-    def _compute_solution(self, mu=None, **kwargs):
+    def _compute_solution(self, mu=None):
         return self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
 
     def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu):
@@ -324,7 +324,7 @@ class InstationaryModel(Model):
     def with_time_stepper(self, **kwargs):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
 
-    def _compute_solution(self, mu=None, **kwargs):
+    def _compute_solution(self, mu=None):
         mu = mu.with_(t=0.)
         U0 = self.initial_data.as_range_array(mu)
         U = self.time_stepper.solve(operator=self.operator,

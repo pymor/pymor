@@ -27,8 +27,8 @@ class MPIModel:
     Instead, you should use :func:`mpi_wrap_model`.
     """
 
-    def __init__(self, obj_id, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, obj_id, *args):
+        super().__init__(*args)
         self.obj_id = obj_id
         m = mpi.get_object(obj_id)
         self.parameters = m.parameters
@@ -36,9 +36,9 @@ class MPIModel:
         self.parameters_internal = m.parameters_internal
         self.visualizer = MPIVisualizer(obj_id)
 
-    def _compute_solution(self, mu=None, **kwargs):
+    def _compute_solution(self, mu=None):
         return self.solution_space.make_array(
-            mpi.call(mpi.method_call_manage, self.obj_id, '_compute_solution', mu=mu, **kwargs)
+            mpi.call(mpi.method_call_manage, self.obj_id, '_compute_solution', mu=mu)
         )
 
     def visualize(self, U, **kwargs):
