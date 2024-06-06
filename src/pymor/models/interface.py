@@ -606,12 +606,12 @@ class OutputDMuResult(FrozenDict):
     """Immutable dict of gradients returned by :meth:`~Model.output_d_mu`."""
 
     def to_numpy(self):
-        """Return gradients as a single 2D NumPy array.
+        """Return gradients as a single 3D NumPy array.
 
-        The array is obtained by stacking the individual arrays along axis 0,
-        ordered by alphabetically ordered parameter name.
+        The array is obtained by stacking the individual arrays along an
+        additional axis 0, ordered by alphabetically ordered parameter name.
         """
-        return np.vstack([v for k, v in sorted(self.items())])
+        return np.array([v for k, v in sorted(self.items())])
 
     def __repr__(self):
         return f'OutputDMuResult({dict(sorted(self.items()))})'
