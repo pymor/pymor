@@ -126,12 +126,12 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     assert model.dim_output == 1
     output = lambda m: model.output(m)[0, 0]
 
-    # make sure the model is instationary by checking length of output vectorarray
+    # make sure the model output does not depend on time by checking length of output vectorarray
     temp_output = model.output(mu)
     assert len(temp_output) == 1
     current_output = temp_output[0, 0].item()
 
-    gradient = model.parameters.parse(model.output_d_mu(mu)).to_numpy()
+    gradient = model.output_d_mu(mu).to_numpy().ravel()
     eps = np.linalg.norm(gradient)
 
     # compute norms
@@ -197,7 +197,7 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
 
         # update gradient
         old_gradient = gradient.copy()
-        gradient = model.parameters.parse(model.output_d_mu(mu)).to_numpy()
+        gradient = model.output_d_mu(mu).to_numpy().ravel()
         first_order_criticality = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
         foc_norms.append(first_order_criticality)
 

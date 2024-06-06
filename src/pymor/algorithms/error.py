@@ -416,7 +416,7 @@ def _compute_errors(mu, fom, reductor, error_estimator, error_norms, condition, 
         u = result['solution']
         if error_estimator:
             e = result['solution_error_estimate']
-            e = e[0] if hasattr(e, '__len__') else e
+            e = np.max(e)
             error_estimates[i_N] = e
         if fom and reductor:
             URB = reductor.reconstruct(u)

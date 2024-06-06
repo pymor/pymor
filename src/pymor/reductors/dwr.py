@@ -223,14 +223,14 @@ class DWRCoerciveRBEstimator(ImmutableObject):
     def estimate_error(self, U, mu, m):
         return self.primal_estimator.estimate_error(U, mu, m)
 
-    def estimate_output_error(self, U, mu, m, return_vector=False):
-        est_pr = self.estimate_error(U, mu, m)
+    def estimate_output_error(self, U, mu, m):
+        est_pr = self.estimate_error(U, mu, m).item()
         est_dus = []
         for d in range(m.dim_output):
             dual_solution = self.dual_models[d].solve(mu)
-            est_dus.append(self.dual_estimators[d].estimate_error(dual_solution, mu, m))
-        ret = (est_pr * est_dus).T
-        return ret if return_vector else np.linalg.norm(ret)
+            est_dus.append(self.dual_estimators[d].estimate_error(dual_solution, mu, m).item())
+        ret = est_pr * np.array(est_dus).reshape((1, -1))
+        return ret
 
     def restricted_to_subbasis(self, dual_roms, primal_dim, dual_dims, m):
         primal_estimator = self.primal_estimator.restricted_to_subbasis(primal_dim, m)

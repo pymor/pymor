@@ -2,10 +2,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepper
-from pymor.models.interface import Model
+from pymor.models.interface import Model, OutputDMuResult
 from pymor.operators.constructions import ConstantOperator, IdentityOperator, VectorOperator, ZeroOperator
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -52,14 +51,17 @@ class StationaryModel(Model):
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
         to the model which forwards its arguments to the
         visualizer's `visualize` method.
+    output_d_mu_use_adjoint
+        If `True`, use adjoint solution for computing ouput gradients
+        (default behavior). See Section 1.6.2 in :cite:`HPUU09` for more
+        details.
     name
         Name of the model.
     """
 
-    _compute_allowed_kwargs = frozenset({'use_adjoint'})
-
     def __init__(self, operator, rhs, output_functional=None, products=None,
-                 error_estimator=None, visualizer=None, name=None):
+                 error_estimator=None, visualizer=None, output_d_mu_use_adjoint=None,
+                 name=None):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
@@ -87,7 +89,7 @@ class StationaryModel(Model):
             f'    dim_output:      {self.dim_output}'
         )
 
-    def _compute_solution(self, mu=None, **kwargs):
+    def _compute_solution(self, mu=None):
         return self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
 
     def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu):
@@ -96,34 +98,34 @@ class StationaryModel(Model):
         rhs = rhs_d_mu - lhs_d_mu
         return self.operator.jacobian(solution, mu=mu).apply_inverse(rhs)
 
-    def _compute_output_d_mu(self, solution, mu, return_array=False, use_adjoint=None):
-        """Compute the gradient of the output functional  w.r.t. the parameters.
+    def _compute_output_d_mu(self, solution, mu):
+        """Compute the output sensitivites w.r.t. the model's parameters.
 
         Parameters
         ----------
         solution
-            Internal model state for the given |Parameter value|
+            Solution of the Model for `mu`.
         mu
-            |Parameter value| for which to compute the gradient
-        return_array
-            if `True`, return the output gradient as a |NumPy array|.
-            Otherwise, return a dict of gradients for each |Parameter|.
-        use_adjoint
-            if `None` use standard approach, if `True`, use
-            the adjoint solution for a more efficient way of computing the gradient.
-            See Section 1.6.2 in :cite:`HPUU09` for more details.
-            So far, the adjoint approach is only valid for linear models.
+            |Parameter value| at which to compute the sensitivities.
 
         Returns
         -------
-        The gradient as a |NumPy array| or a dict of |NumPy arrays|.
+        The output sensitivities as a dict `{(parameter, index): sensitivity}` where
+        `sensitivity` is a 2D |NumPy arrays| with axis 0 corresponding to time and axis 1
+        corresponding to the output component.
+        The returned :class:`OutputDMuResult` object has a `meth`:~OutputDMuResult.to_numpy`
+        method to convert it into a single NumPy array, e.g., for use in optimization
+        libraries.
         """
-        if use_adjoint is None:
+        if self.output_d_mu_use_adjoint is None:
             use_adjoint = self.output_functional.linear and self.operator.linear
-        if not use_adjoint:
-            return super()._compute_output_d_mu(solution, mu, return_array)
         else:
-            assert self.operator.linear
+            use_adjoint = self.output_d_mu_use_adjoint
+        if not use_adjoint:
+            return super()._compute_output_d_mu(solution, mu)
+        else:
+            if not self.operator.linear:
+                raise NotImplementedError
             jacobian = self.output_functional.jacobian(solution, mu)
             assert jacobian.linear
             dual_solutions = self.operator.range.empty()
@@ -131,24 +133,15 @@ class StationaryModel(Model):
                 dual_problem = self.with_(operator=self.operator.H,
                                           rhs=jacobian.H.as_range_array(mu)[d])
                 dual_solutions.append(dual_problem.solve(mu))
-            gradients = [] if return_array else {}
+            sensitivities = {}
             for (parameter, size) in self.parameters.items():
-                result = []
                 for index in range(size):
                     output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution,
                                                                                              mu=mu).to_numpy()[0]
                     lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu)[:, 0]
                     rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:, 0]
-                    result.append(output_partial_dmu + rhs_d_mu - lhs_d_mu)
-                result = np.array(result)
-                if return_array:
-                    gradients.extend(result)
-                else:
-                    gradients[parameter] = result
-        if return_array:
-            return np.array(gradients)
-        else:
-            return gradients
+                    sensitivities[parameter, index] = (output_partial_dmu + rhs_d_mu - lhs_d_mu).reshape((1, -1))
+        return OutputDMuResult(sensitivities)
 
     def deaffinize(self, arg):
         """Build |Model| with linear solution space.
@@ -278,8 +271,6 @@ class InstationaryModel(Model):
         Name of the model.
     """
 
-    _compute_allowed_kwargs = frozenset({'return_error_sequence'})
-
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
                  output_functional=None, products=None, error_estimator=None, visualizer=None, name=None):
 
@@ -333,7 +324,7 @@ class InstationaryModel(Model):
     def with_time_stepper(self, **kwargs):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
 
-    def _compute_solution(self, mu=None, **kwargs):
+    def _compute_solution(self, mu=None):
         mu = mu.with_(t=0.)
         U0 = self.initial_data.as_range_array(mu)
         U = self.time_stepper.solve(operator=self.operator,

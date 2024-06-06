@@ -277,7 +277,7 @@ def _rb_surrogate_evaluate(rom=None, fom=None, reductor=None, mus=None, error_no
             return -1., None
 
     if fom is None:
-        errors = [rom.estimate_error(mu) for mu in mus]
+        errors = [np.max(rom.estimate_error(mu)) for mu in mus]
     elif error_norm is not None:
         errors = [error_norm(fom.solve(mu) - reductor.reconstruct(rom.solve(mu))) for mu in mus]
     else:
