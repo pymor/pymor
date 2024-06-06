@@ -166,7 +166,7 @@ class Model(CacheableObject, ParametricObject):
         Returns
         -------
         The output sensitivities as a dict `{(parameter, index): sensitivity}` where
-        `sensitivity` is a 2D |NumPy arrays| with axis 0 corresponding to time and axis 1
+        `sensitivity` is a 2D |NumPy array| with axis 0 corresponding to time and axis 1
         corresponding to the output component.
         The returned :class:`OutputDMuResult` object has a `meth`:~OutputDMuResult.to_numpy`
         method to convert it into a single NumPy array, e.g., for use in optimization
