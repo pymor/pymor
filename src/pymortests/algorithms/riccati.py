@@ -75,10 +75,9 @@ def relative_residual(A, E, B, C, R, S, Z, trans):
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('solver', ricc_dense_solver_list)
-def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
+def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     skip_if_missing_solver(solver)
 
-    rng = np.random.default_rng(0)
     mat_old = []
     mat_new = []
     if not with_E:
@@ -133,10 +132,9 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('solver', ricc_dense_solver_list)
-def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
+def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     skip_if_missing_solver(solver)
 
-    rng = np.random.default_rng(0)
     mat_old = []
     mat_new = []
     if not with_E:
@@ -193,12 +191,11 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize(('n', 'solver'), chain(product(n_list_small, ricc_lrcf_solver_list_small),
                                                 product(n_list_big, ricc_lrcf_solver_list_big)))
-def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
+def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     skip_if_missing_solver(solver)
     if with_S and solver == 'lrradi':
         pytest.xfail('solver not implemented')
 
-    rng = np.random.default_rng(0)
     mat_old = []
     mat_new = []
     if not with_E:
@@ -261,10 +258,9 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
 @pytest.mark.parametrize('with_S', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
-def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
+def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     skip_if_missing_solver(solver)
 
-    rng = np.random.default_rng(0)
     mat_old = []
     mat_new = []
     if not with_E:

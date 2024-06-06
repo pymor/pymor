@@ -411,11 +411,10 @@ def test_assemble(operator_with_arrays):
         assert np.all(almost_equal(aop.apply_inverse_adjoint(U), AITU))
 
 
-def test_restricted(operator_with_arrays):
+def test_restricted(operator_with_arrays, rng):
     op, mu, U, _, = operator_with_arrays
     if op.range.dim == 0:
         return
-    rng = np.random.default_rng(0)
     for num in [0, 1, 3, 7]:
         dofs = rng.integers(0, op.range.dim, num)
         try:
@@ -427,11 +426,10 @@ def test_restricted(operator_with_arrays):
         assert_all_almost_equal(op_U, rop_U, rtol=1e-13)
 
 
-def test_restricted_jacobian(operator_with_arrays):
+def test_restricted_jacobian(operator_with_arrays, rng):
     op, mu, U, _, = operator_with_arrays
     if op.range.dim == 0:
         return
-    rng = np.random.default_rng(0)
     for num in [0, 1, 3, 7]:
         dofs = rng.integers(0, op.range.dim, num)
         try:
@@ -502,8 +500,7 @@ def test_InverseAdjointOperator(operator_with_arrays):
 
 
 @pytest.mark.builtin()
-def test_vectorarray_op_apply_inverse():
-    rng = np.random.default_rng(0)
+def test_vectorarray_op_apply_inverse(rng):
     O = rng.random((5, 5))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
     V = op.range.random()
@@ -514,8 +511,7 @@ def test_vectorarray_op_apply_inverse():
 
 
 @pytest.mark.builtin()
-def test_vectorarray_op_apply_inverse_lstsq():
-    rng = np.random.default_rng(0)
+def test_vectorarray_op_apply_inverse_lstsq(rng):
     O = rng.random((3, 5))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
     V = op.range.random()
@@ -526,8 +522,7 @@ def test_vectorarray_op_apply_inverse_lstsq():
 
 
 @pytest.mark.builtin()
-def test_adjoint_vectorarray_op_apply_inverse_lstsq():
-    rng = np.random.default_rng(0)
+def test_adjoint_vectorarray_op_apply_inverse_lstsq(rng):
     O = rng.random((3, 5))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O), adjoint=True)
     V = op.range.random()

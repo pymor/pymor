@@ -11,7 +11,7 @@ pytestmark = pytest.mark.builtin
 
 
 @skip_if_missing('TORCH')
-def test_linear_function_fitting():
+def test_linear_function_fitting(rng):
     import torch.optim as optim
 
     from pymor.models.neural_network import FullyConnectedNN
@@ -21,7 +21,6 @@ def test_linear_function_fitting():
     d_in = 3
     d_out = 2
 
-    rng = np.random.default_rng(0)
     a = rng.random((d_in, d_out))
     b = rng.random(d_out)
 
@@ -64,7 +63,7 @@ def test_linear_function_fitting():
 
 
 @skip_if_missing('TORCH')
-def test_no_training_data():
+def test_no_training_data(rng):
 
     import torch
 
@@ -78,7 +77,6 @@ def test_no_training_data():
     validation_data = []
     neural_network = FullyConnectedNN([d_in, 3 * (d_in + d_out), 3 * (d_in + d_out), d_out]).double()
     best_neural_network, _ = multiple_restarts_training(training_data, validation_data, neural_network)
-    rng = np.random.default_rng(0)
     assert np.allclose(best_neural_network(torch.DoubleTensor(rng.random((n, d_in)))).detach(), np.zeros(d_out))
 
 

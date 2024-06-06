@@ -127,7 +127,7 @@ def relative_residual(A, E, B, X, cont_time, trans=False):
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize(('n', 'solver'), chain(product(n_list_small, cont_lyap_dense_solver_list),
                                                 product(n_list_big, cont_lyap_lrcf_solver_list)))
-def test_cont_lrcf(n, m, with_E, trans, solver):
+def test_cont_lrcf(n, m, with_E, trans, solver, rng):
     skip_if_missing_solver(solver)
 
     mat_old = []
@@ -142,7 +142,6 @@ def test_cont_lrcf(n, m, with_E, trans, solver):
     mat_old.append(A.copy())
     mat_new.append(A)
 
-    rng = np.random.default_rng(0)
     B = rng.standard_normal((n, m))
     if trans:
         B = B.T
@@ -172,7 +171,7 @@ def test_cont_lrcf(n, m, with_E, trans, solver):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('solver', disc_lyap_dense_solver_list)
-def test_disc_lrcf(n, m, with_E, trans, solver):
+def test_disc_lrcf(n, m, with_E, trans, solver, rng):
     skip_if_missing_solver(solver)
 
     mat_old = []
@@ -187,7 +186,6 @@ def test_disc_lrcf(n, m, with_E, trans, solver):
     mat_old.append(A.copy())
     mat_new.append(A)
 
-    rng = np.random.default_rng(0)
     B = rng.standard_normal((n, m))
     if trans:
         B = B.T
@@ -217,10 +215,9 @@ def test_disc_lrcf(n, m, with_E, trans, solver):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('solver', cont_lyap_dense_solver_list)
-def test_cont_dense(n, m, with_E, trans, solver):
+def test_cont_dense(n, m, with_E, trans, solver, rng):
     skip_if_missing_solver(solver)
 
-    rng = np.random.default_rng(0)
     A = np.asfortranarray(rng.standard_normal((n, n)))
     E = np.eye(n) + rng.standard_normal((n, n)) / n if with_E else None
     B = rng.standard_normal((n, m))
@@ -252,10 +249,9 @@ def test_cont_dense(n, m, with_E, trans, solver):
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('solver', disc_lyap_dense_solver_list)
-def test_disc_dense(n, m, with_E, trans, solver):
+def test_disc_dense(n, m, with_E, trans, solver, rng):
     skip_if_missing_solver(solver)
 
-    rng = np.random.default_rng(0)
     A = np.asfortranarray(rng.standard_normal((n, n)))
     E = np.eye(n) + rng.standard_normal((n, n)) / n if with_E else None
     B = rng.standard_normal((n, m))

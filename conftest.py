@@ -36,7 +36,6 @@ pytest_plugins = [
     'pymortests.fixtures.grid',
     'pymortests.fixtures.model',
     'pymortests.fixtures.operator',
-    'pymortests.fixtures.parameter',
 ]
 
 
@@ -61,3 +60,9 @@ def monkey_np_testing(monkeypatch):
 @pytest.fixture(autouse=True)
 def reset_rng():
     new_rng(42).install()
+
+
+@pytest.fixture()
+def rng():
+    import numpy as np
+    return np.random.default_rng(0)

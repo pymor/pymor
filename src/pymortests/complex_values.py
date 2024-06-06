@@ -11,8 +11,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 pytestmark = pytest.mark.builtin
 
 
-def test_complex():
-    rng = np.random.default_rng(0)
+def test_complex(rng):
     I = np.eye(5)
     A = rng.standard_normal((5, 5))
     B = rng.standard_normal((5, 5))
