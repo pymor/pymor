@@ -675,55 +675,59 @@ class LTIModel(Model):
         if E is not None:
             _mmwrite(Path(files_basename + '.E'), E)
 
-    def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
-                 solution_error_estimate=False, output_error_estimate=False,
-                 mu=None, **kwargs):
+    def _compute(self, quantities, data, mu=None):
+        if 'solution' in quantities or 'output' in quantities:
+            assert self.T is not None
 
-        assert self.T is not None
+            compute_solution = 'solution' in quantities
+            compute_output = 'output' in quantities
 
-        if not solution and not output:
-            return {}
+            # solution computation
+            iterator = self.time_stepper.iterate(
+                0,  # initial_time
+                self.T,  # end_time
+                self.initial_data.as_range_array(mu),  # initial_data
+                -self.A,  # operator
+                rhs=LinearInputOperator(self.B),
+                mass=None if isinstance(self.E, IdentityOperator) else self.E,
+                mu=mu.with_(t=0),
+                num_values=self.num_values
+            )
+            if self.num_values is None:
+                try:
+                    n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+                except NotImplementedError:
+                    n = 0
+            else:
+                n = self.num_values + 1
 
-        # solution computation
-        iterator = self.time_stepper.iterate(
-            0,  # initial_time
-            self.T,  # end_time
-            self.initial_data.as_range_array(mu),  # initial_data
-            -self.A,  # operator
-            rhs=LinearInputOperator(self.B),
-            mass=None if isinstance(self.E, IdentityOperator) else self.E,
-            mu=mu.with_(t=0),
-            num_values=self.num_values
-        )
-        if self.num_values is None:
-            try:
-                n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
-            except NotImplementedError:
-                n = 0
-        else:
-            n = self.num_values + 1
-        data = {}
-        if solution:
-            data['solution'] = self.solution_space.empty(reserve=n)
-        if output:
-            D = LinearInputOperator(self.D)
-            data['output'] = np.empty((n, self.dim_output))
-            data_output_extra = []
-        for i, (x, t) in enumerate(iterator):
-            if solution:
-                data['solution'].append(x)
-            if output:
-                y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.with_(t=t)).to_numpy()
-                if i < n:
-                    data['output'][i] = y
-                else:
-                    data_output_extra.append(y)
-        if output:
-            if data_output_extra:
-                data['output'] = np.vstack((data['output'], data_output_extra))
-            if len(data['output']) < i + 1:
-                data['output'] = data['output'][:i + 1]
-        return data
+            if compute_solution:
+                data['solution'] = self.solution_space.empty(reserve=n)
+            if compute_output:
+                D = LinearInputOperator(self.D)
+                data['output'] = np.empty((n, self.dim_output))
+                data_output_extra = []
+            for i, (x, t) in enumerate(iterator):
+                if compute_solution:
+                    data['solution'].append(x)
+                if compute_output:
+                    y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.with_(t=t)).to_numpy()
+                    if i < n:
+                        data['output'][i] = y
+                    else:
+                        data_output_extra.append(y)
+            if compute_output:
+                if data_output_extra:
+                    data['output'] = np.vstack((data['output'], data_output_extra))
+                if len(data['output']) < i + 1:
+                    data['output'] = data['output'][:i + 1]
+
+            if compute_solution:
+                quantities.remove('solution')
+            if compute_output:
+                quantities.remove('output')
+
+        super()._compute(quantities, data, mu=mu)
 
     def __add__(self, other):
         """Add an |LTIModel|."""

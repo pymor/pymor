@@ -2,9 +2,12 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from functools import cached_property
+
 import numpy as np
 
 from pymor.core.cache import CacheableObject
+from pymor.core.exceptions import CacheKeyGenerationError
 from pymor.operators.constructions import induced_norm
 from pymor.parameters.base import Mu, Parameters, ParametricObject
 from pymor.tools.frozendict import FrozenDict
@@ -55,203 +58,17 @@ class Model(CacheableObject, ParametricObject):
     def order(self):
         return self.solution_space.dim
 
-    def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
-                 solution_error_estimate=False, output_error_estimate=False,
-                 mu=None, **kwargs):
-        return {}
+    @cached_property
+    def computable_quantities(self):
+        return (
+            {'solution', 'output', 'output_d_mu', 'solution_error_estimate', 'output_error_estimate'}
+            | {('solution_d_mu', param, idx) for param, dim in self.parameters.items() for idx in range(dim)}
+        )
 
-    def _compute_solution(self, mu=None):
-        """Compute the model's solution for |parameter values| `mu`.
-
-        This method is called by the default implementation of :meth:`compute`
-        in :class:`pymor.models.interface.Model`.
-
-        Parameters
-        ----------
-        mu
-            |Parameter values| for which to compute the solution.
-
-        Returns
-        -------
-        |VectorArray| with the computed solution or a dict which at least
-        must contain the key `'solution'`.
-        """
-        raise NotImplementedError
-
-    def _compute_output(self, solution, mu=None):
-        """Compute the model's output for |parameter values| `mu`.
-
-        This method is called by the default implementation of :meth:`compute`
-        in :class:`pymor.models.interface.Model`. The assumption is made
-        that the output is a derived quantity from the model's internal state
-        as returned by :meth:`!_compute_solution`. When this is not the case,
-        the computation of the output should be implemented in :meth:`!_compute`.
-
-        .. note::
-
-            The default implementation applies the |Operator| given by the
-            :attr:`!output_functional` attribute to the given `solution`
-            |VectorArray|.
-
-        Parameters
-        ----------
-        solution
-            Internal model state for the given |parameter values|.
-        mu
-            |Parameter values| for which to compute the output.
-
-        Returns
-        -------
-        |NumPy array| with the computed output or a dict which at least
-        must contain the key `'output'`.
-        """
-        return self.output_functional.apply(solution, mu=mu).to_numpy()
-
-    def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu=None):
-        """Compute the solution sensitivity w.r.t. a single parameter.
-
-        Parameters
-        ----------
-        parameter
-            Parameter for which to compute the sensitivity.
-        index
-            Parameter index for which to compute the sensitivity.
-        solution
-            Solution of the Model for `mu`.
-        mu
-            |Parameter value| at which to compute the sensitivity.
-
-        Returns
-        -------
-        The sensitivity of the solution as a |VectorArray|.
-        """
-        raise NotImplementedError
-
-    def _compute_solution_d_mu(self, solution, directions, mu=None):
-        """Compute solution sensitivities w.r.t. to given parameters.
-
-        Parameters
-        ----------
-        solution
-            Solution of the Model for `mu`.
-        directions
-            Either `True`, to compute solution sensitivities w.r.t. all parameters
-            or a sequence of tuples `(parameter, index)` to compute the solution
-            sensitivities for selected parameters.
-        mu
-            |Parameter value| at which to compute the sensitivities.
-
-        Returns
-        -------
-        A dict with keys `(parameter, index)` of all computed solution sensitivities.
-        """
-        sensitivities = {}
-        if directions is True:
-            directions = ((param, idx) for param, dim in self.parameters.items() for idx in range(dim))
-        for (param, idx) in directions:
-            sens_for_param = self._compute_solution_d_mu_single_direction(param, idx, solution, mu)
-            sensitivities[(param, idx)] = sens_for_param
-        return sensitivities
-
-    def _compute_output_d_mu(self, solution, mu=None):
-        """Compute the output sensitivites w.r.t. the model's parameters.
-
-        Parameters
-        ----------
-        solution
-            Solution of the Model for `mu`.
-        mu
-            |Parameter value| at which to compute the sensitivities.
-
-        Returns
-        -------
-        The output sensitivities as a dict `{(parameter, index): sensitivity}` where
-        `sensitivity` is a 2D |NumPy array| with axis 0 corresponding to time and axis 1
-        corresponding to the output component.
-        The returned :class:`OutputDMuResult` object has a `meth`:~OutputDMuResult.to_numpy`
-        method to convert it into a single NumPy array, e.g., for use in optimization
-        libraries.
-        """
-        assert self.output_functional is not None
-        U_d_mus = self._compute_solution_d_mu(solution, True, mu)
-        sensitivities = {}
-        for (parameter, size) in self.parameters.items():
-            for index in range(size):
-                output_d_mu = self.output_functional.d_mu(parameter, index).apply(
-                    solution, mu=mu).to_numpy()
-                U_d_mu = U_d_mus[parameter, index]
-                for t, U in enumerate(U_d_mu):
-                    output_d_mu[t] += self.output_functional.jacobian(solution[t], mu).apply(U, mu).to_numpy()[0]
-                sensitivities[parameter, index] = output_d_mu
-        return OutputDMuResult(sensitivities)
-
-    def _compute_solution_error_estimate(self, solution, mu=None):
-        """Compute an error estimate for the computed internal state.
-
-        This method is called by the default implementation of :meth:`compute`
-        in :class:`pymor.models.interface.Model`. The assumption is made
-        that the error estimate is a derived quantity from the model's internal state
-        as returned by :meth:`!_compute_solution`. When this is not the case,
-        the computation of the error estimate should be implemented in :meth:`!_compute`.
-
-        .. note::
-
-            The default implementation calls the `estimate_error` method of the object
-            given by the :attr:`error_estimator` attribute, passing `solution`,
-            `mu` and `self`.
-
-        Parameters
-        ----------
-        solution
-            Internal model state for the given |parameter values|.
-        mu
-            |Parameter values| for which to compute the error estimate.
-
-        Returns
-        -------
-        The computed error estimate or a dict which at least must contain the key
-        `'solution_error_estimate'`.
-        """
-        if self.error_estimator is None:
-            raise ValueError('Model has no error estimator')
-        return self.error_estimator.estimate_error(solution, mu, self)
-
-    def _compute_output_error_estimate(self, solution, mu=None):
-        """Compute an error estimate for the computed model output.
-
-        This method is called by the default implementation of :meth:`compute`
-        in :class:`pymor.models.interface.Model`. The assumption is made
-        that the error estimate is a derived quantity from the model's internal state
-        as returned by :meth:`!_compute_solution`. When this is not the case,
-        the computation of the error estimate should be implemented in :meth:`!_compute`.
-
-        .. note::
-
-            The default implementation calls the `estimate_output_error` method of the object
-            given by the :attr:`error_estimator` attribute, passing `solution`,
-            `mu` and `self`.
-
-        Parameters
-        ----------
-        solution
-            Internal model state for the given |parameter values|.
-        mu
-            |Parameter values| for which to compute the error estimate.
-
-        Returns
-        -------
-        The computed error estimate or a dict which at least must contain the key
-        `'solution_error_estimate'`.
-        """
-        if self.error_estimator is None:
-            raise ValueError('Model has no error estimator')
-        return self.error_estimator.estimate_output_error(solution, mu, self)
-
-    _compute_allowed_kwargs = frozenset()
-
-    def compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
+    def compute(self, quantities=None, data=None, *,
+                solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                 solution_error_estimate=False, output_error_estimate=False,
-                *, mu=None, input=None, **kwargs):
+                mu=None, input=None, **kwargs):
         """Compute the solution of the model and associated quantities.
 
         This method computes the output of the model, its internal state,
@@ -260,12 +77,6 @@ class Model(CacheableObject, ParametricObject):
         .. note::
 
             The default implementation defers the actual computations to
-            the methods :meth:`!_compute_solution`, :meth:`!_compute_output`,
-            :meth:`!_compute_solution_error_estimate` and :meth:`!_compute_output_error_estimate`.
-            The call to :meth:`!_compute_solution` is :mod:`cached <pymor.core.cache>`.
-            In addition, |Model| implementors may implement :meth:`!_compute` to
-            simultaneously compute multiple values in an optimized way. The corresponding
-            `_compute_XXX` methods will not be called for values already returned by
             :meth:`!_compute`.
 
         Parameters
@@ -300,8 +111,6 @@ class Model(CacheableObject, ParametricObject):
         -------
         A dict with the computed values.
         """
-        # make sure no unknown kwargs are passed
-        assert kwargs.keys() <= self._compute_allowed_kwargs
         assert input is not None or self.dim_input == 0
 
         # parse parameter values
@@ -314,64 +123,85 @@ class Model(CacheableObject, ParametricObject):
         input = mu_input.get_time_dependent_value('input') if mu_input.is_time_dependent('input') else mu_input['input']
         mu = mu.with_(input=input)
 
-        # log output
-        # explicitly checking if logging is disabled saves some cpu cycles
-        if not self.logging_disabled:
-            self.logger.info(f'Solving {self.name} for {mu} ...')
+        # collect all quantities to be computed
+        wanted_quantities = set(quantities) if quantities else set()
+        wanted_quantities.update(quantity for quantity, wanted in kwargs.items() if wanted)
+        if solution:
+            wanted_quantities.add('solution')
+        if output:
+            wanted_quantities.add('output')
+        if solution_d_mu:
+            if solution_d_mu is True:
+                solution_d_mu = tuple((param, idx) for param, dim in self.parameters.items() for idx in range(dim))
+            assert all(0 <= idx < self.parameters[param] for param, idx in solution_d_mu)
+            wanted_quantities.update(('solution_d_mu', param, idx) for param, idx in solution_d_mu)
+        if output_d_mu:
+            wanted_quantities.add('output_d_mu')
+        if solution_error_estimate:
+            wanted_quantities.add('solution_error_estimate')
+        if output_error_estimate:
+            wanted_quantities.add('output_error_estimate')
 
-        # first call _compute to give subclasses more control
-        data = self._compute(solution=solution, output=output,
-                             solution_d_mu=solution_d_mu, output_d_mu=output_d_mu,
-                             solution_error_estimate=solution_error_estimate,
-                             output_error_estimate=output_error_estimate,
-                             mu=mu, **kwargs)
+        # make sure no unknown kwargs are passed
+        assert wanted_quantities <= self.computable_quantities
 
-        if (solution or solution_error_estimate or solution_d_mu) and 'solution' not in data \
-           or (output or output_error_estimate or output_d_mu) and 'output' not in data:
-            retval = self.cached_method_call(self._compute_solution, mu=mu)
-            if isinstance(retval, dict):
-                assert 'solution' in retval
-                data.update(retval)
-            else:
-                data['solution'] = retval
+        data = data if data is not None else {}
+        self._compute_or_retrieve_from_cache(wanted_quantities, data, mu)
 
-        if output and 'output' not in data:
-            # TODO: use caching here (requires skipping args in key generation)
-            retval = self._compute_output(data['solution'], mu=mu)
-            if isinstance(retval, dict):
-                assert 'output' in retval
-                data.update(retval)
-            else:
-                data['output'] = retval
-
-        if solution_d_mu and 'solution_d_mu' not in data:
-            retval = self._compute_solution_d_mu(data['solution'], solution_d_mu, mu=mu)
-            data['solution_d_mu'] = retval
-
-        if output_d_mu and 'output_d_mu' not in data:
-            # TODO: use caching here (requires skipping args in key generation)
-            retval = self._compute_output_d_mu(data['solution'], mu=mu)
-            data['output_d_mu'] = retval
-
-        if solution_error_estimate and 'solution_error_estimate' not in data:
-            # TODO: use caching here (requires skipping args in key generation)
-            retval = self._compute_solution_error_estimate(data['solution'], mu=mu)
-            if isinstance(retval, dict):
-                assert 'solution_error_estimate' in retval
-                data.update(retval)
-            else:
-                data['solution_error_estimate'] = retval
-
-        if output_error_estimate and 'output_error_estimate' not in data:
-            # TODO: use caching here (requires skipping args in key generation)
-            retval = self._compute_output_error_estimate(data['solution'], mu=mu)
-            if isinstance(retval, dict):
-                assert 'output_error_estimate' in retval
-                data.update(retval)
-            else:
-                data['output_error_estimate'] = retval
+        if solution_d_mu:
+            data['solution_d_mu'] = {quantity: data[('solution_d_mu',) + quantity] for quantity in solution_d_mu}
 
         return data
+
+    def _compute_required_quatities(self, quantities, data, mu):
+        quantities = {q for q in quantities if q not in data}
+        if not quantities:
+            return
+        self.logger.info('Computing required quantities ...')
+        self._compute_or_retrieve_from_cache(quantities, data, mu)
+
+    def _compute_or_retrieve_from_cache(self, quantities, data, mu):
+        assert quantities <= self.computable_quantities
+
+        # fetch already computed data from cache and determine which quantites
+        # actually need to be computed
+        data = data if data is not None else {}
+        quantities_to_compute = set()
+        for quantity in quantities:
+            if quantity in data:
+                continue
+            if self.cache_region is not None:
+                try:
+                    data[quantity] = self.get_cached_value((quantity, mu))
+                except CacheKeyGenerationError:
+                    assert isinstance(quantity, str)
+                    self.logger.warning(f'Cannot generate cache key for {mu}. Result will not be cached.')
+                    quantities_to_compute.add(quantity)
+                except KeyError:
+                    quantities_to_compute.add(quantity)
+            else:
+                quantities_to_compute.add(quantity)
+
+        if quantities_to_compute:
+            # log output
+            # explicitly checking if logging is disabled saves some cpu cycles
+            if not self.logging_disabled:
+                with self.logger.block(f'Computing {", ".join(quantities_to_compute)} of {self.name} for {mu} ...'):
+                    # call _compute to actually compute the missing quantities
+                    self._compute(quantities_to_compute.copy(), data, mu=mu)
+            else:
+                # call _compute to actually compute the missing quantities
+                self._compute(quantities_to_compute.copy(), data, mu=mu)
+
+        if self.cache_region is not None:
+            for quantity in quantities_to_compute:
+                try:
+                    self.set_cached_value((quantity, mu), data[quantity])
+                except CacheKeyGenerationError:
+                    pass
+
+        assert all(quantity in data for quantity in quantities_to_compute)
+
 
     def solve(self, mu=None, input=None, return_error_estimate=False):
         """Solve the discrete problem for the |parameter values| `mu`.
@@ -600,6 +430,57 @@ class Model(CacheableObject, ParametricObject):
             return self.visualizer.visualize(U, **kwargs)
         else:
             raise NotImplementedError('Model has no visualizer.')
+
+    def _compute(self, quantities, data, mu=None):
+        if 'solution' in quantities:
+            raise NotImplementedError
+
+        if 'output' in quantities:
+            # default implementation in case Model has an 'output_functional'
+            if not hasattr(self, 'output_functional'):
+                raise NotImplementedError
+            self._compute_required_quatities({'solution'}, data, mu)
+
+            data['output'] = self.output_functional.apply(data['solution'], mu=mu).to_numpy()
+            quantities.remove('output')
+
+        if 'output_d_mu' in quantities:
+            # default implementation in case Model has an 'output_functional'
+            if not hasattr(self, 'output_functional'):
+                raise NotImplementedError
+            self._compute_required_quatities(
+                {'solution'} | {('solution_d_mu', param, idx) for param, dim in self.parameters for idx in range(dim)},
+                data, mu
+            )
+
+            solution = data['solution']
+            sensitivities = {}
+            for (parameter, size) in self.parameters.items():
+                for index in range(size):
+                    output_d_mu = self.output_functional.d_mu(parameter, index).apply(
+                        solution, mu=mu).to_numpy()
+                    U_d_mu = data['solution_d_mu', parameter, index]
+                    for t, U in enumerate(U_d_mu):
+                        output_d_mu[t] += self.output_functional.jacobian(solution[t], mu).apply(U, mu).to_numpy()[0]
+                    sensitivities[parameter, index] = output_d_mu
+            data['output_d_mu'] = OutputDMuResult(sensitivities)
+            quantities.remove('output_d_mu')
+
+        if 'solution_error_estimate' in quantities:
+            if self.error_estimator is None:
+                raise ValueError('Model has no error estimator')
+            self._compute_required_quatities({'solution'}, data, mu)
+
+            data['solution_error_estimate'] = self.error_estimator.estimate_error(data['solution'], mu, self)
+            quantities.remove('solution_error_estimate')
+
+        if 'output_error_estimate' in quantities:
+            if self.error_estimator is None:
+                raise ValueError('Model has no error estimator')
+            self._compute_required_quatities({'solution'}, data, mu)
+
+            data['output_error_estimate'] = self.error_estimator.estimate_output_error(data['solution'], mu, self)
+            quantities.remove('output_error_estimate')
 
 
 class OutputDMuResult(FrozenDict):
