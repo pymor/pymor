@@ -96,7 +96,6 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
         xtrmm, xtrtri = spla.blas.ztrmm, spla.lapack.ztrtri
 
     iter = 1
-    shift = None
     eig = None
     while iter <= maxiter:
         shift = None
@@ -116,17 +115,16 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
                         shift = m*n+n*(n+1)
                         XX = X
                     else:
-                        if not eig:
+                        if eig is None:
                             from pymor.algorithms.eigs import eigs
                             eig = eigs(product, k=1)[0][0]
 
-                        shift = 2*m*np.sqrt(m*n)+n*(n+1)*np.abs(eig)
+                        shift = (2*m*np.sqrt(m*n)+n*(n+1))*np.abs(eig)
                         XX = A[offset:].gramian(product=product)
                     shift *= 11*eps*spla.eigh(XX, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]**2
 
                 logger.info(f'Applying shift: {shift}')
-                idx = range(len(X))
-                X[idx, idx] += shift
+                X[np.diag_indices_from(X)] += shift
 
             # orthogonalize
             Rinv = xtrtri(Rx)[0].T
