@@ -6,6 +6,7 @@ import numpy as np
 import scipy.linalg as spla
 import scipy.sparse.linalg as spsla
 
+from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
 
 
@@ -154,7 +155,7 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None,
                 if res <= orth_tol*np.sqrt(len(A)):
                     break
                 elif iter == maxiter:
-                    logger.warning('Orthonormality could not be achieved within the given tolerance. \
+                    raise AccuracyError('Orthonormality could not be achieved within the given tolerance. \
                     Consider increasing maxiter.')
 
             iter += 1
