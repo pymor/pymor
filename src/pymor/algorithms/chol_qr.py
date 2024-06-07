@@ -85,15 +85,7 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
     B = B.conj()
 
     dtype = np.promote_types(X.dtype, np.float32)
-    eps = np.finfo(dtype).eps
-    if dtype == np.float32:
-        xtrmm, xtrtri = spla.blas.strmm, spla.lapack.strtri
-    elif dtype == np.float64:
-        xtrmm, xtrtri = spla.blas.dtrmm, spla.lapack.dtrtri
-    elif dtype == np.complex64:
-        xtrmm, xtrtri = spla.blas.ctrmm, spla.lapack.ctrtri
-    elif dtype == np.complex128:
-        xtrmm, xtrtri = spla.blas.ztrmm, spla.lapack.ztrtri
+    trmm, trtri = spla.get_blas_funcs('trmm', dtype=dtype), spla.get_lapack_funcs('trtri', dtype=dtype)
 
     iter = 1
     eig = None
@@ -121,13 +113,14 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
 
                         shift = (2*m*np.sqrt(m*n)+n*(n+1))*np.abs(eig)
                         XX = A[offset:].gramian(product=product)
-                    shift *= 11*eps*spla.eigh(XX, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]**2
+                    shift *= 11*np.finfo(dtype).eps
+                    shift *= spla.eigh(XX, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]**2
 
                 logger.info(f'Applying shift: {shift}')
                 X[np.diag_indices_from(X)] += shift
 
             # orthogonalize
-            Rinv = xtrtri(Rx)[0].T
+            Rinv = trtri(Rx)[0].T
             A_todo = A[:offset].lincomb(-Rinv@B) + A[offset:].lincomb(Rinv)
             del A[offset:]
             A.append(A_todo)
@@ -138,7 +131,7 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
                 Ri = Rx
             else:
                 Bi += B.T @ Rx
-                xtrmm(1, Rx, Ri, overwrite_b=True)
+                trmm(1, Rx, Ri, overwrite_b=True)
 
             # computation not needed in the last iteration
             if iter < maxiter:
