@@ -4,11 +4,13 @@
 
 import numpy as np
 import scipy.linalg as spla
+import scipy.sparse.linalg as spsla
 
 from pymor.core.logger import getLogger
 
 
-def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_finite=True, copy=True):
+def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None,
+                    check_finite=True, copy=True, product_norm=None):
     r"""Orthonormalize a |VectorArray| using the shifted CholeskyQR algorithm.
 
     This method computes a QR decomposition of a |VectorArray| via Cholesky factorizations
@@ -53,6 +55,9 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
         inputs do contain infinities or NaNs.
     copy
         If `True`, create a copy of `A` instead of modifying `A` in-place.
+    product_norm
+        The spectral norm of the inner product. If `None`, it will be computed with
+        :func:`~pymor.algorithms.eigs.eigs`.
 
     Returns
     -------
@@ -87,37 +92,39 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None, check_f
     dtype = np.promote_types(X.dtype, np.float32)
     trmm, trtri = spla.get_blas_funcs('trmm', dtype=dtype), spla.get_lapack_funcs('trtri', dtype=dtype)
 
+    # compute shift
+    m, n = A.dim, len(A[offset:])
+    shift = 11*np.finfo(dtype).eps
+    if product is None:
+        shift *= m*n+n*(n+1)
+        XX = X
+    else:
+        if product_norm is None:
+            from pymor.algorithms.eigs import eigs
+            product_norm = eigs(product, k=1)[0][0]
+        shift = (2*m*np.sqrt(m*n)+n*(n+1))*np.abs(product_norm)
+        XX = A[offset:].gramian()
+    try:
+        shift *= spsla.eigsh(XX, k=1, tol=1e-2, return_eigenvectors=False)[0]
+    except spsla.ArpackNoConvergence as e:
+        logger.warning(f'ARPACK failed with: {e}')
+        logger.info('Proceeding with dense solver.')
+        shift *= spla.eigh(XX, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]
+
     iter = 1
-    eig = None
     while iter <= maxiter:
-        shift = None
         with logger.block(f'Iteration {iter}'):
             # This will compute the Cholesky factor of the lower right block
             # and keep applying shifts if it breaks down.
+            X -= B@B.T
             while True:
                 try:
-                    Rx = spla.cholesky(X - B@B.T, overwrite_a=True, check_finite=check_finite)
+                    Rx = spla.cholesky(X, overwrite_a=True, check_finite=check_finite)
                     break
                 except spla.LinAlgError:
-                    pass
-                logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
-                if shift is None:
-                    m, n = A.dim, len(A[offset:])
-                    if product is None:
-                        shift = m*n+n*(n+1)
-                        XX = X
-                    else:
-                        if eig is None:
-                            from pymor.algorithms.eigs import eigs
-                            eig = eigs(product, k=1)[0][0]
-
-                        shift = (2*m*np.sqrt(m*n)+n*(n+1))*np.abs(eig)
-                        XX = A[offset:].gramian(product=product)
-                    shift *= 11*np.finfo(dtype).eps
-                    shift *= spla.eigh(XX, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]**2
-
-                logger.info(f'Applying shift: {shift}')
-                X[np.diag_indices_from(X)] += shift
+                    logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
+                    logger.info(f'Applying shift: {shift}')
+                    X[np.diag_indices_from(X)] += shift
 
             # orthogonalize
             Rinv = trtri(Rx)[0].T
