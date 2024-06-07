@@ -102,8 +102,8 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None,
     else:
         if product_norm is None:
             from pymor.algorithms.eigs import eigs
-            product_norm = eigs(product, k=1)[0][0]
-        shift = (2*m*np.sqrt(m*n)+n*(n+1))*np.abs(product_norm)
+            product_norm = np.sqrt(np.abs(eigs(product, k=1)[0][0]))
+        shift *= (2*m*np.sqrt(m*n)+n*(n+1))*product_norm
         XX = A[offset:].gramian()
     try:
         shift *= spsla.eigsh(XX, k=1, tol=1e-2, return_eigenvectors=False)[0]
