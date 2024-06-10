@@ -21,7 +21,6 @@ def function_argument(f, count, rng):
 
 
 def mu_of_type(parameters, rng):
-    rng = np.random.default_rng(0)
     while True:
         if parameters is None:
             yield None
