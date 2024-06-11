@@ -186,7 +186,10 @@ class Model(CacheableObject, ParametricObject):
             # log output
             # explicitly checking if logging is disabled saves some cpu cycles
             if not self.logging_disabled:
-                with self.logger.block(f'Computing {", ".join(quantities_to_compute)} of {self.name} for {mu} ...'):
+                quant = ['_'.join(str(qq) for qq in q) if isinstance(q, tuple) else q for q in quantities_to_compute]
+                if len(quant) > 10:
+                    quant = quant[:10] + ['...']
+                with self.logger.block(f'Computing {", ".join(str(q) for q in quant)} of {self.name} for {mu} ...'):
                     # call _compute to actually compute the missing quantities
                     self._compute(quantities_to_compute.copy(), data, mu=mu)
             else:
