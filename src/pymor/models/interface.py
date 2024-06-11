@@ -35,6 +35,8 @@ class Model(CacheableObject, ParametricObject):
         Dict of inner product operators associated with the model.
     order
         Dimension of the `solution_space`.
+    computable_quantities
+        Set of quantities that can be compute via :meth:`compute`.
     """
 
     solution_space = None
@@ -74,13 +76,15 @@ class Model(CacheableObject, ParametricObject):
         This method computes the output of the model, its internal state,
         and various associated quantities for given |parameter values| `mu`.
 
-        .. note::
-
-            The default implementation defers the actual computations to
-            :meth:`!_compute`.
-
         Parameters
         ----------
+        data
+            If not `None`, a dict of already computed quantities for the given `mu` and
+            `input`. If used, newly computed quantities are added to the given dict and
+            the same dict is returned.
+            Providing a `data` dict can be helpful when some quantities (e.g., `output`)
+            depend on already known quantities (e.g, `solution`) and caching has not been
+            activated.
         solution
             If `True`, return the model's internal state.
         output
@@ -153,6 +157,21 @@ class Model(CacheableObject, ParametricObject):
         return data
 
     def _compute_required_quantities(self, quantities, data, mu):
+        """Compute additional required properties.
+
+        Parameters
+        ----------
+        quantities
+            Set of additional quantities to compute.
+        data
+            Dict into which the computed values are inserted.
+        mu
+            |Parameter values| for which to compute the quantities.
+
+        Returns
+        -------
+        `None`.
+        """
         quantities = {q for q in quantities if q not in data}
         if not quantities:
             return
@@ -434,6 +453,48 @@ class Model(CacheableObject, ParametricObject):
             raise NotImplementedError('Model has no visualizer.')
 
     def _compute(self, quantities, data, mu):
+        """Actually compute model quantities.
+
+        Override this method to provide implementations for solving a model,
+        computing its output or other :attr:`computable_quantities`.
+
+        `_compute` is passed a :class:`set` of quantities to compute.
+        If `_compute` knows how to compute a given quantities, the computed value
+        has to be added to the provided `data` dict. After that, the quantity
+        should be removed from `quantities` so that a ::
+
+            super()._compute(quantities, data, mu)
+
+        end of the implementation will not cause `NotImplementedErrors`.
+        :class:`Model` provides default implementations for the `output`, `output_d_mu`,
+        `solution_error_estimate` and `output_error_estimate` quantities.
+        The implementations for `output` and `output_d_mu` require the model to posses
+        an `output_functional` attribute, which is applied to the solution in order to
+        obtain the output. `solution_error_estimate` and `output_error_estimate` defer
+        the error estimation to the model's :attr:`error_estimator`.
+
+        In case a requested quantity depends on another quantities, implementations should
+        call ::
+
+            self._compute_required_quantities({'quantity_a', 'quantity_b'}, data, mu)
+
+        which will populate `data` with the needed quantities by calling `_compute` again
+        or retrieving previously computed values from the cache. Do not compute required
+        properties directly in `_compute` as this will break caching.
+
+        Parameters
+        ----------
+        quantities
+            Set of additional quantities to compute.
+        data
+            Dict into which the computed values are inserted.
+        mu
+            |Parameter values| for which to compute the quantities.
+
+        Returns
+        -------
+        `None`.
+        """
         if 'solution' in quantities:
             raise NotImplementedError
 
