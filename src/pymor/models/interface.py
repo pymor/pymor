@@ -449,7 +449,8 @@ class Model(CacheableObject, ParametricObject):
             if not hasattr(self, 'output_functional'):
                 raise NotImplementedError
             self._compute_required_quatities(
-                {'solution'} | {('solution_d_mu', param, idx) for param, dim in self.parameters for idx in range(dim)},
+                {'solution'} | {('solution_d_mu', param, idx)
+                                for param, dim in self.parameters.items() for idx in range(dim)},
                 data, mu
             )
 
