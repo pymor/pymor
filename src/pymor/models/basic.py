@@ -97,7 +97,7 @@ class StationaryModel(Model):
             quantities.remove('solution')
 
         for _, param, idx in [q for q in quantities if isinstance(q, tuple) and q[0] == 'solution_d_mu']:
-            self._compute_required_quatities({'solution'}, data, mu)
+            self._compute_required_quantities({'solution'}, data, mu)
 
             lhs_d_mu = self.operator.d_mu(param, idx).apply(data['solution'], mu=mu)
             rhs_d_mu = self.rhs.d_mu(param, idx).as_range_array(mu)
@@ -108,7 +108,7 @@ class StationaryModel(Model):
         if 'output_d_mu' in quantities and self.output_d_mu_use_adjoint:
             if not self.operator.linear:
                 raise NotImplementedError
-            self._compute_required_quatities({'solution'}, data, mu)
+            self._compute_required_quantities({'solution'}, data, mu)
 
             jacobian = self.output_functional.jacobian(data['solution'], mu)
             assert jacobian.linear

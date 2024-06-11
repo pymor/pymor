@@ -153,7 +153,7 @@ class Model(CacheableObject, ParametricObject):
 
         return data
 
-    def _compute_required_quatities(self, quantities, data, mu):
+    def _compute_required_quantities(self, quantities, data, mu):
         quantities = {q for q in quantities if q not in data}
         if not quantities:
             return
@@ -442,7 +442,7 @@ class Model(CacheableObject, ParametricObject):
             # default implementation in case Model has an 'output_functional'
             if not hasattr(self, 'output_functional'):
                 raise NotImplementedError
-            self._compute_required_quatities({'solution'}, data, mu)
+            self._compute_required_quantities({'solution'}, data, mu)
 
             data['output'] = self.output_functional.apply(data['solution'], mu=mu).to_numpy()
             quantities.remove('output')
@@ -451,7 +451,7 @@ class Model(CacheableObject, ParametricObject):
             # default implementation in case Model has an 'output_functional'
             if not hasattr(self, 'output_functional'):
                 raise NotImplementedError
-            self._compute_required_quatities(
+            self._compute_required_quantities(
                 {'solution'} | {('solution_d_mu', param, idx)
                                 for param, dim in self.parameters.items() for idx in range(dim)},
                 data, mu
@@ -473,7 +473,7 @@ class Model(CacheableObject, ParametricObject):
         if 'solution_error_estimate' in quantities:
             if self.error_estimator is None:
                 raise ValueError('Model has no error estimator')
-            self._compute_required_quatities({'solution'}, data, mu)
+            self._compute_required_quantities({'solution'}, data, mu)
 
             data['solution_error_estimate'] = self.error_estimator.estimate_error(data['solution'], mu, self)
             quantities.remove('solution_error_estimate')
@@ -481,7 +481,7 @@ class Model(CacheableObject, ParametricObject):
         if 'output_error_estimate' in quantities:
             if self.error_estimator is None:
                 raise ValueError('Model has no error estimator')
-            self._compute_required_quatities({'solution'}, data, mu)
+            self._compute_required_quantities({'solution'}, data, mu)
 
             data['output_error_estimate'] = self.error_estimator.estimate_output_error(data['solution'], mu, self)
             quantities.remove('output_error_estimate')
