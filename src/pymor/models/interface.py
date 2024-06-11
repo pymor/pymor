@@ -65,7 +65,7 @@ class Model(CacheableObject, ParametricObject):
             | {('solution_d_mu', param, idx) for param, dim in self.parameters.items() for idx in range(dim)}
         )
 
-    def compute(self, quantities=None, data=None, *,
+    def compute(self, data=None, *,
                 solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                 solution_error_estimate=False, output_error_estimate=False,
                 mu=None, input=None, **kwargs):
@@ -124,8 +124,7 @@ class Model(CacheableObject, ParametricObject):
         mu = mu.with_(input=input)
 
         # collect all quantities to be computed
-        wanted_quantities = set(quantities) if quantities else set()
-        wanted_quantities.update(quantity for quantity, wanted in kwargs.items() if wanted)
+        wanted_quantities = {quantity for quantity, wanted in kwargs.items() if wanted}
         if solution:
             wanted_quantities.add('solution')
         if output:
