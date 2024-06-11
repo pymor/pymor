@@ -434,7 +434,7 @@ class Model(CacheableObject, ParametricObject):
         else:
             raise NotImplementedError('Model has no visualizer.')
 
-    def _compute(self, quantities, data, mu=None):
+    def _compute(self, quantities, data, mu):
         if 'solution' in quantities:
             raise NotImplementedError
 

@@ -37,7 +37,7 @@ class MPIModel:
         self.parameters_internal = m.parameters_internal
         self.visualizer = MPIVisualizer(obj_id)
 
-    def _compute(self, quantities, data, mu=None):
+    def _compute(self, quantities, data, mu):
         if 'solution' in quantities:
             U = self.solution_space.make_array(
                 mpi.call(mpi.method_call_manage, self.obj_id, 'solve', mu=mu)

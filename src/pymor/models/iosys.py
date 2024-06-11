@@ -675,7 +675,7 @@ class LTIModel(Model):
         if E is not None:
             _mmwrite(Path(files_basename + '.E'), E)
 
-    def _compute(self, quantities, data, mu=None):
+    def _compute(self, quantities, data, mu):
         if 'solution' in quantities or 'output' in quantities:
             assert self.T is not None
 
