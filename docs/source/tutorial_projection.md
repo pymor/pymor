@@ -119,7 +119,7 @@ print_source(fom.compute)
 What we see is a default implementation from {class}`~pymor.models.interface.Model` that
 takes care of checking the input {{ parameter_values }} `mu`, {mod}`caching <pymor.core.cache>` and
 {mod}`logging <pymor.core.logger>`, but defers the actual computations to
-{meth}`~pymor.models.interface.Model._compute`:
+{meth}`!_compute`:
 
 ```{code-cell}
 print_source(fom._compute)

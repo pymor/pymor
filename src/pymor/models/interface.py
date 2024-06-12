@@ -35,8 +35,6 @@ class Model(CacheableObject, ParametricObject):
         Dict of inner product operators associated with the model.
     order
         Dimension of the `solution_space`.
-    computable_quantities
-        Set of quantities that can be compute via :meth:`compute`.
     """
 
     solution_space = None
@@ -62,6 +60,7 @@ class Model(CacheableObject, ParametricObject):
 
     @cached_property
     def computable_quantities(self):
+        """Set of quantities that can be compute via :meth:`compute`."""
         return (
             {'solution', 'output', 'output_d_mu', 'solution_error_estimate', 'output_error_estimate'}
             | {('solution_d_mu', param, idx) for param, dim in self.parameters.items() for idx in range(dim)}
