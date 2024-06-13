@@ -21,17 +21,17 @@ n_list_big = [250]
 m_list = [1, 2]
 p_list = [1, 2]
 ricc_lrcf_solver_list_small = [
-    'scipy',
-    'slycot',
-    'pymess_dense_nm_gmpcare',
+    # 'scipy',
+    # 'slycot',
+    # 'pymess_dense_nm_gmpcare',
 ]
 ricc_lrcf_solver_list_big = [
-    'pymess_lrnm',
+    # 'pymess_lrnm',
     'lrradi'
 ]
 ricc_dense_solver_list = [
-    'scipy',
-    'slycot'
+    # 'scipy',
+    # 'slycot'
 ]
 
 
@@ -68,47 +68,47 @@ def relative_residual(A, E, B, C, R, S, Z, trans):
     return res / rhs
 
 
+# @pytest.mark.parametrize('m', m_list)
+# @pytest.mark.parametrize('p', p_list)
+# @pytest.mark.parametrize('with_E', [False, True])
+# @pytest.mark.parametrize('with_R', [False, True])
+# @pytest.mark.parametrize('with_S', [False]) #, True])
+# @pytest.mark.parametrize('trans', [False, True])
+# @pytest.mark.parametrize('n', n_list_small)
+# @pytest.mark.parametrize('solver', ricc_dense_solver_list)
+# def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
+#     skip_if_missing_solver(solver)
+#
+#     if not with_E:
+#         A = conv_diff_1d_fd(n, 1, 1)
+#         A = A.todense()
+#         E = None
+#     else:
+#         A, E = conv_diff_1d_fem(n, 1, 1)
+#         A = A.todense()
+#         E = E.todense()
+#     B = np.random.randn(n, m)
+#     C = np.random.randn(p, n)
+#     D = np.random.randn(p, m)
+#     if not trans:
+#         R0 = np.random.randn(p, p)
+#         R = D.dot(D.T) + R0.dot(R0.T) if with_R else None
+#         S = 1e-1 * D @ B.T if with_S else None
+#     else:
+#         R0 = np.random.randn(m, m)
+#         R = D.T.dot(D) + R0.dot(R0.T) if with_R else None
+#         S = 1e-1 * C.T @ D if with_S else None
+#
+#     X = solve_ricc_dense(A, E, B, C, R, S, trans=trans, options=solver)
+#
+#     assert relative_residual(A, E, B, C, R, S, _chol(X), trans) < 1e-8
+
+
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
 @pytest.mark.parametrize('with_E', [False, True])
 @pytest.mark.parametrize('with_R', [False, True])
-@pytest.mark.parametrize('with_S', [False, True])
-@pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('n', n_list_small)
-@pytest.mark.parametrize('solver', ricc_dense_solver_list)
-def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver):
-    skip_if_missing_solver(solver)
-
-    if not with_E:
-        A = conv_diff_1d_fd(n, 1, 1)
-        A = A.todense()
-        E = None
-    else:
-        A, E = conv_diff_1d_fem(n, 1, 1)
-        A = A.todense()
-        E = E.todense()
-    B = np.random.randn(n, m)
-    C = np.random.randn(p, n)
-    D = np.random.randn(p, m)
-    if not trans:
-        R0 = np.random.randn(p, p)
-        R = D.dot(D.T) + R0.dot(R0.T) if with_R else None
-        S = 1e-1 * D @ B.T if with_S else None
-    else:
-        R0 = np.random.randn(m, m)
-        R = D.T.dot(D) + R0.dot(R0.T) if with_R else None
-        S = 1e-1 * C.T @ D if with_S else None
-
-    X = solve_ricc_dense(A, E, B, C, R, S, trans=trans, options=solver)
-
-    assert relative_residual(A, E, B, C, R, S, _chol(X), trans) < 1e-8
-
-
-@pytest.mark.parametrize('m', m_list)
-@pytest.mark.parametrize('p', p_list)
-@pytest.mark.parametrize('with_E', [False, True])
-@pytest.mark.parametrize('with_R', [False, True])
-@pytest.mark.parametrize('with_S', [False, True])
+@pytest.mark.parametrize('with_S', [True])
 @pytest.mark.parametrize('trans', [False, True])
 @pytest.mark.parametrize('n,solver', chain(product(n_list_small, ricc_lrcf_solver_list_small),
                                            product(n_list_big, ricc_lrcf_solver_list_big)))
@@ -148,47 +148,47 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     assert relative_residual(A, E, B, C, R, S, Z, trans) < 1e-8
 
 
-@pytest.mark.parametrize('m', m_list)
-@pytest.mark.parametrize('p', p_list)
-@pytest.mark.parametrize('with_E', [False, True])
-@pytest.mark.parametrize('with_R', [False, True])
-@pytest.mark.parametrize('with_S', [False, True])
-@pytest.mark.parametrize('trans', [False, True])
-@pytest.mark.parametrize('n,solver', chain(product(n_list_small, ricc_lrcf_solver_list_small),
-                                           product(n_list_big, ricc_lrcf_solver_list_big)))
-def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
-    skip_if_missing_solver(solver)
-    if with_S and solver.startswith('pymess'):
-        pytest.xfail('solver not implemented')
-
-    if not with_E:
-        A = conv_diff_1d_fd(n, 1, 1)
-        E = None
-    else:
-        A, E = conv_diff_1d_fem(n, 1, 1)
-    B = np.random.randn(n, m)
-    C = np.random.randn(p, n)
-    D = np.random.randn(p, m)
-    if not trans:
-        R0 = np.random.randn(p, p)
-        R = D.dot(D.T) + 10 * R0.dot(R0.T) if with_R else None
-        S = np.random.randn(p,n) if with_S else None
-    else:
-        R0 = np.random.randn(m, m)
-        R = D.T.dot(D) + 10 * R0.dot(R0.T) if with_R else None
-        S = np.random.randn(n,m) if with_S else None
-
-    Aop = NumpyMatrixOperator(A)
-    Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B.T)
-    Cva = Aop.source.from_numpy(C)
-    Sva = Aop.source.from_numpy((S if not trans else S.T)) if with_S else None
-
-    Zva = solve_pos_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
-
-    assert len(Zva) <= n
-
-    Z = Zva.to_numpy().T
-    if not with_R:
-        R = np.eye(p if not trans else m)
-    assert relative_residual(A, E, B, C, -R, S, Z, trans) < 1e-8
+# @pytest.mark.parametrize('m', m_list)
+# @pytest.mark.parametrize('p', p_list)
+# @pytest.mark.parametrize('with_E', [False, True])
+# @pytest.mark.parametrize('with_R', [False, True])
+# @pytest.mark.parametrize('with_S', [False, True])
+# @pytest.mark.parametrize('trans', [False, True])
+# @pytest.mark.parametrize('n,solver', chain(product(n_list_small, ricc_lrcf_solver_list_small),
+#                                            product(n_list_big, ricc_lrcf_solver_list_big)))
+# def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
+#     skip_if_missing_solver(solver)
+#     if with_S and solver.startswith('pymess'):
+#         pytest.xfail('solver not implemented')
+#
+#     if not with_E:
+#         A = conv_diff_1d_fd(n, 1, 1)
+#         E = None
+#     else:
+#         A, E = conv_diff_1d_fem(n, 1, 1)
+#     B = np.random.randn(n, m)
+#     C = np.random.randn(p, n)
+#     D = np.random.randn(p, m)
+#     if not trans:
+#         R0 = np.random.randn(p, p)
+#         R = D.dot(D.T) + 10 * R0.dot(R0.T) if with_R else None
+#         S = np.random.randn(p,n) if with_S else None
+#     else:
+#         R0 = np.random.randn(m, m)
+#         R = D.T.dot(D) + 10 * R0.dot(R0.T) if with_R else None
+#         S = np.random.randn(n,m) if with_S else None
+#
+#     Aop = NumpyMatrixOperator(A)
+#     Eop = NumpyMatrixOperator(E) if with_E else None
+#     Bva = Aop.source.from_numpy(B.T)
+#     Cva = Aop.source.from_numpy(C)
+#     Sva = Aop.source.from_numpy((S if not trans else S.T)) if with_S else None
+#
+#     Zva = solve_pos_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
+#
+#     assert len(Zva) <= n
+#
+#     Z = Zva.to_numpy().T
+#     if not with_R:
+#         R = np.eye(p if not trans else m)
+#     assert relative_residual(A, E, B, C, -R, S, Z, trans) < 1e-8

@@ -89,128 +89,135 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
         |VectorArray| from `A.source`.
     """
     _solve_ricc_check_args(A, E, B, C, R, Q, S, trans)
+
+    if S is not None:
+        if R is not None:
+            Rinv = spla.solve(R, np.eye(R.shape[0]))
+        else:
+            R = Rinv = np.eye(len(B) if trans else len(C))
+
+        BRinvSt = LowRankOperator(B, Rinv, S)
+        tA = A - BRinvSt
+        tC = cat_arrays([C, S])
+        if Q is None:
+            tQ = spla.block_diag(np.eye(len(C)), -Rinv)
+        else:
+            tQ = spla.block_diag(Q, -Rinv)
+        Z_cf = solve_ricc_lrcf(tA, E, B, tC, R, tQ, None, trans, options)
+        return Z_cf
+
+    options = _parse_options(options, ricc_lrcf_solver_options(), 'lrradi', None, False)
+    logger = getLogger('pymor.algorithms.lrradi.solve_ricc_lrcf')
+
+    shift_options = options['shift_options'][options['shifts']]
+    if shift_options['type'] == 'hamiltonian_shifts':
+        init_shifts = hamiltonian_shifts_init
+        iteration_shifts = hamiltonian_shifts
+    else:
+        raise ValueError('Unknown lrradi shift strategy.')
+
+    if E is None:
+        E = IdentityOperator(A.source)
+
+    if not trans:
+        B, C = C, B
+
     if R is not None:
         Rinv = spla.solve(R, np.eye(R.shape[0]))
     else:
         R = Rinv = np.eye(len(B))
 
-    if S is not None:
-        BRinvSt = LowRankOperator(B, Rinv, S)
-        tA = A - BRinvSt
-        tC = cat_arrays(C.copy(), S.copy())
-        if Q is None:
-            tQ = spla.block_diag(np.eye(len(C)), -Rinv)
-        else:
-            tQ = spla.block_diag(Q, -Rinv)
-        Z_cf = solve_ricc_lrcf(tA, E, B, tC, R, tQ, trans, options)
+    Z = A.source.empty(reserve=len(C) * options['maxiter'])
+    Y = np.empty((0, 0))
+
+    K = A.source.zeros(len(B))
+
+    RF = C.copy()
+    RC = np.eye(len(C)) if Q is None else Q
+
+    j = 0
+    j_shift = 0
+    shifts = init_shifts(A, E, B, C, shift_options)
+
+    if Q is None:
+        res = np.linalg.norm(RF.gramian(), ord='fro')
     else:
-        options = _parse_options(options, ricc_lrcf_solver_options(), 'lrradi', None, False)
-        logger = getLogger('pymor.algorithms.lrradi.solve_ricc_lrcf')
+        res = np.linalg.norm(RF.gramian() @ RC, ord='fro')
 
-        shift_options = options['shift_options'][options['shifts']]
-        if shift_options['type'] == 'hamiltonian_shifts':
-            init_shifts = hamiltonian_shifts_init
-            iteration_shifts = hamiltonian_shifts
-        else:
-            raise ValueError('Unknown lrradi shift strategy.')
+    init_res = res
+    Ctol = res * options['tol']
 
-        if E is None:
-            E = IdentityOperator(A.source)
-
+    while res > Ctol and j < options['maxiter']:
         if not trans:
-            B, C = C, B
-
-        Z = A.source.empty(reserve=len(C) * options['maxiter'])
-        Y = np.empty((0, 0))
-
-        K = A.source.zeros(len(B))
-
-        RF = C.copy()
-        RC = np.eye(len(C)) if Q is None else Q
-
-        j = 0
-        j_shift = 0
-        shifts = init_shifts(A, E, B, C, shift_options)
-
-        if Q is None:
-            res = np.linalg.norm(RF.gramian(), ord='fro')
+            AsE = A + shifts[j_shift] * E
         else:
-            res = np.linalg.norm(RF.gramian() @ RC, ord='fro')
-
-        init_res = res
-        Ctol = res * options['tol']
-
-        while res > Ctol and j < options['maxiter']:
+            AsE = A + np.conj(shifts[j_shift]) * E
+        if j == 0:
             if not trans:
-                AsE = A + shifts[j_shift] * E
+                V = AsE.apply_inverse(RF) * np.sqrt(-2 * shifts[j_shift].real)
             else:
-                AsE = A + np.conj(shifts[j_shift]) * E
-            if j == 0:
-                if not trans:
-                    V = AsE.apply_inverse(RF) * np.sqrt(-2 * shifts[j_shift].real)
-                else:
-                    V = AsE.apply_inverse_adjoint(RF) * np.sqrt(-2 * shifts[j_shift].real)
+                V = AsE.apply_inverse_adjoint(RF) * np.sqrt(-2 * shifts[j_shift].real)
+        else:
+            if not trans:
+                BRiK = LowRankOperator(K, Rinv, B)
+                AsEBRiK = AsE - BRiK
+                V = AsEBRiK.apply_inverse(RF) * np.sqrt(-2 * shifts[j_shift].real)
             else:
-                if not trans:
-                    BRiK = LowRankOperator(K, Rinv, B)
-                    AsEBRiK = AsE - BRiK
-                    V = AsEBRiK.apply_inverse(RF) * np.sqrt(-2 * shifts[j_shift].real)
-                else:
-                    BRiK = LowRankOperator(B, Rinv, K)
-                    AsEBRiK = AsE - BRiK
-                    V = AsEBRiK.apply_inverse_adjoint(RF) * np.sqrt(-2 * shifts[j_shift].real)
-            if np.imag(shifts[j_shift]) == 0:
-                V = V.real
-                Z.append(V)
-                VB = V.inner(B)
-                Yt = RC - (VB @ Rinv @ VB.T) / (2 * shifts[j_shift].real)
-                Y = spla.block_diag(Y, Yt)
-                if not trans:
-                    EVYt = E.apply(V).lincomb(np.linalg.inv(Yt))
-                else:
-                    EVYt = E.apply_adjoint(V).lincomb(np.linalg.inv(Yt))
-                RF.axpy(np.sqrt(-2*shifts[j_shift].real), EVYt)
-                K += EVYt.lincomb(VB.T)
-                j += 1
+                BRiK = LowRankOperator(B, Rinv, K)
+                AsEBRiK = AsE - BRiK
+                V = AsEBRiK.apply_inverse_adjoint(RF) * np.sqrt(-2 * shifts[j_shift].real)
+        if np.imag(shifts[j_shift]) == 0:
+            V = V.real
+            Z.append(V)
+            VB = V.inner(B)
+            Yt = RC - (VB @ Rinv @ VB.T) / (2 * shifts[j_shift].real)
+            Y = spla.block_diag(Y, Yt)
+            if not trans:
+                EVYt = E.apply(V).lincomb(np.linalg.inv(Yt))
             else:
-                Z.append(V.real)
-                Z.append(V.imag)
-                Vr = V.real.inner(B)
-                Vi = V.imag.inner(B)
-                sa = np.abs(shifts[j_shift])
-                F1 = np.vstack((
-                    -shifts[j_shift].real/sa * Vr - shifts[j_shift].imag/sa * Vi,
-                    shifts[j_shift].imag/sa * Vr - shifts[j_shift].real/sa * Vi
-                ))
-                F2 = np.vstack((
-                    Vr,
-                    Vi
-                ))
-                F3 = np.vstack((
-                    shifts[j_shift].imag/sa * np.eye(len(RF)),
-                    shifts[j_shift].real/sa * np.eye(len(RF))
-                ))
-                Yt = spla.block_diag(RC, 0.5 * RC) \
-                    - (F1 @ Rinv @ F1.T) / (4 * shifts[j_shift].real)  \
-                    - (F2 @ Rinv @ F2.T) / (4 * shifts[j_shift].real)  \
-                    - (F3 @ RC @ F3.T) / 2
-                Y = spla.block_diag(Y, Yt)
-                if not trans:
-                    EVYt = E.apply(cat_arrays([V.real, V.imag])).lincomb(np.linalg.inv(Yt))
-                else:
-                    EVYt = E.apply_adjoint(cat_arrays([V.real, V.imag])).lincomb(np.linalg.inv(Yt))
-                RF.axpy(np.sqrt(-2 * shifts[j_shift].real), EVYt[:len(C)])
-                K += EVYt.lincomb(F2.T)
-                j += 2
-            j_shift += 1
-            res = np.linalg.norm(RF.gramian() @ RC, ord='fro')
-            logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
-            if j_shift >= shifts.size:
-                shifts = iteration_shifts(A, E, B, RF, K, Z, shift_options)
-                j_shift = 0
-        # transform solution to lrcf
-        cf = spla.cholesky(Y)
-        Z_cf = Z.lincomb(spla.solve_triangular(cf, np.eye(len(Z))).T)
+                EVYt = E.apply_adjoint(V).lincomb(np.linalg.inv(Yt))
+            RF.axpy(np.sqrt(-2*shifts[j_shift].real), EVYt)
+            K += EVYt.lincomb(VB.T)
+            j += 1
+        else:
+            Z.append(V.real)
+            Z.append(V.imag)
+            Vr = V.real.inner(B)
+            Vi = V.imag.inner(B)
+            sa = np.abs(shifts[j_shift])
+            F1 = np.vstack((
+                -shifts[j_shift].real/sa * Vr - shifts[j_shift].imag/sa * Vi,
+                shifts[j_shift].imag/sa * Vr - shifts[j_shift].real/sa * Vi
+            ))
+            F2 = np.vstack((
+                Vr,
+                Vi
+            ))
+            F3 = np.vstack((
+                shifts[j_shift].imag/sa * np.eye(len(RF)),
+                shifts[j_shift].real/sa * np.eye(len(RF))
+            ))
+            Yt = spla.block_diag(RC, 0.5 * RC) \
+                - (F1 @ Rinv @ F1.T) / (4 * shifts[j_shift].real)  \
+                - (F2 @ Rinv @ F2.T) / (4 * shifts[j_shift].real)  \
+                - (F3 @ RC @ F3.T) / 2
+            Y = spla.block_diag(Y, Yt)
+            if not trans:
+                EVYt = E.apply(cat_arrays([V.real, V.imag])).lincomb(np.linalg.inv(Yt))
+            else:
+                EVYt = E.apply_adjoint(cat_arrays([V.real, V.imag])).lincomb(np.linalg.inv(Yt))
+            RF.axpy(np.sqrt(-2 * shifts[j_shift].real), EVYt[:len(C)])
+            K += EVYt.lincomb(F2.T)
+            j += 2
+        j_shift += 1
+        res = np.linalg.norm(RF.gramian() @ RC, ord='fro')
+        logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
+        if j_shift >= shifts.size:
+            shifts = iteration_shifts(A, E, B, RF, K, Z, shift_options)
+            j_shift = 0
+    # transform solution to lrcf
+    cf = spla.cholesky(Y)
+    Z_cf = Z.lincomb(spla.solve_triangular(cf, np.eye(len(Z))).T)
     return Z_cf
 
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
