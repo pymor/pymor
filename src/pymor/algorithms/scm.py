@@ -111,7 +111,8 @@ class UBSuccessiveConstraintsFunctional(ParameterFunctional):
         return np.min(objective_values)
 
 
-def construct_scm_functionals(operator, constraint_parameters, linprog_method='highs', linprog_options={}, M=None):
+def construct_scm_functionals(operator, constraint_parameters, linprog_method='highs', linprog_options={}, M=None,
+                              product=None):
     assert isinstance(operator, LincombOperator)
     assert all(op.linear and not op.parametric for op in operator.operators)
     operators = operator.operators
@@ -124,10 +125,10 @@ def construct_scm_functionals(operator, constraint_parameters, linprog_method='h
     with logger.block('Computing coercivity constants for parameters by solving eigenvalue problems ...'):
         for mu in constraint_parameters:
             fixed_parameter_op = operator.assemble(mu)
-            eigvals, eigvecs = eigs(fixed_parameter_op, k=1, which='SM')
+            eigvals, eigvecs = eigs(fixed_parameter_op, k=1, which='SM', E=product)
             coercivity_constants.append(eigvals[0].real)
             minimizer = eigvecs[0]
-            minimizer_squared_norm = minimizer.norm() ** 2
+            minimizer_squared_norm = minimizer.norm(product=product) ** 2
             y_opt = np.array([op.apply2(minimizer, minimizer)[0].real / minimizer_squared_norm
                               for op in operators])
             minimizers.append(y_opt)
@@ -135,11 +136,11 @@ def construct_scm_functionals(operator, constraint_parameters, linprog_method='h
     with logger.block('Computing bounds on design variables by solving eigenvalue problems ...'):
         def lower_bound(operator):
             # some dispatch should be added here in the future
-            eigvals, _ = eigs(operator, k=1, which='SM')
+            eigvals, _ = eigs(operator, k=1, which='SM', E=product)
             return eigvals[0].real
 
         def upper_bound(operator):
-            eigvals, _ = eigs(operator, k=1, which='LM')
+            eigvals, _ = eigs(operator, k=1, which='LM', E=product)
             return eigvals[0].real
 
         bounds = [(lower_bound(aq), upper_bound(aq)) for aq in operators]
