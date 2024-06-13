@@ -20,11 +20,10 @@ n_list = [10, 20, 30]
 
 @pytest.mark.parametrize('n', n_list)
 @pytest.mark.parametrize('trans', [False, True])
-def test_bernoulli(n, trans):
+def test_bernoulli(n, trans, rng):
     E = -ortho_group.rvs(dim=n, random_state=0)
     A = np.diag(np.concatenate((np.arange(-n + 4, 0), np.arange(1, 5)))) @ E
     A = A + 1.j * A
-    rng = np.random.default_rng(0)
     B = rng.standard_normal((n, 1))
 
     if not trans:
@@ -43,8 +42,7 @@ def test_bernoulli(n, trans):
 
 @pytest.mark.parametrize('n', n_list)
 @pytest.mark.parametrize('trans', [False, True])
-def test_bernoulli_stabilize(n, trans):
-    rng = np.random.default_rng(0)
+def test_bernoulli_stabilize(n, trans, rng):
     A = sps.random(n, n, density=0.3, random_state=rng)
     Aop = NumpyMatrixOperator(A)
 

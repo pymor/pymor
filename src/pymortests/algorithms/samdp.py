@@ -45,7 +45,7 @@ def conv_diff_1d_fem(n, a, b):
 @pytest.mark.parametrize('wanted', wanted_list)
 @pytest.mark.parametrize('which', which_list)
 @pytest.mark.parametrize('with_E', [False, True])
-def test_samdp(n, m, k, wanted, with_E, which):
+def test_samdp(n, m, k, wanted, with_E, which, rng):
     if not with_E:
         A = conv_diff_1d_fd(n, 1, 1)
         E = sps.eye(n)
@@ -54,7 +54,6 @@ def test_samdp(n, m, k, wanted, with_E, which):
         A, E = conv_diff_1d_fem(n, 1, 1)
         Eop = NumpyMatrixOperator(E)
 
-    rng = np.random.default_rng(0)
     B = rng.standard_normal((n, m))
     C = rng.standard_normal((k, n))
 

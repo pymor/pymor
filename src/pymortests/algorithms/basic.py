@@ -185,8 +185,7 @@ def test_project_array(vector_arrays):
 
 
 @pytest.mark.builtin()
-def test_project_array_with_product():
-    rng = np.random.default_rng(0)
+def test_project_array_with_product(rng):
     U = NumpyVectorSpace.from_numpy(rng.random((1, 10)))
     basis = NumpyVectorSpace.from_numpy(rng.random((3, 10)))
     product = rng.random((10, 10))

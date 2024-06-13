@@ -63,11 +63,3 @@ def function(request):
 @pytest.fixture(params=constant_functions + picklable_generic_functions + expression_functions)
 def picklable_function(request):
     return request.param
-
-
-def function_argument(f, count):
-    rng = np.random.default_rng(0)
-    if isinstance(count, tuple):
-        return rng.random(count + (f.dim_domain,))
-    else:
-        return rng.random((count, f.dim_domain))

@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 from hypothesis import assume, example, settings
 from hypothesis import strategies as hyst
+from hypothesis.extra.numpy import arrays
 
 import pymortests.strategies as pyst
 from pymor.algorithms.basic import almost_equal
@@ -18,6 +19,10 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.core.pickling import assert_picklable_without_dumps_function
 
 MAX_RNG_REALIZATIONS = 30
+
+
+def draw_coefficients(data, shape):
+    return data.draw(arrays(np.float64, shape, elements=hyst.floats(-1, 1)))
 
 
 def ind_complement(v, ind):
@@ -403,8 +408,7 @@ def test_scal(vectors_and_indices):
     assert np.all(almost_equal(c[ind], v.zeros(v.len_ind(ind))))
     assert np.all(almost_equal(c[ind_complement_], v[ind_complement_]))
 
-    rng = np.random.default_rng(0)
-    for x in (1., 1.4, rng.random(v.len_ind(ind))):
+    for x in (1., 1.4, np.linspace(1, 2, v.len_ind(ind))):
         c = v.copy()
         c[ind].scal(x)
         assert np.all(almost_equal(c[ind_complement_], v[ind_complement_]))
@@ -644,11 +648,10 @@ def test_inner_self(vectors_and_indices):
     assert np.allclose(r, r.T.conj())
 
 
-@pyst.given_vector_arrays(index_strategy=pyst.valid_indices, random=hyst.random_module())
-def test_lincomb_1d(vectors_and_indices, random):
+@pyst.given_vector_arrays(index_strategy=pyst.valid_indices, data=hyst.data())
+def test_lincomb_1d(vectors_and_indices, data):
     v, ind = vectors_and_indices
-    rng = np.random.default_rng(0)
-    coeffs = rng.random(v.len_ind(ind))
+    coeffs = draw_coefficients(data, v.len_ind(ind))
     lc = v[ind].lincomb(coeffs)
     assert lc.space == v.space
     assert len(lc) == 1
@@ -658,12 +661,11 @@ def test_lincomb_1d(vectors_and_indices, random):
     assert np.all(almost_equal(lc, lc2))
 
 
-@pyst.given_vector_arrays(index_strategy=pyst.valid_indices, random=hyst.random_module())
-def test_lincomb_2d(vectors_and_indices, random):
+@pyst.given_vector_arrays(index_strategy=pyst.valid_indices, data=hyst.data())
+def test_lincomb_2d(vectors_and_indices, data):
     v, ind = vectors_and_indices
-    rng = np.random.default_rng(0)
     for count in (0, 1, 5):
-        coeffs = rng.random((count, v.len_ind(ind)))
+        coeffs = draw_coefficients(data, (count, v.len_ind(ind)))
         lc = v[ind].lincomb(coeffs)
         assert lc.space == v.space
         assert len(lc) == count
@@ -673,18 +675,17 @@ def test_lincomb_2d(vectors_and_indices, random):
         assert np.all(almost_equal(lc, lc2))
 
 
-@pyst.given_vector_arrays(index_strategy=pyst.valid_indices, random=hyst.random_module())
-def test_lincomb_wrong_coefficients(vectors_and_indices, random):
+@pyst.given_vector_arrays(index_strategy=pyst.valid_indices, data=hyst.data())
+def test_lincomb_wrong_coefficients(vectors_and_indices, data):
     v, ind = vectors_and_indices
-    rng = np.random.default_rng(0)
-    coeffs = rng.random(v.len_ind(ind) + 1)
+    coeffs = draw_coefficients(data, v.len_ind(ind) + 1)
     with pytest.raises(Exception):
         v[ind].lincomb(coeffs)
-    coeffs = rng.random(v.len_ind(ind)).reshape((1, 1, -1))
+    coeffs = draw_coefficients(data, v.len_ind(ind)).reshape((1, 1, -1))
     with pytest.raises(Exception):
         v[ind].lincomb(coeffs)
     if v.len_ind(ind) > 0:
-        coeffs = rng.random(v.len_ind(ind) - 1)
+        coeffs = draw_coefficients(data, v.len_ind(ind) - 1)
         with pytest.raises(Exception):
             v[ind].lincomb(coeffs)
         coeffs = np.array([])
@@ -759,8 +760,9 @@ def test_sup_norm(vectors_and_indices):
     assert np.allclose(c[ind].sup_norm(), 0)
 
 
-@pyst.given_vector_arrays(index_strategy=pyst.valid_indices, random_count=hyst.integers(min_value=1, max_value=10))
-def test_dofs(vectors_and_indices, random_count):
+@pyst.given_vector_arrays(index_strategy=pyst.valid_indices, random_count=hyst.integers(min_value=1, max_value=10),
+                          data=hyst.data())
+def test_dofs(vectors_and_indices, random_count, data):
     v, ind = vectors_and_indices
     c = v.copy()
     dofs = c[ind].dofs(np.array([], dtype=int))
@@ -774,8 +776,7 @@ def test_dofs(vectors_and_indices, random_count):
 
     assume(v.dim > 0)
 
-    rng = np.random.default_rng(0)
-    c_ind = rng.integers(0, v.dim, random_count)
+    c_ind = data.draw(arrays(np.int64, random_count, elements=hyst.integers(0, v.dim-1)))
     c = v.copy()
     dofs = c[ind].dofs(c_ind)
     assert dofs.shape == (v.len_ind(ind), random_count)
@@ -1019,24 +1020,22 @@ def test_wrong_ind_raises_exception(vectors_and_indices):
         vector_array[ind]
 
 
-@pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
-def test_scal_wrong_coefficients(vectors_and_indices):
+@pyst.given_vector_arrays(index_strategy=pyst.valid_indices, data=hyst.data())
+def test_scal_wrong_coefficients(vectors_and_indices, data):
     v, ind = vectors_and_indices
-    rng = np.random.default_rng(0)
-    for alpha in ([np.array([]), np.eye(v.len_ind(ind)), rng.random(v.len_ind(ind) + 1)]
+    for alpha in ([np.array([]), np.eye(v.len_ind(ind)), draw_coefficients(data, v.len_ind(ind) + 1)]
                   if v.len_ind(ind) > 0 else
-                  [rng.random(1)]):
+                  [draw_coefficients(data, 1)]):
         with pytest.raises(Exception):
             v[ind].scal(alpha)
 
 
-@pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length)
-def test_axpy_wrong_coefficients(vectors_and_indices):
+@pyst.given_vector_arrays(count=2, index_strategy=pyst.pairs_same_length, data=hyst.data())
+def test_axpy_wrong_coefficients(vectors_and_indices, data):
     (v1, v2), (ind1, ind2) = vectors_and_indices
-    rng = np.random.default_rng(0)
-    for alpha in ([np.array([]), np.eye(v1.len_ind(ind1)), rng.random(v1.len_ind(ind1) + 1)]
+    for alpha in ([np.array([]), np.eye(v1.len_ind(ind1)), draw_coefficients(data, v1.len_ind(ind1) + 1)]
                   if v1.len_ind(ind1) > 0 else
-                  [rng.random(1)]):
+                  [draw_coefficients(data, 1)]):
         with pytest.raises(Exception):
             v1[ind1].axpy(alpha, v2[ind2])
 

@@ -42,8 +42,7 @@ def assert_type_and_allclose(A, Aop, default_format):
 
 
 @pytest.mark.builtin()
-def test_to_matrix_NumpyMatrixOperator():
-    rng = np.random.default_rng(0)
+def test_to_matrix_NumpyMatrixOperator(rng):
     A = rng.standard_normal((2, 2))
 
     Aop = NumpyMatrixOperator(A)
@@ -54,8 +53,7 @@ def test_to_matrix_NumpyMatrixOperator():
 
 
 @pytest.mark.builtin()
-def test_to_matrix_BlockOperator():
-    rng = np.random.default_rng(0)
+def test_to_matrix_BlockOperator(rng):
     A11 = rng.standard_normal((2, 2))
     A12 = rng.standard_normal((2, 3))
     A21 = rng.standard_normal((3, 2))
@@ -78,8 +76,7 @@ def test_to_matrix_BlockOperator():
 
 
 @pytest.mark.builtin()
-def test_to_matrix_BlockDiagonalOperator():
-    rng = np.random.default_rng(0)
+def test_to_matrix_BlockDiagonalOperator(rng):
     A1 = rng.standard_normal((2, 2))
     A2 = rng.standard_normal((3, 3))
     B = np.block([[A1, np.zeros((2, 3))],
@@ -97,8 +94,7 @@ def test_to_matrix_BlockDiagonalOperator():
 
 
 @pytest.mark.builtin()
-def test_to_matrix_AdjointOperator():
-    rng = np.random.default_rng(0)
+def test_to_matrix_AdjointOperator(rng):
     A = rng.standard_normal((2, 2))
     S = rng.standard_normal((2, 2))
     S = S.dot(S.T)
@@ -151,8 +147,7 @@ def test_to_matrix_ComponentProjectionOperator():
 
 
 @pytest.mark.builtin()
-def test_to_matrix_ConcatenationOperator():
-    rng = np.random.default_rng(0)
+def test_to_matrix_ConcatenationOperator(rng):
     A = rng.standard_normal((2, 3))
     B = rng.standard_normal((3, 4))
     C = A.dot(B)
@@ -188,8 +183,7 @@ def test_to_matrix_IdentityOperator():
 
 
 @pytest.mark.builtin()
-def test_to_matrix_LincombOperator():
-    rng = np.random.default_rng(0)
+def test_to_matrix_LincombOperator(rng):
     A = rng.standard_normal((3, 3))
     B = rng.standard_normal((3, 2))
     a = rng.standard_normal()
@@ -218,11 +212,10 @@ def test_to_matrix_LincombOperator():
 
 
 @pytest.mark.builtin()
-def test_to_matrix_LowRankOperator():
+def test_to_matrix_LowRankOperator(rng):
     m = 6
     n = 5
     r = 2
-    rng = np.random.default_rng(0)
     L = rng.standard_normal((m, r))
     Lva = NumpyVectorSpace.make_array(L.T)
     C = rng.standard_normal((r, r))
@@ -237,11 +230,10 @@ def test_to_matrix_LowRankOperator():
 
 
 @pytest.mark.builtin()
-def test_to_matrix_LowRankUpdatedOperator():
+def test_to_matrix_LowRankUpdatedOperator(rng):
     m = 6
     n = 5
     r = 2
-    rng = np.random.default_rng(0)
     A = rng.standard_normal((m, n))
     Aop = NumpyMatrixOperator(A)
     L = rng.standard_normal((m, r))
@@ -256,8 +248,7 @@ def test_to_matrix_LowRankUpdatedOperator():
 
 
 @pytest.mark.builtin()
-def test_to_matrix_VectorArrayOperator():
-    rng = np.random.default_rng(0)
+def test_to_matrix_VectorArrayOperator(rng):
     V = rng.standard_normal((10, 2))
 
     Vva = NumpyVectorSpace.make_array(V.T)
@@ -283,8 +274,7 @@ if config.HAVE_DUNEGDT:
 
     from pymor.bindings.dunegdt import DuneXTMatrixOperator
 
-    def test_to_matrix_DuneXTMatrixOperator():
-        rng = np.random.default_rng(0)
+    def test_to_matrix_DuneXTMatrixOperator(rng):
         A = rng.standard_normal((2, 2))
 
         pattern = SparsityPatternDefault(2)

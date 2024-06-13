@@ -13,8 +13,7 @@ from pymor.operators.numpy import NumpyMatrixOperator
 pytestmark = pytest.mark.builtin
 
 
-def test_adaptive_rrf():
-    rng = np.random.default_rng(0)
+def test_adaptive_rrf(rng):
     A = rng.uniform(low=-1.0, high=1.0, size=(100, 100))
     A = A @ A.T
     range_product = NumpyMatrixOperator(A)
@@ -38,8 +37,7 @@ def test_adaptive_rrf():
     assert Q2 in op.range
 
 
-def test_rrf():
-    rng = np.random.default_rng(0)
+def test_rrf(rng):
     A = rng.uniform(low=-1.0, high=1.0, size=(100, 100))
     A = A @ A.T
     range_product = NumpyMatrixOperator(A)
@@ -65,8 +63,7 @@ def test_rrf():
     assert len(Q2) == 8
 
 
-def test_random_generalized_svd():
-    rng = np.random.default_rng(0)
+def test_random_generalized_svd(rng):
     E = rng.uniform(low=-1.0, high=1.0, size=(5, 5))
     E_op = NumpyMatrixOperator(E)
 
@@ -82,8 +79,7 @@ def test_random_generalized_svd():
     assert Vh in E_op.source
 
 
-def test_random_ghep():
-    rng = np.random.default_rng(0)
+def test_random_ghep(rng):
     D = rng.uniform(low=-1.0, high=1.0, size=(5, 5))
     D = D @ D.T
     D_op = NumpyMatrixOperator(D)

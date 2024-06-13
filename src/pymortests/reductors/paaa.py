@@ -2,7 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
 import pytest
 
 from pymor.reductors.aaa import PAAAReductor
@@ -22,8 +21,7 @@ test_data = [
 
 
 @pytest.mark.parametrize(('m', 'p', 'is_parametric'), test_data)
-def test_paaa(m,p,is_parametric):
-    rng = np.random.default_rng(0)
+def test_paaa(m,p,is_parametric, rng):
     if is_parametric:
         sampling_values = [rng.random(10), rng.random(10)]
         samples = rng.random((10, 10, p, m))

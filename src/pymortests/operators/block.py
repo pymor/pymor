@@ -14,8 +14,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 pytestmark = pytest.mark.builtin
 
 
-def test_apply():
-    rng = np.random.default_rng(0)
+def test_apply(rng):
     A11 = rng.standard_normal((2, 3))
     A12 = rng.standard_normal((2, 4))
     A21 = np.zeros((5, 3))
@@ -39,8 +38,7 @@ def test_apply():
     assert np.allclose(A.dot(v), w)
 
 
-def test_apply_adjoint():
-    rng = np.random.default_rng(0)
+def test_apply_adjoint(rng):
     A11 = rng.standard_normal((2, 3))
     A12 = rng.standard_normal((2, 4))
     A21 = np.zeros((5, 3))
@@ -64,8 +62,7 @@ def test_apply_adjoint():
     assert np.allclose(A.T.dot(v), w)
 
 
-def test_block_diagonal():
-    rng = np.random.default_rng(0)
+def test_block_diagonal(rng):
     A = rng.standard_normal((2, 3))
     B = rng.standard_normal((4, 5))
     Aop = NumpyMatrixOperator(A)
@@ -75,8 +72,7 @@ def test_block_diagonal():
     assert Cop.range.dim == 6
 
 
-def test_blk_diag_apply_inverse():
-    rng = np.random.default_rng(0)
+def test_blk_diag_apply_inverse(rng):
     A = rng.standard_normal((2, 2))
     B = rng.standard_normal((3, 3))
     C = spla.block_diag(A, B)
@@ -96,8 +92,7 @@ def test_blk_diag_apply_inverse():
     assert np.allclose(spla.solve(C, v), w)
 
 
-def test_blk_diag_apply_inverse_adjoint():
-    rng = np.random.default_rng(0)
+def test_blk_diag_apply_inverse_adjoint(rng):
     A = rng.standard_normal((2, 2))
     B = rng.standard_normal((3, 3))
     C = spla.block_diag(A, B)
@@ -117,10 +112,9 @@ def test_blk_diag_apply_inverse_adjoint():
     assert np.allclose(spla.solve(C.T, v), w)
 
 
-def test_block_jacobian():
+def test_block_jacobian(rng):
     from pymor.operators.constructions import QuadraticFunctional
 
-    rng = np.random.default_rng(0)
     A = rng.standard_normal((2, 2))
     B = rng.standard_normal((3, 3))
     C = rng.standard_normal((4, 4))
