@@ -1,6 +1,7 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+from itertools import chain
 from numbers import Number
 
 import numpy as np
@@ -674,6 +675,40 @@ class LTIModel(Model):
             _mmwrite(Path(files_basename + '.D'), D)
         if E is not None:
             _mmwrite(Path(files_basename + '.E'), E)
+
+    def slice(self, input_indices=None, output_indices=None):
+        """Returns an |LTIModel| with a subselection of inputs and outputs.
+
+        Parameters
+        ----------
+        input_indices
+            Indices corresponding to a subselection of inputs to be paired with all outputs
+            or selected ones. If `None`, all inputs are used, otherwise, an `iterable` containing
+            the indices of the selected inputs has to be passed. The order of the inputs depends
+            on the order of the indices in the `iterable`. It is possible to pass negative indices
+            to access the inputs counting backwards.
+        output_indices
+            Indices corresponding to a subselection of outputs to be paired with all inputs
+            or selected ones. If `None`, all outputs are used, otherwise, an `iterable` containing
+            the indices of the selected outputs has to be passed. The order of the outputs depends
+            on the order of the indices in the `iterable`. It is possible to pass negative indices
+            to access the outputs counting backwards.
+        """
+        if input_indices is None:
+            input_indices = list(range(self.dim_input))
+        if output_indices is None:
+            output_indices = list(range(self.dim_output))
+
+        assert all(isinstance(item, int) for item in chain(input_indices, output_indices))
+        assert all(-self.dim_input <= item < self.dim_input for item in input_indices), \
+            f'input_indices should be any integer value between {-self.dim_input} and {self.dim_input-1}'
+        assert all(-self.dim_output <= item < self.dim_output for item in output_indices), \
+            f'output_indices should be any integer value between {-self.dim_output} and {self.dim_output-1}'
+
+        m, p = len(input_indices), len(output_indices)
+        return self.with_(B=NumpyMatrixOperator(to_matrix(self.B)[:, input_indices].reshape(-1, m)),
+                          C=NumpyMatrixOperator(to_matrix(self.C)[output_indices, :].reshape(p, -1)),
+                          D=NumpyMatrixOperator(to_matrix(self.D)[output_indices, input_indices].reshape(p, m)))
 
     def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
                  solution_error_estimate=False, output_error_estimate=False,
