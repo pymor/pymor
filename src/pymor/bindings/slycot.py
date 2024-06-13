@@ -278,7 +278,7 @@ def ricc_lrcf_solver_options():
     return {'slycot': {'type': 'slycot'}}
 
 
-def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=None):
     """Compute an approximate low-rank solution of a Riccati equation.
 
     See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
@@ -290,35 +290,8 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     converted to |NumPy arrays| using
     :func:`~pymor.algorithms.to_matrix.to_matrix` and
     :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
-
-    Parameters
-    ----------
-    A
-        The non-parametric |Operator| A.
-    E
-        The non-parametric |Operator| E or `None`.
-    B
-        The operator B as a |VectorArray| from `A.source`.
-    C
-        The operator C as a |VectorArray| from `A.source`.
-    R
-        The matrix R as a 2D |NumPy array| or `None`.
-    S
-        The operator S as a |VectorArray| from `A.source` or `None`.
-    trans
-        Whether the first |Operator| in the Riccati equation is
-        transposed.
-    options
-        The solver options to use (see
-        :func:`ricc_lrcf_solver_options`).
-
-    Returns
-    -------
-    Z
-        Low-rank Cholesky factor of the Riccati equation solution,
-        |VectorArray| from `A.source`.
     """
-    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    _solve_ricc_check_args(A, E, B, C, R, Q, S, trans)
     options = _parse_options(options, ricc_lrcf_solver_options(), 'slycot', None, False)
     if options['type'] != 'slycot':
         raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
@@ -330,6 +303,8 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     C = C.to_numpy()
     if S is not None:
         S = S.to_numpy() if not trans else S.to_numpy().T
+    if Q is not None:
+        raise NotImplementedError
 
     X = solve_ricc_dense(A, E, B, C, R, S, trans, options)
 
@@ -393,11 +368,11 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         Low-rank Cholesky factor of the positive Riccati equation
         solution, |VectorArray| from `A.source`.
     """
-    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    _solve_ricc_check_args(A, E, B, C, R, None, S, trans)
     options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'slycot', None, False)
     if options['type'] != 'slycot':
         raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
 
     if R is None:
         R = np.eye(len(C) if not trans else len(B))
-    return solve_ricc_lrcf(A, E, B, C, -R, S, trans, options)
+    return solve_ricc_lrcf(A, E, B, C, -R, None, S, trans, options)

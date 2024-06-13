@@ -140,7 +140,7 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):
     Cva = Aop.source.from_numpy(C)
     Sva = Aop.source.from_numpy((S if not trans else S.T)) if with_S else None
 
-    Zva = solve_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
+    Zva = solve_ricc_lrcf(Aop, Eop, Bva, Cva, R, None, Sva, trans=trans, options=solver)
 
     assert len(Zva) <= n
 

@@ -257,7 +257,7 @@ _DEFAULT_POS_RICC_LRCF_DENSE_SOLVER_BACKEND = ('pymess' if config.HAVE_PYMESS el
 
 
 @defaults('default_dense_solver_backend')
-def solve_pos_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=None,
+def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
                         default_dense_solver_backend=_DEFAULT_RICC_LRCF_DENSE_SOLVER_BACKEND):
     """Compute an approximate low-rank solution of a positive Riccati equation.
 
@@ -301,8 +301,6 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options
         The operator C as a |VectorArray| from `A.source`.
     R
         The matrix R as a 2D |NumPy array| or `None`.
-    Q
-        The matrix Q as a 2D |NumPy array| or `None`.
     S
         The operator S as a |VectorArray| from `A.source` or `None`.
     trans
@@ -325,7 +323,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options
         Low-rank Cholesky factor of the positive Riccati equation
         solution, |VectorArray| from `A.source`.
     """
-    _solve_ricc_check_args(A, E, B, C, R, Q, S, trans)
+    _solve_ricc_check_args(A, E, B, C, R, None, S, trans)
     if options:
         solver = options if isinstance(options, str) else options['type']
         backend = solver.split('_')[0]
@@ -341,7 +339,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options
         from pymor.algorithms.lrradi import solve_pos_ricc_lrcf as solve_ricc_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
-    return solve_ricc_impl(A, E, B, C, R, Q, S, trans=trans, options=options)
+    return solve_ricc_impl(A, E, B, C, R, S, trans=trans, options=options)
 
 
 def _solve_ricc_check_args(A, E, B, C, R, Q, S, trans):

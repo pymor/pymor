@@ -246,14 +246,14 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         Low-rank Cholesky factor of the positive Riccati equation
         solution, |VectorArray| from `A.source`.
     """
-    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    _solve_ricc_check_args(A, E, B, C, R, None, S, trans)
     options = _parse_options(options, ricc_lrcf_solver_options(), 'lrradi', None, False)
     if options['type'] != 'lrradi':
         raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
 
     if R is None:
         R = np.eye(len(C) if not trans else len(B))
-    return solve_ricc_lrcf(A, E, B, C, -R, S, trans, options)
+    return solve_ricc_lrcf(A, E, B, C, -R, None, S, trans, options)
 
 
 def hamiltonian_shifts_init(A, E, B, C, shift_options):

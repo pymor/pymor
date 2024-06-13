@@ -335,7 +335,7 @@ def ricc_lrcf_solver_options():
 
 
 @defaults('default_solver')
-def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None, default_solver=None):
+def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=None, default_solver=None):
     """Compute an approximate low-rank solution of a Riccati equation.
 
     See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
@@ -356,40 +356,11 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None, defau
     problems (smaller than defined with
     :func:`~pymor.algorithms.lyapunov.mat_eqn_sparse_min_size`) and
     `lrnm` for large problems.
-
-    Parameters
-    ----------
-    A
-        The non-parametric |Operator| A.
-    E
-        The non-parametric |Operator| E or `None`.
-    B
-        The operator B as a |VectorArray| from `A.source`.
-    C
-        The operator C as a |VectorArray| from `A.source`.
-    R
-        The matrix R as a 2D |NumPy array| or `None`.
-    S
-        The operator S as a |VectorArray| from `A.source` or `None`.
-    trans
-        Whether the first |Operator| in the Riccati equation is
-        transposed.
-    options
-        The solver options to use (see
-        :func:`ricc_lrcf_solver_options`).
-    default_solver
-        Default solver to use (pymess_lrnm,
-        pymess_dense_nm_gmpcare).
-        If `None`, chose solver depending on dimension `A`.
-
-    Returns
-    -------
-    Z
-        Low-rank Cholesky factor of the Riccati equation solution,
-        |VectorArray| from `A.source`.
     """
-    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    _solve_ricc_check_args(A, E, B, C, R, Q, S, trans)
     if S is not None:
+        raise NotImplementedError
+    if Q is not None:
         raise NotImplementedError
     if default_solver is None:
         default_solver = 'pymess_lrnm' if A.source.dim >= mat_eqn_sparse_min_size() else 'pymess_dense_nm_gmpcare'
@@ -471,7 +442,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         Low-rank Cholesky factor of the Riccati equation solution,
         |VectorArray| from `A.source`.
     """
-    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    _solve_ricc_check_args(A, E, B, C, R, None, S, trans)
     if S is not None:
         raise NotImplementedError
     options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'pymess_dense_nm_gmpcare', None, False)
