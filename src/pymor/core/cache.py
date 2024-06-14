@@ -294,7 +294,7 @@ class CacheableObject(ImmutableObject):
             if r and r.persistent and cache_id is None:
                 raise ValueError('For persistent CacheRegions a cache_id has to be specified.')
 
-    def _get_cache_region_and_key(self, key):
+    def _get_cache_region_and_key(self, key_data):
         if not cache_regions:
             default_regions()
         try:
@@ -306,11 +306,11 @@ class CacheableObject(ImmutableObject):
         assert self.cache_id or not region.persistent
         self_id = self.cache_id or self.uid
 
-        cache_key = build_cache_key((self_id, key))
+        cache_key = build_cache_key((self_id, key_data))
 
         return region, cache_key
 
-    def get_cached_value(self, key, value_factory=None):
+    def get_cached_value(self, key_data, value_factory=None):
         """Retrive value from cache.
 
         This low-level method allows retriving cached values for pairs
@@ -336,9 +336,9 @@ class CacheableObject(ImmutableObject):
         The cached value corresponding to the pair `(self, key)`.
         """
         if _caching_disabled or self.cache_region is None:
-            raise KeyError(key)
+            raise KeyError(key_data)
 
-        region, cache_key = self._get_cache_region_and_key(key)
+        region, cache_key = self._get_cache_region_and_key(key_data)
 
         found, value = region.get(cache_key)
 
@@ -348,7 +348,7 @@ class CacheableObject(ImmutableObject):
                 region.set(cache_key, (value, defaults_changes()))
                 return value
             else:
-                raise KeyError(key)
+                raise KeyError(key_data)
 
         value, cached_defaults_changes = value
         if cached_defaults_changes != defaults_changes():
@@ -356,7 +356,7 @@ class CacheableObject(ImmutableObject):
 
         return value
 
-    def set_cached_value(self, key, value):
+    def set_cached_value(self, key_data, value):
         """Store value in active |CacheRegion|.
 
         This low-level method allows storing values for pairs `(self, key)`
@@ -374,7 +374,7 @@ class CacheableObject(ImmutableObject):
         if _caching_disabled or self.cache_region is None:
             return
 
-        region, cache_key = self._get_cache_region_and_key(key)
+        region, cache_key = self._get_cache_region_and_key(key_data)
         region.set(cache_key, (value, defaults_changes()))
 
     def cached_method_call(self, method, *args, **kwargs):
