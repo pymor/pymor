@@ -9,6 +9,7 @@ from scipy.optimize import linprog
 from scipy.spatial import KDTree
 
 from pymor.algorithms.eigs import eigs
+from pymor.algorithms.greedy import WeakGreedySurrogate, weak_greedy
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import LincombOperator
@@ -72,6 +73,8 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
     def _construct_linear_program(self, mu):
         if self.M is not None:
             _, indices = self.kdtree.query(mu.to_numpy(), k=self.M)
+            if isinstance(indices, np.int64):
+                indices = [indices]
             selected_parameters = [self.constraint_parameters[i] for i in list(indices)]
         else:
             indices = np.arange(len(self.constraint_parameters))
@@ -111,27 +114,48 @@ class UBSuccessiveConstraintsFunctional(ParameterFunctional):
         return np.min(objective_values)
 
 
-def construct_scm_functionals(operator, constraint_parameters, linprog_method='highs', linprog_options={}, M=None,
-                              product=None):
+class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
+    def __init__(self, operator, initial_parameter, bounds, product=None,
+                 params_lb_functional={}, params_ub_functional={}):
+        self.__auto_init(locals())
+        self.constraint_parameters = []
+        self.coercivity_constants = []
+        self.minimizers = []
+        self.extend(initial_parameter)
+
+    def evaluate(self, mus, return_all_values=False):
+        evals_ub = np.array([self.ub_functional.evaluate(mu) for mu in mus])
+        evals_lb = np.array([self.lb_functional.evaluate(mu) for mu in mus])
+        estimated_errors = (evals_ub - evals_lb) / evals_ub
+        if return_all_values:
+            return estimated_errors
+        else:
+            index_max_error = np.argmax(estimated_errors)
+            return estimated_errors[index_max_error], mus[index_max_error]
+
+    def extend(self, mu):
+        self.constraint_parameters.append(mu)
+        fixed_parameter_op = self.operator.assemble(mu)
+        eigvals, eigvecs = eigs(fixed_parameter_op, k=1, which='SM', E=self.product)
+        self.coercivity_constants.append(eigvals[0].real)
+        minimizer = eigvecs[0]
+        minimizer_squared_norm = minimizer.norm(product=self.product) ** 2
+        y_opt = np.array([op.apply2(minimizer, minimizer)[0].real / minimizer_squared_norm
+                          for op in self.operator.operators])
+        self.minimizers.append(y_opt)
+        self.lb_functional = LBSuccessiveConstraintsFunctional(self.operator, self.constraint_parameters,
+                                                               self.coercivity_constants, self.bounds,
+                                                               **self.params_lb_functional)
+        self.ub_functional = UBSuccessiveConstraintsFunctional(self.operator, self.constraint_parameters,
+                                                               self.minimizers, **self.params_ub_functional)
+
+
+def construct_scm_functionals(operator, training_set, initial_parameter, atol=None, rtol=None, max_extensions=None,
+                              product=None, params_lb_functional={}, params_ub_functional={}):
     assert isinstance(operator, LincombOperator)
     assert all(op.linear and not op.parametric for op in operator.operators)
-    operators = operator.operators
 
     logger = getLogger('pymor.algorithms.construct_scm_functionals')
-
-    minimizers = []
-    coercivity_constants = []
-
-    with logger.block('Computing coercivity constants for parameters by solving eigenvalue problems ...'):
-        for mu in constraint_parameters:
-            fixed_parameter_op = operator.assemble(mu)
-            eigvals, eigvecs = eigs(fixed_parameter_op, k=1, which='SM', E=product)
-            coercivity_constants.append(eigvals[0].real)
-            minimizer = eigvecs[0]
-            minimizer_squared_norm = minimizer.norm(product=product) ** 2
-            y_opt = np.array([op.apply2(minimizer, minimizer)[0].real / minimizer_squared_norm
-                              for op in operators])
-            minimizers.append(y_opt)
 
     with logger.block('Computing bounds on design variables by solving eigenvalue problems ...'):
         def lower_bound(operator):
@@ -143,10 +167,13 @@ def construct_scm_functionals(operator, constraint_parameters, linprog_method='h
             eigvals, _ = eigs(operator, k=1, which='LM', E=product)
             return eigvals[0].real
 
-        bounds = [(lower_bound(aq), upper_bound(aq)) for aq in operators]
+        bounds = [(lower_bound(aq), upper_bound(aq)) for aq in operator.operators]
 
-    lb_functional = LBSuccessiveConstraintsFunctional(operator, constraint_parameters, coercivity_constants, bounds,
-                                                      linprog_method=linprog_method, linprog_options=linprog_options,
-                                                      M=M)
-    ub_functional = UBSuccessiveConstraintsFunctional(operator, constraint_parameters, minimizers)
-    return lb_functional, ub_functional
+    with logger.block('Running greedy algorithm to construct functionals ...'):
+        surrogate = SuccessiveConstraintsSurrogate(operator, initial_parameter, bounds, product=product,
+                                                   params_lb_functional=params_lb_functional,
+                                                   params_ub_functional=params_ub_functional)
+
+        greedy_results = weak_greedy(surrogate, training_set, atol=atol, rtol=rtol, max_extensions=max_extensions)
+
+    return surrogate.lb_functional, surrogate.ub_functional, greedy_results

@@ -19,7 +19,7 @@ from pymor.basic import *
 # parameters for high-dimensional models
 XBLOCKS = 2             # pyMOR/FEniCS
 YBLOCKS = 2             # pyMOR/FEniCS
-GRID_INTERVALS = 20     # pyMOR/FEniCS
+GRID_INTERVALS = 10     # pyMOR/FEniCS
 
 
 ####################################################################################################
@@ -27,36 +27,38 @@ GRID_INTERVALS = 20     # pyMOR/FEniCS
 ####################################################################################################
 
 def main(
-    num_test_parameters: int = Option(100, help='Number of test parameters.'),
-    num_neighbors: int = Option(10, help='Number of neighbors in the parameter space used to compute bounds.')
+    num_training_parameters: int = Option(50, help='Number of test parameters.'),
+    num_test_parameters: int = Option(10, help='Number of test parameters.'),
+    max_extensions: int = Option(10, help='Maximum number of extensions of the constraint parameter set.'),
+    num_neighbors: int = Option(5, help='Number of neighbors in the parameter space used to compute bounds.')
 ):
     problem = thermal_block_problem(num_blocks=(XBLOCKS, YBLOCKS))
 
     fom, _ = discretize_stationary_cg(problem, diameter=1. / GRID_INTERVALS)
 
     test_parameters = problem.parameter_space.sample_randomly(num_test_parameters)
-    list_num_constraint_parameters = np.arange(10, 100, 20)
-    results = []
-    for num_constraint_parameters in list_num_constraint_parameters:
-        constraint_parameters = problem.parameter_space.sample_randomly(num_constraint_parameters)
-        coercivity_estimator, upper_coercivity_estimator = construct_scm_functionals(fom.operator,
-                                                                                     constraint_parameters,
-                                                                                     M=num_neighbors,
-                                                                                     product=fom.h1_0_semi_product)
+    initial_parameter = problem.parameter_space.sample_randomly(1)[0]
+    training_set = problem.parameter_space.sample_randomly(num_training_parameters)
+    coercivity_estimator, upper_coercivity_estimator, greedy_results = construct_scm_functionals(
+            fom.operator, training_set, initial_parameter, max_extensions=max_extensions,
+            product=fom.h1_0_semi_product, params_lb_functional={'M': num_neighbors})
 
-        results_temp = []
-        for mu in test_parameters:
-            lb = coercivity_estimator.evaluate(mu)
-            ub = upper_coercivity_estimator.evaluate(mu)
-            true_coercivity_constant = np.min(mu.to_numpy())
-            results_temp.append([true_coercivity_constant, lb, ub])
-        results.append(results_temp)
+    results = []
+    for mu in test_parameters:
+        lb = coercivity_estimator.evaluate(mu)
+        ub = upper_coercivity_estimator.evaluate(mu)
+        true_coercivity_constant = np.min(mu.to_numpy())
+        results.append([true_coercivity_constant, lb, ub])
 
     results = np.array(results)
 
-    plt.plot(list_num_constraint_parameters, np.mean(results[..., 0], axis=-1), label='True coercivity constant')
-    plt.plot(list_num_constraint_parameters, np.mean(results[..., 1], axis=-1), label='Lower bound')
-    plt.plot(list_num_constraint_parameters, np.mean(results[..., 2], axis=-1), label='Upper bound')
+    plt.plot(np.arange(len(greedy_results['max_errs'])), greedy_results['max_errs'], label='Maximum greedy errors')
+    plt.legend()
+    plt.show()
+
+    plt.plot(np.arange(len(test_parameters)), results[..., 0], label='True coercivity constant')
+    plt.plot(np.arange(len(test_parameters)), results[..., 1], label='Lower bound')
+    plt.plot(np.arange(len(test_parameters)), results[..., 2], label='Upper bound')
     plt.legend()
     plt.show()
 
