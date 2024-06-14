@@ -180,7 +180,7 @@ class Model(CacheableObject, ParametricObject):
     def _compute_or_retrieve_from_cache(self, quantities, data, mu):
         assert quantities <= self.computable_quantities
 
-        # fetch already computed data from cache and determine which quantites
+        # fetch already computed data from cache and determine which quantities
         # actually need to be computed
         data = data if data is not None else {}
         quantities_to_compute = set()
@@ -467,7 +467,7 @@ class Model(CacheableObject, ParametricObject):
         end of the implementation will not cause `NotImplementedErrors`.
         :class:`Model` provides default implementations for the `output`, `output_d_mu`,
         `solution_error_estimate` and `output_error_estimate` quantities.
-        The implementations for `output` and `output_d_mu` require the model to posses
+        The implementations for `output` and `output_d_mu` require the model to possess
         an `output_functional` attribute, which is applied to the solution in order to
         obtain the output. `solution_error_estimate` and `output_error_estimate` defer
         the error estimation to the model's :attr:`error_estimator`.
