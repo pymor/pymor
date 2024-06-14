@@ -117,7 +117,7 @@ class StationaryModel(Model):
                 dual_problem = self.with_(operator=self.operator.H,
                                           rhs=jacobian.H.as_range_array(mu)[d])
                 dual_solutions.append(dual_problem.solve(mu))
-            sensitivites = {}
+            sensitivities = {}
             for (parameter, size) in self.parameters.items():
                 for index in range(size):
                     output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
@@ -125,8 +125,8 @@ class StationaryModel(Model):
                     lhs_d_mu = self.operator.d_mu(parameter, index).apply2(
                         dual_solutions, data['solution'], mu=mu)[:, 0]
                     rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:, 0]
-                    sensitivites[parameter, index] = (output_partial_dmu + rhs_d_mu - lhs_d_mu).reshape((1, -1))
-            data['output_d_mu'] = OutputDMuResult(sensitivites)
+                    sensitivities[parameter, index] = (output_partial_dmu + rhs_d_mu - lhs_d_mu).reshape((1, -1))
+            data['output_d_mu'] = OutputDMuResult(sensitivities)
             quantities.remove('output_d_mu')
 
         super()._compute(quantities, data, mu=mu)

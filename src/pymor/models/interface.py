@@ -331,7 +331,7 @@ class Model(CacheableObject, ParametricObject):
         return data['solution_d_mu'][parameter, index]
 
     def output_d_mu(self, mu=None, input=None):
-        """Compute the output sensitivites w.r.t. the model's parameters.
+        """Compute the output sensitivities w.r.t. the model's parameters.
 
         Parameters
         ----------
