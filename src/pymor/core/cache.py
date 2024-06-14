@@ -311,13 +311,13 @@ class CacheableObject(ImmutableObject):
         return region, cache_key
 
     def get_cached_value(self, key_data, value_factory=None):
-        """Retrive value from cache.
+        """Retrieve value from cache.
 
-        This low-level method allows retriving cached values for pairs
-        `(self, key)` from the object's active |CacheRegion|.
+        This low-level method allows retrieving cached values for pairs
+        `(self, key_data)` from the object's active |CacheRegion|.
 
-        If the corresponding value is found in the cache, `value_factory` is
-        called to compute the value. The value is then stored in the
+        If the corresponding value is not found in the cache, `value_factory`
+        is called to compute the value. The value is then stored in the
         |CacheRegion| and returned. If `value_factory` is `None`, a `KeyError`
         is raised.
 
@@ -325,10 +325,11 @@ class CacheableObject(ImmutableObject):
 
         Parameters
         ----------
-        key
-            The key for which to retrieve the value.
+        key_data
+            The data/parameters from which the cache key is computed that is
+            used to retrieve the value.
         value_factory
-            A callable with no parameter that computes the desired value
+            A callable with no parameters that computes the desired value
             in case of a cache miss.
 
         Returns
@@ -360,14 +361,15 @@ class CacheableObject(ImmutableObject):
         """Store value in active |CacheRegion|.
 
         This low-level method allows storing values for pairs `(self, key)`
-        in the object's active |CacheRegion| for later retrival.
+        in the object's active |CacheRegion| for later retrieval.
 
         In most cases, the :func:`cached` decorator should be used instead.
 
         Parameters
         ----------
-        key
-            The key for which to store the value.
+        key_data
+            The data/parameters from which the cache key is computed that is
+            used to store the value.
         value
             Value to be stored.
         """
