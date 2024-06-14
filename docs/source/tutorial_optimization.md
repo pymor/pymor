@@ -658,6 +658,11 @@ In metric settings such as with the {math}`2`-norm, these trust-regions correspo
 open balls of radius {math}`\tau`, however using model reduction estimators as estimators
 in this tutorial's setting creates much more complex shapes.
 
+```{image} trust_region_plot.png
+:alt: Sketch of the optimization path of a trust region method
+:width: 100%
+```
+
 The adaptive component of this algorithm is the choice of the trust-radius and the enrichment.
 If a local optimization in an inner loop fails, we retry the surrogate problem with a
 smaller trust-region, thus limiting the trustworthiness of the current model.
@@ -761,8 +766,8 @@ For recent research on combining trust-region methods with model reduction for
 PDE-constrained optimization problems we refer to
 [YM13](<https://epubs.siam.org/doi/abs/10.1137/120869171>),
 [QGVW17](<https://epubs.siam.org/doi/abs/10.1137/16M1081981>) and
-[KMSOV20](<https://doi.org/10.1051/m2an/2021019>) where for the latter a pyMOR
-implementation is available as supplementary material.
+[KMSOV20](<https://www.esaim-m2an.org/articles/m2an/abs/2021/04/m2an200123/m2an200123.html>)
+where for the latter a pyMOR implementation is available as supplementary material.
 
 Download the code:
 {download}`tutorial_optimization.md`
