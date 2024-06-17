@@ -20,8 +20,9 @@ class MPIModel:
     to allow an MPI distributed usage of the |Model|.
     The underlying implementation needs to be MPI aware.
     In particular, the model's
-    :meth:`~pymor.models.interface.Model.solve`
-    method has to perform an MPI parallel solve of the model.
+    :meth:`~pymor.models.interface.Model.compute`
+    method has to perform MPI parallel computation of the desired
+    quantities.
 
     Note that this class is not intended to be instantiated directly.
     Instead, you should use :func:`mpi_wrap_model`.
@@ -36,10 +37,15 @@ class MPIModel:
         self.parameters_internal = m.parameters_internal
         self.visualizer = MPIVisualizer(obj_id)
 
-    def _compute_solution(self, mu=None):
-        return self.solution_space.make_array(
-            mpi.call(mpi.method_call_manage, self.obj_id, '_compute_solution', mu=mu)
-        )
+    def _compute(self, quantities, data, mu):
+        if 'solution' in quantities:
+            U = self.solution_space.make_array(
+                mpi.call(mpi.method_call_manage, self.obj_id, 'solve', mu=mu)
+            )
+            data['solution'] = U
+            quantities.remove('solution')
+
+        super()._compute(quantities, data, mu=mu)
 
     def visualize(self, U, **kwargs):
         self.visualizer.visualize(U, **kwargs)

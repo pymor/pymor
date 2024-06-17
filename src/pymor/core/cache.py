@@ -294,6 +294,91 @@ class CacheableObject(ImmutableObject):
             if r and r.persistent and cache_id is None:
                 raise ValueError('For persistent CacheRegions a cache_id has to be specified.')
 
+    def _get_cache_region_and_key(self, key_data):
+        if not cache_regions:
+            default_regions()
+        try:
+            region = cache_regions[self.cache_region]
+        except KeyError as e:
+            raise ValueError(f'No cache region "{self.cache_region}" found') from e
+
+        # id for self
+        assert self.cache_id or not region.persistent
+        self_id = self.cache_id or self.uid
+
+        cache_key = build_cache_key((self_id, key_data))
+
+        return region, cache_key
+
+    def get_cached_value(self, key_data, value_factory=None):
+        """Retrieve value from cache.
+
+        This low-level method allows retrieving cached values for pairs
+        `(self, key_data)` from the object's active |CacheRegion|.
+
+        If the corresponding value is not found in the cache, `value_factory`
+        is called to compute the value. The value is then stored in the
+        |CacheRegion| and returned. If `value_factory` is `None`, a `KeyError`
+        is raised.
+
+        In most cases, the :func:`cached` decorator should be used instead.
+
+        Parameters
+        ----------
+        key_data
+            The data/parameters from which the cache key is computed that is
+            used to retrieve the value.
+        value_factory
+            A callable with no parameters that computes the desired value
+            in case of a cache miss.
+
+        Returns
+        -------
+        The cached value corresponding to the pair `(self, key)`.
+        """
+        if _caching_disabled or self.cache_region is None:
+            raise KeyError(key_data)
+
+        region, cache_key = self._get_cache_region_and_key(key_data)
+
+        found, value = region.get(cache_key)
+
+        if not found:
+            if value_factory is not None:
+                value = value_factory()
+                region.set(cache_key, (value, defaults_changes()))
+                return value
+            else:
+                raise KeyError(key_data)
+
+        value, cached_defaults_changes = value
+        if cached_defaults_changes != defaults_changes():
+            getLogger('pymor.core.cache').warning('pyMOR defaults have been changed. Cached result may be wrong.')
+
+        return value
+
+    def set_cached_value(self, key_data, value):
+        """Store value in active |CacheRegion|.
+
+        This low-level method allows storing values for pairs `(self, key)`
+        in the object's active |CacheRegion| for later retrieval.
+
+        In most cases, the :func:`cached` decorator should be used instead.
+
+        Parameters
+        ----------
+        key_data
+            The data/parameters from which the cache key is computed that is
+            used to store the value.
+        value
+            Value to be stored.
+        """
+        if _caching_disabled or self.cache_region is None:
+            return
+
+        region, cache_key = self._get_cache_region_and_key(key_data)
+        region.set(cache_key, (value, defaults_changes()))
+
     def cached_method_call(self, method, *args, **kwargs):
         """Call a given `method` and cache the return value.
 
@@ -316,6 +401,7 @@ class CacheableObject(ImmutableObject):
         """
         assert isinstance(method, MethodType)
 
+        # shortcut to avoid key generation when caching is disabled
         if _caching_disabled or self.cache_region is None:
             return method(*args, **kwargs)
 
@@ -327,17 +413,6 @@ class CacheableObject(ImmutableObject):
         return self._cached_method_call(method, False, argnames, defaults, args, kwargs)
 
     def _cached_method_call(self, method, pass_self, argnames, defaults, args, kwargs):
-        if not cache_regions:
-            default_regions()
-        try:
-            region = cache_regions[self.cache_region]
-        except KeyError as e:
-            raise KeyError(f'No cache region "{self.cache_region}" found') from e
-
-        # id for self
-        assert self.cache_id or not region.persistent
-        self_id = self.cache_id or self.uid
-
         # ensure that passing a value as positional or keyword argument does not matter
         kwargs.update(zip(argnames, args))
 
@@ -350,19 +425,11 @@ class CacheableObject(ImmutableObject):
         if 'mu' in kwargs and not isinstance(kwargs['mu'], Mu):
             kwargs['mu'] = self.parameters.parse(kwargs['mu'])
 
-        key = build_cache_key((method.__name__, self_id, kwargs))
-        found, value = region.get(key)
-
-        if found:
-            value, cached_defaults_changes = value
-            if cached_defaults_changes != defaults_changes():
-                getLogger('pymor.core.cache').warning('pyMOR defaults have been changed. Cached result may be wrong.')
-            return value
-        else:
+        def value_factory():
             self.logger.debug(f'creating new cache entry for {self.__class__.__name__}.{method.__name__}')
-            value = method(self, **kwargs) if pass_self else method(**kwargs)
-            region.set(key, (value, defaults_changes()))
-            return value
+            return method(self, **kwargs) if pass_self else method(**kwargs)
+
+        return self.get_cached_value((method.__name__, kwargs), value_factory)
 
 
 def cached(function):

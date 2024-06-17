@@ -20,7 +20,7 @@ from pymor.algorithms.riccati import solve_pos_ricc_dense, solve_pos_ricc_lrcf, 
 from pymor.algorithms.simplify import contract, expand
 from pymor.algorithms.timestepping import DiscreteTimeStepper, TimeStepper
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.analyticalproblems.functions import GenericFunction
+from pymor.analyticalproblems.functions import Function
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -675,55 +675,59 @@ class LTIModel(Model):
         if E is not None:
             _mmwrite(Path(files_basename + '.E'), E)
 
-    def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
-                 solution_error_estimate=False, output_error_estimate=False,
-                 mu=None, **kwargs):
+    def _compute(self, quantities, data, mu):
+        if 'solution' in quantities or 'output' in quantities:
+            assert self.T is not None
 
-        assert self.T is not None
+            compute_solution = 'solution' in quantities
+            compute_output = 'output' in quantities
 
-        if not solution and not output:
-            return {}
+            # solution computation
+            iterator = self.time_stepper.iterate(
+                0,  # initial_time
+                self.T,  # end_time
+                self.initial_data.as_range_array(mu),  # initial_data
+                -self.A,  # operator
+                rhs=LinearInputOperator(self.B),
+                mass=None if isinstance(self.E, IdentityOperator) else self.E,
+                mu=mu.with_(t=0),
+                num_values=self.num_values
+            )
+            if self.num_values is None:
+                try:
+                    n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+                except NotImplementedError:
+                    n = 0
+            else:
+                n = self.num_values + 1
 
-        # solution computation
-        iterator = self.time_stepper.iterate(
-            0,  # initial_time
-            self.T,  # end_time
-            self.initial_data.as_range_array(mu),  # initial_data
-            -self.A,  # operator
-            rhs=LinearInputOperator(self.B),
-            mass=None if isinstance(self.E, IdentityOperator) else self.E,
-            mu=mu.with_(t=0),
-            num_values=self.num_values
-        )
-        if self.num_values is None:
-            try:
-                n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
-            except NotImplementedError:
-                n = 0
-        else:
-            n = self.num_values + 1
-        data = {}
-        if solution:
-            data['solution'] = self.solution_space.empty(reserve=n)
-        if output:
-            D = LinearInputOperator(self.D)
-            data['output'] = np.empty((n, self.dim_output))
-            data_output_extra = []
-        for i, (x, t) in enumerate(iterator):
-            if solution:
-                data['solution'].append(x)
-            if output:
-                y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.with_(t=t)).to_numpy()
-                if i < n:
-                    data['output'][i] = y
-                else:
-                    data_output_extra.append(y)
-        if output:
-            if data_output_extra:
-                data['output'] = np.vstack((data['output'], data_output_extra))
-            if len(data['output']) < i + 1:
-                data['output'] = data['output'][:i + 1]
-        return data
+            if compute_solution:
+                data['solution'] = self.solution_space.empty(reserve=n)
+            if compute_output:
+                D = LinearInputOperator(self.D)
+                data['output'] = np.empty((n, self.dim_output))
+                data_output_extra = []
+            for i, (x, t) in enumerate(iterator):
+                if compute_solution:
+                    data['solution'].append(x)
+                if compute_output:
+                    y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.with_(t=t)).to_numpy()
+                    if i < n:
+                        data['output'][i] = y
+                    else:
+                        data_output_extra.append(y)
+            if compute_output:
+                if data_output_extra:
+                    data['output'] = np.vstack((data['output'], data_output_extra))
+                if len(data['output']) < i + 1:
+                    data['output'] = data['output'][:i + 1]
+
+            if compute_solution:
+                quantities.remove('solution')
+            if compute_output:
+                quantities.remove('output')
+
+        super()._compute(quantities, data, mu=mu)
 
     def __add__(self, other):
         """Add an |LTIModel|."""
@@ -844,12 +848,7 @@ class LTIModel(Model):
                 data = self.with_(initial_data=initial_data[i]).compute(
                     input=np.zeros(self.dim_input), output=True, solution=return_solution, mu=mu)
             else:
-                def input(t):
-                    e = np.zeros(self.dim_input)
-                    if t == 0:
-                        e[i] = self.sampling_time  # noqa: B023
-                    return e
-                input = GenericFunction(mapping=input, shape_range=(self.dim_input,))
+                input = ImpulseFunction(self.dim_input, i, self.sampling_time)
                 data = self.with_(initial_data=self.solution_space.zeros(1)).compute(
                     input=input, output=True, solution=return_solution, mu=mu)
 
@@ -897,12 +896,7 @@ class LTIModel(Model):
             solution = []
 
         for i in range(self.dim_input):
-            def input(t):
-                e = np.zeros(self.dim_input)
-                e[i] = self.sampling_time if self.sampling_time > 0 else 1  # noqa: B023
-                return e
-
-            input = GenericFunction(mapping=input, shape_range=(self.dim_input,))
+            input = StepFunction(self.dim_input, i, self.sampling_time)
             data = self.compute(input=input, output=True, solution=return_solution, mu=mu)
             output[..., i] = data['output']
             if return_solution:
@@ -3296,3 +3290,40 @@ def _poles_b_c_to_lti(poles, b, c):
     B = np.vstack(B)
     C = np.hstack(C)
     return LTIModel.from_matrices(A, B, C)
+
+
+class StepFunction(Function):
+
+    dim_domain = 1
+
+    def __init__(self, dim_input, component, sampling_time):
+        super().__init__()
+        self.__auto_init(locals())
+        self.shape_range = (dim_input,)
+
+    def evaluate(self, x, mu=None):
+        e = np.zeros(self.dim_input)
+        e[self.component] = self.sampling_time if self.sampling_time > 0 else 1
+        return e
+
+    def _cache_key_reduce(self):
+        return ('StepFunction', self.dim_input, self.component, self.sampling_time)
+
+
+class ImpulseFunction(Function):
+
+    dim_domain = 1
+
+    def __init__(self, dim_input, component, sampling_time):
+        super().__init__()
+        self.__auto_init(locals())
+        self.shape_range = (dim_input,)
+
+    def evaluate(self, x, mu=None):
+        e = np.zeros(self.dim_input)
+        if x[0] == 0:
+            e[self.component] = self.sampling_time
+        return e
+
+    def _cache_key_reduce(self):
+        return ('ImpulseFunction', self.dim_input, self.component, self.sampling_time)

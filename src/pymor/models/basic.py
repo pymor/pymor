@@ -67,6 +67,8 @@ class StationaryModel(Model):
             assert rhs in operator.range
             rhs = VectorOperator(rhs, name='rhs')
         output_functional = output_functional or ZeroOperator(NumpyVectorSpace(0), operator.source)
+        if output_d_mu_use_adjoint is None:
+            output_d_mu_use_adjoint = output_functional.linear and operator.linear
 
         assert rhs.range == operator.range
         assert rhs.source.is_scalar
@@ -89,44 +91,26 @@ class StationaryModel(Model):
             f'    dim_output:      {self.dim_output}'
         )
 
-    def _compute_solution(self, mu=None):
-        return self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
+    def _compute(self, quantities, data, mu=None):
+        if 'solution' in quantities:
+            data['solution'] = self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
+            quantities.remove('solution')
 
-    def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu):
-        lhs_d_mu = self.operator.d_mu(parameter, index).apply(solution, mu=mu)
-        rhs_d_mu = self.rhs.d_mu(parameter, index).as_range_array(mu)
-        rhs = rhs_d_mu - lhs_d_mu
-        return self.operator.jacobian(solution, mu=mu).apply_inverse(rhs)
+        for _, param, idx in [q for q in quantities if isinstance(q, tuple) and q[0] == 'solution_d_mu']:
+            self._compute_required_quantities({'solution'}, data, mu)
 
-    def _compute_output_d_mu(self, solution, mu):
-        """Compute the output sensitivites w.r.t. the model's parameters.
+            lhs_d_mu = self.operator.d_mu(param, idx).apply(data['solution'], mu=mu)
+            rhs_d_mu = self.rhs.d_mu(param, idx).as_range_array(mu)
+            rhs = rhs_d_mu - lhs_d_mu
+            data['solution_d_mu', param, idx] = self.operator.jacobian(data['solution'], mu=mu).apply_inverse(rhs)
+            quantities.remove(('solution_d_mu', param, idx))
 
-        Parameters
-        ----------
-        solution
-            Solution of the Model for `mu`.
-        mu
-            |Parameter value| at which to compute the sensitivities.
-
-        Returns
-        -------
-        The output sensitivities as a dict `{(parameter, index): sensitivity}` where
-        `sensitivity` is a 2D |NumPy arrays| with axis 0 corresponding to time and axis 1
-        corresponding to the output component.
-        The returned :class:`OutputDMuResult` object has a `meth`:~OutputDMuResult.to_numpy`
-        method to convert it into a single NumPy array, e.g., for use in optimization
-        libraries.
-        """
-        if self.output_d_mu_use_adjoint is None:
-            use_adjoint = self.output_functional.linear and self.operator.linear
-        else:
-            use_adjoint = self.output_d_mu_use_adjoint
-        if not use_adjoint:
-            return super()._compute_output_d_mu(solution, mu)
-        else:
+        if 'output_d_mu' in quantities and self.output_d_mu_use_adjoint:
             if not self.operator.linear:
                 raise NotImplementedError
-            jacobian = self.output_functional.jacobian(solution, mu)
+            self._compute_required_quantities({'solution'}, data, mu)
+
+            jacobian = self.output_functional.jacobian(data['solution'], mu)
             assert jacobian.linear
             dual_solutions = self.operator.range.empty()
             for d in range(self.output_functional.range.dim):
@@ -136,12 +120,16 @@ class StationaryModel(Model):
             sensitivities = {}
             for (parameter, size) in self.parameters.items():
                 for index in range(size):
-                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution,
-                                                                                             mu=mu).to_numpy()[0]
-                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu)[:, 0]
+                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
+                        data['solution'], mu=mu).to_numpy()[0]
+                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(
+                        dual_solutions, data['solution'], mu=mu)[:, 0]
                     rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:, 0]
                     sensitivities[parameter, index] = (output_partial_dmu + rhs_d_mu - lhs_d_mu).reshape((1, -1))
-        return OutputDMuResult(sensitivities)
+            data['output_d_mu'] = OutputDMuResult(sensitivities)
+            quantities.remove('output_d_mu')
+
+        super()._compute(quantities, data, mu=mu)
 
     def deaffinize(self, arg):
         """Build |Model| with linear solution space.
@@ -324,15 +312,19 @@ class InstationaryModel(Model):
     def with_time_stepper(self, **kwargs):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
 
-    def _compute_solution(self, mu=None):
-        mu = mu.with_(t=0.)
-        U0 = self.initial_data.as_range_array(mu)
-        U = self.time_stepper.solve(operator=self.operator,
-                                    rhs=None if isinstance(self.rhs, ZeroOperator) else self.rhs,
-                                    initial_data=U0,
-                                    mass=None if isinstance(self.mass, IdentityOperator) else self.mass,
-                                    initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
-        return U
+    def _compute(self, quantities, data, mu=None):
+        if 'solution' in quantities:
+            mu = mu.with_(t=0.)
+            U0 = self.initial_data.as_range_array(mu)
+            U = self.time_stepper.solve(operator=self.operator,
+                                        rhs=None if isinstance(self.rhs, ZeroOperator) else self.rhs,
+                                        initial_data=U0,
+                                        mass=None if isinstance(self.mass, IdentityOperator) else self.mass,
+                                        initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
+            data['solution'] = U
+            quantities.remove('solution')
+
+        super()._compute(quantities, data, mu=mu)
 
     def to_lti(self):
         """Convert model to |LTIModel|.

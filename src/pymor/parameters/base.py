@@ -349,7 +349,12 @@ class Mu(FrozenDict):
                 assert isinstance(v, Function)
                 assert v.dim_domain == 1
                 assert len(v.shape_range) == 1
-                vv = v(raw_values.get('t', 0))
+                try:
+                    t = np.array(raw_values['t'], ndmin=1)
+                    assert t.shape == (1,)
+                except KeyError:
+                    t = np.zeros(1)
+                vv = v(t)
             else:
                 vv = np.array(v, copy=False, ndmin=1)
                 assert vv.ndim == 1
