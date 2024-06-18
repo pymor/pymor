@@ -94,10 +94,13 @@ class UBSuccessiveConstraintsFunctional(ParameterFunctional):
     Parameters
     ----------
     operator
-        |LincombOperator| for which to provide an upper bound on the coercivity constant.
+        |LincombOperator| for which to provide an upper bound on the
+        coercivity constant.
     constraint_parameters
         List of |Parameters| used to construct the constraints.
     minimizers
+        List of minimizers associated to the coercivity constants of the
+        operators in `operator`.
     """
 
     def __init__(self, operator, constraint_parameters, minimizers):
@@ -115,6 +118,33 @@ class UBSuccessiveConstraintsFunctional(ParameterFunctional):
 
 
 class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
+    """Surrogate for constructing the functionals in a greedy algorithm.
+
+    This surrogate is used in a weak greedy algorithm to select the parameters
+    used to compute the constraints for the lower and upper bounds derived by
+    the successive constraints method.
+
+    Parameters
+    ----------
+    operator
+        |LincombOperator| for which to provide a bounds on the
+        coercivity constant.
+    initial_parameter
+        |Parameter| used to initialize the surrogate for the greedy algorithm.
+    bounds
+        Either `None` or a list of tuples containing lower and upper bounds
+        for the design variables, i.e. the unknowns in the linear program.
+    product
+        Product with respect to which the coercivity constant should be
+        estimated.
+    params_lb_functional
+        Additional parameters passed to the constructor of the functional
+        for the lower bound.
+    params_ub_functional
+        Additional parameters passed to the constructor of the functional
+        for the upper bound.
+    """
+
     def __init__(self, operator, initial_parameter, bounds, product=None,
                  params_lb_functional={}, params_ub_functional={}):
         self.__auto_init(locals())
@@ -152,6 +182,42 @@ class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
 
 def construct_scm_functionals(operator, training_set, initial_parameter, atol=None, rtol=None, max_extensions=None,
                               product=None, params_lb_functional={}, params_ub_functional={}):
+    """Method to construct lower and upper bounds using the successive constraints method.
+
+    Parameters
+    ----------
+    operator
+        |LincombOperator| for which to provide a bounds on the
+        coercivity constant.
+    training_set
+        |Parameters| used as training set for the greedy algorithm.
+    initial_parameter
+        |Parameter| used to initialize the surrogate for the greedy algorithm.
+    atol
+        If not `None`, stop the greedy algorithm if the maximum (estimated)
+        error on the training set drops below this value.
+    rtol
+        If not `None`, stop the greedy algorithm if the maximum (estimated)
+        relative error on the training set drops below this value.
+    max_extensions
+        If not `None`, stop the greedy algorithm after `max_extensions`
+        extension steps.
+    product
+        Product with respect to which the coercivity constant should be
+        estimated.
+    params_lb_functional
+        Additional parameters passed to the constructor of the functional
+        for the lower bound.
+    params_ub_functional
+        Additional parameters passed to the constructor of the functional
+        for the upper bound.
+
+    Returns
+    -------
+    Functional for a lower bound on the coercivity constant, functional
+    for an upper bound on the coercivity constant, and the results returned
+    by the weak greedy algorithm.
+    """
     assert isinstance(operator, LincombOperator)
     assert all(op.linear and not op.parametric for op in operator.operators)
 
