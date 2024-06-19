@@ -3,11 +3,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-"""Simplified version of the thermalblock demo to showcase the successive constraints method.
-
-Usage:
-  coercivity_estimation_scm.py ALG SNAPSHOTS RBSIZE TEST
-"""
+"""Simplified version of the thermalblock demo to showcase the successive constraints method."""
 
 import matplotlib.pyplot as plt
 import numpy as np
