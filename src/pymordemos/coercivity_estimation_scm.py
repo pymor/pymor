@@ -37,7 +37,7 @@ def main(
     training_set = problem.parameter_space.sample_randomly(num_training_parameters)
     coercivity_estimator, upper_coercivity_estimator, greedy_results = construct_scm_functionals(
             fom.operator, training_set, initial_parameter, max_extensions=max_extensions,
-            product=fom.h1_0_semi_product, params_lb_functional={'M': num_neighbors})
+            product=fom.h1_0_semi_product, M=num_neighbors)
 
     results = []
     for mu in test_parameters:

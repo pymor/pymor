@@ -37,8 +37,8 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
     linprog_options
         Dictionary of additional solver options passed to `scipy.optimize.linprog`.
     M
-        Number of parameters from `constraint_parameters` to use for estimating the coercivity
-        constant. The `M` closest parameters (with respect to the Euclidean distance) are chosen.
+        Number of parameters to use for estimating the coercivity constant.
+        The `M` closest parameters (with respect to the Euclidean distance) are chosen.
         If `None`, all parameters from `constraint_parameters` are used.
     """
 
@@ -137,16 +137,18 @@ class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
     product
         Product with respect to which the coercivity constant should be
         estimated.
-    params_lb_functional
-        Additional parameters passed to the constructor of the functional
-        for the lower bound.
-    params_ub_functional
-        Additional parameters passed to the constructor of the functional
-        for the upper bound.
+    linprog_method
+        Name of the algorithm to use for solving the linear program using `scipy.optimize.linprog`.
+    linprog_options
+        Dictionary of additional solver options passed to `scipy.optimize.linprog`.
+    M
+        Number of parameters to use for estimating the coercivity constant.
+        The `M` closest parameters (with respect to the Euclidean distance) are chosen.
+        If `None`, all parameters are used.
     """
 
     def __init__(self, operator, initial_parameter, bounds, product=None,
-                 params_lb_functional={}, params_ub_functional={}):
+                 linprog_method='highs', linprog_options={}, M=None):
         self.__auto_init(locals())
         self.constraint_parameters = []
         self.coercivity_constants = []
@@ -175,13 +177,14 @@ class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
         self.minimizers.append(y_opt)
         self.lb_functional = LBSuccessiveConstraintsFunctional(self.operator, self.constraint_parameters,
                                                                self.coercivity_constants, self.bounds,
-                                                               **self.params_lb_functional)
+                                                               linprog_method=self.linprog_method,
+                                                               linprog_options=self.linprog_options, M=self.M)
         self.ub_functional = UBSuccessiveConstraintsFunctional(self.operator, self.constraint_parameters,
-                                                               self.minimizers, **self.params_ub_functional)
+                                                               self.minimizers)
 
 
 def construct_scm_functionals(operator, training_set, initial_parameter, atol=None, rtol=None, max_extensions=None,
-                              product=None, params_lb_functional={}, params_ub_functional={}):
+                              product=None, linprog_method='highs', linprog_options={}, M=None):
     """Method to construct lower and upper bounds using the successive constraints method.
 
     Parameters
@@ -205,12 +208,14 @@ def construct_scm_functionals(operator, training_set, initial_parameter, atol=No
     product
         Product with respect to which the coercivity constant should be
         estimated.
-    params_lb_functional
-        Additional parameters passed to the constructor of the functional
-        for the lower bound.
-    params_ub_functional
-        Additional parameters passed to the constructor of the functional
-        for the upper bound.
+    linprog_method
+        Name of the algorithm to use for solving the linear program using `scipy.optimize.linprog`.
+    linprog_options
+        Dictionary of additional solver options passed to `scipy.optimize.linprog`.
+    M
+        Number of parameters to use for estimating the coercivity constant.
+        The `M` closest parameters (with respect to the Euclidean distance) are chosen.
+        If `None`, all parameters selected in the greedy method are used.
 
     Returns
     -------
@@ -237,8 +242,7 @@ def construct_scm_functionals(operator, training_set, initial_parameter, atol=No
 
     with logger.block('Running greedy algorithm to construct functionals ...'):
         surrogate = SuccessiveConstraintsSurrogate(operator, initial_parameter, bounds, product=product,
-                                                   params_lb_functional=params_lb_functional,
-                                                   params_ub_functional=params_ub_functional)
+                                                   linprog_method=linprog_method, linprog_options=linprog_options, M=M)
 
         greedy_results = weak_greedy(surrogate, training_set, atol=atol, rtol=rtol, max_extensions=max_extensions)
 
