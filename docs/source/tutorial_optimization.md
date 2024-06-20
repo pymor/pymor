@@ -369,111 +369,6 @@ for mu in reference_minimization_data['evaluation_points']:
     addplot_xy_point_as_bar(reference_plot, mu[0], mu[1])
 ```
 
-## Optimizing with the ROM using finite differences
-
-We can use a standard RB method to build a surrogate model for the FOM.
-As a result, the solution of the primal equation is no longer expensive
-and the optimization method can evaluate the objective functional quickly.
-For this, we define a standard {class}`~pymor.reductors.coercive.CoerciveRBReductor`
-and use the {class}`~pymor.parameters.functionals.MinThetaParameterFunctional` for an
-estimation of the coercivity constant.
-
-```{code-cell}
-from pymor.algorithms.greedy import rb_greedy
-from pymor.parameters.functionals import MinThetaParameterFunctional
-from pymor.reductors.coercive import CoerciveRBReductor
-
-coercivity_estimator = MinThetaParameterFunctional(fom.operator.coefficients, mu_bar)
-```
-
-The online efficiency of MOR methods most likely comes with a
-rather expensive offline phase. For PDE-constrained optimization, however,
-it is not meaningful to ignore the
-offline time of the surrogate model since it can happen that FOM
-optimization methods would already converge before the surrogate model
-is even ready. Thus, RB optimization methods (at least for only one
-configuration) aims for overall efficiency which includes offline and
-online time. Of course, this effect aggravates if the parameter space is
-high dimensional because the offline phase can increase even more.
-
-In order to decrease the offline time we guess that we may not require
-a perfect surrogate model in the sense that a low error tolerance for
-the {func}`~pymor.algorithms.greedy.rb_greedy` already suffices to converge
-to the same minimum.
-In our case we choose `atol=1e-2` and yield a very low dimensional space.
-In general, however, it is not a priori clear how to choose `atol`
-in order to arrive at a minimum which is close enough to the true
-optimum.
-
-```{code-cell}
-training_set = parameter_space.sample_uniformly(25)
-
-RB_reductor = CoerciveRBReductor(fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
-RB_greedy_data = rb_greedy(fom, RB_reductor, training_set, atol=1e-2)
-
-num_RB_greedy_extensions = RB_greedy_data['extensions']
-RB_greedy_mus, RB_greedy_errors = RB_greedy_data['max_err_mus'], RB_greedy_data['max_errs']
-rom = RB_greedy_data['rom']
-
-print(f'RB system is of size {num_RB_greedy_extensions}x{num_RB_greedy_extensions}')
-print(f'maximum estimated model reduction error over training set: {RB_greedy_errors[-1]}')
-```
-
-We can see that greedy algorithm already stops after {math}`3` basis functions.
-Next, we plot the chosen parameters.
-
-```{code-cell}
-ax = plot_3d_surface(fom_objective_functional, XX, XX, alpha=0.5)
-
-for mu in RB_greedy_mus[:-1]:
-    mu = mu.to_numpy()
-    addplot_xy_point_as_bar(ax, mu[0], mu[1])
-```
-
-Analogously to above, we perform the same optimization method, but use
-the resulting ROM objective functional.
-
-```{code-cell}
-def rom_objective_functional(mu):
-    return rom.output(mu)[0, 0]
-
-RB_minimization_data = prepare_data(offline_time=RB_greedy_data['time'])
-
-rom_result = optimize(rom_objective_functional, RB_minimization_data, ranges)
-```
-
-```{code-cell}
-report(rom_result, RB_minimization_data, reference_mu)
-```
-
-Comparing the result to the FOM model, we see that the number of
-iterations and evaluations of the model are equal. As expected,
-we see that the optimization routine is very fast because the surrogate
-enables almost instant evaluations of the primal equation.
-
-As mentioned above, we should not forget that we required the offline
-time to build our surrogate. In our case, the offline time is still low
-enough to get a speed up over the FOM optimization. Luckily,
-`atol=1e-2` was enough to achieve an absolute error of roughly `1e-06`
-but it is important to notice that we do not know this error before
-choosing `atol`.
-
-To show that the ROM optimization roughly followed the same path as the
-FOM optimization, we visualize both of them in the following plot.
-
-```{code-cell}
-reference_plot = plot_3d_surface(fom_objective_functional, XX, XX, alpha=0.5)
-reference_plot_mean_z_lim = 0.5*(reference_plot.get_zlim()[0] + reference_plot.get_zlim()[1])
-
-for mu in reference_minimization_data['evaluation_points']:
-    addplot_xy_point_as_bar(reference_plot, mu[0], mu[1], color='green',
-                            z_range=(reference_plot.get_zlim()[0], reference_plot_mean_z_lim))
-
-for mu in RB_minimization_data['evaluation_points']:
-    addplot_xy_point_as_bar(reference_plot, mu[0], mu[1], color='orange',
-                           z_range=(reference_plot_mean_z_lim, reference_plot.get_zlim()[1]))
-```
-
 ## Computing the gradient of the objective functional
 
 A major issue of using finite differences for computing the gradient of
@@ -584,45 +479,19 @@ reference_mu = opt_fom_result.x
 report(opt_fom_result, opt_fom_minimization_data)
 ```
 
-With respect to the FOM result with finite differences, we see that we
-have a saved the evaluations for computing the gradient. Of course it is also not for free to
-compute the gradient, but since we are using the dual approach, this will only scale with the
-factor 2. Furthermore, we can expect that the result above is more accurate which is why we
-choose it as the reference parameter.
+With respect to the FOM result with finite differences, we see that we have saved several evaluations
+of the function when using the gradient. Of course it is also not for free to compute the gradient,
+but since we are using the dual approach, this will only scale with a factor of 2. Furthermore,
+we can expect that the result above is more accurate which is why we choose it as the reference parameter.
 
-## Optimizing using a gradient in ROM
+## Adaptive trust-region optimization using reduced basis methods
 
-Obviously, we can also include the gradient of the ROM version of the
-output functional.
-
-```{code-cell}
-def rom_gradient_of_functional(mu):
-    return rom.output_d_mu(rom.parameters.parse(mu)).to_numpy()
-
-opt_rom_minimization_data = prepare_data(offline_time=RB_greedy_data['time'])
-
-opt_rom_result = optimize(rom_objective_functional, opt_rom_minimization_data, ranges,
-                          gradient=rom_gradient_of_functional)
-```
-
-```{code-cell}
-report(opt_rom_result, opt_rom_minimization_data, reference_mu)
-```
-
-The online phase is even faster but the offline time of course remains the same.
-We also conclude that the ROM model eventually gives less speedup by using a better optimization
-method for the FOM and ROM.
-
-## Adaptive trust-region optimization
-
-We already figured out that the main drawback for using RB methods in the
-context of optimization is the expensive offline time to build the
-surrogate model. In the example above, we overcame this issue by
-choosing a large tolerance `atol`. As a result, we cannot be sure
-that our surrogate model is accurate enough for our purposes. In other
-words, either we invest too much time to build an accurate model or we
-face the danger of reducing with a bad surrogate for the whole parameter
-space. Thinking about this issue again, it is important to notice that
+As a simple idea to circumvent the costly solutions of the FOM, one could build a reduced order model
+offline and use it online as a replacement for the FOM. However, in the context of PDE-constrained, it
+is not meaningful to ignore the offline time required to build the RB surrogate since it can happen
+that FOM optimization methods would already converge before the surrogate model is even ready.
+Building a RB model that is accurate in the whole parameter space is thus usually too expensive.
+Thinking about this issue again, it is important to notice that
 we are solving an optimization problem which will eventually converge to
 a certain parameter. Thus, it only matters that the surrogate is good in
 this particular region as long as we are able to arrive at it. This
@@ -631,35 +500,42 @@ methods without trying to approximate the FOM across the
 whole parameter space.
 
 To this end, we can use trust-region methods to adaptively enrich the ROM with respect to
-the underlying error estimator.
-In the trust-region method, we iteratively replace the global problem with local surrogates,
-compute local solutions to these surrogate problems, and enhance the surrogate models
-when we either are close to the boundary of the trust-region or when the model confidence
-decreases such that we require more data.
-Thus, the TR consists of one outer loop and many inner loops. The outer loop iterates over
-global parameter space and constructs local trust-regions along with their corresponding
+the underlying error estimator. In the trust-region method, we iteratively replace the
+global problem with local surrogates, compute local solutions to these surrogate problems,
+and enhance the surrogate models when we either are close to the boundary of the trust-region
+or when the model confidence decreases such that we require more data.
+The local surrogates are required to be accurate only locally which avoids the construction
+of a globally sensible ROM. These local surrogates are built using FOM solutions and gradients.
+A speedup is obtained if many of the optimization steps based on FOM evaluations can be replaced
+by much cheaper iterations of the ROM and only a few FOM computations are required to build the
+reduced models.
+
+The trust-region algorithm thus consists of one outer loop and many inner loops.
+The outer loop iterates over the global parameter space and constructs local trust-regions along with their corresponding
 surrogates, whereas the inner loops use a modified version of the projected BFGS to solve
 the local problems. For a fixed parameter in the outer iteration {math}`\mu` and the current
 surrogate model {math}`J_r`, the local problems can be written as
 
 ```{math}
-\min_{\mu + s \in \Delta} J_r(u_{\mu + s}, \mu + s),  \tag{\hat{P}_r}.
+\min_{\mu + s \in \Delta} J_r(u_{\mu + s}, \mu + s).  \tag{$\hat{P}_r$}
 ```
 
 In the formulation of ({math}`\hat{P}_r`), {math}`\Delta \subseteq \mathcal{P}` is the
-trust-region with tolerance {math}`\tau > 0` for an error estimator of our choice {math}`e_r`
+trust-region with tolerance {math}`\tau > 0` for an error estimator {math}`e_r` of our choice
 in which the updated parameter {math}`\mu + s` satisfies
 
 ```{math}
 e_r(\mu + s) < \tau.
 ```
 
-In metric settings such as with the {math}`2`-norm, these trust-regions correspond to
-open balls of radius {math}`\tau`, however using model reduction estimators as estimators
-in this tutorial's setting creates much more complex shapes.
+In metric settings such as with the {math}`2`-norm in parameter space, these trust-regions
+correspond to open balls of radius {math}`\tau`. However, using error estimators from model
+reduction in this tutorial's setting creates much more complex shapes.
+The sketch below shows an exemplary optimization path with inner and outer iterations and the
+respective trust-regions.
 
 ```{image} trust_region_plot.png
-:alt: Sketch of the optimization path of a trust region method
+:alt: Sketch of the optimization path of a trust-region method
 :width: 100%
 ```
 
@@ -670,7 +546,7 @@ In contrast, when we quickly converge close to the boundary of the trust-region,
 reasonable assumption that the globally optimal parameter is outside of the trust-region
 and thus we stop the inner iteration. After computing an inner solution we then have the
 option to keep the current surrogate model, enlarge the trust-radius of the local model
-or further enrich it by adding the solution snapshot of the current local optimum.
+or further enrich it by adding the FOM solution snapshot at the current local optimum.
 In this sense, the adaptive trust-region algorithm can reduce the number of FOM evaluations
 by estimating if the current surrogate is trustworthy enough to increase the trust-radius
 and only enrich the model if the estimated quality is no longer sufficient.
@@ -679,13 +555,15 @@ The algorithm described above can be executed as follows.
 
 ```{code-cell}
 from pymor.algorithms.tr import coercive_rb_trust_region
+from pymor.parameters.functionals import MinThetaParameterFunctional
 
+coercivity_estimator = MinThetaParameterFunctional(fom.operator.coefficients, mu_bar)
 pdeopt_reductor = CoerciveRBReductor(
     fom, product=fom.energy_product, coercivity_estimator=coercivity_estimator)
 
 tic = perf_counter()
 tr_mu, tr_minimization_data = coercive_rb_trust_region(pdeopt_reductor, parameter_space=parameter_space,
-                                            initial_guess=np.array(initial_guess))
+                                                       initial_guess=np.array(initial_guess))
 toc = perf_counter()
 
 tr_minimization_data['time'] = toc - tic
@@ -705,26 +583,18 @@ reference_fun = fom_objective_functional(reference_mu)
 print('FOM with finite differences')
 report(fom_result, reference_minimization_data, reference_mu)
 
-print('\nROM with finite differences')
-report(rom_result, RB_minimization_data, reference_mu)
-
 print('\nFOM with gradient')
 report(opt_fom_result, opt_fom_minimization_data, reference_mu)
-
-print('\nROM with gradient')
-report(opt_rom_result, opt_rom_minimization_data, reference_mu)
 
 tr_report(tr_mu, tr_output, reference_mu, reference_fun, tr_minimization_data,
     parameter_space.parameters.parse, descriptor=' of optimization with adaptive ROM model and TR method')
 ```
 
-It is apparent that for this example, no drastic changes occur when using different
-methods. Importantly, all ROM methods are noticeably faster than the FOM-based methods,
-but due to the simplicity of the model under consideration the adaptive trust-region
-algorithm is slightly slower than the other two ROM methods. It is expected that this
-downside no longer happens for problems of a larger scale. Crucially, the number of
-necessary FOM evaluations in the trust-region is smaller than for the other methods
-because we use the information in the local surrogates more efficiently.
+It is apparent that for this example no drastic changes occur when using the different
+methods. Importantly, the TR method is noticeably faster than the FOM-based methods.
+It is expected that the for problems of larger scale the speedup is even more pronounced.
+Crucially, the number of necessary FOM evaluations in the trust-region method is smaller
+than for the other methods because we use the information in the local surrogates more efficiently.
 
 ```{code-cell}
 :tags: [remove-cell]
@@ -745,16 +615,9 @@ in the respective demo {mod}`~pymordemos.trust_region`.
 
 In this tutorial we have seen how pyMOR can be used to speedup the optimizer
 for PDE-constrained optimization problems.
-We focused on several aspects of RB methods and showed how explicit gradient information
-helps to reduce the computational cost of the optimizer.
-We also saw that already standard RB methods may help to reduce the computational time.
-It is clear that standard RB methods are especially of interest if an
-optimization problem needs to be solved multiple times.
 
 Moreover, we focused on the lack of overall efficiency of standard RB methods.
-To overcome this, we reduced the (normally) expensive offline time by choosing larger
-tolerances for the greedy algorithm.
-We have also seen a way to efficiently use local surrogate models in a trust-region
+We have therefore seen a way to efficiently use local surrogate models in a trust-region
 algorithm to reduce the number of FOM evaluations required during optimization.
 
 In this tutorial we have only covered a few basic approaches to combine model
