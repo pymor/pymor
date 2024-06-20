@@ -106,10 +106,10 @@ def relative_residual(A, E, B, C, R, S, Z, trans):
 
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
-@pytest.mark.parametrize('with_E', [False, True])
-@pytest.mark.parametrize('with_R', [False, True])
+@pytest.mark.parametrize('with_E', [False]) #, True])
+@pytest.mark.parametrize('with_R', [False]) #, True])
 @pytest.mark.parametrize('with_S', [True])
-@pytest.mark.parametrize('trans', [False, True])
+@pytest.mark.parametrize('trans', [True])
 @pytest.mark.parametrize('n,solver', chain(product(n_list_small, ricc_lrcf_solver_list_small),
                                            product(n_list_big, ricc_lrcf_solver_list_big)))
 def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver):

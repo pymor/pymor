@@ -5,6 +5,8 @@
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.algorithms.to_matrix import to_matrix
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.riccati import _solve_ricc_check_args
@@ -96,13 +98,20 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
         else:
             R = Rinv = np.eye(len(B) if trans else len(C))
 
-        BRinvSt = LowRankOperator(B, Rinv, S)
-        tA = A - BRinvSt
+        BRinvSt = NumpyMatrixOperator(B.to_numpy().T @ Rinv @ S.to_numpy())
+        BRinvSt2 = LowRankOperator(B, Rinv, S)
+        RHS = BRinvSt.source.from_numpy(np.eye(BRinvSt.source.dim))
+        V1 = BRinvSt.apply(RHS)
+        V2 = BRinvSt2.apply(RHS)
+        assert np.max((V1-V2).norm()) < 1e-10
+        tA = (A - BRinvSt).assemble()
+        assert isinstance(tA, NumpyMatrixOperator)
         tC = cat_arrays([C, S])
         if Q is None:
             tQ = spla.block_diag(np.eye(len(C)), -Rinv)
         else:
             tQ = spla.block_diag(Q, -Rinv)
+        assert False
         Z_cf = solve_ricc_lrcf(tA, E, B, tC, R, tQ, None, trans, options)
         return Z_cf
 
@@ -137,7 +146,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
 
     j = 0
     j_shift = 0
-    shifts = init_shifts(A, E, B, C, shift_options)
+    shifts = init_shifts(A, E, B, C, Q, shift_options)
 
     if Q is None:
         res = np.linalg.norm(RF.gramian(), ord='fro')
@@ -165,6 +174,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
             else:
                 BRiK = LowRankOperator(B, Rinv, K)
                 AsEBRiK = AsE - BRiK
+                # AsEBRiK = NumpyMatrixOperator(to_matrix(AsEBRiK))
                 V = AsEBRiK.apply_inverse_adjoint(RF) * np.sqrt(-2 * shifts[j_shift].real)
         if np.imag(shifts[j_shift]) == 0:
             V = V.real
@@ -173,9 +183,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
             Yt = RC - (VB @ Rinv @ VB.T) / (2 * shifts[j_shift].real)
             Y = spla.block_diag(Y, Yt)
             if not trans:
-                EVYt = E.apply(V).lincomb(np.linalg.inv(Yt))
+                EVYt = E.apply(V).lincomb(spla.inv(Yt))
             else:
-                EVYt = E.apply_adjoint(V).lincomb(np.linalg.inv(Yt))
+                EVYt = E.apply_adjoint(V).lincomb(spla.inv(Yt))
             RF.axpy(np.sqrt(-2*shifts[j_shift].real), EVYt)
             K += EVYt.lincomb(VB.T)
             j += 1
@@ -203,9 +213,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
                 - (F3 @ RC @ F3.T) / 2
             Y = spla.block_diag(Y, Yt)
             if not trans:
-                EVYt = E.apply(cat_arrays([V.real, V.imag])).lincomb(np.linalg.inv(Yt))
+                EVYt = E.apply(cat_arrays([V.real, V.imag])).lincomb(spla.inv(Yt))
             else:
-                EVYt = E.apply_adjoint(cat_arrays([V.real, V.imag])).lincomb(np.linalg.inv(Yt))
+                EVYt = E.apply_adjoint(cat_arrays([V.real, V.imag])).lincomb(spla.inv(Yt))
             RF.axpy(np.sqrt(-2 * shifts[j_shift].real), EVYt[:len(C)])
             K += EVYt.lincomb(F2.T)
             j += 2
@@ -263,7 +273,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     return solve_ricc_lrcf(A, E, B, C, -R, None, S, trans, options)
 
 
-def hamiltonian_shifts_init(A, E, B, C, shift_options):
+def hamiltonian_shifts_init(A, E, B, C, Q, shift_options):
     """Compute initial shift parameters for low-rank RADI iteration.
 
     Compute Galerkin projection of Hamiltonian matrix on space spanned by :math:`C` and return the
@@ -291,13 +301,15 @@ def hamiltonian_shifts_init(A, E, B, C, shift_options):
         A |NumPy array| containing a set of stable shift parameters.
     """
     rng = new_rng(0)
+    QQQ = Q
     for _ in range(shift_options['init_maxiter']):
         Q = gram_schmidt(C, atol=0, rtol=0)
         Ap = A.apply2(Q, Q)
         QB = Q.inner(B)
         Gp = QB.dot(QB.T)
         QR = Q.inner(C)
-        Rp = QR.dot(QR.T)
+        import ipdb; ipdb.set_trace()
+        Rp = (QR@QQQ)@QR.T
         Hp = np.block([
             [Ap, Gp],
             [Rp, -Ap.T]
