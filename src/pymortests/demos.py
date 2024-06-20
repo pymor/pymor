@@ -58,8 +58,7 @@ if not parallel:
     DISCRETIZATION_ARGS += (('elliptic_unstructured', [6., 16, 1e-1]),)
 
 SUCCESSIVE_CONSTRAINTS_ARGS = (
-    ('coercivity_estimation_scm', ['naive', 10, 5, 10]),
-    ('coercivity_estimation_scm', ['greedy', 10, 5, 10]),
+    ('coercivity_estimation_scm', []),
 )
 
 NEURAL_NETWORK_ARGS = (
