@@ -11,6 +11,8 @@ from pymor.algorithms.bernoulli import bernoulli_stabilize
 from pymor.algorithms.eigs import eigs
 from pymor.algorithms.lyapunov import (
     _chol,
+    solve_bilinear_lyap_dense,
+    solve_bilinear_lyap_lrcf,
     solve_cont_lyap_dense,
     solve_cont_lyap_lrcf,
     solve_disc_lyap_dense,
@@ -3213,6 +3215,95 @@ class BilinearModel(Model):
             f'    solution_space:  {self.solution_space}'
         )
         return string
+
+    @cached
+    def gramian(self, typ='c_lrcf', mu=None):
+        """Compute a Gramian.
+
+        Parameters
+        ----------
+        typ
+            Type of the Gramian (`'c_lrcf'`, `'o_lrcf'`, `'c_dense'`, `'o_dense'`).
+        mu
+            |Parameter value|.
+
+        Returns
+        -------
+        Gramian.
+        """
+        assert typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense')
+        if self.solver_options is None:
+            opts = {}
+        else:
+            if typ == 'c_lrcf':
+                opts = self.solver_options.get('bilinear_lyap_lrcf', {})
+            elif typ == 'o_lrcf':
+                opts = self.solver_options.get('bilinear_lyap_lrcf', {})
+            elif typ == 'c_dense':
+                opts = self.solver_options.get('bilinear_lyap_dense', {})
+            elif typ == 'o_dense':
+                opts = self.solver_options.get('bilinear_lyap_dense', {})
+        if typ == 'c_lrcf':
+            return solve_bilinear_lyap_lrcf(
+                self.A.assemble(mu=mu),
+                self.E.assemble(mu=mu),
+                tuple(Ni.assemble(mu=mu) for Ni in self.N),
+                self.B.as_range_array(mu=mu),
+                **opts,
+            )
+        elif typ == 'o_lrcf':
+            return solve_bilinear_lyap_lrcf(
+                self.A.assemble(mu=mu),
+                self.E.assemble(mu=mu),
+                tuple(Ni.assemble(mu=mu) for Ni in self.N),
+                self.B.as_range_array(mu=mu),
+                trans=True,
+                **opts,
+            )
+        elif typ == 'c_dense':
+            return solve_bilinear_lyap_dense(
+                to_matrix(self.A, format='dense', mu=mu),
+                to_matrix(self.E, format='dense', mu=mu),
+                tuple(to_matrix(Ni, format='dense', mu=mu) for Ni in self.N),
+                to_matrix(self.B, format='dense', mu=mu),
+                **opts,
+            )
+        elif typ == 'o_dense':
+            return solve_bilinear_lyap_dense(
+                to_matrix(self.A, format='dense', mu=mu),
+                to_matrix(self.E, format='dense', mu=mu),
+                tuple(to_matrix(Ni, format='dense', mu=mu) for Ni in self.N),
+                to_matrix(self.C, format='dense', mu=mu),
+                trans=True,
+                **opts,
+            )
+
+    @cached
+    def h2_norm(self, mu=None):
+        """Compute H2 norm.
+
+        Parameters
+        ----------
+        mu
+            |Parameter value|.
+
+        Returns
+        -------
+        norm
+            H2 norm.
+        """
+        D_norm2 = np.sum(self.D.as_range_array(mu=mu).norm2())
+        if D_norm2 != 0 and self.sampling_time == 0:
+            self.logger.warning('The D operator is not exactly zero '
+                                f'(squared Frobenius norm is {D_norm2}).')
+            D_norm2 = 0
+        assert self.parameters.assert_compatible(mu)
+        if self.dim_input <= self.dim_output:
+            cf = self.gramian('c_lrcf', mu=mu)
+            return np.sqrt(self.C.apply(cf, mu=mu).norm2().sum() + D_norm2)
+        else:
+            of = self.gramian('o_lrcf', mu=mu)
+            return np.sqrt(self.B.apply_adjoint(of, mu=mu).norm2().sum() + D_norm2)
 
 
 def _lti_to_poles_b_c(lti, mu=None):

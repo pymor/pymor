@@ -5,10 +5,16 @@
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.svd_va import qr_svd
 from pymor.core.config import config
 from pymor.core.defaults import defaults
+from pymor.core.logger import getLogger
+from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 from pymor.tools.frozendict import FrozenDict
+from pymor.vectorarrays.constructions import cat_arrays
+from pymor.vectorarrays.interface import VectorArray
 
 _DEFAULT_LYAP_SOLVER_BACKEND = FrozenDict(
     {
@@ -380,6 +386,232 @@ def _solve_lyap_dense_check_args(A, E, B, trans):
     assert isinstance(B, np.ndarray)
     assert A.ndim == 2
     assert not trans and B.shape[0] == A.shape[0] or trans and B.shape[1] == A.shape[0]
+
+
+def solve_bilinear_lyap_lrcf(A, E, N, B, trans=False, maxit=2, tol=1e-10):
+    r"""Solve a bilinear Lyapunov equation.
+
+    Computes a low-rank approximation to the solution.
+
+    The equation is given by
+
+    .. math::
+        A X E^T
+        + E X A^T
+        + \sum_{k = 1}^m N_i X N_i^T
+        + B B^T
+        = 0
+
+    if `trans` is `False` or
+
+    .. math::
+        A^T X E
+        + E^T X A
+        + \sum_{k = 1}^m N_i^T X N_i
+        + B^T B
+        = 0
+
+    if `trans` is `True`.
+
+    Parameters
+    ----------
+    A
+        The non-parametric |Operator| A.
+    E
+        The non-parametric |Operator| E or `None`.
+    N
+        The tuple of non-parametric |Operators| N_i.
+    B
+        The operator B as a |VectorArray| from `A.source`.
+    trans
+        Whether the first |Operator| in the Lyapunov equation is transposed.
+    maxit
+        Maximum number of iterations.
+    tol
+        Relative error tolerance.
+
+    Returns
+    -------
+    Z
+        Low-rank Cholesky factor of the Lyapunov equation solution,
+        |VectorArray| from `A.source`.
+    """
+    assert isinstance(A, Operator)
+    assert A.source == A.range
+
+    if E is None:
+        E = IdentityOperator(A.source)
+    assert isinstance(E, Operator)
+    assert E.source == E.range
+    assert E.source == A.source
+
+    assert isinstance(N, tuple)
+    assert all(isinstance(Ni, Operator) for Ni in N)
+    assert all(Ni.source == Ni.range for Ni in N)
+    assert all(Ni.source == A.source for Ni in N)
+
+    assert isinstance(B, VectorArray)
+    assert B in A.source
+
+    assert maxit > 0
+    assert tol >= 0
+
+    logger = getLogger('pymor.algorithms.lyapunov.solve_bilinear_lyap_lrcf')
+    B_updated = B
+    for i in range(maxit):
+        with logger.block(f'Iteration {i + 1}'):
+            logger.info('Solving Lyapunov equation ...')
+            Z = solve_cont_lyap_lrcf(A, E, B_updated, trans=trans)
+            logger.info('Compressing low-rank factor ...')
+            Z = _compress(Z)
+            if tol > 0:
+                logger.info('Computing error ...')
+                error = _compute_bilinear_lyap_lrcf_error(A, E, N, B, Z, trans)
+                logger.info(f'Error: {error:.3e}')
+                if error <= tol:
+                    break
+            if i < maxit - 1:
+                if not trans:
+                    B_updated = cat_arrays((B,) + tuple(Ni.apply(Z) for Ni in N))
+                else:
+                    B_updated = cat_arrays((B,) + tuple(Ni.apply_adjoint(Z) for Ni in N))
+                logger.info('Compressing B ...')
+                B_updated = _compress(B_updated)
+    return Z
+
+
+def _compute_bilinear_lyap_lrcf_error(A, E, H, N, B, Z, trans):
+    if not trans:
+        U = cat_arrays((A.apply(Z), E.apply(Z), B) + tuple(Ni.apply(Z) for Ni in N))
+    else:
+        U = cat_arrays((A.apply_adjoint(Z), E.apply_adjoint(Z), B) + tuple(Ni.apply_adjoint(Z) for Ni in N))
+    U, R = gram_schmidt(U, return_R=True)
+    R2 = R.copy()
+    tmp = R[:, : len(Z)].copy()
+    R[:, : len(Z)] = R[:, len(Z) : 2 * len(Z)]
+    R[:, len(Z) : 2 * len(Z)] = tmp
+    error = spla.norm(R @ R2.T)
+    B_norm = spla.norm(B.inner(B))
+    return error / B_norm
+
+
+def solve_bilinear_lyap_dense(A, E, N, B, trans=False, maxit=2, tol=1e-10):
+    r"""Solve a quadratic-bilinear controllability Lyapunov equation.
+
+    Returns the solution as a dense matrix.
+
+    The equation is given by
+
+    .. math::
+        A X E^T
+        + E X A^T
+        + \sum_{k = 1}^m N_i X N_i^T
+        + B B^T
+        = 0
+
+    if `trans` is `False` or
+
+    .. math::
+        A^T X E
+        + E^T X A
+        + \sum_{k = 1}^m N_i^T X N_i
+        + B^T B
+        = 0
+
+    if `trans` is `True`.
+
+    Parameters
+    ----------
+    A
+        The matrix A as a 2D |NumPy array|.
+    E
+        The matrix E as a 2D |NumPy array| or `None`.
+    N
+        The tuple of matrices N_i as 2D |NumPy arrays|.
+    B
+        The matrix B as a 2D |NumPy array|.
+    trans
+        Whether the first |Operator| in the Lyapunov equation is transposed.
+    maxit
+        Maximum number of iterations.
+    tol
+        Relative error tolerance.
+
+    Returns
+    -------
+    P
+        The Lyapunov equation solution as a 2D |NumPy array|.
+    """
+    assert isinstance(A, np.ndarray)
+    assert A.ndim == 2
+    assert A.shape[0] == A.shape[1]
+
+    if E is None:
+        E = np.eye(A.shape)
+    assert isinstance(E, np.ndarray)
+    assert E.ndim == 2
+    assert E.shape[0] == E.shape[1]
+    assert E.shape[0] == A.shape[0]
+
+    assert isinstance(N, tuple)
+    assert all(isinstance(Ni, np.ndarray) for Ni in N)
+    assert all(Ni.ndim == 2 for Ni in N)
+    assert all(Ni.shape[0] == Ni.shape[1] for Ni in N)
+
+    assert isinstance(B, np.ndarray)
+    assert B.ndim == 2
+    assert B.shape[0] == A.shape[0]
+
+    assert maxit > 0
+    assert tol >= 0
+
+    logger = getLogger('pymor.algorithms.lyapunov.solve_bilinear_lyap_dense')
+    B_updated = B
+    for i in range(maxit):
+        with logger.block(f'Iteration {i + 1}'):
+            logger.info('Solving Lyapunov equation ...')
+            P = solve_cont_lyap_dense(A, E, B_updated, trans=trans)
+            Z = _chol(P)
+            if tol > 0:
+                logger.info('Computing error ...')
+                error = _compute_bilinear_lyap_dense_error(A, E, N, B, Z, trans)
+                logger.info(f'Error: {error:.3e}')
+                if error <= tol:
+                    break
+            if i < maxit - 1:
+                logger.info('Updating B ...')
+                if not trans:
+                    B_updated = np.hstack((B,) + tuple(Ni @ Z for Ni in N))
+                else:
+                    B_updated = np.hstack((B,) + tuple(Ni.T @ Z for Ni in N))
+                logger.info('Compressing B ...')
+                B_updated = _chol(B_updated @ B_updated.T)
+    return P
+
+
+def _compute_bilinear_lyap_dense_error(A, E, N, B, Z, trans):
+    if not trans:
+        U = np.hstack((A @ Z, E @ Z, B) + tuple(Ni @ Z for Ni in N))
+    else:
+        U = np.hstack((A.T @ Z, E.T @ Z, B) + tuple(Ni.T @ Z for Ni in N))
+    U, R = spla.qr(U, mode='economic')
+    R2 = R.copy()
+    tmp = R[:, : len(Z)].copy()
+    R[:, : len(Z)] = R[:, len(Z) : 2 * len(Z)]
+    R[:, len(Z) : 2 * len(Z)] = tmp
+    error = spla.norm(R @ R2.T)
+    B_norm = spla.norm(B.T @ B)
+    return error / B_norm
+
+
+def _compress(Z):
+    if isinstance(Z, VectorArray):
+        U, s, _ = qr_svd(Z, rtol=1e-10)
+        U.scal(s)
+    else:
+        U, s, _ = spla.svd(Z, full_matrices=False, lapack_driver='gesvd')
+        U *= s
+    return U
 
 
 def _chol(A):
