@@ -52,7 +52,7 @@ def main(
     plt.legend()
     plt.show()
 
-    plt.plot(np.arange(len(test_parameters)), results[..., 0], label='True coercivity constant')
+    plt.plot(np.arange(len(test_parameters)), results[..., 0], 'x', label='True coercivity constant')
     plt.plot(np.arange(len(test_parameters)), results[..., 1], label='Lower bound')
     plt.plot(np.arange(len(test_parameters)), results[..., 2], label='Upper bound')
     plt.legend()
