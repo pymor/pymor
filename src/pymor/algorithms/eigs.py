@@ -131,6 +131,7 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
     while True:
         i += 1
 
+        assert len(V) == k
         V, H, f = _extend_arnoldi(Aop, V, H, f, l - k)
 
         ew, ev = spla.eig(H)
@@ -155,11 +156,14 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
         ews = ew[idx]
         evs = ev[:, idx]
 
-        rres = f.norm()[0] * np.abs(evs[l - 1]) / np.abs(ews)
+        rres = f.norm()[0] * np.abs(evs[-1]) / np.abs(ews)
 
         # increase k by one in order to keep complex conjugate pairs together
         if not complex_evp and ews[k - 1].imag != 0 and ews[k - 1].imag + ews[k].imag < complex_pair_tol:
             k += 1
+
+        if k > l:
+            raise RuntimeError('Breakdown in Arnoldi iteration.')
 
         logger.info(f'Maximum of relative Ritz estimates at step {i}: {rres[:k].max():.5e}')
 
@@ -201,7 +205,7 @@ def _arnoldi(A, l, b, complex_evp):
     v = b * (1 / b.norm()[0])
 
     H = np.zeros((l, l), dtype=np.complex128 if complex_evp else np.float64)
-    V = A.source.empty(reserve=l)
+    V = A.source.empty(reserve=l+1)
 
     V.append(v)
 
@@ -209,8 +213,14 @@ def _arnoldi(A, l, b, complex_evp):
         v = A.apply(v)
         V.append(v)
 
+        assert len(V) == i+2
         _, R = gram_schmidt(V, return_R=True, atol=0, rtol=0, offset=len(V) - 1, copy=False)
         H[:i + 2, i] = R[:l, i + 1]
+
+        if len(V) < i+2:  # breakdown
+            l = i+1
+            return V[:l], H[:l,:l], V.zeros()
+
         v = V[-1]
 
     return V[:l], H, v * R[l, l]
@@ -221,6 +231,8 @@ def _extend_arnoldi(A, V, H, f, p):
     k = len(V)
 
     res = f.norm()[0]
+    if res == 0:  # breakdown in _arnoldi
+        return V, H, f
     # the explicit "constant" mode is needed for numpy 1.16
     # mode only gained a default value with numpy 1.17
     H = np.pad(H, ((0, p), (0, p)), mode='constant')
@@ -232,8 +244,13 @@ def _extend_arnoldi(A, V, H, f, p):
     for i in range(k, k + p):
         v = A.apply(v)
         V.append(v)
+        assert len(V) == i+2
         _, R = gram_schmidt(V, return_R=True, atol=0, rtol=0, offset=len(V) - 1, copy=False)
         H[:i + 2, i] = R[:k + p, i + 1]
+
+        if len(V) < i+2:  # breakdown
+            p = i+1-k
+            return V[:k + p], H[:k + p, :k + p], V.zeros()
 
         v = V[-1]
 
