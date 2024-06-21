@@ -457,7 +457,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
     Parameters
     ----------
     thetas
-        List or tuple of |ParameterFunctional|
+        List or tuple of |ParameterFunctionals|.
     mu_bar
         Parameter associated with alpha_mu_bar.
     alpha_mu_bar
@@ -614,7 +614,7 @@ class MaxThetaParameterFunctional(BaseMaxThetaParameterFunctional):
     Parameters
     ----------
     thetas
-        List or tuple of |ParameterFunctional|
+        List or tuple of |ParameterFunctionals|.
     mu_bar
         Parameter associated with gamma_mu_bar.
     gamma_mu_bar

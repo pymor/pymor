@@ -57,6 +57,10 @@ DISCRETIZATION_ARGS = (
 if not parallel:
     DISCRETIZATION_ARGS += (('elliptic_unstructured', [6., 16, 1e-1]),)
 
+SUCCESSIVE_CONSTRAINTS_ARGS = (
+    ('coercivity_estimation_scm', []),
+)
+
 NEURAL_NETWORK_ARGS = (
     ('neural_networks', [15, 20, 3]),
     ('neural_networks_fenics', [15, 3]),
@@ -161,6 +165,7 @@ SYMPLECTIC_WAVE_ARGS = (
 
 DEMO_ARGS = (
     DISCRETIZATION_ARGS
+    + SUCCESSIVE_CONSTRAINTS_ARGS
     + NEURAL_NETWORK_ARGS
     + THERMALBLOCK_ARGS
     + THERMALBLOCK_ADAPTIVE_ARGS
