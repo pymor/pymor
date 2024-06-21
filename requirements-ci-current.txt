@@ -18,7 +18,7 @@ argon2-cffi-bindings==21.2.0
     # via argon2-cffi
 arrow==1.3.0
     # via isoduration
-astroid==3.2.2
+astroid==3.2.4
     # via sphinx-autoapi
 asttokens==2.4.1
     # via stack-data
@@ -64,7 +64,7 @@ comm==0.2.2
     #   ipywidgets
 contourpy==1.2.1
     # via matplotlib
-coverage[toml]==7.5.4
+coverage[toml]==7.6.0
     # via
     #   coverage
     #   pytest-cov
@@ -129,7 +129,7 @@ idna==3.7
     #   requests
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==8.0.0
+importlib-metadata==8.2.0
     # via
     #   jupyter-cache
     #   myst-nb
@@ -182,7 +182,7 @@ json5==0.9.25
     # via jupyterlab-server
 jsonpointer==3.0.0
     # via jsonschema
-jsonschema[format-nongpl]==4.22.0
+jsonschema[format-nongpl]==4.23.0
     # via
     #   jupyter-events
     #   jupyterlab-server
@@ -210,7 +210,7 @@ jupyter-events==0.10.0
     # via jupyter-server
 jupyter-lsp==2.2.5
     # via jupyterlab
-jupyter-server==2.14.1
+jupyter-server==2.14.2
     # via
     #   jupyter-lsp
     #   jupyter-server-mathjax
@@ -224,7 +224,7 @@ jupyter-server-mathjax==0.2.6
     # via nbdime
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.2.3
+jupyterlab==4.2.4
     # via
     #   notebook
     #   pymor (pyproject.toml)
@@ -232,7 +232,7 @@ jupyterlab-myst==2.4.2
     # via pymor (pyproject.toml)
 jupyterlab-pygments==0.3.0
     # via nbconvert
-jupyterlab-server==2.27.2
+jupyterlab-server==2.27.3
     # via
     #   jupyterlab
     #   notebook
@@ -275,7 +275,7 @@ mistune==3.0.2
     # via nbconvert
 mkl==2024.2.0
     # via ngsolve
-mpi4py==3.1.6
+mpi4py==4.0.0
     # via pymor (pyproject.toml)
 mpmath==1.3.0
     # via sympy
@@ -322,7 +322,7 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
-numpy==1.26.4
+numpy==2.0.1
     # via
     #   contourpy
     #   hypothesis
@@ -378,7 +378,7 @@ ptyprocess==0.7.0
     # via
     #   pexpect
     #   terminado
-pure-eval==0.2.2
+pure-eval==0.2.3
     # via stack-data
 pybind11[global]==2.13.1
     # via pymor (pyproject.toml)
@@ -414,7 +414,7 @@ pyside6-essentials==6.7.2
     # via
     #   pyside6
     #   pyside6-addons
-pytest==8.2.2
+pytest==8.3.2
     # via
     #   hypothesis
     #   pymor (pyproject.toml)
@@ -477,11 +477,11 @@ rich==13.7.1
     # via
     #   meshio
     #   typer
-rpds-py==0.18.1
+rpds-py==0.19.1
     # via
     #   jsonschema
     #   referencing
-scikit-fem==9.1.1
+scikit-fem==10.0.0
     # via pymor (pyproject.toml)
 scipy==1.14.0
     # via
@@ -517,7 +517,7 @@ sortedcontainers==2.4.0
     # via hypothesis
 soupsieve==2.5
     # via beautifulsoup4
-sphinx==7.3.7
+sphinx==7.4.7
     # via
     #   myst-nb
     #   myst-parser
@@ -525,29 +525,29 @@ sphinx==7.3.7
     #   sphinx-autoapi
     #   sphinx-material
     #   sphinxcontrib-bibtex
-sphinx-autoapi==3.1.2
+sphinx-autoapi==3.2.1
     # via pymor (pyproject.toml)
 sphinx-material==0.0.36
     # via pymor (pyproject.toml)
-sphinxcontrib-applehelp==1.0.8
+sphinxcontrib-applehelp==2.0.0
     # via sphinx
 sphinxcontrib-bibtex==2.6.2
     # via pymor (pyproject.toml)
-sphinxcontrib-devhelp==1.0.6
+sphinxcontrib-devhelp==2.0.0
     # via sphinx
-sphinxcontrib-htmlhelp==2.0.5
+sphinxcontrib-htmlhelp==2.1.0
     # via sphinx
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
-sphinxcontrib-qthelp==1.0.7
+sphinxcontrib-qthelp==2.0.0
     # via sphinx
-sphinxcontrib-serializinghtml==1.1.10
+sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 sqlalchemy==2.0.31
     # via jupyter-cache
 stack-data==0.6.3
     # via ipython
-sympy==1.12.1
+sympy==1.13.1
     # via torch
 tabulate==0.9.0
     # via jupyter-cache
@@ -561,7 +561,7 @@ text-unidecode==1.3
     # via python-slugify
 tinycss2==1.3.0
     # via nbconvert
-torch==2.3.1+cpu
+torch==2.4.0+cpu
     # via pymor (pyproject.toml)
 tornado==6.4.1
     # via
