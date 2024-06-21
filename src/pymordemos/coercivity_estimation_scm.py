@@ -3,7 +3,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-"""Simplified version of the thermalblock demo to showcase the successive constraints method."""
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,6 +27,7 @@ def main(
     max_extensions: int = Option(10, help='Maximum number of extensions of the constraint parameter set.'),
     num_neighbors: int = Option(5, help='Number of neighbors in the parameter space used to compute bounds.')
 ):
+    """Simplified version of the thermalblock demo to showcase the successive constraints method."""
     problem = thermal_block_problem(num_blocks=(XBLOCKS, YBLOCKS))
 
     fom, _ = discretize_stationary_cg(problem, diameter=1. / GRID_INTERVALS)
