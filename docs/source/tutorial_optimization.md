@@ -535,7 +535,8 @@ respective trust-regions.
 
 ```{image} trust_region_plot.png
 :alt: Sketch of the optimization path of a trust-region method
-:width: 100%
+:width: 50%
+:align: center
 ```
 
 The adaptive component of this algorithm is the choice of the trust-radius and the enrichment.
@@ -571,8 +572,7 @@ tr_output = fom.output(tr_mu)[0, 0]
 
 Now, we only need {math}`4` enrichments and end up with an approximation
 error of about `1e-06` which is comparable to the result obtained from the
-previous methods. Unfortunately, the trust-region method takes longer because of
-the overhead of ROM evaluations and line searches performed in the BFGS step.
+previous methods.
 To conclude, we once again compare all methods that we have discussed in this notebook.
 
 ```{code-cell}
@@ -591,7 +591,9 @@ tr_report(tr_mu, tr_output, reference_mu, reference_fun, tr_minimization_data,
 
 It is apparent that for this example no drastic changes occur when using the different
 methods. Importantly, the TR method is noticeably faster than the FOM-based methods.
-It is expected that the for problems of larger scale the speedup is even more pronounced.
+It has been shown in the references mentioned below in the conclusion that for problems
+of larger scale the speedup obtained by gradient-based methods and in particular the TR method
+is even more pronounced.
 Crucially, the number of necessary FOM evaluations in the trust-region method is smaller
 than for the other methods because we use the information in the local surrogates more efficiently.
 
@@ -614,12 +616,10 @@ in the respective demo {mod}`~pymordemos.trust_region`.
 
 In this tutorial we have seen how pyMOR can be used to speedup the optimizer
 for PDE-constrained optimization problems.
+The trust-region algorithm shown here is able to efficiently use local surrogate
+models to reduce the number of FOM evaluations required during optimization.
 
-Moreover, we focused on the lack of overall efficiency of standard RB methods.
-We have therefore seen a way to efficiently use local surrogate models in a trust-region
-algorithm to reduce the number of FOM evaluations required during optimization.
-
-In this tutorial we have only covered a few basic approaches to combine model
+In this tutorial we have only covered a few approaches to combine model
 reduction with optimization.
 For faster and more robust optimization algorithms we refer to the textbooks
 [CGT00](<https://epubs.siam.org/doi/book/10.1137/1.9780898719857>) and
