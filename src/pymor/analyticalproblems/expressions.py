@@ -300,7 +300,7 @@ class BaseConstant(Expression):
     shape = ()
 
     def numpy_expr(self):
-        return f'array({self.numpy_symbol}, ndmin={len(self.shape)}, copy=False)'
+        return f'array({self.numpy_symbol}, ndmin={len(self.shape)}, copy=None)'
 
     def fenics_expr(self, params):
         import ufl
