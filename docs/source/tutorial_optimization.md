@@ -487,7 +487,7 @@ we can expect that the result above is more accurate which is why we choose it a
 ## Adaptive trust-region optimization using reduced basis methods
 
 As a simple idea to circumvent the costly solutions of the FOM, one could build a reduced order model
-offline and use it online as a replacement for the FOM. However, in the context of PDE-constrained, it
+offline and use it online as a replacement for the FOM. However, in the context of PDE-constrained optimization, it
 is not meaningful to ignore the offline time required to build the RB surrogate since it can happen
 that FOM optimization methods would already converge before the surrogate model is even ready.
 Building a RB model that is accurate in the whole parameter space is thus usually too expensive.
@@ -504,15 +504,15 @@ the underlying error estimator. In the trust-region method, we iteratively repla
 global problem with local surrogates, compute local solutions to these surrogate problems,
 and enhance the surrogate models when we either are close to the boundary of the trust-region
 or when the model confidence decreases such that we require more data.
-The local surrogates are required to be accurate only locally which avoids the construction
-of a globally sensible ROM. These local surrogates are built using FOM solutions and gradients.
+The local surrogates are required to be accurate only locally, which avoids the construction
+of a globally accurate ROM. These local surrogates are built using FOM solutions and gradients.
 A speedup is obtained if many of the optimization steps based on FOM evaluations can be replaced
 by much cheaper iterations of the ROM and only a few FOM computations are required to build the
 reduced models.
 
-The trust-region algorithm thus consists of one outer loop and many inner loops.
+The trust-region algorithm consists of one outer loop and many inner loops.
 The outer loop iterates over the global parameter space and constructs local trust-regions along with their corresponding
-surrogates, whereas the inner loops use a modified version of the projected BFGS to solve
+surrogates, whereas the inner loops use a modified version of the projected BFGS algorithm to solve
 the local problems. For a fixed parameter in the outer iteration {math}`\mu` and the current
 surrogate model {math}`J_r`, the local problems can be written as
 
@@ -521,7 +521,7 @@ surrogate model {math}`J_r`, the local problems can be written as
 ```
 
 In the formulation of ({math}`\hat{P}_r`), {math}`\Delta \subseteq \mathcal{P}` is the
-trust-region with tolerance {math}`\tau > 0` for an error estimator {math}`e_r` of our choice
+trust-region with tolerance {math}`\tau > 0` for an error estimator {math}`e_r` of our choice,
 in which the updated parameter {math}`\mu + s` satisfies
 
 ```{math}
@@ -529,8 +529,7 @@ e_r(\mu + s) < \tau.
 ```
 
 In metric settings such as with the {math}`2`-norm in parameter space, these trust-regions
-correspond to open balls of radius {math}`\tau`. However, using error estimators from model
-reduction in this tutorial's setting creates much more complex shapes.
+correspond to open balls of radius {math}`\tau`. However, using model reduction error estimators as in this tutorial, creates much more complex shapes.
 The sketch below shows an exemplary optimization path with inner and outer iterations and the
 respective trust-regions.
 
@@ -544,12 +543,12 @@ If a local optimization in an inner loop fails, we retry the surrogate problem w
 smaller trust-region, thus limiting the trustworthiness of the current model.
 In contrast, when we quickly converge close to the boundary of the trust-region, it is a
 reasonable assumption that the globally optimal parameter is outside of the trust-region
-and thus we stop the inner iteration. After computing an inner solution we then have the
+and, thus, we stop the inner iteration. After computing an inner solution we then have the
 option to keep the current surrogate model, enlarge the trust-radius of the local model
 or further enrich it by adding the FOM solution snapshot at the current local optimum.
 In this sense, the adaptive trust-region algorithm can reduce the number of FOM evaluations
-by estimating if the current surrogate is trustworthy enough to increase the trust-radius
-and only enrich the model if the estimated quality is no longer sufficient.
+by estimating whether the current surrogate is trustworthy enough to increase the trust-radius
+and only enriching the model if the estimated quality is no longer sufficient.
 
 The algorithm described above can be executed as follows.
 
