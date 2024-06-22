@@ -111,7 +111,6 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
             tQ = spla.block_diag(np.eye(len(C)), -Rinv)
         else:
             tQ = spla.block_diag(Q, -Rinv)
-        assert False
         Z_cf = solve_ricc_lrcf(tA, E, B, tC, R, tQ, None, trans, options)
         return Z_cf
 
@@ -133,6 +132,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
 
     if R is not None:
         Rinv = spla.solve(R, np.eye(R.shape[0]))
+        Rinv = 0.5 * (Rinv + Rinv.T)
     else:
         R = Rinv = np.eye(len(B))
 
@@ -146,7 +146,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
 
     j = 0
     j_shift = 0
-    shifts = init_shifts(A, E, B, C, Q, shift_options)
+    shifts = init_shifts(A, E, B, C, Rinv, Q, shift_options)
 
     if Q is None:
         res = np.linalg.norm(RF.gramian(), ord='fro')
@@ -167,15 +167,14 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
             else:
                 V = AsE.apply_inverse_adjoint(RF) * np.sqrt(-2 * shifts[j_shift].real)
         else:
+            BRiK = LowRankOperator(B, Rinv, K)
+            AsEBRiK = AsE - BRiK
+
             if not trans:
-                BRiK = LowRankOperator(K, Rinv, B)
-                AsEBRiK = AsE - BRiK
                 V = AsEBRiK.apply_inverse(RF) * np.sqrt(-2 * shifts[j_shift].real)
             else:
-                BRiK = LowRankOperator(B, Rinv, K)
-                AsEBRiK = AsE - BRiK
-                # AsEBRiK = NumpyMatrixOperator(to_matrix(AsEBRiK))
                 V = AsEBRiK.apply_inverse_adjoint(RF) * np.sqrt(-2 * shifts[j_shift].real)
+
         if np.imag(shifts[j_shift]) == 0:
             V = V.real
             Z.append(V)
@@ -223,7 +222,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
         res = np.linalg.norm(RF.gramian() @ RC, ord='fro')
         logger.info(f'Relative residual at step {j}: {res/init_res:.5e}')
         if j_shift >= shifts.size:
-            shifts = iteration_shifts(A, E, B, RF, K, Z, shift_options)
+            shifts = iteration_shifts(A, E, B, Rinv, RF, RC, K, Z, shift_options)
             j_shift = 0
     # transform solution to lrcf
     cf = spla.cholesky(Y)
@@ -273,7 +272,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     return solve_ricc_lrcf(A, E, B, C, -R, None, S, trans, options)
 
 
-def hamiltonian_shifts_init(A, E, B, C, Q, shift_options):
+def hamiltonian_shifts_init(A, E, B, C, Rinv, Q, shift_options):
     """Compute initial shift parameters for low-rank RADI iteration.
 
     Compute Galerkin projection of Hamiltonian matrix on space spanned by :math:`C` and return the
@@ -301,20 +300,19 @@ def hamiltonian_shifts_init(A, E, B, C, Q, shift_options):
         A |NumPy array| containing a set of stable shift parameters.
     """
     rng = new_rng(0)
-    QQQ = Q
+
     for _ in range(shift_options['init_maxiter']):
-        Q = gram_schmidt(C, atol=0, rtol=0)
-        Ap = A.apply2(Q, Q)
-        QB = Q.inner(B)
-        Gp = QB.dot(QB.T)
-        QR = Q.inner(C)
-        import ipdb; ipdb.set_trace()
-        Rp = (QR@QQQ)@QR.T
+        U = gram_schmidt(C, atol=0, rtol=0)
+        Ap = A.apply2(U, U)
+        UB = U.inner(B)
+        Gp = UB @ (Rinv @ UB.T)
+        UR = U.inner(C)
+        Rp = (UR @ Q) @ UR.T
         Hp = np.block([
             [Ap, Gp],
             [Rp, -Ap.T]
         ])
-        Ep = E.apply2(Q, Q)
+        Ep = E.apply2(U, U)
         EEp = spla.block_diag(Ep, Ep.T)
         eigvals, eigvecs = spla.eig(Hp, EEp)
         eigpairs = zip(eigvals, eigvecs)
@@ -346,7 +344,7 @@ def hamiltonian_shifts_init(A, E, B, C, Q, shift_options):
     raise RuntimeError('Could not generate initial shifts for low-rank RADI iteration.')
 
 
-def hamiltonian_shifts(A, E, B, R, K, Z, shift_options):
+def hamiltonian_shifts(A, E, B, Rinv, RF, RC, K, Z, shift_options):
     """Compute further shift parameters for low-rank RADI iteration.
 
     Compute Galerkin projection of Hamiltonian matrix on space spanned by last few columns of
@@ -363,8 +361,10 @@ def hamiltonian_shifts(A, E, B, R, K, Z, shift_options):
         The |Operator| E from the corresponding Riccati equation.
     B
         The |VectorArray| B from the corresponding Riccati equation.
-    R
+    RF
         A |VectorArray| representing the currently computed residual factor.
+    RC
+        A |NumPy array| representing the currently computed residual core.
     K
         A |VectorArray| representing the currently computed iterate.
     Z
@@ -379,23 +379,26 @@ def hamiltonian_shifts(A, E, B, R, K, Z, shift_options):
     """
     l = shift_options['subspace_columns']
     # always use multiple of len(R) columns
-    l = max(1, l // len(R)) * len(R)
+    l = max(1, l // len(RF)) * len(RF)
     if len(Z) < l:
         l = len(Z)
 
-    Q = gram_schmidt(Z[-l:], atol=0, rtol=0)
-    Ap = A.apply2(Q, Q)
-    KBp = Q.inner(K) @ Q.inner(B).T
+    if RC is None:
+        RC = np.eye(len(RF))
+
+    U = gram_schmidt(Z[-l:], atol=0, rtol=0)
+    Ap = A.apply2(U, U)
+    KBp = U.inner(K) @ (Rinv @ U.inner(B).T)
     AAp = Ap - KBp
-    QB = Q.inner(B)
-    Gp = QB.dot(QB.T)
-    QR = Q.inner(R)
-    Rp = QR.dot(QR.T)
+    UB = U.inner(B)
+    Gp = UB.dot(Rinv @ UB.T)
+    UR = U.inner(RF)
+    Rp = UR.dot(RC @ UR.T)
     Hp = np.block([
         [AAp, Gp],
         [Rp, -AAp.T]
     ])
-    Ep = E.apply2(Q, Q)
+    Ep = E.apply2(U, U)
     EEp = spla.block_diag(Ep, Ep.T)
     eigvals, eigvecs = spla.eig(Hp, EEp)
     eigpairs = zip(eigvals, eigvecs)
@@ -406,8 +409,8 @@ def hamiltonian_shifts(A, E, B, R, K, Z, shift_options):
     maxind = 0
     for i in range(len(eigpairs)):
         eig = eigpairs[i][1]
-        y_eig = eig[-len(Q):]
-        x_eig = eig[:len(Q)]
+        y_eig = eig[-len(U):]
+        x_eig = eig[:len(U)]
         Ey = Ep.T.dot(y_eig)
         xEy = np.abs(np.dot(x_eig, Ey))
         currval = np.linalg.norm(y_eig)**2 / xEy
