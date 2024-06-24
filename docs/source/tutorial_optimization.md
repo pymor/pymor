@@ -487,10 +487,10 @@ we can expect that the result above is more accurate which is why we choose it a
 ## Adaptive trust-region optimization using reduced basis methods
 
 As a simple idea to circumvent the costly solutions of the FOM, one could build a reduced order model
-offline and use it online as a replacement for the FOM. However, in the context of PDE-constrained optimization, it
-is not meaningful to ignore the offline time required to build the RB surrogate since it can happen
-that FOM optimization methods would already converge before the surrogate model is even ready.
-Building a RB model that is accurate in the whole parameter space is thus usually too expensive.
+offline and use it online as a replacement for the FOM. However, in the context of PDE-constrained
+optimization, it is not meaningful to ignore the offline time required to build the RB surrogate since
+it can happen that FOM optimization methods would already converge before the surrogate model is even
+ready. Building a RB model that is accurate in the whole parameter space is thus usually too expensive.
 Thinking about this issue again, it is important to notice that
 we are solving an optimization problem which will eventually converge to
 a certain parameter. Thus, it only matters that the surrogate is good in
@@ -511,10 +511,11 @@ by much cheaper iterations of the ROM and only a few FOM computations are requir
 reduced models.
 
 The trust-region algorithm consists of one outer loop and many inner loops.
-The outer loop iterates over the global parameter space and constructs local trust-regions along with their corresponding
-surrogates, whereas the inner loops use a modified version of the projected BFGS algorithm to solve
-the local problems. For a fixed parameter in the outer iteration {math}`\mu` and the current
-surrogate model {math}`J_r`, the local problems can be written as
+The outer loop iterates over the global parameter space and constructs local trust-regions along
+with their corresponding surrogates, whereas the inner loops use a modified version of the
+projected BFGS algorithm to solve the local problems. For a fixed parameter in the outer
+iteration {math}`\mu` and the current surrogate model {math}`J_r`, the local problems can be
+written as
 
 ```{math}
 \min_{\mu + s \in \Delta} J_r(u_{\mu + s}, \mu + s).  \tag{$\hat{P}_r$}
@@ -529,7 +530,8 @@ e_r(\mu + s) < \tau.
 ```
 
 In metric settings such as with the {math}`2`-norm in parameter space, these trust-regions
-correspond to open balls of radius {math}`\tau`. However, using model reduction error estimators as in this tutorial, creates much more complex shapes.
+correspond to open balls of radius {math}`\tau`. However, using model reduction error
+estimators as in this tutorial, creates much more complex shapes.
 The sketch below shows an exemplary optimization path with inner and outer iterations and the
 respective trust-regions.
 
