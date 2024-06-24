@@ -307,7 +307,7 @@ def hamiltonian_shifts_init(A, E, B, C, Rinv, Q, shift_options):
         UB = U.inner(B)
         Gp = UB @ (Rinv @ UB.T)
         UR = U.inner(C)
-        Rp = (UR @ Q) @ UR.T
+        Rp = (UR @ Q) @ UR.T if Q is not None else UR @ UR.T
         Hp = np.block([
             [Ap, Gp],
             [Rp, -Ap.T]
@@ -328,8 +328,8 @@ def hamiltonian_shifts_init(A, E, B, C, Rinv, Q, shift_options):
         maxind = 0
         for i in range(len(eigpairs)):
             eig = eigpairs[i][1]
-            y_eig = eig[-len(Q):]
-            x_eig = eig[:len(Q)]
+            y_eig = eig[-len(U):]
+            x_eig = eig[:len(U)]
             Ey = Ep.T.dot(y_eig)
             xEy = np.abs(np.dot(x_eig, Ey))
             currval = np.linalg.norm(y_eig)**2 / xEy
