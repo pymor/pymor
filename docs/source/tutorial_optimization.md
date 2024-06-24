@@ -619,7 +619,7 @@ for PDE-constrained optimization problems.
 The trust-region algorithm shown here is able to efficiently use local surrogate
 models to reduce the number of FOM evaluations required during optimization.
 
-In this tutorial we have only covered a few approaches to combine model
+We have only covered a few approaches to combine model
 reduction with optimization.
 For faster and more robust optimization algorithms we refer to the textbooks
 [CGT00](<https://epubs.siam.org/doi/book/10.1137/1.9780898719857>) and
@@ -628,7 +628,7 @@ For recent research on combining trust-region methods with model reduction for
 PDE-constrained optimization problems we refer to
 [YM13](<https://epubs.siam.org/doi/abs/10.1137/120869171>),
 [QGVW17](<https://epubs.siam.org/doi/abs/10.1137/16M1081981>) and
-[KMSOV20](<https://www.esaim-m2an.org/articles/m2an/abs/2021/04/m2an200123/m2an200123.html>)
+[KMSOV20](<https://www.esaim-m2an.org/articles/m2an/abs/2021/04/m2an200123/m2an200123.html>),
 where for the latter a pyMOR implementation is available as supplementary material.
 
 Download the code:
