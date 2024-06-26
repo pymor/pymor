@@ -39,7 +39,6 @@ def run_mor_method_dd(fom, ss, reductor_cls, reductor_short_name, reductor_kwarg
     reduce_kwargs
         Optional keyword arguments for the reduce method.
     """
-    # Reduction
     rom = reductor_cls(ss * 1j, fom, **reductor_kwargs).reduce(*reduce_args, **reduce_kwargs)
     err = fom - rom
 
@@ -65,7 +64,6 @@ def main(
     """1D heat equation example."""
     set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
 
-    # Model
     p = InstationaryProblem(
         StationaryProblem(
             domain=RectDomain([[0., 0.], [1., 1.]], left='robin', right='robin', top='robin', bottom='robin'),
@@ -85,7 +83,7 @@ def main(
 
     run_mor_method_dd(lti, ss, PAAAReductor, 'AAA')
     run_mor_method_dd(lti, ss, LoewnerReductor, 'Loewner')
-    run_mor_method_dd(lti, ss, VectorFittingReductor, 'VF', reduce_args=(10,), reduce_kwargs={'maxit': 50})
+    run_mor_method_dd(lti, ss, VectorFittingReductor, 'VF', reduce_args=(20,), reduce_kwargs={'maxit': 50})
 
     plt.show()
 
