@@ -157,66 +157,75 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
     Ctol = res * options['tol']
 
     while res > Ctol and j < options['maxiter']:
+        s = shifts[j_shift]
+        sr = shifts[j_shift].real
+        si = shifts[j_shift].imag
+        sa = np.abs(shifts[j_shift])
+        print(s)
         if not trans:
-            AsE = A + shifts[j_shift] * E
+            AsE = A + s * E
         else:
-            AsE = A + np.conj(shifts[j_shift]) * E
+            AsE = A + np.conj(s) * E
         if j == 0:
             if not trans:
-                V = AsE.apply_inverse(RF) * np.sqrt(-2 * shifts[j_shift].real)
+                V = AsE.apply_inverse(RF) * np.sqrt(-2 * sr)
             else:
-                V = AsE.apply_inverse_adjoint(RF) * np.sqrt(-2 * shifts[j_shift].real)
+                V = AsE.apply_inverse_adjoint(RF) * np.sqrt(-2 * sr)
         else:
             BRiK = LowRankOperator(B, Rinv, K)
             AsEBRiK = AsE - BRiK
 
             if not trans:
-                V = AsEBRiK.apply_inverse(RF) * np.sqrt(-2 * shifts[j_shift].real)
+                V = AsEBRiK.apply_inverse(RF) * np.sqrt(-2 * sr)
             else:
-                V = AsEBRiK.apply_inverse_adjoint(RF) * np.sqrt(-2 * shifts[j_shift].real)
+                V = AsEBRiK.apply_inverse_adjoint(RF) * np.sqrt(-2 * sr)
+
+        V = V.lincomb(RC)
 
         if np.imag(shifts[j_shift]) == 0:
             V = V.real
             Z.append(V)
+
             VB = V.inner(B)
-            Yt = RC - (VB @ Rinv @ VB.T) / (2 * shifts[j_shift].real)
+            Yt = RC - (VB @ Rinv @ VB.T) / (2 * sr)
             Y = spla.block_diag(Y, Yt)
+
             if not trans:
                 EVYt = E.apply(V).lincomb(spla.inv(Yt))
             else:
                 EVYt = E.apply_adjoint(V).lincomb(spla.inv(Yt))
-            RF.axpy(np.sqrt(-2*shifts[j_shift].real), EVYt)
-            K += EVYt.lincomb(VB.T)
+            RF.axpy(np.sqrt(-2.0 * sr), EVYt)
+
+            K += EVYt.lincomb(Rinv @ VB.T)
             j += 1
         else:
             Z.append(V.real)
             Z.append(V.imag)
             Vr = V.real.inner(B)
             Vi = V.imag.inner(B)
-            sa = np.abs(shifts[j_shift])
             F1 = np.vstack((
-                -shifts[j_shift].real/sa * Vr - shifts[j_shift].imag/sa * Vi,
-                shifts[j_shift].imag/sa * Vr - shifts[j_shift].real/sa * Vi
+                -sr/sa * Vr - si/sa * Vi,
+                 si/sa * Vr - sr/sa * Vi
             ))
             F2 = np.vstack((
                 Vr,
                 Vi
             ))
             F3 = np.vstack((
-                shifts[j_shift].imag/sa * np.eye(len(RF)),
-                shifts[j_shift].real/sa * np.eye(len(RF))
+                si/sa * np.eye(len(RF)),
+                sr/sa * np.eye(len(RF))
             ))
             Yt = spla.block_diag(RC, 0.5 * RC) \
-                - (F1 @ Rinv @ F1.T) / (4 * shifts[j_shift].real)  \
-                - (F2 @ Rinv @ F2.T) / (4 * shifts[j_shift].real)  \
+                - (F1 @ Rinv @ F1.T) / (4 * sr)  \
+                - (F2 @ Rinv @ F2.T) / (4 * sr)  \
                 - (F3 @ RC @ F3.T) / 2
             Y = spla.block_diag(Y, Yt)
             if not trans:
                 EVYt = E.apply(cat_arrays([V.real, V.imag])).lincomb(spla.inv(Yt))
             else:
                 EVYt = E.apply_adjoint(cat_arrays([V.real, V.imag])).lincomb(spla.inv(Yt))
-            RF.axpy(np.sqrt(-2 * shifts[j_shift].real), EVYt[:len(C)])
-            K += EVYt.lincomb(F2.T)
+            RF.axpy(np.sqrt(-2.0 * sr), EVYt[:len(C)])
+            K += EVYt.lincomb(Rinv @ F2.T)
             j += 2
         j_shift += 1
         res = np.linalg.norm(RF.gramian() @ RC, ord='fro')
