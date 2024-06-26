@@ -101,6 +101,28 @@ print(f'Error estimate: {rom.estimate_error(mu)}')
 print(f'Actual error: {(fom.solve(mu) - reductor.reconstruct(u)).norm(fom.h1_0_semi_product)}')
 ```
 
+### Neural networks for parameter-dependent problems
+
+```{code-cell} ipython3
+:tags: [remove-output]
+
+from pymor.models.examples import thermal_block_example
+fom = thermal_block_example()
+
+# instantiate reductor with training and validation parameters and desired errors
+from pymor.reductors.neural_network import NeuralNetworkReductor
+reductor = NeuralNetworkReductor(fom,
+                                 fom.parameters.space(0.1, 1).sample_uniformly(25),
+                                 fom.parameters.space(0.1, 1).sample_randomly(5),
+                                 l2_err=1e-2, ann_mse=1e-2)
+rom =  reductor.reduce(restarts=10)
+
+# estimate and compute state-space MOR error
+mu = rom.parameters.parse([0.1, 0.9, 0.2, 0.3])
+u = rom.solve(mu)
+print(f'Actual error: {(fom.solve(mu) - reductor.reconstruct(u)).norm(fom.h1_0_semi_product)}')
+```
+
 Download the code:
 {download}`mor_methods.md`,
 {nb-download}`mor_methods.ipynb`.
