@@ -123,6 +123,50 @@ u = rom.solve(mu)
 print(f'Actual error: {(fom.solve(mu) - reductor.reconstruct(u)).norm(fom.h1_0_semi_product)}')
 ```
 
+### Estimation of coercivity and continuity constants using the min/max-theta approaches
+
+```{code-cell} ipython3
+:tags: [remove-output]
+
+from pymor.models.examples import thermal_block_example
+fom = thermal_block_example()
+
+from pymor.parameters.functionals import MaxThetaParameterFunctional, MinThetaParameterFunctional
+mu_bar = fom.parameters.parse([0.5, 0.5, 0.5, 0.5])
+coercivity_estimator = MinThetaParameterFunctional(fom.operator.coefficients, mu_bar)
+continuity_estimator = MaxThetaParameterFunctional(fom.operator.coefficients, mu_bar, gamma_mu_bar=0.5)
+
+from pymor.parameters.functionals import ExpressionParameterFunctional
+mu = fom.parameters.parse([0.1, 0.9, 0.2, 0.3])
+naive_coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
+print(f"Naive coercivity constant estimate: {naive_coercivity_estimator.evaluate(mu)}")
+print(f"Coercivitiy constant estimate using min-theta approach: {coercivity_estimator.evaluate(mu)}")
+print(f"Continuity constant estimate using max-theta approach: {continuity_estimator.evaluate(mu)}")
+```
+
+### Estimation of coercivity constants using the successive constraints method
+
+```{code-cell} ipython3
+:tags: [remove-output]
+
+from pymor.analyticalproblems.thermalblock import thermal_block_problem
+from pymor.discretizers.builtin import discretize_stationary_cg
+problem = thermal_block_problem(num_blocks=(2, 2))
+fom, _ = discretize_stationary_cg(problem, diameter=0.1)
+
+from pymor.algorithms.scm import construct_scm_functionals
+initial_parameter = problem.parameter_space.sample_randomly(1)[0]
+training_set = problem.parameter_space.sample_randomly(50)
+coercivity_estimator, _, _ = construct_scm_functionals(
+            fom.operator, training_set, initial_parameter, product=fom.h1_0_semi_product, max_extensions=10, M=5)
+
+from pymor.parameters.functionals import ExpressionParameterFunctional
+mu = fom.parameters.parse([0.1, 0.9, 0.2, 0.3])
+naive_coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
+print(f"Naive coercivity constant estimate: {naive_coercivity_estimator.evaluate(mu)}")
+print(f"Coercivitiy constant estimate using successive constraints method: {coercivity_estimator.evaluate(mu)}")
+```
+
 Download the code:
 {download}`mor_methods.md`,
 {nb-download}`mor_methods.ipynb`.
