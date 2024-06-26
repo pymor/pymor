@@ -891,7 +891,9 @@ class VectorFittingReductor(BasicObject):
         self.weights_sqrt = np.sqrt(weights)
 
     def reduce(self, r, tol=1e-4, maxit=100):
-        """Reduce using vector-fitting.
+        """Reduce using vector fitting.
+
+        Based on :cite:`DGB15`.
 
         Parameters
         ----------
@@ -907,21 +909,28 @@ class VectorFittingReductor(BasicObject):
         rom
             Reduced-order |LTIModel|.
         """
-        lambdas = -np.logspace(0, 1, r)
+        imag_min = np.min(np.abs(self.points[self.points.imag != 0].imag))
+        imag_max = np.max(np.abs(self.points.imag))
+        lambdas_imag = np.geomspace(imag_min, imag_max, r // 2)
+        lambdas = np.concatenate((-lambdas_imag + 1j * lambdas_imag, -lambdas_imag - 1j * lambdas_imag))
+        if r % 2 == 1:
+            lambdas = np.concatenate((lambdas, [-1]))
         b = self.weights_sqrt * self.data
         for i in range(maxit):
             self.logger.info(f'Iteration {i + 1}')
 
-            # least squares problem
+            # least squares problem for barycentric form
             A1 = self.weights_sqrt[:, np.newaxis] / (self.points[:, np.newaxis] - lambdas)
             A2 = -self.weights_sqrt[:, np.newaxis] * self.data[:, np.newaxis] / (self.points[:, np.newaxis] - lambdas)
             A = np.hstack((A1, A2))
-            x = spla.lstsq(A, b)[0]
+            x = spla.lstsq(A, b, cond=1e-10)[0]
             psis = x[:r]
             phis = x[r:]
+            cond = np.linalg.cond(A)
+            self.logger.info(f'{cond=:.3e}')
 
             # convergence check
-            error = spla.norm(phis, ord=np.inf)
+            error = spla.norm(phis / lambdas.real, ord=1)
             self.logger.info(f'{error=:.3e}')
             if error < tol:
                 break
@@ -951,4 +960,11 @@ class VectorFittingReductor(BasicObject):
 
             # new lambdas
             lambdas = -np.abs(zeros.real) + 1j * zeros.imag
+
+        # least squares problem for residues
+        A = self.weights_sqrt[:, np.newaxis] / (self.points[:, np.newaxis] - lambdas)
+        psis = spla.lstsq(A, b, cond=1e-10)[0]
+        cond = np.linalg.cond(A)
+        self.logger.info(f'{cond=:.3e}')
+
         return _poles_b_c_to_lti(lambdas, psis[:, np.newaxis], np.ones((r, 1)))
