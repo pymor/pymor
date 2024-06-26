@@ -167,6 +167,25 @@ print(f"Naive coercivity constant estimate: {naive_coercivity_estimator.evaluate
 print(f"Coercivitiy constant estimate using successive constraints method: {coercivity_estimator.evaluate(mu)}")
 ```
 
+## LTI System MOR
+
+Here we consider some of the methods for {{LTIModels}}.
+
+```{code-cell} ipython3
+:tags: [remove-output]
+
+from pymor.models.examples import penzl_example
+fom = penzl_example()
+
+# balanced truncation
+from pymor.reductors.bt import BTReductor
+rom_bt = BTReductor(fom).reduce(10)
+
+# iterative rational Krylov algorithm (IRKA)
+from pymor.reductors.h2 import IRKAReductor
+rom_irka = IRKAReductor(fom).reduce(10)
+```
+
 Download the code:
 {download}`mor_methods.md`,
 {nb-download}`mor_methods.ipynb`.
