@@ -234,8 +234,11 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
             shifts = iteration_shifts(A, E, B, Rinv, RF, RC, K, Z, shift_options)
             j_shift = 0
     # transform solution to lrcf
-    cf = spla.cholesky(Y)
-    Z_cf = Z.lincomb(spla.solve_triangular(cf, np.eye(len(Z))).T)
+    Yinv = spla.inv(Y)
+    Yinv = (Yinv + Yinv.T) / 2.0
+    Z_cf, S = LDL_T_rank_truncation(Z, Yinv, tol=np.finfo(float).eps)
+    S = np.diag(np.sqrt(np.diag(S)))
+    Z_cf = Z_cf.lincomb(S)
     return Z_cf
 
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
@@ -431,3 +434,50 @@ def hamiltonian_shifts(A, E, B, Rinv, RF, RC, K, Z, shift_options):
     if np.abs(shift.imag) / np.abs(shift) < 1e-8:
         shift = shift.real
     return np.array([shift])
+
+
+def LDL_T_rank_truncation(L, D, tol=np.finfo(float).eps):
+    """Compute a rank-truncated :math:'LDL^T' factorization.
+
+    Computes the QR factorization :math:'Q R = L' of L followed by an
+    eigendecomposition of :math:'RDR^T' and a rank decision on the absolute
+    values of th computed eigenvalues. The truncated eigenpairs are dropped.
+    The resulting core matrix (replacing D) is diagonal matrix of preserved
+    eigenvalues and the updated |VectorArray| is :math:'Q' times the
+    preserved (left) eingenvectors
+
+    Parameters
+    ----------
+    L
+        The |VectorArray| L from representing the left factor in the
+        :math:'LDL^T' facorization.
+    D
+        The |NumPy array| representing the core factor.
+    tol
+        A float representing the desired relative truncation tolerance
+        on the absolute values of the eigenvalues.
+        Defaults to double precision machine epsilon
+
+    Returns
+    -------
+    hL
+        The |VectorArray| hL representing the left factor in the
+        :math:'LDL^T' rank-truncated facorization.
+    hD
+        The |NumPy array| representing the core factor.
+    """
+    # QR decomposition of left factor
+    Q, R = gram_schmidt(L, return_R=True)
+    # Solve symmetric eigenvalue problem
+    RDRT = R @ D @ R.T
+    # ensure numerical symmetry
+    RDRT = (RDRT+RDRT.T)/2.0
+    S, U = spla.eigh(RDRT)
+
+    # Thresholding based on tolerance
+    r = np.abs(S) > tol * np.max(np.abs(S))
+
+    # Filtering columns of V and elements of S based on r
+    hL = Q.lincomb((U[:, r]).T)
+    hD = np.diag(S[r])
+    return hL, hD
