@@ -175,6 +175,9 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
         The computed POD modes.
     svals
         The associated singular values.
+    coeffs
+        If `return_reduced_coefficients` is `True`, a |NumPy array|
+        of right singular vectors as conjugated rows.
     snap_count
         The total number of input snapshot vectors.
     """
@@ -294,6 +297,9 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None,
         The computed POD modes.
     svals
         The associated singular values.
+    coeffs
+        If `return_reduced_coefficients` is `True`, a |NumPy array|
+        of right singular vectors as conjugated rows.
     snap_count
         The total number of input snapshot vectors.
     """
@@ -359,6 +365,9 @@ def dist_hapod(num_slices, snapshots, eps, omega, arity=None,
         The computed POD modes.
     svals
         The associated singular values.
+    coeffs
+        If `return_reduced_coefficients` is `True`, a |NumPy array|
+        of right singular vectors as conjugated rows.
     snap_count
         The total number of input snapshot vectors.
     """
@@ -400,6 +409,9 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None,
         The computed POD modes.
     svals
         The associated singular values.
+    coeffs
+        If `return_reduced_coefficients` is `True`, a |NumPy array|
+        of right singular vectors as conjugated rows.
     snap_count
         The total number of input snapshot vectors.
     """
@@ -451,6 +463,9 @@ def dist_vectorarray_hapod(num_slices, U, eps, omega, arity=None, product=None, 
         The computed POD modes.
     svals
         The associated singular values.
+    coeffs
+        If `return_reduced_coefficients` is `True`, a |NumPy array|
+        of right singular vectors as conjugated rows.
     snap_count
         The total number of input snapshot vectors.
     """
