@@ -834,41 +834,41 @@ class GapIRKAReductor(GenericIRKAReductor):
 
 
 class VectorFittingReductor(BasicObject):
-    """Vector-fitting reductor.
+    """Vector fitting reductor.
 
     Only for single-input single-output (SISO) systems.
 
     Parameters
     ----------
-    points
-        Sampling points.
-    data_or_fom
-        Data.
+    s
+        Sampling points in the complex plane as a 1D |NumPy array|.
+    Hs
+        Transfer function values at the sampling points `s` as a 1D |NumPy array|.
+        Alternatively, |TransferFunction| or `Model` with `transfer_function` attribute.
     weights
-        Weights.
+        Weights in the weighted least squares error as a 1D |NumPy array|.
+        If not given, it is set to a vector of ones.
     conjugate
         Whether to include conjugated data.
     """
 
-    def __init__(self, points, data_or_fom, weights=None, conjugate=True):
-        assert isinstance(points, np.ndarray)
-        assert points.ndim == 1
+    def __init__(self, s, Hs, weights=None, conjugate=True):
+        assert isinstance(s, np.ndarray)
+        assert s.ndim == 1
 
-        if isinstance(data_or_fom, TransferFunction):
-            data = data_or_fom.freq_resp(points).squeeze()
-        elif hasattr(data_or_fom, 'transfer_function'):
-            data = data_or_fom.transfer_function.freq_resp(points).squeeze()
-        else:
-            data = data_or_fom
-        assert isinstance(data, np.ndarray)
-        assert data.ndim == 1
-        assert len(data) == len(points)
+        if hasattr(Hs, 'transfer_function'):
+            Hs = Hs.transfer_function
+        if isinstance(Hs, TransferFunction):
+            Hs = np.array([Hs.eval_tf(si).squeeze() for si in s])
+        assert isinstance(Hs, np.ndarray)
+        assert Hs.ndim == 1
+        assert len(Hs) == len(s)
 
         if weights is None:
-            weights = np.ones(len(points))
+            weights = np.ones(len(s))
         assert isinstance(weights, np.ndarray)
         assert weights.ndim == 1
-        assert len(weights) == len(points)
+        assert len(weights) == len(s)
         assert np.all(weights > 0)
 
         # add complex conjugate samples
@@ -876,21 +876,21 @@ class VectorFittingReductor(BasicObject):
             points_conj_list = []
             data_conj_list = []
             weights_list = []
-            for i, s in enumerate(points):
-                if s.conjugate() not in points:
-                    points_conj_list.append(s.conjugate())
-                    data_conj_list.append(data[i].conjugate())
+            for i, si in enumerate(s):
+                if si.conjugate() not in s:
+                    points_conj_list.append(si.conjugate())
+                    data_conj_list.append(Hs[i].conjugate())
                     weights_list.append(weights[i])
             if points_conj_list:
-                points = np.concatenate((points, points_conj_list))
-                data = np.concatenate((data, data_conj_list))
+                s = np.concatenate((s, points_conj_list))
+                Hs = np.concatenate((Hs, data_conj_list))
                 weights = np.concatenate((weights, weights_list))
 
-        self.points = points
-        self.data = data
+        self.s = s
+        self.Hs = Hs
         self.weights_sqrt = np.sqrt(weights)
 
-    def reduce(self, r, tol=1e-4, maxit=100):
+    def reduce(self, r=None, lambdas=None, tol=1e-4, maxit=100):
         """Reduce using vector fitting.
 
         Based on :cite:`DGB15`.
@@ -898,7 +898,9 @@ class VectorFittingReductor(BasicObject):
         Parameters
         ----------
         r
-            Reduced order.
+            Reduced order (if not given, it is `len(lambdas)`).
+        lambdas
+            Initial poles (if not given, it is set to `-np.logspace(-1, 0, r)`).
         tol
             Tolerance for the convergence criterion.
         maxit
@@ -909,30 +911,45 @@ class VectorFittingReductor(BasicObject):
         rom
             Reduced-order |LTIModel|.
         """
-        imag_min = np.min(np.abs(self.points[self.points.imag != 0].imag))
-        imag_max = np.max(np.abs(self.points.imag))
-        lambdas_imag = np.geomspace(imag_min, imag_max, r // 2)
-        lambdas = np.concatenate((-lambdas_imag + 1j * lambdas_imag, -lambdas_imag - 1j * lambdas_imag))
-        if r % 2 == 1:
-            lambdas = np.concatenate((lambdas, [-1]))
-        b = self.weights_sqrt * self.data
+        if r is None and lambdas is None:
+            raise ValueError('Either r or lambdas must be given.')
+        if r is not None and lambdas is not None:
+            raise ValueError('Only r or lambdas must be given.')
+
+        if lambdas is None:
+            lambdas = -np.logspace(-1, 0, r)
+        else:
+            assert isinstance(lambdas, np.ndarray)
+            assert lambdas.ndim == 1
+            r = len(lambdas)
+
+        # right-hand side in least squares problems
+        b = self.weights_sqrt * self.Hs
+
         for i in range(maxit):
             self.logger.info(f'Iteration {i + 1}')
 
             # least squares problem for barycentric form
-            A1 = self.weights_sqrt[:, np.newaxis] / (self.points[:, np.newaxis] - lambdas)
-            A2 = -self.weights_sqrt[:, np.newaxis] * self.data[:, np.newaxis] / (self.points[:, np.newaxis] - lambdas)
+            A1 = self.weights_sqrt[:, np.newaxis] / (self.s[:, np.newaxis] - lambdas)
+            A2 = -self.weights_sqrt[:, np.newaxis] * self.Hs[:, np.newaxis] / (self.s[:, np.newaxis] - lambdas)
             A = np.hstack((A1, A2))
-            x = spla.lstsq(A, b, cond=1e-10)[0]
+            x = spla.lstsq(A, b)[0]
             psis = x[:r]
             phis = x[r:]
-            cond = np.linalg.cond(A)
-            self.logger.info(f'{cond=:.3e}')
 
             # convergence check
-            error = spla.norm(phis / lambdas.real, ord=1)
+            conv_crit = spla.norm(phis / lambdas.real, ord=1)
+            self.logger.info(f'{conv_crit=:.3e}')
+            error = spla.norm(
+                self.weights_sqrt * (
+                    self.Hs
+                    - np.sum(psis / (self.s[:, np.newaxis] - lambdas), axis=1)
+                    / (1 + np.sum(phis / (self.s[:, np.newaxis] - lambdas), axis=1))
+                )
+                / len(self.s)
+            )
             self.logger.info(f'{error=:.3e}')
-            if error < tol:
+            if conv_crit < tol:
                 break
 
             # real version of A_zeros = np.diag(lambdas) + ones * phi.T
@@ -962,9 +979,7 @@ class VectorFittingReductor(BasicObject):
             lambdas = -np.abs(zeros.real) + 1j * zeros.imag
 
         # least squares problem for residues
-        A = self.weights_sqrt[:, np.newaxis] / (self.points[:, np.newaxis] - lambdas)
-        psis = spla.lstsq(A, b, cond=1e-10)[0]
-        cond = np.linalg.cond(A)
-        self.logger.info(f'{cond=:.3e}')
+        A = self.weights_sqrt[:, np.newaxis] / (self.s[:, np.newaxis] - lambdas)
+        psis = spla.lstsq(A, b)[0]
 
         return _poles_b_c_to_lti(lambdas, psis[:, np.newaxis], np.ones((r, 1)))

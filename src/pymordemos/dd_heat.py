@@ -74,16 +74,14 @@ def main(
         ConstantFunction(0., 2),
         T=1.
     )
-
     fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=100)
-
     lti = fom.to_lti()
 
     ss = np.logspace(-1, 4, n)
 
     run_mor_method_dd(lti, ss, PAAAReductor, 'AAA')
     run_mor_method_dd(lti, ss, LoewnerReductor, 'Loewner')
-    run_mor_method_dd(lti, ss, VectorFittingReductor, 'VF', reduce_args=(20,), reduce_kwargs={'maxit': 50})
+    run_mor_method_dd(lti, ss, VectorFittingReductor, 'VF', reduce_args=(20,), reduce_kwargs={'maxit': 30})
 
     plt.show()
 
