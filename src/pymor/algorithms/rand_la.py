@@ -4,9 +4,9 @@
 
 import numpy as np
 import scipy.linalg as spla
-from scipy.sparse.linalg import LinearOperator, eigsh
 from scipy.special import erfinv
 
+from pymor.algorithms.eigs import eigs
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.svd_va import qr_svd
 from pymor.core.base import BasicObject
@@ -84,14 +84,7 @@ class RandomizedRangeFinder(BasicObject):
                 self.lambda_min = 1
             else:
                 assert source_product is not None
-                def mv(v):
-                    return source_product.apply(source_product.source.from_numpy(v)).to_numpy()
-
-                def mvinv(v):
-                    return source_product.apply_inverse(source_product.range.from_numpy(v)).to_numpy()
-                L = LinearOperator((source_product.source.dim, source_product.range.dim), matvec=mv)
-                Linv = LinearOperator((source_product.range.dim, source_product.source.dim), matvec=mvinv)
-                self.lambda_min = eigsh(L, sigma=0, which='LM', return_eigenvectors=False, k=1, OPinv=Linv)[0]
+                self.lambda_min = eigs(source_product, sigma=0, which='LM', k=1)[0][0].real
 
         if self.R is None:
             Omega_test = A.source.random(num_testvecs, distribution='normal')
