@@ -127,16 +127,16 @@ def dist_hapod_tree(num_slices, arity=None):
     return tree
 
 
-def default_pod_method(U, eps, is_root_node, product, return_right_singular_vectors):
+def default_pod_method(U, eps, is_root_node, product, return_reduced_coefficients):
     return pod(U, atol=0., rtol=0.,
                l2_err=eps, product=product,
                orth_tol=None if is_root_node else np.inf,
-               return_right_singular_vectors=return_right_singular_vectors)
+               return_reduced_coefficients=return_reduced_coefficients)
 
 
 def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_method,
           executor=None, eval_snapshots_in_executor=False,
-          return_right_singular_vectors=False):
+          return_reduced_coefficients=False):
     """Compute the Hierarchical Approximate POD.
 
     This is an implementation of the HAPOD algorithm from :cite:`HLR18`.
@@ -165,7 +165,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
         for parallelization.
     eval_snapshots_in_executor
         If `True` also parallelize the evaluation of the snapshot map.
-    return_right_singular_vectors
+    return_reduced_coefficients
         If `True`, also return the right singular vectors corresponding
         to the POD modes.
 
@@ -187,7 +187,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
             await asyncio.wait([asyncio.create_task(node_finished_events[a].wait()) for a in node.after])
 
         if node.children:
-            if return_right_singular_vectors:
+            if return_reduced_coefficients:
                 modes, svals, Vhs, snap_counts = zip(
                     *await asyncio.gather(*(spawn_rng(hapod_step(c)) for c in node.children))
                 )
@@ -201,7 +201,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
             for V in modes[1:]:
                 U.append(V, remove_from_other=True)
             snap_count = sum(snap_counts)
-            if return_right_singular_vectors:
+            if return_reduced_coefficients:
                 Vh = np.zeros((len(U), snap_count))
                 i_0, i_1 = 0, 0
                 for v in Vhs:
@@ -214,12 +214,12 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
                 U = await executor.submit(snapshots, node)
             else:
                 U = snapshots(node)
-            if return_right_singular_vectors:
+            if return_reduced_coefficients:
                 Vh = np.eye(len(U))
             snap_count = len(U)
 
         eps = local_eps(node, snap_count, len(U))
-        if return_right_singular_vectors:
+        if return_reduced_coefficients:
             if eps:
                 logger.info('Computing intermediate POD ...')
                 modes, svals, Vh2 = await executor.submit(pod_method, U, eps, not node.parent, product, True)
@@ -234,7 +234,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
                 modes, svals = U.copy(), np.ones(len(U))
         if node.tag is not None:
             node_finished_events[node.tag].set()
-        if return_right_singular_vectors:
+        if return_reduced_coefficients:
             return modes, svals, Vh, snap_count
         else:
             return modes, svals, snap_count
@@ -261,7 +261,7 @@ def hapod(tree, snapshots, local_eps, product=None, pod_method=default_pod_metho
 
 
 def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None,
-              return_right_singular_vectors=False):
+              return_reduced_coefficients=False):
     """Incremental Hierarchical Approximate POD.
 
     This computes the incremental HAPOD from :cite:`HLR18`.
@@ -284,7 +284,7 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None,
     executor
         If not `None`, a :class:`concurrent.futures.Executor` object to use
         to compute new snapshot vectors and POD updates in parallel.
-    return_right_singular_vectors
+    return_reduced_coefficients
         If `True`, also return the right singular vectors corresponding
         to the POD modes.
 
@@ -314,14 +314,14 @@ def inc_hapod(steps, snapshots, eps, omega, product=None, executor=None,
                    product=product,
                    executor=executor,
                    eval_snapshots_in_executor=True,
-                   return_right_singular_vectors=return_right_singular_vectors)
+                   return_reduced_coefficients=return_reduced_coefficients)
     assert last_step == steps - 1
     return result
 
 
 def dist_hapod(num_slices, snapshots, eps, omega, arity=None,
                product=None, executor=None, eval_snapshots_in_executor=False,
-               return_right_singular_vectors=False):
+               return_reduced_coefficients=False):
     """Distributed Hierarchical Approximate POD.
 
     This computes the distributed HAPOD from :cite:`HLR18`.
@@ -349,7 +349,7 @@ def dist_hapod(num_slices, snapshots, eps, omega, arity=None,
         for parallelization.
     eval_snapshots_in_executor
         If `True` also parallelize the evaluation of the snapshot map.
-    return_right_singular_vectors
+    return_reduced_coefficients
         If `True`, also return the right singular vectors corresponding
         to the POD modes.
 
@@ -368,11 +368,11 @@ def dist_hapod(num_slices, snapshots, eps, omega, arity=None,
                  std_local_eps(tree, eps, omega, True),
                  product=product, executor=executor,
                  eval_snapshots_in_executor=eval_snapshots_in_executor,
-                 return_right_singular_vectors=return_right_singular_vectors)
+                 return_reduced_coefficients=return_reduced_coefficients)
 
 
 def inc_vectorarray_hapod(steps, U, eps, omega, product=None,
-                          return_right_singular_vectors=False):
+                          return_reduced_coefficients=False):
     """Incremental Hierarchical Approximate POD.
 
     This computes the incremental HAPOD from :cite:`HLR18` for a given |VectorArray|.
@@ -390,7 +390,7 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None,
         approximation quality.
     product
         Inner product |Operator| w.r.t. which to compute the POD.
-    return_right_singular_vectors
+    return_reduced_coefficients
         If `True`, also return the right singular vectors corresponding
         to the POD modes.
 
@@ -412,11 +412,11 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None,
 
     return inc_hapod(len(slices), snapshots(),
                      eps, omega, product=product,
-                     return_right_singular_vectors=return_right_singular_vectors)
+                     return_reduced_coefficients=return_reduced_coefficients)
 
 
 def dist_vectorarray_hapod(num_slices, U, eps, omega, arity=None, product=None, executor=None,
-                           return_right_singular_vectors=False):
+                           return_reduced_coefficients=False):
     """Distributed Hierarchical Approximate POD.
 
     This computes the distributed HAPOD from :cite:`HLR18` of a given |VectorArray|.
@@ -441,7 +441,7 @@ def dist_vectorarray_hapod(num_slices, U, eps, omega, arity=None, product=None, 
     executor
         If not `None`, a :class:`concurrent.futures.Executor` object to use
         for parallelization.
-    return_right_singular_vectors
+    return_reduced_coefficients
         If `True`, also return the right singular vectors corresponding
         to the POD modes.
 
@@ -459,7 +459,7 @@ def dist_vectorarray_hapod(num_slices, U, eps, omega, arity=None, product=None, 
     return dist_hapod(len(slices),
                       lambda i: U[slices[i.tag]: slices[i.tag]+chunk_size],
                       eps, omega, arity=arity, product=product, executor=executor,
-                      return_right_singular_vectors=return_right_singular_vectors)
+                      return_reduced_coefficients=return_reduced_coefficients)
 
 
 def std_local_eps(tree, eps, omega, pod_on_leafs=True):
