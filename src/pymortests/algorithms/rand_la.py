@@ -70,7 +70,7 @@ def test_randomized_svd():
     E_op = NumpyMatrixOperator(E)
 
     n = 3
-    U, s, Vh = randomized_svd(E_op, n=n, oversampling=1, subspace_iterations=2)
+    U, s, Vh = randomized_svd(E_op, n=n, oversampling=1, power_iterations=2)
     U_real, s_real, Vh_real = sp.linalg.svd(E)
 
     assert abs(np.linalg.norm(s-s_real[:n])) <= 1e-2
@@ -93,7 +93,7 @@ def test_randomized_ghep(return_evecs, single_pass):
         w_real = w_real[::-1]
         V_real = V_real[:, ::-1]
 
-        w = randomized_ghep(op, n=n, subspace_iterations=1, single_pass=single_pass, return_evecs=return_evecs)
+        w = randomized_ghep(op, n=n, power_iterations=1, single_pass=single_pass, return_evecs=return_evecs)
         if return_evecs:
             w, V = w[0], w[1]
             assert len(V) == n
