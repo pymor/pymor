@@ -70,7 +70,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         if len_other <= self._array.shape[0] - self._len:
             if self._array.dtype != other_array.dtype:
-                self._array = self._array.astype(np.promote_types(self._array.dtype, other_array.dtype))
+                self._array = self._array.astype(np.promote_types(self._array.dtype, other_array.dtype), copy=False)
             self._array[self._len:self._len + len_other] = other_array
         else:
             self._array = np.append(self._array[:self._len], other_array, axis=0)
@@ -87,7 +87,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         alpha_type = type(alpha)
         alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
         if self._array.dtype != alpha_dtype:
-            self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype))
+            self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype), copy=False)
         self._array[ind] *= alpha
 
     def scal_copy(self, alpha, ind):
@@ -109,7 +109,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         if self._array.dtype != alpha_dtype or self._array.dtype != B.dtype:
             dtype = np.promote_types(self._array.dtype, alpha_dtype)
             dtype = np.promote_types(dtype, B.dtype)
-            self._array = self._array.astype(dtype)
+            self._array = self._array.astype(dtype, copy=False)
 
         if type(alpha) is np.ndarray:
             alpha = alpha[:, np.newaxis]
@@ -245,7 +245,7 @@ class NumpyVectorSpace(VectorSpace):
         return va
 
     @classinstancemethod
-    def make_array(cls, obj, id=None):  # noqa N805
+    def make_array(cls, obj, id=None):  # noqa: N805
         return cls._array_factory(obj, id=id)
 
     @make_array.instancemethod
@@ -254,7 +254,7 @@ class NumpyVectorSpace(VectorSpace):
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
-    def from_numpy(cls, data, id=None, ensure_copy=False):  # noqa N805
+    def from_numpy(cls, data, id=None, ensure_copy=False):  # noqa: N805
         return cls._array_factory(data.copy() if ensure_copy else data, id=id)
 
     @from_numpy.instancemethod
@@ -263,7 +263,7 @@ class NumpyVectorSpace(VectorSpace):
         return self._array_factory(data.copy() if ensure_copy else data, space=self)
 
     @classinstancemethod
-    def from_file(cls, path, key=None, single_vector=False, transpose=False, id=None):  # noqa N805
+    def from_file(cls, path, key=None, single_vector=False, transpose=False, id=None):  # noqa: N805
         assert not (single_vector and transpose)
         from pymor.tools.io import load_matrix
         array = load_matrix(path, key=key)

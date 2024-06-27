@@ -99,19 +99,21 @@ class NeuralNetworkModel(BaseNeuralNetworkModel):
         assert self.output_functional.source == self.solution_space
         self.dim_output = self.output_functional.range.dim
 
-    def _compute_solution(self, mu=None, **kwargs):
+    def _compute(self, quantities, data, mu):
+        if 'solution' in quantities:
+            # convert the parameter `mu` into a form that is usable in PyTorch
+            converted_input = torch.DoubleTensor(mu.to_numpy())
+            converted_input = self._scale_input(converted_input)
+            # obtain (reduced) coordinates by forward pass of the parameter values
+            # through the neural network
+            U = self.neural_network(converted_input).detach().numpy()
+            U = self._scale_target(U)
+            # convert plain numpy array to element of the actual solution space
+            U = self.solution_space.make_array(U)
+            data['solution'] = U
+            quantities.remove('solution')
 
-        # convert the parameter `mu` into a form that is usable in PyTorch
-        converted_input = torch.DoubleTensor(mu.to_numpy())
-        converted_input = self._scale_input(converted_input)
-        # obtain (reduced) coordinates by forward pass of the parameter values
-        # through the neural network
-        U = self.neural_network(converted_input).detach().numpy()
-        U = self._scale_target(U)
-        # convert plain numpy array to element of the actual solution space
-        U = self.solution_space.make_array(U)
-
-        return U
+        super()._compute(quantities, data, mu=mu)
 
 
 class NeuralNetworkStatefreeOutputModel(BaseNeuralNetworkModel):
@@ -153,18 +155,18 @@ class NeuralNetworkStatefreeOutputModel(BaseNeuralNetworkModel):
 
         self.__auto_init(locals())
 
-    def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
-                 solution_error_estimate=False, output_error_estimate=False,
-                 output_d_mu_return_array=False, mu=None, **kwargs):
-        if output:
+    def _compute(self, quantities, data, mu):
+        if 'output' in quantities:
             converted_input = torch.from_numpy(mu.to_numpy()).double()
             converted_input = self._scale_input(converted_input)
             output = self.neural_network(converted_input).detach().numpy()
             output = self._scale_target(output)
             if isinstance(output, torch.Tensor):
                 output = output.numpy()
-            return {'output': output, 'solution': None}
-        return {}
+            data['output'] = output
+            quantities.remove('output')
+
+        super()._compute(quantities, data, mu=mu)
 
 
 class NeuralNetworkInstationaryModel(BaseNeuralNetworkModel):
@@ -230,15 +232,19 @@ class NeuralNetworkInstationaryModel(BaseNeuralNetworkModel):
         assert output_functional.source == self.solution_space
         self.dim_output = output_functional.range.dim
 
-    def _compute_solution(self, mu=None, **kwargs):
-        # collect all inputs in a single tensor
-        inputs = self._scale_input(torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
-                                                                for t in np.linspace(0., self.T, self.nt)])))
-        # pass batch of inputs to neural network
-        result = self.neural_network(inputs).detach().numpy()
-        result = self._scale_target(result)
-        # convert result into element from solution space
-        return self.solution_space.make_array(result)
+    def _compute(self, quantities, data, mu):
+        if 'solution' in quantities:
+            # collect all inputs in a single tensor
+            inputs = self._scale_input(torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
+                                                                    for t in np.linspace(0., self.T, self.nt)])))
+            # pass batch of inputs to neural network
+            result = self.neural_network(inputs).detach().numpy()
+            result = self._scale_target(result)
+            # convert result into element from solution space
+            data['solution'] = self.solution_space.make_array(result)
+            quantities.remove('solution')
+
+        super()._compute(quantities, data, mu=mu)
 
 
 class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
@@ -284,20 +290,18 @@ class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
 
         self.__auto_init(locals())
 
-    def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
-                 solution_error_estimate=False, output_error_estimate=False,
-                 output_d_mu_return_array=False, mu=None, **kwargs):
-
-        if output:
+    def _compute(self, quantities, data, mu):
+        if 'output' in quantities:
             inputs = self._scale_input(torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
                                                                     for t in np.linspace(0., self.T, self.nt)])))
             outputs = self.neural_network(inputs).detach().numpy()
             outputs = self._scale_target(outputs)
             if isinstance(outputs, torch.Tensor):
                 outputs = outputs.numpy()
+            data['output'] = outputs
+            quantities.remove('output')
 
-            return {'output': outputs, 'solution': None}
-        return {}
+        super()._compute(quantities, data, mu=mu)
 
 
 class FullyConnectedNN(nn.Module, BasicObject):

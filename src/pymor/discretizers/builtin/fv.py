@@ -231,7 +231,7 @@ class NonlinearAdvectionOperator(Operator):
         return self.with_(numerical_flux=self.numerical_flux.with_(**kwargs))
 
     def restricted(self, dofs):
-        source_dofs = np.setdiff1d(np.union1d(self.grid.neighbours(0, 0)[dofs].ravel(), dofs),
+        source_dofs = np.setdiff1d(np.union1d(self.grid.neighbors(0, 0)[dofs].ravel(), dofs),
                                    np.array([-1], dtype=np.int32),
                                    assume_unique=True)
         sub_grid = SubGrid(self.grid, source_dofs)
@@ -314,7 +314,8 @@ class NonlinearAdvectionOperator(Operator):
         return self.range.make_array(R[:, :-1])
 
     def jacobian(self, U, mu=None):
-        assert U in self.source and len(U) == 1
+        assert U in self.source
+        assert len(U) == 1
         assert self.parameters.assert_compatible(mu)
 
         if not hasattr(self, '_grid_data'):
@@ -565,7 +566,8 @@ class ReactionOperator(NumpyMatrixBasedOperator):
     sparse = True
 
     def __init__(self, grid, reaction_coefficient, solver_options=None, name=None):
-        assert reaction_coefficient.dim_domain == grid.dim and reaction_coefficient.shape_range == ()
+        assert reaction_coefficient.dim_domain == grid.dim
+        assert reaction_coefficient.shape_range == ()
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid)
 
@@ -944,10 +946,12 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     data
         Dictionary with the following entries:
 
-            :grid:           The generated |Grid|.
-            :boundary_info:  The generated |BoundaryInfo|.
-            :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
-                             before preassembling operators.
+        :grid:
+            The generated |Grid|.
+        :boundary_info:
+            The generated |BoundaryInfo|.
+        :unassembled_m:
+            In case `preassemble` is `True`, the generated |Model| before preassembling operators.
     """
     assert isinstance(analytical_problem, StationaryProblem)
     assert grid is None or boundary_info is not None
@@ -1161,10 +1165,12 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
     data
         Dictionary with the following entries:
 
-            :grid:           The generated |Grid|.
-            :boundary_info:  The generated |BoundaryInfo|.
-            :unassembled_m:  In case `preassemble` is `True`, the generated |Model|
-                             before preassembling operators.
+        :grid:
+            The generated |Grid|.
+        :boundary_info:
+            The generated |BoundaryInfo|.
+        :unassembled_m:
+            In case `preassemble` is `True`, the generated |Model| before preassembling operators.
     """
     assert isinstance(analytical_problem, InstationaryProblem)
     assert isinstance(analytical_problem.stationary_part, StationaryProblem)

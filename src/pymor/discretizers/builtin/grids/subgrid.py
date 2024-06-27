@@ -35,9 +35,8 @@ class SubGrid(Grid):
     reference_element = None
 
     def __init__(self, parent_grid, parent_entities):
-        assert parent_grid is not None, \
-            'parent_grid is None. Maybe you have called sub_grid.with(parent_entities=e)\n' \
-            'on a SubGrid for which the parent grid has been destroyed?'
+        assert parent_grid is not None, ('parent_grid is None. Maybe you have called sub_grid.with(parent_entities=e)\n'
+                                         'on a SubGrid for which the parent grid has been destroyed?')
         assert isinstance(parent_grid, Grid)
         self.dim = parent_grid.dim
         self.reference_element = parent_grid.reference_element
@@ -88,10 +87,11 @@ class SubGrid(Grid):
         """
         assert 0 <= codim <= self.dim, 'Invalid codimension'
         ind = ind.ravel()
-        # TODO Find better implementation of the following
-        R = np.argmax(ind[:, np.newaxis] - self.__parent_indices[codim][np.newaxis, :] == 0, axis=1)
-        if not np.all(self.__parent_indices[codim][R] == ind):
+        PI = self.__parent_indices[codim]
+        X, R = np.nonzero(PI[np.newaxis, :] == ind[:, np.newaxis])
+        if not len(X) == len(ind):
             raise ValueError('Not all parent indices found')
+        assert np.all(PI[R] == ind)
         return np.array(R, dtype=np.int32)
 
     def size(self, codim):
@@ -152,7 +152,7 @@ def make_sub_grid_boundary_info(sub_grid, parent_grid, parent_grid_boundary_info
             else:
                 masks[t].append(m)
         if new_boundary_type is not None and new_boundary_type not in boundary_types:
-            m = np.zeros(sub_grid.size(codim), dtype=np.bool)
+            m = np.zeros(sub_grid.size(codim), dtype=bool)
             m[new_boundaries_sg_indices] = True
             if codim == 1:
                 masks[new_boundary_type] = [m]

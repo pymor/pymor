@@ -248,11 +248,13 @@ class Operator(ParametricObject):
                         mat_op = NumpyMatrixOperator(mat)
                         if not self.parametric:
                             self._mat_op = mat_op
-                    except (NoMatchingRuleError, NotImplementedError):
+                    except (NoMatchingRuleError, NotImplementedError) as e:
                         if solver_type == 'to_matrix':
-                            raise InversionError
+                            raise InversionError from e
                         else:
                             self.logger.warning('Failed.')
+                else:
+                    mat_op = self._mat_op
                 if mat_op is not None:
                     v = mat_op.range.from_numpy(V.to_numpy())
                     i = None if initial_guess is None else mat_op.source.from_numpy(initial_guess.to_numpy())
@@ -397,7 +399,8 @@ class Operator(ParametricObject):
         V
             The |VectorArray| defined above.
         """
-        assert isinstance(self.source, NumpyVectorSpace) and self.linear
+        assert isinstance(self.source, NumpyVectorSpace)
+        assert self.linear
         assert self.source.dim <= as_array_max_length()
         return self.apply(self.source.from_numpy(np.eye(self.source.dim)), mu=mu)
 
@@ -425,7 +428,8 @@ class Operator(ParametricObject):
         V
             The |VectorArray| defined above.
         """
-        assert isinstance(self.range, NumpyVectorSpace) and self.linear
+        assert isinstance(self.range, NumpyVectorSpace)
+        assert self.linear
         assert self.range.dim <= as_array_max_length()
         return self.apply_adjoint(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
 
@@ -621,8 +625,8 @@ class Operator(ParametricObject):
         return self * (-1.)
 
     def __str__(self):
-        return f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  ' \
-               f'(parameters: {self.parameters}, class: {self.__class__.__name__})'
+        return (f'{self.name}: R^{self.source.dim} --> R^{self.range.dim}  '
+                f'(parameters: {self.parameters}, class: {self.__class__.__name__})')
 
 
 @defaults('value')

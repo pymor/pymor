@@ -5,9 +5,9 @@ cd "${PYMOR_ROOT}"
 
 set -eux
 
-CI_CURRENT_IMAGE_TAG=$(sha256sum requirements-ci-current.txt | cut -d ' ' -f 1)
-CI_OLDEST_IMAGE_TAG=$(sha256sum requirements-ci-oldest.txt | cut -d ' ' -f 1)
-CI_FENICS_IMAGE_TAG=$(sha256sum requirements-ci-fenics.txt | cut -d ' ' -f 1)
+CI_CURRENT_IMAGE_TAG=$(cat docker/Dockerfile.ci-current requirements-ci-current.txt | sha256sum | cut -d ' ' -f 1)
+CI_OLDEST_IMAGE_TAG=$(cat docker/Dockerfile.ci-oldest requirements-ci-oldest.txt | sha256sum | cut -d ' ' -f 1)
+CI_FENICS_IMAGE_TAG=$(cat docker/Dockerfile.ci-fenics requirements-ci-fenics.txt | sha256sum | cut -d ' ' -f 1)
 
 echo "CI_CURRENT_IMAGE_TAG=${CI_CURRENT_IMAGE_TAG}" > out.env
 echo "CI_OLDEST_IMAGE_TAG=${CI_OLDEST_IMAGE_TAG}" >> out.env

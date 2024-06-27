@@ -51,7 +51,7 @@ class QuadraticHamiltonianRBReductor(BasicObject):
             elif isinstance(dims, Number) or dims is None:
                 dim = dims
             else:
-                raise NotImplementedError()
+                raise NotImplementedError
 
             if dim is None:
                 dim = len(self.RB) * 2

@@ -12,6 +12,7 @@ from pymor.core.base import abstractmethod
 from pymor.core.config import config
 from pymor.parameters.base import Mu, ParametricObject
 from pymor.parameters.functionals import ParameterFunctional
+from pymor.tools.random import get_rng
 
 
 class Function(ParametricObject):
@@ -276,6 +277,9 @@ class SymbolicExpressionFunction(GenericFunction):
         return (SymbolicExpressionFunction,
                 (self.expression_obj, self.dim_domain, self.variable, getattr(self, '_name', None)))
 
+    def _cache_key_reduce(self):
+        return (self.expression_obj, self.dim_domain, self.variable)
+
     def __str__(self):
         return f'{self.name}: {self.variable} -> {self.expression_obj}'
 
@@ -401,43 +405,72 @@ class ProductFunction(Function):
 
 
 class BitmapFunction(Function):
-    """Define a 2D |Function| via a grayscale image.
+    """Define a piecewise constant 2D |Function| via a bitmap array.
 
     Parameters
     ----------
-    filename
-        Path of the image representing the function.
+    bitmap
+        2d |NumPy array| of the discrete function values.
     bounding_box
         Lower left and upper right coordinates of the domain of the function.
-    range
-        A pixel of value p is mapped to `(p / 255.) * range[1] + range[0]`.
     """
 
     dim_domain = 2
     shape_range = ()
 
-    def __init__(self, filename, bounding_box=None, range=None):
+    def __init__(self, bitmap, bounding_box=None):
+        assert isinstance(bitmap, np.ndarray)
         bounding_box = bounding_box or [[0., 0.], [1., 1.]]
+        self.__auto_init(locals())
+        self.lower_left = np.array(bounding_box[0])
+        self.size = np.array(bounding_box[1] - self.lower_left)
+
+    @classmethod
+    def from_file(cls, filename, bounding_box=None, range=None):
+        """Create a |BitmapFunction| from a grayscale image file.
+
+        Parameters
+        ----------
+        filename
+            Path of the image representing the function.
+        bounding_box
+            Lower left and upper right coordinates of the domain of the function.
+        range
+            A pixel of value p is mapped to `(p / 255.) * range[1] + range[0]`.
+        """
         range = range or [0., 1.]
         try:
             from PIL import Image
         except ImportError as e:
             raise ImportError("PIL is needed for loading images. Try 'pip install pillow'") from e
         img = Image.open(filename)
-        if not img.mode == 'L':
-            self.logger.warning('Image ' + filename + ' not in grayscale mode. Converting to grayscale.')
+        if img.mode != 'L':
+            cls._logger.warning('Image ' + filename + ' not in grayscale mode. Converting to grayscale.')
             img = img.convert('L')
-        self.__auto_init(locals())
-        self.bitmap = np.array(img).T[:, ::-1]
-        self.lower_left = np.array(bounding_box[0])
-        self.size = np.array(bounding_box[1] - self.lower_left)
+        bitmap = np.array(img).T[:, ::-1]
+        bitmap = bitmap * ((range[1] - range[0]) / 255.)  # copy to change dtype
+        bitmap += range[0]
+        return cls(bitmap, bounding_box=bounding_box)
+
+    @classmethod
+    def random(cls, shape=(1, 1), bounding_box=((0., 0.), (1., 1.)), range=(0., 1.)):
+        """Create a random |BitmapFunction| with uniform distribution of values.
+
+        Parameters
+        ----------
+        bounding_box
+            Lower left and upper right coordinates of the domain of the function.
+        range
+            Tuple of minimum and maximum function values.
+        """
+        a, b = range[0], range[1]
+        random_field = get_rng().uniform(a, b, np.prod(shape)).reshape(shape)
+        return cls(random_field, bounding_box=bounding_box)
 
     def evaluate(self, x, mu=None):
         indices = np.maximum(np.floor((x - self.lower_left) * np.array(self.bitmap.shape) / self.size).astype(int), 0)
-        F = (self.bitmap[np.minimum(indices[..., 0], self.bitmap.shape[0] - 1),
-                         np.minimum(indices[..., 1], self.bitmap.shape[1] - 1)]
-             * ((self.range[1] - self.range[0]) / 255.)
-             + self.range[0])
+        F = self.bitmap[np.minimum(indices[..., 0], self.bitmap.shape[0] - 1),
+                        np.minimum(indices[..., 1], self.bitmap.shape[1] - 1)]
         return F
 
 
@@ -491,13 +524,14 @@ class EmpiricalInterpolatedFunction(LincombFunction):
         assert isinstance(function, Function)
         if len(function.shape_range) > 0:
             raise NotImplementedError
-        assert isinstance(interpolation_points, np.ndarray) and interpolation_points.ndim == 2 and \
-            interpolation_points.shape[1] == function.dim_domain
-        assert isinstance(interpolation_matrix, np.ndarray) and \
-            interpolation_matrix.shape == (len(interpolation_points),) * 2
+        assert isinstance(interpolation_points, np.ndarray)
+        assert interpolation_points.ndim == 2
+        assert interpolation_points.shape[1] == function.dim_domain
+        assert isinstance(interpolation_matrix, np.ndarray)
+        assert interpolation_matrix.shape == (len(interpolation_points),) * 2
         assert all(isinstance(mu, Mu) for mu in snapshot_mus)
-        assert isinstance(snapshot_coefficients, np.ndarray) and \
-            snapshot_coefficients.shape == (len(interpolation_points), len(snapshot_mus))
+        assert isinstance(snapshot_coefficients, np.ndarray)
+        assert snapshot_coefficients.shape == (len(interpolation_points), len(snapshot_mus))
         assert (evaluation_points is None) == (basis_evaluations is None)
         assert evaluation_points is None or isinstance(evaluation_points, np.ndarray) and \
             evaluation_points.ndim == 2 and evaluation_points.shape[1] == function.dim_domain

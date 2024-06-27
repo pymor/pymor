@@ -237,7 +237,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
         product = self.products['RB']
 
         if self.initial_data_product != product:
-            # TODO there should be functionality for this somewhere else
+            # TODO: there should be functionality for this somewhere else
             projection_matrix = RB.gramian(self.initial_data_product)
             projection_op = NumpyMatrixOperator(projection_matrix)
             inverse_projection_op = InverseOperator(projection_op, 'inverse_projection_op')
@@ -266,7 +266,7 @@ class InstationaryRBReductor(ProjectionBasedReductor):
         product = self.products['RB']
 
         if self.initial_data_product != product:
-            # TODO there should be functionality for this somewhere else
+            # TODO: there should be functionality for this somewhere else
             pop = project_to_subbasis(rom.initial_data.operators[1], dim_range=dim, dim_source=None)
             inverse_projection_op = InverseOperator(
                 project_to_subbasis(rom.initial_data.operators[0].operator, dim_range=dim, dim_source=dim),

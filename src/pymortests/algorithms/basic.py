@@ -81,7 +81,7 @@ def test_almost_equal_self(vectors_and_indices, tolerances, sup_norm):
     assert isinstance(r, np.ndarray)
     assert r.shape == (v.len_ind(ind),)
     assert np.all(r)
-    # TODO drop assumptions
+    # TODO: drop assumptions
     # the first assumption here is a direct translation of the old loop abort
     assume(v.len_ind(ind) > 0 and np.max(v[ind].sup_norm() > 0))
     # the second one accounts for old input missing very-near zero data
@@ -184,11 +184,11 @@ def test_project_array(vector_arrays):
     assert np.all(err <= tol)
 
 
-@pytest.mark.builtin
-def test_project_array_with_product():
-    U = NumpyVectorSpace.from_numpy(np.random.random((1, 10)))
-    basis = NumpyVectorSpace.from_numpy(np.random.random((3, 10)))
-    product = np.random.random((10, 10))
+@pytest.mark.builtin()
+def test_project_array_with_product(rng):
+    U = NumpyVectorSpace.from_numpy(rng.random((1, 10)))
+    basis = NumpyVectorSpace.from_numpy(rng.random((3, 10)))
+    product = rng.random((10, 10))
     product = NumpyMatrixOperator(product.T.dot(product))
     U_p = project_array(U, basis, product=product, orthonormal=False)
     onb = gram_schmidt(basis, product=product)

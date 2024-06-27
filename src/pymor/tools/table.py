@@ -36,8 +36,8 @@ def format_table(rows, width='AUTO', title=None):
 
     if title is not None:
         separator = '=' * len(title)
-        title = f'{title:^{total_width}}\n' \
-                f'{separator:^{total_width}}\n\n'
+        title = (f'{title:^{total_width}}\n'
+                 f'{separator:^{total_width}}\n\n')
     else:
         title = ''
 

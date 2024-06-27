@@ -7,8 +7,6 @@ import shutil
 import tempfile
 from contextlib import contextmanager
 
-from pymor.tools.deprecated import Deprecated
-
 from .matrices import load_matrix, save_matrix
 
 

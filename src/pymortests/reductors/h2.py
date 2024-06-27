@@ -19,17 +19,21 @@ def test_irka():
     irka = IRKAReductor(fom)
 
     rom = irka.reduce(1)
-    assert isinstance(rom, LTIModel) and rom.order == 1
+    assert isinstance(rom, LTIModel)
+    assert rom.order == 1
 
     rom = irka.reduce(np.array([1]))
-    assert isinstance(rom, LTIModel) and rom.order == 1
+    assert isinstance(rom, LTIModel)
+    assert rom.order == 1
 
     rom = irka.reduce({'sigma': np.array([1]),
                        'b': np.array([[1]]),
                        'c': np.array([[1]])})
-    assert isinstance(rom, LTIModel) and rom.order == 1
+    assert isinstance(rom, LTIModel)
+    assert rom.order == 1
 
     rom = irka.reduce(LTIModel.from_matrices(np.array([[-1]]),
                                              np.array([[1]]),
                                              np.array([[1]])))
-    assert isinstance(rom, LTIModel) and rom.order == 1
+    assert isinstance(rom, LTIModel)
+    assert rom.order == 1

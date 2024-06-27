@@ -59,7 +59,7 @@ def test_StationaryModel_deaffinize():
     assert np.allclose(m.output(mu), m_deaff.output(mu))
 
 
-@pytest.mark.parametrize('block_phase_space', (False, True))
+@pytest.mark.parametrize('block_phase_space', [False, True])
 def test_quadratic_hamiltonian_model(block_phase_space):
     """Check QuadraticHamiltonianModel with implicit midpoint rule."""
     if block_phase_space:
@@ -85,11 +85,11 @@ def test_quadratic_hamiltonian_model(block_phase_space):
     assert np.allclose(ham, ham[0])
 
 
-@pytest.mark.parametrize('nt', (4, 5))
-@pytest.mark.parametrize('T', (4, 5))
-@pytest.mark.parametrize('p', (1, 2))
-@pytest.mark.parametrize('m', (1, 2))
-@pytest.mark.parametrize('sampling_time', (0, 1))
+@pytest.mark.parametrize('nt', [4, 5])
+@pytest.mark.parametrize('T', [4, 5])
+@pytest.mark.parametrize('p', [1, 2])
+@pytest.mark.parametrize('m', [1, 2])
+@pytest.mark.parametrize('sampling_time', [0, 1])
 def test_lti_solve(sampling_time, m, p, T, nt):
     if sampling_time == 0:
         time_stepper = ExplicitEulerTimeStepper(nt)

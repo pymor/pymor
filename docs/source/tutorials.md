@@ -6,9 +6,11 @@ tutorial_basis_generation
 tutorial_projection
 tutorial_lti_systems
 tutorial_bt
+tutorial_ph
 tutorial_unstable_lti_systems
 tutorial_mor_with_anns
 tutorial_optimization
-tutorial_external_solver
 tutorial_interact
+tutorial_vectorarray
+tutorial_external_solver
 ```

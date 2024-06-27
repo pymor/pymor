@@ -98,7 +98,8 @@ class NeuralNetworkReductor(BasicObject):
                                    'min_targets': None, 'max_targets': None}
 
         if not fom:
-            assert training_set is not None and len(training_set) > 0
+            assert training_set is not None
+            assert len(training_set) > 0
             self.parameters_dim = training_set[0][0].parameters.dim
         else:
             self.parameters_dim = fom.parameters.dim
@@ -290,32 +291,49 @@ class NeuralNetworkReductor(BasicObject):
             sample = sample[0]
 
         def prepare_datum(datum):
-            if not (isinstance(datum, torch.DoubleTensor) or isinstance(datum, np.ndarray)):
+            if not (isinstance(datum, (torch.DoubleTensor, np.ndarray))):
                 return datum.to_numpy()
             return datum
         sample = (torch.DoubleTensor(prepare_datum(sample[0])), torch.DoubleTensor(prepare_datum(sample[1])))
 
         if self.scale_inputs:
+            if sample[0].ndim > 1:
+                s_in_min, _ = torch.min(sample[0], 0)
+            else:
+                s_in_min = sample[0]
             if self.scaling_parameters['min_inputs'] is not None:
-                self.scaling_parameters['min_inputs'] = torch.min(self.scaling_parameters['min_inputs'], sample[0])
+
+                self.scaling_parameters['min_inputs'] = torch.min(self.scaling_parameters['min_inputs'], s_in_min)
             else:
-                self.scaling_parameters['min_inputs'] = sample[0]
+                self.scaling_parameters['min_inputs'] = s_in_min
+            if sample[0].ndim > 1:
+                s_in_max, _ = torch.max(sample[0], 0)
+            else:
+                s_in_max = sample[0]
             if self.scaling_parameters['max_inputs'] is not None:
-                self.scaling_parameters['max_inputs'] = torch.max(self.scaling_parameters['max_inputs'], sample[0])
+                self.scaling_parameters['max_inputs'] = torch.max(self.scaling_parameters['max_inputs'], s_in_max)
             else:
-                self.scaling_parameters['max_inputs'] = sample[0]
+                self.scaling_parameters['max_inputs'] = s_in_max
 
         if self.scale_outputs:
+            if sample[1].ndim > 1:
+                s_out_min, _ = torch.min(sample[1], 0)
+            else:
+                s_out_min = sample[1]
             if self.scaling_parameters['min_targets'] is not None:
                 self.scaling_parameters['min_targets'] = torch.min(self.scaling_parameters['min_targets'],
-                                                                   sample[1])
+                                                                   s_out_min)
             else:
-                self.scaling_parameters['min_targets'] = sample[1]
+                self.scaling_parameters['min_targets'] = s_out_min
+            if sample[1].ndim > 1:
+                s_out_max, _ = torch.max(sample[1], 0)
+            else:
+                s_out_max = sample[1]
             if self.scaling_parameters['max_targets'] is not None:
                 self.scaling_parameters['max_targets'] = torch.max(self.scaling_parameters['max_targets'],
-                                                                   sample[1])
+                                                                   s_out_max)
             else:
-                self.scaling_parameters['max_targets'] = sample[1]
+                self.scaling_parameters['max_targets'] = s_out_max
 
     def _compute_sample(self, mu, u=None):
         """Transform parameter and corresponding solution to |NumPy arrays|."""
@@ -431,7 +449,8 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
                                    'min_targets': None, 'max_targets': None}
 
         if not fom:
-            assert training_set is not None and len(training_set) > 0
+            assert training_set is not None
+            assert len(training_set) > 0
             self.parameters_dim = training_set[0][0].parameters.dim
             self.dim_output = len(training_set[0][1].flatten())
         else:
@@ -543,7 +562,8 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
                                    'min_targets': None, 'max_targets': None}
 
         if not fom:
-            assert training_set is not None and len(training_set) > 0
+            assert training_set is not None
+            assert len(training_set) > 0
             assert T is not None
             self.parameters_dim = training_set[0][0].parameters.dim
             self.T = T
@@ -786,7 +806,8 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
                                    'min_targets': None, 'max_targets': None}
 
         if not fom:
-            assert training_set is not None and len(training_set) > 0
+            assert training_set is not None
+            assert len(training_set) > 0
             assert T is not None
             self.parameters_dim = training_set[0][0].parameters.dim
             self.dim_output = len(training_set[0][1].flatten())
@@ -1055,19 +1076,21 @@ def train_neural_network(training_data, validation_data, neural_network,
         assert all(isinstance(datum, tuple) and len(datum) == 2 for datum in data)
 
     def prepare_datum(datum):
-        if not (isinstance(datum, torch.DoubleTensor) or isinstance(datum, np.ndarray)):
+        if not (isinstance(datum, (torch.DoubleTensor, np.ndarray))):
             return datum.to_numpy()
         return datum
 
     training_data = [(prepare_datum(datum[0]), prepare_datum(datum[1])) for datum in training_data]
     validation_data = [(prepare_datum(datum[0]), prepare_datum(datum[1])) for datum in validation_data]
 
-    optimizer = optim.LBFGS if 'optimizer' not in training_parameters else training_parameters['optimizer']
-    epochs = 1000 if 'epochs' not in training_parameters else training_parameters['epochs']
-    assert isinstance(epochs, int) and epochs > 0
-    batch_size = 20 if 'batch_size' not in training_parameters else training_parameters['batch_size']
-    assert isinstance(batch_size, int) and batch_size > 0
-    learning_rate = 1. if 'learning_rate' not in training_parameters else training_parameters['learning_rate']
+    optimizer = training_parameters.get('optimizer', optim.LBFGS)
+    epochs = training_parameters.get('epochs', 1000)
+    assert isinstance(epochs, int)
+    assert epochs > 0
+    batch_size = training_parameters.get('batch_size', 20)
+    assert isinstance(batch_size, int)
+    assert batch_size > 0
+    learning_rate = training_parameters.get('learning_rate', 1.0)
     assert learning_rate > 0.
     loss_function = (nn.MSELoss() if (training_parameters.get('loss_function') is None)
                      else training_parameters['loss_function'])
@@ -1153,7 +1176,7 @@ def train_neural_network(training_data, validation_data, neural_network,
                     targets = batch[1]
 
                 with torch.set_grad_enabled(phase == 'train'):
-                    def closure():
+                    def closure(inputs=inputs, targets=targets):
                         if torch.is_grad_enabled():
                             optimizer.zero_grad()
                         outputs = neural_network(inputs)
@@ -1185,7 +1208,7 @@ def train_neural_network(training_data, validation_data, neural_network,
             if log_loss_frequency > 0 and epoch % log_loss_frequency == 0:
                 logger.info(f'Epoch {epoch}: Current {phase} loss of {losses[phase]:.3e}')
 
-            if 'lr_scheduler' in training_parameters and training_parameters['lr_scheduler']:
+            if training_parameters.get('lr_scheduler'):
                 lr_scheduler.step()
 
             # check for early stopping
@@ -1246,7 +1269,8 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
         of restarts.
     """
     assert isinstance(training_parameters, dict)
-    assert isinstance(max_restarts, int) and max_restarts >= 0
+    assert isinstance(max_restarts, int)
+    assert max_restarts >= 0
 
     logger = getLogger('pymor.algorithms.neural_network.multiple_restarts_training')
 
@@ -1311,8 +1335,8 @@ def multiple_restarts_training(training_data, validation_data, neural_network,
             logger.info(f'Rejecting neural network with loss of {current_losses["full"]:.3e} '
                         f'(instead of {losses["full"]:.3e}) ...')
 
-    if target_loss:
+    if target_loss and losses['full'] > target_loss:
         raise NeuralNetworkTrainingError(f'Could not find neural network with prescribed loss of '
-                                          f'{target_loss:.3e} (best one found was {losses["full"]:.3e})!')
+                                         f'{target_loss:.3e} (best one found was {losses["full"]:.3e})!')
     logger.info(f'Found neural network with error of {losses["full"]:.3e} ...')
     return best_neural_network, losses

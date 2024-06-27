@@ -5,9 +5,10 @@
 import numpy as np
 import pytest
 
-from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, GenericFunction
+from pymor.analyticalproblems.functions import BitmapFunction, ConstantFunction, ExpressionFunction, GenericFunction
 
 constant_functions = [
+    BitmapFunction.random((3,3)),
     ConstantFunction(),
     ConstantFunction(np.array([1., 2., 3.]), dim_domain=7),
     ConstantFunction(np.eye(27), dim_domain=2),
@@ -62,10 +63,3 @@ def function(request):
 @pytest.fixture(params=constant_functions + picklable_generic_functions + expression_functions)
 def picklable_function(request):
     return request.param
-
-
-def function_argument(f, count):
-    if isinstance(count, tuple):
-        return np.random.random(count + (f.dim_domain,))
-    else:
-        return np.random.random((count, f.dim_domain))

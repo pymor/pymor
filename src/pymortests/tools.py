@@ -15,7 +15,7 @@ from hypothesis import given
 from pymor.core.config import config
 from pymor.core.logger import getLogger
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
-from pymor.tools import formatsrc, timing
+from pymor.tools import formatsrc
 from pymor.tools.deprecated import Deprecated
 from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
 from pymor.tools.formatsrc import print_source
@@ -38,10 +38,10 @@ FUNCTIONS = (('sin(2x pi)', lambda x: sin(2 * x * pi), 0),
 
 def polynomials(max_order):
     for n in range(max_order + 1):
-        def f(x):
+        def f(x, n=n):
             return np.power(x, n)
 
-        def deri(k):
+        def deri(k, n=n):
             if k > n:
                 return lambda _: 0
             return lambda x: (factorial(n) / factorial(n - k)) * np.power(x, n - k)
@@ -116,11 +116,9 @@ def test_float_cmp():
 
         assert not float_cmp(nan, nan, rtol, atol), msg
         assert nan != nan
-        assert not (nan == nan)
         assert not float_cmp(-nan, nan, rtol, atol), msg
 
         assert not float_cmp(inf, inf, rtol, atol), msg
-        assert not (inf != inf)
         assert inf == inf
         if rtol > 0:
             assert float_cmp(-inf, inf, rtol, atol), msg
@@ -139,8 +137,10 @@ def test_almost_less():
         assert almost_less(0., 1, rtol, atol), msg
         assert almost_less(-1., 1., rtol, atol), msg
         assert almost_less(atol, 0., rtol, atol), msg
-        assert (rtol == 0.0 and not almost_less(0., inf, rtol, atol), msg) or \
-               almost_less(0., inf, rtol, atol), msg
+        if rtol > 0:
+            assert almost_less(0., inf, rtol, atol), msg
+        else:
+            assert not almost_less(0., inf, rtol, atol), msg
 
 
 @pytest.mark.skipif(not config.HAVE_VTKIO, reason='VTKIO support libraries missing')
@@ -149,37 +149,13 @@ def test_vtkio(grid):
     from pymor.discretizers.builtin.grids.vtkio import write_vtk
     from pymor.tools.io.vtk import read_vtkfile
     steps = 4
-    for codim, data in enumerate((NumpyVectorSpace.from_numpy(np.ones((steps, grid.size(c))))
-                                  for c in range(grid.dim+1))):
+    for codim, data in enumerate(NumpyVectorSpace.from_numpy(np.ones((steps, grid.size(c))))
+                                  for c in range(grid.dim+1)):
         with safe_temporary_filename('wb') as out_name:
             fn = write_vtk(grid, data, out_name, codim=codim)
             meshes = read_vtkfile(fn)
             assert len(meshes) == len(data)
             assert all((a is not None and b is not None for a, b in meshes))
-
-
-def testTimingContext():
-    with timing.Timer('busywait', logger):
-        timing.busywait(100)
-    with timing.Timer('defaultlog'):
-        timing.busywait(100)
-
-
-def testTimingDecorator():
-
-    @timing.Timer('busywait_decorator', logger)
-    def wait():
-        timing.busywait(1000)
-
-    wait()
-
-
-def testTiming():
-    timer = timing.Timer('busywait', logger)
-    timer.start()
-    timing.busywait(1000)
-    timer.stop()
-    logger.info('plain timing took %s seconds', timer.dt)
 
 
 def testDeprecated():

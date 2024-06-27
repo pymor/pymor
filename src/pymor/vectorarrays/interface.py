@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Number
+from numbers import Integral, Number
 
 import numpy as np
 
@@ -63,6 +63,10 @@ class VectorArray(BasicObject):
     ind
         In case the array is a view, the indices with which the :attr:`~VectorArray.base`
         array is indexed with.
+    real
+        The real part of the vectors in the array.
+    imag
+        The imaginary part of the vectors in the array.
     """
 
     # override NumPy binary operations and ufuncs
@@ -214,7 +218,7 @@ class VectorArray(BasicObject):
 
         # normalize ind s.t. the length of the view does not change when
         # the array is appended to
-        if type(ind) is int or isinstance(ind, Number):
+        if isinstance(ind, Integral):
             if 0 <= ind < l:
                 ind = slice(ind, ind+1)
             elif ind >= l or ind < -l:
@@ -234,7 +238,8 @@ class VectorArray(BasicObject):
                 ind = slice(start, None if stop == -1 else stop, step)
                 view_len = len(range(start, stop, step))
         else:
-            assert isinstance(ind, (list, np.ndarray)) and all(-l <= i < l for i in ind)
+            assert isinstance(ind, (list, np.ndarray))
+            assert all(-l <= i < l for i in ind)
             ind = [i if 0 <= i else l+i for i in ind]
             view_len = len(ind)
 
@@ -739,7 +744,7 @@ class VectorArray(BasicObject):
         return (type(ind) is slice
                 or isinstance(ind, Number) and -l <= ind < l
                 or isinstance(ind, (list, np.ndarray))
-                and len(set(i if i >= 0 else l+i for i in ind if -l <= i < l)) == len(ind))
+                and len({i if i >= 0 else l+i for i in ind if -l <= i < l}) == len(ind))
 
     def len_ind(self, ind):
         """Return the number of given indices."""

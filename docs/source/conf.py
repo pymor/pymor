@@ -59,7 +59,7 @@ myst_enable_extensions = [
 myst_url_schemes = ('http', 'https', 'mailto')
 # auto generated link anchors
 myst_heading_anchors = 2
-import substitutions # noqa
+import substitutions  # noqa: I001
 myst_substitutions = substitutions.myst_substitutions
 nb_execute_notebooks = 'cache'
 nb_execution_timeout = 180
@@ -88,8 +88,8 @@ copyright = 'pyMOR developers and contributors'
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 # imports have to be delayed until after sys.path modification
-import pymor  # noqa
-import autoapi_pymor # noqa
+import pymor  # noqa: I001
+import autoapi_pymor  # noqa: F401
 version = pymor.__version__
 rst_epilog = substitutions.substitutions
 
@@ -137,7 +137,6 @@ nitpick_ignore = [
 ]
 nitpick_ignore_regex = [
     ('py:class', 'Choices(.+)'),  # pymor.tools.typer.Choices(...) cannot be referred to
-    ('py:.*', 'pymess.*'),  # pymess does not have online Sphinx documentation
     ('py:.*', 'matplotlib.backends.*'),  # matplotlib backends are not auto documented
 ]
 
@@ -167,7 +166,7 @@ html_theme_options = {
 }
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = '%s v%s Manual' % (project, version)
+html_title = f'{project} v{version} Manual'
 
 # The name of an image file (within the static path) to place at the top of
 # the sidebar.

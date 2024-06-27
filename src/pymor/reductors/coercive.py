@@ -83,17 +83,14 @@ class CoerciveRBEstimator(ImmutableObject):
             est /= self.coercivity_estimator(mu)
         return est
 
-    def estimate_output_error(self, U, mu, m, return_vector=False):
+    def estimate_output_error(self, U, mu, m):
         if self.projected_output_adjoint is None:
             raise NotImplementedError
         estimate = self.estimate_error(U, mu, m)
         # scale with dual norm of the output functional
         output_functional_norms = self.projected_output_adjoint.as_range_array(mu).norm()
         errs = estimate * output_functional_norms
-        if return_vector:
-            return errs
-        else:
-            return np.linalg.norm(errs)
+        return errs.reshape((1, -1))
 
     def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims:
@@ -137,7 +134,8 @@ class SimpleCoerciveRBReductor(StationaryRBReductor):
 
     def __init__(self, fom, RB=None, product=None, coercivity_estimator=None,
                  check_orthonormality=None, check_tol=None):
-        assert fom.operator.linear and fom.rhs.linear
+        assert fom.operator.linear
+        assert fom.rhs.linear
         assert isinstance(fom.operator, LincombOperator)
         assert all(not op.parametric for op in fom.operator.operators)
         if fom.rhs.parametric:
@@ -285,7 +283,7 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
 
         return est
 
-    def estimate_output_error(self, U, mu, m, return_vector=False):
+    def estimate_output_error(self, U, mu, m):
         if not self.output_estimator_matrices or not self.output_functional_coeffs:
             raise NotImplementedError
         estimate = self.estimate_error(U, mu, m)
@@ -295,10 +293,7 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
         for d in range(m.dim_output):
             dual_norms.append(np.sqrt(coeff_vals.T@(self.output_estimator_matrices[d]@coeff_vals)))
         errs = estimate * dual_norms
-        if return_vector:
-            return errs
-        else:
-            return np.linalg.norm(errs)
+        return errs.reshape((-1, 1))
 
     def restricted_to_subbasis(self, dim, m):
         cr = 1 if not m.rhs.parametric else len(m.rhs.operators)

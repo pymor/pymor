@@ -23,7 +23,7 @@ settings.register_profile('ci', derandomize=True, max_examples=80, **_common_set
 settings.register_profile('dev', derandomize=True, max_examples=10, **_common_settings)
 _common_settings['verbosity'] = Verbosity.verbose
 settings.register_profile('debug', derandomize=True, max_examples=10, **_common_settings)
-settings.load_profile(os.getenv(u'PYMOR_HYPOTHESIS_PROFILE', 'dev'))
+settings.load_profile(os.getenv('PYMOR_HYPOTHESIS_PROFILE', 'dev'))
 
 """ This makes sure all our fixtures are available to all tests
 
@@ -36,7 +36,6 @@ pytest_plugins = [
     'pymortests.fixtures.grid',
     'pymortests.fixtures.model',
     'pymortests.fixtures.operator',
-    'pymortests.fixtures.parameter',
 ]
 
 
@@ -61,4 +60,9 @@ def monkey_np_testing(monkeypatch):
 @pytest.fixture(autouse=True)
 def reset_rng():
     new_rng(42).install()
-    np.random.seed(42)
+
+
+@pytest.fixture()
+def rng():
+    import numpy as np
+    return np.random.default_rng(0)

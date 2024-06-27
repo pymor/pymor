@@ -67,16 +67,25 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
 
     Returns
     -------
-    Dict with the following fields:
+    data
+        Dict with the following fields:
 
-        :extensions:             Number of greedy iterations.
-        :max_errs:               Sequence of maximum errors during the greedy run.
-        :max_err_mus:            The parameters corresponding to `max_errs`.
-        :max_val_errs:           Sequence of maximum errors on the validation set.
-        :max_val_err_mus:        The parameters corresponding to `max_val_errs`.
-        :refinements:            Number of refinements made in each extension step.
-        :training_set_sizes:     The final size of the training set in each extension step.
-        :time:                   Duration of the algorithm.
+        :extensions:
+            Number of greedy iterations.
+        :max_errs:
+            Sequence of maximum errors during the greedy run.
+        :max_err_mus:
+            The parameters corresponding to `max_errs`.
+        :max_val_errs:
+            Sequence of maximum errors on the validation set.
+        :max_val_err_mus:
+            The parameters corresponding to `max_val_errs`.
+        :refinements:
+            Number of refinements made in each extension step.
+        :training_set_sizes:
+            The final size of the training set in each extension step.
+        :time:
+            Duration of the algorithm.
     """
     logger = getLogger('pymor.algorithms.adaptivegreedy.adaptive_weak_greedy')
 
@@ -143,7 +152,7 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
                 # visualization
                 if visualize:
                     import matplotlib.pyplot as plt
-                    from mpl_toolkits.mplot3d import Axes3D  # NOQA
+                    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
                     plt.figure()
                     plt.subplot(2, 2, 1, projection=None if sample_set.dim == 2 else '3d')
                     plt.title('estimated errors')
@@ -272,18 +281,27 @@ def rb_adaptive_greedy(fom, reductor, parameter_space,
 
     Returns
     -------
-    Dict with the following fields:
+    data
+        Dict with the following fields:
 
-        :rom:                    The reduced |Model| obtained for the
-                                 computed basis.
-        :extensions:             Number of greedy iterations.
-        :max_errs:               Sequence of maximum errors during the greedy run.
-        :max_err_mus:            The parameters corresponding to `max_errs`.
-        :max_val_errs:           Sequence of maximum errors on the validation set.
-        :max_val_err_mus:        The parameters corresponding to `max_val_errs`.
-        :refinements:            Number of refinements made in each extension step.
-        :training_set_sizes:     The final size of the training set in each extension step.
-        :time:                   Duration of the algorithm.
+        :rom:
+            The reduced |Model| obtained for the computed basis.
+        :extensions:
+            Number of greedy iterations.
+        :max_errs:
+            Sequence of maximum errors during the greedy run.
+        :max_err_mus:
+            The parameters corresponding to `max_errs`.
+        :max_val_errs:
+            Sequence of maximum errors on the validation set.
+        :max_val_err_mus:
+            The parameters corresponding to `max_val_errs`.
+        :refinements:
+            Number of refinements made in each extension step.
+        :training_set_sizes:
+            The final size of the training set in each extension step.
+        :time:
+            Duration of the algorithm.
     """
     surrogate = RBSurrogate(fom, reductor, use_error_estimator, error_norm, extension_params, pool or dummy_pool)
 
@@ -421,7 +439,7 @@ class AdaptiveSampleSet(BasicObject):
                              [0., 0., 1.]])
 
             import matplotlib.pyplot as plt
-            from mpl_toolkits.mplot3d import Axes3D  # NOQA
+            from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
             if new_figure:
                 plt.figure()
                 plt.gca().add_subplot(111, projection='3d')
@@ -458,9 +476,8 @@ class AdaptiveSampleSet(BasicObject):
     def _iter_leafs(self):
         def walk(node):
             if node.children:
-                for node in node.children:
-                    for leaf in walk(node):
-                        yield leaf
+                for child in node.children:
+                    yield from walk(child)
             else:
                 yield node
 

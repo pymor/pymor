@@ -471,9 +471,9 @@ class LowRankOperator(Operator):
         assert isinstance(left, VectorArray)
         assert isinstance(right, VectorArray)
         assert len(left) == len(right)
-        assert (isinstance(core, np.ndarray)
-                and core.ndim == 2
-                and core.shape[0] == core.shape[1] == len(left))
+        assert isinstance(core, np.ndarray)
+        assert core.ndim == 2
+        assert core.shape[0] == core.shape[1] == len(left)
 
         self.__auto_init(locals())
         self.source = right.space
@@ -826,17 +826,15 @@ class VectorArrayOperator(Operator):
         if not least_squares and len(self.array) != self.array.dim:
             raise InversionError
 
-        from numpy.linalg import lstsq
-
         from pymor.algorithms.gram_schmidt import gram_schmidt
 
         Q, R = gram_schmidt(self.array, return_R=True, reiterate=False)
         if self.adjoint:
-            v = lstsq(R.T.conj(), V.to_numpy().T, rcond=None)[0]
+            v = spla.lstsq(R.T.conj(), V.to_numpy().T)[0]
             U = Q.lincomb(v.T)
         else:
             v = Q.inner(V)
-            u = lstsq(R, v, rcond=None)[0]
+            u = spla.lstsq(R, v)[0]
             U = self.source.make_array(u.T)
 
         return U

@@ -1,11 +1,10 @@
+---
 name: external_pr_mirror
-
 on:
   pull_request_target:
     types:
       - opened
       - synchronize
-
 jobs:
   push:
     if: github.event.pull_request.head.repo.owner.login != 'pymor'
@@ -18,14 +17,14 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git push --force origin HEAD:refs/heads/external_pr_${{github.event.pull_request.number}}
-
   comment:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.head.repo.owner.login != 'pymor' && github.event.action == 'opened'
+    if: github.event.pull_request.head.repo.owner.login != 'pymor' && github.event.action
+      == 'opened'
     steps:
       - uses: actions/github-script@v6
         with:
-          script: |
+          script: |-
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

@@ -44,8 +44,10 @@ Replace `RELEASE_TAG` below with the actual release tag.
       Push `RELEASE_TAG` to GitHub.
 - [ ] Wait for CI build for tagged commit to finish (see the list of pipelines at
       [zivgitlab](https://zivgitlab.uni-muenster.de/pymor/pymor/-/pipelines)).
-- [ ] Merge the automatic PR at [`pymor/docs`](https://github.com/pymor/docs) and
-      wait for the CI build to finish.
+- [ ] Check that https://docs.pymor.org/list.html shows tagged version
+      (~5 min. after CI build has finished).
+- [ ] Check that https://docs.pymor.org/ points to tagged version and that list of available
+      versions is correct (~5 min. after CI build has finished).
 - [ ] Check again that documentation for tagged commit (not release branch) is built correctly.
       Check that binder links work and `.binder/Dockerfile` in `pymor/docs@RELEASE_TAG` uses the
       correctly tagged base image.
@@ -89,5 +91,11 @@ Replace `RELEASE_TAG` below with the actual release tag.
 - [ ] Bump version in main branch to NEXT_TARGET_TAG.dev0.
 - [ ] All developers check if (stale) branches can be pruned.
 - [ ] All developers check for `.mailmap` correctness.
+
+    This file is up-to-date if the command
+    `git log --format="%aN <%aE>" | sort -u`
+    gives no duplicates.
+
+    See the manpage of `git-shortlog` for details (`git help shortlog`).
 - [ ] Remove deprecated features in main in `pymor/pymor`.
       (Omit in case of a bugfix release.)

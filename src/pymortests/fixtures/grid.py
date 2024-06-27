@@ -38,7 +38,6 @@ def _hy_rect_tria_kwargs(draw, grid_type):
     identify_bottom_top = draw(hyst.booleans())
     interval_i = hyst.integers(min_value=1, max_value=42)
 
-    lambda x: (not identify_left_right) or x > 1
     num_intervals = draw(hyst.tuples(interval_i.map(lambda x: x if not identify_left_right else max(2, x)),
                                      interval_i.map(lambda y: y if not identify_bottom_top else max(2, y))))
 

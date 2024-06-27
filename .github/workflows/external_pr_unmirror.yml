@@ -1,10 +1,9 @@
+---
 name: external_pr_unmirror
-
 on:
   pull_request_target:
     types:
       - closed
-
 jobs:
   delete_branch:
     if: github.event.pull_request.head.repo.owner.login != 'pymor'
@@ -17,14 +16,13 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git push origin --delete external_pr_${{github.event.pull_request.number}}
-
   comment:
     runs-on: ubuntu-latest
     if: github.event.pull_request.head.repo.owner.login != 'pymor'
     steps:
       - uses: actions/github-script@v6
         with:
-          script: |
+          script: |-
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

@@ -169,6 +169,9 @@ Defaults
         else:
             raise ValueError('No default value matching the specified criteria')
 
+    def __iter__(self):
+        return iter(self._data)
+
     def __getitem__(self, key):
         assert isinstance(key, str)
         self.get(key)[0]
@@ -177,7 +180,7 @@ Defaults
         return self._data.keys()
 
     def import_all(self):
-        packages = {k.split('.')[0] for k in self._data.keys()}.union({'pymor'})
+        packages = {k.split('.')[0] for k in self._data}.union({'pymor'})
         for package in packages:
             _import_all(package)
 
@@ -282,7 +285,7 @@ def print_defaults(import_all=True, shorten_paths=2):
 
     keys, values, comments = [], [], []
 
-    for k in sorted(_default_container.keys()):
+    for k in sorted(_default_container):
         v, c = _default_container.get(k)
         k_parts = k.split('.')
         if len(k_parts) >= shorten_paths + 2:
@@ -328,7 +331,7 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
         as_comment.append(c == 'code')
     key_width = max(max([0] + list(map(len, ks))) for ks in keys)
 
-    with open(filename, 'wt') as f:
+    with open(filename, 'w') as f:
         print("""
 # pyMOR defaults config file
 # This file has been automatically created by pymor.core.defaults.write_defaults_to_file'.
@@ -363,7 +366,9 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
         Path of the configuration file.
     """
     env = {}
-    exec(open(filename, 'rt').read(), env)
+    with open(filename) as f:
+        contents = f.read()
+    exec(contents, env)
     try:
         _default_container.update(env['d'], type='file')
     except KeyError as e:
@@ -415,7 +420,7 @@ def get_defaults(user=True, file=True, code=True):
         If `True`, returned dict contains unmodified default values.
     """
     defaults = {}
-    for k in _default_container.keys():
+    for k in _default_container:
         v, t = _default_container.get(k)
         if t == 'user' and user:
             defaults[k] = v

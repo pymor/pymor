@@ -390,6 +390,12 @@ def randomized_svd(A, n, source_product=None, range_product=None, power_iteratio
         range_product = IdentityOperator(A.range)
     if source_product is None:
         source_product = IdentityOperator(A.source)
+
+    assert isinstance(range_product, Operator)
+    assert range_product.source == range_product.range == A.range
+    assert isinstance(source_product, Operator)
+    assert source_product.source == source_product.range == A.source
+
     if A.source.dim == 0 or A.range.dim == 0:
         return A.source.empty(), np.array([]), A.range.empty()
 
@@ -401,8 +407,8 @@ def randomized_svd(A, n, source_product=None, range_product=None, power_iteratio
         V, s, Uh_b = qr_svd(B, product=source_product, modes=n, rtol=0)
 
     with logger.block('Backprojecting the left'
-                      + f'{" " if isinstance(range_product, IdentityOperator) else " generalized "}'
-                      + f'singular vector{"s" if n > 1 else ""} ...'):
+                      f'{" " if isinstance(range_product, IdentityOperator) else " generalized "}'
+                      f'singular vector{"s" if n > 1 else ""} ...'):
         U = Q.lincomb(Uh_b[:n])
 
     return U, s, V
@@ -507,7 +513,8 @@ def randomized_ghep(A, E=None, n=6, power_iterations=0, oversampling=20, single_
     """
     logger = getLogger('pymor.algorithms.rand_la.randomized_ghep')
 
-    assert isinstance(A, Operator) and A.linear
+    assert isinstance(A, Operator)
+    assert A.linear
     assert not A.parametric
     assert A.source == A.range
     assert 0 <= n <= max(A.source.dim, A.range.dim)
@@ -517,7 +524,8 @@ def randomized_ghep(A, E=None, n=6, power_iterations=0, oversampling=20, single_
     if E is None:
         E = IdentityOperator(A.source)
     else:
-        assert isinstance(E, Operator) and E.linear
+        assert isinstance(E, Operator)
+        assert E.linear
         assert not E.parametric
         assert E.source == E.range
         assert E.source == A.source
@@ -551,15 +559,15 @@ def randomized_ghep(A, E=None, n=6, power_iterations=0, oversampling=20, single_
 
     if return_evecs:
         with logger.block(f'Computing the{" " if isinstance(E, IdentityOperator) else " generalized "}'
-                          + f'eigenvalue{"s" if n > 1 else ""} and eigenvector{"s" if n > 1 else ""} '
-                          + 'in the reduced space ...'):
+                          f'eigenvalue{"s" if n > 1 else ""} and eigenvector{"s" if n > 1 else ""} '
+                          'in the reduced space ...'):
             w, Vr = spla.eigh(T, subset_by_index=(T.shape[1]-n, T.shape[0]-1))
         with logger.block('Backprojecting the'
-                          + f'{" " if isinstance(E, IdentityOperator) else " generalized "}'
-                          + f'eigenvector{"s" if n > 1 else ""} ...'):
+                          f'{" " if isinstance(E, IdentityOperator) else " generalized "}'
+                          f'eigenvector{"s" if n > 1 else ""} ...'):
             V = Q.lincomb(Vr[:, ::-1].T)
         return w[::-1], V
     else:
         with logger.block(f'Computing the{" " if isinstance(E, IdentityOperator) else " generalized "}'
-                          + f'eigenvalue{"s" if n > 1 else ""} in the reduced space ...'):
+                          f'eigenvalue{"s" if n > 1 else ""} in the reduced space ...'):
             return spla.eigh(T, subset_by_index=(T.shape[1]-n, T.shape[0]-1), eigvals_only=True)[::-1]

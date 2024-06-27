@@ -291,4 +291,3 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
                      [vmin[0] for vmin in vmins],
                      [vmax[0] for vmax in vmaxs])
             plt.show()
-

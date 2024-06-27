@@ -1,10 +1,10 @@
+---
 on:
   pull_request:
   merge_group:
-    types: [checks_requested]
-
+    types:
+      - checks_requested
 name: Git
-
 jobs:
   message-check:
     if: github.event_name != 'merge_group'
@@ -15,7 +15,6 @@ jobs:
         uses: xt0rted/block-autosquash-commits-action@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-
   merge_conflict_job:
     if: github.event_name != 'merge_group'
     runs-on: ubuntu-22.04

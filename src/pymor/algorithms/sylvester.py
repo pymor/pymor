@@ -65,8 +65,12 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
         If `V` and `W` cannot be returned.
     """
     # check types
-    assert isinstance(A, Operator) and A.linear and A.source == A.range
-    assert isinstance(Ar, Operator) and Ar.linear and Ar.source == Ar.range
+    assert isinstance(A, Operator)
+    assert A.linear
+    assert A.source == A.range
+    assert isinstance(Ar, Operator)
+    assert Ar.linear
+    assert Ar.source == Ar.range
 
     assert E is None or isinstance(E, Operator) and E.linear and E.source == E.range == A.source
     if E is None:
@@ -80,13 +84,21 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
         raise ValueError('Not enough parameters are given to solve a Sylvester equation.')
 
     if compute_V:
-        assert isinstance(B, Operator) and B.linear and B.range == A.source
-        assert isinstance(Br, Operator) and Br.linear and Br.range == Ar.source
+        assert isinstance(B, Operator)
+        assert B.linear
+        assert B.range == A.source
+        assert isinstance(Br, Operator)
+        assert Br.linear
+        assert Br.range == Ar.source
         assert B.source == Br.source
 
     if compute_W:
-        assert isinstance(C, Operator) and C.linear and C.source == A.source
-        assert isinstance(Cr, Operator) and Cr.linear and Cr.source == Ar.source
+        assert isinstance(C, Operator)
+        assert C.linear
+        assert C.source == A.source
+        assert isinstance(Cr, Operator)
+        assert Cr.linear
+        assert Cr.source == Ar.source
         assert C.range == Cr.range
 
     # convert reduced operators

@@ -110,7 +110,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
     logger.info(f'Started error-aware adaptive TR algorithm for {fom.output_functional}.')
 
     if parameter_space is None:
-        logger.warn('No parameter space given. Assuming uniform parameter bounds of (-1, 1).')
+        logger.warning('No parameter space given. Assuming uniform parameter bounds of (-1, 1).')
         parameter_space = fom.parameters.space(-1., 1.)
 
     if initial_guess is None:
@@ -159,7 +159,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
             if iteration >= miniter:
                 if first_order_criticality < tol_criticality:
                     logger.info(
-                        f'TR converged in {iteration} iterations because first order criticality tolerance of' \
+                        f'TR converged in {iteration} iterations because first order criticality tolerance of'
                         f' {tol_criticality} was reached. The reduced basis is of size {surrogate.rb_size()}.')
                     break
                 if iteration >= maxiter:
@@ -238,7 +238,7 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
 
                 with logger.block('Computing first order criticality...'):
                     # fom.output_d_mu is potentially for free after enrichment, e.g. using caching
-                    gradient = fom.parameters.parse(fom.output_d_mu(mu)).to_numpy()
+                    gradient = fom.parameters.parse(fom.output_d_mu(mu).to_numpy())
                     first_order_criticality = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
                     foc_norms.append(first_order_criticality)
 

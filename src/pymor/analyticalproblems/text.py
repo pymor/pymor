@@ -45,7 +45,7 @@ def text_problem(text='pyMOR', font_name=None):
         # after leaving this 'with' block, the temporary file is automatically deleted
         with safe_temporary_filename(name='letter_bitmap.png') as f:
             img.save(f, format='png')
-            return BitmapFunction(f, bounding_box=[(0, 0), size], range=[0., 1.])
+            return BitmapFunction.from_file(f, bounding_box=[(0, 0), size], range=[0., 1.])
 
     # create BitmapFunctions for each character
     dfs = [make_bitmap_function(n) for n in range(len(text))]
@@ -72,7 +72,7 @@ def _get_font(font_name):
     for filename in font_list:
         try:
             return ImageFont.truetype(filename, 64)  # load some font from file of given size
-        except (OSError, IOError):
+        except OSError:
             pass
     warnings.warn(f'Falling back to pillow default font. Could not load any of {font_list}',
                   ResourceWarning, stacklevel=1)

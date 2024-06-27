@@ -14,12 +14,8 @@ _DEFAULT_LYAP_SOLVER_BACKEND = FrozenDict(
     {
         'cont': FrozenDict(
             {
-                'sparse': 'pymess' if config.HAVE_PYMESS else 'lradi',
-                'dense': 'pymess'
-                if config.HAVE_PYMESS
-                else 'slycot'
-                if config.HAVE_SLYCOT
-                else 'scipy',
+                'sparse': 'lradi',
+                'dense': 'slycot' if config.HAVE_SLYCOT else 'scipy',
             }
         ),
         'disc': FrozenDict({'dense': 'slycot' if config.HAVE_SLYCOT else 'scipy'}),
@@ -72,14 +68,12 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
     - for sparse problems (minimum size specified by
       :func:`mat_eqn_sparse_min_size`)
 
-      1. `pymess` (see :func:`pymor.bindings.pymess.solve_lyap_lrcf`),
-      2. `lradi` (see :func:`pymor.algorithms.lradi.solve_lyap_lrcf`),
+      1. `lradi` (see :func:`pymor.algorithms.lradi.solve_lyap_lrcf`),
 
     - for dense problems (smaller than :func:`mat_eqn_sparse_min_size`)
 
-      1. `pymess` (see :func:`pymor.bindings.pymess.solve_lyap_lrcf`),
-      2. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_lrcf`),
-      3. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_lrcf`).
+      1. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_lrcf`),
+      2. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_lrcf`).
 
     Parameters
     ----------
@@ -98,12 +92,11 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
         - :func:`pymor.algorithms.lradi.lyap_lrcf_solver_options`,
         - :func:`pymor.bindings.scipy.lyap_lrcf_solver_options`,
         - :func:`pymor.bindings.slycot.lyap_lrcf_solver_options`,
-        - :func:`pymor.bindings.pymess.lyap_lrcf_solver_options`.
 
     default_sparse_solver_backend
-        Default sparse solver backend to use (pymess, lradi).
+        Default sparse solver backend to use (lradi).
     default_dense_solver_backend
-        Default dense solver backend to use (pymess, slycot, scipy).
+        Default dense solver backend to use (slycot, scipy).
 
     Returns
     -------
@@ -123,8 +116,6 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
         from pymor.bindings.scipy import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'slycot':
         from pymor.bindings.slycot import solve_lyap_lrcf as solve_lyap_impl
-    elif backend == 'pymess':
-        from pymor.bindings.pymess import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'lradi':
         from pymor.algorithms.lradi import solve_lyap_lrcf as solve_lyap_impl
     else:
@@ -211,11 +202,13 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
 
 
 def _solve_lyap_lrcf_check_args(A, E, B, trans):
-    assert isinstance(A, Operator) and A.linear
+    assert isinstance(A, Operator)
+    assert A.linear
     assert not A.parametric
     assert A.source == A.range
     if E is not None:
-        assert isinstance(E, Operator) and E.linear
+        assert isinstance(E, Operator)
+        assert E.linear
         assert not E.parametric
         assert E.source == E.range
         assert E.source == A.source
@@ -255,9 +248,8 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
     If the solver is not specified using the options argument, a solver backend is chosen based on
     availability in the following order:
 
-    1. `pymess` (see :func:`pymor.bindings.pymess.solve_lyap_dense`)
-    2. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_dense`)
-    3. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_dense`)
+    1. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_dense`)
+    2. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_dense`)
 
     Parameters
     ----------
@@ -275,10 +267,9 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
 
         - :func:`pymor.bindings.scipy.lyap_dense_solver_options`,
         - :func:`pymor.bindings.slycot.lyap_dense_solver_options`,
-        - :func:`pymor.bindings.pymess.lyap_dense_solver_options`.
 
     default_solver_backend
-        Default solver backend to use (pymess, slycot, scipy).
+        Default solver backend to use (slycot, scipy).
 
     Returns
     -------
@@ -295,8 +286,6 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
         from pymor.bindings.scipy import solve_lyap_dense as solve_lyap_impl
     elif backend == 'slycot':
         from pymor.bindings.slycot import solve_lyap_dense as solve_lyap_impl
-    elif backend == 'pymess':
-        from pymor.bindings.pymess import solve_lyap_dense as solve_lyap_impl
     else:
         raise ValueError(f'Unknown solver backend ({backend}).')
     return solve_lyap_impl(A, E, B, trans=trans, cont_time=True, options=options)
@@ -380,13 +369,16 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
 
 
 def _solve_lyap_dense_check_args(A, E, B, trans):
-    assert isinstance(A, np.ndarray) and A.ndim == 2
+    assert isinstance(A, np.ndarray)
+    assert A.ndim == 2
     assert A.shape[0] == A.shape[1]
     if E is not None:
-        assert isinstance(E, np.ndarray) and E.ndim == 2
+        assert isinstance(E, np.ndarray)
+        assert E.ndim == 2
         assert E.shape[0] == E.shape[1]
         assert E.shape[0] == A.shape[0]
-    assert isinstance(B, np.ndarray) and A.ndim == 2
+    assert isinstance(B, np.ndarray)
+    assert A.ndim == 2
     assert not trans and B.shape[0] == A.shape[0] or trans and B.shape[1] == A.shape[0]
 
 
@@ -405,7 +397,8 @@ def _chol(A):
     L
         Cholesky factor of A (in the sense that L * L^T approximates A).
     """
-    assert isinstance(A, np.ndarray) and A.ndim == 2
+    assert isinstance(A, np.ndarray)
+    assert A.ndim == 2
     assert A.shape[0] == A.shape[1]
 
     U, s, _ = spla.svd(A, lapack_driver='gesvd')

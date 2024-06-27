@@ -57,9 +57,14 @@ class DWRCoerciveRBReductor(BasicObject):
 
         if dual_RBs is not None:
             assert len(dual_RBs) == fom.dim_output
-        assert (fom.output_functional is not None and fom.output_functional.linear), \
-            'DWRCoerciveRBReductor requires a linear output functional. ' + \
+        assert fom.output_functional is not None, (
+            'DWRCoerciveRBReductor requires an output functional. '
             'Please use CoerciveRBReductor instead.'
+        )
+        assert fom.output_functional.linear, (
+            'DWRCoerciveRBReductor requires a linear output functional. '
+            'Please use CoerciveRBReductor instead.'
+        )
 
         self.primal_reductor = CoerciveRBReductor(fom, RB=primal_RB, product=product,
                                                   coercivity_estimator=coercivity_estimator,
@@ -184,7 +189,7 @@ class DWRCoerciveRBReductor(BasicObject):
             # case where model.dim_output == 1 and
             # more general case without using the structure of BlockColumnOperator
             if model.dim_output > 1:
-                model.logger.warn('Using inefficient concatenation for the right-hand side')
+                model.logger.warning('Using inefficient concatenation for the right-hand side')
             e_i_vec = model.output_functional.range.from_numpy(np.eye(1, model.dim_output, dim))
             dual_rhs = - output.H @ VectorOperator(e_i_vec) if model.dim_output > 1 else - output.H
         dual_operator = model.operator.H
@@ -218,14 +223,14 @@ class DWRCoerciveRBEstimator(ImmutableObject):
     def estimate_error(self, U, mu, m):
         return self.primal_estimator.estimate_error(U, mu, m)
 
-    def estimate_output_error(self, U, mu, m, return_vector=False):
-        est_pr = self.estimate_error(U, mu, m)
+    def estimate_output_error(self, U, mu, m):
+        est_pr = self.estimate_error(U, mu, m).item()
         est_dus = []
         for d in range(m.dim_output):
             dual_solution = self.dual_models[d].solve(mu)
-            est_dus.append(self.dual_estimators[d].estimate_error(dual_solution, mu, m))
-        ret = (est_pr * est_dus).T
-        return ret if return_vector else np.linalg.norm(ret)
+            est_dus.append(self.dual_estimators[d].estimate_error(dual_solution, mu, m).item())
+        ret = est_pr * np.array(est_dus).reshape((1, -1))
+        return ret
 
     def restricted_to_subbasis(self, dual_roms, primal_dim, dual_dims, m):
         primal_estimator = self.primal_estimator.restricted_to_subbasis(primal_dim, m)

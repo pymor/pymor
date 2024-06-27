@@ -85,18 +85,19 @@ def get_model(name, sampling_time, parametric):
             dH = lambda s, mu: np.array([[-1 / (s + 1 + mu['mu'][0])**2]])
         return TransferFunction(1, 1, H, dH, sampling_time=sampling_time, parameters={'mu': 1} if parametric else {})
     elif name == 'FactorizedTransferFunction':
+        s = ProjectionParameterFunctional('s')
         if not parametric:
-            K = lambda s: NumpyMatrixOperator(np.array([[s + 1]]))
+            K = s * NumpyMatrixOperator(np.array([[1]])) + NumpyMatrixOperator(np.array([[1]]))
         else:
-            K = lambda s: (NumpyMatrixOperator(np.array([[s + 1]]))
-                           + ProjectionParameterFunctional('mu') * NumpyMatrixOperator(np.eye(1)))
-        B = lambda s: NumpyMatrixOperator(np.array([[1]]))
-        C = lambda s: NumpyMatrixOperator(np.array([[1]]))
-        D = lambda s: NumpyMatrixOperator(np.array([[1]]))
-        dK = lambda s: NumpyMatrixOperator(np.array([[1]]))
-        dB = lambda s: NumpyMatrixOperator(np.array([[0]]))
-        dC = lambda s: NumpyMatrixOperator(np.array([[0]]))
-        dD = lambda s: NumpyMatrixOperator(np.array([[0]]))
+            K = (s * NumpyMatrixOperator(np.array([[1]])) + NumpyMatrixOperator(np.array([[1]]))
+                 + ProjectionParameterFunctional('mu') * NumpyMatrixOperator(np.eye(1)))
+        B = NumpyMatrixOperator(np.array([[1]]))
+        C = NumpyMatrixOperator(np.array([[1]]))
+        D = NumpyMatrixOperator(np.array([[1]]))
+        dK = NumpyMatrixOperator(np.array([[1]]))
+        dB = NumpyMatrixOperator(np.array([[0]]))
+        dC = NumpyMatrixOperator(np.array([[0]]))
+        dD = NumpyMatrixOperator(np.array([[0]]))
         return FactorizedTransferFunction(1, 1, K, B, C, D, dK, dB, dC, dD, sampling_time=sampling_time,
                                           parameters={'mu': 1} if parametric else {})
 
@@ -196,8 +197,8 @@ def test_mul(n1, n2, sampling_time, param1, param2):
 
 @pytest.mark.parametrize('param2', [False, True])
 @pytest.mark.parametrize('param1', [False, True])
-@pytest.mark.parametrize('n,ph_first', chain(((n, True) for n in name_list + ['PHLTIModel']),
-                                             ((n, False) for n in name_list)))
+@pytest.mark.parametrize(('n', 'ph_first'), chain(((n, True) for n in name_list + ['PHLTIModel']),
+                                                  ((n, False) for n in name_list)))
 def test_add_ph(n, ph_first, param1, param2):
     if ph_first:
         m1 = get_model('PHLTIModel', 0, param1)
@@ -217,8 +218,8 @@ def test_add_ph(n, ph_first, param1, param2):
 
 @pytest.mark.parametrize('param2', [False, True])
 @pytest.mark.parametrize('param1', [False, True])
-@pytest.mark.parametrize('n,ph_first', chain(((n, True) for n in name_list + ['PHLTIModel']),
-                                             ((n, False) for n in name_list)))
+@pytest.mark.parametrize(('n', 'ph_first'), chain(((n, True) for n in name_list + ['PHLTIModel']),
+                                                  ((n, False) for n in name_list)))
 def test_sub_ph(n, ph_first, param1, param2):
     if ph_first:
         m1 = get_model('PHLTIModel', 0, param1)
@@ -236,8 +237,8 @@ def test_sub_ph(n, ph_first, param1, param2):
 
 @pytest.mark.parametrize('param2', [False, True])
 @pytest.mark.parametrize('param1', [False, True])
-@pytest.mark.parametrize('n,ph_first', chain(((n, True) for n in name_list + ['PHLTIModel']),
-                                             ((n, False) for n in name_list)))
+@pytest.mark.parametrize(('n', 'ph_first'), chain(((n, True) for n in name_list + ['PHLTIModel']),
+                                                  ((n, False) for n in name_list)))
 def test_mul_ph(n, ph_first, param1, param2):
     if ph_first:
         m1 = get_model('PHLTIModel', 0, param1)

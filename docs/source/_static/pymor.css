@@ -157,3 +157,11 @@ html .md-typeset .admonition > :last-child, html .md-typeset details > :last-chi
 .colorMapLegend {
     z-index: 0 !important;
 }
+
+li[class*="toctree-l"] ul, li[class^="toctree-l"] ul {
+    display: none;
+}
+
+.active {
+    display: block !important;
+}

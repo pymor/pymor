@@ -118,17 +118,15 @@ print_source(fom.compute)
 
 What we see is a default implementation from {class}`~pymor.models.interface.Model` that
 takes care of checking the input {{ parameter_values }} `mu`, {mod}`caching <pymor.core.cache>` and
-{mod}`logging <pymor.core.logger>`, but defers the actual computations to further private methods.
-Implementors can directly implement {meth}`!_compute` to compute
-multiple return values at once in an optimized way. Our given model, however, just implements
-{meth}`!_compute_solution` where we can find the
-actual code:
+{mod}`logging <pymor.core.logger>`, but defers the actual computations to
+{meth}`!_compute`:
 
 ```{code-cell}
-print_source(fom._compute_solution)
+print_source(fom._compute)
 ```
 
-What does this mean? If we look at the type of `fom`,
+Only the first lines are relevant when we are interested in computing the solution and not other quantities.
+What do they mean? If we look at the type of `fom`,
 
 ```{code-cell}
 type(fom)

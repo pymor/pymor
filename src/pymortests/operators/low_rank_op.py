@@ -9,26 +9,25 @@ import scipy.linalg as spla
 from pymor.algorithms.lincomb import assemble_lincomb
 from pymor.operators.constructions import LowRankOperator, LowRankUpdatedOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.tools.random import get_rng
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 pytestmark = pytest.mark.builtin
 
 
-def construct_operators_and_vectorarrays(m, n, r, k):
+def construct_operators_and_vectorarrays(m, n, r, k, rng):
     space_m = NumpyVectorSpace(m)
     space_n = NumpyVectorSpace(n)
-    A = NumpyMatrixOperator(get_rng().normal(size=(m, n)))
+    A = NumpyMatrixOperator(rng.normal(size=(m, n)))
     L = space_m.random(r, distribution='normal')
-    C = get_rng().normal(size=(r, r))
+    C = rng.normal(size=(r, r))
     R = space_n.random(r, distribution='normal')
     U = space_n.random(k, distribution='normal')
     V = space_m.random(k, distribution='normal')
     return A, L, C, R, U, V
 
 
-def test_low_rank_apply():
-    _, L, C, R, U, _ = construct_operators_and_vectorarrays(6, 5, 2, 3)
+def test_low_rank_apply(rng):
+    _, L, C, R, U, _ = construct_operators_and_vectorarrays(6, 5, 2, 3, rng)
 
     LR = LowRankOperator(L, C, R)
     V = LR.apply(U)
@@ -40,8 +39,8 @@ def test_low_rank_apply():
                        L.to_numpy().T @ spla.solve(C, R.to_numpy() @ U.to_numpy().T))
 
 
-def test_low_rank_apply_adjoint():
-    _, L, C, R, _, V = construct_operators_and_vectorarrays(6, 5, 2, 3)
+def test_low_rank_apply_adjoint(rng):
+    _, L, C, R, _, V = construct_operators_and_vectorarrays(6, 5, 2, 3, rng)
 
     LR = LowRankOperator(L, C, R)
     U = LR.apply_adjoint(V)
@@ -53,8 +52,8 @@ def test_low_rank_apply_adjoint():
                        R.to_numpy().T @ spla.solve(C.T, L.to_numpy() @ V.to_numpy().T))
 
 
-def test_low_rank_updated_apply_inverse():
-    A, L, C, R, _, V = construct_operators_and_vectorarrays(5, 5, 2, 3)
+def test_low_rank_updated_apply_inverse(rng):
+    A, L, C, R, _, V = construct_operators_and_vectorarrays(5, 5, 2, 3, rng)
 
     LR = LowRankOperator(L, C, R)
     op = LowRankUpdatedOperator(A, LR, 1, 1)
@@ -69,8 +68,8 @@ def test_low_rank_updated_apply_inverse():
     assert np.allclose(U.to_numpy().T, spla.solve(mat, V.to_numpy().T))
 
 
-def test_low_rank_updated_apply_inverse_adjoint():
-    A, L, C, R, U, _ = construct_operators_and_vectorarrays(5, 5, 2, 3)
+def test_low_rank_updated_apply_inverse_adjoint(rng):
+    A, L, C, R, U, _ = construct_operators_and_vectorarrays(5, 5, 2, 3, rng)
 
     LR = LowRankOperator(L, C, R)
     op = LowRankUpdatedOperator(A, LR, 1, 1)
@@ -85,10 +84,10 @@ def test_low_rank_updated_apply_inverse_adjoint():
     assert np.allclose(V.to_numpy().T, spla.solve(mat.T, U.to_numpy().T))
 
 
-def test_low_rank_assemble():
+def test_low_rank_assemble(rng):
     r1, r2 = 2, 3
-    _, L1, C1, R1, _, _ = construct_operators_and_vectorarrays(5, 5, r1, 0)
-    _, L2, C2, R2, _, _ = construct_operators_and_vectorarrays(5, 5, r2, 0)
+    _, L1, C1, R1, _, _ = construct_operators_and_vectorarrays(5, 5, r1, 0, rng)
+    _, L2, C2, R2, _, _ = construct_operators_and_vectorarrays(5, 5, r2, 0, rng)
 
     LR1 = LowRankOperator(L1, C1, R1)
     LR2 = LowRankOperator(L2, C2, R2)
@@ -113,8 +112,8 @@ def test_low_rank_assemble():
     assert op is None
 
 
-def test_low_rank_updated_assemble():
-    A, L, C, R, _, _ = construct_operators_and_vectorarrays(5, 5, 2, 0)
+def test_low_rank_updated_assemble(rng):
+    A, L, C, R, _, _ = construct_operators_and_vectorarrays(5, 5, 2, 0, rng)
     LR = LowRankOperator(L, C, R)
 
     op = (A + LR).assemble()
@@ -127,8 +126,8 @@ def test_low_rank_updated_assemble():
     assert isinstance(op, LowRankUpdatedOperator)
 
 
-def test_low_rank_updated_assemble_apply():
-    A, L, C, R, U, _ = construct_operators_and_vectorarrays(5, 5, 2, 3)
+def test_low_rank_updated_assemble_apply(rng):
+    A, L, C, R, U, _ = construct_operators_and_vectorarrays(5, 5, 2, 3, rng)
 
     LR = LowRankOperator(L, C, R)
     op = (A + (A + LR).assemble() + LR).assemble()

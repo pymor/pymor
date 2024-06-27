@@ -41,9 +41,9 @@ def assert_type_and_allclose(A, Aop, default_format):
     assert np.allclose(A, to_matrix(Aop, format='csr').toarray())
 
 
-@pytest.mark.builtin
-def test_to_matrix_NumpyMatrixOperator():
-    A = np.random.randn(2, 2)
+@pytest.mark.builtin()
+def test_to_matrix_NumpyMatrixOperator(rng):
+    A = rng.standard_normal((2, 2))
 
     Aop = NumpyMatrixOperator(A)
     assert_type_and_allclose(A, Aop, 'dense')
@@ -52,12 +52,12 @@ def test_to_matrix_NumpyMatrixOperator():
     assert_type_and_allclose(A, Aop, 'csc')
 
 
-@pytest.mark.builtin
-def test_to_matrix_BlockOperator():
-    A11 = np.random.randn(2, 2)
-    A12 = np.random.randn(2, 3)
-    A21 = np.random.randn(3, 2)
-    A22 = np.random.randn(3, 3)
+@pytest.mark.builtin()
+def test_to_matrix_BlockOperator(rng):
+    A11 = rng.standard_normal((2, 2))
+    A12 = rng.standard_normal((2, 3))
+    A21 = rng.standard_normal((3, 2))
+    A22 = rng.standard_normal((3, 3))
     B = np.block([[A11, A12], [A21, A22]])
 
     A11op = NumpyMatrixOperator(A11)
@@ -75,10 +75,10 @@ def test_to_matrix_BlockOperator():
     assert_type_and_allclose(B, Bop, 'sparse')
 
 
-@pytest.mark.builtin
-def test_to_matrix_BlockDiagonalOperator():
-    A1 = np.random.randn(2, 2)
-    A2 = np.random.randn(3, 3)
+@pytest.mark.builtin()
+def test_to_matrix_BlockDiagonalOperator(rng):
+    A1 = rng.standard_normal((2, 2))
+    A2 = rng.standard_normal((3, 3))
     B = np.block([[A1, np.zeros((2, 3))],
                   [np.zeros((3, 2)), A2]])
 
@@ -93,12 +93,12 @@ def test_to_matrix_BlockDiagonalOperator():
     assert_type_and_allclose(B, Bop, 'sparse')
 
 
-@pytest.mark.builtin
-def test_to_matrix_AdjointOperator():
-    A = np.random.randn(2, 2)
-    S = np.random.randn(2, 2)
+@pytest.mark.builtin()
+def test_to_matrix_AdjointOperator(rng):
+    A = rng.standard_normal((2, 2))
+    S = rng.standard_normal((2, 2))
     S = S.dot(S.T)
-    R = np.random.randn(2, 2)
+    R = rng.standard_normal((2, 2))
     R = R.dot(R.T)
 
     Aop = NumpyMatrixOperator(A)
@@ -134,7 +134,7 @@ def test_to_matrix_AdjointOperator():
     assert_type_and_allclose(spla.solve(S, A.T.dot(R)), Aadj, 'sparse')
 
 
-@pytest.mark.builtin
+@pytest.mark.builtin()
 def test_to_matrix_ComponentProjectionOperator():
     dofs = np.array([0, 1, 2, 4, 8])
     n = 10
@@ -146,10 +146,10 @@ def test_to_matrix_ComponentProjectionOperator():
     assert_type_and_allclose(A, Aop, 'sparse')
 
 
-@pytest.mark.builtin
-def test_to_matrix_ConcatenationOperator():
-    A = np.random.randn(2, 3)
-    B = np.random.randn(3, 4)
+@pytest.mark.builtin()
+def test_to_matrix_ConcatenationOperator(rng):
+    A = rng.standard_normal((2, 3))
+    B = rng.standard_normal((3, 4))
     C = A.dot(B)
 
     Aop = NumpyMatrixOperator(A)
@@ -173,7 +173,7 @@ def test_to_matrix_ConcatenationOperator():
     assert_type_and_allclose(A, Aop, 'sparse')
 
 
-@pytest.mark.builtin
+@pytest.mark.builtin()
 def test_to_matrix_IdentityOperator():
     n = 3
     I = np.eye(n)
@@ -182,12 +182,12 @@ def test_to_matrix_IdentityOperator():
     assert_type_and_allclose(I, Iop, 'sparse')
 
 
-@pytest.mark.builtin
-def test_to_matrix_LincombOperator():
-    A = np.random.randn(3, 3)
-    B = np.random.randn(3, 2)
-    a = np.random.randn()
-    b = np.random.randn()
+@pytest.mark.builtin()
+def test_to_matrix_LincombOperator(rng):
+    A = rng.standard_normal((3, 3))
+    B = rng.standard_normal((3, 2))
+    a = rng.standard_normal()
+    b = rng.standard_normal()
     C = a * A + b * B.dot(B.T)
 
     Aop = NumpyMatrixOperator(A)
@@ -211,15 +211,15 @@ def test_to_matrix_LincombOperator():
     assert_type_and_allclose(C, Cop, 'sparse')
 
 
-@pytest.mark.builtin
-def test_to_matrix_LowRankOperator():
+@pytest.mark.builtin()
+def test_to_matrix_LowRankOperator(rng):
     m = 6
     n = 5
     r = 2
-    L = np.random.randn(m, r)
+    L = rng.standard_normal((m, r))
     Lva = NumpyVectorSpace.make_array(L.T)
-    C = np.random.randn(r, r)
-    R = np.random.randn(n, r)
+    C = rng.standard_normal((r, r))
+    R = rng.standard_normal((n, r))
     Rva = NumpyVectorSpace.make_array(R.T)
 
     LR = LowRankOperator(Lva, C, Rva)
@@ -229,17 +229,17 @@ def test_to_matrix_LowRankOperator():
     assert_type_and_allclose(L @ spla.solve(C, R.T), LR, 'dense')
 
 
-@pytest.mark.builtin
-def test_to_matrix_LowRankUpdatedOperator():
+@pytest.mark.builtin()
+def test_to_matrix_LowRankUpdatedOperator(rng):
     m = 6
     n = 5
     r = 2
-    A = np.random.randn(m, n)
+    A = rng.standard_normal((m, n))
     Aop = NumpyMatrixOperator(A)
-    L = np.random.randn(m, r)
+    L = rng.standard_normal((m, r))
     Lva = NumpyVectorSpace.make_array(L.T)
-    C = np.random.randn(r, r)
-    R = np.random.randn(n, r)
+    C = rng.standard_normal((r, r))
+    R = rng.standard_normal((n, r))
     Rva = NumpyVectorSpace.make_array(R.T)
     LR = LowRankOperator(Lva, C, Rva)
 
@@ -247,9 +247,9 @@ def test_to_matrix_LowRankUpdatedOperator():
     assert_type_and_allclose(A + L @ C @ R.T, op, 'dense')
 
 
-@pytest.mark.builtin
-def test_to_matrix_VectorArrayOperator():
-    V = np.random.randn(10, 2)
+@pytest.mark.builtin()
+def test_to_matrix_VectorArrayOperator(rng):
+    V = rng.standard_normal((10, 2))
 
     Vva = NumpyVectorSpace.make_array(V.T)
     Vop = VectorArrayOperator(Vva)
@@ -259,7 +259,7 @@ def test_to_matrix_VectorArrayOperator():
     assert_type_and_allclose(V.T, Vop, 'dense')
 
 
-@pytest.mark.builtin
+@pytest.mark.builtin()
 def test_to_matrix_ZeroOperator():
     n = 3
     m = 4
@@ -274,8 +274,8 @@ if config.HAVE_DUNEGDT:
 
     from pymor.bindings.dunegdt import DuneXTMatrixOperator
 
-    def test_to_matrix_DuneXTMatrixOperator():
-        A = np.random.randn(2, 2)
+    def test_to_matrix_DuneXTMatrixOperator(rng):
+        A = rng.standard_normal((2, 2))
 
         pattern = SparsityPatternDefault(2)
         for ii in range(2):

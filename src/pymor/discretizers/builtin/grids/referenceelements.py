@@ -31,10 +31,10 @@ class Point(ReferenceElement):
         return self
 
     def unit_outer_normals(self):
-        return np.zeros((0))
+        return np.zeros(0)
 
     def center(self):
-        return np.zeros((0))
+        return np.zeros(0)
 
     def mapped_diameter(self, A):
         return np.ones(A.shape[:-2])

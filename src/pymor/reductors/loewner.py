@@ -264,10 +264,10 @@ class LoewnerReductor(CacheableObject):
                     rtd = self.mimo_handling[1]
                     assert ltd.shape == (len(ip), self.dim_output)
                     assert rtd.shape == (self.dim_input, len(jp))
-                L = np.empty((len(ip), len(jp)), dtype=np.complex_)
-                Ls = np.empty((len(ip), len(jp)), dtype=np.complex_)
-                V = np.empty((len(ip), self.dim_input), dtype=np.complex_)
-                W = np.empty((self.dim_output, len(jp)), dtype=np.complex_)
+                L = np.empty((len(ip), len(jp)), dtype=np.complex128)
+                Ls = np.empty((len(ip), len(jp)), dtype=np.complex128)
+                V = np.empty((len(ip), self.dim_input), dtype=np.complex128)
+                W = np.empty((self.dim_output, len(jp)), dtype=np.complex128)
                 for i, si in enumerate(ip):
                     for j, sj in enumerate(jp):
                         L[i, j] = ltd[i] @ (self.Hs[si] - self.Hs[sj]) @ rtd[:, j] / (self.s[si] - self.s[sj])
@@ -279,7 +279,7 @@ class LoewnerReductor(CacheableObject):
 
         # transform the system to have real matrices
         if self.conjugate:
-            TL = np.zeros((len(ip), len(ip)), dtype=np.complex_)
+            TL = np.zeros((len(ip), len(ip)), dtype=np.complex128)
             for i, si in enumerate(ip):
                 if self.s[si].imag == 0:
                     TL[i, i] = 1
@@ -291,7 +291,7 @@ class LoewnerReductor(CacheableObject):
                         TL[j, i] = -1j
                         TL[j, j] = 1j
 
-            TR = np.zeros((len(jp), len(jp)), dtype=np.complex_)
+            TR = np.zeros((len(jp), len(jp)), dtype=np.complex128)
             for i, si in enumerate(jp):
                 if self.s[si].imag == 0:
                     TR[i, i] = 1

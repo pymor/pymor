@@ -278,7 +278,7 @@ following graphic stored in `RB.png`:
 and a range of `[0.001 1]` we obtain:
 
 ```{code-cell}
-diffusion = BitmapFunction('RB.png', range=[0.001, 1])
+diffusion = BitmapFunction.from_file('RB.png', range=[0.001, 1])
 problem = StationaryProblem(
    domain=domain,
    diffusion=diffusion,
@@ -441,8 +441,8 @@ the following image files:
 ```
 
 ```{code-cell}
-f_R = BitmapFunction('R.png', range=[1, 0])
-f_B = BitmapFunction('B.png', range=[1, 0])
+f_R = BitmapFunction.from_file('R.png', range=[1, 0])
+f_B = BitmapFunction.from_file('B.png', range=[1, 0])
 ```
 
 Next we need to define the {{ ParameterFunctionals }}

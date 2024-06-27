@@ -226,7 +226,7 @@ class GenericParameterFunctional(ParameterFunctional):
                                 derivative_mappings={}
                             )
                 else:
-                    raise ValueError('derivative expressions do not contain item {}'.format(parameter))
+                    raise ValueError(f'derivative expressions do not contain item {parameter}')
         return ConstantParameterFunctional(0, name=f'{self.name}_d_{parameter}_{index}')
 
 
@@ -469,7 +469,7 @@ class MinThetaParameterFunctional(ParameterFunctional):
     def __init__(self, thetas, mu_bar, alpha_mu_bar=1., name=None):
         assert isinstance(thetas, (list, tuple))
         assert len(thetas) > 0
-        assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas])
+        assert all(isinstance(theta, (Number, ParameterFunctional)) for theta in thetas)
         thetas = tuple(ConstantParameterFunctional(theta) if not isinstance(theta, ParameterFunctional) else theta
                        for theta in thetas)
         if not isinstance(mu_bar, Mu):
@@ -557,8 +557,8 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
         assert isinstance(thetas, (list, tuple))
         assert len(thetas) > 0
         assert len(thetas) == len(thetas_prime)
-        assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas])
-        assert all([isinstance(theta, (Number, ParameterFunctional)) for theta in thetas_prime])
+        assert all(isinstance(theta, (Number, ParameterFunctional)) for theta in thetas)
+        assert all(isinstance(theta, (Number, ParameterFunctional)) for theta in thetas_prime)
         thetas = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
                        for f in thetas)
         thetas_prime = tuple(ConstantParameterFunctional(f) if not isinstance(f, ParameterFunctional) else f
@@ -572,7 +572,7 @@ class BaseMaxThetaParameterFunctional(ParameterFunctional):
         assert gamma_mu_bar > 0
         self.__auto_init(locals())
         self.thetas_mu_bar = thetas_mu_bar
-        self.theta_mu_bar_has_negative = True if np.any(thetas_mu_bar < 0) else False
+        self.theta_mu_bar_has_negative = np.any(thetas_mu_bar < 0)
         if self.theta_mu_bar_has_negative:
             # If 0 is in theta_prime(mu), we need to use the absolute value to ensure
             # that the bound is still valid (and not zero)

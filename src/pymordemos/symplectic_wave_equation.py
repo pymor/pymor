@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
@@ -125,15 +125,18 @@ def discretize_fom(T=50):
     ])
 
     fom = QuadraticHamiltonianModel(T, initial_data, H_op, nt=nt, name='hamiltonian_wave_equation')
-    # fom.operator = fom.operator.with_(solver_options={'type': 'to_matrix'}) #TODO
+    # TODO: fom.operator = fom.operator.with_(solver_options={'type': 'to_matrix'})
     return fom
 
 
 def run_mor(fom, U_fom, method, red_dims):
     assert isinstance(fom, QuadraticHamiltonianModel)
-    assert isinstance(U_fom, VectorArray) and U_fom in fom.H_op.range
-    assert isinstance(method, str) and method in METHODS
-    assert isinstance(red_dims, np.ndarray) and red_dims.dtype == int
+    assert isinstance(U_fom, VectorArray)
+    assert U_fom in fom.H_op.range
+    assert isinstance(method, str)
+    assert method in METHODS
+    assert isinstance(red_dims, np.ndarray)
+    assert red_dims.dtype == int
     assert fom.time_stepper.nt + 1 == len(U_fom)
 
     # compute basis of maximal size
@@ -146,7 +149,7 @@ def run_mor(fom, U_fom, method, red_dims):
         elif method == 'svd_like':
             MAX_RB = psd_svd_like_decomp(U_fom, max_red_dim)
         else:
-            raise NotImplementedError('Unknown method: {}'.format(method))
+            raise NotImplementedError(f'Unknown method: {method}')
     else:
         assert method == 'pod'
         MAX_RB, svals = pod(U_fom, modes=max_red_dim)

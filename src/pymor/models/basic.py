@@ -2,10 +2,9 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepper
-from pymor.models.interface import Model
+from pymor.models.interface import Model, OutputDMuResult
 from pymor.operators.constructions import ConstantOperator, IdentityOperator, VectorOperator, ZeroOperator
 from pymor.vectorarrays.interface import VectorArray
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -52,21 +51,28 @@ class StationaryModel(Model):
         is not `None`, a `visualize(U, *args, **kwargs)` method is added
         to the model which forwards its arguments to the
         visualizer's `visualize` method.
+    output_d_mu_use_adjoint
+        If `True`, use adjoint solution for computing ouput gradients
+        (default behavior). See Section 1.6.2 in :cite:`HPUU09` for more
+        details.
     name
         Name of the model.
     """
 
-    _compute_allowed_kwargs = frozenset({'use_adjoint'})
-
     def __init__(self, operator, rhs, output_functional=None, products=None,
-                 error_estimator=None, visualizer=None, name=None):
+                 error_estimator=None, visualizer=None, output_d_mu_use_adjoint=None,
+                 name=None):
 
         if isinstance(rhs, VectorArray):
             assert rhs in operator.range
             rhs = VectorOperator(rhs, name='rhs')
         output_functional = output_functional or ZeroOperator(NumpyVectorSpace(0), operator.source)
+        if output_d_mu_use_adjoint is None:
+            output_d_mu_use_adjoint = output_functional.linear and operator.linear
 
-        assert rhs.range == operator.range and rhs.source.is_scalar and rhs.linear
+        assert rhs.range == operator.range
+        assert rhs.source.is_scalar
+        assert rhs.linear
         assert output_functional.source == operator.source
 
         super().__init__(products=products, error_estimator=error_estimator, visualizer=visualizer, name=name)
@@ -85,68 +91,45 @@ class StationaryModel(Model):
             f'    dim_output:      {self.dim_output}'
         )
 
-    def _compute_solution(self, mu=None, **kwargs):
-        return self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
+    def _compute(self, quantities, data, mu=None):
+        if 'solution' in quantities:
+            data['solution'] = self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
+            quantities.remove('solution')
 
-    def _compute_solution_d_mu_single_direction(self, parameter, index, solution, mu):
-        lhs_d_mu = self.operator.d_mu(parameter, index).apply(solution, mu=mu)
-        rhs_d_mu = self.rhs.d_mu(parameter, index).as_range_array(mu)
-        rhs = rhs_d_mu - lhs_d_mu
-        return self.operator.jacobian(solution, mu=mu).apply_inverse(rhs)
+        for _, param, idx in [q for q in quantities if isinstance(q, tuple) and q[0] == 'solution_d_mu']:
+            self._compute_required_quantities({'solution'}, data, mu)
 
-    def _compute_output_d_mu(self, solution, mu, return_array=False, use_adjoint=None):
-        """Compute the gradient of the output functional  w.r.t. the parameters.
+            lhs_d_mu = self.operator.d_mu(param, idx).apply(data['solution'], mu=mu)
+            rhs_d_mu = self.rhs.d_mu(param, idx).as_range_array(mu)
+            rhs = rhs_d_mu - lhs_d_mu
+            data['solution_d_mu', param, idx] = self.operator.jacobian(data['solution'], mu=mu).apply_inverse(rhs)
+            quantities.remove(('solution_d_mu', param, idx))
 
-        Parameters
-        ----------
-        solution
-            Internal model state for the given |Parameter value|
-        mu
-            |Parameter value| for which to compute the gradient
-        return_array
-            if `True`, return the output gradient as a |NumPy array|.
-            Otherwise, return a dict of gradients for each |Parameter|.
-        use_adjoint
-            if `None` use standard approach, if `True`, use
-            the adjoint solution for a more efficient way of computing the gradient.
-            See Section 1.6.2 in :cite:`HPUU09` for more details.
-            So far, the adjoint approach is only valid for linear models.
+        if 'output_d_mu' in quantities and self.output_d_mu_use_adjoint:
+            if not self.operator.linear:
+                raise NotImplementedError
+            self._compute_required_quantities({'solution'}, data, mu)
 
-        Returns
-        -------
-        The gradient as a |NumPy array| or a dict of |NumPy arrays|.
-        """
-        if use_adjoint is None:
-            use_adjoint = True if (self.output_functional.linear and self.operator.linear) else False
-        if not use_adjoint:
-            return super()._compute_output_d_mu(solution, mu, return_array)
-        else:
-            assert self.operator.linear
-            jacobian = self.output_functional.jacobian(solution, mu)
+            jacobian = self.output_functional.jacobian(data['solution'], mu)
             assert jacobian.linear
             dual_solutions = self.operator.range.empty()
             for d in range(self.output_functional.range.dim):
                 dual_problem = self.with_(operator=self.operator.H,
                                           rhs=jacobian.H.as_range_array(mu)[d])
                 dual_solutions.append(dual_problem.solve(mu))
-            gradients = [] if return_array else {}
+            sensitivities = {}
             for (parameter, size) in self.parameters.items():
-                result = []
                 for index in range(size):
-                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(solution,
-                                                                                             mu=mu).to_numpy()[0]
-                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(dual_solutions, solution, mu=mu)[:, 0]
+                    output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
+                        data['solution'], mu=mu).to_numpy()[0]
+                    lhs_d_mu = self.operator.d_mu(parameter, index).apply2(
+                        dual_solutions, data['solution'], mu=mu)[:, 0]
                     rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:, 0]
-                    result.append(output_partial_dmu + rhs_d_mu - lhs_d_mu)
-                result = np.array(result)
-                if return_array:
-                    gradients.extend(result)
-                else:
-                    gradients[parameter] = result
-        if return_array:
-            return np.array(gradients)
-        else:
-            return gradients
+                    sensitivities[parameter, index] = (output_partial_dmu + rhs_d_mu - lhs_d_mu).reshape((1, -1))
+            data['output_d_mu'] = OutputDMuResult(sensitivities)
+            quantities.remove('output_d_mu')
+
+        super()._compute(quantities, data, mu=mu)
 
     def deaffinize(self, arg):
         """Build |Model| with linear solution space.
@@ -193,7 +176,8 @@ class StationaryModel(Model):
         if not isinstance(arg, VectorArray):
             mu = self.parameters.parse(arg)
             arg = self.solve(mu)
-        assert arg in self.solution_space and len(arg) == 1
+        assert arg in self.solution_space
+        assert len(arg) == 1
 
         affine_shift = arg
 
@@ -275,8 +259,6 @@ class InstationaryModel(Model):
         Name of the model.
     """
 
-    _compute_allowed_kwargs = frozenset({'return_error_sequence'})
-
     def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
                  output_functional=None, products=None, error_estimator=None, visualizer=None, name=None):
 
@@ -293,8 +275,12 @@ class InstationaryModel(Model):
         assert isinstance(time_stepper, TimeStepper)
         assert initial_data.source.is_scalar
         assert operator.source == initial_data.range
-        assert rhs.linear and rhs.range == operator.range and rhs.source.is_scalar
-        assert mass.linear and mass.source == mass.range == operator.source
+        assert rhs.linear
+        assert rhs.range == operator.range
+        assert rhs.source.is_scalar
+        assert mass.linear
+        assert mass.source == mass.range
+        assert mass.source == operator.source
         assert output_functional.source == operator.source
 
         try:
@@ -326,15 +312,19 @@ class InstationaryModel(Model):
     def with_time_stepper(self, **kwargs):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
 
-    def _compute_solution(self, mu=None, **kwargs):
-        mu = mu.with_(t=0.)
-        U0 = self.initial_data.as_range_array(mu)
-        U = self.time_stepper.solve(operator=self.operator,
-                                    rhs=None if isinstance(self.rhs, ZeroOperator) else self.rhs,
-                                    initial_data=U0,
-                                    mass=None if isinstance(self.mass, IdentityOperator) else self.mass,
-                                    initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
-        return U
+    def _compute(self, quantities, data, mu=None):
+        if 'solution' in quantities:
+            mu = mu.with_(t=0.)
+            U0 = self.initial_data.as_range_array(mu)
+            U = self.time_stepper.solve(operator=self.operator,
+                                        rhs=None if isinstance(self.rhs, ZeroOperator) else self.rhs,
+                                        initial_data=U0,
+                                        mass=None if isinstance(self.mass, IdentityOperator) else self.mass,
+                                        initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
+            data['solution'] = U
+            quantities.remove('solution')
+
+        super()._compute(quantities, data, mu=mu)
 
     def to_lti(self):
         """Convert model to |LTIModel|.
@@ -357,4 +347,5 @@ class InstationaryModel(Model):
             raise ValueError('Operators not linear.')
 
         from pymor.models.iosys import LTIModel
-        return LTIModel(A, B, C, E=E, visualizer=self.visualizer)
+        return LTIModel(A, B, C, E=E, T=self.T, time_stepper=self.time_stepper, num_values=self.num_values,
+                        error_estimator=self.error_estimator, visualizer=self.visualizer, name=self.name)

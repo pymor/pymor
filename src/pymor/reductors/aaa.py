@@ -18,7 +18,7 @@ class PAAAReductor(BasicObject):
     The reductor implements the parametric AAA algorithm and can be used either with
     data or a given full-order model, which can be a |TransferFunction| or any model which
     has a `transfer_function` attribute. MIMO and non-parametric data is accepted. See
-    :cite:`NST18` for the non-parametric and :cite:`CRBG20` for the parametric version of
+    :cite:`NST18` for the non-parametric and :cite:`CRBG23` for the parametric version of
     the algorithm. The reductor computes approximations based on the multivariate barycentric
     form :math:`H(s,p,...)` (see :func:`~pymor.reductors.aaa.make_bary_func`), where
     the inputs :math:`s,p,...` are referred to as the variables. Further, :math:`s` is
@@ -445,7 +445,7 @@ def make_bary_func(itpl_nodes, itpl_vals, coefs, removable_singularity_tol=1e-14
                 d = 1 / d
             pd = np.kron(pd, d)
         coefs_pd = coefs * pd
-        num = np.inner(coefs_pd, itpl_vals)
+        num = np.tensordot(coefs_pd, itpl_vals, axes=1)
         denom = np.sum(coefs_pd)
         nd = num / denom
         return np.atleast_2d(nd)

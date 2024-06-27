@@ -7,18 +7,32 @@ import pytest
 
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, GenericFunction
 from pymor.core.pickle import dumps, loads
+from pymor.parameters.base import Mu
 from pymortests.core.pickling import assert_picklable, assert_picklable_without_dumps_function
-from pymortests.fixtures.function import function_argument
-from pymortests.fixtures.parameter import mu_of_type
 
 pytestmark = pytest.mark.builtin
 
 
-def test_evaluate(function):
+def function_argument(f, count, rng):
+    if isinstance(count, tuple):
+        return rng.random(count + (f.dim_domain,))
+    else:
+        return rng.random((count, f.dim_domain))
+
+
+def mu_of_type(parameters, rng):
+    while True:
+        if parameters is None:
+            yield None
+        else:
+            yield Mu({k: rng.random(v) for k, v in parameters.items()})
+
+
+def test_evaluate(function, rng):
     f = function
-    mus = mu_of_type(f.parameters)
+    mus = mu_of_type(f.parameters, rng)
     for count in [0, 1, 5, (0, 1), (2, 2, 2)]:
-        arg = function_argument(f, count)
+        arg = function_argument(f, count, rng)
         result = f.evaluate(arg, next(mus))
         assert result.shape == arg.shape[:-1] + f.shape_range
 
@@ -58,11 +72,11 @@ def test_pickle_without_dumps_function(picklable_function):
     assert_picklable_without_dumps_function(picklable_function)
 
 
-def test_pickle_by_evaluation(function):
+def test_pickle_by_evaluation(function, rng):
     f = function
     f2 = loads(dumps(f))
-    mus = mu_of_type(f.parameters)
-    for arg in function_argument(f, 10):
+    mus = mu_of_type(f.parameters, rng)
+    for arg in function_argument(f, 10, rng):
         mu = next(mus)
         assert np.all(f.evaluate(arg, mu) == f2.evaluate(arg, mu))
 
@@ -70,3 +84,16 @@ def test_pickle_by_evaluation(function):
 def test_invalid_expressions():
     with pytest.raises(TypeError):
         ExpressionFunction('(-1 < x[0]) and (x[0] < 1)', 1)
+
+
+def test_random_bitmap_function():
+    from pymor.analyticalproblems.functions import BitmapFunction
+    f = BitmapFunction.random(shape=(10, 10))
+    for i in range(9):
+        for j in range(9):
+            # all values are between 0 and 1
+            assert 0 <= f([i / 10., j / 10.]) <= 1
+            # neighboring cells have different values
+            assert (f([i/10., j/10.]) != f([(i+1)/10., (j+1)/10.]))
+            # values in same cell are equal
+            assert (f([i/10., j/10.]) == f([(i+0.3)/10., (j+0.3)/10.]))

@@ -11,11 +11,11 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 pytestmark = pytest.mark.builtin
 
 
-def test_complex():
+def test_complex(rng):
     I = np.eye(5)
-    A = np.random.randn(5, 5)
-    B = np.random.randn(5, 5)
-    C = np.random.randn(3, 5)
+    A = rng.standard_normal((5, 5))
+    B = rng.standard_normal((5, 5))
+    C = rng.standard_normal((3, 5))
 
     Iop = NumpyMatrixOperator(I)
     Aop = NumpyMatrixOperator(A)
@@ -40,7 +40,7 @@ def test_complex():
         for o_ind in (slice(None), [0]):
             va = NumpyVectorSpace(5).empty(reserve=rsrv)
             va.append(Cva)
-            D = np.random.randn(1, 5) + 1j * np.random.randn(1, 5)
+            D = rng.standard_normal((1, 5)) + 1j * rng.standard_normal((1, 5))
             Dva = NumpyVectorSpace.from_numpy(D)
 
             assert not np.iscomplexobj(va.to_numpy())

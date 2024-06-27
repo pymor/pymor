@@ -79,82 +79,84 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
 
     Returns
     -------
-    Dict with the following fields:
+    data
+        Dict with the following fields:
 
-        :mus:                       The test |Parameters| which have been considered.
-
-        :basis_sizes:               The reduced basis dimensions which have been considered.
-
-        :norms:                     |Array| of the norms of the high-dimensional solutions
-                                    w.r.t. all given test |Parameters| and norms in `error_norms`.
-                                    (Only present when `error_norms` has been specified.)
-
-        :max_norms:                 Maxima of `norms` over the given test |Parameters|.
-
-        :max_norm_mus:              |Parameters| corresponding to `max_norms`.
-
-        :errors:                    |Array| of the norms of the model reduction errors
-                                    w.r.t. all given test |Parameters|, reduced basis
-                                    dimensions and norms in `error_norms`.
-                                    (Only present when `error_norms` has been specified.)
-
-        :max_errors:                Maxima of `errors` over the given test |Parameters|.
-
-        :max_error_mus:             |Parameters| corresponding to `max_errors`.
-
-        :rel_errors:                `errors` divided by `norms`.
-                                    (Only present when `error_norms` has been specified.)
-
-        :max_rel_errors:            Maxima of `rel_errors` over the given test |Parameters|.
-
-        :max_rel_error_mus:         |Parameters| corresponding to `max_rel_errors`.
-
-        :error_norm_names:          Names of the given `error_norms`.
-                                    (Only present when `error_norms` has been specified.)
-
-        :error_estimates:           |Array| of the model reduction error estimates
-                                    w.r.t. all given test |Parameters| and reduced basis
-                                    dimensions.
-                                    (Only present when `error_estimator` is `True`.)
-
-        :max_error_estimate:        Maxima of `error_estimates` over the given test |Parameters|.
-
-        :max_error_estimate_mus:    |Parameters| corresponding to `max_error_estimates`.
-
-        :effectivities:             `errors` divided by `error_estimates`.
-                                    (Only present when `error_estimator` is `True` and `error_norms`
-                                    has been specified.)
-
-        :min_effectivities:         Minima of `effectivities` over the given test |Parameters|.
-
-        :min_effectivity_mus:       |Parameters| corresponding to `min_effectivities`.
-
-        :max_effectivities:         Maxima of `effectivities` over the given test |Parameters|.
-
-        :max_effectivity_mus:       |Parameters| corresponding to `max_effectivities`.
-
-        :errors:                    |Array| of the reduced system matrix conditions
-                                    w.r.t. all given test |Parameters| and reduced basis
-                                    dimensions.
-                                    (Only present when `conditions` is `True`.)
-
-        :max_conditions:            Maxima of `conditions` over the given test |Parameters|.
-
-        :max_condition_mus:         |Parameters| corresponding to `max_conditions`.
-
-        :custom_values:             |Array| of custom function evaluations
-                                    w.r.t. all given test |Parameters|, reduced basis
-                                    dimensions and functions in `custom`.
-                                    (Only present when `custom` has been specified.)
-
-        :max_custom_values:         Maxima of `custom_values` over the given test |Parameters|.
-
-        :max_custom_values_mus:     |Parameters| corresponding to `max_custom_values`.
-
-        :time:                      Time (in seconds) needed for the error analysis.
-
-        :summary:                   String containing a summary of all computed quantities for
-                                    the largest (last) considered basis size.
+        :mus:
+            The test |Parameters| which have been considered.
+        :basis_sizes:
+            The reduced basis dimensions which have been considered.
+        :norms:
+            |Array| of the norms of the high-dimensional solutions
+            w.r.t. all given test |Parameters| and norms in `error_norms`.
+            (Only present when `error_norms` has been specified.)
+        :max_norms:
+            Maxima of `norms` over the given test |Parameters|.
+        :max_norm_mus:
+            |Parameters| corresponding to `max_norms`.
+        :errors:
+            |Array| of the norms of the model reduction errors
+            w.r.t. all given test |Parameters|, reduced basis
+            dimensions and norms in `error_norms`.
+            (Only present when `error_norms` has been specified.)
+        :max_errors:
+            Maxima of `errors` over the given test |Parameters|.
+        :max_error_mus:
+            |Parameters| corresponding to `max_errors`.
+        :rel_errors:
+            `errors` divided by `norms`.
+            (Only present when `error_norms` has been specified.)
+        :max_rel_errors:
+            Maxima of `rel_errors` over the given test |Parameters|.
+        :max_rel_error_mus:
+            |Parameters| corresponding to `max_rel_errors`.
+        :error_norm_names:
+            Names of the given `error_norms`.
+            (Only present when `error_norms` has been specified.)
+        :error_estimates:
+            |Array| of the model reduction error estimates
+            w.r.t. all given test |Parameters| and reduced basis
+            dimensions.
+            (Only present when `error_estimator` is `True`.)
+        :max_error_estimate:
+            Maxima of `error_estimates` over the given test |Parameters|.
+        :max_error_estimate_mus:
+            |Parameters| corresponding to `max_error_estimates`.
+        :effectivities:
+            `errors` divided by `error_estimates`.
+            (Only present when `error_estimator` is `True` and `error_norms`
+            has been specified.)
+        :min_effectivities:
+            Minima of `effectivities` over the given test |Parameters|.
+        :min_effectivity_mus:
+            |Parameters| corresponding to `min_effectivities`.
+        :max_effectivities:
+            Maxima of `effectivities` over the given test |Parameters|.
+        :max_effectivity_mus:
+            |Parameters| corresponding to `max_effectivities`.
+        :errors:
+            |Array| of the reduced system matrix conditions
+            w.r.t. all given test |Parameters| and reduced basis
+            dimensions.
+            (Only present when `conditions` is `True`.)
+        :max_conditions:
+            Maxima of `conditions` over the given test |Parameters|.
+        :max_condition_mus:
+            |Parameters| corresponding to `max_conditions`.
+        :custom_values:
+            |Array| of custom function evaluations
+            w.r.t. all given test |Parameters|, reduced basis
+            dimensions and functions in `custom`.
+            (Only present when `custom` has been specified.)
+        :max_custom_values:
+            Maxima of `custom_values` over the given test |Parameters|.
+        :max_custom_values_mus:
+            |Parameters| corresponding to `max_custom_values`.
+        :time:
+            Time (in seconds) needed for the error analysis.
+        :summary:
+            String containing a summary of all computed quantities for
+            the largest (last) considered basis size.
     """
     assert not error_norms or (fom and reductor)
     assert error_norm_names is None or len(error_norm_names) == len(error_norms)
@@ -179,7 +181,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
             basis_sizes = min(rom.solution_space.dim + 1, basis_sizes)
             basis_sizes = np.linspace(0, rom.solution_space.dim, basis_sizes).astype(int)
     elif isinstance(basis_sizes, (list, tuple)):
-        assert all([isinstance(sz, Number) for sz in basis_sizes])
+        assert all(isinstance(sz, Number) for sz in basis_sizes)
         basis_sizes = np.array(basis_sizes)
     if error_norm_names is None:
         error_norm_names = tuple(norm.name for norm in error_norms)
@@ -414,7 +416,7 @@ def _compute_errors(mu, fom, reductor, error_estimator, error_norms, condition, 
         u = result['solution']
         if error_estimator:
             e = result['solution_error_estimate']
-            e = e[0] if hasattr(e, '__len__') else e
+            e = np.max(e)
             error_estimates[i_N] = e
         if fom and reductor:
             URB = reductor.reconstruct(u)

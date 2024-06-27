@@ -15,7 +15,12 @@ from pymor.core.config import config
 from pymor.operators.constructions import IdentityOperator
 from pymor.operators.interface import Operator
 from pymor.operators.list import NumpyListVectorArrayMatrixOperator
-from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.operators.numpy import (
+    NumpyCirculantOperator,
+    NumpyHankelOperator,
+    NumpyMatrixOperator,
+    NumpyToeplitzOperator,
+)
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import BUILTIN_DISABLED
 
@@ -44,25 +49,25 @@ class MonomOperator(Operator):
         return self.range.make_array(1. / V.to_numpy())
 
 
-def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range,
+def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, rng,
                                               source_id=None, range_id=None, sparse=False):
     assert not sparse or sparse in ('matrix', 'array')
-    mat = np.random.random((dim_range, dim_source))
+    mat = rng.random((dim_range, dim_source))
     if sparse == 'matrix':
         mat = sps.csc_matrix(mat)
     elif sparse == 'array':
         mat = sps.csc_array(mat)
-    op = NumpyMatrixOperator(np.random.random((dim_range, dim_source)), source_id=source_id, range_id=range_id)
-    s = op.source.make_array(np.random.random((count_source, dim_source)))
-    r = op.range.make_array(np.random.random((count_range, dim_range)))
+    op = NumpyMatrixOperator(rng.random((dim_range, dim_source)), source_id=source_id, range_id=range_id)
+    s = op.source.make_array(rng.random((count_source, dim_source)))
+    r = op.range.make_array(rng.random((count_range, dim_range)))
     return op, None, s, r
 
 
 def numpy_list_vector_array_matrix_operator_with_arrays_factory(
-    dim_source, dim_range, count_source, count_range, source_id=None, range_id=None, sparse=False,
+    dim_source, dim_range, count_source, count_range, rng, source_id=None, range_id=None, sparse=False,
 ):
     op, _, s, r = numpy_matrix_operator_with_arrays_factory(
-        dim_source, dim_range, count_source, count_range, source_id, range_id, sparse
+        dim_source, dim_range, count_source, count_range, rng, source_id, range_id, sparse
     )
     op = op.with_(new_type=NumpyListVectorArrayMatrixOperator)
     s = op.source.from_numpy(s.to_numpy())
@@ -70,14 +75,40 @@ def numpy_list_vector_array_matrix_operator_with_arrays_factory(
     return op, None, s, r
 
 
-def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range, count_source, count_range,
+def numpy_structured_matrix_operator_with_arrays_factory(structure, iscomplex, even, r_none, shape, blockshape,
+                                                         count_source, count_range, rng, source_id=None, range_id=None):
+    n = 5 if even else 4
+    nr = 2 if shape == 'skinny' else n
+    nc = 2 if shape == 'fat' else n
+    blocks = (2 if blockshape == 'skinny' else 3, 2 if blockshape == 'fat' else 3)
+    if blockshape == 'scalar':
+        blocks = ()
+    if iscomplex:
+        c = rng.random((nc, *blocks)) + 1j * rng.random((nc, *blocks))
+        r = rng.random((nr, *blocks)) + 1j * rng.random((nr, *blocks))
+    else:
+        c = rng.random((nc, *blocks))
+        r = rng.random((nr, *blocks))
+    if structure == NumpyCirculantOperator:
+        op = structure(c, source_id=source_id, range_id=range_id)
+    elif structure == NumpyToeplitzOperator:
+        r[0] = c[0]
+        op = structure(c, r=None if r_none else r, source_id=source_id, range_id=range_id)
+    elif structure == NumpyHankelOperator:
+        r[0] = c[-1]
+        op = structure(c, r=None if r_none else r, source_id=source_id, range_id=range_id)
+    U, V = op.source.random(count_source), op.range.random(count_range)
+    return op, None, U, V
+
+
+def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range, count_source, count_range, rng,
                                                            source_id=None, range_id=None):
     from scipy.linalg import eigh
-    op, _, U, V = numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range,
+    op, _, U, V = numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, rng,
                                                             source_id=source_id, range_id=range_id)
     if dim_source > 0:
         while True:
-            sp = np.random.random((dim_source, dim_source))
+            sp = rng.random((dim_source, dim_source))
             sp = sp.T.dot(sp)
             evals = eigh(sp, eigvals_only=True)
             if np.min(evals) > 1e-6:
@@ -87,7 +118,7 @@ def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range
         sp = NumpyMatrixOperator(np.zeros((0, 0)), source_id=source_id, range_id=source_id)
     if dim_range > 0:
         while True:
-            rp = np.random.random((dim_range, dim_range))
+            rp = rng.random((dim_range, dim_range))
             rp = rp.T.dot(rp)
             evals = eigh(rp, eigvals_only=True)
             if np.min(evals) > 1e-6:
@@ -112,28 +143,50 @@ numpy_matrix_operator_with_arrays_factory_arguments = list(product(
     [{'sparse': opt} for opt in _sparse_opts],
 ))
 
+numpy_structured_matrix_operator_with_arrays_factory_arguments = list(product(
+    [NumpyCirculantOperator, NumpyHankelOperator, NumpyToeplitzOperator],
+    [False, True],
+    [False, True],
+    [False, True],
+    ['fat', 'skinny', 'square'],
+    ['fat', 'skinny', 'square'],
+    [1, 3],
+    [1, 3],
+))
 
 numpy_matrix_operator_with_arrays_generators = \
-    [lambda args=args: numpy_matrix_operator_with_arrays_factory(*args, **kwargs)
+    [lambda rng, args=args, kwargs=kwargs: numpy_matrix_operator_with_arrays_factory(*args, rng=rng, **kwargs)
      for args, kwargs in numpy_matrix_operator_with_arrays_factory_arguments]
 
 
 numpy_matrix_operator_generators = \
-    [lambda args=args: numpy_matrix_operator_with_arrays_factory(*args, **kwargs)[0:2]
+    [lambda rng, args=args, kwargs=kwargs: numpy_matrix_operator_with_arrays_factory(*args, rng=rng, **kwargs)[0:2]
      for args, kwargs in numpy_matrix_operator_with_arrays_factory_arguments]
 
 
 numpy_list_vector_array_matrix_operator_with_arrays_generators = \
-    [lambda args=args: numpy_list_vector_array_matrix_operator_with_arrays_factory(*args, **kwargs)
+    [lambda rng, args=args, kwargs=kwargs: numpy_list_vector_array_matrix_operator_with_arrays_factory(
+        *args, rng=rng, **kwargs)
      for args, kwargs in numpy_matrix_operator_with_arrays_factory_arguments]
 
 
 numpy_list_vector_array_matrix_operator_generators = \
-    [lambda args=args: numpy_list_vector_array_matrix_operator_with_arrays_factory(*args, **kwargs)[0:2]
+    [lambda rng, args=args, kwargs=kwargs: numpy_list_vector_array_matrix_operator_with_arrays_factory(
+        *args, rng=rng, **kwargs)[0:2]
      for args, kwargs in numpy_matrix_operator_with_arrays_factory_arguments]
 
 
-def thermalblock_factory(xblocks, yblocks, diameter):
+numpy_structured_matrix_operator_with_arrays_generators = \
+    [lambda rng, args=args: numpy_structured_matrix_operator_with_arrays_factory(*args, rng=rng)
+     for args in numpy_structured_matrix_operator_with_arrays_factory_arguments]
+
+
+numpy_structured_matrix_operator_generators = \
+    [lambda rng, args=args: numpy_structured_matrix_operator_with_arrays_factory(*args, rng=rng)[0:2]
+     for args in numpy_structured_matrix_operator_with_arrays_factory_arguments]
+
+
+def thermalblock_factory(xblocks, yblocks, diameter, rng):
     from pymor.analyticalproblems.functions import GenericFunction
     from pymor.analyticalproblems.thermalblock import thermal_block_problem
     from pymor.discretizers.builtin import discretize_stationary_cg
@@ -145,81 +198,81 @@ def thermalblock_factory(xblocks, yblocks, diameter):
     iop = InterpolationOperator(m_data['grid'], f)
     U = m.operator.source.empty()
     V = m.operator.range.empty()
-    for exp in np.random.random(5):
+    for exp in rng.random(5):
         U.append(iop.as_vector(f.parameters.parse(exp)))
-    for exp in np.random.random(6):
+    for exp in rng.random(6):
         V.append(iop.as_vector(f.parameters.parse(exp)))
     mu = p.parameter_space.sample_randomly(1)[0]
     return m.operator, mu, U, V, m.h1_product, m.l2_product
 
 
-def thermalblock_assemble_factory(xblocks, yblocks, diameter):
-    op, mu, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter)
+def thermalblock_assemble_factory(xblocks, yblocks, diameter, rng):
+    op, mu, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, rng)
     return op.assemble(mu), None, U, V, sp, rp
 
 
-def thermalblock_concatenation_factory(xblocks, yblocks, diameter):
-    op, mu, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter)
+def thermalblock_concatenation_factory(xblocks, yblocks, diameter, rng):
+    op, mu, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, rng)
     op = sp @ op
     return op, mu, U, V, sp, rp
 
 
-def thermalblock_identity_factory(xblocks, yblocks, diameter):
+def thermalblock_identity_factory(xblocks, yblocks, diameter, rng):
     from pymor.operators.constructions import IdentityOperator
-    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter)
+    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, rng)
     return IdentityOperator(U.space), None, U, V, sp, rp
 
 
-def thermalblock_zero_factory(xblocks, yblocks, diameter):
+def thermalblock_zero_factory(xblocks, yblocks, diameter, rng):
     from pymor.operators.constructions import ZeroOperator
-    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter)
+    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, rng)
     return ZeroOperator(V.space, U.space), None, U, V, sp, rp
 
 
-def thermalblock_constant_factory(xblocks, yblocks, diameter):
+def thermalblock_constant_factory(xblocks, yblocks, diameter, rng):
     from pymor.operators.constructions import ConstantOperator
-    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter)
+    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, rng)
     return ConstantOperator(V[0], U.space), None, U, V, sp, rp
 
 
-def thermalblock_vectorarray_factory(adjoint, xblocks, yblocks, diameter):
+def thermalblock_vectorarray_factory(adjoint, xblocks, yblocks, diameter, rng):
     from pymor.operators.constructions import VectorArrayOperator
-    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter)
+    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, rng)
     op = VectorArrayOperator(U, adjoint)
     if adjoint:
         U = V
-        V = op.range.make_array(np.random.random((7, op.range.dim)))
+        V = op.range.make_array(rng.random((7, op.range.dim)))
         sp = rp
         rp = NumpyMatrixOperator(np.eye(op.range.dim) * 2)
     else:
-        U = op.source.make_array(np.random.random((7, op.source.dim)))
+        U = op.source.make_array(rng.random((7, op.source.dim)))
         sp = NumpyMatrixOperator(np.eye(op.source.dim) * 2)
     return op, None, U, V, sp, rp
 
 
-def thermalblock_vector_factory(xblocks, yblocks, diameter):
+def thermalblock_vector_factory(xblocks, yblocks, diameter, rng):
     from pymor.operators.constructions import VectorOperator
-    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter)
+    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, rng)
     op = VectorOperator(U[0])
-    U = op.source.make_array(np.random.random((7, 1)))
+    U = op.source.make_array(rng.random((7, 1)))
     sp = NumpyMatrixOperator(np.eye(1) * 2)
     return op, None, U, V, sp, rp
 
 
-def thermalblock_vectorfunc_factory(product, xblocks, yblocks, diameter):
+def thermalblock_vectorfunc_factory(product, xblocks, yblocks, diameter, rng):
     from pymor.operators.constructions import VectorFunctional
-    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter)
+    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, rng)
     op = VectorFunctional(U[0], product=sp if product else None)
     U = V
-    V = op.range.make_array(np.random.random((7, 1)))
+    V = op.range.make_array(rng.random((7, 1)))
     sp = rp
     rp = NumpyMatrixOperator(np.eye(1) * 2)
     return op, None, U, V, sp, rp
 
 
-def thermalblock_fixedparam_factory(xblocks, yblocks, diameter):
+def thermalblock_fixedparam_factory(xblocks, yblocks, diameter, rng):
     from pymor.operators.constructions import FixedParameterOperator
-    op, mu, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter)
+    op, mu, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, rng)
     return FixedParameterOperator(op, mu=mu), None, U, V, sp, rp
 
 
@@ -227,175 +280,183 @@ thermalblock_factory_arguments = \
     [(2, 2, 1./2.),
      (1, 1, 1./4.)]
 
-
 thermalblock_operator_generators = \
-    [lambda args=args: thermalblock_factory(*args)[0:2] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_factory(*args, rng=rng)[0:2]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_operator_with_arrays_generators = \
-    [lambda args=args: thermalblock_factory(*args)[0:4] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_factory(*args, rng=rng)[0:4]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_operator_with_arrays_and_products_generators = \
-    [lambda args=args: thermalblock_factory(*args) for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_factory(*args, rng=rng)
+     for args in thermalblock_factory_arguments]
 
 thermalblock_assemble_operator_generators = \
-    [lambda args=args: thermalblock_assemble_factory(*args)[0:2] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_assemble_factory(*args, rng=rng)[0:2]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_assemble_operator_with_arrays_generators = \
-    [lambda args=args: thermalblock_assemble_factory(*args)[0:4] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_assemble_factory(*args, rng=rng)[0:4]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_assemble_operator_with_arrays_and_products_generators = \
-    [lambda args=args: thermalblock_assemble_factory(*args) for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_assemble_factory(*args, rng=rng)
+     for args in thermalblock_factory_arguments]
 
 thermalblock_concatenation_operator_generators = \
-    [lambda args=args: thermalblock_concatenation_factory(*args)[0:2] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_concatenation_factory(*args, rng=rng)[0:2]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_concatenation_operator_with_arrays_generators = \
-    [lambda args=args: thermalblock_concatenation_factory(*args)[0:4] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_concatenation_factory(*args, rng=rng)[0:4]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_concatenation_operator_with_arrays_and_products_generators = \
-    [lambda args=args: thermalblock_concatenation_factory(*args) for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_concatenation_factory(*args, rng=rng)
+     for args in thermalblock_factory_arguments]
 
 thermalblock_identity_operator_generators = \
-    [lambda args=args: thermalblock_identity_factory(*args)[0:2] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_identity_factory(*args, rng=rng)[0:2]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_zero_operator_generators = \
-    [lambda args=args: thermalblock_zero_factory(*args)[0:2] for args in thermalblock_factory_arguments]
+    [lambda rng, args=args: thermalblock_zero_factory(*args, rng=rng)[0:2]
+     for args in thermalblock_factory_arguments]
 
 
 thermalblock_constant_operator_generators = \
-    [lambda args=args: thermalblock_constant_factory(*args)[0:2] for args in thermalblock_factory_arguments]
+    [lambda rng, args=args: thermalblock_constant_factory(*args, rng=rng)[0:2]
+     for args in thermalblock_factory_arguments]
 
 
 thermalblock_identity_operator_with_arrays_generators = \
-    [lambda args=args: thermalblock_identity_factory(*args)[0:4] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_identity_factory(*args, rng=rng)[0:4]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_zero_operator_with_arrays_generators = \
-    [lambda args=args: thermalblock_zero_factory(*args)[0:4] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_zero_factory(*args, rng=rng)[0:4]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_constant_operator_with_arrays_generators = \
-    [lambda args=args: thermalblock_constant_factory(*args)[0:4] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_constant_factory(*args, rng=rng)[0:4]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_identity_operator_with_arrays_and_products_generators = \
-    [lambda args=args: thermalblock_identity_factory(*args) for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_identity_factory(*args, rng=rng)
+     for args in thermalblock_factory_arguments]
 
 thermalblock_zero_operator_with_arrays_and_products_generators = \
-    [lambda args=args: thermalblock_zero_factory(*args) for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_zero_factory(*args, rng=rng)
+     for args in thermalblock_factory_arguments]
 
 thermalblock_constant_operator_with_arrays_and_products_generators = \
-    [lambda args=args: thermalblock_constant_factory(*args) for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_constant_factory(*args, rng=rng)
+     for args in thermalblock_factory_arguments]
 
 thermalblock_vectorarray_operator_generators = \
-    [lambda args=args: thermalblock_vectorarray_factory(False, *args)[0:2] for args in thermalblock_factory_arguments] \
-    + [lambda args=args: thermalblock_vectorarray_factory(True, *args)[0:2] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_vectorarray_factory(False, *args, rng=rng)[0:2]
+     for args in thermalblock_factory_arguments] \
+    + [lambda rng, args=args: thermalblock_vectorarray_factory(True, *args, rng=rng)[0:2]
+       for args in thermalblock_factory_arguments]
 
 thermalblock_vectorarray_operator_with_arrays_generators = \
-    [lambda args=args: thermalblock_vectorarray_factory(False, *args)[0:4] for args in thermalblock_factory_arguments] \
-    + [lambda args=args: thermalblock_vectorarray_factory(True, *args)[0:4] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_vectorarray_factory(False, *args, rng=rng)[0:4]
+     for args in thermalblock_factory_arguments] \
+    + [lambda rng, args=args: thermalblock_vectorarray_factory(True, *args, rng=rng)[0:4]
+       for args in thermalblock_factory_arguments]
 
 thermalblock_vectorarray_operator_with_arrays_and_products_generators = \
-    [lambda args=args: thermalblock_vectorarray_factory(False, *args) for args in thermalblock_factory_arguments] \
-    + [lambda args=args: thermalblock_vectorarray_factory(True, *args) for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_vectorarray_factory(False, *args, rng=rng)
+     for args in thermalblock_factory_arguments] \
+    + [lambda rng, args=args: thermalblock_vectorarray_factory(True, *args, rng=rng)
+       for args in thermalblock_factory_arguments]
 
 thermalblock_vector_operator_generators = \
-    [lambda args=args: thermalblock_vector_factory(*args)[0:2] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_vector_factory(*args, rng=rng)[0:2]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_vector_operator_with_arrays_generators = \
-    [lambda args=args: thermalblock_vector_factory(*args)[0:4] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_vector_factory(*args, rng=rng)[0:4]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_vector_operator_with_arrays_and_products_generators = \
-    [lambda args=args: thermalblock_vector_factory(*args) for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_vector_factory(*args, rng=rng)
+     for args in thermalblock_factory_arguments]
 
 thermalblock_vectorfunc_operator_generators = \
-    [lambda args=args: thermalblock_vectorfunc_factory(False, *args)[0:2] for args in thermalblock_factory_arguments] \
-    + [lambda args=args: thermalblock_vectorfunc_factory(True, *args)[0:2] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_vectorfunc_factory(False, *args, rng=rng)[0:2]
+     for args in thermalblock_factory_arguments] \
+    + [lambda rng, args=args: thermalblock_vectorfunc_factory(True, *args, rng=rng)[0:2]
+       for args in thermalblock_factory_arguments]
 
 thermalblock_vectorfunc_operator_with_arrays_generators = \
-    [lambda args=args: thermalblock_vectorfunc_factory(False, *args)[0:4] for args in thermalblock_factory_arguments] \
-    + [lambda args=args: thermalblock_vectorfunc_factory(True, *args)[0:4] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_vectorfunc_factory(False, *args, rng=rng)[0:4]
+     for args in thermalblock_factory_arguments] \
+    + [lambda rng, args=args: thermalblock_vectorfunc_factory(True, *args, rng=rng)[0:4]
+       for args in thermalblock_factory_arguments]
 
 thermalblock_vectorfunc_operator_with_arrays_and_products_generators = \
-    [lambda args=args: thermalblock_vectorfunc_factory(False, *args) for args in thermalblock_factory_arguments] \
-    + [lambda args=args: thermalblock_vectorfunc_factory(True, *args) for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_vectorfunc_factory(False, *args, rng=rng)
+     for args in thermalblock_factory_arguments] \
+    + [lambda rng, args=args: thermalblock_vectorfunc_factory(True, *args, rng=rng)
+       for args in thermalblock_factory_arguments]
 
 thermalblock_fixedparam_operator_generators = \
-    [lambda args=args: thermalblock_fixedparam_factory(*args)[0:2] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_fixedparam_factory(*args, rng=rng)[0:2]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_fixedparam_operator_with_arrays_generators = \
-    [lambda args=args: thermalblock_fixedparam_factory(*args)[0:4] for args in thermalblock_factory_arguments]
-
+    [lambda rng, args=args: thermalblock_fixedparam_factory(*args, rng=rng)[0:4]
+     for args in thermalblock_factory_arguments]
 
 thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
-    [lambda args=args: thermalblock_fixedparam_factory(*args) for args in thermalblock_factory_arguments]
+    [lambda rng, args=args: thermalblock_fixedparam_factory(*args, rng=rng)
+     for args in thermalblock_factory_arguments]
 
 
-num_misc_operators = 14
+num_misc_operators = 13
 
 
-def misc_operator_with_arrays_and_products_factory(n):
+def misc_operator_with_arrays_and_products_factory(n, rng):
     if n == 0:
         from pymor.operators.constructions import ComponentProjectionOperator
-        _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 10, 4, 3)
-        op = ComponentProjectionOperator(np.random.randint(0, 100, 10), U.space)
+        _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 10, 4, 3, rng)
+        op = ComponentProjectionOperator(rng.integers(0, 100, 10), U.space)
         return op, _, U, V, sp, rp
     elif n == 1:
         from pymor.operators.constructions import ComponentProjectionOperator
-        _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 0, 4, 3)
+        _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 0, 4, 3, rng)
         op = ComponentProjectionOperator([], U.space)
         return op, _, U, V, sp, rp
     elif n == 2:
         from pymor.operators.constructions import ComponentProjectionOperator
-        _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 3, 4, 3)
+        _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 3, 4, 3, rng)
         op = ComponentProjectionOperator([3, 3, 3], U.space)
         return op, _, U, V, sp, rp
     elif n == 3:
         from pymor.operators.constructions import AdjointOperator
-        op, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 20, 4, 3)
+        op, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 20, 4, 3, rng)
         op = AdjointOperator(op, with_apply_inverse=True)
         return op, _, V, U, rp, sp
     elif n == 4:
         from pymor.operators.constructions import AdjointOperator
-        op, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 20, 4, 3)
+        op, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 20, 4, 3, rng)
         op = AdjointOperator(op, with_apply_inverse=False)
         return op, _, V, U, rp, sp
     elif 5 <= n <= 7:
         from pymor.operators.constructions import SelectionOperator
         from pymor.parameters.functionals import ProjectionParameterFunctional
-        op0, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(30, 30, 4, 3)
-        op1 = NumpyMatrixOperator(np.random.random((30, 30)))
-        op2 = NumpyMatrixOperator(np.random.random((30, 30)))
+        op0, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(30, 30, 4, 3, rng)
+        op1 = NumpyMatrixOperator(rng.random((30, 30)))
+        op2 = NumpyMatrixOperator(rng.random((30, 30)))
         op = SelectionOperator([op0, op1, op2], ProjectionParameterFunctional('x'), [0.3, 0.6])
         return op, op.parameters.parse((n-5)/2), V, U, rp, sp
     elif n == 8:
         from pymor.operators.block import BlockDiagonalOperator
-        op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3)
-        op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3)
-        op2, _, U2, V2, sp2, rp2 = numpy_matrix_operator_with_arrays_and_products_factory(30, 30, 4, 3)
+        op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, rng)
+        op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, rng)
+        op2, _, U2, V2, sp2, rp2 = numpy_matrix_operator_with_arrays_and_products_factory(30, 30, 4, 3, rng)
         op = BlockDiagonalOperator([op0, op1, op2])
         sp = BlockDiagonalOperator([sp0, sp1, sp2])
         rp = BlockDiagonalOperator([rp0, rp1, rp2])
@@ -405,12 +466,12 @@ def misc_operator_with_arrays_and_products_factory(n):
     elif n == 9:
         from pymor.operators.block import BlockDiagonalOperator, BlockOperator
         from pymor.parameters.functionals import ProjectionParameterFunctional
-        op0a, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3)
-        op0b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3)
-        op0c, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3)
-        op1, _, U1, V1, sp1, rp1  = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3)
-        op2a, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3)
-        op2b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3)
+        op0a, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, rng)
+        op0b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, rng)
+        op0c, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, rng)
+        op1, _, U1, V1, sp1, rp1  = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, rng)
+        op2a, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, rng)
+        op2b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, rng)
         op0 = (op0a * ProjectionParameterFunctional('p', 3, 0)
                + op0b * ProjectionParameterFunctional('p', 3, 1)
                + op0c * ProjectionParameterFunctional('p', 3, 1))
@@ -427,10 +488,10 @@ def misc_operator_with_arrays_and_products_factory(n):
     elif n == 10:
         from pymor.operators.block import BlockColumnOperator, BlockDiagonalOperator
         from pymor.parameters.functionals import ProjectionParameterFunctional
-        op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3)
-        op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3)
-        op2a, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3)
-        op2b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3)
+        op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, rng)
+        op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, rng)
+        op2a, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, rng)
+        op2b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, rng)
         op2 = (op2a * ProjectionParameterFunctional('p', 3, 0)
                + op2b * ProjectionParameterFunctional('q', 1))
         op = BlockColumnOperator([op2, op1])
@@ -443,10 +504,10 @@ def misc_operator_with_arrays_and_products_factory(n):
     elif n == 11:
         from pymor.operators.block import BlockDiagonalOperator, BlockRowOperator
         from pymor.parameters.functionals import ProjectionParameterFunctional
-        op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3)
-        op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3)
-        op2a, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3)
-        op2b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3)
+        op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, rng)
+        op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, rng)
+        op2a, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, rng)
+        op2b, _, _, _, _, _       = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, rng)
         op2 = (op2a * ProjectionParameterFunctional('p', 3, 0)
                + op2b * ProjectionParameterFunctional('q', 1))
         op = BlockRowOperator([op0, op2])
@@ -462,12 +523,6 @@ def misc_operator_with_arrays_and_products_factory(n):
         space = BlockVectorSpace([NumpyVectorSpace(1), NumpyVectorSpace(2)])
         op = NumpyConversionOperator(space)
         return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
-    elif n == 13:
-        from pymor.operators.numpy import NumpyHankelOperator
-        s, p, m = 4, 2, 3
-        mp = np.random.rand(s, p, m)
-        op = NumpyHankelOperator(mp)
-        return op, None, op.source.random(), op.range.random(), IdentityOperator(op.source), IdentityOperator(op.range)
     else:
         assert False
 
@@ -475,10 +530,10 @@ def misc_operator_with_arrays_and_products_factory(n):
 num_unpicklable_misc_operators = 1
 
 
-def unpicklable_misc_operator_with_arrays_and_products_factory(n):
+def unpicklable_misc_operator_with_arrays_and_products_factory(n, rng):
     if n == 0:
         from pymor.operators.numpy import NumpyGenericOperator
-        op, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 20, 4, 3)
+        op, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 20, 4, 3, rng)
         mat = op.matrix
         op2 = NumpyGenericOperator(mapping=lambda U: mat.dot(U.T).T, adjoint_mapping=lambda U: mat.T.dot(U.T).T,
                                    dim_source=100, dim_range=20, linear=True)
@@ -488,29 +543,24 @@ def unpicklable_misc_operator_with_arrays_and_products_factory(n):
 
 
 misc_operator_generators = \
-    [lambda n=n: misc_operator_with_arrays_and_products_factory(n)[0:2] for n in range(num_misc_operators)]
-
+    [lambda rng, n=n: misc_operator_with_arrays_and_products_factory(n, rng)[0:2] for n in range(num_misc_operators)]
 
 misc_operator_with_arrays_generators = \
-    [lambda n=n: misc_operator_with_arrays_and_products_factory(n)[0:4] for n in range(num_misc_operators)]
-
+    [lambda rng, n=n: misc_operator_with_arrays_and_products_factory(n, rng)[0:4] for n in range(num_misc_operators)]
 
 misc_operator_with_arrays_and_products_generators = \
-    [lambda n=n: misc_operator_with_arrays_and_products_factory(n) for n in range(num_misc_operators)]
-
+    [lambda rng, n=n: misc_operator_with_arrays_and_products_factory(n, rng) for n in range(num_misc_operators)]
 
 unpicklable_misc_operator_generators = \
-    [lambda n=n: unpicklable_misc_operator_with_arrays_and_products_factory(n)[0:2]
+    [lambda rng, n=n: unpicklable_misc_operator_with_arrays_and_products_factory(n, rng)[0:2]
      for n in range(num_unpicklable_misc_operators)]
-
 
 unpicklable_misc_operator_with_arrays_generators = \
-    [lambda n=n: unpicklable_misc_operator_with_arrays_and_products_factory(n)[0:4]
+    [lambda rng, n=n: unpicklable_misc_operator_with_arrays_and_products_factory(n, rng)[0:4]
      for n in range(num_unpicklable_misc_operators)]
 
-
 unpicklable_misc_operator_with_arrays_and_products_generators = \
-    [lambda n=n: unpicklable_misc_operator_with_arrays_and_products_factory(n)
+    [lambda rng, n=n: unpicklable_misc_operator_with_arrays_and_products_factory(n, rng)
      for n in range(num_unpicklable_misc_operators)]
 
 
@@ -567,12 +617,12 @@ if config.HAVE_FENICS:
         return op, op.parameters.parse(42), op.source.random(), op.range.random(), prod, prod
 
     fenics_with_arrays_and_products_generators = [
-        lambda: fenics_matrix_operator_factory(),
-        lambda: fenics_nonlinear_operator_factory(),
+        lambda rng: fenics_matrix_operator_factory(),
+        lambda rng: fenics_nonlinear_operator_factory(),
     ]
     fenics_with_arrays_generators = [
-        lambda: fenics_matrix_operator_factory()[:4],
-        lambda: fenics_nonlinear_operator_factory()[:4],
+        lambda rng: fenics_matrix_operator_factory()[:4],
+        lambda rng: fenics_nonlinear_operator_factory()[:4],
     ]
 else:
     fenics_with_arrays_and_products_generators = []
@@ -600,14 +650,15 @@ builtin_operator_with_arrays_and_products_generators = (
     builtin_operator_with_arrays_and_products_generators
     + fenics_with_arrays_and_products_generators
 ))
-def operator_with_arrays_and_products(reset_rng, request):
-    return request.param()
+def operator_with_arrays_and_products(rng, request):
+    return request.param(rng)
 
 
 builtin_operator_with_arrays_generators = (
     [] if BUILTIN_DISABLED else
     numpy_matrix_operator_with_arrays_generators
     + numpy_list_vector_array_matrix_operator_with_arrays_generators
+    + numpy_structured_matrix_operator_with_arrays_generators
     + thermalblock_operator_with_arrays_generators
     + thermalblock_assemble_operator_with_arrays_generators
     + thermalblock_concatenation_operator_with_arrays_generators
@@ -626,14 +677,15 @@ builtin_operator_with_arrays_generators = (
     builtin_operator_with_arrays_generators
     + fenics_with_arrays_generators
 ))
-def operator_with_arrays(reset_rng, request):
-    return request.param()
+def operator_with_arrays(rng, request):
+    return request.param(rng)
 
 
 builtin_operator_generators = (
     [] if BUILTIN_DISABLED else
     numpy_matrix_operator_generators
     + numpy_list_vector_array_matrix_operator_generators
+    + numpy_structured_matrix_operator_generators
     + thermalblock_operator_generators
     + thermalblock_assemble_operator_generators
     + thermalblock_concatenation_operator_generators
@@ -651,14 +703,15 @@ builtin_operator_generators = (
 @pytest.fixture(params=(
     builtin_operator_generators
 ))
-def operator(reset_rng, request):
-    return request.param()
+def operator(rng, request):
+    return request.param(rng)
 
 
 builtin_picklable_operator_generators = (
     [] if BUILTIN_DISABLED else
     numpy_matrix_operator_generators
     + numpy_list_vector_array_matrix_operator_generators
+    + numpy_structured_matrix_operator_generators
     + thermalblock_operator_generators
     + thermalblock_assemble_operator_generators
     + thermalblock_concatenation_operator_generators
@@ -675,10 +728,10 @@ builtin_picklable_operator_generators = (
 @pytest.fixture(params=(
     builtin_picklable_operator_generators
 ))
-def picklable_operator(reset_rng, request):
-    return request.param()
+def picklable_operator(rng, request):
+    return request.param(rng)
 
 
-@pytest.fixture
+@pytest.fixture()
 def loadable_matrices(shared_datadir):
     return (shared_datadir / 'matrices').glob('*')

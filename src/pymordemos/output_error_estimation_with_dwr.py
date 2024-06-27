@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
@@ -12,8 +13,8 @@ from pymor.reductors.dwr import DWRCoerciveRBReductor
 
 
 def main(
-    fom_number: int = Argument(..., help='Selects FOMs [0, 1] for elliptic problems '
-                                         + 'with scalar and vector valued outputs '),
+    fom_number: int = Argument(..., help=('Selects FOMs [0, 1] for elliptic problems '
+                                          'with scalar and vector valued outputs.')),
     grid_intervals: int = Argument(..., help='Grid interval count.'),
     training_samples: int = Argument(..., help='Number of samples used for training the reduced basis.'),
     modes: int = Argument(..., help='Number of basis functions for the RB spaces (generated with POD)')
@@ -90,8 +91,8 @@ def main(
         results_full = {'fom': [], 'rom': [], 'err': [], 'est': []}
         for i, mu in enumerate(training_set):
             s_fom = fom_outputs[i]
-            s_rom, s_est = rom.output(return_error_estimate=True, mu=mu,
-                                      return_error_estimate_vector=False)
+            s_rom, s_est = rom.output(return_error_estimate=True, mu=mu)
+            s_est = np.linalg.norm(s_est[-1, :])
             results_full['fom'].append(s_fom)
             results_full['rom'].append(s_rom)
             results_full['err'].append(np.linalg.norm(np.abs(s_fom[-1]-s_rom[-1])))
@@ -135,6 +136,7 @@ def main(
             for i, mu in enumerate(training_set):
                 s_fom = fom_outputs[i]
                 s_rom, s_est = rom.output(return_error_estimate=True, mu=mu)
+                s_est = np.linalg.norm(s_est[-1, :])
                 max_err = max(max_err, np.linalg.norm(np.abs(s_fom-s_rom)))
                 max_est = max(max_est, s_est)
                 min_err = min(min_err, np.linalg.norm(np.abs(s_fom-s_rom)))

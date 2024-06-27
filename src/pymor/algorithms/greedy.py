@@ -47,12 +47,17 @@ def weak_greedy(surrogate, training_set, atol=None, rtol=None, max_extensions=No
 
     Returns
     -------
-    Dict with the following fields:
+    data
+        Dict with the following fields:
 
-        :max_errs:               Sequence of maximum estimated errors during the greedy run.
-        :max_err_mus:            The parameters corresponding to `max_errs`.
-        :extensions:             Number of performed basis extensions.
-        :time:                   Total runtime of the algorithm.
+        :max_errs:
+            Sequence of maximum estimated errors during the greedy run.
+        :max_err_mus:
+            The parameters corresponding to `max_errs`.
+        :extensions:
+            Number of performed basis extensions.
+        :time:
+            Total runtime of the algorithm.
     """
     logger = getLogger('pymor.algorithms.greedy.weak_greedy')
     training_set = list(training_set)
@@ -188,14 +193,19 @@ def rb_greedy(fom, reductor, training_set, use_error_estimator=True, error_norm=
 
     Returns
     -------
-    Dict with the following fields:
+    data
+        Dict with the following fields:
 
-        :rom:                    The reduced |Model| obtained for the
-                                 computed basis.
-        :max_errs:               Sequence of maximum errors during the greedy run.
-        :max_err_mus:            The parameters corresponding to `max_errs`.
-        :extensions:             Number of performed basis extensions.
-        :time:                   Total runtime of the algorithm.
+        :rom:
+            The reduced |Model| obtained for the computed basis.
+        :max_errs:
+            Sequence of maximum errors during the greedy run.
+        :max_err_mus:
+            The parameters corresponding to `max_errs`.
+        :extensions:
+            Number of performed basis extensions.
+        :time:
+            Total runtime of the algorithm.
     """
     surrogate = RBSurrogate(fom, reductor, use_error_estimator, error_norm, extension_params, pool or dummy_pool)
 
@@ -267,7 +277,7 @@ def _rb_surrogate_evaluate(rom=None, fom=None, reductor=None, mus=None, error_no
             return -1., None
 
     if fom is None:
-        errors = [rom.estimate_error(mu) for mu in mus]
+        errors = [np.max(rom.estimate_error(mu)) for mu in mus]
     elif error_norm is not None:
         errors = [error_norm(fom.solve(mu) - reductor.reconstruct(rom.solve(mu))) for mu in mus]
     else:

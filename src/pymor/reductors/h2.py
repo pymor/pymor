@@ -86,9 +86,12 @@ class GenericIRKAReductor(BasicObject):
 
     @staticmethod
     def _check_common_args(tol, maxit, num_prev, conv_crit):
-        assert isinstance(tol, Real) and tol > 0
-        assert isinstance(maxit, Integral) and maxit >= 1
-        assert isinstance(num_prev, Integral) and num_prev >= 1
+        assert isinstance(tol, Real)
+        assert tol > 0
+        assert isinstance(maxit, Integral)
+        assert maxit >= 1
+        assert isinstance(num_prev, Integral)
+        assert num_prev >= 1
         assert conv_crit in ('sigma', 'h2')
 
     def _order_to_sigma_b_c(self, r):

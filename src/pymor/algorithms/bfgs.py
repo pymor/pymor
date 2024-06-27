@@ -82,14 +82,16 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     data
         Dict containing the following fields:
 
-            :mus:                       `list` of |parameter values| after each iteration.
-            :foc_norms:                 |NumPy array| of the first order criticality norms
-                                        after each iteration.
-            :update_norms:              |NumPy array| of the norms of the update vectors
-                                        after each iteration.
-            :iterations:                Number of total BFGS iterations.
-            :line_search_iterations:    |NumPy array| of the number of line search
-                                        iterations per BFGS iteration.
+        :mus:
+            `list` of |parameter values| after each iteration.
+        :foc_norms:
+            |NumPy array| of the first order criticality norms after each iteration.
+        :update_norms:
+            |NumPy array| of the norms of the update vectors after each iteration.
+        :iterations:
+            Number of total BFGS iterations.
+        :line_search_iterations:
+            |NumPy array| of the number of line search iterations per BFGS iteration.
 
     Raises
     ------
@@ -103,7 +105,7 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     logger.info(f'Started projected BFGS algorithm for {model.name}.')
 
     if parameter_space is None:
-        logger.warn('No parameter space given. Assuming uniform parameter bounds of (-1, 1).')
+        logger.warning('No parameter space given. Assuming uniform parameter bounds of (-1, 1).')
         parameter_space = model.parameters.space(-1., 1.)
 
     if initial_guess is None:
@@ -117,18 +119,19 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
     if error_aware:
         assert error_criterion is not None
         assert line_search_error_criterion is not None
-        assert callable(error_criterion) and callable(line_search_error_criterion)
+        assert callable(error_criterion)
+        assert callable(line_search_error_criterion)
         bfgs_armijo = partial(constrained_armijo, armijo_condition=line_search_error_criterion)
 
     assert model.dim_output == 1
     output = lambda m: model.output(m)[0, 0]
 
-    # make sure the model is instationary by checking length of output vectorarray
+    # make sure the model output does not depend on time by checking length of output vectorarray
     temp_output = model.output(mu)
     assert len(temp_output) == 1
     current_output = temp_output[0, 0].item()
 
-    gradient = model.parameters.parse(model.output_d_mu(mu)).to_numpy()
+    gradient = model.output_d_mu(mu).to_numpy().ravel()
     eps = np.linalg.norm(gradient)
 
     # compute norms
@@ -194,7 +197,7 @@ def error_aware_bfgs(model, parameter_space=None, initial_guess=None, miniter=0,
 
         # update gradient
         old_gradient = gradient.copy()
-        gradient = model.parameters.parse(model.output_d_mu(mu)).to_numpy()
+        gradient = model.output_d_mu(mu).to_numpy().ravel()
         first_order_criticality = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
         foc_norms.append(first_order_criticality)
 

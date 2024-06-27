@@ -22,7 +22,7 @@ methods = [method_of_snapshots, qr_svd]
 def test_method_of_snapshots(vector_array, method):
     A = vector_array
 
-    # TODO assumption here masks a potential issue with the algorithm
+    # TODO: assumption here masks a potential issue with the algorithm
     #      where it fails in internal lapack instead of a proper error
     assume(len(A) > 1 or A.dim > 1)
     assume(not contains_zero_vector(A, rtol=1e-13, atol=1e-13))
@@ -56,7 +56,7 @@ def test_method_of_snapshots_with_product(operator_with_arrays_and_products, met
     assert np.all(almost_equal(A, UsVh, rtol=4e-8))
 
 
-@pytest.mark.builtin
+@pytest.mark.builtin()
 @pytest.mark.parametrize('method', methods)
 def test_not_too_many_modes(method):
     vec_array = NumpyVectorSpace.from_numpy(np.logspace(-5, 0, 10).reshape((-1, 1)))

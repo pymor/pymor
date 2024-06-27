@@ -34,7 +34,7 @@ def table(rows):
     return r
 
 
-class PeekIterator(object):
+class PeekIterator:
     def __init__(self, *args):
         self._iterable = iter(*args)
         self._cache = deque()
@@ -246,7 +246,7 @@ def parse_sections(sections):
         if section == 'nonsection':
             non_section_lines.extend(lines)
         elif section in parsed_sections:
-            raise ValueError('Duplicate section "{}" in docstring'.format(section))
+            raise ValueError(f'Duplicate section "{section}" in docstring')
         elif section in FIELD_SECTIONS:
             parsed_sections[section] = parse_fields_section(lines)
         else:
@@ -358,9 +358,9 @@ def inspect_class(obj):
             pass
 
     key_func = lambda x: '|' + x[0].lower() if x[0].startswith('_') else x[0].lower()
-    methods = {k: [':meth:`~{}.{}`'.format(get_full_class_name(c), n) for n, c in sorted(v, key=key_func)]
+    methods = {k: [f':meth:`~{get_full_class_name(c)}.{n}`' for n, c in sorted(v, key=key_func)]
                for k, v in methods.items()}
-    rows = [(':class:`~{}`'.format(get_full_class_name(c)), ', '.join(methods[c]))
+    rows = [(f':class:`~{get_full_class_name(c)}`', ', '.join(methods[c]))
             for c in mro if c is not object and c in methods]
     if rows:
         im = ['.. admonition:: Methods', '']
@@ -374,9 +374,9 @@ def inspect_class(obj):
         for a in c.__dict__.get('_sphinx_documented_attributes', []):
             if a not in all_attributes:
                 attributes[c].append((a, c))
-    attributes = {k: [':attr:`~{}.{}`'.format(get_full_class_name(c), n) for n, c in sorted(v, key=key_func)]
+    attributes = {k: [f':attr:`~{get_full_class_name(c)}.{n}`' for n, c in sorted(v, key=key_func)]
                   for k, v in attributes.items()}
-    rows = [(':class:`~{}`'.format(get_full_class_name(c)), ', '.join(attributes[c]))
+    rows = [(f':class:`~{get_full_class_name(c)}`', ', '.join(attributes[c]))
             for c in mro if c is not object and c in attributes]
     if rows:
         ia = ['.. admonition:: Attributes', '']

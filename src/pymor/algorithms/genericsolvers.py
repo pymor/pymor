@@ -190,8 +190,9 @@ def _parse_options(options, default_options, default_solver, default_least_squar
     elif isinstance(options, str):
         options = default_options[options]
     else:
-        assert 'type' in options and options['type'] in default_options \
-            and options.keys() <= default_options[options['type']].keys()
+        assert 'type' in options
+        assert options['type'] in default_options
+        assert options.keys() <= default_options[options['type']].keys()
         user_options = options
         options = default_options[user_options['type']]
         options.update(user_options)
@@ -743,7 +744,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
            'Cond(Abar) seems to be too large for this machine         ',
            'The iteration limit has been reached                      ')
 
-    hdg1 = '   itn      x(1)       norm r    norm A''r'
+    hdg1 = '   itn      x(1)       norm r    norm Ar'
     hdg2 = ' compatible   LS      norm A   cond A'
     pfreq = 20   # print frequency (for repeating the heading)
     pcount = 0   # print counter
@@ -936,7 +937,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         if (normA * normr) != 0:
             test2 = normar / (normA * normr)
         else:
-            test2 = np.infty
+            test2 = np.inf
         test3 = 1 / condA
         t1 = test1 / (1 + normA * normx / normb)
         rtol = btol + atol * normA * normx / normb

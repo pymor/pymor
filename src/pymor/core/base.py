@@ -66,7 +66,7 @@ class UID:
     __slots__ = ['uid']
 
     prefix = f'{uuid.uuid4()}_'
-    counter = [0]
+    counter = [0]  # noqa: RUF012
 
     def __init__(self):
         self.uid = self.prefix + str(self.counter[0])

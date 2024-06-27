@@ -16,11 +16,11 @@ from pymor.algorithms.lyapunov import (
     solve_disc_lyap_dense,
     solve_disc_lyap_lrcf,
 )
-from pymor.algorithms.riccati import solve_pos_ricc_lrcf, solve_ricc_lrcf
+from pymor.algorithms.riccati import solve_pos_ricc_dense, solve_pos_ricc_lrcf, solve_ricc_lrcf
 from pymor.algorithms.simplify import contract, expand
 from pymor.algorithms.timestepping import DiscreteTimeStepper, TimeStepper
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.analyticalproblems.functions import GenericFunction
+from pymor.analyticalproblems.functions import Function
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -36,7 +36,6 @@ from pymor.operators.block import (
 )
 from pymor.operators.constructions import (
     IdentityOperator,
-    InverseOperator,
     LincombOperator,
     LinearInputOperator,
     LowRankOperator,
@@ -46,6 +45,7 @@ from pymor.operators.constructions import (
 )
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Mu, Parameters
+from pymor.parameters.functionals import ExpressionParameterFunctional, ProjectionParameterFunctional
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray
 
@@ -218,22 +218,25 @@ class LTIModel(Model):
             presets = {}
 
         assert solver_options is None or solver_options.keys() <= {'lyap_lrcf', 'lyap_dense',
-                                                                   'ricc_lrcf', 'ricc_dense', 'ricc_pos_lrcf'}
+                                                                   'ricc_lrcf', 'ricc_dense',
+                                                                   'ricc_pos_dense', 'ricc_pos_lrcf'}
 
         super().__init__(dim_input=B.source.dim, error_estimator=error_estimator, visualizer=visualizer, name=name)
         self.__auto_init(locals())
         self.solution_space = A.source
         self.dim_output = C.range.dim
 
-        K = lambda s: s * self.E - self.A
-        B = lambda s: self.B
-        C = lambda s: self.C
-        D = lambda s: self.D
-        dK = lambda s: self.E
-        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
-        dC = lambda s: ZeroOperator(self.C.range, self.C.source)
-        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
         parameters = Parameters.of(self.A, self.B, self.C, self.D, self.E)
+        s = ProjectionParameterFunctional('s')
+
+        K = s * self.E - self.A
+        B = self.B
+        C = self.C
+        D = self.D
+        dK = self.E
+        dB = ZeroOperator(self.B.range, self.B.source)
+        dC = ZeroOperator(self.C.range, self.C.source)
+        dD = ZeroOperator(self.D.range, self.D.source)
 
         self.transfer_function = FactorizedTransferFunction(
             self.dim_input, self.dim_output,
@@ -336,8 +339,18 @@ class LTIModel(Model):
                    time_stepper=time_stepper, num_values=num_values, presets=presets,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
-    def to_matrices(self):
+    def to_matrices(self, format=None, mu=None):
         """Return operators as matrices.
+
+        Parameters
+        ----------
+        format
+            Format of the resulting matrices: |NumPy array| if 'dense',
+            otherwise the appropriate |SciPy spmatrix|.
+            If `None`, a choice between dense and sparse format is
+            automatically made.
+        mu
+            The |parameter values| for which to convert the operators.
 
         Returns
         -------
@@ -352,11 +365,39 @@ class LTIModel(Model):
         E
             The |NumPy array| or |SciPy spmatrix| E or `None` (if E is an `IdentityOperator`).
         """
-        A = to_matrix(self.A)
-        B = to_matrix(self.B)
-        C = to_matrix(self.C)
-        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D)
-        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E)
+        return self.to_abcde_matrices(format, mu)
+
+    def to_abcde_matrices(self, format=None, mu=None):
+        """Return A, B, C, D, and E operators as matrices.
+
+        Parameters
+        ----------
+        format
+            Format of the resulting matrices: |NumPy array| if 'dense',
+            otherwise the appropriate |SciPy spmatrix|.
+            If `None`, a choice between dense and sparse format is
+            automatically made.
+        mu
+            The |parameter values| for which to convert the operators.
+
+        Returns
+        -------
+        A
+            The |NumPy array| or |SciPy spmatrix| A.
+        B
+            The |NumPy array| or |SciPy spmatrix| B.
+        C
+            The |NumPy array| or |SciPy spmatrix| C.
+        D
+            The |NumPy array| or |SciPy spmatrix| D or `None` (if D is a `ZeroOperator`).
+        E
+            The |NumPy array| or |SciPy spmatrix| E or `None` (if E is an `IdentityOperator`).
+        """
+        A = to_matrix(self.A, format, mu)
+        B = to_matrix(self.B, format, mu)
+        C = to_matrix(self.C, format, mu)
+        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D, format, mu)
+        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format, mu)
         return A, B, C, D, E
 
     @classmethod
@@ -429,7 +470,7 @@ class LTIModel(Model):
                                  solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                                  name=name)
 
-    def to_files(self, A_file, B_file, C_file, D_file=None, E_file=None):
+    def to_files(self, A_file, B_file, C_file, D_file=None, E_file=None, mu=None):
         """Write operators to files as matrices.
 
         Parameters
@@ -445,6 +486,8 @@ class LTIModel(Model):
         E_file
             The name of the file (with extension) containing E or `None` if E is an
             `IdentityOperator`.
+        mu
+            The |parameter values| for which to write the operators to files.
         """
         if D_file is None and not isinstance(self.D, ZeroOperator):
             raise ValueError('D is not zero, D_file must be given')
@@ -453,7 +496,7 @@ class LTIModel(Model):
 
         from pymor.tools.io import save_matrix
 
-        A, B, C, D, E = self.to_matrices()
+        A, B, C, D, E = self.to_matrices(mu=mu)
         for mat, file in [(A, A_file), (B, B_file), (C, C_file), (D, D_file), (E, E_file)]:
             if mat is None:
                 continue
@@ -510,7 +553,8 @@ class LTIModel(Model):
         import scipy.io as spio
         mat_dict = spio.loadmat(file_name)
 
-        assert 'A' in mat_dict and 'B' in mat_dict
+        assert 'A' in mat_dict
+        assert 'B' in mat_dict
 
         matrices = [
             mat_dict['A'],
@@ -524,23 +568,25 @@ class LTIModel(Model):
         for i in range(len(matrices)):
             mat = matrices[i]
             if mat is not None and np.issubdtype(mat.dtype, np.integer):
-                matrices[i] = mat.astype(np.float_)
+                matrices[i] = mat.astype(np.float64)
 
         return cls.from_matrices(*matrices, sampling_time=sampling_time, T=T, time_stepper=time_stepper,
                                  num_values=num_values, presets=presets, state_id=state_id,
                                  solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                                  name=name)
 
-    def to_mat_file(self, file_name):
+    def to_mat_file(self, file_name, mu=None):
         """Save operators as matrices to .mat file.
 
         Parameters
         ----------
         file_name
             The name of the .mat file (extension .mat does not need to be included).
+        mu
+            The |parameter values| for which to write the operators to files.
         """
         import scipy.io as spio
-        A, B, C, D, E = self.to_matrices()
+        A, B, C, D, E = self.to_matrices(mu=mu)
         mat_dict = {'A': A, 'B': B, 'C': C}
         if D is not None:
             mat_dict['D'] = D
@@ -607,18 +653,20 @@ class LTIModel(Model):
                                  solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                                  name=name)
 
-    def to_abcde_files(self, files_basename):
+    def to_abcde_files(self, files_basename, mu=None):
         """Save operators as matrices to .[ABCDE] files in Matrix Market format.
 
         Parameters
         ----------
         files_basename
             The basename of files containing the operators.
+        mu
+            The |parameter values| for which to write the operators to files.
         """
         from pathlib import Path
 
         from pymor.tools.io.matrices import _mmwrite
-        A, B, C, D, E = self.to_matrices()
+        A, B, C, D, E = self.to_matrices(mu=mu)
         _mmwrite(Path(files_basename + '.A'), A)
         _mmwrite(Path(files_basename + '.B'), B)
         _mmwrite(Path(files_basename + '.C'), C)
@@ -627,39 +675,59 @@ class LTIModel(Model):
         if E is not None:
             _mmwrite(Path(files_basename + '.E'), E)
 
-    def _compute(self, solution=False, output=False, solution_d_mu=False, output_d_mu=False,
-                 solution_error_estimate=False, output_error_estimate=False,
-                 output_d_mu_return_array=False, mu=None, **kwargs):
-        if not solution and not output:
-            return {}
+    def _compute(self, quantities, data, mu):
+        if 'solution' in quantities or 'output' in quantities:
+            assert self.T is not None
 
-        assert self.T is not None
+            compute_solution = 'solution' in quantities
+            compute_output = 'output' in quantities
 
-        # solution computation
-        mu = mu.with_(t=0)
-        X0 = self.initial_data.as_range_array(mu)
-        rhs = LinearInputOperator(self.B)
-        X = self.time_stepper.solve(
-            operator=-self.A,
-            rhs=rhs,
-            initial_data=X0,
-            mass=None if isinstance(self.E, IdentityOperator) else self.E,
-            initial_time=0,
-            end_time=self.T,
-            mu=mu,
-            num_values=self.num_values,
-        )
-        data = {'solution': X}
-
-        # output computation
-        if output:
-            Cx = self.C.apply(X, mu=mu).to_numpy()
-            if input is None or isinstance(self.D, ZeroOperator):
-                data['output'] = Cx
+            # solution computation
+            iterator = self.time_stepper.iterate(
+                0,  # initial_time
+                self.T,  # end_time
+                self.initial_data.as_range_array(mu),  # initial_data
+                -self.A,  # operator
+                rhs=LinearInputOperator(self.B),
+                mass=None if isinstance(self.E, IdentityOperator) else self.E,
+                mu=mu.with_(t=0),
+                num_values=self.num_values
+            )
+            if self.num_values is None:
+                try:
+                    n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+                except NotImplementedError:
+                    n = 0
             else:
-                raise NotImplementedError
+                n = self.num_values + 1
 
-        return data
+            if compute_solution:
+                data['solution'] = self.solution_space.empty(reserve=n)
+            if compute_output:
+                D = LinearInputOperator(self.D)
+                data['output'] = np.empty((n, self.dim_output))
+                data_output_extra = []
+            for i, (x, t) in enumerate(iterator):
+                if compute_solution:
+                    data['solution'].append(x)
+                if compute_output:
+                    y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.with_(t=t)).to_numpy()
+                    if i < n:
+                        data['output'][i] = y
+                    else:
+                        data_output_extra.append(y)
+            if compute_output:
+                if data_output_extra:
+                    data['output'] = np.vstack((data['output'], data_output_extra))
+                if len(data['output']) < i + 1:
+                    data['output'] = data['output'][:i + 1]
+
+            if compute_solution:
+                quantities.remove('solution')
+            if compute_output:
+                quantities.remove('output')
+
+        super()._compute(quantities, data, mu=mu)
 
     def __add__(self, other):
         """Add an |LTIModel|."""
@@ -679,7 +747,7 @@ class LTIModel(Model):
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         if self.T is not None and other.T is not None:
-            if type(self.time_stepper) != type(other.time_stepper):  # noqa
+            if type(self.time_stepper) != type(other.time_stepper):  # noqa: E721
                 raise TypeError('The time-steppers are not of the same type.')
             T = min(self.T, other.T)
             initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
@@ -721,7 +789,7 @@ class LTIModel(Model):
         else:
             E = BlockDiagonalOperator([self.E, other.E])
         if self.T is not None and other.T is not None:
-            if type(self.time_stepper) != type(other.time_stepper):  # noqa
+            if type(self.time_stepper) != type(other.time_stepper):  # noqa: E721
                 raise TypeError('The time-steppers are not of the same type.')
             T = min(self.T, other.T)
             initial_data = BlockColumnOperator([self.initial_data, other.initial_data])
@@ -750,70 +818,48 @@ class LTIModel(Model):
 
         Returns
         -------
-        y
+        output
             Impulse response as a 3D |NumPy array| where
-            `y.shape[0]` is the number of time steps,
-            `y.shape[1]` is the number of outputs, and
-            `y.shape[2]` is the number of inputs.
-        Xs
+            `output.shape[0]` is the number of time steps,
+            `output.shape[1]` is the number of outputs, and
+            `output.shape[2]` is the number of inputs.
+        solution
             The tuple of solution |VectorArrays| for every input.
             Returned only when `return_solution` is `True`.
         """
         assert self.T is not None
 
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
-
-        # solution computation
-        common_solver_opts = dict(
-            operator=-self.A,
-            mass=None if isinstance(self.E, IdentityOperator) else self.E,
-            initial_time=0,
-            end_time=self.T,
-            num_values=self.num_values,
-        )
-        if self.sampling_time == 0:
-            Xs0 = self.E.apply_inverse(self.B.as_range_array(mu=mu), mu=mu)
-            Xs = tuple(
-                self.time_stepper.solve(
-                    rhs=None,
-                    initial_data=X0,
-                    mu=mu,
-                    **common_solver_opts,
-                )
-                for X0 in Xs0
-            )
+        if self.num_values is None:
+            try:
+                n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+            except NotImplementedError:
+                n = 0
         else:
-            rhs = LinearInputOperator(self.B)
-            Xs = []
-            for i in range(self.dim_input):
-                def input_i(t):
-                    if t == 0:
-                        e_i = np.zeros(self.dim_input)
-                        e_i[i] = 1/self.sampling_time
-                        return e_i
-                    return np.zeros(self.dim_input)
-                Xs.append(
-                    self.time_stepper.solve(
-                        rhs=rhs,
-                        initial_data=self.solution_space.zeros(1),
-                        mu=mu.with_(input=GenericFunction(input_i, shape_range=(self.dim_input,))),
-                        **common_solver_opts,
-                    )
-                )
-            Xs = tuple(Xs)
+            n = self.num_values + 1
+        output = np.empty((n, self.dim_output, self.dim_input))
+        if return_solution:
+            solution = []
 
-        # output computation
-        y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
-        for i, X in enumerate(Xs):
-            y[:, :, i] = self.C.apply(X, mu=mu).to_numpy()
-        if self.sampling_time > 0 and isinstance(self.D, ZeroOperator):
-            y[0] += to_matrix(self.D, mu=mu, format='dense')
+        if self.sampling_time == 0:
+            initial_data = self.E.apply_inverse(self.B.as_range_array(mu=mu), mu=mu)
+
+        for i in range(self.dim_input):
+            if self.sampling_time == 0:
+                data = self.with_(initial_data=initial_data[i]).compute(
+                    input=np.zeros(self.dim_input), output=True, solution=return_solution, mu=mu)
+            else:
+                input = ImpulseFunction(self.dim_input, i, self.sampling_time)
+                data = self.with_(initial_data=self.solution_space.zeros(1)).compute(
+                    input=input, output=True, solution=return_solution, mu=mu)
+
+            output[..., i] = data['output']
+            if return_solution:
+                solution.append(data['solution'])
 
         if return_solution:
-            return y, Xs
+            return output, tuple(solution)
 
-        return y
+        return output
 
     def step_resp(self, mu=None, return_solution=False):
         """Compute step response from all inputs.
@@ -827,45 +873,39 @@ class LTIModel(Model):
 
         Returns
         -------
-        y
+        output
             Step response as a 3D |NumPy array| where
-            `y.shape[0]` is the number of time steps,
-            `y.shape[1]` is the number of outputs, and
-            `y.shape[2]` is the number of inputs.
-        Xs
+            `output.shape[0]` is the number of time steps,
+            `output.shape[1]` is the number of outputs, and
+            `output.shape[2]` is the number of inputs.
+        solution
             The tuple of solution |VectorArrays| for every input.
             Returned only when `return_solution` is `True`.
         """
         assert self.T is not None
 
-        if not isinstance(mu, Mu):
-            mu = self.parameters.parse(mu)
+        if self.num_values is None:
+            try:
+                n = self.time_stepper.estimate_time_step_count(0, self.T) + 1
+            except NotImplementedError:
+                n = 0
+        else:
+            n = self.num_values + 1
+        output = np.empty((n, self.dim_output, self.dim_input))
+        if return_solution:
+            solution = []
 
-        # solution computation
-        B_va = self.B.as_range_array(mu)
-        Xs = tuple(
-            self.time_stepper.solve(
-                operator=-self.A,
-                rhs=b,
-                initial_data=self.solution_space.zeros(1),
-                mass=None if isinstance(self.E, IdentityOperator) else self.E,
-                initial_time=0,
-                end_time=self.T,
-                mu=mu,
-                num_values=self.num_values,
-            )
-            for b in B_va
-        )
-
-        # output computation
-        y = np.empty((len(Xs[0]), self.dim_output, self.dim_input))
-        for i, X in enumerate(Xs):
-            y[:, :, i] = self.C.apply(X, mu=mu).to_numpy()
+        for i in range(self.dim_input):
+            input = StepFunction(self.dim_input, i, self.sampling_time)
+            data = self.compute(input=input, output=True, solution=return_solution, mu=mu)
+            output[..., i] = data['output']
+            if return_solution:
+                solution.append(data['solution'])
 
         if return_solution:
-            return y, Xs
+            return output, tuple(solution)
 
-        return y
+        return output
 
     @cached
     def _poles(self, mu=None):
@@ -902,7 +942,8 @@ class LTIModel(Model):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
         poles = self.presets['poles'] if 'poles' in self.presets else self._poles(mu=mu)
-        assert isinstance(poles, np.ndarray) and poles.shape == (self.A.source.dim,)
+        assert isinstance(poles, np.ndarray)
+        assert poles.shape == (self.A.source.dim,)
 
         return poles
 
@@ -925,6 +966,7 @@ class LTIModel(Model):
         options_lrcf = self.solver_options.get('lyap_lrcf') if self.solver_options else None
         options_dense = self.solver_options.get('lyap_dense') if self.solver_options else None
         options_ricc_lrcf = self.solver_options.get('ricc_lrcf') if self.solver_options else None
+        options_ricc_pos_dense = self.solver_options.get('ricc_pos_dense') if self.solver_options else None
         options_ricc_pos_lrcf = self.solver_options.get('ricc_pos_lrcf') if self.solver_options else None
         solve_lyap_lrcf = solve_cont_lyap_lrcf if self.sampling_time == 0 else solve_disc_lyap_lrcf
         solve_lyap_dense = solve_cont_lyap_dense if self.sampling_time == 0 else solve_disc_lyap_dense
@@ -965,6 +1007,16 @@ class LTIModel(Model):
             return solve_pos_ricc_lrcf(A, E, -B.as_range_array(mu=mu), A.source.zeros(),
                                        R=to_matrix(D + D.H, 'dense'), S=C.as_source_array(mu=mu),
                                        trans=True, options=options_ricc_pos_lrcf)
+        elif typ == 'pr_c_dense':
+            return solve_pos_ricc_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
+                                        A.source.zeros().to_numpy().T, -to_matrix(C, format='dense'),
+                                        R=to_matrix(D + D.H, 'dense'), S=to_matrix(B, format='dense').T,
+                                        trans=False, options=options_ricc_pos_dense)
+        elif typ == 'pr_o_dense':
+            return solve_pos_ricc_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
+                                        -to_matrix(B, format='dense'), A.source.zeros().to_numpy(),
+                                        R=to_matrix(D + D.H, 'dense'), S=to_matrix(C, format='dense').T,
+                                        trans=True, options=options_ricc_pos_dense)
         elif typ[0] == 'br_c_lrcf':
             return solve_pos_ricc_lrcf(A, E, B.as_range_array(mu=mu), C.as_source_array(mu=mu),
                                        R=(typ[1] ** 2 * np.eye(self.dim_output)
@@ -1022,7 +1074,7 @@ class LTIModel(Model):
         If typ ends with `'_dense'`, then the Gramian as a |NumPy array|.
         """
         assert (typ in ('c_lrcf', 'o_lrcf', 'c_dense', 'o_dense', 'bs_c_lrcf', 'bs_o_lrcf', 'lqg_c_lrcf', 'lqg_o_lrcf',
-                        'pr_c_lrcf', 'pr_o_lrcf')
+                        'pr_c_lrcf', 'pr_o_lrcf', 'pr_c_dense', 'pr_o_dense')
                 or isinstance(typ, tuple) and len(typ) == 2 and typ[0] in ('br_c_lrcf', 'br_o_lrcf'))
 
         if ((isinstance(typ, str) and (typ.startswith('bs') or typ.startswith('lqg')) or isinstance(typ, tuple))
@@ -1113,7 +1165,8 @@ class LTIModel(Model):
             One-dimensional |NumPy array| of singular values.
         """
         hsv = self.presets['hsv'] if 'hsv' in self.presets else self._sv_U_V(mu=mu)[0]
-        assert isinstance(hsv, np.ndarray) and hsv.ndim == 1
+        assert isinstance(hsv, np.ndarray)
+        assert hsv.ndim == 1
 
         return hsv
 
@@ -1192,7 +1245,8 @@ class LTIModel(Model):
             )
 
         if return_fpeak:
-            assert isinstance(fpeak, Number) and hinf_norm >= 0
+            assert isinstance(fpeak, Number)
+            assert hinf_norm >= 0
             return hinf_norm, fpeak
         else:
             assert hinf_norm >= 0
@@ -1345,7 +1399,8 @@ class LTIModel(Model):
             linf_norm, fpeak = self._linf_norm(mu=mu, ab13dd_equilibrate=ab13dd_equilibrate, tol=tol)
 
         if return_fpeak:
-            assert isinstance(fpeak, Number) and linf_norm >= 0
+            assert isinstance(fpeak, Number)
+            assert linf_norm >= 0
             return linf_norm, fpeak
         else:
             assert linf_norm >= 0
@@ -1379,7 +1434,7 @@ class LTIModel(Model):
         if self.ast_pole_data is not None:
             if isinstance(E, IdentityOperator):
                 E = None
-            if type(self.ast_pole_data) == dict:
+            if isinstance(self.ast_pole_data, dict):
                 ew, rev = eigs(A, E, left_evp=False, **self.ast_pole_data)
                 ast_idx = (ew.real > 0)
                 ast_ews = ew[ast_idx]
@@ -1392,7 +1447,7 @@ class LTIModel(Model):
                     _, lev = eigs(A, E, k=1, l=3, sigma=ae, left_evp=True)
                     ast_levs.append(lev)
                 return ast_levs, ast_ews, rev[ast_idx]
-            elif type(self.ast_pole_data) == list:
+            elif isinstance(self.ast_pole_data, list):
                 assert all(np.real(self.ast_pole_data) > 0)
                 ast_pole_data = np.sort(self.ast_pole_data)
                 ast_levs = A.source.empty(reserve=len(ast_pole_data))
@@ -1458,17 +1513,15 @@ class LTIModel(Model):
         """
         assert isinstance(M, MoebiusTransformation)
 
-        a, b, c, d = M.coefficients
-        s = a * d - b * c
-        v = np.sqrt(np.abs(s))
+        a, b, c, d = MoebiusTransformation(M.coefficients, normalize=True).coefficients
 
-        Et = d * self.E + c * self.A
-        At = a * self.A + b * self.E
-        Bt = np.sign(s) * v * self.B
-        Ct = v * self.C @ InverseOperator(Et)
-        Dt = self.D - c * self.C @ InverseOperator(Et) @ self.B
+        Et = a * self.E - c * self.A
+        At = d * self.A - b * self.E
+        C = VectorArrayOperator(Et.apply_inverse_adjoint(self.C.H.as_range_array())).H
+        Ct = C @ self.E
+        Dt = self.D + c * C @ self.B
 
-        return LTIModel(At, Bt, Ct, D=Dt, E=Et, sampling_time=sampling_time)
+        return LTIModel(At, self.B, Ct, D=Dt, E=Et, sampling_time=sampling_time)
 
     def to_discrete(self, sampling_time, method='Tustin', w0=0):
         """Converts a continuous-time |LTIModel| to a discrete-time |LTIModel|.
@@ -1496,7 +1549,7 @@ class LTIModel(Model):
         assert sampling_time > 0
         assert isinstance(w0, Number)
         x = 2 / sampling_time if w0 == 0 else w0 / np.tan(w0 * sampling_time / 2)
-        c2d = BilinearTransformation(x).inverse()
+        c2d = BilinearTransformation(x)
         return self.moebius_substitution(c2d, sampling_time=sampling_time)
 
     def to_continuous(self, method='Tustin', w0=0):
@@ -1521,7 +1574,7 @@ class LTIModel(Model):
         assert self.sampling_time > 0
         assert isinstance(w0, Number)
         x = 2 / self.sampling_time if w0 == 0 else w0 / np.tan(w0 * self.sampling_time / 2)
-        d2c = BilinearTransformation(x)
+        d2c = BilinearTransformation(x).inverse()
         return self.moebius_substitution(d2c, sampling_time=0)
 
 
@@ -1543,7 +1596,7 @@ class PHLTIModel(LTIModel):
             -G(\mu)^T & N(\mu)
         \end{bmatrix},
         \text{ and }
-        W(\mu) =
+        \mathcal{W}(\mu) =
         \begin{bmatrix}
             R(\mu) & P(\mu) \\
             P(\mu)^T & S(\mu)
@@ -1552,7 +1605,7 @@ class PHLTIModel(LTIModel):
     satisfy
     :math:`H(\mu) = H(\mu)^T \succ 0`,
     :math:`\Gamma(\mu)^T = -\Gamma(\mu)`, and
-    :math:`W(\mu) = W(\mu)^T \succcurlyeq 0`.
+    :math:`\mathcal{W}(\mu) = \mathcal{W}(\mu)^T \succcurlyeq 0`.
 
     A dynamical system of this form, together with a given quadratic (energy) function
     :math:`\mathcal{H}(x, \mu) = \tfrac{1}{2} x^T H(\mu) x`, typically called Hamiltonian,
@@ -1686,6 +1739,9 @@ class PHLTIModel(LTIModel):
         """
         Convert a passive |LTIModel| to a |PHLTIModel|.
 
+        .. note::
+            The method uses dense computations and converts `model` to dense matrices.
+
         Parameters
         ----------
         model
@@ -1694,20 +1750,24 @@ class PHLTIModel(LTIModel):
             If `True`, the resulting |PHLTIModel| will have :math:`Q=I`.
         """
         # Determine solution of KYP inequality
-        L = VectorArrayOperator(model.gramian('pr_o_lrcf'), adjoint=True)
-        X = L.H @ L
+        X = model.gramian('pr_o_dense')
+        A, B, C, D, E = model.to_matrices()
+
+        XinvAT = np.linalg.solve(X, A.T)
+        AXinv = XinvAT.T # X is symmetric
+        XinvCT = np.linalg.solve(X, C.T)
 
         Q = X
-        E = model.E
-        J = 0.5 * (model.A @ InverseOperator(X) - InverseOperator(X) @ model.A.H)
-        R = -0.5 * (model.A @ InverseOperator(X) + InverseOperator(X) @ model.A.H)
-        G = 0.5 * (InverseOperator(X) @ model.C.H + model.B)
-        P = 0.5 * (InverseOperator(X) @ model.C.H - model.B)
-        S = 0.5 * (model.D + model.D.H)
-        N = 0.5 * (model.D - model.D.H)
+        J = 0.5 * (AXinv - XinvAT)
+        R = -0.5 * (AXinv + XinvAT)
+        G = 0.5 * (XinvCT + B)
+        P = 0.5 * (XinvCT - B)
+        S = 0.5 * (D + D.T)
+        N = 0.5 * (D - D.T)
 
-        return cls(E=E, J=J, R=R, G=G, P=P, S=S, N=N, Q=Q, solver_options=model.solver_options,
-                   error_estimator=model.error_estimator, visualizer=model.visualizer, name=model.name)
+        return PHLTIModel.from_matrices(J, R, G, P=P, S=S, N=N, E=E, Q=Q, solver_options=model.solver_options,
+                                        error_estimator=model.error_estimator, visualizer=model.visualizer,
+                                        name=model.name)
 
     def __str__(self):
         string = (
@@ -1797,8 +1857,18 @@ class PHLTIModel(LTIModel):
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                    name=name)
 
-    def to_matrices(self):
+    def to_matrices(self, format=None, mu=None):
         """Return operators as matrices.
+
+        Parameters
+        ----------
+        format
+            Format of the resulting matrices: |NumPy array| if 'dense',
+            otherwise the appropriate |SciPy spmatrix|.
+            If `None`, a choice between dense and sparse format is
+            automatically made.
+        mu
+            The |parameter values| for which to convert the operators.
 
         Returns
         -------
@@ -1819,14 +1889,14 @@ class PHLTIModel(LTIModel):
         Q
             The |NumPy array| or |SciPy spmatrix| Q  or `None` (if Q is an `IdentityOperator`).
         """
-        J = to_matrix(self.J)
-        R = to_matrix(self.R)
-        G = to_matrix(self.G)
-        P = None if isinstance(self.P, ZeroOperator) else to_matrix(self.P)
-        S = None if isinstance(self.S, ZeroOperator) else to_matrix(self.S)
-        N = None if isinstance(self.N, ZeroOperator) else to_matrix(self.N)
-        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E)
-        Q = None if isinstance(self.Q, IdentityOperator) else to_matrix(self.Q)
+        J = to_matrix(self.J, format, mu)
+        R = to_matrix(self.R, format, mu)
+        G = to_matrix(self.G, format, mu)
+        P = None if isinstance(self.P, ZeroOperator) else to_matrix(self.P, format, mu)
+        S = None if isinstance(self.S, ZeroOperator) else to_matrix(self.S, format, mu)
+        N = None if isinstance(self.N, ZeroOperator) else to_matrix(self.N, format, mu)
+        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format, mu)
+        Q = None if isinstance(self.Q, IdentityOperator) else to_matrix(self.Q, format, mu)
 
         return J, R, G, P, S, N, E, Q
 
@@ -1956,17 +2026,28 @@ class SecondOrderModel(Model):
     def __init__(self, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
                  solver_options=None, error_estimator=None, visualizer=None, name=None):
 
-        assert M.linear and M.source == M.range
-        assert E.linear and E.source == E.range == M.source
-        assert K.linear and K.source == K.range == M.source
-        assert B.linear and B.range == M.source
-        assert Cp.linear and Cp.source == M.range
+        assert M.linear
+        assert M.source == M.range
+        assert E.linear
+        assert E.source == E.range
+        assert E.source == M.source
+        assert K.linear
+        assert K.source == K.range
+        assert K.source == M.source
+        assert B.linear
+        assert B.range == M.source
+        assert Cp.linear
+        assert Cp.source == M.range
 
         Cv = Cv or ZeroOperator(Cp.range, Cp.source)
-        assert Cv.linear and Cv.source == M.range and Cv.range == Cp.range
+        assert Cv.linear
+        assert Cv.source == M.range
+        assert Cv.range == Cp.range
 
         D = D or ZeroOperator(Cp.range, B.source)
-        assert D.linear and D.source == B.source and D.range == Cp.range
+        assert D.linear
+        assert D.source == B.source
+        assert D.range == Cp.range
 
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
@@ -1978,14 +2059,17 @@ class SecondOrderModel(Model):
         self.solution_space = M.source
         self.dim_output = Cp.range.dim
 
-        K = lambda s: s ** 2 * self.M + s * self.E + self.K
-        B = lambda s: self.B
-        C = lambda s: self.Cp + s * self.Cv
-        D = lambda s: self.D
-        dK = lambda s: 2 * s * self.M + self.E
-        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
-        dC = lambda s: self.Cv
-        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
+        s = ProjectionParameterFunctional('s')
+        s_quad = ExpressionParameterFunctional('s[0]**2', parameters=s.parameters)
+
+        K = s_quad * self.M + s * self.E + self.K
+        B = self.B
+        C = self.Cp + s * self.Cv
+        D = self.D
+        dK = 2 * s * self.M + self.E
+        dB = ZeroOperator(self.B.range, self.B.source)
+        dC = self.Cv
+        dD = ZeroOperator(self.D.range, self.D.source)
         parameters = Parameters.of(self.M, self.E, self.K, self.B, self.Cp, self.Cv, self.D)
 
         self.transfer_function = FactorizedTransferFunction(
@@ -2090,8 +2174,13 @@ class SecondOrderModel(Model):
         return cls(M, E, K, B, Cp, Cv, D, sampling_time=sampling_time,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer, name=name)
 
-    def to_matrices(self):
+    def to_matrices(self, mu=None):
         """Return operators as matrices.
+
+        Parameters
+        ----------
+        mu
+            The |parameter values| for which to convert the operators.
 
         Returns
         -------
@@ -2110,13 +2199,13 @@ class SecondOrderModel(Model):
         D
             The |NumPy array| or |SciPy spmatrix| D or `None` (if D is a `ZeroOperator`).
         """
-        M = to_matrix(self.M)
-        E = to_matrix(self.E)
-        K = to_matrix(self.K)
-        B = to_matrix(self.B)
-        Cp = to_matrix(self.Cp)
-        Cv = None if isinstance(self.Cv, ZeroOperator) else to_matrix(self.Cv)
-        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D)
+        M = to_matrix(self.M, mu=mu)
+        E = to_matrix(self.E, mu=mu)
+        K = to_matrix(self.K, mu=mu)
+        B = to_matrix(self.B, mu=mu)
+        Cp = to_matrix(self.Cp, mu=mu)
+        Cv = None if isinstance(self.Cv, ZeroOperator) else to_matrix(self.Cv, mu=mu)
+        D = None if isinstance(self.D, ZeroOperator) else to_matrix(self.D, mu=mu)
         return M, E, K, B, Cp, Cv, D
 
     @classmethod
@@ -2179,7 +2268,7 @@ class SecondOrderModel(Model):
                                  state_id=state_id, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
-    def to_files(self, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None):
+    def to_files(self, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, mu=None):
         """Write operators to files as matrices.
 
         Parameters
@@ -2198,6 +2287,8 @@ class SecondOrderModel(Model):
             The name of the file (with extension) containing Cv or `None` if D is a `ZeroOperator`.
         D_file
             The name of the file (with extension) containing D or `None` if D is a `ZeroOperator`.
+        mu
+            The |parameter values| for which to write the operators to files.
         """
         if Cv_file is None and not isinstance(self.Cv, ZeroOperator):
             raise ValueError('Cv is not zero, Cv_file must be given')
@@ -2206,7 +2297,7 @@ class SecondOrderModel(Model):
 
         from pymor.tools.io import save_matrix
 
-        M, E, K, B, Cp, Cv, D = self.to_matrices()
+        M, E, K, B, Cp, Cv, D = self.to_matrices(mu=mu)
         for mat, file in [(M, M_file), (E, E_file), (K, K_file),
                           (B, B_file), (Cp, Cp_file), (Cv, Cv_file), (D, D_file)]:
             if mat is None:
@@ -2647,9 +2738,14 @@ class LinearDelayModel(Model):
 
         assert A.linear
         assert A.source == A.range
-        assert isinstance(Ad, tuple) and len(Ad) > 0
-        assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in Ad)
-        assert isinstance(tau, tuple) and len(tau) == len(Ad) and all(taui > 0 for taui in tau)
+        assert isinstance(Ad, tuple)
+        assert len(Ad) > 0
+        assert all(Ai.linear for Ai in Ad)
+        assert all(Ai.source == Ai.range for Ai in Ad)
+        assert all(Ai.source == A.source for Ai in Ad)
+        assert isinstance(tau, tuple)
+        assert len(tau) == len(Ad)
+        assert all(taui > 0 for taui in tau)
         assert B.linear
         assert B.range == A.source
         assert C.linear
@@ -2674,14 +2770,17 @@ class LinearDelayModel(Model):
         self.dim_output = C.range.dim
         self.q = len(Ad)
 
-        K = lambda s: LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
-        B = lambda s: self.B
-        C = lambda s: self.C
-        D = lambda s: self.D
-        dK = lambda s: LincombOperator((E,) + Ad, (1,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
-        dB = lambda s: ZeroOperator(self.B.range, self.B.source)
-        dC = lambda s: ZeroOperator(self.C.range, self.C.source)
-        dD = lambda s: ZeroOperator(self.D.range, self.D.source)
+        s = ProjectionParameterFunctional('s')
+        exp_tau_s = lambda taui: ExpressionParameterFunctional(f'exp(- {taui} * s[0])', parameters=s.parameters)
+
+        K = LincombOperator((E, A) + Ad, (s, -1) + tuple(-exp_tau_s(taui) for taui in self.tau))
+        B = self.B
+        C = self.C
+        D = self.D
+        dK = LincombOperator((E,) + Ad, (1,) + tuple(taui * exp_tau_s(taui) for taui in self.tau))
+        dB = ZeroOperator(self.B.range, self.B.source)
+        dC = ZeroOperator(self.C.range, self.C.source)
+        dD = ZeroOperator(self.D.range, self.D.source)
         parameters = Parameters.of(self.A, self.Ad, self.B, self.C, self.D, self.E)
 
         self.transfer_function = FactorizedTransferFunction(
@@ -2927,17 +3026,27 @@ class LinearStochasticModel(Model):
     def __init__(self, A, As, B, C, D=None, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
-        assert A.linear and A.source == A.range
-        assert isinstance(As, tuple) and len(As) > 0
-        assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in As)
-        assert B.linear and B.range == A.source
-        assert C.linear and C.source == A.range
+        assert A.linear
+        assert A.source == A.range
+        assert isinstance(As, tuple)
+        assert len(As) > 0
+        assert all(Ai.linear for Ai in As)
+        assert all(Ai.source == Ai.range for Ai in As)
+        assert all(Ai.source == A.source for Ai in As)
+        assert B.linear
+        assert B.range == A.source
+        assert C.linear
+        assert C.source == A.range
 
         D = D or ZeroOperator(C.range, B.source)
-        assert D.linear and D.source == B.source and D.range == C.range
+        assert D.linear
+        assert D.source == B.source
+        assert D.range == C.range
 
         E = E or IdentityOperator(A.source)
-        assert E.linear and E.source == E.range == A.source
+        assert E.linear
+        assert E.source == E.range
+        assert E.source == A.source
 
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
@@ -3056,17 +3165,27 @@ class BilinearModel(Model):
     def __init__(self, A, N, B, C, D, E=None, sampling_time=0,
                  error_estimator=None, visualizer=None, name=None):
 
-        assert A.linear and A.source == A.range
-        assert B.linear and B.range == A.source
-        assert isinstance(N, tuple) and len(N) == B.source.dim
-        assert all(Ni.linear and Ni.source == Ni.range == A.source for Ni in N)
-        assert C.linear and C.source == A.range
+        assert A.linear
+        assert A.source == A.range
+        assert B.linear
+        assert B.range == A.source
+        assert isinstance(N, tuple)
+        assert len(N) == B.source.dim
+        assert all(Ni.linear for Ni in N)
+        assert all(Ni.source == Ni.range for Ni in N)
+        assert all(Ni.source == A.source for Ni in N)
+        assert C.linear
+        assert C.source == A.range
 
         D = D or ZeroOperator(C.range, B.source)
-        assert D.linear and D.source == B.source and D.range == C.range
+        assert D.linear
+        assert D.source == B.source
+        assert D.range == C.range
 
         E = E or IdentityOperator(A.source)
-        assert E.linear and E.source == E.range == A.source
+        assert E.linear
+        assert E.source == E.range
+        assert E.source == A.source
 
         sampling_time = float(sampling_time)
         assert sampling_time >= 0
@@ -3171,3 +3290,40 @@ def _poles_b_c_to_lti(poles, b, c):
     B = np.vstack(B)
     C = np.hstack(C)
     return LTIModel.from_matrices(A, B, C)
+
+
+class StepFunction(Function):
+
+    dim_domain = 1
+
+    def __init__(self, dim_input, component, sampling_time):
+        super().__init__()
+        self.__auto_init(locals())
+        self.shape_range = (dim_input,)
+
+    def evaluate(self, x, mu=None):
+        e = np.zeros(self.dim_input)
+        e[self.component] = self.sampling_time if self.sampling_time > 0 else 1
+        return e
+
+    def _cache_key_reduce(self):
+        return ('StepFunction', self.dim_input, self.component, self.sampling_time)
+
+
+class ImpulseFunction(Function):
+
+    dim_domain = 1
+
+    def __init__(self, dim_input, component, sampling_time):
+        super().__init__()
+        self.__auto_init(locals())
+        self.shape_range = (dim_input,)
+
+    def evaluate(self, x, mu=None):
+        e = np.zeros(self.dim_input)
+        if x[0] == 0:
+            e[self.component] = self.sampling_time
+        return e
+
+    def _cache_key_reduce(self):
+        return ('ImpulseFunction', self.dim_input, self.component, self.sampling_time)

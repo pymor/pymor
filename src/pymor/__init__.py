@@ -2,21 +2,11 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-__version__ = '2023.2.0.dev0'
+__version__ = '2024.1.0.dev0'
 
 import os
 import platform
 import sys
-
-if sys.version_info.major < 3:
-    raise RuntimeError('pyMOR requires Python 3.6 or newer')
-elif sys.version_info.major == 3:
-    if sys.version_info.minor < 6:
-        raise RuntimeError('pyMOR requires Python 3.6 or newer.')
-    if sys.version_info.minor == 6 and platform.python_implementation() != 'CPython':
-        # dicts are only guaranteed to be insertion ordered for Python 3.7 or newer.
-        # For CPython this is already the case for Python 3.6.
-        raise RuntimeError('pyMOR requires Python 3.7 or newer for non-CPython interpreters.')
 
 
 def _init_mpi():
@@ -48,8 +38,8 @@ def _init_mpi():
 
 _init_mpi()
 
-from pymor.core.config import config
-from pymor.core.defaults import load_defaults_from_file
+from pymor.core.config import config, is_jupyter
+from pymor.core.defaults import defaults, load_defaults_from_file
 
 if 'PYMOR_DEFAULTS' in os.environ:
     filename = os.environ['PYMOR_DEFAULTS']
@@ -58,7 +48,7 @@ if 'PYMOR_DEFAULTS' in os.environ:
     else:
         for fn in filename.split(':'):
             if not os.path.exists(fn):
-                raise IOError('Cannot load pyMOR defaults from file ' + fn)
+                raise OSError('Cannot load pyMOR defaults from file ' + fn)
             print('Loading pyMOR defaults from file ' + fn + ' (set by PYMOR_DEFAULTS)')
             load_defaults_from_file(fn)
 else:
@@ -66,7 +56,7 @@ else:
     if os.path.exists(filename):
         from pymor.tools.io import file_owned_by_current_user
         if not file_owned_by_current_user(filename):
-            raise IOError('Cannot load pyMOR defaults from config file ' + filename
+            raise OSError('Cannot load pyMOR defaults from config file ' + filename
                           + ': not owned by user running Python interpreter')
         print('Loading pyMOR defaults from file ' + filename)
         load_defaults_from_file(filename)
@@ -75,6 +65,19 @@ from pymor.core.logger import set_log_format, set_log_levels
 
 set_log_levels()
 set_log_format()
+
+
+@defaults('enabled')
+def auto_load_jupyter_extension(enabled=True):
+    if not enabled:
+        return
+    if is_jupyter() and config.HAVE_IPYWIDGETS:
+        from IPython import get_ipython
+        ip = get_ipython()
+        ip.run_line_magic('load_ext', 'pymor.tools.jupyter')
+
+auto_load_jupyter_extension()
+
 
 from pymor.tools import mpi
 
@@ -89,5 +92,4 @@ if mpi.parallel and mpi.event_loop_settings()['auto_launch']:
         print(f'Rank {mpi.rank}: MPI parallel run detected. Launching event loop ...')
     mpi.launch_event_loop()
     if not mpi.rank0:
-        import sys
         sys.exit(0)

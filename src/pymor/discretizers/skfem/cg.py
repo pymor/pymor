@@ -177,12 +177,16 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
     data
         Dictionary with the following entries:
 
-            :mesh:             The generated `skfem.Mesh`.
-            :basis:            The generated `skfem.Basis`.
-            :boundary_facets:  Dict of `boundary_facets` of `mesh` per boundary type.
-            :dirichlet_dofs:   DOFs of the `skfem.Basis` associated with the Dirichlet boundary.
-            :unassembled_m:    In case `preassemble` is `True`, the generated |Model|
-                               before preassembling operators.
+        :mesh:
+            The generated `skfem.Mesh`.
+        :basis:
+            The generated `skfem.Basis`.
+        :boundary_facets:
+            Dict of `boundary_facets` of `mesh` per boundary type.
+        :dirichlet_dofs:
+            DOFs of the `skfem.Basis` associated with the Dirichlet boundary.
+        :unassembled_m:
+            In case `preassemble` is `True`, the generated |Model| before preassembling operators.
     """
     assert isinstance(analytical_problem, StationaryProblem)
 
@@ -279,8 +283,10 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
             else:
                 boundary_basis = boundary_basis or BoundaryFacetBasis(mesh, element)
                 outputs.append(
-                    _assemble_operator(v[1], 'l2_boundary_output',
-                                       lambda f, n: L2Functional(boundary_basis, f, name=n).H)
+                    _assemble_operator(
+                        v[1], 'l2_boundary_output',
+                        lambda f, n, boundary_basis=boundary_basis: L2Functional(boundary_basis, f, name=n).H
+                    )
                 )
         if len(outputs) > 1:
             from pymor.operators.block import BlockColumnOperator

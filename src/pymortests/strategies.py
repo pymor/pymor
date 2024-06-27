@@ -7,7 +7,7 @@ import numpy as np
 from hypothesis import assume, given
 from hypothesis import strategies as hyst
 from hypothesis.extra import numpy as hynp
-from scipy.stats._multivariate import random_correlation_gen
+from scipy.stats import random_correlation
 
 from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, Function
 from pymor.core.config import config
@@ -104,7 +104,7 @@ def _block_vector_spaces(draw, np_data_list, compatible, count, dims):
         if c == 0 or (not compatible and c > 0):
             block_dims = _block_dims(d)
         constituent_spaces = [NumpyVectorSpace(dim) for dim in block_dims]
-        # TODO this needs to be relaxed again
+        # TODO: this needs to be relaxed again
         assume(len(constituent_spaces))
         ret.append((BlockVectorSpace(constituent_spaces), ar))
     return ret
@@ -162,7 +162,10 @@ _picklable_vector_space_types = [] if BUILTIN_DISABLED else ['numpy', 'numpy_lis
 def vector_arrays(draw, space_types, count=1, dtype=None, length=None, compatible=True):
     dims = draw(_hy_dims(count, compatible))
     dtype = dtype or draw(hy_dtypes)
-    lngs = draw(length or hyst.tuples(*[hy_lengths for _ in range(count)]))
+    if length is not None:
+        lngs = draw(length)
+    else:
+        lngs = draw(hyst.tuples(*[hy_lengths for _ in range(count)]))
     np_data_list = [draw(_np_arrays(l, dim, dtype=dtype)) for l, dim in zip(lngs, dims)]
     space_type = draw(hyst.sampled_from(space_types))
     space_data = globals()[f'_{space_type}_vector_spaces'](draw, np_data_list, compatible, count, dims)
@@ -229,7 +232,7 @@ def given_vector_arrays(which='all', count=1, dtype=None, length=None, compatibl
     return inner_backend_decorator
 
 
-# TODO match st_valid_inds results to this
+# TODO: match st_valid_inds results to this
 def valid_inds(v, length=None):
     if length is None:
         yield []
@@ -242,7 +245,7 @@ def valid_inds(v, length=None):
         yield list(range(-len(v), len(v)))
         yield list(range(int(len(v)/2)))
         yield list(range(len(v))) * 2
-        # TODO what's with the magic number here?
+        # TODO: what's with the magic number here?
         # Maybe related to this?
         # pymortests/vectorarray.py:910: VisibleDeprecationWarning:
         #   Creating an ndarray from nested sequences exceeding
@@ -251,11 +254,11 @@ def valid_inds(v, length=None):
         #  'dtype=object' when creating the ndarray.
         length = 32
     if len(v) > 0:
-        for ind in [-len(v), 0, len(v) - 1]:
-            yield ind
+        yield from [-len(v), 0, len(v) - 1]
         if len(v) == length:
             yield slice(None)
-        yield list(np.random.randint(-len(v), len(v), size=length))
+        rng = np.random.default_rng(0)
+        yield list(rng.integers(-len(v), len(v), size=length))
     else:
         if len(v) == 0:
             yield slice(0, 0)
@@ -284,7 +287,7 @@ def valid_indices(draw, array_strategy, length=None):
     return v, draw(indices)
 
 
-# TODO match st_valid_inds_of_same_length results to this
+# TODO: match st_valid_inds_of_same_length results to this
 def valid_inds_of_same_length(v1, v2):
     if len(v1) == len(v2):
         yield slice(None), slice(None)
@@ -301,18 +304,19 @@ def valid_inds_of_same_length(v1, v2):
         yield -len(v1), -len(v2)
         yield [0], 0
         yield (list(range(min(len(v1), len(v2))//2)),) * 2
+        rng = np.random.default_rng(0)
         for count in np.linspace(0, min(len(v1), len(v2)), 3).astype(int):
-            yield (list(np.random.randint(-len(v1), len(v1), size=count)),
-                   list(np.random.randint(-len(v2), len(v2), size=count)))
-        yield slice(None), np.random.randint(-len(v2), len(v2), size=len(v1))
-        yield np.random.randint(-len(v1), len(v1), size=len(v2)), slice(None)
+            yield (list(rng.integers(-len(v1), len(v1), size=count)),
+                   list(rng.integers(-len(v2), len(v2), size=count)))
+        yield slice(None), rng.integers(-len(v2), len(v2), size=len(v1))
+        yield rng.integers(-len(v1), len(v1), size=len(v2)), slice(None)
 
 
 @hyst.composite
 def st_valid_inds_of_same_length(draw, v1, v2):
     len1, len2 = len(v1), len(v2)
     ret = hyst.just(([], []))
-    # TODO we should include integer arrays here by chaining
+    # TODO: we should include integer arrays here by chaining
     # `| hynp.integer_array_indices(shape=(LEN_X,))`
     if len1 == len2:
         ints = hyst.integers(min_value=-len1, max_value=max(len1 - 1, 0))
@@ -339,7 +343,7 @@ def st_scaling_value(draw, v1, v2=None):
     return v1, r1
 
 
-# TODO match st_valid_inds_of_different_length results to this
+# TODO: match st_valid_inds_of_different_length results to this
 def valid_inds_of_different_length(v1, v2):
     # note this potentially yields no result at all for dual 0 length inputs
     if len(v1) != len(v2):
@@ -355,14 +359,15 @@ def valid_inds_of_different_length(v1, v2):
             yield 0, [0, 1]
             yield [0], [0, 1]
         for count1 in np.linspace(0, len(v1), 3).astype(int):
-            count2 = np.random.randint(0, len(v2))
+            rng = np.random.default_rng(0)
+            count2 = rng.integers(0, len(v2))
             if count2 == count1:
                 count2 += 1
                 if count2 == len(v2):
                     count2 -= 2
             if count2 >= 0:
-                yield (list(np.random.randint(-len(v1), len(v1), size=count1)),
-                       list(np.random.randint(-len(v2), len(v2), size=count2)))
+                yield (list(rng.integers(-len(v1), len(v1), size=count1)),
+                       list(rng.integers(-len(v2), len(v2), size=count2)))
 
 
 @hyst.composite
@@ -377,7 +382,7 @@ def st_valid_inds_of_different_length(draw, v1, v2):
         return False  # both scalars => not of different length
 
     len1, len2 = len(v1), len(v2)
-    # TODO we should include integer arrays here
+    # TODO: we should include integer arrays here
     val1 = hyst.slices(len1)  # | hynp.integer_array_indices(shape=(len1,))
     val2 = hyst.slices(len2)  # | hynp.integer_array_indices(shape=(len1,))
     ret = hyst.tuples(val1, val2).filter(_filter)
@@ -451,7 +456,7 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     -------
     A list of |VectorArray| linear-independent objects of same dimension and length.
     """
-    dtype = dtype or np.float_
+    dtype = dtype or np.float64
     # simplest way currently of getting a |VectorSpace| to construct our new arrays from
     space_types = _picklable_vector_space_types + _other_vector_space_types
     space = draw(vector_arrays(count=1, dtype=dtype, length=hyst.just((1,)), compatible=True, space_types=space_types)
@@ -459,22 +464,20 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
     length = space.dim
 
     # this lets hypothesis control np's random state too
-    random = draw(hyst.random_module())
-    # scipy performs this check although technically numpy accepts a different range
-    assume(0 <= random.seed < 2**32 - 1)
-    random_correlation = random_correlation_gen(random.seed)
+    random = draw(hyst.randoms())
+    rng = np.random.default_rng(random.randint(0, 2**32-1))
 
     def _eigs():
         """Sum must equal to `length` for the scipy construct method."""
         min_eig, max_eig = 0.001, 1.
-        eigs = np.asarray((max_eig-min_eig)*np.random.random(length-1) + min_eig, dtype=float)
+        eigs = np.asarray(rng.uniform(min_eig, max_eig, length-1), dtype=float)
         return np.append(eigs, [length - np.sum(eigs)])
 
     if length > 1:
-        mat = [random_correlation.rvs(_eigs(), tol=1e-12) for _ in range(count)]
+        mat = [random_correlation.rvs(_eigs(), tol=1e-12, random_state=rng) for _ in range(count)]
         return [space.from_numpy(m) for m in mat]
     else:
-        scalar = 4*np.random.random((1, 1))+0.1
+        scalar = rng.uniform(0.1, 4, (1, 1))
         return [space.from_numpy(scalar) for _ in range(count)]
 
 
@@ -502,7 +505,7 @@ def active_mu_data(draw, min_num=1, max_num=3, min_dim=1, max_dim=5, num_mus=10)
         low_active_indices = sample(active_inds, num_low)
         high_active_indices = list(set(active_inds) - set(low_active_indices))
 
-        mu_range = list(space.ranges.values())[0]
+        mu_range = next(iter(space.ranges.values()))
         val = .5 * (mu_range[0] + mu_range[1])
         mu = val * np.ones(dim)
         mu[low_active_indices] = mu_range[0]

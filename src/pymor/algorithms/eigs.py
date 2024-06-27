@@ -78,14 +78,16 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
     """
     logger = getLogger('pymor.algorithms.eigs.eigs')
 
-    assert isinstance(A, Operator) and A.linear
+    assert isinstance(A, Operator)
+    assert A.linear
     assert not A.parametric
     assert A.source == A.range
 
     if E is None:
         E = IdentityOperator(A.source)
     else:
-        assert isinstance(E, Operator) and E.linear
+        assert isinstance(E, Operator)
+        assert E.linear
         assert not E.parametric
         assert E.source == E.range
         assert E.source == A.source
@@ -198,7 +200,7 @@ def _arnoldi(A, l, b, complex_evp):
     """Compute an Arnoldi factorization."""
     v = b * (1 / b.norm()[0])
 
-    H = np.zeros((l, l), dtype=np.complex_ if complex_evp else np.float_)
+    H = np.zeros((l, l), dtype=np.complex128 if complex_evp else np.float64)
     V = A.source.empty(reserve=l)
 
     V.append(v)
@@ -246,10 +248,10 @@ def _qr_iteration(H, shifts, complex_evp=False):
     while i < len(shifts) - 1:
         s = shifts[i]
         if not complex_evp and shifts[i].imag != 0:
-            Q, _ = np.linalg.qr(H @ H - 2 * s.real * H + np.abs(s)**2 * np.eye(len(H)))
+            Q, _ = spla.qr(H @ H - 2 * s.real * H + np.abs(s)**2 * np.eye(len(H)))
             i += 2
         else:
-            Q, _ = np.linalg.qr(H - s * np.eye(len(H)))
+            Q, _ = spla.qr(H - s * np.eye(len(H)))
             i += 1
         Qs = Qs @ Q
         H = Q.T @ H @ Q

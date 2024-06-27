@@ -35,7 +35,7 @@ class Parameters(SortedFrozenDict):
     __slots__ = ()
 
     def _post_init(self):
-        assert all(type(k) is str and type(v) is int and 0 <= v
+        assert all(isinstance(k, str) and isinstance(v, int) and 0 <= v
                    for k, v in self.items())
         assert self.get('t', 1) == 1, 'time parameter must have length 1'
 
@@ -56,7 +56,8 @@ class Parameters(SortedFrozenDict):
         parameters = {}
 
         def check_dims(param, dim1, dim2):
-            assert isinstance(dim2, int) and dim2 >= 0, f'Dimension of parameter {param} not an int or negative'
+            assert isinstance(dim2, int), f'Dimension of parameter {param} not an int'
+            assert dim2 >= 0, f'Dimension of parameter {param} negative'
             assert dim1 is None or dim1 == dim2, \
                 f'Dimension mismatch for parameter {param} (got {dim1} and {dim2})'
             return True
@@ -164,7 +165,8 @@ class Parameters(SortedFrozenDict):
             parsed_mu = {}
             for k, v in self.items():
                 if len(mu) > 0 and isinstance(mu[0], Function) and \
-                        len(mu[0].shape_range) == 1 and mu[0].shape_range[0] > 1:
+                        len(mu[0].shape_range) == 1 and \
+                        (mu[0].shape_range[0] > 1 or v == 1):
                     p, mu = mu[0], mu[1:]
                     p.shape_range[0] == v or \
                         fail(f'shape of parameter function for parameter {k} must be {v} (not {p.shape_range[0]}):\n'
@@ -344,8 +346,15 @@ class Mu(FrozenDict):
                 # time dependency significantly more expensive).
                 from pymor.analyticalproblems.functions import Function
                 assert k != 't'
-                assert isinstance(v, Function) and v.dim_domain == 1 and len(v.shape_range) == 1
-                vv = v(raw_values.get('t', 0))
+                assert isinstance(v, Function)
+                assert v.dim_domain == 1
+                assert len(v.shape_range) == 1
+                try:
+                    t = np.array(raw_values['t'], ndmin=1)
+                    assert t.shape == (1,)
+                except KeyError:
+                    t = np.zeros(1)
+                vv = v(t)
             else:
                 vv = np.array(v, copy=False, ndmin=1)
                 assert vv.ndim == 1
@@ -464,6 +473,9 @@ class Mu(FrozenDict):
 
     def __repr__(self):
         return f'Mu({dict(sorted(self._raw_values.items()))})'
+
+    def _cache_key_reduce(self):
+        return self._raw_values
 
 
 class ParametricObject(ImmutableObject):

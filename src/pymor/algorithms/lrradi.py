@@ -154,9 +154,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
             Yt = np.eye(len(C)) - (VB @ VB.T) / (2 * shifts[j_shift].real)
             Y = spla.block_diag(Y, Yt)
             if not trans:
-                EVYt = E.apply(V).lincomb(np.linalg.inv(Yt))
+                EVYt = E.apply(V).lincomb(spla.inv(Yt))
             else:
-                EVYt = E.apply_adjoint(V).lincomb(np.linalg.inv(Yt))
+                EVYt = E.apply_adjoint(V).lincomb(spla.inv(Yt))
             RF.axpy(np.sqrt(-2*shifts[j_shift].real), EVYt)
             K += EVYt.lincomb(VB.T)
             j += 1
@@ -184,9 +184,9 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
                 - (F3 @ F3.T) / 2
             Y = spla.block_diag(Y, Yt)
             if not trans:
-                EVYt = E.apply(cat_arrays([V.real, V.imag])).lincomb(np.linalg.inv(Yt))
+                EVYt = E.apply(cat_arrays([V.real, V.imag])).lincomb(spla.inv(Yt))
             else:
-                EVYt = E.apply_adjoint(cat_arrays([V.real, V.imag])).lincomb(np.linalg.inv(Yt))
+                EVYt = E.apply_adjoint(cat_arrays([V.real, V.imag])).lincomb(spla.inv(Yt))
             RF.axpy(np.sqrt(-2 * shifts[j_shift].real), EVYt[:len(C)])
             K += EVYt.lincomb(F2.T)
             j += 2

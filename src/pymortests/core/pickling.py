@@ -30,7 +30,7 @@ if config.HAVE_DUNEGDT:
             return False
         if not isinstance(second, IstlVector):
             return False
-        if not len(first) == len(second):
+        if len(first) != len(second):
             return False
         assert_is_equal(np.array(first, copy=False), np.array(second, copy=False))
         return True

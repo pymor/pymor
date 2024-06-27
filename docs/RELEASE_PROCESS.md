@@ -46,6 +46,8 @@ The release manager is responsible for ensuring that the following steps are per
         (new feature PRs have to wait until after the release to get merged).
   - [ ] Determine number of commits and so on for the release notes and add these information.
         Merge the release notes branch into `main` when they are finished.
+  - [ ] Update `AUTHORS.md` to include attributions for relevant contributions made to the
+        release by non-main devs.
 - [ ] At the day of the release:
   - [ ] Follow the steps outlined in [`RELEASE_CHECKLIST`](RELEASE_CHECKLIST.md).
 - [ ] In the first community meeting after the release:

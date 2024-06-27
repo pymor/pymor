@@ -11,26 +11,38 @@ from pymor.reductors.loewner import LoewnerReductor
 
 pytestmark = pytest.mark.builtin
 
-np.random.seed(0)
-custom_partitioning = np.random.permutation(40)
 
-test_data = [
-    ({'r': 20}, {}),
-    ({'tol': 1e-12}, {}),
-    ({'tol': 1e-12}, {'partitioning': 'even-odd'}),
-    ({'tol': 1e-12}, {'partitioning': 'half-half'}),
-    ({'tol': 1e-12}, {'partitioning': (custom_partitioning[:20], custom_partitioning[20:])}),
-    ({'tol': 1e-12}, {'ordering': 'magnitude'}),
-    ({'tol': 1e-12}, {'ordering': 'random'}),
-    ({'tol': 1e-12}, {'ordering': 'regular'}),
-    ({'tol': 1e-12}, {'conjugate': False}),
-    ({'tol': 1e-12}, {'mimo_handling': 'full'}),
-    ({'tol': 1e-12}, {'mimo_handling': 'random'}),
-    ({'tol': 1e-12}, {'mimo_handling': (np.random.rand(40, 3), np.random.rand(2, 40))})
-]
+def custom_partitioning(rng):
+    p = rng.permutation(40)
+    return p[:20], p[20:]
+
+@pytest.fixture(
+    params=[
+        lambda rng: ({'r': 20}, {}),
+        lambda rng: ({'tol': 1e-12}, {}),
+        lambda rng: ({'tol': 1e-12}, {'partitioning': 'even-odd'}),
+        lambda rng: ({'tol': 1e-12}, {'partitioning': 'half-half'}),
+        lambda rng: ({'tol': 1e-12}, {'partitioning': custom_partitioning(rng)}),
+        lambda rng: ({'tol': 1e-12}, {'ordering': 'magnitude'}),
+        lambda rng: ({'tol': 1e-12}, {'ordering': 'random'}),
+        lambda rng: ({'tol': 1e-12}, {'ordering': 'regular'}),
+        lambda rng: ({'tol': 1e-12}, {'conjugate': False}),
+        lambda rng: ({'tol': 1e-12}, {'mimo_handling': 'full'}),
+        lambda rng: ({'tol': 1e-12}, {'mimo_handling': 'random'}),
+        lambda rng: ({'tol': 1e-12}, {'mimo_handling': (rng.random((40, 3)), rng.random((2, 40)))})
+    ])
+def reduce_kwargs_and_lowener_kwargs(rng, request):
+    return request.param(rng)
+
+@pytest.fixture()
+def reduce_kwargs(reduce_kwargs_and_lowener_kwargs):
+    return reduce_kwargs_and_lowener_kwargs[0]
+
+@pytest.fixture()
+def loewner_kwargs(reduce_kwargs_and_lowener_kwargs):
+    return reduce_kwargs_and_lowener_kwargs[1]
 
 
-@pytest.mark.parametrize('reduce_kwargs,loewner_kwargs', test_data)
 def test_loewner_lti(reduce_kwargs, loewner_kwargs):
     fom = make_fom(10)
     s = np.logspace(1, 3, 40)*1j
@@ -40,7 +52,6 @@ def test_loewner_lti(reduce_kwargs, loewner_kwargs):
         / np.abs(fom.transfer_function.eval_tf(ss)) < 1e-10 for ss in s])
 
 
-@pytest.mark.parametrize('reduce_kwargs,loewner_kwargs', test_data)
 def test_loewner_tf(reduce_kwargs, loewner_kwargs):
     fom = make_fom(10)
     s = np.logspace(1, 3, 40)*1j
@@ -50,7 +61,6 @@ def test_loewner_tf(reduce_kwargs, loewner_kwargs):
         / np.abs(fom.transfer_function.eval_tf(ss)) < 1e-10 for ss in s])
 
 
-@pytest.mark.parametrize('reduce_kwargs,loewner_kwargs', test_data)
 def test_loewner_data(reduce_kwargs, loewner_kwargs):
     fom = make_fom(10)
     s = np.logspace(1, 3, 40)

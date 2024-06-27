@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
@@ -51,7 +51,7 @@ Arguments:
         usage()
     demo = sys.argv[1]
     if demo in shorts:
-        if demo in fails.keys():
+        if demo in fails:
             print(str(fails[demo]))
             print(f'\nThe {demo} pyMOR demo needs additional packages to be installed (see above error for details).')
             print('\nYou can try to `pip install pymor[full]` to install optional dependencies.\n')

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
@@ -90,8 +90,10 @@ def main(
     # write results to disk
     #######################
     from pymor.core.pickle import dump
-    dump((rom, parameter_space), open('reduced_model.out', 'wb'))
-    dump(results, open('results.out', 'wb'))
+    with open('reduced_model.out', 'wb') as f:
+        dump((rom, parameter_space), f)
+    with open('results.out', 'wb') as f:
+        dump(results, f)
 
     # visualize reduction error for worst-approximated mu
     #####################################################

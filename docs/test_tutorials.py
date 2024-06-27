@@ -23,7 +23,7 @@ class NBLaxFixture(NBRegressionFixture):
         return super().check(path=path, raise_errors=False)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture()
 def nb_lax(pytestconfig):
     kwargs, other_args = gather_config_options(pytestconfig)
     return NBLaxFixture(**kwargs)
