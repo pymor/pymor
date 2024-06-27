@@ -69,11 +69,11 @@ from pymor.models.examples import thermal_block_example
 fom = thermal_block_example()
 
 # FOM is parameter separable, i.e., system operator is a
-# linear combination non-parametric operators
+# linear combination of non-parametric operators with parametric coefficients
 print(repr(fom.operator))
 
-# instatiate reductor that builds the ROM given some reduced basis
-# `product` is inner product w.r.t. which MOR error is estimated
+# instantiate reductor that builds the ROM given some reduced basis;
+# `product` is inner product w.r.t. which MOR error is estimated;
 # `coercivity_estimator` needs to return lower bound for the operator's
 # coercivity constant (w.r.t. given `product`) for the given parameter values
 from pymor.parameters.functionals import ExpressionParameterFunctional
@@ -140,7 +140,7 @@ from pymor.parameters.functionals import ExpressionParameterFunctional
 mu = fom.parameters.parse([0.1, 0.9, 0.2, 0.3])
 naive_coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
 print(f"Naive coercivity constant estimate: {naive_coercivity_estimator.evaluate(mu)}")
-print(f"Coercivitiy constant estimate using min-theta approach: {coercivity_estimator.evaluate(mu)}")
+print(f"Coercivity constant estimate using min-theta approach: {coercivity_estimator.evaluate(mu)}")
 print(f"Continuity constant estimate using max-theta approach: {continuity_estimator.evaluate(mu)}")
 ```
 
@@ -164,7 +164,7 @@ from pymor.parameters.functionals import ExpressionParameterFunctional
 mu = fom.parameters.parse([0.1, 0.9, 0.2, 0.3])
 naive_coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
 print(f"Naive coercivity constant estimate: {naive_coercivity_estimator.evaluate(mu)}")
-print(f"Coercivitiy constant estimate using successive constraints method: {coercivity_estimator.evaluate(mu)}")
+print(f"Coercivity constant estimate using successive constraints method: {coercivity_estimator.evaluate(mu)}")
 ```
 
 ## LTI System MOR
