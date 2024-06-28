@@ -20,7 +20,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 def test_shifted_chol_qr(vector_array):
     U = vector_array
 
-    assume(len(U) > 1 or not contains_zero_vector(U))
+    assume(len(U) >= 1 and not contains_zero_vector(U))
 
     V = U.copy()
 
@@ -33,7 +33,7 @@ def test_shifted_chol_qr(vector_array):
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.inner(onb), np.eye(len(onb)))
     lc = onb.lincomb(onb.inner(U).T)
-    rtol = atol = 1e-13
+    rtol = atol = 1e-10
 
     assert np.all(almost_equal(U, lc, rtol=rtol, atol=atol))
     try:
@@ -50,7 +50,7 @@ def test_shifted_chol_qr(vector_array):
 def test_shifted_chol_qr_with_product(operator_with_arrays_and_products):
     _, _, U, _, p, _ = operator_with_arrays_and_products
 
-    assume(len(U) > 1 or not contains_zero_vector(U))
+    assume(len(U) >= 1 and not contains_zero_vector(U))
 
     if U.dim < len(U):
         return

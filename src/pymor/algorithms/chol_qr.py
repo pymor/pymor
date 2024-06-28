@@ -114,11 +114,15 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None,
             # This will compute the Cholesky factor of the lower right block
             # and keep applying shifts if it breaks down.
             X -= B@B.T
+            it = 0
             while True:
                 try:
                     Rx = spla.cholesky(X, overwrite_a=True, check_finite=check_finite)
                     break
                 except spla.LinAlgError:
+                    it += 1
+                    if it > 100:
+                        assert False
                     logger.warning('Cholesky factorization broke down! Matrix is ill-conditioned.')
                     logger.info(f'Applying shift: {shift}')
                     X[np.diag_indices_from(X)] += shift
