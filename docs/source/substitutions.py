@@ -150,6 +150,7 @@ common = """
 .. |Array| replace:: :class:`NumPy array <numpy.ndarray>`
 
 .. |SciPy| replace:: :mod:`SciPy <scipy>`
+.. |SciPy linalg| replace:: :mod:`SciPy linalg <scipy.linalg>`
 .. |SciPy spmatrix| replace:: :class:`SciPy spmatrix <scipy.sparse.spmatrix>`
 .. |SciPy spmatrices| replace:: :class:`SciPy spmatrices <scipy.sparse.spmatrix>`
 .. |Scipy spmatrix| replace:: :class:`SciPy spmatrix <scipy.sparse.spmatrix>`
