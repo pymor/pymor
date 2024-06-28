@@ -76,11 +76,6 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None,
 
     if offset == len(A):
         return A, np.eye(len(A))
-    elif A.sup_norm().max() < 1e-16:
-        k = len(A)
-        del A[:]
-        R = np.empty([len(A), k])
-        return A, R
 
     logger = getLogger('pymor.algorithms.chol_qr.shifted_chol_qr')
 
@@ -111,6 +106,7 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None,
         logger.warning(f'ARPACK failed with: {e}')
         logger.info('Proceeding with dense solver.')
         shift *= spla.eigh(XX, eigvals_only=True, subset_by_index=[n-1, n-1], driver='evr')[0]
+    shift = max(shift, np.finfo(dtype).eps)  # ensure that shift is non-zero
 
     iter = 1
     while iter <= maxiter:

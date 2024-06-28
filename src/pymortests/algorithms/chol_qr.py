@@ -70,18 +70,6 @@ def test_shifted_chol_qr_with_product(operator_with_arrays_and_products):
 
 
 @pytest.mark.parametrize('copy', [False, True])
-def test_chol_qr_zeros(copy):
-    n, m = 5, 2
-    V = NumpyVectorSpace(n).zeros(m)
-    Q, R = shifted_chol_qr(V, copy=copy)
-    if copy:
-        assert len(V) == m
-    else:
-        assert len(V) == 0
-    assert len(Q) == 0
-
-
-@pytest.mark.parametrize('copy', [False, True])
 def test_chol_qr_empty(copy):
     n = 5
     V = NumpyVectorSpace(n).empty(0)
