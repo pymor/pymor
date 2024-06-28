@@ -170,6 +170,7 @@ print(f"Coercivity constant estimate using successive constraints method: {coerc
 ### Parabolic problems using greedy algorithm
 
 ```{code-cell} ipython3
+:tags: [remove-output]
 
 from pymor.models.examples import heat_equation_example
 fom = heat_equation_example()
