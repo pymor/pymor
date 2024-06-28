@@ -101,6 +101,18 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
     n = A.source.dim
     l_min = 20
 
+    if n - 1 < l_min:
+        from pymor.algorithms.to_matrix import to_matrix
+        ew, ev = spla.eig(to_matrix(A, format='dense'), to_matrix(E, format='dense'))
+        # truncate small imaginary parts
+        ew.imag[np.abs(ew.imag) / np.abs(ew) < imag_tol] = 0
+
+        # sort eigenvalues
+        idx = _sort_ew(ew, which)
+        ews = ew[idx]
+        evs = ev[:, idx]
+        return ews[:k], A.source.from_numpy(evs[:, :k].T)
+
     if l is None:
         l = min(n - 1, max(2 * k + 1, l_min))
 
@@ -139,25 +151,13 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
         # truncate small imaginary parts
         ew.imag[np.abs(ew.imag) / np.abs(ew) < imag_tol] = 0
 
-        if which == 'LM':
-            idx = np.argsort(-np.abs(ew))
-        elif which == 'SM':
-            idx = np.argsort(np.abs(ew))
-        elif which == 'LR':
-            idx = np.argsort(-ew.real)
-        elif which == 'SR':
-            idx = np.argsort(ew.real)
-        elif which == 'LI':
-            idx = np.argsort(-np.abs(ew.imag))
-        elif which == 'SI':
-            idx = np.argsort(np.abs(ew.imag))
-
-        k = k0
+        idx = _sort_ew(ew, which)
         ews = ew[idx]
         evs = ev[:, idx]
 
         rres = f.norm()[0] * np.abs(evs[-1]) / np.abs(ews)
 
+        k = k0
         # increase k by one in order to keep complex conjugate pairs together
         if not complex_evp and ews[k - 1].imag != 0 and ews[k - 1].imag + ews[k].imag < complex_pair_tol:
             k += 1
@@ -274,3 +274,20 @@ def _qr_iteration(H, shifts, complex_evp=False):
         H = Q.T @ H @ Q
 
     return H, Qs
+
+
+def _sort_ew(ew, which):
+    if which == 'LM':
+        return np.argsort(-np.abs(ew))
+    elif which == 'SM':
+        return np.argsort(np.abs(ew))
+    elif which == 'LR':
+        return np.argsort(-ew.real)
+    elif which == 'SR':
+        return np.argsort(ew.real)
+    elif which == 'LI':
+        return np.argsort(-np.abs(ew.imag))
+    elif which == 'SI':
+        return np.argsort(np.abs(ew.imag))
+    else:
+        raise ValueError
