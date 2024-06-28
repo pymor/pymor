@@ -112,10 +112,10 @@ fom = thermal_block_example()
 # instantiate reductor with training and validation parameters and desired errors
 from pymor.reductors.neural_network import NeuralNetworkReductor
 reductor = NeuralNetworkReductor(fom,
-                                 fom.parameters.space(0.1, 1).sample_uniformly(25),
+                                 fom.parameters.space(0.1, 1).sample_uniformly(2),
                                  fom.parameters.space(0.1, 1).sample_randomly(5),
-                                 l2_err=1e-2, ann_mse=1e-2)
-rom =  reductor.reduce(restarts=10)
+                                 ann_mse=None, scale_outputs=True)
+rom =  reductor.reduce(restarts=5)
 
 # estimate and compute state-space MOR error
 mu = rom.parameters.parse([0.1, 0.9, 0.2, 0.3])
