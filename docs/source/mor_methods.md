@@ -116,11 +116,6 @@ reductor = NeuralNetworkReductor(fom,
                                  validation_set=fom.parameters.space(0.1, 1).sample_randomly(5),
                                  ann_mse=None, scale_outputs=True)
 rom =  reductor.reduce(restarts=5)
-
-# estimate and compute state-space MOR error
-mu = rom.parameters.parse([0.1, 0.9, 0.2, 0.3])
-u = rom.solve(mu)
-print(f'Actual error: {(fom.solve(mu) - reductor.reconstruct(u)).norm(fom.h1_0_semi_product)}')
 ```
 
 ### Estimation of coercivity and continuity constants using the min/max-theta approaches
@@ -159,12 +154,6 @@ initial_parameter = problem.parameter_space.sample_randomly(1)[0]
 training_set = problem.parameter_space.sample_randomly(50)
 coercivity_estimator, _, _ = construct_scm_functionals(
             fom.operator, training_set, initial_parameter, product=fom.h1_0_semi_product, max_extensions=10, M=5)
-
-from pymor.parameters.functionals import ExpressionParameterFunctional
-mu = fom.parameters.parse([0.1, 0.9, 0.2, 0.3])
-naive_coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
-print(f"Naive coercivity constant estimate: {naive_coercivity_estimator.evaluate(mu)}")
-print(f"Coercivity constant estimate using successive constraints method: {coercivity_estimator.evaluate(mu)}")
 ```
 
 ### Parabolic problems using greedy algorithm
@@ -185,11 +174,6 @@ from pymor.algorithms.greedy import rb_greedy
 training_set = parameter_space.sample_uniformly(20)
 greedy_data = rb_greedy(fom, reductor, training_set=parameter_space.sample_uniformly(20), max_extensions=10)
 rom = greedy_data['rom']
-
-# estimate and compute state-space MOR error
-mu = rom.parameters.parse([10.])
-u = rom.solve(mu)
-print(f'Actual error: {(fom.solve(mu) - reductor.reconstruct(u)).norm(fom.h1_0_semi_product)}')
 ```
 
 ## LTI System MOR
