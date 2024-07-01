@@ -193,6 +193,10 @@ rom_bt = BTReductor(fom).reduce(10)
 # iterative rational Krylov algorithm (IRKA)
 from pymor.reductors.h2 import IRKAReductor
 rom_irka = IRKAReductor(fom).reduce(10)
+
+# modal truncation
+from pymor.reductors.mt import MTReductor
+rom_mt = MTReductor(fom).reduce(10)
 ```
 
 Download the code:
