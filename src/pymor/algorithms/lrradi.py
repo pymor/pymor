@@ -98,14 +98,8 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
         else:
             R = Rinv = np.eye(len(B) if trans else len(C))
 
-        BRinvSt = NumpyMatrixOperator(B.to_numpy().T @ Rinv @ S.to_numpy())
-        BRinvSt2 = LowRankOperator(B, Rinv, S)
-        RHS = BRinvSt.source.from_numpy(np.eye(BRinvSt.source.dim))
-        V1 = BRinvSt.apply(RHS)
-        V2 = BRinvSt2.apply(RHS)
-        assert np.max((V1-V2).norm()) < 1e-10
-        tA = (A - BRinvSt).assemble()
-        assert isinstance(tA, NumpyMatrixOperator)
+        BRinvSt = LowRankOperator(B, Rinv, S)
+        tA = A - BRinvSt
         tC = cat_arrays([C, S])
         if Q is None:
             tQ = spla.block_diag(np.eye(len(C)), -Rinv)
@@ -158,10 +152,10 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
 
     while res > Ctol and j < options['maxiter']:
         s = shifts[j_shift]
-        sr = shifts[j_shift].real
-        si = shifts[j_shift].imag
-        sa = np.abs(shifts[j_shift])
-        print(s)
+        sr = s.real
+        si = s.imag
+        sa = np.abs(s)
+
         if not trans:
             AsE = A + s * E
         else:
@@ -236,7 +230,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
     # transform solution to lrcf
     Yinv = spla.inv(Y)
     Yinv = (Yinv + Yinv.T) / 2.0
-    Z_cf, S = LDL_T_rank_truncation(Z, Yinv, tol=np.finfo(float).eps)
+    Z_cf, S = LDL_T_rank_truncation(Z, Yinv)
     S = np.diag(np.sqrt(np.diag(S)))
     Z_cf = Z_cf.lincomb(S)
     return Z_cf
