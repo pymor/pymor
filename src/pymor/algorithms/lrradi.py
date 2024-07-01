@@ -5,8 +5,6 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.to_matrix import to_matrix
-from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.riccati import _solve_ricc_check_args
