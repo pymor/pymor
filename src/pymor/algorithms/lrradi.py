@@ -53,7 +53,7 @@ def ricc_lrcf_solver_options(lrradi_tol=1e-10,
                                                'subspace_columns': hamiltonian_shifts_subspace_columns}}}}
 
 
-def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=None):
+def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     """Compute an approximate low-rank solution of a Riccati equation.
 
     See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
@@ -73,8 +73,6 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
         The operator C as a |VectorArray| from `A.source`.
     R
         The matrix R as a 2D |NumPy array| or `None`.
-    Q
-        The matrix Q as a 2D |NumPy array| or `None`.
     S
         The operator S as a |VectorArray| from `A.source` or `None`.
     trans
@@ -90,24 +88,125 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
         Low-rank Cholesky factor of the Riccati equation solution,
         |VectorArray| from `A.source`.
     """
-    _solve_ricc_check_args(A, E, B, C, R, Q, S, trans)
+    _solve_ricc_check_args(A, E, B, C, R, S, trans)
 
-    if S is not None:
+    if S is None:
+        Z_cf = lrradi(A, E, B, C, R, None, S, trans, options)
+        return Z_cf
+    else:
         if R is not None:
             Rinv = spla.solve(R, np.eye(R.shape[0]))
         else:
             R = Rinv = np.eye(len(B) if trans else len(C))
 
         BRinvSt = LowRankOperator(B, Rinv, S)
+
         tA = A - BRinvSt
         tC = cat_arrays([C, S])
-        if Q is None:
-            tQ = spla.block_diag(np.eye(len(C)), -Rinv)
-        else:
-            tQ = spla.block_diag(Q, -Rinv)
-        Z_cf = solve_ricc_lrcf(tA, E, B, tC, R, tQ, None, trans, options)
+        tQ = spla.block_diag(np.eye(len(C)), -Rinv)
+
+        Z_cf = lrradi(tA, E, B, tC, R, tQ, None, trans, options)
         return Z_cf
 
+def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+    """Compute an approximate low-rank solution of a positive Riccati equation.
+
+    See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a
+    general description.
+
+    Parameters
+    ----------
+    A
+        The non-parametric |Operator| A.
+    E
+        The non-parametric |Operator| E or `None`.
+    B
+        The operator B as a |VectorArray| from `A.source`.
+    C
+        The operator C as a |VectorArray| from `A.source`.
+    R
+        The matrix R as a 2D |NumPy array| or `None`.
+    S
+        The operator S as a |VectorArray| from `A.source` or `None`.
+    trans
+        Whether the first |Operator| in the positive Riccati equation is
+        transposed.
+    options
+        The solver options to use (see
+        :func:`ricc_lrcf_solver_options`).
+
+    Returns
+    -------
+    Z
+        Low-rank Cholesky factor of the positive Riccati equation
+        solution, |VectorArray| from `A.source`.
+    """
+    _solve_ricc_check_args(A, E, B, C, R, S, trans)
+    options = _parse_options(options, ricc_lrcf_solver_options(), 'lrradi', None, False)
+    if options['type'] != 'lrradi':
+        raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
+
+    if R is None:
+        R = np.eye(len(C) if not trans else len(B))
+    return lrradi(A, E, B, C, -R, None, S, trans, options)
+
+
+def lrradi(A, E, B, C, R=None, Q=None, S=None, trans=False, options=None):
+    """Compute the solution of a Riccati equation.
+
+    Returns the solution :math:`X` of a (generalized) continuous-time
+    algebraic Riccati equation:
+
+    - if trans is `False`
+
+      .. math::
+          A X E^T + E X A^T - E X C^T Q^{-1} C X E^T + B R B^T = 0.
+
+    - if trans is `True`
+
+      .. math::
+          A^T X E + E^T X A - E^T X B R^{-1} B^T X E + C^T Q C = 0.
+
+    If E is None, it is taken to be identity, and similarly for R and Q.
+
+    We assume:
+
+    - A and E are real |Operators|,
+    - B and C are real |VectorArrays| from `A.source` and `len(B)` and `len(C)`  are small,
+    - R, Q are real |NumPy arrays|,
+    - E is nonsingular,
+    - (E, A, B, C) is stabilizable and detectable,
+    - R is symmetric, Q is symmetric.
+
+    Parameters
+    ----------
+    A
+        The non-parametric |Operator| A.
+    E
+        The non-parametric |Operator| E or `None`.
+    B
+        The operator B as a |VectorArray| from `A.source`.
+    C
+        The operator C as a |VectorArray| from `A.source`.
+    R
+        The matrix R as a 2D |NumPy array| or `None`.
+    Q
+        The matrix Q as a 2D |NumPy array| or `None`.
+    trans
+        Whether the first |Operator| in the Riccati equation is
+        transposed.
+    options
+        The solver options to use.
+        See:
+
+        - :func:`pymor.algorithms.lrradi.ricc_lrcf_solver_options`.
+
+    Returns
+    -------
+    Z
+        Low-rank Cholesky factor of the Riccati equation solution,
+        |VectorArray| from `A.source`.
+    """
     options = _parse_options(options, ricc_lrcf_solver_options(), 'lrradi', None, False)
     logger = getLogger('pymor.algorithms.lrradi.solve_ricc_lrcf')
 
@@ -123,6 +222,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
 
     if not trans:
         B, C = C, B
+        R, Q = Q, R
 
     if R is not None:
         Rinv = spla.solve(R, np.eye(R.shape[0]))
@@ -234,48 +334,6 @@ def solve_ricc_lrcf(A, E, B, C, R=None, Q=None, S=None, trans=False, options=Non
     S = np.diag(np.sqrt(np.diag(S)))
     Z_cf = Z_cf.lincomb(S)
     return Z_cf
-
-def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
-    """Compute an approximate low-rank solution of a positive Riccati equation.
-
-    See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a
-    general description.
-
-    Parameters
-    ----------
-    A
-        The non-parametric |Operator| A.
-    E
-        The non-parametric |Operator| E or `None`.
-    B
-        The operator B as a |VectorArray| from `A.source`.
-    C
-        The operator C as a |VectorArray| from `A.source`.
-    R
-        The matrix R as a 2D |NumPy array| or `None`.
-    S
-        The operator S as a |VectorArray| from `A.source` or `None`.
-    trans
-        Whether the first |Operator| in the positive Riccati equation is
-        transposed.
-    options
-        The solver options to use (see
-        :func:`ricc_lrcf_solver_options`).
-
-    Returns
-    -------
-    Z
-        Low-rank Cholesky factor of the positive Riccati equation
-        solution, |VectorArray| from `A.source`.
-    """
-    _solve_ricc_check_args(A, E, B, C, R, None, S, trans)
-    options = _parse_options(options, ricc_lrcf_solver_options(), 'lrradi', None, False)
-    if options['type'] != 'lrradi':
-        raise ValueError(f"Unexpected positive Riccati equation solver ({options['type']}).")
-
-    if R is None:
-        R = np.eye(len(C) if not trans else len(B))
-    return solve_ricc_lrcf(A, E, B, C, -R, None, S, trans, options)
 
 
 def hamiltonian_shifts_init(A, E, B, C, Rinv, Q, shift_options):
@@ -394,8 +452,8 @@ def hamiltonian_shifts(A, E, B, Rinv, RF, RC, K, Z, shift_options):
 
     U = gram_schmidt(Z[-l:], atol=0, rtol=0)
     Ap = A.apply2(U, U)
-    KBp = U.inner(K) @ (Rinv @ U.inner(B).T)
-    AAp = Ap - KBp
+    BKp = U.inner(B) @ (Rinv @ U.inner(K).T)
+    AAp = Ap - BKp
     UB = U.inner(B)
     Gp = UB.dot(Rinv @ UB.T)
     UR = U.inner(RF)
@@ -435,10 +493,10 @@ def LDL_T_rank_truncation(L, D, tol=np.finfo(float).eps):
 
     Computes the QR factorization :math:'Q R = L' of L followed by an
     eigendecomposition of :math:'RDR^T' and a rank decision on the absolute
-    values of th computed eigenvalues. The truncated eigenpairs are dropped.
-    The resulting core matrix (replacing D) is diagonal matrix of preserved
+    values of the computed eigenvalues. The truncated eigenpairs are dropped.
+    The resulting core matrix (replacing D) is the diagonal matrix of preserved
     eigenvalues and the updated |VectorArray| is :math:'Q' times the
-    preserved (left) eingenvectors
+    preserved (left) eingenvectors.
 
     Parameters
     ----------
