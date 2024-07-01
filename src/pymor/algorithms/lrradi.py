@@ -89,7 +89,10 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
 
     if S is None:
-        Z_cf = lrradi(A, E, B, C, R, None, S, trans, options)
+        if trans:
+            Z_cf = lrradi(A, E, B, C, R, None, S, trans, options)
+        else:
+            Z_cf = lrradi(A, E, B, C, None, R, S, trans, options)
         return Z_cf
     else:
         if R is not None:
@@ -97,13 +100,22 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         else:
             R = Rinv = np.eye(len(B) if trans else len(C))
 
-        BRinvSt = LowRankOperator(B, Rinv, S)
+        if trans:
+            BRinvSt = LowRankOperator(B, Rinv, S)
 
-        tA = A - BRinvSt
-        tC = cat_arrays([C, S])
-        tQ = spla.block_diag(np.eye(len(C)), -Rinv)
+            tA = A - BRinvSt
+            tC = cat_arrays([C, S])
+            tQ = spla.block_diag(np.eye(len(C)), -Rinv)
 
-        Z_cf = lrradi(tA, E, B, tC, R, tQ, None, trans, options)
+            Z_cf = lrradi(tA, E, B, tC, R, tQ, trans, options)
+        else:
+            CRinvSt = LowRankOperator(C, Rinv, S)
+
+            tA = A - CRinvSt
+            tB = cat_arrays([B, S])
+            tR = spla.block_diag(np.eye(len(B)), -Rinv)
+
+            Z_cf = lrradi(tA, E, tB, C, tR, R, trans, options)
         return Z_cf
 
 def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
@@ -146,10 +158,10 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
 
     if R is None:
         R = np.eye(len(C) if not trans else len(B))
-    return lrradi(A, E, B, C, -R, None, S, trans, options)
+    return lrradi(A, E, B, C, -R, None, trans, options)
 
 
-def lrradi(A, E, B, C, R=None, Q=None, S=None, trans=False, options=None):
+def lrradi(A, E, B, C, R=None, Q=None, trans=False, options=None):
     """Compute the solution of a Riccati equation.
 
     Returns the solution :math:`X` of a (generalized) continuous-time
@@ -253,48 +265,49 @@ def lrradi(A, E, B, C, R=None, Q=None, S=None, trans=False, options=None):
         sr = s.real
         si = s.imag
         sa = np.abs(s)
+        alpha = np.sqrt(-2.0 * sr)
 
         if not trans:
             AsE = A + s * E
         else:
             AsE = A + np.conj(s) * E
-        if j == 0:
-            if not trans:
-                V = AsE.apply_inverse(RF) * np.sqrt(-2 * sr)
-            else:
-                V = AsE.apply_inverse_adjoint(RF) * np.sqrt(-2 * sr)
-        else:
-            BRiK = LowRankOperator(B, Rinv, K)
-            AsEBRiK = AsE - BRiK
 
-            if not trans:
-                V = AsEBRiK.apply_inverse(RF) * np.sqrt(-2 * sr)
-            else:
-                V = AsEBRiK.apply_inverse_adjoint(RF) * np.sqrt(-2 * sr)
+        BRiK = LowRankOperator(B, Rinv, K)
+        AsEBRiK = (AsE - BRiK).assemble() # assemble combines the two low-rank
+                                          # updates into a single one if A came
+                                          # in as a LowRankUpdatedOperator already
+                                          # (avoids recursive Sherman-Morrison-Woodburry)
+
+        if not trans:
+            V = AsEBRiK.apply_inverse(RF)
+        else:
+            V = AsEBRiK.apply_inverse_adjoint(RF)
 
         V = V.lincomb(RC)
 
-        if np.imag(shifts[j_shift]) == 0:
+        if np.imag(s) == 0:
             V = V.real
-            Z.append(V)
+            Z.append(alpha * V)
 
             VB = V.inner(B)
-            Yt = RC - (VB @ Rinv @ VB.T) / (2 * sr)
+            Yt = RC + (VB @ Rinv @ VB.T)
             Y = spla.block_diag(Y, Yt)
 
             if not trans:
                 EVYt = E.apply(V).lincomb(spla.inv(Yt))
             else:
                 EVYt = E.apply_adjoint(V).lincomb(spla.inv(Yt))
-            RF.axpy(np.sqrt(-2.0 * sr), EVYt)
+            RF.axpy(-2.0 * sr, EVYt)
 
             K += EVYt.lincomb(Rinv @ VB.T)
             j += 1
         else:
-            Z.append(V.real)
-            Z.append(V.imag)
-            Vr = V.real.inner(B)
-            Vi = V.imag.inner(B)
+            V1 = alpha * V.real
+            V2 = alpha * V.imag
+            Z.append(V1)
+            Z.append(V2)
+            Vr = V1.inner(B)
+            Vi = V2.inner(B)
             F1 = np.vstack((
                 -sr/sa * Vr - si/sa * Vi,
                  si/sa * Vr - sr/sa * Vi
@@ -313,10 +326,10 @@ def lrradi(A, E, B, C, R=None, Q=None, S=None, trans=False, options=None):
                 - (F3 @ RC @ F3.T) / 2
             Y = spla.block_diag(Y, Yt)
             if not trans:
-                EVYt = E.apply(cat_arrays([V.real, V.imag])).lincomb(spla.inv(Yt))
+                EVYt = E.apply(cat_arrays([V1, V2])).lincomb(spla.inv(Yt))
             else:
-                EVYt = E.apply_adjoint(cat_arrays([V.real, V.imag])).lincomb(spla.inv(Yt))
-            RF.axpy(np.sqrt(-2.0 * sr), EVYt[:len(C)])
+                EVYt = E.apply_adjoint(cat_arrays([V1, V2])).lincomb(spla.inv(Yt))
+            RF.axpy(alpha, EVYt[:len(C)])
             K += EVYt.lincomb(Rinv @ F2.T)
             j += 2
         j_shift += 1
@@ -331,7 +344,7 @@ def lrradi(A, E, B, C, R=None, Q=None, S=None, trans=False, options=None):
     Z_cf, S = LDL_T_rank_truncation(Z, Yinv)
     S = np.diag(np.sqrt(np.diag(S)))
     Z_cf = Z_cf.lincomb(S)
-    return Z_cf
+    return Z_cf, Z, Yinv
 
 
 def hamiltonian_shifts_init(A, E, B, C, Rinv, Q, shift_options):
