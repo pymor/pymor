@@ -403,7 +403,7 @@ pygments==2.16.1
     #   pymor (pyproject.toml)
     #   rich
     #   sphinx
-pymepack==1.1.0
+pymepack==1.1.1
     # via pymor (pyproject.toml)
 pyopengl==3.1.6
     # via pymor (pyproject.toml)
