@@ -33,9 +33,13 @@ interpolatory Loewner method (:class:`~pymor.reductors.Loewner.LoewnerReductor`)
 and mixed greedy/least-squares AAA algorithm
 (:class:`~pymor.reductors.aaa.PAAAReductor`).
 
-Shifted Cholseky QR algorithm
+Shifted Cholesky QR algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`[#2177] shifted Cholesky QR algorithm <https://github.com/pymor/pymor/pull/2177>`_
+We added a generic implementation of the shifted Cholesky QR algorithm in
+`[#2177] <https://github.com/pymor/pymor/pull/2177>`_,
+which has potential to exploit higher performance linear algebra routines
+compared to the Gram-Schmidt algorithm
+(:func:`~pymor.algorithms.gram_schmidt.gram_schmidt`).
 
 Improved randomized range finder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
