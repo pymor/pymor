@@ -1,0 +1,57 @@
+pyMOR 2024.1 (July 5, 2025)
+-------------------------------
+
+We are proud to announce the release of pyMOR 2024.1!
+This release features ...
+
+Over ??? single commits have entered this release. For a full list of changes
+see `here <https://github.com/pymor/pymor/compare/2023.2.x...2024.1.x>`__.
+
+pyMOR 2024.2 contains contributions by Maximilian Bindhak and Art Pelling.
+See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more
+details.
+
+
+Main new features
+^^^^^^^^^^^^^^^^^
+
+Successive constraints method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`[#1989] Successive constraints method <https://github.com/pymor/pymor/pull/1989>`_
+
+Vector fitting
+~~~~~~~~~~~~~~
+`[#2214] Add vector fitting  <https://github.com/pymor/pymor/pull/2214>`_
+
+Shifted Cholseky QR algorithm
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`[#2177] shifted Cholesky QR algorithm <https://github.com/pymor/pymor/pull/2177>`_
+
+Improved randomized range finder
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `[#1753] rand_la refactoring <https://github.com/pymor/pymor/pull/1753>`_
+
+Improved documentation
+~~~~~~~~~~~~~~~~~~~~~~
+`[#2266] Add MOR methods overview to documentation <https://github.com/pymor/pymor/pull/2266>`_ (NOT MERGED YET)
+`[#2153] Add tutorial on interpolation for LTI systems <https://github.com/pymor/pymor/pull/2153>`_ (NOT MERGED YET)
+`[#2181] TR description in optimization tutorial <https://github.com/pymor/pymor/pull/2181>`_
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Improved Model interface and implementation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`[#2278] Simplify and clarify Model interface <https://github.com/pymor/pymor/pull/2278>`_
+(SECOND PR MISSING)
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- `[#2246] Bug Fix in FactorizedTransferFunction <https://github.com/pymor/pymor/pull/2246>`_
+- `[#2250] Implement __eq__, __hash__ for ReferenceElement <https://github.com/pymor/pymor/pull/2250>`_
+- `[#2253] fix to prevent unnecessary copys in NumpyVectorArrayImpl functions <https://github.com/pymor/pymor/pull/2253>`_
+- `[#2255] Allow to_matrices to accept parameter <https://github.com/pymor/pymor/pull/2255>`_
+- `[#2268] Support Python 3.12 <https://github.com/pymor/pymor/pull/2268>`_
