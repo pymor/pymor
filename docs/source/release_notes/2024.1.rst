@@ -14,7 +14,13 @@ Main new features
 
 Successive constraints method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`[#1989] Successive constraints method <https://github.com/pymor/pymor/pull/1989>`_
+We now offer the successive constraints method, implemented in
+`[#1989] Successive constraints method <https://github.com/pymor/pymor/pull/1989>`_,
+to efficiently compute upper and lower bounds for the coercivity constant of
+parameter-separable and coercive problems by means of linear programs.
+The respective |ParameterFunctionals| are constructed within a greedy algorithm
+that iteratively determines a set of parameters used in the construction of the
+estimates. The usage of the successive constraints method is showcased in a demo.
 
 Vector fitting
 ~~~~~~~~~~~~~~
