@@ -44,7 +44,7 @@ Backward incompatible changes
 Improved Model interface and implementation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 `[#2278] Simplify and clarify Model interface <https://github.com/pymor/pymor/pull/2278>`_
-(SECOND PR MISSING)
+`[#2277] Simplify implementation of Model.compute and improve caching <https://github.com/pymor/pymor/pull/2277>`_
 
 
 Further notable improvements
