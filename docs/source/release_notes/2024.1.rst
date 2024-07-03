@@ -24,7 +24,14 @@ estimates. The usage of the successive constraints method is showcased in a demo
 
 Vector fitting
 ~~~~~~~~~~~~~~
-`[#2214] Add vector fitting  <https://github.com/pymor/pymor/pull/2214>`_
+We added an implementation of vector fitting
+`[#2214] <https://github.com/pymor/pymor/pull/2214>`_,
+a least-squares data-driven method for frequency-response data of linear
+time-invariant systems.
+This extends to the available methods:
+interpolatory Loewner method (:class:`~pymor.reductors.Loewner.LoewnerReductor`)
+and mixed greedy/least-squares AAA algorithm
+(:class:`~pymor.reductors.aaa.PAAAReductor`).
 
 Shifted Cholseky QR algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
