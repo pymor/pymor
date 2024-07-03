@@ -180,23 +180,63 @@ rom = greedy_data['rom']
 
 Here we consider some of the methods for {{LTIModels}}.
 
+### Balancing-based MOR
+
 ```{code-cell} ipython3
 :tags: [remove-output]
 
 from pymor.models.examples import penzl_example
 fom = penzl_example()
 
-# balanced truncation
 from pymor.reductors.bt import BTReductor
 rom_bt = BTReductor(fom).reduce(10)
 
-# iterative rational Krylov algorithm (IRKA)
+from pymor.reductors.bt import LQGBTReductor
+rom_lqgbt = LQGBTReductor(fom).reduce(10)
+```
+
+### Interpolation-based MOR
+
+```{code-cell} ipython3
+:tags: [remove-output]
+
+from pymor.models.examples import penzl_example
+fom = penzl_example()
+
 from pymor.reductors.h2 import IRKAReductor
 rom_irka = IRKAReductor(fom).reduce(10)
 
-# modal truncation
+from pymor.reductors.h2 import TFIRKAReductor
+rom_irka = TFIRKAReductor(fom).reduce(10)
+```
+
+### Eigenvalue-based MOR
+
+```{code-cell} ipython3
+:tags: [remove-output]
+
+from pymor.models.examples import penzl_example
+fom = penzl_example()
+
 from pymor.reductors.mt import MTReductor
 rom_mt = MTReductor(fom).reduce(10)
+```
+
+### Data-driven MOR
+
+```{code-cell} ipython3
+:tags: [remove-output]
+
+from pymor.models.examples import penzl_example
+import numpy as np
+fom = penzl_example()
+s = np.logspace(1, 3, 100) * 1j
+
+from pymor.reductors.aaa import PAAAReductor
+rom_aaa = PAAAReductor(s, fom).reduce()
+
+from pymor.reductors.loewner import LoewnerReductor
+rom_loewner = LoewnerReductor(s, fom).reduce()
 ```
 
 Download the code:
