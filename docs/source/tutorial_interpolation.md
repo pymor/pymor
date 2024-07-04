@@ -57,7 +57,6 @@ Given an LTI system
 the most straightforward interpolation method is using Krylov subspaces
 
 ```{math}
-\newcommand{\T}{\operatorname{T}}
 \begin{align*}
   V
   & =
@@ -67,7 +66,7 @@ the most straightforward interpolation method is using Krylov subspaces
   W
   & =
   \begin{bmatrix}
-    C^{\T} & A^{\T} C^{\T} & \cdots & {\left(A^{\T}\right)}^{r - 1} C^{\T}
+    C^T & A^T C^T & \cdots & {\left(A^T\right)}^{r - 1} C^T
   \end{bmatrix}
 \end{align*}
 ```
@@ -179,10 +178,10 @@ The next option is using an inverse Krylov subspaces
   W
   & =
   \begin{bmatrix}
-    A^{-\T} C^{\T}
-    & {\left(A^{-\T}\right)}^{2} C^{\T}
+    A^T C^T
+    & {\left(A^T\right)}^{2} C^T
     & \cdots
-    & {\left(A^{-\T}\right)}^{r} C^{\T}
+    & {\left(A^T\right)}^{r} C^T
   \end{bmatrix}
 \end{align*}
 ```
@@ -277,7 +276,6 @@ More general approach is a rational Krylov subspace
 (also known as the shifted Padé approximation).
 
 ```{math}
-\newcommand{\H}{\operatorname{H}}
 \begin{align*}
   V
   & =
@@ -290,10 +288,10 @@ More general approach is a rational Krylov subspace
   W
   & =
   \begin{bmatrix}
-    (\sigma I - A)^{-\H} C^{\T}
-    & {\left((\sigma I - A)^{-\H}\right)}^{2} C^{\T}
+    (\sigma I - A)^{-H} C^T
+    & {\left((\sigma I - A)^{-H}\right)}^{2} C^T
     & \cdots
-    & {\left((\sigma I - A)^{-\H}\right)}^{r} C^{\T}
+    & {\left((\sigma I - A)^{-H}\right)}^{r} C^T
   \end{bmatrix}
 \end{align*}
 ```
