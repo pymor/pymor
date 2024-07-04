@@ -105,7 +105,7 @@ PARABOLIC_MOR_ARGS = (
 
 SYS_MOR_ARGS = (
     ('heat', [0.2, 2]),
-    ('delay', [1, 2]),
+    ('delay', ['--', 1, -0.1, 2]),
     ('string_equation', [5, 2]),
     ('parametric_heat', [0.02, 2]),
     ('parametric_delay', [2]),

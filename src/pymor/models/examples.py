@@ -163,6 +163,35 @@ def msd_example(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
 
     return PHLTIModel.from_matrices(J, R, G, S=S, N=N, Q=Q)
 
+def transfer_function_delay_example(tau=1, a=-0.1):
+    """Return transfer function of a 1D system with input delay.
+
+    Parameters
+    ----------
+    tau
+        Time delay.
+    a
+        The matrix A in the 1D system as a scalar.
+
+    Returns
+    -------
+    tf
+        Delay model as a |TransferFunction|.
+    """
+    import numpy as np
+
+    from pymor.models.transfer_function import TransferFunction
+
+    def H(s):
+        return np.array([[np.exp(-tau * s) / (s - a)]])
+
+    def dH(s):
+        return np.array([[(-tau*s + tau*a - 1) * np.exp(-tau * s) / (s - a) ** 2]])
+
+    tf = TransferFunction(1, 1, H, dH)
+
+    return tf
+
 def heat_equation_example(grid_intervals=50, nt=50):
     """Return heat equation example with a high-conductivity and two parametrized channels.
 
