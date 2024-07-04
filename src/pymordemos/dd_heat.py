@@ -7,12 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typer import Argument, run
 
-from pymor.analyticalproblems.domaindescriptions import RectDomain
-from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
-from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.logger import set_log_levels
-from pymor.discretizers.builtin import discretize_instationary_cg
+from pymor.models.examples import heat_equation_non_parametric_example
 from pymor.models.transfer_function import TransferFunction
 from pymor.reductors.aaa import PAAAReductor
 from pymor.reductors.h2 import VectorFittingReductor
@@ -64,17 +60,7 @@ def main(
     """1D heat equation example."""
     set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
 
-    p = InstationaryProblem(
-        StationaryProblem(
-            domain=RectDomain([[0., 0.], [1., 1.]], left='robin', right='robin', top='robin', bottom='robin'),
-            diffusion=ConstantFunction(1., 2),
-            robin_data=(ConstantFunction(1., 2), ExpressionFunction('(x[0] < 1e-10) * 1.', 2)),
-            outputs=[('l2_boundary', ExpressionFunction('(x[0] > (1 - 1e-10)) * 1.', 2))]
-        ),
-        ConstantFunction(0., 2),
-        T=1.
-    )
-    fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=100)
+    fom = heat_equation_non_parametric_example(diameter=diameter)
     lti = fom.to_lti()
 
     ss = np.logspace(-1, 4, n)

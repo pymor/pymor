@@ -8,16 +8,11 @@ import numpy as np
 from typer import Argument, run
 
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
-from pymor.analyticalproblems.domaindescriptions import LineDomain
-from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, LincombFunction
-from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.config import config
 from pymor.core.logger import set_log_levels
-from pymor.discretizers.builtin import discretize_instationary_cg
+from pymor.models.examples import heat_equation_1d_example
 from pymor.models.iosys import LTIModel, SecondOrderModel
 from pymor.models.transfer_function import TransferFunction
-from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.reductors.bt import BRBTReductor, BTReductor, LQGBTReductor
 from pymor.reductors.h2 import IRKAReductor, OneSidedIRKAReductor, TSIAReductor
 from pymor.reductors.mt import MTReductor
@@ -276,21 +271,7 @@ def main(
     plt.rcParams['axes.grid'] = True
 
     # Model
-    p = InstationaryProblem(
-        StationaryProblem(
-            domain=LineDomain([0., 1.], left='robin', right='robin'),
-            diffusion=LincombFunction([ExpressionFunction('(x[0] <= 0.5) * 1.', 1),
-                                       ExpressionFunction('(0.5 < x[0]) * 1.', 1)],
-                                      [1,
-                                       ProjectionParameterFunctional('diffusion')]),
-            robin_data=(ConstantFunction(1., 1), ExpressionFunction('(x[0] < 1e-10) * 1.', 1)),
-            outputs=(('l2_boundary', ExpressionFunction('(x[0] > (1 - 1e-10)) * 1.', 1)),),
-        ),
-        ConstantFunction(0., 1),
-        T=3.
-    )
-
-    fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=100)
+    fom = heat_equation_1d_example(diameter=diameter)
 
     fom.visualize(fom.solve(mu=0.1))
     fom.visualize(fom.solve(mu=1))

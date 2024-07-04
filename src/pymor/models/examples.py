@@ -219,3 +219,81 @@ def heat_equation_example(grid_intervals=50, nt=50):
     fom, _ = discretize_instationary_cg(analytical_problem=problem, diameter=1./grid_intervals, nt=nt)
 
     return fom
+
+
+def heat_equation_non_parametric_example(diameter=0.1, nt=100):
+    """Return non-parametric heat equation example with one output.
+
+    Parameters
+    ----------
+    diameter
+        Diameter option for the domain discretizer.
+    nt
+        Number of time steps.
+
+    Returns
+    -------
+    fom
+        Heat equation problem as an |InstationaryModel|.
+    """
+    from pymor.analyticalproblems.domaindescriptions import RectDomain
+    from pymor.analyticalproblems.elliptic import StationaryProblem
+    from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
+    from pymor.analyticalproblems.instationary import InstationaryProblem
+    from pymor.discretizers.builtin import discretize_instationary_cg
+
+    p = InstationaryProblem(
+        StationaryProblem(
+            domain=RectDomain([[0., 0.], [1., 1.]], left='robin', right='robin', top='robin', bottom='robin'),
+            diffusion=ConstantFunction(1., 2),
+            robin_data=(ConstantFunction(1., 2), ExpressionFunction('(x[0] < 1e-10) * 1.', 2)),
+            outputs=[('l2_boundary', ExpressionFunction('(x[0] > (1 - 1e-10)) * 1.', 2))]
+        ),
+        ConstantFunction(0., 2),
+        T=1.
+    )
+
+    fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=nt)
+
+    return fom
+
+
+def heat_equation_1d_example(diameter=0.01, nt=100):
+    """Return parametric 1D heat equation example with one output.
+
+    Parameters
+    ----------
+    diameter
+        Diameter option for the domain discretizer.
+    nt
+        Number of time steps.
+
+    Returns
+    -------
+    fom
+        Heat equation problem as an |InstationaryModel|.
+    """
+    from pymor.analyticalproblems.domaindescriptions import LineDomain
+    from pymor.analyticalproblems.elliptic import StationaryProblem
+    from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, LincombFunction
+    from pymor.analyticalproblems.instationary import InstationaryProblem
+    from pymor.discretizers.builtin import discretize_instationary_cg
+    from pymor.parameters.functionals import ProjectionParameterFunctional
+
+    p = InstationaryProblem(
+        StationaryProblem(
+            domain=LineDomain([0., 1.], left='robin', right='robin'),
+            diffusion=LincombFunction([ExpressionFunction('(x[0] <= 0.5) * 1.', 1),
+                                       ExpressionFunction('(0.5 < x[0]) * 1.', 1)],
+                                      [1,
+                                       ProjectionParameterFunctional('diffusion')]),
+            robin_data=(ConstantFunction(1., 1), ExpressionFunction('(x[0] < 1e-10) * 1.', 1)),
+            outputs=(('l2_boundary', ExpressionFunction('(x[0] > (1 - 1e-10)) * 1.', 1)),),
+        ),
+        ConstantFunction(0., 1),
+        T=3.
+    )
+
+    fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=nt)
+
+    return fom
