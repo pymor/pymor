@@ -21,14 +21,21 @@ kernelspec:
 
 ```
 
-# Tutorial: Interpolation-based methods for LTI systems
+# Tutorial: Interpolatory model order reduction for LTI systems
 
-Here we discuss interpolation-based methods
+Here we discuss interpolatory model order reduction methods
 (also known as:
 moment matching,
 Krylov subspace methods, and
 Padé approximation)
 for LTI systems.
+In {doc}`tutorial_lti_systems`, we discussed transfer functions of LTI systems,
+which give a frequency-domain description of the input-output mapping and
+are involved in system norms.
+Therefore, a reasonable approach to approximating a given LTI system is to build
+a reduced-order model such that its transfer function interpolates the
+full-order transfer function.
+
 We start with simpler approaches
 (higher-order interpolation at single point {cite}`G97`) and
 then move on to bitangential Hermite interpolation
@@ -41,6 +48,7 @@ We demonstrate them on
 from pymor.models.examples import penzl_example
 
 fom = penzl_example()
+print(fom)
 ```
 
 ## Interpolation at infinity
@@ -48,13 +56,13 @@ fom = penzl_example()
 Given an LTI system
 
 ```{math}
-\begin{align}
+\begin{align*}
   \dot{x}(t) & = A x(t) + B u(t), \\
   y(t) & = C x(t) + D u(t),
-\end{align}
+\end{align*}
 ```
 
-the most straightforward interpolation method is using Krylov subspaces
+the most straightforward interpolatory method is using Krylov subspaces
 
 ```{math}
 \begin{align*}
@@ -95,6 +103,33 @@ The moments at infinity are thus
 ```{math}
 M_0(\infty) = D, \quad
 M_k(\infty) = C A^{k - 1} B,  \text{ for } k \geqslant 1.
+```
+
+A reduced-order model
+
+```{math}
+\begin{align*}
+  \dot{x}(t) & = \widehat{A} x(t) + \widehat{B} u(t), \\
+  y(t) & = \widehat{C} x(t) + \widehat{D} u(t),
+\end{align*}
+```
+
+where
+
+```{math}
+\widehat{A} = {\left(W^T V\right)}^{-1} W^T A V, \quad
+\widehat{B} = {\left(W^T V\right)}^{-1} W^T B, \quad
+\widehat{C} = C V, \quad
+\widehat{D} = D,
+```
+
+with $V$ and $W$ as above, satisfies
+
+```{math}
+C A^{k - 1} B
+=
+\widehat{C} \widehat{A}^{k - 1} \widehat{B}, \quad
+k = 1, \ldots, 2 r.
 ```
 
 We can compute {math}`V` and {math}`W` using the
@@ -165,7 +200,7 @@ We see that they are all asymptotically stable.
 
 ## Interpolation at zero
 
-The next option is using an inverse Krylov subspaces
+The next option is using inverse Krylov subspaces
 (more commonly called the Padé approximation).
 
 ```{math}
@@ -178,10 +213,10 @@ The next option is using an inverse Krylov subspaces
   W
   & =
   \begin{bmatrix}
-    A^T C^T
-    & {\left(A^T\right)}^{2} C^T
+    A^{-T} C^T
+    & {\left(A^{-T}\right)}^{2} C^T
     & \cdots
-    & {\left(A^T\right)}^{r} C^T
+    & {\left(A^{-T}\right)}^{r} C^T
   \end{bmatrix}
 \end{align*}
 ```
@@ -206,8 +241,15 @@ transfer function.
 The moments at zero are
 
 ```{math}
-M_0(0) = D - C A^{-1} B, \quad
-M_k(0) = -C A^{-(k + 1)} B,  \text{ for } k \ge 1.
+\begin{align*}
+  M_0(0)
+  & = D - C A^{-1} B
+  = H(0), \\
+  M_k(0)
+  & = -C A^{-(k + 1)} B
+  = \frac{1}{k!} H^{(k)}(0),
+  \text{ for } k \ge 1.
+\end{align*}
 ```
 
 We can again use the {func}`~pymor.algorithms.krylov.arnoldi` function
@@ -272,7 +314,7 @@ The ROMs are again all asymptotically stable.
 
 ## Interpolation at an arbitrary finite point
 
-More general approach is a rational Krylov subspace
+A more general approach is using rational Krylov subspaces
 (also known as the shifted Padé approximation).
 
 ```{math}
@@ -292,9 +334,11 @@ More general approach is a rational Krylov subspace
     & {\left((\sigma I - A)^{-H}\right)}^{2} C^T
     & \cdots
     & {\left((\sigma I - A)^{-H}\right)}^{r} C^T
-  \end{bmatrix}
+  \end{bmatrix},
 \end{align*}
 ```
+
+for some $\sigma \in \mathbb{C}$ that is not an eigenvalue of $A$.
 
 This will achieve interpolation of the first $2 r$ moments at {math}`\sigma` of
 the transfer function.
@@ -327,11 +371,19 @@ the transfer function.
 The moments at {math}`\sigma` are
 
 ```{math}
-M_0(\sigma) = C {(\sigma I - A)}^{-1} B + D, \quad
-M_k(\sigma) = -C {(A - \sigma I)}^{-(k + 1)} B,  \text{ for } k \ge 1.
+\begin{align*}
+  M_0(\sigma)
+  & = C {(\sigma I - A)}^{-1} B + D
+  = H(\sigma), \\
+  M_k(\sigma)
+  & = -C {(A - \sigma I)}^{-(k + 1)} B
+  = \frac{1}{k!} H^{(k)}(\sigma),
+  \text{ for } k \ge 1.
+\end{align*}
 ```
 
-To preserve realness in the ROMs, we interpolate at a conjugate pair of points.
+To preserve realness in the ROMs,
+we interpolate at a conjugate pair of points ($\pm 200 i$).
 
 ```{code-cell} ipython3
 from pymor.algorithms.gram_schmidt import gram_schmidt
@@ -382,7 +434,7 @@ for rom in roms_sigma:
 _ = ax.legend()
 ```
 
-Poles of the ROMs.
+The poles of the ROMs are as follows.
 
 ```{code-cell} ipython3
 fig, ax = plt.subplots()
@@ -398,6 +450,10 @@ print(f'Maximum real part: {max(spectral_abscissas)}')
 We observe that some of the ROMs are unstable.
 In particular, interpolation does not necessarily preserve stability,
 just as Petrov-Galerkin projection in general.
+A common approach then is using a Galerkin projection with $W = V$ if $A + A^T$
+is negative definite.
+This preserves stability, but reduces the number of interpolated moments from
+$2 r$ to $r$.
 
 +++
 
@@ -407,10 +463,34 @@ To achieve good approximation over a larger frequency range,
 instead of local approximation given by higher-order interpolation at a single point,
 one idea is to do interpolation at multiple points (sometimes called *multipoint Padé*),
 whether of lower or higher-order.
-pyMOR implements bitangential Hermite interpolation (BHI) for different types of {{ Models }}.
+pyMOR implements bitangential Hermite interpolation (BHI) for different types of {{ Models }},
+i.e., methods to construct a reduced-order transfer function $\widehat{H}$ such that
 
-Bitangential interpolation is relevant for systems with multiple inputs and outputs.
-Here we focus on standard interpolation.
+```{mat}
+\begin{align*}
+  H(\sigma_i) b_i & = \widehat{H}(\sigma_i) b_i, \\
+  c_i^H H(\sigma_i) & = c_i^H \widehat{H}(\sigma_i), \\
+  c_i^H H'(\sigma_i) b_i & = c_i^H \widehat{H}(\sigma_i) b_i,
+\end{align*}
+```
+
+for given interpolation points $\sigma_i$,
+right tangential directions $b_i$, and
+left tangential directions $c_i$,
+$i = 1, \ldots, r$.
+Such interpolation is relevant for systems with multiple inputs and outputs,
+where interpolation of matrices
+
+```{mat}
+\begin{align*}
+  H(\sigma_i) & = \widehat{H}(\sigma_i), \\
+  H'(\sigma_i) b_i & = \widehat{H}(\sigma_i) b_i,
+\end{align*}
+```
+
+may be too restrictive.
+Here we focus on single input and single output systems,
+where tangential and matrix interpolation are the same.
 
 ```{code-cell} ipython3
 import numpy as np
