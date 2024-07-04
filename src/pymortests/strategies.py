@@ -375,9 +375,9 @@ def st_valid_inds_of_different_length(draw, v1, v2):
     def _filter(x):
         a, b = x
         a_type, b_type = type(a), type(b)
-        if a_type != b_type:
+        if a_type is not b_type:
             return True  # tuple + scalar index
-        if a_type == tuple:
+        if a_type is tuple:
             return len(a) != len(b)
         return False  # both scalars => not of different length
 
