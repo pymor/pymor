@@ -220,7 +220,6 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
             Ef = E if E.flags.f_contiguous else E.copy(order='F')
             if cont_time:
                 X,AS,ES,Q,Z = pymepack.gglyap(Af, Ef, Cf, trans = trans, **opts, inplace = False)
-                opts
                 X, *_ = pymepack.gglyap_refine(Af, Ef, Cf, AS, ES, Q, Z, X, trans = trans, **refinement_opts)
             else:
                 X,AS,ES,Q,Z = pymepack.ggstein(Af, Ef, Cf, trans = trans, **opts, inplace = False)

@@ -385,7 +385,8 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
 
 
 def _solve_lyap_dense_check_args(A, E, B, trans):
-    assert isinstance(A, np.ndarray) and A.ndim == 2
+    assert isinstance(A, np.ndarray)
+    assert A.ndim == 2
     assert A.shape[0] == A.shape[1]
     if E is not None:
         assert isinstance(E, np.ndarray)
