@@ -31,16 +31,16 @@ def custom_partitioning(rng):
         lambda rng: ({'tol': 1e-12}, {'mimo_handling': 'random'}),
         lambda rng: ({'tol': 1e-12}, {'mimo_handling': (rng.random((40, 3)), rng.random((2, 40)))})
     ])
-def reduce_kwargs_and_lowener_kwargs(rng, request):
+def reduce_kwargs_and_loewner_kwargs(rng, request):
     return request.param(rng)
 
 @pytest.fixture()
-def reduce_kwargs(reduce_kwargs_and_lowener_kwargs):
-    return reduce_kwargs_and_lowener_kwargs[0]
+def reduce_kwargs(reduce_kwargs_and_loewner_kwargs):
+    return reduce_kwargs_and_loewner_kwargs[0]
 
 @pytest.fixture()
-def loewner_kwargs(reduce_kwargs_and_lowener_kwargs):
-    return reduce_kwargs_and_lowener_kwargs[1]
+def loewner_kwargs(reduce_kwargs_and_loewner_kwargs):
+    return reduce_kwargs_and_loewner_kwargs[1]
 
 
 def test_loewner_lti(reduce_kwargs, loewner_kwargs):
