@@ -2,9 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
-import scipy.linalg as spla
-
 
 def thermal_block_example():
     """Return 2x2 thermal block example.
@@ -46,6 +43,33 @@ def penzl_example():
     fom = LTIModel.from_matrices(A, B, C)
 
     return fom
+
+def penzl_mimo_example(n):
+    """Return modified multiple-input multiple-output Penzl's example.
+
+    Parameters
+    ----------
+    n
+        Model order.
+
+    Returns
+    -------
+    fom
+        Penzl's FOM example as an |LTIModel|.
+    """
+    import numpy as np
+    import scipy.sparse as sps
+
+    from pymor.models.iosys import LTIModel
+
+    A1 = np.array([[-1, 100], [-100, -1]])
+    A2 = np.array([[-1, 200], [-200, -1]])
+    A3 = np.array([[-1, 400], [-400, -1]])
+    A4 = sps.diags(np.arange(-1, -n + 5, -1))
+    A = sps.block_diag((A1, A2, A3, A4))
+    B = np.arange(2*n).reshape(n, 2)
+    C = np.arange(3*n).reshape(3, n)
+    return LTIModel.from_matrices(A, B, C)
 
 def msd_example(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
     """Mass-spring-damper model as (port-Hamiltonian) linear time-invariant system.
