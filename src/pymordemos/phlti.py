@@ -12,6 +12,7 @@ from typer import Argument, run
 
 from pymor.models.examples import msd_example
 from pymor.models.iosys import PHLTIModel
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.bt import BTReductor, PRBTReductor
 from pymor.reductors.h2 import IRKAReductor
 from pymor.reductors.ph.ph_irka import PHIRKAReductor
@@ -24,16 +25,16 @@ def main(
         max_reduced_order: int = Argument(20, help=('The maximum reduced order (at least 2). '
                                                     'Every even order below is used.')),
 ):
-    J, R, G, P, S, N, E, Q = msd_example(n, m)
+    fom = msd_example(n, m)
 
     # tolerance for solving the Riccati equation instead of KYP-LMI
     # by introducing a regularization feedthrough term D
     eps = 1e-12
+    S = fom.S.matrix.copy()
     S += np.eye(S.shape[0]) * eps
 
-    fom = PHLTIModel.from_matrices(J, R, G, S=S, Q=Q, solver_options={
-        'ricc_pos_lrcf': 'slycot', 'ricc_pos_dense': 'slycot'
-    })
+    fom = fom.with_(S=NumpyMatrixOperator(S), N=None,
+                    solver_options={'ricc_pos_lrcf': 'slycot', 'ricc_pos_dense': 'slycot'})
 
     bt = BTReductor(fom).reduce
     prbt = PRBTReductor(fom).reduce

@@ -150,17 +150,18 @@ nonsingular for the same reasons.
 
 ```{code-cell}
 import numpy as np
-from pymor.models.iosys import PHLTIModel
 from pymor.models.examples import msd_example
 
-J, R, G, P, S, N, E, Q = msd_example(50, 2)
+fom = msd_example(50, 2)
 
 # tolerance for solving the Riccati equation instead of KYP-LMI
 # by introducing a regularization feedthrough term D
 # (required for PRBTReductor and SpectralFactorReductor reductors)
+S = fom.S.matrix.copy()
 S += np.eye(S.shape[0]) * 1e-12
 
-fom = PHLTIModel.from_matrices(J, R, G, P=P, S=S, N=N, E=E, Q=Q, solver_options={'ricc_pos_lrcf': 'slycot'})
+fom = fom.with_(S=fom.S.with_(matrix=S),
+                solver_options={'ricc_pos_lrcf': 'slycot'})
 ```
 
 The `ricc_pos_lrcf` solver option refers to the solver used for the underlying
@@ -196,6 +197,7 @@ of type {{ LTIModel }}. Thus, we convert the ROM into a {{ PHLTIModel }} in a
 post-processing step. Note that PRBT can be used with any passive {{ LTIModel}} FOM.
 
 ```{code-cell}
+from pymor.models.iosys import PHLTIModel
 from pymor.reductors.bt import PRBTReductor
 
 reductor = PRBTReductor(fom)

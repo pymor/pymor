@@ -70,30 +70,15 @@ def msd_example(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
 
     Returns
     -------
-    A
-        The LTI |NumPy array| A, if `as_lti` is `True`.
-    B
-        The LTI |NumPy array| B, if `as_lti` is `True`.
-    C
-        The LTI |NumPy array| C, if `as_lti` is `True`.
-    D
-        The LTI |NumPy array| D, if `as_lti` is `True`.
-    J
-        The pH |NumPy array| J, if `as_lti` is `False`.
-    R
-        The pH |NumPy array| R, if `as_lti` is `False`.
-    G
-        The pH |NumPy array| G, if `as_lti` is `False`.
-    P
-        The pH |NumPy array| P, if `as_lti` is `False`.
-    S
-        The pH |NumPy array| S, if `as_lti` is `False`.
-    N
-        The pH |NumPy array| N, if `as_lti` is `False`.
-    E
-        The LTI |NumPy array| E, if `as_lti` is `True`, or
-        the pH |NumPy array| E, if `as_lti` is `False`.
+    fom
+        Mass-spring-damper model as an |LTIModel| (if `as_lti` is `True`)
+        or |PHLTIModel| (if `as_lti` is `False`).
     """
+    import numpy as np
+    import scipy.linalg as spla
+
+    from pymor.models.iosys import LTIModel, PHLTIModel
+
     assert n % 2 == 0
     n //= 2
 
@@ -145,16 +130,14 @@ def msd_example(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
 
     Q = spla.solve(J - R, A)
     G = B
-    P = np.zeros(G.shape)
     D = np.zeros((m, m))
-    E = np.eye(2 * n)
     S = (D + D.T) / 2
     N = -(D - D.T) / 2
 
     if as_lti:
-        return A, B, C, D, E
+        return LTIModel.from_matrices(A, B, C, D)
 
-    return J, R, G, P, S, N, E, Q
+    return PHLTIModel.from_matrices(J, R, G, S=S, N=N, Q=Q)
 
 def heat_equation_example(grid_intervals=50, nt=50):
     """Return heat equation example with a high-conductivity and two parametrized channels.
