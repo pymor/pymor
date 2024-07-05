@@ -36,7 +36,7 @@ For more in-depth explanations we refer to the {doc}`tutorials`.
 
 # generate some data to approximate
 from pymor.models.examples import thermal_block_example
-fom = thermal_block_example()
+fom = thermal_block_example(diameter=1/10)
 U = fom.solution_space.empty()
 for mu in fom.parameters.space(0.1, 1).sample_randomly(10):
     U.append(fom.solve(mu))
@@ -66,7 +66,7 @@ Here we consider MOR methods for {{Models}} that depend on one or more {{Paramet
 :tags: [remove-output]
 
 from pymor.models.examples import thermal_block_example
-fom = thermal_block_example()
+fom = thermal_block_example(diameter=1/10)
 
 # FOM is parameter separable, i.e., system operator is a
 # linear combination of non-parametric operators with parametric coefficients
@@ -107,7 +107,7 @@ print(f'Actual error: {(fom.solve(mu) - reductor.reconstruct(u)).norm(fom.h1_0_s
 :tags: [remove-output]
 
 from pymor.models.examples import thermal_block_example
-fom = thermal_block_example()
+fom = thermal_block_example(diameter=1/10)
 
 # instantiate reductor with training and validation parameters and desired errors
 from pymor.reductors.neural_network import NeuralNetworkReductor
@@ -115,7 +115,7 @@ reductor = NeuralNetworkReductor(fom,
                                  training_set=fom.parameters.space(0.1, 1).sample_uniformly(2),
                                  validation_set=fom.parameters.space(0.1, 1).sample_randomly(5),
                                  ann_mse=None, scale_outputs=True)
-rom =  reductor.reduce(restarts=5)
+rom = reductor.reduce(restarts=5)
 ```
 
 ### Estimation of coercivity and continuity constants using the min/max-theta approaches
@@ -124,7 +124,7 @@ rom =  reductor.reduce(restarts=5)
 :tags: [remove-output]
 
 from pymor.models.examples import thermal_block_example
-fom = thermal_block_example()
+fom = thermal_block_example(diameter=1/10)
 
 from pymor.parameters.functionals import ExpressionParameterFunctional
 mu = fom.parameters.parse([0.1, 0.9, 0.2, 0.3])
@@ -135,7 +135,7 @@ mu_bar = fom.parameters.parse([0.5, 0.5, 0.5, 0.5])
 coercivity_estimator = MinThetaParameterFunctional(fom.operator.coefficients, mu_bar, alpha_mu_bar=0.5)
 continuity_estimator = MaxThetaParameterFunctional(fom.operator.coefficients, mu_bar, gamma_mu_bar=0.5)
 
-print(f"Exact coercivity constant estimate: {naive_coercivity_estimator.evaluate(mu)}")
+print(f"Exact coercivity constant estimate: {exact_coercivity_estimator.evaluate(mu)}")
 print(f"Coercivity constant estimate using min-theta approach: {coercivity_estimator.evaluate(mu)}")
 print(f"Continuity constant estimate using max-theta approach: {continuity_estimator.evaluate(mu)}")
 ```
@@ -145,14 +145,13 @@ print(f"Continuity constant estimate using max-theta approach: {continuity_estim
 ```{code-cell} ipython3
 :tags: [remove-output]
 
-from pymor.analyticalproblems.thermalblock import thermal_block_problem
-from pymor.discretizers.builtin import discretize_stationary_cg
-problem = thermal_block_problem(num_blocks=(2, 2))
-fom, _ = discretize_stationary_cg(problem, diameter=0.1)
+from pymor.models.examples import thermal_block_example
+fom = thermal_block_example(diameter=0.1)
+parameter_space = fom.parameters.space(0.1, 1.)
 
 from pymor.algorithms.scm import construct_scm_functionals
-initial_parameter = problem.parameter_space.sample_randomly(1)[0]
-training_set = problem.parameter_space.sample_randomly(50)
+initial_parameter = parameter_space.sample_randomly(1)[0]
+training_set = parameter_space.sample_randomly(50)
 coercivity_estimator, _, _ = construct_scm_functionals(
             fom.operator, training_set, initial_parameter, product=fom.h1_0_semi_product, max_extensions=10, M=5)
 ```
