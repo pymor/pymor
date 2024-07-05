@@ -180,7 +180,7 @@ for rom in roms_inf:
 _ = ax.legend()
 ```
 
-To check the stability of the ROM's, we can plot their poles and compute the maximum real part.
+To check the stability of the ROMs, we can plot their poles and compute the maximum real part.
 
 ```{code-cell} ipython3
 fig, ax = plt.subplots()
