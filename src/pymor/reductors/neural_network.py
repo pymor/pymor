@@ -190,6 +190,7 @@ class NeuralNetworkReductor(BasicObject):
         if not hasattr(self, "training_data"):
             self.compute_training_data()
 
+        assert self.training_data is not None and len(self.training_data) == len(self.training_set)
         layer_sizes = self._compute_layer_sizes(hidden_layers)
 
         # compute validation data
