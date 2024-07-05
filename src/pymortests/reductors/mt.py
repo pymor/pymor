@@ -4,9 +4,9 @@
 
 import pytest
 
+from pymor.models.examples import penzl_mimo_example
 from pymor.models.iosys import LTIModel
 from pymor.reductors.mt import MTReductor
-from pymortests.reductors.loewner import make_fom
 
 pytestmark = pytest.mark.builtin
 
@@ -30,7 +30,7 @@ test_data = [
 
 @pytest.mark.parametrize(('r', 'mt_kwargs'), test_data)
 def test_mt(r, mt_kwargs):
-    fom = make_fom(10)
+    fom = penzl_mimo_example(10)
     mt = MTReductor(fom)
 
     rom = mt.reduce(r, **mt_kwargs)
