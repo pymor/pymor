@@ -89,8 +89,8 @@ class NeuralNetworkReductor(BasicObject):
         networks.
     """
 
-    def __init__(self, fom=None, training_set=None, validation_set=None, validation_ratio=0.1,
-                 basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={},
+    def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None, validation_snapshots=None,
+                 validation_ratio=0.1, basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={},
                  ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
@@ -98,9 +98,8 @@ class NeuralNetworkReductor(BasicObject):
                                    'min_targets': None, 'max_targets': None}
 
         if not fom:
-            assert training_set is not None
-            assert len(training_set) > 0
-            self.parameters_dim = training_set[0][0].parameters.dim
+            assert training_set is not None and len(training_set) > 0
+            self.parameters_dim = training_set[0].parameters.dim
         else:
             self.parameters_dim = fom.parameters.dim
 
