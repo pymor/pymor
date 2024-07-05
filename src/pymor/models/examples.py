@@ -3,8 +3,13 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 
-def thermal_block_example():
+def thermal_block_example(diameter=1/100):
     """Return 2x2 thermal block example.
+
+    Parameters
+    ----------
+    diameter
+        Grid element diameter.
 
     Returns
     -------
@@ -15,7 +20,7 @@ def thermal_block_example():
     from pymor.discretizers.builtin import discretize_stationary_cg
 
     p = thermal_block_problem((2, 2))
-    fom, _ = discretize_stationary_cg(p, diameter=1/100)
+    fom, _ = discretize_stationary_cg(p, diameter=diameter)
     return fom
 
 def penzl_example():
