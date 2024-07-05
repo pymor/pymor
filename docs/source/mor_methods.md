@@ -126,15 +126,16 @@ rom =  reductor.reduce(restarts=5)
 from pymor.models.examples import thermal_block_example
 fom = thermal_block_example()
 
-from pymor.parameters.functionals import MaxThetaParameterFunctional, MinThetaParameterFunctional
-mu_bar = fom.parameters.parse([0.5, 0.5, 0.5, 0.5])
-coercivity_estimator = MinThetaParameterFunctional(fom.operator.coefficients, mu_bar)
-continuity_estimator = MaxThetaParameterFunctional(fom.operator.coefficients, mu_bar, gamma_mu_bar=0.5)
-
 from pymor.parameters.functionals import ExpressionParameterFunctional
 mu = fom.parameters.parse([0.1, 0.9, 0.2, 0.3])
-naive_coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
-print(f"Naive coercivity constant estimate: {naive_coercivity_estimator.evaluate(mu)}")
+exact_coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', fom.parameters)
+
+from pymor.parameters.functionals import MaxThetaParameterFunctional, MinThetaParameterFunctional
+mu_bar = fom.parameters.parse([0.5, 0.5, 0.5, 0.5])
+coercivity_estimator = MinThetaParameterFunctional(fom.operator.coefficients, mu_bar, alpha_mu_bar=0.5)
+continuity_estimator = MaxThetaParameterFunctional(fom.operator.coefficients, mu_bar, gamma_mu_bar=0.5)
+
+print(f"Exact coercivity constant estimate: {naive_coercivity_estimator.evaluate(mu)}")
 print(f"Coercivity constant estimate using min-theta approach: {coercivity_estimator.evaluate(mu)}")
 print(f"Continuity constant estimate using max-theta approach: {continuity_estimator.evaluate(mu)}")
 ```
