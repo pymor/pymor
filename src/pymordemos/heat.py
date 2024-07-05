@@ -9,13 +9,9 @@ from typer import Argument, run
 
 from pymor.algorithms.lradi import lyap_lrcf_solver_options
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
-from pymor.analyticalproblems.domaindescriptions import RectDomain
-from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
-from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.config import config
 from pymor.core.logger import set_log_levels
-from pymor.discretizers.builtin import discretize_instationary_cg
+from pymor.models.examples import heat_equation_non_parametric_example
 from pymor.models.iosys import LTIModel, SecondOrderModel
 from pymor.reductors.bt import BRBTReductor, BTReductor, LQGBTReductor
 from pymor.reductors.h2 import IRKAReductor, OneSidedIRKAReductor, TSIAReductor
@@ -304,19 +300,7 @@ def main(
     })
     plt.rcParams['axes.grid'] = True
 
-    p = InstationaryProblem(
-        StationaryProblem(
-            domain=RectDomain([[0., 0.], [1., 1.]], left='robin', right='robin', top='robin', bottom='robin'),
-            diffusion=ConstantFunction(1., 2),
-            robin_data=(ConstantFunction(1., 2), ExpressionFunction('(x[0] < 1e-10) * 1.', 2)),
-            outputs=[('l2_boundary', ExpressionFunction('(x[0] > (1 - 1e-10)) * 1.', 2))]
-        ),
-        ConstantFunction(0., 2),
-        T=1.
-    )
-
-    fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=100)
-
+    fom = heat_equation_non_parametric_example(diameter=diameter)
     fom.visualize(fom.solve())
 
     # LTI system

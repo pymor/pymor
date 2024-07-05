@@ -831,3 +831,155 @@ class GapIRKAReductor(GenericIRKAReductor):
 
         self.conv_crit.append(dist)
         self.logger.info(f'Convergence criterion in iteration {it + 1}: {dist:e}')
+
+
+class VectorFittingReductor(BasicObject):
+    """Vector fitting reductor.
+
+    Only for single-input single-output (SISO) systems.
+
+    Parameters
+    ----------
+    s
+        Sampling points in the complex plane as a 1D |NumPy array|.
+    Hs
+        Transfer function values at the sampling points `s` as a 1D |NumPy array|.
+        Alternatively, |TransferFunction| or `Model` with `transfer_function` attribute.
+    weights
+        Weights in the weighted least squares error as a 1D |NumPy array|.
+        If not given, it is set to a vector of ones.
+    conjugate
+        Whether to include conjugated data.
+    """
+
+    def __init__(self, s, Hs, weights=None, conjugate=True):
+        assert isinstance(s, np.ndarray)
+        assert s.ndim == 1
+
+        if hasattr(Hs, 'transfer_function'):
+            Hs = Hs.transfer_function
+        if isinstance(Hs, TransferFunction):
+            Hs = np.array([Hs.eval_tf(si).squeeze() for si in s])
+        assert isinstance(Hs, np.ndarray)
+        assert Hs.ndim == 1
+        assert len(Hs) == len(s)
+
+        if weights is None:
+            weights = np.ones(len(s))
+        assert isinstance(weights, np.ndarray)
+        assert weights.ndim == 1
+        assert len(weights) == len(s)
+        assert np.all(weights > 0)
+
+        # add complex conjugate samples
+        if conjugate:
+            points_conj_list = []
+            data_conj_list = []
+            weights_list = []
+            for i, si in enumerate(s):
+                if si.conjugate() not in s:
+                    points_conj_list.append(si.conjugate())
+                    data_conj_list.append(Hs[i].conjugate())
+                    weights_list.append(weights[i])
+            if points_conj_list:
+                s = np.concatenate((s, points_conj_list))
+                Hs = np.concatenate((Hs, data_conj_list))
+                weights = np.concatenate((weights, weights_list))
+
+        self.s = s
+        self.Hs = Hs
+        self.weights_sqrt = np.sqrt(weights)
+
+    def reduce(self, r=None, lambdas=None, tol=1e-4, maxit=100):
+        """Reduce using vector fitting.
+
+        Based on :cite:`DGB15`.
+
+        Parameters
+        ----------
+        r
+            Reduced order (if not given, it is `len(lambdas)`).
+        lambdas
+            Initial poles (if not given, it is set to `-np.logspace(-1, 0, r)`).
+        tol
+            Tolerance for the convergence criterion.
+        maxit
+            Maximum number of iterations.
+
+        Returns
+        -------
+        rom
+            Reduced-order |LTIModel|.
+        """
+        if r is None and lambdas is None:
+            raise ValueError('Either r or lambdas must be given.')
+        if r is not None and lambdas is not None:
+            raise ValueError('Only r or lambdas must be given.')
+
+        if lambdas is None:
+            lambdas = -np.logspace(-1, 0, r)
+        else:
+            assert isinstance(lambdas, np.ndarray)
+            assert lambdas.ndim == 1
+            r = len(lambdas)
+
+        # right-hand side in least squares problems
+        b = self.weights_sqrt * self.Hs
+
+        for i in range(maxit):
+            self.logger.info(f'Iteration {i + 1}')
+
+            # least squares problem for barycentric form
+            A1 = self.weights_sqrt[:, np.newaxis] / (self.s[:, np.newaxis] - lambdas)
+            A2 = -self.weights_sqrt[:, np.newaxis] * self.Hs[:, np.newaxis] / (self.s[:, np.newaxis] - lambdas)
+            A = np.hstack((A1, A2))
+            x = spla.lstsq(A, b)[0]
+            psis = x[:r]
+            phis = x[r:]
+
+            # convergence check
+            conv_crit = spla.norm(phis / lambdas.real, ord=1)
+            self.logger.info(f'{conv_crit=:.3e}')
+            error = spla.norm(
+                self.weights_sqrt * (
+                    self.Hs
+                    - np.sum(psis / (self.s[:, np.newaxis] - lambdas), axis=1)
+                    / (1 + np.sum(phis / (self.s[:, np.newaxis] - lambdas), axis=1))
+                )
+                / len(self.s)
+            )
+            self.logger.info(f'{error=:.3e}')
+            if conv_crit < tol:
+                break
+
+            # real version of A_zeros = np.diag(lambdas) + ones * phi.T
+            A_zeros = np.zeros((r, r))
+            ones = np.ones(r)
+            phis_real = np.empty(r)
+            k = 0
+            for lam, phi in zip(lambdas, phis):
+                if lam.imag == 0:
+                    A_zeros[k, k] = lam.real
+                    phis_real[k] = phi.real
+                    k += 1
+                elif lam.imag > 0:
+                    A_zeros[k, k] = lam.real
+                    A_zeros[k, k + 1] = lam.imag
+                    A_zeros[k + 1, k] = -lam.imag
+                    A_zeros[k + 1, k + 1] = lam.real
+                    ones[k] = 2
+                    ones[k + 1] = 0
+                    phis_real[k] = phi.real
+                    phis_real[k + 1] = phi.imag
+                    k += 2
+            A_zeros += np.outer(ones, phis_real)
+            zeros = spla.eigvals(A_zeros)
+
+            # new lambdas
+            lambdas = -np.abs(zeros.real) + 1j * zeros.imag
+
+        # least squares problem for residues
+        A = self.weights_sqrt[:, np.newaxis] / (self.s[:, np.newaxis] - lambdas)
+        psis = spla.lstsq(A, b)[0]
+
+        return _poles_b_c_to_lti(lambdas, psis[:, np.newaxis], np.ones((r, 1)))

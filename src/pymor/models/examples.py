@@ -2,9 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
-import scipy.linalg as spla
-
 
 def thermal_block_example():
     """Return 2x2 thermal block example.
@@ -47,6 +44,33 @@ def penzl_example():
 
     return fom
 
+def penzl_mimo_example(n):
+    """Return modified multiple-input multiple-output Penzl's example.
+
+    Parameters
+    ----------
+    n
+        Model order.
+
+    Returns
+    -------
+    fom
+        Penzl's FOM example as an |LTIModel|.
+    """
+    import numpy as np
+    import scipy.sparse as sps
+
+    from pymor.models.iosys import LTIModel
+
+    A1 = np.array([[-1, 100], [-100, -1]])
+    A2 = np.array([[-1, 200], [-200, -1]])
+    A3 = np.array([[-1, 400], [-400, -1]])
+    A4 = sps.diags(np.arange(-1, -n + 5, -1))
+    A = sps.block_diag((A1, A2, A3, A4))
+    B = np.arange(2*n).reshape(n, 2)
+    C = np.arange(3*n).reshape(3, n)
+    return LTIModel.from_matrices(A, B, C)
+
 def msd_example(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
     """Mass-spring-damper model as (port-Hamiltonian) linear time-invariant system.
 
@@ -70,30 +94,15 @@ def msd_example(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
 
     Returns
     -------
-    A
-        The LTI |NumPy array| A, if `as_lti` is `True`.
-    B
-        The LTI |NumPy array| B, if `as_lti` is `True`.
-    C
-        The LTI |NumPy array| C, if `as_lti` is `True`.
-    D
-        The LTI |NumPy array| D, if `as_lti` is `True`.
-    J
-        The pH |NumPy array| J, if `as_lti` is `False`.
-    R
-        The pH |NumPy array| R, if `as_lti` is `False`.
-    G
-        The pH |NumPy array| G, if `as_lti` is `False`.
-    P
-        The pH |NumPy array| P, if `as_lti` is `False`.
-    S
-        The pH |NumPy array| S, if `as_lti` is `False`.
-    N
-        The pH |NumPy array| N, if `as_lti` is `False`.
-    E
-        The LTI |NumPy array| E, if `as_lti` is `True`, or
-        the pH |NumPy array| E, if `as_lti` is `False`.
+    fom
+        Mass-spring-damper model as an |LTIModel| (if `as_lti` is `True`)
+        or |PHLTIModel| (if `as_lti` is `False`).
     """
+    import numpy as np
+    import scipy.linalg as spla
+
+    from pymor.models.iosys import LTIModel, PHLTIModel
+
     assert n % 2 == 0
     n //= 2
 
@@ -145,16 +154,43 @@ def msd_example(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
 
     Q = spla.solve(J - R, A)
     G = B
-    P = np.zeros(G.shape)
     D = np.zeros((m, m))
-    E = np.eye(2 * n)
     S = (D + D.T) / 2
     N = -(D - D.T) / 2
 
     if as_lti:
-        return A, B, C, D, E
+        return LTIModel.from_matrices(A, B, C, D)
 
-    return J, R, G, P, S, N, E, Q
+    return PHLTIModel.from_matrices(J, R, G, S=S, N=N, Q=Q)
+
+def transfer_function_delay_example(tau=1, a=-0.1):
+    """Return transfer function of a 1D system with input delay.
+
+    Parameters
+    ----------
+    tau
+        Time delay.
+    a
+        The matrix A in the 1D system as a scalar.
+
+    Returns
+    -------
+    tf
+        Delay model as a |TransferFunction|.
+    """
+    import numpy as np
+
+    from pymor.models.transfer_function import TransferFunction
+
+    def H(s):
+        return np.array([[np.exp(-tau * s) / (s - a)]])
+
+    def dH(s):
+        return np.array([[(-tau*s + tau*a - 1) * np.exp(-tau * s) / (s - a) ** 2]])
+
+    tf = TransferFunction(1, 1, H, dH)
+
+    return tf
 
 def heat_equation_example(grid_intervals=50, nt=50):
     """Return heat equation example with a high-conductivity and two parametrized channels.
@@ -210,5 +246,83 @@ def heat_equation_example(grid_intervals=50, nt=50):
 
     # discretize using continuous finite elements
     fom, _ = discretize_instationary_cg(analytical_problem=problem, diameter=1./grid_intervals, nt=nt)
+
+    return fom
+
+
+def heat_equation_non_parametric_example(diameter=0.1, nt=100):
+    """Return non-parametric heat equation example with one output.
+
+    Parameters
+    ----------
+    diameter
+        Diameter option for the domain discretizer.
+    nt
+        Number of time steps.
+
+    Returns
+    -------
+    fom
+        Heat equation problem as an |InstationaryModel|.
+    """
+    from pymor.analyticalproblems.domaindescriptions import RectDomain
+    from pymor.analyticalproblems.elliptic import StationaryProblem
+    from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
+    from pymor.analyticalproblems.instationary import InstationaryProblem
+    from pymor.discretizers.builtin import discretize_instationary_cg
+
+    p = InstationaryProblem(
+        StationaryProblem(
+            domain=RectDomain([[0., 0.], [1., 1.]], left='robin', right='robin', top='robin', bottom='robin'),
+            diffusion=ConstantFunction(1., 2),
+            robin_data=(ConstantFunction(1., 2), ExpressionFunction('(x[0] < 1e-10) * 1.', 2)),
+            outputs=[('l2_boundary', ExpressionFunction('(x[0] > (1 - 1e-10)) * 1.', 2))]
+        ),
+        ConstantFunction(0., 2),
+        T=1.
+    )
+
+    fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=nt)
+
+    return fom
+
+
+def heat_equation_1d_example(diameter=0.01, nt=100):
+    """Return parametric 1D heat equation example with one output.
+
+    Parameters
+    ----------
+    diameter
+        Diameter option for the domain discretizer.
+    nt
+        Number of time steps.
+
+    Returns
+    -------
+    fom
+        Heat equation problem as an |InstationaryModel|.
+    """
+    from pymor.analyticalproblems.domaindescriptions import LineDomain
+    from pymor.analyticalproblems.elliptic import StationaryProblem
+    from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, LincombFunction
+    from pymor.analyticalproblems.instationary import InstationaryProblem
+    from pymor.discretizers.builtin import discretize_instationary_cg
+    from pymor.parameters.functionals import ProjectionParameterFunctional
+
+    p = InstationaryProblem(
+        StationaryProblem(
+            domain=LineDomain([0., 1.], left='robin', right='robin'),
+            diffusion=LincombFunction([ExpressionFunction('(x[0] <= 0.5) * 1.', 1),
+                                       ExpressionFunction('(0.5 < x[0]) * 1.', 1)],
+                                      [1,
+                                       ProjectionParameterFunctional('diffusion')]),
+            robin_data=(ConstantFunction(1., 1), ExpressionFunction('(x[0] < 1e-10) * 1.', 1)),
+            outputs=(('l2_boundary', ExpressionFunction('(x[0] > (1 - 1e-10)) * 1.', 1)),),
+        ),
+        ConstantFunction(0., 1),
+        T=3.
+    )
+
+    fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=nt)
 
     return fom

@@ -9,13 +9,8 @@ import numpy as np
 import scipy.linalg as spla
 from typer import Argument, run
 
-from pymor.analyticalproblems.domaindescriptions import LineDomain
-from pymor.analyticalproblems.elliptic import StationaryProblem
-from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, LincombFunction
-from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.core.logger import set_log_levels
-from pymor.discretizers.builtin import discretize_instationary_cg
-from pymor.parameters.functionals import ProjectionParameterFunctional
+from pymor.models.examples import heat_equation_1d_example
 from pymor.reductors.aaa import PAAAReductor
 
 
@@ -83,21 +78,7 @@ def main(
     set_log_levels({'pymor.algorithms.gram_schmidt.gram_schmidt': 'WARNING'})
 
     # Model
-    p = InstationaryProblem(
-        StationaryProblem(
-            domain=LineDomain([0., 1.], left='robin', right='robin'),
-            diffusion=LincombFunction([ExpressionFunction('(x[0] <= 0.5) * 1.', 1),
-                                       ExpressionFunction('(0.5 < x[0]) * 1.', 1)],
-                                      [1,
-                                       ProjectionParameterFunctional('diffusion')]),
-            robin_data=(ConstantFunction(1., 1), ExpressionFunction('(x[0] < 1e-10) * 1.', 1)),
-            outputs=(('l2_boundary', ExpressionFunction('(x[0] > (1 - 1e-10)) * 1.', 1)),),
-        ),
-        ConstantFunction(0., 1),
-        T=3.
-    )
-
-    fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=100)
+    fom = heat_equation_1d_example(diameter=diameter)
 
     lti = fom.to_lti()
 
