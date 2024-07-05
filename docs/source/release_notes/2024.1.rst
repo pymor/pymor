@@ -4,7 +4,7 @@ pyMOR 2024.1 (July 5, 2025)
 We are proud to announce the release of pyMOR 2024.1!
 This release features ...
 
-pyMOR 2024.2 contains contributions by Maximilian Bindhak and Art Pelling.
+pyMOR 2024.1 contains contributions by Maximilian Bindhak and Art Pelling.
 See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more
 details.
 
