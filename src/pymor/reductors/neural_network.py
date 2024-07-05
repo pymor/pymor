@@ -557,6 +557,10 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     validation_set
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+    training_snapshots
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+    validation_snapshots
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     validation_ratio
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     T
@@ -812,6 +816,10 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
         See :class:`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`.
     validation_set
         See :class:`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`.
+    training_snapshots
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
+    validation_snapshots
+        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     T
         See :class:`~pymor.reductors.neural_network.NeuralNetworkInstationaryReductor`.
     validation_ratio
