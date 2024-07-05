@@ -30,8 +30,8 @@ class LBSuccessiveConstraintsFunctional(ParameterFunctional):
     coercivity_constants
         A list of coercivity constants for the `constraint_parameters`.
     bounds
-        Either `None` or a list of tuples containing lower and upper bounds
-        for the design variables, i.e. the unknowns in the linear program.
+        List of tuples containing lower and upper bounds for the design variables,
+        i.e. the unknowns in the linear program.
     linprog_method
         Name of the algorithm to use for solving the linear program using `scipy.optimize.linprog`.
     linprog_options
@@ -132,8 +132,8 @@ class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
     initial_parameter
         |Parameter| used to initialize the surrogate for the greedy algorithm.
     bounds
-        Either `None` or a list of tuples containing lower and upper bounds
-        for the design variables, i.e. the unknowns in the linear program.
+        List of tuples containing lower and upper bounds for the design variables,
+        i.e. the unknowns in the linear program.
     product
         Product with respect to which the coercivity constant should be
         estimated.
@@ -168,7 +168,7 @@ class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
     def extend(self, mu):
         self.constraint_parameters.append(mu)
         fixed_parameter_op = self.operator.assemble(mu)
-        eigvals, eigvecs = eigs(fixed_parameter_op, k=1, which='SM', E=self.product)
+        eigvals, eigvecs = eigs(fixed_parameter_op, k=1, sigma=0, which='LM', E=self.product)
         self.coercivity_constants.append(eigvals[0].real)
         minimizer = eigvecs[0]
         minimizer_squared_norm = minimizer.norm(product=self.product) ** 2
@@ -229,16 +229,18 @@ def construct_scm_functionals(operator, training_set, initial_parameter, atol=No
     logger = getLogger('pymor.algorithms.construct_scm_functionals')
 
     with logger.block('Computing bounds on design variables by solving eigenvalue problems ...'):
-        def lower_bound(operator):
+        def lower_upper_bound(operator):
             # some dispatch should be added here in the future
-            eigvals, _ = eigs(operator, k=1, which='SM', E=product)
-            return eigvals[0].real
-
-        def upper_bound(operator):
             eigvals, _ = eigs(operator, k=1, which='LM', E=product)
-            return eigvals[0].real
+            largest = abs(eigvals[0].real)
 
-        bounds = [(lower_bound(aq), upper_bound(aq)) for aq in operator.operators]
+            # use -|largest mag ev| as lower bound for shift-invert mode
+            eigvals, _ = eigs(operator, k=1, sigma=-largest, which='LM', E=product)
+            smallest = eigvals[0].real
+
+            return smallest, largest
+
+        bounds = [lower_upper_bound(aq) for aq in operator.operators]
 
     with logger.block('Running greedy algorithm to construct functionals ...'):
         surrogate = SuccessiveConstraintsSurrogate(operator, initial_parameter, bounds, product=product,
