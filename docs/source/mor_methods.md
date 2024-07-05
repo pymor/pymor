@@ -101,24 +101,27 @@ print(f'Error estimate: {rom.estimate_error(mu)}')
 print(f'Actual error: {(fom.solve(mu) - reductor.reconstruct(u)).norm(fom.h1_0_semi_product)}')
 ```
 
-### Neural networks for parameter-dependent problems
+### POD-Greedy method for parabolic models
 
 ```{code-cell} ipython3
 :tags: [remove-output]
 
-from pymor.models.examples import thermal_block_example
-fom = thermal_block_example(diameter=1/10)
+from pymor.models.examples import heat_equation_example
+fom = heat_equation_example()
+parameter_space = fom.parameters.space(1, 100)
 
-# instantiate reductor with training and validation parameters and desired errors
-from pymor.reductors.neural_network import NeuralNetworkReductor
-reductor = NeuralNetworkReductor(fom,
-                                 training_set=fom.parameters.space(0.1, 1).sample_uniformly(2),
-                                 validation_set=fom.parameters.space(0.1, 1).sample_randomly(5),
-                                 ann_mse=None, scale_outputs=True)
-rom = reductor.reduce(restarts=5)
+from pymor.parameters.functionals import ExpressionParameterFunctional
+coercivity_estimator = ExpressionParameterFunctional('1.', fom.parameters)
+from pymor.reductors.parabolic import ParabolicRBReductor
+reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
+
+from pymor.algorithms.greedy import rb_greedy
+training_set = parameter_space.sample_uniformly(20)
+greedy_data = rb_greedy(fom, reductor, training_set=parameter_space.sample_uniformly(20), max_extensions=10)
+rom = greedy_data['rom']
 ```
 
-### Estimation of coercivity and continuity constants using the min/max-theta approaches
+### Estimation of coercivity and continuity constants using the min/max-theta approach
 
 ```{code-cell} ipython3
 :tags: [remove-output]
@@ -153,27 +156,24 @@ from pymor.algorithms.scm import construct_scm_functionals
 initial_parameter = parameter_space.sample_randomly(1)[0]
 training_set = parameter_space.sample_randomly(50)
 coercivity_estimator, _, _ = construct_scm_functionals(
-            fom.operator, training_set, initial_parameter, product=fom.h1_0_semi_product, max_extensions=10, M=5)
+    fom.operator, training_set, initial_parameter, product=fom.h1_0_semi_product, max_extensions=10, M=5)
 ```
 
-### Parabolic problems using greedy algorithm
+### POD/neural network approximation
 
 ```{code-cell} ipython3
 :tags: [remove-output]
 
-from pymor.models.examples import heat_equation_example
-fom = heat_equation_example()
-parameter_space = fom.parameters.space(1, 100)
+from pymor.models.examples import thermal_block_example
+fom = thermal_block_example(diameter=1/10)
 
-from pymor.parameters.functionals import ExpressionParameterFunctional
-coercivity_estimator = ExpressionParameterFunctional('1.', fom.parameters)
-from pymor.reductors.parabolic import ParabolicRBReductor
-reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
-
-from pymor.algorithms.greedy import rb_greedy
-training_set = parameter_space.sample_uniformly(20)
-greedy_data = rb_greedy(fom, reductor, training_set=parameter_space.sample_uniformly(20), max_extensions=10)
-rom = greedy_data['rom']
+# instantiate reductor with training and validation parameters and desired errors
+from pymor.reductors.neural_network import NeuralNetworkReductor
+reductor = NeuralNetworkReductor(fom,
+                                 training_set=fom.parameters.space(0.1, 1).sample_uniformly(2),
+                                 validation_set=fom.parameters.space(0.1, 1).sample_randomly(5),
+                                 ann_mse=None, scale_outputs=True)
+rom = reductor.reduce(restarts=5)
 ```
 
 ### Empirical interpolation of coefficient functions
@@ -193,12 +193,6 @@ f_ei, _ = interpolate_function(
 mu = f.parameters.parse(2.3)
 X = np.linspace(0, 1, 100)
 plt.plot(X, f(X.reshape((-1,1)), mu=mu) - f_ei(X.reshape((-1,1)), mu=mu))
-plt.title('Error')
-plt.figure()
-for i, g in enumerate(f_ei.functions):
-    plt.plot(X, g(X.reshape((-1,1)), mu=mu), label=f'{i}')
-plt.legend()
-plt.title('Basis functions')
 plt.show()
 ```
 
@@ -215,6 +209,7 @@ from pymor.reductors.basic import InstationaryRBReductor
 problem = burgers_problem_2d()
 fom, _ = discretize_instationary_fv(problem, diameter=1./20, num_flux='engquist_osher', nt=100)
 fom.enable_caching('disk')  # cache solution snapshots on disk
+
 training_set = problem.parameter_space.sample_uniformly(10)
 fom_ei, _ = interpolate_operators(
     fom, ['operator'], training_set, error_norm=fom.l2_norm, max_interpolation_dofs=30)
