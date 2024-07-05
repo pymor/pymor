@@ -466,7 +466,7 @@ whether of lower or higher-order.
 pyMOR implements bitangential Hermite interpolation (BHI) for different types of {{ Models }},
 i.e., methods to construct a reduced-order transfer function $\widehat{H}$ such that
 
-```{mat}
+```{math}
 \begin{align*}
   H(\sigma_i) b_i & = \widehat{H}(\sigma_i) b_i, \\
   c_i^H H(\sigma_i) & = c_i^H \widehat{H}(\sigma_i), \\
@@ -481,7 +481,7 @@ $i = 1, \ldots, r$.
 Such interpolation is relevant for systems with multiple inputs and outputs,
 where interpolation of matrices
 
-```{mat}
+```{math}
 \begin{align*}
   H(\sigma_i) & = \widehat{H}(\sigma_i), \\
   H'(\sigma_i) b_i & = \widehat{H}(\sigma_i) b_i,
