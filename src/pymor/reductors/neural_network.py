@@ -303,12 +303,6 @@ class NeuralNetworkReductor(BasicObject):
                 self._update_scaling_parameters(sample)
                 self.training_data.extend(sample)
 
-        # set singular values as weights for the weighted MSE loss
-        self.weights = torch.Tensor(svals)
-
-        # compute mean square loss
-        self.mse_basis = (sum(U.norm2()) - sum(svals**2)) / len(U)
-
     def _update_scaling_parameters(self, sample):
         """Update the quantities for scaling of inputs and outputs."""
         assert len(sample) == 2 or (len(sample) == 1 and len(sample[0]) == 2)
@@ -419,7 +413,7 @@ class NeuralNetworkReductor(BasicObject):
             name = self.fom.name
         else:
             projected_output_functional = None
-            parameters = self.training_set[0][0].parameters
+            parameters = self.training_set[0].parameters
             name = 'data_driven'
 
         with self.logger.block('Building ROM ...'):
