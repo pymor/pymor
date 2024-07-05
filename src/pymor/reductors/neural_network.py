@@ -194,7 +194,7 @@ class NeuralNetworkReductor(BasicObject):
         layer_sizes = self._compute_layer_sizes(hidden_layers)
 
         # compute validation data
-        if not hasattr(self, 'validation_data'):
+        if self.validation_snapshots is None:
             with self.logger.block('Computing validation snapshots ...'):
 
                 if self.validation_set:
@@ -213,7 +213,16 @@ class NeuralNetworkReductor(BasicObject):
                     get_rng().shuffle(self.training_data)
                     # split training data into validation and training set
                     self.validation_data = self.training_data[0:number_validation_snapshots]
-                    self.training_data = self.training_data[number_validation_snapshots+1:]
+                    self.training_data = self.training_data[number_validation_snapshots:]
+        else:
+            assert self.validation_set is not None
+            with self.logger.block('Computing validation samples ...'):
+                validation_data_iterable = zip(self.validation_set, self.validation_snapshots)
+
+                self.validation_data = []
+                for mu, u in validation_data_iterable:
+                    sample = self._compute_sample(mu, u)
+                    self.validation_data.extend(sample)
 
         # run the actual training of the neural network
         with self.logger.block('Training of neural network ...'):
