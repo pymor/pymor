@@ -57,23 +57,34 @@ Backward incompatible changes
 
 Improved Model interface and implementation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-For `Model` interface methods that return NumPy arrays, the shape of these arrays is now clearly
-defined `[#2278] <https://github.com/pymor/pymor/pull/2278>`_:
-`estimate_error` always returns a 1D NumPy array, where the index corresponds to time.
-For time-independent problems, the array always has length 1. `estimate_output_error` always returns a 2D NumPy array, where axis 0 corresponds to
-time and axis 1 corresponds to the output component. The `return_vector` parameter has been removed.
+For `Model` interface methods that return NumPy arrays, the shape of these
+arrays is now clearly defined `[#2278] <https://github.com/pymor/pymor/pull/2278>`_:
+`estimate_error` always returns a 1D NumPy array, where the index corresponds to
+time. `estimate_output_error` always returns a 2D NumPy array, where axis 0
+corresponds to time and axis 1 corresponds to the output component. The
+`return_vector` parameter has been removed.
 
-Further, in order to have consistent behavior for time-dependent models, the `solution_d_mu` option of `compute` now returns a dict of the form `{(parameter, index): sensitivity}` instead of appending solution sensitivities for different parameter indices to a single array. `solution_d_mu` can now either be set to `True` to compute all sensitivities or it can be set to a sequence of tuples `(parameter, index)` to select the parameters for which to compute sensitivities.
+In order to have consistent behavior for time-dependent models, the
+`solution_d_mu` option of `compute` now returns a dict of the form
+`{(parameter, index): sensitivity}` instead of appending solution sensitivities
+for different parameter indices to a single array. `output_d_mu` now always
+returns a frozen dict-like object of the form `{(parameter, index): sensitivity}`,
+where `sensitivity` is a 2D NumPy array with axis 0 corresponding to time and
+axis 1 corresponding to output component. The returned object has a `to_numpy`
+method to convert it to a single array. The `return_array` parameter has been
+removed from `output_d_mu`.
 
-`output_d_mu` now always returns a frozen dict-like object of the form `{(parameter, index): sensitivity}`, where `sensitivity` is a 2D NumPy array with axis 0 corresponding to time and axis 1 corresponding to output component. The returned object has a `to_numpy` method to convert it to a single array. The `return_array` parameter has been removed from `output_d_mu`.
+Only compute keeps `**kwargs`, which are only allowed to be used to select
+additional quantities that are to be computed. To change behavior of `solve`,
+etc., appropriate attributes of the `Model` instance have to be used in the
+future.
 
-Only compute keeps `**kwargs`, which are only allowed to be used to select additional quantities that are to be computed. To change behavior of `solve`, etc., appropriate attributes of the `Model` instance have to be used in the future.
-
-Finally, the internal interfaces for implementing `compute` and related methods have been significantly simplified.
-`Models` now only implement `_compute`, which can access default implementations via a `super` call. In particular, this
-new approach allows retrieving intermediate `compute` quantities from the `cache`, when these already have been
-computed. For further details, see `[#2277] <https://github.com/pymor/pymor/pull/2277>`_
-
+Finally, the internal interfaces for implementing `compute` and related methods
+have been significantly simplified. `Models` now only implement `_compute`,
+which can access default implementations via a `super` call. In particular, this
+new approach allows retrieving arbitrary intermediate `compute` quantities from
+the `cache` in subsequent computations. For further details, see
+`[#2277] <https://github.com/pymor/pymor/pull/2277>`_.
 
 
 Further notable improvements
