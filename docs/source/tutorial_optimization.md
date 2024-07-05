@@ -1,26 +1,20 @@
 ---
 jupytext:
   text_representation:
-   format_name: myst
-jupyter:
-  jupytext:
-    cell_metadata_filter: -all
-    formats: ipynb,myst
-    main_language: python
-    text_representation:
-      format_name: myst
-      extension: .md
-      format_version: '1.3'
-      jupytext_version: 1.11.2
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.16.2
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
+  language: python
   name: python3
 ---
 
 ```{try_on_binder}
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 :load: myst_code_init.py
 :tags: [remove-cell]
 
@@ -127,7 +121,7 @@ where {math}`\theta_{\mathcal{J}}(\mu) := 1 + \frac{1}{5}(\mu_0 + \mu_1)`.
 
 With this data, we can construct a {{ StationaryProblem }} in pyMOR.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.basic import *
 import numpy as np
 
@@ -169,7 +163,7 @@ we also define {math}`\bar{\mu}`, which we pass via the argument
 `mu_energy_product`. Also, we define the parameter space
 {math}`\mathcal{P}` on which we want to optimize.
 
-```{code-cell}
+```{code-cell} ipython3
 mu_bar = problem.parameters.parse([np.pi/2,np.pi/2])
 
 fom, data = discretize_stationary_cg(problem, diameter=1/50, mu_energy_product=mu_bar)
@@ -178,7 +172,7 @@ parameter_space = fom.parameters.space(0, np.pi)
 
 We now define the first function for the output of the model that will be used by the minimizer.
 
-```{code-cell}
+```{code-cell} ipython3
 def fom_objective_functional(mu):
     return fom.output(mu)[0, 0]
 ```
@@ -186,21 +180,21 @@ def fom_objective_functional(mu):
 We also pick a starting parameter for the optimization method,
 which in our case is {math}`\mu^0 = (0.25, 0.5)`.
 
-```{code-cell}
+```{code-cell} ipython3
 initial_guess = [0.25, 0.5]
 ```
 
 Next, we visualize the diffusion function {math}`\lambda_\mu` by using
 {class}`~pymor.discretizers.builtin.cg.InterpolationOperator` for interpolating it on the grid.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.discretizers.builtin.cg import InterpolationOperator
 
 diff = InterpolationOperator(data['grid'], problem.diffusion).as_vector(fom.parameters.parse(initial_guess))
 fom.visualize(diff)
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 print(data['grid'])
 ```
 
@@ -214,7 +208,7 @@ It rather further improves the speedups achieved by model reduction.
 Before we discuss the first optimization method, we define helpful
 functions for visualizations.
 
-```{code-cell}
+```{code-cell} ipython3
 import matplotlib as mpl
 mpl.rcParams['figure.figsize'] = (12.0, 8.0)
 mpl.rcParams['font.size'] = 12
@@ -254,7 +248,7 @@ def addplot_xy_point_as_bar(ax, x, y, color='orange', z_range=None):
 
 Now, we can visualize the objective functional on the parameter space
 
-```{code-cell}
+```{code-cell} ipython3
 ranges = parameter_space.ranges['diffusion']
 XX = np.linspace(ranges[0] + 0.05, ranges[1], 10)
 
@@ -270,7 +264,7 @@ already result in a very different non-convex output functional.
 In order to record some data during the optimization, we also define
 helpful functions for recording and reporting the results in this tutorial.
 
-```{code-cell}
+```{code-cell} ipython3
 def prepare_data(offline_time=False, enrichments=False):
     data = {'num_evals': 0, 'evaluations' : [], 'evaluation_points': [], 'time': np.inf}
     if offline_time:
@@ -321,7 +315,7 @@ builtin `L-BFGS-B` routine which is a quasi-Newton method that can
 also handle a constrained parameter space. For the whole tutorial, we define the
 optimization function as follows.
 
-```{code-cell}
+```{code-cell} ipython3
 from functools import partial
 from scipy.optimize import minimize
 
@@ -344,7 +338,7 @@ This is not recommended because the gradient is inexact and the
 computation of finite differences requires even more evaluations of the
 primal equation. Here, we use this approach for a simple demonstration.
 
-```{code-cell}
+```{code-cell} ipython3
 reference_minimization_data = prepare_data()
 
 fom_result = optimize(fom_objective_functional, reference_minimization_data, ranges)
@@ -352,7 +346,7 @@ fom_result = optimize(fom_objective_functional, reference_minimization_data, ran
 reference_mu = fom_result.x
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 report(fom_result, reference_minimization_data)
 ```
 
@@ -362,7 +356,7 @@ full order model. Obviously, this is related to the computation of the
 finite differences. We can visualize the optimization path by plotting
 the chosen points during the minimization.
 
-```{code-cell}
+```{code-cell} ipython3
 reference_plot = plot_3d_surface(fom_objective_functional, XX, XX, alpha=0.5)
 
 for mu in reference_minimization_data['evaluation_points']:
@@ -462,7 +456,7 @@ In order to use the output for {func}`~scipy.optimize.minimize` we use the outpu
 {meth}`~pymor.models.interface.OutputDMuResult.to_numpy` method
 to convert the values to a single NumPy array.
 
-```{code-cell}
+```{code-cell} ipython3
 def fom_gradient_of_functional(mu):
     return fom.output_d_mu(fom.parameters.parse(mu)).to_numpy()
 
@@ -475,7 +469,7 @@ opt_fom_result = optimize(fom_objective_functional, opt_fom_minimization_data, r
 reference_mu = opt_fom_result.x
 ```
 
-```{code-cell}
+```{code-cell} ipython3
 report(opt_fom_result, opt_fom_minimization_data)
 ```
 
@@ -555,7 +549,7 @@ and only enriching the model if the estimated quality is no longer sufficient.
 
 The algorithm described above can be executed as follows.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymor.algorithms.tr import coercive_rb_trust_region
 from pymor.parameters.functionals import MinThetaParameterFunctional
 
@@ -577,7 +571,7 @@ error of about `1e-06` which is comparable to the result obtained from the
 previous methods.
 To conclude, we once again compare all methods that we have discussed in this notebook.
 
-```{code-cell}
+```{code-cell} ipython3
 from pymordemos.trust_region import report as tr_report
 reference_fun = fom_objective_functional(reference_mu)
 
@@ -599,7 +593,7 @@ is even more pronounced.
 Crucially, the number of necessary FOM evaluations in the trust-region method is smaller
 than for the other methods because we use the information in the local surrogates more efficiently.
 
-```{code-cell}
+```{code-cell} ipython3
 :tags: [remove-cell]
 
 subproblem_data = tr_minimization_data['subproblem_data']
