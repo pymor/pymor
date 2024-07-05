@@ -44,15 +44,17 @@ def main(
         for mu in test_set:
             U_red.append(reductor.reconstruct(rom.solve(mu)))
 
-    training_data = []
+    # Initialise to NumpyVectorArray for simulation snapshots
+    training_snapshots = fom.solution_space.empty(reserve=len(training_set))
     for mu in training_set:
-        training_data.append((mu, fom.solve(mu)))
+        training_snapshots.append(fom.solve(mu))
 
-    validation_data = []
+    validation_snapshots= fom.solution_space.empty(reserve=len(validation_set))
     for mu in validation_set:
-        validation_data.append((mu, fom.solve(mu)))
+        validation_snapshots.append(fom.solve(mu))
 
-    reductor_data_driven = NeuralNetworkReductor(training_set=training_data, validation_set=validation_data,
+    reductor_data_driven = NeuralNetworkReductor(training_set=training_set, training_snapshots=training_snapshots,
+                                                 validation_set=validation_set, validation_snapshots=validation_snapshots,
                                                  l2_err=1e-5, ann_mse=1e-5)
     rom_data_driven = reductor_data_driven.reduce(restarts=100, log_loss_frequency=10)
 
