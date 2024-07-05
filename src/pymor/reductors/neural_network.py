@@ -49,14 +49,16 @@ class NeuralNetworkReductor(BasicObject):
         |VectorArrays|.
     training_set
         Set of |parameter values| to use for POD and training of the
-        neural network. If `fom` is `None`, the `training_set` has
-        to consist of pairs of |parameter values| and corresponding solution
-        |VectorArrays|.
+        neural network.
+    training_snapshots
+        Set of |simulation snapshots| to use for POD and training of the
+        neural network.
     validation_set
         Set of |parameter values| to use for validation in the training
-        of the neural network. If `fom` is `None`, the `validation_set` has
-        to consist of pairs of |parameter values| and corresponding solution
-        |VectorArrays|.
+        of the neural network.
+    validation_snapshots
+        Set of solution |VectorArrays| to use for validation in the training
+        of the neural network.
     validation_ratio
         Fraction of the training set to use for validation in the training
         of the neural network (only used if no validation set is provided).
@@ -437,12 +439,16 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         to consist of pairs of |parameter values| and corresponding outputs.
     training_set
         Set of |parameter values| to use for POD and training of the
-        neural network. If `fom` is `None`, the `training_set` has
-        to consist of pairs of |parameter values| and corresponding outputs.
+        neural network.
+    training_snapshots
+        Set of |simulation snapshots| to use for POD and training of the
+        neural network.
     validation_set
         Set of |parameter values| to use for validation in the training
-        of the neural network. If `fom` is `None`, the `validation_set` has
-        to consist of pairs of |parameter values| and corresponding outputs.
+        of the neural network.
+    validation_snapshots
+        Set of solution |VectorArrays| to use for validation in the training
+        of the neural network.
     validation_ratio
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     validation_loss
@@ -454,8 +460,8 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     """
 
-    def __init__(self, fom=None, training_set=None, validation_set=None, validation_ratio=0.1,
-                 validation_loss=None, scale_inputs=True, scale_outputs=False):
+    def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None, validation_snapshots=None,
+                 validation_ratio=0.1, validation_loss=None, scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
@@ -484,6 +490,9 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
                     sample = self._compute_sample(datum)
                 self._update_scaling_parameters(sample)
                 self.training_data.extend(sample)
+
+    def compute_reduced_basis(self):
+        """empty function to avoid computing a reduced basis."""
 
     def _compute_sample(self, mu, output=None):
         """Transform parameter and corresponding output to tensors."""
