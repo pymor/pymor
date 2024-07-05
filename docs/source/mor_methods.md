@@ -176,6 +176,32 @@ greedy_data = rb_greedy(fom, reductor, training_set=parameter_space.sample_unifo
 rom = greedy_data['rom']
 ```
 
+### Empirical interpolation of coefficient functions
+
+```{code-cell} ipython3
+:tags: [remove-output]
+from matplotlib import pyplot as plt
+import numpy as np
+from pymor.algorithms.ei import interpolate_function
+from pymor.analyticalproblems.functions import ExpressionFunction
+
+f = ExpressionFunction('1 + x[0]**exp[0]', 1, {'exp': 1})
+parameter_space = f.parameters.space(1, 3)
+f_ei, _ = interpolate_function(
+    f, parameter_space.sample_uniformly(10), np.linspace(0, 1, 100).reshape((-1,1)), rtol=1e-4)
+
+mu = f.parameters.parse(2.3)
+X = np.linspace(0, 1, 100)
+plt.plot(X, f(X.reshape((-1,1)), mu=mu) - f_ei(X.reshape((-1,1)), mu=mu))
+plt.title('Error')
+plt.figure()
+for i, g in enumerate(f_ei.functions):
+    plt.plot(X, g(X.reshape((-1,1)), mu=mu), label=f'{i}')
+plt.legend()
+plt.title('Basis functions')
+plt.show()
+```
+
 ## LTI System MOR
 
 Here we consider some of the methods for {{LTIModels}}.
