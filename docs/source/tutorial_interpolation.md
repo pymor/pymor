@@ -109,8 +109,8 @@ A reduced-order model
 
 ```{math}
 \begin{align*}
-  \dot{x}(t) & = \widehat{A} x(t) + \widehat{B} u(t), \\
-  y(t) & = \widehat{C} x(t) + \widehat{D} u(t),
+  \dot{\widehat{x}}(t) & = \widehat{A} \widehat{x}(t) + \widehat{B} u(t), \\
+  \widehat{y}(t) & = \widehat{C} \widehat{x}(t) + \widehat{D} u(t),
 \end{align*}
 ```
 
@@ -470,7 +470,7 @@ i.e., methods to construct a reduced-order transfer function $\widehat{H}$ such 
 \begin{align*}
   H(\sigma_i) b_i & = \widehat{H}(\sigma_i) b_i, \\
   c_i^H H(\sigma_i) & = c_i^H \widehat{H}(\sigma_i), \\
-  c_i^H H'(\sigma_i) b_i & = c_i^H \widehat{H}(\sigma_i) b_i,
+  c_i^H H'(\sigma_i) b_i & = c_i^H \widehat{H}'(\sigma_i) b_i,
 \end{align*}
 ```
 
@@ -484,21 +484,30 @@ where interpolation of matrices
 ```{math}
 \begin{align*}
   H(\sigma_i) & = \widehat{H}(\sigma_i), \\
-  H'(\sigma_i) b_i & = \widehat{H}(\sigma_i) b_i,
+  H'(\sigma_i) & = \widehat{H}'(\sigma_i),
 \end{align*}
 ```
 
 may be too restrictive.
-Here we focus on single input and single output systems,
+Here we focus on single-input single-output systems,
 where tangential and matrix interpolation are the same.
+
+Bitangential Hermite interpolation is also relevant for $\mathcal{H}_2$-optimal
+model order reduction and methods such as IRKA (iterative rational Krylov
+algorithm), but we don't discuss them in this tutorial.
+
+Interpolation at multiple points can be achieved by concatenating different $V$
+and $W$ matrices discussed above.
+In pyMOR, {class}`~pymor.reductors.interpolation.LTIBHIReductor` can be used
+directly to perform bitangential Hermite interpolation.
 
 ```{code-cell} ipython3
 import numpy as np
 from pymor.reductors.interpolation import LTIBHIReductor
 
 bhi = LTIBHIReductor(fom)
-sigma = np.array([0.5, 5, 50, 500, 5000])
-sigma = np.concatenate([1j * sigma, -1j * sigma])
+freq = np.array([0.5, 5, 50, 500, 5000])
+sigma = np.concatenate([1j * freq, -1j * freq])
 b = np.ones((10, 1))
 c = np.ones((10, 1))
 rom_bhi = bhi.reduce(sigma, b, c)
@@ -510,8 +519,10 @@ We can compare the Bode plots.
 fig, ax = plt.subplots(2, 1, **bode_plot_opts)
 fom.transfer_function.bode_plot(w, ax=ax, label='FOM')
 rom_bhi.transfer_function.bode_plot(w, ax=ax, label=f'ROM $r = {rom_bhi.order}$')
-_ = ax[0, 0].legend()
-_ = ax[1, 0].legend()
+for a in ax.flat:
+    for f in freq:
+        a.axvline(f, color='gray', linestyle='--')
+    _ = a.legend()
 ```
 
 The error plot shows interpolation more clearly.
@@ -520,6 +531,8 @@ The error plot shows interpolation more clearly.
 fig, ax = plt.subplots()
 err = fom - rom_bhi
 err.transfer_function.mag_plot(w, label=f'Error $r = {rom_bhi.order}$')
+for f in freq:
+    ax.axvline(f, color='gray', linestyle='--')
 _ = ax.legend()
 ```
 
