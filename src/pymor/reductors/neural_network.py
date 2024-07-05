@@ -174,8 +174,18 @@ class NeuralNetworkReductor(BasicObject):
 
         torch.manual_seed(get_seed_seq().spawn(1)[0].generate_state(1).item())
 
-        # build a reduced basis using POD and compute training data
-        if not hasattr(self, 'training_data'):
+        # compute training data
+        if self.fom is None:
+            assert self.training_snapshots is not None
+        elif self.training_snapshots is None:
+            self.compute_training_snapshots()
+
+        # build a reduced basis using POD
+        if not hasattr(self, 'reduced_basis'):
+            self.compute_reduced_basis()
+
+        # compute training samples
+        if not hasattr(self, "training_data"):
             self.compute_training_data()
 
         layer_sizes = self._compute_layer_sizes(hidden_layers)
@@ -244,34 +254,38 @@ class NeuralNetworkReductor(BasicObject):
         neural_network = FullyConnectedNN(**neural_network_parameters).double()
         return neural_network
 
-    def compute_training_data(self):
-        """Compute a reduced basis using proper orthogonal decomposition."""
+    def compute_training_snapshots(self):
+        """Compute training data for the neural network."""
         # compute snapshots for POD and training of neural networks
-        if not self.fom:
-            U = self.training_set[0][1].empty()
-            for mu, u in self.training_set:
-                U.append(u)
-        else:
-            with self.logger.block('Computing training snapshots ...'):
-                U = self.fom.solution_space.empty()
-                for mu in self.training_set:
-                    U.append(self.fom.solve(mu))
+        with self.logger.block('Computing training snapshots ...'):
+            U = self.fom.solution_space.empty()
+            for mu in self.training_set:
+                U.append(self.fom.solve(mu))
 
+        self.training_snapshots = U
+
+    def compute_reduced_basis(self):
+        """Compute a reduced basis using proper orthogonal decomposition."""
         # compute reduced basis via POD
         with self.logger.block('Building reduced basis ...'):
-            self.reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
+            self.reduced_basis, svals = pod(self.training_snapshots, modes=self.basis_size, rtol=self.rtol / 2.,
                                             atol=self.atol / 2., l2_err=self.l2_err / 2.,
                                             **(self.pod_params or {}))
 
+            # set singular values as weights for the weighted MSE loss
+            self.weights = torch.Tensor(svals)
+
+            # compute mean square loss
+            self.mse_basis = (sum(self.training_snapshots.norm2()) - sum(svals ** 2)) / len(self.training_snapshots)
+
+    def compute_training_data(self):
+        """Compute training data for the neural network using the reduced basis."""
         # compute training samples
         with self.logger.block('Computing training samples ...'):
-            if not self.fom:
-                training_set_iterable = self.training_set
-            else:
-                training_set_iterable = zip(self.training_set, U)
+            training_data_iterable = zip(self.training_set, self.training_snapshots)
 
             self.training_data = []
-            for mu, u in training_set_iterable:
+            for mu, u in training_data_iterable:
                 sample = self._compute_sample(mu, u)
                 # compute minimum and maximum of outputs/targets for scaling
                 self._update_scaling_parameters(sample)
