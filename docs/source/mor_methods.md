@@ -202,6 +202,28 @@ plt.title('Basis functions')
 plt.show()
 ```
 
+### EI-Greedy/POD-Greedy reduction of nonlinear models
+
+```{code-cell} ipython3
+:tags: [remove-output]
+from pymor.algorithms.ei import interpolate_operators
+from pymor.algorithms.greedy import rb_greedy
+from pymor.analyticalproblems.burgers import burgers_problem_2d
+from pymor.discretizers.builtin.fv import discretize_instationary_fv
+from pymor.reductors.basic import InstationaryRBReductor
+
+problem = burgers_problem_2d()
+fom, _ = discretize_instationary_fv(problem, diameter=1./20, num_flux='engquist_osher', nt=100)
+fom.enable_caching('disk')  # cache solution snapshots on disk
+training_set = problem.parameter_space.sample_uniformly(10)
+fom_ei, _ = interpolate_operators(
+    fom, ['operator'], training_set, error_norm=fom.l2_norm, max_interpolation_dofs=30)
+reductor = InstationaryRBReductor(fom_ei)
+greedy_data = rb_greedy(
+    fom, reductor, training_set, use_error_estimator=False, max_extensions=10)
+rom = greedy_data['rom']
+```
+
 ## LTI System MOR
 
 Here we consider some of the methods for {{LTIModels}}.
