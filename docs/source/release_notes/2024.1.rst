@@ -29,7 +29,7 @@ We added an implementation of vector fitting
 a least-squares data-driven method for frequency-response data of linear
 time-invariant systems.
 This extends to the available methods:
-interpolatory Loewner method (:class:`~pymor.reductors.Loewner.LoewnerReductor`)
+interpolatory Loewner method (:class:`~pymor.reductors.loewner.LoewnerReductor`)
 and mixed greedy/least-squares AAA algorithm
 (:class:`~pymor.reductors.aaa.PAAAReductor`).
 
