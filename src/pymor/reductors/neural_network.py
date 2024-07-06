@@ -91,16 +91,17 @@ class NeuralNetworkReductor(BasicObject):
         networks.
     """
 
-    def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None, validation_snapshots=None,
-                 validation_ratio=0.1, basis_size=None, rtol=0., atol=0., l2_err=0., pod_params={},
-                 ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
+    def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None,
+                 validation_snapshots=None, validation_ratio=0.1, basis_size=None, rtol=0., atol=0., l2_err=0.,
+                 pod_params={}, ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
                                    'min_targets': None, 'max_targets': None}
 
         if not fom:
-            assert training_set is not None and len(training_set) > 0
+            assert training_set is not None
+            assert len(training_set) > 0
             self.parameters_dim = training_set[0].parameters.dim
         else:
             self.parameters_dim = fom.parameters.dim
@@ -190,7 +191,8 @@ class NeuralNetworkReductor(BasicObject):
         if not hasattr(self, "training_data"):
             self.compute_training_data()
 
-        assert self.training_data is not None and len(self.training_data) == len(self.training_set)
+        assert self.training_data is not None
+        assert len(self.training_data) == len(self.training_set)
         layer_sizes = self._compute_layer_sizes(hidden_layers)
 
         # compute validation data
@@ -464,8 +466,9 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     """
 
-    def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None, validation_snapshots=None,
-                 validation_ratio=0.1, validation_loss=None, scale_inputs=True, scale_outputs=False):
+    def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None,
+                 validation_snapshots=None, validation_ratio=0.1, validation_loss=None, scale_inputs=True,
+                 scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
@@ -583,8 +586,8 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     """
 
-    def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None, validation_snapshots=None,
-                 validation_ratio=0.1, T=None, basis_size=None, rtol=0., atol=0., l2_err=0.,
+    def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None,
+                 validation_snapshots=None, validation_ratio=0.1, T=None, basis_size=None, rtol=0., atol=0., l2_err=0.,
                  pod_params={}, ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
@@ -832,8 +835,9 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     """
 
-    def __init__(self, fom=None, nt=1, training_set=None, validation_set=None, training_snapshots=None, validation_snapshots=None,
-                 validation_ratio=0.1, T=None, validation_loss=None, scale_inputs=True, scale_outputs=False):
+    def __init__(self, fom=None, nt=1, training_set=None, validation_set=None, training_snapshots=None,
+                 validation_snapshots=None, validation_ratio=0.1, T=None, validation_loss=None,
+                 scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,

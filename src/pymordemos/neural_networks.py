@@ -54,8 +54,8 @@ def main(
         validation_snapshots.append(fom.solve(mu))
 
     reductor_data_driven = NeuralNetworkReductor(training_set=training_set, training_snapshots=training_snapshots,
-                                                 validation_set=validation_set, validation_snapshots=validation_snapshots,
-                                                 l2_err=1e-5, ann_mse=1e-5)
+                                                 validation_set=validation_set,
+                                                 validation_snapshots=validation_snapshots, l2_err=1e-5, ann_mse=1e-5)
     rom_data_driven = reductor_data_driven.reduce(restarts=100, log_loss_frequency=10)
 
     speedups_data_driven = []
