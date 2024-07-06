@@ -284,7 +284,7 @@ def _rb_surrogate_evaluate(rom=None, fom=None, reductor=None, mus=None, error_no
         errors = [(fom.solve(mu) - reductor.reconstruct(rom.solve(mu))).norm() for mu in mus]
     # most error_norms will return an array of length 1 instead of a number,
     # so we extract the numbers if necessary
-    errors = [x[0] if hasattr(x, '__len__') else x for x in errors]
+    errors = [np.max(x) if hasattr(x, '__len__') else x for x in errors]
     if return_all_values:
         return errors
     else:
