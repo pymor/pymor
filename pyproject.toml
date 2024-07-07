@@ -83,7 +83,7 @@ slycot = [
 ]
 # dense matrix equation solvers
 pymepack = [
-  "pymepack>=1.1.1",
+  "pymepack>=1.1.1.post2",
 ]
 # parallelization of some MOR algorithms (e.g. greedy search) using ipyparallel
 ipyparallel = [
