@@ -51,9 +51,14 @@ range approximation `[#1753] <https://github.com/pymor/pymor/pull/1753>`_.
 
 Improved documentation
 ~~~~~~~~~~~~~~~~~~~~~~
-`[#2266] Add MOR methods overview to documentation <https://github.com/pymor/pymor/pull/2266>`_ (NOT MERGED YET)
-`[#2153] Add tutorial on interpolation for LTI systems <https://github.com/pymor/pymor/pull/2153>`_ (NOT MERGED YET)
-`[#2181] TR description in optimization tutorial <https://github.com/pymor/pymor/pull/2181>`_
+pyMOR's user documentation now features an overview of the most important
+MOR methods implemented in the library. Each method is accompanied by a
+short code snippet demonstrating its use
+`[#2266] <https://github.com/pymor/pymor/pull/2266>`_.
+Additionally, we have added an in-depth tutorial on interpolatory MOR
+`[#2153] <https://github.com/pymor/pymor/pull/2153>`_.
+The PDE-constraint optimization tutorial has been enhanced with a section
+on trust-region methods `[#2181] <https://github.com/pymor/pymor/pull/2181>`_.
 
 
 Backward incompatible changes
