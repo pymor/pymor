@@ -54,7 +54,7 @@ compared to the Gram-Schmidt algorithm
 
 Improved randomized range finder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The :mod`~pymor.algorithms.rand_la` module has seen various improvements.
+The :mod:`~pymor.algorithms.rand_la` module has seen various improvements.
 In particular, the `adaptive_rrf` and `rrf` methods have been merged into
 a single :class:`~pymor.algorithms.rand_la.RandomizedRangeFinder` class,
 which supports both power iterations and adaptive error-estimator based
@@ -94,8 +94,8 @@ axis 1 corresponding to output component. The returned object has a `to_numpy`
 method to convert it to a single array. The `return_array` parameter has been
 removed from `output_d_mu`.
 
-Only compute keeps `**kwargs`, which are only allowed to be used to select
-additional quantities that are to be computed. To change behavior of `solve`,
+Only `compute` keeps `**kwargs`, which are only allowed to be used to select
+additional quantities that are to be computed. To change the behavior of `solve`,
 etc., appropriate attributes of the `Model` instance have to be used in the
 future.
 
