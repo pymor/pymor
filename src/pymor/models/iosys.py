@@ -318,11 +318,11 @@ class LTIModel(Model):
         lti
             The |LTIModel| with operators A, B, C, D, and E.
         """
-        assert isinstance(A, (np.ndarray, sps.spmatrix))
-        assert isinstance(B, (np.ndarray, sps.spmatrix))
-        assert isinstance(C, (np.ndarray, sps.spmatrix))
-        assert isinstance(D, (np.ndarray, sps.spmatrix, type(None)))
-        assert isinstance(E, (np.ndarray, sps.spmatrix, type(None)))
+        assert isinstance(A, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert isinstance(B, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert isinstance(C, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert isinstance(D, (np.ndarray, sps.spmatrix, sps.sparray, type(None)))
+        assert isinstance(E, (np.ndarray, sps.spmatrix, sps.sparray, type(None)))
         assert isinstance(initial_data, (np.ndarray, type(None)))
 
         A = NumpyMatrixOperator(A, source_id=state_id, range_id=state_id)
@@ -1830,14 +1830,14 @@ class PHLTIModel(LTIModel):
         phlti
             The |PHLTIModel| with operators J, R, G, P, S, N, and E.
         """
-        assert isinstance(J, (np.ndarray, sps.spmatrix))
-        assert isinstance(R, (np.ndarray, sps.spmatrix))
-        assert isinstance(G, (np.ndarray, sps.spmatrix))
-        assert P is None or isinstance(P, (np.ndarray, sps.spmatrix))
-        assert S is None or isinstance(S, (np.ndarray, sps.spmatrix))
-        assert N is None or isinstance(N, (np.ndarray, sps.spmatrix))
-        assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
-        assert Q is None or isinstance(Q, (np.ndarray, sps.spmatrix))
+        assert isinstance(J, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert isinstance(R, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert isinstance(G, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert P is None or isinstance(P, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert S is None or isinstance(S, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert N is None or isinstance(N, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert E is None or isinstance(E, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert Q is None or isinstance(Q, (np.ndarray, sps.spmatrix, sps.sparray))
 
         J = NumpyMatrixOperator(J, source_id=state_id, range_id=state_id)
         R = NumpyMatrixOperator(R, source_id=state_id, range_id=state_id)
@@ -2153,13 +2153,13 @@ class SecondOrderModel(Model):
         lti
             The SecondOrderModel with operators M, E, K, B, Cp, Cv, and D.
         """
-        assert isinstance(M, (np.ndarray, sps.spmatrix))
-        assert isinstance(E, (np.ndarray, sps.spmatrix))
-        assert isinstance(K, (np.ndarray, sps.spmatrix))
-        assert isinstance(B, (np.ndarray, sps.spmatrix))
-        assert isinstance(Cp, (np.ndarray, sps.spmatrix))
-        assert Cv is None or isinstance(Cv, (np.ndarray, sps.spmatrix))
-        assert D is None or isinstance(D, (np.ndarray, sps.spmatrix))
+        assert isinstance(M, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert isinstance(E, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert isinstance(K, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert isinstance(B, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert isinstance(Cp, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert Cv is None or isinstance(Cv, (np.ndarray, sps.spmatrix, sps.sparray))
+        assert D is None or isinstance(D, (np.ndarray, sps.spmatrix, sps.sparray))
 
         M = NumpyMatrixOperator(M, source_id=state_id, range_id=state_id)
         E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
