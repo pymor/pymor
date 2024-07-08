@@ -33,7 +33,7 @@ dependencies = [
   "pillow",
   "pygments",
   "qtpy>=2.3.1",
-  "scipy>=1.5.4",
+  "scipy>=1.6.0",
   "typer",
 ]
 
@@ -76,10 +76,14 @@ dev = [
 ann = [
   "torch>=1.11.0",
 ]
-# dense matrix equation solver for system-theoretic methods and H-infinity norm calculation
+# dense matrix equation solvers for system-theoretic methods and H-infinity norm calculation
 # requires OpenBLAS headers and a Fortran compiler
 slycot = [
   "slycot>=0.5.4",
+]
+# dense matrix equation solvers
+pymepack = [
+  "pymepack>=1.1.1.post2",
 ]
 # parallelization of some MOR algorithms (e.g. greedy search) using ipyparallel
 ipyparallel = [
@@ -130,7 +134,7 @@ scikit-fem = [
 # # Meta dependencies
 # install all optional dependencies, except those requiring a compiler toolchain to build
 full = [
-  "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,dune,ngsolve,scikit-fem]",
+  "pymor[docs_additional,tests,dev,ann,pymepack,ipyparallel,gui,jupyter,vtk,gmsh,dune,ngsolve,scikit-fem]",
 ]
 # install all optional dependencies, including those requiring a compiler toolchain to build
 full-compiled = [
