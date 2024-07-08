@@ -58,5 +58,4 @@ def test_skfem2d():
     o_skfem = m_skfem.output()
     o_builtin = m_builtin.output()
 
-    assert False
     assert np.linalg.norm((o_builtin - o_skfem) / o_builtin) < 0.03
