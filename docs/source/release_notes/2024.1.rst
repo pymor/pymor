@@ -31,17 +31,17 @@ and mixed greedy/least-squares AAA algorithm
 
 Successive constraints method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-We now offer the successive constraints method, implemented in
-`[#1989] Successive constraints method <https://github.com/pymor/pymor/pull/1989>`_,
+We implemented the successive constraints method,
 to efficiently compute upper and lower bounds for the coercivity constant of
-parameter-separable and coercive problems by means of linear programs.
+parameter-separable and coercive problems by means of linear programs
+`[#1989] <https://github.com/pymor/pymor/pull/1989>`_.
 The respective |ParameterFunctionals| are constructed within a greedy algorithm
 that iteratively determines a set of parameters used in the construction of the
 estimates. The usage of the successive constraints method is showcased in a demo.
 
 Shifted Cholesky QR algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-We added a generic implementation of the shifted Cholesky QR algorithm in
+We added an implementation of the shifted Cholesky QR algorithm
 `[#2177] <https://github.com/pymor/pymor/pull/2177>`_,
 which has potential to exploit higher performance linear algebra routines
 compared to the Gram-Schmidt algorithm
