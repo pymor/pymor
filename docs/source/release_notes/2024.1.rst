@@ -2,7 +2,13 @@ pyMOR 2024.1 (July 7, 2025)
 -------------------------------
 
 We are proud to announce the release of pyMOR 2024.1!
-This release features ...
+
+The main new features are:
+- vector fitting
+- successive constraints method
+- shifted Cholesky QR algorithm
+- improved randomized range finder
+- additional tutorials and MOR methods overview
 
 pyMOR 2024.1 contains contributions by Maximilian Bindhak and Art Pelling.
 See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more
@@ -11,16 +17,6 @@ details.
 
 Main new features
 ^^^^^^^^^^^^^^^^^
-
-Successive constraints method
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-We now offer the successive constraints method, implemented in
-`[#1989] Successive constraints method <https://github.com/pymor/pymor/pull/1989>`_,
-to efficiently compute upper and lower bounds for the coercivity constant of
-parameter-separable and coercive problems by means of linear programs.
-The respective |ParameterFunctionals| are constructed within a greedy algorithm
-that iteratively determines a set of parameters used in the construction of the
-estimates. The usage of the successive constraints method is showcased in a demo.
 
 Vector fitting
 ~~~~~~~~~~~~~~
@@ -32,6 +28,16 @@ This extends to the available methods:
 interpolatory Loewner method (:class:`~pymor.reductors.loewner.LoewnerReductor`)
 and mixed greedy/least-squares AAA algorithm
 (:class:`~pymor.reductors.aaa.PAAAReductor`).
+
+Successive constraints method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+We now offer the successive constraints method, implemented in
+`[#1989] Successive constraints method <https://github.com/pymor/pymor/pull/1989>`_,
+to efficiently compute upper and lower bounds for the coercivity constant of
+parameter-separable and coercive problems by means of linear programs.
+The respective |ParameterFunctionals| are constructed within a greedy algorithm
+that iteratively determines a set of parameters used in the construction of the
+estimates. The usage of the successive constraints method is showcased in a demo.
 
 Shifted Cholesky QR algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
