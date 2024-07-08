@@ -29,14 +29,14 @@ We added an implementation of vector fitting
 `[#2214] <https://github.com/pymor/pymor/pull/2214>`_,
 a least-squares data-driven method for frequency-response data of linear
 time-invariant systems.
-This extends to the available methods:
+This addition complements our existing methods:
 interpolatory Loewner method (:class:`~pymor.reductors.loewner.LoewnerReductor`)
 and mixed greedy/least-squares AAA algorithm
 (:class:`~pymor.reductors.aaa.PAAAReductor`).
 
 Successive constraints method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-We implemented the successive constraints method,
+We implemented the successive constraints method, which allows
 to efficiently compute upper and lower bounds for the coercivity constant of
 parameter-separable and coercive problems by means of linear programs
 `[#1989] <https://github.com/pymor/pymor/pull/1989>`_.
