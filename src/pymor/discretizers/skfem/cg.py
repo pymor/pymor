@@ -190,6 +190,11 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
     """
     assert isinstance(analytical_problem, StationaryProblem)
 
+    from packaging.version import parse
+    if parse(config.SCIPY_VERSION) >= parse('1.13.0'):
+        import warnings
+        warnings.warn('Discreizer yields incorrect results for scipy>=1.13.0. Please install an older scipy.')
+
     p = analytical_problem
 
     if p.nonlinear_advection is not None:
