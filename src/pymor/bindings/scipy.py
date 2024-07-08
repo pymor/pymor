@@ -4,6 +4,7 @@
 
 
 import numpy as np
+from packaging.version import parse
 from scipy.linalg import solve, solve_continuous_are, solve_continuous_lyapunov, solve_discrete_lyapunov
 from scipy.sparse.linalg import LinearOperator, bicgstab, lgmres, lsqr, spilu, splu, spsolve
 
@@ -15,6 +16,8 @@ from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.operators.numpy import NumpyMatrixOperator
+
+SCIPY_1_14_OR_NEWER = parse(config.SCIPY_VERSION) >= parse('1.14')
 
 
 @defaults('bicgstab_tol', 'bicgstab_maxiter', 'spilu_drop_tol',
@@ -196,8 +199,12 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
 
     if options['type'] == 'scipy_bicgstab':
         for i, VV in enumerate(V):
-            R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
-                                  tol=options['tol'], maxiter=options['maxiter'], atol='legacy')
+            if SCIPY_1_14_OR_NEWER:
+                R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
+                                      atol=options['tol'], rtol=options['tol'], maxiter=options['maxiter'])
+            else:
+                R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
+                                      tol=options['tol'], maxiter=options['maxiter'], atol='legacy')
             if info != 0:
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
@@ -208,8 +215,12 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
                     drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
         precond = LinearOperator(matrix.shape, ilu.solve)
         for i, VV in enumerate(V):
-            R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
-                                  tol=options['tol'], maxiter=options['maxiter'], M=precond, atol='legacy')
+            if SCIPY_1_14_OR_NEWER:
+                R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
+                                      atol=options['tol'], rtol=options['tol'], maxiter=options['maxiter'], M=precond)
+            else:
+                R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
+                                      tol=options['tol'], maxiter=options['maxiter'], M=precond, atol='legacy')
             if info != 0:
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
@@ -244,12 +255,20 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
             raise InversionError(e) from e
     elif options['type'] == 'scipy_lgmres':
         for i, VV in enumerate(V):
-            R[i], info = lgmres(matrix, VV, initial_guess[i] if initial_guess is not None else None,
-                                tol=options['tol'],
-                                atol=options['tol'],
-                                maxiter=options['maxiter'],
-                                inner_m=options['inner_m'],
-                                outer_k=options['outer_k'])
+            if SCIPY_1_14_OR_NEWER:
+                R[i], info = lgmres(matrix, VV, initial_guess[i] if initial_guess is not None else None,
+                                    atol=options['tol'],
+                                    rtol=options['tol'],
+                                    maxiter=options['maxiter'],
+                                    inner_m=options['inner_m'],
+                                    outer_k=options['outer_k'])
+            else:
+                R[i], info = lgmres(matrix, VV, initial_guess[i] if initial_guess is not None else None,
+                                    tol=options['tol'],
+                                    atol=options['tol'],
+                                    maxiter=options['maxiter'],
+                                    inner_m=options['inner_m'],
+                                    outer_k=options['outer_k'])
             if info > 0:
                 raise InversionError(f'lgmres failed to converge after {info} iterations')
             assert info == 0
