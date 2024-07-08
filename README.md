@@ -93,13 +93,6 @@ because they need additional setup on your system:
 
       pip install slycot
 
-* [Py-M.E.S.S.](https://www.mpi-magdeburg.mpg.de/projects/mess):
-  dense and sparse matrix equation solvers for system-theoretic methods
-  (it is recommended to install from
-  [source](https://gitlab.mpi-magdeburg.mpg.de/mess/cmess-releases)):
-
-      pip install pymess
-
 ### Latest Development Version
 
 To install the latest development version of pyMOR, execute
@@ -116,7 +109,7 @@ might break (this is usually announced in our
 [discussion forum](https://github.com/pymor/pymor/discussions)),
 so you might prefer to install pyMOR from the current release branch:
 
-    pip install 'pymor[full] @ git+https://github.com/pymor/pymor@2023.2.x'
+    pip install 'pymor[full] @ git+https://github.com/pymor/pymor@2024.1.x'
 
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
