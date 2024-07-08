@@ -4,11 +4,16 @@ pyMOR 2024.1 (July 7, 2025)
 We are proud to announce the release of pyMOR 2024.1!
 
 The main new features are:
-- vector fitting
-- successive constraints method
-- shifted Cholesky QR algorithm
-- improved randomized range finder
-- additional tutorials and MOR methods overview
+
+* vector fitting
+
+* successive constraints method
+
+* shifted Cholesky QR algorithm
+
+* improved randomized range finder
+
+* additional tutorials and MOR methods overview
 
 pyMOR 2024.1 contains contributions by Maximilian Bindhak and Art Pelling.
 See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more
