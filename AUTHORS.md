@@ -13,11 +13,13 @@
 
 ### pyMOR 2024.1
 
-* Art Pelling, a.pelling@tu-berlin.de
-  * shifted Cholesky-QR algorithm
+* Art Pelling, @artpelling
+  * various improvements in `rand_la` module
+  * shifted Cholesky QR algorithm
 
-* Maximilian Bindhak, bindhak@mpi-magdeburg.mpg.de
-  * shifted Cholesky-QR algorithm
+* Maximilian Bindhak, @maxbindhak
+  * fixes in shifted Cholesky QR algorithm
+  * performance improvements in `NumpyVectorArray` implementation
 
 ### pyMOR 2023.2
 
