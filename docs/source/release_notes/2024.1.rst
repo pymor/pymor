@@ -43,7 +43,11 @@ compared to the Gram-Schmidt algorithm
 
 Improved randomized range finder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#1753] rand_la refactoring <https://github.com/pymor/pymor/pull/1753>`_
+The :mod`~pymor.algorithms.rand_la` module has seen various improvements.
+In particular, the `adaptive_rrf` and `rrf` methods have been merged into
+a single :class:`~pymor.algorithms.rand_la.RandomizedRangeFinder` class,
+which supports both power iterations and adaptive error-estimator based
+range approximation `[#1753] <https://github.com/pymor/pymor/pull/1753>`_.
 
 Improved documentation
 ~~~~~~~~~~~~~~~~~~~~~~
