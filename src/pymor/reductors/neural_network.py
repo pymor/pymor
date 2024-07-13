@@ -514,33 +514,58 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
 
         self.__auto_init(locals())
 
-    # def compute_training_data(self):
-    #     """Compute the training samples (the outputs to the parameters of the training set)."""
-    #     with self.logger.block('Computing training samples ...'):
-    #         self.training_data = []
-    #         for datum in self.training_set:
-    #             if not self.fom:
-    #                 mu, output = datum
-    #                 sample = self._compute_sample(mu, output=output)
-    #             else:
-    #                 sample = self._compute_sample(datum)
-    #             self._update_scaling_parameters(sample)
-    #             self.training_data.extend(sample)
+    def compute_training_data(self):
+        """Compute the training samples (the outputs to the parameters of the training set)."""
+        with self.logger.block('Computing training samples ...'):
+            self.training_data = []
+            for datum in self.training_set:
+                if not self.fom:
+                    mu, output = datum
+                    samples = self._compute_sample(mu, output=output)
+                else:
+                    samples = self._compute_sample(datum)
+                for sample in samples:
+                    self._update_scaling_parameters(sample)
+                self.training_data.extend(samples)
+
+    def compute_validation_data(self):
+        """Compute the training samples (the outputs to the parameters of the training set)."""
+        with self.logger.block('Computing validation samples ...'):
+
+            self.validation_data = []
+            for datum in self.validation_set:
+                if not self.fom:
+                    mu, output = datum
+                    samples = self._compute_sample(mu, output=output)
+                else:
+                    samples = self._compute_sample(datum)
+                for sample in samples:
+                    self._update_scaling_parameters(sample)
+                self.validation_data.extend(samples)
 
     def compute_reduced_basis(self):
         """empty function to avoid computing a reduced basis."""
+
+    def compute_training_snapshots(self):
+        """empty function to avoid computing training_snapshots."""
+
+    def compute_validation_snapshots(self):
+        """empty function to avoid computing validation_snapshots."""
 
     def _compute_sample(self, mu, output=None):
         """Transform parameter and corresponding output to tensors."""
         if output:
             output_size = len(output)
         else:
-            output_size = self.fom.output(mu).flatten().shape[0]
+            output = self.fom.output(mu).flatten()
 
-        # conditional expression to check if solution should be instationary to return self.nt solutions
-        parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, output_size)] if output_size > 1 else [mu]
-        samples = [(mu, outputs.to_numpy()[0,:]) for mu, outputs in zip(parameters, output)]
-
+        if hasattr(self, 'T'):
+            output_size = output.shape[0]
+            # conditional expression to check if solution should be instationary to return self.nt solutions
+            parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, output_size)] if output_size > 1 else [mu]
+            samples = [(mu, outputs[:,0]) for mu, outputs in zip(parameters, output)]
+        else:
+            samples = [(mu, output)]
         return samples
 
 
