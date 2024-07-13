@@ -502,11 +502,13 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         if not fom:
             assert training_set is not None
             assert len(training_set) > 0
-            self.parameters_dim = training_set[0][0].parameters.dim
-            self.dim_output = len(training_set[0][1].flatten())
+            assert training_snapshots is not None
+            assert len(training_snapshots) > 0
+            self.parameters_dim = training_set[0].parameters.dim
+            self.dim_output = training_snapshots[0].dim
         else:
             self.parameters_dim = fom.parameters.dim
-            self.dim_output = fom.dim_output
+            self.dim_output = fom.order
 
         self.__auto_init(locals())
 
@@ -623,7 +625,7 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
             assert training_set is not None
             assert len(training_set) > 0
             assert T is not None
-            self.parameters_dim = training_set[0][0].parameters.dim
+            self.parameters_dim = training_set[0].parameters.dim
             self.T = T
         else:
             self.parameters_dim = fom.parameters.dim
@@ -834,10 +836,11 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
 
         if not fom:
             assert training_set is not None
+            assert training_snapshots is not None
             assert len(training_set) > 0
             assert T is not None
-            self.parameters_dim = training_set[0][0].parameters.dim
-            self.dim_output = len(training_set[0][1].flatten())
+            self.parameters_dim = training_set[0].parameters.dim
+            self.dim_output = len(training_snapshots[0])
             self.T = T
         else:
             self.parameters_dim = fom.parameters.dim
