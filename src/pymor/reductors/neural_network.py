@@ -180,6 +180,7 @@ class NeuralNetworkReductor(BasicObject):
         # compute training snapshots
         if self.fom is None:
             assert self.training_snapshots is not None
+            self.nt = int(len(self.training_snapshots) / len(self.training_set))
         elif self.training_snapshots is None:
             self.compute_training_snapshots()
 
@@ -190,41 +191,23 @@ class NeuralNetworkReductor(BasicObject):
         # compute training data
         if not hasattr(self, "training_data"):
             self.compute_training_data()
-
         assert self.training_data is not None
-        assert len(self.training_data) == len(self.training_set)
+        assert len(self.training_data) == len(self.training_set) * self.nt
+
+        # compute validation snapshots
+        if self.fom is None:
+            assert self.validation_snapshots is not None
+        elif self.validation_snapshots is None:
+            self.compute_validation_snapshots()
+
+        # compute layer sizes
         layer_sizes = self._compute_layer_sizes(hidden_layers)
 
         # compute validation data
-        if self.validation_snapshots is None:
-            with self.logger.block('Computing validation snapshots ...'):
-
-                if self.validation_set:
-                    self.validation_data = []
-                    if self.fom:
-                        for mu in self.validation_set:
-                            sample = self._compute_sample(mu)
-                            self.validation_data.extend(sample)
-                    else:
-                        for mu, u in self.validation_set:
-                            sample = self._compute_sample(mu, u)
-                            self.validation_data.extend(sample)
-                else:
-                    number_validation_snapshots = int(len(self.training_data)*self.validation_ratio)
-                    # randomly shuffle training data before splitting into two sets
-                    get_rng().shuffle(self.training_data)
-                    # split training data into validation and training set
-                    self.validation_data = self.training_data[0:number_validation_snapshots]
-                    self.training_data = self.training_data[number_validation_snapshots:]
-        else:
-            assert self.validation_set is not None
-            with self.logger.block('Computing validation samples ...'):
-                validation_data_iterable = zip(self.validation_set, self.validation_snapshots)
-
-                self.validation_data = []
-                for mu, u in validation_data_iterable:
-                    sample = self._compute_sample(mu, u)
-                    self.validation_data.extend(sample)
+        if not hasattr(self, 'validation_data'):
+            self.compute_validation_data()
+        assert self.validation_data is not None
+        assert len(self.validation_data) == len(self.validation_set) * self.nt
 
         # run the actual training of the neural network
         with self.logger.block('Training of neural network ...'):
@@ -274,7 +257,12 @@ class NeuralNetworkReductor(BasicObject):
         with self.logger.block('Computing training snapshots ...'):
             U = self.fom.solution_space.empty()
             for mu in self.training_set:
-                U.append(self.fom.solve(mu))
+                u = self.fom.solve(mu)
+                U.append(u)
+                if hasattr(self, 'nt'):
+                    assert self.nt == len(u)
+                else:
+                    self.nt = len(u)
 
         self.training_snapshots = U
 
@@ -299,11 +287,42 @@ class NeuralNetworkReductor(BasicObject):
             training_data_iterable = zip(self.training_set, self.training_snapshots)
 
             self.training_data = []
-            for mu, u in training_data_iterable:
-                sample = self._compute_sample(mu, u)
+            for i, (mu, u) in enumerate(training_data_iterable):
+                samples = self._compute_sample(mu, u.base[i*self.nt:(i+1)*self.nt])
                 # compute minimum and maximum of outputs/targets for scaling
-                self._update_scaling_parameters(sample)
-                self.training_data.extend(sample)
+                for sample in samples:
+                    self._update_scaling_parameters(sample)
+                self.training_data.extend(samples)
+
+    def compute_validation_snapshots(self):
+        """Compute validation data for the neural network."""
+        # compute snapshots for POD and validation of neural networks
+        with self.logger.block('Computing validation snapshots ...'):
+
+            if self.validation_set is None:
+                number_validation_snapshots = int(len(self.training_data) * self.validation_ratio)
+                # randomly shuffle training data before splitting into two sets
+                get_rng().shuffle(self.training_data)
+                # split training data into validation and training set
+                self.validation_data = self.training_data[0:number_validation_snapshots]
+                self.training_data = self.training_data[number_validation_snapshots:]
+
+            U = self.fom.solution_space.empty()
+            for mu in self.validation_set:
+                u = self.fom.solve(mu)
+                U.append(u)
+
+        self.validation_snapshots = U
+
+    def compute_validation_data(self):
+            assert self.validation_set is not None
+            with self.logger.block('Computing validation samples ...'):
+                validation_data_iterable = zip(self.validation_set, self.validation_snapshots)
+
+                self.validation_data = []
+                for i, (mu, u) in enumerate(validation_data_iterable):
+                    samples = self._compute_sample(mu, u.base[i * self.nt:(i + 1) * self.nt])
+                    self.validation_data.extend(samples)
 
     def _update_scaling_parameters(self, sample):
         """Update the quantities for scaling of inputs and outputs."""
@@ -366,7 +385,13 @@ class NeuralNetworkReductor(BasicObject):
 
         product = self.pod_params.get('product')
 
-        return [(mu, self.reduced_basis.inner(u, product=product)[:, 0])]
+        # conditional expression to check if solution should be instationary to return self.nt solutions
+        assert hasattr(self, 'nt')
+        parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, self.nt)] if self.nt > 1 else [mu]
+        samples = [(mu, self.reduced_basis.inner(u_t, product=product)[:, 0]) for mu, u_t in
+                   zip(parameters, u)]
+
+        return samples
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network."""
