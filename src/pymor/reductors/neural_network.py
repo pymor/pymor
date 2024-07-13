@@ -194,20 +194,31 @@ class NeuralNetworkReductor(BasicObject):
         assert self.training_data is not None
         assert len(self.training_data) == len(self.training_set) * self.nt
 
+        if self.validation_set is None:
+            number_validation_snapshots = int(len(self.training_data) * self.validation_ratio)
+            # randomly shuffle training data before splitting into two sets
+            get_rng().shuffle(self.training_data)
+            # split training snapshots into validation and training snapshots
+            self.validation_data = self.training_data[0:number_validation_snapshots]
+            self.validation_set = [self.validation_data[0][0]]
+            self.training_data = self.training_data[number_validation_snapshots:]
+
+
         # compute validation snapshots
         if self.fom is None:
-            assert self.validation_snapshots is not None
+            if not hasattr(self, 'validation_data'):
+                assert self.validation_snapshots is not None
         elif self.validation_snapshots is None:
             self.compute_validation_snapshots()
-
-        # compute layer sizes
-        layer_sizes = self._compute_layer_sizes(hidden_layers)
 
         # compute validation data
         if not hasattr(self, 'validation_data'):
             self.compute_validation_data()
         assert self.validation_data is not None
         assert len(self.validation_data) == len(self.validation_set) * self.nt
+
+        # compute layer sizes
+        layer_sizes = self._compute_layer_sizes(hidden_layers)
 
         # run the actual training of the neural network
         with self.logger.block('Training of neural network ...'):
