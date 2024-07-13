@@ -177,7 +177,7 @@ class NeuralNetworkReductor(BasicObject):
 
         torch.manual_seed(get_seed_seq().spawn(1)[0].generate_state(1).item())
 
-        # compute training data
+        # compute training snapshots
         if self.fom is None:
             assert self.training_snapshots is not None
         elif self.training_snapshots is None:
@@ -187,7 +187,7 @@ class NeuralNetworkReductor(BasicObject):
         if not hasattr(self, 'reduced_basis'):
             self.compute_reduced_basis()
 
-        # compute training samples
+        # compute training data
         if not hasattr(self, "training_data"):
             self.compute_training_data()
 
@@ -485,18 +485,18 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
 
         self.__auto_init(locals())
 
-    def compute_training_data(self):
-        """Compute the training samples (the outputs to the parameters of the training set)."""
-        with self.logger.block('Computing training samples ...'):
-            self.training_data = []
-            for datum in self.training_set:
-                if not self.fom:
-                    mu, output = datum
-                    sample = self._compute_sample(mu, output=output)
-                else:
-                    sample = self._compute_sample(datum)
-                self._update_scaling_parameters(sample)
-                self.training_data.extend(sample)
+    # def compute_training_data(self):
+    #     """Compute the training samples (the outputs to the parameters of the training set)."""
+    #     with self.logger.block('Computing training samples ...'):
+    #         self.training_data = []
+    #         for datum in self.training_set:
+    #             if not self.fom:
+    #                 mu, output = datum
+    #                 sample = self._compute_sample(mu, output=output)
+    #             else:
+    #                 sample = self._compute_sample(datum)
+    #             self._update_scaling_parameters(sample)
+    #             self.training_data.extend(sample)
 
     def compute_reduced_basis(self):
         """empty function to avoid computing a reduced basis."""
@@ -606,70 +606,34 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
 
         self.__auto_init(locals())
 
-    def compute_training_data(self):
-        """Compute a reduced basis using proper orthogonal decomposition."""
-        # compute snapshots for POD and training of neural networks
-        if not self.fom:
-            U = self.training_set[0][1].empty()
-            for mu, u in self.training_set:
-                if hasattr(self, 'nt'):
-                    assert self.nt == len(u)
-                else:
-                    self.nt = len(u)
-                U.append(u)
-        else:
-            with self.logger.block('Computing training snapshots ...'):
-                U = self.fom.solution_space.empty()
-                for mu in self.training_set:
-                    u = self.fom.solve(mu)
-                    if hasattr(self, 'nt'):
-                        assert self.nt == len(u)
-                    else:
-                        self.nt = len(u)
-                    U.append(u)
+    # def compute_training_data(self):
+    #     """Compute training data for the neural network using the reduced basis."""
+    #     # compute training samples
+    #     with self.logger.block('Computing training samples ...'):
+    #         self.training_data = []
+    #         for i, datum in enumerate(self.training_set):
+    #             samples = self._compute_sample(datum, self.training_snapshots[i*self.nt:(i+1)*self.nt])
+    #
+    #             for sample in samples:
+    #                 self._update_scaling_parameters(sample)
+    #             self.training_data.extend(samples)
 
-        # compute reduced basis via POD
-        with self.logger.block('Building reduced basis ...'):
-            self.reduced_basis, svals = pod(U, modes=self.basis_size, rtol=self.rtol / 2.,
-                                            atol=self.atol / 2., l2_err=self.l2_err / 2.,
-                                            **(self.pod_params or {}))
-
-        # compute training samples
-        with self.logger.block('Computing training samples ...'):
-            self.training_data = []
-            for i, datum in enumerate(self.training_set):
-                if not self.fom:
-                    mu, u = datum
-                    samples = self._compute_sample(mu, u=u)
-                else:
-                    samples = self._compute_sample(datum, U[i*self.nt:(i+1)*self.nt])
-
-                for sample in samples:
-                    self._update_scaling_parameters(sample)
-                self.training_data.extend(samples)
-
-        # set singular values as weights for the weighted MSE loss
-        self.weights = torch.Tensor(svals)
-
-        # compute mean square loss
-        self.mse_basis = (sum(U.norm2()) - sum(svals**2)) / len(U)
-
-    def _compute_sample(self, mu, u=None):
-        """Transform parameter and corresponding solution to |NumPy arrays|.
-
-        This function takes care of including the time instances in the inputs.
-        """
-        if u is None:
-            u = self.fom.solve(mu)
-
-        parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.T, self.nt)]
-
-        product = self.pod_params.get('product')
-
-        samples = [(mu, self.reduced_basis.inner(u_t, product=product)[:, 0])
-                   for mu, u_t in zip(parameters_with_time, u)]
-
-        return samples
+    # def _compute_sample(self, mu, u=None):
+    #     """Transform parameter and corresponding solution to |NumPy arrays|.
+    #
+    #     This function takes care of including the time instances in the inputs.
+    #     """
+    #     if u is None:
+    #         u = self.fom.solve(mu)
+    #
+    #     parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.T, self.nt)]
+    #
+    #     product = self.pod_params.get('product')
+    #
+    #     samples = [(mu, self.reduced_basis.inner(u_t, product=product)[:, 0])
+    #                for mu, u_t in zip(parameters_with_time, u)]
+    #
+    #     return samples
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network.
@@ -774,22 +738,22 @@ class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
         neural_network = LongShortTermMemoryNN(**neural_network_parameters).double()
         return neural_network
 
-    def _compute_sample(self, mu, u=None):
-        """Transform parameter and corresponding solution to |NumPy arrays|.
-
-        This function takes care of including the time instances in the inputs.
-        """
-        if u is None:
-            u = self.fom.solve(mu)
-
-        parameters = torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
-                                                  for t in np.linspace(0., self.fom.T, self.nt)]))
-
-        product = self.pod_params.get('product')
-
-        sample = [(parameters, torch.transpose(torch.DoubleTensor(self.reduced_basis.inner(u, product=product)), 0, 1))]
-
-        return sample
+    # def _compute_sample(self, mu, u=None):
+    #     """Transform parameter and corresponding solution to |NumPy arrays|.
+    #
+    #     This function takes care of including the time instances in the inputs.
+    #     """
+    #     if u is None:
+    #         u = self.fom.solve(mu)
+    #
+    #     parameters = torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
+    #                                               for t in np.linspace(0., self.fom.T, self.nt)]))
+    #
+    #     product = self.pod_params.get('product')
+    #
+    #     sample = [(parameters, torch.transpose(torch.DoubleTensor(self.reduced_basis.inner(u, product=product)), 0, 1))]
+    #
+    #     return sample
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network."""
@@ -857,36 +821,36 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
 
         self.__auto_init(locals())
 
-    def compute_training_data(self):
-        """Compute the training samples (the outputs to the parameters of the training set)."""
-        with self.logger.block('Computing training samples ...'):
-            self.training_data = []
-            for datum in self.training_set:
-                if not self.fom:
-                    mu, outputs = datum
-                    samples = self._compute_sample(mu, output_trajectory=outputs)
-                else:
-                    samples = self._compute_sample(datum)
+    # def compute_training_data(self):
+    #     """Compute the training samples (the outputs to the parameters of the training set)."""
+    #     with self.logger.block('Computing training samples ...'):
+    #         self.training_data = []
+    #         for datum in self.training_set:
+    #             if not self.fom:
+    #                 mu, outputs = datum
+    #                 samples = self._compute_sample(mu, output_trajectory=outputs)
+    #             else:
+    #                 samples = self._compute_sample(datum)
+    #
+    #             for sample in samples:
+    #                 self._update_scaling_parameters(sample)
+    #             self.training_data.extend(samples)
 
-                for sample in samples:
-                    self._update_scaling_parameters(sample)
-                self.training_data.extend(samples)
-
-    def _compute_sample(self, mu, output_trajectory=None):
-        """Transform parameter and corresponding output to |NumPy arrays|.
-
-        This function takes care of including the time instances in the inputs.
-        """
-        if output_trajectory:
-            output_size = output_trajectory.shape[0]
-        else:
-            output_trajectory = self.fom.output(mu)
-
-        output_size = output_trajectory.shape[0]
-        samples = [(mu.with_(t=t), output.flatten())
-                   for t, output in zip(np.linspace(0, self.T, output_size), output_trajectory)]
-
-        return samples
+    # def _compute_sample(self, mu, output_trajectory=None):
+    #     """Transform parameter and corresponding output to |NumPy arrays|.
+    #
+    #     This function takes care of including the time instances in the inputs.
+    #     """
+    #     if output_trajectory:
+    #         output_size = output_trajectory.shape[0]
+    #     else:
+    #         output_trajectory = self.fom.output(mu)
+    #
+    #     output_size = output_trajectory.shape[0]
+    #     samples = [(mu.with_(t=t), output.flatten())
+    #                for t, output in zip(np.linspace(0, self.T, output_size), output_trajectory)]
+    #
+    #     return samples
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network."""
@@ -928,20 +892,20 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkInstatio
 
     _initialize_neural_network = NeuralNetworkLSTMInstationaryReductor._initialize_neural_network
 
-    def _compute_sample(self, mu, u=None):
-        """Transform parameter and corresponding solution to |NumPy arrays|.
-
-        This function takes care of including the time instances in the inputs.
-        """
-        output_trajectory = self.fom.output(mu)
-        output_size = output_trajectory.shape[0]
-
-        parameters = torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
-                                                  for t in np.linspace(0., self.fom.T, output_size)]))
-
-        sample = [(parameters, output_trajectory)]
-
-        return sample
+    # def _compute_sample(self, mu, u=None):
+    #     """Transform parameter and corresponding solution to |NumPy arrays|.
+    #
+    #     This function takes care of including the time instances in the inputs.
+    #     """
+    #     output_trajectory = self.fom.output(mu)
+    #     output_size = output_trajectory.shape[0]
+    #
+    #     parameters = torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
+    #                                               for t in np.linspace(0., self.fom.T, output_size)]))
+    #
+    #     sample = [(parameters, output_trajectory)]
+    #
+    #     return sample
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network."""
