@@ -508,7 +508,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
             self.dim_output = training_snapshots[0].dim
         else:
             self.parameters_dim = fom.parameters.dim
-            self.dim_output = fom.order
+            self.dim_output = fom.dim_output
 
         self.__auto_init(locals())
 
