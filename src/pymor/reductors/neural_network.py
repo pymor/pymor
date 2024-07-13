@@ -309,15 +309,6 @@ class NeuralNetworkReductor(BasicObject):
         """Compute validation data for the neural network."""
         # compute snapshots for POD and validation of neural networks
         with self.logger.block('Computing validation snapshots ...'):
-
-            if self.validation_set is None:
-                number_validation_snapshots = int(len(self.training_data) * self.validation_ratio)
-                # randomly shuffle training data before splitting into two sets
-                get_rng().shuffle(self.training_data)
-                # split training data into validation and training set
-                self.validation_data = self.training_data[0:number_validation_snapshots]
-                self.training_data = self.training_data[number_validation_snapshots:]
-
             U = self.fom.solution_space.empty()
             for mu in self.validation_set:
                 u = self.fom.solve(mu)
