@@ -557,13 +557,13 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         if output:
             output_size = len(output)
         else:
-            output = self.fom.output(mu).flatten()
+            output = self.fom.output(mu)
 
         if hasattr(self, 'T'):
             output_size = output.shape[0]
             # conditional expression to check if solution should be instationary to return self.nt solutions
             parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, output_size)] if output_size > 1 else [mu]
-            samples = [(mu, outputs[:,0]) for mu, outputs in zip(parameters, output)]
+            samples = [(mu, outputs) for mu, outputs in zip(parameters, output)]
         else:
             samples = [(mu, output)]
         return samples
