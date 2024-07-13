@@ -531,8 +531,16 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     def _compute_sample(self, mu, output=None):
         """Transform parameter and corresponding output to tensors."""
         if output:
-            return [(mu, output.flatten())]
-        return [(mu, self.fom.output(mu).flatten())]
+            output_size = len(output)
+        else:
+            output_size = self.fom.output(mu).flatten().shape[0]
+
+        # conditional expression to check if solution should be instationary to return self.nt solutions
+        parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, output_size)] if output_size > 1 else [mu]
+        samples = [(mu, outputs.to_numpy()[0,:]) for mu, outputs in zip(parameters, output)]
+
+        return samples
+
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network."""
