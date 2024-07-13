@@ -113,7 +113,7 @@ class NeuralNetworkReductor(BasicObject):
                loss_function=None, restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
                lr_scheduler_params={'step_size': 10, 'gamma': 0.7},
                es_scheduler_params={'patience': 10, 'delta': 0.}, weight_decay=0.,
-               log_loss_frequency=0):
+               log_loss_frequency=0, nt=1):
         """Reduce by training artificial neural networks.
 
         Parameters
@@ -493,7 +493,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
 
     def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None,
                  validation_snapshots=None, validation_ratio=0.1, validation_loss=None, scale_inputs=True,
-                 scale_outputs=False):
+                 scale_outputs=False, nt=1):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
