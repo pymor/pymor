@@ -387,7 +387,7 @@ class NeuralNetworkReductor(BasicObject):
 
         product = self.pod_params.get('product')
 
-        # conditional expression to check if solution should be instationary to return self.nt solutions
+        # conditional expression to check for instationary solution to return self.nt solutions
         assert hasattr(self, 'nt')
         parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, self.nt)] if self.nt > 1 else [mu]
         samples = [(mu, self.reduced_basis.inner(u_t, product=product)[:, 0]) for mu, u_t in
@@ -561,9 +561,9 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
 
         if hasattr(self, 'T'):
             output_size = output.shape[0]
-            # conditional expression to check if solution should be instationary to return self.nt solutions
+            # conditional expression to check for instationary solution to return self.nt solutions
             parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, output_size)] if output_size > 1 else [mu]
-            samples = [(mu, outputs) for mu, outputs in zip(parameters, output)]
+            samples = list(zip(parameters, output))
         else:
             samples = [(mu, output)]
         return samples
