@@ -175,22 +175,7 @@ def recalculated_shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=
     of its Gramian matrix according to :cite:`FKNYY20`. For ill-conditioned matrices, the Cholesky
     factorization will break down. In this case a diagonal shift will be applied to the Gramian.
 
-    - `shifted_chol_qr(A, maxiter=3, orth_tol=None)` is equivalent to the shifted CholeskyQR3
-      algorithm (Algorithm 4.2 in :cite:`FKNYY20`).
-    - `shifted_chol_qr(A, maxiter=np.inf, orth_tol=<some_number>)` is equivalent to the shifted
-      CholeskyQR algorithm (Algorithm 4.1 in :cite:`FKNYY20`).
-    - `shifted_chol_qr(A, product=<some_product>, maxiter=3, orth_tol=None)` is equivalent to the
-      shifted CholeskyQR3 algorithm in an oblique inner product (Algorithm 5.1 in :cite:`FKNYY20`).
-
-    .. note::
-        Note that the unshifted single iteration CholeskyQR algorithm is unstable.
-        Setting `maxiter=1` will perform the simple shifted CholeskyQR algorithm (Algorithm 2.1
-        in :cite:`FKNYY20`) which is stable but leads to poor orthogonality in general, i.e.
-
-        .. math::
-            \lVert Q^TQ - I \rVert_2 < 2,
-
-        (see Lemma 3.1 in :cite:`FKNYY20`).
+    - ToDo
 
     Parameters
     ----------
