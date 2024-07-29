@@ -1458,8 +1458,8 @@ class LTIModel(Model):
                     _, rev = eigs(A, E, k=1, l=3, sigma=ae)
                     ast_revs.append(rev)
                 return ast_levs, ast_pole_data, ast_revs
-            elif type(ast_pole_data) == tuple:
-                return ast_pole_data
+            elif isinstance(self.ast_pole_data, tuple):
+                return self.ast_pole_data
             else:
                 TypeError(f'ast_pole_data is of wrong type ({type(ast_pole_data)}).')
         else:

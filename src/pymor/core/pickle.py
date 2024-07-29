@@ -15,13 +15,12 @@ implementation details of CPython to achieve its goals.
 """
 
 import marshal
+import opcode
 import pickle
 import platform
 import sys
 from io import BytesIO as IOtype
 from types import CodeType, FunctionType, ModuleType
-
-import opcode
 
 from pymor.core.exceptions import UnpicklableError
 

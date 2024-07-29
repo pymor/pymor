@@ -67,7 +67,7 @@ tests = [
 ]
 # additional dependencies for pyMOR development
 dev = [
-  "ruff==0.3.5", # our linter of choice
+  "ruff==0.5.0", # our linter of choice
   "conda_lock==1.4.0", # needed for make ci_conda_requirements
   "hatch", # build frontend for building and publishing pyMOR images
 ]
@@ -271,6 +271,7 @@ ignore = [
   "PT015", # assertion always fails, replace with `pytest.fail()`
   "RUF005", # consider unpacking instead of concatenation
   "SIM102", # use a single if statement instead of nested if statements
+  "SIM103", # return the condition directly
   "SIM105", # use contextlib.suppress instead of try-except-pass
   "SIM108", # use ternary operator instead of if-else-block
   "SIM114", # combine if branches using logical or operator
