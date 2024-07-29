@@ -180,7 +180,10 @@ class ConstantFunction(Function):
         return f'{self.name}: x -> {self.value}'
 
     def evaluate(self, x, mu=None):
-        x = np.array(x, copy=False, ndmin=1)
+        x = np.asarray(x)
+        if x.ndim == 0:
+            x.shape = (1,)
+        assert x.ndim > 0
         assert x.shape[-1] == self.dim_domain
         if x.ndim == 1:
             return np.array(self.value)
@@ -234,7 +237,10 @@ class GenericFunction(Function):
 
     def evaluate(self, x, mu=None):
         assert self.parameters.assert_compatible(mu)
-        x = np.array(x, copy=False, ndmin=1)
+        x = np.asarray(x)
+        if x.ndim == 0:
+            x.shape = (1,)
+        assert x.ndim > 0
         assert x.shape[-1] == self.dim_domain
 
         if self.parametric:
