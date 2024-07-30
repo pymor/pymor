@@ -517,7 +517,7 @@ sortedcontainers==2.4.0
     # via hypothesis
 soupsieve==2.5
     # via beautifulsoup4
-sphinx==7.4.7
+sphinx==7.3.7
     # via
     #   myst-nb
     #   myst-parser
@@ -525,7 +525,7 @@ sphinx==7.4.7
     #   sphinx-autoapi
     #   sphinx-material
     #   sphinxcontrib-bibtex
-sphinx-autoapi==3.2.1
+sphinx-autoapi==3.1.2
     # via pymor (pyproject.toml)
 sphinx-material==0.0.36
     # via pymor (pyproject.toml)
