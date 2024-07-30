@@ -279,14 +279,14 @@ class PolygonalDomain(DomainDescription):
     Parameters
     ----------
     points
-        List of points [x_0, x_1] that describe the polygonal chain that bounds the domain.
+        2D |NumPy array| points [x_0, x_1] that describe the polygonal chain that bounds the domain.
     boundary_types
         Either a dictionary `{boundary_type: [i_0, ...], boundary_type: [j_0, ...], ...}`
         with `i_0, ...` being the ids of boundary segments for a given boundary type
         (`0` is the line connecting point `0` to `1`, `1` is the line connecting point `1` to `2`
         etc.), or a function that returns the boundary type for a given coordinate.
     holes
-        List of lists of points that describe the polygonal chains that bound the holes
+        List of 2D |NumPy arrays| of points that describe the polygonal chains that bound the holes
         inside the domain.
 
     Attributes
@@ -299,7 +299,14 @@ class PolygonalDomain(DomainDescription):
     dim = 2
 
     def __init__(self, points, boundary_types, holes=None):
+        points = np.asarray(points)
+        assert points.ndim == 2
+        assert points.shape[-1] == 2
+
         holes = holes or []
+        holes = [np.asarray(h) for h in holes]
+        assert all(h.ndim == 2 for h in holes)
+        assert all(h.shape[-1] == 2 for h in holes)
 
         if isinstance(boundary_types, dict):
             pass
