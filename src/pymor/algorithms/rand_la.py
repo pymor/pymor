@@ -60,7 +60,7 @@ class RandomizedRangeFinder(BasicObject):
     """
 
     @defaults('num_testvecs', 'failure_tolerance')
-    def __init__(self, A, source_product=None, range_product=None, A_adj=None,
+    def __init__(self, A, range_product=None, source_product=None, A_adj=None,
                  power_iterations=0, failure_tolerance=1e-15, num_testvecs=20,
                  lambda_min=None, block_size=None, iscomplex=False):
         assert source_product is None or isinstance(source_product, Operator)
