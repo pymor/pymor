@@ -16,7 +16,6 @@ from pymor.core.config import config
 from pymor.core.logger import getLogger
 from pymor.discretizers.builtin.quadratures import GaussQuadratures
 from pymor.tools import formatsrc
-from pymor.tools.deprecated import Deprecated
 from pymor.tools.floatcmp import almost_less, float_cmp, float_cmp_all
 from pymor.tools.formatsrc import print_source
 from pymor.tools.io import change_to_directory, safe_temporary_filename
@@ -156,22 +155,6 @@ def test_vtkio(grid):
             meshes = read_vtkfile(fn)
             assert len(meshes) == len(data)
             assert all((a is not None and b is not None for a, b in meshes))
-
-
-def testDeprecated():
-    @Deprecated('use other stuff instead')
-    def deprecated_function():
-        pass
-    # Cause all warnings to always be triggered.
-    import warnings
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        # Trigger a warning.
-        deprecated_function()
-        # Verify some things
-        assert len(w) == 1
-        assert issubclass(w[-1].category, DeprecationWarning)
-        assert 'DeprecationWarning' in str(w[-1].message)
 
 
 def test_formatsrc():
