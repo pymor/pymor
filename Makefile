@@ -60,6 +60,7 @@ ci_current_requirements:
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \
 		--index-strategy unsafe-best-match \
+		--emit-index-url \
 		-o requirements-ci-current.txt \
 		./pyproject.toml
 
@@ -71,6 +72,7 @@ ci_oldest_requirements:
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \
 		--index-strategy unsafe-best-match \
+		--emit-index-url \
 		-o requirements-ci-oldest.txt \
 		./pyproject.toml ./requirements-ci-oldest-pins.in
 
@@ -85,6 +87,7 @@ ci_fenics_requirements:
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \
 		--index-strategy unsafe-best-match \
+		--emit-index-url \
 		-o requirements-ci-fenics.txt \
 		./pyproject.toml
 
