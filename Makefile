@@ -89,7 +89,7 @@ ci_fenics_requirements:
 		--index-strategy unsafe-best-match \
 		--emit-index-url \
 		-o requirements-ci-fenics.txt \
-		./pyproject.toml
+		./pyproject.toml ./requirements-ci-fenics-pins.in
 
 CONDA_EXTRAS = \
 	--extras tests \
