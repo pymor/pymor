@@ -324,8 +324,9 @@ pexpect==4.9.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
-pillow==10.4.0
+pillow==10.3.0
     # via
+    #   -r ./requirements-ci-oldest-pins.in
     #   pymor (./pyproject.toml)
     #   ipympl
     #   matplotlib
