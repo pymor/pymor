@@ -8,3 +8,9 @@ torch==1.11.0+cpu
 k3d==2.15.2
 scikit-fem==6.0.0
 slycot==0.5.4
+
+# we cannot include the entire docs-additional extra since the pinned sphinx only
+# works with Python>=3.9 so we manually add the requirements needed for the
+# cpp_demo and tutorials builds
+myst-nb>=0.16
+pybind11[global]
