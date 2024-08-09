@@ -45,7 +45,7 @@ runs:
         sed -i 's/@echo Please make a deployment choice:/@GOTO desktopgl/g' ./mesa/systemwidedeploy.cmd
         sed -i 's/@echo Desktop OpenGL drivers deploy complete./@exit/g' ./mesa/systemwidedeploy.cmd
         ./mesa/systemwidedeploy.cmd
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: setup-micromamba
       uses: mamba-org/setup-micromamba@v1
       with:
@@ -96,28 +96,28 @@ runs:
         coverage xml -o ${{ inputs.coverage_file }}.xml --fail-under=10
     - name: Upload Coverage XML
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage_results
         path: ${{ inputs.coverage_file }}.xml
         if-no-files-found: error
     - name: Upload Coverage RAW
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage_results_raw
         path: ${{ inputs.coverage_file }}
         if-no-files-found: error
     - name: Upload Unit Test Results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Unit Test Results (Python ${{ inputs.python }}, OS ${{ runner.os }})
         path: ${{ inputs.results_file }}
         if-no-files-found: error
     - name: Upload Conda Env Export
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Conda Env Exports
         path: conda-env__${{ runner.os }}-${{ inputs.python }}.yml
