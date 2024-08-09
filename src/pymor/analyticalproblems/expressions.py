@@ -60,7 +60,7 @@ builtin_max = max
 
 if np.lib.NumpyVersion(np.__version__) >= '2.0.0':
     NUMPY_COPY_IF_NEEDED = None
-elif np.lib.NumpyVersion(np.__version__) < '1.28.0':
+else:
     NUMPY_COPY_IF_NEEDED = False
 
 
