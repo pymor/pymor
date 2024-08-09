@@ -58,6 +58,12 @@ from pymor.parameters.base import ParametricObject
 builtin_max = max
 
 
+if np.lib.NumpyVersion(np.__version__) >= '2.0.0':
+    NUMPY_COPY_IF_NEEDED = None
+else:
+    NUMPY_COPY_IF_NEEDED = False
+
+
 def parse_expression(expression, parameters={}, values={}):
     if isinstance(expression, Expression):
         return expression
@@ -300,7 +306,7 @@ class BaseConstant(Expression):
     shape = ()
 
     def numpy_expr(self):
-        return f'array({self.numpy_symbol}, ndmin={len(self.shape)}, copy=False)'
+        return f'array({self.numpy_symbol}, ndmin={len(self.shape)}, copy={NUMPY_COPY_IF_NEEDED})'
 
     def fenics_expr(self, params):
         import ufl

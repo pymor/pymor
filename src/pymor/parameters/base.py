@@ -356,7 +356,9 @@ class Mu(FrozenDict):
                     t = np.zeros(1)
                 vv = v(t)
             else:
-                vv = np.array(v, copy=False, ndmin=1)
+                vv = np.asarray(v)
+                if vv.ndim == 0:
+                    vv.shape = (1,)
                 assert vv.ndim == 1
                 assert k != 't' or len(vv) == 1
             assert not vv.setflags(write=False)
