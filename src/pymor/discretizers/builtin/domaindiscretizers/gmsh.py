@@ -70,8 +70,8 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
     def discretize_PolygonalDomain():
         # combine points and holes, since holes are points, too, and have to be stored as such.
-        points = [domain_description.points]
-        points.extend(domain_description.holes)
+        points = [domain_description.points.tolist()]
+        points.extend([h.tolist() for h in domain_description.holes])
 
         return points, domain_description.boundary_types
 

@@ -28,7 +28,7 @@ classifiers = [
 dependencies = [
   "diskcache",
   "matplotlib>=3.5.0",
-  "numpy>=1.20.3,!=1.25.0,<2", # 1.25.0 crashes CI, >=2 breaks API
+  "numpy>=1.20.3,!=1.25.0", # 1.25.0 crashes CI
   "packaging",
   "pillow",
   "pygments",
@@ -51,9 +51,9 @@ docs-additional = [
   "myst-nb>=0.16",
   "pybind11[global]",
   "python-slugify",
-  "sphinx-autoapi",
+  "sphinx-autoapi==3.1.2",
   "sphinx-material",
-  "sphinx",
+  "sphinx==7.3.7",
   "sphinxcontrib-bibtex",
 ]
 # additional dependencies for running tests via 'make tests'
