@@ -98,27 +98,27 @@ runs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: coverage_results, ${{ runner.os }}, ${{ inputs.python }}
+        name: coverage_results (${{ runner.os }}, ${{ inputs.python }})
         path: ${{ inputs.coverage_file }}.xml
         if-no-files-found: error
     - name: Upload Coverage RAW
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: coverage_results_raw, ${{ runner.os }}, ${{ inputs.python }}
+        name: coverage_results_raw (${{ runner.os }}, ${{ inputs.python }})
         path: ${{ inputs.coverage_file }}
         if-no-files-found: error
     - name: Upload Unit Test Results
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: Unit Test Results, ${{ runner.os }}, ${{ inputs.python }}
+        name: Unit Test Results (${{ runner.os }}, ${{ inputs.python }})
         path: ${{ inputs.results_file }}
         if-no-files-found: error
     - name: Upload Conda Env Export
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: Conda Env Exports, ${{ runner.os }}, ${{ inputs.python }}
+        name: Conda Env Exports (${{ runner.os }}, ${{ inputs.python }})
         path: conda-env__${{ runner.os }}-${{ inputs.python }}.yml
         if-no-files-found: error
