@@ -68,7 +68,7 @@ tests = [
 # additional dependencies for pyMOR development
 dev = [
   "ruff==0.5.0", # our linter of choice
-  "conda_lock==1.4.0", # needed for make ci_conda_requirements
+  "conda_lock==2.5.7", # needed for make ci_conda_requirements
   "hatch", # build frontend for building and publishing pyMOR images
 ]
 # ## Optional dependencies for MOR algorithms
