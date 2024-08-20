@@ -11,7 +11,7 @@ from pathlib import Path
 base_path = Path('/var/www/docs.pymor.org/')
 
 def versions():
-    pattern = re.compile(r'20\d\d-\d-\d')
+    pattern = re.compile(r'^20\d\d-\d-\d$')
 
     for d in base_path.iterdir():
         if not d.is_dir():
