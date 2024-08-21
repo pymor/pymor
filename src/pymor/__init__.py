@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-__version__ = '2024.1.1'
+__version__ = '2024.1.2'
 
 import os
 import platform
