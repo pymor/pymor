@@ -118,6 +118,10 @@ because they need additional setup on your system:
     the pyMOR conda-forge package, you can also `pip` install pyMOR
     into an existing conda environment.
 
+  If you are on linux and don't want to build Slycot yourself, you
+  can try our experimental
+  [manylinux wheels for Slycot](https://github.com/pymor/slycot-wheels/releases).
+
 ### Latest Development Version
 
 To install the latest development version of pyMOR, execute
