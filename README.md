@@ -96,15 +96,17 @@ because they need additional setup on your system:
       pip install slycot
 
   Note that building Slycot might fail for the following reasons:
+
   * The Slycot package contains a cmake check which fails when it
     detects multiply NumPy include directories. This will cause the
     build to fail in venvs with any Python interpreter that has NumPy
     globally installed.
     To circumvent this problem, use another Python interpreter. If
     you do not want to build CPython yourself, you can use
-    [pyenv](https://github.com/pyenv/pyenv) or
-    [uv](https://github.com/astral-sh/uv) to easily install another
-    interpreter.
+    [pyenv](https://github.com/pyenv/pyenv),
+    [uv](https://github.com/astral-sh/uv) or
+    [mise-en-place](https://mise.jdx.dev/)
+    to easily install another interpreter.
   * Slycot's build environment contains `numpy>=2`. However,
     scikit-builds's `FindF2PY.cmake`
     [will select any globally installed f2py3 executable](https://github.com/scikit-build/scikit-build/issues/449)
