@@ -295,11 +295,11 @@ class NeuralNetworkReductor(BasicObject):
         """Compute training data for the neural network using the reduced basis."""
         # compute training samples
         with self.logger.block('Computing training samples ...'):
-            training_data_iterable = zip(self.training_set, self.training_snapshots)
-
             self.training_data = []
             for i, (mu, u) in enumerate(training_data_iterable):
                 samples = self._compute_sample(mu, u.base[i*self.nt:(i+1)*self.nt])
+            for i, mu in enumerate(self.training_set):
+                samples = self._compute_sample(mu, self.training_snapshots[i*self.nt:(i+1)*self.nt])
                 # compute minimum and maximum of outputs/targets for scaling
                 for sample in samples:
                     self._update_scaling_parameters(sample)
