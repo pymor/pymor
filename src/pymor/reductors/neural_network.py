@@ -93,7 +93,7 @@ class NeuralNetworkReductor(BasicObject):
         networks.
     """
 
-    def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None,
+    def __init__(self, fom=None, reduced_basis=None, training_set=None, validation_set=None, training_snapshots=None,
                  validation_snapshots=None, validation_ratio=0.1, basis_size=None, rtol=0., atol=0., l2_err=0.,
                  pod_params={}, ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
@@ -187,7 +187,7 @@ class NeuralNetworkReductor(BasicObject):
             self.compute_training_snapshots()
 
         # build a reduced basis using POD
-        if not hasattr(self, 'reduced_basis'):
+        if self.reduced_basis is None:
             self.compute_reduced_basis()
 
         # compute training data
