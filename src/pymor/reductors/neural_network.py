@@ -51,14 +51,16 @@ class NeuralNetworkReductor(BasicObject):
         Set of |parameter values| to use for POD and training of the
         neural network.
     training_snapshots
-        Set of |simulation snapshots| to use for POD and training of the
-        neural network.
+        Set of solution |VectorArrays| to use for POD and training of the
+        neural network. These are the solutions to the parameters of the
+        `training_set` and can be `None` when fom is available.
     validation_set
-        Set of |parameter values| to use for validation in the training
+        List of |Parameter values| to use for validation in the training
         of the neural network.
     validation_snapshots
         Set of solution |VectorArrays| to use for validation in the training
-        of the neural network.
+        of the neural network. These are the solutions to the parameters of
+        the `validation_set` and can be `None` when fom is available.
     validation_ratio
         Fraction of the training set to use for validation in the training
         of the neural network (only used if no validation set is provided).
@@ -296,8 +298,6 @@ class NeuralNetworkReductor(BasicObject):
         # compute training samples
         with self.logger.block('Computing training samples ...'):
             self.training_data = []
-            for i, (mu, u) in enumerate(training_data_iterable):
-                samples = self._compute_sample(mu, u.base[i*self.nt:(i+1)*self.nt])
             for i, mu in enumerate(self.training_set):
                 samples = self._compute_sample(mu, self.training_snapshots[i*self.nt:(i+1)*self.nt])
                 # compute minimum and maximum of outputs/targets for scaling
@@ -471,17 +471,19 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         The full-order |Model| to reduce. If `None`, the `training_set` has
         to consist of pairs of |parameter values| and corresponding outputs.
     training_set
-        Set of |parameter values| to use for POD and training of the
+        List of |Parameter values| to use for POD and training of the
         neural network.
     training_snapshots
-        Set of |simulation snapshots| to use for POD and training of the
-        neural network.
+        Set of solution |VectorArrays| to use for POD and training of the
+        neural network. These are the solutions to the parameters of the
+        `training_set` and can be `None` when fom is available.
     validation_set
-        Set of |parameter values| to use for validation in the training
+        List of |Parameter values| to use for validation in the training
         of the neural network.
     validation_snapshots
         Set of solution |VectorArrays| to use for validation in the training
-        of the neural network.
+        of the neural network. These are the solutions to the parameters of
+        the `validation_set` and can be `None` when fom is available.
     validation_ratio
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     validation_loss
