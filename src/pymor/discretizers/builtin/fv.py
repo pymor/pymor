@@ -620,6 +620,18 @@ class NonlinearReactionOperator(Operator):
 
         return NumpyMatrixOperator(A, source_id=self.source.id, range_id=self.range.id)
 
+    def restricted(self, dofs):
+        source_dofs = np.setdiff1d(np.union1d(self.grid.neighbors(0, 0)[dofs].ravel(), dofs),
+                                   np.array([-1], dtype=np.int32),
+                                   assume_unique=True)
+        sub_grid = SubGrid(self.grid, source_dofs)
+        sub_boundary_info = make_sub_grid_boundary_info(sub_grid, self.grid, self.boundary_info)
+        op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, space_id=None,
+                        name=f'{self.name}_restricted')
+        sub_grid_indices = sub_grid.indices_from_parent_indices(dofs, codim=0)
+        proj = ComponentProjectionOperator(sub_grid_indices, op.range)
+        return proj @ op, sub_grid.parent_indices(0)
+
 
 class L2Functional(NumpyMatrixBasedOperator):
     """Finite volume functional representing the inner product with an L2-|Function|.
