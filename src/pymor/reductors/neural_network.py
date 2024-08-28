@@ -48,7 +48,7 @@ class NeuralNetworkReductor(BasicObject):
         to consist of pairs of |parameter values| and corresponding solution
         |VectorArrays|.
     training_set
-        Set of |parameter values| to use for POD and training of the
+        List of |Parameter values| to use for POD and training of the
         neural network.
     training_snapshots
         Set of solution |VectorArrays| to use for POD and training of the
