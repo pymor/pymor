@@ -559,7 +559,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         if output:
             output_size = len(output)
         else:
-            output = self.fom.output(mu)
+            output = self.fom.output(mu).flatten()
 
         if hasattr(self, 'T'):
             output_size = output.shape[0]
