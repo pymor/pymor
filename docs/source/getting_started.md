@@ -39,14 +39,14 @@ give pointers to further documentation.
 pyMOR can be installed via `pip`. To follow this guide, pyMOR should be installed with GUI support:
 
 ```bash
-pip install pymor[gui]
+pip install 'pymor[gui]'
 ```
 
 If you follow along in a [Jupyter](https://jupyter.org) notebook, you should install pyMOR using
 the `jupyter` extra:
 
 ```bash
-pip install pymor[jupyter]
+pip install 'pymor[jupyter]'
 ```
 
 We also provide [conda-forge](https://conda-forge.org) packages.

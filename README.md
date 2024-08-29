@@ -70,14 +70,14 @@ Note that most included demo scripts additionally require Qt bindings such as
 `pyside2` to function.
 Therefore we recommend install pyMOR with the `gui` extra:
 
-    pip install pymor[gui]  # 2023.1 and later
+    pip install 'pymor[gui]'  # 2023.1 and later
 
 ### Latest Release (with all Optional Dependencies)
 
 The following installs the latest release of pyMOR on your system with most
 optional dependencies:
 
-    pip install pymor[full]
+    pip install 'pymor[full]'
 
 There are some optional packages not included with `pymor[full]`
 because they need additional setup on your system:
