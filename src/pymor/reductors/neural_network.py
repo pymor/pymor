@@ -565,7 +565,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
             output_size = output.shape[0]
             # conditional expression to check for instationary solution to return self.nt solutions
             parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, output_size)] if output_size > 1 else [mu]
-            samples = list(zip(parameters, output))
+            samples = [(param, np.array([out])) for param, out in zip(parameters, output)]
         else:
             samples = [(mu, output)]
         return samples
