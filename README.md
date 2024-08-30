@@ -95,6 +95,35 @@ because they need additional setup on your system:
 
       pip install slycot
 
+  Note that building Slycot might fail for the following reasons:
+
+  * The Slycot package contains a cmake check which fails when it
+    detects multiply NumPy include directories. This will cause the
+    build to fail in venvs with any Python interpreter that has NumPy
+    globally installed.
+    To circumvent this problem, use another Python interpreter. If
+    you do not want to build CPython yourself, you can use
+    [pyenv](https://github.com/pyenv/pyenv),
+    [uv](https://github.com/astral-sh/uv) or
+    [mise-en-place](https://mise.jdx.dev/)
+    to easily install another interpreter.
+  * Slycot's build environment contains `numpy>=2`. However,
+    scikit-builds's `FindF2PY.cmake`
+    [will select any globally installed f2py3 executable](https://github.com/scikit-build/scikit-build/issues/449)
+    to generate the Fortran wrapper code.
+    On most systems, an older NumPy version is installed, whose
+    f2py will generate incorrect wrapper code for `numpy>=2`.
+    To mitigate this issue, install `numpy>=2` into your venv
+    and link `f2py3` to `f2py` its `/bin` directory.
+  * Building Slycot on Windows is challenging. We recommend using
+    conda-forge packages instead. If you do not want to install
+    the pyMOR conda-forge package, you can also `pip` install pyMOR
+    into an existing conda environment.
+
+  If you are on Linux and don't want to build Slycot yourself, you
+  can try our experimental
+  [manylinux wheels for Slycot](https://github.com/pymor/slycot-wheels/releases).
+
 ### Latest Development Version
 
 To install the latest development version of pyMOR, execute
@@ -118,12 +147,22 @@ after the corresponding release has been made.
 
 ## Installation via conda
 
-We recommend installation of pyMOR in a
-[conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
-
-pyMOR can be installed using conda by running
+pyMOR is packaged in [conda-forge](https://conda-forge.org/) and can be installed
+by running
 
     conda install -c conda-forge pymor
+
+This will install pyMOR with its core dependencies into the current active conda
+environment. To replicate an environment with most optional dependencies, which
+is also used in our continuous integration tests, you can use the
+[conda-linux-64.lock](https://raw.githubusercontent.com/pymor/pymor/main/conda-linux-64.lock),
+[conda-osx-64.lock](https://raw.githubusercontent.com/pymor/pymor/main/conda-osx-64.lock),
+[conda-win-64.lock](https://raw.githubusercontent.com/pymor/pymor/main/conda-win-64.lock)
+lock files from the pyMOR repository:
+
+    conda create -n pymorenv --file ./conda-{linux,osx,win}-64.lock
+    conda activate pymorenv
+    conda install pymor
 
 ## Documentation
 
