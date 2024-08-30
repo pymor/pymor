@@ -288,10 +288,6 @@ class NeuralNetworkReductor(BasicObject):
             for mu in self.training_set:
                 u = self.fom.solve(mu)
                 U.append(u)
-                if hasattr(self, 'nt'):
-                    assert self.nt == len(u)
-                else:
-                    self.nt = len(u)
 
         self.training_snapshots = U
 
