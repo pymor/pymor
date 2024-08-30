@@ -94,7 +94,7 @@ class NeuralNetworkReductor(BasicObject):
     """
 
     def __init__(self, fom=None, reduced_basis=None, training_set=None, validation_set=None, training_snapshots=None,
-                 validation_snapshots=None, validation_ratio=0.1, basis_size=None, rtol=0., atol=0., l2_err=0.,
+                 validation_snapshots=None, validation_ratio=0.1, T=None, nt=1, basis_size=None, rtol=0., atol=0., l2_err=0.,
                  pod_params={}, ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
@@ -104,9 +104,28 @@ class NeuralNetworkReductor(BasicObject):
         if not fom:
             assert training_set is not None
             assert len(training_set) > 0
+            assert training_snapshots is not None
             self.parameters_dim = training_set[0].parameters.dim
+            self.nt = int(len(training_snapshots) / len(training_set))
+            # instationary
+            if self.nt > 1:
+                assert T is not None
+                self.T = T
+                self.is_stationary = False
+            # stationary
+            else:
+                self.is_stationary = True
         else:
             self.parameters_dim = fom.parameters.dim
+            # instationary
+            if hasattr(fom, 'time_stepper'):
+                self.nt = fom.time_stepper.nt + 1
+                self.T = fom.T
+                self.is_stationary = False
+            # stationary
+            else:
+                self.nt = 1
+                self.is_stationary = True
 
         self.__auto_init(locals())
 
@@ -180,10 +199,7 @@ class NeuralNetworkReductor(BasicObject):
         torch.manual_seed(get_seed_seq().spawn(1)[0].generate_state(1).item())
 
         # compute training snapshots
-        if self.fom is None:
-            assert self.training_snapshots is not None
-            self.nt = int(len(self.training_snapshots) / len(self.training_set))
-        elif self.training_snapshots is None:
+        if self.training_snapshots is None:
             self.compute_training_snapshots()
 
         # build a reduced basis using POD
@@ -389,7 +405,7 @@ class NeuralNetworkReductor(BasicObject):
 
         # conditional expression to check for instationary solution to return self.nt solutions
         assert hasattr(self, 'nt')
-        parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, self.nt)] if self.nt > 1 else [mu]
+        parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, self.nt)] if not self.is_stationary else [mu]
         samples = [(mu, self.reduced_basis.inner(u_t, product=product)[:, 0]) for mu, u_t in
                    zip(parameters, u)]
 
@@ -495,9 +511,9 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     """
 
-    def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None,
-                 validation_snapshots=None, validation_ratio=0.1, validation_loss=None, scale_inputs=True,
-                 scale_outputs=False, nt=1):
+    def __init__(self, fom=None, reduced_basis=None, training_set=None, validation_set=None, training_snapshots=None,
+                 validation_snapshots=None, validation_ratio=0.1, T=None, nt=None, validation_loss=None, scale_inputs=True,
+                 scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
@@ -508,11 +524,30 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
             assert len(training_set) > 0
             assert training_snapshots is not None
             assert len(training_snapshots) > 0
+            assert nt is not None
             self.parameters_dim = training_set[0].parameters.dim
             self.dim_output = training_snapshots[0].dim
+            self.nt = nt
+            # instationary
+            if self.nt > 1:
+                assert T is not None
+                self.T = T
+                self.is_stationary = False
+            # stationary
+            else:
+                self.is_stationary = True
         else:
             self.parameters_dim = fom.parameters.dim
             self.dim_output = fom.dim_output
+            # instationary
+            if hasattr(fom, 'time_stepper'):
+                self.nt = fom.time_stepper.nt + 1
+                self.T = fom.T
+                self.is_stationary = False
+            # stationary
+            else:
+                self.nt = 1
+                self.is_stationary = True
 
         self.__auto_init(locals())
 
@@ -561,7 +596,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         else:
             output = self.fom.output(mu).flatten()
 
-        if hasattr(self, 'T'):
+        if self.T is not None:
             output_size = output.shape[0]
             # conditional expression to check for instationary solution to return self.nt solutions
             parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, output_size)] if output_size > 1 else [mu]
