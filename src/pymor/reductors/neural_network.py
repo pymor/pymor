@@ -94,8 +94,8 @@ class NeuralNetworkReductor(BasicObject):
     """
 
     def __init__(self, fom=None, reduced_basis=None, training_set=None, validation_set=None, training_snapshots=None,
-                 validation_snapshots=None, validation_ratio=0.1, T=None, nt=1, basis_size=None, rtol=0., atol=0., l2_err=0.,
-                 pod_params={}, ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
+                 validation_snapshots=None, validation_ratio=0.1, T=None, nt=1, basis_size=None, rtol=0., atol=0.,
+                 l2_err=0., pod_params={}, ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
@@ -409,9 +409,11 @@ class NeuralNetworkReductor(BasicObject):
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network.
+
         The input dimension is increased by one to account for the time in
         case of instationary data.
         """
+
         # determine the numbers of neurons in the hidden layers
         if isinstance(hidden_layers, str):
             hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.parameters_dim})
@@ -520,8 +522,8 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     """
 
     def __init__(self, fom=None, reduced_basis=None, training_set=None, validation_set=None, training_snapshots=None,
-                 validation_snapshots=None, validation_ratio=0.1, T=None, nt=None, validation_loss=None, scale_inputs=True,
-                 scale_outputs=False):
+                 validation_snapshots=None, validation_ratio=0.1, T=None, nt=None, validation_loss=None,
+                 scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,

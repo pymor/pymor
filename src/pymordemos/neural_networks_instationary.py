@@ -86,8 +86,8 @@ def main(
 
     abs_errors, rel_errors, speedups = compute_errors_state(rom, reductor)
 
-    reductor_lstm = NeuralNetworkLSTMReductor(fom=fom, training_set=training_set, validation_set=validation_set, basis_size=10,
-                                              scale_inputs=False, scale_outputs=True, ann_mse=None)
+    reductor_lstm = NeuralNetworkLSTMReductor(fom=fom, training_set=training_set, validation_set=validation_set,
+                                              basis_size=10, scale_inputs=False, scale_outputs=True, ann_mse=None)
     rom_lstm = reductor_lstm.reduce(restarts=0, number_layers=3, learning_rate=0.1)
 
     abs_errors_lstm, rel_errors_lstm, speedups_lstm = compute_errors_state(rom_lstm, reductor_lstm)
@@ -118,15 +118,17 @@ def main(
         return outputs_absolute_errors, outputs_relative_errors, outputs_speedups
 
     output_reductor = NeuralNetworkStatefreeOutputReductor(fom=fom, nt=time_steps+1, training_set=training_set,
-                                                                       validation_set=validation_set, validation_loss=1e-5,
-                                                                       scale_outputs=True)
+                                                           validation_set=validation_set, validation_loss=1e-5,
+                                                           scale_outputs=True)
     output_rom = output_reductor.reduce(restarts=100)
 
     outputs_abs_errors, outputs_rel_errors, outputs_speedups = compute_errors_output(output_rom)
 
-    output_reductor_lstm = NeuralNetworkLSTMStatefreeOutputReductor(fom=fom, nt=time_steps + 1, training_set=training_set,
-                                                                    validation_set=validation_set, validation_loss=None,
-                                                                    scale_inputs=False, scale_outputs=True)
+    output_reductor_lstm = NeuralNetworkLSTMStatefreeOutputReductor(fom=fom, nt=time_steps + 1,
+                                                                    training_set=training_set,
+                                                                    validation_set=validation_set,
+                                                                    validation_loss=None, scale_inputs=False,
+                                                                    scale_outputs=True)
     output_rom_lstm = output_reductor_lstm.reduce(restarts=0, number_layers=3, hidden_dimension=50,
                                                   learning_rate=0.1)
 
