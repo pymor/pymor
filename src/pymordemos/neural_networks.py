@@ -83,7 +83,7 @@ def main(
         fom.visualize((U, U_red_data_driven),
                       legend=('Full solution', 'Reduced solution (data-driven)'))
 
-    output_reductor = NeuralNetworkStatefreeOutputReductor(fom, training_set, validation_set, validation_loss=1e-5)
+    output_reductor = NeuralNetworkStatefreeOutputReductor(fom=fom, training_set=training_set, validation_set=validation_set, validation_loss=1e-5)
     output_rom = output_reductor.reduce(restarts=100, log_loss_frequency=10)
 
     outputs = []
