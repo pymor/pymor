@@ -408,14 +408,20 @@ class NeuralNetworkReductor(BasicObject):
         return samples
 
     def _compute_layer_sizes(self, hidden_layers):
-        """Compute the number of neurons in the layers of the neural network."""
+        """Compute the number of neurons in the layers of the neural network.
+        The input dimension is increased by one to account for the time in
+        case of instationary data.
+        """
         # determine the numbers of neurons in the hidden layers
         if isinstance(hidden_layers, str):
             hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.parameters_dim})
         # input and output size of the neural network are prescribed by the
         # dimension of the parameter space and the reduced basis size
         assert isinstance(hidden_layers, list)
-        return [self.parameters_dim, ] + hidden_layers + [len(self.reduced_basis), ]
+        if self.is_stationary:
+            return [self.parameters_dim, ] + hidden_layers + [len(self.reduced_basis), ]
+        else:
+            return [self.parameters_dim + 1, ] + hidden_layers + [len(self.reduced_basis), ]
 
     def _compute_target_loss(self):
         """Compute target loss depending on value of `ann_mse`."""
@@ -458,11 +464,17 @@ class NeuralNetworkReductor(BasicObject):
             name = 'data_driven'
 
         with self.logger.block('Building ROM ...'):
-            rom = NeuralNetworkModel(self.neural_network, parameters,
+            if self.is_stationary:
+                rom = NeuralNetworkModel(self.neural_network, parameters,
                                      scaling_parameters=self.scaling_parameters,
                                      output_functional=projected_output_functional,
                                      name=f'{name}_reduced')
-
+            else:
+                rom = NeuralNetworkInstationaryModel(self.T, self.nt, self.neural_network,
+                                                     parameters=parameters,
+                                                     scaling_parameters=self.scaling_parameters,
+                                                     output_functional=projected_output_functional,
+                                                     name=f'{name}_reduced')
         return rom
 
     def reconstruct(self, u):
@@ -610,7 +622,10 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         # input and output size of the neural network are prescribed by the
         # dimension of the parameter space and the output dimension
         assert isinstance(hidden_layers, list)
-        return [self.parameters_dim, ] + hidden_layers + [self.dim_output, ]
+        if self.is_stationary:
+            return [self.parameters_dim, ] + hidden_layers + [self.dim_output, ]
+        else:
+            return [self.parameters_dim + 1, ] + hidden_layers + [self.dim_output, ]
 
     def _compute_target_loss(self):
         """Compute target loss depending on value of `ann_mse`."""
@@ -631,111 +646,19 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
             name = 'data_driven'
 
         with self.logger.block('Building ROM ...'):
-            rom = NeuralNetworkStatefreeOutputModel(self.neural_network, parameters=parameters,
+            if self.is_stationary:
+                rom = NeuralNetworkStatefreeOutputModel(self.neural_network, parameters=parameters,
                                                     scaling_parameters=self.scaling_parameters,
                                                     name=f'{name}_output_reduced')
+            else:
+                rom = NeuralNetworkInstationaryStatefreeOutputModel(self.T, self.nt, self.neural_network,
+                                                                    parameters=parameters,
+                                                                    scaling_parameters=self.scaling_parameters,
+                                                                    name=f'{name}_output_reduced')
 
         return rom
 
-
-class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
-    """Reduced Basis reductor for instationary problems relying on artificial neural networks.
-
-    This is a reductor that constructs a reduced basis using proper
-    orthogonal decomposition and trains a neural network that approximates
-    the mapping from parameter and time space to coefficients of the
-    full-order solution in the reduced basis.
-    The approach is described in :cite:`WHR19`.
-
-    Parameters
-    ----------
-    fom
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    training_set
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    validation_set
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    training_snapshots
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    validation_snapshots
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    validation_ratio
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    T
-        The final time T used in case `fom` is `None`.
-    basis_size
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    rtol
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    atol
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    l2_err
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    pod_params
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    ann_mse
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    scale_inputs
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    scale_outputs
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    """
-
-    def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None,
-                 validation_snapshots=None, validation_ratio=0.1, T=None, basis_size=None, rtol=0., atol=0., l2_err=0.,
-                 pod_params={}, ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
-        assert 0 < validation_ratio < 1 or validation_set
-
-        self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
-                                   'min_targets': None, 'max_targets': None}
-
-        if not fom:
-            assert training_set is not None
-            assert len(training_set) > 0
-            assert T is not None
-            self.parameters_dim = training_set[0].parameters.dim
-            self.T = T
-        else:
-            self.parameters_dim = fom.parameters.dim
-            self.T = fom.T
-
-        self.__auto_init(locals())
-
-    def _compute_layer_sizes(self, hidden_layers):
-        """Compute the number of neurons in the layers of the neural network.
-
-        (make sure to increase the input dimension to account for the time).
-        """
-        # determine the numbers of neurons in the hidden layers
-        if isinstance(hidden_layers, str):
-            hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.parameters_dim})
-        # input and output size of the neural network are prescribed by the
-        # dimension of the parameter space and the reduced basis size
-        assert isinstance(hidden_layers, list)
-        return [self.parameters_dim + 1, ] + hidden_layers + [len(self.reduced_basis), ]
-
-    def _build_rom(self):
-        """Construct the reduced order model."""
-        if self.fom:
-            projected_output_functional = project(self.fom.output_functional, None, self.reduced_basis)
-            parameters = self.fom.parameters
-            name = self.fom.name
-        else:
-            projected_output_functional = None
-            parameters = self.training_set[0][0].parameters
-            name = 'data_driven'
-
-        with self.logger.block('Building ROM ...'):
-            rom = NeuralNetworkInstationaryModel(self.T, self.nt, self.neural_network,
-                                                 parameters=parameters,
-                                                 scaling_parameters=self.scaling_parameters,
-                                                 output_functional=projected_output_functional,
-                                                 name=f'{name}_reduced')
-
-        return rom
-
-
-class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
+class NeuralNetworkLSTMReductor(NeuralNetworkReductor):
     """Reduced Basis reductor for instationary problems relying on LSTM neural networks.
 
     This is a reductor that constructs a reduced basis using proper
@@ -813,73 +736,11 @@ class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
         assert isinstance(hidden_dimension, int)
         # input and output size of the neural network are prescribed by the
         # dimension of the parameter space and the reduced basis size
-        return [self.fom.parameters.dim + 1, hidden_dimension, len(self.reduced_basis), ]
-
-
-class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOutputReductor):
-    """Output reductor relying on artificial neural networks.
-
-    This is a reductor that trains a neural network that approximates
-    the mapping from parameter space to output space.
-
-    Parameters
-    ----------
-    fom
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`.
-    nt
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkInstationaryReductor`.
-    training_set
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`.
-    validation_set
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`.
-    training_snapshots
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    validation_snapshots
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    T
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkInstationaryReductor`.
-    validation_ratio
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    validation_loss
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`.
-    scale_inputs
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    scale_outputs
-        See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
-    """
-
-    def __init__(self, fom=None, nt=1, training_set=None, validation_set=None, training_snapshots=None,
-                 validation_snapshots=None, validation_ratio=0.1, T=None, validation_loss=None,
-                 scale_inputs=True, scale_outputs=False):
-        assert 0 < validation_ratio < 1 or validation_set
-
-        self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
-                                   'min_targets': None, 'max_targets': None}
-
-        if not fom:
-            assert training_set is not None
-            assert training_snapshots is not None
-            assert len(training_set) > 0
-            assert T is not None
-            self.parameters_dim = training_set[0].parameters.dim
-            self.dim_output = len(training_snapshots[0])
-            self.T = T
+        if self.is_stationary:
+            return [self.fom.parameters.dim, hidden_dimension, len(self.reduced_basis), ]
         else:
-            self.parameters_dim = fom.parameters.dim
-            self.dim_output = fom.dim_output
-            self.T = fom.T
+            return [self.fom.parameters.dim + 1, hidden_dimension, len(self.reduced_basis), ]
 
-        self.__auto_init(locals())
-
-    def _compute_layer_sizes(self, hidden_layers):
-        """Compute the number of neurons in the layers of the neural network."""
-        # determine the numbers of neurons in the hidden layers
-        if isinstance(hidden_layers, str):
-            hidden_layers = eval(hidden_layers, {'N': self.dim_output, 'P': self.parameters_dim})
-        # input and output size of the neural network are prescribed by the
-        # dimension of the parameter space and the output dimension
-        assert isinstance(hidden_layers, list)
-        return [self.parameters_dim + 1, ] + hidden_layers + [self.dim_output, ]
 
     def _build_rom(self):
         """Construct the reduced order model."""
@@ -901,15 +762,17 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
 
 class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkInstationaryStatefreeOutputReductor,
                                                            NeuralNetworkLSTMInstationaryReductor):
+class NeuralNetworkLSTMStatefreeOutputReductor(NeuralNetworkStatefreeOutputReductor,
+                                               NeuralNetworkLSTMReductor):
     """Output reductor relying on LSTM neural networks.
 
     This is a reductor that trains an LSTM neural network that approximates
     the mapping from parameter space to output space.
     """
 
-    reduce = NeuralNetworkLSTMInstationaryReductor.reduce
+    reduce = NeuralNetworkLSTMReductor.reduce
 
-    _initialize_neural_network = NeuralNetworkLSTMInstationaryReductor._initialize_neural_network
+    _initialize_neural_network = NeuralNetworkLSTMReductor._initialize_neural_network
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network."""
@@ -920,7 +783,10 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkInstatio
         assert isinstance(hidden_dimension, int)
         # input and output size of the neural network are prescribed by the
         # dimension of the parameter space and the reduced basis size
-        return [self.fom.parameters.dim + 1, hidden_dimension, self.dim_output, ]
+        if self.is_stationary:
+            return [self.fom.parameters_dim, hidden_dimension, self.dim_output, ]
+        else:
+            return [self.fom.parameters.dim + 1, hidden_dimension, self.dim_output, ]
 
 
 class EarlyStoppingScheduler(BasicObject):
