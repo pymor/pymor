@@ -742,26 +742,6 @@ class NeuralNetworkLSTMReductor(NeuralNetworkReductor):
             return [self.fom.parameters.dim + 1, hidden_dimension, len(self.reduced_basis), ]
 
 
-    def _build_rom(self):
-        """Construct the reduced order model."""
-        if self.fom:
-            parameters = self.fom.parameters
-            name = self.fom.name
-        else:
-            parameters = self.training_set[0][0].parameters
-            name = 'data_driven'
-
-        with self.logger.block('Building ROM ...'):
-            rom = NeuralNetworkInstationaryStatefreeOutputModel(self.T, self.nt, self.neural_network,
-                                                                parameters=parameters,
-                                                                scaling_parameters=self.scaling_parameters,
-                                                                name=f'{name}_output_reduced')
-
-        return rom
-
-
-class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkInstationaryStatefreeOutputReductor,
-                                                           NeuralNetworkLSTMInstationaryReductor):
 class NeuralNetworkLSTMStatefreeOutputReductor(NeuralNetworkStatefreeOutputReductor,
                                                NeuralNetworkLSTMReductor):
     """Output reductor relying on LSTM neural networks.
