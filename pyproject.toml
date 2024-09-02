@@ -59,7 +59,7 @@ docs-additional = [
 # additional dependencies for running tests via 'make tests'
 tests = [
   "hypothesis[numpy,pytest]==6.56.3", # pin hypothesis version to ensure deterministic tests
-  "pytest-notebook",
+  "pytest-notebook~=0.10",
   "notebook",
   "pytest-cov",
   "pytest-datadir",

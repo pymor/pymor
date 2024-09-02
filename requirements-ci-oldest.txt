@@ -88,7 +88,7 @@ exceptiongroup==1.2.2
     #   anyio
     #   hypothesis
     #   pytest
-executing==2.0.1
+executing==2.1.0
     # via stack-data
 fastjsonschema==2.20.0
     # via nbformat
@@ -120,7 +120,7 @@ idna==3.8
     #   requests
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==8.4.0
+importlib-metadata==6.11.0
     # via
     #   jupyter-cache
     #   jupyter-client
@@ -129,6 +129,7 @@ importlib-metadata==8.4.0
     #   jupyterlab-server
     #   myst-nb
     #   nbconvert
+    #   pytest-notebook
     #   sphinx
 importlib-resources==5.13.0
     # via
@@ -426,7 +427,7 @@ pytest-cov==5.0.0
     # via pymor (./pyproject.toml)
 pytest-datadir==1.5.0
     # via pymor (./pyproject.toml)
-pytest-notebook==0.8.1
+pytest-notebook==0.10.0
     # via pymor (./pyproject.toml)
 python-dateutil==2.9.0.post0
     # via
