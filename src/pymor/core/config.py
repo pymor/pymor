@@ -189,19 +189,24 @@ class Config:
 
         if package in _PACKAGES:
             if package in self.disabled:
-                version = False
+                version = None
+                status = 'disabled'
             else:
                 try:
                     version = _PACKAGES[package]()
+                    if not version:
+                        raise ImportError
+                    status = 'present'
                 except ImportError:
-                    version = False
+                    version = None
+                    status = 'missing'
+                except Exception:
+                    version = None
+                    status = 'import check failed'
 
-            if version is not None and version is not False:
-                setattr(self, 'HAVE_' + package, True)
-                setattr(self, package + '_VERSION', version)
-            else:
-                setattr(self, 'HAVE_' + package, False)
-                setattr(self, package + '_VERSION', None)
+            setattr(self, 'HAVE_' + package, version is not None)
+            setattr(self, package + '_VERSION', version)
+            setattr(self, package + '_STATUS', status)
         else:
             raise AttributeError
 
@@ -214,9 +219,15 @@ class Config:
         return list(keys)
 
     def __repr__(self):
-        status = {p: 'disabled' if p in self.disabled else
-                     (lambda v: 'missing' if not v else 'present' if v is True else v)(getattr(self, p + '_VERSION'))
-                  for p in _PACKAGES}
+
+        def get_status(p):
+            version = getattr(self, p + '_VERSION')
+            if not version or version is True:
+                return getattr(self, p + '_STATUS')
+            else:
+                return version
+
+        status = {p: get_status(p) for p in _PACKAGES}
         key_width = max(len(p) for p in _PACKAGES) + 2
         package_info = [f"{p+':':{key_width}} {v}" for p, v in sorted(status.items())]
         separator = '-' * max(map(len, package_info))
