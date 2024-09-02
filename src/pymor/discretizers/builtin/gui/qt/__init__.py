@@ -324,10 +324,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             with NamedTemporaryFile(mode='wb', delete=False) as f:
                 dump(data, f)
                 filename = f.name
-            # Use python3 executable since python executable is not available
-            # on most system-wide installs.
-            # On windows, use python executable as there is no python3 executable on windows.
-            subprocess.Popen(['python' if is_windows_platform() else 'python3',
+            subprocess.Popen([sys.executable,
                               '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
@@ -485,10 +482,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             with NamedTemporaryFile(mode='wb', delete=False) as f:
                 dump(data, f)
                 filename = f.name
-            # Use python3 executable since python executable is not available
-            # on most system-wide installs.
-            # On windows, use python executable as there is no python3 executable on windows.
-            subprocess.Popen(['python' if is_windows_platform() else 'python3',
+            subprocess.Popen([sys.executable,
                               '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
