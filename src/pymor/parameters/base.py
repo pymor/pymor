@@ -235,16 +235,16 @@ class Parameters(SortedFrozenDict):
 
         return Mu({k: parse_value(k, v) for k, v in mu.items()})
 
-    def space(self, *ranges):
+    def space(self, *ranges, constraints=None):
         """Create a |ParameterSpace| with given ranges.
 
         This is a shorthand for ::
 
-            ParameterSpace(self, *range)
+            ParameterSpace(self, *range, constraints=constraints)
 
-        See |ParameterSpace| for allowed range arguments.
+        See |ParameterSpace| for allowed `range` and `constraints` arguments.
         """
-        return ParameterSpace(self, *ranges)
+        return ParameterSpace(self, *ranges, constraints=constraints)
 
     def assert_compatible(self, mu):
         """Assert that |parameter values| are compatible with the given |Parameters|.
