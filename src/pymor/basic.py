@@ -20,6 +20,7 @@ from pymor.algorithms.pod import pod
 from pymor.algorithms.preassemble import preassemble
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.algorithms.simplify import expand
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
 from pymor.analyticalproblems.domaindescriptions import (
     CircleDomain,
