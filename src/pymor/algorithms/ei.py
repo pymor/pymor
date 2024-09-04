@@ -94,13 +94,14 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
                                        max_interpolation_dofs=max_interpolation_dofs, copy=copy, pool=pool)
 
     assert isinstance(U, VectorArray)
+    assert len(U) > 0
 
     logger = getLogger('pymor.algorithms.ei.ei_greedy')
     logger.info('Generating Interpolation Data ...')
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     collateral_basis = U.empty()
-    K = np.eye(len(U))  # matrix s.t. U = U_initial.lincomb(K)
+    K = np.eye(len(U), dtype=U[0].dofs([0]).dtype)  # matrix s.t. U = U_initial.lincomb(K)
     coefficients = np.zeros((0, len(U)))
     max_errs = []
     triangularity_errs = []
