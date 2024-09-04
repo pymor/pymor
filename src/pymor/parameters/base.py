@@ -600,6 +600,12 @@ class ParameterSpace(ParametricObject):
         - a list/tuple of two numbers specifying these bounds,
         - or a dict of those tuples, specifying upper and lower
           bounds individually for each parameter of the space.
+    constraints
+        If not `None`, a function `constraints(mu) -> bool`
+        defining additional (inequality) constraints on the space.
+        For each given |Mu| that lies within the given `ranges`,
+        `constraints` is called to check if the constraints
+        are satisfied.
     """
 
     def __init__(self, parameters, *ranges, constraints=None):
@@ -623,6 +629,11 @@ class ParameterSpace(ParametricObject):
     def sample_uniformly(self, counts):
         """Uniformly sample |parameter values| from the space.
 
+        In the case of additional :attr:`~ParameterSpace.constraints`, the samples
+        are generated w.r.t. the box constraints specified by
+        :attr:`~ParameterSpace.ranges`, but only those |Mus| are returned, which
+        satisfy the additional constraints.
+
         Parameters
         ----------
         counts
@@ -641,13 +652,13 @@ class ParameterSpace(ParametricObject):
                           for k in self.parameters)
         iters = tuple(product(linspace, repeat=size)
                       for linspace, size in zip(linspaces, self.parameters.values()))
-        unconstrainted_mus = (Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
-                              for i in product(*iters))
+        unconstrained_mus = (Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
+                             for i in product(*iters))
         if self.constraints:
             constraints = self.constraints
-            return [mu for mu in unconstrainted_mus if constraints(mu)]
+            return [mu for mu in unconstrained_mus if constraints(mu)]
         else:
-            return list(unconstrainted_mus)
+            return list(unconstrained_mus)
 
     def sample_randomly(self, count=None):
         """Randomly sample |parameter values| from the space.
@@ -684,6 +695,11 @@ class ParameterSpace(ParametricObject):
     def sample_logarithmic_uniformly(self, counts):
         """Logarithmically uniform sample |parameter values| from the space.
 
+        In the case of additional :attr:`~ParameterSpace.constraints`, the samples
+        are generated w.r.t. the box constraints specified by
+        :attr:`~ParameterSpace.ranges`, but only those |Mus| are returned, which
+        satisfy the additional constraints.
+
         Parameters
         ----------
         counts
@@ -702,13 +718,13 @@ class ParameterSpace(ParametricObject):
                           for k in self.parameters)
         iters = tuple(product(logspace, repeat=size)
                       for logspace, size in zip(logspaces, self.parameters.values()))
-        unconstrainted_mus = (Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
-                              for i in product(*iters))
+        unconstrained_mus = (Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
+                             for i in product(*iters))
         if self.constraints:
             constraints = self.constraints
-            return [mu for mu in unconstrainted_mus if constraints(mu)]
+            return [mu for mu in unconstrained_mus if constraints(mu)]
         else:
-            return list(unconstrainted_mus)
+            return list(unconstrained_mus)
 
     def sample_logarithmic_randomly(self, count=None):
         """Logarithmically scaled random sample |parameter values| from the space.
