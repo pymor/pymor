@@ -178,5 +178,25 @@ def test_mu_t_wrong_value():
         Mu(t=np.array([1, 2]))
 
 
+def test_constraints():
+    const = lambda mu: mu['a'][0] <= mu['b'][0]
+    space = Parameters({'a': 1, 'b': 1}).space(1, 2, constraints=const)
+
+    mus = space.sample_randomly(10)
+    assert len(mus) == 10
+    assert all(const(mu) for mu in mus)
+
+    mus = space.sample_uniformly(10)
+    assert len(mus) == 10*11//2
+
+    mus = space.sample_logarithmic_randomly(10)
+    assert len(mus) == 10
+    assert all(const(mu) for mu in mus)
+
+    mus = space.sample_logarithmic_uniformly(10)
+    assert len(mus) == 10*11//2
+    assert all(const(mu) for mu in mus)
+
+
 if __name__ == '__main__':
     runmodule(filename=__file__)
