@@ -588,7 +588,7 @@ class ParameterSpace(ParametricObject):
     |parameter values| for given |Parameters| within a specified
     range.
 
-    Parameters
+    Attributes
     ----------
     parameters
         The |Parameters| which are part of the space.
