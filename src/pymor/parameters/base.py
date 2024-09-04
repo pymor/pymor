@@ -603,8 +603,8 @@ class ParameterSpace(ParametricObject):
     constraints
         If not `None`, a function `constraints(mu) -> bool`
         defining additional (inequality) constraints on the space.
-        For each given |Mu| that lies within the given `ranges`,
-        `constraints` is called to check if the constraints
+        For each given |parameter values| that lies within the given
+        `ranges`, `constraints` is called to check if the constraints
         are satisfied.
     """
 
@@ -631,8 +631,8 @@ class ParameterSpace(ParametricObject):
 
         In the case of additional :attr:`~ParameterSpace.constraints`, the samples
         are generated w.r.t. the box constraints specified by
-        :attr:`~ParameterSpace.ranges`, but only those |Mus| are returned, which
-        satisfy the additional constraints.
+        :attr:`~ParameterSpace.ranges`, but only those |parameter values| are returned,
+        which satisfy the additional constraints.
 
         Parameters
         ----------
@@ -697,8 +697,8 @@ class ParameterSpace(ParametricObject):
 
         In the case of additional :attr:`~ParameterSpace.constraints`, the samples
         are generated w.r.t. the box constraints specified by
-        :attr:`~ParameterSpace.ranges`, but only those |Mus| are returned, which
-        satisfy the additional constraints.
+        :attr:`~ParameterSpace.ranges`, but only those |parameter values| are returned,
+        which satisfy the additional constraints.
 
         Parameters
         ----------
