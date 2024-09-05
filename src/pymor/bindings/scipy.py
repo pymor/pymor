@@ -5,6 +5,7 @@
 
 import numpy as np
 from packaging.version import parse
+import scipy.sparse as sps
 from scipy.linalg import solve, solve_continuous_are, solve_continuous_lyapunov, solve_discrete_lyapunov
 from scipy.sparse.linalg import LinearOperator, bicgstab, lgmres, lsqr, spilu, splu, spsolve
 
@@ -18,7 +19,7 @@ from pymor.core.exceptions import InversionError
 from pymor.operators.numpy import NumpyMatrixOperator
 
 SCIPY_1_14_OR_NEWER = parse(config.SCIPY_VERSION) >= parse('1.14')
-
+sparray = sps.sparray if parse(config.SCIPY_VERSION) >= parse('1.11') else sps._sparray
 
 @defaults('bicgstab_tol', 'bicgstab_maxiter', 'spilu_drop_tol',
           'spilu_fill_factor', 'spilu_drop_rule', 'spilu_permc_spec', 'spsolve_permc_spec',
