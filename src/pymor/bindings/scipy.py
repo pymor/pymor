@@ -4,8 +4,8 @@
 
 
 import numpy as np
-from packaging.version import parse
 import scipy.sparse as sps
+from packaging.version import parse
 from scipy.linalg import solve, solve_continuous_are, solve_continuous_lyapunov, solve_discrete_lyapunov
 from scipy.sparse.linalg import LinearOperator, bicgstab, lgmres, lsqr, spilu, splu, spsolve
 
