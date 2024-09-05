@@ -235,16 +235,16 @@ class Parameters(SortedFrozenDict):
 
         return Mu({k: parse_value(k, v) for k, v in mu.items()})
 
-    def space(self, *ranges):
+    def space(self, *ranges, constraints=None):
         """Create a |ParameterSpace| with given ranges.
 
         This is a shorthand for ::
 
-            ParameterSpace(self, *range)
+            ParameterSpace(self, *range, constraints=constraints)
 
-        See |ParameterSpace| for allowed range arguments.
+        See |ParameterSpace| for allowed `range` and `constraints` arguments.
         """
-        return ParameterSpace(self, *ranges)
+        return ParameterSpace(self, *ranges, constraints=constraints)
 
     def assert_compatible(self, mu):
         """Assert that |parameter values| are compatible with the given |Parameters|.
@@ -588,7 +588,7 @@ class ParameterSpace(ParametricObject):
     |parameter values| for given |Parameters| within a specified
     range.
 
-    Parameters
+    Attributes
     ----------
     parameters
         The |Parameters| which are part of the space.
@@ -600,9 +600,15 @@ class ParameterSpace(ParametricObject):
         - a list/tuple of two numbers specifying these bounds,
         - or a dict of those tuples, specifying upper and lower
           bounds individually for each parameter of the space.
+    constraints
+        If not `None`, a function `constraints(mu) -> bool`
+        defining additional (inequality) constraints on the space.
+        For each given |parameter values| that lies within the given
+        `ranges`, `constraints` is called to check if the constraints
+        are satisfied.
     """
 
-    def __init__(self, parameters, *ranges):
+    def __init__(self, parameters, *ranges, constraints=None):
         assert isinstance(parameters, Parameters)
         assert 1 <= len(ranges) <= 2
         if len(ranges) == 1:
@@ -616,11 +622,17 @@ class ParameterSpace(ParametricObject):
                    and all(isinstance(v, Number) for v in ranges[k])
                    and ranges[k][0] <= ranges[k][1]
                    for k in parameters)
-        self.parameters = parameters
+        assert constraints is None or callable(constraints)
+        self.__auto_init(locals())
         self.ranges = SortedFrozenDict((k, tuple(v)) for k, v in ranges.items())
 
     def sample_uniformly(self, counts):
         """Uniformly sample |parameter values| from the space.
+
+        In the case of additional :attr:`~ParameterSpace.constraints`, the samples
+        are generated w.r.t. the box constraints specified by
+        :attr:`~ParameterSpace.ranges`, but only those |parameter values| are returned,
+        which satisfy the additional constraints.
 
         Parameters
         ----------
@@ -640,8 +652,13 @@ class ParameterSpace(ParametricObject):
                           for k in self.parameters)
         iters = tuple(product(linspace, repeat=size)
                       for linspace, size in zip(linspaces, self.parameters.values()))
-        return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
-                for i in product(*iters)]
+        unconstrained_mus = (Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
+                             for i in product(*iters))
+        if self.constraints:
+            constraints = self.constraints
+            return [mu for mu in unconstrained_mus if constraints(mu)]
+        else:
+            return list(unconstrained_mus)
 
     def sample_randomly(self, count=None):
         """Randomly sample |parameter values| from the space.
@@ -657,8 +674,19 @@ class ParameterSpace(ParametricObject):
         -------
         The sampled |parameter values|.
         """
-        get_param = lambda: Mu((k, get_rng().uniform(self.ranges[k][0], self.ranges[k][1], size))
-                               for k, size in self.parameters.items())
+        rng = get_rng()
+        constraints = self.constraints
+
+        def get_param():
+            while True:
+                mu = Mu((k, rng.uniform(self.ranges[k][0], self.ranges[k][1], size))
+                        for k, size in self.parameters.items())
+                if constraints:
+                    if constraints(mu):
+                        return mu
+                else:
+                    return mu
+
         if count is None:
             return get_param()
         else:
@@ -666,6 +694,11 @@ class ParameterSpace(ParametricObject):
 
     def sample_logarithmic_uniformly(self, counts):
         """Logarithmically uniform sample |parameter values| from the space.
+
+        In the case of additional :attr:`~ParameterSpace.constraints`, the samples
+        are generated w.r.t. the box constraints specified by
+        :attr:`~ParameterSpace.ranges`, but only those |parameter values| are returned,
+        which satisfy the additional constraints.
 
         Parameters
         ----------
@@ -685,8 +718,13 @@ class ParameterSpace(ParametricObject):
                           for k in self.parameters)
         iters = tuple(product(logspace, repeat=size)
                       for logspace, size in zip(logspaces, self.parameters.values()))
-        return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
-                for i in product(*iters)]
+        unconstrained_mus = (Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
+                             for i in product(*iters))
+        if self.constraints:
+            constraints = self.constraints
+            return [mu for mu in unconstrained_mus if constraints(mu)]
+        else:
+            return list(unconstrained_mus)
 
     def sample_logarithmic_randomly(self, count=None):
         """Logarithmically scaled random sample |parameter values| from the space.
@@ -702,10 +740,19 @@ class ParameterSpace(ParametricObject):
         -------
         The sampled |parameter values|.
         """
-        get_param = lambda: Mu((k, np.exp(get_rng().uniform(np.log(self.ranges[k][0]),
-                                                            np.log( self.ranges[k][1]),
-                                                            size)))
-                               for k, size in self.parameters.items())
+        rng = get_rng()
+        constraints = self.constraints
+
+        def get_param():
+            while True:
+                mu = Mu((k, np.exp(rng.uniform(np.log(self.ranges[k][0]), np.log( self.ranges[k][1]), size)))
+                        for k, size in self.parameters.items())
+                if constraints:
+                    if constraints(mu):
+                        return mu
+                else:
+                    return mu
+
         if count is None:
             return get_param()
         else:
@@ -716,8 +763,9 @@ class ParameterSpace(ParametricObject):
             mu = self.parameters.parse(mu)
         if not self.parameters.is_compatible(mu):
             return False
-        return all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
-                   for k in self.parameters)
+        return (all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
+                    for k in self.parameters)
+                and (not self.constraints or self.constraints(mu)))
 
     def clip(self, mu, keep_additional=False):
         """Clip (limit) |parameter values| to the space's parameter ranges.
@@ -734,6 +782,8 @@ class ParameterSpace(ParametricObject):
         -------
         The clipped |parameter values|.
         """
+        if self.constraints:
+            raise NotImplementedError
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         if not self.parameters.is_compatible(mu):
