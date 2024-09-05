@@ -46,38 +46,38 @@ If you use pyMOR for academic work, please consider citing our
 
 ## Installation via pip
 
-We recommend installation of pyMOR in a [virtual environment](https://virtualenv.pypa.io/en/latest/).
-
-pyMOR can easily be installed with the [pip](https://pip.pypa.io/en/stable/)
-command.
-Please note that pip versions prior to 21.1 might have problems resolving all
-dependencies, so running the following first is recommended:
-
-    pip install --upgrade pip
-
-If you are not operating in a virtual environment, you can pass the optional
-`--user` argument to pip.
-pyMOR will then only be installed for your local user, not requiring
-administrator privileges.
-
-### Latest Release (without Optional Dependencies)
+pyMOR can easily be installed using Python package managers like
+[pip](https://pip.pypa.io/en/stable/).
+We recommend installation of pyMOR into a
+[virtual environment](https://docs.python.org/3/tutorial/venv.html)
+to avoid dependency conflicts.
 
 For an installation with minimal dependencies, run
 
     pip install pymor
 
-Note that most included demo scripts additionally require Qt bindings such as
-`pyside2` to function.
-Therefore we recommend install pyMOR with the `gui` extra:
+Since most included demo scripts require Qt bindings such as `pyside6` to function,
+we recommend install pyMOR with the `gui` extra:
 
-    pip install 'pymor[gui]'  # 2023.1 and later
-
-### Latest Release (with all Optional Dependencies)
+    pip install 'pymor[gui]'
 
 The following installs the latest release of pyMOR on your system with most
 optional dependencies:
 
     pip install 'pymor[full]'
+
+To obtain an environment with the exact same package versions used in our
+Linux continuous integration tests, you can use the
+[requirements-ci-current.txt](https://raw.githubusercontent.com/pymor/pymor/main/requirements-ci-current.txt),
+file from the pyMOR repository
+
+    pip install -r requirements-ci-current.txt
+    pip install pymor
+
+If you are using a stable release, you should download the file from the
+corresponding release branch of the repository.
+
+## Additional dependencies
 
 There are some optional packages not included with `pymor[full]`
 because they need additional setup on your system:
@@ -123,27 +123,6 @@ because they need additional setup on your system:
   If you are on Linux and don't want to build Slycot yourself, you
   can try our experimental
   [manylinux wheels for Slycot](https://github.com/pymor/slycot-wheels/releases).
-
-### Latest Development Version
-
-To install the latest development version of pyMOR, execute
-
-    pip install 'pymor[full] @ git+https://github.com/pymor/pymor'
-
-which requires that the [git](https://git-scm.com/) version control system is
-installed on your system.
-
-### Current Release Branch Version
-
-From time to time, the main branch of pyMOR undergoes major changes and things
-might break (this is usually announced in our
-[discussion forum](https://github.com/pymor/pymor/discussions)),
-so you might prefer to install pyMOR from the current release branch:
-
-    pip install 'pymor[full] @ git+https://github.com/pymor/pymor@2024.1.x'
-
-Release branches will always stay stable and will only receive bugfix commits
-after the corresponding release has been made.
 
 ## Installation via conda
 

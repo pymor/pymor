@@ -39,7 +39,6 @@ ci_preflight_image: ## build CI image used in preflight stage
 	$(DOCKER) build -t pymor/ci-preflight -f $(THIS_DIR)/docker/Dockerfile.ci-preflight $(THIS_DIR)
 
 CI_EXTRAS= \
-	--extra docs-additional \
 	--extra tests \
 	--extra ann \
 	--extra slycot \
@@ -54,43 +53,43 @@ CI_EXTRAS= \
 	# dune not available for Python 3.12
 
 ci_current_requirements:
-	# we run pip-compile in a container to ensure that the right Python version is used
-	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src python:3.12-bullseye /bin/bash -c "\
-		cd /src && \
-		pip install pip-tools==6.13.0 && \
-		pip-compile --resolver backtracking \
-			$(CI_EXTRAS) \
-			--extra-index-url https://download.pytorch.org/whl/cpu \
-			-o requirements-ci-current.txt \
-		"
+	uv pip compile  \
+		$(CI_EXTRAS) \
+		--extra docs-additional \
+		--python-version 3.12 \
+		--python-platform x86_64-manylinux_2_31 \
+		--extra-index-url https://download.pytorch.org/whl/cpu \
+		--index-strategy unsafe-best-match \
+		--emit-index-url \
+		-o requirements-ci-current.txt \
+		./pyproject.toml
 
 ci_oldest_requirements:
-	# we run pip-compile in a container to ensure that the right Python version is used
-	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src python:3.8-bullseye /bin/bash -c "\
-		cd /src && \
-		pip install pip-tools==6.13.0 && \
-		pip-compile --resolver backtracking \
-			$(CI_EXTRAS) --extra dune \
-			--extra-index-url https://download.pytorch.org/whl/cpu \
-			-o requirements-ci-oldest.txt \
-			pyproject.toml requirements-ci-oldest-pins.in \
-		"
-
+	uv pip compile  \
+		$(CI_EXTRAS) \
+		--extra dune \
+		--python-version 3.8 \
+		--python-platform x86_64-manylinux_2_31 \
+		--extra-index-url https://download.pytorch.org/whl/cpu \
+		--index-strategy unsafe-best-match \
+		--emit-index-url \
+		-o requirements-ci-oldest.txt \
+		./pyproject.toml ./requirements-ci-oldest-pins.in
 
 ci_fenics_requirements:
-	$(DOCKER) run --rm -it -v=$(THIS_DIR):/src python:3.11-bullseye /bin/bash -c "\
-		cd /src && \
-		pip install pip-tools==6.13.0 && \
-		pip-compile --resolver backtracking \
-			--extra docs_additional \
-			--extra tests \
-			--extra ci \
-			--extra ann \
-			--extra ipyparallel \
-			--extra mpi \
-			--extra-index-url https://download.pytorch.org/whl/cpu \
-			-o requirements-ci-fenics.txt \
-		"
+	uv pip compile  \
+		--extra docs_additional \
+		--extra tests \
+		--extra ann \
+		--extra ipyparallel \
+		--extra mpi \
+		--python-version 3.11 \
+		--python-platform x86_64-manylinux_2_31 \
+		--extra-index-url https://download.pytorch.org/whl/cpu \
+		--index-strategy unsafe-best-match \
+		--emit-index-url \
+		-o requirements-ci-fenics.txt \
+		./pyproject.toml ./requirements-ci-fenics-pins.in
 
 CONDA_EXTRAS = \
 	--extras tests \
