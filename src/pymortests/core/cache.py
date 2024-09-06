@@ -125,5 +125,9 @@ def test_memory_region_safety():
     assert len(U) == 1
 
 
+def test_print_cached_methods():
+    cache.print_cached_methods()
+
+
 if __name__ == '__main__':
     runmodule(filename=__file__)
