@@ -481,9 +481,9 @@ rpds-py==0.20.0
     #   referencing
 scikit-fem==6.0.0
     # via
-    #   -r ./requirements-ci-oldest-pins.in
-    #   pymor (./pyproject.toml)
-scipy==1.6.0
+    #   -r requirements-ci-oldest-pins.in
+    #   pymor (pyproject.toml)
+scipy==1.8.0
     # via
     #   -r ./requirements-ci-oldest-pins.in
     #   pymor (./pyproject.toml)

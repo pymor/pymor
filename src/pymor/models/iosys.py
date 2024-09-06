@@ -21,6 +21,7 @@ from pymor.algorithms.simplify import contract, expand
 from pymor.algorithms.timestepping import DiscreteTimeStepper, TimeStepper
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.analyticalproblems.functions import Function
+from pymor.bindings.scipy import sparray
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -264,7 +265,7 @@ class LTIModel(Model):
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, sampling_time=0,
                       T=None, initial_data=None, time_stepper=None, num_values=None, presets=None,
-                      state_id='STATE', solver_options=None, error_estimator=None,
+                      state_id=None, solver_options=None, error_estimator=None,
                       visualizer=None, name=None):
         """Create |LTIModel| from matrices.
 
@@ -318,11 +319,11 @@ class LTIModel(Model):
         lti
             The |LTIModel| with operators A, B, C, D, and E.
         """
-        assert isinstance(A, (np.ndarray, sps.spmatrix))
-        assert isinstance(B, (np.ndarray, sps.spmatrix))
-        assert isinstance(C, (np.ndarray, sps.spmatrix))
-        assert isinstance(D, (np.ndarray, sps.spmatrix, type(None)))
-        assert isinstance(E, (np.ndarray, sps.spmatrix, type(None)))
+        assert isinstance(A, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(B, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(C, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(D, (np.ndarray, sps.spmatrix, sparray, type(None)))
+        assert isinstance(E, (np.ndarray, sps.spmatrix, sparray, type(None)))
         assert isinstance(initial_data, (np.ndarray, type(None)))
 
         A = NumpyMatrixOperator(A, source_id=state_id, range_id=state_id)
@@ -403,7 +404,7 @@ class LTIModel(Model):
     @classmethod
     def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, sampling_time=0,
                    T=None, initial_data_file=None, time_stepper=None, num_values=None, presets=None,
-                   state_id='STATE', solver_options=None, error_estimator=None, visualizer=None, name=None):
+                   state_id=None, solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in separate files.
 
         Parameters
@@ -504,7 +505,7 @@ class LTIModel(Model):
 
     @classmethod
     def from_mat_file(cls, file_name, sampling_time=0, T=None, time_stepper=None, num_values=None, presets=None,
-                      state_id='STATE', solver_options=None, error_estimator=None, visualizer=None, name=None):
+                      state_id=None, solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in a .mat file.
 
         Supports the format used in the `SLICOT benchmark collection
@@ -596,7 +597,7 @@ class LTIModel(Model):
 
     @classmethod
     def from_abcde_files(cls, files_basename, sampling_time=0, T=None, time_stepper=None, num_values=None, presets=None,
-                         state_id='STATE', solver_options=None, error_estimator=None, visualizer=None, name=None):
+                         state_id=None, solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in .[ABCDE] files.
 
         Parameters
@@ -1787,7 +1788,7 @@ class PHLTIModel(LTIModel):
 
     @classmethod
     def from_matrices(cls, J, R, G, P=None, S=None, N=None, E=None, Q=None,
-                      state_id='STATE', solver_options=None, error_estimator=None,
+                      state_id=None, solver_options=None, error_estimator=None,
                       visualizer=None, name=None):
         """Create |PHLTIModel| from matrices.
 
@@ -1830,14 +1831,14 @@ class PHLTIModel(LTIModel):
         phlti
             The |PHLTIModel| with operators J, R, G, P, S, N, and E.
         """
-        assert isinstance(J, (np.ndarray, sps.spmatrix))
-        assert isinstance(R, (np.ndarray, sps.spmatrix))
-        assert isinstance(G, (np.ndarray, sps.spmatrix))
-        assert P is None or isinstance(P, (np.ndarray, sps.spmatrix))
-        assert S is None or isinstance(S, (np.ndarray, sps.spmatrix))
-        assert N is None or isinstance(N, (np.ndarray, sps.spmatrix))
-        assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
-        assert Q is None or isinstance(Q, (np.ndarray, sps.spmatrix))
+        assert isinstance(J, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(R, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(G, (np.ndarray, sps.spmatrix, sparray))
+        assert P is None or isinstance(P, (np.ndarray, sps.spmatrix, sparray))
+        assert S is None or isinstance(S, (np.ndarray, sps.spmatrix, sparray))
+        assert N is None or isinstance(N, (np.ndarray, sps.spmatrix, sparray))
+        assert E is None or isinstance(E, (np.ndarray, sps.spmatrix, sparray))
+        assert Q is None or isinstance(Q, (np.ndarray, sps.spmatrix, sparray))
 
         J = NumpyMatrixOperator(J, source_id=state_id, range_id=state_id)
         R = NumpyMatrixOperator(R, source_id=state_id, range_id=state_id)
@@ -2111,7 +2112,7 @@ class SecondOrderModel(Model):
 
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
-                      state_id='STATE', solver_options=None, error_estimator=None,
+                      state_id=None, solver_options=None, error_estimator=None,
                       visualizer=None, name=None):
         """Create a second order system from matrices.
 
@@ -2153,13 +2154,13 @@ class SecondOrderModel(Model):
         lti
             The SecondOrderModel with operators M, E, K, B, Cp, Cv, and D.
         """
-        assert isinstance(M, (np.ndarray, sps.spmatrix))
-        assert isinstance(E, (np.ndarray, sps.spmatrix))
-        assert isinstance(K, (np.ndarray, sps.spmatrix))
-        assert isinstance(B, (np.ndarray, sps.spmatrix))
-        assert isinstance(Cp, (np.ndarray, sps.spmatrix))
-        assert Cv is None or isinstance(Cv, (np.ndarray, sps.spmatrix))
-        assert D is None or isinstance(D, (np.ndarray, sps.spmatrix))
+        assert isinstance(M, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(E, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(K, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(B, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(Cp, (np.ndarray, sps.spmatrix, sparray))
+        assert Cv is None or isinstance(Cv, (np.ndarray, sps.spmatrix, sparray))
+        assert D is None or isinstance(D, (np.ndarray, sps.spmatrix, sparray))
 
         M = NumpyMatrixOperator(M, source_id=state_id, range_id=state_id)
         E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
@@ -2210,7 +2211,7 @@ class SecondOrderModel(Model):
 
     @classmethod
     def from_files(cls, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, sampling_time=0,
-                   state_id='STATE', solver_options=None, error_estimator=None, visualizer=None,
+                   state_id=None, solver_options=None, error_estimator=None, visualizer=None,
                    name=None):
         """Create |LTIModel| from matrices stored in separate files.
 
