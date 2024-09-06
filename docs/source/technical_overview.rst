@@ -124,7 +124,8 @@ operating on objects of the following types:
     algorithms for |solving| the given problem, returning |VectorArrays|
     from the |solution_space|. The solution can be |cached|, s.t.
     subsequent solving of the problem for the same |parameter values| reduces
-    to looking up the solution in pyMOR's cache.
+    to looking up the solution in pyMOR's cache. To get an overview, which
+    methods can be cached in pyMOR, use :func:`~pymor.core.cache.print_cached_methods`.
 
     While special model classes may be implemented which make use of
     the specific types of operators they contain (e.g. using some external
