@@ -183,8 +183,8 @@ class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
                                                                self.minimizers)
 
 
-def construct_scm_functionals(operator, training_set, initial_parameter, atol=None, rtol=None, max_extensions=None,
-                              product=None, linprog_method='highs', linprog_options={}, M=None):
+def scm(operator, training_set, initial_parameter, atol=None, rtol=None, max_extensions=None,
+        product=None, linprog_method='highs', linprog_options={}, M=None):
     """Method to construct lower and upper bounds using the successive constraints method.
 
     Parameters
@@ -226,7 +226,7 @@ def construct_scm_functionals(operator, training_set, initial_parameter, atol=No
     assert isinstance(operator, LincombOperator)
     assert all(op.linear and not op.parametric for op in operator.operators)
 
-    logger = getLogger('pymor.algorithms.construct_scm_functionals')
+    logger = getLogger('pymor.algorithms.scm')
 
     with logger.block('Computing bounds on design variables by solving eigenvalue problems ...'):
         def lower_upper_bound(operator):

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typer import Option, run
 
-from pymor.algorithms.scm import construct_scm_functionals
+from pymor.algorithms.scm import scm
 from pymor.basic import *
 
 # parameters for high-dimensional models
@@ -35,7 +35,7 @@ def main(
     test_parameters = problem.parameter_space.sample_randomly(num_test_parameters)
     initial_parameter = problem.parameter_space.sample_randomly(1)[0]
     training_set = problem.parameter_space.sample_randomly(num_training_parameters)
-    coercivity_estimator, upper_coercivity_estimator, greedy_results = construct_scm_functionals(
+    coercivity_estimator, upper_coercivity_estimator, greedy_results = scm(
             fom.operator, training_set, initial_parameter, max_extensions=max_extensions,
             product=fom.h1_0_semi_product, M=num_neighbors)
 

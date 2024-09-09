@@ -152,10 +152,10 @@ from pymor.models.examples import thermal_block_example
 fom = thermal_block_example(diameter=0.1)
 parameter_space = fom.parameters.space(0.1, 1.)
 
-from pymor.algorithms.scm import construct_scm_functionals
+from pymor.algorithms.scm import scm
 initial_parameter = parameter_space.sample_randomly(1)[0]
 training_set = parameter_space.sample_randomly(50)
-coercivity_estimator, _, _ = construct_scm_functionals(
+coercivity_estimator, _, _ = scm(
     fom.operator, training_set, initial_parameter, product=fom.h1_0_semi_product, max_extensions=10, M=5)
 ```
 
