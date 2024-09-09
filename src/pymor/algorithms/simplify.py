@@ -2,9 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.algorithms.rules import RuleTable, match_class
+from pymor.algorithms.rules import RuleNotMatchingError, RuleTable, match_class
 from pymor.models.interface import Model
-from pymor.operators.constructions import ConcatenationOperator, IdentityOperator, LincombOperator, VectorArrayOperator
+from pymor.operators.constructions import (
+    AdjointOperator, ConcatenationOperator, IdentityOperator, LincombOperator, VectorArrayOperator)
 from pymor.operators.interface import Operator, as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ParameterFunctional
@@ -122,6 +123,16 @@ class ExpandRules(RuleTable):
             op = self.apply(op)
 
         return op
+
+    @match_class(AdjointOperator)
+    def action_AdjointOperator(self, op):
+        if not isinstance(op.operator, LincombOperator):
+            raise RuleNotMatchingError
+        op = op.operator.with_(
+            operators=[AdjointOperator(o, range_product=op.range_product, source_product=op.source_product)
+                       for o in op.operator.operators]
+        )
+        return self.apply(op)
 
     @match_class(Model, Operator)
     def action_recurse(self, op):

@@ -10,9 +10,10 @@ from scipy.spatial import KDTree
 
 from pymor.algorithms.eigs import eigs
 from pymor.algorithms.greedy import WeakGreedySurrogate, weak_greedy
+from pymor.algorithms.simplify import expand
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import LincombOperator
+from pymor.operators.constructions import AdjointOperator, LincombOperator
 from pymor.parameters.functionals import ConstantParameterFunctional, ParameterFunctional
 
 
@@ -249,3 +250,72 @@ def scm(operator, training_set, initial_parameter, atol=None, rtol=None, max_ext
         greedy_results = weak_greedy(surrogate, training_set, atol=atol, rtol=rtol, max_extensions=max_extensions)
 
     return surrogate.lb_functional, surrogate.ub_functional, greedy_results
+
+
+def inf_sup_scm(operator, training_set, initial_parameter, atol=None, rtol=None, max_extensions=None,
+        product=None, linprog_method='highs', linprog_options={}, M=None):
+    """Method to construct lower and upper bounds using the successive constraints method.
+
+    Parameters
+    ----------
+    operator
+        |LincombOperator| for which to provide a bounds on the
+        coercivity constant.
+    training_set
+        |Parameters| used as training set for the greedy algorithm.
+    initial_parameter
+        |Parameter| used to initialize the surrogate for the greedy algorithm.
+    atol
+        If not `None`, stop the greedy algorithm if the maximum (estimated)
+        error on the training set drops below this value.
+    rtol
+        If not `None`, stop the greedy algorithm if the maximum (estimated)
+        relative error on the training set drops below this value.
+    max_extensions
+        If not `None`, stop the greedy algorithm after `max_extensions`
+        extension steps.
+    product
+        Product with respect to which the coercivity constant should be
+        estimated.
+    linprog_method
+        Name of the algorithm to use for solving the linear program using `scipy.optimize.linprog`.
+    linprog_options
+        Dictionary of additional solver options passed to `scipy.optimize.linprog`.
+    M
+        Number of parameters to use for estimating the coercivity constant.
+        The `M` closest parameters (with respect to the Euclidean distance) are chosen.
+        If `None`, all parameters selected in the greedy method are used.
+
+    Returns
+    -------
+    Functional for a lower bound on the coercivity constant, functional
+    for an upper bound on the coercivity constant, and the results returned
+    by the weak greedy algorithm.
+    """
+    hermitian_op = AdjointOperator(operator, range_product=product, source_product=product) @ operator
+    expanded_op = expand(hermitian_op)
+    assert isinstance(expanded_op, LincombOperator)
+    assert all(op.linear and not op.parametric for op in expanded_op.operators)
+
+    atol = np.sqrt(atol) if atol else atol
+    rtol = np.sqrt(rtol) if rtol else rtol
+
+    lb_functional, ub_functional, greedy_results = scm(
+        expanded_op, training_set, initial_parameter,
+        atol=atol, rtol=rtol, max_extensions=max_extensions, product=product,
+        linprog_method=linprog_method, linprog_options=linprog_options, M=M
+    )
+
+    return SqrtParameterFunctional(lb_functional), SqrtParameterFunctional(ub_functional), greedy_results
+
+
+class SqrtParameterFunctional(ParameterFunctional):
+
+    def __init__(self, functional):
+        super.__init__()
+        self.__auto_init(locals())
+
+    def evaluate(self, mu=None):
+        assert self.parameters.assert_compatible(mu)
+        value = self.functional.evaluate(mu)
+        return np.sqrt(value)
