@@ -8,6 +8,17 @@ from textwrap import wrap
 import numpy as np
 
 
+def _wrap_entry(entry, width):
+    # simple hack to make wrap break lines on '.' instead of '-'
+    # this is mainly for print_defaults
+    if '°' in entry:
+        raise ValueError
+    entry = entry.replace('-', '°').replace('.', '-')
+    lines = wrap(entry, width, subsequent_indent='  ', break_on_hyphens=True)
+    lines = [l.replace('-', '.').replace('°', '-') for l in lines]
+    return lines
+
+
 def format_table(rows, width='AUTO', title=None):
     rows = [[str(c) for c in r] for r in rows]
     if width == 'AUTO':
@@ -27,7 +38,7 @@ def format_table(rows, width='AUTO', title=None):
 
     wrapped_rows = []
     for row in rows:
-        cols = [wrap(c, width=cw) for c, cw in zip(row, column_widths)]
+        cols = [_wrap_entry(c, width=cw) for c, cw in zip(row, column_widths)]
         for r in zip_longest(*cols, fillvalue=''):
             wrapped_rows.append(r)
     rows = wrapped_rows
