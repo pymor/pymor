@@ -113,12 +113,7 @@ class ERAReductor(CacheableObject):
     def _sv_U_V(self, num_left, num_right):
         n, p, m = self.data.shape
         s = n if self.force_stability else (n + 1) // 2
-        if num_left is None and m * s < p:
-            self.logger.info('Data has low rank! Accelerating computation with output tangential projections ...')
-            num_left = m * s
-        if num_right is None and p * s < m:
-            self.logger.info('Data has low rank! Accelerating computation with input tangential projections ...')
-            num_right = p * s
+
         h = self._project_markov_parameters(num_left, num_right) if num_left or num_right else self.data
         self.logger.info(f'Computing SVD of the {"projected " if num_left or num_right else ""}Hankel matrix ...')
         if self.force_stability:
@@ -195,6 +190,15 @@ class ERAReductor(CacheableObject):
 
         return np.sqrt(err)
 
+    def _construct_abcd(self, sv, U, V, m, p):
+        sqsv = np.sqrt(sv)
+        U *= sqsv.reshape(1, -1)
+        V *= sqsv.reshape(-1, 1)
+        A = NumpyMatrixOperator(spla.lstsq(U[: -p], U[p:])[0])
+        B = NumpyMatrixOperator(V[:, :m])
+        C = NumpyMatrixOperator(U[:p])
+        return A, B, C, self.feed_through
+
     def reduce(self, r=None, tol=None, num_left=None, num_right=None):
         """Construct a minimal realization.
 
@@ -221,6 +225,13 @@ class ERAReductor(CacheableObject):
         assert num_right is None or isinstance(num_right, int) and 0 < num_right < m
         assert r is None or 0 < r <= min((num_left or p), (num_right or m)) * s
 
+        if num_left is None and m * s < p:
+            self.logger.info('Data has low rank! Accelerating computation with output tangential projections ...')
+            num_left = m * s
+        if num_right is None and p * s < m:
+            self.logger.info('Data has low rank! Accelerating computation with input tangential projections ...')
+            num_right = p * s
+
         sv, U, V = self._sv_U_V(num_left, num_right)
 
         if tol is not None:
@@ -230,16 +241,8 @@ class ERAReductor(CacheableObject):
 
         sv, U, V = sv[:r], U[:r].T, V[:r]
 
-        num_left = m * s if num_left is None and m * s < p else num_left
-        num_right = p * s if num_right is None and p * s < m else num_right
-
         self.logger.info(f'Constructing reduced realization of order {r} ...')
-        sqsv = np.sqrt(sv)
-        U *= sqsv.reshape(1, -1)
-        V *= sqsv.reshape(-1, 1)
-        A = NumpyMatrixOperator(spla.lstsq(U[: -(num_left or p)], U[(num_left or p):])[0])
-        B = NumpyMatrixOperator(V[:, :(num_right or m)])
-        C = NumpyMatrixOperator(U[:(num_left or p)])
+        A, B, C, D = self._construct_abcd(U, V, sv, num_right or m, num_left or p)
 
         if num_left:
             self.logger.info('Backprojecting tangential output directions ...')
@@ -250,5 +253,46 @@ class ERAReductor(CacheableObject):
             W2 = self.input_projector(num_right)
             B = project(B, source_basis=B.source.from_numpy(W2), range_basis=None)
 
-        return LTIModel(A, B, C, D=self.feedthrough, sampling_time=self.sampling_time,
+        return LTIModel(A, B, C, D=D, sampling_time=self.sampling_time,
                         presets={'o_dense': np.diag(sv), 'c_dense': np.diag(sv)})
+
+
+class RandomizedERAReductor(ERAReductor):
+    def __init__(self, data, sampling_time, num_samples, force_stability=True, feedthrough=None):
+        super().__init__(data, sampling_time, force_stability, feedthrough)
+        self.num_samples = num_samples
+
+    @cached
+    def _sv_U_V(self, num_left, num_right):
+        n, p, m = self.data.shape
+        s = n if self.force_stability else (n + 1) // 2
+
+        h = self._project_markov_parameters(num_left, num_right) if num_left or num_right else self.data
+        self.logger.info(f'Computing SVD of the {"projected " if num_left or num_right else ""}Hankel matrix ...')
+        if self.force_stability:
+            h = np.concatenate([h, np.zeros_like(h)[1:]], axis=0)
+        H = NumpyHankelOperator(h[:s], r=h[s-1:])
+        U, sv, V = spla.svd(to_matrix(H), full_matrices=False)
+        return sv, U.T, V
+
+    def reduce(self, r=None, tol=None, num_left=None, num_right=None):
+        """Construct a minimal realization.
+
+        Parameters
+        ----------
+        r
+            Order of the reduced model if `tol` is `None`, maximum order if `tol` is specified.
+        tol
+            Tolerance for the error bound.
+        num_left
+            Number of left (output) directions for tangential projection.
+        num_right
+            Number of right (input) directions for tangential projection.
+
+        Returns
+        -------
+        rom
+            Reduced-order |LTIModel|.
+        """
+        assert self.num_samples >= r
+        return super().reduce(r=r, tol=tol, num_left=num_left, num_right=num_right)
