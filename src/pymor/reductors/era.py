@@ -5,12 +5,15 @@
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.algorithms.chol_qr import shifted_chol_qr
+from pymor.algorithms.svd_va import qr_svd
 from pymor.algorithms.projection import project
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
+from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 class ERAReductor(CacheableObject):
@@ -119,8 +122,8 @@ class ERAReductor(CacheableObject):
         if self.force_stability:
             h = np.concatenate([h, np.zeros_like(h)[1:]], axis=0)
         H = NumpyHankelOperator(h[:s], r=h[s-1:])
-        U, sv, V = spla.svd(to_matrix(H), full_matrices=False)
-        return sv, U.T, V
+        U, sv, Vh = spla.svd(to_matrix(H), full_matrices=False)
+        return sv, U, Vh.T
 
     def output_projector(self, num_left):
         """Construct the left/output projector :math:`W_1`."""
@@ -191,12 +194,12 @@ class ERAReductor(CacheableObject):
         return np.sqrt(err)
 
     def _construct_abcd(self, sv, U, V, m, p):
-        print(sv.max())
+        print(U.shape, V.shape)
         sqsv = np.sqrt(sv)
         U *= sqsv.reshape(1, -1)
-        V *= sqsv.reshape(-1, 1)
+        V *= sqsv.reshape(1, -1)
         A = NumpyMatrixOperator(spla.lstsq(U[: -p], U[p:])[0])
-        B = NumpyMatrixOperator(V[:, :m])
+        B = NumpyMatrixOperator(V[:m].T)
         C = NumpyMatrixOperator(U[:p])
         return A, B, C, self.feedthrough
 
@@ -240,7 +243,7 @@ class ERAReductor(CacheableObject):
             r_tol = np.argmax(error_bounds <= tol) + 1
             r = r_tol if r is None else min(r, r_tol)
 
-        sv, U, V = sv[:r], U[:r].T, V[:r]
+        sv, U, V = sv[:r], U[:,:r], V[:,:r]
 
         self.logger.info(f'Constructing reduced realization of order {r} ...')
         A, B, C, D = self._construct_abcd(sv, U, V, num_right or m, num_left or p)
@@ -259,9 +262,11 @@ class ERAReductor(CacheableObject):
 
 
 class RandomizedERAReductor(ERAReductor):
-    def __init__(self, data, sampling_time, num_samples, force_stability=True, feedthrough=None):
+    def __init__(self, data, sampling_time, min_samples=None, loo_tol=None, power_iterations=2, force_stability=True, feedthrough=None):
         super().__init__(data, sampling_time, force_stability, feedthrough)
-        self.num_samples = num_samples
+        self.__auto_init(locals())
+        self._Z = None
+        self._R = None
 
     @cached
     def _sv_U_V(self, num_left, num_right):
@@ -273,8 +278,62 @@ class RandomizedERAReductor(ERAReductor):
         if self.force_stability:
             h = np.concatenate([h, np.zeros_like(h)[1:]], axis=0)
         H = NumpyHankelOperator(h[:s], r=h[s-1:])
-        U, sv, V = spla.svd(to_matrix(H), full_matrices=False)
-        return sv, U.T, V
+
+        self._Z = self.draw_samples(H, self.min_samples)
+        Y = self._Z
+
+        for q in range(self.power_iterations):
+            self.logger.info(f'Power iteration: {q+1}')
+            Y = H.apply(H.apply_adjoint(Y))
+
+        Q, self._R = shifted_chol_qr(Y)
+
+        block_size = 5
+        if self.loo_tol is not None:
+            while True:
+                # leave one out error estimator
+                if self.power_iterations == 0:
+                    Rinv = spla.get_lapack_funcs('trtri', dtype=self.data.dtype)(self._R)[0]
+                    G = spla.norm(Rinv, axis=1)**2
+                    loo_est = np.sqrt(np.sum(1/G)/len(self._Z))
+                else:
+                    Rinv = spla.get_lapack_funcs('trtri', dtype=self.data.dtype)(self._R.T)[0]
+                    T = Rinv / spla.norm(Rinv, axis=1)
+                    QZ = self._Z.inner(Q)
+                    QQZ = Q.lincomb(QZ.T).to_numpy().T
+                    QTTQZ = Q.to_numpy().T @ T * np.diag(T.T @ QZ)
+
+                    loo_est = spla.norm(self._Z.to_numpy().T-QQZ+QTTQZ) / np.sqrt(len(self._Z))
+                    print(loo_est)
+                    assert False
+                if loo_est < self.loo_tol:
+                    break
+
+                # enlarge basis if not reached
+                W = self.draw_samples(H, block_size)
+                self._Z.append(W)
+                for q in range(self.power_iterations):
+                    self.logger.info(f'Power iteration: {q+1}')
+                    W = H.apply(H.apply_adjoint(W))
+                n = len(Q)
+                print(n)
+                Q.append(W)
+                Q, Rn = shifted_chol_qr(Q, offset=n)
+                Rn[:n,:n] = self._R
+                self._R = Rn
+
+        B = H.apply_adjoint(Q).to_numpy()
+        Ub, sv, Vh = spla.svd(B, full_matrices=False)
+        U = Q.lincomb(Ub.T)
+        self.logger.info2(len(sv))
+        return sv, U.to_numpy().T, Vh.T
+
+    def draw_samples(self, H, num):
+        self.logger.info(f'Taking {num} samples ...')
+        # faster way of computing the random samples
+        V = np.zeros((H._circulant.source.dim, num), dtype=self.data.dtype)
+        V[:H.source.dim] = np.random.randn(H.source.dim, num)
+        return H.range.make_array(H._circulant._circular_matvec(V)[:, :H.range.dim])
 
     def reduce(self, r=None, tol=None, num_left=None, num_right=None):
         """Construct a minimal realization.
@@ -295,5 +354,5 @@ class RandomizedERAReductor(ERAReductor):
         rom
             Reduced-order |LTIModel|.
         """
-        assert self.num_samples >= r
+        assert self.min_samples >= r
         return super().reduce(r=r, tol=tol, num_left=num_left, num_right=num_right)
