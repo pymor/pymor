@@ -191,13 +191,14 @@ class ERAReductor(CacheableObject):
         return np.sqrt(err)
 
     def _construct_abcd(self, sv, U, V, m, p):
+        print(sv.max())
         sqsv = np.sqrt(sv)
         U *= sqsv.reshape(1, -1)
         V *= sqsv.reshape(-1, 1)
         A = NumpyMatrixOperator(spla.lstsq(U[: -p], U[p:])[0])
         B = NumpyMatrixOperator(V[:, :m])
         C = NumpyMatrixOperator(U[:p])
-        return A, B, C, self.feed_through
+        return A, B, C, self.feedthrough
 
     def reduce(self, r=None, tol=None, num_left=None, num_right=None):
         """Construct a minimal realization.
@@ -242,7 +243,7 @@ class ERAReductor(CacheableObject):
         sv, U, V = sv[:r], U[:r].T, V[:r]
 
         self.logger.info(f'Constructing reduced realization of order {r} ...')
-        A, B, C, D = self._construct_abcd(U, V, sv, num_right or m, num_left or p)
+        A, B, C, D = self._construct_abcd(sv, U, V, num_right or m, num_left or p)
 
         if num_left:
             self.logger.info('Backprojecting tangential output directions ...')
