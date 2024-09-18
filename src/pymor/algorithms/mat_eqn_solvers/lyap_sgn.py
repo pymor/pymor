@@ -12,7 +12,90 @@ from numbers import Integral
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.algorithms.genericsolvers import _parse_options
+from pymor.algorithms.lyapunov import _solve_lyap_dense_check_args, _solve_lyap_lrcf_check_args
+from pymor.algorithms.to_matrix import to_matrix
+from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
+
+
+@defaults('maxiter', 'atol', 'rtol', 'ctol')
+def lyap_lrcf_solver_options(maxiter=100, atol=0, rtol=None, ctol=None):
+    """Return available Lyapunov solvers with default options for the sign function backend.
+
+    Returns
+    -------
+    A dict of available solvers with default solver options.
+    """
+    return {'sign': {'type': 'sign',
+                     'maxiter': maxiter,
+                     'atol': atol,
+                     'rtol': rtol,
+                     'ctol': ctol}}
+
+
+def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
+    _solve_lyap_lrcf_check_args(A, E, B, trans)
+    options = _parse_options(options, lyap_lrcf_solver_options(), 'sign', None, False)
+
+    if options['type'] == 'sign':
+        space = A.source
+        A = to_matrix(A, format='dense')
+        E = to_matrix(E, format='dense') if E else None
+        B = B.to_numpy().T
+        if trans:
+            A = A.T
+            if E is not None:
+                E = E.T
+            B = B.T
+        if cont_time:
+            Z, _ = lyap_sgn_fac(A, B, E,
+                                maxiter=options['maxiter'],
+                                atol=options['atol'],
+                                rtol=options['rtol'],
+                                ctol=options['ctol'])
+        else:
+            raise NotImplementedError
+        return space.from_numpy(Z.T)
+    else:
+        raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
+
+
+@defaults('maxiter', 'atol', 'rtol')
+def lyap_dense_solver_options(maxiter=100, atol=0, rtol=None):
+    """Return available Lyapunov solvers with default options for the sign function backend.
+
+    Returns
+    -------
+    A dict of available solvers with default solver options.
+    """
+    return {'sign': {'type': 'sign',
+                     'maxiter': maxiter,
+                     'atol': atol,
+                     'rtol': rtol}}
+
+
+def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
+    _solve_lyap_dense_check_args(A, E, B, trans)
+    options = _parse_options(options, lyap_dense_solver_options(), 'sign', None, False)
+
+    if options['type'] == 'sign':
+        if trans:
+            A = A.T
+            if E is not None:
+                E = E.T
+            B = B.T
+        if cont_time:
+            X, _ = lyap_sgn(A, B @ B.T, E,
+                            maxiter=options['maxiter'],
+                            atol=options['atol'],
+                            rtol=options['rtol'])
+        else:
+            raise NotImplementedError
+    else:
+        raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
+
+    return X
 
 
 def lyap_sgn(A, G, E, maxiter=100, atol=0, rtol=None):
@@ -202,12 +285,12 @@ def lyap_sgn_fac(A, B, E, maxiter=100, atol=0, rtol=None, ctol=None):
         Nonnegative scalar, tolerance for the absolute error in the last
         iteration step.
     rtol
-        Nonnegative scalar, tolerance for the column compression during the
-        iteration.
-        If `None`, the value is `10*n*eps`.
-    ctol
         Nonnegative scalar, tolerance for the relative error in the last
         iteration step.
+        If `None`, the value is `10*n*eps`.
+    ctol
+        Nonnegative scalar, tolerance for the column compression during the
+        iteration.
         If `None`, the value is `1e-2*sqrt(n*eps)`.
 
     Returns
