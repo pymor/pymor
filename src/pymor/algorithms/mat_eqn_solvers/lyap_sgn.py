@@ -47,7 +47,6 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
             A = A.T
             if E is not None:
                 E = E.T
-            B = B.T
         if cont_time:
             Z, _ = lyap_sgn_fac(A, B, E,
                                 maxiter=options['maxiter'],
@@ -206,7 +205,7 @@ def lyap_sgn(A, G, E, maxiter=100, atol=0, rtol=None):
     # sign function iteration
     while niter <= maxiter and not converged:
         EAinv = spla.solve(A.T, E.T).T
-        EAinvE = EAinv * E if hasE else EAinv
+        EAinvE = EAinv @ E if hasE else EAinv
 
         # scaling factor for convergence acceleration
         if niter == 1 or rel_err[-1] > 1e-2:
@@ -370,7 +369,7 @@ def lyap_sgn_fac(A, B, E, maxiter=100, atol=0, rtol=None, ctol=None):
     # sign function iteration
     while niter <= maxiter and not converged:
         EAinv = spla.solve(A.T, E.T, check_finite=False).T
-        EAinvE = EAinv * E if hasE else EAinv
+        EAinvE = EAinv @ E if hasE else EAinv
 
         # scaling factor for convergence acceleration
         if niter == 1 or rel_err[-1] > 1e-2:
