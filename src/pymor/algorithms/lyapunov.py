@@ -73,7 +73,7 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
 
       1. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_lrcf`),
       2. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_lrcf`),
-      3. `sign` (see :mod:`pymor.algorithms.mat_eqn_solvers.lyap_sgn`).
+      3. `internal` (see :mod:`pymor.algorithms.mat_eqn_solvers.lyap_sgn`).
 
     Parameters
     ----------
@@ -97,7 +97,7 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
     default_sparse_solver_backend
         Default sparse solver backend to use (lradi).
     default_dense_solver_backend
-        Default dense solver backend to use (slycot, scipy, sign).
+        Default dense solver backend to use (slycot, scipy, internal).
 
     Returns
     -------
@@ -113,7 +113,7 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
             backend = default_sparse_solver_backend
         else:
             backend = default_dense_solver_backend
-    if backend == 'sign':
+    if backend == 'internal':
         from pymor.algorithms.mat_eqn_solvers.lyap_sgn import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'scipy':
         from pymor.bindings.scipy import solve_lyap_lrcf as solve_lyap_impl
@@ -162,7 +162,8 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
     availability in the following order:
 
       1. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_lrcf`),
-      2. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_lrcf`).
+      2. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_lrcf`),
+      3. `internal` (see :mod:`pymor.algorithms.mat_eqn_solvers.lyap_sgn`).
 
     Parameters
     ----------
@@ -182,7 +183,7 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
         - :func:`pymor.bindings.slycot.lyap_lrcf_solver_options`.
 
     default_dense_solver_backend
-        Default dense solver backend to use (slycot, scipy).
+        Default dense solver backend to use (slycot, scipy, internal).
 
     Returns
     -------
@@ -195,7 +196,9 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
         backend = solver.split('_')[0]
     else:
         backend = default_dense_solver_backend
-    if backend == 'scipy':
+    if backend == 'internal':
+        from pymor.algorithms.mat_eqn_solvers.lyap_sgn import solve_lyap_lrcf as solve_lyap_impl
+    elif backend == 'scipy':
         from pymor.bindings.scipy import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'slycot':
         from pymor.bindings.slycot import solve_lyap_lrcf as solve_lyap_impl
@@ -253,7 +256,7 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
 
     1. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_dense`),
     2. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_dense`),
-    3. `sign` (see :mod:`pymor.algorithms.mat_eqn_solvers.lyap_sgn`).
+    3. `internal` (see :mod:`pymor.algorithms.mat_eqn_solvers.lyap_sgn`).
 
     Parameters
     ----------
@@ -274,7 +277,7 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
         - :func:`pymor.algorithms.mat_eqn_solvers.lyap_sqn.lyap_dense_solver_options`,
 
     default_solver_backend
-        Default solver backend to use (slycot, scipy, sign).
+        Default solver backend to use (slycot, scipy, internal).
 
     Returns
     -------
@@ -287,7 +290,7 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
         backend = solver.split('_')[0]
     else:
         backend = default_solver_backend
-    if backend == 'sign':
+    if backend == 'internal':
         from pymor.algorithms.mat_eqn_solvers.lyap_sgn import solve_lyap_dense as solve_lyap_impl
     elif backend == 'scipy':
         from pymor.bindings.scipy import solve_lyap_dense as solve_lyap_impl
@@ -331,8 +334,9 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
     If the solver is not specified using the options argument, a solver backend is chosen based on
     availability in the following order:
 
-    1. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_dense`)
-    2. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_dense`)
+    1. `slycot` (see :func:`pymor.bindings.slycot.solve_lyap_dense`),
+    2. `scipy` (see :func:`pymor.bindings.scipy.solve_lyap_dense`),
+    3. `internal` (see :mod:`pymor.algorithms.mat_eqn_solvers.lyap_sgn`).
 
     Parameters
     ----------
@@ -353,7 +357,7 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
         - :func:`pymor.bindings.slycot.lyap_dense_solver_options`.
 
     default_solver_backend
-        Default solver backend to use (slycot, scipy).
+        Default solver backend to use (slycot, scipy, internal).
 
     Returns
     -------
@@ -366,7 +370,9 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
         backend = solver.split('_')[0]
     else:
         backend = default_solver_backend
-    if backend == 'scipy':
+    if backend == 'internal':
+        from pymor.algorithms.mat_eqn_solvers.lyap_sgn import solve_lyap_dense as solve_lyap_impl
+    elif backend == 'scipy':
         from pymor.bindings.scipy import solve_lyap_dense as solve_lyap_impl
     elif backend == 'slycot':
         from pymor.bindings.slycot import solve_lyap_dense as solve_lyap_impl
