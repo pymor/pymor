@@ -143,7 +143,7 @@ class AssembleLincombRules(RuleTable):
         for op, c in zip(ops[1:], coeffs[1:]):
             array.axpy(c, op.array)
 
-        return VectorArrayOperator(array, adjoint=adjoint, space_id=ops[0].space_id, name=self.name)
+        return VectorArrayOperator(array, adjoint=adjoint, name=self.name)
 
     @match_class_any(SecondOrderModelOperator)
     def action_SecondOrderModelOperator(self, ops):

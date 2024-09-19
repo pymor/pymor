@@ -125,7 +125,7 @@ class ProjectRules(RuleTable):
                 raise RuleNotMatchingError('apply_adjoint not implemented') from e
             if isinstance(op.source, NumpyVectorSpace):
                 from pymor.operators.numpy import NumpyMatrixOperator
-                return NumpyMatrixOperator(V.to_numpy().conj(), source_id=op.source.id)
+                return NumpyMatrixOperator(V.to_numpy().conj())
             else:
                 from pymor.operators.constructions import VectorArrayOperator
                 return VectorArrayOperator(V, adjoint=True)
@@ -134,7 +134,7 @@ class ProjectRules(RuleTable):
                 V = op.apply(source_basis)
                 if isinstance(op.range, NumpyVectorSpace):
                     from pymor.operators.numpy import NumpyMatrixOperator
-                    return NumpyMatrixOperator(V.to_numpy().T, range_id=op.range.id)
+                    return NumpyMatrixOperator(V.to_numpy().T)
                 else:
                     from pymor.operators.constructions import VectorArrayOperator
                     return VectorArrayOperator(V, adjoint=False)
@@ -304,8 +304,7 @@ class ProjectToSubbasisRules(RuleTable):
     def action_NumpyMatrixOperator(self, op):
         # copy instead of just slicing the matrix to ensure contiguous memory
         return NumpyMatrixOperator(op.matrix[:self.dim_range, :self.dim_source].copy(),
-                                   solver_options=op.solver_options,
-                                   source_id=op.source.id, range_id=op.range.id)
+                                   solver_options=op.solver_options)
 
     @match_class(ConstantOperator)
     def action_ConstantOperator(self, op):
