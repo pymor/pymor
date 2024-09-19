@@ -10,7 +10,6 @@ from scipy.spatial import KDTree
 
 from pymor.algorithms.eigs import eigs
 from pymor.algorithms.greedy import WeakGreedySurrogate, weak_greedy
-from pymor.algorithms.simplify import expand
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import AdjointOperator, LincombOperator
@@ -148,8 +147,8 @@ class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
         If `None`, all parameters are used.
     """
 
-    def __init__(self, operator, initial_parameter, bounds, product=None,
-                 linprog_method='highs', linprog_options={}, M=None):
+    def __init__(self, operator, initial_parameter, bounds, product,
+                 linprog_method, linprog_options, M, smallest_ev_solver):
         self.__auto_init(locals())
         self.constraint_parameters = []
         self.coercivity_constants = []
@@ -160,6 +159,7 @@ class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
         evals_ub = np.array([self.ub_functional.evaluate(mu) for mu in mus])
         evals_lb = np.array([self.lb_functional.evaluate(mu) for mu in mus])
         estimated_errors = (evals_ub - evals_lb) / evals_ub
+        # estimated_errors[np.where(evals_lb < 0)] += 100
         if return_all_values:
             return estimated_errors
         else:
@@ -169,9 +169,8 @@ class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
     def extend(self, mu):
         self.constraint_parameters.append(mu)
         fixed_parameter_op = self.operator.assemble(mu)
-        eigvals, eigvecs = eigs(fixed_parameter_op, k=1, sigma=0, which='LM', E=self.product)
-        self.coercivity_constants.append(eigvals[0].real)
-        minimizer = eigvecs[0]
+        eigval, minimizer = self.smallest_ev_solver(fixed_parameter_op, self.product)
+        self.coercivity_constants.append(eigval)
         minimizer_squared_norm = minimizer.norm(product=self.product) ** 2
         y_opt = np.array([op.apply2(minimizer, minimizer)[0].real / minimizer_squared_norm
                           for op in self.operator.operators])
@@ -184,8 +183,9 @@ class SuccessiveConstraintsSurrogate(WeakGreedySurrogate):
                                                                self.minimizers)
 
 
-def scm(operator, training_set, initial_parameter, atol=None, rtol=None, max_extensions=None,
-        product=None, linprog_method='highs', linprog_options={}, M=None):
+def scm(operator, training_set, initial_parameter, tol=None, max_extensions=None,
+        product=None, linprog_method='highs', linprog_options={}, M=None,
+        smallest_ev_solver=None, smallest_largest_ev_solver=None):
     """Method to construct lower and upper bounds using the successive constraints method.
 
     Parameters
@@ -197,12 +197,9 @@ def scm(operator, training_set, initial_parameter, atol=None, rtol=None, max_ext
         |Parameters| used as training set for the greedy algorithm.
     initial_parameter
         |Parameter| used to initialize the surrogate for the greedy algorithm.
-    atol
+    tol
         If not `None`, stop the greedy algorithm if the maximum (estimated)
         error on the training set drops below this value.
-    rtol
-        If not `None`, stop the greedy algorithm if the maximum (estimated)
-        relative error on the training set drops below this value.
     max_extensions
         If not `None`, stop the greedy algorithm after `max_extensions`
         extension steps.
@@ -227,83 +224,72 @@ def scm(operator, training_set, initial_parameter, atol=None, rtol=None, max_ext
     assert isinstance(operator, LincombOperator)
     assert all(op.linear and not op.parametric for op in operator.operators)
 
+    smallest_ev_solver = smallest_ev_solver or _default_smallest_ev_solver
+    smallest_largest_ev_solver = smallest_largest_ev_solver or _default_smallest_largest_ev_solver
+
     logger = getLogger('pymor.algorithms.scm')
 
     with logger.block('Computing bounds on design variables by solving eigenvalue problems ...'):
-        def lower_upper_bound(operator):
-            # some dispatch should be added here in the future
-            eigvals, _ = eigs(operator, k=1, which='LM', E=product)
-            largest = abs(eigvals[0].real)
-
-            # use -|largest mag ev| as lower bound for shift-invert mode
-            eigvals, _ = eigs(operator, k=1, sigma=-largest, which='LM', E=product)
-            smallest = eigvals[0].real
-
-            return smallest, largest
-
-        bounds = [lower_upper_bound(aq) for aq in operator.operators]
+        bounds = [smallest_largest_ev_solver(aq, product) for aq in operator.operators]
 
     with logger.block('Running greedy algorithm to construct functionals ...'):
         surrogate = SuccessiveConstraintsSurrogate(operator, initial_parameter, bounds, product=product,
-                                                   linprog_method=linprog_method, linprog_options=linprog_options, M=M)
+                                                   linprog_method=linprog_method, linprog_options=linprog_options, M=M,
+                                                   smallest_ev_solver=smallest_ev_solver)
 
-        greedy_results = weak_greedy(surrogate, training_set, atol=atol, rtol=rtol, max_extensions=max_extensions)
+        tol = 1 - 1/tol if tol else None
+        greedy_results = weak_greedy(surrogate, training_set, atol=tol, max_extensions=max_extensions)
 
     return surrogate.lb_functional, surrogate.ub_functional, greedy_results
 
 
-def inf_sup_scm(operator, training_set, initial_parameter, atol=None, rtol=None, max_extensions=None,
-        product=None, linprog_method='highs', linprog_options={}, M=None):
-    """Method to construct lower and upper bounds using the successive constraints method.
+def _default_smallest_ev_solver(operator, product):
+    eigvals, eigvecs = eigs(operator, k=1, sigma=0, which='LM', E=product)
+    assert len(eigvecs) == 1
+    return eigvals[0].real, eigvecs
 
-    Parameters
-    ----------
-    operator
-        |LincombOperator| for which to provide a bounds on the
-        coercivity constant.
-    training_set
-        |Parameters| used as training set for the greedy algorithm.
-    initial_parameter
-        |Parameter| used to initialize the surrogate for the greedy algorithm.
-    atol
-        If not `None`, stop the greedy algorithm if the maximum (estimated)
-        error on the training set drops below this value.
-    rtol
-        If not `None`, stop the greedy algorithm if the maximum (estimated)
-        relative error on the training set drops below this value.
-    max_extensions
-        If not `None`, stop the greedy algorithm after `max_extensions`
-        extension steps.
-    product
-        Product with respect to which the coercivity constant should be
-        estimated.
-    linprog_method
-        Name of the algorithm to use for solving the linear program using `scipy.optimize.linprog`.
-    linprog_options
-        Dictionary of additional solver options passed to `scipy.optimize.linprog`.
-    M
-        Number of parameters to use for estimating the coercivity constant.
-        The `M` closest parameters (with respect to the Euclidean distance) are chosen.
-        If `None`, all parameters selected in the greedy method are used.
 
-    Returns
-    -------
-    Functional for a lower bound on the coercivity constant, functional
-    for an upper bound on the coercivity constant, and the results returned
-    by the weak greedy algorithm.
-    """
-    hermitian_op = AdjointOperator(operator, range_product=product, source_product=product) @ operator
-    expanded_op = expand(hermitian_op)
-    assert isinstance(expanded_op, LincombOperator)
-    assert all(op.linear and not op.parametric for op in expanded_op.operators)
+def _default_smallest_largest_ev_solver(operator, product):
+    eigvals, _ = eigs(operator, k=1, which='LM', E=product)
+    largest = abs(eigvals[0].real)
 
-    atol = np.sqrt(atol) if atol else atol
-    rtol = np.sqrt(rtol) if rtol else rtol
+    # use -|largest mag ev| as lower bound for shift-invert mode
+    eigvals, _ = eigs(operator, k=1, sigma=-largest, which='LM', E=product, tol=1e-6)
+    smallest = eigvals[0].real
+
+    return smallest, largest
+
+
+def inf_sup_scm(operator, training_set, initial_parameter, tol=None, max_extensions=None,
+                product=None, linprog_method='highs', linprog_options={}, M=None,
+                smallest_ev_solver=None, smallest_largest_ev_solver=None):
+    assert isinstance(operator, LincombOperator)
+    assert all(op.linear and not op.parametric for op in operator.operators)
+
+    operators, coefficients = [], []
+    for i in range(len(operator.operators)):
+        for j in range(i, len(operator.operators)):
+            op_i, op_j = operator.operators[i], operator.operators[j]
+            c_i, c_j = operator.coefficients[i], operator.coefficients[j]
+            # operators.append(0.5*(AdjointOperator(op_i) @ op_j + AdjointOperator(op_j) @ op_i))
+            operators.append(AdjointOperator(op_i) @ op_j)
+            coefficients.append((1 if i==j else 2)*c_i*c_j)
+
+    hermitian_op = LincombOperator(operators, coefficients)
+
+    # hermitian_op = AdjointOperator(operator, range_product=product,
+    #                                source_product=product) @ operator
+    # expanded_op = expand(hermitian_op)
+    # assert isinstance(expanded_op, LincombOperator)
+    # assert all(op.linear and not op.parametric for op in expanded_op.operators)
+
+    tol = np.sqrt(tol) if tol else tol
 
     lb_functional, ub_functional, greedy_results = scm(
-        expanded_op, training_set, initial_parameter,
-        atol=atol, rtol=rtol, max_extensions=max_extensions, product=product,
-        linprog_method=linprog_method, linprog_options=linprog_options, M=M
+        hermitian_op, training_set, initial_parameter,
+        tol=tol, max_extensions=max_extensions, product=product,
+        linprog_method=linprog_method, linprog_options=linprog_options, M=M,
+        smallest_ev_solver=smallest_ev_solver, smallest_largest_ev_solver=smallest_largest_ev_solver
     )
 
     return SqrtParameterFunctional(lb_functional), SqrtParameterFunctional(ub_functional), greedy_results
@@ -312,7 +298,7 @@ def inf_sup_scm(operator, training_set, initial_parameter, atol=None, rtol=None,
 class SqrtParameterFunctional(ParameterFunctional):
 
     def __init__(self, functional):
-        super.__init__()
+        super().__init__()
         self.__auto_init(locals())
 
     def evaluate(self, mu=None):
