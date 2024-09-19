@@ -154,7 +154,7 @@ def lyap_sgn(A, G, E, maxiter=100, atol=0, rtol=None):
     lyap_sgn_ldl
     """
     # check inputs
-    n, E, hasE, rtol = _check_a_g_e(A, G, E, maxiter, atol, rtol)
+    n, E, hasE, rtol = _check_lyap_inputs(A, G, E, maxiter, atol, rtol)
 
     # case of empty data
     if n == 0:
@@ -236,7 +236,7 @@ def lyap_sgn_fac(A, B, E, maxiter=100, atol=0, rtol=None, ctol=None):
 
        A*X*E^T + E*X*A^T + B*B^T = 0,                                   (2)
 
-    with X = Z*Z', using the sign function iteration. It is assumed that
+    with X = Z*Z^T, using the sign function iteration. It is assumed that
     the eigenvalues of A (or s*E - A) lie in the open left half-plane.
     See :cite:`BCQ98`.
 
@@ -352,7 +352,7 @@ def lyap_sgn_fac(A, B, E, maxiter=100, atol=0, rtol=None, ctol=None):
         # construction of next full-rank factor with column compression
         Z = np.sqrt(c1) * compress_fac(np.hstack([Z, c * (EAinv @ Z)]), ctol)
 
-        # Update of iteration matrix
+        # update of iteration matrix
         A = c1 * A + (0.5 * c) * EAinvE
 
         # information about current iteration step
@@ -389,16 +389,16 @@ def lyap_sgn_fac(A, B, E, maxiter=100, atol=0, rtol=None, ctol=None):
 
 
 def dlyap_smith(A, G, E, maxiter=100, atol=0, rtol=None):
-    """Solve continuous-time Lyapunov equation.
+    """Solve discrete-time Lyapunov equation.
 
     Computes the solution matrix of the standard discrete-time Lyapunov
     equation
 
-        A*X*A' - X + G = 0,                                             (1)
+        A*X*A^T - X + G = 0,                                             (1)
 
     or of the generalized Lyapunov equation
 
-        A*X*A' - E*X*E' + G = 0,                                        (2)
+        A*X*A^T - E*X*E^T + G = 0,                                        (2)
 
     using the Smith iteration. It is assumed that the eigenvalues
     of A (or s*E - A) lie inside the open unit-circle.
@@ -445,7 +445,7 @@ def dlyap_smith(A, G, E, maxiter=100, atol=0, rtol=None):
     dlyap_smith_ldl
     """
     # check inputs
-    n, E, hasE, rtol = _check_a_g_e(A, G, E, maxiter, atol, rtol)
+    n, E, hasE, rtol = _check_lyap_inputs(A, G, E, maxiter, atol, rtol)
 
     # case of empty data
     if n == 0:
@@ -506,7 +506,130 @@ def dlyap_smith(A, G, E, maxiter=100, atol=0, rtol=None):
     return X, info
 
 
-def _check_a_g_e(A, G, E, maxiter, atol, rtol):
+def dlyap_smith_fac(A, B, E, maxiter=100, atol=0, rtol=None, ctol=None):
+    """Solve discrete-time Lyapunov equation.
+
+    Computes the solution matrix of the standard discrete-time Lyapunov
+    equation
+
+        A*X*A^T - X + B*B^T = 0,                                          (1)
+
+    or of the generalized Lyapunov equation
+
+        A*X*A^T - E^T*X*E + B*B^T = 0,                                     (2)
+
+    with X = Z*Z^T using the Smith iteration. It is assumed that the
+    eigenvalues of A (or s*E - A) lie inside the open unit-circle.
+    See :cite:`S16`.
+
+    Parameters
+    ----------
+    A
+        |NumPy array| with dimensions n x n in (1) or (2).
+    B
+        |NumPy array| with dimensions n x m in (1) or (2).
+    E
+        |NumPy array| with dimensions n x n in (2).
+        If `None`, the standard equation (1) is solved.
+    maxiter
+        Positive integer, maximum number of iteration steps.
+    atol
+        Nonnegative scalar, tolerance for the absolute error in the last
+        iteration step.
+    rtol
+        Nonnegative scalar, tolerance for the relative error in the last
+        iteration step.
+        If `None`, the value is `10*n*eps`.
+    ctol
+        Nonnegative scalar, tolerance for the column compression during the
+        iteration.
+        If `None`, the value is `1e-2*sqrt(n*eps)`.
+
+    Returns
+    -------
+    Z
+        Full-rank solution factor of (1) or (2), such that `X = Z*Z^T`,
+        as a |NumPy array| with dimensions n x r.
+    info
+        Dict with the following fields:
+
+        :abs_err:
+            Vector, containing the absolute error of the iteration matrix in
+            each iteration step.
+        :rel_err:
+            Vector, containing the relative error of the iteration matrix in
+            each iteration step.
+        :num_iter:
+            Number of performed iteration steps.
+
+    See Also
+    --------
+    dlyap_smith
+    dlyapdl_smith_fac
+    """
+    # check inputs
+    n, E, hasE, rtol, ctol = _check_lyap_fac_inputs(A, B, E, maxiter, atol, rtol, ctol)
+
+    # case of empty data
+    if n == 0:
+        X = np.empty(0)
+        info = {}
+        return X, info
+
+    # initialization
+    logger = getLogger('pymor.algorithms.mat_eqn_solver.lyap_sgn.dlyap_smith_fac')
+    if hasE:
+        A = spla.solve(E, A)
+        Z = spla.solve(E, B)
+    else:
+        Z = B
+    niter = 1
+    converged = False
+
+    abs_err = []
+    rel_err = []
+
+    # sign function iteration
+    while niter <= maxiter and not converged:
+        # construction of next solution matrix
+        AZ = A @ Z
+        Z  = compress_fac([Z, AZ], ctol)
+
+        # update of iteration matrix
+        A = A @ A
+
+        # information about current iteration step
+        abs_err.append(spla.norm(AZ))
+        rel_err.append(abs_err[-1] / spla.norm(Z))
+
+        logger.info(f'step {niter:4d}, absolute error {abs_err[-1]:e}, relative error {rel_err[-1]:e}')
+
+        # method is converged if absolute or relative errors are small enough
+        converged = abs_err[-1] <= atol or rel_err[-1] <= rtol
+        niter += 1
+
+    niter -= 1
+
+    # warning if iteration not converged
+    if niter == maxiter and not converged:
+        logger.warning(
+            f'No convergence in {niter:d} iteration steps.\n'
+            f'Abs. tolerance: {atol:e}, Abs. error: {abs_err[-1]:e}\n'
+            f'Rel. tolerance: {rtol:e}, Rel. error: {rel_err[-1]:e}\n'
+            f'Try to increase the tolerances or number of iteration steps.'
+        )
+
+    # assign information about iteration
+    info = {
+        'abs_err': np.array(abs_err),
+        'rel_err': np.array(rel_err),
+        'num_iter': niter,
+    }
+
+    return Z, info
+
+
+def _check_lyap_inputs(A, G, E, maxiter, atol, rtol):
     assert isinstance(A, np.ndarray)
     assert A.ndim == 2
     assert A.shape[0] == A.shape[1]
@@ -540,11 +663,48 @@ def _check_a_g_e(A, G, E, maxiter, atol, rtol):
     return n, E, hasE, rtol
 
 
+def _check_lyap_fac_inputs(A, B, E, maxiter, atol, rtol, ctol):
+    assert isinstance(A, np.ndarray)
+    assert A.ndim == 2
+    assert A.shape[0] == A.shape[1]
+
+    assert isinstance(B, np.ndarray)
+    assert B.ndim == 2
+    assert B.shape[0] == A.shape[0]
+
+    assert E is None or isinstance(E, np.ndarray)
+    if E is None:
+        E = np.eye(A.shape[0])
+        hasE = False
+    else:
+        assert E.ndim == 2
+        assert E.shape[0] == E.shape[1]
+        assert E.shape[0] == A.shape[0]
+        hasE = True
+
+    n = A.shape[0]
+
+    assert isinstance(maxiter, Integral)
+    assert maxiter >= 1
+
+    assert atol >= 0
+
+    if rtol is None:
+        rtol = 10 * n * np.finfo(np.float64).eps
+    assert rtol >= 0
+
+    if ctol is None:
+        ctol = 1e-2 * np.sqrt(n * np.finfo(np.float64).eps)
+    assert ctol >= 0
+
+    return n, E, hasE, rtol, ctol
+
+
 def compress_fac(Z, tol, column_compression=True):
     """Perform SVD-based column/row compression.
 
     Computes a column or row compression of the matrix Z using the SVD.
-    Usually used to approximate the products Z'*Z or Z*Z' via a low-rank
+    Usually used to approximate the products Z^T*Z or Z*Z^T via a low-rank
     factor.
 
     Parameters
