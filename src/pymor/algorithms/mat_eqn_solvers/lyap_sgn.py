@@ -21,24 +21,24 @@ from pymor.core.logger import getLogger
 
 @defaults('maxiter', 'atol', 'rtol', 'ctol')
 def lyap_lrcf_solver_options(maxiter=100, atol=0, rtol=None, ctol=None):
-    """Return available Lyapunov solvers with default options for the sign function backend.
+    """Return available Lyapunov solvers with default options for the internal backend.
 
     Returns
     -------
     A dict of available solvers with default solver options.
     """
-    return {'sign': {'type': 'sign',
-                     'maxiter': maxiter,
-                     'atol': atol,
-                     'rtol': rtol,
-                     'ctol': ctol}}
+    return {'internal': {'type': 'internal',
+                         'maxiter': maxiter,
+                         'atol': atol,
+                         'rtol': rtol,
+                         'ctol': ctol}}
 
 
 def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     _solve_lyap_lrcf_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_lrcf_solver_options(), 'sign', None, False)
+    options = _parse_options(options, lyap_lrcf_solver_options(), 'internal', None, False)
 
-    if options['type'] == 'sign':
+    if options['type'] == 'internal':
         space = A.source
         A = to_matrix(A, format='dense')
         E = to_matrix(E, format='dense') if E else None
@@ -47,14 +47,12 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
             A = A.T
             if E is not None:
                 E = E.T
-        if cont_time:
-            Z, _ = lyap_sgn_fac(A, B, E,
-                                maxiter=options['maxiter'],
-                                atol=options['atol'],
-                                rtol=options['rtol'],
-                                ctol=options['ctol'])
-        else:
-            raise NotImplementedError
+        solve = lyap_sgn_fac if cont_time else dlyap_smith_fac
+        Z, _ = solve(A, B, E,
+                     maxiter=options['maxiter'],
+                     atol=options['atol'],
+                     rtol=options['rtol'],
+                     ctol=options['ctol'])
         return space.from_numpy(Z.T)
     else:
         raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
@@ -62,35 +60,33 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
 
 @defaults('maxiter', 'atol', 'rtol')
 def lyap_dense_solver_options(maxiter=100, atol=0, rtol=None):
-    """Return available Lyapunov solvers with default options for the sign function backend.
+    """Return available Lyapunov solvers with default options for the internal backend.
 
     Returns
     -------
     A dict of available solvers with default solver options.
     """
-    return {'sign': {'type': 'sign',
-                     'maxiter': maxiter,
-                     'atol': atol,
-                     'rtol': rtol}}
+    return {'internal': {'type': 'internal',
+                         'maxiter': maxiter,
+                         'atol': atol,
+                         'rtol': rtol}}
 
 
 def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
     _solve_lyap_dense_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_dense_solver_options(), 'sign', None, False)
+    options = _parse_options(options, lyap_dense_solver_options(), 'internal', None, False)
 
-    if options['type'] == 'sign':
+    if options['type'] == 'internal':
         if trans:
             A = A.T
             if E is not None:
                 E = E.T
             B = B.T
-        if cont_time:
-            X, _ = lyap_sgn(A, B @ B.T, E,
-                            maxiter=options['maxiter'],
-                            atol=options['atol'],
-                            rtol=options['rtol'])
-        else:
-            raise NotImplementedError
+        solve = lyap_sgn if cont_time else dlyap_smith
+        X, _ = solve(A, B @ B.T, E,
+                     maxiter=options['maxiter'],
+                     atol=options['atol'],
+                     rtol=options['rtol'])
     else:
         raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 
@@ -589,11 +585,11 @@ def dlyap_smith_fac(A, B, E, maxiter=100, atol=0, rtol=None, ctol=None):
     abs_err = []
     rel_err = []
 
-    # sign function iteration
+    # squared Smith iteration
     while niter <= maxiter and not converged:
         # construction of next solution matrix
         AZ = A @ Z
-        Z  = compress_fac([Z, AZ], ctol)
+        Z  = compress_fac(np.hstack([Z, AZ]), ctol)
 
         # update of iteration matrix
         A = A @ A

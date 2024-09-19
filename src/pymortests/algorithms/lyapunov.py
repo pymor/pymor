@@ -29,11 +29,12 @@ cont_lyap_lrcf_solver_list = [
 cont_lyap_dense_solver_list = [
     'scipy',
     'slycot_bartels-stewart',
-    'sign',
+    'internal',
 ]
 disc_lyap_dense_solver_list = [
     'scipy',
     'slycot_bartels-stewart',
+    'internal',
 ]
 
 
@@ -253,7 +254,7 @@ def test_cont_dense(n, m, with_E, trans, solver, rng):
 def test_disc_dense(n, m, with_E, trans, solver, rng):
     skip_if_missing_solver(solver)
 
-    A = np.asfortranarray(rng.standard_normal((n, n)))
+    A = np.asfortranarray(rng.standard_normal((n, n)) / n)
     E = np.eye(n) + rng.standard_normal((n, n)) / n if with_E else None
     B = rng.standard_normal((n, m))
     if trans:
