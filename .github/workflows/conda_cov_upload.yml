@@ -12,10 +12,11 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: dawidd6/action-download-artifact@v2.24.3
+      - uses: dawidd6/action-download-artifact@v4
         with:
           run_id: ${{ github.event.workflow_run.id }}
-          name: coverage_results
+          pattern: coverage_results (*)
+          merge-multiple: true
           path: ./reports/
       # Upload to codecov with an API token to avoid upload failures
       # See https://github.com/codecov/codecov-action/issues/837.
