@@ -20,7 +20,7 @@ jobs:
           path: ./reports/
       # Upload to codecov with an API token to avoid upload failures
       # See https://github.com/codecov/codecov-action/issues/837.
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         name: Upload coverage
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
