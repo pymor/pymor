@@ -6,6 +6,7 @@
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.logger import getLogger
+from pymor.operators.constructions import IdentityOperator
 
 
 def arnoldi(A, E, b, r):
@@ -39,6 +40,8 @@ def arnoldi(A, E, b, r):
         Orthonormal basis for the Krylov subspace as a |VectorArray|.
     """
     assert A.source == A.range
+    if E is None:
+        E = IdentityOperator(A.source)
     assert E.source == A.source
     assert E.range == A.source
     assert b in A.source
