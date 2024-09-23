@@ -68,7 +68,7 @@ ci_oldest_requirements:
 	uv pip compile  \
 		$(CI_EXTRAS) \
 		--extra dune \
-		--python-version 3.8 \
+		--python-version 3.9 \
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \
 		--index-strategy unsafe-best-match \

@@ -137,10 +137,6 @@ class TransformLiterals(ast.NodeTransformer):
         return ast.Call(ast.Name('Constant', ast.Load()),
                         [self.generic_visit(node)], [])
 
-    # Python versions prior to 3.8 use ast.Num instead of ast.Constant
-    def visit_Num(self, node):
-        return self.visit_Constant(node)
-
     def visit_Subscript(self, node):
         base = self.visit(node.value)
         self.in_subscript = True
