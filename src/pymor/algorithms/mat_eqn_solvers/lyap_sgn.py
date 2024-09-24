@@ -154,7 +154,7 @@ def lyap_sgn(A, G, E, maxiter=100, atol=0, rtol=None):
 
     # case of empty data
     if n == 0:
-        X = np.empty(0)
+        X = np.empty((0, 0))
         info = {}
         return X, info
 
@@ -318,9 +318,9 @@ def lyap_sgn_fac(A, B, E, maxiter=100, atol=0, rtol=None, ctol=None):
 
     # case of empty data
     if n == 0:
-        X = np.empty(0)
+        Z = np.empty((0, 0))
         info = {}
-        return X, info
+        return Z, info
 
     # initialization
     logger = getLogger('pymor.algorithms.mat_eqn_solver.lyap_sgn.lyap_sgn_fac')
@@ -445,7 +445,7 @@ def dlyap_smith(A, G, E, maxiter=100, atol=0, rtol=None):
 
     # case of empty data
     if n == 0:
-        X = np.empty(0)
+        X = np.empty((0, 0))
         info = {}
         return X, info
 
@@ -568,9 +568,9 @@ def dlyap_smith_fac(A, B, E, maxiter=100, atol=0, rtol=None, ctol=None):
 
     # case of empty data
     if n == 0:
-        X = np.empty(0)
+        Z = np.empty((0, 0))
         info = {}
-        return X, info
+        return Z, info
 
     # initialization
     logger = getLogger('pymor.algorithms.mat_eqn_solver.lyap_sgn.dlyap_smith_fac')
