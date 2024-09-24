@@ -54,7 +54,7 @@ def arnoldi(A, E, b, r):
     v = E.apply_inverse(b)
     V.append(v, remove_from_other=True)
     gram_schmidt(V, atol=0, rtol=0, copy=False)
-    if len(V) < r:
+    if len(V) < len(b):
         logger.warning('gram_schmidt removed vectors.')
     last_block_len = len(V)
 
