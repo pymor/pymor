@@ -22,15 +22,17 @@ n_list_big = [250]
 m_list = [1, 2]
 p_list = [1, 2]
 ricc_lrcf_solver_list_small = [
+    'internal',
     'scipy',
     'slycot',
 ]
 ricc_lrcf_solver_list_big = [
-    'lrradi'
+    'lrradi',
 ]
 ricc_dense_solver_list = [
+    'internal',
     'scipy',
-    'slycot'
+    'slycot',
 ]
 
 
@@ -77,6 +79,8 @@ def relative_residual(A, E, B, C, R, S, Z, trans):
 @pytest.mark.parametrize('solver', ricc_dense_solver_list)
 def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     skip_if_missing_solver(solver)
+    if (with_R or with_S) and solver == 'internal':
+        pytest.xfail('solver not implemented')
 
     mat_old = []
     mat_new = []
@@ -134,6 +138,8 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
 @pytest.mark.parametrize('solver', ricc_dense_solver_list)
 def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     skip_if_missing_solver(solver)
+    if solver == 'internal':
+        pytest.xfail('solver not implemented')
 
     mat_old = []
     mat_new = []
@@ -194,6 +200,8 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
 def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     skip_if_missing_solver(solver)
     if with_S and solver == 'lrradi':
+        pytest.xfail('solver not implemented')
+    if (with_R or with_S) and solver == 'internal':
         pytest.xfail('solver not implemented')
 
     mat_old = []
@@ -260,6 +268,8 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
 @pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
 def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     skip_if_missing_solver(solver)
+    if solver == 'internal':
+        pytest.xfail('solver not implemented')
 
     mat_old = []
     mat_new = []
