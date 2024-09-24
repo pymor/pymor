@@ -12,7 +12,7 @@ from pymor.operators.constructions import IdentityOperator
 def arnoldi(A, E, b, r):
     r"""Block Arnoldi algorithm.
 
-    Computes a real orthonormal basis for the Krylov subspace
+    Computes an orthonormal basis for the Krylov subspace
 
     .. math::
         \mathrm{span}\left\{
@@ -26,18 +26,20 @@ def arnoldi(A, E, b, r):
     Parameters
     ----------
     A
-        Real |Operator| A.
+        The |Operator| A.
     E
-        Real |Operator| E.
+        The |Operator| E. If `None`, the identity operator is assumed.
     b
-        Real |VectorArray|.
+        The |VectorArray| b.
     r
         Order of the Krylov subspace (positive integer).
 
     Returns
     -------
     V
-        Orthonormal basis for the Krylov subspace as a |VectorArray|.
+        Orthonormal basis for the Krylov subspace as a |VectorArray|
+        with `len(V) <= r*len(b)` (strict inequality in case of
+        deflation).
     """
     assert A.source == A.range
     if E is None:
