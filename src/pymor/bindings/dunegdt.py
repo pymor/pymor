@@ -147,10 +147,6 @@ class DuneXTMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
     ----------
     matrix
         The actual matrix from dune.xt.la, usually IstlMatrix.
-    source_id
-        Identifier of the source |VectorSpace|.
-    range_id
-        Identifier of the source |VectorSpace|.
     solver_options
         If specified, either a string or a dict specifying the solver used in apply_inverse. See
         https://zivgitlab.uni-muenster.de/ag-ohlberger/dune-community/dune-xt/-/tree/master/dune/xt/la/solver

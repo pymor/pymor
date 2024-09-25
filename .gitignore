@@ -11,8 +11,6 @@ src/pymor/discretizers/builtin/grids/_unstructured.c
 src/pymordemos/minimal_cpp_demo/bindings_generated.cpp
 reduced_model.out
 results.out
-reduced_model.out
-results.out
 
 # Packages
 *.egg
