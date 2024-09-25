@@ -89,28 +89,26 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     if options['type'] != 'internal':
         raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
 
-    A_source = A.source
-    A = to_matrix(A, format='dense')
-    E = to_matrix(E, format='dense') if E else None
-    B = B.to_numpy().T
-    C = C.to_numpy()
+    A_mat = to_matrix(A, format='dense')
+    E_mat = to_matrix(E, format='dense') if E else None
+    B_mat = B.to_numpy().T
+    C_mat = C.to_numpy()
     if R is not None:
         raise NotImplementedError
     if S is not None:
         raise NotImplementedError
     if not trans:
-        A = A.T
-        B = C.T
-        C = B.T
-        if E is not None:
-            E = E.T
-    Z, _ = care_nwt_fac(A, B, C, E,
+        A_mat = A_mat.T
+        B_mat, C_mat = C_mat.T, B_mat.T
+        if E:
+            E_mat = E_mat.T
+    Z, _ = care_nwt_fac(A_mat, B_mat, C_mat, E_mat,
                         maxiter=options['maxiter'],
                         atol=options['atol'],
                         rtol=options['rtol'],
                         lyap_opts=options['lyap_opts'])
 
-    return A_source.from_numpy(Z.T)
+    return A.source.from_numpy(Z.T)
 
 
 @defaults('maxiter', 'atol', 'rtol', 'lyap_maxiter', 'lyap_atol', 'lyap_rtol', 'lyap_ctol')
@@ -325,10 +323,7 @@ def care_nwt_fac(A, B, C, E, maxiter=100, atol=0, rtol=None, K0=None, lyap_opts=
         Z, info_lyap_cur = lyap_sgn_fac((A - B @ K).T, W.T, ET, **lyap_opts)
 
         AZ = A.T @ Z
-        if E is not None:
-            ZE = Z.T @ E
-        else:
-            ZE = Z.T
+        ZE = Z.T @ E if E is not None else Z.T
         K = (B.T @ Z) @ ZE
 
         # information about current iteration step
