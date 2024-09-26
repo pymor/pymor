@@ -811,10 +811,6 @@ class VectorSpace(ImmutableObject):
     |Numpy array| via the :meth:`~VectorSpace.from_numpy`
     method.
 
-    Each vector space has a string :attr:`~VectorSpace.id`
-    to distinguish mathematically different spaces appearing
-    in the formulation of a given problem.
-
     Vector spaces can be compared for equality via the `==` and `!=`
     operators. To test if a given |VectorArray| is an element of
     the space, the `in` operator can be used.
@@ -830,11 +826,9 @@ class VectorSpace(ImmutableObject):
         The dimension (number of degrees of freedom) of the
         vectors contained in the space.
     is_scalar
-        Equivalent to
-        `isinstance(space, NumpyVectorSpace) and space.dim == 1 and space.id is None`.
+        Equivalent to `isinstance(space, NumpyVectorSpace) and space.dim == 1`.
     """
 
-    id = None
     dim = None
     is_scalar = False
 
@@ -984,8 +978,9 @@ class VectorSpace(ImmutableObject):
     def __contains__(self, other):
         return self == getattr(other, 'space', None)
 
+    @abstractmethod
     def __hash__(self):
-        return hash(self.id)
+        pass
 
 
 def _create_random_values(shape, distribution, **kwargs):

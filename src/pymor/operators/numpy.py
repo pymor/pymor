@@ -71,10 +71,10 @@ class NumpyGenericOperator(Operator):
     """
 
     def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameters={},
-                 source_id=None, range_id=None, solver_options=None, name=None):
+                 solver_options=None, name=None):
         self.__auto_init(locals())
-        self.source = NumpyVectorSpace(dim_source, source_id)
-        self.range = NumpyVectorSpace(dim_range, range_id)
+        self.source = NumpyVectorSpace(dim_source)
+        self.range = NumpyVectorSpace(dim_range)
         self.parameters_own = parameters
 
     def apply(self, U, mu=None):
@@ -124,8 +124,6 @@ class NumpyMatrixBasedOperator(Operator):
     def assemble(self, mu=None):
         assert self.parameters.assert_compatible(mu)
         return NumpyMatrixOperator(self._assemble(mu),
-                                   source_id=self.source.id,
-                                   range_id=self.range.id,
                                    solver_options=self.solver_options,
                                    name=self.name)
 
@@ -182,17 +180,13 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     ----------
     matrix
         The |NumPy array| or |SciPy spmatrix| which is to be wrapped.
-    source_id
-        The id of the operator's `source` |VectorSpace|.
-    range_id
-        The id of the operator's `range` |VectorSpace|.
     solver_options
         The |solver_options| for the operator.
     name
         Name of the operator.
     """
 
-    def __init__(self, matrix, source_id=None, range_id=None, solver_options=None, name=None):
+    def __init__(self, matrix, solver_options=None, name=None):
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
             matrix = np.reshape(matrix, (1, -1))
@@ -202,16 +196,15 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             pass
 
         self.__auto_init(locals())
-        self.source = NumpyVectorSpace(matrix.shape[1], source_id)
-        self.range = NumpyVectorSpace(matrix.shape[0], range_id)
+        self.source = NumpyVectorSpace(matrix.shape[1])
+        self.range = NumpyVectorSpace(matrix.shape[0])
         self.sparse = sps.issparse(matrix)
 
     @classmethod
-    def from_file(cls, path, key=None, source_id=None, range_id=None, solver_options=None, name=None):
+    def from_file(cls, path, key=None, solver_options=None, name=None):
         from pymor.tools.io import load_matrix
         matrix = load_matrix(path, key=key)
-        return cls(matrix, solver_options=solver_options, source_id=source_id, range_id=range_id,
-                   name=name or key or path)
+        return cls(matrix, solver_options=solver_options, name=name or key or path)
 
     @property
     def H(self):
@@ -223,8 +216,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             adjoint_matrix = self.matrix.T
         else:
             adjoint_matrix = self.matrix.T.conj()
-        return self.with_(matrix=adjoint_matrix, source_id=self.range_id, range_id=self.source_id,
-                          solver_options=options, name=self.name + '_adjoint')
+        return self.with_(matrix=adjoint_matrix, solver_options=options, name=self.name + '_adjoint')
 
     def _assemble(self, mu=None):
         pass
@@ -401,10 +393,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             else:
                 matrix += (np.eye(matrix.shape[0]) * identity_shift)
 
-        return NumpyMatrixOperator(matrix,
-                                   source_id=self.source.id,
-                                   range_id=self.range.id,
-                                   solver_options=solver_options)
+        return NumpyMatrixOperator(matrix, solver_options=solver_options)
 
     def __getstate__(self):
         if hasattr(self.matrix, 'factorization'):  # remove unpicklable SuperLU factorization
@@ -445,10 +434,6 @@ class NumpyCirculantOperator(Operator, CacheableObject):
     ----------
     c
         The |NumPy array| of shape `(n)` or `(n, p, m)` that defines the circulant vector.
-    source_id
-        The id of the operator's `source` |VectorSpace|.
-    range_id
-        The id of the operator's `range` |VectorSpace|.
     name
         Name of the operator.
     """
@@ -456,7 +441,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
     cache_region = 'memory'
     linear = True
 
-    def __init__(self, c, source_id=None, range_id=None, name=None):
+    def __init__(self, c, name=None):
         assert isinstance(c, np.ndarray)
         if c.ndim == 1:
             c = c.reshape(-1, 1, 1)
@@ -466,8 +451,8 @@ class NumpyCirculantOperator(Operator, CacheableObject):
         n, p, m = c.shape
         self._arr = c
         self.linear = True
-        self.source = NumpyVectorSpace(n*m, source_id)
-        self.range = NumpyVectorSpace(n*p, range_id)
+        self.source = NumpyVectorSpace(n*m)
+        self.range = NumpyVectorSpace(n*p)
 
     @cached
     def _circulant(self):
@@ -510,8 +495,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
 
     @property
     def H(self):
-        return self.with_(c=np.roll(self._arr.conj(), -1, axis=0)[::-1].transpose(0, 2, 1),
-                          source_id=self.range_id, range_id=self.source_id, name=self.name + '_adjoint')
+        return self.with_(c=np.roll(self._arr.conj(), -1, axis=0)[::-1].transpose(0, 2, 1), name=self.name + '_adjoint')
 
 
 class NumpyToeplitzOperator(Operator):
@@ -548,17 +532,13 @@ class NumpyToeplitzOperator(Operator):
         matrix. If supplied, its first entry `r[0]` has to be equal to `c[0]`.
         Defaults to `None`. If `r` is `None`, the behavior of :func:`scipy.linalg.toeplitz` is
         mimicked which sets `r = c.conj()` (except for the first entry).
-    source_id
-        The id of the operator's `source` |VectorSpace|.
-    range_id
-        The id of the operator's `range` |VectorSpace|.
     name
         Name of the operator.
     """
 
     linear = True
 
-    def __init__(self, c, r=None, source_id=None, range_id=None, name=None):
+    def __init__(self, c, r=None, name=None):
         assert isinstance(c, np.ndarray)
         c = c.reshape(-1, 1, 1) if c.ndim == 1 else c
         assert c.ndim == 3
@@ -575,11 +555,11 @@ class NumpyToeplitzOperator(Operator):
         r.setflags(write=False)
         self.__auto_init(locals())
         self._circulant = NumpyCirculantOperator(
-            np.concatenate([c, r[:0:-1]]), source_id=source_id, range_id=range_id,
+            np.concatenate([c, r[:0:-1]]),
             name=self.name + ' (implicit circulant)')
         _, p, m = self._circulant._arr.shape
-        self.source = NumpyVectorSpace(m*r.shape[0], source_id)
-        self.range = NumpyVectorSpace(p*c.shape[0], range_id)
+        self.source = NumpyVectorSpace(m*r.shape[0])
+        self.range = NumpyVectorSpace(p*c.shape[0])
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -594,7 +574,7 @@ class NumpyToeplitzOperator(Operator):
     @property
     def H(self):
         return self.with_(c=self.r.conj().transpose(0, 2, 1), r=self.c.conj().transpose(0, 2, 1),
-                          source_id=self.range_id, range_id=self.source_id, name=self.name + '_adjoint')
+                          name=self.name + '_adjoint')
 
 
 class NumpyHankelOperator(Operator):
@@ -630,17 +610,13 @@ class NumpyHankelOperator(Operator):
         Hankel matrix. If supplied, its first entry `r[0]` has to be equal to `c[-1]`.
         Defaults to `None`. If `r` is `None`, the behavior of :func:`scipy.linalg.hankel` is
         mimicked which sets `r` to zero (except for the first entry).
-    source_id
-        The id of the operator's `source` |VectorSpace|.
-    range_id
-        The id of the operator's `range` |VectorSpace|.
     name
         Name of the operator.
     """
 
     linear = True
 
-    def __init__(self, c, r=None, source_id=None, range_id=None, name=None):
+    def __init__(self, c, r=None, name=None):
         assert isinstance(c, np.ndarray)
         c = c.reshape(-1, 1, 1) if c.ndim == 1 else c
         assert c.ndim == 3
@@ -663,10 +639,10 @@ class NumpyHankelOperator(Operator):
         h = np.concatenate((c, r[1:], np.zeros([z, *c.shape[1:]])))
         shift = n // 2 + int(np.ceil((k - l) / 2)) + (n % 2) + z # this works
         self._circulant = NumpyCirculantOperator(
-            np.roll(h, shift, axis=0), source_id=source_id, range_id=range_id, name=self.name + ' (implicit circulant)')
+            np.roll(h, shift, axis=0), name=self.name + ' (implicit circulant)')
         p, m = self._circulant._arr.shape[1:]
-        self.source = NumpyVectorSpace(l*m, source_id)
-        self.range = NumpyVectorSpace(k*p, range_id)
+        self.source = NumpyVectorSpace(l*m)
+        self.range = NumpyVectorSpace(k*p)
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -684,5 +660,4 @@ class NumpyHankelOperator(Operator):
     @property
     def H(self):
         h = np.concatenate([self.c, self.r[1:]], axis=0).conj().transpose(0, 2, 1)
-        return self.with_(c=h[:self.r.shape[0]], r=h[self.r.shape[0]-1:],
-                          source_id=self.range_id, range_id=self.source_id, name=self.name+'_adjoint')
+        return self.with_(c=h[:self.r.shape[0]], r=h[self.r.shape[0]-1:], name=self.name+'_adjoint')

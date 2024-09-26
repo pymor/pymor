@@ -136,7 +136,7 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace):
     real_vector_type = FenicsVector
     vector_type = ComplexifiedFenicsVector
 
-    def __init__(self, V, id='STATE'):
+    def __init__(self, V):
         self.__auto_init(locals())
 
     @property
@@ -144,11 +144,11 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace):
         return df.Function(self.V).vector().size()
 
     def __eq__(self, other):
-        return type(other) is FenicsVectorSpace and self.V == other.V and self.id == other.id
+        return type(other) is FenicsVectorSpace and self.V == other.V
 
     # since we implement __eq__, we also need to implement __hash__
     def __hash__(self):
-        return id(self.V) + hash(self.id)
+        return id(self.V)
 
     def real_zero_vector(self):
         impl = df.Function(self.V).vector()

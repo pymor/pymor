@@ -40,8 +40,8 @@ def main(
         rng = get_rng()
         random_matrix_1 = rng.random((2, dim_source))
         random_matrix_2 = rng.random((2, dim_source))
-        op1 = NumpyMatrixOperator(random_matrix_1, source_id='STATE')
-        op2 = NumpyMatrixOperator(random_matrix_2, source_id='STATE')
+        op1 = NumpyMatrixOperator(random_matrix_1)
+        op2 = NumpyMatrixOperator(random_matrix_2)
         ops = [op1, op2]
         lincomb_op = LincombOperator(ops, [1., 0.5])
         fom = fom.with_(output_functional=lincomb_op)
@@ -53,7 +53,7 @@ def main(
             fom = fom.with_(output_functional=fom.rhs.operators[0].H)
         else:
             random_matrix_1 = get_rng().random((2, fom.solution_space.dim))
-            op = NumpyMatrixOperator(random_matrix_1, source_id='STATE')
+            op = NumpyMatrixOperator(random_matrix_1)
             fom = fom.with_(output_functional=op)
 
     if reductor_count == 0:

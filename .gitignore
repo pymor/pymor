@@ -9,10 +9,8 @@ src/pymor/discretizers/builtin/inplace.c
 src/pymor/discretizers/builtin/relations.c
 src/pymor/discretizers/builtin/grids/_unstructured.c
 src/pymordemos/minimal_cpp_demo/bindings_generated.cpp
-src/pymordemos/reduced_model.out
-src/pymordemos/results.out
-src/pymortests/reduced_model.out
-src/pymortests/results.out
+reduced_model.out
+results.out
 
 # Packages
 *.egg

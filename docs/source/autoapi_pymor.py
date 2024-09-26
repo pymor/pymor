@@ -55,7 +55,6 @@ MANUAL_SKIPS = ('RENDER_FRAGMENT_SHADER',
                 'pymor.vectorarrays.interface.VectorArray.ind',
                 'pymor.vectorarrays.interface.VectorArray.is_view',
                 'pymor.vectorarrays.interface.VectorSpace.dim',
-                'pymor.vectorarrays.interface.VectorSpace.id',
                 'pymor.vectorarrays.interface.VectorSpace.is_scalar',
                 )
 

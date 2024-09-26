@@ -265,8 +265,7 @@ class LTIModel(Model):
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, sampling_time=0,
                       T=None, initial_data=None, time_stepper=None, num_values=None, presets=None,
-                      state_id=None, solver_options=None, error_estimator=None,
-                      visualizer=None, name=None):
+                      solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices.
 
         Parameters
@@ -298,8 +297,6 @@ class LTIModel(Model):
         presets
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
-        state_id
-            Id of the state space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -326,13 +323,13 @@ class LTIModel(Model):
         assert isinstance(E, (np.ndarray, sps.spmatrix, sparray, type(None)))
         assert isinstance(initial_data, (np.ndarray, type(None)))
 
-        A = NumpyMatrixOperator(A, source_id=state_id, range_id=state_id)
-        B = NumpyMatrixOperator(B, range_id=state_id)
-        C = NumpyMatrixOperator(C, source_id=state_id)
+        A = NumpyMatrixOperator(A)
+        B = NumpyMatrixOperator(B)
+        C = NumpyMatrixOperator(C)
         if D is not None:
             D = NumpyMatrixOperator(D)
         if E is not None:
-            E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
+            E = NumpyMatrixOperator(E)
         if initial_data is not None:
             initial_data = A.source.from_numpy(initial_data)
 
@@ -404,7 +401,7 @@ class LTIModel(Model):
     @classmethod
     def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, sampling_time=0,
                    T=None, initial_data_file=None, time_stepper=None, num_values=None, presets=None,
-                   state_id=None, solver_options=None, error_estimator=None, visualizer=None, name=None):
+                   solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in separate files.
 
         Parameters
@@ -436,8 +433,6 @@ class LTIModel(Model):
         presets
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
-        state_id
-            Id of the state space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -467,7 +462,7 @@ class LTIModel(Model):
         initial_data = load_matrix(initial_data_file) if initial_data_file is not None else None
 
         return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, T=T, initial_data=initial_data,
-                                 time_stepper=time_stepper, num_values=num_values, presets=presets, state_id=state_id,
+                                 time_stepper=time_stepper, num_values=num_values, presets=presets,
                                  solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                                  name=name)
 
@@ -505,7 +500,7 @@ class LTIModel(Model):
 
     @classmethod
     def from_mat_file(cls, file_name, sampling_time=0, T=None, time_stepper=None, num_values=None, presets=None,
-                      state_id=None, solver_options=None, error_estimator=None, visualizer=None, name=None):
+                      solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in a .mat file.
 
         Supports the format used in the `SLICOT benchmark collection
@@ -530,8 +525,6 @@ class LTIModel(Model):
         presets
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
-        state_id
-            Id of the state space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -572,7 +565,7 @@ class LTIModel(Model):
                 matrices[i] = mat.astype(np.float64)
 
         return cls.from_matrices(*matrices, sampling_time=sampling_time, T=T, time_stepper=time_stepper,
-                                 num_values=num_values, presets=presets, state_id=state_id,
+                                 num_values=num_values, presets=presets,
                                  solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                                  name=name)
 
@@ -597,7 +590,7 @@ class LTIModel(Model):
 
     @classmethod
     def from_abcde_files(cls, files_basename, sampling_time=0, T=None, time_stepper=None, num_values=None, presets=None,
-                         state_id=None, solver_options=None, error_estimator=None, visualizer=None, name=None):
+                         solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in .[ABCDE] files.
 
         Parameters
@@ -618,8 +611,6 @@ class LTIModel(Model):
         presets
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
-        state_id
-            Id of the state space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -650,7 +641,7 @@ class LTIModel(Model):
         E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
         return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, T=T, time_stepper=time_stepper,
-                                 num_values=num_values, presets=presets, state_id=state_id,
+                                 num_values=num_values, presets=presets,
                                  solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                                  name=name)
 
@@ -1788,8 +1779,7 @@ class PHLTIModel(LTIModel):
 
     @classmethod
     def from_matrices(cls, J, R, G, P=None, S=None, N=None, E=None, Q=None,
-                      state_id=None, solver_options=None, error_estimator=None,
-                      visualizer=None, name=None):
+                      solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |PHLTIModel| from matrices.
 
         Parameters
@@ -1810,8 +1800,6 @@ class PHLTIModel(LTIModel):
             The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be identity).
         Q
             The |NumPy array| or |SciPy spmatrix| Q or `None` (then Q is assumed to be identity).
-        state_id
-            Id of the state space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -1840,19 +1828,19 @@ class PHLTIModel(LTIModel):
         assert E is None or isinstance(E, (np.ndarray, sps.spmatrix, sparray))
         assert Q is None or isinstance(Q, (np.ndarray, sps.spmatrix, sparray))
 
-        J = NumpyMatrixOperator(J, source_id=state_id, range_id=state_id)
-        R = NumpyMatrixOperator(R, source_id=state_id, range_id=state_id)
-        G = NumpyMatrixOperator(G, range_id=state_id)
+        J = NumpyMatrixOperator(J)
+        R = NumpyMatrixOperator(R)
+        G = NumpyMatrixOperator(G)
         if P is not None:
-            P = NumpyMatrixOperator(P, range_id=state_id)
+            P = NumpyMatrixOperator(P)
         if S is not None:
             S = NumpyMatrixOperator(S)
         if N is not None:
             N = NumpyMatrixOperator(N)
         if E is not None:
-            E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
+            E = NumpyMatrixOperator(E)
         if Q is not None:
-            Q = NumpyMatrixOperator(Q, source_id=state_id, range_id=state_id)
+            Q = NumpyMatrixOperator(Q)
 
         return cls(J=J, R=R, G=G, P=P, S=S, N=N, E=E, Q=Q,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
@@ -2112,8 +2100,7 @@ class SecondOrderModel(Model):
 
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
-                      state_id=None, solver_options=None, error_estimator=None,
-                      visualizer=None, name=None):
+                      solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create a second order system from matrices.
 
         Parameters
@@ -2162,13 +2149,13 @@ class SecondOrderModel(Model):
         assert Cv is None or isinstance(Cv, (np.ndarray, sps.spmatrix, sparray))
         assert D is None or isinstance(D, (np.ndarray, sps.spmatrix, sparray))
 
-        M = NumpyMatrixOperator(M, source_id=state_id, range_id=state_id)
-        E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
-        K = NumpyMatrixOperator(K, source_id=state_id, range_id=state_id)
-        B = NumpyMatrixOperator(B, range_id=state_id)
-        Cp = NumpyMatrixOperator(Cp, source_id=state_id)
+        M = NumpyMatrixOperator(M)
+        E = NumpyMatrixOperator(E)
+        K = NumpyMatrixOperator(K)
+        B = NumpyMatrixOperator(B)
+        Cp = NumpyMatrixOperator(Cp)
         if Cv is not None:
-            Cv = NumpyMatrixOperator(Cv, source_id=state_id)
+            Cv = NumpyMatrixOperator(Cv)
         if D is not None:
             D = NumpyMatrixOperator(D)
 
@@ -2211,8 +2198,7 @@ class SecondOrderModel(Model):
 
     @classmethod
     def from_files(cls, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, sampling_time=0,
-                   state_id=None, solver_options=None, error_estimator=None, visualizer=None,
-                   name=None):
+                   solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in separate files.
 
         Parameters
@@ -2234,8 +2220,6 @@ class SecondOrderModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
-        state_id
-            Id of the state space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -2265,8 +2249,7 @@ class SecondOrderModel(Model):
         Cv = load_matrix(Cv_file) if Cv_file is not None else None
         D = load_matrix(D_file) if D_file is not None else None
 
-        return cls.from_matrices(M, E, K, B, Cp, Cv, D, sampling_time=sampling_time,
-                                 state_id=state_id, solver_options=solver_options,
+        return cls.from_matrices(M, E, K, B, Cp, Cv, D, sampling_time=sampling_time, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
     def to_files(self, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, mu=None):

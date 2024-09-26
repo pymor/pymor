@@ -520,31 +520,6 @@ print((U * 1j).inner(U) == U.inner(U) * (-1j))
 print(U.inner(U * 1j) == U.inner(U) * 1j)
 ```
 
-## VectorSpace ids
-
-{{ VectorSpaces }} can have an {attr}`~pymor.vectorarrays.interface.VectorSpace.id` attached to them
-to make different spaces with the same properties (e.g. dimension) distinguishable and protect
-the user from potential errors.
-
-```{code-cell} ipython3
-space = NumpyVectorSpace(3)
-different_space = NumpyVectorSpace(3, id='different')
-print(space == different_space)
-
-U = space.ones()
-print(U in space, U in different_space)
-```
-
-It is not allowed to combine arrays from different spaces, in particular from spaces with different ids:
-
-```{code-cell} ipython3
-:tags: [raises-exception]
-
-V = different_space.zeros()
-print(V.space.id)
-U + V
-```
-
 ## Internals / other types of arrays
 
 Finally, we want to take brief look at the internals of {{ VectorArrays }} and also try one other type of

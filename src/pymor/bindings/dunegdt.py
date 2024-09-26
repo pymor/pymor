@@ -106,7 +106,7 @@ class DuneXTVectorSpace(ComplexifiedListVectorSpace):
 
     real_vector_type = DuneXTVector
 
-    def __init__(self, dim, dune_vector_type=IstlVector, id='STATE'):
+    def __init__(self, dim, dune_vector_type=IstlVector):
         assert isinstance(dim, Integral)
         dim = int(dim)
         self.__auto_init(locals())
@@ -114,8 +114,7 @@ class DuneXTVectorSpace(ComplexifiedListVectorSpace):
     def __eq__(self, other):
         return type(other) is DuneXTVectorSpace \
             and self.dune_vector_type == other.dune_vector_type \
-            and self.dim == other.dim \
-            and self.id == other.id
+            and self.dim == other.dim
 
     # since we implement __eq__, we also need to implement __hash__
     def __hash__(self):
@@ -148,10 +147,6 @@ class DuneXTMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
     ----------
     matrix
         The actual matrix from dune.xt.la, usually IstlMatrix.
-    source_id
-        Identifier of the source |VectorSpace|.
-    range_id
-        Identifier of the source |VectorSpace|.
     solver_options
         If specified, either a string or a dict specifying the solver used in apply_inverse. See
         https://zivgitlab.uni-muenster.de/ag-ohlberger/dune-community/dune-xt/-/tree/master/dune/xt/la/solver
@@ -170,9 +165,9 @@ class DuneXTMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
 
     linear = True
 
-    def __init__(self, matrix, source_id='STATE', range_id='STATE', solver_options=None, name=None):
-        self.source = DuneXTVectorSpace(matrix.cols, matrix.vector_type(), source_id)
-        self.range = DuneXTVectorSpace(matrix.rows, matrix.vector_type(), range_id)
+    def __init__(self, matrix, solver_options=None, name=None):
+        self.source = DuneXTVectorSpace(matrix.cols, matrix.vector_type())
+        self.range = DuneXTVectorSpace(matrix.rows, matrix.vector_type())
         self.__auto_init(locals())
 
     def _real_apply_one_vector(self, u, mu=None, prepare_data=None):
@@ -218,4 +213,4 @@ class DuneXTMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
             # sparsity patterns one would have to extract the patterns from the pruned
             # matrices, merge them and create a new matrix.
 
-        return DuneXTMatrixOperator(matrix, self.source.id, self.range.id, solver_options=solver_options, name=name)
+        return DuneXTMatrixOperator(matrix, solver_options=solver_options, name=name)

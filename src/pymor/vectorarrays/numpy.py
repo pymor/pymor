@@ -212,20 +212,17 @@ class NumpyVectorSpace(VectorSpace):
     ----------
     dim
         The dimension of the vectors contained in the space.
-    id
-        See :attr:`~pymor.vectorarrays.interface.VectorSpace.id`.
     """
 
-    def __init__(self, dim, id=None):
+    def __init__(self, dim):
         assert isinstance(dim, Integral)
         self.dim = int(dim)
-        self.id = id
 
     def __eq__(self, other):
-        return type(other) is type(self) and self.dim == other.dim and self.id == other.id
+        return type(other) is type(self) and self.dim == other.dim
 
     def __hash__(self):
-        return hash(self.dim) + hash(self.id)
+        return hash(self.dim)
 
     def zeros(self, count=1, reserve=0):
         assert count >= 0
@@ -245,8 +242,8 @@ class NumpyVectorSpace(VectorSpace):
         return va
 
     @classinstancemethod
-    def make_array(cls, obj, id=None):  # noqa: N805
-        return cls._array_factory(obj, id=id)
+    def make_array(cls, obj):  # noqa: N805
+        return cls._array_factory(obj)
 
     @make_array.instancemethod
     def make_array(self, obj):
@@ -254,8 +251,8 @@ class NumpyVectorSpace(VectorSpace):
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
-    def from_numpy(cls, data, id=None, ensure_copy=False):  # noqa: N805
-        return cls._array_factory(data.copy() if ensure_copy else data, id=id)
+    def from_numpy(cls, data, ensure_copy=False):  # noqa: N805
+        return cls._array_factory(data.copy() if ensure_copy else data)
 
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
@@ -263,7 +260,7 @@ class NumpyVectorSpace(VectorSpace):
         return self._array_factory(data.copy() if ensure_copy else data, space=self)
 
     @classinstancemethod
-    def from_file(cls, path, key=None, single_vector=False, transpose=False, id=None):  # noqa: N805
+    def from_file(cls, path, key=None, single_vector=False, transpose=False):  # noqa: N805
         assert not (single_vector and transpose)
         from pymor.tools.io import load_matrix
         array = load_matrix(path, key=key)
@@ -276,15 +273,15 @@ class NumpyVectorSpace(VectorSpace):
             array = array.reshape((1, -1))
         if transpose:
             array = array.T
-        return cls.make_array(array, id=id)
+        return cls.make_array(array)
 
     @from_file.instancemethod
     def from_file(self, path, key=None, single_vector=False, transpose=False):
         """:noindex:"""  # noqa: D400
-        return type(self).from_file(path, key=key, single_vector=single_vector, transpose=transpose, id=self.id)
+        return type(self).from_file(path, key=key, single_vector=single_vector, transpose=transpose)
 
     @classmethod
-    def _array_factory(cls, array, space=None, id=None):
+    def _array_factory(cls, array, space=None):
         if type(array) is np.ndarray:
             pass
         elif issparse(array):
@@ -295,11 +292,11 @@ class NumpyVectorSpace(VectorSpace):
             assert array.ndim == 1
             array = np.reshape(array, (1, -1))
         if space is None:
-            return NumpyVectorArray(cls(array.shape[1], id), NumpyVectorArrayImpl(array))
+            return NumpyVectorArray(cls(array.shape[1]), NumpyVectorArrayImpl(array))
         else:
             assert array.shape[1] == space.dim
             return NumpyVectorArray(space, NumpyVectorArrayImpl(array))
 
     @property
     def is_scalar(self):
-        return self.dim == 1 and self.id is None
+        return self.dim == 1
