@@ -138,7 +138,7 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
 @pytest.mark.parametrize('solver', ricc_dense_solver_list)
 def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     skip_if_missing_solver(solver)
-    if solver == 'internal':
+    if (with_R or with_S) and solver == 'internal':
         pytest.xfail('solver not implemented')
 
     mat_old = []
@@ -268,7 +268,7 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
 @pytest.mark.parametrize('solver', ricc_lrcf_solver_list_small)
 def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     skip_if_missing_solver(solver)
-    if solver == 'internal':
+    if (with_R or with_S) and solver == 'internal':
         pytest.xfail('solver not implemented')
 
     mat_old = []
