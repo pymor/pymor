@@ -15,7 +15,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           run-id: ${{ github.event.workflow_run.id }}
-          pattern: coverage_results (*)
+          pattern: coverage_results-*
           merge-multiple: true
           path: ./reports/
       # Upload to codecov with an API token to avoid upload failures
