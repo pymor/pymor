@@ -98,7 +98,7 @@ runs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: coverage_results (${{ runner.os }}, ${{ inputs.python }})
+        name: coverage_results-${{ runner.os }}_${{ inputs.python }}
         path: ${{ inputs.coverage_file }}.xml
         if-no-files-found: error
     - name: Upload Coverage RAW
