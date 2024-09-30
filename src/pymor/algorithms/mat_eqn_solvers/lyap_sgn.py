@@ -282,39 +282,7 @@ def lyap_sgn_fac(A, B, E, maxiter=100, atol=0, rtol=None, ctol=None):
     lyap_sgn_ldl
     """
     # check inputs
-    assert isinstance(A, np.ndarray)
-    assert A.ndim == 2
-    assert A.shape[0] == A.shape[1]
-
-    assert isinstance(B, np.ndarray)
-    assert B.ndim == 2
-    assert B.shape[0] == A.shape[0]
-
-    assert E is None or isinstance(E, np.ndarray)
-    if E is None:
-        E = np.eye(A.shape[0])
-        hasE = False
-    else:
-        assert E.ndim == 2
-        assert E.shape[0] == E.shape[1]
-        assert E.shape[0] == A.shape[0]
-        hasE = True
-
-    n = A.shape[0]
-
-    # check and assign optional parameters
-    assert isinstance(maxiter, Integral)
-    assert maxiter >= 1
-
-    assert atol >= 0
-
-    if rtol is None:
-        rtol = 10 * n * np.finfo(np.float64).eps
-    assert rtol >= 0
-
-    if ctol is None:
-        ctol = 1e-2 * np.sqrt(n * np.finfo(np.float64).eps)
-    assert ctol >= 0
+    n, E, hasE, rtol, ctol = _check_lyap_fac_inputs(A, B, E, maxiter, atol, rtol, ctol)
 
     # case of empty data
     if n == 0:
