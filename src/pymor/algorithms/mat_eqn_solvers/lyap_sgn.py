@@ -303,7 +303,7 @@ def lyap_sgn_fac(A, B, E, maxiter=100, atol=0, rtol=None, ctol=None):
 
     # sign function iteration
     while niter <= maxiter and not converged:
-        EAinv = spla.solve(A.T, E.T, check_finite=False).T
+        EAinv = spla.solve(A.T, E.T).T
         EAinvE = EAinv @ E if hasE else EAinv
 
         # scaling factor for convergence acceleration
