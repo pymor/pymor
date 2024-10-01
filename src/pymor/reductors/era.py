@@ -194,13 +194,10 @@ class ERAReductor(CacheableObject):
         return np.sqrt(err)
 
     def _construct_abcd(self, sv, U, V, m, p):
-        print(U.shape, V.shape)
         sqsv = np.sqrt(sv)
-        U *= sqsv.reshape(1, -1)
-        V *= sqsv.reshape(1, -1)
-        A = NumpyMatrixOperator(spla.lstsq(U[: -p], U[p:])[0])
-        B = NumpyMatrixOperator(V[:m].T)
-        C = NumpyMatrixOperator(U[:p])
+        A = NumpyMatrixOperator((1/sqsv).reshape(-1,1)*spla.lstsq(U[: -p], U[p:])[0]*sqsv.reshape(1,-1))
+        B = NumpyMatrixOperator((V[:m]*sqsv.reshape(1, -1)).T)
+        C = NumpyMatrixOperator(U[:p]*sqsv.reshape(1, -1))
         return A, B, C, self.feedthrough
 
     def reduce(self, r=None, tol=None, num_left=None, num_right=None):
