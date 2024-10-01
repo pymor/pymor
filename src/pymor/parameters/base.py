@@ -442,6 +442,10 @@ class ParametricObject(ImmutableObject):
     def parametric(self):
         return bool(self.parameters)
 
+    @property
+    def is_time_dependent(self):
+        return 't' in self.parameters
+
     def __check_parameter_consistency(self):
         if self._parameters_internal is not None:
             if self._parameters is not None:
