@@ -99,9 +99,7 @@ class Parameters(SortedFrozenDict):
             Parameters(b=2, a=1).parse([1,2,3])
 
         will assign to parameter `a` the value `[1]` and to parameter `b` the
-        values `[2, 3]`. Further, each parameter value can be given as a
-        vector-valued |Function| with `dim_domain == 1` to specify time-dependent
-        values. A `str` is converted to an appropriate |ExpressionFunction|.
+        values `[2, 3]`.
 
         Parameters
         ----------
@@ -118,8 +116,6 @@ class Parameters(SortedFrozenDict):
             Is raised if `mu` cannot be interpreted as |parameter values| for the
             given |Parameters|.
         """
-        from pymor.analyticalproblems.expressions import Array, Constant
-        from pymor.analyticalproblems.functions import ExpressionFunction, Function, SymbolicExpressionFunction
 
         def fail(msg):
             if isinstance(mu, dict):
@@ -138,100 +134,39 @@ class Parameters(SortedFrozenDict):
             return mu
 
         # convert mu to dict
-        if isinstance(mu, (Number, str, Function)):
+        if isinstance(mu, Number):
             mu = [mu]
-
-        def convert_to_function(v):
-            if isinstance(v, Number):
-                return v
-            f = ExpressionFunction(v, dim_domain=1, variable='t') if isinstance(v, str) else v
-            f.dim_domain == 1 or \
-                fail(f'dim_domain of parameter function must be 1 (not {f.dim_domain}):\n'
-                     f'    {v}')
-            len(f.shape_range) <= 1 or \
-                fail(f'parameter function must be scalar- or vector-valued (not {f.shape_range}):\n'
-                     f'    {v}')
-            return f
-
-        if isinstance(mu, (tuple, list, np.ndarray)):
+        elif isinstance(mu, (tuple, list, np.ndarray)):
             if isinstance(mu, np.ndarray):
                 mu = mu.ravel()
-            all(isinstance(v, (Number, str, Function)) for v in mu) or \
-                fail('not every element a number or function')
-
-            # first convert all strings to functions to get their shape
-            mu = [convert_to_function(v) for v in mu]
+            all(isinstance(v, Number) for v in mu) or fail('not every element a number')
 
             parsed_mu = {}
             for k, v in self.items():
-                if len(mu) > 0 and isinstance(mu[0], Function) and \
-                        len(mu[0].shape_range) == 1 and \
-                        (mu[0].shape_range[0] > 1 or v == 1):
-                    p, mu = mu[0], mu[1:]
-                    p.shape_range[0] == v or \
-                        fail(f'shape of parameter function for parameter {k} must be {v} (not {p.shape_range[0]}):\n'
-                             f'    {p}')
-                else:
-                    len(mu) >= v or fail('not enough values')
-                    p, mu = mu[:v], mu[v:]
+                len(mu) >= v or fail('not enough values')
+                p, mu = mu[:v], mu[v:]
                 parsed_mu[k] = p
             len(mu) == 0 or fail('too many values')
             mu = parsed_mu
+
+        isinstance(mu, dict) or fail('can only parse numbers, tuples, lists, arrays and dicts')
 
         set(mu.keys()) == set(self.keys()) or fail('parameters not matching')
 
         def parse_value(k, v):
             if isinstance(v, Number):
                 v = np.array([v])
-                v = v.ravel()
-                len(v) == self[k] or fail(f'wrong dimension of parameter value {k}')
-                return v
             elif isinstance(v, np.ndarray):
                 v = v.ravel()
-                len(v) == self[k] or fail(f'wrong dimension of parameter value {k}')
-                return v
-            elif isinstance(v, (str, Function)):
-                v = convert_to_function(v)
-
-                # convert scalar-valued functions to functions 1D shape_range
-                if v.shape_range == () and self[k] == 1 and isinstance(v, SymbolicExpressionFunction):
-                    v = SymbolicExpressionFunction(Array([v.expression_obj]), dim_domain=1, variable='t')
-
-                len(v.shape_range) == 1 or fail(f'wrong shape_range of parameter function {k}')
-                v.shape_range[0] == self[k] or fail(f'wrong range dimension of parameter function {k}')
-                return v
             elif isinstance(v, (tuple, list)):
-                all(isinstance(vv, (Number, str, Function)) for vv in v) or \
-                    fail(f"invalid value type '{type(v)}' for parameter {k}")
-                v = [convert_to_function(vv) for vv in v]
-                if any(isinstance(vv, Function) for vv in v):
-                    len(v) == self[k] or fail(f'wrong dimension of parameter value {k}')
-                    funcs = []
-                    for i, vv in enumerate(v):
-                        if isinstance(vv, Number):
-                            f = SymbolicExpressionFunction(Constant(vv), dim_domain=1, variable='t')
-                        else:
-                            f = vv
-
-                        f.dim_domain == 1 or fail(f'wrong domain dimension of parameter function {k}')
-
-                        # convert functions to scalar-valued functions if possible
-                        if f.shape_range == (1,) and isinstance(f, SymbolicExpressionFunction):
-                            f = SymbolicExpressionFunction(f.expression_obj[0], dim_domain=1, variable='t')
-
-                        f.shape_range == () or \
-                            fail(f'parameter function {k}[{i}] not scalar-valued: {vv}')
-                        funcs.append(f)
-                    v = SymbolicExpressionFunction(Array([f.expression_obj for f in funcs]),
-                                                   dim_domain=1, variable='t')
-                    return v
-                else:
-                    v = np.array(v)
-                    v = v.ravel()
-                    len(v) == self[k] or fail(f'wrong dimension of parameter value {k}')
-                    return v
+                all(isinstance(vv, Number) for vv in v) or fail(f"invalid value type '{type(v)}' for parameter {k}")
+                v = np.array(v)
+                v = v.ravel()
             else:
                 fail(f"invalid value type '{type(v)}' for parameter {k}")
+
+            len(v) == self[k] or fail(f'wrong dimension of parameter value {k}')
+            return v
 
         return Mu({k: parse_value(k, v) for k, v in mu.items()})
 
@@ -319,10 +254,9 @@ class Mu(FrozenDict):
     Parameters
     ----------
     Anything that dict accepts for the construction of a dictionary.
-    Values are automatically converted to one-dimensional |NumPy arrays|,
-    except for |Functions| which are interpreted as time-dependent parameter
-    values. Unless the Python interpreter runs with the `-O` flag,
-    the arrays are made immutable.
+    Values are automatically converted to one-dimensional |NumPy arrays|.
+    Unless the Python interpreter runs with the `-O` flag, the arrays
+    are made immutable.
 
     Attributes
     ----------
@@ -330,76 +264,25 @@ class Mu(FrozenDict):
         The |Parameters| to which the mapping assigns values.
     """
 
-    __slots__ = ('_raw_values')
     __array_priority__ = 100.0
     __array_ufunc__ = None
 
     def __new__(cls, *args, **kwargs):
-        raw_values = dict(*args, **kwargs)
-        values_for_t = {}
-        for k, v in sorted(raw_values.items()):
+        values = dict(*args, **kwargs)
+        for k, v in sorted(values.items()):
             assert isinstance(k, str)
-            if callable(v):
-                # note: We can't import Function globally due to circular dependencies, so
-                # we import it locally in this branch to avoid executing the import statement
-                # each time a Mu is created (which would make instantiation of simple Mus without
-                # time dependency significantly more expensive).
-                from pymor.analyticalproblems.functions import Function
-                assert k != 't'
-                assert isinstance(v, Function)
-                assert v.dim_domain == 1
-                assert len(v.shape_range) == 1
-                try:
-                    t = np.array(raw_values['t'], ndmin=1)
-                    assert t.shape == (1,)
-                except KeyError:
-                    t = np.zeros(1)
-                vv = v(t)
-            else:
-                vv = np.asarray(v)
-                if vv.ndim == 0:
-                    vv.shape = (1,)
-                assert vv.ndim == 1
-                assert k != 't' or len(vv) == 1
+            vv = np.asarray(v)
+            if vv.ndim == 0:
+                vv.shape = (1,)
+            assert vv.ndim == 1
+            assert k != 't' or len(vv) == 1
             assert not vv.setflags(write=False)
-            values_for_t[k] = vv
 
-        mu = super().__new__(cls, values_for_t)
-        mu._raw_values = raw_values
+        mu = super().__new__(cls, values)
         return mu
 
-    def is_time_dependent(self, param):
-        """Check whether the values for a given parameter depend on time.
-
-        This is the case when the value for `self[param]` was given by a |Function|
-        instead of a constant array.
-        """
-        from pymor.analyticalproblems.functions import Function
-        return isinstance(self._raw_values[param], Function)
-
-    def get_time_dependent_value(self, param):
-        """Return time-dependent |Function| for given parameter.
-
-        Parameters
-        ----------
-        param
-            The parameter for which to return the time-dependent values.
-
-        Returns
-        -------
-        If `param` depends on time, this corresponding |Function| (and not its
-        evaluation at the current time) is returned. If `param` is not given
-        by a |Function|, a |ConstantFunction| is returned.
-        """
-        from pymor.analyticalproblems.functions import Function
-        value = self._raw_values[param]
-        if not isinstance(value, Function):
-            from pymor.analyticalproblems.functions import ConstantFunction
-            value = ConstantFunction(value)
-        return value
-
     def with_(self, **kwargs):
-        return Mu(self._raw_values, **kwargs)
+        return Mu(self, **kwargs)
 
     @property
     def parameters(self):
@@ -465,19 +348,13 @@ class Mu(FrozenDict):
         return self * other
 
     def __str__(self):
-        def format_value(k, v):
-            if self.is_time_dependent(k):
-                return f'{self._raw_values[k]}({self.get("t", 0)}) = {format_array(v)}'
-            else:
-                return format_array(v)
-
-        return '{' + ', '.join(f'{k}: {format_value(k, v)}' for k, v in self.items()) + '}'
+        return '{' + ', '.join(f'{k}: {format_array(v)}' for k, v in self.items()) + '}'
 
     def __repr__(self):
-        return f'Mu({dict(sorted(self._raw_values.items()))})'
+        return f'Mu({dict(sorted(self.items()))})'
 
     def _cache_key_reduce(self):
-        return self._raw_values
+        return dict(self)
 
 
 class ParametricObject(ImmutableObject):

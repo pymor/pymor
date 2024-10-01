@@ -124,31 +124,6 @@ def test_mu_values(mu):
 
 
 @given(pyst.mus)
-def test_mu_time_dependent(mu):
-    for param in mu:
-        func = mu.get_time_dependent_value(param)
-        if mu.is_time_dependent(param):
-            assert np.all(mu[param] == func(mu.get('t', 0)))
-        else:
-            assert isinstance(func, ConstantFunction)
-            assert np.all(mu[param] == func.value)
-
-
-@given(pyst.mus)
-def test_mu_with_changed_time(mu):
-    mu2 = mu.with_(t=42)
-    for param in mu:
-        if param == 't':
-            assert mu2['t'].item() == 42
-            continue
-        func = mu.get_time_dependent_value(param)
-        if mu.is_time_dependent(param):
-            assert np.all(mu2[param] == func(42))
-        else:
-            assert np.all(mu[param] == mu2[param])
-
-
-@given(pyst.mus)
 def test_mu_to_numpy(mu):
     mu_array = mu.to_numpy()
     mu2 = mu.parameters.parse(mu_array)
