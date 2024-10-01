@@ -269,7 +269,8 @@ class Mu(FrozenDict):
 
     def __new__(cls, *args, **kwargs):
         values = dict(*args, **kwargs)
-        for k, v in sorted(values.items()):
+
+        def process_value(k, v):
             assert isinstance(k, str)
             vv = np.asarray(v)
             if vv.ndim == 0:
@@ -277,8 +278,11 @@ class Mu(FrozenDict):
             assert vv.ndim == 1
             assert k != 't' or len(vv) == 1
             assert not vv.setflags(write=False)
+            return vv
 
-        mu = super().__new__(cls, values)
+        processed_values = {k: process_value(k, v) for k, v in sorted(values.items())}
+
+        mu = super().__new__(cls, processed_values)
         return mu
 
     def with_(self, **kwargs):
