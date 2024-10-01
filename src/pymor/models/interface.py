@@ -3,13 +3,15 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from functools import cached_property
+from numbers import Number
 
 import numpy as np
 
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, Function, GenericFunction
 from pymor.core.cache import CacheableObject
 from pymor.core.exceptions import CacheKeyGenerationError
 from pymor.operators.constructions import induced_norm
-from pymor.parameters.base import Mu, Parameters, ParametricObject
+from pymor.parameters.base import Mu, ParametricObject
 from pymor.tools.frozendict import FrozenDict
 
 
@@ -49,8 +51,6 @@ class Model(CacheableObject, ParametricObject):
             for k, v in products.items():
                 setattr(self, f'{k}_product', v)
                 setattr(self, f'{k}_norm', induced_norm(v))
-
-        self.parameters_internal = {'input': dim_input}
 
         self.__auto_init(locals())
 
@@ -121,10 +121,25 @@ class Model(CacheableObject, ParametricObject):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
 
-        # parse input and add it to the parameter values
-        mu_input = Parameters(input=self.dim_input).parse(input)
-        input = mu_input.get_time_dependent_value('input') if mu_input.is_time_dependent('input') else mu_input['input']
-        mu = mu.with_(input=input)
+        # parse input
+        if input is None:
+            input = ConstantFunction(np.array([]), 1)
+        elif isinstance(input, (Number, list, np.ndarray)):
+            input = np.asarray(input).ravel()
+            if input.dtype == object:
+                raise ValueError('Invalid input')
+            input = ConstantFunction(input, 1)
+        elif isinstance(input, str):
+            input = ExpressionFunction(input, dim_domain=1, variable='t')
+        elif not isinstance(input, Function):
+            if not callable(input):
+                raise ValueError('Invalid input')
+            input = GenericFunction(input, 1, self.dim_input)
+
+        if input.dim_domain != 1:
+            raise ValueError(f'dim_domain of input function must be 1 (not {input.dim_domain})')
+        if input.shape_range != (self.dim_input,):
+            raise ValueError(f'shape_range of input function must be ({self.dim_input},) (not {input.shape_range})')
 
         # collect all quantities to be computed
         wanted_quantities = {quantity for quantity, wanted in kwargs.items() if wanted}
@@ -148,14 +163,14 @@ class Model(CacheableObject, ParametricObject):
         assert wanted_quantities <= self.computable_quantities
 
         data = data if data is not None else {}
-        self._compute_or_retrieve_from_cache(wanted_quantities, data, mu)
+        self._compute_or_retrieve_from_cache(wanted_quantities, data, mu, input)
 
         if solution_d_mu:
             data['solution_d_mu'] = {quantity: data[('solution_d_mu',) + quantity] for quantity in solution_d_mu}
 
         return data
 
-    def _compute_required_quantities(self, quantities, data, mu):
+    def _compute_required_quantities(self, quantities, data, mu, input):
         """Compute additional required properties.
 
         Parameters
@@ -166,6 +181,8 @@ class Model(CacheableObject, ParametricObject):
             Dict into which the computed values are inserted.
         mu
             |Parameter values| for which to compute the quantities.
+        input
+            Input for which to compute the quantities.
 
         Returns
         -------
@@ -175,9 +192,9 @@ class Model(CacheableObject, ParametricObject):
         if not quantities:
             return
         self.logger.info('Computing required quantities ...')
-        self._compute_or_retrieve_from_cache(quantities, data, mu)
+        self._compute_or_retrieve_from_cache(quantities, data, mu, input)
 
-    def _compute_or_retrieve_from_cache(self, quantities, data, mu):
+    def _compute_or_retrieve_from_cache(self, quantities, data, mu, input):
         assert quantities <= self.computable_quantities
 
         # fetch already computed data from cache and determine which quantities
@@ -189,10 +206,11 @@ class Model(CacheableObject, ParametricObject):
                 continue
             if self.cache_region is not None:
                 try:
-                    data[quantity] = self.get_cached_value((quantity, mu))
+                    data[quantity] = self.get_cached_value((quantity, mu, input))
                 except CacheKeyGenerationError:
                     assert isinstance(quantity, str)
-                    self.logger.warning(f'Cannot generate cache key for {mu}. Result will not be cached.')
+                    assert isinstance(mu, Mu)
+                    self.logger.warning(f'Cannot generate cache key for input {input}. Result will not be cached.')
                     quantities_to_compute.add(quantity)
                 except KeyError:
                     quantities_to_compute.add(quantity)
@@ -206,17 +224,18 @@ class Model(CacheableObject, ParametricObject):
                 quant = ['_'.join(str(qq) for qq in q) if isinstance(q, tuple) else q for q in quantities_to_compute]
                 if len(quant) > 10:
                     quant = quant[:10] + ['...']
-                with self.logger.block(f'Computing {", ".join(str(q) for q in quant)} of {self.name} for {mu} ...'):
+                with self.logger.block(
+                        f'Computing {", ".join(str(q) for q in quant)} of {self.name} for {mu}/{input} ...'):
                     # call _compute to actually compute the missing quantities
-                    self._compute(quantities_to_compute.copy(), data, mu=mu)
+                    self._compute(quantities_to_compute.copy(), data, mu=mu, input=input)
             else:
                 # call _compute to actually compute the missing quantities
-                self._compute(quantities_to_compute.copy(), data, mu=mu)
+                self._compute(quantities_to_compute.copy(), data, mu=mu, input=input)
 
         if self.cache_region is not None:
             for quantity in quantities_to_compute:
                 try:
-                    self.set_cached_value((quantity, mu), data[quantity])
+                    self.set_cached_value((quantity, mu, input), data[quantity])
                 except CacheKeyGenerationError:
                     pass
 
@@ -451,7 +470,7 @@ class Model(CacheableObject, ParametricObject):
         else:
             raise NotImplementedError('Model has no visualizer.')
 
-    def _compute(self, quantities, data, mu):
+    def _compute(self, quantities, data, mu, input):
         """Actually compute model quantities.
 
         Override this method to provide implementations for solving a model,
@@ -462,7 +481,7 @@ class Model(CacheableObject, ParametricObject):
         has to be added to the provided `data` dict. After that, the quantity
         should be removed from `quantities` so that a ::
 
-            super()._compute(quantities, data, mu)
+            super()._compute(quantities, data, mu, input)
 
         end of the implementation will not cause `NotImplementedErrors`.
         :class:`Model` provides default implementations for the `output`, `output_d_mu`,
@@ -475,7 +494,7 @@ class Model(CacheableObject, ParametricObject):
         In case a requested quantity depends on another quantities, implementations should
         call ::
 
-            self._compute_required_quantities({'quantity_a', 'quantity_b'}, data, mu)
+            self._compute_required_quantities({'quantity_a', 'quantity_b'}, data, mu, input)
 
         which will populate `data` with the needed quantities by calling `_compute` again
         or retrieving previously computed values from the cache. Do not compute required
@@ -489,6 +508,8 @@ class Model(CacheableObject, ParametricObject):
             Dict into which the computed values are inserted.
         mu
             |Parameter values| for which to compute the quantities.
+        input
+            Input for which to compute the quantities.
 
         Returns
         -------
@@ -501,7 +522,7 @@ class Model(CacheableObject, ParametricObject):
             # default implementation in case Model has an 'output_functional'
             if not hasattr(self, 'output_functional'):
                 raise NotImplementedError
-            self._compute_required_quantities({'solution'}, data, mu)
+            self._compute_required_quantities({'solution'}, data, mu, input)
 
             data['output'] = self.output_functional.apply(data['solution'], mu=mu).to_numpy()
             quantities.remove('output')
@@ -513,7 +534,7 @@ class Model(CacheableObject, ParametricObject):
             self._compute_required_quantities(
                 {'solution'} | {('solution_d_mu', param, idx)
                                 for param, dim in self.parameters.items() for idx in range(dim)},
-                data, mu
+                data, mu, input
             )
 
             solution = data['solution']
@@ -532,17 +553,18 @@ class Model(CacheableObject, ParametricObject):
         if 'solution_error_estimate' in quantities:
             if self.error_estimator is None:
                 raise ValueError('Model has no error estimator')
-            self._compute_required_quantities({'solution'}, data, mu)
+            self._compute_required_quantities({'solution'}, data, mu, input)
 
-            data['solution_error_estimate'] = self.error_estimator.estimate_error(data['solution'], mu, self)
+            data['solution_error_estimate'] = self.error_estimator.estimate_error(data['solution'], mu, input, self)
             quantities.remove('solution_error_estimate')
 
         if 'output_error_estimate' in quantities:
             if self.error_estimator is None:
                 raise ValueError('Model has no error estimator')
-            self._compute_required_quantities({'solution'}, data, mu)
+            self._compute_required_quantities({'solution'}, data, mu, input)
 
-            data['output_error_estimate'] = self.error_estimator.estimate_output_error(data['solution'], mu, self)
+            data['output_error_estimate'] = \
+                self.error_estimator.estimate_output_error(data['solution'], mu, input, self)
             quantities.remove('output_error_estimate')
 
 

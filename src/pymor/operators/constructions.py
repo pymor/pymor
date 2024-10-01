@@ -1437,21 +1437,28 @@ class LinearInputOperator(Operator):
     ----------
     B
         The input |Operator|.
+    input
+        The input |Function|.
     """
 
     linear = True
 
-    def __init__(self, B):
-        self.B = B
+    def __init__(self, B, input):
+        assert (B.source.dim,) == input.shape_range
+        self.__auto_init(locals())
         self.source = NumpyVectorSpace(1)
         self.range = B.range
-        self.parameters_own = {'input': B.source.dim}
+        self.parameters_own = {'t': 1}
 
     def apply(self, U, mu=None):
-        return self.B.as_range_array(mu).lincomb(U.to_numpy() * mu['input'])
+        assert U in self.source
+        B_ut = self.as_range_array(mu)
+        return B_ut.lincomb(U.to_numpy())
 
     def as_range_array(self, mu=None):
-        return self.B.as_range_array(mu).lincomb(mu['input'])
+        assert self.parameters.assert_compatible(mu)
+        inp = self.B.source.from_numpy(self.input(mu['t']))
+        return self.B.apply(inp, mu=mu)
 
 
 class QuadraticFunctional(Operator):

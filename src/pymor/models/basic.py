@@ -91,13 +91,13 @@ class StationaryModel(Model):
             f'    dim_output:      {self.dim_output}'
         )
 
-    def _compute(self, quantities, data, mu=None):
+    def _compute(self, quantities, data, mu, input):
         if 'solution' in quantities:
             data['solution'] = self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
             quantities.remove('solution')
 
         for _, param, idx in [q for q in quantities if isinstance(q, tuple) and q[0] == 'solution_d_mu']:
-            self._compute_required_quantities({'solution'}, data, mu)
+            self._compute_required_quantities({'solution'}, data, mu, input)
 
             lhs_d_mu = self.operator.d_mu(param, idx).apply(data['solution'], mu=mu)
             rhs_d_mu = self.rhs.d_mu(param, idx).as_range_array(mu)
@@ -108,7 +108,7 @@ class StationaryModel(Model):
         if 'output_d_mu' in quantities and self.output_d_mu_use_adjoint:
             if not self.operator.linear:
                 raise NotImplementedError
-            self._compute_required_quantities({'solution'}, data, mu)
+            self._compute_required_quantities({'solution'}, data, mu, input)
 
             jacobian = self.output_functional.jacobian(data['solution'], mu)
             assert jacobian.linear
@@ -129,7 +129,7 @@ class StationaryModel(Model):
             data['output_d_mu'] = OutputDMuResult(sensitivities)
             quantities.remove('output_d_mu')
 
-        super()._compute(quantities, data, mu=mu)
+        super()._compute(quantities, data, mu, input)
 
     def deaffinize(self, arg):
         """Build |Model| with linear solution space.
@@ -283,13 +283,7 @@ class InstationaryModel(Model):
         assert mass.source == operator.source
         assert output_functional.source == operator.source
 
-        try:
-            dim_input = [op.parameters['input']
-                         for op in [operator, rhs, output_functional] if 'input' in op.parameters].pop()
-        except IndexError:
-            dim_input = 0
-
-        super().__init__(dim_input=dim_input, products=products, error_estimator=error_estimator,
+        super().__init__(dim_input=0, products=products, error_estimator=error_estimator,
                          visualizer=visualizer, name=name)
 
         self.parameters_internal = dict(self.parameters_internal, t=1)
@@ -305,14 +299,13 @@ class InstationaryModel(Model):
             f'    {"linear" if self.linear else "non-linear"}\n'
             f'    T: {self.T}\n'
             f'    solution_space:  {self.solution_space}\n'
-            f'    dim_input:       {self.dim_input}\n'
             f'    dim_output:      {self.dim_output}'
         )
 
     def with_time_stepper(self, **kwargs):
         return self.with_(time_stepper=self.time_stepper.with_(**kwargs))
 
-    def _compute(self, quantities, data, mu=None):
+    def _compute(self, quantities, data, mu, input):
         if 'solution' in quantities:
             mu = mu.with_(t=0.)
             U0 = self.initial_data.as_range_array(mu)
@@ -324,7 +317,7 @@ class InstationaryModel(Model):
             data['solution'] = U
             quantities.remove('solution')
 
-        super()._compute(quantities, data, mu=mu)
+        super()._compute(quantities, data, mu, input)
 
     def to_lti(self):
         """Convert model to |LTIModel|.
