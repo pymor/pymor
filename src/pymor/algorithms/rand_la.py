@@ -72,17 +72,18 @@ class RandomizedRangeFinder(BasicObject):
             A_adj = AdjointOperator(A, range_product=range_product, source_product=source_product)
 
         self.__auto_init(locals())
-        self.Omega = A.source.empty()
+        self.Omega = A.range.empty()
         self.T = None
         self.estimator_last_basis_size, self.last_estimated_error = 0, np.inf
         self.Q = [A.range.empty() for _ in range(power_iterations+1)]
         self.R = [np.empty((0,0)) for _ in range(power_iterations+1)]
 
     def _draw_samples(self, num):
+        # returns samples of the range of A
         V = self.A.source.random(num, distribution='normal')
         if self.iscomplex:
             V += 1j*self.A.source.random(num, distribution='normal')
-        return V
+        return self.A.apply(V)
 
     def _qr_update(self, Q, R, offset):
         product = self.range_product
@@ -107,8 +108,7 @@ class RandomizedRangeFinder(BasicObject):
                 self.lambda_min = eigs(source_product, sigma=0, which='LM', k=1)[0][0].real
 
         if self.T is None:
-            Omega_test = self._draw_samples(num_testvecs)
-            self.T = A.apply(Omega_test)
+            self.T = self._draw_samples(num_testvecs)
 
         if len(self.Q[-1]) > self.estimator_last_basis_size:
             # in an older implementation, we used re-orthogonalization here, i.e,
@@ -176,7 +176,7 @@ class RandomizedRangeFinder(BasicObject):
             self.Omega.append(V)
 
             current_len = len(Q[0])
-            Q[0].append(A.apply(V))
+            Q[0].append(self.Omega[-block_size:])
             R[0] = self._qr_update(Q[0], R[0], current_len)
 
             # power iterations
