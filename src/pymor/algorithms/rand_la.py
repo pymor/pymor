@@ -90,7 +90,7 @@ class RandomizedRangeFinder(BasicObject):
             _, _R = gram_schmidt(Q, product=product, atol=0, rtol=0, offset=offset, copy=False, return_R=True)
         elif self.qr_method == 'shifted_chol_qr':
             _, _R = shifted_chol_qr(Q, product=product, offset=offset, copy=False)
-        if len(Q[0]) == offset:
+        if len(Q) == offset:
             raise ValueError('Basis extension broke down before convergence.')
         _R[:offset, :offset] = R
         return _R
