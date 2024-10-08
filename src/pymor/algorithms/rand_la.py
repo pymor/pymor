@@ -62,7 +62,7 @@ class RandomizedRangeFinder(BasicObject):
     @defaults('num_testvecs', 'failure_tolerance')
     def __init__(self, A, range_product=None, source_product=None, A_adj=None,
                  power_iterations=0, failure_tolerance=1e-15, num_testvecs=20,
-                 lambda_min=None, block_size=None, iscomplex=False, qr_method='gram_schmidt'):
+                 lambda_min=None, block_size=None, iscomplex=False, qr_method='gram_schmidt', error_estimator='buhr'):
         assert source_product is None or isinstance(source_product, Operator)
         assert range_product is None or isinstance(range_product, Operator)
         assert isinstance(A, Operator)
@@ -72,11 +72,12 @@ class RandomizedRangeFinder(BasicObject):
             A_adj = AdjointOperator(A, range_product=range_product, source_product=source_product)
 
         self.__auto_init(locals())
-        self.Omega = A.source.empty()
+        self.Omega = A.range.empty()
         self.T = None
         self.estimator_last_basis_size, self.last_estimated_error = 0, np.inf
         self.Q = [A.range.empty() for _ in range(power_iterations+1)]
         self.R = [np.empty((0,0)) for _ in range(power_iterations+1)]
+        self.estimate_error = self.buhr_error if error_estimator == 'buhr' else self.loo_error
 
     def _draw_samples(self, num):
         V = self.A.source.random(num, distribution='normal')
@@ -95,7 +96,7 @@ class RandomizedRangeFinder(BasicObject):
         _R[:offset, :offset] = R
         return _R
 
-    def estimate_error(self):
+    def loo_error(self):
         R = np.linalg.multi_dot(self.R[::-1]) if len(self.R) > 1 else self.R[0]   # TODO: TRANSPOSE??
         print(R.shape, self.R[0].dtype)
         Rinv = spla.get_lapack_funcs('trtri', dtype=self.R[0].dtype)(R)[0]
@@ -105,12 +106,14 @@ class RandomizedRangeFinder(BasicObject):
         else:
             Q = self.Q[-1]
             T = Rinv / spla.norm(Rinv, axis=1)
+            print(len(self.Omega), self.Omega.space)
+            print(len(Q), Q.space)
             QZ = self.Omega.inner(Q)
             QQZ = Q.lincomb(QZ.T).to_numpy().T
             QTTQZ = Q.to_numpy().T @ T * np.diag(T.T @ QZ)
             return spla.norm(self.Omega.to_numpy().T-QQZ+QTTQZ) / np.sqrt(len(self.Omega))
 
-    def restimate_error(self):
+    def buhr_error(self):
         A, range_product, num_testvecs = self.A, self.range_product, self.num_testvecs
 
         if self.lambda_min is None:
@@ -191,6 +194,7 @@ class RandomizedRangeFinder(BasicObject):
             self.Omega.append(V)
 
             current_len = len(Q[0])
+            print(current_len)
             Q[0].append(A.apply(V))
             R[0] = self._qr_update(Q[0], R[0], current_len)
 
