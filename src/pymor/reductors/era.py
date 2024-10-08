@@ -9,12 +9,28 @@ from pymor.algorithms.chol_qr import shifted_chol_qr
 from pymor.algorithms.svd_va import qr_svd
 from pymor.algorithms.projection import project
 from pymor.algorithms.to_matrix import to_matrix
+from pymor.core.base import BasicObject
 from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
-from pymor.vectorarrays.numpy import NumpyVectorArray
 
+
+class GenericERAReductor(BasicObject):
+    def __init__(self, data, sampling_time, force_stability=True, feedthrough=None):
+        assert sampling_time >= 0
+        assert feedthrough is None or isinstance(feedthrough, (np.ndarray, Operator))
+        assert np.isrealobj(data)
+        if data.ndim == 1:
+            data = data.reshape(-1, 1, 1)
+        assert data.ndim == 3
+        if isinstance(feedthrough, np.ndarray):
+            feedthrough = NumpyMatrixOperator(feedthrough)
+        if isinstance(feedthrough, Operator):
+            assert feedthrough.range.dim == data.shape[1]
+            assert feedthrough.source.dim == data.shape[2]
+        self.__auto_init(locals())
+    
 
 class ERAReductor(CacheableObject):
     r"""Eigensystem Realization Algorithm reductor.
@@ -75,20 +91,6 @@ class ERAReductor(CacheableObject):
     """
 
     cache_region = 'memory'
-
-    def __init__(self, data, sampling_time, force_stability=True, feedthrough=None):
-        assert sampling_time >= 0
-        assert feedthrough is None or isinstance(feedthrough, (np.ndarray, Operator))
-        assert np.isrealobj(data)
-        if data.ndim == 1:
-            data = data.reshape(-1, 1, 1)
-        assert data.ndim == 3
-        if isinstance(feedthrough, np.ndarray):
-            feedthrough = NumpyMatrixOperator(feedthrough)
-        if isinstance(feedthrough, Operator):
-            assert feedthrough.range.dim == data.shape[1]
-            assert feedthrough.source.dim == data.shape[2]
-        self.__auto_init(locals())
 
     @cached
     def _s1_W1(self):
@@ -240,7 +242,7 @@ class ERAReductor(CacheableObject):
             r_tol = np.argmax(error_bounds <= tol) + 1
             r = r_tol if r is None else min(r, r_tol)
 
-        sv, U, V = sv[:r], U[:,:r], V[:,:r]
+        sv, U, V = sv[:r], U[:, :r], V[:, :r]
 
         self.logger.info(f'Constructing reduced realization of order {r} ...')
         A, B, C, D = self._construct_abcd(sv, U, V, num_right or m, num_left or p)
@@ -259,78 +261,77 @@ class ERAReductor(CacheableObject):
 
 
 class RandomizedERAReductor(ERAReductor):
-    def __init__(self, data, sampling_time, min_samples=None, loo_tol=None, power_iterations=2, force_stability=True, feedthrough=None):
+
+    cache_region = 'memory'
+
+    def __init__(self, data, sampling_time, power_iterations=2, block_size=20, force_stability=True, feedthrough=None, num_left=None, num_right=None):
         super().__init__(data, sampling_time, force_stability, feedthrough)
+        data = data.copy()
+        if num_left is not None or num_right is not None:
+            self.logger.info('Computing the projected Markov parameters ...')
+            data = self._project_markov_parameters(num_left, num_right)
         self.__auto_init(locals())
+        if self.force_stability:
+            data = np.concatenate([data, np.zeros_like(data)[1:]], axis=0)
+        s = (data.shape[0] + 1) // 2
+        self._H = NumpyHankelOperator(data[:s], r=data[s-1:])
         self._Z = None
         self._R = None
 
     @cached
     def _sv_U_V(self, num_left, num_right):
-        n, p, m = self.data.shape
-        s = n if self.force_stability else (n + 1) // 2
+        B = self._H.apply_adjoint(Q).to_numpy()
+        Ub, sv, Vh = spla.svd(B, full_matrices=False)
+        U = Q.lincomb(Ub.T)
+        return sv, U.to_numpy().T, Vh.T
 
-        h = self._project_markov_parameters(num_left, num_right) if num_left or num_right else self.data
-        self.logger.info(f'Computing SVD of the {"projected " if num_left or num_right else ""}Hankel matrix ...')
-        if self.force_stability:
-            h = np.concatenate([h, np.zeros_like(h)[1:]], axis=0)
-        H = NumpyHankelOperator(h[:s], r=h[s-1:])
-
-        self._Z = self.draw_samples(H, self.min_samples)
+    def get_randomized_basis(self, basis_size, tol):
+        basis_size = self.block_size if basis_size is None else basis_size
+        self._Z = self.draw_samples(basis_size)
         Y = self._Z
 
         for q in range(self.power_iterations):
             self.logger.info(f'Power iteration: {q+1}')
-            Y = H.apply(H.apply_adjoint(Y))
+            Y = self._H.apply(self._H.apply_adjoint(Y))
 
         Q, self._R = shifted_chol_qr(Y)
 
-        block_size = 5
         if self.loo_tol is not None:
             while True:
                 # leave one out error estimator
-                if self.power_iterations == 0:
-                    Rinv = spla.get_lapack_funcs('trtri', dtype=self.data.dtype)(self._R)[0]
-                    G = spla.norm(Rinv, axis=1)**2
-                    loo_est = np.sqrt(np.sum(1/G)/len(self._Z))
-                else:
-                    Rinv = spla.get_lapack_funcs('trtri', dtype=self.data.dtype)(self._R.T)[0]
-                    T = Rinv / spla.norm(Rinv, axis=1)
-                    QZ = self._Z.inner(Q)
-                    QQZ = Q.lincomb(QZ.T).to_numpy().T
-                    QTTQZ = Q.to_numpy().T @ T * np.diag(T.T @ QZ)
-
-                    loo_est = spla.norm(self._Z.to_numpy().T-QQZ+QTTQZ) / np.sqrt(len(self._Z))
-                    print(loo_est)
-                    assert False
-                if loo_est < self.loo_tol:
+                if self.loo_error_estimator() < self.loo_tol:
                     break
 
                 # enlarge basis if not reached
-                W = self.draw_samples(H, block_size)
+                W = self.draw_samples(self.block_size)
                 self._Z.append(W)
                 for q in range(self.power_iterations):
                     self.logger.info(f'Power iteration: {q+1}')
-                    W = H.apply(H.apply_adjoint(W))
+                    W = self._H.apply(self._H.apply_adjoint(W))
                 n = len(Q)
-                print(n)
                 Q.append(W)
                 Q, Rn = shifted_chol_qr(Q, offset=n)
                 Rn[:n,:n] = self._R
                 self._R = Rn
+                
+    def loo_error_estimator(self):
+        Rinv = spla.get_lapack_funcs('trtri', dtype=self.data.dtype)(self._R)[0]  # TODO: TRANSPOSE??
+        if self.power_iterations == 0:
+            G = spla.norm(Rinv, axis=1)**2
+            return np.sqrt(np.sum(1/G)/len(self._Z))
+        else:
+            T = Rinv / spla.norm(Rinv, axis=1)
+            QZ = self._Z.inner(Q)
+            QQZ = Q.lincomb(QZ.T).to_numpy().T
+            QTTQZ = Q.to_numpy().T @ T * np.diag(T.T @ QZ)
+            return spla.norm(self._Z.to_numpy().T-QQZ+QTTQZ) / np.sqrt(len(self._Z))
 
-        B = H.apply_adjoint(Q).to_numpy()
-        Ub, sv, Vh = spla.svd(B, full_matrices=False)
-        U = Q.lincomb(Ub.T)
-        self.logger.info2(len(sv))
-        return sv, U.to_numpy().T, Vh.T
-
-    def draw_samples(self, H, num):
+    def draw_samples(self, num):
         self.logger.info(f'Taking {num} samples ...')
         # faster way of computing the random samples
-        V = np.zeros((H._circulant.source.dim, num), dtype=self.data.dtype)
-        V[:H.source.dim] = np.random.randn(H.source.dim, num)
-        return H.range.make_array(H._circulant._circular_matvec(V)[:, :H.range.dim])
+        V = np.zeros((self._H._circulant.source.dim, num), dtype=self.data.dtype)
+        V[:self._H.source.dim] = self._H.source.random(num, distribution='normal').to_numpy().T
+        return self._H.range.make_array(self._H._circulant._circular_matvec(V)[:, :self._H.range.dim])
 
     def reduce(self, r=None, tol=None, num_left=None, num_right=None):
         """Construct a minimal realization.
@@ -351,5 +352,51 @@ class RandomizedERAReductor(ERAReductor):
         rom
             Reduced-order |LTIModel|.
         """
-        assert self.min_samples >= r
         return super().reduce(r=r, tol=tol, num_left=num_left, num_right=num_right)
+
+
+from pymor.algorithms.rand_la import RandomizedRangeFinder
+
+
+class RandERAReductor(ERAReductor):
+    def __init__(self, data, sampling_time, power_iterations=2, block_size=20, force_stability=True, feedthrough=None, qr_method='gram_schmidt', num_left=None, num_right=None):
+        super().__init__(data, sampling_time, force_stability, feedthrough)
+        data = data.copy()
+        if num_left is not None or num_right is not None:
+            self.logger.info('Computing the projected Markov parameters ...')
+            data = self._project_markov_parameters(num_left, num_right)
+        self.__auto_init(locals())
+        if self.force_stability:
+            data = np.concatenate([data, np.zeros_like(data)[1:]], axis=0)
+        s = (data.shape[0] + 1) // 2
+        self._H = NumpyHankelOperator(data[:s], r=data[s-1:])
+        self.rrf = RandomizedRangeFinder(self._H, power_iterations=power_iterations, block_size=block_size, qr_method=qr_method)
+        self._last_sv_U_V = None
+
+    def reduce(self, r=None, tol=None):
+        last_basis_size = len(self.rrf.Q[-1])
+        Q = self.rrf.find_range(basis_size=r, tol=tol)
+        r = len(Q) if r is None else r
+        if r > last_basis_size:
+            B = self._H.apply_adjoint(Q).to_numpy()
+            Ub, sv, Vh = spla.svd(B, full_matrices=False)
+            U = Q.lincomb(Ub.T)
+            self._last_sv_U_V = (sv, U.to_numpy().T, Vh.T)
+        sv, U, V = self._last_sv_U_V
+        sv, U, V = sv[:r], U[:, :r], V[:, :r]
+        
+        self.logger.info(f'Constructing reduced realization of order {r} ...')
+        _, p, m = self.data.shape
+        A, B, C, D = self._construct_abcd(sv, U, V, self.num_right or m, self.num_left or p)
+
+        if self.num_left:
+            self.logger.info('Backprojecting tangential output directions ...')
+            W1 = self.output_projector(self.num_left)
+            C = project(C, source_basis=None, range_basis=C.range.from_numpy(W1))
+        if self.num_right:
+            self.logger.info('Backprojecting tangential input directions ...')
+            W2 = self.input_projector(self.num_right)
+            B = project(B, source_basis=B.source.from_numpy(W2), range_basis=None)
+
+        return LTIModel(A, B, C, D=D, sampling_time=self.sampling_time,
+                        presets={'o_dense': np.diag(sv), 'c_dense': np.diag(sv)})
