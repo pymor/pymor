@@ -98,16 +98,13 @@ class RandomizedRangeFinder(BasicObject):
 
     def loo_error(self):
         R = np.linalg.multi_dot(self.R[::-1]) if len(self.R) > 1 else self.R[0]   # TODO: TRANSPOSE??
-        print(R.shape, self.R[0].dtype)
-        Rinv = spla.get_lapack_funcs('trtri', dtype=self.R[0].dtype)(R)[0]
+        Rinv = spla.get_lapack_funcs('trtri', dtype=self.R[0].dtype)(R.T)[0]
         if self.power_iterations == 0:
-            G = spla.norm(Rinv, axis=1)**2
+            G = spla.norm(Rinv, axis=0)**2
             return np.sqrt(np.sum(1/G)/len(self.Omega))
         else:
             Q = self.Q[-1]
-            T = Rinv / spla.norm(Rinv, axis=1)
-            print(len(self.Omega), self.Omega.space)
-            print(len(Q), Q.space)
+            T = Rinv / spla.norm(Rinv, axis=0)
             QZ = self.Omega.inner(Q)
             QQZ = Q.lincomb(QZ.T).to_numpy().T
             QTTQZ = Q.to_numpy().T @ T * np.diag(T.T @ QZ)
@@ -191,11 +188,10 @@ class RandomizedRangeFinder(BasicObject):
                 block_size = min(block_size, basis_size - len(Q[-1]))
 
             V = self._draw_samples(block_size)
-            self.Omega.append(V)
+            self.Omega.append(A.apply(V))
 
             current_len = len(Q[0])
-            print(current_len)
-            Q[0].append(A.apply(V))
+            Q[0].append(self.Omega[-block_size:])
             R[0] = self._qr_update(Q[0], R[0], current_len)
 
             # power iterations
