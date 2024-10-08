@@ -6,31 +6,13 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.chol_qr import shifted_chol_qr
-from pymor.algorithms.svd_va import qr_svd
 from pymor.algorithms.projection import project
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.core.base import BasicObject
 from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 
-
-class GenericERAReductor(BasicObject):
-    def __init__(self, data, sampling_time, force_stability=True, feedthrough=None):
-        assert sampling_time >= 0
-        assert feedthrough is None or isinstance(feedthrough, (np.ndarray, Operator))
-        assert np.isrealobj(data)
-        if data.ndim == 1:
-            data = data.reshape(-1, 1, 1)
-        assert data.ndim == 3
-        if isinstance(feedthrough, np.ndarray):
-            feedthrough = NumpyMatrixOperator(feedthrough)
-        if isinstance(feedthrough, Operator):
-            assert feedthrough.range.dim == data.shape[1]
-            assert feedthrough.source.dim == data.shape[2]
-        self.__auto_init(locals())
-    
 
 class ERAReductor(CacheableObject):
     r"""Eigensystem Realization Algorithm reductor.
@@ -91,6 +73,20 @@ class ERAReductor(CacheableObject):
     """
 
     cache_region = 'memory'
+
+    def __init__(self, data, sampling_time, force_stability=True, feedthrough=None):
+        assert sampling_time >= 0
+        assert feedthrough is None or isinstance(feedthrough, (np.ndarray, Operator))
+        assert np.isrealobj(data)
+        if data.ndim == 1:
+            data = data.reshape(-1, 1, 1)
+        assert data.ndim == 3
+        if isinstance(feedthrough, np.ndarray):
+            feedthrough = NumpyMatrixOperator(feedthrough)
+        if isinstance(feedthrough, Operator):
+            assert feedthrough.range.dim == data.shape[1]
+            assert feedthrough.source.dim == data.shape[2]
+        self.__auto_init(locals())
 
     @cached
     def _s1_W1(self):
@@ -313,7 +309,7 @@ class RandomizedERAReductor(ERAReductor):
                 Q, Rn = shifted_chol_qr(Q, offset=n)
                 Rn[:n,:n] = self._R
                 self._R = Rn
-                
+
     def loo_error_estimator(self):
         Rinv = spla.get_lapack_funcs('trtri', dtype=self.data.dtype)(self._R)[0]  # TODO: TRANSPOSE??
         if self.power_iterations == 0:
@@ -384,7 +380,7 @@ class RandERAReductor(ERAReductor):
             self._last_sv_U_V = (sv, U.to_numpy().T, Vh.T)
         sv, U, V = self._last_sv_U_V
         sv, U, V = sv[:r], U[:, :r], V[:, :r]
-        
+
         self.logger.info(f'Constructing reduced realization of order {r} ...')
         _, p, m = self.data.shape
         A, B, C, D = self._construct_abcd(sv, U, V, self.num_right or m, self.num_left or p)

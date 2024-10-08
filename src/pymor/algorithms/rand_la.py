@@ -96,6 +96,21 @@ class RandomizedRangeFinder(BasicObject):
         return _R
 
     def estimate_error(self):
+        R = np.linalg.multi_dot(self.R[::-1]) if len(self.R) > 1 else self.R[0]   # TODO: TRANSPOSE??
+        print(R.shape, self.R[0].dtype)
+        Rinv = spla.get_lapack_funcs('trtri', dtype=self.R[0].dtype)(R)[0]
+        if self.power_iterations == 0:
+            G = spla.norm(Rinv, axis=1)**2
+            return np.sqrt(np.sum(1/G)/len(self.Omega))
+        else:
+            Q = self.Q[-1]
+            T = Rinv / spla.norm(Rinv, axis=1)
+            QZ = self.Omega.inner(Q)
+            QQZ = Q.lincomb(QZ.T).to_numpy().T
+            QTTQZ = Q.to_numpy().T @ T * np.diag(T.T @ QZ)
+            return spla.norm(self.Omega.to_numpy().T-QQZ+QTTQZ) / np.sqrt(len(self.Omega))
+
+    def restimate_error(self):
         A, range_product, num_testvecs = self.A, self.range_product, self.num_testvecs
 
         if self.lambda_min is None:
