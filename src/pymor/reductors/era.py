@@ -273,7 +273,7 @@ class RandERAReductor(ERAReductor):
         self._last_sv_U_V = None
 
     def _draw_samples(self, num):
-        self.logger.info(f'Taking {num} samples ...')
+        self.rrf.logger.info(f'Taking {num} samples ...')
         # faster way of computing the random samples
         V = np.zeros((self._H._circulant.source.dim, num), dtype=self.data.dtype)
         V[:self._H.source.dim] = self._H.source.random(num, distribution='normal').to_numpy().T
