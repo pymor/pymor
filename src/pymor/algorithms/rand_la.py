@@ -4,9 +4,8 @@
 
 import numpy as np
 import scipy.linalg as spla
-from scipy.special import erfinv
 
-from pymor.algorithms.eigs import eigs
+from pymor.algorithms.chol_qr import shifted_chol_qr
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.svd_va import qr_svd
 from pymor.core.base import BasicObject
@@ -45,64 +44,61 @@ class RandomizedRangeFinder(BasicObject):
         Adjoint |Operator| to use for power iterations. If `None` the
         adjoint is computed using `A`, `source_product` and `range_product`.
         Set to `A` for a `self` for a known self-adjoint operator.
-    failure_tolerance
-        Maximum failure probability.
-    num_testvecs
-        Number of test vectors.
-    lambda_min
-        The smallest eigenvalue of source_product.
-        If `None`, the smallest eigenvalue is computed using scipy.
     block_size
         Number of basis vectors to add per iteration.
     iscomplex
         If `True`, the random vectors are chosen complex.
     """
 
-    @defaults('num_testvecs', 'failure_tolerance')
     def __init__(self, A, range_product=None, source_product=None, A_adj=None,
-                 power_iterations=0, failure_tolerance=1e-15, num_testvecs=20,
-                 lambda_min=None, block_size=None, iscomplex=False):
+                 power_iterations=0, block_size=None, iscomplex=False, qr_method='gram_schmidt'):
         assert source_product is None or isinstance(source_product, Operator)
         assert range_product is None or isinstance(range_product, Operator)
         assert isinstance(A, Operator)
-        assert lambda_min is None or lambda_min > 0
 
         if A_adj is None:
             A_adj = AdjointOperator(A, range_product=range_product, source_product=source_product)
 
         self.__auto_init(locals())
-        self.R, self.estimator_last_basis_size, self.last_estimated_error = None, 0, np.inf
+        self.Omega = A.range.empty()
+        self.estimator_last_basis_size, self.last_estimated_error = 0, np.inf
         self.Q = [A.range.empty() for _ in range(power_iterations+1)]
+        self.R = [np.empty((0,0)) for _ in range(power_iterations+1)]
+
+    def _draw_samples(self, num):
+        # returns samples of the range of A
+        V = self.A.source.random(num, distribution='normal')
+        if self.iscomplex:
+            V += 1j*self.A.source.random(num, distribution='normal')
+        return self.A.apply(V)
+
+    def _qr_update(self, Q, R, offset):
+        product = self.range_product
+        if self.qr_method == 'gram_schmidt':
+            _, _R = gram_schmidt(Q, product=product, atol=0, rtol=0, offset=offset, copy=False, return_R=True)
+        elif self.qr_method == 'shifted_chol_qr':
+            _, _R = shifted_chol_qr(Q, product=product, offset=offset, copy=False)
+        if len(Q) == offset:
+            raise ValueError('Basis extension broke down before convergence.')
+        _R[:offset, :offset] = R
+        return _R
 
     def estimate_error(self):
-        A, range_product, num_testvecs = self.A, self.range_product, self.num_testvecs
-
-        if self.lambda_min is None:
-            source_product = self.source_product
-            if source_product is None:
-                self.lambda_min = 1
-            else:
-                assert source_product is not None
-                self.lambda_min = eigs(source_product, sigma=0, which='LM', k=1)[0][0].real
-
-        if self.R is None:
-            Omega_test = A.source.random(num_testvecs, distribution='normal')
-            if self.iscomplex:
-                Omega_test += 1j*A.source.random(num_testvecs, distribution='normal')
-            self.R = A.apply(Omega_test)
-
         if len(self.Q[-1]) > self.estimator_last_basis_size:
-            # in an older implementation, we used re-orthogonalization here, i.e,
-            # projecting onto Q[-1] instead of new_basis_vecs
-            # should not be needed in most cases. add an option?
-            new_basis_vecs = self.Q[-1][self.estimator_last_basis_size:]
-            self.R -= new_basis_vecs.lincomb(new_basis_vecs.inner(self.R, product=range_product).T)
-            self.estimator_last_basis_size += len(new_basis_vecs)
-
-        testfail = self.failure_tolerance / min(A.source.dim, A.range.dim)
-        testlimit = np.sqrt(2. * self.lambda_min) * erfinv(testfail**(1. / num_testvecs))
-        maxnorm = np.max(self.R.norm(range_product))
-        self.last_estimated_error = maxnorm / testlimit
+            R = np.linalg.multi_dot(self.R[::-1]) if len(self.R) > 1 else self.R[0]   # TODO: TRANSPOSE??
+            G = spla.get_lapack_funcs('trtri', dtype=self.R[0].dtype)(R)[0].T
+            g = spla.norm(G, axis=0)  # norm of rows of R^{-1} / columns of R^{-*}
+            if self.power_iterations == 0:
+                error = np.sqrt(np.sum(1/g**2)/len(self.Omega))
+            else:
+                Q = self.Q[-1]
+                T = G / g
+                QZ = Q.inner(self.Omega)
+                QQZ = Q.lincomb(QZ.T).to_numpy().T
+                QTTQZ = Q.to_numpy().T @ T * np.diag(T.T @ QZ)
+                error = spla.norm(self.Omega.to_numpy().T-QQZ+QTTQZ) / np.sqrt(len(self.Omega))
+            self.last_estimated_error = error
+            self.estimator_last_basis_size = len(self.Q[-1])
         return self.last_estimated_error
 
     def find_range(self, basis_size=None, tol=None):
@@ -119,7 +115,7 @@ class RandomizedRangeFinder(BasicObject):
         -------
         |VectorArray| which contains the basis, whose span approximates the range of A.
         """
-        A, A_adj, Q, range_product = self.A, self.A_adj, self.Q, self.range_product
+        A, A_adj, Q, R = self.A, self.A_adj, self.Q, self.R
 
         if basis_size is None and tol is None:
             raise ValueError('Must specify basis_size or tol.')
@@ -153,24 +149,19 @@ class RandomizedRangeFinder(BasicObject):
             if basis_size is not None:
                 block_size = min(block_size, basis_size - len(Q[-1]))
 
-            V = A.source.random(block_size, distribution='normal')
-            if self.iscomplex:
-                V += 1j*A.source.random(block_size, distribution='normal')
+            V = self._draw_samples(block_size)
+            self.Omega.append(V)
 
             current_len = len(Q[0])
-            Q[0].append(A.apply(V))
-            gram_schmidt(Q[0], range_product, atol=0, rtol=0, offset=current_len, copy=False)
-            if len(Q[0]) == current_len:
-                raise ValueError('Basis extension broke down before convergence.')
+            Q[0].append(self.Omega[-block_size:])
+            R[0] = self._qr_update(Q[0], R[0], current_len)
 
             # power iterations
             for i in range(1, len(Q)):
                 V = Q[i-1][current_len:]
                 current_len = len(Q[i])
                 Q[i].append(A.apply(A_adj.apply(V)))
-                gram_schmidt(Q[i], range_product, atol=0, rtol=0, offset=current_len, copy=False)
-                if len(Q[i]) == current_len:
-                    raise ValueError('Basis extension broke down before convergence.')
+                R[i] = self._qr_update(Q[i], R[i], current_len)
 
         if basis_size is not None and basis_size < len(Q[-1]):
             return Q[-1][:basis_size].copy()
