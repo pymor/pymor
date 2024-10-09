@@ -4,10 +4,8 @@
 
 import numpy as np
 import scipy.linalg as spla
-from scipy.special import erfinv
 
 from pymor.algorithms.chol_qr import shifted_chol_qr
-from pymor.algorithms.eigs import eigs
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.svd_va import qr_svd
 from pymor.core.base import BasicObject
@@ -73,7 +71,6 @@ class RandomizedRangeFinder(BasicObject):
 
         self.__auto_init(locals())
         self.Omega = A.range.empty()
-        self.T = None
         self.estimator_last_basis_size, self.last_estimated_error = 0, np.inf
         self.Q = [A.range.empty() for _ in range(power_iterations+1)]
         self.R = [np.empty((0,0)) for _ in range(power_iterations+1)]
@@ -96,48 +93,19 @@ class RandomizedRangeFinder(BasicObject):
         _R[:offset, :offset] = R
         return _R
 
-    def loo_error(self):
+    def estimate_error(self):
         R = np.linalg.multi_dot(self.R[::-1]) if len(self.R) > 1 else self.R[0]   # TODO: TRANSPOSE??
-        Rinv = spla.get_lapack_funcs('trtri', dtype=self.R[0].dtype)(R.T)[0]
+        G = spla.get_lapack_funcs('trtri', dtype=self.R[0].dtype)(R)[0].T
+        g = spla.norm(G, axis=0)  # norm of rows of R^{-1} / columns of R^{-*}
         if self.power_iterations == 0:
-            G = spla.norm(Rinv, axis=0)**2
-            return np.sqrt(np.sum(1/G)/len(self.Omega))
+            return np.sqrt(np.sum(1/g**2)/len(self.Omega))
         else:
             Q = self.Q[-1]
-            T = Rinv / spla.norm(Rinv, axis=0)
-            QZ = self.Omega.inner(Q)
+            T = G / g
+            QZ = Q.inner(self.Omega)
             QQZ = Q.lincomb(QZ.T).to_numpy().T
             QTTQZ = Q.to_numpy().T @ T * np.diag(T.T @ QZ)
             return spla.norm(self.Omega.to_numpy().T-QQZ+QTTQZ) / np.sqrt(len(self.Omega))
-
-    def buhr_error(self):
-        A, range_product, num_testvecs = self.A, self.range_product, self.num_testvecs
-
-        if self.lambda_min is None:
-            source_product = self.source_product
-            if source_product is None:
-                self.lambda_min = 1
-            else:
-                assert source_product is not None
-                self.lambda_min = eigs(source_product, sigma=0, which='LM', k=1)[0][0].real
-
-        if self.T is None:
-            Omega_test = self._draw_samples(num_testvecs)
-            self.T = A.apply(Omega_test)
-
-        if len(self.Q[-1]) > self.estimator_last_basis_size:
-            # in an older implementation, we used re-orthogonalization here, i.e,
-            # projecting onto Q[-1] instead of new_basis_vecs
-            # should not be needed in most cases. add an option?
-            new_basis_vecs = self.Q[-1][self.estimator_last_basis_size:]
-            self.T -= new_basis_vecs.lincomb(new_basis_vecs.inner(self.T, product=range_product).T)
-            self.estimator_last_basis_size += len(new_basis_vecs)
-
-        testfail = self.failure_tolerance / min(A.source.dim, A.range.dim)
-        testlimit = np.sqrt(2. * self.lambda_min) * erfinv(testfail**(1. / num_testvecs))
-        maxnorm = np.max(self.T.norm(range_product))
-        self.last_estimated_error = maxnorm / testlimit
-        return self.last_estimated_error
 
     def find_range(self, basis_size=None, tol=None):
         """Find the range of A.
