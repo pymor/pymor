@@ -98,7 +98,7 @@ class RandomizedRangeFinder(BasicObject):
                 QTTQZ = Q.to_numpy().T @ T * np.diag(T.T @ QZ)
                 error = spla.norm(self.Omega.to_numpy().T-QQZ+QTTQZ) / np.sqrt(len(self.Omega))
             self.last_estimated_error = error
-            self.estimator_last_basis_size = len(Q[-1])
+            self.estimator_last_basis_size = len(self.Q[-1])
         return self.last_estimated_error
 
     def find_range(self, basis_size=None, tol=None):
