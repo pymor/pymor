@@ -50,7 +50,6 @@ class RandomizedRangeFinder(BasicObject):
         If `True`, the random vectors are chosen complex.
     """
 
-    @defaults('num_testvecs', 'failure_tolerance')
     def __init__(self, A, range_product=None, source_product=None, A_adj=None,
                  power_iterations=0, block_size=None, iscomplex=False, qr_method='gram_schmidt'):
         assert source_product is None or isinstance(source_product, Operator)
