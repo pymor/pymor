@@ -284,10 +284,15 @@ class RandERAReductor(ERAReductor):
         Q = self.rrf.find_range(basis_size=r, tol=tol)
         r = len(Q) if r is None else r
         if r > last_basis_size:
+            self.logger.info('Projecting onto reduced space ...')
             B = self._H.apply_adjoint(Q).to_numpy()
+            self.logger.info(f'Computing reduced SVD of size {B.shape[0]}x{B.shape[1]} ...')
             Ub, sv, Vh = spla.svd(B, full_matrices=False)
+            self.logger.info('Lifting left singular vectors ...')
             U = Q.lincomb(Ub.T)
             self._last_sv_U_V = (sv, U.to_numpy().T, Vh.T)
+        else:
+            self.logger.info('Smaller model order requested. Reusing last SVD.')
         sv, U, V = self._last_sv_U_V
         sv, U, V = sv[:r], U[:, :r], V[:, :r]
 
