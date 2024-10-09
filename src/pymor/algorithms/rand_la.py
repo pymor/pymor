@@ -169,7 +169,7 @@ class RandomizedRangeFinder(BasicObject):
                 block_size = min(block_size, basis_size - len(Q[-1]))
 
             V = self._draw_samples(block_size)
-            self.Omega.append(A.apply(V))
+            self.Omega.append(V)
 
             current_len = len(Q[0])
             Q[0].append(self.Omega[-block_size:])
