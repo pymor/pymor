@@ -66,6 +66,7 @@ class RandomizedRangeFinder(BasicObject):
         self.R = [np.empty((0,0)) for _ in range(power_iterations+1)]
 
     def _draw_samples(self, num):
+        self.logger.info(f'Taking {num} samples ...')
         # returns samples of the range of A
         V = self.A.source.random(num, distribution='normal')
         if self.iscomplex:
@@ -158,10 +159,11 @@ class RandomizedRangeFinder(BasicObject):
 
             # power iterations
             for i in range(1, len(Q)):
-                V = Q[i-1][current_len:]
-                current_len = len(Q[i])
-                Q[i].append(A.apply(A_adj.apply(V)))
-                R[i] = self._qr_update(Q[i], R[i], current_len)
+                with self.logger.block(f'Power iteration {i} ...'):
+                    V = Q[i-1][current_len:]
+                    current_len = len(Q[i])
+                    Q[i].append(A.apply(A_adj.apply(V)))
+                    R[i] = self._qr_update(Q[i], R[i], current_len)
 
         if basis_size is not None and basis_size < len(Q[-1]):
             return Q[-1][:basis_size].copy()
