@@ -66,10 +66,11 @@ class RandomizedRangeFinder(BasicObject):
         self.R = [np.empty((0,0)) for _ in range(power_iterations+1)]
 
     def _draw_samples(self, num):
+        # returns samples of the range of A
         V = self.A.source.random(num, distribution='normal')
         if self.iscomplex:
             V += 1j*self.A.source.random(num, distribution='normal')
-        return V
+        return self.A.apply(V)
 
     def _qr_update(self, Q, R, offset):
         product = self.range_product
@@ -149,7 +150,7 @@ class RandomizedRangeFinder(BasicObject):
                 block_size = min(block_size, basis_size - len(Q[-1]))
 
             V = self._draw_samples(block_size)
-            self.Omega.append(A.apply(V))
+            self.Omega.append(V)
 
             current_len = len(Q[0])
             Q[0].append(self.Omega[-block_size:])
