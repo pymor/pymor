@@ -5,8 +5,8 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.chol_qr import shifted_chol_qr
 from pymor.algorithms.projection import project
+from pymor.algorithms.rand_la import RandomizedRangeFinder
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
@@ -256,104 +256,6 @@ class ERAReductor(CacheableObject):
                         presets={'o_dense': np.diag(sv), 'c_dense': np.diag(sv)})
 
 
-class RandomizedERAReductor(ERAReductor):
-
-    cache_region = 'memory'
-
-    def __init__(self, data, sampling_time, power_iterations=2, block_size=20, force_stability=True, feedthrough=None, num_left=None, num_right=None):
-        super().__init__(data, sampling_time, force_stability, feedthrough)
-        data = data.copy()
-        if num_left is not None or num_right is not None:
-            self.logger.info('Computing the projected Markov parameters ...')
-            data = self._project_markov_parameters(num_left, num_right)
-        self.__auto_init(locals())
-        if self.force_stability:
-            data = np.concatenate([data, np.zeros_like(data)[1:]], axis=0)
-        s = (data.shape[0] + 1) // 2
-        self._H = NumpyHankelOperator(data[:s], r=data[s-1:])
-        self._Z = None
-        self._R = None
-
-    @cached
-    def _sv_U_V(self, num_left, num_right):
-        B = self._H.apply_adjoint(Q).to_numpy()
-        Ub, sv, Vh = spla.svd(B, full_matrices=False)
-        U = Q.lincomb(Ub.T)
-        return sv, U.to_numpy().T, Vh.T
-
-    def get_randomized_basis(self, basis_size, tol):
-        basis_size = self.block_size if basis_size is None else basis_size
-        self._Z = self.draw_samples(basis_size)
-        Y = self._Z
-
-        for q in range(self.power_iterations):
-            self.logger.info(f'Power iteration: {q+1}')
-            Y = self._H.apply(self._H.apply_adjoint(Y))
-
-        Q, self._R = shifted_chol_qr(Y)
-
-        if self.loo_tol is not None:
-            while True:
-                # leave one out error estimator
-                if self.loo_error_estimator() < self.loo_tol:
-                    break
-
-                # enlarge basis if not reached
-                W = self.draw_samples(self.block_size)
-                self._Z.append(W)
-                for q in range(self.power_iterations):
-                    self.logger.info(f'Power iteration: {q+1}')
-                    W = self._H.apply(self._H.apply_adjoint(W))
-                n = len(Q)
-                Q.append(W)
-                Q, Rn = shifted_chol_qr(Q, offset=n)
-                Rn[:n,:n] = self._R
-                self._R = Rn
-
-    def loo_error_estimator(self):
-        Rinv = spla.get_lapack_funcs('trtri', dtype=self.data.dtype)(self._R)[0]  # TODO: TRANSPOSE??
-        if self.power_iterations == 0:
-            G = spla.norm(Rinv, axis=1)**2
-            return np.sqrt(np.sum(1/G)/len(self._Z))
-        else:
-            T = Rinv / spla.norm(Rinv, axis=1)
-            QZ = self._Z.inner(Q)
-            QQZ = Q.lincomb(QZ.T).to_numpy().T
-            QTTQZ = Q.to_numpy().T @ T * np.diag(T.T @ QZ)
-            return spla.norm(self._Z.to_numpy().T-QQZ+QTTQZ) / np.sqrt(len(self._Z))
-
-    def draw_samples(self, num):
-        self.logger.info(f'Taking {num} samples ...')
-        # faster way of computing the random samples
-        V = np.zeros((self._H._circulant.source.dim, num), dtype=self.data.dtype)
-        V[:self._H.source.dim] = self._H.source.random(num, distribution='normal').to_numpy().T
-        return self._H.range.make_array(self._H._circulant._circular_matvec(V)[:, :self._H.range.dim])
-
-    def reduce(self, r=None, tol=None, num_left=None, num_right=None):
-        """Construct a minimal realization.
-
-        Parameters
-        ----------
-        r
-            Order of the reduced model if `tol` is `None`, maximum order if `tol` is specified.
-        tol
-            Tolerance for the error bound.
-        num_left
-            Number of left (output) directions for tangential projection.
-        num_right
-            Number of right (input) directions for tangential projection.
-
-        Returns
-        -------
-        rom
-            Reduced-order |LTIModel|.
-        """
-        return super().reduce(r=r, tol=tol, num_left=num_left, num_right=num_right)
-
-
-from pymor.algorithms.rand_la import RandomizedRangeFinder
-
-
 class RandERAReductor(ERAReductor):
     def __init__(self, data, sampling_time, power_iterations=2, block_size=20, force_stability=True, feedthrough=None, qr_method='gram_schmidt', num_left=None, num_right=None):
         super().__init__(data, sampling_time, force_stability, feedthrough)
@@ -367,7 +269,15 @@ class RandERAReductor(ERAReductor):
         s = (data.shape[0] + 1) // 2
         self._H = NumpyHankelOperator(data[:s], r=data[s-1:])
         self.rrf = RandomizedRangeFinder(self._H, power_iterations=power_iterations, block_size=block_size, qr_method=qr_method)
+        self.rrf._draw_samples = self._draw_samples
         self._last_sv_U_V = None
+
+    def _draw_samples(self, num):
+        self.logger.info(f'Taking {num} samples ...')
+        # faster way of computing the random samples
+        V = np.zeros((self._H._circulant.source.dim, num), dtype=self.data.dtype)
+        V[:self._H.source.dim] = self._H.source.random(num, distribution='normal').to_numpy().T
+        return self._H.range.make_array(self._H._circulant._circular_matvec(V)[:, :self._H.range.dim])
 
     def reduce(self, r=None, tol=None):
         last_basis_size = len(self.rrf.Q[-1])
