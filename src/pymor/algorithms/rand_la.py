@@ -72,7 +72,6 @@ class RandomizedRangeFinder(BasicObject):
             A_adj = AdjointOperator(A, range_product=range_product, source_product=source_product)
 
         self.__auto_init(locals())
-        self.Omega = A.range.empty()
         self.T = None
         self.estimator_last_basis_size, self.last_estimated_error = 0, np.inf
         self.Q = [A.range.empty() for _ in range(power_iterations+1)]
@@ -175,10 +174,9 @@ class RandomizedRangeFinder(BasicObject):
 
             V = self._draw_samples(block_size)
             assert len(V) == block_size
-            self.Omega.append(V)
 
             current_len = len(Q[0])
-            Q[0].append(self.Omega[-block_size:])
+            Q[0].append(V)
             R[0] = self._qr_update(Q[0], R[0], current_len)
 
             # power iterations
