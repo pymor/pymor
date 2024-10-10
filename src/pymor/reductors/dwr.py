@@ -220,15 +220,15 @@ class DWRCoerciveRBEstimator(ImmutableObject):
     def __init__(self, primal_estimator, dual_estimators, dual_models):
         self.__auto_init(locals())
 
-    def estimate_error(self, U, mu, m):
-        return self.primal_estimator.estimate_error(U, mu, m)
+    def estimate_error(self, U, mu, input, m):
+        return self.primal_estimator.estimate_error(U, mu, input, m)
 
-    def estimate_output_error(self, U, mu, m):
-        est_pr = self.estimate_error(U, mu, m).item()
+    def estimate_output_error(self, U, mu, input, m):
+        est_pr = self.estimate_error(U, mu, input, m).item()
         est_dus = []
         for d in range(m.dim_output):
             dual_solution = self.dual_models[d].solve(mu)
-            est_dus.append(self.dual_estimators[d].estimate_error(dual_solution, mu, m).item())
+            est_dus.append(self.dual_estimators[d].estimate_error(dual_solution, mu, input, m).item())
         ret = est_pr * np.array(est_dus).reshape((1, -1))
         return ret
 

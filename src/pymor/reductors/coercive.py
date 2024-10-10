@@ -77,16 +77,16 @@ class CoerciveRBEstimator(ImmutableObject):
     def __init__(self, residual, residual_range_dims, coercivity_estimator, projected_output_adjoint=None):
         self.__auto_init(locals())
 
-    def estimate_error(self, U, mu, m):
+    def estimate_error(self, U, mu, input, m):
         est = self.residual.apply(U, mu=mu).norm()
         if self.coercivity_estimator:
             est /= self.coercivity_estimator(mu)
         return est
 
-    def estimate_output_error(self, U, mu, m):
+    def estimate_output_error(self, U, mu, input, m):
         if self.projected_output_adjoint is None:
             raise NotImplementedError
-        estimate = self.estimate_error(U, mu, m)
+        estimate = self.estimate_error(U, mu, input, m)
         # scale with dual norm of the output functional
         output_functional_norms = self.projected_output_adjoint.as_range_array(mu).norm()
         errs = estimate * output_functional_norms
@@ -262,7 +262,7 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
         self.__auto_init(locals())
         self.norm = induced_norm(estimator_matrix)
 
-    def estimate_error(self, U, mu, m):
+    def estimate_error(self, U, mu, input, m):
         if len(U) > 1:
             raise NotImplementedError
         if not m.rhs.parametric:
@@ -283,10 +283,10 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
 
         return est
 
-    def estimate_output_error(self, U, mu, m):
+    def estimate_output_error(self, U, mu, input, m):
         if not self.output_estimator_matrices or not self.output_functional_coeffs:
             raise NotImplementedError
-        estimate = self.estimate_error(U, mu, m)
+        estimate = self.estimate_error(U, mu, input, m)
         # scale with dual norm of the output functional
         coeff_vals = np.array([c.evaluate(mu) for c in self.output_functional_coeffs])
         dual_norms = []

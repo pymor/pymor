@@ -169,7 +169,7 @@ class ImplicitEulerTimeStepper(TimeStepper):
         elif isinstance(F, Operator):
             assert F.source.dim == 1
             assert F.range == A.range
-            F_time_dep = _depends_on_time(F, mu)
+            F_time_dep = F.is_time_dependent
             if not F_time_dep:
                 dt_F = F.as_vector(mu) * dt
         else:
@@ -194,7 +194,7 @@ class ImplicitEulerTimeStepper(TimeStepper):
                    M.solver_options if self.solver_options == 'mass' else
                    self.solver_options)
         M_dt_A = (M + A * dt).with_(solver_options=options)
-        if not _depends_on_time(M_dt_A, mu):
+        if not M_dt_A.is_time_dependent:
             M_dt_A = M_dt_A.assemble(mu)
 
         t = t0
@@ -250,7 +250,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
         if isinstance(F, Operator):
             assert F.source.dim == 1
             assert F.range == A.range
-            F_time_dep = _depends_on_time(F, mu)
+            F_time_dep = F.is_time_dependent
             if not F_time_dep:
                 F_ass = F.as_vector(mu)
         elif isinstance(F, VectorArray):
@@ -262,7 +262,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
         assert len(U0) == 1
         assert U0 in A.source
 
-        A_time_dep = _depends_on_time(A, mu)
+        A_time_dep = A.is_time_dependent
         if not A_time_dep:
             A = A.assemble(mu)
 
@@ -340,7 +340,7 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         elif isinstance(F, Operator):
             assert F.source.dim == 1
             assert F.range == A.range
-            F_time_dep = _depends_on_time(F, mu)
+            F_time_dep = F.is_time_dependent
             if not F_time_dep:
                 dt_F = F.as_vector(mu) * dt
         else:
@@ -369,10 +369,10 @@ class ImplicitMidpointTimeStepper(TimeStepper):
             options = self.solver_options
 
         M_dt_A_impl = (M + A * (dt/2)).with_(solver_options=options)
-        if not _depends_on_time(M_dt_A_impl, mu):
+        if not M_dt_A_impl.is_time_dependent:
             M_dt_A_impl = M_dt_A_impl.assemble(mu)
         M_dt_A_expl = (M - A * (dt/2)).with_(solver_options=options)
-        if not _depends_on_time(M_dt_A_expl, mu):
+        if not M_dt_A_expl.is_time_dependent:
             M_dt_A_expl = M_dt_A_expl.assemble(mu)
 
         t = t0
@@ -427,7 +427,7 @@ class DiscreteTimeStepper(TimeStepper):
         elif isinstance(F, Operator):
             assert F.source.dim == 1
             assert F.range == A.range
-            F_time_dep = _depends_on_time(F, mu)
+            F_time_dep = F.is_time_dependent
             if not F_time_dep:
                 Fk = F.as_vector(mu)
         else:
@@ -447,7 +447,7 @@ class DiscreteTimeStepper(TimeStepper):
         num_ret_values = 1
         yield U0, k0
 
-        if not _depends_on_time(M, mu):
+        if not M.is_time_dependent:
             M = M.assemble(mu)
 
         U = U0.copy()
@@ -465,9 +465,3 @@ class DiscreteTimeStepper(TimeStepper):
             while k - k0 + 1 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
                 num_ret_values += 1
                 yield U, k
-
-
-def _depends_on_time(obj, mu):
-    if not mu:
-        return False
-    return 't' in obj.parameters or any(mu.is_time_dependent(k) for k in obj.parameters)

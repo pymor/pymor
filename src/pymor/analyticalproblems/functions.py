@@ -195,6 +195,9 @@ class ConstantFunction(Function):
         from dolfin import Constant
         return np.vectorize(Constant)(self.value), {}
 
+    def _cache_key_reduce(self):
+        return (self.value, self.dim_domain)
+
 
 class GenericFunction(Function):
     """Wrapper making an arbitrary Python function between |NumPy arrays| a proper |Function|.
