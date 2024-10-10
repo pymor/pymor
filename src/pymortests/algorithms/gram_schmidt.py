@@ -8,7 +8,7 @@ from hypothesis import assume, settings
 
 import pymortests.strategies as pyst
 from pymor.algorithms.basic import almost_equal, contains_zero_vector
-from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
+from pymor.algorithms.gram_schmidt import cgs_iro_ls, gram_schmidt, gram_schmidt_biorth
 from pymor.core.logger import log_levels
 from pymortests.base import runmodule
 
@@ -80,6 +80,78 @@ def test_gram_schmidt_with_product_and_R(operator_with_arrays_and_products):
     assert np.all(almost_equal(U, onb.lincomb(R.T)))
 
     onb2, R2 = gram_schmidt(U, product=p, return_R=True, copy=False)
+    assert np.all(almost_equal(onb, onb2))
+    assert np.all(R == R2)
+    assert np.all(almost_equal(onb, U))
+
+
+@pyst.given_vector_arrays()
+def test_cgs_iro_ls(vector_array):
+    U = vector_array
+    # TODO: assumption here masks a potential issue with the algorithm
+    #      where it fails in del instead of a proper error
+    assume(len(U) > 1 or not contains_zero_vector(U))
+
+    V = U.copy()
+    onb = cgs_iro_ls(U, copy=True)
+    assert np.all(almost_equal(U, V))
+    assert np.allclose(onb.inner(onb), np.eye(len(onb)))
+    # TODO: maybe raise tolerances again
+    assert np.all(almost_equal(U, onb.lincomb(onb.inner(U).T), atol=1e-13, rtol=1e-13))
+
+    onb2 = cgs_iro_ls(U, copy=False)
+    assert np.all(almost_equal(onb, onb2))
+    assert np.all(almost_equal(onb, U))
+
+
+@pyst.given_vector_arrays()
+@settings(deadline=None)
+def test_cgs_iro_ls_with_R(vector_array):
+    U = vector_array
+    # TODO: assumption here masks a potential issue with the algorithm
+    #      where it fails in del instead of a proper error
+    assume(len(U) > 1 or not contains_zero_vector(U))
+
+    V = U.copy()
+    onb, R = cgs_iro_ls(U, return_R=True, copy=True)
+    assert np.all(almost_equal(U, V))
+    assert np.allclose(onb.inner(onb), np.eye(len(onb)))
+    lc = onb.lincomb(onb.inner(U).T)
+    rtol = atol = 1e-13
+    assert np.all(almost_equal(U, lc, rtol=rtol, atol=atol))
+    assert np.all(almost_equal(V, onb.lincomb(R.T), rtol=rtol, atol=atol))
+
+    onb2, R2 = cgs_iro_ls(U, return_R=True, copy=False)
+    assert np.all(almost_equal(onb, onb2))
+    assert np.all(R == R2)
+    assert np.all(almost_equal(onb, U))
+
+
+def test_cgs_iro_ls_with_product(operator_with_arrays_and_products):
+    _, _, U, _, p, _ = operator_with_arrays_and_products
+
+    V = U.copy()
+    onb = cgs_iro_ls(U, product=p, copy=True)
+    assert np.all(almost_equal(U, V))
+    assert np.allclose(p.apply2(onb, onb), np.eye(len(onb)))
+    assert np.all(almost_equal(U, onb.lincomb(p.apply2(onb, U).T), rtol=1e-13))
+
+    onb2 = cgs_iro_ls(U, product=p, copy=False)
+    assert np.all(almost_equal(onb, onb2))
+    assert np.all(almost_equal(onb, U))
+
+
+def test_cgs_iro_ls_with_product_and_R(operator_with_arrays_and_products):
+    _, _, U, _, p, _ = operator_with_arrays_and_products
+
+    V = U.copy()
+    onb, R = cgs_iro_ls(U, product=p, return_R=True, copy=True)
+    assert np.all(almost_equal(U, V))
+    assert np.allclose(p.apply2(onb, onb), np.eye(len(onb)))
+    assert np.all(almost_equal(U, onb.lincomb(p.apply2(onb, U).T), rtol=1e-13))
+    assert np.all(almost_equal(U, onb.lincomb(R.T)))
+
+    onb2, R2 = cgs_iro_ls(U, product=p, return_R=True, copy=False)
     assert np.all(almost_equal(onb, onb2))
     assert np.all(R == R2)
     assert np.all(almost_equal(onb, U))

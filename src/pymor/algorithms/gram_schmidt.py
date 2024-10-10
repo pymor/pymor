@@ -122,6 +122,141 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
         return A
 
 
+@defaults('atol', 'rtol', 'check', 'check_tol')
+def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0,
+               check=True, check_tol=1e-3, copy=True):
+    """Orthonormalize a |VectorArray| using the CGS IRO LS algortihm.
+
+    This method computes a QR decomposition of a |VectorArray| via the classical Gram-Schmidt
+    algorithm with normalization lag and re-orthogonalization lag according to :cite:`SLAYT21`.
+    Derived from the matlab repository :cite:`LCO24` to include tolerance checks,
+    offsets and non-euclidean inner products.
+
+    Parameters
+    ----------
+    A
+        The |VectorArray| which is to be orthonormalized.
+    product
+        The inner product |Operator| w.r.t. which to orthonormalize.
+        If `None`, the Euclidean product is used.
+    return_R
+        If `True`, the R matrix from QR decomposition is returned.
+    atol
+        Vectors of norm smaller than `atol` are removed from the array.
+    rtol
+        Relative tolerance used to detect linear dependent vectors
+        (which are then removed from the array).
+    offset
+        Assume that the first `offset` vectors are already orthonormal and start the
+        algorithm at the `offset + 1`-th vector.
+    check
+        If `True`, check if the resulting |VectorArray| is really orthonormal.
+    check_tol
+        Tolerance for the check.
+    copy
+        If `True`, create a copy of `A` instead of modifying `A` in-place.
+
+    Returns
+    -------
+    Q
+        The orthonormalized |VectorArray|.
+    R
+        The upper-triangular/trapezoidal matrix (if `return_R` is `True`).
+    """
+    logger = getLogger('pymor.algorithms.gram_schmidt.cgs_iro_ls')
+
+    n = len(A)
+    assert 0 <= atol
+    assert 0 <= offset <= n
+    if copy:
+        A = A.copy()
+
+    atol_p2 = atol ** 2
+
+    R = np.eye(n)
+    remove = []
+    r0 = r1 = None
+
+    if n == 0 or offset == n:
+        return A, R
+
+    # last two orthonormal vectors have to be orthogonalized again
+    # to achieve an orthonormal basis
+    offset = max(offset-2, 0)
+
+    for k in range(offset, n-1):
+        q = A[k]
+        u = A[k+1]
+
+        r0 = q.inner(q, product)[0][0]
+        initial_norm = np.sqrt(r0)
+        if r0 <= atol_p2:
+            logger.info(f'Removing vector {k} of norm {r0}')
+            remove.append(k)
+            continue
+        r1 = q.inner(u, product)[0][0]
+
+        if k > offset:
+            y = np.reshape(A[:k].inner(q, product), [k])
+            z = np.reshape(A[:k].inner(u, product), [k])
+            r0 -= y.dot(y)
+            r1 -= y.dot(z)
+            R[:k, k] += y
+
+        if r0 <= rtol * initial_norm:
+            logger.info(f'Removing linearly dependent vector {k}')
+            remove.append(k)
+            continue
+
+        r0 = np.sqrt(r0)
+
+        R[k, k] = r0
+        R[k, k+1] = r1 / r0
+
+        if k > offset:
+            R[:k, k+1] = z
+            q.axpy(-1.0, A[:k].lincomb(y))
+
+        q.scal(1 / r0)
+        u.axpy(-1.0, A[:k+1].lincomb(R[:k+1, k+1]))
+
+    # orth last vector outside loop
+    q = A[n-1]
+    r0 = q.inner(q, product)[0][0]
+    initial_norm = np.sqrt(r0)
+    if r0 <= atol_p2 or r0 <= rtol * initial_norm:
+        logger.info(f'Removing vector {n-1} of norm {r0}')
+        remove.append(n-1)
+    else:
+        y = np.reshape(A[:n-1].inner(q, product), [n-1]) if n>1 else np.zeros([0])
+        R[:n-1, n-1] += y
+
+        r0 -= y.dot(y)
+        if r0 <= rtol * initial_norm:
+            logger.info(f'Removing linearly dependent vector {k}')
+            remove.append(k)
+        else:
+            r0 = np.sqrt(r0)
+            R[n-1, n-1] = r0
+
+            q.axpy(-1.0, A[:n-1].lincomb(y))
+            q.scal(1 / r0)
+
+    if remove:
+        del A[remove]
+        R = np.delete(R, remove, axis=0)
+
+    if check:
+        error_matrix = A[offset:len(A)].inner(A, product)
+        error_matrix[:len(A) - offset, offset:len(A)] -= np.eye(len(A) - offset)
+        if error_matrix.size > 0:
+            err = np.max(np.abs(error_matrix))
+            if err >= check_tol:
+                raise AccuracyError(f'result not orthogonal (max err={err})')
+
+    return A, R if return_R else A
+
+
 def gram_schmidt_biorth(V, W, product=None,
                         reiterate=True, reiteration_threshold=1e-1, check=True, check_tol=1e-3,
                         copy=True):
