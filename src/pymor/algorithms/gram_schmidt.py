@@ -210,6 +210,9 @@ def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0
 
         r0 = np.sqrt(r0)
 
+        common_dtype = np.promote_types(R.dtype, type(r0))
+        R = R.astype(common_dtype, copy=False)
+
         R[k, k] = r0
         R[k, k+1] = r1 / r0
 
@@ -229,6 +232,10 @@ def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0
         remove.append(n-1)
     else:
         y = np.reshape(A[:n-1].inner(q, product), [n-1]) if n>1 else np.zeros([0])
+
+        common_dtype = np.promote_types(R.dtype, type(r0))
+        R = R.astype(common_dtype, copy=False)
+
         R[:n-1, n-1] += y
 
         r0 -= y.dot(y)
