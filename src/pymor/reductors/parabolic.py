@@ -111,7 +111,7 @@ class ParabolicRBEstimator(ImmutableObject):
                  coercivity_estimator, projected_output_adjoint=None):
         self.__auto_init(locals())
 
-    def estimate_error(self, U, mu, m):
+    def estimate_error(self, U, mu, input, m):
         dt = m.T / m.time_stepper.nt
         C = self.coercivity_estimator(mu) if self.coercivity_estimator else 1.
 
@@ -130,10 +130,10 @@ class ParabolicRBEstimator(ImmutableObject):
 
         return est
 
-    def estimate_output_error(self, U, mu, m):
+    def estimate_output_error(self, U, mu, input, m):
         if self.projected_output_adjoint is None:
             raise NotImplementedError
-        estimate = self.estimate_error(U, mu, m)
+        estimate = self.estimate_error(U, mu, input, m)
         # scale with dual norm of the output functional
         output_functional_norms = self.projected_output_adjoint.as_range_array(mu).norm()
         errs = estimate[:, np.newaxis] * output_functional_norms[np.newaxis, :]

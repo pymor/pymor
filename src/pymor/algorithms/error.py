@@ -163,6 +163,8 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
     assert custom_names is None or (custom and len(custom_names) == len(custom))
     assert not condition \
         or isinstance(rom, StationaryModel) and rom.operator.linear
+    if rom.dim_input > 0:
+        raise NotImplementedError
 
     logger = getLogger('pymor.algorithms.error')
     if pool is None or pool is dummy_pool:
