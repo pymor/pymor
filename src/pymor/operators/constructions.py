@@ -151,7 +151,7 @@ class LincombOperator(Operator):
         #     which we define to be the case when the number of operators has ben reduced.
         if (self.parametric
                 or operators != self.operators  # for this comparison to work self.operators always has to be a tuple!
-                or type(op) != type(self)
+                or type(op) is not type(self)
                 or len(op.operators) < len(operators)):
             return op
         else:

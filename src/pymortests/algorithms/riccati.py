@@ -120,7 +120,7 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     assert relative_residual(A, E, B, C, R, S, _chol(X), trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new):
-        assert type(mat1) == type(mat2)
+        assert type(mat1) is type(mat2)
         assert np.all(mat1 == mat2)
 
 
@@ -179,7 +179,7 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     assert relative_residual(A, E, B, C, -R, S, _chol(X), trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new):
-        assert type(mat1) == type(mat2)
+        assert type(mat1) is type(mat2)
         assert np.all(mat1 == mat2)
 
 
@@ -243,7 +243,7 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     assert relative_residual(A, E, B, C, R, S, Z, trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new):
-        assert type(mat1) == type(mat2)
+        assert type(mat1) is type(mat2)
         if sps.issparse(mat1):
             mat1 = mat1.toarray()
             mat2 = mat2.toarray()
@@ -310,7 +310,7 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     assert relative_residual(A, E, B, C, -R, S, Z, trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new):
-        assert type(mat1) == type(mat2)
+        assert type(mat1) is type(mat2)
         if sps.issparse(mat1):
             mat1 = mat1.toarray()
             mat2 = mat2.toarray()
