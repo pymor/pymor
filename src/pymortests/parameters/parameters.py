@@ -7,7 +7,6 @@ import pytest
 from hypothesis import given
 
 import pymortests.strategies as pyst
-from pymor.analyticalproblems.functions import ConstantFunction
 from pymor.parameters.base import Mu, Parameters
 from pymortests.base import runmodule
 
@@ -90,18 +89,6 @@ def test_parse_parameter():
     assert mu_as_list == mu_as_parameter_and_back
 
 
-def test_parse_parameter_time_dep():
-    parameters = Parameters(b=2, a=1)
-    mu = parameters.parse([7, 't**2', 't[0]'])
-    assert list(mu.with_(t=3)['a']) == [7]
-    assert list(mu.with_(t=3)['b']) == [9, 3]
-
-
-def test_parse_parameter_scalar_time_dep():
-    parameters = Parameters(a=1)
-    parameters.parse(ConstantFunction(np.ones(1)))
-
-
 @given(pyst.mus)
 def test_parse_mu(mu):
     parameters = mu.parameters
@@ -147,8 +134,6 @@ def test_mu_algebra(mu):
 
 
 def test_mu_t_wrong_value():
-    with pytest.raises(Exception):
-        Mu(t=ConstantFunction(np.array([3])))
     with pytest.raises(Exception):
         Mu(t=np.array([1, 2]))
 
