@@ -234,7 +234,7 @@ def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0
         r0 -= y.dot(y)
         if r0 <= rtol * initial_norm:
             logger.info(f'Removing linearly dependent vector {k}')
-            remove.append(k)
+            remove.append(n-1)
         else:
             r0 = np.sqrt(r0)
             R[n-1, n-1] = r0
@@ -254,7 +254,7 @@ def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0
             if err >= check_tol:
                 raise AccuracyError(f'result not orthogonal (max err={err})')
 
-    return A, R if return_R else A
+    return (A, R) if return_R else A
 
 
 def gram_schmidt_biorth(V, W, product=None,
