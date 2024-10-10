@@ -59,7 +59,7 @@ class RandomizedRangeFinder(BasicObject):
         If `True`, the random vectors are chosen complex.
     """
 
-    @defaults('num_testvecs', 'failure_tolerance')
+    @defaults('num_testvecs', 'failure_tolerance', 'qr_method')
     def __init__(self, A, range_product=None, source_product=None, A_adj=None,
                  power_iterations=0, failure_tolerance=1e-15, num_testvecs=20,
                  lambda_min=None, block_size=None, iscomplex=False, qr_method='gram_schmidt'):
@@ -109,6 +109,7 @@ class RandomizedRangeFinder(BasicObject):
 
         if self.T is None:
             self.T = self._draw_samples(num_testvecs)
+            assert len(self.T) == num_testvecs
 
         if len(self.Q[-1]) > self.estimator_last_basis_size:
             # in an older implementation, we used re-orthogonalization here, i.e,
@@ -173,6 +174,7 @@ class RandomizedRangeFinder(BasicObject):
                 block_size = min(block_size, basis_size - len(Q[-1]))
 
             V = self._draw_samples(block_size)
+            assert len(V) == block_size
             self.Omega.append(V)
 
             current_len = len(Q[0])
