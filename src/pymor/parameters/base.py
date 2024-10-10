@@ -133,10 +133,10 @@ class Parameters(SortedFrozenDict):
             set(mu) == set(self) or fail(f'additional parameters {set(mu) - set(self)}')
             return mu
 
-        # convert mu to dict
         if isinstance(mu, Number):
             mu = [mu]
-        elif isinstance(mu, (tuple, list, np.ndarray)):
+
+        if isinstance(mu, (tuple, list, np.ndarray)):
             if isinstance(mu, np.ndarray):
                 mu = mu.ravel()
             all(isinstance(v, Number) for v in mu) or fail('not every element a number')
