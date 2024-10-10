@@ -78,13 +78,32 @@ class RandomizedRangeFinder(BasicObject):
         self.R = [np.empty((0,0)) for _ in range(power_iterations+1)]
 
     def _draw_samples(self, num):
-        # returns samples of the range of A
+        """Compute `num` samples of the operator range."""
         V = self.A.source.random(num, distribution='normal')
         if self.iscomplex:
             V += 1j*self.A.source.random(num, distribution='normal')
         return self.A.apply(V)
 
     def _qr_update(self, Q, R, offset):
+        r"""Update the QR decomposition.
+
+        Q[:offset]R is assumed to be a QR decomposition.
+        Q[offset:] are contains new vectors that will be orthogonalized in place.
+
+        Parameters
+        ----------
+        Q
+            |VectorArray| of length `offset + num_new`.
+        R
+            |NumPy array| of shape `(offset, offset)`.
+        offset
+            A nonzero integer denoting the size of the previous QR decomposition.
+
+        Returns
+        -------
+        R_updated
+            |NumPy array| of shape `(offset+num_new, offset+num_new)` (the updated R factor).
+        """
         product = self.range_product
         if self.qr_method == 'gram_schmidt':
             _, _R = gram_schmidt(Q, product=product, atol=0, rtol=0, offset=offset, copy=False, return_R=True)
