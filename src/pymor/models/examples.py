@@ -49,7 +49,7 @@ def penzl_example():
 
     return fom
 
-def penzl_mimo_example(n):
+def penzl_mimo_example(n, m=2, p=3):
     """Return modified multiple-input multiple-output Penzl's example.
 
     Parameters
@@ -72,8 +72,8 @@ def penzl_mimo_example(n):
     A3 = np.array([[-1, 400], [-400, -1]])
     A4 = sps.diags(np.arange(-1, -n + 5, -1))
     A = sps.block_diag((A1, A2, A3, A4))
-    B = np.arange(2*n).reshape(n, 2)
-    C = np.arange(3*n).reshape(3, n)
+    B = np.arange(m*n).reshape(n, m)
+    C = np.arange(p*n).reshape(p, n)
     return LTIModel.from_matrices(A, B, C)
 
 def msd_example(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):
