@@ -51,7 +51,8 @@ class RandomizedRangeFinder(BasicObject):
     """
 
     def __init__(self, A, range_product=None, source_product=None, A_adj=None,
-                 power_iterations=0, block_size=None, iscomplex=False, qr_method='gram_schmidt', dtype=None):
+                 power_iterations=0, block_size=None, iscomplex=False, qr_method='gram_schmidt', dtype=None,
+                 qr_opts={}):
         assert source_product is None or isinstance(source_product, Operator)
         assert range_product is None or isinstance(range_product, Operator)
         assert isinstance(A, Operator)
@@ -81,7 +82,7 @@ class RandomizedRangeFinder(BasicObject):
         if self.qr_method == 'gram_schmidt':
             _, _R = gram_schmidt(Q, product=product, atol=0, rtol=0, offset=offset, copy=False, return_R=True)
         elif self.qr_method == 'shifted_chol_qr':
-            _, _R = shifted_chol_qr(Q, product=product, offset=offset, copy=False)
+            _, _R = shifted_chol_qr(Q, product=product, offset=offset, copy=False, **self.qr_opts)
         if len(Q) == offset:
             raise ValueError('Basis extension broke down before convergence.')
         _R[:offset, :offset] = R
