@@ -257,7 +257,8 @@ class ERAReductor(CacheableObject):
 
 
 class RandERAReductor(ERAReductor):
-    def __init__(self, data, sampling_time, power_iterations=2, block_size=20, force_stability=True, feedthrough=None, qr_method='gram_schmidt', num_left=None, num_right=None):
+    def __init__(self, data, sampling_time, power_iterations=2, block_size=20, force_stability=True, feedthrough=None,
+                 qr_method='gram_schmidt', num_left=None, num_right=None):
         super().__init__(data, sampling_time, force_stability, feedthrough)
         data = data.copy()
         if num_left is not None or num_right is not None:
@@ -268,20 +269,32 @@ class RandERAReductor(ERAReductor):
             data = np.concatenate([data, np.zeros_like(data)[1:]], axis=0)
         s = (data.shape[0] + 1) // 2
         self._H = NumpyHankelOperator(data[:s], r=data[s-1:])
-        self.rrf = RandomizedRangeFinder(self._H, power_iterations=power_iterations, block_size=block_size, qr_method=qr_method)
-        self.rrf._draw_samples = self._draw_samples
         self._last_sv_U_V = None
+        self._rrf = None
+
+    def _init_rrf(self):
+        self._rrf = RandomizedRangeFinder(
+            self._H,
+            power_iterations=self.power_iterations,
+            block_size=self.block_size,
+            qr_method=self.qr_method,
+            dtype=self.data.dtype
+        )
+        self._rrf._draw_samples = self._draw_samples
 
     def _draw_samples(self, num):
-        self.rrf.logger.info(f'Taking {num} samples ...')
+        self._rrf.logger.info(f'Taking {num} samples ...')
         # faster way of computing the random samples
-        V = np.zeros((self._H._circulant.source.dim, num), dtype=self.data.dtype)
+        dtype = self.data.dtype
+        V = np.zeros((self._H._circulant.source.dim, num), dtype=dtype)
         V[:self._H.source.dim] = self._H.source.random(num, distribution='normal').to_numpy().T
         return self._H.range.make_array(self._H._circulant._circular_matvec(V)[:, :self._H.range.dim])
 
     def reduce(self, r=None, tol=None):
-        last_basis_size = len(self.rrf.Q[-1])
-        Q = self.rrf.find_range(basis_size=r, tol=tol)
+        if self._rrf is None:
+            self._init_rrf()
+        last_basis_size = len(self._rrf.Q[-1])
+        Q = self._rrf.find_range(basis_size=r, tol=tol)
         r = len(Q) if r is None else r
         if r > last_basis_size:
             self.logger.info('Projecting onto reduced space ...')

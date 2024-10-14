@@ -51,19 +51,22 @@ class RandomizedRangeFinder(BasicObject):
     """
 
     def __init__(self, A, range_product=None, source_product=None, A_adj=None,
-                 power_iterations=0, block_size=None, iscomplex=False, qr_method='gram_schmidt'):
+                 power_iterations=0, block_size=None, iscomplex=False, qr_method='gram_schmidt', dtype=None):
         assert source_product is None or isinstance(source_product, Operator)
         assert range_product is None or isinstance(range_product, Operator)
         assert isinstance(A, Operator)
+
+        if dtype is None:
+            dtype = np.complex128 if iscomplex else np.float64
 
         if A_adj is None:
             A_adj = AdjointOperator(A, range_product=range_product, source_product=source_product)
 
         self.__auto_init(locals())
-        self.Omega = A.range.empty()
+        self.Omega = A.range.make_array(np.empty((0, A.range.dim), dtype=dtype))
         self.estimator_last_basis_size, self.last_estimated_error = 0, np.inf
-        self.Q = [A.range.empty() for _ in range(power_iterations+1)]
-        self.R = [np.empty((0,0)) for _ in range(power_iterations+1)]
+        self.Q = [A.range.make_array(np.empty((0, A.range.dim), dtype=dtype)) for _ in range(power_iterations+1)]
+        self.R = [np.empty((0,0), dtype=dtype) for _ in range(power_iterations+1)]
 
     def _draw_samples(self, num):
         self.logger.info(f'Taking {num} samples ...')
