@@ -258,7 +258,7 @@ class ERAReductor(CacheableObject):
 
 class RandERAReductor(ERAReductor):
     def __init__(self, data, sampling_time, power_iterations=2, block_size=20, force_stability=True, feedthrough=None,
-                 qr_method='gram_schmidt', num_left=None, num_right=None):
+                 qr_method='gram_schmidt', qr_opts={}, num_left=None, num_right=None):
         super().__init__(data, sampling_time, force_stability, feedthrough)
         data = data.copy()
         if num_left is not None or num_right is not None:
@@ -278,7 +278,8 @@ class RandERAReductor(ERAReductor):
             power_iterations=self.power_iterations,
             block_size=self.block_size,
             qr_method=self.qr_method,
-            dtype=self.data.dtype
+            dtype=self.data.dtype,
+            qr_opts=self.qr_opts,
         )
         self._rrf._draw_samples = self._draw_samples
 
