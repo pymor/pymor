@@ -99,7 +99,7 @@ class NeuralNetworkModel(BaseNeuralNetworkModel):
         assert self.output_functional.source == self.solution_space
         self.dim_output = self.output_functional.range.dim
 
-    def _compute(self, quantities, data, mu):
+    def _compute(self, quantities, data, mu, input):
         if 'solution' in quantities:
             # convert the parameter `mu` into a form that is usable in PyTorch
             converted_input = torch.DoubleTensor(mu.to_numpy())
@@ -113,7 +113,7 @@ class NeuralNetworkModel(BaseNeuralNetworkModel):
             data['solution'] = U
             quantities.remove('solution')
 
-        super()._compute(quantities, data, mu=mu)
+        super()._compute(quantities, data, mu, input)
 
 
 class NeuralNetworkStatefreeOutputModel(BaseNeuralNetworkModel):
@@ -155,7 +155,7 @@ class NeuralNetworkStatefreeOutputModel(BaseNeuralNetworkModel):
 
         self.__auto_init(locals())
 
-    def _compute(self, quantities, data, mu):
+    def _compute(self, quantities, data, mu, input):
         if 'output' in quantities:
             converted_input = torch.from_numpy(mu.to_numpy()).double()
             converted_input = self._scale_input(converted_input)
@@ -166,7 +166,7 @@ class NeuralNetworkStatefreeOutputModel(BaseNeuralNetworkModel):
             data['output'] = output
             quantities.remove('output')
 
-        super()._compute(quantities, data, mu=mu)
+        super()._compute(quantities, data, mu, input)
 
 
 class NeuralNetworkInstationaryModel(BaseNeuralNetworkModel):
@@ -232,7 +232,7 @@ class NeuralNetworkInstationaryModel(BaseNeuralNetworkModel):
         assert output_functional.source == self.solution_space
         self.dim_output = output_functional.range.dim
 
-    def _compute(self, quantities, data, mu):
+    def _compute(self, quantities, data, mu, input):
         if 'solution' in quantities:
             # collect all inputs in a single tensor
             inputs = self._scale_input(torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
@@ -244,7 +244,7 @@ class NeuralNetworkInstationaryModel(BaseNeuralNetworkModel):
             data['solution'] = self.solution_space.make_array(result)
             quantities.remove('solution')
 
-        super()._compute(quantities, data, mu=mu)
+        super()._compute(quantities, data, mu, input)
 
 
 class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
@@ -290,7 +290,7 @@ class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
 
         self.__auto_init(locals())
 
-    def _compute(self, quantities, data, mu):
+    def _compute(self, quantities, data, mu, input):
         if 'output' in quantities:
             inputs = self._scale_input(torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
                                                                     for t in np.linspace(0., self.T, self.nt)])))
@@ -301,7 +301,7 @@ class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
             data['output'] = outputs
             quantities.remove('output')
 
-        super()._compute(quantities, data, mu=mu)
+        super()._compute(quantities, data, mu, input)
 
 
 class FullyConnectedNN(nn.Module, BasicObject):

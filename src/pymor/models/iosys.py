@@ -667,7 +667,7 @@ class LTIModel(Model):
         if E is not None:
             _mmwrite(Path(files_basename + '.E'), E)
 
-    def _compute(self, quantities, data, mu):
+    def _compute(self, quantities, data, mu, input):
         if 'solution' in quantities or 'output' in quantities:
             assert self.T is not None
 
@@ -680,9 +680,9 @@ class LTIModel(Model):
                 self.T,  # end_time
                 self.initial_data.as_range_array(mu),  # initial_data
                 -self.A,  # operator
-                rhs=LinearInputOperator(self.B),
+                rhs=LinearInputOperator(self.B, input),
                 mass=None if isinstance(self.E, IdentityOperator) else self.E,
-                mu=mu.with_(t=0),
+                mu=mu,
                 num_values=self.num_values
             )
             if self.num_values is None:
@@ -696,7 +696,7 @@ class LTIModel(Model):
             if compute_solution:
                 data['solution'] = self.solution_space.empty(reserve=n)
             if compute_output:
-                D = LinearInputOperator(self.D)
+                D = LinearInputOperator(self.D, input)
                 data['output'] = np.empty((n, self.dim_output))
                 data_output_extra = []
             for i, (x, t) in enumerate(iterator):
@@ -719,7 +719,7 @@ class LTIModel(Model):
             if compute_output:
                 quantities.remove('output')
 
-        super()._compute(quantities, data, mu=mu)
+        super()._compute(quantities, data, mu=mu, input=input)
 
     def __add__(self, other):
         """Add an |LTIModel|."""

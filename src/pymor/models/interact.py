@@ -2,7 +2,6 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-from itertools import chain
 from time import perf_counter
 
 import numpy as np
@@ -12,66 +11,29 @@ from pymor.core.config import config
 config.require('IPYWIDGETS')
 
 from IPython.display import display
-from ipywidgets import Accordion, Button, Checkbox, FloatSlider, HBox, Label, Layout, Stack, Text, VBox, jsdlink
+from ipywidgets import Accordion, Button, Checkbox, FloatSlider, HBox, Label, Layout, Text, VBox, jsdlink
 
+from pymor.analyticalproblems.functions import ExpressionFunction
 from pymor.core.base import BasicObject
-from pymor.models.basic import StationaryModel
-from pymor.parameters.base import Mu, Parameters, ParameterSpace
+from pymor.parameters.base import ParameterSpace
 
 
 class ParameterSelector(BasicObject):
     """Parameter selector."""
 
-    def __init__(self, space, time_dependent):
+    def __init__(self, space, dim_input):
         assert isinstance(space, ParameterSpace)
         self.space = space
         self._handlers = []
 
-        class ParameterWidget:
-            def __init__(self, p):
-                dim = space.parameters[p]
-                low, high = space.ranges[p]
-                self._sliders = sliders = []
-                self._texts = texts = []
-                self._checkboxes = checkboxes = []
-                stacks = []
-                hboxes = []
-                for i in range(dim):
-                    sliders.append(FloatSlider((high+low)/2, min=low, max=high,
-                                               description=f'{i}:'))
-
-                for i in range(dim):
-                    texts.append(Text(f'{(high+low)/2:.2f}', description=f'{i}:'))
-
-                    def text_changed(change):
-                        try:
-                            Parameters(p=1).parse(change['new'])
-                            change['owner'].style.background = '#FFFFFF'
-                            return
-                        except ValueError:
-                            pass
-                        change['owner'].style.background = '#FFCCCC'
-
-                    texts[i].observe(text_changed, 'value')
-
-                    stacks.append(Stack(children=[sliders[i], texts[i]], selected_index=0, layout=Layout(flex='1')))
-                    checkboxes.append(Checkbox(value=False, description='time dep.',
-                                               indent=False, layout=Layout(flex='0')))
-
-                    def check_box_clicked(change, idx):
-                        stacks[idx].selected_index = int(change['new'])
-
-                    checkboxes[i].observe(lambda change, idx=i: check_box_clicked(change, idx), 'value')
-
-                    hboxes.append(HBox([stacks[i], checkboxes[i]]))
-                widgets = VBox(hboxes if time_dependent else sliders)
-                self.widget = Accordion(titles=[p], children=[widgets], selected_index=0)
-                self._old_values = [s.value for s in sliders]
-                self.valid = True
+        class WidgetBase:
+            def __init__(self):
+                self._old_values = [w.value for w in self._widgets]
                 self._handlers = []
-
-                for obj in chain(sliders, texts, checkboxes):
+                for obj in self._widgets:
                     obj.observe(self._values_changed, 'value')
+                    obj._valid_value = True
+                self.valid = True
 
             def _call_handlers(self):
                 for handler in self._handlers:
@@ -79,18 +41,15 @@ class ParameterSelector(BasicObject):
 
             def _values_changed(self, change):
                 was_valid = self.valid
-                new_values = [t.value if c.value else s.value
-                              for s, t, c in zip(self._sliders, self._texts, self._checkboxes)]
                 # do nothing if new values are invalid
-                try:
-                    Parameters(p=len(self._sliders)).parse(new_values)
-                except ValueError:
+                if not all(t._valid_value for t in self._widgets):
                     self.valid = False
                     if was_valid:
                         self._call_handlers()
                     return
 
                 self.valid = True
+                new_values = [t.value for t in self._widgets]
                 if new_values != self._old_values:
                     self._old_values = new_values
                     self._call_handlers()
@@ -102,7 +61,45 @@ class ParameterSelector(BasicObject):
             def on_change(self, handler):
                 self._handlers.append(handler)
 
+        class ParameterWidget(WidgetBase):
+            def __init__(self, p):
+                dim = space.parameters[p]
+                low, high = space.ranges[p]
+                self._widgets = sliders = []
+                for i in range(dim):
+                    sliders.append(FloatSlider((high+low)/2, min=low, max=high,
+                                               description=f'{i}:'))
+                self.widget = Accordion(titles=[p], children=[VBox(sliders)], selected_index=0)
+                super().__init__()
+
+        class InputWidget(WidgetBase):
+            def __init__(self, dim):
+                self._widgets = texts = []
+                for i in range(dim):
+                    texts.append(Text('0.', description=f'{i}:'))
+
+                    def text_changed(change):
+                        try:
+                            input = ExpressionFunction(change['new'], dim_domain=1, variable='t')
+                            if input.shape_range != ():
+                                raise ValueError
+                            change['owner'].style.background = '#FFFFFF'
+                            change['owner']._valid_value = True
+                            return
+                        except ValueError:
+                            change['owner'].style.background = '#FFCCCC'
+                            change['owner']._valid_value = False
+
+                    texts[i]._valid_input = True
+                    texts[i].observe(text_changed, 'value')
+
+                self.widget = Accordion(titles=['input'], children=[VBox(texts)], selected_index=0)
+                super().__init__()
+
         self._widgets = _widgets = {p: ParameterWidget(p) for p in space.parameters}
+        if dim_input > 0:
+            assert 'input' not in _widgets
+            _widgets['input'] = InputWidget(dim_input)
         for w in _widgets.values():
             w.on_change(self._update_mu)
         self._auto_update = Checkbox(value=False, indent=False, description='auto update',
@@ -128,14 +125,19 @@ class ParameterSelector(BasicObject):
     def _call_handlers(self):
         self._update_button.disabled = True
         for handler in self._handlers:
-            handler(self.mu)
-        self.last_mu = self.mu
+            handler(self.mu, self.input)
+        self.last_mu, self.last_input = self.mu, self.input
 
     def _update_mu(self):
         if any(not w.valid for w in self._widgets.values()):
             self._update_button.disabled = True
             return
-        self.mu = self.space.parameters.parse({p: w.values for p, w in self._widgets.items()})
+        self.mu = self.space.parameters.parse({p: w.values for p, w in self._widgets.items() if p != 'input'})
+        if 'input' in self._widgets:
+            self.input = ExpressionFunction('[' + ','.join(self._widgets['input'].values) + ']',
+                                            dim_domain=1, variable='t')
+        else:
+            self.input = None
         if self._auto_update.value:
             self._call_handlers()
         else:
@@ -171,20 +173,14 @@ def interact(model, parameter_space, show_solution=True, visualizer=None, transf
     The created widgets as a single `ipywidget`.
     """
     assert model.parameters == parameter_space.parameters
-    if model.dim_input > 0:
-        params = Parameters(model.parameters, input=model.dim_input)
-        parameter_space = ParameterSpace(params, dict(parameter_space.ranges, input=[-1,1]))
     right_pane = []
-    parameter_selector = ParameterSelector(parameter_space, time_dependent=not isinstance(model, StationaryModel))
+    parameter_selector = ParameterSelector(parameter_space, model.dim_input)
     right_pane.append(parameter_selector.widget)
 
     has_output = model.dim_output > 0
     tic = perf_counter()
-    mu = parameter_selector.mu
-    input = parameter_selector.mu.get('input', None)
-    mu = Mu({k: mu.get_time_dependent_value(k) if mu.is_time_dependent(k) else mu[k]
-            for k in mu if k != 'input'})
-    data = model.compute(solution=show_solution, output=has_output, input=input, mu=mu)
+    mu, input = parameter_selector.mu, parameter_selector.input
+    data = model.compute(solution=show_solution, output=has_output, mu=mu, input=input)
     sim_time = perf_counter() - tic
 
     if has_output:
@@ -224,15 +220,9 @@ def interact(model, parameter_space, show_solution=True, visualizer=None, transf
     else:
         widget = right_pane
 
-    def do_update(mu):
-        if 'input' in mu:
-            input = mu.get_time_dependent_value('input') if mu.is_time_dependent('input') else mu['input']
-        else:
-            input = None
-        mu = Mu({k: mu.get_time_dependent_value(k) if mu.is_time_dependent(k) else mu[k]
-                for k in mu if k != 'input'})
+    def do_update(mu, input):
         tic = perf_counter()
-        data = model.compute(solution=show_solution, output=has_output, input=input, mu=mu)
+        data = model.compute(solution=show_solution, output=has_output, mu=mu, input=input)
         sim_time = perf_counter() - tic
         if show_solution:
             U = data['solution']
