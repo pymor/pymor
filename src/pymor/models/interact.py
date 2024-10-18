@@ -81,7 +81,7 @@ class ParameterSelector(BasicObject):
                     def text_changed(change):
                         try:
                             input = ExpressionFunction(change['new'], dim_domain=1, variable='t')
-                            if input.shape_range != ():
+                            if input.shape_range not in [(), (1,)]:
                                 raise ValueError
                             change['owner'].style.background = '#FFFFFF'
                             change['owner']._valid_value = True

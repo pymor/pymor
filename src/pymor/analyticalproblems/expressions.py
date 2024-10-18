@@ -384,6 +384,8 @@ class Array(Expression):
             if not isinstance(v, Expression):
                 raise ValueError(f'Entry "{v}" at index {i} of Array {array} is not an Expression '
                                  f'(type: {type(v).__name__}).')
+            if __builtins__['sum'](v.shape) == 1:
+                A[i] = v = v[(0,) * len(v.shape)]
             if v.shape != ():
                 raise ValueError(f'Entry "{v}" at index {i} of Array {array} is not scalar valued (shape: {v.shape}).')
         self.array = A

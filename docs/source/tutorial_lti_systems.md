@@ -150,7 +150,7 @@ fom = fom.with_(T=4, time_stepper=ImplicitEulerTimeStepper(200))
 With this done, we can compute the output for some given input and plot it.
 
 ```{code-cell} ipython3
-Y = fom.output(input='[sin(4 * t[0]), sin(6 * t[0])]')
+Y = fom.output(input='[sin(4 * t), sin(6 * t)]')
 fig, ax = plt.subplots()
 for i, y in enumerate(Y.T):
     ax.plot(np.linspace(0, fom.T, fom.time_stepper.nt + 1), y, label=f'$y_{i+1}(t)$')
