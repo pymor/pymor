@@ -178,7 +178,7 @@ def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0
     r0 = r1 = None
 
     if n == 0 or offset == n:
-        return A, R
+        return (A, R) if return_R else A
 
     # last two orthonormal vectors have to be orthogonalized again
     # to achieve an orthonormal basis
@@ -259,7 +259,7 @@ def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
             if err >= check_tol:
-                raise AccuracyError(f'result not orthogonal (max err={err})')
+                raise AccuracyError(f'Result not orthogonal (max err={err})')
 
     return (A, R) if return_R else A
 
