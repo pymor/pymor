@@ -504,7 +504,7 @@ class ParametricObject(ImmutableObject):
         item of :attr:`parameters`.
     parameters_inherited
         The |Parameters| the object depends on because some child object depends on them.
-        Each item of :attr:`parameters_own` is also an item of :attr:`parameters`.
+        Each item of :attr:`parameters_inherited` is also an item of :attr:`parameters`.
     parameters_internal
         The |Parameters| some of the object's child objects may depend on, but which are
         fixed to a concrete value by this object. All items of :attr:`parameters_internal`
