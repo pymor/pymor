@@ -29,6 +29,7 @@ class BestApproximationReductor(BasicObject):
             len(self.basis),
             self.fom.parameters,
             lambda mu: project_onto_basis(self.fom.solve(mu)),
+            name=f"{self.fom.name}_BestApproxReduced",
         )
 
     def extend_basis(
