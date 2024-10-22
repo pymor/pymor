@@ -84,6 +84,8 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
             Number of refinements made in each extension step.
         :training_set_sizes:
             The final size of the training set in each extension step.
+        :training_set:
+            The final training after the last extension step.
         :time:
             Duration of the algorithm.
     """
@@ -229,8 +231,8 @@ def adaptive_weak_greedy(surrogate, parameter_space, target_error=None, max_exte
     logger.info(f'Greedy search took {tictoc} seconds')
     return {'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
             'max_val_errs': max_val_errs, 'max_val_err_mus': max_val_err_mus,
-            'refinements': refinements, 'training_set_sizes': training_set_sizes,
-            'time': tictoc}
+            'refinements': refinements, 'training_set': sample_set.vertex_mus,
+            'training_set_sizes': training_set_sizes, 'time': tictoc}
 
 
 def rb_adaptive_greedy(fom, reductor, parameter_space,
