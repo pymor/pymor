@@ -9,7 +9,7 @@ from pymor.algorithms.projection import project
 from pymor.algorithms.rand_la import RandomizedRangeFinder
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject, cached
-from pymor.models.iosys import LTIModel
+from pymor.models.iosys import LinearDelayModel, LTIModel
 from pymor.operators.interface import Operator
 from pymor.operators.numpy import NumpyHankelOperator, NumpyMatrixOperator
 
@@ -255,6 +255,93 @@ class ERAReductor(CacheableObject):
         return LTIModel(A, B, C, D=D, sampling_time=self.sampling_time,
                         presets={'o_dense': np.diag(sv), 'c_dense': np.diag(sv)})
 
+
+class DelayERAReductor(ERAReductor):
+    def _construct_abcd(self, sv, U, V, m, p, tau):
+        sqsv = np.sqrt(sv).reshape(1, -1)
+        U *= sqsv
+        V *= sqsv
+        print(U[:p].shape)
+        r = int(U.shape[1] // 2)
+        Q, R = spla.qr(np.concatenate((U[:p].T, V[:m].T), axis=1))
+        U, V = U @ Q, V @ Q
+        print(Q.shape)
+        print(R.shape)
+        print(U.shape)
+        print(V.shape)
+        print(U)
+        lhs = U[:-p, :r]
+        rhs = U[p:, :2*r]
+        rhs[:, :r] -= U[:-p, r:2*r]
+        print(spla.lstsq(lhs, rhs)[0].shape)
+        A, Ad, _ = np.split(spla.lstsq(lhs, rhs)[0], (r, 2*r), axis=1)
+        A = NumpyMatrixOperator(A)
+        Ad = NumpyMatrixOperator(Ad)
+        B = NumpyMatrixOperator(V[:m, :r].T)
+        C = NumpyMatrixOperator(U[:p, :r])
+        return A, Ad, B, C, self.feedthrough
+
+    def reduce(self, tau, r=None, tol=None, num_left=None, num_right=None):
+        """Construct a minimal realization.
+
+        Parameters
+        ----------
+        tau
+            The delay.
+        r
+            Order of the reduced model if `tol` is `None`, maximum order if `tol` is specified.
+        tol
+            Tolerance for the error bound.
+        num_left
+            Number of left (output) directions for tangential projection.
+        num_right
+            Number of right (input) directions for tangential projection.
+
+        Returns
+        -------
+        rom
+            Reduced-order |LTIModel|.
+        """
+        assert r is not None or tol is not None
+        n, p, m = self.data.shape
+        s = n if self.force_stability else (n + 1) // 2
+        assert num_left is None or isinstance(num_left, int) and 0 < num_left < p
+        assert num_right is None or isinstance(num_right, int) and 0 < num_right < m
+        assert r is None or 0 < 2*r <= min((num_left or p), (num_right or m)) * s
+
+        if num_left is None and m * s < p:
+            self.logger.info('Data has low rank! Accelerating computation with output tangential projections ...')
+            num_left = m * s
+        if num_right is None and p * s < m:
+            self.logger.info('Data has low rank! Accelerating computation with input tangential projections ...')
+            num_right = p * s
+
+        sv, U, V = self._sv_U_V(num_left, num_right)
+
+        if tol is not None:
+            error_bounds = self.error_bounds(num_left=num_left, num_right=num_right)
+            r_tol = np.argmax(error_bounds <= tol) + 1
+            r = r_tol if r is None else min(r, r_tol)
+
+        sv, U, V = sv[:2*r], U[:, :2*r], V[:, :2*r]
+
+        self.logger.info(f'Constructing reduced realization of order {r} ...')
+        A, Ad, B, C, D = self._construct_abcd(sv, U, V, num_right or m, num_left or p, tau)
+
+        if num_left:
+            self.logger.info('Backprojecting tangential output directions ...')
+            W1 = self.output_projector(num_left)
+            C = project(C, source_basis=None, range_basis=C.range.from_numpy(W1))
+        if num_right:
+            self.logger.info('Backprojecting tangential input directions ...')
+            W2 = self.input_projector(num_right)
+            B = project(B, source_basis=B.source.from_numpy(W2), range_basis=None)
+
+        print(A)
+        print(Ad)
+        print(B)
+        print(C)
+        return LinearDelayModel(A, (Ad,), (tau,), B, C, D=D, sampling_time=self.sampling_time)
 
 class RandERAReductor(ERAReductor):
     def __init__(self, data, sampling_time, power_iterations=2, block_size=20, force_stability=True, feedthrough=None,
