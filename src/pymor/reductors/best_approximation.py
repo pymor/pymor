@@ -52,8 +52,10 @@ class BestApproximationReductor(ProjectionBasedReductor):
             R = self.basis[:dim].inner(U)
             return np.linalg.solve(G, R).T
 
-        return BlackBoxModel(
+        rom = BlackBoxModel(
             dim,
             self.fom.parameters,
             lambda mu: project_onto_basis(self.fom.solve(mu)),
         )
+        rom.disable_logging()
+        return rom
