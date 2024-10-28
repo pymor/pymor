@@ -44,7 +44,8 @@ class TimeStepper(ImmutableObject):
         """
         raise NotImplementedError
 
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None,
+              backwards_in_time=False):
         """Apply time-stepper to the equation.
 
         The equation is of the form ::
@@ -83,14 +84,15 @@ class TimeStepper(ImmutableObject):
         except NotImplementedError:
             num_time_steps = 0
         iterator = self.iterate(initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass, mu=mu,
-                                num_values=num_values)
+                                num_values=num_values, backwards_in_time=backwards_in_time)
         U = operator.source.empty(reserve=num_values if num_values else num_time_steps + 1)
         for U_n, _ in iterator:
             U.append(U_n)
         return U
 
     @abstractmethod
-    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None,
+                backwards_in_time=False):
         """Iterate time-stepper to the equation.
 
         The equation is of the form ::
@@ -154,15 +156,19 @@ class ImplicitEulerTimeStepper(TimeStepper):
     def estimate_time_step_count(self, initial_time, end_time):
         return self.nt
 
-    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None,
+                backwards_in_time=False):
         A, F, M, U0, t0, t1, nt = operator, rhs, mass, initial_data, initial_time, end_time, self.nt
         assert isinstance(A, Operator)
         assert isinstance(F, (type(None), Operator, VectorArray))
         assert isinstance(M, (type(None), Operator))
         assert A.source == A.range
         num_values = num_values or nt + 1
-        dt = (t1 - t0) / nt
-        DT = (t1 - t0) / (num_values - 1)
+        factor = 1
+        if backwards_in_time:
+            factor = -1
+        dt = factor * (t1 - t0) / nt
+        DT = factor * (t1 - t0) / (num_values - 1)
 
         if F is None:
             F_time_dep = False
@@ -197,7 +203,10 @@ class ImplicitEulerTimeStepper(TimeStepper):
         if not _depends_on_time(M_dt_A, mu):
             M_dt_A = M_dt_A.assemble(mu)
 
-        t = t0
+        t_init = t0
+        if backwards_in_time:
+            t_init = t1
+        t = t_init
         U = U0.copy()
         if mu is None:
             mu = Mu()
@@ -211,7 +220,7 @@ class ImplicitEulerTimeStepper(TimeStepper):
             if F:
                 rhs += dt_F
             U = M_dt_A.apply_inverse(rhs, mu=mu, initial_guess=U)
-            while t - t0 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+            while factor * (t - t_init + (min(dt, DT) * 0.5)) >= factor * (num_ret_values * DT):
                 num_ret_values += 1
                 yield U, t
 
@@ -238,7 +247,8 @@ class ExplicitEulerTimeStepper(TimeStepper):
     def estimate_time_step_count(self, initial_time, end_time):
         return self.nt
 
-    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None,
+                backwards_in_time=False):
         if mass is not None:
             raise NotImplementedError
         A, F, U0, t0, t1, nt = operator, rhs, initial_data, initial_time, end_time, self.nt
@@ -266,12 +276,18 @@ class ExplicitEulerTimeStepper(TimeStepper):
         if not A_time_dep:
             A = A.assemble(mu)
 
-        dt = (t1 - t0) / nt
-        DT = (t1 - t0) / (num_values - 1)
+        factor = 1
+        if backwards_in_time:
+            factor = -1
+        dt = factor * (t1 - t0) / nt
+        DT = factor * (t1 - t0) / (num_values - 1)
         num_ret_values = 1
-        yield U0, t0
+        t_init = t0
+        if backwards_in_time:
+            t_init = t1
+        t = t_init
+        yield U0, t
 
-        t = t0
         U = U0.copy()
         if mu is None:
             mu = Mu()
@@ -281,7 +297,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
                 t += dt
                 mu = mu.with_(t=t)
                 U.axpy(-dt, A.apply(U, mu=mu))
-                while t - t0 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+                while factor * (t - t_init + (min(dt, DT) * 0.5)) >= factor * (num_ret_values * DT):
                     num_ret_values += 1
                     yield U, t
         else:
@@ -291,7 +307,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
                 if F_time_dep:
                     F_ass = F.as_vector(mu)
                 U.axpy(dt, F_ass - A.apply(U, mu=mu))
-                while t - t0 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+                while factor * (t - t_init + (min(dt, DT) * 0.5)) >= factor * (num_ret_values * DT):
                     num_ret_values += 1
                     yield U, t
 
@@ -323,7 +339,8 @@ class ImplicitMidpointTimeStepper(TimeStepper):
     def estimate_time_step_count(self, initial_time, end_time):
         return self.nt
 
-    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None,
+                backwards_in_time=False):
         if not operator.linear:
             raise NotImplementedError
         A, F, M, U0, t0, t1, nt = operator, rhs, mass, initial_data, initial_time, end_time, self.nt
@@ -332,8 +349,11 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         assert isinstance(M, (type(None), Operator))
         assert A.source == A.range
         num_values = num_values or nt + 1
-        dt = (t1 - t0) / nt
-        DT = (t1 - t0) / (num_values - 1)
+        factor = 1
+        if backwards_in_time:
+            factor = -1
+        dt = factor * (t1 - t0) / nt
+        DT = factor * (t1 - t0) / (num_values - 1)
 
         if F is None:
             F_time_dep = False
@@ -375,7 +395,10 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         if not _depends_on_time(M_dt_A_expl, mu):
             M_dt_A_expl = M_dt_A_expl.assemble(mu)
 
-        t = t0
+        t_init = t0
+        if backwards_in_time:
+            t_init = t1
+        t = t_init
         U = U0.copy()
         if mu is None:
             mu = Mu()
@@ -389,7 +412,7 @@ class ImplicitMidpointTimeStepper(TimeStepper):
             if F:
                 rhs += dt_F
             U = M_dt_A_impl.apply_inverse(rhs, mu=mu)
-            while t - t0 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+            while factor * (t - t_init + (min(dt, DT) * 0.5)) >= factor * (num_ret_values * DT):
                 num_ret_values += 1
                 yield U, t
 
@@ -411,7 +434,8 @@ class DiscreteTimeStepper(TimeStepper):
     def estimate_time_step_count(self, initial_time, end_time):
         return end_time - initial_time
 
-    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None,
+                backwards_in_time=False):
         A, F, M, U0, k0, k1 = operator, rhs, mass, initial_data, initial_time, end_time
         assert isinstance(A, Operator)
         assert isinstance(F, (type(None), Operator, VectorArray))
@@ -419,8 +443,11 @@ class DiscreteTimeStepper(TimeStepper):
         assert A.source == A.range
         nt = k1 - k0
         num_values = num_values or nt + 1
-        dt = 1
-        DT = nt / (num_values - 1)
+        factor = 1
+        if backwards_in_time:
+            factor = -1
+        dt = factor
+        DT = factor * nt / (num_values - 1)
 
         if F is None:
             F_time_dep = False
@@ -445,7 +472,10 @@ class DiscreteTimeStepper(TimeStepper):
         assert len(U0) == 1
 
         num_ret_values = 1
-        yield U0, k0
+        k_init = k0
+        if backwards_in_time:
+            k_init = k1
+        yield U0, k_init
 
         if not _depends_on_time(M, mu):
             M = M.assemble(mu)
@@ -454,7 +484,7 @@ class DiscreteTimeStepper(TimeStepper):
         if mu is None:
             mu = Mu()
 
-        for k in range(k0, k0 + nt):
+        for k in range(k_init, k_init + factor * nt, factor):
             mu = mu.with_(t=k)
             rhs = -A.apply(U, mu=mu)
             if F_time_dep:
@@ -462,7 +492,7 @@ class DiscreteTimeStepper(TimeStepper):
             if F:
                 rhs += Fk
             U = M.apply_inverse(rhs, mu=mu, initial_guess=U)
-            while k - k0 + 1 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+            while factor * (k - k_init + factor + (min(dt, DT) * 0.5)) >= factor * (num_ret_values * DT):
                 num_ret_values += 1
                 yield U, k
 
