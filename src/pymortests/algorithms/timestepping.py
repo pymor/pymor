@@ -16,8 +16,7 @@ time_stepper = ImplicitEulerTimeStepper(nt)
 
 U = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass)
 
-U_backwards = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs, mass=-mass,
-                                 backwards_in_time=True)
+U_backwards = time_stepper.solve(end_time, initial_time, initial_data, operator, rhs=rhs, mass=-mass)
 
 assert np.all((U - U_backwards).norm() <= 1e-12)
 
@@ -26,8 +25,7 @@ time_stepper = ImplicitMidpointTimeStepper(nt)
 
 U = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass)
 
-U_backwards = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs, mass=-mass,
-                                 backwards_in_time=True)
+U_backwards = time_stepper.solve(end_time, initial_time, initial_data, operator, rhs=rhs, mass=-mass)
 
 assert np.all((U - U_backwards).norm() <= 1e-12)
 
