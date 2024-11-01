@@ -284,7 +284,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
 
     1. `slycot` (see :func:`pymor.bindings.slycot.solve_pos_ricc_lrcf`),
     2. `scipy` (see :func:`pymor.bindings.scipy.solve_pos_ricc_lrcf`),
-    3. `internal` (see :func:`pymor.algorithms.mat_eqn_solvers.care.solve_pos_ricc_lrcf`).
+    3. `internal` (see :func:`pymor.algorithms.mat_eqn_solvers.pcare.solve_pos_ricc_lrcf`).
 
     Currently, only dense solvers are provided.
 
@@ -311,7 +311,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
 
         - :func:`pymor.bindings.scipy.ricc_lrcf_solver_options`,
         - :func:`pymor.bindings.slycot.ricc_lrcf_solver_options`,
-        - :func:`pymor.algorithm.mat_eqn_solvers.care.pos_ricc_lrcf_solver_options`.
+        - :func:`pymor.algorithm.mat_eqn_solvers.pcare.pos_ricc_lrcf_solver_options`.
 
     default_dense_solver_backend
         Default dense solver backend to use (slycot, scipy, internal).
@@ -329,7 +329,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None,
     else:
         backend = default_dense_solver_backend
     if backend == 'internal':
-        from pymor.algorithms.mat_eqn_solvers.care import solve_pos_ricc_lrcf as solve_ricc_impl
+        from pymor.algorithms.mat_eqn_solvers.pcare import solve_pos_ricc_lrcf as solve_ricc_impl
     elif backend == 'scipy':
         from pymor.bindings.scipy import solve_pos_ricc_lrcf as solve_ricc_impl
     elif backend == 'slycot':
@@ -378,7 +378,7 @@ def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None,
 
     1. `slycot` (see :func:`pymor.bindings.slycot.solve_pos_ricc_dense`)
     2. `scipy` (see :func:`pymor.bindings.scipy.solve_pos_ricc_dense`)
-    2. `internal` (see :func:`pymor.algorithms.mat_eqn_solvers.care.solve_pos_ricc_dense`)
+    2. `internal` (see :func:`pymor.algorithms.mat_eqn_solvers.pcare.solve_pos_ricc_dense`)
 
     Parameters
     ----------
@@ -403,7 +403,7 @@ def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None,
 
         - :func:`pymor.bindings.slycot.ricc_dense_solver_options`,
         - :func:`pymor.bindings.scipy.ricc_dense_solver_options`,
-        - :func:`pymor.algorithms.mat_eqn_solvers.care.pos_ricc_dense_solver_options`.
+        - :func:`pymor.algorithms.mat_eqn_solvers.pcare.pos_ricc_dense_solver_options`.
 
     default_solver_backend
         Default solver backend to use (slycot, scipy, internal).
@@ -420,7 +420,7 @@ def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None,
     else:
         backend = default_solver_backend
     if backend == 'internal':
-        from pymor.algorithms.mat_eqn_solvers.care import solve_pos_ricc_dense as solve_ricc_impl
+        from pymor.algorithms.mat_eqn_solvers.pcare import solve_pos_ricc_dense as solve_ricc_impl
     elif backend == 'scipy':
         from pymor.bindings.scipy import solve_pos_ricc_dense as solve_ricc_impl
     elif backend == 'slycot':

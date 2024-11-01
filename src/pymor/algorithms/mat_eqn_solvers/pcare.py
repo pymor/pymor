@@ -14,6 +14,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.mat_eqn_solvers.lyap_fac import lyap_sgn_fac
+from pymor.algorithms.mat_eqn_solvers.tools import compress_fac
 from pymor.algorithms.riccati import _solve_ricc_check_args, _solve_ricc_dense_check_args
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.defaults import defaults
@@ -21,9 +22,9 @@ from pymor.core.logger import getLogger
 from pymor.operators.numpy import NumpyMatrixOperator
 
 
-@defaults('maxiter', 'atol', 'rtol', 'lyap_maxiter', 'lyap_atol', 'lyap_rtol', 'lyap_ctol')
-def ricc_lrcf_solver_options(maxiter=100, atol=0, rtol=None,
-                             lyap_maxiter=100, lyap_atol=0, lyap_rtol=None, lyap_ctol=None):
+@defaults('maxiter', 'atol', 'rtol', 'ctol', 'lyap_maxiter', 'lyap_atol', 'lyap_rtol', 'lyap_ctol')
+def pos_ricc_lrcf_solver_options(maxiter=100, atol=0, rtol=None, ctol=None,
+                                 lyap_maxiter=100, lyap_atol=0, lyap_rtol=None, lyap_ctol=None):
     """Return available Riccati solvers with default options for the internal backend.
 
     Returns
@@ -36,6 +37,7 @@ def ricc_lrcf_solver_options(maxiter=100, atol=0, rtol=None,
             'maxiter': maxiter,
             'atol': atol,
             'rtol': rtol,
+            'ctol': ctol,
             'lyap_opts': {
                 'maxiter': lyap_maxiter,
                 'atol': lyap_atol,
@@ -46,13 +48,13 @@ def ricc_lrcf_solver_options(maxiter=100, atol=0, rtol=None,
     }
 
 
-def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     """Compute an approximate low-rank solution of a Riccati equation.
 
-    See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a general
+    See :func:`pymor.algorithms.riccati.solve_pos_ricc_lrcf` for a general
     description.
 
-    This function uses :func:`care_nwt_fac`, which is a dense solver.
+    This function uses :func:`pcare_nwt_fac`, which is a dense solver.
     Therefore, we assume all |Operators| and |VectorArrays| can be
     converted to |NumPy arrays| using
     :func:`~pymor.algorithms.to_matrix.to_matrix` and
@@ -85,7 +87,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         |VectorArray| from `A.source`.
     """
     _solve_ricc_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, ricc_lrcf_solver_options(), 'internal', None, False)
+    options = _parse_options(options, pos_ricc_lrcf_solver_options(), 'internal', None, False)
     if options['type'] != 'internal':
         raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
 
@@ -102,18 +104,19 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         B_mat, C_mat = C_mat.T, B_mat.T
         if E:
             E_mat = E_mat.T
-    Z, _ = care_nwt_fac(A_mat, B_mat, C_mat, E_mat,
-                        maxiter=options['maxiter'],
-                        atol=options['atol'],
-                        rtol=options['rtol'],
-                        lyap_opts=options['lyap_opts'])
+    Z, _ = pcare_nwt_fac(A_mat, B_mat, C_mat, E_mat,
+                         maxiter=options['maxiter'],
+                         atol=options['atol'],
+                         rtol=options['rtol'],
+                         ctol=options['ctol'],
+                         lyap_opts=options['lyap_opts'])
 
     return A.source.from_numpy(Z.T)
 
 
-@defaults('maxiter', 'atol', 'rtol', 'lyap_maxiter', 'lyap_atol', 'lyap_rtol', 'lyap_ctol')
-def ricc_dense_solver_options(maxiter=100, atol=0, rtol=None,
-                              lyap_maxiter=100, lyap_atol=0, lyap_rtol=None, lyap_ctol=None):
+@defaults('maxiter', 'atol', 'rtol', 'ctol', 'lyap_maxiter', 'lyap_atol', 'lyap_rtol', 'lyap_ctol')
+def pos_ricc_dense_solver_options(maxiter=100, atol=0, rtol=None, ctol=None,
+                                  lyap_maxiter=100, lyap_atol=0, lyap_rtol=None, lyap_ctol=None):
     """Return available Riccati solvers with default options for the internal backend.
 
     Returns
@@ -126,6 +129,7 @@ def ricc_dense_solver_options(maxiter=100, atol=0, rtol=None,
             'maxiter': maxiter,
             'atol': atol,
             'rtol': rtol,
+            'ctol': ctol,
             'lyap_opts': {
                 'maxiter': lyap_maxiter,
                 'atol': lyap_atol,
@@ -136,13 +140,13 @@ def ricc_dense_solver_options(maxiter=100, atol=0, rtol=None,
     }
 
 
-def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
+def solve_pos_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
     """Compute the solution of a Riccati equation.
 
     See :func:`pymor.algorithms.riccati.solve_ricc_dense` for a general
     description.
 
-    This function uses :func:`care_nwt_fac`, which is a dense solver.
+    This function uses :func:`pcare_nwt_fac`, which is a dense solver.
 
     Parameters
     ----------
@@ -170,7 +174,7 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
         Riccati equation solution as a |NumPy array|.
     """
     _solve_ricc_dense_check_args(A, E, B, C, R, S, trans)
-    options = _parse_options(options, ricc_dense_solver_options(), 'internal', None, False)
+    options = _parse_options(options, pos_ricc_dense_solver_options(), 'internal', None, False)
     if options['type'] != 'internal':
         raise ValueError(f"Unexpected Riccati equation solver ({options['type']}).")
 
@@ -183,28 +187,28 @@ def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):
     Eop = NumpyMatrixOperator(E) if E is not None else None
     Bva = Aop.source.from_numpy(B.T)
     Cva = Aop.source.from_numpy(C)
-    Zva = solve_ricc_lrcf(Aop, Eop, Bva, Cva, trans=trans, options=options)
+    Zva = solve_pos_ricc_lrcf(Aop, Eop, Bva, Cva, trans=trans, options=options)
     Z = Zva.to_numpy().T
     X = Z @ Z.T
     return X
 
 
-def care_nwt_fac(A, B, C, E, maxiter=100, atol=0, rtol=None, K0=None, lyap_opts={}):
-    """Solve continuous-time Riccati equation.
+def pcare_nwt_fac(A, B, C, E, maxiter=100, atol=0, rtol=None, ctol=None, lyap_opts={}):
+    """Solve positive continuous-time Riccati equation.
 
-    Computes the full-rank solutions of the standard algebraic Riccati
+    Computes the full-rank solutions of the standard positive Riccati
     equation
 
-        A^T*X + X*A - X*B*B^T*X + C^T*C = 0,                            (1)
+        A^T*X + X*A + X*B*B^T*X + C^T*C = 0,                            (1)
 
-    or of the generalized Riccati equation
+    or of the generalized positive Riccati equation
 
-        A^T*X*E + E^T*X*A - E^T*X*B*B^T*X*E + C^T*C = 0,                (2)
+        A^T*X*E + E^T*X*A + E^T*X*B*B^T*X*E + C^T*C = 0,                (2)
 
-    with X = Z*Z^T, using the Newton-Kleinman iteration. It is assumed that
-    the eigenvalues of A (or s*E - A) lie in the open left half-plane,
-    otherwise a stabilizing initial feedback K0 is given as parameter.
-    See :cite:`BS13`.
+    with X = Z*Z^T, using the low-rank Newton iteration. It is assumed that
+    the eigenvalues of A (or s*E - A) lie in the open left half-plane and
+    that the equation (1) (or (2)) has a solution.
+    See :cite:`V95`.
 
     Parameters
     ----------
@@ -226,10 +230,10 @@ def care_nwt_fac(A, B, C, E, maxiter=100, atol=0, rtol=None, K0=None, lyap_opts=
         Nonnegative scalar, tolerance for the relative error in the last
         iteration step.
         If `None`, the value is `10*n*eps`.
-    K0
-        |NumPy array| with dimensions m x n, used to stabilize the spectrum of
-        s*E - A, such that s*E - (A - BK0) has only stable eigenvalues.
-        If `None`, taken to be zero.
+    ctol
+        Nonnegative scalar, tolerance for the column compression during the
+        iteration.
+        If `None`, the value is `1e-2*sqrt(n*eps)`.
     lyap_opts
         Dict containing the optional parameters for the Lyapunov equation solver
         see `lyap_sgn_fac`.
@@ -256,8 +260,8 @@ def care_nwt_fac(A, B, C, E, maxiter=100, atol=0, rtol=None, K0=None, lyap_opts=
 
     See Also
     --------
+    care_nwt_fac
     icare_ric_fac
-    pcare_nwt_fac
     """
     # check input matrices
     assert isinstance(A, np.ndarray)
@@ -279,7 +283,6 @@ def care_nwt_fac(A, B, C, E, maxiter=100, atol=0, rtol=None, K0=None, lyap_opts=
         assert E.shape[0] == A.shape[0]
 
     n = A.shape[0]
-    m = B.shape[1]
 
     # check and assign optional parameters
     assert isinstance(maxiter, Integral)
@@ -291,14 +294,11 @@ def care_nwt_fac(A, B, C, E, maxiter=100, atol=0, rtol=None, K0=None, lyap_opts=
         rtol = 10 * n * np.finfo(np.float64).eps
     assert rtol >= 0
 
-    assert isinstance(lyap_opts, dict)
+    if ctol is None:
+        ctol = 1e-2 * np.sqrt(n * np.finfo(np.float64).eps)
+    assert ctol >= 0
 
-    assert K0 is None or isinstance(K0, np.ndarray)
-    if K0 is None:
-        K0 = np.zeros((m, n))
-    assert K0.ndim == 2
-    assert K0.shape[0] == m
-    assert K0.shape[1] == n
+    assert isinstance(lyap_opts, dict)
 
     # case of empty data
     if n == 0:
@@ -307,27 +307,48 @@ def care_nwt_fac(A, B, C, E, maxiter=100, atol=0, rtol=None, K0=None, lyap_opts=
         return Z, info
 
     # initialization
-    logger = getLogger('pymor.algorithms.mat_eqn_solver.care.care_nwt_fac')
-    niter = 1
+    logger = getLogger('pymor.algorithms.mat_eqn_solver.care.pcare_nwt_fac')
+    niter = 2
     converged = False
     ET = None if E is None else E.T
-    K = K0
 
     abs_err = []
     rel_err = []
     info_lyap = []
 
+    # initial step
+    N, info_lyap_cur = lyap_sgn_fac(A.T, C.T, ET, **lyap_opts)
+
+    Z = N
+    K = B.T @ N @ N.T
+    if E is not None:
+        K = K @ E
+
+    abs_err.append(spla.norm(K @ K.T))
+    rel_err.append(abs_err[-1] / max(spla.norm(Z.T @ Z), 1))
+
+    logger.info(f'step {niter:4d}, absolute error {abs_err[-1]:e}, relative error {rel_err[-1]:e}')
+
+    info_lyap.append(info_lyap_cur)
+
+    # method is converged if absolute or relative errors are small enough
+    converged = abs_err[-1] <= atol or rel_err[-1] <= rtol
+
     # Newton-Kleinman iteration
     while niter <= maxiter and not converged:
-        W = np.vstack((C, K))
-        Z, info_lyap_cur = lyap_sgn_fac((A - B @ K).T, W.T, ET, **lyap_opts)
+        if E is not None:
+            N, info_lyap_cur = lyap_sgn_fac((A + B @ (B.T @ Z) @ (Z.T @ E)).T, K.T, ET, **lyap_opts)
+        else:
+            N, info_lyap_cur = lyap_sgn_fac((A + B @ (B.T @ Z) @ Z.T).T, K.T, None, **lyap_opts)
+        K = B.T @ N @ N.T
+        if E is not None:
+            K = K @ E
 
-        AZ = A.T @ Z
-        ZE = Z.T @ E if E is not None else Z.T
-        K = (B.T @ Z) @ ZE
+        # column compression
+        Z = compress_fac(np.hstack([Z, N]), ctol)
 
         # information about current iteration step
-        abs_err.append(spla.norm(AZ @ ZE + ZE.T @ AZ.T - K.T @ K + C.T @ C))
+        abs_err.append(spla.norm(K @ K.T))
         rel_err.append(abs_err[-1] / max(spla.norm(Z.T @ Z), 1))
         info_lyap.append(info_lyap_cur)
 
