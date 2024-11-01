@@ -187,7 +187,7 @@ def _orth_step(A, product, i, last_iter, atol, rtol) -> tuple:
 @defaults('atol', 'rtol', 'check', 'check_tol')
 def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0,
                check=True, check_tol=1e-3, copy=True):
-    """Orthonormalize a |VectorArray| using the CGS IRO LS algortihm.
+    """Orthonormalize a |VectorArray| using the CGS IRO LS algorithm.
 
     This method computes a QR decomposition of a |VectorArray| via the classical Gram-Schmidt
     algorithm with normalization lag and re-orthogonalization lag according to :cite:`SLAYT21`.
@@ -214,7 +214,7 @@ def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0
         algorithm at the `offset + 1`-th vector.
     check
         If `True`, check if the resulting |VectorArray| is really orthonormal.
-        Due to the instability of this algortihm it is recommendet to check for orthogonality.
+        Due to the instability of this algorithm it is recommendet to check for orthogonality.
     check_tol
         Tolerance for the check.
     copy
