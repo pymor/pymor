@@ -122,6 +122,68 @@ def gram_schmidt(A, product=None, return_R=False, atol=1e-13, rtol=1e-13, offset
         return A
 
 
+def _orth_step(A, product, i, last_iter, atol, rtol) -> tuple:
+    """`cgs_iro_ls` helper function.
+
+    Orthogonalization step for a single iteration. As long as it is not the last iteration two
+    consecutive vectors are orthogonalized in one iteration, otherwise just one.
+    For the last iteration case `r` (array with single value) contains the norm of the last vector
+    and `proj` (array of dim [i-1,1]) the projection coefficients onto the already orthogonal basis.
+    Otherwise `r` (array with two elements) contains additionally the projection between those two
+    vectors and `proj` (array of dim [i-1,2]) the projection coefficients
+    of the second current vector onto the orthogonal basis.
+    If the norm of the first current vector is below the tolerance `atol`,
+    `None` is returned to indicate that this vector can be removed.
+    Similarly, if after the removal of the linearly dependent parts the first current vector
+    has a norm below the tolerance `rtol * initial_norm`, `None` is returned.
+
+    Parameters
+    ----------
+    A
+        The |VectorArray| which is to be orthonormalized.
+    product
+        The inner product |Operator| w.r.t. which to orthonormalize.
+        If `None`, the Euclidean product is used.
+    i
+        Vector in A, which has to be orthogonalized.
+    last_iter
+        If i is the last iteration. If so, only the last vector has to be orthogonalized.
+    atol
+        Vectors of norm smaller than `atol` are removed from the array.
+    rtol
+        Relative tolerance used to detect linear dependent vectors
+        (which are then removed from the array).
+
+    Returns
+    -------
+    r
+        An array containing the norm of the first vector and if `last_iter` also the projection
+        coefficient of the current two vectors.
+    proj
+        Array containing the projection coeffiecients of the current vector against the orthogonal
+        part of A and if `last_iter` the projection coefficients of the current two vectors.
+        It is of shape [i-1,1] if `last_iter` and [i-1,2] else.
+    """
+    vectors_to_orth = A[i] if last_iter else A[[i,i+1]]
+
+    r = vectors_to_orth[0].inner(vectors_to_orth, product)[0]
+
+    initial_norm = np.sqrt(r[0])
+
+    if initial_norm <= atol:
+        return None
+
+    proj = A[:i].inner(vectors_to_orth, product)
+    r -= proj[:,0].T @ proj
+
+    if r[0] <= rtol * initial_norm:
+        return None
+
+    r[0] = np.sqrt(r[0])
+
+    return r, proj
+
+
 @defaults('atol', 'rtol', 'check', 'check_tol')
 def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0,
                check=True, check_tol=1e-3, copy=True):
@@ -131,6 +193,7 @@ def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0
     algorithm with normalization lag and re-orthogonalization lag according to :cite:`SLAYT21`.
     Derived from the matlab repository :cite:`LCO24` to include tolerance checks,
     offsets and non-euclidean inner products.
+    For condition numbers around 10^16, this algorithm starts to produce a non-orthonormal basis.
 
     Parameters
     ----------
@@ -151,6 +214,7 @@ def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0
         algorithm at the `offset + 1`-th vector.
     check
         If `True`, check if the resulting |VectorArray| is really orthonormal.
+        Due to the instability of this algortihm it is recommendet to check for orthogonality.
     check_tol
         Tolerance for the check.
     copy
@@ -171,88 +235,49 @@ def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0
     if copy:
         A = A.copy()
 
-    atol_p2 = atol ** 2
-
     R = np.eye(n)
-    remove = []
-    r0 = r1 = None
 
     if n == 0 or offset == n:
         return (A, R) if return_R else A
 
-    # last two orthonormal vectors have to be orthogonalized again
+    # last orthonormal vector has to be orthogonalized again
     # to achieve an orthonormal basis
-    offset = max(offset-2, 0)
+    offset = max(offset-1, 0)
 
-    for k in range(offset, n-1):
-        q = A[k]
-        u = A[k+1]
+    # linear dependent or vectors with a low initial norm are removed from `A`
+    # (and the respective row in `R`)
+    # therefore the length of A can shrink during the iterations
+    # `i` is being used to keep track of the current vector
+    # while `column` keeps track of the current column in `R` in which to add
+    # the projection coefficients
+    i = offset
+    for column in range(offset, n):
+        last_iter = i == len(A) - 1
+        # tup can be None to indicate, that the first current vector can be removed
+        tup = _orth_step(A, product, i, last_iter, atol, rtol)
 
-        r0 = q.inner(q, product)[0][0]
-        initial_norm = np.sqrt(r0)
-        if r0 <= atol_p2:
-            logger.info(f'Removing vector {k} of norm {r0}')
-            remove.append(k)
-            continue
-        r1 = q.inner(u, product)[0][0]
+        if tup:
+            r, proj = tup
+            common_dtype = np.promote_types(R.dtype, r.dtype)
+            R = R.astype(common_dtype, copy=False)
 
-        if k > offset:
-            y = np.reshape(A[:k].inner(q, product), [k])
-            z = np.reshape(A[:k].inner(u, product), [k])
-            r0 -= y.dot(y)
-            r1 -= y.dot(z)
-            R[:k, k] += y
+            R[:i, column] += proj[:,0]
+            R[i, column] = r[0]
+            A[i].axpy(-1.0, A[:i].lincomb(proj[:,0]))
+            A[i].scal(1 / r[0])
 
-        if r0 <= rtol * initial_norm:
-            logger.info(f'Removing linearly dependent vector {k}')
-            remove.append(k)
-            continue
+            if not last_iter:
+                R[i, column+1] = r[1] / r[0]
+                R[:i, column+1] = proj[:,1]
+                A[i+1].axpy(-1.0, A[:i+1].lincomb(R[:i+1, i+1]))
 
-        r0 = np.sqrt(r0)
-
-        common_dtype = np.promote_types(R.dtype, type(r0))
-        R = R.astype(common_dtype, copy=False)
-
-        R[k, k] = r0
-        R[k, k+1] = r1 / r0
-
-        if k > offset:
-            R[:k, k+1] = z
-            q.axpy(-1.0, A[:k].lincomb(y))
-
-        q.scal(1 / r0)
-        u.axpy(-1.0, A[:k+1].lincomb(R[:k+1, k+1]))
-
-    # orth last vector outside loop
-    q = A[n-1]
-    r0 = q.inner(q, product)[0][0]
-    initial_norm = np.sqrt(r0)
-    if r0 <= atol_p2 or r0 <= rtol * initial_norm:
-        logger.info(f'Removing vector {n-1} of norm {r0}')
-        remove.append(n-1)
-    else:
-        y = np.reshape(A[:n-1].inner(q, product), [n-1]) if n>1 else np.zeros([0])
-
-        common_dtype = np.promote_types(R.dtype, type(r0))
-        R = R.astype(common_dtype, copy=False)
-
-        R[:n-1, n-1] += y
-
-        r0 -= y.dot(y)
-        if r0 <= rtol * initial_norm:
-            logger.info(f'Removing linearly dependent vector {k}')
-            remove.append(n-1)
+            i += 1
         else:
-            r0 = np.sqrt(r0)
-            R[n-1, n-1] = r0
+            logger.info(f'Removing vector {column}')
+            del A[i]
+            R = np.delete(R, [i], axis=0)
 
-            q.axpy(-1.0, A[:n-1].lincomb(y))
-            q.scal(1 / r0)
-
-    if remove:
-        del A[remove]
-        R = np.delete(R, remove, axis=0)
-
+    # tolerance check
     if check:
         error_matrix = A[offset:len(A)].inner(A, product)
         error_matrix[:len(A) - offset, offset:len(A)] -= np.eye(len(A) - offset)
