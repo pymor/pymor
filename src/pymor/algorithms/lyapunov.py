@@ -92,7 +92,7 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
         - :func:`pymor.algorithms.lradi.lyap_lrcf_solver_options`,
         - :func:`pymor.bindings.scipy.lyap_lrcf_solver_options`,
         - :func:`pymor.bindings.slycot.lyap_lrcf_solver_options`,
-        - :func:`pymor.algorithms.mat_eqn_solvers.lyap_lrcf_solver_options`,
+        - :func:`pymor.algorithms.mat_eqn_solvers.lyap_fac.lyap_lrcf_solver_options`,
 
     default_sparse_solver_backend
         Default sparse solver backend to use (lradi).
@@ -114,7 +114,7 @@ def solve_cont_lyap_lrcf(A, E, B, trans=False, options=None,
         else:
             backend = default_dense_solver_backend
     if backend == 'internal':
-        from pymor.algorithms.mat_eqn_solvers.lyap_sgn import solve_lyap_lrcf as solve_lyap_impl
+        from pymor.algorithms.mat_eqn_solvers.lyap_fac import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'scipy':
         from pymor.bindings.scipy import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'slycot':
@@ -181,6 +181,7 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
 
         - :func:`pymor.bindings.scipy.lyap_lrcf_solver_options`,
         - :func:`pymor.bindings.slycot.lyap_lrcf_solver_options`.
+        - :func:`pymor.algorithms.mat_eqn_solvers.lyap_fac.lyap_lrcf_solver_options`.
 
     default_dense_solver_backend
         Default dense solver backend to use (slycot, scipy, internal).
@@ -197,7 +198,7 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
     else:
         backend = default_dense_solver_backend
     if backend == 'internal':
-        from pymor.algorithms.mat_eqn_solvers.lyap_sgn import solve_lyap_lrcf as solve_lyap_impl
+        from pymor.algorithms.mat_eqn_solvers.lyap_fac import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'scipy':
         from pymor.bindings.scipy import solve_lyap_lrcf as solve_lyap_impl
     elif backend == 'slycot':
@@ -274,7 +275,7 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
 
         - :func:`pymor.bindings.scipy.lyap_dense_solver_options`,
         - :func:`pymor.bindings.slycot.lyap_dense_solver_options`,
-        - :func:`pymor.algorithms.mat_eqn_solvers.lyap_sqn.lyap_dense_solver_options`,
+        - :func:`pymor.algorithms.mat_eqn_solvers.lyap.lyap_dense_solver_options`,
 
     default_solver_backend
         Default solver backend to use (slycot, scipy, internal).
@@ -291,7 +292,7 @@ def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
     else:
         backend = default_solver_backend
     if backend == 'internal':
-        from pymor.algorithms.mat_eqn_solvers.lyap_sgn import solve_lyap_dense as solve_lyap_impl
+        from pymor.algorithms.mat_eqn_solvers.lyap import solve_lyap_dense as solve_lyap_impl
     elif backend == 'scipy':
         from pymor.bindings.scipy import solve_lyap_dense as solve_lyap_impl
     elif backend == 'slycot':
@@ -355,6 +356,7 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
 
         - :func:`pymor.bindings.scipy.lyap_dense_solver_options`,
         - :func:`pymor.bindings.slycot.lyap_dense_solver_options`.
+        - :func:`pymor.algorithms.mat_eqn_solvers.lyap.lyap_dense_solver_options`.
 
     default_solver_backend
         Default solver backend to use (slycot, scipy, internal).
@@ -371,7 +373,7 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
     else:
         backend = default_solver_backend
     if backend == 'internal':
-        from pymor.algorithms.mat_eqn_solvers.lyap_sgn import solve_lyap_dense as solve_lyap_impl
+        from pymor.algorithms.mat_eqn_solvers.lyap import solve_lyap_dense as solve_lyap_impl
     elif backend == 'scipy':
         from pymor.bindings.scipy import solve_lyap_dense as solve_lyap_impl
     elif backend == 'slycot':
