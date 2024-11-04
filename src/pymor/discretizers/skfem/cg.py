@@ -9,6 +9,7 @@ config.require('SCIKIT_FEM')
 import warnings
 
 import numpy as np
+from packaging.version import parse
 from skfem import Basis, BilinearForm, BoundaryFacetBasis, LinearForm, asm, enforce, projection
 from skfem.helpers import dot, grad
 from skfem.visuals.matplotlib import plot, show
@@ -43,7 +44,13 @@ class SKFemBilinearFormOperator(NumpyMatrixBasedOperator):
             with warnings.catch_warnings():
                 from scipy.sparse import SparseEfficiencyWarning
                 warnings.filterwarnings('ignore', category=SparseEfficiencyWarning)
-                A.setdiag(A.diagonal())
+
+                # see https://github.com/scipy/scipy/issues/21791
+                if parse('1.15.0') > parse(config.SCIPY_VERSION) >= parse('1.13.0'):
+                    A = A.tocoo()
+                    A.setdiag(A.diagonal())
+                    A = A.tocsr()
+
                 enforce(A, D=self.dirichlet_dofs, diag=0. if self.dirichlet_clear_diag else 1., overwrite=True)
         return A
 
@@ -189,11 +196,6 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
             In case `preassemble` is `True`, the generated |Model| before preassembling operators.
     """
     assert isinstance(analytical_problem, StationaryProblem)
-
-    from packaging.version import parse
-    if parse(config.SCIPY_VERSION) >= parse('1.13.0'):
-        import warnings
-        warnings.warn('Discreizer yields incorrect results for scipy>=1.13.0. Please install an older scipy.')
 
     p = analytical_problem
 
