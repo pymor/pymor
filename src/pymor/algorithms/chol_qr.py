@@ -8,6 +8,7 @@ import scipy.sparse.linalg as spsla
 
 from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
+from pymor.vectorarrays.list import ListVectorArray
 
 
 def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None,
@@ -89,8 +90,17 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None,
     if maxiter == 1:
         logger.warning('Single iteration shifted CholeskyQR can lead to poor orthogonality!')
 
-    B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
-    B = B.conj()
+    def _compute_gramian_and_offset_matrix():
+        if isinstance(A, ListVectorArray):
+            # for a |ListVectorArray| it is slightly faster to compute `B` and `X` separately
+            B = A[offset:].inner(A[:offset], product=product)
+            X = A.gramian(product)
+        else:
+            B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
+        B = B.conj()
+        return B, X
+
+    B, X = _compute_gramian_and_offset_matrix()
 
     dtype = np.promote_types(X.dtype, np.float32)
     trmm, trtri = spla.get_blas_funcs('trmm', dtype=dtype), spla.get_lapack_funcs('trtri', dtype=dtype)
@@ -155,8 +165,7 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None,
 
             # computation not needed in the last iteration
             if iter < maxiter:
-                B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
-                B = B.conj()
+                B, X = _compute_gramian_and_offset_matrix()
             elif orth_tol is not None:
                 X = A[offset:].gramian(product=product)
 
