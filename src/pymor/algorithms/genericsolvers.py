@@ -250,7 +250,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
         if inner_res_0 == 0:
             rnorm = r_outer.norm()[0]
             raise RuntimeError('Preconditioner returned a zero vector; '
-                               '|v| ~ %.1g, |M v| = 0' % rnorm)
+                               f'|v| ~ {rnorm:.1g}, |M v| = 0')
 
         vs0.scal(1.0/inner_res_0)
         hs = []
@@ -478,7 +478,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         print(' ')
         print('LSQR            Least-squares solution of  Ax = b')
         str1 = f'The matrix A has {m:8g} rows  and {n:8g} cols'
-        str2 = 'damp = %20.14e  ' % (damp)
+        str2 = f'damp = {damp:20.14e}  '
         str3 = f'atol = {atol:8.2e}                 conlim = {conlim:8.2e}'
         str4 = f'btol = {btol:8.2e}               iter_lim = {iter_lim:8g}'
         print(str1)
@@ -761,7 +761,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         print(' ')
         print('LSMR            Least-squares solution of  Ax = b\n')
         print(f'The matrix A has {m:8g} rows  and {n:8g} cols')
-        print('damp = %20.14e\n' % (damp))
+        print(f'damp = {damp:20.14e}\n')
         print(f'atol = {atol:8.2e}                 conlim = {conlim:8.2e}\n')
         print(f'btol = {btol:8.2e}             maxiter = {maxiter:8g}\n')
 
@@ -997,7 +997,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         print(f'istop ={istop:8g}    normr ={normr:8.1e}')
         print(f'    normA ={normA:8.1e}    normAr ={normar:8.1e}')
         print(f'itn   ={itn:8g}    condA ={condA:8.1e}')
-        print('    normx =%8.1e' % (normx))
+        print(f'    normx ={normx:8.1e}')
         print(str1, str2)
         print(str3, str4)
 

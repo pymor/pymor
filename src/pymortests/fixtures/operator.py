@@ -49,25 +49,24 @@ class MonomOperator(Operator):
         return self.range.make_array(1. / V.to_numpy())
 
 
-def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, rng,
-                                              source_id=None, range_id=None, sparse=False):
+def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, rng, sparse=False):
     assert not sparse or sparse in ('matrix', 'array')
     mat = rng.random((dim_range, dim_source))
     if sparse == 'matrix':
         mat = sps.csc_matrix(mat)
     elif sparse == 'array':
         mat = sps.csc_array(mat)
-    op = NumpyMatrixOperator(rng.random((dim_range, dim_source)), source_id=source_id, range_id=range_id)
+    op = NumpyMatrixOperator(rng.random((dim_range, dim_source)))
     s = op.source.make_array(rng.random((count_source, dim_source)))
     r = op.range.make_array(rng.random((count_range, dim_range)))
     return op, None, s, r
 
 
 def numpy_list_vector_array_matrix_operator_with_arrays_factory(
-    dim_source, dim_range, count_source, count_range, rng, source_id=None, range_id=None, sparse=False,
+    dim_source, dim_range, count_source, count_range, rng, sparse=False,
 ):
     op, _, s, r = numpy_matrix_operator_with_arrays_factory(
-        dim_source, dim_range, count_source, count_range, rng, source_id, range_id, sparse
+        dim_source, dim_range, count_source, count_range, rng, sparse
     )
     op = op.with_(new_type=NumpyListVectorArrayMatrixOperator)
     s = op.source.from_numpy(s.to_numpy())
@@ -76,7 +75,7 @@ def numpy_list_vector_array_matrix_operator_with_arrays_factory(
 
 
 def numpy_structured_matrix_operator_with_arrays_factory(structure, iscomplex, even, r_none, shape, blockshape,
-                                                         count_source, count_range, rng, source_id=None, range_id=None):
+                                                         count_source, count_range, rng):
     n = 5 if even else 4
     nr = 2 if shape == 'skinny' else n
     nc = 2 if shape == 'fat' else n
@@ -90,22 +89,20 @@ def numpy_structured_matrix_operator_with_arrays_factory(structure, iscomplex, e
         c = rng.random((nc, *blocks))
         r = rng.random((nr, *blocks))
     if structure == NumpyCirculantOperator:
-        op = structure(c, source_id=source_id, range_id=range_id)
+        op = structure(c)
     elif structure == NumpyToeplitzOperator:
         r[0] = c[0]
-        op = structure(c, r=None if r_none else r, source_id=source_id, range_id=range_id)
+        op = structure(c, r=None if r_none else r)
     elif structure == NumpyHankelOperator:
         r[0] = c[-1]
-        op = structure(c, r=None if r_none else r, source_id=source_id, range_id=range_id)
+        op = structure(c, r=None if r_none else r)
     U, V = op.source.random(count_source), op.range.random(count_range)
     return op, None, U, V
 
 
-def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range, count_source, count_range, rng,
-                                                           source_id=None, range_id=None):
+def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range, count_source, count_range, rng):
     from scipy.linalg import eigh
-    op, _, U, V = numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, rng,
-                                                            source_id=source_id, range_id=range_id)
+    op, _, U, V = numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, rng)
     if dim_source > 0:
         while True:
             sp = rng.random((dim_source, dim_source))
@@ -113,9 +110,9 @@ def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range
             evals = eigh(sp, eigvals_only=True)
             if np.min(evals) > 1e-6:
                 break
-        sp = NumpyMatrixOperator(sp, source_id=source_id, range_id=source_id)
+        sp = NumpyMatrixOperator(sp)
     else:
-        sp = NumpyMatrixOperator(np.zeros((0, 0)), source_id=source_id, range_id=source_id)
+        sp = NumpyMatrixOperator(np.zeros((0, 0)))
     if dim_range > 0:
         while True:
             rp = rng.random((dim_range, dim_range))
@@ -123,9 +120,9 @@ def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range
             evals = eigh(rp, eigvals_only=True)
             if np.min(evals) > 1e-6:
                 break
-        rp = NumpyMatrixOperator(rp, source_id=range_id, range_id=range_id)
+        rp = NumpyMatrixOperator(rp)
     else:
-        rp = NumpyMatrixOperator(np.zeros((0, 0)), source_id=range_id, range_id=range_id)
+        rp = NumpyMatrixOperator(np.zeros((0, 0)))
     return op, None, U, V, sp, rp
 
 if parse(import_module('scipy').__version__) >= parse('1.8.0'):
@@ -732,6 +729,6 @@ def picklable_operator(rng, request):
     return request.param(rng)
 
 
-@pytest.fixture()
+@pytest.fixture
 def loadable_matrices(shared_datadir):
     return (shared_datadir / 'matrices').glob('*')

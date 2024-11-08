@@ -97,5 +97,3 @@ Replace `RELEASE_TAG` below with the actual release tag.
     gives no duplicates.
 
     See the manpage of `git-shortlog` for details (`git help shortlog`).
-- [ ] Remove deprecated features in main in `pymor/pymor`.
-      (Omit in case of a bugfix release.)

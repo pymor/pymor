@@ -5,12 +5,14 @@
 """Module for computing (rational) Krylov subspaces' bases."""
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.core.logger import getLogger
+from pymor.operators.constructions import IdentityOperator
 
 
 def arnoldi(A, E, b, r):
-    r"""Arnoldi algorithm.
+    r"""Block Arnoldi algorithm.
 
-    Computes a real orthonormal basis for the Krylov subspace
+    Computes an orthonormal basis for the Krylov subspace
 
     .. math::
         \mathrm{span}\left\{
@@ -24,35 +26,54 @@ def arnoldi(A, E, b, r):
     Parameters
     ----------
     A
-        Real |Operator| A.
+        The |Operator| A.
     E
-        Real |Operator| E.
+        The |Operator| E. If `None`, the identity operator is assumed.
     b
-        Real |VectorArray| of length 1.
+        The |VectorArray| b.
     r
         Order of the Krylov subspace (positive integer).
 
     Returns
     -------
     V
-        Orthonormal basis for the Krylov subspace as a |VectorArray|.
+        Orthonormal basis for the Krylov subspace as a |VectorArray|
+        with `len(V) <= r*len(b)` (strict inequality in case of
+        deflation).
     """
     assert A.source == A.range
+    if E is None:
+        E = IdentityOperator(A.source)
     assert E.source == A.source
     assert E.range == A.source
     assert b in A.source
-    assert len(b) == 1
+    assert len(b) > 0
 
-    V = A.source.empty(reserve=r)
+    logger = getLogger('pymor.algorithms.krylov.arnoldi')
+
+    V = A.source.empty(reserve=r*len(b))
+
     v = E.apply_inverse(b)
-    v.scal(1 / v.norm()[0])
-    V.append(v)
+    V.append(v, remove_from_other=True)
+    gram_schmidt(V, atol=0, rtol=0, copy=False)
+    if len(V) < len(b):
+        logger.warning('gram_schmidt removed vectors.')
+    last_block_len = len(V)
 
     for i in range(1, r):
-        v = A.apply(V[i - 1])
+        if last_block_len == 0:
+            logger.warning('Last block is empty. Returning.')
+            return V
+
+        v = A.apply(V[-last_block_len:])
         v = E.apply_inverse(v)
-        V.append(v)
-        gram_schmidt(V, atol=0, rtol=0, offset=len(V) - 1, copy=False)
+        len_v, len_V = len(v), len(V)
+        V.append(v, remove_from_other=True)
+        gram_schmidt(V, atol=0, rtol=0, offset=len_V, copy=False)
+        last_block_len = len(V) - len_V
+
+        if last_block_len < len_v:
+            logger.warning('gram_schmidt removed vectors.')
 
     return V
 

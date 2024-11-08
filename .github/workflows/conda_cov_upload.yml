@@ -11,15 +11,16 @@ jobs:
     name: Report Coverage to codecov.io
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
-      - uses: dawidd6/action-download-artifact@v2.24.3
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
-          run_id: ${{ github.event.workflow_run.id }}
-          name: coverage_results
+          run-id: ${{ github.event.workflow_run.id }}
+          pattern: coverage_results-*
+          merge-multiple: true
           path: ./reports/
       # Upload to codecov with an API token to avoid upload failures
       # See https://github.com/codecov/codecov-action/issues/837.
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         name: Upload coverage
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

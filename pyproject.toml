@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Library for building model order reduction applications with Python"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [
   {name = "pyMOR developers", email = "main.developers@pymor.org"},
 ]
@@ -18,7 +18,6 @@ maintainers = [
 classifiers = [
   "Intended Audience :: Science/Research",
   "License :: OSI Approved :: BSD License",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -28,12 +27,12 @@ classifiers = [
 dependencies = [
   "diskcache",
   "matplotlib>=3.5.0",
-  "numpy>=1.20.3,!=1.25.0,<2", # 1.25.0 crashes CI, >=2 breaks API
+  "numpy>=1.20.3,!=1.25.0", # 1.25.0 crashes CI
   "packaging",
   "pillow",
   "pygments",
   "qtpy>=2.3.1",
-  "scipy>=1.5.4",
+  "scipy>=1.8",
   "typer",
 ]
 
@@ -51,15 +50,15 @@ docs-additional = [
   "myst-nb>=0.16",
   "pybind11[global]",
   "python-slugify",
-  "sphinx-autoapi",
+  "sphinx-autoapi==3.1.2",
   "sphinx-material",
-  "sphinx",
+  "sphinx==7.3.7",
   "sphinxcontrib-bibtex",
 ]
 # additional dependencies for running tests via 'make tests'
 tests = [
   "hypothesis[numpy,pytest]==6.56.3", # pin hypothesis version to ensure deterministic tests
-  "pytest-notebook",
+  "pytest-notebook~=0.10",
   "notebook",
   "pytest-cov",
   "pytest-datadir",
@@ -67,9 +66,10 @@ tests = [
 ]
 # additional dependencies for pyMOR development
 dev = [
-  "ruff==0.3.5", # our linter of choice
-  "conda_lock==1.4.0", # needed for make ci_conda_requirements
+  "ruff==0.6.9", # our linter of choice
+  "conda_lock==2.5.7", # needed for make ci_conda_requirements
   "hatch", # build frontend for building and publishing pyMOR images
+  "uv", # to build requirements files
 ]
 # ## Optional dependencies for MOR algorithms
 # dependencies for deep-learning based MOR methods
@@ -129,8 +129,9 @@ scikit-fem = [
 ]
 # # Meta dependencies
 # install all optional dependencies, except those requiring a compiler toolchain to build
+# dune-gdt has no wheels for Python>=3.12, so we don't include it in full
 full = [
-  "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,dune,ngsolve,scikit-fem]",
+  "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,ngsolve,scikit-fem]",
 ]
 # install all optional dependencies, including those requiring a compiler toolchain to build
 full-compiled = [
@@ -271,6 +272,7 @@ ignore = [
   "PT015", # assertion always fails, replace with `pytest.fail()`
   "RUF005", # consider unpacking instead of concatenation
   "SIM102", # use a single if statement instead of nested if statements
+  "SIM103", # return the condition directly
   "SIM105", # use contextlib.suppress instead of try-except-pass
   "SIM108", # use ternary operator instead of if-else-block
   "SIM114", # combine if branches using logical or operator

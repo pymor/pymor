@@ -68,9 +68,10 @@ import hashlib
 import inspect
 import os
 import tempfile
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from numbers import Number
+from textwrap import wrap
 from types import MethodType
 
 import diskcache
@@ -432,6 +433,9 @@ class CacheableObject(ImmutableObject):
         return self.get_cached_value((method.__name__, kwargs), value_factory)
 
 
+_CACHED_METHODS = []
+
+
 def cached(function):
     """Decorator to make a method of `CacheableObject` actually cached."""
     params = inspect.signature(function).parameters
@@ -446,7 +450,56 @@ def cached(function):
             return function(self, *args, **kwargs)
         return self._cached_method_call(function, True, argnames, defaults, args, kwargs)
 
+    _CACHED_METHODS.append(function.__qualname__)
+
     return wrapper
+
+
+def print_cached_methods():
+    from pymor.core.defaults import _import_all
+    _import_all()
+
+    print(f"""
+Overview of cached methods
+--------------------------
+
+Caching is globally {"disabled" if _caching_disabled else "enabled"}.
+
+Use enable_caching()/disable_caching() to globally enable/disable caching.
+To enable/disable caching for a single CacheableObject, use its individual
+enable_caching()/disable_caching() methods.
+
+The following methods are cached when caching is enabled both globally
+and on a per-instance level:
+"""[1:])
+
+    print(*wrap(', '.join(sorted(_CACHED_METHODS)), initial_indent='  ', subsequent_indent='  '), sep='\n')
+
+    # get all classes of CacheableObjects
+    cacheable_classes = []
+    def add_subclasses(parent):
+        for c in parent.__subclasses__():
+            cacheable_classes.append(c)
+            add_subclasses(c)
+    add_subclasses(CacheableObject)
+
+    regions_with_classes = defaultdict(list)
+    for c in cacheable_classes:
+        if c.cache_region is not None:
+            regions_with_classes[c.cache_region].append(c.__qualname__)
+
+    print('\n\nThe following classes have caching enabled by default:\n')
+
+    for region, classes in sorted(regions_with_classes.items(), key=lambda x: x[0]):
+        print(f'Default cache region: {region}\n')
+        print(*wrap(', '.join(sorted(classes)), initial_indent='  ', subsequent_indent='  '), sep='\n')
+        print()
+        print()
+
+    print("""
+Note that cacheable classes outside the pymor package are only listed
+when the modules containing these classes have already been imported.
+"""[1:])
 
 
 NoneType = type(None)

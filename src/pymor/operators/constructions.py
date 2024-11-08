@@ -151,7 +151,7 @@ class LincombOperator(Operator):
         #     which we define to be the case when the number of operators has ben reduced.
         if (self.parametric
                 or operators != self.operators  # for this comparison to work self.operators always has to be a tuple!
-                or type(op) != type(self)
+                or type(op) is not type(self)
                 or len(op.operators) < len(operators)):
             return op
         else:
@@ -609,12 +609,12 @@ class ComponentProjectionOperator(Operator):
 
     linear = True
 
-    def __init__(self, components, source, range_id=None, name=None):
+    def __init__(self, components, source, name=None):
         assert all(0 <= c < source.dim for c in components)
         components = np.array(components, dtype=np.int32)
 
         self.__auto_init(locals())
-        self.range = NumpyVectorSpace(len(components), range_id)
+        self.range = NumpyVectorSpace(len(components))
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -791,29 +791,26 @@ class VectorArrayOperator(Operator):
         The |VectorArray| which is to be treated as an operator.
     adjoint
         See description above.
-    space_id
-        Id of the `source` (`range`) |VectorSpace| in case `adjoint` is
-        `False` (`True`).
     name
         The name of the operator.
     """
 
     linear = True
 
-    def __init__(self, array, adjoint=False, space_id=None, name=None):
+    def __init__(self, array, adjoint=False, name=None):
         array = array.copy()
 
         self.__auto_init(locals())
         if adjoint:
             self.source = array.space
-            self.range = NumpyVectorSpace(len(array), space_id)
+            self.range = NumpyVectorSpace(len(array))
         else:
-            self.source = NumpyVectorSpace(len(array), space_id)
+            self.source = NumpyVectorSpace(len(array))
             self.range = array.space
 
     @property
     def H(self):
-        return VectorArrayOperator(self.array, not self.adjoint, self.space_id, self.name + '_adjoint')
+        return VectorArrayOperator(self.array, not self.adjoint, self.name + '_adjoint')
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -1407,9 +1404,9 @@ class NumpyConversionOperator(Operator):
         self.__auto_init(locals())
         if direction == 'to_numpy':
             self.source = space
-            self.range = NumpyVectorSpace(space.dim, id=space.id)
+            self.range = NumpyVectorSpace(space.dim)
         else:
-            self.source = NumpyVectorSpace(space.dim, id=space.id)
+            self.source = NumpyVectorSpace(space.dim)
             self.range = space
 
     @property

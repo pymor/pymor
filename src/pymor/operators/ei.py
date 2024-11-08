@@ -124,7 +124,6 @@ class EmpiricalInterpolatedOperator(Operator):
         if len(self.interpolation_dofs) == 0:
             if isinstance(self.source, NumpyVectorSpace) and isinstance(self.range, NumpyVectorSpace):
                 return NumpyMatrixOperator(np.zeros((self.range.dim, self.source.dim)), solver_options=options,
-                                           source_id=self.source.id, range_id=self.range.id,
                                            name=self.name + '_jacobian')
             else:
                 return ZeroOperator(self.range, self.source, name=self.name + '_jacobian')
@@ -147,7 +146,7 @@ class EmpiricalInterpolatedOperator(Operator):
                 interpolation_coefficients = np.empty((len(JU), len(self.collateral_basis))) + np.nan
             J = self.collateral_basis.lincomb(interpolation_coefficients)
             if isinstance(J.space, NumpyVectorSpace):
-                J = NumpyMatrixOperator(J.to_numpy().T, range_id=self.range.id)
+                J = NumpyMatrixOperator(J.to_numpy().T)
             else:
                 J = VectorArrayOperator(J)
             return ConcatenationOperator([J, ComponentProjectionOperator(self.source_dofs, self.source)],

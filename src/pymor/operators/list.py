@@ -149,20 +149,16 @@ class NumpyListVectorArrayMatrixOperator(ListVectorArrayOperatorBase, NumpyMatri
     ----------
     matrix
         The |NumPy array| which is to be wrapped.
-    source_id
-        The id of the operator's `source` |VectorSpace|.
-    range_id
-        The id of the operator's `range` |VectorSpace|.
     solver_options
         The |solver_options| for the operator.
     name
         Name of the operator.
     """
 
-    def __init__(self, matrix, source_id=None, range_id=None, solver_options=None, name=None):
-        super().__init__(matrix, source_id=source_id, range_id=range_id, solver_options=solver_options, name=name)
-        self.source = NumpyListVectorSpace(matrix.shape[1], source_id)
-        self.range = NumpyListVectorSpace(matrix.shape[0], range_id)
+    def __init__(self, matrix, solver_options=None, name=None):
+        super().__init__(matrix, solver_options=solver_options, name=name)
+        self.source = NumpyListVectorSpace(matrix.shape[1])
+        self.range = NumpyListVectorSpace(matrix.shape[0])
 
     def _apply_one_vector(self, u, mu=None, prepare_data=None):
         return self.matrix.dot(u._array)
