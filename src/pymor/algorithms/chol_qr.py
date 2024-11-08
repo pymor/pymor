@@ -42,6 +42,8 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
     product
         The inner product |Operator| w.r.t. which to orthonormalize.
         If `None`, the Euclidean product is used.
+    return_R
+        If `True`, the R matrix from QR decomposition is returned.
     maxiter
         Maximum number of iterations. Defaults to 3.
     offset
