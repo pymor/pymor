@@ -131,11 +131,12 @@ def _orth_step(A, product, i, last_iter, atol, rtol) -> tuple:
     and `proj` (array of dim [i-1,1]) the projection coefficients onto the already orthogonal basis.
     Otherwise `r` (array with two elements) contains additionally the projection between those two
     vectors and `proj` (array of dim [i-1,2]) the projection coefficients
-    of the second current vector onto the orthogonal basis.
-    If the norm of the first current vector is below the tolerance `atol`,
-    `None` is returned to indicate that this vector can be removed.
-    Similarly, if after the removal of the linearly dependent parts the first current vector
-    has a norm below the tolerance `rtol * initial_norm`, `None` is returned.
+    of the second vector onto the orthogonal basis.
+    If the initial norm of the first vector is below the tolerance `atol`,
+    `(None, None)` is returned to indicate that this vector can be removed and no projection
+    was performed. In case projection was performed, but the first vector
+    has a too low norm because of linearly dependens to the orthonormal basis,
+    `(None, proj)` is returned. Otherwise `(r, proj)` is being returned.
 
     Parameters
     ----------
@@ -158,11 +159,12 @@ def _orth_step(A, product, i, last_iter, atol, rtol) -> tuple:
     -------
     r
         An array containing the norm of the first vector and if `last_iter` also the projection
-        coefficient of the current two vectors.
+        coefficient of the current two vectors or `None` in case the first vector can be removed.
     proj
         Array containing the projection coeffiecients of the current vector against the orthogonal
         part of A and if `last_iter` the projection coefficients of the current two vectors.
-        It is of shape [i-1,1] if `last_iter` and [i-1,2] else.
+        It is of shape [i-1,1] if `last_iter` and [i-1,2] else. In case the
+        first vector has a too low initial norm, None is returned.
     """
     vectors_to_orth = A[i] if last_iter else A[[i,i+1]]
 
@@ -171,13 +173,13 @@ def _orth_step(A, product, i, last_iter, atol, rtol) -> tuple:
     initial_norm = np.sqrt(r[0])
 
     if initial_norm <= atol:
-        return None
+        return None, None
 
     proj = A[:i].inner(vectors_to_orth, product)
-    r -= proj[:,0].T @ proj
+    r -= proj[:,0] @ proj.conj()
 
     if r[0] <= rtol * initial_norm:
-        return None
+        return None, proj
 
     r[0] = np.sqrt(r[0])
 
@@ -253,24 +255,33 @@ def cgs_iro_ls(A, product=None, return_R=False, atol=1E-13, rtol=1e-13, offset=0
     i = offset
     for column in range(offset, n):
         last_iter = i == len(A) - 1
-        # tup can be None to indicate, that the first current vector can be removed
-        tup = _orth_step(A, product, i, last_iter, atol, rtol)
+        # _orth_step either returns (r, proj), (None, proj) or (None, None)
+        r, proj = _orth_step(A, product, i, last_iter, atol, rtol)
+        # offset being used to determine if e.g. proj contains two vectors and both can be
+        # added to R or if linearly dependent components of the orthonormal basis
+        # can be removed in a single function call
+        lOff = 1 if r is None else 0
+        rOff = 1 if last_iter else 2
 
-        if tup:
-            r, proj = tup
-            common_dtype = np.promote_types(R.dtype, r.dtype)
+        if proj is not None:
+            common_dtype = np.promote_types(R.dtype, proj.dtype)
             R = R.astype(common_dtype, copy=False)
+            # add proj of 2 or 1 vectors onto the orthonormal basis to R
+            R[:i, column:column+rOff] += proj[:,0:rOff]
+            # remove linear dependent parts of the 2 or 1 vectors
+            # in case the first vector is being removed => linearly dependent parts are not removed
+            A[i+lOff:i+rOff].axpy(-1.0, A[:i].lincomb(proj[:,lOff:rOff].T))
 
-            R[:i, column] += proj[:,0]
+        if r is not None:
+            # scale first vector
             R[i, column] = r[0]
-            A[i].axpy(-1.0, A[:i].lincomb(proj[:,0]))
             A[i].scal(1 / r[0])
-
             if not last_iter:
                 R[i, column+1] = r[1] / r[0]
-                R[:i, column+1] = proj[:,1]
-                A[i+1].axpy(-1.0, A[:i+1].lincomb(R[:i+1, i+1]))
-
+                # remove linear dependent parts of v1 from v2
+                # i:i+1 returns an array with a single element required for lincomb
+                # instead of just the element itself
+                A[i+1].axpy(-1.0, A[i].lincomb(R[i:i+1, column+1]))
             i += 1
         else:
             logger.info(f'Removing vector {column}')
