@@ -218,7 +218,7 @@ class NeuralNetworkReductor(BasicObject):
             get_rng().shuffle(self.training_data)
             # split training snapshots into validation and training snapshots
             self.validation_data = self.training_data[0:number_validation_snapshots]
-            self.validation_set = [self.validation_data[0][0]]
+            self.validation_set = [data[0] for data in self.validation_data]
             self.training_data = self.training_data[number_validation_snapshots:]
 
 
