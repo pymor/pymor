@@ -390,14 +390,13 @@ np.median(outputs_speedups)
 ## Neural networks for instationary problems
 
 To solve instationary problems using neural networks, we have extended the
-{class}`~pymor.reductors.neural_network.NeuralNetworkReductor` to the
-{class}`~pymor.reductors.neural_network.NeuralNetworkInstationaryReductor`, which treats time
-as an additional parameter (see {cite}`WHR19`). The resulting
-{class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel` passes the input, together
+{class}`~pymor.reductors.neural_network.NeuralNetworkReductor` to also treat instationary cases, where time
+is treated as an additional parameter (see {cite}`WHR19`). It passes the input, together
 with the current time instance, through the neural network in each time step to obtain reduced
-coefficients. In the same fashion, there exists a
-{class}`~pymor.reductors.neural_network.NeuralNetworkInstationaryStatefreeOutputReductor` and the
-corresponding {class}`~pymor.models.neural_network.NeuralNetworkInstationaryStatefreeOutputModel`.
+coefficients. In the same fashion, the
+{class}`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor` and the
+corresponding {class}`~pymor.models.neural_network.NeuralNetworkStatefreeOutputModel` is extended to
+account for this.
 
 A slightly different approach that is also implemented in pyMOR and uses a different type of
 neural network is described in the following section.
@@ -411,8 +410,8 @@ time step to the next. Therefore, these networks implement an internal memory th
 information over time. Furthermore, for each element of the input sequence, the same neural
 network is applied.
 
-In the {class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel` obtained by the
-{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor`,
+In the {class}`~pymor.models.neural_network.NeuralNetworkModel` obtained by the
+{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMReductor`,
 we make use of a specific type of recurrent neural network, namely a so-called
 *long short-term memory neural network (LSTM)*, first introduced in {cite}`HS97`, that tries to
 avoid problems like vanishing or exploding gradients that often occur during training of recurrent
@@ -525,13 +524,13 @@ instance {math}`t_k` the (potentially) time-dependent input {math}`\mu(t_k)` as 
 the hidden states of the former time step. The output {math}`o(t_k)` of the LSTM (and therefore
 also the hidden state {math}`h_k`) at time {math}`t_k` are either approximations of the reduced
 basis coefficients (similar to the
-{class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel`) or approximations of the
+{class}`~pymor.models.neural_network.NeuralNetworkModel`) or approximations of the
 output quantities (similar to the
-{class}`~pymor.models.neural_network.NeuralNetworkInstationaryModel`). For state approximations
+{class}`~pymor.models.neural_network.NeuralNetworkModel`). For state approximations
 using a reduced basis, one can apply the
-{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor`.
+{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMReductor`.
 For a direct approximation of outputs using LSTMs, we provide the
-{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryStatefreeOutputReductor`.
+{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMStatefreeOutputReductor`.
 
 ### Instationary neural network reductors in practice
 
@@ -587,22 +586,22 @@ def compute_errors(rom, reductor):
 ```
 
 We now run the
-{class}`~pymor.reductors.neural_network.NeuralNetworkInstationaryReductor`
+{class}`~pymor.reductors.neural_network.NeuralNetworkReductor`
 and the
-{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMInstationaryReductor`
+{class}`~pymor.reductors.neural_network.NeuralNetworkLSTMReductor`
 with different parameters and evaluate their performance:
 
 ```{code-cell} ipython3
-from pymor.reductors.neural_network import NeuralNetworkInstationaryReductor, NeuralNetworkLSTMInstationaryReductor
+from pymor.reductors.neural_network import NeuralNetworkReductor, NeuralNetworkLSTMReductor
 
 basis_size = 20
 
-reductor = NeuralNetworkInstationaryReductor(fom, training_set, validation_set, basis_size=basis_size,
+reductor = NeuralNetworkReductor(fom, training_set, validation_set, basis_size=basis_size,
                                              pod_params={'product': product}, ann_mse=None, scale_inputs=True,
                                              scale_outputs=True)
 rom = reductor.reduce(restarts=0)
 rel_errors, speedups = compute_errors(rom, reductor)
-reductor_lstm = NeuralNetworkLSTMInstationaryReductor(fom, training_set, validation_set, basis_size=basis_size,
+reductor_lstm = NeuralNetworkLSTMReductor(fom, training_set, validation_set, basis_size=basis_size,
                                                       pod_params={'product': product}, ann_mse=None, scale_inputs=True,
                                                       scale_outputs=True)
 rom_lstm = reductor_lstm.reduce(restarts=0, number_layers=1, hidden_dimension=25, learning_rate=0.01)
