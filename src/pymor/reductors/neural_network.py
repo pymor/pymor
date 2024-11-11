@@ -519,42 +519,22 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     """
 
     def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None,
-                 validation_snapshots=None, validation_ratio=0.1, T=None, nt=None, validation_loss=None,
+                 validation_snapshots=None, validation_ratio=0.1, T=None, nt=1, validation_loss=None,
                  scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
                                    'min_targets': None, 'max_targets': None}
 
+        super().__init__(fom=fom, training_set=training_set, validation_set=validation_set,
+                         training_snapshots=training_snapshots, validation_snapshots=validation_snapshots,
+                         validation_ratio=validation_ratio, T=T, nt=nt, scale_inputs=scale_inputs,
+                         scale_outputs=scale_outputs)
+        self.validation_loss = validation_loss
         if not fom:
-            assert training_set is not None
-            assert len(training_set) > 0
-            assert training_snapshots is not None
-            assert len(training_snapshots) > 0
-            assert nt is not None
-            self.parameters_dim = training_set[0].parameters.dim
             self.dim_output = training_snapshots[0].dim
-            self.nt = nt
-            # instationary
-            if self.nt > 1:
-                assert T is not None
-                self.T = T
-                self.is_stationary = False
-            # stationary
-            else:
-                self.is_stationary = True
         else:
-            self.parameters_dim = fom.parameters.dim
             self.dim_output = fom.dim_output
-            # instationary
-            if hasattr(fom, 'time_stepper'):
-                self.nt = fom.time_stepper.nt + 1
-                self.T = fom.T
-                self.is_stationary = False
-            # stationary
-            else:
-                self.nt = 1
-                self.is_stationary = True
 
         self.__auto_init(locals())
 
