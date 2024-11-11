@@ -47,6 +47,8 @@ class NeuralNetworkReductor(BasicObject):
         The full-order |Model| to reduce. If `None`, the `training_set` has
         to consist of pairs of |parameter values| and corresponding solution
         |VectorArrays|.
+    reduced_basis
+        Prescribed reduced basis of the full-order |Model|. If `None`, the reduced basis is computed.
     training_set
         |Parameter values| to use for POD and training of the
         neural network.
@@ -513,7 +515,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     """
 
-    def __init__(self, fom=None, reduced_basis=None, training_set=None, validation_set=None, training_snapshots=None,
+    def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None,
                  validation_snapshots=None, validation_ratio=0.1, T=None, nt=None, validation_loss=None,
                  scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
