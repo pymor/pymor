@@ -329,8 +329,8 @@ and initialize the reductor using the same data as before:
 from pymor.reductors.neural_network import NeuralNetworkStatefreeOutputReductor
 
 output_reductor = NeuralNetworkStatefreeOutputReductor(fom,
-                                                       training_set,
-                                                       validation_set,
+                                                       training_set=training_set,
+                                                       validation_set=validation_set,
                                                        validation_loss=1e-5)
 ```
 
@@ -596,12 +596,12 @@ from pymor.reductors.neural_network import NeuralNetworkReductor, NeuralNetworkL
 
 basis_size = 20
 
-reductor = NeuralNetworkReductor(fom, training_set, validation_set, basis_size=basis_size,
+reductor = NeuralNetworkReductor(fom, training_set=training_set, validation_set=validation_set, basis_size=basis_size,
                                              pod_params={'product': product}, ann_mse=None, scale_inputs=True,
                                              scale_outputs=True)
 rom = reductor.reduce(restarts=0)
 rel_errors, speedups = compute_errors(rom, reductor)
-reductor_lstm = NeuralNetworkLSTMReductor(fom, training_set, validation_set, basis_size=basis_size,
+reductor_lstm = NeuralNetworkLSTMReductor(fom, training_set=training_set, validation_set=validation_set, basis_size=basis_size,
                                                       pod_params={'product': product}, ann_mse=None, scale_inputs=True,
                                                       scale_outputs=True)
 rom_lstm = reductor_lstm.reduce(restarts=0, number_layers=1, hidden_dimension=25, learning_rate=0.01)
