@@ -222,15 +222,16 @@ class NeuralNetworkReductor(BasicObject):
             self.training_data = self.training_data[number_validation_snapshots:]
 
 
-        # compute validation snapshots
+        # compute validation snapshots if not given as input
         if self.fom is None:
-            if not self.validation_data is None:
+            if self.validation_data is None:
                 assert self.validation_snapshots is not None
-        elif self.validation_snapshots is None:
-            self.compute_validation_snapshots()
+        else:
+            if self.validation_snapshots is None:
+                self.compute_validation_snapshots()
 
         # compute validation data
-        if not self.validation_data is None:
+        if self.validation_data is None:
             self.compute_validation_data()
         assert self.validation_data is not None
         assert len(self.validation_data) == len(self.validation_set) * self.nt
