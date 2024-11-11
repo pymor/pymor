@@ -102,13 +102,13 @@ class NeuralNetworkReductor(BasicObject):
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
                                    'min_targets': None, 'max_targets': None}
+        self.training_data = None
+        self.validation_data = None
 
         if not fom:
             assert training_set is not None
             assert len(training_set) > 0
             assert training_snapshots is not None
-            self.training_data = None
-            self.validation_data = None
             self.parameters_dim = training_set[0].parameters.dim
             self.nt = int(len(training_snapshots) / len(training_set))
             if self.nt > 1:  # instationary
