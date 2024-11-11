@@ -107,6 +107,8 @@ class NeuralNetworkReductor(BasicObject):
             assert training_set is not None
             assert len(training_set) > 0
             assert training_snapshots is not None
+            self.training_data = None
+            self.validation_data = None
             self.parameters_dim = training_set[0].parameters.dim
             self.nt = int(len(training_snapshots) / len(training_set))
             if self.nt > 1:  # instationary
@@ -205,7 +207,7 @@ class NeuralNetworkReductor(BasicObject):
             self.compute_reduced_basis()
 
         # compute training data
-        if not hasattr(self, "training_data"):
+        if self.training_data is None:
             self.compute_training_data()
         assert self.training_data is not None
         assert len(self.training_data) == len(self.training_set) * self.nt
@@ -222,13 +224,13 @@ class NeuralNetworkReductor(BasicObject):
 
         # compute validation snapshots
         if self.fom is None:
-            if not hasattr(self, 'validation_data'):
+            if not self.validation_data is None:
                 assert self.validation_snapshots is not None
         elif self.validation_snapshots is None:
             self.compute_validation_snapshots()
 
         # compute validation data
-        if not hasattr(self, 'validation_data'):
+        if not self.validation_data is None:
             self.compute_validation_data()
         assert self.validation_data is not None
         assert len(self.validation_data) == len(self.validation_set) * self.nt
