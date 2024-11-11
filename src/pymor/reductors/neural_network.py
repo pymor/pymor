@@ -48,19 +48,19 @@ class NeuralNetworkReductor(BasicObject):
         to consist of pairs of |parameter values| and corresponding solution
         |VectorArrays|.
     training_set
-        List of |Parameter values| to use for POD and training of the
+        |Parameter values| to use for POD and training of the
         neural network.
     training_snapshots
-        Set of solution |VectorArrays| to use for POD and training of the
-        neural network. These are the solutions to the parameters of the
-        `training_set` and can be `None` when fom is available.
+        |VectorArray| to use for POD and training of the
+        neural network. Contains the solutions to the parameters of the
+        `training_set` and can be `None` when FOM is available, i.e. `fom` is not `None`.
     validation_set
-        List of |Parameter values| to use for validation in the training
+        |Parameter values| to use for validation in the training
         of the neural network.
     validation_snapshots
-        Set of solution |VectorArrays| to use for validation in the training
-        of the neural network. These are the solutions to the parameters of
-        the `validation_set` and can be `None` when fom is available.
+        |VectorArray| to use for validation in the training
+        of the neural network. Contains the solutions to the parameters of
+        the `validation_set` and can be `None` when FOM is available, i.e. `fom` is not `None`.
     validation_ratio
         Fraction of the training set to use for validation in the training
         of the neural network (only used if no validation set is provided).
@@ -107,23 +107,19 @@ class NeuralNetworkReductor(BasicObject):
             assert training_snapshots is not None
             self.parameters_dim = training_set[0].parameters.dim
             self.nt = int(len(training_snapshots) / len(training_set))
-            # instationary
-            if self.nt > 1:
+            if self.nt > 1:  # instationary
                 assert T is not None
                 self.T = T
                 self.is_stationary = False
-            # stationary
-            else:
+            else:  # stationary
                 self.is_stationary = True
         else:
             self.parameters_dim = fom.parameters.dim
-            # instationary
-            if hasattr(fom, 'time_stepper'):
+            if hasattr(fom, 'time_stepper'):  # instationary
                 self.nt = fom.time_stepper.nt + 1
                 self.T = fom.T
                 self.is_stationary = False
-            # stationary
-            else:
+            else:  # stationary
                 self.nt = 1
                 self.is_stationary = True
 
@@ -134,7 +130,7 @@ class NeuralNetworkReductor(BasicObject):
                loss_function=None, restarts=10, lr_scheduler=optim.lr_scheduler.StepLR,
                lr_scheduler_params={'step_size': 10, 'gamma': 0.7},
                es_scheduler_params={'patience': 10, 'delta': 0.}, weight_decay=0.,
-               log_loss_frequency=0, nt=1):
+               log_loss_frequency=0):
         """Reduce by training artificial neural networks.
 
         Parameters
@@ -284,12 +280,10 @@ class NeuralNetworkReductor(BasicObject):
         """Compute training data for the neural network."""
         # compute snapshots for POD and training of neural networks
         with self.logger.block('Computing training snapshots ...'):
-            U = self.fom.solution_space.empty()
+            self.training_snapshots = self.fom.solution_space.empty()
             for mu in self.training_set:
                 u = self.fom.solve(mu)
-                U.append(u)
-
-        self.training_snapshots = U
+                self.training_snapshots.append(u)
 
     def compute_reduced_basis(self):
         """Compute a reduced basis using proper orthogonal decomposition."""
@@ -321,12 +315,10 @@ class NeuralNetworkReductor(BasicObject):
         """Compute validation data for the neural network."""
         # compute snapshots for POD and validation of neural networks
         with self.logger.block('Computing validation snapshots ...'):
-            U = self.fom.solution_space.empty()
+            self.validation_snapshots = self.fom.solution_space.empty()
             for mu in self.validation_set:
                 u = self.fom.solve(mu)
-                U.append(u)
-
-        self.validation_snapshots = U
+                self.validation_snapshots.append(u)
 
     def compute_validation_data(self):
             assert self.validation_set is not None
@@ -606,7 +598,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         else:
             output = self.fom.output(mu).flatten()
 
-        if self.T is not None:
+        if not self.is_stationary:
             output_size = output.shape[0]
             # conditional expression to check for instationary solution to return self.nt solutions
             parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, output_size)] if output_size > 1 else [mu]
