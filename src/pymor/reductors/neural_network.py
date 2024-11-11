@@ -48,7 +48,8 @@ class NeuralNetworkReductor(BasicObject):
         to consist of pairs of |parameter values| and corresponding solution
         |VectorArrays|.
     reduced_basis
-        Prescribed reduced basis of the full-order |Model|. If `None`, the reduced basis is computed.
+        Prescribed reduced basis of the full-order |Model|. If `None`, the
+        reduced basis is computed.
     training_set
         |Parameter values| to use for POD and training of the
         neural network.
