@@ -195,8 +195,8 @@ squared error of the neural network:
 from pymor.reductors.neural_network import NeuralNetworkReductor
 
 reductor = NeuralNetworkReductor(fom,
-                                 training_set,
-                                 validation_set,
+                                 training_set=training_set,
+                                 validation_set=validation_set,
                                  l2_err=1e-5,
                                  ann_mse=1e-5)
 ```
