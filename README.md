@@ -8,7 +8,7 @@
 [![Conda Tests](https://github.com/pymor/pymor/actions/workflows/conda_tests.yml/badge.svg)](https://github.com/pymor/pymor/actions/workflows/conda_tests.yml)
 [![codecov](https://codecov.io/gh/pymor/pymor/branch/main/graph/badge.svg)](https://codecov.io/gh/pymor/pymor)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/pymor/pymor/main.svg)](https://results.pre-commit.ci/latest/github/pymor/pymor/main)
-[![NumFocus](https://custom-icon-badges.demolab.com/badge/affiliated_project-NumFocus?label=NumFOCUS&labelColor=FFFFFF&color=017e8d)](https://numfocus.org/sponsored-projects/affiliated-projects)
+[![Affiliated with NumFOCUS](https://camo.githubusercontent.com/a0f197cee66ccd8ed498cf64e9f3f384c78a072fe1e65bada8d3015356ac7599/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f4e756d464f4355532d616666696c696174656425323070726f6a6563742d6f72616e67652e7376673f7374796c653d666c617426636f6c6f72413d45313532334426636f6c6f72423d303037443841)](https://numfocus.org/sponsored-projects/affiliated-projects)
 
 # pyMOR - Model Order Reduction with Python
 
