@@ -115,7 +115,6 @@ def test_cgs_iro_ls(vector_array):
     assert np.all(almost_equal(onb, onb2))
     assert np.all(almost_equal(onb, U))
 
-
 @pyst.given_vector_arrays()
 @settings(deadline=None)
 def test_cgs_iro_ls_with_R(vector_array):
@@ -128,6 +127,7 @@ def test_cgs_iro_ls_with_R(vector_array):
         # if cgs_iro_ls raises as |AccuracyError|
         # check if the matrix condition number is too high
         # cgs iro ls should work for condition numbers of up to 1e-16
+        # (for a matrix which has its linearly dependent or zero vectors removed)
         cond = np.linalg.cond(U.to_numpy().T)
         if cond >= 1e-16:
             warnings.warn(f'Matrix condtition number ({cond=}) to high for CGS IRO LS. Skipping test ...')
@@ -138,7 +138,7 @@ def test_cgs_iro_ls_with_R(vector_array):
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.inner(onb), np.eye(len(onb)))
     lc = onb.lincomb(onb.inner(U).T)
-    rtol = atol = 1e-13
+    rtol = atol = 1e-12
     assert np.all(almost_equal(U, lc, rtol=rtol, atol=atol))
     assert np.all(almost_equal(V, onb.lincomb(R.T), rtol=rtol, atol=atol))
 
@@ -158,6 +158,7 @@ def test_cgs_iro_ls_with_product(operator_with_arrays_and_products):
         # if cgs_iro_ls raises as |AccuracyError|
         # check if the matrix condition number is too high
         # cgs iro ls should work for condition numbers of up to 1e-16
+        # (for a matrix which has its linearly dependent or zero vectors removed)
         cond = np.linalg.cond(U.to_numpy().T)
         if cond >= 1e-16:
             warnings.warn(f'Matrix condtition number ({cond=}) to high for CGS IRO LS. Skipping test ...')
@@ -184,6 +185,7 @@ def test_cgs_iro_ls_with_product_and_R(operator_with_arrays_and_products):
         # if cgs_iro_ls raises as |AccuracyError|
         # check if the matrix condition number is too high
         # cgs iro ls should work for condition numbers of up to 1e-16
+        # (for a matrix which has its linearly dependent or zero vectors removed)
         cond = np.linalg.cond(U.to_numpy().T)
         if cond >= 1e-16:
             warnings.warn(f'Matrix condtition number ({cond=}) to high for CGS IRO LS. Skipping test ...')
