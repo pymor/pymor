@@ -109,12 +109,13 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None,
     m, n = A.dim, len(A[offset:])
     shift = None
     def _compute_shift():
+        nonlocal product_norm
         shift = 11*np.finfo(dtype).eps
         if product is None:
             shift *= m*n+n*(n+1)
             XX = X
         else:
-            if product_norm is None: #noqa: F823
+            if product_norm is None:
                 from pymor.algorithms.eigs import eigs
                 product_norm = np.sqrt(np.abs(eigs(product, k=1)[0][0]))
             shift *= (2*m*np.sqrt(m*n)+n*(n+1))*product_norm
