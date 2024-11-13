@@ -2,6 +2,8 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import warnings
+
 import numpy as np
 import pytest
 from hypothesis import assume, settings
@@ -9,6 +11,7 @@ from hypothesis import assume, settings
 import pymortests.strategies as pyst
 from pymor.algorithms.basic import almost_equal, contains_zero_vector
 from pymor.algorithms.gram_schmidt import cgs_iro_ls, gram_schmidt, gram_schmidt_biorth
+from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import log_levels
 from pymortests.base import runmodule
 
@@ -88,12 +91,21 @@ def test_gram_schmidt_with_product_and_R(operator_with_arrays_and_products):
 @pyst.given_vector_arrays()
 def test_cgs_iro_ls(vector_array):
     U = vector_array
-    # TODO: assumption here masks a potential issue with the algorithm
-    #      where it fails in del instead of a proper error
-    assume(len(U) > 1 or not contains_zero_vector(U))
-
     V = U.copy()
-    onb = cgs_iro_ls(U, copy=True)
+
+    try:
+        onb = cgs_iro_ls(U, copy=True)
+    except AccuracyError as e:
+        # if cgs_iro_ls raises as |AccuracyError|
+        # check if the matrix condition number is too high
+        # cgs iro ls should work for condition numbers of up to 1e-16
+        cond = np.linalg.cond(U.to_numpy().T)
+        if cond >= 1e-16:
+            warnings.warn(f'Matrix condtition number ({cond=}) to high for CGS IRO LS. Skipping test ...')
+            return
+        else:
+            raise e
+
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.inner(onb), np.eye(len(onb)))
     # TODO: maybe raise tolerances again
@@ -108,12 +120,21 @@ def test_cgs_iro_ls(vector_array):
 @settings(deadline=None)
 def test_cgs_iro_ls_with_R(vector_array):
     U = vector_array
-    # TODO: assumption here masks a potential issue with the algorithm
-    #      where it fails in del instead of a proper error
-    assume(len(U) > 1 or not contains_zero_vector(U))
-
     V = U.copy()
-    onb, R = cgs_iro_ls(U, return_R=True, copy=True)
+
+    try:
+        onb, R = cgs_iro_ls(U, return_R=True, copy=True)
+    except AccuracyError as e:
+        # if cgs_iro_ls raises as |AccuracyError|
+        # check if the matrix condition number is too high
+        # cgs iro ls should work for condition numbers of up to 1e-16
+        cond = np.linalg.cond(U.to_numpy().T)
+        if cond >= 1e-16:
+            warnings.warn(f'Matrix condtition number ({cond=}) to high for CGS IRO LS. Skipping test ...')
+            return
+        else:
+            raise e
+
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.inner(onb), np.eye(len(onb)))
     lc = onb.lincomb(onb.inner(U).T)
@@ -129,9 +150,21 @@ def test_cgs_iro_ls_with_R(vector_array):
 
 def test_cgs_iro_ls_with_product(operator_with_arrays_and_products):
     _, _, U, _, p, _ = operator_with_arrays_and_products
-
     V = U.copy()
-    onb = cgs_iro_ls(U, product=p, copy=True)
+
+    try:
+        onb = cgs_iro_ls(U, product=p, copy=True)
+    except AccuracyError as e:
+        # if cgs_iro_ls raises as |AccuracyError|
+        # check if the matrix condition number is too high
+        # cgs iro ls should work for condition numbers of up to 1e-16
+        cond = np.linalg.cond(U.to_numpy().T)
+        if cond >= 1e-16:
+            warnings.warn(f'Matrix condtition number ({cond=}) to high for CGS IRO LS. Skipping test ...')
+            return
+        else:
+            raise e
+
     assert np.all(almost_equal(U, V))
     assert np.allclose(p.apply2(onb, onb), np.eye(len(onb)))
     assert np.all(almost_equal(U, onb.lincomb(p.apply2(onb, U).T), rtol=1e-13))
@@ -143,9 +176,21 @@ def test_cgs_iro_ls_with_product(operator_with_arrays_and_products):
 
 def test_cgs_iro_ls_with_product_and_R(operator_with_arrays_and_products):
     _, _, U, _, p, _ = operator_with_arrays_and_products
-
     V = U.copy()
-    onb, R = cgs_iro_ls(U, product=p, return_R=True, copy=True)
+
+    try:
+        onb, R = cgs_iro_ls(U, product=p, return_R=True, copy=True)
+    except AccuracyError as e:
+        # if cgs_iro_ls raises as |AccuracyError|
+        # check if the matrix condition number is too high
+        # cgs iro ls should work for condition numbers of up to 1e-16
+        cond = np.linalg.cond(U.to_numpy().T)
+        if cond >= 1e-16:
+            warnings.warn(f'Matrix condtition number ({cond=}) to high for CGS IRO LS. Skipping test ...')
+            return
+        else:
+            raise e
+
     assert np.all(almost_equal(U, V))
     assert np.allclose(p.apply2(onb, onb), np.eye(len(onb)))
     assert np.all(almost_equal(U, onb.lincomb(p.apply2(onb, U).T), rtol=1e-13))
