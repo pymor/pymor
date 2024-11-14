@@ -10,7 +10,7 @@ from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
 
 
-def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None,
+def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_tol=None,
                     check_finite=True, copy=True, product_norm=None):
     r"""Orthonormalize a |VectorArray| using the shifted CholeskyQR algorithm.
 
@@ -42,6 +42,8 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None,
     product
         The inner product |Operator| w.r.t. which to orthonormalize.
         If `None`, the Euclidean product is used.
+    return_R
+        If `True`, the R matrix from QR decomposition is returned.
     maxiter
         Maximum number of iterations. Defaults to 3.
     offset
@@ -165,4 +167,4 @@ def shifted_chol_qr(A, product=None, maxiter=3, offset=0, orth_tol=None,
     R[:offset, offset:] = Bi
     R[offset:, offset:] = Ri
 
-    return A, R
+    return (A, R) if return_R else A

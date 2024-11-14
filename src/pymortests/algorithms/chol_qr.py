@@ -29,7 +29,7 @@ def test_shifted_chol_qr(vector_array):
         warnings.warn('Linearly dependent vectors detected! Skipping ...')
         return
 
-    onb, R = shifted_chol_qr(U, copy=True)
+    onb, R = shifted_chol_qr(U, return_R=True, copy=True)
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.inner(onb), np.eye(len(onb)))
     lc = onb.lincomb(onb.inner(U).T)
@@ -41,7 +41,7 @@ def test_shifted_chol_qr(vector_array):
     except AssertionError:
         assert 0
 
-    onb2, R2 = shifted_chol_qr(U, copy=False)
+    onb2, R2 = shifted_chol_qr(U, return_R=True, copy=False)
     assert np.all(almost_equal(onb, onb2))
     assert np.all(R == R2)
     assert np.all(almost_equal(onb, U))
@@ -57,13 +57,13 @@ def test_shifted_chol_qr_with_product(operator_with_arrays_and_products):
 
     V = U.copy()
 
-    onb, R = shifted_chol_qr(U, product=p, copy=True)
+    onb, R = shifted_chol_qr(U, product=p, return_R=True, copy=True)
     assert np.all(almost_equal(U, V))
     assert np.allclose(p.apply2(onb, onb), np.eye(len(onb)))
     assert np.all(almost_equal(U, onb.lincomb(p.apply2(onb, U).T), rtol=1e-11))
     assert np.all(almost_equal(U, onb.lincomb(R.T)))
 
-    onb2, R2 = shifted_chol_qr(U, product=p, copy=False)
+    onb2, R2 = shifted_chol_qr(U, product=p, return_R=True, copy=False)
     assert np.all(almost_equal(onb, onb2))
     assert np.all(R == R2)
     assert np.all(almost_equal(onb, U))
