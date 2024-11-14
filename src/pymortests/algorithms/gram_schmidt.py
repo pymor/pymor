@@ -94,7 +94,7 @@ def test_cgs_iro_ls(vector_array):
     V = U.copy()
 
     try:
-        onb = cgs_iro_ls(U, copy=True)
+        onb = cgs_iro_ls(U, copy=True, check_tol=1e-13)
     except AccuracyError as e:
         # if cgs_iro_ls raises as |AccuracyError|
         # check if the matrix condition number is too high
@@ -122,7 +122,7 @@ def test_cgs_iro_ls_with_R(vector_array):
     V = U.copy()
 
     try:
-        onb, R = cgs_iro_ls(U, return_R=True, copy=True)
+        onb, R = cgs_iro_ls(U, return_R=True, copy=True, check_tol=1e-13)
     except AccuracyError as e:
         # if cgs_iro_ls raises as |AccuracyError|
         # check if the matrix condition number is too high
@@ -138,7 +138,7 @@ def test_cgs_iro_ls_with_R(vector_array):
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.inner(onb), np.eye(len(onb)))
     lc = onb.lincomb(onb.inner(U).T)
-    rtol = atol = 1e-12
+    rtol = atol = 1e-13
     assert np.all(almost_equal(U, lc, rtol=rtol, atol=atol))
     assert np.all(almost_equal(V, onb.lincomb(R.T), rtol=rtol, atol=atol))
 
@@ -153,7 +153,7 @@ def test_cgs_iro_ls_with_product(operator_with_arrays_and_products):
     V = U.copy()
 
     try:
-        onb = cgs_iro_ls(U, product=p, copy=True)
+        onb = cgs_iro_ls(U, product=p, copy=True, check_tol=1e-13)
     except AccuracyError as e:
         # if cgs_iro_ls raises as |AccuracyError|
         # check if the matrix condition number is too high
@@ -180,7 +180,7 @@ def test_cgs_iro_ls_with_product_and_R(operator_with_arrays_and_products):
     V = U.copy()
 
     try:
-        onb, R = cgs_iro_ls(U, product=p, return_R=True, copy=True)
+        onb, R = cgs_iro_ls(U, product=p, return_R=True, copy=True, check_tol=1e-13)
     except AccuracyError as e:
         # if cgs_iro_ls raises as |AccuracyError|
         # check if the matrix condition number is too high
