@@ -74,7 +74,7 @@ def test_shifted_chol_qr_with_product(operator_with_arrays_and_products):
 def test_chol_qr_empty(copy):
     n = 5
     V = NumpyVectorSpace(n).empty(0)
-    Q, R = shifted_chol_qr(V, copy=copy)
+    Q, R = shifted_chol_qr(V, return_R=True, copy=copy)
     assert len(V) == len(Q) == 0
 
 @pyst.given_vector_arrays()
@@ -91,7 +91,7 @@ def test_recalculated_shifted_chol_qr(vector_array):
         warnings.warn('Linearly dependent vectors detected! Skipping ...')
         return
 
-    onb, R = shifted_chol_qr(U, copy=True, recompute_shift=True, maxiter=10, orth_tol=1e-13)
+    onb, R = shifted_chol_qr(U, return_R=True, copy=True, recompute_shift=True, maxiter=10, orth_tol=1e-13)
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.inner(onb), np.eye(len(onb)))
     lc = onb.lincomb(onb.inner(U).T)
@@ -100,7 +100,7 @@ def test_recalculated_shifted_chol_qr(vector_array):
     assert np.all(almost_equal(U, lc, rtol=rtol, atol=atol))
     assert np.all(almost_equal(V, onb.lincomb(R.T), rtol=rtol, atol=atol))
 
-    onb2, R2 = shifted_chol_qr(U, copy=False, recompute_shift=True, maxiter=10, orth_tol=1e-13)
+    onb2, R2 = shifted_chol_qr(U, return_R=True, copy=False, recompute_shift=True, maxiter=10, orth_tol=1e-13)
     assert np.all(almost_equal(onb, onb2))
     assert np.all(R == R2)
     assert np.all(almost_equal(onb, U))
@@ -116,13 +116,13 @@ def test_recalculated_shifted_chol_qr_with_product(operator_with_arrays_and_prod
 
     V = U.copy()
 
-    onb, R = shifted_chol_qr(U, product=p, copy=True, recompute_shift=True, maxiter=10, orth_tol=1e-13)
+    onb, R = shifted_chol_qr(U, return_R=True, product=p, copy=True, recompute_shift=True, maxiter=10, orth_tol=1e-13)
     assert np.all(almost_equal(U, V))
     assert np.allclose(p.apply2(onb, onb), np.eye(len(onb)))
     assert np.all(almost_equal(U, onb.lincomb(p.apply2(onb, U).T), rtol=1e-11))
     assert np.all(almost_equal(U, onb.lincomb(R.T)))
 
-    onb2, R2 = shifted_chol_qr(U, product=p, copy=False, recompute_shift=True, maxiter=10, orth_tol=1e-13)
+    onb2, R2 = shifted_chol_qr(U, return_R=True, product=p, copy=False, recompute_shift=True, maxiter=10, orth_tol=1e-13)
     assert np.all(almost_equal(onb, onb2))
     assert np.all(R == R2)
     assert np.all(almost_equal(onb, U))
