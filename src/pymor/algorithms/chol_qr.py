@@ -106,6 +106,7 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
     B, X = _compute_gramian_and_offset_matrix()
 
     dtype = np.promote_types(X.dtype, np.float32)
+    B = B.astype(dtype=dtype, copy=False)
     trmm, trtri = spla.get_blas_funcs('trmm', dtype=dtype), spla.get_lapack_funcs('trtri', dtype=dtype)
 
     # compute shift
