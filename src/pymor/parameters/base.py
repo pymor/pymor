@@ -12,13 +12,12 @@ are treated as parameter vectors of dimension 1. Mappings of |Parameters| to
 To sample |parameter values| within a given range, |ParameterSpace| objects can be used.
 """
 
-from itertools import product
+from itertools import chain, product
 from numbers import Number
 
 import numpy as np
 
 from pymor.core.base import ImmutableObject
-from pymor.tools.floatcmp import float_cmp_all
 from pymor.tools.frozendict import FrozenDict, SortedFrozenDict
 from pymor.tools.pprint import format_array
 from pymor.tools.random import get_rng
@@ -132,11 +131,6 @@ class Parameters(SortedFrozenDict):
             sum(self.values()) == 0 or fail('no parameter values provided')
             mu = []
 
-        if isinstance(mu, Mu):
-            mu.parameters == self or fail(self.why_incompatible(mu))
-            set(mu) == set(self) or fail(f'additional parameters {set(mu) - set(self)}')
-            return mu
-
         # convert mu to dict
         if isinstance(mu, (Number, str, Function)):
             mu = [mu]
@@ -246,7 +240,7 @@ class Parameters(SortedFrozenDict):
         """
         return ParameterSpace(self, *ranges, constraints=constraints)
 
-    def assert_compatible(self, mu):
+    def assert_compatible(self, mu, allow_time_dependent=False):
         """Assert that |parameter values| are compatible with the given |Parameters|.
 
         Each of the parameter must be contained in  `mu` and the dimensions have to match,
@@ -256,10 +250,11 @@ class Parameters(SortedFrozenDict):
 
         Otherwise, an `AssertionError` will be raised.
         """
-        assert self.is_compatible(mu), self.why_incompatible(mu)
+        assert self.is_compatible(mu, allow_time_dependent=allow_time_dependent), \
+            self.why_incompatible(mu, allow_time_dependent=allow_time_dependent)
         return True
 
-    def is_compatible(self, mu):
+    def is_compatible(self, mu, allow_time_dependent=False):
         """Check if |parameter values| are compatible with the given |Parameters|.
 
         Each of the parameter must be contained in  `mu` and the dimensions have to match,
@@ -269,10 +264,17 @@ class Parameters(SortedFrozenDict):
         """
         if mu is not None and not isinstance(mu, Mu):
             raise TypeError('mu is not a Mu instance. (Use parameters.parse?)')
-        return not self or \
-            mu is not None and all(getattr(mu.get(k), 'size', None) == v for k, v in self.items())
+        if not self:
+            return True
+        if allow_time_dependent:
+            return mu is not None and \
+                all(getattr(mu.get(k), 'size', None) == v or
+                    getattr(mu.time_dependent_values.get(k), 'shape_range', None) == (v,)
+                    for k, v in self.items())
+        else:
+            return mu is not None and all(getattr(mu.get(k), 'size', None) == v for k, v in self.items())
 
-    def why_incompatible(self, mu):
+    def why_incompatible(self, mu, allow_time_dependent=False):
         if mu is not None and not isinstance(mu, Mu):
             return 'mu is not a Mu instance. (Use parameters.parse?)'
         assert self
@@ -280,12 +282,20 @@ class Parameters(SortedFrozenDict):
             mu = {}
         failing_params = {}
         for k, v in self.items():
-            if k not in mu:
+            if k in mu:
+                if (size:=mu[k].size) != v:
+                    failing_params[k] = f'{size} != {v}'
+            elif k in mu.time_dependent_values:
+                if allow_time_dependent:
+                    if (shape:=mu.time_dependent_values[k].shape_range) != (v,):
+                        assert len(shape) == 1
+                        failing_params[k] = f'{shape[0]} != {v}'
+                else:
+                    failing_params[k] = 'time-dependent not allowed'
+            else:
                 failing_params[k] = f'missing != {v}'
-            elif mu[k].shape != v:
-                failing_params[k] = f'{mu[k].size} != {v}'
         assert failing_params
-        return f'Incompatible parameters: {failing_params}'
+        return f'Incompatible parameters: {failing_params} for mu={mu}'
 
     def __or__(self, other):
         assert all(k not in self or self[k] == v
@@ -313,7 +323,7 @@ class Parameters(SortedFrozenDict):
         return hash(tuple(self.items()))
 
 
-class Mu(FrozenDict):
+class Mu(ImmutableObject):
     """Immutable mapping of |Parameter| names to parameter values.
 
     Parameters
@@ -323,21 +333,12 @@ class Mu(FrozenDict):
     except for |Functions| which are interpreted as time-dependent parameter
     values. Unless the Python interpreter runs with the `-O` flag,
     the arrays are made immutable.
-
-    Attributes
-    ----------
-    parameters
-        The |Parameters| to which the mapping assigns values.
     """
 
-    __slots__ = ('_raw_values')
-    __array_priority__ = 100.0
-    __array_ufunc__ = None
-
-    def __new__(cls, *args, **kwargs):
-        raw_values = dict(*args, **kwargs)
-        values_for_t = {}
-        for k, v in sorted(raw_values.items()):
+    def __init__(self, *args, **kwargs):
+        values = {}
+        time_dependent_values = {}
+        for k, v in sorted(dict(*args, **kwargs).items()):
             assert isinstance(k, str)
             if callable(v):
                 # note: We can't import Function globally due to circular dependencies, so
@@ -349,135 +350,98 @@ class Mu(FrozenDict):
                 assert isinstance(v, Function)
                 assert v.dim_domain == 1
                 assert len(v.shape_range) == 1
-                try:
-                    t = np.array(raw_values['t'], ndmin=1)
-                    assert t.shape == (1,)
-                except KeyError:
-                    t = np.zeros(1)
-                vv = v(t)
+                time_dependent_values[k] = v
             else:
                 vv = np.asarray(v)
                 if vv.ndim == 0:
                     vv.shape = (1,)
                 assert vv.ndim == 1
                 assert k != 't' or len(vv) == 1
-            assert not vv.setflags(write=False)
-            values_for_t[k] = vv
+                assert not vv.setflags(write=False)
+                values[k] = vv
 
-        mu = super().__new__(cls, values_for_t)
-        mu._raw_values = raw_values
-        return mu
+        assert 't' not in values or not time_dependent_values, 'cannot specify "t" and have time-dependent values'
 
-    def is_time_dependent(self, param):
-        """Check whether the values for a given parameter depend on time.
+        self._values = values
+        self.time_dependent_values = FrozenDict(time_dependent_values)
 
-        This is the case when the value for `self[param]` was given by a |Function|
-        instead of a constant array.
-        """
-        from pymor.analyticalproblems.functions import Function
-        return isinstance(self._raw_values[param], Function)
+    def __getitem__(self, key):
+        return self._values[key]
 
-    def get_time_dependent_value(self, param):
-        """Return time-dependent |Function| for given parameter.
+    def __iter__(self):
+        return iter(self._values)
 
-        Parameters
-        ----------
-        param
-            The parameter for which to return the time-dependent values.
+    def __len__(self):
+        return len(self._values)
 
-        Returns
-        -------
-        If `param` depends on time, this corresponding |Function| (and not its
-        evaluation at the current time) is returned. If `param` is not given
-        by a |Function|, a |ConstantFunction| is returned.
-        """
-        from pymor.analyticalproblems.functions import Function
-        value = self._raw_values[param]
-        if not isinstance(value, Function):
-            from pymor.analyticalproblems.functions import ConstantFunction
-            value = ConstantFunction(value)
-        return value
+    def __contains__(self, key):
+        return key in self._values
 
-    def with_(self, **kwargs):
-        return Mu(self._raw_values, **kwargs)
+    def keys(self):
+        return self._values.keys()
+
+    def values(self):
+        return self._values.values()
+
+    def items(self):
+        return self._values.items()
+
+    def get(self, key, value=None):
+        return self._values.get(key, value)
 
     @property
-    def parameters(self):
-        return Parameters({k: v.size for k, v in self.items()})
+    def has_time_dependent_values(self):
+        return len(self.time_dependent_values) > 0
 
-    def allclose(self, mu):
-        """Compare dicts of |parameter values| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
+    def parameters(self, include_time_dependent=False):
+        params = {k: v.size for k, v in self.items()}
+        if include_time_dependent:
+            params.update({k: v.shape_range[0] for k, v in self.items()})
+        return Parameters(params)
 
-        Parameters
-        ----------
-        mu
-            The |parameter values| with which to compare.
+    def with_(self, new_type=None, **kwargs):
+        cls = new_type or Mu
+        return cls(**(self._values | self.time_dependent_values | kwargs))
 
-        Returns
-        -------
-        `True` if both |parameter value| dicts contain values for the same |Parameters| and all
-        components of the parameter values are almost equal, else `False`.
-        """
-        assert isinstance(mu, Mu)
-        return self.keys() == mu.keys() and all(float_cmp_all(v, mu[k]) for k, v in self.items())
+    def at_time(self, t):
+        if 't' in self:
+            raise ValueError('time already specified')
+        t = np.asarray(t).reshape((1,))
+        return Mu(self._values, t=t, **{k: v(t) for k, v in self.time_dependent_values.items()})
 
     def to_numpy(self):
-        """All parameter values as a NumPy array, ordered alphabetically."""
+        if self.has_time_dependent_values:
+            raise ValueError(f'Mu has time-dependent values ({list(self.time_dependent_values.keys())}).')
         if len(self) == 0:
             return np.array([])
         else:
-            return np.hstack([v for k, v in self.items()])
+            return np.hstack([v for k, v in self._values.items()])
 
-    def copy(self):
-        return self
-
-    def __eq__(self, mu):
-        if not isinstance(mu, Mu):
+    def __eq__(self, other):
+        if not isinstance(other, Mu):
             try:
-                mu = Mu(mu)
+                other = Mu(other)
             except Exception:
                 return False
-        return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
-
-    def __neg__(self):
-        return Mu({key: -value for key, value in self.items()})
-
-    def __add__(self, other):
-        if not isinstance(other, Mu):
-            other = self.parameters.parse(other)
-        assert self.keys() == other.keys()
-        return Mu({key: self[key] + other[key] for key in self})
-
-    def __radd__(self, other):
-        return self + other
-
-    def __sub__(self, other):
-        return self + -other
-
-    def __rsub__(self, other):
-        return -self + other
-
-    def __mul__(self, other):
-        assert isinstance(other, Number)
-        return Mu({key: self[key] * other for key in self})
-
-    def __rmul__(self, other):
-        return self * other
+        return self.keys() == other.keys() \
+            and all(np.array_equal(v, other[k]) for k, v in self.items()) \
+            and self.time_dependent_values == other.time_dependent_values
 
     def __str__(self):
         def format_value(k, v):
-            if self.is_time_dependent(k):
-                return f'{self._raw_values[k]}({self.get("t", 0)}) = {format_array(v)}'
+            if callable(v):
+                return str(v)
             else:
                 return format_array(v)
 
-        return '{' + ', '.join(f'{k}: {format_value(k, v)}' for k, v in self.items()) + '}'
+        return '{' + ', '.join(f'{k}: {format_value(k, v)}'
+                               for k, v in chain(self.items(), self.time_dependent_values.items())) + '}'
 
     def __repr__(self):
-        return f'Mu({dict(sorted(self._raw_values.items()))})'
+        return f'Mu({dict(sorted(chain(self.items(), self.time_dependent_values.items())))})'
 
     def _cache_key_reduce(self):
-        return self._raw_values
+        return (self._values, self.time_dependent_values)
 
 
 class ParametricObject(ImmutableObject):

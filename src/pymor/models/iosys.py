@@ -682,7 +682,7 @@ class LTIModel(Model):
                 -self.A,  # operator
                 rhs=LinearInputOperator(self.B),
                 mass=None if isinstance(self.E, IdentityOperator) else self.E,
-                mu=mu.with_(t=0),
+                mu=mu,
                 num_values=self.num_values
             )
             if self.num_values is None:
@@ -703,7 +703,7 @@ class LTIModel(Model):
                 if compute_solution:
                     data['solution'].append(x)
                 if compute_output:
-                    y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.with_(t=t)).to_numpy()
+                    y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.at_time(t)).to_numpy()
                     if i < n:
                         data['output'][i] = y
                     else:

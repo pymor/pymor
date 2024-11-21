@@ -170,6 +170,11 @@ class ImplicitEulerTimeStepper(TimeStepper):
         assert isinstance(F, (type(None), Operator, VectorArray))
         assert isinstance(M, (type(None), Operator))
         assert A.source == A.range
+
+        if mu is None:
+            mu = Mu()
+        assert 't' not in mu
+
         num_values = num_values or nt + 1
         dt = (t1 - t0) / nt
         DT = (t1 - t0) / (num_values - 1)
@@ -209,20 +214,18 @@ class ImplicitEulerTimeStepper(TimeStepper):
 
         t = t0
         U = U0.copy()
-        if mu is None:
-            mu = Mu()
 
         sign = np.sign(end_time - initial_time)
 
         for n in range(nt):
             t += dt
-            mu = mu.with_(t=t)
+            mu_t = mu.at_time(t)
             rhs = M.apply(U)
             if F_time_dep:
-                dt_F = F.as_vector(mu) * dt
+                dt_F = F.as_vector(mu_t) * dt
             if F:
                 rhs += dt_F
-            U = M_dt_A.apply_inverse(rhs, mu=mu, initial_guess=U)
+            U = M_dt_A.apply_inverse(rhs, mu=mu_t, initial_guess=U)
             while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                 num_ret_values += 1
                 yield U, t
@@ -257,6 +260,11 @@ class ExplicitEulerTimeStepper(TimeStepper):
         assert isinstance(A, Operator)
         assert F is None or isinstance(F, (Operator, VectorArray))
         assert A.source == A.range
+
+        if mu is None:
+            mu = Mu()
+        assert 't' not in mu
+
         num_values = num_values or nt + 1
 
         if isinstance(F, Operator):
@@ -285,26 +293,24 @@ class ExplicitEulerTimeStepper(TimeStepper):
         yield U0, t
 
         U = U0.copy()
-        if mu is None:
-            mu = Mu()
 
         sign = np.sign(end_time - initial_time)
 
         if F is None:
             for n in range(nt):
                 t += dt
-                mu = mu.with_(t=t)
-                U.axpy(-dt, A.apply(U, mu=mu))
+                mu_t = mu.at_time(t)
+                U.axpy(-dt, A.apply(U, mu=mu_t))
                 while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                     num_ret_values += 1
                     yield U, t
         else:
             for n in range(nt):
                 t += dt
-                mu = mu.with_(t=t)
+                mu_t = mu.at_time(t)
                 if F_time_dep:
-                    F_ass = F.as_vector(mu)
-                U.axpy(dt, F_ass - A.apply(U, mu=mu))
+                    F_ass = F.as_vector(mu_t)
+                U.axpy(dt, F_ass - A.apply(U, mu=mu_t))
                 while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                     num_ret_values += 1
                     yield U, t
@@ -372,6 +378,10 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         assert U0 in A.source
         assert len(U0) == 1
 
+        if mu is None:
+            mu = Mu()
+        assert 't' not in mu
+
         num_ret_values = 1
         yield U0, t0
 
@@ -391,20 +401,18 @@ class ImplicitMidpointTimeStepper(TimeStepper):
 
         t = t0
         U = U0.copy()
-        if mu is None:
-            mu = Mu()
 
         sign = np.sign(end_time - initial_time)
 
         for n in range(nt):
-            mu = mu.with_(t=t + dt/2)
+            mu_t = mu.at_time(t + dt/2)
             t += dt
-            rhs = M_dt_A_expl.apply(U, mu=mu)
+            rhs = M_dt_A_expl.apply(U, mu=mu_t)
             if F_time_dep:
-                dt_F = F.as_vector(mu) * dt
+                dt_F = F.as_vector(mu_t) * dt
             if F:
                 rhs += dt_F
-            U = M_dt_A_impl.apply_inverse(rhs, mu=mu)
+            U = M_dt_A_impl.apply_inverse(rhs, mu=mu_t)
             while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                 num_ret_values += 1
                 yield U, t
@@ -433,6 +441,11 @@ class DiscreteTimeStepper(TimeStepper):
         assert isinstance(F, (type(None), Operator, VectorArray))
         assert isinstance(M, (type(None), Operator))
         assert A.source == A.range
+
+        if mu is None:
+            mu = Mu()
+        assert 't' not in mu
+
         nt = k1 - k0
         sign = np.sign(k1 - k0)
         num_values = num_values or sign * nt + 1
@@ -468,23 +481,19 @@ class DiscreteTimeStepper(TimeStepper):
             M = M.assemble(mu)
 
         U = U0.copy()
-        if mu is None:
-            mu = Mu()
 
         for k in range(k0, k0 + nt, sign):
-            mu = mu.with_(t=k)
-            rhs = -sign * A.apply(U, mu=mu)
+            mu_t = mu.at_time(k)
+            rhs = -sign * A.apply(U, mu=mu_t)
             if F_time_dep:
-                Fk = F.as_vector(mu) * sign
+                Fk = F.as_vector(mu_t) * sign
             if F:
                 rhs += Fk * sign
-            U = M.apply_inverse(rhs, mu=mu, initial_guess=U)
+            U = M.apply_inverse(rhs, mu=mu_t, initial_guess=U)
             while sign * (k - k0) + 1 + (min(sign*dt, sign*DT) * 0.5) >= sign * num_ret_values * DT:
                 num_ret_values += 1
                 yield U, k
 
 
 def _depends_on_time(obj, mu):
-    if not mu:
-        return False
-    return 't' in obj.parameters or any(mu.is_time_dependent(k) for k in obj.parameters)
+    return 't' in obj.parameters or (mu.time_dependent_values.keys() & obj.parameters.keys())
