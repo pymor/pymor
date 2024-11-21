@@ -38,15 +38,15 @@ def custom_partitioning(rng):
 def reduce_kwargs_and_loewner_kwargs_and_model_args(rng, request):
     return request.param(rng)
 
-@pytest.fixture()
+@pytest.fixture
 def reduce_kwargs(reduce_kwargs_and_loewner_kwargs_and_model_args):
     return reduce_kwargs_and_loewner_kwargs_and_model_args[0]
 
-@pytest.fixture()
+@pytest.fixture
 def loewner_kwargs(reduce_kwargs_and_loewner_kwargs_and_model_args):
     return reduce_kwargs_and_loewner_kwargs_and_model_args[1]
 
-@pytest.fixture()
+@pytest.fixture
 def model_args(reduce_kwargs_and_loewner_kwargs_and_model_args):
     return reduce_kwargs_and_loewner_kwargs_and_model_args[2]
 
