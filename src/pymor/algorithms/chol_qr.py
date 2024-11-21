@@ -13,7 +13,6 @@ from pymor.vectorarrays.list import ListVectorArray
 
 def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_tol=None,
                     recompute_shift=False, check_finite=True, copy=True, product_norm=None):
-
     r"""Orthonormalize a |VectorArray| using the shifted CholeskyQR algorithm.
 
     This method computes a QR decomposition of a |VectorArray| via Cholesky factorizations
@@ -125,7 +124,7 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
             shift *= (2*m*np.sqrt(m*n)+n*(n+1))*product_norm
             XX = A[offset:].gramian()
         try:
-            shift *= spsla.eigsh(XX, k=1, tol=1e-2, return_eigenvectors=False)[0]
+            shift *= spsla.eigsh(XX, k=1, tol=1e-2, return_eigenvectors=False, v0=np.ones([n]))[0]
         except spsla.ArpackNoConvergence as e:
             logger.warning(f'ARPACK failed with: {e}')
             logger.info('Proceeding with dense solver.')
