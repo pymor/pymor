@@ -46,7 +46,7 @@ class LoewnerReductor(CacheableObject):
 
     cache_region = 'memory'
 
-    def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, mimo_handling='random'):
+    def __init__(self, s, Hs, partitioning='even-odd', ordering='regular', conjugate=True, mimo_handling='full'):
         assert isinstance(s, np.ndarray)
         if hasattr(Hs, 'transfer_function'):
             Hs = Hs.transfer_function
@@ -63,8 +63,10 @@ class LoewnerReductor(CacheableObject):
                 Hss[i] = Hs.eval_tf(ss)
             Hs = Hss
         else:
-            Hs = Hs
             assert Hs.shape[0] == len(s)
+
+        common_dtype = np.promote_types(s.dtype, Hs.dtype)
+        Hs = Hs.astype(common_dtype, copy=False)
 
         # ensure that complex sampling values appear in complex conjugate pairs
         if conjugate:
@@ -97,7 +99,7 @@ class LoewnerReductor(CacheableObject):
         if len(Hs.shape) > 1:
             self.dim_output = Hs.shape[1]
             self.dim_input = Hs.shape[2]
-            if self.dim_output == self.dim_output == 1:
+            if self.dim_output == self.dim_input == 1:
                 Hs = np.squeeze(Hs)
         else:
             self.dim_output = 1
@@ -257,8 +259,9 @@ class LoewnerReductor(CacheableObject):
             else:
                 if self.mimo_handling == 'random':
                     rng = new_rng(0)
-                    ltd = rng.normal(size=(len(ip), self.dim_output))
-                    rtd = rng.normal(size=(self.dim_input, len(jp)))
+                    # use same tangential directions in order to make conjugate=True option work
+                    ltd = np.tile(rng.normal(size=(1, self.dim_output)), (len(ip), 1))
+                    rtd = np.tile(rng.normal(size=(self.dim_input, 1)), (1, len(jp)))
                 elif len(self.mimo_handling) == 2:
                     ltd = self.mimo_handling[0]
                     rtd = self.mimo_handling[1]
@@ -270,8 +273,8 @@ class LoewnerReductor(CacheableObject):
                 W = np.empty((self.dim_output, len(jp)), dtype=np.complex128)
                 for i, si in enumerate(ip):
                     for j, sj in enumerate(jp):
-                        L[i, j] = ltd[i] @ (self.Hs[si] - self.Hs[sj]) @ rtd[:, j] / (self.s[si] - self.s[sj])
-                        Ls[i, j] = ltd[i] @ (self.s[si] * self.Hs[si] - self.s[sj] * self.Hs[sj]) @ rtd[:, j] \
+                        L[i, j] = (ltd[i] @ (self.Hs[si] - self.Hs[sj]) @ rtd[:, j]) / (self.s[si] - self.s[sj])
+                        Ls[i, j] = (ltd[i] @ (self.s[si] * self.Hs[si] - self.s[sj] * self.Hs[sj]) @ rtd[:, j]) \
                             / (self.s[si] - self.s[sj])
                     V[i, :] = self.Hs[si].T @ ltd[i]
                 for j, sj in enumerate(jp):
