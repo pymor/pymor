@@ -122,7 +122,8 @@ def test_recalculated_shifted_chol_qr_with_product(operator_with_arrays_and_prod
     assert np.all(almost_equal(U, onb.lincomb(p.apply2(onb, U).T), rtol=1e-11))
     assert np.all(almost_equal(U, onb.lincomb(R.T)))
 
-    onb2, R2 = shifted_chol_qr(U, return_R=True, product=p, copy=False, recompute_shift=True, maxiter=10, orth_tol=1e-13)
+    onb2, R2 = shifted_chol_qr(U, return_R=True, product=p, copy=False,
+                               recompute_shift=True, maxiter=10, orth_tol=1e-13)
     assert np.all(almost_equal(onb, onb2))
     assert np.all(R == R2)
     assert np.all(almost_equal(onb, U))
