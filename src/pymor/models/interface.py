@@ -121,6 +121,8 @@ class Model(CacheableObject, ParametricObject):
 
         # parse input and add it to the parameter values
         if input is not None:
+            assert 'input' not in mu
+            assert 'input' not in mu.time_dependent_values
             mu_input = Parameters(input=self.dim_input).parse(input)
             input = mu_input.time_dependent_values.get('input') or mu_input['input']
             mu = mu.with_(input=input)
