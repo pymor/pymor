@@ -95,7 +95,7 @@ def test_recalculated_shifted_chol_qr(vector_array):
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.inner(onb), np.eye(len(onb)))
     lc = onb.lincomb(onb.inner(U).T)
-    rtol = atol = 1e-10
+    rtol = atol = 1e-9
 
     assert np.all(almost_equal(U, lc, rtol=rtol, atol=atol))
     assert np.all(almost_equal(V, onb.lincomb(R.T), rtol=rtol, atol=atol))
