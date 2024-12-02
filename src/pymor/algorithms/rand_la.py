@@ -4,8 +4,10 @@
 
 import numpy as np
 import scipy.linalg as spla
+from scipy.special import erfinv
 
 from pymor.algorithms.chol_qr import shifted_chol_qr
+from pymor.algorithms.eigs import eigs
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.svd_va import qr_svd
 from pymor.core.base import BasicObject
@@ -18,7 +20,7 @@ from pymor.operators.interface import Operator
 class RandomizedRangeFinder(BasicObject):
     r"""Adaptive randomized range approximation of `A`.
 
-    This is an implementation of Algorithm 1 in :cite:`BS18`.
+    Algorithm 1 in :cite:`BS18` is used as the default error estimator.
 
     Given the |Operator| `A`, the return value of this method is the |VectorArray|
     `B` with the property
@@ -29,6 +31,11 @@ class RandomizedRangeFinder(BasicObject):
     with a failure probability smaller than `failure_tolerance`, where the norm denotes the
     operator norm. The inner product of the range of `A` is given by `range_product` and
     the inner product of the source of `A` is given by `source_product`.
+
+    A faster alternative is the leave-one-out error estimator from :cite:`ET24` which can be
+    activated by setting `error_estimator='loo'. Note that while it can be faster and more accurate
+    in practice, this option does only support Euclidian inner products and there are no results on
+    its failure probability so far.
 
     Parameters
     ----------
@@ -44,23 +51,43 @@ class RandomizedRangeFinder(BasicObject):
         Adjoint |Operator| to use for power iterations. If `None` the
         adjoint is computed using `A`, `source_product` and `range_product`.
         Set to `A` for a `self` for a known self-adjoint operator.
+    failure_tolerance
+        Maximum failure probability. Only needed for error_estimator='buhr'.
+    num_testvecs
+        Number of test vectors. Only needed for error_estimator='buhr'.
+    lambda_min
+        The smallest eigenvalue of source_product. Only needed for error_estimator='buhr'.
+        If `None`, the smallest eigenvalue is computed using scipy.
     block_size
         Number of basis vectors to add per iteration.
     iscomplex
         If `True`, the random vectors are chosen complex.
+    qr_method
+        QR method used for orthogonalization. Either 'gram_schmidt' (default) or 'shifted_chol_qr'.
+    error_estimator
+        The error estimator used. Either 'buhr' (default) or 'loo'.
     """
 
-    def __init__(self, A, range_product=None, source_product=None, A_adj=None,
-                 power_iterations=0, block_size=None, iscomplex=False, qr_method='gram_schmidt'):
-        assert source_product is None or isinstance(source_product, Operator)
-        assert range_product is None or isinstance(range_product, Operator)
+    @defaults('num_testvecs', 'failure_tolerance', 'qr_method', 'error_estimator')
+    def __init__(self, A, range_product=None, source_product=None, A_adj=None, power_iterations=0, block_size=None,
+                 failure_tolerance=1e-15, num_testvecs=20, lambda_min=None, iscomplex=False, qr_method='gram_schmidt',
+                 error_estimator='buhr'):
         assert isinstance(A, Operator)
+        assert range_product is None or isinstance(range_product, Operator)
+        assert source_product is None or isinstance(source_product, Operator)
+        assert lambda_min is None or lambda_min > 0
+        assert qr_method in ('gram_schmidt', 'shifted_chol_qr')
+        assert error_estimator in ('buhr', 'loo')
+        if error_estimator == 'loo':
+            assert range_product is None
+            assert source_product is None
 
         if A_adj is None:
             A_adj = AdjointOperator(A, range_product=range_product, source_product=source_product)
 
         self.__auto_init(locals())
-        self.Omega = A.range.empty()
+        self.estimate_error = self._buhr_estimator if error_estimator == 'buhr' else self._loo_estimator
+        self.Omega = A.range.empty()  # the test vectors for 'buhr' or the drawn samples for 'loo'.
         self.estimator_last_basis_size, self.last_estimated_error = 0, np.inf
         self.Q = [A.range.empty() for _ in range(power_iterations+1)]
         self.R = [np.empty((0,0)) for _ in range(power_iterations+1)]
@@ -102,9 +129,38 @@ class RandomizedRangeFinder(BasicObject):
         _R[:offset, :offset] = R
         return _R
 
-    def estimate_error(self):
+    def _buhr_estimator(self):
+        A, range_product, num_testvecs = self.A, self.range_product, self.num_testvecs
+
+        if self.lambda_min is None:
+            source_product = self.source_product
+            if source_product is None:
+                self.lambda_min = 1
+            else:
+                assert source_product is not None
+                self.lambda_min = eigs(source_product, sigma=0, which='LM', k=1)[0][0].real
+
+        if len(self.Omega) == 0:
+            self.Omega.append(self._draw_samples(num_testvecs))
+            assert len(self.Omega) == num_testvecs
+
         if len(self.Q[-1]) > self.estimator_last_basis_size:
-            R = np.linalg.multi_dot(self.R[::-1]) if len(self.R) > 1 else self.R[0]   # TODO: TRANSPOSE??
+            # in an older implementation, we used re-orthogonalization here, i.e,
+            # projecting onto Q[-1] instead of new_basis_vecs
+            # should not be needed in most cases. add an option?
+            new_basis_vecs = self.Q[-1][self.estimator_last_basis_size:]
+            self.Omega -= new_basis_vecs.lincomb(new_basis_vecs.inner(self.Omega, product=range_product).T)
+            self.estimator_last_basis_size += len(new_basis_vecs)
+
+        testfail = self.failure_tolerance / min(A.source.dim, A.range.dim)
+        testlimit = np.sqrt(2. * self.lambda_min) * erfinv(testfail**(1. / num_testvecs))
+        maxnorm = np.max(self.Omega.norm(range_product))
+        self.last_estimated_error = maxnorm / testlimit
+        return self.last_estimated_error
+
+    def _loo_estimator(self):
+        if len(self.Q[-1]) > self.estimator_last_basis_size:
+            R = np.linalg.multi_dot(self.R[::-1]) if len(self.R) > 1 else self.R[0]
             G = spla.get_lapack_funcs('trtri', dtype=self.R[0].dtype)(R)[0].T
             g = spla.norm(G, axis=0)  # norm of rows of R^{-1} / columns of R^{-*}
             if self.power_iterations == 0:
@@ -169,10 +225,11 @@ class RandomizedRangeFinder(BasicObject):
                 block_size = min(block_size, basis_size - len(Q[-1]))
 
             V = self._draw_samples(block_size)
-            self.Omega.append(V)
+            if self.error_estimator == 'loo':
+                self.Omega.append(V)
 
             current_len = len(Q[0])
-            Q[0].append(self.Omega[-block_size:])
+            Q[0].append(V)
             R[0] = self._qr_update(Q[0], R[0], current_len)
 
             # power iterations
