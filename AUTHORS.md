@@ -11,6 +11,11 @@
 
 ## Contributors
 
+### pyMOR 2024.2
+
+* Art Pelling, @artpelling
+  * leave-one-out error estimator for adaptive randomized range approximation
+
 ### pyMOR 2024.1
 
 * Art Pelling, @artpelling
