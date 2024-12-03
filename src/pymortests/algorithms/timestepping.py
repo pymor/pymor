@@ -34,9 +34,10 @@ time_stepper = DiscreteTimeStepper()
 
 initial_time = 0
 end_time = 10
-U = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass)
+dt = 1. / (end_time - initial_time)
 
-U_backwards = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass,
-                                 backwards_in_time=True)
+U = time_stepper.solve(initial_time, end_time, initial_data, dt * operator, rhs=dt * rhs, mass=mass)
+
+U_backwards = time_stepper.solve(end_time, initial_time, initial_data, dt * operator, rhs=dt * rhs, mass=-mass)
 
 assert np.all((U - U_backwards).norm() <= 1e-12)

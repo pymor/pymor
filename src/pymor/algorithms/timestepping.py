@@ -13,6 +13,8 @@ The :class:`TimeStepper` defines a common interface that has to be fulfilled by
 the time-steppers used by |InstationaryModel|.
 """
 
+import numpy as np
+
 from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.operators.interface import Operator
 from pymor.parameters.base import Mu
@@ -44,8 +46,7 @@ class TimeStepper(ImmutableObject):
         """
         raise NotImplementedError
 
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None,
-              backwards_in_time=False):
+    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         """Apply time-stepper to the equation.
 
         The equation is of the form ::
@@ -91,8 +92,7 @@ class TimeStepper(ImmutableObject):
         return U
 
     @abstractmethod
-    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None,
-                backwards_in_time=False):
+    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         """Iterate time-stepper to the equation.
 
         The equation is of the form ::
@@ -423,22 +423,19 @@ class DiscreteTimeStepper(TimeStepper):
         pass
 
     def estimate_time_step_count(self, initial_time, end_time):
-        return end_time - initial_time
+        return np.sign(end_time - initial_time) * (end_time - initial_time)
 
-    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None,
-                backwards_in_time=False):
+    def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         A, F, M, U0, k0, k1 = operator, rhs, mass, initial_data, initial_time, end_time
         assert isinstance(A, Operator)
         assert isinstance(F, (type(None), Operator, VectorArray))
         assert isinstance(M, (type(None), Operator))
         assert A.source == A.range
         nt = k1 - k0
-        num_values = num_values or nt + 1
-        factor = 1
-        if backwards_in_time:
-            factor = -1
+        factor = np.sign(k1 - k0)
+        num_values = num_values or factor * nt + 1
         dt = factor
-        DT = factor * nt / (num_values - 1)
+        DT = nt / (num_values - 1)
 
         if F is None:
             F_time_dep = False
@@ -464,8 +461,6 @@ class DiscreteTimeStepper(TimeStepper):
 
         num_ret_values = 1
         k_init = k0
-        if backwards_in_time:
-            k_init = k1
         yield U0, k_init
 
         if not _depends_on_time(M, mu):
@@ -475,15 +470,15 @@ class DiscreteTimeStepper(TimeStepper):
         if mu is None:
             mu = Mu()
 
-        for k in range(k_init, k_init + factor * nt, factor):
+        for k in range(k_init, k_init + nt, factor):
             mu = mu.with_(t=k)
-            rhs = -A.apply(U, mu=mu)
+            rhs = -factor * A.apply(U, mu=mu)
             if F_time_dep:
-                Fk = F.as_vector(mu)
+                Fk = F.as_vector(mu) * factor
             if F:
-                rhs += Fk
+                rhs += Fk * factor
             U = M.apply_inverse(rhs, mu=mu, initial_guess=U)
-            while factor * (k - k_init + factor + (min(dt, DT) * 0.5)) >= factor * (num_ret_values * DT):
+            while factor * (k - k_init) + 1 + (min(factor*dt, factor*DT) * 0.5) >= factor * num_ret_values * DT:
                 num_ret_values += 1
                 yield U, k
 
