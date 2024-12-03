@@ -12,32 +12,36 @@ operator = fom.operator
 rhs = fom.rhs
 mass = fom.mass
 
-time_stepper = ImplicitEulerTimeStepper(nt)
 
-U = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass)
+def test_implicit_euler():
+    time_stepper = ImplicitEulerTimeStepper(nt)
 
-U_backwards = time_stepper.solve(end_time, initial_time, initial_data, operator, rhs=rhs, mass=-mass)
+    U = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass)
 
-assert np.all((U - U_backwards).norm() <= 1e-12)
+    U_backwards = time_stepper.solve(end_time, initial_time, initial_data, operator, rhs=rhs, mass=-mass)
 
-
-time_stepper = ImplicitMidpointTimeStepper(nt)
-
-U = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass)
-
-U_backwards = time_stepper.solve(end_time, initial_time, initial_data, operator, rhs=rhs, mass=-mass)
-
-assert np.all((U - U_backwards).norm() <= 1e-12)
+    assert np.all((U - U_backwards).norm() <= 1e-12)
 
 
-time_stepper = DiscreteTimeStepper()
+def test_implicit_midpoint():
+    time_stepper = ImplicitMidpointTimeStepper(nt)
 
-initial_time = 0
-end_time = 10
-dt = 1. / (end_time - initial_time)
+    U = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs, mass=mass)
 
-U = time_stepper.solve(initial_time, end_time, initial_data, dt * operator, rhs=dt * rhs, mass=mass)
+    U_backwards = time_stepper.solve(end_time, initial_time, initial_data, operator, rhs=rhs, mass=-mass)
 
-U_backwards = time_stepper.solve(end_time, initial_time, initial_data, dt * operator, rhs=dt * rhs, mass=-mass)
+    assert np.all((U - U_backwards).norm() <= 1e-12)
 
-assert np.all((U - U_backwards).norm() <= 1e-12)
+
+def test_discrete():
+    time_stepper = DiscreteTimeStepper()
+
+    initial_time = 0
+    end_time = 10
+    dt = 1. / (end_time - initial_time)
+
+    U = time_stepper.solve(initial_time, end_time, initial_data, dt * operator, rhs=dt * rhs, mass=mass)
+
+    U_backwards = time_stepper.solve(end_time, initial_time, initial_data, dt * operator, rhs=dt * rhs, mass=-mass)
+
+    assert np.all((U - U_backwards).norm() <= 1e-12)
