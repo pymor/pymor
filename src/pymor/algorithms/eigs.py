@@ -64,7 +64,7 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
     complex_pair_tol
         Tolerance for detecting pairs of complex conjugate eigenvalues.
     complex_evp
-        Wether to consider an eigenvalue problem with complex operators. When operators
+        Whether to consider an eigenvalue problem with complex operators. When operators
         are real setting this argument to `False` will increase stability and performance.
     left_evp
         If set to `True` compute left eigenvectors else compute right eigenvectors.

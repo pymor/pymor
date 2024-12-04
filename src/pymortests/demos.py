@@ -395,7 +395,7 @@ def test_check_check_results_missing(tmp_path):
     results = {'error': math.pi}
     with pytest.raises(NoResultDataError):
         check_results(test_name, args, results, 'error')
-    # running same check again against now recored data must be fine
+    # running same check again against now recorded data must be fine
     check_results(test_name, args, results, 'error')
     with pytest.raises(AssertionError):
         results['error'] += 1

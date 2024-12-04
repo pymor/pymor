@@ -23,7 +23,7 @@ the following data:
     3. the method's arguments.
 
 Note that instances of |ImmutableObject| are allowed to have mutable
-private attributes. It is the implementors responsibility not to break things.
+private attributes. It is the implementer's responsibility not to break things.
 (See this :ref:`warning <ImmutableObjectWarning>`.)
 
 Backends for storage of cached return values derive from :class:`CacheRegion`.

@@ -39,7 +39,7 @@ class SymplecticBasis(BasicObject):
     phase_space
         A |VectorSpace| that represents the phase space. May be none if E and F are specified.
     check_symplecticity
-        Flag, wether to check symplecticity of E and F in the constructor (if these are not None).
+        Flag, whether to check symplecticity of E and F in the constructor (if these are not None).
         Default is True.
     """
 
@@ -71,7 +71,7 @@ class SymplecticBasis(BasicObject):
         U
             The |VectorArray|.
         check_symplecticity
-            Flag, wether to check symplecticity of E and F in the constructor (if these are not
+            Flag, whether to check symplecticity of E and F in the constructor (if these are not
             None). Default is True.
 
         Returns
@@ -122,9 +122,9 @@ class SymplecticBasis(BasicObject):
         other
             The |SymplecticBasis| to append.
         remove_from_other
-            Flag, wether to remove vectors from other.
+            Flag, whether to remove vectors from other.
         check_symplecticity
-            Flag, wether to check symplecticity of E and F in the constructor (if these are not
+            Flag, whether to check symplecticity of E and F in the constructor (if these are not
             None). Default is True.
         """
         assert isinstance(other, SymplecticBasis)
@@ -241,7 +241,7 @@ def psd_svd_like_decomp(U, modes, balance=True):
     modes
         Number of modes (needs to be even).
     balance
-        A flag, wether to balance the norms of pairs of basis vectors.
+        A flag, whether to balance the norms of pairs of basis vectors.
 
     Returns
     -------
