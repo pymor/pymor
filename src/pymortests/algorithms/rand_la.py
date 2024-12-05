@@ -13,7 +13,34 @@ from pymor.operators.numpy import NumpyMatrixOperator
 pytestmark = pytest.mark.builtin
 
 
-def test_adaptive_rrf(rng):
+@pytest.mark.parametrize('qr_method', ['gram_schmidt', 'shifted_chol_qr'])
+@pytest.mark.parametrize('error_estimator', ['buhr', 'loo'])
+def test_adaptive_rrf(rng, qr_method, error_estimator):
+    A  = rng.uniform(low=-1.0, high=1.0, size=(100, 10))
+    op = NumpyMatrixOperator(A)
+
+    B = A + 1j*rng.uniform(low=-1.0, high=1.0, size=(100, 10))
+    op_complex = NumpyMatrixOperator(B)
+
+    Q1 = RandomizedRangeFinder(
+        op,
+        qr_method=qr_method,
+        error_estimator=error_estimator
+    ).find_range(tol=1e-5)
+    assert Q1 in op.range
+
+    Q2 = RandomizedRangeFinder(
+        op_complex,
+        iscomplex=True,
+        qr_method=qr_method,
+        error_estimator=error_estimator
+    ).find_range(tol=1e-5)
+    assert np.iscomplexobj(Q2.to_numpy())
+    assert Q2 in op.range
+
+
+@pytest.mark.parametrize('qr_method', ['gram_schmidt', 'shifted_chol_qr'])
+def test_adaptive_rrf_with_product(rng, qr_method):
     A = rng.uniform(low=-1.0, high=1.0, size=(100, 100))
     A = A @ A.T
     range_product = NumpyMatrixOperator(A)
@@ -30,10 +57,13 @@ def test_adaptive_rrf(rng):
     op_complex = VectorArrayOperator(D)
 
     Q1 = RandomizedRangeFinder(
-        op, range_product=range_product, source_product=source_product).find_range(tol=1e-5)
+        op, range_product=range_product, source_product=source_product, qr_method=qr_method,
+    ).find_range(tol=1e-5)
     assert Q1 in op.range
 
-    Q2 = RandomizedRangeFinder(op_complex, iscomplex=True).find_range(tol=1e-5)
+    Q2 = RandomizedRangeFinder(
+        op_complex, range_product=range_product, source_product=source_product, qr_method=qr_method,
+    ).find_range(tol=1e-5)
     assert np.iscomplexobj(Q2.to_numpy())
     assert Q2 in op.range
 
