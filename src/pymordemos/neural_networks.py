@@ -23,7 +23,7 @@ def main(
     fv: bool = Option(False, help='Use finite volume discretization instead of finite elements.'),
     vis: bool = Option(False, help='Visualize full order solution and reduced solution for a test set.'),
 ):
-    """Model oder reduction with neural networks (approach by Hesthaven and Ubbiali)."""
+    """Model order reduction with neural networks (approach by Hesthaven and Ubbiali)."""
     if not config.HAVE_TORCH:
         raise TorchMissingError
 

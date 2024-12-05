@@ -52,7 +52,7 @@ class StationaryModel(Model):
         to the model which forwards its arguments to the
         visualizer's `visualize` method.
     output_d_mu_use_adjoint
-        If `True`, use adjoint solution for computing ouput gradients
+        If `True`, use adjoint solution for computing output gradients
         (default behavior). See Section 1.6.2 in :cite:`HPUU09` for more
         details.
     name

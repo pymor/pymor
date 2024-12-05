@@ -27,7 +27,7 @@ def main(
     validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
     plot_test_solutions: bool = Option(False, help='Plot FOM and ROM solutions in the test set.'),
 ):
-    """Model oder reduction with neural networks for instationary problems.
+    """Model order reduction with neural networks for instationary problems.
 
     Problem number 0 considers the incompressible Navier-Stokes equations in
     a two-dimensional cavity with the Reynolds number as parameter.
