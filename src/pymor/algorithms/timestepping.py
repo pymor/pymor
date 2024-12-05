@@ -204,9 +204,7 @@ class ImplicitEulerTimeStepper(TimeStepper):
         if mu is None:
             mu = Mu()
 
-        sign = 1
-        if initial_time > end_time:
-            sign = -1
+        sign = np.sign(end_time - initial_time)
 
         for n in range(nt):
             t += dt
@@ -282,9 +280,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
         if mu is None:
             mu = Mu()
 
-        sign = 1
-        if initial_time > end_time:
-            sign = -1
+        sign = np.sign(end_time - initial_time)
 
         if F is None:
             for n in range(nt):
@@ -390,9 +386,7 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         if mu is None:
             mu = Mu()
 
-        sign = 1
-        if initial_time > end_time:
-            sign = -1
+        sign = np.sign(end_time - initial_time)
 
         for n in range(nt):
             mu = mu.with_(t=t + dt/2)
