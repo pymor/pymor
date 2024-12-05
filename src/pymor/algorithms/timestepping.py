@@ -204,9 +204,9 @@ class ImplicitEulerTimeStepper(TimeStepper):
         if mu is None:
             mu = Mu()
 
-        factor = 1
+        sign = 1
         if initial_time > end_time:
-            factor = -1
+            sign = -1
 
         for n in range(nt):
             t += dt
@@ -217,7 +217,7 @@ class ImplicitEulerTimeStepper(TimeStepper):
             if F:
                 rhs += dt_F
             U = M_dt_A.apply_inverse(rhs, mu=mu, initial_guess=U)
-            while factor * (t - t0 + (min(dt, DT) * 0.5)) >= factor * (num_ret_values * DT):
+            while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                 num_ret_values += 1
                 yield U, t
 
@@ -282,16 +282,16 @@ class ExplicitEulerTimeStepper(TimeStepper):
         if mu is None:
             mu = Mu()
 
-        factor = 1
+        sign = 1
         if initial_time > end_time:
-            factor = -1
+            sign = -1
 
         if F is None:
             for n in range(nt):
                 t += dt
                 mu = mu.with_(t=t)
                 U.axpy(-dt, A.apply(U, mu=mu))
-                while factor * (t - t0 + (min(dt, DT) * 0.5)) >= factor * (num_ret_values * DT):
+                while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                     num_ret_values += 1
                     yield U, t
         else:
@@ -301,7 +301,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
                 if F_time_dep:
                     F_ass = F.as_vector(mu)
                 U.axpy(dt, F_ass - A.apply(U, mu=mu))
-                while factor * (t - t0 + (min(dt, DT) * 0.5)) >= factor * (num_ret_values * DT):
+                while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                     num_ret_values += 1
                     yield U, t
 
@@ -390,9 +390,9 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         if mu is None:
             mu = Mu()
 
-        factor = 1
+        sign = 1
         if initial_time > end_time:
-            factor = -1
+            sign = -1
 
         for n in range(nt):
             mu = mu.with_(t=t + dt/2)
@@ -403,7 +403,7 @@ class ImplicitMidpointTimeStepper(TimeStepper):
             if F:
                 rhs += dt_F
             U = M_dt_A_impl.apply_inverse(rhs, mu=mu)
-            while factor * (t - t0 + (min(dt, DT) * 0.5)) >= factor * (num_ret_values * DT):
+            while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                 num_ret_values += 1
                 yield U, t
 
@@ -423,7 +423,7 @@ class DiscreteTimeStepper(TimeStepper):
         pass
 
     def estimate_time_step_count(self, initial_time, end_time):
-        return np.sign(end_time - initial_time) * (end_time - initial_time)
+        return abs(end_time - initial_time)
 
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         A, F, M, U0, k0, k1 = operator, rhs, mass, initial_data, initial_time, end_time
@@ -432,9 +432,9 @@ class DiscreteTimeStepper(TimeStepper):
         assert isinstance(M, (type(None), Operator))
         assert A.source == A.range
         nt = k1 - k0
-        factor = np.sign(k1 - k0)
-        num_values = num_values or factor * nt + 1
-        dt = factor
+        sign = np.sign(k1 - k0)
+        num_values = num_values or sign * nt + 1
+        dt = sign
         DT = nt / (num_values - 1)
 
         if F is None:
@@ -460,8 +460,7 @@ class DiscreteTimeStepper(TimeStepper):
         assert len(U0) == 1
 
         num_ret_values = 1
-        k_init = k0
-        yield U0, k_init
+        yield U0, k0
 
         if not _depends_on_time(M, mu):
             M = M.assemble(mu)
@@ -470,15 +469,15 @@ class DiscreteTimeStepper(TimeStepper):
         if mu is None:
             mu = Mu()
 
-        for k in range(k_init, k_init + nt, factor):
+        for k in range(k0, k0 + nt, sign):
             mu = mu.with_(t=k)
-            rhs = -factor * A.apply(U, mu=mu)
+            rhs = -sign * A.apply(U, mu=mu)
             if F_time_dep:
-                Fk = F.as_vector(mu) * factor
+                Fk = F.as_vector(mu) * sign
             if F:
-                rhs += Fk * factor
+                rhs += Fk * sign
             U = M.apply_inverse(rhs, mu=mu, initial_guess=U)
-            while factor * (k - k_init) + 1 + (min(factor*dt, factor*DT) * 0.5) >= factor * num_ret_values * DT:
+            while sign * (k - k0) + 1 + (min(sign*dt, sign*DT) * 0.5) >= sign * num_ret_values * DT:
                 num_ret_values += 1
                 yield U, k
 
