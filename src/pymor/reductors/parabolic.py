@@ -117,12 +117,12 @@ class ParabolicRBEstimator(ImmutableObject):
 
         est = np.empty(len(U))
         est[0] = (1./C) * self.initial_residual.apply(U[0], mu=mu).norm2()[0]
-        if 't' in self.residual.parameters:
+        if 't' in self.residual.parameters or mu.has_time_dependent_values:
             t = 0
             for n in range(1, m.time_stepper.nt + 1):
                 t += dt
-                mu = mu.with_(t=t)
-                est[n] = self.residual.apply(U[n], U[n-1], mu=mu).norm2()[0]
+                mu_t = mu.at_time(t)
+                est[n] = self.residual.apply(U[n], U[n-1], mu=mu_t).norm2()[0]
         else:
             est[1:] = self.residual.apply(U[1:], U[:-1], mu=mu).norm2()
         est[1:] *= (dt/C**2)

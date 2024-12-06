@@ -238,8 +238,10 @@ def trust_region(fom, surrogate, parameter_space=None, initial_guess=None, beta=
 
                 with logger.block('Computing first order criticality...'):
                     # fom.output_d_mu is potentially for free after enrichment, e.g. using caching
-                    gradient = fom.parameters.parse(fom.output_d_mu(mu).to_numpy())
-                    first_order_criticality = np.linalg.norm(mu - parameter_space.clip(mu - gradient).to_numpy())
+                    gradient = fom.output_d_mu(mu).to_numpy().ravel()
+                    first_order_criticality = np.linalg.norm(
+                        mu - parameter_space.clip(fom.parameters.parse(mu - gradient)).to_numpy()
+                    )
                     foc_norms.append(first_order_criticality)
 
                 surrogate.accept()

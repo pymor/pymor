@@ -83,6 +83,7 @@ from pymor.core.exceptions import CacheKeyGenerationError, UnpicklableError
 from pymor.core.logger import getLogger
 from pymor.core.pickle import dumps
 from pymor.parameters.base import Mu
+from pymor.tools.frozendict import FrozenDict
 
 
 @atexit.register
@@ -521,7 +522,7 @@ def build_cache_key(obj):
             return tuple(transform_obj(o) for o in obj)
         elif t in (set, frozenset):
             return tuple(transform_obj(o) for o in sorted(obj))
-        elif t is dict:
+        elif t in (dict, FrozenDict):
             return tuple((transform_obj(k), transform_obj(v)) for k, v in sorted(obj.items()))
         elif isinstance(obj, Number):
             # handle numpy number objects

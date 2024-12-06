@@ -114,17 +114,20 @@ class Model(CacheableObject, ParametricObject):
         -------
         A dict with the computed values.
         """
-        assert input is not None or self.dim_input == 0
-
         # parse parameter values
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
-        assert self.parameters.assert_compatible(mu)
+        assert self.parameters.assert_compatible(mu, allow_time_dependent=True)
 
         # parse input and add it to the parameter values
-        mu_input = Parameters(input=self.dim_input).parse(input)
-        input = mu_input.get_time_dependent_value('input') if mu_input.is_time_dependent('input') else mu_input['input']
-        mu = mu.with_(input=input)
+        if input is not None:
+            assert 'input' not in mu
+            assert 'input' not in mu.time_dependent_values
+            mu_input = Parameters(input=self.dim_input).parse(input)
+            input = mu_input.time_dependent_values.get('input') or mu_input['input']
+            mu = mu.with_(input=input)
+        assert self.dim_input == 0 or 'input' in mu or 'input' in mu.time_dependent_values
+
 
         # collect all quantities to be computed
         wanted_quantities = {quantity for quantity, wanted in kwargs.items() if wanted}

@@ -9,7 +9,7 @@ from hypothesis import strategies as hyst
 from hypothesis.extra import numpy as hynp
 from scipy.stats import random_correlation
 
-from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction, Function
+from pymor.analyticalproblems.functions import ConstantFunction, ExpressionFunction
 from pymor.core.config import config
 from pymor.parameters.base import Mu, Parameters
 from pymor.vectorarrays.block import BlockVectorSpace
@@ -520,7 +520,7 @@ def active_mu_data(draw, min_num=1, max_num=3, min_dim=1, max_dim=5, num_mus=10)
 # stick to a few representative examples to avoid only seeing degenerate cases
 # in the selected examples
 mus = hyst.dictionaries(
-    keys=hyst.sampled_from(['t', 'foo', 'bar']),
+    keys=hyst.sampled_from(['foo', 'bar']),
     values=hyst.sampled_from([
         np.array([1.]),
         np.array([1., 32., 3]),
@@ -528,4 +528,4 @@ mus = hyst.dictionaries(
         ExpressionFunction('[1., 0] * x + [0, 1.] * x**2', 1),
         ConstantFunction(np.array([1., 2, 3]))
     ])
-).filter(lambda mu: 't' not in mu or (not isinstance(mu['t'], Function) and len(mu['t']) == 1)).map(Mu)
+).map(Mu)

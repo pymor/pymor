@@ -192,7 +192,12 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
     print()
 
     result = {}
-    result['mus'] = test_mus = np.array(test_mus)
+
+    # convert test_mus to object array. np.array(test_mus) will try to iterate over the mus
+    result['mus'] = np.empty(len(test_mus), dtype=object)
+    result['mus'][:] = test_mus
+    test_mus = result['mus']
+
     result['basis_sizes'] = basis_sizes
 
     summary = [('number of samples', str(len(test_mus)))]

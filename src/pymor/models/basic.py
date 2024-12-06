@@ -314,7 +314,6 @@ class InstationaryModel(Model):
 
     def _compute(self, quantities, data, mu=None):
         if 'solution' in quantities:
-            mu = mu.with_(t=0.)
             U0 = self.initial_data.as_range_array(mu)
             U = self.time_stepper.solve(operator=self.operator,
                                         rhs=None if isinstance(self.rhs, ZeroOperator) else self.rhs,
