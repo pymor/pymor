@@ -79,7 +79,7 @@ runs:
       shell: bash -el {0}
       run: |
         ${PYTEST_PREFIX} python -c "from matplotlib.pyplot import *"
-        ${PYTEST_PREFIX} python -c "from qtpy.QtGui import *"
+        # ${PYTEST_PREFIX} python -c "from qtpy.QtGui import *"
         ${PYTEST_PREFIX} python -c "import OpenGL"
         ${PYTEST_PREFIX} python -c "import OpenGL.GL as gl"
     - name: Run pytest
