@@ -351,6 +351,11 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         assert isinstance(F, (type(None), Operator, VectorArray))
         assert isinstance(M, (type(None), Operator))
         assert A.source == A.range
+
+        if mu is None:
+            mu = Mu()
+        assert 't' not in mu
+
         num_values = num_values or nt + 1
         dt = (t1 - t0) / nt
         DT = (t1 - t0) / (num_values - 1)
@@ -377,10 +382,6 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         assert not M.parametric
         assert U0 in A.source
         assert len(U0) == 1
-
-        if mu is None:
-            mu = Mu()
-        assert 't' not in mu
 
         num_ret_values = 1
         yield U0, t0
