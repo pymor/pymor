@@ -16,8 +16,8 @@ FENICS_ORDER = 1
 
 
 def main(
-    training_samples: int = Argument(20, help='Number of samples used for training the neural network.'),
-    validation_samples: int = Argument(2, help='Number of samples used for validation during the training phase.'),
+    training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
+    validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
 ):
     """Reduction of a FEniCS model using neural networks (approach by Hesthaven and Ubbiali)."""
     if not config.HAVE_TORCH:
