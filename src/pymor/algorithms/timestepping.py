@@ -60,8 +60,10 @@ class TimeStepper(ImmutableObject):
             The time at which to begin time-stepping.
         end_time
             The time until which to perform time-stepping.
-            The end time is also allowed to be smaller than the
-            initial time which results in backwards time stepping.
+            The end time is also allowed to be smaller than the initial time
+            which results in solving the corresponding terminal value problem,
+            i.e. `initial_data` serves as terminal data in this case and is
+            also stored first in the resulting |VectorArray|.
         initial_data
             The solution vector at `initial_time`.
         operator
@@ -108,8 +110,10 @@ class TimeStepper(ImmutableObject):
             The time at which to begin time-stepping.
         end_time
             The time until which to perform time-stepping.
-            The end time is also allowed to be smaller than the
-            initial time which results in backwards time stepping.
+            The end time is also allowed to be smaller than the initial time
+            which results in solving the corresponding terminal value problem,
+            i.e. `initial_data` serves as terminal data in this case and is
+            also stored first in the resulting |VectorArray|.
         initial_data
             The solution vector at `initial_time`.
         operator
