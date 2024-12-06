@@ -16,8 +16,8 @@ FENICS_ORDER = 1
 
 
 def main(
-    training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
-    validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
+    training_samples: int = Argument(20, help='Number of samples used for training the neural network.'),
+    validation_samples: int = Argument(2, help='Number of samples used for validation during the training phase.'),
 ):
     """Reduction of a FEniCS model using neural networks (approach by Hesthaven and Ubbiali)."""
     if not config.HAVE_TORCH:
@@ -30,7 +30,7 @@ def main(
     training_set = parameter_space.sample_uniformly(training_samples)
     validation_set = parameter_space.sample_randomly(validation_samples)
 
-    reductor = NeuralNetworkReductor(fom, training_set, validation_set, l2_err=1e-4,
+    reductor = NeuralNetworkReductor(fom, training_set=training_set, validation_set=validation_set, l2_err=1e-4,
                                      ann_mse=1e-4)
     rom = reductor.reduce(hidden_layers='[(N+P)*3, (N+P)*3, (N+P)*3]',
                           restarts=100)
