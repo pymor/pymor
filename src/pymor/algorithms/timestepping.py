@@ -13,6 +13,8 @@ The :class:`TimeStepper` defines a common interface that has to be fulfilled by
 the time-steppers used by |InstationaryModel|.
 """
 
+import numpy as np
+
 from pymor.core.base import ImmutableObject, abstractmethod
 from pymor.operators.interface import Operator
 from pymor.parameters.base import Mu
@@ -58,6 +60,10 @@ class TimeStepper(ImmutableObject):
             The time at which to begin time-stepping.
         end_time
             The time until which to perform time-stepping.
+            The end time is also allowed to be smaller than the initial time
+            which results in solving the corresponding terminal value problem,
+            i.e. `initial_data` serves as terminal data in this case and is
+            also stored first in the resulting |VectorArray|.
         initial_data
             The solution vector at `initial_time`.
         operator
@@ -104,6 +110,10 @@ class TimeStepper(ImmutableObject):
             The time at which to begin time-stepping.
         end_time
             The time until which to perform time-stepping.
+            The end time is also allowed to be smaller than the initial time
+            which results in solving the corresponding terminal value problem,
+            i.e. `initial_data` serves as terminal data in this case and is
+            also stored first in the resulting |VectorArray|.
         initial_data
             The solution vector at `initial_time`.
         operator
@@ -202,6 +212,8 @@ class ImplicitEulerTimeStepper(TimeStepper):
         if mu is None:
             mu = Mu()
 
+        sign = np.sign(end_time - initial_time)
+
         for n in range(nt):
             t += dt
             mu = mu.with_(t=t)
@@ -211,7 +223,7 @@ class ImplicitEulerTimeStepper(TimeStepper):
             if F:
                 rhs += dt_F
             U = M_dt_A.apply_inverse(rhs, mu=mu, initial_guess=U)
-            while t - t0 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+            while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                 num_ret_values += 1
                 yield U, t
 
@@ -269,19 +281,21 @@ class ExplicitEulerTimeStepper(TimeStepper):
         dt = (t1 - t0) / nt
         DT = (t1 - t0) / (num_values - 1)
         num_ret_values = 1
-        yield U0, t0
-
         t = t0
+        yield U0, t
+
         U = U0.copy()
         if mu is None:
             mu = Mu()
+
+        sign = np.sign(end_time - initial_time)
 
         if F is None:
             for n in range(nt):
                 t += dt
                 mu = mu.with_(t=t)
                 U.axpy(-dt, A.apply(U, mu=mu))
-                while t - t0 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+                while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                     num_ret_values += 1
                     yield U, t
         else:
@@ -291,7 +305,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
                 if F_time_dep:
                     F_ass = F.as_vector(mu)
                 U.axpy(dt, F_ass - A.apply(U, mu=mu))
-                while t - t0 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+                while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                     num_ret_values += 1
                     yield U, t
 
@@ -380,6 +394,8 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         if mu is None:
             mu = Mu()
 
+        sign = np.sign(end_time - initial_time)
+
         for n in range(nt):
             mu = mu.with_(t=t + dt/2)
             t += dt
@@ -389,7 +405,7 @@ class ImplicitMidpointTimeStepper(TimeStepper):
             if F:
                 rhs += dt_F
             U = M_dt_A_impl.apply_inverse(rhs, mu=mu)
-            while t - t0 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+            while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                 num_ret_values += 1
                 yield U, t
 
@@ -409,7 +425,7 @@ class DiscreteTimeStepper(TimeStepper):
         pass
 
     def estimate_time_step_count(self, initial_time, end_time):
-        return end_time - initial_time
+        return abs(end_time - initial_time)
 
     def iterate(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         A, F, M, U0, k0, k1 = operator, rhs, mass, initial_data, initial_time, end_time
@@ -418,8 +434,9 @@ class DiscreteTimeStepper(TimeStepper):
         assert isinstance(M, (type(None), Operator))
         assert A.source == A.range
         nt = k1 - k0
-        num_values = num_values or nt + 1
-        dt = 1
+        sign = np.sign(k1 - k0)
+        num_values = num_values or sign * nt + 1
+        dt = sign
         DT = nt / (num_values - 1)
 
         if F is None:
@@ -454,15 +471,15 @@ class DiscreteTimeStepper(TimeStepper):
         if mu is None:
             mu = Mu()
 
-        for k in range(k0, k0 + nt):
+        for k in range(k0, k0 + nt, sign):
             mu = mu.with_(t=k)
-            rhs = -A.apply(U, mu=mu)
+            rhs = -sign * A.apply(U, mu=mu)
             if F_time_dep:
-                Fk = F.as_vector(mu)
+                Fk = F.as_vector(mu) * sign
             if F:
-                rhs += Fk
+                rhs += Fk * sign
             U = M.apply_inverse(rhs, mu=mu, initial_guess=U)
-            while k - k0 + 1 + (min(dt, DT) * 0.5) >= num_ret_values * DT:
+            while sign * (k - k0) + 1 + (min(sign*dt, sign*DT) * 0.5) >= sign * num_ret_values * DT:
                 num_ret_values += 1
                 yield U, k
 
