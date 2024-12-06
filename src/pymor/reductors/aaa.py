@@ -223,7 +223,7 @@ class PAAAReductor(BasicObject):
             # solve LS problem
             L = full_nd_loewner(samples, svs, self.itpl_part)
 
-            _, S, V = spla.svd(L, full_matrices=False, lapack_driver='gesvd')
+            _, S, V = spla.svd(L, full_matrices=False)
             VH = V.T.conj()
             coefs = VH[:, -1]
 
@@ -298,7 +298,7 @@ class PAAAReductor(BasicObject):
 
         # solve LS problem
         L = full_nd_loewner(self.samples, self.sampling_values, self.itpl_part)
-        _, S, V = spla.svd(L, full_matrices=False, lapack_driver='gesvd')
+        _, S, V = spla.svd(L, full_matrices=False)
         VH = np.conj(V.T)
         coefs = VH[:, -1:]
 

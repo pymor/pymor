@@ -401,6 +401,6 @@ def _chol(A):
     assert A.ndim == 2
     assert A.shape[0] == A.shape[1]
 
-    U, s, _ = spla.svd(A, lapack_driver='gesvd')
+    U, s, _ = spla.svd(A)
     L = U * np.sqrt(s)
     return L

@@ -1137,7 +1137,7 @@ class LTIModel(Model):
             of = self.gramian(('br_o_lrcf', gamma), mu=mu)
         else:
             raise ValueError(f'Unknown typ ({typ}).')
-        U, hsv, Vh = spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver='gesvd')
+        U, hsv, Vh = spla.svd(self.E.apply2(of, cf, mu=mu))
         return hsv, U.T, Vh
 
     def hsv(self, mu=None):

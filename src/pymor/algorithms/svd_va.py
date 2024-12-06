@@ -164,7 +164,7 @@ def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
         Q, R = gram_schmidt(A, product=product, return_R=True, check=False)
 
     with logger.block('Computing SVD of R ...'):
-        U2, s, Vh = spla.svd(R, lapack_driver='gesvd')
+        U2, s, Vh = spla.svd(R)
 
     with logger.block('Choosing the number of modes ...'):
         tol = max(rtol * s[0], atol)
