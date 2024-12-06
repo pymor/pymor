@@ -396,7 +396,7 @@ class Mu(ImmutableObject):
     def parameters(self, include_time_dependent=False):
         params = {k: v.size for k, v in self.items()}
         if include_time_dependent:
-            params.update({k: v.shape_range[0] for k, v in self.items()})
+            params.update({k: v.shape_range[0] for k, v in self.time_dependent_values.items()})
         return Parameters(params)
 
     def with_(self, new_type=None, **kwargs):
@@ -415,7 +415,7 @@ class Mu(ImmutableObject):
         if len(self) == 0:
             return np.array([])
         else:
-            return np.hstack([v for k, v in self._values.items()])
+            return np.hstack([v for k, v in self.items()])
 
     def __eq__(self, other):
         if not isinstance(other, Mu):
