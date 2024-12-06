@@ -249,6 +249,16 @@ class Parameters(SortedFrozenDict):
             mu[parameter].size == self[parameter]
 
         Otherwise, an `AssertionError` will be raised.
+
+        Parameters
+        ----------
+        allow_time_dependent
+            If `True`, also the time-dependent parameter values stored in `mu`
+            are taken into account. As these values are only usable when an
+            evaluation time `'t'` is specified, code handling these values must
+            be 'time-aware'. Therefore, the default for this parameter is
+            `False`, which means that time-dependent values are treated as
+            non-existent.
         """
         assert self.is_compatible(mu, allow_time_dependent=allow_time_dependent), \
             self.why_incompatible(mu, allow_time_dependent=allow_time_dependent)
@@ -261,6 +271,16 @@ class Parameters(SortedFrozenDict):
         i.e. ::
 
             mu[parameter].size == self[parameter]
+
+        Parameters
+        ----------
+        allow_time_dependent
+            If `True`, also the time-dependent parameter values stored in `mu`
+            are taken into account. As these values are only usable when an
+            evaluation time `'t'` is specified, code handling these values must
+            be 'time-aware'. Therefore, the default for this parameter is
+            `False`, which means that time-dependent values are treated as
+            non-existent.
         """
         if mu is not None and not isinstance(mu, Mu):
             raise TypeError('mu is not a Mu instance. (Use parameters.parse?)')
@@ -326,13 +346,32 @@ class Parameters(SortedFrozenDict):
 class Mu(ImmutableObject):
     """Immutable mapping of |Parameter| names to parameter values.
 
+    This class represents an immutable mapping (`dict`) from parameter
+    names to corresponding values given as one-dimensional |NumPy Arrays|.
+    In addition, time-dependent parameter values may be stored in the
+    :attr:`time_dependent_values` attribute, which is an immutable mapping
+    from parameter names to |Functions| of time.
+
+    .. note::
+        Time-dependent parameter values are invisible when using the
+        class's mapping protocol methods (`__contains__`, `__getitem__`,
+        `keys`, `items`, etc.). Code wanting to handle time-dependent
+        values needs to use :meth:`at_time` or explicitly lookup values
+        in :attr:`time_dependent_values`.
+
     Parameters
     ----------
     Anything that dict accepts for the construction of a dictionary.
     Values are automatically converted to one-dimensional |NumPy arrays|,
-    except for |Functions| which are interpreted as time-dependent parameter
+    except for |Functions|, which are interpreted as time-dependent parameter
     values. Unless the Python interpreter runs with the `-O` flag,
     the arrays are made immutable.
+
+
+    Attributes
+    ----------
+    time_dependent_values
+        Immutable mapping from parameter names to |Functions| of time.
     """
 
     def __init__(self, *args, **kwargs):
@@ -394,6 +433,16 @@ class Mu(ImmutableObject):
         return len(self.time_dependent_values) > 0
 
     def parameters(self, include_time_dependent=False):
+        """Return the |Parameters| for which values are stored.
+
+        Parameters
+        ----------
+        include_time_dependent
+            If `True`, also include the parameters for which
+            time-dependent values are stored. These are excluded
+            by default, as code needs to take special measures to
+            deal with time-dependent parameter-values.
+        """
         params = {k: v.size for k, v in self.items()}
         if include_time_dependent:
             params.update({k: v.shape_range[0] for k, v in self.time_dependent_values.items()})
@@ -404,6 +453,17 @@ class Mu(ImmutableObject):
         return cls(**(self._values | self.time_dependent_values | kwargs))
 
     def at_time(self, t):
+        """Return a new |Mu| instance with values for given time.
+
+        This methods evaluates all :attr:`time_dependent_values` for
+        the given evaluation time `t` and returns a new |Mu| containing
+        these values along with the other non-time-dependent values.
+
+        Parameters
+        ----------
+        t
+            Evaluation time for the time-dependent parameter values.
+        """
         if 't' in self:
             raise ValueError('time already specified')
         t = np.asarray(t).reshape((1,))
