@@ -49,21 +49,21 @@ class NeuralNetworkReductor(BasicObject):
         |VectorArrays|.
     reduced_basis
         Prescribed reduced basis of the full-order |Model|. If `None`, the
-        reduced basis is computed.
+        reduced basis is computed using the :meth:`~pymor.algorithms.pod.pod` method.
     training_set
-        |Parameter values| to use for POD and training of the
+        |Parameter values| to use for POD (in case no `reduced_basis` is provided) and training of the
         neural network.
     training_snapshots
         |VectorArray| to use for POD and training of the
         neural network. Contains the solutions to the parameters of the
-        `training_set` and can be `None` when FOM is available, i.e. `fom` is not `None`.
+        `training_set` and can be `None` when `fom` is not `None`.
     validation_set
         |Parameter values| to use for validation in the training
         of the neural network.
     validation_snapshots
         |VectorArray| to use for validation in the training
         of the neural network. Contains the solutions to the parameters of
-        the `validation_set` and can be `None` when FOM is available, i.e. `fom` is not `None`.
+        the `validation_set` and can be `None` when `fom` is not `None`.
     validation_ratio
         Fraction of the training set to use for validation in the training
         of the neural network (only used if no validation set is provided).
@@ -203,11 +203,11 @@ class NeuralNetworkReductor(BasicObject):
         if self.training_snapshots is None:
             self.compute_training_snapshots()
 
-        # build a reduced basis using POD
+        # build a reduced basis using POD if necessary
         if self.reduced_basis is None:
             self.compute_reduced_basis()
 
-        # compute training data
+        # compute training data, i.e. pairs of parameters (potentially including time) and reduced coefficients
         if self.training_data is None:
             self.compute_training_data()
         assert self.training_data is not None
@@ -283,7 +283,7 @@ class NeuralNetworkReductor(BasicObject):
         return neural_network
 
     def compute_training_snapshots(self):
-        """Compute training data for the neural network."""
+        """Compute training snapshots for the neural network."""
         # compute snapshots for POD and training of neural networks
         with self.logger.block('Computing training snapshots ...'):
             self.training_snapshots = self.fom.solution_space.empty()
@@ -398,7 +398,6 @@ class NeuralNetworkReductor(BasicObject):
         product = self.pod_params.get('product')
 
         # conditional expression to check for instationary solution to return self.nt solutions
-        assert hasattr(self, 'nt')
         parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, self.nt)] if not self.is_stationary else [mu]
         samples = [(mu, self.reduced_basis.inner(u_t, product=product)[:, 0]) for mu, u_t in
                    zip(parameters, u)]
@@ -495,19 +494,19 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         The full-order |Model| to reduce. If `None`, the `training_set` has
         to consist of pairs of |parameter values| and corresponding outputs.
     training_set
-        List of |Parameter values| to use for POD and training of the
+        List of |Parameter values| to use for training of the
         neural network.
     training_snapshots
-        Set of solution |VectorArrays| to use for POD and training of the
+        Set of solution |VectorArrays| to use for training of the
         neural network. These are the solutions to the parameters of the
-        `training_set` and can be `None` when fom is available.
+        `training_set` and can be `None` when `fom` is not `None`.
     validation_set
         List of |Parameter values| to use for validation in the training
         of the neural network.
     validation_snapshots
         Set of solution |VectorArrays| to use for validation in the training
         of the neural network. These are the solutions to the parameters of
-        the `validation_set` and can be `None` when fom is available.
+        the `validation_set` and can be `None` when `fom` is not `None`.
     validation_ratio
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     validation_loss

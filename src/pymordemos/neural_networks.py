@@ -44,12 +44,11 @@ def main(
         for mu in test_set:
             U_red.append(reductor.reconstruct(rom.solve(mu)))
 
-    # Initialise to NumpyVectorArray for simulation snapshots
     training_snapshots = fom.solution_space.empty(reserve=len(training_set))
     for mu in training_set:
         training_snapshots.append(fom.solve(mu))
 
-    validation_snapshots= fom.solution_space.empty(reserve=len(validation_set))
+    validation_snapshots = fom.solution_space.empty(reserve=len(validation_set))
     for mu in validation_set:
         validation_snapshots.append(fom.solve(mu))
 
