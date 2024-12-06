@@ -1,5 +1,5 @@
-pyMOR 2024.1 (July 8, 2025)
--------------------------------
+pyMOR 2024.1 (July 8, 2024)
+---------------------------
 
 We are proud to announce the release of pyMOR 2024.1!
 

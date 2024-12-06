@@ -1,0 +1,53 @@
+pyMOR 2024.2 (December 13, 2024)
+--------------------------------
+
+We are proud to announce the release of pyMOR 2024.2!
+
+The main new features are:
+
+* Randomized leave-one-out error estimator
+
+* Recalculated shifted Cholesky QR algorithm
+
+* New approach to time-dependent parameter values
+
+pyMOR 2024.2 contains contributions by Maximilian Bindhak, Dmitry Kabanov and Art Pelling.
+See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more details.
+
+
+Main new features
+^^^^^^^^^^^^^^^^^
+
+Randomized leave-one-out error estimator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Recalculated shifted Cholesky QR
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Recalculated shifted Cholesky QR algorithm
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Drop Python 3.8 support
+~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Remove space ids
+~~~~~~~~~~~~~~~~
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- `[#2378] Time stepping backwards in time <https://github.com/pymor/pymor/pull/2378>`_
+- `[#2359] Block Arnoldi <https://github.com/pymor/pymor/pull/2359>`_
+- `[#2353] Add print_cached_methods() <https://github.com/pymor/pymor/pull/2353>`_
+- `[#2349] Add arbitrary (inequality) constraints to ParameterSpace <https://github.com/pymor/pymor/pull/2349>`_
+- `[#2306] Flip range_product and source_product args of RandomizedRangeFinder <https://github.com/pymor/pymor/pull/2306>`_
+- `[#2296] Enhance LTIModel.from_matrices <https://github.com/pymor/pymor/pull/2296>`_
+- `[#2283] Support NumPy 2 <https://github.com/pymor/pymor/pull/2283>`_
