@@ -14,7 +14,7 @@ pytestmark = pytest.mark.builtin
 
 
 @pytest.mark.parametrize('qr_method', ['gram_schmidt', 'shifted_chol_qr'])
-@pytest.mark.parametrize('error_estimator', ['buhr', 'loo'])
+@pytest.mark.parametrize('error_estimator', ['bs18', 'loo'])
 def test_adaptive_rrf(rng, qr_method, error_estimator):
     A  = rng.uniform(low=-1.0, high=1.0, size=(100, 10))
     op = NumpyMatrixOperator(A)

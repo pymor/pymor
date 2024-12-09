@@ -53,11 +53,11 @@ class RandomizedRangeFinder(BasicObject):
         adjoint is computed using `A`, `source_product` and `range_product`.
         Set to `A` for a `self` for a known self-adjoint operator.
     failure_tolerance
-        Maximum failure probability. Only needed for error_estimator='buhr'.
+        Maximum failure probability. Only needed for error_estimator='bs18'.
     num_testvecs
-        Number of test vectors. Only needed for error_estimator='buhr'.
+        Number of test vectors. Only needed for error_estimator='bs18'.
     lambda_min
-        The smallest eigenvalue of source_product. Only needed for error_estimator='buhr'.
+        The smallest eigenvalue of source_product. Only needed for error_estimator='bs18'.
         If `None`, the smallest eigenvalue is computed using scipy.
     block_size
         Number of basis vectors to add per iteration.
@@ -66,19 +66,19 @@ class RandomizedRangeFinder(BasicObject):
     qr_method
         QR method used for orthogonalization. Either 'gram_schmidt' (default) or 'shifted_chol_qr'.
     error_estimator
-        The error estimator used. Either 'buhr' (default) or 'loo'.
+        The error estimator used. Either 'bs18' (default) or 'loo'.
     """
 
     @defaults('num_testvecs', 'failure_tolerance', 'qr_method', 'error_estimator')
     def __init__(self, A, range_product=None, source_product=None, A_adj=None, power_iterations=0, block_size=None,
                  failure_tolerance=1e-15, num_testvecs=20, lambda_min=None, iscomplex=False, qr_method='gram_schmidt',
-                 error_estimator='buhr'):
+                 error_estimator='bs18'):
         assert isinstance(A, Operator)
         assert range_product is None or isinstance(range_product, Operator)
         assert source_product is None or isinstance(source_product, Operator)
         assert lambda_min is None or lambda_min > 0
         assert qr_method in ('gram_schmidt', 'shifted_chol_qr')
-        assert error_estimator in ('buhr', 'loo')
+        assert error_estimator in ('bs18', 'loo')
         if error_estimator == 'loo':
             assert range_product is None
             assert source_product is None
@@ -87,8 +87,8 @@ class RandomizedRangeFinder(BasicObject):
             A_adj = AdjointOperator(A, range_product=range_product, source_product=source_product)
 
         self.__auto_init(locals())
-        self.estimate_error = self._buhr_estimator if error_estimator == 'buhr' else self._loo_estimator
-        self.Omega = A.range.empty()  # the test vectors for 'buhr' or the drawn samples for 'loo'.
+        self.estimate_error = self._buhr_estimator if error_estimator == 'bs18' else self._loo_estimator
+        self.Omega = A.range.empty()  # the test vectors for 'bs18' or the drawn samples for 'loo'.
         self.estimator_last_basis_size, self.last_estimated_error = 0, np.inf
         self.Q = [A.range.empty() for _ in range(power_iterations+1)]
         self.R = [np.empty((0,0)) for _ in range(power_iterations+1)]
