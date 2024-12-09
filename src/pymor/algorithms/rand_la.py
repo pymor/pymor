@@ -28,14 +28,15 @@ class RandomizedRangeFinder(BasicObject):
     .. math::
         \Vert A - P_{span(B)} A \Vert \leq tol
 
-    with a failure probability smaller than `failure_tolerance`, where the norm denotes the
-    operator norm. The inner product of the range of `A` is given by `range_product` and
-    the inner product of the source of `A` is given by `source_product`.
+    with a failure probability smaller than `failure_tolerance`, where the norm denotes the operator
+    norm. The inner product of the range of `A` is given by `range_product` and the inner product of
+    the source of `A` is given by `source_product`.
 
     A faster alternative is the leave-one-out error estimator from :cite:`ET24` which can be
-    activated by setting `error_estimator='loo'. Note that while it can be faster and more accurate
-    in practice, this option does only support Euclidian inner products and there are no results on
-    its failure probability so far.
+    activated by setting `error_estimator='loo'. The leave-one-out error estimator estimates the
+    Frobenius norm of the approximation error. Note that while it can be faster and more accurate in
+    practice, this option does only support Euclidian inner products and there are no results on its
+    failure probability so far.
 
     Parameters
     ----------
