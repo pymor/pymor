@@ -455,7 +455,7 @@ class Mu(ImmutableObject):
     def at_time(self, t):
         """Return a new |Mu| instance with values for given time.
 
-        This methods evaluates all :attr:`time_dependent_values` for
+        This method evaluates all :attr:`time_dependent_values` for
         the given evaluation time `t` and returns a new |Mu| containing
         these values along with the other non-time-dependent values.
 
