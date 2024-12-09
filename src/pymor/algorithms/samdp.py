@@ -83,7 +83,6 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
     leftev
         A |VectorArray| containing the left eigenvectors of the computed poles.
     """
-    assert False, 'DEBUG'
     logger = getLogger('pymor.algorithms.samdp.samdp')
 
     if E is None:
