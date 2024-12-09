@@ -33,7 +33,7 @@ class RandomizedRangeFinder(BasicObject):
     the source of `A` is given by `source_product`.
 
     A faster alternative is the leave-one-out error estimator from :cite:`ET24` which can be
-    activated by setting `error_estimator='loo'. The leave-one-out error estimator estimates the
+    activated by setting `error_estimator='loo'`. The leave-one-out error estimator estimates the
     Frobenius norm of the approximation error. Note that while it can be faster and more accurate in
     practice, this option does only support Euclidian inner products and there are no results on its
     failure probability so far.
