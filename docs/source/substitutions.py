@@ -129,6 +129,7 @@ common = """
 
 .. |Parameter| replace:: :class:`Parameter <pymor.parameters.base.Parameters>`
 .. |Parameters| replace:: :class:`~pymor.parameters.base.Parameters`
+.. |Mu| replace:: :class:`~pymor.parameters.base.Mu`
 .. |Parameter values| replace:: :class:`Parameter values <pymor.parameters.base.Mu>`
 .. |parameter values| replace:: :class:`parameter values <pymor.parameters.base.Mu>`
 .. |Parameter value| replace:: :class:`Parameter value <pymor.parameters.base.Mu>`

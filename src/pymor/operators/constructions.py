@@ -1005,7 +1005,7 @@ class FixedParameterOperator(ProxyOperator):
         assert operator.parameters.assert_compatible(mu)
         self.mu = mu
         if mu:
-            self.parameters_internal = mu.parameters
+            self.parameters_internal = operator.parameters
 
     def apply(self, U, mu=None):
         return self.operator.apply(U, mu=self.mu)
