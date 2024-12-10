@@ -89,7 +89,7 @@ def test_shifted_chol_qr_with_offset(vector_array):
     if len(onbgs) < len(U):
         warnings.warn('Linearly dependent vectors detected! Skipping ...')
         return
-    
+
     # orthogonalize first half
     offset = round(len(U) / 2)
     onb, Ro = shifted_chol_qr(U[:offset], return_R=True, copy=True)
@@ -100,7 +100,7 @@ def test_shifted_chol_qr_with_offset(vector_array):
     _, R = shifted_chol_qr(onb, return_R=True, copy=False)
 
     # insert R of first orthogonalization step into R of second step
-    # overwritten matrix block only contains a unit matrix 
+    # overwritten matrix block only contains a unit matrix
     R[:offset,:offset] = Ro
 
     # compare Q and R of shifted Cholesky QR with offset to the gram_schmidt implementation
