@@ -34,13 +34,7 @@ def test_skfem1d():
 
 @skip_if_missing('SCIKIT_FEM')
 def test_skfem2d():
-    from packaging.version import parse
-
-    from pymor.core.config import config
     from pymor.discretizers.skfem.cg import discretize_stationary_cg
-    if parse(config.SCIPY_VERSION) >= parse('1.13.0'):
-        import pytest
-        pytest.xfail('Broken for newer scipy versions.')
 
     p = StationaryProblem(
         domain=RectDomain([[-1, -1], [1, 1]], bottom='neumann', right='neumann'),
