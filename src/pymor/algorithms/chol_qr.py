@@ -96,7 +96,7 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
         if isinstance(A, ListVectorArray):
             # for a |ListVectorArray| it is slightly faster to compute `B` and `X` separately
             B = A[offset:].inner(A[:offset], product=product)
-            X = A.gramian(product)
+            X = A[offset:].gramian(product)
         else:
             B, X = np.split(A[offset:].inner(A, product=product), [offset], axis=1)
         B = B.conj()
