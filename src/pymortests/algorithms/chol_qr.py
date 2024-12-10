@@ -78,6 +78,38 @@ def test_chol_qr_empty(copy):
     assert len(V) == len(Q) == 0
 
 @pyst.given_vector_arrays()
+def test_shifted_chol_qr_with_offset(vector_array):
+    U = vector_array
+
+    assume(len(U) >= 2 and not contains_zero_vector(U))
+
+    # check if the test VectorArray contains linearly dependent vectors
+    # Q and R are later used for comparison
+    onbgs, Rgs = gram_schmidt(U, copy=True, return_R=True)
+    if len(onbgs) < len(U):
+        warnings.warn('Linearly dependent vectors detected! Skipping ...')
+        return
+    
+    # orthogonalize first half
+    offset = round(len(U) / 2)
+    onb, Ro = shifted_chol_qr(U[:offset], return_R=True, copy=True)
+    assert np.allclose(onb.inner(onb), np.eye(len(onb)))
+
+    # orthogonalize second half
+    onb.append(U[offset:])
+    _, R = shifted_chol_qr(onb, return_R=True, copy=False)
+
+    # insert R of first orthogonalization step into R of second step
+    # overwritten matrix block only contains a unit matrix 
+    R[:offset,:offset] = Ro
+
+    # compare Q and R of shifted Cholesky QR with offset to the gram_schmidt implementation
+    rtol = atol = 1e-13
+    assert np.all(almost_equal(onb, onbgs, rtol=rtol, atol=atol))
+    assert np.allclose(Rgs, R)
+
+
+@pyst.given_vector_arrays()
 @settings(deadline=None)
 def test_recalculated_shifted_chol_qr(vector_array):
     U = vector_array
