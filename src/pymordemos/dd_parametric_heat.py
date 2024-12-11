@@ -35,6 +35,7 @@ def run_mor_method_dd_param(fom, ss, pp, reductor_cls, reductor_short_name, **re
     # Reduction
     rom = reductor_cls([ss * 1j, pp], fom, **reductor_kwargs).reduce()
     err = fom - rom
+    return
 
     n_w = 50
     n_p = 50
