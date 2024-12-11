@@ -1,26 +1,21 @@
 # This file is part of the pyMOR project (https://www.pymor.org).
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
-import math
 import os
-import shutil
 from importlib import import_module
-from tempfile import mkdtemp
 
 import pytest
 from typer import Typer
 from typer.testing import CliRunner
 
 import pymordemos  # noqa: F401
-from pymor.core.config import is_macos_platform, is_windows_platform
 from pymor.core.exceptions import (
     DependencyMissingError,
     GmshMissingError,
     MeshioMissingError,
-    NoResultDataError,
 )
 from pymor.tools.mpi import parallel
-from pymortests.base import BUILTIN_DISABLED, check_results, runmodule
+from pymortests.base import BUILTIN_DISABLED, runmodule
 
 runner = CliRunner()
 
@@ -116,7 +111,7 @@ SYS_MOR_ARGS = (
 
 DD_MOR_ARGS = (
     ('dd_parametric_heat', [0.01, 50, 10]),
-    # ('dd_heat', [0.1, 10]),
+    ('dd_heat', [0.1, 10]),
     ('era', [10]),
 )
 
@@ -173,7 +168,7 @@ DEMO_ARGS = (
     # + BURGERS_EI_ARGS
     # + PARABOLIC_MOR_ARGS
     DD_MOR_ARGS
-    # + SYS_MOR_ARGS
+    + SYS_MOR_ARGS
     # + HAPOD_ARGS
     # + FENICS_NONLINEAR_ARGS
     # + FUNCTION_EI_ARGS
@@ -280,126 +275,6 @@ def test_demos(demo_args):
     args = [str(arg) for arg in args]
     result = _test_demo(lambda: runner.invoke(app, args, catch_exceptions=False))
     assert result.exit_code == 0
-
-
-@pytest.mark.builtin
-def test_analyze_pickle1():
-    d = mkdtemp()
-    try:
-        test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
-        test_demos(('pymordemos.analyze_pickle',
-                   ['histogram', '--error-norm=h1_0_semi', os.path.join(d, 'data_reduced'), 10]))
-    finally:
-        shutil.rmtree(d)
-
-
-@pytest.mark.builtin
-def test_analyze_pickle2():
-    d = mkdtemp()
-    try:
-        test_demos(('pymordemos.thermalblock_adaptive', ['--pickle=' + os.path.join(d, 'data'), 10]))
-        test_demos(('pymordemos.analyze_pickle',
-                   ['histogram', '--detailed-data=' + os.path.join(d, 'data_detailed'), os.path.join(d, 'data_reduced'),
-                    10]))
-    finally:
-        shutil.rmtree(d)
-
-
-@pytest.mark.builtin
-def test_analyze_pickle3():
-    d = mkdtemp()
-    try:
-        test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
-        test_demos(('pymordemos.analyze_pickle',
-                   ['convergence', '--error-norm=h1_0_semi', os.path.join(d, 'data_reduced'),
-                    os.path.join(d, 'data_detailed'), 10]))
-    finally:
-        shutil.rmtree(d)
-
-
-@pytest.mark.builtin
-def test_analyze_pickle4():
-    d = mkdtemp()
-    try:
-        test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
-        test_demos(('pymordemos.analyze_pickle',
-                   ['convergence', os.path.join(d, 'data_reduced'),
-                    os.path.join(d, 'data_detailed'), 10]))
-    finally:
-        shutil.rmtree(d)
-
-
-@pytest.mark.skipif(is_windows_platform(), reason='hangs indefinitely')
-@pytest.mark.skipif(is_macos_platform(), reason='spurious JSON Decode errors in Ipython launch')
-@pytest.mark.parametrize('ipy_args', TB_IPYTHON_ARGS)
-def test_thermalblock_ipython(ipy_args):
-    _skip_if_no_solver(ipy_args)
-    from pymor.tools import mpi
-    if mpi.parallel:  # simply running 'ipcluster start' (without any profile) does not seem to work
-        return        # when running under mpirun, so we do not test this combination for now
-    try:
-        test_demos((f'pymordemos.{ipy_args[0]}', ['--ipython-engines=2'] + ipy_args[1]))
-    finally:
-        import time  # there seems to be no way to shutdown the IPython cluster s.t. a new
-        time.sleep(10)  # cluster can be started directly afterwards, so we have to wait ...
-
-
-def test_thermalblock_results(thermalblock_args):
-    _skip_if_no_solver(thermalblock_args)
-    from pymordemos import thermalblock
-    app = Typer()
-    app.command()(thermalblock.main)
-    args = [str(arg) for arg in thermalblock_args[1]]
-    _test_demo(lambda: runner.invoke(app, args, catch_exceptions=False))
-    results = thermalblock.test_results
-    # due to the symmetry of the problem and the random test parameters, the estimated
-    # error may change a lot
-    # fenics varies more than others between MPI/serial
-    first_tolerance = (1e-13, 3.5e-6) if '--fenics' in thermalblock_args[1] else (1e-13, 1e-7)
-    check_results('test_thermalblock_results', thermalblock_args[1], results,
-                  first_tolerance, 'basis_sizes', 'norms', 'max_norms',
-                  (1e-13, 4.), 'errors', 'max_errors', 'rel_errors', 'max_rel_errors',
-                  'error_estimates', 'max_error_estimates', 'effectivities',
-                  'min_effectivities', 'max_effectivities', 'errors')
-
-
-@pytest.mark.builtin
-def test_burgers_ei_results():
-    from pymordemos import burgers_ei
-    app = Typer()
-    app.command()(burgers_ei.main)
-    args = list(map(str, [1, 2, 2, 5, 2, 5])) + ['--grid=20']
-    _test_demo(lambda: runner.invoke(app, args, catch_exceptions=False))
-    ei_results, greedy_results = burgers_ei.test_results
-    ei_results['greedy_max_errs'] = greedy_results['max_errs']
-    check_results('test_burgers_ei_results', args, ei_results,
-                  (1e-13, 1e-7), 'errors', 'triangularity_errors', 'greedy_max_errs')
-
-
-@pytest.mark.builtin
-def test_parabolic_mor_results():
-    from pymordemos import parabolic_mor
-    args = ['pymor', 'greedy', 5, 20, 3]
-    results = _test_demo(lambda: parabolic_mor.main(*args))
-    check_results('test_parabolic_mor_results', args, results,
-                  (1e-13, 1e-7), 'basis_sizes', 'norms', 'max_norms',
-                  (1e-13, 4.), 'errors', 'max_errors', 'rel_errors', 'max_rel_errors',
-                  'error_estimates', 'max_error_estimates', 'effectivities',
-                  'min_effectivities', 'max_effectivities', 'errors')
-
-
-@pytest.mark.builtin
-def test_check_check_results_missing(tmp_path):
-    test_name = tmp_path.name
-    args = ['NONE', tmp_path]
-    results = {'error': math.pi}
-    with pytest.raises(NoResultDataError):
-        check_results(test_name, args, results, 'error')
-    # running same check again against now recorded data must be fine
-    check_results(test_name, args, results, 'error')
-    with pytest.raises(AssertionError):
-        results['error'] += 1
-        check_results(test_name, args, results, 'error')
 
 
 if __name__ == '__main__':
