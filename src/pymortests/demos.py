@@ -116,7 +116,7 @@ SYS_MOR_ARGS = (
 
 DD_MOR_ARGS = (
     ('dd_parametric_heat', [0.01, 50, 10]),
-    ('dd_heat', [0.1, 10]),
+    # ('dd_heat', [0.1, 10]),
     ('era', [10]),
 )
 
@@ -173,7 +173,7 @@ DEMO_ARGS = (
     # + BURGERS_EI_ARGS
     # + PARABOLIC_MOR_ARGS
     DD_MOR_ARGS
-    + SYS_MOR_ARGS
+    # + SYS_MOR_ARGS
     # + HAPOD_ARGS
     # + FENICS_NONLINEAR_ARGS
     # + FUNCTION_EI_ARGS
