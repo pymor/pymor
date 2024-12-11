@@ -26,6 +26,7 @@ runner = CliRunner()
 
 
 DISCRETIZATION_ARGS = (
+    ('elliptic', [0, 0, 0, 0]),
     ('elliptic', [1, 2, 0, 3]),
     ('elliptic', ['--rect', 1, 2, 0, 3]),
     ('elliptic', [0, 0, 2, 1]),
