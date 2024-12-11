@@ -160,6 +160,7 @@ class PAAAReductor(BasicObject):
         rom
             Reduced |TransferFunction| model.
         """
+        assert False
         svs = self.sampling_values
         samples = self.samples
 
