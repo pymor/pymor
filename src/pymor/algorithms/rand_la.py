@@ -87,7 +87,7 @@ class RandomizedRangeFinder(BasicObject):
             A_adj = AdjointOperator(A, range_product=range_product, source_product=source_product)
 
         self.__auto_init(locals())
-        self.estimate_error = self._buhr_estimator if error_estimator == 'bs18' else self._loo_estimator
+        self.estimate_error = self._bs18_estimator if error_estimator == 'bs18' else self._loo_estimator
         self.Omega = A.range.empty()  # the test vectors for 'bs18' or the drawn samples for 'loo'.
         self.estimator_last_basis_size, self.last_estimated_error = 0, np.inf
         self.Q = [A.range.empty() for _ in range(power_iterations+1)]
@@ -130,7 +130,7 @@ class RandomizedRangeFinder(BasicObject):
         _R[:offset, :offset] = R
         return _R
 
-    def _buhr_estimator(self):
+    def _bs18_estimator(self):
         A, range_product, num_testvecs = self.A, self.range_product, self.num_testvecs
 
         if self.lambda_min is None:
