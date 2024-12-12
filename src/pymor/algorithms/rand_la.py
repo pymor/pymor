@@ -160,6 +160,7 @@ class RandomizedRangeFinder(BasicObject):
         return self.last_estimated_error
 
     def _loo_estimator(self):
+        # the implementation is based on Program SM5 in the supplementary material of ET24.
         if len(self.Q[-1]) > self.estimator_last_basis_size:
             R = np.linalg.multi_dot(self.R[::-1]) if len(self.R) > 1 else self.R[0]
             G = spla.get_lapack_funcs('trtri', dtype=self.R[0].dtype)(R)[0].T
