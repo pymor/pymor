@@ -45,11 +45,14 @@ class SKFemBilinearFormOperator(NumpyMatrixBasedOperator):
                 from scipy.sparse import SparseEfficiencyWarning
                 warnings.filterwarnings('ignore', category=SparseEfficiencyWarning)
 
-                # see https://github.com/scipy/scipy/issues/21791
                 if parse('1.15.0') > parse(config.SCIPY_VERSION) >= parse('1.13.0'):
+                    # see https://github.com/scipy/scipy/issues/21791
                     A = A.tocoo()
                     A.setdiag(A.diagonal())
                     A = A.tocsr()
+                else:
+                    # avoid index errors in enforce
+                    A.setdiag(A.diagonal())
 
                 enforce(A, D=self.dirichlet_dofs, diag=0. if self.dirichlet_clear_diag else 1., overwrite=True)
         return A
