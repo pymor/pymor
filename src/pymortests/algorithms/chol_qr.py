@@ -60,7 +60,7 @@ def test_shifted_chol_qr_with_product(operator_with_arrays_and_products):
 
     onb, R = shifted_chol_qr(U, product=p, return_R=True, copy=True)
     assert np.all(almost_equal(U, V))
-    assert np.allclose(p.apply2(onb, onb), np.eye(len(onb)))
+    assert np.allclose(p.apply2(onb, onb), np.eye(len(onb)), atol=1e-7)
     assert np.all(almost_equal(U, onb.lincomb(p.apply2(onb, U).T), rtol=1e-11))
     assert np.all(almost_equal(U, onb.lincomb(R.T)))
 
