@@ -134,16 +134,15 @@ def solver_options(bicgstab_tol=1e-15,
                                          'btol': least_squares_lsqr_btol,
                                          'conlim': least_squares_lsqr_conlim,
                                          'iter_lim': least_squares_lsqr_iter_lim,
-                                         'show': least_squares_lsqr_show}}
-
-    if config.HAVE_SCIPY_LSMR:
-        opts['scipy_least_squares_lsmr'] = {'type': 'scipy_least_squares_lsmr',
-                                            'damp': least_squares_lsmr_damp,
-                                            'atol': least_squares_lsmr_atol,
-                                            'btol': least_squares_lsmr_btol,
-                                            'conlim': least_squares_lsmr_conlim,
-                                            'maxiter': least_squares_lsmr_maxiter,
-                                            'show': least_squares_lsmr_show}
+                                         'show': least_squares_lsqr_show},
+            'scipy_least_squares_lsmr': {'type': 'scipy_least_squares_lsmr',
+                                         'damp': least_squares_lsmr_damp,
+                                         'atol': least_squares_lsmr_atol,
+                                         'btol': least_squares_lsmr_btol,
+                                         'conlim': least_squares_lsmr_conlim,
+                                         'maxiter': least_squares_lsmr_maxiter,
+                                         'show': least_squares_lsmr_show},
+           }
 
     return opts
 
