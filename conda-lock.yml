@@ -15,9 +15,9 @@
 version: 1
 metadata:
   content_hash:
-    linux-64: 7233582f71e986bf2f753301dcf0c5fff3368919f40e043c02bb1bde431a9db0
-    osx-64: f8084f67edd9f72db5dd7c1282905b97e6f98dc18d3bf8332b7440742f6aa185
-    win-64: 9224cccd9c2a3b0f120a118156fafeb9a21763e7984c32eaae8f299ff41d016a
+    linux-64: 92b8d657125891ceaaa93051af54d24837c0b97ce237a63ecd57182ff367518a
+    osx-64: 3994089a761129e6cc7d20f4a6ec6bc4a7627cf0553f14821c36f7570b744853
+    win-64: 27fbee8cbdc5a81f021309f75e42b570e9cc5b1389182bdab7b5172b6c87f3e5
   channels:
   - url: conda-forge
     used_env_vars: []
@@ -46,11 +46,11 @@ package:
   platform: linux-64
   dependencies:
     _libgcc_mutex: '0.1'
-    libgomp: '>=7.5.0'
-  url: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-2_gnu.tar.bz2
+    llvm-openmp: '>=9.0.1'
+  url: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-2_kmp_llvm.tar.bz2
   hash:
-    md5: 73aaf86a425cc6e73fcf236a5a46396d
-    sha256: fbe2c5e56a653bebb982eda4876a9178aedfc2b545f25d0ce9c4c0b508253d22
+    md5: 562b26ba2e19059551a811e72ab7f793
+    sha256: 84a66275da3a66e3f3e70e9d8f10496d807d01a9e4ec16cd2274cc5e28c478fc
   category: main
   optional: false
 - name: _openmp_mutex
@@ -137,7 +137,7 @@ package:
   hash:
     md5: 54898d0f524c9dee622d44bbb081a8ab
     sha256: 8f032b140ea4159806e4969a68b4a3c0a7cab1ad936eb958a2b5ffe5335e19bf
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: argon2-cffi
   version: 23.1.0
@@ -281,7 +281,7 @@ package:
   hash:
     md5: 8f587de4bcf981e26228f268df374a9b
     sha256: 93b14414b3b3ed91e286e1cbe4e7a60c4e1b1c730b0814d1e452a8ac4b9af593
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: asttokens
   version: 3.0.0
@@ -293,7 +293,7 @@ package:
   hash:
     md5: 8f587de4bcf981e26228f268df374a9b
     sha256: 93b14414b3b3ed91e286e1cbe4e7a60c4e1b1c730b0814d1e452a8ac4b9af593
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: asttokens
   version: 3.0.0
@@ -305,7 +305,7 @@ package:
   hash:
     md5: 8f587de4bcf981e26228f268df374a9b
     sha256: 93b14414b3b3ed91e286e1cbe4e7a60c4e1b1c730b0814d1e452a8ac4b9af593
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: async-lru
   version: 2.0.4
@@ -892,7 +892,7 @@ package:
   hash:
     md5: 9b347a7ec10940d3f7941ff6c460b551
     sha256: 561e6660f26c35d137ee150187d89767c988413c978e1b712d53f27ddf70ea17
-  category: jupyter
+  category: vtk
   optional: true
 - name: cached-property
   version: 1.5.2
@@ -904,7 +904,7 @@ package:
   hash:
     md5: 9b347a7ec10940d3f7941ff6c460b551
     sha256: 561e6660f26c35d137ee150187d89767c988413c978e1b712d53f27ddf70ea17
-  category: jupyter
+  category: vtk
   optional: true
 - name: cached-property
   version: 1.5.2
@@ -916,7 +916,7 @@ package:
   hash:
     md5: 9b347a7ec10940d3f7941ff6c460b551
     sha256: 561e6660f26c35d137ee150187d89767c988413c978e1b712d53f27ddf70ea17
-  category: jupyter
+  category: vtk
   optional: true
 - name: cached_property
   version: 1.5.2
@@ -928,7 +928,7 @@ package:
   hash:
     md5: 576d629e47797577ab0f1b351297ef4a
     sha256: 6dbf7a5070cc43d90a1e4c2ec0c541c69d8e30a0e25f50ce9f6e4a432e42c5d7
-  category: jupyter
+  category: vtk
   optional: true
 - name: cached_property
   version: 1.5.2
@@ -940,7 +940,7 @@ package:
   hash:
     md5: 576d629e47797577ab0f1b351297ef4a
     sha256: 6dbf7a5070cc43d90a1e4c2ec0c541c69d8e30a0e25f50ce9f6e4a432e42c5d7
-  category: jupyter
+  category: vtk
   optional: true
 - name: cached_property
   version: 1.5.2
@@ -952,7 +952,7 @@ package:
   hash:
     md5: 576d629e47797577ab0f1b351297ef4a
     sha256: 6dbf7a5070cc43d90a1e4c2ec0c541c69d8e30a0e25f50ce9f6e4a432e42c5d7
-  category: jupyter
+  category: vtk
   optional: true
 - name: cairo
   version: 1.18.2
@@ -1038,7 +1038,7 @@ package:
   hash:
     md5: 6feb87357ecd66733be3279f16a8c400
     sha256: 048c16a9cbcb1fbad02083414d3bc7c1d0eea4b39aee6aa6bf8d1d5089ca8bad
-  category: jupyter
+  category: vtk
   optional: true
 - name: certifi
   version: 2024.12.14
@@ -1050,7 +1050,7 @@ package:
   hash:
     md5: 6feb87357ecd66733be3279f16a8c400
     sha256: 048c16a9cbcb1fbad02083414d3bc7c1d0eea4b39aee6aa6bf8d1d5089ca8bad
-  category: jupyter
+  category: vtk
   optional: true
 - name: certifi
   version: 2024.12.14
@@ -1062,7 +1062,7 @@ package:
   hash:
     md5: 6feb87357ecd66733be3279f16a8c400
     sha256: 048c16a9cbcb1fbad02083414d3bc7c1d0eea4b39aee6aa6bf8d1d5089ca8bad
-  category: jupyter
+  category: vtk
   optional: true
 - name: cffi
   version: 1.17.1
@@ -1248,7 +1248,7 @@ package:
   hash:
     md5: 962b9857ee8e7018c22f2776ffa0b2d7
     sha256: ab29d57dc70786c1269633ba3dff20288b81664d3ff8d21af995742e2bb03287
-  category: ipyparallel
+  category: tests
   optional: true
 - name: colorama
   version: 0.4.6
@@ -1260,7 +1260,7 @@ package:
   hash:
     md5: 962b9857ee8e7018c22f2776ffa0b2d7
     sha256: ab29d57dc70786c1269633ba3dff20288b81664d3ff8d21af995742e2bb03287
-  category: ipyparallel
+  category: tests
   optional: true
 - name: colorama
   version: 0.4.6
@@ -1285,7 +1285,7 @@ package:
   hash:
     md5: 74673132601ec2b7fc592755605f4c1b
     sha256: 7e87ef7c91574d9fac19faedaaee328a70f718c9b4ddadfdc0ba9ac021bd64af
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: comm
   version: 0.2.2
@@ -1298,7 +1298,7 @@ package:
   hash:
     md5: 74673132601ec2b7fc592755605f4c1b
     sha256: 7e87ef7c91574d9fac19faedaaee328a70f718c9b4ddadfdc0ba9ac021bd64af
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: comm
   version: 0.2.2
@@ -1311,7 +1311,7 @@ package:
   hash:
     md5: 74673132601ec2b7fc592755605f4c1b
     sha256: 7e87ef7c91574d9fac19faedaaee328a70f718c9b4ddadfdc0ba9ac021bd64af
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: contourpy
   version: 1.3.1
@@ -1422,7 +1422,7 @@ package:
   hash:
     md5: 03f9b71509b4a492d7da023bf825ebbd
     sha256: b4e3a1d105d5490742b677f34163f4f72710649a4f91d7615e172c40c2e6fb99
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: cycler
   version: 0.12.1
@@ -1519,7 +1519,7 @@ package:
   hash:
     md5: 55dee3b55868c1dfc5513eff9583612a
     sha256: ba61f86e8d3e214652c8db276383bd993d0846b0ea58dfc64badf1b1bdd484f2
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: debugpy
   version: 1.8.11
@@ -1534,7 +1534,7 @@ package:
   hash:
     md5: ff81dc00fa87d1f9d8587f02845dac7d
     sha256: d0e6fe8059e94bf2a936690c18777ce65d38a735ebf7419cea6cc4d908bb9dd4
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: debugpy
   version: 1.8.11
@@ -1550,7 +1550,7 @@ package:
   hash:
     md5: 9371fe82ad9b8e2385e39a76afa9011f
     sha256: 33cd294b0dc1142798a89afcebb3937d98e3da614bcbe7eb33e505cac61eec60
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: decorator
   version: 5.1.1
@@ -1562,7 +1562,7 @@ package:
   hash:
     md5: d622d8d7ee8868870f9cbe259f381181
     sha256: 84e5120c97502a3785e8c3241c3bf51f64b4d445f13b4d2445db00d9816fe479
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: decorator
   version: 5.1.1
@@ -1574,7 +1574,7 @@ package:
   hash:
     md5: d622d8d7ee8868870f9cbe259f381181
     sha256: 84e5120c97502a3785e8c3241c3bf51f64b4d445f13b4d2445db00d9816fe479
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: decorator
   version: 5.1.1
@@ -1586,7 +1586,7 @@ package:
   hash:
     md5: d622d8d7ee8868870f9cbe259f381181
     sha256: 84e5120c97502a3785e8c3241c3bf51f64b4d445f13b4d2445db00d9816fe479
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: defusedxml
   version: 0.7.1
@@ -1745,7 +1745,7 @@ package:
   hash:
     md5: a16662747cdeb9abbac74d0057cc976e
     sha256: cbde2c64ec317118fc06b223c5fd87c8a680255e7348dd60e7b292d2e103e701
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: exceptiongroup
   version: 1.2.2
@@ -1757,7 +1757,7 @@ package:
   hash:
     md5: a16662747cdeb9abbac74d0057cc976e
     sha256: cbde2c64ec317118fc06b223c5fd87c8a680255e7348dd60e7b292d2e103e701
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: exceptiongroup
   version: 1.2.2
@@ -1769,7 +1769,7 @@ package:
   hash:
     md5: a16662747cdeb9abbac74d0057cc976e
     sha256: cbde2c64ec317118fc06b223c5fd87c8a680255e7348dd60e7b292d2e103e701
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: executing
   version: 2.1.0
@@ -1781,7 +1781,7 @@ package:
   hash:
     md5: ef8b5fca76806159fc25b4f48d8737eb
     sha256: 28d25ea375ebab4bf7479228f8430db20986187b04999136ff5c722ebd32eb60
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: executing
   version: 2.1.0
@@ -1793,7 +1793,7 @@ package:
   hash:
     md5: ef8b5fca76806159fc25b4f48d8737eb
     sha256: 28d25ea375ebab4bf7479228f8430db20986187b04999136ff5c722ebd32eb60
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: executing
   version: 2.1.0
@@ -1805,7 +1805,7 @@ package:
   hash:
     md5: ef8b5fca76806159fc25b4f48d8737eb
     sha256: 28d25ea375ebab4bf7479228f8430db20986187b04999136ff5c722ebd32eb60
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: expat
   version: 2.6.4
@@ -2869,8 +2869,8 @@ package:
   hash:
     md5: 8b189310083baabfb622af68fd9d3ae3
     sha256: 71e750d509f5fa3421087ba88ef9a7b9be11c53174af3aa4d06aff4c18b38e8e
-  category: gui
-  optional: true
+  category: main
+  optional: false
 - name: icu
   version: '75.1'
   manager: conda
@@ -2881,8 +2881,8 @@ package:
   hash:
     md5: d68d48a3060eb5abdc1cdc8e2a3a5966
     sha256: 2e64307532f482a0929412976c8450c719d558ba20c0962832132fd0d07ba7a7
-  category: gui
-  optional: true
+  category: main
+  optional: false
 - name: icu
   version: '75.1'
   manager: conda
@@ -2944,7 +2944,7 @@ package:
   hash:
     md5: 315607a3030ad5d5227e76e0733798ff
     sha256: 13766b88fc5b23581530d3a0287c0c58ad82f60401afefab283bf158d2be55a9
-  category: ipyparallel
+  category: vtk
   optional: true
 - name: importlib-metadata
   version: 8.5.0
@@ -2957,7 +2957,7 @@ package:
   hash:
     md5: 315607a3030ad5d5227e76e0733798ff
     sha256: 13766b88fc5b23581530d3a0287c0c58ad82f60401afefab283bf158d2be55a9
-  category: ipyparallel
+  category: vtk
   optional: true
 - name: importlib-metadata
   version: 8.5.0
@@ -2970,7 +2970,7 @@ package:
   hash:
     md5: 315607a3030ad5d5227e76e0733798ff
     sha256: 13766b88fc5b23581530d3a0287c0c58ad82f60401afefab283bf158d2be55a9
-  category: ipyparallel
+  category: vtk
   optional: true
 - name: importlib-resources
   version: 5.13.0
@@ -3122,6 +3122,17 @@ package:
     sha256: 0ec8f4d02053cd03b0f3e63168316530949484f80e16f5e2fb199a1d117a89ca
   category: tests
   optional: true
+- name: intel-openmp
+  version: 2024.2.1
+  manager: conda
+  platform: win-64
+  dependencies: {}
+  url: https://conda.anaconda.org/conda-forge/win-64/intel-openmp-2024.2.1-h57928b3_1083.conda
+  hash:
+    md5: 2d89243bfb53652c182a7c73182cce4f
+    sha256: 0fd2b0b84c854029041b0ede8f4c2369242ee92acc0092f8407b1fe9238a8209
+  category: main
+  optional: false
 - name: ipykernel
   version: 6.29.5
   manager: conda
@@ -3145,7 +3156,7 @@ package:
   hash:
     md5: b40131ab6a36ac2c09b7c57d4d3fbf99
     sha256: 33cfd339bb4efac56edf93474b37ddc049e08b1b4930cf036c893cc1f5a1f32a
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: ipykernel
   version: 6.29.5
@@ -3171,7 +3182,7 @@ package:
   hash:
     md5: 9eb15d654daa0ef5a98802f586bb4ffc
     sha256: 072534d4d379225b2c3a4e38bc7730b65ae171ac7f0c2d401141043336e97980
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: ipykernel
   version: 6.29.5
@@ -3196,7 +3207,7 @@ package:
   hash:
     md5: 18df5fc4944a679e085e0e8f31775fc8
     sha256: dc569094125127c0078aa536f78733f383dd7e09507277ef8bcd1789786e7086
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: ipympl
   version: 0.9.4
@@ -3346,7 +3357,7 @@ package:
   hash:
     md5: 5d6e5cb3a4b820f61b2073f0ad5431f1
     sha256: 65cdc105e5effea2943d3979cc1592590c923a589009b484d07672faaf047af1
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: ipython
   version: 8.30.0
@@ -3370,7 +3381,7 @@ package:
   hash:
     md5: 5d6e5cb3a4b820f61b2073f0ad5431f1
     sha256: 65cdc105e5effea2943d3979cc1592590c923a589009b484d07672faaf047af1
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: ipython
   version: 8.30.0
@@ -3394,7 +3405,7 @@ package:
   hash:
     md5: 6cdaebbc9e3feb2811eb9f52ed0b89e1
     sha256: 94ee8215bd1f614c9c984437b184e8dbe61a4014eb5813c276e3dcb18aaa7f46
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: ipython_genutils
   version: 0.2.0
@@ -3533,7 +3544,7 @@ package:
   hash:
     md5: a4f4c5dc9b80bc50e0d3dc4e6e8f1bd9
     sha256: 92c4d217e2dc68983f724aa983cca5464dcb929c566627b26a2511159667dba8
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: jedi
   version: 0.19.2
@@ -3546,7 +3557,7 @@ package:
   hash:
     md5: a4f4c5dc9b80bc50e0d3dc4e6e8f1bd9
     sha256: 92c4d217e2dc68983f724aa983cca5464dcb929c566627b26a2511159667dba8
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: jedi
   version: 0.19.2
@@ -3559,7 +3570,7 @@ package:
   hash:
     md5: a4f4c5dc9b80bc50e0d3dc4e6e8f1bd9
     sha256: 92c4d217e2dc68983f724aa983cca5464dcb929c566627b26a2511159667dba8
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: jinja2
   version: 3.1.4
@@ -3925,7 +3936,7 @@ package:
   hash:
     md5: 4ebae00eae9705b0c3d6d1018a81d047
     sha256: 19d8bd5bb2fde910ec59e081eeb59529491995ce0d653a5209366611023a0b3a
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: jupyter_client
   version: 8.6.3
@@ -3943,7 +3954,7 @@ package:
   hash:
     md5: 4ebae00eae9705b0c3d6d1018a81d047
     sha256: 19d8bd5bb2fde910ec59e081eeb59529491995ce0d653a5209366611023a0b3a
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: jupyter_client
   version: 8.6.3
@@ -3961,7 +3972,7 @@ package:
   hash:
     md5: 4ebae00eae9705b0c3d6d1018a81d047
     sha256: 19d8bd5bb2fde910ec59e081eeb59529491995ce0d653a5209366611023a0b3a
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: jupyter_core
   version: 5.7.2
@@ -3976,7 +3987,7 @@ package:
   hash:
     md5: 0a2980dada0dd7fd0998f0342308b1b1
     sha256: 732b1e8536bc22a5a174baa79842d79db2f4956d90293dd82dc1b3f6099bcccd
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: jupyter_core
   version: 5.7.2
@@ -3991,7 +4002,7 @@ package:
   hash:
     md5: 0a2980dada0dd7fd0998f0342308b1b1
     sha256: 732b1e8536bc22a5a174baa79842d79db2f4956d90293dd82dc1b3f6099bcccd
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: jupyter_core
   version: 5.7.2
@@ -4008,7 +4019,7 @@ package:
   hash:
     md5: 46d87d1c0ea5da0aae36f77fa406e20d
     sha256: 7c903b2d62414c3e8da1f78db21f45b98de387aae195f8ca959794113ba4b3fd
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: jupyter_events
   version: 0.10.0
@@ -4512,7 +4523,7 @@ package:
   hash:
     md5: 30186d27e2c9fa62b45fb1476b7200e3
     sha256: 150c05a6e538610ca7c43beb3a40d65c90537497a4f6a5f4d15ec0451b6f5ebb
-  category: gui
+  category: vtk
   optional: true
 - name: kiwisolver
   version: 1.4.7
@@ -4575,7 +4586,7 @@ package:
   hash:
     md5: 3f43953b7d3fb3aaa1d0d0723d91e368
     sha256: 99df692f7a8a5c27cd14b5fb1374ee55e756631b9c3d659ed3ee60830249b238
-  category: gui
+  category: vtk
   optional: true
 - name: krb5
   version: 1.21.3
@@ -4590,7 +4601,7 @@ package:
   hash:
     md5: d4765c524b1d91567886bde656fb514b
     sha256: 83b52685a4ce542772f0892a0f05764ac69d57187975579a0835ff255ae3ef9c
-  category: gui
+  category: vtk
   optional: true
 - name: krb5
   version: 1.21.3
@@ -4605,7 +4616,7 @@ package:
   hash:
     md5: 31aec030344e962fbd7dbbbbd68e60a9
     sha256: 18e8b3430d7d232dad132f574268f56b3eb1a19431d6d5de8c53c29e6c18fa81
-  category: gui
+  category: vtk
   optional: true
 - name: lcms2
   version: '2.16'
@@ -4744,11 +4755,11 @@ package:
   manager: conda
   platform: linux-64
   dependencies:
-    libopenblas: '>=0.3.28,<1.0a0'
-  url: https://conda.anaconda.org/conda-forge/linux-64/libblas-3.9.0-25_linux64_openblas.conda
+    mkl: '>=2024.2.2,<2025.0a0'
+  url: https://conda.anaconda.org/conda-forge/linux-64/libblas-3.9.0-26_linux64_mkl.conda
   hash:
-    md5: 8ea26d42ca88ec5258802715fe1ee10b
-    sha256: d6d12dc437d060f838820e9e61bf73baab651f91935ac594cf10beb9ef1b4450
+    md5: 60463d3ec26e0860bfc7fc1547e005ef
+    sha256: 11cc33993e1865e6caa3e05f117effb3f7cbacc632e5adc572ffd36b4fa47241
   category: main
   optional: false
 - name: libblas
@@ -4756,11 +4767,11 @@ package:
   manager: conda
   platform: osx-64
   dependencies:
-    libopenblas: '>=0.3.28,<1.0a0'
-  url: https://conda.anaconda.org/conda-forge/osx-64/libblas-3.9.0-25_osx64_openblas.conda
+    mkl: '>=2023.2.0,<2024.0a0'
+  url: https://conda.anaconda.org/conda-forge/osx-64/libblas-3.9.0-20_osx64_mkl.conda
   hash:
-    md5: da0a6f87958893e1d2e2bbc7e7a6541f
-    sha256: 1b22b5322a311a775bca637b26317645cf07e35f125cede9278c6c45db6e7105
+    md5: 160fdc97a51d66d51dc782fb67d35205
+    sha256: 808742b95f44dcc7c546e5c3bb7ed378b08aeaef3ee451d31dfe26cdf76d109f
   category: main
   optional: false
 - name: libblas
@@ -4768,11 +4779,11 @@ package:
   manager: conda
   platform: win-64
   dependencies:
-    libopenblas: 0.3.28
-  url: https://conda.anaconda.org/conda-forge/win-64/libblas-3.9.0-25_win64_openblas.conda
+    mkl: 2024.2.2
+  url: https://conda.anaconda.org/conda-forge/win-64/libblas-3.9.0-26_win64_mkl.conda
   hash:
-    md5: 972ba814d59ce8c06a6be4664de45fa1
-    sha256: 2105d8084c67f575143284c351c21235d369767a06d5133555373fa6c10dc3b0
+    md5: ecfe732dbad1be001826fdb7e5e891b5
+    sha256: d631993a5cf5b8d3201f881084fce7ff6a26cd49883e189bf582cd0b7975c80a
   category: main
   optional: false
 - name: libbrotlicommon
@@ -4904,10 +4915,10 @@ package:
   platform: linux-64
   dependencies:
     libblas: 3.9.0
-  url: https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.9.0-25_linux64_openblas.conda
+  url: https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.9.0-26_linux64_mkl.conda
   hash:
-    md5: 5dbd1b0fc0d01ec5e0e1fbe667281a11
-    sha256: ab87b0477078837c91d9cda62a9faca18fba7c57cc77aa779ae24b3ac783b5dd
+    md5: 760c109bfe25518d6f9af51d7af8b9f3
+    sha256: 23866eb509e5896b8fcf647e9cef8f0923d5bb378c0dd14b44b94abe1b24c4d7
   category: main
   optional: false
 - name: libcblas
@@ -4916,10 +4927,10 @@ package:
   platform: osx-64
   dependencies:
     libblas: 3.9.0
-  url: https://conda.anaconda.org/conda-forge/osx-64/libcblas-3.9.0-25_osx64_openblas.conda
+  url: https://conda.anaconda.org/conda-forge/osx-64/libcblas-3.9.0-20_osx64_mkl.conda
   hash:
-    md5: ab304b75ea67f850cf7adf9156e3f62f
-    sha256: b04ae297aa5396df3135514866db72845b111c92524570f923625473f11cfbe2
+    md5: 51089a4865eb4aec2bc5c7468bd07f9f
+    sha256: a35e3c8f0efee2bee8926cbbf23dcb36c9cfe3100690af3b86f933bab26c4eeb
   category: main
   optional: false
 - name: libcblas
@@ -4928,10 +4939,10 @@ package:
   platform: win-64
   dependencies:
     libblas: 3.9.0
-  url: https://conda.anaconda.org/conda-forge/win-64/libcblas-3.9.0-25_win64_openblas.conda
+  url: https://conda.anaconda.org/conda-forge/win-64/libcblas-3.9.0-26_win64_mkl.conda
   hash:
-    md5: ee5350a8985a792cefa39199d3a9872a
-    sha256: c5b4d41c34a28e577511a909cd05b776cc1bac49c1418d57e448f9f586de4c41
+    md5: 652f3adcb9d329050a325416edb14246
+    sha256: 66699c4f84fd36b67a34a7ac59fb86e73ee0c5b3c3502441041c8dd51f0a7d49
   category: main
   optional: false
 - name: libclang-cpp18.1
@@ -5153,7 +5164,7 @@ package:
   hash:
     md5: 4d331e44109e3f0e19b4cb8f9b82f3e1
     sha256: a57d37c236d8f7c886e01656f4949d9dcca131d2a0728609c6f7fa338b65f1cf
-  category: gui
+  category: vtk
   optional: true
 - name: libedit
   version: 3.1.20191231
@@ -5165,7 +5176,7 @@ package:
   hash:
     md5: 6016a8a1d0e63cac3de2c352cd40208b
     sha256: dbd3c3f2eca1d21c52e4c03b21930bbce414c4592f8ce805801575b9e9256095
-  category: gui
+  category: vtk
   optional: true
 - name: libegl
   version: 1.7.0
@@ -5289,8 +5300,8 @@ package:
   hash:
     md5: 9f473a344e18668e99a93f7e21a54b69
     sha256: 0b893b511190332320f4a3e3d6424fbd350271ffbca34eb25b5cd8bc451f1a05
-  category: main
-  optional: false
+  category: slycot
+  optional: true
 - name: libgcc
   version: 14.2.0
   manager: conda
@@ -5473,18 +5484,6 @@ package:
 - name: libgomp
   version: 14.2.0
   manager: conda
-  platform: linux-64
-  dependencies:
-    _libgcc_mutex: '0.1'
-  url: https://conda.anaconda.org/conda-forge/linux-64/libgomp-14.2.0-h77fa898_1.conda
-  hash:
-    md5: cc3573974587f12dda90d96e3e55a702
-    sha256: 1911c29975ec99b6b906904040c855772ccb265a1c79d5d75c8ceec4ed89cd63
-  category: main
-  optional: false
-- name: libgomp
-  version: 14.2.0
-  manager: conda
   platform: win-64
   dependencies:
     libwinpthread: '>=12.0.0.r4.gg4f2fc60ca'
@@ -5492,6 +5491,51 @@ package:
   hash:
     md5: 9e2d4d1214df6f21cba12f6eff4972f9
     sha256: d8739b834608f35775209b032f0c2be752ef187863c7ec847afcebe2f681be4e
+  category: main
+  optional: false
+- name: libhwloc
+  version: 2.11.2
+  manager: conda
+  platform: linux-64
+  dependencies:
+    __glibc: '>=2.17,<3.0.a0'
+    libgcc: '>=13'
+    libstdcxx: '>=13'
+    libxml2: '>=2.13.4,<3.0a0'
+  url: https://conda.anaconda.org/conda-forge/linux-64/libhwloc-2.11.2-default_h0d58e46_1001.conda
+  hash:
+    md5: 804ca9e91bcaea0824a341d55b1684f2
+    sha256: d14c016482e1409ae1c50109a9ff933460a50940d2682e745ab1c172b5282a69
+  category: main
+  optional: false
+- name: libhwloc
+  version: 2.11.2
+  manager: conda
+  platform: osx-64
+  dependencies:
+    __osx: '>=10.13'
+    libcxx: '>=18'
+    libxml2: '>=2.13.4,<3.0a0'
+  url: https://conda.anaconda.org/conda-forge/osx-64/libhwloc-2.11.2-default_h4cdd727_1001.conda
+  hash:
+    md5: 52bbb10ac083c563d00df035c94f9a63
+    sha256: 989917281abf762b7e7a2b5968db2b6b0e89f46e704042ab8ec61a66951e0e0b
+  category: main
+  optional: false
+- name: libhwloc
+  version: 2.11.2
+  manager: conda
+  platform: win-64
+  dependencies:
+    libwinpthread: '>=12.0.0.r4.gg4f2fc60ca'
+    libxml2: '>=2.13.4,<3.0a0'
+    ucrt: '>=10.0.20348.0'
+    vc: '>=14.2,<15'
+    vc14_runtime: '>=14.29.30139'
+  url: https://conda.anaconda.org/conda-forge/win-64/libhwloc-2.11.2-default_ha69328c_1001.conda
+  hash:
+    md5: b87a0ac5ab6495d8225db5dc72dd21cd
+    sha256: 850e255997f538d5fb6ed651321141155a33bb781d43d326fc4ff62114dd2842
   category: main
   optional: false
 - name: libiconv
@@ -5504,8 +5548,8 @@ package:
   hash:
     md5: d66573916ffcf376178462f1b61c941e
     sha256: 8ac2f6a9f186e76539439e50505d98581472fedb347a20e7d1f36429849f05c9
-  category: gui
-  optional: true
+  category: main
+  optional: false
 - name: libiconv
   version: '1.17'
   manager: conda
@@ -5515,8 +5559,8 @@ package:
   hash:
     md5: 6c3628d047e151efba7cf08c5e54d1ca
     sha256: 23d4923baeca359423a7347c2ed7aaf48c68603df0cf8b87cc94a10b0d4e9a23
-  category: gui
-  optional: true
+  category: main
+  optional: false
 - name: libiconv
   version: '1.17'
   manager: conda
@@ -5529,8 +5573,8 @@ package:
   hash:
     md5: e1eb10b1cca179f2baa3601e4efc8712
     sha256: 5f844dd19b046d43174ad80c6ea75b5d504020e3b63cfbc4ace97b8730d35c7b
-  category: gui
-  optional: true
+  category: main
+  optional: false
 - name: libintl
   version: 0.22.5
   manager: conda
@@ -5599,10 +5643,10 @@ package:
   platform: linux-64
   dependencies:
     libblas: 3.9.0
-  url: https://conda.anaconda.org/conda-forge/linux-64/liblapack-3.9.0-25_linux64_openblas.conda
+  url: https://conda.anaconda.org/conda-forge/linux-64/liblapack-3.9.0-26_linux64_mkl.conda
   hash:
-    md5: 4dc03a53fc69371a6158d0ed37214cd3
-    sha256: 9d1ff017714edb2d84868f0f931a4a0e7c289a971062b2ac66cfc8145df7e20e
+    md5: 84112111a50db59ca64153e0054fa73e
+    sha256: 4ab8f00c325e1aacb6edc881b39c7c294adafc9d485cdde82979d1617fcd1e6f
   category: main
   optional: false
 - name: liblapack
@@ -5611,10 +5655,10 @@ package:
   platform: osx-64
   dependencies:
     libblas: 3.9.0
-  url: https://conda.anaconda.org/conda-forge/osx-64/liblapack-3.9.0-25_osx64_openblas.conda
+  url: https://conda.anaconda.org/conda-forge/osx-64/liblapack-3.9.0-20_osx64_mkl.conda
   hash:
-    md5: dda0e24b4605ebbd381e48606a107bed
-    sha256: 2a9a6143d103e7e21511cbf439521645bdd506bfabfcac9d6398dd0562c6905c
+    md5: 58f08e12ad487fac4a08f90ff0b87aec
+    sha256: fdccac604746f9620fefaee313707aa2f500f73e51f8e3a4b690d5d4c90ce3dc
   category: main
   optional: false
 - name: liblapack
@@ -5623,10 +5667,10 @@ package:
   platform: win-64
   dependencies:
     libblas: 3.9.0
-  url: https://conda.anaconda.org/conda-forge/win-64/liblapack-3.9.0-25_win64_openblas.conda
+  url: https://conda.anaconda.org/conda-forge/win-64/liblapack-3.9.0-26_win64_mkl.conda
   hash:
-    md5: 6a036cd00efd51283831536792c56f58
-    sha256: 3dd2e57fb0da4218deabee14caa5886d4bef08eaf3af273b15c77a82a62ddb4b
+    md5: 0a717f5fda7279b77bcce671b324408a
+    sha256: 6701bd162d105531b75d05acf82b4ad9fbc5a24ffbccf8c66efa9e72c386b33c
   category: main
   optional: false
 - name: libllvm18
@@ -5890,51 +5934,6 @@ package:
     sha256: c536513b3b7a74a1a46ee426ff6d5511df521b2218ebaff0ac7badc474cddb9a
   category: gui
   optional: true
-- name: libopenblas
-  version: 0.3.28
-  manager: conda
-  platform: linux-64
-  dependencies:
-    __glibc: '>=2.17,<3.0.a0'
-    libgcc: '>=14'
-    libgfortran: ''
-    libgfortran5: '>=14.2.0'
-  url: https://conda.anaconda.org/conda-forge/linux-64/libopenblas-0.3.28-pthreads_h94d23a6_1.conda
-  hash:
-    md5: 62857b389e42b36b686331bec0922050
-    sha256: 99ba271d8a80a1af2723f2e124ffd91d850074c0389c067e6d96d72a2dbfeabe
-  category: main
-  optional: false
-- name: libopenblas
-  version: 0.3.28
-  manager: conda
-  platform: osx-64
-  dependencies:
-    __osx: '>=10.13'
-    libgfortran: 5.*
-    libgfortran5: '>=13.2.0'
-    llvm-openmp: '>=18.1.8'
-  url: https://conda.anaconda.org/conda-forge/osx-64/libopenblas-0.3.28-openmp_hbf64a52_1.conda
-  hash:
-    md5: cd2c572c02a73b88c4d378eb31110e85
-    sha256: cef5856952688ce9303f85f5bc62c99e8c2256b4c679f63afdfb381f222e90c7
-  category: main
-  optional: false
-- name: libopenblas
-  version: 0.3.28
-  manager: conda
-  platform: win-64
-  dependencies:
-    libflang: '>=5.0.0,<6.0.0.a0'
-    ucrt: '>=10.0.20348.0'
-    vc: '>=14.2,<15'
-    vc14_runtime: '>=14.29.30139'
-  url: https://conda.anaconda.org/conda-forge/win-64/libopenblas-0.3.28-pthreads_hf0a32cb_0.conda
-  hash:
-    md5: 3a27ab073561e48706ba93ffe1552697
-    sha256: 4574b0f99afb72e248df016443ac5ee4b2b59c22fe73c3cf63540ddda28885bd
-  category: main
-  optional: false
 - name: libopengl
   version: 1.7.0
   manager: conda
@@ -6045,7 +6044,7 @@ package:
   hash:
     md5: a587892d3c13b6621a6091be690dbca2
     sha256: 0105bd108f19ea8e6a78d2d994a6d4a8db16d19a41212070d2d1d48a63c34161
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: libsodium
   version: 1.0.20
@@ -6057,7 +6056,7 @@ package:
   hash:
     md5: 6af4b059e26492da6013e79cbcb4d069
     sha256: d3975cfe60e81072666da8c76b993af018cf2e73fe55acba2b5ba0928efaccf5
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: libsodium
   version: 1.0.20
@@ -6071,7 +6070,7 @@ package:
   hash:
     md5: 198bb594f202b205c7d18b936fa4524f
     sha256: 7bcb3edccea30f711b6be9601e083ecf4f435b9407d70fc48fbcf9e5d69a0fc6
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: libsqlite
   version: 3.47.2
@@ -6385,8 +6384,8 @@ package:
   hash:
     md5: 1a21e49e190d1ffe58531a81b6e400e1
     sha256: c3b05bdc40d27a9249f0bb60f3f71718f94104b8bcd200163a6c9d4ade7aa052
-  category: gui
-  optional: true
+  category: main
+  optional: false
 - name: libxml2
   version: 2.13.5
   manager: conda
@@ -6401,8 +6400,8 @@ package:
   hash:
     md5: 23c629eba5239465a34bca0ed9c0b5d3
     sha256: b9332bd8d47a72b7b8fa2ae13c24387ed4f5fd4e1f7ecf0031068c6a755267ae
-  category: gui
-  optional: true
+  category: main
+  optional: false
 - name: libxml2
   version: 2.13.5
   manager: conda
@@ -6417,8 +6416,8 @@ package:
   hash:
     md5: 77eaa84f90fc90643c5a0be0aa9bdd1b
     sha256: 084dd4dde342f13c43ee418d153ac5b2610f95be029073a15fa9dda22b130d06
-  category: gui
-  optional: true
+  category: main
+  optional: false
 - name: libxslt
   version: 1.1.39
   manager: conda
@@ -6430,7 +6429,7 @@ package:
   hash:
     md5: e71f31f8cfb0a91439f2086fc8aa0461
     sha256: 684e9b67ef7b9ca0ca993762eeb39705ec58e2e7f958555c758da7ef416db9f3
-  category: gui
+  category: vtk
   optional: true
 - name: libxslt
   version: 1.1.39
@@ -6442,7 +6441,7 @@ package:
   hash:
     md5: a6e0cec6b3517ffc6b5d36a920fc9312
     sha256: decfc5614a10231a17543b7366616fb2d88c14be6dd9dd5ecde63aa9a5acfb9e
-  category: gui
+  category: vtk
   optional: true
 - name: libxslt
   version: 1.1.39
@@ -6457,7 +6456,7 @@ package:
   hash:
     md5: 279ee338c9b34871d578cb3c7aa68f70
     sha256: 6e3d99466d2076c35e7ac8dcdfe604da3d593f55b74a5b8e96c2b2ff63c247aa
-  category: gui
+  category: vtk
   optional: true
 - name: libzip
   version: 1.11.2
@@ -6555,6 +6554,18 @@ package:
   hash:
     md5: 213b5b5ad34008147a824460e50a691c
     sha256: 090bbeacc3297ff579b53f55ad184f05c30e316fe9d5d7df63df1d2ad4578b79
+  category: slycot
+  optional: true
+- name: llvm-openmp
+  version: 19.1.5
+  manager: conda
+  platform: linux-64
+  dependencies:
+    __glibc: '>=2.17,<3.0.a0'
+  url: https://conda.anaconda.org/conda-forge/linux-64/llvm-openmp-19.1.5-h024ca30_0.conda
+  hash:
+    md5: dc90d15c25a57f641f0b84c271e4761e
+    sha256: e319db1e18dabe23ddeb4a1e04ff1ab5e331069a5a558891ffeb60c8b76d5e6a
   category: main
   optional: false
 - name: llvm-openmp
@@ -6840,7 +6851,7 @@ package:
   hash:
     md5: af6ab708897df59bd6e7283ceab1b56b
     sha256: 69b7dc7131703d3d60da9b0faa6dd8acbf6f6c396224cf6aef3e855b8c0c41c6
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: matplotlib-inline
   version: 0.1.7
@@ -6853,7 +6864,7 @@ package:
   hash:
     md5: af6ab708897df59bd6e7283ceab1b56b
     sha256: 69b7dc7131703d3d60da9b0faa6dd8acbf6f6c396224cf6aef3e855b8c0c41c6
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: matplotlib-inline
   version: 0.1.7
@@ -6866,7 +6877,7 @@ package:
   hash:
     md5: af6ab708897df59bd6e7283ceab1b56b
     sha256: 69b7dc7131703d3d60da9b0faa6dd8acbf6f6c396224cf6aef3e855b8c0c41c6
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: mdurl
   version: 0.1.2
@@ -6991,6 +7002,46 @@ package:
     sha256: 0a9faaf1692b74f321cedbd37a44f108a1ec3f5d9638bc5bbf860cb3b6ff6db4
   category: jupyter
   optional: true
+- name: mkl
+  version: 2024.2.2
+  manager: conda
+  platform: linux-64
+  dependencies:
+    _openmp_mutex: '>=4.5'
+    llvm-openmp: '>=19.1.2'
+    tbb: 2021.*
+  url: https://conda.anaconda.org/conda-forge/linux-64/mkl-2024.2.2-ha957f24_16.conda
+  hash:
+    md5: 1459379c79dda834673426504d52b319
+    sha256: 77906b0acead8f86b489da46f53916e624897338770dbf70b04b8f673c9273c1
+  category: main
+  optional: false
+- name: mkl
+  version: 2023.2.0
+  manager: conda
+  platform: osx-64
+  dependencies:
+    llvm-openmp: '>=16.0.6'
+    tbb: 2021.*
+  url: https://conda.anaconda.org/conda-forge/osx-64/mkl-2023.2.0-h54c2260_50500.conda
+  hash:
+    md5: 0a342ccdc79e4fcd359245ac51941e7b
+    sha256: de76dac5ab3bd22d4a73d50ce9fbe6a80d258c448ee71c5fa748010ca9331c39
+  category: main
+  optional: false
+- name: mkl
+  version: 2024.2.2
+  manager: conda
+  platform: win-64
+  dependencies:
+    intel-openmp: 2024.*
+    tbb: 2021.*
+  url: https://conda.anaconda.org/conda-forge/win-64/mkl-2024.2.2-h66d3029_15.conda
+  hash:
+    md5: 302dff2807f2927b3e9e0d19d60121de
+    sha256: 20e52b0389586d0b914a49cd286c5ccc9c47949bed60ca6df004d1d295f2edbd
+  category: main
+  optional: false
 - name: msgpack-python
   version: 1.1.0
   manager: conda
@@ -7452,7 +7503,7 @@ package:
   hash:
     md5: 598fd7d4d0de2455fb74f56063969a97
     sha256: bb7b21d7fd0445ddc0631f64e66d91a179de4ba920b8381f29b9d006a42788c0
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: nest-asyncio
   version: 1.6.0
@@ -7464,7 +7515,7 @@ package:
   hash:
     md5: 598fd7d4d0de2455fb74f56063969a97
     sha256: bb7b21d7fd0445ddc0631f64e66d91a179de4ba920b8381f29b9d006a42788c0
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: nest-asyncio
   version: 1.6.0
@@ -7476,7 +7527,7 @@ package:
   hash:
     md5: 598fd7d4d0de2455fb74f56063969a97
     sha256: bb7b21d7fd0445ddc0631f64e66d91a179de4ba920b8381f29b9d006a42788c0
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: netcdf4
   version: 1.7.2
@@ -7784,8 +7835,8 @@ package:
   hash:
     md5: 8284c925330fa53668ade00db3c9e787
     sha256: 05c19170938b589f59049679d4e0679c98160fecc6fd1bf721b0f4980bd235dd
-  category: main
-  optional: false
+  category: slycot
+  optional: true
 - name: openssl
   version: 3.4.0
   manager: conda
@@ -7949,7 +8000,7 @@ package:
   hash:
     md5: 5c092057b6badd30f75b06244ecd01c9
     sha256: 17131120c10401a99205fc6fe436e7903c0fa092f1b3e80452927ab377239bcc
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: parso
   version: 0.8.4
@@ -7961,7 +8012,7 @@ package:
   hash:
     md5: 5c092057b6badd30f75b06244ecd01c9
     sha256: 17131120c10401a99205fc6fe436e7903c0fa092f1b3e80452927ab377239bcc
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: parso
   version: 0.8.4
@@ -7973,7 +8024,7 @@ package:
   hash:
     md5: 5c092057b6badd30f75b06244ecd01c9
     sha256: 17131120c10401a99205fc6fe436e7903c0fa092f1b3e80452927ab377239bcc
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pathspec
   version: 0.12.1
@@ -8067,7 +8118,7 @@ package:
   hash:
     md5: d0d408b1f18883a944376da5cf8101ea
     sha256: 202af1de83b585d36445dc1fda94266697341994d1a3328fabde4989e1b3d07a
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pexpect
   version: 4.9.0
@@ -8080,7 +8131,7 @@ package:
   hash:
     md5: d0d408b1f18883a944376da5cf8101ea
     sha256: 202af1de83b585d36445dc1fda94266697341994d1a3328fabde4989e1b3d07a
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pickleshare
   version: 0.7.5
@@ -8092,7 +8143,7 @@ package:
   hash:
     md5: 11a9d1d09a3615fc07c3faf79bc0b943
     sha256: e2ac3d66c367dada209fc6da43e645672364b9fd5f9d28b9f016e24b81af475b
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pickleshare
   version: 0.7.5
@@ -8104,7 +8155,7 @@ package:
   hash:
     md5: 11a9d1d09a3615fc07c3faf79bc0b943
     sha256: e2ac3d66c367dada209fc6da43e645672364b9fd5f9d28b9f016e24b81af475b
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pickleshare
   version: 0.7.5
@@ -8116,7 +8167,7 @@ package:
   hash:
     md5: 11a9d1d09a3615fc07c3faf79bc0b943
     sha256: e2ac3d66c367dada209fc6da43e645672364b9fd5f9d28b9f016e24b81af475b
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pillow
   version: 11.0.0
@@ -8313,7 +8364,7 @@ package:
   hash:
     md5: 577852c7e53901ddccc7e6a9959ddebe
     sha256: bb50f6499e8bc1d1a26f17716c97984671121608dc0c3ecd34858112bce59a27
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: platformdirs
   version: 4.3.6
@@ -8325,7 +8376,7 @@ package:
   hash:
     md5: 577852c7e53901ddccc7e6a9959ddebe
     sha256: bb50f6499e8bc1d1a26f17716c97984671121608dc0c3ecd34858112bce59a27
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: platformdirs
   version: 4.3.6
@@ -8337,7 +8388,7 @@ package:
   hash:
     md5: 577852c7e53901ddccc7e6a9959ddebe
     sha256: bb50f6499e8bc1d1a26f17716c97984671121608dc0c3ecd34858112bce59a27
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pluggy
   version: 1.5.0
@@ -8422,7 +8473,7 @@ package:
   hash:
     md5: 368d4aa48358439e07a97ae237491785
     sha256: 79fb7d1eeb490d4cc1b79f781bb59fe302ae38cf0a30907ecde75a7d399796cc
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: prompt-toolkit
   version: 3.0.48
@@ -8435,7 +8486,7 @@ package:
   hash:
     md5: 368d4aa48358439e07a97ae237491785
     sha256: 79fb7d1eeb490d4cc1b79f781bb59fe302ae38cf0a30907ecde75a7d399796cc
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: prompt-toolkit
   version: 3.0.48
@@ -8448,7 +8499,7 @@ package:
   hash:
     md5: 368d4aa48358439e07a97ae237491785
     sha256: 79fb7d1eeb490d4cc1b79f781bb59fe302ae38cf0a30907ecde75a7d399796cc
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: psutil
   version: 6.1.0
@@ -8463,7 +8514,7 @@ package:
   hash:
     md5: b50a00ebd2fda55306b8a095363ce27f
     sha256: 4afc1ebb9325389df1ff3260fcef8078c8552aba26d0fbefd3aa2b3f04a407b8
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: psutil
   version: 6.1.0
@@ -8477,7 +8528,7 @@ package:
   hash:
     md5: 6b9bcae4917442ec9054a5b6a859452b
     sha256: 68f7069302768c93e0bce8233a00ba13c5c8ca069779a7d8c84ad81cf8d86542
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: psutil
   version: 6.1.0
@@ -8493,7 +8544,7 @@ package:
   hash:
     md5: d13841485f9159f317a4e8bb974e9c8e
     sha256: d58defe84d46da1a7e80283e165d6a9d09378fd830b48917751a318ab5a5d4ce
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pthread-stubs
   version: '0.4'
@@ -8544,7 +8595,7 @@ package:
   hash:
     md5: 7d9daffbb8d8e0af0f769dbbcd173a54
     sha256: a7713dfe30faf17508ec359e0bc7e0983f5d94682492469bd462cdaae9c64d83
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: ptyprocess
   version: 0.7.0
@@ -8556,7 +8607,7 @@ package:
   hash:
     md5: 7d9daffbb8d8e0af0f769dbbcd173a54
     sha256: a7713dfe30faf17508ec359e0bc7e0983f5d94682492469bd462cdaae9c64d83
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pure_eval
   version: 0.2.3
@@ -8568,7 +8619,7 @@ package:
   hash:
     md5: 3bfdfb8dbcdc4af1ae3f9a8eb3948f04
     sha256: 71bd24600d14bb171a6321d523486f6a06f855e75e547fa0cb2a0953b02047f0
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pure_eval
   version: 0.2.3
@@ -8580,7 +8631,7 @@ package:
   hash:
     md5: 3bfdfb8dbcdc4af1ae3f9a8eb3948f04
     sha256: 71bd24600d14bb171a6321d523486f6a06f855e75e547fa0cb2a0953b02047f0
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pure_eval
   version: 0.2.3
@@ -8592,7 +8643,7 @@ package:
   hash:
     md5: 3bfdfb8dbcdc4af1ae3f9a8eb3948f04
     sha256: 71bd24600d14bb171a6321d523486f6a06f855e75e547fa0cb2a0953b02047f0
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pycparser
   version: '2.22'
@@ -9420,7 +9471,7 @@ package:
   hash:
     md5: 7113bd6cfe34e80d8211f7c019d14357
     sha256: 0a68b324ea47ae720c62522c5d0bb5ea3e4987e1c5870d6490c7f954fbe14cbe
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pywinpty
   version: 2.0.14
@@ -9503,7 +9554,7 @@ package:
   hash:
     md5: 8ab50c9c9c3824ac0ffac9e9dcf5619e
     sha256: 0b26fe1cf10d3511b1ef72faedebfe57256e464a51d23e07153f09c6300ec42c
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pyzmq
   version: 26.2.0
@@ -9520,7 +9571,7 @@ package:
   hash:
     md5: 0001baad29089ea50d0644e839cfef14
     sha256: 1a2dc006161415088f824fecb12fcddee97be2a394ae6093ee4d3c9985876893
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: pyzmq
   version: 26.2.0
@@ -9538,7 +9589,7 @@ package:
   hash:
     md5: d0ce06d0a38f8ad0dc9b71e14137deee
     sha256: 971bea2fd92920327f4a44e69393643193b435c37e7528d93c32071e531fc9ba
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: qhull
   version: '2020.2'
@@ -10495,7 +10546,7 @@ package:
   hash:
     md5: b1b505328da7a6b246787df4b5a49fbc
     sha256: 570da295d421661af487f1595045760526964f41471021056e993e73089e9c41
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: stack_data
   version: 0.6.3
@@ -10510,7 +10561,7 @@ package:
   hash:
     md5: b1b505328da7a6b246787df4b5a49fbc
     sha256: 570da295d421661af487f1595045760526964f41471021056e993e73089e9c41
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: stack_data
   version: 0.6.3
@@ -10525,8 +10576,52 @@ package:
   hash:
     md5: b1b505328da7a6b246787df4b5a49fbc
     sha256: 570da295d421661af487f1595045760526964f41471021056e993e73089e9c41
-  category: ipyparallel
+  category: jupyter
   optional: true
+- name: tbb
+  version: 2021.13.0
+  manager: conda
+  platform: linux-64
+  dependencies:
+    __glibc: '>=2.17,<3.0.a0'
+    libgcc: '>=13'
+    libhwloc: '>=2.11.2,<2.11.3.0a0'
+    libstdcxx: '>=13'
+  url: https://conda.anaconda.org/conda-forge/linux-64/tbb-2021.13.0-hceb3a55_1.conda
+  hash:
+    md5: ba7726b8df7b9d34ea80e82b097a4893
+    sha256: 65463732129899770d54b1fbf30e1bb82fdebda9d7553caf08d23db4590cd691
+  category: main
+  optional: false
+- name: tbb
+  version: 2021.13.0
+  manager: conda
+  platform: osx-64
+  dependencies:
+    __osx: '>=10.13'
+    libcxx: '>=18'
+    libhwloc: '>=2.11.2,<2.11.3.0a0'
+  url: https://conda.anaconda.org/conda-forge/osx-64/tbb-2021.13.0-hb890de9_1.conda
+  hash:
+    md5: 284892942cdddfded53d090050b639a5
+    sha256: 54dacd0ed9f980674659dd84cecc10fb1c88b6a53c59e99d0b65f19c3e104c85
+  category: main
+  optional: false
+- name: tbb
+  version: 2021.13.0
+  manager: conda
+  platform: win-64
+  dependencies:
+    libhwloc: '>=2.11.2,<2.11.3.0a0'
+    ucrt: '>=10.0.20348.0'
+    vc: '>=14.2,<15'
+    vc14_runtime: '>=14.29.30139'
+  url: https://conda.anaconda.org/conda-forge/win-64/tbb-2021.13.0-h62715c5_1.conda
+  hash:
+    md5: 9190dd0a23d925f7602f9628b3aed511
+    sha256: 03cc5442046485b03dd1120d0f49d35a7e522930a2ab82f275e938e17b07b302
+  category: main
+  optional: false
 - name: terminado
   version: 0.18.1
   manager: conda
@@ -10735,7 +10830,7 @@ package:
   hash:
     md5: 5f5cbdd527d2e74e270d8b6255ba714f
     sha256: fddab13f9a6046518d20ce0c264299c670cc6ad3eb23a8aba209d2cd7d3b5b44
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: tornado
   version: 6.4.2
@@ -10749,7 +10844,7 @@ package:
   hash:
     md5: 74a3a14f82dc65fa19f4fd4e2eb8da93
     sha256: 209dbf187e031dd3c565ff2da0f17847e84e8edb7648efecac28e61744345a41
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: tornado
   version: 6.4.2
@@ -10765,7 +10860,7 @@ package:
   hash:
     md5: 3d63fe6a4757924a085ab10196049854
     sha256: 062e8b77b825463fc59f373d4033fae7cf65a4170e761814bcbf25cd0627bd1d
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: tqdm
   version: 4.67.1
@@ -10816,7 +10911,7 @@ package:
   hash:
     md5: 019a7385be9af33791c989871317e1ed
     sha256: f39a5620c6e8e9e98357507262a7869de2ae8cc07da8b7f84e517c9fd6c2b959
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: traitlets
   version: 5.14.3
@@ -10828,7 +10923,7 @@ package:
   hash:
     md5: 019a7385be9af33791c989871317e1ed
     sha256: f39a5620c6e8e9e98357507262a7869de2ae8cc07da8b7f84e517c9fd6c2b959
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: traitlets
   version: 5.14.3
@@ -10840,7 +10935,7 @@ package:
   hash:
     md5: 019a7385be9af33791c989871317e1ed
     sha256: f39a5620c6e8e9e98357507262a7869de2ae8cc07da8b7f84e517c9fd6c2b959
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: traittypes
   version: 0.2.1
@@ -11338,7 +11433,7 @@ package:
   hash:
     md5: b68980f2495d096e71c7fd9d7ccf63e6
     sha256: f21e63e8f7346f9074fd00ca3b079bd3d2fa4d71f1f89d5b6934bf31446dc2a5
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: wcwidth
   version: 0.2.13
@@ -11350,7 +11445,7 @@ package:
   hash:
     md5: b68980f2495d096e71c7fd9d7ccf63e6
     sha256: f21e63e8f7346f9074fd00ca3b079bd3d2fa4d71f1f89d5b6934bf31446dc2a5
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: wcwidth
   version: 0.2.13
@@ -11362,7 +11457,7 @@ package:
   hash:
     md5: b68980f2495d096e71c7fd9d7ccf63e6
     sha256: f21e63e8f7346f9074fd00ca3b079bd3d2fa4d71f1f89d5b6934bf31446dc2a5
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: webcolors
   version: 24.11.1
@@ -11986,7 +12081,7 @@ package:
   hash:
     md5: 3947a35e916fcc6b9825449affbf4214
     sha256: a4dc72c96848f764bb5a5176aa93dd1e9b9e52804137b99daeebba277b31ea10
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: zeromq
   version: 4.3.5
@@ -12001,7 +12096,7 @@ package:
   hash:
     md5: 6a0a76cd2b3d575e1b7aaeb283b9c3ed
     sha256: b932dce8c9de9a8ffbf0db0365d29677636e599f7763ca51e554c43a0c5f8389
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: zeromq
   version: 4.3.5
@@ -12017,7 +12112,7 @@ package:
   hash:
     md5: e03f2c245a5ee6055752465519363b1c
     sha256: 15cc8e2162d0a33ffeb3f7b7c7883fd830c54a4b1be6a4b8c7ee1f4fef0088fb
-  category: ipyparallel
+  category: jupyter
   optional: true
 - name: zipp
   version: 3.21.0
@@ -12029,7 +12124,7 @@ package:
   hash:
     md5: 0c3cc595284c5e8f0f9900a9b228a332
     sha256: 567c04f124525c97a096b65769834b7acb047db24b15a56888a322bf3966c3e1
-  category: ipyparallel
+  category: vtk
   optional: true
 - name: zipp
   version: 3.21.0
@@ -12041,7 +12136,7 @@ package:
   hash:
     md5: 0c3cc595284c5e8f0f9900a9b228a332
     sha256: 567c04f124525c97a096b65769834b7acb047db24b15a56888a322bf3966c3e1
-  category: ipyparallel
+  category: vtk
   optional: true
 - name: zipp
   version: 3.21.0
@@ -12053,7 +12148,7 @@ package:
   hash:
     md5: 0c3cc595284c5e8f0f9900a9b228a332
     sha256: 567c04f124525c97a096b65769834b7acb047db24b15a56888a322bf3966c3e1
-  category: ipyparallel
+  category: vtk
   optional: true
 - name: zlib
   version: 1.3.1

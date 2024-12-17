@@ -2,7 +2,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.13
-  - libblas=*=*openblas
+  - libblas=*=*mkl
 platforms:
   - linux-64
   - osx-64
