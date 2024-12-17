@@ -87,9 +87,46 @@ def is_macos_platform():
     return 'Darwin' in platform.system()
 
 
+def get_blas_lapack(package):
+    assert package in ('numpy', 'scipy')
+    try:
+        if package == 'numpy':
+            from numpy.__config__ import CONFIG
+        else:
+            from scipy.__config__ import CONFIG
+        blas = CONFIG['Build Dependencies']['blas']['name']
+        lapack = CONFIG['Build Dependencies']['lapack']['name']
+        return blas, lapack
+    except Exception:
+        from warnings import warn
+        warn(f'Could not determine {package} lapack')
+        return None, None
+
+
+def scipy_lapack_is_mkl():
+    lapack_name = get_blas_lapack('scipy')[1]
+    return lapack_name is not None and 'mlk' in lapack_name
+
+
+def _get_numpy_version():
+    version = import_module('numpy').__version__
+    blas, lapack = get_blas_lapack('numpy')
+    info = f'blas: {blas or "UNKNOWN"}, lapack: {lapack or "UNKNOWN"}'
+    return version, info
+
+
+def _get_scipy_version():
+    version = import_module('scipy').__version__
+    blas, lapack = get_blas_lapack('scipy')
+    info = f'blas: {blas or "UNKNOWN"}, lapack: {lapack or "UNKNOWN"}'
+    return version, info
+
+
 def _get_matplotlib_version():
     import matplotlib as mpl
-    return mpl.__version__
+    version = mpl.__version__
+    info = mpl.get_backend()
+    return version, info
 
 
 def _get_slycot_version():
@@ -143,12 +180,12 @@ _PACKAGES = {
     'MESHIO': lambda: import_module('meshio').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NGSOLVE': lambda: import_module('ngsolve').__version__,
-    'NUMPY': lambda: import_module('numpy').__version__,
+    'NUMPY': _get_numpy_version,
     'PYTEST': lambda: import_module('pytest').__version__,
     'QT': _get_qt_version,
     'QTOPENGL': lambda: bool(_get_qt_version() and import_module('qtpy.QtOpenGL')),
     'SCIKIT_FEM': lambda: import_module('skfem').__version__,
-    'SCIPY': lambda: import_module('scipy').__version__,
+    'SCIPY': _get_scipy_version,
     'SLYCOT': lambda: _get_slycot_version(),
     'SPHINX': lambda: import_module('sphinx').__version__,
     'TORCH': lambda: import_module('torch').__version__,
@@ -192,29 +229,38 @@ class Config:
                 status = 'disabled'
             else:
                 try:
-                    version = _PACKAGES[package]()
+                    result = _PACKAGES[package]()
+                    if isinstance(result, tuple):
+                        assert len(result) == 2
+                        version, info = result
+                    else:
+                        version, info = result, None
                     if not version:
                         raise ImportError
                     status = 'present'
                 except ImportError:
                     version = None
+                    info = None
                     status = 'missing'
                 except Exception:
                     version = None
+                    info = None
                     status = 'import check failed'
 
             setattr(self, 'HAVE_' + package, version is not None)
             setattr(self, package + '_VERSION', version)
+            setattr(self, package + '_INFO', info)
             setattr(self, package + '_STATUS', status)
         else:
             raise AttributeError
 
         return getattr(self, name)
 
-    def __dir__(self, old=False):
+    def __dir__(self):
         keys = set(super().__dir__())
         keys.update('HAVE_' + package for package in _PACKAGES)
         keys.update(package + '_VERSION' for package in _PACKAGES)
+        keys.update(package + '_INFO' for package in _PACKAGES)
         return list(keys)
 
     def __repr__(self):
@@ -222,9 +268,14 @@ class Config:
         def get_status(p):
             version = getattr(self, p + '_VERSION')
             if not version or version is True:
-                return getattr(self, p + '_STATUS')
+                result = getattr(self, p + '_STATUS')
             else:
-                return version
+                result = version
+            info = getattr(self, p + '_INFO')
+            if info:
+                return f'{result} ({info})'
+            else:
+                return result
 
         status = {p: get_status(p) for p in _PACKAGES}
         key_width = max(len(p) for p in _PACKAGES) + 2
