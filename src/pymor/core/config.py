@@ -87,39 +87,29 @@ def is_macos_platform():
     return 'Darwin' in platform.system()
 
 
-def get_blas_lapack(package):
-    assert package in ('numpy', 'scipy')
-    try:
-        if package == 'numpy':
-            from numpy.__config__ import CONFIG
+def is_scipy_mkl():
+    return 'mkl' in config.SCIPY_INFO
+
+
+def _get_threadpool_internal_api(module):
+    from subprocess import run
+    result = run(
+        [sys.executable, '-c', f'from threadpoolctl import threadpool_info as tpi; import {module};\n'
+                                'for d in tpi(): print(d["internal_api"])'],
+        capture_output=True
+    )
+    return {x for x in result.stdout.decode().split('\n') if x}
+
+
+def _get_version(module, threadpoolctl_internal_api=False):
+    def impl():
+        version = import_module(module).__version__
+        if threadpoolctl_internal_api:
+            info = ', '.join(_get_threadpool_internal_api(module))
+            return version, info
         else:
-            from scipy.__config__ import CONFIG
-        blas = CONFIG['Build Dependencies']['blas']['name']
-        lapack = CONFIG['Build Dependencies']['lapack']['name']
-        return blas, lapack
-    except Exception:
-        from warnings import warn
-        warn(f'Could not determine {package} lapack')
-        return None, None
-
-
-def scipy_lapack_is_mkl():
-    lapack_name = get_blas_lapack('scipy')[1]
-    return lapack_name is not None and 'mlk' in lapack_name
-
-
-def _get_numpy_version():
-    version = import_module('numpy').__version__
-    blas, lapack = get_blas_lapack('numpy')
-    info = f'blas: {blas or "UNKNOWN"}, lapack: {lapack or "UNKNOWN"}'
-    return version, info
-
-
-def _get_scipy_version():
-    version = import_module('scipy').__version__
-    blas, lapack = get_blas_lapack('scipy')
-    info = f'blas: {blas or "UNKNOWN"}, lapack: {lapack or "UNKNOWN"}'
-    return version, info
+            return version
+    return impl
 
 
 def _get_matplotlib_version():
@@ -136,7 +126,8 @@ def _get_slycot_version():
         warnings.warn('Slycot support disabled (version 0.3.1 or higher required).')
         return False
     else:
-        return version
+        info = ', '.join(_get_threadpool_internal_api('slycot'))
+        return version, info
 
 
 def _get_qt_version():
@@ -168,28 +159,29 @@ def is_jupyter():
 
 
 _PACKAGES = {
-    'DEALII': lambda: import_module('pymor_dealii').__version__,
+    'DEALII': _get_version('pymor_dealii'),
     'DUNEGDT': _get_dunegdt_version,
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
-    'IPYPARALLEL': lambda: import_module('ipyparallel').__version__,
-    'IPYTHON': lambda: import_module('IPython').__version__,
-    'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
-    'K3D': lambda: import_module('k3d').__version__,
+    'IPYPARALLEL': _get_version('ipyparallel'),
+    'IPYTHON': _get_version('IPython'),
+    'IPYWIDGETS': _get_version('ipywidgets'),
+    'K3D': _get_version('k3d'),
     'MATPLOTLIB': _get_matplotlib_version,
-    'MESHIO': lambda: import_module('meshio').__version__,
+    'MESHIO': _get_version('meshio'),
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
-    'NGSOLVE': lambda: import_module('ngsolve').__version__,
-    'NUMPY': _get_numpy_version,
-    'PYTEST': lambda: import_module('pytest').__version__,
+    'NGSOLVE': _get_version('ngsolve', True),
+    'NUMPY': _get_version('numpy', True),
+    'PYTEST': _get_version('pytest'),
     'QT': _get_qt_version,
     'QTOPENGL': lambda: bool(_get_qt_version() and import_module('qtpy.QtOpenGL')),
-    'SCIKIT_FEM': lambda: import_module('skfem').__version__,
-    'SCIPY': _get_scipy_version,
-    'SLYCOT': lambda: _get_slycot_version(),
-    'SPHINX': lambda: import_module('sphinx').__version__,
-    'TORCH': lambda: import_module('torch').__version__,
-    'TYPER': lambda: import_module('typer').__version__,
+    'SCIKIT_FEM': _get_version('skfem'),
+    'SCIPY': _get_version('scipy', True),
+    'SLYCOT': _get_slycot_version,
+    'SPHINX': _get_version('sphinx'),
+    'TORCH': _get_version('torch', True),
+    'THREADPOOLCTL': _get_version('threadpoolctl'),
+    'TYPER': _get_version('typer'),
     'VTKIO': lambda: _can_import(('meshio', 'pyevtk', 'lxml', 'xmljson')),
 }
 
