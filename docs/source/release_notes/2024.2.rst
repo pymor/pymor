@@ -1,4 +1,4 @@
-pyMOR 2024.2 (December 13, 2024)
+pyMOR 2024.2 (December 20, 2024)
 --------------------------------
 
 We are proud to announce the release of pyMOR 2024.2!
@@ -20,25 +20,42 @@ Main new features
 
 Randomized leave-one-out error estimator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-Recalculated shifted Cholesky QR
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+In `[#2370] <https://github.com/pymor/pymor/pull/2370>`_, a leave-one-out error estimator
+for the :class:`~pymor.algorithms.rand_la.RandomizedRangeFinder` was implemented.
+The leave-one-out error estimator can be activated by setting `error_estimator='loo'`
+and estimates the Frobenius norm of the approximation error. Note that while it can be
+faster and more accurate in practice, this option does only support Euclidian inner
+products and there are no results on its failure probability so far.
 
 Recalculated shifted Cholesky QR algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+We implemented a version of the Shifted Cholesky QR algorithm in
+`[#2304] <https://github.com/pymor/pymor/pull/2304>`_, in which the shift is
+recalculated in every iteration. The algorithms works reliable even for highly
+ill-conditioned matrices.
+
+New approach to time-dependent parameter values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The concept for time-dependent parameter values was improved and made clearer in
+`[#2385] <https://github.com/pymor/pymor/pull/2385>`_. There is now a strict distinction
+between constant values and time-dependent values. In particular, code that is not aware
+of time-dependent parameter values should not fail silently anymore if such values are
+provided.
 
 
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Drop Python 3.8 support
-~~~~~~~~~~~~~~~~~~~~~~~
+Dropped Python 3.8 support
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+We officially dropped support for Python version 3.8 in
+`[#2358] <https://github.com/pymor/pymor/pull/2358>`_. The latest tested version is
+now Python 3.9.
 
-
-Remove space ids
-~~~~~~~~~~~~~~~~
+Removed ids for vector spaces
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Identifiers for |VectorSpaces| were removed completely in
+`[#2357] <https://github.com/pymor/pymor/pull/2357>`_ and are not supported anymore.
 
 
 Further notable improvements
