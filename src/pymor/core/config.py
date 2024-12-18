@@ -114,9 +114,7 @@ def _get_version(module, threadpoolctl_internal_api=False):
 
 def _get_matplotlib_version():
     import matplotlib as mpl
-    version = mpl.__version__
-    info = mpl.get_backend()
-    return version, info
+    return mpl.__version__
 
 
 def _get_slycot_version():
