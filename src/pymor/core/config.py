@@ -98,7 +98,7 @@ def _get_threadpool_internal_api(module):
                                 'for d in tpi(): print(d["internal_api"])'],
         capture_output=True
     )
-    return {x for x in result.stdout.decode().split('\n') if x}
+    return {x.strip() for x in result.stdout.decode().split('\n') if x.strip()}
 
 
 def _get_version(module, threadpoolctl_internal_api=False):
@@ -218,6 +218,7 @@ class Config:
         if package in _PACKAGES:
             if package in self.disabled:
                 version = None
+                info = None
                 status = 'disabled'
             else:
                 try:
