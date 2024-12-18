@@ -13,13 +13,25 @@ from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.lyapunov import _chol, _solve_lyap_dense_check_args, _solve_lyap_lrcf_check_args
 from pymor.algorithms.riccati import _solve_ricc_check_args, _solve_ricc_dense_check_args
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.core.config import config
+from pymor.core.config import config, is_scipy_mkl, is_windows_platform
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.operators.numpy import NumpyMatrixOperator
 
 SCIPY_1_14_OR_NEWER = parse(config.SCIPY_VERSION) >= parse('1.14')
 sparray = sps.sparray if parse(config.SCIPY_VERSION) >= parse('1.11') else sps._arrays._sparray
+
+
+@defaults('driver')
+def svd_lapack_driver(driver='gesvd_unless_win_mkl'):
+    assert driver in {'gesvd', 'gesdd', 'gesvd_unless_win_mkl'}
+    if driver == 'gesvd_unless_win_mkl':
+        if is_windows_platform() and is_scipy_mkl():
+            return 'gesdd'
+        else:
+            return 'gesvd'
+    return driver
+
 
 @defaults('bicgstab_tol', 'bicgstab_maxiter', 'spilu_drop_tol',
           'spilu_fill_factor', 'spilu_drop_rule', 'spilu_permc_spec', 'spsolve_permc_spec',

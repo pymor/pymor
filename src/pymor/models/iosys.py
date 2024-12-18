@@ -21,7 +21,7 @@ from pymor.algorithms.simplify import contract, expand
 from pymor.algorithms.timestepping import DiscreteTimeStepper, TimeStepper
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.analyticalproblems.functions import Function
-from pymor.bindings.scipy import sparray
+from pymor.bindings.scipy import sparray, svd_lapack_driver
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -1137,7 +1137,7 @@ class LTIModel(Model):
             of = self.gramian(('br_o_lrcf', gamma), mu=mu)
         else:
             raise ValueError(f'Unknown typ ({typ}).')
-        U, hsv, Vh = spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver='gesvd')
+        U, hsv, Vh = spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver=svd_lapack_driver())
         return hsv, U.T, Vh
 
     def hsv(self, mu=None):

@@ -401,6 +401,7 @@ def _chol(A):
     assert A.ndim == 2
     assert A.shape[0] == A.shape[1]
 
-    U, s, _ = spla.svd(A, lapack_driver='gesvd')
+    from pymor.bindings.scipy import svd_lapack_driver
+    U, s, _ = spla.svd(A, lapack_driver=svd_lapack_driver())
     L = U * np.sqrt(s)
     return L
