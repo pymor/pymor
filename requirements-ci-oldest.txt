@@ -3,9 +3,9 @@
 --index-url https://pypi.org/simple
 --extra-index-url https://download.pytorch.org/whl/cpu
 
-alabaster==0.7.13
+alabaster==0.7.16
     # via sphinx
-anyio==4.4.0
+anyio==4.7.0
     # via
     #   httpx
     #   jupyter-server
@@ -15,7 +15,7 @@ argon2-cffi-bindings==21.2.0
     # via argon2-cffi
 arrow==1.3.0
     # via isoduration
-asttokens==2.4.1
+asttokens==3.0.0
     # via stack-data
 async-lru==2.0.4
     # via jupyterlab
@@ -30,20 +30,18 @@ babel==2.16.0
     # via
     #   jupyterlab-server
     #   sphinx
-backcall==0.2.0
-    # via ipython
 beautifulsoup4==4.12.3
     # via nbconvert
-bleach==6.1.0
+bleach==6.2.0
     # via nbconvert
-certifi==2024.8.30
+certifi==2024.12.14
     # via
     #   httpcore
     #   httpx
     #   requests
-cffi==1.17.0
+cffi==1.17.1
     # via argon2-cffi-bindings
-charset-normalizer==3.3.2
+charset-normalizer==3.4.0
     # via requests
 click==8.1.7
     # via
@@ -55,13 +53,13 @@ comm==0.2.2
     # via
     #   ipykernel
     #   ipywidgets
-contourpy==1.1.1
+contourpy==1.2.1
     # via matplotlib
-coverage==7.6.1
+coverage==7.6.9
     # via pytest-cov
 cycler==0.12.1
     # via matplotlib
-debugpy==1.8.5
+debugpy==1.8.11
     # via ipykernel
 decorator==5.1.1
     # via
@@ -71,7 +69,7 @@ defusedxml==0.7.1
     # via nbconvert
 diskcache==5.6.3
     # via pymor (./pyproject.toml)
-docutils==0.19
+docutils==0.21.2
     # via
     #   myst-parser
     #   sphinx
@@ -81,18 +79,17 @@ dune-xt==2022.5.3
     # via
     #   pymor (./pyproject.toml)
     #   dune-gdt
-entrypoints==0.4
-    # via ipyparallel
 exceptiongroup==1.2.2
     # via
     #   anyio
     #   hypothesis
+    #   ipython
     #   pytest
 executing==2.1.0
     # via stack-data
-fastjsonschema==2.20.0
+fastjsonschema==2.21.1
     # via nbformat
-fonttools==4.53.1
+fonttools==4.55.3
     # via matplotlib
 fqdn==1.5.1
     # via jsonschema
@@ -102,17 +99,17 @@ gitpython==3.1.43
     # via nbdime
 gmsh==4.13.1
     # via pymor (./pyproject.toml)
-greenlet==3.0.3
+greenlet==3.1.1
     # via sqlalchemy
 h11==0.14.0
     # via httpcore
-httpcore==1.0.5
+httpcore==1.0.7
     # via httpx
-httpx==0.27.2
+httpx==0.28.1
     # via jupyterlab
 hypothesis==6.56.3
     # via pymor (./pyproject.toml)
-idna==3.8
+idna==3.10
     # via
     #   anyio
     #   httpx
@@ -122,6 +119,7 @@ imagesize==1.4.1
     # via sphinx
 importlib-metadata==6.11.0
     # via
+    #   ipyparallel
     #   jupyter-cache
     #   jupyter-client
     #   jupyter-lsp
@@ -133,20 +131,20 @@ importlib-metadata==6.11.0
     #   sphinx
 iniconfig==2.0.0
     # via pytest
-intel-cmplr-lib-ur==2024.2.1
+intel-cmplr-lib-ur==2025.0.4
     # via intel-openmp
-intel-openmp==2024.2.1
+intel-openmp==2025.0.4
     # via mkl
 ipykernel==6.29.5
     # via
     #   ipyparallel
     #   jupyterlab
     #   myst-nb
-ipympl==0.9.3
+ipympl==0.9.5
     # via pymor (./pyproject.toml)
-ipyparallel==8.8.0
+ipyparallel==9.0.0
     # via pymor (./pyproject.toml)
-ipython==8.12.3
+ipython==8.18.1
     # via
     #   dune-xt
     #   ipykernel
@@ -154,8 +152,6 @@ ipython==8.12.3
     #   ipyparallel
     #   ipywidgets
     #   myst-nb
-ipython-genutils==0.2.0
-    # via ipympl
 ipywidgets==8.1.5
     # via
     #   pymor (./pyproject.toml)
@@ -164,7 +160,7 @@ ipywidgets==8.1.5
     #   k3d
 isoduration==20.11.0
     # via jsonschema
-jedi==0.19.1
+jedi==0.19.2
     # via ipython
 jinja2==3.1.4
     # via
@@ -175,7 +171,7 @@ jinja2==3.1.4
     #   nbconvert
     #   nbdime
     #   sphinx
-json5==0.9.25
+json5==0.10.0
     # via jupyterlab-server
 jsonpointer==3.0.0
     # via jsonschema
@@ -185,11 +181,11 @@ jsonschema==4.23.0
     #   jupyterlab-server
     #   nbformat
     #   pytest-notebook
-jsonschema-specifications==2023.12.1
+jsonschema-specifications==2024.10.1
     # via jsonschema
-jupyter-cache==0.6.1
+jupyter-cache==1.0.1
     # via myst-nb
-jupyter-client==8.6.2
+jupyter-client==8.6.3
     # via
     #   ipykernel
     #   ipyparallel
@@ -203,7 +199,7 @@ jupyter-core==5.7.2
     #   jupyterlab
     #   nbconvert
     #   nbformat
-jupyter-events==0.10.0
+jupyter-events==0.11.0
     # via jupyter-server
 jupyter-lsp==2.2.5
     # via jupyterlab
@@ -221,7 +217,7 @@ jupyter-server-mathjax==0.2.6
     # via nbdime
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.2.5
+jupyterlab==4.3.4
     # via
     #   pymor (./pyproject.toml)
     #   notebook
@@ -240,18 +236,18 @@ k3d==2.15.2
     #   -r ./requirements-ci-oldest-pins.in
     #   pymor (./pyproject.toml)
     #   dune-xt
-kiwisolver==1.4.5
+kiwisolver==1.4.7
     # via matplotlib
 lxml==5.3.0
     # via
     #   pymor (./pyproject.toml)
     #   dune-xt
-markdown-it-py==2.2.0
+markdown-it-py==3.0.0
     # via
     #   mdit-py-plugins
     #   myst-parser
     #   rich
-markupsafe==2.1.5
+markupsafe==3.0.2
     # via
     #   jinja2
     #   nbconvert
@@ -266,7 +262,7 @@ matplotlib-inline==0.1.7
     # via
     #   ipykernel
     #   ipython
-mdit-py-plugins==0.3.5
+mdit-py-plugins==0.4.2
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
@@ -274,15 +270,15 @@ meshio==5.3.5
     # via pymor (./pyproject.toml)
 mistune==3.0.2
     # via nbconvert
-mkl==2024.2.1
+mkl==2025.0.1
     # via ngsolve
-mpi4py==4.0.0
+mpi4py==4.0.1
     # via pymor (./pyproject.toml)
-msgpack==1.0.8
+msgpack==1.1.0
     # via k3d
-myst-nb==0.17.2
+myst-nb==1.1.2
     # via -r ./requirements-ci-oldest-pins.in
-myst-parser==0.18.1
+myst-parser==3.0.1
     # via myst-nb
 nbclient==0.5.13
     # via
@@ -292,7 +288,7 @@ nbclient==0.5.13
     #   pytest-notebook
 nbconvert==7.16.4
     # via jupyter-server
-nbdime==4.0.1
+nbdime==4.0.2
     # via pytest-notebook
 nbformat==5.10.4
     # via
@@ -307,13 +303,13 @@ nest-asyncio==1.6.0
     # via
     #   ipykernel
     #   nbclient
-netgen-mesher==6.2.2404.post16
+netgen-mesher==6.2.2406
     # via ngsolve
 netgen-occt==7.8.1
     # via netgen-mesher
-ngsolve==6.2.2404.post51
+ngsolve==6.2.2406
     # via pymor (./pyproject.toml)
-notebook==7.2.2
+notebook==7.3.1
     # via pymor (./pyproject.toml)
 notebook-shim==0.2.4
     # via
@@ -336,7 +332,7 @@ numpy==1.20.3
     #   slycot
 overrides==7.7.0
     # via jupyter-server
-packaging==24.1
+packaging==24.2
     # via
     #   pymor (./pyproject.toml)
     #   ipykernel
@@ -354,23 +350,21 @@ parso==0.8.4
     # via jedi
 pexpect==4.9.0
     # via ipython
-pickleshare==0.7.5
-    # via ipython
 pillow==10.3.0
     # via
     #   -r ./requirements-ci-oldest-pins.in
     #   pymor (./pyproject.toml)
     #   ipympl
     #   matplotlib
-platformdirs==4.2.2
+platformdirs==4.3.6
     # via jupyter-core
 pluggy==1.5.0
     # via pytest
-prometheus-client==0.20.0
+prometheus-client==0.21.1
     # via jupyter-server
-prompt-toolkit==3.0.47
+prompt-toolkit==3.0.48
     # via ipython
-psutil==6.0.0
+psutil==6.1.0
     # via
     #   ipykernel
     #   ipyparallel
@@ -380,9 +374,9 @@ ptyprocess==0.7.0
     #   terminado
 pure-eval==0.2.3
     # via stack-data
-pybind11==2.13.5
+pybind11==2.13.6
     # via -r ./requirements-ci-oldest-pins.in
-pybind11-global==2.13.5
+pybind11-global==2.13.6
     # via pybind11
 pycparser==2.22
     # via cffi
@@ -398,24 +392,24 @@ pygments==2.18.0
     #   sphinx
 pyopengl==3.1.7
     # via pymor (./pyproject.toml)
-pyparsing==3.1.4
+pyparsing==3.2.0
     # via matplotlib
-pyside6==6.6.3.1
+pyside6==6.8.1
     # via pymor (./pyproject.toml)
-pyside6-addons==6.6.3.1
+pyside6-addons==6.8.1
     # via pyside6
-pyside6-essentials==6.6.3.1
+pyside6-essentials==6.8.1
     # via
     #   pyside6
     #   pyside6-addons
-pytest==8.3.2
+pytest==8.3.4
     # via
     #   pymor (./pyproject.toml)
     #   hypothesis
     #   pytest-cov
     #   pytest-datadir
     #   pytest-notebook
-pytest-cov==5.0.0
+pytest-cov==6.0.0
     # via pymor (./pyproject.toml)
 pytest-datadir==1.5.0
     # via pymor (./pyproject.toml)
@@ -427,7 +421,7 @@ python-dateutil==2.9.0.post0
     #   ipyparallel
     #   jupyter-client
     #   matplotlib
-python-json-logger==2.0.7
+python-json-logger==3.2.1
     # via jupyter-events
 pyyaml==6.0.2
     # via
@@ -441,7 +435,7 @@ pyzmq==26.2.0
     #   ipyparallel
     #   jupyter-client
     #   jupyter-server
-qtpy==2.4.1
+qtpy==2.4.2
     # via pymor (./pyproject.toml)
 referencing==0.35.1
     # via
@@ -461,11 +455,11 @@ rfc3986-validator==0.1.1
     # via
     #   jsonschema
     #   jupyter-events
-rich==13.8.0
+rich==13.9.4
     # via
     #   meshio
     #   typer
-rpds-py==0.20.0
+rpds-py==0.22.3
     # via
     #   jsonschema
     #   referencing
@@ -481,19 +475,17 @@ scipy==1.8.0
     #   scikit-fem
 send2trash==1.8.3
     # via jupyter-server
-setuptools==74.0.0
+setuptools==75.6.0
     # via jupyterlab
 shellingham==1.5.4
     # via typer
-shiboken6==6.6.3.1
+shiboken6==6.8.1
     # via
     #   pyside6
     #   pyside6-addons
     #   pyside6-essentials
-six==1.16.0
+six==1.17.0
     # via
-    #   asttokens
-    #   bleach
     #   python-dateutil
     #   rfc3339-validator
 slycot==0.5.4
@@ -503,57 +495,60 @@ slycot==0.5.4
 smmap==5.0.1
     # via gitdb
 sniffio==1.3.1
-    # via
-    #   anyio
-    #   httpx
+    # via anyio
 snowballstemmer==2.2.0
     # via sphinx
 sortedcontainers==2.4.0
     # via hypothesis
 soupsieve==2.6
     # via beautifulsoup4
-sphinx==5.3.0
+sphinx==7.4.7
     # via
     #   myst-nb
     #   myst-parser
-sphinxcontrib-applehelp==1.0.4
+sphinxcontrib-applehelp==2.0.0
     # via sphinx
-sphinxcontrib-devhelp==1.0.2
+sphinxcontrib-devhelp==2.0.0
     # via sphinx
-sphinxcontrib-htmlhelp==2.0.1
+sphinxcontrib-htmlhelp==2.1.0
     # via sphinx
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
-sphinxcontrib-qthelp==1.0.3
+sphinxcontrib-qthelp==2.0.0
     # via sphinx
-sphinxcontrib-serializinghtml==1.1.5
+sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-sqlalchemy==2.0.32
+sqlalchemy==2.0.36
     # via jupyter-cache
 stack-data==0.6.3
     # via ipython
 tabulate==0.9.0
     # via jupyter-cache
-tbb==2021.13.1
+tbb==2022.0.0
     # via mkl
+tcmlib==1.2.0
+    # via
+    #   tbb
+    #   umf
 terminado==0.18.1
     # via
     #   jupyter-server
     #   jupyter-server-terminals
 threadpoolctl==3.5.0
     # via pymor (./pyproject.toml)
-tinycss2==1.3.0
+tinycss2==1.4.0
     # via nbconvert
-tomli==2.0.1
+tomli==2.2.1
     # via
     #   coverage
     #   jupyterlab
     #   pytest
+    #   sphinx
 torch==1.11.0+cpu
     # via
     #   -r ./requirements-ci-oldest-pins.in
     #   pymor (./pyproject.toml)
-tornado==6.4.1
+tornado==6.4.2
     # via
     #   ipykernel
     #   ipyparallel
@@ -563,7 +558,7 @@ tornado==6.4.1
     #   nbdime
     #   notebook
     #   terminado
-tqdm==4.66.5
+tqdm==4.67.1
     # via ipyparallel
 traitlets==5.14.3
     # via
@@ -586,9 +581,9 @@ traitlets==5.14.3
     #   traittypes
 traittypes==0.2.1
     # via k3d
-typer==0.12.5
+typer==0.15.1
     # via pymor (./pyproject.toml)
-types-python-dateutil==2.9.0.20240821
+types-python-dateutil==2.9.0.20241206
     # via arrow
 typing-extensions==4.12.2
     # via
@@ -596,19 +591,22 @@ typing-extensions==4.12.2
     #   async-lru
     #   ipython
     #   myst-nb
-    #   myst-parser
+    #   python-json-logger
+    #   rich
     #   sqlalchemy
     #   torch
     #   typer
+umf==0.9.1
+    # via intel-cmplr-lib-ur
 uri-template==1.3.0
     # via jsonschema
-urllib3==2.2.2
+urllib3==2.2.3
     # via requests
-vtk==9.3.1
+vtk==9.4.0
     # via dune-xt
 wcwidth==0.2.13
     # via prompt-toolkit
-webcolors==24.8.0
+webcolors==24.11.1
     # via jsonschema
 webencodings==0.5.1
     # via
@@ -622,5 +620,5 @@ xmljson==0.2.1
     # via
     #   pymor (./pyproject.toml)
     #   dune-xt
-zipp==3.20.1
+zipp==3.21.0
     # via importlib-metadata

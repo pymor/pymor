@@ -91,7 +91,7 @@ https://conda.anaconda.org/conda-forge/noarch/json5-0.10.0-pyhd8ed1ab_1.conda#cd
 https://conda.anaconda.org/conda-forge/win-64/jsonpointer-3.0.0-py313hfa70ccb_1.conda#001efbf150f0ca5fd0a0c5e6e713c1d1
 https://conda.anaconda.org/conda-forge/noarch/jupyterlab_widgets-3.0.13-pyhd8ed1ab_1.conda#b26e487434032d7f486277beb0cead3a
 https://conda.anaconda.org/conda-forge/win-64/kiwisolver-1.4.7-py313h1ec8472_0.conda#9239895dcd4116c6042ffe0a4e81706a
-https://conda.anaconda.org/conda-forge/win-64/libclang13-19.1.5-default_ha5278ca_0.conda#630e19cfac398a28661914e52d8d99a0
+https://conda.anaconda.org/conda-forge/win-64/libclang13-19.1.6-default_ha5278ca_0.conda#1cfe412982fe3a83577aa80d1e39cfb3
 https://conda.anaconda.org/conda-forge/win-64/libcurl-8.11.1-h88aaa65_0.conda#071d3f18dba5a6a13c6bb70cdb42678f
 https://conda.anaconda.org/conda-forge/win-64/libglib-2.82.2-h7025463_0.conda#3e379c1b908a7101ecbc503def24613f
 https://conda.anaconda.org/conda-forge/win-64/libhwloc-2.11.2-default_ha69328c_1001.conda#b87a0ac5ab6495d8225db5dc72dd21cd
@@ -242,7 +242,7 @@ https://conda.anaconda.org/conda-forge/noarch/nbformat-5.10.4-pyhd8ed1ab_1.conda
 https://conda.anaconda.org/conda-forge/win-64/qt6-main-6.8.1-h1259614_1.conda#2b5d5b1943a7e3be2c6e2f3b9f00ba15
 https://conda.anaconda.org/conda-forge/noarch/requests-2.32.3-pyhd8ed1ab_1.conda#a9b9368f3701a417eac9edbcae7cb737
 https://conda.anaconda.org/conda-forge/noarch/typer-0.15.1-pyhd8ed1ab_0.conda#170a0398946d8f5b454e592672b6fc20
-https://conda.anaconda.org/conda-forge/noarch/jupyter_events-0.10.0-pyhd8ed1ab_1.conda#62186e6383f38cc6a3466f0fadde3f2e
+https://conda.anaconda.org/conda-forge/noarch/jupyter_events-0.11.0-pyhd8ed1ab_0.conda#2d8876ca6bda213622dfbc3d1da56ecb
 https://conda.anaconda.org/conda-forge/noarch/nbclient-0.5.13-pyhd8ed1ab_0.tar.bz2#3edde88a191701cf052216c4ba353a83
 https://conda.anaconda.org/conda-forge/win-64/numpy-2.2.0-py313hd65a2fa_0.conda#23e7f43c81504b0b5dfc2f6244875839
 https://conda.anaconda.org/conda-forge/win-64/pyside6-6.8.1-py313h3e3797f_0.conda#6b1d03179fa124b7d8731df4bf64321a
@@ -251,7 +251,7 @@ https://conda.anaconda.org/conda-forge/win-64/contourpy-1.3.1-py313h1ec8472_0.co
 https://conda.anaconda.org/conda-forge/win-64/h5py-3.12.1-nompi_py313h717f7f6_102.conda#6c7c9fa91cd76f0974e917296f757c34
 https://conda.anaconda.org/conda-forge/noarch/k3d-2.16.1-pyhd8ed1ab_0.conda#5ece63997ad4a85caa31c836f9c5859e
 https://conda.anaconda.org/conda-forge/noarch/nbconvert-core-7.16.4-pyhff2d567_2.conda#0457fdf55c88e52e0e7b63691eafcc48
-https://conda.anaconda.org/conda-forge/noarch/pyevtk-1.6.0-pyha21a80b_0.conda#40768f1f8c37fa1a0a38db1f16561fce
+https://conda.anaconda.org/conda-forge/noarch/pyevtk-1.6.0-pyhb0bfe47_1.conda#2873c0749f886f4ac050adabf2bef203
 https://conda.anaconda.org/conda-forge/win-64/scipy-1.14.1-py313h16bbbb2_2.conda#7418098c38a1353a4a1f363efb948307
 https://conda.anaconda.org/conda-forge/win-64/slycot-0.6.0-py313h821e27e_2.conda#8a259f7a85cbb3d6786d55b91d87b105
 https://conda.anaconda.org/conda-forge/noarch/jupyter_server-2.14.2-pyhd8ed1ab_1.conda#81ea84b3212287f926e35b9036192963
@@ -259,13 +259,13 @@ https://conda.anaconda.org/conda-forge/win-64/matplotlib-base-3.10.0-py313h81b4f
 https://conda.anaconda.org/conda-forge/win-64/netcdf4-1.7.2-nompi_py313hd7ea893_101.conda#8057d8088635f2ce0ae65ba19675d6b1
 https://conda.anaconda.org/conda-forge/noarch/ipympl-0.9.5-pyhd8ed1ab_0.conda#30406b87fecd5a3a6a27dda1f5051c87
 https://conda.anaconda.org/conda-forge/noarch/jupyter-lsp-2.2.5-pyhd8ed1ab_1.conda#0b4c3908e5a38ea22ebb98ee5888c768
-https://conda.anaconda.org/conda-forge/noarch/jupyter-server-mathjax-0.2.6-pyh5bfe37b_1.conda#11ca195fc8a16770661a387bcce27c36
+https://conda.anaconda.org/conda-forge/noarch/jupyter-server-mathjax-0.2.6-pyhbbac1ac_2.conda#a575ab1d71583644de23e7a9bef9bd27
 https://conda.anaconda.org/conda-forge/noarch/jupyterlab-myst-2.4.2-pyhd8ed1ab_0.conda#cc481204ea9c53cda7ac187efa0268a1
 https://conda.anaconda.org/conda-forge/noarch/jupyterlab_server-2.27.3-pyhd8ed1ab_1.conda#9dc4b2b0f41f0de41d27f3293e319357
 https://conda.anaconda.org/conda-forge/noarch/meshio-5.3.5-pyhd8ed1ab_0.conda#2ea6ce24274096bf2df6c8c50f373d5b
 https://conda.anaconda.org/conda-forge/noarch/notebook-shim-0.2.4-pyhd8ed1ab_1.conda#e7f89ea5f7ea9401642758ff50a2d9c1
-https://conda.anaconda.org/conda-forge/noarch/jupyterlab-4.3.3-pyhd8ed1ab_0.conda#0707e62d944a89c365ba11da4898f8af
-https://conda.anaconda.org/conda-forge/noarch/nbdime-4.0.2-pyhd8ed1ab_0.conda#c85813ae6abbeeddecf9ecf544f052bc
+https://conda.anaconda.org/conda-forge/noarch/jupyterlab-4.3.4-pyhd8ed1ab_0.conda#edc13687180382b4444d9f143a2e1ef7
+https://conda.anaconda.org/conda-forge/noarch/nbdime-4.0.2-pyhd8ed1ab_1.conda#5217ed230c497fb71f7bb2de6d7eb27b
 https://conda.anaconda.org/conda-forge/noarch/notebook-7.3.1-pyhd8ed1ab_0.conda#f663ab5bcc9a28364b7b80aa976ed00f
 https://conda.anaconda.org/conda-forge/noarch/pytest_notebook-0.10.0-pyha770c72_0.conda#2613f3691b1d51fcf2d7f6287c15cc80
 https://conda.anaconda.org/conda-forge/noarch/pytest-notebook-0.10.0-hd8ed1ab_0.conda#1ee3879eee8f4211c9752d1fecf2cb61
