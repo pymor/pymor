@@ -31,7 +31,7 @@ def svd_lapack_driver(driver='gesvd_unless_win_mkl'):
             warn('Your SciPy installation seems to be using MKL as LAPACK library.\n'
                  'To avoid stability issues on Windows, we use gesdd instead of gesvd\n'
                  'for SVD computation. This may lead to reduced numerical accuracy.\n'
-                 'See https://github.com/pymor/pymor/issues/2391 for further discuson.\n'
+                 'See https://github.com/pymor/pymor/issues/2391 for further discussion.\n'
                  'To silence this warning, set the pymor.bindings.scipy.svd_lapack_driver.driver\n'
                  'default to either "gesvd" or "gesdd".')
             return 'gesdd'
