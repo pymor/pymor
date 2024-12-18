@@ -12,6 +12,7 @@ import pymortests.strategies as pyst
 from pymor.algorithms.basic import almost_equal, contains_zero_vector
 from pymor.algorithms.chol_qr import shifted_chol_qr
 from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.core.config import is_scipy_mkl
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import runmodule
 
@@ -49,6 +50,8 @@ def test_shifted_chol_qr(vector_array):
 
 
 def test_shifted_chol_qr_with_product(operator_with_arrays_and_products):
+    if is_scipy_mkl():
+        pytest.xfail('fails with mkl')
     _, _, U, _, p, _ = operator_with_arrays_and_products
 
     assume(len(U) >= 1 and not contains_zero_vector(U))
