@@ -1,4 +1,4 @@
-FROM docker.io/python:3.12-bullseye
+FROM docker.io/python:3.13-bullseye
 
 ENV DOCKER_PYMOR=1 \
     OPENBLAS_NUM_THREADS=1 \

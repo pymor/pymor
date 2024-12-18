@@ -82,6 +82,12 @@ runs:
         ${PYTEST_PREFIX} python -c "from qtpy.QtGui import *"
         ${PYTEST_PREFIX} python -c "import OpenGL"
         ${PYTEST_PREFIX} python -c "import OpenGL.GL as gl"
+    - name: Print config
+      shell: bash -el {0}
+      env:
+        PYTHONPATH: ./src
+      run: |
+        ${PYTEST_PREFIX} python -c "import pymor; print(pymor.config)"
     - name: Run pytest
       shell: bash -el {0}
       env:

@@ -8,6 +8,7 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.bindings.scipy import svd_lapack_driver
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.interface import Operator
@@ -164,7 +165,7 @@ def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
         Q, R = gram_schmidt(A, product=product, return_R=True, check=False)
 
     with logger.block('Computing SVD of R ...'):
-        U2, s, Vh = spla.svd(R, lapack_driver='gesvd')
+        U2, s, Vh = spla.svd(R, lapack_driver=svd_lapack_driver())
 
     with logger.block('Choosing the number of modes ...'):
         tol = max(rtol * s[0], atol)

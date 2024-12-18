@@ -22,6 +22,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Scientific/Engineering :: Mathematics",
 ]
 dependencies = [
@@ -33,6 +34,7 @@ dependencies = [
   "pygments",
   "qtpy>=2.3.1",
   "scipy>=1.8",
+  "threadpoolctl",
   "typer",
 ]
 
