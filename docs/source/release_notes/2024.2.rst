@@ -9,7 +9,7 @@ The main new features are:
 
 * Recalculated shifted Cholesky QR algorithm
 
-* New approach to time-dependent parameter values
+* Improved handling of time-dependent parameter values
 
 pyMOR 2024.2 contains contributions by Maximilian Bindhak, Dmitry Kabanov and Art Pelling.
 See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more details.
@@ -24,22 +24,22 @@ In `[#2370] <https://github.com/pymor/pymor/pull/2370>`_, a leave-one-out error 
 for the :class:`~pymor.algorithms.rand_la.RandomizedRangeFinder` was implemented.
 The leave-one-out error estimator can be activated by setting `error_estimator='loo'`
 and estimates the Frobenius norm of the approximation error. Note that while it can be
-faster and more accurate in practice, this option does only support Euclidian inner
-products and there are no results on its failure probability so far.
+much more efficient practice, this approach only supports Euclidean inner
+products so far, and there are no guarantees on its failure probability.
 
 Recalculated shifted Cholesky QR algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 We implemented a version of the Shifted Cholesky QR algorithm in
 `[#2304] <https://github.com/pymor/pymor/pull/2304>`_, in which the shift is
-recalculated in every iteration. The algorithms works reliable even for highly
+recalculated in every iteration. The algorithms works reliably even for highly
 ill-conditioned matrices.
 
-New approach to time-dependent parameter values
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The concept for time-dependent parameter values was improved and made clearer in
+Improved handling of time-dependent parameter values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The concept of time-dependent parameter values was improved and made clearer
 `[#2385] <https://github.com/pymor/pymor/pull/2385>`_. There is now a strict distinction
 between constant values and time-dependent values. In particular, code that is not aware
-of time-dependent parameter values should not fail silently anymore if such values are
+of time-dependent parameter values will no longer silently fail when such values are
 provided.
 
 
@@ -48,9 +48,8 @@ Backward incompatible changes
 
 Dropped Python 3.8 support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-We officially dropped support for Python version 3.8 in
-`[#2358] <https://github.com/pymor/pymor/pull/2358>`_. The latest tested version is
-now Python 3.9.
+Support for Python version 3.8 was dropped `[#2358] <https://github.com/pymor/pymor/pull/2358>`_.
+The latest tested version is now Python 3.9.
 
 Removed ids for vector spaces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
