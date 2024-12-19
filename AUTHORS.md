@@ -13,18 +13,27 @@
 
 ### pyMOR 2024.2
 
+* Maximilian Bindhak, @maxbindhak
+  * Cholesky QR with recalculated shifts
+  * `return_R` parameter for `shifted_chol_qr`
+
+* Dmitry Kabanov, @dmitry-kabanov
+  * use correct Python executable when running `pymor_vis` script
+
 * Art Pelling, @artpelling
   * leave-one-out error estimator for adaptive randomized range approximation
+  * various improvements in `rand_la` module
+  * support for `sparray` in `from_matrices` constructors in `pymor.models.iosys`
 
 ### pyMOR 2024.1
-
-* Art Pelling, @artpelling
-  * various improvements in `rand_la` module
-  * shifted Cholesky QR algorithm
 
 * Maximilian Bindhak, @maxbindhak
   * fixes in shifted Cholesky QR algorithm
   * performance improvements in `NumpyVectorArray` implementation
+
+* Art Pelling, @artpelling
+  * various improvements in `rand_la` module
+  * shifted Cholesky QR algorithm
 
 ### pyMOR 2023.2
 
