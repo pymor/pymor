@@ -22,7 +22,6 @@
 
 * Art Pelling, @artpelling
   * leave-one-out error estimator for adaptive randomized range approximation
-  * various improvements in `rand_la` module
   * support for `sparray` in `from_matrices` constructors in `pymor.models.iosys`
 
 ### pyMOR 2024.1
