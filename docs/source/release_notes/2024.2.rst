@@ -61,10 +61,21 @@ Identifiers for |VectorSpaces| were removed completely in
 Further notable improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- `[#2378] Time stepping backwards in time <https://github.com/pymor/pymor/pull/2378>`_
-- `[#2359] Block Arnoldi <https://github.com/pymor/pymor/pull/2359>`_
-- `[#2353] Add print_cached_methods() <https://github.com/pymor/pymor/pull/2353>`_
-- `[#2349] Add arbitrary (inequality) constraints to ParameterSpace <https://github.com/pymor/pymor/pull/2349>`_
-- `[#2306] Flip range_product and source_product args of RandomizedRangeFinder <https://github.com/pymor/pymor/pull/2306>`_
-- `[#2296] Enhance LTIModel.from_matrices <https://github.com/pymor/pymor/pull/2296>`_
 - `[#2283] Support NumPy 2 <https://github.com/pymor/pymor/pull/2283>`_
+- `[#2296] Enhance LTIModel.from_matrices <https://github.com/pymor/pymor/pull/2296>`_
+- `[#2306] Flip range_product and source_product args of RandomizedRangeFinder <https://github.com/pymor/pymor/pull/2306>`_
+- `[#2328] Use for visualizer subprocess the parent Python executable <https://github.com/pymor/pymor/pull/2328>`_
+- `[#2345] Catch all exceptions in config checks and make _init_mpi() more robust <https://github.com/pymor/pymor/pull/2345>`_
+- `[#2347] Fix ei_greedy for complex-valued arrays <https://github.com/pymor/pymor/pull/2347>`_
+- `[#2348] Add to_matrix to basic module <https://github.com/pymor/pymor/pull/2348>`_
+- `[#2349] Add arbitrary (inequality) constraints to ParameterSpace <https://github.com/pymor/pymor/pull/2349>`_
+- `[#2353] Add print_cached_methods() <https://github.com/pymor/pymor/pull/2353>`_
+- `[#2354] Improve default behavior of print_defaults <https://github.com/pymor/pymor/pull/2354>`_
+- `[#2359] Block Arnoldi <https://github.com/pymor/pymor/pull/2359>`_
+- `[#2369] rand_la tweaks <https://github.com/pymor/pymor/pull/2369>`_
+- `[#2374] Fix Loewner Bugs and Improve Tests <https://github.com/pymor/pymor/pull/2374>`_
+- `[#2378] Time stepping backwards in time <https://github.com/pymor/pymor/pull/2378>`_
+- `[#2380] Support Python 3.13 <https://github.com/pymor/pymor/pull/2380>`_
+- `[#2381] scikit-fem: Fix boundary handling for 1.13 <= scipy < 1.15 <https://github.com/pymor/pymor/pull/2381>`_
+- `[#2383] Add return_R flag and respective logic to the shifted_chol_qr <https://github.com/pymor/pymor/pull/2383>`_
+- `[#2384] fix small bug in rand_la <https://github.com/pymor/pymor/pull/2384>`_
