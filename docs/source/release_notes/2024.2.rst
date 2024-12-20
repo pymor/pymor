@@ -49,7 +49,7 @@ Backward incompatible changes
 Dropped Python 3.8 support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 Support for Python version 3.8 was dropped `[#2358] <https://github.com/pymor/pymor/pull/2358>`_.
-The latest tested version is now Python 3.9.
+The oldest supported version is now Python 3.9.
 
 Removed ids for vector spaces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
