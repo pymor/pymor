@@ -275,6 +275,68 @@ print('LTI Model with input data and time configuration: \n{}\n'.format(fom_disc
 
 </details>
 
+<details>
+<summary>{{PHLTIModel}}</summary>
+
+**Description**
+This class describes input-state-output systems given by:
+
+$$
+E(\mu) \dot{x}(t, \mu) = (J(\mu) - R(\mu)) Q(\mu)   x(t, \mu) + (G(\mu) - P(\mu)) u(t), \\
+y(t, \mu) = (G(\mu) + P(\mu))^T Q(\mu) x(t, \mu) + (S(\mu) - N(\mu)) u(t),
+$$
+
+where $H(\mu) = Q(\mu)^T E(\mu)$
+
+$$
+\Gamma(\mu) =
+        \begin{bmatrix}
+            J(\mu) & G(\mu) \\
+            -G(\mu)^T & N(\mu)
+        \end{bmatrix},
+        \text{ and }
+        \mathcal{W}(\mu) =
+        \begin{bmatrix}
+            R(\mu) & P(\mu) \\
+            P(\mu)^T & S(\mu)
+        \end{bmatrix}
+$$
+
+satisfy $H(\mu) = H(\mu)^T \succ 0$, $\Gamma(\mu)^T = -\Gamma(\mu)$, $\mathcal{W}(\mu) = \mathcal{W}(\mu)^T \succcurlyeq 0$
+
+**Initializing the PHLTIModel Class**
+
+```{code-cell} ipython3
+:tags: [remove-output]
+from pymor.models.iosys import PHLTIModel
+from pymor.operators.numpy import NumpyMatrixOperator
+import numpy as np
+
+# Define mandatory operators
+J = NumpyMatrixOperator(np.array([[0, 1], [-1, 0]]))  # Parameter J
+R = NumpyMatrixOperator(np.array([[1, 0], [0, 1]]))   # Parameter R
+G = NumpyMatrixOperator(np.array([[1, 1], [1, 1]]))   # Parameter G
+
+# Define optional parameters
+P = NumpyMatrixOperator(np.array([[0, 0], [0, 0]]))   # Parameter P
+S = NumpyMatrixOperator(np.array([[1, 0], [1, 0]]))   # Parameter S
+N = NumpyMatrixOperator(np.array([[0, 1], [2, 0]]))   # Parameter N
+E = NumpyMatrixOperator(np.array([[1, 0], [0, 1]]))   # Parameter E
+Q = NumpyMatrixOperator(np.array([[1, 0], [0, 1]]))   # Parameter Q
+solver_options = {'lyap_lrcf': 'scipy'}               # Option to solve Lyapunov equations
+
+# Initialize with only mandatory parameters
+fom_basic = PHLTIModel(J=J, R=R, G=G)
+
+# Initialize with addtional parameters
+fom_detailed = PHLTIModel(J=J, R=R, G=G, P=P, S=S, N=N, E=E, Q=Q, solver_options=solver_options)
+
+print('PHLTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
+print('PHLTI Model with additional parameters: \n{}\n'.format(fom_detailed))
+```
+
+</details>
+
 Here we consider some of the methods for {{LTIModels}}.
 
 ### Balancing-based MOR
