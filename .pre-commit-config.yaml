@@ -34,19 +34,19 @@ repos:
           - --autofix
       - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
+    rev: v0.8.6
     hooks:
       - id: ruff
         args:
           - --fix
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.14.0
+    rev: v0.17.1
     hooks:
       - id: markdownlint-cli2
         args:
           - --fix
   - repo: https://github.com/pappasam/toml-sort.git
-    rev: v0.23.1
+    rev: v0.24.2
     hooks:
       - id: toml-sort-fix
   - repo: https://github.com/lyz-code/yamlfix
