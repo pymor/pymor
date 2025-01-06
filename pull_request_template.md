@@ -16,8 +16,6 @@
 
 ## Changes Made
 <!-- Describe the changes you made in detail. Highlight key updates or additions. -->
-- [ ] Change 1 description
-- [ ] Change 2 description
 
 ---
 
