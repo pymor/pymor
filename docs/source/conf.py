@@ -41,7 +41,7 @@ extensions = ['sphinx.ext.autodoc',
               'autoapi.extension',
               'autoapi_pymor',
               'sphinxcontrib.bibtex',
-              'IPython.sphinxext.ipython_console_highlighting'
+              'IPython.sphinxext.ipython_console_highlighting',
               'sphinx_togglebutton',
               ]
 # this enables:
