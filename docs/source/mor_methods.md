@@ -225,7 +225,7 @@ rom = greedy_data['rom']
 
 ```{toggle} {{LTIModels}}
 
-**Description** 
+**Description**
 This class describes input-state-output systems given by:
 
 $$
