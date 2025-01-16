@@ -445,6 +445,8 @@ sphinx-autoapi==3.1.2
     # via pymor (./pyproject.toml)
 sphinx-material==0.0.36
     # via pymor (./pyproject.toml)
+sphinx-togglebutton==0.3.2
+    # via pymor (./pyproject.toml)
 sphinxcontrib-applehelp==2.0.0
     # via sphinx
 sphinxcontrib-bibtex==2.6.3
@@ -459,6 +461,7 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
+
 sqlalchemy==2.0.36
     # via jupyter-cache
 stack-data==0.6.3
