@@ -223,8 +223,7 @@ rom = greedy_data['rom']
 
 ### Available models
 
-<details>
-<summary>{{LTIModels}}</summary>
+```{toggle} {{LTIModels}}
 
 **Description** 
 This class describes input-state-output systems given by:
@@ -273,10 +272,8 @@ print('LTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
 print('LTI Model with input data and time configuration: \n{}\n'.format(fom_discrete))
 ```
 
-</details>
 
-<details>
-<summary>{{PHLTIModel}}</summary>
+```{toggle} {{PHLTIModel}}
 
 **Description**
 This class describes input-state-output systems given by:
@@ -302,7 +299,7 @@ $$
         \end{bmatrix}
 $$
 
-satisfy $H(\mu) = H(\mu)^T \succ 0$, $\Gamma(\mu)^T = -\Gamma(\mu)$, $\mathcal{W}(\mu) = \mathcal{W}(\mu)^T \succcurlyeq 0$
+satisfy $H(\mu) = H(\mu)^T\succ 0$, $\Gamma(\mu)^T = -\Gamma(\mu)$, $\mathcal{W}(\mu) = \mathcal{W}(\mu)^T\succcurlyeq 0$
 
 **Initializing the PHLTIModel Class**
 
@@ -334,8 +331,6 @@ fom_detailed = PHLTIModel(J=J, R=R, G=G, P=P, S=S, N=N, E=E, Q=Q, solver_options
 print('PHLTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
 print('PHLTI Model with additional parameters: \n{}\n'.format(fom_detailed))
 ```
-
-</details>
 
 Here we consider some of the methods for {{LTIModels}}.
 
