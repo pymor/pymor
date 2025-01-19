@@ -223,7 +223,8 @@ rom = greedy_data['rom']
 
 ### Available models
 
-```{toggle} LTIModel
+```{toggle} 
+:title: LTIModel
 
 **Description**
 This class describes input-state-output systems given by:
