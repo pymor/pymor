@@ -223,8 +223,8 @@ rom = greedy_data['rom']
 
 ### Available models
 
-```{toggle} {{LTIModels}}
-
+<details>
+<summary> {{LTIModel}} </summary>
 **Description**
 This class describes input-state-output systems given by:
 
@@ -272,8 +272,10 @@ print('LTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
 print('LTI Model with input data and time configuration: \n{}\n'.format(fom_discrete))
 ```
 
-```{toggle} {{PHLTIModel}}
+</details>
 
+<details> 
+<summary> {{PHLTIModel}} </summary>
 **Description**
 This class describes input-state-output systems given by:
 
@@ -331,6 +333,7 @@ print('PHLTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
 print('PHLTI Model with additional parameters: \n{}\n'.format(fom_detailed))
 ```
 
+</details>
 
 Here we consider some of the methods for {{LTIModels}}.
 
