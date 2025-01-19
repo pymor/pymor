@@ -11,8 +11,8 @@
     margin-bottom: 1rem;
 }
 
-.md-typeset .admonition.dropdown {
-    padding: 0;
+.md-typeset .admonition.dropdown > .admonition-title {
+    padding-left: 1rem;
 }
 
 .output.text_html {
