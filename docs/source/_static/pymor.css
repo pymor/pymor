@@ -6,6 +6,9 @@
 
 .md-typeset .admonition{
     overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
 }
 
 .output.text_html {
