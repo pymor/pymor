@@ -15,21 +15,6 @@
     padding: 0;
 }
 
-.md-typeset .admonition.dropdown > .admonition-title {
-    padding: 0.5rem 1rem;
-    margin: 0;
-    background-color: #3155a0;
-}
-
-.md-typeset .admonition.dropdown > :not(.admonition-title) {
-    display: none;
-    padding: 0.5rem 1rem;
-}
-
-.md-typeset .admonition.dropdown.toggle-shown > :not(.admonition-title) {
-    display: block;
-}
-
 .output.text_html {
     display: inline;
 }
