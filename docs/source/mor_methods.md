@@ -272,7 +272,6 @@ print('LTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
 print('LTI Model with input data and time configuration: \n{}\n'.format(fom_discrete))
 ```
 
-
 ```{toggle} {{PHLTIModel}}
 
 **Description**
@@ -331,6 +330,7 @@ fom_detailed = PHLTIModel(J=J, R=R, G=G, P=P, S=S, N=N, E=E, Q=Q, solver_options
 print('PHLTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
 print('PHLTI Model with additional parameters: \n{}\n'.format(fom_detailed))
 ```
+
 
 Here we consider some of the methods for {{LTIModels}}.
 
