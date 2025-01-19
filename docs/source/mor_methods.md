@@ -244,6 +244,12 @@ if discrete-time, where $A$, $B$, $C$, $D$, and $E$ are linear operators.
 
 **Initializing the LTIModel Class**
 
+```python
+
+a = 21
+b = 23
+print('a+b = {}'.format(a+b))
+
 ```
 
 <details>
