@@ -225,7 +225,25 @@ rom = greedy_data['rom']
 
 ```{toggle} LTIModel
 
-Sample text to ensure the extension has been correctly added and **installed and functioning**
+**Description**
+This class describes input-state-output systems given by:
+
+$$
+E(\mu) \dot{x}(t, \mu) = A(\mu) x(t, \mu) + B(\mu) u(t), \\
+y(t, \mu) = C(\mu) x(t, \mu) + D(\mu) u(t)
+$$
+
+if continuous-time, or
+
+$$
+E(\mu) x(k + 1, \mu) = A(\mu) x(k, \mu) + B(\mu) u(k), \\
+y(k, \mu) = C(\mu) x(k, \mu) + D(\mu) u(k)
+$$
+
+if discrete-time, where $A$, $B$, $C$, $D$, and $E$ are linear operators.
+
+**Initializing the LTIModel Class**
+
 ```
 
 <details>
