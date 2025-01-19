@@ -223,7 +223,7 @@ rom = greedy_data['rom']
 
 ### Available models
 
-```{admonition} LTIModel
+```{admonition} {{LTIModel}}
 :class: dropdown
 
 **Description**
@@ -272,7 +272,7 @@ print('LTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
 print('LTI Model with input data and time configuration: \n{}\n'.format(fom_discrete))
 ```
 
-```{admonition} PHLTIModel
+```{admonition} {{PHLTIModel}}
 :class: dropdown
 
 **Description**
