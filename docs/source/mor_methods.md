@@ -223,6 +223,11 @@ rom = greedy_data['rom']
 
 ### Available models
 
+```{admonition} LTIModel
+:class: dropdown
+Sample text to ensure the extension has been correctly added and installed and functioning
+```
+
 <details>
 <summary> {{LTIModel}} </summary>
 **Description**
