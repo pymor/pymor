@@ -272,60 +272,8 @@ print('LTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
 print('LTI Model with input data and time configuration: \n{}\n'.format(fom_discrete))
 ```
 
-<details>
-<summary> {{LTIModel}} </summary>
-
-**Description**
-This class describes input-state-output systems given by:
-
-$$
-E(\mu) \dot{x}(t, \mu) = A(\mu) x(t, \mu) + B(\mu) u(t), \\
-y(t, \mu) = C(\mu) x(t, \mu) + D(\mu) u(t)
-$$
-
-if continuous-time, or
-
-$$
-E(\mu) x(k + 1, \mu) = A(\mu) x(k, \mu) + B(\mu) u(k), \\
-y(k, \mu) = C(\mu) x(k, \mu) + D(\mu) u(k)
-$$
-
-if discrete-time, where $A$, $B$, $C$, $D$, and $E$ are linear operators.
-
-**Initializing the LTIModel Class**
-
-```{code-cell} ipython3
-:tags: [remove-output]
-import numpy as np
-from pymor.models.iosys import LTIModel
-from pymor.operators.numpy import NumpyMatrixOperator
-
-# Define mandatory operators A, B, and C
-A = NumpyMatrixOperator(np.array([[1, 2], [3, 4]]))  # The Operator A
-B = NumpyMatrixOperator(np.array([[1], [0]]))        # The Operator B
-C = NumpyMatrixOperator(np.array([[0, 1]]))          # The Operator C
-
-# Other parameters
-D = NumpyMatrixOperator(np.array([[0]]))             # The Operator D
-E = NumpyMatrixOperator(np.array([[1, 0], [0, 1]]))  # The Operator E
-sampling_time = 0.01  # Discrete-time system with sampling time of 0.01s
-T = 10                # Final time
-initial_data = A.source.zeros(1) # Initial 1D data
-
-# Initialize with only mandatory parameters
-fom_basic = LTIModel(A=A, B=B, C=C)
-
-# Initialize with initial data and time configuration
-fom_discrete = LTIModel(A=A, B=B, C=C, D=D, E=E, sampling_time=sampling_time, T=T, initial_data=initial_data)
-
-print('LTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
-print('LTI Model with input data and time configuration: \n{}\n'.format(fom_discrete))
-```
-
-</details>
-
-<details> 
-<summary> {{PHLTIModel}} </summary>
+```{admonition} PHLTIModel
+:class: dropdown
 
 **Description**
 This class describes input-state-output systems given by:
@@ -355,8 +303,7 @@ satisfy $H(\mu) = H(\mu)^T\succ 0$, $\Gamma(\mu)^T = -\Gamma(\mu)$, $\mathcal{W}
 
 **Initializing the PHLTIModel Class**
 
-```{code-cell} ipython3
-:tags: [remove-output]
+```python
 from pymor.models.iosys import PHLTIModel
 from pymor.operators.numpy import NumpyMatrixOperator
 import numpy as np
@@ -383,8 +330,6 @@ fom_detailed = PHLTIModel(J=J, R=R, G=G, P=P, S=S, N=N, E=E, Q=Q, solver_options
 print('PHLTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
 print('PHLTI Model with additional parameters: \n{}\n'.format(fom_detailed))
 ```
-
-</details>
 
 Here we consider some of the methods for {{LTIModels}}.
 
