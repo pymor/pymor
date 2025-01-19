@@ -7,6 +7,7 @@ from pymor.core.config import config
 config.require('MATPLOTLIB')
 
 
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -79,7 +80,7 @@ class PatchVisualizer(BasicObject):
 
 def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, columns=2,
-                    return_widget=True):
+                    return_widget=True, filename=None):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -110,6 +111,10 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
     columns
         The number of columns in the visualizer GUI in case multiple plots are displayed
         at the same time.
+    filename
+        If specified, the visualized results will be saved as JPG files. For animations, a
+        folder named after this argument will be created, and the individual frames will be
+        stored as separate images within it.
     """
     assert isinstance(U, VectorArray) \
            or (isinstance(U, tuple)
@@ -128,6 +133,23 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
         separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars, columns=columns)
 
     do_animation = len(U[0]) > 1
+
+    if filename is not None:
+        assert isinstance(filename, str)
+
+        if do_animation:
+            import os
+            folder_path = filename
+            os.makedirs(folder_path)
+            filename = '{}.jpg'
+            for i in range(len(U[0])):
+                full_filename = os.path.join(folder_path, filename.format(i))
+                vis.set(idx=i)
+                vis.fig.savefig(full_filename)
+        else:
+            filename = filename+'.jpg'
+            vis.fig.savefig(filename)
+        return
 
     if return_widget:
         vis.fig.canvas.header_visible = False
@@ -171,7 +193,7 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
 
 
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False,
-                            rescale_axes=False, columns=2, return_widget=True):
+                            rescale_axes=False, columns=2, return_widget=True, filename=None):
     """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either
@@ -199,6 +221,10 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         If `True`, rescale axes to data in each frame.
     columns
         Number of columns the subplots are organized in.
+    filename
+        If specified, the visualized results will be saved as JPG files. For animations, a
+        folder named after this argument will be created, and the individual frames will be
+        stored as separate images within it.
     """
     assert isinstance(grid, OnedGrid)
     assert codim in (0, 1)
@@ -249,6 +275,23 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
                  [vmin[ind] for vmin in vmins],
                  [vmax[ind] for vmax in vmaxs])
         fig.canvas.draw_idle()
+
+    if filename is not None:
+        assert isinstance(filename, str)
+
+        if do_animation:
+            import os
+            folder_path = filename
+            os.makedirs(folder_path)
+            filename = '{}.jpg'
+            for i in range(len(U[0])):
+                full_filename = os.path.join(folder_path, filename.format(i))
+                set_data(ind=i)
+                fig.savefig(full_filename)
+        else:
+            filename = filename+'.jpg'
+            fig.savefig(filename)
+        return
 
     if return_widget:
         fig.canvas.header_visible = False

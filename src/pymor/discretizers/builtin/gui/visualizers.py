@@ -45,7 +45,7 @@ class PatchVisualizer(ImmutableObject):
         self.__auto_init(locals())
 
     def visualize(self, U, title=None, legend=None, separate_colorbars=False,
-                  rescale_colorbars=False, block=None, filename=None, columns=2,
+                  rescale_colorbars=False, block=None, filename=None, img_filename=None, columns=2,
                   return_widget=False, **kwargs):
         """Visualize the provided data.
 
@@ -74,6 +74,10 @@ class PatchVisualizer(ImmutableObject):
         filename
             If specified, write the data to a VTK-file using
             :func:`~pymor.discretizers.builtin.grids.vtkio.write_vtk` instead of displaying it.
+        img_filename
+            If specified, write the visualized results to .jpg file using
+            :func:`~pymor.discretizers.builtin.gui.jupyter.matplotlib.visualize_patch` with
+            specified filename argument instead of displaying it.
         return_widget
             If `True`, create an interactive visualization that can be used as a jupyter widget.
         kwargs
@@ -90,6 +94,12 @@ class PatchVisualizer(ImmutableObject):
             else:
                 for i, u in enumerate(U):
                     write_vtk(self.grid, u, f'{filename}-{i}', codim=self.codim)
+        elif img_filename:
+            from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_patch
+            return visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
+                                       legend=legend, separate_colorbars=separate_colorbars,
+                                       rescale_colorbars=rescale_colorbars, columns=columns,
+                                       return_widget=return_widget, filename=img_filename, **kwargs)
         else:
             if self.backend == 'jupyter':
                 from pymor.discretizers.builtin.gui.jupyter import get_visualizer
@@ -136,7 +146,7 @@ class OnedVisualizer(ImmutableObject):
         self.__auto_init(locals())
 
     def visualize(self, U, title=None, legend=None, separate_plots=False,
-                  rescale_axes=False, block=None, columns=2, return_widget=False):
+                  rescale_axes=False, block=None, columns=2, img_filename=None, return_widget=False):
         """Visualize the provided data.
 
         Parameters
@@ -160,9 +170,19 @@ class OnedVisualizer(ImmutableObject):
             default provided during instantiation.
         columns
             Number of columns the subplots are organized in.
+        img_filename
+            If specified, write the visualized results to .jpg file using
+            :func:`~pymor.discretizers.builtin.gui.jupyter.matplotlib.visualize_matplotlib_1d` with
+            specified filename argument instead of displaying it.
         return_widget
             If `True`, create an interactive visualization that can be used as a jupyter widget.
         """
+        if img_filename:
+            from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_matplotlib_1d
+            return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
+                                           separate_plots=separate_plots, rescale_axes=rescale_axes,
+                                           columns=columns, filename=img_filename, return_widget=return_widget)
+
         if self.backend == 'jupyter':
             from pymor.discretizers.builtin.gui.jupyter.matplotlib import visualize_matplotlib_1d
             return visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend,
