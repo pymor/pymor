@@ -245,11 +245,30 @@ if discrete-time, where $A$, $B$, $C$, $D$, and $E$ are linear operators.
 **Initializing the LTIModel Class**
 
 ```python
+import numpy as np
+from pymor.models.iosys import LTIModel
+from pymor.operators.numpy import NumpyMatrixOperator
 
-a = 21
-b = 23
-print('a+b = {}'.format(a+b))
+# Define mandatory operators A, B, and C
+A = NumpyMatrixOperator(np.array([[1, 2], [3, 4]]))  # The Operator A
+B = NumpyMatrixOperator(np.array([[1], [0]]))        # The Operator B
+C = NumpyMatrixOperator(np.array([[0, 1]]))          # The Operator C
 
+# Other parameters
+D = NumpyMatrixOperator(np.array([[0]]))             # The Operator D
+E = NumpyMatrixOperator(np.array([[1, 0], [0, 1]]))  # The Operator E
+sampling_time = 0.01  # Discrete-time system with sampling time of 0.01s
+T = 10                # Final time
+initial_data = A.source.zeros(1) # Initial 1D data
+
+# Initialize with only mandatory parameters
+fom_basic = LTIModel(A=A, B=B, C=C)
+
+# Initialize with initial data and time configuration
+fom_discrete = LTIModel(A=A, B=B, C=C, D=D, E=E, sampling_time=sampling_time, T=T, initial_data=initial_data)
+
+print('LTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
+print('LTI Model with input data and time configuration: \n{}\n'.format(fom_discrete))
 ```
 
 <details>
