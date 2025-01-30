@@ -58,6 +58,142 @@ modes, _ = pod(U, method='qr_svd')
 
 ## Parametric MOR
 
+### Available models
+
+```{admonition} {{InstationaryModel}}
+:class: dropdown
+
+**Description**
+Generic class for models of instationary problems. This class describes instationary problems given by the equations
+
+$$
+M \cdot \partial_t u(t, \mu) + L(u(\mu), t, \mu) = F(t, \mu) \\
+u(0, \mu) = u_0(\mu)
+$$
+
+For $t\in[0, T]$, L being a (possibly non-linear) time-dependent {{Operator}}, F a time-dependent vector-like {{Operator}}, and $u_0$ the initial data. The mass {{Operator}} M is assumed to be linear.
+
+**Initializing the InstationaryModel Class**
+
+```python
+from pymor.models.basic import InstationaryModel
+from pymor.operators.constructions import ZeroOperator, IdentityOperator
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.operators.constructions import VectorOperator
+from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
+
+# Define the vector space
+vector_space = NumpyVectorSpace(1)
+
+# Mandatory parameters
+T = 10.0  # Final time
+initial_data = VectorOperator(vector_space.make_array([[3.0]]), name='initial_data')
+operator = IdentityOperator(vector_space)       # Operator L
+rhs = ZeroOperator(vector_space, vector_space)  # Right-hand side F
+time_stepper = ExplicitEulerTimeStepper(nt=10)  # Explicit Euler time-stepper with 10 steps
+
+# Optional parameters
+mass = IdentityOperator(vector_space)  # Mass operator M
+num_values = 5  # Return 5 solution trajectory vectors
+output_functional = IdentityOperator(vector_space)  # Output functional
+
+# Initialize model with mandatory parameters
+fom_basic = InstationaryModel(T=T, initial_data=initial_data, operator=operator, rhs=rhs, time_stepper=time_stepper)
+
+# Initialize model with additional parameters
+fom_detailed = InstationaryModel(T=T, initial_data=initial_data, operator=operator, rhs=rhs, mass=mass, time_stepper=time_stepper, num_values=num_values, output_functional=output_functional)
+
+print('InstationaryModel with only mandatory parameters: \n{}\n'.format(fom_basic))
+print('InstationaryModel with additional parameters: \n{}\n'.format(fom_detailed))
+```
+
+```{admonition} {{QuadraticHamiltonianModel}}
+:class: dropdown
+
+**Description**
+This class describes Hamiltonian systems given by the equations:
+
+$$
+\frac{\partial u(t, \mu)}{\partial t} = J H_{\text{op}}(t, \mu) u(t, \mu) + J h(t, \mu)
+$$
+
+$$
+u(0, \mu) = u_0(\mu)
+$$
+
+for $t\in[0,T]$, where $H_{\text{op}}$ is a linear time-dependent {{Operator}}, $J$ is a canonical Poisson matrix, $h$ is a (possibly) time-dependent vector-like {{Operator}}, and $u_0$ the initial data.
+
+**Initializing the QuadraticHamiltonianModel Class**
+
+```python
+from pymor.models.symplectic import QuadraticHamiltonianModel
+from pymor.operators.constructions import VectorOperator
+from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
+
+import numpy as np
+
+# Define the phase space
+dim = 4  # Must be even for Hamiltonian systems
+phase_space = NumpyVectorSpace(dim)
+H_op = NumpyMatrixOperator(np.eye(dim)) # Define the Hamiltonian operator (H_op) as an identity matrix
+
+# Define the initial condition as a VectorArray of length 1
+initial_data = phase_space.from_numpy(np.array([[1.0, 0.0, -1.0, 0.5]]))
+
+T = 4.0 # Define the final time
+time_stepper = ExplicitEulerTimeStepper(nt=10) # Explicit Euler time-stepper with 10 steps
+h = VectorOperator(phase_space.from_numpy(np.array([[0.1, -0.2, 0.3, -0.4]]))) # state-independent Hamiltonian term h
+
+# Initialize the QuadraticHamiltonianModel
+fom = QuadraticHamiltonianModel(T=T, initial_data=initial_data, H_op=H_op, time_stepper=time_stepper, h=h)
+
+print('QuadraticHamiltonianModel: \n{}\n'.format(fom))
+```
+
+```{admonition} {{StationaryModel}}
+:class: dropdown
+
+**Description**
+Generic class for models of stationary problems. This class describes discrete problems given by the equation:
+
+$$
+L(u(\mu), \mu) = F(\mu)
+$$
+
+with a vector-like right-hand side F and a (possibly non-linear) operator L.
+
+**Initializing the StationaryModel Class**
+
+```python
+from pymor.models.basic import StationaryModel
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.operators.constructions import IdentityOperator, ZeroOperator
+from pymor.operators.constructions import VectorOperator
+
+# Define the vector space
+vector_space = NumpyVectorSpace(1)
+
+# Mandatory parameters
+operator = IdentityOperator(vector_space)  # Operator L
+rhs = VectorOperator(vector_space.make_array([[1.0]]), name="rhs")  # RHS F
+
+# Optional parameters
+output_functional = IdentityOperator(vector_space)  # Output functional
+products = {"l2": IdentityOperator(vector_space)}  # L2 inner product
+output_d_mu_use_adjoint = True  # Use adjoint solution for output gradients
+
+# Initialize model with mandatory parameters
+fom_basic = StationaryModel(operator=operator, rhs=rhs)
+
+# Initialize model with additional parameters
+fom_detailed = StationaryModel(operator=operator, rhs=rhs, output_functional=output_functional, products=products, output_d_mu_use_adjoint=output_d_mu_use_adjoint)
+
+print('StationaryModel with only mandatory parameters: \n{}\n'.format(fom_basic))
+print('StationaryModel with additional parameters: \n{}\n'.format(fom_detailed))
+```
+
 Here we consider MOR methods for {{Models}} that depend on one or more {{Parameters}}.
 
 ### Reduced Basis method for parameter-separable, linear, coercive models
@@ -331,7 +467,7 @@ print('PHLTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
 print('PHLTI Model with additional parameters: \n{}\n'.format(fom_detailed))
 ```
 
-```{admonition} {{BilinearModel}}
+```{admonition} BilinearModel
 :class: dropdown
 
 **Description**
@@ -438,7 +574,7 @@ print('Continouous LinearDelayModel: \n{}\n'.format(fom_continuous))
 print('Discrete LinearDelayModel: \n{}\n'.format(fom_discrete))
 ```
 
-```{admonition} {{LinearStochasticModel}}
+```{admonition} LinearStochasticModel
 :class: dropdown
 
 **Description**
@@ -581,7 +717,7 @@ print('Continuous TransferFunction: \n{}\n'.format(fom_continuous))
 print('Discrete TransferFunction: \n{}\n'.format(fom_discrete))
 ```
 
-```{admonition} {{FactorizedTransferFunction}}
+```{admonition} FactorizedTransferFunction
 :class: dropdown
 
 **Description**
