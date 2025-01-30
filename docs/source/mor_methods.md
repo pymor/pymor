@@ -58,7 +58,7 @@ modes, _ = pod(U, method='qr_svd')
 
 ## Parametric MOR
 
-### Available models
+### Available models under Parametric MOR
 
 ```{admonition} {{InstationaryModel}}
 :class: dropdown
@@ -71,7 +71,8 @@ M \cdot \partial_t u(t, \mu) + L(u(\mu), t, \mu) = F(t, \mu) \\
 u(0, \mu) = u_0(\mu)
 $$
 
-For $t\in[0, T]$, L being a (possibly non-linear) time-dependent {{Operator}}, F a time-dependent vector-like {{Operator}}, and $u_0$ the initial data. The mass {{Operator}} M is assumed to be linear.
+For $t\in[0, T]$, L being a (possibly non-linear) time-dependent {{Operator}}, F a time-dependent vector-like
+{{Operator}}, and $u_0$ the initial data. The mass {{Operator}} M is assumed to be linear.
 
 **Initializing the InstationaryModel Class**
 
@@ -101,7 +102,8 @@ output_functional = IdentityOperator(vector_space)  # Output functional
 fom_basic = InstationaryModel(T=T, initial_data=initial_data, operator=operator, rhs=rhs, time_stepper=time_stepper)
 
 # Initialize model with additional parameters
-fom_detailed = InstationaryModel(T=T, initial_data=initial_data, operator=operator, rhs=rhs, mass=mass, time_stepper=time_stepper, num_values=num_values, output_functional=output_functional)
+fom_detailed = InstationaryModel(T=T, initial_data=initial_data, operator=operator, rhs=rhs,
+mass=mass, time_stepper=time_stepper, num_values=num_values,output_functional=output_functional)
 
 print('InstationaryModel with only mandatory parameters: \n{}\n'.format(fom_basic))
 print('InstationaryModel with additional parameters: \n{}\n'.format(fom_detailed))
@@ -121,7 +123,8 @@ $$
 u(0, \mu) = u_0(\mu)
 $$
 
-for $t\in[0,T]$, where $H_{\text{op}}$ is a linear time-dependent {{Operator}}, $J$ is a canonical Poisson matrix, $h$ is a (possibly) time-dependent vector-like {{Operator}}, and $u_0$ the initial data.
+for $t\in[0,T]$, where $H_{\text{op}}$ is a linear time-dependent {{Operator}}, $J$ is a canonical Poisson matrix,
+$h$ is a (possibly) time-dependent vector-like {{Operator}}, and $u_0$ the initial data.
 
 **Initializing the QuadraticHamiltonianModel Class**
 
@@ -357,7 +360,7 @@ rom = greedy_data['rom']
 
 ## LTI System MOR
 
-### Available models
+### Available models under LTI MOR
 
 ```{admonition} {{LTIModel}}
 :class: dropdown
