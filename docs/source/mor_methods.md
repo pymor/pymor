@@ -331,6 +331,113 @@ print('PHLTI Model with only mandatory parameters: \n{}\n'.format(fom_basic))
 print('PHLTI Model with additional parameters: \n{}\n'.format(fom_detailed))
 ```
 
+```{admonition} {{BilinearModel}}
+:class: dropdown
+
+**Description**
+Class for bilinear systems. This class describes input-output systems given by:
+
+$$
+E x'(t) & = A x(t) + \sum_{i = 1}^m{N_i x(t) u_i(t)} + B u(t), \\
+y(t) & = C x(t) + D u(t),
+$$
+
+if continuous-time, or
+
+$$
+E x(k + 1) & = A x(k) + \sum_{i = 1}^m{N_i x(k) u_i(k)} + B u(k), \\
+y(k) & = C x(k) + D u(t),
+$$
+
+if discrete-time, where $E$, $A$, $N_i$, $B$, $C$, and $D$ are linear operators and $m$ is the number of inputs.
+
+**Initializing the BilinearModel Class**
+
+```python
+from pymor.models.iosys import BilinearModel
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.operators.constructions import IdentityOperator, ZeroOperator
+
+# Define the vector, input and output spaces
+vector_space = NumpyVectorSpace(3)  # Example space with dimension 3
+input_space = NumpyVectorSpace(2)  # Input space with dimension 2
+output_space = NumpyVectorSpace(1)  # Output space with dimension 1
+
+# Mandatory parameters
+A = IdentityOperator(vector_space)  # Operator A
+N = (IdentityOperator(vector_space), IdentityOperator(vector_space))  # Tuple of N_i operators
+B = ZeroOperator(vector_space, input_space)  # Operator B
+C = ZeroOperator(output_space, vector_space)  # Operator C
+D = ZeroOperator(output_space, input_space)  # Operator D
+
+# Optional parameters
+E = IdentityOperator(vector_space)  # Operator E (identity operator for vector space)
+sampling_time = 0.1  # Positive number for discrete-time system (sampling time in seconds)
+
+# Initialize a continuous model
+fom_continuous = BilinearModel(A=A, N=N, B=B, C=C, D=D)
+
+# Initialize a discrete model
+fom_discrete = BilinearModel(A=A, N=N, B=B, C=C, D=D, E=E, sampling_time=sampling_time)
+
+print('Continouous BilinearModel: \n{}\n'.format(fom_continuous))
+print('Discrete BilinearModel: \n{}\n'.format(fom_discrete))
+```
+
+```{admonition} {{LinearDelayModel}}
+:class: dropdown
+
+**Description**
+Class for linear delay systems. This class describes input-state-output systems given by:
+
+$$
+E x'(t) & = A x(t) + \sum_{i = 1}^q{A_i x(t - \tau_i)} + B u(t), \\
+y(t) & = C x(t) + D u(t),
+$$
+
+if continuous-time, or
+
+$$
+E x(k + 1) & = A x(k) + \sum_{i = 1}^q{A_i x(k - \tau_i)} + B u(k), \\
+y(k) & = C x(k) + D u(k),
+$$
+
+if discrete-time, where $E$, $A$, $A_i$, $B$, $C$, and $D$ are linear operators.
+
+**Initializing the LinearDelayModel Class**
+
+```python
+from pymor.models.iosys import LinearDelayModel
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.operators.constructions import IdentityOperator, ZeroOperator
+
+# Define the vector, input and output spaces
+vector_space = NumpyVectorSpace(3)  # Example state space with dimension 3
+input_space = NumpyVectorSpace(3)  # Input space with dimension 3
+output_space = NumpyVectorSpace(1)  # Output space with dimension 1
+
+# Mandatory parameters
+A = IdentityOperator(vector_space)  # Operator A
+Ad = (IdentityOperator(vector_space), IdentityOperator(vector_space))  # Tuple of delay operators (length must match tau)
+tau = (1.0, 2.0)  # Delay times (must match the length of Ad)
+B = ZeroOperator(input_space, vector_space)  # Operator B
+C = ZeroOperator(output_space, vector_space)  # Operator C
+
+# Additional parameters
+D = ZeroOperator(output_space, input_space)  # Operator D
+E = IdentityOperator(vector_space)  # Operator E
+sampling_time = 0.1  # Sampling time 
+
+# Initialize a continuous model
+fom_continuous = LinearDelayModel(A=A, Ad=Ad, tau=tau, B=B, C=C)
+
+# Initialize a discrete model
+fom_discrete = LinearDelayModel(A=A, Ad=Ad, tau=tau, B=B, C=C, D=D, E=E, sampling_time=sampling_time)
+
+print('Continouous LinearDelayModel: \n{}\n'.format(fom_continuous))
+print('Discrete LinearDelayModel: \n{}\n'.format(fom_discrete))
+```
+
 Here we consider some of the methods for {{LTIModels}}.
 
 ### Balancing-based MOR
