@@ -426,7 +426,7 @@ C = ZeroOperator(output_space, vector_space)  # Operator C
 # Additional parameters
 D = ZeroOperator(output_space, input_space)  # Operator D
 E = IdentityOperator(vector_space)  # Operator E
-sampling_time = 0.1  # Sampling time 
+sampling_time = 0.1  # Sampling time
 
 # Initialize a continuous model
 fom_continuous = LinearDelayModel(A=A, Ad=Ad, tau=tau, B=B, C=C)
@@ -436,6 +436,196 @@ fom_discrete = LinearDelayModel(A=A, Ad=Ad, tau=tau, B=B, C=C, D=D, E=E, samplin
 
 print('Continouous LinearDelayModel: \n{}\n'.format(fom_continuous))
 print('Discrete LinearDelayModel: \n{}\n'.format(fom_discrete))
+```
+
+```{admonition} {{LinearStochasticModel}}
+:class: dropdown
+
+**Description**
+This class describes input-state-output systems given by:
+
+$$
+E \mathrm{d}x(t) & = A x(t) \mathrm{d}t + \sum_{i = 1}^q{A_i x(t) \mathrm{d}\omega_i(t)} + B u(t) \mathrm{d}t, \\
+y(t) & = C x(t) + D u(t)
+$$
+
+if continuous-time, or
+
+$$
+E x(k + 1) & = A x(k) + \sum_{i = 1}^q{A_i x(k) \omega_i(k)} + B u(k), \\
+y(k) & = C x(k) + D u(t)
+$$
+
+if discrete-time, where $E$, $A$, $A_i$, $B$, $C$, and $D$ are linear operators and $\omega_i$ are stochastic processes.
+
+**Initializing the LinearStochasticModel Class**
+
+```python
+from pymor.models.iosys import LinearStochasticModel
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.operators.constructions import IdentityOperator, ZeroOperator
+
+# Define the vector, input and output spaces
+vector_space = NumpyVectorSpace(3)  # Example vector space with dimension 3
+input_space = NumpyVectorSpace(3)  # Input space with dimension 3
+output_space = NumpyVectorSpace(1)  # Output space with dimension 1
+
+# Continuous System
+A = IdentityOperator(vector_space)  # System matrix A
+As = (IdentityOperator(vector_space), IdentityOperator(vector_space))  # Tuple of stochastic operators
+B = ZeroOperator(input_space, vector_space)  # Operator B
+C = ZeroOperator(output_space, vector_space)  # Operator C
+
+# Discrete System
+D = ZeroOperator(output_space, input_space)  # Operator D
+E = IdentityOperator(vector_space)  # Operator E
+sampling_time = 1.0  # Discrete-time system with sampling time of 1 second
+
+# Initialize a continuous model
+fom_continuous = LinearStochasticModel(A=A, As=As, B=B, C=C)
+
+# Initialize a discrete model
+fom_discrete = LinearStochasticModel(A=A, As=As, B=B, C=C, D=D, E=E, sampling_time=sampling_time)
+
+print('Continuous LinearStochasticModel: \n{}\n'.format(fom_continuous))
+print('Discrete LinearStochasticModel: \n{}\n'.format(fom_discrete))
+```
+
+```{admonition} {{SecondOrderModel}}
+:class: dropdown
+
+**Description**
+This class describes input-output systems given by
+
+$$
+M(\mu) \ddot{x}(t, \mu) + E(\mu) \dot{x}(t, \mu) + K(\mu) x(t, \mu)
+        & = B(\mu) u(t), \\
+y(t, \mu) & = C_p(\mu) x(t, \mu) + C_v(\mu) \dot{x}(t, \mu) + D(\mu) u(t),
+$$
+
+if continuous-time, or
+
+$$
+M(\mu) x(k + 2, \mu) + E(\mu) x(k + 1, \mu) + K(\mu) x(k, \mu)
+        & = B(\mu) u(k), \\
+y(k, \mu) & = C_p(\mu) x(k, \mu) + C_v(\mu) x(k + 1, \mu) + D(\mu) u(k)
+$$
+
+if discrete-time, where $M$, $E$, $K$, $B$, $C_p$, $C_v$, $D$ are linear operators.
+
+**Initializing the SecondOrderModel Class**
+
+```python
+from pymor.models.iosys import SecondOrderModel
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.operators.constructions import IdentityOperator, ZeroOperator, VectorOperator
+import numpy as np
+
+vector_space = NumpyVectorSpace(3)
+input_space = NumpyVectorSpace(2)
+output_space = NumpyVectorSpace(1)
+
+# Continuous System
+M = IdentityOperator(vector_space)  # Mass matrix (3x3)
+E = IdentityOperator(vector_space)  # Damping matrix (3x3)
+K = IdentityOperator(vector_space)  # Stiffness matrix (3x3)
+B = VectorOperator(vector_space.from_numpy([1, 0, 1])) # B
+Cp = NumpyMatrixOperator(np.array([1, 0, 0])) # Cp
+
+# Discrete System
+Cv = NumpyMatrixOperator(np.array([1, 1, 1])) # Cv
+D = ZeroOperator(output_space, B.source) # D-matrix
+sampling_time = 0.01  # introduce time discretization
+
+# Initialize a continuous model
+fom_continuous = SecondOrderModel(M=M, E=E, K=K, B=B, Cp=Cp)
+
+# Initialize a discrete model
+fom_discrete = SecondOrderModel(M=M, E=E, K=K, B=B, Cp=Cp, Cv=Cv, D=D, sampling_time=sampling_time)
+
+print('Continuous SecondOrderModel: \n{}\n'.format(fom_continuous))
+print('Discrete SecondOrderModel: \n{}\n'.format(fom_discrete))
+```
+
+```{admonition} {{TransferFunction}}
+:class: dropdown
+
+**Description**
+This class describes input-output systems given by a (parametrized) transfer function: $H(s,\mu)$
+
+**Initializing the TransferFunction Class**
+
+```python
+from pymor.models.transfer_function import TransferFunction
+import numpy as np
+
+# Define the transfer function as a callable
+def tf(s, mu=None):
+    # Example transfer function H(s)
+    return np.array([[1 / (s + 1), 0], [0, 1 / (s + 2)]])
+
+dim_input = 2 # input dimension
+dim_output = 1 # output dimension
+
+parameters = {'mu': 2}
+sampling_time = 5 # Sampling time for a discrete-time system
+
+# Initialize continuous TransferFunction
+fom_continuous = TransferFunction(dim_input=dim_input, dim_output=dim_output, tf=tf)
+
+# Initialize discrete TransferFunction
+fom_discrete = TransferFunction(dim_input=dim_input, dim_output=dim_output, tf=tf, parameters=parameters, sampling_time=sampling_time)
+
+print('Continuous TransferFunction: \n{}\n'.format(fom_continuous))
+print('Discrete TransferFunction: \n{}\n'.format(fom_discrete))
+```
+
+```{admonition} {{FactorizedTransferFunction}}
+:class: dropdown
+
+**Description**
+This class describes input-output systems given by a transfer function of the form:
+$H(s, \mu) = \mathcal{C}(s, \mu) \mathcal{K}(s, \mu)^{-1} \mathcal{B}(s, \mu) + \mathcal{D}(s, \mu)$
+
+**Initializing the FactorizedTransferFunction Class**
+
+```python
+from pymor.models.transfer_function import FactorizedTransferFunction
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.operators.constructions import IdentityOperator, VectorOperator
+import numpy as np
+
+# Dimensions
+dim_input = 2
+dim_output = 1
+vector_space = NumpyVectorSpace(2)
+
+# Functions that return Operators
+def K(s):
+    r"""Example function returning an Operator K(s)"""
+    return IdentityOperator(vector_space) * (s + 1)
+
+def B(s):
+    r"""Example function returning an Operator B(s)"""
+    return VectorOperator(vector_space.from_numpy(np.array([[1], [0]])))
+
+def C(s):
+    r"""Example function returning an Operator C(s)"""
+    return VectorOperator(vector_space.from_numpy(np.array([[0, 1]])))
+
+def D(s):
+    r"""Example function returning an Operator D(s)"""
+    return VectorOperator(vector_space.zeros(1))
+
+# Initialize continuous FactorizedTransferFunction
+fom_continuous = FactorizedTransferFunction(dim_input=dim_input, dim_output=dim_output, K=K, B=B, C=C, D=D)
+
+# Initialize discrete FactorizedTransferFunction
+fom_discrete = FactorizedTransferFunction(dim_input=dim_input, dim_output=dim_output, K=K, B=B, C=C, D=D, sampling_time=5)
+
+print('Continuous FactorizedTransferFunction: \n{}\n'.format(fom_continuous))
+print('Discrete FactorizedTransferFunction: \n{}\n'.format(fom_discrete))
 ```
 
 Here we consider some of the methods for {{LTIModels}}.
