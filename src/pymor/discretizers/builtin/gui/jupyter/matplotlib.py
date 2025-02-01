@@ -114,7 +114,8 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
     filename
         If specified, the visualized results will be saved as JPG files. For animations, a
         folder named after this argument will be created, and the individual frames will be
-        stored as separate images within it.
+        stored as separate images within it. Additionally, the animation will also be saved
+        as an MP4 file with the same name.
     """
     assert isinstance(U, VectorArray) \
            or (isinstance(U, tuple)
@@ -146,6 +147,15 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
                 full_filename = os.path.join(folder_path, filename.format(i))
                 vis.set(idx=i)
                 vis.fig.savefig(full_filename)
+
+            from matplotlib.animation import FuncAnimation
+            delay_between_frames = 200  # ms
+            def animate(i):
+                vis.set(idx=i)
+            anim = FuncAnimation(vis.fig, animate, frames=len(U[0]), interval=delay_between_frames, blit=False)
+            filename = folder_path+'.mp4'
+            anim.save(filename)
+
         else:
             filename = filename+'.jpg'
             vis.fig.savefig(filename)
@@ -224,7 +234,8 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     filename
         If specified, the visualized results will be saved as JPG files. For animations, a
         folder named after this argument will be created, and the individual frames will be
-        stored as separate images within it.
+        stored as separate images within it. Additionally, the animation will also be saved
+        as an MP4 file with the same name.
     """
     assert isinstance(grid, OnedGrid)
     assert codim in (0, 1)
@@ -288,6 +299,13 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
                 full_filename = os.path.join(folder_path, filename.format(i))
                 set_data(ind=i)
                 fig.savefig(full_filename)
+
+            from matplotlib.animation import FuncAnimation
+            delay_between_frames = 200  # ms
+            anim = FuncAnimation(fig, lambda ind: set_data(ind=ind), frames=len(U[0]),
+                                 interval=delay_between_frames, blit=False)
+            filename = folder_path+'.mp4'
+            anim.save(filename)
         else:
             filename = filename+'.jpg'
             fig.savefig(filename)
