@@ -105,8 +105,11 @@ def _get_version(module, threadpoolctl_internal_api=False):
     def impl():
         version = import_module(module).__version__
         if threadpoolctl_internal_api:
-            info = ', '.join(_get_threadpool_internal_api(module))
-            return version, info
+            try:
+                info = ', '.join(_get_threadpool_internal_api(module))
+                return version, info
+            except OSError:
+                return version
         else:
             return version
     return impl
