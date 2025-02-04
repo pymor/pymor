@@ -1,7 +1,7 @@
 # Checklist for Using an External Solver in pyMOR
 
 This checklist guides you through the process of using an external solver (already bound to pyMOR) for solving PDEs.  
-**Reference Tutorial**: [Binding an external PDE solver to pyMOR](#tutorial-binding-an-external-pde-solver-to-pymor).
+**Reference Tutorial**: [Binding an external PDE solver to pyMOR](./tutorial_external_solver.md).
 
 ---
 
@@ -33,7 +33,7 @@ This checklist guides you through the process of using an external solver (alrea
 
 - [ ] Create a `WrappedVector` class inheriting from `CopyOnWriteVector`:
   - Implement `to_numpy`, `_scal`, `_axpy`, and other required methods.
-  - Reference: [WrappedVector implementation](#code-cell-ipython3).
+  - Reference: [WrappedVector implementation](../../src/pymordemos/minimal_cpp_demo/wrapper.py).
 - [ ] Define a `WrappedVectorSpace` inheriting from `ListVectorSpace`:
   - Implement `zero_vector`, `make_vector`, and `__eq__`.
 - [ ] Wrap the solver’s operator in a `WrappedDiffusionOperator` class:
