@@ -72,8 +72,10 @@ class RandomizedRangeFinder(BasicObject):
     @defaults('num_testvecs', 'failure_tolerance', 'qr_method', 'error_estimator')
     def __init__(self, A, range_product=None, source_product=None, A_adj=None, power_iterations=0, block_size=None,
                  failure_tolerance=1e-15, num_testvecs=20, lambda_min=None, iscomplex=False, qr_method='gram_schmidt',
-                 error_estimator='bs18'):
+                 error_estimator='bs18', dtype=None, qr_opts={}):
         assert isinstance(A, Operator)
+        if dtype is None:
+            dtype = np.complex128 if iscomplex else np.float64
         assert range_product is None or isinstance(range_product, Operator)
         assert source_product is None or isinstance(source_product, Operator)
         assert lambda_min is None or lambda_min > 0
@@ -88,17 +90,21 @@ class RandomizedRangeFinder(BasicObject):
 
         self.__auto_init(locals())
         self.estimate_error = self._bs18_estimator if error_estimator == 'bs18' else self._loo_estimator
-        self.Omega = A.range.empty()  # the test vectors for 'bs18' or the drawn samples for 'loo'.
+        # the test vectors for 'bs18' or the drawn samples for 'loo'.
+        if error_estimator == 'bs18':
+            self.Omega = A.range.empty()
+        else:
+            self.Omega = A.range.make_array(np.empty((0, A.range.dim), dtype=dtype))
         self.estimator_last_basis_size, self.last_estimated_error = 0, np.inf
-        self.Q = [A.range.empty() for _ in range(power_iterations+1)]
-        self.R = [np.empty((0,0)) for _ in range(power_iterations+1)]
+        self.Q = [A.range.make_array(np.empty((0, A.range.dim), dtype=dtype)) for _ in range(power_iterations+1)]
+        self.R = [np.empty((0,0), dtype=dtype) for _ in range(power_iterations+1)]
 
     def _draw_samples(self, num):
         """Compute `num` samples of the operator range."""
-        V = self.A.source.random(num, distribution='normal')
+        V = self.A.source.random(num, distribution='normal').to_numpy().T.astype(self.dtype)
         if self.iscomplex:
-            V += 1j*self.A.source.random(num, distribution='normal')
-        return self.A.apply(V)
+            V += 1j*self.A.source.random(num, distribution='normal').to_numpy().T.astype(self.dtype)
+        return self.A.apply(self.A.source.make_array(V.T))
 
     def _qr_update(self, Q, R, offset):
         r"""Update the QR decomposition.
@@ -122,9 +128,11 @@ class RandomizedRangeFinder(BasicObject):
         """
         product = self.range_product
         if self.qr_method == 'gram_schmidt':
-            _, _R = gram_schmidt(Q, product=product, atol=0, rtol=0, offset=offset, copy=False, return_R=True)
+            _, _R = gram_schmidt(
+                Q, product=product, atol=0, rtol=0, offset=offset, copy=False, return_R=True, **self.qr_opts
+            )
         elif self.qr_method == 'shifted_chol_qr':
-            _, _R = shifted_chol_qr(Q, product=product, offset=offset, copy=False, return_R=True)
+            _, _R = shifted_chol_qr(Q, product=product, offset=offset, copy=False, return_R=True, **self.qr_opts)
         if len(Q) == offset:
             raise ValueError('Basis extension broke down before convergence.')
         _R[:offset, :offset] = R
@@ -171,9 +179,9 @@ class RandomizedRangeFinder(BasicObject):
                 Q = self.Q[-1]
                 T = G / g
                 QZ = Q.inner(self.Omega)
-                QQZ = Q.lincomb(QZ.T).to_numpy().T
-                QTTQZ = Q.to_numpy().T @ T * np.diag(T.T @ QZ)
-                error = spla.norm(self.Omega.to_numpy().T-QQZ+QTTQZ) / np.sqrt(len(self.Omega))
+                error = spla.norm(
+                    (self.Omega+Q.lincomb((T*np.diag(T.T@QZ)-QZ).T)
+                     ).to_numpy().T) / np.sqrt(len(self.Omega))
             self.last_estimated_error = error
             self.estimator_last_basis_size = len(self.Q[-1])
         return self.last_estimated_error
@@ -236,10 +244,11 @@ class RandomizedRangeFinder(BasicObject):
 
             # power iterations
             for i in range(1, len(Q)):
-                V = Q[i-1][current_len:]
-                current_len = len(Q[i])
-                Q[i].append(A.apply(A_adj.apply(V)))
-                R[i] = self._qr_update(Q[i], R[i], current_len)
+                with self.logger.block(f'Power iteration {i} ...'):
+                    V = Q[i-1][current_len:]
+                    current_len = len(Q[i])
+                    Q[i].append(A.apply(A_adj.apply(V)))
+                    R[i] = self._qr_update(Q[i], R[i], current_len)
 
         if basis_size is not None and basis_size < len(Q[-1]):
             return Q[-1][:basis_size].copy()
