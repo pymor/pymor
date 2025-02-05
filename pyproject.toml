@@ -288,7 +288,6 @@ ignore = [
 banned-from = ["numpy.linalg"] # avoids importing similar routines from numpy.linalg and scipy.linalg
 
 [tool.ruff.lint.flake8-import-conventions.extend-aliases]
-scipy = "" # don't import scipy directly
 "scipy.linalg" = "spla"
 
 [tool.ruff.lint.flake8-quotes]
