@@ -172,3 +172,11 @@ li[class*="toctree-l"] ul, li[class^="toctree-l"] ul {
 .active {
     display: block !important;
 }
+
+.admonition.toggle-hidden .admonition-title ~ * {
+    display: none;
+}
+
+button.toggle-button.toggle-button-hidden::before {
+    vertical-align: super;
+}
