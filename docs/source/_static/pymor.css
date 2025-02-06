@@ -180,3 +180,9 @@ li[class*="toctree-l"] ul, li[class^="toctree-l"] ul {
 button.toggle-button.toggle-button-hidden::before {
     vertical-align: super;
 }
+
+@media only screen and (max-width: 44.9375em) {
+  .md-typeset pre {
+    margin: 0;
+  }
+}
