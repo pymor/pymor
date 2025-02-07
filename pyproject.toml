@@ -255,6 +255,8 @@ ignore = [
   "D104", # missing docstring in public package
   "D105", # missing docstring in magic method
   "D106", # missing docstring in public nested class
+  "D203", # 1 blank line required before class docstring
+  "D212", # multi-line docstring summary should start at the first line
   "D401", # first line of docstring should be in imperative mood
   "D404", # first word of the docstring should not be "This"
   "D405", # the linter thinks the argument name 'parameters' is a docstring section
@@ -268,11 +270,12 @@ ignore = [
   "N802", # function name should be lowercase
   "N803", # argument name should be lowercase (we use single capital letters everywhere for vectorarrays)
   "N806", # same for variables in function
-  "PT004", # fixture does not return anything, add leading underscore
   "PT011", # pytest.raises(Exception) is too broad
   "PT012", # pytest.raises() block should contain a single simple statement
   "PT015", # assertion always fails, replace with `pytest.fail()`
   "RUF005", # consider unpacking instead of concatenation
+  "RUF021", # parenthesize a and b expressions when chaining and and or together, to make the precedence clear
+  "RUF023", # __slots__ is not sorted
   "SIM102", # use a single if statement instead of nested if statements
   "SIM103", # return the condition directly
   "SIM105", # use contextlib.suppress instead of try-except-pass
