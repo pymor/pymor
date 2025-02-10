@@ -108,7 +108,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             logger.info('Writing Gmsh geometry file ...')
             # Create a temporary GEO-file if None is specified
             if geo_file_path is None:
-                geo_file = tempfile.NamedTemporaryFile(mode='wt', delete=False, suffix='.geo')
+                geo_file = tempfile.NamedTemporaryFile(mode='wt', delete=False, suffix='.geo')  # noqa: SIM115
                 geo_file_path = geo_file.name
             else:
                 geo_file = open(geo_file_path, 'w')  # noqa: SIM115
@@ -165,7 +165,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             geo_file_path = geo_file.name
         # Create a temporary MSH-file if no path is specified.
         if msh_file_path is None:
-            msh_file = tempfile.NamedTemporaryFile(mode='wt', delete=False, suffix='.msh')
+            msh_file = tempfile.NamedTemporaryFile(mode='wt', delete=False, suffix='.msh')  # noqa: SIM115
             msh_file_path = msh_file.name
             msh_file.close()
 
