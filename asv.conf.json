@@ -1,0 +1,22 @@
+{
+  "branches": [
+    "main"
+  ],
+  "build_command": [],
+  "env_dir": ".asv/env",
+  "environment_type": "virtualenv",
+  "html_dir": ".asv/html",
+  "install_command": [
+    "python -mpip install -r ./requirements-ci-current.txt",
+    "python -mpip install ."
+  ],
+  "project": "pymor",
+  "project_url": "https://pymor.org/",
+  "pythons": [
+    "3.13"
+  ],
+  "repo": ".",
+  "results_dir": ".asv/results",
+  "show_commit_url": "http://github.com/pymor/pymor/commit/",
+  "version": 1
+}
