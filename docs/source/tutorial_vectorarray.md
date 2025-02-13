@@ -110,7 +110,7 @@ wrapping for you.
 In case of {{ NumpyVectorSpace }}, the backend is NumPy and the data is given as NumPy arrays:
 
 ```{code-cell} ipython3
-space.make_array(np.arange(0, 14).reshape((2, 7)))
+space.make_array_TP(np.arange(0, 14).reshape((7, 2)))
 ```
 
 ## Converting NumPy arrays to VectorArrays
@@ -301,18 +301,17 @@ print(U)
 
 Often, a {{ VectorArray }} represents a basis, and we want to form linear combinations
 w.r.t. this basis.
-For this, we can use the {meth}`~pymor.vectorarrays.interface.VectorArray.lincomb` method:
+For this, we can use the {meth}`~pymor.vectorarrays.interface.VectorArray.lincomb_TP` method:
 
 ```{code-cell} ipython3
-V.lincomb(np.array([2,3]))
+V.lincomb_TP(np.array([2,3]))
 ```
 
 This can also be vectorized:
 
 ```{code-cell} ipython3
-V.lincomb(np.array([[2,3],
-                    [1,0],
-                    [0,1]]))
+V.lincomb_TP(np.array([[2,1,0],
+                       [3,0,1]]))
 ```
 
 Inner products can be computed using the {meth}`~pymor.vectorarrays.interface.VectorArray.inner`
@@ -407,7 +406,7 @@ U[1].scal(2)
 U[-1].scal(42)
 print(U)
 print(U[:3].gramian())
-print(U[[1,-1]].lincomb(np.array([1,1])))
+print(U[[1,-1]].lincomb_TP(np.array([1,1])))
 ```
 
 ```{note}

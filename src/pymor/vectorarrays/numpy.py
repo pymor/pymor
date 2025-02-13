@@ -254,8 +254,8 @@ class NumpyVectorSpace(VectorSpace):
     def make_array_TP(cls, obj):  # noqa: N805
         return cls._array_factory_TP(obj)
 
-    @make_array.instancemethod
-    def make_array(self, obj):
+    @make_array_TP.instancemethod
+    def make_array_TP(self, obj):
         """:noindex:"""  # noqa: D400
         return self._array_factory_TP(obj, space=self)
 

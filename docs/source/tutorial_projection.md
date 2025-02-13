@@ -317,11 +317,11 @@ u_N
 ```
 
 To reconstruct the high-dimensional approximation {math}`\mathbb{V}_N \cdot u_N(\mu)`
-from {math}`u_N(\mu)` we can use the {meth}`~pymor.vectorarrays.interface.VectorArray.lincomb`
+from {math}`u_N(\mu)` we can use the {meth}`~pymor.vectorarrays.interface.VectorArray.lincomb_TP`
 method:
 
 ```{code-cell} ipython3
-U_N = basis.lincomb(u_N.T)
+U_N = basis.lincomb_TP(u_N)
 U_N
 ```
 

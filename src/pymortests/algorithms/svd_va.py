@@ -36,7 +36,7 @@ def test_method_of_snapshots(vector_array, method):
     assert np.allclose(Vh @ Vh.T.conj(), np.eye(len(s)))
     if len(s) > 0:
         U.scal(s)
-        UsVh = U.lincomb(Vh.T)
+        UsVh = U.lincomb_TP(Vh)
         assert np.all(almost_equal(A, UsVh, atol=s[0]*4e-8*2))
 
 
@@ -52,7 +52,7 @@ def test_method_of_snapshots_with_product(operator_with_arrays_and_products, met
     assert Vh.shape[1] == len(A)
     assert np.allclose(Vh @ Vh.T.conj(), np.eye(len(s)))
     U.scal(s)
-    UsVh = U.lincomb(Vh.T)
+    UsVh = U.lincomb_TP(Vh)
     assert np.all(almost_equal(A, UsVh, rtol=4e-8))
 
 

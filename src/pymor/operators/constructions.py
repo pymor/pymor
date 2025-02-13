@@ -394,7 +394,7 @@ class ProjectedOperator(Operator):
                 V = self.operator.apply(U, mu=mu)
                 return self.range.make_array(self.product.apply2(V, self.range_basis))
         else:
-            UU = self.source_basis.lincomb(U.to_numpy())
+            UU = self.source_basis.lincomb_TP(U.to_numpy().T)
             if self.range_basis is None:
                 return self.operator.apply(UU, mu=mu)
             elif self.product is None:
@@ -411,7 +411,7 @@ class ProjectedOperator(Operator):
         if self.source_basis is None:
             J = self.operator.jacobian(U, mu=mu)
         else:
-            J = self.operator.jacobian(self.source_basis.lincomb(U.to_numpy()), mu=mu)
+            J = self.operator.jacobian(self.source_basis.lincomb_TP(U.to_numpy().T), mu=mu)
         from pymor.algorithms.projection import project
         pop = project(J, range_basis=self.range_basis, source_basis=self.source_basis,
                       product=self.product)
@@ -435,7 +435,7 @@ class ProjectedOperator(Operator):
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         if self.range_basis is not None:
-            V = self.range_basis.lincomb(V.to_numpy())
+            V = self.range_basis.lincomb_TP(V.to_numpy().T)
         U = self.operator.apply_adjoint(V, mu)
         if self.source_basis is not None:
             U = self.source.make_array(U.inner(self.source_basis))
@@ -499,7 +499,7 @@ class LowRankOperator(Operator):
             V = spla.solve(self.core, V)
         else:
             V = self.core @ V
-        return self.left.lincomb(V.T)
+        return self.left.lincomb_TP(V)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
@@ -508,7 +508,7 @@ class LowRankOperator(Operator):
             U = spla.solve(self.core.T.conj(), U)
         else:
             U = self.core.T.conj() @ U
-        return self.right.lincomb(U.T)
+        return self.right.lincomb_TP(U)
 
 
 class LowRankUpdatedOperator(LincombOperator):
@@ -561,15 +561,15 @@ class LowRankUpdatedOperator(LincombOperator):
         A, LR = self.operators
         L, C, R = LR.left, LR.core, LR.right
         if not LR.inverted:
-            L = L.lincomb(C.T)
-            R = R.lincomb(C.conj())
+            L = L.lincomb_TP(C)
+            R = R.lincomb_TP(C.conj().T)
         alpha, beta = self.evaluate_coefficients(mu)
         AinvV = A.apply_inverse(V)
         AinvL = A.apply_inverse(L)
         mat = alpha * C + beta * R.inner(AinvL)
         RhAinvV = R.inner(AinvV)
         U = AinvV
-        U.axpy(-beta, AinvL.lincomb(spla.solve(mat, RhAinvV).T))
+        U.axpy(-beta, AinvL.lincomb_TP(spla.solve(mat, RhAinvV)))
         U.scal(1 / alpha)
         return U
 
@@ -579,15 +579,15 @@ class LowRankUpdatedOperator(LincombOperator):
         A, LR = self.operators
         L, C, R = LR.left, LR.core, LR.right
         if not LR.inverted:
-            L = L.lincomb(C.T)
-            R = R.lincomb(C.conj())
+            L = L.lincomb_TP(C)
+            R = R.lincomb_TP(C.conj().T)
         alpha, beta = (c.conjugate() for c in self.evaluate_coefficients(mu))
         AinvhU = A.apply_inverse_adjoint(U)
         AinvhR = A.apply_inverse_adjoint(R)
         mat = alpha * C.T.conj() + beta * L.inner(AinvhR)
         LhAinvhU = L.inner(AinvhU)
         V = AinvhU
-        V.axpy(-beta, AinvhR.lincomb(spla.solve(mat, LhAinvhU).T))
+        V.axpy(-beta, AinvhR.lincomb_TP(spla.solve(mat, LhAinvhU)))
         V.scal(1 / alpha)
         return V
 
@@ -815,7 +815,7 @@ class VectorArrayOperator(Operator):
     def apply(self, U, mu=None):
         assert U in self.source
         if not self.adjoint:
-            return self.array.lincomb(U.to_numpy())
+            return self.array.lincomb_TP(U.to_numpy().T)
         else:
             return self.range.make_array(self.array.inner(U).T)
 
@@ -828,7 +828,7 @@ class VectorArrayOperator(Operator):
         Q, R = gram_schmidt(self.array, return_R=True, reiterate=False)
         if self.adjoint:
             v = spla.lstsq(R.T.conj(), V.to_numpy().T)[0]
-            U = Q.lincomb(v.T)
+            U = Q.lincomb_TP(v)
         else:
             v = Q.inner(V)
             u = spla.lstsq(R, v)[0]
@@ -841,7 +841,7 @@ class VectorArrayOperator(Operator):
         if not self.adjoint:
             return self.source.make_array(self.array.inner(V).T)
         else:
-            return self.array.lincomb(V.to_numpy())
+            return self.array.lincomb_TP(V.to_numpy().T)
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         adjoint_op = VectorArrayOperator(self.array, adjoint=not self.adjoint)
@@ -1448,10 +1448,10 @@ class LinearInputOperator(Operator):
         self.parameters_own = {'input': B.source.dim}
 
     def apply(self, U, mu=None):
-        return self.B.as_range_array(mu).lincomb(U.to_numpy() * mu['input'])
+        return self.B.as_range_array(mu).lincomb_TP((U.to_numpy() * mu['input']).T)
 
     def as_range_array(self, mu=None):
-        return self.B.as_range_array(mu).lincomb(mu['input'])
+        return self.B.as_range_array(mu).lincomb_TP(mu['input'])
 
 
 class QuadraticFunctional(Operator):

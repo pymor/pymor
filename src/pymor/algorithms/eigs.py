@@ -189,7 +189,7 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
 
         H, Qs = _qr_iteration(H, shifts, complex_evp=complex_evp)
 
-        V = V.lincomb(Qs.T)
+        V = V.lincomb_TP(Qs)
         f = V[k] * H[k, k - 1] + f * Qs[l - 1, k - 1]
         V = V[:k]
         H = H[:k, :k]
@@ -197,7 +197,7 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
     if sigma is not None:
         ews = 1 / ews + sigma
 
-    return ews[:k0], V.lincomb(evs[:, :k0].T)
+    return ews[:k0], V.lincomb_TP(evs[:, :k0])
 
 
 def _arnoldi(A, l, b, complex_evp):

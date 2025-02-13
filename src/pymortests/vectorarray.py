@@ -652,7 +652,7 @@ def test_inner_self(vectors_and_indices):
 def test_lincomb_1d(vectors_and_indices, data):
     v, ind = vectors_and_indices
     coeffs = draw_coefficients(data, v.len_ind(ind))
-    lc = v[ind].lincomb(coeffs)
+    lc = v[ind].lincomb_TP(coeffs)
     assert lc.space == v.space
     assert len(lc) == 1
     lc2 = v.zeros()
@@ -665,13 +665,13 @@ def test_lincomb_1d(vectors_and_indices, data):
 def test_lincomb_2d(vectors_and_indices, data):
     v, ind = vectors_and_indices
     for count in (0, 1, 5):
-        coeffs = draw_coefficients(data, (count, v.len_ind(ind)))
-        lc = v[ind].lincomb(coeffs)
+        coeffs = draw_coefficients(data, (v.len_ind(ind), count))
+        lc = v[ind].lincomb_TP(coeffs)
         assert lc.space == v.space
         assert len(lc) == count
         lc2 = v.empty(reserve=count)
-        for coeffs_1d in coeffs:
-            lc2.append(v[ind].lincomb(coeffs_1d))
+        for coeffs_1d in coeffs.T:
+            lc2.append(v[ind].lincomb_TP(coeffs_1d))
         assert np.all(almost_equal(lc, lc2))
 
 
@@ -680,17 +680,17 @@ def test_lincomb_wrong_coefficients(vectors_and_indices, data):
     v, ind = vectors_and_indices
     coeffs = draw_coefficients(data, v.len_ind(ind) + 1)
     with pytest.raises(Exception):
-        v[ind].lincomb(coeffs)
-    coeffs = draw_coefficients(data, v.len_ind(ind)).reshape((1, 1, -1))
+        v[ind].lincomb_TP(coeffs)
+    coeffs = draw_coefficients(data, v.len_ind(ind)).reshape((-1, 1, 1))
     with pytest.raises(Exception):
-        v[ind].lincomb(coeffs)
+        v[ind].lincomb_TP(coeffs)
     if v.len_ind(ind) > 0:
         coeffs = draw_coefficients(data, v.len_ind(ind) - 1)
         with pytest.raises(Exception):
-            v[ind].lincomb(coeffs)
+            v[ind].lincomb_TP(coeffs)
         coeffs = np.array([])
         with pytest.raises(Exception):
-            v[ind].lincomb(coeffs)
+            v[ind].lincomb_TP(coeffs)
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices)

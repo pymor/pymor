@@ -1188,7 +1188,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
             I = p.initial_data.evaluate(grid.quadrature_points(0, order=2), mu).squeeze()
             I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
             I = m.solution_space.make_array(I)
-            return I.lincomb(U).to_numpy()
+            return I.lincomb_TP(U.T).to_numpy()
         I = NumpyGenericOperator(initial_projection, dim_range=grid.size(0), linear=True,
                                  parameters=p.initial_data.parameters)
     else:

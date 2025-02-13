@@ -384,7 +384,7 @@ class Operator(ParametricObject):
         :attr:`~pymor.operators.interface.Operator.range`,
         such that ::
 
-            V.lincomb(U.to_numpy()) == self.apply(U, mu)
+            V.lincomb_TP(U.to_numpy().T) == self.apply(U, mu)
 
         for all |VectorArrays| `U`.
 

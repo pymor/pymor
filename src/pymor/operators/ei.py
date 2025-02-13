@@ -110,12 +110,12 @@ class EmpiricalInterpolatedOperator(Operator):
         try:
             if self.triangular:
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.to_numpy().T,
-                                                              lower=True, unit_diagonal=True).T
+                                                              lower=True, unit_diagonal=True)
             else:
-                interpolation_coefficients = solve(self.interpolation_matrix, AU.to_numpy().T).T
+                interpolation_coefficients = solve(self.interpolation_matrix, AU.to_numpy().T)
         except ValueError:  # this exception occurs when AU contains NaNs ...
-            interpolation_coefficients = np.empty((len(AU), len(self.collateral_basis))) + np.nan
-        return self.collateral_basis.lincomb(interpolation_coefficients)
+            interpolation_coefficients = np.empty((len(self.collateral_basis), len(AU))) + np.nan
+        return self.collateral_basis.lincomb_TP(interpolation_coefficients)
 
     def jacobian(self, U, mu=None):
         assert self.parameters.assert_compatible(mu)
@@ -139,12 +139,12 @@ class EmpiricalInterpolatedOperator(Operator):
             try:
                 if self.triangular:
                     interpolation_coefficients = solve_triangular(self.interpolation_matrix, JU.to_numpy().T,
-                                                                  lower=True, unit_diagonal=True).T
+                                                                  lower=True, unit_diagonal=True)
                 else:
-                    interpolation_coefficients = solve(self.interpolation_matrix, JU.to_numpy().T).T
+                    interpolation_coefficients = solve(self.interpolation_matrix, JU.to_numpy().T)
             except ValueError:  # this exception occurs when AU contains NaNs ...
-                interpolation_coefficients = np.empty((len(JU), len(self.collateral_basis))) + np.nan
-            J = self.collateral_basis.lincomb(interpolation_coefficients)
+                interpolation_coefficients = np.empty((len(self.collateral_basis), len(JU))) + np.nan
+            J = self.collateral_basis.lincomb_TP(interpolation_coefficients)
             if isinstance(J.space, NumpyVectorSpace):
                 J = NumpyMatrixOperator(J.to_numpy().T)
             else:
@@ -173,17 +173,17 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
 
     def apply(self, U, mu=None):
         assert self.parameters.assert_compatible(mu)
-        U_dofs = self.source_basis_dofs.lincomb(U.to_numpy())
+        U_dofs = self.source_basis_dofs.lincomb_TP(U.to_numpy().T)
         AU = self.restricted_operator.apply(U_dofs, mu=mu)
         try:
             if self.triangular:
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.to_numpy().T,
-                                                              lower=True, unit_diagonal=True).T
+                                                              lower=True, unit_diagonal=True)
             else:
-                interpolation_coefficients = solve(self.interpolation_matrix, AU.to_numpy().T).T
+                interpolation_coefficients = solve(self.interpolation_matrix, AU.to_numpy().T)
         except ValueError:  # this exception occurs when AU contains NaNs ...
-            interpolation_coefficients = np.empty((len(AU), len(self.projected_collateral_basis))) + np.nan
-        return self.projected_collateral_basis.lincomb(interpolation_coefficients)
+            interpolation_coefficients = np.empty((len(self.projected_collateral_basis), len(AU))) + np.nan
+        return self.projected_collateral_basis.lincomb_TP(interpolation_coefficients)
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
@@ -194,19 +194,19 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
             return NumpyMatrixOperator(np.zeros((self.range.dim, self.source.dim)), solver_options=options,
                                        name=self.name + '_jacobian')
 
-        U_dofs = self.source_basis_dofs.lincomb(U.to_numpy()[0])
+        U_dofs = self.source_basis_dofs.lincomb_TP(U.to_numpy()[0])
         J = self.restricted_operator.jacobian(U_dofs, mu=mu).apply(self.source_basis_dofs)
         try:
             if self.triangular:
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, J.to_numpy().T,
-                                                              lower=True, unit_diagonal=True).T
+                                                              lower=True, unit_diagonal=True)
             else:
-                interpolation_coefficients = solve(self.interpolation_matrix, J.to_numpy().T).T
+                interpolation_coefficients = solve(self.interpolation_matrix, J.to_numpy().T)
         except ValueError:  # this exception occurs when J contains NaNs ...
-            interpolation_coefficients = (np.empty((len(self.source_basis_dofs),
-                                                    len(self.projected_collateral_basis)))
+            interpolation_coefficients = (np.empty((len(self.projected_collateral_basis),
+                                                    len(self.source_basis_dofs)))
                                           + np.nan)
-        M = self.projected_collateral_basis.lincomb(interpolation_coefficients)
+        M = self.projected_collateral_basis.lincomb_TP(interpolation_coefficients)
         if isinstance(M.space, NumpyVectorSpace):
             return NumpyMatrixOperator(M.to_numpy().T, solver_options=options)
         else:

@@ -80,7 +80,7 @@ def method_of_snapshots(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=
 
         evals, V = spla.eigh(B, overwrite_a=True, subset_by_index=eigvals)
         evals = evals[::-1]
-        V = V.T[::-1, :]
+        V = V[:, ::-1]
 
         tol = max(rtol ** 2 * evals[0], atol ** 2)
         above_tol = np.where(evals >= tol)[0]
@@ -101,11 +101,11 @@ def method_of_snapshots(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=
             selected_modes = A.dim
 
         s = np.sqrt(evals[:selected_modes])
-        V = V[:selected_modes]
-        Vh = V.conj()
+        V = V[:, :selected_modes]
+        Vh = V.conj().T
 
     with logger.block(f'Computing left-singular vectors ({len(V)} vectors) ...'):
-        U = A.lincomb(V / s[:, np.newaxis])
+        U = A.lincomb_TP(V / s)
 
     return U, s, Vh
 
@@ -187,6 +187,6 @@ def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
         Vh = Vh[:selected_modes]
 
     with logger.block(f'Computing left singular vectors ({selected_modes} modes) ...'):
-        U = Q.lincomb(U2.T)
+        U = Q.lincomb_TP(U2)
 
     return U, s, Vh

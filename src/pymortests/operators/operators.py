@@ -539,7 +539,7 @@ def test_as_range_array(operator_with_arrays):
             or op.source.dim > as_array_max_length()):
         return
     array = op.as_range_array(mu)
-    assert np.all(almost_equal(array.lincomb(U.to_numpy()), op.apply(U, mu=mu)))
+    assert np.all(almost_equal(array.lincomb_TP(U.to_numpy().T), op.apply(U, mu=mu)))
 
 
 @pytest.mark.builtin

@@ -118,7 +118,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
 
     def lincomb(self, coefficients, ind):
         assert self._blocks_are_valid()
-        lincombs = [_indexed(block, ind).lincomb(coefficients) for block in self._blocks]
+        lincombs = [_indexed(block, ind).lincomb_TP(coefficients.T) for block in self._blocks]
         return type(self)(lincombs, self.space)
 
     def norm2(self, ind):

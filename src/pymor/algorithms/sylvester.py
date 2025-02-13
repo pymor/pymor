@@ -124,13 +124,13 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
             rhs = -BBrTQ[i].copy()
             if i < -1:
                 if Er is not None:
-                    rhs -= A.apply(V.lincomb(TEr[i, :i:-1].conjugate()))
-                rhs -= E.apply(V.lincomb(TAr[i, :i:-1].conjugate()))
+                    rhs -= A.apply(V.lincomb_TP(TEr[i, :i:-1].conjugate().T))
+                rhs -= E.apply(V.lincomb_TP(TAr[i, :i:-1].conjugate().T))
             TErii = 1 if Er is None else TEr[i, i]
             eAaE = TErii.conjugate() * A + TAr[i, i].conjugate() * E
             V.append(eAaE.apply_inverse(rhs))
 
-        V = V.lincomb(Z.conjugate()[:, ::-1])
+        V = V.lincomb_TP(Z.conjugate()[:, ::-1].T)
         V = V.real
 
     # solve for W, from the first column to the last
@@ -143,13 +143,13 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
             rhs = -CTCrZ[i].copy()
             if i > 0:
                 if Er is not None:
-                    rhs -= A.apply_adjoint(W.lincomb(TEr[:i, i]))
-                rhs -= E.apply_adjoint(W.lincomb(TAr[:i, i]))
+                    rhs -= A.apply_adjoint(W.lincomb_TP(TEr[:i, i].T))
+                rhs -= E.apply_adjoint(W.lincomb_TP(TAr[:i, i].T))
             TErii = 1 if Er is None else TEr[i, i]
             eAaE = TErii.conjugate() * A + TAr[i, i].conjugate() * E
             W.append(eAaE.apply_inverse_adjoint(rhs))
 
-        W = W.lincomb(Q.conjugate())
+        W = W.lincomb_TP(Q.conjugate().T)
         W = W.real
 
     if compute_V and compute_W:

@@ -53,7 +53,7 @@ def test_pod_with_coefficients(vector_array, method):
     assert len(U) == len(s) == len(Vh)
     if len(s) > 0:
         U.scal(s)
-        UsVh = U.lincomb(Vh.T)
+        UsVh = U.lincomb_TP(Vh)
         assert spla.norm((A - UsVh).norm()) / spla.norm(A.norm()) < 1e-6
 
 
@@ -80,5 +80,5 @@ def test_pod_with_product_and_coefficients(operator_with_arrays_and_products, me
     assert len(U) == len(s) == len(Vh)
     if len(s) > 0:
         U.scal(s)
-        UsVh = U.lincomb(Vh.T)
+        UsVh = U.lincomb_TP(Vh)
         assert spla.norm((A - UsVh).norm() / spla.norm(A.norm())) < 1e-7

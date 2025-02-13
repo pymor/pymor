@@ -101,7 +101,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     collateral_basis = U.empty()
-    K = np.eye(len(U), dtype=U[0].dofs([0]).dtype)  # matrix s.t. U = U_initial.lincomb(K)
+    K = np.eye(len(U), dtype=U[0].dofs([0]).dtype)  # matrix s.t. U = U_initial.lincomb_TP(K.T)
     coefficients = np.zeros((0, len(U)))
     max_errs = []
     triangularity_errs = []
@@ -169,7 +169,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     if nodal_basis:
         logger.info('Building nodal basis.')
         inv_interpolation_matrix = spla.inv(interpolation_matrix)
-        collateral_basis = collateral_basis.lincomb(inv_interpolation_matrix.T)
+        collateral_basis = collateral_basis.lincomb_TP(inv_interpolation_matrix)
         coefficients = inv_interpolation_matrix.T @ coefficients
         interpolation_matrix = np.eye(len(collateral_basis))
 
@@ -240,8 +240,8 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
 
         if len(interpolation_dofs) > 0:
             coefficients = spla.solve(interpolation_matrix,
-                                      collateral_basis[i].dofs(interpolation_dofs).T).T
-            U_interpolated = collateral_basis[:len(interpolation_dofs)].lincomb(coefficients)
+                                      collateral_basis[i].dofs(interpolation_dofs).T)
+            U_interpolated = collateral_basis[:len(interpolation_dofs)].lincomb_TP(coefficients)
             ERR = collateral_basis[i] - U_interpolated
         else:
             ERR = collateral_basis[i]
@@ -459,7 +459,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
         )
         snapshot_count = sum(snapshot_counts)
         cum_snapshot_counts = np.hstack(([0], np.cumsum(snapshot_counts)))
-        K = np.eye(snapshot_count)  # matrix s.t. U = U_initial.lincomb(K)
+        K = np.eye(snapshot_count)  # matrix s.t. U = U_initial.lincomb_TP(K.T)
         coefficients = np.zeros((0, snapshot_count))
         max_err_ind = np.argmax(errs)
         initial_max_err = max_err = errs[max_err_ind]
@@ -521,7 +521,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
     if nodal_basis:
         logger.info('Building nodal basis.')
         inv_interpolation_matrix = spla.inv(interpolation_matrix)
-        collateral_basis = collateral_basis.lincomb(inv_interpolation_matrix.T)
+        collateral_basis = collateral_basis.lincomb_TP(inv_interpolation_matrix)
         coefficients = inv_interpolation_matrix.T @ coefficients
         interpolation_matrix = np.eye(len(collateral_basis))
 

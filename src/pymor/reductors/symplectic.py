@@ -80,7 +80,7 @@ class QuadraticHamiltonianRBReductor(BasicObject):
         return rom
 
     def reconstruct(self, u):
-        return self.RB[:u.dim//2].lincomb(u.to_numpy())
+        return self.RB[:u.dim//2].lincomb_TP(u.to_numpy().T)
 
 
 class ReducedQuadraticHamiltonianModel(BaseQuadraticHamiltonianModel):
