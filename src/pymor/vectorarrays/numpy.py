@@ -251,6 +251,15 @@ class NumpyVectorSpace(VectorSpace):
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
+    def make_array_TP(cls, obj):  # noqa: N805
+        return cls._array_factory_TP(obj)
+
+    @make_array.instancemethod
+    def make_array(self, obj):
+        """:noindex:"""  # noqa: D400
+        return self._array_factory_TP(obj, space=self)
+
+    @classinstancemethod
     def from_numpy(cls, data, ensure_copy=False):  # noqa: N805
         return cls._array_factory(data.copy() if ensure_copy else data)
 
@@ -296,6 +305,23 @@ class NumpyVectorSpace(VectorSpace):
         else:
             assert array.shape[1] == space.dim
             return NumpyVectorArray(space, NumpyVectorArrayImpl(array))
+
+    @classmethod
+    def _array_factory_TP(cls, array, space=None):
+        if type(array) is np.ndarray:
+            pass
+        elif issparse(array):
+            array = array.toarray()
+        else:
+            array = np.array(array, ndmin=2)
+        if array.ndim != 2:
+            assert array.ndim == 1
+            array = np.reshape(array, (-1, 1))
+        if space is None:
+            return NumpyVectorArray(cls(array.shape[0]), NumpyVectorArrayImpl(array.T))
+        else:
+            assert array.shape[0] == space.dim
+            return NumpyVectorArray(space, NumpyVectorArrayImpl(array.T))
 
     @property
     def is_scalar(self):

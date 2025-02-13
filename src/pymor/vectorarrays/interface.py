@@ -6,7 +6,7 @@ from numbers import Integral, Number
 
 import numpy as np
 
-from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
+from pymor.core.base import BasicObject, ImmutableObject, abstractmethod, classinstancemethod
 from pymor.core.defaults import defaults
 from pymor.tools.random import get_rng
 
@@ -269,6 +269,17 @@ class VectorArray(BasicObject):
         """
         return self.impl.to_numpy(ensure_copy, self.ind)
 
+    def to_numpy_TP(self, ensure_copy=False):
+        """Return (self.dim, len(self)) NumPy Array with the data stored in the array.
+
+        Parameters
+        ----------
+        ensure_copy
+            If `False`, modifying the returned |NumPy array| might alter the original
+            |VectorArray|. If `True` always a copy of the array data is made.
+        """
+        return self.impl.to_numpy(ensure_copy, self.ind).T
+
     def append(self, other, remove_from_other=False):
         """Append vectors to the array.
 
@@ -391,9 +402,9 @@ class VectorArray(BasicObject):
 
         is equivalent to::
 
-            U.dofs(np.arange(U.dim)) @ V.dofs(np.arange(V.dim)).T
+            U.dofs_TP.T(np.arange(U.dim)) @ V.dofs_TP(np.arange(V.dim))
 
-        (Note, that :meth:`dofs` is only intended to be called for a
+        (Note, that :meth:`dofs_TP` is only intended to be called for a
         small number of DOF indices.)
 
         If a `product` |Operator| is specified, this |Operator| is
@@ -445,9 +456,9 @@ class VectorArray(BasicObject):
 
         is equivalent to::
 
-            np.sum(U.dofs(np.arange(U.dim)) * V.dofs(np.arange(V.dim)), axis=-1)
+            np.sum(U.dofs_TP(np.arange(U.dim)) * V.dofs_TP(np.arange(V.dim)), axis=0)
 
-        (Note, that :meth:`dofs` is only intended to be called for a
+        (Note, that :meth:`dofs_TP` is only intended to be called for a
         small number of DOF indices.)
 
         If a `product` |Operator| is specified, this |Operator| is
@@ -518,6 +529,33 @@ class VectorArray(BasicObject):
             coefficients = coefficients[np.newaxis, ...]
         assert coefficients.shape[-1] == len(self)
         return type(self)(self.space, self.impl.lincomb(coefficients, self.ind))
+
+    def lincomb_TP(self, coefficients):
+        """Returns linear combinations of the vectors contained in the array.
+
+        Parameters
+        ----------
+        coefficients
+            A |NumPy array| of dimension 1 or 2 containing the linear
+            coefficients. `coefficients.shape[0]` has to agree with
+            `len(self)`.
+
+        Returns
+        -------
+        A |VectorArray| `result` such that:
+
+            result[i] = ∑ self[j] * coefficients[j,i]
+
+        in case `coefficients` is of dimension 2, otherwise
+        `len(result) == 1` and
+
+            result[0] = ∑ self[j] * coefficients[j].
+        """
+        assert 1 <= coefficients.ndim <= 2
+        if coefficients.ndim == 1:
+            coefficients = coefficients[..., np.newaxis]
+        assert coefficients.shape[0] == len(self)
+        return self.lincomb(coefficients.T)
 
     def norm(self, product=None, tol=None, raise_complex=None):
         """Norm with respect to a given inner product.
@@ -642,6 +680,21 @@ class VectorArray(BasicObject):
             or (isinstance(dof_indices, np.ndarray) and dof_indices.ndim == 1
                 and (len(dof_indices) == 0 or np.max(dof_indices) < self.dim))
         return self.impl.dofs(np.asarray(dof_indices, dtype=np.int64), self.ind)
+
+    def dofs_TP(self, dof_indices):
+        """Extract DOFs of the vectors contained in the array.
+
+        Parameters
+        ----------
+        dof_indices
+            List or 1D |NumPy array| of indices of the DOFs that are to be returned.
+
+        Returns
+        -------
+        A |NumPy array| `result` such that `result[i, j]` is the `dof_indices[i]`-th
+        DOF of the `j`-th vector of the array.
+        """
+        return self.dofs(dof_indices).T
 
     def amax(self):
         """The maximum absolute value of the DOFs contained in the array.
@@ -968,6 +1021,33 @@ class VectorSpace(ImmutableObject):
         A |VectorArray| with `data` as data.
         """
         raise NotImplementedError
+
+    @classinstancemethod
+    def from_numpy_TP(cls, data, ensure_copy=False): # noqa: N805
+        """Create a |VectorArray| from a |NumPy array|.
+
+        Note that this method will not be supported by all vector
+        space implementations.
+
+        Parameters
+        ----------
+        data
+            |NumPy| array of shape `(dim, len)` where `len` is the
+            number of vectors and `dim` their dimension.
+        ensure_copy
+            If `False`, modifying the returned |VectorArray| might alter the original
+            |NumPy array|. If `True` always a copy of the array data is made.
+
+        Returns
+        -------
+        A |VectorArray| with `data` as data.
+        """
+        return cls.from_numpy(data.T, ensure_copy=ensure_copy)
+
+    @from_numpy_TP.instancemethod
+    def from_numpy_TP(self, data, ensure_copy=False):
+        """:noindex:"""  # noqa: D400
+        return self.from_numpy(data.T, ensure_copy=ensure_copy)
 
     def __eq__(self, other):
         return other is self
