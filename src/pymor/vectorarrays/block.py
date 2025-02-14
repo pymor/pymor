@@ -135,7 +135,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         dof_indices = dof_indices - self._bins[block_inds]
         block_inds = self._bin_map[block_inds]
         blocks = [_indexed(b, ind) for b in self._blocks]
-        return np.array([blocks[bi].dofs([ci])[:, 0]
+        return np.array([blocks[bi].dofs_TP([ci])[0, :]
                          for bi, ci in zip(block_inds, dof_indices)]).T
 
     def amax(self, ind):

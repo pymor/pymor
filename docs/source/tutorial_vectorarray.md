@@ -447,7 +447,7 @@ space = NumpyVectorSpace(6)
 U = space.from_numpy_TP(np.arange(6) * 2.)
 U.append(space.full(-1))
 print(U)
-print(U.dofs(np.array([3, 5])))
+print(U.dofs_TP(np.array([3, 5])))
 ```
 
 Related methods are {meth}`~pymor.vectorarrays.interface.VectorArray.sup_norm` and
@@ -458,7 +458,7 @@ print(U.sup_norm())
 dofs, values = U.amax()
 print(dofs, values)
 for i in range(len(U)):
-    print(np.abs(U[i].dofs([dofs[i]])) == values[i])
+    print(np.abs(U[i].dofs_TP([dofs[i]])) == values[i])
 ```
 
 By speaking of degrees of freedom, we assume that our vectors are coefficient vectors w.r.t.
@@ -469,7 +469,7 @@ values at all degrees of freedom and that {meth}`~pymor.vectorarrays.interface.V
 is just the Euclidean inner product of these coefficient vectors:
 
 ```{code-cell} ipython3
-numpy_array = U.dofs(np.arange(U.dim)).T
+numpy_array = U.dofs_TP(np.arange(U.dim))
 print(numpy_array)
 print(numpy_array == U.to_numpy_TP())
 print(numpy_array.T @ numpy_array == U.inner(U))
@@ -477,7 +477,7 @@ print(numpy_array.T @ numpy_array == U.inner(U))
 
 ```{warning}
 Theoretically, {meth}`~pymor.vectorarrays.interface.VectorArray.dofs` allows to extract all
-data from a {{ VectorArray }} by calling `U.dofs(np.arange(U.dim))` as above.
+data from a {{ VectorArray }} by calling `U.dofs_TP(np.arange(U.dim))` as above.
 However, doing so is strongly discouraged and might lead to bad performance as
 {meth}`~pymor.vectorarrays.interface.VectorArray.dofs` is
 designed to be used to only extract a small amount of degrees of freedom.

@@ -421,8 +421,8 @@ def test_restricted(operator_with_arrays, rng):
             rop, source_dofs = op.restricted(dofs)
         except NotImplementedError:
             return
-        op_U = rop.range.make_array_TP(op.apply(U, mu=mu).dofs(dofs).T)
-        rop_U = rop.apply(rop.source.make_array_TP(U.dofs(source_dofs).T), mu=mu)
+        op_U = rop.range.make_array_TP(op.apply(U, mu=mu).dofs_TP(dofs))
+        rop_U = rop.apply(rop.source.make_array_TP(U.dofs_TP(source_dofs)), mu=mu)
         assert_all_almost_equal(op_U, rop_U, rtol=1e-13)
 
 
@@ -438,8 +438,8 @@ def test_restricted_jacobian(operator_with_arrays, rng):
             return
         jac_U = U[0]
         apply_to = U[0]
-        op_U = rop.range.make_array_TP(op.jacobian(jac_U, mu=mu).apply(apply_to).dofs(dofs).T)
-        r_apply_to = rop.source.make_array_TP(apply_to.dofs(source_dofs).T)
+        op_U = rop.range.make_array_TP(op.jacobian(jac_U, mu=mu).apply(apply_to).dofs_TP(dofs))
+        r_apply_to = rop.source.make_array_TP(apply_to.dofs_TP(source_dofs))
         rop_U = rop.jacobian(r_apply_to, mu=mu).apply(r_apply_to)
         assert len(rop_U) == len(op_U)
         assert len(r_apply_to) == len(apply_to)

@@ -766,33 +766,33 @@ def test_sup_norm(vectors_and_indices):
 def test_dofs(vectors_and_indices, random_count, data):
     v, ind = vectors_and_indices
     c = v.copy()
-    dofs = c[ind].dofs(np.array([], dtype=int))
+    dofs = c[ind].dofs_TP(np.array([], dtype=int))
     assert isinstance(dofs, np.ndarray)
-    assert dofs.shape == (v.len_ind(ind), 0)
+    assert dofs.shape == (0, v.len_ind(ind))
 
     c = v.copy()
-    dofs = c[ind].dofs([])
+    dofs = c[ind].dofs_TP([])
     assert isinstance(dofs, np.ndarray)
-    assert dofs.shape == (v.len_ind(ind), 0)
+    assert dofs.shape == (0, v.len_ind(ind))
 
     assume(v.dim > 0)
 
     c_ind = data.draw(arrays(np.int64, random_count, elements=hyst.integers(0, v.dim-1)))
     c = v.copy()
-    dofs = c[ind].dofs(c_ind)
-    assert dofs.shape == (v.len_ind(ind), random_count)
+    dofs = c[ind].dofs_TP(c_ind)
+    assert dofs.shape == (random_count, v.len_ind(ind))
     c = v.copy()
-    dofs2 = c[ind].dofs(list(c_ind))
+    dofs2 = c[ind].dofs_TP(list(c_ind))
     assert np.all(dofs == dofs2)
     c = v.copy()
     c.scal(3.)
-    dofs2 = c[ind].dofs(c_ind)
+    dofs2 = c[ind].dofs_TP(c_ind)
     assert np.allclose(dofs * 3, dofs2)
     c = v.copy()
-    dofs2 = c[ind].dofs(np.hstack((c_ind, c_ind)))
-    assert np.all(dofs2 == np.hstack((dofs, dofs)))
+    dofs2 = c[ind].dofs_TP(np.hstack((c_ind, c_ind)))
+    assert np.all(dofs2 == np.vstack((dofs, dofs)))
     try:
-        assert np.all(dofs == indexed(v.to_numpy_TP(), ind).T[:, c_ind])
+        assert np.all(dofs == indexed(v.to_numpy_TP(), ind)[c_ind, :])
     except NotImplementedError:
         pass
 
@@ -801,13 +801,13 @@ def test_dofs(vectors_and_indices, random_count, data):
 def test_components_wrong_dof_indices(vectors_and_indices):
     v, ind = vectors_and_indices
     with pytest.raises(Exception):
-        v[ind].dofs(None)
+        v[ind].dofs_TP(None)
     with pytest.raises(Exception):
-        v[ind].dofs(1)
+        v[ind].dofs_TP(1)
     with pytest.raises(Exception):
-        v[ind].dofs(np.array([-1]))
+        v[ind].dofs_TP(np.array([-1]))
     with pytest.raises(Exception):
-        v[ind].dofs(np.array([v.dim]))
+        v[ind].dofs_TP(np.array([v.dim]))
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
@@ -817,7 +817,7 @@ def test_amax(vectors_and_indices):
     max_inds, max_vals = v[ind].amax()
     assert np.allclose(max_vals, v[ind].sup_norm())
     for i, max_ind, max_val in zip(ind_to_list(v, ind), max_inds, max_vals):
-        assert np.allclose(max_val, np.abs(v[[i]].dofs([max_ind])))
+        assert np.allclose(max_val, np.abs(v[[i]].dofs_TP([max_ind])))
 
 
 # def test_amax_zero_dim(zero_dimensional_vector_space):

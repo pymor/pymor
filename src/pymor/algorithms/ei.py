@@ -101,7 +101,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     collateral_basis = U.empty()
-    K = np.eye(len(U), dtype=U[0].dofs([0]).dtype)  # matrix s.t. U = U_initial.lincomb_TP(K.T)
+    K = np.eye(len(U), dtype=U[0].dofs_TP([0]).dtype)  # matrix s.t. U = U_initial.lincomb_TP(K.T)
     coefficients = np.zeros((0, len(U)))
     max_errs = []
     triangularity_errs = []
@@ -140,7 +140,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         if new_dof in interpolation_dofs:
             logger.info(f'DOF {new_dof} selected twice for interpolation! Stopping extension loop.')
             break
-        new_dof_value = new_vec.dofs([new_dof])[0, 0]
+        new_dof_value = new_vec.dofs_TP([new_dof])[0, 0]
         if new_dof_value == 0.:
             logger.info(f'DOF {new_dof} selected for interpolation has zero maximum error! Stopping extension loop.')
             break
@@ -151,14 +151,14 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         max_errs.append(max_err)
 
         # update U and ERR
-        new_dof_values = U.dofs([new_dof])
-        U.axpy(-new_dof_values[:, 0], new_vec)
-        K -= (K[max_err_ind] / new_dof_value) * new_dof_values
+        new_dof_values = U.dofs_TP([new_dof])
+        U.axpy(-new_dof_values[0, :], new_vec)
+        K -= (K[max_err_ind] / new_dof_value) * new_dof_values.T
         errs = ERR.norm() if error_norm is None else ERR.sup_norm() if error_norm == 'sup' else error_norm(ERR)
         max_err_ind = np.argmax(errs)
         max_err = errs[max_err_ind]
 
-    interpolation_matrix = collateral_basis.dofs(interpolation_dofs).T
+    interpolation_matrix = collateral_basis.dofs_TP(interpolation_dofs)
     triangularity_errors = np.abs(interpolation_matrix - np.tril(interpolation_matrix))
     for d in range(1, len(interpolation_matrix) + 1):
         triangularity_errs.append(np.max(triangularity_errors[:d, :d]))
@@ -240,7 +240,7 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
 
         if len(interpolation_dofs) > 0:
             coefficients = spla.solve(interpolation_matrix,
-                                      collateral_basis[i].dofs(interpolation_dofs).T)
+                                      collateral_basis[i].dofs_TP(interpolation_dofs))
             U_interpolated = collateral_basis[:len(interpolation_dofs)].lincomb_TP(coefficients)
             ERR = collateral_basis[i] - U_interpolated
         else:
@@ -254,7 +254,7 @@ def deim(U, modes=None, pod=True, atol=None, rtol=None, product=None, pod_option
             break
 
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
-        interpolation_matrix = collateral_basis[:len(interpolation_dofs)].dofs(interpolation_dofs).T
+        interpolation_matrix = collateral_basis[:len(interpolation_dofs)].dofs_TP(interpolation_dofs)
 
     if len(interpolation_dofs) < len(collateral_basis):
         del collateral_basis[len(interpolation_dofs):len(collateral_basis)]
@@ -489,7 +489,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
             if new_dof in interpolation_dofs:
                 logger.info(f'DOF {new_dof} selected twice for interpolation! Stopping extension loop.')
                 break
-            new_dof_value = new_vec.dofs([new_dof])[0, 0]
+            new_dof_value = new_vec.dofs_TP([new_dof])[0, 0]
             if new_dof_value == 0.:
                 logger.info(f'DOF {new_dof} selected for interpolation has zero maximum error! '
                             f'Stopping extension loop.')
@@ -509,7 +509,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
             max_err_ind = np.argmax(errs)
             max_err = errs[max_err_ind]
 
-    interpolation_matrix = collateral_basis.dofs(interpolation_dofs).T
+    interpolation_matrix = collateral_basis.dofs_TP(interpolation_dofs)
     triangularity_errors = np.abs(interpolation_matrix - np.tril(interpolation_matrix))
     for d in range(1, len(interpolation_matrix) + 1):
         triangularity_errs.append(np.max(triangularity_errors[:d, :d]))
@@ -553,7 +553,7 @@ def _parallel_ei_greedy_update(new_vec=None, new_dof=None, data=None):
     U = data['U']
     error_norm = data['error_norm']
 
-    new_dof_values = U.dofs([new_dof])[:, 0]
+    new_dof_values = U.dofs_TP([new_dof])[0, :]
     U.axpy(-new_dof_values, new_vec)
 
     errs = U.norm() if error_norm is None else U.sup_norm() if error_norm == 'sup' else error_norm(U)

@@ -531,8 +531,9 @@ class Operator(ParametricObject):
         operator along with an array `source_dofs` such that for any
         |VectorArray| `U` in `self.source` the following is true::
 
-            self.apply(U, mu).dofs(dofs)
-                == restricted_op.apply(NumpyVectorArray(U.dofs(source_dofs)), mu))
+            self.apply(U, mu).dofs_TP(dofs)
+                == restricted_op.apply(restricted_op.source.from_numpy_TP(U.dofs_TP(source_dofs))
+                                       mu).to_numpy_TP()
 
         Such an operator is mainly useful for
         :class:`empirical interpolation <pymor.operators.ei.EmpiricalInterpolatedOperator>`

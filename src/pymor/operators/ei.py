@@ -86,7 +86,7 @@ class EmpiricalInterpolatedOperator(Operator):
             except NotImplementedError:
                 self.logger.warning('Operator has no "restricted" method. The full operator will be evaluated.')
                 self._operator = operator
-            interpolation_matrix = collateral_basis.dofs(interpolation_dofs).T
+            interpolation_matrix = collateral_basis.dofs_TP(interpolation_dofs)
             self.interpolation_matrix = interpolation_matrix
         self.collateral_basis = collateral_basis.copy()
 
@@ -103,10 +103,10 @@ class EmpiricalInterpolatedOperator(Operator):
             return self.range.zeros(len(U))
 
         if hasattr(self, 'restricted_operator'):
-            U_dofs = NumpyVectorSpace.make_array_TP(U.dofs(self.source_dofs).T)
+            U_dofs = NumpyVectorSpace.make_array_TP(U.dofs_TP(self.source_dofs))
             AU = self.restricted_operator.apply(U_dofs, mu=mu)
         else:
-            AU = NumpyVectorSpace.make_array_TP(self.operator.apply(U, mu=mu).dofs(self.interpolation_dofs).T)
+            AU = NumpyVectorSpace.make_array_TP(self.operator.apply(U, mu=mu).dofs_TP(self.interpolation_dofs))
         try:
             if self.triangular:
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.to_numpy_TP(),
@@ -133,7 +133,7 @@ class EmpiricalInterpolatedOperator(Operator):
                                                  solver_options=options, name=self.name + '_jacobian')
         else:
             restricted_source = self.restricted_operator.source
-            U_dofs = restricted_source.make_array_TP(U.dofs(self.source_dofs).T)
+            U_dofs = restricted_source.make_array_TP(U.dofs_TP(self.source_dofs))
             JU = self.restricted_operator.jacobian(U_dofs, mu=mu) \
                                          .apply(restricted_source.make_array_TP(np.eye(len(self.source_dofs))))
             try:

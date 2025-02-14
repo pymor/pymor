@@ -547,7 +547,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         print(head1, head2)
         test1 = 1
         test2 = alfa / beta
-        str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}'
+        str1 = f'{itn:6g} {x.dofs_TP([0]).item():12.5e}'
         str2 = f' {r1norm:10.3e} {r2norm:10.3e}'
         str3 = f'  {test1:8.1e} {test2:8.1e}'
         print(str1, str2, str3)
@@ -685,7 +685,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
         if prnt:
             if show:
-                str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}'
+                str1 = f'{itn:6g} {x.dofs_TP([0]).item():12.5e}'
                 str2 = f' {r1norm:10.3e} {r2norm:10.3e}'
                 str3 = f'  {test1:8.1e} {test2:8.1e}'
                 str4 = f' {anorm:8.1e} {acond:8.1e}'
@@ -833,7 +833,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         print(hdg1, hdg2)
         test1 = 1
         test2 = alpha / beta
-        str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}'
+        str1 = f'{itn:6g} {x.dofs_TP([0]).item():12.5e}'
         str2 = f' {normr:10.3e} {normar:10.3e}'
         str3 = f'  {test1:8.1e} {test2:8.1e}'
         print(''.join([str1, str2, str3]))
@@ -979,7 +979,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
                     print(' ')
                     print(hdg1, hdg2)
                 pcount = pcount + 1
-                str1 = f'{itn:6g} {x.dofs([0])[0]:12.5e}'
+                str1 = f'{itn:6g} {x.dofs_TP([0]).item():12.5e}'
                 str2 = f' {normr:10.3e} {normar:10.3e}'
                 str3 = f'  {test1:8.1e} {test2:8.1e}'
                 str4 = f' {normA:8.1e} {condA:8.1e}'

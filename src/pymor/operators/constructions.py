@@ -618,7 +618,7 @@ class ComponentProjectionOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.make_array_TP(U.dofs(self.components).T)
+        return self.range.make_array_TP(U.dofs_TP(self.components))
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
@@ -714,7 +714,7 @@ class ConstantOperator(Operator):
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
-        restricted_value = NumpyVectorSpace.make_array_TP(self.value.dofs(dofs).T)
+        restricted_value = NumpyVectorSpace.make_array_TP(self.value.dofs_TP(dofs))
         return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
@@ -862,7 +862,7 @@ class VectorArrayOperator(Operator):
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         if not self.adjoint:
-            restricted_value = NumpyVectorSpace.make_array_TP(self.array.dofs(dofs).T)
+            restricted_value = NumpyVectorSpace.make_array_TP(self.array.dofs_TP(dofs))
             return VectorArrayOperator(restricted_value, False), np.arange(self.source.dim, dtype=np.int32)
         else:
             raise NotImplementedError

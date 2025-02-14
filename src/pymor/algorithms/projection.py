@@ -205,7 +205,7 @@ class ProjectRules(RuleTable):
             projected_collateral_basis = op.collateral_basis
 
         return ProjectedEmpiricalInterpolatedOperator(op.restricted_operator, op.interpolation_matrix,
-                                                      NumpyVectorSpace.make_array_TP(source_basis.dofs(op.source_dofs).T),
+                                                      NumpyVectorSpace.make_array_TP(source_basis.dofs_TP(op.source_dofs)),
                                                       projected_collateral_basis, op.triangular, None)
 
     @match_class(AffineOperator)
