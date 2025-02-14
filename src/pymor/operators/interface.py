@@ -413,7 +413,7 @@ class Operator(ParametricObject):
         :attr:`~pymor.operators.interface.Operator.source`,
         such that ::
 
-            self.range.make_array(V.inner(U).T) == self.apply(U, mu)
+            self.range.make_array_TP(V.inner(U)) == self.apply(U, mu)
 
         for all |VectorArrays| `U`.
 

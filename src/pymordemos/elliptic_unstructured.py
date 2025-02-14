@@ -40,7 +40,7 @@ def main(
 
     solution = ExpressionFunction('norm(x)**(pi/rho) * sin(angle(x) * pi/rho)', 2,
                                   {}, {'rho': angle})
-    U_ref = U.space.make_array(solution(grid.centers(2)))
+    U_ref = U.space.make_array_TP(solution(grid.centers(2)))
 
     m.visualize((U, U_ref, U-U_ref),
                 legend=('Solution', 'Analytical solution (circular boundary)', 'Error'),

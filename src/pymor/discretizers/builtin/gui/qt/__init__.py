@@ -412,10 +412,10 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         base_name = filename.split('.vtu')[0].split('.vtk')[0].split('.pvd')[0]
         if base_name:
             if len(U) == 1:
-                write_vtk(grid, NumpyVectorSpace.make_array(U[0]), base_name, codim=codim)
+                write_vtk(grid, NumpyVectorSpace.make_array_TP(U[0]), base_name, codim=codim)
             else:
                 for i, u in enumerate(U):
-                    write_vtk(grid, NumpyVectorSpace.make_array(u), f'{base_name}-{i}',
+                    write_vtk(grid, NumpyVectorSpace.make_array_TP(u), f'{base_name}-{i}',
                               codim=codim)
 
     from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs

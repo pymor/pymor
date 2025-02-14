@@ -112,7 +112,7 @@ def test_region_api():
 def test_memory_region_safety():
 
     op = NumpyMatrixOperator(np.eye(1))
-    rhs = op.range.make_array(np.array([1]))
+    rhs = op.range.make_array_TP(np.array([1]))
     m = StationaryModel(op, rhs)
     m.enable_caching('memory')
 

@@ -103,10 +103,10 @@ class EmpiricalInterpolatedOperator(Operator):
             return self.range.zeros(len(U))
 
         if hasattr(self, 'restricted_operator'):
-            U_dofs = NumpyVectorSpace.make_array(U.dofs(self.source_dofs))
+            U_dofs = NumpyVectorSpace.make_array_TP(U.dofs(self.source_dofs).T)
             AU = self.restricted_operator.apply(U_dofs, mu=mu)
         else:
-            AU = NumpyVectorSpace.make_array(self.operator.apply(U, mu=mu).dofs(self.interpolation_dofs))
+            AU = NumpyVectorSpace.make_array_TP(self.operator.apply(U, mu=mu).dofs(self.interpolation_dofs).T)
         try:
             if self.triangular:
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.to_numpy_TP(),
@@ -133,9 +133,9 @@ class EmpiricalInterpolatedOperator(Operator):
                                                  solver_options=options, name=self.name + '_jacobian')
         else:
             restricted_source = self.restricted_operator.source
-            U_dofs = restricted_source.make_array(U.dofs(self.source_dofs))
+            U_dofs = restricted_source.make_array_TP(U.dofs(self.source_dofs).T)
             JU = self.restricted_operator.jacobian(U_dofs, mu=mu) \
-                                         .apply(restricted_source.make_array(np.eye(len(self.source_dofs))))
+                                         .apply(restricted_source.make_array_TP(np.eye(len(self.source_dofs))))
             try:
                 if self.triangular:
                     interpolation_coefficients = solve_triangular(self.interpolation_matrix, JU.to_numpy_TP(),
@@ -221,10 +221,10 @@ class ProjectedEmpiricalInterpolatedOperator(Operator):
         restricted_operator, source_dofs = self.restricted_operator.restricted(np.arange(dim))
 
         old_pcb = self.projected_collateral_basis
-        projected_collateral_basis = NumpyVectorSpace.make_array(old_pcb.to_numpy_TP().T[:dim, :])
+        projected_collateral_basis = NumpyVectorSpace.make_array_TP(old_pcb.to_numpy_TP()[:, :dim])
 
         old_sbd = self.source_basis_dofs
-        source_basis_dofs = NumpyVectorSpace.make_array(old_sbd.to_numpy_TP().T[:, source_dofs])
+        source_basis_dofs = NumpyVectorSpace.make_array_TP(old_sbd.to_numpy_TP()[source_dofs, :])
 
         return ProjectedEmpiricalInterpolatedOperator(restricted_operator, interpolation_matrix,
                                                       source_basis_dofs, projected_collateral_basis, self.triangular,

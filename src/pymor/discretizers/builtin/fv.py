@@ -309,7 +309,7 @@ class NonlinearAdvectionOperator(Operator):
 
         R[:, :-1] /= VOLS0
 
-        return self.range.make_array(R[:, :-1])
+        return self.range.make_array_TP(R[:, :-1].T)
 
     def jacobian(self, U, mu=None):
         assert U in self.source
@@ -604,7 +604,7 @@ class NonlinearReactionOperator(Operator):
         R = U.to_numpy_TP().T if ind is None else U.to_numpy_TP().T[ind]
         R = self.reaction_function.evaluate(R.reshape(R.shape + (1,)), mu=mu)
 
-        return self.range.make_array(R)
+        return self.range.make_array_TP(R.T)
 
     def jacobian(self, U, mu=None):
         if self.reaction_function_derivative is None:
@@ -1187,14 +1187,14 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
         def initial_projection(U, mu):
             I = p.initial_data.evaluate(grid.quadrature_points(0, order=2), mu).squeeze()
             I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
-            I = m.solution_space.make_array(I)
+            I = m.solution_space.make_array_TP(I)
             return I.lincomb_TP(U.T).to_numpy_TP().T
         I = NumpyGenericOperator(initial_projection, dim_range=grid.size(0), linear=True,
                                  parameters=p.initial_data.parameters)
     else:
         I = p.initial_data.evaluate(grid.quadrature_points(0, order=2)).squeeze()
         I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
-        I = m.solution_space.make_array(I)
+        I = m.solution_space.make_array_TP(I)
 
     if time_stepper is None:
         if p.stationary_part.diffusion is None:

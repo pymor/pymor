@@ -389,19 +389,19 @@ class ProjectedOperator(Operator):
             if self.range_basis is None:
                 return self.operator.apply(U, mu=mu)
             elif self.product is None:
-                return self.range.make_array(self.operator.apply2(self.range_basis, U, mu=mu).T)
+                return self.range.make_array_TP(self.operator.apply2(self.range_basis, U, mu=mu))
             else:
                 V = self.operator.apply(U, mu=mu)
-                return self.range.make_array(self.product.apply2(V, self.range_basis))
+                return self.range.make_array_TP(self.product.apply2(self.range_basis, V))
         else:
             UU = self.source_basis.lincomb_TP(U.to_numpy_TP())
             if self.range_basis is None:
                 return self.operator.apply(UU, mu=mu)
             elif self.product is None:
-                return self.range.make_array(self.operator.apply2(self.range_basis, UU, mu=mu).T)
+                return self.range.make_array_TP(self.operator.apply2(self.range_basis, UU, mu=mu))
             else:
                 V = self.operator.apply(UU, mu=mu)
-                return self.range.make_array(self.product.apply2(V, self.range_basis))
+                return self.range.make_array_TP(self.product.apply2(self.range_basis, V))
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
@@ -438,7 +438,7 @@ class ProjectedOperator(Operator):
             V = self.range_basis.lincomb_TP(V.to_numpy_TP())
         U = self.operator.apply_adjoint(V, mu)
         if self.source_basis is not None:
-            U = self.source.make_array(U.inner(self.source_basis))
+            U = self.source.make_array_TP(self.source_basis.inner(U))  # TODO: check formula
         return U
 
 
@@ -618,7 +618,7 @@ class ComponentProjectionOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.make_array(U.dofs(self.components))
+        return self.range.make_array_TP(U.dofs(self.components).T)
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
@@ -714,7 +714,7 @@ class ConstantOperator(Operator):
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
-        restricted_value = NumpyVectorSpace.make_array(self.value.dofs(dofs))
+        restricted_value = NumpyVectorSpace.make_array_TP(self.value.dofs(dofs).T)
         return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
@@ -817,7 +817,7 @@ class VectorArrayOperator(Operator):
         if not self.adjoint:
             return self.array.lincomb_TP(U.to_numpy_TP())
         else:
-            return self.range.make_array(self.array.inner(U).T)
+            return self.range.make_array_TP(self.array.inner(U))
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         if not least_squares and len(self.array) != self.array.dim:
@@ -832,14 +832,14 @@ class VectorArrayOperator(Operator):
         else:
             v = Q.inner(V)
             u = spla.lstsq(R, v)[0]
-            U = self.source.make_array(u.T)
+            U = self.source.make_array_TP(u)
 
         return U
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         if not self.adjoint:
-            return self.source.make_array(self.array.inner(V).T)
+            return self.source.make_array_TP(self.array.inner(V))
         else:
             return self.array.lincomb_TP(V.to_numpy_TP())
 
@@ -862,7 +862,7 @@ class VectorArrayOperator(Operator):
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         if not self.adjoint:
-            restricted_value = NumpyVectorSpace.make_array(self.array.dofs(dofs))
+            restricted_value = NumpyVectorSpace.make_array_TP(self.array.dofs(dofs).T)
             return VectorArrayOperator(restricted_value, False), np.arange(self.source.dim, dtype=np.int32)
         else:
             raise NotImplementedError

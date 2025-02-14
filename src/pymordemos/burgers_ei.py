@@ -120,7 +120,7 @@ def main(
         dofs = eim.operator.interpolation_dofs
         U[dofs] = np.arange(1, len(dofs) + 1)
         U[eim.operator.source_dofs] += int(len(dofs)/2)
-        fom.visualize(fom.solution_space.make_array(U),
+        fom.visualize(fom.solution_space.make_array_TP(U),
                       title='Interpolation DOFs')
 
     print('RB generation ...')

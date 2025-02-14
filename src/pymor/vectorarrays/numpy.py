@@ -276,13 +276,13 @@ class NumpyVectorSpace(VectorSpace):
         assert isinstance(array, np.ndarray)
         assert array.ndim <= 2
         if array.ndim == 1:
-            array = array.reshape((1, -1))
+            array = array.reshape((-1, 1))
         if single_vector:
             assert array.shape[0] == 1 or array.shape[1] == 1
-            array = array.reshape((1, -1))
+            array = array.reshape((-1, 1))
         if transpose:
             array = array.T
-        return cls.make_array(array)
+        return cls.make_array_TP(array)
 
     @from_file.instancemethod
     def from_file(self, path, key=None, single_vector=False, transpose=False):

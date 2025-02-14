@@ -120,8 +120,8 @@ def discretize_fom(T=50):
     h = lambda s: (0 <= s) * (s <= 1) * (1 - 3/2 * s**2 + 3/4 * s**3) + (1 < s) * (s <= 2) * ((2-s)**3)/4
     bump = lambda xi: h(np.abs(4*(xi - l/2)))
     initial_data = H_op.source.make_array([
-        space.make_array(bump(np.linspace(0, l, n_x))),
-        space.make_array(np.zeros(n_x)),
+        space.make_array_TP(bump(np.linspace(0, l, n_x))),
+        space.make_array_TP(np.zeros(n_x)),
     ])
 
     fom = QuadraticHamiltonianModel(T, initial_data, H_op, nt=nt, name='hamiltonian_wave_equation')
