@@ -214,7 +214,7 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
     V = V.to_numpy_TP().T
     initial_guess = initial_guess.to_numpy_TP().T if initial_guess is not None else None
     promoted_type = np.promote_types(matrix.dtype, V.dtype)
-    R = np.empty((len(V), matrix.shape[1]), dtype=promoted_type)
+    R = np.empty((len(V), matrix.shape[1]), dtype=promoted_type)  # TODO: transpose
 
     if options['type'] == 'scipy_bicgstab':
         for i, VV in enumerate(V):
@@ -325,7 +325,7 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
         if not np.isfinite(np.sum(R)):
             raise InversionError('Result contains non-finite values')
 
-    return op.source.from_numpy(R)
+    return op.source.from_numpy_TP(R.T)
 
 
 # unfortunately, this is necessary, as scipy does not
@@ -393,7 +393,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
                          to_matrix(E, format='dense') if E else None,
                          B.to_numpy_TP() if not trans else B.to_numpy_TP().T,
                          trans=trans, cont_time=cont_time, options=options)
-    return A.source.from_numpy(_chol(X).T)
+    return A.source.from_numpy_TP(_chol(X))
 
 
 def lyap_dense_solver_options():
@@ -526,7 +526,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
         S = S.to_numpy_TP().T if not trans else S.to_numpy_TP()
     X = solve_ricc_dense(A, E, B, C, R, S, trans, options)
 
-    return A_source.from_numpy(_chol(X).T)
+    return A_source.from_numpy_TP(_chol(X))
 
 
 def ricc_dense_solver_options():

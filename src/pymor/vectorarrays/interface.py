@@ -861,7 +861,7 @@ class VectorSpace(ImmutableObject):
     |VectorArray| from given raw data of the underlying linear algebra
     backend (e.g. a |Numpy array| in the case  of |NumpyVectorSpace|).
     Some vector spaces can create new |VectorArrays| from a given
-    |Numpy array| via the :meth:`~VectorSpace.from_numpy`
+    |Numpy array| via the :meth:`~VectorSpace.from_numpy_TP`
     method.
 
     Vector spaces can be compared for equality via the `==` and `!=`
@@ -950,7 +950,7 @@ class VectorSpace(ImmutableObject):
         -------
         A |VectorArray| containing `count` vectors with each DOF set to `value`.
         """
-        return self.from_numpy(np.full((count, self.dim), value))
+        return self.from_numpy_TP(np.full((self.dim, count), value))
 
     def random(self, count=1, distribution='uniform', reserve=0, **kwargs):
         """Create a |VectorArray| of vectors with random entries.
@@ -982,8 +982,8 @@ class VectorSpace(ImmutableObject):
         reserve
             Hint for the backend to which length the array will grow.
         """
-        values = _create_random_values((count, self.dim), distribution, **kwargs)
-        return self.from_numpy(values)
+        values = _create_random_values((self.dim, count), distribution, **kwargs)
+        return self.from_numpy_TP(values)
 
     def empty(self, reserve=0):
         """Create an empty |VectorArray|.
@@ -1042,12 +1042,12 @@ class VectorSpace(ImmutableObject):
         -------
         A |VectorArray| with `data` as data.
         """
-        return cls.from_numpy(data.T, ensure_copy=ensure_copy)
+        return cls.from_numpy(np.asarray(data).T, ensure_copy=ensure_copy)
 
     @from_numpy_TP.instancemethod
     def from_numpy_TP(self, data, ensure_copy=False):
         """:noindex:"""  # noqa: D400
-        return self.from_numpy(data.T, ensure_copy=ensure_copy)
+        return self.from_numpy(np.asarray(data).T, ensure_copy=ensure_copy)
 
     def __eq__(self, other):
         return other is self

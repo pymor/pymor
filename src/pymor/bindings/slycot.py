@@ -76,7 +76,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     else:
         raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 
-    return A.source.from_numpy(Z.T)
+    return A.source.from_numpy_TP(Z)
 
 
 def lyap_dense_solver_options():
@@ -387,7 +387,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
 
     X = solve_ricc_dense(A, E, B, C, R, S, trans, options)
 
-    return A_source.from_numpy(_chol(X).T)
+    return A_source.from_numpy_TP(_chol(X))
 
 
 def _ricc_rcond_check(solver, rcond):

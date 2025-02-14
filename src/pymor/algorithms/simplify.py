@@ -182,7 +182,7 @@ class ContractRules(RuleTable):
             elif (ops_rev[i + 1].linear and not ops_rev[i + 1].parametric):
                 if isinstance(ops_rev[i], NumpyMatrixOperator):
                     if not ops_rev[i].sparse:  # do not touch sparse matrices
-                        U = ops_rev[i + 1].source.from_numpy(ops_rev[i].matrix.T)
+                        U = ops_rev[i + 1].source.from_numpy_TP(ops_rev[i].matrix)
                         ops_rev[i + 1] = VectorArrayOperator(ops_rev[i + 1].apply(U))
                         del ops_rev[i]
                     else:

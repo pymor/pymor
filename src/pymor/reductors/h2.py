@@ -412,13 +412,13 @@ class OneSidedIRKAReductor(GenericIRKAReductor):
             else self.fom
         )
         if self.version == 'V':
-            self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy(b), sigma,
+            self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy_TP(b.T), sigma,
                                                 orth=False)
             gram_schmidt(self.V, atol=0, rtol=0,
                          product=None if projection == 'orth' else fom.E,
                          copy=False)
         else:
-            self.V = tangential_rational_krylov(fom.A, fom.E, fom.C, fom.C.range.from_numpy(c), sigma, trans=True,
+            self.V = tangential_rational_krylov(fom.A, fom.E, fom.C, fom.C.range.from_numpy_TP(c.T), sigma, trans=True,
                                                 orth=False)
             gram_schmidt(self.V, atol=0, rtol=0,
                          product=None if projection == 'orth' else fom.E,

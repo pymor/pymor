@@ -72,7 +72,7 @@ def test_quadratic_hamiltonian_model(block_phase_space):
         3,
         H_op.source.ones(),
         H_op,
-        h=H_op.range.from_numpy(np.array([1, 0])),
+        h=H_op.range.from_numpy_TP(np.array([1, 0])),
         time_stepper=ImplicitMidpointTimeStepper(3),
         name='test_mass_spring_model'
     )

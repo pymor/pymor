@@ -199,10 +199,10 @@ def test_bilin_functional():
     two_vec = np.zeros(space.dim)
     one_vec[0] = 1.
     two_vec[0] = 2.
-    one_v = space.from_numpy(one_vec)
-    two_v = space.from_numpy(two_vec)
-    one_s = scalar.from_numpy([1.])
-    four_s = scalar.from_numpy([4.])
+    one_v = space.from_numpy_TP(one_vec)
+    two_v = space.from_numpy_TP(two_vec)
+    one_s = scalar.from_numpy_TP([1.])
+    four_s = scalar.from_numpy_TP([4.])
 
     assert bilin_op.source == space
     assert bilin_op.range == scalar
@@ -226,12 +226,12 @@ def test_bilin_prod_functional():
     two_vec = np.zeros(space.dim)
     one_vec[0] = 1.
     two_vec[0] = 2.
-    one_v = space.from_numpy(one_vec)
-    two_v = space.from_numpy(two_vec)
-    one_s = scalar.from_numpy([1.])
-    four_s = scalar.from_numpy([4.])
-    six_s = scalar.from_numpy([6.])
-    twn_four_s = scalar.from_numpy([24.])
+    one_v = space.from_numpy_TP(one_vec)
+    two_v = space.from_numpy_TP(two_vec)
+    one_s = scalar.from_numpy_TP([1.])
+    four_s = scalar.from_numpy_TP([4.])
+    six_s = scalar.from_numpy_TP([6.])
+    twn_four_s = scalar.from_numpy_TP([24.])
 
     assert bilin_op.source == space
     assert bilin_op_with_prod.source == space
@@ -507,7 +507,7 @@ def test_vectorarray_op_apply_inverse(rng):
     U = op.apply_inverse(V)
     v = V.to_numpy_TP()
     u = spla.solve(O.T, v.ravel())
-    assert np.all(almost_equal(U, U.space.from_numpy(u), rtol=1e-10))
+    assert np.all(almost_equal(U, U.space.from_numpy_TP(u), rtol=1e-10))
 
 
 @pytest.mark.builtin
@@ -518,7 +518,7 @@ def test_vectorarray_op_apply_inverse_lstsq(rng):
     U = op.apply_inverse(V, least_squares=True)
     v = V.to_numpy_TP()
     u = spla.lstsq(O.T, v.ravel())[0]
-    assert np.all(almost_equal(U, U.space.from_numpy(u)))
+    assert np.all(almost_equal(U, U.space.from_numpy_TP(u)))
 
 
 @pytest.mark.builtin
@@ -529,7 +529,7 @@ def test_adjoint_vectorarray_op_apply_inverse_lstsq(rng):
     U = op.apply_inverse(V, least_squares=True)
     v = V.to_numpy_TP()
     u = spla.lstsq(O, v.ravel())[0]
-    assert np.all(almost_equal(U, U.space.from_numpy(u)))
+    assert np.all(almost_equal(U, U.space.from_numpy_TP(u)))
 
 
 def test_as_range_array(operator_with_arrays):

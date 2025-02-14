@@ -69,8 +69,8 @@ def numpy_list_vector_array_matrix_operator_with_arrays_factory(
         dim_source, dim_range, count_source, count_range, rng, sparse
     )
     op = op.with_(new_type=NumpyListVectorArrayMatrixOperator)
-    s = op.source.from_numpy(s.to_numpy_TP().T)
-    r = op.range.from_numpy(r.to_numpy_TP().T)
+    s = op.source.from_numpy_TP(s.to_numpy_TP())
+    r = op.range.from_numpy_TP(r.to_numpy_TP())
     return op, None, s, r
 
 

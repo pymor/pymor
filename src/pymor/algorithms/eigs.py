@@ -111,7 +111,7 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
         idx = _sort_ew(ew, which)
         ews = ew[idx]
         evs = ev[:, idx]
-        return ews[:k], A.source.from_numpy(evs[:, :k].T)
+        return ews[:k], A.source.from_numpy_TP(evs[:, :k])
 
     if l is None:
         l = min(n - 1, max(2 * k + 1, l_min))

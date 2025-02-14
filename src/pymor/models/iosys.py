@@ -331,7 +331,7 @@ class LTIModel(Model):
         if E is not None:
             E = NumpyMatrixOperator(E)
         if initial_data is not None:
-            initial_data = A.source.from_numpy(initial_data)
+            initial_data = A.source.from_numpy_TP(initial_data)
 
         return cls(A, B, C, D, E, sampling_time=sampling_time, T=T, initial_data=initial_data,
                    time_stepper=time_stepper, num_values=num_values, presets=presets,
@@ -942,9 +942,9 @@ class LTIModel(Model):
     @cached
     def _gramian(self, typ, mu=None):
         if typ == 'c_lrcf' and 'c_dense' in self.presets:
-            return self.A.source.from_numpy(_chol(self.presets['c_dense']).T)
+            return self.A.source.from_numpy_TP(_chol(self.presets['c_dense']))
         elif typ == 'o_lrcf' and 'o_dense' in self.presets:
-            return self.A.source.from_numpy(_chol(self.presets['o_dense']).T)
+            return self.A.source.from_numpy_TP(_chol(self.presets['o_dense']))
         elif typ == 'c_dense' and 'c_lrcf' in self.presets:
             return self.presets['c_lrcf'].to_numpy_TP() @ self.presets['c_lrcf'].to_numpy_TP().T
         elif typ == 'o_dense' and 'o_lrcf' in self.presets:
@@ -1469,8 +1469,8 @@ class LTIModel(Model):
             ast_ews = ew[ast_idx]
             idx = ast_ews.argsort()
 
-            ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, idx].T)
-            ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, idx].T)
+            ast_lev = self.A.source.from_numpy_TP(lev[:, ast_idx][:, idx])
+            ast_rev = self.A.range.from_numpy_TP(rev[:, ast_idx][:, idx])
 
             return ast_lev, ast_ews[idx], ast_rev
 

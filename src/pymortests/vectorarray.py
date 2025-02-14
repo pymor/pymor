@@ -230,7 +230,7 @@ def test_from_numpy(vector_array):
     except NotImplementedError:
         return
     try:
-        v = vector_array.space.from_numpy(d.T)
+        v = vector_array.space.from_numpy_TP(d)
         assert np.allclose(d, v.to_numpy_TP())
     except NotImplementedError:
         pass

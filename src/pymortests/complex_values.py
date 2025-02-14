@@ -15,12 +15,12 @@ def test_complex(rng):
     I = np.eye(5)
     A = rng.standard_normal((5, 5))
     B = rng.standard_normal((5, 5))
-    C = rng.standard_normal((3, 5))
+    C = rng.standard_normal((5, 3))
 
     Iop = NumpyMatrixOperator(I)
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
-    Cva = NumpyVectorSpace.from_numpy(C)
+    Cva = NumpyVectorSpace.from_numpy_TP(C)
 
     # lincombs
     assert not np.iscomplexobj((Iop * 1 + Bop * 1).assemble().matrix)
@@ -40,8 +40,8 @@ def test_complex(rng):
         for o_ind in (slice(None), [0]):
             va = NumpyVectorSpace(5).empty(reserve=rsrv)
             va.append(Cva)
-            D = rng.standard_normal((1, 5)) + 1j * rng.standard_normal((1, 5))
-            Dva = NumpyVectorSpace.from_numpy(D)
+            D = rng.standard_normal((5, 1)) + 1j * rng.standard_normal((5, 1))
+            Dva = NumpyVectorSpace.from_numpy_TP(D)
 
             assert not np.iscomplexobj(va.to_numpy_TP())
             assert np.iscomplexobj(Dva.to_numpy_TP())
@@ -58,17 +58,16 @@ def test_complex(rng):
     Cva[0].axpy(1, Dva)
     assert np.iscomplexobj(Cva.to_numpy_TP())
 
-    Cva = NumpyVectorSpace.from_numpy(C)
+    Cva = NumpyVectorSpace.from_numpy_TP(C)
     assert not np.iscomplexobj(Cva.to_numpy_TP())
     Cva[0].axpy(1j, Dva)
     assert np.iscomplexobj(Cva.to_numpy_TP())
 
 
 def test_real_imag():
-    A = np.array([[1 + 2j, 3 + 4j],
-                  [5 + 6j, 7 + 8j],
-                  [9 + 10j, 11 + 12j]])
-    Ava = NumpyVectorSpace.from_numpy(A)
+    A = np.array([[1 + 2j, 5 + 6j,  9 + 10j],
+                  [3 + 4j, 7 + 8j, 11 + 12j]])
+    Ava = NumpyVectorSpace.from_numpy_TP(A)
     Bva = Ava.real
     Cva = Ava.imag
 
@@ -82,9 +81,10 @@ def test_real_imag():
 
 
 def test_scal():
-    v = np.array([[1, 2, 3],
-                  [4, 5, 6]], dtype=float)
-    v = NumpyVectorSpace.from_numpy(v)
+    v = np.array([[1, 4],
+                  [2, 5],
+                  [3, 6]], dtype=float)
+    v = NumpyVectorSpace.from_numpy_TP(v)
     v.scal(1j)
 
     k = 0
@@ -95,26 +95,26 @@ def test_scal():
 
 
 def test_axpy():
-    x = NumpyVectorSpace.from_numpy(np.array([1.]))
-    y = NumpyVectorSpace.from_numpy(np.array([1.]))
+    x = NumpyVectorSpace.from_numpy_TP(np.array([1.]))
+    y = NumpyVectorSpace.from_numpy_TP(np.array([1.]))
     y.axpy(1 + 1j, x)
     assert y.to_numpy_TP()[0, 0] == 2 + 1j
 
-    x = NumpyVectorSpace.from_numpy(np.array([1 + 1j]))
-    y = NumpyVectorSpace.from_numpy(np.array([1.]))
+    x = NumpyVectorSpace.from_numpy_TP(np.array([1 + 1j]))
+    y = NumpyVectorSpace.from_numpy_TP(np.array([1.]))
     y.axpy(-1, x)
     assert y.to_numpy_TP()[0, 0] == -1j
 
 
 def test_inner():
-    x = NumpyVectorSpace.from_numpy(np.array([1 + 1j]))
-    y = NumpyVectorSpace.from_numpy(np.array([1 - 1j]))
+    x = NumpyVectorSpace.from_numpy_TP(np.array([1 + 1j]))
+    y = NumpyVectorSpace.from_numpy_TP(np.array([1 - 1j]))
     z = x.inner(y)
     assert z[0, 0] == -2j
 
 
 def test_pairwise_inner():
-    x = NumpyVectorSpace.from_numpy(np.array([1 + 1j]))
-    y = NumpyVectorSpace.from_numpy(np.array([1 - 1j]))
+    x = NumpyVectorSpace.from_numpy_TP(np.array([1 + 1j]))
+    y = NumpyVectorSpace.from_numpy_TP(np.array([1 - 1j]))
     z = x.pairwise_inner(y)
     assert z == -2j

@@ -258,7 +258,8 @@ class BlockVectorSpace(VectorSpace):
         data_ind = np.cumsum([0] + [subspace.dim for subspace in self.subspaces])
         return BlockVectorArray(
             self,
-            BlockVectorArrayImpl([subspace.from_numpy(data[:, data_ind[i]:data_ind[i + 1]], ensure_copy=ensure_copy)
+            BlockVectorArrayImpl([subspace.from_numpy_TP(data[:, data_ind[i]:data_ind[i + 1]].T,
+                                                         ensure_copy=ensure_copy)
                                   for i, subspace in enumerate(self.subspaces)],
                                  self)
         )

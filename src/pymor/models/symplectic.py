@@ -179,11 +179,11 @@ class QuadraticHamiltonianModel(BaseQuadraticHamiltonianModel):
         if (isinstance(initial_data, VectorArray)
                 and isinstance(initial_data.space, NumpyVectorSpace)):
 
-            initial_data = H_op.source.from_numpy(initial_data.to_numpy_TP().T)
+            initial_data = H_op.source.from_numpy_TP(initial_data.to_numpy_TP())
         elif (isinstance(initial_data, VectorOperator)
               and isinstance(initial_data.range, NumpyVectorSpace)):
 
-            initial_data = VectorOperator(H_op.source.from_numpy(initial_data.as_range_array().to_numpy_TP().T))
+            initial_data = VectorOperator(H_op.source.from_numpy_TP(initial_data.as_range_array().to_numpy_TP()))
 
         # J based on blocked phase_space
         J = CanonicalSymplecticFormOperator(H_op.source)

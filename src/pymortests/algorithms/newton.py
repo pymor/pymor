@@ -15,8 +15,8 @@ pytestmark = pytest.mark.builtin
 
 
 def _newton(mop, initial_value=1.0, **kwargs):
-    rhs = NumpyVectorSpace.from_numpy([0.0])
-    guess = NumpyVectorSpace.from_numpy([initial_value])
+    rhs = NumpyVectorSpace.from_numpy_TP([0.0])
+    guess = NumpyVectorSpace.from_numpy_TP([initial_value])
     return newton(mop, rhs, initial_guess=guess, **kwargs)
 
 

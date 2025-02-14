@@ -150,7 +150,7 @@ def test_cont_lrcf(n, m, with_E, trans, solver, rng):
 
     Aop = NumpyMatrixOperator(A)
     Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B.T if not trans else B)
+    Bva = Aop.source.from_numpy_TP(B if not trans else B.T)
 
     Zva = solve_cont_lyap_lrcf(Aop, Eop, Bva, trans=trans, options=solver)
     assert len(Zva) <= n
@@ -194,7 +194,7 @@ def test_disc_lrcf(n, m, with_E, trans, solver, rng):
 
     Aop = NumpyMatrixOperator(A)
     Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B.T if not trans else B)
+    Bva = Aop.source.from_numpy_TP(B if not trans else B.T)
 
     Zva = solve_disc_lyap_lrcf(Aop, Eop, Bva, trans=trans, options=solver)
     assert len(Zva) <= n

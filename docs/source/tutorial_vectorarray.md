@@ -117,14 +117,14 @@ space.make_array_TP(np.arange(0, 14).reshape((7, 2)))
 
 Some but not all {{ VectorArrays }} can be initialized from NumPy arrays.
 For these arrays, the corresponding {{ VectorSpace }} implements the
-{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy` method:
+{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP` method:
 
 ```{code-cell} ipython3
 space = NumpyVectorSpace(4)
-numpy_array = np.linspace(0, 4, 8).reshape((2, 4))
+numpy_array = np.linspace(0, 4, 8).reshape((4, 2))
 print(numpy_array)
 
-vector_array = space.from_numpy(numpy_array)
+vector_array = space.from_numpy_TP(numpy_array)
 vector_array
 ```
 
@@ -142,8 +142,8 @@ vector_array
 To avoid this problem, you can set `ensure_copy` to `True`:
 
 ```{code-cell} ipython3
-numpy_array = np.linspace(0, 4, 8).reshape((2, 4))
-vector_array = space.from_numpy(numpy_array, ensure_copy=True)
+numpy_array = np.linspace(0, 4, 8).reshape((4, 2))
+vector_array = space.from_numpy_TP(numpy_array, ensure_copy=True)
 
 numpy_array[0, 0] = 99
 print(numpy_array)
@@ -151,17 +151,17 @@ vector_array
 ```
 
 If you quickly want to create a {{ NumpyVectorArray }}, you can also use
-{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
+{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP`
 as a class method of {{ NumpyVectorSpace }}, which will infer the dimension of the
 space from the data:
 
 ```{code-cell} ipython3
-vector_array = NumpyVectorSpace.from_numpy(numpy_array)
+vector_array = NumpyVectorSpace.from_numpy_TP(numpy_array)
 vector_array
 ```
 
 ```{warning}
-Do not use {meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
+Do not use {meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP`
 in generic code that is supposed to work with arbitrary external solvers that might
 not support converting data from NumPy or only at high costs.
 Using it is fine, however, when you know that you are dealing with {{ NumpyVectorArrays }},
@@ -194,7 +194,7 @@ array[:] = 0
 vector_array
 ```
 
-As with {meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
+As with {meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP`
 we can use the `ensure_copy` parameter to make sure we get a copy:
 
 ```{code-cell} ipython3
@@ -214,7 +214,7 @@ When a matrix {{ Operator }} is applied to a {{ VectorArray }}, think of a `for`
 where the corresponding linear {{ Operator }} is applied individually to each vector in
 the array, not of a matrix-matrix product.
 What is true, however, is that
-{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy` /
+{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP` /
 {meth}`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP`
 interpret {{ VectorArrays }} as matrices of row vectors.
 The reason for that is that NumPy prefers a C-like memory layout for matrices, where the
@@ -431,7 +431,7 @@ in a {{ VectorArray }}.
 This is a deliberate design decision in pyMOR as the computationally heavy operations on this
 data should be handled by the respective backend.
 In particular, note again that
-{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy` /
+{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP` /
 {meth}`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP`
 should only be used for {{ NumpyVectorArrays }}, debugging or other special cases.
 Usually, algorithms should not rely on these methods.
@@ -444,7 +444,7 @@ values of certain degrees of freedom:
 
 ```{code-cell} ipython3
 space = NumpyVectorSpace(6)
-U = space.from_numpy(np.arange(6) * 2.)
+U = space.from_numpy_TP(np.arange(6) * 2.)
 U.append(space.full(-1))
 print(U)
 print(U.dofs(np.array([3, 5])))
@@ -464,7 +464,7 @@ for i in range(len(U)):
 By speaking of degrees of freedom, we assume that our vectors are coefficient vectors w.r.t.
 some basis and that `dofs` returns those coefficients.
 We further assume that, if defined,
-{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy` returns the NumPy array of the
+{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP` returns the NumPy array of the
 values at all degrees of freedom and that {meth}`~pymor.vectorarrays.interface.VectorArray.inner`
 is just the Euclidean inner product of these coefficient vectors:
 
@@ -546,7 +546,7 @@ U.impl._array
 ```
 
 However, you should never access this attribute directly and use
-{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy` /
+{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP` /
 {meth}`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP`
 instead, as `_array` may not be what you expect:
 the array creation methods

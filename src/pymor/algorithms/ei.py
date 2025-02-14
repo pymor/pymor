@@ -417,8 +417,8 @@ def interpolate_function(function, parameter_sample, evaluation_points,
     assert evaluation_points.ndim == 2
     assert evaluation_points.shape[1] == function.dim_domain
 
-    snapshot_data = NumpyVectorSpace.from_numpy(
-        np.array([function(evaluation_points, mu=mu) for mu in parameter_sample])
+    snapshot_data = NumpyVectorSpace.from_numpy_TP(
+        np.array([function(evaluation_points, mu=mu) for mu in parameter_sample]).T
     )
 
     dofs, basis, ei_data = ei_greedy(snapshot_data, error_norm='sup',

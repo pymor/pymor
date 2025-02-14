@@ -256,10 +256,10 @@ class Operator(ParametricObject):
                 else:
                     mat_op = self._mat_op
                 if mat_op is not None:
-                    v = mat_op.range.from_numpy(V.to_numpy_TP().T)
-                    i = None if initial_guess is None else mat_op.source.from_numpy(initial_guess.to_numpy_TP().T)
+                    v = mat_op.range.from_numpy_TP(V.to_numpy_TP())
+                    i = None if initial_guess is None else mat_op.source.from_numpy_TP(initial_guess.to_numpy_TP())
                     u = mat_op.apply_inverse(v, initial_guess=i, least_squares=least_squares)
-                    return self.source.from_numpy(u.to_numpy_TP().T)
+                    return self.source.from_numpy_TP(u.to_numpy_TP())
             self.logger.warning('Solving with unpreconditioned iterative solver.')
             return genericsolvers.apply_inverse(assembled_op, V, initial_guess=initial_guess,
                                                 options=options, least_squares=least_squares)
@@ -402,7 +402,7 @@ class Operator(ParametricObject):
         assert isinstance(self.source, NumpyVectorSpace)
         assert self.linear
         assert self.source.dim <= as_array_max_length()
-        return self.apply(self.source.from_numpy(np.eye(self.source.dim)), mu=mu)
+        return self.apply(self.source.from_numpy_TP(np.eye(self.source.dim)), mu=mu)
 
     def as_source_array(self, mu=None):
         """Return a |VectorArray| representation of the operator in its source space.
@@ -431,7 +431,7 @@ class Operator(ParametricObject):
         assert isinstance(self.range, NumpyVectorSpace)
         assert self.linear
         assert self.range.dim <= as_array_max_length()
-        return self.apply_adjoint(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
+        return self.apply_adjoint(self.range.from_numpy_TP(np.eye(self.range.dim)), mu=mu)
 
     def as_vector(self, mu=None):
         """Return a vector representation of a linear functional or vector operator.

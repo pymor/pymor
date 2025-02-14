@@ -17,7 +17,7 @@ from pymor.operators.numpy import NumpyMatrixOperator
 def test_arnoldi(block_size, with_E, r, rng):
     A = NumpyMatrixOperator(rng.standard_normal((10,10)))
     E = NumpyMatrixOperator(rng.standard_normal((10,10))) if with_E else None
-    b = A.source.from_numpy(rng.standard_normal((block_size, 10)))
+    b = A.source.from_numpy_TP(rng.standard_normal((10, block_size)))
 
     V = arnoldi(A, E, b, r)
     assert len(V) == r * block_size

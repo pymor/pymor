@@ -59,7 +59,7 @@ def test_method_of_snapshots_with_product(operator_with_arrays_and_products, met
 @pytest.mark.builtin
 @pytest.mark.parametrize('method', methods)
 def test_not_too_many_modes(method):
-    vec_array = NumpyVectorSpace.from_numpy(np.logspace(-5, 0, 10).reshape((-1, 1)))
+    vec_array = NumpyVectorSpace.from_numpy_TP(np.logspace(-5, 0, 10).reshape((1, -1)))
     U, s, V = method(vec_array, atol=0, rtol=0)
     assert len(U) == len(s) == len(V) == 1
 

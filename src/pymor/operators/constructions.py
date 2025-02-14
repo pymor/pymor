@@ -1381,7 +1381,7 @@ class NumpyConversionOperator(Operator):
     Note that the input |VectorArrays| need to support
     :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP`.
     For the adjoint,
-    :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
+    :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP`
     needs to be implemented.
 
     Parameters
@@ -1415,19 +1415,19 @@ class NumpyConversionOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.from_numpy(U.to_numpy_TP().T)
+        return self.range.from_numpy_TP(U.to_numpy_TP())
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
-        return self.source.from_numpy(V.to_numpy_TP().T)
+        return self.source.from_numpy_TP(V.to_numpy_TP())
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        return self.source.from_numpy(V.to_numpy_TP().T)
+        return self.source.from_numpy_TP(V.to_numpy_TP())
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
-        return self.range.from_numpy(U.to_numpy_TP().T)
+        return self.range.from_numpy_TP(U.to_numpy_TP())
 
 
 class LinearInputOperator(Operator):
@@ -1479,7 +1479,7 @@ class QuadraticFunctional(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.from_numpy(self.operator.apply2(U, U, mu))
+        return self.range.from_numpy_TP(self.operator.apply2(U, U, mu))  # TODO: check case len(U)>1
 
     def jacobian(self, U, mu=None):
         inner_vec = self.operator.apply_adjoint(U, mu) + self.operator.apply(U, mu)

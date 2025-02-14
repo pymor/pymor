@@ -43,12 +43,12 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
         Real |Operator| or `None`.
     Br
         Real |Operator| or `None`.
-        It is assumed that `Br.range.from_numpy` is implemented.
+        It is assumed that `Br.range.from_numpy_TP` is implemented.
     C
         Real |Operator| or `None`.
     Cr
         Real |Operator| or `None`.
-        It is assumed that `Cr.source.from_numpy` is implemented.
+        It is assumed that `Cr.source.from_numpy_TP` is implemented.
 
     Returns
     -------
@@ -118,7 +118,7 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
     if compute_V:
         V = A.source.empty(reserve=r)
 
-        BrTQ = Br.apply_adjoint(Br.range.from_numpy(Q.T))
+        BrTQ = Br.apply_adjoint(Br.range.from_numpy_TP(Q))
         BBrTQ = B.apply(BrTQ)
         for i in range(-1, -r - 1, -1):
             rhs = -BBrTQ[i].copy()
@@ -137,7 +137,7 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
     if compute_W:
         W = A.source.empty(reserve=r)
 
-        CrZ = Cr.apply(Cr.source.from_numpy(Z.T))
+        CrZ = Cr.apply(Cr.source.from_numpy_TP(Z))
         CTCrZ = C.apply_adjoint(CrZ)
         for i in range(r):
             rhs = -CTCrZ[i].copy()

@@ -68,12 +68,12 @@ def nothing(*args, **kwargs):
 
 def _np_arrays(length, dim, dtype=None):
     if dtype is None:
-        return hynp.arrays(dtype=np.float64, shape=(length, dim), elements=hy_float_array_elements) | \
-            hynp.arrays(dtype=np.complex128, shape=(length, dim), elements=hy_complex_array_elements)
+        return hynp.arrays(dtype=np.float64, shape=(dim, length), elements=hy_float_array_elements) | \
+            hynp.arrays(dtype=np.complex128, shape=(dim, length), elements=hy_complex_array_elements)
     if dtype is np.complex128:
-        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=hy_complex_array_elements)
+        return hynp.arrays(dtype=dtype, shape=(dim, length), elements=hy_complex_array_elements)
     if dtype is np.float64:
-        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=hy_float_array_elements)
+        return hynp.arrays(dtype=dtype, shape=(dim, length), elements=hy_float_array_elements)
     raise RuntimeError(f'unsupported dtype={dtype}')
 
 
@@ -169,7 +169,7 @@ def vector_arrays(draw, space_types, count=1, dtype=None, length=None, compatibl
     np_data_list = [draw(_np_arrays(l, dim, dtype=dtype)) for l, dim in zip(lngs, dims)]
     space_type = draw(hyst.sampled_from(space_types))
     space_data = globals()[f'_{space_type}_vector_spaces'](draw, np_data_list, compatible, count, dims)
-    ret = [sp.from_numpy(d) for sp, d in space_data]
+    ret = [sp.from_numpy_TP(d) for sp, d in space_data]
     assume(len(ret))
     if len(ret) == 1:
         assert count == 1
@@ -475,10 +475,10 @@ def base_vector_arrays(draw, count=1, dtype=None, max_dim=100):
 
     if length > 1:
         mat = [random_correlation.rvs(_eigs(), tol=1e-12, random_state=rng) for _ in range(count)]
-        return [space.from_numpy(m) for m in mat]
+        return [space.from_numpy_TP(m) for m in mat]
     else:
         scalar = rng.uniform(0.1, 4, (1, 1))
-        return [space.from_numpy(scalar) for _ in range(count)]
+        return [space.from_numpy_TP(scalar) for _ in range(count)]
 
 
 @hyst.composite

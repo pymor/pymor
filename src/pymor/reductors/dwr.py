@@ -190,7 +190,7 @@ class DWRCoerciveRBReductor(BasicObject):
             # more general case without using the structure of BlockColumnOperator
             if model.dim_output > 1:
                 model.logger.warning('Using inefficient concatenation for the right-hand side')
-            e_i_vec = model.output_functional.range.from_numpy(np.eye(1, model.dim_output, dim))
+            e_i_vec = model.output_functional.range.from_numpy_TP(np.eye(1, model.dim_output, dim))
             dual_rhs = - output.H @ VectorOperator(e_i_vec) if model.dim_output > 1 else - output.H
         dual_operator = model.operator.H
         dual_model = model.with_(operator=dual_operator, rhs=dual_rhs,
@@ -262,11 +262,11 @@ class CorrectedOutputFunctional(Operator):
 
     def apply(self, solution, mu=None):
         # compute corrected output functional
-        output = self.output_functional.apply(solution, mu=mu).to_numpy_TP().T
+        output = self.output_functional.apply(solution, mu=mu).to_numpy_TP()
         correction = np.empty((self.range.dim, len(solution)))
         for d, (dual_m, dual_res) in enumerate(zip(self.dual_models, self.dual_projected_primal_residuals)):
             dual_solution = dual_m.solve(mu)
             dual_correction = dual_res.apply2(dual_solution, solution, mu)
             correction[d] = dual_correction
-        corrected_output = output + correction.T
-        return self.range.from_numpy(corrected_output)
+        corrected_output = output + correction
+        return self.range.from_numpy_TP(corrected_output)
