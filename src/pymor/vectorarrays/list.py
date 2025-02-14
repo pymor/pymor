@@ -595,14 +595,16 @@ class ListVectorSpace(VectorSpace):
         )
 
     @classinstancemethod
-    def from_numpy(cls, data, ensure_copy=False):  # noqa: N805
-        return cls.space_from_dim(data.shape[1]).from_numpy(data, ensure_copy=ensure_copy)
+    def from_numpy_TP(cls, data, ensure_copy=False):  # noqa: N805
+        return cls.space_from_dim(data.shape[0]).from_numpy_TP(data, ensure_copy=ensure_copy)
 
-    @from_numpy.instancemethod
-    def from_numpy(self, data, ensure_copy=False):
+    @from_numpy_TP.instancemethod
+    def from_numpy_TP(self, data, ensure_copy=False):
         """:noindex:"""  # noqa: D400
+        if data.ndim == 1:
+            data = data.reshape((-1, 1))
         return ListVectorArray(
-            self, ListVectorArrayImpl([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self)
+            self, ListVectorArrayImpl([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data.T], self)
         )
 
 

@@ -31,7 +31,7 @@ def test_low_rank_apply(rng):
 
     LR = LowRankOperator(L, C, R)
     V = LR.apply(U)
-    assert np.allclose(V.to_numpy().T, L.to_numpy_TP() @ C @ (R.to_numpy_TP().T @ U.to_numpy_TP()))
+    assert np.allclose(V.to_numpy_TP(), L.to_numpy_TP() @ C @ (R.to_numpy_TP().T @ U.to_numpy_TP()))
 
     LR = LowRankOperator(L, C, R, inverted=True)
     V = LR.apply(U)

@@ -235,7 +235,7 @@ def _MPIVectorArray_pairwise_inner(self, other, ind, oind):
 
 
 def _MPIVectorArray_lincomb(self, coefficients, ind):
-    return _indexed(self, ind).lincomb(coefficients)
+    return _indexed(self, ind).lincomb_TP(coefficients.T)
 
 
 def _MPIVectorArray_norm(self, ind):
@@ -247,7 +247,7 @@ def _MPIVectorArray_norm2(self, ind):
 
 
 def _MPIVectorArray_dofs(self, dof_indices, ind):
-    return _indexed(self, ind).dofs(dof_indices)
+    return _indexed(self, ind).dofs_TP(dof_indices).T
 
 
 def _MPIVectorArray_amax(self, ind):

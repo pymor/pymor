@@ -199,10 +199,10 @@ class NumpyVectorArray(VectorArray):
     impl_type = NumpyVectorArrayImpl
 
     def __str__(self):
-        return str(self.to_numpy())
+        return str(self.to_numpy_TP())
 
     def _format_repr(self, max_width, verbosity):
-        return super()._format_repr(max_width, verbosity, override={'impl': str(self.to_numpy())})
+        return super()._format_repr(max_width, verbosity, override={'impl': str(self.to_numpy_TP())})
 
 
 class NumpyVectorSpace(VectorSpace):
@@ -241,14 +241,8 @@ class NumpyVectorSpace(VectorSpace):
         va.impl._array[:count] = _create_random_values((count, self.dim), distribution, **kwargs)
         return va
 
-    @classinstancemethod
-    def make_array(cls, obj):  # noqa: N805
-        return cls._array_factory(obj)
-
-    @make_array.instancemethod
     def make_array(self, obj):
-        """:noindex:"""  # noqa: D400
-        return self._array_factory(obj, space=self)
+        raise NotImplementedError
 
     @classinstancemethod
     def make_array_TP(cls, obj):  # noqa: N805
@@ -260,13 +254,13 @@ class NumpyVectorSpace(VectorSpace):
         return self._array_factory_TP(obj, space=self)
 
     @classinstancemethod
-    def from_numpy(cls, data, ensure_copy=False):  # noqa: N805
-        return cls._array_factory(data.copy() if ensure_copy else data)
+    def from_numpy_TP(cls, data, ensure_copy=False):  # noqa: N805
+        return cls._array_factory_TP(data.copy() if ensure_copy else data)
 
-    @from_numpy.instancemethod
-    def from_numpy(self, data, ensure_copy=False):
+    @from_numpy_TP.instancemethod
+    def from_numpy_TP(self, data, ensure_copy=False):
         """:noindex:"""  # noqa: D400
-        return self._array_factory(data.copy() if ensure_copy else data, space=self)
+        return self._array_factory_TP(data.copy() if ensure_copy else data, space=self)
 
     @classinstancemethod
     def from_file(cls, path, key=None, single_vector=False, transpose=False):  # noqa: N805

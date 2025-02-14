@@ -252,9 +252,10 @@ class BlockVectorSpace(VectorSpace):
             U.append(self.make_array([s.zeros(len(UU)) if j != i else UU for j, s in enumerate(self.subspaces)]))
         return U
 
-    def from_numpy(self, data, ensure_copy=False):
+    def from_numpy_TP(self, data, ensure_copy=False):
         if data.ndim == 1:
-            data = data.reshape(1, -1)
+            data = data.reshape((-1, 1))
+        data = data.T
         data_ind = np.cumsum([0] + [subspace.dim for subspace in self.subspaces])
         return BlockVectorArray(
             self,
