@@ -377,7 +377,7 @@ Let's check if it works as expected:
 
 ```{code-cell} ipython3
 u_N2 = rom.solve()
-u_N.T - u_N2.to_numpy()
+u_N - u_N2.to_numpy_TP()
 ```
 
 We get exactly the same result, so we have successfully built a pyMOR ROM.
@@ -469,7 +469,7 @@ We check that our new ROM still computes the same solution:
 
 ```{code-cell} ipython3
 u_N3 = rom.solve(mu)
-u_N.T - u_N3.to_numpy()
+u_N - u_N3.to_numpy_TP()
 ```
 
 Let's see if our new ROM is actually faster than the FOM:
@@ -535,7 +535,7 @@ of the linear combination. We check again that we have built the same ROM:
 ```{code-cell} ipython3
 rom = StationaryModel(reduced_operator, reduced_rhs)
 u_N4 = rom.solve(mu)
-u_N.T - u_N4.to_numpy()
+u_N - u_N4.to_numpy_TP()
 ```
 
 So how does {meth}`~pymor.algorithms.projection.project` actually work? Let's take
@@ -632,7 +632,7 @@ Again, we get the same ROM as before:
 
 ```{code-cell} ipython3
 u_N5 = rom.solve(mu)
-u_N.T - u_N5.to_numpy()
+u_N - u_N5.to_numpy_TP()
 ```
 
 As an additional feature, {meth}`!reduce`

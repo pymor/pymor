@@ -35,7 +35,7 @@ def test_adaptive_rrf(rng, qr_method, error_estimator):
         qr_method=qr_method,
         error_estimator=error_estimator
     ).find_range(tol=1e-5)
-    assert np.iscomplexobj(Q2.to_numpy())
+    assert np.iscomplexobj(Q2.to_numpy_TP())
     assert Q2 in op.range
 
 
@@ -64,7 +64,7 @@ def test_adaptive_rrf_with_product(rng, qr_method):
     Q2 = RandomizedRangeFinder(
         op_complex, range_product=range_product, source_product=source_product, qr_method=qr_method,
     ).find_range(tol=1e-5)
-    assert np.iscomplexobj(Q2.to_numpy())
+    assert np.iscomplexobj(Q2.to_numpy_TP())
     assert Q2 in op.range
 
 
@@ -101,7 +101,7 @@ def test_randomized_ghep(rng, return_evecs, single_pass):
         assert len(V) == n
         assert V.dim == op.source.dim
         for i in range(0, n):
-            assert np.linalg.norm(abs(V.to_numpy()[i]) - abs(V_real[:, i])) <= 1
+            assert np.linalg.norm(abs(V.to_numpy_TP()[:, i]) - abs(V_real[:, i])) <= 1
 
     assert len(w) == n
     assert abs(np.linalg.norm(w - w_real[:n])) <= 1e-2

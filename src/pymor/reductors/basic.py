@@ -121,7 +121,7 @@ class ProjectionBasedReductor(BasicObject):
 
     def reconstruct(self, u, basis='RB'):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
-        return self.bases[basis][:u.dim].lincomb_TP(u.to_numpy().T)
+        return self.bases[basis][:u.dim].lincomb_TP(u.to_numpy_TP())
 
     def extend_basis(self, U, basis='RB', method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
         basis_length = len(self.bases[basis])

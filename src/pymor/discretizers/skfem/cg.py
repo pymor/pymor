@@ -158,7 +158,7 @@ class SKFemVisualizer(ImmutableObject):
         if len(U) > 1:
             raise NotImplementedError
 
-        plot(self.basis, U.to_numpy().ravel(), colorbar=True, **kwargs)
+        plot(self.basis, U.to_numpy_TP().ravel(), colorbar=True, **kwargs)
         show()
 
 

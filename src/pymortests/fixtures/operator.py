@@ -36,17 +36,17 @@ class MonomOperator(Operator):
         self.linear = order == 1
 
     def apply(self, U, mu=None):
-        return self.source.make_array(self.monom(U.to_numpy()))
+        return self.source.make_array(self.monom(U.to_numpy_TP().T))
 
     def apply_adjoint(self, U, mu=None):
         return self.apply(U, mu=None)
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
-        return NumpyMatrixOperator(self.derivative(U.to_numpy()).reshape((1, 1)))
+        return NumpyMatrixOperator(self.derivative(U.to_numpy_TP().T).reshape((1, 1)))
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        return self.range.make_array(1. / V.to_numpy())
+        return self.range.make_array(1. / V.to_numpy_TP().T)
 
 
 def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, rng, sparse=False):
@@ -69,8 +69,8 @@ def numpy_list_vector_array_matrix_operator_with_arrays_factory(
         dim_source, dim_range, count_source, count_range, rng, sparse
     )
     op = op.with_(new_type=NumpyListVectorArrayMatrixOperator)
-    s = op.source.from_numpy(s.to_numpy())
-    r = op.range.from_numpy(r.to_numpy())
+    s = op.source.from_numpy(s.to_numpy_TP().T)
+    r = op.range.from_numpy(r.to_numpy_TP().T)
     return op, None, s, r
 
 

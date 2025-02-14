@@ -394,7 +394,7 @@ class ProjectedOperator(Operator):
                 V = self.operator.apply(U, mu=mu)
                 return self.range.make_array(self.product.apply2(V, self.range_basis))
         else:
-            UU = self.source_basis.lincomb_TP(U.to_numpy().T)
+            UU = self.source_basis.lincomb_TP(U.to_numpy_TP())
             if self.range_basis is None:
                 return self.operator.apply(UU, mu=mu)
             elif self.product is None:
@@ -411,7 +411,7 @@ class ProjectedOperator(Operator):
         if self.source_basis is None:
             J = self.operator.jacobian(U, mu=mu)
         else:
-            J = self.operator.jacobian(self.source_basis.lincomb_TP(U.to_numpy().T), mu=mu)
+            J = self.operator.jacobian(self.source_basis.lincomb_TP(U.to_numpy_TP()), mu=mu)
         from pymor.algorithms.projection import project
         pop = project(J, range_basis=self.range_basis, source_basis=self.source_basis,
                       product=self.product)
@@ -435,7 +435,7 @@ class ProjectedOperator(Operator):
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         if self.range_basis is not None:
-            V = self.range_basis.lincomb_TP(V.to_numpy().T)
+            V = self.range_basis.lincomb_TP(V.to_numpy_TP())
         U = self.operator.apply_adjoint(V, mu)
         if self.source_basis is not None:
             U = self.source.make_array(U.inner(self.source_basis))
@@ -815,7 +815,7 @@ class VectorArrayOperator(Operator):
     def apply(self, U, mu=None):
         assert U in self.source
         if not self.adjoint:
-            return self.array.lincomb_TP(U.to_numpy().T)
+            return self.array.lincomb_TP(U.to_numpy_TP())
         else:
             return self.range.make_array(self.array.inner(U).T)
 
@@ -827,7 +827,7 @@ class VectorArrayOperator(Operator):
 
         Q, R = gram_schmidt(self.array, return_R=True, reiterate=False)
         if self.adjoint:
-            v = spla.lstsq(R.T.conj(), V.to_numpy().T)[0]
+            v = spla.lstsq(R.T.conj(), V.to_numpy_TP())[0]
             U = Q.lincomb_TP(v)
         else:
             v = Q.inner(V)
@@ -841,7 +841,7 @@ class VectorArrayOperator(Operator):
         if not self.adjoint:
             return self.source.make_array(self.array.inner(V).T)
         else:
-            return self.array.lincomb_TP(V.to_numpy().T)
+            return self.array.lincomb_TP(V.to_numpy_TP())
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         adjoint_op = VectorArrayOperator(self.array, adjoint=not self.adjoint)
@@ -1379,7 +1379,7 @@ class NumpyConversionOperator(Operator):
     """Converts |VectorArrays| to |NumpyVectorArrays|.
 
     Note that the input |VectorArrays| need to support
-    :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
+    :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP`.
     For the adjoint,
     :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
     needs to be implemented.
@@ -1415,19 +1415,19 @@ class NumpyConversionOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.from_numpy(U.to_numpy())
+        return self.range.from_numpy(U.to_numpy_TP().T)
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
-        return self.source.from_numpy(V.to_numpy())
+        return self.source.from_numpy(V.to_numpy_TP().T)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        return self.source.from_numpy(V.to_numpy())
+        return self.source.from_numpy(V.to_numpy_TP().T)
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
-        return self.range.from_numpy(U.to_numpy())
+        return self.range.from_numpy(U.to_numpy_TP().T)
 
 
 class LinearInputOperator(Operator):
@@ -1448,7 +1448,7 @@ class LinearInputOperator(Operator):
         self.parameters_own = {'input': B.source.dim}
 
     def apply(self, U, mu=None):
-        return self.B.as_range_array(mu).lincomb_TP((U.to_numpy() * mu['input']).T)
+        return self.B.as_range_array(mu).lincomb_TP(U.to_numpy_TP() * mu['input'][..., np.newaxis])
 
     def as_range_array(self, mu=None):
         return self.B.as_range_array(mu).lincomb_TP(mu['input'])

@@ -427,7 +427,7 @@ def interpolate_function(function, parameter_sample, evaluation_points,
     ei_function = EmpiricalInterpolatedFunction(
         function, evaluation_points[dofs], ei_data['interpolation_matrix'], True,
         parameter_sample, ei_data['coefficients'],
-        evaluation_points=evaluation_points, basis_evaluations=basis.to_numpy()
+        evaluation_points=evaluation_points, basis_evaluations=basis.to_numpy_TP().T
     )
 
     return ei_function, ei_data

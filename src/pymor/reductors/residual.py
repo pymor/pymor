@@ -42,7 +42,7 @@ class ResidualReductor(BasicObject):
     Moreover, a `reconstruct` method is provided such that ::
 
         residual_reductor.reconstruct(projected_residual.apply(u, mu))
-            == residual.apply(RB.lincomb_TP(u.to_numpy().T), mu)
+            == residual.apply(RB.lincomb_TP(u.to_numpy_TP()), mu)
 
     Parameters
     ----------
@@ -105,7 +105,7 @@ class ResidualReductor(BasicObject):
             else:
                 return u
         else:
-            return self.residual_range[:u.dim].lincomb_TP(u.to_numpy().T)
+            return self.residual_range[:u.dim].lincomb_TP(u.to_numpy_TP())
 
 
 class ResidualOperator(Operator):
@@ -193,8 +193,8 @@ class ImplicitEulerResidualReductor(BasicObject):
     Moreover, a `reconstruct` method is provided such that ::
 
         residual_reductor.reconstruct(projected_riesz_residual.apply(u, u_old, mu))
-            == riesz_residual.apply(RB.lincomb_TP(u.to_numpy().T),
-                                    RB.lincomb_TP(u_old.to_numpy().T), mu)
+            == riesz_residual.apply(RB.lincomb_TP(u.to_numpy_TP()),
+                                    RB.lincomb_TP(u_old.to_numpy_TP()), mu)
 
     Parameters
     ----------
@@ -258,7 +258,7 @@ class ImplicitEulerResidualReductor(BasicObject):
             else:
                 return u
         else:
-            return self.residual_range[:u.dim].lincomb_TP(u.to_numpy().T)
+            return self.residual_range[:u.dim].lincomb_TP(u.to_numpy_TP())
 
 
 class ImplicitEulerResidualOperator(Operator):

@@ -262,7 +262,7 @@ class CorrectedOutputFunctional(Operator):
 
     def apply(self, solution, mu=None):
         # compute corrected output functional
-        output = self.output_functional.apply(solution, mu=mu).to_numpy()
+        output = self.output_functional.apply(solution, mu=mu).to_numpy_TP().T
         correction = np.empty((self.range.dim, len(solution)))
         for d, (dual_m, dual_res) in enumerate(zip(self.dual_models, self.dual_projected_primal_residuals)):
             dual_solution = dual_m.solve(mu)

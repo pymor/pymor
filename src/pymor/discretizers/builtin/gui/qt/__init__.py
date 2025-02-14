@@ -328,8 +328,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                               '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
-    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-        tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+    U = (U.to_numpy_TP().T.astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+        tuple(u.to_numpy_TP().T.astype(np.float64, copy=False) for u in U)
 
     if backend == 'gl':
         if not config.HAVE_GL:
@@ -486,7 +486,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
                               '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
-    U = (U.to_numpy(),) if isinstance(U, VectorArray) else tuple(u.to_numpy() for u in U)
+    U = (U.to_numpy_TP().T,) if isinstance(U, VectorArray) else tuple(u.to_numpy_TP().T for u in U)
     vmins, vmaxs = _vmins_vmaxs(U, separate_plots, rescale_axes)
 
     from pymor.discretizers.builtin.gui.qt.matplotlib import Matplotlib1DWidget

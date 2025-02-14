@@ -32,8 +32,8 @@ def test_almost_equal(vector_arrays, tolerances, sup_norm):
     v1, v2 = vector_arrays
     rtol, atol = tolerances
     try:
-        dv1 = v1.to_numpy()
-        dv2 = v2.to_numpy()
+        dv1 = v1.to_numpy_TP()
+        dv2 = v2.to_numpy_TP()
     except NotImplementedError:
         dv1 = dv2 = None
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
@@ -41,14 +41,14 @@ def test_almost_equal(vector_arrays, tolerances, sup_norm):
         assert isinstance(r, np.ndarray)
         assert r.shape == (v1.len_ind(ind1),)
         if dv1 is not None:
-            if dv2.shape[1] == 0:
+            if dv2.shape[0] == 0:
                 continue
             assert np.all(r == (np.linalg.norm(indexed(dv1, ind1) - indexed(dv2, ind2),
                                                ord=np.inf if sup_norm else None,
-                                               axis=1)
+                                               axis=0)
                                 <= atol + rtol * np.linalg.norm(indexed(dv2, ind2),
                                                                 ord=np.inf if sup_norm else None,
-                                                                axis=1)))
+                                                                axis=0)))
 
 
 def test_almost_equal_product(operator_with_arrays_and_products):

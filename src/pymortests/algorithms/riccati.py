@@ -239,7 +239,7 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
 
     assert len(Zva) <= n
 
-    Z = Zva.to_numpy().T
+    Z = Zva.to_numpy_TP()
     assert relative_residual(A, E, B, C, R, S, Z, trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new):
@@ -304,7 +304,7 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
 
     assert len(Zva) <= n
 
-    Z = Zva.to_numpy().T
+    Z = Zva.to_numpy_TP()
     if not with_R:
         R = np.eye(p if not trans else m)
     assert relative_residual(A, E, B, C, -R, S, Z, trans) < 1e-8

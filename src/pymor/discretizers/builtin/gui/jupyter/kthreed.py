@@ -229,7 +229,7 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
             and all(len(u) == len(U[0]) for u in U))
     if isinstance(U, VectorArray):
         U = (U,)
-    U = tuple(u.to_numpy() for u in U)
+    U = tuple(u.to_numpy_TP().T for u in U)
 
     legend = (legend,) if isinstance(legend, str) else legend
     assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
@@ -299,8 +299,8 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                or (isinstance(U, tuple)
                    and all(isinstance(u, VectorArray) for u in U)
                    and all(len(u) == len(U[0]) for u in U))
-        U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-            tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+        U = (U.to_numpy_TP().T.astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+            tuple(u.to_numpy_TP().T.astype(np.float64, copy=False) for u in U)
         vmins, vmaxs = _vmins_vmaxs(U, separate_colorbars, rescale_colorbars)
 
         for u, p, vmin, vmax in zip(U, plots, vmins, vmaxs):

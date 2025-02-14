@@ -155,7 +155,7 @@ def test_cont_lrcf(n, m, with_E, trans, solver, rng):
     Zva = solve_cont_lyap_lrcf(Aop, Eop, Bva, trans=trans, options=solver)
     assert len(Zva) <= n
 
-    Z = Zva.to_numpy().T
+    Z = Zva.to_numpy_TP()
     assert relative_residual(A, E, B, Z @ Z.T, trans=trans, cont_time=True) < 1e-10
 
     for mat1, mat2 in zip(mat_old, mat_new):
@@ -199,7 +199,7 @@ def test_disc_lrcf(n, m, with_E, trans, solver, rng):
     Zva = solve_disc_lyap_lrcf(Aop, Eop, Bva, trans=trans, options=solver)
     assert len(Zva) <= n
 
-    Z = Zva.to_numpy().T
+    Z = Zva.to_numpy_TP()
     assert relative_residual(A, E, B, Z @ Z.T, trans=trans, cont_time=False) < 1e-10
 
     for mat1, mat2 in zip(mat_old, mat_new):

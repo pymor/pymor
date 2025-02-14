@@ -256,10 +256,10 @@ class Operator(ParametricObject):
                 else:
                     mat_op = self._mat_op
                 if mat_op is not None:
-                    v = mat_op.range.from_numpy(V.to_numpy())
-                    i = None if initial_guess is None else mat_op.source.from_numpy(initial_guess.to_numpy())
+                    v = mat_op.range.from_numpy(V.to_numpy_TP().T)
+                    i = None if initial_guess is None else mat_op.source.from_numpy(initial_guess.to_numpy_TP().T)
                     u = mat_op.apply_inverse(v, initial_guess=i, least_squares=least_squares)
-                    return self.source.from_numpy(u.to_numpy())
+                    return self.source.from_numpy(u.to_numpy_TP().T)
             self.logger.warning('Solving with unpreconditioned iterative solver.')
             return genericsolvers.apply_inverse(assembled_op, V, initial_guess=initial_guess,
                                                 options=options, least_squares=least_squares)
@@ -384,7 +384,7 @@ class Operator(ParametricObject):
         :attr:`~pymor.operators.interface.Operator.range`,
         such that ::
 
-            V.lincomb_TP(U.to_numpy().T) == self.apply(U, mu)
+            V.lincomb_TP(U.to_numpy_TP()) == self.apply(U, mu)
 
         for all |VectorArrays| `U`.
 

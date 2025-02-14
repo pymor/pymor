@@ -94,6 +94,6 @@ class OnedGrid(GridWithOrthogonalCenters):
         assert all(isinstance(u, (np.ndarray, VectorArray)) for u in U)
         U = tuple(NumpyVectorSpace.make_array(u) if isinstance(u, np.ndarray) else
                   u if isinstance(u.space, NumpyVectorSpace) else
-                  NumpyVectorSpace.make_array(u.to_numpy())
+                  NumpyVectorSpace.make_array(u.to_numpy_TP().T)
                   for u in U)
         OnedVisualizer(self, codim=codim).visualize(U, **kwargs)

@@ -34,8 +34,8 @@ def test_apply(rng):
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Aop.apply(vva)
-    w = np.hstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
-    assert np.allclose(A.dot(v), w)
+    w = np.vstack((wva.blocks[0].to_numpy_TP(), wva.blocks[1].to_numpy_TP()))
+    assert np.allclose(A.dot(v), w.ravel())
 
 
 def test_apply_adjoint(rng):
@@ -58,8 +58,8 @@ def test_apply_adjoint(rng):
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Aop.apply_adjoint(vva)
-    w = np.hstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
-    assert np.allclose(A.T.dot(v), w)
+    w = np.vstack((wva.blocks[0].to_numpy_TP(), wva.blocks[1].to_numpy_TP()))
+    assert np.allclose(A.T.dot(v), w.ravel())
 
 
 def test_block_diagonal(rng):
@@ -88,8 +88,8 @@ def test_blk_diag_apply_inverse(rng):
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Cop.apply_inverse(vva)
-    w = np.hstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
-    assert np.allclose(spla.solve(C, v), w)
+    w = np.vstack((wva.blocks[0].to_numpy_TP(), wva.blocks[1].to_numpy_TP()))
+    assert np.allclose(spla.solve(C, v), w.ravel())
 
 
 def test_blk_diag_apply_inverse_adjoint(rng):
@@ -108,8 +108,8 @@ def test_blk_diag_apply_inverse_adjoint(rng):
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Cop.apply_inverse_adjoint(vva)
-    w = np.hstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
-    assert np.allclose(spla.solve(C.T, v), w)
+    w = np.vstack((wva.blocks[0].to_numpy_TP(), wva.blocks[1].to_numpy_TP()))
+    assert np.allclose(spla.solve(C.T, v), w.ravel())
 
 
 def test_block_jacobian(rng):
@@ -139,6 +139,6 @@ def test_block_jacobian(rng):
     jac_single_block = Dop_single_block.jacobian(vva_single_block, mu=None)
     assert jac.linear
     assert jac_single_block.linear
-    assert np.all(jac.blocks[0, 0].vector.to_numpy()[0] == np.dot(A.T, v1) + np.dot(A, v1))
-    assert np.all(jac.blocks[1, 1].vector.to_numpy()[0] == np.dot(B.T, v2) + np.dot(B, v2))
+    assert np.all(jac.blocks[0, 0].vector.to_numpy_TP()[:, 0] == np.dot(A.T, v1) + np.dot(A, v1))
+    assert np.all(jac.blocks[1, 1].vector.to_numpy_TP()[:, 0] == np.dot(B.T, v2) + np.dot(B, v2))
     assert np.all(jac.blocks[2, 2].matrix == C)

@@ -408,7 +408,7 @@ class NeuralNetworkReductor(BasicObject):
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
         assert hasattr(self, 'reduced_basis')
-        return self.reduced_basis.lincomb_TP(u.to_numpy().T)
+        return self.reduced_basis.lincomb_TP(u.to_numpy_TP())
 
 
 class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):

@@ -112,8 +112,8 @@ def test_gram_schmidt_biorth(vector_arrays):
     assert np.all(almost_equal(U1, V1))
     assert np.all(almost_equal(U2, V2))
     assert np.allclose(A2.inner(A1), np.eye(len(A1)), atol=check_tol)
-    c = (1 if len(A1) == 0 else np.linalg.cond(A1.to_numpy())) \
-        * (1 if len(A2) == 0 else np.linalg.cond(A2.to_numpy()))
+    c = (1 if len(A1) == 0 else np.linalg.cond(A1.to_numpy_TP())) \
+        * (1 if len(A2) == 0 else np.linalg.cond(A2.to_numpy_TP()))
     assert np.all(almost_equal(U1, A1.lincomb_TP(A2.inner(U1)), rtol=c * 1e-14))
     assert np.all(almost_equal(U2, A2.lincomb_TP(A1.inner(U2)), rtol=c * 1e-14))
 
@@ -142,7 +142,7 @@ def test_gram_schmidt_biorth_with_product(operator_with_arrays_and_products):
     assert np.all(almost_equal(U1, V1))
     assert np.all(almost_equal(U2, V2))
     assert np.allclose(p.apply2(A2, A1), np.eye(len(A1)))
-    c = np.linalg.cond(A1.to_numpy()) * np.linalg.cond(p.apply(A2).to_numpy())
+    c = np.linalg.cond(A1.to_numpy_TP()) * np.linalg.cond(p.apply(A2).to_numpy_TP())
     assert np.all(almost_equal(U1, A1.lincomb_TP(p.apply2(A2, U1)), rtol=c * 1e-14))
     assert np.all(almost_equal(U2, A2.lincomb_TP(p.apply2(A1, U2)), rtol=c * 1e-14))
 

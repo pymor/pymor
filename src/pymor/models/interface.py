@@ -506,7 +506,7 @@ class Model(CacheableObject, ParametricObject):
                 raise NotImplementedError
             self._compute_required_quantities({'solution'}, data, mu)
 
-            data['output'] = self.output_functional.apply(data['solution'], mu=mu).to_numpy()
+            data['output'] = self.output_functional.apply(data['solution'], mu=mu).to_numpy_TP().T
             quantities.remove('output')
 
         if 'output_d_mu' in quantities:
@@ -524,10 +524,11 @@ class Model(CacheableObject, ParametricObject):
             for (parameter, size) in self.parameters.items():
                 for index in range(size):
                     output_d_mu = self.output_functional.d_mu(parameter, index).apply(
-                        solution, mu=mu).to_numpy()
+                        solution, mu=mu).to_numpy_TP().T
                     U_d_mu = data['solution_d_mu', parameter, index]
                     for t, U in enumerate(U_d_mu):
-                        output_d_mu[t] += self.output_functional.jacobian(solution[t], mu).apply(U, mu).to_numpy()[0]
+                        output_d_mu[t] \
+                            += self.output_functional.jacobian(solution[t], mu).apply(U, mu).to_numpy_TP()[:, 0]
                     sensitivities[parameter, index] = output_d_mu
             data['output_d_mu'] = OutputDMuResult(sensitivities)
             quantities.remove('output_d_mu')

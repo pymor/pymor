@@ -28,7 +28,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         assert self._blocks_are_valid()
         if len(self._blocks):
             # hstack will error out with empty input list
-            return np.hstack([_indexed(block, ind).to_numpy(False) for block in self._blocks])
+            return np.hstack([_indexed(block, ind).to_numpy_TP(False).T for block in self._blocks])
         else:
             return np.empty((0, 0))
 

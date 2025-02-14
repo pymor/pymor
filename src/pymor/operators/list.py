@@ -169,7 +169,7 @@ class NumpyListVectorArrayMatrixOperator(ListVectorArrayOperatorBase, NumpyMatri
             op.range.make_array(v._array),
             initial_guess=op.source.make_array(initial_guess._array) if initial_guess is not None else None,
             least_squares=least_squares
-        ).to_numpy().ravel()
+        ).to_numpy_TP().ravel()
 
         return u
 

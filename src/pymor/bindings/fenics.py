@@ -539,11 +539,11 @@ class RestrictedFenicsOperator(Operator):
     def apply(self, U, mu=None):
         assert U in self.source
         UU = self.op.source.zeros(len(U))
-        for uu, u in zip(UU.vectors, U.to_numpy()):
+        for uu, u in zip(UU.vectors, U.to_numpy_TP().T):
             uu.real_part.impl[:] = np.ascontiguousarray(u)
         VV = self.op.apply(UU, mu=mu)
         V = self.range.zeros(len(VV))
-        for v, vv in zip(V.to_numpy(), VV.vectors):
+        for v, vv in zip(V.to_numpy_TP().T, VV.vectors):
             v[:] = vv.real_part.impl[self.restricted_range_dofs]
         return V
 
@@ -551,7 +551,7 @@ class RestrictedFenicsOperator(Operator):
         assert U in self.source
         assert len(U) == 1
         UU = self.op.source.zeros()
-        UU.vectors[0].real_part.impl[:] = np.ascontiguousarray(U.to_numpy()[0])
+        UU.vectors[0].real_part.impl[:] = np.ascontiguousarray(U.to_numpy_TP()[:, 0])
         JJ = self.op.jacobian(UU, mu=mu)
         return NumpyMatrixOperator(JJ.matrix.array()[self.restricted_range_dofs, :])
 

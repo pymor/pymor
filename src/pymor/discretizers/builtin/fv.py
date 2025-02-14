@@ -263,7 +263,7 @@ class NonlinearAdvectionOperator(Operator):
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
 
-        U = U.to_numpy()
+        U = U.to_numpy_TP().T
         R = np.zeros((len(U), self.source.dim + 1))
 
         bi = self.boundary_info
@@ -319,7 +319,7 @@ class NonlinearAdvectionOperator(Operator):
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
 
-        U = U.to_numpy().ravel()
+        U = U.to_numpy_TP().ravel()
 
         g = self.grid
         bi = self.boundary_info
@@ -601,7 +601,7 @@ class NonlinearReactionOperator(Operator):
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
 
-        R = U.to_numpy() if ind is None else U.to_numpy()[ind]
+        R = U.to_numpy_TP().T if ind is None else U.to_numpy_TP().T[ind]
         R = self.reaction_function.evaluate(R.reshape(R.shape + (1,)), mu=mu)
 
         return self.range.make_array(R)
@@ -610,7 +610,7 @@ class NonlinearReactionOperator(Operator):
         if self.reaction_function_derivative is None:
             raise NotImplementedError
 
-        U = U.to_numpy()
+        U = U.to_numpy_TP().T
         A = dia_matrix((self.reaction_function_derivative.evaluate(U.reshape(U.shape + (1,)), mu=mu), [0]),
                        shape=(self.grid.size(0),) * 2)
 
@@ -1188,7 +1188,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
             I = p.initial_data.evaluate(grid.quadrature_points(0, order=2), mu).squeeze()
             I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
             I = m.solution_space.make_array(I)
-            return I.lincomb_TP(U.T).to_numpy()
+            return I.lincomb_TP(U.T).to_numpy_TP().T
         I = NumpyGenericOperator(initial_projection, dim_range=grid.size(0), linear=True,
                                  parameters=p.initial_data.parameters)
     else:

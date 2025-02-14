@@ -30,10 +30,10 @@ def test_complex(rng):
     assert np.iscomplexobj((Bop * 1 + Aop * 1j).assemble().matrix)
 
     # apply_inverse
-    assert not np.iscomplexobj(Aop.apply_inverse(Cva).to_numpy())
-    assert np.iscomplexobj((Aop * 1j).apply_inverse(Cva).to_numpy())
-    assert np.iscomplexobj((Aop * 1 + Bop * 1j).assemble().apply_inverse(Cva).to_numpy())
-    assert np.iscomplexobj(Aop.apply_inverse(Cva * 1j).to_numpy())
+    assert not np.iscomplexobj(Aop.apply_inverse(Cva).to_numpy_TP())
+    assert np.iscomplexobj((Aop * 1j).apply_inverse(Cva).to_numpy_TP())
+    assert np.iscomplexobj((Aop * 1 + Bop * 1j).assemble().apply_inverse(Cva).to_numpy_TP())
+    assert np.iscomplexobj(Aop.apply_inverse(Cva * 1j).to_numpy_TP())
 
     # append
     for rsrv in (0, 10):
@@ -43,25 +43,25 @@ def test_complex(rng):
             D = rng.standard_normal((1, 5)) + 1j * rng.standard_normal((1, 5))
             Dva = NumpyVectorSpace.from_numpy(D)
 
-            assert not np.iscomplexobj(va.to_numpy())
-            assert np.iscomplexobj(Dva.to_numpy())
+            assert not np.iscomplexobj(va.to_numpy_TP())
+            assert np.iscomplexobj(Dva.to_numpy_TP())
             va.append(Dva[o_ind])
-            assert np.iscomplexobj(va.to_numpy())
+            assert np.iscomplexobj(va.to_numpy_TP())
 
     # scal
-    assert not np.iscomplexobj(Cva.to_numpy())
-    assert np.iscomplexobj((Cva * 1j).to_numpy())
-    assert np.iscomplexobj((Cva * (1 + 0j)).to_numpy())
+    assert not np.iscomplexobj(Cva.to_numpy_TP())
+    assert np.iscomplexobj((Cva * 1j).to_numpy_TP())
+    assert np.iscomplexobj((Cva * (1 + 0j)).to_numpy_TP())
 
     # axpy
-    assert not np.iscomplexobj(Cva.to_numpy())
+    assert not np.iscomplexobj(Cva.to_numpy_TP())
     Cva[0].axpy(1, Dva)
-    assert np.iscomplexobj(Cva.to_numpy())
+    assert np.iscomplexobj(Cva.to_numpy_TP())
 
     Cva = NumpyVectorSpace.from_numpy(C)
-    assert not np.iscomplexobj(Cva.to_numpy())
+    assert not np.iscomplexobj(Cva.to_numpy_TP())
     Cva[0].axpy(1j, Dva)
-    assert np.iscomplexobj(Cva.to_numpy())
+    assert np.iscomplexobj(Cva.to_numpy_TP())
 
 
 def test_real_imag():
@@ -76,9 +76,9 @@ def test_real_imag():
     for i in range(3):
         for j in range(2):
             k += 1
-            assert Bva.to_numpy()[i, j] == k
+            assert Bva.to_numpy_TP()[j, i] == k
             k += 1
-            assert Cva.to_numpy()[i, j] == k
+            assert Cva.to_numpy_TP()[j, i] == k
 
 
 def test_scal():
@@ -91,19 +91,19 @@ def test_scal():
     for i in range(2):
         for j in range(3):
             k += 1
-            assert v.to_numpy()[i, j] == k * 1j
+            assert v.to_numpy_TP()[j, i] == k * 1j
 
 
 def test_axpy():
     x = NumpyVectorSpace.from_numpy(np.array([1.]))
     y = NumpyVectorSpace.from_numpy(np.array([1.]))
     y.axpy(1 + 1j, x)
-    assert y.to_numpy()[0, 0] == 2 + 1j
+    assert y.to_numpy_TP()[0, 0] == 2 + 1j
 
     x = NumpyVectorSpace.from_numpy(np.array([1 + 1j]))
     y = NumpyVectorSpace.from_numpy(np.array([1.]))
     y.axpy(-1, x)
-    assert y.to_numpy()[0, 0] == -1j
+    assert y.to_numpy_TP()[0, 0] == -1j
 
 
 def test_inner():

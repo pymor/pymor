@@ -42,7 +42,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     This function uses `slycot.sb03md` (if `E is None`) and `slycot.sg03ad` (if `E is not None`),
     which are dense solvers based on the Bartels-Stewart algorithm. Therefore, we assume A and E can
     be converted to |NumPy arrays| using :func:`~pymor.algorithms.to_matrix.to_matrix` and that
-    `B.to_numpy` is implemented.
+    `B.to_numpy_TP` is implemented.
 
     Parameters
     ----------
@@ -70,7 +70,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     if options['type'] == 'slycot_bartels-stewart':
         X = solve_lyap_dense(to_matrix(A, format='dense'),
                              to_matrix(E, format='dense') if E else None,
-                             B.to_numpy().T if not trans else B.to_numpy(),
+                             B.to_numpy_TP() if not trans else B.to_numpy_TP().T,
                              trans=trans, cont_time=cont_time, options=options)
         Z = _chol(X)
     else:
@@ -343,7 +343,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     Therefore, we assume all |Operators| and |VectorArrays| can be
     converted to |NumPy arrays| using
     :func:`~pymor.algorithms.to_matrix.to_matrix` and
-    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
+    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP`.
 
     Parameters
     ----------
@@ -380,10 +380,10 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     A_source = A.source
     A = to_matrix(A, format='dense')
     E = to_matrix(E, format='dense') if E else None
-    B = B.to_numpy().T
-    C = C.to_numpy()
+    B = B.to_numpy_TP()
+    C = C.to_numpy_TP().T
     if S is not None:
-        S = S.to_numpy() if not trans else S.to_numpy().T
+        S = S.to_numpy_TP().T if not trans else S.to_numpy_TP()
 
     X = solve_ricc_dense(A, E, B, C, R, S, trans, options)
 
@@ -408,7 +408,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     Therefore, we assume all |Operators| and |VectorArrays| can be
     converted to |NumPy arrays| using
     :func:`~pymor.algorithms.to_matrix.to_matrix` and
-    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
+    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP`.
 
     Parameters
     ----------
