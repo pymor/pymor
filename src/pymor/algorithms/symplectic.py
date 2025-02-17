@@ -171,16 +171,6 @@ class SymplecticBasis(BasicObject):
         # check_symplecticity = False, otherwise recursion loop
         return type(self)(self.E[ind], self.F[ind], check_symplecticity=False)
 
-    def lincomb(self, coefficients):
-        assert isinstance(coefficients, np.ndarray)
-        if coefficients.ndim == 1:
-            coefficients = coefficients[np.newaxis, ...]
-        assert len(coefficients.shape) == 2
-        assert coefficients.shape[1] == 2*len(self)
-        result = self.E.lincomb_TP(coefficients[:, :len(self)].T)
-        result += self.F.lincomb_TP(coefficients[:, len(self):].T)
-        return result
-
     def lincomb_TP(self, coefficients):
         assert isinstance(coefficients, np.ndarray)
         if coefficients.ndim == 1:
