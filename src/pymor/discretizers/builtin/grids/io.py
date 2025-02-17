@@ -29,7 +29,7 @@ def to_meshio(grid, data, codim=2):
     import meshio
 
     subentities, coordinates, entity_map = flatten_grid(grid)
-    data = data.to_numpy().T if codim == 0 else data.to_numpy().T[:, entity_map].copy()
+    data = data.to_numpy() if codim == 0 else data.to_numpy()[entity_map, :].copy()
     is_cell_data = (codim == 0)
 
     ref = grid.reference_element
@@ -41,9 +41,9 @@ def to_meshio(grid, data, codim=2):
         raise NotImplementedError('Meshio conversion restricted to grid with triangle or rectangle reference elements')
 
     meshes = []
-    for i in range(len(data)):
+    for i in range(data.shape[1]):
         if is_cell_data:
-            meshes.append(meshio.Mesh(coordinates, cells, cell_data={'Data': [data[i, :]]}))
+            meshes.append(meshio.Mesh(coordinates, cells, cell_data={'Data': [data[:, i]]}))
         else:
-            meshes.append(meshio.Mesh(coordinates, cells, point_data={'Data': data[i, :]}))
+            meshes.append(meshio.Mesh(coordinates, cells, point_data={'Data': data[:, i]}))
     return meshes

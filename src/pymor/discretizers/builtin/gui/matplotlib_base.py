@@ -55,6 +55,7 @@ class MatplotlibPatchAxes:
         self.cbar = ax.figure.colorbar(self.p, ax=ax, orientation=orientation)
 
     def set(self, U, vmin, vmax):
+        assert U.ndim == 1
         if self.codim == 2:
             self.p.set_array(U)
         elif self.reference_element is triangle:

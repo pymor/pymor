@@ -67,13 +67,13 @@ class PatchVisualizer(BasicObject):
                    or (isinstance(U, tuple)
                        and all(isinstance(u, VectorArray) for u in U)
                        and all(len(u) == len(U[0]) for u in U))
-            self.U = U = (U.to_numpy().T.astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-                tuple(u.to_numpy().T.astype(np.float64, copy=False) for u in U)
+            self.U = U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+                tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
             from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs
             self.vmins, self.vmaxs = _vmins_vmaxs(U, self.separate_colorbars, self.rescale_colorbars)
 
         for vmin, vmax, u, plot in zip(self.vmins, self.vmaxs, U, self.plots):
-            plot.set(u[idx], vmin=vmin[idx], vmax=vmax[idx])
+            plot.set(u[:, idx], vmin=vmin[idx], vmax=vmax[idx])
         self.fig.canvas.draw_idle()
 
 
@@ -207,8 +207,8 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
            or (isinstance(U, tuple)
                and all(isinstance(u, VectorArray) for u in U)
                and all(len(u) == len(U[0]) for u in U))
-    U = (U.to_numpy().T.astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-        tuple(u.to_numpy().T.astype(np.float64, copy=False) for u in U)
+    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+        tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
 
     if isinstance(legend, str):
         legend = (legend,)
@@ -239,13 +239,13 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     data = [U, vmins, vmaxs]
     def set_data(U=None, ind=0):
         if U is not None:
-            U = (U.to_numpy().T.astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-                tuple(u.to_numpy().T.astype(np.float64, copy=False) for u in U)
+            U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+                tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
             vmins, vmaxs = _vmins_vmaxs(U, separate_plots, rescale_axes)
             data[0:3] = U, vmins, vmaxs
 
         U, vmins, vmaxs = data
-        plot.set([u[ind] for u in U],
+        plot.set([u[:, ind] for u in U],
                  [vmin[ind] for vmin in vmins],
                  [vmax[ind] for vmax in vmaxs])
         fig.canvas.draw_idle()

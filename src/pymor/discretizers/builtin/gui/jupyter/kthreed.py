@@ -67,8 +67,8 @@ class VectorArrayPlot(K3DPlot):
 
         self.data = {}
         self.vertices = {} if warp else vertices
-        for idx, u in enumerate(U):
-            u = u.astype(np.float32)
+        for idx in range(U.shape[1]):
+            u = U[:, idx].astype(np.float32)
             if codim == 2:
                 data = u[entity_map]
             elif grid.reference_element == triangle:
@@ -134,8 +134,8 @@ class VectorArrayPlot(K3DPlot):
     def set(self, U, vmin, vmax, warp=None):
         if warp is not None:
             self.warp = warp
-        for idx, u in enumerate(U):
-            u = u.astype(np.float32)
+        for idx in range(U.shape[1]):
+            u = U[:, idx].astype(np.float32)
             if self.codim == 2:
                 data = u[self.entity_map]
             elif self.reference_element == triangle:
@@ -229,7 +229,7 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
             and all(len(u) == len(U[0]) for u in U))
     if isinstance(U, VectorArray):
         U = (U,)
-    U = tuple(u.to_numpy().T for u in U)
+    U = tuple(u.to_numpy() for u in U)
 
     legend = (legend,) if isinstance(legend, str) else legend
     assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
@@ -285,8 +285,8 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
 
     main_widget.append(plot_widget)
 
-    if len(U[0]) > 1:
-        animation_widget = AnimationWidget(len(U[0]))
+    if U[0].shape[1] > 1:
+        animation_widget = AnimationWidget(U[0].shape[1])
 
         for p in plots:
             jslink((p, 'time'), (animation_widget.frame_slider, 'value'))
@@ -299,8 +299,8 @@ def visualize_k3d(grid, U, bounding_box=None, codim=2, title=None, legend=None,
                or (isinstance(U, tuple)
                    and all(isinstance(u, VectorArray) for u in U)
                    and all(len(u) == len(U[0]) for u in U))
-        U = (U.to_numpy().T.astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-            tuple(u.to_numpy().T.astype(np.float64, copy=False) for u in U)
+        U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+            tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
         vmins, vmaxs = _vmins_vmaxs(U, separate_colorbars, rescale_colorbars)
 
         for u, p, vmin, vmax in zip(U, plots, vmins, vmaxs):
