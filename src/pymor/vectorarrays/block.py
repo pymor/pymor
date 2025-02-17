@@ -128,7 +128,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
     def dofs_TP(self, dof_indices, ind):
         assert self._blocks_are_valid()
         if not len(dof_indices):
-            return np.zeros((self.len_ind(ind), 0))
+            return np.zeros((0, self.len_ind(ind)))
 
         self._compute_bins()
         block_inds = np.digitize(dof_indices, self._bins) - 1
