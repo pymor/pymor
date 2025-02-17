@@ -44,7 +44,7 @@ class NumpyGenericOperator(Operator):
         The function to wrap. If `parameters` is `None`, the function is of
         the form `mapping(U)` and is expected to be vectorized. In particular::
 
-            mapping(U).shape == U.shape[:-1] + (dim_range,).
+            mapping(U).shape == (dim_range,) + U.shape[1:].
 
         If `parameters` is not `None`, the function has to have the signature
         `mapping(U, mu)`.
@@ -52,7 +52,7 @@ class NumpyGenericOperator(Operator):
         The adjoint function to wrap. If `parameters` is `None`, the function is of
         the form `adjoint_mapping(U)` and is expected to be vectorized. In particular::
 
-            adjoint_mapping(U).shape == U.shape[:-1] + (dim_source,).
+            adjoint_mapping(U).shape == (dim_source,) + U.shape[1:].
 
         If `parameters` is not `None`, the function has to have the signature
         `adjoint_mapping(U, mu)`.
@@ -81,20 +81,20 @@ class NumpyGenericOperator(Operator):
         assert U in self.source
         assert self.parameters.assert_compatible(mu)
         if self.parametric:
-            return self.range.make_array(self.mapping(U.to_numpy().T, mu=mu).T)
+            return self.range.make_array(self.mapping(U.to_numpy(), mu=mu))
         else:
-            return self.range.make_array(self.mapping(U.to_numpy().T).T)
+            return self.range.make_array(self.mapping(U.to_numpy()))
 
     def apply_adjoint(self, V, mu=None):
         if self.adjoint_mapping is None:
             raise ValueError('NumpyGenericOperator: adjoint mapping was not defined.')
         assert V in self.range
         assert self.parameters.assert_compatible(mu)
-        V = V.to_numpy().T
+        V = V.to_numpy()
         if self.parametric:
-            return self.source.make_array(self.adjoint_mapping(V, mu=mu).T)
+            return self.source.make_array(self.adjoint_mapping(V, mu=mu))
         else:
-            return self.source.make_array(self.adjoint_mapping(V).T)
+            return self.source.make_array(self.adjoint_mapping(V))
 
 
 class NumpyMatrixBasedOperator(Operator):
