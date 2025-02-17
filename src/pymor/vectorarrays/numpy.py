@@ -17,7 +17,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         self._array = array
         self._len = len(array) if l is None else l
 
-    def to_numpy_TP(self, ensure_copy, ind):
+    def to_numpy(self, ensure_copy, ind):
         A = self._array[:self._len] if ind is None else self._array[ind]
         if ensure_copy and not A.flags['OWNDATA']:
             return A.T.copy()
@@ -25,15 +25,15 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
             return A.T
 
     def real(self, ind):
-        return NumpyVectorArrayImpl(self.to_numpy_TP(False, ind).T.real.copy())
+        return NumpyVectorArrayImpl(self.to_numpy(False, ind).T.real.copy())
 
     def imag(self, ind):
-        return NumpyVectorArrayImpl(self.to_numpy_TP(False, ind).T.imag.copy())
+        return NumpyVectorArrayImpl(self.to_numpy(False, ind).T.imag.copy())
 
     def conj(self, ind):
         if np.isrealobj(self._array):
             return self.copy(False, ind)
-        return NumpyVectorArrayImpl(np.conj(self.to_numpy_TP(False, ind).T))
+        return NumpyVectorArrayImpl(np.conj(self.to_numpy(False, ind).T))
 
     def __len__(self):
         return self._len
@@ -63,7 +63,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         return NumpyVectorArrayImpl(new_array)
 
     def append(self, other, remove_from_other, oind):
-        other_array = other.to_numpy_TP(False, oind).T
+        other_array = other.to_numpy(False, oind).T
         len_other = len(other_array)
         if len_other == 0:
             return
@@ -153,7 +153,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         # .conj() is a no-op on non-complex data types
         return np.sum(A.conj() * B, axis=1)
 
-    def lincomb_TP(self, coefficients, ind):
+    def lincomb(self, coefficients, ind):
         A = self._array[:self._len] if ind is None else self._array[ind]
         return NumpyVectorArrayImpl(coefficients.T.dot(A))
 
@@ -165,7 +165,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         A = self._array[:self._len] if ind is None else self._array[ind]
         return np.sum((A * A.conj()).real, axis=1)
 
-    def dofs_TP(self, dof_indices, ind):
+    def dofs(self, dof_indices, ind):
         ind = slice(None, self._len) if ind is None else ind
         return self._array[:, dof_indices][ind, :].T
 
@@ -199,10 +199,10 @@ class NumpyVectorArray(VectorArray):
     impl_type = NumpyVectorArrayImpl
 
     def __str__(self):
-        return str(self.to_numpy_TP())
+        return str(self.to_numpy())
 
     def _format_repr(self, max_width, verbosity):
-        return super()._format_repr(max_width, verbosity, override={'impl': str(self.to_numpy_TP())})
+        return super()._format_repr(max_width, verbosity, override={'impl': str(self.to_numpy())})
 
 
 class NumpyVectorSpace(VectorSpace):
@@ -241,26 +241,23 @@ class NumpyVectorSpace(VectorSpace):
         va.impl._array[:count] = _create_random_values((count, self.dim), distribution, **kwargs)
         return va
 
+    @classinstancemethod
+    def make_array(cls, obj):  # noqa: N805
+        return cls._array_factory(obj)
+
+    @make_array.instancemethod
     def make_array(self, obj):
-        raise NotImplementedError
+        """:noindex:"""  # noqa: D400
+        return self._array_factory(obj, space=self)
 
     @classinstancemethod
-    def make_array_TP(cls, obj):  # noqa: N805
-        return cls._array_factory_TP(obj)
+    def from_numpy(cls, data, ensure_copy=False):  # noqa: N805
+        return cls._array_factory(data.copy() if ensure_copy else data)
 
-    @make_array_TP.instancemethod
-    def make_array_TP(self, obj):
+    @from_numpy.instancemethod
+    def from_numpy(self, data, ensure_copy=False):
         """:noindex:"""  # noqa: D400
-        return self._array_factory_TP(obj, space=self)
-
-    @classinstancemethod
-    def from_numpy_TP(cls, data, ensure_copy=False):  # noqa: N805
-        return cls._array_factory_TP(data.copy() if ensure_copy else data)
-
-    @from_numpy_TP.instancemethod
-    def from_numpy_TP(self, data, ensure_copy=False):
-        """:noindex:"""  # noqa: D400
-        return self._array_factory_TP(data.copy() if ensure_copy else data, space=self)
+        return self._array_factory(data.copy() if ensure_copy else data, space=self)
 
     @classinstancemethod
     def from_file(cls, path, key=None, single_vector=False, transpose=False):  # noqa: N805
@@ -276,7 +273,7 @@ class NumpyVectorSpace(VectorSpace):
             array = array.reshape((-1, 1))
         if transpose:
             array = array.T
-        return cls.make_array_TP(array)
+        return cls.make_array(array)
 
     @from_file.instancemethod
     def from_file(self, path, key=None, single_vector=False, transpose=False):
@@ -301,7 +298,7 @@ class NumpyVectorSpace(VectorSpace):
             return NumpyVectorArray(space, NumpyVectorArrayImpl(array))
 
     @classmethod
-    def _array_factory_TP(cls, array, space=None):
+    def _array_factory(cls, array, space=None):
         if type(array) is np.ndarray:
             pass
         elif issparse(array):

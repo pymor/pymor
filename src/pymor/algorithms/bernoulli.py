@@ -169,8 +169,8 @@ def bernoulli_stabilize(A, E, B, ast_spectrum, trans=False):
     Xz = Yz.conj() @ Yz.T
 
     if trans:
-        K = E.apply_adjoint(ast_levs.conj()).lincomb_TP(Xz @ B.inner(ast_levs).T)
+        K = E.apply_adjoint(ast_levs.conj()).lincomb(Xz @ B.inner(ast_levs).T)
     else:
-        K = E.apply_adjoint(ast_revs.conj()).lincomb_TP(Xz @ B.inner(ast_revs).T)
+        K = E.apply_adjoint(ast_revs.conj()).lincomb(Xz @ B.inner(ast_revs).T)
 
     return K.real

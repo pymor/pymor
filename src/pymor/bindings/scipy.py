@@ -211,8 +211,8 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
 
     options = _parse_options(options, solver_options(), default_solver, default_least_squares_solver, least_squares)
 
-    V = V.to_numpy_TP().T
-    initial_guess = initial_guess.to_numpy_TP().T if initial_guess is not None else None
+    V = V.to_numpy().T
+    initial_guess = initial_guess.to_numpy().T if initial_guess is not None else None
     promoted_type = np.promote_types(matrix.dtype, V.dtype)
     R = np.empty((len(V), matrix.shape[1]), dtype=promoted_type)  # TODO: transpose
 
@@ -325,7 +325,7 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
         if not np.isfinite(np.sum(R)):
             raise InversionError('Result contains non-finite values')
 
-    return op.source.from_numpy_TP(R.T)
+    return op.source.from_numpy(R.T)
 
 
 # unfortunately, this is necessary, as scipy does not
@@ -360,7 +360,7 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     This function uses `scipy.linalg.solve_continuous_lyapunov` or
     `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers for Lyapunov equations with E=I.
     Therefore, we assume A and E can be converted to |NumPy arrays| using
-    :func:`~pymor.algorithms.to_matrix.to_matrix` and that `B.to_numpy_TP` is implemented.
+    :func:`~pymor.algorithms.to_matrix.to_matrix` and that `B.to_numpy` is implemented.
 
     .. note::
         If E is not `None`, the problem will be reduced to a standard algebraic
@@ -391,9 +391,9 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
 
     X = solve_lyap_dense(to_matrix(A, format='dense'),
                          to_matrix(E, format='dense') if E else None,
-                         B.to_numpy_TP() if not trans else B.to_numpy_TP().T,
+                         B.to_numpy() if not trans else B.to_numpy().T,
                          trans=trans, cont_time=cont_time, options=options)
-    return A.source.from_numpy_TP(_chol(X))
+    return A.source.from_numpy(_chol(X))
 
 
 def lyap_dense_solver_options():
@@ -484,7 +484,7 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     Therefore, we assume all |Operators| and |VectorArrays| can be
     converted to |NumPy arrays| using
     :func:`~pymor.algorithms.to_matrix.to_matrix` and
-    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP`.
+    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
 
     Parameters
     ----------
@@ -520,13 +520,13 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     A_source = A.source
     A = to_matrix(A, format='dense')
     E = to_matrix(E, format='dense') if E else None
-    B = B.to_numpy_TP()
-    C = C.to_numpy_TP().T
+    B = B.to_numpy()
+    C = C.to_numpy().T
     if S is not None:
-        S = S.to_numpy_TP().T if not trans else S.to_numpy_TP()
+        S = S.to_numpy().T if not trans else S.to_numpy()
     X = solve_ricc_dense(A, E, B, C, R, S, trans, options)
 
-    return A_source.from_numpy_TP(_chol(X))
+    return A_source.from_numpy(_chol(X))
 
 
 def ricc_dense_solver_options():
@@ -649,7 +649,7 @@ def solve_pos_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     Therefore, we assume all |Operators| and |VectorArrays| can be
     converted to |NumPy arrays| using
     :func:`~pymor.algorithms.to_matrix.to_matrix` and
-    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP`.
+    :func:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
 
     Parameters
     ----------

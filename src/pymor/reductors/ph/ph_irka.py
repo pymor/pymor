@@ -119,7 +119,7 @@ class PHIRKAReductor(GenericIRKAReductor):
 
     def _set_V_reductor(self, sigma, b, projection):
         fom = self._assemble_fom()
-        self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy_TP(b.T), sigma, orth=False)
+        self.V = tangential_rational_krylov(fom.A, fom.E, fom.B, fom.B.source.from_numpy(b.T), sigma, orth=False)
         product = None if projection == 'orth' else fom.Q.H @ fom.E
         gram_schmidt(self.V, atol=0, rtol=0, product=product, copy=False)
         self._pg_reductor = PHLTIPGReductor(fom, self.V, projection == 'QTEorth')

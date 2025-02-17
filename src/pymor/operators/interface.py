@@ -256,10 +256,10 @@ class Operator(ParametricObject):
                 else:
                     mat_op = self._mat_op
                 if mat_op is not None:
-                    v = mat_op.range.from_numpy_TP(V.to_numpy_TP())
-                    i = None if initial_guess is None else mat_op.source.from_numpy_TP(initial_guess.to_numpy_TP())
+                    v = mat_op.range.from_numpy(V.to_numpy())
+                    i = None if initial_guess is None else mat_op.source.from_numpy(initial_guess.to_numpy())
                     u = mat_op.apply_inverse(v, initial_guess=i, least_squares=least_squares)
-                    return self.source.from_numpy_TP(u.to_numpy_TP())
+                    return self.source.from_numpy(u.to_numpy())
             self.logger.warning('Solving with unpreconditioned iterative solver.')
             return genericsolvers.apply_inverse(assembled_op, V, initial_guess=initial_guess,
                                                 options=options, least_squares=least_squares)
@@ -384,7 +384,7 @@ class Operator(ParametricObject):
         :attr:`~pymor.operators.interface.Operator.range`,
         such that ::
 
-            V.lincomb_TP(U.to_numpy_TP()) == self.apply(U, mu)
+            V.lincomb(U.to_numpy()) == self.apply(U, mu)
 
         for all |VectorArrays| `U`.
 
@@ -402,7 +402,7 @@ class Operator(ParametricObject):
         assert isinstance(self.source, NumpyVectorSpace)
         assert self.linear
         assert self.source.dim <= as_array_max_length()
-        return self.apply(self.source.from_numpy_TP(np.eye(self.source.dim)), mu=mu)
+        return self.apply(self.source.from_numpy(np.eye(self.source.dim)), mu=mu)
 
     def as_source_array(self, mu=None):
         """Return a |VectorArray| representation of the operator in its source space.
@@ -413,7 +413,7 @@ class Operator(ParametricObject):
         :attr:`~pymor.operators.interface.Operator.source`,
         such that ::
 
-            self.range.make_array_TP(V.inner(U)) == self.apply(U, mu)
+            self.range.make_array(V.inner(U)) == self.apply(U, mu)
 
         for all |VectorArrays| `U`.
 
@@ -431,7 +431,7 @@ class Operator(ParametricObject):
         assert isinstance(self.range, NumpyVectorSpace)
         assert self.linear
         assert self.range.dim <= as_array_max_length()
-        return self.apply_adjoint(self.range.from_numpy_TP(np.eye(self.range.dim)), mu=mu)
+        return self.apply_adjoint(self.range.from_numpy(np.eye(self.range.dim)), mu=mu)
 
     def as_vector(self, mu=None):
         """Return a vector representation of a linear functional or vector operator.
@@ -531,9 +531,9 @@ class Operator(ParametricObject):
         operator along with an array `source_dofs` such that for any
         |VectorArray| `U` in `self.source` the following is true::
 
-            self.apply(U, mu).dofs_TP(dofs)
-                == restricted_op.apply(restricted_op.source.from_numpy_TP(U.dofs_TP(source_dofs))
-                                       mu).to_numpy_TP()
+            self.apply(U, mu).dofs(dofs)
+                == restricted_op.apply(restricted_op.source.from_numpy(U.dofs(source_dofs))
+                                       mu).to_numpy()
 
         Such an operator is mainly useful for
         :class:`empirical interpolation <pymor.operators.ei.EmpiricalInterpolatedOperator>`

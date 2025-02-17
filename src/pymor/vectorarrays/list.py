@@ -360,7 +360,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
         else:
             return [self._list[ind]]
 
-    def to_numpy_TP(self, ensure_copy, ind):
+    def to_numpy(self, ensure_copy, ind):
         vectors = [v.to_numpy() for v in self._indexed(ind)]
         if vectors:
             return np.array(vectors).T
@@ -447,7 +447,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
         R = np.array(R)
         return R
 
-    def lincomb_TP(self, coefficients, ind):
+    def lincomb(self, coefficients, ind):
         RL = []
         for coeffs in coefficients.T:
             R = self.space.zero_vector()
@@ -463,7 +463,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
     def norm2(self, ind):
         return np.array([v.norm2() for v in self._indexed(ind)])
 
-    def dofs_TP(self, dof_indices, ind):
+    def dofs(self, dof_indices, ind):
         return (np.array([v.dofs(dof_indices) for v in self._indexed(ind)])
                   .reshape((self.len_ind(ind), len(dof_indices)))).T
 
@@ -595,11 +595,11 @@ class ListVectorSpace(VectorSpace):
         )
 
     @classinstancemethod
-    def from_numpy_TP(cls, data, ensure_copy=False):  # noqa: N805
-        return cls.space_from_dim(data.shape[0]).from_numpy_TP(data, ensure_copy=ensure_copy)
+    def from_numpy(cls, data, ensure_copy=False):  # noqa: N805
+        return cls.space_from_dim(data.shape[0]).from_numpy(data, ensure_copy=ensure_copy)
 
-    @from_numpy_TP.instancemethod
-    def from_numpy_TP(self, data, ensure_copy=False):
+    @from_numpy.instancemethod
+    def from_numpy(self, data, ensure_copy=False):
         """:noindex:"""  # noqa: D400
         if data.ndim == 1:
             data = data.reshape((-1, 1))

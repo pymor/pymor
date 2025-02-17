@@ -1309,7 +1309,7 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
         I = InterpolationOperator(data['grid'], p.initial_data)
     else:
         I = p.initial_data.evaluate(data['grid'].centers(data['grid'].dim))
-        I = m.solution_space.make_array_TP(I)
+        I = m.solution_space.make_array(I)
 
     if time_stepper is None:
         if p.stationary_part.diffusion is None:

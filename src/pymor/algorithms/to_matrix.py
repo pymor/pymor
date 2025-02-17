@@ -203,9 +203,9 @@ class ToMatrixRules(RuleTable):
     def action_LowRankOperator(self, op):
         format = self.format
         if not op.inverted:
-            res = op.left.to_numpy_TP() @ op.core @ op.right.to_numpy_TP().T
+            res = op.left.to_numpy() @ op.core @ op.right.to_numpy().T
         else:
-            res = op.left.to_numpy_TP() @ spla.solve(op.core, op.right.to_numpy_TP().T)
+            res = op.left.to_numpy() @ spla.solve(op.core, op.right.to_numpy().T)
         if format is not None and format != 'dense':
             res = getattr(sps, format + '_matrix')(res)
         return res
@@ -217,7 +217,7 @@ class ToMatrixRules(RuleTable):
     @match_class(VectorArrayOperator)
     def action_VectorArrayOperator(self, op):
         format = self.format
-        res = op.array.conj().to_numpy_TP().T if op.adjoint else op.array.to_numpy_TP()
+        res = op.array.conj().to_numpy().T if op.adjoint else op.array.to_numpy()
         if format is not None and format != 'dense':
             res = getattr(sps, format + '_matrix')(res)
         return res
@@ -238,14 +238,14 @@ class ToMatrixRules(RuleTable):
             if not isinstance(op.source, NumpyVectorSpace):
                 op = op @ NumpyConversionOperator(op.source, 'from_numpy')
             try:
-                return op.as_range_array(mu=self.mu).to_numpy_TP()
+                return op.as_range_array(mu=self.mu).to_numpy()
             except NotImplementedError:
                 pass
         if op.range.dim < as_array_max_length():
             if not isinstance(op.range, NumpyVectorSpace):
                 op = NumpyConversionOperator(op.source, 'to_numpy') @ op
             try:
-                return op.as_source_array(mu=self.mu).to_numpy_TP().T  # TODO: missing .conj()?
+                return op.as_source_array(mu=self.mu).to_numpy().T  # TODO: missing .conj()?
             except NotImplementedError:
                 pass
         raise RuleNotMatchingError

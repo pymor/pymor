@@ -328,8 +328,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                               '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
-    U = (U.to_numpy_TP().T.astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-        tuple(u.to_numpy_TP().T.astype(np.float64, copy=False) for u in U)
+    U = (U.to_numpy().T.astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
+        tuple(u.to_numpy().T.astype(np.float64, copy=False) for u in U)
 
     if backend == 'gl':
         if not config.HAVE_GL:
@@ -412,10 +412,10 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         base_name = filename.split('.vtu')[0].split('.vtk')[0].split('.pvd')[0]
         if base_name:
             if len(U) == 1:
-                write_vtk(grid, NumpyVectorSpace.make_array_TP(U[0]), base_name, codim=codim)
+                write_vtk(grid, NumpyVectorSpace.make_array(U[0]), base_name, codim=codim)
             else:
                 for i, u in enumerate(U):
-                    write_vtk(grid, NumpyVectorSpace.make_array_TP(u), f'{base_name}-{i}',
+                    write_vtk(grid, NumpyVectorSpace.make_array(u), f'{base_name}-{i}',
                               codim=codim)
 
     from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs
@@ -486,7 +486,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
                               '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
-    U = (U.to_numpy_TP().T,) if isinstance(U, VectorArray) else tuple(u.to_numpy_TP().T for u in U)
+    U = (U.to_numpy().T,) if isinstance(U, VectorArray) else tuple(u.to_numpy().T for u in U)
     vmins, vmaxs = _vmins_vmaxs(U, separate_plots, rescale_axes)
 
     from pymor.discretizers.builtin.gui.qt.matplotlib import Matplotlib1DWidget

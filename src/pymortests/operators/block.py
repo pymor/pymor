@@ -29,12 +29,12 @@ def test_apply(rng):
     v1 = rng.standard_normal(3)
     v2 = rng.standard_normal(4)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorSpace.from_numpy_TP(v1)
-    v2va = NumpyVectorSpace.from_numpy_TP(v2)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Aop.apply(vva)
-    w = np.vstack((wva.blocks[0].to_numpy_TP(), wva.blocks[1].to_numpy_TP()))
+    w = np.vstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
     assert np.allclose(A.dot(v), w.ravel())
 
 
@@ -53,12 +53,12 @@ def test_apply_adjoint(rng):
     v1 = rng.standard_normal(2)
     v2 = rng.standard_normal(5)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorSpace.from_numpy_TP(v1)
-    v2va = NumpyVectorSpace.from_numpy_TP(v2)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Aop.apply_adjoint(vva)
-    w = np.vstack((wva.blocks[0].to_numpy_TP(), wva.blocks[1].to_numpy_TP()))
+    w = np.vstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
     assert np.allclose(A.T.dot(v), w.ravel())
 
 
@@ -83,12 +83,12 @@ def test_blk_diag_apply_inverse(rng):
     v1 = rng.standard_normal(2)
     v2 = rng.standard_normal(3)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorSpace.from_numpy_TP(v1)
-    v2va = NumpyVectorSpace.from_numpy_TP(v2)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Cop.apply_inverse(vva)
-    w = np.vstack((wva.blocks[0].to_numpy_TP(), wva.blocks[1].to_numpy_TP()))
+    w = np.vstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
     assert np.allclose(spla.solve(C, v), w.ravel())
 
 
@@ -103,12 +103,12 @@ def test_blk_diag_apply_inverse_adjoint(rng):
     v1 = rng.standard_normal(2)
     v2 = rng.standard_normal(3)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorSpace.from_numpy_TP(v1)
-    v2va = NumpyVectorSpace.from_numpy_TP(v2)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Cop.apply_inverse_adjoint(vva)
-    w = np.vstack((wva.blocks[0].to_numpy_TP(), wva.blocks[1].to_numpy_TP()))
+    w = np.vstack((wva.blocks[0].to_numpy(), wva.blocks[1].to_numpy()))
     assert np.allclose(spla.solve(C.T, v), w.ravel())
 
 
@@ -129,9 +129,9 @@ def test_block_jacobian(rng):
     v1 = rng.standard_normal(2)
     v2 = rng.standard_normal(3)
     v3 = rng.standard_normal(4)
-    v1va = NumpyVectorSpace.from_numpy_TP(v1)
-    v2va = NumpyVectorSpace.from_numpy_TP(v2)
-    v3va = NumpyVectorSpace.from_numpy_TP(v3)
+    v1va = NumpyVectorSpace.from_numpy(v1)
+    v2va = NumpyVectorSpace.from_numpy(v2)
+    v3va = NumpyVectorSpace.from_numpy(v3)
     vva = BlockVectorSpace.make_array((v1va, v2va, v3va))
     vva_single_block = BlockVectorSpace.make_array(v1va)
 
@@ -139,6 +139,6 @@ def test_block_jacobian(rng):
     jac_single_block = Dop_single_block.jacobian(vva_single_block, mu=None)
     assert jac.linear
     assert jac_single_block.linear
-    assert np.all(jac.blocks[0, 0].vector.to_numpy_TP()[:, 0] == np.dot(A.T, v1) + np.dot(A, v1))
-    assert np.all(jac.blocks[1, 1].vector.to_numpy_TP()[:, 0] == np.dot(B.T, v2) + np.dot(B, v2))
+    assert np.all(jac.blocks[0, 0].vector.to_numpy()[:, 0] == np.dot(A.T, v1) + np.dot(A, v1))
+    assert np.all(jac.blocks[1, 1].vector.to_numpy()[:, 0] == np.dot(B.T, v2) + np.dot(B, v2))
     assert np.all(jac.blocks[2, 2].matrix == C)

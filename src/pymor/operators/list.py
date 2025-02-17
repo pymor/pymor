@@ -166,10 +166,10 @@ class NumpyListVectorArrayMatrixOperator(ListVectorArrayOperatorBase, NumpyMatri
     def _apply_inverse_one_vector(self, v, mu=None, initial_guess=None, least_squares=False, prepare_data=None):
         op = self.with_(new_type=NumpyMatrixOperator)
         u = op.apply_inverse(
-            op.range.make_array_TP(v._array),
-            initial_guess=op.source.make_array_TP(initial_guess._array) if initial_guess is not None else None,
+            op.range.make_array(v._array),
+            initial_guess=op.source.make_array(initial_guess._array) if initial_guess is not None else None,
             least_squares=least_squares
-        ).to_numpy_TP().ravel()
+        ).to_numpy().ravel()
 
         return u
 

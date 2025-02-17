@@ -120,8 +120,8 @@ def discretize_fom(T=50):
     h = lambda s: (0 <= s) * (s <= 1) * (1 - 3/2 * s**2 + 3/4 * s**3) + (1 < s) * (s <= 2) * ((2-s)**3)/4
     bump = lambda xi: h(np.abs(4*(xi - l/2)))
     initial_data = H_op.source.make_array([
-        space.make_array_TP(bump(np.linspace(0, l, n_x))),
-        space.make_array_TP(np.zeros(n_x)),
+        space.make_array(bump(np.linspace(0, l, n_x))),
+        space.make_array(np.zeros(n_x)),
     ])
 
     fom = QuadraticHamiltonianModel(T, initial_data, H_op, nt=nt, name='hamiltonian_wave_equation')
@@ -166,11 +166,11 @@ def run_mor(fom, U_fom, method, red_dims):
             RB = MAX_RB[:red_dim//2]
             reductor = QuadraticHamiltonianRBReductor(fom, RB)
             RB_tsi = RB.transposed_symplectic_inverse()
-            U_proj = RB.lincomb_TP(U_fom.inner(RB_tsi.to_array()).T)  # TODO: simplify?
+            U_proj = RB.lincomb(U_fom.inner(RB_tsi.to_array()).T)  # TODO: simplify?
         else:
             RB = MAX_RB[:red_dim]
             reductor = InstationaryRBReductor(fom, RB)
-            U_proj = RB.lincomb_TP(RB.inner(U_fom))
+            U_proj = RB.lincomb(RB.inner(U_fom))
         rom = reductor.reduce()
         u = rom.solve()
         abs_err_proj[i_red_dim] = np.sqrt((U_fom - U_proj).norm2().sum())

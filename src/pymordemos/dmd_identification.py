@@ -26,7 +26,7 @@ def main(
         x = A @ x
         X[:, i + 1] = x
 
-    Xva = NumpyVectorSpace.from_numpy_TP(X)
+    Xva = NumpyVectorSpace.from_numpy(X)
 
     Wk, omega, A_approx = dmd(Xva, return_A_approx=True)
 

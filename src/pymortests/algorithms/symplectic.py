@@ -85,7 +85,7 @@ def test_symplectic_gram_schmidt(test_orthonormality, reiterate):
     M.append(F)
     assert np.allclose(arr_tsi_S.inner(M), Lambda)
     # check M = S * Lambda
-    assert np.allclose(arr_S.lincomb_TP(Lambda).to_numpy_TP(), M.to_numpy_TP())
+    assert np.allclose(arr_S.lincomb(Lambda).to_numpy(), M.to_numpy())
     # upper triangular of permuted matrix
     n = Lambda.shape[0] // 2
     perm = np.vstack([np.arange(0, n), np.arange(n, 2*n)]).T.reshape(-1)

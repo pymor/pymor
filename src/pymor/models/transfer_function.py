@@ -575,11 +575,11 @@ class FactorizedTransferFunction(TransferFunction):
             if dim_input <= dim_output:
                 B_vec = B.as_range_array(mu=mu)
                 Kinv_B = K.apply_inverse(B_vec, mu=mu)
-                res = C.apply(Kinv_B, mu=mu).to_numpy_TP()
+                res = C.apply(Kinv_B, mu=mu).to_numpy()
             else:
                 C_vec_adj = C.as_source_array(mu=mu)
                 Kinvadj_Cadj = K.apply_inverse_adjoint(C_vec_adj, mu=mu)
-                res = B.apply_adjoint(Kinvadj_Cadj, mu=mu).to_numpy_TP().conj().T
+                res = B.apply_adjoint(Kinvadj_Cadj, mu=mu).to_numpy().conj().T
             res += to_matrix(D, format='dense', mu=mu)
             return res
 
@@ -591,29 +591,29 @@ class FactorizedTransferFunction(TransferFunction):
                 if dim_input <= dim_output:
                     B_vec = B.as_range_array(mu=mu)
                     Ki_B = K.apply_inverse(B_vec, mu=mu)
-                    dC_Ki_B = dC.apply(Ki_B, mu=mu).to_numpy_TP()
+                    dC_Ki_B = dC.apply(Ki_B, mu=mu).to_numpy()
 
                     dB_vec = dB.as_range_array(mu=mu)
                     Ki_dB = K.apply_inverse(dB_vec, mu=mu)
-                    C_Ki_dB = C.apply(Ki_dB, mu=mu).to_numpy_TP()
+                    C_Ki_dB = C.apply(Ki_dB, mu=mu).to_numpy()
 
                     dK_Ki_B = dK.apply(Ki_B, mu=mu)
                     Ki_dK_Ki_B = K.apply_inverse(dK_Ki_B, mu=mu)
-                    C_Ki_dK_Ki_B = C.apply(Ki_dK_Ki_B, mu=mu).to_numpy_TP()
+                    C_Ki_dK_Ki_B = C.apply(Ki_dK_Ki_B, mu=mu).to_numpy()
 
                     res = dC_Ki_B + C_Ki_dB - C_Ki_dK_Ki_B
                 else:
                     C_vec_a = C.as_source_array(mu=mu).conj()
                     Kia_Ca = K.apply_inverse_adjoint(C_vec_a, mu=mu)
-                    dC_Ki_B = dB.apply_adjoint(Kia_Ca, mu=mu).to_numpy_TP().conj().T
+                    dC_Ki_B = dB.apply_adjoint(Kia_Ca, mu=mu).to_numpy().conj().T
 
                     dC_vec_a = dC.as_source_array(mu=mu).conj()
                     Kia_dCa = K.apply_inverse_adjoint(dC_vec_a, mu=mu)
-                    CKidB = B.apply_adjoint(Kia_dCa, mu=mu).to_numpy_TP().conj().T
+                    CKidB = B.apply_adjoint(Kia_dCa, mu=mu).to_numpy().conj().T
 
                     dKa_Kiajd_Ca = dK.apply_adjoint(Kia_Ca, mu=mu)
                     Kia_dKa_Kia_Ca = K.apply_inverse_adjoint(dKa_Kiajd_Ca, mu=mu)
-                    C_Ki_dK_Ki_B = B.apply_adjoint(Kia_dKa_Kia_Ca, mu=mu).to_numpy_TP().conj().T
+                    C_Ki_dK_Ki_B = B.apply_adjoint(Kia_dKa_Kia_Ca, mu=mu).to_numpy().conj().T
 
                     res = dC_Ki_B + CKidB - C_Ki_dK_Ki_B
                 res += to_matrix(dD, format='dense', mu=mu)

@@ -47,14 +47,14 @@ def test_bernoulli_stabilize(n, trans, rng):
 
     B = rng.standard_normal((n, 1))
     if not trans:
-        Bva = Aop.range.from_numpy_TP(B)
+        Bva = Aop.range.from_numpy(B)
     else:
-        Bva = Aop.source.from_numpy_TP(B)
+        Bva = Aop.source.from_numpy(B)
 
     ew, lev, rev = spla.eig(A, None, True)
     as_idx = np.where(ew.real > 0.)
-    lva = Aop.source.from_numpy_TP(lev[:, as_idx][:, 0, :])
-    rva = Aop.range.from_numpy_TP(rev[:, as_idx][:, 0, :])
+    lva = Aop.source.from_numpy(lev[:, as_idx][:, 0, :])
+    rva = Aop.range.from_numpy(rev[:, as_idx][:, 0, :])
 
     K = bernoulli_stabilize(Aop, None, Bva, (lva, ew, rva), trans=trans)
 

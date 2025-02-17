@@ -15,8 +15,8 @@ pytestmark = pytest.mark.builtin
 
 
 def _newton(mop, initial_value=1.0, **kwargs):
-    rhs = NumpyVectorSpace.from_numpy_TP([0.0])
-    guess = NumpyVectorSpace.from_numpy_TP([initial_value])
+    rhs = NumpyVectorSpace.from_numpy([0.0])
+    guess = NumpyVectorSpace.from_numpy([initial_value])
     return newton(mop, rhs, initial_guess=guess, **kwargs)
 
 
@@ -28,7 +28,7 @@ def test_newton(order, error_measure):
                    atol=1e-15 if error_measure == 'residual' else 1e-7,
                    rtol=0.,
                    error_measure=error_measure)
-    assert float_cmp(mop.apply(U).to_numpy_TP(), 0.0)
+    assert float_cmp(mop.apply(U).to_numpy(), 0.0)
 
 
 def test_newton_fail():
@@ -40,7 +40,7 @@ def test_newton_fail():
 def test_newton_with_line_search():
     mop = MonomOperator(3) - 2 * MonomOperator(1) + 2 * MonomOperator(0)
     U, _ = _newton(mop, initial_value=0.0, atol=1e-15, relax='armijo')
-    assert float_cmp(mop.apply(U).to_numpy_TP(), 0.0)
+    assert float_cmp(mop.apply(U).to_numpy(), 0.0)
 
 
 def test_newton_fail_without_line_search():
@@ -58,7 +58,7 @@ def test_newton_unknown_line_search():
 def test_newton_residual_is_zero(order=5):
     mop = MonomOperator(order)
     U, _ = _newton(mop, initial_value=0.0)
-    assert float_cmp(mop.apply(U).to_numpy_TP(), 0.0)
+    assert float_cmp(mop.apply(U).to_numpy(), 0.0)
 
 
 if __name__ == '__main__':

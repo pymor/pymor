@@ -34,12 +34,12 @@ def test_shifted_chol_qr(vector_array):
     onb, R = shifted_chol_qr(U, return_R=True, copy=True)
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.inner(onb), np.eye(len(onb)))
-    lc = onb.lincomb_TP(onb.inner(U))
+    lc = onb.lincomb(onb.inner(U))
     rtol = atol = 1e-10
 
     assert np.all(almost_equal(U, lc, rtol=rtol, atol=atol))
     try:
-        assert np.all(almost_equal(V, onb.lincomb_TP(R), rtol=rtol, atol=atol))
+        assert np.all(almost_equal(V, onb.lincomb(R), rtol=rtol, atol=atol))
     except AssertionError:
         assert 0
 
@@ -64,8 +64,8 @@ def test_shifted_chol_qr_with_product(operator_with_arrays_and_products):
     onb, R = shifted_chol_qr(U, product=p, return_R=True, copy=True)
     assert np.all(almost_equal(U, V))
     assert np.allclose(p.apply2(onb, onb), np.eye(len(onb)), atol=1e-7)
-    assert np.all(almost_equal(U, onb.lincomb_TP(p.apply2(onb, U)), rtol=1e-11))
-    assert np.all(almost_equal(U, onb.lincomb_TP(R)))
+    assert np.all(almost_equal(U, onb.lincomb(p.apply2(onb, U)), rtol=1e-11))
+    assert np.all(almost_equal(U, onb.lincomb(R)))
 
     onb2, R2 = shifted_chol_qr(U, product=p, return_R=True, copy=False)
     assert np.all(almost_equal(onb, onb2))
@@ -129,11 +129,11 @@ def test_recalculated_shifted_chol_qr(vector_array):
     onb, R = shifted_chol_qr(U, return_R=True, copy=True, recompute_shift=True, maxiter=10, orth_tol=1e-13)
     assert np.all(almost_equal(U, V))
     assert np.allclose(onb.inner(onb), np.eye(len(onb)))
-    lc = onb.lincomb_TP(onb.inner(U))
+    lc = onb.lincomb(onb.inner(U))
     rtol = atol = 1e-9
 
     assert np.all(almost_equal(U, lc, rtol=rtol, atol=atol))
-    assert np.all(almost_equal(V, onb.lincomb_TP(R), rtol=rtol, atol=atol))
+    assert np.all(almost_equal(V, onb.lincomb(R), rtol=rtol, atol=atol))
 
     onb2, R2 = shifted_chol_qr(U, return_R=True, copy=False, recompute_shift=True, maxiter=10, orth_tol=1e-13)
     assert np.all(almost_equal(onb, onb2))
@@ -154,8 +154,8 @@ def test_recalculated_shifted_chol_qr_with_product(operator_with_arrays_and_prod
     onb, R = shifted_chol_qr(U, return_R=True, product=p, copy=True, recompute_shift=True, maxiter=10, orth_tol=1e-13)
     assert np.all(almost_equal(U, V))
     assert np.allclose(p.apply2(onb, onb), np.eye(len(onb)))
-    assert np.all(almost_equal(U, onb.lincomb_TP(p.apply2(onb, U)), rtol=1e-11))
-    assert np.all(almost_equal(U, onb.lincomb_TP(R)))
+    assert np.all(almost_equal(U, onb.lincomb(p.apply2(onb, U)), rtol=1e-11))
+    assert np.all(almost_equal(U, onb.lincomb(R)))
 
     onb2, R2 = shifted_chol_qr(U, return_R=True, product=p, copy=False,
                                recompute_shift=True, maxiter=10, orth_tol=1e-13)

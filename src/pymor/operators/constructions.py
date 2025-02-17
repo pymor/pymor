@@ -389,19 +389,19 @@ class ProjectedOperator(Operator):
             if self.range_basis is None:
                 return self.operator.apply(U, mu=mu)
             elif self.product is None:
-                return self.range.make_array_TP(self.operator.apply2(self.range_basis, U, mu=mu))
+                return self.range.make_array(self.operator.apply2(self.range_basis, U, mu=mu))
             else:
                 V = self.operator.apply(U, mu=mu)
-                return self.range.make_array_TP(self.product.apply2(self.range_basis, V))
+                return self.range.make_array(self.product.apply2(self.range_basis, V))
         else:
-            UU = self.source_basis.lincomb_TP(U.to_numpy_TP())
+            UU = self.source_basis.lincomb(U.to_numpy())
             if self.range_basis is None:
                 return self.operator.apply(UU, mu=mu)
             elif self.product is None:
-                return self.range.make_array_TP(self.operator.apply2(self.range_basis, UU, mu=mu))
+                return self.range.make_array(self.operator.apply2(self.range_basis, UU, mu=mu))
             else:
                 V = self.operator.apply(UU, mu=mu)
-                return self.range.make_array_TP(self.product.apply2(self.range_basis, V))
+                return self.range.make_array(self.product.apply2(self.range_basis, V))
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
@@ -411,7 +411,7 @@ class ProjectedOperator(Operator):
         if self.source_basis is None:
             J = self.operator.jacobian(U, mu=mu)
         else:
-            J = self.operator.jacobian(self.source_basis.lincomb_TP(U.to_numpy_TP()), mu=mu)
+            J = self.operator.jacobian(self.source_basis.lincomb(U.to_numpy()), mu=mu)
         from pymor.algorithms.projection import project
         pop = project(J, range_basis=self.range_basis, source_basis=self.source_basis,
                       product=self.product)
@@ -435,10 +435,10 @@ class ProjectedOperator(Operator):
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         if self.range_basis is not None:
-            V = self.range_basis.lincomb_TP(V.to_numpy_TP())
+            V = self.range_basis.lincomb(V.to_numpy())
         U = self.operator.apply_adjoint(V, mu)
         if self.source_basis is not None:
-            U = self.source.make_array_TP(self.source_basis.inner(U))  # TODO: check formula
+            U = self.source.make_array(self.source_basis.inner(U))  # TODO: check formula
         return U
 
 
@@ -499,7 +499,7 @@ class LowRankOperator(Operator):
             V = spla.solve(self.core, V)
         else:
             V = self.core @ V
-        return self.left.lincomb_TP(V)
+        return self.left.lincomb(V)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
@@ -508,7 +508,7 @@ class LowRankOperator(Operator):
             U = spla.solve(self.core.T.conj(), U)
         else:
             U = self.core.T.conj() @ U
-        return self.right.lincomb_TP(U)
+        return self.right.lincomb(U)
 
 
 class LowRankUpdatedOperator(LincombOperator):
@@ -561,15 +561,15 @@ class LowRankUpdatedOperator(LincombOperator):
         A, LR = self.operators
         L, C, R = LR.left, LR.core, LR.right
         if not LR.inverted:
-            L = L.lincomb_TP(C)
-            R = R.lincomb_TP(C.conj().T)
+            L = L.lincomb(C)
+            R = R.lincomb(C.conj().T)
         alpha, beta = self.evaluate_coefficients(mu)
         AinvV = A.apply_inverse(V)
         AinvL = A.apply_inverse(L)
         mat = alpha * C + beta * R.inner(AinvL)
         RhAinvV = R.inner(AinvV)
         U = AinvV
-        U.axpy(-beta, AinvL.lincomb_TP(spla.solve(mat, RhAinvV)))
+        U.axpy(-beta, AinvL.lincomb(spla.solve(mat, RhAinvV)))
         U.scal(1 / alpha)
         return U
 
@@ -579,15 +579,15 @@ class LowRankUpdatedOperator(LincombOperator):
         A, LR = self.operators
         L, C, R = LR.left, LR.core, LR.right
         if not LR.inverted:
-            L = L.lincomb_TP(C)
-            R = R.lincomb_TP(C.conj().T)
+            L = L.lincomb(C)
+            R = R.lincomb(C.conj().T)
         alpha, beta = (c.conjugate() for c in self.evaluate_coefficients(mu))
         AinvhU = A.apply_inverse_adjoint(U)
         AinvhR = A.apply_inverse_adjoint(R)
         mat = alpha * C.T.conj() + beta * L.inner(AinvhR)
         LhAinvhU = L.inner(AinvhU)
         V = AinvhU
-        V.axpy(-beta, AinvhR.lincomb_TP(spla.solve(mat, LhAinvhU)))
+        V.axpy(-beta, AinvhR.lincomb(spla.solve(mat, LhAinvhU)))
         V.scal(1 / alpha)
         return V
 
@@ -618,7 +618,7 @@ class ComponentProjectionOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.make_array_TP(U.dofs_TP(self.components))
+        return self.range.make_array(U.dofs(self.components))
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
@@ -714,7 +714,7 @@ class ConstantOperator(Operator):
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
-        restricted_value = NumpyVectorSpace.make_array_TP(self.value.dofs_TP(dofs))
+        restricted_value = NumpyVectorSpace.make_array(self.value.dofs(dofs))
         return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
@@ -815,9 +815,9 @@ class VectorArrayOperator(Operator):
     def apply(self, U, mu=None):
         assert U in self.source
         if not self.adjoint:
-            return self.array.lincomb_TP(U.to_numpy_TP())
+            return self.array.lincomb(U.to_numpy())
         else:
-            return self.range.make_array_TP(self.array.inner(U))
+            return self.range.make_array(self.array.inner(U))
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         if not least_squares and len(self.array) != self.array.dim:
@@ -827,21 +827,21 @@ class VectorArrayOperator(Operator):
 
         Q, R = gram_schmidt(self.array, return_R=True, reiterate=False)
         if self.adjoint:
-            v = spla.lstsq(R.T.conj(), V.to_numpy_TP())[0]
-            U = Q.lincomb_TP(v)
+            v = spla.lstsq(R.T.conj(), V.to_numpy())[0]
+            U = Q.lincomb(v)
         else:
             v = Q.inner(V)
             u = spla.lstsq(R, v)[0]
-            U = self.source.make_array_TP(u)
+            U = self.source.make_array(u)
 
         return U
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         if not self.adjoint:
-            return self.source.make_array_TP(self.array.inner(V))
+            return self.source.make_array(self.array.inner(V))
         else:
-            return self.array.lincomb_TP(V.to_numpy_TP())
+            return self.array.lincomb(V.to_numpy())
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         adjoint_op = VectorArrayOperator(self.array, adjoint=not self.adjoint)
@@ -862,7 +862,7 @@ class VectorArrayOperator(Operator):
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         if not self.adjoint:
-            restricted_value = NumpyVectorSpace.make_array_TP(self.array.dofs_TP(dofs))
+            restricted_value = NumpyVectorSpace.make_array(self.array.dofs(dofs))
             return VectorArrayOperator(restricted_value, False), np.arange(self.source.dim, dtype=np.int32)
         else:
             raise NotImplementedError
@@ -1379,9 +1379,9 @@ class NumpyConversionOperator(Operator):
     """Converts |VectorArrays| to |NumpyVectorArrays|.
 
     Note that the input |VectorArrays| need to support
-    :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP`.
+    :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy`.
     For the adjoint,
-    :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP`
+    :meth:`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
     needs to be implemented.
 
     Parameters
@@ -1415,19 +1415,19 @@ class NumpyConversionOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.from_numpy_TP(U.to_numpy_TP())
+        return self.range.from_numpy(U.to_numpy())
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         assert V in self.range
-        return self.source.from_numpy_TP(V.to_numpy_TP())
+        return self.source.from_numpy(V.to_numpy())
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
-        return self.source.from_numpy_TP(V.to_numpy_TP())
+        return self.source.from_numpy(V.to_numpy())
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         assert U in self.source
-        return self.range.from_numpy_TP(U.to_numpy_TP())
+        return self.range.from_numpy(U.to_numpy())
 
 
 class LinearInputOperator(Operator):
@@ -1448,10 +1448,10 @@ class LinearInputOperator(Operator):
         self.parameters_own = {'input': B.source.dim}
 
     def apply(self, U, mu=None):
-        return self.B.as_range_array(mu).lincomb_TP(U.to_numpy_TP() * mu['input'][..., np.newaxis])
+        return self.B.as_range_array(mu).lincomb(U.to_numpy() * mu['input'][..., np.newaxis])
 
     def as_range_array(self, mu=None):
-        return self.B.as_range_array(mu).lincomb_TP(mu['input'])
+        return self.B.as_range_array(mu).lincomb(mu['input'])
 
 
 class QuadraticFunctional(Operator):
@@ -1479,7 +1479,7 @@ class QuadraticFunctional(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.from_numpy_TP(self.operator.apply2(U, U, mu))  # TODO: check case len(U)>1
+        return self.range.from_numpy(self.operator.apply2(U, U, mu))  # TODO: check case len(U)>1
 
     def jacobian(self, U, mu=None):
         inner_vec = self.operator.apply_adjoint(U, mu) + self.operator.apply(U, mu)

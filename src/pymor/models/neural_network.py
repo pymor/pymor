@@ -109,7 +109,7 @@ class NeuralNetworkModel(BaseNeuralNetworkModel):
             U = self.neural_network(converted_input).detach().numpy()
             U = self._scale_target(U)
             # convert plain numpy array to element of the actual solution space
-            U = self.solution_space.make_array_TP(U)
+            U = self.solution_space.make_array(U)
             data['solution'] = U
             quantities.remove('solution')
 
@@ -241,7 +241,7 @@ class NeuralNetworkInstationaryModel(BaseNeuralNetworkModel):
             result = self.neural_network(inputs).detach().numpy()
             result = self._scale_target(result)
             # convert result into element from solution space
-            data['solution'] = self.solution_space.make_array_TP(result.T)
+            data['solution'] = self.solution_space.make_array(result.T)
             quantities.remove('solution')
 
         super()._compute(quantities, data, mu=mu)

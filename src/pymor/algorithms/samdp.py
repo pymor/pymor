@@ -144,8 +144,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
         u = u_all.conj()[0]
         y = y_all[:, 0]
 
-        x = sEmAB.lincomb_TP(u)
-        v = sEmA.apply_inverse_adjoint(C_defl.lincomb_TP(y))
+        x = sEmAB.lincomb(u)
+        v = sEmA.apply_inverse_adjoint(C_defl.lincomb(y))
 
         X.append(x)
         V.append(v)
@@ -173,9 +173,9 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
         do_rqi = True
         while found:
             theta = SH[0, 0]
-            schurvec = X.lincomb_TP(UR[:, 0])
+            schurvec = X.lincomb(UR[:, 0])
             schurvec.scal(1 / schurvec.norm())
-            lschurvec = V.lincomb_TP(URt[:, 0])
+            lschurvec = V.lincomb(URt[:, 0])
             lschurvec.scal(1 / lschurvec.norm())
 
             st = theta
@@ -233,8 +233,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
                 nr_converged += 1
 
                 if k > 1:
-                    X = X.lincomb_TP(UR[:, 1:k])
-                    V = V.lincomb_TP(URt[:, 1:k])
+                    X = X.lincomb(UR[:, 1:k])
+                    V = V.lincomb(URt[:, 1:k])
                 else:
                     X = A.source.empty()
                     V = A.source.empty()
@@ -243,8 +243,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
                     gram_schmidt(V, atol=0, rtol=0, copy=False)
                     gram_schmidt(X, atol=0, rtol=0, copy=False)
 
-                B_defl -= E.apply(Q[-1].lincomb_TP(Qt[-1].inner(B_defl)))
-                C_defl -= E.apply_adjoint(Qt[-1].lincomb_TP(Q[-1].inner(C_defl)))
+                B_defl -= E.apply(Q[-1].lincomb(Qt[-1].inner(B_defl)))
+                C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].inner(C_defl)))
 
                 k -= 1
 
@@ -276,8 +276,8 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
                         gram_schmidt(V, atol=0, rtol=0, copy=False)
                         gram_schmidt(X, atol=0, rtol=0, copy=False)
 
-                        B_defl -= E.apply(Q[-1].lincomb_TP(Qt[-1].inner(B_defl)))
-                        C_defl -= E.apply_adjoint(Qt[-1].lincomb_TP(Q[-1].inner(C_defl)))
+                        B_defl -= E.apply(Q[-1].lincomb(Qt[-1].inner(B_defl)))
+                        C_defl -= E.apply_adjoint(Qt[-1].lincomb(Q[-1].inner(C_defl)))
 
                 AX = A.apply(X)
                 if k > 0:
@@ -302,13 +302,13 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
             elif k >= krestart:
                 logger.info('Perform restart...')
                 EX = E.apply(X)
-                RR = AX.lincomb_TP(UR) - EX.lincomb_TP(UR).lincomb_TP(SH)
+                RR = AX.lincomb(UR) - EX.lincomb(UR).lincomb(SH)
 
                 minidx = RR.norm().argmin()
                 k = 1
 
-                X = X.lincomb_TP(UR[:, minidx])
-                V = V.lincomb_TP(URt[:, minidx])
+                X = X.lincomb(UR[:, minidx])
+                V = V.lincomb(URt[:, minidx])
 
                 gram_schmidt(V, atol=0, rtol=0, copy=False)
                 gram_schmidt(X, atol=0, rtol=0, copy=False)
@@ -321,13 +321,13 @@ def samdp(A, E, B, C, nwanted, init_shifts=None, which='NR', tol=1e-10, imagtol=
         if k >= krestart:
             logger.info('Perform restart...')
             EX = E.apply(X)
-            RR = AX.lincomb_TP(UR) - EX.lincomb_TP(UR).lincomb_TP(SH)
+            RR = AX.lincomb(UR) - EX.lincomb(UR).lincomb(SH)
 
             minidx = RR.norm().argmin()
             k = 1
 
-            X = X.lincomb_TP(UR[:, minidx])
-            V = V.lincomb_TP(URt[:, minidx])
+            X = X.lincomb(UR[:, minidx])
+            V = V.lincomb(URt[:, minidx])
 
             gram_schmidt(V, atol=0, rtol=0, copy=False)
             gram_schmidt(X, atol=0, rtol=0, copy=False)
@@ -490,8 +490,8 @@ def _select_max_eig(H, G, X, V, B, C, which):
     Vs = Vs[:, idx]
     Vt = Vt[:, idx]
 
-    X = X.lincomb_TP(Vs)
-    V = V.lincomb_TP(Vt)
+    X = X.lincomb(Vs)
+    V = V.lincomb(Vt)
 
     V.scal(1 / V.norm())
     X.scal(1 / X.norm())

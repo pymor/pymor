@@ -98,9 +98,9 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
 
     logger.info('Computing DMD modes ...')
     if type == 'standard':
-        Wk = U.lincomb_TP(evecs)
+        Wk = U.lincomb(evecs)
     elif type == 'exact':
-        Wk = Y.lincomb_TP(((V / s) @ evecs) / evals)
+        Wk = Y.lincomb(((V / s) @ evecs) / evals)
     else:
         assert False
 
@@ -112,7 +112,7 @@ def dmd(X, Y=None, modes=None, atol=None, rtol=None, cont_time_dt=None, type='ex
         retval.append(evals)
 
     if return_A_approx:
-        A_approx = LowRankOperator(Y.lincomb_TP(V), np.diag(s), U, inverted=True)
+        A_approx = LowRankOperator(Y.lincomb(V), np.diag(s), U, inverted=True)
         retval.append(A_approx)
 
     if return_A_tilde:

@@ -22,7 +22,7 @@ from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpa
 
 class MPIVectorArrayImpl(VectorArrayImpl):
 
-    def to_numpy_TP(self, ensure_copy, ind):
+    def to_numpy(self, ensure_copy, ind):
         raise NotImplementedError
 
     def __init__(self, obj_id, space):
@@ -54,15 +54,15 @@ class MPIVectorArrayImpl(VectorArrayImpl):
     def pairwise_inner(self, other, ind, oind):
         return mpi.call(mpi.function_call, _MPIVectorArray_pairwise_inner, self.obj_id, other.obj_id, ind, oind)
 
-    def lincomb_TP(self, coefficients, ind):
+    def lincomb(self, coefficients, ind):
         return type(self)(
-            mpi.call(mpi.function_call_manage, _MPIVectorArray_lincomb_TP, self.obj_id, coefficients, ind), self.space)
+            mpi.call(mpi.function_call_manage, _MPIVectorArray_lincomb, self.obj_id, coefficients, ind), self.space)
 
     def norm2(self, ind):
         return mpi.call(mpi.function_call, _MPIVectorArray_norm2, self.obj_id, ind)
 
-    def dofs_TP(self, dof_indices, ind):
-        return mpi.call(mpi.function_call, _MPIVectorArray_dofs_TP, self.obj_id, dof_indices, ind)
+    def dofs(self, dof_indices, ind):
+        return mpi.call(mpi.function_call, _MPIVectorArray_dofs, self.obj_id, dof_indices, ind)
 
     def amax(self, ind):
         return mpi.call(mpi.function_call, _MPIVectorArray_amax, self.obj_id, ind)
@@ -234,8 +234,8 @@ def _MPIVectorArray_pairwise_inner(self, other, ind, oind):
     return _indexed(self, ind).pairwise_inner(_indexed(other, oind))
 
 
-def _MPIVectorArray_lincomb_TP(self, coefficients, ind):
-    return _indexed(self, ind).lincomb_TP(coefficients)
+def _MPIVectorArray_lincomb(self, coefficients, ind):
+    return _indexed(self, ind).lincomb(coefficients)
 
 
 def _MPIVectorArray_norm(self, ind):
@@ -246,8 +246,8 @@ def _MPIVectorArray_norm2(self, ind):
     return _indexed(self, ind).norm2()
 
 
-def _MPIVectorArray_dofs_TP(self, dof_indices, ind):
-    return _indexed(self, ind).dofs_TP(dof_indices)
+def _MPIVectorArray_dofs(self, dof_indices, ind):
+    return _indexed(self, ind).dofs(dof_indices)
 
 
 def _MPIVectorArray_amax(self, ind):
@@ -280,7 +280,7 @@ class MPIVectorArrayNoCommImpl(MPIVectorArrayImpl):
     def norm2(self, ind):
         raise NotImplementedError
 
-    def dofs_TP(self, dof_indices, ind):
+    def dofs(self, dof_indices, ind):
         raise NotImplementedError
 
     def amax(self, ind):
@@ -330,12 +330,12 @@ class MPIVectorArrayAutoCommImpl(MPIVectorArrayImpl):
     def norm2(self, ind):
         return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_norm2, self.obj_id, ind)
 
-    def dofs_TP(self, dof_indices, ind):
+    def dofs(self, dof_indices, ind):
         offsets = getattr(self, '_offsets', None)
         if offsets is None:
             offsets = self.space._get_dims()[1]
         dof_indices = np.array(dof_indices)
-        return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_dofs_TP, self.obj_id, offsets, dof_indices, ind)
+        return mpi.call(mpi.function_call, _MPIVectorArrayAutoComm_dofs, self.obj_id, offsets, dof_indices, ind)
 
     def amax(self, ind):
         offsets = getattr(self, '_offsets', None)
@@ -421,13 +421,13 @@ def _MPIVectorArrayAutoComm_norm2(self, ind):
         return np.sum(results, axis=0)
 
 
-def _MPIVectorArrayAutoComm_dofs_TP(self, offsets, dof_indices, ind):
+def _MPIVectorArrayAutoComm_dofs(self, offsets, dof_indices, ind):
     self = _indexed(self, ind)
     offset = offsets[mpi.rank]
     dim = self.dim
     my_indices = np.logical_and(dof_indices >= offset, dof_indices < offset + dim)
     local_results = np.zeros((len(dof_indices), len(self)))
-    local_results[my_indices, :] = self.dofs_TP(dof_indices[my_indices] - offset)
+    local_results[my_indices, :] = self.dofs(dof_indices[my_indices] - offset)
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)

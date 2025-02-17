@@ -64,7 +64,7 @@ def test_sylv_schur_V(n, r, m, rng):
 
     Vva = solve_sylv_schur(Aop, Arop, B=Bop, Br=Brop)
 
-    V = Vva.to_numpy_TP()
+    V = Vva.to_numpy()
 
     AV = A.dot(V)
     VArT = V.dot(Ar.T)
@@ -95,7 +95,7 @@ def test_sylv_schur_V_E(n, r, m, rng):
 
     Vva = solve_sylv_schur(Aop, Arop, E=Eop, Er=Erop, B=Bop, Br=Brop)
 
-    V = Vva.to_numpy_TP()
+    V = Vva.to_numpy()
 
     AVErT = A.dot(V.dot(Er.T))
     EVArT = E.dot(V.dot(Ar.T))
@@ -121,7 +121,7 @@ def test_sylv_schur_W(n, r, p, rng):
 
     Wva = solve_sylv_schur(Aop, Arop, C=Cop, Cr=Crop)
 
-    W = Wva.to_numpy_TP()
+    W = Wva.to_numpy()
 
     ATW = A.T.dot(W)
     WAr = W.dot(Ar)
@@ -152,7 +152,7 @@ def test_sylv_schur_W_E(n, r, p, rng):
 
     Wva = solve_sylv_schur(Aop, Arop, E=Eop, Er=Erop, C=Cop, Cr=Crop)
 
-    W = Wva.to_numpy_TP()
+    W = Wva.to_numpy()
 
     ATWEr = A.T.dot(W.dot(Er))
     ETWAr = E.T.dot(W.dot(Ar))

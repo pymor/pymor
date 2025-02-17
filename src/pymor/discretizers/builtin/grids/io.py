@@ -29,7 +29,7 @@ def to_meshio(grid, data, codim=2):
     import meshio
 
     subentities, coordinates, entity_map = flatten_grid(grid)
-    data = data.to_numpy_TP().T if codim == 0 else data.to_numpy_TP().T[:, entity_map].copy()
+    data = data.to_numpy().T if codim == 0 else data.to_numpy().T[:, entity_map].copy()
     is_cell_data = (codim == 0)
 
     ref = grid.reference_element

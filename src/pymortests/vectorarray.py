@@ -65,7 +65,7 @@ def test_empty(vector_array):
         assert v.space == vector_array.space
         assert len(v) == 0
         try:
-            assert v.to_numpy_TP().shape == (v.dim, 0)
+            assert v.to_numpy().shape == (v.dim, 0)
         except NotImplementedError:
             pass
 
@@ -91,8 +91,8 @@ def test_zeros(vector_array):
             assert max(v.sup_norm()) == 0
             assert max(v.norm()) == 0
         try:
-            assert v.to_numpy_TP().shape == (v.dim, c)
-            assert np.allclose(v.to_numpy_TP(), np.zeros((v.dim, c)))
+            assert v.to_numpy().shape == (v.dim, c)
+            assert np.allclose(v.to_numpy(), np.zeros((v.dim, c)))
         except NotImplementedError:
             pass
 
@@ -109,8 +109,8 @@ def test_ones(vector_array):
             assert np.allclose(v.sup_norm(), np.ones(c))
             assert np.allclose(v.norm(), np.full(c, np.sqrt(v.dim)))
         try:
-            assert v.to_numpy_TP().shape == (v.dim, c)
-            assert np.allclose(v.to_numpy_TP(), np.ones((v.dim, c)))
+            assert v.to_numpy().shape == (v.dim, c)
+            assert np.allclose(v.to_numpy(), np.ones((v.dim, c)))
         except NotImplementedError:
             pass
 
@@ -128,8 +128,8 @@ def test_full(vector_array):
                 assert np.allclose(v.sup_norm(), np.full(c, abs(val)))
                 assert np.allclose(v.norm(), np.full(c, np.sqrt(val**2 * v.dim)))
             try:
-                assert v.to_numpy_TP().shape == (v.dim, c)
-                assert np.allclose(v.to_numpy_TP(), np.full((v.dim, c), val))
+                assert v.to_numpy().shape == (v.dim, c)
+                assert np.allclose(v.to_numpy(), np.full((v.dim, c), val))
             except NotImplementedError:
                 pass
 
@@ -179,7 +179,7 @@ def _test_random_uniform(vector_array, realizations, low, high):
     if min(v.dim, c) > 0:
         assert np.all(v.sup_norm() <= max(abs(low), abs(high)))
     try:
-        x = v.to_numpy_TP()
+        x = v.to_numpy()
         assert x.shape == (v.dim, c)
         assert np.all(x <= high)
         assert np.all(x >= low)
@@ -207,7 +207,7 @@ def test_random_normal(vector_array, realizations, loc, scale):
     assert v.space == vector_array.space
     assert len(v) == c
     try:
-        x = v.to_numpy_TP()
+        x = v.to_numpy()
         assert x.shape == (v.dim, c)
         from scipy.stats import norm
         n = x.size
@@ -226,12 +226,12 @@ def test_random_normal(vector_array, realizations, loc, scale):
 @pyst.given_vector_arrays()
 def test_from_numpy(vector_array):
     try:
-        d = vector_array.to_numpy_TP()
+        d = vector_array.to_numpy()
     except NotImplementedError:
         return
     try:
-        v = vector_array.space.from_numpy_TP(d)
-        assert np.allclose(d, v.to_numpy_TP())
+        v = vector_array.space.from_numpy(d)
+        assert np.allclose(d, v.to_numpy())
     except NotImplementedError:
         pass
 
@@ -241,7 +241,7 @@ def test_shape(vector_array):
     assert len(vector_array) >= 0
     assert vector_array.dim >= 0
     try:
-        assert vector_array.to_numpy_TP().shape == (vector_array.dim, len(vector_array))
+        assert vector_array.to_numpy().shape == (vector_array.dim, len(vector_array))
     except NotImplementedError:
         pass
 
@@ -279,7 +279,7 @@ def test_copy(vectors_and_indices):
         else:
             assert np.all(almost_equal(c, v[ind]))
         try:
-            assert np.allclose(c.to_numpy_TP(), indexed(v.to_numpy_TP(), ind))
+            assert np.allclose(c.to_numpy(), indexed(v.to_numpy(), ind))
         except NotImplementedError:
             pass
 
@@ -301,7 +301,7 @@ def test_COW(vectors_and_indices):
             vi = v[ind] if ind else v
             assert not np.all(almost_equal(c, vi, atol=0, rtol=0))
             try:
-                assert np.allclose(c.to_numpy_TP(), 2*indexed(v.to_numpy_TP(), ind))
+                assert np.allclose(c.to_numpy(), 2*indexed(v.to_numpy(), ind))
             except NotImplementedError:
                 pass
 
@@ -317,7 +317,7 @@ def test_copy_repeated_index(vector_array):
         assert almost_equal(c[0], v[ind[0]])
         assert almost_equal(c[1], v[ind[0]])
         try:
-            assert indexed(v.to_numpy_TP(), ind).shape == c.to_numpy_TP().shape
+            assert indexed(v.to_numpy(), ind).shape == c.to_numpy().shape
         except NotImplementedError:
             pass
         c[0].scal(2.)
@@ -325,7 +325,7 @@ def test_copy_repeated_index(vector_array):
         assert almost_equal(c[1], v[ind[0]])
         assert float_cmp(c[0].norm(), 2 * v[ind[0]].norm())
         try:
-            assert indexed(v.to_numpy_TP(), ind).shape == c.to_numpy_TP().shape
+            assert indexed(v.to_numpy(), ind).shape == c.to_numpy().shape
         except NotImplementedError:
             pass
 
@@ -341,7 +341,7 @@ def test_append(vectors_and_indices):
     assert len(c1) == len_v1 + len_ind
     assert np.all(almost_equal(c1[len_v1:len(c1)], c2[ind]))
     try:
-        assert np.allclose(c1.to_numpy_TP(), np.hstack((v1.to_numpy_TP(), indexed(v2.to_numpy_TP(), ind))))
+        assert np.allclose(c1.to_numpy(), np.hstack((v1.to_numpy(), indexed(v2.to_numpy(), ind))))
     except NotImplementedError:
         pass
     c1.append(c2[ind], remove_from_other=True)
@@ -351,7 +351,7 @@ def test_append(vectors_and_indices):
     assert np.all(almost_equal(c1[len_v1:len_v1 + len_ind], c1[len_v1 + len_ind:len(c1)]))
     assert np.all(almost_equal(c2, v2[ind_complement_]))
     try:
-        assert np.allclose(c2.to_numpy_TP(), indexed(v2.to_numpy_TP(), ind_complement_))
+        assert np.allclose(c2.to_numpy(), indexed(v2.to_numpy(), ind_complement_))
     except NotImplementedError:
         pass
 
@@ -364,7 +364,7 @@ def test_append_self(vector_array):
     assert len(c) == 2 * len_v
     assert np.all(almost_equal(c[:len_v], c[len_v:len(c)]))
     try:
-        assert np.allclose(c.to_numpy_TP(), np.hstack((vector_array.to_numpy_TP(), vector_array.to_numpy_TP())))
+        assert np.allclose(c.to_numpy(), np.hstack((vector_array.to_numpy(), vector_array.to_numpy())))
     except NotImplementedError:
         pass
     c = vector_array.copy()
@@ -382,7 +382,7 @@ def test_del(vectors_and_indices):
     assert len(c) == len(ind_complement_)
     assert np.all(almost_equal(v[ind_complement_], c))
     try:
-        assert np.allclose(c.to_numpy_TP(), indexed(v.to_numpy_TP(), ind_complement_))
+        assert np.allclose(c.to_numpy(), indexed(v.to_numpy(), ind_complement_))
     except NotImplementedError:
         pass
     del c[:]
@@ -415,11 +415,11 @@ def test_scal(vectors_and_indices):
         assert np.allclose(c[ind].sup_norm(), v[ind].sup_norm() * abs(x))
         assert np.allclose(c[ind].norm(), v[ind].norm() * abs(x))
         try:
-            y = v.to_numpy_TP(True)
+            y = v.to_numpy(True)
             if isinstance(x, np.ndarray) and not isinstance(ind, Number):
                 x = x[np.newaxis, :]
             y[:, ind] *= x
-            assert np.allclose(c.to_numpy_TP(), y)
+            assert np.allclose(c.to_numpy(), y)
         except NotImplementedError:
             pass
 
@@ -460,16 +460,16 @@ def test_axpy(vectors_and_indices, scalar):
     assert np.all(c1[ind1].sup_norm() <= v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * (1. + 1e-10))
     assert np.all(c1[ind1].norm() <= (v1[ind1].norm() + abs(a) * v2[ind2].norm()) * (1. + 1e-10))
     try:
-        x = v1.to_numpy_TP(True).astype(complex)  # ensure that inplace addition works
+        x = v1.to_numpy(True).astype(complex)  # ensure that inplace addition works
         if isinstance(ind1, Number):
-            x[:, [ind1]] += indexed(v2.to_numpy_TP(), ind2) * a
+            x[:, [ind1]] += indexed(v2.to_numpy(), ind2) * a
         else:
             if isinstance(a, np.ndarray):
                 aa = a[np.newaxis, :]
             else:
                 aa = a
-            x[:, ind1] += indexed(v2.to_numpy_TP(), ind2) * aa
-        assert np.allclose(c1.to_numpy_TP(), x)
+            x[:, ind1] += indexed(v2.to_numpy(), ind2) * aa
+        assert np.allclose(c1.to_numpy(), x)
     except NotImplementedError:
         pass
     c1[ind1].axpy(-a, c2[ind2])
@@ -511,16 +511,16 @@ def test_axpy_one_x(vectors_and_indices, scalar):
         assert np.all(c1[ind1].sup_norm() <= v1[ind1].sup_norm() + abs(a) * v2[ind2].sup_norm() * rtol_factor)
         assert np.all(c1[ind1].norm() <= (v1[ind1].norm() + abs(a) * v2[ind2].norm()) * (1. + 1e-10))
         try:
-            x = v1.to_numpy_TP(True).astype(complex)  # ensure that inplace addition works
+            x = v1.to_numpy(True).astype(complex)  # ensure that inplace addition works
             if isinstance(ind1, Number):
-                x[:, [ind1]] += indexed(v2.to_numpy_TP(), ind2) * a
+                x[:, [ind1]] += indexed(v2.to_numpy(), ind2) * a
             else:
                 if isinstance(a, np.ndarray):
                     aa = a[np.newaxis, :]
                 else:
                     aa = a
-                x[:, ind1] += indexed(v2.to_numpy_TP(), ind2) * aa
-            assert np.allclose(c1.to_numpy_TP(), x)
+                x[:, ind1] += indexed(v2.to_numpy(), ind2) * aa
+            assert np.allclose(c1.to_numpy(), x)
         except NotImplementedError:
             pass
         c1[ind1].axpy(-a, c2[ind2])
@@ -552,16 +552,16 @@ def test_axpy_self(vectors_and_indices, scalar):
     assert np.all(almost_equal(c[ind1_complement], v[ind1_complement]))
     assert np.all(c[ind1].sup_norm() <= v[ind1].sup_norm() + abs(a) * v[ind2].sup_norm() * (1. + 1e-10))
     try:
-        x = v.to_numpy_TP(True).astype(complex)  # ensure that inplace addition works
+        x = v.to_numpy(True).astype(complex)  # ensure that inplace addition works
         if isinstance(ind1, Number):
-            x[:, [ind1]] += indexed(v.to_numpy_TP(), ind2) * a
+            x[:, [ind1]] += indexed(v.to_numpy(), ind2) * a
         else:
             if isinstance(a, np.ndarray):
                 aa = a[np.newaxis, :]
             else:
                 aa = a
-            x[:, ind1] += indexed(v.to_numpy_TP(), ind2) * aa
-        assert np.allclose(c.to_numpy_TP(), x)
+            x[:, ind1] += indexed(v.to_numpy(), ind2) * aa
+        assert np.allclose(c.to_numpy(), x)
     except NotImplementedError:
         pass
     c[ind1].axpy(-a, v[ind2])
@@ -592,7 +592,7 @@ def test_pairwise_inner(vector_arrays):
         assert np.all(r <= (v1[ind1].norm() * v2[ind2].norm() * (1. + 1e-10) + 1e-15))
         try:
             assert np.allclose(r,
-                               np.sum(indexed(v1.to_numpy_TP(), ind1).conj() * indexed(v2.to_numpy_TP(), ind2), axis=0))
+                               np.sum(indexed(v1.to_numpy(), ind1).conj() * indexed(v2.to_numpy(), ind2), axis=0))
         except NotImplementedError:
             pass
 
@@ -607,7 +607,7 @@ def test_pairwise_inner_self(vectors_and_indices):
     assert np.allclose(r, r2.T.conj())
     assert np.all(r <= (v[ind1].norm() * v[ind2].norm() * (1. + 1e-10) + 1e-15))
     try:
-        assert np.allclose(r, np.sum(indexed(v.to_numpy_TP(), ind1).conj() * indexed(v.to_numpy_TP(), ind2), axis=0))
+        assert np.allclose(r, np.sum(indexed(v.to_numpy(), ind1).conj() * indexed(v.to_numpy(), ind2), axis=0))
     except NotImplementedError:
         pass
     ind = ind1
@@ -626,7 +626,7 @@ def test_inner(vectors_and_indices):
     assert np.allclose(r, r2.T.conj())
     assert np.all(r <= (v1[ind1].norm()[:, np.newaxis] * v2[ind2].norm()[np.newaxis, :] * (1. + 1e-10) + 1e-15))
     try:
-        assert np.allclose(r, indexed(v1.to_numpy_TP(), ind1).conj().T.dot(indexed(v2.to_numpy_TP(), ind2)))
+        assert np.allclose(r, indexed(v1.to_numpy(), ind1).conj().T.dot(indexed(v2.to_numpy(), ind2)))
     except NotImplementedError:
         pass
 
@@ -642,7 +642,7 @@ def test_inner_self(vectors_and_indices):
     assert np.allclose(r, r2.T.conj())
     assert np.all(r <= (v[ind1].norm()[:, np.newaxis] * v[ind2].norm()[np.newaxis, :] * (1. + 1e-10) + 1e-15))
     try:
-        assert np.allclose(r, indexed(v.to_numpy_TP(), ind1).conj().T.dot(indexed(v.to_numpy_TP(), ind2)))
+        assert np.allclose(r, indexed(v.to_numpy(), ind1).conj().T.dot(indexed(v.to_numpy(), ind2)))
     except NotImplementedError:
         pass
     r = v[ind1].inner(v[ind1])
@@ -653,7 +653,7 @@ def test_inner_self(vectors_and_indices):
 def test_lincomb_1d(vectors_and_indices, data):
     v, ind = vectors_and_indices
     coeffs = draw_coefficients(data, v.len_ind(ind))
-    lc = v[ind].lincomb_TP(coeffs)
+    lc = v[ind].lincomb(coeffs)
     assert lc.space == v.space
     assert len(lc) == 1
     lc2 = v.zeros()
@@ -667,12 +667,12 @@ def test_lincomb_2d(vectors_and_indices, data):
     v, ind = vectors_and_indices
     for count in (0, 1, 5):
         coeffs = draw_coefficients(data, (v.len_ind(ind), count))
-        lc = v[ind].lincomb_TP(coeffs)
+        lc = v[ind].lincomb(coeffs)
         assert lc.space == v.space
         assert len(lc) == count
         lc2 = v.empty(reserve=count)
         for coeffs_1d in coeffs.T:
-            lc2.append(v[ind].lincomb_TP(coeffs_1d))
+            lc2.append(v[ind].lincomb(coeffs_1d))
         assert np.all(almost_equal(lc, lc2))
 
 
@@ -681,17 +681,17 @@ def test_lincomb_wrong_coefficients(vectors_and_indices, data):
     v, ind = vectors_and_indices
     coeffs = draw_coefficients(data, v.len_ind(ind) + 1)
     with pytest.raises(Exception):
-        v[ind].lincomb_TP(coeffs)
+        v[ind].lincomb(coeffs)
     coeffs = draw_coefficients(data, v.len_ind(ind)).reshape((-1, 1, 1))
     with pytest.raises(Exception):
-        v[ind].lincomb_TP(coeffs)
+        v[ind].lincomb(coeffs)
     if v.len_ind(ind) > 0:
         coeffs = draw_coefficients(data, v.len_ind(ind) - 1)
         with pytest.raises(Exception):
-            v[ind].lincomb_TP(coeffs)
+            v[ind].lincomb(coeffs)
         coeffs = np.array([])
         with pytest.raises(Exception):
-            v[ind].lincomb_TP(coeffs)
+            v[ind].lincomb(coeffs)
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
@@ -705,7 +705,7 @@ def test_norm(vectors_and_indices):
     if v.dim == 0:
         assert np.all(norm == 0)
     try:
-        assert np.allclose(norm, np.linalg.norm(indexed(v.to_numpy_TP(), ind), axis=0))
+        assert np.allclose(norm, np.linalg.norm(indexed(v.to_numpy(), ind), axis=0))
     except NotImplementedError:
         pass
     c.scal(4.)
@@ -727,7 +727,7 @@ def test_norm2(vectors_and_indices):
     if v.dim == 0:
         assert np.all(norm == 0)
     try:
-        assert np.allclose(norm, np.linalg.norm(indexed(v.to_numpy_TP(), ind), axis=0)**2)
+        assert np.allclose(norm, np.linalg.norm(indexed(v.to_numpy(), ind), axis=0)**2)
     except NotImplementedError:
         pass
     c.scal(4.)
@@ -750,7 +750,7 @@ def test_sup_norm(vectors_and_indices):
         assert np.all(norm == 0)
     if v.dim > 0:
         try:
-            assert np.allclose(norm, np.max(np.abs(indexed(v.to_numpy_TP(), ind)), axis=0))
+            assert np.allclose(norm, np.max(np.abs(indexed(v.to_numpy(), ind)), axis=0))
         except NotImplementedError:
             pass
     c.scal(4.)
@@ -766,12 +766,12 @@ def test_sup_norm(vectors_and_indices):
 def test_dofs(vectors_and_indices, random_count, data):
     v, ind = vectors_and_indices
     c = v.copy()
-    dofs = c[ind].dofs_TP(np.array([], dtype=int))
+    dofs = c[ind].dofs(np.array([], dtype=int))
     assert isinstance(dofs, np.ndarray)
     assert dofs.shape == (0, v.len_ind(ind))
 
     c = v.copy()
-    dofs = c[ind].dofs_TP([])
+    dofs = c[ind].dofs([])
     assert isinstance(dofs, np.ndarray)
     assert dofs.shape == (0, v.len_ind(ind))
 
@@ -779,20 +779,20 @@ def test_dofs(vectors_and_indices, random_count, data):
 
     c_ind = data.draw(arrays(np.int64, random_count, elements=hyst.integers(0, v.dim-1)))
     c = v.copy()
-    dofs = c[ind].dofs_TP(c_ind)
+    dofs = c[ind].dofs(c_ind)
     assert dofs.shape == (random_count, v.len_ind(ind))
     c = v.copy()
-    dofs2 = c[ind].dofs_TP(list(c_ind))
+    dofs2 = c[ind].dofs(list(c_ind))
     assert np.all(dofs == dofs2)
     c = v.copy()
     c.scal(3.)
-    dofs2 = c[ind].dofs_TP(c_ind)
+    dofs2 = c[ind].dofs(c_ind)
     assert np.allclose(dofs * 3, dofs2)
     c = v.copy()
-    dofs2 = c[ind].dofs_TP(np.hstack((c_ind, c_ind)))
+    dofs2 = c[ind].dofs(np.hstack((c_ind, c_ind)))
     assert np.all(dofs2 == np.vstack((dofs, dofs)))
     try:
-        assert np.all(dofs == indexed(v.to_numpy_TP(), ind)[c_ind, :])
+        assert np.all(dofs == indexed(v.to_numpy(), ind)[c_ind, :])
     except NotImplementedError:
         pass
 
@@ -801,13 +801,13 @@ def test_dofs(vectors_and_indices, random_count, data):
 def test_components_wrong_dof_indices(vectors_and_indices):
     v, ind = vectors_and_indices
     with pytest.raises(Exception):
-        v[ind].dofs_TP(None)
+        v[ind].dofs(None)
     with pytest.raises(Exception):
-        v[ind].dofs_TP(1)
+        v[ind].dofs(1)
     with pytest.raises(Exception):
-        v[ind].dofs_TP(np.array([-1]))
+        v[ind].dofs(np.array([-1]))
     with pytest.raises(Exception):
-        v[ind].dofs_TP(np.array([v.dim]))
+        v[ind].dofs(np.array([v.dim]))
 
 
 @pyst.given_vector_arrays(index_strategy=pyst.valid_indices)
@@ -817,7 +817,7 @@ def test_amax(vectors_and_indices):
     max_inds, max_vals = v[ind].amax()
     assert np.allclose(max_vals, v[ind].sup_norm())
     for i, max_ind, max_val in zip(ind_to_list(v, ind), max_inds, max_vals):
-        assert np.allclose(max_val, np.abs(v[[i]].dofs_TP([max_ind])))
+        assert np.allclose(max_val, np.abs(v[[i]].dofs([max_ind])))
 
 
 # def test_amax_zero_dim(zero_dimensional_vector_space):

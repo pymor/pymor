@@ -258,7 +258,7 @@ class VectorArray(BasicObject):
         self.impl.delete(ind)
         self._len = len(self.impl)
 
-    def to_numpy_TP(self, ensure_copy=False):
+    def to_numpy(self, ensure_copy=False):
         """Return (self.dim, len(self)) NumPy Array with the data stored in the array.
 
         Parameters
@@ -267,7 +267,7 @@ class VectorArray(BasicObject):
             If `False`, modifying the returned |NumPy array| might alter the original
             |VectorArray|. If `True` always a copy of the array data is made.
         """
-        return self.impl.to_numpy_TP(ensure_copy, self.ind)
+        return self.impl.to_numpy(ensure_copy, self.ind)
 
     def append(self, other, remove_from_other=False):
         """Append vectors to the array.
@@ -391,9 +391,9 @@ class VectorArray(BasicObject):
 
         is equivalent to::
 
-            U.dofs_TP.T(np.arange(U.dim)) @ V.dofs_TP(np.arange(V.dim))
+            U.dofs.T(np.arange(U.dim)) @ V.dofs(np.arange(V.dim))
 
-        (Note, that :meth:`dofs_TP` is only intended to be called for a
+        (Note, that :meth:`dofs` is only intended to be called for a
         small number of DOF indices.)
 
         If a `product` |Operator| is specified, this |Operator| is
@@ -445,9 +445,9 @@ class VectorArray(BasicObject):
 
         is equivalent to::
 
-            np.sum(U.dofs_TP(np.arange(U.dim)) * V.dofs_TP(np.arange(V.dim)), axis=0)
+            np.sum(U.dofs(np.arange(U.dim)) * V.dofs(np.arange(V.dim)), axis=0)
 
-        (Note, that :meth:`dofs_TP` is only intended to be called for a
+        (Note, that :meth:`dofs` is only intended to be called for a
         small number of DOF indices.)
 
         If a `product` |Operator| is specified, this |Operator| is
@@ -492,7 +492,7 @@ class VectorArray(BasicObject):
             assert len(self) == len(other)
             return self.impl.pairwise_inner(other.impl, self.ind, other.ind)
 
-    def lincomb_TP(self, coefficients):
+    def lincomb(self, coefficients):
         """Returns linear combinations of the vectors contained in the array.
 
         Parameters
@@ -517,7 +517,7 @@ class VectorArray(BasicObject):
         if coefficients.ndim == 1:
             coefficients = coefficients[..., np.newaxis]
         assert coefficients.shape[0] == len(self)
-        return type(self)(self.space, self.impl.lincomb_TP(coefficients, self.ind))
+        return type(self)(self.space, self.impl.lincomb(coefficients, self.ind))
 
     def norm(self, product=None, tol=None, raise_complex=None):
         """Norm with respect to a given inner product.
@@ -618,7 +618,7 @@ class VectorArray(BasicObject):
             _, max_val = self.amax()
             return max_val
 
-    def dofs_TP(self, dof_indices):
+    def dofs(self, dof_indices):
         """Extract DOFs of the vectors contained in the array.
 
         Parameters
@@ -641,7 +641,7 @@ class VectorArray(BasicObject):
                 and (len(dof_indices) == 0 or max(dof_indices) < self.dim)) \
             or (isinstance(dof_indices, np.ndarray) and dof_indices.ndim == 1
                 and (len(dof_indices) == 0 or np.max(dof_indices) < self.dim))
-        return self.impl.dofs_TP(np.asarray(dof_indices, dtype=np.int64), self.ind)
+        return self.impl.dofs(np.asarray(dof_indices, dtype=np.int64), self.ind)
 
     def amax(self):
         """The maximum absolute value of the DOFs contained in the array.
@@ -808,7 +808,7 @@ class VectorSpace(ImmutableObject):
     |VectorArray| from given raw data of the underlying linear algebra
     backend (e.g. a |Numpy array| in the case  of |NumpyVectorSpace|).
     Some vector spaces can create new |VectorArrays| from a given
-    |Numpy array| via the :meth:`~VectorSpace.from_numpy_TP`
+    |Numpy array| via the :meth:`~VectorSpace.from_numpy`
     method.
 
     Vector spaces can be compared for equality via the `==` and `!=`
@@ -897,7 +897,7 @@ class VectorSpace(ImmutableObject):
         -------
         A |VectorArray| containing `count` vectors with each DOF set to `value`.
         """
-        return self.from_numpy_TP(np.full((self.dim, count), value))
+        return self.from_numpy(np.full((self.dim, count), value))
 
     def random(self, count=1, distribution='uniform', reserve=0, **kwargs):
         """Create a |VectorArray| of vectors with random entries.
@@ -930,7 +930,7 @@ class VectorSpace(ImmutableObject):
             Hint for the backend to which length the array will grow.
         """
         values = _create_random_values((self.dim, count), distribution, **kwargs)
-        return self.from_numpy_TP(values)
+        return self.from_numpy(values)
 
     def empty(self, reserve=0):
         """Create an empty |VectorArray|.
@@ -948,7 +948,7 @@ class VectorSpace(ImmutableObject):
         """
         return self.zeros(0, reserve=reserve)
 
-    def from_numpy_TP(self, data, ensure_copy=False):
+    def from_numpy(self, data, ensure_copy=False):
         """Create a |VectorArray| from a |NumPy array|.
 
         Note that this method will not be supported by all vector
@@ -1024,7 +1024,7 @@ class VectorArrayImpl(BasicObject):
         pass
 
     @abstractmethod
-    def to_numpy_TP(self, ensure_copy, ind):
+    def to_numpy(self, ensure_copy, ind):
         pass
 
     @abstractmethod
@@ -1069,7 +1069,7 @@ class VectorArrayImpl(BasicObject):
         return self.inner(self, ind, ind)
 
     @abstractmethod
-    def lincomb_TP(self, coefficients, ind):
+    def lincomb(self, coefficients, ind):
         pass
 
     def norm(self, ind):
@@ -1080,7 +1080,7 @@ class VectorArrayImpl(BasicObject):
         pass
 
     @abstractmethod
-    def dofs_TP(self, dof_indices, ind):
+    def dofs(self, dof_indices, ind):
         pass
 
     @abstractmethod

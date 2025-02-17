@@ -47,20 +47,20 @@ def numpy_sparse_solver(request):
 
 def test_generic_solvers(generic_solver):
     op = GenericOperator(generic_solver)
-    rhs = op.range.make_array_TP(np.ones(10))
+    rhs = op.range.make_array(np.ones(10))
     solution = op.apply_inverse(rhs)
     assert ((op.apply(solution) - rhs).norm() / rhs.norm())[0] < 1e-8
 
 
 def test_numpy_dense_solvers():
     op = NumpyMatrixOperator(np.eye(10) * np.arange(1, 11))
-    rhs = op.range.make_array_TP(np.ones(10))
+    rhs = op.range.make_array(np.ones(10))
     solution = op.apply_inverse(rhs)
     assert ((op.apply(solution) - rhs).norm() / rhs.norm())[0] < 1e-8
 
 
 def test_numpy_sparse_solvers(numpy_sparse_solver):
     op = NumpyMatrixOperator(diags([np.arange(1., 11.)], [0], format='csc'), solver_options=numpy_sparse_solver)
-    rhs = op.range.make_array_TP(np.ones(10))
+    rhs = op.range.make_array(np.ones(10))
     solution = op.apply_inverse(rhs)
     assert ((op.apply(solution) - rhs).norm() / rhs.norm())[0] < 1e-8

@@ -85,8 +85,8 @@ class GenericBTReductor(BasicObject):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
 
         # compute projection matrices
-        self.V = cf.lincomb_TP(sV[:r].T)
-        self.W = of.lincomb_TP(sU[:r].T)
+        self.V = cf.lincomb(sV[:r].T)
+        self.W = of.lincomb(sU[:r].T)
         if projection == 'sr':
             alpha = 1 / np.sqrt(sv[:r])
             self.V.scal(alpha)

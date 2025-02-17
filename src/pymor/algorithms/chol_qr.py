@@ -155,7 +155,7 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
 
             # orthogonalize
             Rinv = trtri(Rx)[0]
-            A_todo = A[:offset].lincomb_TP(-B.T@Rinv) + A[offset:].lincomb_TP(Rinv)
+            A_todo = A[:offset].lincomb(-B.T@Rinv) + A[offset:].lincomb(Rinv)
             del A[offset:]
             A.append(A_todo)
 

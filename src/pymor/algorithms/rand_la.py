@@ -150,7 +150,7 @@ class RandomizedRangeFinder(BasicObject):
             # projecting onto Q[-1] instead of new_basis_vecs
             # should not be needed in most cases. add an option?
             new_basis_vecs = self.Q[-1][self.estimator_last_basis_size:]
-            self.Omega -= new_basis_vecs.lincomb_TP(new_basis_vecs.inner(self.Omega, product=range_product))
+            self.Omega -= new_basis_vecs.lincomb(new_basis_vecs.inner(self.Omega, product=range_product))
             self.estimator_last_basis_size += len(new_basis_vecs)
 
         testfail = self.failure_tolerance / min(A.source.dim, A.range.dim)
@@ -171,9 +171,9 @@ class RandomizedRangeFinder(BasicObject):
                 Q = self.Q[-1]
                 T = G / g
                 QZ = Q.inner(self.Omega)
-                QQZ = Q.lincomb_TP(QZ).to_numpy_TP()
-                QTTQZ = Q.to_numpy_TP() @ T * np.diag(T.T @ QZ)
-                error = spla.norm(self.Omega.to_numpy_TP()-QQZ+QTTQZ) / np.sqrt(len(self.Omega))
+                QQZ = Q.lincomb(QZ).to_numpy()
+                QTTQZ = Q.to_numpy() @ T * np.diag(T.T @ QZ)
+                error = spla.norm(self.Omega.to_numpy()-QQZ+QTTQZ) / np.sqrt(len(self.Omega))
             self.last_estimated_error = error
             self.estimator_last_basis_size = len(self.Q[-1])
         return self.last_estimated_error
@@ -336,7 +336,7 @@ def randomized_svd(A, n, source_product=None, range_product=None, power_iteratio
     with logger.block('Backprojecting the left'
                       f'{" " if isinstance(range_product, IdentityOperator) else " generalized "}'
                       f'singular vector{"s" if n > 1 else ""} ...'):
-        U = Q.lincomb_TP(Uh_b[:n].T)
+        U = Q.lincomb(Uh_b[:n].T)
 
     return U, s, V
 
@@ -442,7 +442,7 @@ def randomized_ghep(A, E=None, n=6, power_iterations=0, oversampling=20, single_
         with logger.block('Backprojecting the'
                           f'{" " if isinstance(E, IdentityOperator) else " generalized "}'
                           f'eigenvector{"s" if n > 1 else ""} ...'):
-            V = Q.lincomb_TP(Vr[:, ::-1])
+            V = Q.lincomb(Vr[:, ::-1])
         return w[::-1], V
     else:
         with logger.block(f'Computing the{" " if isinstance(E, IdentityOperator) else " generalized "}'

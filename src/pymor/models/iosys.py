@@ -331,7 +331,7 @@ class LTIModel(Model):
         if E is not None:
             E = NumpyMatrixOperator(E)
         if initial_data is not None:
-            initial_data = A.source.from_numpy_TP(initial_data)
+            initial_data = A.source.from_numpy(initial_data)
 
         return cls(A, B, C, D, E, sampling_time=sampling_time, T=T, initial_data=initial_data,
                    time_stepper=time_stepper, num_values=num_values, presets=presets,
@@ -703,7 +703,7 @@ class LTIModel(Model):
                 if compute_solution:
                     data['solution'].append(x)
                 if compute_output:
-                    y = self.C.apply(x, mu=mu).to_numpy_TP().T + D.as_range_array(mu=mu.at_time(t)).to_numpy_TP().T
+                    y = self.C.apply(x, mu=mu).to_numpy().T + D.as_range_array(mu=mu.at_time(t)).to_numpy().T
                     if i < n:
                         data['output'][i] = y
                     else:
@@ -942,13 +942,13 @@ class LTIModel(Model):
     @cached
     def _gramian(self, typ, mu=None):
         if typ == 'c_lrcf' and 'c_dense' in self.presets:
-            return self.A.source.from_numpy_TP(_chol(self.presets['c_dense']))
+            return self.A.source.from_numpy(_chol(self.presets['c_dense']))
         elif typ == 'o_lrcf' and 'o_dense' in self.presets:
-            return self.A.source.from_numpy_TP(_chol(self.presets['o_dense']))
+            return self.A.source.from_numpy(_chol(self.presets['o_dense']))
         elif typ == 'c_dense' and 'c_lrcf' in self.presets:
-            return self.presets['c_lrcf'].to_numpy_TP() @ self.presets['c_lrcf'].to_numpy_TP().T
+            return self.presets['c_lrcf'].to_numpy() @ self.presets['c_lrcf'].to_numpy().T
         elif typ == 'o_dense' and 'o_lrcf' in self.presets:
-            return self.presets['o_lrcf'].to_numpy_TP() @ self.presets['o_lrcf'].to_numpy_TP().T
+            return self.presets['o_lrcf'].to_numpy() @ self.presets['o_lrcf'].to_numpy().T
 
         A = self.A.assemble(mu)
         B = self.B
@@ -1001,12 +1001,12 @@ class LTIModel(Model):
                                        trans=True, options=options_ricc_pos_lrcf)
         elif typ == 'pr_c_dense':
             return solve_pos_ricc_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
-                                        A.source.zeros().to_numpy_TP(), -to_matrix(C, format='dense'),
+                                        A.source.zeros().to_numpy(), -to_matrix(C, format='dense'),
                                         R=to_matrix(D + D.H, 'dense'), S=to_matrix(B, format='dense').T,
                                         trans=False, options=options_ricc_pos_dense)
         elif typ == 'pr_o_dense':
             return solve_pos_ricc_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
-                                        -to_matrix(B, format='dense'), A.source.zeros().to_numpy_TP().T,
+                                        -to_matrix(B, format='dense'), A.source.zeros().to_numpy().T,
                                         R=to_matrix(D + D.H, 'dense'), S=to_matrix(C, format='dense').T,
                                         trans=True, options=options_ricc_pos_dense)
         elif typ[0] == 'br_c_lrcf':
@@ -1469,8 +1469,8 @@ class LTIModel(Model):
             ast_ews = ew[ast_idx]
             idx = ast_ews.argsort()
 
-            ast_lev = self.A.source.from_numpy_TP(lev[:, ast_idx][:, idx])
-            ast_rev = self.A.range.from_numpy_TP(rev[:, ast_idx][:, idx])
+            ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, idx])
+            ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, idx])
 
             return ast_lev, ast_ews[idx], ast_rev
 

@@ -165,7 +165,7 @@ class NGSolveMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
 
     def as_vector(self, copy=True):
         vec = self.matrix.AsVector().FV().NumPy()
-        return NumpyVectorSpace.make_array_TP(vec.copy() if copy else vec)
+        return NumpyVectorSpace.make_array(vec.copy() if copy else vec)
 
 
 class NGSolveVisualizer(ImmutableObject):

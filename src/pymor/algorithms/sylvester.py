@@ -43,12 +43,12 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
         Real |Operator| or `None`.
     Br
         Real |Operator| or `None`.
-        It is assumed that `Br.range.from_numpy_TP` is implemented.
+        It is assumed that `Br.range.from_numpy` is implemented.
     C
         Real |Operator| or `None`.
     Cr
         Real |Operator| or `None`.
-        It is assumed that `Cr.source.from_numpy_TP` is implemented.
+        It is assumed that `Cr.source.from_numpy` is implemented.
 
     Returns
     -------
@@ -118,38 +118,38 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
     if compute_V:
         V = A.source.empty(reserve=r)
 
-        BrTQ = Br.apply_adjoint(Br.range.from_numpy_TP(Q))
+        BrTQ = Br.apply_adjoint(Br.range.from_numpy(Q))
         BBrTQ = B.apply(BrTQ)
         for i in range(-1, -r - 1, -1):
             rhs = -BBrTQ[i].copy()
             if i < -1:
                 if Er is not None:
-                    rhs -= A.apply(V.lincomb_TP(TEr[i, :i:-1].conjugate().T))
-                rhs -= E.apply(V.lincomb_TP(TAr[i, :i:-1].conjugate().T))
+                    rhs -= A.apply(V.lincomb(TEr[i, :i:-1].conjugate().T))
+                rhs -= E.apply(V.lincomb(TAr[i, :i:-1].conjugate().T))
             TErii = 1 if Er is None else TEr[i, i]
             eAaE = TErii.conjugate() * A + TAr[i, i].conjugate() * E
             V.append(eAaE.apply_inverse(rhs))
 
-        V = V.lincomb_TP(Z.conjugate()[:, ::-1].T)
+        V = V.lincomb(Z.conjugate()[:, ::-1].T)
         V = V.real
 
     # solve for W, from the first column to the last
     if compute_W:
         W = A.source.empty(reserve=r)
 
-        CrZ = Cr.apply(Cr.source.from_numpy_TP(Z))
+        CrZ = Cr.apply(Cr.source.from_numpy(Z))
         CTCrZ = C.apply_adjoint(CrZ)
         for i in range(r):
             rhs = -CTCrZ[i].copy()
             if i > 0:
                 if Er is not None:
-                    rhs -= A.apply_adjoint(W.lincomb_TP(TEr[:i, i].T))
-                rhs -= E.apply_adjoint(W.lincomb_TP(TAr[:i, i].T))
+                    rhs -= A.apply_adjoint(W.lincomb(TEr[:i, i].T))
+                rhs -= E.apply_adjoint(W.lincomb(TAr[:i, i].T))
             TErii = 1 if Er is None else TEr[i, i]
             eAaE = TErii.conjugate() * A + TAr[i, i].conjugate() * E
             W.append(eAaE.apply_inverse_adjoint(rhs))
 
-        W = W.lincomb_TP(Q.conjugate().T)
+        W = W.lincomb(Q.conjugate().T)
         W = W.real
 
     if compute_V and compute_W:

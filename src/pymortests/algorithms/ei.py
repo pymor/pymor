@@ -15,7 +15,7 @@ from pymortests.base import assert_all_almost_equal, runmodule
 def test_ei_restricted_to_full(stationary_models):
     model = stationary_models
     op = model.operator
-    cb = op.range.from_numpy_TP(np.eye(op.range.dim))
+    cb = op.range.from_numpy(np.eye(op.range.dim))
     dofs = list(range(cb.dim))
     ei_op = EmpiricalInterpolatedOperator(op, collateral_basis=cb, interpolation_dofs=dofs, triangular=True)
     ei_model = model.with_(operator=ei_op)
@@ -29,7 +29,7 @@ def test_ei_restricted_to_full(stationary_models):
 
 def test_ei_op_creation(operator):
     op = operator[0]
-    cb = op.range.from_numpy_TP(np.eye(op.range.dim))
+    cb = op.range.from_numpy(np.eye(op.range.dim))
     dofs = list(range(cb.dim))
     EmpiricalInterpolatedOperator(op, collateral_basis=cb, interpolation_dofs=dofs, triangular=True)
 
@@ -37,7 +37,7 @@ def test_ei_op_creation(operator):
 def test_ei_rom(stationary_models):
     fom = stationary_models
     op = fom.operator
-    cb = op.range.from_numpy_TP(np.eye(op.range.dim))
+    cb = op.range.from_numpy(np.eye(op.range.dim))
     dofs = list(range(cb.dim))
     ei_op = EmpiricalInterpolatedOperator(op, collateral_basis=cb, interpolation_dofs=dofs, triangular=True)
     ei_fom = fom.with_(operator=ei_op)

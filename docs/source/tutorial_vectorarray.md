@@ -110,21 +110,21 @@ wrapping for you.
 In case of {{ NumpyVectorSpace }}, the backend is NumPy and the data is given as NumPy arrays:
 
 ```{code-cell} ipython3
-space.make_array_TP(np.arange(0, 14).reshape((7, 2)))
+space.make_array(np.arange(0, 14).reshape((7, 2)))
 ```
 
 ## Converting NumPy arrays to VectorArrays
 
 Some but not all {{ VectorArrays }} can be initialized from NumPy arrays.
 For these arrays, the corresponding {{ VectorSpace }} implements the
-{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP` method:
+{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy` method:
 
 ```{code-cell} ipython3
 space = NumpyVectorSpace(4)
 numpy_array = np.linspace(0, 4, 8).reshape((4, 2))
 print(numpy_array)
 
-vector_array = space.from_numpy_TP(numpy_array)
+vector_array = space.from_numpy(numpy_array)
 vector_array
 ```
 
@@ -143,7 +143,7 @@ To avoid this problem, you can set `ensure_copy` to `True`:
 
 ```{code-cell} ipython3
 numpy_array = np.linspace(0, 4, 8).reshape((4, 2))
-vector_array = space.from_numpy_TP(numpy_array, ensure_copy=True)
+vector_array = space.from_numpy(numpy_array, ensure_copy=True)
 
 numpy_array[0, 0] = 99
 print(numpy_array)
@@ -151,17 +151,17 @@ vector_array
 ```
 
 If you quickly want to create a {{ NumpyVectorArray }}, you can also use
-{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP`
+{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
 as a class method of {{ NumpyVectorSpace }}, which will infer the dimension of the
 space from the data:
 
 ```{code-cell} ipython3
-vector_array = NumpyVectorSpace.from_numpy_TP(numpy_array)
+vector_array = NumpyVectorSpace.from_numpy(numpy_array)
 vector_array
 ```
 
 ```{warning}
-Do not use {meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP`
+Do not use {meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
 in generic code that is supposed to work with arbitrary external solvers that might
 not support converting data from NumPy or only at high costs.
 Using it is fine, however, when you know that you are dealing with {{ NumpyVectorArrays }},
@@ -171,7 +171,7 @@ for instance when building ROMs.
 ## Converting VectorArrays to NumPy arrays
 
 Some {{ VectorArrays }} also implement a
-{meth}`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP` method that returns the
+{meth}`~pymor.vectorarrays.interface.VectorArray.to_numpy` method that returns the
 internal data as a NumPy array:
 
 ```{code-cell} ipython3
@@ -181,7 +181,7 @@ vector_array
 ```
 
 ```{code-cell} ipython3
-array = vector_array.to_numpy_TP()
+array = vector_array.to_numpy()
 array
 ```
 
@@ -194,12 +194,12 @@ array[:] = 0
 vector_array
 ```
 
-As with {meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP`
+As with {meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy`
 we can use the `ensure_copy` parameter to make sure we get a copy:
 
 ```{code-cell} ipython3
 vector_array = space.random(3)
-array = vector_array.to_numpy_TP(ensure_copy=True)
+array = vector_array.to_numpy(ensure_copy=True)
 array[:] = 0
 vector_array
 ```
@@ -214,8 +214,8 @@ When a matrix {{ Operator }} is applied to a {{ VectorArray }}, think of a `for`
 where the corresponding linear {{ Operator }} is applied individually to each vector in
 the array, not of a matrix-matrix product.
 What is true, however, is that
-{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP` /
-{meth}`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP`
+{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy` /
+{meth}`~pymor.vectorarrays.interface.VectorArray.to_numpy`
 interpret {{ VectorArrays }} as matrices of row vectors.
 The reason for that is that NumPy prefers a C-like memory layout for matrices, where the
 individual rows are stored consecutively in memory.
@@ -301,17 +301,17 @@ print(U)
 
 Often, a {{ VectorArray }} represents a basis, and we want to form linear combinations
 w.r.t. this basis.
-For this, we can use the {meth}`~pymor.vectorarrays.interface.VectorArray.lincomb_TP` method:
+For this, we can use the {meth}`~pymor.vectorarrays.interface.VectorArray.lincomb` method:
 
 ```{code-cell} ipython3
-V.lincomb_TP(np.array([2,3]))
+V.lincomb(np.array([2,3]))
 ```
 
 This can also be vectorized:
 
 ```{code-cell} ipython3
-V.lincomb_TP(np.array([[2,1,0],
-                       [3,0,1]]))
+V.lincomb(np.array([[2,1,0],
+                    [3,0,1]]))
 ```
 
 Inner products can be computed using the {meth}`~pymor.vectorarrays.interface.VectorArray.inner`
@@ -406,7 +406,7 @@ U[1].scal(2)
 U[-1].scal(42)
 print(U)
 print(U[:3].gramian())
-print(U[[1,-1]].lincomb_TP(np.array([1,1])))
+print(U[[1,-1]].lincomb(np.array([1,1])))
 ```
 
 ```{note}
@@ -431,8 +431,8 @@ in a {{ VectorArray }}.
 This is a deliberate design decision in pyMOR as the computationally heavy operations on this
 data should be handled by the respective backend.
 In particular, note again that
-{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP` /
-{meth}`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP`
+{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy` /
+{meth}`~pymor.vectorarrays.interface.VectorArray.to_numpy`
 should only be used for {{ NumpyVectorArrays }}, debugging or other special cases.
 Usually, algorithms should not rely on these methods.
 
@@ -444,10 +444,10 @@ values of certain degrees of freedom:
 
 ```{code-cell} ipython3
 space = NumpyVectorSpace(6)
-U = space.from_numpy_TP(np.arange(6) * 2.)
+U = space.from_numpy(np.arange(6) * 2.)
 U.append(space.full(-1))
 print(U)
-print(U.dofs_TP(np.array([3, 5])))
+print(U.dofs(np.array([3, 5])))
 ```
 
 Related methods are {meth}`~pymor.vectorarrays.interface.VectorArray.sup_norm` and
@@ -458,26 +458,26 @@ print(U.sup_norm())
 dofs, values = U.amax()
 print(dofs, values)
 for i in range(len(U)):
-    print(np.abs(U[i].dofs_TP([dofs[i]])) == values[i])
+    print(np.abs(U[i].dofs([dofs[i]])) == values[i])
 ```
 
 By speaking of degrees of freedom, we assume that our vectors are coefficient vectors w.r.t.
 some basis and that `dofs` returns those coefficients.
 We further assume that, if defined,
-{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP` returns the NumPy array of the
+{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy` returns the NumPy array of the
 values at all degrees of freedom and that {meth}`~pymor.vectorarrays.interface.VectorArray.inner`
 is just the Euclidean inner product of these coefficient vectors:
 
 ```{code-cell} ipython3
-numpy_array = U.dofs_TP(np.arange(U.dim))
+numpy_array = U.dofs(np.arange(U.dim))
 print(numpy_array)
-print(numpy_array == U.to_numpy_TP())
+print(numpy_array == U.to_numpy())
 print(numpy_array.T @ numpy_array == U.inner(U))
 ```
 
 ```{warning}
 Theoretically, {meth}`~pymor.vectorarrays.interface.VectorArray.dofs` allows to extract all
-data from a {{ VectorArray }} by calling `U.dofs_TP(np.arange(U.dim))` as above.
+data from a {{ VectorArray }} by calling `U.dofs(np.arange(U.dim))` as above.
 However, doing so is strongly discouraged and might lead to bad performance as
 {meth}`~pymor.vectorarrays.interface.VectorArray.dofs` is
 designed to be used to only extract a small amount of degrees of freedom.
@@ -546,8 +546,8 @@ U.impl._array
 ```
 
 However, you should never access this attribute directly and use
-{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy_TP` /
-{meth}`~pymor.vectorarrays.interface.VectorArray.to_numpy_TP`
+{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy` /
+{meth}`~pymor.vectorarrays.interface.VectorArray.to_numpy`
 instead, as `_array` may not be what you expect:
 the array creation methods
 {meth}`~pymor.vectorarrays.interface.VectorSpace.empty`,
@@ -567,7 +567,7 @@ Here, `_array` is large enough to store 5 vectors, even though the array only co
 
 ```{code-cell} ipython3
 print(len(V))
-print(V.to_numpy_TP())
+print(V.to_numpy())
 ```
 
 If we append one vector, the second row in the array is overwritten:
@@ -591,10 +591,10 @@ W = space.random(3)
 ```
 
 `W` behaves as any other array.
-It also implements `to_numpy_TP` so that we can look at the data directly:
+It also implements `to_numpy` so that we can look at the data directly:
 
 ```{code-cell} ipython3
-W.to_numpy_TP()
+W.to_numpy()
 ```
 
 However, the implementation class now holds a list of vector objects:

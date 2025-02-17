@@ -81,20 +81,20 @@ class NumpyGenericOperator(Operator):
         assert U in self.source
         assert self.parameters.assert_compatible(mu)
         if self.parametric:
-            return self.range.make_array_TP(self.mapping(U.to_numpy_TP().T, mu=mu).T)
+            return self.range.make_array(self.mapping(U.to_numpy().T, mu=mu).T)
         else:
-            return self.range.make_array_TP(self.mapping(U.to_numpy_TP().T).T)
+            return self.range.make_array(self.mapping(U.to_numpy().T).T)
 
     def apply_adjoint(self, V, mu=None):
         if self.adjoint_mapping is None:
             raise ValueError('NumpyGenericOperator: adjoint mapping was not defined.')
         assert V in self.range
         assert self.parameters.assert_compatible(mu)
-        V = V.to_numpy_TP().T
+        V = V.to_numpy().T
         if self.parametric:
-            return self.source.make_array_TP(self.adjoint_mapping(V, mu=mu).T)
+            return self.source.make_array(self.adjoint_mapping(V, mu=mu).T)
         else:
-            return self.source.make_array_TP(self.adjoint_mapping(V).T)
+            return self.source.make_array(self.adjoint_mapping(V).T)
 
 
 class NumpyMatrixBasedOperator(Operator):
@@ -227,16 +227,16 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     def as_range_array(self, mu=None):
         if self.sparse:
             return Operator.as_range_array(self)
-        return self.range.from_numpy_TP(self.matrix.copy())
+        return self.range.from_numpy(self.matrix.copy())
 
     def as_source_array(self, mu=None):
         if self.sparse:
             return Operator.as_source_array(self)
-        return self.source.from_numpy_TP(self.matrix.T.copy()).conj()
+        return self.source.from_numpy(self.matrix.T.copy()).conj()
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.make_array_TP(self.matrix.dot(U.to_numpy_TP()))
+        return self.range.make_array(self.matrix.dot(U.to_numpy()))
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
@@ -290,7 +290,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
         if V.dim == 0:
             if self.source.dim == 0 or least_squares:
-                return self.source.make_array_TP(np.zeros((self.source.dim, len(V))))
+                return self.source.make_array(np.zeros((self.source.dim, len(V))))
             else:
                 raise InversionError
 
@@ -322,7 +322,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             if least_squares:
                 try:
-                    R, _, _, _ = spla.lstsq(self.matrix, V.to_numpy_TP())
+                    R, _, _, _ = spla.lstsq(self.matrix, V.to_numpy())
                 except np.linalg.LinAlgError as e:
                     raise InversionError(f'{type(e)!s}: {e!s}') from e
             else:
@@ -337,13 +337,13 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                         if rcond < np.finfo(np.float64).eps:
                             self.logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}) in apply_inverse: '
                                                 'result may not be accurate.')
-                R = lu_solve(self._lu_factor, V.to_numpy_TP(), check_finite=check_finite)
+                R = lu_solve(self._lu_factor, V.to_numpy(), check_finite=check_finite)
 
             if check_finite:
                 if not np.isfinite(np.sum(R)):
                     raise InversionError('Result contains non-finite values')
 
-            return self.source.make_array_TP(R)
+            return self.source.make_array(R)
 
     def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
         return self.H.apply_inverse(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
@@ -485,8 +485,8 @@ class NumpyCirculantOperator(Operator, CacheableObject):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        U = U.to_numpy_TP()
-        return self.range.make_array_TP(self._circular_matvec(U).T)
+        U = U.to_numpy()
+        return self.range.make_array(self._circular_matvec(U).T)
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
@@ -563,8 +563,8 @@ class NumpyToeplitzOperator(Operator):
     def apply(self, U, mu=None):
         assert U in self.source
         n, _, m = self._circulant._arr.shape
-        U = np.concatenate([U.to_numpy_TP(), np.zeros((n*m - U.dim, len(U)))])
-        return self.range.make_array_TP(self._circulant._circular_matvec(U).T[:self.range.dim, :])
+        U = np.concatenate([U.to_numpy(), np.zeros((n*m - U.dim, len(U)))])
+        return self.range.make_array(self._circulant._circular_matvec(U).T[:self.range.dim, :])
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
@@ -645,12 +645,12 @@ class NumpyHankelOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        U = U.to_numpy_TP()
+        U = U.to_numpy()
         n, p, m = self._circulant._arr.shape
         x = np.zeros((n*m, U.shape[1]), dtype=U.dtype)
         for j in range(m):
             x[:self.source.dim][j::m] = np.flip(U[j::m], axis=0)
-        return self.range.make_array_TP(self._circulant._circular_matvec(x).T[:self.range.dim, :])
+        return self.range.make_array(self._circulant._circular_matvec(x).T[:self.range.dim, :])
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range

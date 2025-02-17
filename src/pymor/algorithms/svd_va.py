@@ -105,7 +105,7 @@ def method_of_snapshots(A, product=None, modes=None, rtol=1e-7, atol=0., l2_err=
         Vh = V.conj().T
 
     with logger.block(f'Computing left-singular vectors ({len(V)} vectors) ...'):
-        U = A.lincomb_TP(V / s)
+        U = A.lincomb(V / s)
 
     return U, s, Vh
 
@@ -187,6 +187,6 @@ def qr_svd(A, product=None, modes=None, rtol=4e-8, atol=0., l2_err=0.):
         Vh = Vh[:selected_modes]
 
     with logger.block(f'Computing left singular vectors ({selected_modes} modes) ...'):
-        U = Q.lincomb_TP(U2)
+        U = Q.lincomb(U2)
 
     return U, s, Vh

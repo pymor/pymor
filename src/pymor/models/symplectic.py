@@ -73,7 +73,7 @@ class BaseQuadraticHamiltonianModel(InstationaryModel):
             mu = self.parameters.parse(mu)
         assert self.parameters.assert_compatible(mu)
         # compute linear part
-        ham_h = self.h.apply_adjoint(u, mu=mu).to_numpy_TP().ravel()
+        ham_h = self.h.apply_adjoint(u, mu=mu).to_numpy().ravel()
         # compute quadratic part
         ham_H = self.H_op.pairwise_apply2(u, u, mu=mu)
 
@@ -179,11 +179,11 @@ class QuadraticHamiltonianModel(BaseQuadraticHamiltonianModel):
         if (isinstance(initial_data, VectorArray)
                 and isinstance(initial_data.space, NumpyVectorSpace)):
 
-            initial_data = H_op.source.from_numpy_TP(initial_data.to_numpy_TP())
+            initial_data = H_op.source.from_numpy(initial_data.to_numpy())
         elif (isinstance(initial_data, VectorOperator)
               and isinstance(initial_data.range, NumpyVectorSpace)):
 
-            initial_data = VectorOperator(H_op.source.from_numpy_TP(initial_data.as_range_array().to_numpy_TP()))
+            initial_data = VectorOperator(H_op.source.from_numpy(initial_data.as_range_array().to_numpy()))
 
         # J based on blocked phase_space
         J = CanonicalSymplecticFormOperator(H_op.source)

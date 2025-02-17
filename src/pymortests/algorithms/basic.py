@@ -32,8 +32,8 @@ def test_almost_equal(vector_arrays, tolerances, sup_norm):
     v1, v2 = vector_arrays
     rtol, atol = tolerances
     try:
-        dv1 = v1.to_numpy_TP()
-        dv2 = v2.to_numpy_TP()
+        dv1 = v1.to_numpy()
+        dv2 = v2.to_numpy()
     except NotImplementedError:
         dv1 = dv2 = None
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
@@ -186,8 +186,8 @@ def test_project_array(vector_arrays):
 
 @pytest.mark.builtin
 def test_project_array_with_product(rng):
-    U = NumpyVectorSpace.from_numpy_TP(rng.random((10, 1)))
-    basis = NumpyVectorSpace.from_numpy_TP(rng.random((10, 3)))
+    U = NumpyVectorSpace.from_numpy(rng.random((10, 1)))
+    basis = NumpyVectorSpace.from_numpy(rng.random((10, 3)))
     product = rng.random((10, 10))
     product = NumpyMatrixOperator(product.T.dot(product))
     U_p = project_array(U, basis, product=product, orthonormal=False)
