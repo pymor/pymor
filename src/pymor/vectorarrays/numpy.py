@@ -15,32 +15,32 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
     def __init__(self, array, l=None):
         self._array = array
-        self._len = len(array) if l is None else l
+        self._len = array.shape[1] if l is None else l
 
     def to_numpy(self, ensure_copy, ind):
-        A = self._array[:self._len] if ind is None else self._array[ind]
+        A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         if ensure_copy and not A.flags['OWNDATA']:
-            return A.T.copy()
+            return A.copy()
         else:
-            return A.T
+            return A
 
     def real(self, ind):
-        return NumpyVectorArrayImpl(self.to_numpy(False, ind).T.real.copy())
+        return NumpyVectorArrayImpl(self.to_numpy(False, ind).real.copy())
 
     def imag(self, ind):
-        return NumpyVectorArrayImpl(self.to_numpy(False, ind).T.imag.copy())
+        return NumpyVectorArrayImpl(self.to_numpy(False, ind).imag.copy())
 
     def conj(self, ind):
         if np.isrealobj(self._array):
             return self.copy(False, ind)
-        return NumpyVectorArrayImpl(np.conj(self.to_numpy(False, ind).T))
+        return NumpyVectorArrayImpl(np.conj(self.to_numpy(False, ind)))
 
     def __len__(self):
         return self._len
 
     def delete(self, ind):
         if ind is None:
-            self._array = np.empty((0, self._array.shape[1]))
+            self._array = np.empty((self._array.shape[0], 0))
             self._len = 0
             return
         if type(ind) is slice:
@@ -51,29 +51,29 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
             l = self._len
             ind = {i if 0 <= i else l+i for i in ind}
         remaining = sorted(set(range(len(self))) - ind)
-        self._array = self._array[remaining]
-        self._len = len(self._array)
+        self._array = self._array[:, remaining]
+        self._len = self._array.shape[1]
         if not self._array.flags['OWNDATA']:
             self._array = self._array.copy()
 
     def copy(self, deep, ind):
-        new_array = self._array[:self._len] if ind is None else self._array[ind]
+        new_array = self._array[:, :self._len] if ind is None else self._array[:, ind]
         if not new_array.flags['OWNDATA']:
             new_array = new_array.copy()
         return NumpyVectorArrayImpl(new_array)
 
     def append(self, other, remove_from_other, oind):
-        other_array = other.to_numpy(False, oind).T
-        len_other = len(other_array)
+        other_array = other.to_numpy(False, oind)
+        len_other = other_array.shape[1]
         if len_other == 0:
             return
 
-        if len_other <= self._array.shape[0] - self._len:
+        if len_other <= self._array.shape[1] - self._len:
             if self._array.dtype != other_array.dtype:
                 self._array = self._array.astype(np.promote_types(self._array.dtype, other_array.dtype), copy=False)
-            self._array[self._len:self._len + len_other] = other_array
+            self._array[:, self._len:self._len + len_other] = other_array
         else:
-            self._array = np.append(self._array[:self._len], other_array, axis=0)
+            self._array = np.concatenate((self._array[:, :self._len], other_array), axis=1)
         self._len += len_other
 
         if remove_from_other:
@@ -82,27 +82,27 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
     def scal(self, alpha, ind):
         ind = slice(None, self._len) if ind is None else ind
         if type(alpha) is np.ndarray:
-            alpha = alpha[:, np.newaxis]
+            alpha = alpha[np.newaxis, :]
 
         alpha_type = type(alpha)
         alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
         if self._array.dtype != alpha_dtype:
             self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype), copy=False)
-        self._array[ind] *= alpha
+        self._array[:, ind] *= alpha
 
     def scal_copy(self, alpha, ind):
         ind = slice(None, self._len) if ind is None else ind
         if type(alpha) is np.ndarray:
-            alpha = alpha[:, np.newaxis]
+            alpha = alpha[np.newaxis, :]
 
         if isinstance(alpha, Number) and alpha == -1:
-            return type(self)(- self._array[ind])
+            return type(self)(- self._array[:, ind])
 
-        return type(self)(self._array[ind] * alpha)
+        return type(self)(self._array[:, ind] * alpha)
 
     def axpy(self, alpha, x, ind, xind):
         ind = slice(None, self._len) if ind is None else ind
-        B = x._array[:x._len] if xind is None else x._array[xind]
+        B = x._array[:, :x._len] if xind is None else x._array[:, xind]
 
         alpha_type = type(alpha)
         alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
@@ -112,68 +112,68 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
             self._array = self._array.astype(dtype, copy=False)
 
         if type(alpha) is np.ndarray:
-            alpha = alpha[:, np.newaxis]
+            alpha = alpha[np.newaxis, :]
 
         if isinstance(alpha, Number):
             if alpha == 1:
-                self._array[ind] += B
+                self._array[:, ind] += B
                 return
             elif alpha == -1:
-                self._array[ind] -= B
+                self._array[:, ind] -= B
                 return
 
-        self._array[ind] += B * alpha
+        self._array[:, ind] += B * alpha
 
     def axpy_copy(self, alpha, x, ind, xind):
         ind = slice(None, self._len) if ind is None else ind
-        B = x._array[:x._len] if xind is None else x._array[xind]
+        B = x._array[:, :x._len] if xind is None else x._array[:, xind]
 
         if type(alpha) is np.ndarray:
-            alpha = alpha[:, np.newaxis]
+            alpha = alpha[np.newaxis, :]
 
         if isinstance(alpha, Number):
             if alpha == 1:
-                return type(self)(self._array[ind] + B)
+                return type(self)(self._array[:, ind] + B)
             elif alpha == -1:
-                return type(self)(self._array[ind] - B)
+                return type(self)(self._array[:, ind] - B)
 
-        return type(self)(self._array[ind] + B * alpha)
+        return type(self)(self._array[:, ind] + B * alpha)
 
     def inner(self, other, ind, oind):
-        A = self._array[:self._len] if ind is None else self._array[ind]
-        B = other._array[:other._len] if oind is None else other._array[oind]
+        A = self._array[:, :self._len] if ind is None else self._array[:, ind]
+        B = other._array[:, :other._len] if oind is None else other._array[:, oind]
 
         # .conj() is a no-op on non-complex data types
-        return A.conj().dot(B.T)
+        return A.conj().T.dot(B)
 
     def pairwise_inner(self, other, ind, oind):
-        A = self._array[:self._len] if ind is None else self._array[ind]
-        B = other._array[:other._len] if oind is None else other._array[oind]
+        A = self._array[:, :self._len] if ind is None else self._array[:, ind]
+        B = other._array[:, :other._len] if oind is None else other._array[:, oind]
 
         # .conj() is a no-op on non-complex data types
-        return np.sum(A.conj() * B, axis=1)
+        return np.sum(A.conj() * B, axis=0)
 
     def lincomb(self, coefficients, ind):
-        A = self._array[:self._len] if ind is None else self._array[ind]
-        return NumpyVectorArrayImpl(coefficients.T.dot(A))
+        A = self._array[:, :self._len] if ind is None else self._array[:, ind]
+        return NumpyVectorArrayImpl(A @ coefficients)
 
     def norm(self, ind):
-        A = self._array[:self._len] if ind is None else self._array[ind]
-        return np.linalg.norm(A, axis=1)
+        A = self._array[:, :self._len] if ind is None else self._array[:, ind]
+        return np.linalg.norm(A, axis=0)
 
     def norm2(self, ind):
-        A = self._array[:self._len] if ind is None else self._array[ind]
-        return np.sum((A * A.conj()).real, axis=1)
+        A = self._array[:, :self._len] if ind is None else self._array[:, ind]
+        return np.sum((A * A.conj()).real, axis=0)
 
     def dofs(self, dof_indices, ind):
         ind = slice(None, self._len) if ind is None else ind
-        return self._array[:, dof_indices][ind, :].T
+        return self._array[dof_indices, :][:, ind]
 
     def amax(self, ind):
         ind = slice(None, self._len) if ind is None else ind
-        A = np.abs(self._array[ind])
-        max_ind = np.argmax(A, axis=1)
-        max_val = A[np.arange(len(A)), max_ind]
+        A = np.abs(self._array[:, ind])
+        max_ind = np.argmax(A, axis=0)
+        max_val = A[max_ind, np.arange(A.shape[1])]
         return max_ind, max_val
 
 
@@ -227,18 +227,18 @@ class NumpyVectorSpace(VectorSpace):
     def zeros(self, count=1, reserve=0):
         assert count >= 0
         assert reserve >= 0
-        return NumpyVectorArray(self, NumpyVectorArrayImpl(np.zeros((max(count, reserve), self.dim)), count))
+        return NumpyVectorArray(self, NumpyVectorArrayImpl(np.zeros((self.dim, max(count, reserve))), count))
 
     def full(self, value, count=1, reserve=0):
         assert count >= 0
         assert reserve >= 0
-        return NumpyVectorArray(self, NumpyVectorArrayImpl(np.full((max(count, reserve), self.dim), value), count))
+        return NumpyVectorArray(self, NumpyVectorArrayImpl(np.full((self.dim, max(count, reserve)), value), count))
 
     def random(self, count=1, distribution='uniform', reserve=0, **kwargs):
         assert count >= 0
         assert reserve >= 0
         va = self.zeros(count, reserve)
-        va.impl._array[:count] = _create_random_values((count, self.dim), distribution, **kwargs)
+        va.impl._array[:, :count] = _create_random_values((self.dim, count), distribution, **kwargs)
         return va
 
     @classinstancemethod
@@ -290,29 +290,12 @@ class NumpyVectorSpace(VectorSpace):
             array = np.array(array, ndmin=2)
         if array.ndim != 2:
             assert array.ndim == 1
-            array = np.reshape(array, (1, -1))
-        if space is None:
-            return NumpyVectorArray(cls(array.shape[1]), NumpyVectorArrayImpl(array))
-        else:
-            assert array.shape[1] == space.dim
-            return NumpyVectorArray(space, NumpyVectorArrayImpl(array))
-
-    @classmethod
-    def _array_factory(cls, array, space=None):
-        if type(array) is np.ndarray:
-            pass
-        elif issparse(array):
-            array = array.toarray()
-        else:
-            array = np.array(array, ndmin=2)
-        if array.ndim != 2:
-            assert array.ndim == 1
             array = np.reshape(array, (-1, 1))
         if space is None:
-            return NumpyVectorArray(cls(array.shape[0]), NumpyVectorArrayImpl(array.T))
+            return NumpyVectorArray(cls(array.shape[0]), NumpyVectorArrayImpl(array))
         else:
             assert array.shape[0] == space.dim
-            return NumpyVectorArray(space, NumpyVectorArrayImpl(array.T))
+            return NumpyVectorArray(space, NumpyVectorArrayImpl(array))
 
     @property
     def is_scalar(self):
