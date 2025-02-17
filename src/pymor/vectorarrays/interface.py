@@ -267,7 +267,7 @@ class VectorArray(BasicObject):
             If `False`, modifying the returned |NumPy array| might alter the original
             |VectorArray|. If `True` always a copy of the array data is made.
         """
-        return self.impl.to_numpy(ensure_copy, self.ind).T
+        return self.impl.to_numpy_TP(ensure_copy, self.ind)
 
     def append(self, other, remove_from_other=False):
         """Append vectors to the array.
@@ -517,7 +517,7 @@ class VectorArray(BasicObject):
         if coefficients.ndim == 1:
             coefficients = coefficients[..., np.newaxis]
         assert coefficients.shape[0] == len(self)
-        return type(self)(self.space, self.impl.lincomb(coefficients.T, self.ind))
+        return type(self)(self.space, self.impl.lincomb_TP(coefficients, self.ind))
 
     def norm(self, product=None, tol=None, raise_complex=None):
         """Norm with respect to a given inner product.
@@ -641,7 +641,7 @@ class VectorArray(BasicObject):
                 and (len(dof_indices) == 0 or max(dof_indices) < self.dim)) \
             or (isinstance(dof_indices, np.ndarray) and dof_indices.ndim == 1
                 and (len(dof_indices) == 0 or np.max(dof_indices) < self.dim))
-        return self.impl.dofs(np.asarray(dof_indices, dtype=np.int64), self.ind).T
+        return self.impl.dofs_TP(np.asarray(dof_indices, dtype=np.int64), self.ind)
 
     def amax(self):
         """The maximum absolute value of the DOFs contained in the array.
@@ -1024,7 +1024,7 @@ class VectorArrayImpl(BasicObject):
         pass
 
     @abstractmethod
-    def to_numpy(self, ensure_copy, ind):
+    def to_numpy_TP(self, ensure_copy, ind):
         pass
 
     @abstractmethod
@@ -1069,7 +1069,7 @@ class VectorArrayImpl(BasicObject):
         return self.inner(self, ind, ind)
 
     @abstractmethod
-    def lincomb(self, coefficients, ind):
+    def lincomb_TP(self, coefficients, ind):
         pass
 
     def norm(self, ind):
@@ -1080,7 +1080,7 @@ class VectorArrayImpl(BasicObject):
         pass
 
     @abstractmethod
-    def dofs(self, dof_indices, ind):
+    def dofs_TP(self, dof_indices, ind):
         pass
 
     @abstractmethod

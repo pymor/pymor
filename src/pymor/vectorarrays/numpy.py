@@ -17,23 +17,23 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         self._array = array
         self._len = len(array) if l is None else l
 
-    def to_numpy(self, ensure_copy, ind):
+    def to_numpy_TP(self, ensure_copy, ind):
         A = self._array[:self._len] if ind is None else self._array[ind]
         if ensure_copy and not A.flags['OWNDATA']:
-            return A.copy()
+            return A.T.copy()
         else:
-            return A
+            return A.T
 
     def real(self, ind):
-        return NumpyVectorArrayImpl(self.to_numpy(False, ind).real.copy())
+        return NumpyVectorArrayImpl(self.to_numpy_TP(False, ind).T.real.copy())
 
     def imag(self, ind):
-        return NumpyVectorArrayImpl(self.to_numpy(False, ind).imag.copy())
+        return NumpyVectorArrayImpl(self.to_numpy_TP(False, ind).T.imag.copy())
 
     def conj(self, ind):
         if np.isrealobj(self._array):
             return self.copy(False, ind)
-        return NumpyVectorArrayImpl(np.conj(self.to_numpy(False, ind)))
+        return NumpyVectorArrayImpl(np.conj(self.to_numpy_TP(False, ind).T))
 
     def __len__(self):
         return self._len
@@ -63,7 +63,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         return NumpyVectorArrayImpl(new_array)
 
     def append(self, other, remove_from_other, oind):
-        other_array = other.to_numpy(False, oind)
+        other_array = other.to_numpy_TP(False, oind).T
         len_other = len(other_array)
         if len_other == 0:
             return
@@ -153,9 +153,9 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         # .conj() is a no-op on non-complex data types
         return np.sum(A.conj() * B, axis=1)
 
-    def lincomb(self, coefficients, ind):
+    def lincomb_TP(self, coefficients, ind):
         A = self._array[:self._len] if ind is None else self._array[ind]
-        return NumpyVectorArrayImpl(coefficients.dot(A))
+        return NumpyVectorArrayImpl(coefficients.T.dot(A))
 
     def norm(self, ind):
         A = self._array[:self._len] if ind is None else self._array[ind]
@@ -165,9 +165,9 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         A = self._array[:self._len] if ind is None else self._array[ind]
         return np.sum((A * A.conj()).real, axis=1)
 
-    def dofs(self, dof_indices, ind):
+    def dofs_TP(self, dof_indices, ind):
         ind = slice(None, self._len) if ind is None else ind
-        return self._array[:, dof_indices][ind, :]
+        return self._array[:, dof_indices][ind, :].T
 
     def amax(self, ind):
         ind = slice(None, self._len) if ind is None else ind

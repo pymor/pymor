@@ -24,11 +24,11 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         except IndexError:
             return 0
 
-    def to_numpy(self, ensure_copy, ind):
+    def to_numpy_TP(self, ensure_copy, ind):
         assert self._blocks_are_valid()
         if len(self._blocks):
             # hstack will error out with empty input list
-            return np.hstack([_indexed(block, ind).to_numpy_TP(False).T for block in self._blocks])
+            return np.vstack([_indexed(block, ind).to_numpy_TP(False) for block in self._blocks])
         else:
             return np.empty((0, 0))
 
@@ -116,16 +116,16 @@ class BlockVectorArrayImpl(VectorArrayImpl):
             ret += prod
         return ret
 
-    def lincomb(self, coefficients, ind):
+    def lincomb_TP(self, coefficients, ind):
         assert self._blocks_are_valid()
-        lincombs = [_indexed(block, ind).lincomb_TP(coefficients.T) for block in self._blocks]
+        lincombs = [_indexed(block, ind).lincomb_TP(coefficients) for block in self._blocks]
         return type(self)(lincombs, self.space)
 
     def norm2(self, ind):
         assert self._blocks_are_valid()
         return np.sum(np.array([_indexed(block, ind).norm2() for block in self._blocks]), axis=0)
 
-    def dofs(self, dof_indices, ind):
+    def dofs_TP(self, dof_indices, ind):
         assert self._blocks_are_valid()
         if not len(dof_indices):
             return np.zeros((self.len_ind(ind), 0))
@@ -136,7 +136,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         block_inds = self._bin_map[block_inds]
         blocks = [_indexed(b, ind) for b in self._blocks]
         return np.array([blocks[bi].dofs_TP([ci])[0, :]
-                         for bi, ci in zip(block_inds, dof_indices)]).T
+                         for bi, ci in zip(block_inds, dof_indices)])
 
     def amax(self, ind):
         assert self._blocks_are_valid()

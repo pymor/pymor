@@ -360,12 +360,12 @@ class ListVectorArrayImpl(VectorArrayImpl):
         else:
             return [self._list[ind]]
 
-    def to_numpy(self, ensure_copy, ind):
+    def to_numpy_TP(self, ensure_copy, ind):
         vectors = [v.to_numpy() for v in self._indexed(ind)]
         if vectors:
-            return np.array(vectors)
+            return np.array(vectors).T
         else:
-            return np.empty((0, self.space.dim))
+            return np.empty((self.space.dim, 0))
 
     def __len__(self):
         return len(self._list)
@@ -447,9 +447,9 @@ class ListVectorArrayImpl(VectorArrayImpl):
         R = np.array(R)
         return R
 
-    def lincomb(self, coefficients, ind):
+    def lincomb_TP(self, coefficients, ind):
         RL = []
-        for coeffs in coefficients:
+        for coeffs in coefficients.T:
             R = self.space.zero_vector()
             for v, c in zip(self._indexed(ind), coeffs):
                 R.axpy(c, v)
@@ -463,9 +463,9 @@ class ListVectorArrayImpl(VectorArrayImpl):
     def norm2(self, ind):
         return np.array([v.norm2() for v in self._indexed(ind)])
 
-    def dofs(self, dof_indices, ind):
+    def dofs_TP(self, dof_indices, ind):
         return (np.array([v.dofs(dof_indices) for v in self._indexed(ind)])
-                  .reshape((self.len_ind(ind), len(dof_indices))))
+                  .reshape((self.len_ind(ind), len(dof_indices)))).T
 
     def amax(self, ind):
         l = self.len_ind(ind)
