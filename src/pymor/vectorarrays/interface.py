@@ -983,7 +983,7 @@ class VectorSpace(ImmutableObject):
         pass
 
 
-def _create_random_values(shape, distribution, **kwargs):
+def _create_random_values(shape, distribution, order='F', **kwargs):
     if distribution not in ('uniform', 'normal'):
         raise NotImplementedError
 
@@ -996,13 +996,13 @@ def _create_random_values(shape, distribution, **kwargs):
         high = kwargs.get('high', 1.)
         if high <= low:
             raise ValueError
-        return rng.uniform(low, high, shape)
+        return rng.uniform(low, high, shape).ravel().reshape(shape, order=order)
     elif distribution == 'normal':
         if not kwargs.keys() <= {'loc', 'scale'}:
             raise ValueError
         loc = kwargs.get('loc', 0.)
         scale = kwargs.get('scale', 1.)
-        return rng.normal(loc, scale, shape)
+        return rng.normal(loc, scale, shape).ravel().reshape(shape, order=order)
     else:
         assert False
 

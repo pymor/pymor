@@ -20,15 +20,15 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
     def to_numpy(self, ensure_copy, ind):
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         if ensure_copy and not A.flags['OWNDATA']:
-            return A.copy()
+            return A.copy(order='F')
         else:
             return A
 
     def real(self, ind):
-        return NumpyVectorArrayImpl(self.to_numpy(False, ind).real.copy())
+        return NumpyVectorArrayImpl(self.to_numpy(False, ind).real.copy(order='F'))
 
     def imag(self, ind):
-        return NumpyVectorArrayImpl(self.to_numpy(False, ind).imag.copy())
+        return NumpyVectorArrayImpl(self.to_numpy(False, ind).imag.copy(order='F'))
 
     def conj(self, ind):
         if np.isrealobj(self._array):
@@ -54,12 +54,12 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         self._array = self._array[:, remaining]
         self._len = self._array.shape[1]
         if not self._array.flags['OWNDATA']:
-            self._array = self._array.copy()
+            self._array = self._array.copy(order='F')
 
     def copy(self, deep, ind):
         new_array = self._array[:, :self._len] if ind is None else self._array[:, ind]
         if not new_array.flags['OWNDATA']:
-            new_array = new_array.copy()
+            new_array = new_array.copy(order='F')
         return NumpyVectorArrayImpl(new_array)
 
     def append(self, other, remove_from_other, oind):
@@ -73,7 +73,10 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
                 self._array = self._array.astype(np.promote_types(self._array.dtype, other_array.dtype), copy=False)
             self._array[:, self._len:self._len + len_other] = other_array
         else:
-            self._array = np.concatenate((self._array[:, :self._len], other_array), axis=1)
+            new_array = np.empty((self._array.shape[0], self._len + len_other),
+                                 dtype=np.promote_types(self._array.dtype, other_array.dtype), order='F')
+            np.concatenate((self._array[:, :self._len], other_array), axis=1, out=new_array)
+            self._array = new_array
         self._len += len_other
 
         if remove_from_other:
@@ -155,7 +158,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
     def lincomb(self, coefficients, ind):
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
-        return NumpyVectorArrayImpl(A @ coefficients)
+        return NumpyVectorArrayImpl((coefficients.T @ A.T).T)   # ensure Fortran order
 
     def norm(self, ind):
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
@@ -227,12 +230,13 @@ class NumpyVectorSpace(VectorSpace):
     def zeros(self, count=1, reserve=0):
         assert count >= 0
         assert reserve >= 0
-        return NumpyVectorArray(self, NumpyVectorArrayImpl(np.zeros((self.dim, max(count, reserve))), count))
+        return NumpyVectorArray(self, NumpyVectorArrayImpl(np.zeros((self.dim, max(count, reserve)), order='F'), count))
 
     def full(self, value, count=1, reserve=0):
         assert count >= 0
         assert reserve >= 0
-        return NumpyVectorArray(self, NumpyVectorArrayImpl(np.full((self.dim, max(count, reserve)), value), count))
+        return NumpyVectorArray(self,
+                                NumpyVectorArrayImpl(np.full((self.dim, max(count, reserve)), value, order='F'), count))
 
     def random(self, count=1, distribution='uniform', reserve=0, **kwargs):
         assert count >= 0
@@ -252,12 +256,12 @@ class NumpyVectorSpace(VectorSpace):
 
     @classinstancemethod
     def from_numpy(cls, data, ensure_copy=False):  # noqa: N805
-        return cls._array_factory(data.copy() if ensure_copy else data)
+        return cls._array_factory(data.copy(order='F') if ensure_copy else data)
 
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
         """:noindex:"""  # noqa: D400
-        return self._array_factory(data.copy() if ensure_copy else data, space=self)
+        return self._array_factory(data.copy(order='F') if ensure_copy else data, space=self)
 
     @classinstancemethod
     def from_file(cls, path, key=None, single_vector=False, transpose=False):  # noqa: N805
@@ -273,7 +277,7 @@ class NumpyVectorSpace(VectorSpace):
             array = array.reshape((-1, 1))
         if transpose:
             array = array.T
-        return cls.make_array(array)
+        return cls.make_array(np.asfortranarray(array))
 
     @from_file.instancemethod
     def from_file(self, path, key=None, single_vector=False, transpose=False):
