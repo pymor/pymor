@@ -101,8 +101,8 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     collateral_basis = U.empty()
-    K = np.eye(len(U), dtype=U[0].dofs([0]).dtype)  # matrix s.t. U = U_initial.lincomb(K.T)
-    coefficients = np.zeros((0, len(U)))
+    K = np.eye(len(U), dtype=U[0].dofs([0]).dtype)  # matrix s.t. U = U_initial.lincomb(K)
+    coefficients = np.zeros((len(U), 0))
     max_errs = []
     triangularity_errs = []
 
@@ -147,13 +147,13 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         new_vec *= 1 / new_dof_value
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
         collateral_basis.append(new_vec)
-        coefficients = np.vstack([coefficients, K[max_err_ind] / new_dof_value])
+        coefficients = np.hstack([coefficients, K[:, max_err_ind:max_err_ind+1] / new_dof_value])
         max_errs.append(max_err)
 
         # update U and ERR
         new_dof_values = U.dofs([new_dof])
         U.axpy(-new_dof_values[0, :], new_vec)
-        K -= (K[max_err_ind] / new_dof_value) * new_dof_values.T
+        K -= K[:, max_err_ind:max_err_ind+1] @ (new_dof_values / new_dof_value)
         errs = ERR.norm() if error_norm is None else ERR.sup_norm() if error_norm == 'sup' else error_norm(ERR)
         max_err_ind = np.argmax(errs)
         max_err = errs[max_err_ind]
@@ -170,7 +170,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         logger.info('Building nodal basis.')
         inv_interpolation_matrix = spla.inv(interpolation_matrix)
         collateral_basis = collateral_basis.lincomb(inv_interpolation_matrix)
-        coefficients = inv_interpolation_matrix.T @ coefficients
+        coefficients = coefficients @ inv_interpolation_matrix
         interpolation_matrix = np.eye(len(collateral_basis))
 
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs,
@@ -459,8 +459,8 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
         )
         snapshot_count = sum(snapshot_counts)
         cum_snapshot_counts = np.hstack(([0], np.cumsum(snapshot_counts)))
-        K = np.eye(snapshot_count)  # matrix s.t. U = U_initial.lincomb(K.T)
-        coefficients = np.zeros((0, snapshot_count))
+        K = np.eye(snapshot_count)  # matrix s.t. U = U_initial.lincomb(K)
+        coefficients = np.zeros((snapshot_count, 0))
         max_err_ind = np.argmax(errs)
         initial_max_err = max_err = errs[max_err_ind]
 
@@ -498,14 +498,14 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
             interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
             collateral_basis.append(new_vec)
             global_max_err_ind = cum_snapshot_counts[max_err_ind] + local_ind
-            coefficients = np.vstack([coefficients, K[global_max_err_ind] / new_dof_value])
+            coefficients = np.hstack([coefficients, K[:, global_max_err_ind:global_max_err_ind+1] / new_dof_value])
             max_errs.append(max_err)
 
             errs, new_dof_values = zip(
                 *pool.apply(_parallel_ei_greedy_update, new_vec=new_vec, new_dof=new_dof, data=distributed_data)
             )
             new_dof_values = np.hstack(new_dof_values)
-            K -= (K[global_max_err_ind] / new_dof_value) * new_dof_values[:, np.newaxis]
+            K -= K[:, global_max_err_ind:global_max_err_ind+1] @ (new_dof_values[np.newaxis, :] / new_dof_value)
             max_err_ind = np.argmax(errs)
             max_err = errs[max_err_ind]
 
@@ -522,7 +522,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
         logger.info('Building nodal basis.')
         inv_interpolation_matrix = spla.inv(interpolation_matrix)
         collateral_basis = collateral_basis.lincomb(inv_interpolation_matrix)
-        coefficients = inv_interpolation_matrix.T @ coefficients
+        coefficients = coefficients @ inv_interpolation_matrix
         interpolation_matrix = np.eye(len(collateral_basis))
 
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs,
