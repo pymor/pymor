@@ -243,9 +243,9 @@ class ToMatrixRules(RuleTable):
                 pass
         if op.range.dim < as_array_max_length():
             if not isinstance(op.range, NumpyVectorSpace):
-                op = NumpyConversionOperator(op.source, 'to_numpy') @ op
+                op = NumpyConversionOperator(op.range, 'to_numpy') @ op
             try:
-                return op.as_source_array(mu=self.mu).to_numpy().T  # TODO: missing .conj()?
+                return op.as_source_array(mu=self.mu).to_numpy().conj().T
             except NotImplementedError:
                 pass
         raise RuleNotMatchingError

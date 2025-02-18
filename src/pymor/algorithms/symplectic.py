@@ -200,7 +200,7 @@ class SymplecticBasis(BasicObject):
         assert modes % 2 == 0, 'number of modes has to be even'
         assert method in ('svd_like', 'complex_svd', 'symplectic_gram_schmidt')
 
-        U_proj_err = U - self.lincomb(U.inner(self.transposed_symplectic_inverse().to_array()).T)  # TODO: simplify
+        U_proj_err = U - self.lincomb(U.inner(self.transposed_symplectic_inverse().to_array()).T)
         proj_error = U_proj_err.norm(product=product)
 
         if method in ('svd_like', 'complex_svd'):

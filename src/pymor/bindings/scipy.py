@@ -211,35 +211,37 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
 
     options = _parse_options(options, solver_options(), default_solver, default_least_squares_solver, least_squares)
 
-    V = V.to_numpy().T
-    initial_guess = initial_guess.to_numpy().T if initial_guess is not None else None
+    V = V.to_numpy()
+    initial_guess = initial_guess.to_numpy() if initial_guess is not None else None
     promoted_type = np.promote_types(matrix.dtype, V.dtype)
-    R = np.empty((len(V), matrix.shape[1]), dtype=promoted_type)  # TODO: transpose
 
     if options['type'] == 'scipy_bicgstab':
-        for i, VV in enumerate(V):
+        R = np.empty((matrix.shape[1], len(V)), dtype=promoted_type, order='F')
+        for i in range(V.shape[1]):
             if SCIPY_1_14_OR_NEWER:
-                R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
-                                      atol=options['tol'], rtol=options['tol'], maxiter=options['maxiter'])
+                R[:, i], info = bicgstab(matrix, V[:, i], initial_guess[:, i] if initial_guess is not None else None,
+                                         atol=options['tol'], rtol=options['tol'], maxiter=options['maxiter'])
             else:
-                R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
-                                      tol=options['tol'], maxiter=options['maxiter'], atol='legacy')
+                R[:, i], info = bicgstab(matrix, V[:, i], initial_guess[:, i] if initial_guess is not None else None,
+                                         tol=options['tol'], maxiter=options['maxiter'], atol='legacy')
             if info != 0:
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
                 else:
                     raise InversionError(f'bicgstab failed with error code {info} (illegal input or breakdown)')
     elif options['type'] == 'scipy_bicgstab_spilu':
+        R = np.empty((matrix.shape[1], len(V)), dtype=promoted_type, order='F')
         ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
                     drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
         precond = LinearOperator(matrix.shape, ilu.solve)
-        for i, VV in enumerate(V):
+        for i in range(V.shape[1]):
             if SCIPY_1_14_OR_NEWER:
-                R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
-                                      atol=options['tol'], rtol=options['tol'], maxiter=options['maxiter'], M=precond)
+                R[:, i], info = bicgstab(matrix, V[:, i], initial_guess[:, i] if initial_guess is not None else None,
+                                         atol=options['tol'], rtol=options['tol'], maxiter=options['maxiter'],
+                                         M=precond)
             else:
-                R[i], info = bicgstab(matrix, VV, initial_guess[i] if initial_guess is not None else None,
-                                      tol=options['tol'], maxiter=options['maxiter'], M=precond, atol='legacy')
+                R[:, i], info = bicgstab(matrix, V[:, i], initial_guess[:, i] if initial_guess is not None else None,
+                                         tol=options['tol'], maxiter=options['maxiter'], M=precond, atol='legacy')
             if info != 0:
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
@@ -258,63 +260,68 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
                 # apply it to a real vector. In that case, we downcast
                 # the result here, removing the imaginary part,
                 # which should be zero.
-                R = matrix.factorization.solve(V.T).T.astype(promoted_type, copy=False)
+                R = matrix.factorization.solve(V).astype(promoted_type, copy=False)
             elif options['keep_factorization']:
                 # the matrix is always converted to the promoted type.
                 # if matrix.dtype == promoted_type, this is a no_op
                 matrix.factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
                                             permc_spec=options['permc_spec'])
                 matrix.factorizationdtype = promoted_type
-                R = matrix.factorization.solve(V.T).T
+                R = matrix.factorization.solve(V)
             else:
                 # the matrix is always converted to the promoted type.
                 # if matrix.dtype == promoted_type, this is a no_op
-                R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T, permc_spec=options['permc_spec']).T
+                R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V, permc_spec=options['permc_spec'])
         except RuntimeError as e:
             raise InversionError(e) from e
     elif options['type'] == 'scipy_lgmres':
-        for i, VV in enumerate(V):
+        R = np.empty((matrix.shape[1], len(V)), dtype=promoted_type, order='F')
+        for i in range(V.shape[1]):
             if SCIPY_1_14_OR_NEWER:
-                R[i], info = lgmres(matrix, VV, initial_guess[i] if initial_guess is not None else None,
-                                    atol=options['tol'],
-                                    rtol=options['tol'],
-                                    maxiter=options['maxiter'],
-                                    inner_m=options['inner_m'],
-                                    outer_k=options['outer_k'])
+                R[:, i], info = lgmres(matrix, V[:, i], initial_guess[:, i] if initial_guess is not None else None,
+                                       atol=options['tol'],
+                                       rtol=options['tol'],
+                                       maxiter=options['maxiter'],
+                                       inner_m=options['inner_m'],
+                                       outer_k=options['outer_k'])
             else:
-                R[i], info = lgmres(matrix, VV, initial_guess[i] if initial_guess is not None else None,
-                                    tol=options['tol'],
-                                    atol=options['tol'],
-                                    maxiter=options['maxiter'],
-                                    inner_m=options['inner_m'],
-                                    outer_k=options['outer_k'])
+                R[:, i], info = lgmres(matrix, V[:, i], initial_guess[:, i] if initial_guess is not None else None,
+                                       tol=options['tol'],
+                                       atol=options['tol'],
+                                       maxiter=options['maxiter'],
+                                       inner_m=options['inner_m'],
+                                       outer_k=options['outer_k'])
             if info > 0:
                 raise InversionError(f'lgmres failed to converge after {info} iterations')
             assert info == 0
     elif options['type'] == 'scipy_least_squares_lsmr':
         from scipy.sparse.linalg import lsmr
-        for i, VV in enumerate(V):
-            R[i], info, itn, _, _, _, _, _ = lsmr(matrix, VV,
-                                                  damp=options['damp'],
-                                                  atol=options['atol'],
-                                                  btol=options['btol'],
-                                                  conlim=options['conlim'],
-                                                  maxiter=options['maxiter'],
-                                                  show=options['show'],
-                                                  x0=initial_guess[i] if initial_guess is not None else None)
+        R = np.empty((matrix.shape[1], len(V)), dtype=promoted_type, order='F')
+        for i in range(V.shape[1]):
+            R[:, i], info, itn, _, _, _, _, _ = \
+                lsmr(matrix, V[:, i],
+                     damp=options['damp'],
+                     atol=options['atol'],
+                     btol=options['btol'],
+                     conlim=options['conlim'],
+                     maxiter=options['maxiter'],
+                     show=options['show'],
+                     x0=initial_guess[:, i] if initial_guess is not None else None)
             assert 0 <= info <= 7
             if info == 7:
                 raise InversionError(f'lsmr failed to converge after {itn} iterations')
     elif options['type'] == 'scipy_least_squares_lsqr':
-        for i, VV in enumerate(V):
-            R[i], info, itn, _, _, _, _, _, _, _ = lsqr(matrix, VV,
-                                                        damp=options['damp'],
-                                                        atol=options['atol'],
-                                                        btol=options['btol'],
-                                                        conlim=options['conlim'],
-                                                        iter_lim=options['iter_lim'],
-                                                        show=options['show'],
-                                                        x0=initial_guess[i] if initial_guess is not None else None)
+        R = np.empty((matrix.shape[1], len(V)), dtype=promoted_type, order='F')
+        for i in range(V.shape[1]):
+            R[:, i], info, itn, _, _, _, _, _, _, _ = \
+                lsqr(matrix, V[:, i],
+                     damp=options['damp'],
+                     atol=options['atol'],
+                     btol=options['btol'],
+                     conlim=options['conlim'],
+                     iter_lim=options['iter_lim'],
+                     show=options['show'],
+                     x0=initial_guess[:, i] if initial_guess is not None else None)
             assert 0 <= info <= 7
             if info == 7:
                 raise InversionError(f'lsmr failed to converge after {itn} iterations')
@@ -325,7 +332,7 @@ def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, 
         if not np.isfinite(np.sum(R)):
             raise InversionError('Result contains non-finite values')
 
-    return op.source.from_numpy(R.T)
+    return op.source.from_numpy(R)
 
 
 # unfortunately, this is necessary, as scipy does not

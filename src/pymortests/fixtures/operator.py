@@ -28,15 +28,14 @@ from pymortests.base import BUILTIN_DISABLED
 class MonomOperator(Operator):
     source = range = NumpyVectorSpace(1)
 
-    def __init__(self, order, monom=None):
-        self.monom = monom if monom else Polynomial(np.identity(order + 1)[order])
-        assert isinstance(self.monom, Polynomial)
+    def __init__(self, order):
+        self.monom = Polynomial(np.identity(order + 1)[order])
         self.order = order
         self.derivative = self.monom.deriv()
         self.linear = order == 1
 
     def apply(self, U, mu=None):
-        return self.source.make_array(self.monom(U.to_numpy().T).T)  # TODO: simplify
+        return self.source.make_array(self.monom(U.to_numpy()))
 
     def apply_adjoint(self, U, mu=None):
         return self.apply(U, mu=None)

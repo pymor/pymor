@@ -438,7 +438,7 @@ class ProjectedOperator(Operator):
             V = self.range_basis.lincomb(V.to_numpy())
         U = self.operator.apply_adjoint(V, mu)
         if self.source_basis is not None:
-            U = self.source.make_array(self.source_basis.inner(U))  # TODO: check formula
+            U = self.source.make_array(self.source_basis.inner(U))
         return U
 
 
@@ -1479,7 +1479,7 @@ class QuadraticFunctional(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.from_numpy(self.operator.apply2(U, U, mu))  # TODO: check case len(U)>1
+        return self.range.from_numpy(self.operator.pairwise_apply2(U, U, mu))
 
     def jacobian(self, U, mu=None):
         inner_vec = self.operator.apply_adjoint(U, mu) + self.operator.apply(U, mu)

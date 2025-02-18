@@ -204,7 +204,7 @@ class ContractRules(RuleTable):
             op = ops_rev[0]
             if isinstance(op, VectorArrayOperator) and isinstance(op.array.space, NumpyVectorSpace):
                 array = op.array.to_numpy()
-                op = NumpyMatrixOperator(array.T if op.adjoint else array)  # TODO: missing .conj()?
+                op = NumpyMatrixOperator(array.conj().T if op.adjoint else array)
             return op
 
         op = op.with_(operators=ops_rev[::-1])
