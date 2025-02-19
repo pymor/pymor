@@ -33,7 +33,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
     def conj(self, ind):
         if np.isrealobj(self._array):
             return self.copy(False, ind)
-        return NumpyVectorArrayImpl(np.conj(self.to_numpy(False, ind)))
+        return NumpyVectorArrayImpl(np.conj(self.to_numpy(False, ind), order='F'))
 
     def __len__(self):
         return self._len
@@ -90,7 +90,9 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         alpha_type = type(alpha)
         alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
         if self._array.dtype != alpha_dtype:
-            self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype), copy=False)
+            new_dtype = np.promote_types(self._array.dtype, alpha_dtype)
+            if new_dtype != self._array.dtype:
+                self._array = self._array.astype(new_dtype, order='F')
         self._array[:, ind] *= alpha
 
     def scal_copy(self, alpha, ind):
@@ -101,7 +103,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         if isinstance(alpha, Number) and alpha == -1:
             return type(self)(- self._array[:, ind])
 
-        return type(self)(self._array[:, ind] * alpha)
+        return type(self)(np.multiply(self._array[:, ind], alpha, order='F'))
 
     def axpy(self, alpha, x, ind, xind):
         ind = slice(None, self._len) if ind is None else ind
@@ -110,9 +112,10 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         alpha_type = type(alpha)
         alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
         if self._array.dtype != alpha_dtype or self._array.dtype != B.dtype:
-            dtype = np.promote_types(self._array.dtype, alpha_dtype)
-            dtype = np.promote_types(dtype, B.dtype)
-            self._array = self._array.astype(dtype, copy=False)
+            new_dtype = np.promote_types(self._array.dtype, alpha_dtype)
+            new_dtype = np.promote_types(new_dtype, B.dtype)
+            if new_dtype != self._array.dtype:
+                self._array = self._array.astype(new_dtype, order='F')
 
         if type(alpha) is np.ndarray:
             alpha = alpha[np.newaxis, :]
@@ -136,18 +139,18 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
         if isinstance(alpha, Number):
             if alpha == 1:
-                return type(self)(self._array[:, ind] + B)
+                return type(self)(np.add(self._array[:, ind],  B, order='F'))
             elif alpha == -1:
-                return type(self)(self._array[:, ind] - B)
+                return type(self)(np.subtract(self._array[:, ind],  B, order='F'))
 
-        return type(self)(self._array[:, ind] + B * alpha)
+        return type(self)(np.add(self._array[:, ind], B * alpha, order='F'))
 
     def inner(self, other, ind, oind):
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         B = other._array[:, :other._len] if oind is None else other._array[:, oind]
 
         # .conj() is a no-op on non-complex data types
-        return A.conj().T.dot(B)
+        return np.matmul(A.conj().T, B, order='F')
 
     def pairwise_inner(self, other, ind, oind):
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
@@ -158,7 +161,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
     def lincomb(self, coefficients, ind):
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
-        return NumpyVectorArrayImpl((coefficients.T @ A.T).T)   # ensure Fortran order
+        return NumpyVectorArrayImpl(np.matmul(A, coefficients, order='F'))
 
     def norm(self, ind):
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
@@ -170,7 +173,7 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
 
     def dofs(self, dof_indices, ind):
         ind = slice(None, self._len) if ind is None else ind
-        return self._array[dof_indices, :][:, ind]
+        return np.asfortranarray(self._array[dof_indices, :][:, ind])
 
     def amax(self, ind):
         ind = slice(None, self._len) if ind is None else ind
