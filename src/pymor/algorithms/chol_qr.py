@@ -141,7 +141,7 @@ def shifted_chol_qr(A, product=None, return_R=False, maxiter=3, offset=0, orth_t
             it = 0
             while True:
                 try:
-                    Rx = spla.cholesky(X, overwrite_a=True, check_finite=check_finite)
+                    Rx = spla.cholesky(X, overwrite_a=False, check_finite=check_finite)
                     break
                 except spla.LinAlgError:
                     it += 1
