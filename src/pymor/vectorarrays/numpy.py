@@ -2,13 +2,19 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import os
 from numbers import Integral, Number
 
 import numpy as np
 from scipy.sparse import issparse
 
 from pymor.core.base import classinstancemethod
+from pymor.core.defaults import defaults
 from pymor.vectorarrays.interface import VectorArray, VectorArrayImpl, VectorSpace, _create_random_values
+
+# warn when creating non Fortran contiguous arrays larger than this size
+# not a pymor default to avoid overhead in array creation
+FORTAN_EFFICIENCY_LIMIT = 10**6
 
 
 class NumpyVectorArrayImpl(VectorArrayImpl):
@@ -288,7 +294,9 @@ class NumpyVectorSpace(VectorSpace):
         return type(self).from_file(path, key=key, single_vector=single_vector, transpose=transpose)
 
     @classmethod
-    def _array_factory(cls, array, space=None):
+    @defaults('fail_large_non_f_contiguous')
+    def _array_factory(cls, array, space=None,
+                       fail_large_non_f_contiguous=os.environ.get('DOCKER_PYMOR', 'warn')):
         if type(array) is np.ndarray:
             pass
         elif issparse(array):
@@ -298,6 +306,17 @@ class NumpyVectorSpace(VectorSpace):
         if array.ndim != 2:
             assert array.ndim == 1
             array = np.reshape(array, (-1, 1))
+
+        if not array.flags.f_contiguous and array.flags.c_contiguous and array.size > FORTAN_EFFICIENCY_LIMIT:
+            if fail_large_non_f_contiguous == 'warn':
+                from warnings import warn
+                warn('Creating NumpyVectorArray from large C contiguous array.\n'
+                     'As NumpyVectorArray stores vectors as a matrix of column vectors, '
+                     'indexed array operations may be inefficient. \nConsider '
+                     'using Fortran contiguous arrays instead.')
+            elif fail_large_non_f_contiguous:
+                raise ValueError('Data array not in Fortran but C order.')
+
         if space is None:
             return NumpyVectorArray(cls(array.shape[0]), NumpyVectorArrayImpl(array))
         else:
