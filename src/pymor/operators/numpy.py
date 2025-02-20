@@ -236,7 +236,11 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.make_array(self.matrix.dot(U.to_numpy()))
+        if self.sparse:
+            return self.range.make_array(np.asfortranarray(self.matrix.dot(U.to_numpy())))
+        else:
+            return self.range.make_array(np.matmul(self.matrix, U.to_numpy(), order='F'))
+
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
@@ -290,7 +294,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
         if V.dim == 0:
             if self.source.dim == 0 or least_squares:
-                return self.source.make_array(np.zeros((self.source.dim, len(V))))
+                return self.source.make_array(np.zeros((self.source.dim, len(V)), order='F'))
             else:
                 raise InversionError
 
@@ -322,7 +326,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             if least_squares:
                 try:
-                    R, _, _, _ = spla.lstsq(self.matrix, V.to_numpy())
+                    R = np.asfortanarray(spla.lstsq(self.matrix, V.to_numpy())[0])
                 except np.linalg.LinAlgError as e:
                     raise InversionError(f'{type(e)!s}: {e!s}') from e
             else:
@@ -337,7 +341,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                         if rcond < np.finfo(np.float64).eps:
                             self.logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}) in apply_inverse: '
                                                 'result may not be accurate.')
-                R = lu_solve(self._lu_factor, V.to_numpy(), check_finite=check_finite)
+                R = np.asfortranarray(lu_solve(self._lu_factor, V.to_numpy(), check_finite=check_finite))
 
             if check_finite:
                 if not np.isfinite(np.sum(R)):
@@ -471,7 +475,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
             C = np.concatenate([C, C[1:l].conj()[::-1]])
 
         dtype = float if isreal else complex
-        y = np.zeros((self.range.dim, k), dtype=dtype)
+        y = np.zeros((self.range.dim, k), dtype=dtype, order='F')
         for j in range(m):
             x = vec[j::m]
             X = rfft(x, axis=0) if isreal else fft(x, axis=0)
@@ -481,12 +485,12 @@ class NumpyCirculantOperator(Operator, CacheableObject):
                 # Hankel operator will always pad to even length to avoid that
                 Y = irfft(Y, n=n, axis=0) if isreal else ifft(Y, axis=0)
                 y[i::p] += Y[:self.range.dim // p]
-        return y.T
+        return y
 
     def apply(self, U, mu=None):
         assert U in self.source
         U = U.to_numpy()
-        return self.range.make_array(self._circular_matvec(U).T)
+        return self.range.make_array(self._circular_matvec(U))
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
@@ -564,7 +568,7 @@ class NumpyToeplitzOperator(Operator):
         assert U in self.source
         n, _, m = self._circulant._arr.shape
         U = np.concatenate([U.to_numpy(), np.zeros((n*m - U.dim, len(U)))])
-        return self.range.make_array(self._circulant._circular_matvec(U).T[:self.range.dim, :])
+        return self.range.make_array(self._circulant._circular_matvec(U)[:self.range.dim, :])
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
@@ -650,7 +654,7 @@ class NumpyHankelOperator(Operator):
         x = np.zeros((n*m, U.shape[1]), dtype=U.dtype)
         for j in range(m):
             x[:self.source.dim][j::m] = np.flip(U[j::m], axis=0)
-        return self.range.make_array(self._circulant._circular_matvec(x).T[:self.range.dim, :])
+        return self.range.make_array(self._circulant._circular_matvec(x)[:self.range.dim, :])
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
