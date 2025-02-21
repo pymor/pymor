@@ -237,7 +237,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     def apply(self, U, mu=None):
         assert U in self.source
         if self.sparse:
-            return self.range.make_array(np.asfortranarray(self.matrix.dot(U.to_numpy())))
+            return self.range.make_array(self.matrix.dot(U.to_numpy()))
         else:
             return self.range.make_array(np.matmul(self.matrix, U.to_numpy(), order='F'))
 
@@ -326,7 +326,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             if least_squares:
                 try:
-                    R = np.asfortanarray(spla.lstsq(self.matrix, V.to_numpy())[0])
+                    R, _, _, _ = spla.lstsq(self.matrix, V.to_numpy())
                 except np.linalg.LinAlgError as e:
                     raise InversionError(f'{type(e)!s}: {e!s}') from e
             else:
@@ -341,7 +341,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                         if rcond < np.finfo(np.float64).eps:
                             self.logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}) in apply_inverse: '
                                                 'result may not be accurate.')
-                R = np.asfortranarray(lu_solve(self._lu_factor, V.to_numpy(), check_finite=check_finite))
+                R = lu_solve(self._lu_factor, V.to_numpy(), check_finite=check_finite)
 
             if check_finite:
                 if not np.isfinite(np.sum(R)):
