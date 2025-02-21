@@ -93,6 +93,10 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
             new_dtype = np.promote_types(self._array.dtype, alpha_dtype)
             if new_dtype != self._array.dtype:
                 self._array = self._array.astype(new_dtype, order='F')
+
+        if ind is not None and not self._array.flags.f_contiguous:
+            self._array = self._array.copy(order='F')
+
         self._array[:, ind] *= alpha
 
     def scal_copy(self, alpha, ind):
@@ -128,6 +132,9 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
                 self._array[:, ind] -= B
                 return
 
+        if ind is not None and not self._array.flags.f_contiguous:
+            self._array = self._array.copy(order='F')
+
         self._array[:, ind] += B * alpha
 
     def axpy_copy(self, alpha, x, ind, xind):
@@ -146,6 +153,9 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         return type(self)(np.add(self._array[:, ind], B * alpha, order='F'))
 
     def inner(self, other, ind, oind):
+        if ind is not None and not self._array.flags.f_contiguous:
+            self._array = self._array.copy(order='F')
+
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         B = other._array[:, :other._len] if oind is None else other._array[:, oind]
 
@@ -153,6 +163,9 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         return np.matmul(A.conj().T, B, order='F')
 
     def pairwise_inner(self, other, ind, oind):
+        if ind is not None and not self._array.flags.f_contiguous:
+            self._array = self._array.copy(order='F')
+
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         B = other._array[:, :other._len] if oind is None else other._array[:, oind]
 
@@ -160,22 +173,37 @@ class NumpyVectorArrayImpl(VectorArrayImpl):
         return np.sum(A.conj() * B, axis=0)
 
     def lincomb(self, coefficients, ind):
+        if ind is not None and not self._array.flags.f_contiguous:
+            self._array = self._array.copy(order='F')
+
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         return NumpyVectorArrayImpl(np.matmul(A, coefficients, order='F'))
 
     def norm(self, ind):
+        if ind is not None and not self._array.flags.f_contiguous:
+            self._array = self._array.copy(order='F')
+
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         return np.linalg.norm(A, axis=0)
 
     def norm2(self, ind):
+        if ind is not None and not self._array.flags.f_contiguous:
+            self._array = self._array.copy(order='F')
+
         A = self._array[:, :self._len] if ind is None else self._array[:, ind]
         return np.sum((A * A.conj()).real, axis=0)
 
     def dofs(self, dof_indices, ind):
+        if ind is not None and not self._array.flags.f_contiguous:
+            self._array = self._array.copy(order='F')
+
         ind = slice(None, self._len) if ind is None else ind
         return np.asfortranarray(self._array[dof_indices, :][:, ind])
 
     def amax(self, ind):
+        if ind is not None and not self._array.flags.f_contiguous:
+            self._array = self._array.copy(order='F')
+
         ind = slice(None, self._len) if ind is None else ind
         A = np.abs(self._array[:, ind])
         max_ind = np.argmax(A, axis=0)
