@@ -167,15 +167,13 @@ def _orth_step(A, product, i, last_iter, atol, rtol) -> tuple:
         first vector has a too low initial norm, None is returned.
     """
     vectors_to_orth = A[i] if last_iter else A[[i,i+1]]
-
-    r = vectors_to_orth[0].inner(vectors_to_orth, product)[0]
+    inner_result = A[:i+1].inner(vectors_to_orth, product)
+    proj, r = inner_result[:-1,:], inner_result[-1,:] # split result of inner product
 
     initial_norm = np.sqrt(r[0])
-
     if initial_norm <= atol:
         return None, None
 
-    proj = A[:i].inner(vectors_to_orth, product)
     r -= proj[:,0] @ proj.conj()
 
     if r[0] <= rtol * initial_norm:
