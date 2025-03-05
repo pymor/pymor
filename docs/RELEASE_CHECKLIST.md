@@ -2,6 +2,7 @@
 
 ## After hard freeze
 
+- [ ] Increase `pymor.__asv_api_gen__` by one.
 - [ ] Bump all CI requirements to current versions:
 
     ```bash
