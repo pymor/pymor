@@ -530,7 +530,6 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
                          training_snapshots=training_snapshots, validation_snapshots=validation_snapshots,
                          validation_ratio=validation_ratio, T=T, nt=nt, scale_inputs=scale_inputs,
                          scale_outputs=scale_outputs)
-        self.validation_loss = validation_loss
         if not fom:
             self.dim_output = training_snapshots[0].dim
         else:
