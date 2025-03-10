@@ -395,8 +395,8 @@ is treated as an additional parameter (see {cite}`WHR19`). It passes the input, 
 with the current time instance, through the neural network in each time step to obtain reduced
 coefficients. In the same fashion, the
 {class}`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor` and the
-corresponding {class}`~pymor.models.neural_network.NeuralNetworkStatefreeOutputModel` is extended to
-account for this.
+corresponding {class}`~pymor.models.neural_network.NeuralNetworkStatefreeOutputModel` are extended to
+take instationary problems into account.
 
 A slightly different approach that is also implemented in pyMOR and uses a different type of
 neural network is described in the following section.
@@ -526,7 +526,7 @@ also the hidden state {math}`h_k`) at time {math}`t_k` are either approximations
 basis coefficients (similar to the
 {class}`~pymor.models.neural_network.NeuralNetworkModel`) or approximations of the
 output quantities (similar to the
-{class}`~pymor.models.neural_network.NeuralNetworkModel`). For state approximations
+{class}`~pymor.models.neural_network.NeuralNetworkStatefreeOutputModel`). For state approximations
 using a reduced basis, one can apply the
 {class}`~pymor.reductors.neural_network.NeuralNetworkLSTMReductor`.
 For a direct approximation of outputs using LSTMs, we provide the
