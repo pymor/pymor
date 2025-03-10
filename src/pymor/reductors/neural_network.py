@@ -496,17 +496,19 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     training_set
         List of |Parameter values| to use for training of the
         neural network.
-    training_snapshots
-        Set of solution |VectorArrays| to use for training of the
-        neural network. These are the solutions to the parameters of the
-        `training_set` and can be `None` when `fom` is not `None`.
+    training_outputs
+        Set of outputs corresponding to a set of |Parameter values| used
+        for training of the neural network. These are the outputs to the
+        parameters of the`training_set` and can be `None` when `fom` is
+        not `None`.
     validation_set
         List of |Parameter values| to use for validation in the training
         of the neural network.
-    validation_snapshots
-        Set of solution |VectorArrays| to use for validation in the training
-        of the neural network. These are the solutions to the parameters of
-        the `validation_set` and can be `None` when `fom` is not `None`.
+    validation_outputs
+        Set of outputs corresponding to a set of |Parameter values| used
+        for validation of the neural network. These are the outputs to the
+        parameters of the`validation_set` and can be `None` when `fom` is
+        not `None`.
     validation_ratio
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     validation_loss
@@ -518,8 +520,8 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     """
 
-    def __init__(self, fom=None, training_set=None, validation_set=None, training_snapshots=None,
-                 validation_snapshots=None, validation_ratio=0.1, T=None, nt=1, validation_loss=None,
+    def __init__(self, fom=None, training_set=None, validation_set=None, training_outputs=None,
+                 validation_outputs=None, validation_ratio=0.1, T=None, nt=1, validation_loss=None,
                  scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_set
 
@@ -527,11 +529,11 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
                                    'min_targets': None, 'max_targets': None}
 
         super().__init__(fom=fom, training_set=training_set, validation_set=validation_set,
-                         training_snapshots=training_snapshots, validation_snapshots=validation_snapshots,
+                         training_snapshots=training_outputs, validation_snapshots=validation_outputs,
                          validation_ratio=validation_ratio, T=T, nt=nt, scale_inputs=scale_inputs,
                          scale_outputs=scale_outputs)
         if not fom:
-            self.dim_output = training_snapshots[0].dim
+            self.dim_output = training_outputs[0].dim
         else:
             self.dim_output = fom.dim_output
 
