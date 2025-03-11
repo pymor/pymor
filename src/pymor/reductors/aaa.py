@@ -301,7 +301,7 @@ class PAAAReductor(BasicObject):
         L = full_nd_loewner(self.samples, self.sampling_values, self.itpl_part)
         _, S, V = spla.svd(L, full_matrices=False, lapack_driver=svd_lapack_driver())
         VH = np.conj(V.T)
-        coefs = VH[:, -1:]
+        coefs = VH[:, -1]
 
         return coefs
 
