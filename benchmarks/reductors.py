@@ -49,4 +49,4 @@ class LTIMORBenchmark:
         BTReductor(self.fom).reduce(10)
 
     def time_irka(self, size):
-        IRKAReductor(self.fom).reduce(10)
+        IRKAReductor(self.fom).reduce(10, maxit=10)
