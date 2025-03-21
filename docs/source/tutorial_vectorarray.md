@@ -204,24 +204,6 @@ array[:] = 0
 vector_array
 ```
 
-## Rows and columns
-
-First time pyMOR users coming from numerical linear algebra often say that
-pyMOR uses row vectors instead column vectors.
-However, it is more useful to think of {{ VectorArrays }} as simple lists of vectors,
-that do not have any notion of being a row or column vector.
-When a matrix {{ Operator }} is applied to a {{ VectorArray }}, think of a `for`-loop,
-where the corresponding linear {{ Operator }} is applied individually to each vector in
-the array, not of a matrix-matrix product.
-What is true, however, is that
-{meth}`~pymor.vectorarrays.interface.VectorSpace.from_numpy` /
-{meth}`~pymor.vectorarrays.interface.VectorArray.to_numpy`
-interpret {{ VectorArrays }} as matrices of row vectors.
-The reason for that is that NumPy prefers a C-like memory layout for matrices, where the
-individual rows are stored consecutively in memory.
-(In contrast, Matlab uses a Fortran-like memory layout, where the columns are
-stored consecutively in memory.)
-
 ## Basic operations
 
 ```{code-cell} ipython3
@@ -280,7 +262,7 @@ print(U)
 The same could be achieved with:
 
 ```{code-cell} ipython3
-U = space.ones(2)
+U = space.full(3, count=2)
 U += 2 * V
 print(U)
 ```
@@ -509,7 +491,7 @@ U.real, U.imag
 ```
 
 Even when the array is real,
-{attr}`~pymor.vectorarrays.interface.VectorArray.real` will alwasy return a copy of the original
+{attr}`~pymor.vectorarrays.interface.VectorArray.real` will always return a copy of the original
 array.
 When it comes to inner products, the convention in pyMOR is that inner products are anti-linear
 in the first argument:
