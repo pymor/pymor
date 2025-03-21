@@ -259,7 +259,7 @@ class VectorArray(BasicObject):
         self._len = len(self.impl)
 
     def to_numpy(self, ensure_copy=False):
-        """Return (len(self), self.dim) NumPy Array with the data stored in the array.
+        """Return (self.dim, len(self)) NumPy Array with the data stored in the array.
 
         Parameters
         ----------
@@ -391,7 +391,7 @@ class VectorArray(BasicObject):
 
         is equivalent to::
 
-            U.dofs(np.arange(U.dim)) @ V.dofs(np.arange(V.dim)).T
+            U.dofs.T(np.arange(U.dim)) @ V.dofs(np.arange(V.dim))
 
         (Note, that :meth:`dofs` is only intended to be called for a
         small number of DOF indices.)
@@ -445,7 +445,7 @@ class VectorArray(BasicObject):
 
         is equivalent to::
 
-            np.sum(U.dofs(np.arange(U.dim)) * V.dofs(np.arange(V.dim)), axis=-1)
+            np.sum(U.dofs(np.arange(U.dim)) * V.dofs(np.arange(V.dim)), axis=0)
 
         (Note, that :meth:`dofs` is only intended to be called for a
         small number of DOF indices.)
@@ -499,14 +499,14 @@ class VectorArray(BasicObject):
         ----------
         coefficients
             A |NumPy array| of dimension 1 or 2 containing the linear
-            coefficients. `coefficients.shape[-1]` has to agree with
+            coefficients. `coefficients.shape[0]` has to agree with
             `len(self)`.
 
         Returns
         -------
         A |VectorArray| `result` such that:
 
-            result[i] = ∑ self[j] * coefficients[i,j]
+            result[i] = ∑ self[j] * coefficients[j,i]
 
         in case `coefficients` is of dimension 2, otherwise
         `len(result) == 1` and
@@ -515,8 +515,8 @@ class VectorArray(BasicObject):
         """
         assert 1 <= coefficients.ndim <= 2
         if coefficients.ndim == 1:
-            coefficients = coefficients[np.newaxis, ...]
-        assert coefficients.shape[-1] == len(self)
+            coefficients = coefficients[..., np.newaxis]
+        assert coefficients.shape[0] == len(self)
         return type(self)(self.space, self.impl.lincomb(coefficients, self.ind))
 
     def norm(self, product=None, tol=None, raise_complex=None):
@@ -628,8 +628,8 @@ class VectorArray(BasicObject):
 
         Returns
         -------
-        A |NumPy array| `result` such that `result[i, j]` is the `dof_indices[j]`-th
-        DOF of the `i`-th vector of the array.
+        A |NumPy array| `result` such that `result[i, j]` is the `dof_indices[i]`-th
+        DOF of the `j`-th vector of the array.
         """
         assert isinstance(dof_indices, list) and (len(dof_indices) == 0 or min(dof_indices) >= 0) \
             or (isinstance(dof_indices, np.ndarray) and dof_indices.ndim == 1
@@ -897,7 +897,7 @@ class VectorSpace(ImmutableObject):
         -------
         A |VectorArray| containing `count` vectors with each DOF set to `value`.
         """
-        return self.from_numpy(np.full((count, self.dim), value))
+        return self.from_numpy(np.full((self.dim, count), value))
 
     def random(self, count=1, distribution='uniform', reserve=0, **kwargs):
         """Create a |VectorArray| of vectors with random entries.
@@ -929,7 +929,7 @@ class VectorSpace(ImmutableObject):
         reserve
             Hint for the backend to which length the array will grow.
         """
-        values = _create_random_values((count, self.dim), distribution, **kwargs)
+        values = _create_random_values((self.dim, count), distribution, **kwargs)
         return self.from_numpy(values)
 
     def empty(self, reserve=0):
@@ -957,7 +957,7 @@ class VectorSpace(ImmutableObject):
         Parameters
         ----------
         data
-            |NumPy| array of shape `(len, dim)` where `len` is the
+            |NumPy| array of shape `(dim, len)` where `len` is the
             number of vectors and `dim` their dimension.
         ensure_copy
             If `False`, modifying the returned |VectorArray| might alter the original
@@ -983,7 +983,7 @@ class VectorSpace(ImmutableObject):
         pass
 
 
-def _create_random_values(shape, distribution, **kwargs):
+def _create_random_values(shape, distribution, order='F', **kwargs):
     if distribution not in ('uniform', 'normal'):
         raise NotImplementedError
 
@@ -996,13 +996,13 @@ def _create_random_values(shape, distribution, **kwargs):
         high = kwargs.get('high', 1.)
         if high <= low:
             raise ValueError
-        return rng.uniform(low, high, shape)
+        return rng.uniform(low, high, shape).ravel().reshape(shape, order=order)
     elif distribution == 'normal':
         if not kwargs.keys() <= {'loc', 'scale'}:
             raise ValueError
         loc = kwargs.get('loc', 0.)
         scale = kwargs.get('scale', 1.)
-        return rng.normal(loc, scale, shape)
+        return rng.normal(loc, scale, shape).ravel().reshape(shape, order=order)
     else:
         assert False
 

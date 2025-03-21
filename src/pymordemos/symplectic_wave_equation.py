@@ -166,11 +166,11 @@ def run_mor(fom, U_fom, method, red_dims):
             RB = MAX_RB[:red_dim//2]
             reductor = QuadraticHamiltonianRBReductor(fom, RB)
             RB_tsi = RB.transposed_symplectic_inverse()
-            U_proj = RB.lincomb(U_fom.inner(RB_tsi.to_array()))
+            U_proj = RB.lincomb(U_fom.inner(RB_tsi.to_array()).T)
         else:
             RB = MAX_RB[:red_dim]
             reductor = InstationaryRBReductor(fom, RB)
-            U_proj = RB.lincomb(U_fom.inner(RB))
+            U_proj = RB.lincomb(RB.inner(U_fom))
         rom = reductor.reduce()
         u = rom.solve()
         abs_err_proj[i_red_dim] = np.sqrt((U_fom - U_proj).norm2().sum())

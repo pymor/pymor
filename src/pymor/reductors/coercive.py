@@ -275,7 +275,7 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
         else:
             CO = np.array(m.operator.evaluate_coefficients(mu))
 
-        C = np.hstack((CR, np.dot(CO[..., np.newaxis], U.to_numpy()).ravel()))
+        C = np.hstack((CR, np.dot(CO[..., np.newaxis], U.to_numpy().T).ravel()))
 
         est = self.norm(NumpyVectorSpace.make_array(C))
         if self.coercivity_estimator:

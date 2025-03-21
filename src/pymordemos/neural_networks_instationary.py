@@ -286,7 +286,7 @@ def _discretize_navier_stokes(n, nt):
 
     def plot_fenics(w, title=''):
         v = df.Function(W)
-        v.leaf_node().vector()[:] = (w.to_numpy()[-1, :]).squeeze()
+        v.leaf_node().vector()[:] = (w.to_numpy()[:, -1]).squeeze()
         p, u  = v.split()
 
         fig_u = df.plot(u)

@@ -268,5 +268,5 @@ class CorrectedOutputFunctional(Operator):
             dual_solution = dual_m.solve(mu)
             dual_correction = dual_res.apply2(dual_solution, solution, mu)
             correction[d] = dual_correction
-        corrected_output = output + correction.T
+        corrected_output = output + correction
         return self.range.from_numpy(corrected_output)

@@ -59,15 +59,15 @@ def main(
     print(format_table([
         ['Method', 'Error', 'Modes', 'Time'],
         ['POD',
-         np.linalg.norm(m.l2_norm(U-pod_modes.lincomb(m.l2_product.apply2(U, pod_modes)))/np.sqrt(len(U))),
+         np.linalg.norm(m.l2_norm(U-pod_modes.lincomb(m.l2_product.apply2(pod_modes, U)))/np.sqrt(len(U))),
          len(pod_modes),
          pod_time],
         ['DIST HAPOD',
-         np.linalg.norm(m.l2_norm(U-dist_modes.lincomb(m.l2_product.apply2(U, dist_modes)))/np.sqrt(len(U))),
+         np.linalg.norm(m.l2_norm(U-dist_modes.lincomb(m.l2_product.apply2(dist_modes, U)))/np.sqrt(len(U))),
          len(dist_modes),
          dist_time],
         ['INC HAPOD',
-         np.linalg.norm(m.l2_norm(U-inc_modes.lincomb(m.l2_product.apply2(U, inc_modes)))/np.sqrt(len(U))),
+         np.linalg.norm(m.l2_norm(U-inc_modes.lincomb(m.l2_product.apply2(inc_modes, U)))/np.sqrt(len(U))),
          len(inc_modes),
          inc_time]]
     ))

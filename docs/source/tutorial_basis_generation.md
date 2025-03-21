@@ -310,11 +310,10 @@ Finally, we need to form the linear combination
 $$ \sum_{j=1}^N \lambda_j u_j = v_{proj} $$
 
 using the {meth}`~pymor.vectorarrays.interface.VectorArray.lincomb` method
-of `trivial_basis`. It expects row vectors of linear coefficients, but
-`solve` returns column vectors, so we need to take the transpose:
+of `trivial_basis`.
 
 ```{code-cell} ipython3
-U_proj = trivial_basis.lincomb(lambdas.T)
+U_proj = trivial_basis.lincomb(lambdas)
 ```
 
 Let's look at `U`, `U_proj` and the difference of both. {{ VectorArrays }} of
@@ -323,7 +322,7 @@ differences:
 
 ```{code-cell} ipython3
 # for some reason U_proj does not carry over from the previous cell
-U_proj = trivial_basis.lincomb(lambdas.T)
+U_proj = trivial_basis.lincomb(lambdas)
 fom.visualize((U, U_proj, U - U_proj),
               legend=('U', 'U_proj', 'best-approximation err'),
               separate_colorbars=True)
@@ -366,7 +365,7 @@ projection error, we can simply pass it as the optional `product` argument to
 G = trivial_basis[:10].gramian(product=fom.h1_0_semi_product)
 R = trivial_basis[:10].inner(U, product=fom.h1_0_semi_product)
 lambdas = np.linalg.solve(G, R)
-U_h1_proj = trivial_basis[:10].lincomb(lambdas.T)
+U_h1_proj = trivial_basis[:10].lincomb(lambdas)
 
 fom.visualize((U, U_h1_proj, U - U_h1_proj), separate_colorbars=True)
 ```
@@ -396,7 +395,7 @@ def compute_proj_errors(basis, V, product):
             v = np.linalg.solve(G[:N, :N], R[:N, :])
         else:
             v = np.zeros((0, len(V)))
-        V_proj = basis[:N].lincomb(v.T)
+        V_proj = basis[:N].lincomb(v)
         errors.append(np.max((V - V_proj).norm(product=product)))
     return errors
 
@@ -404,7 +403,7 @@ trivial_errors = compute_proj_errors(trivial_basis, training_data, fom.h1_0_semi
 ```
 
 Here we have used the fact that we can form multiple linear combinations at once by passing
-multiple rows of linear coefficients to
+multiple columns of linear coefficients to
 {meth}`~pymor.vectorarrays.interface.VectorArray.lincomb`. The
 {meth}`~pymor.vectorarrays.interface.VectorArray.norm` method returns a
 {{ NumPy_array }} of the norms of all vectors in the array with respect to
@@ -447,7 +446,7 @@ def strong_greedy(U, product, N):
         G = basis.gramian(product)
         R = basis.inner(U, product=product)
         lambdas = np.linalg.solve(G, R)
-        U_proj = basis.lincomb(lambdas.T)
+        U_proj = basis.lincomb(lambdas)
         errors = (U - U_proj).norm(product)
 
         # extend basis
@@ -546,7 +545,7 @@ compute these errors now more easily by exploiting orthogonality:
 def compute_proj_errors_orth_basis(basis, V, product):
     errors = []
     for N in range(len(basis) + 1):
-        v = V.inner(basis[:N], product=product)
+        v = basis[:N].inner(V, product=product)
         V_proj = basis[:N].lincomb(v)
         errors.append(np.max((V - V_proj).norm(product)))
     return errors

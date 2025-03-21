@@ -244,11 +244,11 @@ class ERAReductor(CacheableObject):
         if num_left:
             self.logger.info('Backprojecting tangential output directions ...')
             W1 = self.output_projector(num_left)
-            C = project(C, source_basis=None, range_basis=C.range.from_numpy(W1))
+            C = project(C, source_basis=None, range_basis=C.range.from_numpy(W1.T))
         if num_right:
             self.logger.info('Backprojecting tangential input directions ...')
             W2 = self.input_projector(num_right)
-            B = project(B, source_basis=B.source.from_numpy(W2), range_basis=None)
+            B = project(B, source_basis=B.source.from_numpy(W2.T), range_basis=None)
 
         return LTIModel(A, B, C, D=self.feedthrough, sampling_time=self.sampling_time,
                         presets={'o_dense': np.diag(sv), 'c_dense': np.diag(sv)})

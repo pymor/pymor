@@ -413,7 +413,7 @@ class Operator(ParametricObject):
         :attr:`~pymor.operators.interface.Operator.source`,
         such that ::
 
-            self.range.make_array(V.inner(U).T) == self.apply(U, mu)
+            self.range.make_array(V.inner(U)) == self.apply(U, mu)
 
         for all |VectorArrays| `U`.
 
@@ -532,7 +532,8 @@ class Operator(ParametricObject):
         |VectorArray| `U` in `self.source` the following is true::
 
             self.apply(U, mu).dofs(dofs)
-                == restricted_op.apply(NumpyVectorArray(U.dofs(source_dofs)), mu))
+                == restricted_op.apply(restricted_op.source.from_numpy(U.dofs(source_dofs))
+                                       mu).to_numpy()
 
         Such an operator is mainly useful for
         :class:`empirical interpolation <pymor.operators.ei.EmpiricalInterpolatedOperator>`

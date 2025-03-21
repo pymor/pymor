@@ -703,7 +703,7 @@ class LTIModel(Model):
                 if compute_solution:
                     data['solution'].append(x)
                 if compute_output:
-                    y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.at_time(t)).to_numpy()
+                    y = self.C.apply(x, mu=mu).to_numpy().T + D.as_range_array(mu=mu.at_time(t)).to_numpy().T
                     if i < n:
                         data['output'][i] = y
                     else:
@@ -942,13 +942,13 @@ class LTIModel(Model):
     @cached
     def _gramian(self, typ, mu=None):
         if typ == 'c_lrcf' and 'c_dense' in self.presets:
-            return self.A.source.from_numpy(_chol(self.presets['c_dense']).T)
+            return self.A.source.from_numpy(_chol(self.presets['c_dense']))
         elif typ == 'o_lrcf' and 'o_dense' in self.presets:
-            return self.A.source.from_numpy(_chol(self.presets['o_dense']).T)
+            return self.A.source.from_numpy(_chol(self.presets['o_dense']))
         elif typ == 'c_dense' and 'c_lrcf' in self.presets:
-            return self.presets['c_lrcf'].to_numpy().T @ self.presets['c_lrcf'].to_numpy()
+            return self.presets['c_lrcf'].to_numpy() @ self.presets['c_lrcf'].to_numpy().T
         elif typ == 'o_dense' and 'o_lrcf' in self.presets:
-            return self.presets['o_lrcf'].to_numpy().T @ self.presets['o_lrcf'].to_numpy()
+            return self.presets['o_lrcf'].to_numpy() @ self.presets['o_lrcf'].to_numpy().T
 
         A = self.A.assemble(mu)
         B = self.B
@@ -1001,12 +1001,12 @@ class LTIModel(Model):
                                        trans=True, options=options_ricc_pos_lrcf)
         elif typ == 'pr_c_dense':
             return solve_pos_ricc_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
-                                        A.source.zeros().to_numpy().T, -to_matrix(C, format='dense'),
+                                        A.source.zeros().to_numpy(), -to_matrix(C, format='dense'),
                                         R=to_matrix(D + D.H, 'dense'), S=to_matrix(B, format='dense').T,
                                         trans=False, options=options_ricc_pos_dense)
         elif typ == 'pr_o_dense':
             return solve_pos_ricc_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
-                                        -to_matrix(B, format='dense'), A.source.zeros().to_numpy(),
+                                        -to_matrix(B, format='dense'), A.source.zeros().to_numpy().T,
                                         R=to_matrix(D + D.H, 'dense'), S=to_matrix(C, format='dense').T,
                                         trans=True, options=options_ricc_pos_dense)
         elif typ[0] == 'br_c_lrcf':
@@ -1469,8 +1469,8 @@ class LTIModel(Model):
             ast_ews = ew[ast_idx]
             idx = ast_ews.argsort()
 
-            ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, idx].T)
-            ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, idx].T)
+            ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, idx])
+            ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, idx])
 
             return ast_lev, ast_ews[idx], ast_rev
 

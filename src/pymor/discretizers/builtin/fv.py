@@ -263,7 +263,7 @@ class NonlinearAdvectionOperator(Operator):
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
 
-        U = U.to_numpy()
+        U = U.to_numpy().T
         R = np.zeros((len(U), self.source.dim + 1))
 
         bi = self.boundary_info
@@ -309,7 +309,7 @@ class NonlinearAdvectionOperator(Operator):
 
         R[:, :-1] /= VOLS0
 
-        return self.range.make_array(R[:, :-1])
+        return self.range.make_array(R[:, :-1].T)
 
     def jacobian(self, U, mu=None):
         assert U in self.source
@@ -601,16 +601,16 @@ class NonlinearReactionOperator(Operator):
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
 
-        R = U.to_numpy() if ind is None else U.to_numpy()[ind]
+        R = U.to_numpy().T if ind is None else U.to_numpy().T[ind]
         R = self.reaction_function.evaluate(R.reshape(R.shape + (1,)), mu=mu)
 
-        return self.range.make_array(R)
+        return self.range.make_array(R.T)
 
     def jacobian(self, U, mu=None):
         if self.reaction_function_derivative is None:
             raise NotImplementedError
 
-        U = U.to_numpy()
+        U = U.to_numpy().T
         A = dia_matrix((self.reaction_function_derivative.evaluate(U.reshape(U.shape + (1,)), mu=mu), [0]),
                        shape=(self.grid.size(0),) * 2)
 

@@ -42,7 +42,7 @@ class ResidualReductor(BasicObject):
     Moreover, a `reconstruct` method is provided such that ::
 
         residual_reductor.reconstruct(projected_residual.apply(u, mu))
-            == residual.apply(RB.lincomb(u), mu)
+            == residual.apply(RB.lincomb(u.to_numpy()), mu)
 
     Parameters
     ----------
@@ -193,7 +193,8 @@ class ImplicitEulerResidualReductor(BasicObject):
     Moreover, a `reconstruct` method is provided such that ::
 
         residual_reductor.reconstruct(projected_riesz_residual.apply(u, u_old, mu))
-            == riesz_residual.apply(RB.lincomb(u), RB.lincomb(u_old), mu)
+            == riesz_residual.apply(RB.lincomb(u.to_numpy()),
+                                    RB.lincomb(u_old.to_numpy()), mu)
 
     Parameters
     ----------

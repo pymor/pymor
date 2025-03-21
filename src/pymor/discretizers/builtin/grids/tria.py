@@ -220,10 +220,10 @@ class TriaGrid(GridWithOrthogonalCenters):
         Parameters
         ----------
         U
-            |NumPy array| of the data to visualize. If `U.dim == 2 and len(U) > 1`, the
+            |NumPy array| of the data to visualize. If `U.dim == 2 and U.shape[1] > 1`, the
             data is visualized as a time series of plots. Alternatively, a tuple of
             |Numpy arrays| can be provided, in which case a subplot is created for
-            each entry of the tuple. The lengths of all arrays have to agree.
+            each entry of the tuple. The number of time points per array must match.
         codim
             The codimension of the entities the data in `U` is attached to (either 0 or 2).
         kwargs

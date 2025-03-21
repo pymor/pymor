@@ -14,7 +14,7 @@ def test_project(operator_with_arrays, rng):
     assert op_UV.name == op_UV.__class__.__name__
     coeffs = rng.random(len(U))
     X = op_UV.apply(op_UV.source.make_array(coeffs), mu=mu)
-    Y = op_UV.range.make_array(V.inner(op.apply(U.lincomb(coeffs), mu=mu)).T)
+    Y = op_UV.range.make_array(V.inner(op.apply(U.lincomb(coeffs), mu=mu)))
     assert np.all(almost_equal(X, Y))
 
 
@@ -49,7 +49,7 @@ def test_project_with_product(operator_with_arrays_and_products, rng):
     assert op_UV.name == op_UV.__class__.__name__
     coeffs = rng.random(len(U))
     X = op_UV.apply(op_UV.source.make_array(coeffs), mu=mu)
-    Y = op_UV.range.make_array(rp.apply2(op.apply(U.lincomb(coeffs), mu=mu), V))
+    Y = op_UV.range.make_array(rp.apply2(V, op.apply(U.lincomb(coeffs), mu=mu)))
     assert np.all(almost_equal(X, Y))
 
 

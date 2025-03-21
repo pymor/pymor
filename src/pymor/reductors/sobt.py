@@ -130,8 +130,7 @@ class SOBTpReductor(GenericSOBTpvReductor):
         pcf, pof, vcf, vof = gramians
         _, sp, Vp = spla.svd(pof.inner(pcf), lapack_driver=svd_lapack_driver())
         Uv, _, _ = spla.svd(vof.inner(vcf, product=self.fom.M), lapack_driver=svd_lapack_driver())
-        Uv = Uv.T
-        return pcf.lincomb(Vp[:r]), vof.lincomb(Uv[:r]), sp
+        return pcf.lincomb(Vp[:r].T), vof.lincomb(Uv[:, :r]), sp
 
 
 class SOBTvReductor(GenericSOBTpvReductor):
@@ -155,8 +154,7 @@ class SOBTvReductor(GenericSOBTpvReductor):
     def _projection_matrices_and_singular_values(self, r, gramians):
         vcf, vof = gramians
         Uv, sv, Vv = spla.svd(vof.inner(vcf, product=self.fom.M), lapack_driver=svd_lapack_driver())
-        Uv = Uv.T
-        return vcf.lincomb(Vv[:r]), vof.lincomb(Uv[:r]), sv
+        return vcf.lincomb(Vv[:r].T), vof.lincomb(Uv[:, :r]), sv
 
 
 class SOBTpvReductor(GenericSOBTpvReductor):
@@ -180,8 +178,7 @@ class SOBTpvReductor(GenericSOBTpvReductor):
     def _projection_matrices_and_singular_values(self, r, gramians):
         pcf, vof = gramians
         Upv, spv, Vpv = spla.svd(vof.inner(pcf, product=self.fom.M), lapack_driver=svd_lapack_driver())
-        Upv = Upv.T
-        return pcf.lincomb(Vpv[:r]), vof.lincomb(Upv[:r]), spv
+        return pcf.lincomb(Vpv[:r].T), vof.lincomb(Upv[:, :r]), spv
 
 
 class SOBTvpReductor(GenericSOBTpvReductor):
@@ -206,9 +203,8 @@ class SOBTvpReductor(GenericSOBTpvReductor):
     def _projection_matrices_and_singular_values(self, r, gramians):
         pof, vcf, vof = gramians
         Uv, _, _ = spla.svd(vof.inner(vcf, product=self.fom.M), lapack_driver=svd_lapack_driver())
-        Uv = Uv.T
         _, svp, Vvp = spla.svd(pof.inner(vcf), lapack_driver=svd_lapack_driver())
-        return vcf.lincomb(Vvp[:r]), vof.lincomb(Uv[:r]), svp
+        return vcf.lincomb(Vvp[:r].T), vof.lincomb(Uv[:, :r]), svp
 
 
 class SOBTfvReductor(BasicObject):
@@ -271,7 +267,7 @@ class SOBTfvReductor(BasicObject):
         _, sp, Vp = spla.svd(pof.inner(pcf), lapack_driver=svd_lapack_driver())
 
         # compute projection matrices
-        self.V = pcf.lincomb(Vp[:r])
+        self.V = pcf.lincomb(Vp[:r].T)
         if projection == 'sr':
             alpha = 1 / np.sqrt(sp[:r])
             self.V.scal(alpha)
@@ -357,15 +353,13 @@ class SOBTReductor(BasicObject):
 
         # find necessary SVDs
         Up, sp, Vp = spla.svd(pof.inner(pcf), lapack_driver=svd_lapack_driver())
-        Up = Up.T
         Uv, sv, Vv = spla.svd(vof.inner(vcf, product=self.fom.M), lapack_driver=svd_lapack_driver())
-        Uv = Uv.T
 
         # compute projection matrices and find the reduced model
-        self.V1 = pcf.lincomb(Vp[:r])
-        self.W1 = pof.lincomb(Up[:r])
-        self.V2 = vcf.lincomb(Vv[:r])
-        self.W2 = vof.lincomb(Uv[:r])
+        self.V1 = pcf.lincomb(Vp[:r].T)
+        self.W1 = pof.lincomb(Up[:, :r])
+        self.V2 = vcf.lincomb(Vv[:r].T)
+        self.W2 = vof.lincomb(Uv[:, :r])
         if projection == 'sr':
             alpha1 = 1 / np.sqrt(sp[:r])
             self.V1.scal(alpha1)
@@ -394,13 +388,13 @@ class SOBTReductor(BasicObject):
                          source_basis=self.V2),
             'K': project(self.fom.K.assemble(mu=self.mu),
                          range_basis=self.W2,
-                         source_basis=self.V1.lincomb(W1TV1invW1TV2.T)),
+                         source_basis=self.V1.lincomb(W1TV1invW1TV2)),
             'B': project(self.fom.B.assemble(mu=self.mu),
                          range_basis=self.W2,
                          source_basis=None),
             'Cp': project(self.fom.Cp.assemble(mu=self.mu),
                           range_basis=None,
-                          source_basis=self.V1.lincomb(W1TV1invW1TV2.T)),
+                          source_basis=self.V1.lincomb(W1TV1invW1TV2)),
             'Cv': project(self.fom.Cv.assemble(mu=self.mu),
                           range_basis=None,
                           source_basis=self.V2),

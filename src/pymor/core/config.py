@@ -213,6 +213,8 @@ class Config:
             package = name[len('HAVE_'):]
         elif name.endswith('_VERSION'):
             package = name[:-len('_VERSION')]
+        elif name.endswith('_INFO'):
+            package = name[:-len('_INFO')]
         else:
             raise AttributeError
 

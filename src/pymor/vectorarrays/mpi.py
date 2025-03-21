@@ -55,8 +55,8 @@ class MPIVectorArrayImpl(VectorArrayImpl):
         return mpi.call(mpi.function_call, _MPIVectorArray_pairwise_inner, self.obj_id, other.obj_id, ind, oind)
 
     def lincomb(self, coefficients, ind):
-        return type(self)(mpi.call(mpi.function_call_manage, _MPIVectorArray_lincomb, self.obj_id, coefficients, ind),
-                          self.space)
+        return type(self)(
+            mpi.call(mpi.function_call_manage, _MPIVectorArray_lincomb, self.obj_id, coefficients, ind), self.space)
 
     def norm2(self, ind):
         return mpi.call(mpi.function_call, _MPIVectorArray_norm2, self.obj_id, ind)
@@ -426,8 +426,8 @@ def _MPIVectorArrayAutoComm_dofs(self, offsets, dof_indices, ind):
     offset = offsets[mpi.rank]
     dim = self.dim
     my_indices = np.logical_and(dof_indices >= offset, dof_indices < offset + dim)
-    local_results = np.zeros((len(self), len(dof_indices)))
-    local_results[:, my_indices] = self.dofs(dof_indices[my_indices] - offset)
+    local_results = np.zeros((len(dof_indices), len(self)))
+    local_results[my_indices, :] = self.dofs(dof_indices[my_indices] - offset)
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)

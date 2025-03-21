@@ -101,7 +101,7 @@ def test_randomized_ghep(rng, return_evecs, single_pass):
         assert len(V) == n
         assert V.dim == op.source.dim
         for i in range(0, n):
-            assert np.linalg.norm(abs(V.to_numpy()[i]) - abs(V_real[:, i])) <= 1
+            assert np.linalg.norm(abs(V.to_numpy()[:, i]) - abs(V_real[:, i])) <= 1
 
     assert len(w) == n
     assert abs(np.linalg.norm(w - w_real[:n])) <= 1e-2

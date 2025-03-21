@@ -45,7 +45,7 @@ def test_bernoulli_stabilize(n, trans, rng):
     A = rng.standard_normal((n,n))
     Aop = NumpyMatrixOperator(A)
 
-    B = rng.standard_normal((1, n))
+    B = rng.standard_normal((n, 1))
     if not trans:
         Bva = Aop.range.from_numpy(B)
     else:
@@ -53,8 +53,8 @@ def test_bernoulli_stabilize(n, trans, rng):
 
     ew, lev, rev = spla.eig(A, None, True)
     as_idx = np.where(ew.real > 0.)
-    lva = Aop.source.from_numpy(lev[:, as_idx][:, 0, :].T)
-    rva = Aop.range.from_numpy(rev[:, as_idx][:, 0, :].T)
+    lva = Aop.source.from_numpy(lev[:, as_idx][:, 0, :])
+    rva = Aop.range.from_numpy(rev[:, as_idx][:, 0, :])
 
     K = bernoulli_stabilize(Aop, None, Bva, (lva, ew, rva), trans=trans)
 

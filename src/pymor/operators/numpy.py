@@ -44,7 +44,7 @@ class NumpyGenericOperator(Operator):
         The function to wrap. If `parameters` is `None`, the function is of
         the form `mapping(U)` and is expected to be vectorized. In particular::
 
-            mapping(U).shape == U.shape[:-1] + (dim_range,).
+            mapping(U).shape == (dim_range,) + U.shape[1:].
 
         If `parameters` is not `None`, the function has to have the signature
         `mapping(U, mu)`.
@@ -52,7 +52,7 @@ class NumpyGenericOperator(Operator):
         The adjoint function to wrap. If `parameters` is `None`, the function is of
         the form `adjoint_mapping(U)` and is expected to be vectorized. In particular::
 
-            adjoint_mapping(U).shape == U.shape[:-1] + (dim_source,).
+            adjoint_mapping(U).shape == (dim_source,) + U.shape[1:].
 
         If `parameters` is not `None`, the function has to have the signature
         `adjoint_mapping(U, mu)`.
@@ -227,16 +227,20 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     def as_range_array(self, mu=None):
         if self.sparse:
             return Operator.as_range_array(self)
-        return self.range.from_numpy(self.matrix.T.copy())
+        return self.range.from_numpy(self.matrix.copy())
 
     def as_source_array(self, mu=None):
         if self.sparse:
             return Operator.as_source_array(self)
-        return self.source.from_numpy(self.matrix.copy()).conj()
+        return self.source.from_numpy(self.matrix.T.copy()).conj()
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.make_array(self.matrix.dot(U.to_numpy().T).T)
+        if self.sparse:
+            return self.range.make_array(self.matrix.dot(U.to_numpy()))
+        else:
+            return self.range.make_array(np.matmul(self.matrix, U.to_numpy(), order='F'))
+
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
@@ -290,7 +294,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
         if V.dim == 0:
             if self.source.dim == 0 or least_squares:
-                return self.source.make_array(np.zeros((len(V), self.source.dim)))
+                return self.source.make_array(np.zeros((self.source.dim, len(V)), order='F'))
             else:
                 raise InversionError
 
@@ -322,10 +326,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             if least_squares:
                 try:
-                    R, _, _, _ = spla.lstsq(self.matrix, V.to_numpy().T)
+                    R, _, _, _ = spla.lstsq(self.matrix, V.to_numpy())
                 except np.linalg.LinAlgError as e:
                     raise InversionError(f'{type(e)!s}: {e!s}') from e
-                R = R.T
             else:
                 if not hasattr(self, '_lu_factor'):
                     try:
@@ -338,7 +341,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                         if rcond < np.finfo(np.float64).eps:
                             self.logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}) in apply_inverse: '
                                                 'result may not be accurate.')
-                R = lu_solve(self._lu_factor, V.to_numpy().T, check_finite=check_finite).T
+                R = lu_solve(self._lu_factor, V.to_numpy(), check_finite=check_finite)
 
             if check_finite:
                 if not np.isfinite(np.sum(R)):
@@ -472,7 +475,7 @@ class NumpyCirculantOperator(Operator, CacheableObject):
             C = np.concatenate([C, C[1:l].conj()[::-1]])
 
         dtype = float if isreal else complex
-        y = np.zeros((self.range.dim, k), dtype=dtype)
+        y = np.zeros((self.range.dim, k), dtype=dtype, order='F')
         for j in range(m):
             x = vec[j::m]
             X = rfft(x, axis=0) if isreal else fft(x, axis=0)
@@ -482,11 +485,11 @@ class NumpyCirculantOperator(Operator, CacheableObject):
                 # Hankel operator will always pad to even length to avoid that
                 Y = irfft(Y, n=n, axis=0) if isreal else ifft(Y, axis=0)
                 y[i::p] += Y[:self.range.dim // p]
-        return y.T
+        return y
 
     def apply(self, U, mu=None):
         assert U in self.source
-        U = U.to_numpy().T
+        U = U.to_numpy()
         return self.range.make_array(self._circular_matvec(U))
 
     def apply_adjoint(self, V, mu=None):
@@ -564,8 +567,8 @@ class NumpyToeplitzOperator(Operator):
     def apply(self, U, mu=None):
         assert U in self.source
         n, _, m = self._circulant._arr.shape
-        U = np.concatenate([U.to_numpy().T, np.zeros((n*m - U.dim, len(U)))])
-        return self.range.make_array(self._circulant._circular_matvec(U)[:, :self.range.dim])
+        U = np.concatenate([U.to_numpy(), np.zeros((n*m - U.dim, len(U)))])
+        return self.range.make_array(self._circulant._circular_matvec(U)[:self.range.dim, :])
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
@@ -646,12 +649,12 @@ class NumpyHankelOperator(Operator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        U = U.to_numpy().T
+        U = U.to_numpy()
         n, p, m = self._circulant._arr.shape
         x = np.zeros((n*m, U.shape[1]), dtype=U.dtype)
         for j in range(m):
             x[:self.source.dim][j::m] = np.flip(U[j::m], axis=0)
-        return self.range.make_array(self._circulant._circular_matvec(x)[:, :self.range.dim])
+        return self.range.make_array(self._circulant._circular_matvec(x)[:self.range.dim, :])
 
     def apply_adjoint(self, V, mu=None):
         assert V in self.range

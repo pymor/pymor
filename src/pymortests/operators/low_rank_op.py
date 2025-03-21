@@ -31,12 +31,12 @@ def test_low_rank_apply(rng):
 
     LR = LowRankOperator(L, C, R)
     V = LR.apply(U)
-    assert np.allclose(V.to_numpy().T, L.to_numpy().T @ C @ (R.to_numpy() @ U.to_numpy().T))
+    assert np.allclose(V.to_numpy(), L.to_numpy() @ C @ (R.to_numpy().T @ U.to_numpy()))
 
     LR = LowRankOperator(L, C, R, inverted=True)
     V = LR.apply(U)
-    assert np.allclose(V.to_numpy().T,
-                       L.to_numpy().T @ spla.solve(C, R.to_numpy() @ U.to_numpy().T))
+    assert np.allclose(V.to_numpy(),
+                       L.to_numpy() @ spla.solve(C, R.to_numpy().T @ U.to_numpy()))
 
 
 def test_low_rank_apply_adjoint(rng):
@@ -44,12 +44,12 @@ def test_low_rank_apply_adjoint(rng):
 
     LR = LowRankOperator(L, C, R)
     U = LR.apply_adjoint(V)
-    assert np.allclose(U.to_numpy().T, R.to_numpy().T @ C.T @ (L.to_numpy() @ V.to_numpy().T))
+    assert np.allclose(U.to_numpy(), R.to_numpy() @ C.T @ (L.to_numpy().T @ V.to_numpy()))
 
     LR = LowRankOperator(L, C, R, inverted=True)
     U = LR.apply_adjoint(V)
-    assert np.allclose(U.to_numpy().T,
-                       R.to_numpy().T @ spla.solve(C.T, L.to_numpy() @ V.to_numpy().T))
+    assert np.allclose(U.to_numpy(),
+                       R.to_numpy() @ spla.solve(C.T, L.to_numpy().T @ V.to_numpy()))
 
 
 def test_low_rank_updated_apply_inverse(rng):
@@ -58,14 +58,14 @@ def test_low_rank_updated_apply_inverse(rng):
     LR = LowRankOperator(L, C, R)
     op = LowRankUpdatedOperator(A, LR, 1, 1)
     U = op.apply_inverse(V)
-    mat = A.matrix + L.to_numpy().T @ C @ R.to_numpy()
-    assert np.allclose(U.to_numpy().T, spla.solve(mat, V.to_numpy().T))
+    mat = A.matrix + L.to_numpy() @ C @ R.to_numpy().T
+    assert np.allclose(U.to_numpy(), spla.solve(mat, V.to_numpy()))
 
     LR = LowRankOperator(L, C, R, inverted=True)
     op = LowRankUpdatedOperator(A, LR, 1, 1)
     U = op.apply_inverse(V)
-    mat = A.matrix + L.to_numpy().T @ spla.solve(C, R.to_numpy())
-    assert np.allclose(U.to_numpy().T, spla.solve(mat, V.to_numpy().T))
+    mat = A.matrix + L.to_numpy() @ spla.solve(C, R.to_numpy().T)
+    assert np.allclose(U.to_numpy(), spla.solve(mat, V.to_numpy()))
 
 
 def test_low_rank_updated_apply_inverse_adjoint(rng):
@@ -74,14 +74,14 @@ def test_low_rank_updated_apply_inverse_adjoint(rng):
     LR = LowRankOperator(L, C, R)
     op = LowRankUpdatedOperator(A, LR, 1, 1)
     V = op.apply_inverse_adjoint(U)
-    mat = A.matrix + L.to_numpy().T @ C @ R.to_numpy()
-    assert np.allclose(V.to_numpy().T, spla.solve(mat.T, U.to_numpy().T))
+    mat = A.matrix + L.to_numpy() @ C @ R.to_numpy().T
+    assert np.allclose(V.to_numpy(), spla.solve(mat.T, U.to_numpy()))
 
     LR = LowRankOperator(L, C, R, inverted=True)
     op = LowRankUpdatedOperator(A, LR, 1, 1)
     V = op.apply_inverse_adjoint(U)
-    mat = A.matrix + L.to_numpy().T @ spla.solve(C, R.to_numpy())
-    assert np.allclose(V.to_numpy().T, spla.solve(mat.T, U.to_numpy().T))
+    mat = A.matrix + L.to_numpy() @ spla.solve(C, R.to_numpy().T)
+    assert np.allclose(V.to_numpy(), spla.solve(mat.T, U.to_numpy()))
 
 
 def test_low_rank_assemble(rng):
@@ -132,6 +132,6 @@ def test_low_rank_updated_assemble_apply(rng):
     LR = LowRankOperator(L, C, R)
     op = (A + (A + LR).assemble() + LR).assemble()
     V = op.apply(U)
-    assert np.allclose(V.to_numpy().T,
-                       2 * A.matrix @ U.to_numpy().T
-                       + 2 * L.to_numpy().T @ C @ (R.to_numpy() @ U.to_numpy().T))
+    assert np.allclose(V.to_numpy(),
+                       2 * A.matrix @ U.to_numpy()
+                       + 2 * L.to_numpy() @ C @ (R.to_numpy().T @ U.to_numpy()))
