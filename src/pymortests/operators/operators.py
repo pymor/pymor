@@ -50,7 +50,7 @@ def test_selection_op():
         name='foo'
     )
     x = np.linspace(-1., 1., num=3)
-    vx = p1.source.make_array(x[:, np.newaxis])
+    vx = p1.source.make_array(x[np.newaxis, :])
     assert np.allclose(p1.apply(vx).to_numpy(),
                        s1.apply(vx, mu=s1.parameters.parse(0)).to_numpy())
 
@@ -77,11 +77,11 @@ def test_lincomb_op():
     p12 = p1 + p2
     p0 = p1 - p1
     x = np.linspace(-1., 1., num=3)
-    vx = p1.source.make_array(x[:, np.newaxis])
+    vx = p1.source.make_array(x[np.newaxis, :])
     one = p1.source.make_array([1])
     assert np.allclose(p0.apply(vx).to_numpy(), [0.])
-    assert np.allclose(p12.apply(vx).to_numpy(), (x * x + x)[:, np.newaxis])
-    assert np.allclose((p1 * 2.).apply(vx).to_numpy(), (x * 2.)[:, np.newaxis])
+    assert np.allclose(p12.apply(vx).to_numpy(), (x * x + x)[np.newaxis, :])
+    assert np.allclose((p1 * 2.).apply(vx).to_numpy(), (x * 2.)[np.newaxis, :])
     with pytest.raises(AssertionError):
         p2.jacobian(vx)
     for i in range(len(vx)):
@@ -106,7 +106,7 @@ def test_lincomb_op_with_zero_coefficients():
     p10 = p1 + 0 * p2
     p0 = 0 * p1 + 0 * p1
     x = np.linspace(-1., 1., num=3)
-    vx = p1.source.make_array(x[:, np.newaxis])
+    vx = p1.source.make_array(x[np.newaxis, :])
 
     pc1 = NumpyMatrixOperator(np.eye(p1.source.dim))
     pc2 = NumpyMatrixOperator(2*np.eye(p1.source.dim))
@@ -506,29 +506,29 @@ def test_vectorarray_op_apply_inverse(rng):
     V = op.range.random()
     U = op.apply_inverse(V)
     v = V.to_numpy()
-    u = spla.solve(O.T, v.ravel())
+    u = spla.solve(O, v.ravel())
     assert np.all(almost_equal(U, U.space.from_numpy(u), rtol=1e-10))
 
 
 @pytest.mark.builtin
 def test_vectorarray_op_apply_inverse_lstsq(rng):
-    O = rng.random((3, 5))
+    O = rng.random((5, 3))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
     V = op.range.random()
     U = op.apply_inverse(V, least_squares=True)
     v = V.to_numpy()
-    u = spla.lstsq(O.T, v.ravel())[0]
+    u = spla.lstsq(O, v.ravel())[0]
     assert np.all(almost_equal(U, U.space.from_numpy(u)))
 
 
 @pytest.mark.builtin
 def test_adjoint_vectorarray_op_apply_inverse_lstsq(rng):
-    O = rng.random((3, 5))
+    O = rng.random((5, 3))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O), adjoint=True)
     V = op.range.random()
     U = op.apply_inverse(V, least_squares=True)
     v = V.to_numpy()
-    u = spla.lstsq(O, v.ravel())[0]
+    u = spla.lstsq(O.T, v.ravel())[0]
     assert np.all(almost_equal(U, U.space.from_numpy(u)))
 
 

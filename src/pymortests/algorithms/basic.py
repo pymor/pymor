@@ -41,14 +41,14 @@ def test_almost_equal(vector_arrays, tolerances, sup_norm):
         assert isinstance(r, np.ndarray)
         assert r.shape == (v1.len_ind(ind1),)
         if dv1 is not None:
-            if dv2.shape[1] == 0:
+            if dv2.shape[0] == 0:
                 continue
             assert np.all(r == (np.linalg.norm(indexed(dv1, ind1) - indexed(dv2, ind2),
                                                ord=np.inf if sup_norm else None,
-                                               axis=1)
+                                               axis=0)
                                 <= atol + rtol * np.linalg.norm(indexed(dv2, ind2),
                                                                 ord=np.inf if sup_norm else None,
-                                                                axis=1)))
+                                                                axis=0)))
 
 
 def test_almost_equal_product(operator_with_arrays_and_products):
@@ -186,8 +186,8 @@ def test_project_array(vector_arrays):
 
 @pytest.mark.builtin
 def test_project_array_with_product(rng):
-    U = NumpyVectorSpace.from_numpy(rng.random((1, 10)))
-    basis = NumpyVectorSpace.from_numpy(rng.random((3, 10)))
+    U = NumpyVectorSpace.from_numpy(rng.random((10, 1)))
+    basis = NumpyVectorSpace.from_numpy(rng.random((10, 3)))
     product = rng.random((10, 10))
     product = NumpyMatrixOperator(product.T.dot(product))
     U_p = project_array(U, basis, product=product, orthonormal=False)

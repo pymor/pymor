@@ -73,7 +73,7 @@ class PatchVisualizer(BasicObject):
             self.vmins, self.vmaxs = _vmins_vmaxs(U, self.separate_colorbars, self.rescale_colorbars)
 
         for vmin, vmax, u, plot in zip(self.vmins, self.vmaxs, U, self.plots):
-            plot.set(u[idx], vmin=vmin[idx], vmax=vmax[idx])
+            plot.set(u[:, idx], vmin=vmin[idx], vmax=vmax[idx])
         self.fig.canvas.draw_idle()
 
 
@@ -127,7 +127,7 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
     vis = PatchVisualizer(grid, U, bounding_box=bounding_box, codim=codim, title=title, legend=legend,
         separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars, columns=columns)
 
-    do_animation = len(U[0]) > 1
+    do_animation = U[0].shape[1] > 1
 
     if return_widget:
         vis.fig.canvas.header_visible = False
@@ -163,7 +163,7 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
             def animate(i):
                 vis.set(idx=i)
 
-            anim = FuncAnimation(vis.fig, animate, frames=len(U[0]), interval=delay_between_frames, blit=False)
+            anim = FuncAnimation(vis.fig, animate, frames=U[0].shape[1], interval=delay_between_frames, blit=False)
             plt.close(vis.fig)
             return anim
         else:
@@ -217,7 +217,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs
     vmins, vmaxs = _vmins_vmaxs(U, separate_plots, rescale_axes)
 
-    do_animation = len(U[0]) > 1
+    do_animation = U[0].shape[1] > 1
 
     if return_widget:
         from IPython import get_ipython
@@ -245,7 +245,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             data[0:3] = U, vmins, vmaxs
 
         U, vmins, vmaxs = data
-        plot.set([u[ind] for u in U],
+        plot.set([u[:, ind] for u in U],
                  [vmin[ind] for vmin in vmins],
                  [vmax[ind] for vmax in vmaxs])
         fig.canvas.draw_idle()
@@ -282,7 +282,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             fig.patch.set_alpha(0.0)
 
             from matplotlib.animation import FuncAnimation
-            anim = FuncAnimation(fig, lambda ind: set_data(ind=ind), frames=len(U[0]),
+            anim = FuncAnimation(fig, lambda ind: set_data(ind=ind), frames=U[0].shape[1],
                                  interval=delay_between_frames, blit=False)
             plt.close(fig)
             return anim

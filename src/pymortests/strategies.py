@@ -68,12 +68,12 @@ def nothing(*args, **kwargs):
 
 def _np_arrays(length, dim, dtype=None):
     if dtype is None:
-        return hynp.arrays(dtype=np.float64, shape=(length, dim), elements=hy_float_array_elements) | \
-            hynp.arrays(dtype=np.complex128, shape=(length, dim), elements=hy_complex_array_elements)
+        return hynp.arrays(dtype=np.float64, shape=(dim, length), elements=hy_float_array_elements) | \
+            hynp.arrays(dtype=np.complex128, shape=(dim, length), elements=hy_complex_array_elements)
     if dtype is np.complex128:
-        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=hy_complex_array_elements)
+        return hynp.arrays(dtype=dtype, shape=(dim, length), elements=hy_complex_array_elements)
     if dtype is np.float64:
-        return hynp.arrays(dtype=dtype, shape=(length, dim), elements=hy_float_array_elements)
+        return hynp.arrays(dtype=dtype, shape=(dim, length), elements=hy_float_array_elements)
     raise RuntimeError(f'unsupported dtype={dtype}')
 
 

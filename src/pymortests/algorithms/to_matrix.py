@@ -217,10 +217,10 @@ def test_to_matrix_LowRankOperator(rng):
     n = 5
     r = 2
     L = rng.standard_normal((m, r))
-    Lva = NumpyVectorSpace.make_array(L.T)
+    Lva = NumpyVectorSpace.make_array(L)
     C = rng.standard_normal((r, r))
     R = rng.standard_normal((n, r))
-    Rva = NumpyVectorSpace.make_array(R.T)
+    Rva = NumpyVectorSpace.make_array(R)
 
     LR = LowRankOperator(Lva, C, Rva)
     assert_type_and_allclose(L @ C @ R.T, LR, 'dense')
@@ -237,10 +237,10 @@ def test_to_matrix_LowRankUpdatedOperator(rng):
     A = rng.standard_normal((m, n))
     Aop = NumpyMatrixOperator(A)
     L = rng.standard_normal((m, r))
-    Lva = NumpyVectorSpace.make_array(L.T)
+    Lva = NumpyVectorSpace.make_array(L)
     C = rng.standard_normal((r, r))
     R = rng.standard_normal((n, r))
-    Rva = NumpyVectorSpace.make_array(R.T)
+    Rva = NumpyVectorSpace.make_array(R)
     LR = LowRankOperator(Lva, C, Rva)
 
     op = LowRankUpdatedOperator(Aop, LR, 1, 1)
@@ -251,7 +251,7 @@ def test_to_matrix_LowRankUpdatedOperator(rng):
 def test_to_matrix_VectorArrayOperator(rng):
     V = rng.standard_normal((10, 2))
 
-    Vva = NumpyVectorSpace.make_array(V.T)
+    Vva = NumpyVectorSpace.make_array(V)
     Vop = VectorArrayOperator(Vva)
     assert_type_and_allclose(V, Vop, 'dense')
 
