@@ -122,10 +122,6 @@ gmsh = [
   "gmsh",
 ]
 # # Supported external solvers available on PyPI
-dune = [
-  "dune-xt[visualisation]>=2022.5.3; platform_system==\"Linux\" and platform_machine==\"x86_64\"",
-  "dune-gdt>=2022.5.3; platform_system==\"Linux\" and platform_machine==\"x86_64\"",
-]
 ngsolve = [
   "ngsolve",
 ]
@@ -134,7 +130,6 @@ scikit-fem = [
 ]
 # # Meta dependencies
 # install all optional dependencies, except those requiring a compiler toolchain to build
-# dune-gdt has no wheels for Python>=3.12, so we don't include it in full
 full = [
   "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,ngsolve,scikit-fem]",
 ]

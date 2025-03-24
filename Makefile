@@ -50,7 +50,6 @@ CI_EXTRAS= \
 	--extra gmsh \
 	--extra ngsolve \
 	--extra scikit-fem
-	# dune not available for Python 3.13
 
 ci_current_requirements:
 	uv pip compile  \
@@ -67,7 +66,6 @@ ci_current_requirements:
 ci_oldest_requirements:
 	uv pip compile  \
 		$(CI_EXTRAS) \
-		--extra dune \
 		--python-version 3.9 \
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \
@@ -99,7 +97,7 @@ CONDA_EXTRAS = \
 	--extras gui \
 	--extras jupyter \
 	--extras vtk
-	# dune, ngsolve, scikit-fem (no recent version) not available as conda-forge packages
+	# ngsolve, scikit-fem (no recent version) not available as conda-forge packages
 	# pytorch not available for win64
 	# docs-additional not needed
 	# gmsh is incompatible with pyside6>=6.4.3 needed for windows ci not to hang

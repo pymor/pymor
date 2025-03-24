@@ -10,7 +10,6 @@ import scipy.linalg as spla
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.projection import project
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.core.config import config
 from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import (
@@ -553,31 +552,3 @@ def test_issue_1276():
     v = B.source.ones()
 
     B.apply_inverse(v)
-
-
-if config.HAVE_DUNEGDT:
-    from dune.xt.la import IstlSparseMatrix, SparsityPatternDefault
-
-    from pymor.bindings.dunegdt import DuneXTMatrixOperator
-
-    def make_dunegdt_identity(N):
-        pattern = SparsityPatternDefault(N)
-        for n in range(N):
-            pattern.insert(n, n)
-        pattern.sort()
-        mat = IstlSparseMatrix(N, N, pattern)
-        for n in range(N):
-            mat.set_entry(n, n, 1.)
-        return DuneXTMatrixOperator(mat)
-
-    def test_dunegdt_identiy_apply():
-        op = make_dunegdt_identity(4)
-        U = op.source.ones(1)
-        V = op.apply(U)
-        assert (U - V).sup_norm() < 1e-14
-
-    def test_dunegdt_identiy_apply_inverse():
-        op = make_dunegdt_identity(4)
-        V = op.source.ones(1)
-        U = op.apply_inverse(V)
-        assert (U - V).sup_norm() < 1e-14

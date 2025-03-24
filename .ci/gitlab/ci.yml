@@ -34,7 +34,7 @@ stages:
     variables:
         PYMOR_HYPOTHESIS_PROFILE: ci
         PYMOR_PYTEST_EXTRA: ""
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
     cache:
         key: same_db_on_all_runners
         paths:
@@ -131,28 +131,28 @@ build fenics image:
 vanilla current:
     extends: .pytest
     variables:
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
 
 vanilla oldest:
     extends: .pytest
     variables:
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
     image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
 
 vanilla current weekly:
     extends: .pytest_weekly
     variables:
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
 
 vanilla oldest weekly:
     extends: .pytest_weekly
     variables:
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
     image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
 
@@ -179,28 +179,28 @@ mpi oldest:
 tutorials current:
     extends: .pytest
     variables:
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
     script: ./.ci/gitlab/test_tutorials.bash
 
 tutorials oldest:
     extends: .pytest
     variables:
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
     image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
     script: ./.ci/gitlab/test_tutorials.bash
 
 cpp_demo current:
     extends: .pytest
     variables:
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
     script: ./.ci/gitlab/test_cpp_demo.bash
 
 cpp_demo oldest:
     extends: .pytest
     variables:
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii dunegdt"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
     image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
     script: ./.ci/gitlab/test_cpp_demo.bash
 
@@ -208,16 +208,7 @@ ngsolve current:
     extends: .pytest
     variables:
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
-        PYMOR_CONFIG_DISABLE: "fenics scikit_fem dealii dunegdt"
-        PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
-    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
-    script: ./.ci/gitlab/test_vanilla.bash
-
-dunegdt current:
-    extends: .pytest
-    variables:
-        PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
+        PYMOR_CONFIG_DISABLE: "fenics scikit_fem dealii"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
@@ -226,7 +217,7 @@ scikit_fem current:
     extends: .pytest
     variables:
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve dealii dunegdt"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve dealii"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
@@ -235,7 +226,7 @@ scikit_fem oldest:
     extends: .pytest
     variables:
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
-        PYMOR_CONFIG_DISABLE: "fenics ngsolve dealii dunegdt"
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve dealii"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
@@ -244,7 +235,7 @@ fenics:
     extends: .pytest
     variables: 
         PYMOR_PYTEST_EXTRA: "-m 'not builtin'"
-        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
+        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     image: zivgitlab.wwu.io/pymor/pymor/ci-fenics:${CI_FENICS_IMAGE_TAG}
     script: 
@@ -255,7 +246,7 @@ fenics mpi:
     extends: .pytest
     variables:
         # PYMOR_PYTEST_EXTRA: "-m 'not builtin'"   # fails, needs to be fixed in mpi_run_demo_tests
-        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii dunegdt"
+        PYMOR_CONFIG_DISABLE: "ngsolve scikit_fem dealii"
         PYMOR_FIXTURES_DISABLE_BUILTIN: "1"
     retry:
         max: 2
@@ -299,7 +290,6 @@ submit coverage:
         - tutorials current
         - vanilla current
         - ngsolve current
-        - dunegdt current
         - scikit_fem current
         - fenics
         - fenics mpi
