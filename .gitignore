@@ -82,6 +82,7 @@ docs/source/*rst_extracted.py
 # these are managed by sphinx plugin
 docs/source/_static/require.js*
 docs/source/_static/standalone.js*
+.asv
 
 # notebooks
 .ipynb_checkpoints/

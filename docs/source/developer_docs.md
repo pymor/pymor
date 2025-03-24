@@ -284,3 +284,35 @@ defined in `.pre-commit-config.yaml` on every pull request.
 If the hooks change files, the changes are pushed back to the PR branch.
 [Configuration](https://pre-commit.ci/#configuration) is done
 via the `.pre-commit-config.yaml` file.
+
+### Performance tests
+
+The `benchmarks` directory contains a small suite of performance tests based on
+[airspeed velocity (asv)](https://asv.readthedocs.io/). The main purpose of these tests is to detect
+performance regressions during the development of pyMOR. We run periodic tests for all merge commits
+on `main` on a dedicated server. The results are published to https://docs.pymor.org/asv.
+It is also easily possible to run the tests locally, for instance, to monitor the performance of a
+feature branch. For further details, we refer to the [official documentation](https://asv.readthedocs.io/)
+of asv.
+
+#### Adding new performance tests
+
+Before adding a new performance test, you should carefully think about what specific question you
+want to answer with the test. As the tests are run on many commits, sometimes locally, the overall
+execution time of the test suite should not be too large. New tests should either focus on specific
+technical aspects of pyMOR's code base that are not covered by other tests, or particularly
+important algorithms, whose overall performance should be continuously monitored. If you decide to
+parametrize a test, keep in mind to make sure that the total amount of realizations of the test does
+not explode.
+
+Writing the actual tests is pretty straightforward (see [asv documentation](https://asv.readthedocs.io/)
+for advanced features). However, you should make sure that the same test code needs to work with all
+tested versions of pyMOR. This might make it necessary to have different test code paths in case
+pyMOR's API changes in way that is not backward compatible. To help select an appropriate code path,
+pyMOR defines `pymor.__asv_api_gen__`, which is a positive integer that should always be incremented
+in case of API breakage. We also increase `__asv_api_gen__` for each release to ensure that each
+release is identified by a unique `__asv_api_gen__` value.
+
+By default, asv invalidates old test results when the code for a specific test has been changed. To
+override this behavior, we manually set the `version` attribute in each test. `version` should only
+be increased when the actual test behavior is modified.

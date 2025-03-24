@@ -4,7 +4,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from typer import Argument, run
+from typer import Argument, Option, run
 
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.basic import *
@@ -31,6 +31,12 @@ def main(
     ),
     rbsize: int = Argument(..., help='Size of the reduced basis.'),
     test: int = Argument(..., help='Number of test parameters for reduction error estimation.'),
+    pickle: bool = Option(
+        True,
+        help='Pickle reduced model and error analysis results to files.'
+    ),
+    plot_err: bool = Option(False, help='Plot error'),
+    plot_error_sequence: bool = Option(False, help='Plot reduction error vs. basis size.'),
 ):
     """Reduced basis approximation of the heat equation."""
     # discretize
@@ -71,26 +77,29 @@ def main(
     # show results
     ##############
     print(results['summary'])
-    plot_reduction_error_analysis(results)
+    if plot_error_sequence:
+        plot_reduction_error_analysis(results)
 
     # write results to disk
     #######################
-    from pymor.core.pickle import dump
-    with open('reduced_model.out', 'wb') as f:
-        dump(rom, f)
-    with open('results.out', 'wb') as f:
-        dump(results, f)
+    if pickle:
+        from pymor.core.pickle import dump
+        with open('reduced_model.out', 'wb') as f:
+            dump(rom, f)
+        with open('results.out', 'wb') as f:
+            dump(results, f)
 
     # visualize reduction error for worst-approximated mu
     #####################################################
-    mumax = results['max_error_mus'][0, -1]
-    U = fom.solve(mumax)
-    U_RB = reductor.reconstruct(rom.solve(mumax))
-    if backend == 'fenics':  # right now the fenics visualizer does not support time trajectories
-        U = U[len(U) - 1].copy()
-        U_RB = U_RB[len(U_RB) - 1].copy()
-    fom.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                  separate_colorbars=True)
+    if plot_err:
+        mumax = results['max_error_mus'][0, -1]
+        U = fom.solve(mumax)
+        U_RB = reductor.reconstruct(rom.solve(mumax))
+        if backend == 'fenics':  # right now the fenics visualizer does not support time trajectories
+            U = U[len(U) - 1].copy()
+            U_RB = U_RB[len(U_RB) - 1].copy()
+        fom.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+                      separate_colorbars=True)
 
     return results
 
