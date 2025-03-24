@@ -6,6 +6,13 @@
 
 .md-typeset .admonition{
     overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 2rem;
+}
+
+.md-typeset .admonition.dropdown > .admonition-title {
+    padding-left: 2rem;
 }
 
 .output.text_html {
@@ -164,4 +171,18 @@ li[class*="toctree-l"] ul, li[class^="toctree-l"] ul {
 
 .active {
     display: block !important;
+}
+
+.admonition.toggle-hidden .admonition-title ~ * {
+    display: none;
+}
+
+button.toggle-button.toggle-button-hidden::before {
+    vertical-align: super;
+}
+
+@media only screen and (max-width: 44.9375em) {
+  .md-typeset pre {
+    margin: 0;
+  }
 }

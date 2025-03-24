@@ -81,6 +81,7 @@ docutils==0.21.2
     #   myst-parser
     #   pybtex-docutils
     #   sphinx
+    #   sphinx-togglebutton
     #   sphinxcontrib-bibtex
 executing==2.1.0
     # via stack-data
@@ -214,7 +215,7 @@ markdown-it-py==3.0.0
     #   mdit-py-plugins
     #   myst-parser
     #   rich
-markupsafe==3.0.2
+markupsafe==3.0.1
     # via
     #   jinja2
     #   nbconvert
@@ -415,7 +416,9 @@ scipy==1.14.1
 send2trash==1.8.3
     # via jupyter-server
 setuptools==75.6.0
-    # via jupyterlab
+    # via
+    #   jupyterlab
+    #   sphinx-togglebutton
 shellingham==1.5.4
     # via typer
 six==1.17.0
@@ -440,10 +443,13 @@ sphinx==7.3.7
     #   myst-parser
     #   sphinx-autoapi
     #   sphinx-material
+    #   sphinx-togglebutton
     #   sphinxcontrib-bibtex
 sphinx-autoapi==3.1.2
     # via pymor (./pyproject.toml)
 sphinx-material==0.0.36
+    # via pymor (./pyproject.toml)
+sphinx-togglebutton==0.3.2
     # via pymor (./pyproject.toml)
 sphinxcontrib-applehelp==2.0.0
     # via sphinx
@@ -536,5 +542,7 @@ webencodings==0.5.1
     #   tinycss2
 websocket-client==1.8.0
     # via jupyter-server
+wheel==0.45.1
+    # via sphinx-togglebutton
 zipp==3.21.0
     # via importlib-metadata
