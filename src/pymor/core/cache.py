@@ -517,6 +517,12 @@ def build_cache_key(obj):
         elif t is np.ndarray:
             if obj.dtype == object:
                 raise CacheKeyGenerationError('Cannot generate cache key for provided arguments')
+            # we need to upcast into the largest possible dtype, to ensure portable hashing
+            # e.g., numpy < 2 uses int32 per default on Windows, but int64 everywhere else
+            if np.issubdtype(obj.dtype, np.integer) or np.issubdtype(obj.dtype, np.floating):
+                return obj.astype(np.float64)
+            elif np.issubdtype(obj.dtype, np.complexfloating):
+                return obj.astype(np.complex128)
             return obj
         elif t in (list, tuple):
             return tuple(transform_obj(o) for o in obj)
