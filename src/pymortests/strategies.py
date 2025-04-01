@@ -25,9 +25,6 @@ if config.HAVE_FENICS:
 if config.HAVE_DEALII:
     from pymor_dealii.pymor.vectorarray import DealIIVectorSpace
 
-if config.HAVE_DUNEGDT:
-    from pymor.bindings.dunegdt import DuneXTVectorSpace
-
 if config.HAVE_NGSOLVE:
     import netgen.meshing as ngmsh
     import ngsolve as ngs
@@ -148,11 +145,6 @@ if config.HAVE_DEALII:
     def _dealii_vector_spaces(draw, np_data_list, compatible, count, dims):
         return [(DealIIVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
     _other_vector_space_types.append('dealii')
-
-if config.HAVE_DUNEGDT:
-    def _dunegdt_vector_spaces(draw, np_data_list, compatible, count, dims):
-        return [(DuneXTVectorSpace(d), ar) for d, ar in zip(dims, np_data_list)]
-    _other_vector_space_types.append('dunegdt')
 
 
 _picklable_vector_space_types = [] if BUILTIN_DISABLED else ['numpy', 'numpy_list', 'block']

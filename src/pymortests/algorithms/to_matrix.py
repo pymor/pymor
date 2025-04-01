@@ -8,7 +8,6 @@ import scipy.linalg as spla
 import scipy.sparse as sps
 
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.core.config import config
 from pymor.operators.block import BlockDiagonalOperator, BlockOperator
 from pymor.operators.constructions import (
     AdjointOperator,
@@ -267,25 +266,3 @@ def test_to_matrix_ZeroOperator():
 
     Zop = ZeroOperator(NumpyVectorSpace(n), NumpyVectorSpace(m))
     assert_type_and_allclose(Z, Zop, 'sparse')
-
-
-if config.HAVE_DUNEGDT:
-    from dune.xt.la import IstlSparseMatrix, SparsityPatternDefault
-
-    from pymor.bindings.dunegdt import DuneXTMatrixOperator
-
-    def test_to_matrix_DuneXTMatrixOperator(rng):
-        A = rng.standard_normal((2, 2))
-
-        pattern = SparsityPatternDefault(2)
-        for ii in range(2):
-            for jj in range(2):
-                pattern.insert(ii, jj)
-        pattern.sort()
-        mat = IstlSparseMatrix(2, 2, pattern)
-        for ii in range(2):
-            for jj in range(2):
-                mat.set_entry(ii, jj, A[ii][jj])
-        Aop = DuneXTMatrixOperator(mat)
-
-        assert_type_and_allclose(A, Aop, 'sparse')

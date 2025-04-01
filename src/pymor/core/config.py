@@ -57,28 +57,6 @@ def _get_fenics_version():
     return df.__version__
 
 
-def _get_dunegdt_version():
-    import importlib
-    version_ranges = {'dune-gdt': ('2021.1.2', '2023.2'), 'dune-xt': ('2021.1.2', '2023.2')}
-
-    def _get_version(dep_name):
-        min_version, max_version = version_ranges[dep_name]
-        module = importlib.import_module(dep_name.replace('-', '.'))
-        try:
-            version = module.__version__
-            if parse(version) < parse(min_version) or parse(version) >= parse(max_version):
-                warnings.warn(f'{dep_name} bindings have been tested for versions between '
-                              f'{min_version} and {max_version} (installed: {version}).')
-        except AttributeError:
-            warnings.warn(f'{dep_name} bindings have been tested for versions between '
-                          f'{min_version} and {max_version} (installed unknown version).')
-            version = None
-        return version
-
-    _get_version('dune-xt')
-    return _get_version('dune-gdt')
-
-
 def is_windows_platform():
     return sys.platform == 'win32' or sys.platform == 'cygwin'
 
@@ -161,7 +139,6 @@ def is_jupyter():
 
 _PACKAGES = {
     'DEALII': _get_version('pymor_dealii'),
-    'DUNEGDT': _get_dunegdt_version,
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
     'IPYPARALLEL': _get_version('ipyparallel'),
