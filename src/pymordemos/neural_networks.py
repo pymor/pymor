@@ -109,6 +109,45 @@ def main(
     outputs_absolute_errors = np.abs(outputs - outputs_red)
     outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
 
+    training_outputs = []
+    for mu in training_set:
+        training_outputs.append(fom.compute(output=True, mu=mu)['output'])
+    training_outputs = np.squeeze(np.array(training_outputs))
+
+    validation_outputs = []
+    for mu in validation_set:
+        validation_outputs.append(fom.compute(output=True, mu=mu)['output'])
+    validation_outputs = np.squeeze(np.array(validation_outputs))
+
+    output_reductor_data_driven = NeuralNetworkStatefreeOutputReductor(training_set=training_set,
+                                                                        training_outputs=training_outputs,
+                                                                        validation_set=validation_set,
+                                                                       validation_outputs=validation_outputs,
+                                                                        validation_loss=1e-5)
+    output_rom_data_driven = output_reductor_data_driven.reduce(restarts=100, log_loss_frequency=10)
+
+    outputs = []
+    outputs_red_data_driven = []
+    outputs_speedups_data_driven = []
+    print(f'Performing test on set of size {len(test_set)} ...')
+
+    for mu in test_set:
+        tic = time.perf_counter()
+        outputs.append(fom.compute(output=True, mu=mu)['output'])
+        time_fom = time.perf_counter() - tic
+
+        tic = time.perf_counter()
+        outputs_red_data_driven.append(output_rom_data_driven.compute(output=True, mu=mu)['output'])
+        time_red_data_driven = time.perf_counter() - tic
+
+        outputs_speedups_data_driven.append(time_fom / time_red_data_driven)
+
+    outputs = np.squeeze(np.array(outputs))
+    outputs_red_data_driven = np.squeeze(np.array(outputs_red))
+
+    outputs_absolute_errors_data_driven = np.abs(outputs - outputs_red_data_driven)
+    outputs_relative_errors_data_driven = np.abs(outputs - outputs_red_data_driven) / np.abs(outputs)
+
     print()
     print('Results for state approximation purely data-driven:')
     print(f'Average absolute error: {np.average(absolute_errors_data_driven)}')
@@ -121,6 +160,11 @@ def main(
     print(f'Average relative error: {np.average(outputs_relative_errors)}')
     print(f'Median of speedup: {np.median(outputs_speedups)}')
 
+    print()
+    print('Results for data-driven output approximation with `NeuralNetworkStatefreeOutputReductor`:')
+    print(f'Average absolute error: {np.average(outputs_absolute_errors_data_driven)}')
+    print(f'Average relative error: {np.average(outputs_relative_errors_data_driven)}')
+    print(f'Median of speedup: {np.median(outputs_speedups_data_driven)}')
 
 def create_fom(fv, grid_intervals):
     f = LincombFunction(
