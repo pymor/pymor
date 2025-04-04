@@ -215,12 +215,22 @@ class NeuralNetworkReductor(BasicObject):
 
         if self.validation_set is None:
             number_validation_snapshots = int(len(self.training_data) * self.validation_ratio)
-            # randomly shuffle training data before splitting into two sets
-            get_rng().shuffle(self.training_data)
-            # split training snapshots into validation and training snapshots
-            self.validation_data = self.training_data[0:number_validation_snapshots]
-            self.validation_set = [data[0] for data in self.validation_data]
-            self.training_data = self.training_data[number_validation_snapshots:]
+            if self.is_stationary:
+                # randomly shuffle training data before splitting into two sets
+                get_rng().shuffle(self.training_data)
+                # split training snapshots into validation and training snapshots
+                self.validation_data = self.training_data[0:number_validation_snapshots]
+                self.validation_set = [data[0] for data in self.validation_data]
+                self.training_data = self.training_data[number_validation_snapshots:]
+            else:
+                # randomly shuffle training data before splitting into two sets
+                get_rng().shuffle(self.training_data)
+                # split training snapshots into validation and training snapshots
+                self.validation_data = self.training_data[0:number_validation_snapshots]
+                self.validation_set = [data[0] for data in self.validation_data]
+                self.training_data = self.training_data[number_validation_snapshots:]
+
+
 
 
         # compute validation snapshots if not given as input
@@ -533,7 +543,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
                          validation_ratio=validation_ratio, T=T, nt=nt, scale_inputs=scale_inputs,
                          scale_outputs=scale_outputs)
         if not fom:
-            self.dim_output = training_outputs[0].dim
+            self.dim_output = training_outputs[0].size
         else:
             self.dim_output = fom.dim_output
 
@@ -543,12 +553,11 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         """Compute the training samples (the outputs to the parameters of the training set)."""
         with self.logger.block('Computing training samples ...'):
             self.training_data = []
-            for datum in self.training_set:
+            for i, mu in enumerate(self.training_set):
                 if not self.fom:
-                    mu, output = datum
-                    samples = self._compute_sample(mu, output=output)
+                    samples = self._compute_sample(mu, output=self.training_outputs[i*self.nt:(i+1)*self.nt])
                 else:
-                    samples = self._compute_sample(datum)
+                    samples = self._compute_sample(mu)
                 for sample in samples:
                     self._update_scaling_parameters(sample)
                 self.training_data.extend(samples)
@@ -558,12 +567,11 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         with self.logger.block('Computing validation samples ...'):
 
             self.validation_data = []
-            for datum in self.validation_set:
+            for i, mu in enumerate(self.validation_set):
                 if not self.fom:
-                    mu, output = datum
-                    samples = self._compute_sample(mu, output=output)
+                    samples = self._compute_sample(mu, output=self.validation_outputs[i*self.nt:(i+1)*self.nt])
                 else:
-                    samples = self._compute_sample(datum)
+                    samples = self._compute_sample(mu)
                 for sample in samples:
                     self._update_scaling_parameters(sample)
                 self.validation_data.extend(samples)
@@ -579,10 +587,10 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
 
     def _compute_sample(self, mu, output=None):
         """Transform parameter and corresponding output to tensors."""
-        if output:
-            output_size = len(output)
-        else:
+        if output is None:
             output = self.fom.output(mu).flatten()
+        else:
+            output = output.flatten()
 
         if not self.is_stationary:
             output_size = output.shape[0]
@@ -622,7 +630,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
             parameters = self.fom.parameters
             name = self.fom.name
         else:
-            parameters = self.training_set[0][0].parameters
+            parameters = self.training_set[0].parameters
             name = 'data_driven'
 
         with self.logger.block('Building ROM ...'):
