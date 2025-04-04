@@ -437,6 +437,21 @@ class Mu(FrozenDict):
                 return False
         return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
 
+    def __hash__(self):
+        # Convert each value (which is a numpy array by design) into a tuple so it becomes hashable
+        key_value_tuples = []
+        for key, value in self.items():
+            # Ensure each value is converted to a tuple (numpy arrays are not hashable)
+            value_tuple = tuple(value)
+            key_value_tuples.append((key, value_tuple))
+
+        # Sort the list of (key, value_tuple) to ensure consistent ordering
+        # ensures that the hash is the same regardless of the order of keys
+        sorted_items = sorted(key_value_tuples)
+
+        # Create a hash from the sorted list of items
+        return hash(tuple(sorted_items))
+
     def __neg__(self):
         return Mu({key: -value for key, value in self.items()})
 
