@@ -416,7 +416,7 @@ def _compute_errors(mu, fom, reductor, error_estimator, error_norms, condition, 
             norms[i_norm] = n
 
     for i_N, N in enumerate(basis_sizes):
-        rom = reductor.reduce(dims={k: N for k in reductor.bases})
+        rom = reductor.reduce(dims=dict.fromkeys(reductor.bases, N))
         result = rom.compute(solution=True, solution_error_estimate=error_estimator, mu=mu)
         u = result['solution']
         if error_estimator:
