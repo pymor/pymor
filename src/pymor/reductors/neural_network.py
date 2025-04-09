@@ -649,6 +649,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         return rom
 
 class NeuralNetworkLSTMReductor(NeuralNetworkReductor):
+
     """Reduced Basis reductor for instationary problems relying on LSTM neural networks.
 
     This is a reductor that constructs a reduced basis using proper
@@ -728,12 +729,10 @@ class NeuralNetworkLSTMReductor(NeuralNetworkReductor):
         # dimension of the parameter space and the reduced basis size
         if self.is_stationary:
             return [self.fom.parameters.dim, hidden_dimension, len(self.reduced_basis), ]
-        else:
-            return [self.fom.parameters.dim + 1, hidden_dimension, len(self.reduced_basis), ]
-
 
 class NeuralNetworkLSTMStatefreeOutputReductor(NeuralNetworkStatefreeOutputReductor,
                                                NeuralNetworkLSTMReductor):
+
     """Output reductor relying on LSTM neural networks.
 
     This is a reductor that trains an LSTM neural network that approximates

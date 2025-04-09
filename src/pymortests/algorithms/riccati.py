@@ -120,7 +120,7 @@ def test_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     assert relative_residual(A, E, B, C, R, S, _chol(X), trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new):
-        assert type(mat1) == type(mat2)
+        assert type(mat1) is type(mat2)
         assert np.all(mat1 == mat2)
 
 
@@ -179,7 +179,7 @@ def test_pos_ricc_dense(n, m, p, with_E, with_R, with_S, trans, solver, rng):
     assert relative_residual(A, E, B, C, -R, S, _chol(X), trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new):
-        assert type(mat1) == type(mat2)
+        assert type(mat1) is type(mat2)
         assert np.all(mat1 == mat2)
 
 
@@ -231,19 +231,19 @@ def test_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
 
     Aop = NumpyMatrixOperator(A)
     Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B.T)
-    Cva = Aop.source.from_numpy(C)
-    Sva = Aop.source.from_numpy(S if not trans else S.T) if with_S else None
+    Bva = Aop.source.from_numpy(B)
+    Cva = Aop.source.from_numpy(C.T)
+    Sva = Aop.source.from_numpy(S.T if not trans else S) if with_S else None
 
     Zva = solve_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
 
     assert len(Zva) <= n
 
-    Z = Zva.to_numpy().T
+    Z = Zva.to_numpy()
     assert relative_residual(A, E, B, C, R, S, Z, trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new):
-        assert type(mat1) == type(mat2)
+        assert type(mat1) is type(mat2)
         if sps.issparse(mat1):
             mat1 = mat1.toarray()
             mat2 = mat2.toarray()
@@ -296,21 +296,21 @@ def test_pos_ricc_lrcf(n, m, p, with_E, with_R, with_S, trans, solver, rng):
 
     Aop = NumpyMatrixOperator(A)
     Eop = NumpyMatrixOperator(E) if with_E else None
-    Bva = Aop.source.from_numpy(B.T)
-    Cva = Aop.source.from_numpy(C)
-    Sva = Aop.source.from_numpy(S if not trans else S.T) if with_S else None
+    Bva = Aop.source.from_numpy(B)
+    Cva = Aop.source.from_numpy(C.T)
+    Sva = Aop.source.from_numpy(S.T if not trans else S) if with_S else None
 
     Zva = solve_pos_ricc_lrcf(Aop, Eop, Bva, Cva, R, Sva, trans=trans, options=solver)
 
     assert len(Zva) <= n
 
-    Z = Zva.to_numpy().T
+    Z = Zva.to_numpy()
     if not with_R:
         R = np.eye(p if not trans else m)
     assert relative_residual(A, E, B, C, -R, S, Z, trans) < 1e-8
 
     for mat1, mat2 in zip(mat_old, mat_new):
-        assert type(mat1) == type(mat2)
+        assert type(mat1) is type(mat2)
         if sps.issparse(mat1):
             mat1 = mat1.toarray()
             mat2 = mat2.toarray()

@@ -269,10 +269,10 @@ def format_attributes_section(section, lines):
 
 def format_generic_section(section, lines, use_admonition=False):
     if use_admonition:
-        header = '.. admonition:: %s' % section
+        header = f'.. admonition:: {section}'
         lines = indent(lines, 3)
     else:
-        header = '.. rubric:: %s' % section
+        header = f'.. rubric:: {section}'
     if lines:
         return [header, ''] + lines + ['']
     else:

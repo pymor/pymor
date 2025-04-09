@@ -8,7 +8,7 @@ This module provides a few methods and classes for visualizing data
 associated to grids. We use the `Qt <https://www.qt-project.org>`_ widget
 toolkit for the GUI.
 """
-from pymor.core.config import config
+from pymor.core.config import config, is_windows_platform
 from pymor.discretizers.builtin.grids.oned import OnedGrid
 
 config.require('QT')
@@ -190,7 +190,7 @@ class PlotMainWindow(QWidget):
         self.set(0)
 
     def set(self, ind):
-        self.plot.set([u[ind] for u in self.U],
+        self.plot.set([u[:, ind] for u in self.U],
                       [vmin[ind] for vmin in self.vmins],
                       [vmax[ind] for vmax in self.vmaxs])
 
@@ -311,6 +311,9 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     assert isinstance(U, VectorArray) \
         or (isinstance(U, tuple) and all(isinstance(u, VectorArray) for u in U)
             and all(len(u) == len(U[0]) for u in U))
+    if isinstance(U, VectorArray):
+        U = (U,)
+
     if isinstance(legend, str):
         legend = (legend,)
     assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
@@ -324,11 +327,11 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             with NamedTemporaryFile(mode='wb', delete=False) as f:
                 dump(data, f)
                 filename = f.name
-            subprocess.Popen(['python3', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
+            subprocess.Popen([sys.executable,
+                              '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
-    U = (U.to_numpy().astype(np.float64, copy=False),) if isinstance(U, VectorArray) else \
-        tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
+    U = tuple(u.to_numpy().astype(np.float64, copy=False) for u in U)
 
     if backend == 'gl':
         if not config.HAVE_GL:
@@ -420,7 +423,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     from pymor.discretizers.builtin.gui.visualizers import _vmins_vmaxs
     vmins, vmaxs = _vmins_vmaxs(U, separate_colorbars, rescale_colorbars)
 
-    _launch_qt_app(lambda: PlotMainWindow(U, vmins, vmaxs, PlotWidget(), length=len(U[0]), title=title,
+    _launch_qt_app(lambda: PlotMainWindow(U, vmins, vmaxs, PlotWidget(), length=U[0].shape[1], title=title,
                                           save_action=save_action),
                    block)
 
@@ -469,6 +472,9 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         or (isinstance(U, tuple)
             and all(isinstance(u, VectorArray) for u in U)
             and all(len(u) == len(U[0]) for u in U))
+    if isinstance(U, VectorArray):
+        U = (U,)
+
     if isinstance(legend, str):
         legend = (legend,)
     assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
@@ -481,15 +487,16 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             with NamedTemporaryFile(mode='wb', delete=False) as f:
                 dump(data, f)
                 filename = f.name
-            subprocess.Popen(['python3', '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
+            subprocess.Popen([sys.executable,
+                              '-m', 'pymor.scripts.pymor_vis', '--delete', filename])
             return
 
-    U = (U.to_numpy(),) if isinstance(U, VectorArray) else tuple(u.to_numpy() for u in U)
+    U = tuple(u.to_numpy() for u in U)
     vmins, vmaxs = _vmins_vmaxs(U, separate_plots, rescale_axes)
 
     from pymor.discretizers.builtin.gui.qt.matplotlib import Matplotlib1DWidget
     plot_widget = Matplotlib1DWidget(U, None, grid, len(U), legend=legend, codim=codim,
                                      separate_plots=separate_plots, columns=columns)
 
-    _launch_qt_app(lambda: PlotMainWindow(U, vmins, vmaxs, plot_widget, title=title, length=len(U[0])),
+    _launch_qt_app(lambda: PlotMainWindow(U, vmins, vmaxs, plot_widget, title=title, length=U[0].shape[1]),
                    block)

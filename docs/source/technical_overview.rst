@@ -49,9 +49,7 @@ operating on objects of the following types:
     implementation of the underlying backend. For |NumpyVectorSpace|, the
     only required datum is the dimension of the contained vectors.
     |VectorSpaces| for other backends could, e.g., hold a socket for
-    communication with a specific PDE solver instance. Additionally,
-    each |VectorSpace| has a string |id|, defaulting to `None`, which
-    is used to signify the mathematical identity of the given space.
+    communication with a specific PDE solver instance.
 
     Two arrays in pyMOR are compatible (e.g. can be added) if they are from
     the same |VectorSpace|. If a |VectorArray| is contained in a given
@@ -64,7 +62,6 @@ operating on objects of the following types:
     .. |copied|           replace:: :meth:`copied <pymor.vectorarrays.interface.VectorArray.copy>`
     .. |dimension|        replace:: :attr:`dimension <pymor.vectorarrays.interface.VectorArray.dim>`
     .. |empty|            replace:: :meth:`~pymor.vectorarrays.interface.VectorSpace.empty`
-    .. |id|               replace:: :meth:`~pymor.vectorarrays.interface.VectorSpace.id`
     .. |indexed|          replace:: :meth:`!indexed`
     .. |inner products|   replace:: :meth:`inner products <pymor.vectorarrays.interface.VectorArray.inner>`
     .. |lincomb|          replace:: :meth:`~pymor.vectorarrays.interface.VectorArray.lincomb`
@@ -124,7 +121,8 @@ operating on objects of the following types:
     algorithms for |solving| the given problem, returning |VectorArrays|
     from the |solution_space|. The solution can be |cached|, s.t.
     subsequent solving of the problem for the same |parameter values| reduces
-    to looking up the solution in pyMOR's cache.
+    to looking up the solution in pyMOR's cache. To get an overview, which
+    methods can be cached in pyMOR, use :func:`~pymor.core.cache.print_cached_methods`.
 
     While special model classes may be implemented which make use of
     the specific types of operators they contain (e.g. using some external

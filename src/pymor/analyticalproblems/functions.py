@@ -180,7 +180,10 @@ class ConstantFunction(Function):
         return f'{self.name}: x -> {self.value}'
 
     def evaluate(self, x, mu=None):
-        x = np.array(x, copy=False, ndmin=1)
+        x = np.asarray(x)
+        if x.ndim == 0:
+            x.shape = (1,)
+        assert x.ndim > 0
         assert x.shape[-1] == self.dim_domain
         if x.ndim == 1:
             return np.array(self.value)
@@ -234,7 +237,10 @@ class GenericFunction(Function):
 
     def evaluate(self, x, mu=None):
         assert self.parameters.assert_compatible(mu)
-        x = np.array(x, copy=False, ndmin=1)
+        x = np.asarray(x)
+        if x.ndim == 0:
+            x.shape = (1,)
+        assert x.ndim > 0
         assert x.shape[-1] == self.dim_domain
 
         if self.parametric:
@@ -531,12 +537,12 @@ class EmpiricalInterpolatedFunction(LincombFunction):
         assert interpolation_matrix.shape == (len(interpolation_points),) * 2
         assert all(isinstance(mu, Mu) for mu in snapshot_mus)
         assert isinstance(snapshot_coefficients, np.ndarray)
-        assert snapshot_coefficients.shape == (len(interpolation_points), len(snapshot_mus))
+        assert snapshot_coefficients.shape == (len(snapshot_mus), len(interpolation_points))
         assert (evaluation_points is None) == (basis_evaluations is None)
         assert evaluation_points is None or isinstance(evaluation_points, np.ndarray) and \
             evaluation_points.ndim == 2 and evaluation_points.shape[1] == function.dim_domain
         assert basis_evaluations is None or isinstance(basis_evaluations, np.ndarray) and \
-            basis_evaluations.shape == (len(interpolation_points), len(evaluation_points)) + function.shape_range
+            basis_evaluations.shape == (len(evaluation_points), len(interpolation_points))
 
         self.__auto_init(locals())
         functions = [EmpiricalInterpolatedFunctionBasisFunction(self, i) for i in range(len(interpolation_points))]
@@ -569,7 +575,7 @@ class EmpiricalInterpolatedFunction(LincombFunction):
         x.flags.writeable = False
         self._last_evaluation_points = x
         snapshot_evaluations = np.array([self.function.evaluate(x, mu=mu) for mu in self.snapshot_mus])
-        self._last_basis_evaluations = self.snapshot_coefficients @ snapshot_evaluations.T
+        self._last_basis_evaluations = snapshot_evaluations @ self.snapshot_coefficients
 
 
 class EmpiricalInterpolatedFunctionFunctional(ParameterFunctional):
@@ -594,4 +600,4 @@ class EmpiricalInterpolatedFunctionBasisFunction(Function):
 
     def evaluate(self, x, mu=None):
         self.interpolated_function._update_evaluation_points(x)
-        return self.interpolated_function._last_basis_evaluations[self.index].copy()
+        return self.interpolated_function._last_basis_evaluations[:, self.index].copy()

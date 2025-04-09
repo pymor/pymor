@@ -52,7 +52,7 @@ class StationaryModel(Model):
         to the model which forwards its arguments to the
         visualizer's `visualize` method.
     output_d_mu_use_adjoint
-        If `True`, use adjoint solution for computing ouput gradients
+        If `True`, use adjoint solution for computing output gradients
         (default behavior). See Section 1.6.2 in :cite:`HPUU09` for more
         details.
     name
@@ -121,10 +121,10 @@ class StationaryModel(Model):
             for (parameter, size) in self.parameters.items():
                 for index in range(size):
                     output_partial_dmu = self.output_functional.d_mu(parameter, index).apply(
-                        data['solution'], mu=mu).to_numpy()[0]
+                        data['solution'], mu=mu).to_numpy()[:, 0]
                     lhs_d_mu = self.operator.d_mu(parameter, index).apply2(
                         dual_solutions, data['solution'], mu=mu)[:, 0]
-                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[:, 0]
+                    rhs_d_mu = self.rhs.d_mu(parameter, index).apply_adjoint(dual_solutions, mu=mu).to_numpy()[0, :]
                     sensitivities[parameter, index] = (output_partial_dmu + rhs_d_mu - lhs_d_mu).reshape((1, -1))
             data['output_d_mu'] = OutputDMuResult(sensitivities)
             quantities.remove('output_d_mu')
@@ -314,7 +314,6 @@ class InstationaryModel(Model):
 
     def _compute(self, quantities, data, mu=None):
         if 'solution' in quantities:
-            mu = mu.with_(t=0.)
             U0 = self.initial_data.as_range_array(mu)
             U = self.time_stepper.solve(operator=self.operator,
                                         rhs=None if isinstance(self.rhs, ZeroOperator) else self.rhs,

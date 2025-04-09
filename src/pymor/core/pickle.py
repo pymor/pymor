@@ -15,13 +15,12 @@ implementation details of CPython to achieve its goals.
 """
 
 import marshal
+import opcode
 import pickle
 import platform
 import sys
 from io import BytesIO as IOtype
 from types import CodeType, FunctionType, ModuleType
-
-import opcode
 
 from pymor.core.exceptions import UnpicklableError
 
@@ -31,31 +30,54 @@ PROTOCOL = pickle.HIGHEST_PROTOCOL
 PYTHON_311_OR_NEWER = int(sys.version_info.minor) >= 3.11
 
 
+class PyMORPickler(pickle.Pickler):
+
+    def persistent_id(self, obj):
+        if obj.__class__ is FunctionType:
+            if obj.__module__ != '__main__':
+                try:
+                    return b'A' + pickle.dumps(obj)
+                except (AttributeError, TypeError, PicklingError):
+                    return b'B' + dumps_function(obj)
+            else:
+                return b'B' + dumps_function(obj)
+        else:
+            return None
+
+
+class PyMORUnpickler(pickle.Unpickler):
+
+    def persistent_load(self, pid):
+        mode, data = pid[0], pid[1:]
+        if mode == b'A'[0]:
+            return pickle.loads(data)
+        elif mode == b'B'[0]:
+            return loads_function(data)
+        else:
+            raise UnpicklingError
+
+
 # on CPython provide pickling methods which use
 # dumps_function in case pickling of a function fails
 if platform.python_implementation() == 'CPython':
 
     def dump(obj, file, protocol=None):
-        pickler = pickle.Pickler(file, protocol=protocol or PROTOCOL)
-        pickler.persistent_id = _function_pickling_handler
+        pickler = PyMORPickler(file, protocol=protocol or PROTOCOL)
         pickler.dump(obj)
 
     def dumps(obj, protocol=None):
         file = IOtype()
-        pickler = pickle.Pickler(file, protocol=protocol or PROTOCOL)
-        pickler.persistent_id = _function_pickling_handler
+        pickler = PyMORPickler(file, protocol=protocol or PROTOCOL)
         pickler.dump(obj)
         return file.getvalue()
 
     def load(file):
-        unpickler = pickle.Unpickler(file)
-        unpickler.persistent_load = _function_unpickling_handler
+        unpickler = PyMORUnpickler(file)
         return unpickler.load()
 
     def loads(str):
         file = IOtype(str)
-        unpickler = pickle.Unpickler(file)
-        unpickler.persistent_load = _function_unpickling_handler
+        unpickler = PyMORUnpickler(file)
         return unpickler.load()
 
 else:
@@ -169,26 +191,3 @@ def loads_function(s):
     r.__kwdefaults__ = kwdefaults
     r.__annotations__ = annotations
     return r
-
-
-def _function_pickling_handler(f):
-    if f.__class__ is FunctionType:
-        if f.__module__ != '__main__':
-            try:
-                return b'A' + pickle.dumps(f)
-            except (AttributeError, TypeError, PicklingError):
-                return b'B' + dumps_function(f)
-        else:
-            return b'B' + dumps_function(f)
-    else:
-        return None
-
-
-def _function_unpickling_handler(persid):
-    mode, data = persid[0], persid[1:]
-    if mode == b'A'[0]:
-        return pickle.loads(data)
-    elif mode == b'B'[0]:
-        return loads_function(data)
-    else:
-        raise UnpicklingError

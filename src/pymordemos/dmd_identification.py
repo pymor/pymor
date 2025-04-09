@@ -17,14 +17,14 @@ def main(
     A = get_rng().random((n, n))
     A = A / np.linalg.norm(A)
     print(f'A: {A}')
-    X = np.zeros((M + 1, n))
+    X = np.zeros((n, M + 1))
     x = np.ones(n)
 
-    X[0] = x
+    X[:, 0] = x
 
     for i in range(M):
         x = A @ x
-        X[i + 1] = x
+        X[:, i + 1] = x
 
     Xva = NumpyVectorSpace.from_numpy(X)
 

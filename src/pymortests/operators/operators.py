@@ -36,7 +36,7 @@ from pymortests.fixtures.operator import MonomOperator
 from pymortests.strategies import valid_inds, valid_inds_of_same_length
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_selection_op():
     p1 = MonomOperator(1)
     select_rhs_functional = GenericParameterFunctional(
@@ -50,7 +50,7 @@ def test_selection_op():
         name='foo'
     )
     x = np.linspace(-1., 1., num=3)
-    vx = p1.source.make_array(x[:, np.newaxis])
+    vx = p1.source.make_array(x[np.newaxis, :])
     assert np.allclose(p1.apply(vx).to_numpy(),
                        s1.apply(vx, mu=s1.parameters.parse(0)).to_numpy())
 
@@ -70,18 +70,18 @@ def test_selection_op():
     assert s2._get_operator_number(s2.parameters.parse({'nrrhs': 9})) == 3
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_lincomb_op():
     p1 = MonomOperator(1)
     p2 = MonomOperator(2)
     p12 = p1 + p2
     p0 = p1 - p1
     x = np.linspace(-1., 1., num=3)
-    vx = p1.source.make_array(x[:, np.newaxis])
+    vx = p1.source.make_array(x[np.newaxis, :])
     one = p1.source.make_array([1])
     assert np.allclose(p0.apply(vx).to_numpy(), [0.])
-    assert np.allclose(p12.apply(vx).to_numpy(), (x * x + x)[:, np.newaxis])
-    assert np.allclose((p1 * 2.).apply(vx).to_numpy(), (x * 2.)[:, np.newaxis])
+    assert np.allclose(p12.apply(vx).to_numpy(), (x * x + x)[np.newaxis, :])
+    assert np.allclose((p1 * 2.).apply(vx).to_numpy(), (x * 2.)[np.newaxis, :])
     with pytest.raises(AssertionError):
         p2.jacobian(vx)
     for i in range(len(vx)):
@@ -99,14 +99,14 @@ def test_lincomb_op():
         assert almost_equal(pa, p.apply(vx)).all()
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_lincomb_op_with_zero_coefficients():
     p1 = MonomOperator(1)
     p2 = MonomOperator(2)
     p10 = p1 + 0 * p2
     p0 = 0 * p1 + 0 * p1
     x = np.linspace(-1., 1., num=3)
-    vx = p1.source.make_array(x[:, np.newaxis])
+    vx = p1.source.make_array(x[np.newaxis, :])
 
     pc1 = NumpyMatrixOperator(np.eye(p1.source.dim))
     pc2 = NumpyMatrixOperator(2*np.eye(p1.source.dim))
@@ -130,7 +130,7 @@ def test_lincomb_op_with_zero_coefficients():
     assert almost_equal(pc10.apply_adjoint(vx), pc1.apply_adjoint(vx)).all()
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_lincomb_adjoint():
     op = LincombOperator([NumpyMatrixOperator(np.eye(10)), NumpyMatrixOperator(np.eye(10))],
                          [1+3j, ExpressionParameterFunctional('c[0] + 3', {'c': 1})])
@@ -143,7 +143,7 @@ def test_lincomb_adjoint():
     assert np.all(almost_equal(V, VVV))
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_identity_lincomb():
     space = NumpyVectorSpace(10)
     identity = IdentityOperator(space)
@@ -158,7 +158,7 @@ def test_identity_lincomb():
     assert almost_equal(ones * 0.5, idid_.apply_inverse_adjoint(ones))
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_identity_numpy_lincomb():
     n = 2
     space = NumpyVectorSpace(n)
@@ -172,7 +172,7 @@ def test_identity_numpy_lincomb():
             assert np.array_equal(mat1, mat2)
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_block_identity_lincomb():
     space = NumpyVectorSpace(10)
     space2 = BlockVectorSpace([space, space])
@@ -187,7 +187,7 @@ def test_block_identity_lincomb():
     assert almost_equal(ones2 * 0.5, idid.apply_inverse_adjoint(ones2))
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_bilin_functional():
     space = NumpyVectorSpace(10)
     scalar = NumpyVectorSpace(1)
@@ -210,7 +210,7 @@ def test_bilin_functional():
     assert almost_equal(four_s, bilin_op.apply(two_v))
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_bilin_prod_functional():
     from pymor.operators.constructions import VectorFunctional
     space = NumpyVectorSpace(10)
@@ -499,36 +499,36 @@ def test_InverseAdjointOperator(operator_with_arrays):
         pass
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_vectorarray_op_apply_inverse(rng):
     O = rng.random((5, 5))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
     V = op.range.random()
     U = op.apply_inverse(V)
     v = V.to_numpy()
-    u = spla.solve(O.T, v.ravel())
+    u = spla.solve(O, v.ravel())
     assert np.all(almost_equal(U, U.space.from_numpy(u), rtol=1e-10))
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_vectorarray_op_apply_inverse_lstsq(rng):
-    O = rng.random((3, 5))
+    O = rng.random((5, 3))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O))
     V = op.range.random()
     U = op.apply_inverse(V, least_squares=True)
     v = V.to_numpy()
-    u = spla.lstsq(O.T, v.ravel())[0]
+    u = spla.lstsq(O, v.ravel())[0]
     assert np.all(almost_equal(U, U.space.from_numpy(u)))
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_adjoint_vectorarray_op_apply_inverse_lstsq(rng):
-    O = rng.random((3, 5))
+    O = rng.random((5, 3))
     op = VectorArrayOperator(NumpyVectorSpace.make_array(O), adjoint=True)
     V = op.range.random()
     U = op.apply_inverse(V, least_squares=True)
     v = V.to_numpy()
-    u = spla.lstsq(O, v.ravel())[0]
+    u = spla.lstsq(O.T, v.ravel())[0]
     assert np.all(almost_equal(U, U.space.from_numpy(u)))
 
 
@@ -542,7 +542,7 @@ def test_as_range_array(operator_with_arrays):
     assert np.all(almost_equal(array.lincomb(U.to_numpy()), op.apply(U, mu=mu)))
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_issue_1276():
     from pymor.operators.block import BlockOperator
     from pymor.operators.constructions import IdentityOperator

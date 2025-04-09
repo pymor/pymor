@@ -478,7 +478,7 @@ def extend_basis(U, basis, product=None, method='gram_schmidt', pod_modes=1, pod
         basis.append(U, remove_from_other=(not copy_U))
         gram_schmidt(basis, offset=basis_length, product=product, copy=False, check=False)
     elif method == 'pod':
-        U_proj_err = U - basis.lincomb(U.inner(basis, product))
+        U_proj_err = U - basis.lincomb(basis.inner(U, product))
 
         basis.append(pod(U_proj_err, modes=pod_modes, product=product, orth_tol=np.inf)[0])
 

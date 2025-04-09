@@ -1,0 +1,118 @@
+pyMOR 2024.1 (July 8, 2024)
+---------------------------
+
+We are proud to announce the release of pyMOR 2024.1!
+
+The main new features are:
+
+* vector fitting
+
+* successive constraints method
+
+* shifted Cholesky QR algorithm
+
+* improved randomized range finder
+
+* additional tutorials and MOR methods overview
+
+pyMOR 2024.1 contains contributions by Maximilian Bindhak and Art Pelling.
+See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more
+details.
+
+
+Main new features
+^^^^^^^^^^^^^^^^^
+
+Vector fitting
+~~~~~~~~~~~~~~
+We added an implementation of vector fitting
+`[#2214] <https://github.com/pymor/pymor/pull/2214>`_,
+a least-squares data-driven method for frequency-response data of linear
+time-invariant systems.
+This addition complements our existing methods:
+interpolatory Loewner method (:class:`~pymor.reductors.loewner.LoewnerReductor`)
+and mixed greedy/least-squares AAA algorithm
+(:class:`~pymor.reductors.aaa.PAAAReductor`).
+
+Successive constraints method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+We implemented the successive constraints method, which allows
+to efficiently compute upper and lower bounds for the coercivity constant of
+parameter-separable and coercive problems by means of linear programs
+`[#1989] <https://github.com/pymor/pymor/pull/1989>`_.
+The respective |ParameterFunctionals| are constructed within a greedy algorithm
+that iteratively determines a set of parameters used in the construction of the
+estimates. The usage of the successive constraints method is showcased in a demo.
+
+Shifted Cholesky QR algorithm
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+We added an implementation of the shifted Cholesky QR algorithm
+`[#2177] <https://github.com/pymor/pymor/pull/2177>`_,
+which has potential to exploit higher performance linear algebra routines
+compared to the Gram-Schmidt algorithm
+(:func:`~pymor.algorithms.gram_schmidt.gram_schmidt`).
+
+Improved randomized range finder
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The :mod:`~pymor.algorithms.rand_la` module has seen various improvements.
+In particular, the `adaptive_rrf` and `rrf` methods have been merged into
+a single :class:`~pymor.algorithms.rand_la.RandomizedRangeFinder` class,
+which supports both power iterations and adaptive error-estimator based
+range approximation `[#1753] <https://github.com/pymor/pymor/pull/1753>`_.
+
+Improved documentation
+~~~~~~~~~~~~~~~~~~~~~~
+pyMOR's user documentation now features an overview of the most important
+MOR methods implemented in the library. Each method is accompanied by a
+short code snippet demonstrating its use
+`[#2266] <https://github.com/pymor/pymor/pull/2266>`_.
+Additionally, we have added an in-depth tutorial on interpolatory MOR
+`[#2153] <https://github.com/pymor/pymor/pull/2153>`_.
+The PDE-constraint optimization tutorial has been enhanced with a section
+on trust-region methods `[#2181] <https://github.com/pymor/pymor/pull/2181>`_.
+
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Improved Model interface and implementation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For `Model` interface methods that return NumPy arrays, the shape of these
+arrays is now clearly defined `[#2278] <https://github.com/pymor/pymor/pull/2278>`_:
+`estimate_error` always returns a 1D NumPy array, where the index corresponds to
+time. `estimate_output_error` always returns a 2D NumPy array, where axis 0
+corresponds to time and axis 1 corresponds to the output component. The
+`return_vector` parameter has been removed.
+
+In order to have consistent behavior for time-dependent models, the
+`solution_d_mu` option of `compute` now returns a dict of the form
+`{(parameter, index): sensitivity}` instead of appending solution sensitivities
+for different parameter indices to a single array. `output_d_mu` now always
+returns a frozen dict-like object of the form `{(parameter, index): sensitivity}`,
+where `sensitivity` is a 2D NumPy array with axis 0 corresponding to time and
+axis 1 corresponding to output component. The returned object has a `to_numpy`
+method to convert it to a single array. The `return_array` parameter has been
+removed from `output_d_mu`.
+
+Only `compute` keeps `**kwargs`, which are only allowed to be used to select
+additional quantities that are to be computed. To change the behavior of `solve`,
+etc., appropriate attributes of the `Model` instance have to be used in the
+future.
+
+Finally, the internal interfaces for implementing `compute` and related methods
+have been significantly simplified. `Models` now only implement `_compute`,
+which can access default implementations via a `super` call. In particular, this
+new approach allows retrieving arbitrary intermediate `compute` quantities from
+the `cache` in subsequent computations. For further details, see
+`[#2277] <https://github.com/pymor/pymor/pull/2277>`_.
+
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- `[#2246] Bug Fix in FactorizedTransferFunction <https://github.com/pymor/pymor/pull/2246>`_
+- `[#2250] Implement __eq__, __hash__ for ReferenceElement <https://github.com/pymor/pymor/pull/2250>`_
+- `[#2253] fix to prevent unnecessary copys in NumpyVectorArrayImpl functions <https://github.com/pymor/pymor/pull/2253>`_
+- `[#2255] Allow to_matrices to accept parameter <https://github.com/pymor/pymor/pull/2255>`_
+- `[#2268] Support Python 3.12 <https://github.com/pymor/pymor/pull/2268>`_
+- `[#2293] Move some models from demos and tests to models.examples <https://github.com/pymor/pymor/pull/2293>`_

@@ -118,12 +118,12 @@ class MTReductor(BasicObject):
 
             if symmetric:
                 poles, ev_r = spla.eigh(A, E)
-                rev = fom.A.source.from_numpy(ev_r.T)
+                rev = fom.A.source.from_numpy(ev_r)
                 lev = rev.copy()
             else:
                 poles, ev_l, ev_r = spla.eig(A, E, left=True)
-                rev = fom.A.source.from_numpy(ev_r.T)
-                lev = fom.A.source.from_numpy(ev_l.T)
+                rev = fom.A.source.from_numpy(ev_r)
+                lev = fom.A.source.from_numpy(ev_l)
             if which == 'SM':
                 dominance = np.abs(poles)
             elif which == 'LR':

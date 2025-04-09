@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.11.0
+        uses: styfle/cancel-workflow-action@0.12.1
         with:
           all_but_latest: true
           # also works on 'pull_request' targets
@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Event File
           path: ${{ github.event_path }}
@@ -42,20 +42,20 @@ jobs:
       matrix:
         os:
           - ubuntu-22.04
-          - macos-12
+          - macos-13
           - windows-2022
         python:
-          - '3.8'
-          - '3.12'
+          - '3.9'
+          - '3.13'
         include:
           - os: ubuntu-22.04
             prefix: /usr/share/miniconda3/envs/pyMOR-ci
             environment_file: conda-linux-64.lock
-          - os: macos-12
+          - os: macos-13
             prefix: /Users/runner/miniconda3/envs/pyMOR-ci
             environment_file: conda-osx-64.lock
-          - os: macos-12
-            python: 3.8
+          - os: macos-13
+            python: 3.9
             prefix: /Users/runner/miniconda3/envs/pyMOR-ci
             environment_file: conda-osx-64.lock
           - os: windows-2022
@@ -64,7 +64,7 @@ jobs:
             # avoid failure in one job immeadiately cancelling all others
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Miniconda Steps
         uses: ./.github/actions/miniconda_tests
         with:
@@ -80,15 +80,16 @@ jobs:
     needs:
       - miniconda
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
-          name: coverage_results_raw
+          pattern: coverage_results_raw *
+          merge-multiple: true
           path: ./reports/
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
           pip install coverage[toml]
@@ -99,7 +100,7 @@ jobs:
           coverage html --directory coverage_html
       - name: Upload Coverage HTML
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage_html
           path: coverage_html

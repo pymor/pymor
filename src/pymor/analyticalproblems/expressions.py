@@ -58,6 +58,12 @@ from pymor.parameters.base import ParametricObject
 builtin_max = max
 
 
+if np.lib.NumpyVersion(np.__version__) >= '2.0.0':
+    NUMPY_COPY_IF_NEEDED = None
+else:
+    NUMPY_COPY_IF_NEEDED = False
+
+
 def parse_expression(expression, parameters={}, values={}):
     if isinstance(expression, Expression):
         return expression
@@ -130,10 +136,6 @@ class TransformLiterals(ast.NodeTransformer):
             return node
         return ast.Call(ast.Name('Constant', ast.Load()),
                         [self.generic_visit(node)], [])
-
-    # Python versions prior to 3.8 use ast.Num instead of ast.Constant
-    def visit_Num(self, node):
-        return self.visit_Constant(node)
 
     def visit_Subscript(self, node):
         base = self.visit(node.value)
@@ -300,7 +302,7 @@ class BaseConstant(Expression):
     shape = ()
 
     def numpy_expr(self):
-        return f'array({self.numpy_symbol}, ndmin={len(self.shape)}, copy=False)'
+        return f'array({self.numpy_symbol}, ndmin={len(self.shape)}, copy={NUMPY_COPY_IF_NEEDED})'
 
     def fenics_expr(self, params):
         import ufl

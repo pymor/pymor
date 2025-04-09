@@ -6,14 +6,41 @@ import numpy as np
 import pytest
 import scipy.linalg as spla
 
-from pymor.algorithms.rand_la import adaptive_rrf, randomized_ghep, randomized_svd, rrf
+from pymor.algorithms.rand_la import RandomizedRangeFinder, randomized_ghep, randomized_svd
 from pymor.operators.constructions import VectorArrayOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 
 pytestmark = pytest.mark.builtin
 
 
-def test_adaptive_rrf(rng):
+@pytest.mark.parametrize('qr_method', ['gram_schmidt', 'shifted_chol_qr'])
+@pytest.mark.parametrize('error_estimator', ['bs18', 'loo'])
+def test_adaptive_rrf(rng, qr_method, error_estimator):
+    A  = rng.uniform(low=-1.0, high=1.0, size=(100, 10))
+    op = NumpyMatrixOperator(A)
+
+    B = A + 1j*rng.uniform(low=-1.0, high=1.0, size=(100, 10))
+    op_complex = NumpyMatrixOperator(B)
+
+    Q1 = RandomizedRangeFinder(
+        op,
+        qr_method=qr_method,
+        error_estimator=error_estimator
+    ).find_range(tol=1e-5)
+    assert Q1 in op.range
+
+    Q2 = RandomizedRangeFinder(
+        op_complex,
+        iscomplex=True,
+        qr_method=qr_method,
+        error_estimator=error_estimator
+    ).find_range(tol=1e-5)
+    assert np.iscomplexobj(Q2.to_numpy())
+    assert Q2 in op.range
+
+
+@pytest.mark.parametrize('qr_method', ['gram_schmidt', 'shifted_chol_qr'])
+def test_adaptive_rrf_with_product(rng, qr_method):
     A = rng.uniform(low=-1.0, high=1.0, size=(100, 100))
     A = A @ A.T
     range_product = NumpyMatrixOperator(A)
@@ -29,38 +56,16 @@ def test_adaptive_rrf(rng):
     D += 1j*range_product.range.random(10)
     op_complex = VectorArrayOperator(D)
 
-    Q1 = adaptive_rrf(op, range_product=range_product, source_product=source_product)
+    Q1 = RandomizedRangeFinder(
+        op, range_product=range_product, source_product=source_product, qr_method=qr_method,
+    ).find_range(tol=1e-5)
     assert Q1 in op.range
 
-    Q2 = adaptive_rrf(op_complex, iscomplex=True)
+    Q2 = RandomizedRangeFinder(
+        op_complex, range_product=range_product, source_product=source_product, qr_method=qr_method,
+    ).find_range(tol=1e-5)
     assert np.iscomplexobj(Q2.to_numpy())
     assert Q2 in op.range
-
-
-def test_rrf(rng):
-    A = rng.uniform(low=-1.0, high=1.0, size=(100, 100))
-    A = A @ A.T
-    range_product = NumpyMatrixOperator(A)
-
-    B = rng.uniform(low=-1.0, high=1.0, size=(10, 10))
-    B = B @ B.T
-    source_product = NumpyMatrixOperator(B)
-
-    C = range_product.range.random(10)
-    op = VectorArrayOperator(C)
-
-    D = range_product.range.random(10)
-    D += 1j*range_product.range.random(10)
-    op_complex = VectorArrayOperator(D)
-
-    Q1 = rrf(op, range_product=range_product, source_product=source_product)
-    assert Q1 in op.range
-    assert len(Q1) == 8
-
-    Q2 = rrf(op_complex, iscomplex=True)
-    assert np.iscomplexobj(Q2.to_numpy())
-    assert Q2 in op.range
-    assert len(Q2) == 8
 
 
 def test_random_generalized_svd(rng):
@@ -96,7 +101,7 @@ def test_randomized_ghep(rng, return_evecs, single_pass):
         assert len(V) == n
         assert V.dim == op.source.dim
         for i in range(0, n):
-            assert np.linalg.norm(abs(V.to_numpy()[i]) - abs(V_real[:, i])) <= 1
+            assert np.linalg.norm(abs(V.to_numpy()[:, i]) - abs(V_real[:, i])) <= 1
 
     assert len(w) == n
     assert abs(np.linalg.norm(w - w_real[:n])) <= 1e-2

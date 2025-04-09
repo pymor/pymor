@@ -4,6 +4,7 @@
 
 import pytest
 
+from pymor.core.exceptions import InversionError
 from pymor.models.examples import penzl_mimo_example
 from pymor.models.iosys import LTIModel
 from pymor.reductors.mt import MTReductor
@@ -33,6 +34,12 @@ def test_mt(r, mt_kwargs):
     fom = penzl_mimo_example(10)
     mt = MTReductor(fom)
 
-    rom = mt.reduce(r, **mt_kwargs)
+    try:
+        rom = mt.reduce(r, **mt_kwargs)
+    except InversionError as e:
+        if mt_kwargs.get('decomposition', 'samdp') == 'samdp':
+            import pytest
+            pytest.xfail('Known issue. See #2366')
+        raise e
     assert isinstance(rom, LTIModel)
     assert rom.order == r

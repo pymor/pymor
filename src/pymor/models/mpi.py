@@ -85,7 +85,7 @@ def _MPIVisualizer_visualize(m, U, ind, **kwargs):
     m.visualize(U, **kwargs)
 
 
-def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_apply2=False,
+def mpi_wrap_model(local_models, mpi_spaces=None, use_with=True, with_apply2=False,
                    pickle_local_spaces=True, space_type=MPIVectorSpace,
                    base_type=None):
     """Wrap MPI distributed local |Models| to a global |Model| on rank 0.
@@ -123,8 +123,9 @@ def mpi_wrap_model(local_models, mpi_spaces=('STATE',), use_with=True, with_appl
         :class:`~pymor.tools.mpi.ObjectId` of the local |Models|
         on each rank or a callable generating the |Models|.
     mpi_spaces
-        List of types or ids of |VectorSpaces| which are MPI distributed
-        and need to be wrapped.
+        List of types of |VectorSpaces| which are MPI distributed
+        and need to be wrapped. If `None` the type of the model's
+        :attr:`~pymor.models.interface.Model.solution_space` is used.
     use_with
         See above.
     with_apply2
@@ -171,13 +172,16 @@ _OperatorToWrap = namedtuple('_OperatorToWrap', 'operator mpi_range mpi_source')
 def _mpi_wrap_model_manage_operators(obj_id, mpi_spaces, use_with, base_type):
     m = mpi.get_object(obj_id)
 
+    if mpi_spaces is None:
+        mpi_spaces = (type(m.solution_space),)
+
     attributes_to_consider = m._init_arguments if use_with else base_type._init_arguments
     attributes = {k: getattr(m, k) for k in attributes_to_consider}
 
     def process_attribute(v):
         if isinstance(v, Operator):
-            mpi_range = type(v.range) in mpi_spaces or v.range.id in mpi_spaces
-            mpi_source = type(v.source) in mpi_spaces or v.source.id in mpi_spaces
+            mpi_range = type(v.range) in mpi_spaces
+            mpi_source = type(v.source) in mpi_spaces
             if mpi_range or mpi_source:
                 return _OperatorToWrap(mpi.manage_object(v), mpi_range, mpi_source)
             else:

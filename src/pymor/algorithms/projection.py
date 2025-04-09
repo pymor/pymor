@@ -107,7 +107,7 @@ class ProjectRules(RuleTable):
     def action_ConstantOperator(self, op):
         range_basis, source_basis = self.range_basis, self.source_basis
         if range_basis is not None:
-            projected_value = NumpyVectorSpace.make_array(range_basis.inner(op.value).T)
+            projected_value = NumpyVectorSpace.make_array(range_basis.inner(op.value))
         else:
             projected_value = op.value
         if source_basis is None:
@@ -125,7 +125,7 @@ class ProjectRules(RuleTable):
                 raise RuleNotMatchingError('apply_adjoint not implemented') from e
             if isinstance(op.source, NumpyVectorSpace):
                 from pymor.operators.numpy import NumpyMatrixOperator
-                return NumpyMatrixOperator(V.to_numpy().conj(), source_id=op.source.id)
+                return NumpyMatrixOperator(V.to_numpy().conj().T)
             else:
                 from pymor.operators.constructions import VectorArrayOperator
                 return VectorArrayOperator(V, adjoint=True)
@@ -134,7 +134,7 @@ class ProjectRules(RuleTable):
                 V = op.apply(source_basis)
                 if isinstance(op.range, NumpyVectorSpace):
                     from pymor.operators.numpy import NumpyMatrixOperator
-                    return NumpyMatrixOperator(V.to_numpy().T, range_id=op.range.id)
+                    return NumpyMatrixOperator(V.to_numpy())
                 else:
                     from pymor.operators.constructions import VectorArrayOperator
                     return VectorArrayOperator(V, adjoint=False)
@@ -200,7 +200,7 @@ class ProjectRules(RuleTable):
         elif not hasattr(op, 'restricted_operator') or source_basis is None:
             raise RuleNotMatchingError('Has no restricted operator or source_basis is None')
         if range_basis is not None:
-            projected_collateral_basis = NumpyVectorSpace.make_array(op.collateral_basis.inner(range_basis))
+            projected_collateral_basis = NumpyVectorSpace.make_array(range_basis.inner(op.collateral_basis))
         else:
             projected_collateral_basis = op.collateral_basis
 
@@ -304,14 +304,13 @@ class ProjectToSubbasisRules(RuleTable):
     def action_NumpyMatrixOperator(self, op):
         # copy instead of just slicing the matrix to ensure contiguous memory
         return NumpyMatrixOperator(op.matrix[:self.dim_range, :self.dim_source].copy(),
-                                   solver_options=op.solver_options,
-                                   source_id=op.source.id, range_id=op.range.id)
+                                   solver_options=op.solver_options)
 
     @match_class(ConstantOperator)
     def action_ConstantOperator(self, op):
         dim_range, dim_source = self.dim_range, self.dim_source
         source = op.source if dim_source is None else NumpyVectorSpace(dim_source)
-        value = op.value if dim_range is None else NumpyVectorSpace.make_array(op.value.to_numpy()[:, :dim_range])
+        value = op.value if dim_range is None else NumpyVectorSpace.make_array(op.value.to_numpy()[:dim_range, :])
         return ConstantOperator(value, source)
 
     @match_class(IdentityOperator)
@@ -337,10 +336,10 @@ class ProjectToSubbasisRules(RuleTable):
         restricted_operator = op.restricted_operator
 
         old_pcb = op.projected_collateral_basis
-        projected_collateral_basis = NumpyVectorSpace.make_array(old_pcb.to_numpy()[:, :self.dim_range])
+        projected_collateral_basis = NumpyVectorSpace.make_array(old_pcb.to_numpy()[:self.dim_range, :])
 
         old_sbd = op.source_basis_dofs
-        source_basis_dofs = NumpyVectorSpace.make_array(old_sbd.to_numpy()[:self.dim_source])
+        source_basis_dofs = NumpyVectorSpace.make_array(old_sbd.to_numpy()[:, :self.dim_source])
 
         return ProjectedEmpiricalInterpolatedOperator(restricted_operator, op.interpolation_matrix,
                                                       source_basis_dofs, projected_collateral_basis, op.triangular,

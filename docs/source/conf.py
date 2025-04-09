@@ -325,7 +325,7 @@ autoapi_type = 'python'
 # allows incremental build
 autoapi_keep_files = True
 autoapi_ignore = ['*/pymordemos/minimal_cpp_demo/*']
-suppress_warnings = ['autoapi']
+suppress_warnings = ['autoapi', 'config.cache']
 autoapi_template_dir = this_dir / '_templates' / 'autoapi'
 autoapi_member_order = 'groupwise'
 autoapi_options = ['show-inheritance', 'members', 'undoc-members']
