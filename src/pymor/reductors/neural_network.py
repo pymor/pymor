@@ -110,7 +110,7 @@ class NeuralNetworkReductor(BasicObject):
             assert training_set is not None
             assert len(training_set) > 0
             assert training_snapshots is not None
-            self.parameters_dim = training_set[0].parameters.dim
+            self.parameters_dim = training_set[0].parameters().dim
             self.nt = int(len(training_snapshots) / len(training_set))
             if self.nt > 1:  # instationary
                 assert T is not None
@@ -471,7 +471,7 @@ class NeuralNetworkReductor(BasicObject):
             name = self.fom.name
         else:
             projected_output_functional = None
-            parameters = self.training_set[0].parameters
+            parameters = self.training_set[0].parameters()
             name = 'data_driven'
 
         with self.logger.block('Building ROM ...'):
@@ -632,7 +632,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
             parameters = self.fom.parameters
             name = self.fom.name
         else:
-            parameters = self.training_set[0].parameters
+            parameters = self.training_set[0].parameters()
             name = 'data_driven'
 
         with self.logger.block('Building ROM ...'):
