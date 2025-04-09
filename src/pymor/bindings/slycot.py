@@ -70,13 +70,13 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
     if options['type'] == 'slycot_bartels-stewart':
         X = solve_lyap_dense(to_matrix(A, format='dense'),
                              to_matrix(E, format='dense') if E else None,
-                             B.to_numpy().T if not trans else B.to_numpy(),
+                             B.to_numpy() if not trans else B.to_numpy().T,
                              trans=trans, cont_time=cont_time, options=options)
         Z = _chol(X)
     else:
         raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 
-    return A.source.from_numpy(Z.T)
+    return A.source.from_numpy(Z)
 
 
 def lyap_dense_solver_options():
@@ -380,14 +380,14 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     A_source = A.source
     A = to_matrix(A, format='dense')
     E = to_matrix(E, format='dense') if E else None
-    B = B.to_numpy().T
-    C = C.to_numpy()
+    B = B.to_numpy()
+    C = C.to_numpy().T
     if S is not None:
-        S = S.to_numpy() if not trans else S.to_numpy().T
+        S = S.to_numpy().T if not trans else S.to_numpy()
 
     X = solve_ricc_dense(A, E, B, C, R, S, trans, options)
 
-    return A_source.from_numpy(_chol(X).T)
+    return A_source.from_numpy(_chol(X))
 
 
 def _ricc_rcond_check(solver, rcond):

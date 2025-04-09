@@ -7,6 +7,7 @@ import itertools
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.bindings.scipy import svd_lapack_driver
 from pymor.core.base import BasicObject
 from pymor.models.transfer_function import TransferFunction
 from pymor.tools.random import new_rng
@@ -223,7 +224,7 @@ class PAAAReductor(BasicObject):
             # solve LS problem
             L = full_nd_loewner(samples, svs, self.itpl_part)
 
-            _, S, V = spla.svd(L, full_matrices=False, lapack_driver='gesvd')
+            _, S, V = spla.svd(L, full_matrices=False, lapack_driver=svd_lapack_driver())
             VH = V.T.conj()
             coefs = VH[:, -1]
 
@@ -298,7 +299,7 @@ class PAAAReductor(BasicObject):
 
         # solve LS problem
         L = full_nd_loewner(self.samples, self.sampling_values, self.itpl_part)
-        _, S, V = spla.svd(L, full_matrices=False, lapack_driver='gesvd')
+        _, S, V = spla.svd(L, full_matrices=False, lapack_driver=svd_lapack_driver())
         VH = np.conj(V.T)
         coefs = VH[:, -1:]
 

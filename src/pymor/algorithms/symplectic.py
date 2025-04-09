@@ -39,7 +39,7 @@ class SymplecticBasis(BasicObject):
     phase_space
         A |VectorSpace| that represents the phase space. May be none if E and F are specified.
     check_symplecticity
-        Flag, wether to check symplecticity of E and F in the constructor (if these are not None).
+        Flag, whether to check symplecticity of E and F in the constructor (if these are not None).
         Default is True.
     """
 
@@ -71,7 +71,7 @@ class SymplecticBasis(BasicObject):
         U
             The |VectorArray|.
         check_symplecticity
-            Flag, wether to check symplecticity of E and F in the constructor (if these are not
+            Flag, whether to check symplecticity of E and F in the constructor (if these are not
             None). Default is True.
 
         Returns
@@ -122,9 +122,9 @@ class SymplecticBasis(BasicObject):
         other
             The |SymplecticBasis| to append.
         remove_from_other
-            Flag, wether to remove vectors from other.
+            Flag, whether to remove vectors from other.
         check_symplecticity
-            Flag, wether to check symplecticity of E and F in the constructor (if these are not
+            Flag, whether to check symplecticity of E and F in the constructor (if these are not
             None). Default is True.
         """
         assert isinstance(other, SymplecticBasis)
@@ -174,11 +174,11 @@ class SymplecticBasis(BasicObject):
     def lincomb(self, coefficients):
         assert isinstance(coefficients, np.ndarray)
         if coefficients.ndim == 1:
-            coefficients = coefficients[np.newaxis, ...]
+            coefficients = coefficients[..., np.newaxis]
         assert len(coefficients.shape) == 2
-        assert coefficients.shape[1] == 2*len(self)
-        result = self.E.lincomb(coefficients[:, :len(self)])
-        result += self.F.lincomb(coefficients[:, len(self):])
+        assert coefficients.shape[0] == 2*len(self)
+        result = self.E.lincomb(coefficients[:len(self), :])
+        result += self.F.lincomb(coefficients[len(self):, :])
         return result
 
     def extend(self, U, method='svd_like', modes=2, product=None):
@@ -200,7 +200,7 @@ class SymplecticBasis(BasicObject):
         assert modes % 2 == 0, 'number of modes has to be even'
         assert method in ('svd_like', 'complex_svd', 'symplectic_gram_schmidt')
 
-        U_proj_err = U - self.lincomb(U.inner(self.transposed_symplectic_inverse().to_array()))
+        U_proj_err = U - self.lincomb(U.inner(self.transposed_symplectic_inverse().to_array()).T)
         proj_error = U_proj_err.norm(product=product)
 
         if method in ('svd_like', 'complex_svd'):
@@ -241,7 +241,7 @@ def psd_svd_like_decomp(U, modes, balance=True):
     modes
         Number of modes (needs to be even).
     balance
-        A flag, wether to balance the norms of pairs of basis vectors.
+        A flag, whether to balance the norms of pairs of basis vectors.
 
     Returns
     -------
@@ -261,7 +261,7 @@ def psd_svd_like_decomp(U, modes, balance=True):
     DJD = DJD[:, i_sort][i_sort, :]
     inv_D = 1 / np.sqrt(np.abs(np.diag(DJD[(modes//2):, :(modes//2)])))
     inv_D = np.hstack([inv_D, -inv_D*np.sign(np.diag(DJD[(modes//2):, :(modes//2)]))])
-    S = U.lincomb((Q * inv_D[np.newaxis, :]).T)
+    S = U.lincomb(Q * inv_D[np.newaxis, :])
 
     # balance norms of basis vector pairs s_i, s_{modes+1}
     # with a symplectic, orthogonal transformation
@@ -277,7 +277,7 @@ def psd_svd_like_decomp(U, modes, balance=True):
             [np.diag(phi[0, :]), -np.diag(phi[1, :])],
             [np.diag(phi[1, :]), np.diag(phi[0, :])]
         ])
-        S = S.lincomb(balance_coeff.T)
+        S = S.lincomb(balance_coeff)
 
     return SymplecticBasis.from_array(S)
 

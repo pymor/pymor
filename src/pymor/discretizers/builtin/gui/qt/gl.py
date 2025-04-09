@@ -173,6 +173,7 @@ class GLPatchWidget(QOpenGLWidget):
         self.colormap_location = gl.glGetUniformLocation(self.shaders_program, 'colormap')
 
     def paintGL(self):
+        gl.glUseProgram(self.shaders_program)
         if self.update_vbo:
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertices_id)
             gl.glBufferData(gl.GL_ARRAY_BUFFER, self.vertex_data, gl.GL_DYNAMIC_DRAW)
@@ -279,6 +280,7 @@ class ColorBarWidget(QOpenGLWidget):
     def paintGL(self):
         p = QPainter(self)
         p.beginNativePainting()
+        gl.glUseProgram(self.shaders_program)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
         gl.glUseProgram(self.shaders_program)
         gl.glUniform1i(self.colormap_location, 0)

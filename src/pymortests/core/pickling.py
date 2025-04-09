@@ -62,7 +62,7 @@ def assert_is_equal(first, second):
         seen.append(first)
 
         for c, m in is_equal_dispatch_table.items():
-            if type(first) == c:
+            if type(first) is c:
                 assert m(first, second)
                 return
 
@@ -72,7 +72,7 @@ def assert_is_equal(first, second):
                 ignored_attributes = v
                 break
 
-        assert type(first) == type(second)
+        assert type(first) is type(second)
 
         if isinstance(first, np.ndarray):
             if first.dtype == object:

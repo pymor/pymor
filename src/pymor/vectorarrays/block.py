@@ -28,7 +28,7 @@ class BlockVectorArrayImpl(VectorArrayImpl):
         assert self._blocks_are_valid()
         if len(self._blocks):
             # hstack will error out with empty input list
-            return np.hstack([_indexed(block, ind).to_numpy(False) for block in self._blocks])
+            return np.vstack([_indexed(block, ind).to_numpy(False) for block in self._blocks])
         else:
             return np.empty((0, 0))
 
@@ -128,15 +128,15 @@ class BlockVectorArrayImpl(VectorArrayImpl):
     def dofs(self, dof_indices, ind):
         assert self._blocks_are_valid()
         if not len(dof_indices):
-            return np.zeros((self.len_ind(ind), 0))
+            return np.zeros((0, self.len_ind(ind)))
 
         self._compute_bins()
         block_inds = np.digitize(dof_indices, self._bins) - 1
         dof_indices = dof_indices - self._bins[block_inds]
         block_inds = self._bin_map[block_inds]
         blocks = [_indexed(b, ind) for b in self._blocks]
-        return np.array([blocks[bi].dofs([ci])[:, 0]
-                         for bi, ci in zip(block_inds, dof_indices)]).T
+        return np.array([blocks[bi].dofs([ci])[0, :]
+                         for bi, ci in zip(block_inds, dof_indices)])
 
     def amax(self, ind):
         assert self._blocks_are_valid()
@@ -254,11 +254,12 @@ class BlockVectorSpace(VectorSpace):
 
     def from_numpy(self, data, ensure_copy=False):
         if data.ndim == 1:
-            data = data.reshape(1, -1)
+            data = data.reshape((-1, 1))
+        data = data.T
         data_ind = np.cumsum([0] + [subspace.dim for subspace in self.subspaces])
         return BlockVectorArray(
             self,
-            BlockVectorArrayImpl([subspace.from_numpy(data[:, data_ind[i]:data_ind[i + 1]], ensure_copy=ensure_copy)
+            BlockVectorArrayImpl([subspace.from_numpy(data[:, data_ind[i]:data_ind[i + 1]].T, ensure_copy=ensure_copy)
                                   for i, subspace in enumerate(self.subspaces)],
                                  self)
         )

@@ -181,15 +181,15 @@ class OnedVisualizer(ImmutableObject):
 def _vmins_vmaxs(U, separate_colorbars, rescale_colorbars):
     if separate_colorbars:
         if rescale_colorbars:
-            vmins = [np.min(u, axis=1) for u in U]
-            vmaxs = [np.max(u, axis=1) for u in U]
+            vmins = [np.min(u, axis=0) for u in U]
+            vmaxs = [np.max(u, axis=0) for u in U]
         else:
-            vmins = [[np.min(u)] * len(U[0]) for u in U]
-            vmaxs = [[np.max(u)] * len(U[0]) for u in U]
+            vmins = [[np.min(u)] * U[0].shape[1] for u in U]
+            vmaxs = [[np.max(u)] * U[0].shape[1] for u in U]
     else:
         if rescale_colorbars:
-            vmins = [[min(np.min(u[i]) for u in U) for i in range(len(U[0]))]] * len(U)
-            vmaxs = [[max(np.max(u[i]) for u in U) for i in range(len(U[0]))]] * len(U)
+            vmins = [[min(np.min(u[:, i]) for u in U) for i in range(U[0].shape[1])]] * len(U)
+            vmaxs = [[max(np.max(u[:, i]) for u in U) for i in range(U[0].shape[1])]] * len(U)
         else:
             vmins = [[np.min(U)] * len(U[0])] * len(U)
             vmaxs = [[np.max(U)] * len(U[0])] * len(U)

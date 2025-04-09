@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 import hashlib
+import importlib.resources as importlib_resources
 import os
 import sys
 from functools import wraps
@@ -15,11 +16,6 @@ import pytest
 from pymor.algorithms.basic import almost_equal, relative_error
 from pymor.core import config
 from pymor.core.exceptions import DependencyMissingError, NoResultDataError
-
-try:
-    import importlib_resources  # for Python 3.8
-except ImportError:
-    import importlib.resources as importlib_resources
 
 BUILTIN_DISABLED = bool(os.environ.get('PYMOR_FIXTURES_DISABLE_BUILTIN', False))
 

@@ -64,7 +64,7 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
     complex_pair_tol
         Tolerance for detecting pairs of complex conjugate eigenvalues.
     complex_evp
-        Wether to consider an eigenvalue problem with complex operators. When operators
+        Whether to consider an eigenvalue problem with complex operators. When operators
         are real setting this argument to `False` will increase stability and performance.
     left_evp
         If set to `True` compute left eigenvectors else compute right eigenvectors.
@@ -111,7 +111,7 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
         idx = _sort_ew(ew, which)
         ews = ew[idx]
         evs = ev[:, idx]
-        return ews[:k], A.source.from_numpy(evs[:, :k].T)
+        return ews[:k], A.source.from_numpy(evs[:, :k])
 
     if l is None:
         l = min(n - 1, max(2 * k + 1, l_min))
@@ -189,7 +189,7 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
 
         H, Qs = _qr_iteration(H, shifts, complex_evp=complex_evp)
 
-        V = V.lincomb(Qs.T)
+        V = V.lincomb(Qs)
         f = V[k] * H[k, k - 1] + f * Qs[l - 1, k - 1]
         V = V[:k]
         H = H[:k, :k]
@@ -197,7 +197,7 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
     if sigma is not None:
         ews = 1 / ews + sigma
 
-    return ews[:k0], V.lincomb(evs[:, :k0].T)
+    return ews[:k0], V.lincomb(evs[:, :k0])
 
 
 def _arnoldi(A, l, b, complex_evp):

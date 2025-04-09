@@ -1,4 +1,4 @@
-# pyMOR Tutorials
+# Tutorials
 
 ```{toctree}
 tutorial_builtin_discretizer

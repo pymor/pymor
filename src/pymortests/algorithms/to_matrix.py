@@ -41,7 +41,7 @@ def assert_type_and_allclose(A, Aop, default_format):
     assert np.allclose(A, to_matrix(Aop, format='csr').toarray())
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_to_matrix_NumpyMatrixOperator(rng):
     A = rng.standard_normal((2, 2))
 
@@ -52,7 +52,7 @@ def test_to_matrix_NumpyMatrixOperator(rng):
     assert_type_and_allclose(A, Aop, 'csc')
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_to_matrix_BlockOperator(rng):
     A11 = rng.standard_normal((2, 2))
     A12 = rng.standard_normal((2, 3))
@@ -75,7 +75,7 @@ def test_to_matrix_BlockOperator(rng):
     assert_type_and_allclose(B, Bop, 'sparse')
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_to_matrix_BlockDiagonalOperator(rng):
     A1 = rng.standard_normal((2, 2))
     A2 = rng.standard_normal((3, 3))
@@ -93,7 +93,7 @@ def test_to_matrix_BlockDiagonalOperator(rng):
     assert_type_and_allclose(B, Bop, 'sparse')
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_to_matrix_AdjointOperator(rng):
     A = rng.standard_normal((2, 2))
     S = rng.standard_normal((2, 2))
@@ -134,7 +134,7 @@ def test_to_matrix_AdjointOperator(rng):
     assert_type_and_allclose(spla.solve(S, A.T.dot(R)), Aadj, 'sparse')
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_to_matrix_ComponentProjectionOperator():
     dofs = np.array([0, 1, 2, 4, 8])
     n = 10
@@ -146,7 +146,7 @@ def test_to_matrix_ComponentProjectionOperator():
     assert_type_and_allclose(A, Aop, 'sparse')
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_to_matrix_ConcatenationOperator(rng):
     A = rng.standard_normal((2, 3))
     B = rng.standard_normal((3, 4))
@@ -173,7 +173,7 @@ def test_to_matrix_ConcatenationOperator(rng):
     assert_type_and_allclose(A, Aop, 'sparse')
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_to_matrix_IdentityOperator():
     n = 3
     I = np.eye(n)
@@ -182,7 +182,7 @@ def test_to_matrix_IdentityOperator():
     assert_type_and_allclose(I, Iop, 'sparse')
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_to_matrix_LincombOperator(rng):
     A = rng.standard_normal((3, 3))
     B = rng.standard_normal((3, 2))
@@ -211,16 +211,16 @@ def test_to_matrix_LincombOperator(rng):
     assert_type_and_allclose(C, Cop, 'sparse')
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_to_matrix_LowRankOperator(rng):
     m = 6
     n = 5
     r = 2
     L = rng.standard_normal((m, r))
-    Lva = NumpyVectorSpace.make_array(L.T)
+    Lva = NumpyVectorSpace.make_array(L)
     C = rng.standard_normal((r, r))
     R = rng.standard_normal((n, r))
-    Rva = NumpyVectorSpace.make_array(R.T)
+    Rva = NumpyVectorSpace.make_array(R)
 
     LR = LowRankOperator(Lva, C, Rva)
     assert_type_and_allclose(L @ C @ R.T, LR, 'dense')
@@ -229,7 +229,7 @@ def test_to_matrix_LowRankOperator(rng):
     assert_type_and_allclose(L @ spla.solve(C, R.T), LR, 'dense')
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_to_matrix_LowRankUpdatedOperator(rng):
     m = 6
     n = 5
@@ -237,21 +237,21 @@ def test_to_matrix_LowRankUpdatedOperator(rng):
     A = rng.standard_normal((m, n))
     Aop = NumpyMatrixOperator(A)
     L = rng.standard_normal((m, r))
-    Lva = NumpyVectorSpace.make_array(L.T)
+    Lva = NumpyVectorSpace.make_array(L)
     C = rng.standard_normal((r, r))
     R = rng.standard_normal((n, r))
-    Rva = NumpyVectorSpace.make_array(R.T)
+    Rva = NumpyVectorSpace.make_array(R)
     LR = LowRankOperator(Lva, C, Rva)
 
     op = LowRankUpdatedOperator(Aop, LR, 1, 1)
     assert_type_and_allclose(A + L @ C @ R.T, op, 'dense')
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_to_matrix_VectorArrayOperator(rng):
     V = rng.standard_normal((10, 2))
 
-    Vva = NumpyVectorSpace.make_array(V.T)
+    Vva = NumpyVectorSpace.make_array(V)
     Vop = VectorArrayOperator(Vva)
     assert_type_and_allclose(V, Vop, 'dense')
 
@@ -259,7 +259,7 @@ def test_to_matrix_VectorArrayOperator(rng):
     assert_type_and_allclose(V.T, Vop, 'dense')
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 def test_to_matrix_ZeroOperator():
     n = 3
     m = 4

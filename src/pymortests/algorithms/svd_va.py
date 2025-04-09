@@ -36,7 +36,7 @@ def test_method_of_snapshots(vector_array, method):
     assert np.allclose(Vh @ Vh.T.conj(), np.eye(len(s)))
     if len(s) > 0:
         U.scal(s)
-        UsVh = U.lincomb(Vh.T)
+        UsVh = U.lincomb(Vh)
         assert np.all(almost_equal(A, UsVh, atol=s[0]*4e-8*2))
 
 
@@ -52,14 +52,14 @@ def test_method_of_snapshots_with_product(operator_with_arrays_and_products, met
     assert Vh.shape[1] == len(A)
     assert np.allclose(Vh @ Vh.T.conj(), np.eye(len(s)))
     U.scal(s)
-    UsVh = U.lincomb(Vh.T)
+    UsVh = U.lincomb(Vh)
     assert np.all(almost_equal(A, UsVh, rtol=4e-8))
 
 
-@pytest.mark.builtin()
+@pytest.mark.builtin
 @pytest.mark.parametrize('method', methods)
 def test_not_too_many_modes(method):
-    vec_array = NumpyVectorSpace.from_numpy(np.logspace(-5, 0, 10).reshape((-1, 1)))
+    vec_array = NumpyVectorSpace.from_numpy(np.logspace(-5, 0, 10).reshape((1, -1)))
     U, s, V = method(vec_array, atol=0, rtol=0)
     assert len(U) == len(s) == len(V) == 1
 

@@ -3,8 +3,13 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 
-def thermal_block_example():
+def thermal_block_example(diameter=1/100):
     """Return 2x2 thermal block example.
+
+    Parameters
+    ----------
+    diameter
+        Grid element diameter.
 
     Returns
     -------
@@ -15,7 +20,7 @@ def thermal_block_example():
     from pymor.discretizers.builtin import discretize_stationary_cg
 
     p = thermal_block_problem((2, 2))
-    fom, _ = discretize_stationary_cg(p, diameter=1/100)
+    fom, _ = discretize_stationary_cg(p, diameter=diameter)
     return fom
 
 def penzl_example():
@@ -44,7 +49,7 @@ def penzl_example():
 
     return fom
 
-def penzl_mimo_example(n):
+def penzl_mimo_example(n, m=2, p=3):
     """Return modified multiple-input multiple-output Penzl's example.
 
     Parameters
@@ -67,8 +72,8 @@ def penzl_mimo_example(n):
     A3 = np.array([[-1, 400], [-400, -1]])
     A4 = sps.diags(np.arange(-1, -n + 5, -1))
     A = sps.block_diag((A1, A2, A3, A4))
-    B = np.arange(2*n).reshape(n, 2)
-    C = np.arange(3*n).reshape(3, n)
+    B = np.arange(m*n).reshape(n, m)
+    C = np.arange(p*n).reshape(p, n)
     return LTIModel.from_matrices(A, B, C)
 
 def msd_example(n=6, m=2, m_i=4, k_i=4, c_i=1, as_lti=False):

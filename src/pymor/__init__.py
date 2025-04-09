@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-__version__ = '2024.1.0.dev0'
+__version__ = '2025.1.0.dev0'
 
 import os
 import platform
@@ -21,7 +21,10 @@ def _init_mpi():
 
     finalize = os.environ.get('PYMOR_MPI_FINALIZE', mpi4py.rc.finalize if mpi4py.rc.finalize is not None else True)
     mpi4py.rc(initialize=False, finalize=finalize)
-    from mpi4py import MPI
+    try:
+        from mpi4py import MPI
+    except RuntimeError:
+        return
     if not MPI.Is_initialized():
         required_level = int(os.environ.get('PYMOR_MPI_INIT_THREAD', MPI.THREAD_MULTIPLE))
         supported_lvl = MPI.Init_thread(required_level)

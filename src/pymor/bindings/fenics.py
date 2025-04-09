@@ -136,7 +136,7 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace):
     real_vector_type = FenicsVector
     vector_type = ComplexifiedFenicsVector
 
-    def __init__(self, V, id='STATE'):
+    def __init__(self, V):
         self.__auto_init(locals())
 
     @property
@@ -144,11 +144,11 @@ class FenicsVectorSpace(ComplexifiedListVectorSpace):
         return df.Function(self.V).vector().size()
 
     def __eq__(self, other):
-        return type(other) is FenicsVectorSpace and self.V == other.V and self.id == other.id
+        return type(other) is FenicsVectorSpace and self.V == other.V
 
     # since we implement __eq__, we also need to implement __hash__
     def __hash__(self):
-        return id(self.V) + hash(self.id)
+        return id(self.V)
 
     def real_zero_vector(self):
         impl = df.Function(self.V).vector()
@@ -539,11 +539,11 @@ class RestrictedFenicsOperator(Operator):
     def apply(self, U, mu=None):
         assert U in self.source
         UU = self.op.source.zeros(len(U))
-        for uu, u in zip(UU.vectors, U.to_numpy()):
+        for uu, u in zip(UU.vectors, U.to_numpy().T):
             uu.real_part.impl[:] = np.ascontiguousarray(u)
         VV = self.op.apply(UU, mu=mu)
         V = self.range.zeros(len(VV))
-        for v, vv in zip(V.to_numpy(), VV.vectors):
+        for v, vv in zip(V.to_numpy().T, VV.vectors):
             v[:] = vv.real_part.impl[self.restricted_range_dofs]
         return V
 
@@ -551,7 +551,7 @@ class RestrictedFenicsOperator(Operator):
         assert U in self.source
         assert len(U) == 1
         UU = self.op.source.zeros()
-        UU.vectors[0].real_part.impl[:] = np.ascontiguousarray(U.to_numpy()[0])
+        UU.vectors[0].real_part.impl[:] = np.ascontiguousarray(U.to_numpy()[:, 0])
         JJ = self.op.jacobian(UU, mu=mu)
         return NumpyMatrixOperator(JJ.matrix.array()[self.restricted_range_dofs, :])
 

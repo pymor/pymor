@@ -21,6 +21,7 @@ from pymor.algorithms.simplify import contract, expand
 from pymor.algorithms.timestepping import DiscreteTimeStepper, TimeStepper
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.analyticalproblems.functions import Function
+from pymor.bindings.scipy import sparray, svd_lapack_driver
 from pymor.core.cache import cached
 from pymor.core.config import config
 from pymor.core.defaults import defaults
@@ -264,8 +265,7 @@ class LTIModel(Model):
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, sampling_time=0,
                       T=None, initial_data=None, time_stepper=None, num_values=None, presets=None,
-                      state_id='STATE', solver_options=None, error_estimator=None,
-                      visualizer=None, name=None):
+                      solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices.
 
         Parameters
@@ -297,8 +297,6 @@ class LTIModel(Model):
         presets
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
-        state_id
-            Id of the state space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -318,20 +316,20 @@ class LTIModel(Model):
         lti
             The |LTIModel| with operators A, B, C, D, and E.
         """
-        assert isinstance(A, (np.ndarray, sps.spmatrix))
-        assert isinstance(B, (np.ndarray, sps.spmatrix))
-        assert isinstance(C, (np.ndarray, sps.spmatrix))
-        assert isinstance(D, (np.ndarray, sps.spmatrix, type(None)))
-        assert isinstance(E, (np.ndarray, sps.spmatrix, type(None)))
+        assert isinstance(A, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(B, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(C, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(D, (np.ndarray, sps.spmatrix, sparray, type(None)))
+        assert isinstance(E, (np.ndarray, sps.spmatrix, sparray, type(None)))
         assert isinstance(initial_data, (np.ndarray, type(None)))
 
-        A = NumpyMatrixOperator(A, source_id=state_id, range_id=state_id)
-        B = NumpyMatrixOperator(B, range_id=state_id)
-        C = NumpyMatrixOperator(C, source_id=state_id)
+        A = NumpyMatrixOperator(A)
+        B = NumpyMatrixOperator(B)
+        C = NumpyMatrixOperator(C)
         if D is not None:
             D = NumpyMatrixOperator(D)
         if E is not None:
-            E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
+            E = NumpyMatrixOperator(E)
         if initial_data is not None:
             initial_data = A.source.from_numpy(initial_data)
 
@@ -403,7 +401,7 @@ class LTIModel(Model):
     @classmethod
     def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, sampling_time=0,
                    T=None, initial_data_file=None, time_stepper=None, num_values=None, presets=None,
-                   state_id='STATE', solver_options=None, error_estimator=None, visualizer=None, name=None):
+                   solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in separate files.
 
         Parameters
@@ -435,8 +433,6 @@ class LTIModel(Model):
         presets
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
-        state_id
-            Id of the state space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -466,7 +462,7 @@ class LTIModel(Model):
         initial_data = load_matrix(initial_data_file) if initial_data_file is not None else None
 
         return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, T=T, initial_data=initial_data,
-                                 time_stepper=time_stepper, num_values=num_values, presets=presets, state_id=state_id,
+                                 time_stepper=time_stepper, num_values=num_values, presets=presets,
                                  solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                                  name=name)
 
@@ -504,7 +500,7 @@ class LTIModel(Model):
 
     @classmethod
     def from_mat_file(cls, file_name, sampling_time=0, T=None, time_stepper=None, num_values=None, presets=None,
-                      state_id='STATE', solver_options=None, error_estimator=None, visualizer=None, name=None):
+                      solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in a .mat file.
 
         Supports the format used in the `SLICOT benchmark collection
@@ -529,8 +525,6 @@ class LTIModel(Model):
         presets
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
-        state_id
-            Id of the state space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -571,7 +565,7 @@ class LTIModel(Model):
                 matrices[i] = mat.astype(np.float64)
 
         return cls.from_matrices(*matrices, sampling_time=sampling_time, T=T, time_stepper=time_stepper,
-                                 num_values=num_values, presets=presets, state_id=state_id,
+                                 num_values=num_values, presets=presets,
                                  solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                                  name=name)
 
@@ -596,7 +590,7 @@ class LTIModel(Model):
 
     @classmethod
     def from_abcde_files(cls, files_basename, sampling_time=0, T=None, time_stepper=None, num_values=None, presets=None,
-                         state_id='STATE', solver_options=None, error_estimator=None, visualizer=None, name=None):
+                         solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in .[ABCDE] files.
 
         Parameters
@@ -617,8 +611,6 @@ class LTIModel(Model):
         presets
             A `dict` of preset attributes or `None`.
             See |LTIModel|.
-        state_id
-            Id of the state space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -649,7 +641,7 @@ class LTIModel(Model):
         E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
         return cls.from_matrices(A, B, C, D, E, sampling_time=sampling_time, T=T, time_stepper=time_stepper,
-                                 num_values=num_values, presets=presets, state_id=state_id,
+                                 num_values=num_values, presets=presets,
                                  solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
                                  name=name)
 
@@ -690,7 +682,7 @@ class LTIModel(Model):
                 -self.A,  # operator
                 rhs=LinearInputOperator(self.B),
                 mass=None if isinstance(self.E, IdentityOperator) else self.E,
-                mu=mu.with_(t=0),
+                mu=mu,
                 num_values=self.num_values
             )
             if self.num_values is None:
@@ -711,7 +703,7 @@ class LTIModel(Model):
                 if compute_solution:
                     data['solution'].append(x)
                 if compute_output:
-                    y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.with_(t=t)).to_numpy()
+                    y = self.C.apply(x, mu=mu).to_numpy().T + D.as_range_array(mu=mu.at_time(t)).to_numpy().T
                     if i < n:
                         data['output'][i] = y
                     else:
@@ -950,13 +942,13 @@ class LTIModel(Model):
     @cached
     def _gramian(self, typ, mu=None):
         if typ == 'c_lrcf' and 'c_dense' in self.presets:
-            return self.A.source.from_numpy(_chol(self.presets['c_dense']).T)
+            return self.A.source.from_numpy(_chol(self.presets['c_dense']))
         elif typ == 'o_lrcf' and 'o_dense' in self.presets:
-            return self.A.source.from_numpy(_chol(self.presets['o_dense']).T)
+            return self.A.source.from_numpy(_chol(self.presets['o_dense']))
         elif typ == 'c_dense' and 'c_lrcf' in self.presets:
-            return self.presets['c_lrcf'].to_numpy().T @ self.presets['c_lrcf'].to_numpy()
+            return self.presets['c_lrcf'].to_numpy() @ self.presets['c_lrcf'].to_numpy().T
         elif typ == 'o_dense' and 'o_lrcf' in self.presets:
-            return self.presets['o_lrcf'].to_numpy().T @ self.presets['o_lrcf'].to_numpy()
+            return self.presets['o_lrcf'].to_numpy() @ self.presets['o_lrcf'].to_numpy().T
 
         A = self.A.assemble(mu)
         B = self.B
@@ -1009,12 +1001,12 @@ class LTIModel(Model):
                                        trans=True, options=options_ricc_pos_lrcf)
         elif typ == 'pr_c_dense':
             return solve_pos_ricc_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
-                                        A.source.zeros().to_numpy().T, -to_matrix(C, format='dense'),
+                                        A.source.zeros().to_numpy(), -to_matrix(C, format='dense'),
                                         R=to_matrix(D + D.H, 'dense'), S=to_matrix(B, format='dense').T,
                                         trans=False, options=options_ricc_pos_dense)
         elif typ == 'pr_o_dense':
             return solve_pos_ricc_dense(to_matrix(A, format='dense'), to_matrix(E, format='dense') if E else None,
-                                        -to_matrix(B, format='dense'), A.source.zeros().to_numpy(),
+                                        -to_matrix(B, format='dense'), A.source.zeros().to_numpy().T,
                                         R=to_matrix(D + D.H, 'dense'), S=to_matrix(C, format='dense').T,
                                         trans=True, options=options_ricc_pos_dense)
         elif typ[0] == 'br_c_lrcf':
@@ -1145,7 +1137,7 @@ class LTIModel(Model):
             of = self.gramian(('br_o_lrcf', gamma), mu=mu)
         else:
             raise ValueError(f'Unknown typ ({typ}).')
-        U, hsv, Vh = spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver='gesvd')
+        U, hsv, Vh = spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver=svd_lapack_driver())
         return hsv, U.T, Vh
 
     def hsv(self, mu=None):
@@ -1458,8 +1450,8 @@ class LTIModel(Model):
                     _, rev = eigs(A, E, k=1, l=3, sigma=ae)
                     ast_revs.append(rev)
                 return ast_levs, ast_pole_data, ast_revs
-            elif type(ast_pole_data) == tuple:
-                return ast_pole_data
+            elif isinstance(self.ast_pole_data, tuple):
+                return self.ast_pole_data
             else:
                 TypeError(f'ast_pole_data is of wrong type ({type(ast_pole_data)}).')
         else:
@@ -1477,8 +1469,8 @@ class LTIModel(Model):
             ast_ews = ew[ast_idx]
             idx = ast_ews.argsort()
 
-            ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, idx].T)
-            ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, idx].T)
+            ast_lev = self.A.source.from_numpy(lev[:, ast_idx][:, idx])
+            ast_rev = self.A.range.from_numpy(rev[:, ast_idx][:, idx])
 
             return ast_lev, ast_ews[idx], ast_rev
 
@@ -1787,8 +1779,7 @@ class PHLTIModel(LTIModel):
 
     @classmethod
     def from_matrices(cls, J, R, G, P=None, S=None, N=None, E=None, Q=None,
-                      state_id='STATE', solver_options=None, error_estimator=None,
-                      visualizer=None, name=None):
+                      solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |PHLTIModel| from matrices.
 
         Parameters
@@ -1809,8 +1800,6 @@ class PHLTIModel(LTIModel):
             The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be identity).
         Q
             The |NumPy array| or |SciPy spmatrix| Q or `None` (then Q is assumed to be identity).
-        state_id
-            Id of the state space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -1830,28 +1819,28 @@ class PHLTIModel(LTIModel):
         phlti
             The |PHLTIModel| with operators J, R, G, P, S, N, and E.
         """
-        assert isinstance(J, (np.ndarray, sps.spmatrix))
-        assert isinstance(R, (np.ndarray, sps.spmatrix))
-        assert isinstance(G, (np.ndarray, sps.spmatrix))
-        assert P is None or isinstance(P, (np.ndarray, sps.spmatrix))
-        assert S is None or isinstance(S, (np.ndarray, sps.spmatrix))
-        assert N is None or isinstance(N, (np.ndarray, sps.spmatrix))
-        assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
-        assert Q is None or isinstance(Q, (np.ndarray, sps.spmatrix))
+        assert isinstance(J, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(R, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(G, (np.ndarray, sps.spmatrix, sparray))
+        assert P is None or isinstance(P, (np.ndarray, sps.spmatrix, sparray))
+        assert S is None or isinstance(S, (np.ndarray, sps.spmatrix, sparray))
+        assert N is None or isinstance(N, (np.ndarray, sps.spmatrix, sparray))
+        assert E is None or isinstance(E, (np.ndarray, sps.spmatrix, sparray))
+        assert Q is None or isinstance(Q, (np.ndarray, sps.spmatrix, sparray))
 
-        J = NumpyMatrixOperator(J, source_id=state_id, range_id=state_id)
-        R = NumpyMatrixOperator(R, source_id=state_id, range_id=state_id)
-        G = NumpyMatrixOperator(G, range_id=state_id)
+        J = NumpyMatrixOperator(J)
+        R = NumpyMatrixOperator(R)
+        G = NumpyMatrixOperator(G)
         if P is not None:
-            P = NumpyMatrixOperator(P, range_id=state_id)
+            P = NumpyMatrixOperator(P)
         if S is not None:
             S = NumpyMatrixOperator(S)
         if N is not None:
             N = NumpyMatrixOperator(N)
         if E is not None:
-            E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
+            E = NumpyMatrixOperator(E)
         if Q is not None:
-            Q = NumpyMatrixOperator(Q, source_id=state_id, range_id=state_id)
+            Q = NumpyMatrixOperator(Q)
 
         return cls(J=J, R=R, G=G, P=P, S=S, N=N, E=E, Q=Q,
                    solver_options=solver_options, error_estimator=error_estimator, visualizer=visualizer,
@@ -2111,8 +2100,7 @@ class SecondOrderModel(Model):
 
     @classmethod
     def from_matrices(cls, M, E, K, B, Cp, Cv=None, D=None, sampling_time=0,
-                      state_id='STATE', solver_options=None, error_estimator=None,
-                      visualizer=None, name=None):
+                      solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create a second order system from matrices.
 
         Parameters
@@ -2153,21 +2141,21 @@ class SecondOrderModel(Model):
         lti
             The SecondOrderModel with operators M, E, K, B, Cp, Cv, and D.
         """
-        assert isinstance(M, (np.ndarray, sps.spmatrix))
-        assert isinstance(E, (np.ndarray, sps.spmatrix))
-        assert isinstance(K, (np.ndarray, sps.spmatrix))
-        assert isinstance(B, (np.ndarray, sps.spmatrix))
-        assert isinstance(Cp, (np.ndarray, sps.spmatrix))
-        assert Cv is None or isinstance(Cv, (np.ndarray, sps.spmatrix))
-        assert D is None or isinstance(D, (np.ndarray, sps.spmatrix))
+        assert isinstance(M, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(E, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(K, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(B, (np.ndarray, sps.spmatrix, sparray))
+        assert isinstance(Cp, (np.ndarray, sps.spmatrix, sparray))
+        assert Cv is None or isinstance(Cv, (np.ndarray, sps.spmatrix, sparray))
+        assert D is None or isinstance(D, (np.ndarray, sps.spmatrix, sparray))
 
-        M = NumpyMatrixOperator(M, source_id=state_id, range_id=state_id)
-        E = NumpyMatrixOperator(E, source_id=state_id, range_id=state_id)
-        K = NumpyMatrixOperator(K, source_id=state_id, range_id=state_id)
-        B = NumpyMatrixOperator(B, range_id=state_id)
-        Cp = NumpyMatrixOperator(Cp, source_id=state_id)
+        M = NumpyMatrixOperator(M)
+        E = NumpyMatrixOperator(E)
+        K = NumpyMatrixOperator(K)
+        B = NumpyMatrixOperator(B)
+        Cp = NumpyMatrixOperator(Cp)
         if Cv is not None:
-            Cv = NumpyMatrixOperator(Cv, source_id=state_id)
+            Cv = NumpyMatrixOperator(Cv)
         if D is not None:
             D = NumpyMatrixOperator(D)
 
@@ -2210,8 +2198,7 @@ class SecondOrderModel(Model):
 
     @classmethod
     def from_files(cls, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, sampling_time=0,
-                   state_id='STATE', solver_options=None, error_estimator=None, visualizer=None,
-                   name=None):
+                   solver_options=None, error_estimator=None, visualizer=None, name=None):
         """Create |LTIModel| from matrices stored in separate files.
 
         Parameters
@@ -2233,8 +2220,6 @@ class SecondOrderModel(Model):
         sampling_time
             `0` if the system is continuous-time, otherwise a positive number that denotes the
             sampling time (in seconds).
-        state_id
-            Id of the state space.
         solver_options
             The solver options to use to solve the Lyapunov equations.
         error_estimator
@@ -2264,8 +2249,7 @@ class SecondOrderModel(Model):
         Cv = load_matrix(Cv_file) if Cv_file is not None else None
         D = load_matrix(D_file) if D_file is not None else None
 
-        return cls.from_matrices(M, E, K, B, Cp, Cv, D, sampling_time=sampling_time,
-                                 state_id=state_id, solver_options=solver_options,
+        return cls.from_matrices(M, E, K, B, Cp, Cv, D, sampling_time=sampling_time, solver_options=solver_options,
                                  error_estimator=error_estimator, visualizer=visualizer, name=name)
 
     def to_files(self, M_file, E_file, K_file, B_file, Cp_file, Cv_file=None, D_file=None, mu=None):

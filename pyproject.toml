@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Library for building model order reduction applications with Python"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [
   {name = "pyMOR developers", email = "main.developers@pymor.org"},
 ]
@@ -18,22 +18,23 @@ maintainers = [
 classifiers = [
   "Intended Audience :: Science/Research",
   "License :: OSI Approved :: BSD License",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Scientific/Engineering :: Mathematics",
 ]
 dependencies = [
   "diskcache",
   "matplotlib>=3.5.0",
-  "numpy>=1.20.3,!=1.25.0,<2", # 1.25.0 crashes CI, >=2 breaks API
+  "numpy>=1.20.3,!=1.25.0", # 1.25.0 crashes CI
   "packaging",
   "pillow",
   "pygments",
   "qtpy>=2.3.1",
-  "scipy>=1.5.4",
+  "scipy>=1.8",
+  "threadpoolctl",
   "typer",
 ]
 
@@ -51,15 +52,15 @@ docs-additional = [
   "myst-nb>=0.16",
   "pybind11[global]",
   "python-slugify",
-  "sphinx-autoapi",
+  "sphinx-autoapi==3.1.2",
   "sphinx-material",
-  "sphinx",
+  "sphinx==7.3.7",
   "sphinxcontrib-bibtex",
 ]
 # additional dependencies for running tests via 'make tests'
 tests = [
   "hypothesis[numpy,pytest]==6.56.3", # pin hypothesis version to ensure deterministic tests
-  "pytest-notebook",
+  "pytest-notebook~=0.10",
   "notebook",
   "pytest-cov",
   "pytest-datadir",
@@ -67,9 +68,10 @@ tests = [
 ]
 # additional dependencies for pyMOR development
 dev = [
-  "ruff==0.3.5", # our linter of choice
-  "conda_lock==1.4.0", # needed for make ci_conda_requirements
+  "ruff==0.8.6", # our linter of choice
+  "conda_lock==2.5.7", # needed for make ci_conda_requirements
   "hatch", # build frontend for building and publishing pyMOR images
+  "uv", # to build requirements files
 ]
 # ## Optional dependencies for MOR algorithms
 # dependencies for deep-learning based MOR methods
@@ -129,8 +131,9 @@ scikit-fem = [
 ]
 # # Meta dependencies
 # install all optional dependencies, except those requiring a compiler toolchain to build
+# dune-gdt has no wheels for Python>=3.12, so we don't include it in full
 full = [
-  "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,dune,ngsolve,scikit-fem]",
+  "pymor[docs_additional,tests,dev,ann,ipyparallel,gui,jupyter,vtk,gmsh,ngsolve,scikit-fem]",
 ]
 # install all optional dependencies, including those requiring a compiler toolchain to build
 full-compiled = [
@@ -252,6 +255,8 @@ ignore = [
   "D104", # missing docstring in public package
   "D105", # missing docstring in magic method
   "D106", # missing docstring in public nested class
+  "D203", # 1 blank line required before class docstring
+  "D212", # multi-line docstring summary should start at the first line
   "D401", # first line of docstring should be in imperative mood
   "D404", # first word of the docstring should not be "This"
   "D405", # the linter thinks the argument name 'parameters' is a docstring section
@@ -265,12 +270,14 @@ ignore = [
   "N802", # function name should be lowercase
   "N803", # argument name should be lowercase (we use single capital letters everywhere for vectorarrays)
   "N806", # same for variables in function
-  "PT004", # fixture does not return anything, add leading underscore
   "PT011", # pytest.raises(Exception) is too broad
   "PT012", # pytest.raises() block should contain a single simple statement
   "PT015", # assertion always fails, replace with `pytest.fail()`
   "RUF005", # consider unpacking instead of concatenation
+  "RUF021", # parenthesize a and b expressions when chaining and and or together, to make the precedence clear
+  "RUF023", # __slots__ is not sorted
   "SIM102", # use a single if statement instead of nested if statements
+  "SIM103", # return the condition directly
   "SIM105", # use contextlib.suppress instead of try-except-pass
   "SIM108", # use ternary operator instead of if-else-block
   "SIM114", # combine if branches using logical or operator
@@ -284,7 +291,6 @@ ignore = [
 banned-from = ["numpy.linalg"] # avoids importing similar routines from numpy.linalg and scipy.linalg
 
 [tool.ruff.lint.flake8-import-conventions.extend-aliases]
-scipy = "" # don't import scipy directly
 "scipy.linalg" = "spla"
 
 [tool.ruff.lint.flake8-quotes]

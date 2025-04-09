@@ -15,7 +15,7 @@ def test_complex(rng):
     I = np.eye(5)
     A = rng.standard_normal((5, 5))
     B = rng.standard_normal((5, 5))
-    C = rng.standard_normal((3, 5))
+    C = rng.standard_normal((5, 3))
 
     Iop = NumpyMatrixOperator(I)
     Aop = NumpyMatrixOperator(A)
@@ -40,7 +40,7 @@ def test_complex(rng):
         for o_ind in (slice(None), [0]):
             va = NumpyVectorSpace(5).empty(reserve=rsrv)
             va.append(Cva)
-            D = rng.standard_normal((1, 5)) + 1j * rng.standard_normal((1, 5))
+            D = rng.standard_normal((5, 1)) + 1j * rng.standard_normal((5, 1))
             Dva = NumpyVectorSpace.from_numpy(D)
 
             assert not np.iscomplexobj(va.to_numpy())
@@ -65,9 +65,8 @@ def test_complex(rng):
 
 
 def test_real_imag():
-    A = np.array([[1 + 2j, 3 + 4j],
-                  [5 + 6j, 7 + 8j],
-                  [9 + 10j, 11 + 12j]])
+    A = np.array([[1 + 2j, 5 + 6j,  9 + 10j],
+                  [3 + 4j, 7 + 8j, 11 + 12j]])
     Ava = NumpyVectorSpace.from_numpy(A)
     Bva = Ava.real
     Cva = Ava.imag
@@ -76,14 +75,15 @@ def test_real_imag():
     for i in range(3):
         for j in range(2):
             k += 1
-            assert Bva.to_numpy()[i, j] == k
+            assert Bva.to_numpy()[j, i] == k
             k += 1
-            assert Cva.to_numpy()[i, j] == k
+            assert Cva.to_numpy()[j, i] == k
 
 
 def test_scal():
-    v = np.array([[1, 2, 3],
-                  [4, 5, 6]], dtype=float)
+    v = np.array([[1, 4],
+                  [2, 5],
+                  [3, 6]], dtype=float)
     v = NumpyVectorSpace.from_numpy(v)
     v.scal(1j)
 
@@ -91,7 +91,7 @@ def test_scal():
     for i in range(2):
         for j in range(3):
             k += 1
-            assert v.to_numpy()[i, j] == k * 1j
+            assert v.to_numpy()[j, i] == k * 1j
 
 
 def test_axpy():

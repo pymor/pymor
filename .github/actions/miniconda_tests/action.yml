@@ -31,7 +31,7 @@ runs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 libegl-dev
+        sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 libegl-dev libopengl0
     - name: Install
       shell: bash
       if: runner.os == 'Windows'
@@ -45,7 +45,7 @@ runs:
         sed -i 's/@echo Please make a deployment choice:/@GOTO desktopgl/g' ./mesa/systemwidedeploy.cmd
         sed -i 's/@echo Desktop OpenGL drivers deploy complete./@exit/g' ./mesa/systemwidedeploy.cmd
         ./mesa/systemwidedeploy.cmd
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: setup-micromamba
       uses: mamba-org/setup-micromamba@v1
       with:
@@ -76,14 +76,20 @@ runs:
         fi
         echo "QT_DEBUG_PLUGINS=1" >> $GITHUB_ENV
     - name: Sanity check
-      shell: bash -l {0}
+      shell: bash -el {0}
       run: |
         ${PYTEST_PREFIX} python -c "from matplotlib.pyplot import *"
         ${PYTEST_PREFIX} python -c "from qtpy.QtGui import *"
         ${PYTEST_PREFIX} python -c "import OpenGL"
         ${PYTEST_PREFIX} python -c "import OpenGL.GL as gl"
+    - name: Print config
+      shell: bash -el {0}
+      env:
+        PYTHONPATH: ./src
+      run: |
+        ${PYTEST_PREFIX} python -c "import pymor; print(pymor.config)"
     - name: Run pytest
-      shell: bash -l {0}
+      shell: bash -el {0}
       env:
         PYTHONPATH: ./src
         PYMOR_HYPOTHESIS_PROFILE: ${{ inputs.hypothesis_profile }}
@@ -96,29 +102,29 @@ runs:
         coverage xml -o ${{ inputs.coverage_file }}.xml --fail-under=10
     - name: Upload Coverage XML
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: coverage_results
+        name: coverage_results-${{ runner.os }}_${{ inputs.python }}
         path: ${{ inputs.coverage_file }}.xml
         if-no-files-found: error
     - name: Upload Coverage RAW
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: coverage_results_raw
+        name: coverage_results_raw (${{ runner.os }}, ${{ inputs.python }})
         path: ${{ inputs.coverage_file }}
         if-no-files-found: error
     - name: Upload Unit Test Results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: Unit Test Results (Python ${{ inputs.python }}, OS ${{ runner.os }})
+        name: Unit Test Results (${{ runner.os }}, ${{ inputs.python }})
         path: ${{ inputs.results_file }}
         if-no-files-found: error
     - name: Upload Conda Env Export
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: Conda Env Exports
+        name: Conda Env Exports (${{ runner.os }}, ${{ inputs.python }})
         path: conda-env__${{ runner.os }}-${{ inputs.python }}.yml
         if-no-files-found: error
