@@ -729,6 +729,8 @@ class NeuralNetworkLSTMReductor(NeuralNetworkReductor):
         # dimension of the parameter space and the reduced basis size
         if self.is_stationary:
             return [self.fom.parameters.dim, hidden_dimension, len(self.reduced_basis), ]
+        else:
+            return [self.fom.parameters.dim + 1, hidden_dimension, len(self.reduced_basis), ]
 
 class NeuralNetworkLSTMStatefreeOutputReductor(NeuralNetworkStatefreeOutputReductor,
                                                NeuralNetworkLSTMReductor):
