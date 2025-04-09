@@ -330,7 +330,7 @@ class Mu(FrozenDict):
         The |Parameters| to which the mapping assigns values.
     """
 
-    __slots__ = ('_raw_values')
+    __slots__ = ('_raw_values', '_hash')
     __array_priority__ = 100.0
     __array_ufunc__ = None
 
@@ -364,6 +364,8 @@ class Mu(FrozenDict):
 
         mu = super().__new__(cls, values_for_t)
         mu._raw_values = raw_values
+        # initialise a hash to be cached
+        mu._hash = None
         return mu
 
     def is_time_dependent(self, param):
@@ -438,19 +440,20 @@ class Mu(FrozenDict):
         return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
 
     def __hash__(self):
-        # Convert each value (which is a numpy array by design) into a tuple so it becomes hashable
-        key_value_tuples = []
-        for key, value in self.items():
-            # Ensure each value is converted to a tuple (numpy arrays are not hashable)
-            value_tuple = tuple(value)
-            key_value_tuples.append((key, value_tuple))
+        if self._hash is None:
+            # Convert each value into a tuple so it becomes hashable
+            key_value_tuples = []
+            for key, value in self.items():
+                # Ensure each value is converted to a tuple (numpy arrays are not hashable)
+                value_tuple = tuple(value)
+                key_value_tuples.append((key, value_tuple))
 
-        # Sort the list of (key, value_tuple) to ensure consistent ordering
-        # ensures that the hash is the same regardless of the order of keys
-        sorted_items = sorted(key_value_tuples)
-
+            # Sort the list of (key, value_tuple) to ensure consistent ordering
+            # ensures that the hash is the same regardless of the order of keys
+            sorted_items = sorted(key_value_tuples)
+            self._hash = hash(tuple(sorted_items))
         # Create a hash from the sorted list of items
-        return hash(tuple(sorted_items))
+        return  self._hash
 
     def __neg__(self):
         return Mu({key: -value for key, value in self.items()})
