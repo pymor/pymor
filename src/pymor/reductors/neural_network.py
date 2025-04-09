@@ -51,8 +51,8 @@ class NeuralNetworkReductor(BasicObject):
         Prescribed reduced basis of the full-order |Model|. If `None`, the
         reduced basis is computed using the :meth:`~pymor.algorithms.pod.pod` method.
     training_set
-        |Parameter values| to use for POD (in case no `reduced_basis` is provided) and training of the
-        neural network.
+        |Parameter values| to use for POD (in case no `reduced_basis` is provided) and
+        training of the neural network.
     training_snapshots
         |VectorArray| to use for POD and training of the
         neural network. Contains the solutions to the parameters of the
@@ -207,7 +207,8 @@ class NeuralNetworkReductor(BasicObject):
         if self.reduced_basis is None:
             self.compute_reduced_basis()
 
-        # compute training data, i.e. pairs of parameters (potentially including time) and reduced coefficients
+        # compute training data
+        # i.e. pairs of parameters (potentially including time) and reduced coefficients
         if self.training_data is None:
             self.compute_training_data()
         assert self.training_data is not None
