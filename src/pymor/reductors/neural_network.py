@@ -223,26 +223,27 @@ class NeuralNetworkReductor(BasicObject):
                 self.validation_set = [data[0] for data in self.validation_data]
                 self.training_data = self.training_data[number_validation_snapshots:]
             else:
-                # randomly shuffle training data before splitting into two sets
-                get_rng().shuffle(self.training_data)
+                # Create blocks of timesteps for each paraneter
+                blocksize = self.nt
+                blocks = [self.training_data[i:i + blocksize] for i in range(0, len(self.training_data), blocksize)]
+                # shuffle the blocks
+                get_rng().shuffle(blocks)
+                # concatenate the shuffled blocks into a single list
+                self.training_data[:] = [timesteps for parameter in blocks for timesteps in parameter]
                 # split training snapshots into validation and training snapshots
                 self.validation_data = self.training_data[0:number_validation_snapshots]
-                self.validation_set = [data[0] for data in self.validation_data]
+                self.validation_set = [data[0] for data in self.validation_data[::blocksize]]
                 self.training_data = self.training_data[number_validation_snapshots:]
 
-
-
-
         # compute validation snapshots if not given as input
-        if self.fom is None:
-            if self.validation_data is None:
-                assert self.validation_snapshots is not None
-        else:
-            if self.validation_snapshots is None:
-                self.compute_validation_snapshots()
-
-        # compute validation data
         if self.validation_data is None:
+            if self.fom is None:
+                assert self.validation_snapshots is not None
+            else:
+                if self.validation_snapshots is None:
+                    self.compute_validation_snapshots()
+
+            # compute validation data
             self.compute_validation_data()
         assert self.validation_data is not None
         assert len(self.validation_data) == len(self.validation_set) * self.nt
