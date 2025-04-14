@@ -83,6 +83,7 @@ docutils==0.21.2
     #   myst-parser
     #   pybtex-docutils
     #   sphinx
+    #   sphinx-togglebutton
     #   sphinxcontrib-bibtex
 executing==2.1.0
     # via stack-data
@@ -479,6 +480,7 @@ send2trash==1.8.3
 setuptools==75.6.0
     # via
     #   jupyterlab
+    #   sphinx-togglebutton
     #   sphinxcontrib-bibtex
     #   torch
 shellingham==1.5.4
@@ -512,10 +514,13 @@ sphinx==7.3.7
     #   myst-parser
     #   sphinx-autoapi
     #   sphinx-material
+    #   sphinx-togglebutton
     #   sphinxcontrib-bibtex
 sphinx-autoapi==3.1.2
     # via pymor (./pyproject.toml)
 sphinx-material==0.0.36
+    # via pymor (./pyproject.toml)
+sphinx-togglebutton==0.3.2
     # via pymor (./pyproject.toml)
 sphinxcontrib-applehelp==2.0.0
     # via sphinx
@@ -618,6 +623,8 @@ webencodings==0.5.1
     #   tinycss2
 websocket-client==1.8.0
     # via jupyter-server
+wheel==0.45.1
+    # via sphinx-togglebutton
 widgetsnbextension==4.0.13
     # via ipywidgets
 xmljson==0.2.1

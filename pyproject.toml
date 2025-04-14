@@ -56,6 +56,7 @@ docs-additional = [
   "sphinx-material",
   "sphinx==7.3.7",
   "sphinxcontrib-bibtex",
+  "sphinx_togglebutton",
 ]
 # additional dependencies for running tests via 'make tests'
 tests = [

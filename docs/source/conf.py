@@ -42,6 +42,7 @@ extensions = ['sphinx.ext.autodoc',
               'autoapi_pymor',
               'sphinxcontrib.bibtex',
               'IPython.sphinxext.ipython_console_highlighting',
+              'sphinx_togglebutton',
               ]
 # this enables:
 # substitutions-with-jinja2, direct-latex-math and definition-lists
