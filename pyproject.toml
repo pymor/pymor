@@ -139,6 +139,18 @@ full = [
 full-compiled = [
   "pymor[full,slycot,mpi]",
 ]
+# dependencies for ci-current docker image
+ci-current = [
+    "pymor[docs-additional,tests,ann,slycot,ipyparallel,mpi,gui,jupyter,vtk,gmsh,ngsolve,scikit-fem]"
+]
+# dependencies for ci-oldest docker image
+ci-oldest = [
+    "pymor[dune,tests,ann,slycot,ipyparallel,mpi,gui,jupyter,vtk,gmsh,ngsolve,scikit-fem]",
+]
+# dependencies for ci-fenics docker image
+ci-fenics = [
+    "pymor[docs_additional,tests,ann,ipyparallel,mpi]"
+]
 
 [project.scripts]
 pymor-demo = "pymor.scripts.pymor_demo:run"
@@ -313,6 +325,7 @@ convention = "numpy"
 
 [tool.tomlsort]
 trailing_comma_inline_array = true
+
 
 [tool.yamlfix]
 sequence_style = "block_style"

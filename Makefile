@@ -38,24 +38,9 @@ docs: ## build the docs
 ci_preflight_image: ## build CI image used in preflight stage
 	$(DOCKER) build -t pymor/ci-preflight -f $(THIS_DIR)/docker/Dockerfile.ci-preflight $(THIS_DIR)
 
-CI_EXTRAS= \
-	--extra tests \
-	--extra ann \
-	--extra slycot \
-	--extra ipyparallel \
-	--extra mpi \
-	--extra gui \
-	--extra jupyter \
-	--extra vtk \
-	--extra gmsh \
-	--extra ngsolve \
-	--extra scikit-fem
-	# dune not available for Python 3.13
-
 ci_current_requirements:
 	uv pip compile  \
-		$(CI_EXTRAS) \
-		--extra docs-additional \
+		--extra ci-current \
 		--python-version 3.13 \
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \
@@ -66,8 +51,7 @@ ci_current_requirements:
 
 ci_oldest_requirements:
 	uv pip compile  \
-		$(CI_EXTRAS) \
-		--extra dune \
+		--extra ci-oldest \
 		--python-version 3.9 \
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \
@@ -78,11 +62,7 @@ ci_oldest_requirements:
 
 ci_fenics_requirements:
 	uv pip compile  \
-		--extra docs_additional \
-		--extra tests \
-		--extra ann \
-		--extra ipyparallel \
-		--extra mpi \
+		--extra ci-fenics \
 		--python-version 3.11 \
 		--python-platform x86_64-manylinux_2_31 \
 		--extra-index-url https://download.pytorch.org/whl/cpu \
