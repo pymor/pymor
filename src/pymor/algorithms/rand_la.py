@@ -72,7 +72,7 @@ class RandomizedRangeFinder(BasicObject):
     @defaults('num_testvecs', 'failure_tolerance', 'qr_method', 'error_estimator')
     def __init__(self, A, range_product=None, source_product=None, A_adj=None, power_iterations=0, block_size=None,
                  failure_tolerance=1e-15, num_testvecs=20, lambda_min=None, iscomplex=False, qr_method='gram_schmidt',
-                 error_estimator='bs18'):
+                 error_estimator='bs18', qr_opts={}):
         assert isinstance(A, Operator)
         assert range_product is None or isinstance(range_product, Operator)
         assert source_product is None or isinstance(source_product, Operator)
@@ -122,9 +122,11 @@ class RandomizedRangeFinder(BasicObject):
         """
         product = self.range_product
         if self.qr_method == 'gram_schmidt':
-            _, _R = gram_schmidt(Q, product=product, atol=0, rtol=0, offset=offset, copy=False, return_R=True)
+            _, _R = gram_schmidt(
+                Q, product=product, atol=0, rtol=0, offset=offset, copy=False, return_R=True, **self.qr_opts
+            )
         elif self.qr_method == 'shifted_chol_qr':
-            _, _R = shifted_chol_qr(Q, product=product, offset=offset, copy=False, return_R=True)
+            _, _R = shifted_chol_qr(Q, product=product, offset=offset, copy=False, return_R=True, **self.qr_opts)
         if len(Q) == offset:
             raise ValueError('Basis extension broke down before convergence.')
         _R[:offset, :offset] = R
@@ -150,7 +152,7 @@ class RandomizedRangeFinder(BasicObject):
             # projecting onto Q[-1] instead of new_basis_vecs
             # should not be needed in most cases. add an option?
             new_basis_vecs = self.Q[-1][self.estimator_last_basis_size:]
-            self.Omega -= new_basis_vecs.lincomb(new_basis_vecs.inner(self.Omega, product=range_product).T)
+            self.Omega -= new_basis_vecs.lincomb(new_basis_vecs.inner(self.Omega, product=range_product))
             self.estimator_last_basis_size += len(new_basis_vecs)
 
         testfail = self.failure_tolerance / min(A.source.dim, A.range.dim)
@@ -171,9 +173,9 @@ class RandomizedRangeFinder(BasicObject):
                 Q = self.Q[-1]
                 T = G / g
                 QZ = Q.inner(self.Omega)
-                QQZ = Q.lincomb(QZ.T).to_numpy().T
-                QTTQZ = Q.to_numpy().T @ T * np.diag(T.T @ QZ)
-                error = spla.norm(self.Omega.to_numpy().T-QQZ+QTTQZ) / np.sqrt(len(self.Omega))
+                error = spla.norm(
+                    (self.Omega+Q.lincomb((T*np.diag(T.T@QZ)-QZ).T)
+                     ).to_numpy().T) / np.sqrt(len(self.Omega))
             self.last_estimated_error = error
             self.estimator_last_basis_size = len(self.Q[-1])
         return self.last_estimated_error
@@ -236,10 +238,11 @@ class RandomizedRangeFinder(BasicObject):
 
             # power iterations
             for i in range(1, len(Q)):
-                V = Q[i-1][current_len:]
-                current_len = len(Q[i])
-                Q[i].append(A.apply(A_adj.apply(V)))
-                R[i] = self._qr_update(Q[i], R[i], current_len)
+                with self.logger.block(f'Power iteration {i} ...'):
+                    V = Q[i-1][current_len:]
+                    current_len = len(Q[i])
+                    Q[i].append(A.apply(A_adj.apply(V)))
+                    R[i] = self._qr_update(Q[i], R[i], current_len)
 
         if basis_size is not None and basis_size < len(Q[-1]):
             return Q[-1][:basis_size].copy()
@@ -336,7 +339,7 @@ def randomized_svd(A, n, source_product=None, range_product=None, power_iteratio
     with logger.block('Backprojecting the left'
                       f'{" " if isinstance(range_product, IdentityOperator) else " generalized "}'
                       f'singular vector{"s" if n > 1 else ""} ...'):
-        U = Q.lincomb(Uh_b[:n])
+        U = Q.lincomb(Uh_b[:n].T)
 
     return U, s, V
 
@@ -442,7 +445,7 @@ def randomized_ghep(A, E=None, n=6, power_iterations=0, oversampling=20, single_
         with logger.block('Backprojecting the'
                           f'{" " if isinstance(E, IdentityOperator) else " generalized "}'
                           f'eigenvector{"s" if n > 1 else ""} ...'):
-            V = Q.lincomb(Vr[:, ::-1].T)
+            V = Q.lincomb(Vr[:, ::-1])
         return w[::-1], V
     else:
         with logger.block(f'Computing the{" " if isinstance(E, IdentityOperator) else " generalized "}'
