@@ -6,6 +6,7 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.projection import project
+from pymor.algorithms.rand_la import RandomizedRangeFinder
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import CacheableObject, cached
 from pymor.models.iosys import LTIModel
@@ -253,3 +254,69 @@ class ERAReductor(CacheableObject):
 
         self.logger.info(f'Constructing reduced realization of order {r} ...')
         return self._construct_realization(sv, U, V, m, p, num_left, num_right)
+
+
+class RandomizedERAReductor(ERAReductor):
+    def __init__(self, data, sampling_time, force_stability=True, feedthrough=None, allow_transpose=True, rrf_opts={},
+                 num_left=None, num_right=None):
+        super().__init__(data, sampling_time, force_stability=force_stability, feedthrough=feedthrough)
+        self.__auto_init(locals())
+        #data = data.copy()
+        if num_left is not None or num_right is not None:
+            self.logger.info('Computing the projected Markov parameters ...')
+            data = self._project_markov_parameters(num_left, num_right)
+        if self.force_stability:
+            data = np.concatenate([data, np.zeros_like(data)[1:]], axis=0)
+        s = (data.shape[0] + 1) // 2
+        self._transpose = (data.shape[1] < data.shape[2]) if allow_transpose else False
+        self._H = NumpyHankelOperator(data[:s], r=data[s-1:])
+        if self._transpose:
+            self.logger.info('Using transposed formulation.')
+            self._H = self._H.H
+        self._last_sv_U_V = None
+        self._rrf = RandomizedRangeFinder(self._H, **rrf_opts)
+        self._rrf._draw_samples = self._draw_samples
+
+    @cached
+    def _weighted_h2_norm(self):
+        T = self.data.shape[0]
+        s = int((T+1)/2)
+        eta = np.ones(T)
+        eta[1:s+1] *= np.arange(s) + 1
+        eta[s+1:] *= np.arange(s-1)[::-1][:T-s-1] + 1
+        return spla.norm(self.data*np.sqrt(eta.reshape(-1, 1, 1)))
+
+    def _sv_U_V(self, num_left, num_right):
+        return self._last_sv_U_V
+
+    def _draw_samples(self, num):
+        # faster way of computing the random samples for Hankel matrices
+        self._rrf.logger.info(f'Taking {num} samples ...')
+        V = np.zeros((self._H._circulant.source.dim, num))
+        V[:self._H.source.dim] = self._H.source.random(num, distribution='normal').to_numpy().T
+        return self._H.range.make_array(self._H._circulant._circular_matvec(V)[:, :self._H.range.dim])
+
+    def reduce(self, r=None, tol=None):
+        if tol is not None:
+            tol *= self._weighted_h2_norm()
+        last_basis_size = len(self._rrf.Q[-1])
+        Q = self._rrf.find_range(basis_size=r, tol=tol)
+        r = len(Q) if r is None else r
+        if r > last_basis_size:
+            self.logger.info('Projecting onto reduced space ...')
+            B = self._H.apply_adjoint(Q).to_numpy()
+            self.logger.info(f'Computing reduced SVD of size {B.shape[0]}x{B.shape[1]} ...')
+            Ub, sv, Vh = np.linalg.svd(B, full_matrices=False)
+            self.logger.info('Lifting left singular vectors ...')
+            U = Q.lincomb(Ub.T)
+            self._last_sv_U_V = (sv, U.to_numpy().T, Vh.T)
+        else:
+            self.logger.info('Smaller model order requested. Reusing last SVD.')
+        sv, U, V = self._last_sv_U_V
+        sv, U, V = sv[:r], U[:, :r], V[:, :r]
+        if self._transpose:  # switch back, if transposed formulation was used
+            U, V = V, U
+
+        self.logger.info(f'Constructing reduced realization of order {r} ...')
+        _, p, m = self.data.shape
+        return self._construct_realization(sv, U, V, m, p, self.num_left, self.num_right)
