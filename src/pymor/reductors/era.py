@@ -113,19 +113,14 @@ class ERAReductor(CacheableObject):
     def _sv_U_V(self, num_left, num_right):
         n, p, m = self.data.shape
         s = n if self.force_stability else (n + 1) // 2
-        if num_left is None and m * s < p:
-            self.logger.info('Data has low rank! Accelerating computation with output tangential projections ...')
-            num_left = m * s
-        if num_right is None and p * s < m:
-            self.logger.info('Data has low rank! Accelerating computation with input tangential projections ...')
-            num_right = p * s
+
         h = self._project_markov_parameters(num_left, num_right) if num_left or num_right else self.data
         self.logger.info(f'Computing SVD of the {"projected " if num_left or num_right else ""}Hankel matrix ...')
         if self.force_stability:
             h = np.concatenate([h, np.zeros_like(h)[1:]], axis=0)
         H = NumpyHankelOperator(h[:s], r=h[s-1:])
-        U, sv, V = spla.svd(to_matrix(H), full_matrices=False)
-        return sv, U.T, V
+        U, sv, Vh = spla.svd(to_matrix(H), full_matrices=False)
+        return sv, U, Vh.T
 
     def output_projector(self, num_left):
         """Construct the left/output projector :math:`W_1`."""
@@ -183,7 +178,7 @@ class ERAReductor(CacheableObject):
 
         a = p * s if num_right is None and p * s < m else (num_right or m)
         b = m * s if num_left is None and m * s < p else (num_left or p)
-        err = (np.sqrt(np.arange(len(sv)) + a + b) * sv)[1:]
+        err = ((np.arange(len(sv)) + a + b) * sv**2)[1:]
 
         err = 2 * err if num_left or num_right else err
         if num_left:
@@ -194,6 +189,25 @@ class ERAReductor(CacheableObject):
             err += 4 * np.linalg.norm(s2[num_right:])**2
 
         return np.sqrt(err)
+
+    def _construct_realization(self, sv, U, V, m, p, num_left, num_right):
+        m, p = num_right or m, num_left or p
+        sqsv = np.sqrt(sv)
+        A, *_ = spla.lstsq(U[: -p], U[p:])
+        A = NumpyMatrixOperator((1/sqsv).reshape(-1,1)*A*sqsv.reshape(1,-1))
+        B = NumpyMatrixOperator((V[:m]*sqsv.reshape(1, -1)).T)
+        C = NumpyMatrixOperator(U[:p]*sqsv.reshape(1, -1))
+        if num_left:
+            self.logger.info('Backprojecting tangential output directions ...')
+            W1 = self.output_projector(num_left)
+            C = project(C, source_basis=None, range_basis=C.range.from_numpy(W1))
+        if num_right:
+            self.logger.info('Backprojecting tangential input directions ...')
+            W2 = self.input_projector(num_right)
+            B = project(B, source_basis=B.source.from_numpy(W2), range_basis=None)
+
+        return LTIModel(A, B, C, D=self.feedthrough, sampling_time=self.sampling_time,
+                        presets={'o_dense': np.diag(sv), 'c_dense': np.diag(sv), 'hsv': sv})
 
     def reduce(self, r=None, tol=None, num_left=None, num_right=None):
         """Construct a minimal realization.
@@ -221,6 +235,13 @@ class ERAReductor(CacheableObject):
         assert num_right is None or isinstance(num_right, int) and 0 < num_right < m
         assert r is None or 0 < r <= min((num_left or p), (num_right or m)) * s
 
+        if num_left is None and m * s < p:
+            self.logger.info('Data has low rank! Accelerating computation with output tangential projections ...')
+            num_left = m * s
+        if num_right is None and p * s < m:
+            self.logger.info('Data has low rank! Accelerating computation with input tangential projections ...')
+            num_right = p * s
+
         sv, U, V = self._sv_U_V(num_left, num_right)
 
         if tol is not None:
@@ -228,27 +249,7 @@ class ERAReductor(CacheableObject):
             r_tol = np.argmax(error_bounds <= tol) + 1
             r = r_tol if r is None else min(r, r_tol)
 
-        sv, U, V = sv[:r], U[:r].T, V[:r]
-
-        num_left = m * s if num_left is None and m * s < p else num_left
-        num_right = p * s if num_right is None and p * s < m else num_right
+        sv, U, V = sv[:r], U[:, :r], V[:, :r]
 
         self.logger.info(f'Constructing reduced realization of order {r} ...')
-        sqsv = np.sqrt(sv)
-        U *= sqsv.reshape(1, -1)
-        V *= sqsv.reshape(-1, 1)
-        A = NumpyMatrixOperator(spla.lstsq(U[: -(num_left or p)], U[(num_left or p):])[0])
-        B = NumpyMatrixOperator(V[:, :(num_right or m)])
-        C = NumpyMatrixOperator(U[:(num_left or p)])
-
-        if num_left:
-            self.logger.info('Backprojecting tangential output directions ...')
-            W1 = self.output_projector(num_left)
-            C = project(C, source_basis=None, range_basis=C.range.from_numpy(W1.T))
-        if num_right:
-            self.logger.info('Backprojecting tangential input directions ...')
-            W2 = self.input_projector(num_right)
-            B = project(B, source_basis=B.source.from_numpy(W2.T), range_basis=None)
-
-        return LTIModel(A, B, C, D=self.feedthrough, sampling_time=self.sampling_time,
-                        presets={'o_dense': np.diag(sv), 'c_dense': np.diag(sv)})
+        return self._construct_realization(sv, U, V, m, p, num_left, num_right)
