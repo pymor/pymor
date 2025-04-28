@@ -40,7 +40,7 @@ class Point(ReferenceElement):
         return np.ones(A.shape[:-2])
 
     def quadrature_info(self):
-        # of course, the quadrature is of arbitrary oder ...
+        # of course, the quadrature is of arbitrary order ...
         return {'gauss': tuple(range(42))}, {'gauss': (1,)}
 
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):

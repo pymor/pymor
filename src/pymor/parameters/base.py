@@ -12,13 +12,12 @@ are treated as parameter vectors of dimension 1. Mappings of |Parameters| to
 To sample |parameter values| within a given range, |ParameterSpace| objects can be used.
 """
 
-from itertools import product
+from itertools import chain, product
 from numbers import Number
 
 import numpy as np
 
 from pymor.core.base import ImmutableObject
-from pymor.tools.floatcmp import float_cmp_all
 from pymor.tools.frozendict import FrozenDict, SortedFrozenDict
 from pymor.tools.pprint import format_array
 from pymor.tools.random import get_rng
@@ -132,11 +131,6 @@ class Parameters(SortedFrozenDict):
             sum(self.values()) == 0 or fail('no parameter values provided')
             mu = []
 
-        if isinstance(mu, Mu):
-            mu.parameters == self or fail(self.why_incompatible(mu))
-            set(mu) == set(self) or fail(f'additional parameters {set(mu) - set(self)}')
-            return mu
-
         # convert mu to dict
         if isinstance(mu, (Number, str, Function)):
             mu = [mu]
@@ -235,18 +229,18 @@ class Parameters(SortedFrozenDict):
 
         return Mu({k: parse_value(k, v) for k, v in mu.items()})
 
-    def space(self, *ranges):
+    def space(self, *ranges, constraints=None):
         """Create a |ParameterSpace| with given ranges.
 
         This is a shorthand for ::
 
-            ParameterSpace(self, *range)
+            ParameterSpace(self, *range, constraints=constraints)
 
-        See |ParameterSpace| for allowed range arguments.
+        See |ParameterSpace| for allowed `range` and `constraints` arguments.
         """
-        return ParameterSpace(self, *ranges)
+        return ParameterSpace(self, *ranges, constraints=constraints)
 
-    def assert_compatible(self, mu):
+    def assert_compatible(self, mu, allow_time_dependent=False):
         """Assert that |parameter values| are compatible with the given |Parameters|.
 
         Each of the parameter must be contained in  `mu` and the dimensions have to match,
@@ -255,24 +249,52 @@ class Parameters(SortedFrozenDict):
             mu[parameter].size == self[parameter]
 
         Otherwise, an `AssertionError` will be raised.
+
+        Parameters
+        ----------
+        allow_time_dependent
+            If `True`, also the time-dependent parameter values stored in `mu`
+            are taken into account. As these values are only usable when an
+            evaluation time `'t'` is specified, code handling these values must
+            be 'time-aware'. Therefore, the default for this parameter is
+            `False`, which means that time-dependent values are treated as
+            non-existent.
         """
-        assert self.is_compatible(mu), self.why_incompatible(mu)
+        assert self.is_compatible(mu, allow_time_dependent=allow_time_dependent), \
+            self.why_incompatible(mu, allow_time_dependent=allow_time_dependent)
         return True
 
-    def is_compatible(self, mu):
+    def is_compatible(self, mu, allow_time_dependent=False):
         """Check if |parameter values| are compatible with the given |Parameters|.
 
         Each of the parameter must be contained in  `mu` and the dimensions have to match,
         i.e. ::
 
             mu[parameter].size == self[parameter]
+
+        Parameters
+        ----------
+        allow_time_dependent
+            If `True`, also the time-dependent parameter values stored in `mu`
+            are taken into account. As these values are only usable when an
+            evaluation time `'t'` is specified, code handling these values must
+            be 'time-aware'. Therefore, the default for this parameter is
+            `False`, which means that time-dependent values are treated as
+            non-existent.
         """
         if mu is not None and not isinstance(mu, Mu):
             raise TypeError('mu is not a Mu instance. (Use parameters.parse?)')
-        return not self or \
-            mu is not None and all(getattr(mu.get(k), 'size', None) == v for k, v in self.items())
+        if not self:
+            return True
+        if allow_time_dependent:
+            return mu is not None and \
+                all(getattr(mu.get(k), 'size', None) == v or
+                    getattr(mu.time_dependent_values.get(k), 'shape_range', None) == (v,)
+                    for k, v in self.items())
+        else:
+            return mu is not None and all(getattr(mu.get(k), 'size', None) == v for k, v in self.items())
 
-    def why_incompatible(self, mu):
+    def why_incompatible(self, mu, allow_time_dependent=False):
         if mu is not None and not isinstance(mu, Mu):
             return 'mu is not a Mu instance. (Use parameters.parse?)'
         assert self
@@ -280,12 +302,20 @@ class Parameters(SortedFrozenDict):
             mu = {}
         failing_params = {}
         for k, v in self.items():
-            if k not in mu:
+            if k in mu:
+                if (size:=mu[k].size) != v:
+                    failing_params[k] = f'{size} != {v}'
+            elif k in mu.time_dependent_values:
+                if allow_time_dependent:
+                    if (shape:=mu.time_dependent_values[k].shape_range) != (v,):
+                        assert len(shape) == 1
+                        failing_params[k] = f'{shape[0]} != {v}'
+                else:
+                    failing_params[k] = 'time-dependent not allowed'
+            else:
                 failing_params[k] = f'missing != {v}'
-            elif mu[k].shape != v:
-                failing_params[k] = f'{mu[k].size} != {v}'
         assert failing_params
-        return f'Incompatible parameters: {failing_params}'
+        return f'Incompatible parameters: {failing_params} for mu={mu}'
 
     def __or__(self, other):
         assert all(k not in self or self[k] == v
@@ -313,31 +343,41 @@ class Parameters(SortedFrozenDict):
         return hash(tuple(self.items()))
 
 
-class Mu(FrozenDict):
+class Mu(ImmutableObject):
     """Immutable mapping of |Parameter| names to parameter values.
+
+    This class represents an immutable mapping (`dict`) from parameter
+    names to corresponding values given as one-dimensional |NumPy Arrays|.
+    In addition, time-dependent parameter values may be stored in the
+    :attr:`time_dependent_values` attribute, which is an immutable mapping
+    from parameter names to |Functions| of time.
+
+    .. note::
+        Time-dependent parameter values are invisible when using the
+        class's mapping protocol methods (`__contains__`, `__getitem__`,
+        `keys`, `items`, etc.). Code wanting to handle time-dependent
+        values needs to use :meth:`at_time` or explicitly lookup values
+        in :attr:`time_dependent_values`.
 
     Parameters
     ----------
     Anything that dict accepts for the construction of a dictionary.
     Values are automatically converted to one-dimensional |NumPy arrays|,
-    except for |Functions| which are interpreted as time-dependent parameter
+    except for |Functions|, which are interpreted as time-dependent parameter
     values. Unless the Python interpreter runs with the `-O` flag,
     the arrays are made immutable.
 
+
     Attributes
     ----------
-    parameters
-        The |Parameters| to which the mapping assigns values.
+    time_dependent_values
+        Immutable mapping from parameter names to |Functions| of time.
     """
 
-    __slots__ = ('_raw_values', '_hash')
-    __array_priority__ = 100.0
-    __array_ufunc__ = None
-
-    def __new__(cls, *args, **kwargs):
-        raw_values = dict(*args, **kwargs)
-        values_for_t = {}
-        for k, v in sorted(raw_values.items()):
+    def __init__(self, *args, **kwargs):
+        values = {}
+        time_dependent_values = {}
+        for k, v in sorted(dict(*args, **kwargs).items()):
             assert isinstance(k, str)
             if callable(v):
                 # note: We can't import Function globally due to circular dependencies, so
@@ -349,96 +389,105 @@ class Mu(FrozenDict):
                 assert isinstance(v, Function)
                 assert v.dim_domain == 1
                 assert len(v.shape_range) == 1
-                try:
-                    t = np.array(raw_values['t'], ndmin=1)
-                    assert t.shape == (1,)
-                except KeyError:
-                    t = np.zeros(1)
-                vv = v(t)
+                time_dependent_values[k] = v
             else:
-                vv = np.array(v, copy=False, ndmin=1)
+                vv = np.asarray(v)
+                if vv.ndim == 0:
+                    vv.shape = (1,)
                 assert vv.ndim == 1
                 assert k != 't' or len(vv) == 1
-            assert not vv.setflags(write=False)
-            values_for_t[k] = vv
+                assert not vv.setflags(write=False)
+                values[k] = vv
 
-        mu = super().__new__(cls, values_for_t)
-        mu._raw_values = raw_values
-        # initialise a hash to be cached
-        mu._hash = None
-        return mu
+        assert 't' not in values or not time_dependent_values, 'cannot specify "t" and have time-dependent values'
 
-    def is_time_dependent(self, param):
-        """Check whether the values for a given parameter depend on time.
+        self._values = values
+        self._hash = None
+        self.time_dependent_values = FrozenDict(time_dependent_values)
 
-        This is the case when the value for `self[param]` was given by a |Function|
-        instead of a constant array.
-        """
-        from pymor.analyticalproblems.functions import Function
-        return isinstance(self._raw_values[param], Function)
+    def __getitem__(self, key):
+        return self._values[key]
 
-    def get_time_dependent_value(self, param):
-        """Return time-dependent |Function| for given parameter.
+    def __iter__(self):
+        return iter(self._values)
 
-        Parameters
-        ----------
-        param
-            The parameter for which to return the time-dependent values.
+    def __len__(self):
+        return len(self._values)
 
-        Returns
-        -------
-        If `param` depends on time, this corresponding |Function| (and not its
-        evaluation at the current time) is returned. If `param` is not given
-        by a |Function|, a |ConstantFunction| is returned.
-        """
-        from pymor.analyticalproblems.functions import Function
-        value = self._raw_values[param]
-        if not isinstance(value, Function):
-            from pymor.analyticalproblems.functions import ConstantFunction
-            value = ConstantFunction(value)
-        return value
+    def __contains__(self, key):
+        return key in self._values
 
-    def with_(self, **kwargs):
-        return Mu(self._raw_values, **kwargs)
+    def keys(self):
+        return self._values.keys()
+
+    def values(self):
+        return self._values.values()
+
+    def items(self):
+        return self._values.items()
+
+    def get(self, key, value=None):
+        return self._values.get(key, value)
 
     @property
-    def parameters(self):
-        return Parameters({k: v.size for k, v in self.items()})
+    def has_time_dependent_values(self):
+        return len(self.time_dependent_values) > 0
 
-    def allclose(self, mu):
-        """Compare dicts of |parameter values| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
+    def parameters(self, include_time_dependent=False):
+        """Return the |Parameters| for which values are stored.
 
         Parameters
         ----------
-        mu
-            The |parameter values| with which to compare.
-
-        Returns
-        -------
-        `True` if both |parameter value| dicts contain values for the same |Parameters| and all
-        components of the parameter values are almost equal, else `False`.
+        include_time_dependent
+            If `True`, also include the parameters for which
+            time-dependent values are stored. These are excluded
+            by default, as code needs to take special measures to
+            deal with time-dependent parameter-values.
         """
-        assert isinstance(mu, Mu)
-        return self.keys() == mu.keys() and all(float_cmp_all(v, mu[k]) for k, v in self.items())
+        params = {k: v.size for k, v in self.items()}
+        if include_time_dependent:
+            params.update({k: v.shape_range[0] for k, v in self.time_dependent_values.items()})
+        return Parameters(params)
+
+    def with_(self, new_type=None, **kwargs):
+        cls = new_type or Mu
+        return cls(**(self._values | self.time_dependent_values | kwargs))
+
+    def at_time(self, t):
+        """Return a new |Mu| instance with values for given time.
+
+        This method evaluates all :attr:`time_dependent_values` for
+        the given evaluation time `t` and returns a new |Mu| containing
+        these values along with the other non-time-dependent values.
+
+        Parameters
+        ----------
+        t
+            Evaluation time for the time-dependent parameter values.
+        """
+        if 't' in self:
+            raise ValueError('time already specified')
+        t = np.asarray(t).reshape((1,))
+        return Mu(self._values, t=t, **{k: v(t) for k, v in self.time_dependent_values.items()})
 
     def to_numpy(self):
-        """All parameter values as a NumPy array, ordered alphabetically."""
+        if self.has_time_dependent_values:
+            raise ValueError(f'Mu has time-dependent values ({list(self.time_dependent_values.keys())}).')
         if len(self) == 0:
             return np.array([])
         else:
             return np.hstack([v for k, v in self.items()])
 
-    def copy(self):
-        return self
-
-    def __eq__(self, mu):
-        if not isinstance(mu, Mu):
+    def __eq__(self, other):
+        if not isinstance(other, Mu):
             try:
-                mu = Mu(mu)
+                other = Mu(other)
             except Exception:
                 return False
-        return self.keys() == mu.keys() and all(np.array_equal(v, mu[k]) for k, v in self.items())
-
+        return self.keys() == other.keys() \
+            and all(np.array_equal(v, other[k]) for k, v in self.items()) \
+            and self.time_dependent_values == other.time_dependent_values
+    
     def __hash__(self):
         if self._hash is None:
             # Convert each value into a tuple so it becomes hashable
@@ -455,45 +504,21 @@ class Mu(FrozenDict):
         # Create a hash from the sorted list of items
         return  self._hash
 
-    def __neg__(self):
-        return Mu({key: -value for key, value in self.items()})
-
-    def __add__(self, other):
-        if not isinstance(other, Mu):
-            other = self.parameters.parse(other)
-        assert self.keys() == other.keys()
-        return Mu({key: self[key] + other[key] for key in self})
-
-    def __radd__(self, other):
-        return self + other
-
-    def __sub__(self, other):
-        return self + -other
-
-    def __rsub__(self, other):
-        return -self + other
-
-    def __mul__(self, other):
-        assert isinstance(other, Number)
-        return Mu({key: self[key] * other for key in self})
-
-    def __rmul__(self, other):
-        return self * other
-
     def __str__(self):
         def format_value(k, v):
-            if self.is_time_dependent(k):
-                return f'{self._raw_values[k]}({self.get("t", 0)}) = {format_array(v)}'
+            if callable(v):
+                return str(v)
             else:
                 return format_array(v)
 
-        return '{' + ', '.join(f'{k}: {format_value(k, v)}' for k, v in self.items()) + '}'
+        return '{' + ', '.join(f'{k}: {format_value(k, v)}'
+                               for k, v in chain(self.items(), self.time_dependent_values.items())) + '}'
 
     def __repr__(self):
-        return f'Mu({dict(sorted(self._raw_values.items()))})'
+        return f'Mu({dict(sorted(chain(self.items(), self.time_dependent_values.items())))})'
 
     def _cache_key_reduce(self):
-        return self._raw_values
+        return (self._values, self.time_dependent_values)
 
 
 class ParametricObject(ImmutableObject):
@@ -520,7 +545,7 @@ class ParametricObject(ImmutableObject):
         item of :attr:`parameters`.
     parameters_inherited
         The |Parameters| the object depends on because some child object depends on them.
-        Each item of :attr:`parameters_own` is also an item of :attr:`parameters`.
+        Each item of :attr:`parameters_inherited` is also an item of :attr:`parameters`.
     parameters_internal
         The |Parameters| some of the object's child objects may depend on, but which are
         fixed to a concrete value by this object. All items of :attr:`parameters_internal`
@@ -604,7 +629,7 @@ class ParameterSpace(ParametricObject):
     |parameter values| for given |Parameters| within a specified
     range.
 
-    Parameters
+    Attributes
     ----------
     parameters
         The |Parameters| which are part of the space.
@@ -616,9 +641,15 @@ class ParameterSpace(ParametricObject):
         - a list/tuple of two numbers specifying these bounds,
         - or a dict of those tuples, specifying upper and lower
           bounds individually for each parameter of the space.
+    constraints
+        If not `None`, a function `constraints(mu) -> bool`
+        defining additional (inequality) constraints on the space.
+        For each given |parameter values| that lies within the given
+        `ranges`, `constraints` is called to check if the constraints
+        are satisfied.
     """
 
-    def __init__(self, parameters, *ranges):
+    def __init__(self, parameters, *ranges, constraints=None):
         assert isinstance(parameters, Parameters)
         assert 1 <= len(ranges) <= 2
         if len(ranges) == 1:
@@ -632,11 +663,17 @@ class ParameterSpace(ParametricObject):
                    and all(isinstance(v, Number) for v in ranges[k])
                    and ranges[k][0] <= ranges[k][1]
                    for k in parameters)
-        self.parameters = parameters
+        assert constraints is None or callable(constraints)
+        self.__auto_init(locals())
         self.ranges = SortedFrozenDict((k, tuple(v)) for k, v in ranges.items())
 
     def sample_uniformly(self, counts):
         """Uniformly sample |parameter values| from the space.
+
+        In the case of additional :attr:`~ParameterSpace.constraints`, the samples
+        are generated w.r.t. the box constraints specified by
+        :attr:`~ParameterSpace.ranges`, but only those |parameter values| are returned,
+        which satisfy the additional constraints.
 
         Parameters
         ----------
@@ -656,8 +693,13 @@ class ParameterSpace(ParametricObject):
                           for k in self.parameters)
         iters = tuple(product(linspace, repeat=size)
                       for linspace, size in zip(linspaces, self.parameters.values()))
-        return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
-                for i in product(*iters)]
+        unconstrained_mus = (Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
+                             for i in product(*iters))
+        if self.constraints:
+            constraints = self.constraints
+            return [mu for mu in unconstrained_mus if constraints(mu)]
+        else:
+            return list(unconstrained_mus)
 
     def sample_randomly(self, count=None):
         """Randomly sample |parameter values| from the space.
@@ -673,8 +715,19 @@ class ParameterSpace(ParametricObject):
         -------
         The sampled |parameter values|.
         """
-        get_param = lambda: Mu((k, get_rng().uniform(self.ranges[k][0], self.ranges[k][1], size))
-                               for k, size in self.parameters.items())
+        rng = get_rng()
+        constraints = self.constraints
+
+        def get_param():
+            while True:
+                mu = Mu((k, rng.uniform(self.ranges[k][0], self.ranges[k][1], size))
+                        for k, size in self.parameters.items())
+                if constraints:
+                    if constraints(mu):
+                        return mu
+                else:
+                    return mu
+
         if count is None:
             return get_param()
         else:
@@ -682,6 +735,11 @@ class ParameterSpace(ParametricObject):
 
     def sample_logarithmic_uniformly(self, counts):
         """Logarithmically uniform sample |parameter values| from the space.
+
+        In the case of additional :attr:`~ParameterSpace.constraints`, the samples
+        are generated w.r.t. the box constraints specified by
+        :attr:`~ParameterSpace.ranges`, but only those |parameter values| are returned,
+        which satisfy the additional constraints.
 
         Parameters
         ----------
@@ -701,8 +759,13 @@ class ParameterSpace(ParametricObject):
                           for k in self.parameters)
         iters = tuple(product(logspace, repeat=size)
                       for logspace, size in zip(logspaces, self.parameters.values()))
-        return [Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
-                for i in product(*iters)]
+        unconstrained_mus = (Mu((k, np.array(v)) for k, v in zip(self.parameters, i))
+                             for i in product(*iters))
+        if self.constraints:
+            constraints = self.constraints
+            return [mu for mu in unconstrained_mus if constraints(mu)]
+        else:
+            return list(unconstrained_mus)
 
     def sample_logarithmic_randomly(self, count=None):
         """Logarithmically scaled random sample |parameter values| from the space.
@@ -718,10 +781,19 @@ class ParameterSpace(ParametricObject):
         -------
         The sampled |parameter values|.
         """
-        get_param = lambda: Mu((k, np.exp(get_rng().uniform(np.log(self.ranges[k][0]),
-                                                            np.log( self.ranges[k][1]),
-                                                            size)))
-                               for k, size in self.parameters.items())
+        rng = get_rng()
+        constraints = self.constraints
+
+        def get_param():
+            while True:
+                mu = Mu((k, np.exp(rng.uniform(np.log(self.ranges[k][0]), np.log( self.ranges[k][1]), size)))
+                        for k, size in self.parameters.items())
+                if constraints:
+                    if constraints(mu):
+                        return mu
+                else:
+                    return mu
+
         if count is None:
             return get_param()
         else:
@@ -732,8 +804,9 @@ class ParameterSpace(ParametricObject):
             mu = self.parameters.parse(mu)
         if not self.parameters.is_compatible(mu):
             return False
-        return all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
-                   for k in self.parameters)
+        return (all(np.all(self.ranges[k][0] <= mu[k]) and np.all(mu[k] <= self.ranges[k][1])
+                    for k in self.parameters)
+                and (not self.constraints or self.constraints(mu)))
 
     def clip(self, mu, keep_additional=False):
         """Clip (limit) |parameter values| to the space's parameter ranges.
@@ -750,6 +823,8 @@ class ParameterSpace(ParametricObject):
         -------
         The clipped |parameter values|.
         """
+        if self.constraints:
+            raise NotImplementedError
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
         if not self.parameters.is_compatible(mu):

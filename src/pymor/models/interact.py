@@ -16,7 +16,7 @@ from ipywidgets import Accordion, Button, Checkbox, FloatSlider, HBox, Label, La
 
 from pymor.core.base import BasicObject
 from pymor.models.basic import StationaryModel
-from pymor.parameters.base import Mu, Parameters, ParameterSpace
+from pymor.parameters.base import Parameters, ParameterSpace
 
 
 class ParameterSelector(BasicObject):
@@ -181,10 +181,7 @@ def interact(model, parameter_space, show_solution=True, visualizer=None, transf
     has_output = model.dim_output > 0
     tic = perf_counter()
     mu = parameter_selector.mu
-    input = parameter_selector.mu.get('input', None)
-    mu = Mu({k: mu.get_time_dependent_value(k) if mu.is_time_dependent(k) else mu[k]
-            for k in mu if k != 'input'})
-    data = model.compute(solution=show_solution, output=has_output, input=input, mu=mu)
+    data = model.compute(solution=show_solution, output=has_output, mu=mu)
     sim_time = perf_counter() - tic
 
     if has_output:
@@ -225,14 +222,8 @@ def interact(model, parameter_space, show_solution=True, visualizer=None, transf
         widget = right_pane
 
     def do_update(mu):
-        if 'input' in mu:
-            input = mu.get_time_dependent_value('input') if mu.is_time_dependent('input') else mu['input']
-        else:
-            input = None
-        mu = Mu({k: mu.get_time_dependent_value(k) if mu.is_time_dependent(k) else mu[k]
-                for k in mu if k != 'input'})
         tic = perf_counter()
-        data = model.compute(solution=show_solution, output=has_output, input=input, mu=mu)
+        data = model.compute(solution=show_solution, output=has_output, mu=mu)
         sim_time = perf_counter() - tic
         if show_solution:
             U = data['solution']

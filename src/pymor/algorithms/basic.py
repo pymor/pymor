@@ -88,11 +88,11 @@ def project_array(U, basis, product=None, orthonormal=True):
     The projected |VectorArray|.
     """
     if orthonormal:
-        return basis.lincomb(basis.inner(U, product).T)
+        return basis.lincomb(basis.inner(U, product))
     else:
         gramian = basis.gramian(product)
         rhs = basis.inner(U, product)
-        coeffs = spla.solve(gramian, rhs, assume_a='pos', overwrite_a=True, overwrite_b=True).T
+        coeffs = spla.solve(gramian, rhs, assume_a='pos', overwrite_a=True, overwrite_b=True)
         return basis.lincomb(coeffs)
 
 

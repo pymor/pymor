@@ -100,7 +100,7 @@ class NeuralNetworkReductor(BasicObject):
         if not fom:
             assert training_set is not None
             assert len(training_set) > 0
-            self.parameters_dim = training_set[0][0].parameters.dim
+            self.parameters_dim = training_set[0][0].parameters().dim
         else:
             self.parameters_dim = fom.parameters.dim
 
@@ -394,7 +394,7 @@ class NeuralNetworkReductor(BasicObject):
             name = self.fom.name
         else:
             projected_output_functional = None
-            parameters = self.training_set[0][0].parameters
+            parameters = self.training_set[0][0].parameters()
             name = 'data_driven'
 
         with self.logger.block('Building ROM ...'):
@@ -451,7 +451,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         if not fom:
             assert training_set is not None
             assert len(training_set) > 0
-            self.parameters_dim = training_set[0][0].parameters.dim
+            self.parameters_dim = training_set[0][0].parameters().dim
             self.dim_output = len(training_set[0][1].flatten())
         else:
             self.parameters_dim = fom.parameters.dim
@@ -503,7 +503,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
             parameters = self.fom.parameters
             name = self.fom.name
         else:
-            parameters = self.training_set[0][0].parameters
+            parameters = self.training_set[0][0].parameters()
             name = 'data_driven'
 
         with self.logger.block('Building ROM ...'):
@@ -565,7 +565,7 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
             assert training_set is not None
             assert len(training_set) > 0
             assert T is not None
-            self.parameters_dim = training_set[0][0].parameters.dim
+            self.parameters_dim = training_set[0][0].parameters(include_time_dependent=True).dim
             self.T = T
         else:
             self.parameters_dim = fom.parameters.dim
@@ -629,7 +629,7 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
         if u is None:
             u = self.fom.solve(mu)
 
-        parameters_with_time = [mu.with_(t=t) for t in np.linspace(0, self.T, self.nt)]
+        parameters_with_time = [mu.at_time(t) for t in np.linspace(0, self.T, self.nt)]
 
         product = self.pod_params.get('product')
 
@@ -659,7 +659,7 @@ class NeuralNetworkInstationaryReductor(NeuralNetworkReductor):
             name = self.fom.name
         else:
             projected_output_functional = None
-            parameters = self.training_set[0][0].parameters
+            parameters = self.training_set[0][0].parameters(include_time_dependent=True)
             name = 'data_driven'
 
         with self.logger.block('Building ROM ...'):
@@ -749,7 +749,7 @@ class NeuralNetworkLSTMInstationaryReductor(NeuralNetworkInstationaryReductor):
         if u is None:
             u = self.fom.solve(mu)
 
-        parameters = torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
+        parameters = torch.DoubleTensor(np.array([mu.at_time(t).to_numpy()
                                                   for t in np.linspace(0., self.fom.T, self.nt)]))
 
         product = self.pod_params.get('product')
@@ -809,7 +809,7 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
             assert training_set is not None
             assert len(training_set) > 0
             assert T is not None
-            self.parameters_dim = training_set[0][0].parameters.dim
+            self.parameters_dim = training_set[0][0].parameters(include_time_dependent=True).dim
             self.dim_output = len(training_set[0][1].flatten())
             self.T = T
         else:
@@ -845,7 +845,7 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
             output_trajectory = self.fom.output(mu)
 
         output_size = output_trajectory.shape[0]
-        samples = [(mu.with_(t=t), output.flatten())
+        samples = [(mu.at_time(t), output.flatten())
                    for t, output in zip(np.linspace(0, self.T, output_size), output_trajectory)]
 
         return samples
@@ -866,7 +866,7 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
             parameters = self.fom.parameters
             name = self.fom.name
         else:
-            parameters = self.training_set[0][0].parameters
+            parameters = self.training_set[0][0].parameters(include_time_dependent=True)
             name = 'data_driven'
 
         with self.logger.block('Building ROM ...'):
@@ -898,7 +898,7 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkInstatio
         output_trajectory = self.fom.output(mu)
         output_size = output_trajectory.shape[0]
 
-        parameters = torch.DoubleTensor(np.array([mu.with_(t=t).to_numpy()
+        parameters = torch.DoubleTensor(np.array([mu.at_time(t).to_numpy()
                                                   for t in np.linspace(0., self.fom.T, output_size)]))
 
         sample = [(parameters, output_trajectory)]

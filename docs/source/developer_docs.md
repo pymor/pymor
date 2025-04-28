@@ -147,13 +147,13 @@ checks will automatically fix the file.
 
 All required or optional dependencies of pyMOR are specified in `pyproject.toml`.
 
-We use [pip-compile](https://github.com/jazzband/pip-tools), to generate `requirements-ci-*.txt`
+We use [uv pip compile](https://github.com/astral-sh/uv), to generate `requirements-ci-*.txt`
 files from these specifications, which contain pinned versions of all packaged installed into the
 respective GitLab CI images.
 The extras included into the images are specified in `Makefile`.
 For the `oldest` CI image, `requirements-ci-oldest-pins.in` is used in addition, which pins some of
 pyMOR's core dependencies to the oldest version supported by pyMOR.
-Similarly to the `pip-compile` workflow, we use [conda-lock](https://github.com/conda/conda-lock)
+Similarly to the `uv pip compile` workflow, we use [conda-lock](https://github.com/conda/conda-lock)
 to create [conda-forge](https://conda-forge.org/) environment lock files that are used for the
 GitHub actions CI builds.
 
@@ -166,8 +166,6 @@ make ci_requirements
 and commit the changes made to the lock files to ensure that the updated dependencies are picked up
 by CI.
 
-Note that `make ci_requirements` requires [docker](https://www.docker.com/) or a compatible
-container runtime such as [podman](https://podman.io/).
 The pyMOR main developers will be happy to take care of this step for you.
 
 (ref_testing_ci)=

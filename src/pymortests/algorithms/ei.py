@@ -4,9 +4,11 @@
 
 import numpy as np
 
+from pymor.algorithms.ei import ei_greedy
 from pymor.algorithms.pod import pod
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.reductors.basic import StationaryRBReductor
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymortests.base import assert_all_almost_equal, runmodule
 
 
@@ -55,6 +57,12 @@ def test_ei_rom(stationary_models):
         ru = rom.solve(mu)
         ru_rec = reductor.reconstruct(ru)
         assert_all_almost_equal(u, ru_rec, rtol=1e-10)
+
+
+def test_ei_greedy_complex_data():
+    space = NumpyVectorSpace(10)
+    U = space.random(3) * 1.j + space.random(3)
+    ei_greedy(U)
 
 
 if __name__ == '__main__':

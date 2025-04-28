@@ -62,14 +62,14 @@ class ConvertToNumpyListVectorArrayRules(RuleTable):
     def action_only_range(self, op):
         if not (op.range == self.space and op.source != self.space):
             raise RuleNotMatchingError
-        range = NumpyListVectorSpace(op.range.dim, op.range.id)
+        range = NumpyListVectorSpace(op.range.dim)
         return VectorArrayOperator(range.from_numpy(op.as_range_array().to_numpy()), adjoint=False, name=op.name)
 
     @match_always
     def action_only_source(self, op):
         if not (op.range != self.space and op.source == self.space):
             raise RuleNotMatchingError
-        source = NumpyListVectorSpace(op.source.dim, op.source.id)
+        source = NumpyListVectorSpace(op.source.dim)
         return VectorArrayOperator(source.from_numpy(op.as_source_array().to_numpy()), adjoint=True, name=op.name)
 
     @match_class(NumpyMatrixOperator)

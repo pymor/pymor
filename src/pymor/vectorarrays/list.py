@@ -363,9 +363,9 @@ class ListVectorArrayImpl(VectorArrayImpl):
     def to_numpy(self, ensure_copy, ind):
         vectors = [v.to_numpy() for v in self._indexed(ind)]
         if vectors:
-            return np.array(vectors)
+            return np.array(vectors).T
         else:
-            return np.empty((0, self.space.dim))
+            return np.empty((self.space.dim, 0))
 
     def __len__(self):
         return len(self._list)
@@ -449,7 +449,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
 
     def lincomb(self, coefficients, ind):
         RL = []
-        for coeffs in coefficients:
+        for coeffs in coefficients.T:
             R = self.space.zero_vector()
             for v, c in zip(self._indexed(ind), coeffs):
                 R.axpy(c, v)
@@ -465,7 +465,7 @@ class ListVectorArrayImpl(VectorArrayImpl):
 
     def dofs(self, dof_indices, ind):
         return (np.array([v.dofs(dof_indices) for v in self._indexed(ind)])
-                  .reshape((self.len_ind(ind), len(dof_indices))))
+                  .reshape((self.len_ind(ind), len(dof_indices)))).T
 
     def amax(self, ind):
         l = self.len_ind(ind)
@@ -549,11 +549,11 @@ class ListVectorSpace(VectorSpace):
         raise NotImplementedError
 
     @classmethod
-    def space_from_vector_obj(cls, vec, id):
+    def space_from_vector_obj(cls, vec):
         raise NotImplementedError
 
     @classmethod
-    def space_from_dim(cls, dim, id):
+    def space_from_dim(cls, dim):
         raise NotImplementedError
 
     def zeros(self, count=1, reserve=0):
@@ -581,10 +581,10 @@ class ListVectorSpace(VectorSpace):
         )
 
     @classinstancemethod
-    def make_array(cls, obj, id=None):  # noqa: N805
+    def make_array(cls, obj):  # noqa: N805
         if len(obj) == 0:
             raise NotImplementedError
-        return cls.space_from_vector_obj(obj[0], id=id).make_array(obj)
+        return cls.space_from_vector_obj(obj[0]).make_array(obj)
 
     @make_array.instancemethod
     def make_array(self, obj):
@@ -595,14 +595,16 @@ class ListVectorSpace(VectorSpace):
         )
 
     @classinstancemethod
-    def from_numpy(cls, data, id=None, ensure_copy=False):  # noqa: N805
-        return cls.space_from_dim(data.shape[1], id=id).from_numpy(data, ensure_copy=ensure_copy)
+    def from_numpy(cls, data, ensure_copy=False):  # noqa: N805
+        return cls.space_from_dim(data.shape[0]).from_numpy(data, ensure_copy=ensure_copy)
 
     @from_numpy.instancemethod
     def from_numpy(self, data, ensure_copy=False):
         """:noindex:"""  # noqa: D400
+        if data.ndim == 1:
+            data = data.reshape((-1, 1))
         return ListVectorArray(
-            self, ListVectorArrayImpl([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data], self)
+            self, ListVectorArrayImpl([self.vector_from_numpy(v, ensure_copy=ensure_copy) for v in data.T], self)
         )
 
 
@@ -658,20 +660,19 @@ class NumpyListVectorSpace(ListVectorSpace):
 
     vector_type = NumpyVector
 
-    def __init__(self, dim, id=None):
+    def __init__(self, dim):
         self.dim = dim
-        self.id = id
 
     def __eq__(self, other):
-        return type(other) is NumpyListVectorSpace and self.dim == other.dim and self.id == other.id
+        return type(other) is NumpyListVectorSpace and self.dim == other.dim
 
     @classmethod
-    def space_from_vector_obj(cls, vec, id):
-        return cls(len(vec), id)
+    def space_from_vector_obj(cls, vec):
+        return cls(len(vec))
 
     @classmethod
-    def space_from_dim(cls, dim, id):
-        return cls(dim, id)
+    def space_from_dim(cls, dim):
+        return cls(dim)
 
     def zero_vector(self):
         return NumpyVector(np.zeros(self.dim))

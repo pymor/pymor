@@ -20,6 +20,7 @@ from pymor.algorithms.pod import pod
 from pymor.algorithms.preassemble import preassemble
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.algorithms.simplify import expand
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
 from pymor.analyticalproblems.domaindescriptions import (
     CircleDomain,
@@ -43,7 +44,7 @@ from pymor.analyticalproblems.helmholtz import helmholtz_problem
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.text import text_problem
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
-from pymor.core.cache import clear_caches, disable_caching, enable_caching
+from pymor.core.cache import clear_caches, disable_caching, enable_caching, print_cached_methods
 from pymor.core.defaults import load_defaults_from_file, print_defaults, set_defaults, write_defaults_to_file
 from pymor.core.exceptions import DependencyMissingError
 from pymor.core.logger import getLogger, set_log_levels

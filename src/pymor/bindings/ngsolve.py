@@ -77,14 +77,14 @@ class NGSolveVectorSpace(ComplexifiedListVectorSpace):
     real_vector_type = NGSolveVector
     vector_type = ComplexifiedNGSolveVector
 
-    def __init__(self, V, id='STATE'):
+    def __init__(self, V):
         self.__auto_init(locals())
 
     def __eq__(self, other):
-        return type(other) is NGSolveVectorSpace and self.V == other.V and self.id == other.id
+        return type(other) is NGSolveVectorSpace and self.V == other.V
 
     def __hash__(self):
-        return hash(self.V) + hash(self.id)
+        return hash(self.V)
 
     @property
     def value_dim(self):
@@ -99,8 +99,8 @@ class NGSolveVectorSpace(ComplexifiedListVectorSpace):
         return self.V.ndofglobal * self.value_dim
 
     @classmethod
-    def space_from_vector_obj(cls, vec, id):
-        return cls(vec.space, id)
+    def space_from_vector_obj(cls, vec):
+        return cls(vec.space)
 
     def real_zero_vector(self):
         impl = ngs.GridFunction(self.V)

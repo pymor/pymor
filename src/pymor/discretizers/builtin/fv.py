@@ -29,8 +29,8 @@ from pymor.parameters.base import ParametricObject
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-def FVVectorSpace(grid, id='STATE'):
-    return NumpyVectorSpace(grid.size(0), id)
+def FVVectorSpace(grid):
+    return NumpyVectorSpace(grid.size(0))
 
 
 class NumericalConvectiveFlux(ParametricObject):
@@ -215,8 +215,7 @@ class NonlinearAdvectionOperator(Operator):
 
     linear = False
 
-    def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, solver_options=None,
-                 space_id='STATE', name=None):
+    def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, solver_options=None, name=None):
         assert dirichlet_data is None or isinstance(dirichlet_data, Function)
 
         self.__auto_init(locals())
@@ -225,7 +224,7 @@ class NonlinearAdvectionOperator(Operator):
             self._dirichlet_values = self.dirichlet_data(grid.centers(1)[boundary_info.dirichlet_boundaries(1)])
             self._dirichlet_values = self._dirichlet_values.ravel()
             self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1, 1))
-        self.source = self.range = FVVectorSpace(grid, space_id)
+        self.source = self.range = FVVectorSpace(grid)
 
     def with_numerical_flux(self, **kwargs):
         return self.with_(numerical_flux=self.numerical_flux.with_(**kwargs))
@@ -236,8 +235,7 @@ class NonlinearAdvectionOperator(Operator):
                                    assume_unique=True)
         sub_grid = SubGrid(self.grid, source_dofs)
         sub_boundary_info = make_sub_grid_boundary_info(sub_grid, self.grid, self.boundary_info)
-        op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, space_id=None,
-                        name=f'{self.name}_restricted')
+        op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, name=f'{self.name}_restricted')
         sub_grid_indices = sub_grid.indices_from_parent_indices(dofs, codim=0)
         proj = ComponentProjectionOperator(sub_grid_indices, op.range)
         return proj @ op, sub_grid.parent_indices(0)
@@ -265,7 +263,7 @@ class NonlinearAdvectionOperator(Operator):
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
 
-        U = U.to_numpy()
+        U = U.to_numpy().T
         R = np.zeros((len(U), self.source.dim + 1))
 
         bi = self.boundary_info
@@ -311,7 +309,7 @@ class NonlinearAdvectionOperator(Operator):
 
         R[:, :-1] /= VOLS0
 
-        return self.range.make_array(R[:, :-1])
+        return self.range.make_array(R[:, :-1].T)
 
     def jacobian(self, U, mu=None):
         assert U in self.source
@@ -423,7 +421,7 @@ class NonlinearAdvectionOperator(Operator):
         A = csc_matrix(A).copy()   # See pymor.discretizers.builtin.cg.DiffusionOperatorP1 for why copy() is necessary
         A = dia_matrix(([1. / VOLS0], [0]), shape=(g.size(0),) * 2) * A
 
-        return NumpyMatrixOperator(A, source_id=self.source.id, range_id=self.range.id)
+        return NumpyMatrixOperator(A)
 
 
 def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_lambda=1.0,
@@ -590,35 +588,33 @@ class NonlinearReactionOperator(Operator):
         The reaction function.
     reaction_function_derivative
         The reaction function derivative.
-    space_id
-        Space ID.
     name
         The name of the operator.
     """
 
     linear = False
 
-    def __init__(self, grid, reaction_function, reaction_function_derivative=None, space_id='STATE', name=None):
+    def __init__(self, grid, reaction_function, reaction_function_derivative=None, name=None):
         self.__auto_init(locals())
-        self.source = self.range = FVVectorSpace(grid, space_id)
+        self.source = self.range = FVVectorSpace(grid)
 
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
 
-        R = U.to_numpy() if ind is None else U.to_numpy()[ind]
+        R = U.to_numpy().T if ind is None else U.to_numpy().T[ind]
         R = self.reaction_function.evaluate(R.reshape(R.shape + (1,)), mu=mu)
 
-        return self.range.make_array(R)
+        return self.range.make_array(R.T)
 
     def jacobian(self, U, mu=None):
         if self.reaction_function_derivative is None:
             raise NotImplementedError
 
-        U = U.to_numpy()
+        U = U.to_numpy().T
         A = dia_matrix((self.reaction_function_derivative.evaluate(U.reshape(U.shape + (1,)), mu=mu), [0]),
                        shape=(self.grid.size(0),) * 2)
 
-        return NumpyMatrixOperator(A, source_id=self.source.id, range_id=self.range.id)
+        return NumpyMatrixOperator(A)
 
 
 class L2Functional(NumpyMatrixBasedOperator):
@@ -1193,7 +1189,7 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
             I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
             I = m.solution_space.make_array(I)
             return I.lincomb(U).to_numpy()
-        I = NumpyGenericOperator(initial_projection, dim_range=grid.size(0), linear=True, range_id=m.solution_space.id,
+        I = NumpyGenericOperator(initial_projection, dim_range=grid.size(0), linear=True,
                                  parameters=p.initial_data.parameters)
     else:
         I = p.initial_data.evaluate(grid.quadrature_points(0, order=2)).squeeze()

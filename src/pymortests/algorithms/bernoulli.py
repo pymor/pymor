@@ -5,7 +5,6 @@
 import numpy as np
 import pytest
 import scipy.linalg as spla
-import scipy.sparse as sps
 from scipy.stats import ortho_group
 
 from pymor.algorithms.bernoulli import bernoulli_stabilize, solve_bernoulli
@@ -43,19 +42,19 @@ def test_bernoulli(n, trans, rng):
 @pytest.mark.parametrize('n', n_list)
 @pytest.mark.parametrize('trans', [False, True])
 def test_bernoulli_stabilize(n, trans, rng):
-    A = sps.random(n, n, density=0.3, random_state=rng)
+    A = rng.standard_normal((n,n))
     Aop = NumpyMatrixOperator(A)
 
-    B = rng.standard_normal((1, n))
+    B = rng.standard_normal((n, 1))
     if not trans:
         Bva = Aop.range.from_numpy(B)
     else:
         Bva = Aop.source.from_numpy(B)
 
-    ew, lev, rev = spla.eig(A.todense(), None, True)
+    ew, lev, rev = spla.eig(A, None, True)
     as_idx = np.where(ew.real > 0.)
-    lva = Aop.source.from_numpy(lev[:, as_idx][:, 0, :].T)
-    rva = Aop.range.from_numpy(rev[:, as_idx][:, 0, :].T)
+    lva = Aop.source.from_numpy(lev[:, as_idx][:, 0, :])
+    rva = Aop.range.from_numpy(rev[:, as_idx][:, 0, :])
 
     K = bernoulli_stabilize(Aop, None, Bva, (lva, ew, rva), trans=trans)
 
@@ -65,4 +64,4 @@ def test_bernoulli_stabilize(n, trans, rng):
         A_stab = to_matrix(Aop - LowRankOperator(Bva, np.eye(len(Bva)), K))
 
     ew, _ = spla.eig(A_stab)
-    assert np.all(np.real(ew) <= 0)
+    assert np.all(np.real(ew) < 0)

@@ -62,7 +62,7 @@ def reset_rng():
     new_rng(42).install()
 
 
-@pytest.fixture()
+@pytest.fixture
 def rng():
     import numpy as np
     return np.random.default_rng(0)

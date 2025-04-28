@@ -1,0 +1,3 @@
+# pins for fenics ci image
+mpi4py<4           # mpi4py==4.0.0 leads to 'mpi4py.MPI.Op size changed' error
+numpy<2

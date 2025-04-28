@@ -117,8 +117,8 @@ class SpectralFactorReductor(BasicObject):
             self.logger.info(f'Relative L^T*M error: {relLTMerr:.3e}')
 
         spectral_factor = LTIModel(self.fom.A, self.fom.B,
-            NumpyMatrixOperator(L, source_id=self.fom.A.range.id),
-            NumpyMatrixOperator(M, source_id=self.fom.B.source.id),
+            NumpyMatrixOperator(L),
+            NumpyMatrixOperator(M),
             self.fom.E)
 
         spectral_factor_rom = r_fn(spectral_factor, self.mu)

@@ -48,8 +48,8 @@ LagrangeShapeFunctionsGrads = {
 }
 
 
-def CGVectorSpace(grid, id='STATE'):
-    return NumpyVectorSpace(grid.size(grid.dim), id)
+def CGVectorSpace(grid):
+    return NumpyVectorSpace(grid.size(grid.dim))
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):

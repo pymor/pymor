@@ -27,7 +27,7 @@ def main(
     validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
     plot_test_solutions: bool = Option(False, help='Plot FOM and ROM solutions in the test set.'),
 ):
-    """Model oder reduction with neural networks for instationary problems.
+    """Model order reduction with neural networks for instationary problems.
 
     Problem number 0 considers the incompressible Navier-Stokes equations in
     a two-dimensional cavity with the Reynolds number as parameter.
@@ -286,7 +286,7 @@ def _discretize_navier_stokes(n, nt):
 
     def plot_fenics(w, title=''):
         v = df.Function(W)
-        v.leaf_node().vector()[:] = (w.to_numpy()[-1, :]).squeeze()
+        v.leaf_node().vector()[:] = (w.to_numpy()[:, -1]).squeeze()
         p, u  = v.split()
 
         fig_u = df.plot(u)

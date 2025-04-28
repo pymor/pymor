@@ -28,9 +28,8 @@ from pymortests.base import BUILTIN_DISABLED
 class MonomOperator(Operator):
     source = range = NumpyVectorSpace(1)
 
-    def __init__(self, order, monom=None):
-        self.monom = monom if monom else Polynomial(np.identity(order + 1)[order])
-        assert isinstance(self.monom, Polynomial)
+    def __init__(self, order):
+        self.monom = Polynomial(np.identity(order + 1)[order])
         self.order = order
         self.derivative = self.monom.deriv()
         self.linear = order == 1
@@ -43,31 +42,30 @@ class MonomOperator(Operator):
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
-        return NumpyMatrixOperator(self.derivative(U.to_numpy()).reshape((1, 1)))
+        return NumpyMatrixOperator(self.derivative(U.to_numpy().T).reshape((1, 1)))
 
     def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
         return self.range.make_array(1. / V.to_numpy())
 
 
-def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, rng,
-                                              source_id=None, range_id=None, sparse=False):
+def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, rng, sparse=False):
     assert not sparse or sparse in ('matrix', 'array')
     mat = rng.random((dim_range, dim_source))
     if sparse == 'matrix':
         mat = sps.csc_matrix(mat)
     elif sparse == 'array':
         mat = sps.csc_array(mat)
-    op = NumpyMatrixOperator(rng.random((dim_range, dim_source)), source_id=source_id, range_id=range_id)
-    s = op.source.make_array(rng.random((count_source, dim_source)))
-    r = op.range.make_array(rng.random((count_range, dim_range)))
+    op = NumpyMatrixOperator(rng.random((dim_range, dim_source)))
+    s = op.source.make_array(rng.random((dim_source, count_source)))
+    r = op.range.make_array(rng.random((dim_range, count_range)))
     return op, None, s, r
 
 
 def numpy_list_vector_array_matrix_operator_with_arrays_factory(
-    dim_source, dim_range, count_source, count_range, rng, source_id=None, range_id=None, sparse=False,
+    dim_source, dim_range, count_source, count_range, rng, sparse=False,
 ):
     op, _, s, r = numpy_matrix_operator_with_arrays_factory(
-        dim_source, dim_range, count_source, count_range, rng, source_id, range_id, sparse
+        dim_source, dim_range, count_source, count_range, rng, sparse
     )
     op = op.with_(new_type=NumpyListVectorArrayMatrixOperator)
     s = op.source.from_numpy(s.to_numpy())
@@ -76,7 +74,7 @@ def numpy_list_vector_array_matrix_operator_with_arrays_factory(
 
 
 def numpy_structured_matrix_operator_with_arrays_factory(structure, iscomplex, even, r_none, shape, blockshape,
-                                                         count_source, count_range, rng, source_id=None, range_id=None):
+                                                         count_source, count_range, rng):
     n = 5 if even else 4
     nr = 2 if shape == 'skinny' else n
     nc = 2 if shape == 'fat' else n
@@ -90,22 +88,20 @@ def numpy_structured_matrix_operator_with_arrays_factory(structure, iscomplex, e
         c = rng.random((nc, *blocks))
         r = rng.random((nr, *blocks))
     if structure == NumpyCirculantOperator:
-        op = structure(c, source_id=source_id, range_id=range_id)
+        op = structure(c)
     elif structure == NumpyToeplitzOperator:
         r[0] = c[0]
-        op = structure(c, r=None if r_none else r, source_id=source_id, range_id=range_id)
+        op = structure(c, r=None if r_none else r)
     elif structure == NumpyHankelOperator:
         r[0] = c[-1]
-        op = structure(c, r=None if r_none else r, source_id=source_id, range_id=range_id)
+        op = structure(c, r=None if r_none else r)
     U, V = op.source.random(count_source), op.range.random(count_range)
     return op, None, U, V
 
 
-def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range, count_source, count_range, rng,
-                                                           source_id=None, range_id=None):
+def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range, count_source, count_range, rng):
     from scipy.linalg import eigh
-    op, _, U, V = numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, rng,
-                                                            source_id=source_id, range_id=range_id)
+    op, _, U, V = numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, rng)
     if dim_source > 0:
         while True:
             sp = rng.random((dim_source, dim_source))
@@ -113,9 +109,9 @@ def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range
             evals = eigh(sp, eigvals_only=True)
             if np.min(evals) > 1e-6:
                 break
-        sp = NumpyMatrixOperator(sp, source_id=source_id, range_id=source_id)
+        sp = NumpyMatrixOperator(sp)
     else:
-        sp = NumpyMatrixOperator(np.zeros((0, 0)), source_id=source_id, range_id=source_id)
+        sp = NumpyMatrixOperator(np.zeros((0, 0)))
     if dim_range > 0:
         while True:
             rp = rng.random((dim_range, dim_range))
@@ -123,9 +119,9 @@ def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range
             evals = eigh(rp, eigvals_only=True)
             if np.min(evals) > 1e-6:
                 break
-        rp = NumpyMatrixOperator(rp, source_id=range_id, range_id=range_id)
+        rp = NumpyMatrixOperator(rp)
     else:
-        rp = NumpyMatrixOperator(np.zeros((0, 0)), source_id=range_id, range_id=range_id)
+        rp = NumpyMatrixOperator(np.zeros((0, 0)))
     return op, None, U, V, sp, rp
 
 if parse(import_module('scipy').__version__) >= parse('1.8.0'):
@@ -241,11 +237,11 @@ def thermalblock_vectorarray_factory(adjoint, xblocks, yblocks, diameter, rng):
     op = VectorArrayOperator(U, adjoint)
     if adjoint:
         U = V
-        V = op.range.make_array(rng.random((7, op.range.dim)))
+        V = op.range.make_array(rng.random((op.range.dim, 7)))
         sp = rp
         rp = NumpyMatrixOperator(np.eye(op.range.dim) * 2)
     else:
-        U = op.source.make_array(rng.random((7, op.source.dim)))
+        U = op.source.make_array(rng.random((op.source.dim, 7)))
         sp = NumpyMatrixOperator(np.eye(op.source.dim) * 2)
     return op, None, U, V, sp, rp
 
@@ -254,7 +250,7 @@ def thermalblock_vector_factory(xblocks, yblocks, diameter, rng):
     from pymor.operators.constructions import VectorOperator
     _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, rng)
     op = VectorOperator(U[0])
-    U = op.source.make_array(rng.random((7, 1)))
+    U = op.source.make_array(rng.random((1, 7)))
     sp = NumpyMatrixOperator(np.eye(1) * 2)
     return op, None, U, V, sp, rp
 
@@ -264,7 +260,7 @@ def thermalblock_vectorfunc_factory(product, xblocks, yblocks, diameter, rng):
     _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, rng)
     op = VectorFunctional(U[0], product=sp if product else None)
     U = V
-    V = op.range.make_array(rng.random((7, 1)))
+    V = op.range.make_array(rng.random((1, 7)))
     sp = rp
     rp = NumpyMatrixOperator(np.eye(1) * 2)
     return op, None, U, V, sp, rp
@@ -535,7 +531,7 @@ def unpicklable_misc_operator_with_arrays_and_products_factory(n, rng):
         from pymor.operators.numpy import NumpyGenericOperator
         op, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 20, 4, 3, rng)
         mat = op.matrix
-        op2 = NumpyGenericOperator(mapping=lambda U: mat.dot(U.T).T, adjoint_mapping=lambda U: mat.T.dot(U.T).T,
+        op2 = NumpyGenericOperator(mapping=lambda U: mat.dot(U), adjoint_mapping=lambda U: mat.T.dot(U),
                                    dim_source=100, dim_range=20, linear=True)
         return op2, _, U, V, sp, rp
     else:
@@ -732,6 +728,6 @@ def picklable_operator(rng, request):
     return request.param(rng)
 
 
-@pytest.fixture()
+@pytest.fixture
 def loadable_matrices(shared_datadir):
     return (shared_datadir / 'matrices').glob('*')

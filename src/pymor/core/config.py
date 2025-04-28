@@ -87,6 +87,34 @@ def is_macos_platform():
     return 'Darwin' in platform.system()
 
 
+def is_scipy_mkl():
+    return 'mkl' in config.SCIPY_INFO
+
+
+def _get_threadpool_internal_api(module):
+    from subprocess import run
+    result = run(
+        [sys.executable, '-c', f'from threadpoolctl import threadpool_info as tpi; import {module};\n'
+                                'for d in tpi(): print(d["internal_api"])'],
+        capture_output=True
+    )
+    return {x.strip() for x in result.stdout.decode().split('\n') if x.strip()}
+
+
+def _get_version(module, threadpoolctl_internal_api=False):
+    def impl():
+        version = import_module(module).__version__
+        if threadpoolctl_internal_api:
+            try:
+                info = ', '.join(_get_threadpool_internal_api(module))
+                return version, info
+            except OSError:
+                return version
+        else:
+            return version
+    return impl
+
+
 def _get_matplotlib_version():
     import matplotlib as mpl
     return mpl.__version__
@@ -99,7 +127,8 @@ def _get_slycot_version():
         warnings.warn('Slycot support disabled (version 0.3.1 or higher required).')
         return False
     else:
-        return version
+        info = ', '.join(_get_threadpool_internal_api('slycot'))
+        return version, info
 
 
 def _get_qt_version():
@@ -131,29 +160,29 @@ def is_jupyter():
 
 
 _PACKAGES = {
-    'DEALII': lambda: import_module('pymor_dealii').__version__,
+    'DEALII': _get_version('pymor_dealii'),
     'DUNEGDT': _get_dunegdt_version,
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
-    'IPYPARALLEL': lambda: import_module('ipyparallel').__version__,
-    'IPYTHON': lambda: import_module('IPython').__version__,
-    'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
-    'K3D': lambda: import_module('k3d').__version__,
+    'IPYPARALLEL': _get_version('ipyparallel'),
+    'IPYTHON': _get_version('IPython'),
+    'IPYWIDGETS': _get_version('ipywidgets'),
+    'K3D': _get_version('k3d'),
     'MATPLOTLIB': _get_matplotlib_version,
-    'MESHIO': lambda: import_module('meshio').__version__,
+    'MESHIO': _get_version('meshio'),
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
-    'NGSOLVE': lambda: import_module('ngsolve').__version__,
-    'NUMPY': lambda: import_module('numpy').__version__,
-    'PYTEST': lambda: import_module('pytest').__version__,
+    'NGSOLVE': _get_version('ngsolve', True),
+    'NUMPY': _get_version('numpy', True),
+    'PYTEST': _get_version('pytest'),
     'QT': _get_qt_version,
     'QTOPENGL': lambda: bool(_get_qt_version() and import_module('qtpy.QtOpenGL')),
-    'SCIKIT_FEM': lambda: import_module('skfem').__version__,
-    'SCIPY': lambda: import_module('scipy').__version__,
-    'SCIPY_LSMR': lambda: hasattr(import_module('scipy.sparse.linalg'), 'lsmr'),
-    'SLYCOT': lambda: _get_slycot_version(),
-    'SPHINX': lambda: import_module('sphinx').__version__,
-    'TORCH': lambda: import_module('torch').__version__,
-    'TYPER': lambda: import_module('typer').__version__,
+    'SCIKIT_FEM': _get_version('skfem'),
+    'SCIPY': _get_version('scipy', True),
+    'SLYCOT': _get_slycot_version,
+    'SPHINX': _get_version('sphinx'),
+    'TORCH': _get_version('torch', True),
+    'THREADPOOLCTL': _get_version('threadpoolctl'),
+    'TYPER': _get_version('typer'),
     'VTKIO': lambda: _can_import(('meshio', 'pyevtk', 'lxml', 'xmljson')),
 }
 
@@ -184,39 +213,67 @@ class Config:
             package = name[len('HAVE_'):]
         elif name.endswith('_VERSION'):
             package = name[:-len('_VERSION')]
+        elif name.endswith('_INFO'):
+            package = name[:-len('_INFO')]
         else:
             raise AttributeError
 
         if package in _PACKAGES:
             if package in self.disabled:
-                version = False
+                version = None
+                info = None
+                status = 'disabled'
             else:
                 try:
-                    version = _PACKAGES[package]()
+                    result = _PACKAGES[package]()
+                    if isinstance(result, tuple):
+                        assert len(result) == 2
+                        version, info = result
+                    else:
+                        version, info = result, None
+                    if not version:
+                        raise ImportError
+                    status = 'present'
                 except ImportError:
-                    version = False
+                    version = None
+                    info = None
+                    status = 'missing'
+                except Exception:
+                    version = None
+                    info = None
+                    status = 'import check failed'
 
-            if version is not None and version is not False:
-                setattr(self, 'HAVE_' + package, True)
-                setattr(self, package + '_VERSION', version)
-            else:
-                setattr(self, 'HAVE_' + package, False)
-                setattr(self, package + '_VERSION', None)
+            setattr(self, 'HAVE_' + package, version is not None)
+            setattr(self, package + '_VERSION', version)
+            setattr(self, package + '_INFO', info)
+            setattr(self, package + '_STATUS', status)
         else:
             raise AttributeError
 
         return getattr(self, name)
 
-    def __dir__(self, old=False):
+    def __dir__(self):
         keys = set(super().__dir__())
         keys.update('HAVE_' + package for package in _PACKAGES)
         keys.update(package + '_VERSION' for package in _PACKAGES)
+        keys.update(package + '_INFO' for package in _PACKAGES)
         return list(keys)
 
     def __repr__(self):
-        status = {p: 'disabled' if p in self.disabled else
-                     (lambda v: 'missing' if not v else 'present' if v is True else v)(getattr(self, p + '_VERSION'))
-                  for p in _PACKAGES}
+
+        def get_status(p):
+            version = getattr(self, p + '_VERSION')
+            if not version or version is True:
+                result = getattr(self, p + '_STATUS')
+            else:
+                result = version
+            info = getattr(self, p + '_INFO')
+            if info:
+                return f'{result} ({info})'
+            else:
+                return result
+
+        status = {p: get_status(p) for p in _PACKAGES}
         key_width = max(len(p) for p in _PACKAGES) + 2
         package_info = [f"{p+':':{key_width}} {v}" for p, v in sorted(status.items())]
         separator = '-' * max(map(len, package_info))

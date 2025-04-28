@@ -12,11 +12,12 @@ from NumPy/SciPy to external partial differential equation solver packages.
 :maxdepth: 6
 
 getting_started
-technical_overview
-environment
+mor_methods
 tutorials
-release_notes/all.rst
-bibliography
-developer_docs
 /autoapi/index
+technical_overview
+release_notes/all.rst
+developer_docs
+environment
+bibliography
 ```

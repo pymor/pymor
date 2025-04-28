@@ -22,7 +22,7 @@ for writing code of the following form::
 
 If the user does not provide `option_for_algorithm` to
 `method_called_by_user`, the default `42` is automatically chosen
-without the implementor of `method_called_by_user` having to care
+without the implementer of `method_called_by_user` having to care
 about this.
 
 The user interface for handling default values in pyMOR is provided
@@ -264,7 +264,7 @@ def _import_all(package_name='pymor'):
                 logger.warning('Failed to import ' + p[1])
 
 
-def print_defaults(import_all=True, shorten_paths=2):
+def print_defaults(import_all=True, shorten_paths=0):
     """Print all |default| values set in pyMOR.
 
     Parameters
