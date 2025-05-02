@@ -140,7 +140,7 @@ def _discretize_fenics():
     import dolfin as df
 
     mesh = df.UnitSquareMesh(GRID_INTERVALS, GRID_INTERVALS, 'crossed')
-    V = df.FunctionSpace(mesh, ('Lagrange', FENICS_ORDER))
+    V = df.FunctionSpace(mesh, 'Lagrange', FENICS_ORDER)
     u = df.TrialFunction(V)
     v = df.TestFunction(V)
 
