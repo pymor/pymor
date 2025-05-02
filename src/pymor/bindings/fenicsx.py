@@ -9,7 +9,7 @@ config.require('FENICSX')
 
 import numpy as np
 from dolfinx.la import create_petsc_vector
-from dolfinx.plot import create_vtk_mesh
+from dolfinx.plot import vtk_mesh
 from petsc4py import PETSc
 
 from pymor.core.base import ImmutableObject
@@ -103,7 +103,7 @@ class FenicsxVectorSpace(ComplexifiedListVectorSpace):
     real_vector_type = FenicsxVector
     vector_type = ComplexifiedFenicsxVector
 
-    def __init__(self, V, id='STATE'):
+    def __init__(self, V):
         self.__auto_init(locals())
 
     @property
@@ -111,11 +111,10 @@ class FenicsxVectorSpace(ComplexifiedListVectorSpace):
         return self.V.dofmap.index_map.size_global * self.V.dofmap.index_map_bs
 
     def __eq__(self, other):
-        return type(other) is FenicsxVectorSpace and self.V == other.V and self.id == other.id
+        return type(other) is FenicsxVectorSpace and self.V == other.V
 
-    # since we implement __eq__, we also need to implement __hash__
     def __hash__(self):
-        return id(self.V) + hash(self.id)
+        return id(self.V)
 
     def real_zero_vector(self):
         impl = create_petsc_vector(self.V.dofmap.index_map, self.V.dofmap.index_map_bs)
@@ -301,7 +300,7 @@ class FenicsxVisualizer(ImmutableObject):
             rows = 1 if len(U) <= 2 else 2
             cols = int(np.ceil(len(U) / rows))
             plotter = pyvista.Plotter(shape=(rows, cols))
-            mesh_data = create_vtk_mesh(self.space.V)
+            mesh_data = vtk_mesh(self.space.V)
             for i, (u, l) in enumerate(zip(U, legend)):
                 row = i // cols
                 col = i - row*cols

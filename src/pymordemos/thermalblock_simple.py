@@ -217,20 +217,20 @@ def _discretize_fenicsx():
     ########################################
 
     import numpy as np
-    from pymor.tools.mpi import comm
-    import pymor.bindings.fenicsx  # NOQA  needed here to load UFL patch
-    from dolfinx.mesh import create_unit_square, CellType, DiagonalType, locate_entities_boundary
-    from dolfinx.fem import FunctionSpace, form, dirichletbc, locate_dofs_topological, Constant
+    from dolfinx.fem import Constant, dirichletbc, form, functionspace, locate_dofs_topological
     from dolfinx.fem.petsc import assemble_matrix, assemble_vector, set_bc
-    from ufl import TrialFunction, TestFunction, le, lt, SpatialCoordinate, inner, grad, dx, conditional
+    from dolfinx.mesh import CellType, DiagonalType, create_unit_square, locate_entities_boundary
     from petsc4py import PETSc
+    from ufl import SpatialCoordinate, TestFunction, TrialFunction, conditional, dx, grad, inner, le, lt
+
+    from pymor.tools.mpi import comm
 
     mesh = create_unit_square(comm, GRID_INTERVALS, GRID_INTERVALS, CellType.triangle, diagonal=DiagonalType.crossed)
     X = SpatialCoordinate(mesh)
     # Something weird is going on with ulf.lt, etc. and higher order elements. Probably related
     # to the UFL patch required to get this working. Matrix becomes singular with order higher
     # than 2.
-    V = FunctionSpace(mesh, ('Lagrange', FENICS_ORDER))
+    V = functionspace(mesh, ('Lagrange', FENICS_ORDER))
 
     fdim = mesh.topology.dim - 1
     boundary_facets = locate_entities_boundary(
