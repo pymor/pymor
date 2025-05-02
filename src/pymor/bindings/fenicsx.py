@@ -3,20 +3,21 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+
 config.require('FENICSX')
 
 
+import numpy as np
 from dolfinx.la import create_petsc_vector
 from dolfinx.plot import create_vtk_mesh
 from petsc4py import PETSc
-import numpy as np
 
-from pymor.core.defaults import defaults
 from pymor.core.base import ImmutableObject
+from pymor.core.defaults import defaults
 from pymor.core.pickle import unpicklable
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
 from pymor.vectorarrays.interface import _create_random_values
-from pymor.vectorarrays.list import CopyOnWriteVector, ComplexifiedVector, ComplexifiedListVectorSpace
+from pymor.vectorarrays.list import ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector
 
 
 @unpicklable
@@ -34,7 +35,7 @@ class FenicsxVector(CopyOnWriteVector):
         self.impl = self.impl.copy()
 
     def to_numpy(self, ensure_copy=False):
-        return self.impl.array.copy() if ensure_copy else self.impl.array  # TODO what happens here in parallel)
+        return self.impl.array.copy() if ensure_copy else self.impl.array  # TODO: what happens here in parallel)
 
     def _scal(self, alpha):
         self.impl *= alpha
@@ -49,19 +50,19 @@ class FenicsxVector(CopyOnWriteVector):
         return self.impl.dot(other.impl)
 
     def norm(self):
-        return self.impl.norm(PETSc.NormType.NORM_2)  # TODO parallel?
+        return self.impl.norm(PETSc.NormType.NORM_2)  # TODO: parallel?
 
     def norm2(self):
         return self.impl.norm(PETSc.NormType.NORM_2) ** 2
 
     def sup_norm(self):
-        return self.impl.norm(PETSc.NormType.NORM_INFINITY)  # TODO parallel?
+        return self.impl.norm(PETSc.NormType.NORM_INFINITY)  # TODO: parallel?
 
     def dofs(self, dof_indices):
         dof_indices = np.array(dof_indices, dtype=np.intc)
         if len(dof_indices) == 0:
             return np.array([], dtype=np.intc)
-        return self.imp.getValues(dof_indices)  # TODO Global indices but only for local processor allowd
+        return self.imp.getValues(dof_indices)  # TODO: Global indices but only for local processor allowd
 
     def amax(self):
         raise NotImplementedError  # is implemented for complexified vector
@@ -127,7 +128,7 @@ class FenicsxVectorSpace(ComplexifiedListVectorSpace):
 
     def real_random_vector(self, distribution, random_state, **kwargs):
         v = self.real_zero_vector()
-        values = _create_random_values(self.dim, distribution, random_state, **kwargs)  # TODO parallel?
+        values = _create_random_values(self.dim, distribution, random_state, **kwargs)  # TODO: parallel?
         v.to_numpy()[:] = values
         return v
 
