@@ -144,10 +144,10 @@ class FenicsxVectorSpace(ComplexifiedListVectorSpace):
 class FenicsxMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
     """Wraps a FEniCSx matrix as an |Operator|."""
 
-    def __init__(self, matrix, source_space, range_space, solver_options=None, name=None):
+    def __init__(self, matrix, range_space, source_space, solver_options=None, name=None):
         self.__auto_init(locals())
-        self.source = FenicsxVectorSpace(source_space)
         self.range = FenicsxVectorSpace(range_space)
+        self.source = FenicsxVectorSpace(source_space)
 
     def _solver_options(self, adjoint=False):
         if adjoint:
