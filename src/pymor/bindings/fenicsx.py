@@ -111,7 +111,8 @@ class FenicsxVectorSpace(ComplexifiedListVectorSpace):
         return self.V.dofmap.index_map.size_global * self.V.dofmap.index_map_bs
 
     def __eq__(self, other):
-        return type(other) is FenicsxVectorSpace and self.V == other.V
+        return type(other) is FenicsxVectorSpace \
+            and getattr(self.V, '_cpp_object', self.V) == getattr(other.V, '_cpp_object', other.V)
 
     def __hash__(self):
         return id(self.V)
