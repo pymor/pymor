@@ -174,7 +174,7 @@ class FenicsxMatrixBasedOperator(Operator):
         params = params or {}
         bcs = bcs or tuple()
         assert all(isinstance(v, Constant) and len(v.ufl_shape) <= 1 for v in params.values())
-        assert not functional or len(form.arguments()) == 1
+        assert not functional or form.rank == 1
         self.__auto_init(locals())
         if form.rank == 2 or not functional:
             range_space = form.function_spaces[0]
