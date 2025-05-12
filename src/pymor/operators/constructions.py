@@ -4,12 +4,14 @@
 
 """Module containing some constructions to obtain new operators from old ones."""
 
+import weakref
 from functools import reduce
 from numbers import Number
 
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
@@ -18,6 +20,7 @@ from pymor.parameters.functionals import (
     ParameterFunctional,
     ProjectionParameterFunctional,
 )
+from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -1544,3 +1547,145 @@ class QuadraticProductFunctional(QuadraticFunctional):
             super().__init__(left.H @ right, name=name)
         else:
             super().__init__(left.H @ product @ right, name=name)
+
+
+class MutableState(BasicObject):
+
+    _last_fixed_state = None
+
+    def __init__(self, space):
+        self.space = space
+        self.callbacks = []
+
+    @abstractmethod
+    def _set(self, state):
+        pass
+
+    def set(self, new_state):
+        assert isinstance(new_state, VectorArray) and new_state in self.space and len(new_state) == 1 \
+            or isinstance(new_state, FixedMutableState) and new_state.mutable_state is self
+        if isinstance(new_state, FixedMutableState):
+            if self._last_fixed_state is not None and self._last_fixed_state() is new_state:
+                return
+            self._set(new_state.fixed_state)
+            self._last_fixed_state = weakref.ref(new_state)
+        else:
+            self._set(new_state)
+            self._last_fixed_state = None
+        for cb in self.callbacks:
+            cb()
+
+    def add_state_change_callback(self, callback):
+        self.callbacks.append(callback)
+
+
+class FixedMutableState(ImmutableObject):
+    def __init__(self, mutable_state, fixed_state):
+        assert isinstance(mutable_state, MutableState)
+        assert fixed_state in mutable_state.space
+        assert len(fixed_state) == 1
+        fixed_state = fixed_state.copy()
+        self.__auto_init(locals())
+
+
+class MutableStateOperator(Operator):
+
+    linear_in_mutable_state = False
+    linear_in_op_source = False
+    _state_changed = True
+
+    def __init__(self, mutable_states, op_range, op_source):
+        self.__auto_init(locals())
+        if isinstance(mutable_states, MutableState):
+            mutable_states = (mutable_states,)
+        mutable_states = tuple(mutable_states)
+        assert all(isinstance(ms, MutableState) for ms in mutable_states)
+        self.range = op_range
+        self.source = BlockVectorSpace([ms.space for ms in mutable_states] + [op_source,])
+        self.linear = self.linear_in_mutable_state and self.linear_in_op_source
+        for ms in mutable_states:
+            ms.add_state_change_callback(self._state_change_callback)
+
+    @abstractmethod
+    def _apply(self, U, mu=None):
+        pass
+
+    def _apply_adjoint(self, V, mu=None):
+        raise NotImplementedError
+
+    def _apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        raise NotImplementedError
+
+    def _apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+        raise NotImplementedError
+
+    def _jacobian(self, U, mu=None):
+        raise NotImplementedError
+
+    def apply(self, U, mu):
+        assert U in self.source
+        return self.fix_states(U.blocks[:-1]).apply(U.blocks[-1], mu=mu)
+
+    def apply_adjoint(self, V, mu=None):
+        raise NotImplementedError
+
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        raise NotImplementedError
+
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+        assert U in self.source
+        return self.fix_states(U.blocks[:-1]) \
+            .apply_inverse_adjoint(U.blocks[-1], mu=mu, initial_guess=initial_guess, least_squares=least_squares)
+
+    def jacobian(self, U, mu=None):
+        raise NotImplementedError
+
+    def fix_states(self, fixed_states):
+        return FixedMutableStateOperator(
+            self,
+            tuple(fs if isinstance(fs, FixedMutableState) else FixedMutableState(ms, fs)
+                  for ms, fs in zip(self.mutable_states, fixed_states))
+        )
+
+    def _state_change_callback(self):
+        self._state_changed = True
+
+
+class FixedMutableStateOperator(Operator):
+    def __init__(self, operator, fixed_states):
+        self.__auto_init(locals())
+        self.range = operator.op_range
+        self.source = operator.op_source
+        self.linear = operator.linear_in_op_source
+
+    def _set_states(self):
+        for ms, fs in zip(self.operator.mutable_states, self.fixed_states):
+            ms.set(fs)
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        self._set_states()
+        return self.operator._apply(U, mu=mu)
+
+    def apply_adjoint(self, V, mu=None):
+        assert V in self.range
+        self._set_states()
+        return self.operator._apply_adjoint(V, mu=mu)
+
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        assert V in self.range
+        self._set_states()
+        return self.operator._apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
+
+    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+        assert U in self.source
+        self._set_states()
+        return self.operator._apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
+
+    def jacobian(self, U, mu=None):
+        assert U in self.source
+        assert len(U) == 1
+        self._set_states()
+        return self.operator._jacobian(U, mu=mu)
+
+    # TODO: as_range_array, assemble
