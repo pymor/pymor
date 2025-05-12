@@ -8,7 +8,7 @@ config.require('FENICSX')
 
 
 import numpy as np
-from dolfinx.fem import Constant
+from dolfinx.fem import Constant, Function
 from dolfinx.fem.petsc import apply_lifting, assemble_matrix, assemble_vector, set_bc
 from dolfinx.la import create_petsc_vector
 from dolfinx.plot import vtk_mesh
@@ -17,7 +17,7 @@ from petsc4py import PETSc
 from pymor.core.base import ImmutableObject
 from pymor.core.defaults import defaults
 from pymor.core.pickle import unpicklable
-from pymor.operators.constructions import VectorFunctional, VectorOperator
+from pymor.operators.constructions import MutableState, MutableStateOperator, VectorFunctional, VectorOperator
 from pymor.operators.interface import Operator
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
 from pymor.vectorarrays.interface import _create_random_values
@@ -400,3 +400,87 @@ class FenicsxVisualizer(ImmutableObject):
                 plotter.add_scalar_bar(l)
                 plotter.view_xy()
             plotter.show()
+
+
+class FenicsxMutableState(MutableState):
+    def __init__(self, f):
+        self.f = f
+        super().__init__(FenicsxVectorSpace(f.function_space))
+
+    def _set(self, state):
+        assert state.vectors[0].imag_part is None
+        with state.vectors[0].real_part.impl.localForm() as loc_state, self.f.x.petsc_vec.localForm() as loc_f:
+            loc_state.copy(loc_f)
+
+
+class FenicsxMutableStateMatrixBasedOperator(MutableStateOperator):
+
+    linear_in_op_source = True
+    _last_mu = None
+
+    def __init__(self, mutable_states, form, params,
+                 bcs=None, lifting_form=None, functional=False, solver_options=None, name=None):
+        self._matrix_based_op = FenicsxMatrixBasedOperator(
+            form, params,
+            bcs=bcs, lifting_form=lifting_form, functional=functional, solver_options=solver_options, name=name)
+        super().__init__(mutable_states, self._matrix_based_op.range, self._matrix_based_op.source)
+        self.__auto_init(locals())
+        self.parameters_own = self._matrix_based_op.parameters
+        mutable_states = tuple(mutable_states)
+        assert all(isinstance(ms, MutableState) for ms in mutable_states)
+
+    def _assemble_matrix_if_needed(self, mu=None):
+        if self._state_changed or mu is not self._last_mu:
+            self._matrix_op = self._matrix_based_op.assemble(mu)
+            self._last_mu = mu
+
+    def _apply(self, U, mu=None):
+        self._assemble_matrix_if_needed(mu=mu)
+        return self._matrix_op.apply(U)
+
+    def _apply_adjoint(self, V, mu=None):
+        self._assemble_matrix_if_needed(mu=mu)
+        return self._matrix_op.apply_adjoint(V)
+
+    def _apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        self._assemble_matrix_if_needed(mu=mu)
+        return self._matrix_op.apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
+
+    def _apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+        self._assemble_matrix_if_needed(mu=mu)
+        return self._matrix_op.apply_inverse_adjoint(U, initial_guess=initial_guess, least_squares=least_squares)
+
+    def _jacobian(self, U, mu=None):
+        self._assemble_matrix_if_needed(mu=mu)
+        return self._matrix_op
+
+
+class FenicsxInterpolationOperator(Operator):
+
+    def __init__(self, V, function, parameters):
+        self.__auto_init(locals())
+        self.range = FenicsxVectorSpace(V)
+        self.parameters_own = parameters
+
+    def assemble(self, mu=None):
+        assert self.parameters.assert_compatible(mu)
+        f = Function(self.V)
+        self.function.set_mu(mu)
+        f.interpolate(self.function)
+        # TODO: copy needed as petsc_vec does ensure that memory stays allocated
+        return VectorOperator(self.range.make_array([f.x.petsc_vec.copy()]))
+
+    def apply(self, U, mu=None):
+        return self.assemble(mu).apply(U)
+
+    def apply_adjoint(self, V, mu=None):
+        return self.assemble(mu).apply_adjoint(V)
+
+    def as_range_array(self, mu=None):
+        return self.assemble(mu).as_range_array()
+
+    def as_source_array(self, mu=None):
+        return self.assemble(mu).as_source_array()
+
+    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        return self.assemble(mu).apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
