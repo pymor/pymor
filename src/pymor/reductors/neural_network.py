@@ -44,30 +44,30 @@ class NeuralNetworkReductor(BasicObject):
     Parameters
     ----------
     fom
-        The full-order |Model| to reduce. If `None`, the `training_set` has
+        The full-order |Model| to reduce. If `None`, the `training_parameters` has
         to consist of pairs of |parameter values| and corresponding solution
         |VectorArrays|.
     reduced_basis
         Prescribed reduced basis of the full-order |Model|. If `None`, the
         reduced basis is computed using the :meth:`~pymor.algorithms.pod.pod` method.
-    training_set
+    training_parameters
         |Parameter values| to use for POD (in case no `reduced_basis` is provided) and
         training of the neural network.
     training_snapshots
         |VectorArray| to use for POD and training of the
         neural network. Contains the solutions to the parameters of the
-        `training_set` and can be `None` when `fom` is not `None`.
-    validation_set
+        `training_parameters` and can be `None` when `fom` is not `None`.
+    validation_parameters
         |Parameter values| to use for validation in the training
         of the neural network.
     validation_snapshots
         |VectorArray| to use for validation in the training
         of the neural network. Contains the solutions to the parameters of
-        the `validation_set` and can be `None` when `fom` is not `None`.
+        the `validation_parameters` and can be `None` when `fom` is not `None`.
     validation_ratio
-        Fraction of the training set to use for validation in the training
-        of the neural network (only used if no validation set is provided).
-        Either a validation set or a positive validation ratio is required.
+        Fraction of the training parameters to use for validation in the training
+        of the neural network (only used if no validation parameters are provided).
+        Either validation parameters or a positive validation ratio is required.
     basis_size
         Desired size of the reduced basis. If `None`, rtol, atol or l2_err must
         be provided.
@@ -82,11 +82,11 @@ class NeuralNetworkReductor(BasicObject):
         Dict of additional parameters for the POD-method.
     ann_mse
         If `'like_basis'`, the mean squared error of the neural network on
-        the training set should not exceed the error of projecting onto the basis.
+        the training parameters should not exceed the error of projecting onto the basis.
         If `None`, the neural network with smallest validation error is
         used to build the ROM.
         If a tolerance is prescribed, the mean squared error of the neural
-        network on the training set should not exceed this threshold.
+        network on the training parameters should not exceed this threshold.
         Training is interrupted if a neural network that undercuts the
         error tolerance is found.
     scale_inputs
@@ -96,10 +96,10 @@ class NeuralNetworkReductor(BasicObject):
         networks.
     """
 
-    def __init__(self, fom=None, reduced_basis=None, training_set=None, validation_set=None, training_snapshots=None,
+    def __init__(self, fom=None, reduced_basis=None, training_parameters=None, validation_parameters=None, training_snapshots=None,
                  validation_snapshots=None, validation_ratio=0.1, T=None, nt=1, basis_size=None, rtol=0., atol=0.,
                  l2_err=0., pod_params={}, ann_mse='like_basis', scale_inputs=True, scale_outputs=False):
-        assert 0 < validation_ratio < 1 or validation_set
+        assert 0 < validation_ratio < 1 or validation_parameters
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
                                    'min_targets': None, 'max_targets': None}
@@ -107,11 +107,11 @@ class NeuralNetworkReductor(BasicObject):
         self.validation_data = None
 
         if not fom:
-            assert training_set is not None
-            assert len(training_set) > 0
+            assert training_parameters is not None
+            assert len(training_parameters) > 0
             assert training_snapshots is not None
-            self.parameters_dim = training_set[0].parameters().dim
-            self.nt = int(len(training_snapshots) / len(training_set))
+            self.parameters_dim = training_parameters[0].parameters().dim
+            self.nt = int(len(training_snapshots) / len(training_parameters))
             if self.nt > 1:  # instationary
                 assert T is not None
                 self.T = T
@@ -212,16 +212,16 @@ class NeuralNetworkReductor(BasicObject):
         if self.training_data is None:
             self.compute_training_data()
         assert self.training_data is not None
-        assert len(self.training_data) == len(self.training_set) * self.nt
+        assert len(self.training_data) == len(self.training_parameters) * self.nt
 
-        if self.validation_set is None:
+        if self.validation_parameters is None:
             number_validation_snapshots = int(len(self.training_data) * self.validation_ratio)
             if self.is_stationary:
                 # randomly shuffle training data before splitting into two sets
                 get_rng().shuffle(self.training_data)
                 # split training snapshots into validation and training snapshots
                 self.validation_data = self.training_data[0:number_validation_snapshots]
-                self.validation_set = [data[0] for data in self.validation_data]
+                self.validation_parameters = [data[0] for data in self.validation_data]
                 self.training_data = self.training_data[number_validation_snapshots:]
             else:
                 # Create blocks of timesteps for each paraneter
@@ -233,7 +233,7 @@ class NeuralNetworkReductor(BasicObject):
                 self.training_data[:] = [timesteps for parameter in blocks for timesteps in parameter]
                 # split training snapshots into validation and training snapshots
                 self.validation_data = self.training_data[0:number_validation_snapshots]
-                self.validation_set = [data[0] for data in self.validation_data[::blocksize]]
+                self.validation_parameters = [data[0] for data in self.validation_data[::blocksize]]
                 self.training_data = self.training_data[number_validation_snapshots:]
 
         # compute validation snapshots if not given as input
@@ -247,7 +247,7 @@ class NeuralNetworkReductor(BasicObject):
             # compute validation data
             self.compute_validation_data()
         assert self.validation_data is not None
-        assert len(self.validation_data) == len(self.validation_set) * self.nt
+        assert len(self.validation_data) == len(self.validation_parameters) * self.nt
 
         # compute layer sizes
         layer_sizes = self._compute_layer_sizes(hidden_layers)
@@ -299,7 +299,7 @@ class NeuralNetworkReductor(BasicObject):
         # compute snapshots for POD and training of neural networks
         with self.logger.block('Computing training snapshots ...'):
             self.training_snapshots = self.fom.solution_space.empty()
-            for mu in self.training_set:
+            for mu in self.training_parameters:
                 u = self.fom.solve(mu)
                 self.training_snapshots.append(u)
 
@@ -322,7 +322,7 @@ class NeuralNetworkReductor(BasicObject):
         # compute training samples
         with self.logger.block('Computing training samples ...'):
             self.training_data = []
-            for i, mu in enumerate(self.training_set):
+            for i, mu in enumerate(self.training_parameters):
                 samples = self._compute_sample(mu, self.training_snapshots[i*self.nt:(i+1)*self.nt])
                 # compute minimum and maximum of outputs/targets for scaling
                 for sample in samples:
@@ -334,14 +334,14 @@ class NeuralNetworkReductor(BasicObject):
         # compute snapshots for POD and validation of neural networks
         with self.logger.block('Computing validation snapshots ...'):
             self.validation_snapshots = self.fom.solution_space.empty()
-            for mu in self.validation_set:
+            for mu in self.validation_parameters:
                 u = self.fom.solve(mu)
                 self.validation_snapshots.append(u)
 
     def compute_validation_data(self):
-            assert self.validation_set is not None
+            assert self.validation_parameters is not None
             with self.logger.block('Computing validation samples ...'):
-                validation_data_iterable = zip(self.validation_set, self.validation_snapshots)
+                validation_data_iterable = zip(self.validation_parameters, self.validation_snapshots)
 
                 self.validation_data = []
                 for i, (mu, u) in enumerate(validation_data_iterable):
@@ -471,7 +471,7 @@ class NeuralNetworkReductor(BasicObject):
             name = self.fom.name
         else:
             projected_output_functional = None
-            parameters = self.training_set[0].parameters()
+            parameters = self.training_parameters[0].parameters()
             name = 'data_driven'
 
         with self.logger.block('Building ROM ...'):
@@ -503,23 +503,23 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     Parameters
     ----------
     fom
-        The full-order |Model| to reduce. If `None`, the `training_set` has
+        The full-order |Model| to reduce. If `None`, the `training_parameters` has
         to consist of pairs of |parameter values| and corresponding outputs.
-    training_set
+    training_parameters
         List of |Parameter values| to use for training of the
         neural network.
     training_outputs
         Set of outputs corresponding to a set of |Parameter values| used
         for training of the neural network. These are the outputs to the
-        parameters of the`training_set` and can be `None` when `fom` is
+        parameters of the`training_parameters` and can be `None` when `fom` is
         not `None`.
-    validation_set
+    validation_parameters
         List of |Parameter values| to use for validation in the training
         of the neural network.
     validation_outputs
         Set of outputs corresponding to a set of |Parameter values| used
         for validation of the neural network. These are the outputs to the
-        parameters of the`validation_set` and can be `None` when `fom` is
+        parameters of the`validation_parameters` and can be `None` when `fom` is
         not `None`.
     validation_ratio
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
@@ -532,15 +532,15 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     """
 
-    def __init__(self, fom=None, training_set=None, validation_set=None, training_outputs=None,
+    def __init__(self, fom=None, training_parameters=None, validation_parameters=None, training_outputs=None,
                  validation_outputs=None, validation_ratio=0.1, T=None, nt=1, validation_loss=None,
                  scale_inputs=True, scale_outputs=False):
-        assert 0 < validation_ratio < 1 or validation_set
+        assert 0 < validation_ratio < 1 or validation_parameters
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
                                    'min_targets': None, 'max_targets': None}
 
-        super().__init__(fom=fom, training_set=training_set, validation_set=validation_set,
+        super().__init__(fom=fom, training_parameters=training_parameters, validation_parameters=validation_parameters,
                          training_snapshots=training_outputs, validation_snapshots=validation_outputs,
                          validation_ratio=validation_ratio, T=T, nt=nt, scale_inputs=scale_inputs,
                          scale_outputs=scale_outputs)
@@ -555,7 +555,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         """Compute the training samples (the outputs to the parameters of the training set)."""
         with self.logger.block('Computing training samples ...'):
             self.training_data = []
-            for i, mu in enumerate(self.training_set):
+            for i, mu in enumerate(self.training_parameters):
                 if not self.fom:
                     samples = self._compute_sample(mu, output=self.training_outputs[i*self.nt:(i+1)*self.nt])
                 else:
@@ -569,7 +569,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         with self.logger.block('Computing validation samples ...'):
 
             self.validation_data = []
-            for i, mu in enumerate(self.validation_set):
+            for i, mu in enumerate(self.validation_parameters):
                 if not self.fom:
                     samples = self._compute_sample(mu, output=self.validation_outputs[i*self.nt:(i+1)*self.nt])
                 else:
@@ -632,7 +632,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
             parameters = self.fom.parameters
             name = self.fom.name
         else:
-            parameters = self.training_set[0].parameters()
+            parameters = self.training_parameters[0].parameters()
             name = 'data_driven'
 
         with self.logger.block('Building ROM ...'):
@@ -771,8 +771,8 @@ class EarlyStoppingScheduler(BasicObject):
 
     Parameters
     ----------
-    size_training_validation_set
-        Size of both, training and validation set together.
+    size_training_validation_parameters
+        Size of both, training and validation parameters together.
     patience
         Number of epochs of non-decreasing validation loss allowed, before early
         stopping the training process.
@@ -781,7 +781,7 @@ class EarlyStoppingScheduler(BasicObject):
         the counter of non-decreasing epochs.
     """
 
-    def __init__(self, size_training_validation_set, patience=10, delta=0.):
+    def __init__(self, size_training_validation_parameters, patience=10, delta=0.):
         self.__auto_init(locals())
 
         self.best_losses = None
@@ -794,7 +794,7 @@ class EarlyStoppingScheduler(BasicObject):
         Parameters
         ----------
         losses
-            Dictionary of losses on the validation and the training set in
+            Dictionary of losses on the validation and the training parameters in
             the current epoch.
         neural_network
             Neural network that produces the current validation loss.
@@ -806,7 +806,7 @@ class EarlyStoppingScheduler(BasicObject):
         import copy
         if self.best_losses is None:
             self.best_losses = losses
-            self.best_losses['full'] /= self.size_training_validation_set
+            self.best_losses['full'] /= self.size_training_validation_parameters
             self.best_neural_network = copy.deepcopy(neural_network)
         elif self.best_losses['val'] - self.delta <= losses['val']:
             self.counter += 1
@@ -814,7 +814,7 @@ class EarlyStoppingScheduler(BasicObject):
                 return True
         else:
             self.best_losses = losses
-            self.best_losses['full'] /= self.size_training_validation_set
+            self.best_losses['full'] /= self.size_training_validation_parameters
             self.best_neural_network = copy.deepcopy(neural_network)
             self.counter = 0
 
