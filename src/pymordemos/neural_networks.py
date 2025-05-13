@@ -44,13 +44,19 @@ def main(
         for mu in test_parameters:
             U_red.append(reductor.reconstruct(rom.solve(mu)))
 
+    training_outputs = []
     training_snapshots = fom.solution_space.empty(reserve=len(training_parameters))
     for mu in training_parameters:
         training_snapshots.append(fom.solve(mu))
+        training_outputs.append(fom.compute(output=True, mu=mu)['output'])
+    training_outputs = np.squeeze(np.array(training_outputs))
 
+    validation_outputs = []
     validation_snapshots = fom.solution_space.empty(reserve=len(validation_parameters))
     for mu in validation_parameters:
         validation_snapshots.append(fom.solve(mu))
+        validation_outputs.append(fom.compute(output=True, mu=mu)['output'])
+    validation_outputs = np.squeeze(np.array(validation_outputs))
 
     reductor_data_driven = NeuralNetworkReductor(training_parameters=training_parameters, training_snapshots=training_snapshots,
                                                  validation_parameters=validation_parameters,
@@ -109,16 +115,7 @@ def main(
     outputs_absolute_errors = np.abs(outputs - outputs_red)
     outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
 
-    training_outputs = []
-    for mu in training_parameters:
-        training_outputs.append(fom.compute(output=True, mu=mu)['output'])
-    training_outputs = np.squeeze(np.array(training_outputs))
-
-    validation_outputs = []
-    for mu in validation_parameters:
-        validation_outputs.append(fom.compute(output=True, mu=mu)['output'])
-    validation_outputs = np.squeeze(np.array(validation_outputs))
-
+    # data-driven output reductor
     output_reductor_data_driven = NeuralNetworkStatefreeOutputReductor(training_parameters=training_parameters,
                                                                        training_outputs=training_outputs,
                                                                        validation_parameters=validation_parameters,
