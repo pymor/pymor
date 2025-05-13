@@ -69,7 +69,7 @@ neurons has a corresponding weight that is learnable in the training phase.
 ```
 
 To train the neural network, one considers a so-called "loss function", that
-measures how the neural network performs on the training set {math}`S`, i.e.
+measures how the neural network performs on the training parameters {math}`S`, i.e.
 how accurately the neural network reproduces the output {math}`h(\mu_i)` given
 the input {math}`\mu_i`. The weights of the neural network are adjusted
 iteratively such that the loss function is successively minimized. To this end,
@@ -160,12 +160,12 @@ that best fits the problem at hand. In the reductor, one can easily adjust the
 number of layers and the number of neurons in each hidden layer, for instance.
 Furthermore, it is also possible to change the deployed activation function.
 
-To train the neural network, we create a training and a validation set
+To train the neural network, we create a set of training and a validation parameters
 consisting of 100 and 20 randomly chosen {{ parameter_values }}, respectively:
 
 ```{code-cell} ipython3
-training_set = parameter_space.sample_uniformly(100)
-validation_set = parameter_space.sample_randomly(20)
+training_parameters = parameter_space.sample_uniformly(100)
+validation_parameters = parameter_space.sample_randomly(20)
 ```
 
 In this tutorial, we construct the reduced basis such that no more modes than
@@ -174,14 +174,14 @@ The l2-approximation error is  the error of the orthogonal projection (in the
 l2-sense) of the training snapshots onto the reduced basis. That is, we
 prescribe `l2_err` in the reductor. It is also possible to determine a relative
 or absolute tolerance (in the singular values) that should not be exceeded on
-the training set. Further, one can preset the size of the reduced basis.
+the training parameters. Further, one can preset the size of the reduced basis.
 
 The training is aborted when a neural network that guarantees our prescribed
 tolerance is found. If we set `ann_mse` to `None`, this function will
 automatically train several neural networks with different initial weights and
-select the one leading to the best results on the validation set. We can also
+select the one leading to the best results on the validation parameters. We can also
 set `ann_mse` to `'like_basis'`. Then, the algorithm tries to train a neural
-network that leads to a mean squared error on the training set that is as small
+network that leads to a mean squared error on the training parameters that is as small
 as the error of the reduced basis. If the maximal number of restarts is reached
 without finding a network that fulfills the tolerances, an exception is raised.
 In such a case, one could try to change the architecture of the neural network
@@ -195,8 +195,8 @@ squared error of the neural network:
 from pymor.reductors.neural_network import NeuralNetworkReductor
 
 reductor = NeuralNetworkReductor(fom,
-                                 training_set=training_set,
-                                 validation_set=validation_set,
+                                 training_parameters=training_parameters,
+                                 validation_parameters=validation_parameters,
                                  l2_err=1e-5,
                                  ann_mse=1e-5)
 ```
@@ -224,30 +224,30 @@ fom.visualize((U, U_red_recon),
 ```
 
 Finally, we measure the error of our neural network and the performance
-compared to the solution of the full order problem on a training set. To this
+compared to the solution of the full order problem on the training parameters. To this
 end, we sample randomly some {{ parameter_values }} from our {{ ParameterSpace }}:
 
 ```{code-cell} ipython3
-test_set = parameter_space.sample_randomly(10)
+test_parameters = parameter_space.sample_randomly(10)
 ```
 
 Next, we create empty solution arrays for the full and reduced solutions and an
 empty list for the speedups:
 
 ```{code-cell} ipython3
-U = fom.solution_space.empty(reserve=len(test_set))
-U_red = fom.solution_space.empty(reserve=len(test_set))
+U = fom.solution_space.empty(reserve=len(test_parameters))
+U_red = fom.solution_space.empty(reserve=len(test_parameters))
 
 speedups = []
 ```
 
-Now, we iterate over the test set, compute full and reduced solutions to the
+Now, we iterate over the test parameters, compute full and reduced solutions to the
 respective parameters and measure the speedup:
 
 ```{code-cell} ipython3
 import time
 
-for mu in test_set:
+for mu in test_parameters:
     tic = time.perf_counter()
     U.append(fom.solve(mu))
     time_fom = time.perf_counter() - tic
@@ -259,7 +259,7 @@ for mu in test_set:
     speedups.append(time_fom / time_red)
 ```
 
-We can now derive the absolute and relative errors on the training set as
+We can now derive the absolute and relative errors on the training parameters as
 
 ```{code-cell} ipython3
 absolute_errors = (U - U_red).norm()
@@ -329,8 +329,8 @@ and initialize the reductor using the same data as before:
 from pymor.reductors.neural_network import NeuralNetworkStatefreeOutputReductor
 
 output_reductor = NeuralNetworkStatefreeOutputReductor(fom,
-                                                       training_set=training_set,
-                                                       validation_set=validation_set,
+                                                       training_parameters=training_parameters,
+                                                       validation_parameters=validation_parameters,
                                                        validation_loss=1e-5)
 ```
 
@@ -351,7 +351,7 @@ outputs = []
 outputs_red = []
 outputs_speedups = []
 
-for mu in test_set:
+for mu in test_parameters:
     tic = time.perf_counter()
     outputs.append(fom.output(mu=mu))
     time_fom = time.perf_counter() - tic
@@ -369,7 +369,7 @@ outputs_absolute_errors = np.abs(outputs - outputs_red)
 outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
 ```
 
-The average absolute error (component-wise) on the training set is given by
+The average absolute error (component-wise) on the training parameters is given by
 
 ```{code-cell} ipython3
 np.average(outputs_absolute_errors)
@@ -549,25 +549,25 @@ We further define the parameter space:
 parameter_space = fom.parameters.space(1, 25)
 ```
 
-Additionally, we sample training, validation and test sets from the parameter space:
+Additionally, we sample training, validation and test parameters from the respective parameter space:
 
 ```{code-cell} ipython3
-training_set = parameter_space.sample_uniformly(15)
-validation_set = parameter_space.sample_randomly(3)
-test_set = parameter_space.sample_randomly(10)
+training_parameters = parameter_space.sample_uniformly(15)
+validation_parameters = parameter_space.sample_randomly(3)
+test_parameters = parameter_space.sample_randomly(10)
 ```
 
 To check how the two reductors perform, we write a simple function that measures the
-errors and the speedups on a test parameter set:
+errors and the speedups on a set of test parameters:
 
 ```{code-cell} ipython3
 def compute_errors(rom, reductor):
     speedups = []
 
-    U = fom.solution_space.empty(reserve=len(test_set))
-    U_red = fom.solution_space.empty(reserve=len(test_set))
+    U = fom.solution_space.empty(reserve=len(test_parameters))
+    U_red = fom.solution_space.empty(reserve=len(test_parameters))
 
-    for mu in test_set:
+    for mu in test_parameters:
         tic = time.time()
         u_fom = fom.solve(mu)[1:]
         U.append(u_fom)
@@ -596,12 +596,12 @@ from pymor.reductors.neural_network import NeuralNetworkReductor, NeuralNetworkL
 
 basis_size = 20
 
-reductor = NeuralNetworkReductor(fom, training_set=training_set, validation_set=validation_set, basis_size=basis_size,
+reductor = NeuralNetworkReductor(fom, training_parameters=training_parameters, validation_parameters=validation_parameters, basis_size=basis_size,
                                              pod_params={'product': product}, ann_mse=None, scale_inputs=True,
                                              scale_outputs=True)
 rom = reductor.reduce(restarts=0)
 rel_errors, speedups = compute_errors(rom, reductor)
-reductor_lstm = NeuralNetworkLSTMReductor(fom, training_set=training_set, validation_set=validation_set, basis_size=basis_size,
+reductor_lstm = NeuralNetworkLSTMReductor(fom, training_parameters=training_parameters, validation_parameters=validation_parameters, basis_size=basis_size,
                                                       pod_params={'product': product}, ann_mse=None, scale_inputs=True,
                                                       scale_outputs=True)
 rom_lstm = reductor_lstm.reduce(restarts=0, number_layers=1, hidden_dimension=25, learning_rate=0.01)
