@@ -36,7 +36,8 @@ def main(
     test_parameters = parameter_space.sample_randomly(10)
 
     if getattr(sys, '_called_from_test', False):
-        reductor = NeuralNetworkReductor(fom=fom, training_parameters=training_parameters, validation_parameters=validation_parameters,
+        reductor = NeuralNetworkReductor(fom=fom, training_parameters=training_parameters,
+                                         validation_parameters=validation_parameters,
                                          l2_err=1e-5, ann_mse=1e-5)
         rom = reductor.reduce(restarts=100, log_loss_frequency=10)
 
@@ -58,9 +59,11 @@ def main(
         validation_outputs.append(fom.compute(output=True, mu=mu)['output'])
     validation_outputs = np.squeeze(np.array(validation_outputs))
 
-    reductor_data_driven = NeuralNetworkReductor(training_parameters=training_parameters, training_snapshots=training_snapshots,
+    reductor_data_driven = NeuralNetworkReductor(training_parameters=training_parameters,
+                                                 training_snapshots=training_snapshots,
                                                  validation_parameters=validation_parameters,
-                                                 validation_snapshots=validation_snapshots, l2_err=1e-5, ann_mse=1e-5)
+                                                 validation_snapshots=validation_snapshots,
+                                                 l2_err=1e-5, ann_mse=1e-5)
     rom_data_driven = reductor_data_driven.reduce(restarts=100, log_loss_frequency=10)
 
     speedups_data_driven = []
@@ -89,7 +92,8 @@ def main(
                       legend=('Full solution', 'Reduced solution (data-driven)'))
 
     output_reductor = NeuralNetworkStatefreeOutputReductor(fom=fom, training_parameters=training_parameters,
-                                                           validation_parameters=validation_parameters, validation_loss=1e-5)
+                                                           validation_parameters=validation_parameters,
+                                                           validation_loss=1e-5)
     output_rom = output_reductor.reduce(restarts=100, log_loss_frequency=10)
 
     outputs = []

@@ -30,8 +30,9 @@ def main(
     training_parameters = parameter_space.sample_uniformly(training_samples)
     validation_parameters = parameter_space.sample_randomly(validation_samples)
 
-    reductor = NeuralNetworkReductor(fom, training_parameters=training_parameters, validation_parameters=validation_parameters, l2_err=1e-4,
-                                     ann_mse=1e-4)
+    reductor = NeuralNetworkReductor(fom, training_parameters=training_parameters,
+                                     validation_parameters=validation_parameters,
+                                     l2_err=1e-4, ann_mse=1e-4)
     rom = reductor.reduce(hidden_layers='[(N+P)*3, (N+P)*3, (N+P)*3]',
                           restarts=100)
 
