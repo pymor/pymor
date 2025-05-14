@@ -25,7 +25,6 @@ def main(
     time_steps: int = Argument(..., help='Number of time steps used for discretization.'),
     training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
     validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
-    plot_test_solutions: bool = Option(False, help='Plot FOM and ROM solutions in the test set.'),
     plot_test_solutions: bool = Option(False, help='Plot FOM and ROM solutions of the test parameters.'),
 ):
     """Model order reduction with neural networks for instationary problems.
