@@ -596,14 +596,16 @@ from pymor.reductors.neural_network import NeuralNetworkReductor, NeuralNetworkL
 
 basis_size = 20
 
-reductor = NeuralNetworkReductor(fom, training_parameters=training_parameters, validation_parameters=validation_parameters, basis_size=basis_size,
-                                             pod_params={'product': product}, ann_mse=None, scale_inputs=True,
-                                             scale_outputs=True)
+reductor = NeuralNetworkReductor(fom, training_parameters=training_parameters, 
+                                 validation_parameters=validation_parameters, basis_size=basis_size,
+                                 pod_params={'product': product}, ann_mse=None, scale_inputs=True,
+                                 scale_outputs=True)
 rom = reductor.reduce(restarts=0)
 rel_errors, speedups = compute_errors(rom, reductor)
-reductor_lstm = NeuralNetworkLSTMReductor(fom, training_parameters=training_parameters, validation_parameters=validation_parameters, basis_size=basis_size,
-                                                      pod_params={'product': product}, ann_mse=None, scale_inputs=True,
-                                                      scale_outputs=True)
+reductor_lstm = NeuralNetworkLSTMReductor(fom, training_parameters=training_parameters, 
+                                          validation_parameters=validation_parameters, basis_size=basis_size,
+                                          pod_params={'product': product}, ann_mse=None, scale_inputs=True,
+                                          scale_outputs=True)
 rom_lstm = reductor_lstm.reduce(restarts=0, number_layers=1, hidden_dimension=25, learning_rate=0.01)
 rel_errors_lstm, speedups_lstm = compute_errors(rom_lstm, reductor_lstm)
 ```
