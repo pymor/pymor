@@ -630,11 +630,6 @@ print(f'Median of speedup: {np.median(speedups_lstm)}')
 In this example, we observe that the LSTMs perform much better than the feedforward ANNs in terms
 of accuracy while the speedups of both methods lie in the same order of magnitude.
 
-Download the code:
-{download}`tutorial_mor_with_anns.md`
-{nb-download}`tutorial_mor_with_anns.ipynb`
-
-
 ## Data-driven neural network without full-order model
 
 In the previous sections, we have seen how to use neural networks for model order reduction 
@@ -749,3 +744,7 @@ and the median of the speedups amounts to
 ```{code-cell} ipython3
 np.median(outputs_speedups_data_driven)
 ```
+
+Download the code:
+{download}`tutorial_mor_with_anns.md`
+{nb-download}`tutorial_mor_with_anns.ipynb`
