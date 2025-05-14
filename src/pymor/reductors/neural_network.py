@@ -48,7 +48,7 @@ class NeuralNetworkReductor(BasicObject):
         to consist of pairs of |parameter values| and corresponding solution
         |VectorArrays|.
     reduced_basis
-        Prescribed reduced basis of the full-order |Model|. If `None`, the
+        |VectorArray| of basis vectors of the reduced space onto which to project. If `None`, the
         reduced basis is computed using the :meth:`~pymor.algorithms.pod.pod` method.
     training_parameters
         |Parameter values| to use for POD (in case no `reduced_basis` is provided) and
@@ -72,12 +72,12 @@ class NeuralNetworkReductor(BasicObject):
         Desired size of the reduced basis. If `None`, rtol, atol or l2_err must
         be provided.
     rtol
-        Relative tolerance the basis should guarantee on the training set.
+        Relative tolerance the basis should guarantee on the training parameters.
     atol
-        Absolute tolerance the basis should guarantee on the training set.
+        Absolute tolerance the basis should guarantee on the training parameters.
     l2_err
         L2-approximation error the basis should not exceed on the training
-        set.
+        parameters.
     pod_params
         Dict of additional parameters for the POD-method.
     ann_mse
@@ -165,7 +165,7 @@ class NeuralNetworkReductor(BasicObject):
             results highly depend on the initial starting point, i.e. the
             initial weights and biases, it is advisable to train multiple
             neural networks by starting with different initial values and
-            choose that one performing best on the validation set.
+            choose that one performing best on the validation parameters.
         lr_scheduler
             Algorithm to use as learning rate scheduler during training.
             If `None`, no learning rate scheduler is used.
@@ -224,7 +224,7 @@ class NeuralNetworkReductor(BasicObject):
                 self.validation_parameters = [data[0] for data in self.validation_data]
                 self.training_data = self.training_data[number_validation_snapshots:]
             else:
-                # Create blocks of timesteps for each paraneter
+                # create blocks of timesteps for each paraneter
                 blocksize = self.nt
                 blocks = [self.training_data[i:i + blocksize] for i in range(0, len(self.training_data), blocksize)]
                 # shuffle the blocks
@@ -552,7 +552,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         self.__auto_init(locals())
 
     def compute_training_data(self):
-        """Compute the training samples (the outputs to the parameters of the training set)."""
+        """Compute the training samples (the outputs to the training parameters)."""
         with self.logger.block('Computing training samples ...'):
             self.training_data = []
             for i, mu in enumerate(self.training_parameters):
@@ -565,7 +565,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
                 self.training_data.extend(samples)
 
     def compute_validation_data(self):
-        """Compute the training samples (the outputs to the parameters of the training set)."""
+        """Compute the validation samples (the outputs to the validation parameters)."""
         with self.logger.block('Computing validation samples ...'):
 
             self.validation_data = []
@@ -579,13 +579,13 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
                 self.validation_data.extend(samples)
 
     def compute_reduced_basis(self):
-        """empty function to avoid computing a reduced basis."""
+        """Empty function to avoid computing a reduced basis."""
 
     def compute_training_snapshots(self):
-        """empty function to avoid computing training_snapshots."""
+        """Empty function to avoid computing training_snapshots."""
 
     def compute_validation_snapshots(self):
-        """empty function to avoid computing validation_snapshots."""
+        """Empty function to avoid computing validation_snapshots."""
 
     def _compute_sample(self, mu, output=None):
         """Transform parameter and corresponding output to tensors."""
@@ -908,8 +908,8 @@ def train_neural_network(training_data, validation_data, neural_network,
     losses
         The corresponding losses as a dictionary with keys `'full'` (for the
         full loss containing the training and the validation average loss),
-        `'train'` (for the average loss on the training set), and `'val'`
-        (for the average loss on the validation set).
+        `'train'` (for the average loss on the training parameters), and `'val'`
+        (for the average loss on the validation parameters).
     """
     assert isinstance(neural_network, nn.Module)
     assert isinstance(log_loss_frequency, int)
@@ -965,7 +965,7 @@ def train_neural_network(training_data, validation_data, neural_network,
     if training_parameters.get('lr_scheduler'):
         lr_scheduler = training_parameters['lr_scheduler'](optimizer, **training_parameters['lr_scheduler_params'])
 
-    # create the training and validation sets as well as the respective data loaders
+    # create the training and validation parameters as well as the respective data loaders
     training_dataset = CustomDataset(training_data)
     validation_dataset = CustomDataset(validation_data)
     training_loader = utils.data.DataLoader(training_dataset, batch_size=batch_size)
