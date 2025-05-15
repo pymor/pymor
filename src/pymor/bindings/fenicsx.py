@@ -457,6 +457,9 @@ class FenicsxMutableStateMatrixBasedOperator(MutableStateOperator):
 
 class FenicsxInterpolationOperator(Operator):
 
+    linear = True
+    source = NumpyVectorSpace(1)
+
     def __init__(self, V, function, parameters):
         self.__auto_init(locals())
         self.range = FenicsxVectorSpace(V)
