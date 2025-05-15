@@ -689,7 +689,7 @@ full order model (`fom`):
 
 ```{code-cell} ipython3
 from pymor.reductors.neural_network import NeuralNetworkStatefreeOutputReductor
-    
+
 output_reductor_data_driven = NeuralNetworkStatefreeOutputReductor(training_parameters=training_parameters,
                                                                        training_outputs=training_outputs,
                                                                        validation_parameters=validation_parameters,
