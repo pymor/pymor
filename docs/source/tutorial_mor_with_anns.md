@@ -672,15 +672,15 @@ Contrary to the previous examples, we now generate data from the full order mode
 we create `output` quantities for the `training_paramters` and `validation_parameters`:
 
 ```{code-cell} ipython3
-    training_outputs = []
-    for mu in training_parameters:
-        training_outputs.append(fom.compute(output=True, mu=mu)['output'])
-    training_outputs = np.squeeze(np.array(training_outputs))
+training_outputs = []
+for mu in training_parameters:
+    training_outputs.append(fom.compute(output=True, mu=mu)['output'])
+training_outputs = np.squeeze(np.array(training_outputs))
 
-    validation_outputs = []
-    for mu in validation_parameters:
-        validation_outputs.append(fom.compute(output=True, mu=mu)['output'])
-    validation_outputs = np.squeeze(np.array(validation_outputs))
+validation_outputs = []
+for mu in validation_parameters:
+    validation_outputs.append(fom.compute(output=True, mu=mu)['output'])
+validation_outputs = np.squeeze(np.array(validation_outputs))
 ```
 
 Now we import the {class}`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`
@@ -689,8 +689,8 @@ full order model (`fom`):
 
 ```{code-cell} ipython3
 from pymor.reductors.neural_network import NeuralNetworkStatefreeOutputReductor
-
-    output_reductor_data_driven = NeuralNetworkStatefreeOutputReductor(training_parameters=training_parameters,
+    
+output_reductor_data_driven = NeuralNetworkStatefreeOutputReductor(training_parameters=training_parameters,
                                                                        training_outputs=training_outputs,
                                                                        validation_parameters=validation_parameters,
                                                                        validation_outputs=validation_outputs,
@@ -702,29 +702,29 @@ and we measure the speed up and the errors on the test parameters of the resulti
 {class}`~pymor.models.neural_network.NeuralNetworkStatefreeOutputModel`:
 
 ```{code-cell} ipython3
-    output_rom_data_driven = output_reductor_data_driven.reduce(restarts=100, log_loss_frequency=10)
+output_rom_data_driven = output_reductor_data_driven.reduce(restarts=100, log_loss_frequency=10)
 
-    outputs = []
-    outputs_red_data_driven = []
-    outputs_speedups_data_driven = []
-    print(f'Performing test on parameters of size {len(test_parameters)} ...')
+outputs = []
+outputs_red_data_driven = []
+outputs_speedups_data_driven = []
+print(f'Performing test on parameters of size {len(test_parameters)} ...')
 
-    for mu in test_parameters:
-        tic = time.perf_counter()
-        outputs.append(fom.compute(output=True, mu=mu)['output'])
-        time_fom = time.perf_counter() - tic
+for mu in test_parameters:
+    tic = time.perf_counter()
+    outputs.append(fom.compute(output=True, mu=mu)['output'])
+    time_fom = time.perf_counter() - tic
 
-        tic = time.perf_counter()
-        outputs_red_data_driven.append(output_rom_data_driven.compute(output=True, mu=mu)['output'])
-        time_red_data_driven = time.perf_counter() - tic
+    tic = time.perf_counter()
+    outputs_red_data_driven.append(output_rom_data_driven.compute(output=True, mu=mu)['output'])
+    time_red_data_driven = time.perf_counter() - tic
 
-        outputs_speedups_data_driven.append(time_fom / time_red_data_driven)
+    outputs_speedups_data_driven.append(time_fom / time_red_data_driven)
 
-    outputs = np.squeeze(np.array(outputs))
-    outputs_red_data_driven = np.squeeze(np.array(outputs_red))
+outputs = np.squeeze(np.array(outputs))
+outputs_red_data_driven = np.squeeze(np.array(outputs_red))
 
-    outputs_absolute_errors_data_driven = np.abs(outputs - outputs_red_data_driven)
-    outputs_relative_errors_data_driven = np.abs(outputs - outputs_red_data_driven) / np.abs(outputs)
+outputs_absolute_errors_data_driven = np.abs(outputs - outputs_red_data_driven)
+outputs_relative_errors_data_driven = np.abs(outputs - outputs_red_data_driven) / np.abs(outputs)
 ```
 
 The average absolute error (component-wise) on the training parameters is given by
