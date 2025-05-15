@@ -1689,3 +1689,96 @@ class FixedMutableStateOperator(Operator):
         return self.operator._jacobian(U, mu=mu)
 
     # TODO: as_range_array, assemble
+
+
+class ProjectedMutableState(MutableState):
+
+    def __init__(self, state, basis):
+        super().__init__(NumpyVectorSpace(len(basis)))
+        self.state, self.basis = state, basis
+        state.add_state_change_callback(self._parent_state_changed)
+
+    def _set(self, state):
+        self.state.set(self.basis.lincomb(state.to_numpy()))
+
+    def _parent_state_changed(self):
+        # invalidate state when parent state has been changed
+        # this is called during self._set, which is no problem since self.set sets
+        # _last_fixed_state afterwards
+        self._last_fixed_state = None
+
+
+class ProjectedMutableStateOperator(MutableStateOperator):
+    def __init__(self, operator, mutable_state_bases, op_range_basis, op_source_basis, product=None, name=None):
+        assert isinstance(operator, MutableStateOperator)
+        assert op_range_basis is None or op_range_basis in operator.op_range
+        assert op_source_basis is None or op_source_basis in operator.op_source
+        assert (product is None
+                or (isinstance(product, Operator)
+                    and op_range_basis is not None
+                    and operator.op_range == product.source
+                    and product.range == product.source))
+        if op_source_basis is not None:
+            op_source_basis = op_source_basis.copy()
+        if op_range_basis is not None:
+            op_range_basis = op_range_basis.copy()
+        mutable_state_bases = tuple(b if b is None else b.copy() for b in mutable_state_bases)
+        self.__auto_init(locals())
+
+        op_range = NumpyVectorSpace(len(op_range_basis)) if op_range_basis is not None else operator.op_range
+        op_source = NumpyVectorSpace(len(op_source_basis)) if op_source_basis is not None else operator.op_source
+        mutable_states = [s if b is None else ProjectedMutableState(s, b)
+                          for s, b in zip(operator.mutable_states, mutable_state_bases)]
+        self.linear_in_mutable_state = operator.linear_in_mutable_state
+        self.linear_in_op_source = operator.linear_in_op_source
+        super().__init__(mutable_states, op_range, op_source)
+
+    def _apply(self, U, mu=None):
+        if self.op_source_basis is not None:
+            U = self.op_source_basis.lincomb(U.to_numpy())
+        V = self.operator._apply(U, mu=mu)
+        if self.op_range_basis is not None:
+            V = self.op_range.make_array(self.op_range_basis.inner(V, product=self.product))
+        return V
+
+    def _apply_adjoint(self, V, mu=None):
+        if self.op_range_basis is not None:
+            V = self.op_range_basis.lincomb(V.to_numpy())
+        U = self.operator._apply_adjoint(V, mu)
+        if self.op_source_basis is not None:
+            U = self.op_source.make_array(self.op_source_basis.inner(U))
+        return U
+
+    def _apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+        if self.op_range_basis is None and self.op_source_basis is None:
+            return self.operator._apply_inverse(V, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
+
+        if self.linear_in_op_source and self.op_range_basis is not None and self.op_source_basis is not None:
+            from pymor.operators.numpy import NumpyMatrixOperator
+            mat = self.op_range_basis.inner(self.operator._apply(self.op_source_basis, mu=mu),
+                                            product=self.product)
+            return NumpyMatrixOperator(mat).apply_inverse(V, least_squares=least_squares)
+
+        raise NotImplementedError
+
+    def _apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+        if self.op_range_basis is None and self.op_source_basis is None:
+            return self.operator._apply_inverse_adjoint(U, mu=mu, initial_guess=initial_guess,
+                                                        least_squares=least_squares)
+
+        if self.linear_in_op_source and self.op_range_basis is not None and self.op_source_basis is not None:
+            from pymor.operators.numpy import NumpyMatrixOperator
+            mat = self.op_range_basis.inner(self.operator._apply(self.op_source_basis, mu=mu),
+                                            product=self.product)
+            return NumpyMatrixOperator(mat).apply_inverse_adjoint(U, least_squares=least_squares)
+
+        raise NotImplementedError
+
+    def _jacobian(self, U, mu=None):
+        if self.op_source_basis is not None:
+            U = self.op_source_basis.lincomb(U.to_numpy())
+        J = self.operator._jacobian(U, mu=mu)
+        from pymor.algorithms.projection import project
+        pop = project(J, range_basis=self.op_range_basis, source_basis=self.op_source_basis,
+                      product=self.product)
+        return pop
