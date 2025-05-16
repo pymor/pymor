@@ -67,7 +67,7 @@ class FenicsxVector(CopyOnWriteVector):
         dof_indices = np.array(dof_indices, dtype=np.intc)
         if len(dof_indices) == 0:
             return np.array([], dtype=np.intc)
-        return self.imp.getValues(dof_indices)  # TODO: Global indices but only for local processor allowd
+        return self.impl.getValues(dof_indices)  # TODO: Global indices but only for local processor allowd
 
     def amax(self):
         raise NotImplementedError  # is implemented for complexified vector
@@ -100,7 +100,10 @@ class FenicsxVector(CopyOnWriteVector):
 class ComplexifiedFenicsxVector(ComplexifiedVector):
 
     def amax(self):
-        raise NotImplementedError
+        A = np.abs(self.to_numpy())
+        max_ind = np.argmax(A)
+        max_val = A[max_ind]
+        return max_ind, max_val
 
 
 class FenicsxVectorSpace(ComplexifiedListVectorSpace):
