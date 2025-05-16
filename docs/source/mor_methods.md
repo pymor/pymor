@@ -117,7 +117,7 @@ reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product, coercivity_es
 
 from pymor.algorithms.greedy import rb_greedy
 training_parameters = parameter_space.sample_uniformly(20)
-greedy_data = rb_greedy(fom, reductor, training_parameters=parameter_space.sample_uniformly(20), max_extensions=10)
+greedy_data = rb_greedy(fom, reductor, training_parameters, max_extensions=10)
 rom = greedy_data['rom']
 ```
 
