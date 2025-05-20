@@ -40,7 +40,7 @@ repos:
         args:
           - --fix
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.17.2
+    rev: v0.17.1
     hooks:
       - id: markdownlint-cli2
         args:
