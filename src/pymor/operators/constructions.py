@@ -4,14 +4,14 @@
 
 """Module containing some constructions to obtain new operators from old ones."""
 
-import weakref
 from functools import reduce
 from numbers import Number
+from weakref import WeakKeyDictionary
 
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.core.base import BasicObject, ImmutableObject, abstractmethod
+from pymor.core.base import BasicObject, abstractmethod
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
@@ -1552,6 +1552,7 @@ class QuadraticProductFunctional(QuadraticFunctional):
 class MutableState(BasicObject):
 
     _last_fixed_state = None
+    _mutable_state_registry = WeakKeyDictionary()
 
     def __init__(self, space):
         self.space = space
@@ -1562,30 +1563,25 @@ class MutableState(BasicObject):
         pass
 
     def set(self, new_state):
-        assert isinstance(new_state, VectorArray) and new_state in self.space and len(new_state) == 1 \
-            or isinstance(new_state, FixedMutableState) and new_state.mutable_state is self
-        if isinstance(new_state, FixedMutableState):
-            if self._last_fixed_state is not None and self._last_fixed_state() is new_state:
-                return
-            self._set(new_state.fixed_state)
-            self._last_fixed_state = weakref.ref(new_state)
-        else:
-            self._set(new_state)
-            self._last_fixed_state = None
+        assert new_state in self.space
+        assert len(new_state) == 1
+        new_state_va_state = new_state.current_state
+        if self._last_fixed_state is not None and self._last_fixed_state == new_state_va_state:
+            return
+        self._set(new_state)
+        self._last_fixed_state = new_state_va_state
         for cb in self.callbacks:
             cb()
 
     def add_state_change_callback(self, callback):
         self.callbacks.append(callback)
 
-
-class FixedMutableState(ImmutableObject):
-    def __init__(self, mutable_state, fixed_state):
-        assert isinstance(mutable_state, MutableState)
-        assert fixed_state in mutable_state.space
-        assert len(fixed_state) == 1
-        fixed_state = fixed_state.copy()
-        self.__auto_init(locals())
+    @classmethod
+    def create(cls, mutable_state):
+        if mutable_state in cls._mutable_state_registry:
+            return cls._mutable_state_registry[mutable_state]
+        cls._mutable_state_registry[mutable_state] = o = cls(mutable_state)
+        return o
 
 
 class MutableStateOperator(Operator):
@@ -1622,7 +1618,7 @@ class MutableStateOperator(Operator):
     def _jacobian(self, U, mu=None):
         raise NotImplementedError
 
-    def apply(self, U, mu):
+    def apply(self, U, mu=None):
         assert U in self.source
         return self.fix_states(U.blocks[:-1]).apply(U.blocks[-1], mu=mu)
 
@@ -1641,11 +1637,8 @@ class MutableStateOperator(Operator):
         raise NotImplementedError
 
     def fix_states(self, fixed_states):
-        return FixedMutableStateOperator(
-            self,
-            tuple(fs if isinstance(fs, FixedMutableState) else FixedMutableState(ms, fs)
-                  for ms, fs in zip(self.mutable_states, fixed_states))
-        )
+        assert all(fs in ms.space for ms, fs in zip(self.mutable_states, fixed_states))
+        return FixedMutableStateOperator(self, tuple(fs.copy() for fs in fixed_states))
 
     def _state_change_callback(self):
         self._state_changed = True

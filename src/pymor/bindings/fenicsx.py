@@ -426,11 +426,10 @@ class FenicsxMutableStateMatrixBasedOperator(MutableStateOperator):
         self._matrix_based_op = FenicsxMatrixBasedOperator(
             form, params,
             bcs=bcs, lifting_form=lifting_form, functional=functional, solver_options=solver_options, name=name)
+        mutable_states = tuple(FenicsxMutableState.create(ms) for ms in mutable_states)
         super().__init__(mutable_states, self._matrix_based_op.range, self._matrix_based_op.source)
         self.__auto_init(locals())
         self.parameters_own = self._matrix_based_op.parameters
-        mutable_states = tuple(mutable_states)
-        assert all(isinstance(ms, MutableState) for ms in mutable_states)
 
     def _assemble_matrix_if_needed(self, mu=None):
         if self._state_changed or mu is not self._last_mu:
