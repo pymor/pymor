@@ -94,8 +94,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         else:
             boundary_types[domain_description.left].append(4)
 
-        if None in boundary_types:
-            del boundary_types[None]
+        boundary_types.pop(None, None)
 
         return points, boundary_types
 

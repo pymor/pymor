@@ -271,14 +271,9 @@ autosummary_generate = glob.glob('generated/*.rst')
 # -----------------------------------------------------------------------------
 # Coverage checker
 # -----------------------------------------------------------------------------
-coverage_ignore_modules = r"""
-    """.split()
-coverage_ignore_functions = r"""
-    test($|_) (some|all)true bitwise_not cumproduct pkgload
-    generic\.
-    """.split()
-coverage_ignore_classes = r"""
-    """.split()
+coverage_ignore_modules = []
+coverage_ignore_functions = [r'test($|_)', r'(some|all)true', r'bitwise_not', r'cumproduct', r'pkgload', r'generic\.']
+coverage_ignore_classes = []
 
 coverage_c_path = []
 coverage_c_regexes = {}

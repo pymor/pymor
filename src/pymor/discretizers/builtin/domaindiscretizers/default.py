@@ -68,11 +68,11 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
 
     def discretize_RectDomain():
         if grid_type == RectGrid:
-            x0i = int(m.ceil(domain_description.width * m.sqrt(2) / diameter))
-            x1i = int(m.ceil(domain_description.height * m.sqrt(2) / diameter))
+            x0i = m.ceil(domain_description.width * m.sqrt(2) / diameter)
+            x1i = m.ceil(domain_description.height * m.sqrt(2) / diameter)
         elif grid_type == TriaGrid:
-            x0i = int(m.ceil(domain_description.width / diameter))
-            x1i = int(m.ceil(domain_description.height / diameter))
+            x0i = m.ceil(domain_description.width / diameter)
+            x1i = m.ceil(domain_description.height / diameter)
         else:
             raise NotImplementedError
         grid = grid_type(domain=domain_description.domain, num_intervals=(x0i, x1i))
@@ -96,11 +96,11 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
 
     def discretize_CylindricalDomain():
         if grid_type == RectGrid:
-            x0i = int(m.ceil(domain_description.width * m.sqrt(2) / diameter))
-            x1i = int(m.ceil(domain_description.height * m.sqrt(2) / diameter))
+            x0i = m.ceil(domain_description.width * m.sqrt(2) / diameter)
+            x1i = m.ceil(domain_description.height * m.sqrt(2) / diameter)
         elif grid_type == TriaGrid:
-            x0i = int(m.ceil(domain_description.width / diameter))
-            x1i = int(m.ceil(domain_description.height / diameter))
+            x0i = m.ceil(domain_description.width / diameter)
+            x1i = m.ceil(domain_description.height / diameter)
         else:
             raise NotImplementedError
         grid = grid_type(domain=domain_description.domain, num_intervals=(x0i, x1i),
@@ -122,11 +122,11 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
 
     def discretize_TorusDomain():
         if grid_type == RectGrid:
-            x0i = int(m.ceil(domain_description.width * m.sqrt(2) / diameter))
-            x1i = int(m.ceil(domain_description.height * m.sqrt(2) / diameter))
+            x0i = m.ceil(domain_description.width * m.sqrt(2) / diameter)
+            x1i = m.ceil(domain_description.height * m.sqrt(2) / diameter)
         elif grid_type == TriaGrid:
-            x0i = int(m.ceil(domain_description.width / diameter))
-            x1i = int(m.ceil(domain_description.height / diameter))
+            x0i = m.ceil(domain_description.width / diameter)
+            x1i = m.ceil(domain_description.height / diameter)
         else:
             raise NotImplementedError
         grid = grid_type(domain=domain_description.domain, num_intervals=(x0i, x1i),
@@ -137,7 +137,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         return grid, bi
 
     def discretize_LineDomain():
-        ni = int(m.ceil(domain_description.width / diameter))
+        ni = m.ceil(domain_description.width / diameter)
         grid = OnedGrid(domain=domain_description.domain, num_intervals=ni)
 
         def indicator_factory(dd, bt):
@@ -154,7 +154,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         return grid, bi
 
     def discretize_CircleDomain():
-        ni = int(m.ceil(domain_description.width / diameter))
+        ni = m.ceil(domain_description.width / diameter)
         grid = OnedGrid(domain=domain_description.domain, num_intervals=ni, identify_left_right=True)
         bi = EmptyBoundaryInfo(grid)
 

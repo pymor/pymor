@@ -639,7 +639,7 @@ class ParameterSpace(ParametricObject):
             ranges = ranges[0]
         if isinstance(ranges, (tuple, list)):
             assert len(ranges) == 2
-            ranges = {k: ranges for k in parameters}
+            ranges = dict.fromkeys(parameters, ranges)
         assert isinstance(ranges, dict)
         assert all(k in ranges
                    and len(ranges[k]) == 2
@@ -670,7 +670,7 @@ class ParameterSpace(ParametricObject):
         List of |parameter value| dicts.
         """
         if not isinstance(counts, dict):
-            counts = {k: counts for k in self.parameters}
+            counts = dict.fromkeys(self.parameters, counts)
 
         linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k])
                           for k in self.parameters)
@@ -736,7 +736,7 @@ class ParameterSpace(ParametricObject):
         List of |parameter value| dicts.
         """
         if not isinstance(counts, dict):
-            counts = {k: counts for k in self.parameters}
+            counts = dict.fromkeys(self.parameters, counts)
 
         logspaces = tuple(np.geomspace(self.ranges[k][0], self.ranges[k][1], num=counts[k])
                           for k in self.parameters)
