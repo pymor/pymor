@@ -19,7 +19,8 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
                              error_norm_names=None,
                              error_estimator_norm_index=0, custom=(), custom_names=None,
                              plot=False, plot_custom_logarithmic=True,
-                             pool=dummy_pool):
+                             pool=dummy_pool,
+                             print_status=True):
     """Analyze the model reduction error.
 
     The maximum model reduction error is estimated by solving the reduced
@@ -188,8 +189,10 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
 
     norms, error_estimates, errors, conditions, custom_values = \
         list(zip(*pool.map(_compute_errors, test_mus, fom=fom, reductor=reductor, error_estimator=error_estimator,
-                           error_norms=error_norms, condition=condition, custom=custom, basis_sizes=basis_sizes)))
-    print()
+                           error_norms=error_norms, condition=condition, custom=custom, basis_sizes=basis_sizes,
+                           print_status=print_status)))
+    if print_status:
+        print()
 
     result = {}
 
@@ -274,7 +277,7 @@ def reduction_error_analysis(rom, fom, reductor, test_mus,
 
 
 def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivities=True, plot_condition=True,
-                                  plot_custom_logarithmic=True, plot_custom_with_errors=False):
+                                  plot_custom_logarithmic=True, plot_custom_with_errors=False, relative_errors=False):
     """Plots the results from :meth:`reduction_error_analysis`.
 
     Parameters
@@ -298,11 +301,14 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
     condition = 'conditions' in result
     custom = 'custom_values' in result
 
+    if relative_errors:
+        assert error_norms
+        assert not error_estimator
+
     basis_sizes = result['basis_sizes']
     if error_norms:
         error_norm_names = result['error_norm_names']
-        max_errors = result['max_errors']
-        errors = result['errors']
+        max_errors = result['max_rel_errors'] if relative_errors else result['max_errors']
     if error_estimator:
         max_estimates = result['max_error_estimates']
     if error_norms and error_estimator:
@@ -390,14 +396,15 @@ def plot_reduction_error_analysis(result, max_basis_size=None, plot_effectivitie
         ax.set_title('maximum custom values')
         current_plot += 1
 
-    plt.show()
+    return fig
 
 
-def _compute_errors(mu, fom, reductor, error_estimator, error_norms, condition, custom, basis_sizes):
+def _compute_errors(mu, fom, reductor, error_estimator, error_norms, condition, custom, basis_sizes, print_status=True):
     import sys
 
-    print('.', end='')
-    sys.stdout.flush()
+    if print_status:
+        print('.', end='')
+        sys.stdout.flush()
 
     error_estimates = np.empty(len(basis_sizes)) if error_estimator else None
     norms = np.empty(len(error_norms))
