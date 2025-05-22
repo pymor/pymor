@@ -20,6 +20,7 @@ from pymor.core.pickle import unpicklable
 from pymor.operators.constructions import MutableState, MutableStateOperator, VectorFunctional, VectorOperator
 from pymor.operators.interface import Operator
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
+from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.interface import _create_random_values
 from pymor.vectorarrays.list import ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -329,6 +330,43 @@ class FenicsxMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
             # all matrices. how to improve this?
 
         return FenicsxMatrixOperator(matrix, self.source.V, self.range.V, solver_options=solver_options, name=name)
+
+
+class FenicsxOperator(Operator):
+
+    def __init__(self, form, source_states, params=None, bcs=(), lifting_form=None, linear=False, solver_options=None,
+                 name=None):
+        assert form.rank == 1
+        params = params or {}
+        bcs = bcs or tuple()
+        assert all(isinstance(v, Constant) and len(v.ufl_shape) <= 1 for v in params.values())
+        source_states = tuple(FenicsxMutableState.create(s) for s in source_states)
+        assert len(source_states) >= 1
+        self.__auto_init(locals())
+        self.range = FenicsxVectorSpace(form.function_spaces[0])
+        self.source = source_states[0].space if len(source_states) == 1 \
+            else BlockVectorSpace([s.space for s in source_states])
+        self.parameters_own = {k: v.ufl_shape[0] if len(v.ufl_shape) == 1 else 1 for k, v in params.items()}
+
+    def _set_mu(self, mu=None):
+        assert self.parameters.assert_compatible(mu)
+        for k, v in self.params.items():
+            v.value = mu[k]
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        self._set_mu(mu)
+        R = []
+        for u in U:
+            for s, uu in zip(self.source_states, [u] if len(self.source_states) == 1 else u.blocks):
+                s.set(uu)
+            vec = assemble_vector(self.form)
+            if self.lifting_form is not None:
+                apply_lifting(vec, [self.lifting_form], [self.bcs])
+                vec.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE)
+                set_bc(vec, self.bcs)
+            R.append(vec)
+        return self.range.make_array(R)
 
 
 @defaults('solver', 'preconditioner', 'keep_solver')
