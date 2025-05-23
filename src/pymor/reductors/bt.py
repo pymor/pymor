@@ -37,7 +37,7 @@ class GenericBTReductor(BasicObject):
         """Return low-rank Cholesky factors of Gramians."""
         raise NotImplementedError
 
-    def _sv_U_V(self):
+    def _hankel_svd(self):
         """Return singular values and vectors."""
         raise NotImplementedError
 
@@ -74,7 +74,7 @@ class GenericBTReductor(BasicObject):
         assert projection in ('sr', 'bfsr', 'biorth')
 
         cf, of = self._gramians()
-        sv, sU, sV = self._sv_U_V()
+        sU, sv, sVh = self._hankel_svd()
 
         # find reduced order if tol is specified
         if tol is not None:
@@ -85,8 +85,8 @@ class GenericBTReductor(BasicObject):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.')
 
         # compute projection matrices
-        self.V = cf.lincomb(sV[:r].T)
-        self.W = of.lincomb(sU[:r].T)
+        self.V = cf.lincomb(sVh[:r].T)
+        self.W = of.lincomb(sU[:, :r])
         if projection == 'sr':
             alpha = 1 / np.sqrt(sv[:r])
             self.V.scal(alpha)
@@ -128,11 +128,11 @@ class BTReductor(GenericBTReductor):
     def _gramians(self):
         return self.fom.gramian('c_lrcf', mu=self.mu), self.fom.gramian('o_lrcf', mu=self.mu)
 
-    def _sv_U_V(self):
-        return self.fom._sv_U_V(mu=self.mu)
+    def _hankel_svd(self):
+        return self.fom._hankel_svd(mu=self.mu)
 
     def error_bounds(self):
-        sv = self._sv_U_V()[0]
+        sv = self._hankel_svd()[1]
         return 2 * sv[:0:-1].cumsum()[::-1]
 
 
@@ -157,12 +157,12 @@ class FDBTReductor(GenericBTReductor):
     def _gramians(self):
         return self.fom.gramian('bs_c_lrcf', mu=self.mu), self.fom.gramian('bs_o_lrcf', mu=self.mu)
 
-    def _sv_U_V(self):
-        return self.fom._sv_U_V('bs', mu=self.mu)
+    def _hankel_svd(self):
+        return self.fom._hankel_svd('bs', mu=self.mu)
 
     def error_bounds(self):
         """L-infinity error bounds for reduced order models."""
-        sv = self._sv_U_V()[0]
+        sv = self._hankel_svd()[1]
         return 2 * sv[:0:-1].cumsum()[::-1]
 
 
@@ -187,11 +187,11 @@ class LQGBTReductor(GenericBTReductor):
     def _gramians(self):
         return self.fom.gramian('lqg_c_lrcf', mu=self.mu), self.fom.gramian('lqg_o_lrcf', mu=self.mu)
 
-    def _sv_U_V(self):
-        return self.fom._sv_U_V('lqg', mu=self.mu)
+    def _hankel_svd(self):
+        return self.fom._hankel_svd('lqg', mu=self.mu)
 
     def error_bounds(self):
-        sv = self._sv_U_V()[0]
+        sv = self._hankel_svd()[1]
         return 2 * (sv[:0:-1] / np.sqrt(1 + sv[:0:-1]**2)).cumsum()[::-1]
 
 
@@ -221,11 +221,11 @@ class BRBTReductor(GenericBTReductor):
         of = self.fom.gramian(('br_o_lrcf', self.gamma), mu=self.mu)
         return cf, of
 
-    def _sv_U_V(self):
-        return self.fom._sv_U_V(('br', self.gamma), mu=self.mu)
+    def _hankel_svd(self):
+        return self.fom._hankel_svd(('br', self.gamma), mu=self.mu)
 
     def error_bounds(self):
-        sv = self._sv_U_V()[0]
+        sv = self._hankel_svd()[1]
         return 2 * sv[:0:-1].cumsum()[::-1]
 
 
@@ -252,8 +252,8 @@ class PRBTReductor(GenericBTReductor):
         of = self.fom.gramian('pr_o_lrcf', mu=self.mu)
         return cf, of
 
-    def _sv_U_V(self):
-        return self.fom._sv_U_V('pr', mu=self.mu)
+    def _hankel_svd(self):
+        return self.fom._hankel_svd('pr', mu=self.mu)
 
     def error_bounds(self):
         raise NotImplementedError

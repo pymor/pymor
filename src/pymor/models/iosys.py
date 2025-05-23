@@ -1088,7 +1088,7 @@ class LTIModel(Model):
         return gramian
 
     @cached
-    def _sv_U_V(self, typ='lyap', mu=None):
+    def _hankel_svd(self, typ='lyap', mu=None):
         """Compute (Hankel) singular values and vectors.
 
         .. note::
@@ -1109,12 +1109,12 @@ class LTIModel(Model):
 
         Returns
         -------
+        U
+            |NumPy array| of left singular vectors as columns.
         sv
             One-dimensional |NumPy array| of singular values.
-        Uh
-            |NumPy array| of left singular vectors as rows.
         Vh
-            |NumPy array| of right singular vectors as rows.
+            |NumPy array| of right singular vectors as conjugated rows.
         """
         if not isinstance(mu, Mu):
             mu = self.parameters.parse(mu)
@@ -1137,8 +1137,7 @@ class LTIModel(Model):
             of = self.gramian(('br_o_lrcf', gamma), mu=mu)
         else:
             raise ValueError(f'Unknown typ ({typ}).')
-        U, hsv, Vh = spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver=svd_lapack_driver())
-        return hsv, U.T, Vh
+        return spla.svd(self.E.apply2(of, cf, mu=mu), lapack_driver=svd_lapack_driver())
 
     def hsv(self, mu=None):
         """Hankel singular values.
@@ -1156,7 +1155,7 @@ class LTIModel(Model):
         sv
             One-dimensional |NumPy array| of singular values.
         """
-        hsv = self.presets['hsv'] if 'hsv' in self.presets else self._sv_U_V(mu=mu)[0]
+        hsv = self.presets['hsv'] if 'hsv' in self.presets else self._hankel_svd(mu=mu)[1]
         assert isinstance(hsv, np.ndarray)
         assert hsv.ndim == 1
 
