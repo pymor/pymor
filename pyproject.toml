@@ -7,8 +7,8 @@ name = "pymor"
 dynamic = ["version"]
 description = "Library for building model order reduction applications with Python"
 readme = "README.md"
-license = "BSD-2-Clause"
-license-files = ["LICENSE.txt"]
+license = "BSD-2-Clause AND BSD-3-Clause"
+license-files = ["LICENSE.txt", "LICENSE-BSD-3-Clause.txt"]
 requires-python = ">=3.9"
 authors = [
   {name = "pyMOR developers", email = "main.developers@pymor.org"},
