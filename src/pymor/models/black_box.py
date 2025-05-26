@@ -41,7 +41,7 @@ class NumpyBlackBoxModel(BlackBoxModel):
         self,
         solution_dim: int,
         parameters: Parameters,
-        solve_lambda: Callable[[Mu], npt.ArrayLike],
+        numpy_solve_lambda: Callable[[Mu], npt.ArrayLike],
         *,
         visualizer=None,
         name: Optional[str] = None,
@@ -49,11 +49,13 @@ class NumpyBlackBoxModel(BlackBoxModel):
         solution_space = NumpyVectorSpace(solution_dim)
 
         def solve_lambda(mu):
-            u = np.array(solve_lambda(mu)).reshape(solution_space.dim, -1)
+            u = np.array(numpy_solve_lambda(mu)).reshape(solution_space.dim, -1)
             return solution_space.from_numpy(u)
 
-        super().__init__(solution_space=solution_space,
-        parameters=parameters,
-        solve_lambda=solve_lambda,
-            visualizer=visualizer, name=name or 'BlackBoxModel')
+        super().__init__(
+            solution_space=solution_space,
+            parameters=parameters,
+            solve_lambda=solve_lambda,
+            visualizer=visualizer,
+            name=name or 'NumpyBlackBoxModel')
         self.__auto_init(locals())
