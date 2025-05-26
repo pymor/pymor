@@ -1,6 +1,8 @@
+from collections.abc import Callable
 from numbers import Number
 
 import numpy as np
+import numpy.typing as npt
 from vkoga.kernels import Gaussian
 from vkoga.vkoga import VKOGA
 
@@ -16,6 +18,7 @@ class VkogaStateReductor(BasicObject):
         solution_space,
         parameter_space,
         solution_length=1,
+        parameter_scaling: Callable[[npt.ArrayLike], npt.ArrayLike]=lambda x: x,
         rom_name='VKOGAStateModel',
         max_iter=None,
         tol_p=1e-10,
@@ -27,17 +30,18 @@ class VkogaStateReductor(BasicObject):
         assert isinstance(solution_space, VectorSpace)
         assert isinstance(parameter_space, ParameterSpace)
 
-        # we need to rescale to [-1, 1] for kernel methods
+        # we need to
+        # - rescale to [-1, 1] for kernel methods
+        # - taking the parameter_scaling into account beforehand
         parameter_bounds = [[], []]
         for kk in parameter_space.ranges:
-            for jj in range(parameter_space.parameters[kk]):
-                parameter_bounds[0].append(parameter_space.ranges[kk][0])
-                parameter_bounds[1].append(parameter_space.ranges[kk][1])
+            parameter_bounds[0].append(parameter_scaling(parameter_space.ranges[kk][0]))
+            parameter_bounds[1].append(parameter_scaling(parameter_space.ranges[kk][1]))
         parameter_bounds = np.array(parameter_bounds)
 
         self._input_scaling = (
             lambda x: 2.0
-            * (x - parameter_bounds[0, :])
+            * (parameter_scaling(x) - parameter_bounds[0, :])
             / (parameter_bounds[1, :] - parameter_bounds[0, :])
             - 1.0
         )
@@ -168,7 +172,7 @@ class VkogaStateReductor(BasicObject):
                 try:
                     already_colected_mu_index = self._data[0].index(mu)
                     already_collected_u = self._data[1][already_colected_mu_index]
-                    assert np.max((already_collected_u - state).sup_norm()) < 1e-14
+                    assert np.linalg.norm(already_collected_u - state, np.inf) < 1e-14
                 except ValueError:
                     # index() raises for unknown mus, so we did not collect data for this one yet
                     new_inputs.append(mu)
