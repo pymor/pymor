@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
@@ -7,7 +7,8 @@ name = "pymor"
 dynamic = ["version"]
 description = "Library for building model order reduction applications with Python"
 readme = "README.md"
-license = {file = "LICENSE.txt"}
+license = "BSD-2-Clause"
+license-files = ["LICENSE.txt"]
 requires-python = ">=3.9"
 authors = [
   {name = "pyMOR developers", email = "main.developers@pymor.org"},
@@ -17,7 +18,6 @@ maintainers = [
 ]
 classifiers = [
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: BSD License",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
