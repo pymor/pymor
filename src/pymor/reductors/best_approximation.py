@@ -20,9 +20,10 @@ class BestApproximationReductor(ProjectionBasedReductor):
     def __init__(
         self,
         fom: Model,
-        basis=None, # dict or vectorarray
+        basis=None, # dict or iterable
         check_orthonormality=True,
         check_tol=1e-3,
+        rom_cache_id_prefix='BestApproximationReduced',
     ):
         if isinstance(basis, (list, tuple)):
             assert isinstance(fom.solution_space, BlockVectorSpace)
@@ -49,7 +50,7 @@ class BestApproximationReductor(ProjectionBasedReductor):
 
     def reconstruct(self, u):
         if len(self.bases) == 1:
-            super().reconstruct(u)
+            return super().reconstruct(u)
         else:
             assert isinstance(self.fom.solution_space, BlockVectorSpace)
             assert isinstance(u.space, BlockVectorSpace)
@@ -69,11 +70,12 @@ class BestApproximationReductor(ProjectionBasedReductor):
             assert not isinstance(self.fom.solution_space, BlockVectorSpace)
             dim = projected_operators['RB']
             assert dim <= len(self.basis['RB'])
+            basis = self.basis['RB']
 
             def project_onto_basis(U):
                 # See https://docs.pymor.org/2024-1-2/tutorial_basis_generation.html#a-trivial-reduced-basis
-                G = self.basis[:dim].gramian()
-                R = self.basis[:dim].inner(U)
+                G = basis[:dim].gramian()
+                R = basis[:dim].inner(U)
                 return np.linalg.solve(G, R)
 
             rom = NumpyBlackBoxModel(
@@ -82,6 +84,8 @@ class BestApproximationReductor(ProjectionBasedReductor):
                 lambda mu: project_onto_basis(self.fom.solve(mu)),
             )
             rom.disable_logging()
+            if self.rom_cache_id_prefix:
+                rom.enable_caching('memory', f'{self.rom_cache_id_prefix}_NumpyBlackBoxModel_{dim}')
             return rom
 
         else:
@@ -117,4 +121,6 @@ class BestApproximationReductor(ProjectionBasedReductor):
                 lambda mu: project_onto_basis(self.fom.solve(mu)),
             )
             rom.disable_logging()
+            if self.rom_cache_id_prefix:
+                rom.enable_caching('memory', f'{self.rom_cache_id_prefix}_BlackBoxModel_{dim}')
             return rom
