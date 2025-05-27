@@ -33,6 +33,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.autosummary',
               'sphinx.ext.linkcode',
+              'sphinx.ext.napoleon',
               'sphinx.ext.intersphinx',
               'try_on_binder',
               'myst_nb',
@@ -323,3 +324,5 @@ suppress_warnings = ['autoapi', 'config.cache']
 autoapi_template_dir = this_dir / '_templates' / 'autoapi'
 autoapi_member_order = 'groupwise'
 autoapi_options = ['show-inheritance', 'members', 'undoc-members']
+
+napoleon_use_rtype = False
