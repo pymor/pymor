@@ -10,6 +10,7 @@ from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
+# TODO: replace solve_lambda by compute_lambdas = {id: lambda}
 class BlackBoxModel(Model):
     def __init__(
         self,
