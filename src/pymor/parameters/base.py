@@ -487,22 +487,11 @@ class Mu(ImmutableObject):
         return self.keys() == other.keys() \
             and all(np.array_equal(v, other[k]) for k, v in self.items()) \
             and self.time_dependent_values == other.time_dependent_values
-    
+
     def __hash__(self):
         if self._hash is None:
-            # Convert each value into a tuple so it becomes hashable
-            key_value_tuples = []
-            for key, value in self.items():
-                # Ensure each value is converted to a tuple (numpy arrays are not hashable)
-                value_tuple = tuple(value)
-                key_value_tuples.append((key, value_tuple))
-
-            # Sort the list of (key, value_tuple) to ensure consistent ordering
-            # ensures that the hash is the same regardless of the order of keys
-            sorted_items = sorted(key_value_tuples)
-            self._hash = hash(tuple(sorted_items))
-        # Create a hash from the sorted list of items
-        return  self._hash
+            self._hash = sum(hash(v.tobytes()) for v in self.values())
+        return self._hash
 
     def __str__(self):
         def format_value(k, v):
