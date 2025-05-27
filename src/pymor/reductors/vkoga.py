@@ -22,6 +22,7 @@ class VkogaStateReductor(BasicObject):
         rom_name='VKOGAStateModel',
         max_iter=None,
         tol_p=1e-10,
+        kernel=lambda parameters: Gaussian(ep=1 / np.sqrt(parameters.dim)),
         kernel_par=1,
         greedy_type='p_greedy',
         vkoga_verbose=False,
@@ -29,6 +30,8 @@ class VkogaStateReductor(BasicObject):
     ):
         assert isinstance(solution_space, VectorSpace)
         assert isinstance(parameter_space, ParameterSpace)
+
+        kernel = kernel(parameter_space.parameters) if callable(kernel) else kernel
 
         # we need to
         # - rescale to [-1, 1] for kernel methods
@@ -120,7 +123,7 @@ class VkogaStateReductor(BasicObject):
             tol_p=self.tol_p,
             kernel_par=self.kernel_par,
             greedy_type=self.greedy_type,
-            kernel=Gaussian(ep=1 / np.sqrt(self.parameter_space.parameters.dim)),
+            kernel=self.kernel,
         )
         vkoga_mlm.verbose = not self.logging_disabled and self.vkoga_verbose
         return vkoga_mlm
