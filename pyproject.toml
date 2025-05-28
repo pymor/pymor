@@ -33,7 +33,7 @@ dependencies = [
   "pillow",
   "pygments",
   "qtpy>=2.3.1",
-  "scipy>=1.8",
+  "scipy>=1.8,!=1.15.0,!=1.15.1,!=1.15.2",
   "threadpoolctl",
   "typer",
 ]
