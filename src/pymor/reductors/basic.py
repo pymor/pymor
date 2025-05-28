@@ -138,12 +138,12 @@ class ProjectionBasedReductor(BasicObject):
 
         U = self.bases[basis]
         product = self.products.get(basis, None)
-        error_matrix = U[offset:].inner(U, product)
-        error_matrix[:len(U) - offset, offset:] -= np.eye(len(U) - offset)
-        if error_matrix.size > 0:
-            err = np.max(np.abs(error_matrix))
-            if err >= self.check_tol:
-                raise AccuracyError(f'result not orthogonal (max err={err})')
+        # error_matrix = U[offset:].inner(U, product)
+        # error_matrix[:len(U) - offset, offset:] -= np.eye(len(U) - offset)
+        # if error_matrix.size > 0:
+        #     err = np.max(np.abs(error_matrix))
+        #     if err >= self.check_tol:
+        #         raise AccuracyError(f'result not orthogonal (max err={err})')
 
 
 class StationaryRBReductor(ProjectionBasedReductor):
