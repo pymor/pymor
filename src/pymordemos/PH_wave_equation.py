@@ -134,6 +134,11 @@ def run_mor(fom, X, F, method, red_dims):
         rom  = reductor.reduce()
         abs_err_initial_data[i_red_dim] = (fom.initial_data.as_vector() - V_r.lincomb(rom.initial_data.as_vector().to_numpy())).norm()
         u = rom.solve()
+        H = []
+        for vector in u:
+            H.append((.5 * vector.to_numpy().transpose() @ rom.H_op.apply(vector).to_numpy())[0])
+        plt.plot(range(len(u)), H)
+        plt.show()
         reconstruction = V_r[:u.dim].lincomb(u.to_numpy())
         abs_err_proj[i_red_dim] = np.sqrt((X - U_proj).norm2().sum())
         abs_err_rom[i_red_dim] = np.sqrt((X - reconstruction).norm2().sum())
