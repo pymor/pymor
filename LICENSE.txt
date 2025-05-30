@@ -19,7 +19,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The following files contain source code originating from other open source software projects:
 
-* docs/source/pymordocstring.py  (sphinxcontrib-napoleon)
-* src/pymor/algorithms/genericsolvers.py (SciPy)
+* docs/source/pymordocstring.py  (sphinxcontrib-napoleon) under BSD-2-Clause license
+* src/pymor/algorithms/genericsolvers.py (SciPy) under BSD-3-Clause license
 
 See these files for more information.
