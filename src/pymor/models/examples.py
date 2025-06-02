@@ -337,10 +337,6 @@ def stokes_examples():
 
     Parameters
     ----------
-    diameter
-        Diameter option for the domain discretizer.
-    nt
-        Number of time steps.
 
     Returns
     -------
@@ -391,7 +387,7 @@ def stokes_examples():
     D_all = np.concatenate([D_u, D_p + A.shape[0]])
 
     K_c, f_c = condense(K, f, D=D_all, expand=False)
-    
+
     free_u = A.shape[0] - len(D_u)
     free_p = C.shape[0] - len(D_p)
 
