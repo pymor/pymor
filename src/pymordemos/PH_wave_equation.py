@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from pymordemos.symplectic_wave_equation import discretize_fom
+# from pymordemos.symplectic_wave_equation import discretize_fom
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.algorithms.pod import pod
 from pymor.reductors.basic import InstationaryRBReductor
@@ -14,10 +14,10 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.models.symplectic import QuadraticHamiltonianModel
 from scipy.sparse import diags
 
-from pymor.reductors.reductor_PH import PHReductor, check_PODReductor
+from pymor.reductors.reductor_PH import PHReductor, check_PODReductor, MyQuadraticHamiltonianRBReductor
 from pymor.algorithms.PH import POD_PH, check_POD
 
-NEW_METHODS = ['POD_PH'] + ['POD_PH_just_Vr']
+NEW_METHODS = ['POD_PH'] #+ ['POD_PH_just_Vr']
 METHODS = NEW_METHODS + ['POD', 'check_POD']
 
 
@@ -25,10 +25,12 @@ def main(
         final_time: float = 10.,
         rbsize: int = 80,        
 ):
-    fom = discretize_fom(T=final_time)
+    fom, F = discretize_fom(T=final_time)
     # fom = discretize_mass_spring_chain()
     X = fom.solve()
-    F = fom.operator.apply(X)
+    F = fom.H_op.apply(X)
+    print("check", np.sqrt((X - F).norm2().sum()))
+    # F = fom.H_op.apply(fom.initial_data)
     rel_fac = np.sqrt(X.norm2().sum())
 
     half_rbsize = min(rbsize // 2, len(X) // 2)
@@ -104,6 +106,7 @@ def run_mor(fom, X, F, method, red_dims):
     abs_err_proj = np.zeros(len(red_dims))
     abs_err_rom = np.zeros(len(red_dims))
     abs_err_initial_data = np.zeros(len(red_dims))
+    abs_err_proj_W_r = np.zeros(len(red_dims))
     for i_red_dim, red_dim in enumerate(red_dims):
         print(method)
         if red_dim > len(max_V_r):
@@ -117,9 +120,9 @@ def run_mor(fom, X, F, method, red_dims):
                 print("checking orthogonality of V_r inside", np.linalg.norm(np.identity(len(V_r)) - V_r.gramian(None)))
                 W_r = max_W_r[:red_dim]
                 print("POD_PH", len(V_r))
-                reductor = PHReductor(fom, V_r, W_r)
+                reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, W_r)
                 print(X.dim, len(X), W_r.dim, len(W_r))
-                U_proj = W_r.lincomb(V_r.inner(X))
+                U_proj = V_r.lincomb(W_r.inner(X))
             elif method == 'POD_PH_just_Vr':
                 reductor = PHReductor(fom, V_r, V_r)
                 U_proj = V_r.lincomb(V_r.inner(X))
@@ -131,11 +134,13 @@ def run_mor(fom, X, F, method, red_dims):
             elif method == 'check_POD':
                 print('len of max RB', len(max_V_r), 'red_dim', red_dim)
                 V_r = max_V_r[:red_dim]
-                reductor = PHReductor(fom, V_r, V_r)
+                reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, V_r)
                 U_proj = V_r.lincomb(V_r.inner(X))
         rom  = reductor.reduce()
         abs_err_initial_data[i_red_dim] = (fom.initial_data.as_vector() - V_r.lincomb(rom.initial_data.as_vector().to_numpy())).norm()
         u = rom.solve()
+        # if method == 'POD_PH':
+        #     abs_err_proj_W_r[i_red_dim] = np.sqrt((F - u.operator.apply()))
         # H = []
         # for vector in u:
         #     H.append((.5 * vector.to_numpy().transpose() @ rom.H_op.apply(vector).to_numpy())[0])
@@ -150,6 +155,41 @@ def run_mor(fom, X, F, method, red_dims):
         'abs_err_rom': abs_err_rom,
         'abs_err_initial_data': abs_err_initial_data
     }
+
+
+def discretize_fom(T=50):
+    n_x = 500
+    nt = int(T / 0.01) + 1
+    wave_speed = 0.1
+    l = 1.
+    dx = l / (n_x-1)
+
+    # construct H_op
+    space = NumpyVectorSpace(n_x)
+    Dxx = diags(
+        [-2 * np.ones(n_x), np.ones(n_x-1), np.ones(n_x-1)],
+        [0, 1, -1],
+        format='csr',
+    )
+    H_op = BlockDiagonalOperator([
+        NumpyMatrixOperator(-wave_speed**2 / dx * Dxx),
+        LincombOperator([IdentityOperator(space)], [1/dx]),
+    ])
+
+    # construct initial_data
+    h = lambda s: (0 <= s) * (s <= 1) * (1 - 3/2 * s**2 + 3/4 * s**3) + (1 < s) * (s <= 2) * ((2-s)**3)/4
+    bump = lambda xi: h(np.abs(4*(xi - l/2)))
+    initial_data = H_op.source.make_array([
+        space.make_array(bump(np.linspace(0, l, n_x))),
+        space.make_array(np.zeros(n_x)),
+    ])
+
+    F = H_op.apply(initial_data)
+
+    fom = QuadraticHamiltonianModel(T, initial_data, H_op, nt=nt, name='hamiltonian_wave_equation')
+    # TODO: fom.operator = fom.operator.with_(solver_options={'type': 'to_matrix'})
+    return fom, F
+
 
 
 def discretize_mass_spring_chain(T=10, n=100, k=1.0, m=1.0):

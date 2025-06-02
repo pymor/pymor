@@ -18,25 +18,36 @@ def POD_PH(X, F, modes):
     Vtilde_r, svals = pod(X, modes=modes)
     Wtilde_r, svals = pod(F, modes=modes)
     max_modes = min(len(Vtilde_r), len(Wtilde_r))
+    if max_modes % 2 != 0:
+        max_modes -= 1
     Vtilde_r = Vtilde_r[:max_modes]
     Wtilde_r = Wtilde_r[:max_modes]
 
     M = Wtilde_r.inner(Vtilde_r)
     eigenvalues, eigenvectors = np.linalg.eig(M)
-    M_inverse_sqrt = (eigenvectors.transpose() @ np.diag(np.sqrt(eigenvalues**(-1))) @ eigenvectors)
-    V_r1 = Vtilde_r.lincomb(M_inverse_sqrt)
-    W_r1 = Wtilde_r.lincomb(M_inverse_sqrt.transpose())
-    # numpy_Vtilde_r = Vtilde_r.to_numpy().transpose()
-    # numpy_Wtilde_r = Wtilde_r.to_numpy().transpose()
+    M_decomp = eigenvectors @ np.diag(eigenvalues) @ np.linalg.inv(eigenvectors)
+    print("checking M_decomp", np.linalg.norm(M - M_decomp))
+    M_inverse_sqrt = (eigenvectors @ np.diag((np.sqrt(eigenvalues))**(-1)) @ np.linalg.inv(eigenvectors))
+    M_sqrt = eigenvectors @ np.diag(np.sqrt(eigenvalues)) @ np.linalg.inv(eigenvectors)
+    print("checking M_sqrt", np.linalg.norm(M - M_sqrt @ M_sqrt))
+    print("cheking M_inverse_sqrt", np.linalg.norm(np.linalg.inv(M) - M_inverse_sqrt @ M_inverse_sqrt))
+    numpy_V_r1 = Vtilde_r.to_numpy() @ M_inverse_sqrt
+    numpy_W_r1 = Wtilde_r.to_numpy() @ M_inverse_sqrt.transpose()
+    numpy_Vtilde_r = Vtilde_r.to_numpy()
+    numpy_Wtilde_r = Wtilde_r.to_numpy()
+    # print(V_r1.shape, W_r1.shape)
+    # print("checking biorthogonality of numpy", np.linalg.norm(np.identity(numpy_Vtilde_r.shape[1]) - W_r1.transpose() @ V_r1))
     # numpy_V_r = (numpy_Vtilde_r @ M_inverse_sqrt).transpose()
     # numpy_W_r = (numpy_Wtilde_r @ M_inverse_sqrt.transpose()).transpose()
-    # half_dim = X.dim//2
-    # space = BlockVectorSpace([NumpyVectorSpace(half_dim), NumpyVectorSpace(half_dim)])
-    # V_r1 = space.from_numpy(np.array([numpy_V_r[:half_dim, :], numpy_V_r[half_dim:, :]]))
-    # W_r1 = space.from_numpy(np.array([numpy_W_r[:half_dim, :], numpy_W_r[half_dim:, :]]))
+    half_dim_V_r = numpy_V_r1.shape[0] // 2
+    half_dim_X = X.dim // 2
+    space = BlockVectorSpace([NumpyVectorSpace(half_dim_X), NumpyVectorSpace(half_dim_X)])
+    V_r1 = space.from_numpy(numpy_V_r1)
+    W_r1 = space.from_numpy(numpy_W_r1)
+    print(V_r1)
     V_r2, W_r2 = gram_schmidt_biorth(Vtilde_r, Wtilde_r)
-    # print("checking biorthogonality 1", np.linalg.norm((np.identity(len(V_r1)) - (W_r1.to_numpy() @ V_r1.to_numpy().transpose()))))
-    # print("checking biorthogonality 2", np.linalg.norm((np.identity(len(V_r2)) - (W_r2.to_numpy() @ V_r2.to_numpy().transpose()))))
+    # print("checking biorthogonality 1", np.linalg.norm((np.identity(len(V_r1)) - (W_r1.inner(V_r1)))))
+    # print("checking biorthogonality 2", np.linalg.norm((np.identity(len(V_r2)) - (W_r2.inner(V_r2.to_numpy)))))
     return V_r2, W_r2
 
 def check_POD(X, modes):
