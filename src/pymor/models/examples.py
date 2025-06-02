@@ -331,3 +331,89 @@ def heat_equation_1d_example(diameter=0.01, nt=100):
     fom, _ = discretize_instationary_cg(p, diameter=diameter, nt=nt)
 
     return fom
+
+def stokes_examples(): 
+    """Return parametric Stokes equation example
+
+    Parameters
+    ----------
+    diameter
+        Diameter option for the domain discretizer.
+    nt
+        Number of time steps.
+
+    Returns
+    -------
+    fom
+        Stokes equation problem as an |StationaryModel|.
+
+    """
+    from skfem.mesh import MeshTri 
+    from skfem.element import ElementVector, ElementTriP2, ElementTriP1
+    from skfem.assembly import Basis, LinearForm, asm 
+    from skfem.models.poisson import vector_laplace, mass
+    from skfem.models.general import divergence
+    from skfem.utils import condense, bmat
+
+    from pymor.operators.numpy import NumpyMatrixOperator
+    from pymor.operators.constructions import ZeroOperator
+    from pymor.vectorarrays.numpy import NumpyVectorSpace
+    from pymor.operators.constructions import VectorOperator
+    from pymor.operators.block import BlockOperator
+    from pymor.operators.block import BlockColumnOperator
+    from pymor.parameters.functionals import ExpressionParameterFunctional
+    from pymor.operators.constructions import LincombOperator
+    from pymor.models.basic import StationaryModel
+
+    import numpy as np
+
+    mesh = MeshTri.init_circle(4)
+
+    #Taylor-Hood discretization 
+    element = {'u': ElementVector(ElementTriP2()), 'p': ElementTriP1()}
+    basis = {variable: Basis(mesh, e, intorder=3) for variable, e in element.items()}
+
+    def body_force(v, w):
+        return w.x[0] * v[1]
+
+    A = asm(vector_laplace, basis['u'])
+    B = asm(divergence, basis['u'], basis['p'])
+    C = asm(mass, basis['p'])
+
+    K = bmat([[A, -B.T],
+          [-B, 0 * C]], 'csr')
+    
+    f = np.concatenate([asm(LinearForm(body_force), basis['u']), basis['p'].zeros()])
+    
+    #Dirichlet boundary values, fix one pressure node
+    D_u = basis['u'].get_dofs().flatten()
+    D_p = np.array(basis['p'].get_dofs().flatten()[[0]])
+    D_all = np.concatenate([D_u, D_p + A.shape[0]])
+
+    K_c, f_c = condense(K, f, D=D_all, expand=False)
+    
+    free_u = A.shape[0] - len(D_u)
+    free_p = C.shape[0] - len(D_p)
+
+    A_c = K_c[:free_u, :free_u]
+    B_c = K_c[free_u:, :free_u]
+    
+    #Transform everything into pymor language
+    U_free = NumpyVectorSpace(free_u)
+    P_free = NumpyVectorSpace(free_p)
+
+    nu = ExpressionParameterFunctional('nu', {'nu': 1}, name='nu')
+    A_op  = NumpyMatrixOperator(A_c)
+    A_op_nu = LincombOperator(operators=[A_op], coefficients=[nu])
+
+    B_op  = NumpyMatrixOperator(B_c)
+    B_op_T = NumpyMatrixOperator(B_c.T)
+    Z_op  = ZeroOperator(range=P_free, source=P_free)
+
+    K_op = BlockOperator([[A_op_nu,  -B_op_T], [-B_op,   Z_op]])
+    F_op = BlockColumnOperator([VectorOperator(U_free.make_array(f_c[:free_u])), VectorOperator(P_free.make_array(f_c[free_u:]))])
+    
+    fom = StationaryModel(operator=K_op, rhs=F_op, name='Stokes-TH')
+
+    return fom 
+    
