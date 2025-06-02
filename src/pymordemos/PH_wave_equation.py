@@ -17,7 +17,7 @@ from scipy.sparse import diags
 from pymor.reductors.reductor_PH import PHReductor, check_PODReductor
 from pymor.algorithms.PH import POD_PH, check_POD
 
-NEW_METHODS = ['POD_PH'] #+ ['POD_PH_just_Vr']
+NEW_METHODS = ['POD_PH'] + ['POD_PH_just_Vr']
 METHODS = NEW_METHODS + ['POD', 'check_POD']
 
 
@@ -31,14 +31,12 @@ def main(
     F = fom.operator.apply(X)
     rel_fac = np.sqrt(X.norm2().sum())
 
-
     half_rbsize = min(rbsize // 2, len(X) // 2)
     red_dims = np.linspace(0, half_rbsize, 10, dtype=int)
     for i_red_dim, red_dim in enumerate(red_dims):
         if red_dim % 2 != 0:
             red_dims[i_red_dim] -= 1
     red_dims = red_dims * 2
-
 
     results = {}
     for method in METHODS:
@@ -81,6 +79,7 @@ def main(
     fig.suptitle('Linear wave equation, FD discretization, reproduction experiment')
     axs[0].title.set_text('Relative projection error')
     axs[1].title.set_text('Relative reduction error')
+    axs[2].title.set_text('Initial data error')
     axs[0].set_xlabel('red. dim. 2k')
     axs[1].set_xlabel('red. dim. 2k')
     axs[0].set_ylabel('rel. err.')
@@ -106,20 +105,23 @@ def run_mor(fom, X, F, method, red_dims):
     abs_err_rom = np.zeros(len(red_dims))
     abs_err_initial_data = np.zeros(len(red_dims))
     for i_red_dim, red_dim in enumerate(red_dims):
-        # if red_dim > len(max_V_r):
-        #     abs_err_proj[i_red_dim] = np.nan
-        #     abs_err_rom[i_red_dim] = np.nan
-        #     continue
+        print(method)
+        if red_dim > len(max_V_r):
+            abs_err_proj[i_red_dim] = np.nan
+            abs_err_rom[i_red_dim] = np.nan
+            abs_err_initial_data[i_red_dim] = np.nan
+            continue
         V_r = max_V_r[:red_dim]
         if method in NEW_METHODS:
             if method == "POD_PH":
+                print("checking orthogonality of V_r inside", np.linalg.norm(np.identity(len(V_r)) - V_r.gramian(None)))
                 W_r = max_W_r[:red_dim]
                 print("POD_PH", len(V_r))
                 reductor = PHReductor(fom, V_r, W_r)
                 print(X.dim, len(X), W_r.dim, len(W_r))
                 U_proj = W_r.lincomb(V_r.inner(X))
             elif method == 'POD_PH_just_Vr':
-                reductor = InstationaryRBReductor(fom, V_r)
+                reductor = PHReductor(fom, V_r, V_r)
                 U_proj = V_r.lincomb(V_r.inner(X))
         else:
             if method == "POD":
@@ -134,11 +136,11 @@ def run_mor(fom, X, F, method, red_dims):
         rom  = reductor.reduce()
         abs_err_initial_data[i_red_dim] = (fom.initial_data.as_vector() - V_r.lincomb(rom.initial_data.as_vector().to_numpy())).norm()
         u = rom.solve()
-        H = []
-        for vector in u:
-            H.append((.5 * vector.to_numpy().transpose() @ rom.H_op.apply(vector).to_numpy())[0])
-        plt.plot(range(len(u)), H)
-        plt.show()
+        # H = []
+        # for vector in u:
+        #     H.append((.5 * vector.to_numpy().transpose() @ rom.H_op.apply(vector).to_numpy())[0])
+        # plt.plot(range(len(u)), H)
+        # plt.show()
         reconstruction = V_r[:u.dim].lincomb(u.to_numpy())
         abs_err_proj[i_red_dim] = np.sqrt((X - U_proj).norm2().sum())
         abs_err_rom[i_red_dim] = np.sqrt((X - reconstruction).norm2().sum())
