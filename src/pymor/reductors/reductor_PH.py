@@ -89,7 +89,7 @@ class check_PODReductor():
                     'H_op':              H_op_proj,
                     'h':                 project(fom.h, V_r, None),
                     'initial_data':      project(fom.initial_data, V_r, None),
-                    'J':                 J_2
+                    'J':                 J_1
                 }
   
         
@@ -160,12 +160,13 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
             else:
                 n = fom.H_op.source.dim // 2
                 numpy_W_r = self.W_r.to_numpy()
-            # n = projected_H_op.source.dim // 2
+            n = fom.H_op.source.dim // 2
             J_inside = np.block([[np.zeros((n, n)), np.eye(n)], [-np.eye(n), np.zeros((n, n))]])
             print(J_inside.shape)
-            J = NumpyMatrixOperator(
-                (numpy_W_r.transpose() @ J_inside @ numpy_W_r)
-            )
+            # J = NumpyMatrixOperator(
+            #     (numpy_W_r.transpose() @ J_inside @ numpy_W_r)
+            # )
+            J = project(CanonicalSymplecticFormOperator(fom.H_op.source), self.W_r, self.W_r)
 
             projected_operators = {
                 'H_op':              projected_H_op,

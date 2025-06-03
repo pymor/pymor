@@ -17,7 +17,7 @@ from scipy.sparse import diags
 from pymor.reductors.reductor_PH import PHReductor, check_PODReductor, MyQuadraticHamiltonianRBReductor
 from pymor.algorithms.PH import POD_PH, check_POD
 
-NEW_METHODS = ['POD_PH'] #+ ['POD_PH_just_Vr']
+NEW_METHODS = ['POD_PH'] + ['POD_PH_just_Vr']
 METHODS = NEW_METHODS + ['POD', 'check_POD']
 
 
@@ -28,7 +28,8 @@ def main(
     fom, F = discretize_fom(T=final_time)
     # fom = discretize_mass_spring_chain()
     X = fom.solve()
-    F = fom.H_op.apply(X)
+    F = fom.operator.apply(X)
+    # F = fom.H_op.apply(fom.initial_data)
     print("check", np.sqrt((X - F).norm2().sum()))
     # F = fom.H_op.apply(fom.initial_data)
     rel_fac = np.sqrt(X.norm2().sum())
@@ -120,7 +121,7 @@ def run_mor(fom, X, F, method, red_dims):
                 print("checking orthogonality of V_r inside", np.linalg.norm(np.identity(len(V_r)) - V_r.gramian(None)))
                 W_r = max_W_r[:red_dim]
                 print("POD_PH", len(V_r))
-                reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, W_r)
+                reductor = PHReductor(fom, V_r, W_r)
                 print(X.dim, len(X), W_r.dim, len(W_r))
                 U_proj = V_r.lincomb(W_r.inner(X))
             elif method == 'POD_PH_just_Vr':
@@ -134,7 +135,7 @@ def run_mor(fom, X, F, method, red_dims):
             elif method == 'check_POD':
                 print('len of max RB', len(max_V_r), 'red_dim', red_dim)
                 V_r = max_V_r[:red_dim]
-                reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, V_r)
+                reductor = PHReductor(fom, V_r, V_r)
                 U_proj = V_r.lincomb(V_r.inner(X))
         rom  = reductor.reduce()
         abs_err_initial_data[i_red_dim] = (fom.initial_data.as_vector() - V_r.lincomb(rom.initial_data.as_vector().to_numpy())).norm()

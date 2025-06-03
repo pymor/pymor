@@ -47,7 +47,9 @@ def POD_PH(X, F, modes):
     print(V_r1)
     V_r2, W_r2 = gram_schmidt_biorth(Vtilde_r, Wtilde_r)
     # print("checking biorthogonality 1", np.linalg.norm((np.identity(len(V_r1)) - (W_r1.inner(V_r1)))))
-    # print("checking biorthogonality 2", np.linalg.norm((np.identity(len(V_r2)) - (W_r2.inner(V_r2.to_numpy)))))
+    print("checking biorthogonality 2", np.linalg.norm((np.identity(len(V_r2)) - (W_r2.inner(V_r2)))))
+    print("checking difference between V_r and W_r", np.sqrt((W_r2 - Wtilde_r).norm2().sum()))
+    print("checking difference between V_r and W_r", np.sqrt((W_r1 - Wtilde_r).norm2().sum()))
     return V_r2, W_r2
 
 def check_POD(X, modes):
