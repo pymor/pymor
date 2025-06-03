@@ -1,6 +1,6 @@
 ----
 
-The PyMOR repository includes software developed in other projects that
+The pyMOR repository includes software developed in other projects that
 are compatibly licensed.  We list these here.
 
 Name: generic solvers
