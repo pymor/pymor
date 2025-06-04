@@ -13,6 +13,8 @@ from pymor.vectorarrays.interface import VectorSpace
 
 
 class VkogaStateReductor(BasicObject):
+    """Kernel-based state reductor using the VKOGA algorithm."""
+
     def __init__(
         self,
         solution_space,
@@ -21,7 +23,7 @@ class VkogaStateReductor(BasicObject):
         parameter_scaling: Callable[[npt.ArrayLike], npt.ArrayLike]=lambda x: x,
         rom_name='VKOGAStateModel',
         max_iter=None,
-        tol_p=1e-10,
+        tol=1e-10,
         kernel=lambda parameters: Gaussian(ep=1 / np.sqrt(parameters.dim)),
         kernel_par=1,
         greedy_type='p_greedy',
@@ -59,6 +61,7 @@ class VkogaStateReductor(BasicObject):
             'DATA': self._data[0],
         }
 
+        self._estimators = {}
         self._mlms = {}
 
     def extend_training_data(
@@ -90,7 +93,7 @@ class VkogaStateReductor(BasicObject):
                 )
         dim = dims['DATA']
         if dim not in self._mlms:
-            vkoga_mlm = self._build_VKOGA()
+            self._estimators[dim] = self._build_VKOGA()
             if dim > 0:
                 training_inputs = [mu.to_numpy() for mu in self._data[0][:dim]]
                 assert np.all(mu.shape == (self.parameter_space.parameters.dim,) for mu in training_inputs)
@@ -98,16 +101,15 @@ class VkogaStateReductor(BasicObject):
                 training_states = np.stack(
                     [state.ravel() for state in self._data[1][:dim]]
                 )
-                vkoga_mlm = self._build_VKOGA()
                 with self.logger.block(
                     f'Fitting VKOGA model to {"all" if dim == len(self._data[0]) else "first"} {dim} samples ...'
                 ):
-                    vkoga_mlm.fit(
+                    self._estimators[dim].fit(
                         self._input_scaling(training_inputs),
                         training_states,
                         maxIter=self.max_iter or len(training_inputs),
                     )
-            mlm = self._build_rom(vkoga_mlm)
+            mlm = self._build_rom(self._estimators[dim])
             self._mlms[dim] = mlm
         return self._mlms[dim]
 
@@ -120,7 +122,8 @@ class VkogaStateReductor(BasicObject):
 
     def _build_VKOGA(self):
         vkoga_mlm = VKOGA(
-            tol_p=self.tol_p,
+            tol_f=self.tol,
+            tol_p=self.tol,
             kernel_par=self.kernel_par,
             greedy_type=self.greedy_type,
             kernel=self.kernel,
@@ -173,8 +176,8 @@ class VkogaStateReductor(BasicObject):
             new_states = []
             for mu, state in zip(inputs, states):
                 try:
-                    already_colected_mu_index = self._data[0].index(mu)
-                    already_collected_u = self._data[1][already_colected_mu_index]
+                    already_collected_mu_index = self._data[0].index(mu)
+                    already_collected_u = self._data[1][already_collected_mu_index]
                     assert np.linalg.norm(already_collected_u - state, np.inf) < 1e-14
                 except ValueError:
                     # index() raises for unknown mus, so we did not collect data for this one yet
