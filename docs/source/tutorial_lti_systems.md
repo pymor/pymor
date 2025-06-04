@@ -152,7 +152,7 @@ With this done, we can compute the output for some given input and plot it.
 ```{code-cell} ipython3
 Y = fom.output(input='[sin(4 * t[0]), sin(6 * t[0])]')
 fig, ax = plt.subplots()
-for i, y in enumerate(Y.T):
+for i, y in enumerate(Y):
     ax.plot(np.linspace(0, fom.T, fom.time_stepper.nt + 1), y, label=f'$y_{i+1}(t)$')
 _ = ax.set(xlabel='$t$', ylabel='$y(t)$', title='Output')
 _ = ax.legend()
@@ -184,7 +184,7 @@ y_impulse = fom.impulse_resp()
 fig, ax = plt.subplots(fom.dim_output, fom.dim_input, sharex=True, constrained_layout=True)
 for i in range(fom.dim_output):
     for j in range(fom.dim_input):
-        ax[i, j].plot(np.linspace(0, fom.T, y_impulse.shape[0]), y_impulse[:, i, j])
+        ax[i, j].plot(np.linspace(0, fom.T, y_impulse.shape[1]), y_impulse[i, :, j])
 for i in range(fom.dim_output):
     ax[i, 0].set_title(f'Output {i + 1}', loc='left', rotation='vertical', x=-0.2, y=0.2)
 for j in range(fom.dim_input):
@@ -201,7 +201,7 @@ y_step = fom.step_resp()
 fig, ax = plt.subplots(fom.dim_output, fom.dim_input, sharex=True, constrained_layout=True)
 for i in range(fom.dim_output):
     for j in range(fom.dim_input):
-        ax[i, j].plot(np.linspace(0, fom.T, y_step.shape[0]), y_step[:, i, j])
+        ax[i, j].plot(np.linspace(0, fom.T, y_step.shape[0]), y_step[i, :, j])
 for i in range(fom.dim_output):
     ax[i, 0].set_title(f'Output {i + 1}', loc='left', rotation='vertical', x=-0.2, y=0.2)
 for j in range(fom.dim_input):

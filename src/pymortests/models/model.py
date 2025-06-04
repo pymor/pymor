@@ -111,8 +111,8 @@ def test_lti_solve(sampling_time, m, p, T, nt):
         assert len(X) == T + 1
 
     y = lti.output(input=f)
-    assert y.shape[1] == p
-    assert y.shape[0] == len(X)
+    assert y.shape[0] == p
+    assert y.shape[1] == len(X)
 
     y_impulse = lti.impulse_resp()
     assert y_impulse.shape[:2] == y.shape

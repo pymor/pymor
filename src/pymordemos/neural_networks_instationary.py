@@ -103,10 +103,10 @@ def main(
 
         for mu in test_parameters:
             tic = time.perf_counter()
-            outputs.append(fom.compute(output=True, mu=mu)['output'][1:])
+            outputs.append(fom.output(mu=mu)[:, 1:])
             time_fom = time.perf_counter() - tic
             tic = time.perf_counter()
-            outputs_red.append(output_rom.compute(output=True, mu=mu)['output'][1:])
+            outputs_red.append(output_rom.output(mu=mu)[:, 1:])
             time_red = time.perf_counter() - tic
 
             outputs_speedups.append(time_fom / time_red)

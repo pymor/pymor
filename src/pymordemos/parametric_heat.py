@@ -130,8 +130,8 @@ def fom_properties_param(fom, w, mus):
             y_s = fom.step_resp(mu=mu)
             for i in range(fom.dim_output):
                 for j in range(fom.dim_input):
-                    axs_i[i, j].plot(times, y_i[:, i, j], f'{marker}-', fillstyle='none', label=fr'$\mu = {mu}$')
-                    axs_s[i, j].plot(times, y_s[:, i, j], f'{marker}-', fillstyle='none', label=fr'$\mu = {mu}$')
+                    axs_i[i, j].plot(times, y_i[i, :, j], f'{marker}-', fillstyle='none', label=fr'$\mu = {mu}$')
+                    axs_s[i, j].plot(times, y_s[i, :, j], f'{marker}-', fillstyle='none', label=fr'$\mu = {mu}$')
         for j in range(fom.dim_input):
             axs_i[-1, j].set_xlabel('Time (s)')
             axs_s[-1, j].set_xlabel('Time (s)')
@@ -245,8 +245,8 @@ def run_mor_method_param(fom, r, w, mus, reductor_cls, reductor_short_name, **re
             y_s = rom.step_resp()
             for i in range(fom.dim_output):
                 for j in range(fom.dim_input):
-                    axs_i[i, j].plot(times, y_i[:, i, j], f'{marker}-', fillstyle='none', label=fr'$\mu = {mu}$')
-                    axs_s[i, j].plot(times, y_s[:, i, j], f'{marker}-', fillstyle='none', label=fr'$\mu = {mu}$')
+                    axs_i[i, j].plot(times, y_i[i, :, j], f'{marker}-', fillstyle='none', label=fr'$\mu = {mu}$')
+                    axs_s[i, j].plot(times, y_s[i, :, j], f'{marker}-', fillstyle='none', label=fr'$\mu = {mu}$')
         for j in range(fom.dim_input):
             axs_i[-1, j].set_xlabel('Time (s)')
             axs_s[-1, j].set_xlabel('Time (s)')
