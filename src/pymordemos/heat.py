@@ -141,8 +141,8 @@ def fom_properties(fom, w, stable_lti=True):
         times = np.linspace(0, fom.T, fom.time_stepper.nt + 1)
         for i in range(fom.dim_output):
             for j in range(fom.dim_input):
-                axs_i[i, j].plot(times, y_i[:, i, j])
-                axs_s[i, j].plot(times, y_s[:, i, j])
+                axs_i[i, j].plot(times, y_i[i, :, j])
+                axs_s[i, j].plot(times, y_s[i, :, j])
         for j in range(fom.dim_input):
             axs_i[-1, j].set_xlabel('Time (s)')
             axs_s[-1, j].set_xlabel('Time (s)')
@@ -257,10 +257,10 @@ def run_mor_method(fom, w, reductor, reductor_short_name, r, stable=True, **redu
         times = np.linspace(0, fom.T, fom.time_stepper.nt + 1)
         for i in range(fom.dim_output):
             for j in range(fom.dim_input):
-                axs_i[i, j].plot(times, y_i[:, i, j], label='FOM')
-                axs_s[i, j].plot(times, y_s[:, i, j], label='FOM')
-                axs_i[i, j].plot(times, yr_i[:, i, j], '--', label='ROM')
-                axs_s[i, j].plot(times, yr_s[:, i, j], '--', label='ROM')
+                axs_i[i, j].plot(times, y_i[i, :, j], label='FOM')
+                axs_s[i, j].plot(times, y_s[i, :, j], label='FOM')
+                axs_i[i, j].plot(times, yr_i[i, :, j], '--', label='ROM')
+                axs_s[i, j].plot(times, yr_s[i, :, j], '--', label='ROM')
         for j in range(fom.dim_input):
             axs_i[-1, j].set_xlabel('Time (s)')
             axs_s[-1, j].set_xlabel('Time (s)')

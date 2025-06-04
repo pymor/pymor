@@ -839,14 +839,12 @@ class NeuralNetworkInstationaryStatefreeOutputReductor(NeuralNetworkStatefreeOut
 
         This function takes care of including the time instances in the inputs.
         """
-        if output_trajectory:
-            output_size = output_trajectory.shape[0]
-        else:
+        if output_trajectory is None:
             output_trajectory = self.fom.output(mu)
 
-        output_size = output_trajectory.shape[0]
+        output_size = output_trajectory.shape[1]
         samples = [(mu.at_time(t), output.flatten())
-                   for t, output in zip(np.linspace(0, self.T, output_size), output_trajectory)]
+                   for t, output in zip(np.linspace(0, self.T, output_size), output_trajectory.T)]
 
         return samples
 
@@ -896,12 +894,12 @@ class NeuralNetworkLSTMInstationaryStatefreeOutputReductor(NeuralNetworkInstatio
         This function takes care of including the time instances in the inputs.
         """
         output_trajectory = self.fom.output(mu)
-        output_size = output_trajectory.shape[0]
+        output_size = output_trajectory.shape[1]
 
         parameters = torch.DoubleTensor(np.array([mu.at_time(t).to_numpy()
                                                   for t in np.linspace(0., self.fom.T, output_size)]))
 
-        sample = [(parameters, output_trajectory)]
+        sample = [(parameters, output_trajectory.T)]
 
         return sample
 
