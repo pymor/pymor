@@ -14,10 +14,10 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.models.symplectic import QuadraticHamiltonianModel
 from scipy.sparse import diags
 
-from pymor.reductors.reductor_PH import PHReductor, check_PODReductor, MyQuadraticHamiltonianRBReductor
+from pymor.reductors.reductor_PH import PHReductor, MyQuadraticHamiltonianRBReductor
 from pymor.algorithms.PH import POD_PH, check_POD
 
-NEW_METHODS = ['POD_PH'] + ['POD_PH_just_Vr']
+NEW_METHODS = ['POD_PH'] #+ ['POD_PH_just_Vr']
 METHODS = NEW_METHODS + ['POD', 'check_POD']
 
 
@@ -25,13 +25,10 @@ def main(
         final_time: float = 10.,
         rbsize: int = 80,        
 ):
-    fom, F = discretize_fom(T=final_time)
+    fom = discretize_fom(T=final_time)
     # fom = discretize_mass_spring_chain()
     X = fom.solve()
     F = fom.operator.apply(X)
-    # F = fom.H_op.apply(fom.initial_data)
-    print("check", np.sqrt((X - F).norm2().sum()))
-    # F = fom.H_op.apply(fom.initial_data)
     rel_fac = np.sqrt(X.norm2().sum())
 
     half_rbsize = min(rbsize // 2, len(X) // 2)
@@ -107,7 +104,6 @@ def run_mor(fom, X, F, method, red_dims):
     abs_err_proj = np.zeros(len(red_dims))
     abs_err_rom = np.zeros(len(red_dims))
     abs_err_initial_data = np.zeros(len(red_dims))
-    abs_err_proj_W_r = np.zeros(len(red_dims))
     for i_red_dim, red_dim in enumerate(red_dims):
         print(method)
         if red_dim > len(max_V_r):
@@ -118,7 +114,6 @@ def run_mor(fom, X, F, method, red_dims):
         V_r = max_V_r[:red_dim]
         if method in NEW_METHODS:
             if method == "POD_PH":
-                print("checking orthogonality of V_r inside", np.linalg.norm(np.identity(len(V_r)) - V_r.gramian(None)))
                 W_r = max_W_r[:red_dim]
                 print("POD_PH", len(V_r))
                 reductor = PHReductor(fom, V_r, W_r)
@@ -140,13 +135,6 @@ def run_mor(fom, X, F, method, red_dims):
         rom  = reductor.reduce()
         abs_err_initial_data[i_red_dim] = (fom.initial_data.as_vector() - V_r.lincomb(rom.initial_data.as_vector().to_numpy())).norm()
         u = rom.solve()
-        # if method == 'POD_PH':
-        #     abs_err_proj_W_r[i_red_dim] = np.sqrt((F - u.operator.apply()))
-        # H = []
-        # for vector in u:
-        #     H.append((.5 * vector.to_numpy().transpose() @ rom.H_op.apply(vector).to_numpy())[0])
-        # plt.plot(range(len(u)), H)
-        # plt.show()
         reconstruction = V_r[:u.dim].lincomb(u.to_numpy())
         abs_err_proj[i_red_dim] = np.sqrt((X - U_proj).norm2().sum())
         abs_err_rom[i_red_dim] = np.sqrt((X - reconstruction).norm2().sum())
@@ -184,12 +172,10 @@ def discretize_fom(T=50):
         space.make_array(bump(np.linspace(0, l, n_x))),
         space.make_array(np.zeros(n_x)),
     ])
-
-    F = H_op.apply(initial_data)
-
+    
     fom = QuadraticHamiltonianModel(T, initial_data, H_op, nt=nt, name='hamiltonian_wave_equation')
     # TODO: fom.operator = fom.operator.with_(solver_options={'type': 'to_matrix'})
-    return fom, F
+    return fom
 
 
 
