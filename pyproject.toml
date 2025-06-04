@@ -66,6 +66,9 @@ tests = [
   "pytest-datadir",
   "pytest>=7.2.1", # 7.2.0 causes format_source tests to fail do to wrong paths in co_filename
 ]
+ci-conda = [
+  "pyopengl!=3.1.7,!=3.1.9",
+]
 # additional dependencies for pyMOR development
 dev = [
   "ruff==0.8.6", # our linter of choice

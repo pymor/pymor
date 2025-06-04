@@ -93,7 +93,7 @@ ci_fenics_requirements:
 
 CONDA_EXTRAS = \
 	--extras tests \
-	--extras ci \
+	--extras ci-conda \
 	--extras slycot \
 	--extras ipyparallel \
 	--extras gui \
