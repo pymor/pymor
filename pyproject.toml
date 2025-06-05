@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
@@ -7,7 +7,8 @@ name = "pymor"
 dynamic = ["version"]
 description = "Library for building model order reduction applications with Python"
 readme = "README.md"
-license = {file = "LICENSE.txt"}
+license = "BSD-2-Clause"
+license-files = ["LICENSE.txt"]
 requires-python = ">=3.9"
 authors = [
   {name = "pyMOR developers", email = "main.developers@pymor.org"},
@@ -17,7 +18,6 @@ maintainers = [
 ]
 classifiers = [
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: BSD License",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -33,7 +33,7 @@ dependencies = [
   "pillow",
   "pygments",
   "qtpy>=2.3.1",
-  "scipy>=1.8",
+  "scipy>=1.8,!=1.15.0,!=1.15.1,!=1.15.2",
   "threadpoolctl",
   "typer",
 ]
@@ -65,6 +65,9 @@ tests = [
   "pytest-cov",
   "pytest-datadir",
   "pytest>=7.2.1", # 7.2.0 causes format_source tests to fail do to wrong paths in co_filename
+]
+ci-conda = [
+  "pyopengl!=3.1.7,!=3.1.9",
 ]
 # additional dependencies for pyMOR development
 dev = [
