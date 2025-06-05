@@ -231,14 +231,12 @@ class NeuralNetworkReductor(BasicObject):
                 # shuffle the blocks
                 get_rng().shuffle(blocks)
                 # concatenate the shuffled blocks into a single list
-                self.training_data[:] = [timesteps for parameter in blocks for timesteps in parameter]
+                self.training_data = [timesteps for parameter in blocks for timesteps in parameter]
                 # split training snapshots into validation and training snapshots
                 self.validation_data = self.training_data[0:number_validation_snapshots]
                 self.validation_parameters = [data[0] for data in self.validation_data[::blocksize]]
                 self.training_data = self.training_data[number_validation_snapshots:]
-
-        # compute validation snapshots if not given as input
-        if self.validation_data is None:
+        elif self.validation_data is None:  # compute validation snapshots if not given as input
             if self.fom is None:
                 assert self.validation_snapshots is not None
             else:
@@ -247,6 +245,7 @@ class NeuralNetworkReductor(BasicObject):
 
             # compute validation data
             self.compute_validation_data()
+
         assert self.validation_data is not None
         assert len(self.validation_data) == len(self.validation_parameters) * self.nt
 
@@ -340,14 +339,15 @@ class NeuralNetworkReductor(BasicObject):
                 self.validation_snapshots.append(u)
 
     def compute_validation_data(self):
-            assert self.validation_parameters is not None
-            with self.logger.block('Computing validation samples ...'):
-                validation_data_iterable = zip(self.validation_parameters, self.validation_snapshots)
+        """Compute validation data for the neural network using the reduced basis."""
+        assert self.validation_parameters is not None
+        with self.logger.block('Computing validation samples ...'):
+            validation_data_iterable = zip(self.validation_parameters, self.validation_snapshots)
 
-                self.validation_data = []
-                for i, (mu, u) in enumerate(validation_data_iterable):
-                    samples = self._compute_sample(mu, u.base[i * self.nt:(i + 1) * self.nt])
-                    self.validation_data.extend(samples)
+            self.validation_data = []
+            for i, (mu, u) in enumerate(validation_data_iterable):
+                samples = self._compute_sample(mu, u.base[i*self.nt:(i+1)*self.nt])
+                self.validation_data.extend(samples)
 
     def _update_scaling_parameters(self, sample):
         """Update the quantities for scaling of inputs and outputs."""
@@ -511,7 +511,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     training_outputs
         Set of outputs corresponding to a set of |Parameter values| used
         for training of the neural network. These are the outputs to the
-        parameters of the`training_parameters` and can be `None` when `fom` is
+        parameters of the `training_parameters` and can be `None` when `fom` is
         not `None`.
     validation_parameters
         List of |Parameter values| to use for validation in the training
@@ -519,7 +519,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     validation_outputs
         Set of outputs corresponding to a set of |Parameter values| used
         for validation of the neural network. These are the outputs to the
-        parameters of the`validation_parameters` and can be `None` when `fom` is
+        parameters of the `validation_parameters` and can be `None` when `fom` is
         not `None`.
     validation_ratio
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
