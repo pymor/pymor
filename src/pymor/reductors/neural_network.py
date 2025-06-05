@@ -423,7 +423,6 @@ class NeuralNetworkReductor(BasicObject):
         The input dimension is increased by one to account for the time in
         case of instationary data.
         """
-
         # determine the numbers of neurons in the hidden layers
         if isinstance(hidden_layers, str):
             hidden_layers = eval(hidden_layers, {'N': len(self.reduced_basis), 'P': self.parameters_dim})
@@ -650,7 +649,6 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         return rom
 
 class NeuralNetworkLSTMReductor(NeuralNetworkReductor):
-
     """Reduced Basis reductor for instationary problems relying on LSTM neural networks.
 
     This is a reductor that constructs a reduced basis using proper
@@ -735,7 +733,6 @@ class NeuralNetworkLSTMReductor(NeuralNetworkReductor):
 
 class NeuralNetworkLSTMStatefreeOutputReductor(NeuralNetworkStatefreeOutputReductor,
                                                NeuralNetworkLSTMReductor):
-
     """Output reductor relying on LSTM neural networks.
 
     This is a reductor that trains an LSTM neural network that approximates
