@@ -51,11 +51,11 @@ class PHReductor():
         n = H_op_proj.source.dim // 2
         J = regular_J(n)
 
-        projected_initial_data = project_initial_data(V_r, W_r, fom.initial_data)        
+        projected_initial_data = project_initial_data_with_op(V_r, W_r, fom.initial_data)        
 
         projected_operators = {
-            'mass':              None,
-            'operator':          project(fom.operator, W_r, V_r),
+            'mass':              project(fom.mass, V_r, V_r),
+            'operator':          project(fom.operator, V_r, V_r),
             'rhs':               None,
             'initial_data':      projected_initial_data,
             'products':          None,
@@ -90,19 +90,17 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
             V_r = self.V_r
             W_r = self.W_r
 
-            projected_initial_data = project_initial_data(V_r, W_r, fom.initial_data)
+            projected_initial_data = project_initial_data_with_op(V_r, W_r, fom.initial_data)
             projected_H_op = project(fom.H_op, V_r, V_r)
 
             projected_J = project(CanonicalSymplecticFormOperator(fom.H_op.source), W_r, W_r)
 
-            h = project(fom.h, V_r, None)
-
             projected_operator = ConcatenationOperator([projected_J.H, projected_H_op])
 
             projected_operators = {
-            'mass':              None,
+            'mass':              project(fom.mass, W_r, V_r),
             'operator':          projected_operator,
-            'rhs':               None,
+            'rhs':               project(fom.rhs, V_r, None),
             'initial_data':      projected_initial_data,
             'products':          None,
             'output_functional': None
