@@ -10,14 +10,13 @@ from pymor.parameters.base import Mu, Parameters
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 
 
-class BlackBoxModel(Model):
+class ComputeModel(Model):
 
     def __init__(
         self,
         *,
         parameters: Parameters,
         computers: dict[str, tuple[VectorSpace | Number, Callable[[Mu], VectorArray | npt.ArrayLike]]],
-        # compute_lambdas: dict[str, Callable[[Mu], VectorArray | npt.ArrayLike]],
         output_functional=None,
         visualizer=None,
         name: Optional[str] = None,
@@ -59,10 +58,10 @@ class BlackBoxModel(Model):
                         data[quantity] = computed_data
                 else:  # this needs to be the numpy case
                     if target_shape == 0:
-                        data[quantity] = np.zeros((target_shape, 1))
+                        data[quantity] = np.zeros((1, target_shape))
                     else:
                         computed_data = computer(mu)
-                        computed_data = computed_data.reshape(target_shape, -1)
+                        computed_data = computed_data.reshape(-1, target_shape)
                         data[quantity] = computed_data
                 quantities.remove(quantity)
         # ... and delegate the rest to the parent class
