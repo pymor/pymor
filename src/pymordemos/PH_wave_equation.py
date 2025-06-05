@@ -116,26 +116,29 @@ def run_mor(fom, X, F, method, red_dims):
             if method == "POD_PH":
                 W_r = max_W_r[:red_dim]
                 print("POD_PH", len(V_r))
-                reductor = PHReductor(fom, V_r, W_r)
+                reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, W_r)
                 print(X.dim, len(X), W_r.dim, len(W_r))
                 U_proj = V_r.lincomb(W_r.inner(X))
             elif method == 'POD_PH_just_Vr':
+                W_r = V_r
                 reductor = PHReductor(fom, V_r, V_r)
                 U_proj = V_r.lincomb(V_r.inner(X))
         else:
             if method == "POD":
                 V_r = max_V_r[:red_dim]
+                W_r = V_r
                 reductor = InstationaryRBReductor(fom, V_r)
                 U_proj = V_r.lincomb(V_r.inner(X))
             elif method == 'check_POD':
                 print('len of max RB', len(max_V_r), 'red_dim', red_dim)
                 V_r = max_V_r[:red_dim]
+                W_r = V_r
                 reductor = PHReductor(fom, V_r, V_r)
                 U_proj = V_r.lincomb(V_r.inner(X))
         rom  = reductor.reduce()
         abs_err_initial_data[i_red_dim] = (fom.initial_data.as_vector() - V_r.lincomb(rom.initial_data.as_vector().to_numpy())).norm()
         u = rom.solve()
-        reconstruction = V_r[:u.dim].lincomb(u.to_numpy())
+        reconstruction = V_r.lincomb(u.to_numpy())
         abs_err_proj[i_red_dim] = np.sqrt((X - U_proj).norm2().sum())
         abs_err_rom[i_red_dim] = np.sqrt((X - reconstruction).norm2().sum())
 

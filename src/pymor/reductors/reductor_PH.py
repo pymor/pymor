@@ -2,7 +2,7 @@ import numpy as np
 
 from pymor.algorithms.projection import project, ProjectRules
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator
-from pymor.models.symplectic import BaseQuadraticHamiltonianModel
+from pymor.models.symplectic import BaseQuadraticHamiltonianModel, QuadraticHamiltonianModel
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
 from pymor.vectorarrays.block import BlockVectorSpace
@@ -32,6 +32,8 @@ def project_initial_data_with_op(V_r, W_r, initial_data):
     projected_initial_data = ConcatenationOperator([inverse_projection_op, pid])
     return projected_initial_data
 
+def project_initial_data(V_r, W_r, initial_data):
+    return project(initial_data, W_r, None)
 
 
 class PHReductor():
@@ -49,11 +51,12 @@ class PHReductor():
         n = H_op_proj.source.dim // 2
         J = regular_J(n)
 
-        projected_initial_data = project_initial_data_with_op(V_r, W_r, fom.initial_data)        
+        projected_initial_data = project_initial_data(V_r, W_r, fom.initial_data)        
 
         projected_operators = {
-            'operator':          project(fom.operator, V_r, V_r),
-            'rhs':               project(fom.rhs, V_r, None),
+            'mass':              None,
+            'operator':          project(fom.operator, W_r, V_r),
+            'rhs':               None,
             'initial_data':      projected_initial_data,
             'products':          None,
             'output_functional': None
@@ -87,27 +90,34 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
             V_r = self.V_r
             W_r = self.W_r
 
-            projected_initial_data = project_initial_data_with_op(V_r, W_r, fom.initial_data)
-            projected_H_op = project(fom.H_op, self.V_r, self.V_r)
+            projected_initial_data = project_initial_data(V_r, W_r, fom.initial_data)
+            projected_H_op = project(fom.H_op, V_r, V_r)
 
-            J = project(CanonicalSymplecticFormOperator(fom.H_op.source), self.W_r, self.W_r)
+            projected_J = project(CanonicalSymplecticFormOperator(fom.H_op.source), W_r, W_r)
+
+            h = project(fom.h, V_r, None)
+
+            projected_operator = ConcatenationOperator([projected_J.H, projected_H_op])
 
             projected_operators = {
-                'H_op':              projected_H_op,
-                'h':                 project(fom.h, self.V_r, None),
-                'initial_data':      projected_initial_data,
-                'output_functional': project(fom.output_functional, None, self.V_r) if fom.output_functional else None,
-                'J':                 J
-            }
+            'mass':              None,
+            'operator':          projected_operator,
+            'rhs':               None,
+            'initial_data':      projected_initial_data,
+            'products':          None,
+            'output_functional': None
+        }
+
+            print("check symmetric", np.linalg.norm(projected_H_op.as_range_array().to_numpy() - projected_H_op.as_range_array().to_numpy().transpose()))
 
         with self.logger.block('Building ROM ...'):
-            rom = BaseQuadraticHamiltonianModel(
-                fom.T,
+            rom = InstationaryModel(
+                fom.T, 
                 time_stepper=fom.time_stepper,
                 num_values=fom.num_values,
-                name=None if fom.name is None else 'reduced_' + fom.name,
+                name = 'reduced_' + fom.name,
                 **projected_operators
-            )
+                )
         return rom
 
     def reconstruct(self, u):

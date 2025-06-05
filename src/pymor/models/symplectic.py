@@ -141,7 +141,7 @@ class QuadraticHamiltonianModel(BaseQuadraticHamiltonianModel):
         Name of the model.
     """
 
-    def __init__(self, T, initial_data, H_op, h=None, time_stepper=None, nt=None, num_values=None,
+    def __init__(self, T, initial_data, H_op, J=None, h=None, time_stepper=None, nt=None, num_values=None,
                  output_functional=None, visualizer=None, name=None):
         assert isinstance(H_op, Operator)
         assert H_op.linear
@@ -185,8 +185,9 @@ class QuadraticHamiltonianModel(BaseQuadraticHamiltonianModel):
 
             initial_data = VectorOperator(H_op.source.from_numpy(initial_data.as_range_array().to_numpy()))
 
-        # J based on blocked phase_space
-        J = CanonicalSymplecticFormOperator(H_op.source)
+        if J == None:
+            # J based on blocked phase_space
+            J = CanonicalSymplecticFormOperator(H_op.source)
 
         super().__init__(T, initial_data, J, H_op, h, time_stepper, nt, num_values,
                          output_functional, visualizer, name)
