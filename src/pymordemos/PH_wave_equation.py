@@ -17,7 +17,7 @@ from scipy.sparse import diags
 from pymor.reductors.reductor_PH import PHReductor, MyQuadraticHamiltonianRBReductor
 from pymor.algorithms.PH import POD_PH, check_POD, POD_new
 
-NEW_METHODS = ['POD_PH'] + ['POD_new'] +  ['POD_PH_just_Vr']
+NEW_METHODS = ['POD_PH']  +  ['POD_PH_just_Vr'] #+ ['POD_new']
 METHODS = NEW_METHODS + ['POD', 'check_POD']
 
 
@@ -78,7 +78,7 @@ def main(
             label=method
         )
 
-    fig.suptitle('Linear wave equation, FD discretization, reproduction experiment')
+    fig.suptitle('All reduction techniques set to PHReductor')
     axs[0].title.set_text('Relative projection error')
     axs[1].title.set_text('Relative reduction error')
     axs[2].title.set_text('Initial data error')
@@ -129,8 +129,8 @@ def run_mor(fom, X, F, method, red_dims):
                 U_proj = V_r.lincomb(V_r.inner(X))
             elif method == 'POD_new':
                 W_r = max_W_r[:red_dim]
-                reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, W_r)
-                U_proj = V_r.lincomb(V_r.inner(X))
+                reductor = PHReductor(fom, V_r, W_r)
+                U_proj = V_r.lincomb(W_r.inner(X))
         else:
             if method == "POD":
                 V_r = max_V_r[:red_dim]
@@ -140,10 +140,11 @@ def run_mor(fom, X, F, method, red_dims):
             elif method == 'check_POD':
                 V_r = max_V_r[:red_dim]
                 W_r = V_r
-                reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, V_r)
+                reductor = PHReductor(fom, V_r, V_r)
                 U_proj = V_r.lincomb(V_r.inner(X))
         rom  = reductor.reduce()
-        abs_err_initial_data[i_red_dim] = (fom.initial_data.as_vector() - V_r.lincomb(rom.initial_data.as_vector().to_numpy())).norm()
+        print(len(fom.initial_data.as_vector()), fom.initial_data.as_vector().dim)
+        abs_err_initial_data[i_red_dim] = np.sqrt((fom.initial_data.as_vector() - V_r.lincomb(rom.initial_data.as_vector().to_numpy())).norm2())
         u = rom.solve()
         reconstruction = V_r.lincomb(u.to_numpy())
         abs_err_proj[i_red_dim] = np.sqrt((X - U_proj).norm2().sum())

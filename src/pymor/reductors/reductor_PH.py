@@ -46,10 +46,6 @@ class PHReductor():
         fom = self.fom
         V_r = self.V_r
         W_r = self.W_r
-        
-        H_op_proj = project(fom.H_op, V_r, V_r)
-        n = H_op_proj.source.dim // 2
-        J = regular_J(n)
 
         projected_initial_data = project_initial_data_with_op(V_r, W_r, fom.initial_data)        
 
@@ -90,7 +86,7 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
             V_r = self.V_r
             W_r = self.W_r
 
-            projected_initial_data = project_initial_data_with_op(V_r, W_r, fom.initial_data)
+            projected_initial_data = project_initial_data(V_r, W_r, fom.initial_data)
             projected_H_op = project(fom.H_op, V_r, V_r)
 
             projected_J = project(CanonicalSymplecticFormOperator(fom.H_op.source), W_r, W_r)
