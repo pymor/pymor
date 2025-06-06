@@ -17,7 +17,7 @@ from scipy.sparse import diags
 from pymor.reductors.reductor_PH import PHReductor, MyQuadraticHamiltonianRBReductor
 from pymor.algorithms.PH import POD_PH, check_POD, POD_new
 
-NEW_METHODS = ['POD_PH']  +  ['POD_PH_just_Vr'] #+ ['POD_new']
+NEW_METHODS = ['POD_PH'] + ['POD_PH_just_Vr'] #+ ['POD_new']
 METHODS = NEW_METHODS + ['POD', 'check_POD']
 
 
