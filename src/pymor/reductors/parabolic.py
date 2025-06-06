@@ -136,7 +136,7 @@ class ParabolicRBEstimator(ImmutableObject):
         estimate = self.estimate_error(U, mu, m)
         # scale with dual norm of the output functional
         output_functional_norms = self.projected_output_adjoint.as_range_array(mu).norm()
-        errs = estimate[:, np.newaxis] * output_functional_norms[np.newaxis, :]
+        errs = estimate[np.newaxis, :] * output_functional_norms[:, np.newaxis]
         return errs
 
     def restricted_to_subbasis(self, dim, m):
