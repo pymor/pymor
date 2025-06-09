@@ -93,7 +93,7 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
 
             projected_operator = ConcatenationOperator([projected_J.H, projected_H_op])
 
-            projected_operators = {
+            projected_operators_instationary = {
             'mass':              project(fom.mass, W_r, V_r),
             'operator':          projected_operator,
             'rhs':               project(fom.rhs, V_r, None),
@@ -101,18 +101,32 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
             'products':          None,
             'output_functional': None
         }
+            projected_operators_quadratic = {
+                'H_op':              projected_H_op,
+                'h':                 project(fom.h, V_r, None),
+                'initial_data':      projected_initial_data,
+                'output_functional': None,
+                'J':                 projected_J
+            }
 
             print("check symmetric", np.linalg.norm(projected_H_op.as_range_array().to_numpy() - projected_H_op.as_range_array().to_numpy().transpose()))
 
         with self.logger.block('Building ROM ...'):
-            rom = InstationaryModel(
+            rom1 = InstationaryModel(
                 fom.T, 
                 time_stepper=fom.time_stepper,
                 num_values=fom.num_values,
                 name = 'reduced_' + fom.name,
-                **projected_operators
+                **projected_operators_instationary
                 )
-        return rom
+            rom2 = BaseQuadraticHamiltonianModel(
+                fom.T,
+                time_stepper=fom.time_stepper,
+                num_values=fom.num_values,
+                name='reduced_' + fom.name,
+                **projected_operators_quadratic
+            )
+        return rom2
 
     def reconstruct(self, u):
         return self.RB[:u.dim//2].lincomb(u.to_numpy())

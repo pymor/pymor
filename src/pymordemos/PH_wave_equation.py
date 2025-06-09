@@ -41,6 +41,7 @@ def main(
     results = {}
     for method in METHODS:
         results[method] = run_mor(fom, X, F, method, red_dims)
+        
 
     fig, axs = plt.subplots(1, 3, sharey=True, sharex=True)
     markers = {
@@ -90,11 +91,14 @@ def main(
     plt.show()
 
 
+
+
 def run_mor(fom, X, F, method, red_dims):
     max_red_dim = red_dims.max()
     if method in NEW_METHODS:
         if method == 'POD_PH':
             max_V_r, max_W_r = POD_PH(X, F, max_red_dim, 2)
+            fig1, ax1 = plt.subplots()
         elif method == 'POD_PH_just_Vr':
             max_V_r, max_W_r = POD_PH(X, F, max_red_dim, 2)
         elif method == 'POD_new':
@@ -120,7 +124,7 @@ def run_mor(fom, X, F, method, red_dims):
             if method == "POD_PH":
                 W_r = max_W_r[:red_dim]
                 print("POD_PH", len(V_r))
-                reductor = PHReductor(fom, V_r, W_r)
+                reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, W_r)
                 print(X.dim, len(X), W_r.dim, len(W_r))
                 U_proj = V_r.lincomb(W_r.inner(X))
             elif method == 'POD_PH_just_Vr':
@@ -146,7 +150,37 @@ def run_mor(fom, X, F, method, red_dims):
         print(len(fom.initial_data.as_vector()), fom.initial_data.as_vector().dim)
         abs_err_initial_data[i_red_dim] = np.sqrt((fom.initial_data.as_vector() - V_r.lincomb(rom.initial_data.as_vector().to_numpy())).norm2())
         u = rom.solve()
+        n_x = 500
+        wave_speed = 0.1
+        l = 1.
+        dx = l / (n_x-1)
+        if method == 'POD_PH' and red_dim != 0:
+            reduced_Hamiltonian = rom.eval_hamiltonian(u)
+            ax1.semilogy(reduced_Hamiltonian, label = str(red_dim))
+            ax1.semilogy(fom.eval_hamiltonian(X), color = "blue")
+            plt.legend()
+            plt.title(f"method: {method}, modes: {red_dim}")
+            energy = []
+            # numpy_u = u.to_numpy()
+            # print(np.shape(numpy_u)[0])
+            # for i in range(np.shape(numpy_u)[1]):
+            #     energy[i] = compute_discretized_Hamiltonian(dx=dx, p=u[], q=u.blocks[1][500:], c=wave_speed)
+            #     print(reduced_Hamiltonian - energy)
+
+
+
+        
+        x_axis = np.arange(0, 1, 0.001)
+        numpy_X = (X.blocks[0])[:1000].to_numpy()
         reconstruction = V_r.lincomb(u.to_numpy())
+        if red_dim == 60 and method == 'POD_PH':
+            fig2, ax2 = plt.subplots()
+            numpy_reconstruction = (reconstruction.blocks[0])[:1000].to_numpy()
+            for i in range(0, 1002, 150):
+                ax2.plot(x_axis, numpy_X[i], color = "red")
+                ax2.plot(x_axis, numpy_reconstruction[i], color = "blue")
+            plt.ylim(0, 1)
+            plt.title(f"method: {method}, number of modes: {red_dim}")
         abs_err_proj[i_red_dim] = np.sqrt((X - U_proj).norm2().sum())
         abs_err_rom[i_red_dim] = np.sqrt((X - reconstruction).norm2().sum())
 
@@ -155,6 +189,20 @@ def run_mor(fom, X, F, method, red_dims):
         'abs_err_rom': abs_err_rom,
         'abs_err_initial_data': abs_err_initial_data
     }
+
+
+def compute_discretized_Hamiltonian(dx, p, q, c):
+    n = len(p)
+    sum_p = 0
+    q_0 = q[n-1]
+    sum_q = (q[0] - q_0)**2
+    for i in range(n):
+        sum_p += p[i]**2
+    for i in range(1, n):
+        sum_q += (q[i] - q[i-1]) ** 2
+    energy = (dx / 2) * sum_p + ((c ** 2) / (2 * dx))
+    return energy
+
 
 
 def discretize_fom(T=50):
