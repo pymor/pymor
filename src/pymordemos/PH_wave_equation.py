@@ -159,7 +159,7 @@ def run_mor(fom, X, F, method, red_dims):
             ax1.plot(reduced_Hamiltonian, label = str(red_dim))
             ax1.plot(fom.eval_hamiltonian(X), color = "blue")
             plt.legend()
-            plt.title(f"method: {method}, modes: {red_dim}")
+            plt.title(f"method: {method}")
             numpy_u = u.to_numpy()
             n = np.shape(numpy_u)[1]
             energy = np.zeros(n)
