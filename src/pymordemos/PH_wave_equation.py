@@ -154,31 +154,29 @@ def run_mor(fom, X, F, method, red_dims):
         wave_speed = 0.1
         l = 1.
         dx = l / (n_x-1)
-        if method == 'POD_PH' and red_dim != 0:
+        if method == 'POD_PH' and red_dim != 0 and red_dim != 8:
             reduced_Hamiltonian = rom.eval_hamiltonian(u)
-            ax1.semilogy(reduced_Hamiltonian, label = str(red_dim))
-            ax1.semilogy(fom.eval_hamiltonian(X), color = "blue")
+            ax1.plot(reduced_Hamiltonian, label = str(red_dim))
+            ax1.plot(fom.eval_hamiltonian(X), color = "blue")
             plt.legend()
             plt.title(f"method: {method}, modes: {red_dim}")
-            energy = []
-            # numpy_u = u.to_numpy()
-            # print(np.shape(numpy_u)[0])
-            # for i in range(np.shape(numpy_u)[1]):
-            #     energy[i] = compute_discretized_Hamiltonian(dx=dx, p=u[], q=u.blocks[1][500:], c=wave_speed)
-            #     print(reduced_Hamiltonian - energy)
+            numpy_u = u.to_numpy()
+            n = np.shape(numpy_u)[1]
+            energy = np.zeros(n)
+            for i in range(n):
+                energy[i] = compute_discretized_Hamiltonian(dx=dx, p=numpy_u[:4, i], q=numpy_u[4:, i], c=wave_speed)
+            print("check energy computation", np.linalg.norm(reduced_Hamiltonian - energy))
 
 
-
-        
         x_axis = np.arange(0, 1, 0.001)
-        numpy_X = (X.blocks[0])[:1000].to_numpy()
+        numpy_X = (X.blocks[0]).to_numpy()
         reconstruction = V_r.lincomb(u.to_numpy())
         if red_dim == 60 and method == 'POD_PH':
             fig2, ax2 = plt.subplots()
-            numpy_reconstruction = (reconstruction.blocks[0])[:1000].to_numpy()
-            for i in range(0, 1002, 150):
-                ax2.plot(x_axis, numpy_X[i], color = "red")
-                ax2.plot(x_axis, numpy_reconstruction[i], color = "blue")
+            numpy_reconstruction = (reconstruction.blocks[0]).to_numpy()
+            for i in range(0, 1002, 50):
+                ax2.plot(numpy_X[:, i], color = "red")
+                ax2.plot(numpy_reconstruction[:, i], color = "blue")
             plt.ylim(0, 1)
             plt.title(f"method: {method}, number of modes: {red_dim}")
         abs_err_proj[i_red_dim] = np.sqrt((X - U_proj).norm2().sum())
