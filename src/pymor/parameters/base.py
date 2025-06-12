@@ -402,6 +402,7 @@ class Mu(ImmutableObject):
         assert 't' not in values or not time_dependent_values, 'cannot specify "t" and have time-dependent values'
 
         self._values = values
+        self._hash = None
         self.time_dependent_values = FrozenDict(time_dependent_values)
 
     def __getitem__(self, key):
@@ -486,6 +487,11 @@ class Mu(ImmutableObject):
         return self.keys() == other.keys() \
             and all(np.array_equal(v, other[k]) for k, v in self.items()) \
             and self.time_dependent_values == other.time_dependent_values
+
+    def __hash__(self):
+        if self._hash is None:
+            self._hash = sum(hash(v.tobytes()) for v in self.values())
+        return self._hash
 
     def __str__(self):
         def format_value(k, v):
