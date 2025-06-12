@@ -44,9 +44,9 @@ class NeuralNetworkReductor(BasicObject):
     Parameters
     ----------
     fom
-        The full-order |Model| to reduce. If `None`, the `training_parameters` has
-        to consist of pairs of |parameter values| and corresponding solution
-        |VectorArrays|.
+        The full-order |Model| to reduce. If `None`, the `training_parameters` with
+        |parameter values| and the `training_snapshots` with corresponding solution
+        |VectorArrays| have to be set.
     reduced_basis
         |VectorArray| of basis vectors of the reduced space onto which to project. If `None`, the
         reduced basis is computed using the :meth:`~pymor.algorithms.pod.pod` method.
@@ -503,8 +503,9 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     Parameters
     ----------
     fom
-        The full-order |Model| to reduce. If `None`, the `training_parameters` has
-        to consist of pairs of |parameter values| and corresponding outputs.
+        The full-order |Model| to reduce. If `None`, both the `training_parameters`
+        with |parameter values| and the `training_outputs` with corresponding outputs
+        have to be set.
     training_parameters
         List of |Parameter values| to use for training of the
         neural network.
