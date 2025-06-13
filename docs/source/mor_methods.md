@@ -90,7 +90,7 @@ reductor = CoerciveRBReductor(
 # use weak greedy algorithm to train the model
 from pymor.algorithms.greedy import rb_greedy
 greedy_data = rb_greedy(fom, reductor,
-                        fom.parameters.space(0.1, 1).sample_randomly(1000),  # training set
+                        fom.parameters.space(0.1, 1).sample_randomly(1000),  # training parameters
                         rtol=1e-2)
 rom = greedy_data['rom']
 
@@ -116,8 +116,8 @@ from pymor.reductors.parabolic import ParabolicRBReductor
 reductor = ParabolicRBReductor(fom, product=fom.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
 
 from pymor.algorithms.greedy import rb_greedy
-training_set = parameter_space.sample_uniformly(20)
-greedy_data = rb_greedy(fom, reductor, training_set=parameter_space.sample_uniformly(20), max_extensions=10)
+training_parameters = parameter_space.sample_uniformly(20)
+greedy_data = rb_greedy(fom, reductor, training_parameters, max_extensions=10)
 rom = greedy_data['rom']
 ```
 
@@ -154,9 +154,9 @@ parameter_space = fom.parameters.space(0.1, 1.)
 
 from pymor.algorithms.scm import construct_scm_functionals
 initial_parameter = parameter_space.sample_randomly(1)[0]
-training_set = parameter_space.sample_randomly(50)
+training_parameters = parameter_space.sample_randomly(50)
 coercivity_estimator, _, _ = construct_scm_functionals(
-    fom.operator, training_set, initial_parameter, product=fom.h1_0_semi_product, max_extensions=10, M=5)
+    fom.operator, training_parameters, initial_parameter, product=fom.h1_0_semi_product, max_extensions=10, M=5)
 ```
 
 ### POD/neural network approximation
@@ -170,8 +170,8 @@ fom = thermal_block_example(diameter=1/10)
 # instantiate reductor with training and validation parameters and desired errors
 from pymor.reductors.neural_network import NeuralNetworkReductor
 reductor = NeuralNetworkReductor(fom,
-                                 training_set=fom.parameters.space(0.1, 1).sample_uniformly(2),
-                                 validation_set=fom.parameters.space(0.1, 1).sample_randomly(5),
+                                 training_parameters=fom.parameters.space(0.1, 1).sample_uniformly(2),
+                                 validation_parameters=fom.parameters.space(0.1, 1).sample_randomly(5),
                                  ann_mse=None, scale_outputs=True)
 rom = reductor.reduce(restarts=5)
 ```
@@ -210,12 +210,12 @@ problem = burgers_problem_2d()
 fom, _ = discretize_instationary_fv(problem, diameter=1./20, num_flux='engquist_osher', nt=100)
 fom.enable_caching('disk')  # cache solution snapshots on disk
 
-training_set = problem.parameter_space.sample_uniformly(10)
+training_parameters = problem.parameter_space.sample_uniformly(10)
 fom_ei, _ = interpolate_operators(
-    fom, ['operator'], training_set, error_norm=fom.l2_norm, max_interpolation_dofs=30)
+    fom, ['operator'], training_parameters, error_norm=fom.l2_norm, max_interpolation_dofs=30)
 reductor = InstationaryRBReductor(fom_ei)
 greedy_data = rb_greedy(
-    fom, reductor, training_set, use_error_estimator=False, max_extensions=10)
+    fom, reductor, training_parameters, use_error_estimator=False, max_extensions=10)
 rom = greedy_data['rom']
 ```
 

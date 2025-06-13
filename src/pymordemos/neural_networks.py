@@ -31,39 +31,49 @@ def main(
 
     parameter_space = fom.parameters.space((0.1, 1))
 
-    training_set = parameter_space.sample_uniformly(training_samples)
-    validation_set = parameter_space.sample_randomly(validation_samples)
-    test_set = parameter_space.sample_randomly(10)
+    training_parameters = parameter_space.sample_uniformly(training_samples)
+    validation_parameters = parameter_space.sample_randomly(validation_samples)
+    test_parameters = parameter_space.sample_randomly(10)
 
     if getattr(sys, '_called_from_test', False):
-        reductor = NeuralNetworkReductor(fom=fom, training_set=training_set, validation_set=validation_set,
+        reductor = NeuralNetworkReductor(fom=fom, training_parameters=training_parameters,
+                                         validation_parameters=validation_parameters,
                                          l2_err=1e-5, ann_mse=1e-5)
         rom = reductor.reduce(restarts=100, log_loss_frequency=10)
 
-        U_red = fom.solution_space.empty(reserve=len(test_set))
-        for mu in test_set:
+        U_red = fom.solution_space.empty(reserve=len(test_parameters))
+        for mu in test_parameters:
             U_red.append(reductor.reconstruct(rom.solve(mu)))
 
-    training_data = []
-    for mu in training_set:
-        training_data.append((mu, fom.solve(mu)))
+    training_outputs = []
+    training_snapshots = fom.solution_space.empty(reserve=len(training_parameters))
+    for mu in training_parameters:
+        training_snapshots.append(fom.solve(mu))
+        training_outputs.append(fom.compute(output=True, mu=mu)['output'])
+    training_outputs = np.squeeze(np.array(training_outputs))
 
-    validation_data = []
-    for mu in validation_set:
-        validation_data.append((mu, fom.solve(mu)))
+    validation_outputs = []
+    validation_snapshots = fom.solution_space.empty(reserve=len(validation_parameters))
+    for mu in validation_parameters:
+        validation_snapshots.append(fom.solve(mu))
+        validation_outputs.append(fom.compute(output=True, mu=mu)['output'])
+    validation_outputs = np.squeeze(np.array(validation_outputs))
 
-    reductor_data_driven = NeuralNetworkReductor(training_set=training_data, validation_set=validation_data,
+    reductor_data_driven = NeuralNetworkReductor(training_parameters=training_parameters,
+                                                 training_snapshots=training_snapshots,
+                                                 validation_parameters=validation_parameters,
+                                                 validation_snapshots=validation_snapshots,
                                                  l2_err=1e-5, ann_mse=1e-5)
     rom_data_driven = reductor_data_driven.reduce(restarts=100, log_loss_frequency=10)
 
     speedups_data_driven = []
 
-    print(f'Performing test on set of size {len(test_set)} ...')
+    print(f'Performing test on parameters of size {len(test_parameters)} ...')
 
-    U = fom.solution_space.empty(reserve=len(test_set))
-    U_red_data_driven = fom.solution_space.empty(reserve=len(test_set))
+    U = fom.solution_space.empty(reserve=len(test_parameters))
+    U_red_data_driven = fom.solution_space.empty(reserve=len(test_parameters))
 
-    for mu in test_set:
+    for mu in test_parameters:
         tic = time.perf_counter()
         U.append(fom.solve(mu))
         time_fom = time.perf_counter() - tic
@@ -81,16 +91,18 @@ def main(
         fom.visualize((U, U_red_data_driven),
                       legend=('Full solution', 'Reduced solution (data-driven)'))
 
-    output_reductor = NeuralNetworkStatefreeOutputReductor(fom, training_set, validation_set, validation_loss=1e-5)
+    output_reductor = NeuralNetworkStatefreeOutputReductor(fom=fom, training_parameters=training_parameters,
+                                                           validation_parameters=validation_parameters,
+                                                           validation_loss=1e-5)
     output_rom = output_reductor.reduce(restarts=100, log_loss_frequency=10)
 
     outputs = []
     outputs_red = []
     outputs_speedups = []
 
-    print(f'Performing test on set of size {len(test_set)} ...')
+    print(f'Performing test on parameters of size {len(test_parameters)} ...')
 
-    for mu in test_set:
+    for mu in test_parameters:
         tic = time.perf_counter()
         outputs.append(fom.compute(output=True, mu=mu)['output'])
         time_fom = time.perf_counter() - tic
@@ -107,6 +119,36 @@ def main(
     outputs_absolute_errors = np.abs(outputs - outputs_red)
     outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
 
+    # data-driven output reductor
+    output_reductor_data_driven = NeuralNetworkStatefreeOutputReductor(training_parameters=training_parameters,
+                                                                       training_outputs=training_outputs,
+                                                                       validation_parameters=validation_parameters,
+                                                                       validation_outputs=validation_outputs,
+                                                                       validation_loss=1e-5)
+    output_rom_data_driven = output_reductor_data_driven.reduce(restarts=100, log_loss_frequency=10)
+
+    outputs = []
+    outputs_red_data_driven = []
+    outputs_speedups_data_driven = []
+    print(f'Performing test on parameters of size {len(test_parameters)} ...')
+
+    for mu in test_parameters:
+        tic = time.perf_counter()
+        outputs.append(fom.compute(output=True, mu=mu)['output'])
+        time_fom = time.perf_counter() - tic
+
+        tic = time.perf_counter()
+        outputs_red_data_driven.append(output_rom_data_driven.compute(output=True, mu=mu)['output'])
+        time_red_data_driven = time.perf_counter() - tic
+
+        outputs_speedups_data_driven.append(time_fom / time_red_data_driven)
+
+    outputs = np.squeeze(np.array(outputs))
+    outputs_red_data_driven = np.squeeze(np.array(outputs_red))
+
+    outputs_absolute_errors_data_driven = np.abs(outputs - outputs_red_data_driven)
+    outputs_relative_errors_data_driven = np.abs(outputs - outputs_red_data_driven) / np.abs(outputs)
+
     print()
     print('Results for state approximation purely data-driven:')
     print(f'Average absolute error: {np.average(absolute_errors_data_driven)}')
@@ -119,6 +161,11 @@ def main(
     print(f'Average relative error: {np.average(outputs_relative_errors)}')
     print(f'Median of speedup: {np.median(outputs_speedups)}')
 
+    print()
+    print('Results for data-driven output approximation with `NeuralNetworkStatefreeOutputReductor`:')
+    print(f'Average absolute error: {np.average(outputs_absolute_errors_data_driven)}')
+    print(f'Average relative error: {np.average(outputs_relative_errors_data_driven)}')
+    print(f'Median of speedup: {np.median(outputs_speedups_data_driven)}')
 
 def create_fom(fv, grid_intervals):
     f = LincombFunction(

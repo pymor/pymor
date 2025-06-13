@@ -27,26 +27,27 @@ def main(
 
     from pymor.reductors.neural_network import NeuralNetworkReductor
 
-    training_set = parameter_space.sample_uniformly(training_samples)
-    validation_set = parameter_space.sample_randomly(validation_samples)
+    training_parameters = parameter_space.sample_uniformly(training_samples)
+    validation_parameters = parameter_space.sample_randomly(validation_samples)
 
-    reductor = NeuralNetworkReductor(fom, training_set, validation_set, l2_err=1e-4,
-                                     ann_mse=1e-4)
+    reductor = NeuralNetworkReductor(fom, training_parameters=training_parameters,
+                                     validation_parameters=validation_parameters,
+                                     l2_err=1e-4, ann_mse=1e-4)
     rom = reductor.reduce(hidden_layers='[(N+P)*3, (N+P)*3, (N+P)*3]',
                           restarts=100)
 
-    test_set = parameter_space.sample_randomly(1)
+    test_parameters = parameter_space.sample_randomly(1)
 
     speedups = []
 
     import time
 
-    print(f'Performing test on set of size {len(test_set)} ...')
+    print(f'Performing test on parameters of size {len(test_parameters)} ...')
 
-    U = fom.solution_space.empty(reserve=len(test_set))
-    U_red = fom.solution_space.empty(reserve=len(test_set))
+    U = fom.solution_space.empty(reserve=len(test_parameters))
+    U_red = fom.solution_space.empty(reserve=len(test_parameters))
 
-    for mu in test_set:
+    for mu in test_parameters:
         tic = time.perf_counter()
         U.append(fom.solve(mu))
         time_fom = time.perf_counter() - tic
