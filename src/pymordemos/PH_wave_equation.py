@@ -1,5 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
+import os
 
 # from pymordemos.symplectic_wave_equation import discretize_fom
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -20,6 +21,13 @@ from pymor.algorithms.PH import POD_PH, check_POD, POD_new
 NEW_METHODS = ['POD_PH'] + ['POD_PH_just_Vr'] #+ ['POD_new']
 METHODS = NEW_METHODS + ['POD', 'check_POD']
 
+folder_name = "results"
+
+print("Current working directory:", os.getcwd())
+
+os.makedirs(folder_name, exist_ok=True)
+
+
 
 def main(
         final_time: float = 10.,
@@ -37,6 +45,8 @@ def main(
         if red_dim % 2 != 0:
             red_dims[i_red_dim] -= 1
     red_dims = red_dims * 2
+
+    np.savetxt(os.path.join(folder_name, "red_dims"), red_dims)
 
     results = {}
     for method in METHODS:
@@ -125,7 +135,7 @@ def run_mor(fom, X, F, method, red_dims):
                 W_r = max_W_r[:red_dim]
                 print("POD_PH", len(V_r))
                 reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, W_r)
-                print(X.dim, len(X), W_r.dim, len(W_r))
+                print("X shape, W_r shape", X.dim, len(X), W_r.dim, len(W_r))
                 U_proj = V_r.lincomb(W_r.inner(X))
             elif method == 'POD_PH_just_Vr':
                 W_r = max_W_r[:red_dim]
@@ -155,6 +165,16 @@ def run_mor(fom, X, F, method, red_dims):
         x_axis = np.arange(0, 1, 0.001)
         numpy_X = (X.blocks[0]).to_numpy()
         reconstruction = V_r.lincomb(u.to_numpy())
+        Hamiltonian_reconstruction = fom.eval_hamiltonian(reconstruction)
+        numpy_reconstruction = (reconstruction.blocks[0]).to_numpy()
+
+        filename1 = f"Hamiltonian_reconstruction_{method}_{red_dim}.txt"
+        filename2 = f"reconstruction_q_{method}_{red_dim}.txt"
+        np.savetxt(os.path.join(folder_name, filename1), Hamiltonian_reconstruction[:998])
+        np.savetxt(os.path.join(folder_name, filename2), numpy_reconstruction[:, :998])
+        print("shape?",numpy_reconstruction.shape, Hamiltonian_reconstruction.shape)
+        # np.savetxt(f"Hamiltonian_reconstruction_{method}_{red_dim}.txt", Hamiltonian_reconstruction)
+        # np.savetxt(f"reconstruction_q_{method}_{red_dim}.txt", numpy_reconstruction)
         if red_dim == 60 and method == 'POD_PH':
             fig2, ax2 = plt.subplots()
             numpy_reconstruction = (reconstruction.blocks[0]).to_numpy()
@@ -169,22 +189,21 @@ def run_mor(fom, X, F, method, red_dims):
         l = 1.
         dx = l / (n_x-1)
         if red_dim != 0:
-            if method == 'POD_PH' and red_dim != 8:
-                # reduced_Hamiltonian = rom.eval_hamiltonian(u)
-                # ax1.plot(reduced_Hamiltonian, label = str(red_dim))
-                ax1.plot(fom.eval_hamiltonian(X), color = "blue", marker = "o")
-                ax1.plot(fom.eval_hamiltonian(reconstruction), label = str(red_dim))
-                # print("difference between reduced hamiltonian and hamiltonian of reconstruction",
-                #       np.linalg.norm(reduced_Hamiltonian - fom.eval_hamiltonian(reconstruction)))
-                plt.legend()
-                plt.title(f"Hamiltonian, method: {method}")
-                ax1.set_ylabel("Hamiltonian")
-                # numpy_u = u.to_numpy()
-                # n = np.shape(numpy_u)[1]
-                # energy = np.zeros(n)
-                # for i in range(n):
-                #     energy[i] = compute_discretized_Hamiltonian(dx=dx, p=numpy_u[:4, i], q=numpy_u[4:, i], c=wave_speed)
-                # print("check energy computation", np.linalg.norm(reduced_Hamiltonian - energy))
+            # reduced_Hamiltonian = rom.eval_hamiltonian(u)
+            # ax1.plot(reduced_Hamiltonian, label = str(red_dim))
+            ax1.plot(fom.eval_hamiltonian(X), color = "blue", marker = "o")
+            ax1.plot(fom.eval_hamiltonian(reconstruction), label = str(red_dim))
+            # print("difference between reduced hamiltonian and hamiltonian of reconstruction",
+            #       np.linalg.norm(reduced_Hamiltonian - fom.eval_hamiltonian(reconstruction)))
+            plt.legend()
+            plt.title(f"Hamiltonian, method: {method}")
+            ax1.set_ylabel("Hamiltonian")
+            # numpy_u = u.to_numpy()
+            # n = np.shape(numpy_u)[1]
+            # energy = np.zeros(n)
+            # for i in range(n):
+            #     energy[i] = compute_discretized_Hamiltonian(dx=dx, p=numpy_u[:4, i], q=numpy_u[4:, i], c=wave_speed)
+            # print("check energy computation", np.linalg.norm(reduced_Hamiltonian - energy))
 
         abs_err_proj[i_red_dim] = np.sqrt((X - U_proj).norm2().sum())
         abs_err_rom[i_red_dim] = np.sqrt((X - reconstruction).norm2().sum())
@@ -216,7 +235,13 @@ def discretize_fom(T=50):
     wave_speed = 0.1
     l = 1.
     dx = l / (n_x-1)
-
+    print(nt)
+    t = np.arange(0, int(T), 0.01)
+    t = np.delete(t, 999)
+    t = np.delete(t, 998)
+    filename = "time.txt"
+    np.savetxt(os.path.join(folder_name, filename), t)
+    print("t shape?", t.shape)
     # construct H_op
     space = NumpyVectorSpace(n_x)
     Dxx = diags(

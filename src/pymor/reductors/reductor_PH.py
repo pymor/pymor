@@ -93,8 +93,12 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
 
             projected_operator = ConcatenationOperator([projected_J.H, projected_H_op])
 
+            J = CanonicalSymplecticFormOperator(fom.H_op.source)
+            inverse_J = -1 * J
+            projected_mass = ConcatenationOperator([project(inverse_J, W_r, W_r), project(J, V_r, V_r)])
+
             projected_operators_instationary = {
-            'mass':              project(fom.mass, W_r, V_r),
+            'mass':              projected_mass,
             'operator':          projected_operator,
             'rhs':               project(fom.rhs, V_r, None),
             'initial_data':      projected_initial_data,
