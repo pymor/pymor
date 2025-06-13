@@ -104,7 +104,7 @@ def fom_properties(fom, w, stable_lti=True):
             if stable_lti:
                 hsv = fom.hsv()
             else:
-                hsv = fom._sv_U_V(typ='bs')[0]
+                hsv = fom._hankel_svd(typ='bs')[1]
             ax = fig_sv.subplots()
             ax.semilogy(range(1, len(hsv) + 1), hsv, '.-')
             if stable_lti:
