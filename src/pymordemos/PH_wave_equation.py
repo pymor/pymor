@@ -18,7 +18,7 @@ from scipy.sparse import diags
 from pymor.reductors.reductor_PH import PHReductor, MyQuadraticHamiltonianRBReductor
 from pymor.algorithms.PH import POD_PH, check_POD, POD_new
 
-NEW_METHODS = [] + ['POD_PH'] + ['POD_PH_just_Vr']#+ ['POD_new']
+NEW_METHODS = [] + ['POD_PH'] #+ ['POD_PH_just_Vr']#+ ['POD_new']
 METHODS = NEW_METHODS + ['POD', 'check_POD']
 
 folder_name = "results"
@@ -31,7 +31,7 @@ os.makedirs(folder_name, exist_ok=True)
 
 def main(
         final_time: float = 10.,
-        rbsize: int = 80,        
+        rbsize: int = 18,        
 ):
     fom = discretize_fom(T=final_time)
     # fom = discretize_mass_spring_chain()
@@ -139,7 +139,7 @@ def run_mor(fom, X, F, method, red_dims):
                 U_proj = V_r.lincomb(W_r.inner(X))
             elif method == 'POD_PH_just_Vr':
                 W_r = max_W_r[:red_dim]
-                reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, V_r)
+                reductor = PHReductor(fom, V_r, V_r)
                 U_proj = V_r.lincomb(V_r.inner(X))
             elif method == 'POD_new':
                 W_r = max_W_r[:red_dim]
@@ -149,7 +149,7 @@ def run_mor(fom, X, F, method, red_dims):
             if method == "POD":
                 V_r = max_V_r[:red_dim]
                 W_r = V_r
-                reductor = InstationaryRBReductor(fom, V_r)
+                reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, W_r)
                 U_proj = V_r.lincomb(V_r.inner(X))
             elif method == 'check_POD':
                 V_r = max_V_r[:red_dim]
