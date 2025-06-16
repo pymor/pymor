@@ -86,7 +86,7 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
             V_r = self.V_r
             W_r = self.W_r
 
-            projected_initial_data = project_initial_data(V_r, W_r, fom.initial_data)
+            projected_initial_data = project_initial_data_with_op(V_r, W_r, fom.initial_data)
             projected_H_op = project(fom.H_op, V_r, V_r)
 
             projected_J = project(CanonicalSymplecticFormOperator(fom.H_op.source), W_r, W_r)
@@ -106,7 +106,7 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
             print("check if J^{-1}J*vector of ones = vector of ones", np.sqrt((J_inverse_J.apply(vector_ones) - vector_ones).norm2().sum()))
 
             projected_operators_instationary = {
-            'mass':              projected_mass,
+            'mass':              project(fom.mass, W_r, V_r),
             'operator':          projected_operator,
             'rhs':               project(fom.rhs, V_r, None),
             'initial_data':      projected_initial_data,
@@ -138,7 +138,7 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
                 name='reduced_' + fom.name,
                 **projected_operators_quadratic
             )
-        return rom2
+        return rom1
 
     def reconstruct(self, u):
         return self.RB[:u.dim//2].lincomb(u.to_numpy())
