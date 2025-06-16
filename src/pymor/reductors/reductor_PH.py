@@ -95,7 +95,15 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
 
             J = CanonicalSymplecticFormOperator(fom.H_op.source)
             inverse_J = -1 * J
-            projected_mass = ConcatenationOperator([project(inverse_J, W_r, W_r), project(J, V_r, V_r)])
+            projected_J_inside = project(J, W_r, V_r)
+            projected_inverse_J_inside = project(inverse_J, W_r, V_r)
+            # print("check J inverse", ConcatenationOperator([J, inverse_J]).as_range_array())
+            projected_mass = ConcatenationOperator([projected_J_inside, projected_inverse_J_inside])
+
+            J_inverse_J = ConcatenationOperator([J, inverse_J])
+            space = J_inverse_J.range
+            vector_ones = space.ones(1)
+            print("check if J^{-1}J*vector of ones = vector of ones", np.sqrt((J_inverse_J.apply(vector_ones) - vector_ones).norm2().sum()))
 
             projected_operators_instationary = {
             'mass':              projected_mass,

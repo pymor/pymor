@@ -18,7 +18,7 @@ from scipy.sparse import diags
 from pymor.reductors.reductor_PH import PHReductor, MyQuadraticHamiltonianRBReductor
 from pymor.algorithms.PH import POD_PH, check_POD, POD_new
 
-NEW_METHODS = ['POD_PH'] + ['POD_PH_just_Vr'] #+ ['POD_new']
+NEW_METHODS = [] + ['POD_PH'] + ['POD_PH_just_Vr']#+ ['POD_new']
 METHODS = NEW_METHODS + ['POD', 'check_POD']
 
 folder_name = "results"
@@ -139,7 +139,7 @@ def run_mor(fom, X, F, method, red_dims):
                 U_proj = V_r.lincomb(W_r.inner(X))
             elif method == 'POD_PH_just_Vr':
                 W_r = max_W_r[:red_dim]
-                reductor = PHReductor(fom, V_r, V_r)
+                reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, V_r)
                 U_proj = V_r.lincomb(V_r.inner(X))
             elif method == 'POD_new':
                 W_r = max_W_r[:red_dim]
@@ -154,7 +154,7 @@ def run_mor(fom, X, F, method, red_dims):
             elif method == 'check_POD':
                 V_r = max_V_r[:red_dim]
                 W_r = V_r
-                reductor = PHReductor(fom, V_r, V_r)
+                reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, V_r)
                 U_proj = V_r.lincomb(V_r.inner(X))
         rom  = reductor.reduce()
         print(len(fom.initial_data.as_vector()), fom.initial_data.as_vector().dim)
