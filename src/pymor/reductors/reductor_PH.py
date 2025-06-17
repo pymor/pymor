@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 from pymor.algorithms.projection import project, ProjectRules
 from pymor.operators.symplectic import CanonicalSymplecticFormOperator
@@ -93,20 +94,39 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
 
             projected_operator = ConcatenationOperator([projected_J.H, projected_H_op])
 
+            n = fom.H_op.source.dim // 2
+            red_dim = len(V_r)
+            if n != 0:
+                space = fom.H_op.source
+                numpy_J_block = np.block([[np.zeros((n, n)), np.eye(n)], [-np.eye(n), np.zeros((n, n))]])
+                J_block = space.from_numpy(numpy_J_block)
+                numpy_J_inside = V_r.inner(J_block.lincomb(V_r.to_numpy()))
+
+                J_block_inverse = -1 * J_block
+                numpy_J_inverse_inside = W_r.inner(J_block_inverse.lincomb(W_r.to_numpy()))
+                mass = numpy_J_inverse_inside @ numpy_J_inside
+                np.savetxt(os.path.join("mass", f'mass{red_dim}.txt'), mass)
+
+
             J = CanonicalSymplecticFormOperator(fom.H_op.source)
             inverse_J = -1 * J
             projected_J_inside = project(J, V_r, V_r)
             projected_inverse_J_inside = project(inverse_J, W_r, W_r)
             # print("check J inverse", ConcatenationOperator([J, inverse_J]).as_range_array())
-            projected_mass = ConcatenationOperator([projected_J_inside, projected_inverse_J_inside])
+            projected_mass1 = ConcatenationOperator([projected_inverse_J_inside, projected_J_inside])
+            projected_mass2 = NumpyMatrixOperator(mass)
+
+            
 
             J_inverse_J = ConcatenationOperator([J, inverse_J])
             space = J_inverse_J.range
             vector_ones = space.ones(1)
+            vector_ones_mass = projected_mass1.range.ones(1)
+            print("check mass1 and mass2", np.sqrt((projected_mass1.apply(vector_ones_mass) - projected_mass2.apply(vector_ones_mass)).norm2().sum()))
             print("check if J^{-1}J*vector of ones = vector of ones", np.sqrt((J_inverse_J.apply(vector_ones) - vector_ones).norm2().sum()))
 
             projected_operators_instationary = {
-            'mass':              projected_mass,
+            'mass':              projected_mass2,
             'operator':          projected_operator,
             'rhs':               project(fom.rhs, V_r, None),
             'initial_data':      projected_initial_data,

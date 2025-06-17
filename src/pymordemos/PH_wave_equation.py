@@ -28,16 +28,16 @@ print("Current working directory:", os.getcwd())
 os.makedirs(folder_name, exist_ok=True)
 
 
-
 def main(
         final_time: float = 10.,
-        rbsize: int = 18,        
+        rbsize: int = 80,        
 ):
     fom = discretize_fom(T=final_time)
     # fom = discretize_mass_spring_chain()
     X = fom.solve()
     F = fom.operator.apply(X)
     rel_fac = np.sqrt(X.norm2().sum())
+    print("mass?", fom.mass)
 
     half_rbsize = min(rbsize // 2, len(X) // 2)
     red_dims = np.linspace(0, half_rbsize, 10, dtype=int)
@@ -46,7 +46,7 @@ def main(
             red_dims[i_red_dim] -= 1
     red_dims = red_dims * 2
 
-    np.savetxt(os.path.join(folder_name, "red_dims"), red_dims)
+    # np.savetxt(os.path.join(folder_name, "red_dims"), red_dims)
 
     results = {}
     for method in METHODS:
@@ -89,7 +89,7 @@ def main(
             label=method
         )
 
-    fig.suptitle('All reduction techniques set to PHReductor')
+    fig.suptitle('mass matrix numpy way')
     axs[0].title.set_text('Relative projection error')
     axs[1].title.set_text('Relative reduction error')
     axs[2].title.set_text('Initial data error')
@@ -149,7 +149,7 @@ def run_mor(fom, X, F, method, red_dims):
             if method == "POD":
                 V_r = max_V_r[:red_dim]
                 W_r = V_r
-                reductor = MyQuadraticHamiltonianRBReductor(fom, V_r, W_r)
+                reductor = PHReductor(fom, V_r, W_r)
                 U_proj = V_r.lincomb(V_r.inner(X))
             elif method == 'check_POD':
                 V_r = max_V_r[:red_dim]
@@ -170,8 +170,8 @@ def run_mor(fom, X, F, method, red_dims):
 
         filename1 = f"Hamiltonian_reconstruction_{method}_{red_dim}.txt"
         filename2 = f"reconstruction_q_{method}_{red_dim}.txt"
-        np.savetxt(os.path.join(folder_name, filename1), Hamiltonian_reconstruction[:998])
-        np.savetxt(os.path.join(folder_name, filename2), numpy_reconstruction[:, :998])
+        # np.savetxt(os.path.join(folder_name, filename1), Hamiltonian_reconstruction[:998])
+        # np.savetxt(os.path.join(folder_name, filename2), numpy_reconstruction[:, :998])
         print("shape?",numpy_reconstruction.shape, Hamiltonian_reconstruction.shape)
         # np.savetxt(f"Hamiltonian_reconstruction_{method}_{red_dim}.txt", Hamiltonian_reconstruction)
         # np.savetxt(f"reconstruction_q_{method}_{red_dim}.txt", numpy_reconstruction)
@@ -240,7 +240,7 @@ def discretize_fom(T=50):
     t = np.delete(t, 999)
     t = np.delete(t, 998)
     filename = "time.txt"
-    np.savetxt(os.path.join(folder_name, filename), t)
+    # np.savetxt(os.path.join(folder_name, filename), t)
     print("t shape?", t.shape)
     # construct H_op
     space = NumpyVectorSpace(n_x)
