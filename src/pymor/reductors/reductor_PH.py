@@ -114,6 +114,7 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
             projected_inverse_J_inside = project(inverse_J, W_r, W_r)
             # print("check J inverse", ConcatenationOperator([J, inverse_J]).as_range_array())
             projected_mass1 = ConcatenationOperator([projected_inverse_J_inside, projected_J_inside])
+
             projected_mass2 = NumpyMatrixOperator(mass)
 
             
@@ -124,6 +125,9 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
             vector_ones_mass = projected_mass1.range.ones(1)
             print("check mass1 and mass2", np.sqrt((projected_mass1.apply(vector_ones_mass) - projected_mass2.apply(vector_ones_mass)).norm2().sum()))
             print("check if J^{-1}J*vector of ones = vector of ones", np.sqrt((J_inverse_J.apply(vector_ones) - vector_ones).norm2().sum()))
+
+            print("check Identity - mass", np.linalg.norm(mass - np.identity(mass.shape[0])))
+
 
             projected_operators_instationary = {
             'mass':              projected_mass2,
