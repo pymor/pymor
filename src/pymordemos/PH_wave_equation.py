@@ -30,7 +30,7 @@ os.makedirs(folder_name, exist_ok=True)
 
 def main(
         final_time: float = 10.,
-        rbsize: int = 8,        
+        rbsize: int = 80,        
 ):
     fom = discretize_fom(T=final_time)
     # fom = discretize_mass_spring_chain()

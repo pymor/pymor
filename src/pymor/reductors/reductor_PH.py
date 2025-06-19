@@ -158,7 +158,7 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
                 name='reduced_' + fom.name,
                 **projected_operators_quadratic
             )
-        return rom1
+        return rom2
 
     def reconstruct(self, u):
         return self.RB[:u.dim//2].lincomb(u.to_numpy())
