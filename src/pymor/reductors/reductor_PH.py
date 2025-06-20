@@ -37,7 +37,7 @@ def project_initial_data(V_r, W_r, initial_data):
     return project(initial_data, W_r, None)
 
 
-class PHReductor():
+class check_PODReductor():
     def __init__(self, fom, V_r, W_r):
         self.fom = fom
         self.V_r = V_r
@@ -65,17 +65,45 @@ class PHReductor():
         return rom
     
 
-class MyQuadraticHamiltonianRBReductor(BasicObject):
-    """Symplectic Galerkin projection of a |QuadraticHamiltonianModel|.
+class StructurePreservingPODReductor(BasicObject):
+    def __init__(self, fom, V_r, W_r):
+        self.fom = fom
+        self.V_r = V_r
+        self.W_r = W_r
 
-    Parameters
-    ----------
-    fom
-        The full order |QuadraticHamiltonianModel| to reduce.
-    RB
-        A |SymplecticBasis| prescribing the basis vectors.
-    """
+    def reduce(self, dims=None):
+        with self.logger.block('Operator projection ...'):
+            fom = self.fom
+            V_r = self.V_r
+            W_r = self.W_r
 
+            projected_initial_data = project_initial_data_with_op(V_r, W_r, fom.initial_data)
+            projected_H_op = project(fom.H_op, V_r, V_r)
+            projected_J = project(CanonicalSymplecticFormOperator(fom.H_op.source), W_r, W_r)
+
+            projected_operators_quadratic = {
+                'H_op':              projected_H_op,
+                'h':                 project(fom.h, V_r, None),
+                'initial_data':      projected_initial_data,
+                'output_functional': None,
+                'J':                 projected_J
+            }
+
+        with self.logger.block('Building ROM ...'):
+            rom = BaseQuadraticHamiltonianModel(
+                fom.T,
+                time_stepper=fom.time_stepper,
+                num_values=fom.num_values,
+                name='reduced_' + fom.name,
+                **projected_operators_quadratic
+            )
+        return rom
+
+    def reconstruct(self, u):
+        return self.RB[:u.dim//2].lincomb(u.to_numpy())
+    
+
+class StructurePresservingPODReductor_changedLHS(BasicObject):
     def __init__(self, fom, V_r, W_r):
         self.fom = fom
         self.V_r = V_r
@@ -94,75 +122,51 @@ class MyQuadraticHamiltonianRBReductor(BasicObject):
 
             projected_operator = ConcatenationOperator([projected_J.H, projected_H_op])
 
+            # numpy way
             n = fom.H_op.source.dim // 2
-            red_dim = len(V_r)
+            # red_dim = len(V_r)
             if n != 0:
                 space = fom.H_op.source
-                numpy_J_block = np.block([[np.zeros((n, n)), np.eye(n)], [-np.eye(n), np.zeros((n, n))]])
-                J_block = space.from_numpy(numpy_J_block)
-                numpy_J_inside = V_r.inner(J_block.lincomb(V_r.to_numpy()))
+                numpy_J = np.block([[np.zeros((n, n)), np.eye(n)], [-np.eye(n), np.zeros((n, n))]])
+                vector_array_J = space.from_numpy(numpy_J)
 
-                J_block_inverse = -1 * J_block
-                numpy_J_inverse_inside = W_r.inner(J_block_inverse.lincomb(W_r.to_numpy()))
-                mass = numpy_J_inverse_inside @ numpy_J_inside
-                np.savetxt(os.path.join("mass", f'mass{red_dim}.txt'), mass)
+                numpy_projected_J_inside = V_r.inner(vector_array_J.lincomb(V_r.to_numpy()))
 
+                vector_array_J_inverse = -1 * vector_array_J
+                numpy_projected_J_inverse_inside = W_r.inner(vector_array_J_inverse.lincomb(W_r.to_numpy()))
 
-            J = CanonicalSymplecticFormOperator(fom.H_op.source)
-            inverse_J = -1 * J
-            projected_J_inside = project(J, V_r, V_r)
-            projected_inverse_J_inside = project(inverse_J, W_r, W_r)
-            # print("check J inverse", ConcatenationOperator([J, inverse_J]).as_range_array())
-            projected_mass1 = ConcatenationOperator([projected_inverse_J_inside, projected_J_inside])
+                mass = numpy_projected_J_inverse_inside @ numpy_projected_J_inside
+                # np.savetxt(os.path.join("mass", f'mass{red_dim}.txt'), mass)
+            projected_mass_numpy = NumpyMatrixOperator(mass)
 
-            projected_mass2 = NumpyMatrixOperator(mass)
-
-            
-
-            J_inverse_J = ConcatenationOperator([J, inverse_J])
-            space = J_inverse_J.range
-            vector_ones = space.ones(1)
-            vector_ones_mass = projected_mass1.range.ones(1)
-            print("check mass1 and mass2", np.sqrt((projected_mass1.apply(vector_ones_mass) - projected_mass2.apply(vector_ones_mass)).norm2().sum()))
-            print("check if J^{-1}J*vector of ones = vector of ones", np.sqrt((J_inverse_J.apply(vector_ones) - vector_ones).norm2().sum()))
-
-            print("check Identity - mass", np.linalg.norm(mass - np.identity(mass.shape[0])))
+            # pyMOR way
+            J_operator = CanonicalSymplecticFormOperator(fom.H_op.source)
+            J_inverse = -1 * J_operator
+            projected_J_inside = project(J_operator, V_r, V_r)
+            projected_J_inverse_inside = project(J_inverse, W_r, W_r)
+            projected_mass_pyMOR = ConcatenationOperator([projected_J_inverse_inside, projected_J_inside])
 
 
             projected_operators_instationary = {
-            'mass':              projected_mass2,
+            'mass':              projected_mass_numpy,
             'operator':          projected_operator,
             'rhs':               project(fom.rhs, V_r, None),
             'initial_data':      projected_initial_data,
             'products':          None,
             'output_functional': None
         }
-            projected_operators_quadratic = {
-                'H_op':              projected_H_op,
-                'h':                 project(fom.h, V_r, None),
-                'initial_data':      projected_initial_data,
-                'output_functional': None,
-                'J':                 projected_J
-            }
-
-            print("check symmetric", np.linalg.norm(projected_H_op.as_range_array().to_numpy() - projected_H_op.as_range_array().to_numpy().transpose()))
 
         with self.logger.block('Building ROM ...'):
-            rom1 = InstationaryModel(
+            rom = InstationaryModel(
                 fom.T, 
                 time_stepper=fom.time_stepper,
                 num_values=fom.num_values,
                 name = 'reduced_' + fom.name,
                 **projected_operators_instationary
                 )
-            rom2 = BaseQuadraticHamiltonianModel(
-                fom.T,
-                time_stepper=fom.time_stepper,
-                num_values=fom.num_values,
-                name='reduced_' + fom.name,
-                **projected_operators_quadratic
-            )
-        return rom2
+
+        return rom
 
     def reconstruct(self, u):
         return self.RB[:u.dim//2].lincomb(u.to_numpy())
+

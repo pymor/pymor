@@ -37,7 +37,6 @@ def POD_PH(X, F, modes, method):
 def POD_new(X, modes, method):
     half_dim = X.dim//2
     X1, X2 = X.blocks[0], X.blocks[1]
-    print("dimensions of X1", len(X1), X1.dim)
 
     Vtilde_r, _ = pod(X1, modes=modes)
     Wtilde_r, _ = pod(X2, modes=modes)
