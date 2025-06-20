@@ -29,6 +29,10 @@ class DataSetReader(BasicObject):
     def _entry_prefix(self, mu):
         return f'{self.id}_{build_cache_key(mu)}'
 
+    def _load(self, id):
+        with open(self.path / id, 'rb') as f:
+            return load(f)
+
     def get(self, mu, quantities=None):
         mu = self.parameters.parse(mu)
         if mu not in self:
@@ -37,16 +41,14 @@ class DataSetReader(BasicObject):
         quantities = quantities or self.quantities
         if isinstance(quantities, str):
             assert quantities in self.quantities
-            with open(self.path / f'{base_filename}_{quantities}.dat', 'rb') as f:
-                return load(f)
+            return self._load(f'{base_filename}_{quantities}.dat')
         else:
             assert isinstance(quantities, (tuple, list, set))
             assert all(isinstance(q, str) for q in quantities)
             assert all(q in self.quantities for q in quantities)
             data = {}
             for q in quantities:
-                with open(self.path / f'{base_filename}_{q}.dat', 'rb') as f:
-                    data[q] = load(f)
+                data[q] = self._load(f'{base_filename}_{q}.dat')
             return data
 
     def __contains__(self, mu):
@@ -80,6 +82,10 @@ class DataSet(DataSetReader):
         self._seen_quantities = {q: None for q in self.quantities}
         self.__auto_init(locals())
 
+    def _dump(self, v, id):
+        with open(self.path / id, 'wb') as f:
+            dump(v, f)
+
     def add(self, mu, data):
         mu = self.parameters.parse(mu)
         assert isinstance(data, dict)
@@ -99,8 +105,6 @@ class DataSet(DataSetReader):
                 assert v.shape == self._seen_quantities[q]
             else:
                 raise TypeError(f'Unsupported type {type(v)} for quantity {q}. Expected VectorArray or npt.ArrayLike!')
-            with open(self.path / f'{base_filename}_{q}.dat', 'wb') as f:
-                dump(v, f)
+            self._dump(v, f'{base_filename}_{q}.dat')
         # we write mu last, as it's the indicator for an existing entry
-        with open(self.path / f'{base_filename}_mu.dat', 'wb') as f:
-            dump(mu, f)
+        self._dump(mu, f'{base_filename}_mu.dat')
