@@ -697,22 +697,22 @@ class LTIModel(Model):
                 data['solution'] = self.solution_space.empty(reserve=n)
             if compute_output:
                 D = LinearInputOperator(self.D)
-                data['output'] = np.empty((n, self.dim_output))
+                data['output'] = np.empty((self.dim_output, n))
                 data_output_extra = []
             for i, (x, t) in enumerate(iterator):
                 if compute_solution:
                     data['solution'].append(x)
                 if compute_output:
-                    y = self.C.apply(x, mu=mu).to_numpy().T + D.as_range_array(mu=mu.at_time(t)).to_numpy().T
+                    y = self.C.apply(x, mu=mu).to_numpy() + D.as_range_array(mu=mu.at_time(t)).to_numpy()
                     if i < n:
-                        data['output'][i] = y
+                        data['output'][:, i] = y.ravel()
                     else:
                         data_output_extra.append(y)
             if compute_output:
                 if data_output_extra:
-                    data['output'] = np.vstack((data['output'], data_output_extra))
-                if len(data['output']) < i + 1:
-                    data['output'] = data['output'][:i + 1]
+                    data['output'] = np.hstack((data['output'], data_output_extra))
+                if data['output'].shape[1] < i + 1:
+                    data['output'] = data['output'][:, :i + 1]
 
             if compute_solution:
                 quantities.remove('solution')
@@ -812,8 +812,8 @@ class LTIModel(Model):
         -------
         output
             Impulse response as a 3D |NumPy array| where
-            `output.shape[0]` is the number of time steps,
-            `output.shape[1]` is the number of outputs, and
+            `output.shape[0]` is the number of outputs, and
+            `output.shape[1]` is the number of time steps,
             `output.shape[2]` is the number of inputs.
         solution
             The tuple of solution |VectorArrays| for every input.
@@ -828,7 +828,7 @@ class LTIModel(Model):
                 n = 0
         else:
             n = self.num_values + 1
-        output = np.empty((n, self.dim_output, self.dim_input))
+        output = np.empty((self.dim_output, n, self.dim_input))
         if return_solution:
             solution = []
 
@@ -867,8 +867,8 @@ class LTIModel(Model):
         -------
         output
             Step response as a 3D |NumPy array| where
-            `output.shape[0]` is the number of time steps,
-            `output.shape[1]` is the number of outputs, and
+            `output.shape[0]` is the number of outputs, and
+            `output.shape[1]` is the number of time steps,
             `output.shape[2]` is the number of inputs.
         solution
             The tuple of solution |VectorArrays| for every input.
@@ -883,7 +883,7 @@ class LTIModel(Model):
                 n = 0
         else:
             n = self.num_values + 1
-        output = np.empty((n, self.dim_output, self.dim_input))
+        output = np.empty((self.dim_output, n, self.dim_input))
         if return_solution:
             solution = []
 
