@@ -29,8 +29,8 @@ class DataSetReader(BasicObject):
     def _entry_prefix(self, mu):
         return f'{self.id}_{build_cache_key(mu)}'
 
-    def _load(self, id):
-        with open(self.path / id, 'rb') as f:
+    def _load(self, filename):
+        with open(self.path / filename, 'rb') as f:
             return load(f)
 
     def get(self, mu, quantities=None):
@@ -39,6 +39,7 @@ class DataSetReader(BasicObject):
             raise KeyError(f'Mu {mu} not found in dataset (id={id}).')
         base_filename = self._entry_prefix(mu)
         quantities = quantities or self.quantities
+        self.logger.debug(f"Getting '{quantities}' for {mu} ...")
         if isinstance(quantities, str):
             assert quantities in self.quantities
             return self._load(f'{base_filename}_{quantities}.dat')
@@ -82,8 +83,8 @@ class DataSet(DataSetReader):
         self._seen_quantities = dict.fromkeys(self.quantities)
         self.__auto_init(locals())
 
-    def _dump(self, v, id):
-        with open(self.path / id, 'wb') as f:
+    def _dump(self, v, filename):
+        with open(self.path / filename, 'wb') as f:
             dump(v, f)
 
     def add(self, mu, data):
@@ -92,6 +93,7 @@ class DataSet(DataSetReader):
         if mu in self:
             raise ValueError(f'An entry for {mu} already exists in this dataset!')
         base_filename = self._entry_prefix(mu)
+        quantities_to_write = {}
         for q in self.quantities:
             assert q in data, f'Missing quantity {q} in data'
             v = data[q]
@@ -105,6 +107,9 @@ class DataSet(DataSetReader):
                 assert v.shape == self._seen_quantities[q]
             else:
                 raise TypeError(f'Unsupported type {type(v)} for quantity {q}. Expected VectorArray or npt.ArrayLike!')
+            quantities_to_write[q] = v
+        self.logger.debug(f"Adding '{quantities_to_write.keys()}' for {mu} ...")
+        for q, v in quantities_to_write.items():
             self._dump(v, f'{base_filename}_{q}.dat')
         # we write mu last, as it's the indicator for an existing entry
         self._dump(mu, f'{base_filename}_mu.dat')
