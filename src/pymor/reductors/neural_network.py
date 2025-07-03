@@ -35,10 +35,14 @@ from pymor.tools.random import get_rng, get_seed_seq
 class NeuralNetworkReductor(BasicObject):
     """Reduced Basis reductor relying on artificial neural networks.
 
-    This is a reductor that constructs a reduced basis using proper
-    orthogonal decomposition and trains a neural network that approximates
-    the mapping from parameter space to coefficients of the full-order
-    solution in the reduced basis.
+    This is a reductor that either takes a precomputed reduced basis or
+    constructs a reduced basis using proper orthogonal decomposition
+    and trains a neural network that approximates the mapping from
+    parameter space to coefficients of the full-order solution
+    in the reduced basis. Moreover, the reductor also works without
+    providing a full-order model, in which case it requires a set of
+    training parameters and corresponding solution snapshots. This way,
+    the reductor can be used in a completely data-driven manner.
     The approach is described in :cite:`HU18`.
 
     Parameters
@@ -48,14 +52,15 @@ class NeuralNetworkReductor(BasicObject):
         |parameter values| and the `training_snapshots` with corresponding solution
         |VectorArrays| have to be set.
     reduced_basis
-        |VectorArray| of basis vectors of the reduced space onto which to project. If `None`, the
-        reduced basis is computed using the :meth:`~pymor.algorithms.pod.pod` method.
+        |VectorArray| of basis vectors of the reduced space onto which to project.
+        If `None`, the reduced basis is computed using the
+        :meth:`~pymor.algorithms.pod.pod` method.
     training_parameters
-        |Parameter values| to use for POD (in case no `reduced_basis` is provided) and
-        training of the neural network.
+        |Parameter values| to use for POD (in case no `reduced_basis` is provided)
+        and training of the neural network.
     training_snapshots
-        |VectorArray| to use for POD and training of the
-        neural network. Contains the solutions to the parameters of the
+        |VectorArray| to use for POD and training of the neural network.
+        Contains the solutions to the parameters of the
         `training_parameters` and can be `None` when `fom` is not `None`.
     validation_parameters
         |Parameter values| to use for validation in the training
