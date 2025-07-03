@@ -74,7 +74,7 @@ def hy_subgrid(draw):
         return SubGrid(grid, np.arange(grid.size(0), dtype=np.int32))
     else:
         random = draw(hyst.randoms())
-        sample = random.sample(range(grid.size(0)), max(int(m.floor(grid.size(0) / neq)), 1))
+        sample = random.sample(range(grid.size(0)), max(m.floor(grid.size(0) / neq), 1))
         return SubGrid(grid, np.array(sample))
 
 

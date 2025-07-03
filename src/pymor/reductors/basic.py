@@ -57,7 +57,7 @@ class ProjectionBasedReductor(BasicObject):
         if dims is None:
             dims = {k: len(v) for k, v in self.bases.items()}
         if isinstance(dims, Number):
-            dims = {k: dims for k in self.bases}
+            dims = dict.fromkeys(self.bases, dims)
         if set(dims.keys()) != set(self.bases.keys()):
             raise ValueError(f'Must specify dimensions for {set(self.bases.keys())}')
         for k, d in dims.items():
