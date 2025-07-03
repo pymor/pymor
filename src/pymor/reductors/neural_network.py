@@ -301,7 +301,6 @@ class NeuralNetworkReductor(BasicObject):
 
     def compute_training_snapshots(self):
         """Compute training snapshots for the neural network."""
-        # compute snapshots for POD and training of neural networks
         with self.logger.block('Computing training snapshots ...'):
             self.training_snapshots = self.fom.solution_space.empty()
             for mu in self.training_parameters:
@@ -324,7 +323,6 @@ class NeuralNetworkReductor(BasicObject):
 
     def compute_training_data(self):
         """Compute training data for the neural network using the reduced basis."""
-        # compute training samples
         with self.logger.block('Computing training samples ...'):
             self.training_data = []
             for i, mu in enumerate(self.training_parameters):
@@ -336,7 +334,6 @@ class NeuralNetworkReductor(BasicObject):
 
     def compute_validation_snapshots(self):
         """Compute validation data for the neural network."""
-        # compute snapshots for POD and validation of neural networks
         with self.logger.block('Computing validation snapshots ...'):
             self.validation_snapshots = self.fom.solution_space.empty()
             for mu in self.validation_parameters:
@@ -347,11 +344,9 @@ class NeuralNetworkReductor(BasicObject):
         """Compute validation data for the neural network using the reduced basis."""
         assert self.validation_parameters is not None
         with self.logger.block('Computing validation samples ...'):
-            validation_data_iterable = zip(self.validation_parameters, self.validation_snapshots)
-
             self.validation_data = []
-            for i, (mu, u) in enumerate(validation_data_iterable):
-                samples = self._compute_sample(mu, u.base[i*self.nt:(i+1)*self.nt])
+            for i, mu in enumerate(self.validation_parameters):
+                samples = self._compute_sample(mu, self.validation_snapshots[i*self.nt:(i+1)*self.nt])
                 self.validation_data.extend(samples)
 
     def _update_scaling_parameters(self, sample):
