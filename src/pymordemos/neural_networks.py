@@ -48,15 +48,17 @@ def main(
     training_outputs = []
     training_snapshots = fom.solution_space.empty(reserve=len(training_parameters))
     for mu in training_parameters:
-        training_snapshots.append(fom.solve(mu))
-        training_outputs.append(fom.compute(output=True, mu=mu)['output'])
+        res = fom.compute(solution=True, output=True, mu=mu)
+        training_snapshots.append(res['solution'])
+        training_outputs.append(res['output'])
     training_outputs = np.squeeze(np.array(training_outputs))
 
     validation_outputs = []
     validation_snapshots = fom.solution_space.empty(reserve=len(validation_parameters))
     for mu in validation_parameters:
-        validation_snapshots.append(fom.solve(mu))
-        validation_outputs.append(fom.compute(output=True, mu=mu)['output'])
+        res = fom.compute(solution=True, output=True, mu=mu)
+        validation_snapshots.append(res['solution'])
+        validation_outputs.append(res['output'])
     validation_outputs = np.squeeze(np.array(validation_outputs))
 
     reductor_data_driven = NeuralNetworkReductor(training_parameters=training_parameters,
@@ -104,11 +106,11 @@ def main(
 
     for mu in test_parameters:
         tic = time.perf_counter()
-        outputs.append(fom.compute(output=True, mu=mu)['output'])
+        outputs.append(fom.output(mu=mu))
         time_fom = time.perf_counter() - tic
 
         tic = time.perf_counter()
-        outputs_red.append(output_rom.compute(output=True, mu=mu)['output'])
+        outputs_red.append(output_rom.output(mu=mu))
         time_red = time.perf_counter() - tic
 
         outputs_speedups.append(time_fom / time_red)
@@ -134,11 +136,11 @@ def main(
 
     for mu in test_parameters:
         tic = time.perf_counter()
-        outputs.append(fom.compute(output=True, mu=mu)['output'])
+        outputs.append(fom.output(mu=mu))
         time_fom = time.perf_counter() - tic
 
         tic = time.perf_counter()
-        outputs_red_data_driven.append(output_rom_data_driven.compute(output=True, mu=mu)['output'])
+        outputs_red_data_driven.append(output_rom_data_driven.output(mu=mu))
         time_red_data_driven = time.perf_counter() - tic
 
         outputs_speedups_data_driven.append(time_fom / time_red_data_driven)
