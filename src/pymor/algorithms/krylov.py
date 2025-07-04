@@ -78,7 +78,7 @@ def arnoldi(A, E, b, r):
     return V
 
 
-def rational_arnoldi(A, E, b, sigma, trans=False):
+def rational_arnoldi(A, E, b, sigma, trans=False, shifted_system_solver=None):
     r"""Rational Arnoldi algorithm.
 
     If `trans == False`, using Arnoldi process, computes a real
@@ -135,6 +135,8 @@ def rational_arnoldi(A, E, b, sigma, trans=False):
         Sequence of interpolation points (closed under conjugation).
     trans
         Boolean, see above.
+    shifted_system_solver
+        The |Solver| for the shifted systems.
 
     Returns
     -------
@@ -161,9 +163,9 @@ def rational_arnoldi(A, E, b, sigma, trans=False):
         else:
             sEmA = sigma[i] * E - A
         if not trans:
-            v = sEmA.apply_inverse(v if len(V) == 0 else E.apply(v))
+            v = sEmA.apply_inverse(v if len(V) == 0 else E.apply(v), solver=shifted_system_solver)
         else:
-            v = sEmA.apply_inverse_adjoint(v if len(V) == 0 else E.apply_adjoint(v))
+            v = sEmA.apply_inverse_adjoint(v if len(V) == 0 else E.apply_adjoint(v), solver=shifted_system_solver)
         if sigma[i].imag == 0:
             V.append(v)
             gram_schmidt(V, atol=0, rtol=0, offset=len(V) - 1, copy=False)
@@ -176,7 +178,7 @@ def rational_arnoldi(A, E, b, sigma, trans=False):
     return V
 
 
-def tangential_rational_krylov(A, E, B, b, sigma, trans=False, orth=True):
+def tangential_rational_krylov(A, E, B, b, sigma, trans=False, orth=True, shifted_system_solver=None):
     r"""Tangential Rational Krylov subspace.
 
     If `trans == False`, computes a real basis for the rational Krylov
@@ -221,6 +223,8 @@ def tangential_rational_krylov(A, E, B, b, sigma, trans=False, orth=True):
     orth
         If `True`, orthonormalizes the basis using
         :meth:`pymor.algorithms.gram_schmidt.gram_schmidt`.
+    shifted_system_solver
+        The |Solver| to use for the shifted systems.
 
     Returns
     -------
@@ -241,18 +245,18 @@ def tangential_rational_krylov(A, E, B, b, sigma, trans=False, orth=True):
             sEmA = sigma[i].real * E - A
             if not trans:
                 Bb = B.apply(b.real[i])
-                V.append(sEmA.apply_inverse(Bb))
+                V.append(sEmA.apply_inverse(Bb, solver=shifted_system_solver))
             else:
                 BTb = B.apply_adjoint(b.real[i])
-                V.append(sEmA.apply_inverse_adjoint(BTb))
+                V.append(sEmA.apply_inverse_adjoint(BTb, solver=shifted_system_solver))
         elif sigma[i].imag > 0:
             sEmA = sigma[i] * E - A
             if not trans:
                 Bb = B.apply(b[i])
-                v = sEmA.apply_inverse(Bb)
+                v = sEmA.apply_inverse(Bb, solver=shifted_system_solver)
             else:
                 BTb = B.apply_adjoint(b[i].conj())
-                v = sEmA.apply_inverse_adjoint(BTb)
+                v = sEmA.apply_inverse_adjoint(BTb, solver=shifted_system_solver)
             V.append(v.real)
             V.append(v.imag)
     if orth:

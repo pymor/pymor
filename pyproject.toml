@@ -297,10 +297,10 @@ inline-quotes = "single"
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"] # module imported but unused
 "docs/source/try_on_binder.py" = ["N801"] # class name CapWords convention
-"src/pymor/algorithms/genericsolvers.py" = ["TD001"] # invalid TODO tag (XXX)
 "src/pymor/algorithms/rules.py" = ["N801", "N805"] # class name CapWords convention, first argument should be `self`
 "src/pymor/analyticalproblems/expressions.py" = ["N801"] # class name CapWords convention
 "src/pymor/basic.py" = ["F401"] # ununsed imports
+"src/pymor/solvers/generic.py" = ["TD001"] # invalid TODO tag (XXX)
 "src/pymordemos/*" = ["F403", "F405"] # undefined import due to pymor.basic functionality
 
 [tool.ruff.lint.pycodestyle]

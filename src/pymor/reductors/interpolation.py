@@ -228,8 +228,10 @@ class LTIBHIReductor(GenericBHIReductor):
         assert c.shape == (r, self.fom.dim_output)
 
         # compute projection matrices
-        self.V = rational_arnoldi(self.fom.A, self.fom.E, self.fom.B, sigma)
-        self.W = rational_arnoldi(self.fom.A, self.fom.E, self.fom.C, sigma, trans=True)
+        self.V = rational_arnoldi(self.fom.A, self.fom.E, self.fom.B, sigma,
+                                  shifted_system_solver=self.fom.shifted_system_solver)
+        self.W = rational_arnoldi(self.fom.A, self.fom.E, self.fom.C, sigma, trans=True,
+                                  shifted_system_solver=self.fom.shifted_system_solver)
 
         # find reduced-order model
         self._pg_reductor = self._PGReductor(self._fom_assemble(), self.W, self.V)

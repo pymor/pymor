@@ -30,7 +30,7 @@ class SKFemBilinearFormOperator(NumpyMatrixBasedOperator):
 
     sparse = True
 
-    def __init__(self, basis, dirichlet_dofs=None, dirichlet_clear_diag=False, name=None):
+    def __init__(self, basis, dirichlet_dofs=None, dirichlet_clear_diag=False, solver=None, name=None):
         self.source = self.range = NumpyVectorSpace(basis.N)
         self.__auto_init(locals())
 
@@ -77,8 +77,10 @@ class SKFemLinearFormOperator(NumpyMatrixBasedOperator):
 
 class DiffusionOperator(SKFemBilinearFormOperator):
 
-    def __init__(self, basis, diffusion_function, dirichlet_dofs=None, dirichlet_clear_diag=False, name=None):
-        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag, name=name)
+    def __init__(self, basis, diffusion_function, dirichlet_dofs=None, dirichlet_clear_diag=False, solver=None,
+                 name=None):
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag,
+                         solver=solver, name=name)
         self.__auto_init(locals())
 
     def build_form(self, mu):
@@ -91,8 +93,9 @@ class DiffusionOperator(SKFemBilinearFormOperator):
 class L2ProductOperator(SKFemBilinearFormOperator):
 
     def __init__(self, basis, dirichlet_dofs=None, dirichlet_clear_diag=False, coefficient_function=None,
-                 name=None):
-        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag, name=name)
+                 solver=None, name=None):
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag,
+                         solver=solver, name=name)
         self.__auto_init(locals())
 
     def build_form(self, mu):
@@ -107,8 +110,10 @@ class L2ProductOperator(SKFemBilinearFormOperator):
 
 class AdvectionOperator(SKFemBilinearFormOperator):
 
-    def __init__(self, basis, advection_function, dirichlet_dofs=None, dirichlet_clear_diag=False, name=None):
-        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag, name=name)
+    def __init__(self, basis, advection_function, dirichlet_dofs=None, dirichlet_clear_diag=False, solver=None,
+                 name=None):
+        super().__init__(basis, dirichlet_dofs=dirichlet_dofs, dirichlet_clear_diag=dirichlet_clear_diag, solver=solver,
+                         name=name)
         self.__auto_init(locals())
 
     def build_form(self, mu):
@@ -162,7 +167,8 @@ class SKFemVisualizer(ImmutableObject):
         show()
 
 
-def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, element=None, preassemble=True):
+def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, element=None, preassemble=True,
+                             solver=None):
     """Discretizes a |StationaryProblem| with finite elements using scikit-fem.
 
     Parameters
@@ -179,6 +185,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
         If `None`, `mesh.elem()` is used.
     preassemble
         If `True`, preassemble all operators in the resulting |Model|.
+    solver
+        The |Solver| to be used.
 
     Returns
     -------
@@ -241,7 +249,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
         Li, coefficients
     )
 
-    L = LincombOperator(operators=Li, coefficients=coefficients, name='ellipticOperator')
+    L = LincombOperator(operators=Li, coefficients=coefficients, solver=solver, name='ellipticOperator')
 
     # right-hand side
     Fi = []
@@ -271,13 +279,13 @@ def discretize_stationary_cg(analytical_problem, diameter=None, mesh_type=None, 
 
     F = LincombOperator(operators=Fi, coefficients=coefficients_F, name='rhsOperator')
 
-    l2_product = L2ProductOperator(basis)
+    l2_product = L2ProductOperator(basis, solver=solver)
     h1_semi_product = DiffusionOperator(basis, ConstantFunction(1, p.domain.dim))
 
     products = {
         'l2': l2_product,
         'h1_semi': h1_semi_product,
-        'h1': l2_product + h1_semi_product,
+        'h1': (l2_product + h1_semi_product).with_(solver=solver),
     }
 
     if p.outputs:

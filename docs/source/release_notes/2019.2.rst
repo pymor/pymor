@@ -241,7 +241,7 @@ has been reduced throughout pyMOR to avoid unwanted errors due to incompatible `
 
 Further API Changes
 ~~~~~~~~~~~~~~~~~~~
-- The stagnation criterion of the :func:`~pymor.algorithms.newton.newton` is disabled by default
+- The stagnation criterion of the :func:`!~pymor.algorithms.newton.newton` is disabled by default
   (and a relaxation parameter has been added) `[#800] <https://github.com/pymor/pymor/pull/800>`_.
 - The `coordinates` parameter of :class:`~pymor.parameters.functionals.ProjectionParameterFunctional`
   has been renamed to `index` `[#756] <https://github.com/pymor/pymor/pull/756>`_.
