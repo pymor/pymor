@@ -2,11 +2,21 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import weakref
 
 import numpy as np
 import scipy.sparse as sps
 from packaging.version import parse
-from scipy.linalg import solve, solve_continuous_are, solve_continuous_lyapunov, solve_discrete_lyapunov
+from scipy.linalg import (
+    lstsq,
+    lu_factor,
+    lu_solve,
+    solve,
+    solve_continuous_are,
+    solve_continuous_lyapunov,
+    solve_discrete_lyapunov,
+)
+from scipy.linalg.lapack import get_lapack_funcs
 from scipy.sparse.linalg import LinearOperator, bicgstab, lgmres, lsqr, spilu, splu, spsolve
 
 from pymor.algorithms.genericsolvers import _parse_options
@@ -16,7 +26,9 @@ from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.config import config, is_scipy_mkl, is_windows_platform
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
+from pymor.operators.interface import LinearSolver
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 SCIPY_1_14_OR_NEWER = parse(config.SCIPY_VERSION) >= parse('1.14')
 sparray = sps.sparray if parse(config.SCIPY_VERSION) >= parse('1.11') else sps._arrays._sparray
@@ -40,299 +52,265 @@ def svd_lapack_driver(driver='gesvd_unless_win_mkl'):
     return driver
 
 
-@defaults('bicgstab_tol', 'bicgstab_maxiter', 'spilu_drop_tol',
-          'spilu_fill_factor', 'spilu_drop_rule', 'spilu_permc_spec', 'spsolve_permc_spec',
-          'spsolve_keep_factorization',
-          'lgmres_tol', 'lgmres_maxiter', 'lgmres_inner_m', 'lgmres_outer_k', 'least_squares_lsmr_damp',
-          'least_squares_lsmr_atol', 'least_squares_lsmr_btol', 'least_squares_lsmr_conlim',
-          'least_squares_lsmr_maxiter', 'least_squares_lsmr_show', 'least_squares_lsqr_atol',
-          'least_squares_lsqr_btol', 'least_squares_lsqr_conlim', 'least_squares_lsqr_iter_lim',
-          'least_squares_lsqr_show')
-def solver_options(bicgstab_tol=1e-15,
-                   bicgstab_maxiter=None,
-                   spilu_drop_tol=1e-4,
-                   spilu_fill_factor=10,
-                   spilu_drop_rule=None,
-                   spilu_permc_spec='COLAMD',
-                   spsolve_permc_spec='COLAMD',
-                   spsolve_keep_factorization=True,
-                   lgmres_tol=1e-5,
-                   lgmres_maxiter=1000,
-                   lgmres_inner_m=39,
-                   lgmres_outer_k=3,
-                   least_squares_lsmr_damp=0.0,
-                   least_squares_lsmr_atol=1e-6,
-                   least_squares_lsmr_btol=1e-6,
-                   least_squares_lsmr_conlim=1e8,
-                   least_squares_lsmr_maxiter=None,
-                   least_squares_lsmr_show=False,
-                   least_squares_lsqr_damp=0.0,
-                   least_squares_lsqr_atol=1e-6,
-                   least_squares_lsqr_btol=1e-6,
-                   least_squares_lsqr_conlim=1e8,
-                   least_squares_lsqr_iter_lim=None,
-                   least_squares_lsqr_show=False):
-    """Returns available solvers with default |solver_options| for the SciPy backend.
+class ScipyLinearSolver(LinearSolver):
 
-    Parameters
-    ----------
-    bicgstab_tol
-        See :func:`scipy.sparse.linalg.bicgstab`.
-    bicgstab_maxiter
-        See :func:`scipy.sparse.linalg.bicgstab`.
-    spilu_drop_tol
-        See :func:`scipy.sparse.linalg.spilu`.
-    spilu_fill_factor
-        See :func:`scipy.sparse.linalg.spilu`.
-    spilu_drop_rule
-        See :func:`scipy.sparse.linalg.spilu`.
-    spilu_permc_spec
-        See :func:`scipy.sparse.linalg.spilu`.
-    spsolve_permc_spec
-        See :func:`scipy.sparse.linalg.spsolve`.
-    spsolve_keep_factorization
-        See :func:`scipy.sparse.linalg.spsolve`.
-    lgmres_tol
-        See :func:`scipy.sparse.linalg.lgmres`.
-    lgmres_maxiter
-        See :func:`scipy.sparse.linalg.lgmres`.
-    lgmres_inner_m
-        See :func:`scipy.sparse.linalg.lgmres`.
-    lgmres_outer_k
-        See :func:`scipy.sparse.linalg.lgmres`.
-    least_squares_lsmr_damp
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_atol
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_btol
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_conlim
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_maxiter
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_show
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsqr_damp
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_atol
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_btol
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_conlim
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_iter_lim
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_show
-        See :func:`scipy.sparse.linalg.lsqr`.
+    self_adjoint = True
+    least_squares = False
 
-    Returns
-    -------
-    A dict of available solvers with default |solver_options|.
-    """
-    opts = {'scipy_bicgstab_spilu':     {'type': 'scipy_bicgstab_spilu',
-                                         'tol': bicgstab_tol,
-                                         'maxiter': bicgstab_maxiter,
-                                         'spilu_drop_tol': spilu_drop_tol,
-                                         'spilu_fill_factor': spilu_fill_factor,
-                                         'spilu_drop_rule': spilu_drop_rule,
-                                         'spilu_permc_spec': spilu_permc_spec},
-            'scipy_bicgstab':           {'type': 'scipy_bicgstab',
-                                         'tol': bicgstab_tol,
-                                         'maxiter': bicgstab_maxiter},
-            'scipy_spsolve':            {'type': 'scipy_spsolve',
-                                         'permc_spec': spsolve_permc_spec,
-                                         'keep_factorization': spsolve_keep_factorization},
-            'scipy_lgmres':             {'type': 'scipy_lgmres',
-                                         'tol': lgmres_tol,
-                                         'maxiter': lgmres_maxiter,
-                                         'inner_m': lgmres_inner_m,
-                                         'outer_k': lgmres_outer_k},
-            'scipy_least_squares_lsqr': {'type': 'scipy_least_squares_lsqr',
-                                         'damp': least_squares_lsqr_damp,
-                                         'atol': least_squares_lsqr_atol,
-                                         'btol': least_squares_lsqr_btol,
-                                         'conlim': least_squares_lsqr_conlim,
-                                         'iter_lim': least_squares_lsqr_iter_lim,
-                                         'show': least_squares_lsqr_show},
-            'scipy_least_squares_lsmr': {'type': 'scipy_least_squares_lsmr',
-                                         'damp': least_squares_lsmr_damp,
-                                         'atol': least_squares_lsmr_atol,
-                                         'btol': least_squares_lsmr_btol,
-                                         'conlim': least_squares_lsmr_conlim,
-                                         'maxiter': least_squares_lsmr_maxiter,
-                                         'show': least_squares_lsmr_show},
-           }
+    @defaults('check_finite')
+    def __init__(self, check_finite=True):
+        self.__auto_init(locals())
 
-    return opts
+    def apply_inverse(self, operator, V, mu=None, initial_guess=None):
+        assert V in operator.range
+        assert initial_guess is None or initial_guess in operator.source and len(initial_guess) == len(V)
+
+        if operator.source.dim != operator.range.dim:
+            raise InversionError
+
+        operator = operator.assemble(mu)
+        if isinstance(operator, NumpyMatrixOperator):
+            matrix = operator.matrix
+        else:
+            from pymor.algorithms.to_matrix import to_matrix
+            matrix = to_matrix(operator)
+
+        assert isinstance(operator.source, NumpyVectorSpace)
+        V = V.to_numpy()
+        initial_guess = initial_guess.to_numpy() if initial_guess is not None else None
+        promoted_type = np.promote_types(matrix.dtype, V.dtype)
+        R = self._apply_inverse(matrix, V, initial_guess, promoted_type)
+
+        if self.check_finite:
+            if not np.isfinite(np.sum(R)):
+                raise InversionError('Result contains non-finite values')
+
+        return operator.source.from_numpy(R)
+
+    def _apply_inverse(self, matrix, V, initial_guess, promoted_type):
+        raise NotImplementedError
 
 
-@defaults('check_finite', 'default_solver', 'default_least_squares_solver')
-def apply_inverse(op, V, initial_guess=None, options=None, least_squares=False, check_finite=True,
-                  default_solver='scipy_spsolve', default_least_squares_solver='scipy_least_squares_lsmr'):
-    """Solve linear equation system.
+class ScipyBicgStabSolver(ScipyLinearSolver):
 
-    Applies the inverse of `op` to the vectors in `V` using SciPy.
+    @defaults('tol', 'maxiter')
+    def __init__(self, check_finite=None, tol=1e-15, maxiter=None):
+        super().__init__(check_finite)
+        self.__auto_init(locals())
 
-    Parameters
-    ----------
-    op
-        The linear, non-parametric |Operator| to invert.
-    V
-        |VectorArray| of right-hand sides for the equation system.
-    initial_guess
-        |VectorArray| with the same length as `V` containing initial guesses
-        for the solution.  Some implementations of `apply_inverse` may
-        ignore this parameter.  If `None` a solver-dependent default is used.
-    options
-        The |solver_options| to use (see :func:`solver_options`).
-    least_squares
-        If `True`, return least squares solution.
-    check_finite
-        Test if solution only contains finite values.
-    default_solver
-        Default solver to use (scipy_spsolve, scipy_bicgstab, scipy_bicgstab_spilu,
-        scipy_lgmres, scipy_least_squares_lsmr, scipy_least_squares_lsqr).
-    default_least_squares_solver
-        Default solver to use for least squares problems (scipy_least_squares_lsmr,
-        scipy_least_squares_lsqr).
-
-    Returns
-    -------
-    |VectorArray| of the solution vectors.
-    """
-    assert V in op.range
-    assert initial_guess is None or initial_guess in op.source and len(initial_guess) == len(V)
-
-    if isinstance(op, NumpyMatrixOperator):
-        matrix = op.matrix
-    else:
-        from pymor.algorithms.to_matrix import to_matrix
-        matrix = to_matrix(op)
-
-    options = _parse_options(options, solver_options(), default_solver, default_least_squares_solver, least_squares)
-
-    V = V.to_numpy()
-    initial_guess = initial_guess.to_numpy() if initial_guess is not None else None
-    promoted_type = np.promote_types(matrix.dtype, V.dtype)
-
-    if options['type'] == 'scipy_bicgstab':
+    def _apply_inverse(self, matrix, V, initial_guess, promoted_type):
         R = np.empty((matrix.shape[1], len(V)), dtype=promoted_type, order='F')
         for i in range(V.shape[1]):
             if SCIPY_1_14_OR_NEWER:
                 R[:, i], info = bicgstab(matrix, V[:, i], initial_guess[:, i] if initial_guess is not None else None,
-                                         atol=options['tol'], rtol=options['tol'], maxiter=options['maxiter'])
+                                         atol=self.tol, rtol=self.tol, maxiter=self.maxiter)
             else:
                 R[:, i], info = bicgstab(matrix, V[:, i], initial_guess[:, i] if initial_guess is not None else None,
-                                         tol=options['tol'], maxiter=options['maxiter'], atol='legacy')
+                                         tol=self.tol, maxiter=self.maxiter, atol='legacy')
             if info != 0:
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
                 else:
                     raise InversionError(f'bicgstab failed with error code {info} (illegal input or breakdown)')
-    elif options['type'] == 'scipy_bicgstab_spilu':
+        return R
+
+
+class ScipyBicgStabSpILUSolver(ScipyLinearSolver):
+
+    @defaults('tol', 'maxiter', 'spilu_drop_tol', 'spilu_fill_factor', 'spilu_drop_rule', 'spilu_permc_spec')
+    def __init__(self, check_finite=None, tol=1e-15, maxiter=None,
+                 spilu_drop_tol=1e-4, spilu_fill_factor=10, spilu_drop_rule=None, spilu_permc_spec='COLAMD'):
+        super().__init__(check_finite)
+        self.__auto_init(locals())
+
+    def _apply_inverse(self, matrix, V, initial_guess, promoted_type):
         R = np.empty((matrix.shape[1], len(V)), dtype=promoted_type, order='F')
-        ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
-                    drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
+        ilu = spilu(matrix, drop_tol=self.spilu_drop_tol, fill_factor=self.spilu_fill_factor,
+                    drop_rule=self.spilu_drop_rule, permc_spec=self.spilu_permc_spec)
         precond = LinearOperator(matrix.shape, ilu.solve)
         for i in range(V.shape[1]):
             if SCIPY_1_14_OR_NEWER:
                 R[:, i], info = bicgstab(matrix, V[:, i], initial_guess[:, i] if initial_guess is not None else None,
-                                         atol=options['tol'], rtol=options['tol'], maxiter=options['maxiter'],
-                                         M=precond)
+                                         atol=self.tol, rtol=self.tol, maxiter=self.maxiter, M=precond)
             else:
                 R[:, i], info = bicgstab(matrix, V[:, i], initial_guess[:, i] if initial_guess is not None else None,
-                                         tol=options['tol'], maxiter=options['maxiter'], M=precond, atol='legacy')
+                                         tol=self.tol, maxiter=self.maxiter, M=precond, atol='legacy')
             if info != 0:
                 if info > 0:
                     raise InversionError(f'bicgstab failed to converge after {info} iterations')
                 else:
                     raise InversionError(f'bicgstab failed with error code {info} (illegal input or breakdown)')
-    elif options['type'] == 'scipy_spsolve':
+        return R
+
+
+class ScipySpSolveSolver(ScipyLinearSolver):
+
+    _factorization = None
+    _factorizationdtype = None
+    _last_matrix = None
+
+    @defaults('permc_spec', 'keep_factorization')
+    def __init__(self, check_finite=None, permc_spec='COLAMD', keep_factorization=True):
+        super().__init__(check_finite)
+        self.__auto_init(locals())
+
+    def _apply_inverse(self, matrix, V, initial_guess, promoted_type):
         try:
             # maybe remove unusable factorization:
-            if hasattr(matrix, 'factorization'):
-                fdtype = matrix.factorizationdtype
-                if not np.can_cast(V.dtype, fdtype, casting='safe'):
-                    del matrix.factorization
+            if self._factorization is not None:
+                if self._last_matrix() is not matrix:
+                    self._factorization = None
+                if not np.can_cast(V.dtype, self._factorizationdtype, casting='safe'):
+                    self._factorization = None
 
-            if hasattr(matrix, 'factorization'):
+            if self._factorization is not None:
                 # we may use a complex factorization of a real matrix to
                 # apply it to a real vector. In that case, we downcast
                 # the result here, removing the imaginary part,
                 # which should be zero.
-                R = matrix.factorization.solve(V).astype(promoted_type, copy=False)
-            elif options['keep_factorization']:
+                R = self._factorization.solve(V).astype(promoted_type, copy=False)
+            elif self.keep_factorization:
                 # the matrix is always converted to the promoted type.
                 # if matrix.dtype == promoted_type, this is a no_op
-                matrix.factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
-                                            permc_spec=options['permc_spec'])
-                matrix.factorizationdtype = promoted_type
-                R = matrix.factorization.solve(V)
+                self._factorization = splu(matrix_astype_nocopy(matrix.tocsc(), promoted_type),
+                                           permc_spec=self.permc_spec)
+                self._factorizationdtype = promoted_type
+                self._last_matrix = weakref.ref(matrix)
+                R = self._factorization.solve(V)
             else:
                 # the matrix is always converted to the promoted type.
                 # if matrix.dtype == promoted_type, this is a no_op
-                R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V, permc_spec=options['permc_spec'])
+                R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V, permc_spec=self.permc_spec)
         except RuntimeError as e:
             raise InversionError(e) from e
-    elif options['type'] == 'scipy_lgmres':
+        return R
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['_factorization'] = None
+        return state
+
+
+class ScipyLGMRESSolver(ScipyLinearSolver):
+
+    @defaults('tol', 'maxiter', 'inner_m', 'outer_k')
+    def __init__(self, check_finite=None, tol=1e-5, maxiter=1000, inner_m=39, outer_k=3):
+        super().__init__(check_finite)
+        self.__auto_init(locals())
+
+    def _apply_inverse(self, matrix, V, initial_guess, promoted_type):
         R = np.empty((matrix.shape[1], len(V)), dtype=promoted_type, order='F')
         for i in range(V.shape[1]):
             if SCIPY_1_14_OR_NEWER:
                 R[:, i], info = lgmres(matrix, V[:, i], initial_guess[:, i] if initial_guess is not None else None,
-                                       atol=options['tol'],
-                                       rtol=options['tol'],
-                                       maxiter=options['maxiter'],
-                                       inner_m=options['inner_m'],
-                                       outer_k=options['outer_k'])
+                                       atol=self.tol,
+                                       rtol=self.tol,
+                                       maxiter=self.maxiter,
+                                       inner_m=self.inner_m,
+                                       outer_k=self.outer_k)
             else:
                 R[:, i], info = lgmres(matrix, V[:, i], initial_guess[:, i] if initial_guess is not None else None,
-                                       tol=options['tol'],
-                                       atol=options['tol'],
-                                       maxiter=options['maxiter'],
-                                       inner_m=options['inner_m'],
-                                       outer_k=options['outer_k'])
+                                       tol=self.tol,
+                                       atol=self.tol,
+                                       maxiter=self.maxiter,
+                                       inner_m=self.inner_m,
+                                       outer_k=self.outer_k)
             if info > 0:
                 raise InversionError(f'lgmres failed to converge after {info} iterations')
             assert info == 0
-    elif options['type'] == 'scipy_least_squares_lsmr':
+        return R
+
+
+class ScipyLSMRSolver(ScipyLinearSolver):
+
+    least_squares = True
+
+    @defaults('damp', 'atol', 'btol', 'conlim', 'maxiter', 'show')
+    def __init__(self, check_finite=None, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8, maxiter=None, show=False):
+        super().__init__(check_finite)
+        self.__auto_init(locals())
+
+    def _apply_inverse(self, matrix, V, initial_guess, promoted_type):
         from scipy.sparse.linalg import lsmr
         R = np.empty((matrix.shape[1], len(V)), dtype=promoted_type, order='F')
         for i in range(V.shape[1]):
             R[:, i], info, itn, _, _, _, _, _ = \
                 lsmr(matrix, V[:, i],
-                     damp=options['damp'],
-                     atol=options['atol'],
-                     btol=options['btol'],
-                     conlim=options['conlim'],
-                     maxiter=options['maxiter'],
-                     show=options['show'],
+                     damp=self.damp,
+                     atol=self.atol,
+                     btol=self.btol,
+                     conlim=self.conlim,
+                     maxiter=self.maxiter,
+                     show=self.show,
                      x0=initial_guess[:, i] if initial_guess is not None else None)
             assert 0 <= info <= 7
             if info == 7:
                 raise InversionError(f'lsmr failed to converge after {itn} iterations')
-    elif options['type'] == 'scipy_least_squares_lsqr':
+        return R
+
+
+class ScipyLSQRSolver(ScipyLinearSolver):
+
+    least_squares = True
+
+    @defaults('damp', 'atol', 'btol', 'conlim', 'iter_lim', 'show')
+    def __init__(self, check_finite=None, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8, iter_lim=None, show=False):
+        super().__init__(check_finite)
+        self.__auto_init(locals())
+
+    def _apply_inverse(self, matrix, V, initial_guess, promoted_type):
         R = np.empty((matrix.shape[1], len(V)), dtype=promoted_type, order='F')
         for i in range(V.shape[1]):
             R[:, i], info, itn, _, _, _, _, _, _, _ = \
                 lsqr(matrix, V[:, i],
-                     damp=options['damp'],
-                     atol=options['atol'],
-                     btol=options['btol'],
-                     conlim=options['conlim'],
-                     iter_lim=options['iter_lim'],
-                     show=options['show'],
+                     damp=self.damp,
+                     atol=self.atol,
+                     btol=self.btol,
+                     conlim=self.conlim,
+                     iter_lim=self.iter_lim,
+                     show=self.show,
                      x0=initial_guess[:, i] if initial_guess is not None else None)
             assert 0 <= info <= 7
             if info == 7:
                 raise InversionError(f'lsmr failed to converge after {itn} iterations')
-    else:
-        raise ValueError('Unknown solver type')
+        return R
 
-    if check_finite:
-        if not np.isfinite(np.sum(R)):
-            raise InversionError('Result contains non-finite values')
 
-    return op.source.from_numpy(R)
+class ScipyLUSolveSolver(ScipyLinearSolver):
+
+    _lu_factor = None
+
+    @defaults('check_cond')
+    def __init__(self, check_finite=None, check_cond=True):
+        super().__init__(check_finite)
+        self.__auto_init(locals())
+
+    def _apply_inverse(self, matrix, V, initial_guess, promoted_type):
+        if self._lu_factor is None:
+            try:
+                self._lu_factor = lu_factor(matrix, check_finite=self.check_finite)
+            except np.linalg.LinAlgError as e:
+                raise InversionError(f'{type(e)!s}: {e!s}') from e
+            if self.check_cond:
+                gecon = get_lapack_funcs('gecon', self._lu_factor)
+                rcond, _ = gecon(self._lu_factor[0], np.linalg.norm(matrix, ord=1), norm='1')
+                if rcond < np.finfo(np.float64).eps:
+                    self.logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}) in apply_inverse: '
+                                        'result may not be accurate.')
+        R = lu_solve(self._lu_factor, V, check_finite=self.check_finite)
+        return R
+
+
+class ScipyLSTSQSolver(ScipyLinearSolver):
+
+    least_squares = True
+
+    def _apply_inverse(self, matrix, V, initial_guess, promoted_type):
+        try:
+            R, _, _, _ = lstsq(self.matrix, V)
+        except np.linalg.LinAlgError as e:
+            raise InversionError(f'{type(e)!s}: {e!s}') from e
+        return R
 
 
 # unfortunately, this is necessary, as scipy does not
