@@ -188,6 +188,8 @@ class StationaryModel(Model):
             new_operator = \
                 self.operator @ (IdentityOperator(self.solution_space)
                                  + ConstantOperator(affine_shift, self.solution_space))
+            if solver := self.operator.solver:
+                new_operator = new_operator.with_(solver=solver)
             new_rhs = self.rhs
 
         if not isinstance(self.output_functional, ZeroOperator):

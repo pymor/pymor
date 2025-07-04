@@ -11,11 +11,10 @@ import numpy as np
 import scipy.linalg as spla
 import slycot
 
-from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.lyapunov import _chol, _solve_lyap_dense_check_args, _solve_lyap_lrcf_check_args
 from pymor.algorithms.riccati import _solve_ricc_dense_check_args
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.bindings.scipy import _solve_ricc_check_args
+from pymor.bindings.scipy import _parse_options, _solve_ricc_check_args
 from pymor.core.logger import getLogger
 
 

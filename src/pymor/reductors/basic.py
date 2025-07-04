@@ -288,7 +288,10 @@ class InstationaryRBReductor(ProjectionBasedReductor):
 
     def build_rom(self, projected_operators, error_estimator):
         fom = self.fom
-        return InstationaryModel(T=fom.T, time_stepper=fom.time_stepper, num_values=fom.num_values,
+        # solvers attached to the time stepper will probably be unsuitable for the ROM
+        if (time_stepper := fom.time_stepper) and getattr(time_stepper, 'solver', None):
+            time_stepper = time_stepper.with_(solver=None)
+        return InstationaryModel(T=fom.T, time_stepper=time_stepper, num_values=fom.num_values,
                                  error_estimator=error_estimator, **projected_operators)
 
 
@@ -338,7 +341,10 @@ class LTIPGReductor(ProjectionBasedReductor):
 
     def build_rom(self, projected_operators, error_estimator):
         fom = self.fom
-        return LTIModel(T=fom.T, time_stepper=fom.time_stepper, num_values=fom.num_values,
+        # solvers attached to the time stepper will probably be unsuitable for the ROM
+        if (time_stepper := fom.time_stepper) and getattr(time_stepper, 'solver', None):
+            time_stepper = time_stepper.with_(solver=None)
+        return LTIModel(T=fom.T, time_stepper=time_stepper, num_values=fom.num_values,
                         error_estimator=error_estimator, sampling_time=fom.sampling_time, **projected_operators)
 
     def extend_basis(self, **kwargs):

@@ -28,7 +28,7 @@ from pymor.operators.constructions import (
 from pymor.vectorarrays.constructions import cat_arrays
 
 
-def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
+def assemble_lincomb(operators, coefficients, solver=None, name=None):
     """Try to assemble a linear combination of the given operators.
 
     Returns a new |Operator| which represents the sum ::
@@ -51,8 +51,8 @@ def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
         List of |Operators| `O_i` whose linear combination is formed.
     coefficients
         List of the corresponding linear coefficients `c_i`.
-    solver_options
-        |solver_options| for the assembled operator.
+    solver
+        |Solver| for the assembled operator.
     name
         Name of the assembled operator.
 
@@ -60,7 +60,10 @@ def assemble_lincomb(operators, coefficients, solver_options=None, name=None):
     -------
     The assembled |Operator|.
     """
-    return AssembleLincombRules(tuple(coefficients), solver_options, name).apply(tuple(operators))
+    op =  AssembleLincombRules(tuple(coefficients), name).apply(tuple(operators))
+    if solver:
+        op = op.with_(solver=solver)
+    return op
 
 
 class AssembleLincombRules(RuleTable):
@@ -70,13 +73,11 @@ class AssembleLincombRules(RuleTable):
     ----------
     coefficients
         Tuple of coefficients.
-    solver_options
-        |solver_options| for the assembled operator.
     name
         Name of the assembled operator.
     """
 
-    def __init__(self, coefficients, solver_options, name):
+    def __init__(self, coefficients, name):
         super().__init__(use_caching=False)
         self.__auto_init(locals())
 
@@ -91,8 +92,7 @@ class AssembleLincombRules(RuleTable):
             return ZeroOperator(ops[0].range, ops[0].source, name=self.name)
         else:
             new_ops, new_coeffs = zip(*without_zero)
-            return assemble_lincomb(new_ops, new_coeffs,
-                                    solver_options=self.solver_options, name=self.name)
+            return assemble_lincomb(new_ops, new_coeffs, name=self.name)
 
     @match_class_any(ZeroOperator)
     def action_ZeroOperator(self, ops):
@@ -103,8 +103,7 @@ class AssembleLincombRules(RuleTable):
             return ZeroOperator(ops[0].range, ops[0].source, name=self.name)
         else:
             new_ops, new_coeffs = zip(*without_zero)
-            return assemble_lincomb(new_ops, new_coeffs,
-                                    solver_options=self.solver_options, name=self.name)
+            return assemble_lincomb(new_ops, new_coeffs, name=self.name)
 
     @match_class_all(IdentityOperator)
     def action_IdentityOperator(self, ops):
@@ -113,8 +112,7 @@ class AssembleLincombRules(RuleTable):
             return ZeroOperator(ops[0].source, ops[0].source, name=self.name)
         else:
             return LincombOperator([IdentityOperator(ops[0].source, name=self.name)],
-                                   [coeff],
-                                   name=self.name)
+                                   [coeff], name=self.name)
 
     @match_class_any(BlockOperatorBase)
     @match_class_any(IdentityOperator)
@@ -132,7 +130,6 @@ class AssembleLincombRules(RuleTable):
             raise RuleNotMatchingError
 
         adjoint = ops[0].adjoint
-        assert not self.solver_options
 
         coeffs = np.conj(self.coefficients) if adjoint else self.coefficients
 
@@ -198,8 +195,7 @@ class AssembleLincombRules(RuleTable):
         if len(ops) > 1:
             for i in range(num_source_blocks):
                 operators_i = [op.blocks[i, i] for op in ops]
-                blocks[i] = assemble_lincomb(operators_i, coefficients,
-                                             solver_options=self.solver_options, name=self.name)
+                blocks[i] = assemble_lincomb(operators_i, coefficients, name=self.name)
                 if blocks[i] is None:
                     return None
             return BlockDiagonalOperator(blocks)
@@ -221,8 +217,7 @@ class AssembleLincombRules(RuleTable):
         if len(ops) > 1:
             for (i, j) in np.ndindex(shape):
                 operators_ij = [op.blocks[i, j] for op in ops]
-                blocks[i, j] = assemble_lincomb(operators_ij, coefficients,
-                                                solver_options=self.solver_options, name=self.name)
+                blocks[i, j] = assemble_lincomb(operators_ij, coefficients, name=self.name)
                 if blocks[i, j] is None:
                     return None
             return operator_type(blocks)
@@ -262,8 +257,7 @@ class AssembleLincombRules(RuleTable):
             return new_low_rank_op
         else:
             new_ops, new_coeffs = zip(*not_low_rank)
-            return assemble_lincomb(chain(new_ops, [new_low_rank_op]), chain(new_coeffs, [1]),
-                                    solver_options=self.solver_options, name=self.name)
+            return assemble_lincomb(chain(new_ops, [new_low_rank_op]), chain(new_coeffs, [1]), name=self.name)
 
     @match_generic(lambda ops: len(ops) >= 2)
     @match_class_any(LowRankOperator, LowRankUpdatedOperator)
@@ -289,8 +283,7 @@ class AssembleLincombRules(RuleTable):
         lru_lr_coeff = 1
         if isinstance(lru_lr_op, LincombOperator):
             lru_lr_op, lru_lr_coeff = lru_lr_op.operators[0], lru_lr_op.coefficients[0]
-        return LowRankUpdatedOperator(lru_op, lru_lr_op, 1, lru_lr_coeff,
-                                      solver_options=self.solver_options, name=self.name)
+        return LowRankUpdatedOperator(lru_op, lru_lr_op, 1, lru_lr_coeff, name=self.name)
 
     @match_always
     def action_call_assemble_lincomb_method(self, ops):
@@ -304,7 +297,7 @@ class AssembleLincombRules(RuleTable):
         id_coeff = sum(id_coeffs)
 
         op = ops_without_id[0]._assemble_lincomb(ops_without_id, coeffs_without_id, identity_shift=id_coeff,
-                                                 solver_options=self.solver_options, name=self.name)
+                                                 name=self.name)
 
         if not op:
             raise RuleNotMatchingError

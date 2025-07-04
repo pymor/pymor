@@ -58,7 +58,7 @@ class MPIOperator(Operator):
     """
 
     def __init__(self, obj_id, mpi_range, mpi_source, with_apply2=False, pickle_local_spaces=True,
-                 space_type=MPIVectorSpace):
+                 space_type=MPIVectorSpace, solver=None, name=None):
         assert mpi_source or mpi_range
 
         self.__auto_init(locals())
@@ -67,7 +67,7 @@ class MPIOperator(Operator):
         self.parameters = op.parameters
         self.parameters_own = op.parameters_own
         self.parameters_internal = op.parameters_internal
-        self.name = op.name
+        self.name = name or op.name
         if mpi_source:
             local_spaces = mpi.call(_MPIOperator_get_local_spaces, obj_id, True, pickle_local_spaces)
             if all(ls == local_spaces[0] for ls in local_spaces):
@@ -82,7 +82,6 @@ class MPIOperator(Operator):
             self.range = space_type(local_spaces)
         else:
             self.range = op.range
-        self.solver_options = op.solver_options
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -139,31 +138,23 @@ class MPIOperator(Operator):
         else:
             return mpi.call(mpi.function_call, _MPIOperator_apply_adjoint, self.obj_id, V, V_ind, mu)
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
+    def _apply_inverse(self, V, mu, initial_guess):
         if not self.mpi_source or not self.mpi_range:
             raise NotImplementedError
-        assert V in self.range
-        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
-        assert self.parameters.assert_compatible(mu)
         return self.source.make_array(mpi.call(mpi.function_call_manage, _MPIOperator_apply_inverse,
                                                self.obj_id,
                                                V.impl.obj_id, V.ind, mu,
                                                initial_guess=(initial_guess.impl.obj_id if initial_guess is not None
-                                                              else None),
-                                               least_squares=least_squares))
+                                                              else None))), {}
 
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
+    def _apply_inverse_adjoint(self, U, mu=None, initial_guess=None):
         if not self.mpi_source or not self.mpi_range:
             raise NotImplementedError
-        assert U in self.source
-        assert initial_guess is None or initial_guess in self.range and len(initial_guess) == len(U)
-        assert self.parameters.assert_compatible(mu)
         return self.source.make_array(mpi.call(mpi.function_call_manage, _MPIOperator_apply_inverse_adjoint,
                                                self.obj_id,
                                                U.impl.obj_id, U.ind, mu,
                                                initial_guess=(initial_guess.impl.obj_id if initial_guess is not None
-                                                              else None),
-                                               least_squares=least_squares))
+                                                              else None))), {}
 
     def jacobian(self, U, mu=None):
         assert U in self.source
@@ -180,10 +171,9 @@ class MPIOperator(Operator):
         else:
             return self
 
-    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., name=None):
         if not all(isinstance(op, MPIOperator) for op in operators):
             return None
-        assert solver_options is None
         operators = [op.obj_id for op in operators]
         obj_id = mpi.call(_MPIOperator_assemble_lincomb, operators, coefficients, identity_shift, name=name)
         op = mpi.get_object(obj_id)
@@ -225,14 +215,14 @@ def _MPIOperator_apply_adjoint(self, V, V_ind, mu):
     return self.apply_adjoint(_indexed(V, V_ind), mu=mu)
 
 
-def _MPIOperator_apply_inverse(self, V, V_ind, mu, initial_guess, least_squares):
+def _MPIOperator_apply_inverse(self, V, V_ind, mu, initial_guess):
     return self.apply_inverse(_indexed(V, V_ind), mu=mu,
-                              initial_guess=initial_guess, least_squares=least_squares)
+                              initial_guess=initial_guess)
 
 
-def _MPIOperator_apply_inverse_adjoint(self, U, U_ind, mu, initial_guess, least_squares):
+def _MPIOperator_apply_inverse_adjoint(self, U, U_ind, mu, initial_guess):
     return self.apply_inverse_adjoint(_indexed(U, U_ind), mu=mu,
-                                      initial_guess=initial_guess, least_squares=least_squares)
+                                      initial_guess=initial_guess)
 
 
 def _MPIOperator_jacobian(self, U, U_ind, mu):

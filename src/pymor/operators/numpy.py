@@ -19,18 +19,14 @@ This module provides the following |NumPy|-based |Operators|:
 from functools import reduce
 
 import numpy as np
-import scipy.linalg as spla
 import scipy.sparse as sps
 from scipy.fft import fft, ifft, irfft, rfft
 from scipy.io import mmwrite, savemat
-from scipy.linalg import lu_factor, lu_solve
-from scipy.linalg.lapack import get_lapack_funcs
 
+from pymor.bindings.scipy import ScipyLUSolveSolver, ScipySpSolveSolver
 from pymor.core.base import abstractmethod
 from pymor.core.cache import CacheableObject, cached
 from pymor.core.defaults import defaults
-from pymor.core.exceptions import InversionError
-from pymor.core.logger import getLogger
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -64,14 +60,14 @@ class NumpyGenericOperator(Operator):
         Set to `True` if the provided `mapping` and `adjoint_mapping` are linear.
     parameters
         The |Parameters| the operator depends on.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
     def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameters={},
-                 solver_options=None, name=None):
+                 solver=None, name=None):
         self.__auto_init(locals())
         self.source = NumpyVectorSpace(dim_source)
         self.range = NumpyVectorSpace(dim_range)
@@ -123,9 +119,7 @@ class NumpyMatrixBasedOperator(Operator):
 
     def assemble(self, mu=None):
         assert self.parameters.assert_compatible(mu)
-        return NumpyMatrixOperator(self._assemble(mu),
-                                   solver_options=self.solver_options,
-                                   name=self.name)
+        return NumpyMatrixOperator(self._assemble(mu), solver=self.solver, name=self.name)
 
     def apply(self, U, mu=None):
         return self.assemble(mu).apply(U)
@@ -138,9 +132,6 @@ class NumpyMatrixBasedOperator(Operator):
 
     def as_source_array(self, mu=None):
         return self.assemble(mu).as_source_array()
-
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        return self.assemble(mu).apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
         """Save the matrix of the operator to a file.
@@ -180,13 +171,16 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     ----------
     matrix
         The |NumPy array| or |SciPy spmatrix| which is to be wrapped.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
-    def __init__(self, matrix, solver_options=None, name=None):
+    @defaults('default_dense_solver', 'default_sparse_solver')
+    def __init__(self, matrix, solver=None, name=None,
+                 default_dense_solver=ScipyLUSolveSolver,
+                 default_sparse_solver=ScipySpSolveSolver):
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
             matrix = np.reshape(matrix, (1, -1))
@@ -195,28 +189,29 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         except AttributeError:
             pass
 
+        sparse = sps.issparse(matrix)
+        solver = solver or (default_sparse_solver() if sparse else default_dense_solver())
+
         self.__auto_init(locals())
         self.source = NumpyVectorSpace(matrix.shape[1])
         self.range = NumpyVectorSpace(matrix.shape[0])
-        self.sparse = sps.issparse(matrix)
+        self.sparse = sparse
 
     @classmethod
-    def from_file(cls, path, key=None, solver_options=None, name=None):
+    def from_file(cls, path, key=None, solver=None, name=None):
         from pymor.tools.io import load_matrix
         matrix = load_matrix(path, key=key)
-        return cls(matrix, solver_options=solver_options, name=name or key or path)
+        return cls(matrix, solver=solver, name=name or key or path)
 
     @property
     def H(self):
-        options = {'inverse': self.solver_options.get('inverse_adjoint'),
-                   'inverse_adjoint': self.solver_options.get('inverse')} if self.solver_options else None
         if self.sparse:
             adjoint_matrix = self.matrix.transpose(copy=False).conj(copy=False)
         elif np.isrealobj(self.matrix):
             adjoint_matrix = self.matrix.T
         else:
             adjoint_matrix = self.matrix.T.conj()
-        return self.with_(matrix=adjoint_matrix, solver_options=options, name=self.name + '_adjoint')
+        return self.with_(matrix=adjoint_matrix, solver=self._adjoint_solver, name=self.name + '_adjoint')
 
     def _assemble(self, mu=None):
         pass
@@ -241,118 +236,11 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             return self.range.make_array(np.matmul(self.matrix, U.to_numpy(), order='F'))
 
-
     def apply_adjoint(self, V, mu=None):
         assert V in self.range
         return self.H.apply(V, mu=mu)
 
-    @defaults('check_finite', 'check_cond', 'default_sparse_solver_backend')
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False,
-                      check_finite=True, check_cond=True, default_sparse_solver_backend='scipy'):
-        """Apply the inverse operator.
-
-        Parameters
-        ----------
-        V
-            |VectorArray| of vectors to which the inverse operator is applied.
-        mu
-            The |parameter values| for which to evaluate the inverse operator.
-        initial_guess
-            |VectorArray| with the same length as `V` containing initial guesses
-            for the solution.  Some implementations of `apply_inverse` may
-            ignore this parameter.  If `None` a solver-dependent default is used.
-        least_squares
-            If `True`, solve the least squares problem::
-
-                u = argmin ||op(u) - v||_2.
-
-            Since for an invertible operator the least squares solution agrees
-            with the result of the application of the inverse operator,
-            setting this option should, in general, have no effect on the result
-            for those operators. However, note that when no appropriate
-            |solver_options| are set for the operator, most implementations
-            will choose a least squares solver by default which may be
-            undesirable.
-        check_finite
-            Test if solution only contains finite values.
-        check_cond
-            Check condition number in case the matrix is a |NumPy array|.
-        default_sparse_solver_backend
-            Default sparse solver backend to use (scipy, generic).
-
-        Returns
-        -------
-        |VectorArray| of the inverse operator evaluations.
-
-        Raises
-        ------
-        InversionError
-            The operator could not be inverted.
-        """
-        assert V in self.range
-        assert initial_guess is None or initial_guess in self.source and len(initial_guess) == len(V)
-
-        if V.dim == 0:
-            if self.source.dim == 0 or least_squares:
-                return self.source.make_array(np.zeros((self.source.dim, len(V)), order='F'))
-            else:
-                raise InversionError
-
-        if self.source.dim != self.range.dim and not least_squares:
-            raise InversionError
-
-        options = self.solver_options.get('inverse') if self.solver_options else None
-        assert self.sparse or not options
-
-        if self.sparse:
-            if options:
-                solver = options if isinstance(options, str) else options['type']
-                backend = solver.split('_')[0]
-            else:
-                backend = default_sparse_solver_backend
-
-            if backend == 'scipy':
-                from pymor.bindings.scipy import apply_inverse as apply_inverse_impl
-            elif backend == 'generic':
-                logger = getLogger('pymor.bindings.scipy.scipy_apply_inverse')
-                logger.warning('You have selected a (potentially slow) generic solver for a NumPy matrix operator!')
-                from pymor.algorithms.genericsolvers import apply_inverse as apply_inverse_impl
-            else:
-                raise NotImplementedError
-
-            return apply_inverse_impl(self, V, initial_guess=initial_guess, options=options,
-                                      least_squares=least_squares, check_finite=check_finite)
-
-        else:
-            if least_squares:
-                try:
-                    R, _, _, _ = spla.lstsq(self.matrix, V.to_numpy())
-                except np.linalg.LinAlgError as e:
-                    raise InversionError(f'{type(e)!s}: {e!s}') from e
-            else:
-                if not hasattr(self, '_lu_factor'):
-                    try:
-                        self._lu_factor = lu_factor(self.matrix, check_finite=check_finite)
-                    except np.linalg.LinAlgError as e:
-                        raise InversionError(f'{type(e)!s}: {e!s}') from e
-                    if check_cond:
-                        gecon = get_lapack_funcs('gecon', self._lu_factor)
-                        rcond, _ = gecon(self._lu_factor[0], np.linalg.norm(self.matrix, ord=1), norm='1')
-                        if rcond < np.finfo(np.float64).eps:
-                            self.logger.warning(f'Ill-conditioned matrix (rcond={rcond:.6g}) in apply_inverse: '
-                                                'result may not be accurate.')
-                R = lu_solve(self._lu_factor, V.to_numpy(), check_finite=check_finite)
-
-            if check_finite:
-                if not np.isfinite(np.sum(R)):
-                    raise InversionError('Result contains non-finite values')
-
-            return self.source.make_array(R)
-
-    def apply_inverse_adjoint(self, U, mu=None, initial_guess=None, least_squares=False):
-        return self.H.apply_inverse(U, mu=mu, initial_guess=initial_guess, least_squares=least_squares)
-
-    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., name=None):
         if not all(isinstance(op, NumpyMatrixOperator) for op in operators):
             return None
 
@@ -396,12 +284,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             else:
                 matrix += (np.eye(matrix.shape[0]) * identity_shift)
 
-        return NumpyMatrixOperator(matrix, solver_options=solver_options)
-
-    def __getstate__(self):
-        if hasattr(self.matrix, 'factorization'):  # remove unpicklable SuperLU factorization
-            del self.matrix.factorization
-        return self.__dict__
+        return NumpyMatrixOperator(matrix)
 
     def _format_repr(self, max_width, verbosity):
         if self.sparse:
@@ -444,12 +327,13 @@ class NumpyCirculantOperator(Operator, CacheableObject):
     cache_region = 'memory'
     linear = True
 
-    def __init__(self, c, name=None):
+    def __init__(self, c, solver=None, name=None):
         assert isinstance(c, np.ndarray)
         if c.ndim == 1:
             c = c.reshape(-1, 1, 1)
         assert c.ndim == 3
         c.setflags(write=False)  # make numpy arrays read-only
+
         self.__auto_init(locals())
         n, p, m = c.shape
         self._arr = c
@@ -498,7 +382,8 @@ class NumpyCirculantOperator(Operator, CacheableObject):
 
     @property
     def H(self):
-        return self.with_(c=np.roll(self._arr.conj(), -1, axis=0)[::-1].transpose(0, 2, 1), name=self.name + '_adjoint')
+        return self.with_(c=np.roll(self._arr.conj(), -1, axis=0)[::-1].transpose(0, 2, 1),
+                          solver=self._adjoint_solver, name=self.name + '_adjoint')
 
 
 class NumpyToeplitzOperator(Operator):
@@ -541,7 +426,7 @@ class NumpyToeplitzOperator(Operator):
 
     linear = True
 
-    def __init__(self, c, r=None, name=None):
+    def __init__(self, c, r=None, solver=None, name=None):
         assert isinstance(c, np.ndarray)
         c = c.reshape(-1, 1, 1) if c.ndim == 1 else c
         assert c.ndim == 3
@@ -556,6 +441,7 @@ class NumpyToeplitzOperator(Operator):
             assert np.allclose(c[0], r[0])
         c.setflags(write=False)
         r.setflags(write=False)
+
         self.__auto_init(locals())
         self._circulant = NumpyCirculantOperator(
             np.concatenate([c, r[:0:-1]]),
@@ -577,7 +463,7 @@ class NumpyToeplitzOperator(Operator):
     @property
     def H(self):
         return self.with_(c=self.r.conj().transpose(0, 2, 1), r=self.c.conj().transpose(0, 2, 1),
-                          name=self.name + '_adjoint')
+                          solver=self._adjoint_solver, name=self.name + '_adjoint')
 
 
 class NumpyHankelOperator(Operator):
@@ -619,7 +505,7 @@ class NumpyHankelOperator(Operator):
 
     linear = True
 
-    def __init__(self, c, r=None, name=None):
+    def __init__(self, c, r=None, solver=None, name=None):
         assert isinstance(c, np.ndarray)
         c = c.reshape(-1, 1, 1) if c.ndim == 1 else c
         assert c.ndim == 3
@@ -663,4 +549,5 @@ class NumpyHankelOperator(Operator):
     @property
     def H(self):
         h = np.concatenate([self.c, self.r[1:]], axis=0).conj().transpose(0, 2, 1)
-        return self.with_(c=h[:self.r.shape[0]], r=h[self.r.shape[0]-1:], name=self.name+'_adjoint')
+        return self.with_(c=h[:self.r.shape[0]], r=h[self.r.shape[0]-1:],
+                          solver=self._adjoint_solver, name=self.name+'_adjoint')
