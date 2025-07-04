@@ -652,8 +652,7 @@ is aware of the output quantities:
 fom, _ = discretize_stationary_cg(problem, diameter=1/50)
 ```
 
-We employ a single {{ Parameter }} with the same range for each
-parameter and create the {{ ParameterSpace }}:
+We create the {{ ParameterSpace }} similarly as before:
 
 ```{code-cell} ipython3
 parameter_space = fom.parameters.space((0.1, 1))
@@ -691,10 +690,10 @@ full order model (`fom`):
 from pymor.reductors.neural_network import NeuralNetworkStatefreeOutputReductor
 
 output_reductor_data_driven = NeuralNetworkStatefreeOutputReductor(training_parameters=training_parameters,
-                                                                       training_outputs=training_outputs,
-                                                                       validation_parameters=validation_parameters,
-                                                                       validation_outputs=validation_outputs,
-                                                                       validation_loss=1e-5)
+                                                                   training_outputs=training_outputs,
+                                                                   validation_parameters=validation_parameters,
+                                                                   validation_outputs=validation_outputs,
+                                                                   validation_loss=1e-5)
 ```
 
 Similar to the previous examples, the reduction can be performed using the `reduce` method,

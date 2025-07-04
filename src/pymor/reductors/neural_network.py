@@ -62,6 +62,8 @@ class NeuralNetworkReductor(BasicObject):
         |VectorArray| to use for POD and training of the neural network.
         Contains the solutions to the parameters of the
         `training_parameters` and can be `None` when `fom` is not `None`.
+        In the case of a time-dependent problem, the snapshots are assumed to be
+        equidistant in time.
     validation_parameters
         |Parameter values| to use for validation in the training
         of the neural network.
@@ -69,6 +71,8 @@ class NeuralNetworkReductor(BasicObject):
         |VectorArray| to use for validation in the training
         of the neural network. Contains the solutions to the parameters of
         the `validation_parameters` and can be `None` when `fom` is not `None`.
+        In the case of a time-dependent problem, the snapshots are assumed to be
+        equidistant in time.
     validation_ratio
         Fraction of the training parameters to use for validation in the training
         of the neural network (only used if no validation parameters are provided).
@@ -118,11 +122,13 @@ class NeuralNetworkReductor(BasicObject):
             assert training_snapshots is not None
             self.parameters_dim = training_parameters[0].parameters().dim
             self.nt = int(len(training_snapshots) / len(training_parameters))
+            assert len(training_snapshots) == len(training_parameters) * self.nt
             if self.nt > 1:  # instationary
                 assert T is not None
                 self.T = T
                 self.is_stationary = False
             else:  # stationary
+                assert T is None
                 self.is_stationary = True
         else:
             self.parameters_dim = fom.parameters.dim
@@ -581,12 +587,15 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
 
     def compute_reduced_basis(self):
         """Empty function to avoid computing a reduced basis."""
+        pass
 
     def compute_training_snapshots(self):
-        """Empty function to avoid computing training_snapshots."""
+        """Empty function to avoid computing `training_snapshots`."""
+        pass
 
     def compute_validation_snapshots(self):
-        """Empty function to avoid computing validation_snapshots."""
+        """Empty function to avoid computing `validation_snapshots`."""
+        pass
 
     def _compute_sample(self, mu, output=None):
         """Transform parameter and corresponding output to tensors."""
