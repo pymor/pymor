@@ -28,17 +28,18 @@ def main(
 
     # ### ROM generation (POD/DEIM)
     from pymor.algorithms.ei import ei_greedy
-    from pymor.algorithms.newton import newton
     from pymor.algorithms.pod import pod
     from pymor.operators.ei import EmpiricalInterpolatedOperator
     from pymor.reductors.basic import StationaryRBReductor
+    from pymor.solvers.newton import NewtonSolver
 
+    solver = NewtonSolver(rtol=1e-6, return_residuals=True)
     U = fom.solution_space.empty()
     residuals = fom.solution_space.empty()
     for mu in parameter_space.sample_uniformly(10):
-        UU, data = newton(fom.operator, fom.rhs.as_vector(), mu=mu, rtol=1e-6, return_residuals=True)
+        UU, info = solver.solve(fom.operator, fom.rhs.as_vector(), mu=mu, return_info=True)
         U.append(UU)
-        residuals.append(data['residuals'])
+        residuals.append(info['residuals'])
 
     dofs, cb, _ = ei_greedy(residuals, rtol=1e-7)
     ei_op = EmpiricalInterpolatedOperator(fom.operator, collateral_basis=cb, interpolation_dofs=dofs, triangular=True)
@@ -47,8 +48,8 @@ def main(
     fom_ei = fom.with_(operator=ei_op)
     reductor = StationaryRBReductor(fom_ei, rb)
     rom = reductor.reduce()
-    # the reductor currently removes all solver_options so we need to add them again
-    rom = rom.with_(operator=rom.operator.with_(solver_options=fom.operator.solver_options))
+    # the reductor currently removes all solvers so we need to add them again
+    rom = rom.with_(operator=rom.operator.with_(solver=solver))
 
     # ### ROM validation
     import time
@@ -114,8 +115,7 @@ def discretize(dim, n, order):
     space = FenicsVectorSpace(V)
     op = FenicsOperator(F, space, space, u, (bc,),
                         parameter_setter=lambda mu: c.assign(mu['c'].item()),
-                        parameters={'c': 1},
-                        solver_options={'inverse': {'type': 'newton', 'rtol': 1e-6}})
+                        parameters={'c': 1})
     rhs = VectorOperator(op.range.zeros())
 
     fom = StationaryModel(op, rhs,

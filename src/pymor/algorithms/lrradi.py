@@ -5,9 +5,9 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.genericsolvers import _parse_options
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.riccati import _solve_ricc_check_args
+from pymor.bindings.scipy import _parse_options
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator
@@ -51,7 +51,7 @@ def ricc_lrcf_solver_options(lrradi_tol=1e-10,
                                                'subspace_columns': hamiltonian_shifts_subspace_columns}}}}
 
 
-def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
+def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None, solver=None):
     """Compute an approximate low-rank solution of a Riccati equation.
 
     See :func:`pymor.algorithms.riccati.solve_ricc_lrcf` for a
@@ -79,6 +79,8 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
     options
         The solver options to use. (see
         :func:`ricc_lrcf_solver_options`)
+    solver
+        The |Solver| to use for the shifted systems.
 
     Returns
     -------
@@ -134,14 +136,14 @@ def solve_ricc_lrcf(A, E, B, C, R=None, S=None, trans=False, options=None):
             AsE = A + np.conj(shifts[j_shift]) * E
         if j == 0:
             if not trans:
-                V = AsE.apply_inverse(RF) * np.sqrt(-2 * shifts[j_shift].real)
+                V = AsE.apply_inverse(RF, solver=solver) * np.sqrt(-2 * shifts[j_shift].real)
             else:
-                V = AsE.apply_inverse_adjoint(RF) * np.sqrt(-2 * shifts[j_shift].real)
+                V = AsE.apply_inverse_adjoint(RF, solver=solver) * np.sqrt(-2 * shifts[j_shift].real)
         else:
             if not trans:
-                LN = AsE.apply_inverse(cat_arrays([RF, K]))
+                LN = AsE.apply_inverse(cat_arrays([RF, K]), solver=solver)
             else:
-                LN = AsE.apply_inverse_adjoint(cat_arrays([RF, K]))
+                LN = AsE.apply_inverse_adjoint(cat_arrays([RF, K]), solver=solver)
             L = LN[:len(RF)]
             N = LN[-len(K):]
             ImBN = np.eye(len(K)) - B.inner(N)

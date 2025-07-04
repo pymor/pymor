@@ -158,14 +158,11 @@ class ImplicitEulerTimeStepper(TimeStepper):
     ----------
     nt
         The number of time-steps the time-stepper will perform.
-    solver_options
-        The |solver_options| used to invert `M + dt*A`.
-        The special values `'mass'` and `'operator'` are
-        recognized, in which case the solver_options of
-        M (resp. A) are used.
+    solver
+        The |Solver| for each time step.
     """
 
-    def __init__(self, nt, solver_options='operator'):
+    def __init__(self, nt, solver=None):
         self.__auto_init(locals())
 
     def estimate_time_step_count(self, initial_time, end_time):
@@ -215,12 +212,10 @@ class ImplicitEulerTimeStepper(TimeStepper):
         num_ret_values = 1
         yield U0, t0
 
-        options = (A.solver_options if self.solver_options == 'operator' else
-                   M.solver_options if self.solver_options == 'mass' else
-                   self.solver_options)
-        M_dt_A = (M + A * dt).with_(solver_options=options)
+        M_dt_A = (M + A * dt)
         if not _depends_on_time(M_dt_A, mu):
             M_dt_A = M_dt_A.assemble(mu)
+        solver = self.solver
 
         t = t0
         U = U0.copy()
@@ -235,7 +230,7 @@ class ImplicitEulerTimeStepper(TimeStepper):
                 dt_F = F.as_vector(mu_t) * dt
             if F:
                 rhs += dt_F
-            U = M_dt_A.apply_inverse(rhs, mu=mu_t, initial_guess=U)
+            U = M_dt_A.apply_inverse(rhs, mu=mu_t, initial_guess=U, solver=solver)
             while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                 num_ret_values += 1
                 yield U, t
@@ -343,14 +338,11 @@ class ImplicitMidpointTimeStepper(TimeStepper):
     ----------
     nt
         The number of time-steps the time-stepper will perform.
-    solver_options
-        The |solver_options| used to invert `M - dt/2*A`.
-        The special values `'mass'` and `'operator'` are
-        recognized, in which case the solver_options of
-        M (resp. A) are used.
+    solver
+        The |Solver| for each time step.
     """
 
-    def __init__(self, nt, solver_options='operator'):
+    def __init__(self, nt, solver=None):
         self.__auto_init(locals())
 
     def estimate_time_step_count(self, initial_time, end_time):
@@ -402,19 +394,14 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         num_ret_values = 1
         yield U0, t0
 
-        if self.solver_options == 'operator':
-            options = A.solver_options
-        elif self.solver_options == 'mass':
-            options = M.solver_options
-        else:
-            options = self.solver_options
-
-        M_dt_A_impl = (M + A * (dt/2)).with_(solver_options=options)
+        M_dt_A_impl = (M + A * (dt/2))
         if not _depends_on_time(M_dt_A_impl, mu):
             M_dt_A_impl = M_dt_A_impl.assemble(mu)
-        M_dt_A_expl = (M - A * (dt/2)).with_(solver_options=options)
+        M_dt_A_expl = (M - A * (dt/2))
         if not _depends_on_time(M_dt_A_expl, mu):
             M_dt_A_expl = M_dt_A_expl.assemble(mu)
+        solver = self.solver
+
 
         t = t0
         U = U0.copy()
@@ -429,7 +416,7 @@ class ImplicitMidpointTimeStepper(TimeStepper):
                 dt_F = F.as_vector(mu_t) * dt
             if F:
                 rhs += dt_F
-            U = M_dt_A_impl.apply_inverse(rhs, mu=mu_t)
+            U = M_dt_A_impl.apply_inverse(rhs, mu=mu_t, solver=solver)
             while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                 num_ret_values += 1
                 yield U, t

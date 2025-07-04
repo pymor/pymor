@@ -184,11 +184,6 @@ class EngquistOsherFlux(NumericalConvectiveFlux):
         return Fs
 
 
-@defaults('delta')
-def jacobian_options(delta=1e-7):
-    return {'delta': delta}
-
-
 class NonlinearAdvectionOperator(Operator):
     """Nonlinear finite volume advection |Operator|.
 
@@ -207,15 +202,17 @@ class NonlinearAdvectionOperator(Operator):
     dirichlet_data
         |Function| providing the Dirichlet boundary values. If `None`, constant-zero
         boundary is assumed.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         The name of the operator.
     """
 
     linear = False
 
-    def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, solver_options=None, name=None):
+    @defaults('jacobian_delta')
+    def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, jacobian_delta=1e-7,
+                 solver=None, name=None):
         assert dirichlet_data is None or isinstance(dirichlet_data, Function)
 
         self.__auto_init(locals())
@@ -333,11 +330,7 @@ class NonlinearAdvectionOperator(Operator):
         NEUMANN_BOUNDARIES = gd['NEUMANN_BOUNDARIES']
         UNIT_OUTER_NORMALS = gd['UNIT_OUTER_NORMALS']
         INNER = np.setdiff1d(np.arange(g.size(1)), BOUNDARIES)
-
-        solver_options = self.solver_options
-        delta = solver_options.get('jacobian_delta') if solver_options else None
-        if delta is None:
-            delta = jacobian_options()['delta']
+        delta = self.jacobian_delta
 
         if bi.has_dirichlet:
             if hasattr(self, '_dirichlet_values'):
@@ -425,24 +418,28 @@ class NonlinearAdvectionOperator(Operator):
 
 
 def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_lambda=1.0,
-                                                dirichlet_data=None, solver_options=None, name=None):
+                                                dirichlet_data=None, jacobian_delta=None, solver=None, name=None):
     """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`LaxFriedrichsFlux`."""
     num_flux = LaxFriedrichsFlux(flux, lxf_lambda)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
+    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, jacobian_delta=jacobian_delta,
+                                      solver=solver, name=name)
 
 
 def nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, flux, flux_derivative,
-                                                           dirichlet_data=None, solver_options=None, name=None):
+                                                           dirichlet_data=None, jacobian_delta=None,
+                                                           solver=None, name=None):
     """Create a :class:`NonlinearAdvectionOperator` using :class:`SimplifiedEngquistOsherFlux`."""
     num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
+    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, jacobian_delta=jacobian_delta,
+                                      solver=solver, name=name)
 
 
 def nonlinear_advection_engquist_osher_operator(grid, boundary_info, flux, flux_derivative, gausspoints=5, intervals=1,
-                                                dirichlet_data=None, solver_options=None, name=None):
+                                                dirichlet_data=None, jacobian_delta=None, solver=None, name=None):
     """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`EngquistOsherFlux`."""
     num_flux = EngquistOsherFlux(flux, flux_derivative, gausspoints=gausspoints, intervals=intervals)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
+    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, jacobian_delta=jacobian_delta,
+                                      solver=solver, name=name)
 
 
 class LinearAdvectionLaxFriedrichsOperator(NumpyMatrixBasedOperator):
@@ -464,13 +461,13 @@ class LinearAdvectionLaxFriedrichsOperator(NumpyMatrixBasedOperator):
         |Function| defining the velocity field `v`.
     lxf_lambda
         The stabilization parameter `λ`.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         The name of the operator.
     """
 
-    def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, solver_options=None, name=None):
+    def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, solver=None, name=None):
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid)
 
@@ -523,15 +520,15 @@ class L2Product(NumpyMatrixBasedOperator):
     ----------
     grid
         The |Grid| for which to assemble the product.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         The name of the product.
     """
 
     sparse = True
 
-    def __init__(self, grid, solver_options=None, name=None):
+    def __init__(self, grid, solver=None, name=None):
         self.__auto_init(locals())
         self.source = self.range = FVVectorSpace(grid)
 
@@ -555,15 +552,15 @@ class ReactionOperator(NumpyMatrixBasedOperator):
         The |Grid| for which to assemble the operator.
     reaction_coefficient
         The function 'c'
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         The name of the operator.
     """
 
     sparse = True
 
-    def __init__(self, grid, reaction_coefficient, solver_options=None, name=None):
+    def __init__(self, grid, reaction_coefficient, solver=None, name=None):
         assert reaction_coefficient.dim_domain == grid.dim
         assert reaction_coefficient.shape_range == ()
         self.__auto_init(locals())
@@ -773,15 +770,15 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         The scalar-valued |Function| `d(x)`. If `None`, constant one is assumed.
     diffusion_constant
         The constant `c`. If `None`, `c` is set to one.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
     sparse = True
 
-    def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None, solver_options=None,
+    def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None, solver=None,
                  name=None):
         super().__init__()
         assert isinstance(grid, GridWithOrthogonalCenters)

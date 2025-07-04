@@ -7,6 +7,7 @@ from types import FunctionType, MethodType
 import numpy as np
 from scipy.sparse import issparse
 
+from pymor.bindings.scipy import ScipyLUSolveSolver, ScipySpSolveSolver
 from pymor.core.base import BasicObject
 from pymor.core.pickle import PicklingError, dumps, dumps_function, loads
 from pymor.discretizers.builtin.grids.subgrid import SubGrid
@@ -14,10 +15,12 @@ from pymor.operators.numpy import NumpyMatrixBasedOperator
 from pymor.parameters.base import ParametricObject
 
 is_equal_ignored_attributes = \
-    ((SubGrid, {'_uid', '_CacheableObject__cache_region', '_SubGrid__parent_grid'}),
+    ((ScipyLUSolveSolver, {'_lu_factors'}),
+     (ScipySpSolveSolver, {'_factorizations'}),
+     (SubGrid, {'_uid', '_CacheableObject__cache_region', '_SubGrid__parent_grid'}),
      (NumpyMatrixBasedOperator, {'_uid', '_CacheableObject__cache_region', '_parameters', '_assembled_operator'}),
      (ParametricObject, {'_name', '_uid', '_CacheableObject__cache_region', '_parameters'}),
-     (BasicObject, {'_name', '_uid', '_CacheableObject__cache_region'}))
+     (BasicObject, {'_name', '_uid', '_CacheableObject__cache_region'}),)
 
 is_equal_dispatch_table = {}
 
