@@ -9,6 +9,16 @@ import numpy as np
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
+from pymor.operators.interface import LinearSolver
+
+
+class AdjointSolver(LinearSolver):
+
+    def __init__(self, solver):
+        self.solver = solver
+
+    def apply_inverse(self, operator, V, mu=None, initial_guess=None):
+        return self.solver.apply_inverse_adjoint(operator, V, mu=mu, initial_guess=initial_guess)
 
 
 @defaults('lgmres_tol', 'lgmres_maxiter',
