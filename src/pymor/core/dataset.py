@@ -2,6 +2,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 import numpy.typing as npt
+import numpy as np
 
 from pymor.core.base import BasicObject
 from pymor.core.cache import build_cache_key
@@ -101,7 +102,7 @@ class DataSet(DataSetReader):
                 if not self._seen_quantities[q]:
                     self._seen_quantities[q] = v.space
                 assert v.space == self._seen_quantities[q]
-            elif isinstance(v, npt.ArrayLike):
+            elif isinstance(v, np.ndarray):
                 if not self._seen_quantities[q]:
                     self._seen_quantities[q] = v.shape
                 assert v.shape == self._seen_quantities[q]
