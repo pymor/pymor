@@ -641,7 +641,7 @@ an arbitrary external solver. This works for all of the above discussed neural n
 In the following we will show an example with data generated from our initial two-dimensional
 diffusion problem with parametrized diffusion, right hand side and Dirichlet boundary condition.
 Therefore, we will use the
-{class}`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor` to apprximate the
+{class}`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor` to approximate the
 mapping from the {{ Parameters }} to the output quantities directly using the
 {class}`~pymor.reductors.neural_network.NeuralNetworkReductor` without the full-order model.
 
@@ -660,7 +660,7 @@ parameter_space = fom.parameters.space((0.1, 1))
 ```
 
 To train the neural network, we create a set of training, validation and test parameters
-consisting of 100,20 and 10 randomly chosen {{ parameter_values }}, respectively:
+consisting of 100, 20 and 10 randomly chosen {{ parameter_values }}, respectively:
 
 ```{code-cell} ipython3
 training_parameters = parameter_space.sample_uniformly(100)
@@ -697,7 +697,7 @@ output_reductor_data_driven = NeuralNetworkStatefreeOutputReductor(training_para
                                                                        validation_loss=1e-5)
 ```
 
-Similar to the previous examples, the reduction can be performed using the `reduce` method
+Similar to the previous examples, the reduction can be performed using the `reduce` method,
 and we measure the speed up and the errors on the test parameters of the resulting
 {class}`~pymor.models.neural_network.NeuralNetworkStatefreeOutputModel`:
 

@@ -35,9 +35,9 @@ from pymor.tools.random import get_rng, get_seed_seq
 class NeuralNetworkReductor(BasicObject):
     """Reduced Basis reductor relying on artificial neural networks.
 
-    This is a reductor that either takes a precomputed reduced basis or
-    constructs a reduced basis using proper orthogonal decomposition
-    and trains a neural network that approximates the mapping from
+    This reductor either takes a precomputed reduced basis or
+    constructs a reduced basis using proper orthogonal decomposition.
+    It then trains a neural network that approximates the mapping from
     parameter space to coefficients of the full-order solution
     in the reduced basis. Moreover, the reductor also works without
     providing a full-order model, in which case it requires a set of
@@ -411,7 +411,7 @@ class NeuralNetworkReductor(BasicObject):
         product = self.pod_params.get('product')
 
         # conditional expression to check for instationary solution to return self.nt solutions
-        parameters = [mu] if self.is_stationary else [mu.with_(t=t) for t in np.linspace(0, self.T, self.nt)]
+        parameters = [mu] if self.is_stationary else [mu.at_time(t) for t in np.linspace(0, self.T, self.nt)]
         samples = [(mu, self.reduced_basis.inner(u_t, product=product)[:, 0]) for mu, u_t in
                    zip(parameters, u)]
 
