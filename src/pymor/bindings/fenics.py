@@ -21,6 +21,7 @@ from pymor.operators.constructions import VectorFunctional, VectorOperator, Zero
 from pymor.operators.interface import Operator
 from pymor.operators.list import LinearComplexifiedListVectorArrayOperatorBase
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.solvers.list import ComplexifiedListVectorArrayBasedSolver
 from pymor.vectorarrays.interface import _create_random_values
 from pymor.vectorarrays.list import ComplexifiedListVectorSpace, ComplexifiedVector, CopyOnWriteVector
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -191,15 +192,15 @@ class FenicsMatrixBasedOperator(Operator):
     functional
         If `True` return a |VectorFunctional| instead of a |VectorOperator| in case
         `form` is a linear form.
-    solver_options
-        The |solver_options| for the assembled :class:`FenicsMatrixOperator`.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
     linear = True
 
-    def __init__(self, form, params, bc=None, bc_zero=False, functional=False, solver_options=None, name=None):
+    def __init__(self, form, params, bc=None, bc_zero=False, functional=False, solver=None, name=None):
         assert 1 <= len(form.arguments()) <= 2
         assert not functional or len(form.arguments()) == 1
         self.__auto_init(locals())
@@ -229,7 +230,8 @@ class FenicsMatrixBasedOperator(Operator):
             else:
                 self.bc.apply(mat)
         if len(self.form.arguments()) == 2:
-            return FenicsMatrixOperator(mat, self.source.V, self.range.V, self.solver_options, self.name + '_assembled')
+            return FenicsMatrixOperator(mat, self.source.V, self.range.V, solver=self.solver,
+                                        name=self.name + '_assembled')
         elif self.functional:
             V = self.source.make_array([mat])
             return VectorFunctional(V)
@@ -249,94 +251,87 @@ class FenicsMatrixBasedOperator(Operator):
     def as_source_array(self, mu=None):
         return self.assemble(mu).as_source_array()
 
-    def apply_inverse(self, V, mu=None, initial_guess=None, least_squares=False):
-        return self.assemble(mu).apply_inverse(V, initial_guess=initial_guess, least_squares=least_squares)
+
+class FenicsLinearSolver(ComplexifiedListVectorArrayBasedSolver):
+
+    @defaults('method', 'preconditioner', 'keep_solver')
+    def __init__(self, method='mumps' if 'mumps' in df.linear_solver_methods() else 'default',
+                 preconditioner=None, keep_solver=True):
+        self.__auto_init(locals())
+        if keep_solver:  # not thread safe
+            self._solver = self._create_solver()
+            self._adjoint_solver = self._create_solver()
+            self._last_operator = None
+            self._last_adjoint_operator = None
+
+    def _create_solver(self):
+        method, preconditioner = self.method, self.preconditioner
+        if method == 'lu' or method in df.lu_solver_methods():
+            method = 'default' if method == 'lu' else method
+            return df.LUSolver(method)
+        else:
+            return df.KrylovSolver(method, preconditioner)
+
+    def _prepare(self, operator, U, mu, adjoint):
+        if adjoint and not hasattr(operator, '_matrix_transpose'):
+            # since dolfin does not have 'apply_inverse_adjoint', we assume
+            # PETSc is used as backend and transpose the matrix
+            operator._matrix_transpose = operator.matrix.copy()
+            mat_tr = df.as_backend_type(operator._matrix_transpose).mat()
+            mat_tr.transpose()
+
+        if self.keep_solver:
+            if adjoint:
+                solver = self._adjoint_solver
+                if operator.uid != self._last_adjoint_operator:
+                    solver.set_operator(operator._matrix_transpose)
+                    self._last_adjoint_operator = operator.uid
+            else:
+                solver = self._solver
+                if operator.uid != self._last_operator:
+                    solver.set_operator(operator.matrix)
+                    self._last_operator = operator.uid
+        else:
+            solver = self._create_solver()
+            solver.set_operator(operator._matrix_transpose if adjoint else operator.matrix)
+        return solver
+
+    def _real_solve_one_vector(self, operator, v, mu, initial_guess, prepare_data):
+        solver = prepare_data
+        r = (operator.source.real_zero_vector() if initial_guess is None else
+             initial_guess.copy(deep=True))
+        solver.solve(r.impl, v.impl)
+        return r
+
+    def _real_solve_adjoint_one_vector(self, operator, u, mu, initial_guess, prepare_data):
+        solver = prepare_data
+        r = (operator.range.real_zero_vector() if initial_guess is None else
+             initial_guess.copy(deep=True))
+        solver.solve(r.impl, u.impl)
+        return r
 
 
 class FenicsMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
     """Wraps a FEniCS matrix as an |Operator|."""
 
-    def __init__(self, matrix, source_space, range_space, solver_options=None, name=None):
+    def __init__(self, matrix, source_space, range_space, solver=None, name=None):
         assert matrix.rank() == 2
+        solver = solver or FenicsLinearSolver()
         self.__auto_init(locals())
         self.source = FenicsVectorSpace(source_space)
         self.range = FenicsVectorSpace(range_space)
 
-    def _solver_options(self, adjoint=False):
-        if adjoint:
-            options = self.solver_options.get('inverse_adjoint') if self.solver_options else None
-            if options is None:
-                options = self.solver_options.get('inverse') if self.solver_options else None
-        else:
-            options = self.solver_options.get('inverse') if self.solver_options else None
-        return options or _solver_options()
-
-    def _create_solver(self, adjoint=False):
-        options = self._solver_options(adjoint)
-        if adjoint:
-            try:
-                matrix = self._matrix_transpose
-            except AttributeError as e:
-                raise RuntimeError('_create_solver called before _matrix_transpose has been initialized.') from e
-        else:
-            matrix = self.matrix
-        method = options.get('solver')
-        preconditioner = options.get('preconditioner')
-        if method == 'lu' or method in df.lu_solver_methods():
-            method = 'default' if method == 'lu' else method
-            solver = df.LUSolver(matrix, method)
-        else:
-            solver = df.KrylovSolver(matrix, method, preconditioner)
-        return solver
-
-    def _apply_inverse(self, r, v, adjoint=False):
-        try:
-            solver = self._adjoint_solver if adjoint else self._solver
-        except AttributeError:
-            solver = self._create_solver(adjoint)
-        solver.solve(r, v)
-        if _solver_options()['keep_solver']:
-            if adjoint:
-                self._adjoint_solver = solver
-            else:
-                self._solver = solver
-
-    def _real_apply_one_vector(self, u, mu=None, prepare_data=None):
+    def _real_apply_one_vector(self, u, mu=None):
         r = self.range.real_zero_vector()
         self.matrix.mult(u.impl, r.impl)
         return r
 
-    def _real_apply_adjoint_one_vector(self, v, mu=None, prepare_data=None):
+    def _real_apply_adjoint_one_vector(self, v, mu=None):
         r = self.source.real_zero_vector()
         self.matrix.transpmult(v.impl, r.impl)
         return r
 
-    def _real_apply_inverse_one_vector(self, v, mu=None, initial_guess=None,
-                                       least_squares=False, prepare_data=None):
-        if least_squares:
-            raise NotImplementedError
-        r = (self.source.real_zero_vector() if initial_guess is None else
-             initial_guess.copy(deep=True))
-        self._apply_inverse(r.impl, v.impl)
-        return r
-
-    def _real_apply_inverse_adjoint_one_vector(self, u, mu=None, initial_guess=None,
-                                               least_squares=False, prepare_data=None):
-        if least_squares:
-            raise NotImplementedError
-        r = (self.range.real_zero_vector() if initial_guess is None else
-             initial_guess.copy(deep=True))
-
-        # since dolfin does not have 'apply_inverse_adjoint', we assume
-        # PETSc is used as backend and transpose the matrix
-        if not hasattr(self, '_matrix_transpose'):
-            self._matrix_transpose = self.matrix.copy()
-            mat_tr = df.as_backend_type(self._matrix_transpose).mat()
-            mat_tr.transpose()
-        self._apply_inverse(r.impl, u.impl, adjoint=True)
-        return r
-
-    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., name=None):
         if not all(isinstance(op, FenicsMatrixOperator) for op in operators):
             return None
         if identity_shift != 0:
@@ -353,7 +348,7 @@ class FenicsMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
             # in general, we cannot assume the same nonzero pattern for
             # all matrices. how to improve this?
 
-        return FenicsMatrixOperator(matrix, self.source.V, self.range.V, solver_options=solver_options, name=name)
+        return FenicsMatrixOperator(matrix, self.source.V, self.range.V, name=name)
 
 
 class FenicsOperator(Operator):
@@ -362,7 +357,7 @@ class FenicsOperator(Operator):
     linear = False
 
     def __init__(self, form, source_space, range_space, source_function, dirichlet_bcs=(),
-                 parameter_setter=None, parameters={}, solver_options=None, name=None):
+                 parameter_setter=None, parameters={}, solver=None, name=None):
         assert len(form.arguments()) == 1
         self.__auto_init(locals())
         self.source = source_space
@@ -400,7 +395,8 @@ class FenicsOperator(Operator):
         matrix = df.assemble(df.derivative(self.form, self.source_function))
         for bc in self.dirichlet_bcs:
             bc.apply(matrix)
-        return FenicsMatrixOperator(matrix, self.source.V, self.range.V)
+        return FenicsMatrixOperator(matrix, self.source.V, self.range.V,
+                                    solver=self._jacobian_solver)
 
     def restricted(self, dofs):
         from pymor.tools.mpi import parallel
@@ -530,11 +526,10 @@ class RestrictedFenicsOperator(Operator):
 
     linear = False
 
-    def __init__(self, op, restricted_range_dofs):
+    def __init__(self, op, restricted_range_dofs, solver=None):
+        self.__auto_init(locals())
         self.source = NumpyVectorSpace(op.source.dim)
         self.range = NumpyVectorSpace(len(restricted_range_dofs))
-        self.op = op
-        self.restricted_range_dofs = restricted_range_dofs
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -553,16 +548,11 @@ class RestrictedFenicsOperator(Operator):
         UU = self.op.source.zeros()
         UU.vectors[0].real_part.impl[:] = np.ascontiguousarray(U.to_numpy()[:, 0])
         JJ = self.op.jacobian(UU, mu=mu)
-        return NumpyMatrixOperator(JJ.matrix.array()[self.restricted_range_dofs, :])
+        return NumpyMatrixOperator(JJ.matrix.array()[self.restricted_range_dofs, :],
+                                   solver=self._jacobian_solver)
 
 
 _DEFAULT_SOLVER = 'mumps' if 'mumps' in df.linear_solver_methods() else 'default'
-
-
-@defaults('solver', 'preconditioner', 'keep_solver')
-def _solver_options(solver=_DEFAULT_SOLVER,
-                    preconditioner=None, keep_solver=True):
-    return {'solver': solver, 'preconditioner': preconditioner, 'keep_solver': keep_solver}
 
 
 class FenicsVisualizer(ImmutableObject):

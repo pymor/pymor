@@ -151,7 +151,7 @@ class NGSolveMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         r.impl.vec.data = inv * v.impl.vec
         return r
 
-    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., name=None):
         if not all(isinstance(op, NGSolveMatrixOperator) for op in operators):
             return None
         if identity_shift != 0:
@@ -161,7 +161,7 @@ class NGSolveMatrixOperator(LinearComplexifiedListVectorArrayOperatorBase):
         matrix.AsVector().data = float(coefficients[0]) * matrix.AsVector()
         for op, c in zip(operators[1:], coefficients[1:]):
             matrix.AsVector().data += float(c) * op.matrix.AsVector()
-        return NGSolveMatrixOperator(matrix, self.range, self.source, solver_options=solver_options, name=name)
+        return NGSolveMatrixOperator(matrix, self.range, self.source, name=name)
 
     def as_vector(self, copy=True):
         vec = self.matrix.AsVector().FV().NumPy()

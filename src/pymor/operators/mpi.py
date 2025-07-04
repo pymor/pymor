@@ -180,10 +180,9 @@ class MPIOperator(Operator):
         else:
             return self
 
-    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., solver_options=None, name=None):
+    def _assemble_lincomb(self, operators, coefficients, identity_shift=0., name=None):
         if not all(isinstance(op, MPIOperator) for op in operators):
             return None
-        assert solver_options is None
         operators = [op.obj_id for op in operators]
         obj_id = mpi.call(_MPIOperator_assemble_lincomb, operators, coefficients, identity_shift, name=name)
         op = mpi.get_object(obj_id)

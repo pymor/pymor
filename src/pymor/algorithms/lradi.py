@@ -66,7 +66,7 @@ def lyap_lrcf_solver_options(lradi_tol=1e-10,
                                              'tol': wachspress_tol}}}}
 
 
-def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
+def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None, solver=None):
     """Compute an approximate low-rank solution of a Lyapunov equation.
 
     See
@@ -92,6 +92,8 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
         Only the continuous-time case is implemented.
     options
         The solver options to use (see :func:`lyap_lrcf_solver_options`).
+    solver
+        The |Solver| for the shifted systems.
 
     Returns
     -------
@@ -131,10 +133,10 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
         if shifts[j_shift].imag == 0:
             AaE = A + shifts[j_shift].real * E
             if not trans:
-                V = AaE.apply_inverse(W)
+                V = AaE.apply_inverse(W, solver=solver)
                 W -= E.apply(V) * (2 * shifts[j_shift].real)
             else:
-                V = AaE.apply_inverse_adjoint(W)
+                V = AaE.apply_inverse_adjoint(W, solver=solver)
                 W -= E.apply_adjoint(V) * (2 * shifts[j_shift].real)
             Z.append(V * np.sqrt(-2 * shifts[j_shift].real))
             j += 1
@@ -143,10 +145,10 @@ def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
             gs = -4 * shifts[j_shift].real
             d = shifts[j_shift].real / shifts[j_shift].imag
             if not trans:
-                V = AaE.apply_inverse(W)
+                V = AaE.apply_inverse(W, solver=solver)
                 W += E.apply(V.real + V.imag * d) * gs
             else:
-                V = AaE.apply_inverse_adjoint(W).conj()
+                V = AaE.apply_inverse_adjoint(W, solver=solver).conj()
                 W += E.apply_adjoint(V.real + V.imag * d) * gs
             g = np.sqrt(gs)
             Z.append((V.real + V.imag * d) * g)

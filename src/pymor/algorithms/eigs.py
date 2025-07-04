@@ -13,7 +13,7 @@ from pymor.tools.random import new_rng
 
 
 def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, tol=1e-13,
-         imag_tol=1e-12, complex_pair_tol=1e-12, complex_evp=False, left_evp=False):
+         imag_tol=1e-12, complex_pair_tol=1e-12, complex_evp=False, left_evp=False, solver=None):
     """Approximate a few eigenvalues of a linear |Operator|.
 
     Computes `k` eigenvalues `w` with corresponding eigenvectors `v` which solve
@@ -68,6 +68,8 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
         are real setting this argument to `False` will increase stability and performance.
     left_evp
         If set to `True` compute left eigenvectors else compute right eigenvectors.
+    solver
+        The |Solver| to use if `sigma` is not `None`.
 
     Returns
     -------
@@ -131,9 +133,9 @@ def eigs(A, E=None, k=3, sigma=None, which='LM', b=None, l=None, maxiter=1000, t
             sigma = sigma.real
 
         if left_evp:
-            Aop = InverseOperator(A - sigma * E).H @ E.H
+            Aop = InverseOperator(A - sigma * E, solver=solver).H @ E.H
         else:
-            Aop = InverseOperator(A - sigma * E) @ E
+            Aop = InverseOperator(A - sigma * E, solver=solver) @ E
 
     V, H, f = _arnoldi(Aop, k, b, complex_evp)
 
