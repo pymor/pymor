@@ -133,7 +133,7 @@ class NeuralNetworkReductor(BasicObject):
         else:
             self.parameters_dim = fom.parameters.dim
             if hasattr(fom, 'time_stepper'):  # instationary
-                self.nt = fom.time_stepper.nt + 1
+                self.nt = fom.time_stepper.nt + 1  # +1 because of initial condition
                 self.T = fom.T
                 self.is_stationary = False
             else:  # stationary
@@ -338,6 +338,8 @@ class NeuralNetworkReductor(BasicObject):
                     self._update_scaling_parameters(sample)
                 self.training_data.extend(samples)
 
+        assert self.training_data[0][1].shape[0] == len(self.reduced_basis)
+
     def compute_validation_snapshots(self):
         """Compute validation data for the neural network."""
         with self.logger.block('Computing validation snapshots ...'):
@@ -354,6 +356,8 @@ class NeuralNetworkReductor(BasicObject):
             for i, mu in enumerate(self.validation_parameters):
                 samples = self._compute_sample(mu, self.validation_snapshots[i*self.nt:(i+1)*self.nt])
                 self.validation_data.extend(samples)
+
+        assert self.validation_data[0][1].shape[0] == len(self.reduced_basis)
 
     def _update_scaling_parameters(self, sample):
         """Update the quantities for scaling of inputs and outputs."""
@@ -571,6 +575,8 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
                     self._update_scaling_parameters(sample)
                 self.training_data.extend(samples)
 
+        assert self.training_data[0][1].shape[0] == self.dim_output
+
     def compute_validation_data(self):
         """Compute the validation samples (the outputs to the validation parameters)."""
         with self.logger.block('Computing validation samples ...'):
@@ -584,6 +590,8 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
                 for sample in samples:
                     self._update_scaling_parameters(sample)
                 self.validation_data.extend(samples)
+
+        assert self.validation_data[0][1].shape[0] == self.dim_output
 
     def compute_reduced_basis(self):
         """Empty function to avoid computing a reduced basis."""
