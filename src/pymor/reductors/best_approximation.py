@@ -2,10 +2,10 @@ import numpy as np
 
 from pymor.core.defaults import defaults
 from pymor.models.interface import Model
+from pymor.models.compute import ComputeModel
 from pymor.reductors.basic import ProjectionBasedReductor
 from pymor.vectorarrays.interface import VectorArray
-
-from models.black_box import BlackBoxModel
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class BestApproximationReductor(ProjectionBasedReductor):
@@ -52,10 +52,18 @@ class BestApproximationReductor(ProjectionBasedReductor):
             R = self.basis[:dim].inner(U)
             return np.linalg.solve(G, R).T
 
-        rom = BlackBoxModel(
-            dim,
-            self.fom.parameters,
-            lambda mu: project_onto_basis(self.fom.solve(mu)),
+        rom_space = NumpyVectorSpace(dim)
+        rom = ComputeModel(
+            parameters=self.fom.parameters,
+            computers={
+                "solution": (
+                    rom_space,
+                    lambda mu: rom_space.from_numpy(
+                        project_onto_basis(self.fom.solve(mu))
+                    ),
+                ),
+            },
+            name=f"BestApproximationReduced{self.fom.name}",
         )
         rom.disable_logging()
         return rom
