@@ -11,6 +11,11 @@
 
 ## Contributors
 
+### pyMOR 2025.1
+
+* Timo Plath, @TiPlath
+  * Adjusted neural network reductor to run without full order model
+
 ### pyMOR 2024.2
 
 * Maximilian Bindhak, @maxbindhak

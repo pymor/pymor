@@ -11,10 +11,10 @@ from typer import Argument, Option, run
 from pymor.basic import *
 from pymor.core.config import config
 from pymor.reductors.neural_network import (
-    NeuralNetworkInstationaryReductor,
-    NeuralNetworkInstationaryStatefreeOutputReductor,
-    NeuralNetworkLSTMInstationaryReductor,
-    NeuralNetworkLSTMInstationaryStatefreeOutputReductor,
+    NeuralNetworkLSTMReductor,
+    NeuralNetworkLSTMStatefreeOutputReductor,
+    NeuralNetworkReductor,
+    NeuralNetworkStatefreeOutputReductor,
 )
 from pymor.tools import mpi
 
@@ -25,7 +25,7 @@ def main(
     time_steps: int = Argument(..., help='Number of time steps used for discretization.'),
     training_samples: int = Argument(..., help='Number of samples used for training the neural network.'),
     validation_samples: int = Argument(..., help='Number of samples used for validation during the training phase.'),
-    plot_test_solutions: bool = Option(False, help='Plot FOM and ROM solutions in the test set.'),
+    plot_test_solutions: bool = Option(False, help='Plot FOM and ROM solutions of the test parameters.'),
 ):
     """Model order reduction with neural networks for instationary problems.
 
@@ -46,19 +46,19 @@ def main(
     else:
         parameter_space = fom.parameters.space(1., 2.)
 
-    training_set = parameter_space.sample_uniformly(training_samples)
-    validation_set = parameter_space.sample_randomly(validation_samples)
-    test_set = parameter_space.sample_randomly(10)
+    training_parameters = parameter_space.sample_uniformly(training_samples)
+    validation_parameters = parameter_space.sample_randomly(validation_samples)
+    test_parameters = parameter_space.sample_randomly(10)
 
     def compute_errors_state(rom, reductor):
         speedups = []
 
-        print(f'Performing test on set of size {len(test_set)} ...')
+        print(f'Performing test on parameters of size {len(test_parameters)} ...')
 
-        U = fom.solution_space.empty(reserve=len(test_set))
-        U_red = fom.solution_space.empty(reserve=len(test_set))
+        U = fom.solution_space.empty(reserve=len(test_parameters))
+        U_red = fom.solution_space.empty(reserve=len(test_parameters))
 
-        for mu in test_set:
+        for mu in test_parameters:
             tic = time.time()
             u_fom = fom.solve(mu)[1:]
             U.append(u_fom)
@@ -80,14 +80,16 @@ def main(
 
         return absolute_errors, relative_errors, speedups
 
-    reductor = NeuralNetworkInstationaryReductor(fom, training_set, validation_set, basis_size=10,
-                                                 scale_outputs=True, ann_mse=None)
+    reductor = NeuralNetworkReductor(fom=fom, training_parameters=training_parameters,
+                                     validation_parameters=validation_parameters, basis_size=10,
+                                     scale_outputs=True, ann_mse=None)
     rom = reductor.reduce(hidden_layers='[30, 30, 30]', restarts=0)
 
     abs_errors, rel_errors, speedups = compute_errors_state(rom, reductor)
 
-    reductor_lstm = NeuralNetworkLSTMInstationaryReductor(fom, training_set, validation_set, basis_size=10,
-                                                          scale_inputs=False, scale_outputs=True, ann_mse=None)
+    reductor_lstm = NeuralNetworkLSTMReductor(fom=fom, training_parameters=training_parameters,
+                                              validation_parameters=validation_parameters, basis_size=10,
+                                              scale_inputs=False, scale_outputs=True, ann_mse=None)
     rom_lstm = reductor_lstm.reduce(restarts=0, number_layers=3, learning_rate=0.1)
 
     abs_errors_lstm, rel_errors_lstm, speedups_lstm = compute_errors_state(rom_lstm, reductor_lstm)
@@ -97,9 +99,9 @@ def main(
         outputs_red = []
         outputs_speedups = []
 
-        print(f'Performing test on set of size {len(test_set)} ...')
+        print(f'Performing test on parameters of size {len(test_parameters)} ...')
 
-        for mu in test_set:
+        for mu in test_parameters:
             tic = time.perf_counter()
             outputs.append(fom.compute(output=True, mu=mu)['output'][1:])
             time_fom = time.perf_counter() - tic
@@ -117,16 +119,19 @@ def main(
 
         return outputs_absolute_errors, outputs_relative_errors, outputs_speedups
 
-    output_reductor = NeuralNetworkInstationaryStatefreeOutputReductor(fom, time_steps+1, training_set,
-                                                                       validation_set, validation_loss=1e-5,
-                                                                       scale_outputs=True)
+    output_reductor = NeuralNetworkStatefreeOutputReductor(fom=fom, nt=time_steps+1,
+                                                           training_parameters=training_parameters,
+                                                           validation_parameters=validation_parameters,
+                                                           validation_loss=1e-5, scale_outputs=True)
     output_rom = output_reductor.reduce(restarts=100)
 
     outputs_abs_errors, outputs_rel_errors, outputs_speedups = compute_errors_output(output_rom)
 
-    output_reductor_lstm = NeuralNetworkLSTMInstationaryStatefreeOutputReductor(fom, time_steps+1, training_set,
-                                                                                validation_set, validation_loss=None,
-                                                                                scale_inputs=False, scale_outputs=True)
+    output_reductor_lstm = NeuralNetworkLSTMStatefreeOutputReductor(fom=fom, nt=time_steps + 1,
+                                                                    training_parameters=training_parameters,
+                                                                    validation_parameters=validation_parameters,
+                                                                    validation_loss=None, scale_inputs=False,
+                                                                    scale_outputs=True)
     output_rom_lstm = output_reductor_lstm.reduce(restarts=0, number_layers=3, hidden_dimension=50,
                                                   learning_rate=0.1)
 
