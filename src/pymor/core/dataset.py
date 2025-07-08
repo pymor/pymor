@@ -1,12 +1,13 @@
 from collections.abc import Iterable
 from pathlib import Path
 
-import numpy.typing as npt
 import numpy as np
+import numpy.typing as npt
 
 from pymor.core.base import BasicObject
 from pymor.core.cache import build_cache_key
 from pymor.core.pickle import dump, load
+from pymor.models.compute import ComputeModel
 from pymor.parameters.base import Parameters
 from pymor.vectorarrays.interface import VectorArray
 
@@ -72,6 +73,29 @@ class DataSetReader(BasicObject):
         for mu in self.keys():
             yield mu, self.get(mu, quantities=quantities)
 
+    def to_model(self, name=None):
+        # we don't have the shapes or vector spaces, so we need to load an entry
+        # as adding ensures conforming shapes, we can just pick the first entry
+        _, data = next(iter(self.items()))
+
+        def parse_shape(v):
+            if isinstance(v, VectorArray):
+                return v.space
+            elif isinstance(v, npt.ArrayLike):
+                return v.shape
+            else:
+                raise TypeError(f'Unsupported type {type(v)} for quantity value {v}. Expected VectorArray or npt.ArrayLike!')
+
+        return ComputeModel(
+            parameters=self.parameters,
+            computers={
+                q: (
+                    parse_shape(v),
+                    lambda mu: self.get(mu, q),
+                ) for q, v in data.items()
+            },
+            name=name or f'{self.id}Model',
+        )
 
 class DataSet(DataSetReader):
 
