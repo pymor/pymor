@@ -60,6 +60,40 @@ class VKOGAEstimator(VKOGA, BasicObject):
     def __sklearn_is_fitted__(self):
         return hasattr(self, "ctrs_") and self.ctrs_ is not None
 
+    def set_params(self, **params):
+        """Set parameters - required for sklearn compatibility"""
+        for key, value in params.items():
+            setattr(self, key, value)
+
+        # Reinitialize kernel when parameters change
+        if "kernel_type" in params or "kernel_length_scale" in params:
+            if self.kernel_type == "gaussian":
+                self.kernel = Gaussian(ep=self.kernel_length_scale)
+            elif self.kernel_type[:6] == "matern":
+                order = int(self.kernel_type[7:]) if len(self.kernel_type) > 6 else 1
+                self.kernel = Matern(ep=self.kernel_length_scale, k=order)
+
+        # Update VKOGA parameters
+        self.tol_f = self.greedy_tol
+        self.tol_p = self.greedy_tol
+        self.reg_par = self.regularisation_parameter
+        self.restr_par = self.selection_threshold
+
+        return self
+
+    def get_params(self, deep=True):
+        """Get parameters - required for sklearn compatibility"""
+        return {
+            "kernel_type": self.kernel_type,
+            "kernel_length_scale": self.kernel_length_scale,
+            "greedy_type": self.greedy_type,
+            "greedy_tol": self.greedy_tol,
+            "greedy_max_iter": self.greedy_max_iter,
+            "regularisation_parameter": self.regularisation_parameter,
+            "selection_threshold": self.selection_threshold,
+            "verbose": self.verbose,
+        }
+
 
 class ScikitLearnComputeModel(ComputeModel):
     def __init__(
@@ -362,3 +396,98 @@ class ScikitLearnComputeReductor(BasicObject):
                     )
 
         return parsed_new_data
+
+    def tune_hyperparameters(
+        self,
+        param_grid: dict,
+        quantity: str = None,
+        cv_folds: int = 5,
+        scoring_norm: tuple = None,
+    ):
+        from sklearn.metrics import make_scorer
+        from sklearn.model_selection import GridSearchCV
+
+        """Tune hyperparameters using GridSearchCV."""
+
+        if quantity is None:
+            assert len(self.reducable_computes) == 1
+            quantity = next(iter(self.reducable_computes))
+
+        # Use provided norm or default to l-inf
+        if scoring_norm is None:
+            scoring_norm = ("l_inf", lambda u: np.linalg.norm(u, np.inf))
+
+        # Create custom scorer for relative error that matches validation exactly
+        def relative_error(y_true, y_pred):
+            """Compute relative error matching the validation metric."""
+            errors = []
+            for i in range(y_true.shape[0]):
+                # Special handling for l_inf-l_2 norm
+                if scoring_norm[0] == "l_inf-l_2":
+                    # For CV, we only have access to numpy arrays, not VectorArrays
+                    # So we interpret l_inf-l_2 as: for each parameter, compute L2 error
+                    # Then take the max (L_inf) over all parameters
+                    # This is what the validation does with VectorArrays
+                    y_true_norm = np.linalg.norm(y_true[i], 2)
+                    error_norm = np.linalg.norm(y_true[i] - y_pred[i], 2)
+                else:
+                    # Use provided function for other norms
+                    y_true_norm = scoring_norm[1](y_true[i])
+                    error_norm = scoring_norm[1](y_true[i] - y_pred[i])
+
+                if y_true_norm > 0:
+                    errors.append(error_norm / y_true_norm)
+                else:
+                    errors.append(0.0)  # Handle zero norm case
+
+            # Return max error (L_inf over parameter space) to match validation
+            return np.max(errors) if errors else 0.0
+
+        scorer = make_scorer(relative_error, greater_is_better=False)
+
+        # Get data for tuning
+        X, y = self.data_as_X_y(quantity=quantity)
+
+        # Ensure we're not using validation data in CV
+        # Only use training data for hyperparameter tuning
+        n_training = len(self.training_set) if hasattr(self, "training_set") else len(X)
+        X_train = X[:n_training]
+        y_train = y[:n_training]
+
+        # Run grid search
+        with self.logger.block(f"Tuning hyperparameters for {quantity}..."):
+            search = GridSearchCV(
+                estimator=self.estimators[quantity],
+                param_grid=param_grid,
+                scoring=scorer,
+                cv=cv_folds,
+                verbose=1,
+                n_jobs=-1,
+            )
+            search.fit(X_train, y_train)
+
+            # Update estimator with best parameters
+            self.estimators[quantity] = search.best_estimator_
+
+            self.logger.info(f"Best parameters: {search.best_params_}")
+            self.logger.info(f"Best CV score: {-search.best_score_:.6f}")
+
+            # Compute validation score on held-out data if available
+            if hasattr(self, "validation_set") and n_training < len(X):
+                X_val = X[n_training:]
+                y_val = y[n_training:]
+                val_errors = []
+                y_val_pred = search.best_estimator_.predict(X_val)
+                for i in range(y_val.shape[0]):
+                    if scoring_norm[0] == "l_inf-l_2":
+                        y_true_norm = np.linalg.norm(y_val[i], 2)
+                        error_norm = np.linalg.norm(y_val[i] - y_val_pred[i], 2)
+                    else:
+                        y_true_norm = scoring_norm[1](y_val[i])
+                        error_norm = scoring_norm[1](y_val[i] - y_val_pred[i])
+                    if y_true_norm > 0:
+                        val_errors.append(error_norm / y_true_norm)
+                val_score = np.max(val_errors) if val_errors else 0.0
+                self.logger.info(f"Validation score: {val_score:.6f}")
+
+        return search
