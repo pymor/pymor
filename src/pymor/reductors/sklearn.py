@@ -22,7 +22,7 @@ class VKOGAEstimator(VKOGA, BasicObject):
     def __init__(
         self,
         kernel_type="gaussian",
-        kernel_lenght_scale=1.0,
+        kernel_length_scale=1.0,
         greedy_type="p_greedy",
         greedy_tol=1e-10,
         greedy_max_iter=100,
@@ -31,10 +31,10 @@ class VKOGAEstimator(VKOGA, BasicObject):
         verbose=False,
     ):
         if kernel_type == "gaussian":
-            kernel = Gaussian(ep=kernel_lenght_scale)
+            kernel = Gaussian(ep=kernel_length_scale)
         elif kernel_type[:6] == "matern":
             order = int(kernel_type[7:]) if len(kernel_type) > 6 else 1
-            kernel = Matern(ep=kernel_lenght_scale, k=order)
+            kernel = Matern(ep=kernel_length_scale, k=order)
         else:
             raise ValueError(f"Unknown kernel: {kernel_type}")
         super().__init__(
