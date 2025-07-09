@@ -66,6 +66,8 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     boundary_info
         |BoundaryInfo| determining the Dirichlet boundaries in case
         `dirichlet_clear_dofs` is set to `True`.
+    solver
+        The |Solver| for the operator.
     name
         The name of the functional.
     """
@@ -73,10 +75,11 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, name=None):
+    def __init__(self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, solver=None, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == ()
         assert not dirichlet_clear_dofs or boundary_info
+        super().__init__(solver=solver, name=name)
         self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
 
@@ -126,6 +129,8 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
     boundary_info
         If `boundary_type` is specified or `dirichlet_clear_dofs` is `True`, the
         |BoundaryInfo| determining which boundary entity belongs to which physical boundary.
+    solver
+        The |Solver| for the operator.
     name
         The name of the functional.
     """
@@ -133,10 +138,12 @@ class BoundaryL2ProductFunctional(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, boundary_type=None, dirichlet_clear_dofs=False, boundary_info=None, name=None):
+    def __init__(self, grid, function, boundary_type=None, dirichlet_clear_dofs=False, boundary_info=None,
+                 solver=None, name=None):
         assert grid.reference_element(0) in {line, triangle, square}
         assert function.shape_range == ()
         assert not (boundary_type or dirichlet_clear_dofs) or boundary_info
+        super().__init__(solver=solver, name=name)
         self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
 
@@ -177,6 +184,8 @@ class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
         |Function| providing the Dirichlet boundary values.
     boundary_info
         |BoundaryInfo| determining the Dirichlet boundaries.
+    solver
+        The |Solver| for the operator.
     name
         The name of the functional.
     """
@@ -184,8 +193,9 @@ class BoundaryDirichletFunctional(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
 
-    def __init__(self, grid, dirichlet_data, boundary_info, name=None):
+    def __init__(self, grid, dirichlet_data, boundary_info, solver=None, name=None):
         assert grid.reference_element(0) in {line, triangle, square}
+        super().__init__(solver=solver, name=name)
         self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
 
@@ -214,6 +224,8 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     boundary_info
         |BoundaryInfo| determining the Dirichlet boundaries in case
         `dirichlet_clear_dofs` is set to `True`.
+    solver
+        The |Solver| for the operator.
     name
         The name of the functional.
     """
@@ -221,10 +233,11 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     sparse = False
     source = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, name=None):
+    def __init__(self, grid, function, dirichlet_clear_dofs=False, boundary_info=None, solver=None, name=None):
         assert grid.reference_element(0) in {square}
         assert function.shape_range == ()
         assert not dirichlet_clear_dofs or boundary_info
+        super().__init__(solver=solver, name=name)
         self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
 
@@ -280,8 +293,8 @@ class L2ProductP1(NumpyMatrixBasedOperator):
     coefficient_function
         Coefficient |Function| for product with `shape_range == ()`.
         If `None`, constant one is assumed.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         The name of the product.
     """
@@ -289,8 +302,9 @@ class L2ProductP1(NumpyMatrixBasedOperator):
     sparse = True
 
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
-                 dirichlet_clear_diag=False, coefficient_function=None, solver_options=None, name=None):
+                 dirichlet_clear_diag=False, coefficient_function=None, solver=None, name=None):
         assert grid.reference_element in (line, triangle)
+        super().__init__(solver=solver, name=name)
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
 
@@ -360,7 +374,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
     coefficient_function
         Coefficient |Function| for product with `shape_range == ()`.
         If `None`, constant one is assumed.
-    solver_options
+    solver
         The |solver_options| for the operator.
     name
         The name of the product.
@@ -369,8 +383,9 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
     sparse = True
 
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
-                 dirichlet_clear_diag=False, coefficient_function=None, solver_options=None, name=None):
+                 dirichlet_clear_diag=False, coefficient_function=None, solver=None, name=None):
         assert grid.reference_element in {square}
+        super().__init__(solver=solver, name=name)
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
 
@@ -446,8 +461,8 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
     dirichlet_clear_diag
         If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
         zero. Otherwise they are set to one.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
@@ -456,13 +471,14 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False,
-                 solver_options=None, name=None):
+                 solver=None, name=None):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
         assert diffusion_function is None \
             or (isinstance(diffusion_function, Function)
                 and diffusion_function.dim_domain == grid.dim
                 and diffusion_function.shape_range == ()
                 or diffusion_function.shape_range == (grid.dim,) * 2)
+        super().__init__(solver=solver, name=name)
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
 
@@ -551,8 +567,8 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
     dirichlet_clear_diag
         If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
         zero. Otherwise they are set to one.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
@@ -561,13 +577,14 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False,
-                 solver_options=None, name=None):
+                 solver=None, name=None):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
         assert diffusion_function is None \
             or (isinstance(diffusion_function, Function)
                 and diffusion_function.dim_domain == grid.dim
                 and diffusion_function.shape_range == ()
                 or diffusion_function.shape_range == (grid.dim,) * 2)
+        super().__init__(solver=solver, name=name)
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
 
@@ -658,8 +675,8 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
     dirichlet_clear_diag
         If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
         zero. Otherwise they are set to one.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
@@ -668,13 +685,14 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, boundary_info, advection_function=None, advection_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False,
-                 solver_options=None, name=None):
+                 solver=None, name=None):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
 
         advection_function = advection_function or ConstantFunction(np.ones((grid.dim,)), grid.dim)
         assert isinstance(advection_function, Function)
         assert advection_function.dim_domain == grid.dim
         assert advection_function.shape_range == (grid.dim,)
+        super().__init__(solver=solver, name=name)
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
 
@@ -759,8 +777,8 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
     dirichlet_clear_diag
         If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
         zero. Otherwise they are set to one.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
@@ -769,12 +787,13 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, boundary_info, advection_function=None, advection_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False,
-                 solver_options=None, name=None):
+                 solver=None, name=None):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
         assert advection_function is None \
             or (isinstance(advection_function, Function)
                 and advection_function.dim_domain == grid.dim
                 and advection_function.shape_range == (grid.dim,))
+        super().__init__(solver=solver, name=name)
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
 
@@ -855,21 +874,22 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
     robin_data
         Tuple (c(x), g(x)) providing two |Functions| that represent the Robin parameter
         and boundary value function. If `None`, the resulting operator is zero.
-    solver_options
-        The |solver_options| for the operator.
+    solver
+        The |Solver| for the operator.
     name
         Name of the operator.
     """
 
     sparse = True
 
-    def __init__(self, grid, boundary_info, robin_data=None, solver_options=None, name=None):
+    def __init__(self, grid, boundary_info, robin_data=None, solver=None, name=None):
         assert robin_data is None or (isinstance(robin_data, tuple) and len(robin_data) == 2)
         assert robin_data is None or all(isinstance(f, Function)
                                           and f.dim_domain == grid.dim
                                           and (f.shape_range == ()
                                                or f.shape_range == (grid.dim,))
                                           for f in robin_data)
+        super().__init__(solver=solver, name=name)
         self.__auto_init(locals())
         self.source = self.range = CGVectorSpace(grid)
 
@@ -923,14 +943,17 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
         The |Grid| on which to interpolate.
     function
         The |Function| to interpolate.
+    solver
+        The |Solver| for the operator.
     """
 
     source = NumpyVectorSpace(1)
     linear = True
 
-    def __init__(self, grid, function):
+    def __init__(self, grid, function, solver=None, name=None):
         assert function.dim_domain == grid.dim
         assert function.shape_range == ()
+        super().__init__(solver=solver, name=name)
         self.__auto_init(locals())
         self.range = CGVectorSpace(grid)
 
@@ -940,7 +963,7 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
 
 def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretizer=None,
                              grid_type=None, grid=None, boundary_info=None,
-                             preassemble=True, mu_energy_product=None):
+                             preassemble=True, mu_energy_product=None, solver=None):
     """Discretizes a |StationaryProblem| using finite elements.
 
     Parameters
@@ -971,6 +994,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
         is equal to `fom.operator.assemble(mu)`, except for the fact that the former has
         cleared Dirichlet rows and columns, while the latter only
         has cleared Dirichlet rows).
+    solver
+        The |Solver| to be used.
 
     Returns
     -------
@@ -1094,7 +1119,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                 eLi += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data)]
             coefficients.append(1.)
 
-    L = LincombOperator(operators=Li, coefficients=coefficients, name='ellipticOperator')
+    L = LincombOperator(operators=Li, coefficients=coefficients, solver=solver, name='ellipticOperator')
     if mu_energy_product:
         eL = LincombOperator(operators=eLi, coefficients=[1.]*len(eLi), name='ellipticEnergyProduct')
 
@@ -1220,6 +1245,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
                 products['energy'] = eL_unassembled.assemble() if preassemble else eL_unassembled
         else:
             products['energy'] = eL
+
+    products = {k: v.with_(solver=solver) for k, v in products.items()}
 
     m  = StationaryModel(L, F, output_functional=output_functional, products=products, visualizer=visualizer,
                          name=f'{p.name}_CG')
