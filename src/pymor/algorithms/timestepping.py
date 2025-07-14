@@ -190,7 +190,7 @@ class ImplicitEulerTimeStepper(TimeStepper):
                 F_list = [F, ] * nt
             else:
                 dt_F = F.as_vector(mu) * dt
-        elif isinstance(F, VectorArray):
+        else:
             assert len(F) == 1 or len(F) == nt
             if len(F) == 1:
                 assert F in A.range
@@ -294,7 +294,7 @@ class ExplicitEulerTimeStepper(TimeStepper):
                 F_list = [F, ] * nt
             else:
                 F_ass = F.as_vector(mu)
-        elif isinstance(F, VectorArray):
+        else:
             assert len(F) == 1 or len(F) == nt
             if len(F) == 1:
                 assert F in A.range
