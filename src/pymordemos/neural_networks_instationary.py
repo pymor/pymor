@@ -76,7 +76,7 @@ def main(
             speedups.append(time_fom / time_red)
 
         absolute_errors = (U - U_red).norm2()
-        relative_errors = (U - U_red).norm2() / U.norm2()
+        relative_errors = absolute_errors / U.norm2()
 
         return absolute_errors, relative_errors, speedups
 
@@ -114,15 +114,15 @@ def main(
         outputs = np.squeeze(np.array(outputs))
         outputs_red = np.squeeze(np.array(outputs_red))
 
-        outputs_absolute_errors = np.abs(outputs - outputs_red)
-        outputs_relative_errors = np.abs(outputs - outputs_red) / np.abs(outputs)
+        outputs_absolute_errors = np.linalg.norm(outputs - outputs_red, axis=0)
+        outputs_relative_errors = outputs_absolute_errors / np.linalg.norm(outputs, axis=0)
 
         return outputs_absolute_errors, outputs_relative_errors, outputs_speedups
 
     output_reductor = NeuralNetworkStatefreeOutputReductor(fom=fom, nt=time_steps+1,
                                                            training_parameters=training_parameters,
                                                            validation_parameters=validation_parameters,
-                                                           validation_loss=1e-5, scale_outputs=True)
+                                                           validation_loss=None, scale_outputs=True)
     output_rom = output_reductor.reduce(restarts=100)
 
     outputs_abs_errors, outputs_rel_errors, outputs_speedups = compute_errors_output(output_rom)
@@ -178,7 +178,7 @@ def create_fom(problem_number, grid_intervals, time_steps):
         f = LincombFunction(
             [ExpressionFunction('1.', 1), ConstantFunction(1., 1)],
             [ProjectionParameterFunctional('exponent'), 0.1])
-        problem = problem.with_stationary_part(outputs=[('l2', f)])
+        problem = problem.with_stationary_part(outputs=[('l2', f), ('l2', ConstantFunction(1., 1))],)
 
         fom, _ = discretize_instationary_fv(problem, diameter=1. / grid_intervals, nt=time_steps)
         plot_function = fom.visualize

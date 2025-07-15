@@ -615,20 +615,15 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     def _compute_sample(self, mu, output=None):
         """Transform parameter and corresponding output to tensors."""
         if output is None:
-            output = self.fom.output(mu).flatten()
-        else:
-            output = output.flatten()
+            output = self.fom.output(mu)
 
         if self.is_stationary:
-            samples = [(mu, output)]
+            samples = [(mu, output.flatten())]
         else:
-            output_size = output.shape[0]  # TODO: This seems to implicitly assume that there is only one output
-                                           # component?
             # conditional expression to check for instationary solution to return self.nt solutions
-            parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, output_size)] if output_size > 1 else [mu]
-            samples = [(param, np.array([out])) for param, out in zip(parameters, output)]
+            parameters = [mu] if self.is_stationary else [mu.at_time(t) for t in np.linspace(0, self.T, self.nt)]
+            samples = [(param, out) for param, out in zip(parameters, output.T)]
         return samples
-
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network."""

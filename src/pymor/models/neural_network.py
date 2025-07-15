@@ -163,7 +163,7 @@ class NeuralNetworkStatefreeOutputModel(BaseNeuralNetworkModel):
             output = self._scale_target(output)
             if isinstance(output, torch.Tensor):
                 output = output.numpy()
-            data['output'] = output.reshape((self.dim_output, 1))
+            data['output'] = output.reshape((self.neural_network.output_dimension, 1))
             quantities.remove('output')
 
         super()._compute(quantities, data, mu=mu)
@@ -298,7 +298,7 @@ class NeuralNetworkInstationaryStatefreeOutputModel(BaseNeuralNetworkModel):
             outputs = self._scale_target(outputs)
             if isinstance(outputs, torch.Tensor):
                 outputs = outputs.numpy()
-            assert outputs.shape == (self.nt, self.dim_output)
+            assert outputs.shape == (self.nt, self.neural_network.output_dimension)
             data['output'] = outputs.T
             quantities.remove('output')
 
