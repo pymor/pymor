@@ -673,13 +673,13 @@ we create `output` quantities for the `training_paramters` and `validation_param
 ```{code-cell} ipython3
 training_outputs = []
 for mu in training_parameters:
-    training_outputs.append(fom.compute(output=True, mu=mu)['output'])
-training_outputs = np.squeeze(np.array(training_outputs))
+    training_outputs.append(fom.compute(output=True, mu=mu)['output'].flatten())
+training_outputs = np.array(training_outputs).T
 
 validation_outputs = []
 for mu in validation_parameters:
-    validation_outputs.append(fom.compute(output=True, mu=mu)['output'])
-validation_outputs = np.squeeze(np.array(validation_outputs))
+    validation_outputs.append(fom.compute(output=True, mu=mu)['output'].flatten())
+validation_outputs = np.array(validation_outputs).T
 ```
 
 Now we import the {class}`~pymor.reductors.neural_network.NeuralNetworkStatefreeOutputReductor`
