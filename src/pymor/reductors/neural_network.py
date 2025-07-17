@@ -520,18 +520,18 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         List of |Parameter values| to use for training of the
         neural network.
     training_outputs
-        Set of outputs corresponding to a set of |Parameter values| used
-        for training of the neural network. These are the outputs to the
-        parameters of the `training_parameters` and can be `None` when `fom` is
-        not `None`.
+        2D |NumPy array| of outputs corresponding the |Parameter values| given by
+        `training_parameters`. Axis 0 corresponds to the output index, and axis 1
+        corresponds to the parameter sample index.
+        Can be `None` when `fom` is not `None`.
     validation_parameters
         List of |Parameter values| to use for validation in the training
         of the neural network.
     validation_outputs
-        Set of outputs corresponding to a set of |Parameter values| used
-        for validation of the neural network. These are the outputs to the
-        parameters of the `validation_parameters` and can be `None` when `fom` is
-        not `None`.
+        2D |NumPy array| of outputs corresponding the |Parameter values| given by
+        `validation_parameters`. Axis 0 corresponds to the output index, and axis 1
+        corresponds to the parameter sample index.
+        Can be `None` when `fom` is not `None`.
     validation_ratio
         See :class:`~pymor.reductors.neural_network.NeuralNetworkReductor`.
     validation_loss
@@ -547,16 +547,23 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
                  validation_outputs=None, validation_ratio=0.1, T=None, nt=1, validation_loss=None,
                  scale_inputs=True, scale_outputs=False):
         assert 0 < validation_ratio < 1 or validation_parameters
+        assert training_outputs is None or \
+            (isinstance(training_outputs, np.ndarray)
+             and training_outputs.ndim == 2 and training_outputs.shape[1] == len(training_parameters))
+        assert validation_outputs is None or \
+            (isinstance(validation_outputs, np.ndarray)
+             and validation_outputs.ndim == 2 and validation_outputs.shape[1] == len(validation_parameters))
 
         self.scaling_parameters = {'min_inputs': None, 'max_inputs': None,
                                    'min_targets': None, 'max_targets': None}
 
         super().__init__(fom=fom, training_parameters=training_parameters, validation_parameters=validation_parameters,
-                         training_snapshots=training_outputs, validation_snapshots=validation_outputs,
+                         training_snapshots=training_outputs.T if training_outputs is not None else None,
+                         validation_snapshots=validation_outputs if validation_outputs is not None else None,
                          validation_ratio=validation_ratio, T=T, nt=nt, scale_inputs=scale_inputs,
                          scale_outputs=scale_outputs)
         if not fom:
-            self.dim_output = training_outputs[0].size
+            self.dim_output = training_outputs.shape[0]
         else:
             self.dim_output = fom.dim_output
 
@@ -568,7 +575,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
             self.training_data = []
             for i, mu in enumerate(self.training_parameters):
                 if not self.fom:
-                    samples = self._compute_sample(mu, output=self.training_outputs[i*self.nt:(i+1)*self.nt])
+                    samples = self._compute_sample(mu, output=self.training_outputs[:, i*self.nt:(i+1)*self.nt])
                 else:
                     samples = self._compute_sample(mu)
                 for sample in samples:
@@ -584,7 +591,7 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
             self.validation_data = []
             for i, mu in enumerate(self.validation_parameters):
                 if not self.fom:
-                    samples = self._compute_sample(mu, output=self.validation_outputs[i*self.nt:(i+1)*self.nt])
+                    samples = self._compute_sample(mu, output=self.validation_outputs[:, i*self.nt:(i+1)*self.nt])
                 else:
                     samples = self._compute_sample(mu)
                 for sample in samples:
@@ -608,19 +615,15 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
     def _compute_sample(self, mu, output=None):
         """Transform parameter and corresponding output to tensors."""
         if output is None:
-            output = self.fom.output(mu).flatten()
-        else:
-            output = output.flatten()
+            output = self.fom.output(mu)
 
         if self.is_stationary:
-            samples = [(mu, output)]
+            samples = [(mu, output.flatten())]
         else:
-            output_size = output.shape[0]
             # conditional expression to check for instationary solution to return self.nt solutions
-            parameters = [mu.with_(t=t) for t in np.linspace(0, self.T, output_size)] if output_size > 1 else [mu]
-            samples = [(param, np.array([out])) for param, out in zip(parameters, output)]
+            parameters = [mu] if self.is_stationary else [mu.at_time(t) for t in np.linspace(0, self.T, self.nt)]
+            samples = [(param, out) for param, out in zip(parameters, output.T)]
         return samples
-
 
     def _compute_layer_sizes(self, hidden_layers):
         """Compute the number of neurons in the layers of the neural network."""
@@ -656,8 +659,8 @@ class NeuralNetworkStatefreeOutputReductor(NeuralNetworkReductor):
         with self.logger.block('Building ROM ...'):
             if self.is_stationary:
                 rom = NeuralNetworkStatefreeOutputModel(self.neural_network, parameters=parameters,
-                                                    scaling_parameters=self.scaling_parameters,
-                                                    name=f'{name}_output_reduced')
+                                                        scaling_parameters=self.scaling_parameters,
+                                                        name=f'{name}_output_reduced')
             else:
                 rom = NeuralNetworkInstationaryStatefreeOutputModel(self.T, self.nt, self.neural_network,
                                                                     parameters=parameters,

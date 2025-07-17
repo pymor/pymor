@@ -50,16 +50,16 @@ def main(
     for mu in training_parameters:
         res = fom.compute(solution=True, output=True, mu=mu)
         training_snapshots.append(res['solution'])
-        training_outputs.append(res['output'])
-    training_outputs = np.squeeze(np.array(training_outputs))
+        training_outputs.append(res['output'].flatten())
+    training_outputs = np.array(training_outputs).T
 
     validation_outputs = []
     validation_snapshots = fom.solution_space.empty(reserve=len(validation_parameters))
     for mu in validation_parameters:
         res = fom.compute(solution=True, output=True, mu=mu)
         validation_snapshots.append(res['solution'])
-        validation_outputs.append(res['output'])
-    validation_outputs = np.squeeze(np.array(validation_outputs))
+        validation_outputs.append(res['output'].flatten())
+    validation_outputs = np.array(validation_outputs).T
 
     reductor_data_driven = NeuralNetworkReductor(training_parameters=training_parameters,
                                                  training_snapshots=training_snapshots,
