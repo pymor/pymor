@@ -201,7 +201,7 @@ y_step = fom.step_resp()
 fig, ax = plt.subplots(fom.dim_output, fom.dim_input, sharex=True, constrained_layout=True)
 for i in range(fom.dim_output):
     for j in range(fom.dim_input):
-        ax[i, j].plot(np.linspace(0, fom.T, y_step.shape[0]), y_step[i, :, j])
+        ax[i, j].plot(np.linspace(0, fom.T, y_step.shape[1]), y_step[i, :, j])
 for i in range(fom.dim_output):
     ax[i, 0].set_title(f'Output {i + 1}', loc='left', rotation='vertical', x=-0.2, y=0.2)
 for j in range(fom.dim_input):
