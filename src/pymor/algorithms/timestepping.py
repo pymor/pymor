@@ -179,29 +179,19 @@ class ImplicitEulerTimeStepper(TimeStepper):
         dt = (t1 - t0) / nt
         DT = (t1 - t0) / (num_values - 1)
 
-        F_list = [None, ] * nt
         if F is None:
             F_time_dep = False
         elif isinstance(F, Operator):
             assert F.source.dim == 1
             assert F.range == A.range
             F_time_dep = _depends_on_time(F, mu)
-            if F_time_dep:
-                F_list = [F, ] * nt
-            else:
+            if not F_time_dep:
                 dt_F = F.as_vector(mu) * dt
         else:
-            assert len(F) == 1 or len(F) == nt
-            if len(F) == 1:
-                assert F in A.range
-                F_time_dep = False
-                dt_F = F * dt
-            else:
-                F_time_dep = True
-                if dt < 0:
-                    F_list = F[::-1]
-                else:
-                    F_list = F
+            assert len(F) == 1
+            assert F in A.range
+            F_time_dep = False
+            dt_F = F * dt
 
         if M is None:
             from pymor.operators.constructions import IdentityOperator
@@ -227,16 +217,13 @@ class ImplicitEulerTimeStepper(TimeStepper):
 
         sign = np.sign(end_time - initial_time)
 
-        for n, F in enumerate(F_list):
+        for n in range(nt):
             t += dt
             mu_t = mu.at_time(t)
             rhs = M.apply(U)
             if F_time_dep:
-                if isinstance(F, Operator):
-                    dt_F = F.as_vector(mu_t) * dt
-                else:
-                    dt_F = F * dt
-            if F is not None:
+                dt_F = F.as_vector(mu_t) * dt
+            if F:
                 rhs += dt_F
             U = M_dt_A.apply_inverse(rhs, mu=mu_t, initial_guess=U)
             while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
@@ -280,32 +267,17 @@ class ExplicitEulerTimeStepper(TimeStepper):
 
         num_values = num_values or nt + 1
 
-        dt = (t1 - t0) / nt
-        DT = (t1 - t0) / (num_values - 1)
-
-        F_list = [None, ] * nt
-        if F is None:
-            F_time_dep = False
-        elif isinstance(F, Operator):
+        if isinstance(F, Operator):
             assert F.source.dim == 1
             assert F.range == A.range
             F_time_dep = _depends_on_time(F, mu)
-            if F_time_dep:
-                F_list = [F, ] * nt
-            else:
+            if not F_time_dep:
                 F_ass = F.as_vector(mu)
-        else:
-            assert len(F) == 1 or len(F) == nt
-            if len(F) == 1:
-                assert F in A.range
-                F_time_dep = False
-                F_ass = F
-            else:
-                F_time_dep = True
-                if dt < 0:
-                    F_list = F[::-1]
-                else:
-                    F_list = F
+        elif isinstance(F, VectorArray):
+            assert len(F) == 1
+            assert F in A.range
+            F_time_dep = False
+            F_ass = F
 
         assert len(U0) == 1
         assert U0 in A.source
@@ -314,6 +286,8 @@ class ExplicitEulerTimeStepper(TimeStepper):
         if not A_time_dep:
             A = A.assemble(mu)
 
+        dt = (t1 - t0) / nt
+        DT = (t1 - t0) / (num_values - 1)
         num_ret_values = 1
         t = t0
         yield U0, t
@@ -331,14 +305,11 @@ class ExplicitEulerTimeStepper(TimeStepper):
                     num_ret_values += 1
                     yield U, t
         else:
-            for n, F in enumerate(F_list):
+            for n in range(nt):
                 t += dt
                 mu_t = mu.at_time(t)
                 if F_time_dep:
-                    if isinstance(F, Operator):
-                        F_ass = F.as_vector(mu_t)
-                    else:
-                        F_ass = F
+                    F_ass = F.as_vector(mu_t)
                 U.axpy(dt, F_ass - A.apply(U, mu=mu_t))
                 while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
                     num_ret_values += 1
@@ -389,29 +360,19 @@ class ImplicitMidpointTimeStepper(TimeStepper):
         dt = (t1 - t0) / nt
         DT = (t1 - t0) / (num_values - 1)
 
-        F_list = [None, ] * nt
         if F is None:
             F_time_dep = False
         elif isinstance(F, Operator):
             assert F.source.dim == 1
             assert F.range == A.range
             F_time_dep = _depends_on_time(F, mu)
-            if F_time_dep:
-                F_list = [F, ] * nt
-            else:
+            if not F_time_dep:
                 dt_F = F.as_vector(mu) * dt
         else:
-            assert len(F) == 1 or len(F) == nt
-            if len(F) == 1:
-                assert F in A.range
-                F_time_dep = False
-                dt_F = F * dt
-            else:
-                F_time_dep = True
-                if dt < 0:
-                    F_list = F[::-1]
-                else:
-                    F_list = F
+            assert len(F) == 1
+            assert F in A.range
+            F_time_dep = False
+            dt_F = F * dt
 
         if M is None:
             from pymor.operators.constructions import IdentityOperator
@@ -444,16 +405,13 @@ class ImplicitMidpointTimeStepper(TimeStepper):
 
         sign = np.sign(end_time - initial_time)
 
-        for n, F in enumerate(F_list):
+        for n in range(nt):
             mu_t = mu.at_time(t + dt/2)
             t += dt
             rhs = M_dt_A_expl.apply(U, mu=mu_t)
             if F_time_dep:
-                if isinstance(F, Operator):
-                    dt_F = F.as_vector(mu_t) * dt
-                else:
-                    dt_F = F * dt
-            if F is not None:
+                dt_F = F.as_vector(mu_t) * dt
+            if F:
                 rhs += dt_F
             U = M_dt_A_impl.apply_inverse(rhs, mu=mu_t)
             while sign * (t - t0 + sign*(min(sign*dt, sign*DT) * 0.5)) >= sign * (num_ret_values * DT):
