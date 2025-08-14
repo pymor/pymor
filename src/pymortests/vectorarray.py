@@ -12,7 +12,6 @@ from hypothesis.extra.numpy import arrays
 
 import pymortests.strategies as pyst
 from pymor.algorithms.basic import almost_equal
-from pymor.core.config import config
 from pymor.tools.floatcmp import bounded, float_cmp
 from pymor.vectorarrays.interface import VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -139,27 +138,7 @@ def test_full(vector_array):
                           high=hyst.floats(allow_infinity=False, allow_nan=False))
 @example(vector_array=NumpyVectorSpace(1).empty(), realizations=2,
          low=-5e-324, high=0.0)
-def test_random_uniform_all(vector_array, realizations, low, high):
-    if config.HAVE_DUNEGDT:
-        # atm needs special casing due to norm implementation handling of large vector elements
-        from pymor.bindings.dunegdt import DuneXTVectorSpace
-        if isinstance(vector_array.space, DuneXTVectorSpace):
-            return
-    _test_random_uniform(vector_array, realizations, low, high)
-
-
-if config.HAVE_DUNEGDT:
-    @pyst.given_vector_arrays(realizations=hyst.integers(min_value=0, max_value=MAX_RNG_REALIZATIONS),
-                              low=hyst.floats(allow_infinity=False, allow_nan=False,
-                                              max_value=10e100, min_value=-10e100),
-                              high=hyst.floats(allow_infinity=False, allow_nan=False,
-                                               max_value=10e100, min_value=-10e100),
-                              which=('dunegdt',))
-    def test_random_uniform_dune(vector_array, realizations, low, high):
-        _test_random_uniform(vector_array, realizations, low, high)
-
-
-def _test_random_uniform(vector_array, realizations, low, high):
+def test_random_uniform(vector_array, realizations, low, high):
     assume(np.isfinite(high-low))  # avoid overflow in np.random.RandomState.uniform
     with pytest.raises(Exception):
         vector_array.random(-1)

@@ -505,8 +505,6 @@ class ListVectorArray(VectorArray):
     For an example, see :class:`NumpyVector` and :class:`NumpyListVectorSpace`,
     :class:`~pymor.bindings.fenics.FenicsVector` and
     :class:`~pymor.bindings.fenics.FenicsVectorSpace`,
-    :class:`~pymor.bindings.dunegdt.DuneXTVector` and
-    :class:`~pymor.bindings.dunegdt.DuneXTVectorSpace`,
     :class:`~pymor.bindings.ngsolve.NGSolveVector` and
     :class:`~pymor.bindings.ngsolve.NGSolveVectorSpace`.
     """
