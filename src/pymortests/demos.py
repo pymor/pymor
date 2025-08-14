@@ -224,14 +224,9 @@ def _test_demo(demo):
     import sys
     sys._called_from_test = True
 
-    def nop(*args, **kwargs):
-        pass
+    from matplotlib import pyplot as plt
+    plt.ion()
 
-    try:
-        from matplotlib import pyplot as plt
-        plt.ion()
-    except ImportError:
-        pass
     try:
         import petsc4py
 
