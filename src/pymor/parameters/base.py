@@ -374,6 +374,8 @@ class Mu(ImmutableObject):
         Immutable mapping from parameter names to |Functions| of time.
     """
 
+    _hash = None
+
     def __init__(self, *args, **kwargs):
         values = {}
         time_dependent_values = {}
@@ -402,7 +404,6 @@ class Mu(ImmutableObject):
         assert 't' not in values or not time_dependent_values, 'cannot specify "t" and have time-dependent values'
 
         self._values = values
-        self._hash = None
         self.time_dependent_values = FrozenDict(time_dependent_values)
 
     def __getitem__(self, key):
