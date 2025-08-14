@@ -83,7 +83,7 @@ Replace `RELEASE_TAG` below with the actual release tag.
 - [ ] Update MOR Wiki:
       [pyMOR page](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/PyMOR),
       [software comparison table](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/Comparison_of_Software).
-- [ ] Submit release to [NA-digest](http://icl.utk.edu/na-digest/websubmit.html).
+- [ ] Submit release to [NA-digest](https://na-digest.coecis.cornell.edu/submit/).
       (Omit in case of a bugfix release.)
 
 ## After release
