@@ -375,6 +375,8 @@ class Mu(ImmutableObject):
         Immutable mapping from parameter names to |Functions| of time.
     """
 
+    _hash = None
+
     def __init__(self, *args, **kwargs):
         values = {}
         time_dependent_values = {}
@@ -487,6 +489,11 @@ class Mu(ImmutableObject):
         return self.keys() == other.keys() \
             and all(np.array_equal(v, other[k]) for k, v in self.items()) \
             and self.time_dependent_values == other.time_dependent_values
+
+    def __hash__(self):
+        if self._hash is None:
+            self._hash = sum(hash(v.tobytes()) for v in self.values())
+        return self._hash
 
     def __str__(self):
         def format_value(k, v):
