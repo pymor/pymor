@@ -45,7 +45,8 @@ def test_va_as_rhs_implicit_euler():
         print(mu_t)
         rhs_time_dep.append(2. * rhs.as_vector(mu=mu_t))
 
-    rhs_time_dep_operator = vector_array_to_selection_operator(rhs_time_dep, initial_time=initial_time, end_time=end_time)
+    rhs_time_dep_operator = vector_array_to_selection_operator(rhs_time_dep,
+                                                               initial_time=initial_time, end_time=end_time)
 
     for n in range(nt):
         mu_t = mu.at_time(initial_time + n * dt)

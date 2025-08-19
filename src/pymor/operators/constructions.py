@@ -13,8 +13,12 @@ import scipy.linalg as spla
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
-from pymor.parameters.base import Parameters, ParametricObject
-from pymor.parameters.functionals import ConjugateParameterFunctional, ParameterFunctional, ProjectionParameterFunctional
+from pymor.parameters.base import ParametricObject
+from pymor.parameters.functionals import (
+    ConjugateParameterFunctional,
+    ParameterFunctional,
+    ProjectionParameterFunctional,
+)
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -1325,7 +1329,9 @@ def vector_array_to_selection_operator(array, time_instances=None, initial_time=
     assert time_instances is not None or (initial_time is not None and end_time is not None)
     operators = [VectorArrayOperator(a, adjoint=False, name=name) for a in array]
     parameter_functional = ProjectionParameterFunctional('t')
-    boundaries = time_instances if time_instances is not None else np.linspace(initial_time + (end_time-initial_time)/(2.*(len(array)-1)), end_time - (end_time-initial_time)/(2.*(len(array)-1)), len(array) - 1)
+    shift = (end_time - initial_time) / (2. * (len(array) - 1))
+    boundaries = time_instances if time_instances is not None else np.linspace(initial_time + shift,
+                                                                               end_time - shift, len(array) - 1)
     return SelectionOperator(operators, parameter_functional, boundaries, name=name)
 
 
