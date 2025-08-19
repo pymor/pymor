@@ -1321,14 +1321,12 @@ class SelectionOperator(Operator):
         return self.operators[operator_number].as_source_array(mu=mu)
 
 
-class TimeDependentVectorArrayOperator(SelectionOperator):
-    def __init__(self, array, time_instances=None, initial_time=None, end_time=None, name=None):
-        assert time_instances is not None or (initial_time is not None and end_time is not None)
-        self.__auto_init(locals())
-        operators = [VectorArrayOperator(a, adjoint=False, name=name) for a in array]
-        parameter_functional = ProjectionParameterFunctional('t')
-        boundaries = time_instances if time_instances is not None else np.linspace(initial_time, end_time, len(array)-1)
-        super().__init__(operators, parameter_functional, boundaries, name=name)
+def vector_array_to_selection_operator(array, time_instances=None, initial_time=None, end_time=None, name=None):
+    assert time_instances is not None or (initial_time is not None and end_time is not None)
+    operators = [VectorArrayOperator(a, adjoint=False, name=name) for a in array]
+    parameter_functional = ProjectionParameterFunctional('t')
+    boundaries = time_instances if time_instances is not None else np.linspace(initial_time + (end_time-initial_time)/(2.*(len(array)-1)), end_time - (end_time-initial_time)/(2.*(len(array)-1)), len(array) - 1)
+    return SelectionOperator(operators, parameter_functional, boundaries, name=name)
 
 
 @defaults('raise_negative', 'tol')

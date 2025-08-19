@@ -2,7 +2,7 @@ import numpy as np
 
 from pymor.algorithms.timestepping import DiscreteTimeStepper, ImplicitEulerTimeStepper, ImplicitMidpointTimeStepper
 from pymor.models.examples import heat_equation_example, heat_equation_non_parametric_example
-from pymor.operators.constructions import TimeDependentVectorArrayOperator
+from pymor.operators.constructions import vector_array_to_selection_operator
 
 tol = 1e-10
 
@@ -10,7 +10,7 @@ tol = 1e-10
 def setup_non_parametric_example():
     initial_time = 0.
     end_time = 1.
-    nt = 10
+    nt = 12
     fom = heat_equation_non_parametric_example(diameter=1., nt=nt)
     num_values = 19
     initial_data = fom.initial_data.as_range_array()
@@ -21,7 +21,7 @@ def setup_non_parametric_example():
 
 
 def setup_parametric_example():
-    nt = 10
+    nt = 12
     num_values = 19
     initial_time = 0.
     end_time = 1.
@@ -37,34 +37,21 @@ def setup_parametric_example():
 
 def test_va_as_rhs_implicit_euler():
     fom, initial_time, end_time, nt, num_values, initial_data, operator, rhs, mass, mu = setup_parametric_example()
-    dt = (end_time - initial_time) / nt
+    dt = (end_time - initial_time) / (nt - 1)
 
     rhs_time_dep = fom.operator.range.empty(reserve=nt)
     for n in range(nt):
-        mu_t = mu.at_time(initial_time + (n + 1) * dt)
+        mu_t = mu.at_time(initial_time + n * dt)
+        print(mu_t)
         rhs_time_dep.append(2. * rhs.as_vector(mu=mu_t))
 
-    rhs_time_dep = TimeDependentVectorArrayOperator(rhs_time_dep, initial_time=initial_time, end_time=end_time)
+    rhs_time_dep_operator = vector_array_to_selection_operator(rhs_time_dep, initial_time=initial_time, end_time=end_time)
 
-    time_stepper = ImplicitEulerTimeStepper(nt)
-    U_va_rhs = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs_time_dep,
-                                  mass=mass, mu=mu)
-    U = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=2. * rhs, mass=mass, mu=mu)
-    assert np.all((U - U_va_rhs).norm() <= tol)
-
-
-def test_va_as_rhs_implicit_midpoint():
-    fom, initial_time, end_time, nt, num_values, initial_data, operator, rhs, mass, mu = setup_parametric_example()
-    dt = (end_time - initial_time) / nt
-
-    rhs_time_dep = fom.operator.range.empty(reserve=nt)
     for n in range(nt):
-        mu_t = mu.at_time(initial_time + (n + 0.5) * dt)
-        rhs_time_dep.append(2. * rhs.as_vector(mu=mu_t))
+        mu_t = mu.at_time(initial_time + n * dt)
+        assert (rhs_time_dep_operator.as_vector(mu=mu_t) - 2*rhs.as_vector(mu=mu_t)).norm() <= tol
 
-    rhs_time_dep = TimeDependentVectorArrayOperator(rhs_time_dep, initial_time=initial_time, end_time=end_time)
-
-    time_stepper = ImplicitMidpointTimeStepper(nt)
+    time_stepper = ImplicitEulerTimeStepper(nt - 1)
     U_va_rhs = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs_time_dep,
                                   mass=mass, mu=mu)
     U = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=2. * rhs, mass=mass, mu=mu)

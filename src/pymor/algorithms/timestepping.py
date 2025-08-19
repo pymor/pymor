@@ -16,6 +16,7 @@ the time-steppers used by |InstationaryModel|.
 import numpy as np
 
 from pymor.core.base import ImmutableObject, abstractmethod
+from pymor.operators.constructions import vector_array_to_selection_operator
 from pymor.operators.interface import Operator
 from pymor.parameters.base import Mu
 from pymor.vectorarrays.interface import VectorArray
@@ -187,6 +188,9 @@ class ImplicitEulerTimeStepper(TimeStepper):
             F_time_dep = _depends_on_time(F, mu)
             if not F_time_dep:
                 dt_F = F.as_vector(mu) * dt
+        elif isinstance(F, VectorArray) and len(F) > 1:
+            F_time_dep = True
+            F = vector_array_to_selection_operator(F, initial_time=initial_time, end_time=end_time)
         else:
             assert len(F) == 1
             assert F in A.range
@@ -273,6 +277,9 @@ class ExplicitEulerTimeStepper(TimeStepper):
             F_time_dep = _depends_on_time(F, mu)
             if not F_time_dep:
                 F_ass = F.as_vector(mu)
+        elif isinstance(F, VectorArray) and len(F) > 1:
+            F_time_dep = True
+            F = vector_array_to_selection_operator(F, initial_time=initial_time, end_time=end_time)
         elif isinstance(F, VectorArray):
             assert len(F) == 1
             assert F in A.range
@@ -368,6 +375,9 @@ class ImplicitMidpointTimeStepper(TimeStepper):
             F_time_dep = _depends_on_time(F, mu)
             if not F_time_dep:
                 dt_F = F.as_vector(mu) * dt
+        elif isinstance(F, VectorArray) and len(F) > 1:
+            F_time_dep = True
+            F = vector_array_to_selection_operator(F, initial_time=initial_time, end_time=end_time)
         else:
             assert len(F) == 1
             assert F in A.range
@@ -461,6 +471,9 @@ class DiscreteTimeStepper(TimeStepper):
             F_time_dep = _depends_on_time(F, mu)
             if not F_time_dep:
                 Fk = F.as_vector(mu)
+        elif isinstance(F, VectorArray) and len(F) > 1:
+            F_time_dep = True
+            F = vector_array_to_selection_operator(F, initial_time=initial_time, end_time=end_time)
         else:
             assert len(F) == 1
             assert F in A.range
