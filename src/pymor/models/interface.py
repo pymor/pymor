@@ -287,8 +287,8 @@ class Model(CacheableObject, ParametricObject):
         Returns
         -------
         The computed model output as a 2D |NumPy array|. The dimension
-        of axis 1 is :attr:`dim_output`. (For stationary problems, axis 0 has
-        dimension 1. For time-dependent problems, the dimension of axis 0
+        of axis 0 is :attr:`dim_output`. (For stationary problems, axis 1 has
+        dimension 1. For time-dependent problems, the dimension of axis 1
         depends on the number of time steps.)
         When `return_error_estimate` is `True`, the estimate is returned as
         second value.
@@ -426,8 +426,8 @@ class Model(CacheableObject, ParametricObject):
         Returns
         -------
         The estimated model output as a 2D |NumPy array|. The dimension
-        of axis 1 is :attr:`dim_output`. For stationary problems, axis 0 has
-        dimension 1. For time-dependent problems, the dimension of axis 0
+        of axis 0 is :attr:`dim_output`. For stationary problems, axis 1 has
+        dimension 1. For time-dependent problems, the dimension of axis 1
         depends on the number of time steps. The spatial/temporal norms
         w.r.t. which the error is estimated depend on the given problem.
         """
@@ -506,7 +506,7 @@ class Model(CacheableObject, ParametricObject):
                 raise NotImplementedError
             self._compute_required_quantities({'solution'}, data, mu)
 
-            data['output'] = self.output_functional.apply(data['solution'], mu=mu).to_numpy().T
+            data['output'] = self.output_functional.apply(data['solution'], mu=mu).to_numpy()
             quantities.remove('output')
 
         if 'output_d_mu' in quantities:
@@ -524,10 +524,10 @@ class Model(CacheableObject, ParametricObject):
             for (parameter, size) in self.parameters.items():
                 for index in range(size):
                     output_d_mu = self.output_functional.d_mu(parameter, index).apply(
-                        solution, mu=mu).to_numpy().T
+                        solution, mu=mu).to_numpy()
                     U_d_mu = data['solution_d_mu', parameter, index]
                     for t, U in enumerate(U_d_mu):
-                        output_d_mu[t] \
+                        output_d_mu[:, t] \
                             += self.output_functional.jacobian(solution[t], mu).apply(U, mu).to_numpy()[:, 0]
                     sensitivities[parameter, index] = output_d_mu
             data['output_d_mu'] = OutputDMuResult(sensitivities)
@@ -557,9 +557,9 @@ class OutputDMuResult(FrozenDict):
         """Return gradients as a single 3D NumPy array.
 
         The array is obtained by stacking the individual arrays along an
-        additional axis 0, ordered by alphabetically ordered parameter name.
+        additional axis 2, ordered by alphabetically ordered parameter name.
         """
-        return np.array([v for k, v in sorted(self.items())])
+        return np.stack([v for k, v in sorted(self.items())], axis=2)
 
     def __repr__(self):
         return f'OutputDMuResult({dict(sorted(self.items()))})'

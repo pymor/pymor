@@ -79,7 +79,7 @@ def main(
         print('Computing outputs ...')
         S = m.output()
         print(f'  average solution over the domain:   {S[0, 0]}')
-        print(f'  average solution over the boundary: {S[0, 1]}')
+        print(f'  average solution over the boundary: {S[1, 0]}')
 
 
 if __name__ == '__main__':

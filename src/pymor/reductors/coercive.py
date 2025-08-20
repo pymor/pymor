@@ -90,7 +90,7 @@ class CoerciveRBEstimator(ImmutableObject):
         # scale with dual norm of the output functional
         output_functional_norms = self.projected_output_adjoint.as_range_array(mu).norm()
         errs = estimate * output_functional_norms
-        return errs.reshape((1, -1))
+        return errs.reshape((-1, 1))
 
     def restricted_to_subbasis(self, dim, m):
         if self.residual_range_dims:
@@ -293,7 +293,7 @@ class SimpleCoerciveRBEstimator(ImmutableObject):
         for d in range(m.dim_output):
             dual_norms.append(np.sqrt(coeff_vals.T@(self.output_estimator_matrices[d]@coeff_vals)))
         errs = estimate * dual_norms
-        return errs.reshape((-1, 1))
+        return errs.reshape((1, -1))
 
     def restricted_to_subbasis(self, dim, m):
         cr = 1 if not m.rhs.parametric else len(m.rhs.operators)

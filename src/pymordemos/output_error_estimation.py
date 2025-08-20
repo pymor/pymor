@@ -97,10 +97,10 @@ def main(
     for i, mu in enumerate(training_set):
         s_fom = fom_outputs[i]
         s_rom, s_est = rom.output(return_error_estimate=True, mu=mu)
-        s_est = np.linalg.norm(s_est[-1, :])
+        s_est = np.linalg.norm(s_est[:, -1])
         results_full['fom'].append(s_fom)
         results_full['rom'].append(s_rom)
-        results_full['err'].append(np.linalg.norm(np.abs(s_fom[-1]-s_rom[-1])))
+        results_full['err'].append(np.linalg.norm(np.abs(s_fom[:, -1]-s_rom[:, -1])))
         results_full['est'].append(s_est)
 
         # just for testing purpose
@@ -123,7 +123,7 @@ def main(
         for i, mu in enumerate(training_set):
             s_fom = fom_outputs[i]
             s_rom, s_est = rom.output(return_error_estimate=True, mu=mu)
-            s_est = np.linalg.norm(s_est[-1, :])
+            s_est = np.linalg.norm(s_est[:, -1])
             max_err = max(max_err, np.linalg.norm(np.abs(s_fom-s_rom)))
             max_est = max(max_est, s_est)
             min_err = min(min_err, np.linalg.norm(np.abs(s_fom-s_rom)))

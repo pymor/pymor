@@ -458,7 +458,7 @@ to convert the values to a single NumPy array.
 
 ```{code-cell} ipython3
 def fom_gradient_of_functional(mu):
-    return fom.output_d_mu(fom.parameters.parse(mu)).to_numpy()
+    return fom.output_d_mu(fom.parameters.parse(mu)).to_numpy().ravel()
 
 opt_fom_minimization_data = prepare_data()
 
