@@ -7,7 +7,7 @@ BASEDIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 find /var/www/docs.pymor.org -maxdepth 1 -type d -name 'gh-readonly-queue-*' -exec rm -r '{}' \;
 
 # remove old documentation
-find /var/www/docs.pymor.org -maxdepth 1 -type d -mtime +90 -not -name '20??-*-*' -not -name '20??.*.*' -not -name '0.?.?' -not -name 'main' -exec rm -r '{}' \;
+find /var/www/docs.pymor.org -maxdepth 1 -type d -mtime +90 -not -name '20??-*-*' -not -name '20??.*.*' -not -name '0.?.?' -not -name 'main' -not -name 'asv' -exec rm -r '{}' \;
 
 # rebuild https://docs.pymor.org/list.html
 $BASEDIR/docs_makeindex.py /var/www/docs.pymor.org
