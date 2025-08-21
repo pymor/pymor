@@ -11,3 +11,4 @@ MD033:
 MD034: false  # allow bare URLs
 MD040: false  # ``` fenced code must have language set
 MD041: false  # require heading as first line in file
+MD059: false  # link text should be descriptive (not, e.g., "here")

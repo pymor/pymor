@@ -55,7 +55,7 @@ def test_newton_unknown_line_search():
         _ = _newton(mop, relax='armo')
 
 
-def test_newton_residual_is_zero(order=5):
+def test_newton_residual_is_zero(order=5):  # noqa: PT028
     mop = MonomOperator(order)
     U, _ = _newton(mop, initial_value=0.0)
     assert float_cmp(mop.apply(U).to_numpy(), 0.0)

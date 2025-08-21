@@ -4,7 +4,7 @@
 exclude: .ci/gitlab/ci.yml
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -34,13 +34,13 @@ repos:
           - --autofix
       - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.4
+    rev: v0.12.9
     hooks:
       - id: ruff
         args:
           - --fix
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.17.1
+    rev: v0.18.1
     hooks:
       - id: markdownlint-cli2
         args:
