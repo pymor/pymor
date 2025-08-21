@@ -26,9 +26,16 @@ The release manager is responsible for ensuring that the following steps are per
   - [ ] Assign main developers to pull requests that still require review.
         Make sure that reviews are finished early,
         such that enough time remains to incorporate requested changes.
-  - [ ] Start working on the release notes.
-        Make sure that all features merged later are mentioned in the release notes as well.
-        All new deprecations need to be mentioned in the release notes.
+  - [ ] Start working on the release notes., e.g., using GitHub CLI:
+
+    ```bash
+    gh pr list --search "milestone:202x.y.z" --state all --json number,title,url \
+    --template '{{range .}}{{tablerow (printf "#%v" .number) .title .url}}{{end}}'
+    ```
+
+    Make sure that all features merged later are mentioned in the release notes as well.
+    All new deprecations need to be mentioned in the release notes.
+
 - [ ] One week before the hard freeze:
   - [ ] Remind everyone of the upcoming hard freeze and missing reviews or unfinished pull requests
         (ping in the PRs).
