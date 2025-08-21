@@ -1,0 +1,42 @@
+pyMOR 2025.1 (August ??, 2025)
+--------------------------------
+
+We are proud to announce the release of pyMOR 2025.1!
+
+The main new features are:
+
+*
+
+pyMOR 2025.1 contains contributions by ...
+See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more details.
+
+
+Main new features
+^^^^^^^^^^^^^^^^^
+
+Backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Further notable improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- `[#2445] Fix shape of scipy solver return values <https://github.com/pymor/pymor/pull/2445>`_
+- `[#2440] Replace solver_options by Solver classes <https://github.com/pymor/pymor/pull/2440>`_
+- `[#2434] Transpose output quantities <https://github.com/pymor/pymor/pull/2434>`_
+- `[#2432] Remove pymordocstring.py <https://github.com/pymor/pymor/pull/2432>`_
+- `[#2431] BSD-3-Clause license <https://github.com/pymor/pymor/pull/2431>`_
+- `[#2429] Bump minimum hatchling version for PEP639 <https://github.com/pymor/pymor/pull/2429>`_
+- `[#2426] Change _sv_U_V to _hankel_svd <https://github.com/pymor/pymor/pull/2426>`_
+- `[#2425] Switch to NumFOCUS Code of Conduct <https://github.com/pymor/pymor/pull/2425>`_
+- `[#2423] Adaptive RandomizedERAReductor <https://github.com/pymor/pymor/pull/2423>`_
+- `[#2420] created a new hash function to make Mu values hashable. <https://github.com/pymor/pymor/pull/2420>`_
+- `[#2417] Allow for VectorArrays as right hand side in time stepping methods <https://github.com/pymor/pymor/pull/2417>`_
+- `[#2416] Remove dune-gdt bindings <https://github.com/pymor/pymor/pull/2416>`_
+- `[#2411] Improving Loewner Construction in p-AAA <https://github.com/pymor/pymor/pull/2411>`_
+- `[#2408] Add asv-based performance benchmarks <https://github.com/pymor/pymor/pull/2408>`_
+- `[#2407] Avoid data corruption in shifted_chol_qr <https://github.com/pymor/pymor/pull/2407>`_
+- `[#2405] The Great Transposition <https://github.com/pymor/pymor/pull/2405>`_
+- `[#2401] Execute _get_threadpool_internal_api in try-except-block <https://github.com/pymor/pymor/pull/2401>`_
+- `[#2372] Add the CGS IRO LS algorithm, tests and references. <https://github.com/pymor/pymor/pull/2372>`_
+- `[#2295] Adjust neural network reductor to run without full order model <https://github.com/pymor/pymor/pull/2295>`_
+- `[#2140] FAQs <https://github.com/pymor/pymor/pull/2140>`_
