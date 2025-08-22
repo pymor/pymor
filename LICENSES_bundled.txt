@@ -7,6 +7,7 @@ Name: generic solvers
 File: src/pymor/algorithms/genericsolvers.py#L715-L732
 License: BSD-3-Clause
 
+Copyright (C) 2010 David Fong and Michael Saunders
 Copyright (c) 2001-2002 Enthought, Inc. 2003, SciPy Developers.
 All rights reserved.
 
