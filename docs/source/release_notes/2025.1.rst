@@ -7,7 +7,7 @@ The main new features are:
 
 *
 
-pyMOR 2025.1 contains contributions by ...
+pyMOR 2025.1 contains contributions by Timo Plath.
 See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more details.
 
 
