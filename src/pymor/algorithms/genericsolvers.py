@@ -713,7 +713,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
 
 # The following code is an adapted version of
-# scipy.sparse.linalg.lsqr.
+# scipy.sparse.linalg.lsmr.
 # Original copyright notice:
 #
 # Copyright (C) 2010 David Fong and Michael Saunders

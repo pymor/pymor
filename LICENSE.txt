@@ -19,6 +19,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The following files contain source code originating from other open source software projects:
 
-* src/pymor/algorithms/genericsolvers.py (SciPy)
+* src/pymor/algorithms/genericsolvers.py (SciPy) under BSD-3-Clause license
 
 See these files for more information.
