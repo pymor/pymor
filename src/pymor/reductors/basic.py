@@ -200,7 +200,7 @@ class StationaryRBReductor(ProjectionBasedReductor):
 
     def build_rom(self, projected_operators, error_estimator):
         return StationaryModel(error_estimator=error_estimator, **projected_operators)
-    
+
 
 class InstationaryRBReductor(ProjectionBasedReductor):
     """Galerkin projection of an |InstationaryModel|.
