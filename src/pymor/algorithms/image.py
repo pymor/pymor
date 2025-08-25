@@ -95,7 +95,7 @@ def estimate_image(operators=(), vectors=(),
                 rules.apply(v)
             except NoMatchingRuleError as e:
                 raise ImageCollectionError(e.obj) from e
-    
+
     if operators and domain is None:
         domain = domain_space.empty()
     for op in operators:
