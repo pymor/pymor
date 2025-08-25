@@ -332,17 +332,24 @@ def heat_equation_1d_example(diameter=0.01, nt=100):
 
     return fom
 
-def stokes_examples(): 
-    """Return parametric Stokes equation example
+def stokes_2Dexample(rhs=None): 
+    """Return parametric, stationary Stokes equation on the unit circle. The problem consists in solving ::
+
+        - ν Δ u(x, ν) + ∇ p(x, ν) = f(x)  in Ω
+        ∇ ⋅ u(x, ν) = 0  in Ω
+
+    with homogenous Dirichlet boundary conditions on ∂Ω, where ν is a constant diffusion coefficient. 
+    To eliminate the singularity of the saddle-point system, one pressure node is set to zero.
 
     Parameters
     ----------
+    rhs
+        The |Function| f. `rhs.dim_domain` has to be 2, whereas `rhs.shape_range` has to be `(2,)`.
 
     Returns
     -------
     fom
-        Stokes equation problem as an |StationaryModel|.
-
+        Stokes equation problem as a |StationaryModel|.
     """
     from skfem.mesh import MeshTri 
     from skfem.element import ElementVector, ElementTriP2, ElementTriP1
@@ -360,8 +367,12 @@ def stokes_examples():
     from pymor.parameters.functionals import ExpressionParameterFunctional
     from pymor.operators.constructions import LincombOperator
     from pymor.models.basic import StationaryModel
+    from pymor.analyticalproblems.functions import Function
 
     import numpy as np
+
+    assert isinstance(rhs, Function)
+    assert rhs.dim_domain == 2 and rhs.shape_range == (2,)
 
     mesh = MeshTri.init_circle(4)
 
@@ -369,47 +380,66 @@ def stokes_examples():
     element = {'u': ElementVector(ElementTriP2()), 'p': ElementTriP1()}
     basis = {variable: Basis(mesh, e, intorder=3) for variable, e in element.items()}
 
-    def body_force(v, w):
-        return w.x[0] * v[1]
+    def make_body_force(rhs):
+        def integrand(v, w):
+            K, Q = w.x.shape[1], w.x.shape[2]
+            x, y = w.x[0], w.x[1]
 
+            vals = rhs(np.array([x.reshape(-1), y.reshape(-1)]).T)
+            vals = vals.reshape(K, Q, 2)
+            f_x = vals[:, :, 0]
+            f_y = vals[:, :, 1]
+
+            return f_x * v[0] + f_y * v[1]
+
+        return LinearForm(integrand)
+
+    #Assemble
     A = asm(vector_laplace, basis['u'])
     B = asm(divergence, basis['u'], basis['p'])
     C = asm(mass, basis['p'])
+    product_u = A
+    product_p = C
 
-    K = bmat([[A, -B.T],
-          [-B, 0 * C]], 'csr')
+    K = bmat([[A, - B.T], [- B, 0 * C]], 'csr')
+    f = np.concatenate([asm(make_body_force(rhs), basis['u']), basis['p'].zeros()])
     
-    f = np.concatenate([asm(LinearForm(body_force), basis['u']), basis['p'].zeros()])
-    
-    #Dirichlet boundary values, fix one pressure node
+    #Dirichlet boundary values, fix one pressure node to zero
     D_u = basis['u'].get_dofs().flatten()
     D_p = np.array(basis['p'].get_dofs().flatten()[[0]])
     D_all = np.concatenate([D_u, D_p + A.shape[0]])
 
-    K_c, f_c = condense(K, f, D=D_all, expand=False)
+    #Condense
+    K_c, f_c, _, I = condense(K, f, D=D_all, expand=True)
+    free_u = len(I[I < A.shape[0]])
+    free_p = len(I[I >= A.shape[0]] - A.shape[0])
 
-    free_u = A.shape[0] - len(D_u)
-    free_p = C.shape[0] - len(D_p)
-
+    #Extract blocks
     A_c = K_c[:free_u, :free_u]
     B_c = K_c[free_u:, :free_u]
+
+    all_u = np.arange(product_u.shape[0])
+    free_idx_u = np.setdiff1d(all_u, D_u)
+    all_p = np.arange(product_p.shape[0])
+    free_idx_p = np.setdiff1d(all_p, D_p)
+
+    product_u_c = product_u[free_idx_u][:, free_idx_u]
+    product_p_c = product_p[free_idx_p][:, free_idx_p]
     
-    #Transform everything into pymor language
-    U_free = NumpyVectorSpace(free_u)
-    P_free = NumpyVectorSpace(free_p)
+    #Build BlockOperator
+    U_space = NumpyVectorSpace(free_u)
+    P_space = NumpyVectorSpace(free_p)
 
     nu = ExpressionParameterFunctional('nu', {'nu': 1}, name='nu')
     A_op  = NumpyMatrixOperator(A_c)
     A_op_nu = LincombOperator(operators=[A_op], coefficients=[nu])
-
     B_op  = NumpyMatrixOperator(B_c)
     B_op_T = NumpyMatrixOperator(B_c.T)
-    Z_op  = ZeroOperator(range=P_free, source=P_free)
+    Z_op  = ZeroOperator(range=P_space, source=P_space)
 
-    K_op = BlockOperator([[A_op_nu,  -B_op_T], [-B_op,   Z_op]])
-    F_op = BlockColumnOperator([VectorOperator(U_free.make_array(f_c[:free_u])), VectorOperator(P_free.make_array(f_c[free_u:]))])
+    K_op = BlockOperator([[A_op_nu, B_op_T], [B_op, Z_op]])
+    F_op = BlockColumnOperator([VectorOperator(U_space.make_array(f_c[:free_u])), VectorOperator(P_space.make_array(f_c[free_u:]))])
+ 
+    fom = StationaryModel(operator=K_op, rhs=F_op, products={'u': NumpyMatrixOperator(product_u_c), 'p': NumpyMatrixOperator(product_p_c)}, name='Stokes-TH')
     
-    fom = StationaryModel(operator=K_op, rhs=F_op, name='Stokes-TH')
-
-    return fom 
-    
+    return fom
