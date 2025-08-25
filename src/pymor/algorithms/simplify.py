@@ -18,6 +18,10 @@ from pymor.operators.interface import Operator, as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ParameterFunctional
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.operators.block import BlockOperator
+from pymor.operators.constructions import AdjointOperator, InverseOperator, ZeroOperator
+
+import numpy as np
 
 
 def expand(obj):
@@ -104,7 +108,7 @@ class ExpandRules(RuleTable):
     def action_LincombOperator(self, op):
         # recursively expand all children
         op = self.replace_children(op)
-
+        
         # merge child LincombOperators
         if any(isinstance(o, LincombOperator) for o in op.operators):
             ops, coeffs = [], []
@@ -195,9 +199,21 @@ class ExpandRules(RuleTable):
             i = next(iter(i for i, o in enumerate(op.operators) if isinstance(o, LincombOperator)))
             left, right = op.operators[:i], op.operators[i+1:]
             ops = [ConcatenationOperator(left + (o,) + right) for o in op.operators[i].operators]
-            op = op.operators[i].with_(operators=ops)
+            op = op.operators[i].with_(operators=ops) #this results in a LincombOperator
 
             # there can still be LincombOperators within the summands so we recurse ..
+            op = self.apply(op)
+
+        # expand concatenations with AdjointOperators
+        if any(isinstance(o, AdjointOperator) for o in op.operators): 
+            i = next(iter(i for i, o in enumerate(op.operators) if isinstance(o, AdjointOperator)))
+            left, right = op.operators[:i], op.operators[i+1:]
+
+            inner_adj = self.apply(op.operators[i])
+            ops = ConcatenationOperator(left + (inner_adj,) + right)
+            op = op.operators[i].with_(operator=ops)
+
+            # there can still be AdjointOperators within the summands so we recurse ..
             op = self.apply(op)
 
         return op

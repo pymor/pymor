@@ -2,11 +2,14 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
+
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.core.exceptions import ImageCollectionError, NoMatchingRuleError
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import ConcatenationOperator, LincombOperator, SelectionOperator
+from pymor.operators.block import BlockOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.interface import VectorArray
@@ -92,7 +95,7 @@ def estimate_image(operators=(), vectors=(),
                 rules.apply(v)
             except NoMatchingRuleError as e:
                 raise ImageCollectionError(e.obj) from e
-
+    
     if operators and domain is None:
         domain = domain_space.empty()
     for op in operators:
@@ -101,7 +104,7 @@ def estimate_image(operators=(), vectors=(),
             rules.apply(op)
         except NoMatchingRuleError as e:
             raise ImageCollectionError(e.obj) from e
-
+        
     if riesz_representatives and product:
         image = product.apply_inverse(image)
 
@@ -247,7 +250,27 @@ class CollectOperatorRangeRules(RuleTable):
             type(self)(self.source, firstrange, self.extends).apply(op.operators[-1])
             type(self)(firstrange, self.image, self.extends).apply(op.with_(operators=op.operators[:-1]))
 
+    @match_class(BlockOperator)
+    def action_BlockOperator(self, op):
+        image_space = self.image.space
+        block_images = [image_space.subspaces[i].empty() for i in range(len(image_space.subspaces))]
 
+        for (i, j), block_op in np.ndenumerate(op.blocks):
+            if block_op is not None:
+                source_part = self.source.blocks[j]
+                block_image = image_space.subspaces[i].empty()
+                block_rule = CollectOperatorRangeRules(source_part, block_image, self.extends)
+
+                try:
+                    block_rule.apply(block_op)
+                    block_images[i].append(block_image)
+                except NoMatchingRuleError as e:
+                    raise ImageCollectionError(e.obj) from e
+
+        new_image = image_space.make_array(block_images)
+        self.image.append(new_image)
+        
+        
 class CollectVectorRangeRules(RuleTable):
     """|RuleTable| for the :func:`estimate_image` algorithm."""
 
