@@ -16,7 +16,11 @@ Main new features
 
 Purely data-based neural network reductors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- `[#2295] Adjust neural network reductor to run without full order model <https://github.com/pymor/pymor/pull/2295>`_
+In `[#2295] <https://github.com/pymor/pymor/pull/2295>`_,
+the :class:`~pymor.reductors.neural_network.NeuralNetworkReductor` was adjusted such that
+it is now possible to use it also without a full order model at hand. It can be run
+completely data-driven only with parameter values and snapshot data. Moreover, a precomputed
+reduced basis can be passed as an input to the constructor of the reductor.
 
 
 
