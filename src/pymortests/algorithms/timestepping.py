@@ -42,7 +42,6 @@ def test_va_as_rhs_implicit_euler():
     rhs_time_dep = fom.operator.range.empty(reserve=nt)
     for n in range(nt):
         mu_t = mu.at_time(initial_time + n * dt)
-        print(mu_t)
         rhs_time_dep.append(2. * rhs.as_vector(mu=mu_t))
 
     rhs_time_dep_operator = vector_array_to_selection_operator(rhs_time_dep,
@@ -50,7 +49,7 @@ def test_va_as_rhs_implicit_euler():
 
     for n in range(nt):
         mu_t = mu.at_time(initial_time + n * dt)
-        assert (rhs_time_dep_operator.as_vector(mu=mu_t) - 2*rhs.as_vector(mu=mu_t)).norm() <= tol
+        assert (rhs_time_dep_operator.as_vector(mu=mu_t) - 2. * rhs.as_vector(mu=mu_t)).norm() <= tol
 
     time_stepper = ImplicitEulerTimeStepper(nt - 1)
     U_va_rhs = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs_time_dep,
