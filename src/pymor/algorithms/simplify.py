@@ -87,7 +87,7 @@ class ExpandRules(RuleTable):
     def action_LincombOperator(self, op):
         # recursively expand all children
         op = self.replace_children(op)
-        
+
         # merge child LincombOperators
         if any(isinstance(o, LincombOperator) for o in op.operators):
             ops, coeffs = [], []
@@ -215,7 +215,7 @@ class ExpandRules(RuleTable):
             i = next(iter(i for i, o in enumerate(op.operators) if isinstance(o, LincombOperator)))
             left, right = op.operators[:i], op.operators[i+1:]
             ops = [ConcatenationOperator(left + (o,) + right) for o in op.operators[i].operators]
-            op = op.operators[i].with_(operators=ops) #this results in a LincombOperator
+            op = op.operators[i].with_(operators=ops)
 
             # there can still be LincombOperators within the summands so we recurse ..
             op = self.apply(op)
