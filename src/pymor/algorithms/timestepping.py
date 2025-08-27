@@ -70,9 +70,9 @@ class TimeStepper(ImmutableObject):
         operator
             The |Operator| A.
         rhs
-            The right-hand side F (either |VectorArray| of length 1 or |VectorArray| of length
-            equal to the number of time-steps to perform or |Operator| with
-            `source.dim == 1`). If `None`, zero right-hand side is assumed.
+            The right-hand side F (either |VectorArray| that might be converted into a
+            suitable |SelectionOperat| or |Operator| with `source.dim == 1`).
+            If `None`, zero right-hand side is assumed.
         mass
             The |Operator| M. If `None`, the identity operator is assumed.
         mu

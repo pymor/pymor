@@ -1335,17 +1335,15 @@ def vector_array_to_selection_operator(array, time_instances=None, initial_time=
     If `initial_time` and `end_time` are used, the time interval is split equidistantly where
     the number of subintervals is determined by the length of `array`.
     In time, the operator is therefore piecewise constant and the discontinuity points are
-    at `t_n + eps`, i.e.::
+    at `t_i - eps`, i.e.::
 
-        -infty ------- initial_time ----------- t_1 ----------- t_2 ----------- ... ----------- t_{n-1} ----------- end_time ------------------------ infty
-                                     |               |               |                                   |                    |
-        ------------ array[0] -------|--- array[1] --|--- array[2] --|--------- ... ---------------------|---- array[n-2] ----|-------- array[n-1] --------
-                                     |               |               |                                   |                    |
+        -infty ------- initial_time --------- t_1 ----------- t_2 --------------- ... --------------- t_{n-1} ----------- end_time ----------- infty
+                                           |               |               |                       |                   |
+        ---------------- array[0] ---------|--- array[1] --|--- array[2] --|----------...----------|---- array[n-2] ---|-------- array[n-1] --------
+                                           |               |               |                       |                   |
 
     where `n = len(array)`, `t_i = initial_time + i * (end_time - initial_time) / n`,
-    `eps = (end_time - initial_time) * machine_eps * n * 10` and
-    the discontinuity points are of the form
-    `initial_time + j * (end_time - initial_time) / n + eps` for `j = 0,...,n-1`.
+    `eps = (end_time - initial_time) * machine_eps * n * 10`.
 
     Parameters
     ----------
@@ -1376,7 +1374,7 @@ def vector_array_to_selection_operator(array, time_instances=None, initial_time=
     parameter_functional = ProjectionParameterFunctional('t')
     shift = (end_time - initial_time) * np.finfo(np.float64).eps * len(array) * 10
     boundaries = time_instances if time_instances is not None else np.linspace(initial_time, end_time,
-                                                                               len(array))[:-1] + shift
+                                                                               len(array))[1:] - shift
     return SelectionOperator(operators, parameter_functional, boundaries, name=name)
 
 
