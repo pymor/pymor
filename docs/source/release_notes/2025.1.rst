@@ -3,9 +3,14 @@ pyMOR 2025.1 (August ??, 2025)
 
 We are proud to announce the release of pyMOR 2025.1!
 
-The main new features are:
-
-*
+This release brings introduces a major breaking change in pyMOR's |VectorArray| API, along
+with a few new features. By popular demand, |VectorArrays| can be now interpreted as
+matrices of column vectors instead of row vectors. Although, formally, |VectorArrays| are
+just sequences of abstract vectors, interface methods like |lincomb|, |dofs| or |to_numpy|
+work with 2D |NumPy arrays|. These arrays are now transposed such that array axis 1
+(instead of axis 0) corresponds to the vector index. This change makes working with
+|VectorArrays| much more natural when translating typical matrix expressions from model
+order reduction or numerical linear algebra to pyMOR.
 
 pyMOR 2025.1 contains contributions by Timo Plath.
 See `here <https://github.com/pymor/pymor/blob/main/AUTHORS.md>`__ for more details.
@@ -27,11 +32,50 @@ instationary problems. However, this change will cause backward compatibility is
 user code that used the removed reductors.
 
 
-
 Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- `[#2434] Transpose output quantities <https://github.com/pymor/pymor/pull/2434>`_
-- `[#2405] The Great Transposition <https://github.com/pymor/pymor/pull/2405>`_
+
+"Transposed" |VectorArrays| and |Model| outputs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+By definition, a |VectorArray| is simply a finite sequence of vectors of the same
+dimension. However, some interface methods suggest a matrix interpretation of
+|VectorArrays|. In particular, |from_numpy|, |to_numpy| and |dofs| expect/return 2d NumPy
+arrays, where each row corresponds to a vector. The reason for this choice was |NumPy|'s
+preference for C ordered data, where the rows in a 2d array are stored consecutively in
+memory. However, in mathematics we tend to arrange vectors as column vectors, not row
+vectors. Consequently, many new pyMOR users were confused by pyMOR's convention, and
+translating mathematical formulas into pyMOR code often involved "transposing" the given
+formula.
+
+With this release, we adapt the |VectorArray| interface methods to allow a "column vector"
+interpretation of the arrays:
+
+- `U.to_numpy()` returns a 2d array, where the i-th column contains the DOFs of `U[i]`.
+- `U.dofs(indices)` returns a 2d array, where the i-th column contains the selected DOFs
+  of `U[i]`.
+- `space.from_numpy(data)` / `NumpyVectorSpace.make_array(data)` return a |VectorArray|,
+  where `U[i]` is given by `data[:, i]`.
+- `U.lincomb(coefficients)` returns a new |VectorArray| `V`, where `V[i]` is given by a
+  linear combination of the vectors in `U` with coefficients given by `coefficients[:, i]`.
+  In particular, `U.lincomb(coefficients).to_numpy()` is now the same as
+  `U.to_numpy() @ coefficients`.
+
+To make these changes consistent across pyMOR, |Model|
+:meth:`outputs <pymor.models.interface.Model.output>` and related quantities have been
+transposed as well, with axis 0 corresponding to the output index and axis 1 corresponding
+to the time index. Further, :class:`~pymor.operators.numpy.NumpyGenericOperator` operates
+on |NumPy arrays| of column vectors now. The same is true for the `visualize` methods of
+pyMOR's builtin grid classes `[#2405] <https://github.com/pymor/pymor/pull/2405>`_
+`[#2434] <https://github.com/pymor/pymor/pull/2434>`_.
+
+Using |NumpyVectorArrays| with C ordered data arrays (the default in |NumPy|) can
+significantly affect the performance of algorithms like
+:func:`~pymor.algorithms.gram_schmidt.gram_schmidt` that iterate over individual vectors of
+the array. Consequently, the implementation of |NumpyVectorArray| and |NumpyVectorSpace|
+has been adapted to always create Fortran ordered arrays. When |NumpyVectorArrays| are
+instantiated from C ordered arrays, the data is converted to Fortran order as soon as
+interface methods act on individual vectors of the array.
+
 
 Merged stationary and instationary neural network-based reductors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -50,3 +94,9 @@ Further notable improvements
 - `[#2416] Remove dune-gdt bindings <https://github.com/pymor/pymor/pull/2416>`_
 - `[#2408] Add asv-based performance benchmarks <https://github.com/pymor/pymor/pull/2408>`_
 - `[#2407] Avoid data corruption in shifted_chol_qr <https://github.com/pymor/pymor/pull/2407>`_
+
+
+.. |dofs|             replace:: :meth:`~pymor.vectorarrays.interface.VectorArray.dofs`
+.. |lincomb|          replace:: :meth:`~pymor.vectorarrays.interface.VectorArray.lincomb`
+.. |to_numpy|         replace:: :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy`
+.. |from_numpy|       replace:: :meth:`~pymor.vectorarrays.interface.VectorArray.to_numpy`
