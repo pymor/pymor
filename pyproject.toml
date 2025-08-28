@@ -67,7 +67,7 @@ tests = [
   "pytest>=7.2.1", # 7.2.0 causes format_source tests to fail do to wrong paths in co_filename
 ]
 ci-conda = [
-  "pyopengl!=3.1.7,!=3.1.9",
+  "pyopengl!=3.1.7,!=3.1.9,!=3.1.10", # CI crashes
 ]
 # additional dependencies for pyMOR development
 dev = [
