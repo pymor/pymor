@@ -71,9 +71,9 @@ class TimeStepper(ImmutableObject):
             The |Operator| A.
         rhs
             The right-hand side. Either a vector-like |Operator| with `source.dim == 1` or a |VectorArray|.
-            If the |VectorArray| contains more than one vector,  
+            If the |VectorArray| contains more than one vector,
             :func:`~pymor.operators.constructions.vector_array_to_selection_operator` is used to convert
-            the array to an |Operator| that is piecewise constant in time. If `None`, zero right-hand side is 
+            the array to an |Operator| that is piecewise constant in time. If `None`, zero right-hand side is
             assumed.
         mass
             The |Operator| M. If `None`, the identity operator is assumed.
@@ -124,7 +124,7 @@ class TimeStepper(ImmutableObject):
             The |Operator| A.
         rhs
             The right-hand side. Either a vector-like |Operator| with `source.dim == 1` or a |VectorArray|.
-            If the |VectorArray| contains more than one vector,  
+            If the |VectorArray| contains more than one vector,
             :func:`~pymor.operators.constructions.vector_array_to_selection_operator` is used to convert
             `source.dim == 1`). If `None`, zero right-hand side is assumed.
         mass
