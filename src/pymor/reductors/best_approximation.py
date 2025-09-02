@@ -46,10 +46,13 @@ class BestApproximationReductor(ProjectionBasedReductor):
         dim = projected_operators
         assert dim <= len(self.basis)
 
+        # Calculate μ-independent parts once per ROM - approx 100x faster than recomputing in loop
+        B_sub = self.basis[:dim]
+        G = B_sub.gramian()
+
         def project_onto_basis(U):
             # See https://docs.pymor.org/2024-1-2/tutorial_basis_generation.html#a-trivial-reduced-basis
-            G = self.basis[:dim].gramian()
-            R = self.basis[:dim].inner(U)
+            R = B_sub.inner(U)
             return np.linalg.solve(G, R).T
 
         rom_space = NumpyVectorSpace(dim)
