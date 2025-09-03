@@ -552,3 +552,22 @@ def test_issue_1276():
     v = B.source.ones()
 
     B.apply_inverse(v)
+
+
+def test_vector_array_to_selection_operator():
+    from pymor.operators.constructions import vector_array_to_selection_operator
+    from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+    vs = NumpyVectorSpace(8)
+    v = vs.random(10)
+
+    so = vector_array_to_selection_operator(v, initial_time=0., end_time=1.)
+    assert_all_almost_equal(so.as_range_array(so.parameters.parse({'t': 0.})), v[0], rtol=1e-13)
+    assert_all_almost_equal(so.as_range_array(so.parameters.parse({'t': 1.})), v[-1], rtol=1e-13)
+    assert_all_almost_equal(so.as_range_array(so.parameters.parse({'t': 0.5})), v[4], rtol=1e-13)
+
+    time_instances = np.linspace(0., 1., 9)
+    so = vector_array_to_selection_operator(v, time_instances=time_instances)
+    assert_all_almost_equal(so.as_range_array(so.parameters.parse({'t': -0.1})), v[0], rtol=1e-13)
+    assert_all_almost_equal(so.as_range_array(so.parameters.parse({'t': 0.5})), v[4], rtol=1e-13)
+    assert_all_almost_equal(so.as_range_array(so.parameters.parse({'t': 1.1})), v[-1], rtol=1e-13)

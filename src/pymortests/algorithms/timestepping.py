@@ -2,7 +2,6 @@ import numpy as np
 
 from pymor.algorithms.timestepping import DiscreteTimeStepper, ImplicitEulerTimeStepper, ImplicitMidpointTimeStepper
 from pymor.models.examples import heat_equation_example, heat_equation_non_parametric_example
-from pymor.operators.constructions import vector_array_to_selection_operator
 
 tol = 1e-10
 
@@ -33,29 +32,6 @@ def setup_parametric_example():
     mass = fom.mass
     mu = fom.parameters.parse({'top': 1.})
     return fom, initial_time, end_time, nt, num_values, initial_data, operator, rhs, mass, mu
-
-
-def test_va_as_rhs_implicit_euler():
-    fom, initial_time, end_time, nt, num_values, initial_data, operator, rhs, mass, mu = setup_parametric_example()
-    dt = (end_time - initial_time) / (nt - 1)
-
-    rhs_time_dep = fom.operator.range.empty(reserve=nt)
-    for n in range(nt):
-        mu_t = mu.at_time(initial_time + n * dt)
-        rhs_time_dep.append(2. * rhs.as_vector(mu=mu_t))
-
-    rhs_time_dep_operator = vector_array_to_selection_operator(rhs_time_dep,
-                                                               initial_time=initial_time, end_time=end_time)
-
-    for n in range(nt):
-        mu_t = mu.at_time(initial_time + n * dt)
-        assert (rhs_time_dep_operator.as_vector(mu=mu_t) - 2. * rhs.as_vector(mu=mu_t)).norm() <= tol
-
-    time_stepper = ImplicitEulerTimeStepper(nt - 1)
-    U_va_rhs = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=rhs_time_dep,
-                                  mass=mass, mu=mu)
-    U = time_stepper.solve(initial_time, end_time, initial_data, operator, rhs=2. * rhs, mass=mass, mu=mu)
-    assert np.all((U - U_va_rhs).norm() <= tol)
 
 
 def test_backward_stepping_implicit_euler():

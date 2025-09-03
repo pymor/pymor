@@ -1372,7 +1372,8 @@ def vector_array_to_selection_operator(array, time_instances=None, initial_time=
     assert time_instances is not None or (initial_time is not None and end_time is not None)
     operators = [VectorArrayOperator(a, adjoint=False, name=name) for a in array]
     parameter_functional = ProjectionParameterFunctional('t')
-    shift = (end_time - initial_time) * np.finfo(np.float64).eps * len(array) * 10
+    if time_instances is None:
+        shift = (end_time - initial_time) * np.finfo(np.float64).eps * len(array) * 10
     boundaries = time_instances if time_instances is not None else np.linspace(initial_time, end_time,
                                                                                len(array))[1:] - shift
     return SelectionOperator(operators, parameter_functional, boundaries, name=name)
