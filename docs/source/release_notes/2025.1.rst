@@ -3,7 +3,7 @@ pyMOR 2025.1 (August ??, 2025)
 
 We are proud to announce the release of pyMOR 2025.1!
 
-This release brings introduces a major breaking change in pyMOR's |VectorArray| API, along
+This release introduces a major breaking change in pyMOR's |VectorArray| API, along
 with a few new features. By popular demand, |VectorArrays| can be now interpreted as
 matrices of column vectors instead of row vectors. Although, formally, |VectorArrays| are
 just sequences of abstract vectors, interface methods like |lincomb|, |dofs| or |to_numpy|
