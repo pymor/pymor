@@ -14,7 +14,11 @@ from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.operators.interface import Operator
 from pymor.parameters.base import ParametricObject
-from pymor.parameters.functionals import ConjugateParameterFunctional, ParameterFunctional
+from pymor.parameters.functionals import (
+    ConjugateParameterFunctional,
+    ParameterFunctional,
+    ProjectionParameterFunctional,
+)
 from pymor.vectorarrays.interface import VectorArray, VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -1321,6 +1325,60 @@ class SelectionOperator(Operator):
         return self.operators[operator_number].as_source_array(mu=mu)
 
 
+def vector_array_to_selection_operator(array, time_instances=None, initial_time=None, end_time=None, name=None):
+    """Create a |SelectionOperator| from a |VectorArray|.
+
+    A |SelectionOperator| is created that selects an element from the |VectorArray| `array`
+    depending on the time component of the parameter that is passed to the |Operator|.
+    If `time_instances` is provided, these values are used for selection according to the
+    behavior of the |SelectionOperator|.
+    If `initial_time` and `end_time` are used, the time interval is split equidistantly where
+    the number of subintervals is determined by the length of `array`.
+    In time, the operator is therefore piecewise constant and the discontinuity points are
+    at `t_i - eps`, i.e.::
+
+        -infty ------- initial_time --------- t_1 ----------- t_2 --------------- ... --------------- t_{n-1} ----------- end_time ----------- infty
+                                           |               |               |                       |                   |
+        ---------------- array[0] ---------|--- array[1] --|--- array[2] --|----------...----------|---- array[n-2] ---|-------- array[n-1] --------
+                                           |               |               |                       |                   |
+
+    where `n = len(array)`, `t_i = initial_time + i * (end_time - initial_time) / n`,
+    `eps = (end_time - initial_time) * machine_eps * n * 10`.
+
+    Parameters
+    ----------
+    array
+        |VectorArray| that is used to build |VectorArrayOperators| that can be selected
+        using the created |SelectionOperator|.
+    time_instances
+        List of time instances used for selecting the element of the |VectorArray| `array`
+        within the |SelectionOperator|.
+        If `None`, `initial_time` and `end_time` need to be provided.
+    initial_time
+        If `time_instances` is not provided, the `initial_time` is used to determine the
+        start of the time interval that is equidistantly divided into subintervals on
+        which the |SelectionOperator| is piecewise constant.
+    end_time
+        Similar to `initial_time` but determines the end time of the time interval.
+    name
+        Name of the operator.
+
+    Returns
+    -------
+    operator
+        |SelectionOperator| where the selection of the element in the |VectorArray|
+        is performed according to the time parameter.
+    """  # noqa: W505,E501
+    assert time_instances is not None or (initial_time is not None and end_time is not None)
+    operators = [VectorArrayOperator(a, adjoint=False, name=name) for a in array]
+    parameter_functional = ProjectionParameterFunctional('t')
+    if time_instances is None:
+        shift = (end_time - initial_time) * np.finfo(np.float64).eps * len(array) * 10
+    boundaries = time_instances if time_instances is not None else np.linspace(initial_time, end_time,
+                                                                               len(array))[1:] - shift
+    return SelectionOperator(operators, parameter_functional, boundaries, name=name)
+
+
 @defaults('raise_negative', 'tol')
 def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
     """Obtain induced norm of an inner product.
@@ -1346,7 +1404,7 @@ def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
     tol
         See above.
     name
-        optional, if None product's name is used
+        Optional, if None product's name is used.
 
     Returns
     -------

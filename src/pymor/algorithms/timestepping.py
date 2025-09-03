@@ -16,6 +16,7 @@ the time-steppers used by |InstationaryModel|.
 import numpy as np
 
 from pymor.core.base import ImmutableObject, abstractmethod
+from pymor.operators.constructions import vector_array_to_selection_operator
 from pymor.operators.interface import Operator
 from pymor.parameters.base import Mu
 from pymor.vectorarrays.interface import VectorArray
@@ -69,8 +70,11 @@ class TimeStepper(ImmutableObject):
         operator
             The |Operator| A.
         rhs
-            The right-hand side F (either |VectorArray| of length 1 or |Operator| with
-            `source.dim == 1`). If `None`, zero right-hand side is assumed.
+            The right-hand side. Either a vector-like |Operator| with `source.dim == 1` or a
+            |VectorArray|. If the |VectorArray| contains more than one vector,
+            :func:`~pymor.operators.constructions.vector_array_to_selection_operator` is used to
+            convert the array to an |Operator| that is piecewise constant in time. If `None`, zero
+            right-hand side is assumed.
         mass
             The |Operator| M. If `None`, the identity operator is assumed.
         mu
@@ -119,8 +123,11 @@ class TimeStepper(ImmutableObject):
         operator
             The |Operator| A.
         rhs
-            The right-hand side F (either |VectorArray| of length 1 or |Operator| with
-            `source.dim == 1`). If `None`, zero right-hand side is assumed.
+            The right-hand side. Either a vector-like |Operator| with `source.dim == 1` or a
+            |VectorArray|. If the |VectorArray| contains more than one vector,
+            :func:`~pymor.operators.constructions.vector_array_to_selection_operator` is used to
+            convert the array to an |Operator| that is piecewise constant in time. If `None`, zero
+            right-hand side is assumed.
         mass
             The |Operator| M. If `None`, the identity operator is assumed.
         mu
@@ -187,6 +194,9 @@ class ImplicitEulerTimeStepper(TimeStepper):
             F_time_dep = _depends_on_time(F, mu)
             if not F_time_dep:
                 dt_F = F.as_vector(mu) * dt
+        elif isinstance(F, VectorArray) and len(F) > 1:
+            F_time_dep = True
+            F = vector_array_to_selection_operator(F, initial_time=initial_time, end_time=end_time)
         else:
             assert len(F) == 1
             assert F in A.range
@@ -273,6 +283,9 @@ class ExplicitEulerTimeStepper(TimeStepper):
             F_time_dep = _depends_on_time(F, mu)
             if not F_time_dep:
                 F_ass = F.as_vector(mu)
+        elif isinstance(F, VectorArray) and len(F) > 1:
+            F_time_dep = True
+            F = vector_array_to_selection_operator(F, initial_time=initial_time, end_time=end_time)
         elif isinstance(F, VectorArray):
             assert len(F) == 1
             assert F in A.range
@@ -368,6 +381,9 @@ class ImplicitMidpointTimeStepper(TimeStepper):
             F_time_dep = _depends_on_time(F, mu)
             if not F_time_dep:
                 dt_F = F.as_vector(mu) * dt
+        elif isinstance(F, VectorArray) and len(F) > 1:
+            F_time_dep = True
+            F = vector_array_to_selection_operator(F, initial_time=initial_time, end_time=end_time)
         else:
             assert len(F) == 1
             assert F in A.range
@@ -461,6 +477,9 @@ class DiscreteTimeStepper(TimeStepper):
             F_time_dep = _depends_on_time(F, mu)
             if not F_time_dep:
                 Fk = F.as_vector(mu)
+        elif isinstance(F, VectorArray) and len(F) > 1:
+            F_time_dep = True
+            F = vector_array_to_selection_operator(F, initial_time=initial_time, end_time=end_time)
         else:
             assert len(F) == 1
             assert F in A.range
