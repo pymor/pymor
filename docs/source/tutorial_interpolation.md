@@ -42,7 +42,7 @@ then move on to bitangential Hermite interpolation
 which is directly supported in pyMOR.
 
 We demonstrate them on
-[Penzl's FOM example](https://morwiki.mpi-magdeburg.mpg.de/morwiki/index.php/Penzl%27s_FOM).
+[Penzl's FOM example](https://modelreduction.org/index.php/Penzl%27s_FOM).
 
 ```{code-cell} ipython3
 from pymor.models.examples import penzl_example
