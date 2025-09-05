@@ -186,6 +186,7 @@ include = [
   "/src",
   "/docs",
   "CITATION.cff",
+  "conftest.py",
 ]
 
 [tool.hatch.build.targets.wheel]
