@@ -7,7 +7,7 @@ from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.models.basic import StationaryModel
 from pymor.operators.constructions import InverseOperator, ZeroOperator, AdjointOperator
 from pymor.vectorarrays.block import BlockVectorSpace
-from pymor.operators.block import BlockOperator
+from pymor.operators.block import BlockOperator, BlockDiagonalOperator
 from pymor.vectorarrays.constructions import cat_arrays
 
 
@@ -37,7 +37,7 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         See :class:`ProjectionBasedReductor`.
     """
 
-    def __init__(self, fom, RB_u=None, RB_p=None, projection_method='Galerkin', product_u=None, product_p=None, mu_basis_list=None, check_orthonormality=None, check_tol=None):
+    def __init__(self, fom, RB_u=None, RB_p=None, projection_method='Galerkin', product_u=None, product_p=None, check_orthonormality=None, check_tol=None):
         assert isinstance(fom, StationaryModel)
         assert fom.name == "Stokes-TH"
         RB_u = fom.solution_space.subspaces[0].empty() if RB_u is None else RB_u
@@ -48,10 +48,6 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         if projection_method == 'ls-ls' or projection_method == 'ls-normal':
             assert product_u 
             assert product_p
-
-        if projection_method == 'Galerkin':
-            assert mu_basis_list 
-            self.mu_basis_list = mu_basis_list
 
         self.projection_method = projection_method
 
@@ -86,10 +82,11 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         elif self.projection_method == 'ls-normal':
             trial_space = BlockVectorSpace((RB_u.space, RB_p.space))
             V_block = trial_space.make_block_diagonal_array((RB_u, RB_p))
-            global_gramian = BlockOperator(([[product_u, ZeroOperator(source=product_p.source, range=product_u.range)], [ZeroOperator(range=product_p.range, source=product_u.source), product_p]]))
-
-            proj_op = project(AdjointOperator(fom.operator) @ InverseOperator(global_gramian) @ fom.operator, range_basis=V_block, source_basis=V_block)
-            proj_rhs = project(AdjointOperator(fom.operator) @ InverseOperator(global_gramian) @ fom.rhs, range_basis=V_block, source_basis=None)
+            mixed_product = BlockDiagonalOperator(blocks=[product_u, product_p])
+            X_h_inv = InverseOperator(mixed_product)
+            
+            proj_op = project(AdjointOperator(fom.operator) @ X_h_inv @ fom.operator, range_basis=V_block, source_basis=V_block)
+            proj_rhs = project(AdjointOperator(fom.operator) @ X_h_inv @ fom.rhs, range_basis=V_block, source_basis=None)
 
             projected_operators = {
                 'operator':         proj_op,
@@ -100,14 +97,19 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         elif self.projection_method == 'ls-ls': 
             trial_space = BlockVectorSpace((RB_u.space, RB_p.space))
             V_block = trial_space.make_block_diagonal_array((RB_u, RB_p))
-            global_gramian = BlockOperator(([[product_u, ZeroOperator(source=product_p.source, range=product_u.range)], [ZeroOperator(range=product_p.range, source=product_u.source), product_p]]))
-            X_h_inv = InverseOperator(global_gramian)
+            mixed_product = BlockDiagonalOperator(blocks=[product_u, product_p])
+            X_h_inv = InverseOperator(mixed_product)
 
             from pymor.algorithms.image import estimate_image
             test_space = estimate_image(operators=[X_h_inv @ fom.operator], domain=V_block, orthonormalize=True)
 
             proj_op = project(fom.operator, range_basis=test_space, source_basis=V_block)
             proj_rhs = project(fom.rhs, range_basis=test_space, source_basis=None)
+
+            #from pymor.operators.numpy import NumpyMatrixOperator
+            #from pymor.operators.constructions import VectorArrayOperator
+            #proj_op = fom.operator @ BlockDiagonalOperator(blocks=[VectorArrayOperator(RB_u), VectorArrayOperator(RB_p)])
+            #proj_rhs = fom.rhs
 
             projected_operators = {
                 'operator':         proj_op,
@@ -129,10 +131,9 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         block_pu = fom.operator.blocks[1,0]    
         supremizer_space = fom.solution_space.subspaces[0].empty()
     
-        for i in range(len(RB_p)):
-            supremizer_rhs = block_pu.apply_adjoint(RB_p[i], mu=fom.parameters.parse(self.mu_basis_list[i]))
-            supremizer_vector = product_u.apply_inverse(supremizer_rhs, mu=fom.parameters.parse(self.mu_basis_list[i]))
-            supremizer_space.append(supremizer_vector)
+        supremizer_rhs = block_pu.apply_adjoint(RB_p)
+        supremizer_vector = product_u.apply_inverse(supremizer_rhs)
+        supremizer_space.append(supremizer_vector)
 
         return supremizer_space
 
