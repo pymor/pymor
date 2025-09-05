@@ -21,12 +21,11 @@ asttokens==3.0.0
     # via stack-data
 async-lru==2.0.5
     # via jupyterlab
-attrs==22.2.0
+attrs==25.3.0
     # via
     #   hypothesis
     #   jsonschema
     #   jupyter-cache
-    #   pytest-notebook
     #   referencing
 babel==2.17.0
     # via
@@ -34,7 +33,7 @@ babel==2.17.0
     #   sphinx
 bash-kernel==0.10.0
     # via pymor (./pyproject.toml)
-beautifulsoup4==4.13.4
+beautifulsoup4==4.13.5
     # via
     #   nbconvert
     #   sphinx-material
@@ -53,15 +52,13 @@ click==8.2.1
     # via
     #   jupyter-cache
     #   typer
-colorama==0.4.6
-    # via nbdime
 comm==0.2.3
     # via
     #   ipykernel
     #   ipywidgets
 contourpy==1.3.3
     # via matplotlib
-coverage==7.10.4
+coverage==7.10.6
     # via pytest-cov
 css-html-js-minify==2.5.5
     # via sphinx-material
@@ -86,7 +83,7 @@ docutils==0.21.2
     #   pybtex-docutils
     #   sphinx
     #   sphinxcontrib-bibtex
-executing==2.2.0
+executing==2.2.1
     # via stack-data
 fastjsonschema==2.21.2
     # via nbformat
@@ -94,17 +91,13 @@ filelock==3.19.1
     # via torch
 filetype==1.2.0
     # via bash-kernel
-fonttools==4.59.1
+fonttools==4.59.2
     # via matplotlib
 fqdn==1.5.1
     # via jsonschema
-fsspec==2025.7.0
+fsspec==2025.9.0
     # via torch
-gitdb==4.0.12
-    # via gitpython
-gitpython==3.1.45
-    # via nbdime
-gmsh==4.14.0
+gmsh==4.14.1
     # via pymor (./pyproject.toml)
 greenlet==3.2.4
     # via sqlalchemy
@@ -140,11 +133,12 @@ ipykernel==6.30.1
     #   ipyparallel
     #   jupyterlab
     #   myst-nb
+    #   nbmake
 ipympl==0.9.7
     # via pymor (./pyproject.toml)
 ipyparallel==9.0.1
     # via pymor (./pyproject.toml)
-ipython==9.4.0
+ipython==9.5.0
     # via
     #   ipykernel
     #   ipympl
@@ -169,7 +163,6 @@ jinja2==3.1.6
     #   jupyterlab-server
     #   myst-parser
     #   nbconvert
-    #   nbdime
     #   sphinx
     #   sphinx-autoapi
     #   torch
@@ -182,7 +175,6 @@ jsonschema==4.25.1
     #   jupyter-events
     #   jupyterlab-server
     #   nbformat
-    #   pytest-notebook
 jsonschema-specifications==2025.4.1
     # via jsonschema
 jupyter-cache==1.0.1
@@ -199,27 +191,24 @@ jupyter-core==5.8.1
     #   jupyter-client
     #   jupyter-server
     #   jupyterlab
+    #   nbclient
     #   nbconvert
     #   nbformat
 jupyter-events==0.12.0
     # via jupyter-server
-jupyter-lsp==2.2.6
+jupyter-lsp==2.3.0
     # via jupyterlab
 jupyter-server==2.17.0
     # via
     #   jupyter-lsp
-    #   jupyter-server-mathjax
     #   jupyterlab
     #   jupyterlab-myst
     #   jupyterlab-server
-    #   nbdime
     #   notebook
     #   notebook-shim
-jupyter-server-mathjax==0.2.6
-    # via nbdime
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.4.6
+jupyterlab==4.4.7
     # via
     #   pymor (./pyproject.toml)
     #   notebook
@@ -241,7 +230,7 @@ lark==1.2.2
     # via rfc3987-syntax
 latexcodec==3.0.1
     # via pybtex
-lxml==6.0.0
+lxml==6.0.1
     # via
     #   pymor (./pyproject.toml)
     #   sphinx-material
@@ -254,7 +243,7 @@ markupsafe==3.0.2
     # via
     #   jinja2
     #   nbconvert
-matplotlib==3.10.5
+matplotlib==3.10.6
     # via
     #   pymor (./pyproject.toml)
     #   ipympl
@@ -268,7 +257,7 @@ mdurl==0.1.2
     # via markdown-it-py
 meshio==5.3.5
     # via pymor (./pyproject.toml)
-mistune==3.1.3
+mistune==3.1.4
     # via nbconvert
 mkl==2025.2.0
     # via ngsolve
@@ -282,16 +271,14 @@ myst-nb==1.3.0
     # via pymor (./pyproject.toml)
 myst-parser==4.0.1
     # via myst-nb
-nbclient==0.5.13
+nbclient==0.10.2
     # via
     #   jupyter-cache
     #   myst-nb
     #   nbconvert
-    #   pytest-notebook
+    #   nbmake
 nbconvert==7.16.6
     # via jupyter-server
-nbdime==4.0.2
-    # via pytest-notebook
 nbformat==5.10.4
     # via
     #   jupyter-cache
@@ -299,12 +286,11 @@ nbformat==5.10.4
     #   myst-nb
     #   nbclient
     #   nbconvert
-    #   nbdime
-    #   pytest-notebook
+    #   nbmake
+nbmake==1.5.5
+    # via pymor (./pyproject.toml)
 nest-asyncio==1.6.0
-    # via
-    #   ipykernel
-    #   nbclient
+    # via ipykernel
 netgen-mesher==6.2.2505
     # via ngsolve
 netgen-occt==7.8.1
@@ -347,7 +333,7 @@ packaging==25.0
     #   sphinx
 pandocfilters==1.5.1
     # via nbconvert
-parso==0.8.4
+parso==0.8.5
     # via jedi
 pexpect==4.9.0
     # via
@@ -358,7 +344,7 @@ pillow==11.3.0
     #   pymor (./pyproject.toml)
     #   ipympl
     #   matplotlib
-platformdirs==4.3.8
+platformdirs==4.4.0
     # via jupyter-core
 pluggy==1.6.0
     # via
@@ -366,7 +352,7 @@ pluggy==1.6.0
     #   pytest-cov
 prometheus-client==0.22.1
     # via jupyter-server
-prompt-toolkit==3.0.51
+prompt-toolkit==3.0.52
     # via ipython
 psutil==7.0.0
     # via
@@ -378,9 +364,9 @@ ptyprocess==0.7.0
     #   terminado
 pure-eval==0.2.3
     # via stack-data
-pybind11==3.0.0
+pybind11==3.0.1
     # via pymor (./pyproject.toml)
-pybind11-global==3.0.0
+pybind11-global==3.0.1
     # via pybind11
 pybtex==0.25.1
     # via
@@ -398,7 +384,7 @@ pygments==2.19.2
     #   ipython
     #   ipython-pygments-lexers
     #   nbconvert
-    #   nbdime
+    #   nbmake
     #   pytest
     #   rich
     #   sphinx
@@ -406,26 +392,24 @@ pyopengl==3.1.10
     # via pymor (./pyproject.toml)
 pyparsing==3.2.3
     # via matplotlib
-pyside6==6.9.1
+pyside6==6.9.2
     # via pymor (./pyproject.toml)
-pyside6-addons==6.9.1
+pyside6-addons==6.9.2
     # via pyside6
-pyside6-essentials==6.9.1
+pyside6-essentials==6.9.2
     # via
     #   pyside6
     #   pyside6-addons
-pytest==8.4.1
+pytest==8.4.2
     # via
     #   pymor (./pyproject.toml)
     #   hypothesis
+    #   nbmake
     #   pytest-cov
     #   pytest-datadir
-    #   pytest-notebook
 pytest-cov==6.2.1
     # via pymor (./pyproject.toml)
 pytest-datadir==1.8.0
-    # via pymor (./pyproject.toml)
-pytest-notebook==0.10.0
     # via pymor (./pyproject.toml)
 python-dateutil==2.9.0.post0
     # via
@@ -463,7 +447,6 @@ referencing==0.36.2
 requests==2.32.5
     # via
     #   jupyterlab-server
-    #   nbdime
     #   sphinx
 rfc3339-validator==0.1.4
     # via
@@ -479,7 +462,7 @@ rich==14.1.0
     # via
     #   meshio
     #   typer
-rpds-py==0.27.0
+rpds-py==0.27.1
     # via
     #   jsonschema
     #   referencing
@@ -497,7 +480,7 @@ setuptools==80.9.0
     #   torch
 shellingham==1.5.4
     # via typer
-shiboken6==6.9.1
+shiboken6==6.9.2
     # via
     #   pyside6
     #   pyside6-addons
@@ -508,15 +491,13 @@ six==1.17.0
     #   rfc3339-validator
 slycot==0.6.0
     # via pymor (./pyproject.toml)
-smmap==5.0.2
-    # via gitdb
 sniffio==1.3.1
     # via anyio
 snowballstemmer==3.0.1
     # via sphinx
 sortedcontainers==2.4.0
     # via hypothesis
-soupsieve==2.7
+soupsieve==2.8
     # via beautifulsoup4
 sphinx==7.3.7
     # via
@@ -577,7 +558,6 @@ tornado==6.5.2
     #   jupyter-client
     #   jupyter-server
     #   jupyterlab
-    #   nbdime
     #   notebook
     #   terminado
 tqdm==4.67.1
@@ -602,11 +582,11 @@ traitlets==5.14.3
     #   traittypes
 traittypes==0.2.1
     # via k3d
-typer==0.16.1
+typer==0.17.3
     # via pymor (./pyproject.toml)
-types-python-dateutil==2.9.0.20250809
+types-python-dateutil==2.9.0.20250822
     # via arrow
-typing-extensions==4.14.1
+typing-extensions==4.15.0
     # via
     #   beautifulsoup4
     #   myst-nb
