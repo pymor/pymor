@@ -84,6 +84,7 @@ Replace `RELEASE_TAG` below with the actual release tag.
 - [ ] Update MOR Wiki:
       [pyMOR page](https://modelreduction.org/index.php/PyMOR),
       [software comparison table](https://modelreduction.org/index.php/Comparison_of_Software).
+- [ ] Update [rationalapproximation.github.io](https://rationalapproximation.github.io/).
 - [ ] Submit release to [NA-digest](https://na-digest.coecis.cornell.edu/submit/).
       (Omit in case of a bugfix release.)
 
