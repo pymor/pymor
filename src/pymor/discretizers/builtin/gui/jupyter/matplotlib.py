@@ -127,7 +127,7 @@ def visualize_patch(grid, U, bounding_box=None, codim=2, title=None, legend=None
     vis = PatchVisualizer(grid, U, bounding_box=bounding_box, codim=codim, title=title, legend=legend,
         separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars, columns=columns)
 
-    do_animation = U[0].shape[1] > 1
+    do_animation = U[0].to_numpy().shape[1] > 1
 
     if return_widget:
         vis.fig.canvas.header_visible = False
