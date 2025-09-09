@@ -103,7 +103,7 @@ runs:
     - name: Run jupyter tests
       shell: bash -el {0}
       env:
-        PYTHONPATH: ./src
+        PYTHONPATH: ${{ github.workspace }}/src
         PYMOR_HYPOTHESIS_PROFILE: ${{ inputs.hypothesis_profile }}
         # we may be able to limit this to macos
         COMMON_PYTEST_OPTS: --cov-report= --cov --cov-context=test --junitxml=${{ inputs.results_file }}
