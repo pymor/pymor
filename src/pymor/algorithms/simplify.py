@@ -105,16 +105,13 @@ class ExpandRules(RuleTable):
     def action_AdjointOperator(self, op):
         inner = self.apply(op.operator)
 
-        assert op.range_product is None 
-        assert op.source_product is None
-
         # If the inside is a LincombOperator, distribute adjoint over the sum: (∑ c_i A_i)^* = ∑ conj(c_i) A_i^*
         if isinstance(inner, LincombOperator):
-            ops = [AdjointOperator(o) for o in inner.operators]
-            coeffs = [c.conjugate() if hasattr(c, 'conjugate') else c for c in inner.coefficients]
+            ops = [AdjointOperator(o, source_product=op.source_product, range_product=op.range_product) for o in inner.operators]
+            coeffs = [c.conjugate() for c in inner.coefficients]
             return LincombOperator(ops, coeffs)
 
-        return inner
+        return AdjointOperator(inner, source_product=op.source_product, range_product=op.range_product)
     
     @match_class(BlockOperator)
     def action_BlockOperator(self, op):
@@ -123,28 +120,15 @@ class ExpandRules(RuleTable):
 
         nrows, ncols = op.blocks.shape
 
-        # create zero blocks with matching source/range spaces
-        zeros = [[None for _ in range(ncols)] for _ in range(nrows)]
-        for l in range(nrows):
-            for j in range(ncols):
-                if op.blocks[l, j] is not None:
-                    source_ = op.blocks[l, j].source
-                    range_ = op.blocks[l, j].range
-                    zeros[l][j] = ZeroOperator(range_, source_)
-
         # Build the constant part: copy non-Lincomb blocks; Lincomb blocks start as zero
-        const_blocks = [[None for _ in range(ncols)] for _ in range(nrows)]
+        const_blocks = np.full((nrows, ncols), None, dtype=object)
         for i in range(nrows):
             for j in range(ncols):
                 b = op.blocks[i, j]
-                if b is None:
-                    const_blocks[i][j] = None
-                elif isinstance(b, LincombOperator): 
-                    const_blocks[i][j] = zeros[i][j]
-                else:
-                    const_blocks[i][j] = b
+                if not isinstance(b, LincombOperator):
+                    const_blocks[i, j] = b
 
-        lifted_terms = []
+        expanded_terms = []
         for i in range(nrows):
             for j in range(ncols):
                 b = op.blocks[i, j]
@@ -152,42 +136,26 @@ class ExpandRules(RuleTable):
                     continue
                 for c_k, a_k in zip(b.coefficients, b.operators):
                     if isinstance(c_k, ParameterFunctional):
-                        blocks_k = [[zeros[ii][jj] for jj in range(ncols)] for ii in range(nrows)]
-                        blocks_k[i][j] = a_k
-                        lifted_terms.append((c_k, BlockOperator(blocks_k)))
+                        blocks_k = np.full((nrows, ncols), None, dtype=object)
+                        blocks_k[i, j] = a_k
+                        expanded_terms.append((c_k, BlockOperator(blocks_k, range_spaces=op.range.subspaces, source_spaces=op.source.subspaces)))
                     else:
-                        if c_k == 0:
-                            continue
-                        if not isinstance(a_k, NumpyMatrixOperator): 
-                            cur = const_blocks[i,j]
-                            if cur is None or isinstance(cur, ZeroOperator): 
-                                const_blocks[i,j] = LincombOperator(c_k, a_k)
-                            else: 
-                                const_blocks[i,j] = LincombOperator([cur, a_k], [1, c_k])
-                        else: 
-                            cur = const_blocks[i][j]
-                            scaled = a_k if c_k == 1 else a_k.with_(matrix=c_k * a_k.matrix)
-                            if cur is None or isinstance(cur, ZeroOperator):
-                                const_blocks[i][j] = scaled
-                            else:
-                                const_blocks[i][j] = LincombOperator([cur, a_k], [1, c_k])
+                        cur = const_blocks[i, j]
+                        if cur is None:
+                            const_blocks[i, j] = LincombOperator([a_k], [c_k])
+                        else:
+                            cur_op = cur.operators
+                            cur_coeff = cur.coeffcients 
+                            const_blocks[i, j] = LincombOperator([cur_op.append(a_k)], [cur_coeff.append(c_k)])
 
-        const_part = BlockOperator(const_blocks)
-
-        def is_all_zero(bop):
-            for blk in bop.blocks.flat:
-                if blk is None:
-                    continue
-                if not isinstance(blk, ZeroOperator):
-                    return False
-            return True
+        const_part = BlockOperator(const_blocks, range_spaces=op.range.subspaces, source_spaces=op.source.subspaces)
 
         ops, coeffs = [], []
-        if not is_all_zero(const_part):
+        if const_blocks.any():
             ops.append(const_part)
             coeffs.append(1)
 
-        for c, bop_k in lifted_terms:
+        for c, bop_k in expanded_terms:
             ops.append(bop_k)
             coeffs.append(c)
 
@@ -218,18 +186,6 @@ class ExpandRules(RuleTable):
             op = op.operators[i].with_(operators=ops)
 
             # there can still be LincombOperators within the summands so we recurse ..
-            op = self.apply(op)
-
-        # expand concatenations with AdjointOperators
-        if any(isinstance(o, AdjointOperator) for o in op.operators): 
-            i = next(iter(i for i, o in enumerate(op.operators) if isinstance(o, AdjointOperator)))
-            left, right = op.operators[:i], op.operators[i+1:]
-
-            inner_adj = self.apply(op.operators[i])
-            ops = ConcatenationOperator(left + (inner_adj,) + right)
-            op = op.operators[i].with_(operator=ops)
-
-            # there can still be AdjointOperators within the summands so we recurse ..
             op = self.apply(op)
 
         return op

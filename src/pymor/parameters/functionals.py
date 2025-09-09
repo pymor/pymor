@@ -43,6 +43,9 @@ class ParameterFunctional(ParametricObject):
         else:
             raise NotImplementedError
 
+    def conjugate(self):
+        return ConjugateParameterFunctional(self)
+
     def __call__(self, mu=None):
         return self.evaluate(mu)
 
