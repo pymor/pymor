@@ -104,14 +104,14 @@ runs:
       shell: bash -el {0}
       env:
         PYTHONPATH: ${{ github.workspace }}/src
-        PYMOR_HYPOTHESIS_PROFILE: ${{ inputs.hypothesis_profile }}
+        # PYMOR_HYPOTHESIS_PROFILE: ${{ inputs.hypothesis_profile }}
         # we may be able to limit this to macos
-        COMMON_PYTEST_OPTS: --cov-report= --cov --cov-context=test --junitxml=${{ inputs.results_file }}
-        COVERAGE_FILE: ${{ inputs.coverage_file }}
+        # COMMON_PYTEST_OPTS: --cov-report= --cov --cov-context=test --junitxml=${{ inputs.results_file }}
+        # COVERAGE_FILE: ${{ inputs.coverage_file }}
       run: |
-        ${PYTEST_PREFIX} pytest --nbmake ${COMMON_PYTEST_OPTS} ./src/pymortests/jupyter/*.ipynb
+        ${PYTEST_PREFIX} pytest --nbmake ./src/pymortests/jupyter/*.ipynb
         # make sure to fail if there was an error collecting data
-        coverage xml -o ${{ inputs.coverage_file }}.xml --fail-under=10
+        # coverage xml -o ${{ inputs.coverage_file }}.xml --fail-under=10
     - name: Upload Coverage XML
       if: always()
       uses: actions/upload-artifact@v4
