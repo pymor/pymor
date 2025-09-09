@@ -26,6 +26,7 @@ class MatplotlibPatchAxes:
         assert codim in (0, 2)
 
         subentities, coordinates, entity_map = flatten_grid(grid)
+        self.entity_map = entity_map
         self.subentities = subentities if grid.reference_element is triangle \
             else np.vstack((subentities[:, 0:3], subentities[:, [2, 3, 0]]))
         self.reference_element = grid.reference_element
@@ -57,7 +58,7 @@ class MatplotlibPatchAxes:
     def set(self, U, vmin, vmax):
         assert U.ndim == 1
         if self.codim == 2:
-            self.p.set_array(U)
+            self.p.set_array(U[self.entity_map])
         elif self.reference_element is triangle:
             self.p.set_array(U)
         else:
