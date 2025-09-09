@@ -2,7 +2,7 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-__version__ = '2025.1.1'
+__version__ = '2025.1.2'
 __asv_api_gen__ = 1  # used by asv benchmarks to determine to adapt test code in case of api breakage
 
 import os
