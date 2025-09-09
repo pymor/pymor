@@ -116,7 +116,6 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
 
             from pymor.algorithms.image import estimate_image
             test_space = estimate_image(operators=[expanded_op], domain=V_block, orthonormalize=True, product=X_h_inv)
-            print("wie groß ist das was wir bekommen", len(test_space), len(V_block))
 
             proj_op = project(fom.operator, range_basis=test_space, source_basis=V_block)
             proj_rhs = project(fom.rhs, range_basis=test_space, source_basis=None)
