@@ -156,6 +156,20 @@ vanilla oldest weekly:
     image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
     script: ./.ci/gitlab/test_vanilla.bash
 
+jupyter current:
+    extends: .pytest
+    variables:
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
+    image: zivgitlab.wwu.io/pymor/pymor/ci-current:${CI_CURRENT_IMAGE_TAG}
+    script: ./.ci/gitlab/test_jupyter.bash
+
+jupyter oldest:
+    extends: .pytest
+    variables:
+        PYMOR_CONFIG_DISABLE: "fenics ngsolve scikit_fem dealii"
+    image: zivgitlab.wwu.io/pymor/pymor/ci-oldest:${CI_OLDEST_IMAGE_TAG}
+    script: ./.ci/gitlab/test_jupyter.bash
+
 mpi current:
     extends: .pytest
     variables:
@@ -289,6 +303,7 @@ submit coverage:
         - mpi current
         - tutorials current
         - vanilla current
+        - jupyter current
         - ngsolve current
         - scikit_fem current
         - fenics
