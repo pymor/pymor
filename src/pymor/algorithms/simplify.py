@@ -204,18 +204,6 @@ class ExpandRules(RuleTable):
             # there can still be LincombOperators within the summands so we recurse ..
             op = self.apply(op)
 
-        # expand concatenations with AdjointOperators
-        if any(isinstance(o, AdjointOperator) for o in op.operators): 
-            i = next(iter(i for i, o in enumerate(op.operators) if isinstance(o, AdjointOperator)))
-            left, right = op.operators[:i], op.operators[i+1:]
-
-            inner_adj = self.apply(op.operators[i])
-            ops = ConcatenationOperator(left + (inner_adj,) + right)
-            op = op.operators[i].with_(operator=ops)
-
-            # there can still be AdjointOperators within the summands so we recurse ..
-            op = self.apply(op)
-
         return op
 
     @match_class(Model, Operator)
