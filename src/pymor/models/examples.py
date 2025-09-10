@@ -333,14 +333,14 @@ def heat_equation_1d_example(diameter=0.01, nt=100):
     return fom
 
 def stokes_2Dexample(rhs=None): 
-    """Return parametric, stationary Stokes equation on the unit circle. 
+    """Return a discretization of the parametric, stationary Stokes equation on the unit circle. 
     
     The problem consists in solving ::
 
-        - ν Δ u(x, ν) + ∇ p(x, ν) = f(x)  in Ω
-        ∇ ⋅ u(x, ν) = 0  in Ω
+        - μ Δ u(x, μ) + ∇ p(x, μ) = f(x)  in Ω
+        ∇ ⋅ u(x, μ) = 0  in Ω
 
-    with homogenous Dirichlet boundary conditions, where ν is a constant diffusion coefficient. 
+    with homogenous Dirichlet boundary conditions, where μ is the dynamic viscosity. 
     To eliminate the singularity of the saddle-point system, one pressure node is set to zero.
 
     Parameters
@@ -367,6 +367,7 @@ def stokes_2Dexample(rhs=None):
     from pymor.operators.block import BlockOperator
     from pymor.operators.block import BlockColumnOperator
     from pymor.parameters.functionals import ExpressionParameterFunctional
+    from pymor.parameters.base import Parameters
     from pymor.operators.constructions import LincombOperator
     from pymor.models.basic import StationaryModel
     from pymor.analyticalproblems.functions import Function
@@ -432,15 +433,15 @@ def stokes_2Dexample(rhs=None):
     # build BlockOperator
     U_space = NumpyVectorSpace(free_u)
     P_space = NumpyVectorSpace(free_p)
-
-    nu = ExpressionParameterFunctional('nu', {'nu': 1}, name='nu')
-    A_op  = NumpyMatrixOperator(A_c)
+    nu = ExpressionParameterFunctional('mu', Parameters({'mu': 1}), name='mu')
+    A_op = NumpyMatrixOperator(A_c)
     A_op_nu = LincombOperator(operators=[A_op], coefficients=[nu])
-    B_op  = NumpyMatrixOperator(B_c)
+    B_op = NumpyMatrixOperator(B_c)
     B_op_T = NumpyMatrixOperator(B_c.T)
-    Z_op  = ZeroOperator(range=P_space, source=P_space)
+    Z_op = ZeroOperator(range=P_space, source=P_space)
 
     K_op = BlockOperator([[A_op_nu, B_op_T], [B_op, Z_op]])
+    #TODO VectorOperator or VectorArrayOperator
     F_op = BlockColumnOperator([VectorOperator(U_space.make_array(f_c[:free_u])),
                                VectorOperator(P_space.make_array(f_c[free_u:]))])   
  

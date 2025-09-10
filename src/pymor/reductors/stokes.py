@@ -13,7 +13,8 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 
 
 class StationaryRBStokesReductor(ProjectionBasedReductor): 
-    """Galerkin or least-sqaures projection of a |StationaryModel| for the stationary stokes equation.
+    """Galerkin or least-sqaures projection of a |StationaryModel| 
+    for the stationary stokes equation.
 
     Parameters
     ----------
@@ -26,8 +27,8 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         The basis of the redcued pressure space onto which to project. 
         If `None` an empty basis is used.
     projection_method 
-        'Galerkin', 'ls-ls' or 'ls-normal'. Default is 'Galerkin', which uses a supremizer enrichment
-        strategy for the velocity space in order to guarantee inf-sup stability.
+        'Galerkin', 'ls-ls' or 'ls-normal'. Default is 'Galerkin', which uses a supremizer 
+        enrichment strategy for the velocity space in order to guarantee inf-sup stability.
         'ls-ls' solves the least-squares problem directly via least_square = True in apply_inverse. 
         'ls-normal' solves the least-squares problem via the normal equation.
     product_u
@@ -42,7 +43,8 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         See :class:`~pymor.reductors.basic.ProjectionBasedReductor`.
     """
 
-    def __init__(self, fom, RB_u=None, RB_p=None, projection_method='Galerkin', product_u=None, product_p=None, check_orthonormality=None, check_tol=None):
+    def __init__(self, fom, RB_u=None, RB_p=None, projection_method='Galerkin', 
+                 product_u=None, product_p=None, check_orthonormality=None, check_tol=None):
         assert isinstance(fom, StationaryModel)
         assert fom.name == "Stokes-TH"
         RB_u = fom.solution_space.subspaces[0].empty() if RB_u is None else RB_u
@@ -78,7 +80,8 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
             projected_operators = {
                 'operator': proj_op,
                 'rhs': proj_rhs,
-                'products': {'u': project(fom.products['u'], RB_u, RB_u), 'p': project(fom.products['p'], RB_p, RB_p)}
+                'products': {'u': project(fom.products['u'], RB_u, RB_u), 
+                             'p': project(fom.products['p'], RB_p, RB_p)}
             }
 
         elif self.projection_method == 'ls-normal':
@@ -91,13 +94,16 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
             else:
                 X_h_inv = None
 
-            proj_op = project(AdjointOperator(fom.operator, range_product=X_h_inv) @ fom.operator, range_basis=V_block, source_basis=V_block)
-            proj_rhs = project(AdjointOperator(fom.operator, range_product=X_h_inv) @ fom.rhs, range_basis=V_block, source_basis=None)
+            proj_op = project(AdjointOperator(fom.operator, range_product=X_h_inv) @ fom.operator, 
+                              range_basis=V_block, source_basis=V_block)
+            proj_rhs = project(AdjointOperator(fom.operator, range_product=X_h_inv) @ fom.rhs, 
+                               range_basis=V_block, source_basis=None)
 
             projected_operators = {
                 'operator':         proj_op,
                 'rhs':              proj_rhs,
-                'products':         {'u': project(fom.products['u'], RB_u, RB_u), 'p': project(fom.products['p'], RB_p, RB_p)}
+                'products':         {'u': project(fom.products['u'], RB_u, RB_u), 
+                                     'p': project(fom.products['p'], RB_p, RB_p)}
             }
 
         elif self.projection_method == 'ls-ls':
@@ -123,7 +129,8 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
             projected_operators = {
                 'operator':         proj_op,
                 'rhs':              proj_rhs,
-                'products':         {'u': project(fom.products['u'], RB_u, RB_u), 'p': project(fom.products['p'], RB_p, RB_p)}
+                'products':         {'u': project(fom.products['u'], RB_u, RB_u), 
+                                     'p': project(fom.products['p'], RB_p, RB_p)}
             }
 
         else:
@@ -153,25 +160,25 @@ class StationaryRBStokesReductor(ProjectionBasedReductor):
         rom = self._last_rom
         dim_u = dims['RB_u']
         dim_p = dims['RB_p']
-        product_u = self.products['RB_u']
-        product_p = self.products['RB_p']
 
         if self.projection_method == 'Galerkin':
             dim_u = dims['RB_u_enriched']
             projected_operators = {
                 'operator': project_to_subbasis(rom.operator, dim_u + dim_p, dim_u + dim_p),
                 'rhs': project_to_subbasis(rom.rhs, dim_u + dim_p, None), 
-                'products': {'RB_u': project_to_subbasis(product_u, dim_u, dim_u), 'RB_p': project_to_subbasis(product_p, dim_p, dim_p)}
+                'products': {'u': project_to_subbasis(rom.products['u'], dim_u, dim_u), 
+                             'p': project_to_subbasis(rom.products['p'], dim_p, dim_p)}
             }
 
         elif self.projection_method == 'ls-normal' or self.projection_method == 'ls-ls':
             projected_operators = {
             'operator':          project_to_subbasis(rom.operator, dim_u + dim_p, dim_u + dim_p),
             'rhs':               project_to_subbasis(rom.rhs, dim_u + dim_p, None),
-            'products':          {'RB_u': project_to_subbasis(product_u, dim_u, dim_u), 'RB_p': project_to_subbasis(product_p, dim_p, dim_p)}
+            'products':          {'u': project_to_subbasis(rom.products['u'], dim_u, dim_u), 
+                                  'p': project_to_subbasis(rom.products['p'], dim_p, dim_p)}
         }
                 
-        else: 
+        else:
             raise NotImplementedError
 
         return projected_operators
