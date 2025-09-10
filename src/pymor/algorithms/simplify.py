@@ -105,9 +105,11 @@ class ExpandRules(RuleTable):
     def action_AdjointOperator(self, op):
         inner = self.apply(op.operator)
 
-        # If the inside is a LincombOperator, distribute adjoint over the sum: (∑ c_i A_i)^* = ∑ conj(c_i) A_i^*
+        # If the inside is a LincombOperator, distribute adjoint over the sum: 
+        # (∑ c_i A_i)^* = ∑ conj(c_i) A_i^*
         if isinstance(inner, LincombOperator):
-            ops = [AdjointOperator(o, source_product=op.source_product, range_product=op.range_product) for o in inner.operators]
+            ops = [AdjointOperator(o, source_product=op.source_product, range_product=op.range_product) 
+                   for o in inner.operators]
             coeffs = [c.conjugate() for c in inner.coefficients]
             return LincombOperator(ops, coeffs)
 
@@ -138,7 +140,8 @@ class ExpandRules(RuleTable):
                     if isinstance(c_k, ParameterFunctional):
                         blocks_k = np.full((nrows, ncols), None, dtype=object)
                         blocks_k[i, j] = a_k
-                        expanded_terms.append((c_k, BlockOperator(blocks_k, range_spaces=op.range.subspaces, source_spaces=op.source.subspaces)))
+                        expanded_terms.append((c_k, BlockOperator(blocks_k, range_spaces=op.range.subspaces, 
+                                                source_spaces=op.source.subspaces)))
                     else:
                         cur = const_blocks[i, j]
                         if cur is None:

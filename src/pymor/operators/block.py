@@ -48,12 +48,18 @@ class BlockOperatorBase(Operator):
                     assert range_spaces[i] is None or op.range == range_spaces[i]
                     range_spaces[i] = op.range
 
+
         # turn Nones to ZeroOperators
         for (i, j) in np.ndindex(blocks.shape):
             if blocks[i, j] is None:
                 self.blocks[i, j] = ZeroOperator(range_spaces[i], source_spaces[j])
 
         self.__auto_init(locals())
+
+        # if self.source_spaces and self.range_spaces are not set to None, 
+        # projecting to a subspace after a projection has the wrong dimensionen in there. 
+        self.source_spaces = None
+        self.range_spaces = None 
         self.source = BlockVectorSpace(source_spaces) if self.blocked_source else source_spaces[0]
         self.range = BlockVectorSpace(range_spaces) if self.blocked_range else range_spaces[0]
         self.num_source_blocks = len(source_spaces)
