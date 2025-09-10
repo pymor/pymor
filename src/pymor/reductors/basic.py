@@ -68,17 +68,12 @@ class ProjectionBasedReductor(BasicObject):
 
         if self._last_rom is None or any(dims[b] > self._last_rom_dims[b] for b in dims):
             self._last_rom = self._reduce()
+            self._last_rom_dims = {k: len(v) for k, v in self.bases.items()}
 
-            from pymor.reductors.stokes import StationaryRBStokesReductor
-            if isinstance(self, StationaryRBStokesReductor):
-                self._last_rom_dims = {k: len(v) for k, v in self.bases.items() if k != 'RB_u_enriched'}
-            else: 
-                self._last_rom_dims = {k: len(v) for k, v in self.bases.items()}
-
-        if dims == self._last_rom_dims:
-            return self._last_rom
-        else:
+        elif dims != self._last_rom_dims:
             return self._reduce_to_subbasis(dims)
+
+        return self._last_rom
 
     def _reduce(self):
         with self.logger.block('Operator projection ...'):
