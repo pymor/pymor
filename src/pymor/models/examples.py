@@ -332,15 +332,15 @@ def heat_equation_1d_example(diameter=0.01, nt=100):
 
     return fom
 
-def stokes_2Dexample(rhs=None): 
-    """Return a discretization of the parametric, stationary Stokes equation on the unit circle. 
-    
+def stokes_2Dexample(rhs=None):
+    """Return a discretization of the parametric, stationary Stokes equation on the unit circle.
+
     The problem consists in solving ::
 
         - μ Δ u(x, μ) + ∇ p(x, μ) = f(x)  in Ω
         ∇ ⋅ u(x, μ) = 0  in Ω
 
-    with homogenous Dirichlet boundary conditions, where μ is the dynamic viscosity. 
+    with homogenous Dirichlet boundary conditions, where μ is the dynamic viscosity.
     To eliminate the singularity of the saddle-point system, one pressure node is set to zero.
 
     Parameters
@@ -353,26 +353,22 @@ def stokes_2Dexample(rhs=None):
     fom
         Stokes equation problem as a |StationaryModel|.
     """
-    from skfem.mesh import MeshTri 
-    from skfem.element import ElementVector, ElementTriP2, ElementTriP1
-    from skfem.assembly import Basis, LinearForm, asm 
-    from skfem.models.poisson import vector_laplace, mass
-    from skfem.models.general import divergence
-    from skfem.utils import condense, bmat
-
-    from pymor.operators.numpy import NumpyMatrixOperator
-    from pymor.operators.constructions import ZeroOperator
-    from pymor.vectorarrays.numpy import NumpyVectorSpace
-    from pymor.operators.constructions import VectorOperator
-    from pymor.operators.block import BlockOperator
-    from pymor.operators.block import BlockColumnOperator
-    from pymor.parameters.functionals import ExpressionParameterFunctional
-    from pymor.parameters.base import Parameters
-    from pymor.operators.constructions import LincombOperator
-    from pymor.models.basic import StationaryModel
-    from pymor.analyticalproblems.functions import Function
-
     import numpy as np
+    from skfem.assembly import Basis, LinearForm, asm
+    from skfem.element import ElementTriP1, ElementTriP2, ElementVector
+    from skfem.mesh import MeshTri
+    from skfem.models.general import divergence
+    from skfem.models.poisson import mass, vector_laplace
+    from skfem.utils import bmat, condense
+
+    from pymor.analyticalproblems.functions import Function
+    from pymor.models.basic import StationaryModel
+    from pymor.operators.block import BlockColumnOperator, BlockOperator
+    from pymor.operators.constructions import LincombOperator, VectorOperator, ZeroOperator
+    from pymor.operators.numpy import NumpyMatrixOperator
+    from pymor.parameters.base import Parameters
+    from pymor.parameters.functionals import ExpressionParameterFunctional
+    from pymor.vectorarrays.numpy import NumpyVectorSpace
 
     assert isinstance(rhs, Function)
     assert rhs.dim_domain == 2
@@ -407,7 +403,7 @@ def stokes_2Dexample(rhs=None):
 
     K = bmat([[A, B.T], [B, 0 * C]], 'csr')
     f = np.concatenate([asm(make_body_force(rhs), basis['u']), basis['p'].zeros()])
-    
+
     # dirichlet boundary values, fix one pressure node to zero
     D_u = basis['u'].get_dofs().flatten()
     D_p = np.array(basis['p'].get_dofs().flatten()[[0]])
@@ -429,7 +425,7 @@ def stokes_2Dexample(rhs=None):
 
     product_u_c = product_u[free_idx_u][:, free_idx_u]
     product_p_c = product_p[free_idx_p][:, free_idx_p]
-    
+
     # build BlockOperator
     U_space = NumpyVectorSpace(free_u)
     P_space = NumpyVectorSpace(free_p)
@@ -441,10 +437,9 @@ def stokes_2Dexample(rhs=None):
     Z_op = ZeroOperator(range=P_space, source=P_space)
 
     K_op = BlockOperator([[A_op_nu, B_op_T], [B_op, Z_op]])
-    #TODO VectorOperator or VectorArrayOperator
     F_op = BlockColumnOperator([VectorOperator(U_space.make_array(f_c[:free_u])),
-                               VectorOperator(P_space.make_array(f_c[free_u:]))])   
- 
+                               VectorOperator(P_space.make_array(f_c[free_u:]))])
+
     fom = StationaryModel(operator=K_op,
                           rhs=F_op,
                           products={'u': NumpyMatrixOperator(product_u_c),
