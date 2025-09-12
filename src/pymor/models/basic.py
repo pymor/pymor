@@ -96,7 +96,7 @@ class StationaryModel(Model):
         if 'solution' in quantities:
             if self.least_squares:
                 data['solution'] = self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu, least_squares=True)
-            else: 
+            else:
                 data['solution'] = self.operator.apply_inverse(self.rhs.as_range_array(mu), mu=mu)
             quantities.remove('solution')
 
