@@ -11,7 +11,7 @@ from pymor.algorithms.pod import pod
 from pymor.algorithms.symplectic import psd_complex_svd, psd_cotangent_lift, psd_svd_like_decomp
 from pymor.models.symplectic import QuadraticHamiltonianModel
 from pymor.operators.block import BlockDiagonalOperator
-from pymor.operators.constructions import IdentityOperator, LincombOperator
+from pymor.operators.constructions import IdentityOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.basic import InstationaryRBReductor
 from pymor.reductors.symplectic import QuadraticHamiltonianRBReductor
@@ -112,8 +112,8 @@ def discretize_fom(T=50):
         format='csr',
     )
     H_op = BlockDiagonalOperator([
-        NumpyMatrixOperator(-wave_speed**2 / dx * Dxx),
-        LincombOperator([IdentityOperator(space)], [1/dx]),
+        NumpyMatrixOperator(-(wave_speed/dx)**2 * Dxx),
+        IdentityOperator(space),
     ])
 
     # construct initial_data
