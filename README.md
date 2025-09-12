@@ -184,7 +184,7 @@ We provide bindings for the following solver libraries:
     For an example see `pymordemos.thermalblock_simple`.
     It is tested using NGSolve version v6.2.2104.
 
-A simple example for direct integration of pyMOR with a a custom solver
+A simple example for direct integration of pyMOR with a custom solver
 can be found in `pymordemos.minimal_cpp_demo`.
 
 An alternative approach is to import system matrices from file and use
