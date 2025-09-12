@@ -56,10 +56,10 @@ class BlockOperatorBase(Operator):
 
         self.__auto_init(locals())
 
-        # if self.source_spaces and self.range_spaces are not set to None, 
-        # projecting to a subspace after a projection has the wrong dimensionen in there. 
+        # if self.source_spaces and self.range_spaces are not set to None,
+        # projecting to a subspace after a projection has the wrong dimensionen in there.
         self.source_spaces = None
-        self.range_spaces = None 
+        self.range_spaces = None
         self.source = BlockVectorSpace(source_spaces) if self.blocked_source else source_spaces[0]
         self.range = BlockVectorSpace(range_spaces) if self.blocked_range else range_spaces[0]
         self.num_source_blocks = len(source_spaces)

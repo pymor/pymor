@@ -8,8 +8,8 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.core.exceptions import ImageCollectionError, NoMatchingRuleError
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import ConcatenationOperator, LincombOperator, SelectionOperator
 from pymor.operators.block import BlockOperator
+from pymor.operators.constructions import ConcatenationOperator, LincombOperator, SelectionOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.operators.interface import Operator
 from pymor.vectorarrays.interface import VectorArray
@@ -269,8 +269,8 @@ class CollectOperatorRangeRules(RuleTable):
 
         new_image = image_space.make_array(block_images)
         self.image.append(new_image)
-        
-        
+
+
 class CollectVectorRangeRules(RuleTable):
     """|RuleTable| for the :func:`estimate_image` algorithm."""
 
