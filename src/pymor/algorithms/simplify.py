@@ -18,10 +18,6 @@ from pymor.operators.interface import Operator, as_array_max_length
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.functionals import ParameterFunctional
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymor.operators.block import BlockOperator
-from pymor.operators.constructions import AdjointOperator, InverseOperator, ZeroOperator
-
-import numpy as np
 
 
 def expand(obj):
