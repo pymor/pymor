@@ -2,9 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
-from pymor.solvers.interface import SolverWithAdjointImpl
+from pymor.solvers.interface import LyapunovLRCFSolver, SolverWithAdjointImpl
 
 
 class DefaultSolver(SolverWithAdjointImpl):
@@ -81,7 +82,7 @@ class DefaultSolver(SolverWithAdjointImpl):
         if mat_op is None:
             self.logger.warning(f'No specialized linear solver available for {op}.')
             self.logger.warning('Trying to solve by converting to NumPy/SciPy matrix.')
-            from pymor.algorithms.rules import NoMatchingRuleError
+from pymor.algorithms.rules import NoMatchingRuleError
             try:
                 from pymor.algorithms.to_matrix import to_matrix
                 from pymor.operators.numpy import NumpyMatrixOperator
@@ -92,3 +93,67 @@ class DefaultSolver(SolverWithAdjointImpl):
             except (NoMatchingRuleError, NotImplementedError) as e:
                 raise InversionError from e
         return mat_op
+
+_DEFAULT_LYAP_SOLVER_BACKEND = FrozenDict(
+    {
+        'cont': FrozenDict(
+            {
+                'sparse': 'lradi',
+                'dense': 'slycot' if config.HAVE_SLYCOT else 'scipy',
+            }
+        ),
+        'disc': FrozenDict({'dense': 'slycot' if config.HAVE_SLYCOT else 'scipy'}),
+    }
+)
+
+
+@defaults('value')
+def mat_eqn_sparse_min_size(value=1000):
+    """Returns minimal size for which a sparse solver will be used by default."""
+    return value
+
+
+@defaults('default_dense_solver', 'default_sparse_solver', 'sparse_min_size')
+def default_lyapunov_lrcf_solver(A, cont_time,
+                                 default_dense_solver='slycot_or_scipy',
+                                 default_sparse_solver='lradi',
+                                 sparse_min_size=1000):
+    if isinstance(default_dense_solver, 'str'):
+        assert default_dense_solver('slycot', 'scipy', 'lradi', 'slycot_or_scipy')
+    if isinstance(default_sparse_solver, 'str'):
+        assert default_dense_solver('slycot', 'scipy', 'lradi', 'slycot_or_scipy')
+
+    if 
+
+    if A.source.dim >= sparse_min_size() and :
+        if 
+        backend = default_sparse_solver_backend
+        else:
+            backend = default_dense_solver_backend
+    if backend == 'scipy':
+        from pymor.bindings.scipy import solve_lyap_lrcf as solve_lyap_impl
+    elif backend == 'slycot':
+        from pymor.bindings.slycot import solve_lyap_lrcf as solve_lyap_impl
+    elif backend == 'lradi':
+        from pymor.algorithms.lradi import solve_lyap_lrcf as solve_lyap_impl
+    else:
+        raise ValueError(f'Unknown solver backend ({backend}).')
+
+
+@defaults('default_dense_solver_backend')
+def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
+                         default_dense_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND['disc']['dense']):
+    if options:
+        solver = options if isinstance(options, str) else options['type']
+        backend = solver.split('_')[0]
+    else:
+        backend = default_dense_solver_backend
+    if backend == 'scipy':
+        from pymor.bindings.scipy import solve_lyap_lrcf as solve_lyap_impl
+    elif backend == 'slycot':
+        from pymor.bindings.slycot import solve_lyap_lrcf as solve_lyap_impl
+    else:
+        raise ValueError(f'Unknown solver backend ({backend}).')
+    return solve_lyap_impl(A, E, B, trans=trans, cont_time=False, options=options)
+
+

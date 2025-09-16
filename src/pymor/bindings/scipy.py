@@ -324,16 +324,6 @@ def matrix_astype_nocopy(matrix, dtype):
         return matrix.astype(dtype)
 
 
-def lyap_lrcf_solver_options():
-    """Return available Lyapunov solvers with default options for the SciPy backend.
-
-    Returns
-    -------
-    A dict of available solvers with default solver options.
-    """
-    return {'scipy': {'type': 'scipy'}}
-
-
 class SciPyLyapunovLRCFSolver(LyapunovLRCFSolver):
     """SciPy-based Lyapunov equation Solver (returns low-rank Cholesky-factor).
 

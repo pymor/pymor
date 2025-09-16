@@ -116,8 +116,84 @@ class LyapunovSolver:
 
 
 class LyapunovLRCFSolver:
+    """Compute an approximate low-rank solution of a Lyapunov equation.
+
+    Returns a low-rank Cholesky factor :math:`Z` such that :math:`Z Z^T` approximates the solution
+    :math:`X` of a (generalized) continuous- or discrete-time algebraic Lyapunov equation:
+
+    - if `cont_time` is `True`, trans is `False` and E is `None`:
+
+      .. math::
+         A X + X A^T + B B^T = 0,
+
+    - if `cont_time` is `True`, trans is `False` and E is an |Operator|:
+
+      .. math::
+          A X E^T + E X A^T + B B^T = 0,
+
+    - if `cont_time` is `True`, trans is `True` and E is `None`:
+
+      .. math::
+          A^T X + X A + B^T B = 0,
+
+    - if `cont_time` is `True`, trans is `True` and E is an |Operator|:
+
+      .. math::
+          A^T X E + E^T X A + B^T B = 0.
+
+    - if `cont_time` is `False`, trans is `False` and E is `None`:
+
+      .. math::
+         A X A^T - X + B B^T = 0,
+
+    - if `cont_time` is `False`, trans is `False` and E is an |Operator|:
+
+      .. math::
+          A X A^T - E X E^T + B B^T = 0,
+
+    - if `cont_time` is `False`, trans is `True` and E is `None`:
+
+      .. math::
+          A^T X A - X + B^T B = 0,
+
+    - if `cont_time` is `False`, trans is `True` and E is an |Operator|:
+
+      .. math::
+          A^T X A - E^T X E + B^T B = 0.
+
+
+    We assume A and E are real |Operators| and E is invertible.
+    When `cont_time` is `True`, we assume the eigenvalues of (A, E) all lie in the open
+    left half-plane. When `cont_time` is `False`, we asume all the eigenvalues of (A, E) all
+    lie inside the unit circle.
+
+    Operator B needs to be given as a |VectorArray| from
+    `A.source`, and for large-scale problems, we assume `len(B)` is small.
+    """
 
     def solve(self, A, E, B, trans=False, cont_time=True):
+        """Solve the Lyapunov equation.
+
+        Parameters
+        ----------
+        A
+            The non-parametric |Operator| A.
+        E
+            The non-parametric |Operator| E or `None`.
+        B
+            The operator B as a |VectorArray| from `A.source`.
+        trans
+            Whether the first |Operator| in the Lyapunov equation is transposed.
+        cont_time
+            If `True`, solve the continuous-time Lyapunov equation.
+            If `Flase`, solve the discrete-time Lyapunov equation.
+
+        Returns
+        -------
+        Z
+            Low-rank Cholesky factor of the Lyapunov equation solution, |VectorArray|
+            from `A.source`.
+        """
         assert isinstance(A, Operator)
         assert A.linear
         assert not A.parametric
