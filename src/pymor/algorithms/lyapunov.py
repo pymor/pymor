@@ -201,20 +201,6 @@ def solve_disc_lyap_lrcf(A, E, B, trans=False, options=None,
     return solve_lyap_impl(A, E, B, trans=trans, cont_time=False, options=options)
 
 
-def _solve_lyap_lrcf_check_args(A, E, B, trans):
-    assert isinstance(A, Operator)
-    assert A.linear
-    assert not A.parametric
-    assert A.source == A.range
-    if E is not None:
-        assert isinstance(E, Operator)
-        assert E.linear
-        assert not E.parametric
-        assert E.source == E.range
-        assert E.source == A.source
-    assert B in A.source
-
-
 @defaults('default_solver_backend')
 def solve_cont_lyap_dense(A, E, B, trans=False, options=None,
                           default_solver_backend=_DEFAULT_LYAP_SOLVER_BACKEND['cont']['dense']):
@@ -368,40 +354,3 @@ def solve_disc_lyap_dense(A, E, B, trans=False, options=None,
     return solve_lyap_impl(A, E, B, trans=trans, cont_time=False, options=options)
 
 
-def _solve_lyap_dense_check_args(A, E, B, trans):
-    assert isinstance(A, np.ndarray)
-    assert A.ndim == 2
-    assert A.shape[0] == A.shape[1]
-    if E is not None:
-        assert isinstance(E, np.ndarray)
-        assert E.ndim == 2
-        assert E.shape[0] == E.shape[1]
-        assert E.shape[0] == A.shape[0]
-    assert isinstance(B, np.ndarray)
-    assert A.ndim == 2
-    assert not trans and B.shape[0] == A.shape[0] or trans and B.shape[1] == A.shape[0]
-
-
-def _chol(A):
-    """Cholesky decomposition.
-
-    This implementation uses SVD to compute the Cholesky factor (can be used for singular matrices).
-
-    Parameters
-    ----------
-    A
-        Symmetric positive semidefinite matrix as a |NumPy array|.
-
-    Returns
-    -------
-    L
-        Cholesky factor of A (in the sense that L * L^T approximates A).
-    """
-    assert isinstance(A, np.ndarray)
-    assert A.ndim == 2
-    assert A.shape[0] == A.shape[1]
-
-    from pymor.bindings.scipy import svd_lapack_driver
-    U, s, _ = spla.svd(A, lapack_driver=svd_lapack_driver())
-    L = U * np.sqrt(s)
-    return L

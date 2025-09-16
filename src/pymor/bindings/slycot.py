@@ -11,21 +11,11 @@ import numpy as np
 import scipy.linalg as spla
 import slycot
 
-from pymor.algorithms.lyapunov import _chol, _solve_lyap_dense_check_args, _solve_lyap_lrcf_check_args
 from pymor.algorithms.riccati import _solve_ricc_dense_check_args
 from pymor.algorithms.to_matrix import to_matrix
-from pymor.bindings.scipy import _parse_options, _solve_ricc_check_args
+from pymor.bindings.scipy import _chol, _parse_options, _solve_ricc_check_args
 from pymor.core.logger import getLogger
-
-
-def lyap_lrcf_solver_options():
-    """Return available Lyapunov solvers with default options for the slycot backend.
-
-    Returns
-    -------
-    A dict of available solvers with default solver options.
-    """
-    return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
+from pymor.solvers.interface import LyapunovLRCFSolver, LyapunovSolver
 
 
 def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
@@ -88,43 +78,14 @@ def lyap_dense_solver_options():
     return {'slycot_bartels-stewart': {'type': 'slycot_bartels-stewart'}}
 
 
-def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
-    """Compute the solution of a Lyapunov equation.
-
-    See
-
-    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_dense`
-    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_dense`
-
-    for a general description.
+class SlycotLyapunovSolver(LyapunovSolver):
+    """Slycot-based Lyapunov equation Solver.
 
     This function uses `slycot.sb03md` (if `E is None`) and `slycot.sg03ad` (if `E is not None`),
     which are based on the Bartels-Stewart algorithm.
-
-    Parameters
-    ----------
-    A
-        The matrix A as a 2D |NumPy array|.
-    E
-        The matrix E as a 2D |NumPy array| or `None`.
-    B
-        The matrix B as a 2D |NumPy array|.
-    trans
-        Whether the first matrix in the Lyapunov equation is transposed.
-    cont_time
-        Whether the continuous- or discrete-time Lyapunov equation is solved.
-    options
-        The solver options to use (see :func:`lyap_dense_solver_options`).
-
-    Returns
-    -------
-    X
-        Lyapunov equation solution as a |NumPy array|.
     """
-    _solve_lyap_dense_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_dense_solver_options(), 'slycot_bartels-stewart', None, False)
 
-    if options['type'] == 'slycot_bartels-stewart':
+    def _solve(self, A, E, B, trans, cont_time):
         n = A.shape[0]
         C = -B.dot(B.T) if not trans else -B.T.dot(B)
         trana = 'T' if not trans else 'N'
@@ -144,10 +105,8 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
                                                                      Q, Z, C)
             _solve_check(A.dtype, 'slycot.sg03ad', sep, ferr)
         X /= scale
-    else:
-        raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 
-    return X
+        return X
 
 
 def solve_ricc_dense(A, E, B, C, R=None, S=None, trans=False, options=None):

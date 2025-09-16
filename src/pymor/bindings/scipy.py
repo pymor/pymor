@@ -5,6 +5,7 @@
 import weakref
 
 import numpy as np
+import scipy.linalg as spla
 import scipy.sparse as sps
 from packaging.version import parse
 from scipy.linalg import (
@@ -19,13 +20,12 @@ from scipy.linalg import (
 from scipy.linalg.lapack import get_lapack_funcs
 from scipy.sparse.linalg import LinearOperator, bicgstab, lgmres, lsqr, spilu, splu, spsolve
 
-from pymor.algorithms.lyapunov import _chol, _solve_lyap_dense_check_args, _solve_lyap_lrcf_check_args
 from pymor.algorithms.riccati import _solve_ricc_check_args, _solve_ricc_dense_check_args
 from pymor.core.config import config, is_scipy_mkl, is_windows_platform
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
-from pymor.solvers.interface import Solver
+from pymor.solvers.interface import LyapunovLRCFSolver, LyapunovSolver, Solver
 
 SCIPY_1_14_OR_NEWER = parse(config.SCIPY_VERSION) >= parse('1.14')
 sparray = sps.sparray if parse(config.SCIPY_VERSION) >= parse('1.11') else sps._arrays._sparray
@@ -334,107 +334,42 @@ def lyap_lrcf_solver_options():
     return {'scipy': {'type': 'scipy'}}
 
 
-def solve_lyap_lrcf(A, E, B, trans=False, cont_time=True, options=None):
-    """Compute an approximate low-rank solution of a Lyapunov equation.
+class SciPyLyapunovLRCFSolver(LyapunovLRCFSolver):
+    """SciPy-based Lyapunov equation Solver (returns low-rank Cholesky-factor).
 
-    See
+    Uses `scipy.linalg.solve_continuous_lyapunov` or
+    `scipy.linalg.solve_discrete_lyapunov`.
 
-    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_lrcf`
-    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_lrcf`
-
-    for a general description.
-
-    This function uses `scipy.linalg.solve_continuous_lyapunov` or
-    `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers for Lyapunov equations with E=I.
-    Therefore, we assume A and E can be converted to |NumPy arrays| using
-    :func:`~pymor.algorithms.to_matrix.to_matrix` and that `B.to_numpy` is implemented.
+    |Operators| are converted to |NumPy arrays| using
+    :func:`~pymor.algorithms.to_matrix.to_matrix` and `B.to_numpy`.
 
     .. note::
         If E is not `None`, the problem will be reduced to a standard algebraic
         Lyapunov equation by inverting E.
-
-    Parameters
-    ----------
-    A
-        The non-parametric |Operator| A.
-    E
-        The non-parametric |Operator| E or `None`.
-    B
-        The operator B as a |VectorArray| from `A.source`.
-    trans
-        Whether the first |Operator| in the Lyapunov equation is transposed.
-    cont_time
-        Whether the continuous- or discrete-time Lyapunov equation is solved.
-    options
-        The solver options to use (see :func:`lyap_lrcf_solver_options`).
-
-    Returns
-    -------
-    Z
-        Low-rank Cholesky factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
     """
-    _solve_lyap_lrcf_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_lrcf_solver_options(), 'scipy', None, False)
 
-    from pymor.algorithms.to_matrix import to_matrix
-    X = solve_lyap_dense(to_matrix(A, format='dense'),
-                         to_matrix(E, format='dense') if E else None,
-                         B.to_numpy() if not trans else B.to_numpy().T,
-                         trans=trans, cont_time=cont_time, options=options)
-    return A.source.from_numpy(_chol(X))
-
-
-def lyap_dense_solver_options():
-    """Return available dense Lyapunov solvers with default options for the SciPy backend.
-
-    Returns
-    -------
-    A dict of available solvers with default solver options.
-    """
-    return {'scipy': {'type': 'scipy'}}
+    def _solve(self, A, E, B, trans, cont_time):
+        from pymor.algorithms.to_matrix import to_matrix
+        X = ScipyLyapunovSolver().solve(
+            to_matrix(A, format='dense'),
+            to_matrix(E, format='dense') if E else None,
+            B.to_numpy() if not trans else B.to_numpy().T,
+            trans=trans, cont_time=cont_time)
+        return A.source.from_numpy(_chol(X))
 
 
-def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
-    """Compute the solution of a Lyapunov equation.
+class ScipyLyapunovSolver(LyapunovSolver):
+    """SciPy-based Lyapunov equation Solver.
 
-    See
-
-    - :func:`pymor.algorithms.lyapunov.solve_cont_lyap_dense`
-    - :func:`pymor.algorithms.lyapunov.solve_disc_lyap_dense`
-
-    for a general description.
-
-    This function uses `scipy.linalg.solve_continuous_lyapunov` or
-    `scipy.linalg.solve_discrete_lyapunov`, which are dense solvers for Lyapunov equations with E=I.
+    Uses `scipy.linalg.solve_continuous_lyapunov` or
+    `scipy.linalg.solve_discrete_lyapunov`.
 
     .. note::
         If E is not `None`, the problem will be reduced to a standard algebraic
         Lyapunov equation by inverting E.
-
-    Parameters
-    ----------
-    A
-        The matrix A as a 2D |NumPy array|.
-    E
-        The matrix E as a 2D |NumPy array| or `None`.
-    B
-        The matrix B as a 2D |NumPy array|.
-    trans
-        Whether the first operator in the Lyapunov equation is transposed.
-    cont_time
-        Whether the continuous- or discrete-time Lyapunov equation is solved.
-    options
-        The solver options to use (see :func:`lyap_dense_solver_options`).
-
-    Returns
-    -------
-    X
-        Lyapunov equation solution as a |NumPy array|.
     """
-    _solve_lyap_dense_check_args(A, E, B, trans)
-    options = _parse_options(options, lyap_dense_solver_options(), 'scipy', None, False)
 
-    if options['type'] == 'scipy':
+    def _solve(self, A, E, B, trans, cont_time):
         if E is not None:
             A = solve(E, A) if not trans else solve(E.T, A.T).T
             B = solve(E, B) if not trans else solve(E.T, B.T).T
@@ -445,10 +380,8 @@ def solve_lyap_dense(A, E, B, trans=False, cont_time=True, options=None):
             X = solve_continuous_lyapunov(A, -B @ B.T)
         else:
             X = solve_discrete_lyapunov(A, B @ B.T)
-    else:
-        raise ValueError(f"Unexpected Lyapunov equation solver ({options['type']}).")
 
-    return X
+        return X
 
 
 def ricc_lrcf_solver_options():
@@ -698,3 +631,28 @@ def _parse_options(options, default_options, default_solver, default_least_squar
             logger.warning('Least squares solver selected for non-least squares problem.')
 
     return options
+
+
+def _chol(A):
+    """Cholesky decomposition.
+
+    This implementation uses SVD to compute the Cholesky factor (can be used for singular matrices).
+
+    Parameters
+    ----------
+    A
+        Symmetric positive semidefinite matrix as a |NumPy array|.
+
+    Returns
+    -------
+    L
+        Cholesky factor of A (in the sense that L * L^T approximates A).
+    """
+    assert isinstance(A, np.ndarray)
+    assert A.ndim == 2
+    assert A.shape[0] == A.shape[1]
+
+    from pymor.bindings.scipy import svd_lapack_driver
+    U, s, _ = spla.svd(A, lapack_driver=svd_lapack_driver())
+    L = U * np.sqrt(s)
+    return L

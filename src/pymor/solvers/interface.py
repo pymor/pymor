@@ -2,8 +2,11 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
+import numpy as np
+
 from pymor.core.base import ImmutableObject
 from pymor.core.exceptions import LinAlgError
+from pymor.core.operators.interface import Operator
 
 
 class Solver(ImmutableObject):
@@ -90,3 +93,43 @@ class AdjointSolver(Solver):
 
     def _solve_adjoint(self, operator, U, mu, initial_guess):
         return self.solver.solve(operator.H, U, mu=mu, initial_guess=initial_guess)
+
+
+class LyapunovSolver:
+
+    def solve(self, A, E, B, trans=False, cont_time=True):
+        assert isinstance(A, np.ndarray)
+        assert A.ndim == 2
+        assert A.shape[0] == A.shape[1]
+        if E is not None:
+            assert isinstance(E, np.ndarray)
+            assert E.ndim == 2
+            assert E.shape[0] == E.shape[1]
+            assert E.shape[0] == A.shape[0]
+        assert isinstance(B, np.ndarray)
+        assert A.ndim == 2
+        assert not trans and B.shape[0] == A.shape[0] or trans and B.shape[1] == A.shape[0]
+        return self._solve(A, E, B, trans=trans, cont_time=cont_time)
+
+    def _solve(self, A, E, B, trans=False, cont_time=True):
+        raise NotImplementedError
+
+
+class LyapunovLRCFSolver:
+
+    def solve(self, A, E, B, trans=False, cont_time=True):
+        assert isinstance(A, Operator)
+        assert A.linear
+        assert not A.parametric
+        assert A.source == A.range
+        if E is not None:
+            assert isinstance(E, Operator)
+            assert E.linear
+            assert not E.parametric
+            assert E.source == E.range
+            assert E.source == A.source
+        assert B in A.source
+        return self._solve(A, E, B, trans=trans, cont_time=cont_time)
+
+    def _solve(self, A, E, B, trans=False, cont_time=True):
+        raise NotImplementedError
