@@ -103,6 +103,7 @@ Defaults
             defaultsdict[n] = p.default
 
         path = func.__module__ + '.' + getattr(func, '__qualname__', func.__name__)
+        path = path.removesuffix('.__init__')
         if path in self.registered_functions:
             raise ValueError(f'Function with name {path} already registered for default values!')
         self.registered_functions.add(path)
