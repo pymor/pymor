@@ -292,7 +292,10 @@ def print_defaults(import_all=True, shorten_paths=0):
             keys.append('.'.join(k_parts[shorten_paths:]))
         else:
             keys.append('.'.join(k_parts))
-        values.append(repr(v))
+        if inspect.isclass(v) or inspect.isfunction(v):
+            values.append(f'{v.__module__}.{v.__qualname__}')
+        else:
+            values.append(repr(v))
         comments.append(c)
     key_string = 'path (shortened)' if shorten_paths else 'path'
 
@@ -327,7 +330,10 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
     for k in sorted(_default_container.keys()):
         v, c = _default_container.get(k)
         keys.append("'" + k + "'")
-        values.append(repr(v))
+        if inspect.isclass(v) or inspect.isfunction(v):
+            values.append(f"import_module('{v.__module__}').{v.__qualname__}")
+        else:
+            values.append(repr(v))
         as_comment.append(c == 'code')
     key_width = max(max([0] + list(map(len, ks))) for ks in keys)
 
@@ -335,6 +341,8 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
         print("""
 # pyMOR defaults config file
 # This file has been automatically created by pymor.core.defaults.write_defaults_to_file'.
+
+from importlib import import_module
 
 d = {}
 """[1:], file=f)
