@@ -131,7 +131,7 @@ markdown-it-py==3.0.0
     #   mdit-py-plugins
     #   myst-parser
     #   rich
-markupsafe==3.0.2
+markupsafe==3.0.1
     # via jinja2
 matplotlib==3.10.6
     # via pymor (./pyproject.toml)
