@@ -15,15 +15,32 @@ jobs:
       - uses: actions/github-script@v6
         with:
           script: |-
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body:
-                `This pull request modifies \`pyproject.toml\` or \`requirements-ci-oldest-pins.in\`.
-            In case dependencies were changed, make sure to call
-            \`\`\`shell
-            make ci_requirements
-            \`\`\`
-            and commit the changed files to ensure that CI runs with the updated dependencies.`
-            })
+            const issue_number = context.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                owner,
+                repo,
+                issue_number,
+              }
+            );
+            const commentExists = comments.some(comment =>
+              comment.body.includes('<!-- ci-requirements-comment -->')
+            );
+            if (!commentExists) {
+              await github.rest.issues.createComment({
+                issue_number: issue_number,
+                owner: owner,
+                repo: repo,
+                body:
+                  `<!-- ci-requirements-comment -->
+              This pull request modifies \`pyproject.toml\` or \`requirements-ci-oldest-pins.in\`.
+              In case dependencies were changed, make sure to call
+              \`\`\`shell
+              make ci_requirements
+              \`\`\`
+              and commit the changed files to ensure that CI runs with the updated dependencies.`
+              });
+            }
