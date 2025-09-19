@@ -2,13 +2,10 @@
 # Copyright pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
-
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.core.exceptions import ImageCollectionError, NoMatchingRuleError
 from pymor.core.logger import getLogger
-from pymor.operators.block import BlockOperator
 from pymor.operators.constructions import ConcatenationOperator, LincombOperator, SelectionOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.operators.interface import Operator
@@ -249,26 +246,6 @@ class CollectOperatorRangeRules(RuleTable):
             firstrange = op.operators[-1].range.empty()
             type(self)(self.source, firstrange, self.extends).apply(op.operators[-1])
             type(self)(firstrange, self.image, self.extends).apply(op.with_(operators=op.operators[:-1]))
-
-    @match_class(BlockOperator)
-    def action_BlockOperator(self, op):
-        image_space = self.image.space
-        block_images = [image_space.subspaces[i].empty() for i in range(len(image_space.subspaces))]
-
-        for (i, j), block_op in np.ndenumerate(op.blocks):
-            if block_op is not None:
-                source_part = self.source.blocks[j]
-                block_image = image_space.subspaces[i].empty()
-                block_rule = CollectOperatorRangeRules(source_part, block_image, self.extends)
-
-                try:
-                    block_rule.apply(block_op)
-                    block_images[i].append(block_image)
-                except NoMatchingRuleError as e:
-                    raise ImageCollectionError(e.obj) from e
-
-        new_image = image_space.make_array(block_images)
-        self.image.append(new_image)
 
 
 class CollectVectorRangeRules(RuleTable):
