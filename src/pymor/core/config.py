@@ -267,6 +267,10 @@ External Packages
 Defaults
 --------
 See pymor.core.defaults.print_defaults.
+
+Caching
+-------
+See pymor.core.cache.print_cached_methods.
 """[1:]
         return info
 
